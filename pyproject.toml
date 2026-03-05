@@ -1,0 +1,87 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+name = "mnemos"
+version = "0.1.0"
+description = "Biomimetic memory architectures for LLMs — surprisal-gated encoding, mutable RAG, affective routing, sleep consolidation, and spreading activation."
+readme = "README.md"
+license = { text = "MIT" }
+authors = [
+    { name = "Anthony Maio", email = "anthony.maio@gmail.com" }
+]
+keywords = [
+    "llm", "memory", "biomimetic", "rag", "neuroscience",
+    "ai", "spreading-activation", "predictive-coding"
+]
+classifiers = [
+    "Development Status :: 3 - Alpha",
+    "Intended Audience :: Developers",
+    "Intended Audience :: Science/Research",
+    "License :: OSI Approved :: MIT License",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Topic :: Scientific/Engineering :: Artificial Intelligence",
+    "Topic :: Software Development :: Libraries :: Python Modules",
+]
+requires-python = ">=3.10"
+dependencies = [
+    "numpy>=1.24.0",
+    "pydantic>=2.0.0",
+    "httpx>=0.24.0",
+]
+
+[project.optional-dependencies]
+ollama = [
+    "ollama>=0.1.0",
+]
+openai = [
+    "openai>=1.0.0",
+]
+mcp = [
+    "mcp>=1.0.0",
+]
+neo4j = [
+    "neo4j>=5.0.0",
+]
+all = [
+    "ollama>=0.1.0",
+    "openai>=1.0.0",
+    "neo4j>=5.0.0",
+    "mcp>=1.0.0",
+]
+dev = [
+    "pytest>=7.0.0",
+    "pytest-asyncio>=0.21.0",
+    "black>=23.0.0",
+    "mypy>=1.0.0",
+]
+
+[project.scripts]
+mnemos-mcp = "mnemos.mcp_server:main"
+mnemos-cli = "mnemos.cli:main"
+
+[project.urls]
+Homepage = "https://mnemos.making-minds.ai"
+Repository = "https://github.com/anthony-maio/mnemos"
+Documentation = "https://github.com/anthony-maio/mnemos#readme"
+"Bug Tracker" = "https://github.com/anthony-maio/mnemos/issues"
+
+[tool.hatch.build.targets.wheel]
+packages = ["mnemos"]
+
+[tool.pytest.ini_options]
+asyncio_mode = "auto"
+testpaths = ["tests"]
+
+[tool.mypy]
+python_version = "3.10"
+strict = true
+ignore_missing_imports = true
+
+[tool.black]
+line-length = 100
+target-version = ["py310", "py311", "py312"]
