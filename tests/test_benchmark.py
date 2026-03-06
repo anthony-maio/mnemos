@@ -5,12 +5,14 @@ tests/test_benchmark.py — Retrieval benchmark metric tests.
 from __future__ import annotations
 
 import json
+import uuid
 from pathlib import Path
 
 import pytest
 
 from mnemos.benchmark import (
     BenchmarkDocument,
+    _benchmark_store_id,
     _build_comparisons,
     compute_retrieval_metrics,
     evaluate_production_replacement_gate,
@@ -179,3 +181,10 @@ def test_load_documents_allows_empty_query_lists(tmp_path: Path) -> None:
     assert len(docs) == 2
     assert docs[0].queries == ()
     assert docs[1].queries == ("active query",)
+
+
+def test_benchmark_store_id_is_stable_uuid() -> None:
+    first = _benchmark_store_id("editor-old")
+    second = _benchmark_store_id("editor-old")
+    assert first == second
+    assert str(uuid.UUID(first)) == first

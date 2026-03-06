@@ -57,6 +57,10 @@ def fake_qdrant(monkeypatch: pytest.MonkeyPatch) -> None:
             self.vector = vector
             self.payload = payload
 
+    class _QueryResult:
+        def __init__(self, points: list[_PointView]) -> None:
+            self.points = points
+
     class FakeQdrantClient:
         def __init__(
             self,
@@ -112,6 +116,25 @@ def fake_qdrant(monkeypatch: pytest.MonkeyPatch) -> None:
             return [
                 _PointView(pid, data["vector"], data["payload"]) for _, pid, data in scored[:limit]
             ]
+
+        def query_points(
+            self,
+            collection_name: str,
+            query: list[float],
+            limit: int,
+            with_payload: bool = True,
+            with_vectors: bool = True,
+        ) -> _QueryResult:
+            collection = self._collections[collection_name]
+            scored: list[tuple[float, str, dict[str, Any]]] = []
+            for point_id, point_data in collection["points"].items():
+                score = cosine_similarity(query, point_data["vector"])
+                scored.append((score, point_id, point_data))
+            scored.sort(key=lambda x: x[0], reverse=True)
+            points = [
+                _PointView(pid, data["vector"], data["payload"]) for _, pid, data in scored[:limit]
+            ]
+            return _QueryResult(points)
 
         def retrieve(
             self,
@@ -244,3 +267,30 @@ def test_qdrant_store_filter_fn(fake_qdrant: None) -> None:
 
     assert len(filtered) == 1
     assert filtered[0].id == "infra-1"
+
+
+def test_qdrant_store_retrieve_uses_query_points_fallback(fake_qdrant: None) -> None:
+    store = QdrantStore(path=":memory:", collection_name="mnemos_test_query_points")
+    store.store(
+        MemoryChunk(
+            id="infra-1",
+            content="Kubernetes alerting and Grafana dashboards",
+            embedding=[0.9, 0.1, 0.0],
+            metadata={"team": "infra"},
+        )
+    )
+    store.store(
+        MemoryChunk(
+            id="data-1",
+            content="PostgreSQL backup and PITR",
+            embedding=[0.0, 1.0, 0.0],
+            metadata={"team": "data"},
+        )
+    )
+
+    # Force codepath for clients that expose query_points instead of search.
+    delattr(type(store._client), "search")
+
+    hits = store.retrieve([1.0, 0.0, 0.0], top_k=1)
+    assert len(hits) == 1
+    assert hits[0].id == "infra-1"

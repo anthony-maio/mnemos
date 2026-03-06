@@ -14,6 +14,7 @@ import argparse
 import json
 import shutil
 import time
+import uuid
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Any
@@ -128,6 +129,15 @@ def build_queries(documents: list[BenchmarkDocument]) -> list[BenchmarkQuery]:
     return queries
 
 
+def _benchmark_store_id(doc_id: str) -> str:
+    """
+    Map arbitrary dataset IDs to stable UUIDs for backend compatibility.
+
+    Some vector backends (embedded Qdrant) require UUID-like point IDs.
+    """
+    return str(uuid.uuid5(uuid.NAMESPACE_URL, f"mnemos-benchmark:{doc_id}"))
+
+
 def compute_retrieval_metrics(
     *,
     retrieved_ids: list[list[str]],
@@ -231,7 +241,11 @@ def _cleanup_local_store_artifacts(
         sqlite_path.unlink()
     if store_type == "qdrant" and qdrant_path is not None and qdrant_path.exists():
         if qdrant_path.is_dir():
-            shutil.rmtree(qdrant_path)
+            try:
+                shutil.rmtree(qdrant_path)
+            except PermissionError:
+                # Best-effort cleanup for local embedded runs where lock release can lag.
+                pass
         else:
             qdrant_path.unlink()
 
@@ -460,10 +474,13 @@ def run_retrieval_benchmark(
         document_embeddings = embedder.embed_batch([doc.content for doc in documents])
         if not document_embeddings:
             raise ValueError("Unable to generate document embeddings.")
+        id_map: dict[str, str] = {}
         for doc, embedding in zip(documents, document_embeddings):
+            store_id = _benchmark_store_id(doc.id)
+            id_map[doc.id] = store_id
             store.store(
                 MemoryChunk(
-                    id=doc.id,
+                    id=store_id,
                     content=doc.content,
                     embedding=embedding,
                     metadata={"source": "benchmark"},
@@ -478,7 +495,7 @@ def run_retrieval_benchmark(
             elapsed_ms = (time.perf_counter() - start) * 1000.0
             latencies_ms.append(elapsed_ms)
             retrieved_ids.append([chunk.id for chunk in chunks])
-            relevant_ids.append(query.relevant_ids)
+            relevant_ids.append({id_map[doc_id] for doc_id in query.relevant_ids})
     else:
         engine = MnemosEngine(
             config=MnemosConfig(

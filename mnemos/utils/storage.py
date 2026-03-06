@@ -761,16 +761,37 @@ class QdrantStore(MemoryStore):
             return [chunk for _, chunk in scored[:top_k]]
 
         with self._lock:
-            hits = self._call_client(
-                "search",
-                lambda: self._client.search(
-                    collection_name=self.collection_name,
-                    query_vector=query_embedding,
-                    limit=top_k,
-                    with_payload=True,
-                    with_vectors=True,
-                ),
-            )
+            search_fn = getattr(self._client, "search", None)
+            query_points_fn = getattr(self._client, "query_points", None)
+            if callable(search_fn):
+                hits = self._call_client(
+                    "search",
+                    lambda: search_fn(
+                        collection_name=self.collection_name,
+                        query_vector=query_embedding,
+                        limit=top_k,
+                        with_payload=True,
+                        with_vectors=True,
+                    ),
+                )
+            elif callable(query_points_fn):
+                query_result = self._call_client(
+                    "query_points",
+                    lambda: query_points_fn(
+                        collection_name=self.collection_name,
+                        query=query_embedding,
+                        limit=top_k,
+                        with_payload=True,
+                        with_vectors=True,
+                    ),
+                )
+                points = getattr(query_result, "points", query_result)
+                if isinstance(points, list):
+                    hits = points
+                else:
+                    raise TypeError("Unsupported Qdrant query_points response shape.")
+            else:
+                raise RuntimeError("Qdrant client does not support search/query_points APIs.")
 
         return [self._point_to_chunk(hit) for hit in hits]
 

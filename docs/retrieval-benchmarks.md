@@ -60,6 +60,12 @@ Default gate thresholds:
 - p95 latency ratio: `<= 2.0`
 - latency floor for ratio denominator: `1.0 ms`
 
+CI profile-specific production gates:
+
+- `memory` profile: `MRR lift >= 0.15`, `p95 ratio <= 2.0`
+- `sqlite` starter profile: `MRR lift >= 0.15`, `p95 ratio <= 4.0`
+- `qdrant` local-performance profile: `MRR lift >= 0.15`, `p95 ratio <= 2.25`
+
 ## Custom Dataset Format
 
 Use `.json` (array) or `.jsonl` (one object per line). Each item must include:

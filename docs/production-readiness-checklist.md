@@ -9,6 +9,7 @@ Use this checklist before promoting a release as production-ready.
 - [ ] `black --check .` passes
 - [ ] Tier 1 MCP smoke tests pass (Claude Code, Claude Desktop config, generic stdio contract)
 - [ ] Benchmark production replacement gate passes
+- [ ] Profile-specific benchmark gates pass (`memory`, `sqlite`, `qdrant`)
 - [ ] CLI startup and store/embedder wiring smoke tests pass
 
 ## Retrieval and Memory Quality
