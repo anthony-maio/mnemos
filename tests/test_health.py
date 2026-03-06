@@ -8,7 +8,9 @@ from pathlib import Path
 
 import pytest
 
+from mnemos.types import MemoryChunk
 from mnemos.health import detect_profile, run_health_checks
+from mnemos.utils import SQLiteStore
 
 
 def test_detect_profile_starter_sqlite(monkeypatch: pytest.MonkeyPatch) -> None:
@@ -69,3 +71,43 @@ def test_health_reports_ready_for_openclaw_starter_profile(
     assert report["profile"] == "starter"
     assert report["status"] == "ready"
     assert report["summary"]["fail"] == 0
+
+
+def test_health_does_not_recommend_qdrant_when_sqlite_below_threshold(
+    monkeypatch: pytest.MonkeyPatch, tmp_path: Path
+) -> None:
+    db_path = tmp_path / "mnemos_below_threshold.db"
+    monkeypatch.setenv("MNEMOS_STORE_TYPE", "sqlite")
+    monkeypatch.setenv("MNEMOS_SQLITE_PATH", str(db_path))
+    monkeypatch.setenv("MNEMOS_LLM_PROVIDER", "openclaw")
+    monkeypatch.setenv("MNEMOS_OPENCLAW_API_KEY", "test-key")
+    monkeypatch.setenv("MNEMOS_EMBEDDING_PROVIDER", "openclaw")
+    monkeypatch.setenv("MNEMOS_DOCTOR_QDRANT_CHUNK_THRESHOLD", "100")
+
+    report = run_health_checks()
+
+    assert report["upgrade_signals"]["threshold_exceeded"] is False
+    assert not any("Upgrade path:" in rec for rec in report["recommendations"])
+
+
+def test_health_recommends_qdrant_when_sqlite_chunk_threshold_exceeded(
+    monkeypatch: pytest.MonkeyPatch, tmp_path: Path
+) -> None:
+    db_path = tmp_path / "mnemos_above_threshold.db"
+    store = SQLiteStore(db_path=str(db_path))
+    try:
+        store.store(MemoryChunk(content="example memory", embedding=[0.1, 0.2, 0.3]))
+    finally:
+        store.close()
+
+    monkeypatch.setenv("MNEMOS_STORE_TYPE", "sqlite")
+    monkeypatch.setenv("MNEMOS_SQLITE_PATH", str(db_path))
+    monkeypatch.setenv("MNEMOS_LLM_PROVIDER", "openclaw")
+    monkeypatch.setenv("MNEMOS_OPENCLAW_API_KEY", "test-key")
+    monkeypatch.setenv("MNEMOS_EMBEDDING_PROVIDER", "openclaw")
+    monkeypatch.setenv("MNEMOS_DOCTOR_QDRANT_CHUNK_THRESHOLD", "1")
+
+    report = run_health_checks()
+
+    assert report["upgrade_signals"]["threshold_exceeded"] is True
+    assert any("Upgrade path:" in rec for rec in report["recommendations"])

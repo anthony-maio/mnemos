@@ -6,6 +6,7 @@ from __future__ import annotations
 
 import importlib.util
 import os
+import sqlite3
 from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any, Mapping
@@ -31,6 +32,43 @@ def _resolve_env_value(
 
 def _module_available(module_name: str) -> bool:
     return importlib.util.find_spec(module_name) is not None
+
+
+def _safe_int(value: str | None, default: int) -> int:
+    if value is None or value == "":
+        return default
+    try:
+        return int(value)
+    except ValueError:
+        return default
+
+
+def _safe_float(value: str | None, default: float) -> float:
+    if value is None or value == "":
+        return default
+    try:
+        return float(value)
+    except ValueError:
+        return default
+
+
+def _sqlite_chunk_count(db_path: Path) -> int | None:
+    if not db_path.exists():
+        return 0
+    try:
+        conn = sqlite3.connect(str(db_path))
+        try:
+            cursor = conn.execute(
+                "SELECT COUNT(*) FROM sqlite_master WHERE type='table' AND name='memory_chunks'"
+            )
+            table_exists = int(cursor.fetchone()[0]) > 0
+            if not table_exists:
+                return 0
+            return int(conn.execute("SELECT COUNT(*) FROM memory_chunks").fetchone()[0])
+        finally:
+            conn.close()
+    except Exception:
+        return None
 
 
 def _embedding_provider_from_env(env: Mapping[str, str] | None = None) -> str:
@@ -102,6 +140,33 @@ def run_health_checks(
         _resolve_env_value("MNEMOS_LLM_PROVIDER", env=env, default="mock") or "mock"
     ).lower()
     embedding_provider = _embedding_provider_from_env(env)
+    sqlite_chunk_threshold = _safe_int(
+        _resolve_env_value(
+            "MNEMOS_DOCTOR_QDRANT_CHUNK_THRESHOLD",
+            env=env,
+            default="5000",
+        ),
+        default=5000,
+    )
+    latency_p95_threshold_ms = _safe_float(
+        _resolve_env_value(
+            "MNEMOS_DOCTOR_LATENCY_P95_THRESHOLD_MS",
+            env=env,
+            default="250",
+        ),
+        default=250.0,
+    )
+    observed_latency_p95_ms_text = _resolve_env_value(
+        "MNEMOS_DOCTOR_OBSERVED_P95_MS",
+        env=env,
+        default=None,
+    )
+    observed_latency_p95_ms = (
+        None
+        if observed_latency_p95_ms_text in (None, "")
+        else _safe_float(observed_latency_p95_ms_text, default=0.0)
+    )
+    sqlite_chunk_count: int | None = None
 
     if store_type == "memory":
         add_check(
@@ -128,6 +193,7 @@ def run_health_checks(
                 "warn",
                 f"SQLite parent directory does not exist yet: {parent}",
             )
+        sqlite_chunk_count = _sqlite_chunk_count(Path(sqlite_path).expanduser().resolve())
     elif store_type == "qdrant":
         if _module_available("qdrant_client"):
             add_check("dependency.qdrant_client", "pass", "qdrant-client dependency available.")
@@ -243,6 +309,35 @@ def run_health_checks(
             "embedding.provider", "fail", f"Unsupported embedding provider: {embedding_provider!r}"
         )
 
+    size_threshold_exceeded = (
+        store_type == "sqlite"
+        and sqlite_chunk_count is not None
+        and sqlite_chunk_count >= sqlite_chunk_threshold
+    )
+    latency_threshold_exceeded = (
+        observed_latency_p95_ms is not None and observed_latency_p95_ms >= latency_p95_threshold_ms
+    )
+
+    if store_type == "sqlite":
+        if size_threshold_exceeded or latency_threshold_exceeded:
+            add_check(
+                "store.sqlite.scale_signal",
+                "warn",
+                "SQLite scale/latency threshold exceeded; consider local-performance profile.",
+            )
+        elif sqlite_chunk_count is not None:
+            add_check(
+                "store.sqlite.scale_signal",
+                "pass",
+                f"SQLite scale signal within threshold (chunks={sqlite_chunk_count}, threshold={sqlite_chunk_threshold}).",
+            )
+        else:
+            add_check(
+                "store.sqlite.scale_signal",
+                "warn",
+                "Unable to inspect SQLite scale signal from database.",
+            )
+
     summary = {
         "pass": sum(1 for c in checks if c["status"] == "pass"),
         "warn": sum(1 for c in checks if c["status"] == "warn"),
@@ -257,7 +352,7 @@ def run_health_checks(
         status = "ready"
 
     recommendations: list[str] = []
-    if store_type == "sqlite":
+    if store_type == "sqlite" and (size_threshold_exceeded or latency_threshold_exceeded):
         recommendations.append(
             "Upgrade path: set MNEMOS_STORE_TYPE=qdrant and MNEMOS_QDRANT_PATH=.mnemos_qdrant for local-performance profile."
         )
@@ -278,6 +373,13 @@ def run_health_checks(
         "store_type": store_type,
         "llm_provider": llm_provider,
         "embedding_provider": embedding_provider,
+        "upgrade_signals": {
+            "sqlite_chunk_count": sqlite_chunk_count,
+            "sqlite_chunk_threshold": sqlite_chunk_threshold,
+            "observed_latency_p95_ms": observed_latency_p95_ms,
+            "latency_p95_threshold_ms": latency_p95_threshold_ms,
+            "threshold_exceeded": bool(size_threshold_exceeded or latency_threshold_exceeded),
+        },
         "summary": summary,
         "checks": checks,
         "recommendations": recommendations,

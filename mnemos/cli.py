@@ -18,6 +18,8 @@ from __future__ import annotations
 import argparse
 import asyncio
 import json
+import os
+import shlex
 import sys
 from typing import Any
 
@@ -28,6 +30,68 @@ from .observability import configure_logging, log_event
 from .runtime import build_embedder_from_env, build_store_from_env
 from .types import Interaction
 from .utils.llm import MockLLMProvider, LLMProvider
+
+PROFILE_CHOICES = ("starter", "local-performance", "scale")
+
+
+def _infer_embedding_provider(llm_provider: str) -> str:
+    provider = llm_provider.lower()
+    if provider in {"openai", "openclaw", "ollama"}:
+        return provider
+    return "simple"
+
+
+def _build_profile_env(
+    *,
+    profile: str,
+    llm_provider: str,
+    embedding_provider: str | None,
+    model: str | None,
+    sqlite_path: str,
+    qdrant_path: str,
+    qdrant_url: str,
+    qdrant_collection: str,
+) -> dict[str, str]:
+    if profile not in PROFILE_CHOICES:
+        raise ValueError(f"Unsupported profile: {profile!r}")
+
+    env: dict[str, str] = {
+        "MNEMOS_LLM_PROVIDER": llm_provider,
+        "MNEMOS_EMBEDDING_PROVIDER": embedding_provider or _infer_embedding_provider(llm_provider),
+    }
+    if model:
+        env["MNEMOS_LLM_MODEL"] = model
+
+    if profile == "starter":
+        env["MNEMOS_STORE_TYPE"] = "sqlite"
+        env["MNEMOS_SQLITE_PATH"] = sqlite_path
+    elif profile == "local-performance":
+        env["MNEMOS_STORE_TYPE"] = "qdrant"
+        env["MNEMOS_QDRANT_PATH"] = qdrant_path
+        env["MNEMOS_QDRANT_COLLECTION"] = qdrant_collection
+    else:
+        env["MNEMOS_STORE_TYPE"] = "qdrant"
+        env["MNEMOS_QDRANT_URL"] = qdrant_url
+        env["MNEMOS_QDRANT_COLLECTION"] = qdrant_collection
+
+    return env
+
+
+def _render_profile_env(profile: str, env: dict[str, str], output_format: str) -> str:
+    ordered = {key: env[key] for key in sorted(env)}
+    if output_format == "json":
+        return json.dumps({"profile": profile, "env": ordered}, indent=2)
+    if output_format == "dotenv":
+        return "\n".join(f"{key}={value}" for key, value in ordered.items())
+    if output_format == "bash":
+        return "\n".join(f"export {key}={shlex.quote(value)}" for key, value in ordered.items())
+    if output_format == "powershell":
+        lines: list[str] = []
+        for key, value in ordered.items():
+            escaped = value.replace("'", "''")
+            lines.append(f"$env:{key}='{escaped}'")
+        return "\n".join(lines)
+    raise ValueError(f"Unsupported output format: {output_format!r}")
 
 
 def _build_engine() -> MnemosEngine:
@@ -152,8 +216,12 @@ async def _cmd_stats(args: argparse.Namespace) -> None:
 
 
 async def _cmd_doctor(args: argparse.Namespace) -> None:
-    _ = args
-    report = run_health_checks()
+    doctor_env = dict(os.environ)
+    doctor_env["MNEMOS_DOCTOR_QDRANT_CHUNK_THRESHOLD"] = str(args.qdrant_chunk_threshold)
+    doctor_env["MNEMOS_DOCTOR_LATENCY_P95_THRESHOLD_MS"] = str(args.latency_p95_threshold_ms)
+    if args.observed_p95_ms is not None:
+        doctor_env["MNEMOS_DOCTOR_OBSERVED_P95_MS"] = str(args.observed_p95_ms)
+    report = run_health_checks(env=doctor_env)
     log_event(
         "mnemos.health_check",
         status=report["status"],
@@ -161,6 +229,25 @@ async def _cmd_doctor(args: argparse.Namespace) -> None:
         summary=report["summary"],
     )
     print(json.dumps(report, indent=2))
+
+
+async def _cmd_profile(args: argparse.Namespace) -> None:
+    env = _build_profile_env(
+        profile=args.profile,
+        llm_provider=args.llm_provider,
+        embedding_provider=args.embedding_provider or None,
+        model=args.model or None,
+        sqlite_path=args.sqlite_path,
+        qdrant_path=args.qdrant_path,
+        qdrant_url=args.qdrant_url,
+        qdrant_collection=args.qdrant_collection,
+    )
+    rendered = _render_profile_env(args.profile, env, args.format)
+    print(rendered)
+    if args.write:
+        text = rendered if rendered.endswith("\n") else f"{rendered}\n"
+        with open(args.write, "w", encoding="utf-8") as handle:
+            handle.write(text)
 
 
 def main() -> None:
@@ -186,7 +273,75 @@ def main() -> None:
 
     # stats
     subparsers.add_parser("stats", help="Show system statistics")
-    subparsers.add_parser("doctor", help="Run profile readiness and dependency checks")
+    sp_doctor = subparsers.add_parser("doctor", help="Run profile readiness and dependency checks")
+    sp_doctor.add_argument(
+        "--qdrant-chunk-threshold",
+        type=int,
+        default=5000,
+        help="Recommend qdrant upgrade only once SQLite chunk count reaches this threshold.",
+    )
+    sp_doctor.add_argument(
+        "--latency-p95-threshold-ms",
+        type=float,
+        default=250.0,
+        help="Recommend qdrant upgrade once observed p95 retrieval latency exceeds this threshold.",
+    )
+    sp_doctor.add_argument(
+        "--observed-p95-ms",
+        type=float,
+        default=None,
+        help="Optional observed p95 retrieval latency to evaluate against threshold.",
+    )
+
+    sp_profile = subparsers.add_parser(
+        "profile",
+        help="Generate ready-to-use env configuration for starter/local-performance/scale profiles.",
+    )
+    sp_profile.add_argument("profile", choices=PROFILE_CHOICES)
+    sp_profile.add_argument(
+        "--format",
+        choices=("dotenv", "json", "bash", "powershell"),
+        default="dotenv",
+        help="Output format for generated profile config.",
+    )
+    sp_profile.add_argument(
+        "--write",
+        default="",
+        help="Optional file path to write generated config output.",
+    )
+    sp_profile.add_argument(
+        "--llm-provider",
+        default="openclaw",
+        help="LLM provider to encode in profile (openclaw/openai/ollama/mock).",
+    )
+    sp_profile.add_argument(
+        "--embedding-provider",
+        default="",
+        help="Optional explicit embedding provider; defaults to inferred from LLM provider.",
+    )
+    sp_profile.add_argument(
+        "--model", default="", help="Optional model value for MNEMOS_LLM_MODEL."
+    )
+    sp_profile.add_argument(
+        "--sqlite-path",
+        default=".mnemos/memory.db",
+        help="SQLite path used by starter profile.",
+    )
+    sp_profile.add_argument(
+        "--qdrant-path",
+        default=".mnemos/qdrant",
+        help="Embedded qdrant path used by local-performance profile.",
+    )
+    sp_profile.add_argument(
+        "--qdrant-url",
+        default="http://localhost:6333",
+        help="Remote qdrant URL used by scale profile.",
+    )
+    sp_profile.add_argument(
+        "--qdrant-collection",
+        default="mnemos_memory",
+        help="Qdrant collection name used by qdrant profiles.",
+    )
 
     args = parser.parse_args()
 
@@ -200,6 +355,8 @@ def main() -> None:
         asyncio.run(_cmd_stats(args))
     elif args.command == "doctor":
         asyncio.run(_cmd_doctor(args))
+    elif args.command == "profile":
+        asyncio.run(_cmd_profile(args))
 
 
 if __name__ == "__main__":

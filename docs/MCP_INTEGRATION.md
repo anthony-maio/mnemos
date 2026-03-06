@@ -241,6 +241,13 @@ mnemos-cli stats
 
 # Readiness diagnostics
 mnemos-cli doctor
+
+# Threshold-aware readiness diagnostics
+mnemos-cli doctor --qdrant-chunk-threshold 5000 --latency-p95-threshold-ms 250 --observed-p95-ms 180
+
+# One-command profile generation
+mnemos-cli profile starter --format dotenv --write .mnemos.profile.env
+mnemos-cli profile local-performance --format dotenv --write .mnemos.profile.env
 ```
 
 The CLI defaults to SQLite storage (persistent across sessions), unlike the MCP server which defaults to in-memory.

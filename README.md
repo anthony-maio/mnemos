@@ -284,6 +284,22 @@ Readiness check:
 mnemos-cli doctor
 ```
 
+Threshold-aware doctor check (recommend qdrant only when limits are hit):
+
+```bash
+mnemos-cli doctor --qdrant-chunk-threshold 5000 --latency-p95-threshold-ms 250 --observed-p95-ms 180
+```
+
+One-command profile generation:
+
+```bash
+# Starter (default) profile
+mnemos-cli profile starter --format dotenv --write .mnemos.profile.env
+
+# Local performance profile (embedded qdrant)
+mnemos-cli profile local-performance --format dotenv --write .mnemos.profile.env
+```
+
 Profile + compatibility docs:
 - [docs/profiles/starter-sqlite.md](docs/profiles/starter-sqlite.md)
 - [docs/profiles/local-performance-embedded-qdrant.md](docs/profiles/local-performance-embedded-qdrant.md)
