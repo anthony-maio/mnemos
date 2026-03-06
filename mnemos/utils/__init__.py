@@ -4,6 +4,8 @@ mnemos/utils/__init__.py — Public API for the utils package.
 
 from .embeddings import (
     EmbeddingProvider,
+    OllamaEmbeddingProvider,
+    OpenAIEmbeddingProvider,
     SimpleEmbeddingProvider,
     cosine_distance,
     cosine_similarity,
@@ -15,6 +17,8 @@ __all__ = [
     # Embeddings
     "EmbeddingProvider",
     "SimpleEmbeddingProvider",
+    "OllamaEmbeddingProvider",
+    "OpenAIEmbeddingProvider",
     "cosine_similarity",
     "cosine_distance",
     # LLM

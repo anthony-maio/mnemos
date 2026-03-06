@@ -78,7 +78,7 @@ class SleepDaemon:
         self._total_facts_extracted: int = 0
         self._total_chunks_pruned: int = 0
         # Daemon task reference
-        self._daemon_task: asyncio.Task | None = None
+        self._daemon_task: asyncio.Task[Any] | None = None
 
     def add_episode(self, interaction: Interaction) -> None:
         """

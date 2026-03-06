@@ -132,6 +132,37 @@ class MnemosEngine:
             config=self.config.spreading,
         )
 
+        # Rebuild associative graph from persisted storage so retrieval
+        # keeps working across process restarts.
+        self._hydrate_spreading_graph_from_store()
+
+    def _hydrate_spreading_graph_from_store(self) -> None:
+        """Load persisted chunks into spreading activation graph at startup."""
+        spreading_cfg = self.config.spreading
+        if not spreading_cfg.hydrate_on_startup:
+            return
+
+        stored_chunks = self._store.get_all()
+        if not stored_chunks:
+            return
+
+        limit = spreading_cfg.startup_hydration_limit
+        chunks_to_load = stored_chunks[:limit]
+
+        for chunk in chunks_to_load:
+            if self.spreading_activation.get_node(chunk.id) is None:
+                self.spreading_activation.add_node_from_chunk(chunk)
+
+        if spreading_cfg.startup_auto_connect and len(chunks_to_load) > 1:
+            self.spreading_activation.auto_connect()
+
+        if self.config.debug and len(stored_chunks) > limit:
+            logger.debug(
+                "[MnemosEngine] Startup hydration truncated at %d chunks (store has %d).",
+                limit,
+                len(stored_chunks),
+            )
+
     async def process(self, interaction: Interaction) -> ProcessResult:
         """
         Process an interaction through the full encoding pipeline.

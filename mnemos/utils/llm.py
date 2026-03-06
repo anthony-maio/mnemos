@@ -221,7 +221,10 @@ class OllamaProvider(LLMProvider):
             )
             response.raise_for_status()
             data = response.json()
-            return data.get("response", "").strip()
+            text = data.get("response", "")
+            if not isinstance(text, str):
+                text = str(text)
+            return text.strip()
 
     async def classify(self, prompt: str, labels: list[str]) -> dict[str, float]:
         """
@@ -343,7 +346,10 @@ class OpenAIProvider(LLMProvider):
             )
             response.raise_for_status()
             data = response.json()
-            return data["choices"][0]["message"]["content"].strip()
+            content = data["choices"][0]["message"]["content"]
+            if not isinstance(content, str):
+                content = str(content)
+            return content.strip()
 
     async def classify(self, prompt: str, labels: list[str]) -> dict[str, float]:
         """

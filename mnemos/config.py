@@ -256,6 +256,19 @@ class SpreadingConfig(BaseModel):
         le=1.0,
         description="Rate at which all node energies decay naturally over time (forgetting).",
     )
+    hydrate_on_startup: bool = Field(
+        default=True,
+        description=("Rebuild spreading activation nodes from persisted store at engine startup."),
+    )
+    startup_hydration_limit: int = Field(
+        default=5000,
+        gt=0,
+        description=("Maximum number of stored chunks to load into spreading graph on startup."),
+    )
+    startup_auto_connect: bool = Field(
+        default=True,
+        description=("Whether to run graph auto-connect after startup hydration."),
+    )
 
 
 class MnemosConfig(BaseModel):

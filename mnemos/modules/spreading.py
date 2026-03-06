@@ -74,7 +74,7 @@ class SpreadingActivation:
         content: str,
         embedding: list[float] | None = None,
         node_id: str | None = None,
-        metadata: dict | None = None,
+        metadata: dict[str, Any] | None = None,
     ) -> ActivationNode:
         """
         Add a new concept node to the activation graph.

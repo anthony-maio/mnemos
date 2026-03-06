@@ -109,11 +109,17 @@ All configuration is via environment variables:
 | `MNEMOS_OLLAMA_URL` | `http://localhost:11434` | Ollama API URL |
 | `MNEMOS_OPENAI_API_KEY` | — | Required if provider is `openai` |
 | `MNEMOS_OPENAI_URL` | `https://api.openai.com/v1` | OpenAI-compatible URL |
+| `MNEMOS_EMBEDDING_PROVIDER` | `simple` | Embedding backend: `simple`, `ollama`, or `openai` |
+| `MNEMOS_EMBEDDING_MODEL` | provider-dependent | Embedding model name |
 | `MNEMOS_STORE_TYPE` | `memory` | Storage backend: `memory` or `sqlite` |
 | `MNEMOS_SQLITE_PATH` | `mnemos_memory.db` | SQLite database path |
 | `MNEMOS_SURPRISAL_THRESHOLD` | `0.3` | Surprisal gate sensitivity (0-1) |
 | `MNEMOS_EMBEDDING_DIM` | `384` | Embedding vector dimension |
 | `MNEMOS_DEBUG` | `false` | Enable debug logging |
+
+Backward-compatible aliases:
+- `MNEMOS_STORAGE` works as an alias for `MNEMOS_STORE_TYPE`
+- `MNEMOS_DB_PATH` works as an alias for `MNEMOS_SQLITE_PATH`
 
 ### Provider recommendations
 

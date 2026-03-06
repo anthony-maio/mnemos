@@ -436,10 +436,18 @@ engine = MnemosEngine(config=config)
 | `MNEMOS_LLM_MODEL` | `llama3` | Model name for the LLM provider |
 | `MNEMOS_OLLAMA_URL` | `http://localhost:11434` | Ollama API base URL |
 | `MNEMOS_OPENAI_API_KEY` | — | Required when using `openai` provider |
+| `MNEMOS_OPENAI_URL` | `https://api.openai.com/v1` | OpenAI-compatible API base URL |
+| `MNEMOS_EMBEDDING_PROVIDER` | `simple` | `simple`, `ollama`, or `openai` |
+| `MNEMOS_EMBEDDING_MODEL` | provider-dependent | Embedding model name (e.g. `nomic-embed-text`) |
+| `MNEMOS_EMBEDDING_DIM` | `384` | Embedding dimension for `simple` provider |
 | `MNEMOS_STORE_TYPE` | `memory` | `memory` or `sqlite` |
 | `MNEMOS_SQLITE_PATH` | `mnemos_memory.db` | SQLite database path |
 | `MNEMOS_SURPRISAL_THRESHOLD` | `0.3` | Surprisal gate sensitivity |
 | `MNEMOS_DEBUG` | `false` | Enable verbose debug logging |
+
+Backward-compatible aliases are supported for migration:
+- `MNEMOS_STORAGE` -> `MNEMOS_STORE_TYPE`
+- `MNEMOS_DB_PATH` -> `MNEMOS_SQLITE_PATH`
 
 ---
 
@@ -485,6 +493,10 @@ pip install 'mnemos-memory[all]'
 **Storage backends built-in:**
 - `InMemoryStore` — zero setup, for development and testing
 - `SQLiteStore` — persistent, zero external services, suitable for personal deployments
+
+## Production Checklist
+
+Use [docs/production-readiness-checklist.md](docs/production-readiness-checklist.md) before advertising a deployment as production-ready.
 
 ---
 

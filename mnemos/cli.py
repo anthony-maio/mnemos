@@ -22,10 +22,9 @@ from typing import Any
 
 from .config import MnemosConfig, SurprisalConfig
 from .engine import MnemosEngine
+from .runtime import build_embedder_from_env, build_store_from_env
 from .types import Interaction
-from .utils.embeddings import SimpleEmbeddingProvider
 from .utils.llm import MockLLMProvider, LLMProvider
-from .utils.storage import InMemoryStore, SQLiteStore, MemoryStore
 
 
 def _build_engine() -> MnemosEngine:
@@ -57,16 +56,7 @@ def _build_engine() -> MnemosEngine:
     else:
         llm = MockLLMProvider()
 
-    store_type = os.getenv("MNEMOS_STORE_TYPE", "sqlite").lower()
-    store: MemoryStore
-    if store_type == "memory":
-        store = InMemoryStore()
-    else:
-        path = os.getenv("MNEMOS_SQLITE_PATH", "mnemos_memory.db")
-        store = SQLiteStore(db_path=path)
-
     threshold = float(os.getenv("MNEMOS_SURPRISAL_THRESHOLD", "0.3"))
-    dim = int(os.getenv("MNEMOS_EMBEDDING_DIM", "384"))
 
     config = MnemosConfig(
         surprisal=SurprisalConfig(threshold=threshold),
@@ -76,8 +66,8 @@ def _build_engine() -> MnemosEngine:
     return MnemosEngine(
         config=config,
         llm=llm,
-        embedder=SimpleEmbeddingProvider(dim=dim),
-        store=store,
+        embedder=build_embedder_from_env(default_provider="simple"),
+        store=build_store_from_env(default_store_type="sqlite"),
     )
 
 

@@ -20,7 +20,7 @@ from mnemos.engine import MnemosEngine
 from mnemos.types import CognitiveState, Interaction, MemoryChunk
 from mnemos.utils.embeddings import SimpleEmbeddingProvider
 from mnemos.utils.llm import MockLLMProvider
-from mnemos.utils.storage import InMemoryStore
+from mnemos.utils.storage import InMemoryStore, SQLiteStore
 
 # ─── Fixtures ─────────────────────────────────────────────────────────────────
 
@@ -368,6 +368,41 @@ class TestEngineFullPipeline:
         assert engine.store is not None
         assert engine.llm is not None
         assert engine.embedder is not None
+
+
+class TestEnginePersistence:
+    @pytest.mark.asyncio
+    async def test_spreading_graph_hydrates_from_persistent_store(self, tmp_path):
+        """A restarted engine should rebuild spreading graph nodes from persisted chunks."""
+        db_path = tmp_path / "mnemos_persist.db"
+        config = MnemosConfig(
+            surprisal=SurprisalConfig(threshold=0.0, min_content_length=0),
+        )
+
+        store1 = SQLiteStore(db_path=str(db_path))
+        engine1 = MnemosEngine(
+            config=config,
+            llm=MockLLMProvider(),
+            embedder=SimpleEmbeddingProvider(dim=64),
+            store=store1,
+        )
+
+        await engine1.process(make_interaction("I deploy services on AWS."))
+        await engine1.process(make_interaction("I use Docker for packaging."))
+        stored_count = len(engine1.store.get_all())
+        store1.close()
+
+        store2 = SQLiteStore(db_path=str(db_path))
+        engine2 = MnemosEngine(
+            config=config,
+            llm=MockLLMProvider(),
+            embedder=SimpleEmbeddingProvider(dim=64),
+            store=store2,
+        )
+
+        assert len(engine2.store.get_all()) == stored_count
+        assert engine2.spreading_activation.get_node_count() == stored_count
+        store2.close()
 
 
 # ─── Tests for __init__.py exports ────────────────────────────────────────────

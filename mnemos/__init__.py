@@ -55,7 +55,9 @@ from .utils import (
     LLMProvider,
     MemoryStore,
     MockLLMProvider,
+    OllamaEmbeddingProvider,
     OllamaProvider,
+    OpenAIEmbeddingProvider,
     OpenAIProvider,
     SimpleEmbeddingProvider,
     SQLiteStore,
@@ -95,6 +97,8 @@ __all__ = [
     # Utils
     "EmbeddingProvider",
     "SimpleEmbeddingProvider",
+    "OllamaEmbeddingProvider",
+    "OpenAIEmbeddingProvider",
     "cosine_similarity",
     "cosine_distance",
     "LLMProvider",

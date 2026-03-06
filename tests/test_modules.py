@@ -278,6 +278,38 @@ class TestMutableRAG:
         retrieved = store.get(chunk.id)
         assert retrieved.access_count == 1
 
+    @pytest.mark.asyncio
+    async def test_mark_labile_respects_reconsolidation_cooldown(
+        self, embedder, store, monkeypatch
+    ):
+        """mark_labile should not re-queue a chunk until cooldown elapses."""
+        llm = MockLLMProvider()
+        config = MutableRAGConfig(reconsolidation_cooldown_seconds=60)
+        rag = MutableRAG(llm=llm, embedder=embedder, store=store, config=config)
+
+        chunk = MemoryChunk(
+            content="User uses Python",
+            embedding=embedder.embed("User uses Python"),
+        )
+        store.store(chunk)
+
+        # First retrieval cycle at t=1000
+        monkeypatch.setattr("mnemos.modules.mutable_rag.time.time", lambda: 1000.0)
+        rag.mark_labile(chunk, "initial context")
+        assert rag.get_labile_count() == 1
+        await rag.process_labile_chunks()
+        assert rag.get_labile_count() == 0
+
+        # Within cooldown at t=1020: should not be re-queued
+        monkeypatch.setattr("mnemos.modules.mutable_rag.time.time", lambda: 1020.0)
+        rag.mark_labile(chunk, "second context")
+        assert rag.get_labile_count() == 0
+
+        # After cooldown at t=1061: allowed again
+        monkeypatch.setattr("mnemos.modules.mutable_rag.time.time", lambda: 1061.0)
+        rag.mark_labile(chunk, "third context")
+        assert rag.get_labile_count() == 1
+
 
 # ─── AffectiveRouter tests ────────────────────────────────────────────────────
 

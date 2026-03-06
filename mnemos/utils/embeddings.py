@@ -21,7 +21,9 @@ import math
 import re
 from abc import ABC, abstractmethod
 from collections import Counter
+from typing import Any
 
+import httpx
 import numpy as np
 
 
@@ -203,7 +205,7 @@ class SimpleEmbeddingProvider(EmbeddingProvider):
         tokens = _tokenize(text)
         self._update_idf(tokens)
         vec = self._compute_tfidf_vector(tokens)
-        return vec.tolist()
+        return [float(x) for x in vec.tolist()]
 
     def embed_batch(self, texts: list[str]) -> list[list[float]]:
         """
@@ -224,7 +226,170 @@ class SimpleEmbeddingProvider(EmbeddingProvider):
             self._update_idf(tokens)
 
         # Second pass: compute embeddings with updated IDF
-        return [self._compute_tfidf_vector(tokens).tolist() for tokens in tokenized]
+        return [
+            [float(x) for x in self._compute_tfidf_vector(tokens).tolist()] for tokens in tokenized
+        ]
+
+
+class OllamaEmbeddingProvider(EmbeddingProvider):
+    """
+    Embedding provider backed by Ollama's embedding endpoints.
+
+    Uses `/api/embed` when available and falls back to `/api/embeddings`
+    for compatibility with older Ollama versions.
+    """
+
+    def __init__(
+        self,
+        model: str = "nomic-embed-text",
+        base_url: str = "http://localhost:11434",
+        timeout: float = 30.0,
+    ) -> None:
+        self.model = model
+        self.base_url = base_url.rstrip("/")
+        self.timeout = timeout
+        self._dim: int | None = None
+
+    @property
+    def dim(self) -> int:
+        if self._dim is None:
+            raise RuntimeError("Embedding dimension unknown until first embed() call.")
+        return self._dim
+
+    def _parse_vector(self, payload: dict[str, Any]) -> list[float]:
+        if "embedding" in payload and isinstance(payload["embedding"], list):
+            vector = payload["embedding"]
+        elif "embeddings" in payload and isinstance(payload["embeddings"], list):
+            embeddings = payload["embeddings"]
+            if not embeddings:
+                raise ValueError("Ollama returned empty embeddings list.")
+            vector = embeddings[0]
+        else:
+            raise ValueError("Ollama response missing embedding vector.")
+
+        vec = [float(x) for x in vector]
+        self._dim = len(vec)
+        return vec
+
+    def embed(self, text: str) -> list[float]:
+        # Prefer modern /api/embed endpoint.
+        try:
+            response = httpx.post(
+                f"{self.base_url}/api/embed",
+                json={"model": self.model, "input": text},
+                timeout=self.timeout,
+            )
+            response.raise_for_status()
+            return self._parse_vector(response.json())
+        except Exception:
+            # Fallback for older Ollama servers.
+            response = httpx.post(
+                f"{self.base_url}/api/embeddings",
+                json={"model": self.model, "prompt": text},
+                timeout=self.timeout,
+            )
+            response.raise_for_status()
+            return self._parse_vector(response.json())
+
+    def embed_batch(self, texts: list[str]) -> list[list[float]]:
+        if not texts:
+            return []
+
+        try:
+            response = httpx.post(
+                f"{self.base_url}/api/embed",
+                json={"model": self.model, "input": texts},
+                timeout=self.timeout,
+            )
+            response.raise_for_status()
+            payload = response.json()
+            embeddings = payload.get("embeddings")
+            if isinstance(embeddings, list) and embeddings:
+                vectors = [[float(x) for x in row] for row in embeddings]
+                self._dim = len(vectors[0])
+                return vectors
+        except Exception:
+            pass
+
+        # Graceful fallback if batch endpoint is unavailable.
+        return [self.embed(text) for text in texts]
+
+
+class OpenAIEmbeddingProvider(EmbeddingProvider):
+    """
+    Embedding provider for OpenAI-compatible `/embeddings` APIs.
+    """
+
+    def __init__(
+        self,
+        api_key: str,
+        model: str = "text-embedding-3-small",
+        base_url: str = "https://api.openai.com/v1",
+        timeout: float = 30.0,
+    ) -> None:
+        self.api_key = api_key
+        self.model = model
+        self.base_url = base_url.rstrip("/")
+        self.timeout = timeout
+        self._dim: int | None = None
+
+    @property
+    def dim(self) -> int:
+        if self._dim is None:
+            raise RuntimeError("Embedding dimension unknown until first embed() call.")
+        return self._dim
+
+    def _headers(self) -> dict[str, str]:
+        return {
+            "Authorization": f"Bearer {self.api_key}",
+            "Content-Type": "application/json",
+        }
+
+    def _parse_single(self, payload: dict[str, Any]) -> list[float]:
+        data = payload.get("data")
+        if not isinstance(data, list) or not data:
+            raise ValueError("OpenAI embedding response missing data.")
+        first = data[0]
+        if not isinstance(first, dict) or "embedding" not in first:
+            raise ValueError("OpenAI embedding response missing embedding vector.")
+        vector = [float(x) for x in first["embedding"]]
+        self._dim = len(vector)
+        return vector
+
+    def embed(self, text: str) -> list[float]:
+        response = httpx.post(
+            f"{self.base_url}/embeddings",
+            json={
+                "model": self.model,
+                "input": text,
+            },
+            headers=self._headers(),
+            timeout=self.timeout,
+        )
+        response.raise_for_status()
+        return self._parse_single(response.json())
+
+    def embed_batch(self, texts: list[str]) -> list[list[float]]:
+        if not texts:
+            return []
+        response = httpx.post(
+            f"{self.base_url}/embeddings",
+            json={
+                "model": self.model,
+                "input": texts,
+            },
+            headers=self._headers(),
+            timeout=self.timeout,
+        )
+        response.raise_for_status()
+        payload = response.json()
+        data = payload.get("data")
+        if not isinstance(data, list):
+            raise ValueError("OpenAI embedding response missing data.")
+        vectors = [[float(x) for x in item["embedding"]] for item in data]
+        if vectors:
+            self._dim = len(vectors[0])
+        return vectors
 
 
 def cosine_similarity(a: list[float], b: list[float]) -> float:

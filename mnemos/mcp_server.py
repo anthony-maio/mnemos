@@ -28,11 +28,16 @@ Usage:
 Configuration via environment variables:
   MNEMOS_LLM_PROVIDER   — "mock" (default), "ollama", or "openai"
   MNEMOS_LLM_MODEL      — Model name for LLM provider (default: "llama3")
+  MNEMOS_EMBEDDING_PROVIDER — "simple" (default), "ollama", or "openai"
+  MNEMOS_EMBEDDING_MODEL — Embedding model name (provider-specific default if unset)
+  MNEMOS_EMBEDDING_DIM  — Embedding dimension for simple provider (default: 384)
   MNEMOS_OLLAMA_URL     — Ollama API base URL (default: "http://localhost:11434")
   MNEMOS_OPENAI_API_KEY — OpenAI API key (required if provider is "openai")
   MNEMOS_OPENAI_URL     — OpenAI-compatible base URL
   MNEMOS_STORE_TYPE     — "memory" (default) or "sqlite"
   MNEMOS_SQLITE_PATH    — Path for SQLite store (default: "mnemos_memory.db")
+  MNEMOS_STORAGE        — Alias for MNEMOS_STORE_TYPE
+  MNEMOS_DB_PATH        — Alias for MNEMOS_SQLITE_PATH
   MNEMOS_SURPRISAL_THRESHOLD — Surprisal gate threshold (default: 0.3)
   MNEMOS_DEBUG          — "true" to enable debug logging
 """
@@ -50,10 +55,11 @@ from typing import Any
 
 from .config import MnemosConfig, SurprisalConfig
 from .engine import MnemosEngine
+from .runtime import build_embedder_from_env, build_store_from_env
 from .types import Interaction
-from .utils.embeddings import SimpleEmbeddingProvider
+from .utils.embeddings import EmbeddingProvider
 from .utils.llm import MockLLMProvider, LLMProvider
-from .utils.storage import InMemoryStore, MemoryStore
+from .utils.storage import MemoryStore
 
 # ---------------------------------------------------------------------------
 # Engine lifecycle: initialize once, share across all tool calls
@@ -93,19 +99,12 @@ def _build_llm_provider() -> LLMProvider:
 
 def _build_store() -> MemoryStore:
     """Build storage backend from environment variables."""
-    store_type = os.getenv("MNEMOS_STORE_TYPE", "memory").lower()
+    return build_store_from_env(default_store_type="memory")
 
-    if store_type == "memory":
-        return InMemoryStore()
 
-    elif store_type == "sqlite":
-        from .utils.storage import SQLiteStore
-
-        path = os.getenv("MNEMOS_SQLITE_PATH", "mnemos_memory.db")
-        return SQLiteStore(db_path=path)
-
-    else:
-        raise ValueError(f"Unknown store type: {store_type!r}. Use 'memory' or 'sqlite'.")
+def _build_embedder() -> EmbeddingProvider:
+    """Build embedding provider from environment variables."""
+    return build_embedder_from_env(default_provider="simple")
 
 
 def _build_config() -> MnemosConfig:
@@ -130,10 +129,10 @@ class MnemosContext:
 # ---------------------------------------------------------------------------
 
 
-def create_mcp_server():
+def create_mcp_server() -> Any:
     """Create and configure the MCP server with all mnemos tools and resources."""
     try:
-        from mcp.server.fastmcp import FastMCP, Context
+        from mcp.server.fastmcp import FastMCP
     except ImportError:
         raise ImportError(
             "MCP server requires the 'mcp' package. Install it with:\n"
@@ -148,7 +147,7 @@ def create_mcp_server():
         engine = MnemosEngine(
             config=_build_config(),
             llm=_build_llm_provider(),
-            embedder=SimpleEmbeddingProvider(dim=int(os.getenv("MNEMOS_EMBEDDING_DIM", "384"))),
+            embedder=_build_embedder(),
             store=_build_store(),
         )
         try:
@@ -172,7 +171,7 @@ def create_mcp_server():
         content: str,
         role: str = "user",
         metadata: str = "{}",
-        ctx: Context = None,
+        ctx: Any = None,
     ) -> str:
         """Store a memory through the full biomimetic pipeline.
 
@@ -215,7 +214,7 @@ def create_mcp_server():
         query: str,
         top_k: int = 5,
         reconsolidate: bool = True,
-        ctx: Context = None,
+        ctx: Any = None,
     ) -> str:
         """Retrieve memories using the full contextual retrieval pipeline.
 
@@ -262,7 +261,7 @@ def create_mcp_server():
         return json.dumps(results, indent=2)
 
     @mcp.tool()
-    async def mnemos_consolidate(ctx: Context = None) -> str:
+    async def mnemos_consolidate(ctx: Any = None) -> str:
         """Trigger sleep consolidation — compress episodic memories into semantic facts.
 
         Mimics the hippocampal-neocortical transfer during sleep:
@@ -288,7 +287,7 @@ def create_mcp_server():
         )
 
     @mcp.tool()
-    async def mnemos_forget(chunk_id: str, ctx: Context = None) -> str:
+    async def mnemos_forget(chunk_id: str, ctx: Any = None) -> str:
         """Delete a specific memory by its ID.
 
         Permanent removal — the memory cannot be recovered.
@@ -316,7 +315,7 @@ def create_mcp_server():
         )
 
     @mcp.tool()
-    async def mnemos_stats(ctx: Context = None) -> str:
+    async def mnemos_stats(ctx: Any = None) -> str:
         """Get system-wide statistics from all memory modules.
 
         Returns stats for: engine, surprisal gate, mutable RAG,
@@ -338,7 +337,7 @@ def create_mcp_server():
         return json.dumps(_clean(stats), indent=2)
 
     @mcp.tool()
-    async def mnemos_inspect(chunk_id: str, ctx: Context = None) -> str:
+    async def mnemos_inspect(chunk_id: str, ctx: Any = None) -> str:
         """Inspect a specific memory chunk by its ID.
 
         Returns the full memory record including content, metadata,
@@ -380,7 +379,7 @@ def create_mcp_server():
     async def mnemos_list(
         limit: int = 20,
         sort_by: str = "created_at",
-        ctx: Context = None,
+        ctx: Any = None,
     ) -> str:
         """List all stored memories.
 
@@ -495,7 +494,7 @@ def create_mcp_server():
 # ---------------------------------------------------------------------------
 
 
-def main():
+def main() -> None:
     """Run the MCP server via stdio transport (for Claude Code, Cursor, etc.)."""
     mcp = create_mcp_server()
     mcp.run(transport="stdio")

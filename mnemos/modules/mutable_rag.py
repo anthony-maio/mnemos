@@ -26,6 +26,7 @@ Mnemos Implementation:
 
 from __future__ import annotations
 
+import time
 from datetime import datetime, timezone
 from typing import Any
 
@@ -64,10 +65,24 @@ class MutableRAG:
         self._config = config or MutableRAGConfig()
         # Labile chunk queue: chunk_id → (chunk, context_when_retrieved)
         self._labile_chunks: dict[str, tuple[MemoryChunk, str]] = {}
+        # Last reconsolidation timestamp per chunk (seconds since epoch)
+        self._last_reconsolidation_at: dict[str, float] = {}
         # Stats
         self._total_retrieved: int = 0
         self._total_reconsolidated: int = 0
         self._total_unchanged: int = 0
+
+    def _in_cooldown(self, chunk_id: str) -> bool:
+        cooldown = self._config.reconsolidation_cooldown_seconds
+        if cooldown <= 0:
+            return False
+        last = self._last_reconsolidation_at.get(chunk_id)
+        if last is None:
+            return False
+        return (time.time() - last) < cooldown
+
+    def _mark_reconsolidated_now(self, chunk_id: str) -> None:
+        self._last_reconsolidation_at[chunk_id] = time.time()
 
     def retrieve(
         self,
@@ -96,6 +111,8 @@ class MutableRAG:
 
         if self._config.enabled:
             for chunk in chunks:
+                if self._in_cooldown(chunk.id):
+                    continue
                 # Flag as labile with the current context
                 self._labile_chunks[chunk.id] = (chunk, current_context)
 
@@ -117,7 +134,7 @@ class MutableRAG:
             chunk: The retrieved chunk to mark as labile.
             context: The query/context that triggered retrieval.
         """
-        if self._config.enabled:
+        if self._config.enabled and not self._in_cooldown(chunk.id):
             self._labile_chunks[chunk.id] = (chunk, context)
 
     def _build_reconsolidation_prompt(self, chunk: MemoryChunk, context: str) -> str:
@@ -166,6 +183,7 @@ class MutableRAG:
             chunk.touch()
             self._store.update(chunk.id, chunk)
             self._total_unchanged += 1
+            self._mark_reconsolidated_now(chunk.id)
             return chunk, False
 
         elif response.upper().startswith("CHANGED"):
@@ -177,12 +195,14 @@ class MutableRAG:
                 chunk.touch()
                 self._store.update(chunk.id, chunk)
                 self._total_unchanged += 1
+                self._mark_reconsolidated_now(chunk.id)
                 return chunk, False
 
             if not new_content:
                 chunk.touch()
                 self._store.update(chunk.id, chunk)
                 self._total_unchanged += 1
+                self._mark_reconsolidated_now(chunk.id)
                 return chunk, False
 
             # Create reconsolidated version
@@ -195,6 +215,7 @@ class MutableRAG:
             # Overwrite in store (same ID, new version)
             self._store.update(chunk.id, updated_chunk)
             self._total_reconsolidated += 1
+            self._mark_reconsolidated_now(chunk.id)
             return updated_chunk, True
 
         else:
@@ -202,6 +223,7 @@ class MutableRAG:
             chunk.touch()
             self._store.update(chunk.id, chunk)
             self._total_unchanged += 1
+            self._mark_reconsolidated_now(chunk.id)
             return chunk, False
 
     async def process_labile_chunks(
