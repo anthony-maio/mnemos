@@ -269,8 +269,8 @@ The server exposes eight tools:
 
 | Tool | Description |
 |------|-------------|
-| `mnemos_store` | Process a memory through the full pipeline (surprisal gate → affective tagging → graph) |
-| `mnemos_retrieve` | Retrieve with spreading activation + emotional re-ranking + reconsolidation |
+| `mnemos_store` | Process a memory through the full pipeline (surprisal gate → affective tagging → graph), with optional `scope` + `scope_id` |
+| `mnemos_retrieve` | Retrieve with spreading activation + emotional re-ranking + reconsolidation, with scoped filtering (`current_scope`, `scope_id`, `allowed_scopes`) |
 | `mnemos_consolidate` | Trigger sleep consolidation: episodic buffer → semantic long-term memory |
 | `mnemos_forget` | Delete a specific memory by ID |
 | `mnemos_stats` | System-wide statistics across all modules |
@@ -298,6 +298,19 @@ mnemos-cli profile starter --format dotenv --write .mnemos.profile.env
 
 # Local performance profile (embedded qdrant)
 mnemos-cli profile local-performance --format dotenv --write .mnemos.profile.env
+```
+
+Scoped memory examples (cross-project aware):
+
+```bash
+# Store project-scoped memory
+mnemos-cli store "Use uv for Python tooling in this repo" --scope project --scope-id repo-alpha
+
+# Store global preference memory
+mnemos-cli store "Prefer concise summaries" --scope global
+
+# Retrieve from current project plus global memory
+mnemos-cli retrieve "tooling preferences" --current-scope project --scope-id repo-alpha --allowed-scopes project,global
 ```
 
 Profile + compatibility docs:

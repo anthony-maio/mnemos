@@ -199,6 +199,78 @@ class TestEngineRetrieve:
             assert len(r.content) > 0
 
 
+class TestEngineScopedMemory:
+    @pytest.mark.asyncio
+    async def test_process_persists_scope_metadata(self, engine):
+        """process() should persist scope metadata on stored chunks."""
+        result = await engine.process(
+            make_interaction("workspace-specific memory"),
+            scope="workspace",
+            scope_id="ws-1",
+        )
+        assert result.stored is True
+        assert result.chunk is not None
+        assert result.chunk.metadata.get("scope") == "workspace"
+        assert result.chunk.metadata.get("scope_id") == "ws-1"
+
+    @pytest.mark.asyncio
+    async def test_retrieve_filters_by_scope_id_and_allowed_scopes(self, engine):
+        """retrieve() should isolate project scope while allowing selected global memory."""
+        await engine.process(
+            make_interaction("alpha project uses terraform"),
+            scope="project",
+            scope_id="alpha",
+        )
+        await engine.process(
+            make_interaction("beta project uses ansible"),
+            scope="project",
+            scope_id="beta",
+        )
+        await engine.process(
+            make_interaction("global policy requires code review"),
+            scope="global",
+        )
+
+        results = await engine.retrieve(
+            "project deployment tooling",
+            top_k=10,
+            reconsolidate=False,
+            current_scope="project",
+            scope_id="alpha",
+            allowed_scopes=("project", "global"),
+        )
+
+        ids = {chunk.metadata.get("scope_id") for chunk in results}
+        scopes = {chunk.metadata.get("scope") for chunk in results}
+        assert "beta" not in ids
+        assert "alpha" in ids
+        assert "global" in scopes
+
+    @pytest.mark.asyncio
+    async def test_retrieve_prefers_current_scope_over_global(self, engine):
+        """Current scope matches should rank ahead of global memories when equally relevant."""
+        await engine.process(
+            make_interaction("deploy checklist includes smoke tests"),
+            scope="project",
+            scope_id="alpha",
+        )
+        await engine.process(
+            make_interaction("deploy checklist includes changelog updates"),
+            scope="global",
+        )
+
+        results = await engine.retrieve(
+            "deploy checklist",
+            top_k=2,
+            reconsolidate=False,
+            current_scope="project",
+            scope_id="alpha",
+            allowed_scopes=("project", "global"),
+        )
+        assert len(results) == 2
+        assert results[0].metadata.get("scope") == "project"
+
+
 # ─── Consolidation tests ──────────────────────────────────────────────────────
 
 

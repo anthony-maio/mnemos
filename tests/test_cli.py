@@ -11,7 +11,15 @@ import pytest
 
 from argparse import Namespace
 
-from mnemos.cli import _build_engine, _build_profile_env, _cmd_doctor, _cmd_profile
+from mnemos.cli import (
+    _build_engine,
+    _build_profile_env,
+    _cmd_doctor,
+    _cmd_profile,
+    _cmd_retrieve,
+    _cmd_store,
+)
+from mnemos.types import MemoryChunk, ProcessResult
 from mnemos.utils import (
     OpenAIEmbeddingProvider,
     OpenAIProvider,
@@ -150,3 +158,93 @@ async def test_cli_profile_writes_dotenv(tmp_path: Path, capsys: Any) -> None:
     assert "MNEMOS_LLM_PROVIDER=openclaw" in text
     captured = capsys.readouterr().out
     assert "MNEMOS_STORE_TYPE=sqlite" in captured
+
+
+@pytest.mark.asyncio
+async def test_cli_store_forwards_scope_args(monkeypatch: pytest.MonkeyPatch, capsys: Any) -> None:
+    class DummyEngine:
+        def __init__(self) -> None:
+            self.scope: str | None = None
+            self.scope_id: str | None = None
+
+        async def process(
+            self,
+            interaction: Any,
+            scope: str = "project",
+            scope_id: str | None = None,
+        ) -> ProcessResult:
+            self.scope = scope
+            self.scope_id = scope_id
+            return ProcessResult(
+                stored=True,
+                salience=0.9,
+                reason="ok",
+                chunk=MemoryChunk(
+                    content=interaction.content,
+                    metadata={"scope": scope, "scope_id": scope_id},
+                ),
+            )
+
+    engine = DummyEngine()
+    monkeypatch.setattr("mnemos.cli._build_engine", lambda: engine)
+
+    await _cmd_store(
+        Namespace(
+            content="remember this fact",
+            role="user",
+            scope="workspace",
+            scope_id="ws-1",
+        )
+    )
+    assert engine.scope == "workspace"
+    assert engine.scope_id == "ws-1"
+    assert '"scope": "workspace"' in capsys.readouterr().out
+
+
+@pytest.mark.asyncio
+async def test_cli_retrieve_forwards_scope_args(
+    monkeypatch: pytest.MonkeyPatch, capsys: Any
+) -> None:
+    class DummyEngine:
+        def __init__(self) -> None:
+            self.current_scope: str | None = None
+            self.scope_id: str | None = None
+            self.allowed_scopes: tuple[str, ...] = ()
+
+        async def retrieve(
+            self,
+            query: str,
+            top_k: int = 5,
+            reconsolidate: bool = True,
+            current_scope: str = "project",
+            scope_id: str | None = None,
+            allowed_scopes: tuple[str, ...] = ("project", "workspace", "global"),
+        ) -> list[MemoryChunk]:
+            _ = query, top_k, reconsolidate
+            self.current_scope = current_scope
+            self.scope_id = scope_id
+            self.allowed_scopes = allowed_scopes
+            return [
+                MemoryChunk(
+                    content="result",
+                    metadata={"scope": "project", "scope_id": "alpha"},
+                )
+            ]
+
+    engine = DummyEngine()
+    monkeypatch.setattr("mnemos.cli._build_engine", lambda: engine)
+
+    await _cmd_retrieve(
+        Namespace(
+            query="deployment",
+            top_k=3,
+            current_scope="project",
+            scope_id="alpha",
+            allowed_scopes="project,global",
+            reconsolidate=False,
+        )
+    )
+    assert engine.current_scope == "project"
+    assert engine.scope_id == "alpha"
+    assert engine.allowed_scopes == ("project", "global")
+    assert '"scope": "project"' in capsys.readouterr().out

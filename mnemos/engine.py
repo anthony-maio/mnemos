@@ -27,6 +27,7 @@ from __future__ import annotations
 import asyncio
 import logging
 import time
+from collections.abc import Callable
 from datetime import datetime, timezone
 from typing import Any
 
@@ -49,6 +50,91 @@ def _on_reconsolidation_done(t: asyncio.Task[Any]) -> None:
     """Log errors from background reconsolidation tasks instead of silently swallowing them."""
     if not t.cancelled() and t.exception():
         logger.error("Background reconsolidation failed: %s", t.exception())
+
+
+_VALID_SCOPES = ("project", "workspace", "global")
+_DEFAULT_SCOPE = "project"
+_DEFAULT_SCOPE_ID = "default"
+_DEFAULT_ALLOWED_SCOPES = ("project", "workspace", "global")
+
+
+def _normalize_scope(scope: str | None, *, default: str = _DEFAULT_SCOPE) -> str:
+    normalized = (scope or default).strip().lower()
+    if normalized not in _VALID_SCOPES:
+        raise ValueError(f"Invalid scope {scope!r}; expected one of {', '.join(_VALID_SCOPES)}.")
+    return normalized
+
+
+def _normalize_scope_id(scope: str, scope_id: str | None) -> str | None:
+    if scope == "global":
+        return None
+    if scope_id is None:
+        return _DEFAULT_SCOPE_ID
+    trimmed = scope_id.strip()
+    return trimmed if trimmed else _DEFAULT_SCOPE_ID
+
+
+def _normalize_allowed_scopes(
+    allowed_scopes: tuple[str, ...] | list[str] | None,
+) -> tuple[str, ...]:
+    if allowed_scopes is None:
+        return _DEFAULT_ALLOWED_SCOPES
+    normalized: list[str] = []
+    for scope in allowed_scopes:
+        norm = _normalize_scope(scope)
+        if norm not in normalized:
+            normalized.append(norm)
+    return tuple(normalized)
+
+
+def _chunk_scope_data(chunk: MemoryChunk) -> tuple[str, str | None]:
+    scope_raw = chunk.metadata.get("scope")
+    if isinstance(scope_raw, str):
+        try:
+            scope = _normalize_scope(scope_raw)
+        except ValueError:
+            scope = "global"
+    else:
+        # Backward-compatibility for chunks that predate scoped metadata.
+        scope = "global"
+
+    if scope == "global":
+        return scope, None
+
+    scope_id_raw = chunk.metadata.get("scope_id")
+    if isinstance(scope_id_raw, str) and scope_id_raw.strip():
+        return scope, scope_id_raw.strip()
+    return scope, _DEFAULT_SCOPE_ID
+
+
+def _build_scope_filter(
+    *,
+    current_scope: str,
+    scope_id: str | None,
+    allowed_scopes: tuple[str, ...],
+) -> Callable[[MemoryChunk], bool]:
+    def _is_allowed(chunk: MemoryChunk) -> bool:
+        chunk_scope, chunk_scope_id = _chunk_scope_data(chunk)
+        if chunk_scope not in allowed_scopes:
+            return False
+        if chunk_scope == "global":
+            return True
+        if scope_id is None:
+            return False
+        return chunk_scope_id == scope_id
+
+    _ = current_scope  # reserved for future policy variants
+    return _is_allowed
+
+
+def _scope_match_boost(chunk_scope: str, current_scope: str) -> float:
+    if chunk_scope == current_scope:
+        return 0.25
+    if chunk_scope == "workspace" and current_scope == "project":
+        return 0.12
+    if chunk_scope == "global":
+        return 0.05
+    return 0.02
 
 
 class MnemosEngine:
@@ -166,7 +252,13 @@ class MnemosEngine:
                 len(stored_chunks),
             )
 
-    async def process(self, interaction: Interaction) -> ProcessResult:
+    async def process(
+        self,
+        interaction: Interaction,
+        *,
+        scope: str = _DEFAULT_SCOPE,
+        scope_id: str | None = None,
+    ) -> ProcessResult:
         """
         Process an interaction through the full encoding pipeline.
 
@@ -182,18 +274,36 @@ class MnemosEngine:
         Returns:
             ProcessResult with storage decision, chunk (if stored), and reason.
         """
+        normalized_scope = _normalize_scope(scope)
+        normalized_scope_id = _normalize_scope_id(normalized_scope, scope_id)
+
+        scoped_metadata = dict(interaction.metadata)
+        scoped_metadata["scope"] = normalized_scope
+        if normalized_scope_id is None:
+            scoped_metadata.pop("scope_id", None)
+        else:
+            scoped_metadata["scope_id"] = normalized_scope_id
+        scoped_interaction = interaction.model_copy(update={"metadata": scoped_metadata})
+
         # Always add to episodic buffer for eventual consolidation
         # (The hippocampus stores everything briefly, even mundane inputs)
-        self.sleep_daemon.add_episode(interaction)
+        self.sleep_daemon.add_episode(scoped_interaction)
 
         # Step 1: Surprisal gate — filter by prediction error
-        result = await self.surprisal_gate.process(interaction)
+        result = await self.surprisal_gate.process(scoped_interaction)
 
         if not result.stored or result.chunk is None:
             return result
 
+        # Ensure scope tags are always present on persisted chunks.
+        result.chunk.metadata["scope"] = normalized_scope
+        if normalized_scope_id is None:
+            result.chunk.metadata.pop("scope_id", None)
+        else:
+            result.chunk.metadata["scope_id"] = normalized_scope_id
+
         # Step 2: Affective tagging — classify and attach cognitive state
-        state = await self.affective_router.classify_state(interaction)
+        state = await self.affective_router.classify_state(scoped_interaction)
         self.affective_router.tag_chunk(result.chunk, state)
 
         # Update the stored chunk with the affective tag
@@ -226,6 +336,10 @@ class MnemosEngine:
         query: str,
         top_k: int = 5,
         reconsolidate: bool = True,
+        *,
+        current_scope: str = _DEFAULT_SCOPE,
+        scope_id: str | None = None,
+        allowed_scopes: tuple[str, ...] | list[str] | None = None,
     ) -> list[MemoryChunk]:
         """
         Retrieve memories through the full contextual retrieval pipeline.
@@ -246,6 +360,14 @@ class MnemosEngine:
             Top-k MemoryChunks ranked by affective blended score.
         """
         start = time.perf_counter()
+        normalized_current_scope = _normalize_scope(current_scope)
+        normalized_scope_id = _normalize_scope_id(normalized_current_scope, scope_id)
+        normalized_allowed_scopes = _normalize_allowed_scopes(allowed_scopes)
+        scope_filter = _build_scope_filter(
+            current_scope=normalized_current_scope,
+            scope_id=normalized_scope_id,
+            allowed_scopes=normalized_allowed_scopes,
+        )
 
         # Step 1: Classify affective state of the query
         query_interaction = Interaction(role="user", content=query)
@@ -271,11 +393,16 @@ class MnemosEngine:
             current_state=current_state,
             store=self._store,
             top_k=top_k * 2,  # Slightly larger pool
+            filter_fn=scope_filter,
         )
 
         # Always include direct semantic retrieval candidates so engine retrieval
         # never underperforms plain vector lookup by candidate omission.
-        baseline_chunks = self._store.retrieve(query_embedding, top_k=top_k * 4)
+        baseline_chunks = self._store.retrieve(
+            query_embedding,
+            top_k=top_k * 4,
+            filter_fn=scope_filter,
+        )
 
         # Merge activated nodes: boost chunks that appear in activation graph
         chunk_scores: dict[str, tuple[float, MemoryChunk]] = {}
@@ -283,15 +410,20 @@ class MnemosEngine:
         for i, chunk in enumerate(baseline_chunks):
             semantic_rank_score = 1.0 - (i / max(len(baseline_chunks), 1))
             base_score = 0.9 * semantic_rank_score
+            chunk_scope, _ = _chunk_scope_data(chunk)
+            base_score += _scope_match_boost(chunk_scope, normalized_current_scope)
             if recency_hint:
                 age_seconds = max((now - chunk.updated_at).total_seconds(), 0.0)
                 recency_weight = 1.0 / (1.0 + (age_seconds / 86400.0))
                 base_score = (0.35 * semantic_rank_score) + (0.85 * recency_weight)
+                base_score += _scope_match_boost(chunk_scope, normalized_current_scope)
             chunk_scores[chunk.id] = (base_score, chunk)
 
         for i, chunk in enumerate(affective_chunks):
             # Base score: inverse rank from affective retrieval
             base_score = 0.4 * (1.0 - (i / max(len(affective_chunks), 1)))
+            chunk_scope, _ = _chunk_scope_data(chunk)
+            base_score += _scope_match_boost(chunk_scope, normalized_current_scope)
             # Activation boost: chunks in the spreading graph get a 20% boost
             if chunk.id in activated_ids:
                 base_score *= 1.2
@@ -308,12 +440,14 @@ class MnemosEngine:
         # Also include any activated nodes not in the affective results
         missing_ids = activated_ids - set(chunk_scores.keys())
         if missing_ids:
-            store_chunks_by_id = {c.id: c for c in self._store.get_all()}
+            store_chunks_by_id = {c.id: c for c in self._store.get_all() if scope_filter(c)}
             for node in activated_nodes:
                 if node.id in missing_ids and node.id in store_chunks_by_id:
                     chunk = store_chunks_by_id[node.id]
                     # Score based on activation energy
                     score = node.energy * 0.5  # Activation-only score (lower weight)
+                    chunk_scope, _ = _chunk_scope_data(chunk)
+                    score += _scope_match_boost(chunk_scope, normalized_current_scope)
                     chunk_scores[node.id] = (score, chunk)
 
         # Sort by score and take top_k
@@ -352,6 +486,9 @@ class MnemosEngine:
             latency_ms=round(latency_ms, 3),
             result_count=len(final_chunks),
             top_k=top_k,
+            scope=normalized_current_scope,
+            scope_id=normalized_scope_id,
+            allowed_scopes=",".join(normalized_allowed_scopes),
             store_backend=self._store.get_stats().get("backend", "unknown"),
         )
 

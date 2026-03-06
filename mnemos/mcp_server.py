@@ -72,6 +72,26 @@ from .utils.embeddings import EmbeddingProvider
 from .utils.llm import MockLLMProvider, LLMProvider
 from .utils.storage import MemoryStore
 
+VALID_SCOPES = ("project", "workspace", "global")
+
+
+def _parse_allowed_scopes(raw: str) -> tuple[str, ...]:
+    scopes = [scope.strip().lower() for scope in raw.split(",") if scope.strip()]
+    if not scopes:
+        return VALID_SCOPES
+    invalid = [scope for scope in scopes if scope not in VALID_SCOPES]
+    if invalid:
+        raise ValueError(
+            f"Invalid allowed scope(s): {', '.join(invalid)}. "
+            f"Expected one or more of: {', '.join(VALID_SCOPES)}."
+        )
+    deduped: list[str] = []
+    for scope in scopes:
+        if scope not in deduped:
+            deduped.append(scope)
+    return tuple(deduped)
+
+
 # ---------------------------------------------------------------------------
 # Engine lifecycle: initialize once, share across all tool calls
 # ---------------------------------------------------------------------------
@@ -217,6 +237,8 @@ def create_mcp_server() -> Any:
         content: str,
         role: str = "user",
         metadata: str = "{}",
+        scope: str = "project",
+        scope_id: str = "default",
         ctx: Any = None,
     ) -> str:
         """Store a memory through the full biomimetic pipeline.
@@ -242,7 +264,11 @@ def create_mcp_server() -> Any:
             meta = {}
 
         interaction = Interaction(role=role, content=content, metadata=meta)
-        result = await engine.process(interaction)
+        result = await engine.process(
+            interaction,
+            scope=scope,
+            scope_id=(scope_id or None),
+        )
 
         return json.dumps(
             {
@@ -251,6 +277,8 @@ def create_mcp_server() -> Any:
                 "reason": result.reason,
                 "chunk_id": result.chunk.id if result.chunk else None,
                 "content": result.chunk.content if result.chunk else None,
+                "scope": (result.chunk.metadata.get("scope") if result.chunk else None),
+                "scope_id": (result.chunk.metadata.get("scope_id") if result.chunk else None),
             },
             indent=2,
         )
@@ -260,6 +288,9 @@ def create_mcp_server() -> Any:
         query: str,
         top_k: int = 5,
         reconsolidate: bool = True,
+        current_scope: str = "project",
+        scope_id: str = "default",
+        allowed_scopes: str = "project,workspace,global",
         ctx: Any = None,
     ) -> str:
         """Retrieve memories using the full contextual retrieval pipeline.
@@ -279,7 +310,15 @@ def create_mcp_server() -> Any:
             JSON array of matching memories with content, salience, and metadata.
         """
         engine: MnemosEngine = ctx.request_context.lifespan_context.engine
-        chunks = await engine.retrieve(query, top_k=top_k, reconsolidate=reconsolidate)
+        parsed_allowed_scopes = _parse_allowed_scopes(allowed_scopes)
+        chunks = await engine.retrieve(
+            query,
+            top_k=top_k,
+            reconsolidate=reconsolidate,
+            current_scope=current_scope,
+            scope_id=(scope_id or None),
+            allowed_scopes=parsed_allowed_scopes,
+        )
 
         results = []
         for chunk in chunks:
@@ -301,6 +340,8 @@ def create_mcp_server() -> Any:
                     ),
                     "created_at": chunk.created_at.isoformat(),
                     "updated_at": chunk.updated_at.isoformat(),
+                    "scope": chunk.metadata.get("scope", "global"),
+                    "scope_id": chunk.metadata.get("scope_id"),
                 }
             )
 

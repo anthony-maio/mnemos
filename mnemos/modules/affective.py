@@ -35,6 +35,7 @@ from __future__ import annotations
 
 import re
 from collections import deque
+from collections.abc import Callable
 from typing import Any
 
 from ..config import AffectiveConfig
@@ -225,6 +226,7 @@ class AffectiveRouter:
         store: MemoryStore,
         top_k: int = 5,
         candidate_k: int | None = None,
+        filter_fn: Callable[[MemoryChunk], bool] | None = None,
     ) -> list[MemoryChunk]:
         """
         Retrieve and re-rank chunks using affective state scoring.
@@ -245,6 +247,7 @@ class AffectiveRouter:
             top_k: Number of results to return.
             candidate_k: Size of candidate pool before re-ranking.
                          Defaults to max(top_k * 3, 20) for good coverage.
+            filter_fn: Optional predicate to filter candidate chunks by metadata.
 
         Returns:
             Top-k MemoryChunks sorted by affective blended score.
@@ -256,7 +259,7 @@ class AffectiveRouter:
 
         # Fetch a larger candidate pool for re-ranking
         ck = candidate_k or max(top_k * 3, 20)
-        candidates = store.retrieve(query_embedding, top_k=ck)
+        candidates = store.retrieve(query_embedding, top_k=ck, filter_fn=filter_fn)
 
         if not candidates:
             return []

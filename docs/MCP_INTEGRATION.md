@@ -104,8 +104,8 @@ The agent will automatically discover these tools:
 
 | Tool | What it does |
 |------|-------------|
-| `mnemos_store` | Store a memory through the surprisal gate + affective tagging pipeline |
-| `mnemos_retrieve` | Retrieve memories with spreading activation + emotional re-ranking |
+| `mnemos_store` | Store a memory through the surprisal gate + affective tagging pipeline (supports `scope` + `scope_id`) |
+| `mnemos_retrieve` | Retrieve memories with spreading activation + emotional re-ranking (supports `current_scope`, `scope_id`, `allowed_scopes`) |
 | `mnemos_consolidate` | Trigger sleep consolidation (episodic → semantic compression) |
 | `mnemos_forget` | Delete a specific memory |
 | `mnemos_stats` | System-wide statistics from all modules |
@@ -232,6 +232,14 @@ mnemos-cli store "The user prefers Python 3.12 and uses pytest"
 
 # Retrieve memories
 mnemos-cli retrieve "testing preferences" --top-k 5
+
+# Store project/workspace/global-scoped memories
+mnemos-cli store "Use pnpm in this repository" --scope project --scope-id repo-alpha
+mnemos-cli store "In this workspace, default to black + mypy" --scope workspace --scope-id consulting-workspace
+mnemos-cli store "Prefer concise status updates" --scope global
+
+# Retrieve scoped memories (project + global)
+mnemos-cli retrieve "coding preferences" --current-scope project --scope-id repo-alpha --allowed-scopes project,global
 
 # Trigger consolidation
 mnemos-cli consolidate

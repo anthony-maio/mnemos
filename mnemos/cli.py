@@ -32,6 +32,7 @@ from .types import Interaction
 from .utils.llm import MockLLMProvider, LLMProvider
 
 PROFILE_CHOICES = ("starter", "local-performance", "scale")
+VALID_SCOPES = ("project", "workspace", "global")
 
 
 def _infer_embedding_provider(llm_provider: str) -> str:
@@ -92,6 +93,23 @@ def _render_profile_env(profile: str, env: dict[str, str], output_format: str) -
             lines.append(f"$env:{key}='{escaped}'")
         return "\n".join(lines)
     raise ValueError(f"Unsupported output format: {output_format!r}")
+
+
+def _parse_allowed_scopes(raw: str) -> tuple[str, ...]:
+    scopes = [scope.strip().lower() for scope in raw.split(",") if scope.strip()]
+    if not scopes:
+        return VALID_SCOPES
+    invalid = [scope for scope in scopes if scope not in VALID_SCOPES]
+    if invalid:
+        raise ValueError(
+            f"Invalid allowed scope(s): {', '.join(invalid)}. "
+            f"Expected one or more of: {', '.join(VALID_SCOPES)}."
+        )
+    deduped: list[str] = []
+    for scope in scopes:
+        if scope not in deduped:
+            deduped.append(scope)
+    return tuple(deduped)
 
 
 def _build_engine() -> MnemosEngine:
@@ -172,19 +190,33 @@ def _build_engine() -> MnemosEngine:
 async def _cmd_store(args: argparse.Namespace) -> None:
     engine = _build_engine()
     interaction = Interaction(role=args.role, content=args.content)
-    result = await engine.process(interaction)
+    result = await engine.process(
+        interaction,
+        scope=args.scope,
+        scope_id=(args.scope_id or None),
+    )
     output = {
         "stored": result.stored,
         "salience": round(result.salience, 4),
         "reason": result.reason,
         "chunk_id": result.chunk.id if result.chunk else None,
+        "scope": (result.chunk.metadata.get("scope") if result.chunk else None),
+        "scope_id": (result.chunk.metadata.get("scope_id") if result.chunk else None),
     }
     print(json.dumps(output, indent=2))
 
 
 async def _cmd_retrieve(args: argparse.Namespace) -> None:
     engine = _build_engine()
-    chunks = await engine.retrieve(args.query, top_k=args.top_k)
+    allowed_scopes = _parse_allowed_scopes(args.allowed_scopes)
+    chunks = await engine.retrieve(
+        args.query,
+        top_k=args.top_k,
+        reconsolidate=args.reconsolidate,
+        current_scope=args.current_scope,
+        scope_id=(args.scope_id or None),
+        allowed_scopes=allowed_scopes,
+    )
     results = []
     for chunk in chunks:
         results.append(
@@ -193,6 +225,8 @@ async def _cmd_retrieve(args: argparse.Namespace) -> None:
                 "content": chunk.content,
                 "salience": round(chunk.salience, 4),
                 "version": chunk.version,
+                "scope": chunk.metadata.get("scope", "global"),
+                "scope_id": chunk.metadata.get("scope_id"),
             }
         )
     print(json.dumps(results, indent=2))
@@ -262,11 +296,43 @@ def main() -> None:
     sp_store = subparsers.add_parser("store", help="Store a memory through the full pipeline")
     sp_store.add_argument("content", help="Text content to memorize")
     sp_store.add_argument("--role", default="user", help="Speaker role (default: user)")
+    sp_store.add_argument(
+        "--scope",
+        choices=VALID_SCOPES,
+        default="project",
+        help="Memory scope (default: project).",
+    )
+    sp_store.add_argument(
+        "--scope-id",
+        default="default",
+        help="Scope identifier (ignored for global scope).",
+    )
 
     # retrieve
     sp_retrieve = subparsers.add_parser("retrieve", help="Retrieve memories by query")
     sp_retrieve.add_argument("query", help="Search query")
     sp_retrieve.add_argument("--top-k", type=int, default=5, help="Max results (default: 5)")
+    sp_retrieve.add_argument(
+        "--current-scope",
+        choices=VALID_SCOPES,
+        default="project",
+        help="Current runtime scope used for scoped retrieval (default: project).",
+    )
+    sp_retrieve.add_argument(
+        "--scope-id",
+        default="default",
+        help="Current scope identifier used to filter project/workspace memories.",
+    )
+    sp_retrieve.add_argument(
+        "--allowed-scopes",
+        default="project,workspace,global",
+        help="Comma-separated scopes to include (default: project,workspace,global).",
+    )
+    sp_retrieve.add_argument(
+        "--no-reconsolidate",
+        action="store_true",
+        help="Disable post-retrieval background reconsolidation.",
+    )
 
     # consolidate
     subparsers.add_parser("consolidate", help="Trigger sleep consolidation")
@@ -344,6 +410,8 @@ def main() -> None:
     )
 
     args = parser.parse_args()
+    if args.command == "retrieve":
+        args.reconsolidate = not args.no_reconsolidate
 
     if args.command == "store":
         asyncio.run(_cmd_store(args))
