@@ -432,12 +432,14 @@ engine = MnemosEngine(config=config)
 
 | Variable | Default | Description |
 |----------|---------|-------------|
-| `MNEMOS_LLM_PROVIDER` | `mock` | `mock`, `ollama`, or `openai` |
+| `MNEMOS_LLM_PROVIDER` | `mock` | `mock`, `ollama`, `openai`, or `openclaw` |
 | `MNEMOS_LLM_MODEL` | `llama3` | Model name for the LLM provider |
 | `MNEMOS_OLLAMA_URL` | `http://localhost:11434` | Ollama API base URL |
 | `MNEMOS_OPENAI_API_KEY` | — | Required when using `openai` provider |
 | `MNEMOS_OPENAI_URL` | `https://api.openai.com/v1` | OpenAI-compatible API base URL |
-| `MNEMOS_EMBEDDING_PROVIDER` | `simple` | `simple`, `ollama`, or `openai` |
+| `MNEMOS_OPENCLAW_API_KEY` | — | OpenClaw API key (or fallback to `MNEMOS_OPENAI_API_KEY`) |
+| `MNEMOS_OPENCLAW_URL` | — | OpenClaw API base URL (or fallback to `MNEMOS_OPENAI_URL`) |
+| `MNEMOS_EMBEDDING_PROVIDER` | `simple` | `simple`, `ollama`, `openai`, or `openclaw` |
 | `MNEMOS_EMBEDDING_MODEL` | provider-dependent | Embedding model name (e.g. `nomic-embed-text`) |
 | `MNEMOS_EMBEDDING_DIM` | `384` | Embedding dimension for `simple` provider |
 | `MNEMOS_STORE_TYPE` | `memory` | `memory` or `sqlite` |

@@ -26,7 +26,7 @@ Usage:
   mnemos-mcp
 
 Configuration via environment variables:
-  MNEMOS_LLM_PROVIDER   — "mock" (default), "ollama", or "openai"
+  MNEMOS_LLM_PROVIDER   — "mock" (default), "ollama", "openai", or "openclaw"
   MNEMOS_LLM_MODEL      — Model name for LLM provider (default: "llama3")
   MNEMOS_EMBEDDING_PROVIDER — "simple" (default), "ollama", or "openai"
   MNEMOS_EMBEDDING_MODEL — Embedding model name (provider-specific default if unset)
@@ -34,6 +34,8 @@ Configuration via environment variables:
   MNEMOS_OLLAMA_URL     — Ollama API base URL (default: "http://localhost:11434")
   MNEMOS_OPENAI_API_KEY — OpenAI API key (required if provider is "openai")
   MNEMOS_OPENAI_URL     — OpenAI-compatible base URL
+  MNEMOS_OPENCLAW_API_KEY — OpenClaw API key (or fallback to MNEMOS_OPENAI_API_KEY)
+  MNEMOS_OPENCLAW_URL   — OpenClaw API base URL (or fallback to MNEMOS_OPENAI_URL)
   MNEMOS_STORE_TYPE     — "memory" (default) or "sqlite"
   MNEMOS_SQLITE_PATH    — Path for SQLite store (default: "mnemos_memory.db")
   MNEMOS_STORAGE        — Alias for MNEMOS_STORE_TYPE
@@ -81,20 +83,37 @@ def _build_llm_provider() -> LLMProvider:
             model=os.getenv("MNEMOS_LLM_MODEL", "llama3"),
         )
 
-    elif provider == "openai":
+    elif provider in ("openai", "openclaw"):
         from .utils.llm import OpenAIProvider
 
-        api_key = os.getenv("MNEMOS_OPENAI_API_KEY", "")
+        if provider == "openclaw":
+            api_key = os.getenv("MNEMOS_OPENCLAW_API_KEY", "") or os.getenv(
+                "MNEMOS_OPENAI_API_KEY", ""
+            )
+            base_url = os.getenv("MNEMOS_OPENCLAW_URL", "") or os.getenv(
+                "MNEMOS_OPENAI_URL", "https://api.openai.com/v1"
+            )
+            if not api_key:
+                raise ValueError(
+                    "MNEMOS_OPENCLAW_API_KEY or MNEMOS_OPENAI_API_KEY must be set "
+                    "when using openclaw provider"
+                )
+        else:
+            api_key = os.getenv("MNEMOS_OPENAI_API_KEY", "")
+            base_url = os.getenv("MNEMOS_OPENAI_URL", "https://api.openai.com/v1")
+
         if not api_key:
             raise ValueError("MNEMOS_OPENAI_API_KEY must be set when using openai provider")
         return OpenAIProvider(
             api_key=api_key,
-            base_url=os.getenv("MNEMOS_OPENAI_URL", "https://api.openai.com/v1"),
+            base_url=base_url,
             model=os.getenv("MNEMOS_LLM_MODEL", "gpt-4o-mini"),
         )
 
     else:
-        raise ValueError(f"Unknown LLM provider: {provider!r}. Use 'mock', 'ollama', or 'openai'.")
+        raise ValueError(
+            f"Unknown LLM provider: {provider!r}. Use 'mock', 'ollama', 'openai', or 'openclaw'."
+        )
 
 
 def _build_store() -> MemoryStore:

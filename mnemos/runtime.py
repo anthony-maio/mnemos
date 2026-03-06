@@ -74,7 +74,7 @@ def build_embedder_from_env(default_provider: str = "simple") -> EmbeddingProvid
     Build embedding provider from env vars.
 
     Supported:
-    - `MNEMOS_EMBEDDING_PROVIDER`: `simple`, `ollama`, `openai`
+    - `MNEMOS_EMBEDDING_PROVIDER`: `simple`, `ollama`, `openai`, `openclaw`
     - `MNEMOS_EMBEDDING_MODEL` (provider model name)
     - provider-specific auth/url vars
     """
@@ -126,6 +126,34 @@ def build_embedder_from_env(default_provider: str = "simple") -> EmbeddingProvid
             base_url=base_url,
         )
 
+    if provider == "openclaw":
+        api_key = resolve_env_value("MNEMOS_OPENCLAW_API_KEY", default="") or resolve_env_value(
+            "MNEMOS_OPENAI_API_KEY", default=""
+        )
+        if not api_key:
+            raise ValueError(
+                "MNEMOS_OPENCLAW_API_KEY or MNEMOS_OPENAI_API_KEY must be set "
+                "when using openclaw embedding provider"
+            )
+        model = (
+            resolve_env_value(
+                "MNEMOS_EMBEDDING_MODEL",
+                default="text-embedding-3-small",
+            )
+            or "text-embedding-3-small"
+        )
+        base_url = (
+            resolve_env_value("MNEMOS_OPENCLAW_URL", default="")
+            or resolve_env_value("MNEMOS_OPENAI_URL", default="https://api.openai.com/v1")
+            or "https://api.openai.com/v1"
+        )
+        return OpenAIEmbeddingProvider(
+            api_key=api_key,
+            model=model,
+            base_url=base_url,
+        )
+
     raise ValueError(
-        f"Unknown embedding provider: {provider!r}. " "Use 'simple', 'ollama', or 'openai'."
+        f"Unknown embedding provider: {provider!r}. "
+        "Use 'simple', 'ollama', 'openai', or 'openclaw'."
     )

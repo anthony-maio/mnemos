@@ -71,3 +71,15 @@ def test_build_embedder_from_env_openai(monkeypatch: pytest.MonkeyPatch) -> None
     monkeypatch.setenv("MNEMOS_OPENAI_API_KEY", "dummy-key")
     embedder = build_embedder_from_env(default_provider="simple")
     assert isinstance(embedder, OpenAIEmbeddingProvider)
+
+
+def test_build_embedder_from_env_openclaw(monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.setenv("MNEMOS_EMBEDDING_PROVIDER", "openclaw")
+    monkeypatch.setenv("MNEMOS_OPENCLAW_API_KEY", "claw-key")
+    monkeypatch.setenv("MNEMOS_OPENCLAW_URL", "https://api.openclaw.example/v1")
+
+    embedder = build_embedder_from_env(default_provider="simple")
+
+    assert isinstance(embedder, OpenAIEmbeddingProvider)
+    assert embedder.api_key == "claw-key"
+    assert embedder.base_url == "https://api.openclaw.example/v1"

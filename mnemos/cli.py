@@ -41,16 +41,29 @@ def _build_engine() -> MnemosEngine:
             base_url=os.getenv("MNEMOS_OLLAMA_URL", "http://localhost:11434"),
             model=os.getenv("MNEMOS_LLM_MODEL", "llama3"),
         )
-    elif provider_name == "openai":
+    elif provider_name in ("openai", "openclaw"):
         from .utils.llm import OpenAIProvider
 
-        api_key = os.getenv("MNEMOS_OPENAI_API_KEY", "")
+        if provider_name == "openclaw":
+            api_key = os.getenv("MNEMOS_OPENCLAW_API_KEY", "") or os.getenv(
+                "MNEMOS_OPENAI_API_KEY", ""
+            )
+            base_url = os.getenv("MNEMOS_OPENCLAW_URL", "") or os.getenv(
+                "MNEMOS_OPENAI_URL", "https://api.openai.com/v1"
+            )
+            key_error = "Error: MNEMOS_OPENCLAW_API_KEY or MNEMOS_OPENAI_API_KEY required for openclaw provider"
+        else:
+            api_key = os.getenv("MNEMOS_OPENAI_API_KEY", "")
+            base_url = os.getenv("MNEMOS_OPENAI_URL", "https://api.openai.com/v1")
+            key_error = "Error: MNEMOS_OPENAI_API_KEY required for openai provider"
+
         if not api_key:
-            print("Error: MNEMOS_OPENAI_API_KEY required for openai provider", file=sys.stderr)
+            print(key_error, file=sys.stderr)
             sys.exit(1)
+
         llm = OpenAIProvider(
             api_key=api_key,
-            base_url=os.getenv("MNEMOS_OPENAI_URL", "https://api.openai.com/v1"),
+            base_url=base_url,
             model=os.getenv("MNEMOS_LLM_MODEL", "gpt-4o-mini"),
         )
     else:

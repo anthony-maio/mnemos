@@ -8,8 +8,8 @@ from pathlib import Path
 
 import pytest
 
-from mnemos.mcp_server import _build_embedder, _build_store
-from mnemos.utils import SQLiteStore
+from mnemos.mcp_server import _build_embedder, _build_llm_provider, _build_store
+from mnemos.utils import OpenAIProvider, SQLiteStore
 
 
 def test_mcp_build_store_supports_alias_vars(
@@ -31,3 +31,17 @@ def test_mcp_build_embedder_rejects_unknown_provider(monkeypatch: pytest.MonkeyP
     monkeypatch.setenv("MNEMOS_EMBEDDING_PROVIDER", "invalid")
     with pytest.raises(ValueError, match="Unknown embedding provider"):
         _build_embedder()
+
+
+def test_mcp_build_llm_provider_openclaw(monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.setenv("MNEMOS_LLM_PROVIDER", "openclaw")
+    monkeypatch.setenv("MNEMOS_OPENCLAW_API_KEY", "claw-key")
+    monkeypatch.setenv("MNEMOS_OPENCLAW_URL", "https://api.openclaw.example/v1")
+    monkeypatch.setenv("MNEMOS_LLM_MODEL", "openclaw/claude")
+
+    llm = _build_llm_provider()
+
+    assert isinstance(llm, OpenAIProvider)
+    assert llm.api_key == "claw-key"
+    assert llm.base_url == "https://api.openclaw.example/v1"
+    assert llm.model == "openclaw/claude"
