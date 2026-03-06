@@ -12,13 +12,17 @@ import pytest
 
 from mnemos.benchmark import (
     BenchmarkDocument,
+    BenchmarkQuery,
     _benchmark_store_id,
     _build_comparisons,
+    _load_queries,
+    _scope_filter_for_query,
     compute_retrieval_metrics,
     evaluate_production_replacement_gate,
     load_documents,
     run_retrieval_benchmark,
 )
+from mnemos.types import MemoryChunk
 
 
 def test_compute_retrieval_metrics_recall_mrr_and_p95() -> None:
@@ -188,3 +192,138 @@ def test_benchmark_store_id_is_stable_uuid() -> None:
     second = _benchmark_store_id("editor-old")
     assert first == second
     assert str(uuid.UUID(first)) == first
+
+
+def test_load_queries_supports_scoped_query_objects(tmp_path: Path) -> None:
+    dataset_path = tmp_path / "scope-pack.jsonl"
+    dataset_path.write_text(
+        (
+            '{"id":"alpha-ci","scope":"project","scope_id":"alpha","content":"alpha content",'
+            '"queries":[{"text":"which ci here","current_scope":"project","scope_id":"alpha",'
+            '"allowed_scopes":["project","global"]}]}\n'
+            '{"id":"global-style","scope":"global","content":"global defaults",'
+            '"queries":[{"text":"global defaults","current_scope":"project","scope_id":"alpha",'
+            '"allowed_scopes":["project","global"],"relevant_ids":["global-style"]}]}\n'
+        ),
+        encoding="utf-8",
+    )
+
+    docs = load_documents(dataset_path)
+    queries = _load_queries(dataset_path, docs)
+
+    assert len(queries) == 2
+    assert queries[0].text == "which ci here"
+    assert queries[0].current_scope == "project"
+    assert queries[0].scope_id == "alpha"
+    assert queries[0].allowed_scopes == ("project", "global")
+    assert queries[1].relevant_ids == {"global-style"}
+
+
+def test_scope_filter_for_query_honors_scope_boundaries() -> None:
+    query = BenchmarkQuery(
+        text="ci system",
+        relevant_ids={"alpha-ci"},
+        current_scope="project",
+        scope_id="alpha",
+        allowed_scopes=("project", "global"),
+    )
+    filter_fn = _scope_filter_for_query(query)
+
+    alpha_chunk = MemoryChunk(
+        content="alpha",
+        metadata={"scope": "project", "scope_id": "alpha"},
+    )
+    beta_chunk = MemoryChunk(
+        content="beta",
+        metadata={"scope": "project", "scope_id": "beta"},
+    )
+    global_chunk = MemoryChunk(
+        content="global",
+        metadata={"scope": "global"},
+    )
+    workspace_chunk = MemoryChunk(
+        content="workspace",
+        metadata={"scope": "workspace", "scope_id": "consulting"},
+    )
+
+    assert filter_fn(alpha_chunk) is True
+    assert filter_fn(global_chunk) is True
+    assert filter_fn(beta_chunk) is False
+    assert filter_fn(workspace_chunk) is False
+
+
+def test_run_retrieval_benchmark_accepts_explicit_queries() -> None:
+    documents = [
+        BenchmarkDocument(
+            id="alpha",
+            content="Project alpha uses ECS.",
+            queries=("query alpha",),
+            scope="project",
+            scope_id="alpha",
+        ),
+        BenchmarkDocument(
+            id="beta",
+            content="Project beta uses GKE.",
+            queries=("query beta",),
+            scope="project",
+            scope_id="beta",
+        ),
+    ]
+    queries = [
+        BenchmarkQuery(
+            text="query beta",
+            relevant_ids={"beta"},
+            current_scope="project",
+            scope_id="beta",
+            allowed_scopes=("project", "global"),
+        )
+    ]
+
+    result = run_retrieval_benchmark(
+        store_type="memory",
+        retriever="baseline",
+        top_k=1,
+        documents=documents,
+        queries=queries,
+    )
+
+    assert result["query_count"] == 1
+
+
+def test_run_retrieval_benchmark_supports_scope_aware_baseline_mode() -> None:
+    documents = [
+        BenchmarkDocument(
+            id="alpha",
+            content="Project alpha uses ECS.",
+            queries=("deployment target",),
+            scope="project",
+            scope_id="alpha",
+        ),
+        BenchmarkDocument(
+            id="beta",
+            content="Project beta uses GKE.",
+            queries=("deployment target",),
+            scope="project",
+            scope_id="beta",
+        ),
+    ]
+    queries = [
+        BenchmarkQuery(
+            text="deployment target",
+            relevant_ids={"alpha"},
+            current_scope="project",
+            scope_id="alpha",
+            allowed_scopes=("project", "global"),
+        )
+    ]
+
+    result = run_retrieval_benchmark(
+        store_type="memory",
+        retriever="baseline",
+        top_k=1,
+        documents=documents,
+        queries=queries,
+        baseline_scope_aware=True,
+    )
+
+    assert result["query_count"] == 1

@@ -18,6 +18,8 @@ Retriever modes:
 - `baseline`: direct vector retrieval from the store (`store.retrieve`)
 - `engine`: full Mnemos retrieval path (`MnemosEngine.retrieve`)
 
+`baseline` is intentionally scope-agnostic by default so scoped retrieval value is visible in cross-project benchmarks. To make baseline scope-aware for strict apples-to-apples runs, pass `--baseline-scope-aware`.
+
 The report includes a `comparisons` section with per-store deltas:
 - `delta_engine_minus_baseline.recall_at_k`
 - `delta_engine_minus_baseline.mrr`
@@ -31,6 +33,7 @@ Mnemos includes fixed-version datasets for replacement-claim evaluation:
 
 - `benchmarks/datasets/contradiction-update-v1.jsonl`
 - `benchmarks/datasets/preference-drift-v1.jsonl`
+- `benchmarks/datasets/cross-project-scope-v1.jsonl`
 
 Run:
 
@@ -74,14 +77,27 @@ Use `.json` (array) or `.jsonl` (one object per line). Each item must include:
 - `content`: stored memory text
 - `queries`: list of query variants expected to retrieve that document (can be empty for distractor documents)
 
+Optional scoped-memory fields:
+- document-level: `scope` (`project|workspace|global`), `scope_id`
+- query object fields: `text`, `current_scope`, `scope_id`, `allowed_scopes`, `relevant_ids`
+
 Example:
 
 ```json
 [
   {
     "id": "aws-ecs",
+    "scope": "project",
+    "scope_id": "repo-alpha",
     "content": "We deploy microservices on AWS ECS with blue-green releases.",
-    "queries": ["blue green ecs deployment", "microservices platform on aws ecs"]
+    "queries": [
+      {
+        "text": "blue green ecs deployment",
+        "current_scope": "project",
+        "scope_id": "repo-alpha",
+        "allowed_scopes": ["project", "global"]
+      }
+    ]
   }
 ]
 ```

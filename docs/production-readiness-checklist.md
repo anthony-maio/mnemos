@@ -16,7 +16,7 @@ Use this checklist before promoting a release as production-ready.
 
 - [ ] Non-toy embedding provider configured for production (`ollama` or `openai`)
 - [ ] Retrieval quality baseline documented (Recall@k/MRR) from `mnemos-benchmark`
-- [ ] Contradiction/update and preference-drift benchmark packs evaluated
+- [ ] Contradiction/update, preference-drift, and cross-project-scope benchmark packs evaluated
 - [ ] Startup graph hydration validated against persisted stores
 
 ## Performance and Scale

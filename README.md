@@ -577,7 +577,7 @@ Run reproducible retrieval benchmarks with `Recall@k`, `MRR`, and `p95` latency:
 mnemos-benchmark --stores memory,sqlite,qdrant --retrievers baseline,engine --top-k 5
 ```
 
-You can provide a custom dataset (`.json` or `.jsonl`) with `id`, `content`, and `queries`:
+You can provide a custom dataset (`.json` or `.jsonl`) with `id`, `content`, and `queries` (plus optional scoped fields like `scope`, `scope_id`, query-level `allowed_scopes`):
 
 ```bash
 mnemos-benchmark --stores qdrant --retrievers baseline,engine --dataset ./benchmarks/retrieval.jsonl --top-k 10
@@ -590,6 +590,7 @@ mnemos-benchmark --stores memory --retrievers baseline,engine --dataset-pack cla
 ```
 
 Gate output fields live under `gates.production_replacement.*`.
+Use `--baseline-scope-aware` if you want baseline retrieval to apply scope filters in scoped-memory datasets.
 
 ## Production Checklist
 

@@ -15,6 +15,7 @@ import json
 import shutil
 import time
 import uuid
+from collections.abc import Callable
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Any
@@ -33,6 +34,7 @@ DATASET_PACKS: dict[str, tuple[str, ...]] = {
     "claim-driving": (
         "contradiction-update-v1.jsonl",
         "preference-drift-v1.jsonl",
+        "cross-project-scope-v1.jsonl",
     )
 }
 
@@ -44,6 +46,8 @@ class BenchmarkDocument:
     id: str
     content: str
     queries: tuple[str, ...]
+    scope: str = "project"
+    scope_id: str | None = "default"
 
 
 @dataclass(frozen=True)
@@ -52,6 +56,58 @@ class BenchmarkQuery:
 
     text: str
     relevant_ids: set[str]
+    current_scope: str = "project"
+    scope_id: str | None = "default"
+    allowed_scopes: tuple[str, ...] = ("project", "workspace", "global")
+
+
+def _normalize_scope(scope: str | None, *, default: str = "project") -> str:
+    normalized = (scope or default).strip().lower()
+    if normalized not in {"project", "workspace", "global"}:
+        raise ValueError(f"Invalid scope {scope!r}; expected one of project, workspace, global.")
+    return normalized
+
+
+def _normalize_scope_id(scope: str, scope_id: str | None) -> str | None:
+    if scope == "global":
+        return None
+    if scope_id is None:
+        return "default"
+    trimmed = scope_id.strip()
+    return trimmed if trimmed else "default"
+
+
+def _normalize_allowed_scopes(
+    allowed_scopes: list[str] | tuple[str, ...] | None,
+) -> tuple[str, ...]:
+    if not allowed_scopes:
+        return ("project", "workspace", "global")
+    normalized: list[str] = []
+    for scope in allowed_scopes:
+        norm = _normalize_scope(scope)
+        if norm not in normalized:
+            normalized.append(norm)
+    return tuple(normalized)
+
+
+def _scope_filter_for_query(query: BenchmarkQuery) -> Callable[[MemoryChunk], bool]:
+    def _matches(chunk: MemoryChunk) -> bool:
+        chunk_scope = _normalize_scope(str(chunk.metadata.get("scope", "global")), default="global")
+        if chunk_scope not in query.allowed_scopes:
+            return False
+        if chunk_scope == "global":
+            return True
+        chunk_scope_id_raw = chunk.metadata.get("scope_id")
+        chunk_scope_id = (
+            str(chunk_scope_id_raw).strip()
+            if chunk_scope_id_raw is not None and str(chunk_scope_id_raw).strip()
+            else "default"
+        )
+        if query.scope_id is None:
+            return False
+        return chunk_scope_id == query.scope_id
+
+    return _matches
 
 
 def default_benchmark_documents() -> list[BenchmarkDocument]:
@@ -125,7 +181,14 @@ def build_queries(documents: list[BenchmarkDocument]) -> list[BenchmarkQuery]:
     queries: list[BenchmarkQuery] = []
     for doc in documents:
         for query in doc.queries:
-            queries.append(BenchmarkQuery(text=query, relevant_ids={doc.id}))
+            queries.append(
+                BenchmarkQuery(
+                    text=query,
+                    relevant_ids={doc.id},
+                    current_scope=doc.scope,
+                    scope_id=doc.scope_id,
+                )
+            )
     return queries
 
 
@@ -194,14 +257,177 @@ def _coerce_document(item: dict[str, Any], index: int) -> BenchmarkDocument:
         raw_queries = []
     if not isinstance(raw_queries, list):
         raise ValueError(f"Dataset item at index {index} must include 'queries' as a list.")
-    queries = tuple(str(q) for q in raw_queries if str(q).strip())
+    parsed_query_texts: list[str] = []
+    parsed_scope: str | None = None
+    parsed_scope_id: str | None = None
+    for query_item in raw_queries:
+        if isinstance(query_item, dict):
+            text = str(query_item.get("text", "")).strip()
+            if not text:
+                continue
+            parsed_query_texts.append(text)
+            parsed_scope = str(query_item.get("current_scope", "project"))
+            parsed_scope_id_raw = query_item.get("scope_id", "default")
+            parsed_scope_id = str(parsed_scope_id_raw) if parsed_scope_id_raw is not None else None
+        else:
+            text = str(query_item).strip()
+            if text:
+                parsed_query_texts.append(text)
+    queries = tuple(parsed_query_texts)
+
+    scope = _normalize_scope(str(item.get("scope", parsed_scope or "project")))
+    scope_id = _normalize_scope_id(
+        scope, str(item.get("scope_id")) if item.get("scope_id") is not None else parsed_scope_id
+    )
 
     doc_id_raw = item.get("id", f"doc-{index}")
     return BenchmarkDocument(
         id=str(doc_id_raw),
         content=content,
         queries=queries,
+        scope=scope,
+        scope_id=scope_id,
     )
+
+
+def _load_queries(dataset_path: Path, documents: list[BenchmarkDocument]) -> list[BenchmarkQuery]:
+    text = dataset_path.read_text(encoding="utf-8")
+    suffix = dataset_path.suffix.lower()
+    doc_by_id = {doc.id: doc for doc in documents}
+    queries: list[BenchmarkQuery] = []
+
+    def _append_doc_default_queries(doc: BenchmarkDocument) -> None:
+        for q in doc.queries:
+            queries.append(
+                BenchmarkQuery(
+                    text=q,
+                    relevant_ids={doc.id},
+                    current_scope=doc.scope,
+                    scope_id=doc.scope_id,
+                )
+            )
+
+    if suffix == ".jsonl":
+        for line in text.splitlines():
+            stripped = line.strip()
+            if not stripped:
+                continue
+            item = json.loads(stripped)
+            if not isinstance(item, dict):
+                continue
+            doc_id = str(item.get("id", ""))
+            doc = doc_by_id.get(doc_id)
+            if doc is None:
+                continue
+            raw_queries = item.get("queries", [])
+            if not isinstance(raw_queries, list):
+                _append_doc_default_queries(doc)
+                continue
+            if not raw_queries:
+                continue
+            for raw_query in raw_queries:
+                if isinstance(raw_query, dict):
+                    text_value = str(raw_query.get("text", "")).strip()
+                    if not text_value:
+                        continue
+                    relevant_ids_raw = raw_query.get("relevant_ids", [doc.id])
+                    if not isinstance(relevant_ids_raw, list):
+                        raise ValueError(f"relevant_ids must be a list for document {doc.id}.")
+                    relevant_ids = {str(value) for value in relevant_ids_raw if str(value).strip()}
+                    if not relevant_ids:
+                        relevant_ids = {doc.id}
+                    current_scope = _normalize_scope(str(raw_query.get("current_scope", doc.scope)))
+                    scope_id_value = raw_query.get("scope_id", doc.scope_id)
+                    scope_id = str(scope_id_value) if scope_id_value is not None else None
+                    scope_id = _normalize_scope_id(current_scope, scope_id)
+                    allowed_scopes_raw = raw_query.get("allowed_scopes")
+                    if allowed_scopes_raw is not None and not isinstance(allowed_scopes_raw, list):
+                        raise ValueError(
+                            f"allowed_scopes must be a list for document {doc.id} query {text_value!r}."
+                        )
+                    allowed_scopes = _normalize_allowed_scopes(
+                        allowed_scopes_raw if isinstance(allowed_scopes_raw, list) else None
+                    )
+                    queries.append(
+                        BenchmarkQuery(
+                            text=text_value,
+                            relevant_ids=relevant_ids,
+                            current_scope=current_scope,
+                            scope_id=scope_id,
+                            allowed_scopes=allowed_scopes,
+                        )
+                    )
+                else:
+                    text_value = str(raw_query).strip()
+                    if text_value:
+                        queries.append(
+                            BenchmarkQuery(
+                                text=text_value,
+                                relevant_ids={doc.id},
+                                current_scope=doc.scope,
+                                scope_id=doc.scope_id,
+                            )
+                        )
+        return queries
+
+    payload = json.loads(text)
+    if not isinstance(payload, list):
+        raise ValueError("JSON dataset must be a list of objects.")
+    for item in payload:
+        if not isinstance(item, dict):
+            continue
+        doc_id = str(item.get("id", ""))
+        doc = doc_by_id.get(doc_id)
+        if doc is None:
+            continue
+        raw_queries = item.get("queries", [])
+        if not isinstance(raw_queries, list):
+            _append_doc_default_queries(doc)
+            continue
+        for raw_query in raw_queries:
+            if isinstance(raw_query, dict):
+                text_value = str(raw_query.get("text", "")).strip()
+                if not text_value:
+                    continue
+                relevant_ids_raw = raw_query.get("relevant_ids", [doc.id])
+                if not isinstance(relevant_ids_raw, list):
+                    raise ValueError(f"relevant_ids must be a list for document {doc.id}.")
+                relevant_ids = {str(value) for value in relevant_ids_raw if str(value).strip()}
+                if not relevant_ids:
+                    relevant_ids = {doc.id}
+                current_scope = _normalize_scope(str(raw_query.get("current_scope", doc.scope)))
+                scope_id_value = raw_query.get("scope_id", doc.scope_id)
+                scope_id = str(scope_id_value) if scope_id_value is not None else None
+                scope_id = _normalize_scope_id(current_scope, scope_id)
+                allowed_scopes_raw = raw_query.get("allowed_scopes")
+                if allowed_scopes_raw is not None and not isinstance(allowed_scopes_raw, list):
+                    raise ValueError(
+                        f"allowed_scopes must be a list for document {doc.id} query {text_value!r}."
+                    )
+                allowed_scopes = _normalize_allowed_scopes(
+                    allowed_scopes_raw if isinstance(allowed_scopes_raw, list) else None
+                )
+                queries.append(
+                    BenchmarkQuery(
+                        text=text_value,
+                        relevant_ids=relevant_ids,
+                        current_scope=current_scope,
+                        scope_id=scope_id,
+                        allowed_scopes=allowed_scopes,
+                    )
+                )
+            else:
+                text_value = str(raw_query).strip()
+                if text_value:
+                    queries.append(
+                        BenchmarkQuery(
+                            text=text_value,
+                            relevant_ids={doc.id},
+                            current_scope=doc.scope,
+                            scope_id=doc.scope_id,
+                        )
+                    )
+    return queries
 
 
 def load_documents(dataset_path: Path) -> list[BenchmarkDocument]:
@@ -298,7 +524,9 @@ async def _run_engine_roundtrip(
                 role="user",
                 content=doc.content,
                 metadata={"source": "benchmark", "benchmark_id": doc.id},
-            )
+            ),
+            scope=doc.scope,
+            scope_id=doc.scope_id,
         )
         if not result.stored or result.chunk is None:
             raise RuntimeError(f"Engine failed to store benchmark document: {doc.id}")
@@ -310,11 +538,21 @@ async def _run_engine_roundtrip(
 
     for query in queries:
         start = time.perf_counter()
-        chunks = await engine.retrieve(query.text, top_k=top_k, reconsolidate=False)
+        chunks = await engine.retrieve(
+            query.text,
+            top_k=top_k,
+            reconsolidate=False,
+            current_scope=query.current_scope,
+            scope_id=query.scope_id,
+            allowed_scopes=query.allowed_scopes,
+        )
         elapsed_ms = (time.perf_counter() - start) * 1000.0
         latencies_ms.append(elapsed_ms)
         retrieved_ids.append([chunk.id for chunk in chunks])
-        relevant_ids.append({id_map[doc_id] for doc_id in query.relevant_ids})
+        mapped_relevant_ids = {id_map[doc_id] for doc_id in query.relevant_ids if doc_id in id_map}
+        if not mapped_relevant_ids:
+            raise RuntimeError(f"Query {query.text!r} has no mapped relevant IDs.")
+        relevant_ids.append(mapped_relevant_ids)
 
     return id_map, retrieved_ids, relevant_ids, latencies_ms
 
@@ -435,6 +673,8 @@ def run_retrieval_benchmark(
     qdrant_api_key: str | None = None,
     qdrant_path: Path | None = None,
     qdrant_collection: str = "mnemos_benchmark",
+    queries: list[BenchmarkQuery] | None = None,
+    baseline_scope_aware: bool = False,
 ) -> dict[str, Any]:
     """Run one benchmark pass for one storage backend and retriever mode."""
     if top_k <= 0:
@@ -444,9 +684,9 @@ def run_retrieval_benchmark(
     if retriever not in {"baseline", "engine"}:
         raise ValueError("retriever must be 'baseline' or 'engine'.")
 
-    queries = build_queries(documents)
+    benchmark_queries = queries or build_queries(documents)
     if query_limit is not None and query_limit > 0:
-        queries = queries[:query_limit]
+        benchmark_queries = benchmark_queries[:query_limit]
 
     _cleanup_local_store_artifacts(store_type, sqlite_path, qdrant_path)
     embedder = build_embedder_from_env(default_provider="simple")
@@ -478,24 +718,33 @@ def run_retrieval_benchmark(
         for doc, embedding in zip(documents, document_embeddings):
             store_id = _benchmark_store_id(doc.id)
             id_map[doc.id] = store_id
+            metadata: dict[str, Any] = {"source": "benchmark", "scope": doc.scope}
+            if doc.scope_id is not None:
+                metadata["scope_id"] = doc.scope_id
             store.store(
                 MemoryChunk(
                     id=store_id,
                     content=doc.content,
                     embedding=embedding,
-                    metadata={"source": "benchmark"},
+                    metadata=metadata,
                 )
             )
         ingest_seconds = time.perf_counter() - ingest_start
 
-        for query in queries:
+        for query in benchmark_queries:
             start = time.perf_counter()
             query_embedding = embedder.embed(query.text)
-            chunks = store.retrieve(query_embedding, top_k=top_k)
+            scope_filter = _scope_filter_for_query(query) if baseline_scope_aware else None
+            chunks = store.retrieve(query_embedding, top_k=top_k, filter_fn=scope_filter)
             elapsed_ms = (time.perf_counter() - start) * 1000.0
             latencies_ms.append(elapsed_ms)
             retrieved_ids.append([chunk.id for chunk in chunks])
-            relevant_ids.append({id_map[doc_id] for doc_id in query.relevant_ids})
+            mapped_relevant_ids = {
+                id_map[doc_id] for doc_id in query.relevant_ids if doc_id in id_map
+            }
+            if not mapped_relevant_ids:
+                raise RuntimeError(f"Query {query.text!r} has no mapped relevant IDs.")
+            relevant_ids.append(mapped_relevant_ids)
     else:
         engine = MnemosEngine(
             config=MnemosConfig(
@@ -510,7 +759,7 @@ def run_retrieval_benchmark(
             _run_engine_roundtrip(
                 engine=engine,
                 documents=documents,
-                queries=queries,
+                queries=benchmark_queries,
                 top_k=top_k,
             )
         )
@@ -628,6 +877,11 @@ def main() -> None:
         default=1.0,
         help="Minimum baseline latency denominator used when computing p95 ratio.",
     )
+    parser.add_argument(
+        "--baseline-scope-aware",
+        action="store_true",
+        help="Apply query scope filters to baseline retriever (disabled by default).",
+    )
     args = parser.parse_args()
 
     if args.dataset and args.dataset_pack:
@@ -647,20 +901,25 @@ def main() -> None:
     qdrant_api_key = args.qdrant_api_key or None
 
     if args.dataset_pack:
-        dataset_runs = [
-            (name, load_documents(path)) for name, path in _resolve_dataset_pack(args.dataset_pack)
-        ]
+        dataset_runs = []
+        for name, path in _resolve_dataset_pack(args.dataset_pack):
+            docs = load_documents(path)
+            queries = _load_queries(path, docs)
+            dataset_runs.append((name, docs, queries))
         dataset_label = args.dataset_pack
     elif args.dataset:
         dataset_path = Path(args.dataset)
-        dataset_runs = [(dataset_path.stem, load_documents(dataset_path))]
+        docs = load_documents(dataset_path)
+        queries = _load_queries(dataset_path, docs)
+        dataset_runs = [(dataset_path.stem, docs, queries)]
         dataset_label = args.dataset
     else:
-        dataset_runs = [("built-in", default_benchmark_documents())]
+        docs = default_benchmark_documents()
+        dataset_runs = [("built-in", docs, build_queries(docs))]
         dataset_label = "built-in"
 
     results: list[dict[str, Any]] = []
-    for dataset_name, documents in dataset_runs:
+    for dataset_name, documents, benchmark_queries in dataset_runs:
         for store_type in store_types:
             for retriever in retrievers:
                 result = run_retrieval_benchmark(
@@ -674,6 +933,8 @@ def main() -> None:
                     qdrant_api_key=qdrant_api_key,
                     qdrant_path=qdrant_path,
                     qdrant_collection=args.qdrant_collection,
+                    queries=benchmark_queries,
+                    baseline_scope_aware=args.baseline_scope_aware,
                 )
                 result["dataset"] = dataset_name
                 results.append(result)
