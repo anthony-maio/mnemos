@@ -1,3 +1,4 @@
+# mypy: disable-error-code=untyped-decorator
 """
 mnemos/mcp_server.py — Model Context Protocol (MCP) server for Mnemos.
 

@@ -9,6 +9,7 @@ Measures retrieval quality and latency with metrics:
 
 from __future__ import annotations
 
+import asyncio
 import argparse
 import json
 import shutil
@@ -19,8 +20,11 @@ from typing import Any
 
 import numpy as np
 
+from .config import MnemosConfig, MutableRAGConfig, SurprisalConfig
+from .engine import MnemosEngine
 from .runtime import build_embedder_from_env
-from .types import MemoryChunk
+from .types import Interaction, MemoryChunk
+from .utils.llm import MockLLMProvider
 from .utils.storage import InMemoryStore, MemoryStore, QdrantStore, SQLiteStore
 
 
@@ -252,9 +256,88 @@ def _build_store(
     raise ValueError(f"Unsupported store type: {store_type!r}")
 
 
+def _close_store(store: MemoryStore) -> None:
+    close_fn = getattr(store, "close", None)
+    if callable(close_fn):
+        close_fn()
+
+
+async def _run_engine_roundtrip(
+    *,
+    engine: MnemosEngine,
+    documents: list[BenchmarkDocument],
+    queries: list[BenchmarkQuery],
+    top_k: int,
+) -> tuple[dict[str, str], list[list[str]], list[set[str]], list[float]]:
+    id_map: dict[str, str] = {}
+    for doc in documents:
+        result = await engine.process(
+            Interaction(
+                role="user",
+                content=doc.content,
+                metadata={"source": "benchmark", "benchmark_id": doc.id},
+            )
+        )
+        if not result.stored or result.chunk is None:
+            raise RuntimeError(f"Engine failed to store benchmark document: {doc.id}")
+        id_map[doc.id] = result.chunk.id
+
+    retrieved_ids: list[list[str]] = []
+    relevant_ids: list[set[str]] = []
+    latencies_ms: list[float] = []
+
+    for query in queries:
+        start = time.perf_counter()
+        chunks = await engine.retrieve(query.text, top_k=top_k, reconsolidate=False)
+        elapsed_ms = (time.perf_counter() - start) * 1000.0
+        latencies_ms.append(elapsed_ms)
+        retrieved_ids.append([chunk.id for chunk in chunks])
+        relevant_ids.append({id_map[doc_id] for doc_id in query.relevant_ids})
+
+    return id_map, retrieved_ids, relevant_ids, latencies_ms
+
+
+def _build_comparisons(results: list[dict[str, Any]]) -> list[dict[str, Any]]:
+    by_store: dict[str, dict[str, dict[str, Any]]] = {}
+    for result in results:
+        store_type = str(result.get("store_type", ""))
+        retriever = str(result.get("retriever", ""))
+        by_store.setdefault(store_type, {})[retriever] = result
+
+    comparisons: list[dict[str, Any]] = []
+    for store_type, store_results in by_store.items():
+        baseline = store_results.get("baseline")
+        engine = store_results.get("engine")
+        if baseline is None or engine is None:
+            continue
+
+        comparisons.append(
+            {
+                "store_type": store_type,
+                "baseline": {
+                    "recall_at_k": baseline["recall_at_k"],
+                    "mrr": baseline["mrr"],
+                    "latency_p95_ms": baseline["latency_p95_ms"],
+                },
+                "engine": {
+                    "recall_at_k": engine["recall_at_k"],
+                    "mrr": engine["mrr"],
+                    "latency_p95_ms": engine["latency_p95_ms"],
+                },
+                "delta_engine_minus_baseline": {
+                    "recall_at_k": engine["recall_at_k"] - baseline["recall_at_k"],
+                    "mrr": engine["mrr"] - baseline["mrr"],
+                    "latency_p95_ms": engine["latency_p95_ms"] - baseline["latency_p95_ms"],
+                },
+            }
+        )
+    return comparisons
+
+
 def run_retrieval_benchmark(
     *,
     store_type: str,
+    retriever: str = "baseline",
     top_k: int,
     documents: list[BenchmarkDocument],
     query_limit: int | None = None,
@@ -264,23 +347,24 @@ def run_retrieval_benchmark(
     qdrant_path: Path | None = None,
     qdrant_collection: str = "mnemos_benchmark",
 ) -> dict[str, Any]:
-    """Run one benchmark pass for a single storage backend."""
+    """Run one benchmark pass for one storage backend and retriever mode."""
     if top_k <= 0:
         raise ValueError("top_k must be > 0")
     if not documents:
         raise ValueError("Benchmark requires at least one document.")
+    if retriever not in {"baseline", "engine"}:
+        raise ValueError("retriever must be 'baseline' or 'engine'.")
 
     queries = build_queries(documents)
     if query_limit is not None and query_limit > 0:
         queries = queries[:query_limit]
 
+    _cleanup_local_store_artifacts(store_type, sqlite_path, qdrant_path)
     embedder = build_embedder_from_env(default_provider="simple")
     document_embeddings = embedder.embed_batch([doc.content for doc in documents])
-    query_embeddings = embedder.embed_batch([query.text for query in queries])
     if not document_embeddings:
         raise ValueError("Unable to generate document embeddings.")
 
-    _cleanup_local_store_artifacts(store_type, sqlite_path, qdrant_path)
     store = _build_store(
         store_type=store_type,
         sqlite_path=sqlite_path,
@@ -292,29 +376,49 @@ def run_retrieval_benchmark(
     )
 
     ingest_start = time.perf_counter()
-    for doc, embedding in zip(documents, document_embeddings):
-        store.store(
-            MemoryChunk(
-                id=doc.id,
-                content=doc.content,
-                embedding=embedding,
-                metadata={"source": "benchmark"},
-            )
-        )
-    ingest_seconds = time.perf_counter() - ingest_start
-
     retrieved_ids: list[list[str]] = []
     relevant_ids: list[set[str]] = []
     latencies_ms: list[float] = []
 
-    for query, query_embedding in zip(queries, query_embeddings):
-        start = time.perf_counter()
-        chunks = store.retrieve(query_embedding, top_k=top_k)
-        elapsed_ms = (time.perf_counter() - start) * 1000.0
+    if retriever == "baseline":
+        query_embeddings = embedder.embed_batch([query.text for query in queries])
+        for doc, embedding in zip(documents, document_embeddings):
+            store.store(
+                MemoryChunk(
+                    id=doc.id,
+                    content=doc.content,
+                    embedding=embedding,
+                    metadata={"source": "benchmark"},
+                )
+            )
+        ingest_seconds = time.perf_counter() - ingest_start
 
-        latencies_ms.append(elapsed_ms)
-        retrieved_ids.append([chunk.id for chunk in chunks])
-        relevant_ids.append(query.relevant_ids)
+        for query, query_embedding in zip(queries, query_embeddings):
+            start = time.perf_counter()
+            chunks = store.retrieve(query_embedding, top_k=top_k)
+            elapsed_ms = (time.perf_counter() - start) * 1000.0
+            latencies_ms.append(elapsed_ms)
+            retrieved_ids.append([chunk.id for chunk in chunks])
+            relevant_ids.append(query.relevant_ids)
+    else:
+        engine = MnemosEngine(
+            config=MnemosConfig(
+                surprisal=SurprisalConfig(threshold=0.0, min_content_length=0),
+                mutable_rag=MutableRAGConfig(enabled=False),
+            ),
+            llm=MockLLMProvider(),
+            embedder=embedder,
+            store=store,
+        )
+        _, retrieved_ids, relevant_ids, latencies_ms = asyncio.run(
+            _run_engine_roundtrip(
+                engine=engine,
+                documents=documents,
+                queries=queries,
+                top_k=top_k,
+            )
+        )
+        ingest_seconds = time.perf_counter() - ingest_start
 
     metrics = compute_retrieval_metrics(
         retrieved_ids=retrieved_ids,
@@ -325,6 +429,7 @@ def run_retrieval_benchmark(
 
     result = {
         "store_type": store_type,
+        "retriever": retriever,
         "top_k": top_k,
         "document_count": len(documents),
         "query_count": int(metrics["query_count"]),
@@ -336,11 +441,7 @@ def run_retrieval_benchmark(
         "store_stats": store.get_stats(),
     }
 
-    if hasattr(store, "close"):
-        close_fn = getattr(store, "close")
-        if callable(close_fn):
-            close_fn()
-
+    _close_store(store)
     return result
 
 
@@ -353,6 +454,11 @@ def main() -> None:
         "--stores",
         default="memory,sqlite",
         help="Comma-separated store backends to benchmark (memory,sqlite,qdrant).",
+    )
+    parser.add_argument(
+        "--retrievers",
+        default="baseline,engine",
+        help="Comma-separated retriever modes to benchmark (baseline,engine).",
     )
     parser.add_argument("--top-k", type=int, default=5, help="k for Recall@k/MRR (default: 5).")
     parser.add_argument(
@@ -407,6 +513,9 @@ def main() -> None:
     store_types = [item.strip().lower() for item in args.stores.split(",") if item.strip()]
     if not store_types:
         raise ValueError("No store types provided.")
+    retrievers = [item.strip().lower() for item in args.retrievers.split(",") if item.strip()]
+    if not retrievers:
+        raise ValueError("No retrievers provided.")
 
     query_limit = args.query_limit if args.query_limit > 0 else None
     sqlite_path = Path(args.sqlite_path) if args.sqlite_path else None
@@ -414,27 +523,33 @@ def main() -> None:
     qdrant_url = args.qdrant_url or None
     qdrant_api_key = args.qdrant_api_key or None
 
-    results = []
+    results: list[dict[str, Any]] = []
     for store_type in store_types:
-        results.append(
-            run_retrieval_benchmark(
-                store_type=store_type,
-                top_k=args.top_k,
-                documents=documents,
-                query_limit=query_limit,
-                sqlite_path=sqlite_path,
-                qdrant_url=qdrant_url,
-                qdrant_api_key=qdrant_api_key,
-                qdrant_path=qdrant_path,
-                qdrant_collection=args.qdrant_collection,
+        for retriever in retrievers:
+            results.append(
+                run_retrieval_benchmark(
+                    store_type=store_type,
+                    retriever=retriever,
+                    top_k=args.top_k,
+                    documents=documents,
+                    query_limit=query_limit,
+                    sqlite_path=sqlite_path,
+                    qdrant_url=qdrant_url,
+                    qdrant_api_key=qdrant_api_key,
+                    qdrant_path=qdrant_path,
+                    qdrant_collection=args.qdrant_collection,
+                )
             )
-        )
+
+    comparisons = _build_comparisons(results)
 
     report = {
         "dataset": args.dataset or "built-in",
         "stores": store_types,
+        "retrievers": retrievers,
         "top_k": args.top_k,
         "results": results,
+        "comparisons": comparisons,
     }
 
     rendered = json.dumps(report, indent=2)

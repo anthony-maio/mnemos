@@ -531,13 +531,13 @@ pip install 'mnemos-memory[all]'
 Run reproducible retrieval benchmarks with `Recall@k`, `MRR`, and `p95` latency:
 
 ```bash
-mnemos-benchmark --stores memory,sqlite,qdrant --top-k 5
+mnemos-benchmark --stores memory,sqlite,qdrant --retrievers baseline,engine --top-k 5
 ```
 
 You can provide a custom dataset (`.json` or `.jsonl`) with `id`, `content`, and `queries`:
 
 ```bash
-mnemos-benchmark --stores qdrant --dataset ./benchmarks/retrieval.jsonl --top-k 10
+mnemos-benchmark --stores qdrant --retrievers baseline,engine --dataset ./benchmarks/retrieval.jsonl --top-k 10
 ```
 
 ## Production Checklist

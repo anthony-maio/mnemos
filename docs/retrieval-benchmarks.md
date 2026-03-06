@@ -1,6 +1,6 @@
 # Retrieval Benchmarking
 
-Mnemos ships a benchmark harness via `mnemos-benchmark` to measure retrieval quality and latency across storage backends.
+Mnemos ships a benchmark harness via `mnemos-benchmark` to measure retrieval quality and latency across storage backends and retrieval modes.
 
 ## Metrics
 
@@ -11,8 +11,17 @@ Mnemos ships a benchmark harness via `mnemos-benchmark` to measure retrieval qua
 ## Quick Start
 
 ```bash
-mnemos-benchmark --stores memory,sqlite,qdrant --top-k 5
+mnemos-benchmark --stores memory,sqlite,qdrant --retrievers baseline,engine --top-k 5
 ```
+
+Retriever modes:
+- `baseline`: direct vector retrieval from the store (`store.retrieve`)
+- `engine`: full Mnemos retrieval path (`MnemosEngine.retrieve`)
+
+The report includes a `comparisons` section with per-store deltas:
+- `delta_engine_minus_baseline.recall_at_k`
+- `delta_engine_minus_baseline.mrr`
+- `delta_engine_minus_baseline.latency_p95_ms`
 
 This command uses the built-in benchmark dataset.
 
@@ -39,7 +48,7 @@ Example:
 Run:
 
 ```bash
-mnemos-benchmark --stores qdrant --dataset ./benchmarks/retrieval.json --top-k 10
+mnemos-benchmark --stores qdrant --retrievers baseline,engine --dataset ./benchmarks/retrieval.json --top-k 10
 ```
 
 ## Qdrant Notes
