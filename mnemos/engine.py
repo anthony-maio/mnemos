@@ -26,6 +26,8 @@ from __future__ import annotations
 
 import asyncio
 import logging
+import time
+from datetime import datetime, timezone
 from typing import Any
 
 from .config import MnemosConfig
@@ -35,6 +37,7 @@ from .modules.sleep import SleepDaemon
 from .modules.spreading import SpreadingActivation
 from .modules.surprisal import SurprisalGate
 from .types import ConsolidationResult, Interaction, MemoryChunk, ProcessResult
+from .observability import log_event
 from .utils.embeddings import EmbeddingProvider, cosine_similarity
 from .utils.llm import LLMProvider
 from .utils.storage import MemoryStore
@@ -242,6 +245,8 @@ class MnemosEngine:
         Returns:
             Top-k MemoryChunks ranked by affective blended score.
         """
+        start = time.perf_counter()
+
         # Step 1: Classify affective state of the query
         query_interaction = Interaction(role="user", content=query)
         current_state = await self.affective_router.classify_state(query_interaction)
@@ -255,6 +260,10 @@ class MnemosEngine:
 
         # Gather IDs of activated nodes to boost them in final scoring
         activated_ids: set[str] = {node.id for node in activated_nodes}
+        query_lower = query.lower()
+        recency_hint = any(
+            token in query_lower for token in ("current", "now", "latest", "today", "recent")
+        )
 
         # Step 3: AffectiveRouter — retrieve and re-rank from store
         affective_chunks = await self.affective_router.retrieve(
@@ -264,15 +273,37 @@ class MnemosEngine:
             top_k=top_k * 2,  # Slightly larger pool
         )
 
+        # Always include direct semantic retrieval candidates so engine retrieval
+        # never underperforms plain vector lookup by candidate omission.
+        baseline_chunks = self._store.retrieve(query_embedding, top_k=top_k * 4)
+
         # Merge activated nodes: boost chunks that appear in activation graph
         chunk_scores: dict[str, tuple[float, MemoryChunk]] = {}
+        now = datetime.now(timezone.utc)
+        for i, chunk in enumerate(baseline_chunks):
+            semantic_rank_score = 1.0 - (i / max(len(baseline_chunks), 1))
+            base_score = 0.9 * semantic_rank_score
+            if recency_hint:
+                age_seconds = max((now - chunk.updated_at).total_seconds(), 0.0)
+                recency_weight = 1.0 / (1.0 + (age_seconds / 86400.0))
+                base_score = (0.35 * semantic_rank_score) + (0.85 * recency_weight)
+            chunk_scores[chunk.id] = (base_score, chunk)
+
         for i, chunk in enumerate(affective_chunks):
             # Base score: inverse rank from affective retrieval
-            base_score = 1.0 - (i / max(len(affective_chunks), 1))
+            base_score = 0.4 * (1.0 - (i / max(len(affective_chunks), 1)))
             # Activation boost: chunks in the spreading graph get a 20% boost
             if chunk.id in activated_ids:
                 base_score *= 1.2
-            chunk_scores[chunk.id] = (base_score, chunk)
+            if recency_hint:
+                age_seconds = max((now - chunk.updated_at).total_seconds(), 0.0)
+                recency_weight = 1.0 / (1.0 + (age_seconds / 86400.0))
+                base_score += 0.35 * recency_weight
+            existing = chunk_scores.get(chunk.id)
+            if existing is None:
+                chunk_scores[chunk.id] = (base_score, chunk)
+            else:
+                chunk_scores[chunk.id] = (existing[0] + base_score, chunk)
 
         # Also include any activated nodes not in the affective results
         missing_ids = activated_ids - set(chunk_scores.keys())
@@ -291,6 +322,14 @@ class MnemosEngine:
             key=lambda x: x[0],
             reverse=True,
         )
+        if recency_hint and len(sorted_chunks) > 1:
+            head_count = min(len(sorted_chunks), max(top_k * 2, 2))
+            recency_head = sorted(
+                sorted_chunks[:head_count],
+                key=lambda x: x[1].updated_at,
+                reverse=True,
+            )
+            sorted_chunks = recency_head + sorted_chunks[head_count:]
         final_chunks = [chunk for _, chunk in sorted_chunks[:top_k]]
 
         # Step 4: MutableRAG — flag as labile and optionally reconsolidate
@@ -306,6 +345,15 @@ class MnemosEngine:
             logger.debug(
                 f"[MnemosEngine] Retrieved {len(final_chunks)} chunks for query: {query!r}"
             )
+
+        latency_ms = (time.perf_counter() - start) * 1000.0
+        log_event(
+            "mnemos.retrieval_latency",
+            latency_ms=round(latency_ms, 3),
+            result_count=len(final_chunks),
+            top_k=top_k,
+            store_backend=self._store.get_stats().get("backend", "unknown"),
+        )
 
         return final_chunks
 

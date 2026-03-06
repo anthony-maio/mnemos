@@ -12,6 +12,7 @@ MCP Tools provided:
   - mnemos_consolidate: Trigger sleep consolidation (episodic → semantic)
   - mnemos_forget:      Delete a specific memory by ID
   - mnemos_stats:       Get system statistics across all modules
+  - mnemos_health:      Profile readiness and dependency diagnostics
   - mnemos_inspect:     Inspect a specific memory chunk by ID
   - mnemos_list:        List all stored memories (with optional limit)
 
@@ -63,6 +64,8 @@ from typing import Any
 
 from .config import MnemosConfig, SurprisalConfig
 from .engine import MnemosEngine
+from .health import run_health_checks
+from .observability import configure_logging, log_event
 from .runtime import build_embedder_from_env, build_store_from_env
 from .types import Interaction
 from .utils.embeddings import EmbeddingProvider
@@ -169,12 +172,30 @@ def create_mcp_server() -> Any:
     @asynccontextmanager
     async def mnemos_lifespan(server: FastMCP) -> AsyncIterator[MnemosContext]:
         """Initialize the MnemosEngine on startup, clean up on shutdown."""
+        _ = server
         engine = MnemosEngine(
             config=_build_config(),
             llm=_build_llm_provider(),
             embedder=_build_embedder(),
             store=_build_store(),
         )
+        health = run_health_checks(default_store_type="memory")
+        log_event(
+            "mnemos.startup",
+            transport="mcp_stdio",
+            status=health["status"],
+            profile=health["profile"],
+            store_type=health["store_type"],
+            llm_provider=health["llm_provider"],
+            embedding_provider=health["embedding_provider"],
+        )
+        if health["status"] != "ready":
+            log_event(
+                "mnemos.degraded_mode",
+                transport="mcp_stdio",
+                status=health["status"],
+                summary=health["summary"],
+            )
         try:
             yield MnemosContext(engine=engine)
         finally:
@@ -362,6 +383,21 @@ def create_mcp_server() -> Any:
         return json.dumps(_clean(stats), indent=2)
 
     @mcp.tool()
+    async def mnemos_health(ctx: Any = None) -> str:
+        """Run profile readiness diagnostics and dependency checks.
+
+        Returns:
+            JSON health report including status, checks, and recommendations.
+        """
+        engine: MnemosEngine = ctx.request_context.lifespan_context.engine
+        report = run_health_checks(default_store_type="memory")
+        report["runtime"] = {
+            "store_backend": engine.store.get_stats().get("backend", "unknown"),
+            "total_chunks": engine.store.get_stats().get("total_chunks", 0),
+        }
+        return json.dumps(report, indent=2)
+
+    @mcp.tool()
     async def mnemos_inspect(chunk_id: str, ctx: Any = None) -> str:
         """Inspect a specific memory chunk by its ID.
 
@@ -521,6 +557,7 @@ def create_mcp_server() -> Any:
 
 def main() -> None:
     """Run the MCP server via stdio transport (for Claude Code, Cursor, etc.)."""
+    configure_logging()
     mcp = create_mcp_server()
     mcp.run(transport="stdio")
 

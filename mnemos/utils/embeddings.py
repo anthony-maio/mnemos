@@ -17,6 +17,7 @@ For production, swap in a proper sentence-transformer or embedding API provider.
 from __future__ import annotations
 
 import hashlib
+import logging
 import math
 import re
 from abc import ABC, abstractmethod
@@ -25,6 +26,9 @@ from typing import Any
 
 import httpx
 import numpy as np
+
+from ..observability import log_event
+from .reliability import RetryPolicy, call_with_retry, is_retryable_http_exception
 
 
 class EmbeddingProvider(ABC):
@@ -274,42 +278,74 @@ class OllamaEmbeddingProvider(EmbeddingProvider):
     def embed(self, text: str) -> list[float]:
         # Prefer modern /api/embed endpoint.
         try:
-            response = httpx.post(
-                f"{self.base_url}/api/embed",
-                json={"model": self.model, "input": text},
-                timeout=self.timeout,
+            return call_with_retry(
+                provider="ollama",
+                operation="embed",
+                policy=RetryPolicy(),
+                should_retry=is_retryable_http_exception,
+                fn=lambda: self._parse_vector(
+                    _http_post_json(
+                        f"{self.base_url}/api/embed",
+                        payload={"model": self.model, "input": text},
+                        timeout=self.timeout,
+                    )
+                ),
             )
-            response.raise_for_status()
-            return self._parse_vector(response.json())
         except Exception:
             # Fallback for older Ollama servers.
-            response = httpx.post(
-                f"{self.base_url}/api/embeddings",
-                json={"model": self.model, "prompt": text},
-                timeout=self.timeout,
-            )
-            response.raise_for_status()
-            return self._parse_vector(response.json())
+            try:
+                return call_with_retry(
+                    provider="ollama",
+                    operation="embed_legacy",
+                    policy=RetryPolicy(),
+                    should_retry=is_retryable_http_exception,
+                    fn=lambda: self._parse_vector(
+                        _http_post_json(
+                            f"{self.base_url}/api/embeddings",
+                            payload={"model": self.model, "prompt": text},
+                            timeout=self.timeout,
+                        )
+                    ),
+                )
+            except Exception as exc:
+                log_event(
+                    "mnemos.provider_failure",
+                    level=logging.ERROR,
+                    provider="ollama",
+                    operation="embed",
+                    error=str(exc),
+                )
+                raise
 
     def embed_batch(self, texts: list[str]) -> list[list[float]]:
         if not texts:
             return []
 
         try:
-            response = httpx.post(
-                f"{self.base_url}/api/embed",
-                json={"model": self.model, "input": texts},
-                timeout=self.timeout,
+            payload = call_with_retry(
+                provider="ollama",
+                operation="embed_batch",
+                policy=RetryPolicy(),
+                should_retry=is_retryable_http_exception,
+                fn=lambda: _http_post_json(
+                    f"{self.base_url}/api/embed",
+                    payload={"model": self.model, "input": texts},
+                    timeout=self.timeout,
+                ),
             )
-            response.raise_for_status()
-            payload = response.json()
             embeddings = payload.get("embeddings")
             if isinstance(embeddings, list) and embeddings:
                 vectors = [[float(x) for x in row] for row in embeddings]
                 self._dim = len(vectors[0])
                 return vectors
-        except Exception:
-            pass
+        except Exception as exc:
+            log_event(
+                "mnemos.provider_failure",
+                level=logging.ERROR,
+                provider="ollama",
+                operation="embed_batch",
+                error=str(exc),
+            )
 
         # Graceful fallback if batch endpoint is unavailable.
         return [self.embed(text) for text in texts]
@@ -357,39 +393,97 @@ class OpenAIEmbeddingProvider(EmbeddingProvider):
         return vector
 
     def embed(self, text: str) -> list[float]:
-        response = httpx.post(
-            f"{self.base_url}/embeddings",
-            json={
-                "model": self.model,
-                "input": text,
-            },
-            headers=self._headers(),
-            timeout=self.timeout,
-        )
-        response.raise_for_status()
-        return self._parse_single(response.json())
+        provider_name = "openclaw" if "openclaw" in self.base_url.lower() else "openai"
+        try:
+            payload = call_with_retry(
+                provider=provider_name,
+                operation="embed",
+                policy=RetryPolicy(),
+                should_retry=is_retryable_http_exception,
+                fn=lambda: _http_post_json(
+                    f"{self.base_url}/embeddings",
+                    payload={
+                        "model": self.model,
+                        "input": text,
+                    },
+                    timeout=self.timeout,
+                    headers=self._headers(),
+                ),
+            )
+            return self._parse_single(payload)
+        except Exception as exc:
+            log_event(
+                "mnemos.provider_failure",
+                level=logging.ERROR,
+                provider=provider_name,
+                operation="embed",
+                error=str(exc),
+            )
+            raise
 
     def embed_batch(self, texts: list[str]) -> list[list[float]]:
         if not texts:
             return []
+        provider_name = "openclaw" if "openclaw" in self.base_url.lower() else "openai"
+        try:
+            payload = call_with_retry(
+                provider=provider_name,
+                operation="embed_batch",
+                policy=RetryPolicy(),
+                should_retry=is_retryable_http_exception,
+                fn=lambda: _http_post_json(
+                    f"{self.base_url}/embeddings",
+                    payload={
+                        "model": self.model,
+                        "input": texts,
+                    },
+                    timeout=self.timeout,
+                    headers=self._headers(),
+                ),
+            )
+            data = payload.get("data")
+            if not isinstance(data, list):
+                raise ValueError("OpenAI embedding response missing data.")
+            vectors = [[float(x) for x in item["embedding"]] for item in data]
+            if vectors:
+                self._dim = len(vectors[0])
+            return vectors
+        except Exception as exc:
+            log_event(
+                "mnemos.provider_failure",
+                level=logging.ERROR,
+                provider=provider_name,
+                operation="embed_batch",
+                error=str(exc),
+            )
+            raise
+
+
+def _http_post_json(
+    url: str,
+    *,
+    payload: dict[str, Any],
+    timeout: float,
+    headers: dict[str, str] | None = None,
+) -> dict[str, Any]:
+    if headers is None:
         response = httpx.post(
-            f"{self.base_url}/embeddings",
-            json={
-                "model": self.model,
-                "input": texts,
-            },
-            headers=self._headers(),
-            timeout=self.timeout,
+            url,
+            json=payload,
+            timeout=timeout,
         )
-        response.raise_for_status()
-        payload = response.json()
-        data = payload.get("data")
-        if not isinstance(data, list):
-            raise ValueError("OpenAI embedding response missing data.")
-        vectors = [[float(x) for x in item["embedding"]] for item in data]
-        if vectors:
-            self._dim = len(vectors[0])
-        return vectors
+    else:
+        response = httpx.post(
+            url,
+            json=payload,
+            headers=headers,
+            timeout=timeout,
+        )
+    response.raise_for_status()
+    raw = response.json()
+    if not isinstance(raw, dict):
+        raise ValueError("Embedding API response must be a JSON object.")
+    return raw
 
 
 def cosine_similarity(a: list[float], b: list[float]) -> float:

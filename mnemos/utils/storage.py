@@ -21,15 +21,20 @@ Both implement the same interface, so you can swap them transparently.
 from __future__ import annotations
 
 import json
+import logging
 import sqlite3
 import threading
 from abc import ABC, abstractmethod
 from collections.abc import Callable
 from datetime import datetime, timezone
-from typing import Any
+from typing import Any, TypeVar
 
 from ..types import CognitiveState, MemoryChunk
+from ..observability import log_event
 from .embeddings import cosine_similarity
+from .reliability import RetryPolicy, call_with_retry, is_retryable_qdrant_exception
+
+T = TypeVar("T")
 
 
 class MemoryStore(ABC):
@@ -498,6 +503,7 @@ class QdrantStore(MemoryStore):
         self.name = name
         self._vector_size = vector_size
         self._lock = threading.RLock()
+        self._retry_policy = RetryPolicy()
 
         try:
             from qdrant_client import QdrantClient, models
@@ -520,20 +526,50 @@ class QdrantStore(MemoryStore):
         if self._vector_size is not None:
             self._ensure_collection(self._vector_size)
 
+    def _call_client(self, operation: str, fn: Callable[[], T]) -> T:
+        try:
+            return call_with_retry(
+                provider="qdrant",
+                operation=operation,
+                fn=fn,
+                policy=self._retry_policy,
+                should_retry=is_retryable_qdrant_exception,
+            )
+        except Exception as exc:
+            log_event(
+                "mnemos.provider_failure",
+                level=logging.ERROR,
+                provider="qdrant",
+                operation=operation,
+                error=str(exc),
+            )
+            raise
+
     def _collection_exists(self) -> bool:
         with self._lock:
             try:
-                return bool(self._client.collection_exists(self.collection_name))
+                return bool(
+                    self._call_client(
+                        "collection_exists",
+                        lambda: self._client.collection_exists(self.collection_name),
+                    )
+                )
             except Exception:
                 try:
-                    self._client.get_collection(self.collection_name)
+                    self._call_client(
+                        "get_collection",
+                        lambda: self._client.get_collection(self.collection_name),
+                    )
                     return True
                 except Exception:
                     return False
 
     def _extract_vector_size(self) -> int | None:
         try:
-            info = self._client.get_collection(self.collection_name)
+            info = self._call_client(
+                "get_collection",
+                lambda: self._client.get_collection(self.collection_name),
+            )
         except Exception:
             return None
 
@@ -571,11 +607,14 @@ class QdrantStore(MemoryStore):
         with self._lock:
             exists = self._collection_exists()
             if not exists:
-                self._client.create_collection(
-                    collection_name=self.collection_name,
-                    vectors_config=self._models.VectorParams(
-                        size=vector_size,
-                        distance=self._models.Distance.COSINE,
+                self._call_client(
+                    "create_collection",
+                    lambda: self._client.create_collection(
+                        collection_name=self.collection_name,
+                        vectors_config=self._models.VectorParams(
+                            size=vector_size,
+                            distance=self._models.Distance.COSINE,
+                        ),
                     ),
                 )
                 self._vector_size = vector_size
@@ -683,10 +722,13 @@ class QdrantStore(MemoryStore):
         )
 
         with self._lock:
-            self._client.upsert(
-                collection_name=self.collection_name,
-                points=[point],
-                wait=True,
+            self._call_client(
+                "upsert",
+                lambda: self._client.upsert(
+                    collection_name=self.collection_name,
+                    points=[point],
+                    wait=True,
+                ),
             )
 
     def retrieve(
@@ -719,12 +761,15 @@ class QdrantStore(MemoryStore):
             return [chunk for _, chunk in scored[:top_k]]
 
         with self._lock:
-            hits = self._client.search(
-                collection_name=self.collection_name,
-                query_vector=query_embedding,
-                limit=top_k,
-                with_payload=True,
-                with_vectors=True,
+            hits = self._call_client(
+                "search",
+                lambda: self._client.search(
+                    collection_name=self.collection_name,
+                    query_vector=query_embedding,
+                    limit=top_k,
+                    with_payload=True,
+                    with_vectors=True,
+                ),
             )
 
         return [self._point_to_chunk(hit) for hit in hits]
@@ -747,10 +792,13 @@ class QdrantStore(MemoryStore):
 
         selector = self._models.PointIdsList(points=[chunk_id])
         with self._lock:
-            self._client.delete(
-                collection_name=self.collection_name,
-                points_selector=selector,
-                wait=True,
+            self._call_client(
+                "delete",
+                lambda: self._client.delete(
+                    collection_name=self.collection_name,
+                    points_selector=selector,
+                    wait=True,
+                ),
             )
         return True
 
@@ -760,11 +808,14 @@ class QdrantStore(MemoryStore):
             return None
 
         with self._lock:
-            points = self._client.retrieve(
-                collection_name=self.collection_name,
-                ids=[chunk_id],
-                with_payload=True,
-                with_vectors=True,
+            points = self._call_client(
+                "retrieve",
+                lambda: self._client.retrieve(
+                    collection_name=self.collection_name,
+                    ids=[chunk_id],
+                    with_payload=True,
+                    with_vectors=True,
+                ),
             )
         if not points:
             return None
@@ -780,12 +831,15 @@ class QdrantStore(MemoryStore):
 
         while True:
             with self._lock:
-                points, next_offset = self._client.scroll(
-                    collection_name=self.collection_name,
-                    limit=256,
-                    offset=offset,
-                    with_payload=True,
-                    with_vectors=True,
+                points, next_offset = self._call_client(
+                    "scroll",
+                    lambda: self._client.scroll(
+                        collection_name=self.collection_name,
+                        limit=256,
+                        offset=offset,
+                        with_payload=True,
+                        with_vectors=True,
+                    ),
                 )
             all_chunks.extend(self._point_to_chunk(point) for point in points)
             if next_offset is None:

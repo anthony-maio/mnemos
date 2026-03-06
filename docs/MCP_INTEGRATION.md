@@ -109,8 +109,16 @@ The agent will automatically discover these tools:
 | `mnemos_consolidate` | Trigger sleep consolidation (episodic → semantic compression) |
 | `mnemos_forget` | Delete a specific memory |
 | `mnemos_stats` | System-wide statistics from all modules |
+| `mnemos_health` | Profile readiness and dependency diagnostics |
 | `mnemos_inspect` | Full details on a specific memory |
 | `mnemos_list` | List all stored memories |
+
+Compatibility + contract docs:
+- [mcp-transport-contract.md](mcp-transport-contract.md)
+- [client-compatibility-matrix.md](client-compatibility-matrix.md)
+- [profiles/starter-sqlite.md](profiles/starter-sqlite.md)
+- [profiles/local-performance-embedded-qdrant.md](profiles/local-performance-embedded-qdrant.md)
+- [profiles/scale-external-qdrant.md](profiles/scale-external-qdrant.md)
 
 ---
 
@@ -230,6 +238,9 @@ mnemos-cli consolidate
 
 # View statistics
 mnemos-cli stats
+
+# Readiness diagnostics
+mnemos-cli doctor
 ```
 
 The CLI defaults to SQLite storage (persistent across sessions), unlike the MCP server which defaults to in-memory.

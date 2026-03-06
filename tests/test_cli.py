@@ -5,10 +5,13 @@ tests/test_cli.py — Tests for CLI runtime wiring.
 from __future__ import annotations
 
 from pathlib import Path
+from typing import Any
 
 import pytest
 
-from mnemos.cli import _build_engine
+from argparse import Namespace
+
+from mnemos.cli import _build_engine, _cmd_doctor
 from mnemos.utils import (
     OpenAIEmbeddingProvider,
     OpenAIProvider,
@@ -72,3 +75,13 @@ def test_build_engine_infers_openclaw_embedder_from_llm_provider(
     assert engine.embedder.api_key == "claw-key"
     assert engine.embedder.base_url == "https://api.openclaw.example/v1"
     engine.store.close()
+
+
+@pytest.mark.asyncio
+async def test_cli_doctor_prints_report(monkeypatch: pytest.MonkeyPatch, capsys: Any) -> None:
+    monkeypatch.setenv("MNEMOS_STORE_TYPE", "sqlite")
+    monkeypatch.setenv("MNEMOS_LLM_PROVIDER", "mock")
+    await _cmd_doctor(Namespace())
+    captured = capsys.readouterr().out
+    assert '"profile": "starter"' in captured
+    assert '"status": "degraded"' in captured

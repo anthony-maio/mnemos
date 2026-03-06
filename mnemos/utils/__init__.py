@@ -11,6 +11,13 @@ from .embeddings import (
     cosine_similarity,
 )
 from .llm import LLMProvider, MockLLMProvider, OllamaProvider, OpenAIProvider
+from .reliability import (
+    MnemosConfigurationError,
+    MnemosError,
+    MnemosExternalServiceError,
+    MnemosTransientError,
+    RetryPolicy,
+)
 from .storage import InMemoryStore, MemoryStore, QdrantStore, SQLiteStore
 
 __all__ = [
@@ -26,6 +33,12 @@ __all__ = [
     "MockLLMProvider",
     "OllamaProvider",
     "OpenAIProvider",
+    # Reliability
+    "MnemosError",
+    "MnemosConfigurationError",
+    "MnemosTransientError",
+    "MnemosExternalServiceError",
+    "RetryPolicy",
     # Storage
     "MemoryStore",
     "InMemoryStore",

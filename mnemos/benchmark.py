@@ -27,6 +27,14 @@ from .types import Interaction, MemoryChunk
 from .utils.llm import MockLLMProvider
 from .utils.storage import InMemoryStore, MemoryStore, QdrantStore, SQLiteStore
 
+BENCHMARK_DATASET_DIR = Path(__file__).resolve().parents[1] / "benchmarks" / "datasets"
+DATASET_PACKS: dict[str, tuple[str, ...]] = {
+    "claim-driving": (
+        "contradiction-update-v1.jsonl",
+        "preference-drift-v1.jsonl",
+    )
+}
+
 
 @dataclass(frozen=True)
 class BenchmarkDocument:
@@ -171,12 +179,12 @@ def _coerce_document(item: dict[str, Any], index: int) -> BenchmarkDocument:
     if not isinstance(content, str) or not content.strip():
         raise ValueError(f"Dataset item at index {index} is missing non-empty 'content'.")
 
-    raw_queries = item.get("queries")
-    if not isinstance(raw_queries, list) or not raw_queries:
-        raise ValueError(f"Dataset item at index {index} must include non-empty 'queries' list.")
+    raw_queries = item.get("queries", [])
+    if raw_queries is None:
+        raw_queries = []
+    if not isinstance(raw_queries, list):
+        raise ValueError(f"Dataset item at index {index} must include 'queries' as a list.")
     queries = tuple(str(q) for q in raw_queries if str(q).strip())
-    if not queries:
-        raise ValueError(f"Dataset item at index {index} has empty query strings.")
 
     doc_id_raw = item.get("id", f"doc-{index}")
     return BenchmarkDocument(
@@ -298,14 +306,15 @@ async def _run_engine_roundtrip(
 
 
 def _build_comparisons(results: list[dict[str, Any]]) -> list[dict[str, Any]]:
-    by_store: dict[str, dict[str, dict[str, Any]]] = {}
+    by_store: dict[tuple[str, str], dict[str, dict[str, Any]]] = {}
     for result in results:
         store_type = str(result.get("store_type", ""))
+        dataset_name = str(result.get("dataset", "built-in"))
         retriever = str(result.get("retriever", ""))
-        by_store.setdefault(store_type, {})[retriever] = result
+        by_store.setdefault((dataset_name, store_type), {})[retriever] = result
 
     comparisons: list[dict[str, Any]] = []
-    for store_type, store_results in by_store.items():
+    for (dataset_name, store_type), store_results in by_store.items():
         baseline = store_results.get("baseline")
         engine = store_results.get("engine")
         if baseline is None or engine is None:
@@ -313,6 +322,7 @@ def _build_comparisons(results: list[dict[str, Any]]) -> list[dict[str, Any]]:
 
         comparisons.append(
             {
+                "dataset": dataset_name,
                 "store_type": store_type,
                 "baseline": {
                     "recall_at_k": baseline["recall_at_k"],
@@ -332,6 +342,71 @@ def _build_comparisons(results: list[dict[str, Any]]) -> list[dict[str, Any]]:
             }
         )
     return comparisons
+
+
+def _resolve_dataset_pack(pack_name: str) -> list[tuple[str, Path]]:
+    files = DATASET_PACKS.get(pack_name)
+    if files is None:
+        available = ", ".join(sorted(DATASET_PACKS))
+        raise ValueError(f"Unknown dataset pack {pack_name!r}. Available: {available}")
+
+    resolved: list[tuple[str, Path]] = []
+    for filename in files:
+        path = BENCHMARK_DATASET_DIR / filename
+        if not path.exists():
+            raise FileNotFoundError(f"Dataset pack file not found: {path}")
+        resolved.append((path.stem, path))
+    return resolved
+
+
+def evaluate_production_replacement_gate(
+    comparisons: list[dict[str, Any]],
+    *,
+    min_mrr_lift: float = 0.15,
+    max_latency_ratio: float = 2.0,
+    latency_floor_ms: float = 1.0,
+) -> dict[str, Any]:
+    """Evaluate replacement claim gate across baseline vs engine comparisons."""
+    details: list[dict[str, Any]] = []
+
+    for comp in comparisons:
+        baseline_mrr = float(comp["baseline"]["mrr"])
+        engine_mrr = float(comp["engine"]["mrr"])
+        baseline_latency = float(comp["baseline"]["latency_p95_ms"])
+        engine_latency = float(comp["engine"]["latency_p95_ms"])
+
+        if baseline_mrr > 0:
+            mrr_lift_ratio = (engine_mrr - baseline_mrr) / baseline_mrr
+        else:
+            mrr_lift_ratio = 1.0 if engine_mrr > 0 else 0.0
+
+        latency_denominator = max(baseline_latency, latency_floor_ms)
+        latency_ratio = engine_latency / latency_denominator if latency_denominator > 0 else 0.0
+
+        passed = mrr_lift_ratio >= min_mrr_lift and latency_ratio <= max_latency_ratio
+        details.append(
+            {
+                "dataset": comp["dataset"],
+                "store_type": comp["store_type"],
+                "mrr_lift_ratio": mrr_lift_ratio,
+                "latency_p95_ratio": latency_ratio,
+                "passed": passed,
+            }
+        )
+
+    failed = [item for item in details if not item["passed"]]
+    passed_count = len(details) - len(failed)
+
+    return {
+        "required_mrr_lift_ratio": min_mrr_lift,
+        "max_latency_p95_ratio": max_latency_ratio,
+        "latency_ratio_floor_ms": latency_floor_ms,
+        "evaluated_pairs": len(details),
+        "passed_pairs": passed_count,
+        "failed_pairs": len(failed),
+        "passed": len(details) > 0 and len(failed) == 0,
+        "details": details,
+    }
 
 
 def run_retrieval_benchmark(
@@ -361,9 +436,10 @@ def run_retrieval_benchmark(
 
     _cleanup_local_store_artifacts(store_type, sqlite_path, qdrant_path)
     embedder = build_embedder_from_env(default_provider="simple")
-    document_embeddings = embedder.embed_batch([doc.content for doc in documents])
-    if not document_embeddings:
-        raise ValueError("Unable to generate document embeddings.")
+    try:
+        vector_size = embedder.dim
+    except Exception:
+        vector_size = len(embedder.embed(documents[0].content))
 
     store = _build_store(
         store_type=store_type,
@@ -372,7 +448,7 @@ def run_retrieval_benchmark(
         qdrant_api_key=qdrant_api_key,
         qdrant_path=qdrant_path,
         qdrant_collection=qdrant_collection,
-        vector_size=len(document_embeddings[0]),
+        vector_size=vector_size,
     )
 
     ingest_start = time.perf_counter()
@@ -381,7 +457,9 @@ def run_retrieval_benchmark(
     latencies_ms: list[float] = []
 
     if retriever == "baseline":
-        query_embeddings = embedder.embed_batch([query.text for query in queries])
+        document_embeddings = embedder.embed_batch([doc.content for doc in documents])
+        if not document_embeddings:
+            raise ValueError("Unable to generate document embeddings.")
         for doc, embedding in zip(documents, document_embeddings):
             store.store(
                 MemoryChunk(
@@ -393,8 +471,9 @@ def run_retrieval_benchmark(
             )
         ingest_seconds = time.perf_counter() - ingest_start
 
-        for query, query_embedding in zip(queries, query_embeddings):
+        for query in queries:
             start = time.perf_counter()
+            query_embedding = embedder.embed(query.text)
             chunks = store.retrieve(query_embedding, top_k=top_k)
             elapsed_ms = (time.perf_counter() - start) * 1000.0
             latencies_ms.append(elapsed_ms)
@@ -465,6 +544,12 @@ def main() -> None:
         "--dataset", type=str, default="", help="Optional .json/.jsonl dataset path."
     )
     parser.add_argument(
+        "--dataset-pack",
+        type=str,
+        default="",
+        help="Named dataset pack (e.g., claim-driving). Cannot be used with --dataset.",
+    )
+    parser.add_argument(
         "--query-limit",
         type=int,
         default=0,
@@ -503,12 +588,33 @@ def main() -> None:
     parser.add_argument(
         "--output", type=str, default="", help="Optional path to write JSON report."
     )
+    parser.add_argument(
+        "--enforce-production-gate",
+        action="store_true",
+        help="Exit non-zero when production replacement gate fails.",
+    )
+    parser.add_argument(
+        "--gate-min-mrr-lift",
+        type=float,
+        default=0.15,
+        help="Minimum required MRR lift ratio for production replacement gate.",
+    )
+    parser.add_argument(
+        "--gate-max-p95-latency-ratio",
+        type=float,
+        default=2.0,
+        help="Maximum allowed engine/baseline p95 latency ratio for production gate.",
+    )
+    parser.add_argument(
+        "--gate-latency-floor-ms",
+        type=float,
+        default=1.0,
+        help="Minimum baseline latency denominator used when computing p95 ratio.",
+    )
     args = parser.parse_args()
 
-    if args.dataset:
-        documents = load_documents(Path(args.dataset))
-    else:
-        documents = default_benchmark_documents()
+    if args.dataset and args.dataset_pack:
+        raise ValueError("Use either --dataset or --dataset-pack, not both.")
 
     store_types = [item.strip().lower() for item in args.stores.split(",") if item.strip()]
     if not store_types:
@@ -523,11 +629,24 @@ def main() -> None:
     qdrant_url = args.qdrant_url or None
     qdrant_api_key = args.qdrant_api_key or None
 
+    if args.dataset_pack:
+        dataset_runs = [
+            (name, load_documents(path)) for name, path in _resolve_dataset_pack(args.dataset_pack)
+        ]
+        dataset_label = args.dataset_pack
+    elif args.dataset:
+        dataset_path = Path(args.dataset)
+        dataset_runs = [(dataset_path.stem, load_documents(dataset_path))]
+        dataset_label = args.dataset
+    else:
+        dataset_runs = [("built-in", default_benchmark_documents())]
+        dataset_label = "built-in"
+
     results: list[dict[str, Any]] = []
-    for store_type in store_types:
-        for retriever in retrievers:
-            results.append(
-                run_retrieval_benchmark(
+    for dataset_name, documents in dataset_runs:
+        for store_type in store_types:
+            for retriever in retrievers:
+                result = run_retrieval_benchmark(
                     store_type=store_type,
                     retriever=retriever,
                     top_k=args.top_k,
@@ -539,17 +658,27 @@ def main() -> None:
                     qdrant_path=qdrant_path,
                     qdrant_collection=args.qdrant_collection,
                 )
-            )
+                result["dataset"] = dataset_name
+                results.append(result)
 
     comparisons = _build_comparisons(results)
+    gate = evaluate_production_replacement_gate(
+        comparisons,
+        min_mrr_lift=args.gate_min_mrr_lift,
+        max_latency_ratio=args.gate_max_p95_latency_ratio,
+        latency_floor_ms=args.gate_latency_floor_ms,
+    )
 
     report = {
-        "dataset": args.dataset or "built-in",
+        "dataset": dataset_label,
         "stores": store_types,
         "retrievers": retrievers,
         "top_k": args.top_k,
         "results": results,
         "comparisons": comparisons,
+        "gates": {
+            "production_replacement": gate,
+        },
     }
 
     rendered = json.dumps(report, indent=2)
@@ -557,6 +686,9 @@ def main() -> None:
 
     if args.output:
         Path(args.output).write_text(rendered + "\n", encoding="utf-8")
+
+    if args.enforce_production_gate and not gate["passed"]:
+        raise SystemExit(2)
 
 
 if __name__ == "__main__":

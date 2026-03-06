@@ -10,6 +10,7 @@ Usage:
     mnemos-cli retrieve "user preferences" --top-k 5
     mnemos-cli consolidate
     mnemos-cli stats
+    mnemos-cli doctor
 """
 
 from __future__ import annotations
@@ -22,6 +23,8 @@ from typing import Any
 
 from .config import MnemosConfig, SurprisalConfig
 from .engine import MnemosEngine
+from .health import run_health_checks
+from .observability import configure_logging, log_event
 from .runtime import build_embedder_from_env, build_store_from_env
 from .types import Interaction
 from .utils.llm import MockLLMProvider, LLMProvider
@@ -76,12 +79,30 @@ def _build_engine() -> MnemosEngine:
         debug=os.getenv("MNEMOS_DEBUG", "").lower() in ("true", "1", "yes"),
     )
 
-    return MnemosEngine(
+    engine = MnemosEngine(
         config=config,
         llm=llm,
         embedder=build_embedder_from_env(default_provider="simple"),
         store=build_store_from_env(default_store_type="sqlite"),
     )
+    health = run_health_checks()
+    log_event(
+        "mnemos.startup",
+        transport="cli",
+        status=health["status"],
+        profile=health["profile"],
+        store_type=health["store_type"],
+        llm_provider=health["llm_provider"],
+        embedding_provider=health["embedding_provider"],
+    )
+    if health["status"] != "ready":
+        log_event(
+            "mnemos.degraded_mode",
+            transport="cli",
+            status=health["status"],
+            summary=health["summary"],
+        )
+    return engine
 
 
 async def _cmd_store(args: argparse.Namespace) -> None:
@@ -130,7 +151,20 @@ async def _cmd_stats(args: argparse.Namespace) -> None:
     print(json.dumps(stats, indent=2, default=str))
 
 
+async def _cmd_doctor(args: argparse.Namespace) -> None:
+    _ = args
+    report = run_health_checks()
+    log_event(
+        "mnemos.health_check",
+        status=report["status"],
+        profile=report["profile"],
+        summary=report["summary"],
+    )
+    print(json.dumps(report, indent=2))
+
+
 def main() -> None:
+    configure_logging()
     parser = argparse.ArgumentParser(
         prog="mnemos-cli",
         description="Mnemos memory system CLI — shell-friendly commands for hooks and automation.",
@@ -152,6 +186,7 @@ def main() -> None:
 
     # stats
     subparsers.add_parser("stats", help="Show system statistics")
+    subparsers.add_parser("doctor", help="Run profile readiness and dependency checks")
 
     args = parser.parse_args()
 
@@ -163,6 +198,8 @@ def main() -> None:
         asyncio.run(_cmd_consolidate(args))
     elif args.command == "stats":
         asyncio.run(_cmd_stats(args))
+    elif args.command == "doctor":
+        asyncio.run(_cmd_doctor(args))
 
 
 if __name__ == "__main__":

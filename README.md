@@ -265,7 +265,7 @@ Default plugin behavior:
  - embedding provider inferred from the selected LLM provider unless explicitly overridden
  - if `MNEMOS_STORE_TYPE=qdrant`, the plugin bootstrap installs the `qdrant` extra automatically
 
-The server exposes seven tools:
+The server exposes eight tools:
 
 | Tool | Description |
 |------|-------------|
@@ -274,8 +274,22 @@ The server exposes seven tools:
 | `mnemos_consolidate` | Trigger sleep consolidation: episodic buffer → semantic long-term memory |
 | `mnemos_forget` | Delete a specific memory by ID |
 | `mnemos_stats` | System-wide statistics across all modules |
+| `mnemos_health` | Profile readiness and dependency diagnostics |
 | `mnemos_inspect` | Full details on a specific memory chunk |
 | `mnemos_list` | List all stored memories |
+
+Readiness check:
+
+```bash
+mnemos-cli doctor
+```
+
+Profile + compatibility docs:
+- [docs/profiles/starter-sqlite.md](docs/profiles/starter-sqlite.md)
+- [docs/profiles/local-performance-embedded-qdrant.md](docs/profiles/local-performance-embedded-qdrant.md)
+- [docs/profiles/scale-external-qdrant.md](docs/profiles/scale-external-qdrant.md)
+- [docs/mcp-transport-contract.md](docs/mcp-transport-contract.md)
+- [docs/client-compatibility-matrix.md](docs/client-compatibility-matrix.md)
 
 ### Claude Code / Claude Desktop
 
@@ -539,6 +553,14 @@ You can provide a custom dataset (`.json` or `.jsonl`) with `id`, `content`, and
 ```bash
 mnemos-benchmark --stores qdrant --retrievers baseline,engine --dataset ./benchmarks/retrieval.jsonl --top-k 10
 ```
+
+Replacement-claim gate run:
+
+```bash
+mnemos-benchmark --stores memory --retrievers baseline,engine --dataset-pack claim-driving --top-k 1 --enforce-production-gate
+```
+
+Gate output fields live under `gates.production_replacement.*`.
 
 ## Production Checklist
 

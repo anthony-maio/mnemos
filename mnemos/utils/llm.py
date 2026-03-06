@@ -16,11 +16,15 @@ The OpenAIProvider supports any OpenAI-compatible API endpoint.
 from __future__ import annotations
 
 import json
+import logging
 import re
 from abc import ABC, abstractmethod
 from typing import Any
 
 import httpx
+
+from ..observability import log_event
+from .reliability import RetryPolicy, call_with_async_retry
 
 
 class LLMProvider(ABC):
@@ -214,17 +218,35 @@ class OllamaProvider(LLMProvider):
             },
         }
 
-        async with httpx.AsyncClient(timeout=self.timeout) as client:
-            response = await client.post(
-                f"{self.base_url}/api/generate",
-                json=payload,
+        async def _request() -> str:
+            async with httpx.AsyncClient(timeout=self.timeout) as client:
+                response = await client.post(
+                    f"{self.base_url}/api/generate",
+                    json=payload,
+                )
+                response.raise_for_status()
+                data = response.json()
+                text = data.get("response", "")
+                if not isinstance(text, str):
+                    text = str(text)
+                return text.strip()
+
+        try:
+            return await call_with_async_retry(
+                provider="ollama",
+                operation="predict",
+                fn=_request,
+                policy=RetryPolicy(),
             )
-            response.raise_for_status()
-            data = response.json()
-            text = data.get("response", "")
-            if not isinstance(text, str):
-                text = str(text)
-            return text.strip()
+        except Exception as exc:
+            log_event(
+                "mnemos.provider_failure",
+                level=logging.ERROR,
+                provider="ollama",
+                operation="predict",
+                error=str(exc),
+            )
+            raise
 
     async def classify(self, prompt: str, labels: list[str]) -> dict[str, float]:
         """
@@ -338,18 +360,38 @@ class OpenAIProvider(LLMProvider):
             "Content-Type": "application/json",
         }
 
-        async with httpx.AsyncClient(timeout=self.timeout) as client:
-            response = await client.post(
-                f"{self.base_url}/chat/completions",
-                json=payload,
-                headers=headers,
+        provider_name = "openclaw" if "openclaw" in self.base_url.lower() else "openai"
+
+        async def _request() -> str:
+            async with httpx.AsyncClient(timeout=self.timeout) as client:
+                response = await client.post(
+                    f"{self.base_url}/chat/completions",
+                    json=payload,
+                    headers=headers,
+                )
+                response.raise_for_status()
+                data = response.json()
+                content = data["choices"][0]["message"]["content"]
+                if not isinstance(content, str):
+                    content = str(content)
+                return content.strip()
+
+        try:
+            return await call_with_async_retry(
+                provider=provider_name,
+                operation="predict",
+                fn=_request,
+                policy=RetryPolicy(),
             )
-            response.raise_for_status()
-            data = response.json()
-            content = data["choices"][0]["message"]["content"]
-            if not isinstance(content, str):
-                content = str(content)
-            return content.strip()
+        except Exception as exc:
+            log_event(
+                "mnemos.provider_failure",
+                level=logging.ERROR,
+                provider=provider_name,
+                operation="predict",
+                error=str(exc),
+            )
+            raise
 
     async def classify(self, prompt: str, labels: list[str]) -> dict[str, float]:
         """
