@@ -14,6 +14,21 @@ pip install 'mnemos-memory[mcp]'
 
 ### 2. Configure your agent
 
+### Plugin-first install for Claude Code
+
+If you want ClaudeMem-style plugin installation, use the built-in plugin packaging in this repo:
+
+```text
+/plugin marketplace add anthony-maio/mnemos
+/plugin install mnemos-memory@mnemos-marketplace
+```
+
+The plugin manifest auto-registers the Mnemos MCP server and runs a bootstrap wrapper that:
+- creates a local `.claude-plugin/.venv`
+- installs Mnemos with MCP extras
+- launches `mnemos.mcp_server` over stdio
+- defaults to persistent SQLite storage
+
 #### Claude Code / Claude Desktop
 
 Add to `~/.claude/claude_desktop_config.json` (or your project's `.claude` config):

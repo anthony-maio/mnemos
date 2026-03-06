@@ -244,6 +244,25 @@ mnemos ships a full [Model Context Protocol](https://modelcontextprotocol.io) se
 pip install 'mnemos-memory[mcp]'
 ```
 
+### Claude Code Plugin Install (Like ClaudeMem)
+
+This repository now includes a native Claude Code plugin package (`.claude-plugin/plugin.json`) that auto-wires Mnemos MCP.
+
+```text
+/plugin marketplace add anthony-maio/mnemos
+/plugin install mnemos-memory@mnemos-marketplace
+```
+
+On first run, the plugin bootstraps a local virtual environment under `.claude-plugin/.venv`, installs Mnemos with MCP extras, and launches the MCP server over stdio.
+
+Default plugin behavior:
+- persistent SQLite memory store at `.claude-plugin/mnemos.db`
+- automatic provider selection:
+  - `openclaw` if `MNEMOS_OPENCLAW_API_KEY` exists
+  - otherwise `openai` if `MNEMOS_OPENAI_API_KEY` exists
+  - otherwise `ollama` if `MNEMOS_OLLAMA_URL` exists
+  - otherwise `mock`
+
 The server exposes seven tools:
 
 | Tool | Description |
