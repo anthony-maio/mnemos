@@ -137,7 +137,7 @@ def create_mcp_server():
     except ImportError:
         raise ImportError(
             "MCP server requires the 'mcp' package. Install it with:\n"
-            "  pip install 'mnemos[mcp]'\n"
+            "  pip install 'mnemos-memory[mcp]'\n"
             "  # or\n"
             "  pip install mcp"
         )

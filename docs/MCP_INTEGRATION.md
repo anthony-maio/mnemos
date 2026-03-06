@@ -9,7 +9,7 @@ The Model Context Protocol (MCP) lets agentic platforms — Claude Code, Cursor,
 ### 1. Install with MCP support
 
 ```bash
-pip install 'mnemos[mcp]'
+pip install 'mnemos-memory[mcp]'
 ```
 
 ### 2. Configure your agent

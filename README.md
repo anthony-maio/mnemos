@@ -2,7 +2,7 @@
 
 **Biomimetic memory architectures for LLMs — built on how the brain actually works.**
 
-[![PyPI version](https://img.shields.io/pypi/v/mnemos.svg)](https://pypi.org/project/mnemos/)
+[![PyPI version](https://img.shields.io/pypi/v/mnemos-memory.svg)](https://pypi.org/project/mnemos-memory/)
 [![Python 3.10+](https://img.shields.io/badge/python-3.10+-blue.svg)](https://www.python.org/downloads/)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 [![Website](https://img.shields.io/badge/Website-mnemos.making--minds.ai-purple.svg)](https://mnemos.making-minds.ai)
@@ -177,8 +177,10 @@ sa = SpreadingActivation(
 ## Quick Start
 
 ```bash
-pip install mnemos
+pip install mnemos-memory
 ```
+
+> **Note:** The PyPI package is `mnemos-memory` but the import name is just `import mnemos`.
 
 Zero external dependencies required. The default configuration uses `MockLLMProvider` and `SimpleEmbeddingProvider` for instant experimentation.
 
@@ -203,7 +205,7 @@ asyncio.run(main())
 **With Ollama (recommended for production):**
 
 ```bash
-pip install 'mnemos[ollama]'
+pip install 'mnemos-memory[ollama]'
 ```
 
 ```python
@@ -220,7 +222,7 @@ engine = MnemosEngine(
 **With OpenAI:**
 
 ```bash
-pip install 'mnemos[openai]'
+pip install 'mnemos-memory[openai]'
 ```
 
 ```python
@@ -239,7 +241,7 @@ engine = MnemosEngine(
 mnemos ships a full [Model Context Protocol](https://modelcontextprotocol.io) server. Any MCP-compatible agent — Claude Code, Cursor, Windsurf, Cline — can discover and call mnemos tools natively.
 
 ```bash
-pip install 'mnemos[mcp]'
+pip install 'mnemos-memory[mcp]'
 ```
 
 The server exposes seven tools:
@@ -470,14 +472,14 @@ The distinction isn't just architectural. It's causal: standard tools retrieve s
 - `httpx >= 0.24` — async HTTP for LLM providers
 
 **Optional (install what you need):**
-- `ollama` — local LLM inference via Ollama (`pip install 'mnemos[ollama]'`)
-- `openai` — OpenAI or any OpenAI-compatible API (`pip install 'mnemos[openai]'`)
-- `mcp` — MCP server for Claude Code, Cursor, Windsurf (`pip install 'mnemos[mcp]'`)
-- `neo4j` — Neo4j graph backend for SpreadingActivation at scale (`pip install 'mnemos[neo4j]'`)
+- `ollama` — local LLM inference via Ollama (`pip install 'mnemos-memory[ollama]'`)
+- `openai` — OpenAI or any OpenAI-compatible API (`pip install 'mnemos-memory[openai]'`)
+- `mcp` — MCP server for Claude Code, Cursor, Windsurf (`pip install 'mnemos-memory[mcp]'`)
+- `neo4j` — Neo4j graph backend for SpreadingActivation at scale (`pip install 'mnemos-memory[neo4j]'`)
 
 **Install everything:**
 ```bash
-pip install 'mnemos[all]'
+pip install 'mnemos-memory[all]'
 ```
 
 **Storage backends built-in:**
