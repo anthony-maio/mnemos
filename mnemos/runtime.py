@@ -104,9 +104,15 @@ def build_embedder_from_env(default_provider: str = "simple") -> EmbeddingProvid
     - `MNEMOS_EMBEDDING_MODEL` (provider model name)
     - provider-specific auth/url vars
     """
-    provider = (
-        resolve_env_value("MNEMOS_EMBEDDING_PROVIDER", default=default_provider) or default_provider
-    ).lower()
+    explicit_provider = resolve_env_value("MNEMOS_EMBEDDING_PROVIDER", default=None)
+    if explicit_provider is not None:
+        provider = explicit_provider.lower()
+    else:
+        llm_provider = (resolve_env_value("MNEMOS_LLM_PROVIDER", default="") or "").lower()
+        if llm_provider in {"ollama", "openai", "openclaw"}:
+            provider = llm_provider
+        else:
+            provider = default_provider.lower()
 
     if provider == "simple":
         dim_text = resolve_env_value("MNEMOS_EMBEDDING_DIM", default="384") or "384"

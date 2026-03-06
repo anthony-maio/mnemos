@@ -10,7 +10,12 @@ import pytest
 
 import mnemos.runtime as runtime_module
 from mnemos.runtime import build_embedder_from_env, build_store_from_env, resolve_env_value
-from mnemos.utils import OpenAIEmbeddingProvider, SimpleEmbeddingProvider, SQLiteStore
+from mnemos.utils import (
+    OllamaEmbeddingProvider,
+    OpenAIEmbeddingProvider,
+    SimpleEmbeddingProvider,
+    SQLiteStore,
+)
 
 
 def test_resolve_env_value_supports_aliases(monkeypatch: pytest.MonkeyPatch) -> None:
@@ -84,6 +89,30 @@ def test_build_embedder_from_env_openclaw(monkeypatch: pytest.MonkeyPatch) -> No
     assert isinstance(embedder, OpenAIEmbeddingProvider)
     assert embedder.api_key == "claw-key"
     assert embedder.base_url == "https://api.openclaw.example/v1"
+
+
+def test_build_embedder_from_env_infers_openai_from_llm_provider(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    monkeypatch.delenv("MNEMOS_EMBEDDING_PROVIDER", raising=False)
+    monkeypatch.setenv("MNEMOS_LLM_PROVIDER", "openai")
+    monkeypatch.setenv("MNEMOS_OPENAI_API_KEY", "dummy-key")
+
+    embedder = build_embedder_from_env(default_provider="simple")
+
+    assert isinstance(embedder, OpenAIEmbeddingProvider)
+
+
+def test_build_embedder_from_env_infers_ollama_from_llm_provider(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    monkeypatch.delenv("MNEMOS_EMBEDDING_PROVIDER", raising=False)
+    monkeypatch.setenv("MNEMOS_LLM_PROVIDER", "ollama")
+    monkeypatch.setenv("MNEMOS_OLLAMA_URL", "http://localhost:11434")
+
+    embedder = build_embedder_from_env(default_provider="simple")
+
+    assert isinstance(embedder, OllamaEmbeddingProvider)
 
 
 def test_build_store_from_env_qdrant(monkeypatch: pytest.MonkeyPatch) -> None:

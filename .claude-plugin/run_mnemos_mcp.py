@@ -31,12 +31,21 @@ def _venv_python(venv_dir: Path) -> Path:
     return venv_dir / "bin" / "python"
 
 
-def _expected_install_stamp(plugin_root: Path) -> str:
+def _required_install_extras(env: dict[str, str]) -> tuple[str, ...]:
+    extras = ["mcp"]
+    store_type = env.get("MNEMOS_STORE_TYPE", env.get("MNEMOS_STORAGE", "sqlite")).lower()
+    if store_type == "qdrant":
+        extras.append("qdrant")
+    return tuple(sorted(set(extras)))
+
+
+def _expected_install_stamp(plugin_root: Path, env: dict[str, str]) -> str:
     pyproject = plugin_root / "pyproject.toml"
     if not pyproject.exists():
         return "unknown"
     # Use mtime as a cheap invalidation key for local plugin updates.
-    return str(int(pyproject.stat().st_mtime))
+    extras = ",".join(_required_install_extras(env))
+    return f"{int(pyproject.stat().st_mtime)}:{extras}"
 
 
 def _create_venv(venv_dir: Path) -> None:
@@ -44,7 +53,8 @@ def _create_venv(venv_dir: Path) -> None:
     builder.create(venv_dir)
 
 
-def _install_plugin(venv_python: Path, plugin_root: Path) -> None:
+def _install_plugin(venv_python: Path, plugin_root: Path, env: dict[str, str]) -> None:
+    extras = ",".join(_required_install_extras(env))
     subprocess.check_call([str(venv_python), "-m", "pip", "install", "--upgrade", "pip"])
     subprocess.check_call(
         [
@@ -53,25 +63,25 @@ def _install_plugin(venv_python: Path, plugin_root: Path) -> None:
             "pip",
             "install",
             "--upgrade",
-            f"{plugin_root}[mcp]",
+            f"{plugin_root}[{extras}]",
         ]
     )
 
 
-def _ensure_runtime(venv_dir: Path, plugin_root: Path) -> Path:
+def _ensure_runtime(venv_dir: Path, plugin_root: Path, env: dict[str, str]) -> Path:
     venv_python = _venv_python(venv_dir)
     stamp_path = venv_dir / ".mnemos-install-stamp"
-    expected = _expected_install_stamp(plugin_root)
+    expected = _expected_install_stamp(plugin_root, env)
 
     if not venv_python.exists():
         _create_venv(venv_dir)
-        _install_plugin(venv_python, plugin_root)
+        _install_plugin(venv_python, plugin_root, env)
         stamp_path.write_text(expected, encoding="utf-8")
         return venv_python
 
     current = stamp_path.read_text(encoding="utf-8").strip() if stamp_path.exists() else ""
     if current != expected:
-        _install_plugin(venv_python, plugin_root)
+        _install_plugin(venv_python, plugin_root, env)
         stamp_path.write_text(expected, encoding="utf-8")
 
     return venv_python
@@ -109,8 +119,8 @@ def _apply_default_env(plugin_root: Path) -> dict[str, str]:
 def main() -> int:
     plugin_root = _plugin_root()
     venv_dir = plugin_root / ".claude-plugin" / ".venv"
-    venv_python = _ensure_runtime(venv_dir, plugin_root)
     env = _apply_default_env(plugin_root)
+    venv_python = _ensure_runtime(venv_dir, plugin_root, env)
 
     os.execve(
         str(venv_python),

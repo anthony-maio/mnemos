@@ -28,6 +28,7 @@ The plugin manifest auto-registers the Mnemos MCP server and runs a bootstrap wr
 - installs Mnemos with MCP extras
 - launches `mnemos.mcp_server` over stdio
 - defaults to persistent SQLite storage
+ - installs the `qdrant` extra automatically if `MNEMOS_STORE_TYPE=qdrant`
 
 #### Claude Code / Claude Desktop
 
@@ -126,7 +127,7 @@ All configuration is via environment variables:
 | `MNEMOS_OPENAI_URL` | `https://api.openai.com/v1` | OpenAI-compatible URL |
 | `MNEMOS_OPENCLAW_API_KEY` | — | OpenClaw API key (or fallback to `MNEMOS_OPENAI_API_KEY`) |
 | `MNEMOS_OPENCLAW_URL` | — | OpenClaw API URL (or fallback to `MNEMOS_OPENAI_URL`) |
-| `MNEMOS_EMBEDDING_PROVIDER` | `simple` | Embedding backend: `simple`, `ollama`, `openai`, or `openclaw` |
+| `MNEMOS_EMBEDDING_PROVIDER` | inferred from `MNEMOS_LLM_PROVIDER`, else `simple` | Embedding backend: `simple`, `ollama`, `openai`, or `openclaw` |
 | `MNEMOS_EMBEDDING_MODEL` | provider-dependent | Embedding model name |
 | `MNEMOS_STORE_TYPE` | `memory` | Storage backend: `memory`, `sqlite`, or `qdrant` |
 | `MNEMOS_SQLITE_PATH` | `mnemos_memory.db` | SQLite database path |
@@ -142,6 +143,8 @@ All configuration is via environment variables:
 Backward-compatible aliases:
 - `MNEMOS_STORAGE` works as an alias for `MNEMOS_STORE_TYPE`
 - `MNEMOS_DB_PATH` works as an alias for `MNEMOS_SQLITE_PATH`
+
+If `MNEMOS_EMBEDDING_PROVIDER` is not set, Mnemos infers it from `MNEMOS_LLM_PROVIDER` for `ollama`, `openai`, and `openclaw`.
 
 ### Provider recommendations
 

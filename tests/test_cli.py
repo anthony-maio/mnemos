@@ -9,7 +9,12 @@ from pathlib import Path
 import pytest
 
 from mnemos.cli import _build_engine
-from mnemos.utils import OpenAIProvider, SimpleEmbeddingProvider, SQLiteStore
+from mnemos.utils import (
+    OpenAIEmbeddingProvider,
+    OpenAIProvider,
+    SimpleEmbeddingProvider,
+    SQLiteStore,
+)
 
 
 def test_build_engine_supports_storage_alias_vars(
@@ -47,4 +52,23 @@ def test_build_engine_supports_openclaw_provider(
     assert isinstance(engine.llm, OpenAIProvider)
     assert engine.llm.api_key == "claw-key"
     assert engine.llm.base_url == "https://api.openclaw.example/v1"
+    engine.store.close()
+
+
+def test_build_engine_infers_openclaw_embedder_from_llm_provider(
+    monkeypatch: pytest.MonkeyPatch, tmp_path: Path
+) -> None:
+    db_path = tmp_path / "mnemos_cli_openclaw_inferred.db"
+    monkeypatch.setenv("MNEMOS_LLM_PROVIDER", "openclaw")
+    monkeypatch.setenv("MNEMOS_OPENCLAW_API_KEY", "claw-key")
+    monkeypatch.setenv("MNEMOS_OPENCLAW_URL", "https://api.openclaw.example/v1")
+    monkeypatch.delenv("MNEMOS_EMBEDDING_PROVIDER", raising=False)
+    monkeypatch.setenv("MNEMOS_STORE_TYPE", "sqlite")
+    monkeypatch.setenv("MNEMOS_SQLITE_PATH", str(db_path))
+
+    engine = _build_engine()
+
+    assert isinstance(engine.embedder, OpenAIEmbeddingProvider)
+    assert engine.embedder.api_key == "claw-key"
+    assert engine.embedder.base_url == "https://api.openclaw.example/v1"
     engine.store.close()

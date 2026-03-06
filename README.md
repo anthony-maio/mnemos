@@ -262,6 +262,8 @@ Default plugin behavior:
   - otherwise `openai` if `MNEMOS_OPENAI_API_KEY` exists
   - otherwise `ollama` if `MNEMOS_OLLAMA_URL` exists
   - otherwise `mock`
+ - embedding provider inferred from the selected LLM provider unless explicitly overridden
+ - if `MNEMOS_STORE_TYPE=qdrant`, the plugin bootstrap installs the `qdrant` extra automatically
 
 The server exposes seven tools:
 
@@ -458,7 +460,7 @@ engine = MnemosEngine(config=config)
 | `MNEMOS_OPENAI_URL` | `https://api.openai.com/v1` | OpenAI-compatible API base URL |
 | `MNEMOS_OPENCLAW_API_KEY` | — | OpenClaw API key (or fallback to `MNEMOS_OPENAI_API_KEY`) |
 | `MNEMOS_OPENCLAW_URL` | — | OpenClaw API base URL (or fallback to `MNEMOS_OPENAI_URL`) |
-| `MNEMOS_EMBEDDING_PROVIDER` | `simple` | `simple`, `ollama`, `openai`, or `openclaw` |
+| `MNEMOS_EMBEDDING_PROVIDER` | inferred from `MNEMOS_LLM_PROVIDER`, else `simple` | `simple`, `ollama`, `openai`, or `openclaw` |
 | `MNEMOS_EMBEDDING_MODEL` | provider-dependent | Embedding model name (e.g. `nomic-embed-text`) |
 | `MNEMOS_EMBEDDING_DIM` | `384` | Embedding dimension for `simple` provider |
 | `MNEMOS_STORE_TYPE` | `memory` | `memory`, `sqlite`, or `qdrant` |
@@ -474,6 +476,8 @@ engine = MnemosEngine(config=config)
 Backward-compatible aliases are supported for migration:
 - `MNEMOS_STORAGE` -> `MNEMOS_STORE_TYPE`
 - `MNEMOS_DB_PATH` -> `MNEMOS_SQLITE_PATH`
+
+If `MNEMOS_EMBEDDING_PROVIDER` is unset, Mnemos now infers it from `MNEMOS_LLM_PROVIDER` for `ollama`, `openai`, and `openclaw`. Set it explicitly to `simple` if you want the lightweight fallback.
 
 ---
 
