@@ -12,7 +12,7 @@ from .utils.embeddings import (
     OpenAIEmbeddingProvider,
     SimpleEmbeddingProvider,
 )
-from .utils.storage import InMemoryStore, MemoryStore, SQLiteStore
+from .utils.storage import InMemoryStore, MemoryStore, QdrantStore, SQLiteStore
 
 
 def resolve_env_value(
@@ -45,6 +45,7 @@ def build_store_from_env(default_store_type: str = "memory") -> MemoryStore:
     Supported:
     - `MNEMOS_STORE_TYPE` (alias: `MNEMOS_STORAGE`)
     - `MNEMOS_SQLITE_PATH` (alias: `MNEMOS_DB_PATH`)
+    - `MNEMOS_QDRANT_*` (for `qdrant` store type)
     """
     store_type = (
         resolve_env_value(
@@ -66,7 +67,32 @@ def build_store_from_env(default_store_type: str = "memory") -> MemoryStore:
         )
         return SQLiteStore(db_path=db_path or "mnemos_memory.db")
 
-    raise ValueError(f"Unknown store type: {store_type!r}. Use 'memory' or 'sqlite'.")
+    if store_type == "qdrant":
+        url = resolve_env_value("MNEMOS_QDRANT_URL", default="http://localhost:6333")
+        api_key = resolve_env_value("MNEMOS_QDRANT_API_KEY", default=None)
+        path = resolve_env_value("MNEMOS_QDRANT_PATH", default=None)
+        collection_name = (
+            resolve_env_value("MNEMOS_QDRANT_COLLECTION", default="mnemos_memory")
+            or "mnemos_memory"
+        )
+        vector_size_text = resolve_env_value(
+            "MNEMOS_QDRANT_VECTOR_SIZE",
+            default=None,
+            aliases=("MNEMOS_EMBEDDING_DIM",),
+        )
+        vector_size: int | None = None
+        if vector_size_text is not None and vector_size_text != "":
+            vector_size = int(vector_size_text)
+
+        return QdrantStore(
+            url=url,
+            api_key=api_key,
+            path=path,
+            collection_name=collection_name,
+            vector_size=vector_size,
+        )
+
+    raise ValueError(f"Unknown store type: {store_type!r}. Use 'memory', 'sqlite', or 'qdrant'.")
 
 
 def build_embedder_from_env(default_provider: str = "simple") -> EmbeddingProvider:

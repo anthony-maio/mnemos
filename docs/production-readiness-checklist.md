@@ -13,7 +13,7 @@ Use this checklist before promoting a release as production-ready.
 ## Retrieval and Memory Quality
 
 - [ ] Non-toy embedding provider configured for production (`ollama` or `openai`)
-- [ ] Retrieval quality baseline documented (Recall@k/MRR or equivalent)
+- [ ] Retrieval quality baseline documented (Recall@k/MRR) from `mnemos-benchmark`
 - [ ] Reconsolidation behavior validated with contradiction/update scenarios
 - [ ] Startup graph hydration validated against persisted stores
 
@@ -21,7 +21,7 @@ Use this checklist before promoting a release as production-ready.
 
 - [ ] p95 retrieval latency budget defined and measured
 - [ ] Storage growth behavior measured for representative workloads
-- [ ] Store backend chosen for scale target (`sqlite` for small, vector DB for large)
+- [ ] Store backend chosen for scale target (`sqlite` for small, `qdrant` for large)
 
 ## Operations and Safety
 

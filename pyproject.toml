@@ -47,10 +47,14 @@ mcp = [
 neo4j = [
     "neo4j>=5.0.0",
 ]
+qdrant = [
+    "qdrant-client>=1.9.0",
+]
 all = [
     "ollama>=0.1.0",
     "openai>=1.0.0",
     "neo4j>=5.0.0",
+    "qdrant-client>=1.9.0",
     "mcp>=1.0.0",
 ]
 dev = [
@@ -63,6 +67,7 @@ dev = [
 [project.scripts]
 mnemos-mcp = "mnemos.mcp_server:main"
 mnemos-cli = "mnemos.cli:main"
+mnemos-benchmark = "mnemos.benchmark:main"
 
 [project.urls]
 Homepage = "https://mnemos.making-minds.ai"

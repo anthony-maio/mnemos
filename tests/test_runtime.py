@@ -8,6 +8,7 @@ from pathlib import Path
 
 import pytest
 
+import mnemos.runtime as runtime_module
 from mnemos.runtime import build_embedder_from_env, build_store_from_env, resolve_env_value
 from mnemos.utils import OpenAIEmbeddingProvider, SimpleEmbeddingProvider, SQLiteStore
 
@@ -83,3 +84,40 @@ def test_build_embedder_from_env_openclaw(monkeypatch: pytest.MonkeyPatch) -> No
     assert isinstance(embedder, OpenAIEmbeddingProvider)
     assert embedder.api_key == "claw-key"
     assert embedder.base_url == "https://api.openclaw.example/v1"
+
+
+def test_build_store_from_env_qdrant(monkeypatch: pytest.MonkeyPatch) -> None:
+    captured: dict[str, object] = {}
+
+    class DummyQdrantStore:
+        def __init__(
+            self,
+            *,
+            url: str | None = None,
+            api_key: str | None = None,
+            path: str | None = None,
+            collection_name: str = "mnemos_memory",
+            vector_size: int | None = None,
+        ) -> None:
+            captured["url"] = url
+            captured["api_key"] = api_key
+            captured["path"] = path
+            captured["collection_name"] = collection_name
+            captured["vector_size"] = vector_size
+
+    monkeypatch.setattr(runtime_module, "QdrantStore", DummyQdrantStore, raising=False)
+    monkeypatch.setenv("MNEMOS_STORE_TYPE", "qdrant")
+    monkeypatch.setenv("MNEMOS_QDRANT_URL", "http://localhost:6333")
+    monkeypatch.setenv("MNEMOS_QDRANT_API_KEY", "qdrant-key")
+    monkeypatch.setenv("MNEMOS_QDRANT_PATH", "/tmp/mnemos-qdrant")
+    monkeypatch.setenv("MNEMOS_QDRANT_COLLECTION", "mnemos-test")
+    monkeypatch.setenv("MNEMOS_EMBEDDING_DIM", "256")
+
+    store = build_store_from_env(default_store_type="memory")
+
+    assert isinstance(store, DummyQdrantStore)
+    assert captured["url"] == "http://localhost:6333"
+    assert captured["api_key"] == "qdrant-key"
+    assert captured["path"] == "/tmp/mnemos-qdrant"
+    assert captured["collection_name"] == "mnemos-test"
+    assert captured["vector_size"] == 256

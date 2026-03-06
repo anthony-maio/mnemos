@@ -9,10 +9,11 @@ Backends:
 - MemoryStore (abstract): defines the interface
 - InMemoryStore: dict-based, cosine similarity search (development default)
 - SQLiteStore: persistent storage using Python's built-in sqlite3
+- QdrantStore: scalable vector retrieval with Qdrant
 
 The InMemoryStore is analogous to the hippocampus — fast, temporary,
-in-process working memory. The SQLiteStore is analogous to neocortical
-long-term storage — slower, persistent, survives process restarts.
+in-process working memory. The SQLiteStore/QdrantStore are analogous to
+neocortical long-term storage — persistent and restart-safe.
 
 Both implement the same interface, so you can swap them transparently.
 """
@@ -462,6 +463,369 @@ class SQLiteStore(MemoryStore):
 
     def __del__(self) -> None:
         """Ensure connection is closed on garbage collection."""
+        try:
+            self.close()
+        except Exception:
+            pass
+
+
+class QdrantStore(MemoryStore):
+    """
+    Vector database backend powered by Qdrant.
+
+    Supports both remote Qdrant servers (`url`) and embedded local mode (`path`).
+    Collection creation is lazy by default: the first stored chunk defines vector
+    size unless `vector_size` is provided at init.
+
+    Requires optional dependency:
+        pip install "mnemos-memory[qdrant]"
+    """
+
+    def __init__(
+        self,
+        *,
+        url: str | None = None,
+        api_key: str | None = None,
+        path: str | None = None,
+        collection_name: str = "mnemos_memory",
+        vector_size: int | None = None,
+        name: str = "qdrant",
+    ) -> None:
+        self.url = url
+        self.api_key = api_key
+        self.path = path
+        self.collection_name = collection_name
+        self.name = name
+        self._vector_size = vector_size
+        self._lock = threading.RLock()
+
+        try:
+            from qdrant_client import QdrantClient, models
+        except ImportError as e:
+            raise ImportError(
+                "QdrantStore requires the 'qdrant-client' package. "
+                "Install with: pip install 'mnemos-memory[qdrant]'"
+            ) from e
+
+        self._models = models
+        self._client: Any
+        if path:
+            self._client = QdrantClient(path=path)
+        else:
+            self._client = QdrantClient(
+                url=url or "http://localhost:6333",
+                api_key=api_key,
+            )
+
+        if self._vector_size is not None:
+            self._ensure_collection(self._vector_size)
+
+    def _collection_exists(self) -> bool:
+        with self._lock:
+            try:
+                return bool(self._client.collection_exists(self.collection_name))
+            except Exception:
+                try:
+                    self._client.get_collection(self.collection_name)
+                    return True
+                except Exception:
+                    return False
+
+    def _extract_vector_size(self) -> int | None:
+        try:
+            info = self._client.get_collection(self.collection_name)
+        except Exception:
+            return None
+
+        # qdrant-client compatibility across versions: vector params can be
+        # exposed in multiple shapes (object, dict, named vectors map).
+        config = getattr(info, "config", None)
+        params = getattr(config, "params", None) if config is not None else None
+        vectors = getattr(params, "vectors", None) if params is not None else None
+
+        if vectors is None:
+            return None
+
+        size = getattr(vectors, "size", None)
+        if size is not None:
+            return int(size)
+
+        if isinstance(vectors, dict):
+            if "size" in vectors and isinstance(vectors["size"], int):
+                return int(vectors["size"])
+            first = next(iter(vectors.values()), None)
+            if first is None:
+                return None
+            first_size = getattr(first, "size", None)
+            if first_size is not None:
+                return int(first_size)
+            if isinstance(first, dict) and "size" in first and isinstance(first["size"], int):
+                return int(first["size"])
+
+        return None
+
+    def _ensure_collection(self, vector_size: int) -> None:
+        if vector_size <= 0:
+            raise ValueError("Qdrant vector_size must be positive.")
+
+        with self._lock:
+            exists = self._collection_exists()
+            if not exists:
+                self._client.create_collection(
+                    collection_name=self.collection_name,
+                    vectors_config=self._models.VectorParams(
+                        size=vector_size,
+                        distance=self._models.Distance.COSINE,
+                    ),
+                )
+                self._vector_size = vector_size
+                return
+
+            existing_size = self._extract_vector_size()
+            if existing_size is not None and existing_size != vector_size:
+                raise ValueError(
+                    "Qdrant collection vector size mismatch: "
+                    f"existing={existing_size}, attempted={vector_size}"
+                )
+            self._vector_size = existing_size or vector_size
+
+    def _chunk_to_payload(self, chunk: MemoryChunk) -> dict[str, Any]:
+        return {
+            "content": chunk.content,
+            "metadata": chunk.metadata,
+            "salience": chunk.salience,
+            "cognitive_state": (
+                chunk.cognitive_state.model_dump() if chunk.cognitive_state is not None else None
+            ),
+            "created_at": chunk.created_at.isoformat(),
+            "updated_at": chunk.updated_at.isoformat(),
+            "access_count": chunk.access_count,
+            "version": chunk.version,
+        }
+
+    def _parse_vector(self, point: Any) -> list[float] | None:
+        vector_obj = getattr(point, "vector", None)
+        if vector_obj is None:
+            return None
+        if isinstance(vector_obj, list):
+            return [float(x) for x in vector_obj]
+        if isinstance(vector_obj, dict):
+            first = next(iter(vector_obj.values()), None)
+            if isinstance(first, list):
+                return [float(x) for x in first]
+        return None
+
+    def _parse_payload(self, point: Any) -> dict[str, Any]:
+        payload = getattr(point, "payload", None)
+        if isinstance(payload, dict):
+            return payload
+        return {}
+
+    def _point_to_chunk(self, point: Any) -> MemoryChunk:
+        payload = self._parse_payload(point)
+
+        created_at_raw = payload.get("created_at")
+        updated_at_raw = payload.get("updated_at")
+        created_at = (
+            datetime.fromisoformat(created_at_raw) if isinstance(created_at_raw, str) else None
+        )
+        updated_at = (
+            datetime.fromisoformat(updated_at_raw) if isinstance(updated_at_raw, str) else None
+        )
+
+        if created_at is None:
+            created_at = datetime.now(timezone.utc)
+        elif created_at.tzinfo is None:
+            created_at = created_at.replace(tzinfo=timezone.utc)
+
+        if updated_at is None:
+            updated_at = datetime.now(timezone.utc)
+        elif updated_at.tzinfo is None:
+            updated_at = updated_at.replace(tzinfo=timezone.utc)
+
+        cognitive_state_payload = payload.get("cognitive_state")
+        cognitive_state = (
+            CognitiveState.model_validate(cognitive_state_payload)
+            if isinstance(cognitive_state_payload, dict)
+            else None
+        )
+
+        point_id = getattr(point, "id", "")
+        return MemoryChunk(
+            id=str(point_id),
+            content=str(payload.get("content", "")),
+            embedding=self._parse_vector(point),
+            metadata=(payload["metadata"] if isinstance(payload.get("metadata"), dict) else {}),
+            salience=float(payload.get("salience", 0.5)),
+            cognitive_state=cognitive_state,
+            created_at=created_at,
+            updated_at=updated_at,
+            access_count=int(payload.get("access_count", 0)),
+            version=int(payload.get("version", 1)),
+        )
+
+    def store(self, chunk: MemoryChunk) -> None:
+        """Insert or replace a chunk by ID."""
+        vector = chunk.embedding
+        if vector is None:
+            if self._vector_size is None:
+                raise ValueError(
+                    "Cannot store chunk without embedding before Qdrant vector size is known."
+                )
+            vector = [0.0] * self._vector_size
+
+        self._ensure_collection(len(vector))
+
+        point = self._models.PointStruct(
+            id=chunk.id,
+            vector=vector,
+            payload=self._chunk_to_payload(chunk),
+        )
+
+        with self._lock:
+            self._client.upsert(
+                collection_name=self.collection_name,
+                points=[point],
+                wait=True,
+            )
+
+    def retrieve(
+        self,
+        query_embedding: list[float],
+        top_k: int = 5,
+        filter_fn: Callable[[MemoryChunk], bool] | None = None,
+    ) -> list[MemoryChunk]:
+        """
+        Retrieve top-k chunks by cosine similarity.
+
+        When `filter_fn` is supplied, we do a full scan and local scoring to
+        preserve exact callback semantics defined by MemoryStore.
+        """
+        if top_k <= 0:
+            return []
+        if not self._collection_exists():
+            return []
+
+        if filter_fn is not None:
+            candidates = [chunk for chunk in self.get_all() if filter_fn(chunk)]
+            scored: list[tuple[float, MemoryChunk]] = []
+            for chunk in candidates:
+                if chunk.embedding is not None and len(chunk.embedding) == len(query_embedding):
+                    sim = cosine_similarity(query_embedding, chunk.embedding)
+                else:
+                    sim = 0.0
+                scored.append((sim, chunk))
+            scored.sort(key=lambda x: x[0], reverse=True)
+            return [chunk for _, chunk in scored[:top_k]]
+
+        with self._lock:
+            hits = self._client.search(
+                collection_name=self.collection_name,
+                query_vector=query_embedding,
+                limit=top_k,
+                with_payload=True,
+                with_vectors=True,
+            )
+
+        return [self._point_to_chunk(hit) for hit in hits]
+
+    def update(self, chunk_id: str, chunk: MemoryChunk) -> bool:
+        """Update an existing chunk; returns False if not found."""
+        existing = self.get(chunk_id)
+        if existing is None:
+            return False
+
+        if chunk.id != chunk_id:
+            chunk = chunk.model_copy(update={"id": chunk_id})
+        self.store(chunk)
+        return True
+
+    def delete(self, chunk_id: str) -> bool:
+        """Delete chunk by ID; returns False if not found."""
+        if self.get(chunk_id) is None:
+            return False
+
+        selector = self._models.PointIdsList(points=[chunk_id])
+        with self._lock:
+            self._client.delete(
+                collection_name=self.collection_name,
+                points_selector=selector,
+                wait=True,
+            )
+        return True
+
+    def get(self, chunk_id: str) -> MemoryChunk | None:
+        """Lookup by point ID."""
+        if not self._collection_exists():
+            return None
+
+        with self._lock:
+            points = self._client.retrieve(
+                collection_name=self.collection_name,
+                ids=[chunk_id],
+                with_payload=True,
+                with_vectors=True,
+            )
+        if not points:
+            return None
+        return self._point_to_chunk(points[0])
+
+    def get_all(self) -> list[MemoryChunk]:
+        """Load all chunks from the collection using scroll pagination."""
+        if not self._collection_exists():
+            return []
+
+        all_chunks: list[MemoryChunk] = []
+        offset: Any | None = None
+
+        while True:
+            with self._lock:
+                points, next_offset = self._client.scroll(
+                    collection_name=self.collection_name,
+                    limit=256,
+                    offset=offset,
+                    with_payload=True,
+                    with_vectors=True,
+                )
+            all_chunks.extend(self._point_to_chunk(point) for point in points)
+            if next_offset is None:
+                break
+            offset = next_offset
+
+        return all_chunks
+
+    def get_stats(self) -> dict[str, Any]:
+        """Return statistics about the Qdrant-backed store."""
+        chunks = self.get_all()
+        total = len(chunks)
+        with_embedding = sum(1 for c in chunks if c.embedding is not None)
+        avg_salience = sum(c.salience for c in chunks) / total if total > 0 else 0.0
+        avg_access = sum(c.access_count for c in chunks) / total if total > 0 else 0.0
+
+        if self._vector_size is None and self._collection_exists():
+            self._vector_size = self._extract_vector_size()
+
+        return {
+            "backend": "QdrantStore",
+            "name": self.name,
+            "collection_name": self.collection_name,
+            "qdrant_url": self.url,
+            "qdrant_path": self.path,
+            "vector_size": self._vector_size,
+            "total_chunks": total,
+            "chunks_with_embeddings": with_embedding,
+            "average_salience": round(avg_salience, 4),
+            "average_access_count": round(avg_access, 4),
+        }
+
+    def close(self) -> None:
+        """Close the underlying client if it exposes close()."""
+        close_fn = getattr(self._client, "close", None)
+        if callable(close_fn):
+            close_fn()
+
+    def __del__(self) -> None:
+        """Ensure client cleanup on garbage collection."""
         try:
             self.close()
         except Exception:

@@ -36,8 +36,13 @@ Configuration via environment variables:
   MNEMOS_OPENAI_URL     — OpenAI-compatible base URL
   MNEMOS_OPENCLAW_API_KEY — OpenClaw API key (or fallback to MNEMOS_OPENAI_API_KEY)
   MNEMOS_OPENCLAW_URL   — OpenClaw API base URL (or fallback to MNEMOS_OPENAI_URL)
-  MNEMOS_STORE_TYPE     — "memory" (default) or "sqlite"
+  MNEMOS_STORE_TYPE     — "memory" (default), "sqlite", or "qdrant"
   MNEMOS_SQLITE_PATH    — Path for SQLite store (default: "mnemos_memory.db")
+  MNEMOS_QDRANT_URL     — Qdrant server URL (default: "http://localhost:6333")
+  MNEMOS_QDRANT_API_KEY — Qdrant API key (optional)
+  MNEMOS_QDRANT_PATH    — Local embedded Qdrant path (optional, overrides URL)
+  MNEMOS_QDRANT_COLLECTION — Qdrant collection name (default: "mnemos_memory")
+  MNEMOS_QDRANT_VECTOR_SIZE — Optional fixed vector size for pre-creating collection
   MNEMOS_STORAGE        — Alias for MNEMOS_STORE_TYPE
   MNEMOS_DB_PATH        — Alias for MNEMOS_SQLITE_PATH
   MNEMOS_SURPRISAL_THRESHOLD — Surprisal gate threshold (default: 0.3)

@@ -11,7 +11,7 @@ from .embeddings import (
     cosine_similarity,
 )
 from .llm import LLMProvider, MockLLMProvider, OllamaProvider, OpenAIProvider
-from .storage import InMemoryStore, MemoryStore, SQLiteStore
+from .storage import InMemoryStore, MemoryStore, QdrantStore, SQLiteStore
 
 __all__ = [
     # Embeddings
@@ -30,4 +30,5 @@ __all__ = [
     "MemoryStore",
     "InMemoryStore",
     "SQLiteStore",
+    "QdrantStore",
 ]

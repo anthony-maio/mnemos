@@ -59,6 +59,7 @@ from .utils import (
     OllamaProvider,
     OpenAIEmbeddingProvider,
     OpenAIProvider,
+    QdrantStore,
     SimpleEmbeddingProvider,
     SQLiteStore,
     cosine_distance,
@@ -108,4 +109,5 @@ __all__ = [
     "MemoryStore",
     "InMemoryStore",
     "SQLiteStore",
+    "QdrantStore",
 ]

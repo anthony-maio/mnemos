@@ -128,8 +128,13 @@ All configuration is via environment variables:
 | `MNEMOS_OPENCLAW_URL` | — | OpenClaw API URL (or fallback to `MNEMOS_OPENAI_URL`) |
 | `MNEMOS_EMBEDDING_PROVIDER` | `simple` | Embedding backend: `simple`, `ollama`, `openai`, or `openclaw` |
 | `MNEMOS_EMBEDDING_MODEL` | provider-dependent | Embedding model name |
-| `MNEMOS_STORE_TYPE` | `memory` | Storage backend: `memory` or `sqlite` |
+| `MNEMOS_STORE_TYPE` | `memory` | Storage backend: `memory`, `sqlite`, or `qdrant` |
 | `MNEMOS_SQLITE_PATH` | `mnemos_memory.db` | SQLite database path |
+| `MNEMOS_QDRANT_URL` | `http://localhost:6333` | Qdrant server URL |
+| `MNEMOS_QDRANT_API_KEY` | — | Optional Qdrant API key |
+| `MNEMOS_QDRANT_PATH` | — | Local embedded Qdrant path (overrides URL) |
+| `MNEMOS_QDRANT_COLLECTION` | `mnemos_memory` | Qdrant collection name |
+| `MNEMOS_QDRANT_VECTOR_SIZE` | — | Optional fixed vector size |
 | `MNEMOS_SURPRISAL_THRESHOLD` | `0.3` | Surprisal gate sensitivity (0-1) |
 | `MNEMOS_EMBEDDING_DIM` | `384` | Embedding vector dimension |
 | `MNEMOS_DEBUG` | `false` | Enable debug logging |

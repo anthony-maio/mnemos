@@ -1,0 +1,448 @@
+"""
+mnemos/benchmark.py — Retrieval benchmark harness.
+
+Measures retrieval quality and latency with metrics:
+- Recall@k
+- MRR (Mean Reciprocal Rank)
+- p95 latency (milliseconds)
+"""
+
+from __future__ import annotations
+
+import argparse
+import json
+import shutil
+import time
+from dataclasses import dataclass
+from pathlib import Path
+from typing import Any
+
+import numpy as np
+
+from .runtime import build_embedder_from_env
+from .types import MemoryChunk
+from .utils.storage import InMemoryStore, MemoryStore, QdrantStore, SQLiteStore
+
+
+@dataclass(frozen=True)
+class BenchmarkDocument:
+    """A memory document with one or more benchmark query variants."""
+
+    id: str
+    content: str
+    queries: tuple[str, ...]
+
+
+@dataclass(frozen=True)
+class BenchmarkQuery:
+    """A query with a set of relevant memory IDs."""
+
+    text: str
+    relevant_ids: set[str]
+
+
+def default_benchmark_documents() -> list[BenchmarkDocument]:
+    """Built-in dataset used when no dataset path is provided."""
+    return [
+        BenchmarkDocument(
+            id="aws-ecs",
+            content="We deploy microservices on AWS ECS with blue-green releases.",
+            queries=("blue green ecs deployment", "microservices platform on aws ecs"),
+        ),
+        BenchmarkDocument(
+            id="k8s-observability",
+            content="Kubernetes clusters use Prometheus and Grafana for observability.",
+            queries=("kubernetes monitoring stack", "prometheus grafana cluster metrics"),
+        ),
+        BenchmarkDocument(
+            id="postgres-backup",
+            content="PostgreSQL backups run nightly with point-in-time recovery enabled.",
+            queries=("postgres backup schedule", "point in time recovery database"),
+        ),
+        BenchmarkDocument(
+            id="redis-cache",
+            content="Redis caches session tokens with a 15 minute TTL policy.",
+            queries=("session token cache ttl", "redis policy for session cache"),
+        ),
+        BenchmarkDocument(
+            id="pytest-ci",
+            content="CI pipelines run pytest with coverage gates above ninety percent.",
+            queries=("pytest coverage gate in ci", "test coverage threshold pipeline"),
+        ),
+        BenchmarkDocument(
+            id="fastapi-auth",
+            content="FastAPI services use OAuth2 bearer tokens for API authentication.",
+            queries=("fastapi api auth method", "oauth2 bearer token service"),
+        ),
+        BenchmarkDocument(
+            id="react-design",
+            content="The frontend stack uses React with a shared design token system.",
+            queries=("frontend framework and design tokens", "react shared design system"),
+        ),
+        BenchmarkDocument(
+            id="svelte-migration",
+            content="The web team is migrating from React to Svelte this quarter.",
+            queries=("which framework migration is planned", "move from react to svelte"),
+        ),
+        BenchmarkDocument(
+            id="incident-pagerduty",
+            content="Critical incidents page the on-call engineer through PagerDuty.",
+            queries=("how are critical incidents escalated", "on call paging tool"),
+        ),
+        BenchmarkDocument(
+            id="runbook-nginx",
+            content="The outage runbook restarts nginx then validates upstream health checks.",
+            queries=("nginx outage runbook steps", "restart nginx and validate upstream"),
+        ),
+        BenchmarkDocument(
+            id="terraform-modules",
+            content="Infrastructure uses Terraform modules with environment-specific workspaces.",
+            queries=("terraform workspace strategy", "infra modules per environment"),
+        ),
+        BenchmarkDocument(
+            id="llm-routing",
+            content="The assistant routes urgent bug triage to a high reasoning model.",
+            queries=("model routing for bug triage", "urgent issue high reasoning model"),
+        ),
+    ]
+
+
+def build_queries(documents: list[BenchmarkDocument]) -> list[BenchmarkQuery]:
+    """Expand document query variants into query objects."""
+    queries: list[BenchmarkQuery] = []
+    for doc in documents:
+        for query in doc.queries:
+            queries.append(BenchmarkQuery(text=query, relevant_ids={doc.id}))
+    return queries
+
+
+def compute_retrieval_metrics(
+    *,
+    retrieved_ids: list[list[str]],
+    relevant_ids: list[set[str]],
+    latencies_ms: list[float],
+    top_k: int,
+) -> dict[str, float | int]:
+    """Compute Recall@k, MRR, and p95 latency."""
+    if len(retrieved_ids) != len(relevant_ids):
+        raise ValueError("retrieved_ids and relevant_ids must have the same length.")
+
+    query_count = len(retrieved_ids)
+    if query_count == 0:
+        return {
+            "query_count": 0,
+            "recall_at_k": 0.0,
+            "mrr": 0.0,
+            "latency_p95_ms": 0.0,
+            "latency_mean_ms": 0.0,
+        }
+
+    hit_count = 0
+    reciprocal_rank_sum = 0.0
+
+    for candidates, relevant in zip(retrieved_ids, relevant_ids):
+        first_rank: int | None = None
+        for index, candidate_id in enumerate(candidates[:top_k], start=1):
+            if candidate_id in relevant:
+                first_rank = index
+                break
+        if first_rank is not None:
+            hit_count += 1
+            reciprocal_rank_sum += 1.0 / first_rank
+
+    p95_ms = float(np.percentile(latencies_ms, 95)) if latencies_ms else 0.0
+    mean_ms = float(np.mean(latencies_ms)) if latencies_ms else 0.0
+
+    return {
+        "query_count": query_count,
+        "recall_at_k": hit_count / query_count,
+        "mrr": reciprocal_rank_sum / query_count,
+        "latency_p95_ms": p95_ms,
+        "latency_mean_ms": mean_ms,
+    }
+
+
+def _coerce_document(item: dict[str, Any], index: int) -> BenchmarkDocument:
+    content = item.get("content", item.get("text", ""))
+    if not isinstance(content, str) or not content.strip():
+        raise ValueError(f"Dataset item at index {index} is missing non-empty 'content'.")
+
+    raw_queries = item.get("queries")
+    if not isinstance(raw_queries, list) or not raw_queries:
+        raise ValueError(f"Dataset item at index {index} must include non-empty 'queries' list.")
+    queries = tuple(str(q) for q in raw_queries if str(q).strip())
+    if not queries:
+        raise ValueError(f"Dataset item at index {index} has empty query strings.")
+
+    doc_id_raw = item.get("id", f"doc-{index}")
+    return BenchmarkDocument(
+        id=str(doc_id_raw),
+        content=content,
+        queries=queries,
+    )
+
+
+def load_documents(dataset_path: Path) -> list[BenchmarkDocument]:
+    """Load dataset from .json or .jsonl."""
+    suffix = dataset_path.suffix.lower()
+    if suffix not in {".json", ".jsonl"}:
+        raise ValueError("Dataset file must be .json or .jsonl")
+
+    documents: list[BenchmarkDocument] = []
+    if suffix == ".jsonl":
+        for idx, line in enumerate(dataset_path.read_text(encoding="utf-8").splitlines()):
+            stripped = line.strip()
+            if not stripped:
+                continue
+            item = json.loads(stripped)
+            if not isinstance(item, dict):
+                raise ValueError(f"JSONL line {idx + 1} must be an object.")
+            documents.append(_coerce_document(item, idx))
+        return documents
+
+    payload = json.loads(dataset_path.read_text(encoding="utf-8"))
+    if not isinstance(payload, list):
+        raise ValueError("JSON dataset must be a list of objects.")
+    for idx, item in enumerate(payload):
+        if not isinstance(item, dict):
+            raise ValueError(f"JSON dataset item at index {idx} must be an object.")
+        documents.append(_coerce_document(item, idx))
+    return documents
+
+
+def _cleanup_local_store_artifacts(
+    store_type: str,
+    sqlite_path: Path | None,
+    qdrant_path: Path | None,
+) -> None:
+    if store_type == "sqlite" and sqlite_path is not None and sqlite_path.exists():
+        sqlite_path.unlink()
+    if store_type == "qdrant" and qdrant_path is not None and qdrant_path.exists():
+        if qdrant_path.is_dir():
+            shutil.rmtree(qdrant_path)
+        else:
+            qdrant_path.unlink()
+
+
+def _build_store(
+    *,
+    store_type: str,
+    sqlite_path: Path | None,
+    qdrant_url: str | None,
+    qdrant_api_key: str | None,
+    qdrant_path: Path | None,
+    qdrant_collection: str,
+    vector_size: int,
+) -> MemoryStore:
+    if store_type == "memory":
+        return InMemoryStore(name="benchmark-memory")
+    if store_type == "sqlite":
+        if sqlite_path is None:
+            raise ValueError("sqlite_path is required for sqlite benchmark runs.")
+        return SQLiteStore(db_path=str(sqlite_path), name="benchmark-sqlite")
+    if store_type == "qdrant":
+        return QdrantStore(
+            url=qdrant_url,
+            api_key=qdrant_api_key,
+            path=str(qdrant_path) if qdrant_path is not None else None,
+            collection_name=qdrant_collection,
+            vector_size=vector_size,
+            name="benchmark-qdrant",
+        )
+    raise ValueError(f"Unsupported store type: {store_type!r}")
+
+
+def run_retrieval_benchmark(
+    *,
+    store_type: str,
+    top_k: int,
+    documents: list[BenchmarkDocument],
+    query_limit: int | None = None,
+    sqlite_path: Path | None = None,
+    qdrant_url: str | None = None,
+    qdrant_api_key: str | None = None,
+    qdrant_path: Path | None = None,
+    qdrant_collection: str = "mnemos_benchmark",
+) -> dict[str, Any]:
+    """Run one benchmark pass for a single storage backend."""
+    if top_k <= 0:
+        raise ValueError("top_k must be > 0")
+    if not documents:
+        raise ValueError("Benchmark requires at least one document.")
+
+    queries = build_queries(documents)
+    if query_limit is not None and query_limit > 0:
+        queries = queries[:query_limit]
+
+    embedder = build_embedder_from_env(default_provider="simple")
+    document_embeddings = embedder.embed_batch([doc.content for doc in documents])
+    query_embeddings = embedder.embed_batch([query.text for query in queries])
+    if not document_embeddings:
+        raise ValueError("Unable to generate document embeddings.")
+
+    _cleanup_local_store_artifacts(store_type, sqlite_path, qdrant_path)
+    store = _build_store(
+        store_type=store_type,
+        sqlite_path=sqlite_path,
+        qdrant_url=qdrant_url,
+        qdrant_api_key=qdrant_api_key,
+        qdrant_path=qdrant_path,
+        qdrant_collection=qdrant_collection,
+        vector_size=len(document_embeddings[0]),
+    )
+
+    ingest_start = time.perf_counter()
+    for doc, embedding in zip(documents, document_embeddings):
+        store.store(
+            MemoryChunk(
+                id=doc.id,
+                content=doc.content,
+                embedding=embedding,
+                metadata={"source": "benchmark"},
+            )
+        )
+    ingest_seconds = time.perf_counter() - ingest_start
+
+    retrieved_ids: list[list[str]] = []
+    relevant_ids: list[set[str]] = []
+    latencies_ms: list[float] = []
+
+    for query, query_embedding in zip(queries, query_embeddings):
+        start = time.perf_counter()
+        chunks = store.retrieve(query_embedding, top_k=top_k)
+        elapsed_ms = (time.perf_counter() - start) * 1000.0
+
+        latencies_ms.append(elapsed_ms)
+        retrieved_ids.append([chunk.id for chunk in chunks])
+        relevant_ids.append(query.relevant_ids)
+
+    metrics = compute_retrieval_metrics(
+        retrieved_ids=retrieved_ids,
+        relevant_ids=relevant_ids,
+        latencies_ms=latencies_ms,
+        top_k=top_k,
+    )
+
+    result = {
+        "store_type": store_type,
+        "top_k": top_k,
+        "document_count": len(documents),
+        "query_count": int(metrics["query_count"]),
+        "ingest_seconds": ingest_seconds,
+        "recall_at_k": metrics["recall_at_k"],
+        "mrr": metrics["mrr"],
+        "latency_mean_ms": metrics["latency_mean_ms"],
+        "latency_p95_ms": metrics["latency_p95_ms"],
+        "store_stats": store.get_stats(),
+    }
+
+    if hasattr(store, "close"):
+        close_fn = getattr(store, "close")
+        if callable(close_fn):
+            close_fn()
+
+    return result
+
+
+def main() -> None:
+    parser = argparse.ArgumentParser(
+        prog="mnemos-benchmark",
+        description="Benchmark Mnemos retrieval quality and latency.",
+    )
+    parser.add_argument(
+        "--stores",
+        default="memory,sqlite",
+        help="Comma-separated store backends to benchmark (memory,sqlite,qdrant).",
+    )
+    parser.add_argument("--top-k", type=int, default=5, help="k for Recall@k/MRR (default: 5).")
+    parser.add_argument(
+        "--dataset", type=str, default="", help="Optional .json/.jsonl dataset path."
+    )
+    parser.add_argument(
+        "--query-limit",
+        type=int,
+        default=0,
+        help="Optional max number of query variants to benchmark.",
+    )
+    parser.add_argument(
+        "--sqlite-path",
+        type=str,
+        default=".mnemos_benchmark.sqlite",
+        help="SQLite path for sqlite benchmark runs.",
+    )
+    parser.add_argument(
+        "--qdrant-url",
+        type=str,
+        default="",
+        help="Qdrant server URL for qdrant runs (omit when using --qdrant-path).",
+    )
+    parser.add_argument(
+        "--qdrant-api-key",
+        type=str,
+        default="",
+        help="Qdrant API key for remote qdrant.",
+    )
+    parser.add_argument(
+        "--qdrant-path",
+        type=str,
+        default=".mnemos_benchmark_qdrant",
+        help="Local Qdrant path for embedded qdrant mode.",
+    )
+    parser.add_argument(
+        "--qdrant-collection",
+        type=str,
+        default=f"mnemos_benchmark_{int(time.time())}",
+        help="Collection name for qdrant runs.",
+    )
+    parser.add_argument(
+        "--output", type=str, default="", help="Optional path to write JSON report."
+    )
+    args = parser.parse_args()
+
+    if args.dataset:
+        documents = load_documents(Path(args.dataset))
+    else:
+        documents = default_benchmark_documents()
+
+    store_types = [item.strip().lower() for item in args.stores.split(",") if item.strip()]
+    if not store_types:
+        raise ValueError("No store types provided.")
+
+    query_limit = args.query_limit if args.query_limit > 0 else None
+    sqlite_path = Path(args.sqlite_path) if args.sqlite_path else None
+    qdrant_path = Path(args.qdrant_path) if args.qdrant_path else None
+    qdrant_url = args.qdrant_url or None
+    qdrant_api_key = args.qdrant_api_key or None
+
+    results = []
+    for store_type in store_types:
+        results.append(
+            run_retrieval_benchmark(
+                store_type=store_type,
+                top_k=args.top_k,
+                documents=documents,
+                query_limit=query_limit,
+                sqlite_path=sqlite_path,
+                qdrant_url=qdrant_url,
+                qdrant_api_key=qdrant_api_key,
+                qdrant_path=qdrant_path,
+                qdrant_collection=args.qdrant_collection,
+            )
+        )
+
+    report = {
+        "dataset": args.dataset or "built-in",
+        "stores": store_types,
+        "top_k": args.top_k,
+        "results": results,
+    }
+
+    rendered = json.dumps(report, indent=2)
+    print(rendered)
+
+    if args.output:
+        Path(args.output).write_text(rendered + "\n", encoding="utf-8")
+
+
+if __name__ == "__main__":
+    main()

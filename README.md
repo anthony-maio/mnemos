@@ -461,8 +461,13 @@ engine = MnemosEngine(config=config)
 | `MNEMOS_EMBEDDING_PROVIDER` | `simple` | `simple`, `ollama`, `openai`, or `openclaw` |
 | `MNEMOS_EMBEDDING_MODEL` | provider-dependent | Embedding model name (e.g. `nomic-embed-text`) |
 | `MNEMOS_EMBEDDING_DIM` | `384` | Embedding dimension for `simple` provider |
-| `MNEMOS_STORE_TYPE` | `memory` | `memory` or `sqlite` |
+| `MNEMOS_STORE_TYPE` | `memory` | `memory`, `sqlite`, or `qdrant` |
 | `MNEMOS_SQLITE_PATH` | `mnemos_memory.db` | SQLite database path |
+| `MNEMOS_QDRANT_URL` | `http://localhost:6333` | Qdrant server URL |
+| `MNEMOS_QDRANT_API_KEY` | — | Optional Qdrant API key |
+| `MNEMOS_QDRANT_PATH` | — | Local embedded Qdrant path (overrides URL) |
+| `MNEMOS_QDRANT_COLLECTION` | `mnemos_memory` | Qdrant collection name |
+| `MNEMOS_QDRANT_VECTOR_SIZE` | — | Optional fixed vector size for pre-created collections |
 | `MNEMOS_SURPRISAL_THRESHOLD` | `0.3` | Surprisal gate sensitivity |
 | `MNEMOS_DEBUG` | `false` | Enable verbose debug logging |
 
@@ -503,6 +508,7 @@ The distinction isn't just architectural. It's causal: standard tools retrieve s
 **Optional (install what you need):**
 - `ollama` — local LLM inference via Ollama (`pip install 'mnemos-memory[ollama]'`)
 - `openai` — OpenAI or any OpenAI-compatible API (`pip install 'mnemos-memory[openai]'`)
+- `qdrant` — Qdrant vector database backend (`pip install 'mnemos-memory[qdrant]'`)
 - `mcp` — MCP server for Claude Code, Cursor, Windsurf (`pip install 'mnemos-memory[mcp]'`)
 - `neo4j` — Neo4j graph backend for SpreadingActivation at scale (`pip install 'mnemos-memory[neo4j]'`)
 
@@ -514,6 +520,21 @@ pip install 'mnemos-memory[all]'
 **Storage backends built-in:**
 - `InMemoryStore` — zero setup, for development and testing
 - `SQLiteStore` — persistent, zero external services, suitable for personal deployments
+- `QdrantStore` — vector database backend for scalable retrieval
+
+## Retrieval Benchmark Harness
+
+Run reproducible retrieval benchmarks with `Recall@k`, `MRR`, and `p95` latency:
+
+```bash
+mnemos-benchmark --stores memory,sqlite,qdrant --top-k 5
+```
+
+You can provide a custom dataset (`.json` or `.jsonl`) with `id`, `content`, and `queries`:
+
+```bash
+mnemos-benchmark --stores qdrant --dataset ./benchmarks/retrieval.jsonl --top-k 10
+```
 
 ## Production Checklist
 
@@ -534,7 +555,7 @@ pytest
 
 **Good first contributions:**
 - Neo4j backend for `SpreadingActivation` (the storage interface is ready, the backend isn't)
-- Qdrant/Weaviate storage backends
+- Weaviate storage backend
 - Proceduralization quality improvements in `SleepDaemon`
 - Benchmarks comparing retrieval quality against standard RAG baselines
 
