@@ -311,6 +311,15 @@ mnemos-cli store "Prefer concise summaries" --scope global
 
 # Retrieve from current project plus global memory
 mnemos-cli retrieve "tooling preferences" --current-scope project --scope-id repo-alpha --allowed-scopes project,global
+
+# Audit current project memories
+mnemos-cli list --scope project --scope-id repo-alpha --limit 20
+mnemos-cli search "terraform" --scope project --scope-id repo-alpha
+mnemos-cli export --scope project --scope-id repo-alpha --format jsonl --output .mnemos-export.jsonl
+
+# Dry-run purge old project memories, then confirm
+mnemos-cli purge --scope project --scope-id repo-alpha --older-than-days 30 --dry-run
+mnemos-cli purge --scope project --scope-id repo-alpha --older-than-days 30 --yes
 ```
 
 Profile + compatibility docs:

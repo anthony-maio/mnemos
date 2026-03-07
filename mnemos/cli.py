@@ -21,6 +21,7 @@ import json
 import os
 import shlex
 import sys
+from datetime import datetime, timedelta, timezone
 from typing import Any, Literal, cast
 
 from .config import MemoryGovernanceConfig, MemorySafetyConfig, MnemosConfig, SurprisalConfig
@@ -34,6 +35,7 @@ from .utils.llm import MockLLMProvider, LLMProvider
 
 PROFILE_CHOICES = ("starter", "local-performance", "scale")
 VALID_SCOPES = ("project", "workspace", "global")
+AUDIT_SCOPES = ("all", "project", "workspace", "global")
 ANTIGRAVITY_HOST_CHOICES = ("cursor", "generic-mcp")
 MemoryAction = Literal["allow", "redact", "block"]
 CaptureMode = Literal["all", "manual_only", "hooks_only"]
@@ -157,6 +159,98 @@ def _build_antigravity_policy(host: str) -> str:
         "6. Never store secrets, tokens, credentials, or one-off transient chatter.\n"
         "7. If retrieval returns nothing useful, continue normally and seed memory as facts emerge.\n"
     )
+
+
+def _chunk_scope(chunk: Any) -> tuple[str, str | None]:
+    scope_raw = chunk.metadata.get("scope")
+    scope = str(scope_raw).lower() if isinstance(scope_raw, str) else "global"
+    if scope not in VALID_SCOPES:
+        scope = "global"
+    if scope == "global":
+        return scope, None
+    scope_id_raw = chunk.metadata.get("scope_id")
+    scope_id = str(scope_id_raw).strip() if isinstance(scope_id_raw, str) else "default"
+    if not scope_id:
+        scope_id = "default"
+    return scope, scope_id
+
+
+def _scope_filter(chunk: Any, scope: str, scope_id: str) -> bool:
+    if scope == "all":
+        return True
+    chunk_scope, chunk_scope_id = _chunk_scope(chunk)
+    if chunk_scope != scope:
+        return False
+    if scope in {"project", "workspace"}:
+        target = scope_id.strip() if scope_id.strip() else "default"
+        return chunk_scope_id == target
+    return True
+
+
+def _query_filter(chunk: Any, query: str) -> bool:
+    if not query.strip():
+        return True
+    q = query.lower()
+    if q in chunk.content.lower():
+        return True
+    for value in chunk.metadata.values():
+        if isinstance(value, str) and q in value.lower():
+            return True
+    return False
+
+
+def _age_filter(chunk: Any, older_than_days: int) -> bool:
+    if older_than_days <= 0:
+        return True
+    cutoff = datetime.now(timezone.utc) - timedelta(days=older_than_days)
+    updated = chunk.updated_at
+    created = chunk.created_at
+    return bool(updated < cutoff and created < cutoff)
+
+
+def _sort_chunks(chunks: list[Any], sort_by: str) -> list[Any]:
+    if sort_by == "salience":
+        return sorted(chunks, key=lambda chunk: chunk.salience, reverse=True)
+    if sort_by == "access_count":
+        return sorted(chunks, key=lambda chunk: chunk.access_count, reverse=True)
+    if sort_by == "updated_at":
+        return sorted(chunks, key=lambda chunk: chunk.updated_at, reverse=True)
+    return sorted(chunks, key=lambda chunk: chunk.created_at, reverse=True)
+
+
+def _serialize_chunk(chunk: Any) -> dict[str, Any]:
+    scope, scope_id = _chunk_scope(chunk)
+    return {
+        "id": chunk.id,
+        "content": chunk.content,
+        "scope": scope,
+        "scope_id": scope_id,
+        "salience": round(chunk.salience, 4),
+        "version": chunk.version,
+        "access_count": chunk.access_count,
+        "created_at": chunk.created_at.isoformat(),
+        "updated_at": chunk.updated_at.isoformat(),
+        "metadata": chunk.metadata,
+    }
+
+
+def _filtered_chunks(
+    engine: MnemosEngine,
+    *,
+    scope: str,
+    scope_id: str,
+    query: str = "",
+    older_than_days: int = 0,
+) -> list[Any]:
+    chunks = engine.store.get_all()
+    filtered = [
+        chunk
+        for chunk in chunks
+        if _scope_filter(chunk, scope, scope_id)
+        and _query_filter(chunk, query)
+        and _age_filter(chunk, older_than_days)
+    ]
+    return filtered
 
 
 def _build_engine() -> MnemosEngine:
@@ -304,6 +398,155 @@ async def _cmd_stats(args: argparse.Namespace) -> None:
     engine = _build_engine()
     stats = engine.get_stats()
     print(json.dumps(stats, indent=2, default=str))
+
+
+async def _cmd_list(args: argparse.Namespace) -> None:
+    engine = _build_engine()
+    chunks = _filtered_chunks(
+        engine,
+        scope=args.scope,
+        scope_id=args.scope_id,
+        query=args.query,
+    )
+    chunks = _sort_chunks(chunks, args.sort_by)
+    limited = chunks[: args.limit] if args.limit > 0 else chunks
+    print(
+        json.dumps(
+            {
+                "total": len(chunks),
+                "showing": len(limited),
+                "scope": args.scope,
+                "scope_id": args.scope_id if args.scope != "global" else None,
+                "query": args.query,
+                "memories": [_serialize_chunk(chunk) for chunk in limited],
+            },
+            indent=2,
+        )
+    )
+
+
+async def _cmd_search(args: argparse.Namespace) -> None:
+    engine = _build_engine()
+    chunks = _filtered_chunks(
+        engine,
+        scope=args.scope,
+        scope_id=args.scope_id,
+        query=args.query,
+    )
+    chunks = _sort_chunks(chunks, args.sort_by)
+    limited = chunks[: args.limit] if args.limit > 0 else chunks
+    print(
+        json.dumps(
+            {
+                "query": args.query,
+                "total": len(chunks),
+                "showing": len(limited),
+                "scope": args.scope,
+                "scope_id": args.scope_id if args.scope != "global" else None,
+                "results": [_serialize_chunk(chunk) for chunk in limited],
+            },
+            indent=2,
+        )
+    )
+
+
+async def _cmd_export(args: argparse.Namespace) -> None:
+    engine = _build_engine()
+    chunks = _filtered_chunks(
+        engine,
+        scope=args.scope,
+        scope_id=args.scope_id,
+        query=args.query,
+    )
+    chunks = _sort_chunks(chunks, args.sort_by)
+    limited = chunks[: args.limit] if args.limit > 0 else chunks
+    serialized = [_serialize_chunk(chunk) for chunk in limited]
+
+    if args.format == "jsonl":
+        output = "\n".join(json.dumps(item) for item in serialized)
+    else:
+        output = json.dumps(
+            {
+                "scope": args.scope,
+                "scope_id": args.scope_id if args.scope != "global" else None,
+                "query": args.query,
+                "total": len(serialized),
+                "memories": serialized,
+            },
+            indent=2,
+        )
+    if args.output:
+        text = output if output.endswith("\n") else f"{output}\n"
+        with open(args.output, "w", encoding="utf-8") as handle:
+            handle.write(text)
+    print(output)
+
+
+async def _cmd_purge(args: argparse.Namespace) -> None:
+    engine = _build_engine()
+    chunks = _filtered_chunks(
+        engine,
+        scope=args.scope,
+        scope_id=args.scope_id,
+        query=args.query,
+        older_than_days=args.older_than_days,
+    )
+    chunks = _sort_chunks(chunks, "created_at")
+    limited = chunks[: args.limit] if args.limit > 0 else chunks
+    ids = [chunk.id for chunk in limited]
+    if args.dry_run:
+        print(
+            json.dumps(
+                {
+                    "deleted": 0,
+                    "matched": len(ids),
+                    "dry_run": True,
+                    "scope": args.scope,
+                    "scope_id": args.scope_id if args.scope != "global" else None,
+                    "query": args.query,
+                    "older_than_days": args.older_than_days,
+                    "ids": ids,
+                },
+                indent=2,
+            )
+        )
+        return
+
+    if not args.yes:
+        print(
+            json.dumps(
+                {
+                    "deleted": 0,
+                    "matched": len(ids),
+                    "dry_run": False,
+                    "reason": "Refusing purge without --yes confirmation.",
+                },
+                indent=2,
+            )
+        )
+        return
+
+    deleted = 0
+    for chunk_id in ids:
+        if engine.store.delete(chunk_id):
+            deleted += 1
+            node = engine.spreading_activation.get_node(chunk_id)
+            if node:
+                engine.spreading_activation.remove_node(chunk_id)
+
+    print(
+        json.dumps(
+            {
+                "deleted": deleted,
+                "matched": len(ids),
+                "scope": args.scope,
+                "scope_id": args.scope_id if args.scope != "global" else None,
+                "query": args.query,
+                "older_than_days": args.older_than_days,
+            },
+            indent=2,
+        )
+    )
 
 
 async def _cmd_doctor(args: argparse.Namespace) -> None:
@@ -484,6 +727,66 @@ def main() -> None:
 
     # stats
     subparsers.add_parser("stats", help="Show system statistics")
+
+    sp_list = subparsers.add_parser(
+        "list", help="List stored memories with optional scope/query filters"
+    )
+    sp_list.add_argument("--scope", choices=AUDIT_SCOPES, default="all")
+    sp_list.add_argument("--scope-id", default="default")
+    sp_list.add_argument("--query", default="", help="Optional case-insensitive substring filter.")
+    sp_list.add_argument(
+        "--sort-by",
+        choices=("created_at", "updated_at", "salience", "access_count"),
+        default="created_at",
+    )
+    sp_list.add_argument("--limit", type=int, default=50)
+
+    sp_search = subparsers.add_parser(
+        "search", help="Search memory content/metadata with scope filters."
+    )
+    sp_search.add_argument("query")
+    sp_search.add_argument("--scope", choices=AUDIT_SCOPES, default="all")
+    sp_search.add_argument("--scope-id", default="default")
+    sp_search.add_argument(
+        "--sort-by",
+        choices=("created_at", "updated_at", "salience", "access_count"),
+        default="created_at",
+    )
+    sp_search.add_argument("--limit", type=int, default=50)
+
+    sp_export = subparsers.add_parser(
+        "export", help="Export stored memories for audit/backup with optional filters."
+    )
+    sp_export.add_argument("--scope", choices=AUDIT_SCOPES, default="all")
+    sp_export.add_argument("--scope-id", default="default")
+    sp_export.add_argument(
+        "--query", default="", help="Optional case-insensitive substring filter."
+    )
+    sp_export.add_argument(
+        "--sort-by",
+        choices=("created_at", "updated_at", "salience", "access_count"),
+        default="created_at",
+    )
+    sp_export.add_argument("--limit", type=int, default=0, help="0 means no limit.")
+    sp_export.add_argument("--format", choices=("json", "jsonl"), default="json")
+    sp_export.add_argument("--output", default="", help="Optional output path.")
+
+    sp_purge = subparsers.add_parser(
+        "purge", help="Delete memories matching filters (requires --yes unless --dry-run)."
+    )
+    sp_purge.add_argument("--scope", choices=AUDIT_SCOPES, default="all")
+    sp_purge.add_argument("--scope-id", default="default")
+    sp_purge.add_argument("--query", default="", help="Optional case-insensitive substring filter.")
+    sp_purge.add_argument(
+        "--older-than-days",
+        type=int,
+        default=0,
+        help="Only purge memories older than this many days (0 disables age filter).",
+    )
+    sp_purge.add_argument("--limit", type=int, default=0, help="0 means no limit.")
+    sp_purge.add_argument("--dry-run", action="store_true")
+    sp_purge.add_argument("--yes", action="store_true", help="Confirm destructive purge.")
+
     sp_doctor = subparsers.add_parser("doctor", help="Run profile readiness and dependency checks")
     sp_doctor.add_argument(
         "--qdrant-chunk-threshold",
@@ -616,6 +919,14 @@ def main() -> None:
         asyncio.run(_cmd_consolidate(args))
     elif args.command == "stats":
         asyncio.run(_cmd_stats(args))
+    elif args.command == "list":
+        asyncio.run(_cmd_list(args))
+    elif args.command == "search":
+        asyncio.run(_cmd_search(args))
+    elif args.command == "export":
+        asyncio.run(_cmd_export(args))
+    elif args.command == "purge":
+        asyncio.run(_cmd_purge(args))
     elif args.command == "doctor":
         asyncio.run(_cmd_doctor(args))
     elif args.command == "profile":

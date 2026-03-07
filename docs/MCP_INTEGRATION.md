@@ -254,6 +254,13 @@ mnemos-cli consolidate
 # View statistics
 mnemos-cli stats
 
+# Audit memory
+mnemos-cli list --scope project --scope-id repo-alpha --limit 20
+mnemos-cli search "terraform" --scope project --scope-id repo-alpha
+mnemos-cli export --scope project --scope-id repo-alpha --format jsonl --output .mnemos-export.jsonl
+mnemos-cli purge --scope project --scope-id repo-alpha --older-than-days 30 --dry-run
+mnemos-cli purge --scope project --scope-id repo-alpha --older-than-days 30 --yes
+
 # Readiness diagnostics
 mnemos-cli doctor
 

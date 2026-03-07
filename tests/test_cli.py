@@ -18,8 +18,12 @@ from mnemos.cli import (
     _cmd_antigravity,
     _cmd_autostore_hook,
     _cmd_doctor,
+    _cmd_export,
+    _cmd_list,
+    _cmd_purge,
     _cmd_profile,
     _cmd_retrieve,
+    _cmd_search,
     _cmd_store,
 )
 from mnemos.types import MemoryChunk, ProcessResult
@@ -359,3 +363,217 @@ async def test_cli_autostore_hook_stores_when_decision_allows(
     assert engine.scope_id == "repo-alpha"
     captured = capsys.readouterr().out
     assert '"stored": true' in captured.lower()
+
+
+@pytest.mark.asyncio
+async def test_cli_list_filters_by_scope(monkeypatch: pytest.MonkeyPatch, capsys: Any) -> None:
+    class DummyStore:
+        def __init__(self, chunks: list[MemoryChunk]) -> None:
+            self._chunks = chunks
+
+        def get_all(self) -> list[MemoryChunk]:
+            return list(self._chunks)
+
+    class DummyEngine:
+        def __init__(self) -> None:
+            self.store = DummyStore(
+                [
+                    MemoryChunk(
+                        content="alpha fact", metadata={"scope": "project", "scope_id": "alpha"}
+                    ),
+                    MemoryChunk(
+                        content="beta fact", metadata={"scope": "project", "scope_id": "beta"}
+                    ),
+                    MemoryChunk(content="global fact", metadata={"scope": "global"}),
+                ]
+            )
+
+    monkeypatch.setattr("mnemos.cli._build_engine", lambda: DummyEngine())
+    await _cmd_list(
+        Namespace(
+            scope="project",
+            scope_id="alpha",
+            query="",
+            sort_by="created_at",
+            limit=50,
+        )
+    )
+    output = capsys.readouterr().out
+    assert '"total": 1' in output
+    assert "alpha fact" in output
+    assert "beta fact" not in output
+
+
+@pytest.mark.asyncio
+async def test_cli_search_filters_by_query(monkeypatch: pytest.MonkeyPatch, capsys: Any) -> None:
+    class DummyStore:
+        def __init__(self, chunks: list[MemoryChunk]) -> None:
+            self._chunks = chunks
+
+        def get_all(self) -> list[MemoryChunk]:
+            return list(self._chunks)
+
+    class DummyEngine:
+        def __init__(self) -> None:
+            self.store = DummyStore(
+                [
+                    MemoryChunk(
+                        content="uses terraform modules",
+                        metadata={"scope": "project", "scope_id": "alpha"},
+                    ),
+                    MemoryChunk(
+                        content="uses ansible", metadata={"scope": "project", "scope_id": "alpha"}
+                    ),
+                ]
+            )
+
+    monkeypatch.setattr("mnemos.cli._build_engine", lambda: DummyEngine())
+    await _cmd_search(
+        Namespace(
+            query="terraform",
+            scope="project",
+            scope_id="alpha",
+            sort_by="created_at",
+            limit=50,
+        )
+    )
+    output = capsys.readouterr().out
+    assert "terraform" in output
+    assert "ansible" not in output
+
+
+@pytest.mark.asyncio
+async def test_cli_export_writes_jsonl(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+    class DummyStore:
+        def __init__(self, chunks: list[MemoryChunk]) -> None:
+            self._chunks = chunks
+
+        def get_all(self) -> list[MemoryChunk]:
+            return list(self._chunks)
+
+    class DummyEngine:
+        def __init__(self) -> None:
+            self.store = DummyStore(
+                [
+                    MemoryChunk(content="global preference", metadata={"scope": "global"}),
+                ]
+            )
+
+    monkeypatch.setattr("mnemos.cli._build_engine", lambda: DummyEngine())
+    out_path = tmp_path / "export.jsonl"
+    await _cmd_export(
+        Namespace(
+            scope="all",
+            scope_id="default",
+            query="",
+            sort_by="created_at",
+            limit=0,
+            format="jsonl",
+            output=str(out_path),
+        )
+    )
+    text = out_path.read_text(encoding="utf-8")
+    assert "global preference" in text
+    assert text.strip().startswith("{")
+
+
+@pytest.mark.asyncio
+async def test_cli_purge_requires_yes(monkeypatch: pytest.MonkeyPatch, capsys: Any) -> None:
+    class DummyStore:
+        def __init__(self, chunks: list[MemoryChunk]) -> None:
+            self._chunks = {chunk.id: chunk for chunk in chunks}
+
+        def get_all(self) -> list[MemoryChunk]:
+            return list(self._chunks.values())
+
+        def delete(self, chunk_id: str) -> bool:
+            if chunk_id not in self._chunks:
+                return False
+            del self._chunks[chunk_id]
+            return True
+
+    class DummySpreading:
+        def get_node(self, chunk_id: str) -> None:
+            _ = chunk_id
+            return None
+
+        def remove_node(self, chunk_id: str) -> None:
+            _ = chunk_id
+
+    class DummyEngine:
+        def __init__(self) -> None:
+            self.store = DummyStore(
+                [
+                    MemoryChunk(
+                        content="alpha fact", metadata={"scope": "project", "scope_id": "alpha"}
+                    )
+                ]
+            )
+            self.spreading_activation = DummySpreading()
+
+    engine = DummyEngine()
+    monkeypatch.setattr("mnemos.cli._build_engine", lambda: engine)
+    await _cmd_purge(
+        Namespace(
+            scope="project",
+            scope_id="alpha",
+            query="",
+            older_than_days=0,
+            limit=0,
+            dry_run=False,
+            yes=False,
+        )
+    )
+    output = capsys.readouterr().out
+    assert "Refusing purge without --yes" in output
+    assert len(engine.store.get_all()) == 1
+
+
+@pytest.mark.asyncio
+async def test_cli_purge_deletes_when_confirmed(monkeypatch: pytest.MonkeyPatch) -> None:
+    class DummyStore:
+        def __init__(self, chunks: list[MemoryChunk]) -> None:
+            self._chunks = {chunk.id: chunk for chunk in chunks}
+
+        def get_all(self) -> list[MemoryChunk]:
+            return list(self._chunks.values())
+
+        def delete(self, chunk_id: str) -> bool:
+            if chunk_id not in self._chunks:
+                return False
+            del self._chunks[chunk_id]
+            return True
+
+    class DummySpreading:
+        def get_node(self, chunk_id: str) -> None:
+            _ = chunk_id
+            return None
+
+        def remove_node(self, chunk_id: str) -> None:
+            _ = chunk_id
+
+    class DummyEngine:
+        def __init__(self) -> None:
+            self.store = DummyStore(
+                [
+                    MemoryChunk(
+                        content="alpha fact", metadata={"scope": "project", "scope_id": "alpha"}
+                    )
+                ]
+            )
+            self.spreading_activation = DummySpreading()
+
+    engine = DummyEngine()
+    monkeypatch.setattr("mnemos.cli._build_engine", lambda: engine)
+    await _cmd_purge(
+        Namespace(
+            scope="project",
+            scope_id="alpha",
+            query="",
+            older_than_days=0,
+            limit=0,
+            dry_run=False,
+            yes=True,
+        )
+    )
+    assert len(engine.store.get_all()) == 0

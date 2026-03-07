@@ -32,6 +32,7 @@ Use this checklist before promoting a release as production-ready.
 - [ ] Backward-compatible env aliases validated (`MNEMOS_STORAGE`, `MNEMOS_DB_PATH`)
 - [ ] Shared memory write firewall configured (`MNEMOS_MEMORY_*` secret/PII policy)
 - [ ] Governance controls configured (`capture_mode`, TTL retention, per-scope cap)
+- [ ] Memory audit flows validated (`mnemos-cli list/search/export/purge`)
 - [ ] Default production docs do not rely on mock providers
 - [ ] Structured JSON logs validated for startup, retrieval latency, and provider failures
 - [ ] Tier 2 smoke checks (Cursor/Windsurf/Cline) reviewed with known caveats tracked
