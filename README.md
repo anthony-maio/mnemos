@@ -390,6 +390,8 @@ Once configured, you can tell your agent:
 
 The agent's memory now filters the mundane, tags emotional context, updates stale facts on recall, and compresses session logs into lasting knowledge — automatically.
 
+For deterministic Claude Code auto-memory, use the shipped hook config at [docs/claude-code-hooks.json](docs/claude-code-hooks.json). It auto-ingests user prompts and high-signal tool failures via `mnemos-cli autostore-hook`, then consolidates on `PreCompact`/`Stop`.
+
 ---
 
 ## Architecture Diagram

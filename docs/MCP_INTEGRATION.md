@@ -268,8 +268,15 @@ The CLI defaults to SQLite storage (persistent across sessions), unlike the MCP 
 
 Copy the example hooks from `docs/claude-code-hooks.json` into your Claude Code settings. The included hooks:
 
+- **UserPromptSubmit**: Automatically ingest high-signal user prompts into Mnemos (`mnemos-cli autostore-hook UserPromptSubmit`).
+- **PostToolUse**: Automatically ingest high-signal tool failures into Mnemos (`mnemos-cli autostore-hook PostToolUse`).
 - **PreCompact**: Before context compression, consolidate episodic memory so important context is saved to long-term storage before it's lost.
 - **Stop**: After Claude finishes responding, trigger consolidation to compress session learnings.
+
+The auto-store hook path is deterministic and conservative:
+- skips low-signal prompts
+- skips sensitive content (tokens/secrets/key material patterns)
+- only stores tool outputs when failure/error patterns are present
 
 ### Environment variables
 

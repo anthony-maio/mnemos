@@ -26,6 +26,7 @@ from typing import Any
 from .config import MnemosConfig, SurprisalConfig
 from .engine import MnemosEngine
 from .health import run_health_checks
+from .hook_autostore import SUPPORTED_HOOK_EVENTS, decide_autostore, parse_hook_payload
 from .observability import configure_logging, log_event
 from .runtime import build_embedder_from_env, build_store_from_env
 from .types import Interaction
@@ -320,6 +321,81 @@ async def _cmd_antigravity(args: argparse.Namespace) -> None:
             handle.write(text)
 
 
+def _read_hook_payload(raw_payload_arg: str) -> dict[str, Any]:
+    if raw_payload_arg:
+        return parse_hook_payload(raw_payload_arg)
+    if sys.stdin is None:
+        return {}
+    try:
+        if sys.stdin.isatty():
+            return {}
+        return parse_hook_payload(sys.stdin.read())
+    except OSError:
+        return {}
+
+
+async def _cmd_autostore_hook(args: argparse.Namespace) -> None:
+    payload = _read_hook_payload(args.payload)
+    decision = decide_autostore(
+        event=args.event,
+        payload=payload,
+        default_scope=args.scope,
+        default_scope_id=(args.scope_id or None),
+        max_chars=args.max_chars,
+    )
+
+    if not decision.should_store or decision.interaction is None:
+        print(
+            json.dumps(
+                {
+                    "stored": False,
+                    "reason": decision.reason,
+                    "event": args.event,
+                    "scope": decision.scope,
+                    "scope_id": decision.scope_id,
+                },
+                indent=2,
+            )
+        )
+        return
+
+    if args.dry_run:
+        print(
+            json.dumps(
+                {
+                    "stored": False,
+                    "reason": f"Dry run: {decision.reason}",
+                    "event": args.event,
+                    "scope": decision.scope,
+                    "scope_id": decision.scope_id,
+                    "content_preview": decision.interaction.content[:200],
+                },
+                indent=2,
+            )
+        )
+        return
+
+    engine = _build_engine()
+    result = await engine.process(
+        decision.interaction,
+        scope=decision.scope,
+        scope_id=decision.scope_id,
+    )
+    print(
+        json.dumps(
+            {
+                "stored": result.stored,
+                "reason": result.reason,
+                "event": args.event,
+                "scope": decision.scope,
+                "scope_id": decision.scope_id,
+                "chunk_id": result.chunk.id if result.chunk else None,
+            },
+            indent=2,
+        )
+    )
+
+
 def main() -> None:
     configure_logging()
     parser = argparse.ArgumentParser(
@@ -462,6 +538,39 @@ def main() -> None:
         help="Optional file path to write generated autopilot policy.",
     )
 
+    sp_autostore = subparsers.add_parser(
+        "autostore-hook",
+        help="Ingest Claude Code hook payload from stdin and auto-store high-signal memory.",
+    )
+    sp_autostore.add_argument("event", choices=SUPPORTED_HOOK_EVENTS)
+    sp_autostore.add_argument(
+        "--payload",
+        default="",
+        help="Optional raw JSON payload (stdin is used when omitted).",
+    )
+    sp_autostore.add_argument(
+        "--scope",
+        choices=VALID_SCOPES,
+        default="project",
+        help="Scope to store auto-ingested memory under (default: project).",
+    )
+    sp_autostore.add_argument(
+        "--scope-id",
+        default="",
+        help="Optional explicit scope id; defaults to payload cwd basename.",
+    )
+    sp_autostore.add_argument(
+        "--max-chars",
+        type=int,
+        default=1200,
+        help="Maximum stored content length for hook ingests.",
+    )
+    sp_autostore.add_argument(
+        "--dry-run",
+        action="store_true",
+        help="Print decision without storing.",
+    )
+
     args = parser.parse_args()
     if args.command == "retrieve":
         args.reconsolidate = not args.no_reconsolidate
@@ -480,6 +589,8 @@ def main() -> None:
         asyncio.run(_cmd_profile(args))
     elif args.command == "antigravity":
         asyncio.run(_cmd_antigravity(args))
+    elif args.command == "autostore-hook":
+        asyncio.run(_cmd_autostore_hook(args))
 
 
 if __name__ == "__main__":

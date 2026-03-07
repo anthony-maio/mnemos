@@ -16,6 +16,7 @@ from mnemos.cli import (
     _build_engine,
     _build_profile_env,
     _cmd_antigravity,
+    _cmd_autostore_hook,
     _cmd_doctor,
     _cmd_profile,
     _cmd_retrieve,
@@ -274,3 +275,68 @@ async def test_cli_antigravity_writes_policy(tmp_path: Path, capsys: Any) -> Non
     assert "mnemos_retrieve" in text
     captured = capsys.readouterr().out
     assert "Mnemos Antigravity Autopilot Policy" in captured
+
+
+@pytest.mark.asyncio
+async def test_cli_autostore_hook_dry_run_prints_decision(capsys: Any) -> None:
+    payload = '{"prompt":"Use uv and mypy in this repo","cwd":"/tmp/repo-alpha"}'
+    await _cmd_autostore_hook(
+        Namespace(
+            event="UserPromptSubmit",
+            payload=payload,
+            scope="project",
+            scope_id="",
+            max_chars=1200,
+            dry_run=True,
+        )
+    )
+    captured = capsys.readouterr().out
+    assert '"stored": false' in captured.lower()
+    assert "Dry run" in captured
+
+
+@pytest.mark.asyncio
+async def test_cli_autostore_hook_stores_when_decision_allows(
+    monkeypatch: pytest.MonkeyPatch, capsys: Any
+) -> None:
+    class DummyEngine:
+        def __init__(self) -> None:
+            self.scope: str | None = None
+            self.scope_id: str | None = None
+
+        async def process(
+            self,
+            interaction: Any,
+            scope: str = "project",
+            scope_id: str | None = None,
+        ) -> ProcessResult:
+            self.scope = scope
+            self.scope_id = scope_id
+            return ProcessResult(
+                stored=True,
+                salience=0.8,
+                reason="stored",
+                chunk=MemoryChunk(
+                    content=interaction.content,
+                    metadata={"scope": scope, "scope_id": scope_id},
+                ),
+            )
+
+    engine = DummyEngine()
+    monkeypatch.setattr("mnemos.cli._build_engine", lambda: engine)
+
+    payload = '{"prompt":"Set deployment target to ECS in this repository","cwd":"/tmp/repo-alpha"}'
+    await _cmd_autostore_hook(
+        Namespace(
+            event="UserPromptSubmit",
+            payload=payload,
+            scope="project",
+            scope_id="",
+            max_chars=1200,
+            dry_run=False,
+        )
+    )
+    assert engine.scope == "project"
+    assert engine.scope_id == "repo-alpha"
+    captured = capsys.readouterr().out
+    assert '"stored": true' in captured.lower()
