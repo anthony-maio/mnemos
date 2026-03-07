@@ -23,7 +23,7 @@ import shlex
 import sys
 from typing import Any, Literal, cast
 
-from .config import MemorySafetyConfig, MnemosConfig, SurprisalConfig
+from .config import MemoryGovernanceConfig, MemorySafetyConfig, MnemosConfig, SurprisalConfig
 from .engine import MnemosEngine
 from .health import run_health_checks
 from .hook_autostore import SUPPORTED_HOOK_EVENTS, decide_autostore, parse_hook_payload
@@ -36,6 +36,7 @@ PROFILE_CHOICES = ("starter", "local-performance", "scale")
 VALID_SCOPES = ("project", "workspace", "global")
 ANTIGRAVITY_HOST_CHOICES = ("cursor", "generic-mcp")
 MemoryAction = Literal["allow", "redact", "block"]
+CaptureMode = Literal["all", "manual_only", "hooks_only"]
 
 
 def _env_bool(name: str, default: bool) -> bool:
@@ -49,6 +50,13 @@ def _memory_action_from_env(name: str, default: MemoryAction) -> MemoryAction:
     raw = (os.getenv(name, default) or default).strip().lower()
     if raw in {"allow", "redact", "block"}:
         return cast(MemoryAction, raw)
+    return default
+
+
+def _capture_mode_from_env(name: str, default: CaptureMode) -> CaptureMode:
+    raw = (os.getenv(name, default) or default).strip().lower()
+    if raw in {"all", "manual_only", "hooks_only"}:
+        return cast(CaptureMode, raw)
     return default
 
 
@@ -201,6 +209,11 @@ def _build_engine() -> MnemosEngine:
             enabled=_env_bool("MNEMOS_MEMORY_SAFETY_ENABLED", True),
             secret_action=_memory_action_from_env("MNEMOS_MEMORY_SECRET_ACTION", "block"),
             pii_action=_memory_action_from_env("MNEMOS_MEMORY_PII_ACTION", "redact"),
+        ),
+        governance=MemoryGovernanceConfig(
+            capture_mode=_capture_mode_from_env("MNEMOS_MEMORY_CAPTURE_MODE", "all"),
+            retention_ttl_days=int(os.getenv("MNEMOS_MEMORY_RETENTION_TTL_DAYS", "0")),
+            max_chunks_per_scope=int(os.getenv("MNEMOS_MEMORY_MAX_CHUNKS_PER_SCOPE", "0")),
         ),
         debug=os.getenv("MNEMOS_DEBUG", "").lower() in ("true", "1", "yes"),
     )

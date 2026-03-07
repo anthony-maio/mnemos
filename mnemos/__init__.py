@@ -27,6 +27,7 @@ Quick start (zero external dependencies):
 
 from .config import (
     AffectiveConfig,
+    MemoryGovernanceConfig,
     MemorySafetyConfig,
     MnemosConfig,
     MutableRAGConfig,
@@ -90,6 +91,7 @@ __all__ = [
     "SurprisalConfig",
     "MutableRAGConfig",
     "AffectiveConfig",
+    "MemoryGovernanceConfig",
     "MemorySafetyConfig",
     "SleepConfig",
     "SpreadingConfig",

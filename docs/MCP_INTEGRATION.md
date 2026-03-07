@@ -149,6 +149,9 @@ All configuration is via environment variables:
 | `MNEMOS_MEMORY_SAFETY_ENABLED` | `true` | Enable shared memory write safety firewall |
 | `MNEMOS_MEMORY_SECRET_ACTION` | `block` | Secret handling mode: `allow`, `redact`, or `block` |
 | `MNEMOS_MEMORY_PII_ACTION` | `redact` | PII handling mode: `allow`, `redact`, or `block` |
+| `MNEMOS_MEMORY_CAPTURE_MODE` | `all` | Ingestion mode: `all`, `manual_only`, or `hooks_only` |
+| `MNEMOS_MEMORY_RETENTION_TTL_DAYS` | `0` | Prune memories older than N days (`0` disables TTL pruning) |
+| `MNEMOS_MEMORY_MAX_CHUNKS_PER_SCOPE` | `0` | Max chunks per `(scope, scope_id)` partition (`0` disables cap) |
 | `MNEMOS_EMBEDDING_DIM` | `384` | Embedding vector dimension |
 | `MNEMOS_DEBUG` | `false` | Enable debug logging |
 

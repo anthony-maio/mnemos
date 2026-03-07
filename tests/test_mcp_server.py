@@ -8,7 +8,7 @@ from pathlib import Path
 
 import pytest
 
-from mnemos.mcp_server import _build_embedder, _build_llm_provider, _build_store
+from mnemos.mcp_server import _build_config, _build_embedder, _build_llm_provider, _build_store
 from mnemos.utils import OpenAIEmbeddingProvider, OpenAIProvider, SQLiteStore
 
 
@@ -58,3 +58,14 @@ def test_mcp_build_embedder_infers_openclaw(monkeypatch: pytest.MonkeyPatch) -> 
     assert isinstance(embedder, OpenAIEmbeddingProvider)
     assert embedder.api_key == "claw-key"
     assert embedder.base_url == "https://api.openclaw.example/v1"
+
+
+def test_mcp_build_config_reads_governance_env(monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.setenv("MNEMOS_MEMORY_CAPTURE_MODE", "manual_only")
+    monkeypatch.setenv("MNEMOS_MEMORY_RETENTION_TTL_DAYS", "14")
+    monkeypatch.setenv("MNEMOS_MEMORY_MAX_CHUNKS_PER_SCOPE", "200")
+
+    config = _build_config()
+    assert config.governance.capture_mode == "manual_only"
+    assert config.governance.retention_ttl_days == 14
+    assert config.governance.max_chunks_per_scope == 200

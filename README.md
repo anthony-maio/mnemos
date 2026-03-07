@@ -397,6 +397,11 @@ Memory writes now pass through a shared safety firewall across ingestion, recons
 - `MNEMOS_MEMORY_SECRET_ACTION` (`block` default)
 - `MNEMOS_MEMORY_PII_ACTION` (`redact` default)
 
+Governance controls for retention and growth limits:
+- `MNEMOS_MEMORY_CAPTURE_MODE` (`all` | `manual_only` | `hooks_only`)
+- `MNEMOS_MEMORY_RETENTION_TTL_DAYS` (`0` disables TTL pruning)
+- `MNEMOS_MEMORY_MAX_CHUNKS_PER_SCOPE` (`0` disables per-scope cap)
+
 ---
 
 ## Architecture Diagram

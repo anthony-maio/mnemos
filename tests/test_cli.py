@@ -88,6 +88,25 @@ def test_build_engine_infers_openclaw_embedder_from_llm_provider(
     engine.store.close()
 
 
+def test_build_engine_reads_memory_governance_env(
+    monkeypatch: pytest.MonkeyPatch, tmp_path: Path
+) -> None:
+    db_path = tmp_path / "mnemos_cli_governance.db"
+    monkeypatch.setenv("MNEMOS_LLM_PROVIDER", "mock")
+    monkeypatch.setenv("MNEMOS_EMBEDDING_PROVIDER", "simple")
+    monkeypatch.setenv("MNEMOS_STORE_TYPE", "sqlite")
+    monkeypatch.setenv("MNEMOS_SQLITE_PATH", str(db_path))
+    monkeypatch.setenv("MNEMOS_MEMORY_CAPTURE_MODE", "hooks_only")
+    monkeypatch.setenv("MNEMOS_MEMORY_RETENTION_TTL_DAYS", "7")
+    monkeypatch.setenv("MNEMOS_MEMORY_MAX_CHUNKS_PER_SCOPE", "50")
+
+    engine = _build_engine()
+    assert engine.config.governance.capture_mode == "hooks_only"
+    assert engine.config.governance.retention_ttl_days == 7
+    assert engine.config.governance.max_chunks_per_scope == 50
+    engine.store.close()
+
+
 @pytest.mark.asyncio
 async def test_cli_doctor_prints_report(monkeypatch: pytest.MonkeyPatch, capsys: Any) -> None:
     monkeypatch.setenv("MNEMOS_STORE_TYPE", "sqlite")

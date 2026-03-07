@@ -28,7 +28,7 @@ import asyncio
 import logging
 import time
 from collections.abc import Callable
-from datetime import datetime, timezone
+from datetime import datetime, timedelta, timezone
 from typing import Any
 
 from .config import MnemosConfig
@@ -138,6 +138,16 @@ def _scope_match_boost(chunk_scope: str, current_scope: str) -> float:
     return 0.02
 
 
+def _infer_ingest_channel(interaction: Interaction) -> str:
+    source = str(interaction.metadata.get("source", "")).strip().lower()
+    if source == "claude_hook" or "hook_event" in interaction.metadata:
+        return "hook"
+    ingest_channel = str(interaction.metadata.get("ingest_channel", "")).strip().lower()
+    if ingest_channel in {"hook", "manual"}:
+        return ingest_channel
+    return "manual"
+
+
 class MnemosEngine:
     """
     Orchestrator for the full biomimetic memory pipeline.
@@ -229,6 +239,63 @@ class MnemosEngine:
         # keeps working across process restarts.
         self._hydrate_spreading_graph_from_store()
 
+    def _capture_channel_allowed(self, ingest_channel: str) -> bool:
+        mode = self.config.governance.capture_mode
+        if mode == "all":
+            return True
+        if mode == "manual_only":
+            return ingest_channel != "hook"
+        if mode == "hooks_only":
+            return ingest_channel == "hook"
+        return True
+
+    def _delete_chunk_everywhere(self, chunk_id: str) -> None:
+        deleted = self._store.delete(chunk_id)
+        if deleted and self.spreading_activation.get_node(chunk_id) is not None:
+            self.spreading_activation.remove_node(chunk_id)
+
+    def _apply_governance(
+        self,
+        *,
+        target_scope: str | None = None,
+        target_scope_id: str | None = None,
+    ) -> None:
+        governance = self.config.governance
+        retention_days = governance.retention_ttl_days
+        max_per_scope = governance.max_chunks_per_scope
+        if retention_days <= 0 and max_per_scope <= 0:
+            return
+
+        chunks = self._store.get_all()
+
+        if retention_days > 0:
+            cutoff = datetime.now(timezone.utc) - timedelta(days=retention_days)
+            for chunk in chunks:
+                if chunk.updated_at < cutoff and chunk.created_at < cutoff:
+                    self._delete_chunk_everywhere(chunk.id)
+            chunks = self._store.get_all()
+
+        if max_per_scope > 0:
+            grouped: dict[tuple[str, str | None], list[MemoryChunk]] = {}
+            for chunk in chunks:
+                scope, scope_id = _chunk_scope_data(chunk)
+                if target_scope is not None and (
+                    scope != target_scope or scope_id != target_scope_id
+                ):
+                    continue
+                grouped.setdefault((scope, scope_id), []).append(chunk)
+
+            for _, group in grouped.items():
+                if len(group) <= max_per_scope:
+                    continue
+                ranked = sorted(
+                    group,
+                    key=lambda chunk: (chunk.updated_at, chunk.created_at),
+                    reverse=True,
+                )
+                for stale in ranked[max_per_scope:]:
+                    self._delete_chunk_everywhere(stale.id)
+
     def _hydrate_spreading_graph_from_store(self) -> None:
         """Load persisted chunks into spreading activation graph at startup."""
         spreading_cfg = self.config.spreading
@@ -288,6 +355,17 @@ class MnemosEngine:
         else:
             scoped_metadata["scope_id"] = normalized_scope_id
         scoped_interaction = interaction.model_copy(update={"metadata": scoped_metadata})
+        ingest_channel = _infer_ingest_channel(scoped_interaction)
+        if not self._capture_channel_allowed(ingest_channel):
+            return ProcessResult(
+                stored=False,
+                chunk=None,
+                salience=0.0,
+                reason=(
+                    "Blocked by capture mode policy: "
+                    f"{self.config.governance.capture_mode} disallows {ingest_channel} ingestion."
+                ),
+            )
 
         # Always add to episodic buffer for eventual consolidation
         # (The hippocampus stores everything briefly, even mundane inputs)
@@ -348,6 +426,11 @@ class MnemosEngine:
                 f"[MnemosEngine] Processed: stored={result.stored}, "
                 f"salience={result.salience:.3f}, reason={result.reason}"
             )
+
+        self._apply_governance(
+            target_scope=normalized_scope,
+            target_scope_id=normalized_scope_id,
+        )
 
         return result
 
@@ -542,6 +625,8 @@ class MnemosEngine:
         # Rebuild connections for newly added nodes
         if new_chunks:
             self.spreading_activation.auto_connect()
+
+        self._apply_governance()
 
         if self.config.debug:
             logger.debug(

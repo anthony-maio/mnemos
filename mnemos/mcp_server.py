@@ -51,6 +51,9 @@ Configuration via environment variables:
   MNEMOS_MEMORY_SAFETY_ENABLED — Enable shared memory write safety firewall (default: true)
   MNEMOS_MEMORY_SECRET_ACTION — Secret handling: allow|redact|block (default: block)
   MNEMOS_MEMORY_PII_ACTION — PII handling: allow|redact|block (default: redact)
+  MNEMOS_MEMORY_CAPTURE_MODE — Ingestion mode: all|manual_only|hooks_only (default: all)
+  MNEMOS_MEMORY_RETENTION_TTL_DAYS — Prune memories older than this many days (0=disabled)
+  MNEMOS_MEMORY_MAX_CHUNKS_PER_SCOPE — Max chunks per (scope,scope_id) partition (0=disabled)
   MNEMOS_DEBUG          — "true" to enable debug logging
 """
 
@@ -65,7 +68,7 @@ from collections.abc import AsyncIterator
 from dataclasses import dataclass
 from typing import Any, Literal, cast
 
-from .config import MemorySafetyConfig, MnemosConfig, SurprisalConfig
+from .config import MemoryGovernanceConfig, MemorySafetyConfig, MnemosConfig, SurprisalConfig
 from .engine import MnemosEngine
 from .health import run_health_checks
 from .observability import configure_logging, log_event
@@ -77,6 +80,7 @@ from .utils.storage import MemoryStore
 
 VALID_SCOPES = ("project", "workspace", "global")
 MemoryAction = Literal["allow", "redact", "block"]
+CaptureMode = Literal["all", "manual_only", "hooks_only"]
 
 
 def _parse_allowed_scopes(raw: str) -> tuple[str, ...]:
@@ -107,6 +111,13 @@ def _memory_action_from_env(name: str, default: MemoryAction) -> MemoryAction:
     raw = (os.getenv(name, default) or default).strip().lower()
     if raw in {"allow", "redact", "block"}:
         return cast(MemoryAction, raw)
+    return default
+
+
+def _capture_mode_from_env(name: str, default: CaptureMode) -> CaptureMode:
+    raw = (os.getenv(name, default) or default).strip().lower()
+    if raw in {"all", "manual_only", "hooks_only"}:
+        return cast(CaptureMode, raw)
     return default
 
 
@@ -183,6 +194,11 @@ def _build_config() -> MnemosConfig:
             enabled=_env_bool("MNEMOS_MEMORY_SAFETY_ENABLED", True),
             secret_action=_memory_action_from_env("MNEMOS_MEMORY_SECRET_ACTION", "block"),
             pii_action=_memory_action_from_env("MNEMOS_MEMORY_PII_ACTION", "redact"),
+        ),
+        governance=MemoryGovernanceConfig(
+            capture_mode=_capture_mode_from_env("MNEMOS_MEMORY_CAPTURE_MODE", "all"),
+            retention_ttl_days=int(os.getenv("MNEMOS_MEMORY_RETENTION_TTL_DAYS", "0")),
+            max_chunks_per_scope=int(os.getenv("MNEMOS_MEMORY_MAX_CHUNKS_PER_SCOPE", "0")),
         ),
         debug=debug,
     )

@@ -295,6 +295,34 @@ class MemorySafetyConfig(BaseModel):
     )
 
 
+class MemoryGovernanceConfig(BaseModel):
+    """
+    Configuration for memory governance controls.
+
+    - capture_mode controls which ingestion channels are allowed to persist.
+    - retention_ttl_days prunes memories older than the TTL.
+    - max_chunks_per_scope caps memory growth per (scope, scope_id).
+    """
+
+    capture_mode: Literal["all", "manual_only", "hooks_only"] = Field(
+        default="all",
+        description=(
+            "Allowed ingestion channels: all, manual_only, hooks_only. "
+            "Manual means non-hook process() calls; hooks means claude hook ingestion."
+        ),
+    )
+    retention_ttl_days: int = Field(
+        default=0,
+        ge=0,
+        description="If > 0, prune memories older than this many days on write operations.",
+    )
+    max_chunks_per_scope: int = Field(
+        default=0,
+        ge=0,
+        description="If > 0, keep at most this many chunks per scope partition.",
+    )
+
+
 class MnemosConfig(BaseModel):
     """
     Top-level configuration for the MnemosEngine.
@@ -333,6 +361,10 @@ class MnemosConfig(BaseModel):
     safety: MemorySafetyConfig = Field(
         default_factory=MemorySafetyConfig,
         description="Memory write safety policy shared across all write paths.",
+    )
+    governance: MemoryGovernanceConfig = Field(
+        default_factory=MemoryGovernanceConfig,
+        description="Memory governance controls for capture, retention, and growth limits.",
     )
     debug: bool = Field(
         default=False,

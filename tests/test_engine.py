@@ -7,11 +7,13 @@ for fully offline execution.
 """
 
 import asyncio
+from datetime import datetime, timedelta, timezone
 
 import pytest
 
 from mnemos.config import (
     AffectiveConfig,
+    MemoryGovernanceConfig,
     MnemosConfig,
     SleepConfig,
     SurprisalConfig,
@@ -288,6 +290,86 @@ class TestEngineScopedMemory:
         )
         assert len(results) == 2
         assert results[0].metadata.get("scope") == "project"
+
+
+class TestEngineGovernance:
+    @pytest.mark.asyncio
+    async def test_capture_mode_hooks_only_blocks_manual_process(self) -> None:
+        config = MnemosConfig(
+            surprisal=SurprisalConfig(threshold=0.0, min_content_length=0),
+            governance=MemoryGovernanceConfig(capture_mode="hooks_only"),
+        )
+        engine = MnemosEngine(
+            config=config,
+            llm=MockLLMProvider(),
+            embedder=SimpleEmbeddingProvider(dim=64),
+            store=InMemoryStore(),
+        )
+
+        result = await engine.process(make_interaction("manual memory content"))
+        assert result.stored is False
+        assert "capture mode policy" in result.reason.lower()
+
+        hook_interaction = Interaction(
+            role="user",
+            content="hook memory content",
+            metadata={"source": "claude_hook", "hook_event": "UserPromptSubmit"},
+        )
+        hook_result = await engine.process(hook_interaction)
+        assert hook_result.stored is True
+
+    @pytest.mark.asyncio
+    async def test_max_chunks_per_scope_cap_prunes_oldest(self) -> None:
+        config = MnemosConfig(
+            surprisal=SurprisalConfig(threshold=0.0, min_content_length=0),
+            governance=MemoryGovernanceConfig(max_chunks_per_scope=2),
+        )
+        engine = MnemosEngine(
+            config=config,
+            llm=MockLLMProvider(),
+            embedder=SimpleEmbeddingProvider(dim=64),
+            store=InMemoryStore(),
+        )
+
+        await engine.process(make_interaction("fact one"), scope="project", scope_id="alpha")
+        await engine.process(make_interaction("fact two"), scope="project", scope_id="alpha")
+        await engine.process(make_interaction("fact three"), scope="project", scope_id="alpha")
+
+        scoped_chunks = [
+            chunk
+            for chunk in engine.store.get_all()
+            if chunk.metadata.get("scope") == "project"
+            and chunk.metadata.get("scope_id") == "alpha"
+        ]
+        assert len(scoped_chunks) <= 2
+
+    @pytest.mark.asyncio
+    async def test_retention_ttl_prunes_old_chunks(self) -> None:
+        config = MnemosConfig(
+            surprisal=SurprisalConfig(threshold=0.0, min_content_length=0),
+            governance=MemoryGovernanceConfig(retention_ttl_days=1),
+        )
+        store = InMemoryStore()
+        engine = MnemosEngine(
+            config=config,
+            llm=MockLLMProvider(),
+            embedder=SimpleEmbeddingProvider(dim=64),
+            store=store,
+        )
+
+        old_time = datetime.now(timezone.utc) - timedelta(days=5)
+        stale_chunk = MemoryChunk(
+            content="stale memory",
+            embedding=engine.embedder.embed("stale memory"),
+            metadata={"scope": "project", "scope_id": "alpha"},
+            created_at=old_time,
+            updated_at=old_time,
+        )
+        store.store(stale_chunk)
+
+        await engine.process(make_interaction("fresh memory"), scope="project", scope_id="alpha")
+        ids = {chunk.id for chunk in store.get_all()}
+        assert stale_chunk.id not in ids
 
 
 # ─── Consolidation tests ──────────────────────────────────────────────────────
