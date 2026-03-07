@@ -18,7 +18,7 @@ MCP Tools provided:
 
 MCP Resources provided:
   - mnemos://stats         — Live system statistics
-  - mnemos://memories      — All stored memory contents
+  - mnemos://architecture  — Runtime architecture and module overview
 
 Usage:
   # stdio transport (for Claude Code, Cursor, etc.)
@@ -30,7 +30,7 @@ Usage:
 Configuration via environment variables:
   MNEMOS_LLM_PROVIDER   — "mock" (default), "ollama", "openai", or "openclaw"
   MNEMOS_LLM_MODEL      — Model name for LLM provider (default: "llama3")
-  MNEMOS_EMBEDDING_PROVIDER — "simple" (default), "ollama", or "openai"
+  MNEMOS_EMBEDDING_PROVIDER — "simple" (default), "ollama", "openai", or "openclaw"
   MNEMOS_EMBEDDING_MODEL — Embedding model name (provider-specific default if unset)
   MNEMOS_EMBEDDING_DIM  — Embedding dimension for simple provider (default: 384)
   MNEMOS_OLLAMA_URL     — Ollama API base URL (default: "http://localhost:11434")

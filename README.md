@@ -579,7 +579,7 @@ The distinction isn't just architectural. It's causal: standard tools retrieve s
 - `openai` — OpenAI or any OpenAI-compatible API (`pip install 'mnemos-memory[openai]'`)
 - `qdrant` — Qdrant vector database backend (`pip install 'mnemos-memory[qdrant]'`)
 - `mcp` — MCP server for Claude Code, Cursor, Windsurf (`pip install 'mnemos-memory[mcp]'`)
-- `neo4j` — Neo4j graph backend for SpreadingActivation at scale (`pip install 'mnemos-memory[neo4j]'`)
+- `neo4j` — Neo4j (planned) graph backend for SpreadingActivation at scale (`pip install 'mnemos-memory[neo4j]'`)
 
 **Install everything:**
 ```bash
