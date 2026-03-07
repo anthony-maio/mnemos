@@ -76,3 +76,15 @@ jobs:
           python-version: "3.12"
       - run: pip install -e '.[dev]'
       - run: pytest -q tests/test_mcp_tier2_smoke.py
+
+  release_readiness:
+    runs-on: ubuntu-latest
+    needs: [benchmark_gate, tier1_mcp_smoke]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - run: pip install -e '.[dev,qdrant]'
+      - run: pytest -q tests/test_docs_consistency.py tests/test_mcp_compatibility.py
+      - run: test -f docs/release-checklist.md
