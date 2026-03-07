@@ -9,6 +9,8 @@ All configuration is expressed as Pydantic BaseModels so it can be:
 
 from __future__ import annotations
 
+from typing import Literal
+
 from pydantic import BaseModel, Field, model_validator
 
 
@@ -271,6 +273,28 @@ class SpreadingConfig(BaseModel):
     )
 
 
+class MemorySafetyConfig(BaseModel):
+    """
+    Configuration for memory write safety filtering.
+
+    This policy is applied to all long-term memory writes (direct encoding,
+    reconsolidation updates, and sleep consolidation facts).
+    """
+
+    enabled: bool = Field(
+        default=True,
+        description="Whether memory safety filtering is enforced on writes.",
+    )
+    secret_action: Literal["allow", "redact", "block"] = Field(
+        default="block",
+        description="Action when secret-like patterns are detected in memory content.",
+    )
+    pii_action: Literal["allow", "redact", "block"] = Field(
+        default="redact",
+        description="Action when PII-like patterns are detected in memory content.",
+    )
+
+
 class MnemosConfig(BaseModel):
     """
     Top-level configuration for the MnemosEngine.
@@ -305,6 +329,10 @@ class MnemosConfig(BaseModel):
     spreading: SpreadingConfig = Field(
         default_factory=SpreadingConfig,
         description="Configuration for the SpreadingActivation module.",
+    )
+    safety: MemorySafetyConfig = Field(
+        default_factory=MemorySafetyConfig,
+        description="Memory write safety policy shared across all write paths.",
     )
     debug: bool = Field(
         default=False,

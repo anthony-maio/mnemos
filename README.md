@@ -392,6 +392,11 @@ The agent's memory now filters the mundane, tags emotional context, updates stal
 
 For deterministic Claude Code auto-memory, use the shipped hook config at [docs/claude-code-hooks.json](docs/claude-code-hooks.json). It auto-ingests user prompts and high-signal tool failures via `mnemos-cli autostore-hook`, then consolidates on `PreCompact`/`Stop`.
 
+Memory writes now pass through a shared safety firewall across ingestion, reconsolidation, and sleep consolidation. Configure with:
+- `MNEMOS_MEMORY_SAFETY_ENABLED` (`true` by default)
+- `MNEMOS_MEMORY_SECRET_ACTION` (`block` default)
+- `MNEMOS_MEMORY_PII_ACTION` (`redact` default)
+
 ---
 
 ## Architecture Diagram

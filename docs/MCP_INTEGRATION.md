@@ -146,6 +146,9 @@ All configuration is via environment variables:
 | `MNEMOS_QDRANT_COLLECTION` | `mnemos_memory` | Qdrant collection name |
 | `MNEMOS_QDRANT_VECTOR_SIZE` | — | Optional fixed vector size |
 | `MNEMOS_SURPRISAL_THRESHOLD` | `0.3` | Surprisal gate sensitivity (0-1) |
+| `MNEMOS_MEMORY_SAFETY_ENABLED` | `true` | Enable shared memory write safety firewall |
+| `MNEMOS_MEMORY_SECRET_ACTION` | `block` | Secret handling mode: `allow`, `redact`, or `block` |
+| `MNEMOS_MEMORY_PII_ACTION` | `redact` | PII handling mode: `allow`, `redact`, or `block` |
 | `MNEMOS_EMBEDDING_DIM` | `384` | Embedding vector dimension |
 | `MNEMOS_DEBUG` | `false` | Enable debug logging |
 

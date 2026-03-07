@@ -40,7 +40,7 @@ def test_decide_autostore_user_prompt_skips_sensitive_content() -> None:
         payload={"prompt": "api_key=supersecretvalue"},
     )
     assert decision.should_store is False
-    assert "sensitive" in decision.reason
+    assert "safety policy" in decision.reason.lower()
 
 
 def test_decide_autostore_post_tool_use_stores_failures() -> None:

@@ -32,6 +32,7 @@ from datetime import datetime, timezone
 from typing import Any
 
 from .config import MnemosConfig
+from .memory_safety import MemoryWriteFirewall
 from .modules.affective import AffectiveRouter
 from .modules.mutable_rag import MutableRAG
 from .modules.sleep import SleepDaemon
@@ -189,6 +190,7 @@ class MnemosEngine:
             dim=self.config.surprisal.embedding_dim
         )
         self._store = store or InMemoryStore()
+        self._write_firewall = MemoryWriteFirewall(self.config.safety)
 
         # Initialize all five modules
         self.surprisal_gate = SurprisalGate(
@@ -203,6 +205,7 @@ class MnemosEngine:
             embedder=self._embedder,
             store=self._store,
             config=self.config.mutable_rag,
+            write_firewall=self._write_firewall,
         )
 
         self.affective_router = AffectiveRouter(
@@ -214,6 +217,7 @@ class MnemosEngine:
         self.sleep_daemon = SleepDaemon(
             store=self._store,
             config=self.config.sleep,
+            write_firewall=self._write_firewall,
         )
 
         self.spreading_activation = SpreadingActivation(
@@ -294,6 +298,22 @@ class MnemosEngine:
 
         if not result.stored or result.chunk is None:
             return result
+
+        safety = self._write_firewall.apply(result.chunk.content)
+        if not safety.allowed:
+            self._store.delete(result.chunk.id)
+            return ProcessResult(
+                stored=False,
+                chunk=None,
+                salience=result.salience,
+                reason=f"Blocked by safety policy: {safety.reason}",
+            )
+
+        if safety.content != result.chunk.content:
+            result.chunk.content = safety.content
+            result.chunk.embedding = self._embedder.embed(safety.content)
+            result.chunk.metadata["safety_redactions"] = [match.label for match in safety.matches]
+            self._store.update(result.chunk.id, result.chunk)
 
         # Ensure scope tags are always present on persisted chunks.
         result.chunk.metadata["scope"] = normalized_scope

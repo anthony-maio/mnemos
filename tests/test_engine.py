@@ -132,6 +132,25 @@ class TestEngineProcess:
             assert result.chunk.embedding is not None
             assert len(result.chunk.embedding) == 64
 
+    @pytest.mark.asyncio
+    async def test_process_blocks_secret_content_via_safety_firewall(self, engine):
+        """Secret-like content should be blocked from long-term storage."""
+        result = await engine.process(
+            make_interaction("Store this token: api_key=supersecretvalue123")
+        )
+        assert result.stored is False
+        assert "safety policy" in result.reason.lower()
+
+    @pytest.mark.asyncio
+    async def test_process_redacts_pii_content_via_safety_firewall(self, engine):
+        """PII-like content should be redacted before storage under default policy."""
+        result = await engine.process(
+            make_interaction("My email is jane@example.com for follow-up")
+        )
+        assert result.stored is True
+        assert result.chunk is not None
+        assert "REDACTED_EMAIL" in result.chunk.content
+
 
 # ─── Basic retrieve tests ─────────────────────────────────────────────────────
 

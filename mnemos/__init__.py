@@ -27,6 +27,7 @@ Quick start (zero external dependencies):
 
 from .config import (
     AffectiveConfig,
+    MemorySafetyConfig,
     MnemosConfig,
     MutableRAGConfig,
     SleepConfig,
@@ -34,6 +35,7 @@ from .config import (
     SurprisalConfig,
 )
 from .engine import MnemosEngine
+from .memory_safety import MemorySafetyDecision, MemorySafetyMatch, MemoryWriteFirewall
 from .modules import (
     AffectiveRouter,
     MutableRAG,
@@ -80,11 +82,15 @@ __all__ = [
     "__version__",
     # Engine
     "MnemosEngine",
+    "MemoryWriteFirewall",
+    "MemorySafetyDecision",
+    "MemorySafetyMatch",
     # Config
     "MnemosConfig",
     "SurprisalConfig",
     "MutableRAGConfig",
     "AffectiveConfig",
+    "MemorySafetyConfig",
     "SleepConfig",
     "SpreadingConfig",
     # Modules

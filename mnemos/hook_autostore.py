@@ -13,6 +13,8 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import Any
 
+from .config import MemorySafetyConfig
+from .memory_safety import MemoryWriteFirewall
 from .types import Interaction
 
 SUPPORTED_HOOK_EVENTS: tuple[str, ...] = ("UserPromptSubmit", "PostToolUse")
@@ -22,19 +24,19 @@ _LOW_SIGNAL_PATTERNS: tuple[re.Pattern[str], ...] = (
     re.compile(r"^\s*(yes|no|yep|nope)\s*[.!]?\s*$", re.I),
 )
 
-_SENSITIVE_PATTERNS: tuple[re.Pattern[str], ...] = (
-    re.compile(r"-----BEGIN [A-Z ]+PRIVATE KEY-----"),
-    re.compile(r"\bAKIA[0-9A-Z]{16}\b"),
-    re.compile(r"\bsk-[A-Za-z0-9]{16,}\b"),
-    re.compile(r"\bghp_[A-Za-z0-9]{20,}\b"),
-    re.compile(r"(?i)\b(api[_-]?key|token|secret|password|passwd|authorization)\b\s*[:=]\s*\S+"),
-)
-
 _TOOL_FAILURE_PATTERNS: tuple[re.Pattern[str], ...] = (
     re.compile(r"(?i)\berror\b"),
     re.compile(r"(?i)\bfailed\b"),
     re.compile(r"(?i)\bexception\b"),
     re.compile(r"(?i)\btraceback\b"),
+)
+
+_HOOK_FIREWALL = MemoryWriteFirewall(
+    MemorySafetyConfig(
+        enabled=True,
+        secret_action="block",
+        pii_action="block",
+    )
 )
 
 
@@ -139,10 +141,6 @@ def _extract_tool_output(payload: dict[str, Any]) -> str | None:
     return None
 
 
-def _looks_sensitive(text: str) -> bool:
-    return any(pattern.search(text) for pattern in _SENSITIVE_PATTERNS)
-
-
 def _is_low_signal(text: str) -> bool:
     normalized = _normalize_text(text)
     if len(normalized) < 20:
@@ -213,16 +211,17 @@ def decide_autostore(
                 scope=scope,
                 scope_id=scope_id,
             )
-        if _looks_sensitive(prompt):
+        safety = _HOOK_FIREWALL.apply(prompt)
+        if not safety.allowed:
             return AutoStoreDecision(
                 should_store=False,
-                reason="Skipped sensitive prompt content.",
+                reason=f"Skipped by safety policy: {safety.reason}",
                 interaction=None,
                 scope=scope,
                 scope_id=scope_id,
             )
 
-        content = prompt[:max_chars]
+        content = safety.content[:max_chars]
         return AutoStoreDecision(
             should_store=True,
             reason="Store user prompt memory.",
@@ -248,10 +247,11 @@ def decide_autostore(
             scope=scope,
             scope_id=scope_id,
         )
-    if _looks_sensitive(tool_output):
+    safety = _HOOK_FIREWALL.apply(tool_output)
+    if not safety.allowed:
         return AutoStoreDecision(
             should_store=False,
-            reason="Skipped sensitive tool output.",
+            reason=f"Skipped by safety policy: {safety.reason}",
             interaction=None,
             scope=scope,
             scope_id=scope_id,
@@ -265,7 +265,7 @@ def decide_autostore(
             scope_id=scope_id,
         )
 
-    content = f"Tool failure [{tool_name}]: {tool_output[:max_chars]}"
+    content = f"Tool failure [{tool_name}]: {safety.content[:max_chars]}"
     return AutoStoreDecision(
         should_store=True,
         reason="Store high-signal tool failure memory.",

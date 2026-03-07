@@ -42,6 +42,7 @@ from datetime import datetime, timezone
 from typing import Any
 
 from ..config import SleepConfig
+from ..memory_safety import MemoryWriteFirewall
 from ..types import ConsolidationResult, Interaction, MemoryChunk
 from ..utils.embeddings import EmbeddingProvider
 from ..utils.llm import LLMProvider
@@ -65,9 +66,11 @@ class SleepDaemon:
         self,
         store: MemoryStore,
         config: SleepConfig | None = None,
+        write_firewall: MemoryWriteFirewall | None = None,
     ) -> None:
         self._store = store
         self._config = config or SleepConfig()
+        self._write_firewall = write_firewall
         # Episodic buffer: fast, in-memory list of raw interactions
         # Analogous to hippocampal short-term episodic storage
         self._episodic_buffer: list[Interaction] = []
@@ -191,14 +194,24 @@ class SleepDaemon:
         for fact in facts:
             if not fact.strip():
                 continue
-            embedding = embedder.embed(fact)
+            safe_fact = fact
+            redactions: list[str] = []
+            if self._write_firewall is not None:
+                safety = self._write_firewall.apply(fact)
+                if not safety.allowed:
+                    continue
+                safe_fact = safety.content
+                redactions = [match.label for match in safety.matches]
+
+            embedding = embedder.embed(safe_fact)
             chunk = MemoryChunk(
-                content=fact,
+                content=safe_fact,
                 embedding=embedding,
                 metadata={
                     "source": "sleep_consolidation",
                     "consolidation_time": datetime.now(timezone.utc).isoformat(),
                     "episode_count": episodes_to_prune,
+                    "safety_redactions": redactions,
                 },
                 salience=0.7,  # Consolidated facts have high salience
             )

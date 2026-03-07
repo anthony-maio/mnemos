@@ -21,9 +21,9 @@ import json
 import os
 import shlex
 import sys
-from typing import Any
+from typing import Any, Literal, cast
 
-from .config import MnemosConfig, SurprisalConfig
+from .config import MemorySafetyConfig, MnemosConfig, SurprisalConfig
 from .engine import MnemosEngine
 from .health import run_health_checks
 from .hook_autostore import SUPPORTED_HOOK_EVENTS, decide_autostore, parse_hook_payload
@@ -35,6 +35,21 @@ from .utils.llm import MockLLMProvider, LLMProvider
 PROFILE_CHOICES = ("starter", "local-performance", "scale")
 VALID_SCOPES = ("project", "workspace", "global")
 ANTIGRAVITY_HOST_CHOICES = ("cursor", "generic-mcp")
+MemoryAction = Literal["allow", "redact", "block"]
+
+
+def _env_bool(name: str, default: bool) -> bool:
+    raw = os.getenv(name)
+    if raw is None:
+        return default
+    return raw.strip().lower() in {"1", "true", "yes", "on"}
+
+
+def _memory_action_from_env(name: str, default: MemoryAction) -> MemoryAction:
+    raw = (os.getenv(name, default) or default).strip().lower()
+    if raw in {"allow", "redact", "block"}:
+        return cast(MemoryAction, raw)
+    return default
 
 
 def _infer_embedding_provider(llm_provider: str) -> str:
@@ -182,6 +197,11 @@ def _build_engine() -> MnemosEngine:
 
     config = MnemosConfig(
         surprisal=SurprisalConfig(threshold=threshold),
+        safety=MemorySafetyConfig(
+            enabled=_env_bool("MNEMOS_MEMORY_SAFETY_ENABLED", True),
+            secret_action=_memory_action_from_env("MNEMOS_MEMORY_SECRET_ACTION", "block"),
+            pii_action=_memory_action_from_env("MNEMOS_MEMORY_PII_ACTION", "redact"),
+        ),
         debug=os.getenv("MNEMOS_DEBUG", "").lower() in ("true", "1", "yes"),
     )
 

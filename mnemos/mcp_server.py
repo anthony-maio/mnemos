@@ -48,6 +48,9 @@ Configuration via environment variables:
   MNEMOS_STORAGE        — Alias for MNEMOS_STORE_TYPE
   MNEMOS_DB_PATH        — Alias for MNEMOS_SQLITE_PATH
   MNEMOS_SURPRISAL_THRESHOLD — Surprisal gate threshold (default: 0.3)
+  MNEMOS_MEMORY_SAFETY_ENABLED — Enable shared memory write safety firewall (default: true)
+  MNEMOS_MEMORY_SECRET_ACTION — Secret handling: allow|redact|block (default: block)
+  MNEMOS_MEMORY_PII_ACTION — PII handling: allow|redact|block (default: redact)
   MNEMOS_DEBUG          — "true" to enable debug logging
 """
 
@@ -60,9 +63,9 @@ import sys
 from contextlib import asynccontextmanager
 from collections.abc import AsyncIterator
 from dataclasses import dataclass
-from typing import Any
+from typing import Any, Literal, cast
 
-from .config import MnemosConfig, SurprisalConfig
+from .config import MemorySafetyConfig, MnemosConfig, SurprisalConfig
 from .engine import MnemosEngine
 from .health import run_health_checks
 from .observability import configure_logging, log_event
@@ -73,6 +76,7 @@ from .utils.llm import MockLLMProvider, LLMProvider
 from .utils.storage import MemoryStore
 
 VALID_SCOPES = ("project", "workspace", "global")
+MemoryAction = Literal["allow", "redact", "block"]
 
 
 def _parse_allowed_scopes(raw: str) -> tuple[str, ...]:
@@ -90,6 +94,20 @@ def _parse_allowed_scopes(raw: str) -> tuple[str, ...]:
         if scope not in deduped:
             deduped.append(scope)
     return tuple(deduped)
+
+
+def _env_bool(name: str, default: bool) -> bool:
+    raw = os.getenv(name)
+    if raw is None:
+        return default
+    return raw.strip().lower() in {"1", "true", "yes", "on"}
+
+
+def _memory_action_from_env(name: str, default: MemoryAction) -> MemoryAction:
+    raw = (os.getenv(name, default) or default).strip().lower()
+    if raw in {"allow", "redact", "block"}:
+        return cast(MemoryAction, raw)
+    return default
 
 
 # ---------------------------------------------------------------------------
@@ -161,6 +179,11 @@ def _build_config() -> MnemosConfig:
     debug = os.getenv("MNEMOS_DEBUG", "").lower() in ("true", "1", "yes")
     return MnemosConfig(
         surprisal=SurprisalConfig(threshold=threshold),
+        safety=MemorySafetyConfig(
+            enabled=_env_bool("MNEMOS_MEMORY_SAFETY_ENABLED", True),
+            secret_action=_memory_action_from_env("MNEMOS_MEMORY_SECRET_ACTION", "block"),
+            pii_action=_memory_action_from_env("MNEMOS_MEMORY_PII_ACTION", "redact"),
+        ),
         debug=debug,
     )
 

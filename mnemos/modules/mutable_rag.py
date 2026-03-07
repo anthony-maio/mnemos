@@ -31,6 +31,7 @@ from datetime import datetime, timezone
 from typing import Any
 
 from ..config import MutableRAGConfig
+from ..memory_safety import MemoryWriteFirewall
 from ..types import MemoryChunk, ProcessResult
 from ..utils.embeddings import EmbeddingProvider
 from ..utils.llm import LLMProvider
@@ -58,11 +59,13 @@ class MutableRAG:
         embedder: EmbeddingProvider,
         store: MemoryStore,
         config: MutableRAGConfig | None = None,
+        write_firewall: MemoryWriteFirewall | None = None,
     ) -> None:
         self._llm = llm
         self._embedder = embedder
         self._store = store
         self._config = config or MutableRAGConfig()
+        self._write_firewall = write_firewall
         # Labile chunk queue: chunk_id → (chunk, context_when_retrieved)
         self._labile_chunks: dict[str, tuple[MemoryChunk, str]] = {}
         # Last reconsolidation timestamp per chunk (seconds since epoch)
@@ -205,12 +208,26 @@ class MutableRAG:
                 self._mark_reconsolidated_now(chunk.id)
                 return chunk, False
 
+            safe_content = new_content
+            redactions: list[str] = []
+            if self._write_firewall is not None:
+                safety = self._write_firewall.apply(new_content)
+                if not safety.allowed:
+                    chunk.touch()
+                    self._store.update(chunk.id, chunk)
+                    self._total_unchanged += 1
+                    self._mark_reconsolidated_now(chunk.id)
+                    return chunk, False
+                safe_content = safety.content
+                redactions = [match.label for match in safety.matches]
+
             # Create reconsolidated version
-            updated_chunk = chunk.reconsolidate(new_content)
+            updated_chunk = chunk.reconsolidate(safe_content)
             # Re-embed the new content
-            updated_chunk.embedding = self._embedder.embed(new_content)
+            updated_chunk.embedding = self._embedder.embed(safe_content)
             updated_chunk.metadata["reconsolidated_at"] = datetime.now(timezone.utc).isoformat()
             updated_chunk.metadata["reconsolidation_context"] = new_context[:200]  # Truncate
+            updated_chunk.metadata["safety_redactions"] = redactions
 
             # Overwrite in store (same ID, new version)
             self._store.update(chunk.id, updated_chunk)
