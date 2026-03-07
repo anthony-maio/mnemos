@@ -12,8 +12,10 @@ import pytest
 from argparse import Namespace
 
 from mnemos.cli import (
+    _build_antigravity_policy,
     _build_engine,
     _build_profile_env,
+    _cmd_antigravity,
     _cmd_doctor,
     _cmd_profile,
     _cmd_retrieve,
@@ -248,3 +250,27 @@ async def test_cli_retrieve_forwards_scope_args(
     assert engine.scope_id == "alpha"
     assert engine.allowed_scopes == ("project", "global")
     assert '"scope": "project"' in capsys.readouterr().out
+
+
+def test_build_antigravity_policy_mentions_required_tools() -> None:
+    policy = _build_antigravity_policy("cursor")
+    assert "mnemos_retrieve" in policy
+    assert "mnemos_store" in policy
+    assert "mnemos_consolidate" in policy
+
+
+@pytest.mark.asyncio
+async def test_cli_antigravity_writes_policy(tmp_path: Path, capsys: Any) -> None:
+    output_path = tmp_path / "mnemos-antigravity.txt"
+    await _cmd_antigravity(
+        Namespace(
+            host="cursor",
+            format="text",
+            write=str(output_path),
+        )
+    )
+    text = output_path.read_text(encoding="utf-8")
+    assert "Mnemos Antigravity Autopilot Policy" in text
+    assert "mnemos_retrieve" in text
+    captured = capsys.readouterr().out
+    assert "Mnemos Antigravity Autopilot Policy" in captured

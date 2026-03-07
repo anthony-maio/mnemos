@@ -14,7 +14,7 @@ Last updated: **March 6, 2026**
 | Claude Code | Tier 1 | Supported | plugin + direct `mnemos-mcp` | Primary target; plugin defaults to SQLite starter profile. |
 | Claude Desktop | Tier 1 | Supported | `docs/mcp-configs/claude-desktop.json` | Uses standard MCP `stdio` registration. |
 | Generic MCP stdio host | Tier 1 | Supported | `docs/mcp-configs/generic-stdio.json` | Tool/resource contract is host-agnostic. |
-| Cursor | Tier 2 | Best effort | `docs/mcp-configs/cursor.json` | Smoke config validated in CI (non-blocking). |
+| Cursor | Tier 2 | Best effort + Antigravity pack | `docs/mcp-configs/cursor.json` + `docs/cursor-antigravity.md` | Smoke config validated in CI (non-blocking). |
 | Windsurf | Tier 2 | Best effort | `docs/mcp-configs/windsurf.json` | Smoke config validated in CI (non-blocking). |
 | Cline | Tier 2 | Best effort | `docs/mcp-configs/cline.json` | Smoke config validated in CI (non-blocking). |
 

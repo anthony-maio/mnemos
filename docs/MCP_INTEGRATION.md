@@ -116,6 +116,7 @@ The agent will automatically discover these tools:
 Compatibility + contract docs:
 - [mcp-transport-contract.md](mcp-transport-contract.md)
 - [client-compatibility-matrix.md](client-compatibility-matrix.md)
+- [cursor-antigravity.md](cursor-antigravity.md)
 - [profiles/starter-sqlite.md](profiles/starter-sqlite.md)
 - [profiles/local-performance-embedded-qdrant.md](profiles/local-performance-embedded-qdrant.md)
 - [profiles/scale-external-qdrant.md](profiles/scale-external-qdrant.md)
@@ -256,6 +257,9 @@ mnemos-cli doctor --qdrant-chunk-threshold 5000 --latency-p95-threshold-ms 250 -
 # One-command profile generation
 mnemos-cli profile starter --format dotenv --write .mnemos.profile.env
 mnemos-cli profile local-performance --format dotenv --write .mnemos.profile.env
+
+# Generate Cursor autopilot policy text
+mnemos-cli antigravity cursor --write .cursor/mnemos-antigravity.txt
 ```
 
 The CLI defaults to SQLite storage (persistent across sessions), unlike the MCP server which defaults to in-memory.

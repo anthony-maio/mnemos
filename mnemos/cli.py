@@ -33,6 +33,7 @@ from .utils.llm import MockLLMProvider, LLMProvider
 
 PROFILE_CHOICES = ("starter", "local-performance", "scale")
 VALID_SCOPES = ("project", "workspace", "global")
+ANTIGRAVITY_HOST_CHOICES = ("cursor", "generic-mcp")
 
 
 def _infer_embedding_provider(llm_provider: str) -> str:
@@ -110,6 +111,28 @@ def _parse_allowed_scopes(raw: str) -> tuple[str, ...]:
         if scope not in deduped:
             deduped.append(scope)
     return tuple(deduped)
+
+
+def _build_antigravity_policy(host: str) -> str:
+    if host not in ANTIGRAVITY_HOST_CHOICES:
+        raise ValueError(f"Unsupported host: {host!r}")
+
+    host_label = "Cursor" if host == "cursor" else "Generic MCP host"
+    return (
+        f"Mnemos Antigravity Autopilot Policy ({host_label})\n\n"
+        "Always use Mnemos memory tools automatically.\n"
+        "1. At the start of every new user task, call `mnemos_retrieve` using a focused query.\n"
+        "2. Use `current_scope=project` and set `scope_id` to the current repository/workspace name.\n"
+        "3. Include `allowed_scopes=project,global` unless the user asks for broader scope.\n"
+        "4. During execution, call `mnemos_store` for durable facts only:\n"
+        "   - stable user preferences\n"
+        "   - project architecture decisions\n"
+        "   - environment/tooling setup facts\n"
+        "   - recurring bug patterns and fixes\n"
+        "5. Before finishing substantial work, call `mnemos_consolidate`.\n"
+        "6. Never store secrets, tokens, credentials, or one-off transient chatter.\n"
+        "7. If retrieval returns nothing useful, continue normally and seed memory as facts emerge.\n"
+    )
 
 
 def _build_engine() -> MnemosEngine:
@@ -284,6 +307,19 @@ async def _cmd_profile(args: argparse.Namespace) -> None:
             handle.write(text)
 
 
+async def _cmd_antigravity(args: argparse.Namespace) -> None:
+    policy = _build_antigravity_policy(args.host)
+    if args.format == "json":
+        rendered = json.dumps({"host": args.host, "policy": policy}, indent=2)
+    else:
+        rendered = policy
+    print(rendered)
+    if args.write:
+        text = rendered if rendered.endswith("\n") else f"{rendered}\n"
+        with open(args.write, "w", encoding="utf-8") as handle:
+            handle.write(text)
+
+
 def main() -> None:
     configure_logging()
     parser = argparse.ArgumentParser(
@@ -409,6 +445,23 @@ def main() -> None:
         help="Qdrant collection name used by qdrant profiles.",
     )
 
+    sp_antigravity = subparsers.add_parser(
+        "antigravity",
+        help="Generate host autopilot policy text for automatic Mnemos tool use.",
+    )
+    sp_antigravity.add_argument("host", choices=ANTIGRAVITY_HOST_CHOICES)
+    sp_antigravity.add_argument(
+        "--format",
+        choices=("text", "json"),
+        default="text",
+        help="Output format for generated autopilot policy.",
+    )
+    sp_antigravity.add_argument(
+        "--write",
+        default="",
+        help="Optional file path to write generated autopilot policy.",
+    )
+
     args = parser.parse_args()
     if args.command == "retrieve":
         args.reconsolidate = not args.no_reconsolidate
@@ -425,6 +478,8 @@ def main() -> None:
         asyncio.run(_cmd_doctor(args))
     elif args.command == "profile":
         asyncio.run(_cmd_profile(args))
+    elif args.command == "antigravity":
+        asyncio.run(_cmd_antigravity(args))
 
 
 if __name__ == "__main__":

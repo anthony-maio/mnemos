@@ -317,6 +317,7 @@ Profile + compatibility docs:
 - [docs/profiles/starter-sqlite.md](docs/profiles/starter-sqlite.md)
 - [docs/profiles/local-performance-embedded-qdrant.md](docs/profiles/local-performance-embedded-qdrant.md)
 - [docs/profiles/scale-external-qdrant.md](docs/profiles/scale-external-qdrant.md)
+- [docs/cursor-antigravity.md](docs/cursor-antigravity.md)
 - [docs/mcp-transport-contract.md](docs/mcp-transport-contract.md)
 - [docs/client-compatibility-matrix.md](docs/client-compatibility-matrix.md)
 
