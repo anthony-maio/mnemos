@@ -27,7 +27,7 @@ import threading
 from abc import ABC, abstractmethod
 from collections.abc import Callable
 from datetime import datetime, timezone
-from typing import Any, TypeVar
+from typing import Any, TypeVar, cast
 
 from ..types import CognitiveState, MemoryChunk
 from ..observability import log_event
@@ -145,6 +145,26 @@ class MemoryStore(ABC):
         for chunk in list(self.get_all()):
             self.delete(chunk.id)
 
+    def touch(
+        self,
+        chunk_id: str,
+        *,
+        access_count: int | None = None,
+        updated_at: datetime | None = None,
+    ) -> bool:
+        """
+        Persist an access-count/timestamp bump for a chunk.
+
+        Default implementation falls back to get+update. Backends can override
+        this with a more efficient payload/SQL-only mutation path.
+        """
+        chunk = self.get(chunk_id)
+        if chunk is None:
+            return False
+        chunk.access_count = chunk.access_count + 1 if access_count is None else access_count
+        chunk.updated_at = updated_at or datetime.now(timezone.utc)
+        return self.update(chunk_id, chunk)
+
 
 class InMemoryStore(MemoryStore):
     """
@@ -213,6 +233,22 @@ class InMemoryStore(MemoryStore):
             if chunk_id not in self._store:
                 return False
             del self._store[chunk_id]
+            return True
+
+    def touch(
+        self,
+        chunk_id: str,
+        *,
+        access_count: int | None = None,
+        updated_at: datetime | None = None,
+    ) -> bool:
+        """Update access_count and updated_at in-place without replacing the full chunk."""
+        with self._lock:
+            chunk = self._store.get(chunk_id)
+            if chunk is None:
+                return False
+            chunk.access_count = chunk.access_count + 1 if access_count is None else access_count
+            chunk.updated_at = updated_at or datetime.now(timezone.utc)
             return True
 
     def get(self, chunk_id: str) -> MemoryChunk | None:
@@ -291,6 +327,7 @@ class SQLiteStore(MemoryStore):
             check_same_thread=False,
         )
         self._conn.execute("PRAGMA journal_mode=WAL;")  # Better concurrent access
+        self._conn.execute("PRAGMA synchronous=NORMAL;")  # Lower fsync cost for high-read local use
         self._conn.execute(self._CREATE_TABLE_SQL)
         self._conn.commit()
 
@@ -420,6 +457,37 @@ class SQLiteStore(MemoryStore):
             self._conn.commit()
             return cursor.rowcount > 0
 
+    def touch(
+        self,
+        chunk_id: str,
+        *,
+        access_count: int | None = None,
+        updated_at: datetime | None = None,
+    ) -> bool:
+        """Persist access_count/updated_at with a narrow UPDATE statement."""
+        touched_at = updated_at or datetime.now(timezone.utc)
+        with self._lock:
+            if access_count is None:
+                cursor = self._conn.execute(
+                    """
+                    UPDATE memory_chunks
+                    SET updated_at = ?, access_count = access_count + 1
+                    WHERE id = ?
+                    """,
+                    (touched_at.isoformat(), chunk_id),
+                )
+            else:
+                cursor = self._conn.execute(
+                    """
+                    UPDATE memory_chunks
+                    SET updated_at = ?, access_count = ?
+                    WHERE id = ?
+                    """,
+                    (touched_at.isoformat(), access_count, chunk_id),
+                )
+            self._conn.commit()
+            return cursor.rowcount > 0
+
     def get(self, chunk_id: str) -> MemoryChunk | None:
         """O(1) lookup by primary key."""
         with self._lock:
@@ -504,6 +572,7 @@ class QdrantStore(MemoryStore):
         self._vector_size = vector_size
         self._lock = threading.RLock()
         self._retry_policy = RetryPolicy()
+        self._pending_touches: dict[str, tuple[int, datetime]] = {}
 
         try:
             from qdrant_client import QdrantClient, models
@@ -642,6 +711,163 @@ class QdrantStore(MemoryStore):
             "version": chunk.version,
         }
 
+    def _apply_pending_touch(self, chunk: MemoryChunk) -> MemoryChunk:
+        pending = self._pending_touches.get(chunk.id)
+        if pending is None:
+            return chunk
+        access_count, updated_at = pending
+        chunk.access_count = access_count
+        chunk.updated_at = updated_at
+        return chunk
+
+    def _flush_pending_touches(self) -> None:
+        if not self._pending_touches or not self._collection_exists():
+            return
+
+        pending = list(self._pending_touches.items())
+        set_payload_fn = getattr(self._client, "set_payload", None)
+        if callable(set_payload_fn):
+            set_payload = cast(Callable[..., Any], set_payload_fn)
+            with self._lock:
+                for chunk_id, (access_count, updated_at) in pending:
+
+                    def _set_payload(
+                        *,
+                        chunk_id: str = chunk_id,
+                        access_count: int = access_count,
+                        updated_at: datetime = updated_at,
+                    ) -> Any:
+                        return set_payload(
+                            collection_name=self.collection_name,
+                            payload={
+                                "access_count": access_count,
+                                "updated_at": updated_at.isoformat(),
+                            },
+                            points=[chunk_id],
+                            wait=False,
+                        )
+
+                    self._call_client(
+                        "set_payload",
+                        _set_payload,
+                    )
+            for chunk_id, _ in pending:
+                self._pending_touches.pop(chunk_id, None)
+            return
+
+        pending_map = dict(pending)
+        self._pending_touches.clear()
+        for chunk_id, (access_count, updated_at) in pending_map.items():
+            chunk = self.get(chunk_id)
+            if chunk is None:
+                continue
+            chunk.access_count = access_count
+            chunk.updated_at = updated_at
+            self.store(chunk)
+
+    def _payload_matches_scope_filter(
+        self,
+        payload: dict[str, Any],
+        *,
+        scope_id: str | None,
+        allowed_scopes: tuple[str, ...],
+    ) -> bool:
+        metadata = payload.get("metadata")
+        if not isinstance(metadata, dict):
+            metadata = {}
+
+        scope_raw = metadata.get("scope")
+        scope = str(scope_raw).strip().lower() if isinstance(scope_raw, str) else "global"
+        if scope not in {"project", "workspace", "global"}:
+            scope = "global"
+
+        if scope not in allowed_scopes:
+            return False
+        if scope == "global":
+            return True
+        if scope_id is None:
+            return False
+
+        scope_id_raw = metadata.get("scope_id")
+        chunk_scope_id = (
+            scope_id_raw.strip()
+            if isinstance(scope_id_raw, str) and scope_id_raw.strip()
+            else "default"
+        )
+        return chunk_scope_id == scope_id
+
+    def _build_native_scope_filter(
+        self,
+        filter_fn: Callable[[MemoryChunk], bool] | None,
+    ) -> Any | None:
+        descriptor = getattr(filter_fn, "_mnemos_scope_filter", None)
+        if not isinstance(descriptor, dict):
+            return None
+
+        scope_id_raw = descriptor.get("scope_id")
+        scope_id = (
+            scope_id_raw.strip() if isinstance(scope_id_raw, str) and scope_id_raw.strip() else None
+        )
+        allowed_scopes_raw = descriptor.get("allowed_scopes")
+        if isinstance(allowed_scopes_raw, (list, tuple)):
+            allowed_scopes = tuple(
+                str(scope).strip().lower() for scope in allowed_scopes_raw if str(scope).strip()
+            )
+        else:
+            allowed_scopes = ("project", "workspace", "global")
+
+        if not allowed_scopes:
+            return None
+
+        required_model_names = ("Filter", "FieldCondition", "MatchValue", "MatchAny")
+        if not all(hasattr(self._models, name) for name in required_model_names):
+            return lambda payload: self._payload_matches_scope_filter(
+                payload,
+                scope_id=scope_id,
+                allowed_scopes=allowed_scopes,
+            )
+
+        field_condition = self._models.FieldCondition
+        filter_model = self._models.Filter
+        match_value = self._models.MatchValue
+        match_any = self._models.MatchAny
+
+        should_conditions: list[Any] = []
+        if "global" in allowed_scopes:
+            should_conditions.append(
+                field_condition(key="metadata.scope", match=match_value(value="global"))
+            )
+            should_conditions.append(
+                filter_model(
+                    must_not=[
+                        field_condition(
+                            key="metadata.scope",
+                            match=match_any(any=["project", "workspace", "global"]),
+                        )
+                    ]
+                )
+            )
+
+        if scope_id is not None:
+            for scope in ("project", "workspace"):
+                if scope not in allowed_scopes:
+                    continue
+                should_conditions.append(
+                    filter_model(
+                        must=[
+                            field_condition(key="metadata.scope", match=match_value(value=scope)),
+                            field_condition(
+                                key="metadata.scope_id",
+                                match=match_value(value=scope_id),
+                            ),
+                        ]
+                    )
+                )
+
+        if not should_conditions:
+            return None
+        return filter_model(should=should_conditions)
+
     def _parse_vector(self, point: Any) -> list[float] | None:
         vector_obj = getattr(point, "vector", None)
         if vector_obj is None:
@@ -705,6 +931,7 @@ class QdrantStore(MemoryStore):
 
     def store(self, chunk: MemoryChunk) -> None:
         """Insert or replace a chunk by ID."""
+        self._pending_touches.pop(chunk.id, None)
         vector = chunk.embedding
         if vector is None:
             if self._vector_size is None:
@@ -740,15 +967,17 @@ class QdrantStore(MemoryStore):
         """
         Retrieve top-k chunks by cosine similarity.
 
-        When `filter_fn` is supplied, we do a full scan and local scoring to
-        preserve exact callback semantics defined by MemoryStore.
+        For generic Python callbacks we preserve exact MemoryStore semantics via
+        a full scan. Engine-generated scope filters are translated to native
+        Qdrant payload filters to avoid collection scans on normal retrieval.
         """
         if top_k <= 0:
             return []
         if not self._collection_exists():
             return []
 
-        if filter_fn is not None:
+        native_filter = self._build_native_scope_filter(filter_fn)
+        if filter_fn is not None and native_filter is None:
             candidates = [chunk for chunk in self.get_all() if filter_fn(chunk)]
             scored: list[tuple[float, MemoryChunk]] = []
             for chunk in candidates:
@@ -764,26 +993,29 @@ class QdrantStore(MemoryStore):
             search_fn = getattr(self._client, "search", None)
             query_points_fn = getattr(self._client, "query_points", None)
             if callable(search_fn):
-                hits = self._call_client(
-                    "search",
-                    lambda: search_fn(
-                        collection_name=self.collection_name,
-                        query_vector=query_embedding,
-                        limit=top_k,
-                        with_payload=True,
-                        with_vectors=True,
-                    ),
-                )
+                search_kwargs = {
+                    "collection_name": self.collection_name,
+                    "query_vector": query_embedding,
+                    "limit": top_k,
+                    "with_payload": True,
+                    "with_vectors": True,
+                }
+                if native_filter is not None:
+                    search_kwargs["query_filter"] = native_filter
+                hits = self._call_client("search", lambda: search_fn(**search_kwargs))
             elif callable(query_points_fn):
+                query_kwargs = {
+                    "collection_name": self.collection_name,
+                    "query": query_embedding,
+                    "limit": top_k,
+                    "with_payload": True,
+                    "with_vectors": True,
+                }
+                if native_filter is not None:
+                    query_kwargs["query_filter"] = native_filter
                 query_result = self._call_client(
                     "query_points",
-                    lambda: query_points_fn(
-                        collection_name=self.collection_name,
-                        query=query_embedding,
-                        limit=top_k,
-                        with_payload=True,
-                        with_vectors=True,
-                    ),
+                    lambda: query_points_fn(**query_kwargs),
                 )
                 points = getattr(query_result, "points", query_result)
                 if isinstance(points, list):
@@ -793,7 +1025,10 @@ class QdrantStore(MemoryStore):
             else:
                 raise RuntimeError("Qdrant client does not support search/query_points APIs.")
 
-        return [self._point_to_chunk(hit) for hit in hits]
+        chunks = [self._apply_pending_touch(self._point_to_chunk(hit)) for hit in hits]
+        if filter_fn is not None:
+            chunks = [chunk for chunk in chunks if filter_fn(chunk)]
+        return chunks
 
     def update(self, chunk_id: str, chunk: MemoryChunk) -> bool:
         """Update an existing chunk; returns False if not found."""
@@ -806,11 +1041,32 @@ class QdrantStore(MemoryStore):
         self.store(chunk)
         return True
 
+    def touch(
+        self,
+        chunk_id: str,
+        *,
+        access_count: int | None = None,
+        updated_at: datetime | None = None,
+    ) -> bool:
+        """Record access metadata and defer payload flush off the hot retrieval path."""
+        existing = self.get(chunk_id)
+        if existing is None:
+            return False
+
+        touched_at = updated_at or datetime.now(timezone.utc)
+        next_access_count = existing.access_count + 1 if access_count is None else access_count
+        with self._lock:
+            self._pending_touches[chunk_id] = (next_access_count, touched_at)
+        if len(self._pending_touches) >= 128:
+            self._flush_pending_touches()
+        return True
+
     def delete(self, chunk_id: str) -> bool:
         """Delete chunk by ID; returns False if not found."""
         if self.get(chunk_id) is None:
             return False
 
+        self._pending_touches.pop(chunk_id, None)
         selector = self._models.PointIdsList(points=[chunk_id])
         with self._lock:
             self._call_client(
@@ -840,7 +1096,7 @@ class QdrantStore(MemoryStore):
             )
         if not points:
             return None
-        return self._point_to_chunk(points[0])
+        return self._apply_pending_touch(self._point_to_chunk(points[0]))
 
     def get_all(self) -> list[MemoryChunk]:
         """Load all chunks from the collection using scroll pagination."""
@@ -862,7 +1118,9 @@ class QdrantStore(MemoryStore):
                         with_vectors=True,
                     ),
                 )
-            all_chunks.extend(self._point_to_chunk(point) for point in points)
+            all_chunks.extend(
+                self._apply_pending_touch(self._point_to_chunk(point)) for point in points
+            )
             if next_offset is None:
                 break
             offset = next_offset
@@ -895,6 +1153,7 @@ class QdrantStore(MemoryStore):
 
     def close(self) -> None:
         """Close the underlying client if it exposes close()."""
+        self._flush_pending_touches()
         close_fn = getattr(self._client, "close", None)
         if callable(close_fn):
             close_fn()

@@ -40,7 +40,7 @@ from .modules.spreading import SpreadingActivation
 from .modules.surprisal import SurprisalGate
 from .types import ConsolidationResult, Interaction, MemoryChunk, ProcessResult
 from .observability import log_event
-from .utils.embeddings import EmbeddingProvider, cosine_similarity
+from .utils.embeddings import EmbeddingProvider, cosine_similarity, embed_text_async
 from .utils.llm import LLMProvider
 from .utils.storage import MemoryStore
 
@@ -125,6 +125,15 @@ def _build_scope_filter(
         return chunk_scope_id == scope_id
 
     _ = current_scope  # reserved for future policy variants
+    setattr(
+        _is_allowed,
+        "_mnemos_scope_filter",
+        {
+            "current_scope": current_scope,
+            "scope_id": scope_id,
+            "allowed_scopes": allowed_scopes,
+        },
+    )
     return _is_allowed
 
 
@@ -389,7 +398,7 @@ class MnemosEngine:
 
         if safety.content != result.chunk.content:
             result.chunk.content = safety.content
-            result.chunk.embedding = self._embedder.embed(safety.content)
+            result.chunk.embedding = await embed_text_async(self._embedder, safety.content)
             result.chunk.metadata["safety_redactions"] = [match.label for match in safety.matches]
             self._store.update(result.chunk.id, result.chunk)
 
@@ -477,10 +486,16 @@ class MnemosEngine:
         current_state = await self.affective_router.classify_state(query_interaction)
 
         # Step 2: SpreadingActivation — find associatively connected neighbors
-        query_embedding = self._embedder.embed(query)
+        query_embedding = await embed_text_async(self._embedder, query)
         activated_nodes = self.spreading_activation.retrieve(
             query_embedding,
             top_k=top_k * 3,  # Get larger pool for re-ranking
+        )
+        candidate_pool_k = max(top_k * 6, 20)
+        baseline_chunks = self._store.retrieve(
+            query_embedding,
+            top_k=candidate_pool_k,
+            filter_fn=scope_filter,
         )
 
         # Gather IDs of activated nodes to boost them in final scoring
@@ -496,15 +511,8 @@ class MnemosEngine:
             current_state=current_state,
             store=self._store,
             top_k=top_k * 2,  # Slightly larger pool
-            filter_fn=scope_filter,
-        )
-
-        # Always include direct semantic retrieval candidates so engine retrieval
-        # never underperforms plain vector lookup by candidate omission.
-        baseline_chunks = self._store.retrieve(
-            query_embedding,
-            top_k=top_k * 4,
-            filter_fn=scope_filter,
+            query_embedding=query_embedding,
+            candidates=baseline_chunks,
         )
 
         # Merge activated nodes: boost chunks that appear in activation graph
@@ -543,15 +551,18 @@ class MnemosEngine:
         # Also include any activated nodes not in the affective results
         missing_ids = activated_ids - set(chunk_scores.keys())
         if missing_ids:
-            store_chunks_by_id = {c.id: c for c in self._store.get_all() if scope_filter(c)}
             for node in activated_nodes:
-                if node.id in missing_ids and node.id in store_chunks_by_id:
-                    chunk = store_chunks_by_id[node.id]
-                    # Score based on activation energy
-                    score = node.energy * 0.5  # Activation-only score (lower weight)
-                    chunk_scope, _ = _chunk_scope_data(chunk)
-                    score += _scope_match_boost(chunk_scope, normalized_current_scope)
-                    chunk_scores[node.id] = (score, chunk)
+                if node.id not in missing_ids:
+                    continue
+                candidate = self._store.get(node.id)
+                if candidate is None or not scope_filter(candidate):
+                    continue
+                chunk = candidate
+                # Score based on activation energy
+                score = node.energy * 0.5  # Activation-only score (lower weight)
+                chunk_scope, _ = _chunk_scope_data(chunk)
+                score += _scope_match_boost(chunk_scope, normalized_current_scope)
+                chunk_scores[node.id] = (score, chunk)
 
         # Sort by score and take top_k
         sorted_chunks = sorted(
@@ -571,6 +582,12 @@ class MnemosEngine:
 
         # Step 4: MutableRAG — flag as labile and optionally reconsolidate
         for chunk in final_chunks:
+            touched_at = datetime.now(timezone.utc)
+            next_access_count = chunk.access_count + 1
+            if self._store.touch(chunk.id, updated_at=touched_at):
+                if chunk.access_count < next_access_count:
+                    chunk.access_count = next_access_count
+                chunk.updated_at = touched_at
             self.mutable_rag.mark_labile(chunk, query)
 
         if reconsolidate and final_chunks:

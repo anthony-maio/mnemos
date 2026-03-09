@@ -419,6 +419,68 @@ class TestAffectiveRouter:
         assert results[0].cognitive_state is not None
 
     @pytest.mark.asyncio
+    async def test_retrieve_uses_supplied_query_embedding(self, mock_llm):
+        """retrieve() should not re-embed the query when query_embedding is provided."""
+
+        class CountingEmbedder:
+            def __init__(self) -> None:
+                self.calls = 0
+
+            def embed(self, text: str) -> list[float]:
+                self.calls += 1
+                return [1.0, 0.0, 0.0]
+
+            def embed_batch(self, texts: list[str]) -> list[list[float]]:
+                return [self.embed(text) for text in texts]
+
+        embedder = CountingEmbedder()
+        router = AffectiveRouter(llm=mock_llm, embedder=embedder)
+        store = InMemoryStore()
+        store.store(
+            MemoryChunk(
+                content="server is down production outage",
+                embedding=[1.0, 0.0, 0.0],
+                cognitive_state=CognitiveState(valence=-0.8, arousal=0.9, complexity=0.7),
+            )
+        )
+
+        current_state = CognitiveState(valence=-0.7, arousal=0.8, complexity=0.6)
+        results = await router.retrieve(
+            "server problems",
+            current_state=current_state,
+            store=store,
+            top_k=1,
+            query_embedding=[1.0, 0.0, 0.0],
+        )
+
+        assert len(results) == 1
+        assert embedder.calls == 0
+
+    @pytest.mark.asyncio
+    async def test_retrieve_uses_supplied_candidates_without_store_lookup(self, mock_llm, embedder):
+        """retrieve() should rerank provided candidates without calling store.retrieve()."""
+        router = AffectiveRouter(llm=mock_llm, embedder=embedder)
+        store = MagicMock()
+        candidate = MemoryChunk(
+            content="server is down production outage",
+            embedding=embedder.embed("server is down production outage"),
+            cognitive_state=CognitiveState(valence=-0.8, arousal=0.9, complexity=0.7),
+        )
+        current_state = CognitiveState(valence=-0.7, arousal=0.8, complexity=0.6)
+
+        results = await router.retrieve(
+            "server problems",
+            current_state=current_state,
+            store=store,
+            top_k=1,
+            query_embedding=embedder.embed("server problems"),
+            candidates=[candidate],
+        )
+
+        assert len(results) == 1
+        store.retrieve.assert_not_called()
+
+    @pytest.mark.asyncio
     async def test_state_history_updates(self, mock_llm, embedder):
         """classify_state should update the state history."""
         router = AffectiveRouter(llm=mock_llm, embedder=embedder)

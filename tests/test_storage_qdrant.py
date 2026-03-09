@@ -6,6 +6,7 @@ from __future__ import annotations
 
 import sys
 import types
+from datetime import datetime, timezone
 from typing import Any
 
 import pytest
@@ -73,6 +74,11 @@ def fake_qdrant(monkeypatch: pytest.MonkeyPatch) -> None:
             self.url = url
             self.api_key = api_key
             self._collections: dict[str, dict[str, Any]] = {}
+            self.search_calls: list[dict[str, Any]] = []
+            self.scroll_calls = 0
+            self.upsert_calls = 0
+            self.retrieve_calls = 0
+            self.set_payload_calls: list[dict[str, Any]] = []
 
         def collection_exists(self, collection_name: str) -> bool:
             return collection_name in self._collections
@@ -92,6 +98,7 @@ def fake_qdrant(monkeypatch: pytest.MonkeyPatch) -> None:
         def upsert(
             self, collection_name: str, points: list[PointStruct], wait: bool = True
         ) -> None:
+            self.upsert_calls += 1
             collection = self._collections[collection_name]
             for point in points:
                 collection["points"][point.id] = {
@@ -104,12 +111,22 @@ def fake_qdrant(monkeypatch: pytest.MonkeyPatch) -> None:
             collection_name: str,
             query_vector: list[float],
             limit: int,
+            query_filter: Any | None = None,
             with_payload: bool = True,
             with_vectors: bool = True,
         ) -> list[_PointView]:
             collection = self._collections[collection_name]
+            self.search_calls.append(
+                {
+                    "collection_name": collection_name,
+                    "limit": limit,
+                    "query_filter": query_filter,
+                }
+            )
             scored: list[tuple[float, str, dict[str, Any]]] = []
             for point_id, point_data in collection["points"].items():
+                if query_filter is not None and not query_filter(point_data["payload"]):
+                    continue
                 score = cosine_similarity(query_vector, point_data["vector"])
                 scored.append((score, point_id, point_data))
             scored.sort(key=lambda x: x[0], reverse=True)
@@ -143,6 +160,7 @@ def fake_qdrant(monkeypatch: pytest.MonkeyPatch) -> None:
             with_payload: bool = True,
             with_vectors: bool = True,
         ) -> list[_PointView]:
+            self.retrieve_calls += 1
             collection = self._collections[collection_name]
             results: list[_PointView] = []
             for point_id in ids:
@@ -152,6 +170,41 @@ def fake_qdrant(monkeypatch: pytest.MonkeyPatch) -> None:
                 results.append(_PointView(point_id, point_data["vector"], point_data["payload"]))
             return results
 
+        def set_payload(
+            self,
+            collection_name: str,
+            payload: dict[str, Any],
+            points: list[str] | PointIdsList,
+            key: str | None = None,
+            wait: bool = True,
+            **kwargs: Any,
+        ) -> None:
+            if isinstance(points, PointIdsList):
+                point_ids = points.points
+            else:
+                point_ids = list(points)
+            self.set_payload_calls.append(
+                {
+                    "collection_name": collection_name,
+                    "payload": dict(payload),
+                    "points": list(point_ids),
+                    "key": key,
+                    "wait": wait,
+                }
+            )
+            collection = self._collections[collection_name]
+            for point_id in point_ids:
+                point_data = collection["points"].get(point_id)
+                if point_data is None:
+                    continue
+                target = point_data["payload"]
+                if key:
+                    nested = target.setdefault(key, {})
+                    if isinstance(nested, dict):
+                        nested.update(payload)
+                else:
+                    target.update(payload)
+
         def scroll(
             self,
             collection_name: str,
@@ -160,6 +213,7 @@ def fake_qdrant(monkeypatch: pytest.MonkeyPatch) -> None:
             with_payload: bool = True,
             with_vectors: bool = True,
         ) -> tuple[list[_PointView], int | None]:
+            self.scroll_calls += 1
             collection = self._collections[collection_name]
             all_ids = list(collection["points"].keys())
             start = offset or 0
@@ -294,3 +348,74 @@ def test_qdrant_store_retrieve_uses_query_points_fallback(fake_qdrant: None) -> 
     hits = store.retrieve([1.0, 0.0, 0.0], top_k=1)
     assert len(hits) == 1
     assert hits[0].id == "infra-1"
+
+
+def test_qdrant_store_scope_filter_uses_native_payload_filter(fake_qdrant: None) -> None:
+    store = QdrantStore(path=":memory:", collection_name="mnemos_test_scope_filters")
+    store.store(
+        MemoryChunk(
+            id="alpha",
+            content="repo alpha terraform",
+            embedding=[1.0, 0.0, 0.0],
+            metadata={"scope": "project", "scope_id": "repo-alpha"},
+        )
+    )
+    store.store(
+        MemoryChunk(
+            id="beta",
+            content="repo beta ansible",
+            embedding=[0.9, 0.1, 0.0],
+            metadata={"scope": "project", "scope_id": "repo-beta"},
+        )
+    )
+
+    def scope_filter(chunk: MemoryChunk) -> bool:
+        return (
+            chunk.metadata.get("scope") == "project"
+            and chunk.metadata.get("scope_id") == "repo-alpha"
+        )
+
+    setattr(
+        scope_filter,
+        "_mnemos_scope_filter",
+        {
+            "current_scope": "project",
+            "scope_id": "repo-alpha",
+            "allowed_scopes": ("project",),
+        },
+    )
+
+    hits = store.retrieve([1.0, 0.0, 0.0], top_k=5, filter_fn=scope_filter)
+
+    assert [hit.id for hit in hits] == ["alpha"]
+    assert store._client.scroll_calls == 0
+    assert store._client.search_calls
+    assert store._client.search_calls[-1]["query_filter"] is not None
+
+
+def test_qdrant_store_touch_updates_payload_without_upsert(fake_qdrant: None) -> None:
+    store = QdrantStore(path=":memory:", collection_name="mnemos_test_touch")
+    store.store(
+        MemoryChunk(
+            id="alpha",
+            content="repo alpha terraform",
+            embedding=[1.0, 0.0, 0.0],
+            metadata={"scope": "project", "scope_id": "repo-alpha"},
+        )
+    )
+
+    touched_at = datetime(2026, 3, 8, 12, 0, tzinfo=timezone.utc)
+    assert store.touch("alpha", access_count=2, updated_at=touched_at) is True
+
+    chunk = store.get("alpha")
+    assert chunk is not None
+    assert chunk.access_count == 2
+    assert chunk.updated_at == touched_at
+    assert store._client.upsert_calls == 1
+
+    # Fast touch path should defer the payload flush until close/maintenance.
+    assert store._client.set_payload_calls == []
+
+    store.close()
+    assert store._client.set_payload_calls
+    assert store._client.set_payload_calls[-1]["wait"] is False

@@ -219,6 +219,37 @@ class TestEngineRetrieve:
             assert isinstance(r, MemoryChunk)
             assert len(r.content) > 0
 
+    @pytest.mark.asyncio
+    async def test_retrieve_reuses_single_store_candidate_pool(self):
+        """retrieve() should fetch semantic candidates once and reuse them for affective reranking."""
+
+        class CountingInMemoryStore(InMemoryStore):
+            def __init__(self) -> None:
+                super().__init__()
+                self.retrieve_calls = 0
+
+            def retrieve(self, query_embedding, top_k=5, filter_fn=None):
+                self.retrieve_calls += 1
+                return super().retrieve(query_embedding, top_k=top_k, filter_fn=filter_fn)
+
+        store = CountingInMemoryStore()
+        engine = MnemosEngine(
+            config=MnemosConfig(
+                surprisal=SurprisalConfig(threshold=0.0, min_content_length=0),
+            ),
+            llm=MockLLMProvider(),
+            embedder=SimpleEmbeddingProvider(dim=64),
+            store=store,
+        )
+
+        await engine.process(make_interaction("Python services deploy with uv and Docker"))
+        await engine.process(make_interaction("PostgreSQL backs the production app"))
+
+        results = await engine.retrieve("python deploy tooling", top_k=2, reconsolidate=False)
+
+        assert results
+        assert store.retrieve_calls == 1
+
 
 class TestEngineScopedMemory:
     @pytest.mark.asyncio
@@ -290,6 +321,80 @@ class TestEngineScopedMemory:
         )
         assert len(results) == 2
         assert results[0].metadata.get("scope") == "project"
+
+    @pytest.mark.asyncio
+    async def test_consolidate_preserves_scope_and_isolates_projects(self) -> None:
+        """Sleep consolidation should preserve source scope and never leak facts across projects."""
+        llm = MockLLMProvider(
+            responses={
+                "repo alpha uses terraform": "1. Repo alpha uses Terraform modules.",
+                "repo beta uses ansible": "1. Repo beta uses Ansible playbooks.",
+            }
+        )
+        engine = MnemosEngine(
+            config=MnemosConfig(
+                surprisal=SurprisalConfig(threshold=0.0, min_content_length=0),
+                sleep=SleepConfig(
+                    min_episodes_before_consolidation=1,
+                    consolidation_interval_seconds=0,
+                ),
+            ),
+            llm=llm,
+            embedder=SimpleEmbeddingProvider(dim=64),
+            store=InMemoryStore(),
+        )
+
+        await engine.process(
+            make_interaction("Repo alpha uses Terraform."),
+            scope="project",
+            scope_id="repo-alpha",
+        )
+        await engine.process(
+            make_interaction("Repo beta uses Ansible."),
+            scope="project",
+            scope_id="repo-beta",
+        )
+
+        result = await engine.consolidate()
+        assert "Repo alpha uses Terraform modules." in result.facts_extracted
+        assert "Repo beta uses Ansible playbooks." in result.facts_extracted
+
+        consolidated = [
+            chunk
+            for chunk in engine.store.get_all()
+            if chunk.metadata.get("source") == "sleep_consolidation"
+        ]
+        assert consolidated
+        assert {
+            (chunk.metadata.get("scope"), chunk.metadata.get("scope_id")) for chunk in consolidated
+        } == {
+            ("project", "repo-alpha"),
+            ("project", "repo-beta"),
+        }
+
+        alpha_results = await engine.retrieve(
+            "terraform modules",
+            top_k=5,
+            reconsolidate=False,
+            current_scope="project",
+            scope_id="repo-alpha",
+            allowed_scopes=("project",),
+        )
+        assert alpha_results
+        assert any("Terraform modules" in chunk.content for chunk in alpha_results)
+        assert not any(chunk.metadata.get("scope_id") == "repo-beta" for chunk in alpha_results)
+
+        beta_results = await engine.retrieve(
+            "ansible playbooks",
+            top_k=5,
+            reconsolidate=False,
+            current_scope="project",
+            scope_id="repo-beta",
+            allowed_scopes=("project",),
+        )
+        assert beta_results
+        assert any("Ansible playbooks" in chunk.content for chunk in beta_results)
+        assert not any(chunk.metadata.get("scope_id") == "repo-alpha" for chunk in beta_results)
 
 
 class TestEngineGovernance:
@@ -541,6 +646,60 @@ class TestEngineFullPipeline:
         assert engine.store is not None
         assert engine.llm is not None
         assert engine.embedder is not None
+
+
+class TestEngineRetrievePersistence:
+    @pytest.mark.asyncio
+    @pytest.mark.parametrize("store_kind", ["memory", "sqlite"])
+    async def test_retrieve_persists_access_count_and_touch(
+        self, store_kind: str, tmp_path
+    ) -> None:
+        """retrieve() should persist access_count and updated_at for returned chunks."""
+        if store_kind == "memory":
+            store = InMemoryStore()
+        else:
+            store = SQLiteStore(db_path=str(tmp_path / "mnemos_access_count.db"))
+
+        engine = MnemosEngine(
+            config=MnemosConfig(
+                surprisal=SurprisalConfig(threshold=0.0, min_content_length=0),
+            ),
+            llm=MockLLMProvider(),
+            embedder=SimpleEmbeddingProvider(dim=64),
+            store=store,
+        )
+
+        try:
+            result = await engine.process(
+                make_interaction("Use uv for Python tooling"),
+                scope="project",
+                scope_id="repo-alpha",
+            )
+            assert result.chunk is not None
+
+            before = store.get(result.chunk.id)
+            assert before is not None
+            before_updated_at = before.updated_at
+            assert before.access_count == 0
+
+            results = await engine.retrieve(
+                "python tooling",
+                top_k=1,
+                reconsolidate=False,
+                current_scope="project",
+                scope_id="repo-alpha",
+                allowed_scopes=("project",),
+            )
+
+            assert len(results) == 1
+            after = store.get(result.chunk.id)
+            assert after is not None
+            assert after.access_count == 1
+            assert after.updated_at >= before_updated_at
+        finally:
+            close = getattr(store, "close", None)
+            if callable(close):
+                close()
 
 
 class TestEnginePersistence:

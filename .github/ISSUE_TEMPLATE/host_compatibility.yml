@@ -1,0 +1,65 @@
+name: Host compatibility report
+description: Report setup, behavior, or gaps for a specific MCP host or client
+title: "[Host]: "
+labels:
+  - compatibility
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Use this form for Claude, Codex, Cursor, Windsurf, Cline, or another MCP client.
+  - type: input
+    id: client
+    attributes:
+      label: Client or host
+      placeholder: Codex
+    validations:
+      required: true
+  - type: dropdown
+    id: tier
+    attributes:
+      label: Current documented status
+      options:
+        - Tier 1 supported
+        - Tier 2 documented
+        - Not listed
+    validations:
+      required: true
+  - type: input
+    id: transport
+    attributes:
+      label: Transport
+      placeholder: MCP stdio
+    validations:
+      required: true
+  - type: textarea
+    id: config
+    attributes:
+      label: Config or launch details
+      description: Include the exact command or config that launches Mnemos
+      render: json
+    validations:
+      required: true
+  - type: textarea
+    id: behavior
+    attributes:
+      label: Observed behavior
+      description: What worked, what failed, and how reproducible was it?
+    validations:
+      required: true
+  - type: textarea
+    id: evidence
+    attributes:
+      label: Evidence
+      description: Include logs, screenshots, or session notes if they help
+    validations:
+      required: true
+  - type: checkboxes
+    id: checklist
+    attributes:
+      label: Checklist
+      options:
+        - label: I checked the compatibility matrix first
+          required: true
+        - label: I included whether this was a one-off smoke test or daily-use validation
+          required: true

@@ -33,7 +33,7 @@ from typing import Any
 from ..config import MutableRAGConfig
 from ..memory_safety import MemoryWriteFirewall
 from ..types import MemoryChunk, ProcessResult
-from ..utils.embeddings import EmbeddingProvider
+from ..utils.embeddings import EmbeddingProvider, embed_text_async
 from ..utils.llm import LLMProvider
 from ..utils.storage import MemoryStore
 
@@ -121,8 +121,12 @@ class MutableRAG:
 
         # Increment access counts
         for chunk in chunks:
-            chunk.touch()
-            self._store.update(chunk.id, chunk)
+            touched_at = datetime.now(timezone.utc)
+            next_access_count = chunk.access_count + 1
+            if self._store.touch(chunk.id, updated_at=touched_at):
+                if chunk.access_count < next_access_count:
+                    chunk.access_count = next_access_count
+                chunk.updated_at = touched_at
 
         return chunks
 
@@ -183,8 +187,12 @@ class MutableRAG:
 
         if response.upper().startswith("UNCHANGED"):
             # Memory is still valid — just touch it
-            chunk.touch()
-            self._store.update(chunk.id, chunk)
+            touched_at = datetime.now(timezone.utc)
+            next_access_count = chunk.access_count + 1
+            if self._store.touch(chunk.id, updated_at=touched_at):
+                if chunk.access_count < next_access_count:
+                    chunk.access_count = next_access_count
+                chunk.updated_at = touched_at
             self._total_unchanged += 1
             self._mark_reconsolidated_now(chunk.id)
             return chunk, False
@@ -195,15 +203,23 @@ class MutableRAG:
                 new_content = response.split(":", 1)[1].strip()
             else:
                 # Response is just "CHANGED" without content — don't modify
-                chunk.touch()
-                self._store.update(chunk.id, chunk)
+                touched_at = datetime.now(timezone.utc)
+                next_access_count = chunk.access_count + 1
+                if self._store.touch(chunk.id, updated_at=touched_at):
+                    if chunk.access_count < next_access_count:
+                        chunk.access_count = next_access_count
+                    chunk.updated_at = touched_at
                 self._total_unchanged += 1
                 self._mark_reconsolidated_now(chunk.id)
                 return chunk, False
 
             if not new_content:
-                chunk.touch()
-                self._store.update(chunk.id, chunk)
+                touched_at = datetime.now(timezone.utc)
+                next_access_count = chunk.access_count + 1
+                if self._store.touch(chunk.id, updated_at=touched_at):
+                    if chunk.access_count < next_access_count:
+                        chunk.access_count = next_access_count
+                    chunk.updated_at = touched_at
                 self._total_unchanged += 1
                 self._mark_reconsolidated_now(chunk.id)
                 return chunk, False
@@ -213,8 +229,12 @@ class MutableRAG:
             if self._write_firewall is not None:
                 safety = self._write_firewall.apply(new_content)
                 if not safety.allowed:
-                    chunk.touch()
-                    self._store.update(chunk.id, chunk)
+                    touched_at = datetime.now(timezone.utc)
+                    next_access_count = chunk.access_count + 1
+                    if self._store.touch(chunk.id, updated_at=touched_at):
+                        if chunk.access_count < next_access_count:
+                            chunk.access_count = next_access_count
+                        chunk.updated_at = touched_at
                     self._total_unchanged += 1
                     self._mark_reconsolidated_now(chunk.id)
                     return chunk, False
@@ -224,7 +244,7 @@ class MutableRAG:
             # Create reconsolidated version
             updated_chunk = chunk.reconsolidate(safe_content)
             # Re-embed the new content
-            updated_chunk.embedding = self._embedder.embed(safe_content)
+            updated_chunk.embedding = await embed_text_async(self._embedder, safe_content)
             updated_chunk.metadata["reconsolidated_at"] = datetime.now(timezone.utc).isoformat()
             updated_chunk.metadata["reconsolidation_context"] = new_context[:200]  # Truncate
             updated_chunk.metadata["safety_redactions"] = redactions
@@ -237,8 +257,12 @@ class MutableRAG:
 
         else:
             # Unexpected response format — conservative: leave unchanged
-            chunk.touch()
-            self._store.update(chunk.id, chunk)
+            touched_at = datetime.now(timezone.utc)
+            next_access_count = chunk.access_count + 1
+            if self._store.touch(chunk.id, updated_at=touched_at):
+                if chunk.access_count < next_access_count:
+                    chunk.access_count = next_access_count
+                chunk.updated_at = touched_at
             self._total_unchanged += 1
             self._mark_reconsolidated_now(chunk.id)
             return chunk, False

@@ -1,6 +1,6 @@
 # mnemos (μνῆμος)
 
-**Biomimetic memory architectures for LLMs — built on how the brain actually works.**
+**Reliable scoped memory for coding agents, built with biomimetic retrieval and consolidation.**
 
 [![PyPI version](https://img.shields.io/pypi/v/mnemos-memory.svg)](https://pypi.org/project/mnemos-memory/)
 [![Python 3.10+](https://img.shields.io/badge/python-3.10+-blue.svg)](https://www.python.org/downloads/)
@@ -10,19 +10,22 @@
 
 ---
 
-## The Problem
+## What Mnemos Is
 
-Current LLM memory falls into two failure modes: **context stuffing** (cramming millions of tokens into RAM until it costs a fortune) or **standard RAG** (dumping everything into an append-only vector database and hoping cosine similarity is enough).
+Mnemos is a local-first memory layer for coding agents. The v1 target is straightforward:
 
-Both treat memory as a hard drive — static, lossless, and disorganized. A mundane greeting gets the same embedding priority as a production outage. A fact from 2024 sits quietly contradicting the updated fact from 2025, and the LLM burns context tokens resolving the conflict on every single retrieval.
+- safe scoped memory for solo agent workflows
+- persistent local storage that survives restarts
+- MCP compatibility for Claude Code, Claude Desktop, generic MCP hosts, and documented Codex setup
+- biomimetic memory modules under the hood so retrieval stays compact and adaptive instead of append-only
 
-The result: bloated stores, stale data, no associative reasoning, and zero emotional context.
+This is not a hosted memory platform, team memory system, or remote sync product in v1.
 
 ---
 
-## The Insight
+## Why The Architecture Is Different
 
-Human memory is efficient precisely because it does the opposite. It is:
+Most agent memory tools either keep too much raw transcript or append contradictory facts forever. Mnemos uses a different design:
 
 - **Reconstructive, not reproductive** — every recall rewrites the trace with current context
 - **Surprisal-gated** — the brain only encodes events that violate predictions
@@ -30,7 +33,7 @@ Human memory is efficient precisely because it does the opposite. It is:
 - **Lossy by design** — sleep compresses episodic logs into semantic abstractions and discards the rest
 - **Associative** — remembering "server" pre-activates "AWS," "downtime," and "nginx" before you ask
 
-mnemos implements all five of these mechanisms as composable Python modules, grounded in the neuroscience literature. They can be used independently or composed together through `MnemosEngine`.
+mnemos implements these mechanisms as composable Python modules. They can be used independently or composed through `MnemosEngine`, but the product promise is narrower than the research inspiration: reliable scoped memory for agent workflows.
 
 ---
 
@@ -182,7 +185,7 @@ pip install mnemos-memory
 
 > **Note:** The PyPI package is `mnemos-memory` but the import name is just `import mnemos`.
 
-Zero external dependencies required. The default configuration uses `MockLLMProvider` and `SimpleEmbeddingProvider` for instant experimentation.
+Zero external dependencies are required for experimentation. The default configuration uses `MockLLMProvider` and `SimpleEmbeddingProvider`, which are appropriate for demos and tests, not production retrieval quality.
 
 ```python
 import asyncio
@@ -202,7 +205,7 @@ async def main():
 asyncio.run(main())
 ```
 
-**With Ollama (recommended for production):**
+**With Ollama (recommended for local production use):**
 
 ```bash
 pip install 'mnemos-memory[ollama]'
@@ -238,7 +241,7 @@ engine = MnemosEngine(
 
 ## MCP Integration
 
-mnemos ships a full [Model Context Protocol](https://modelcontextprotocol.io) server. Any MCP-compatible agent — Claude Code, Cursor, Windsurf, Cline — can discover and call mnemos tools natively.
+mnemos ships a full [Model Context Protocol](https://modelcontextprotocol.io) server. Any MCP-compatible agent can call Mnemos tools natively, with the most polished path currently being Claude Code plus documented MCP setups for other hosts.
 
 ```bash
 pip install 'mnemos-memory[mcp]'
@@ -326,9 +329,22 @@ Profile + compatibility docs:
 - [docs/profiles/starter-sqlite.md](docs/profiles/starter-sqlite.md)
 - [docs/profiles/local-performance-embedded-qdrant.md](docs/profiles/local-performance-embedded-qdrant.md)
 - [docs/profiles/scale-external-qdrant.md](docs/profiles/scale-external-qdrant.md)
+- [docs/public-release-package.md](docs/public-release-package.md)
+- [docs/release-checklist.md](docs/release-checklist.md)
+- [docs/codex.md](docs/codex.md)
 - [docs/cursor-antigravity.md](docs/cursor-antigravity.md)
 - [docs/mcp-transport-contract.md](docs/mcp-transport-contract.md)
 - [docs/client-compatibility-matrix.md](docs/client-compatibility-matrix.md)
+
+### Codex via MCP + `AGENTS.md`
+
+Codex support in v1 is MCP-first rather than plugin-first. Use the documented setup in [docs/codex.md](docs/codex.md) and generate the repo policy text with:
+
+```bash
+mnemos-cli antigravity codex
+```
+
+That flow keeps Codex on the same scoped `retrieve -> work -> store -> consolidate` loop as Claude Code.
 
 ### Claude Code / Claude Desktop
 
@@ -338,10 +354,11 @@ Add to `~/.claude/claude_desktop_config.json`:
 {
   "mcpServers": {
     "mnemos": {
-      "command": "mnemos-mcp",
+      "command": "python",
+      "args": ["-m", "mnemos.mcp_server"],
       "env": {
-        "MNEMOS_LLM_PROVIDER": "ollama",
-        "MNEMOS_LLM_MODEL": "llama3",
+        "MNEMOS_LLM_PROVIDER": "mock",
+        "MNEMOS_EMBEDDING_PROVIDER": "simple",
         "MNEMOS_STORE_TYPE": "sqlite",
         "MNEMOS_SQLITE_PATH": "~/.mnemos/memory.db"
       }
@@ -349,6 +366,9 @@ Add to `~/.claude/claude_desktop_config.json`:
   }
 }
 ```
+
+This is the minimal tested Tier 1 config. Swap `mock` and `simple` to `ollama`,
+`openai`, or `openclaw` when you want real retrieval quality.
 
 ### Cursor
 
@@ -546,24 +566,35 @@ If `MNEMOS_EMBEDDING_PROVIDER` is unset, Mnemos now infers it from `MNEMOS_LLM_P
 
 ---
 
-## Comparison with Existing Tools
+## Compatibility and Release Posture
 
-Every other memory library for LLMs is, at its core, a wrapper around a vector database. mnemos is the only open-source implementation of the neuroscience mechanisms that make biological memory actually work.
+Mnemos is ready for a disciplined public open-source release. It is not yet ready for “definitive replacement” claims across every host and workflow. The verified public surface today is:
 
-| Feature | mnemos | Mem0 | Zep | LangMem | MemGPT |
-|---------|:------:|:----:|:---:|:-------:|:------:|
-| Surprisal-gated encoding (predictive coding) | ✅ | ❌ | ❌ | ❌ | ❌ |
-| Mutable memories (reconsolidation, no stale data) | ✅ | Partial | Partial | ❌ | ❌ |
-| Affective/emotional state-dependent retrieval | ✅ | ❌ | ❌ | ❌ | ❌ |
-| Sleep consolidation (episodic → semantic compression) | ✅ | ❌ | ❌ | ❌ | ❌ |
-| Spreading activation graph RAG | ✅ | ❌ | ❌ | ❌ | ❌ |
-| Append-only vector storage | ❌ | ✅ | ✅ | ✅ | ✅ |
-| MCP server (Claude Code, Cursor, Windsurf) | ✅ | ❌ | ❌ | ❌ | ❌ |
-| Zero-dependency quick start | ✅ | ❌ | ❌ | ❌ | ❌ |
-| Fully composable modules | ✅ | ❌ | ❌ | Partial | ❌ |
-| Pydantic-validated config | ✅ | ❌ | ❌ | ❌ | ❌ |
+| Client / Surface | Status | Notes |
+|---|---|---|
+| Claude Code | Tier 1 supported | Primary install path via plugin; validated end-to-end. |
+| Claude Desktop | Tier 1 supported | Minimal tested stdio config ships in the repo. |
+| Generic MCP stdio hosts | Tier 1 supported | Validated against the live MCP server. |
+| Codex | Tier 2 documented | Supported through MCP + `AGENTS.md`; promote after verified daily-use validation. |
+| Cursor / Windsurf / Cline | Tier 2 best effort | Configs and docs exist, but are not part of the release-blocking validation set. |
 
-The distinction isn't just architectural. It's causal: standard tools retrieve stale facts, accumulate contradictions, miss emotional context, and grow without bound. mnemos doesn't.
+The current product promise is narrower than the architecture story:
+
+- safe scoped memory for solo coding-agent workflows
+- local-first persistence with SQLite as the starter profile
+- biomimetic retrieval and consolidation under the hood
+- verified Tier 1 support for Claude Code, Claude Desktop, and generic MCP hosts
+
+Source-of-truth release docs:
+
+- [docs/public-release-package.md](docs/public-release-package.md)
+- [docs/release-checklist.md](docs/release-checklist.md)
+- [docs/client-compatibility-matrix.md](docs/client-compatibility-matrix.md)
+- [docs/codex.md](docs/codex.md)
+- [SUPPORT.md](SUPPORT.md)
+- [SECURITY.md](SECURITY.md)
+- [CONTRIBUTING.md](CONTRIBUTING.md)
+- [CODE_OF_CONDUCT.md](CODE_OF_CONDUCT.md)
 
 ---
 
@@ -578,7 +609,7 @@ The distinction isn't just architectural. It's causal: standard tools retrieve s
 - `ollama` — local LLM inference via Ollama (`pip install 'mnemos-memory[ollama]'`)
 - `openai` — OpenAI or any OpenAI-compatible API (`pip install 'mnemos-memory[openai]'`)
 - `qdrant` — Qdrant vector database backend (`pip install 'mnemos-memory[qdrant]'`)
-- `mcp` — MCP server for Claude Code, Cursor, Windsurf (`pip install 'mnemos-memory[mcp]'`)
+- `mcp` — MCP server for Claude Code, Claude Desktop, generic MCP hosts, and documented Codex setup (`pip install 'mnemos-memory[mcp]'`)
 - `neo4j` — Neo4j (planned) graph backend for SpreadingActivation at scale (`pip install 'mnemos-memory[neo4j]'`)
 
 **Install everything:**
@@ -614,15 +645,17 @@ mnemos-benchmark --stores memory --retrievers baseline,engine --dataset-pack cla
 Gate output fields live under `gates.production_replacement.*`.
 Use `--baseline-scope-aware` if you want baseline retrieval to apply scope filters in scoped-memory datasets.
 
-## Production Checklist
+## Release Checklist
 
-Use [docs/production-readiness-checklist.md](docs/production-readiness-checklist.md) before advertising a deployment as production-ready.
+Use [docs/release-checklist.md](docs/release-checklist.md) before tagging a release candidate or making category-defining claims.
+
+For public launch framing, approved claims, and feedback routing, use [docs/public-release-package.md](docs/public-release-package.md).
 
 ---
 
 ## Contributing
 
-Contributions are welcome. The codebase follows a clean module boundary — each of the five memory modules lives in `mnemos/modules/` and implements the same `MemoryModule` interface.
+Contributions are welcome. The codebase follows a clean module boundary, and the release bar is intentionally strict around scope isolation, persistence, and MCP behavior.
 
 ```bash
 git clone https://github.com/anthony-maio/mnemos
@@ -637,7 +670,7 @@ pytest
 - Proceduralization quality improvements in `SleepDaemon`
 - Benchmarks comparing retrieval quality against standard RAG baselines
 
-Please open an issue before starting large changes. Keep PRs focused — one feature or fix per PR.
+Before large changes, open the relevant issue template and read [CONTRIBUTING.md](CONTRIBUTING.md), [SUPPORT.md](SUPPORT.md), and [docs/release-checklist.md](docs/release-checklist.md). Keep PRs focused: one feature, fix, or doc change per PR.
 
 ---
 

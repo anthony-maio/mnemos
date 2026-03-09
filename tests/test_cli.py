@@ -283,6 +283,13 @@ def test_build_antigravity_policy_mentions_required_tools() -> None:
     assert "mnemos_consolidate" in policy
 
 
+def test_build_antigravity_policy_codex_mentions_agents() -> None:
+    policy = _build_antigravity_policy("codex")
+    assert "AGENTS.md" in policy
+    assert "mnemos_retrieve" in policy
+    assert "mnemos_consolidate" in policy
+
+
 @pytest.mark.asyncio
 async def test_cli_antigravity_writes_policy(tmp_path: Path, capsys: Any) -> None:
     output_path = tmp_path / "mnemos-antigravity.txt"

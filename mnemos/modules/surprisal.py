@@ -31,7 +31,7 @@ from typing import Any
 
 from ..config import SurprisalConfig
 from ..types import Interaction, MemoryChunk, ProcessResult
-from ..utils.embeddings import EmbeddingProvider, cosine_distance
+from ..utils.embeddings import EmbeddingProvider, cosine_distance, embed_text_async
 from ..utils.llm import LLMProvider
 from ..utils.storage import MemoryStore
 
@@ -129,8 +129,8 @@ class SurprisalGate:
             return 0.5
 
         # Step 2: Embed both prediction and actual input
-        prediction_embedding = self._embedder.embed(prediction)
-        actual_embedding = self._embedder.embed(interaction.content)
+        prediction_embedding = await embed_text_async(self._embedder, prediction)
+        actual_embedding = await embed_text_async(self._embedder, interaction.content)
 
         # Step 3: Cosine distance = semantic divergence = surprisal score
         return cosine_distance(prediction_embedding, actual_embedding)
@@ -199,7 +199,7 @@ class SurprisalGate:
 
         # High surprisal: encode as a memory chunk
         salience = self._salience_from_surprisal(surprisal)
-        embedding = self._embedder.embed(interaction.content)
+        embedding = await embed_text_async(self._embedder, interaction.content)
 
         chunk = MemoryChunk(
             content=interaction.content,

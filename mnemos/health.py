@@ -5,6 +5,7 @@ mnemos/health.py — Readiness checks for CLI/MCP production profiles.
 from __future__ import annotations
 
 import importlib.util
+import json
 import os
 import sqlite3
 from datetime import datetime, timezone
@@ -65,6 +66,38 @@ def _sqlite_chunk_count(db_path: Path) -> int | None:
             if not table_exists:
                 return 0
             return int(conn.execute("SELECT COUNT(*) FROM memory_chunks").fetchone()[0])
+        finally:
+            conn.close()
+    except Exception:
+        return None
+
+
+def _sqlite_legacy_unscoped_chunk_count(db_path: Path) -> int | None:
+    if not db_path.exists():
+        return 0
+    try:
+        conn = sqlite3.connect(str(db_path))
+        try:
+            cursor = conn.execute(
+                "SELECT COUNT(*) FROM sqlite_master WHERE type='table' AND name='memory_chunks'"
+            )
+            table_exists = int(cursor.fetchone()[0]) > 0
+            if not table_exists:
+                return 0
+
+            count = 0
+            for (metadata_json,) in conn.execute("SELECT metadata FROM memory_chunks"):
+                if metadata_json in (None, ""):
+                    count += 1
+                    continue
+                try:
+                    metadata = json.loads(metadata_json)
+                except Exception:
+                    count += 1
+                    continue
+                if not isinstance(metadata, dict) or "scope" not in metadata:
+                    count += 1
+            return count
         finally:
             conn.close()
     except Exception:
@@ -167,6 +200,7 @@ def run_health_checks(
         else _safe_float(observed_latency_p95_ms_text, default=0.0)
     )
     sqlite_chunk_count: int | None = None
+    legacy_unscoped_chunks: int | None = None
 
     if store_type == "memory":
         add_check(
@@ -193,7 +227,9 @@ def run_health_checks(
                 "warn",
                 f"SQLite parent directory does not exist yet: {parent}",
             )
-        sqlite_chunk_count = _sqlite_chunk_count(Path(sqlite_path).expanduser().resolve())
+        sqlite_db_path = Path(sqlite_path).expanduser().resolve()
+        sqlite_chunk_count = _sqlite_chunk_count(sqlite_db_path)
+        legacy_unscoped_chunks = _sqlite_legacy_unscoped_chunk_count(sqlite_db_path)
     elif store_type == "qdrant":
         if _module_available("qdrant_client"):
             add_check("dependency.qdrant_client", "pass", "qdrant-client dependency available.")
@@ -319,6 +355,25 @@ def run_health_checks(
     )
 
     if store_type == "sqlite":
+        if legacy_unscoped_chunks is None:
+            add_check(
+                "scope.isolation",
+                "warn",
+                "Unable to inspect SQLite store for legacy unscoped chunks.",
+            )
+        elif legacy_unscoped_chunks > 0:
+            add_check(
+                "scope.isolation",
+                "warn",
+                f"Found {legacy_unscoped_chunks} legacy unscoped chunks. Scope isolation is not fully ready.",
+            )
+        else:
+            add_check(
+                "scope.isolation",
+                "pass",
+                "All SQLite chunks include scope metadata for v1 isolation.",
+            )
+
         if size_threshold_exceeded or latency_threshold_exceeded:
             add_check(
                 "store.sqlite.scale_signal",
@@ -364,6 +419,10 @@ def run_health_checks(
         recommendations.append(
             "Set MNEMOS_EMBEDDING_PROVIDER=openclaw/openai/ollama for production retrieval quality."
         )
+    if legacy_unscoped_chunks is not None and legacy_unscoped_chunks > 0:
+        recommendations.append(
+            "Legacy unscoped chunks are still readable as global memory, but v1 scope isolation is degraded until you purge or rebuild them."
+        )
 
     return {
         "timestamp": datetime.now(timezone.utc).isoformat(),
@@ -379,6 +438,10 @@ def run_health_checks(
             "observed_latency_p95_ms": observed_latency_p95_ms,
             "latency_p95_threshold_ms": latency_p95_threshold_ms,
             "threshold_exceeded": bool(size_threshold_exceeded or latency_threshold_exceeded),
+        },
+        "scope_isolation": {
+            "legacy_unscoped_chunks": legacy_unscoped_chunks,
+            "ready": not bool(legacy_unscoped_chunks),
         },
         "summary": summary,
         "checks": checks,
