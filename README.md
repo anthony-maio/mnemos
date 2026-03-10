@@ -93,6 +93,29 @@ mnemos implements these mechanisms as composable Python modules. They can be use
 
 ## Five Architectures
 
+```
+                    ┌─────────────────────────────────────────────────────┐
+                    │                  SpreadingActivation                │
+                    │                                                     │
+                    │    "Docker bug"                                     │
+                    │         │                                           │
+                    │         ▼  energy = 1.0                             │
+                    │   ┌───────────┐          ┌──────────────┐           │
+                    │   │  Docker   │──0.80──▶│   Ubuntu     │           │
+                    │   │ networking│          │  22.04 cfg   │           │
+                    │   └───────────┘          └──────┬───────┘           │
+                    │                                 │ 0.64              │
+                    │   ┌───────────┐          ┌──────▼───────┐           │
+                    │   │  old nginx│◀──0.51──│ nginx proxy  │           │
+                    │   │  config   │          │    setup     │           │
+                    │   └───────────┘          └──────────────┘           │
+                    │                                                     │
+                    │   Energy decays 20% per hop. Nodes above 0.3       │
+                    │   threshold are returned — surfacing associative    │
+                    │   context that vector search alone would miss.      │
+                    └─────────────────────────────────────────────────────┘
+```
+
 ### 1. `SurprisalGate` — Predictive Coding Memory Gate
 
 > *Inspired by Friston's Active Inference / Predictive Processing: the brain encodes only prediction errors, not the expected.*
@@ -235,6 +258,8 @@ sa = SpreadingActivation(
 
 Zero external dependencies are required for experimentation. The default configuration uses `MockLLMProvider` and `SimpleEmbeddingProvider`, which are appropriate for demos and tests, not production retrieval quality.
 
+### Python API
+
 ```python
 import asyncio
 from mnemos import MnemosEngine, Interaction
@@ -251,6 +276,16 @@ async def main():
         print(m.content)
 
 asyncio.run(main())
+```
+
+### CLI
+
+```bash
+mnemos-cli store "I use Python for ML."
+mnemos-cli store "I deploy on AWS SageMaker."
+mnemos-cli retrieve "cloud infrastructure" --top-k 3
+mnemos-cli consolidate
+mnemos-cli stats
 ```
 
 **With Ollama (recommended for local production use):**
@@ -737,7 +772,7 @@ If you use mnemos in research, please cite:
   author       = {Maio, Anthony},
   title        = {mnemos: Biomimetic Memory Architectures for Large Language Models},
   year         = {2026},
-  version      = {0.1.0},
+  version      = {0.2.0},
   url          = {https://github.com/anthony-maio/mnemos},
   note         = {Implements surprisal-triggered encoding, memory reconsolidation,
                   affective routing, hippocampal-neocortical consolidation, and
