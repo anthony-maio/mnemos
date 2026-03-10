@@ -420,3 +420,15 @@ def test_qdrant_store_touch_updates_payload_without_upsert(fake_qdrant: None) ->
     store.close()
     assert store._client.set_payload_calls
     assert store._client.set_payload_calls[-1]["wait"] is False
+
+
+def test_qdrant_store_touch_rejects_missing_chunk_with_explicit_access_count(
+    fake_qdrant: None,
+) -> None:
+    store = QdrantStore(path=":memory:", collection_name="mnemos_test_touch_missing")
+
+    touched_at = datetime(2026, 3, 8, 12, 0, tzinfo=timezone.utc)
+    assert store.touch("missing", access_count=2, updated_at=touched_at) is False
+
+    store.close()
+    assert store._client.set_payload_calls == []

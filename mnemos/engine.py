@@ -456,13 +456,13 @@ class MnemosEngine:
         allowed_scopes: tuple[str, ...] | list[str] | None = None,
     ) -> list[MemoryChunk]:
         """
-        Retrieve memories through the full contextual retrieval pipeline.
+        Retrieve memories through the contextual retrieval pipeline.
 
         Pipeline:
-        1. Classify current affective state from query text
-        2. SpreadingActivation: find associatively-connected context
-        3. AffectiveRouter: re-rank all candidates with emotional weighting
-        4. MutableRAG: flag retrieved chunks as labile for reconsolidation
+        1. Embed the query and gather scoped semantic candidates
+        2. Optionally expand with SpreadingActivation when returning multiple results
+        3. Optionally re-rank with AffectiveRouter when returning multiple results
+        4. Flag retrieved chunks as labile and persist access metadata
 
         Args:
             query: The query string to search for.
@@ -471,7 +471,7 @@ class MnemosEngine:
                            after retrieval (default True, runs in background).
 
         Returns:
-            Top-k MemoryChunks ranked by affective blended score.
+            Top-k MemoryChunks ranked by the active retrieval pipeline.
         """
         start = time.perf_counter()
         normalized_current_scope = _normalize_scope(current_scope)
@@ -600,11 +600,7 @@ class MnemosEngine:
         for chunk in final_chunks:
             touched_at = datetime.now(timezone.utc)
             next_access_count = chunk.access_count + 1
-            if self._store.touch(
-                chunk.id,
-                access_count=next_access_count,
-                updated_at=touched_at,
-            ):
+            if self._store.touch(chunk.id, updated_at=touched_at):
                 if chunk.access_count < next_access_count:
                     chunk.access_count = next_access_count
                 chunk.updated_at = touched_at

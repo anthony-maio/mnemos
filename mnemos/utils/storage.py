@@ -573,6 +573,7 @@ class QdrantStore(MemoryStore):
         self._lock = threading.RLock()
         self._retry_policy = RetryPolicy()
         self._pending_touches: dict[str, tuple[int, datetime]] = {}
+        self._known_access_counts: dict[str, int] = {}
 
         try:
             from qdrant_client import QdrantClient, models
@@ -714,10 +715,12 @@ class QdrantStore(MemoryStore):
     def _apply_pending_touch(self, chunk: MemoryChunk) -> MemoryChunk:
         pending = self._pending_touches.get(chunk.id)
         if pending is None:
+            self._known_access_counts[chunk.id] = chunk.access_count
             return chunk
         access_count, updated_at = pending
         chunk.access_count = access_count
         chunk.updated_at = updated_at
+        self._known_access_counts[chunk.id] = access_count
         return chunk
 
     def _flush_pending_touches(self) -> None:
@@ -932,6 +935,7 @@ class QdrantStore(MemoryStore):
     def store(self, chunk: MemoryChunk) -> None:
         """Insert or replace a chunk by ID."""
         self._pending_touches.pop(chunk.id, None)
+        self._known_access_counts[chunk.id] = chunk.access_count
         vector = chunk.embedding
         if vector is None:
             if self._vector_size is None:
@@ -1050,16 +1054,29 @@ class QdrantStore(MemoryStore):
     ) -> bool:
         """Record access metadata and defer payload flush off the hot retrieval path."""
         touched_at = updated_at or datetime.now(timezone.utc)
-        if access_count is None:
+        with self._lock:
+            pending = self._pending_touches.get(chunk_id)
+            base_access_count: int | None
+            if pending is not None:
+                base_access_count = pending[0]
+            else:
+                base_access_count = self._known_access_counts.get(chunk_id)
+
+        if base_access_count is None:
+            if not self._collection_exists():
+                return False
             existing = self.get(chunk_id)
             if existing is None:
                 return False
-            next_access_count = existing.access_count + 1
-        else:
-            next_access_count = access_count
+            base_access_count = existing.access_count
+
+        next_access_count = base_access_count + 1 if access_count is None else access_count
+        should_flush = False
         with self._lock:
             self._pending_touches[chunk_id] = (next_access_count, touched_at)
-        if len(self._pending_touches) >= 128:
+            self._known_access_counts[chunk_id] = next_access_count
+            should_flush = len(self._pending_touches) >= 128
+        if should_flush:
             self._flush_pending_touches()
         return True
 
@@ -1069,6 +1086,8 @@ class QdrantStore(MemoryStore):
             return False
 
         self._pending_touches.pop(chunk_id, None)
+        self._pending_touches.pop(chunk_id, None)
+        self._known_access_counts.pop(chunk_id, None)
         selector = self._models.PointIdsList(points=[chunk_id])
         with self._lock:
             self._call_client(

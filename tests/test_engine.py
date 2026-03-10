@@ -742,6 +742,57 @@ class TestEngineRetrievePersistence:
         assert len(results) == 1
 
     @pytest.mark.asyncio
+    async def test_retrieve_uses_backend_managed_touch_increment(self) -> None:
+        """retrieve() should let the store apply its own increment semantics."""
+
+        class RecordingStore(InMemoryStore):
+            def __init__(self) -> None:
+                super().__init__()
+                self.touch_access_count_args: list[int | None] = []
+
+            def touch(
+                self,
+                chunk_id: str,
+                *,
+                access_count: int | None = None,
+                updated_at: datetime | None = None,
+            ) -> bool:
+                self.touch_access_count_args.append(access_count)
+                return super().touch(
+                    chunk_id,
+                    access_count=access_count,
+                    updated_at=updated_at,
+                )
+
+        store = RecordingStore()
+        engine = MnemosEngine(
+            config=MnemosConfig(
+                surprisal=SurprisalConfig(threshold=0.0, min_content_length=0),
+            ),
+            llm=MockLLMProvider(),
+            embedder=SimpleEmbeddingProvider(dim=64),
+            store=store,
+        )
+
+        await engine.process(
+            make_interaction("Use uv for Python tooling"),
+            scope="project",
+            scope_id="repo-alpha",
+        )
+
+        results = await engine.retrieve(
+            "python tooling",
+            top_k=1,
+            reconsolidate=False,
+            current_scope="project",
+            scope_id="repo-alpha",
+            allowed_scopes=("project",),
+        )
+
+        assert len(results) == 1
+        assert store.touch_access_count_args == [None]
+
+    @pytest.mark.asyncio
     async def test_retrieve_top_one_skips_spreading_activation(self) -> None:
         """top_k=1 should stay on the direct semantic path without graph expansion."""
         store = InMemoryStore()
