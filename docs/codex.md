@@ -25,16 +25,17 @@ $env:MNEMOS_SQLITE_PATH=".mnemos/memory.db"
 
 ## 2. Register the MCP server for Codex
 
-Use [mcp-configs/codex.json](mcp-configs/codex.json) as the starting point. The important part is that Codex can launch `mnemos-mcp` over MCP stdio.
+Use [mcp-configs/codex.json](mcp-configs/codex.json) as the starting point. The checked-in config is runnable from a source checkout with `python -m mnemos.mcp_server`; if you are using an installed package instead, `mnemos-mcp` is also valid.
 
 ```json
 {
   "mcpServers": {
     "mnemos": {
-      "command": "mnemos-mcp",
-      "args": [],
+      "command": "python",
+      "args": ["-m", "mnemos.mcp_server"],
       "env": {
         "MNEMOS_LLM_PROVIDER": "openclaw",
+        "MNEMOS_EMBEDDING_PROVIDER": "openclaw",
         "MNEMOS_STORE_TYPE": "sqlite",
         "MNEMOS_SQLITE_PATH": ".mnemos/memory.db"
       }
@@ -45,13 +46,15 @@ Use [mcp-configs/codex.json](mcp-configs/codex.json) as the starting point. The 
 
 ## 3. Add an `AGENTS.md` memory policy
 
+This repo now ships a ready-to-use example at [AGENTS.md](../AGENTS.md).
+
 Generate a Codex-specific policy block:
 
 ```bash
 mnemos-cli antigravity codex
 ```
 
-Add the generated policy to your repo-level `AGENTS.md`. The minimum workflow is:
+Add the generated policy to your repo-level `AGENTS.md` if you want to customize it. The minimum workflow is:
 
 1. Start each task with `mnemos_retrieve`.
 2. Use `current_scope=project` and `scope_id` equal to the repo name.

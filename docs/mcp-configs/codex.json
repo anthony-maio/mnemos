@@ -1,10 +1,11 @@
 {
   "mcpServers": {
     "mnemos": {
-      "command": "mnemos-mcp",
-      "args": [],
+      "command": "python",
+      "args": ["-m", "mnemos.mcp_server"],
       "env": {
         "MNEMOS_LLM_PROVIDER": "openclaw",
+        "MNEMOS_EMBEDDING_PROVIDER": "openclaw",
         "MNEMOS_STORE_TYPE": "sqlite",
         "MNEMOS_SQLITE_PATH": ".mnemos/memory.db"
       }

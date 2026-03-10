@@ -173,9 +173,14 @@ def test_tier2_codex_config_and_guide_validate() -> None:
         (ROOT / "docs" / "mcp-configs" / "codex.json").read_text(encoding="utf-8")
     )
     codex_guide = (ROOT / "docs" / "codex.md").read_text(encoding="utf-8")
+    agents_guide = (ROOT / "AGENTS.md").read_text(encoding="utf-8")
 
     codex_server = codex_config["mcpServers"]["mnemos"]
 
-    assert codex_server["command"] == "mnemos-mcp"
+    assert codex_server["command"] == "python"
+    assert codex_server["args"] == ["-m", "mnemos.mcp_server"]
     assert "AGENTS.md" in codex_guide
     assert "mnemos-cli antigravity codex" in codex_guide
+    assert "mnemos_retrieve" in agents_guide
+    assert "mnemos_store" in agents_guide
+    assert "mnemos_consolidate" in agents_guide
