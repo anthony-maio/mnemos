@@ -8,6 +8,12 @@ for fully offline execution.
 
 import asyncio
 from datetime import datetime, timedelta, timezone
+from pathlib import Path
+
+try:
+    import tomllib
+except ModuleNotFoundError:  # pragma: no cover - Python < 3.11 fallback
+    import tomli as tomllib
 
 import pytest
 
@@ -920,8 +926,13 @@ class TestPackageExports:
         """__version__ should be importable from mnemos."""
         import mnemos
 
+        pyproject = Path(__file__).resolve().parents[1] / "pyproject.toml"
+        expected_version = tomllib.loads(pyproject.read_text(encoding="utf-8"))["project"][
+            "version"
+        ]
+
         assert hasattr(mnemos, "__version__")
-        assert mnemos.__version__ == "0.1.0"
+        assert mnemos.__version__ == expected_version
 
     def test_all_main_classes_exported(self):
         """All main classes should be importable from mnemos directly."""
