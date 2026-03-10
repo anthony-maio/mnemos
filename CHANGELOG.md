@@ -4,6 +4,8 @@
 
 ## 0.2.0 — 2026-03-10
 
+Public beta release.
+
 ### Changed
 - scoped consolidation now preserves `scope` and `scope_id`, so project and workspace memories do not bleed during sleep consolidation
 - retrieval now persists access touches and keeps remote embedding providers off the async event loop

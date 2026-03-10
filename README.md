@@ -37,9 +37,9 @@ This is not a hosted memory platform, team memory system, or remote sync product
 
 ---
 
-## Technical Preview
+## Public Beta
 
-Mnemos is currently in technical preview while onboarding hardens. The core engine is ready for real usage, but the new control plane is the intended path for setup and host integration:
+Mnemos is now in broad public beta. The core engine and onboarding control plane are ready for real coding-agent usage, and the intended setup path is:
 
 1. `pip install "mnemos-memory[mcp]"`
 2. `mnemos ui`
@@ -49,7 +49,7 @@ Mnemos is currently in technical preview while onboarding hardens. The core engi
 
 If you are coming from an env-var or hand-edited MCP config setup, use the UI's **Import Existing Setup** action first.
 
-Manual env-var setup is still supported for advanced users, but it is no longer the primary onboarding path.
+Manual env-var setup is still supported for advanced users, but it is no longer the primary onboarding path. This beta is meant for real users and real workflows, but it is still a beta: use it, stress it, and report where setup, retrieval quality, or host behavior breaks down.
 
 ---
 
