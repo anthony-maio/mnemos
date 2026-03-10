@@ -1,6 +1,20 @@
-# mnemos (μνῆμος)
+<p align="center">
+  <img src="docs/assets/readme-hero.svg" alt="Mnemos - reliable scoped memory for coding agents" width="100%">
+</p>
 
-**Reliable scoped memory for coding agents, built with biomimetic retrieval and consolidation.**
+<h1 align="center">mnemos</h1>
+
+<p align="center">
+  <strong>Local-first memory for coding agents that keeps project, workspace, and global context separate.</strong><br />
+  Mnemos plugs into Claude Code and other MCP hosts, rewrites stale facts instead of appending forever, and compacts raw agent history into durable memory.
+</p>
+
+<p align="center">
+  <a href="#quick-start"><strong>Quick start</strong></a> ·
+  <a href="#mcp-integration"><strong>MCP setup</strong></a> ·
+  <a href="docs/codex.md"><strong>Codex</strong></a> ·
+  <a href="https://mnemos.making-minds.ai"><strong>Website</strong></a>
+</p>
 
 [![PyPI version](https://img.shields.io/pypi/v/mnemos-memory.svg)](https://pypi.org/project/mnemos-memory/)
 [![Python 3.10+](https://img.shields.io/badge/python-3.10+-blue.svg)](https://www.python.org/downloads/)

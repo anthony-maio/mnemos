@@ -15,6 +15,7 @@ README_PATH = ROOT / "README.md"
 MCP_INTEGRATION_PATH = ROOT / "docs" / "MCP_INTEGRATION.md"
 MCP_CONTRACT_PATH = ROOT / "docs" / "mcp-transport-contract.md"
 ARCHITECTURE_PATH = ROOT / "ARCHITECTURE.md"
+README_HERO_PATH = ROOT / "docs" / "assets" / "readme-hero.svg"
 REQUIRED_OSS_DOCS = [
     ROOT / "CONTRIBUTING.md",
     ROOT / "SECURITY.md",
@@ -154,3 +155,9 @@ def test_backend_status_labels_are_explicit() -> None:
 def test_required_oss_docs_exist() -> None:
     missing = [path.name for path in REQUIRED_OSS_DOCS if not path.exists()]
     assert missing == [], f"Add the standard OSS trust docs before release: {missing}"
+
+
+def test_readme_has_checked_in_hero_asset() -> None:
+    readme = README_PATH.read_text(encoding="utf-8")
+    assert README_HERO_PATH.exists(), "Add a checked-in README hero asset under docs/assets/."
+    assert "docs/assets/readme-hero.svg" in readme
