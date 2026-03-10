@@ -15,6 +15,12 @@ README_PATH = ROOT / "README.md"
 MCP_INTEGRATION_PATH = ROOT / "docs" / "MCP_INTEGRATION.md"
 MCP_CONTRACT_PATH = ROOT / "docs" / "mcp-transport-contract.md"
 ARCHITECTURE_PATH = ROOT / "ARCHITECTURE.md"
+REQUIRED_OSS_DOCS = [
+    ROOT / "CONTRIBUTING.md",
+    ROOT / "SECURITY.md",
+    ROOT / "CODE_OF_CONDUCT.md",
+    ROOT / "SUPPORT.md",
+]
 
 MNEMOS_ENV_RE = re.compile(r"\bMNEMOS_[A-Z0-9_]+\b")
 MNEMOS_RESOURCE_RE = re.compile(r"\bmnemos://[a-z0-9_-]+\b", re.IGNORECASE)
@@ -143,3 +149,8 @@ def test_backend_status_labels_are_explicit() -> None:
     assert "QdrantStore" in architecture
     assert re.search(r"Neo4j`?\s+\(planned\)", readme) is not None
     assert re.search(r"Neo4j`?\s+\(planned\)", architecture) is not None
+
+
+def test_required_oss_docs_exist() -> None:
+    missing = [path.name for path in REQUIRED_OSS_DOCS if not path.exists()]
+    assert missing == [], f"Add the standard OSS trust docs before release: {missing}"

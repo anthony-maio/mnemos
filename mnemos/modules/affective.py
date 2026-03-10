@@ -40,7 +40,7 @@ from typing import Any
 
 from ..config import AffectiveConfig
 from ..types import CognitiveState, Interaction, MemoryChunk
-from ..utils.embeddings import EmbeddingProvider, cosine_similarity
+from ..utils.embeddings import EmbeddingProvider, cosine_similarity, embed_text_async
 from ..utils.llm import LLMProvider
 from ..utils.storage import MemoryStore
 
@@ -227,6 +227,8 @@ class AffectiveRouter:
         top_k: int = 5,
         candidate_k: int | None = None,
         filter_fn: Callable[[MemoryChunk], bool] | None = None,
+        query_embedding: list[float] | None = None,
+        candidates: list[MemoryChunk] | None = None,
     ) -> list[MemoryChunk]:
         """
         Retrieve and re-rank chunks using affective state scoring.
@@ -248,6 +250,8 @@ class AffectiveRouter:
             candidate_k: Size of candidate pool before re-ranking.
                          Defaults to max(top_k * 3, 20) for good coverage.
             filter_fn: Optional predicate to filter candidate chunks by metadata.
+            query_embedding: Optional precomputed query embedding to reuse.
+            candidates: Optional pre-fetched candidate pool to rerank in memory.
 
         Returns:
             Top-k MemoryChunks sorted by affective blended score.
@@ -255,11 +259,17 @@ class AffectiveRouter:
         self._total_retrieved += 1
 
         # Embed the query
-        query_embedding = self._embedder.embed(query)
+        if query_embedding is None:
+            query_embedding = await embed_text_async(self._embedder, query)
 
-        # Fetch a larger candidate pool for re-ranking
-        ck = candidate_k or max(top_k * 3, 20)
-        candidates = store.retrieve(query_embedding, top_k=ck, filter_fn=filter_fn)
+        if candidates is None:
+            # Fetch a larger candidate pool for re-ranking
+            ck = candidate_k or max(top_k * 3, 20)
+            candidates = store.retrieve(query_embedding, top_k=ck, filter_fn=filter_fn)
+        elif filter_fn is not None:
+            candidates = [chunk for chunk in candidates if filter_fn(chunk)]
+            if candidate_k is not None:
+                candidates = candidates[:candidate_k]
 
         if not candidates:
             return []

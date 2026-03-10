@@ -38,15 +38,34 @@ from __future__ import annotations
 import asyncio
 import re
 import time
+from collections import defaultdict
 from datetime import datetime, timezone
 from typing import Any
 
 from ..config import SleepConfig
 from ..memory_safety import MemoryWriteFirewall
 from ..types import ConsolidationResult, Interaction, MemoryChunk
-from ..utils.embeddings import EmbeddingProvider
+from ..utils.embeddings import EmbeddingProvider, embed_text_async
 from ..utils.llm import LLMProvider
 from ..utils.storage import MemoryStore
+
+_VALID_SCOPES = ("project", "workspace", "global")
+_DEFAULT_SCOPE_ID = "default"
+
+
+def _scope_partition_key(interaction: Interaction) -> tuple[str, str | None]:
+    scope_raw = interaction.metadata.get("scope")
+    scope = str(scope_raw).strip().lower() if isinstance(scope_raw, str) else "global"
+    if scope not in _VALID_SCOPES:
+        scope = "global"
+
+    if scope == "global":
+        return scope, None
+
+    scope_id_raw = interaction.metadata.get("scope_id")
+    if isinstance(scope_id_raw, str) and scope_id_raw.strip():
+        return scope, scope_id_raw.strip()
+    return scope, _DEFAULT_SCOPE_ID
 
 
 class SleepDaemon:
@@ -71,9 +90,8 @@ class SleepDaemon:
         self._store = store
         self._config = config or SleepConfig()
         self._write_firewall = write_firewall
-        # Episodic buffer: fast, in-memory list of raw interactions
-        # Analogous to hippocampal short-term episodic storage
-        self._episodic_buffer: list[Interaction] = []
+        # Episodic buffer partitioned by scope to prevent cross-project consolidation.
+        self._episodic_buffer: dict[tuple[str, str | None], list[Interaction]] = defaultdict(list)
         # Timestamp of last consolidation
         self._last_consolidation: float = time.time()
         # Stats
@@ -94,11 +112,11 @@ class SleepDaemon:
         Args:
             interaction: The interaction to buffer.
         """
-        self._episodic_buffer.append(interaction)
+        self._episodic_buffer[_scope_partition_key(interaction)].append(interaction)
 
     def get_episode_count(self) -> int:
         """Return the number of interactions currently in the episodic buffer."""
-        return len(self._episodic_buffer)
+        return sum(len(episodes) for episodes in self._episodic_buffer.values())
 
     def should_consolidate(self) -> bool:
         """
@@ -111,15 +129,16 @@ class SleepDaemon:
         Returns:
             True if consolidation should run now.
         """
-        episode_threshold = (
-            len(self._episodic_buffer) >= self._config.min_episodes_before_consolidation
+        episode_threshold = any(
+            len(episodes) >= self._config.min_episodes_before_consolidation
+            for episodes in self._episodic_buffer.values()
         )
         time_threshold = (
             time.time() - self._last_consolidation >= self._config.consolidation_interval_seconds
         )
         return episode_threshold and time_threshold
 
-    def _format_episodes_for_prompt(self) -> str:
+    def _format_episodes_for_prompt(self, episodes: list[Interaction]) -> str:
         """
         Format the episodic buffer as a readable transcript for the LLM.
 
@@ -129,7 +148,6 @@ class SleepDaemon:
         Returns:
             Formatted transcript string.
         """
-        episodes = self._episodic_buffer[-self._config.max_episodes_per_consolidation :]
         lines = []
         for i, ep in enumerate(episodes, 1):
             ts = ep.timestamp.strftime("%H:%M:%S")
@@ -162,7 +180,7 @@ class SleepDaemon:
         """
         start_time = time.time()
 
-        if not self._episodic_buffer:
+        if self.get_episode_count() == 0:
             return ConsolidationResult(
                 facts_extracted=[],
                 chunks_pruned=0,
@@ -170,76 +188,85 @@ class SleepDaemon:
                 duration_seconds=0.0,
             )
 
-        episodes_text = self._format_episodes_for_prompt()
-        episodes_to_prune = len(self._episodic_buffer)
+        all_facts: list[str] = []
+        tools_generated: list[str] = []
+        total_pruned = 0
+        successful_partitions = 0
 
-        # Step 1: Extract permanent facts via LLM
-        consolidation_prompt = self._config.consolidation_prompt.format(episodes=episodes_text)
-        try:
-            raw_facts = await llm_provider.predict(consolidation_prompt)
-        except Exception as e:
-            # Consolidation failure: don't prune episodes
-            return ConsolidationResult(
-                facts_extracted=[],
-                chunks_pruned=0,
-                tools_generated=[],
-                duration_seconds=time.time() - start_time,
-            )
-
-        # Step 2: Parse extracted facts (numbered list format)
-        facts = self._parse_fact_list(raw_facts)
-
-        # Step 3: Create semantic MemoryChunks from extracted facts
-        semantic_chunks: list[MemoryChunk] = []
-        for fact in facts:
-            if not fact.strip():
+        for partition_key, buffered_episodes in list(self._episodic_buffer.items()):
+            if not buffered_episodes:
                 continue
-            safe_fact = fact
-            redactions: list[str] = []
-            if self._write_firewall is not None:
-                safety = self._write_firewall.apply(fact)
-                if not safety.allowed:
-                    continue
-                safe_fact = safety.content
-                redactions = [match.label for match in safety.matches]
 
-            embedding = embedder.embed(safe_fact)
-            chunk = MemoryChunk(
-                content=safe_fact,
-                embedding=embedding,
-                metadata={
+            episodes = buffered_episodes[-self._config.max_episodes_per_consolidation :]
+            episodes_text = self._format_episodes_for_prompt(episodes)
+            episodes_to_prune = len(episodes)
+            scope, scope_id = partition_key
+
+            consolidation_prompt = self._config.consolidation_prompt.format(episodes=episodes_text)
+            try:
+                raw_facts = await llm_provider.predict(consolidation_prompt)
+            except Exception:
+                continue
+
+            facts = self._parse_fact_list(raw_facts)
+            semantic_chunks: list[MemoryChunk] = []
+            for fact in facts:
+                if not fact.strip():
+                    continue
+                safe_fact = fact
+                redactions: list[str] = []
+                if self._write_firewall is not None:
+                    safety = self._write_firewall.apply(fact)
+                    if not safety.allowed:
+                        continue
+                    safe_fact = safety.content
+                    redactions = [match.label for match in safety.matches]
+
+                metadata: dict[str, Any] = {
                     "source": "sleep_consolidation",
                     "consolidation_time": datetime.now(timezone.utc).isoformat(),
                     "episode_count": episodes_to_prune,
                     "safety_redactions": redactions,
-                },
-                salience=0.7,  # Consolidated facts have high salience
-            )
-            semantic_chunks.append(chunk)
+                    "scope": scope,
+                }
+                if scope_id is not None:
+                    metadata["scope_id"] = scope_id
 
-        # Step 4: Store in long-term memory
-        for chunk in semantic_chunks:
-            self._store.store(chunk)
+                semantic_chunks.append(
+                    MemoryChunk(
+                        content=safe_fact,
+                        embedding=await embed_text_async(embedder, safe_fact),
+                        metadata=metadata,
+                        salience=0.7,  # Consolidated facts have high salience
+                    )
+                )
 
-        # Step 5: Clear episodic buffer (active forgetting of raw episodes)
-        self._episodic_buffer.clear()
+            for chunk in semantic_chunks:
+                self._store.store(chunk)
 
-        # Step 6: Optional proceduralization
-        tools_generated: list[str] = []
-        if self._config.enable_proceduralization and facts:
-            tool_code = await self.proceduralize(llm_provider, episodes_text)
-            if tool_code:
-                tools_generated.append(tool_code)
+            if episodes_to_prune >= len(buffered_episodes):
+                self._episodic_buffer.pop(partition_key, None)
+            else:
+                self._episodic_buffer[partition_key] = buffered_episodes[:-episodes_to_prune]
 
-        # Update state
-        self._last_consolidation = time.time()
-        self._total_consolidations += 1
-        self._total_facts_extracted += len(facts)
-        self._total_chunks_pruned += episodes_to_prune
+            all_facts.extend(facts)
+            total_pruned += episodes_to_prune
+            successful_partitions += 1
+
+            if self._config.enable_proceduralization and facts:
+                tool_code = await self.proceduralize(llm_provider, episodes_text)
+                if tool_code:
+                    tools_generated.append(tool_code)
+
+        if successful_partitions > 0:
+            self._last_consolidation = time.time()
+            self._total_consolidations += successful_partitions
+            self._total_facts_extracted += len(all_facts)
+            self._total_chunks_pruned += total_pruned
 
         return ConsolidationResult(
-            facts_extracted=facts,
-            chunks_pruned=episodes_to_prune,
+            facts_extracted=all_facts,
+            chunks_pruned=total_pruned,
             tools_generated=tools_generated,
             duration_seconds=time.time() - start_time,
         )
@@ -299,9 +326,14 @@ class SleepDaemon:
             Python code string if a pattern was found, None otherwise.
         """
         if episodes_text is None:
-            if not self._episodic_buffer:
+            all_episodes = [
+                episode for partition in self._episodic_buffer.values() for episode in partition
+            ]
+            if not all_episodes:
                 return None
-            episodes_text = self._format_episodes_for_prompt()
+            all_episodes.sort(key=lambda episode: episode.timestamp)
+            recent_episodes = all_episodes[-self._config.max_episodes_per_consolidation :]
+            episodes_text = self._format_episodes_for_prompt(recent_episodes)
 
         prompt = self._config.proceduralization_prompt.format(episodes=episodes_text)
 
@@ -366,9 +398,16 @@ class SleepDaemon:
     def get_stats(self) -> dict[str, Any]:
         """Return statistics about the SleepDaemon module."""
         time_since_last = time.time() - self._last_consolidation
+        ready_partitions = sum(
+            1
+            for episodes in self._episodic_buffer.values()
+            if len(episodes) >= self._config.min_episodes_before_consolidation
+        )
         return {
             "module": "SleepDaemon",
-            "episodic_buffer_size": len(self._episodic_buffer),
+            "episodic_buffer_size": self.get_episode_count(),
+            "episodic_buffer_partitions": len(self._episodic_buffer),
+            "ready_partitions": ready_partitions,
             "total_consolidations": self._total_consolidations,
             "total_facts_extracted": self._total_facts_extracted,
             "total_chunks_pruned": self._total_chunks_pruned,

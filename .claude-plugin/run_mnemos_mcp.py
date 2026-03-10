@@ -12,10 +12,10 @@ This wrapper makes the plugin self-contained for Claude Code installs:
 from __future__ import annotations
 
 import os
-import subprocess
 import sys
 import venv
 from pathlib import Path
+import subprocess
 
 
 def _plugin_root() -> Path:
@@ -87,6 +87,15 @@ def _ensure_runtime(venv_dir: Path, plugin_root: Path, env: dict[str, str]) -> P
     return venv_python
 
 
+def _resolve_runtime_python(plugin_root: Path, env: dict[str, str]) -> str:
+    explicit_python = env.get("MNEMOS_PLUGIN_PYTHON", "").strip()
+    if explicit_python:
+        return explicit_python
+
+    venv_dir = plugin_root / ".claude-plugin" / ".venv"
+    return str(_ensure_runtime(venv_dir, plugin_root, env))
+
+
 def _apply_default_env(plugin_root: Path) -> dict[str, str]:
     env = dict(os.environ)
     plugin_data_dir = plugin_root / ".claude-plugin"
@@ -118,16 +127,15 @@ def _apply_default_env(plugin_root: Path) -> dict[str, str]:
 
 def main() -> int:
     plugin_root = _plugin_root()
-    venv_dir = plugin_root / ".claude-plugin" / ".venv"
     env = _apply_default_env(plugin_root)
-    venv_python = _ensure_runtime(venv_dir, plugin_root, env)
+    runtime_python = _resolve_runtime_python(plugin_root, env)
 
-    os.execve(
-        str(venv_python),
-        [str(venv_python), "-m", "mnemos.mcp_server"],
-        env,
+    completed = subprocess.run(
+        [runtime_python, "-m", "mnemos.mcp_server"],
+        env=env,
+        check=False,
     )
-    return 1
+    return int(completed.returncode)
 
 
 if __name__ == "__main__":

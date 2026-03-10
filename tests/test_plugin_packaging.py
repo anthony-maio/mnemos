@@ -65,3 +65,15 @@ def test_plugin_wrapper_required_extras_include_qdrant(monkeypatch) -> None:
 
     assert "mcp" in extras
     assert "qdrant" in extras
+
+
+def test_plugin_wrapper_uses_explicit_runtime_python(monkeypatch) -> None:
+    wrapper = _load_plugin_wrapper()
+    plugin_root = Path(".").resolve()
+    expected_python = plugin_root / ".venv-test" / "python.exe"
+
+    monkeypatch.setenv("MNEMOS_PLUGIN_PYTHON", str(expected_python))
+
+    runtime_python = wrapper._resolve_runtime_python(plugin_root, dict(os.environ))
+
+    assert runtime_python == str(expected_python)

@@ -111,3 +111,33 @@ def test_health_recommends_qdrant_when_sqlite_chunk_threshold_exceeded(
 
     assert report["upgrade_signals"]["threshold_exceeded"] is True
     assert any("Upgrade path:" in rec for rec in report["recommendations"])
+
+
+def test_health_reports_legacy_unscoped_sqlite_chunks(
+    monkeypatch: pytest.MonkeyPatch, tmp_path: Path
+) -> None:
+    db_path = tmp_path / "mnemos_legacy_scope.db"
+    store = SQLiteStore(db_path=str(db_path))
+    try:
+        store.store(
+            MemoryChunk(
+                content="legacy chunk without scope",
+                embedding=[0.1, 0.2, 0.3],
+                metadata={},
+            )
+        )
+    finally:
+        store.close()
+
+    monkeypatch.setenv("MNEMOS_STORE_TYPE", "sqlite")
+    monkeypatch.setenv("MNEMOS_SQLITE_PATH", str(db_path))
+    monkeypatch.setenv("MNEMOS_LLM_PROVIDER", "openclaw")
+    monkeypatch.setenv("MNEMOS_OPENCLAW_API_KEY", "test-key")
+    monkeypatch.setenv("MNEMOS_EMBEDDING_PROVIDER", "openclaw")
+
+    report = run_health_checks()
+
+    assert report["status"] == "degraded"
+    assert report["scope_isolation"]["legacy_unscoped_chunks"] == 1
+    assert report["scope_isolation"]["ready"] is False
+    assert any("legacy unscoped" in rec.lower() for rec in report["recommendations"])

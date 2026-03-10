@@ -219,7 +219,7 @@ class MnemosContext:
 def create_mcp_server() -> Any:
     """Create and configure the MCP server with all mnemos tools and resources."""
     try:
-        from mcp.server.fastmcp import FastMCP
+        from mcp.server.fastmcp import Context, FastMCP
     except ImportError:
         raise ImportError(
             "MCP server requires the 'mcp' package. Install it with:\n"
@@ -227,6 +227,7 @@ def create_mcp_server() -> Any:
             "  # or\n"
             "  pip install mcp"
         )
+    globals()["Context"] = Context
 
     @asynccontextmanager
     async def mnemos_lifespan(server: FastMCP) -> AsyncIterator[MnemosContext]:
@@ -267,6 +268,14 @@ def create_mcp_server() -> Any:
         lifespan=mnemos_lifespan,
     )
 
+    def _engine_from_ctx(
+        ctx: Context[Any, Any, Any] | None,
+        tool_name: str,
+    ) -> MnemosEngine:
+        if ctx is None:
+            raise RuntimeError(f"MCP context was not injected for {tool_name}.")
+        return cast(MnemosEngine, ctx.request_context.lifespan_context.engine)
+
     # -----------------------------------------------------------------------
     # TOOLS
     # -----------------------------------------------------------------------
@@ -278,7 +287,7 @@ def create_mcp_server() -> Any:
         metadata: str = "{}",
         scope: str = "project",
         scope_id: str = "default",
-        ctx: Any = None,
+        ctx: Context[Any, Any, Any] | None = None,
     ) -> str:
         """Store a memory through the full biomimetic pipeline.
 
@@ -295,7 +304,7 @@ def create_mcp_server() -> Any:
         Returns:
             JSON with storage decision, salience score, and reason.
         """
-        engine: MnemosEngine = ctx.request_context.lifespan_context.engine
+        engine = _engine_from_ctx(ctx, "mnemos_store")
 
         try:
             meta = json.loads(metadata)
@@ -330,7 +339,7 @@ def create_mcp_server() -> Any:
         current_scope: str = "project",
         scope_id: str = "default",
         allowed_scopes: str = "project,workspace,global",
-        ctx: Any = None,
+        ctx: Context[Any, Any, Any] | None = None,
     ) -> str:
         """Retrieve memories using the full contextual retrieval pipeline.
 
@@ -348,7 +357,7 @@ def create_mcp_server() -> Any:
         Returns:
             JSON array of matching memories with content, salience, and metadata.
         """
-        engine: MnemosEngine = ctx.request_context.lifespan_context.engine
+        engine = _engine_from_ctx(ctx, "mnemos_retrieve")
         parsed_allowed_scopes = _parse_allowed_scopes(allowed_scopes)
         chunks = await engine.retrieve(
             query,
@@ -387,7 +396,7 @@ def create_mcp_server() -> Any:
         return json.dumps(results, indent=2)
 
     @mcp.tool()
-    async def mnemos_consolidate(ctx: Any = None) -> str:
+    async def mnemos_consolidate(ctx: Context[Any, Any, Any] | None = None) -> str:
         """Trigger sleep consolidation — compress episodic memories into semantic facts.
 
         Mimics the hippocampal-neocortical transfer during sleep:
@@ -399,7 +408,7 @@ def create_mcp_server() -> Any:
         Returns:
             JSON with facts extracted, episodes pruned, and any tools generated.
         """
-        engine: MnemosEngine = ctx.request_context.lifespan_context.engine
+        engine = _engine_from_ctx(ctx, "mnemos_consolidate")
         result = await engine.consolidate()
 
         return json.dumps(
@@ -413,7 +422,10 @@ def create_mcp_server() -> Any:
         )
 
     @mcp.tool()
-    async def mnemos_forget(chunk_id: str, ctx: Any = None) -> str:
+    async def mnemos_forget(
+        chunk_id: str,
+        ctx: Context[Any, Any, Any] | None = None,
+    ) -> str:
         """Delete a specific memory by its ID.
 
         Permanent removal — the memory cannot be recovered.
@@ -424,7 +436,7 @@ def create_mcp_server() -> Any:
         Returns:
             JSON confirming deletion or reporting the memory was not found.
         """
-        engine: MnemosEngine = ctx.request_context.lifespan_context.engine
+        engine = _engine_from_ctx(ctx, "mnemos_forget")
         deleted = engine.store.delete(chunk_id)
 
         # Also remove from spreading activation graph if present
@@ -441,13 +453,13 @@ def create_mcp_server() -> Any:
         )
 
     @mcp.tool()
-    async def mnemos_stats(ctx: Any = None) -> str:
+    async def mnemos_stats(ctx: Context[Any, Any, Any] | None = None) -> str:
         """Get system-wide statistics from all memory modules.
 
         Returns stats for: engine, surprisal gate, mutable RAG,
         affective router, sleep daemon, spreading activation, and store.
         """
-        engine: MnemosEngine = ctx.request_context.lifespan_context.engine
+        engine = _engine_from_ctx(ctx, "mnemos_stats")
         stats = engine.get_stats()
 
         # Make sure everything is JSON-serializable
@@ -463,22 +475,26 @@ def create_mcp_server() -> Any:
         return json.dumps(_clean(stats), indent=2)
 
     @mcp.tool()
-    async def mnemos_health(ctx: Any = None) -> str:
+    async def mnemos_health(ctx: Context[Any, Any, Any] | None = None) -> str:
         """Run profile readiness diagnostics and dependency checks.
 
         Returns:
             JSON health report including status, checks, and recommendations.
         """
-        engine: MnemosEngine = ctx.request_context.lifespan_context.engine
+        engine = _engine_from_ctx(ctx, "mnemos_health")
         report = run_health_checks(default_store_type="memory")
+        store_stats = engine.store.get_stats()
         report["runtime"] = {
-            "store_backend": engine.store.get_stats().get("backend", "unknown"),
-            "total_chunks": engine.store.get_stats().get("total_chunks", 0),
+            "store_backend": store_stats.get("backend", "unknown"),
+            "total_chunks": store_stats.get("total_chunks", 0),
         }
         return json.dumps(report, indent=2)
 
     @mcp.tool()
-    async def mnemos_inspect(chunk_id: str, ctx: Any = None) -> str:
+    async def mnemos_inspect(
+        chunk_id: str,
+        ctx: Context[Any, Any, Any] | None = None,
+    ) -> str:
         """Inspect a specific memory chunk by its ID.
 
         Returns the full memory record including content, metadata,
@@ -487,7 +503,7 @@ def create_mcp_server() -> Any:
         Args:
             chunk_id: The UUID of the memory to inspect.
         """
-        engine: MnemosEngine = ctx.request_context.lifespan_context.engine
+        engine = _engine_from_ctx(ctx, "mnemos_inspect")
 
         chunk = engine.store.get(chunk_id)
         if chunk:
@@ -520,7 +536,7 @@ def create_mcp_server() -> Any:
     async def mnemos_list(
         limit: int = 20,
         sort_by: str = "created_at",
-        ctx: Any = None,
+        ctx: Context[Any, Any, Any] | None = None,
     ) -> str:
         """List all stored memories.
 
@@ -531,7 +547,7 @@ def create_mcp_server() -> Any:
         Returns:
             JSON array of memory summaries.
         """
-        engine: MnemosEngine = ctx.request_context.lifespan_context.engine
+        engine = _engine_from_ctx(ctx, "mnemos_list")
         all_chunks = engine.store.get_all()
 
         # Sort

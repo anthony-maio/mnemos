@@ -1,0 +1,65 @@
+name: Feature request
+description: Propose a focused improvement to Mnemos
+title: "[Feature]: "
+labels:
+  - enhancement
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Feature requests are most useful when they describe a user problem, not just a desired implementation.
+  - type: textarea
+    id: problem
+    attributes:
+      label: Problem to solve
+      description: What workflow or user pain does this address?
+      placeholder: I need ...
+    validations:
+      required: true
+  - type: textarea
+    id: workflow
+    attributes:
+      label: Current workflow
+      description: How are you handling this today?
+      placeholder: Today I ...
+    validations:
+      required: true
+  - type: textarea
+    id: proposal
+    attributes:
+      label: Proposed change
+      description: Describe the smallest useful improvement
+      placeholder: Mnemos should ...
+    validations:
+      required: true
+  - type: dropdown
+    id: surface
+    attributes:
+      label: Product surface
+      options:
+        - Core memory engine
+        - Storage backend
+        - MCP server
+        - CLI
+        - Docs or examples
+        - Host compatibility
+        - Other
+    validations:
+      required: true
+  - type: textarea
+    id: success
+    attributes:
+      label: Success criteria
+      description: How would we know this is done and useful?
+      placeholder: This is successful when ...
+    validations:
+      required: true
+  - type: checkboxes
+    id: checklist
+    attributes:
+      label: Checklist
+      options:
+        - label: This request stays within the local-first v1 scope or clearly labels itself as future work
+          required: true
+        - label: I checked existing docs and issues first
+          required: true

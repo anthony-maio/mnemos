@@ -36,7 +36,7 @@ from .utils.llm import MockLLMProvider, LLMProvider
 PROFILE_CHOICES = ("starter", "local-performance", "scale")
 VALID_SCOPES = ("project", "workspace", "global")
 AUDIT_SCOPES = ("all", "project", "workspace", "global")
-ANTIGRAVITY_HOST_CHOICES = ("cursor", "generic-mcp")
+ANTIGRAVITY_HOST_CHOICES = ("cursor", "generic-mcp", "codex")
 MemoryAction = Literal["allow", "redact", "block"]
 CaptureMode = Literal["all", "manual_only", "hooks_only"]
 
@@ -143,10 +143,21 @@ def _build_antigravity_policy(host: str) -> str:
     if host not in ANTIGRAVITY_HOST_CHOICES:
         raise ValueError(f"Unsupported host: {host!r}")
 
-    host_label = "Cursor" if host == "cursor" else "Generic MCP host"
+    if host == "cursor":
+        host_label = "Cursor"
+    elif host == "codex":
+        host_label = "Codex"
+    else:
+        host_label = "Generic MCP host"
+    codex_note = (
+        "0. Add this workflow to your repo-level `AGENTS.md` so Codex uses Mnemos via MCP consistently.\n"
+        if host == "codex"
+        else ""
+    )
     return (
         f"Mnemos Antigravity Autopilot Policy ({host_label})\n\n"
         "Always use Mnemos memory tools automatically.\n"
+        f"{codex_note}"
         "1. At the start of every new user task, call `mnemos_retrieve` using a focused query.\n"
         "2. Use `current_scope=project` and set `scope_id` to the current repository/workspace name.\n"
         "3. Include `allowed_scopes=project,global` unless the user asks for broader scope.\n"

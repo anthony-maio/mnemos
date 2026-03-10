@@ -1,0 +1,91 @@
+name: Bug report
+description: Report a reproducible Mnemos bug
+title: "[Bug]: "
+labels:
+  - bug
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for filing a bug. Please include enough detail for us to reproduce it quickly.
+
+        Before submitting, gather:
+        - `mnemos-cli doctor`
+        - `mnemos-cli stats`
+        - host / MCP client details
+        - store, LLM, and embedding provider details
+  - type: dropdown
+    id: area
+    attributes:
+      label: Area
+      options:
+        - Memory correctness / scope isolation
+        - Retrieval quality or latency
+        - MCP host integration
+        - Startup or persistence
+        - Safety / redaction
+        - Other
+    validations:
+      required: true
+  - type: input
+    id: host
+    attributes:
+      label: Host or client
+      description: Claude Code, Claude Desktop, Codex, generic MCP host, CLI, or Python API
+      placeholder: Claude Code
+    validations:
+      required: true
+  - type: input
+    id: environment
+    attributes:
+      label: Store and provider setup
+      description: Include store backend, LLM provider, and embedding provider
+      placeholder: sqlite + ollama + ollama
+    validations:
+      required: true
+  - type: input
+    id: scope
+    attributes:
+      label: Scope details
+      description: Include `scope`, `scope_id`, and `allowed_scopes` if relevant
+      placeholder: project / repo-alpha / project,global
+  - type: textarea
+    id: repro
+    attributes:
+      label: Reproduction steps
+      placeholder: |
+        1. Run ...
+        2. Store ...
+        3. Retrieve ...
+        4. Observe ...
+    validations:
+      required: true
+  - type: textarea
+    id: expected
+    attributes:
+      label: Expected result
+    validations:
+      required: true
+  - type: textarea
+    id: actual
+    attributes:
+      label: Actual result
+    validations:
+      required: true
+  - type: textarea
+    id: diagnostics
+    attributes:
+      label: Diagnostics
+      description: Paste the relevant output from `mnemos-cli doctor`, `mnemos-cli stats`, logs, or traceback
+      render: shell
+    validations:
+      required: true
+  - type: checkboxes
+    id: checklist
+    attributes:
+      label: Checklist
+      options:
+        - label: I removed secrets, credentials, and tokens from this report
+          required: true
+        - label: I checked the compatibility matrix and release package docs first
+          required: true

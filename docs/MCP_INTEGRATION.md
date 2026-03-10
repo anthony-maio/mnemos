@@ -2,7 +2,7 @@
 
 ## What is MCP?
 
-The Model Context Protocol (MCP) lets agentic platforms — Claude Code, Cursor, Windsurf, Cline, and others — discover and call external tools in a standardized way. Mnemos ships an MCP server that exposes its full biomimetic memory system as tools any agent can use.
+The Model Context Protocol (MCP) lets agentic platforms — Claude Code, Codex, Cursor, Windsurf, Cline, and others — discover and call external tools in a standardized way. Mnemos ships an MCP server that exposes its full memory system as tools any agent can use.
 
 ## Quick Setup
 
@@ -38,10 +38,11 @@ Add to `~/.claude/claude_desktop_config.json` (or your project's `.claude` confi
 {
   "mcpServers": {
     "mnemos": {
-      "command": "mnemos-mcp",
+      "command": "python",
+      "args": ["-m", "mnemos.mcp_server"],
       "env": {
-        "MNEMOS_LLM_PROVIDER": "ollama",
-        "MNEMOS_LLM_MODEL": "llama3",
+        "MNEMOS_LLM_PROVIDER": "mock",
+        "MNEMOS_EMBEDDING_PROVIDER": "simple",
         "MNEMOS_STORE_TYPE": "sqlite",
         "MNEMOS_SQLITE_PATH": "~/.mnemos/memory.db"
       }
@@ -49,6 +50,9 @@ Add to `~/.claude/claude_desktop_config.json` (or your project's `.claude` confi
   }
 }
 ```
+
+This is the minimal tested Tier 1 config. For real usage, swap `mock` and `simple`
+to `ollama`, `openai`, or `openclaw` once credentials or a local model endpoint are ready.
 
 #### Cursor
 
@@ -68,6 +72,14 @@ Add to `.cursor/mcp.json` in your project root:
   }
 }
 ```
+
+#### Codex
+
+Codex uses the same MCP server surface, with repo-level guidance in `AGENTS.md` to make memory use consistent.
+
+- Starting config: [mcp-configs/codex.json](mcp-configs/codex.json)
+- Setup guide: [codex.md](codex.md)
+- Generate the policy text with `mnemos-cli antigravity codex`
 
 #### Windsurf
 
@@ -98,7 +110,7 @@ mnemos-mcp
 python -m mnemos.mcp_server
 ```
 
-### 3. Done — your agent now has biomimetic memory
+### 3. Done — your agent now has scoped agent memory
 
 The agent will automatically discover these tools:
 
@@ -116,6 +128,7 @@ The agent will automatically discover these tools:
 Compatibility + contract docs:
 - [mcp-transport-contract.md](mcp-transport-contract.md)
 - [client-compatibility-matrix.md](client-compatibility-matrix.md)
+- [codex.md](codex.md)
 - [cursor-antigravity.md](cursor-antigravity.md)
 - [profiles/starter-sqlite.md](profiles/starter-sqlite.md)
 - [profiles/local-performance-embedded-qdrant.md](profiles/local-performance-embedded-qdrant.md)

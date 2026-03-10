@@ -16,10 +16,12 @@ For production, swap in a proper sentence-transformer or embedding API provider.
 
 from __future__ import annotations
 
+import asyncio
 import hashlib
 import logging
 import math
 import re
+import threading
 from abc import ABC, abstractmethod
 from collections import Counter
 from typing import Any
@@ -80,6 +82,17 @@ class EmbeddingProvider(ABC):
         """Return the dimensionality of embeddings produced by this provider."""
         ...
 
+    @property
+    def should_offload_in_async(self) -> bool:
+        """
+        Whether async helpers should offload this provider to a worker thread.
+
+        Network-backed or blocking providers should keep the default True.
+        Cheap in-process providers can override to run inline and avoid
+        thread-hop overhead on hot paths.
+        """
+        return True
+
 
 def _tokenize(text: str) -> list[str]:
     """
@@ -129,6 +142,7 @@ class SimpleEmbeddingProvider(EmbeddingProvider):
         self._dim = dim
         self._seed = seed
         self._rng = np.random.default_rng(seed)
+        self._lock = threading.RLock()
         # IDF tracking: word → document frequency count
         self._doc_freq: Counter[str] = Counter()
         self._doc_count: int = 0
@@ -138,6 +152,11 @@ class SimpleEmbeddingProvider(EmbeddingProvider):
     @property
     def dim(self) -> int:
         return self._dim
+
+    @property
+    def should_offload_in_async(self) -> bool:
+        """Simple local embeddings are cheap enough to run inline."""
+        return False
 
     def _get_word_vector(self, word: str) -> np.ndarray:
         """
@@ -206,10 +225,11 @@ class SimpleEmbeddingProvider(EmbeddingProvider):
         Returns:
             L2-normalized embedding as list of floats.
         """
-        tokens = _tokenize(text)
-        self._update_idf(tokens)
-        vec = self._compute_tfidf_vector(tokens)
-        return [float(x) for x in vec.tolist()]
+        with self._lock:
+            tokens = _tokenize(text)
+            self._update_idf(tokens)
+            vec = self._compute_tfidf_vector(tokens)
+            return [float(x) for x in vec.tolist()]
 
     def embed_batch(self, texts: list[str]) -> list[list[float]]:
         """
@@ -224,15 +244,17 @@ class SimpleEmbeddingProvider(EmbeddingProvider):
         Returns:
             List of L2-normalized embedding vectors.
         """
-        # First pass: update IDF for the whole batch
-        tokenized = [_tokenize(t) for t in texts]
-        for tokens in tokenized:
-            self._update_idf(tokens)
+        with self._lock:
+            # First pass: update IDF for the whole batch
+            tokenized = [_tokenize(t) for t in texts]
+            for tokens in tokenized:
+                self._update_idf(tokens)
 
-        # Second pass: compute embeddings with updated IDF
-        return [
-            [float(x) for x in self._compute_tfidf_vector(tokens).tolist()] for tokens in tokenized
-        ]
+            # Second pass: compute embeddings with updated IDF
+            return [
+                [float(x) for x in self._compute_tfidf_vector(tokens).tolist()]
+                for tokens in tokenized
+            ]
 
 
 class OllamaEmbeddingProvider(EmbeddingProvider):
@@ -484,6 +506,20 @@ def _http_post_json(
     if not isinstance(raw, dict):
         raise ValueError("Embedding API response must be a JSON object.")
     return raw
+
+
+async def embed_text_async(embedder: EmbeddingProvider, text: str) -> list[float]:
+    """Offload synchronous embedding providers from the async event loop."""
+    if not embedder.should_offload_in_async:
+        return embedder.embed(text)
+    return await asyncio.to_thread(embedder.embed, text)
+
+
+async def embed_batch_async(embedder: EmbeddingProvider, texts: list[str]) -> list[list[float]]:
+    """Offload synchronous batch embedding work from the async event loop."""
+    if not embedder.should_offload_in_async:
+        return embedder.embed_batch(texts)
+    return await asyncio.to_thread(embedder.embed_batch, texts)
 
 
 def cosine_similarity(a: list[float], b: list[float]) -> float:
