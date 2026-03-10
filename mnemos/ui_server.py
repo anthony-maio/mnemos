@@ -75,6 +75,15 @@ class MnemosUiRouter:
             return self._json_response(self.service.health_report())
         if method == "GET" and path == "/api/memory":
             return self._json_response(self.service.get_memory_snapshot())
+        if method == "GET" and path.startswith("/api/memory/"):
+            chunk_id = path.removeprefix("/api/memory/")
+            try:
+                return self._json_response(self.service.get_memory_detail(chunk_id))
+            except KeyError:
+                return self._json_response(
+                    {"error": f"Memory chunk {chunk_id!r} not found."},
+                    status=HTTPStatus.NOT_FOUND,
+                )
 
         payload: dict[str, Any] = {}
         if body:

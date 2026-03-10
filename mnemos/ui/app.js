@@ -1,6 +1,7 @@
 const state = {
   settings: null,
   view: null,
+  selectedMemoryId: null,
 };
 
 async function api(path, options = {}) {
@@ -129,20 +130,96 @@ async function refreshHealth() {
 async function refreshMemory() {
   const snapshot = await api("/api/memory");
   document.getElementById("memory-summary").textContent = `${snapshot.count} chunks currently visible from the configured store.`;
+  if (!state.selectedMemoryId && snapshot.recent.length > 0) {
+    state.selectedMemoryId = snapshot.recent[0].id;
+  }
   document.getElementById("memory-list").innerHTML = snapshot.recent
     .map(
       (item) => `
-      <article class="memory-item">
+      <button class="memory-item ${state.selectedMemoryId === item.id ? "selected" : ""}" data-memory-id="${item.id}">
         <div class="memory-meta">
           <span>${item.scope}${item.scope_id ? `:${item.scope_id}` : ""}</span>
           <span>accessed ${item.access_count}x</span>
           <span>${item.updated_at}</span>
         </div>
         <p>${item.content}</p>
-      </article>
+      </button>
     `,
     )
     .join("");
+  document.querySelectorAll(".memory-item").forEach((element) => {
+    element.addEventListener("click", async () => {
+      state.selectedMemoryId = element.dataset.memoryId;
+      await refreshMemory();
+    });
+  });
+  if (state.selectedMemoryId) {
+    await refreshMemoryDetail(state.selectedMemoryId);
+  } else {
+    document.getElementById("memory-detail").textContent = "No stored memories yet.";
+  }
+}
+
+async function refreshMemoryDetail(chunkId) {
+  try {
+    const payload = await api(`/api/memory/${encodeURIComponent(chunkId)}`);
+    const history = (payload.history || [])
+      .map(
+        (entry) => `
+        <li>
+          <span>v${entry.from_version} -> v${entry.to_version}</span>
+          <span>${entry.changed_at}</span>
+          <p>${entry.previous_content}</p>
+          <p>${entry.new_content}</p>
+        </li>
+      `,
+      )
+      .join("");
+    const neighbors = (payload.graph?.neighbors || [])
+      .map(
+        (neighbor) => `
+        <li>
+          <span>${neighbor.id}</span>
+          <span>${neighbor.weight}</span>
+        </li>
+      `,
+      )
+      .join("");
+    document.getElementById("memory-detail").innerHTML = `
+      <div class="detail-section">
+        <p class="section-kicker">Scope</p>
+        <h3>${payload.scope}${payload.scope_id ? `:${payload.scope_id}` : ""}</h3>
+        <p>${payload.content}</p>
+      </div>
+      <div class="detail-section">
+        <p class="section-kicker">Provenance</p>
+        <ul class="detail-list">
+          <li><strong>Stored by:</strong> ${payload.provenance?.stored_by || "unknown"}</li>
+          <li><strong>Channel:</strong> ${payload.provenance?.ingest_channel || "n/a"}</li>
+          <li><strong>Reason:</strong> ${payload.provenance?.encoding_reason || "n/a"}</li>
+          <li><strong>Version:</strong> ${payload.version}</li>
+          <li><strong>Access count:</strong> ${payload.access_count}</li>
+        </ul>
+      </div>
+      <div class="detail-section">
+        <p class="section-kicker">Revision History</p>
+        <ul class="detail-list">${history || "<li>No rewrites yet.</li>"}</ul>
+      </div>
+      <div class="detail-section">
+        <p class="section-kicker">Graph</p>
+        <ul class="detail-list">
+          <li><strong>Neighbors:</strong> ${payload.graph?.neighbor_count || 0}</li>
+        </ul>
+        <ul class="detail-list">${neighbors || "<li>No graph neighbors yet.</li>"}</ul>
+      </div>
+      <div class="detail-section">
+        <p class="section-kicker">Metadata</p>
+        <pre class="console">${JSON.stringify(payload.metadata || {}, null, 2)}</pre>
+      </div>
+    `;
+  } catch (error) {
+    document.getElementById("memory-detail").textContent = error.message;
+  }
 }
 
 async function save(scope) {

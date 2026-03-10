@@ -408,6 +408,8 @@ class MnemosEngine:
             result.chunk.metadata.pop("scope_id", None)
         else:
             result.chunk.metadata["scope_id"] = normalized_scope_id
+        result.chunk.metadata["ingest_channel"] = ingest_channel
+        result.chunk.metadata["encoding_reason"] = result.reason
 
         # Step 2: Affective tagging — classify and attach cognitive state
         state = await self.affective_router.classify_state(scoped_interaction)

@@ -94,6 +94,20 @@ async def _assert_tier1_roundtrip(params: StdioServerParameters) -> None:
             assert store_payload["stored"] is True
             assert store_payload["scope"] == "project"
             assert store_payload["scope_id"] == "repo-alpha"
+            assert store_payload["chunk_id"]
+
+            inspect_result = await session.call_tool(
+                "mnemos_inspect",
+                {
+                    "chunk_id": store_payload["chunk_id"],
+                },
+            )
+            inspect_payload = json.loads(_call_result_text(inspect_result))
+            assert inspect_payload["scope"] == "project"
+            assert inspect_payload["scope_id"] == "repo-alpha"
+            assert inspect_payload["provenance"]["stored_by"] == "surprisal_gate"
+            assert inspect_payload["provenance"]["ingest_channel"] == "manual"
+            assert "graph" in inspect_payload
 
             retrieve_result = await session.call_tool(
                 "mnemos_retrieve",

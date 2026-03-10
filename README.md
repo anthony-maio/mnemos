@@ -65,7 +65,13 @@ What the control plane gives you:
 - canonical config in `mnemos.toml`
 - optional project override in `.mnemos/mnemos.toml`
 - guided host setup for Claude Code, Cursor, and Codex
-- health checks, smoke checks, and a light memory viewer
+- health checks, smoke checks, and a light memory viewer with chunk details
+
+Inspectability entry points:
+
+- `mnemos inspect <chunk-id>` for raw JSON inspection from the CLI
+- `mnemos_inspect` for MCP-native hosts
+- the control plane Memory panel for scope, provenance, revision history, and graph context
 
 For advanced/manual setup, see [docs/MCP_INTEGRATION.md](docs/MCP_INTEGRATION.md).
 

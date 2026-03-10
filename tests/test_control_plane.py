@@ -7,6 +7,8 @@ from __future__ import annotations
 from pathlib import Path
 
 from mnemos.control_plane import ControlPlaneService
+from mnemos.types import MemoryChunk
+from mnemos.utils import SQLiteStore
 
 
 def test_control_plane_saves_global_settings(tmp_path: Path) -> None:
@@ -95,3 +97,44 @@ def test_control_plane_runs_smoke_test_with_mock_profile(tmp_path: Path) -> None
     assert report["steps"]["retrieve"] == "pass"
     assert report["steps"]["consolidate"] == "pass"
     assert report["steps"]["health"] in {"pass", "warn"}
+
+
+def test_control_plane_memory_detail_returns_inspection_payload(tmp_path: Path) -> None:
+    db_path = tmp_path / "memory.db"
+    global_config = tmp_path / "Mnemos" / "mnemos.toml"
+    service = ControlPlaneService(
+        cwd=tmp_path / "repo",
+        home=tmp_path / "home",
+        env={},
+        global_config_path=global_config,
+    )
+    service.save_settings(
+        {
+            "llm": {"provider": "mock"},
+            "embedding": {"provider": "simple", "dim": 64},
+            "storage": {"type": "sqlite", "sqlite_path": str(db_path)},
+        },
+        scope="global",
+    )
+
+    store = SQLiteStore(str(db_path))
+    chunk = MemoryChunk(
+        id="chunk-123",
+        content="Use uv for Python package management.",
+        metadata={
+            "scope": "project",
+            "scope_id": "repo-alpha",
+            "source": "surprisal_gate",
+            "ingest_channel": "manual",
+            "encoding_reason": "High surprisal.",
+        },
+    )
+    store.store(chunk)
+    store.close()
+
+    payload = service.get_memory_detail("chunk-123")
+
+    assert payload["id"] == "chunk-123"
+    assert payload["scope"] == "project"
+    assert payload["provenance"]["stored_by"] == "surprisal_gate"
+    assert payload["history"] == []

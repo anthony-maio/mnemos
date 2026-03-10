@@ -161,3 +161,14 @@ def test_readme_has_checked_in_hero_asset() -> None:
     readme = README_PATH.read_text(encoding="utf-8")
     assert README_HERO_PATH.exists(), "Add a checked-in README hero asset under docs/assets/."
     assert "docs/assets/readme-hero.svg" in readme
+
+
+def test_inspectability_surfaces_are_documented() -> None:
+    readme = README_PATH.read_text(encoding="utf-8")
+    mcp_guide = MCP_INTEGRATION_PATH.read_text(encoding="utf-8")
+    codex_guide = (ROOT / "docs" / "codex.md").read_text(encoding="utf-8")
+
+    assert "mnemos inspect" in readme.lower()
+    assert "revision history" in mcp_guide.lower()
+    assert "mnemos_inspect" in mcp_guide
+    assert "mnemos_inspect" in codex_guide

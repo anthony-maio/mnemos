@@ -19,6 +19,7 @@ from mnemos.cli import (
     _cmd_autostore_hook,
     _cmd_doctor,
     _cmd_export,
+    _cmd_inspect,
     _cmd_list,
     _cmd_purge,
     _cmd_profile,
@@ -26,7 +27,7 @@ from mnemos.cli import (
     _cmd_search,
     _cmd_store,
 )
-from mnemos.types import MemoryChunk, ProcessResult
+from mnemos.types import ActivationNode, MemoryChunk, ProcessResult
 from mnemos.utils import (
     OpenAIEmbeddingProvider,
     OpenAIProvider,
@@ -314,6 +315,50 @@ async def test_cli_retrieve_forwards_scope_args(
     assert engine.scope_id == "alpha"
     assert engine.allowed_scopes == ("project", "global")
     assert '"scope": "project"' in capsys.readouterr().out
+
+
+@pytest.mark.asyncio
+async def test_cli_inspect_outputs_chunk_details(
+    monkeypatch: pytest.MonkeyPatch, capsys: Any
+) -> None:
+    chunk = MemoryChunk(
+        id="chunk-123",
+        content="We use FastAPI for internal APIs.",
+        metadata={
+            "scope": "project",
+            "scope_id": "repo-alpha",
+            "source": "surprisal_gate",
+            "ingest_channel": "manual",
+            "encoding_reason": "High surprisal (0.500 > threshold 0.000). Encoded with salience 0.500.",
+        },
+    )
+
+    class DummyStore:
+        def get(self, chunk_id: str) -> MemoryChunk | None:
+            return chunk if chunk_id == chunk.id else None
+
+    class DummySpreading:
+        def get_node(self, node_id: str) -> ActivationNode | None:
+            if node_id != chunk.id:
+                return None
+            return ActivationNode(
+                id=node_id,
+                content=chunk.content,
+                neighbors={"neighbor-1": 0.91},
+            )
+
+    class DummyEngine:
+        store = DummyStore()
+        spreading_activation = DummySpreading()
+
+    monkeypatch.setattr("mnemos.cli._build_engine", lambda: DummyEngine())
+
+    await _cmd_inspect(Namespace(chunk_id="chunk-123"))
+
+    payload = capsys.readouterr().out
+    assert '"id": "chunk-123"' in payload
+    assert '"stored_by": "surprisal_gate"' in payload
+    assert '"neighbor_count": 1' in payload
 
 
 def test_build_antigravity_policy_mentions_required_tools() -> None:

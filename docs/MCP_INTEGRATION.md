@@ -130,7 +130,7 @@ The agent will automatically discover these tools:
 | `mnemos_forget` | Delete a specific memory |
 | `mnemos_stats` | System-wide statistics from all modules |
 | `mnemos_health` | Profile readiness and dependency diagnostics |
-| `mnemos_inspect` | Full details on a specific memory |
+| `mnemos_inspect` | Full details on a specific memory, including provenance, revision history, and graph context |
 | `mnemos_list` | List all stored memories |
 
 Compatibility + contract docs:
@@ -228,6 +228,24 @@ Once configured, you can say things like:
 ```
 
 The agent's memory now works like a brain: it filters the mundane, tags emotions, updates stale facts on recall, and compresses episodic experience into lasting knowledge.
+
+## Inspectability
+
+Mnemos now exposes one shared inspectability surface across CLI, MCP, and the control plane:
+
+- CLI: `mnemos inspect <chunk-id>`
+- MCP: `mnemos_inspect`
+- Control plane: open the Memory panel and select a chunk
+
+The current inspector shows:
+
+- scope and scope ID
+- provenance such as storage source, ingest channel, and encoding reason
+- revision history for reconsolidated memories
+- graph neighbor count and top neighbors
+- raw metadata for debugging
+
+Rollback is intentionally not part of this first inspectability slice yet.
 
 ---
 

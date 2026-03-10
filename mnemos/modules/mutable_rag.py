@@ -37,6 +37,8 @@ from ..utils.embeddings import EmbeddingProvider, embed_text_async
 from ..utils.llm import LLMProvider
 from ..utils.storage import MemoryStore
 
+_MAX_REVISION_HISTORY = 10
+
 
 class MutableRAG:
     """
@@ -245,9 +247,24 @@ class MutableRAG:
             updated_chunk = chunk.reconsolidate(safe_content)
             # Re-embed the new content
             updated_chunk.embedding = await embed_text_async(self._embedder, safe_content)
-            updated_chunk.metadata["reconsolidated_at"] = datetime.now(timezone.utc).isoformat()
+            reconsolidated_at = datetime.now(timezone.utc).isoformat()
+            updated_chunk.metadata["reconsolidated_at"] = reconsolidated_at
             updated_chunk.metadata["reconsolidation_context"] = new_context[:200]  # Truncate
             updated_chunk.metadata["safety_redactions"] = redactions
+            history = updated_chunk.metadata.get("revision_history", [])
+            if not isinstance(history, list):
+                history = []
+            history.append(
+                {
+                    "from_version": chunk.version,
+                    "to_version": updated_chunk.version,
+                    "previous_content": chunk.content,
+                    "new_content": safe_content,
+                    "context": new_context[:200],
+                    "changed_at": reconsolidated_at,
+                }
+            )
+            updated_chunk.metadata["revision_history"] = history[-_MAX_REVISION_HISTORY:]
 
             # Overwrite in store (same ID, new version)
             self._store.update(chunk.id, updated_chunk)

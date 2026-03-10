@@ -29,6 +29,7 @@ from .config import MemoryGovernanceConfig, MemorySafetyConfig, MnemosConfig, Su
 from .engine import MnemosEngine
 from .health import run_health_checks
 from .hook_autostore import SUPPORTED_HOOK_EVENTS, decide_autostore, parse_hook_payload
+from .inspectability import build_chunk_inspection
 from .observability import configure_logging, log_event
 from .runtime import (
     build_embedder_from_env,
@@ -365,6 +366,15 @@ async def _cmd_stats(args: argparse.Namespace) -> None:
     engine = _build_engine()
     stats = engine.get_stats()
     print(json.dumps(stats, indent=2, default=str))
+
+
+async def _cmd_inspect(args: argparse.Namespace) -> None:
+    engine = _build_engine()
+    payload = build_chunk_inspection(engine, args.chunk_id)
+    if payload is None:
+        print(json.dumps({"error": f"Memory chunk {args.chunk_id!r} not found."}, indent=2))
+        return
+    print(json.dumps(payload, indent=2))
 
 
 async def _cmd_list(args: argparse.Namespace) -> None:
@@ -712,6 +722,9 @@ def main() -> None:
     # stats
     subparsers.add_parser("stats", help="Show system statistics")
 
+    sp_inspect = subparsers.add_parser("inspect", help="Inspect one stored memory chunk")
+    sp_inspect.add_argument("chunk_id", help="Memory chunk ID to inspect")
+
     sp_list = subparsers.add_parser(
         "list", help="List stored memories with optional scope/query filters"
     )
@@ -912,6 +925,8 @@ def main() -> None:
         asyncio.run(_cmd_consolidate(args))
     elif args.command == "stats":
         asyncio.run(_cmd_stats(args))
+    elif args.command == "inspect":
+        asyncio.run(_cmd_inspect(args))
     elif args.command == "list":
         asyncio.run(_cmd_list(args))
     elif args.command == "search":

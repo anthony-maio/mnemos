@@ -11,6 +11,7 @@ from typing import Any, Literal, Mapping
 from .engine import MnemosEngine
 from .health import run_health_checks
 from .hosts import apply_host_integration, preview_host_integration
+from .inspectability import build_chunk_inspection
 from .runtime import (
     build_embedder_from_settings,
     build_llm_from_settings,
@@ -188,6 +189,14 @@ class ControlPlaneService:
     def health_report(self) -> dict[str, Any]:
         return run_health_checks(env=self._config_env(), default_store_type="sqlite")
 
+    def _build_engine(self, settings: AppSettings) -> MnemosEngine:
+        return MnemosEngine(
+            config=build_mnemos_config_from_settings(settings),
+            llm=build_llm_from_settings(settings),
+            embedder=build_embedder_from_settings(settings),
+            store=build_store_from_settings(settings),
+        )
+
     def get_memory_snapshot(self, *, limit: int = 10) -> dict[str, Any]:
         resolved = self._resolved_settings()
         store = build_store_from_settings(resolved.settings)
@@ -213,15 +222,23 @@ class ControlPlaneService:
             if callable(close):
                 close()
 
+    def get_memory_detail(self, chunk_id: str) -> dict[str, Any]:
+        resolved = self._resolved_settings()
+        engine = self._build_engine(resolved.settings)
+        try:
+            payload = build_chunk_inspection(engine, chunk_id)
+            if payload is None:
+                raise KeyError(chunk_id)
+            return payload
+        finally:
+            close = getattr(engine.store, "close", None)
+            if callable(close):
+                close()
+
     def run_smoke_tests(self) -> dict[str, Any]:
         async def _run() -> dict[str, Any]:
             resolved = self._resolved_settings()
-            engine = MnemosEngine(
-                config=build_mnemos_config_from_settings(resolved.settings),
-                llm=build_llm_from_settings(resolved.settings),
-                embedder=build_embedder_from_settings(resolved.settings),
-                store=build_store_from_settings(resolved.settings),
-            )
+            engine = self._build_engine(resolved.settings)
             steps: dict[str, str] = {}
             try:
                 await engine.process(

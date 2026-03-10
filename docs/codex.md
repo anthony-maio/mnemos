@@ -70,6 +70,7 @@ Add the generated policy to your repo-level `AGENTS.md` if you want to customize
 2. Use `current_scope=project` and `scope_id` equal to the repo name.
 3. Store only durable facts with `mnemos_store`.
 4. Finish substantial work with `mnemos_consolidate`.
+5. Use `mnemos_inspect` when you need to verify why a memory exists or how it changed.
 
 Ready-to-copy snippet:
 
@@ -106,3 +107,12 @@ Run at least one real Codex session through:
 4. `mnemos_consolidate`
 
 Until that flow is verified in daily use, Codex remains documented as Tier 2 in [client-compatibility-matrix.md](client-compatibility-matrix.md).
+
+## Inspectability in Codex
+
+If a retrieved memory looks wrong, inspect it before storing more state:
+
+1. call `mnemos_inspect`
+2. verify scope and provenance
+3. review revision history if the fact was reconsolidated
+4. only then decide whether to store a correcting fact or forget the chunk

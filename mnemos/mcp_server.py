@@ -74,6 +74,7 @@ from typing import Any, Literal, cast
 from .config import MemoryGovernanceConfig, MemorySafetyConfig, MnemosConfig, SurprisalConfig
 from .engine import MnemosEngine
 from .health import run_health_checks
+from .inspectability import build_chunk_inspection
 from .observability import configure_logging, log_event
 from .runtime import (
     build_embedder_from_env,
@@ -455,30 +456,9 @@ def create_mcp_server() -> Any:
         """
         engine = _engine_from_ctx(ctx, "mnemos_inspect")
 
-        chunk = engine.store.get(chunk_id)
-        if chunk:
-            return json.dumps(
-                {
-                    "id": chunk.id,
-                    "content": chunk.content,
-                    "salience": round(chunk.salience, 4),
-                    "version": chunk.version,
-                    "access_count": chunk.access_count,
-                    "cognitive_state": (
-                        {
-                            "valence": round(chunk.cognitive_state.valence, 3),
-                            "arousal": round(chunk.cognitive_state.arousal, 3),
-                            "complexity": round(chunk.cognitive_state.complexity, 3),
-                        }
-                        if chunk.cognitive_state
-                        else None
-                    ),
-                    "metadata": chunk.metadata,
-                    "created_at": chunk.created_at.isoformat(),
-                    "updated_at": chunk.updated_at.isoformat(),
-                },
-                indent=2,
-            )
+        payload = build_chunk_inspection(engine, chunk_id)
+        if payload is not None:
+            return json.dumps(payload, indent=2)
 
         return json.dumps({"error": f"Memory chunk {chunk_id!r} not found."})
 
