@@ -1049,12 +1049,14 @@ class QdrantStore(MemoryStore):
         updated_at: datetime | None = None,
     ) -> bool:
         """Record access metadata and defer payload flush off the hot retrieval path."""
-        existing = self.get(chunk_id)
-        if existing is None:
-            return False
-
         touched_at = updated_at or datetime.now(timezone.utc)
-        next_access_count = existing.access_count + 1 if access_count is None else access_count
+        if access_count is None:
+            existing = self.get(chunk_id)
+            if existing is None:
+                return False
+            next_access_count = existing.access_count + 1
+        else:
+            next_access_count = access_count
         with self._lock:
             self._pending_touches[chunk_id] = (next_access_count, touched_at)
         if len(self._pending_touches) >= 128:

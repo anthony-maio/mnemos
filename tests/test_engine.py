@@ -701,6 +701,130 @@ class TestEngineRetrievePersistence:
             if callable(close):
                 close()
 
+    @pytest.mark.asyncio
+    async def test_retrieve_does_not_call_store_stats_on_hot_path(self) -> None:
+        """retrieve() should not compute full store stats just to log backend metadata."""
+        store = InMemoryStore()
+        engine = MnemosEngine(
+            config=MnemosConfig(
+                surprisal=SurprisalConfig(threshold=0.0, min_content_length=0),
+            ),
+            llm=MockLLMProvider(),
+            embedder=SimpleEmbeddingProvider(dim=64),
+            store=store,
+        )
+
+        result = await engine.process(
+            make_interaction("Use uv for Python tooling"),
+            scope="project",
+            scope_id="repo-alpha",
+        )
+        assert result.chunk is not None
+
+        original_get_stats = store.get_stats
+
+        def fail_get_stats() -> dict[str, object]:
+            raise AssertionError("retrieve() hot path should not call store.get_stats()")
+
+        store.get_stats = fail_get_stats  # type: ignore[assignment]
+        try:
+            results = await engine.retrieve(
+                "python tooling",
+                top_k=1,
+                reconsolidate=False,
+                current_scope="project",
+                scope_id="repo-alpha",
+                allowed_scopes=("project",),
+            )
+        finally:
+            store.get_stats = original_get_stats  # type: ignore[assignment]
+
+        assert len(results) == 1
+
+    @pytest.mark.asyncio
+    async def test_retrieve_top_one_skips_spreading_activation(self) -> None:
+        """top_k=1 should stay on the direct semantic path without graph expansion."""
+        store = InMemoryStore()
+        engine = MnemosEngine(
+            config=MnemosConfig(
+                surprisal=SurprisalConfig(threshold=0.0, min_content_length=0),
+            ),
+            llm=MockLLMProvider(),
+            embedder=SimpleEmbeddingProvider(dim=64),
+            store=store,
+        )
+
+        await engine.process(
+            make_interaction("Use uv for Python tooling"),
+            scope="project",
+            scope_id="repo-alpha",
+        )
+
+        original_retrieve = engine.spreading_activation.retrieve
+
+        def fail_retrieve(*args, **kwargs):
+            raise AssertionError("top_k=1 retrieval should not invoke spreading activation")
+
+        engine.spreading_activation.retrieve = fail_retrieve  # type: ignore[assignment]
+        try:
+            results = await engine.retrieve(
+                "python tooling",
+                top_k=1,
+                reconsolidate=False,
+                current_scope="project",
+                scope_id="repo-alpha",
+                allowed_scopes=("project",),
+            )
+        finally:
+            engine.spreading_activation.retrieve = original_retrieve  # type: ignore[assignment]
+
+        assert len(results) == 1
+
+    @pytest.mark.asyncio
+    async def test_retrieve_top_one_skips_affective_reranking(self) -> None:
+        """top_k=1 should not spend time on affective classification or reranking."""
+        store = InMemoryStore()
+        engine = MnemosEngine(
+            config=MnemosConfig(
+                surprisal=SurprisalConfig(threshold=0.0, min_content_length=0),
+            ),
+            llm=MockLLMProvider(),
+            embedder=SimpleEmbeddingProvider(dim=64),
+            store=store,
+        )
+
+        await engine.process(
+            make_interaction("Use uv for Python tooling"),
+            scope="project",
+            scope_id="repo-alpha",
+        )
+
+        original_classify = engine.affective_router.classify_state
+        original_retrieve = engine.affective_router.retrieve
+
+        async def fail_classify(*args, **kwargs):
+            raise AssertionError("top_k=1 retrieval should not classify affective state")
+
+        async def fail_retrieve(*args, **kwargs):
+            raise AssertionError("top_k=1 retrieval should not run affective reranking")
+
+        engine.affective_router.classify_state = fail_classify  # type: ignore[assignment]
+        engine.affective_router.retrieve = fail_retrieve  # type: ignore[assignment]
+        try:
+            results = await engine.retrieve(
+                "python tooling",
+                top_k=1,
+                reconsolidate=False,
+                current_scope="project",
+                scope_id="repo-alpha",
+                allowed_scopes=("project",),
+            )
+        finally:
+            engine.affective_router.classify_state = original_classify  # type: ignore[assignment]
+            engine.affective_router.retrieve = original_retrieve  # type: ignore[assignment]
+
+        assert len(results) == 1
+
 
 class TestEnginePersistence:
     @pytest.mark.asyncio

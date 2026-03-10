@@ -483,15 +483,21 @@ class MnemosEngine:
             allowed_scopes=normalized_allowed_scopes,
         )
 
-        # Step 1: Classify affective state of the query
-        query_interaction = Interaction(role="user", content=query)
-        current_state = await self.affective_router.classify_state(query_interaction)
+        # Step 1: Embed query once for every downstream retrieval stage.
+        query_embedding = await embed_text_async(self._embedder, query)
 
         # Step 2: SpreadingActivation — find associatively connected neighbors
-        query_embedding = await embed_text_async(self._embedder, query)
-        activated_nodes = self.spreading_activation.retrieve(
-            query_embedding,
-            top_k=top_k * 3,  # Get larger pool for re-ranking
+        # Single-result lookups are better served by the direct semantic path.
+        # Associative expansion adds fixed overhead without improving top-1
+        # quality on our scoped coding-agent workloads.
+        use_spreading = top_k > 1 and self.spreading_activation.get_node_count() > 1
+        activated_nodes = (
+            self.spreading_activation.retrieve(
+                query_embedding,
+                top_k=top_k * 3,  # Get larger pool for re-ranking
+            )
+            if use_spreading
+            else []
         )
         candidate_pool_k = max(top_k * 6, 20)
         baseline_chunks = self._store.retrieve(
@@ -508,14 +514,22 @@ class MnemosEngine:
         )
 
         # Step 3: AffectiveRouter — retrieve and re-rank from store
-        affective_chunks = await self.affective_router.retrieve(
-            query=query,
-            current_state=current_state,
-            store=self._store,
-            top_k=top_k * 2,  # Slightly larger pool
-            query_embedding=query_embedding,
-            candidates=baseline_chunks,
-        )
+        # State-dependent reranking is most useful when returning multiple
+        # options. For top-1, the direct semantic/scoped path is both faster
+        # and more deterministic.
+        use_affective = top_k > 1
+        affective_chunks: list[MemoryChunk] = []
+        if use_affective:
+            query_interaction = Interaction(role="user", content=query)
+            current_state = await self.affective_router.classify_state(query_interaction)
+            affective_chunks = await self.affective_router.retrieve(
+                query=query,
+                current_state=current_state,
+                store=self._store,
+                top_k=top_k * 2,  # Slightly larger pool
+                query_embedding=query_embedding,
+                candidates=baseline_chunks,
+            )
 
         # Merge activated nodes: boost chunks that appear in activation graph
         chunk_scores: dict[str, tuple[float, MemoryChunk]] = {}
@@ -586,7 +600,11 @@ class MnemosEngine:
         for chunk in final_chunks:
             touched_at = datetime.now(timezone.utc)
             next_access_count = chunk.access_count + 1
-            if self._store.touch(chunk.id, updated_at=touched_at):
+            if self._store.touch(
+                chunk.id,
+                access_count=next_access_count,
+                updated_at=touched_at,
+            ):
                 if chunk.access_count < next_access_count:
                     chunk.access_count = next_access_count
                 chunk.updated_at = touched_at
@@ -611,7 +629,7 @@ class MnemosEngine:
             scope=normalized_current_scope,
             scope_id=normalized_scope_id,
             allowed_scopes=",".join(normalized_allowed_scopes),
-            store_backend=self._store.get_stats().get("backend", "unknown"),
+            store_backend=type(self._store).__name__,
         )
 
         return final_chunks
