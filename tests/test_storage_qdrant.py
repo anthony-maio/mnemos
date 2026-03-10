@@ -406,6 +406,7 @@ def test_qdrant_store_touch_updates_payload_without_upsert(fake_qdrant: None) ->
 
     touched_at = datetime(2026, 3, 8, 12, 0, tzinfo=timezone.utc)
     assert store.touch("alpha", access_count=2, updated_at=touched_at) is True
+    assert store._client.retrieve_calls == 0
 
     chunk = store.get("alpha")
     assert chunk is not None
