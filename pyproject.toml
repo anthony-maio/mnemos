@@ -32,6 +32,8 @@ dependencies = [
     "numpy>=1.24.0",
     "pydantic>=2.0.0",
     "httpx>=0.24.0",
+    "platformdirs>=4.0.0",
+    "tomli>=2.0.0; python_version < '3.11'",
 ]
 
 [project.optional-dependencies]
@@ -66,6 +68,7 @@ dev = [
 ]
 
 [project.scripts]
+mnemos = "mnemos.cli:main"
 mnemos-mcp = "mnemos.mcp_server:main"
 mnemos-cli = "mnemos.cli:main"
 mnemos-benchmark = "mnemos.benchmark:main"

@@ -22,6 +22,7 @@ import os
 import shlex
 import sys
 from datetime import datetime, timedelta, timezone
+from pathlib import Path
 from typing import Any, Literal, cast
 
 from .config import MemoryGovernanceConfig, MemorySafetyConfig, MnemosConfig, SurprisalConfig
@@ -29,7 +30,12 @@ from .engine import MnemosEngine
 from .health import run_health_checks
 from .hook_autostore import SUPPORTED_HOOK_EVENTS, decide_autostore, parse_hook_payload
 from .observability import configure_logging, log_event
-from .runtime import build_embedder_from_env, build_store_from_env
+from .runtime import (
+    build_embedder_from_env,
+    build_llm_from_env,
+    build_mnemos_config_from_env,
+    build_store_from_env,
+)
 from .types import Interaction
 from .utils.llm import MockLLMProvider, LLMProvider
 
@@ -266,69 +272,19 @@ def _filtered_chunks(
 
 def _build_engine() -> MnemosEngine:
     """Build engine from environment, defaulting to SQLite for persistence."""
-    import os
-
-    provider_name = os.getenv("MNEMOS_LLM_PROVIDER", "mock").lower()
-    llm: LLMProvider
-
-    if provider_name == "ollama":
-        from .utils.llm import OllamaProvider
-
-        llm = OllamaProvider(
-            base_url=os.getenv("MNEMOS_OLLAMA_URL", "http://localhost:11434"),
-            model=os.getenv("MNEMOS_LLM_MODEL", "llama3"),
+    try:
+        llm = build_llm_from_env()
+        config = build_mnemos_config_from_env(default_store_type="sqlite")
+        engine = MnemosEngine(
+            config=config,
+            llm=llm,
+            embedder=build_embedder_from_env(default_provider="simple"),
+            store=build_store_from_env(default_store_type="sqlite"),
         )
-    elif provider_name in ("openai", "openclaw"):
-        from .utils.llm import OpenAIProvider
+    except ValueError as exc:
+        print(f"Error: {exc}", file=sys.stderr)
+        sys.exit(1)
 
-        if provider_name == "openclaw":
-            api_key = os.getenv("MNEMOS_OPENCLAW_API_KEY", "") or os.getenv(
-                "MNEMOS_OPENAI_API_KEY", ""
-            )
-            base_url = os.getenv("MNEMOS_OPENCLAW_URL", "") or os.getenv(
-                "MNEMOS_OPENAI_URL", "https://api.openai.com/v1"
-            )
-            key_error = "Error: MNEMOS_OPENCLAW_API_KEY or MNEMOS_OPENAI_API_KEY required for openclaw provider"
-        else:
-            api_key = os.getenv("MNEMOS_OPENAI_API_KEY", "")
-            base_url = os.getenv("MNEMOS_OPENAI_URL", "https://api.openai.com/v1")
-            key_error = "Error: MNEMOS_OPENAI_API_KEY required for openai provider"
-
-        if not api_key:
-            print(key_error, file=sys.stderr)
-            sys.exit(1)
-
-        llm = OpenAIProvider(
-            api_key=api_key,
-            base_url=base_url,
-            model=os.getenv("MNEMOS_LLM_MODEL", "gpt-4o-mini"),
-        )
-    else:
-        llm = MockLLMProvider()
-
-    threshold = float(os.getenv("MNEMOS_SURPRISAL_THRESHOLD", "0.3"))
-
-    config = MnemosConfig(
-        surprisal=SurprisalConfig(threshold=threshold),
-        safety=MemorySafetyConfig(
-            enabled=_env_bool("MNEMOS_MEMORY_SAFETY_ENABLED", True),
-            secret_action=_memory_action_from_env("MNEMOS_MEMORY_SECRET_ACTION", "block"),
-            pii_action=_memory_action_from_env("MNEMOS_MEMORY_PII_ACTION", "redact"),
-        ),
-        governance=MemoryGovernanceConfig(
-            capture_mode=_capture_mode_from_env("MNEMOS_MEMORY_CAPTURE_MODE", "all"),
-            retention_ttl_days=int(os.getenv("MNEMOS_MEMORY_RETENTION_TTL_DAYS", "0")),
-            max_chunks_per_scope=int(os.getenv("MNEMOS_MEMORY_MAX_CHUNKS_PER_SCOPE", "0")),
-        ),
-        debug=os.getenv("MNEMOS_DEBUG", "").lower() in ("true", "1", "yes"),
-    )
-
-    engine = MnemosEngine(
-        config=config,
-        llm=llm,
-        embedder=build_embedder_from_env(default_provider="simple"),
-        store=build_store_from_env(default_store_type="sqlite"),
-    )
     health = run_health_checks()
     log_event(
         "mnemos.startup",
@@ -683,10 +639,27 @@ async def _cmd_autostore_hook(args: argparse.Namespace) -> None:
     )
 
 
+def _cmd_ui(args: argparse.Namespace) -> None:
+    from .control_plane import ControlPlaneService
+    from .ui_server import run_ui_server
+
+    service = ControlPlaneService(
+        cwd=Path.cwd(),
+        env=os.environ,
+        global_config_path=(args.config_path or None),
+    )
+    run_ui_server(
+        service=service,
+        host=args.host,
+        port=args.port,
+        open_browser=not args.no_browser,
+    )
+
+
 def main() -> None:
     configure_logging()
     parser = argparse.ArgumentParser(
-        prog="mnemos-cli",
+        prog=Path(sys.argv[0]).name,
         description="Mnemos memory system CLI — shell-friendly commands for hooks and automation.",
     )
     subparsers = parser.add_subparsers(dest="command", required=True)
@@ -918,6 +891,15 @@ def main() -> None:
         help="Print decision without storing.",
     )
 
+    sp_ui = subparsers.add_parser(
+        "ui",
+        help="Launch the local Mnemos onboarding and control-plane UI.",
+    )
+    sp_ui.add_argument("--host", default="127.0.0.1")
+    sp_ui.add_argument("--port", type=int, default=8765)
+    sp_ui.add_argument("--config-path", default="")
+    sp_ui.add_argument("--no-browser", action="store_true")
+
     args = parser.parse_args()
     if args.command == "retrieve":
         args.reconsolidate = not args.no_reconsolidate
@@ -946,6 +928,8 @@ def main() -> None:
         asyncio.run(_cmd_antigravity(args))
     elif args.command == "autostore-hook":
         asyncio.run(_cmd_autostore_hook(args))
+    elif args.command == "ui":
+        _cmd_ui(args)
 
 
 if __name__ == "__main__":

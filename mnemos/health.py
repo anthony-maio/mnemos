@@ -12,6 +12,8 @@ from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any, Mapping
 
+from .settings import load_settings
+
 
 def _resolve_env_value(
     name: str,
@@ -105,16 +107,8 @@ def _sqlite_legacy_unscoped_chunk_count(db_path: Path) -> int | None:
 
 
 def _embedding_provider_from_env(env: Mapping[str, str] | None = None) -> str:
-    explicit = _resolve_env_value("MNEMOS_EMBEDDING_PROVIDER", env=env, default=None)
-    if explicit:
-        return explicit.lower()
-
-    llm_provider = (
-        _resolve_env_value("MNEMOS_LLM_PROVIDER", env=env, default="mock") or "mock"
-    ).lower()
-    if llm_provider in {"ollama", "openai", "openclaw"}:
-        return llm_provider
-    return "simple"
+    resolved = load_settings(env=env, default_store_type="sqlite")
+    return resolved.settings.embedding.provider or "simple"
 
 
 def detect_profile(
@@ -129,20 +123,16 @@ def detect_profile(
     - local-performance: qdrant with local embedded path
     - scale: qdrant over URL
     """
-    store_type = (
-        _resolve_env_value(
-            "MNEMOS_STORE_TYPE",
-            env=env,
-            default=default_store_type,
-            aliases=("MNEMOS_STORAGE",),
-        )
-        or default_store_type
-    ).lower()
+    resolved = load_settings(
+        env=env,
+        default_store_type=default_store_type,  # type: ignore[arg-type]
+    )
+    store_type = resolved.settings.storage.type
 
     if store_type != "qdrant":
         return "starter"
 
-    qdrant_path = _resolve_env_value("MNEMOS_QDRANT_PATH", env=env, default=None)
+    qdrant_path = resolved.settings.storage.qdrant_path
     if qdrant_path:
         return "local-performance"
     return "scale"
@@ -155,24 +145,19 @@ def run_health_checks(
 ) -> dict[str, Any]:
     """Evaluate readiness for current profile and provider/storage dependencies."""
     checks: list[dict[str, str]] = []
+    resolved = load_settings(
+        env=env,
+        default_store_type=default_store_type,  # type: ignore[arg-type]
+    )
+    settings = resolved.settings
 
     def add_check(name: str, status: str, message: str) -> None:
         checks.append({"name": name, "status": status, "message": message})
 
     profile = detect_profile(env, default_store_type=default_store_type)
-    store_type = (
-        _resolve_env_value(
-            "MNEMOS_STORE_TYPE",
-            env=env,
-            default=default_store_type,
-            aliases=("MNEMOS_STORAGE",),
-        )
-        or default_store_type
-    ).lower()
-    llm_provider = (
-        _resolve_env_value("MNEMOS_LLM_PROVIDER", env=env, default="mock") or "mock"
-    ).lower()
-    embedding_provider = _embedding_provider_from_env(env)
+    store_type = settings.storage.type
+    llm_provider = settings.llm.provider
+    embedding_provider = settings.embedding.provider or "simple"
     sqlite_chunk_threshold = _safe_int(
         _resolve_env_value(
             "MNEMOS_DOCTOR_QDRANT_CHUNK_THRESHOLD",
@@ -209,15 +194,7 @@ def run_health_checks(
             "InMemory store is non-persistent. Use sqlite or qdrant for production.",
         )
     elif store_type == "sqlite":
-        sqlite_path = (
-            _resolve_env_value(
-                "MNEMOS_SQLITE_PATH",
-                env=env,
-                default="mnemos_memory.db",
-                aliases=("MNEMOS_DB_PATH",),
-            )
-            or "mnemos_memory.db"
-        )
+        sqlite_path = settings.storage.sqlite_path
         parent = Path(sqlite_path).expanduser().resolve().parent
         if parent.exists():
             add_check("store.sqlite", "pass", f"SQLite profile ready at {sqlite_path}.")
@@ -240,12 +217,8 @@ def run_health_checks(
                 "qdrant-client not installed. Install with `pip install 'mnemos-memory[qdrant]'`.",
             )
 
-        qdrant_path = _resolve_env_value("MNEMOS_QDRANT_PATH", env=env, default=None)
-        qdrant_url = _resolve_env_value(
-            "MNEMOS_QDRANT_URL",
-            env=env,
-            default="http://localhost:6333",
-        )
+        qdrant_path = settings.storage.qdrant_path
+        qdrant_url = settings.storage.qdrant_url
         if qdrant_path:
             add_check(
                 "store.qdrant.embedded", "pass", f"Embedded Qdrant path configured: {qdrant_path}"
@@ -266,15 +239,13 @@ def run_health_checks(
             "Mock LLM provider is active. Cognitive modules run in degraded/mock mode.",
         )
     elif llm_provider == "ollama":
-        ollama_url = _resolve_env_value(
-            "MNEMOS_OLLAMA_URL", env=env, default="http://localhost:11434"
-        )
+        ollama_url = settings.base_url_for("ollama") or "http://localhost:11434"
         if ollama_url:
             add_check("llm.ollama", "pass", f"Ollama provider configured at {ollama_url}.")
         else:
             add_check("llm.ollama", "fail", "MNEMOS_OLLAMA_URL is required for ollama provider.")
     elif llm_provider == "openai":
-        api_key = _resolve_env_value("MNEMOS_OPENAI_API_KEY", env=env, default="")
+        api_key = settings.api_key_for("openai")
         if api_key:
             add_check("llm.openai", "pass", "OpenAI provider API key configured.")
         else:
@@ -282,9 +253,7 @@ def run_health_checks(
                 "llm.openai", "fail", "MNEMOS_OPENAI_API_KEY is required for openai provider."
             )
     elif llm_provider == "openclaw":
-        api_key = _resolve_env_value(
-            "MNEMOS_OPENCLAW_API_KEY", env=env, default=""
-        ) or _resolve_env_value("MNEMOS_OPENAI_API_KEY", env=env, default="")
+        api_key = settings.api_key_for("openclaw")
         if api_key:
             add_check("llm.openclaw", "pass", "OpenClaw provider API key configured.")
         else:
@@ -292,6 +261,16 @@ def run_health_checks(
                 "llm.openclaw",
                 "fail",
                 "MNEMOS_OPENCLAW_API_KEY (or MNEMOS_OPENAI_API_KEY) is required for openclaw provider.",
+            )
+    elif llm_provider == "openrouter":
+        api_key = settings.api_key_for("openrouter")
+        if api_key:
+            add_check("llm.openrouter", "pass", "OpenRouter provider API key configured.")
+        else:
+            add_check(
+                "llm.openrouter",
+                "fail",
+                "MNEMOS_OPENROUTER_API_KEY is required for openrouter provider.",
             )
     else:
         add_check("llm.provider", "fail", f"Unsupported MNEMOS_LLM_PROVIDER: {llm_provider!r}")
@@ -303,9 +282,7 @@ def run_health_checks(
             "Simple embeddings are for development; use openclaw/openai/ollama for production retrieval quality.",
         )
     elif embedding_provider == "ollama":
-        ollama_url = _resolve_env_value(
-            "MNEMOS_OLLAMA_URL", env=env, default="http://localhost:11434"
-        )
+        ollama_url = settings.base_url_for("ollama") or "http://localhost:11434"
         if ollama_url:
             add_check(
                 "embedding.ollama", "pass", f"Ollama embedding provider configured at {ollama_url}."
@@ -317,7 +294,7 @@ def run_health_checks(
                 "MNEMOS_OLLAMA_URL is required for ollama embedding provider.",
             )
     elif embedding_provider == "openai":
-        api_key = _resolve_env_value("MNEMOS_OPENAI_API_KEY", env=env, default="")
+        api_key = settings.api_key_for("openai")
         if api_key:
             add_check("embedding.openai", "pass", "OpenAI embedding provider API key configured.")
         else:
@@ -327,9 +304,7 @@ def run_health_checks(
                 "MNEMOS_OPENAI_API_KEY is required for openai embedding provider.",
             )
     elif embedding_provider == "openclaw":
-        api_key = _resolve_env_value(
-            "MNEMOS_OPENCLAW_API_KEY", env=env, default=""
-        ) or _resolve_env_value("MNEMOS_OPENAI_API_KEY", env=env, default="")
+        api_key = settings.api_key_for("openclaw")
         if api_key:
             add_check(
                 "embedding.openclaw", "pass", "OpenClaw embedding provider API key configured."
@@ -340,10 +315,27 @@ def run_health_checks(
                 "fail",
                 "MNEMOS_OPENCLAW_API_KEY (or MNEMOS_OPENAI_API_KEY) is required for openclaw embeddings.",
             )
+    elif embedding_provider == "openrouter":
+        api_key = settings.api_key_for("openrouter")
+        if api_key:
+            add_check(
+                "embedding.openrouter",
+                "pass",
+                "OpenRouter embedding provider API key configured.",
+            )
+        else:
+            add_check(
+                "embedding.openrouter",
+                "fail",
+                "MNEMOS_OPENROUTER_API_KEY is required for openrouter embeddings.",
+            )
     else:
         add_check(
             "embedding.provider", "fail", f"Unsupported embedding provider: {embedding_provider!r}"
         )
+
+    for index, warning in enumerate(resolved.warnings, start=1):
+        add_check(f"config.warning.{index}", "warn", warning)
 
     size_threshold_exceeded = (
         store_type == "sqlite"

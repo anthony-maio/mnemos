@@ -14,6 +14,19 @@ Codex support in Mnemos is MCP-first. There is no separate Codex plugin format f
 pip install "mnemos-memory[mcp]"
 ```
 
+Then launch the control plane:
+
+```bash
+mnemos ui
+```
+
+Use it to:
+
+- choose `Dev` or `Pro` onboarding mode
+- configure your provider and storage
+- preview/apply the Codex MCP config
+- run the built-in smoke check
+
 For reliable scoped memory, prefer a real embedding provider and SQLite starter storage:
 
 ```bash
@@ -25,7 +38,7 @@ $env:MNEMOS_SQLITE_PATH=".mnemos/memory.db"
 
 ## 2. Register the MCP server for Codex
 
-Use [mcp-configs/codex.json](mcp-configs/codex.json) as the starting point. The checked-in config is runnable from a source checkout with `python -m mnemos.mcp_server`; if you are using an installed package instead, `mnemos-mcp` is also valid.
+Use [mcp-configs/codex.json](mcp-configs/codex.json) as the starting point. The checked-in template stays runnable from a source checkout with `python -m mnemos.mcp_server`, while the control plane writes the installed-package form automatically.
 
 ```json
 {
@@ -34,10 +47,7 @@ Use [mcp-configs/codex.json](mcp-configs/codex.json) as the starting point. The 
       "command": "python",
       "args": ["-m", "mnemos.mcp_server"],
       "env": {
-        "MNEMOS_LLM_PROVIDER": "openclaw",
-        "MNEMOS_EMBEDDING_PROVIDER": "openclaw",
-        "MNEMOS_STORE_TYPE": "sqlite",
-        "MNEMOS_SQLITE_PATH": ".mnemos/memory.db"
+        "MNEMOS_CONFIG_PATH": "~/.config/Mnemos/mnemos.toml"
       }
     }
   }

@@ -12,7 +12,22 @@ The Model Context Protocol (MCP) lets agentic platforms — Claude Code, Codex, 
 pip install 'mnemos-memory[mcp]'
 ```
 
-### 2. Configure your agent
+### 2. Launch the control plane
+
+```bash
+mnemos ui
+```
+
+The control plane is now the primary onboarding path. It lets you:
+
+- save a canonical global `mnemos.toml`
+- import existing preview-user env/config setups
+- preview and apply Claude Code, Cursor, and Codex host configs
+- run health and smoke checks before daily use
+
+### 3. Configure your agent
+
+The generated host configs should point Mnemos at the canonical config file with `MNEMOS_CONFIG_PATH`, rather than embedding provider secrets into every host file.
 
 ### Plugin-first install for Claude Code
 
@@ -38,21 +53,16 @@ Add to `~/.claude/claude_desktop_config.json` (or your project's `.claude` confi
 {
   "mcpServers": {
     "mnemos": {
-      "command": "python",
-      "args": ["-m", "mnemos.mcp_server"],
+      "command": "mnemos-mcp",
       "env": {
-        "MNEMOS_LLM_PROVIDER": "mock",
-        "MNEMOS_EMBEDDING_PROVIDER": "simple",
-        "MNEMOS_STORE_TYPE": "sqlite",
-        "MNEMOS_SQLITE_PATH": "~/.mnemos/memory.db"
+        "MNEMOS_CONFIG_PATH": "~/.config/Mnemos/mnemos.toml"
       }
     }
   }
 }
 ```
 
-This is the minimal tested Tier 1 config. For real usage, swap `mock` and `simple`
-to `ollama`, `openai`, or `openclaw` once credentials or a local model endpoint are ready.
+If this repo's Claude plugin wrapper is available, the control plane prefers that path automatically.
 
 #### Cursor
 
@@ -64,9 +74,7 @@ Add to `.cursor/mcp.json` in your project root:
     "mnemos": {
       "command": "mnemos-mcp",
       "env": {
-        "MNEMOS_LLM_PROVIDER": "mock",
-        "MNEMOS_STORE_TYPE": "sqlite",
-        "MNEMOS_SQLITE_PATH": ".mnemos/memory.db"
+        "MNEMOS_CONFIG_PATH": "~/.config/Mnemos/mnemos.toml"
       }
     }
   }
@@ -138,18 +146,37 @@ Compatibility + contract docs:
 
 ## Configuration
 
-All configuration is via environment variables:
+The canonical runtime config is now `mnemos.toml`, typically stored at the platform config directory:
+
+- Windows: `%APPDATA%/Mnemos/mnemos.toml`
+- macOS: `~/Library/Application Support/Mnemos/mnemos.toml`
+- Linux: `$XDG_CONFIG_HOME/Mnemos/mnemos.toml` or `~/.config/Mnemos/mnemos.toml`
+
+Optional per-project overrides live at `.mnemos/mnemos.toml`.
+
+Precedence:
+
+1. CLI flags
+2. environment variables
+3. project `.mnemos/mnemos.toml`
+4. global `mnemos.toml`
+5. built-in defaults
+
+Environment variables still work and override config files. They are now the advanced/manual path:
 
 | Variable | Default | Description |
 |----------|---------|-------------|
-| `MNEMOS_LLM_PROVIDER` | `mock` | LLM backend: `mock`, `ollama`, `openai`, or `openclaw` |
+| `MNEMOS_CONFIG_PATH` | platform config dir | Canonical global config path used by host integrations |
+| `MNEMOS_LLM_PROVIDER` | `mock` | LLM backend: `mock`, `ollama`, `openai`, `openclaw`, or `openrouter` |
 | `MNEMOS_LLM_MODEL` | `llama3` | Model name for the LLM provider |
 | `MNEMOS_OLLAMA_URL` | `http://localhost:11434` | Ollama API URL |
 | `MNEMOS_OPENAI_API_KEY` | — | Required if provider is `openai` |
 | `MNEMOS_OPENAI_URL` | `https://api.openai.com/v1` | OpenAI-compatible URL |
 | `MNEMOS_OPENCLAW_API_KEY` | — | OpenClaw API key (or fallback to `MNEMOS_OPENAI_API_KEY`) |
 | `MNEMOS_OPENCLAW_URL` | — | OpenClaw API URL (or fallback to `MNEMOS_OPENAI_URL`) |
-| `MNEMOS_EMBEDDING_PROVIDER` | inferred from `MNEMOS_LLM_PROVIDER`, else `simple` | Embedding backend: `simple`, `ollama`, `openai`, or `openclaw` |
+| `MNEMOS_OPENROUTER_API_KEY` | — | Required if provider is `openrouter` |
+| `MNEMOS_OPENROUTER_URL` | `https://openrouter.ai/api/v1` | OpenRouter API URL |
+| `MNEMOS_EMBEDDING_PROVIDER` | inferred from `MNEMOS_LLM_PROVIDER`, else `simple` | Embedding backend: `simple`, `ollama`, `openai`, `openclaw`, or `openrouter` |
 | `MNEMOS_EMBEDDING_MODEL` | provider-dependent | Embedding model name |
 | `MNEMOS_STORE_TYPE` | `memory` | Storage backend: `memory`, `sqlite`, or `qdrant` |
 | `MNEMOS_SQLITE_PATH` | `mnemos_memory.db` | SQLite database path |
@@ -172,13 +199,13 @@ Backward-compatible aliases:
 - `MNEMOS_STORAGE` works as an alias for `MNEMOS_STORE_TYPE`
 - `MNEMOS_DB_PATH` works as an alias for `MNEMOS_SQLITE_PATH`
 
-If `MNEMOS_EMBEDDING_PROVIDER` is not set, Mnemos infers it from `MNEMOS_LLM_PROVIDER` for `ollama`, `openai`, and `openclaw`.
+If `MNEMOS_EMBEDDING_PROVIDER` is not set, Mnemos infers it from `MNEMOS_LLM_PROVIDER` for `ollama`, `openai`, `openclaw`, and `openrouter`.
 
 ### Provider recommendations
 
 - **Development/testing**: Use `mock` — zero dependencies, deterministic
 - **Local deployment**: Use `ollama` with a small model like `llama3:8b`
-- **Production**: Use `openai`, `openclaw`, or any OpenAI-compatible API (vLLM, Together, etc.)
+- **Production**: Use `openai`, `openclaw`, `openrouter`, or any OpenAI-compatible API
 
 ---
 

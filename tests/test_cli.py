@@ -111,6 +111,46 @@ def test_build_engine_reads_memory_governance_env(
     engine.store.close()
 
 
+def test_build_engine_uses_mnemos_config_path(
+    monkeypatch: pytest.MonkeyPatch, tmp_path: Path
+) -> None:
+    config_path = tmp_path / "mnemos.toml"
+    db_path = tmp_path / "configured.db"
+    config_path.write_text(
+        f"""
+[llm]
+provider = "openrouter"
+model = "openrouter/auto"
+
+[embedding]
+provider = "openrouter"
+model = "text-embedding-3-small"
+
+[storage]
+type = "sqlite"
+sqlite_path = "{db_path.as_posix()}"
+
+[providers.openrouter]
+api_key = "router-key"
+base_url = "https://openrouter.ai/api/v1"
+""".strip(),
+        encoding="utf-8",
+    )
+    monkeypatch.setenv("MNEMOS_CONFIG_PATH", str(config_path))
+    monkeypatch.delenv("MNEMOS_LLM_PROVIDER", raising=False)
+    monkeypatch.delenv("MNEMOS_EMBEDDING_PROVIDER", raising=False)
+    monkeypatch.delenv("MNEMOS_STORE_TYPE", raising=False)
+
+    engine = _build_engine()
+
+    assert isinstance(engine.llm, OpenAIProvider)
+    assert engine.llm.base_url == "https://openrouter.ai/api/v1"
+    assert isinstance(engine.embedder, OpenAIEmbeddingProvider)
+    assert isinstance(engine.store, SQLiteStore)
+    assert Path(engine.store.db_path).resolve() == db_path.resolve()
+    engine.store.close()
+
+
 @pytest.mark.asyncio
 async def test_cli_doctor_prints_report(monkeypatch: pytest.MonkeyPatch, capsys: Any) -> None:
     monkeypatch.setenv("MNEMOS_STORE_TYPE", "sqlite")

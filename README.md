@@ -37,6 +37,40 @@ This is not a hosted memory platform, team memory system, or remote sync product
 
 ---
 
+## Technical Preview
+
+Mnemos is currently in technical preview while onboarding hardens. The core engine is ready for real usage, but the new control plane is the intended path for setup and host integration:
+
+1. `pip install "mnemos-memory[mcp]"`
+2. `mnemos ui`
+3. Choose a provider and store profile
+4. Apply Claude Code, Cursor, or Codex config from the UI
+5. Run the built-in smoke check before daily use
+
+If you are coming from an env-var or hand-edited MCP config setup, use the UI's **Import Existing Setup** action first.
+
+Manual env-var setup is still supported for advanced users, but it is no longer the primary onboarding path.
+
+---
+
+## Quick Start
+
+```bash
+pip install "mnemos-memory[mcp]"
+mnemos ui
+```
+
+What the control plane gives you:
+
+- canonical config in `mnemos.toml`
+- optional project override in `.mnemos/mnemos.toml`
+- guided host setup for Claude Code, Cursor, and Codex
+- health checks, smoke checks, and a light memory viewer
+
+For advanced/manual setup, see [docs/MCP_INTEGRATION.md](docs/MCP_INTEGRATION.md).
+
+---
+
 ## Why The Architecture Is Different
 
 Most agent memory tools either keep too much raw transcript or append contradictory facts forever. Mnemos uses a different design:
@@ -190,12 +224,6 @@ sa = SpreadingActivation(
 ```
 
 ---
-
-## Quick Start
-
-```bash
-pip install mnemos-memory
-```
 
 > **Note:** The PyPI package is `mnemos-memory` but the import name is just `import mnemos`.
 

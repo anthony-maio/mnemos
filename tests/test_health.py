@@ -141,3 +141,37 @@ def test_health_reports_legacy_unscoped_sqlite_chunks(
     assert report["scope_isolation"]["legacy_unscoped_chunks"] == 1
     assert report["scope_isolation"]["ready"] is False
     assert any("legacy unscoped" in rec.lower() for rec in report["recommendations"])
+
+
+def test_health_uses_mnemos_config_path(monkeypatch: pytest.MonkeyPatch, tmp_path: Path) -> None:
+    config_path = tmp_path / "mnemos.toml"
+    db_path = tmp_path / "health-configured.db"
+    config_path.write_text(
+        f"""
+[llm]
+provider = "openrouter"
+
+[embedding]
+provider = "openrouter"
+
+[storage]
+type = "sqlite"
+sqlite_path = "{db_path.as_posix()}"
+
+[providers.openrouter]
+api_key = "router-key"
+base_url = "https://openrouter.ai/api/v1"
+""".strip(),
+        encoding="utf-8",
+    )
+    monkeypatch.setenv("MNEMOS_CONFIG_PATH", str(config_path))
+    monkeypatch.delenv("MNEMOS_LLM_PROVIDER", raising=False)
+    monkeypatch.delenv("MNEMOS_EMBEDDING_PROVIDER", raising=False)
+    monkeypatch.delenv("MNEMOS_STORE_TYPE", raising=False)
+
+    report = run_health_checks()
+
+    assert report["status"] == "ready"
+    assert report["llm_provider"] == "openrouter"
+    assert report["embedding_provider"] == "openrouter"
+    assert report["store_type"] == "sqlite"

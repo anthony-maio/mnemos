@@ -1,0 +1,188 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Mnemos Control Plane</title>
+    <link rel="stylesheet" href="/styles.css" />
+  </head>
+  <body>
+    <div class="app-shell">
+      <header class="hero">
+        <div class="hero-copy">
+          <p class="eyebrow">Local Setup</p>
+          <h1>Mnemos Control Plane</h1>
+          <p class="lede">
+            Configure providers, wire up hosts, verify health, and inspect local memory without
+            hand-editing env vars or MCP config files.
+          </p>
+          <div class="hero-actions">
+            <button id="import-button" class="button button-accent">Import Existing Setup</button>
+            <button id="smoke-button" class="button button-ghost">Run Smoke Check</button>
+          </div>
+        </div>
+        <div class="hero-status card">
+          <p class="section-kicker">Current State</p>
+          <div id="hero-status" class="status-cluster">Loading...</div>
+        </div>
+      </header>
+
+      <main class="grid">
+        <section class="card span-2">
+          <div class="section-head">
+            <div>
+              <p class="section-kicker">Setup</p>
+              <h2>Provider and Storage</h2>
+            </div>
+            <div class="toggle-row">
+              <button id="save-global" class="button">Save Global</button>
+              <button id="save-project" class="button button-ghost">Save Project Override</button>
+            </div>
+          </div>
+
+          <div class="form-grid">
+            <label>
+              <span>Onboarding mode</span>
+              <select id="onboarding-mode">
+                <option value="dev">Dev</option>
+                <option value="pro">Pro</option>
+              </select>
+            </label>
+            <label>
+              <span>Preferred host</span>
+              <select id="preferred-host">
+                <option value="claude-code">Claude Code</option>
+                <option value="cursor">Cursor</option>
+                <option value="codex">Codex</option>
+              </select>
+            </label>
+
+            <label>
+              <span>LLM provider</span>
+              <select id="llm-provider">
+                <option value="mock">Mock</option>
+                <option value="ollama">Ollama</option>
+                <option value="openai">OpenAI</option>
+                <option value="openclaw">OpenClaw</option>
+                <option value="openrouter">OpenRouter</option>
+              </select>
+            </label>
+            <label>
+              <span>LLM model</span>
+              <input id="llm-model" type="text" placeholder="gpt-4o-mini" />
+            </label>
+
+            <label>
+              <span>Embedding provider</span>
+              <select id="embedding-provider">
+                <option value="simple">Simple</option>
+                <option value="ollama">Ollama</option>
+                <option value="openai">OpenAI</option>
+                <option value="openclaw">OpenClaw</option>
+                <option value="openrouter">OpenRouter</option>
+              </select>
+            </label>
+            <label>
+              <span>Embedding model</span>
+              <input id="embedding-model" type="text" placeholder="text-embedding-3-small" />
+            </label>
+
+            <label>
+              <span>Store type</span>
+              <select id="store-type">
+                <option value="sqlite">SQLite</option>
+                <option value="qdrant">Qdrant</option>
+                <option value="memory">In-memory</option>
+              </select>
+            </label>
+            <label>
+              <span>SQLite path</span>
+              <input id="sqlite-path" type="text" placeholder=".mnemos/memory.db" />
+            </label>
+
+            <label>
+              <span>Qdrant path</span>
+              <input id="qdrant-path" type="text" placeholder=".mnemos/qdrant" />
+            </label>
+            <label>
+              <span>Qdrant URL</span>
+              <input id="qdrant-url" type="text" placeholder="http://localhost:6333" />
+            </label>
+
+            <label>
+              <span>Provider base URL</span>
+              <input id="provider-url" type="text" placeholder="http://localhost:11434" />
+            </label>
+            <label>
+              <span>API key</span>
+              <input id="provider-key" type="password" placeholder="leave blank to keep current key" />
+              <small id="provider-key-status"></small>
+            </label>
+          </div>
+        </section>
+
+        <section class="card">
+          <div class="section-head">
+            <div>
+              <p class="section-kicker">Integrations</p>
+              <h2>Host Apply</h2>
+            </div>
+          </div>
+          <div class="host-stack">
+            <article class="host-card" data-host="claude-code">
+              <h3>Claude Code</h3>
+              <p>Prefer the plugin wrapper when this repo ships it.</p>
+              <div class="host-actions">
+                <button class="button button-ghost preview-host">Preview</button>
+                <button class="button apply-host">Apply</button>
+              </div>
+            </article>
+            <article class="host-card" data-host="cursor">
+              <h3>Cursor</h3>
+              <p>Writes a minimal `.cursor/mcp.json` entry pointing at the canonical config.</p>
+              <div class="host-actions">
+                <button class="button button-ghost preview-host">Preview</button>
+                <button class="button apply-host">Apply</button>
+              </div>
+            </article>
+            <article class="host-card" data-host="codex">
+              <h3>Codex</h3>
+              <p>Updates `~/.codex/config.toml` without duplicating provider secrets.</p>
+              <div class="host-actions">
+                <button class="button button-ghost preview-host">Preview</button>
+                <button class="button apply-host">Apply</button>
+              </div>
+            </article>
+          </div>
+          <pre id="integration-preview" class="console"></pre>
+        </section>
+
+        <section class="card">
+          <div class="section-head">
+            <div>
+              <p class="section-kicker">Health</p>
+              <h2>Readiness</h2>
+            </div>
+            <button id="refresh-health" class="button button-ghost">Refresh</button>
+          </div>
+          <div id="health-summary" class="status-cluster"></div>
+          <ul id="health-checks" class="check-list"></ul>
+        </section>
+
+        <section class="card span-2">
+          <div class="section-head">
+            <div>
+              <p class="section-kicker">Memory</p>
+              <h2>Recent Chunks</h2>
+            </div>
+            <button id="refresh-memory" class="button button-ghost">Refresh</button>
+          </div>
+          <div id="memory-summary" class="memory-summary"></div>
+          <div id="memory-list" class="memory-list"></div>
+        </section>
+      </main>
+    </div>
+
+    <script src="/app.js"></script>
+  </body>
+</html>

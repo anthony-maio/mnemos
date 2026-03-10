@@ -99,6 +99,14 @@ def _resolve_runtime_python(plugin_root: Path, env: dict[str, str]) -> str:
 def _apply_default_env(plugin_root: Path) -> dict[str, str]:
     env = dict(os.environ)
     plugin_data_dir = plugin_root / ".claude-plugin"
+    raw_config_path = env.get("MNEMOS_CONFIG_PATH", "").strip()
+    config_path = (
+        Path(raw_config_path).expanduser() if raw_config_path else plugin_data_dir / "mnemos.toml"
+    )
+    env.setdefault("MNEMOS_CONFIG_PATH", str(config_path))
+
+    if config_path.exists():
+        return env
 
     env.setdefault("MNEMOS_STORE_TYPE", "sqlite")
     env.setdefault("MNEMOS_SQLITE_PATH", str(plugin_data_dir / "mnemos.db"))

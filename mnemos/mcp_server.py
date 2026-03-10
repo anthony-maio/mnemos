@@ -28,9 +28,10 @@ Usage:
   mnemos-mcp
 
 Configuration via environment variables:
-  MNEMOS_LLM_PROVIDER   — "mock" (default), "ollama", "openai", or "openclaw"
+  MNEMOS_CONFIG_PATH    — Canonical global config path (optional; host configs should prefer this)
+  MNEMOS_LLM_PROVIDER   — "mock" (default), "ollama", "openai", "openclaw", or "openrouter"
   MNEMOS_LLM_MODEL      — Model name for LLM provider (default: "llama3")
-  MNEMOS_EMBEDDING_PROVIDER — "simple" (default), "ollama", "openai", or "openclaw"
+  MNEMOS_EMBEDDING_PROVIDER — "simple" (default), "ollama", "openai", "openclaw", or "openrouter"
   MNEMOS_EMBEDDING_MODEL — Embedding model name (provider-specific default if unset)
   MNEMOS_EMBEDDING_DIM  — Embedding dimension for simple provider (default: 384)
   MNEMOS_OLLAMA_URL     — Ollama API base URL (default: "http://localhost:11434")
@@ -38,6 +39,8 @@ Configuration via environment variables:
   MNEMOS_OPENAI_URL     — OpenAI-compatible base URL
   MNEMOS_OPENCLAW_API_KEY — OpenClaw API key (or fallback to MNEMOS_OPENAI_API_KEY)
   MNEMOS_OPENCLAW_URL   — OpenClaw API base URL (or fallback to MNEMOS_OPENAI_URL)
+  MNEMOS_OPENROUTER_API_KEY — OpenRouter API key (required if provider is "openrouter")
+  MNEMOS_OPENROUTER_URL — OpenRouter API base URL (default: "https://openrouter.ai/api/v1")
   MNEMOS_STORE_TYPE     — "memory" (default), "sqlite", or "qdrant"
   MNEMOS_SQLITE_PATH    — Path for SQLite store (default: "mnemos_memory.db")
   MNEMOS_QDRANT_URL     — Qdrant server URL (default: "http://localhost:6333")
@@ -72,7 +75,12 @@ from .config import MemoryGovernanceConfig, MemorySafetyConfig, MnemosConfig, Su
 from .engine import MnemosEngine
 from .health import run_health_checks
 from .observability import configure_logging, log_event
-from .runtime import build_embedder_from_env, build_store_from_env
+from .runtime import (
+    build_embedder_from_env,
+    build_llm_from_env,
+    build_mnemos_config_from_env,
+    build_store_from_env,
+)
 from .types import Interaction
 from .utils.embeddings import EmbeddingProvider
 from .utils.llm import MockLLMProvider, LLMProvider
@@ -128,50 +136,7 @@ def _capture_mode_from_env(name: str, default: CaptureMode) -> CaptureMode:
 
 def _build_llm_provider() -> LLMProvider:
     """Build LLM provider from environment variables."""
-    provider = os.getenv("MNEMOS_LLM_PROVIDER", "mock").lower()
-
-    if provider == "mock":
-        return MockLLMProvider()
-
-    elif provider == "ollama":
-        from .utils.llm import OllamaProvider
-
-        return OllamaProvider(
-            base_url=os.getenv("MNEMOS_OLLAMA_URL", "http://localhost:11434"),
-            model=os.getenv("MNEMOS_LLM_MODEL", "llama3"),
-        )
-
-    elif provider in ("openai", "openclaw"):
-        from .utils.llm import OpenAIProvider
-
-        if provider == "openclaw":
-            api_key = os.getenv("MNEMOS_OPENCLAW_API_KEY", "") or os.getenv(
-                "MNEMOS_OPENAI_API_KEY", ""
-            )
-            base_url = os.getenv("MNEMOS_OPENCLAW_URL", "") or os.getenv(
-                "MNEMOS_OPENAI_URL", "https://api.openai.com/v1"
-            )
-            if not api_key:
-                raise ValueError(
-                    "MNEMOS_OPENCLAW_API_KEY or MNEMOS_OPENAI_API_KEY must be set "
-                    "when using openclaw provider"
-                )
-        else:
-            api_key = os.getenv("MNEMOS_OPENAI_API_KEY", "")
-            base_url = os.getenv("MNEMOS_OPENAI_URL", "https://api.openai.com/v1")
-
-        if not api_key:
-            raise ValueError("MNEMOS_OPENAI_API_KEY must be set when using openai provider")
-        return OpenAIProvider(
-            api_key=api_key,
-            base_url=base_url,
-            model=os.getenv("MNEMOS_LLM_MODEL", "gpt-4o-mini"),
-        )
-
-    else:
-        raise ValueError(
-            f"Unknown LLM provider: {provider!r}. Use 'mock', 'ollama', 'openai', or 'openclaw'."
-        )
+    return build_llm_from_env()
 
 
 def _build_store() -> MemoryStore:
@@ -186,22 +151,7 @@ def _build_embedder() -> EmbeddingProvider:
 
 def _build_config() -> MnemosConfig:
     """Build configuration from environment variables."""
-    threshold = float(os.getenv("MNEMOS_SURPRISAL_THRESHOLD", "0.3"))
-    debug = os.getenv("MNEMOS_DEBUG", "").lower() in ("true", "1", "yes")
-    return MnemosConfig(
-        surprisal=SurprisalConfig(threshold=threshold),
-        safety=MemorySafetyConfig(
-            enabled=_env_bool("MNEMOS_MEMORY_SAFETY_ENABLED", True),
-            secret_action=_memory_action_from_env("MNEMOS_MEMORY_SECRET_ACTION", "block"),
-            pii_action=_memory_action_from_env("MNEMOS_MEMORY_PII_ACTION", "redact"),
-        ),
-        governance=MemoryGovernanceConfig(
-            capture_mode=_capture_mode_from_env("MNEMOS_MEMORY_CAPTURE_MODE", "all"),
-            retention_ttl_days=int(os.getenv("MNEMOS_MEMORY_RETENTION_TTL_DAYS", "0")),
-            max_chunks_per_scope=int(os.getenv("MNEMOS_MEMORY_MAX_CHUNKS_PER_SCOPE", "0")),
-        ),
-        debug=debug,
-    )
+    return build_mnemos_config_from_env(default_store_type="memory")
 
 
 @dataclass
