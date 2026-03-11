@@ -132,6 +132,84 @@ def fake_neo4j(monkeypatch: pytest.MonkeyPatch) -> None:
     monkeypatch.setitem(sys.modules, "neo4j", fake_module)
 
 
+@pytest.fixture
+def strict_fake_neo4j(monkeypatch: pytest.MonkeyPatch) -> None:
+    class FakeResult:
+        def __init__(self, records: list[dict[str, Any]] | None = None) -> None:
+            self._records = records or []
+            self._closed = False
+
+        def close(self) -> None:
+            self._closed = True
+
+        def _ensure_open(self) -> None:
+            if self._closed:
+                raise RuntimeError("Neo4j result accessed after session close")
+
+        def __iter__(self):
+            self._ensure_open()
+            return iter(self._records)
+
+        def single(self) -> dict[str, Any] | None:
+            self._ensure_open()
+            return self._records[0] if self._records else None
+
+        def consume(self) -> None:
+            self._ensure_open()
+            return None
+
+    class FakeSession:
+        def __init__(self) -> None:
+            self._results: list[FakeResult] = []
+
+        def __enter__(self) -> "FakeSession":
+            return self
+
+        def __exit__(self, exc_type: object, exc: object, tb: object) -> bool:
+            for result in self._results:
+                result.close()
+            return False
+
+        def run(self, query: str, **params: Any) -> FakeResult:
+            normalized = " ".join(query.split())
+            if "CREATE CONSTRAINT" in normalized:
+                result = FakeResult()
+            elif "RETURN count(chunk) AS total_chunks" in normalized:
+                result = FakeResult(
+                    [
+                        {
+                            "total_chunks": 0,
+                            "chunks_with_embeddings": 0,
+                            "average_salience": None,
+                            "average_access_count": None,
+                        }
+                    ]
+                )
+            else:
+                raise AssertionError(f"Unexpected Cypher query: {normalized}")
+            self._results.append(result)
+            return result
+
+    class FakeDriver:
+        def verify_connectivity(self) -> None:
+            return None
+
+        def session(self, *, database: str | None = None) -> FakeSession:
+            return FakeSession()
+
+        def close(self) -> None:
+            return None
+
+    class FakeGraphDatabase:
+        @staticmethod
+        def driver(uri: str, auth: tuple[str, str]) -> FakeDriver:
+            return FakeDriver()
+
+    fake_module = types.ModuleType("neo4j")
+    fake_module.GraphDatabase = FakeGraphDatabase  # type: ignore[attr-defined]
+    monkeypatch.setitem(sys.modules, "neo4j", fake_module)
+
+
 def test_neo4j_store_crud_and_retrieve(fake_neo4j: None) -> None:
     store = Neo4jStore(
         uri="bolt://localhost:7687",
@@ -183,3 +261,17 @@ def test_neo4j_store_crud_and_retrieve(fake_neo4j: None) -> None:
     stats = store.get_stats()
     assert stats["backend"] == "Neo4jStore"
     assert stats["total_chunks"] == 1
+
+
+def test_neo4j_store_materializes_results_before_session_close(strict_fake_neo4j: None) -> None:
+    store = Neo4jStore(
+        uri="bolt://localhost:7687",
+        username="neo4j",
+        password="password",
+        database="mnemos",
+        label="MnemosMemoryChunk",
+    )
+
+    stats = store.get_stats()
+
+    assert stats["total_chunks"] == 0

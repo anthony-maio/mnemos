@@ -592,9 +592,26 @@ class Neo4jStore(MemoryStore):
         return self.label.replace("`", "")
 
     def _run(self, query: str, **params: Any) -> Any:
+        class _BufferedResult:
+            def __init__(self, records: list[Any], counters: Any) -> None:
+                self._records = records
+                self._counters = counters
+
+            def __iter__(self):
+                return iter(self._records)
+
+            def single(self) -> Any:
+                return self._records[0] if self._records else None
+
+            def consume(self) -> Any:
+                return self._counters
+
         with self._lock:
             with self._driver.session(database=self.database) as session:
-                return session.run(query, **params)
+                result = session.run(query, **params)
+                records = list(result)
+                counters = result.consume()
+                return _BufferedResult(records, counters)
 
     def _ensure_schema(self) -> None:
         query = (
