@@ -18,7 +18,7 @@ from .reliability import (
     MnemosTransientError,
     RetryPolicy,
 )
-from .storage import InMemoryStore, MemoryStore, QdrantStore, SQLiteStore
+from .storage import InMemoryStore, MemoryStore, Neo4jStore, QdrantStore, SQLiteStore
 
 __all__ = [
     # Embeddings
@@ -43,5 +43,6 @@ __all__ = [
     "MemoryStore",
     "InMemoryStore",
     "SQLiteStore",
+    "Neo4jStore",
     "QdrantStore",
 ]

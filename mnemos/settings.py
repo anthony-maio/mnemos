@@ -195,6 +195,26 @@ def _env_overrides(env: Mapping[str, str]) -> dict[str, Any]:
     if qdrant_api_key is not None:
         _set_nested(overrides, ("providers", "qdrant", "api_key"), qdrant_api_key)
 
+    neo4j_uri = _env_value(env, "MNEMOS_NEO4J_URI")
+    if neo4j_uri is not None:
+        _set_nested(overrides, ("storage", "neo4j_uri"), neo4j_uri)
+
+    neo4j_database = _env_value(env, "MNEMOS_NEO4J_DATABASE")
+    if neo4j_database is not None:
+        _set_nested(overrides, ("storage", "neo4j_database"), neo4j_database)
+
+    neo4j_label = _env_value(env, "MNEMOS_NEO4J_LABEL")
+    if neo4j_label is not None:
+        _set_nested(overrides, ("storage", "neo4j_label"), neo4j_label)
+
+    neo4j_username = _env_value(env, "MNEMOS_NEO4J_USERNAME")
+    if neo4j_username is not None:
+        _set_nested(overrides, ("providers", "neo4j", "username"), neo4j_username)
+
+    neo4j_password = _env_value(env, "MNEMOS_NEO4J_PASSWORD")
+    if neo4j_password is not None:
+        _set_nested(overrides, ("providers", "neo4j", "password"), neo4j_password)
+
     ollama_url = _env_value(env, "MNEMOS_OLLAMA_URL")
     if ollama_url is not None:
         _set_nested(overrides, ("providers", "ollama", "base_url"), ollama_url)
@@ -293,6 +313,13 @@ class QdrantProviderSettings(BaseModel):
     api_key: str | None = None
 
 
+class Neo4jProviderSettings(BaseModel):
+    model_config = ConfigDict(extra="ignore")
+
+    username: str | None = None
+    password: str | None = None
+
+
 class ProvidersSettings(BaseModel):
     model_config = ConfigDict(extra="ignore")
 
@@ -313,6 +340,7 @@ class ProvidersSettings(BaseModel):
     )
     ollama: OllamaProviderSettings = Field(default_factory=OllamaProviderSettings)
     qdrant: QdrantProviderSettings = Field(default_factory=QdrantProviderSettings)
+    neo4j: Neo4jProviderSettings = Field(default_factory=Neo4jProviderSettings)
 
 
 class LLMSettings(BaseModel):
@@ -333,12 +361,15 @@ class EmbeddingSettings(BaseModel):
 class StorageSettings(BaseModel):
     model_config = ConfigDict(extra="ignore")
 
-    type: Literal["memory", "sqlite", "qdrant"] = "sqlite"
+    type: Literal["memory", "sqlite", "qdrant", "neo4j"] = "sqlite"
     sqlite_path: str = "mnemos_memory.db"
     qdrant_url: str = "http://localhost:6333"
     qdrant_path: str | None = None
     qdrant_collection: str = "mnemos_memory"
     qdrant_vector_size: int | None = None
+    neo4j_uri: str = "bolt://localhost:7687"
+    neo4j_database: str = "neo4j"
+    neo4j_label: str = "MnemosMemoryChunk"
 
 
 class RuntimeSettings(BaseModel):
@@ -430,7 +461,7 @@ def load_settings(
     env: Mapping[str, str] | None = None,
     cwd: str | Path | None = None,
     global_config_path: str | Path | None = None,
-    default_store_type: Literal["memory", "sqlite", "qdrant"] = "sqlite",
+    default_store_type: Literal["memory", "sqlite", "qdrant", "neo4j"] = "sqlite",
 ) -> ResolvedSettings:
     source_env = dict(os.environ if env is None else env)
     warnings: list[str] = []
@@ -529,7 +560,7 @@ def import_existing_setup(
     cwd: str | Path | None = None,
     home: str | Path | None = None,
     global_config_path: str | Path | None = None,
-    default_store_type: Literal["memory", "sqlite", "qdrant"] = "sqlite",
+    default_store_type: Literal["memory", "sqlite", "qdrant", "neo4j"] = "sqlite",
 ) -> ImportedSetup:
     merged_env = dict(os.environ if env is None else env)
     sources: list[str] = []

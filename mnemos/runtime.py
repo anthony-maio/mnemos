@@ -19,7 +19,7 @@ from .utils.embeddings import (
     SimpleEmbeddingProvider,
 )
 from .utils.llm import LLMProvider, MockLLMProvider, OllamaProvider, OpenAIProvider
-from .utils.storage import InMemoryStore, MemoryStore, QdrantStore, SQLiteStore
+from .utils.storage import InMemoryStore, MemoryStore, Neo4jStore, QdrantStore, SQLiteStore
 
 
 def resolve_env_value(
@@ -50,7 +50,7 @@ def resolve_env_value(
 
 def load_runtime_settings(
     *,
-    default_store_type: Literal["memory", "sqlite", "qdrant"] = "memory",
+    default_store_type: Literal["memory", "sqlite", "qdrant", "neo4j"] = "memory",
     env: Mapping[str, str] | None = None,
     cwd: str | Path | None = None,
 ) -> ResolvedSettings:
@@ -79,7 +79,24 @@ def build_store_from_settings(settings: AppSettings) -> MemoryStore:
             vector_size=settings.storage.qdrant_vector_size,
         )
 
-    raise ValueError(f"Unknown store type: {store_type!r}. Use 'memory', 'sqlite', or 'qdrant'.")
+    if store_type == "neo4j":
+        username = settings.providers.neo4j.username
+        password = settings.providers.neo4j.password
+        if not username or not password:
+            raise ValueError(
+                "MNEMOS_NEO4J_USERNAME and MNEMOS_NEO4J_PASSWORD must be set when using the neo4j store"
+            )
+        return Neo4jStore(
+            uri=settings.storage.neo4j_uri,
+            username=username,
+            password=password,
+            database=settings.storage.neo4j_database,
+            label=settings.storage.neo4j_label,
+        )
+
+    raise ValueError(
+        f"Unknown store type: {store_type!r}. Use 'memory', 'sqlite', 'qdrant', or 'neo4j'."
+    )
 
 
 def build_embedder_from_settings(settings: AppSettings) -> EmbeddingProvider:
@@ -160,7 +177,7 @@ def build_mnemos_config_from_settings(settings: AppSettings) -> MnemosConfig:
 
 
 def build_store_from_env(
-    default_store_type: Literal["memory", "sqlite", "qdrant"] = "memory",
+    default_store_type: Literal["memory", "sqlite", "qdrant", "neo4j"] = "memory",
     *,
     env: Mapping[str, str] | None = None,
     cwd: str | Path | None = None,
@@ -208,7 +225,7 @@ def build_mnemos_config_from_env(
     *,
     env: Mapping[str, str] | None = None,
     cwd: str | Path | None = None,
-    default_store_type: Literal["memory", "sqlite", "qdrant"] = "sqlite",
+    default_store_type: Literal["memory", "sqlite", "qdrant", "neo4j"] = "sqlite",
 ) -> MnemosConfig:
     resolved = load_runtime_settings(
         default_store_type=default_store_type,

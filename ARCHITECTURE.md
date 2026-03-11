@@ -64,4 +64,4 @@ Domain types are Pydantic models (not dataclasses):
 - `InMemoryStore` (implemented): zero-setup, ephemeral development backend.
 - `SQLiteStore` (implemented): local persistent backend with no external services.
 - `QdrantStore` (implemented): vector DB backend for higher-scale retrieval.
-- `Neo4j` (planned): graph persistence for spreading activation at larger scale.
+- `Neo4jStore` (experimental): Neo4j-backed persistence for MemoryChunks. The spreading-activation graph still hydrates in-process from stored chunks today, so graph-native activation persistence remains future work.

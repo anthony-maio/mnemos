@@ -102,6 +102,27 @@ sqlite_path = ".mnemos/project.db"
     assert resolved.settings.storage.qdrant_path == ".mnemos/qdrant"
 
 
+def test_load_settings_env_overrides_support_neo4j(tmp_path: Path) -> None:
+    resolved = load_settings(
+        env={
+            "MNEMOS_STORE_TYPE": "neo4j",
+            "MNEMOS_NEO4J_URI": "bolt://localhost:7687",
+            "MNEMOS_NEO4J_USERNAME": "neo4j",
+            "MNEMOS_NEO4J_PASSWORD": "secret",
+            "MNEMOS_NEO4J_DATABASE": "mnemos",
+            "MNEMOS_NEO4J_LABEL": "MemoryChunk",
+        },
+        cwd=tmp_path,
+    )
+
+    assert resolved.settings.storage.type == "neo4j"
+    assert resolved.settings.storage.neo4j_uri == "bolt://localhost:7687"
+    assert resolved.settings.storage.neo4j_database == "mnemos"
+    assert resolved.settings.storage.neo4j_label == "MemoryChunk"
+    assert resolved.settings.providers.neo4j.username == "neo4j"
+    assert resolved.settings.providers.neo4j.password == "secret"
+
+
 def test_project_config_secrets_are_ignored(tmp_path: Path) -> None:
     global_config = tmp_path / "global.toml"
     global_config.write_text(

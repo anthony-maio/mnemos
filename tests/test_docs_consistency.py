@@ -148,8 +148,8 @@ def test_backend_status_labels_are_explicit() -> None:
 
     assert "QdrantStore" in readme
     assert "QdrantStore" in architecture
-    assert re.search(r"Neo4j`?\s+\(planned\)", readme) is not None
-    assert re.search(r"Neo4j`?\s+\(planned\)", architecture) is not None
+    assert re.search(r"Neo4j(?:Store)?`?\s+\(experimental\)", readme) is not None
+    assert re.search(r"Neo4j(?:Store)?`?\s+\(experimental\)", architecture) is not None
 
 
 def test_required_oss_docs_exist() -> None:

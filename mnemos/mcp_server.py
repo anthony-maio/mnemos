@@ -41,13 +41,18 @@ Configuration via environment variables:
   MNEMOS_OPENCLAW_URL   — OpenClaw API base URL (or fallback to MNEMOS_OPENAI_URL)
   MNEMOS_OPENROUTER_API_KEY — OpenRouter API key (required if provider is "openrouter")
   MNEMOS_OPENROUTER_URL — OpenRouter API base URL (default: "https://openrouter.ai/api/v1")
-  MNEMOS_STORE_TYPE     — "memory" (default), "sqlite", or "qdrant"
+  MNEMOS_STORE_TYPE     — "memory" (default), "sqlite", "qdrant", or "neo4j"
   MNEMOS_SQLITE_PATH    — Path for SQLite store (default: "mnemos_memory.db")
   MNEMOS_QDRANT_URL     — Qdrant server URL (default: "http://localhost:6333")
   MNEMOS_QDRANT_API_KEY — Qdrant API key (optional)
   MNEMOS_QDRANT_PATH    — Local embedded Qdrant path (optional, overrides URL)
   MNEMOS_QDRANT_COLLECTION — Qdrant collection name (default: "mnemos_memory")
   MNEMOS_QDRANT_VECTOR_SIZE — Optional fixed vector size for pre-creating collection
+  MNEMOS_NEO4J_URI      — Neo4j Bolt URI (default: "bolt://localhost:7687")
+  MNEMOS_NEO4J_USERNAME — Neo4j username for the `neo4j` store
+  MNEMOS_NEO4J_PASSWORD — Neo4j password for the `neo4j` store
+  MNEMOS_NEO4J_DATABASE — Neo4j database name (default: "neo4j")
+  MNEMOS_NEO4J_LABEL    — Neo4j node label for stored chunks (default: "MnemosMemoryChunk")
   MNEMOS_STORAGE        — Alias for MNEMOS_STORE_TYPE
   MNEMOS_DB_PATH        — Alias for MNEMOS_SQLITE_PATH
   MNEMOS_SURPRISAL_THRESHOLD — Surprisal gate threshold (default: 0.3)

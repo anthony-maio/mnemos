@@ -33,6 +33,12 @@ def test_detect_profile_scale_external_qdrant(monkeypatch: pytest.MonkeyPatch) -
     assert detect_profile() == "scale"
 
 
+def test_detect_profile_scale_neo4j(monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.setenv("MNEMOS_STORE_TYPE", "neo4j")
+    monkeypatch.setenv("MNEMOS_NEO4J_URI", "bolt://localhost:7687")
+    assert detect_profile() == "scale"
+
+
 def test_health_fails_when_openclaw_missing_api_key(monkeypatch: pytest.MonkeyPatch) -> None:
     monkeypatch.setenv("MNEMOS_LLM_PROVIDER", "openclaw")
     monkeypatch.delenv("MNEMOS_OPENCLAW_API_KEY", raising=False)
@@ -175,3 +181,20 @@ base_url = "https://openrouter.ai/api/v1"
     assert report["llm_provider"] == "openrouter"
     assert report["embedding_provider"] == "openrouter"
     assert report["store_type"] == "sqlite"
+
+
+def test_health_reports_ready_for_neo4j(monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.setenv("MNEMOS_STORE_TYPE", "neo4j")
+    monkeypatch.setenv("MNEMOS_NEO4J_URI", "bolt://localhost:7687")
+    monkeypatch.setenv("MNEMOS_NEO4J_USERNAME", "neo4j")
+    monkeypatch.setenv("MNEMOS_NEO4J_PASSWORD", "password")
+    monkeypatch.setenv("MNEMOS_LLM_PROVIDER", "openclaw")
+    monkeypatch.setenv("MNEMOS_OPENCLAW_API_KEY", "test-key")
+    monkeypatch.setenv("MNEMOS_EMBEDDING_PROVIDER", "openclaw")
+    monkeypatch.setattr("mnemos.health._module_available", lambda module_name: module_name == "neo4j")
+
+    report = run_health_checks()
+
+    assert report["profile"] == "scale"
+    assert report["status"] == "ready"
+    assert report["store_type"] == "neo4j"

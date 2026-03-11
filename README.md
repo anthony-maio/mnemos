@@ -631,13 +631,18 @@ engine = MnemosEngine(config=config)
 | `MNEMOS_EMBEDDING_PROVIDER` | inferred from `MNEMOS_LLM_PROVIDER`, else `simple` | `simple`, `ollama`, `openai`, or `openclaw` |
 | `MNEMOS_EMBEDDING_MODEL` | provider-dependent | Embedding model name (e.g. `nomic-embed-text`) |
 | `MNEMOS_EMBEDDING_DIM` | `384` | Embedding dimension for `simple` provider |
-| `MNEMOS_STORE_TYPE` | `memory` | `memory`, `sqlite`, or `qdrant` |
+| `MNEMOS_STORE_TYPE` | `memory` | `memory`, `sqlite`, `qdrant`, or `neo4j` |
 | `MNEMOS_SQLITE_PATH` | `mnemos_memory.db` | SQLite database path |
 | `MNEMOS_QDRANT_URL` | `http://localhost:6333` | Qdrant server URL |
 | `MNEMOS_QDRANT_API_KEY` | — | Optional Qdrant API key |
 | `MNEMOS_QDRANT_PATH` | — | Local embedded Qdrant path (overrides URL) |
 | `MNEMOS_QDRANT_COLLECTION` | `mnemos_memory` | Qdrant collection name |
 | `MNEMOS_QDRANT_VECTOR_SIZE` | — | Optional fixed vector size for pre-created collections |
+| `MNEMOS_NEO4J_URI` | `bolt://localhost:7687` | Neo4j Bolt URI |
+| `MNEMOS_NEO4J_USERNAME` | — | Required when using `neo4j` storage |
+| `MNEMOS_NEO4J_PASSWORD` | — | Required when using `neo4j` storage |
+| `MNEMOS_NEO4J_DATABASE` | `neo4j` | Neo4j database name |
+| `MNEMOS_NEO4J_LABEL` | `MnemosMemoryChunk` | Node label used for persisted memories |
 | `MNEMOS_SURPRISAL_THRESHOLD` | `0.3` | Surprisal gate sensitivity |
 | `MNEMOS_DEBUG` | `false` | Enable verbose debug logging |
 
@@ -693,7 +698,7 @@ Source-of-truth release docs:
 - `openai` — OpenAI or any OpenAI-compatible API (`pip install 'mnemos-memory[openai]'`)
 - `qdrant` — Qdrant vector database backend (`pip install 'mnemos-memory[qdrant]'`)
 - `mcp` — MCP server for Claude Code, Claude Desktop, generic MCP hosts, and documented Codex setup (`pip install 'mnemos-memory[mcp]'`)
-- `neo4j` — Neo4j (planned) graph backend for SpreadingActivation at scale (`pip install 'mnemos-memory[neo4j]'`)
+- `neo4j` — Neo4jStore (experimental) persistent backend for Neo4j deployments (`pip install 'mnemos-memory[neo4j]'`)
 
 **Install everything:**
 ```bash
@@ -704,6 +709,7 @@ pip install 'mnemos-memory[all]'
 - `InMemoryStore` — zero setup, for development and testing
 - `SQLiteStore` — persistent, zero external services, suitable for personal deployments
 - `QdrantStore` — vector database backend for scalable retrieval
+- `Neo4jStore` (experimental) — property-graph persistence for Neo4j environments; spreading activation still hydrates in-process from stored chunks
 
 ## Retrieval Benchmark Harness
 
@@ -748,7 +754,7 @@ pytest
 ```
 
 **Good first contributions:**
-- Neo4j backend for `SpreadingActivation` (the storage interface is ready, the backend isn't)
+- Graph-native `SpreadingActivation` persistence on top of the experimental Neo4j backend
 - Weaviate storage backend
 - Proceduralization quality improvements in `SleepDaemon`
 - Benchmarks comparing retrieval quality against standard RAG baselines

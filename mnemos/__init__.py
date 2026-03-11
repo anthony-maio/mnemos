@@ -62,6 +62,7 @@ from .utils import (
     MnemosTransientError,
     MemoryStore,
     MockLLMProvider,
+    Neo4jStore,
     OllamaEmbeddingProvider,
     OllamaProvider,
     OpenAIEmbeddingProvider,
@@ -127,5 +128,6 @@ __all__ = [
     "MemoryStore",
     "InMemoryStore",
     "SQLiteStore",
+    "Neo4jStore",
     "QdrantStore",
 ]

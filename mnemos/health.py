@@ -121,13 +121,16 @@ def detect_profile(
 
     - starter: sqlite (plugin-first default)
     - local-performance: qdrant with local embedded path
-    - scale: qdrant over URL
+    - scale: qdrant over URL or Neo4j
     """
     resolved = load_settings(
         env=env,
         default_store_type=default_store_type,  # type: ignore[arg-type]
     )
     store_type = resolved.settings.storage.type
+
+    if store_type == "neo4j":
+        return "scale"
 
     if store_type != "qdrant":
         return "starter"
@@ -228,6 +231,38 @@ def run_health_checks(
         else:
             add_check(
                 "store.qdrant.remote", "fail", "MNEMOS_QDRANT_URL must be set for remote Qdrant."
+            )
+    elif store_type == "neo4j":
+        if _module_available("neo4j"):
+            add_check("dependency.neo4j", "pass", "neo4j dependency available.")
+        else:
+            add_check(
+                "dependency.neo4j",
+                "fail",
+                "neo4j not installed. Install with `pip install 'mnemos-memory[neo4j]'`.",
+            )
+
+        if settings.storage.neo4j_uri:
+            add_check("store.neo4j.uri", "pass", f"Neo4j URI configured: {settings.storage.neo4j_uri}")
+        else:
+            add_check("store.neo4j.uri", "fail", "MNEMOS_NEO4J_URI must be set for Neo4j.")
+
+        if settings.providers.neo4j.username:
+            add_check("store.neo4j.username", "pass", "Neo4j username configured.")
+        else:
+            add_check(
+                "store.neo4j.username",
+                "fail",
+                "MNEMOS_NEO4J_USERNAME is required for Neo4j storage.",
+            )
+
+        if settings.providers.neo4j.password:
+            add_check("store.neo4j.password", "pass", "Neo4j password configured.")
+        else:
+            add_check(
+                "store.neo4j.password",
+                "fail",
+                "MNEMOS_NEO4J_PASSWORD is required for Neo4j storage.",
             )
     else:
         add_check("store.type", "fail", f"Unsupported MNEMOS_STORE_TYPE: {store_type!r}")

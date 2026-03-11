@@ -48,6 +48,9 @@ def _mask_secret_fields(payload: dict[str, Any]) -> dict[str, Any]:
             safe_values["configured"] = True
         else:
             safe_values["configured"] = False
+        if safe_values.get("password"):
+            safe_values["password"] = ""
+            safe_values["configured"] = True
         safe_providers[name] = safe_values
     masked["providers"] = safe_providers
     return masked

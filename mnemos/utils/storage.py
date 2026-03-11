@@ -9,13 +9,14 @@ Backends:
 - MemoryStore (abstract): defines the interface
 - InMemoryStore: dict-based, cosine similarity search (development default)
 - SQLiteStore: persistent storage using Python's built-in sqlite3
+- Neo4jStore: persistent property-graph storage using Neo4j
 - QdrantStore: scalable vector retrieval with Qdrant
 
 The InMemoryStore is analogous to the hippocampus — fast, temporary,
 in-process working memory. The SQLiteStore/QdrantStore are analogous to
 neocortical long-term storage — persistent and restart-safe.
 
-Both implement the same interface, so you can swap them transparently.
+All backends implement the same interface, so you can swap them transparently.
 """
 
 from __future__ import annotations
@@ -536,6 +537,280 @@ class SQLiteStore(MemoryStore):
 
     def __del__(self) -> None:
         """Ensure connection is closed on garbage collection."""
+        try:
+            self.close()
+        except Exception:
+            pass
+
+
+class Neo4jStore(MemoryStore):
+    """
+    Persistent storage backend using Neo4j as a property graph store.
+
+    This backend stores each MemoryChunk as a node with scalar properties plus
+    JSON-serialized metadata/cognitive state. Retrieval currently preserves the
+    generic MemoryStore contract by loading candidate chunks and scoring them
+    in Python, mirroring SQLite semantics while enabling Neo4j-backed persistence.
+
+    Requires optional dependency:
+        pip install "mnemos-memory[neo4j]"
+    """
+
+    def __init__(
+        self,
+        *,
+        uri: str,
+        username: str,
+        password: str,
+        database: str = "neo4j",
+        label: str = "MnemosMemoryChunk",
+        name: str = "neo4j",
+    ) -> None:
+        try:
+            from neo4j import GraphDatabase
+        except ImportError as e:
+            raise ImportError(
+                "Neo4jStore requires the 'neo4j' package. "
+                "Install with: pip install 'mnemos-memory[neo4j]'"
+            ) from e
+
+        self.uri = uri
+        self.username = username
+        self.password = password
+        self.database = database
+        self.label = label
+        self.name = name
+        self._lock = threading.RLock()
+        self._driver = GraphDatabase.driver(uri, auth=(username, password))
+        verify_connectivity = getattr(self._driver, "verify_connectivity", None)
+        if callable(verify_connectivity):
+            verify_connectivity()
+        self._ensure_schema()
+
+    @property
+    def _escaped_label(self) -> str:
+        return self.label.replace("`", "")
+
+    def _run(self, query: str, **params: Any) -> Any:
+        with self._lock:
+            with self._driver.session(database=self.database) as session:
+                return session.run(query, **params)
+
+    def _ensure_schema(self) -> None:
+        query = (
+            f"CREATE CONSTRAINT mnemos_memory_chunk_id IF NOT EXISTS "
+            f"FOR (chunk:{self._escaped_label}) REQUIRE chunk.id IS UNIQUE"
+        )
+        self._run(query)
+
+    def _chunk_to_params(self, chunk: MemoryChunk) -> dict[str, Any]:
+        return {
+            "id": chunk.id,
+            "content": chunk.content,
+            "embedding": chunk.embedding,
+            "metadata_json": json.dumps(chunk.metadata),
+            "salience": chunk.salience,
+            "cognitive_state_json": (
+                chunk.cognitive_state.model_dump_json() if chunk.cognitive_state is not None else None
+            ),
+            "created_at": chunk.created_at.isoformat(),
+            "updated_at": chunk.updated_at.isoformat(),
+            "access_count": chunk.access_count,
+            "version": chunk.version,
+        }
+
+    def _record_to_chunk(self, record: Any) -> MemoryChunk:
+        metadata_json = record.get("metadata_json", "{}")
+        cognitive_state_json = record.get("cognitive_state_json")
+        created_at_raw = record.get("created_at")
+        updated_at_raw = record.get("updated_at")
+
+        metadata = json.loads(metadata_json) if metadata_json else {}
+        cognitive_state = (
+            CognitiveState.model_validate_json(cognitive_state_json)
+            if isinstance(cognitive_state_json, str) and cognitive_state_json
+            else None
+        )
+
+        def _parse_dt(value: str | None) -> datetime:
+            if not value:
+                return datetime.now(timezone.utc)
+            dt = datetime.fromisoformat(value)
+            if dt.tzinfo is None:
+                dt = dt.replace(tzinfo=timezone.utc)
+            return dt
+
+        embedding_raw = record.get("embedding")
+        embedding = (
+            [float(x) for x in embedding_raw]
+            if isinstance(embedding_raw, list)
+            else None
+        )
+
+        return MemoryChunk(
+            id=str(record["id"]),
+            content=str(record.get("content", "")),
+            embedding=embedding,
+            metadata=metadata if isinstance(metadata, dict) else {},
+            salience=float(record.get("salience", 0.5)),
+            cognitive_state=cognitive_state,
+            created_at=_parse_dt(created_at_raw),
+            updated_at=_parse_dt(updated_at_raw),
+            access_count=int(record.get("access_count", 0)),
+            version=int(record.get("version", 1)),
+        )
+
+    def store(self, chunk: MemoryChunk) -> None:
+        params = self._chunk_to_params(chunk)
+        query = f"""
+            MERGE (chunk:{self._escaped_label} {{id: $id}})
+            SET chunk.content = $content,
+                chunk.embedding = $embedding,
+                chunk.metadata_json = $metadata_json,
+                chunk.salience = $salience,
+                chunk.cognitive_state_json = $cognitive_state_json,
+                chunk.created_at = $created_at,
+                chunk.updated_at = $updated_at,
+                chunk.access_count = $access_count,
+                chunk.version = $version
+        """
+        self._run(query, **params).consume()
+
+    def retrieve(
+        self,
+        query_embedding: list[float],
+        top_k: int = 5,
+        filter_fn: Callable[[MemoryChunk], bool] | None = None,
+    ) -> list[MemoryChunk]:
+        if top_k <= 0:
+            return []
+
+        all_chunks = self.get_all()
+        if filter_fn is not None:
+            all_chunks = [chunk for chunk in all_chunks if filter_fn(chunk)]
+
+        scored: list[tuple[float, MemoryChunk]] = []
+        for chunk in all_chunks:
+            if chunk.embedding is not None and len(chunk.embedding) == len(query_embedding):
+                sim = cosine_similarity(query_embedding, chunk.embedding)
+            else:
+                sim = 0.0
+            scored.append((sim, chunk))
+
+        scored.sort(key=lambda item: item[0], reverse=True)
+        return [chunk for _, chunk in scored[:top_k]]
+
+    def update(self, chunk_id: str, chunk: MemoryChunk) -> bool:
+        if self.get(chunk_id) is None:
+            return False
+        if chunk.id != chunk_id:
+            chunk = chunk.model_copy(update={"id": chunk_id})
+        self.store(chunk)
+        return True
+
+    def delete(self, chunk_id: str) -> bool:
+        if self.get(chunk_id) is None:
+            return False
+        query = f"""
+            MATCH (chunk:{self._escaped_label})
+            WHERE chunk.id = $chunk_id
+            DELETE chunk
+        """
+        self._run(query, chunk_id=chunk_id).consume()
+        return True
+
+    def touch(
+        self,
+        chunk_id: str,
+        *,
+        access_count: int | None = None,
+        updated_at: datetime | None = None,
+    ) -> bool:
+        chunk = self.get(chunk_id)
+        if chunk is None:
+            return False
+
+        touched_at = updated_at or datetime.now(timezone.utc)
+        next_access_count = chunk.access_count + 1 if access_count is None else access_count
+        query = f"""
+            MATCH (chunk:{self._escaped_label})
+            WHERE chunk.id = $chunk_id
+            SET chunk.access_count = $access_count,
+                chunk.updated_at = $updated_at
+        """
+        self._run(
+            query,
+            chunk_id=chunk_id,
+            access_count=next_access_count,
+            updated_at=touched_at.isoformat(),
+        ).consume()
+        return True
+
+    def get(self, chunk_id: str) -> MemoryChunk | None:
+        query = f"""
+            MATCH (chunk:{self._escaped_label})
+            WHERE chunk.id = $chunk_id
+            RETURN chunk.id AS id,
+                   chunk.content AS content,
+                   chunk.embedding AS embedding,
+                   chunk.metadata_json AS metadata_json,
+                   chunk.salience AS salience,
+                   chunk.cognitive_state_json AS cognitive_state_json,
+                   chunk.created_at AS created_at,
+                   chunk.updated_at AS updated_at,
+                   chunk.access_count AS access_count,
+                   chunk.version AS version
+        """
+        record = self._run(query, chunk_id=chunk_id).single()
+        if record is None:
+            return None
+        return self._record_to_chunk(record)
+
+    def get_all(self) -> list[MemoryChunk]:
+        query = f"""
+            MATCH (chunk:{self._escaped_label})
+            RETURN chunk.id AS id,
+                   chunk.content AS content,
+                   chunk.embedding AS embedding,
+                   chunk.metadata_json AS metadata_json,
+                   chunk.salience AS salience,
+                   chunk.cognitive_state_json AS cognitive_state_json,
+                   chunk.created_at AS created_at,
+                   chunk.updated_at AS updated_at,
+                   chunk.access_count AS access_count,
+                   chunk.version AS version
+        """
+        result = self._run(query)
+        return [self._record_to_chunk(record) for record in result]
+
+    def get_stats(self) -> dict[str, Any]:
+        query = f"""
+            MATCH (chunk:{self._escaped_label})
+            RETURN count(chunk) AS total_chunks,
+                   count(chunk.embedding) AS chunks_with_embeddings,
+                   avg(chunk.salience) AS average_salience,
+                   avg(chunk.access_count) AS average_access_count
+        """
+        record = self._run(query).single() or {}
+        return {
+            "backend": "Neo4jStore",
+            "name": self.name,
+            "uri": self.uri,
+            "database": self.database,
+            "label": self.label,
+            "total_chunks": int(record.get("total_chunks", 0)),
+            "chunks_with_embeddings": int(record.get("chunks_with_embeddings", 0)),
+            "average_salience": round(float(record.get("average_salience", 0.0) or 0.0), 4),
+            "average_access_count": round(
+                float(record.get("average_access_count", 0.0) or 0.0), 4
+            ),
+        }
+
+    def close(self) -> None:
+        with self._lock:
+            self._driver.close()
+
+    def __del__(self) -> None:
         try:
             self.close()
         except Exception:
