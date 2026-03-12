@@ -48,6 +48,8 @@ def fake_neo4j(monkeypatch: pytest.MonkeyPatch) -> None:
 
         def run(self, query: str, **params: Any) -> FakeResult:
             normalized = " ".join(query.split())
+            if normalized.startswith("SHOW CONSTRAINTS"):
+                return FakeResult([{"total": 0}])
             if "CREATE CONSTRAINT" in normalized:
                 return FakeResult()
 
@@ -64,14 +66,17 @@ def fake_neo4j(monkeypatch: pytest.MonkeyPatch) -> None:
                 node["updated_at"] = params["updated_at"]
                 return FakeResult(counters=FakeCounters(properties_set=2))
 
-            if "RETURN chunk.id AS id" in normalized and "WHERE chunk.id = $chunk_id" in normalized:
+            if (
+                "RETURN properties(chunk)['id'] AS id" in normalized
+                and "WHERE chunk.id = $chunk_id" in normalized
+            ):
                 node = self._driver.nodes.get(params["chunk_id"])
                 if node is None:
                     return FakeResult()
                 return FakeResult([dict(node)])
 
             if (
-                "RETURN chunk.id AS id" in normalized
+                "RETURN properties(chunk)['id'] AS id" in normalized
                 and "MATCH (chunk:" in normalized
                 and "WHERE chunk.id = $chunk_id" not in normalized
             ):
@@ -172,7 +177,9 @@ def strict_fake_neo4j(monkeypatch: pytest.MonkeyPatch) -> None:
 
         def run(self, query: str, **params: Any) -> FakeResult:
             normalized = " ".join(query.split())
-            if "CREATE CONSTRAINT" in normalized:
+            if normalized.startswith("SHOW CONSTRAINTS"):
+                result = FakeResult([{"total": 0}])
+            elif "CREATE CONSTRAINT" in normalized:
                 result = FakeResult()
             elif "RETURN count(chunk) AS total_chunks" in normalized:
                 result = FakeResult(
@@ -189,6 +196,120 @@ def strict_fake_neo4j(monkeypatch: pytest.MonkeyPatch) -> None:
                 raise AssertionError(f"Unexpected Cypher query: {normalized}")
             self._results.append(result)
             return result
+
+    class FakeDriver:
+        def verify_connectivity(self) -> None:
+            return None
+
+        def session(self, *, database: str | None = None) -> FakeSession:
+            return FakeSession()
+
+        def close(self) -> None:
+            return None
+
+    class FakeGraphDatabase:
+        @staticmethod
+        def driver(uri: str, auth: tuple[str, str]) -> FakeDriver:
+            return FakeDriver()
+
+    fake_module = types.ModuleType("neo4j")
+    fake_module.GraphDatabase = FakeGraphDatabase  # type: ignore[attr-defined]
+    monkeypatch.setitem(sys.modules, "neo4j", fake_module)
+
+
+@pytest.fixture
+def warning_safe_fake_neo4j(monkeypatch: pytest.MonkeyPatch) -> None:
+    expected_projection = (
+        "RETURN properties(chunk)['id'] AS id, "
+        "properties(chunk)['content'] AS content, "
+        "properties(chunk)['embedding'] AS embedding, "
+        "properties(chunk)['metadata_json'] AS metadata_json, "
+        "properties(chunk)['salience'] AS salience, "
+        "properties(chunk)['cognitive_state_json'] AS cognitive_state_json, "
+        "properties(chunk)['created_at'] AS created_at, "
+        "properties(chunk)['updated_at'] AS updated_at, "
+        "properties(chunk)['access_count'] AS access_count, "
+        "properties(chunk)['version'] AS version"
+    )
+    expected_stats = (
+        "RETURN count(chunk) AS total_chunks, "
+        "count(properties(chunk)['embedding']) AS chunks_with_embeddings, "
+        "avg(properties(chunk)['salience']) AS average_salience, "
+        "avg(properties(chunk)['access_count']) AS average_access_count"
+    )
+
+    class FakeResult:
+        def __init__(self, records: list[dict[str, Any]] | None = None) -> None:
+            self._records = records or []
+
+        def __iter__(self):
+            return iter(self._records)
+
+        def single(self) -> dict[str, Any] | None:
+            return self._records[0] if self._records else None
+
+        def consume(self) -> None:
+            return None
+
+    class FakeSession:
+        def __enter__(self) -> "FakeSession":
+            return self
+
+        def __exit__(self, exc_type: object, exc: object, tb: object) -> bool:
+            return False
+
+        def run(self, query: str, **params: Any) -> FakeResult:
+            normalized = " ".join(query.split())
+            if normalized.startswith("SHOW CONSTRAINTS"):
+                return FakeResult([{"total": 0}])
+            if "CREATE CONSTRAINT" in normalized:
+                return FakeResult()
+            if expected_projection in normalized and "WHERE chunk.id = $chunk_id" in normalized:
+                return FakeResult(
+                    [
+                        {
+                            "id": params["chunk_id"],
+                            "content": "neo4j warning-safe get",
+                            "embedding": [1.0, 0.0, 0.0],
+                            "metadata_json": "{}",
+                            "salience": 0.5,
+                            "cognitive_state_json": None,
+                            "created_at": "2026-03-12T00:00:00+00:00",
+                            "updated_at": "2026-03-12T00:00:00+00:00",
+                            "access_count": 0,
+                            "version": 1,
+                        }
+                    ]
+                )
+            if expected_projection in normalized and "WHERE chunk.id = $chunk_id" not in normalized:
+                return FakeResult(
+                    [
+                        {
+                            "id": "all",
+                            "content": "neo4j warning-safe list",
+                            "embedding": [1.0, 0.0, 0.0],
+                            "metadata_json": "{}",
+                            "salience": 0.5,
+                            "cognitive_state_json": None,
+                            "created_at": "2026-03-12T00:00:00+00:00",
+                            "updated_at": "2026-03-12T00:00:00+00:00",
+                            "access_count": 0,
+                            "version": 1,
+                        }
+                    ]
+                )
+            if expected_stats in normalized:
+                return FakeResult(
+                    [
+                        {
+                            "total_chunks": 1,
+                            "chunks_with_embeddings": 1,
+                            "average_salience": 0.5,
+                            "average_access_count": 0.0,
+                        }
+                    ]
+                )
+            raise AssertionError(f"Unexpected Cypher query: {normalized}")
 
     class FakeDriver:
         def verify_connectivity(self) -> None:
@@ -275,3 +396,209 @@ def test_neo4j_store_materializes_results_before_session_close(strict_fake_neo4j
     stats = store.get_stats()
 
     assert stats["total_chunks"] == 0
+
+
+def test_neo4j_store_uses_warning_safe_property_access(
+    warning_safe_fake_neo4j: None,
+) -> None:
+    store = Neo4jStore(
+        uri="bolt://localhost:7687",
+        username="neo4j",
+        password="password",
+        database="mnemos",
+        label="MnemosMemoryChunk",
+    )
+
+    fetched = store.get("chunk-1")
+    all_chunks = store.get_all()
+    stats = store.get_stats()
+
+    assert fetched is not None
+    assert fetched.content == "neo4j warning-safe get"
+    assert len(all_chunks) == 1
+    assert stats["chunks_with_embeddings"] == 1
+
+
+def test_neo4j_store_uses_label_specific_constraint_name(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    seen_queries: list[str] = []
+
+    class FakeResult:
+        def __iter__(self):
+            return iter([])
+
+        def single(self) -> None:
+            return None
+
+        def consume(self) -> None:
+            return None
+
+    class FakeSession:
+        def __enter__(self) -> "FakeSession":
+            return self
+
+        def __exit__(self, exc_type: object, exc: object, tb: object) -> bool:
+            return False
+
+        def run(self, query: str, **params: Any) -> FakeResult:
+            seen_queries.append(" ".join(query.split()))
+            return FakeResult()
+
+    class FakeDriver:
+        def verify_connectivity(self) -> None:
+            return None
+
+        def session(self, *, database: str | None = None) -> FakeSession:
+            return FakeSession()
+
+        def close(self) -> None:
+            return None
+
+    class FakeGraphDatabase:
+        @staticmethod
+        def driver(uri: str, auth: tuple[str, str]) -> FakeDriver:
+            return FakeDriver()
+
+    fake_module = types.ModuleType("neo4j")
+    fake_module.GraphDatabase = FakeGraphDatabase  # type: ignore[attr-defined]
+    monkeypatch.setitem(sys.modules, "neo4j", fake_module)
+
+    Neo4jStore(
+        uri="bolt://localhost:7687",
+        username="neo4j",
+        password="password",
+        database="mnemos",
+        label="MnemosMigrationSmoke",
+    )
+
+    assert seen_queries
+    assert any(
+        "CREATE CONSTRAINT mnemos_memory_chunk_id_mnemosmigrationsmoke" in query
+        for query in seen_queries
+    )
+
+
+def test_neo4j_store_preserves_legacy_constraint_name_for_default_label(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    seen_queries: list[str] = []
+
+    class FakeResult:
+        def __iter__(self):
+            return iter([])
+
+        def single(self) -> None:
+            return None
+
+        def consume(self) -> None:
+            return None
+
+    class FakeSession:
+        def __enter__(self) -> "FakeSession":
+            return self
+
+        def __exit__(self, exc_type: object, exc: object, tb: object) -> bool:
+            return False
+
+        def run(self, query: str, **params: Any) -> FakeResult:
+            seen_queries.append(" ".join(query.split()))
+            return FakeResult()
+
+    class FakeDriver:
+        def verify_connectivity(self) -> None:
+            return None
+
+        def session(self, *, database: str | None = None) -> FakeSession:
+            return FakeSession()
+
+        def close(self) -> None:
+            return None
+
+    class FakeGraphDatabase:
+        @staticmethod
+        def driver(uri: str, auth: tuple[str, str]) -> FakeDriver:
+            return FakeDriver()
+
+    fake_module = types.ModuleType("neo4j")
+    fake_module.GraphDatabase = FakeGraphDatabase  # type: ignore[attr-defined]
+    monkeypatch.setitem(sys.modules, "neo4j", fake_module)
+
+    Neo4jStore(
+        uri="bolt://localhost:7687",
+        username="neo4j",
+        password="password",
+        database="mnemos",
+        label="MnemosMemoryChunk",
+    )
+
+    assert seen_queries
+    assert any(
+        "CREATE CONSTRAINT mnemos_memory_chunk_id IF NOT EXISTS" in query
+        for query in seen_queries
+    )
+
+
+def test_neo4j_store_skips_constraint_create_when_schema_already_exists(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    seen_queries: list[str] = []
+
+    class FakeResult:
+        def __init__(self, records: list[dict[str, Any]] | None = None) -> None:
+            self._records = records or []
+
+        def __iter__(self):
+            return iter(self._records)
+
+        def single(self) -> dict[str, Any] | None:
+            return self._records[0] if self._records else None
+
+        def consume(self) -> None:
+            return None
+
+    class FakeSession:
+        def __enter__(self) -> "FakeSession":
+            return self
+
+        def __exit__(self, exc_type: object, exc: object, tb: object) -> bool:
+            return False
+
+        def run(self, query: str, **params: Any) -> FakeResult:
+            normalized = " ".join(query.split())
+            seen_queries.append(normalized)
+            if normalized.startswith("SHOW CONSTRAINTS"):
+                return FakeResult([{"total": 1}])
+            if normalized.startswith("CREATE CONSTRAINT"):
+                return FakeResult()
+            return FakeResult()
+
+    class FakeDriver:
+        def verify_connectivity(self) -> None:
+            return None
+
+        def session(self, *, database: str | None = None) -> FakeSession:
+            return FakeSession()
+
+        def close(self) -> None:
+            return None
+
+    class FakeGraphDatabase:
+        @staticmethod
+        def driver(uri: str, auth: tuple[str, str]) -> FakeDriver:
+            return FakeDriver()
+
+    fake_module = types.ModuleType("neo4j")
+    fake_module.GraphDatabase = FakeGraphDatabase  # type: ignore[attr-defined]
+    monkeypatch.setitem(sys.modules, "neo4j", fake_module)
+
+    Neo4jStore(
+        uri="bolt://localhost:7687",
+        username="neo4j",
+        password="password",
+        database="mnemos",
+        label="MnemosMemoryChunk",
+    )
+
+    assert any(query.startswith("SHOW CONSTRAINTS") for query in seen_queries)
+    assert not any(query.startswith("CREATE CONSTRAINT") for query in seen_queries)

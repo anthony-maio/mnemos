@@ -23,6 +23,7 @@ from __future__ import annotations
 
 import json
 import logging
+import re
 import sqlite3
 import threading
 from abc import ABC, abstractmethod
@@ -591,6 +592,15 @@ class Neo4jStore(MemoryStore):
     def _escaped_label(self) -> str:
         return self.label.replace("`", "")
 
+    @property
+    def _constraint_name(self) -> str:
+        if self._escaped_label == "MnemosMemoryChunk":
+            return "mnemos_memory_chunk_id"
+        sanitized = re.sub(r"[^0-9A-Za-z_]+", "_", self._escaped_label).strip("_").lower()
+        if not sanitized:
+            sanitized = "chunks"
+        return f"mnemos_memory_chunk_id_{sanitized}"
+
     def _run(self, query: str, **params: Any) -> Any:
         class _BufferedResult:
             def __init__(self, records: list[Any], counters: Any) -> None:
@@ -614,8 +624,28 @@ class Neo4jStore(MemoryStore):
                 return _BufferedResult(records, counters)
 
     def _ensure_schema(self) -> None:
+        check_query = """
+            SHOW CONSTRAINTS
+            YIELD name, labelsOrTypes, properties
+            WHERE name = $constraint_name
+               OR (
+                   size(labelsOrTypes) = 1
+                   AND labelsOrTypes[0] = $label
+                   AND size(properties) = 1
+                   AND properties[0] = 'id'
+               )
+            RETURN count(*) AS total
+        """
+        existing = self._run(
+            check_query,
+            constraint_name=self._constraint_name,
+            label=self._escaped_label,
+        ).single() or {}
+        if int(existing.get("total", 0) or 0) > 0:
+            return
+
         query = (
-            f"CREATE CONSTRAINT mnemos_memory_chunk_id IF NOT EXISTS "
+            f"CREATE CONSTRAINT {self._constraint_name} IF NOT EXISTS "
             f"FOR (chunk:{self._escaped_label}) REQUIRE chunk.id IS UNIQUE"
         )
         self._run(query)
@@ -767,16 +797,16 @@ class Neo4jStore(MemoryStore):
         query = f"""
             MATCH (chunk:{self._escaped_label})
             WHERE chunk.id = $chunk_id
-            RETURN chunk.id AS id,
-                   chunk.content AS content,
-                   chunk.embedding AS embedding,
-                   chunk.metadata_json AS metadata_json,
-                   chunk.salience AS salience,
-                   chunk.cognitive_state_json AS cognitive_state_json,
-                   chunk.created_at AS created_at,
-                   chunk.updated_at AS updated_at,
-                   chunk.access_count AS access_count,
-                   chunk.version AS version
+            RETURN properties(chunk)['id'] AS id,
+                   properties(chunk)['content'] AS content,
+                   properties(chunk)['embedding'] AS embedding,
+                   properties(chunk)['metadata_json'] AS metadata_json,
+                   properties(chunk)['salience'] AS salience,
+                   properties(chunk)['cognitive_state_json'] AS cognitive_state_json,
+                   properties(chunk)['created_at'] AS created_at,
+                   properties(chunk)['updated_at'] AS updated_at,
+                   properties(chunk)['access_count'] AS access_count,
+                   properties(chunk)['version'] AS version
         """
         record = self._run(query, chunk_id=chunk_id).single()
         if record is None:
@@ -786,16 +816,16 @@ class Neo4jStore(MemoryStore):
     def get_all(self) -> list[MemoryChunk]:
         query = f"""
             MATCH (chunk:{self._escaped_label})
-            RETURN chunk.id AS id,
-                   chunk.content AS content,
-                   chunk.embedding AS embedding,
-                   chunk.metadata_json AS metadata_json,
-                   chunk.salience AS salience,
-                   chunk.cognitive_state_json AS cognitive_state_json,
-                   chunk.created_at AS created_at,
-                   chunk.updated_at AS updated_at,
-                   chunk.access_count AS access_count,
-                   chunk.version AS version
+            RETURN properties(chunk)['id'] AS id,
+                   properties(chunk)['content'] AS content,
+                   properties(chunk)['embedding'] AS embedding,
+                   properties(chunk)['metadata_json'] AS metadata_json,
+                   properties(chunk)['salience'] AS salience,
+                   properties(chunk)['cognitive_state_json'] AS cognitive_state_json,
+                   properties(chunk)['created_at'] AS created_at,
+                   properties(chunk)['updated_at'] AS updated_at,
+                   properties(chunk)['access_count'] AS access_count,
+                   properties(chunk)['version'] AS version
         """
         result = self._run(query)
         return [self._record_to_chunk(record) for record in result]
@@ -804,9 +834,9 @@ class Neo4jStore(MemoryStore):
         query = f"""
             MATCH (chunk:{self._escaped_label})
             RETURN count(chunk) AS total_chunks,
-                   count(chunk.embedding) AS chunks_with_embeddings,
-                   avg(chunk.salience) AS average_salience,
-                   avg(chunk.access_count) AS average_access_count
+                   count(properties(chunk)['embedding']) AS chunks_with_embeddings,
+                   avg(properties(chunk)['salience']) AS average_salience,
+                   avg(properties(chunk)['access_count']) AS average_access_count
         """
         record = self._run(query).single() or {}
         return {
