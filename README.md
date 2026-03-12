@@ -350,6 +350,7 @@ Default plugin behavior:
   - otherwise `mock`
  - embedding provider inferred from the selected LLM provider unless explicitly overridden
  - if `MNEMOS_STORE_TYPE=qdrant`, the plugin bootstrap installs the `qdrant` extra automatically
+ - if `MNEMOS_STORE_TYPE=neo4j`, the plugin bootstrap installs the `neo4j` extra automatically
 
 The server exposes eight tools:
 
@@ -384,6 +385,19 @@ mnemos-cli profile starter --format dotenv --write .mnemos.profile.env
 
 # Local performance profile (embedded qdrant)
 mnemos-cli profile local-performance --format dotenv --write .mnemos.profile.env
+```
+
+Store migration examples:
+
+```bash
+# Dry-run old Qdrant memories into the active Neo4j config
+mnemos-cli migrate-store --source-store qdrant --target-store neo4j --dry-run
+
+# Execute Qdrant -> Neo4j migration
+mnemos-cli migrate-store --source-store qdrant --target-store neo4j
+
+# Migrate a specific SQLite database into Neo4j
+mnemos-cli migrate-store --source-store sqlite --source-sqlite-path .mnemos/memory.db --target-store neo4j
 ```
 
 Scoped memory examples (cross-project aware):
@@ -663,13 +677,14 @@ Mnemos is ready for a disciplined public open-source release. It is not yet read
 | Claude Code | Tier 1 supported | Primary install path via plugin; validated end-to-end. |
 | Claude Desktop | Tier 1 supported | Minimal tested stdio config ships in the repo. |
 | Generic MCP stdio hosts | Tier 1 supported | Validated against the live MCP server. |
-| Codex | Tier 2 documented | Supported through MCP + `AGENTS.md`; promote after verified daily-use validation. |
-| Cursor / Windsurf / Cline | Tier 2 best effort | Configs and docs exist, but are not part of the release-blocking validation set. |
+| Codex | Tier 2 documented | Supported through MCP + `AGENTS.md`; shared `MNEMOS_CONFIG_PATH` to Neo4j is validated, but auto-capture is still manual/tool-driven. |
+| Cursor / Windsurf / Cline | Tier 2 best effort | Configs and docs exist; Cursor shared-config resolution to Neo4j is covered in tests, but auto-capture is not yet shipped. |
 
 The current product promise is narrower than the architecture story:
 
 - safe scoped memory for solo coding-agent workflows
 - local-first persistence with SQLite as the starter profile
+- Neo4j-backed persistence is validated as an advanced/shared deployment path
 - biomimetic retrieval and consolidation under the hood
 - verified Tier 1 support for Claude Code, Claude Desktop, and generic MCP hosts
 

@@ -67,6 +67,16 @@ def test_plugin_wrapper_required_extras_include_qdrant(monkeypatch) -> None:
     assert "qdrant" in extras
 
 
+def test_plugin_wrapper_required_extras_include_neo4j(monkeypatch) -> None:
+    wrapper = _load_plugin_wrapper()
+
+    monkeypatch.setenv("MNEMOS_STORE_TYPE", "neo4j")
+    extras = wrapper._required_install_extras(dict(os.environ))
+
+    assert "mcp" in extras
+    assert "neo4j" in extras
+
+
 def test_plugin_wrapper_uses_explicit_runtime_python(monkeypatch) -> None:
     wrapper = _load_plugin_wrapper()
     plugin_root = Path(".").resolve()

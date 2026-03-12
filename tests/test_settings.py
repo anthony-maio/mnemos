@@ -243,3 +243,115 @@ MNEMOS_SQLITE_PATH = ".mnemos/memory.db"
     assert imported.settings.providers.openrouter.api_key == "router-key"
     assert imported.settings.storage.sqlite_path == ".mnemos/memory.db"
     assert "codex" in imported.sources
+
+
+def test_import_existing_setup_reads_codex_config_path_for_neo4j(tmp_path: Path) -> None:
+    home_dir = tmp_path / "home"
+    config_path = tmp_path / "Mnemos" / "mnemos.toml"
+    config_path.parent.mkdir(parents=True)
+    config_path.write_text(
+        """
+[llm]
+provider = "ollama"
+
+[embedding]
+provider = "ollama"
+
+[storage]
+type = "neo4j"
+neo4j_uri = "bolt://nas:7687"
+neo4j_database = "neo4j"
+neo4j_label = "MnemosMemoryChunk"
+
+[providers.ollama]
+base_url = "http://ollama:11434"
+
+[providers.neo4j]
+username = "neo4j"
+password = "secret"
+""".strip(),
+        encoding="utf-8",
+    )
+
+    codex_config = home_dir / ".codex" / "config.toml"
+    codex_config.parent.mkdir(parents=True)
+    codex_config.write_text(
+        f"""
+[mcp_servers.mnemos]
+command = "mnemos-mcp"
+
+[mcp_servers.mnemos.env]
+MNEMOS_CONFIG_PATH = "{config_path.as_posix()}"
+""".strip(),
+        encoding="utf-8",
+    )
+
+    imported = import_existing_setup(
+        env={},
+        cwd=tmp_path / "repo",
+        home=home_dir,
+    )
+
+    assert imported.settings.storage.type == "neo4j"
+    assert imported.settings.storage.neo4j_uri == "bolt://nas:7687"
+    assert imported.settings.providers.neo4j.username == "neo4j"
+    assert imported.settings.providers.neo4j.password == "secret"
+    assert "codex" in imported.sources
+
+
+def test_import_existing_setup_reads_cursor_config_path_for_neo4j(tmp_path: Path) -> None:
+    repo_dir = tmp_path / "repo"
+    repo_dir.mkdir(parents=True)
+    config_path = tmp_path / "Mnemos" / "mnemos.toml"
+    config_path.parent.mkdir(parents=True)
+    config_path.write_text(
+        """
+[llm]
+provider = "ollama"
+
+[embedding]
+provider = "ollama"
+
+[storage]
+type = "neo4j"
+neo4j_uri = "bolt://nas:7687"
+
+[providers.ollama]
+base_url = "http://ollama:11434"
+
+[providers.neo4j]
+username = "neo4j"
+password = "secret"
+""".strip(),
+        encoding="utf-8",
+    )
+
+    cursor_config = repo_dir / ".cursor" / "mcp.json"
+    cursor_config.parent.mkdir(parents=True)
+    cursor_config.write_text(
+        f"""
+{{
+  "mcpServers": {{
+    "mnemos": {{
+      "command": "mnemos-mcp",
+      "env": {{
+        "MNEMOS_CONFIG_PATH": "{config_path.as_posix()}"
+      }}
+    }}
+  }}
+}}
+""".strip(),
+        encoding="utf-8",
+    )
+
+    imported = import_existing_setup(
+        env={},
+        cwd=repo_dir,
+        home=tmp_path / "home",
+    )
+
+    assert imported.settings.storage.type == "neo4j"
+    assert imported.settings.storage.neo4j_uri == "bolt://nas:7687"
+    assert imported.settings.providers.neo4j.username == "neo4j"
+    assert imported.settings.providers.neo4j.password == "secret"
+    assert "cursor" in imported.sources

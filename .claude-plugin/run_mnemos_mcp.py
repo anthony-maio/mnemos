@@ -36,6 +36,8 @@ def _required_install_extras(env: dict[str, str]) -> tuple[str, ...]:
     store_type = env.get("MNEMOS_STORE_TYPE", env.get("MNEMOS_STORAGE", "sqlite")).lower()
     if store_type == "qdrant":
         extras.append("qdrant")
+    if store_type == "neo4j":
+        extras.append("neo4j")
     return tuple(sorted(set(extras)))
 
 

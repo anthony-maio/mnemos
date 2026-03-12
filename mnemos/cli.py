@@ -44,6 +44,7 @@ PROFILE_CHOICES = ("starter", "local-performance", "scale")
 VALID_SCOPES = ("project", "workspace", "global")
 AUDIT_SCOPES = ("all", "project", "workspace", "global")
 ANTIGRAVITY_HOST_CHOICES = ("cursor", "generic-mcp", "codex")
+MIGRATION_STORE_CHOICES = ("sqlite", "qdrant", "neo4j")
 MemoryAction = Literal["allow", "redact", "block"]
 CaptureMode = Literal["all", "manual_only", "hooks_only"]
 
@@ -250,6 +251,67 @@ def _serialize_chunk(chunk: Any) -> dict[str, Any]:
         "updated_at": chunk.updated_at.isoformat(),
         "metadata": chunk.metadata,
     }
+
+
+def _build_store_for_migration(
+    *,
+    store_type: str,
+    sqlite_path: str = "",
+    qdrant_path: str = "",
+    qdrant_url: str = "",
+    qdrant_collection: str = "",
+    neo4j_uri: str = "",
+    neo4j_database: str = "",
+    neo4j_label: str = "",
+    neo4j_username: str = "",
+    neo4j_password: str = "",
+) -> Any:
+    env = dict(os.environ)
+    env["MNEMOS_STORE_TYPE"] = store_type
+
+    if sqlite_path:
+        env["MNEMOS_SQLITE_PATH"] = sqlite_path
+
+    if qdrant_path:
+        env["MNEMOS_QDRANT_PATH"] = qdrant_path
+    if qdrant_url:
+        env["MNEMOS_QDRANT_URL"] = qdrant_url
+    if qdrant_collection:
+        env["MNEMOS_QDRANT_COLLECTION"] = qdrant_collection
+
+    if neo4j_uri:
+        env["MNEMOS_NEO4J_URI"] = neo4j_uri
+    if neo4j_database:
+        env["MNEMOS_NEO4J_DATABASE"] = neo4j_database
+    if neo4j_label:
+        env["MNEMOS_NEO4J_LABEL"] = neo4j_label
+    if neo4j_username:
+        env["MNEMOS_NEO4J_USERNAME"] = neo4j_username
+    if neo4j_password:
+        env["MNEMOS_NEO4J_PASSWORD"] = neo4j_password
+
+    return build_store_from_env(default_store_type="sqlite", env=env)
+
+
+def _migrate_chunks(*, source_store: Any, target_store: Any, dry_run: bool) -> dict[str, Any]:
+    chunks = source_store.get_all()
+    migrated = 0
+    if not dry_run:
+        for chunk in chunks:
+            target_store.store(chunk)
+            migrated += 1
+    return {
+        "scanned": len(chunks),
+        "migrated": migrated,
+        "skipped": 0,
+        "dry_run": dry_run,
+    }
+
+
+def _close_store_quietly(store: Any) -> None:
+    close = getattr(store, "close", None)
+    if callable(close):
+        close()
 
 
 def _filtered_chunks(
@@ -561,6 +623,54 @@ async def _cmd_profile(args: argparse.Namespace) -> None:
             handle.write(text)
 
 
+async def _cmd_migrate_store(args: argparse.Namespace) -> None:
+    if args.source_store not in MIGRATION_STORE_CHOICES:
+        raise ValueError(f"Unsupported source store: {args.source_store!r}")
+    if args.target_store not in MIGRATION_STORE_CHOICES:
+        raise ValueError(f"Unsupported target store: {args.target_store!r}")
+    if args.source_store == args.target_store:
+        raise ValueError("Source and target store types must differ.")
+
+    source_store = _build_store_for_migration(
+        store_type=args.source_store,
+        sqlite_path=args.source_sqlite_path,
+        qdrant_path=args.source_qdrant_path,
+        qdrant_url=args.source_qdrant_url,
+        qdrant_collection=args.source_qdrant_collection,
+        neo4j_uri=args.source_neo4j_uri,
+        neo4j_database=args.source_neo4j_database,
+        neo4j_label=args.source_neo4j_label,
+        neo4j_username=args.source_neo4j_username,
+        neo4j_password=args.source_neo4j_password,
+    )
+    target_store = _build_store_for_migration(
+        store_type=args.target_store,
+        sqlite_path=args.target_sqlite_path,
+        qdrant_path=args.target_qdrant_path,
+        qdrant_url=args.target_qdrant_url,
+        qdrant_collection=args.target_qdrant_collection,
+        neo4j_uri=args.target_neo4j_uri,
+        neo4j_database=args.target_neo4j_database,
+        neo4j_label=args.target_neo4j_label,
+        neo4j_username=args.target_neo4j_username,
+        neo4j_password=args.target_neo4j_password,
+    )
+
+    try:
+        summary = _migrate_chunks(
+            source_store=source_store,
+            target_store=target_store,
+            dry_run=args.dry_run,
+        )
+    finally:
+        _close_store_quietly(source_store)
+        _close_store_quietly(target_store)
+
+    summary["source_store"] = args.source_store
+    summary["target_store"] = args.target_store
+    print(json.dumps(summary, indent=2))
+
+
 async def _cmd_antigravity(args: argparse.Namespace) -> None:
     policy = _build_antigravity_policy(args.host)
     if args.format == "json":
@@ -854,6 +964,32 @@ def main() -> None:
         help="Qdrant collection name used by qdrant profiles.",
     )
 
+    sp_migrate = subparsers.add_parser(
+        "migrate-store",
+        help="Copy memory chunks between configured persistent stores.",
+    )
+    sp_migrate.add_argument("--source-store", required=True, choices=MIGRATION_STORE_CHOICES)
+    sp_migrate.add_argument("--target-store", required=True, choices=MIGRATION_STORE_CHOICES)
+    sp_migrate.add_argument("--source-sqlite-path", default="")
+    sp_migrate.add_argument("--source-qdrant-path", default="")
+    sp_migrate.add_argument("--source-qdrant-url", default="")
+    sp_migrate.add_argument("--source-qdrant-collection", default="")
+    sp_migrate.add_argument("--source-neo4j-uri", default="")
+    sp_migrate.add_argument("--source-neo4j-database", default="")
+    sp_migrate.add_argument("--source-neo4j-label", default="")
+    sp_migrate.add_argument("--source-neo4j-username", default="")
+    sp_migrate.add_argument("--source-neo4j-password", default="")
+    sp_migrate.add_argument("--target-sqlite-path", default="")
+    sp_migrate.add_argument("--target-qdrant-path", default="")
+    sp_migrate.add_argument("--target-qdrant-url", default="")
+    sp_migrate.add_argument("--target-qdrant-collection", default="")
+    sp_migrate.add_argument("--target-neo4j-uri", default="")
+    sp_migrate.add_argument("--target-neo4j-database", default="")
+    sp_migrate.add_argument("--target-neo4j-label", default="")
+    sp_migrate.add_argument("--target-neo4j-username", default="")
+    sp_migrate.add_argument("--target-neo4j-password", default="")
+    sp_migrate.add_argument("--dry-run", action="store_true")
+
     sp_antigravity = subparsers.add_parser(
         "antigravity",
         help="Generate host autopilot policy text for automatic Mnemos tool use.",
@@ -939,6 +1075,8 @@ def main() -> None:
         asyncio.run(_cmd_doctor(args))
     elif args.command == "profile":
         asyncio.run(_cmd_profile(args))
+    elif args.command == "migrate-store":
+        asyncio.run(_cmd_migrate_store(args))
     elif args.command == "antigravity":
         asyncio.run(_cmd_antigravity(args))
     elif args.command == "autostore-hook":

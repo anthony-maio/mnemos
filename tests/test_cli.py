@@ -11,6 +11,7 @@ import pytest
 
 from argparse import Namespace
 
+import mnemos.cli as cli_module
 from mnemos.cli import (
     _build_antigravity_policy,
     _build_engine,
@@ -21,6 +22,7 @@ from mnemos.cli import (
     _cmd_export,
     _cmd_inspect,
     _cmd_list,
+    _cmd_migrate_store,
     _cmd_purge,
     _cmd_profile,
     _cmd_retrieve,
@@ -455,6 +457,122 @@ async def test_cli_autostore_hook_stores_when_decision_allows(
     assert engine.scope_id == "repo-alpha"
     captured = capsys.readouterr().out
     assert '"stored": true' in captured.lower()
+
+
+def test_migrate_chunks_dry_run_reports_counts_without_writing() -> None:
+    class DummyStore:
+        def __init__(self, chunks: list[MemoryChunk]) -> None:
+            self._chunks = chunks
+            self.stored: list[MemoryChunk] = []
+
+        def get_all(self) -> list[MemoryChunk]:
+            return list(self._chunks)
+
+        def store(self, chunk: MemoryChunk) -> None:
+            self.stored.append(chunk)
+
+    source = DummyStore(
+        [
+            MemoryChunk(content="chunk-a"),
+            MemoryChunk(content="chunk-b"),
+        ]
+    )
+    target = DummyStore([])
+
+    summary = cli_module._migrate_chunks(source_store=source, target_store=target, dry_run=True)
+
+    assert summary["scanned"] == 2
+    assert summary["migrated"] == 0
+    assert summary["dry_run"] is True
+    assert target.stored == []
+
+
+def test_migrate_chunks_copies_chunks_to_target() -> None:
+    class DummyStore:
+        def __init__(self, chunks: list[MemoryChunk]) -> None:
+            self._chunks = chunks
+            self.stored: list[MemoryChunk] = []
+
+        def get_all(self) -> list[MemoryChunk]:
+            return list(self._chunks)
+
+        def store(self, chunk: MemoryChunk) -> None:
+            self.stored.append(chunk)
+
+    source = DummyStore([MemoryChunk(content="chunk-a"), MemoryChunk(content="chunk-b")])
+    target = DummyStore([])
+
+    summary = cli_module._migrate_chunks(source_store=source, target_store=target, dry_run=False)
+
+    assert summary["scanned"] == 2
+    assert summary["migrated"] == 2
+    assert [chunk.content for chunk in target.stored] == ["chunk-a", "chunk-b"]
+
+
+@pytest.mark.asyncio
+async def test_cli_migrate_store_prints_json_summary(
+    monkeypatch: pytest.MonkeyPatch, capsys: Any
+) -> None:
+    class DummyStore:
+        def __init__(self, chunks: list[MemoryChunk]) -> None:
+            self._chunks = chunks
+            self.stored: list[MemoryChunk] = []
+            self.closed = False
+
+        def get_all(self) -> list[MemoryChunk]:
+            return list(self._chunks)
+
+        def store(self, chunk: MemoryChunk) -> None:
+            self.stored.append(chunk)
+
+        def close(self) -> None:
+            self.closed = True
+
+    source_store = DummyStore([MemoryChunk(content="chunk-a")])
+    target_store = DummyStore([])
+
+    def fake_build_store_for_migration(**kwargs: Any) -> DummyStore:
+        store_type = kwargs["store_type"]
+        if store_type == "qdrant":
+            return source_store
+        if store_type == "neo4j":
+            return target_store
+        raise AssertionError(f"Unexpected store type: {store_type}")
+
+    monkeypatch.setattr(cli_module, "_build_store_for_migration", fake_build_store_for_migration)
+
+    await _cmd_migrate_store(
+        Namespace(
+            source_store="qdrant",
+            target_store="neo4j",
+            source_sqlite_path="",
+            source_qdrant_path="",
+            source_qdrant_url="",
+            source_qdrant_collection="",
+            source_neo4j_uri="",
+            source_neo4j_database="",
+            source_neo4j_label="",
+            source_neo4j_username="",
+            source_neo4j_password="",
+            target_sqlite_path="",
+            target_qdrant_path="",
+            target_qdrant_url="",
+            target_qdrant_collection="",
+            target_neo4j_uri="",
+            target_neo4j_database="",
+            target_neo4j_label="",
+            target_neo4j_username="",
+            target_neo4j_password="",
+            dry_run=False,
+        )
+    )
+
+    captured = capsys.readouterr().out
+    assert '"source_store": "qdrant"' in captured
+    assert '"target_store": "neo4j"' in captured
+    assert '"migrated": 1' in captured
+    assert source_store.closed is True
+    assert target_store.closed is True
 
 
 @pytest.mark.asyncio
