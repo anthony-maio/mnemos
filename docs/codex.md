@@ -75,7 +75,7 @@ This repo now ships a ready-to-use example at [AGENTS.md](../AGENTS.md).
 Generate a Codex-specific policy block:
 
 ```bash
-mnemos-cli antigravity codex
+mnemos-cli antigravity codex --target codex-agents
 ```
 
 Add the generated policy to your repo-level `AGENTS.md` if you want to customize it. The minimum workflow is:
@@ -91,18 +91,30 @@ Ready-to-copy snippet:
 ```md
 ## Mnemos Memory
 
-Use Mnemos through MCP on every substantial coding task.
+Use Mnemos through MCP automatically on every substantial coding task in this repository.
 
-1. At task start, call `mnemos_retrieve` with a focused query.
-2. Use `current_scope=project`, `scope_id=<repo-name>`, and `allowed_scopes=project,global`.
-3. Call `mnemos_store` only for durable facts:
-   - project architecture decisions
-   - stable user or team preferences
-   - tooling and environment facts
-   - recurring bug patterns and fixes
+1. At the start of every substantial user task, call `mnemos_retrieve` with a focused query tied to the task.
+2. Use `current_scope=project`, set `scope_id` to the current repository name, and include `allowed_scopes=project,global` unless broader scope is needed.
+3. During execution, call `mnemos_store` only for durable facts:
+   - stable user or maintainer preferences
+   - project architecture decisions and rationale
+   - environment and tooling facts that will matter again
+   - recurring bug patterns and their fixes
 4. Before finishing substantial work, call `mnemos_consolidate`.
-5. Never store secrets, credentials, tokens, or transient chatter.
+5. If a retrieved memory looks suspicious, call `mnemos_inspect` before storing a correction.
+6. Never store secrets, credentials, tokens, or transient chatter.
+7. If Mnemos MCP tools are unavailable in the current host, continue normally without blocking work.
 ```
+
+## 3b. Optional Codex Automations
+
+Codex Automations are useful for scheduled Mnemos maintenance, not chat-session capture. Generate a prompt you can paste into a Codex Automation with:
+
+```bash
+mnemos-cli antigravity codex --target codex-automation
+```
+
+Use it for recurring hygiene checks such as `mnemos-cli doctor` and `mnemos-cli stats`. Do not treat Codex Automations as a substitute for host lifecycle hooks.
 
 ## 4. Recommended v1 operating mode
 
@@ -125,7 +137,7 @@ Until that flow is verified in daily use, Codex remains documented as Tier 2 in 
 
 ## Neo4j-backed status
 
-Codex now validates cleanly against a shared `MNEMOS_CONFIG_PATH` that points at Neo4j. That means the MCP server can use the same always-on backend as Claude Code or Cursor. It does **not** mean Codex has automatic capture hooks yet; the current validated loop is still:
+Codex now validates cleanly against a shared `MNEMOS_CONFIG_PATH` that points at Neo4j. That means the MCP server can use the same always-on backend as Claude Code or Cursor. It does **not** mean Codex has automatic capture hooks yet; the current validated loop is still soft-auto instruction plus MCP:
 
 1. `mnemos_retrieve`
 2. normal coding work

@@ -14,6 +14,8 @@ Use this file when the user asks how Mnemos actually works in daily use, wants a
 
 Do not hide this gap. If the user wants parity outside Claude Code, say so plainly.
 
+Hard auto-capture remains host-dependent. Do not promise it for Codex, Cursor, OpenClaw, or generic MCP hosts unless verified hooks/extensions are actually installed.
+
 ## Storage guidance
 
 - SQLite: default starter profile, simplest persistent setup.

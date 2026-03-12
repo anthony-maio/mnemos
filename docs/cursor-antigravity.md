@@ -4,7 +4,7 @@ Use this guide to make Cursor call Mnemos memory tools automatically without man
 
 ## 1) Register Mnemos MCP in Cursor
 
-Copy [docs/mcp-configs/cursor.json](docs/mcp-configs/cursor.json) into your project `.cursor/mcp.json` (or merge it into your existing config).
+Copy [docs/mcp-configs/cursor.json](docs/mcp-configs/cursor.json) into your project `.cursor/mcp.json` (or merge it into your existing config). The control plane can write this file for you.
 
 Default profile in that config is zero-friction:
 
@@ -15,25 +15,26 @@ Default profile in that config is zero-friction:
 
 Upgrade later to Ollama/OpenAI/OpenClaw for higher retrieval quality.
 
-## 2) Generate Antigravity policy text
+## 2) Generate a Cursor rule
 
-Generate a host policy prompt with the CLI:
+Generate the Cursor rule with the CLI:
 
 ```bash
-mnemos-cli antigravity cursor --write .cursor/mnemos-antigravity.txt
+mnemos-cli antigravity cursor --target cursor-rule --write .cursor/rules/mnemos-memory.mdc
 ```
 
-Then paste that text into your Cursor project/system instructions so the assistant follows it by default.
+This creates an always-apply rule that makes Cursor follow the Mnemos workflow by default. The control plane preview/apply path writes the same rule automatically.
 
 ## 3) What the policy enforces
 
-The generated policy makes the assistant:
+The generated rule makes the assistant:
 
 - call `mnemos_retrieve` at task start
 - call `mnemos_store` for durable facts during work
 - call `mnemos_consolidate` before finishing substantial tasks
 - use `project` + `scope_id` for cross-project-safe retrieval
 - avoid storing secrets and transient chatter
+- avoid claiming host-level hard auto-capture hooks that Cursor does not currently expose
 
 ## 4) Live smoke test
 

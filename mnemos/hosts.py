@@ -12,6 +12,7 @@ from difflib import unified_diff
 from pathlib import Path
 from typing import Any, Literal
 
+from .antigravity import build_antigravity_artifact
 from .settings import _emit_toml_sections
 
 try:
@@ -61,6 +62,10 @@ def _config_path_for_host(host: HostName, *, cwd: Path, home: Path) -> Path:
     if host == "codex":
         return home / ".codex" / "config.toml"
     return home / ".claude" / "claude_desktop_config.json"
+
+
+def _cursor_rule_path(cwd: Path) -> Path:
+    return cwd / ".cursor" / "rules" / "mnemos-memory.mdc"
 
 
 def _read_text(path: Path) -> str:
@@ -188,6 +193,13 @@ def preview_host_integration(
         cwd=resolved_cwd,
     )
     preview_text = _preview_diff(config_path, existing_text, rendered_config)
+    if host == "cursor":
+        rule_path = _cursor_rule_path(resolved_cwd)
+        existing_rule_text = _read_text(rule_path)
+        rendered_rule = build_antigravity_artifact("cursor", "cursor-rule")
+        rule_diff = _preview_diff(rule_path, existing_rule_text, rendered_rule)
+        if rule_diff:
+            preview_text = "\n\n".join(part for part in (preview_text, rule_diff) if part)
     return HostIntegrationPreview(
         host=host,
         config_path=config_path,
@@ -222,6 +234,16 @@ def apply_host_integration(
         backup_path.write_text(_read_text(preview.config_path), encoding="utf-8")
 
     preview.config_path.write_text(preview.rendered_config, encoding="utf-8")
+    if host == "cursor":
+        rule_path = _cursor_rule_path(_cwd_path(cwd))
+        rule_path.parent.mkdir(parents=True, exist_ok=True)
+        if rule_path.exists():
+            rule_backup_path = _backup_path(rule_path)
+            rule_backup_path.write_text(_read_text(rule_path), encoding="utf-8")
+        rule_path.write_text(
+            build_antigravity_artifact("cursor", "cursor-rule"),
+            encoding="utf-8",
+        )
     return HostIntegrationResult(
         host=host,
         config_path=preview.config_path,

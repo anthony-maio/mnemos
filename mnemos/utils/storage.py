@@ -27,7 +27,7 @@ import re
 import sqlite3
 import threading
 from abc import ABC, abstractmethod
-from collections.abc import Callable
+from collections.abc import Callable, Iterator
 from datetime import datetime, timezone
 from typing import Any, TypeVar, cast
 
@@ -607,7 +607,7 @@ class Neo4jStore(MemoryStore):
                 self._records = records
                 self._counters = counters
 
-            def __iter__(self):
+            def __iter__(self) -> Iterator[Any]:
                 return iter(self._records)
 
             def single(self) -> Any:
@@ -636,11 +636,14 @@ class Neo4jStore(MemoryStore):
                )
             RETURN count(*) AS total
         """
-        existing = self._run(
-            check_query,
-            constraint_name=self._constraint_name,
-            label=self._escaped_label,
-        ).single() or {}
+        existing = (
+            self._run(
+                check_query,
+                constraint_name=self._constraint_name,
+                label=self._escaped_label,
+            ).single()
+            or {}
+        )
         if int(existing.get("total", 0) or 0) > 0:
             return
 
@@ -658,7 +661,9 @@ class Neo4jStore(MemoryStore):
             "metadata_json": json.dumps(chunk.metadata),
             "salience": chunk.salience,
             "cognitive_state_json": (
-                chunk.cognitive_state.model_dump_json() if chunk.cognitive_state is not None else None
+                chunk.cognitive_state.model_dump_json()
+                if chunk.cognitive_state is not None
+                else None
             ),
             "created_at": chunk.created_at.isoformat(),
             "updated_at": chunk.updated_at.isoformat(),
@@ -688,11 +693,7 @@ class Neo4jStore(MemoryStore):
             return dt
 
         embedding_raw = record.get("embedding")
-        embedding = (
-            [float(x) for x in embedding_raw]
-            if isinstance(embedding_raw, list)
-            else None
-        )
+        embedding = [float(x) for x in embedding_raw] if isinstance(embedding_raw, list) else None
 
         return MemoryChunk(
             id=str(record["id"]),
@@ -848,9 +849,7 @@ class Neo4jStore(MemoryStore):
             "total_chunks": int(record.get("total_chunks", 0)),
             "chunks_with_embeddings": int(record.get("chunks_with_embeddings", 0)),
             "average_salience": round(float(record.get("average_salience", 0.0) or 0.0), 4),
-            "average_access_count": round(
-                float(record.get("average_access_count", 0.0) or 0.0), 4
-            ),
+            "average_access_count": round(float(record.get("average_access_count", 0.0) or 0.0), 4),
         }
 
     def close(self) -> None:

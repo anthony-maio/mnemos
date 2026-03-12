@@ -81,13 +81,22 @@ Add to `.cursor/mcp.json` in your project root:
 }
 ```
 
+For project-level soft-auto behavior, add a Cursor rule as well:
+
+```bash
+mnemos-cli antigravity cursor --target cursor-rule --write .cursor/rules/mnemos-memory.mdc
+```
+
+The control plane preview/apply path now writes both the MCP config and the Cursor rule file.
+
 #### Codex
 
 Codex uses the same MCP server surface, with repo-level guidance in `AGENTS.md` to make memory use consistent.
 
 - Starting config: [mcp-configs/codex.json](mcp-configs/codex.json)
 - Setup guide: [codex.md](codex.md)
-- Generate the policy text with `mnemos-cli antigravity codex`
+- Generate the repo `AGENTS.md` block with `mnemos-cli antigravity codex --target codex-agents`
+- Generate an optional Codex Automation prompt with `mnemos-cli antigravity codex --target codex-automation`
 
 #### Windsurf
 
@@ -340,8 +349,8 @@ mnemos-cli migrate-store --source-store qdrant --target-store neo4j --dry-run
 # Execute migration into Neo4j
 mnemos-cli migrate-store --source-store qdrant --target-store neo4j
 
-# Generate Cursor autopilot policy text
-mnemos-cli antigravity cursor --write .cursor/mnemos-antigravity.txt
+# Generate a Cursor rule for soft-auto memory use
+mnemos-cli antigravity cursor --target cursor-rule --write .cursor/rules/mnemos-memory.mdc
 ```
 
 The CLI defaults to SQLite storage (persistent across sessions), unlike the MCP server which defaults to in-memory.
@@ -361,6 +370,8 @@ The auto-store hook path is deterministic and conservative:
 - only stores tool outputs when failure/error patterns are present
 
 This Claude hook path has been validated on a Neo4j-backed `MNEMOS_CONFIG_PATH` setup as of March 12, 2026. Codex and Cursor can point at the same shared config, but they still rely on explicit Mnemos tool usage or host instruction policies today rather than shipped hook capture.
+
+Treat hard auto-capture as host-dependent outside Claude Code. Codex, Cursor, OpenClaw, and generic MCP hosts can use soft-auto instruction packs today, but they should not be marketed as having built-in hook parity unless that host actually exposes verified lifecycle hooks.
 
 ### Environment variables
 

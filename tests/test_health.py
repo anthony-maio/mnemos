@@ -191,7 +191,9 @@ def test_health_reports_ready_for_neo4j(monkeypatch: pytest.MonkeyPatch) -> None
     monkeypatch.setenv("MNEMOS_LLM_PROVIDER", "openclaw")
     monkeypatch.setenv("MNEMOS_OPENCLAW_API_KEY", "test-key")
     monkeypatch.setenv("MNEMOS_EMBEDDING_PROVIDER", "openclaw")
-    monkeypatch.setattr("mnemos.health._module_available", lambda module_name: module_name == "neo4j")
+    monkeypatch.setattr(
+        "mnemos.health._module_available", lambda module_name: module_name == "neo4j"
+    )
 
     report = run_health_checks()
 

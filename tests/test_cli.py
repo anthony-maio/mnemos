@@ -13,6 +13,7 @@ from argparse import Namespace
 
 import mnemos.cli as cli_module
 from mnemos.cli import (
+    _build_antigravity_artifact,
     _build_antigravity_policy,
     _build_engine,
     _build_profile_env,
@@ -377,12 +378,35 @@ def test_build_antigravity_policy_codex_mentions_agents() -> None:
     assert "mnemos_consolidate" in policy
 
 
+def test_build_antigravity_artifact_cursor_rule_has_frontmatter() -> None:
+    artifact = _build_antigravity_artifact("cursor", "cursor-rule")
+    assert artifact.startswith("---")
+    assert "alwaysApply: true" in artifact
+    assert "mnemos_retrieve" in artifact
+    assert "mnemos_store" in artifact
+
+
+def test_build_antigravity_artifact_codex_agents_is_markdown_section() -> None:
+    artifact = _build_antigravity_artifact("codex", "codex-agents")
+    assert artifact.startswith("## Mnemos Memory")
+    assert "mnemos_retrieve" in artifact
+    assert "mnemos_inspect" in artifact
+
+
+def test_build_antigravity_artifact_codex_automation_mentions_hygiene_loop() -> None:
+    artifact = _build_antigravity_artifact("codex", "codex-automation")
+    assert "mnemos-cli doctor" in artifact
+    assert "AGENTS.md" in artifact
+    assert "soft-auto" not in artifact.lower()
+
+
 @pytest.mark.asyncio
 async def test_cli_antigravity_writes_policy(tmp_path: Path, capsys: Any) -> None:
     output_path = tmp_path / "mnemos-antigravity.txt"
     await _cmd_antigravity(
         Namespace(
             host="cursor",
+            target="policy",
             format="text",
             write=str(output_path),
         )
@@ -392,6 +416,26 @@ async def test_cli_antigravity_writes_policy(tmp_path: Path, capsys: Any) -> Non
     assert "mnemos_retrieve" in text
     captured = capsys.readouterr().out
     assert "Mnemos Antigravity Autopilot Policy" in captured
+
+
+@pytest.mark.asyncio
+async def test_cli_antigravity_writes_cursor_rule(tmp_path: Path, capsys: Any) -> None:
+    output_path = tmp_path / ".cursor" / "rules" / "mnemos-memory.mdc"
+    output_path.parent.mkdir(parents=True)
+    await _cmd_antigravity(
+        Namespace(
+            host="cursor",
+            target="cursor-rule",
+            format="text",
+            write=str(output_path),
+        )
+    )
+    text = output_path.read_text(encoding="utf-8")
+    assert text.startswith("---")
+    assert "alwaysApply: true" in text
+    assert "mnemos_consolidate" in text
+    captured = capsys.readouterr().out
+    assert "alwaysApply: true" in captured
 
 
 @pytest.mark.asyncio

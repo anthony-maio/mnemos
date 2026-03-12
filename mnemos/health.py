@@ -243,7 +243,9 @@ def run_health_checks(
             )
 
         if settings.storage.neo4j_uri:
-            add_check("store.neo4j.uri", "pass", f"Neo4j URI configured: {settings.storage.neo4j_uri}")
+            add_check(
+                "store.neo4j.uri", "pass", f"Neo4j URI configured: {settings.storage.neo4j_uri}"
+            )
         else:
             add_check("store.neo4j.uri", "fail", "MNEMOS_NEO4J_URI must be set for Neo4j.")
 

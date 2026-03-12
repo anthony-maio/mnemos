@@ -2,16 +2,16 @@
 
 ## Mnemos Memory
 
-Use Mnemos through MCP on every substantial coding task in this repository.
+Use Mnemos through MCP automatically on every substantial coding task in this repository.
 
-1. At task start, call `mnemos_retrieve` with a focused query.
-2. Use `current_scope=project`, `scope_id=mnemos`, and `allowed_scopes=project,global`.
-3. Call `mnemos_store` only for durable facts:
-   - architecture decisions and rationale
-   - stable tooling and environment facts
+1. At the start of every substantial user task, call `mnemos_retrieve` with a focused query tied to the task.
+2. Use `current_scope=project`, set `scope_id` to `mnemos`, and include `allowed_scopes=project,global` unless broader scope is needed.
+3. During execution, call `mnemos_store` only for durable facts:
+   - stable user or maintainer preferences
+   - project architecture decisions and rationale
+   - environment and tooling facts that will matter again
    - recurring bug patterns and their fixes
-   - durable maintainer preferences that apply to this repo
 4. Before finishing substantial work, call `mnemos_consolidate`.
-5. Never store secrets, credentials, tokens, or transient chatter.
-
-If Mnemos MCP tools are unavailable in the current host, continue normally without blocking work.
+5. If a retrieved memory looks suspicious, call `mnemos_inspect` before storing a correction.
+6. Never store secrets, credentials, tokens, or transient chatter.
+7. If Mnemos MCP tools are unavailable in the current host, continue normally without blocking work.

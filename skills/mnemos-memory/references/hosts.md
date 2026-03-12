@@ -11,6 +11,24 @@ mnemos ui
 
 Prefer the control plane. It writes canonical config, previews host integration, and runs smoke checks.
 
+## OpenClaw / ClawHub
+
+Use this path when an OpenClaw agent needs to bootstrap Mnemos for itself:
+
+```bash
+pip install "mnemos-memory[mcp]"
+mnemos ui
+```
+
+Then wire `mnemos-mcp` into the current host with a shared `MNEMOS_CONFIG_PATH`. The operating loop is still:
+
+1. `mnemos_retrieve`
+2. normal work
+3. `mnemos_store`
+4. `mnemos_consolidate`
+
+Do not claim built-in hook capture for OpenClaw unless the host has verified lifecycle hooks configured.
+
 ## Claude Code / Claude Desktop
 
 - Best path: use the control plane or the bundled plugin packaging.
@@ -74,7 +92,7 @@ MNEMOS_CONFIG_PATH = "~/.config/Mnemos/mnemos.toml"
 Policy generator:
 
 ```bash
-mnemos-cli antigravity codex
+mnemos-cli antigravity codex --target codex-agents
 ```
 
 ## Generic MCP hosts

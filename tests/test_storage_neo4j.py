@@ -17,7 +17,9 @@ from mnemos.utils.storage import Neo4jStore
 @pytest.fixture
 def fake_neo4j(monkeypatch: pytest.MonkeyPatch) -> None:
     class FakeResult:
-        def __init__(self, records: list[dict[str, Any]] | None = None, counters: Any = None) -> None:
+        def __init__(
+            self, records: list[dict[str, Any]] | None = None, counters: Any = None
+        ) -> None:
             self._records = records or []
             self._counters = counters
 
@@ -88,7 +90,9 @@ def fake_neo4j(monkeypatch: pytest.MonkeyPatch) -> None:
 
             if "RETURN count(chunk) AS total_chunks" in normalized:
                 total = len(self._driver.nodes)
-                with_embedding = sum(1 for node in self._driver.nodes.values() if node["embedding"] is not None)
+                with_embedding = sum(
+                    1 for node in self._driver.nodes.values() if node["embedding"] is not None
+                )
                 avg_salience = (
                     sum(float(node["salience"]) for node in self._driver.nodes.values()) / total
                     if total
@@ -534,8 +538,7 @@ def test_neo4j_store_preserves_legacy_constraint_name_for_default_label(
 
     assert seen_queries
     assert any(
-        "CREATE CONSTRAINT mnemos_memory_chunk_id IF NOT EXISTS" in query
-        for query in seen_queries
+        "CREATE CONSTRAINT mnemos_memory_chunk_id IF NOT EXISTS" in query for query in seen_queries
     )
 
 

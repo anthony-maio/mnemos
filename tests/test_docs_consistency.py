@@ -16,6 +16,9 @@ MCP_INTEGRATION_PATH = ROOT / "docs" / "MCP_INTEGRATION.md"
 MCP_CONTRACT_PATH = ROOT / "docs" / "mcp-transport-contract.md"
 ARCHITECTURE_PATH = ROOT / "ARCHITECTURE.md"
 README_HERO_PATH = ROOT / "docs" / "assets" / "readme-hero.svg"
+MNEMOS_SKILL_PATH = ROOT / "skills" / "mnemos-memory" / "SKILL.md"
+MNEMOS_SKILL_HOSTS_PATH = ROOT / "skills" / "mnemos-memory" / "references" / "hosts.md"
+MNEMOS_SKILL_OPERATIONS_PATH = ROOT / "skills" / "mnemos-memory" / "references" / "operations.md"
 REQUIRED_OSS_DOCS = [
     ROOT / "CONTRIBUTING.md",
     ROOT / "SECURITY.md",
@@ -172,3 +175,14 @@ def test_inspectability_surfaces_are_documented() -> None:
     assert "revision history" in mcp_guide.lower()
     assert "mnemos_inspect" in mcp_guide
     assert "mnemos_inspect" in codex_guide
+
+
+def test_openclaw_skill_covers_install_and_capture_positioning() -> None:
+    skill = MNEMOS_SKILL_PATH.read_text(encoding="utf-8")
+    hosts = MNEMOS_SKILL_HOSTS_PATH.read_text(encoding="utf-8")
+    operations = MNEMOS_SKILL_OPERATIONS_PATH.read_text(encoding="utf-8")
+
+    assert "OpenClaw" in skill
+    assert 'pip install "mnemos-memory[mcp]"' in hosts
+    assert "mnemos ui" in hosts
+    assert "hard auto-capture" in operations.lower()

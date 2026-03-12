@@ -426,6 +426,7 @@ Profile + compatibility docs:
 - [docs/profiles/starter-sqlite.md](docs/profiles/starter-sqlite.md)
 - [docs/profiles/local-performance-embedded-qdrant.md](docs/profiles/local-performance-embedded-qdrant.md)
 - [docs/profiles/scale-external-qdrant.md](docs/profiles/scale-external-qdrant.md)
+- [docs/clawhub-skill.md](docs/clawhub-skill.md)
 - [docs/public-release-package.md](docs/public-release-package.md)
 - [docs/release-checklist.md](docs/release-checklist.md)
 - [docs/codex.md](docs/codex.md)
@@ -438,10 +439,10 @@ Profile + compatibility docs:
 Codex support in v1 is MCP-first rather than plugin-first. Use the documented setup in [docs/codex.md](docs/codex.md) and generate the repo policy text with:
 
 ```bash
-mnemos-cli antigravity codex
+mnemos-cli antigravity codex --target codex-agents
 ```
 
-That flow keeps Codex on the same scoped `retrieve -> work -> store -> consolidate` loop as Claude Code.
+That flow keeps Codex on the same scoped `retrieve -> work -> store -> consolidate` loop as Claude Code. Optional Codex Automations can help with scheduled Mnemos hygiene checks, but they are not chat-session hooks and do not change the hard auto-capture story.
 
 ### Claude Code / Claude Desktop
 
@@ -485,6 +486,18 @@ Add to `.cursor/mcp.json` in your project root:
   }
 }
 ```
+
+For soft-auto usage in Cursor, also add a project rule:
+
+```bash
+mnemos-cli antigravity cursor --target cursor-rule --write .cursor/rules/mnemos-memory.mdc
+```
+
+The control plane now writes both `.cursor/mcp.json` and `.cursor/rules/mnemos-memory.mdc` for Cursor projects.
+
+### OpenClaw / ClawHub Skill
+
+This repo ships a ClawHub-ready skill at `skills/mnemos-memory`. It teaches OpenClaw agents how to install `mnemos-memory[mcp]`, run `mnemos ui`, wire `mnemos-mcp`, and operate the `retrieve -> work -> store -> consolidate` loop. It is an onboarding/use skill, not a claim of built-in hard auto-capture hooks for OpenClaw hosts.
 
 ### Windsurf
 
@@ -677,8 +690,8 @@ Mnemos is ready for a disciplined public open-source release. It is not yet read
 | Claude Code | Tier 1 supported | Primary install path via plugin; validated end-to-end. |
 | Claude Desktop | Tier 1 supported | Minimal tested stdio config ships in the repo. |
 | Generic MCP stdio hosts | Tier 1 supported | Validated against the live MCP server. |
-| Codex | Tier 2 documented | Supported through MCP + `AGENTS.md`; shared `MNEMOS_CONFIG_PATH` to Neo4j is validated, but auto-capture is still manual/tool-driven. |
-| Cursor / Windsurf / Cline | Tier 2 best effort | Configs and docs exist; Cursor shared-config resolution to Neo4j is covered in tests, but auto-capture is not yet shipped. |
+| Codex | Tier 2 documented | Supported through MCP + a stronger `AGENTS.md` pack; shared `MNEMOS_CONFIG_PATH` to Neo4j is validated, and optional Codex Automations can run maintenance checks, but host-hook auto-capture is still not shipped. |
+| Cursor / Windsurf / Cline | Tier 2 best effort | Configs and docs exist; Cursor now has a `.cursor/rules` soft-auto path and shared-config resolution to Neo4j is covered in tests, but host-hook auto-capture is not yet shipped. |
 
 The current product promise is narrower than the architecture story:
 
@@ -793,7 +806,7 @@ If you use mnemos in research, please cite:
   author       = {Maio, Anthony},
   title        = {mnemos: Biomimetic Memory Architectures for Large Language Models},
   year         = {2026},
-  version      = {0.2.0},
+  version      = {0.3.0},
   url          = {https://github.com/anthony-maio/mnemos},
   note         = {Implements surprisal-triggered encoding, memory reconsolidation,
                   affective routing, hippocampal-neocortical consolidation, and

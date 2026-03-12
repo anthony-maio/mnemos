@@ -25,6 +25,12 @@ from datetime import datetime, timedelta, timezone
 from pathlib import Path
 from typing import Any, Literal, cast
 
+from .antigravity import (
+    ANTIGRAVITY_HOST_CHOICES,
+    ANTIGRAVITY_TARGET_CHOICES,
+    build_antigravity_artifact,
+    build_antigravity_policy,
+)
 from .config import MemoryGovernanceConfig, MemorySafetyConfig, MnemosConfig, SurprisalConfig
 from .engine import MnemosEngine
 from .health import run_health_checks
@@ -43,7 +49,6 @@ from .utils.llm import MockLLMProvider, LLMProvider
 PROFILE_CHOICES = ("starter", "local-performance", "scale")
 VALID_SCOPES = ("project", "workspace", "global")
 AUDIT_SCOPES = ("all", "project", "workspace", "global")
-ANTIGRAVITY_HOST_CHOICES = ("cursor", "generic-mcp", "codex")
 MIGRATION_STORE_CHOICES = ("sqlite", "qdrant", "neo4j")
 MemoryAction = Literal["allow", "redact", "block"]
 CaptureMode = Literal["all", "manual_only", "hooks_only"]
@@ -148,36 +153,11 @@ def _parse_allowed_scopes(raw: str) -> tuple[str, ...]:
 
 
 def _build_antigravity_policy(host: str) -> str:
-    if host not in ANTIGRAVITY_HOST_CHOICES:
-        raise ValueError(f"Unsupported host: {host!r}")
+    return build_antigravity_policy(cast(Any, host))
 
-    if host == "cursor":
-        host_label = "Cursor"
-    elif host == "codex":
-        host_label = "Codex"
-    else:
-        host_label = "Generic MCP host"
-    codex_note = (
-        "0. Add this workflow to your repo-level `AGENTS.md` so Codex uses Mnemos via MCP consistently.\n"
-        if host == "codex"
-        else ""
-    )
-    return (
-        f"Mnemos Antigravity Autopilot Policy ({host_label})\n\n"
-        "Always use Mnemos memory tools automatically.\n"
-        f"{codex_note}"
-        "1. At the start of every new user task, call `mnemos_retrieve` using a focused query.\n"
-        "2. Use `current_scope=project` and set `scope_id` to the current repository/workspace name.\n"
-        "3. Include `allowed_scopes=project,global` unless the user asks for broader scope.\n"
-        "4. During execution, call `mnemos_store` for durable facts only:\n"
-        "   - stable user preferences\n"
-        "   - project architecture decisions\n"
-        "   - environment/tooling setup facts\n"
-        "   - recurring bug patterns and fixes\n"
-        "5. Before finishing substantial work, call `mnemos_consolidate`.\n"
-        "6. Never store secrets, tokens, credentials, or one-off transient chatter.\n"
-        "7. If retrieval returns nothing useful, continue normally and seed memory as facts emerge.\n"
-    )
+
+def _build_antigravity_artifact(host: str, target: str) -> str:
+    return build_antigravity_artifact(cast(Any, host), cast(Any, target))
 
 
 def _chunk_scope(chunk: Any) -> tuple[str, str | None]:
@@ -672,9 +652,12 @@ async def _cmd_migrate_store(args: argparse.Namespace) -> None:
 
 
 async def _cmd_antigravity(args: argparse.Namespace) -> None:
-    policy = _build_antigravity_policy(args.host)
+    policy = _build_antigravity_artifact(args.host, args.target)
     if args.format == "json":
-        rendered = json.dumps({"host": args.host, "policy": policy}, indent=2)
+        rendered = json.dumps(
+            {"host": args.host, "target": args.target, "artifact": policy},
+            indent=2,
+        )
     else:
         rendered = policy
     print(rendered)
@@ -995,6 +978,12 @@ def main() -> None:
         help="Generate host autopilot policy text for automatic Mnemos tool use.",
     )
     sp_antigravity.add_argument("host", choices=ANTIGRAVITY_HOST_CHOICES)
+    sp_antigravity.add_argument(
+        "--target",
+        choices=ANTIGRAVITY_TARGET_CHOICES,
+        default="policy",
+        help="Artifact to generate: generic policy text, Cursor rule, or Codex helpers.",
+    )
     sp_antigravity.add_argument(
         "--format",
         choices=("text", "json"),

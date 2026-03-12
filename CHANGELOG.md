@@ -2,6 +2,25 @@
 
 ## Unreleased
 
+## 0.3.0 — 2026-03-12
+
+Public beta update focused on shared persistence, host soft-auto workflows, and OpenClaw onboarding.
+
+### Changed
+- Neo4j-backed persistence is now wired into runtime settings, health checks, and live shared-config validation
+- Neo4j reads and schema setup are hardened for real server usage, including safer optional-property reads and constraint handling
+- Codex soft-auto guidance now ships as a stronger `AGENTS.md` pack, with an optional Codex Automation prompt for scheduled Mnemos hygiene checks
+- Cursor soft-auto now includes a generated `.cursor/rules/mnemos-memory.mdc` rule alongside `.cursor/mcp.json`
+- docs, UI copy, and compatibility notes now explicitly position hard auto-capture as host-dependent outside Claude Code
+
+### Added
+- `Neo4jStore` experimental backend with validated write/read/delete smoke coverage against a live Neo4j instance
+- `mnemos-cli migrate-store` for Qdrant/SQLite/Neo4j backfill and migration workflows
+- shared antigravity artifact generation for generic policy text, Codex AGENTS blocks, Codex automation prompts, and Cursor rules
+- publishable OpenClaw / ClawHub skill guidance in `skills/mnemos-memory`
+- `docs/clawhub-skill.md` for skill packaging/publishing and positioning
+- regression coverage for Cursor rule generation and multi-artifact host integration previews
+
 ## 0.2.0 — 2026-03-10
 
 Public beta release.

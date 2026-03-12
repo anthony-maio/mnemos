@@ -13,6 +13,7 @@ from mnemos.hosts import apply_host_integration, preview_host_integration
 def test_cursor_integration_apply_writes_minimal_config_and_backup(tmp_path: Path) -> None:
     repo_dir = tmp_path / "repo"
     config_path = repo_dir / ".cursor" / "mcp.json"
+    rule_path = repo_dir / ".cursor" / "rules" / "mnemos-memory.mdc"
     config_path.parent.mkdir(parents=True)
     config_path.write_text(
         json.dumps(
@@ -34,6 +35,7 @@ def test_cursor_integration_apply_writes_minimal_config_and_backup(tmp_path: Pat
         home=tmp_path / "home",
     )
     assert "MNEMOS_CONFIG_PATH" in preview.preview_text
+    assert "mnemos-memory.mdc" in preview.preview_text
 
     result = apply_host_integration(
         "cursor",
@@ -51,6 +53,11 @@ def test_cursor_integration_apply_writes_minimal_config_and_backup(tmp_path: Pat
         payload["mcpServers"]["mnemos"]["env"]["MNEMOS_CONFIG_PATH"]
         == mnemos_config_path.as_posix()
     )
+    assert rule_path.exists()
+    rule_text = rule_path.read_text(encoding="utf-8")
+    assert "alwaysApply: true" in rule_text
+    assert "mnemos_retrieve" in rule_text
+    assert "mnemos_consolidate" in rule_text
 
 
 def test_codex_integration_apply_writes_toml_config(tmp_path: Path) -> None:
