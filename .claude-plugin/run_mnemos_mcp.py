@@ -98,12 +98,25 @@ def _resolve_runtime_python(plugin_root: Path, env: dict[str, str]) -> str:
     return str(_ensure_runtime(venv_dir, plugin_root, env))
 
 
+def _default_user_config_path() -> Path:
+    if os.name == "nt":
+        appdata = os.environ.get("APPDATA", "").strip()
+        if appdata:
+            return Path(appdata) / "Mnemos" / "mnemos.toml"
+    if sys.platform == "darwin":
+        return Path.home() / "Library" / "Application Support" / "Mnemos" / "mnemos.toml"
+    xdg_config_home = os.environ.get("XDG_CONFIG_HOME", "").strip()
+    if xdg_config_home:
+        return Path(xdg_config_home) / "mnemos" / "mnemos.toml"
+    return Path.home() / ".config" / "mnemos" / "mnemos.toml"
+
+
 def _apply_default_env(plugin_root: Path) -> dict[str, str]:
     env = dict(os.environ)
     plugin_data_dir = plugin_root / ".claude-plugin"
     raw_config_path = env.get("MNEMOS_CONFIG_PATH", "").strip()
     config_path = (
-        Path(raw_config_path).expanduser() if raw_config_path else plugin_data_dir / "mnemos.toml"
+        Path(raw_config_path).expanduser() if raw_config_path else _default_user_config_path()
     )
     env.setdefault("MNEMOS_CONFIG_PATH", str(config_path))
 

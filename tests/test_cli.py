@@ -37,6 +37,7 @@ from mnemos.utils import (
     SimpleEmbeddingProvider,
     SQLiteStore,
 )
+from mnemos.utils.llm import MockLLMProvider
 
 
 def test_build_engine_supports_storage_alias_vars(
@@ -152,6 +153,23 @@ base_url = "https://openrouter.ai/api/v1"
     assert isinstance(engine.embedder, OpenAIEmbeddingProvider)
     assert isinstance(engine.store, SQLiteStore)
     assert Path(engine.store.db_path).resolve() == db_path.resolve()
+    engine.store.close()
+
+
+def test_build_hook_engine_uses_mock_llm_for_fast_capture(
+    monkeypatch: pytest.MonkeyPatch, tmp_path: Path
+) -> None:
+    db_path = tmp_path / "mnemos_cli_hook.db"
+    monkeypatch.setenv("MNEMOS_LLM_PROVIDER", "ollama")
+    monkeypatch.setenv("MNEMOS_EMBEDDING_PROVIDER", "simple")
+    monkeypatch.setenv("MNEMOS_STORE_TYPE", "sqlite")
+    monkeypatch.setenv("MNEMOS_SQLITE_PATH", str(db_path))
+
+    engine = cli_module._build_hook_engine()
+
+    assert isinstance(engine.llm, MockLLMProvider)
+    assert isinstance(engine.embedder, SimpleEmbeddingProvider)
+    assert isinstance(engine.store, SQLiteStore)
     engine.store.close()
 
 
@@ -484,7 +502,7 @@ async def test_cli_autostore_hook_stores_when_decision_allows(
             )
 
     engine = DummyEngine()
-    monkeypatch.setattr("mnemos.cli._build_engine", lambda: engine)
+    monkeypatch.setattr("mnemos.cli._build_hook_engine", lambda: engine)
 
     payload = '{"prompt":"Set deployment target to ECS in this repository","cwd":"/tmp/repo-alpha"}'
     await _cmd_autostore_hook(
@@ -499,6 +517,59 @@ async def test_cli_autostore_hook_stores_when_decision_allows(
     )
     assert engine.scope == "project"
     assert engine.scope_id == "repo-alpha"
+    captured = capsys.readouterr().out
+    assert '"stored": true' in captured.lower()
+
+
+@pytest.mark.asyncio
+async def test_cli_autostore_hook_uses_fast_hook_engine(
+    monkeypatch: pytest.MonkeyPatch, capsys: Any
+) -> None:
+    class DummyEngine:
+        def __init__(self) -> None:
+            self.scope: str | None = None
+            self.scope_id: str | None = None
+
+        async def process(
+            self,
+            interaction: Any,
+            scope: str = "project",
+            scope_id: str | None = None,
+        ) -> ProcessResult:
+            self.scope = scope
+            self.scope_id = scope_id
+            return ProcessResult(
+                stored=True,
+                salience=0.6,
+                reason="fast-hook",
+                chunk=MemoryChunk(
+                    content=interaction.content,
+                    metadata={"scope": scope, "scope_id": scope_id},
+                ),
+            )
+
+    engine = DummyEngine()
+    monkeypatch.setattr("mnemos.cli._build_hook_engine", lambda: engine, raising=False)
+
+    def _unexpected_default_engine() -> DummyEngine:
+        raise AssertionError("autostore-hook should use fast hook engine")
+
+    monkeypatch.setattr("mnemos.cli._build_engine", _unexpected_default_engine)
+
+    payload = '{"prompt":"Store this repo preference for Claude hooks","cwd":"/tmp/repo-fast"}'
+    await _cmd_autostore_hook(
+        Namespace(
+            event="UserPromptSubmit",
+            payload=payload,
+            scope="project",
+            scope_id="",
+            max_chars=1200,
+            dry_run=False,
+        )
+    )
+
+    assert engine.scope == "project"
+    assert engine.scope_id == "repo-fast"
     captured = capsys.readouterr().out
     assert '"stored": true' in captured.lower()
 

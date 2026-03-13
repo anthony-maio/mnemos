@@ -348,6 +348,28 @@ def _build_engine() -> MnemosEngine:
     return engine
 
 
+def _build_hook_engine() -> MnemosEngine:
+    """
+    Build a fast-path engine for deterministic hook ingestion.
+
+    Claude hook capture should not block on slow background cognition calls.
+    We keep the real embedder/store/config so persisted memory still behaves
+    normally, but swap in a local mock LLM so surprisal/affective tagging
+    degrade to deterministic neutral behavior instead of timing out.
+    """
+    try:
+        engine = MnemosEngine(
+            config=build_mnemos_config_from_env(default_store_type="sqlite"),
+            llm=MockLLMProvider(),
+            embedder=build_embedder_from_env(default_provider="simple"),
+            store=build_store_from_env(default_store_type="sqlite"),
+        )
+    except ValueError as exc:
+        print(f"Error: {exc}", file=sys.stderr)
+        sys.exit(1)
+    return engine
+
+
 async def _cmd_store(args: argparse.Namespace) -> None:
     engine = _build_engine()
     interaction = Interaction(role=args.role, content=args.content)
@@ -721,7 +743,7 @@ async def _cmd_autostore_hook(args: argparse.Namespace) -> None:
         )
         return
 
-    engine = _build_engine()
+    engine = _build_hook_engine()
     result = await engine.process(
         decision.interaction,
         scope=decision.scope,

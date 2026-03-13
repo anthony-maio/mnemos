@@ -7,6 +7,7 @@ from __future__ import annotations
 import json
 import os
 from pathlib import Path
+import tomllib
 
 from importlib.util import module_from_spec, spec_from_file_location
 
@@ -37,6 +38,33 @@ def test_marketplace_manifest_matches_plugin_name() -> None:
     plugins = data.get("plugins", [])
     assert plugins
     assert plugins[0]["name"] == "mnemos-memory"
+
+
+def test_plugin_manifest_versions_match_package_version() -> None:
+    project = tomllib.loads(Path("pyproject.toml").read_text(encoding="utf-8"))
+    expected_version = project["project"]["version"]
+
+    plugin_manifest = json.loads(Path(".claude-plugin/plugin.json").read_text(encoding="utf-8"))
+    marketplace_manifest = json.loads(
+        Path(".claude-plugin/marketplace.json").read_text(encoding="utf-8")
+    )
+
+    assert plugin_manifest["version"] == expected_version
+    assert marketplace_manifest["plugins"][0]["version"] == expected_version
+
+
+def test_plugin_manifest_does_not_force_sqlite_env() -> None:
+    data = json.loads(Path(".claude-plugin/plugin.json").read_text(encoding="utf-8"))
+    env = data["mcpServers"]["mnemos"].get("env", {})
+
+    assert "MNEMOS_STORE_TYPE" not in env
+    assert "MNEMOS_SQLITE_PATH" not in env
+
+
+def test_plugin_manifest_registers_curator_agent() -> None:
+    data = json.loads(Path(".claude-plugin/plugin.json").read_text(encoding="utf-8"))
+
+    assert "./agents/mnemos-curator.md" in data["agents"]
 
 
 def test_plugin_wrapper_exists() -> None:
@@ -75,6 +103,39 @@ def test_plugin_wrapper_required_extras_include_neo4j(monkeypatch) -> None:
 
     assert "mcp" in extras
     assert "neo4j" in extras
+
+
+def test_plugin_wrapper_defaults_to_user_config_path(monkeypatch) -> None:
+    wrapper = _load_plugin_wrapper()
+    plugin_root = Path(".").resolve()
+
+    monkeypatch.delenv("MNEMOS_CONFIG_PATH", raising=False)
+    monkeypatch.setenv("APPDATA", r"C:\Users\Test\AppData\Roaming")
+
+    env = wrapper._apply_default_env(plugin_root)
+
+    assert env["MNEMOS_CONFIG_PATH"] == r"C:\Users\Test\AppData\Roaming\Mnemos\mnemos.toml"
+
+
+def test_plugin_hooks_wire_autostore_and_consolidation() -> None:
+    hooks_path = Path("hooks/hooks.json")
+    assert hooks_path.exists()
+
+    data = json.loads(hooks_path.read_text(encoding="utf-8"))
+    hooks = data["hooks"]
+
+    assert "UserPromptSubmit" in hooks
+    assert "PostToolUse" in hooks
+    assert "PreCompact" in hooks
+    assert "Stop" in hooks
+
+    prompt_command = hooks["UserPromptSubmit"][0]["hooks"][0]["command"]
+    tool_command = hooks["PostToolUse"][0]["hooks"][0]["command"]
+    consolidate_command = hooks["PreCompact"][0]["hooks"][0]["command"]
+
+    assert "mnemos-cli autostore-hook UserPromptSubmit" in prompt_command
+    assert "mnemos-cli autostore-hook PostToolUse" in tool_command
+    assert "mnemos-cli consolidate" in consolidate_command
 
 
 def test_plugin_wrapper_uses_explicit_runtime_python(monkeypatch) -> None:

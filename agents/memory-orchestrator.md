@@ -1,7 +1,10 @@
 ---
+name: memory-orchestrator
 description: Biomimetic memory orchestrator. Retrieve before complex work, store high-salience facts during execution, and consolidate before handoff.
 capabilities: ["context-retrieval", "memory-curation", "consolidation"]
 model: haiku
+mcpServers:
+  - mnemos
 ---
 
 # Mnemos Memory Orchestrator
