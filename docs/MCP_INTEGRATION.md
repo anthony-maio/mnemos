@@ -23,6 +23,7 @@ The control plane is now the primary onboarding path. It lets you:
 - save a canonical global `mnemos.toml`
 - import existing preview-user env/config setups
 - preview and apply Claude Code, Cursor, and Codex host configs
+- write the Codex repo `AGENTS.md` memory block as part of Codex host setup
 - run health and smoke checks before daily use
 
 ### 3. Configure your agent
@@ -95,6 +96,7 @@ Codex uses the same MCP server surface, with repo-level guidance in `AGENTS.md` 
 
 - Starting config: [mcp-configs/codex.json](mcp-configs/codex.json)
 - Setup guide: [codex.md](codex.md)
+- Optional local skill: [skills/mnemos-codex/SKILL.md](../skills/mnemos-codex/SKILL.md)
 - Generate the repo `AGENTS.md` block with `mnemos-cli antigravity codex --target codex-agents`
 - Generate an optional Codex Automation prompt with `mnemos-cli antigravity codex --target codex-automation`
 

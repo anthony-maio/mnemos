@@ -19,6 +19,11 @@ README_HERO_PATH = ROOT / "docs" / "assets" / "readme-hero.svg"
 MNEMOS_SKILL_PATH = ROOT / "skills" / "mnemos-memory" / "SKILL.md"
 MNEMOS_SKILL_HOSTS_PATH = ROOT / "skills" / "mnemos-memory" / "references" / "hosts.md"
 MNEMOS_SKILL_OPERATIONS_PATH = ROOT / "skills" / "mnemos-memory" / "references" / "operations.md"
+MNEMOS_CODEX_SKILL_PATH = ROOT / "skills" / "mnemos-codex" / "SKILL.md"
+MNEMOS_CODEX_SKILL_INSTALL_PATH = ROOT / "skills" / "mnemos-codex" / "references" / "install.md"
+MNEMOS_CODEX_SKILL_OPERATIONS_PATH = (
+    ROOT / "skills" / "mnemos-codex" / "references" / "operations.md"
+)
 REQUIRED_OSS_DOCS = [
     ROOT / "CONTRIBUTING.md",
     ROOT / "SECURITY.md",
@@ -186,3 +191,19 @@ def test_openclaw_skill_covers_install_and_capture_positioning() -> None:
     assert 'pip install "mnemos-memory[mcp]"' in hosts
     assert "mnemos ui" in hosts
     assert "hard auto-capture" in operations.lower()
+
+
+def test_codex_skill_covers_install_and_honest_positioning() -> None:
+    skill = MNEMOS_CODEX_SKILL_PATH.read_text(encoding="utf-8")
+    install = MNEMOS_CODEX_SKILL_INSTALL_PATH.read_text(encoding="utf-8")
+    operations = MNEMOS_CODEX_SKILL_OPERATIONS_PATH.read_text(encoding="utf-8")
+    codex_guide = (ROOT / "docs" / "codex.md").read_text(encoding="utf-8")
+    mcp_guide = MCP_INTEGRATION_PATH.read_text(encoding="utf-8")
+
+    assert "Codex" in skill
+    assert "AGENTS.md" in skill
+    assert 'pip install "mnemos-memory[mcp]"' in install
+    assert "mnemos-cli antigravity codex --target codex-agents" in install
+    assert "hard auto-capture" in operations.lower()
+    assert "mnemos-codex" in codex_guide
+    assert "mnemos-codex" in mcp_guide

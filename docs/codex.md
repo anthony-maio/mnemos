@@ -24,7 +24,7 @@ Use it to:
 
 - choose `Dev` or `Pro` onboarding mode
 - configure your provider and storage
-- preview/apply the Codex MCP config
+- preview/apply the Codex MCP config and repo `AGENTS.md` memory block
 - run the built-in smoke check
 
 For reliable scoped memory, prefer a real embedding provider and SQLite starter storage:
@@ -67,6 +67,12 @@ Use [mcp-configs/codex.json](mcp-configs/codex.json) as the starting point. The 
   }
 }
 ```
+
+## 2b. Optional local Codex skill
+
+This repo now ships a Codex onboarding skill at [`skills/mnemos-codex/SKILL.md`](../skills/mnemos-codex/SKILL.md).
+
+Copy `skills/mnemos-codex` into your local Codex skills directory if you want Codex itself to have Mnemos install and usage guidance. The `mnemos-codex` skill teaches the same supported path documented here: MCP config, repo `AGENTS.md`, and optional maintenance Automations. It does not imply hard auto-capture hooks.
 
 ## 3. Add an `AGENTS.md` memory policy
 

@@ -5,6 +5,7 @@ mnemos/hosts.py — Host integration preview/apply helpers for onboarding.
 from __future__ import annotations
 
 import json
+import re
 import sys
 from dataclasses import dataclass
 from datetime import datetime, timezone
@@ -68,6 +69,10 @@ def _cursor_rule_path(cwd: Path) -> Path:
     return cwd / ".cursor" / "rules" / "mnemos-memory.mdc"
 
 
+def _codex_agents_path(cwd: Path) -> Path:
+    return cwd / "AGENTS.md"
+
+
 def _read_text(path: Path) -> str:
     if not path.exists():
         return ""
@@ -83,6 +88,19 @@ def _preview_diff(path: Path, old_text: str, new_text: str) -> str:
         lineterm="",
     )
     return "\n".join(diff)
+
+
+def _merge_markdown_section(existing_text: str, *, heading: str, rendered_section: str) -> str:
+    section = rendered_section.strip()
+    if not existing_text.strip():
+        return f"{section}\n"
+
+    pattern = re.compile(rf"(?ms)^##\s+{re.escape(heading)}\s*\n.*?(?=^#{{1,6}}\s|\Z)")
+    if pattern.search(existing_text):
+        updated = pattern.sub(section, existing_text, count=1)
+        return updated.rstrip() + "\n"
+
+    return existing_text.rstrip() + "\n\n" + section + "\n"
 
 
 def _merge_json_host_config(
@@ -200,6 +218,17 @@ def preview_host_integration(
         rule_diff = _preview_diff(rule_path, existing_rule_text, rendered_rule)
         if rule_diff:
             preview_text = "\n\n".join(part for part in (preview_text, rule_diff) if part)
+    elif host == "codex":
+        agents_path = _codex_agents_path(resolved_cwd)
+        existing_agents_text = _read_text(agents_path)
+        rendered_agents = _merge_markdown_section(
+            existing_agents_text,
+            heading="Mnemos Memory",
+            rendered_section=build_antigravity_artifact("codex", "codex-agents"),
+        )
+        agents_diff = _preview_diff(agents_path, existing_agents_text, rendered_agents)
+        if agents_diff:
+            preview_text = "\n\n".join(part for part in (preview_text, agents_diff) if part)
     return HostIntegrationPreview(
         host=host,
         config_path=config_path,
@@ -242,6 +271,21 @@ def apply_host_integration(
             rule_backup_path.write_text(_read_text(rule_path), encoding="utf-8")
         rule_path.write_text(
             build_antigravity_artifact("cursor", "cursor-rule"),
+            encoding="utf-8",
+        )
+    elif host == "codex":
+        agents_path = _codex_agents_path(_cwd_path(cwd))
+        agents_path.parent.mkdir(parents=True, exist_ok=True)
+        existing_agents_text = _read_text(agents_path)
+        if agents_path.exists():
+            agents_backup_path = _backup_path(agents_path)
+            agents_backup_path.write_text(existing_agents_text, encoding="utf-8")
+        agents_path.write_text(
+            _merge_markdown_section(
+                existing_agents_text,
+                heading="Mnemos Memory",
+                rendered_section=build_antigravity_artifact("codex", "codex-agents"),
+            ),
             encoding="utf-8",
         )
     return HostIntegrationResult(
