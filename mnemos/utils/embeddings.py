@@ -30,7 +30,12 @@ import httpx
 import numpy as np
 
 from ..observability import log_event
-from .reliability import RetryPolicy, call_with_retry, is_retryable_http_exception
+from .reliability import (
+    MnemosConfigurationError,
+    RetryPolicy,
+    call_with_retry,
+    is_retryable_http_exception,
+)
 
 
 class EmbeddingProvider(ABC):
@@ -107,6 +112,15 @@ def _tokenize(text: str) -> list[str]:
     text = text.lower()
     text = re.sub(r"[^a-z0-9\s]", " ", text)
     return [tok for tok in text.split() if len(tok) > 1]
+
+
+def _provider_name_from_base_url(base_url: str) -> str:
+    lower = base_url.lower()
+    if "openrouter" in lower:
+        return "openrouter"
+    if "openclaw" in lower:
+        return "openclaw"
+    return "openai"
 
 
 class SimpleEmbeddingProvider(EmbeddingProvider):
@@ -381,11 +395,13 @@ class OpenAIEmbeddingProvider(EmbeddingProvider):
     def __init__(
         self,
         api_key: str,
+        api_key_fallback: str | None = None,
         model: str = "text-embedding-3-small",
         base_url: str = "https://api.openai.com/v1",
         timeout: float = 30.0,
     ) -> None:
         self.api_key = api_key
+        self.api_key_fallback = api_key_fallback
         self.model = model
         self.base_url = base_url.rstrip("/")
         self.timeout = timeout
@@ -397,9 +413,10 @@ class OpenAIEmbeddingProvider(EmbeddingProvider):
             raise RuntimeError("Embedding dimension unknown until first embed() call.")
         return self._dim
 
-    def _headers(self) -> dict[str, str]:
+    def _headers(self, api_key: str | None = None) -> dict[str, str]:
+        key = self.api_key if api_key is None else api_key
         return {
-            "Authorization": f"Bearer {self.api_key}",
+            "Authorization": f"Bearer {key}",
             "Content-Type": "application/json",
         }
 
@@ -414,25 +431,88 @@ class OpenAIEmbeddingProvider(EmbeddingProvider):
         self._dim = len(vector)
         return vector
 
+    def _embed_with_key(self, text: str, *, api_key: str, provider_name: str) -> list[float]:
+        payload = call_with_retry(
+            provider=provider_name,
+            operation="embed",
+            policy=RetryPolicy(),
+            should_retry=is_retryable_http_exception,
+            fn=lambda: _http_post_json(
+                f"{self.base_url}/embeddings",
+                payload={
+                    "model": self.model,
+                    "input": text,
+                },
+                timeout=self.timeout,
+                headers=self._headers(api_key),
+            ),
+        )
+        return self._parse_single(payload)
+
+    def _embed_batch_with_key(
+        self,
+        texts: list[str],
+        *,
+        api_key: str,
+        provider_name: str,
+    ) -> list[list[float]]:
+        payload = call_with_retry(
+            provider=provider_name,
+            operation="embed_batch",
+            policy=RetryPolicy(),
+            should_retry=is_retryable_http_exception,
+            fn=lambda: _http_post_json(
+                f"{self.base_url}/embeddings",
+                payload={
+                    "model": self.model,
+                    "input": texts,
+                },
+                timeout=self.timeout,
+                headers=self._headers(api_key),
+            ),
+        )
+        data = payload.get("data")
+        if not isinstance(data, list):
+            raise ValueError("OpenAI embedding response missing data.")
+        vectors = [[float(x) for x in item["embedding"]] for item in data]
+        if vectors:
+            self._dim = len(vectors[0])
+        return vectors
+
+    def _fallback_key_for_auth_retry(self, provider_name: str) -> str | None:
+        fallback_key = self.api_key_fallback
+        if provider_name != "openrouter":
+            return None
+        if fallback_key in (None, "", self.api_key):
+            return None
+        return fallback_key
+
     def embed(self, text: str) -> list[float]:
-        provider_name = "openclaw" if "openclaw" in self.base_url.lower() else "openai"
+        provider_name = _provider_name_from_base_url(self.base_url)
         try:
-            payload = call_with_retry(
+            return self._embed_with_key(text, api_key=self.api_key, provider_name=provider_name)
+        except MnemosConfigurationError as exc:
+            error: Exception = exc
+            fallback_key = self._fallback_key_for_auth_retry(provider_name)
+            if fallback_key is not None:
+                try:
+                    vector = self._embed_with_key(
+                        text,
+                        api_key=fallback_key,
+                        provider_name=provider_name,
+                    )
+                    self.api_key = fallback_key
+                    return vector
+                except Exception as retry_exc:
+                    error = retry_exc
+            log_event(
+                "mnemos.provider_failure",
+                level=logging.ERROR,
                 provider=provider_name,
                 operation="embed",
-                policy=RetryPolicy(),
-                should_retry=is_retryable_http_exception,
-                fn=lambda: _http_post_json(
-                    f"{self.base_url}/embeddings",
-                    payload={
-                        "model": self.model,
-                        "input": text,
-                    },
-                    timeout=self.timeout,
-                    headers=self._headers(),
-                ),
+                error=str(error),
             )
-            return self._parse_single(payload)
+            raise error
         except Exception as exc:
             log_event(
                 "mnemos.provider_failure",
@@ -446,30 +526,35 @@ class OpenAIEmbeddingProvider(EmbeddingProvider):
     def embed_batch(self, texts: list[str]) -> list[list[float]]:
         if not texts:
             return []
-        provider_name = "openclaw" if "openclaw" in self.base_url.lower() else "openai"
+        provider_name = _provider_name_from_base_url(self.base_url)
         try:
-            payload = call_with_retry(
+            return self._embed_batch_with_key(
+                texts,
+                api_key=self.api_key,
+                provider_name=provider_name,
+            )
+        except MnemosConfigurationError as exc:
+            error: Exception = exc
+            fallback_key = self._fallback_key_for_auth_retry(provider_name)
+            if fallback_key is not None:
+                try:
+                    vectors = self._embed_batch_with_key(
+                        texts,
+                        api_key=fallback_key,
+                        provider_name=provider_name,
+                    )
+                    self.api_key = fallback_key
+                    return vectors
+                except Exception as retry_exc:
+                    error = retry_exc
+            log_event(
+                "mnemos.provider_failure",
+                level=logging.ERROR,
                 provider=provider_name,
                 operation="embed_batch",
-                policy=RetryPolicy(),
-                should_retry=is_retryable_http_exception,
-                fn=lambda: _http_post_json(
-                    f"{self.base_url}/embeddings",
-                    payload={
-                        "model": self.model,
-                        "input": texts,
-                    },
-                    timeout=self.timeout,
-                    headers=self._headers(),
-                ),
+                error=str(error),
             )
-            data = payload.get("data")
-            if not isinstance(data, list):
-                raise ValueError("OpenAI embedding response missing data.")
-            vectors = [[float(x) for x in item["embedding"]] for item in data]
-            if vectors:
-                self._dim = len(vectors[0])
-            return vectors
+            raise error
         except Exception as exc:
             log_event(
                 "mnemos.provider_failure",

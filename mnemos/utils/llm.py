@@ -24,7 +24,16 @@ from typing import Any
 import httpx
 
 from ..observability import log_event
-from .reliability import RetryPolicy, call_with_async_retry
+from .reliability import MnemosConfigurationError, RetryPolicy, call_with_async_retry
+
+
+def _provider_name_from_base_url(base_url: str) -> str:
+    lower = base_url.lower()
+    if "openrouter" in lower:
+        return "openrouter"
+    if "openclaw" in lower:
+        return "openclaw"
+    return "openai"
 
 
 class LLMProvider(ABC):
@@ -310,6 +319,7 @@ class OpenAIProvider(LLMProvider):
     def __init__(
         self,
         api_key: str,
+        api_key_fallback: str | None = None,
         model: str = "gpt-4o-mini",
         base_url: str = "https://api.openai.com/v1",
         timeout: float = 30.0,
@@ -318,6 +328,7 @@ class OpenAIProvider(LLMProvider):
         system_prompt: str | None = None,
     ) -> None:
         self.api_key = api_key
+        self.api_key_fallback = api_key_fallback
         self.model = model
         self.base_url = base_url.rstrip("/")
         self.timeout = timeout
@@ -325,6 +336,53 @@ class OpenAIProvider(LLMProvider):
         self.max_tokens = max_tokens
         self.system_prompt = system_prompt or (
             "You are a helpful AI assistant with expertise in memory management and information synthesis."
+        )
+
+    def _headers(self, api_key: str | None = None) -> dict[str, str]:
+        key = self.api_key if api_key is None else api_key
+        return {
+            "Authorization": f"Bearer {key}",
+            "Content-Type": "application/json",
+        }
+
+    def _fallback_key_for_auth_retry(self, provider_name: str) -> str | None:
+        fallback_key = self.api_key_fallback
+        if provider_name != "openrouter":
+            return None
+        if fallback_key in (None, "", self.api_key):
+            return None
+        return fallback_key
+
+    async def _predict_with_key(
+        self,
+        *,
+        prompt: str,
+        payload: dict[str, Any],
+        api_key: str,
+        provider_name: str,
+    ) -> str:
+        headers = self._headers(api_key)
+
+        async def _request() -> str:
+            async with httpx.AsyncClient(timeout=self.timeout) as client:
+                response = await client.post(
+                    f"{self.base_url}/chat/completions",
+                    json=payload,
+                    headers=headers,
+                )
+                response.raise_for_status()
+                data = response.json()
+                content = data["choices"][0]["message"]["content"]
+                if not isinstance(content, str):
+                    content = str(content)
+                return content.strip()
+
+        _ = prompt
+        return await call_with_async_retry(
+            provider=provider_name,
+            operation="predict",
+            fn=_request,
+            policy=RetryPolicy(),
         )
 
     async def predict(self, prompt: str, **kwargs: Any) -> str:
@@ -355,34 +413,38 @@ class OpenAIProvider(LLMProvider):
             "max_tokens": max_tokens,
         }
 
-        headers = {
-            "Authorization": f"Bearer {self.api_key}",
-            "Content-Type": "application/json",
-        }
-
-        provider_name = "openclaw" if "openclaw" in self.base_url.lower() else "openai"
-
-        async def _request() -> str:
-            async with httpx.AsyncClient(timeout=self.timeout) as client:
-                response = await client.post(
-                    f"{self.base_url}/chat/completions",
-                    json=payload,
-                    headers=headers,
-                )
-                response.raise_for_status()
-                data = response.json()
-                content = data["choices"][0]["message"]["content"]
-                if not isinstance(content, str):
-                    content = str(content)
-                return content.strip()
+        provider_name = _provider_name_from_base_url(self.base_url)
 
         try:
-            return await call_with_async_retry(
+            return await self._predict_with_key(
+                prompt=prompt,
+                payload=payload,
+                api_key=self.api_key,
+                provider_name=provider_name,
+            )
+        except MnemosConfigurationError as exc:
+            error: Exception = exc
+            fallback_key = self._fallback_key_for_auth_retry(provider_name)
+            if fallback_key is not None:
+                try:
+                    content = await self._predict_with_key(
+                        prompt=prompt,
+                        payload=payload,
+                        api_key=fallback_key,
+                        provider_name=provider_name,
+                    )
+                    self.api_key = fallback_key
+                    return content
+                except Exception as retry_exc:
+                    error = retry_exc
+            log_event(
+                "mnemos.provider_failure",
+                level=logging.ERROR,
                 provider=provider_name,
                 operation="predict",
-                fn=_request,
-                policy=RetryPolicy(),
+                error=str(error),
             )
+            raise error
         except Exception as exc:
             log_event(
                 "mnemos.provider_failure",

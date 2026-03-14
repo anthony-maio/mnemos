@@ -6,6 +6,7 @@ from __future__ import annotations
 
 import asyncio
 
+import httpx
 import pytest
 
 from mnemos.utils import embeddings as embeddings_module
@@ -153,3 +154,56 @@ def test_openai_embedding_provider_embed(monkeypatch: pytest.MonkeyPatch) -> Non
     headers = captured["headers"]
     assert isinstance(headers, dict)
     assert headers["Authorization"] == "Bearer test-key"
+
+
+def test_openai_embedding_provider_retries_openrouter_with_fallback_key_on_401(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    calls: list[str] = []
+
+    class _DummyResponse:
+        def __init__(self, status_code: int, payload: dict[str, object]) -> None:
+            self._status_code = status_code
+            self._payload = payload
+
+        def raise_for_status(self) -> None:
+            if self._status_code < 400:
+                return None
+            request = httpx.Request("POST", "https://openrouter.ai/api/v1/embeddings")
+            response = httpx.Response(self._status_code, request=request)
+            raise httpx.HTTPStatusError(
+                f"status {self._status_code}",
+                request=request,
+                response=response,
+            )
+
+        def json(self) -> dict[str, object]:
+            return self._payload
+
+    def _fake_post(
+        url: str,
+        *,
+        json: dict[str, object],
+        headers: dict[str, str],
+        timeout: float,
+    ) -> _DummyResponse:
+        _ = url, json, timeout
+        calls.append(headers["Authorization"])
+        if headers["Authorization"] == "Bearer stale-key":
+            return _DummyResponse(401, {})
+        return _DummyResponse(200, {"data": [{"embedding": [0.9, 0.1]}]})
+
+    monkeypatch.setattr(embeddings_module.httpx, "post", _fake_post)
+
+    provider = embeddings_module.OpenAIEmbeddingProvider(
+        api_key="stale-key",
+        api_key_fallback="fresh-key",
+        model="thenlper/gte-base",
+        base_url="https://openrouter.ai/api/v1",
+    )
+
+    vec = provider.embed("memory test")
+
+    assert vec == [0.9, 0.1]
+    assert calls == ["Bearer stale-key", "Bearer fresh-key"]
+    assert provider.api_key == "fresh-key"

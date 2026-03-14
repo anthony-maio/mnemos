@@ -11,7 +11,7 @@ from typing import Literal, Mapping
 from pydantic import ValidationError
 
 from .config import MemoryGovernanceConfig, MemorySafetyConfig, MnemosConfig, SurprisalConfig
-from .settings import AppSettings, ResolvedSettings, load_settings
+from .settings import AppSettings, ResolvedSettings, _persistent_env_value, load_settings
 from .utils.embeddings import (
     EmbeddingProvider,
     OllamaEmbeddingProvider,
@@ -59,6 +59,18 @@ def load_runtime_settings(
         cwd=cwd,
         default_store_type=default_store_type,
     )
+
+
+def _persistent_provider_api_key(provider: str) -> str | None:
+    if provider == "openai":
+        return _persistent_env_value("MNEMOS_OPENAI_API_KEY")
+    if provider == "openclaw":
+        return _persistent_env_value("MNEMOS_OPENCLAW_API_KEY") or _persistent_env_value(
+            "MNEMOS_OPENAI_API_KEY"
+        )
+    if provider == "openrouter":
+        return _persistent_env_value("MNEMOS_OPENROUTER_API_KEY")
+    return None
 
 
 def build_store_from_settings(settings: AppSettings) -> MemoryStore:
@@ -122,6 +134,7 @@ def build_embedder_from_settings(settings: AppSettings) -> EmbeddingProvider:
             raise ValueError(f"{env_name} must be set when using {provider} embedding provider")
         return OpenAIEmbeddingProvider(
             api_key=api_key,
+            api_key_fallback=_persistent_provider_api_key(provider),
             model=settings.embedding.model or "text-embedding-3-small",
             base_url=settings.base_url_for(provider) or "https://api.openai.com/v1",
         )
@@ -155,6 +168,7 @@ def build_llm_from_settings(settings: AppSettings) -> LLMProvider:
             raise ValueError(f"{env_name} must be set when using {provider} provider")
         return OpenAIProvider(
             api_key=api_key,
+            api_key_fallback=_persistent_provider_api_key(provider),
             base_url=settings.base_url_for(provider) or "https://api.openai.com/v1",
             model=settings.llm.model or "gpt-4o-mini",
         )

@@ -5,6 +5,7 @@ mnemos/settings.py — Canonical config loading, precedence, and persistence.
 from __future__ import annotations
 
 import os
+import re
 import sys
 from dataclasses import dataclass, field
 from pathlib import Path
@@ -85,6 +86,60 @@ def _set_nested(target: dict[str, Any], path: tuple[str, ...], value: Any) -> No
     cursor[path[-1]] = value
 
 
+def _persistent_env_value(name: str) -> str | None:
+    if os.name != "nt":
+        return None
+    try:
+        import winreg
+    except ImportError:  # pragma: no cover
+        return None
+
+    registry_paths = (
+        (winreg.HKEY_CURRENT_USER, "Environment"),
+        (
+            winreg.HKEY_LOCAL_MACHINE,
+            r"SYSTEM\CurrentControlSet\Control\Session Manager\Environment",
+        ),
+    )
+    seen: set[str] = set()
+
+    def _resolve_registry_value(variable_name: str) -> str | None:
+        if variable_name in seen:
+            return None
+        seen.add(variable_name)
+
+        raw_value: str | None = None
+        for hive, subkey in registry_paths:
+            try:
+                with winreg.OpenKey(hive, subkey) as key:
+                    value, _ = winreg.QueryValueEx(key, variable_name)
+            except OSError:
+                continue
+            if value in (None, ""):
+                continue
+            raw_value = str(value).strip()
+            break
+
+        if raw_value in (None, ""):
+            return None
+
+        def _replace(match: re.Match[str]) -> str:
+            referenced_name = match.group(1)
+            resolved = _resolve_registry_value(referenced_name)
+            if resolved not in (None, ""):
+                return str(resolved)
+            env_value = os.environ.get(referenced_name)
+            if env_value not in (None, ""):
+                return str(env_value)
+            return match.group(0)
+
+        assert raw_value is not None
+        resolved = re.sub(r"%([^%]+)%", _replace, raw_value).strip()
+        return resolved or None
+
+    return _resolve_registry_value(name)
+
+
 def _env_value(
     env: Mapping[str, str],
     name: str,
@@ -99,6 +154,37 @@ def _env_value(
         if value not in (None, ""):
             return value
     return None
+
+
+def _nested_value(data: Mapping[str, Any], path: tuple[str, ...]) -> Any:
+    cursor: Any = data
+    for key in path:
+        if not isinstance(cursor, Mapping):
+            return None
+        cursor = cursor.get(key)
+    return cursor
+
+
+def _apply_persistent_env_fallbacks(raw: dict[str, Any]) -> dict[str, Any]:
+    fallback_specs = (
+        (("providers", "openai", "api_key"), ("MNEMOS_OPENAI_API_KEY",)),
+        (("providers", "openclaw", "api_key"), ("MNEMOS_OPENCLAW_API_KEY",)),
+        (("providers", "openrouter", "api_key"), ("MNEMOS_OPENROUTER_API_KEY",)),
+        (("providers", "qdrant", "api_key"), ("MNEMOS_QDRANT_API_KEY",)),
+        (("providers", "neo4j", "username"), ("MNEMOS_NEO4J_USERNAME",)),
+        (("providers", "neo4j", "password"), ("MNEMOS_NEO4J_PASSWORD",)),
+    )
+    merged = dict(raw)
+    for path, names in fallback_specs:
+        existing = _nested_value(merged, path)
+        if existing not in (None, ""):
+            continue
+        for name in names:
+            fallback = _persistent_env_value(name)
+            if fallback not in (None, ""):
+                _set_nested(merged, path, fallback)
+                break
+    return merged
 
 
 def _env_bool(env: Mapping[str, str], name: str) -> bool | None:
@@ -487,6 +573,7 @@ def load_settings(
         merged = _deep_merge(merged, project_sanitized)
 
     merged = _deep_merge(merged, _env_overrides(source_env))
+    merged = _apply_persistent_env_fallbacks(merged)
     settings = AppSettings.model_validate(merged)
     return ResolvedSettings(
         settings=settings,

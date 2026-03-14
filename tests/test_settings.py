@@ -4,6 +4,7 @@ tests/test_settings.py — Canonical config loading and persistence tests.
 
 from __future__ import annotations
 
+import sys
 from pathlib import Path
 
 from mnemos.settings import import_existing_setup, load_settings, save_settings
@@ -181,6 +182,95 @@ base_url = "https://openrouter.ai/api/v1"
 
     assert resolved.global_config_path == explicit_config
     assert resolved.settings.llm.provider == "openrouter"
+    assert resolved.settings.providers.openrouter.api_key == "router-key"
+
+
+def test_load_settings_uses_windows_persistent_env_fallback_for_provider_keys(
+    monkeypatch, tmp_path: Path
+) -> None:
+    config_path = tmp_path / "mnemos.toml"
+    config_path.write_text(
+        """
+[llm]
+provider = "openrouter"
+
+[embedding]
+provider = "openrouter"
+""".strip(),
+        encoding="utf-8",
+    )
+
+    monkeypatch.setattr(
+        "mnemos.settings._persistent_env_value",
+        lambda name: "router-key" if name == "MNEMOS_OPENROUTER_API_KEY" else None,
+        raising=False,
+    )
+
+    resolved = load_settings(
+        env={"MNEMOS_CONFIG_PATH": str(config_path)},
+        cwd=tmp_path,
+    )
+
+    assert resolved.settings.providers.openrouter.api_key == "router-key"
+
+
+def test_persistent_env_fallback_resolves_registry_references_without_process_env(
+    monkeypatch, tmp_path: Path
+) -> None:
+    config_path = tmp_path / "mnemos.toml"
+    config_path.write_text(
+        """
+[llm]
+provider = "openrouter"
+
+[embedding]
+provider = "openrouter"
+""".strip(),
+        encoding="utf-8",
+    )
+
+    class _FakeKey:
+        def __init__(self, hive: str, subkey: str) -> None:
+            self.hive = hive
+            self.subkey = subkey
+
+        def __enter__(self) -> "_FakeKey":
+            return self
+
+        def __exit__(self, exc_type, exc, tb) -> None:
+            _ = exc_type, exc, tb
+            return None
+
+    class _FakeWinreg:
+        HKEY_CURRENT_USER = "hkcu"
+        HKEY_LOCAL_MACHINE = "hklm"
+
+        values = {
+            ("hkcu", "Environment", "MNEMOS_OPENROUTER_API_KEY"): "%OPENROUTER_API_KEY%",
+            ("hkcu", "Environment", "OPENROUTER_API_KEY"): "router-key",
+        }
+
+        @staticmethod
+        def OpenKey(hive: str, subkey: str) -> _FakeKey:
+            return _FakeKey(hive, subkey)
+
+        @staticmethod
+        def QueryValueEx(key: _FakeKey, name: str) -> tuple[str, int]:
+            try:
+                value = _FakeWinreg.values[(key.hive, key.subkey, name)]
+            except KeyError as exc:
+                raise OSError(name) from exc
+            return value, 1
+
+    monkeypatch.setattr("mnemos.settings.os.name", "nt")
+    monkeypatch.setitem(sys.modules, "winreg", _FakeWinreg)
+    monkeypatch.setenv("OPENROUTER_API_KEY", "stale-process-key")
+
+    resolved = load_settings(
+        env={"MNEMOS_CONFIG_PATH": str(config_path)},
+        cwd=tmp_path,
+    )
+
     assert resolved.settings.providers.openrouter.api_key == "router-key"
 
 
