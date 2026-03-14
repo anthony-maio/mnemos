@@ -7,7 +7,11 @@ from __future__ import annotations
 import json
 import os
 from pathlib import Path
-import tomllib
+
+try:
+    import tomllib
+except ModuleNotFoundError:  # pragma: no cover - Python < 3.11 fallback
+    import tomli as tomllib
 
 from importlib.util import module_from_spec, spec_from_file_location
 
