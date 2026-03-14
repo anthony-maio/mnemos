@@ -141,6 +141,13 @@ Run at least one real Codex session through:
 
 Until that flow is verified in daily use, Codex remains documented as Tier 2 in [client-compatibility-matrix.md](client-compatibility-matrix.md).
 
+The best current mental model for Codex is not "automatic memory." It is a two-step soft-auto loop:
+
+1. recall first with `mnemos_retrieve`
+2. curate durable facts with `mnemos_store` and finish with `mnemos_consolidate`
+
+That framing is what the shipped `mnemos-codex` skill now teaches.
+
 ## Neo4j-backed status
 
 Codex now validates cleanly against a shared `MNEMOS_CONFIG_PATH` that points at Neo4j. That means the MCP server can use the same always-on backend as Claude Code or Cursor. It does **not** mean Codex has automatic capture hooks yet; the current validated loop is still soft-auto instruction plus MCP:

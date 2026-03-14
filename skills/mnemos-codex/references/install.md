@@ -56,7 +56,15 @@ mnemos-cli doctor
 
 Then verify one real loop:
 
-1. `mnemos_retrieve`
+1. recall: `mnemos_retrieve`
 2. normal coding work
-3. `mnemos_store`
-4. `mnemos_consolidate`
+3. curator: `mnemos_store`
+4. finish: `mnemos_consolidate`
+
+If you are validating Codex specifically, make sure the query uses the repo scope:
+
+```text
+current_scope=project
+scope_id=<workspace-or-repo-name>
+allowed_scopes=project,global
+```

@@ -205,5 +205,9 @@ def test_codex_skill_covers_install_and_honest_positioning() -> None:
     assert 'pip install "mnemos-memory[mcp]"' in install
     assert "mnemos-cli antigravity codex --target codex-agents" in install
     assert "hard auto-capture" in operations.lower()
+    assert "recall" in skill.lower()
+    assert "curator" in skill.lower()
+    assert "recall workflow" in operations.lower()
+    assert "curator workflow" in operations.lower()
     assert "mnemos-codex" in codex_guide
     assert "mnemos-codex" in mcp_guide

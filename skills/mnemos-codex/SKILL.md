@@ -5,7 +5,11 @@ description: Use when Codex users or Codex agents need to install, configure, va
 
 # Mnemos for Codex
 
-Use this skill to put Mnemos on the supported Codex path without overstating host automation.
+Use this skill to put Mnemos on the supported Codex path without overstating host automation. In Codex, the practical Mnemos workflow is:
+
+- recall at the start of substantial work
+- curate durable facts during or after the task
+- consolidate before finishing
 
 ## Default path
 
@@ -22,11 +26,23 @@ Use this skill to put Mnemos on the supported Codex path without overstating hos
 
 ## Daily loop
 
-1. Call `mnemos_retrieve` at the start of substantial tasks.
-2. Store only durable facts with `mnemos_store`.
-3. Finish substantial work with `mnemos_consolidate`.
-4. Use `mnemos_inspect` before storing a correction.
+1. Start in recall mode: call `mnemos_retrieve` with a task-focused query and repo-scoped arguments.
+2. Do the work, then switch to curator mode: store only durable facts with `mnemos_store`.
+3. Use `mnemos_inspect` before storing a correction or when a retrieved memory looks suspicious.
+4. Finish substantial work with `mnemos_consolidate`.
 5. If Mnemos MCP tools are unavailable, continue normally instead of blocking work.
+
+## Recall mode
+
+- Use at the start of coding, debugging, review, or handoff tasks.
+- Query for architecture, current repo conventions, recent fixes, environment quirks, and user preferences that matter for this task.
+- In Codex, prefer `current_scope=project`, `scope_id=<workspace or repo name>`, and `allowed_scopes=project,global`.
+
+## Curator mode
+
+- Use during or near the end of a substantial task.
+- Store decisions, constraints, environment facts, recurring bug patterns, and stable preferences.
+- Skip one-off chatter, ephemeral plans, stack traces without reusable lessons, and secrets.
 
 ## Avoid
 

@@ -19,6 +19,48 @@ Do not hide this gap. If the user asks whether Codex has Claude-style automatic 
 4. Finish substantial work with `mnemos_consolidate`.
 5. Use `mnemos_inspect` if a retrieved memory looks wrong.
 
+## Recall workflow
+
+At task start, ask: what durable repo memory would reduce re-explaining or repeated mistakes here?
+
+Good retrieval targets:
+- architecture and repo conventions
+- recent bugfixes and failure patterns
+- deploy and environment quirks
+- stable user or maintainer preferences
+
+Preferred Codex retrieval shape:
+
+```text
+mnemos_retrieve(
+  query=<task-focused query>,
+  current_scope=project,
+  scope_id=<workspace-or-repo-name>,
+  allowed_scopes=project,global,
+  top_k=5
+)
+```
+
+Summarize the returned memories into the working plan instead of dumping them back verbatim.
+
+## Curator workflow
+
+Near the end of a substantial task, ask: what from this session will matter again next week?
+
+Good things to store:
+- architecture decisions and rationale
+- reusable environment facts
+- recurring bug patterns and their fixes
+- stable preferences and conventions
+
+Bad things to store:
+- transient chatter
+- one-off stack traces without a reusable lesson
+- secrets, credentials, or tokens
+- speculative plans that were not adopted
+
+If a retrieved memory conflicts with current reality, inspect first, then store the correction.
+
 ## Troubleshooting
 
 Start with:
