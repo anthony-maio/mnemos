@@ -12,7 +12,6 @@ from __future__ import annotations
 import asyncio
 import argparse
 import json
-import shutil
 import time
 import uuid
 from collections.abc import Callable
@@ -27,7 +26,7 @@ from .engine import MnemosEngine
 from .runtime import build_embedder_from_env
 from .types import Interaction, MemoryChunk
 from .utils.llm import MockLLMProvider
-from .utils.storage import InMemoryStore, MemoryStore, QdrantStore, SQLiteStore
+from .utils.storage import InMemoryStore, MemoryStore, SQLiteStore
 
 BENCHMARK_DATASET_DIR = Path(__file__).resolve().parents[1] / "benchmarks" / "datasets"
 DATASET_PACKS: dict[str, tuple[str, ...]] = {
@@ -36,6 +35,10 @@ DATASET_PACKS: dict[str, tuple[str, ...]] = {
         "preference-drift-v1.jsonl",
         "cross-project-scope-v1.jsonl",
     )
+}
+DEFAULT_MAX_P95_LATENCY_RATIO_BY_STORE: dict[str, float] = {
+    "memory": 2.0,
+    "sqlite": 4.0,
 }
 
 
@@ -196,7 +199,7 @@ def _benchmark_store_id(doc_id: str) -> str:
     """
     Map arbitrary dataset IDs to stable UUIDs for backend compatibility.
 
-    Some vector backends (embedded Qdrant) require UUID-like point IDs.
+    Keeps benchmark point IDs deterministic across runs and stores.
     """
     return str(uuid.uuid5(uuid.NAMESPACE_URL, f"mnemos-benchmark:{doc_id}"))
 
@@ -458,33 +461,15 @@ def load_documents(dataset_path: Path) -> list[BenchmarkDocument]:
     return documents
 
 
-def _cleanup_local_store_artifacts(
-    store_type: str,
-    sqlite_path: Path | None,
-    qdrant_path: Path | None,
-) -> None:
+def _cleanup_local_store_artifacts(store_type: str, sqlite_path: Path | None) -> None:
     if store_type == "sqlite" and sqlite_path is not None and sqlite_path.exists():
         sqlite_path.unlink()
-    if store_type == "qdrant" and qdrant_path is not None and qdrant_path.exists():
-        if qdrant_path.is_dir():
-            try:
-                shutil.rmtree(qdrant_path)
-            except PermissionError:
-                # Best-effort cleanup for local embedded runs where lock release can lag.
-                pass
-        else:
-            qdrant_path.unlink()
 
 
 def _build_store(
     *,
     store_type: str,
     sqlite_path: Path | None,
-    qdrant_url: str | None,
-    qdrant_api_key: str | None,
-    qdrant_path: Path | None,
-    qdrant_collection: str,
-    vector_size: int,
 ) -> MemoryStore:
     if store_type == "memory":
         return InMemoryStore(name="benchmark-memory")
@@ -492,15 +477,6 @@ def _build_store(
         if sqlite_path is None:
             raise ValueError("sqlite_path is required for sqlite benchmark runs.")
         return SQLiteStore(db_path=str(sqlite_path), name="benchmark-sqlite")
-    if store_type == "qdrant":
-        return QdrantStore(
-            url=qdrant_url,
-            api_key=qdrant_api_key,
-            path=str(qdrant_path) if qdrant_path is not None else None,
-            collection_name=qdrant_collection,
-            vector_size=vector_size,
-            name="benchmark-qdrant",
-        )
     raise ValueError(f"Unsupported store type: {store_type!r}")
 
 
@@ -615,13 +591,14 @@ def evaluate_production_replacement_gate(
     comparisons: list[dict[str, Any]],
     *,
     min_mrr_lift: float = 0.15,
-    max_latency_ratio: float = 2.0,
+    max_latency_ratio: float | None = None,
     latency_floor_ms: float = 1.0,
 ) -> dict[str, Any]:
     """Evaluate replacement claim gate across baseline vs engine comparisons."""
     details: list[dict[str, Any]] = []
 
     for comp in comparisons:
+        store_type = str(comp["store_type"])
         baseline_mrr = float(comp["baseline"]["mrr"])
         engine_mrr = float(comp["engine"]["mrr"])
         baseline_latency = float(comp["baseline"]["latency_p95_ms"])
@@ -634,14 +611,20 @@ def evaluate_production_replacement_gate(
 
         latency_denominator = max(baseline_latency, latency_floor_ms)
         latency_ratio = engine_latency / latency_denominator if latency_denominator > 0 else 0.0
+        applied_max_latency_ratio = (
+            max_latency_ratio
+            if max_latency_ratio is not None
+            else DEFAULT_MAX_P95_LATENCY_RATIO_BY_STORE.get(store_type, 2.0)
+        )
 
-        passed = mrr_lift_ratio >= min_mrr_lift and latency_ratio <= max_latency_ratio
+        passed = mrr_lift_ratio >= min_mrr_lift and latency_ratio <= applied_max_latency_ratio
         details.append(
             {
                 "dataset": comp["dataset"],
-                "store_type": comp["store_type"],
+                "store_type": store_type,
                 "mrr_lift_ratio": mrr_lift_ratio,
                 "latency_p95_ratio": latency_ratio,
+                "max_latency_p95_ratio": applied_max_latency_ratio,
                 "passed": passed,
             }
         )
@@ -652,6 +635,9 @@ def evaluate_production_replacement_gate(
     return {
         "required_mrr_lift_ratio": min_mrr_lift,
         "max_latency_p95_ratio": max_latency_ratio,
+        "max_latency_p95_ratio_by_store": (
+            None if max_latency_ratio is not None else DEFAULT_MAX_P95_LATENCY_RATIO_BY_STORE
+        ),
         "latency_ratio_floor_ms": latency_floor_ms,
         "evaluated_pairs": len(details),
         "passed_pairs": passed_count,
@@ -669,10 +655,6 @@ def run_retrieval_benchmark(
     documents: list[BenchmarkDocument],
     query_limit: int | None = None,
     sqlite_path: Path | None = None,
-    qdrant_url: str | None = None,
-    qdrant_api_key: str | None = None,
-    qdrant_path: Path | None = None,
-    qdrant_collection: str = "mnemos_benchmark",
     queries: list[BenchmarkQuery] | None = None,
     baseline_scope_aware: bool = False,
 ) -> dict[str, Any]:
@@ -688,21 +670,12 @@ def run_retrieval_benchmark(
     if query_limit is not None and query_limit > 0:
         benchmark_queries = benchmark_queries[:query_limit]
 
-    _cleanup_local_store_artifacts(store_type, sqlite_path, qdrant_path)
+    _cleanup_local_store_artifacts(store_type, sqlite_path)
     embedder = build_embedder_from_env(default_provider="simple")
-    try:
-        vector_size = embedder.dim
-    except Exception:
-        vector_size = len(embedder.embed(documents[0].content))
 
     store = _build_store(
         store_type=store_type,
         sqlite_path=sqlite_path,
-        qdrant_url=qdrant_url,
-        qdrant_api_key=qdrant_api_key,
-        qdrant_path=qdrant_path,
-        qdrant_collection=qdrant_collection,
-        vector_size=vector_size,
     )
 
     ingest_start = time.perf_counter()
@@ -798,7 +771,7 @@ def main() -> None:
     parser.add_argument(
         "--stores",
         default="memory,sqlite",
-        help="Comma-separated store backends to benchmark (memory,sqlite,qdrant).",
+        help="Comma-separated store backends to benchmark (memory,sqlite).",
     )
     parser.add_argument(
         "--retrievers",
@@ -828,30 +801,6 @@ def main() -> None:
         help="SQLite path for sqlite benchmark runs.",
     )
     parser.add_argument(
-        "--qdrant-url",
-        type=str,
-        default="",
-        help="Qdrant server URL for qdrant runs (omit when using --qdrant-path).",
-    )
-    parser.add_argument(
-        "--qdrant-api-key",
-        type=str,
-        default="",
-        help="Qdrant API key for remote qdrant.",
-    )
-    parser.add_argument(
-        "--qdrant-path",
-        type=str,
-        default=".mnemos_benchmark_qdrant",
-        help="Local Qdrant path for embedded qdrant mode.",
-    )
-    parser.add_argument(
-        "--qdrant-collection",
-        type=str,
-        default=f"mnemos_benchmark_{int(time.time())}",
-        help="Collection name for qdrant runs.",
-    )
-    parser.add_argument(
         "--output", type=str, default="", help="Optional path to write JSON report."
     )
     parser.add_argument(
@@ -868,8 +817,11 @@ def main() -> None:
     parser.add_argument(
         "--gate-max-p95-latency-ratio",
         type=float,
-        default=2.0,
-        help="Maximum allowed engine/baseline p95 latency ratio for production gate.",
+        default=None,
+        help=(
+            "Override maximum allowed engine/baseline p95 latency ratio for production gate. "
+            "If omitted, uses store defaults (memory=2.0, sqlite=4.0)."
+        ),
     )
     parser.add_argument(
         "--gate-latency-floor-ms",
@@ -896,9 +848,6 @@ def main() -> None:
 
     query_limit = args.query_limit if args.query_limit > 0 else None
     sqlite_path = Path(args.sqlite_path) if args.sqlite_path else None
-    qdrant_path = Path(args.qdrant_path) if args.qdrant_path else None
-    qdrant_url = args.qdrant_url or None
-    qdrant_api_key = args.qdrant_api_key or None
 
     if args.dataset_pack:
         dataset_runs = []
@@ -929,10 +878,6 @@ def main() -> None:
                     documents=documents,
                     query_limit=query_limit,
                     sqlite_path=sqlite_path,
-                    qdrant_url=qdrant_url,
-                    qdrant_api_key=qdrant_api_key,
-                    qdrant_path=qdrant_path,
-                    qdrant_collection=args.qdrant_collection,
                     queries=benchmark_queries,
                     baseline_scope_aware=args.baseline_scope_aware,
                 )

@@ -32,13 +32,8 @@ def _venv_python(venv_dir: Path) -> Path:
 
 
 def _required_install_extras(env: dict[str, str]) -> tuple[str, ...]:
-    extras = ["mcp"]
-    store_type = env.get("MNEMOS_STORE_TYPE", env.get("MNEMOS_STORAGE", "sqlite")).lower()
-    if store_type == "qdrant":
-        extras.append("qdrant")
-    if store_type == "neo4j":
-        extras.append("neo4j")
-    return tuple(sorted(set(extras)))
+    _ = env
+    return ("mcp",)
 
 
 def _expected_install_stamp(plugin_root: Path, env: dict[str, str]) -> str:

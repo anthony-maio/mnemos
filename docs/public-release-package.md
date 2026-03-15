@@ -21,7 +21,7 @@ Mnemos is a local-first memory layer for coding agents. It keeps project, worksp
 Safe to claim today:
 
 - reliable scoped memory for solo coding-agent workflows
-- local-first persistence with SQLite as the starter profile
+- local-first persistence with a single SQLite database
 - biomimetic retrieval and consolidation under the hood
 - Tier 1 support for Claude Code, Claude Desktop, and generic MCP stdio hosts
 - documented Codex support through MCP + `AGENTS.md`
@@ -78,7 +78,7 @@ Before stronger production claims, Mnemos still needs:
 ## Maintainer Ship Checklist
 
 - confirm `python -m pytest -q`, `python -m mypy .`, and `python -m black --check .` pass
-- confirm benchmark gates pass for `memory-core`, `starter-sqlite`, and `local-performance-qdrant`
+- confirm benchmark gates pass for `memory` and `sqlite`
 - confirm Tier 1 MCP tests pass
 - confirm [docs/public-beta-launch.md](public-beta-launch.md) matches the actual release posture
 - confirm website, README, and changelog use the same release framing

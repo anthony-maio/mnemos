@@ -17,7 +17,7 @@ This beta is not a “definitive replacement” launch. It is a serious public r
 ### What is in this beta
 
 - scoped memory isolation for project, workspace, and global memory
-- local-first persistence with SQLite as the starter profile
+- local-first persistence with a single SQLite database
 - biomimetic retrieval and consolidation under the hood:
   - surprisal-gated encoding
   - reconsolidation of stale facts
@@ -54,7 +54,7 @@ pip install "mnemos-memory[mcp]"
 mnemos-cli doctor
 ```
 
-Start with the SQLite profile, then move to Qdrant only when your dataset size or latency targets justify it.
+Use the default SQLite setup for the shipped local-first path.
 
 Key docs:
 

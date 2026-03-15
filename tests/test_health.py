@@ -13,14 +13,14 @@ from mnemos.health import detect_profile, run_health_checks
 from mnemos.utils import SQLiteStore
 
 
-def test_detect_profile_starter_sqlite(monkeypatch: pytest.MonkeyPatch) -> None:
+def test_detect_profile_default_sqlite(monkeypatch: pytest.MonkeyPatch) -> None:
     monkeypatch.setenv("MNEMOS_STORE_TYPE", "sqlite")
-    assert detect_profile() == "starter"
+    assert detect_profile() == "default"
 
 
-def test_detect_profile_starter_memory(monkeypatch: pytest.MonkeyPatch) -> None:
+def test_detect_profile_default_memory(monkeypatch: pytest.MonkeyPatch) -> None:
     monkeypatch.setenv("MNEMOS_STORE_TYPE", "memory")
-    assert detect_profile() == "starter"
+    assert detect_profile() == "default"
 
 
 def test_health_fails_when_openclaw_missing_api_key(monkeypatch: pytest.MonkeyPatch) -> None:
@@ -46,7 +46,7 @@ def test_health_reports_degraded_when_using_mock_llm(monkeypatch: pytest.MonkeyP
     assert report["summary"]["warn"] >= 1
 
 
-def test_health_reports_ready_for_openclaw_starter_profile(
+def test_health_reports_ready_for_openclaw_default_profile(
     monkeypatch: pytest.MonkeyPatch, tmp_path: Path
 ) -> None:
     db_path = tmp_path / "mnemos.db"
@@ -58,7 +58,7 @@ def test_health_reports_ready_for_openclaw_starter_profile(
 
     report = run_health_checks()
 
-    assert report["profile"] == "starter"
+    assert report["profile"] == "default"
     assert report["status"] == "ready"
     assert report["summary"]["fail"] == 0
 
@@ -72,7 +72,7 @@ def test_health_does_not_recommend_backend_upgrade_when_sqlite_below_threshold(
     monkeypatch.setenv("MNEMOS_LLM_PROVIDER", "openclaw")
     monkeypatch.setenv("MNEMOS_OPENCLAW_API_KEY", "test-key")
     monkeypatch.setenv("MNEMOS_EMBEDDING_PROVIDER", "openclaw")
-    monkeypatch.setenv("MNEMOS_DOCTOR_QDRANT_CHUNK_THRESHOLD", "100")
+    monkeypatch.setenv("MNEMOS_DOCTOR_CHUNK_THRESHOLD", "100")
 
     report = run_health_checks()
 
@@ -96,7 +96,7 @@ def test_health_does_not_recommend_backend_upgrade_when_sqlite_threshold_exceede
     monkeypatch.setenv("MNEMOS_LLM_PROVIDER", "openclaw")
     monkeypatch.setenv("MNEMOS_OPENCLAW_API_KEY", "test-key")
     monkeypatch.setenv("MNEMOS_EMBEDDING_PROVIDER", "openclaw")
-    monkeypatch.setenv("MNEMOS_DOCTOR_QDRANT_CHUNK_THRESHOLD", "1")
+    monkeypatch.setenv("MNEMOS_DOCTOR_CHUNK_THRESHOLD", "1")
 
     report = run_health_checks()
 
@@ -181,7 +181,7 @@ def test_health_reports_single_local_backend_story(
 
     report = run_health_checks()
 
-    assert report["profile"] == "starter"
+    assert report["profile"] == "default"
     assert report["store_type"] == "sqlite"
     assert not any("qdrant" in check["name"] for check in report["checks"])
     assert not any("neo4j" in check["name"] for check in report["checks"])

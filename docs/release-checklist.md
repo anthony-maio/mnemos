@@ -6,10 +6,9 @@ Use this checklist before tagging a release candidate or making category-definin
 - `black --check .` passes
 - `mypy .` passes
 - `pytest -q` passes
-- benchmark gate passes for all required profiles:
-  - `memory-core`
-  - `starter-sqlite`
-  - `local-performance-qdrant`
+- benchmark gate passes for required local store modes:
+  - `memory`
+  - `sqlite`
 - Tier 1 MCP checks pass as real end-to-end flows:
   - Claude Code plugin flow
   - Claude Desktop stdio registration
@@ -20,13 +19,9 @@ Use this checklist before tagging a release candidate or making category-definin
 - `docs/mcp-transport-contract.md` reflects current tool/resource contract
 - `docs/client-compatibility-matrix.md` includes tested versions and caveats
 - `docs/codex.md` reflects the current MCP + `AGENTS.md` setup path
-- profile docs are current:
-  - `docs/profiles/starter-sqlite.md`
-  - `docs/profiles/local-performance-embedded-qdrant.md`
-  - `docs/profiles/scale-external-qdrant.md`
 
 ## Operational Readiness
-- `mnemos-cli doctor` reports expected profile readiness
+- `mnemos-cli doctor` reports expected readiness
 - `mnemos-cli doctor` reports legacy unscoped chunk counts when present
 - `mnemos_health` MCP tool reports readiness + backend stats + scope-isolation status
 - structured logs verified for:

@@ -44,7 +44,6 @@ The plugin manifest auto-registers the Mnemos MCP server and runs a bootstrap wr
 - installs Mnemos with MCP extras
 - launches `mnemos.mcp_server` over stdio
 - defaults to persistent SQLite storage
- - installs the `qdrant` extra automatically if `MNEMOS_STORE_TYPE=qdrant`
 
 #### Claude Code / Claude Desktop
 
@@ -149,9 +148,6 @@ Compatibility + contract docs:
 - [client-compatibility-matrix.md](client-compatibility-matrix.md)
 - [codex.md](codex.md)
 - [cursor-antigravity.md](cursor-antigravity.md)
-- [profiles/starter-sqlite.md](profiles/starter-sqlite.md)
-- [profiles/local-performance-embedded-qdrant.md](profiles/local-performance-embedded-qdrant.md)
-- [profiles/scale-external-qdrant.md](profiles/scale-external-qdrant.md)
 
 ---
 
@@ -189,18 +185,8 @@ Environment variables still work and override config files. They are now the adv
 | `MNEMOS_OPENROUTER_URL` | `https://openrouter.ai/api/v1` | OpenRouter API URL |
 | `MNEMOS_EMBEDDING_PROVIDER` | inferred from `MNEMOS_LLM_PROVIDER`, else `simple` | Embedding backend: `simple`, `ollama`, `openai`, `openclaw`, or `openrouter` |
 | `MNEMOS_EMBEDDING_MODEL` | provider-dependent | Embedding model name |
-| `MNEMOS_STORE_TYPE` | `memory` | Storage backend: `memory`, `sqlite`, `qdrant`, or `neo4j` |
+| `MNEMOS_STORE_TYPE` | `memory` | Storage backend: `memory` or `sqlite` |
 | `MNEMOS_SQLITE_PATH` | `mnemos_memory.db` | SQLite database path |
-| `MNEMOS_QDRANT_URL` | `http://localhost:6333` | Qdrant server URL |
-| `MNEMOS_QDRANT_API_KEY` | — | Optional Qdrant API key |
-| `MNEMOS_QDRANT_PATH` | — | Local embedded Qdrant path (overrides URL) |
-| `MNEMOS_QDRANT_COLLECTION` | `mnemos_memory` | Qdrant collection name |
-| `MNEMOS_QDRANT_VECTOR_SIZE` | — | Optional fixed vector size |
-| `MNEMOS_NEO4J_URI` | `bolt://localhost:7687` | Neo4j Bolt URI |
-| `MNEMOS_NEO4J_USERNAME` | — | Required when using `neo4j` storage |
-| `MNEMOS_NEO4J_PASSWORD` | — | Required when using `neo4j` storage |
-| `MNEMOS_NEO4J_DATABASE` | `neo4j` | Neo4j database name |
-| `MNEMOS_NEO4J_LABEL` | `MnemosMemoryChunk` | Node label used for persisted memories |
 | `MNEMOS_SURPRISAL_THRESHOLD` | `0.3` | Surprisal gate sensitivity (0-1) |
 | `MNEMOS_MEMORY_SAFETY_ENABLED` | `true` | Enable shared memory write safety firewall |
 | `MNEMOS_MEMORY_SECRET_ACTION` | `block` | Secret handling mode: `allow`, `redact`, or `block` |
@@ -339,17 +325,16 @@ mnemos-cli purge --scope project --scope-id repo-alpha --older-than-days 30 --ye
 mnemos-cli doctor
 
 # Threshold-aware readiness diagnostics
-mnemos-cli doctor --qdrant-chunk-threshold 5000 --latency-p95-threshold-ms 250 --observed-p95-ms 180
+mnemos-cli doctor --chunk-threshold 5000 --latency-p95-threshold-ms 250 --observed-p95-ms 180
 
 # One-command profile generation
-mnemos-cli profile starter --format dotenv --write .mnemos.profile.env
-mnemos-cli profile local-performance --format dotenv --write .mnemos.profile.env
+mnemos-cli profile default --format dotenv --write .mnemos.profile.env
 
-# Dry-run migration into Neo4j
-mnemos-cli migrate-store --source-store qdrant --target-store neo4j --dry-run
+# Dry-run migration into SQLite
+mnemos-cli migrate-store --source-store qdrant --target-store sqlite --dry-run
 
-# Execute migration into Neo4j
-mnemos-cli migrate-store --source-store qdrant --target-store neo4j
+# Execute migration into SQLite
+mnemos-cli migrate-store --source-store qdrant --target-store sqlite
 
 # Generate a Cursor rule for soft-auto memory use
 mnemos-cli antigravity cursor --target cursor-rule --write .cursor/rules/mnemos-memory.mdc
@@ -371,7 +356,7 @@ The auto-store hook path is deterministic and conservative:
 - skips sensitive content (tokens/secrets/key material patterns)
 - only stores tool outputs when failure/error patterns are present
 
-This Claude hook path has been validated on a Neo4j-backed `MNEMOS_CONFIG_PATH` setup as of March 12, 2026. Codex and Cursor can point at the same shared config, but they still rely on explicit Mnemos tool usage or host instruction policies today rather than shipped hook capture.
+This Claude hook path has been validated on the canonical SQLite-backed `MNEMOS_CONFIG_PATH` setup as of March 15, 2026. Codex and Cursor can point at the same shared config, but they still rely on explicit Mnemos tool usage or host instruction policies today rather than shipped hook capture.
 
 Treat hard auto-capture as host-dependent outside Claude Code. Codex, Cursor, OpenClaw, and generic MCP hosts can use soft-auto instruction packs today, but they should not be marketed as having built-in hook parity unless that host actually exposes verified lifecycle hooks.
 

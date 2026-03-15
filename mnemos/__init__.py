@@ -62,12 +62,10 @@ from .utils import (
     MnemosTransientError,
     MemoryStore,
     MockLLMProvider,
-    Neo4jStore,
     OllamaEmbeddingProvider,
     OllamaProvider,
     OpenAIEmbeddingProvider,
     OpenAIProvider,
-    QdrantStore,
     RetryPolicy,
     SimpleEmbeddingProvider,
     SQLiteStore,
@@ -75,7 +73,7 @@ from .utils import (
     cosine_similarity,
 )
 
-__version__ = "0.3.0"
+__version__ = "0.3.1"
 __author__ = "Anthony Maio"
 __license__ = "MIT"
 
@@ -128,6 +126,4 @@ __all__ = [
     "MemoryStore",
     "InMemoryStore",
     "SQLiteStore",
-    "Neo4jStore",
-    "QdrantStore",
 ]

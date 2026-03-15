@@ -43,7 +43,7 @@ Mnemos is now in broad public beta. The core engine and onboarding control plane
 
 1. `pip install "mnemos-memory[mcp]"`
 2. `mnemos ui`
-3. Choose a provider and store profile
+3. Choose a provider and review the local SQLite path
 4. Apply Claude Code, Cursor, or Codex config from the UI
 5. Run the built-in smoke check before daily use
 
@@ -344,13 +344,11 @@ On first run, the plugin bootstraps a local virtual environment under `.claude-p
 Default plugin behavior:
 - persistent SQLite memory store at `.claude-plugin/mnemos.db`
 - automatic provider selection:
-  - `openclaw` if `MNEMOS_OPENCLAW_API_KEY` exists
-  - otherwise `openai` if `MNEMOS_OPENAI_API_KEY` exists
-  - otherwise `ollama` if `MNEMOS_OLLAMA_URL` exists
-  - otherwise `mock`
- - embedding provider inferred from the selected LLM provider unless explicitly overridden
- - if `MNEMOS_STORE_TYPE=qdrant`, the plugin bootstrap installs the `qdrant` extra automatically
- - if `MNEMOS_STORE_TYPE=neo4j`, the plugin bootstrap installs the `neo4j` extra automatically
+ - `openclaw` if `MNEMOS_OPENCLAW_API_KEY` exists
+ - otherwise `openai` if `MNEMOS_OPENAI_API_KEY` exists
+ - otherwise `ollama` if `MNEMOS_OLLAMA_URL` exists
+ - otherwise `mock`
+- embedding provider inferred from the selected LLM provider unless explicitly overridden
 
 The server exposes eight tools:
 
@@ -371,33 +369,30 @@ Readiness check:
 mnemos-cli doctor
 ```
 
-Threshold-aware doctor check (recommend qdrant only when limits are hit):
+Threshold-aware doctor check:
 
 ```bash
-mnemos-cli doctor --qdrant-chunk-threshold 5000 --latency-p95-threshold-ms 250 --observed-p95-ms 180
+mnemos-cli doctor --chunk-threshold 5000 --latency-p95-threshold-ms 250 --observed-p95-ms 180
 ```
 
 One-command profile generation:
 
 ```bash
-# Starter (default) profile
-mnemos-cli profile starter --format dotenv --write .mnemos.profile.env
-
-# Local performance profile (embedded qdrant)
-mnemos-cli profile local-performance --format dotenv --write .mnemos.profile.env
+# Default local SQLite profile
+mnemos-cli profile default --format dotenv --write .mnemos.profile.env
 ```
 
 Store migration examples:
 
 ```bash
-# Dry-run old Qdrant memories into the active Neo4j config
-mnemos-cli migrate-store --source-store qdrant --target-store neo4j --dry-run
+# Dry-run old Qdrant memories into a new SQLite database
+mnemos-cli migrate-store --source-store qdrant --target-store sqlite --target-sqlite-path .mnemos/memory.db --dry-run
 
-# Execute Qdrant -> Neo4j migration
-mnemos-cli migrate-store --source-store qdrant --target-store neo4j
+# Execute Qdrant -> SQLite migration
+mnemos-cli migrate-store --source-store qdrant --target-store sqlite --target-sqlite-path .mnemos/memory.db
 
-# Migrate a specific SQLite database into Neo4j
-mnemos-cli migrate-store --source-store sqlite --source-sqlite-path .mnemos/memory.db --target-store neo4j
+# Copy one SQLite database into another SQLite path
+mnemos-cli migrate-store --source-store sqlite --source-sqlite-path .mnemos/memory.db --target-store sqlite --target-sqlite-path .mnemos/memory-v2.db
 ```
 
 Scoped memory examples (cross-project aware):
@@ -422,10 +417,7 @@ mnemos-cli purge --scope project --scope-id repo-alpha --older-than-days 30 --dr
 mnemos-cli purge --scope project --scope-id repo-alpha --older-than-days 30 --yes
 ```
 
-Profile + compatibility docs:
-- [docs/profiles/starter-sqlite.md](docs/profiles/starter-sqlite.md)
-- [docs/profiles/local-performance-embedded-qdrant.md](docs/profiles/local-performance-embedded-qdrant.md)
-- [docs/profiles/scale-external-qdrant.md](docs/profiles/scale-external-qdrant.md)
+Onboarding + compatibility docs:
 - [docs/clawhub-skill.md](docs/clawhub-skill.md)
 - [docs/public-release-package.md](docs/public-release-package.md)
 - [docs/release-checklist.md](docs/release-checklist.md)
@@ -658,18 +650,8 @@ engine = MnemosEngine(config=config)
 | `MNEMOS_EMBEDDING_PROVIDER` | inferred from `MNEMOS_LLM_PROVIDER`, else `simple` | `simple`, `ollama`, `openai`, or `openclaw` |
 | `MNEMOS_EMBEDDING_MODEL` | provider-dependent | Embedding model name (e.g. `nomic-embed-text`) |
 | `MNEMOS_EMBEDDING_DIM` | `384` | Embedding dimension for `simple` provider |
-| `MNEMOS_STORE_TYPE` | `memory` | `memory`, `sqlite`, `qdrant`, or `neo4j` |
+| `MNEMOS_STORE_TYPE` | `memory` | `memory` or `sqlite` |
 | `MNEMOS_SQLITE_PATH` | `mnemos_memory.db` | SQLite database path |
-| `MNEMOS_QDRANT_URL` | `http://localhost:6333` | Qdrant server URL |
-| `MNEMOS_QDRANT_API_KEY` | — | Optional Qdrant API key |
-| `MNEMOS_QDRANT_PATH` | — | Local embedded Qdrant path (overrides URL) |
-| `MNEMOS_QDRANT_COLLECTION` | `mnemos_memory` | Qdrant collection name |
-| `MNEMOS_QDRANT_VECTOR_SIZE` | — | Optional fixed vector size for pre-created collections |
-| `MNEMOS_NEO4J_URI` | `bolt://localhost:7687` | Neo4j Bolt URI |
-| `MNEMOS_NEO4J_USERNAME` | — | Required when using `neo4j` storage |
-| `MNEMOS_NEO4J_PASSWORD` | — | Required when using `neo4j` storage |
-| `MNEMOS_NEO4J_DATABASE` | `neo4j` | Neo4j database name |
-| `MNEMOS_NEO4J_LABEL` | `MnemosMemoryChunk` | Node label used for persisted memories |
 | `MNEMOS_SURPRISAL_THRESHOLD` | `0.3` | Surprisal gate sensitivity |
 | `MNEMOS_DEBUG` | `false` | Enable verbose debug logging |
 
@@ -687,17 +669,16 @@ Mnemos is ready for a disciplined public open-source release. It is not yet read
 
 | Client / Surface | Status | Notes |
 |---|---|---|
-| Claude Code | Tier 1 supported | Primary install path via plugin; validated end-to-end. |
+| Claude Code | Tier 1 supported | Primary install path via plugin; validated end-to-end on the default local SQLite path. |
 | Claude Desktop | Tier 1 supported | Minimal tested stdio config ships in the repo. |
 | Generic MCP stdio hosts | Tier 1 supported | Validated against the live MCP server. |
-| Codex | Tier 2 documented | Supported through MCP + a stronger `AGENTS.md` pack; shared `MNEMOS_CONFIG_PATH` to Neo4j is validated, and optional Codex Automations can run maintenance checks, but host-hook auto-capture is still not shipped. |
-| Cursor / Windsurf / Cline | Tier 2 best effort | Configs and docs exist; Cursor now has a `.cursor/rules` soft-auto path and shared-config resolution to Neo4j is covered in tests, but host-hook auto-capture is not yet shipped. |
+| Codex | Tier 2 documented | Supported through MCP + a stronger `AGENTS.md` pack and optional maintenance Automations; host-hook auto-capture is still not shipped. |
+| Cursor / Windsurf / Cline | Tier 2 best effort | Configs and docs exist; Cursor now has a `.cursor/rules` soft-auto path, but host-hook auto-capture is not yet shipped. |
 
 The current product promise is narrower than the architecture story:
 
 - safe scoped memory for solo coding-agent workflows
-- local-first persistence with SQLite as the starter profile
-- Neo4j-backed persistence is validated as an advanced/shared deployment path
+- local-first persistence with a single SQLite database
 - biomimetic retrieval and consolidation under the hood
 - verified Tier 1 support for Claude Code, Claude Desktop, and generic MCP hosts
 
@@ -724,9 +705,7 @@ Source-of-truth release docs:
 **Optional (install what you need):**
 - `ollama` — local LLM inference via Ollama (`pip install 'mnemos-memory[ollama]'`)
 - `openai` — OpenAI or any OpenAI-compatible API (`pip install 'mnemos-memory[openai]'`)
-- `qdrant` — Qdrant vector database backend (`pip install 'mnemos-memory[qdrant]'`)
 - `mcp` — MCP server for Claude Code, Claude Desktop, generic MCP hosts, and documented Codex setup (`pip install 'mnemos-memory[mcp]'`)
-- `neo4j` — Neo4jStore (experimental) persistent backend for Neo4j deployments (`pip install 'mnemos-memory[neo4j]'`)
 
 **Install everything:**
 ```bash
@@ -736,21 +715,19 @@ pip install 'mnemos-memory[all]'
 **Storage backends built-in:**
 - `InMemoryStore` — zero setup, for development and testing
 - `SQLiteStore` — persistent, zero external services, suitable for personal deployments
-- `QdrantStore` — vector database backend for scalable retrieval
-- `Neo4jStore` (experimental) — property-graph persistence for Neo4j environments; spreading activation still hydrates in-process from stored chunks
 
 ## Retrieval Benchmark Harness
 
 Run reproducible retrieval benchmarks with `Recall@k`, `MRR`, and `p95` latency:
 
 ```bash
-mnemos-benchmark --stores memory,sqlite,qdrant --retrievers baseline,engine --top-k 5
+mnemos-benchmark --stores memory,sqlite --retrievers baseline,engine --top-k 5
 ```
 
 You can provide a custom dataset (`.json` or `.jsonl`) with `id`, `content`, and `queries` (plus optional scoped fields like `scope`, `scope_id`, query-level `allowed_scopes`):
 
 ```bash
-mnemos-benchmark --stores qdrant --retrievers baseline,engine --dataset ./benchmarks/retrieval.jsonl --top-k 10
+mnemos-benchmark --stores sqlite --retrievers baseline,engine --dataset ./benchmarks/retrieval.jsonl --top-k 10
 ```
 
 Replacement-claim gate run:
@@ -782,10 +759,10 @@ pytest
 ```
 
 **Good first contributions:**
-- Graph-native `SpreadingActivation` persistence on top of the experimental Neo4j backend
-- Weaviate storage backend
 - Proceduralization quality improvements in `SleepDaemon`
+- Inspectability and memory audit UX improvements
 - Benchmarks comparing retrieval quality against standard RAG baselines
+- Cross-host soft-auto workflow polish for Codex and Cursor
 
 Before large changes, open the relevant issue template and read [CONTRIBUTING.md](CONTRIBUTING.md), [SUPPORT.md](SUPPORT.md), and [docs/release-checklist.md](docs/release-checklist.md). Keep PRs focused: one feature, fix, or doc change per PR.
 

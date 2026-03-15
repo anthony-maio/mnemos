@@ -23,31 +23,17 @@ mnemos ui
 Use it to:
 
 - choose `Dev` or `Pro` onboarding mode
-- configure your provider and storage
+- configure your provider and review the local SQLite path
 - preview/apply the Codex MCP config and repo `AGENTS.md` memory block
 - run the built-in smoke check
 
-For reliable scoped memory, prefer a real embedding provider and SQLite starter storage:
+For reliable scoped memory, prefer a real embedding provider and the default SQLite storage:
 
 ```bash
 $env:MNEMOS_LLM_PROVIDER="openclaw"
 $env:MNEMOS_EMBEDDING_PROVIDER="openclaw"
 $env:MNEMOS_STORE_TYPE="sqlite"
 $env:MNEMOS_SQLITE_PATH=".mnemos/memory.db"
-```
-
-If you already have a shared always-on Neo4j deployment, point the same global config at it instead:
-
-```toml
-[storage]
-type = "neo4j"
-neo4j_uri = "bolt://192.168.86.41:7687"
-neo4j_database = "neo4j"
-neo4j_label = "MnemosMemoryChunk"
-
-[providers.neo4j]
-username = "neo4j"
-password = "..."
 ```
 
 ## 2. Register the MCP server for Codex
@@ -125,10 +111,9 @@ Use it for recurring hygiene checks such as `mnemos-cli doctor` and `mnemos-cli 
 ## 4. Recommended v1 operating mode
 
 - Default store: SQLite
-- Upgrade to Qdrant only when benchmarked latency or dataset size justifies it
-- Neo4j is a valid advanced/shared deployment path when you already operate it; migrate existing memories with `mnemos-cli migrate-store --source-store qdrant --target-store neo4j`
 - Treat `SimpleEmbeddingProvider` as development-only
 - Audit for legacy unscoped chunks with `mnemos-cli doctor` before claiming v1 isolation
+- Use `mnemos-cli migrate-store` only to import older memories into SQLite
 
 ## Validation Loop
 
@@ -147,15 +132,6 @@ The best current mental model for Codex is not "automatic memory." It is a two-s
 2. curate durable facts with `mnemos_store` and finish with `mnemos_consolidate`
 
 That framing is what the shipped `mnemos-codex` skill now teaches.
-
-## Neo4j-backed status
-
-Codex now validates cleanly against a shared `MNEMOS_CONFIG_PATH` that points at Neo4j. That means the MCP server can use the same always-on backend as Claude Code or Cursor. It does **not** mean Codex has automatic capture hooks yet; the current validated loop is still soft-auto instruction plus MCP:
-
-1. `mnemos_retrieve`
-2. normal coding work
-3. `mnemos_store`
-4. `mnemos_consolidate`
 
 ## Inspectability in Codex
 

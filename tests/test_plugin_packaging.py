@@ -89,24 +89,13 @@ def test_plugin_wrapper_defaults_embedding_provider_from_llm(monkeypatch) -> Non
     assert env["MNEMOS_EMBEDDING_PROVIDER"] == "openclaw"
 
 
-def test_plugin_wrapper_required_extras_include_qdrant(monkeypatch) -> None:
+def test_plugin_wrapper_required_extras_are_fixed_to_mcp(monkeypatch) -> None:
     wrapper = _load_plugin_wrapper()
 
     monkeypatch.setenv("MNEMOS_STORE_TYPE", "qdrant")
     extras = wrapper._required_install_extras(dict(os.environ))
 
-    assert "mcp" in extras
-    assert "qdrant" in extras
-
-
-def test_plugin_wrapper_required_extras_include_neo4j(monkeypatch) -> None:
-    wrapper = _load_plugin_wrapper()
-
-    monkeypatch.setenv("MNEMOS_STORE_TYPE", "neo4j")
-    extras = wrapper._required_install_extras(dict(os.environ))
-
-    assert "mcp" in extras
-    assert "neo4j" in extras
+    assert extras == ("mcp",)
 
 
 def test_plugin_wrapper_defaults_to_user_config_path(monkeypatch) -> None:

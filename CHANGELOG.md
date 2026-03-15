@@ -2,6 +2,20 @@
 
 ## Unreleased
 
+## 0.3.1 — 2026-03-15
+
+Beta update focused on unifying Mnemos around a single local SQLite backend and validating retrieval quality on that shipped path.
+
+### Changed
+- public runtime/configuration/docs now present SQLite as the definitive shipped backend, with a single local-file persistence story across hosts
+- CLI profile/doctor flows now align to the SQLite-only path, including the simplified `default` profile and `--chunk-threshold` doctor gate
+- benchmark tooling now targets `memory` and `sqlite` store modes, and the claim-driving benchmark is green on the SQLite release path
+- Claude plugin bootstrap now installs only MCP support rather than backend-specific storage extras
+- public API exports and compatibility docs no longer present Qdrant and Neo4j as first-class runtime backends
+
+### Added
+- expanded SQLite graph-store validation covering sparse edge persistence, FTS, and `sqlite-vec` indexing in the shipped local database path
+
 ## 0.3.0 — 2026-03-12
 
 Public beta update focused on shared persistence, host soft-auto workflows, and OpenClaw onboarding.

@@ -152,12 +152,9 @@ def test_mcp_resources_match_documented_contract() -> None:
 
 def test_backend_status_labels_are_explicit() -> None:
     readme = README_PATH.read_text(encoding="utf-8")
-    architecture = ARCHITECTURE_PATH.read_text(encoding="utf-8")
-
-    assert "QdrantStore" in readme
-    assert "QdrantStore" in architecture
-    assert re.search(r"Neo4j(?:Store)?`?\s+\(experimental\)", readme) is not None
-    assert re.search(r"Neo4j(?:Store)?`?\s+\(experimental\)", architecture) is not None
+    assert "SQLiteStore" in readme
+    assert "QdrantStore" not in readme
+    assert "Neo4jStore" not in readme
 
 
 def test_required_oss_docs_exist() -> None:

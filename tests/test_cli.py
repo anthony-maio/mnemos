@@ -179,26 +179,23 @@ async def test_cli_doctor_prints_report(monkeypatch: pytest.MonkeyPatch, capsys:
     monkeypatch.setenv("MNEMOS_LLM_PROVIDER", "mock")
     await _cmd_doctor(
         Namespace(
-            qdrant_chunk_threshold=5000,
+            chunk_threshold=5000,
             latency_p95_threshold_ms=250.0,
             observed_p95_ms=None,
         )
     )
     captured = capsys.readouterr().out
-    assert '"profile": "starter"' in captured
+    assert '"profile": "default"' in captured
     assert '"status": "degraded"' in captured
 
 
-def test_build_profile_env_starter_defaults() -> None:
+def test_build_profile_env_default_defaults() -> None:
     env = _build_profile_env(
-        profile="starter",
+        profile="default",
         llm_provider="openclaw",
         embedding_provider=None,
         model="openclaw/claude-sonnet",
         sqlite_path=".mnemos/memory.db",
-        qdrant_path=".mnemos/qdrant",
-        qdrant_url="http://localhost:6333",
-        qdrant_collection="mnemos_memory",
     )
     assert env["MNEMOS_STORE_TYPE"] == "sqlite"
     assert env["MNEMOS_SQLITE_PATH"] == ".mnemos/memory.db"
@@ -206,38 +203,18 @@ def test_build_profile_env_starter_defaults() -> None:
     assert env["MNEMOS_EMBEDDING_PROVIDER"] == "openclaw"
 
 
-def test_build_profile_env_local_performance() -> None:
-    env = _build_profile_env(
-        profile="local-performance",
-        llm_provider="openai",
-        embedding_provider="openai",
-        model="gpt-4o-mini",
-        sqlite_path=".mnemos/memory.db",
-        qdrant_path=".mnemos/qdrant",
-        qdrant_url="http://localhost:6333",
-        qdrant_collection="mnemos_memory",
-    )
-    assert env["MNEMOS_STORE_TYPE"] == "qdrant"
-    assert env["MNEMOS_QDRANT_PATH"] == ".mnemos/qdrant"
-    assert env["MNEMOS_QDRANT_COLLECTION"] == "mnemos_memory"
-    assert "MNEMOS_QDRANT_URL" not in env
-
-
 @pytest.mark.asyncio
 async def test_cli_profile_writes_dotenv(tmp_path: Path, capsys: Any) -> None:
     output_path = tmp_path / "mnemos.profile.env"
     await _cmd_profile(
         Namespace(
-            profile="starter",
+            profile="default",
             format="dotenv",
             write=str(output_path),
             llm_provider="openclaw",
             embedding_provider="",
             model="",
             sqlite_path=".mnemos/memory.db",
-            qdrant_path=".mnemos/qdrant",
-            qdrant_url="http://localhost:6333",
-            qdrant_collection="mnemos_memory",
         )
     )
     text = output_path.read_text(encoding="utf-8")
@@ -712,14 +689,6 @@ async def test_cli_migrate_store_prints_json_summary(
             source_neo4j_username="",
             source_neo4j_password="",
             target_sqlite_path="",
-            target_qdrant_path="",
-            target_qdrant_url="",
-            target_qdrant_collection="",
-            target_neo4j_uri="",
-            target_neo4j_database="",
-            target_neo4j_label="",
-            target_neo4j_username="",
-            target_neo4j_password="",
             dry_run=False,
         )
     )
@@ -778,14 +747,6 @@ async def test_cli_migrate_store_allows_sqlite_schema_upgrade(
             source_neo4j_username="",
             source_neo4j_password="",
             target_sqlite_path="target.db",
-            target_qdrant_path="",
-            target_qdrant_url="",
-            target_qdrant_collection="",
-            target_neo4j_uri="",
-            target_neo4j_database="",
-            target_neo4j_label="",
-            target_neo4j_username="",
-            target_neo4j_password="",
             dry_run=False,
         )
     )

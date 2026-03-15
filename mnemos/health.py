@@ -1,5 +1,5 @@
 """
-mnemos/health.py — Readiness checks for CLI/MCP production profiles.
+mnemos/health.py — Readiness checks for the shipped local SQLite runtime.
 """
 
 from __future__ import annotations
@@ -117,16 +117,14 @@ def detect_profile(
     default_store_type: str = "sqlite",
 ) -> str:
     """
-    Return onboarding profile inferred from runtime env.
-
-    - starter: sqlite or memory
+    Return the current shipped runtime shape.
     """
     resolved = load_settings(
         env=env,
         default_store_type=default_store_type,  # type: ignore[arg-type]
     )
     _ = resolved.settings.storage.type
-    return "starter"
+    return "default"
 
 
 def run_health_checks(
@@ -134,7 +132,7 @@ def run_health_checks(
     *,
     default_store_type: str = "sqlite",
 ) -> dict[str, Any]:
-    """Evaluate readiness for current profile and provider/storage dependencies."""
+    """Evaluate readiness for the current local runtime and provider dependencies."""
     checks: list[dict[str, str]] = []
     resolved = load_settings(
         env=env,
@@ -151,9 +149,10 @@ def run_health_checks(
     embedding_provider = settings.embedding.provider or "simple"
     sqlite_chunk_threshold = _safe_int(
         _resolve_env_value(
-            "MNEMOS_DOCTOR_QDRANT_CHUNK_THRESHOLD",
+            "MNEMOS_DOCTOR_CHUNK_THRESHOLD",
             env=env,
             default="5000",
+            aliases=("MNEMOS_DOCTOR_QDRANT_CHUNK_THRESHOLD",),
         ),
         default=5000,
     )
@@ -189,7 +188,7 @@ def run_health_checks(
         sqlite_path = settings.storage.sqlite_path
         parent = Path(sqlite_path).expanduser().resolve().parent
         if parent.exists():
-            add_check("store.sqlite", "pass", f"SQLite profile ready at {sqlite_path}.")
+            add_check("store.sqlite", "pass", f"SQLite backend ready at {sqlite_path}.")
         else:
             add_check(
                 "store.sqlite",
@@ -353,7 +352,7 @@ def run_health_checks(
             add_check(
                 "store.sqlite.scale_signal",
                 "warn",
-                "SQLite scale/latency threshold exceeded; inspect retrieval performance before changing implementation details.",
+                "SQLite chunk/latency threshold exceeded; inspect retrieval performance before shipping larger datasets.",
             )
         elif sqlite_chunk_count is not None:
             add_check(

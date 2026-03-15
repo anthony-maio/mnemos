@@ -11,10 +11,10 @@ Last updated: **March 12, 2026**
 
 | Client | Tier | Status | Tested Config | Notes |
 |---|---|---|---|---|
-| Claude Code | Tier 1 | Supported | plugin + direct `mnemos-mcp` | Primary target; SQLite starter remains the default, and hook-based auto-capture has now been validated on a Neo4j-backed shared config. |
+| Claude Code | Tier 1 | Supported | plugin + direct `mnemos-mcp` | Primary target; the default local SQLite path is the shipped setup, and hook-based auto-capture is validated there. |
 | Claude Desktop | Tier 1 | Supported | `docs/mcp-configs/claude-desktop.json` | Tested with `python -m mnemos.mcp_server` and local-safe mock/simple defaults. |
 | Generic MCP stdio host | Tier 1 | Supported | `docs/mcp-configs/generic-stdio.json` | Tested with `python -m mnemos.mcp_server`; swap provider env for production. |
-| Codex | Tier 2 | Documented | `docs/mcp-configs/codex.json` + `docs/codex.md` | Supported through MCP + a stronger `AGENTS.md` pack; shared `MNEMOS_CONFIG_PATH` resolution to Neo4j is validated, and optional Codex Automations can run maintenance checks, but daily-use E2E promotion is still pending. |
+| Codex | Tier 2 | Documented | `docs/mcp-configs/codex.json` + `docs/codex.md` | Supported through MCP + a stronger `AGENTS.md` pack; the shared SQLite-backed `MNEMOS_CONFIG_PATH` path is validated, and optional Codex Automations can run maintenance checks, but daily-use E2E promotion is still pending. |
 | Cursor | Tier 2 | Best effort + Antigravity pack | `docs/mcp-configs/cursor.json` + `docs/cursor-antigravity.md` | Repo-level `.cursor/mcp.json` plus `.cursor/rules/mnemos-memory.mdc` soft-auto setup is now covered in tests; no shipped host-hook auto-capture path yet. |
 | Windsurf | Tier 2 | Best effort | `docs/mcp-configs/windsurf.json` | Smoke config validated in CI (non-blocking). |
 | Cline | Tier 2 | Best effort | `docs/mcp-configs/cline.json` | Smoke config validated in CI (non-blocking). |
@@ -27,4 +27,3 @@ Last updated: **March 12, 2026**
 - Codex currently depends on the repo's `AGENTS.md` to consistently trigger `mnemos_retrieve`, `mnemos_store`, and `mnemos_consolidate`; optional Codex Automations are maintenance helpers, not chat hooks.
 - Cursor still depends on project instructions / `.cursor/rules` for automatic Mnemos tool usage.
 - For highest retrieval quality, avoid `MNEMOS_EMBEDDING_PROVIDER=simple` in production profiles.
-- Qdrant remote profiles require `qdrant-client` extra and reachable network endpoint.

@@ -47,10 +47,11 @@ from .types import Interaction
 from .utils.llm import MockLLMProvider, LLMProvider
 from .utils.storage import Neo4jStore, QdrantStore, SQLiteStore
 
-PROFILE_CHOICES = ("starter", "local-performance", "scale")
+PROFILE_CHOICES = ("default",)
 VALID_SCOPES = ("project", "workspace", "global")
 AUDIT_SCOPES = ("all", "project", "workspace", "global")
-MIGRATION_STORE_CHOICES = ("sqlite", "qdrant", "neo4j")
+LEGACY_SOURCE_STORE_CHOICES = ("sqlite", "qdrant", "neo4j")
+MIGRATION_TARGET_CHOICES = ("sqlite",)
 MemoryAction = Literal["allow", "redact", "block"]
 CaptureMode = Literal["all", "manual_only", "hooks_only"]
 
@@ -90,9 +91,6 @@ def _build_profile_env(
     embedding_provider: str | None,
     model: str | None,
     sqlite_path: str,
-    qdrant_path: str,
-    qdrant_url: str,
-    qdrant_collection: str,
 ) -> dict[str, str]:
     if profile not in PROFILE_CHOICES:
         raise ValueError(f"Unsupported profile: {profile!r}")
@@ -104,17 +102,8 @@ def _build_profile_env(
     if model:
         env["MNEMOS_LLM_MODEL"] = model
 
-    if profile == "starter":
-        env["MNEMOS_STORE_TYPE"] = "sqlite"
-        env["MNEMOS_SQLITE_PATH"] = sqlite_path
-    elif profile == "local-performance":
-        env["MNEMOS_STORE_TYPE"] = "qdrant"
-        env["MNEMOS_QDRANT_PATH"] = qdrant_path
-        env["MNEMOS_QDRANT_COLLECTION"] = qdrant_collection
-    else:
-        env["MNEMOS_STORE_TYPE"] = "qdrant"
-        env["MNEMOS_QDRANT_URL"] = qdrant_url
-        env["MNEMOS_QDRANT_COLLECTION"] = qdrant_collection
+    env["MNEMOS_STORE_TYPE"] = "sqlite"
+    env["MNEMOS_SQLITE_PATH"] = sqlite_path
 
     return env
 
@@ -599,7 +588,7 @@ async def _cmd_purge(args: argparse.Namespace) -> None:
 
 async def _cmd_doctor(args: argparse.Namespace) -> None:
     doctor_env = dict(os.environ)
-    doctor_env["MNEMOS_DOCTOR_QDRANT_CHUNK_THRESHOLD"] = str(args.qdrant_chunk_threshold)
+    doctor_env["MNEMOS_DOCTOR_CHUNK_THRESHOLD"] = str(args.chunk_threshold)
     doctor_env["MNEMOS_DOCTOR_LATENCY_P95_THRESHOLD_MS"] = str(args.latency_p95_threshold_ms)
     if args.observed_p95_ms is not None:
         doctor_env["MNEMOS_DOCTOR_OBSERVED_P95_MS"] = str(args.observed_p95_ms)
@@ -620,9 +609,6 @@ async def _cmd_profile(args: argparse.Namespace) -> None:
         embedding_provider=args.embedding_provider or None,
         model=args.model or None,
         sqlite_path=args.sqlite_path,
-        qdrant_path=args.qdrant_path,
-        qdrant_url=args.qdrant_url,
-        qdrant_collection=args.qdrant_collection,
     )
     rendered = _render_profile_env(args.profile, env, args.format)
     print(rendered)
@@ -633,9 +619,9 @@ async def _cmd_profile(args: argparse.Namespace) -> None:
 
 
 async def _cmd_migrate_store(args: argparse.Namespace) -> None:
-    if args.source_store not in MIGRATION_STORE_CHOICES:
+    if args.source_store not in LEGACY_SOURCE_STORE_CHOICES:
         raise ValueError(f"Unsupported source store: {args.source_store!r}")
-    if args.target_store not in MIGRATION_STORE_CHOICES:
+    if args.target_store not in MIGRATION_TARGET_CHOICES:
         raise ValueError(f"Unsupported target store: {args.target_store!r}")
     if args.target_store != "sqlite":
         raise ValueError("Legacy migration targets must use the unified sqlite backend.")
@@ -662,14 +648,6 @@ async def _cmd_migrate_store(args: argparse.Namespace) -> None:
     target_store = _build_store_for_migration(
         store_type=args.target_store,
         sqlite_path=args.target_sqlite_path,
-        qdrant_path=args.target_qdrant_path,
-        qdrant_url=args.target_qdrant_url,
-        qdrant_collection=args.target_qdrant_collection,
-        neo4j_uri=args.target_neo4j_uri,
-        neo4j_database=args.target_neo4j_database,
-        neo4j_label=args.target_neo4j_label,
-        neo4j_username=args.target_neo4j_username,
-        neo4j_password=args.target_neo4j_password,
     )
 
     try:
@@ -913,18 +891,18 @@ def main() -> None:
     sp_purge.add_argument("--dry-run", action="store_true")
     sp_purge.add_argument("--yes", action="store_true", help="Confirm destructive purge.")
 
-    sp_doctor = subparsers.add_parser("doctor", help="Run profile readiness and dependency checks")
+    sp_doctor = subparsers.add_parser("doctor", help="Run readiness and dependency checks")
     sp_doctor.add_argument(
-        "--qdrant-chunk-threshold",
+        "--chunk-threshold",
         type=int,
         default=5000,
-        help="Recommend qdrant upgrade only once SQLite chunk count reaches this threshold.",
+        help="Flag large SQLite datasets once chunk count reaches this threshold.",
     )
     sp_doctor.add_argument(
         "--latency-p95-threshold-ms",
         type=float,
         default=250.0,
-        help="Recommend qdrant upgrade once observed p95 retrieval latency exceeds this threshold.",
+        help="Flag slow retrieval once observed p95 latency exceeds this threshold.",
     )
     sp_doctor.add_argument(
         "--observed-p95-ms",
@@ -935,7 +913,7 @@ def main() -> None:
 
     sp_profile = subparsers.add_parser(
         "profile",
-        help="Generate ready-to-use env configuration for starter/local-performance/scale profiles.",
+        help="Generate ready-to-use env configuration for the default local SQLite setup.",
     )
     sp_profile.add_argument("profile", choices=PROFILE_CHOICES)
     sp_profile.add_argument(
@@ -965,30 +943,15 @@ def main() -> None:
     sp_profile.add_argument(
         "--sqlite-path",
         default=".mnemos/memory.db",
-        help="SQLite path used by starter profile.",
-    )
-    sp_profile.add_argument(
-        "--qdrant-path",
-        default=".mnemos/qdrant",
-        help="Embedded qdrant path used by local-performance profile.",
-    )
-    sp_profile.add_argument(
-        "--qdrant-url",
-        default="http://localhost:6333",
-        help="Remote qdrant URL used by scale profile.",
-    )
-    sp_profile.add_argument(
-        "--qdrant-collection",
-        default="mnemos_memory",
-        help="Qdrant collection name used by qdrant profiles.",
+        help="SQLite path used by the default profile.",
     )
 
     sp_migrate = subparsers.add_parser(
         "migrate-store",
-        help="Copy memory chunks between configured persistent stores.",
+        help="Copy legacy memories into the unified SQLite backend.",
     )
-    sp_migrate.add_argument("--source-store", required=True, choices=MIGRATION_STORE_CHOICES)
-    sp_migrate.add_argument("--target-store", required=True, choices=MIGRATION_STORE_CHOICES)
+    sp_migrate.add_argument("--source-store", required=True, choices=LEGACY_SOURCE_STORE_CHOICES)
+    sp_migrate.add_argument("--target-store", required=True, choices=MIGRATION_TARGET_CHOICES)
     sp_migrate.add_argument("--source-sqlite-path", default="")
     sp_migrate.add_argument("--source-qdrant-path", default="")
     sp_migrate.add_argument("--source-qdrant-url", default="")
@@ -999,14 +962,6 @@ def main() -> None:
     sp_migrate.add_argument("--source-neo4j-username", default="")
     sp_migrate.add_argument("--source-neo4j-password", default="")
     sp_migrate.add_argument("--target-sqlite-path", default="")
-    sp_migrate.add_argument("--target-qdrant-path", default="")
-    sp_migrate.add_argument("--target-qdrant-url", default="")
-    sp_migrate.add_argument("--target-qdrant-collection", default="")
-    sp_migrate.add_argument("--target-neo4j-uri", default="")
-    sp_migrate.add_argument("--target-neo4j-database", default="")
-    sp_migrate.add_argument("--target-neo4j-label", default="")
-    sp_migrate.add_argument("--target-neo4j-username", default="")
-    sp_migrate.add_argument("--target-neo4j-password", default="")
     sp_migrate.add_argument("--dry-run", action="store_true")
 
     sp_antigravity = subparsers.add_parser(

@@ -172,6 +172,22 @@ def test_evaluate_production_replacement_gate_fails_when_lift_too_low() -> None:
     assert gate["failed_pairs"] == 1
 
 
+def test_evaluate_production_replacement_gate_uses_store_specific_latency_defaults() -> None:
+    comparisons = [
+        {
+            "dataset": "claim-driving-c",
+            "store_type": "sqlite",
+            "baseline": {"mrr": 0.375, "latency_p95_ms": 0.623},
+            "engine": {"mrr": 1.0, "latency_p95_ms": 2.012},
+        }
+    ]
+
+    gate = evaluate_production_replacement_gate(comparisons, min_mrr_lift=0.15)
+
+    assert gate["passed"] is True
+    assert gate["details"][0]["max_latency_p95_ratio"] == pytest.approx(4.0)
+
+
 def test_load_documents_allows_empty_query_lists(tmp_path: Path) -> None:
     dataset_path = tmp_path / "dataset.json"
     payload = [

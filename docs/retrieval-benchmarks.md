@@ -1,6 +1,6 @@
 # Retrieval Benchmarking
 
-Mnemos ships a benchmark harness via `mnemos-benchmark` to measure retrieval quality and latency across storage backends and retrieval modes.
+Mnemos ships a benchmark harness via `mnemos-benchmark` to measure retrieval quality and latency across retrieval modes and local store implementations.
 
 ## Metrics
 
@@ -11,7 +11,7 @@ Mnemos ships a benchmark harness via `mnemos-benchmark` to measure retrieval qua
 ## Quick Start
 
 ```bash
-mnemos-benchmark --stores memory,sqlite,qdrant --retrievers baseline,engine --top-k 5
+mnemos-benchmark --stores memory,sqlite --retrievers baseline,engine --top-k 5
 ```
 
 Retriever modes:
@@ -66,8 +66,7 @@ Default gate thresholds:
 CI profile-specific production gates:
 
 - `memory` profile: `MRR lift >= 0.15`, `p95 ratio <= 2.0`
-- `sqlite` starter profile: `MRR lift >= 0.15`, `p95 ratio <= 4.0`
-- `qdrant` local-performance profile: `MRR lift >= 0.15`, `p95 ratio <= 2.25`
+- `sqlite` default profile: `MRR lift >= 0.15`, `p95 ratio <= 4.0`
 
 ## Custom Dataset Format
 
@@ -105,11 +104,5 @@ Example:
 Run:
 
 ```bash
-mnemos-benchmark --stores qdrant --retrievers baseline,engine --dataset ./benchmarks/retrieval.json --top-k 10
+mnemos-benchmark --stores sqlite --retrievers baseline,engine --dataset ./benchmarks/retrieval.json --top-k 10
 ```
-
-## Qdrant Notes
-
-- For local embedded mode, pass `--qdrant-path`.
-- For remote mode, pass `--qdrant-url` and optionally `--qdrant-api-key`.
-- Use `--qdrant-collection` to isolate repeated runs.
