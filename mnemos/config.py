@@ -252,6 +252,14 @@ class SpreadingConfig(BaseModel):
             "Minimum cosine similarity for auto-connecting nodes during graph construction."
         ),
     )
+    max_neighbors_per_node: int = Field(
+        default=4,
+        ge=1,
+        description=(
+            "Maximum number of graph neighbors retained per node when building sparse "
+            "associative connections."
+        ),
+    )
     natural_decay_rate: float = Field(
         default=0.05,
         ge=0.0,

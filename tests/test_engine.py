@@ -22,6 +22,7 @@ from mnemos.config import (
     MemoryGovernanceConfig,
     MnemosConfig,
     SleepConfig,
+    SpreadingConfig,
     SurprisalConfig,
 )
 from mnemos.engine import MnemosEngine
@@ -884,6 +885,70 @@ class TestEngineRetrievePersistence:
 
 
 class TestEnginePersistence:
+    def test_spreading_graph_hydrates_persisted_edges(self) -> None:
+        """Hydration should reuse persisted graph edges when the store provides them."""
+
+        class GraphAwareStore(InMemoryStore):
+            def __init__(self) -> None:
+                super().__init__()
+                self.edge_map: dict[str, dict[str, float]] = {}
+
+            def get_graph_edges(
+                self,
+                chunk_ids: list[str] | None = None,
+            ) -> dict[str, dict[str, float]]:
+                if chunk_ids is None:
+                    return {
+                        node_id: dict(neighbors) for node_id, neighbors in self.edge_map.items()
+                    }
+                allowed = set(chunk_ids)
+                return {
+                    node_id: {
+                        neighbor_id: weight
+                        for neighbor_id, weight in neighbors.items()
+                        if neighbor_id in allowed
+                    }
+                    for node_id, neighbors in self.edge_map.items()
+                    if node_id in allowed
+                }
+
+        store = GraphAwareStore()
+        chunk_a = MemoryChunk(
+            id="alpha",
+            content="alpha memory",
+            embedding=[1.0, 0.0, 0.0],
+            metadata={"scope": "project", "scope_id": "repo-alpha"},
+        )
+        chunk_b = MemoryChunk(
+            id="global",
+            content="global memory",
+            embedding=[0.9, 0.1, 0.0],
+            metadata={"scope": "global"},
+        )
+        store.store(chunk_a)
+        store.store(chunk_b)
+        store.edge_map = {
+            chunk_a.id: {chunk_b.id: 0.91},
+            chunk_b.id: {chunk_a.id: 0.91},
+        }
+
+        engine = MnemosEngine(
+            config=MnemosConfig(
+                surprisal=SurprisalConfig(threshold=0.0, min_content_length=0),
+                spreading=SpreadingConfig(startup_auto_connect=False),
+            ),
+            llm=MockLLMProvider(),
+            embedder=SimpleEmbeddingProvider(dim=64),
+            store=store,
+        )
+
+        alpha = engine.spreading_activation.get_node("alpha")
+        global_node = engine.spreading_activation.get_node("global")
+        assert alpha is not None
+        assert global_node is not None
+        assert alpha.neighbors == {"global": pytest.approx(0.91)}
+        assert global_node.neighbors == {"alpha": pytest.approx(0.91)}
+
     @pytest.mark.asyncio
     async def test_spreading_graph_hydrates_from_persistent_store(self, tmp_path):
         """A restarted engine should rebuild spreading graph nodes from persisted chunks."""
@@ -916,6 +981,50 @@ class TestEnginePersistence:
         assert len(engine2.store.get_all()) == stored_count
         assert engine2.spreading_activation.get_node_count() == stored_count
         store2.close()
+
+    @pytest.mark.asyncio
+    async def test_process_keeps_cross_scope_nodes_disconnected(self) -> None:
+        """Processing should not create graph edges across unrelated project scopes."""
+        engine = MnemosEngine(
+            config=MnemosConfig(
+                surprisal=SurprisalConfig(threshold=0.0, min_content_length=0),
+                spreading=SpreadingConfig(
+                    auto_connect_threshold=0.0,
+                    max_neighbors_per_node=4,
+                ),
+            ),
+            llm=MockLLMProvider(),
+            embedder=SimpleEmbeddingProvider(dim=64),
+            store=InMemoryStore(),
+        )
+
+        alpha = await engine.process(
+            make_interaction("python deployment memory"),
+            scope="project",
+            scope_id="repo-alpha",
+        )
+        beta = await engine.process(
+            make_interaction("python deployment memory"),
+            scope="project",
+            scope_id="repo-beta",
+        )
+        global_result = await engine.process(
+            make_interaction("shared deployment preference"),
+            scope="global",
+        )
+
+        assert alpha.chunk is not None
+        assert beta.chunk is not None
+        assert global_result.chunk is not None
+
+        alpha_node = engine.spreading_activation.get_node(alpha.chunk.id)
+        beta_node = engine.spreading_activation.get_node(beta.chunk.id)
+        global_node = engine.spreading_activation.get_node(global_result.chunk.id)
+        assert alpha_node is not None
+        assert beta_node is not None
+        assert global_node is not None
+        assert beta.chunk.id not in alpha_node.neighbors
+        assert global_result.chunk.id in alpha_node.neighbors
 
 
 # ─── Tests for __init__.py exports ────────────────────────────────────────────

@@ -119,26 +119,14 @@ def detect_profile(
     """
     Return onboarding profile inferred from runtime env.
 
-    - starter: sqlite (plugin-first default)
-    - local-performance: qdrant with local embedded path
-    - scale: qdrant over URL or Neo4j
+    - starter: sqlite or memory
     """
     resolved = load_settings(
         env=env,
         default_store_type=default_store_type,  # type: ignore[arg-type]
     )
-    store_type = resolved.settings.storage.type
-
-    if store_type == "neo4j":
-        return "scale"
-
-    if store_type != "qdrant":
-        return "starter"
-
-    qdrant_path = resolved.settings.storage.qdrant_path
-    if qdrant_path:
-        return "local-performance"
-    return "scale"
+    _ = resolved.settings.storage.type
+    return "starter"
 
 
 def run_health_checks(
@@ -189,12 +177,13 @@ def run_health_checks(
     )
     sqlite_chunk_count: int | None = None
     legacy_unscoped_chunks: int | None = None
+    sqlite_vec_enabled = False
 
     if store_type == "memory":
         add_check(
             "store.memory",
             "warn",
-            "InMemory store is non-persistent. Use sqlite or qdrant for production.",
+            "InMemory store is non-persistent. Use sqlite for durable Mnemos storage.",
         )
     elif store_type == "sqlite":
         sqlite_path = settings.storage.sqlite_path
@@ -210,61 +199,18 @@ def run_health_checks(
         sqlite_db_path = Path(sqlite_path).expanduser().resolve()
         sqlite_chunk_count = _sqlite_chunk_count(sqlite_db_path)
         legacy_unscoped_chunks = _sqlite_legacy_unscoped_chunk_count(sqlite_db_path)
-    elif store_type == "qdrant":
-        if _module_available("qdrant_client"):
-            add_check("dependency.qdrant_client", "pass", "qdrant-client dependency available.")
-        else:
+        sqlite_vec_enabled = _module_available("sqlite_vec")
+        if sqlite_vec_enabled:
             add_check(
-                "dependency.qdrant_client",
-                "fail",
-                "qdrant-client not installed. Install with `pip install 'mnemos-memory[qdrant]'`.",
-            )
-
-        qdrant_path = settings.storage.qdrant_path
-        qdrant_url = settings.storage.qdrant_url
-        if qdrant_path:
-            add_check(
-                "store.qdrant.embedded", "pass", f"Embedded Qdrant path configured: {qdrant_path}"
-            )
-        elif qdrant_url:
-            add_check("store.qdrant.remote", "pass", f"Remote Qdrant URL configured: {qdrant_url}")
-        else:
-            add_check(
-                "store.qdrant.remote", "fail", "MNEMOS_QDRANT_URL must be set for remote Qdrant."
-            )
-    elif store_type == "neo4j":
-        if _module_available("neo4j"):
-            add_check("dependency.neo4j", "pass", "neo4j dependency available.")
-        else:
-            add_check(
-                "dependency.neo4j",
-                "fail",
-                "neo4j not installed. Install with `pip install 'mnemos-memory[neo4j]'`.",
-            )
-
-        if settings.storage.neo4j_uri:
-            add_check(
-                "store.neo4j.uri", "pass", f"Neo4j URI configured: {settings.storage.neo4j_uri}"
+                "store.sqlite.vec",
+                "pass",
+                "sqlite-vec dependency available for in-process vector acceleration.",
             )
         else:
-            add_check("store.neo4j.uri", "fail", "MNEMOS_NEO4J_URI must be set for Neo4j.")
-
-        if settings.providers.neo4j.username:
-            add_check("store.neo4j.username", "pass", "Neo4j username configured.")
-        else:
             add_check(
-                "store.neo4j.username",
-                "fail",
-                "MNEMOS_NEO4J_USERNAME is required for Neo4j storage.",
-            )
-
-        if settings.providers.neo4j.password:
-            add_check("store.neo4j.password", "pass", "Neo4j password configured.")
-        else:
-            add_check(
-                "store.neo4j.password",
-                "fail",
-                "MNEMOS_NEO4J_PASSWORD is required for Neo4j storage.",
+                "store.sqlite.vec",
+                "warn",
+                "sqlite-vec is not installed; SQLite retrieval will fall back to Python similarity scan.",
             )
     else:
         add_check("store.type", "fail", f"Unsupported MNEMOS_STORE_TYPE: {store_type!r}")
@@ -407,7 +353,7 @@ def run_health_checks(
             add_check(
                 "store.sqlite.scale_signal",
                 "warn",
-                "SQLite scale/latency threshold exceeded; consider local-performance profile.",
+                "SQLite scale/latency threshold exceeded; inspect retrieval performance before changing implementation details.",
             )
         elif sqlite_chunk_count is not None:
             add_check(
@@ -436,10 +382,6 @@ def run_health_checks(
         status = "ready"
 
     recommendations: list[str] = []
-    if store_type == "sqlite" and (size_threshold_exceeded or latency_threshold_exceeded):
-        recommendations.append(
-            "Upgrade path: set MNEMOS_STORE_TYPE=qdrant and MNEMOS_QDRANT_PATH=.mnemos_qdrant for local-performance profile."
-        )
     if llm_provider == "mock":
         recommendations.append(
             "Set MNEMOS_LLM_PROVIDER=openclaw (or openai/ollama) to enable non-mock cognition."
@@ -471,6 +413,10 @@ def run_health_checks(
         "scope_isolation": {
             "legacy_unscoped_chunks": legacy_unscoped_chunks,
             "ready": not bool(legacy_unscoped_chunks),
+        },
+        "vector_acceleration": {
+            "enabled": sqlite_vec_enabled,
+            "provider": "sqlite-vec" if sqlite_vec_enabled else None,
         },
         "summary": summary,
         "checks": checks,

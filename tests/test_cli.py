@@ -624,6 +624,48 @@ def test_migrate_chunks_copies_chunks_to_target() -> None:
     assert [chunk.content for chunk in target.stored] == ["chunk-a", "chunk-b"]
 
 
+def test_migrate_chunks_copies_graph_edges_to_target() -> None:
+    class DummySourceStore:
+        def __init__(self) -> None:
+            self._chunks = [
+                MemoryChunk(id="alpha", content="chunk-a"),
+                MemoryChunk(id="beta", content="chunk-b"),
+            ]
+
+        def get_all(self) -> list[MemoryChunk]:
+            return list(self._chunks)
+
+        def get_graph_edges(self) -> dict[str, dict[str, float]]:
+            return {
+                "alpha": {"beta": 0.91},
+                "beta": {"alpha": 0.91},
+            }
+
+    class DummyTargetStore:
+        def __init__(self) -> None:
+            self.stored: list[MemoryChunk] = []
+            self.neighbors: dict[str, dict[str, float]] = {}
+
+        def store(self, chunk: MemoryChunk) -> None:
+            self.stored.append(chunk)
+
+        def replace_graph_neighbors(self, chunk_id: str, neighbors: dict[str, float]) -> None:
+            self.neighbors[chunk_id] = dict(neighbors)
+
+    source = DummySourceStore()
+    target = DummyTargetStore()
+
+    summary = cli_module._migrate_chunks(source_store=source, target_store=target, dry_run=False)
+
+    assert summary["scanned"] == 2
+    assert summary["migrated"] == 2
+    assert summary["edge_sets_migrated"] == 2
+    assert target.neighbors == {
+        "alpha": {"beta": 0.91},
+        "beta": {"alpha": 0.91},
+    }
+
+
 @pytest.mark.asyncio
 async def test_cli_migrate_store_prints_json_summary(
     monkeypatch: pytest.MonkeyPatch, capsys: Any
@@ -650,7 +692,7 @@ async def test_cli_migrate_store_prints_json_summary(
         store_type = kwargs["store_type"]
         if store_type == "qdrant":
             return source_store
-        if store_type == "neo4j":
+        if store_type == "sqlite":
             return target_store
         raise AssertionError(f"Unexpected store type: {store_type}")
 
@@ -659,7 +701,7 @@ async def test_cli_migrate_store_prints_json_summary(
     await _cmd_migrate_store(
         Namespace(
             source_store="qdrant",
-            target_store="neo4j",
+            target_store="sqlite",
             source_sqlite_path="",
             source_qdrant_path="",
             source_qdrant_url="",
@@ -684,10 +726,74 @@ async def test_cli_migrate_store_prints_json_summary(
 
     captured = capsys.readouterr().out
     assert '"source_store": "qdrant"' in captured
-    assert '"target_store": "neo4j"' in captured
+    assert '"target_store": "sqlite"' in captured
     assert '"migrated": 1' in captured
     assert source_store.closed is True
     assert target_store.closed is True
+
+
+@pytest.mark.asyncio
+async def test_cli_migrate_store_allows_sqlite_schema_upgrade(
+    monkeypatch: pytest.MonkeyPatch, capsys: Any
+) -> None:
+    class DummyStore:
+        def __init__(self, chunks: list[MemoryChunk]) -> None:
+            self._chunks = chunks
+            self.stored: list[MemoryChunk] = []
+            self.closed = False
+
+        def get_all(self) -> list[MemoryChunk]:
+            return list(self._chunks)
+
+        def store(self, chunk: MemoryChunk) -> None:
+            self.stored.append(chunk)
+
+        def close(self) -> None:
+            self.closed = True
+
+    source_store = DummyStore([MemoryChunk(content="chunk-a")])
+    target_store = DummyStore([])
+
+    def fake_build_store_for_migration(**kwargs: Any) -> DummyStore:
+        sqlite_path = kwargs.get("sqlite_path", "")
+        if sqlite_path == "source.db":
+            return source_store
+        if sqlite_path == "target.db":
+            return target_store
+        raise AssertionError(f"Unexpected sqlite path: {sqlite_path}")
+
+    monkeypatch.setattr(cli_module, "_build_store_for_migration", fake_build_store_for_migration)
+
+    await _cmd_migrate_store(
+        Namespace(
+            source_store="sqlite",
+            target_store="sqlite",
+            source_sqlite_path="source.db",
+            source_qdrant_path="",
+            source_qdrant_url="",
+            source_qdrant_collection="",
+            source_neo4j_uri="",
+            source_neo4j_database="",
+            source_neo4j_label="",
+            source_neo4j_username="",
+            source_neo4j_password="",
+            target_sqlite_path="target.db",
+            target_qdrant_path="",
+            target_qdrant_url="",
+            target_qdrant_collection="",
+            target_neo4j_uri="",
+            target_neo4j_database="",
+            target_neo4j_label="",
+            target_neo4j_username="",
+            target_neo4j_password="",
+            dry_run=False,
+        )
+    )
+
+    captured = capsys.readouterr().out
+    assert '"source_store": "sqlite"' in captured
+    assert '"target_store": "sqlite"' in captured
+    assert '"migrated": 1' in captured
 
 
 @pytest.mark.asyncio

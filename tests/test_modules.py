@@ -626,6 +626,16 @@ class TestSpreadingActivation:
         assert sa.get_node_count() == 1
         assert sa.get_node(node.id) is not None
 
+    def test_add_node_preserves_metadata(self, embedder):
+        """add_node should keep scope metadata on the activation node."""
+        sa = SpreadingActivation(embedder=embedder)
+        node = sa.add_node(
+            "test concept",
+            metadata={"scope": "project", "scope_id": "repo-alpha"},
+        )
+        assert node.metadata["scope"] == "project"
+        assert node.metadata["scope_id"] == "repo-alpha"
+
     def test_add_node_computes_embedding(self, embedder):
         """add_node should compute embedding if not provided."""
         sa = SpreadingActivation(embedder=embedder)
@@ -663,6 +673,45 @@ class TestSpreadingActivation:
 
         edges = sa.auto_connect(threshold=0.0)
         assert edges > 0  # Should create at least some edges
+
+    def test_auto_connect_respects_scope_boundaries_and_neighbor_cap(self, embedder):
+        """auto_connect should avoid cross-project edges and keep the graph sparse."""
+        sa = SpreadingActivation(
+            embedder=embedder,
+            config=SpreadingConfig(
+                auto_connect_threshold=0.0,
+                max_neighbors_per_node=2,
+            ),
+        )
+        alpha = sa.add_node(
+            "alpha",
+            embedding=[1.0, 0.0, 0.0],
+            metadata={"scope": "project", "scope_id": "repo-alpha"},
+        )
+        alpha_peer = sa.add_node(
+            "alpha-peer",
+            embedding=[0.99, 0.01, 0.0],
+            metadata={"scope": "project", "scope_id": "repo-alpha"},
+        )
+        beta_peer = sa.add_node(
+            "beta-peer",
+            embedding=[0.98, 0.02, 0.0],
+            metadata={"scope": "project", "scope_id": "repo-beta"},
+        )
+        global_peer = sa.add_node(
+            "global-peer",
+            embedding=[0.97, 0.03, 0.0],
+            metadata={"scope": "global"},
+        )
+
+        sa.auto_connect(threshold=0.0)
+
+        assert alpha_peer.id in alpha.neighbors
+        assert beta_peer.id not in alpha.neighbors
+        assert len(alpha.neighbors) <= 2
+        assert len(alpha_peer.neighbors) <= 2
+        assert len(beta_peer.neighbors) <= 2
+        assert len(global_peer.neighbors) <= 2
 
     def test_activate_seed_gets_initial_energy(self, embedder):
         """The seed node should receive the initial energy."""
@@ -798,8 +847,11 @@ class TestSpreadingActivation:
         chunk = MemoryChunk(
             content="important memory",
             embedding=embedder.embed("important memory"),
+            metadata={"scope": "project", "scope_id": "repo-alpha"},
         )
         node = sa.add_node_from_chunk(chunk)
         assert node.id == chunk.id
         assert node.content == chunk.content
+        assert node.metadata["scope"] == "project"
+        assert node.metadata["scope_id"] == "repo-alpha"
         assert sa.get_node(chunk.id) is not None

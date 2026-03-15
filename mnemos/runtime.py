@@ -19,7 +19,7 @@ from .utils.embeddings import (
     SimpleEmbeddingProvider,
 )
 from .utils.llm import LLMProvider, MockLLMProvider, OllamaProvider, OpenAIProvider
-from .utils.storage import InMemoryStore, MemoryStore, Neo4jStore, QdrantStore, SQLiteStore
+from .utils.storage import InMemoryStore, MemoryStore, SQLiteStore
 
 
 def resolve_env_value(
@@ -50,7 +50,7 @@ def resolve_env_value(
 
 def load_runtime_settings(
     *,
-    default_store_type: Literal["memory", "sqlite", "qdrant", "neo4j"] = "memory",
+    default_store_type: Literal["memory", "sqlite"] = "memory",
     env: Mapping[str, str] | None = None,
     cwd: str | Path | None = None,
 ) -> ResolvedSettings:
@@ -82,33 +82,7 @@ def build_store_from_settings(settings: AppSettings) -> MemoryStore:
     if store_type == "sqlite":
         return SQLiteStore(db_path=settings.storage.sqlite_path)
 
-    if store_type == "qdrant":
-        return QdrantStore(
-            url=settings.storage.qdrant_url,
-            api_key=settings.api_key_for("qdrant"),
-            path=settings.storage.qdrant_path,
-            collection_name=settings.storage.qdrant_collection,
-            vector_size=settings.storage.qdrant_vector_size,
-        )
-
-    if store_type == "neo4j":
-        username = settings.providers.neo4j.username
-        password = settings.providers.neo4j.password
-        if not username or not password:
-            raise ValueError(
-                "MNEMOS_NEO4J_USERNAME and MNEMOS_NEO4J_PASSWORD must be set when using the neo4j store"
-            )
-        return Neo4jStore(
-            uri=settings.storage.neo4j_uri,
-            username=username,
-            password=password,
-            database=settings.storage.neo4j_database,
-            label=settings.storage.neo4j_label,
-        )
-
-    raise ValueError(
-        f"Unknown store type: {store_type!r}. Use 'memory', 'sqlite', 'qdrant', or 'neo4j'."
-    )
+    raise ValueError(f"Unknown store type: {store_type!r}. Use 'memory' or 'sqlite'.")
 
 
 def build_embedder_from_settings(settings: AppSettings) -> EmbeddingProvider:
@@ -191,7 +165,7 @@ def build_mnemos_config_from_settings(settings: AppSettings) -> MnemosConfig:
 
 
 def build_store_from_env(
-    default_store_type: Literal["memory", "sqlite", "qdrant", "neo4j"] = "memory",
+    default_store_type: Literal["memory", "sqlite"] = "memory",
     *,
     env: Mapping[str, str] | None = None,
     cwd: str | Path | None = None,
@@ -239,7 +213,7 @@ def build_mnemos_config_from_env(
     *,
     env: Mapping[str, str] | None = None,
     cwd: str | Path | None = None,
-    default_store_type: Literal["memory", "sqlite", "qdrant", "neo4j"] = "sqlite",
+    default_store_type: Literal["memory", "sqlite"] = "sqlite",
 ) -> MnemosConfig:
     resolved = load_runtime_settings(
         default_store_type=default_store_type,

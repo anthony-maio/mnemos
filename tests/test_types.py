@@ -295,6 +295,10 @@ class TestActivationNode:
         node = ActivationNode(content="test")
         assert node.neighbors == {}
 
+    def test_default_metadata_empty(self):
+        node = ActivationNode(content="test")
+        assert node.metadata == {}
+
     def test_with_neighbors(self):
         node = ActivationNode(
             content="test",
@@ -302,6 +306,14 @@ class TestActivationNode:
         )
         assert "node-b" in node.neighbors
         assert node.neighbors["node-b"] == 0.8
+
+    def test_with_metadata(self):
+        node = ActivationNode(
+            content="test",
+            metadata={"scope": "project", "scope_id": "repo-alpha"},
+        )
+        assert node.metadata["scope"] == "project"
+        assert node.metadata["scope_id"] == "repo-alpha"
 
 
 # ─── ConsolidationResult tests ────────────────────────────────────────────────

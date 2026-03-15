@@ -7,6 +7,9 @@ from __future__ import annotations
 import sys
 from pathlib import Path
 
+import pytest
+from pydantic import ValidationError
+
 from mnemos.settings import import_existing_setup, load_settings, save_settings
 
 
@@ -90,8 +93,8 @@ sqlite_path = ".mnemos/project.db"
         env={
             "MNEMOS_LLM_PROVIDER": "ollama",
             "MNEMOS_OLLAMA_URL": "http://192.168.86.35:11434",
-            "MNEMOS_STORE_TYPE": "qdrant",
-            "MNEMOS_QDRANT_PATH": ".mnemos/qdrant",
+            "MNEMOS_STORE_TYPE": "sqlite",
+            "MNEMOS_SQLITE_PATH": ".mnemos/runtime.db",
         },
         cwd=project_dir,
         global_config_path=global_config,
@@ -99,29 +102,30 @@ sqlite_path = ".mnemos/project.db"
 
     assert resolved.settings.llm.provider == "ollama"
     assert resolved.settings.providers.ollama.base_url == "http://192.168.86.35:11434"
-    assert resolved.settings.storage.type == "qdrant"
-    assert resolved.settings.storage.qdrant_path == ".mnemos/qdrant"
+    assert resolved.settings.storage.type == "sqlite"
+    assert resolved.settings.storage.sqlite_path == ".mnemos/runtime.db"
 
 
-def test_load_settings_env_overrides_support_neo4j(tmp_path: Path) -> None:
-    resolved = load_settings(
-        env={
-            "MNEMOS_STORE_TYPE": "neo4j",
-            "MNEMOS_NEO4J_URI": "bolt://localhost:7687",
-            "MNEMOS_NEO4J_USERNAME": "neo4j",
-            "MNEMOS_NEO4J_PASSWORD": "secret",
-            "MNEMOS_NEO4J_DATABASE": "mnemos",
-            "MNEMOS_NEO4J_LABEL": "MemoryChunk",
-        },
-        cwd=tmp_path,
-    )
+def test_load_settings_rejects_legacy_store_types(tmp_path: Path) -> None:
+    with pytest.raises(ValidationError):
+        load_settings(
+            env={
+                "MNEMOS_STORE_TYPE": "neo4j",
+                "MNEMOS_NEO4J_URI": "bolt://localhost:7687",
+                "MNEMOS_NEO4J_USERNAME": "neo4j",
+                "MNEMOS_NEO4J_PASSWORD": "secret",
+            },
+            cwd=tmp_path,
+        )
 
-    assert resolved.settings.storage.type == "neo4j"
-    assert resolved.settings.storage.neo4j_uri == "bolt://localhost:7687"
-    assert resolved.settings.storage.neo4j_database == "mnemos"
-    assert resolved.settings.storage.neo4j_label == "MemoryChunk"
-    assert resolved.settings.providers.neo4j.username == "neo4j"
-    assert resolved.settings.providers.neo4j.password == "secret"
+    with pytest.raises(ValidationError):
+        load_settings(
+            env={
+                "MNEMOS_STORE_TYPE": "qdrant",
+                "MNEMOS_QDRANT_URL": "http://localhost:6333",
+            },
+            cwd=tmp_path,
+        )
 
 
 def test_project_config_secrets_are_ignored(tmp_path: Path) -> None:
@@ -335,7 +339,7 @@ MNEMOS_SQLITE_PATH = ".mnemos/memory.db"
     assert "codex" in imported.sources
 
 
-def test_import_existing_setup_reads_codex_config_path_for_neo4j(tmp_path: Path) -> None:
+def test_import_existing_setup_reads_codex_config_path_for_sqlite(tmp_path: Path) -> None:
     home_dir = tmp_path / "home"
     config_path = tmp_path / "Mnemos" / "mnemos.toml"
     config_path.parent.mkdir(parents=True)
@@ -348,17 +352,11 @@ provider = "ollama"
 provider = "ollama"
 
 [storage]
-type = "neo4j"
-neo4j_uri = "bolt://nas:7687"
-neo4j_database = "neo4j"
-neo4j_label = "MnemosMemoryChunk"
+type = "sqlite"
+sqlite_path = ".mnemos/memory.db"
 
 [providers.ollama]
 base_url = "http://ollama:11434"
-
-[providers.neo4j]
-username = "neo4j"
-password = "secret"
 """.strip(),
         encoding="utf-8",
     )
@@ -382,14 +380,13 @@ MNEMOS_CONFIG_PATH = "{config_path.as_posix()}"
         home=home_dir,
     )
 
-    assert imported.settings.storage.type == "neo4j"
-    assert imported.settings.storage.neo4j_uri == "bolt://nas:7687"
-    assert imported.settings.providers.neo4j.username == "neo4j"
-    assert imported.settings.providers.neo4j.password == "secret"
+    assert imported.settings.storage.type == "sqlite"
+    assert imported.settings.storage.sqlite_path == ".mnemos/memory.db"
+    assert imported.settings.providers.ollama.base_url == "http://ollama:11434"
     assert "codex" in imported.sources
 
 
-def test_import_existing_setup_reads_cursor_config_path_for_neo4j(tmp_path: Path) -> None:
+def test_import_existing_setup_reads_cursor_config_path_for_sqlite(tmp_path: Path) -> None:
     repo_dir = tmp_path / "repo"
     repo_dir.mkdir(parents=True)
     config_path = tmp_path / "Mnemos" / "mnemos.toml"
@@ -403,15 +400,11 @@ provider = "ollama"
 provider = "ollama"
 
 [storage]
-type = "neo4j"
-neo4j_uri = "bolt://nas:7687"
+type = "sqlite"
+sqlite_path = ".mnemos/cursor-memory.db"
 
 [providers.ollama]
 base_url = "http://ollama:11434"
-
-[providers.neo4j]
-username = "neo4j"
-password = "secret"
 """.strip(),
         encoding="utf-8",
     )
@@ -440,8 +433,7 @@ password = "secret"
         home=tmp_path / "home",
     )
 
-    assert imported.settings.storage.type == "neo4j"
-    assert imported.settings.storage.neo4j_uri == "bolt://nas:7687"
-    assert imported.settings.providers.neo4j.username == "neo4j"
-    assert imported.settings.providers.neo4j.password == "secret"
+    assert imported.settings.storage.type == "sqlite"
+    assert imported.settings.storage.sqlite_path == ".mnemos/cursor-memory.db"
+    assert imported.settings.providers.ollama.base_url == "http://ollama:11434"
     assert "cursor" in imported.sources

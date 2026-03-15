@@ -40,7 +40,7 @@ from .modules.spreading import SpreadingActivation
 from .modules.surprisal import SurprisalGate
 from .types import ConsolidationResult, Interaction, MemoryChunk, ProcessResult
 from .observability import log_event
-from .utils.embeddings import EmbeddingProvider, cosine_similarity, embed_text_async
+from .utils.embeddings import EmbeddingProvider, embed_text_async
 from .utils.llm import LLMProvider
 from .utils.storage import MemoryStore
 
@@ -263,6 +263,10 @@ class MnemosEngine:
         if deleted and self.spreading_activation.get_node(chunk_id) is not None:
             self.spreading_activation.remove_node(chunk_id)
 
+    def _sync_persisted_graph_edges(self) -> None:
+        for node in self.spreading_activation.get_all_nodes():
+            self._store.replace_graph_neighbors(node.id, dict(node.neighbors))
+
     def _apply_governance(
         self,
         *,
@@ -322,8 +326,13 @@ class MnemosEngine:
             if self.spreading_activation.get_node(chunk.id) is None:
                 self.spreading_activation.add_node_from_chunk(chunk)
 
-        if spreading_cfg.startup_auto_connect and len(chunks_to_load) > 1:
-            self.spreading_activation.auto_connect()
+        persisted_edges = self._store.get_graph_edges([chunk.id for chunk in chunks_to_load])
+        if persisted_edges:
+            self.spreading_activation.hydrate_edges(persisted_edges)
+            self._sync_persisted_graph_edges()
+        elif spreading_cfg.startup_auto_connect and len(chunks_to_load) > 1:
+            self.spreading_activation.auto_connect(exclude_existing=False)
+            self._sync_persisted_graph_edges()
 
         if self.config.debug and len(stored_chunks) > limit:
             logger.debug(
@@ -421,16 +430,10 @@ class MnemosEngine:
         # Step 3: Add to spreading activation graph
         self.spreading_activation.add_node_from_chunk(result.chunk)
 
-        # Auto-connect new node to its semantic neighbors in the graph
-        # (Only connect the new node — avoid O(N²) on every process call)
-        new_node = self.spreading_activation.get_node(result.chunk.id)
-        if new_node and new_node.embedding:
-            for existing_node in self.spreading_activation.get_all_nodes():
-                if existing_node.id == new_node.id or existing_node.embedding is None:
-                    continue
-                sim = cosine_similarity(new_node.embedding, existing_node.embedding)
-                if sim >= self.config.spreading.auto_connect_threshold:
-                    self.spreading_activation.add_edge(new_node.id, existing_node.id, sim)
+        # Connect the new node to its strongest eligible scoped neighbors and
+        # persist the resulting sparse graph when the backend supports it.
+        self.spreading_activation.connect_node(result.chunk.id)
+        self._sync_persisted_graph_edges()
 
         if self.config.debug:
             logger.debug(
@@ -657,7 +660,8 @@ class MnemosEngine:
 
         # Rebuild connections for newly added nodes
         if new_chunks:
-            self.spreading_activation.auto_connect()
+            self.spreading_activation.auto_connect(exclude_existing=False)
+            self._sync_persisted_graph_edges()
 
         self._apply_governance()
 

@@ -60,6 +60,24 @@ def fake_neo4j(monkeypatch: pytest.MonkeyPatch) -> None:
                 self._driver.nodes[chunk["id"]] = chunk
                 return FakeResult(counters=FakeCounters(properties_set=1))
 
+            if (
+                "OPTIONAL MATCH (source)-[rel]->() WHERE type(rel) = $edge_type DELETE rel"
+                in normalized
+            ):
+                source_id = params["chunk_id"]
+                self._driver.edges.pop(source_id, None)
+                return FakeResult(counters=FakeCounters())
+
+            if (
+                "UNWIND $edges AS edge" in normalized
+                and "MERGE (source)-[rel:RELATED_TO]->(target)" in normalized
+            ):
+                source_id = params["chunk_id"]
+                source_edges = self._driver.edges.setdefault(source_id, {})
+                for edge in params["edges"]:
+                    source_edges[edge["target_id"]] = edge["weight"]
+                return FakeResult(counters=FakeCounters(properties_set=len(params["edges"])))
+
             if "SET chunk.access_count" in normalized:
                 node = self._driver.nodes.get(params["chunk_id"])
                 if node is None:
@@ -84,8 +102,34 @@ def fake_neo4j(monkeypatch: pytest.MonkeyPatch) -> None:
             ):
                 return FakeResult([dict(node) for node in self._driver.nodes.values()])
 
+            if (
+                "RETURN source.id AS source_id" in normalized
+                and "rel.weight AS weight" in normalized
+                and "WHERE type(rel) = $edge_type" in normalized
+            ):
+                records: list[dict[str, Any]] = []
+                allowed_ids = set(params.get("chunk_ids", [])) if "chunk_ids" in params else None
+                for source_id, neighbors in self._driver.edges.items():
+                    if allowed_ids is not None and source_id not in allowed_ids:
+                        continue
+                    for target_id, weight in neighbors.items():
+                        if allowed_ids is not None and target_id not in allowed_ids:
+                            continue
+                        records.append(
+                            {
+                                "source_id": source_id,
+                                "target_id": target_id,
+                                "weight": weight,
+                            }
+                        )
+                return FakeResult(records)
+
             if "DELETE chunk" in normalized:
-                deleted = 1 if self._driver.nodes.pop(params["chunk_id"], None) is not None else 0
+                chunk_id = params["chunk_id"]
+                deleted = 1 if self._driver.nodes.pop(chunk_id, None) is not None else 0
+                self._driver.edges.pop(chunk_id, None)
+                for neighbors in self._driver.edges.values():
+                    neighbors.pop(chunk_id, None)
                 return FakeResult(counters=FakeCounters(nodes_deleted=deleted))
 
             if "RETURN count(chunk) AS total_chunks" in normalized:
@@ -114,6 +158,13 @@ def fake_neo4j(monkeypatch: pytest.MonkeyPatch) -> None:
                     ]
                 )
 
+            if (
+                "RETURN count(rel) AS directed_related_edges" in normalized
+                and "WHERE type(rel) = $edge_type" in normalized
+            ):
+                directed = sum(len(neighbors) for neighbors in self._driver.edges.values())
+                return FakeResult([{"directed_related_edges": directed}])
+
             raise AssertionError(f"Unexpected Cypher query: {normalized}")
 
     class FakeDriver:
@@ -121,6 +172,7 @@ def fake_neo4j(monkeypatch: pytest.MonkeyPatch) -> None:
             self.uri = uri
             self.auth = auth
             self.nodes: dict[str, dict[str, Any]] = {}
+            self.edges: dict[str, dict[str, float]] = {}
 
         def verify_connectivity(self) -> None:
             return None
@@ -196,6 +248,11 @@ def strict_fake_neo4j(monkeypatch: pytest.MonkeyPatch) -> None:
                         }
                     ]
                 )
+            elif (
+                "RETURN count(rel) AS directed_related_edges" in normalized
+                and "WHERE type(rel) = $edge_type" in normalized
+            ):
+                result = FakeResult([{"directed_related_edges": 0}])
             else:
                 raise AssertionError(f"Unexpected Cypher query: {normalized}")
             self._results.append(result)
@@ -313,6 +370,11 @@ def warning_safe_fake_neo4j(monkeypatch: pytest.MonkeyPatch) -> None:
                         }
                     ]
                 )
+            if (
+                "RETURN count(rel) AS directed_related_edges" in normalized
+                and "WHERE type(rel) = $edge_type" in normalized
+            ):
+                return FakeResult([{"directed_related_edges": 0}])
             raise AssertionError(f"Unexpected Cypher query: {normalized}")
 
     class FakeDriver:
@@ -386,6 +448,41 @@ def test_neo4j_store_crud_and_retrieve(fake_neo4j: None) -> None:
     stats = store.get_stats()
     assert stats["backend"] == "Neo4jStore"
     assert stats["total_chunks"] == 1
+
+
+def test_neo4j_store_persists_related_edges(fake_neo4j: None) -> None:
+    store = Neo4jStore(
+        uri="bolt://localhost:7687",
+        username="neo4j",
+        password="password",
+        database="mnemos",
+        label="MnemosMemoryChunk",
+    )
+
+    chunk_a = MemoryChunk(
+        id="a",
+        content="alpha memory",
+        embedding=[1.0, 0.0, 0.0],
+        metadata={"scope": "project", "scope_id": "repo-alpha"},
+    )
+    chunk_b = MemoryChunk(
+        id="b",
+        content="global memory",
+        embedding=[0.9, 0.1, 0.0],
+        metadata={"scope": "global"},
+    )
+    store.store(chunk_a)
+    store.store(chunk_b)
+
+    store.upsert_graph_edge("a", "b", 0.91)
+
+    assert store.get_graph_edges(["a", "b"]) == {
+        "a": {"b": pytest.approx(0.91)},
+        "b": {"a": pytest.approx(0.91)},
+    }
+
+    stats = store.get_stats()
+    assert stats["related_edges"] == 1
 
 
 def test_neo4j_store_materializes_results_before_session_close(strict_fake_neo4j: None) -> None:

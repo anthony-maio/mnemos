@@ -447,7 +447,7 @@ class EmbeddingSettings(BaseModel):
 class StorageSettings(BaseModel):
     model_config = ConfigDict(extra="ignore")
 
-    type: Literal["memory", "sqlite", "qdrant", "neo4j"] = "sqlite"
+    type: Literal["memory", "sqlite"] = "sqlite"
     sqlite_path: str = "mnemos_memory.db"
     qdrant_url: str = "http://localhost:6333"
     qdrant_path: str | None = None
@@ -547,7 +547,7 @@ def load_settings(
     env: Mapping[str, str] | None = None,
     cwd: str | Path | None = None,
     global_config_path: str | Path | None = None,
-    default_store_type: Literal["memory", "sqlite", "qdrant", "neo4j"] = "sqlite",
+    default_store_type: Literal["memory", "sqlite"] = "sqlite",
 ) -> ResolvedSettings:
     source_env = dict(os.environ if env is None else env)
     warnings: list[str] = []
@@ -647,7 +647,7 @@ def import_existing_setup(
     cwd: str | Path | None = None,
     home: str | Path | None = None,
     global_config_path: str | Path | None = None,
-    default_store_type: Literal["memory", "sqlite", "qdrant", "neo4j"] = "sqlite",
+    default_store_type: Literal["memory", "sqlite"] = "sqlite",
 ) -> ImportedSetup:
     merged_env = dict(os.environ if env is None else env)
     sources: list[str] = []

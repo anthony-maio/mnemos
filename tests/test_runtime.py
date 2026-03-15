@@ -11,7 +11,6 @@ import pytest
 import mnemos.runtime as runtime_module
 from mnemos.runtime import build_embedder_from_env, build_store_from_env, resolve_env_value
 from mnemos.utils import (
-    Neo4jStore,
     OllamaEmbeddingProvider,
     OpenAIEmbeddingProvider,
     SimpleEmbeddingProvider,
@@ -42,6 +41,20 @@ def test_build_store_from_env_supports_db_path_alias(
     monkeypatch.setenv("MNEMOS_DB_PATH", str(db_path))
 
     store = build_store_from_env(default_store_type="memory")
+
+    assert isinstance(store, SQLiteStore)
+    assert store.db_path == str(db_path)
+    store.close()
+
+
+def test_build_store_from_env_defaults_to_sqlite_when_requested(
+    monkeypatch: pytest.MonkeyPatch, tmp_path: Path
+) -> None:
+    db_path = tmp_path / "mnemos_default.db"
+    monkeypatch.delenv("MNEMOS_STORE_TYPE", raising=False)
+    monkeypatch.setenv("MNEMOS_SQLITE_PATH", str(db_path))
+
+    store = build_store_from_env(default_store_type="sqlite")
 
     assert isinstance(store, SQLiteStore)
     assert store.db_path == str(db_path)
@@ -116,75 +129,13 @@ def test_build_embedder_from_env_infers_ollama_from_llm_provider(
     assert isinstance(embedder, OllamaEmbeddingProvider)
 
 
-def test_build_store_from_env_qdrant(monkeypatch: pytest.MonkeyPatch) -> None:
-    captured: dict[str, object] = {}
-
-    class DummyQdrantStore:
-        def __init__(
-            self,
-            *,
-            url: str | None = None,
-            api_key: str | None = None,
-            path: str | None = None,
-            collection_name: str = "mnemos_memory",
-            vector_size: int | None = None,
-        ) -> None:
-            captured["url"] = url
-            captured["api_key"] = api_key
-            captured["path"] = path
-            captured["collection_name"] = collection_name
-            captured["vector_size"] = vector_size
-
-    monkeypatch.setattr(runtime_module, "QdrantStore", DummyQdrantStore, raising=False)
+def test_build_store_from_env_rejects_legacy_store_types(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
     monkeypatch.setenv("MNEMOS_STORE_TYPE", "qdrant")
-    monkeypatch.setenv("MNEMOS_QDRANT_URL", "http://localhost:6333")
-    monkeypatch.setenv("MNEMOS_QDRANT_API_KEY", "qdrant-key")
-    monkeypatch.setenv("MNEMOS_QDRANT_PATH", "/tmp/mnemos-qdrant")
-    monkeypatch.setenv("MNEMOS_QDRANT_COLLECTION", "mnemos-test")
-    monkeypatch.setenv("MNEMOS_EMBEDDING_DIM", "256")
+    with pytest.raises(Exception, match="storage.type"):
+        build_store_from_env(default_store_type="memory")
 
-    store = build_store_from_env(default_store_type="memory")
-
-    assert isinstance(store, DummyQdrantStore)
-    assert captured["url"] == "http://localhost:6333"
-    assert captured["api_key"] == "qdrant-key"
-    assert captured["path"] == "/tmp/mnemos-qdrant"
-    assert captured["collection_name"] == "mnemos-test"
-    assert captured["vector_size"] == 256
-
-
-def test_build_store_from_env_neo4j(monkeypatch: pytest.MonkeyPatch) -> None:
-    captured: dict[str, object] = {}
-
-    class DummyNeo4jStore:
-        def __init__(
-            self,
-            *,
-            uri: str,
-            username: str,
-            password: str,
-            database: str = "neo4j",
-            label: str = "MnemosMemoryChunk",
-        ) -> None:
-            captured["uri"] = uri
-            captured["username"] = username
-            captured["password"] = password
-            captured["database"] = database
-            captured["label"] = label
-
-    monkeypatch.setattr(runtime_module, "Neo4jStore", DummyNeo4jStore, raising=False)
     monkeypatch.setenv("MNEMOS_STORE_TYPE", "neo4j")
-    monkeypatch.setenv("MNEMOS_NEO4J_URI", "bolt://localhost:7687")
-    monkeypatch.setenv("MNEMOS_NEO4J_USERNAME", "neo4j")
-    monkeypatch.setenv("MNEMOS_NEO4J_PASSWORD", "test-password")
-    monkeypatch.setenv("MNEMOS_NEO4J_DATABASE", "mnemos")
-    monkeypatch.setenv("MNEMOS_NEO4J_LABEL", "MemoryChunk")
-
-    store = build_store_from_env(default_store_type="memory")
-
-    assert isinstance(store, DummyNeo4jStore)
-    assert captured["uri"] == "bolt://localhost:7687"
-    assert captured["username"] == "neo4j"
-    assert captured["password"] == "test-password"
-    assert captured["database"] == "mnemos"
-    assert captured["label"] == "MemoryChunk"
+    with pytest.raises(Exception, match="storage.type"):
+        build_store_from_env(default_store_type="memory")

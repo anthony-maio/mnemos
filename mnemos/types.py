@@ -265,6 +265,10 @@ class ActivationNode(BaseModel):
         default=None,
         description="Vector embedding for initial similarity-based lookup.",
     )
+    metadata: dict[str, Any] = Field(
+        default_factory=dict,
+        description="Scoped metadata used for graph-safe connectivity decisions.",
+    )
 
     model_config = {"frozen": False}
 

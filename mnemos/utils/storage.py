@@ -142,6 +142,14 @@ class MemoryStore(ABC):
                 return chunk
         return None
 
+    def get_graph_edges(self, chunk_ids: list[str] | None = None) -> dict[str, dict[str, float]]:
+        """Return persisted graph edges keyed by source chunk ID."""
+        return {}
+
+    def replace_graph_neighbors(self, chunk_id: str, neighbors: dict[str, float]) -> None:
+        """Replace the outgoing graph-neighbor set for a chunk."""
+        return None
+
     def clear(self) -> None:
         """Remove all chunks from the store. Used for testing and consolidation."""
         for chunk in list(self.get_all()):
@@ -320,18 +328,245 @@ class SQLiteStore(MemoryStore):
         );
     """
 
+    _CREATE_META_TABLE_SQL = """
+        CREATE TABLE IF NOT EXISTS mnemos_meta (
+            key TEXT PRIMARY KEY,
+            value TEXT NOT NULL
+        );
+    """
+
+    _CREATE_EDGES_TABLE_SQL = """
+        CREATE TABLE IF NOT EXISTS memory_edges (
+            source_id TEXT NOT NULL,
+            target_id TEXT NOT NULL,
+            weight REAL NOT NULL,
+            edge_type TEXT NOT NULL DEFAULT 'RELATED_TO',
+            updated_at TEXT NOT NULL,
+            PRIMARY KEY (source_id, target_id, edge_type),
+            FOREIGN KEY (source_id) REFERENCES memory_chunks(id) ON DELETE CASCADE,
+            FOREIGN KEY (target_id) REFERENCES memory_chunks(id) ON DELETE CASCADE
+        );
+    """
+
+    _CREATE_EDGES_SOURCE_INDEX_SQL = """
+        CREATE INDEX IF NOT EXISTS idx_memory_edges_source
+        ON memory_edges(edge_type, source_id);
+    """
+
+    _CREATE_EDGES_TARGET_INDEX_SQL = """
+        CREATE INDEX IF NOT EXISTS idx_memory_edges_target
+        ON memory_edges(edge_type, target_id);
+    """
+
+    _CREATE_FTS_SQL = """
+        CREATE VIRTUAL TABLE IF NOT EXISTS memory_fts
+        USING fts5(content, content='memory_chunks', content_rowid='rowid');
+    """
+
+    _CREATE_FTS_INSERT_TRIGGER_SQL = """
+        CREATE TRIGGER IF NOT EXISTS memory_chunks_ai
+        AFTER INSERT ON memory_chunks
+        BEGIN
+            INSERT INTO memory_fts(rowid, content) VALUES (new.rowid, new.content);
+        END;
+    """
+
+    _CREATE_FTS_DELETE_TRIGGER_SQL = """
+        CREATE TRIGGER IF NOT EXISTS memory_chunks_ad
+        AFTER DELETE ON memory_chunks
+        BEGIN
+            INSERT INTO memory_fts(memory_fts, rowid, content)
+            VALUES ('delete', old.rowid, old.content);
+        END;
+    """
+
+    _CREATE_FTS_UPDATE_TRIGGER_SQL = """
+        CREATE TRIGGER IF NOT EXISTS memory_chunks_au
+        AFTER UPDATE ON memory_chunks
+        BEGIN
+            INSERT INTO memory_fts(memory_fts, rowid, content)
+            VALUES ('delete', old.rowid, old.content);
+            INSERT INTO memory_fts(rowid, content) VALUES (new.rowid, new.content);
+        END;
+    """
+
+    _SCHEMA_VERSION = "2"
+    _GRAPH_EDGE_TYPE = "RELATED_TO"
+    _SQLITE_VEC_DIM_KEY = "sqlite_vec_dim"
+
     def __init__(self, db_path: str = "mnemos_memory.db", name: str = "sqlite") -> None:
         self.db_path = db_path
         self.name = name
         self._lock = threading.Lock()
+        self._sqlite_vec_enabled = False
+        self._sqlite_vec_dim: int | None = None
+        self._sqlite_vec_module: Any | None = None
         self._conn = sqlite3.connect(
             db_path,
             check_same_thread=False,
         )
+        self._conn.execute("PRAGMA foreign_keys=ON;")
         self._conn.execute("PRAGMA journal_mode=WAL;")  # Better concurrent access
         self._conn.execute("PRAGMA synchronous=NORMAL;")  # Lower fsync cost for high-read local use
+        self._load_sqlite_vec_extension()
+        self._initialize_schema()
+
+    def _load_sqlite_vec_extension(self) -> None:
+        try:
+            import sqlite_vec
+        except ImportError:
+            return
+
+        enable_extension = getattr(self._conn, "enable_load_extension", None)
+        if not callable(enable_extension):
+            return
+
+        try:
+            enable_extension(True)
+            sqlite_vec.load(self._conn)
+            enable_extension(False)
+        except Exception:
+            try:
+                enable_extension(False)
+            except Exception:
+                pass
+            return
+
+        self._sqlite_vec_enabled = True
+        self._sqlite_vec_module = sqlite_vec
+
+    def _initialize_schema(self) -> None:
         self._conn.execute(self._CREATE_TABLE_SQL)
+        self._conn.execute(self._CREATE_META_TABLE_SQL)
+        self._conn.execute(self._CREATE_EDGES_TABLE_SQL)
+        self._conn.execute(self._CREATE_EDGES_SOURCE_INDEX_SQL)
+        self._conn.execute(self._CREATE_EDGES_TARGET_INDEX_SQL)
+        self._conn.execute(self._CREATE_FTS_SQL)
+        self._conn.execute(self._CREATE_FTS_INSERT_TRIGGER_SQL)
+        self._conn.execute(self._CREATE_FTS_DELETE_TRIGGER_SQL)
+        self._conn.execute(self._CREATE_FTS_UPDATE_TRIGGER_SQL)
+        self._conn.execute(
+            """
+            INSERT INTO mnemos_meta(key, value)
+            VALUES ('schema_version', ?)
+            ON CONFLICT(key) DO UPDATE SET value = excluded.value
+            """,
+            (self._SCHEMA_VERSION,),
+        )
+        # Keep the external-content FTS table consistent for existing databases.
+        self._conn.execute("INSERT INTO memory_fts(memory_fts) VALUES ('rebuild');")
+        if self._sqlite_vec_enabled:
+            existing_dim = self._meta_value(self._SQLITE_VEC_DIM_KEY)
+            if existing_dim not in (None, ""):
+                self._sqlite_vec_dim = int(str(existing_dim))
+            elif self._vec_table_exists():
+                sample = self._conn.execute(
+                    "SELECT rowid FROM memory_vec ORDER BY rowid LIMIT 1"
+                ).fetchone()
+                if sample is not None:
+                    self._sqlite_vec_dim = None
+            else:
+                first_embedding = self._conn.execute(
+                    "SELECT embedding FROM memory_chunks WHERE embedding IS NOT NULL LIMIT 1"
+                ).fetchone()
+                if first_embedding is not None and first_embedding[0]:
+                    embedding = json.loads(first_embedding[0])
+                    if isinstance(embedding, list) and embedding:
+                        self._sqlite_vec_dim = len(embedding)
+            if self._sqlite_vec_dim is not None:
+                self._ensure_vec_table(self._sqlite_vec_dim)
+                self._rebuild_vec_index()
         self._conn.commit()
+
+    def _meta_value(self, key: str) -> str | None:
+        row = self._conn.execute("SELECT value FROM mnemos_meta WHERE key = ?", (key,)).fetchone()
+        return None if row is None else str(row[0])
+
+    def _vec_table_exists(self) -> bool:
+        return bool(
+            self._conn.execute(
+                "SELECT COUNT(*) FROM sqlite_master WHERE type = 'table' AND name = 'memory_vec'"
+            ).fetchone()[0]
+        )
+
+    def _ensure_vec_table(self, dim: int) -> None:
+        if not self._sqlite_vec_enabled:
+            return
+        if dim <= 0:
+            raise ValueError("sqlite-vec dimension must be positive.")
+        if self._sqlite_vec_dim is not None and self._sqlite_vec_dim != dim:
+            raise ValueError(
+                f"SQLite vector dimension mismatch: existing={self._sqlite_vec_dim}, attempted={dim}"
+            )
+
+        self._conn.execute(
+            f"CREATE VIRTUAL TABLE IF NOT EXISTS memory_vec USING vec0(embedding float[{dim}])"
+        )
+        self._conn.execute(
+            """
+            INSERT INTO mnemos_meta(key, value)
+            VALUES (?, ?)
+            ON CONFLICT(key) DO UPDATE SET value = excluded.value
+            """,
+            (self._SQLITE_VEC_DIM_KEY, str(dim)),
+        )
+        self._sqlite_vec_dim = dim
+
+    def _serialize_vec(self, embedding: list[float]) -> Any:
+        if not self._sqlite_vec_enabled or self._sqlite_vec_module is None:
+            raise RuntimeError("sqlite-vec is not enabled")
+        return self._sqlite_vec_module.serialize_float32(embedding)
+
+    def _rebuild_vec_index(self) -> None:
+        if (
+            not self._sqlite_vec_enabled
+            or self._sqlite_vec_dim is None
+            or not self._vec_table_exists()
+        ):
+            return
+
+        self._conn.execute("DELETE FROM memory_vec")
+        rows = self._conn.execute(
+            "SELECT rowid, embedding FROM memory_chunks WHERE embedding IS NOT NULL"
+        ).fetchall()
+        payload = []
+        for rowid, embedding_json in rows:
+            if not embedding_json:
+                continue
+            embedding = json.loads(embedding_json)
+            if not isinstance(embedding, list) or len(embedding) != self._sqlite_vec_dim:
+                continue
+            payload.append((int(rowid), self._serialize_vec([float(x) for x in embedding])))
+        if payload:
+            self._conn.executemany(
+                "INSERT INTO memory_vec(rowid, embedding) VALUES (?, ?)",
+                payload,
+            )
+
+    def _sync_vec_row(self, chunk_id: str, embedding: list[float] | None) -> None:
+        if not self._sqlite_vec_enabled:
+            return
+
+        row = self._conn.execute(
+            "SELECT rowid FROM memory_chunks WHERE id = ?",
+            (chunk_id,),
+        ).fetchone()
+        if row is None:
+            return
+        rowid = int(row[0])
+
+        if self._vec_table_exists():
+            self._conn.execute("DELETE FROM memory_vec WHERE rowid = ?", (rowid,))
+
+        if embedding is None:
+            return
+
+        dim = len(embedding)
+        self._ensure_vec_table(dim)
+        self._conn.execute(
+            "INSERT INTO memory_vec(rowid, embedding) VALUES (?, ?)",
+            (rowid, self._serialize_vec(embedding)),
+        )
 
     def _chunk_to_row(self, chunk: MemoryChunk) -> tuple[Any, ...]:
         """Serialize a MemoryChunk to a database row tuple."""
@@ -400,13 +635,24 @@ class SQLiteStore(MemoryStore):
         with self._lock:
             self._conn.execute(
                 """
-                INSERT OR REPLACE INTO memory_chunks
+                INSERT INTO memory_chunks
                 (id, content, embedding, metadata, salience, cognitive_state,
                  created_at, updated_at, access_count, version)
                 VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                ON CONFLICT(id) DO UPDATE SET
+                    content=excluded.content,
+                    embedding=excluded.embedding,
+                    metadata=excluded.metadata,
+                    salience=excluded.salience,
+                    cognitive_state=excluded.cognitive_state,
+                    created_at=excluded.created_at,
+                    updated_at=excluded.updated_at,
+                    access_count=excluded.access_count,
+                    version=excluded.version
                 """,
                 row,
             )
+            self._sync_vec_row(chunk.id, chunk.embedding)
             self._conn.commit()
 
     def retrieve(
@@ -416,6 +662,34 @@ class SQLiteStore(MemoryStore):
         filter_fn: Callable[[MemoryChunk], bool] | None = None,
     ) -> list[MemoryChunk]:
         """Retrieve top-k chunks by cosine similarity (loads all, scores in Python)."""
+        if (
+            filter_fn is None
+            and top_k > 0
+            and self._sqlite_vec_enabled
+            and self._sqlite_vec_dim == len(query_embedding)
+            and self._vec_table_exists()
+        ):
+            with self._lock:
+                rows = self._conn.execute(
+                    """
+                    SELECT rowid, distance
+                    FROM memory_vec
+                    WHERE embedding MATCH ?
+                    ORDER BY distance
+                    LIMIT ?
+                    """,
+                    (self._serialize_vec(query_embedding), top_k),
+                ).fetchall()
+                ordered_rows = []
+                for rowid, _distance in rows:
+                    row = self._conn.execute(
+                        "SELECT * FROM memory_chunks WHERE rowid = ?",
+                        (int(rowid),),
+                    ).fetchone()
+                    if row is not None:
+                        ordered_rows.append(row)
+            return [self._row_to_chunk(row) for row in ordered_rows]
+
         all_chunks = self.get_all()
 
         if filter_fn is not None:
@@ -438,23 +712,21 @@ class SQLiteStore(MemoryStore):
             cursor = self._conn.execute("SELECT id FROM memory_chunks WHERE id = ?", (chunk_id,))
             if cursor.fetchone() is None:
                 return False
-            row = self._chunk_to_row(chunk)
-            self._conn.execute(
-                """
-                UPDATE memory_chunks SET
-                    content=?, embedding=?, metadata=?, salience=?,
-                    cognitive_state=?, created_at=?, updated_at=?,
-                    access_count=?, version=?
-                WHERE id=?
-                """,
-                row[1:] + (chunk_id,),
-            )
-            self._conn.commit()
-            return True
+        if chunk.id != chunk_id:
+            chunk = chunk.model_copy(update={"id": chunk_id})
+        self.store(chunk)
+        return True
 
     def delete(self, chunk_id: str) -> bool:
         """Delete chunk by ID; returns False if not found."""
         with self._lock:
+            if self._sqlite_vec_enabled and self._vec_table_exists():
+                row = self._conn.execute(
+                    "SELECT rowid FROM memory_chunks WHERE id = ?",
+                    (chunk_id,),
+                ).fetchone()
+                if row is not None:
+                    self._conn.execute("DELETE FROM memory_vec WHERE rowid = ?", (int(row[0]),))
             cursor = self._conn.execute("DELETE FROM memory_chunks WHERE id = ?", (chunk_id,))
             self._conn.commit()
             return cursor.rowcount > 0
@@ -506,6 +778,69 @@ class SQLiteStore(MemoryStore):
             rows = cursor.fetchall()
         return [self._row_to_chunk(row) for row in rows]
 
+    def get_graph_edges(self, chunk_ids: list[str] | None = None) -> dict[str, dict[str, float]]:
+        query = """
+            SELECT source_id, target_id, weight
+            FROM memory_edges
+            WHERE edge_type = ?
+        """
+        params: list[Any] = [self._GRAPH_EDGE_TYPE]
+        if chunk_ids:
+            placeholders = ", ".join("?" for _ in chunk_ids)
+            query += f" AND source_id IN ({placeholders})" f" AND target_id IN ({placeholders})"
+            params.extend(chunk_ids)
+            params.extend(chunk_ids)
+
+        with self._lock:
+            rows = self._conn.execute(query, tuple(params)).fetchall()
+
+        edge_map: dict[str, dict[str, float]] = {}
+        for source_id, target_id, weight in rows:
+            if source_id == target_id:
+                continue
+            edge_map.setdefault(str(source_id), {})[str(target_id)] = float(weight)
+        return edge_map
+
+    def replace_graph_neighbors(self, chunk_id: str, neighbors: dict[str, float]) -> None:
+        with self._lock:
+            self._conn.execute(
+                "DELETE FROM memory_edges WHERE source_id = ? AND edge_type = ?",
+                (chunk_id, self._GRAPH_EDGE_TYPE),
+            )
+
+            if neighbors:
+                target_ids = [target_id for target_id in neighbors if target_id != chunk_id]
+                existing_targets: set[str] = set()
+                if target_ids:
+                    placeholders = ", ".join("?" for _ in target_ids)
+                    existing_targets = {
+                        str(row[0])
+                        for row in self._conn.execute(
+                            f"SELECT id FROM memory_chunks WHERE id IN ({placeholders})",
+                            tuple(target_ids),
+                        ).fetchall()
+                    }
+
+                now = datetime.now(timezone.utc).isoformat()
+                rows = [
+                    (chunk_id, target_id, float(weight), self._GRAPH_EDGE_TYPE, now)
+                    for target_id, weight in neighbors.items()
+                    if target_id != chunk_id and target_id in existing_targets
+                ]
+                if rows:
+                    self._conn.executemany(
+                        """
+                        INSERT INTO memory_edges(source_id, target_id, weight, edge_type, updated_at)
+                        VALUES (?, ?, ?, ?, ?)
+                        ON CONFLICT(source_id, target_id, edge_type) DO UPDATE SET
+                            weight=excluded.weight,
+                            updated_at=excluded.updated_at
+                        """,
+                        rows,
+                    )
+
+            self._conn.commit()
+
     def get_stats(self) -> dict[str, Any]:
         """Return statistics from the database."""
         with self._lock:
@@ -520,6 +855,19 @@ class SQLiteStore(MemoryStore):
             with_embedding = self._conn.execute(
                 "SELECT COUNT(*) FROM memory_chunks WHERE embedding IS NOT NULL"
             ).fetchone()[0]
+            directed_edges = self._conn.execute(
+                "SELECT COUNT(*) FROM memory_edges WHERE edge_type = ?",
+                (self._GRAPH_EDGE_TYPE,),
+            ).fetchone()[0]
+            schema_version_raw = self._conn.execute(
+                "SELECT value FROM mnemos_meta WHERE key = 'schema_version'"
+            ).fetchone()
+            fts_exists = (
+                self._conn.execute(
+                    "SELECT COUNT(*) FROM sqlite_master WHERE type = 'table' AND name = 'memory_fts'"
+                ).fetchone()[0]
+                > 0
+            )
 
         return {
             "backend": "SQLiteStore",
@@ -529,6 +877,12 @@ class SQLiteStore(MemoryStore):
             "chunks_with_embeddings": with_embedding,
             "average_salience": round(avg_salience, 4),
             "average_access_count": round(avg_access, 4),
+            "related_edges": int(directed_edges // 2),
+            "fts_enabled": bool(fts_exists),
+            "schema_version": int(schema_version_raw[0]) if schema_version_raw else None,
+            "sqlite_vec_enabled": self._sqlite_vec_enabled,
+            "sqlite_vec_indexed": self._vec_table_exists(),
+            "sqlite_vec_dim": self._sqlite_vec_dim,
         }
 
     def close(self) -> None:
@@ -652,6 +1006,9 @@ class Neo4jStore(MemoryStore):
             f"FOR (chunk:{self._escaped_label}) REQUIRE chunk.id IS UNIQUE"
         )
         self._run(query)
+
+    def _graph_edge_type(self) -> str:
+        return "RELATED_TO"
 
     def _chunk_to_params(self, chunk: MemoryChunk) -> dict[str, Any]:
         return {
@@ -831,6 +1188,77 @@ class Neo4jStore(MemoryStore):
         result = self._run(query)
         return [self._record_to_chunk(record) for record in result]
 
+    def get_graph_edges(self, chunk_ids: list[str] | None = None) -> dict[str, dict[str, float]]:
+        if chunk_ids:
+            query = f"""
+                MATCH (source:{self._escaped_label})-[rel]->(target:{self._escaped_label})
+                WHERE type(rel) = $edge_type
+                  AND source.id IN $chunk_ids
+                  AND target.id IN $chunk_ids
+                RETURN source.id AS source_id,
+                       target.id AS target_id,
+                       rel.weight AS weight
+            """
+            result = self._run(query, chunk_ids=chunk_ids, edge_type=self._graph_edge_type())
+        else:
+            query = f"""
+                MATCH (source:{self._escaped_label})-[rel]->(target:{self._escaped_label})
+                WHERE type(rel) = $edge_type
+                RETURN source.id AS source_id,
+                       target.id AS target_id,
+                       rel.weight AS weight
+            """
+            result = self._run(query, edge_type=self._graph_edge_type())
+
+        edge_map: dict[str, dict[str, float]] = {}
+        for record in result:
+            source_id = str(record.get("source_id", "")).strip()
+            target_id = str(record.get("target_id", "")).strip()
+            if not source_id or not target_id or source_id == target_id:
+                continue
+            edge_map.setdefault(source_id, {})[target_id] = float(record.get("weight", 0.0))
+        return edge_map
+
+    def replace_graph_neighbors(self, chunk_id: str, neighbors: dict[str, float]) -> None:
+        delete_query = f"""
+            MATCH (source:{self._escaped_label})
+            WHERE source.id = $chunk_id
+            OPTIONAL MATCH (source)-[rel]->()
+            WHERE type(rel) = $edge_type
+            DELETE rel
+        """
+        self._run(delete_query, chunk_id=chunk_id, edge_type=self._graph_edge_type()).consume()
+        if not neighbors:
+            return
+
+        edges = [
+            {"target_id": target_id, "weight": float(weight)}
+            for target_id, weight in neighbors.items()
+            if target_id != chunk_id
+        ]
+        if not edges:
+            return
+
+        query = f"""
+            MATCH (source:{self._escaped_label})
+            WHERE source.id = $chunk_id
+            UNWIND $edges AS edge
+            MATCH (target:{self._escaped_label})
+            WHERE target.id = edge.target_id
+            MERGE (source)-[rel:{self._graph_edge_type()}]->(target)
+            SET rel.weight = edge.weight
+        """
+        self._run(query, chunk_id=chunk_id, edges=edges).consume()
+
+    def upsert_graph_edge(self, source_id: str, target_id: str, weight: float) -> None:
+        edge_map = self.get_graph_edges([source_id]).get(source_id, {})
+        edge_map[target_id] = float(weight)
+        self.replace_graph_neighbors(source_id, edge_map)
+
+        reverse_map = self.get_graph_edges([target_id]).get(target_id, {})
+        reverse_map[source_id] = float(weight)
+        self.replace_graph_neighbors(target_id, reverse_map)
+
     def get_stats(self) -> dict[str, Any]:
         query = f"""
             MATCH (chunk:{self._escaped_label})
@@ -840,6 +1268,12 @@ class Neo4jStore(MemoryStore):
                    avg(properties(chunk)['access_count']) AS average_access_count
         """
         record = self._run(query).single() or {}
+        edge_query = f"""
+            MATCH (:{self._escaped_label})-[rel]->(:{self._escaped_label})
+            WHERE type(rel) = $edge_type
+            RETURN count(rel) AS directed_related_edges
+        """
+        edge_record = self._run(edge_query, edge_type=self._graph_edge_type()).single() or {}
         return {
             "backend": "Neo4jStore",
             "name": self.name,
@@ -850,6 +1284,7 @@ class Neo4jStore(MemoryStore):
             "chunks_with_embeddings": int(record.get("chunks_with_embeddings", 0)),
             "average_salience": round(float(record.get("average_salience", 0.0) or 0.0), 4),
             "average_access_count": round(float(record.get("average_access_count", 0.0) or 0.0), 4),
+            "related_edges": int(edge_record.get("directed_related_edges", 0)) // 2,
         }
 
     def close(self) -> None:

@@ -15,28 +15,12 @@ from mnemos.utils import SQLiteStore
 
 def test_detect_profile_starter_sqlite(monkeypatch: pytest.MonkeyPatch) -> None:
     monkeypatch.setenv("MNEMOS_STORE_TYPE", "sqlite")
-    monkeypatch.delenv("MNEMOS_QDRANT_PATH", raising=False)
     assert detect_profile() == "starter"
 
 
-def test_detect_profile_local_performance_embedded_qdrant(
-    monkeypatch: pytest.MonkeyPatch,
-) -> None:
-    monkeypatch.setenv("MNEMOS_STORE_TYPE", "qdrant")
-    monkeypatch.setenv("MNEMOS_QDRANT_PATH", ".mnemos-qdrant")
-    assert detect_profile() == "local-performance"
-
-
-def test_detect_profile_scale_external_qdrant(monkeypatch: pytest.MonkeyPatch) -> None:
-    monkeypatch.setenv("MNEMOS_STORE_TYPE", "qdrant")
-    monkeypatch.delenv("MNEMOS_QDRANT_PATH", raising=False)
-    assert detect_profile() == "scale"
-
-
-def test_detect_profile_scale_neo4j(monkeypatch: pytest.MonkeyPatch) -> None:
-    monkeypatch.setenv("MNEMOS_STORE_TYPE", "neo4j")
-    monkeypatch.setenv("MNEMOS_NEO4J_URI", "bolt://localhost:7687")
-    assert detect_profile() == "scale"
+def test_detect_profile_starter_memory(monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.setenv("MNEMOS_STORE_TYPE", "memory")
+    assert detect_profile() == "starter"
 
 
 def test_health_fails_when_openclaw_missing_api_key(monkeypatch: pytest.MonkeyPatch) -> None:
@@ -79,7 +63,7 @@ def test_health_reports_ready_for_openclaw_starter_profile(
     assert report["summary"]["fail"] == 0
 
 
-def test_health_does_not_recommend_qdrant_when_sqlite_below_threshold(
+def test_health_does_not_recommend_backend_upgrade_when_sqlite_below_threshold(
     monkeypatch: pytest.MonkeyPatch, tmp_path: Path
 ) -> None:
     db_path = tmp_path / "mnemos_below_threshold.db"
@@ -94,9 +78,10 @@ def test_health_does_not_recommend_qdrant_when_sqlite_below_threshold(
 
     assert report["upgrade_signals"]["threshold_exceeded"] is False
     assert not any("Upgrade path:" in rec for rec in report["recommendations"])
+    assert not any("qdrant" in rec.lower() for rec in report["recommendations"])
 
 
-def test_health_recommends_qdrant_when_sqlite_chunk_threshold_exceeded(
+def test_health_does_not_recommend_backend_upgrade_when_sqlite_threshold_exceeded(
     monkeypatch: pytest.MonkeyPatch, tmp_path: Path
 ) -> None:
     db_path = tmp_path / "mnemos_above_threshold.db"
@@ -116,7 +101,8 @@ def test_health_recommends_qdrant_when_sqlite_chunk_threshold_exceeded(
     report = run_health_checks()
 
     assert report["upgrade_signals"]["threshold_exceeded"] is True
-    assert any("Upgrade path:" in rec for rec in report["recommendations"])
+    assert not any("Upgrade path:" in rec for rec in report["recommendations"])
+    assert not any("qdrant" in rec.lower() for rec in report["recommendations"])
 
 
 def test_health_reports_legacy_unscoped_sqlite_chunks(
@@ -183,20 +169,36 @@ base_url = "https://openrouter.ai/api/v1"
     assert report["store_type"] == "sqlite"
 
 
-def test_health_reports_ready_for_neo4j(monkeypatch: pytest.MonkeyPatch) -> None:
-    monkeypatch.setenv("MNEMOS_STORE_TYPE", "neo4j")
-    monkeypatch.setenv("MNEMOS_NEO4J_URI", "bolt://localhost:7687")
-    monkeypatch.setenv("MNEMOS_NEO4J_USERNAME", "neo4j")
-    monkeypatch.setenv("MNEMOS_NEO4J_PASSWORD", "password")
+def test_health_reports_single_local_backend_story(
+    monkeypatch: pytest.MonkeyPatch, tmp_path: Path
+) -> None:
+    db_path = tmp_path / "mnemos_single_backend.db"
+    monkeypatch.setenv("MNEMOS_STORE_TYPE", "sqlite")
+    monkeypatch.setenv("MNEMOS_SQLITE_PATH", str(db_path))
     monkeypatch.setenv("MNEMOS_LLM_PROVIDER", "openclaw")
     monkeypatch.setenv("MNEMOS_OPENCLAW_API_KEY", "test-key")
     monkeypatch.setenv("MNEMOS_EMBEDDING_PROVIDER", "openclaw")
-    monkeypatch.setattr(
-        "mnemos.health._module_available", lambda module_name: module_name == "neo4j"
-    )
 
     report = run_health_checks()
 
-    assert report["profile"] == "scale"
-    assert report["status"] == "ready"
-    assert report["store_type"] == "neo4j"
+    assert report["profile"] == "starter"
+    assert report["store_type"] == "sqlite"
+    assert not any("qdrant" in check["name"] for check in report["checks"])
+    assert not any("neo4j" in check["name"] for check in report["checks"])
+
+
+def test_health_reports_sqlite_vec_acceleration(
+    monkeypatch: pytest.MonkeyPatch, tmp_path: Path
+) -> None:
+    db_path = tmp_path / "mnemos_vec_health.db"
+    monkeypatch.setenv("MNEMOS_STORE_TYPE", "sqlite")
+    monkeypatch.setenv("MNEMOS_SQLITE_PATH", str(db_path))
+    monkeypatch.setenv("MNEMOS_LLM_PROVIDER", "openclaw")
+    monkeypatch.setenv("MNEMOS_OPENCLAW_API_KEY", "test-key")
+    monkeypatch.setenv("MNEMOS_EMBEDDING_PROVIDER", "openclaw")
+
+    report = run_health_checks()
+
+    assert report["vector_acceleration"]["enabled"] is True
+    assert report["vector_acceleration"]["provider"] == "sqlite-vec"
+    assert any(check["name"] == "store.sqlite.vec" for check in report["checks"])

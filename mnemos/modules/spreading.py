@@ -102,6 +102,7 @@ class SpreadingActivation:
             energy=0.0,
             neighbors={},
             embedding=embedding,
+            metadata=dict(metadata or {}),
         )
         self._nodes[nid] = node
         return node
@@ -125,7 +126,154 @@ class SpreadingActivation:
             content=chunk.content,
             embedding=embedding,
             node_id=chunk.id,
+            metadata=dict(chunk.metadata),
         )
+
+    @staticmethod
+    def _normalized_scope_data(node: ActivationNode) -> tuple[str, str | None]:
+        metadata = node.metadata if isinstance(node.metadata, dict) else {}
+        scope_raw = metadata.get("scope")
+        scope = str(scope_raw).strip().lower() if isinstance(scope_raw, str) else "global"
+        if scope not in {"project", "workspace", "global"}:
+            scope = "global"
+        scope_id_raw = metadata.get("scope_id")
+        scope_id = (
+            scope_id_raw.strip() if isinstance(scope_id_raw, str) and scope_id_raw.strip() else None
+        )
+        if scope == "global":
+            return scope, None
+        return scope, scope_id
+
+    def _nodes_can_connect(self, node_a: ActivationNode, node_b: ActivationNode) -> bool:
+        scope_a, scope_a_id = self._normalized_scope_data(node_a)
+        scope_b, scope_b_id = self._normalized_scope_data(node_b)
+        if scope_a == "global" or scope_b == "global":
+            return True
+        return (
+            scope_a == scope_b
+            and scope_a in {"project", "workspace"}
+            and scope_a_id is not None
+            and scope_a_id == scope_b_id
+        )
+
+    def _max_neighbors(self) -> int:
+        return max(int(self._config.max_neighbors_per_node), 1)
+
+    def remove_edge(
+        self,
+        node_a_id: str,
+        node_b_id: str,
+        *,
+        bidirectional: bool = True,
+    ) -> bool:
+        """Remove an edge between two nodes if it exists."""
+        if node_a_id not in self._nodes or node_b_id not in self._nodes:
+            return False
+        removed = self._nodes[node_a_id].neighbors.pop(node_b_id, None) is not None
+        if bidirectional:
+            removed = self._nodes[node_b_id].neighbors.pop(node_a_id, None) is not None or removed
+        return removed
+
+    def clear_edges(self, node_id: str) -> bool:
+        """Remove all inbound and outbound edges for a node."""
+        node = self._nodes.get(node_id)
+        if node is None:
+            return False
+        for neighbor_id in list(node.neighbors):
+            self.remove_edge(node_id, neighbor_id)
+        for other in self._nodes.values():
+            if other.id != node_id:
+                other.neighbors.pop(node_id, None)
+        return True
+
+    def clear_all_edges(self) -> None:
+        """Remove all graph edges while preserving nodes."""
+        for node in self._nodes.values():
+            node.neighbors.clear()
+
+    def _apply_candidate_pairs(
+        self,
+        candidates: list[tuple[float, str, str]],
+        *,
+        exclude_existing: bool,
+    ) -> int:
+        limit = self._max_neighbors()
+        edges_added = 0
+        for similarity, node_a_id, node_b_id in sorted(
+            candidates, key=lambda item: item[0], reverse=True
+        ):
+            node_a = self._nodes.get(node_a_id)
+            node_b = self._nodes.get(node_b_id)
+            if node_a is None or node_b is None:
+                continue
+            if exclude_existing and node_b_id in node_a.neighbors:
+                continue
+            if len(node_a.neighbors) >= limit or len(node_b.neighbors) >= limit:
+                continue
+            if not self.add_edge(node_a_id, node_b_id, similarity):
+                continue
+            edges_added += 1
+        return edges_added
+
+    def hydrate_edges(self, edge_map: dict[str, dict[str, float]]) -> int:
+        """Load persisted edges into the in-memory graph while enforcing graph policy."""
+        unique_pairs: dict[tuple[str, str], float] = {}
+        for source_id, neighbors in edge_map.items():
+            if source_id not in self._nodes or not isinstance(neighbors, dict):
+                continue
+            for target_id, weight in neighbors.items():
+                if target_id not in self._nodes or source_id == target_id:
+                    continue
+                sorted_pair = sorted((source_id, target_id))
+                pair = (sorted_pair[0], sorted_pair[1])
+                unique_pairs[pair] = max(float(weight), unique_pairs.get(pair, 0.0))
+
+        self.clear_all_edges()
+        candidates = [
+            (weight, node_a_id, node_b_id)
+            for (node_a_id, node_b_id), weight in unique_pairs.items()
+        ]
+        return self._apply_candidate_pairs(candidates, exclude_existing=False)
+
+    def connect_node(self, node_id: str, threshold: float | None = None) -> int:
+        """Connect a single node to its strongest eligible neighbors."""
+        node = self._nodes.get(node_id)
+        if node is None or node.embedding is None:
+            return 0
+
+        thresh = threshold if threshold is not None else self._config.auto_connect_threshold
+        limit = self._max_neighbors()
+        self.clear_edges(node_id)
+
+        candidates: list[tuple[float, str]] = []
+        for other in self._nodes.values():
+            if other.id == node_id or other.embedding is None:
+                continue
+            if not self._nodes_can_connect(node, other):
+                continue
+            similarity = cosine_similarity(node.embedding, other.embedding)
+            if similarity >= thresh:
+                candidates.append((similarity, other.id))
+
+        edges_added = 0
+        for similarity, other_id in sorted(candidates, key=lambda item: item[0], reverse=True):
+            node = self._nodes.get(node_id)
+            other_node = self._nodes.get(other_id)
+            if node is None or other_node is None:
+                continue
+            if len(node.neighbors) >= limit:
+                break
+            if len(other_node.neighbors) >= limit:
+                weakest_neighbor_id, weakest_weight = min(
+                    other_node.neighbors.items(),
+                    key=lambda item: item[1],
+                )
+                if weakest_weight >= similarity:
+                    continue
+                self.remove_edge(other_id, weakest_neighbor_id)
+            if self.add_edge(node_id, other_id, similarity):
+                edges_added += 1
+        return edges_added
 
     def add_edge(
         self,
@@ -153,6 +301,8 @@ class SpreadingActivation:
         if node_a_id not in self._nodes or node_b_id not in self._nodes:
             return False
         if node_a_id == node_b_id:
+            return False
+        if not self._nodes_can_connect(self._nodes[node_a_id], self._nodes[node_b_id]):
             return False
 
         self._nodes[node_a_id].neighbors[node_b_id] = weight
@@ -183,22 +333,22 @@ class SpreadingActivation:
             Number of new edges created.
         """
         thresh = threshold if threshold is not None else self._config.auto_connect_threshold
-        node_list = list(self._nodes.values())
-        edges_added = 0
+        if not exclude_existing:
+            self.clear_all_edges()
 
+        node_list = list(self._nodes.values())
+        candidates: list[tuple[float, str, str]] = []
         for i, node_a in enumerate(node_list):
             for node_b in node_list[i + 1 :]:
-                if exclude_existing and node_b.id in node_a.neighbors:
-                    continue
                 if node_a.embedding is None or node_b.embedding is None:
+                    continue
+                if not self._nodes_can_connect(node_a, node_b):
                     continue
                 sim = cosine_similarity(node_a.embedding, node_b.embedding)
                 if sim >= thresh:
-                    node_a.neighbors[node_b.id] = sim
-                    node_b.neighbors[node_a.id] = sim
-                    edges_added += 1
+                    candidates.append((sim, node_a.id, node_b.id))
 
-        return edges_added
+        return self._apply_candidate_pairs(candidates, exclude_existing=exclude_existing)
 
     def activate(self, node_id: str, energy: float | None = None) -> dict[str, float]:
         """
@@ -403,5 +553,6 @@ class SpreadingActivation:
                 "decay_rate": self._config.decay_rate,
                 "activation_threshold": self._config.activation_threshold,
                 "max_hops": self._config.max_hops,
+                "max_neighbors_per_node": self._config.max_neighbors_per_node,
             },
         }

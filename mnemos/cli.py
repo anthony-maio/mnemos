@@ -45,6 +45,7 @@ from .runtime import (
 )
 from .types import Interaction
 from .utils.llm import MockLLMProvider, LLMProvider
+from .utils.storage import Neo4jStore, QdrantStore, SQLiteStore
 
 PROFILE_CHOICES = ("starter", "local-performance", "scale")
 VALID_SCOPES = ("project", "workspace", "global")
@@ -246,43 +247,49 @@ def _build_store_for_migration(
     neo4j_username: str = "",
     neo4j_password: str = "",
 ) -> Any:
-    env = dict(os.environ)
-    env["MNEMOS_STORE_TYPE"] = store_type
-
-    if sqlite_path:
-        env["MNEMOS_SQLITE_PATH"] = sqlite_path
-
-    if qdrant_path:
-        env["MNEMOS_QDRANT_PATH"] = qdrant_path
-    if qdrant_url:
-        env["MNEMOS_QDRANT_URL"] = qdrant_url
-    if qdrant_collection:
-        env["MNEMOS_QDRANT_COLLECTION"] = qdrant_collection
-
-    if neo4j_uri:
-        env["MNEMOS_NEO4J_URI"] = neo4j_uri
-    if neo4j_database:
-        env["MNEMOS_NEO4J_DATABASE"] = neo4j_database
-    if neo4j_label:
-        env["MNEMOS_NEO4J_LABEL"] = neo4j_label
-    if neo4j_username:
-        env["MNEMOS_NEO4J_USERNAME"] = neo4j_username
-    if neo4j_password:
-        env["MNEMOS_NEO4J_PASSWORD"] = neo4j_password
-
-    return build_store_from_env(default_store_type="sqlite", env=env)
+    if store_type == "sqlite":
+        return SQLiteStore(db_path=sqlite_path or "mnemos_memory.db")
+    if store_type == "qdrant":
+        return QdrantStore(
+            path=qdrant_path or None,
+            url=qdrant_url or None,
+            collection_name=qdrant_collection or "mnemos_memory",
+        )
+    if store_type == "neo4j":
+        if not neo4j_username or not neo4j_password:
+            raise ValueError(
+                "MNEMOS_NEO4J_USERNAME and MNEMOS_NEO4J_PASSWORD are required for legacy Neo4j import."
+            )
+        return Neo4jStore(
+            uri=neo4j_uri or "bolt://localhost:7687",
+            username=neo4j_username,
+            password=neo4j_password,
+            database=neo4j_database or "neo4j",
+            label=neo4j_label or "MnemosMemoryChunk",
+        )
+    raise ValueError(f"Unsupported migration store: {store_type!r}")
 
 
 def _migrate_chunks(*, source_store: Any, target_store: Any, dry_run: bool) -> dict[str, Any]:
     chunks = source_store.get_all()
     migrated = 0
+    edge_sets_migrated = 0
     if not dry_run:
         for chunk in chunks:
             target_store.store(chunk)
             migrated += 1
+        source_edges: dict[str, dict[str, float]] = getattr(
+            source_store, "get_graph_edges", lambda: {}
+        )()
+        replace_neighbors = getattr(target_store, "replace_graph_neighbors", None)
+        if callable(replace_neighbors):
+            for chunk_id, neighbors in source_edges.items():
+                replace_neighbors(chunk_id, neighbors)
+                edge_sets_migrated += 1
     return {
         "scanned": len(chunks),
         "migrated": migrated,
+        "edge_sets_migrated": edge_sets_migrated,
         "skipped": 0,
         "dry_run": dry_run,
     }
@@ -630,8 +637,15 @@ async def _cmd_migrate_store(args: argparse.Namespace) -> None:
         raise ValueError(f"Unsupported source store: {args.source_store!r}")
     if args.target_store not in MIGRATION_STORE_CHOICES:
         raise ValueError(f"Unsupported target store: {args.target_store!r}")
-    if args.source_store == args.target_store:
-        raise ValueError("Source and target store types must differ.")
+    if args.target_store != "sqlite":
+        raise ValueError("Legacy migration targets must use the unified sqlite backend.")
+    if args.source_store == "sqlite" and args.target_store == "sqlite":
+        if not args.source_sqlite_path or not args.target_sqlite_path:
+            raise ValueError(
+                "SQLite-to-SQLite migration requires both --source-sqlite-path and --target-sqlite-path."
+            )
+        if Path(args.source_sqlite_path).resolve() == Path(args.target_sqlite_path).resolve():
+            raise ValueError("Source and target SQLite paths must differ.")
 
     source_store = _build_store_for_migration(
         store_type=args.source_store,
