@@ -78,6 +78,21 @@ For advanced/manual setup, see [docs/MCP_INTEGRATION.md](docs/MCP_INTEGRATION.md
 
 ---
 
+## Why Use This Instead Of Built-In Claude Memory?
+
+Claude Code already has built-in memory. Mnemos is narrower and more explicit:
+
+- repo, workspace, and global memory stay scoped instead of blending together
+- retrieval is inspectable, so you can see why a memory came back
+- recall and curator form a repeatable workflow instead of silent accumulation
+- everything persists in one local SQLite database
+
+If you want "memory exists somewhere in the background," Claude's built-in path may be enough. If you want scoped, local, inspectable continuity across coding sessions, Mnemos is the point.
+
+See the side-by-side writeup at [docs/demos/claude-code-continuity.md](docs/demos/claude-code-continuity.md).
+
+---
+
 ## Why The Architecture Is Different
 
 Most agent memory tools either keep too much raw transcript or append contradictory facts forever. Mnemos uses a different design:
