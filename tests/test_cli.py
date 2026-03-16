@@ -351,12 +351,74 @@ async def test_cli_inspect_outputs_chunk_details(
 
     monkeypatch.setattr("mnemos.cli._build_engine", lambda: DummyEngine())
 
-    await _cmd_inspect(Namespace(chunk_id="chunk-123"))
+    await _cmd_inspect(
+        Namespace(
+            chunk_id="chunk-123",
+            query="",
+            current_scope="project",
+            scope_id="default",
+            allowed_scopes="project,workspace,global",
+        )
+    )
 
     payload = capsys.readouterr().out
     assert '"id": "chunk-123"' in payload
     assert '"stored_by": "surprisal_gate"' in payload
     assert '"neighbor_count": 1' in payload
+
+
+@pytest.mark.asyncio
+async def test_cli_inspect_supports_query_context(
+    monkeypatch: pytest.MonkeyPatch, capsys: Any
+) -> None:
+    class DummyEngine:
+        store = object()
+        spreading_activation = object()
+
+    def _fake_inspection(
+        engine: Any,
+        chunk_id: str,
+        *,
+        query: str | None = None,
+        current_scope: str = "project",
+        scope_id: str | None = None,
+        allowed_scopes: tuple[str, ...] = ("project", "workspace", "global"),
+    ) -> dict[str, Any]:
+        assert chunk_id == "chunk-123"
+        assert query == "python tooling"
+        assert current_scope == "project"
+        assert scope_id == "repo-alpha"
+        assert allowed_scopes == ("project", "global")
+        return {
+            "id": chunk_id,
+            "content": "Tooling note",
+            "retrieval": {
+                "scope_match": True,
+                "in_semantic_candidates": True,
+                "semantic_rank": 1,
+                "explanation": [
+                    "Matched the current project scope.",
+                    "Appeared in semantic candidates.",
+                ],
+            },
+        }
+
+    monkeypatch.setattr("mnemos.cli._build_engine", lambda: DummyEngine())
+    monkeypatch.setattr("mnemos.cli.build_chunk_inspection", _fake_inspection)
+
+    await _cmd_inspect(
+        Namespace(
+            chunk_id="chunk-123",
+            query="python tooling",
+            current_scope="project",
+            scope_id="repo-alpha",
+            allowed_scopes="project,global",
+        )
+    )
+
+    payload = capsys.readouterr().out
+    assert '"retrieval"' in payload
+    assert '"semantic_rank": 1' in payload
 
 
 def test_build_antigravity_policy_mentions_required_tools() -> None:

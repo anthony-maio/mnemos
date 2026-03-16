@@ -247,6 +247,7 @@ The current inspector shows:
 - provenance such as storage source, ingest channel, and encoding reason
 - revision history for reconsolidated memories
 - graph neighbor count and top neighbors
+- optional retrieval explanation for a query/scope context from the CLI inspect path
 - raw metadata for debugging
 
 Rollback is intentionally not part of this first inspectability slice yet.

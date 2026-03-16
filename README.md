@@ -70,6 +70,7 @@ What the control plane gives you:
 Inspectability entry points:
 
 - `mnemos inspect <chunk-id>` for raw JSON inspection from the CLI
+- `mnemos inspect <chunk-id> --query "..." --current-scope project --scope-id <repo>` to explain why a memory is relevant to a task
 - `mnemos_inspect` for MCP-native hosts
 - the control plane Memory panel for scope, provenance, revision history, and graph context
 

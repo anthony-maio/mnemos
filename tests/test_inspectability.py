@@ -60,6 +60,43 @@ async def test_build_chunk_inspection_reports_scope_provenance_and_graph_context
 
 
 @pytest.mark.asyncio
+async def test_build_chunk_inspection_can_explain_retrieval_relevance(
+    engine: MnemosEngine,
+) -> None:
+    first = await engine.process(
+        Interaction(role="user", content="Use uv and Ruff for Python tooling in this repo."),
+        scope="project",
+        scope_id="repo-alpha",
+    )
+    second = await engine.process(
+        Interaction(role="user", content="Deployment uses GitHub Actions and Docker."),
+        scope="project",
+        scope_id="repo-alpha",
+    )
+
+    assert first.chunk is not None
+    assert second.chunk is not None
+
+    engine.spreading_activation.add_edge(first.chunk.id, second.chunk.id, 0.88)
+
+    payload = build_chunk_inspection(
+        engine,
+        first.chunk.id,
+        query="python tooling",
+        current_scope="project",
+        scope_id="repo-alpha",
+        allowed_scopes=("project", "global"),
+    )
+
+    assert payload is not None
+    assert payload["retrieval"] is not None
+    assert payload["retrieval"]["scope_match"] is True
+    assert payload["retrieval"]["in_semantic_candidates"] is True
+    assert payload["retrieval"]["semantic_rank"] is not None
+    assert payload["retrieval"]["explanation"]
+
+
+@pytest.mark.asyncio
 async def test_reconsolidation_appends_revision_history() -> None:
     embedder = SimpleEmbeddingProvider(dim=64)
     store = InMemoryStore()

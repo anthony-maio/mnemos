@@ -430,7 +430,14 @@ async def _cmd_stats(args: argparse.Namespace) -> None:
 
 async def _cmd_inspect(args: argparse.Namespace) -> None:
     engine = _build_engine()
-    payload = build_chunk_inspection(engine, args.chunk_id)
+    payload = build_chunk_inspection(
+        engine,
+        args.chunk_id,
+        query=args.query,
+        current_scope=args.current_scope,
+        scope_id=args.scope_id,
+        allowed_scopes=_parse_allowed_scopes(args.allowed_scopes),
+    )
     if payload is None:
         print(json.dumps({"error": f"Memory chunk {args.chunk_id!r} not found."}, indent=2))
         return
@@ -831,6 +838,12 @@ def main() -> None:
 
     sp_inspect = subparsers.add_parser("inspect", help="Inspect one stored memory chunk")
     sp_inspect.add_argument("chunk_id", help="Memory chunk ID to inspect")
+    sp_inspect.add_argument(
+        "--query", default="", help="Optional query to explain why this memory would be retrieved."
+    )
+    sp_inspect.add_argument("--current-scope", choices=VALID_SCOPES, default="project")
+    sp_inspect.add_argument("--scope-id", default="default")
+    sp_inspect.add_argument("--allowed-scopes", default="project,workspace,global")
 
     sp_list = subparsers.add_parser(
         "list", help="List stored memories with optional scope/query filters"
