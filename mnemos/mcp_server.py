@@ -74,6 +74,7 @@ import sys
 from contextlib import asynccontextmanager
 from collections.abc import AsyncIterator
 from dataclasses import dataclass
+from pathlib import Path
 from typing import Any, Literal, cast
 
 from .config import MemoryGovernanceConfig, MemorySafetyConfig, MnemosConfig, SurprisalConfig
@@ -95,6 +96,44 @@ from .utils.storage import MemoryStore
 VALID_SCOPES = ("project", "workspace", "global")
 MemoryAction = Literal["allow", "redact", "block"]
 CaptureMode = Literal["all", "manual_only", "hooks_only"]
+
+
+def _most_relevant_startup_exception(exc: BaseException) -> BaseException:
+    if isinstance(exc, BaseExceptionGroup) and exc.exceptions:
+        return _most_relevant_startup_exception(exc.exceptions[0])
+
+    cause = getattr(exc, "__cause__", None)
+    if cause is not None:
+        return _most_relevant_startup_exception(cause)
+
+    context = getattr(exc, "__context__", None)
+    if context is not None and not getattr(exc, "__suppress_context__", False):
+        return _most_relevant_startup_exception(context)
+
+    return exc
+
+
+def _active_config_path() -> str:
+    raw = os.getenv("MNEMOS_CONFIG_PATH", "").strip()
+    if raw:
+        return str(Path(raw).expanduser())
+    return "<default config resolution>"
+
+
+def _format_startup_error(exc: Exception) -> str:
+    relevant = _most_relevant_startup_exception(exc)
+    details = str(relevant).strip() or relevant.__class__.__name__
+    if details.startswith("Mnemos MCP startup failed."):
+        return details
+    config_path = _active_config_path()
+    return (
+        "Mnemos MCP startup failed.\n"
+        f"Config path: {config_path}\n"
+        f"Details: {details}\n"
+        "Expected the shipped local runtime to use storage.type = \"sqlite\".\n"
+        "Run `mnemos-cli doctor` to validate the active config and update any legacy "
+        "storage.type values such as qdrant or neo4j."
+    )
 
 
 def _parse_allowed_scopes(raw: str) -> tuple[str, ...]:
@@ -189,12 +228,15 @@ def create_mcp_server() -> Any:
     async def mnemos_lifespan(server: FastMCP) -> AsyncIterator[MnemosContext]:
         """Initialize the MnemosEngine on startup, clean up on shutdown."""
         _ = server
-        engine = MnemosEngine(
-            config=_build_config(),
-            llm=_build_llm_provider(),
-            embedder=_build_embedder(),
-            store=_build_store(),
-        )
+        try:
+            engine = MnemosEngine(
+                config=_build_config(),
+                llm=_build_llm_provider(),
+                embedder=_build_embedder(),
+                store=_build_store(),
+            )
+        except Exception as exc:
+            raise RuntimeError(_format_startup_error(exc)) from exc
         health = run_health_checks(default_store_type="memory")
         log_event(
             "mnemos.startup",
@@ -589,8 +631,12 @@ def create_mcp_server() -> Any:
 def main() -> None:
     """Run the MCP server via stdio transport (for Claude Code, Cursor, etc.)."""
     configure_logging()
-    mcp = create_mcp_server()
-    mcp.run(transport="stdio")
+    try:
+        mcp = create_mcp_server()
+        mcp.run(transport="stdio")
+    except Exception as exc:
+        print(_format_startup_error(exc), file=sys.stderr)
+        raise SystemExit(1) from None
 
 
 if __name__ == "__main__":

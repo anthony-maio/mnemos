@@ -5,10 +5,17 @@ tests/test_mcp_server.py — Tests for MCP server runtime wiring helpers.
 from __future__ import annotations
 
 from pathlib import Path
+from pydantic import ValidationError
 
 import pytest
 
-from mnemos.mcp_server import _build_config, _build_embedder, _build_llm_provider, _build_store
+from mnemos.mcp_server import (
+    _build_config,
+    _build_embedder,
+    _build_llm_provider,
+    _build_store,
+    _format_startup_error,
+)
 from mnemos.utils import OpenAIEmbeddingProvider, OpenAIProvider, SQLiteStore
 
 
@@ -111,3 +118,43 @@ base_url = "https://openrouter.ai/api/v1"
     assert isinstance(store, SQLiteStore)
     assert Path(store.db_path).resolve() == db_path.resolve()
     store.close()
+
+
+def test_format_startup_error_for_legacy_store_is_actionable(
+    monkeypatch: pytest.MonkeyPatch, tmp_path: Path
+) -> None:
+    config_path = tmp_path / "mnemos.toml"
+    config_path.write_text(
+        """
+[storage]
+type = "neo4j"
+""".strip(),
+        encoding="utf-8",
+    )
+    monkeypatch.setenv("MNEMOS_CONFIG_PATH", str(config_path))
+
+    with pytest.raises(ValidationError) as exc_info:
+        _build_config()
+
+    message = _format_startup_error(exc_info.value)
+
+    assert "Mnemos MCP startup failed." in message
+    assert str(config_path) in message
+    assert "storage.type" in message
+    assert "sqlite" in message
+    assert "mnemos-cli doctor" in message
+
+
+def test_format_startup_error_prefers_nested_actionable_message() -> None:
+    nested = RuntimeError(
+        "Mnemos MCP startup failed.\n"
+        "Config path: C:\\test\\mnemos.toml\n"
+        "Details: storage.type invalid"
+    )
+    wrapped = ExceptionGroup("outer", [nested])
+
+    message = _format_startup_error(wrapped)
+
+    assert message.startswith("Mnemos MCP startup failed.")
+    assert "storage.type invalid" in message
+    assert "ExceptionGroup" not in message
