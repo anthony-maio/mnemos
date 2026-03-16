@@ -17,6 +17,8 @@ from mnemos.benchmark import (
     _build_comparisons,
     _load_queries,
     _scope_filter_for_query,
+    _sqlite_path_for_run,
+    summarize_repeat_runs,
     compute_retrieval_metrics,
     evaluate_production_replacement_gate,
     load_documents,
@@ -343,3 +345,58 @@ def test_run_retrieval_benchmark_supports_scope_aware_baseline_mode() -> None:
     )
 
     assert result["query_count"] == 1
+
+
+def test_summarize_repeat_runs_reports_pass_counts_and_ratio_ranges() -> None:
+    reports = [
+        {
+            "gates": {
+                "production_replacement": {
+                    "passed": True,
+                    "details": [
+                        {
+                            "store_type": "sqlite",
+                            "dataset": "claim-driving",
+                            "latency_p95_ratio": 1.2,
+                            "mrr_lift_ratio": 0.8,
+                        }
+                    ],
+                }
+            }
+        },
+        {
+            "gates": {
+                "production_replacement": {
+                    "passed": False,
+                    "details": [
+                        {
+                            "store_type": "sqlite",
+                            "dataset": "claim-driving",
+                            "latency_p95_ratio": 1.8,
+                            "mrr_lift_ratio": 0.7,
+                        }
+                    ],
+                }
+            }
+        },
+    ]
+
+    summary = summarize_repeat_runs(reports)
+
+    assert summary["runs"] == 2
+    assert summary["passed_runs"] == 1
+    assert summary["failed_runs"] == 1
+    assert summary["all_passed"] is False
+    assert summary["stores"]["sqlite"]["latency_p95_ratio"]["min"] == pytest.approx(1.2)
+    assert summary["stores"]["sqlite"]["latency_p95_ratio"]["max"] == pytest.approx(1.8)
+
+
+def test_sqlite_path_for_run_adds_unique_suffixes(tmp_path: Path) -> None:
+    base = tmp_path / "mnemos.sqlite"
+
+    first = _sqlite_path_for_run(base, repetition=1, store_type="sqlite", retriever="baseline")
+    second = _sqlite_path_for_run(base, repetition=2, store_type="sqlite", retriever="engine")
+
+    assert first != second
+    assert first.name == "mnemos-r1-sqlite-baseline.sqlite"
+    assert second.name == "mnemos-r2-sqlite-engine.sqlite"

@@ -466,6 +466,20 @@ def _cleanup_local_store_artifacts(store_type: str, sqlite_path: Path | None) ->
         sqlite_path.unlink()
 
 
+def _sqlite_path_for_run(
+    sqlite_path: Path | None,
+    *,
+    repetition: int,
+    store_type: str,
+    retriever: str,
+) -> Path | None:
+    if sqlite_path is None or store_type != "sqlite":
+        return sqlite_path
+    stem = sqlite_path.stem
+    suffix = sqlite_path.suffix or ".sqlite"
+    return sqlite_path.with_name(f"{stem}-r{repetition}-{store_type}-{retriever}{suffix}")
+
+
 def _build_store(
     *,
     store_type: str,
@@ -644,6 +658,46 @@ def evaluate_production_replacement_gate(
         "failed_pairs": len(failed),
         "passed": len(details) > 0 and len(failed) == 0,
         "details": details,
+    }
+
+
+def summarize_repeat_runs(reports: list[dict[str, Any]]) -> dict[str, Any]:
+    per_store: dict[str, dict[str, list[float]]] = {}
+    passed_runs = 0
+
+    for report in reports:
+        gate = report.get("gates", {}).get("production_replacement", {})
+        if gate.get("passed") is True:
+            passed_runs += 1
+        for detail in gate.get("details", []):
+            store_type = str(detail.get("store_type", "unknown"))
+            metrics = per_store.setdefault(
+                store_type,
+                {"latency_p95_ratio": [], "mrr_lift_ratio": []},
+            )
+            metrics["latency_p95_ratio"].append(float(detail["latency_p95_ratio"]))
+            metrics["mrr_lift_ratio"].append(float(detail["mrr_lift_ratio"]))
+
+    stores: dict[str, Any] = {}
+    for store_type, metrics in per_store.items():
+        stores[store_type] = {
+            "latency_p95_ratio": {
+                "min": min(metrics["latency_p95_ratio"]),
+                "max": max(metrics["latency_p95_ratio"]),
+            },
+            "mrr_lift_ratio": {
+                "min": min(metrics["mrr_lift_ratio"]),
+                "max": max(metrics["mrr_lift_ratio"]),
+            },
+        }
+
+    total_runs = len(reports)
+    return {
+        "runs": total_runs,
+        "passed_runs": passed_runs,
+        "failed_runs": total_runs - passed_runs,
+        "all_passed": total_runs > 0 and passed_runs == total_runs,
+        "stores": stores,
     }
 
 
@@ -834,6 +888,12 @@ def main() -> None:
         action="store_true",
         help="Apply query scope filters to baseline retriever (disabled by default).",
     )
+    parser.add_argument(
+        "--repetitions",
+        type=int,
+        default=1,
+        help="Repeat the full benchmark this many times and emit an aggregate summary.",
+    )
     args = parser.parse_args()
 
     if args.dataset and args.dataset_pack:
@@ -867,42 +927,67 @@ def main() -> None:
         dataset_runs = [("built-in", docs, build_queries(docs))]
         dataset_label = "built-in"
 
-    results: list[dict[str, Any]] = []
-    for dataset_name, documents, benchmark_queries in dataset_runs:
-        for store_type in store_types:
-            for retriever in retrievers:
-                result = run_retrieval_benchmark(
-                    store_type=store_type,
-                    retriever=retriever,
-                    top_k=args.top_k,
-                    documents=documents,
-                    query_limit=query_limit,
-                    sqlite_path=sqlite_path,
-                    queries=benchmark_queries,
-                    baseline_scope_aware=args.baseline_scope_aware,
-                )
-                result["dataset"] = dataset_name
-                results.append(result)
+    reports: list[dict[str, Any]] = []
+    for repetition in range(args.repetitions):
+        results: list[dict[str, Any]] = []
+        for dataset_name, documents, benchmark_queries in dataset_runs:
+            for store_type in store_types:
+                for retriever in retrievers:
+                    run_sqlite_path = _sqlite_path_for_run(
+                        sqlite_path,
+                        repetition=repetition + 1,
+                        store_type=store_type,
+                        retriever=retriever,
+                    )
+                    result = run_retrieval_benchmark(
+                        store_type=store_type,
+                        retriever=retriever,
+                        top_k=args.top_k,
+                        documents=documents,
+                        query_limit=query_limit,
+                        sqlite_path=run_sqlite_path,
+                        queries=benchmark_queries,
+                        baseline_scope_aware=args.baseline_scope_aware,
+                    )
+                    result["dataset"] = dataset_name
+                    results.append(result)
 
-    comparisons = _build_comparisons(results)
-    gate = evaluate_production_replacement_gate(
-        comparisons,
-        min_mrr_lift=args.gate_min_mrr_lift,
-        max_latency_ratio=args.gate_max_p95_latency_ratio,
-        latency_floor_ms=args.gate_latency_floor_ms,
+        comparisons = _build_comparisons(results)
+        gate = evaluate_production_replacement_gate(
+            comparisons,
+            min_mrr_lift=args.gate_min_mrr_lift,
+            max_latency_ratio=args.gate_max_p95_latency_ratio,
+            latency_floor_ms=args.gate_latency_floor_ms,
+        )
+
+        reports.append(
+            {
+                "repetition": repetition + 1,
+                "dataset": dataset_label,
+                "stores": store_types,
+                "retrievers": retrievers,
+                "top_k": args.top_k,
+                "results": results,
+                "comparisons": comparisons,
+                "gates": {
+                    "production_replacement": gate,
+                },
+            }
+        )
+
+    report = (
+        reports[0]
+        if len(reports) == 1
+        else {
+            "dataset": dataset_label,
+            "stores": store_types,
+            "retrievers": retrievers,
+            "top_k": args.top_k,
+            "repetitions": args.repetitions,
+            "runs": reports,
+            "summary": summarize_repeat_runs(reports),
+        }
     )
-
-    report = {
-        "dataset": dataset_label,
-        "stores": store_types,
-        "retrievers": retrievers,
-        "top_k": args.top_k,
-        "results": results,
-        "comparisons": comparisons,
-        "gates": {
-            "production_replacement": gate,
-        },
-    }
 
     rendered = json.dumps(report, indent=2)
     print(rendered)
@@ -910,7 +995,12 @@ def main() -> None:
     if args.output:
         Path(args.output).write_text(rendered + "\n", encoding="utf-8")
 
-    if args.enforce_production_gate and not gate["passed"]:
+    final_gate_passed = (
+        report["gates"]["production_replacement"]["passed"]
+        if len(reports) == 1
+        else report["summary"]["all_passed"]
+    )
+    if args.enforce_production_gate and not final_gate_passed:
         raise SystemExit(2)
 
 

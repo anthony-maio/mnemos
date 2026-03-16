@@ -14,6 +14,14 @@ Mnemos ships a benchmark harness via `mnemos-benchmark` to measure retrieval qua
 mnemos-benchmark --stores memory,sqlite --retrievers baseline,engine --top-k 5
 ```
 
+Copy-paste-safe contributor command for the shipped trust gate:
+
+```bash
+MNEMOS_LLM_PROVIDER=mock MNEMOS_EMBEDDING_PROVIDER=simple \
+mnemos-benchmark --stores memory,sqlite --retrievers baseline,engine \
+  --dataset-pack claim-driving --top-k 1 --repetitions 2 --enforce-production-gate
+```
+
 Retriever modes:
 - `baseline`: direct vector retrieval from the store (`store.retrieve`)
 - `engine`: full Mnemos retrieval path (`MnemosEngine.retrieve`)
@@ -24,6 +32,15 @@ The report includes a `comparisons` section with per-store deltas:
 - `delta_engine_minus_baseline.recall_at_k`
 - `delta_engine_minus_baseline.mrr`
 - `delta_engine_minus_baseline.latency_p95_ms`
+
+When `--repetitions` is greater than `1`, the top-level report shape changes:
+- `runs[]`: each full benchmark run with its own `results`, `comparisons`, and `gates`
+- `summary.runs`
+- `summary.passed_runs`
+- `summary.failed_runs`
+- `summary.all_passed`
+- `summary.stores.<store>.latency_p95_ratio.min|max`
+- `summary.stores.<store>.mrr_lift_ratio.min|max`
 
 This command uses the built-in benchmark dataset.
 
@@ -57,6 +74,12 @@ Enforce gate (non-zero exit on failure):
 mnemos-benchmark --stores memory --retrievers baseline,engine --dataset-pack claim-driving --top-k 1 --enforce-production-gate
 ```
 
+Repeat the full benchmark and require every run to pass:
+
+```bash
+mnemos-benchmark --stores memory,sqlite --retrievers baseline,engine --dataset-pack claim-driving --top-k 1 --repetitions 2 --enforce-production-gate
+```
+
 Default gate thresholds:
 
 - MRR lift ratio: `>= 0.15`
@@ -67,6 +90,12 @@ CI profile-specific production gates:
 
 - `memory` profile: `MRR lift >= 0.15`, `p95 ratio <= 2.0`
 - `sqlite` default profile: `MRR lift >= 0.15`, `p95 ratio <= 4.0`
+
+Current trust-release benchmark summary on the shipped SQLite path:
+
+- repeated `claim-driving` gate: `2/2` runs passed
+- SQLite `mrr_lift_ratio` range: `0.40` to `1.67`
+- SQLite `latency_p95_ratio` range: `1.05` to `2.49`
 
 ## Custom Dataset Format
 
