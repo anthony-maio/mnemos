@@ -340,6 +340,9 @@ This repository now includes a native Claude Code plugin package (`.claude-plugi
 ```
 
 On first run, the plugin bootstraps a local virtual environment under `.claude-plugin/.venv`, installs Mnemos with MCP extras, and launches the MCP server over stdio.
+It also ships Claude Code subagents for the default Mnemos workflow:
+- `mnemos-recall` to pull scoped repo memory before substantial work
+- `mnemos-curator` to keep only durable facts after meaningful work
 
 Default plugin behavior:
 - persistent SQLite memory store at `.claude-plugin/mnemos.db`
@@ -349,6 +352,8 @@ Default plugin behavior:
  - otherwise `ollama` if `MNEMOS_OLLAMA_URL` exists
  - otherwise `mock`
 - embedding provider inferred from the selected LLM provider unless explicitly overridden
+
+If you apply Claude host integration from the control plane, Mnemos also installs user-level agent files under `~/.claude/agents/` so these recall and curator workflows are available immediately in Claude Code.
 
 The server exposes eight tools:
 

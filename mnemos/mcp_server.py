@@ -68,6 +68,7 @@ Configuration via environment variables:
 from __future__ import annotations
 
 import asyncio
+import builtins
 import json
 import os
 import sys
@@ -96,10 +97,15 @@ from .utils.storage import MemoryStore
 VALID_SCOPES = ("project", "workspace", "global")
 MemoryAction = Literal["allow", "redact", "block"]
 CaptureMode = Literal["all", "manual_only", "hooks_only"]
+BASE_EXCEPTION_GROUP = getattr(builtins, "BaseExceptionGroup", None)
 
 
 def _most_relevant_startup_exception(exc: BaseException) -> BaseException:
-    if isinstance(exc, BaseExceptionGroup) and exc.exceptions:
+    if (
+        BASE_EXCEPTION_GROUP is not None
+        and isinstance(exc, BASE_EXCEPTION_GROUP)
+        and exc.exceptions
+    ):
         return _most_relevant_startup_exception(exc.exceptions[0])
 
     cause = getattr(exc, "__cause__", None)
@@ -130,7 +136,7 @@ def _format_startup_error(exc: Exception) -> str:
         "Mnemos MCP startup failed.\n"
         f"Config path: {config_path}\n"
         f"Details: {details}\n"
-        "Expected the shipped local runtime to use storage.type = \"sqlite\".\n"
+        'Expected the shipped local runtime to use storage.type = "sqlite".\n'
         "Run `mnemos-cli doctor` to validate the active config and update any legacy "
         "storage.type values such as qdrant or neo4j."
     )

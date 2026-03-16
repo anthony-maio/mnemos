@@ -69,6 +69,18 @@ def _cursor_rule_path(cwd: Path) -> Path:
     return cwd / ".cursor" / "rules" / "mnemos-memory.mdc"
 
 
+def _claude_agents_dir(home: Path) -> Path:
+    return home / ".claude" / "agents"
+
+
+def _repo_agent_path(cwd: Path, agent_name: str) -> Path:
+    candidate = cwd / "agents" / agent_name
+    if candidate.exists():
+        return candidate
+    shipped = Path(__file__).resolve().parents[1] / "agents" / agent_name
+    return shipped
+
+
 def _codex_agents_path(cwd: Path) -> Path:
     return cwd / "AGENTS.md"
 
@@ -88,6 +100,10 @@ def _preview_diff(path: Path, old_text: str, new_text: str) -> str:
         lineterm="",
     )
     return "\n".join(diff)
+
+
+def _render_claude_agent(cwd: Path, agent_name: str) -> str:
+    return _read_text(_repo_agent_path(cwd, agent_name))
 
 
 def _merge_markdown_section(existing_text: str, *, heading: str, rendered_section: str) -> str:
@@ -218,6 +234,17 @@ def preview_host_integration(
         rule_diff = _preview_diff(rule_path, existing_rule_text, rendered_rule)
         if rule_diff:
             preview_text = "\n\n".join(part for part in (preview_text, rule_diff) if part)
+    elif host == "claude-code":
+        agents_dir = _claude_agents_dir(resolved_home)
+        for agent_name in ("mnemos-recall.md", "mnemos-curator.md"):
+            agent_path = agents_dir / agent_name
+            agent_diff = _preview_diff(
+                agent_path,
+                _read_text(agent_path),
+                _render_claude_agent(resolved_cwd, agent_name),
+            )
+            if agent_diff:
+                preview_text = "\n\n".join(part for part in (preview_text, agent_diff) if part)
     elif host == "codex":
         agents_path = _codex_agents_path(resolved_cwd)
         existing_agents_text = _read_text(agents_path)
@@ -273,6 +300,15 @@ def apply_host_integration(
             build_antigravity_artifact("cursor", "cursor-rule"),
             encoding="utf-8",
         )
+    elif host == "claude-code":
+        agents_dir = _claude_agents_dir(_home_path(home))
+        agents_dir.mkdir(parents=True, exist_ok=True)
+        for agent_name in ("mnemos-recall.md", "mnemos-curator.md"):
+            agent_path = agents_dir / agent_name
+            agent_path.write_text(
+                _render_claude_agent(_cwd_path(cwd), agent_name),
+                encoding="utf-8",
+            )
     elif host == "codex":
         agents_path = _codex_agents_path(_cwd_path(cwd))
         agents_path.parent.mkdir(parents=True, exist_ok=True)

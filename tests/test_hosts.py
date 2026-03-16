@@ -165,3 +165,37 @@ def test_claude_integration_prefers_plugin_wrapper_when_available(tmp_path: Path
 
     assert "run_mnemos_mcp.py" in preview.preview_text
     assert mnemos_config_path.as_posix() in preview.preview_text
+
+
+def test_claude_integration_apply_installs_mnemos_agents(tmp_path: Path) -> None:
+    repo_dir = tmp_path / "repo"
+    home_dir = tmp_path / "home"
+    wrapper_path = repo_dir / ".claude-plugin" / "run_mnemos_mcp.py"
+    wrapper_path.parent.mkdir(parents=True)
+    wrapper_path.write_text("#!/usr/bin/env python3\n", encoding="utf-8")
+    mnemos_config_path = tmp_path / "Mnemos" / "mnemos.toml"
+
+    preview = preview_host_integration(
+        "claude-code",
+        mnemos_config_path=mnemos_config_path,
+        cwd=repo_dir,
+        home=home_dir,
+    )
+
+    assert "mnemos-recall.md" in preview.preview_text
+    assert "mnemos-curator.md" in preview.preview_text
+
+    result = apply_host_integration(
+        "claude-code",
+        mnemos_config_path=mnemos_config_path,
+        cwd=repo_dir,
+        home=home_dir,
+    )
+
+    assert result.backup_path is None
+    recall_path = home_dir / ".claude" / "agents" / "mnemos-recall.md"
+    curator_path = home_dir / ".claude" / "agents" / "mnemos-curator.md"
+    assert recall_path.exists()
+    assert curator_path.exists()
+    assert "mnemos_retrieve" in recall_path.read_text(encoding="utf-8")
+    assert "mnemos_store" in curator_path.read_text(encoding="utf-8")

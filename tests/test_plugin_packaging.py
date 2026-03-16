@@ -71,6 +71,12 @@ def test_plugin_manifest_registers_curator_agent() -> None:
     assert "./agents/mnemos-curator.md" in data["agents"]
 
 
+def test_plugin_manifest_registers_recall_agent() -> None:
+    data = json.loads(Path(".claude-plugin/plugin.json").read_text(encoding="utf-8"))
+
+    assert "./agents/mnemos-recall.md" in data["agents"]
+
+
 def test_plugin_wrapper_exists() -> None:
     wrapper = Path(".claude-plugin/run_mnemos_mcp.py")
     assert wrapper.exists()

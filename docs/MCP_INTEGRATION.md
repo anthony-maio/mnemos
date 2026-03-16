@@ -44,6 +44,7 @@ The plugin manifest auto-registers the Mnemos MCP server and runs a bootstrap wr
 - installs Mnemos with MCP extras
 - launches `mnemos.mcp_server` over stdio
 - defaults to persistent SQLite storage
+- ships `mnemos-recall` and `mnemos-curator` Claude subagents for the default retrieve-then-curate workflow
 
 #### Claude Code / Claude Desktop
 
@@ -63,6 +64,7 @@ Add to `~/.claude/claude_desktop_config.json` (or your project's `.claude` confi
 ```
 
 If this repo's Claude plugin wrapper is available, the control plane prefers that path automatically.
+The Claude host integration path also installs `mnemos-recall.md` and `mnemos-curator.md` into `~/.claude/agents/` so the workflows are available immediately.
 
 #### Cursor
 
@@ -359,6 +361,17 @@ The auto-store hook path is deterministic and conservative:
 This Claude hook path has been validated on the canonical SQLite-backed `MNEMOS_CONFIG_PATH` setup as of March 15, 2026. Codex and Cursor can point at the same shared config, but they still rely on explicit Mnemos tool usage or host instruction policies today rather than shipped hook capture.
 
 Treat hard auto-capture as host-dependent outside Claude Code. Codex, Cursor, OpenClaw, and generic MCP hosts can use soft-auto instruction packs today, but they should not be marketed as having built-in hook parity unless that host actually exposes verified lifecycle hooks.
+
+### Claude Code recall + curator workflow
+
+The default Claude Code product path is:
+
+1. `mnemos-recall` at task start to retrieve scoped repo memory
+2. do the work in the main conversation
+3. `mnemos-curator` near the end to store only durable facts
+4. hooks plus `mnemos_consolidate` keep memory compact over time
+
+This makes Mnemos feel less like a raw memory tool and more like a repeatable continuity workflow.
 
 ### Environment variables
 
