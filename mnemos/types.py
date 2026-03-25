@@ -176,6 +176,72 @@ class MemoryChunk(BaseModel):
         )
 
 
+class RetrievalFeedbackEvent(BaseModel):
+    """
+    A user- or maintainer-recorded judgment about retrieval quality.
+
+    This is the bridge between Mnemos' retrieval behavior and observable product
+    usefulness. Each event records whether a retrieved memory helped, failed to
+    help, or whether a relevant memory was missed entirely.
+    """
+
+    id: str = Field(
+        default_factory=lambda: str(uuid.uuid4()),
+        description="Unique identifier for this feedback event.",
+    )
+    event_type: str = Field(
+        description="Retrieval feedback type: helpful, not_helpful, or missed_memory.",
+    )
+    query: str = Field(description="The query or task that triggered the retrieval attempt.")
+    scope: str = Field(
+        default="project",
+        description="Scope used at retrieval time: project, workspace, or global.",
+    )
+    scope_id: str | None = Field(
+        default="default",
+        description="Scope identifier for project/workspace retrieval contexts.",
+    )
+    chunk_ids: list[str] = Field(
+        default_factory=list,
+        description="Retrieved chunk IDs associated with this feedback event.",
+    )
+    notes: str = Field(
+        default="",
+        description="Optional human note explaining why the retrieval was good or bad.",
+    )
+    created_at: datetime = Field(
+        default_factory=_utcnow,
+        description="UTC timestamp when this feedback event was recorded.",
+    )
+
+    @field_validator("event_type")
+    @classmethod
+    def validate_event_type(cls, v: str) -> str:
+        normalized = v.strip().lower()
+        if normalized not in {"helpful", "not_helpful", "missed_memory"}:
+            raise ValueError("event_type must be one of: helpful, not_helpful, missed_memory.")
+        return normalized
+
+    @field_validator("scope")
+    @classmethod
+    def validate_scope(cls, v: str) -> str:
+        normalized = v.strip().lower()
+        if normalized not in {"project", "workspace", "global"}:
+            raise ValueError("scope must be one of: project, workspace, global.")
+        return normalized
+
+    @field_validator("scope_id")
+    @classmethod
+    def normalize_scope_id(cls, v: str | None, info: Any) -> str | None:
+        scope = str(info.data.get("scope", "project")).strip().lower()
+        if scope == "global":
+            return None
+        if v is None:
+            return "default"
+        trimmed = v.strip()
+        return trimmed or "default"
+
+
 class Interaction(BaseModel):
     """
     A single turn in the conversation — the raw episodic input.

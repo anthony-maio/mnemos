@@ -31,7 +31,7 @@ from collections.abc import Callable, Iterator
 from datetime import datetime, timezone
 from typing import Any, TypeVar, cast
 
-from ..types import CognitiveState, MemoryChunk
+from ..types import CognitiveState, MemoryChunk, RetrievalFeedbackEvent
 from ..observability import log_event
 from .embeddings import cosine_similarity
 from .reliability import RetryPolicy, call_with_retry, is_retryable_qdrant_exception
@@ -150,6 +150,20 @@ class MemoryStore(ABC):
         """Replace the outgoing graph-neighbor set for a chunk."""
         return None
 
+    def store_feedback_event(self, event: RetrievalFeedbackEvent) -> None:
+        """Persist one retrieval-feedback event."""
+        raise NotImplementedError("This storage backend does not support feedback events.")
+
+    def list_feedback_events(
+        self,
+        *,
+        event_type: str | None = None,
+        scope: str | None = None,
+        scope_id: str | None = None,
+    ) -> list[RetrievalFeedbackEvent]:
+        """List stored retrieval-feedback events with optional filters."""
+        return []
+
     def clear(self) -> None:
         """Remove all chunks from the store. Used for testing and consolidation."""
         for chunk in list(self.get_all()):
@@ -193,6 +207,7 @@ class InMemoryStore(MemoryStore):
     def __init__(self, name: str = "default") -> None:
         self.name = name
         self._store: dict[str, MemoryChunk] = {}
+        self._feedback_events: list[RetrievalFeedbackEvent] = []
         self._lock = threading.Lock()
 
     def store(self, chunk: MemoryChunk) -> None:
@@ -290,6 +305,28 @@ class InMemoryStore(MemoryStore):
             "average_access_count": round(avg_access, 4),
         }
 
+    def store_feedback_event(self, event: RetrievalFeedbackEvent) -> None:
+        with self._lock:
+            self._feedback_events.append(event)
+
+    def list_feedback_events(
+        self,
+        *,
+        event_type: str | None = None,
+        scope: str | None = None,
+        scope_id: str | None = None,
+    ) -> list[RetrievalFeedbackEvent]:
+        with self._lock:
+            events = list(self._feedback_events)
+
+        if event_type is not None:
+            events = [event for event in events if event.event_type == event_type]
+        if scope is not None:
+            events = [event for event in events if event.scope == scope]
+        if scope_id is not None:
+            events = [event for event in events if event.scope_id == scope_id]
+        return events
+
     def clear(self) -> None:
         """Clear all chunks atomically."""
         with self._lock:
@@ -346,6 +383,29 @@ class SQLiteStore(MemoryStore):
             FOREIGN KEY (source_id) REFERENCES memory_chunks(id) ON DELETE CASCADE,
             FOREIGN KEY (target_id) REFERENCES memory_chunks(id) ON DELETE CASCADE
         );
+    """
+
+    _CREATE_FEEDBACK_TABLE_SQL = """
+        CREATE TABLE IF NOT EXISTS retrieval_feedback_events (
+            id TEXT PRIMARY KEY,
+            event_type TEXT NOT NULL,
+            query TEXT NOT NULL,
+            scope TEXT NOT NULL,
+            scope_id TEXT,
+            chunk_ids TEXT NOT NULL DEFAULT '[]',
+            notes TEXT NOT NULL DEFAULT '',
+            created_at TEXT NOT NULL
+        );
+    """
+
+    _CREATE_FEEDBACK_TYPE_INDEX_SQL = """
+        CREATE INDEX IF NOT EXISTS idx_retrieval_feedback_type
+        ON retrieval_feedback_events(event_type, created_at DESC);
+    """
+
+    _CREATE_FEEDBACK_SCOPE_INDEX_SQL = """
+        CREATE INDEX IF NOT EXISTS idx_retrieval_feedback_scope
+        ON retrieval_feedback_events(scope, scope_id, created_at DESC);
     """
 
     _CREATE_EDGES_SOURCE_INDEX_SQL = """
@@ -441,6 +501,9 @@ class SQLiteStore(MemoryStore):
         self._conn.execute(self._CREATE_EDGES_TABLE_SQL)
         self._conn.execute(self._CREATE_EDGES_SOURCE_INDEX_SQL)
         self._conn.execute(self._CREATE_EDGES_TARGET_INDEX_SQL)
+        self._conn.execute(self._CREATE_FEEDBACK_TABLE_SQL)
+        self._conn.execute(self._CREATE_FEEDBACK_TYPE_INDEX_SQL)
+        self._conn.execute(self._CREATE_FEEDBACK_SCOPE_INDEX_SQL)
         self._conn.execute(self._CREATE_FTS_SQL)
         self._conn.execute(self._CREATE_FTS_INSERT_TRIGGER_SQL)
         self._conn.execute(self._CREATE_FTS_DELETE_TRIGGER_SQL)
@@ -629,6 +692,46 @@ class SQLiteStore(MemoryStore):
             version=version,
         )
 
+    def _feedback_event_to_row(self, event: RetrievalFeedbackEvent) -> tuple[Any, ...]:
+        return (
+            event.id,
+            event.event_type,
+            event.query,
+            event.scope,
+            event.scope_id,
+            json.dumps(event.chunk_ids),
+            event.notes,
+            event.created_at.isoformat(),
+        )
+
+    def _row_to_feedback_event(self, row: tuple[Any, ...]) -> RetrievalFeedbackEvent:
+        (
+            event_id,
+            event_type,
+            query,
+            scope,
+            scope_id,
+            chunk_ids_json,
+            notes,
+            created_at,
+        ) = row
+
+        chunk_ids = json.loads(chunk_ids_json) if chunk_ids_json else []
+        created_dt = datetime.fromisoformat(created_at)
+        if created_dt.tzinfo is None:
+            created_dt = created_dt.replace(tzinfo=timezone.utc)
+
+        return RetrievalFeedbackEvent(
+            id=str(event_id),
+            event_type=str(event_type),
+            query=str(query),
+            scope=str(scope),
+            scope_id=(str(scope_id) if scope_id is not None else None),
+            chunk_ids=[str(chunk_id) for chunk_id in chunk_ids],
+            notes=str(notes),
+            created_at=created_dt,
+        )
+
     def store(self, chunk: MemoryChunk) -> None:
         """Insert or replace a chunk by ID."""
         row = self._chunk_to_row(chunk)
@@ -777,6 +880,59 @@ class SQLiteStore(MemoryStore):
             cursor = self._conn.execute("SELECT * FROM memory_chunks")
             rows = cursor.fetchall()
         return [self._row_to_chunk(row) for row in rows]
+
+    def store_feedback_event(self, event: RetrievalFeedbackEvent) -> None:
+        row = self._feedback_event_to_row(event)
+        with self._lock:
+            self._conn.execute(
+                """
+                INSERT INTO retrieval_feedback_events
+                (id, event_type, query, scope, scope_id, chunk_ids, notes, created_at)
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+                ON CONFLICT(id) DO UPDATE SET
+                    event_type=excluded.event_type,
+                    query=excluded.query,
+                    scope=excluded.scope,
+                    scope_id=excluded.scope_id,
+                    chunk_ids=excluded.chunk_ids,
+                    notes=excluded.notes,
+                    created_at=excluded.created_at
+                """,
+                row,
+            )
+            self._conn.commit()
+
+    def list_feedback_events(
+        self,
+        *,
+        event_type: str | None = None,
+        scope: str | None = None,
+        scope_id: str | None = None,
+    ) -> list[RetrievalFeedbackEvent]:
+        query = """
+            SELECT id, event_type, query, scope, scope_id, chunk_ids, notes, created_at
+            FROM retrieval_feedback_events
+        """
+        clauses: list[str] = []
+        params: list[Any] = []
+
+        if event_type is not None:
+            clauses.append("event_type = ?")
+            params.append(event_type)
+        if scope is not None:
+            clauses.append("scope = ?")
+            params.append(scope)
+        if scope_id is not None:
+            clauses.append("scope_id = ?")
+            params.append(scope_id)
+
+        if clauses:
+            query += " WHERE " + " AND ".join(clauses)
+        query += " ORDER BY created_at DESC"
+
+        with self._lock:
+            rows = self._conn.execute(query, tuple(params)).fetchall()
+        return [self._row_to_feedback_event(row) for row in rows]
 
     def get_graph_edges(self, chunk_ids: list[str] | None = None) -> dict[str, dict[str, float]]:
         query = """
