@@ -4,6 +4,7 @@ tests/test_cli.py — Tests for CLI runtime wiring.
 
 from __future__ import annotations
 
+from datetime import datetime, timedelta, timezone
 from pathlib import Path
 from typing import Any
 
@@ -31,7 +32,7 @@ from mnemos.cli import (
     _cmd_search,
     _cmd_store,
 )
-from mnemos.types import ActivationNode, MemoryChunk, ProcessResult
+from mnemos.types import ActivationNode, MemoryChunk, ProcessResult, RetrievalFeedbackEvent
 from mnemos.utils import (
     OpenAIEmbeddingProvider,
     OpenAIProvider,
@@ -454,6 +455,149 @@ async def test_cli_feedback_records_event(monkeypatch: pytest.MonkeyPatch, capsy
     assert engine.store.events[0].query == "deploy flow"
     assert engine.store.events[0].chunk_ids == ["abc123"]
     assert '"event_type": "helpful"' in capsys.readouterr().out
+
+
+@pytest.mark.asyncio
+async def test_cli_feedback_list_filters_and_limits(
+    monkeypatch: pytest.MonkeyPatch, capsys: Any
+) -> None:
+    now = datetime.now(timezone.utc)
+    events = [
+        RetrievalFeedbackEvent(
+            event_type="missed_memory",
+            query="deploy flow",
+            scope="project",
+            scope_id="repo-alpha",
+            chunk_ids=[],
+            notes="Should have recalled the deploy note.",
+            created_at=now,
+        ),
+        RetrievalFeedbackEvent(
+            event_type="not_helpful",
+            query="deploy flow",
+            scope="project",
+            scope_id="repo-alpha",
+            chunk_ids=["chunk-wrong"],
+            notes="Returned the wrong memory.",
+            created_at=now - timedelta(minutes=1),
+        ),
+        RetrievalFeedbackEvent(
+            event_type="missed_memory",
+            query="incident playbook",
+            scope="workspace",
+            scope_id="client-a",
+            chunk_ids=[],
+            notes="Missed the runbook memory.",
+            created_at=now - timedelta(minutes=2),
+        ),
+    ]
+
+    class DummyStore:
+        def list_feedback_events(
+            self,
+            *,
+            event_type: str | None = None,
+            scope: str | None = None,
+            scope_id: str | None = None,
+        ) -> list[RetrievalFeedbackEvent]:
+            filtered = list(events)
+            if event_type is not None:
+                filtered = [event for event in filtered if event.event_type == event_type]
+            if scope is not None:
+                filtered = [event for event in filtered if event.scope == scope]
+            if scope_id is not None:
+                filtered = [event for event in filtered if event.scope_id == scope_id]
+            return filtered
+
+    class DummyEngine:
+        def __init__(self) -> None:
+            self.store = DummyStore()
+
+    monkeypatch.setattr("mnemos.cli._build_engine", lambda: DummyEngine())
+
+    await cli_module._cmd_feedback_list(
+        Namespace(
+            event_type="missed_memory",
+            scope="all",
+            scope_id="default",
+            limit=1,
+        )
+    )
+
+    payload = capsys.readouterr().out
+    assert '"event_type": "missed_memory"' in payload
+    assert "incident playbook" not in payload
+    assert "deploy flow" in payload
+    assert '"showing": 1' in payload
+    assert '"total": 2' in payload
+
+
+@pytest.mark.asyncio
+async def test_cli_feedback_export_writes_jsonl(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    now = datetime.now(timezone.utc)
+    events = [
+        RetrievalFeedbackEvent(
+            event_type="missed_memory",
+            query="deploy flow",
+            scope="project",
+            scope_id="repo-alpha",
+            chunk_ids=[],
+            notes="Should have recalled the deploy note.",
+            created_at=now,
+        ),
+        RetrievalFeedbackEvent(
+            event_type="not_helpful",
+            query="incident playbook",
+            scope="workspace",
+            scope_id="client-a",
+            chunk_ids=["chunk-wrong"],
+            notes="Returned the wrong memory.",
+            created_at=now - timedelta(minutes=1),
+        ),
+    ]
+
+    class DummyStore:
+        def list_feedback_events(
+            self,
+            *,
+            event_type: str | None = None,
+            scope: str | None = None,
+            scope_id: str | None = None,
+        ) -> list[RetrievalFeedbackEvent]:
+            filtered = list(events)
+            if event_type is not None:
+                filtered = [event for event in filtered if event.event_type == event_type]
+            if scope is not None:
+                filtered = [event for event in filtered if event.scope == scope]
+            if scope_id is not None:
+                filtered = [event for event in filtered if event.scope_id == scope_id]
+            return filtered
+
+    class DummyEngine:
+        def __init__(self) -> None:
+            self.store = DummyStore()
+
+    monkeypatch.setattr("mnemos.cli._build_engine", lambda: DummyEngine())
+
+    out_path = tmp_path / "feedback-events.jsonl"
+    await cli_module._cmd_feedback_export(
+        Namespace(
+            event_type="",
+            scope="all",
+            scope_id="default",
+            limit=0,
+            format="jsonl",
+            output=str(out_path),
+        )
+    )
+
+    text = out_path.read_text(encoding="utf-8")
+    lines = [line for line in text.splitlines() if line.strip()]
+    assert len(lines) == 2
+    assert '"event_type": "missed_memory"' in lines[0]
+    assert '"event_type": "not_helpful"' in lines[1]
 
 
 def test_build_antigravity_policy_mentions_required_tools() -> None:

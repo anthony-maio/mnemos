@@ -252,6 +252,20 @@ The current inspector shows:
 
 Rollback is intentionally not part of this first inspectability slice yet.
 
+## Feedback Review Loop
+
+Mnemos now has a maintainer-facing retrieval feedback loop on the same local SQLite path:
+
+1. record a retrieval outcome:
+   `mnemos-cli feedback helpful|not_helpful|missed_memory --query "..." [--chunk-id <id>]`
+2. review recent misses or bad recalls:
+   `mnemos-cli feedback-list --event-type missed_memory`
+   `mnemos-cli feedback-list --event-type not_helpful`
+3. export events for eval work:
+   `mnemos-cli feedback-export --format jsonl --output feedback-events.jsonl`
+
+This is the bridge between qualitative pilot feedback and benchmarkable recall regressions. The goal is to turn real Claude Code sessions into concrete retrieval-quality evidence instead of relying only on synthetic benchmark packs.
+
 ---
 
 ## Architecture

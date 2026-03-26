@@ -74,6 +74,12 @@ Inspectability entry points:
 - `mnemos_inspect` for MCP-native hosts
 - the control plane Memory panel for scope, provenance, revision history, and graph context
 
+Feedback review loop:
+
+- record a retrieval outcome with `mnemos-cli feedback helpful|not_helpful|missed_memory --query "..." [--chunk-id <id>]`
+- review the highest-signal misses or bad recalls with `mnemos-cli feedback-list --event-type missed_memory` or `mnemos-cli feedback-list --event-type not_helpful`
+- export events for offline eval work with `mnemos-cli feedback-export --format jsonl --output feedback-events.jsonl`
+
 For advanced/manual setup, see [docs/MCP_INTEGRATION.md](docs/MCP_INTEGRATION.md).
 
 ---

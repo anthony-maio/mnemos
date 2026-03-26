@@ -52,6 +52,7 @@ VALID_SCOPES = ("project", "workspace", "global")
 AUDIT_SCOPES = ("all", "project", "workspace", "global")
 LEGACY_SOURCE_STORE_CHOICES = ("sqlite", "qdrant", "neo4j")
 MIGRATION_TARGET_CHOICES = ("sqlite",)
+FEEDBACK_EVENT_CHOICES = ("helpful", "not_helpful", "missed_memory")
 MemoryAction = Literal["allow", "redact", "block"]
 CaptureMode = Literal["all", "manual_only", "hooks_only"]
 
@@ -221,6 +222,57 @@ def _serialize_chunk(chunk: Any) -> dict[str, Any]:
         "updated_at": chunk.updated_at.isoformat(),
         "metadata": chunk.metadata,
     }
+
+
+def _normalize_feedback_event_type(event_type: str | None) -> str | None:
+    value = (event_type or "").strip()
+    if not value:
+        return None
+    if value not in FEEDBACK_EVENT_CHOICES:
+        raise ValueError(
+            f"Invalid feedback event type: {value!r}. "
+            f"Expected one of: {', '.join(FEEDBACK_EVENT_CHOICES)}."
+        )
+    return value
+
+
+def _normalize_feedback_scope(scope: str, scope_id: str) -> tuple[str | None, str | None]:
+    if scope == "all":
+        return None, None
+    if scope == "global":
+        return "global", None
+    normalized_scope_id = scope_id.strip() if scope_id.strip() else "default"
+    return scope, normalized_scope_id
+
+
+def _serialize_feedback_event(event: RetrievalFeedbackEvent) -> dict[str, Any]:
+    return {
+        "id": event.id,
+        "event_type": event.event_type,
+        "query": event.query,
+        "scope": event.scope,
+        "scope_id": event.scope_id if event.scope != "global" else None,
+        "chunk_ids": list(event.chunk_ids),
+        "notes": event.notes,
+        "created_at": event.created_at.isoformat(),
+    }
+
+
+def _filtered_feedback_events(
+    engine: MnemosEngine,
+    *,
+    event_type: str | None,
+    scope: str,
+    scope_id: str,
+) -> list[RetrievalFeedbackEvent]:
+    normalized_event_type = _normalize_feedback_event_type(event_type)
+    normalized_scope, normalized_scope_id = _normalize_feedback_scope(scope, scope_id)
+    events = engine.store.list_feedback_events(
+        event_type=normalized_event_type,
+        scope=normalized_scope,
+        scope_id=normalized_scope_id,
+    )
+    return sorted(events, key=lambda event: event.created_at, reverse=True)
 
 
 def _build_store_for_migration(
@@ -449,6 +501,61 @@ async def _cmd_feedback(args: argparse.Namespace) -> None:
             indent=2,
         )
     )
+
+
+async def _cmd_feedback_list(args: argparse.Namespace) -> None:
+    engine = _build_engine()
+    events = _filtered_feedback_events(
+        engine,
+        event_type=args.event_type,
+        scope=args.scope,
+        scope_id=args.scope_id,
+    )
+    limited = events[: args.limit] if args.limit > 0 else events
+    print(
+        json.dumps(
+            {
+                "total": len(events),
+                "showing": len(limited),
+                "event_type": _normalize_feedback_event_type(args.event_type),
+                "scope": args.scope,
+                "scope_id": args.scope_id if args.scope not in {"all", "global"} else None,
+                "events": [_serialize_feedback_event(event) for event in limited],
+            },
+            indent=2,
+        )
+    )
+
+
+async def _cmd_feedback_export(args: argparse.Namespace) -> None:
+    engine = _build_engine()
+    events = _filtered_feedback_events(
+        engine,
+        event_type=args.event_type,
+        scope=args.scope,
+        scope_id=args.scope_id,
+    )
+    limited = events[: args.limit] if args.limit > 0 else events
+    serialized = [_serialize_feedback_event(event) for event in limited]
+
+    if args.format == "jsonl":
+        output = "\n".join(json.dumps(item) for item in serialized)
+    else:
+        output = json.dumps(
+            {
+                "event_type": _normalize_feedback_event_type(args.event_type),
+                "scope": args.scope,
+                "scope_id": args.scope_id if args.scope not in {"all", "global"} else None,
+                "total": len(serialized),
+                "events": serialized,
+            },
+            indent=2,
+        )
+    if args.output:
+        text = output if output.endswith("\n") else f"{output}\n"
+        with open(args.output, "w", encoding="utf-8") as handle:
+            handle.write(text)
+    print(output)
 
 
 async def _cmd_stats(args: argparse.Namespace) -> None:
@@ -879,6 +986,26 @@ def main() -> None:
     )
     sp_feedback.add_argument("--notes", default="", help="Optional explanation or annotation.")
 
+    sp_feedback_list = subparsers.add_parser(
+        "feedback-list",
+        help="List recorded retrieval feedback events for maintainer review.",
+    )
+    sp_feedback_list.add_argument("--event-type", choices=FEEDBACK_EVENT_CHOICES, default=None)
+    sp_feedback_list.add_argument("--scope", choices=AUDIT_SCOPES, default="all")
+    sp_feedback_list.add_argument("--scope-id", default="default")
+    sp_feedback_list.add_argument("--limit", type=int, default=50)
+
+    sp_feedback_export = subparsers.add_parser(
+        "feedback-export",
+        help="Export recorded retrieval feedback events for offline analysis.",
+    )
+    sp_feedback_export.add_argument("--event-type", choices=FEEDBACK_EVENT_CHOICES, default=None)
+    sp_feedback_export.add_argument("--scope", choices=AUDIT_SCOPES, default="all")
+    sp_feedback_export.add_argument("--scope-id", default="default")
+    sp_feedback_export.add_argument("--limit", type=int, default=0, help="0 means no limit.")
+    sp_feedback_export.add_argument("--format", choices=("json", "jsonl"), default="json")
+    sp_feedback_export.add_argument("--output", default="", help="Optional output path.")
+
     # stats
     subparsers.add_parser("stats", help="Show system statistics")
 
@@ -1100,6 +1227,10 @@ def main() -> None:
         asyncio.run(_cmd_consolidate(args))
     elif args.command == "feedback":
         asyncio.run(_cmd_feedback(args))
+    elif args.command == "feedback-list":
+        asyncio.run(_cmd_feedback_list(args))
+    elif args.command == "feedback-export":
+        asyncio.run(_cmd_feedback_export(args))
     elif args.command == "stats":
         asyncio.run(_cmd_stats(args))
     elif args.command == "inspect":
