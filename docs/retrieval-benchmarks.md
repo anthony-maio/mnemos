@@ -97,6 +97,30 @@ Current trust-release benchmark summary on the shipped SQLite path:
 - SQLite `mrr_lift_ratio` range: `0.40` to `1.67`
 - SQLite `latency_p95_ratio` range: `1.05` to `2.49`
 
+## Feedback-Driven Eval Export
+
+Synthetic benchmark packs are still useful, but Mnemos now also supports a
+stable JSONL export shape for explicit retrieval feedback events.
+
+The first checked-in seed pack is:
+
+- `benchmarks/datasets/real-world-feedback-v1.jsonl`
+
+Each row captures:
+
+- `query`
+- `feedback_event_type`
+- `current_scope`
+- `scope_id`
+- `allowed_scopes`
+- `relevant_chunk_ids` for explicitly helpful recalls
+- `retrieved_chunk_ids` for audit/debugging
+- `notes`
+- `created_at`
+
+This is not yet a full automatic benchmark runner input. It is the stable
+bridge between real pilot feedback and future benchmark packs.
+
 ## Custom Dataset Format
 
 Use `.json` (array) or `.jsonl` (one object per line). Each item must include:

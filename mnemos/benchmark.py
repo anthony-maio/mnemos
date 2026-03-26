@@ -24,7 +24,7 @@ import numpy as np
 from .config import MnemosConfig, MutableRAGConfig, SurprisalConfig
 from .engine import MnemosEngine
 from .runtime import build_embedder_from_env
-from .types import Interaction, MemoryChunk
+from .types import Interaction, MemoryChunk, RetrievalFeedbackEvent
 from .utils.llm import MockLLMProvider
 from .utils.storage import InMemoryStore, MemoryStore, SQLiteStore
 
@@ -62,6 +62,60 @@ class BenchmarkQuery:
     current_scope: str = "project"
     scope_id: str | None = "default"
     allowed_scopes: tuple[str, ...] = ("project", "workspace", "global")
+
+
+def _allowed_scopes_for_feedback_scope(scope: str) -> tuple[str, ...]:
+    normalized = _normalize_scope(scope)
+    if normalized == "project":
+        return ("project", "workspace", "global")
+    if normalized == "workspace":
+        return ("workspace", "global")
+    return ("global",)
+
+
+def feedback_events_to_eval_rows(
+    events: list[RetrievalFeedbackEvent],
+) -> list[dict[str, Any]]:
+    """
+    Convert retrieval feedback events into stable JSONL-friendly eval rows.
+
+    This intentionally captures only explicit human judgment for now. Helpful
+    recalls preserve known-good chunk IDs as relevant targets. Negative events
+    keep the retrieved chunk IDs for later audit, but leave relevant targets
+    empty until we have a stronger labeling path.
+    """
+    rows: list[dict[str, Any]] = []
+    for event in events:
+        relevant_chunk_ids = list(event.chunk_ids) if event.event_type == "helpful" else []
+        rows.append(
+            {
+                "id": event.id,
+                "feedback_event_type": event.event_type,
+                "query": event.query,
+                "current_scope": event.scope,
+                "scope_id": _normalize_scope_id(event.scope, event.scope_id),
+                "allowed_scopes": list(_allowed_scopes_for_feedback_scope(event.scope)),
+                "relevant_chunk_ids": relevant_chunk_ids,
+                "retrieved_chunk_ids": list(event.chunk_ids),
+                "notes": event.notes,
+                "created_at": event.created_at.isoformat(),
+            }
+        )
+    return rows
+
+
+def write_feedback_eval_dataset(
+    events: list[RetrievalFeedbackEvent],
+    output_path: Path,
+) -> int:
+    """Write eval rows derived from retrieval feedback events as JSONL."""
+    rows = feedback_events_to_eval_rows(events)
+    output_path.parent.mkdir(parents=True, exist_ok=True)
+    text = "\n".join(json.dumps(row) for row in rows)
+    if text:
+        text += "\n"
+    output_path.write_text(text, encoding="utf-8")
+    return len(rows)
 
 
 def _normalize_scope(scope: str | None, *, default: str = "project") -> str:
