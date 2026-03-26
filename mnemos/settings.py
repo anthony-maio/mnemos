@@ -23,7 +23,7 @@ except ImportError:  # pragma: no cover
 
 
 def _fallback_user_config_dir(app_name: str) -> Path:
-    if os.name == "nt":
+    if _is_windows():
         appdata = os.environ.get("APPDATA")
         if appdata:
             return Path(appdata) / app_name
@@ -88,7 +88,7 @@ def _set_nested(target: dict[str, Any], path: tuple[str, ...], value: Any) -> No
 
 
 def _persistent_env_value(name: str) -> str | None:
-    if os.name != "nt":
+    if not _is_windows():
         return None
     try:
         winreg = cast(Any, import_module("winreg"))
@@ -139,6 +139,10 @@ def _persistent_env_value(name: str) -> str | None:
         return resolved or None
 
     return _resolve_registry_value(name)
+
+
+def _is_windows() -> bool:
+    return os.name == "nt"
 
 
 def _env_value(

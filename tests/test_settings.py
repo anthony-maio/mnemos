@@ -266,7 +266,7 @@ provider = "openrouter"
                 raise OSError(name) from exc
             return value, 1
 
-    monkeypatch.setattr("mnemos.settings.os.name", "nt")
+    monkeypatch.setattr("mnemos.settings._is_windows", lambda: True)
     monkeypatch.setitem(sys.modules, "winreg", _FakeWinreg)
     monkeypatch.setenv("OPENROUTER_API_KEY", "stale-process-key")
 
