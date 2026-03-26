@@ -7,6 +7,7 @@ from __future__ import annotations
 import os
 import re
 import sys
+from importlib import import_module
 from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Any, Literal, Mapping, cast
@@ -90,7 +91,7 @@ def _persistent_env_value(name: str) -> str | None:
     if os.name != "nt":
         return None
     try:
-        import winreg
+        winreg = cast(Any, import_module("winreg"))
     except ImportError:  # pragma: no cover
         return None
 
