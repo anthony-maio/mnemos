@@ -9,6 +9,7 @@ discover and call natively.
 MCP Tools provided:
   - mnemos_store:       Process and store a memory through the full pipeline
   - mnemos_retrieve:    Retrieve memories with affective + spreading activation
+  - mnemos_feedback:    Record whether a retrieval was helpful, wrong, or missing
   - mnemos_consolidate: Trigger sleep consolidation (episodic → semantic)
   - mnemos_forget:      Delete a specific memory by ID
   - mnemos_stats:       Get system statistics across all modules
@@ -89,7 +90,7 @@ from .runtime import (
     build_mnemos_config_from_env,
     build_store_from_env,
 )
-from .types import Interaction
+from .types import Interaction, RetrievalFeedbackEvent
 from .utils.embeddings import EmbeddingProvider
 from .utils.llm import MockLLMProvider, LLMProvider
 from .utils.storage import MemoryStore
@@ -398,6 +399,43 @@ def create_mcp_server() -> Any:
             )
 
         return json.dumps(results, indent=2)
+
+    @mcp.tool()
+    async def mnemos_feedback(
+        event_type: str,
+        query: str,
+        scope: str = "project",
+        scope_id: str = "default",
+        chunk_ids: list[str] | None = None,
+        notes: str = "",
+        ctx: Context[Any, Any, Any] | None = None,
+    ) -> str:
+        """Record whether a retrieval was helpful, wrong, or missing."""
+        engine = _engine_from_ctx(ctx, "mnemos_feedback")
+        event = RetrievalFeedbackEvent(
+            event_type=event_type,
+            query=query,
+            scope=scope,
+            scope_id=(scope_id or None),
+            chunk_ids=list(chunk_ids or []),
+            notes=notes,
+        )
+        engine.store.store_feedback_event(event)
+
+        return json.dumps(
+            {
+                "stored": True,
+                "event_id": event.id,
+                "event_type": event.event_type,
+                "query": event.query,
+                "scope": event.scope,
+                "scope_id": event.scope_id,
+                "chunk_ids": event.chunk_ids,
+                "notes": event.notes,
+                "created_at": event.created_at.isoformat(),
+            },
+            indent=2,
+        )
 
     @mcp.tool()
     async def mnemos_consolidate(ctx: Context[Any, Any, Any] | None = None) -> str:

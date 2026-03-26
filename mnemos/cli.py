@@ -43,7 +43,7 @@ from .runtime import (
     build_mnemos_config_from_env,
     build_store_from_env,
 )
-from .types import Interaction
+from .types import Interaction, RetrievalFeedbackEvent
 from .utils.llm import MockLLMProvider, LLMProvider
 from .utils.storage import Neo4jStore, QdrantStore, SQLiteStore
 
@@ -420,6 +420,35 @@ async def _cmd_consolidate(args: argparse.Namespace) -> None:
         "duration_seconds": round(result.duration_seconds, 3),
     }
     print(json.dumps(output, indent=2))
+
+
+async def _cmd_feedback(args: argparse.Namespace) -> None:
+    engine = _build_engine()
+    event = RetrievalFeedbackEvent(
+        event_type=args.event_type,
+        query=args.query,
+        scope=args.scope,
+        scope_id=(args.scope_id or None),
+        chunk_ids=list(args.chunk_ids or []),
+        notes=args.notes,
+    )
+    engine.store.store_feedback_event(event)
+    print(
+        json.dumps(
+            {
+                "stored": True,
+                "event_id": event.id,
+                "event_type": event.event_type,
+                "query": event.query,
+                "scope": event.scope,
+                "scope_id": event.scope_id,
+                "chunk_ids": event.chunk_ids,
+                "notes": event.notes,
+                "created_at": event.created_at.isoformat(),
+            },
+            indent=2,
+        )
+    )
 
 
 async def _cmd_stats(args: argparse.Namespace) -> None:
@@ -833,6 +862,23 @@ def main() -> None:
     # consolidate
     subparsers.add_parser("consolidate", help="Trigger sleep consolidation")
 
+    sp_feedback = subparsers.add_parser(
+        "feedback",
+        help="Record feedback about whether a retrieval was useful, wrong, or missed.",
+    )
+    sp_feedback.add_argument("event_type", choices=("helpful", "not_helpful", "missed_memory"))
+    sp_feedback.add_argument("--query", required=True, help="Query or task the feedback refers to.")
+    sp_feedback.add_argument("--scope", choices=VALID_SCOPES, default="project")
+    sp_feedback.add_argument("--scope-id", default="default")
+    sp_feedback.add_argument(
+        "--chunk-id",
+        dest="chunk_ids",
+        action="append",
+        default=[],
+        help="Retrieved chunk ID associated with this feedback event. Repeatable.",
+    )
+    sp_feedback.add_argument("--notes", default="", help="Optional explanation or annotation.")
+
     # stats
     subparsers.add_parser("stats", help="Show system statistics")
 
@@ -1052,6 +1098,8 @@ def main() -> None:
         asyncio.run(_cmd_retrieve(args))
     elif args.command == "consolidate":
         asyncio.run(_cmd_consolidate(args))
+    elif args.command == "feedback":
+        asyncio.run(_cmd_feedback(args))
     elif args.command == "stats":
         asyncio.run(_cmd_stats(args))
     elif args.command == "inspect":

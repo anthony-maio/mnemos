@@ -21,6 +21,7 @@ from mnemos.cli import (
     _cmd_autostore_hook,
     _cmd_doctor,
     _cmd_export,
+    _cmd_feedback,
     _cmd_inspect,
     _cmd_list,
     _cmd_migrate_store,
@@ -419,6 +420,40 @@ async def test_cli_inspect_supports_query_context(
     payload = capsys.readouterr().out
     assert '"retrieval"' in payload
     assert '"semantic_rank": 1' in payload
+
+
+@pytest.mark.asyncio
+async def test_cli_feedback_records_event(monkeypatch: pytest.MonkeyPatch, capsys: Any) -> None:
+    class DummyStore:
+        def __init__(self) -> None:
+            self.events: list[Any] = []
+
+        def store_feedback_event(self, event: Any) -> None:
+            self.events.append(event)
+
+    class DummyEngine:
+        def __init__(self) -> None:
+            self.store = DummyStore()
+
+    engine = DummyEngine()
+    monkeypatch.setattr("mnemos.cli._build_engine", lambda: engine)
+
+    await _cmd_feedback(
+        Namespace(
+            event_type="helpful",
+            query="deploy flow",
+            scope="project",
+            scope_id="repo-alpha",
+            chunk_ids=["abc123"],
+            notes="Exactly the right memory.",
+        )
+    )
+
+    assert len(engine.store.events) == 1
+    assert engine.store.events[0].event_type == "helpful"
+    assert engine.store.events[0].query == "deploy flow"
+    assert engine.store.events[0].chunk_ids == ["abc123"]
+    assert '"event_type": "helpful"' in capsys.readouterr().out
 
 
 def test_build_antigravity_policy_mentions_required_tools() -> None:

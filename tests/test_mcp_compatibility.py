@@ -19,6 +19,7 @@ ROOT = Path(__file__).resolve().parents[1]
 TOOL_NAMES = {
     "mnemos_store",
     "mnemos_retrieve",
+    "mnemos_feedback",
     "mnemos_consolidate",
     "mnemos_forget",
     "mnemos_stats",
@@ -123,6 +124,22 @@ async def _assert_tier1_roundtrip(params: StdioServerParameters) -> None:
             retrieve_payload = json.loads(_call_result_text(retrieve_result))
             assert retrieve_payload
             assert retrieve_payload[0]["scope"] == "project"
+
+            feedback_result = await session.call_tool(
+                "mnemos_feedback",
+                {
+                    "event_type": "helpful",
+                    "query": "python tooling",
+                    "scope": "project",
+                    "scope_id": "repo-alpha",
+                    "chunk_ids": [store_payload["chunk_id"]],
+                    "notes": "This recall was correct.",
+                },
+            )
+            feedback_payload = json.loads(_call_result_text(feedback_result))
+            assert feedback_payload["stored"] is True
+            assert feedback_payload["event_type"] == "helpful"
+            assert feedback_payload["chunk_ids"] == [store_payload["chunk_id"]]
 
             health_result = await session.call_tool("mnemos_health", {})
             health_payload = json.loads(_call_result_text(health_result))
