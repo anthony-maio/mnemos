@@ -388,6 +388,11 @@ The default Claude Code product path is:
 
 This makes Mnemos feel less like a raw memory tool and more like a repeatable continuity workflow.
 
+The curator standard is intentionally narrow:
+
+- keep stable repo conventions, environment constraints, deployment facts, and recurring bug causes
+- skip timestamps, command echoes, one-off task status, and repetitive chatter
+
 ### Environment variables
 
 Both `mnemos-mcp` and `mnemos-cli` read the same `MNEMOS_*` environment variables. Set them in your shell profile for consistent behavior:

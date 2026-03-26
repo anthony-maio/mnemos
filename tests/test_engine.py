@@ -160,6 +160,31 @@ class TestEngineProcess:
         assert result.chunk is not None
         assert "REDACTED_EMAIL" in result.chunk.content
 
+    @pytest.mark.asyncio
+    async def test_curator_process_stores_stable_repo_preference(self, engine):
+        result = await engine.process(
+            make_interaction("For this repo, use uv and mypy before opening a PR.")
+        )
+        assert result.stored is True
+        assert result.chunk is not None
+        assert "uv and mypy" in result.chunk.content
+
+    @pytest.mark.asyncio
+    async def test_curator_process_skips_transient_timestamp_noise(self, engine):
+        result = await engine.process(
+            make_interaction("2026-03-26T12:10:00Z command completed in 0.24s exit code 0")
+        )
+        assert result.stored is False
+        assert "transient" in result.reason.lower() or "noise" in result.reason.lower()
+
+    @pytest.mark.asyncio
+    async def test_curator_process_skips_repetitive_status_noise(self, engine):
+        result = await engine.process(
+            make_interaction("still debugging still debugging still debugging still debugging")
+        )
+        assert result.stored is False
+        assert "noise" in result.reason.lower() or "low-signal" in result.reason.lower()
+
 
 # ─── Basic retrieve tests ─────────────────────────────────────────────────────
 

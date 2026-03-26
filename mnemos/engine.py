@@ -32,6 +32,7 @@ from datetime import datetime, timedelta, timezone
 from typing import Any
 
 from .config import MnemosConfig
+from .curation import durable_memory_skip_reason
 from .memory_safety import MemoryWriteFirewall
 from .modules.affective import AffectiveRouter
 from .modules.mutable_rag import MutableRAG
@@ -403,6 +404,16 @@ class MnemosEngine:
                 chunk=None,
                 salience=result.salience,
                 reason=f"Blocked by safety policy: {safety.reason}",
+            )
+
+        skip_reason = durable_memory_skip_reason(safety.content)
+        if skip_reason is not None:
+            self._store.delete(result.chunk.id)
+            return ProcessResult(
+                stored=False,
+                chunk=None,
+                salience=result.salience,
+                reason=f"Skipped transient/noisy memory: {skip_reason}.",
             )
 
         if safety.content != result.chunk.content:

@@ -30,6 +30,8 @@ You curate what should survive beyond the current Claude Code session.
    - secrets or tokens
    - transient chatter
    - one-off task status
+   - timestamps, command echoes, or "completed in 0.24s" style tool noise
+   - repetitive status chatter such as "still debugging" loops
    - speculative ideas that were not adopted
 3. For each durable fact, call `mnemos_store` with concise phrasing.
 4. Keep the number of writes small and high-signal.

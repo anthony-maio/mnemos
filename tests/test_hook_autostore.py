@@ -68,3 +68,45 @@ def test_decide_autostore_post_tool_use_skips_non_failure() -> None:
     )
     assert decision.should_store is False
     assert "non-failure" in decision.reason
+
+
+def test_curator_decide_autostore_stores_stable_repo_preference() -> None:
+    decision = decide_autostore(
+        event="UserPromptSubmit",
+        payload={
+            "prompt": "For this repository, always use uv and mypy before opening a PR.",
+            "cwd": "/tmp/repo-alpha",
+        },
+    )
+    assert decision.should_store is True
+    assert decision.interaction is not None
+    assert "uv and mypy" in decision.interaction.content
+
+
+def test_curator_decide_autostore_skips_transient_failure_echo() -> None:
+    decision = decide_autostore(
+        event="PostToolUse",
+        payload={
+            "tool_name": "Bash",
+            "output": (
+                "Command failed with error: exit code 130\n"
+                "Started at 2026-03-26T12:10:00Z\n"
+                "Completed in 0.24s"
+            ),
+            "cwd": "/tmp/repo-alpha",
+        },
+    )
+    assert decision.should_store is False
+    assert "transient" in decision.reason.lower() or "noise" in decision.reason.lower()
+
+
+def test_curator_decide_autostore_skips_repetitive_status_noise() -> None:
+    decision = decide_autostore(
+        event="UserPromptSubmit",
+        payload={
+            "prompt": "still debugging still debugging still debugging still debugging",
+            "cwd": "/tmp/repo-alpha",
+        },
+    )
+    assert decision.should_store is False
+    assert "low-signal" in decision.reason.lower() or "noise" in decision.reason.lower()

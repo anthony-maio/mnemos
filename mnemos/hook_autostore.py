@@ -14,6 +14,7 @@ from pathlib import Path
 from typing import Any
 
 from .config import MemorySafetyConfig
+from .curation import durable_memory_skip_reason
 from .memory_safety import MemoryWriteFirewall
 from .types import Interaction
 
@@ -221,6 +222,16 @@ def decide_autostore(
                 scope_id=scope_id,
             )
 
+        skip_reason = durable_memory_skip_reason(safety.content)
+        if skip_reason is not None:
+            return AutoStoreDecision(
+                should_store=False,
+                reason=f"Skipped transient/noisy prompt: {skip_reason}.",
+                interaction=None,
+                scope=scope,
+                scope_id=scope_id,
+            )
+
         content = safety.content[:max_chars]
         return AutoStoreDecision(
             should_store=True,
@@ -260,6 +271,16 @@ def decide_autostore(
         return AutoStoreDecision(
             should_store=False,
             reason="Skipped non-failure tool output.",
+            interaction=None,
+            scope=scope,
+            scope_id=scope_id,
+        )
+
+    skip_reason = durable_memory_skip_reason(safety.content)
+    if skip_reason is not None:
+        return AutoStoreDecision(
+            should_store=False,
+            reason=f"Skipped transient/noisy tool output: {skip_reason}.",
             interaction=None,
             scope=scope,
             scope_id=scope_id,

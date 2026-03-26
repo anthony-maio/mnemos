@@ -93,6 +93,18 @@ Claude Code already has built-in memory. Mnemos is narrower and more explicit:
 - recall and curator form a repeatable workflow instead of silent accumulation
 - everything persists in one local SQLite database
 
+What curator is supposed to keep:
+
+- stable repo conventions and tooling expectations
+- environment and deployment constraints
+- recurring bug causes and the real fix
+
+What curator should skip:
+
+- timestamps and command echoes
+- one-off task status
+- repetitive "still debugging" style chatter
+
 If you want "memory exists somewhere in the background," Claude's built-in path may be enough. If you want scoped, local, inspectable continuity across coding sessions, Mnemos is the point.
 
 See the side-by-side writeup at [docs/demos/claude-code-continuity.md](docs/demos/claude-code-continuity.md).
