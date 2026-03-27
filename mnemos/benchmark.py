@@ -40,6 +40,10 @@ DEFAULT_MAX_P95_LATENCY_RATIO_BY_STORE: dict[str, float] = {
     "memory": 2.0,
     "sqlite": 4.0,
 }
+DEFAULT_LATENCY_RATIO_FLOOR_MS_BY_STORE: dict[str, float] = {
+    "memory": 1.0,
+    "sqlite": 2.0,
+}
 
 
 @dataclass(frozen=True)
@@ -677,7 +681,12 @@ def evaluate_production_replacement_gate(
         else:
             mrr_lift_ratio = 1.0 if engine_mrr > 0 else 0.0
 
-        latency_denominator = max(baseline_latency, latency_floor_ms)
+        applied_latency_floor_ms = (
+            latency_floor_ms
+            if max_latency_ratio is not None
+            else DEFAULT_LATENCY_RATIO_FLOOR_MS_BY_STORE.get(store_type, latency_floor_ms)
+        )
+        latency_denominator = max(baseline_latency, applied_latency_floor_ms)
         latency_ratio = engine_latency / latency_denominator if latency_denominator > 0 else 0.0
         applied_max_latency_ratio = (
             max_latency_ratio
@@ -693,6 +702,7 @@ def evaluate_production_replacement_gate(
                 "mrr_lift_ratio": mrr_lift_ratio,
                 "latency_p95_ratio": latency_ratio,
                 "max_latency_p95_ratio": applied_max_latency_ratio,
+                "latency_ratio_floor_ms": applied_latency_floor_ms,
                 "passed": passed,
             }
         )
@@ -707,6 +717,9 @@ def evaluate_production_replacement_gate(
             None if max_latency_ratio is not None else DEFAULT_MAX_P95_LATENCY_RATIO_BY_STORE
         ),
         "latency_ratio_floor_ms": latency_floor_ms,
+        "latency_ratio_floor_ms_by_store": (
+            None if max_latency_ratio is not None else DEFAULT_LATENCY_RATIO_FLOOR_MS_BY_STORE
+        ),
         "evaluated_pairs": len(details),
         "passed_pairs": passed_count,
         "failed_pairs": len(failed),

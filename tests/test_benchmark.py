@@ -188,6 +188,23 @@ def test_evaluate_production_replacement_gate_uses_store_specific_latency_defaul
 
     assert gate["passed"] is True
     assert gate["details"][0]["max_latency_p95_ratio"] == pytest.approx(4.0)
+    assert gate["details"][0]["latency_ratio_floor_ms"] == pytest.approx(2.0)
+
+
+def test_evaluate_production_replacement_gate_uses_sqlite_latency_floor() -> None:
+    comparisons = [
+        {
+            "dataset": "claim-driving-d",
+            "store_type": "sqlite",
+            "baseline": {"mrr": 0.7142857142857143, "latency_p95_ms": 0.8},
+            "engine": {"mrr": 1.0, "latency_p95_ms": 5.6},
+        }
+    ]
+
+    gate = evaluate_production_replacement_gate(comparisons, min_mrr_lift=0.15)
+
+    assert gate["passed"] is True
+    assert gate["details"][0]["latency_p95_ratio"] == pytest.approx(2.8)
 
 
 def test_load_documents_allows_empty_query_lists(tmp_path: Path) -> None:

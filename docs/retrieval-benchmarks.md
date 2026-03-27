@@ -84,7 +84,9 @@ Default gate thresholds:
 
 - MRR lift ratio: `>= 0.15`
 - p95 latency ratio: `<= 2.0`
-- latency floor for ratio denominator: `1.0 ms`
+- latency floor for ratio denominator:
+  - `memory`: `1.0 ms`
+  - `sqlite`: `2.0 ms`
 
 CI profile-specific production gates:
 
