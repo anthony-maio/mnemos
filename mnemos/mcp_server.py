@@ -101,6 +101,36 @@ CaptureMode = Literal["all", "manual_only", "hooks_only"]
 BASE_EXCEPTION_GROUP = getattr(builtins, "BaseExceptionGroup", None)
 
 
+def _find_actionable_startup_message(exc: BaseException) -> str | None:
+    details = str(exc).strip()
+    if details.startswith("Mnemos MCP startup failed."):
+        return details
+
+    if (
+        BASE_EXCEPTION_GROUP is not None
+        and isinstance(exc, BASE_EXCEPTION_GROUP)
+        and exc.exceptions
+    ):
+        for nested in exc.exceptions:
+            message = _find_actionable_startup_message(nested)
+            if message is not None:
+                return message
+
+    cause = getattr(exc, "__cause__", None)
+    if cause is not None:
+        message = _find_actionable_startup_message(cause)
+        if message is not None:
+            return message
+
+    context = getattr(exc, "__context__", None)
+    if context is not None and not getattr(exc, "__suppress_context__", False):
+        message = _find_actionable_startup_message(context)
+        if message is not None:
+            return message
+
+    return None
+
+
 def _most_relevant_startup_exception(exc: BaseException) -> BaseException:
     if (
         BASE_EXCEPTION_GROUP is not None
@@ -128,6 +158,10 @@ def _active_config_path() -> str:
 
 
 def _format_startup_error(exc: Exception) -> str:
+    actionable_message = _find_actionable_startup_message(exc)
+    if actionable_message is not None:
+        return actionable_message
+
     relevant = _most_relevant_startup_exception(exc)
     details = str(relevant).strip() or relevant.__class__.__name__
     if details.startswith("Mnemos MCP startup failed."):
