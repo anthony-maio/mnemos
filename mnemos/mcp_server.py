@@ -98,7 +98,18 @@ from .utils.storage import MemoryStore
 VALID_SCOPES = ("project", "workspace", "global")
 MemoryAction = Literal["allow", "redact", "block"]
 CaptureMode = Literal["all", "manual_only", "hooks_only"]
-BASE_EXCEPTION_GROUP = getattr(builtins, "BaseExceptionGroup", None)
+_exception_group_types: list[type[BaseException]] = []
+_builtins_base_exception_group = getattr(builtins, "BaseExceptionGroup", None)
+if _builtins_base_exception_group is not None:
+    _exception_group_types.append(cast(type[BaseException], _builtins_base_exception_group))
+try:
+    from exceptiongroup import BaseExceptionGroup as _backport_base_exception_group
+except ImportError:  # pragma: no cover - only used on Python < 3.11
+    _backport_base_exception_group = None
+else:
+    if _backport_base_exception_group not in _exception_group_types:
+        _exception_group_types.append(_backport_base_exception_group)
+EXCEPTION_GROUP_TYPES = tuple(_exception_group_types)
 
 
 def _find_actionable_startup_message(exc: BaseException) -> str | None:
@@ -106,12 +117,9 @@ def _find_actionable_startup_message(exc: BaseException) -> str | None:
     if details.startswith("Mnemos MCP startup failed."):
         return details
 
-    if (
-        BASE_EXCEPTION_GROUP is not None
-        and isinstance(exc, BASE_EXCEPTION_GROUP)
-        and exc.exceptions
-    ):
-        for nested in exc.exceptions:
+    if EXCEPTION_GROUP_TYPES and isinstance(exc, EXCEPTION_GROUP_TYPES):
+        nested_exceptions = cast(Any, exc).exceptions
+        for nested in nested_exceptions:
             message = _find_actionable_startup_message(nested)
             if message is not None:
                 return message
@@ -132,12 +140,10 @@ def _find_actionable_startup_message(exc: BaseException) -> str | None:
 
 
 def _most_relevant_startup_exception(exc: BaseException) -> BaseException:
-    if (
-        BASE_EXCEPTION_GROUP is not None
-        and isinstance(exc, BASE_EXCEPTION_GROUP)
-        and exc.exceptions
-    ):
-        return _most_relevant_startup_exception(exc.exceptions[0])
+    if EXCEPTION_GROUP_TYPES and isinstance(exc, EXCEPTION_GROUP_TYPES):
+        nested_exceptions = cast(Any, exc).exceptions
+        if nested_exceptions:
+            return _most_relevant_startup_exception(nested_exceptions[0])
 
     cause = getattr(exc, "__cause__", None)
     if cause is not None:
