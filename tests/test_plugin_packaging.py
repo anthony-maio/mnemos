@@ -110,6 +110,7 @@ def test_plugin_wrapper_defaults_to_user_config_path(monkeypatch) -> None:
 
     monkeypatch.delenv("MNEMOS_CONFIG_PATH", raising=False)
     monkeypatch.setenv("APPDATA", r"C:\Users\Test\AppData\Roaming")
+    monkeypatch.setattr(wrapper, "_is_windows", lambda: True)
 
     env = wrapper._apply_default_env(plugin_root)
 

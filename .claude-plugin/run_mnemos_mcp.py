@@ -26,7 +26,7 @@ def _plugin_root() -> Path:
 
 
 def _venv_python(venv_dir: Path) -> Path:
-    if os.name == "nt":
+    if _is_windows():
         return venv_dir / "Scripts" / "python.exe"
     return venv_dir / "bin" / "python"
 
@@ -94,7 +94,7 @@ def _resolve_runtime_python(plugin_root: Path, env: dict[str, str]) -> str:
 
 
 def _default_user_config_path() -> Path:
-    if os.name == "nt":
+    if _is_windows():
         appdata = os.environ.get("APPDATA", "").strip()
         if appdata:
             return Path(appdata) / "Mnemos" / "mnemos.toml"
@@ -104,6 +104,10 @@ def _default_user_config_path() -> Path:
     if xdg_config_home:
         return Path(xdg_config_home) / "mnemos" / "mnemos.toml"
     return Path.home() / ".config" / "mnemos" / "mnemos.toml"
+
+
+def _is_windows() -> bool:
+    return os.name == "nt"
 
 
 def _apply_default_env(plugin_root: Path) -> dict[str, str]:

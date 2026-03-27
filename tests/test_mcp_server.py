@@ -9,6 +9,11 @@ from pydantic import ValidationError
 
 import pytest
 
+try:
+    ExceptionGroup
+except NameError:  # pragma: no cover - Python < 3.11 fallback
+    from exceptiongroup import ExceptionGroup
+
 from mnemos.mcp_server import (
     _build_config,
     _build_embedder,
