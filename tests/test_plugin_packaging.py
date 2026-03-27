@@ -114,7 +114,9 @@ def test_plugin_wrapper_defaults_to_user_config_path(monkeypatch) -> None:
 
     env = wrapper._apply_default_env(plugin_root)
 
-    assert env["MNEMOS_CONFIG_PATH"] == r"C:\Users\Test\AppData\Roaming\Mnemos\mnemos.toml"
+    assert env["MNEMOS_CONFIG_PATH"].replace("/", "\\") == (
+        r"C:\Users\Test\AppData\Roaming\Mnemos\mnemos.toml"
+    )
 
 
 def test_plugin_hooks_wire_autostore_and_consolidation() -> None:
