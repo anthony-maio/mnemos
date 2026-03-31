@@ -42,18 +42,8 @@ Configuration via environment variables:
   MNEMOS_OPENCLAW_URL   — OpenClaw API base URL (or fallback to MNEMOS_OPENAI_URL)
   MNEMOS_OPENROUTER_API_KEY — OpenRouter API key (required if provider is "openrouter")
   MNEMOS_OPENROUTER_URL — OpenRouter API base URL (default: "https://openrouter.ai/api/v1")
-  MNEMOS_STORE_TYPE     — "memory" (default), "sqlite", "qdrant", or "neo4j"
+  MNEMOS_STORE_TYPE     — "memory" (default) or "sqlite"
   MNEMOS_SQLITE_PATH    — Path for SQLite store (default: "mnemos_memory.db")
-  MNEMOS_QDRANT_URL     — Qdrant server URL (default: "http://localhost:6333")
-  MNEMOS_QDRANT_API_KEY — Qdrant API key (optional)
-  MNEMOS_QDRANT_PATH    — Local embedded Qdrant path (optional, overrides URL)
-  MNEMOS_QDRANT_COLLECTION — Qdrant collection name (default: "mnemos_memory")
-  MNEMOS_QDRANT_VECTOR_SIZE — Optional fixed vector size for pre-creating collection
-  MNEMOS_NEO4J_URI      — Neo4j Bolt URI (default: "bolt://localhost:7687")
-  MNEMOS_NEO4J_USERNAME — Neo4j username for the `neo4j` store
-  MNEMOS_NEO4J_PASSWORD — Neo4j password for the `neo4j` store
-  MNEMOS_NEO4J_DATABASE — Neo4j database name (default: "neo4j")
-  MNEMOS_NEO4J_LABEL    — Neo4j node label for stored chunks (default: "MnemosMemoryChunk")
   MNEMOS_STORAGE        — Alias for MNEMOS_STORE_TYPE
   MNEMOS_DB_PATH        — Alias for MNEMOS_SQLITE_PATH
   MNEMOS_SURPRISAL_THRESHOLD — Surprisal gate threshold (default: 0.3)
@@ -179,7 +169,7 @@ def _format_startup_error(exc: Exception) -> str:
         f"Details: {details}\n"
         'Expected the shipped local runtime to use storage.type = "sqlite".\n'
         "Run `mnemos-cli doctor` to validate the active config and update any legacy "
-        "storage.type values such as qdrant or neo4j."
+        "non-SQLite storage.type values."
     )
 
 
@@ -304,7 +294,7 @@ def create_mcp_server() -> Any:
         try:
             yield MnemosContext(engine=engine)
         finally:
-            # Future: clean up connections (Neo4j, etc.)
+            # Future: clean up additional long-lived runtime resources here.
             pass
 
     mcp = FastMCP(
@@ -484,6 +474,7 @@ def create_mcp_server() -> Any:
         Mimics the hippocampal-neocortical transfer during sleep:
         - Replays recent episodic interactions
         - Extracts permanent facts and user preferences
+        - Optionally applies recall-gated plasticity before long-term writes
         - Stores distilled knowledge as long-term semantic memory
         - Prunes raw episode buffer to save capacity
 
@@ -689,7 +680,7 @@ def create_mcp_server() -> Any:
                     ],
                     "consolidate": [
                         "Idle → SleepDaemon (episodic → semantic transfer)",
-                        "→ Fact extraction + episode pruning",
+                        "→ Fact extraction + optional recall gate + episode pruning",
                         "→ Optional proceduralization (tool generation)",
                     ],
                 },
@@ -697,7 +688,7 @@ def create_mcp_server() -> Any:
                     "surprisal_gate": "Predictive coding / active inference — only encode prediction errors",
                     "mutable_rag": "Memory reconsolidation — recalled memories enter labile state, get rewritten",
                     "affective_router": "Amygdala-mediated state-dependent memory — emotional context shapes retrieval",
-                    "sleep_daemon": "Hippocampal-neocortical transfer during sleep — episodic → semantic compression",
+                    "sleep_daemon": "Hippocampal-neocortical transfer during sleep, with optional recall-gated plasticity — episodic replay must support semantic updates",
                     "spreading_activation": "Collins & Loftus (1975) — activation energy propagates through semantic graph",
                 },
             },

@@ -4,6 +4,9 @@
 Mnemos is an MCP-native memory layer with a biomimetic retrieval pipeline.
 The runtime is organized around one orchestrator (`MnemosEngine`), five
 memory modules, and pluggable providers for embeddings, LLMs, and storage.
+`SleepDaemon` also supports optional recall-gated plasticity, so semantic
+consolidation can require repeated episodic support instead of blindly
+accepting every extracted fact.
 
 ## Runtime Surfaces
 - `mnemos.mcp_server`: stdio MCP server (tools + resources for hosts like Claude Code/Desktop).
@@ -58,10 +61,8 @@ Domain types are Pydantic models (not dataclasses):
 ## Pipeline
 1. Encode (`process`): `SurprisalGate -> AffectiveRouter -> store + spreading graph`.
 2. Retrieve (`retrieve`): `SpreadingActivation + AffectiveRouter -> ranking -> MutableRAG queue`.
-3. Maintain (`consolidate`): `SleepDaemon` extracts durable facts and prunes episodes.
+3. Maintain (`consolidate`): `SleepDaemon` extracts durable facts, optionally applies a recall gate, and prunes episodes.
 
 ## Storage and Persistence
 - `InMemoryStore` (implemented): zero-setup, ephemeral development backend.
-- `SQLiteStore` (implemented): local persistent backend with no external services.
-- `QdrantStore` (implemented): vector DB backend for higher-scale retrieval.
-- `Neo4jStore` (experimental): Neo4j-backed persistence for MemoryChunks. The spreading-activation graph still hydrates in-process from stored chunks today, so graph-native activation persistence remains future work.
+- `SQLiteStore` (implemented): definitive local persistent backend with one file, SQLite FTS5, `sqlite-vec` acceleration, and persisted `memory_edges` for graph hydration.

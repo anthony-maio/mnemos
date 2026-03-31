@@ -152,7 +152,6 @@ def run_health_checks(
             "MNEMOS_DOCTOR_CHUNK_THRESHOLD",
             env=env,
             default="5000",
-            aliases=("MNEMOS_DOCTOR_QDRANT_CHUNK_THRESHOLD",),
         ),
         default=5000,
     )

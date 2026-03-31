@@ -6,7 +6,7 @@ Mnemos implements five neuroscience-inspired memory modules:
 1. SurprisalGate   — Predictive coding memory gate (only encodes surprising inputs)
 2. MutableRAG      — Memory reconsolidation (facts evolve on retrieval, no stale data)
 3. AffectiveRouter — Emotional state-dependent memory routing (amygdala filter)
-4. SleepDaemon     — Hippocampal-neocortical consolidation (semantic compression)
+4. SleepDaemon     — Hippocampal-neocortical consolidation with optional recall-gated plasticity
 5. SpreadingActivation — Graph-based associative context retrieval
 
 Quick start (zero external dependencies):
@@ -73,7 +73,7 @@ from .utils import (
     cosine_similarity,
 )
 
-__version__ = "0.3.1"
+__version__ = "0.6.0"
 __author__ = "Anthony Maio"
 __license__ = "MIT"
 

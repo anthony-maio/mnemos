@@ -907,35 +907,27 @@ async def test_cli_migrate_store_prints_json_summary(
     target_store = DummyStore([])
 
     def fake_build_store_for_migration(**kwargs: Any) -> DummyStore:
-        store_type = kwargs["store_type"]
-        if store_type == "qdrant":
+        sqlite_path = kwargs.get("sqlite_path", "")
+        if sqlite_path == "source.db":
             return source_store
-        if store_type == "sqlite":
+        if sqlite_path == "target.db":
             return target_store
-        raise AssertionError(f"Unexpected store type: {store_type}")
+        raise AssertionError(f"Unexpected sqlite path: {sqlite_path}")
 
     monkeypatch.setattr(cli_module, "_build_store_for_migration", fake_build_store_for_migration)
 
     await _cmd_migrate_store(
         Namespace(
-            source_store="qdrant",
+            source_store="sqlite",
             target_store="sqlite",
-            source_sqlite_path="",
-            source_qdrant_path="",
-            source_qdrant_url="",
-            source_qdrant_collection="",
-            source_neo4j_uri="",
-            source_neo4j_database="",
-            source_neo4j_label="",
-            source_neo4j_username="",
-            source_neo4j_password="",
-            target_sqlite_path="",
+            source_sqlite_path="source.db",
+            target_sqlite_path="target.db",
             dry_run=False,
         )
     )
 
     captured = capsys.readouterr().out
-    assert '"source_store": "qdrant"' in captured
+    assert '"source_store": "sqlite"' in captured
     assert '"target_store": "sqlite"' in captured
     assert '"migrated": 1' in captured
     assert source_store.closed is True
@@ -979,14 +971,6 @@ async def test_cli_migrate_store_allows_sqlite_schema_upgrade(
             source_store="sqlite",
             target_store="sqlite",
             source_sqlite_path="source.db",
-            source_qdrant_path="",
-            source_qdrant_url="",
-            source_qdrant_collection="",
-            source_neo4j_uri="",
-            source_neo4j_database="",
-            source_neo4j_label="",
-            source_neo4j_username="",
-            source_neo4j_password="",
             target_sqlite_path="target.db",
             dry_run=False,
         )

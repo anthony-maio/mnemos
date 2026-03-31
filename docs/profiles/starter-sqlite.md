@@ -20,4 +20,4 @@ MNEMOS_LLM_PROVIDER=openclaw   # or openai/ollama/mock
 
 - This is the default for plugin installs.
 - Run `mnemos-cli doctor` to verify readiness.
-- Recommended next step for local production: embedded Qdrant profile.
+- This remains the production path for local persistent memory.

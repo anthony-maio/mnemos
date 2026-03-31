@@ -154,6 +154,8 @@ class SleepConfig(BaseModel):
     - Consolidation occurs during 'idle' periods (low activity windows)
     - A minimum number of episodes must accumulate before consolidation (like
       the hippocampus waiting for enough material to replay)
+    - Optional recall gating requires semantic candidates to be strongly
+      recoverable from episodic traces before long-term plasticity occurs
     - Proceduralization is optional (analogous to implicit/procedural memory
       formation from declarative experiences)
     """
@@ -206,6 +208,32 @@ class SleepConfig(BaseModel):
         default=100,
         gt=0,
         description="Maximum episodes to include in a single consolidation prompt.",
+    )
+    recall_gated_plasticity_enabled: bool = Field(
+        default=False,
+        description=(
+            "Whether to require candidate long-term facts to be recall-supported by the "
+            "episodic buffer before consolidation. This approximates recall-gated "
+            "plasticity by letting only repeatedly re-instated patterns alter semantic "
+            "memory."
+        ),
+    )
+    recall_min_supporting_episodes: int = Field(
+        default=2,
+        gt=0,
+        description=(
+            "Minimum number of episodic interactions that must strongly support an "
+            "extracted fact before it is consolidated when recall gating is enabled."
+        ),
+    )
+    recall_similarity_threshold: float = Field(
+        default=0.82,
+        ge=-1.0,
+        le=1.0,
+        description=(
+            "Minimum cosine similarity between an extracted fact and an episodic trace "
+            "for that trace to count as recall support."
+        ),
     )
 
 

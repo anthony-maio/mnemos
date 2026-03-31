@@ -175,9 +175,6 @@ def _apply_persistent_env_fallbacks(raw: dict[str, Any]) -> dict[str, Any]:
         (("providers", "openai", "api_key"), ("MNEMOS_OPENAI_API_KEY",)),
         (("providers", "openclaw", "api_key"), ("MNEMOS_OPENCLAW_API_KEY",)),
         (("providers", "openrouter", "api_key"), ("MNEMOS_OPENROUTER_API_KEY",)),
-        (("providers", "qdrant", "api_key"), ("MNEMOS_QDRANT_API_KEY",)),
-        (("providers", "neo4j", "username"), ("MNEMOS_NEO4J_USERNAME",)),
-        (("providers", "neo4j", "password"), ("MNEMOS_NEO4J_PASSWORD",)),
     )
     merged = dict(raw)
     for path, names in fallback_specs:
@@ -261,50 +258,6 @@ def _env_overrides(env: Mapping[str, str]) -> dict[str, Any]:
     sqlite_path = _env_value(env, "MNEMOS_SQLITE_PATH", aliases=("MNEMOS_DB_PATH",))
     if sqlite_path is not None:
         _set_nested(overrides, ("storage", "sqlite_path"), sqlite_path)
-
-    qdrant_url = _env_value(env, "MNEMOS_QDRANT_URL")
-    if qdrant_url is not None:
-        _set_nested(overrides, ("storage", "qdrant_url"), qdrant_url)
-
-    qdrant_path = _env_value(env, "MNEMOS_QDRANT_PATH")
-    if qdrant_path is not None:
-        _set_nested(overrides, ("storage", "qdrant_path"), qdrant_path)
-
-    qdrant_collection = _env_value(env, "MNEMOS_QDRANT_COLLECTION")
-    if qdrant_collection is not None:
-        _set_nested(overrides, ("storage", "qdrant_collection"), qdrant_collection)
-
-    qdrant_vector_size = _env_int(
-        env,
-        "MNEMOS_QDRANT_VECTOR_SIZE",
-        aliases=("MNEMOS_EMBEDDING_DIM",),
-    )
-    if qdrant_vector_size is not None:
-        _set_nested(overrides, ("storage", "qdrant_vector_size"), qdrant_vector_size)
-
-    qdrant_api_key = _env_value(env, "MNEMOS_QDRANT_API_KEY")
-    if qdrant_api_key is not None:
-        _set_nested(overrides, ("providers", "qdrant", "api_key"), qdrant_api_key)
-
-    neo4j_uri = _env_value(env, "MNEMOS_NEO4J_URI")
-    if neo4j_uri is not None:
-        _set_nested(overrides, ("storage", "neo4j_uri"), neo4j_uri)
-
-    neo4j_database = _env_value(env, "MNEMOS_NEO4J_DATABASE")
-    if neo4j_database is not None:
-        _set_nested(overrides, ("storage", "neo4j_database"), neo4j_database)
-
-    neo4j_label = _env_value(env, "MNEMOS_NEO4J_LABEL")
-    if neo4j_label is not None:
-        _set_nested(overrides, ("storage", "neo4j_label"), neo4j_label)
-
-    neo4j_username = _env_value(env, "MNEMOS_NEO4J_USERNAME")
-    if neo4j_username is not None:
-        _set_nested(overrides, ("providers", "neo4j", "username"), neo4j_username)
-
-    neo4j_password = _env_value(env, "MNEMOS_NEO4J_PASSWORD")
-    if neo4j_password is not None:
-        _set_nested(overrides, ("providers", "neo4j", "password"), neo4j_password)
 
     ollama_url = _env_value(env, "MNEMOS_OLLAMA_URL")
     if ollama_url is not None:
@@ -398,19 +351,6 @@ class OllamaProviderSettings(BaseModel):
     base_url: str = "http://localhost:11434"
 
 
-class QdrantProviderSettings(BaseModel):
-    model_config = ConfigDict(extra="ignore")
-
-    api_key: str | None = None
-
-
-class Neo4jProviderSettings(BaseModel):
-    model_config = ConfigDict(extra="ignore")
-
-    username: str | None = None
-    password: str | None = None
-
-
 class ProvidersSettings(BaseModel):
     model_config = ConfigDict(extra="ignore")
 
@@ -430,8 +370,6 @@ class ProvidersSettings(BaseModel):
         )
     )
     ollama: OllamaProviderSettings = Field(default_factory=OllamaProviderSettings)
-    qdrant: QdrantProviderSettings = Field(default_factory=QdrantProviderSettings)
-    neo4j: Neo4jProviderSettings = Field(default_factory=Neo4jProviderSettings)
 
 
 class LLMSettings(BaseModel):
@@ -454,13 +392,6 @@ class StorageSettings(BaseModel):
 
     type: Literal["memory", "sqlite"] = "sqlite"
     sqlite_path: str = "mnemos_memory.db"
-    qdrant_url: str = "http://localhost:6333"
-    qdrant_path: str | None = None
-    qdrant_collection: str = "mnemos_memory"
-    qdrant_vector_size: int | None = None
-    neo4j_uri: str = "bolt://localhost:7687"
-    neo4j_database: str = "neo4j"
-    neo4j_label: str = "MnemosMemoryChunk"
 
 
 class RuntimeSettings(BaseModel):
@@ -516,8 +447,6 @@ class AppSettings(BaseModel):
             return self.providers.openclaw.api_key or self.providers.openai.api_key
         if provider == "openrouter":
             return self.providers.openrouter.api_key
-        if provider == "qdrant":
-            return self.providers.qdrant.api_key
         return None
 
     def base_url_for(self, provider: str) -> str | None:

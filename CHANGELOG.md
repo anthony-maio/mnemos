@@ -2,6 +2,18 @@
 
 ## Unreleased
 
+## 0.6.0 — 2026-03-31
+
+Beta update focused on making SQLite the only shipped persistence path and exposing recall-gated plasticity on the live runtime.
+
+### Changed
+- removed dead Qdrant and Neo4j runtime code, migration flags, profile docs, and backend packaging extras so Mnemos now has one persistent storage story: SQLite
+- simplified `mnemos-cli migrate-store` to SQLite-to-SQLite copy and upgrade workflows
+- updated MCP, skill, and profile docs to describe the shipped local database path without optional backend branching
+
+### Added
+- optional recall-gated plasticity during sleep consolidation, with config knobs, MCP surfacing, and regression coverage
+
 ## 0.3.1 — 2026-03-15
 
 Beta update focused on unifying Mnemos around a single local SQLite backend and validating retrieval quality on that shipped path.

@@ -98,7 +98,7 @@ def test_plugin_wrapper_defaults_embedding_provider_from_llm(monkeypatch) -> Non
 def test_plugin_wrapper_required_extras_are_fixed_to_mcp(monkeypatch) -> None:
     wrapper = _load_plugin_wrapper()
 
-    monkeypatch.setenv("MNEMOS_STORE_TYPE", "qdrant")
+    monkeypatch.setenv("MNEMOS_STORE_TYPE", "sqlite")
     extras = wrapper._required_install_extras(dict(os.environ))
 
     assert extras == ("mcp",)

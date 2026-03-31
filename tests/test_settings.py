@@ -128,6 +128,20 @@ def test_load_settings_rejects_legacy_store_types(tmp_path: Path) -> None:
         )
 
 
+def test_load_settings_exposes_only_live_storage_surfaces(tmp_path: Path) -> None:
+    resolved = load_settings(env={}, cwd=tmp_path)
+
+    assert not hasattr(resolved.settings.storage, "qdrant_url")
+    assert not hasattr(resolved.settings.storage, "qdrant_path")
+    assert not hasattr(resolved.settings.storage, "qdrant_collection")
+    assert not hasattr(resolved.settings.storage, "qdrant_vector_size")
+    assert not hasattr(resolved.settings.storage, "neo4j_uri")
+    assert not hasattr(resolved.settings.storage, "neo4j_database")
+    assert not hasattr(resolved.settings.storage, "neo4j_label")
+    assert not hasattr(resolved.settings.providers, "qdrant")
+    assert not hasattr(resolved.settings.providers, "neo4j")
+
+
 def test_project_config_secrets_are_ignored(tmp_path: Path) -> None:
     global_config = tmp_path / "global.toml"
     global_config.write_text(

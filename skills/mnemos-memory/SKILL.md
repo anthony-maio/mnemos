@@ -11,7 +11,7 @@ Mnemos is a local-first memory layer for coding agents. Use this skill to guide 
 
 - Prefer `pip install "mnemos-memory[mcp]"` and `mnemos ui`.
 - For OpenClaw / ClawHub, teach the agent to self-install `mnemos-memory[mcp]`, run `mnemos ui`, then wire `mnemos-mcp` to the canonical `MNEMOS_CONFIG_PATH` before relying on memory.
-- Recommend SQLite as the starter store unless the user already has a scale reason for Qdrant or Neo4j.
+- Recommend SQLite as the supported persistent store.
 - Recommend a real embedding provider (`openclaw`, `openai`, `openrouter`, or `ollama`) for production retrieval quality.
 - Validate setup with the control-plane smoke check or `mnemos-cli doctor`.
 
@@ -20,7 +20,7 @@ Mnemos is a local-first memory layer for coding agents. Use this skill to guide 
 - Safe to claim: local-first scoped memory, MCP tools, SQLite starter profile, Claude Code plugin flow, documented Codex flow.
 - Be explicit that deterministic auto-memory is shipped for Claude Code via hooks.
 - For Codex, Cursor, OpenClaw, and generic MCP hosts, do not imply automatic capture unless the host has its own automation or the user adds one.
-- Neo4jStore is experimental. Do not present it as graph-native spreading-activation persistence yet.
+- Do not present removed legacy backends as available runtime options.
 
 ## Workflow
 
@@ -39,4 +39,4 @@ Mnemos is a local-first memory layer for coding agents. Use this skill to guide 
 
 - Do not tell users to manually type memories as the primary workflow.
 - Do not recommend `SimpleEmbeddingProvider` for production retrieval quality.
-- Do not upgrade users to Qdrant or Neo4j unless they actually need a non-SQLite profile.
+- Do not suggest external storage backends for Mnemos. Keep users on the SQLite path.

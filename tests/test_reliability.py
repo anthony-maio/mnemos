@@ -25,8 +25,8 @@ def test_call_with_retry_retries_transient_then_succeeds() -> None:
         return "ok"
 
     result = call_with_retry(
-        provider="qdrant",
-        operation="search",
+        provider="sqlite",
+        operation="store",
         fn=flaky,
         policy=RetryPolicy(max_attempts=3, initial_backoff_seconds=0.0, jitter_ratio=0.0),
     )

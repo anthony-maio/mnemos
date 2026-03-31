@@ -14,6 +14,11 @@ Neuroscience Basis:
        semantic structure during sleep consolidation, then stores
        abstracted knowledge long-term
 
+    Mnemos can optionally add recall-gated plasticity to this step:
+    a candidate semantic memory is only consolidated if it can be strongly
+    re-instated from multiple episodic traces, approximating the idea that
+    long-term plasticity should follow reliable short-term recall.
+
     The hippocampal representation is pruned after successful transfer —
     the detailed episodic trace is 'forgotten' in favor of the generalized
     semantic representation. This is why we remember *what happened* but
@@ -27,6 +32,8 @@ Mnemos Implementation:
     An episodic buffer holds raw Interactions from the current session.
     During consolidation (triggered by inactivity or schedule):
     - The LLM is asked to extract permanent facts and user preferences
+    - Optional recall gating checks whether those facts are supported by
+      repeated episodic traces before they can alter long-term memory
     - Semantic MemoryChunks are created from extracted facts
     - Chunks are stored in long-term store
     - The episodic buffer is cleared (garbage collection)
@@ -45,7 +52,12 @@ from typing import Any
 from ..config import SleepConfig
 from ..memory_safety import MemoryWriteFirewall
 from ..types import ConsolidationResult, Interaction, MemoryChunk
-from ..utils.embeddings import EmbeddingProvider, embed_text_async
+from ..utils.embeddings import (
+    EmbeddingProvider,
+    cosine_similarity,
+    embed_batch_async,
+    embed_text_async,
+)
 from ..utils.llm import LLMProvider
 from ..utils.storage import MemoryStore
 
@@ -98,6 +110,8 @@ class SleepDaemon:
         self._total_consolidations: int = 0
         self._total_facts_extracted: int = 0
         self._total_chunks_pruned: int = 0
+        self._total_recall_filtered_facts: int = 0
+        self._total_recall_supported_facts: int = 0
         # Daemon task reference
         self._daemon_task: asyncio.Task[Any] | None = None
 
@@ -154,6 +168,39 @@ class SleepDaemon:
             lines.append(f"[{i}] {ts} {ep.role.upper()}: {ep.content}")
         return "\n".join(lines)
 
+    async def _measure_recall_support(
+        self,
+        fact: str,
+        episodes: list[Interaction],
+        embedder: EmbeddingProvider,
+    ) -> tuple[int, float]:
+        """
+        Estimate how strongly an extracted fact can be recalled from episodic traces.
+
+        We approximate recall-gated plasticity by embedding the candidate fact
+        alongside the current episodic window and counting how many episodes
+        reinstate that fact above a configurable similarity threshold.
+        """
+        episode_texts = [episode.content.strip() for episode in episodes if episode.content.strip()]
+        if not fact.strip() or not episode_texts:
+            return 0, 0.0
+
+        embeddings = await embed_batch_async(embedder, [fact, *episode_texts])
+        fact_embedding = embeddings[0]
+        similarities = [
+            cosine_similarity(fact_embedding, episode_embedding)
+            for episode_embedding in embeddings[1:]
+        ]
+        supporting = [
+            similarity
+            for similarity in similarities
+            if similarity >= self._config.recall_similarity_threshold
+        ]
+        if not supporting:
+            return 0, max(similarities, default=0.0)
+        mean_support = sum(supporting) / len(supporting)
+        return len(supporting), mean_support
+
     async def consolidate(
         self,
         llm_provider: LLMProvider,
@@ -188,10 +235,12 @@ class SleepDaemon:
                 duration_seconds=0.0,
             )
 
-        all_facts: list[str] = []
+        stored_facts: list[str] = []
         tools_generated: list[str] = []
         total_pruned = 0
         successful_partitions = 0
+        recall_filtered = 0
+        recall_supported = 0
 
         for partition_key, buffered_episodes in list(self._episodic_buffer.items()):
             if not buffered_episodes:
@@ -213,6 +262,17 @@ class SleepDaemon:
             for fact in facts:
                 if not fact.strip():
                     continue
+                recall_supporting_episodes = 0
+                recall_support_score = 0.0
+                if self._config.recall_gated_plasticity_enabled:
+                    recall_supporting_episodes, recall_support_score = (
+                        await self._measure_recall_support(fact, episodes, embedder)
+                    )
+                    if recall_supporting_episodes < self._config.recall_min_supporting_episodes:
+                        recall_filtered += 1
+                        continue
+                    recall_supported += 1
+
                 safe_fact = fact
                 redactions: list[str] = []
                 if self._write_firewall is not None:
@@ -229,6 +289,15 @@ class SleepDaemon:
                     "safety_redactions": redactions,
                     "scope": scope,
                 }
+                if self._config.recall_gated_plasticity_enabled:
+                    metadata["recall_supporting_episodes"] = recall_supporting_episodes
+                    metadata["recall_support_score"] = round(recall_support_score, 4)
+                    metadata["recall_similarity_threshold"] = (
+                        self._config.recall_similarity_threshold
+                    )
+                    metadata["recall_min_supporting_episodes"] = (
+                        self._config.recall_min_supporting_episodes
+                    )
                 if scope_id is not None:
                     metadata["scope_id"] = scope_id
 
@@ -240,6 +309,7 @@ class SleepDaemon:
                         salience=0.7,  # Consolidated facts have high salience
                     )
                 )
+                stored_facts.append(safe_fact)
 
             for chunk in semantic_chunks:
                 self._store.store(chunk)
@@ -249,7 +319,6 @@ class SleepDaemon:
             else:
                 self._episodic_buffer[partition_key] = buffered_episodes[:-episodes_to_prune]
 
-            all_facts.extend(facts)
             total_pruned += episodes_to_prune
             successful_partitions += 1
 
@@ -261,11 +330,13 @@ class SleepDaemon:
         if successful_partitions > 0:
             self._last_consolidation = time.time()
             self._total_consolidations += successful_partitions
-            self._total_facts_extracted += len(all_facts)
+            self._total_facts_extracted += len(stored_facts)
             self._total_chunks_pruned += total_pruned
+            self._total_recall_filtered_facts += recall_filtered
+            self._total_recall_supported_facts += recall_supported
 
         return ConsolidationResult(
-            facts_extracted=all_facts,
+            facts_extracted=stored_facts,
             chunks_pruned=total_pruned,
             tools_generated=tools_generated,
             duration_seconds=time.time() - start_time,
@@ -411,6 +482,11 @@ class SleepDaemon:
             "total_consolidations": self._total_consolidations,
             "total_facts_extracted": self._total_facts_extracted,
             "total_chunks_pruned": self._total_chunks_pruned,
+            "recall_gated_plasticity_enabled": self._config.recall_gated_plasticity_enabled,
+            "recall_min_supporting_episodes": self._config.recall_min_supporting_episodes,
+            "recall_similarity_threshold": self._config.recall_similarity_threshold,
+            "total_recall_filtered_facts": self._total_recall_filtered_facts,
+            "total_recall_supported_facts": self._total_recall_supported_facts,
             "seconds_since_last_consolidation": round(time_since_last, 1),
             "should_consolidate_now": self.should_consolidate(),
             "proceduralization_enabled": self._config.enable_proceduralization,

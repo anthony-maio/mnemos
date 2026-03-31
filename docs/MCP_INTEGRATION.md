@@ -347,11 +347,11 @@ mnemos-cli doctor --chunk-threshold 5000 --latency-p95-threshold-ms 250 --observ
 # One-command profile generation
 mnemos-cli profile default --format dotenv --write .mnemos.profile.env
 
-# Dry-run migration into SQLite
-mnemos-cli migrate-store --source-store qdrant --target-store sqlite --dry-run
+# Dry-run a SQLite copy or upgrade path
+mnemos-cli migrate-store --source-store sqlite --source-sqlite-path .mnemos/memory.db --target-store sqlite --target-sqlite-path .mnemos/memory-v2.db --dry-run
 
-# Execute migration into SQLite
-mnemos-cli migrate-store --source-store qdrant --target-store sqlite
+# Execute the SQLite copy
+mnemos-cli migrate-store --source-store sqlite --source-sqlite-path .mnemos/memory.db --target-store sqlite --target-sqlite-path .mnemos/memory-v2.db
 
 # Generate a Cursor rule for soft-auto memory use
 mnemos-cli antigravity cursor --target cursor-rule --write .cursor/rules/mnemos-memory.mdc

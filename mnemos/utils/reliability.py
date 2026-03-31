@@ -64,7 +64,7 @@ def is_retryable_http_exception(exc: Exception) -> bool:
     return False
 
 
-def is_retryable_qdrant_exception(exc: Exception) -> bool:
+def is_retryable_transient_exception(exc: Exception) -> bool:
     text = str(exc).lower()
     retry_markers = (
         "timeout",
@@ -94,7 +94,7 @@ def _wrap_provider_exception(provider: str, operation: str, exc: Exception) -> M
     if isinstance(exc, (httpx.TimeoutException, httpx.ConnectError, httpx.RemoteProtocolError)):
         return MnemosTransientError(detail)
 
-    if is_retryable_qdrant_exception(exc):
+    if is_retryable_transient_exception(exc):
         return MnemosTransientError(detail)
 
     return MnemosExternalServiceError(detail)
@@ -137,7 +137,7 @@ def call_with_retry(
 ) -> T:
     """Execute a synchronous call with retries and standardized error mapping."""
     effective_policy = policy or RetryPolicy()
-    retry_predicate = should_retry or is_retryable_qdrant_exception
+    retry_predicate = should_retry or is_retryable_transient_exception
 
     last_exception: Exception | None = None
     for attempt in range(1, effective_policy.max_attempts + 1):

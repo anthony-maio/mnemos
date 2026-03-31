@@ -105,6 +105,29 @@ def test_health_does_not_recommend_backend_upgrade_when_sqlite_threshold_exceede
     assert not any("qdrant" in rec.lower() for rec in report["recommendations"])
 
 
+def test_health_ignores_legacy_qdrant_threshold_alias(
+    monkeypatch: pytest.MonkeyPatch, tmp_path: Path
+) -> None:
+    db_path = tmp_path / "mnemos_alias_threshold.db"
+    store = SQLiteStore(db_path=str(db_path))
+    try:
+        store.store(MemoryChunk(content="example memory", embedding=[0.1, 0.2, 0.3]))
+    finally:
+        store.close()
+
+    monkeypatch.setenv("MNEMOS_STORE_TYPE", "sqlite")
+    monkeypatch.setenv("MNEMOS_SQLITE_PATH", str(db_path))
+    monkeypatch.setenv("MNEMOS_LLM_PROVIDER", "openclaw")
+    monkeypatch.setenv("MNEMOS_OPENCLAW_API_KEY", "test-key")
+    monkeypatch.setenv("MNEMOS_EMBEDDING_PROVIDER", "openclaw")
+    monkeypatch.delenv("MNEMOS_DOCTOR_CHUNK_THRESHOLD", raising=False)
+    monkeypatch.setenv("MNEMOS_DOCTOR_QDRANT_CHUNK_THRESHOLD", "1")
+
+    report = run_health_checks()
+
+    assert report["upgrade_signals"]["threshold_exceeded"] is False
+
+
 def test_health_reports_legacy_unscoped_sqlite_chunks(
     monkeypatch: pytest.MonkeyPatch, tmp_path: Path
 ) -> None:

@@ -13,7 +13,7 @@ What it does:
 Publish command:
 
 ```bash
-clawhub publish ./skills/mnemos-memory --slug mnemos-memory --name "Mnemos Memory" --version 0.3.0 --tags latest
+clawhub publish ./skills/mnemos-memory --slug mnemos-memory --name "Mnemos Memory" --version 0.6.0 --tags latest
 ```
 
 Positioning:

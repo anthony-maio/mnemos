@@ -16,7 +16,8 @@ that mirrors the full human memory cycle:
              → Ranked results
 
     Maintenance path (consolidate):
-        Idle trigger → SleepDaemon (hippocampal-neocortical transfer)
+        Idle trigger → SleepDaemon (hippocampal-neocortical transfer,
+        optionally recall-gated before semantic writes)
 
 This is the main entry point for library consumers. Instantiate MnemosEngine
 and call process()/retrieve()/consolidate() to use the full pipeline.

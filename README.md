@@ -116,6 +116,7 @@ See the side-by-side writeup at [docs/demos/claude-code-continuity.md](docs/demo
 Most agent memory tools either keep too much raw transcript or append contradictory facts forever. Mnemos uses a different design:
 
 - **Reconstructive, not reproductive** — every recall rewrites the trace with current context
+- **Recall-gated plasticity** — long-term consolidation prefers facts that can be re-instated from multiple episodic traces
 - **Surprisal-gated** — the brain only encodes events that violate predictions
 - **State-dependent** — fear retrieves fear, urgency retrieves crisis solutions
 - **Lossy by design** — sleep compresses episodic logs into semantic abstractions and discards the rest
@@ -230,6 +231,8 @@ from mnemos.types import CognitiveState
 > *Inspired by the two-stage memory model: the hippocampus stores fast, raw episodic traces; slow-wave sleep replays them to the neocortex, extracts semantic knowledge, and prunes the originals.*
 
 Every interaction enters the episodic buffer regardless of the surprisal gate — the "hippocampus." When idle (configurable interval), `SleepDaemon` replays the buffer through an LLM consolidation pass, extracting permanent facts and user preferences. These are written as semantic `MemoryChunk` objects to long-term storage. The raw episodic buffer is then pruned.
+
+When recall-gated plasticity is enabled, extracted facts are not consolidated just because the LLM proposed them. A candidate fact must also be strongly re-instated by multiple episodic traces in the current buffer before it is allowed to update semantic memory. This makes consolidation more selective in noisy sessions and gives Mnemos a practical analogue of recall-gated consolidation.
 
 Optionally, the daemon identifies repeated reasoning patterns across sessions and generates Python tool code to automate them — declarative memory crystallizing into procedural reflex.
 
@@ -424,13 +427,10 @@ mnemos-cli profile default --format dotenv --write .mnemos.profile.env
 Store migration examples:
 
 ```bash
-# Dry-run old Qdrant memories into a new SQLite database
-mnemos-cli migrate-store --source-store qdrant --target-store sqlite --target-sqlite-path .mnemos/memory.db --dry-run
+# Dry-run copying one SQLite database into another
+mnemos-cli migrate-store --source-store sqlite --source-sqlite-path .mnemos/memory.db --target-store sqlite --target-sqlite-path .mnemos/memory-v2.db --dry-run
 
-# Execute Qdrant -> SQLite migration
-mnemos-cli migrate-store --source-store qdrant --target-store sqlite --target-sqlite-path .mnemos/memory.db
-
-# Copy one SQLite database into another SQLite path
+# Execute the SQLite copy or schema-upgrade move
 mnemos-cli migrate-store --source-store sqlite --source-sqlite-path .mnemos/memory.db --target-store sqlite --target-sqlite-path .mnemos/memory-v2.db
 ```
 
@@ -628,6 +628,7 @@ Governance controls for retention and growth limits:
   SleepDaemon
       │
       ├──▶ LLM: extract permanent facts from episodic buffer
+      ├──▶ (optional) recall gate: require multi-episode support before LTM write
       ├──▶ Write semantic MemoryChunks to long-term store
       ├──▶ Add new nodes to SpreadingActivation graph
       ├──▶ Prune raw episodic buffer
@@ -669,6 +670,9 @@ engine = MnemosEngine(config=config)
 | `SleepConfig` | `consolidation_interval_seconds` | `3600` | Minimum idle time before consolidation triggers. |
 | `SleepConfig` | `min_episodes_before_consolidation` | `10` | Minimum episodic buffer depth before consolidation. |
 | `SleepConfig` | `enable_proceduralization` | `False` | Generate Python tools from repeated reasoning patterns. |
+| `SleepConfig` | `recall_gated_plasticity_enabled` | `False` | Require episodic recall support before a consolidated fact can alter long-term memory. |
+| `SleepConfig` | `recall_min_supporting_episodes` | `2` | Minimum number of supporting episodic traces required when recall gating is enabled. |
+| `SleepConfig` | `recall_similarity_threshold` | `0.82` | Minimum episodic similarity needed for a trace to count as recall support. |
 | `SpreadingConfig` | `initial_energy` | `1.0` | Activation energy injected at seed node. |
 | `SpreadingConfig` | `decay_rate` | `0.2` | Energy lost per graph hop (20%). |
 | `SpreadingConfig` | `activation_threshold` | `0.3` | Minimum energy for a node to be included in results. |
@@ -822,7 +826,7 @@ If you use mnemos in research, please cite:
   author       = {Maio, Anthony},
   title        = {mnemos: Biomimetic Memory Architectures for Large Language Models},
   year         = {2026},
-  version      = {0.3.0},
+  version      = {0.6.0},
   url          = {https://github.com/anthony-maio/mnemos},
   note         = {Implements surprisal-triggered encoding, memory reconsolidation,
                   affective routing, hippocampal-neocortical consolidation, and

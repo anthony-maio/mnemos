@@ -29,7 +29,7 @@ Mnemos is MCP-protocol-first and host-agnostic. The compatibility contract is de
   - startup emits a structured JSON log event (`mnemos.startup`)
   - degraded profiles emit `mnemos.degraded_mode`
 - Reliability:
-  - OpenAI/OpenClaw and Qdrant calls use shared retry/backoff policy
+  - OpenAI/OpenClaw calls use shared retry/backoff policy
   - provider/storage failures are emitted as structured JSON events (`mnemos.provider_failure`)
 - Retrieval observability:
   - every retrieval emits `mnemos.retrieval_latency` with `latency_ms` and `result_count`

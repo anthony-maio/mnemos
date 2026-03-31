@@ -45,12 +45,12 @@ from .runtime import (
 )
 from .types import Interaction, RetrievalFeedbackEvent
 from .utils.llm import MockLLMProvider, LLMProvider
-from .utils.storage import Neo4jStore, QdrantStore, SQLiteStore
+from .utils.storage import SQLiteStore
 
 PROFILE_CHOICES = ("default",)
 VALID_SCOPES = ("project", "workspace", "global")
 AUDIT_SCOPES = ("all", "project", "workspace", "global")
-LEGACY_SOURCE_STORE_CHOICES = ("sqlite", "qdrant", "neo4j")
+MIGRATION_SOURCE_STORE_CHOICES = ("sqlite",)
 MIGRATION_TARGET_CHOICES = ("sqlite",)
 FEEDBACK_EVENT_CHOICES = ("helpful", "not_helpful", "missed_memory")
 MemoryAction = Literal["allow", "redact", "block"]
@@ -279,35 +279,9 @@ def _build_store_for_migration(
     *,
     store_type: str,
     sqlite_path: str = "",
-    qdrant_path: str = "",
-    qdrant_url: str = "",
-    qdrant_collection: str = "",
-    neo4j_uri: str = "",
-    neo4j_database: str = "",
-    neo4j_label: str = "",
-    neo4j_username: str = "",
-    neo4j_password: str = "",
 ) -> Any:
     if store_type == "sqlite":
         return SQLiteStore(db_path=sqlite_path or "mnemos_memory.db")
-    if store_type == "qdrant":
-        return QdrantStore(
-            path=qdrant_path or None,
-            url=qdrant_url or None,
-            collection_name=qdrant_collection or "mnemos_memory",
-        )
-    if store_type == "neo4j":
-        if not neo4j_username or not neo4j_password:
-            raise ValueError(
-                "MNEMOS_NEO4J_USERNAME and MNEMOS_NEO4J_PASSWORD are required for legacy Neo4j import."
-            )
-        return Neo4jStore(
-            uri=neo4j_uri or "bolt://localhost:7687",
-            username=neo4j_username,
-            password=neo4j_password,
-            database=neo4j_database or "neo4j",
-            label=neo4j_label or "MnemosMemoryChunk",
-        )
     raise ValueError(f"Unsupported migration store: {store_type!r}")
 
 
@@ -762,31 +736,20 @@ async def _cmd_profile(args: argparse.Namespace) -> None:
 
 
 async def _cmd_migrate_store(args: argparse.Namespace) -> None:
-    if args.source_store not in LEGACY_SOURCE_STORE_CHOICES:
+    if args.source_store not in MIGRATION_SOURCE_STORE_CHOICES:
         raise ValueError(f"Unsupported source store: {args.source_store!r}")
     if args.target_store not in MIGRATION_TARGET_CHOICES:
         raise ValueError(f"Unsupported target store: {args.target_store!r}")
-    if args.target_store != "sqlite":
-        raise ValueError("Legacy migration targets must use the unified sqlite backend.")
-    if args.source_store == "sqlite" and args.target_store == "sqlite":
-        if not args.source_sqlite_path or not args.target_sqlite_path:
-            raise ValueError(
-                "SQLite-to-SQLite migration requires both --source-sqlite-path and --target-sqlite-path."
-            )
-        if Path(args.source_sqlite_path).resolve() == Path(args.target_sqlite_path).resolve():
-            raise ValueError("Source and target SQLite paths must differ.")
+    if not args.source_sqlite_path or not args.target_sqlite_path:
+        raise ValueError(
+            "SQLite migration requires both --source-sqlite-path and --target-sqlite-path."
+        )
+    if Path(args.source_sqlite_path).resolve() == Path(args.target_sqlite_path).resolve():
+        raise ValueError("Source and target SQLite paths must differ.")
 
     source_store = _build_store_for_migration(
         store_type=args.source_store,
         sqlite_path=args.source_sqlite_path,
-        qdrant_path=args.source_qdrant_path,
-        qdrant_url=args.source_qdrant_url,
-        qdrant_collection=args.source_qdrant_collection,
-        neo4j_uri=args.source_neo4j_uri,
-        neo4j_database=args.source_neo4j_database,
-        neo4j_label=args.source_neo4j_label,
-        neo4j_username=args.source_neo4j_username,
-        neo4j_password=args.source_neo4j_password,
     )
     target_store = _build_store_for_migration(
         store_type=args.target_store,
@@ -1134,19 +1097,11 @@ def main() -> None:
 
     sp_migrate = subparsers.add_parser(
         "migrate-store",
-        help="Copy legacy memories into the unified SQLite backend.",
+        help="Copy memories between SQLite databases for upgrades or path moves.",
     )
-    sp_migrate.add_argument("--source-store", required=True, choices=LEGACY_SOURCE_STORE_CHOICES)
+    sp_migrate.add_argument("--source-store", required=True, choices=MIGRATION_SOURCE_STORE_CHOICES)
     sp_migrate.add_argument("--target-store", required=True, choices=MIGRATION_TARGET_CHOICES)
     sp_migrate.add_argument("--source-sqlite-path", default="")
-    sp_migrate.add_argument("--source-qdrant-path", default="")
-    sp_migrate.add_argument("--source-qdrant-url", default="")
-    sp_migrate.add_argument("--source-qdrant-collection", default="")
-    sp_migrate.add_argument("--source-neo4j-uri", default="")
-    sp_migrate.add_argument("--source-neo4j-database", default="")
-    sp_migrate.add_argument("--source-neo4j-label", default="")
-    sp_migrate.add_argument("--source-neo4j-username", default="")
-    sp_migrate.add_argument("--source-neo4j-password", default="")
     sp_migrate.add_argument("--target-sqlite-path", default="")
     sp_migrate.add_argument("--dry-run", action="store_true")
 

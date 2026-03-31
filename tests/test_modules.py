@@ -613,6 +613,58 @@ class TestSleepDaemon:
         for chunk in all_chunks:
             assert chunk.salience == 0.7
 
+    @pytest.mark.asyncio
+    async def test_consolidate_recall_gate_blocks_singleton_fact(self, store, embedder):
+        """Recall-gated consolidation should skip facts not supported by repeated episodes."""
+        llm = MockLLMProvider(
+            responses={"extract permanent facts": "1. Team uses uv for Python tooling."}
+        )
+        daemon = SleepDaemon(
+            store=store,
+            config=SleepConfig(
+                min_episodes_before_consolidation=1,
+                recall_gated_plasticity_enabled=True,
+                recall_min_supporting_episodes=2,
+                recall_similarity_threshold=0.999,
+            ),
+        )
+
+        daemon.add_episode(make_interaction("Team uses uv for Python tooling."))
+        daemon.add_episode(make_interaction("We reviewed release notes today."))
+
+        result = await daemon.consolidate(llm, embedder)
+
+        assert result.facts_extracted == []
+        assert store.get_all() == []
+
+    @pytest.mark.asyncio
+    async def test_consolidate_recall_gate_keeps_repeated_fact(self, store, embedder):
+        """Recall-gated consolidation should retain facts supported by multiple episodes."""
+        llm = MockLLMProvider(
+            responses={"extract permanent facts": "1. Team uses uv for Python tooling."}
+        )
+        daemon = SleepDaemon(
+            store=store,
+            config=SleepConfig(
+                min_episodes_before_consolidation=1,
+                recall_gated_plasticity_enabled=True,
+                recall_min_supporting_episodes=2,
+                recall_similarity_threshold=0.999,
+            ),
+        )
+
+        daemon.add_episode(make_interaction("Team uses uv for Python tooling."))
+        daemon.add_episode(make_interaction("Team uses uv for Python tooling."))
+        daemon.add_episode(make_interaction("We reviewed release notes today."))
+
+        result = await daemon.consolidate(llm, embedder)
+
+        assert result.facts_extracted == ["Team uses uv for Python tooling."]
+        all_chunks = store.get_all()
+        assert len(all_chunks) == 1
+        assert all_chunks[0].content == "Team uses uv for Python tooling."
+        assert all_chunks[0].metadata["recall_supporting_episodes"] == 2
+
 
 # ─── SpreadingActivation tests ────────────────────────────────────────────────
 

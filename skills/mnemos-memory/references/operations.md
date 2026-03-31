@@ -18,9 +18,8 @@ Hard auto-capture remains host-dependent. Do not promise it for Codex, Cursor, O
 
 ## Storage guidance
 
-- SQLite: default starter profile, simplest persistent setup.
-- Qdrant: use when dataset size or latency justifies a vector database.
-- Neo4jStore: experimental persistence backend for Neo4j environments. It does not yet make spreading activation graph-native.
+- SQLite: the shipped persistent store and the recommended setup.
+- `sqlite-vec` and FTS5 already cover semantic and full-text retrieval inside the same local database.
 
 ## Retrieval quality guidance
 
@@ -29,7 +28,7 @@ Hard auto-capture remains host-dependent. Do not promise it for Codex, Cursor, O
 - If retrieval quality looks poor, check:
   - embedding provider choice
   - scope and `scope_id`
-  - whether the right store is configured
+  - whether the expected SQLite database path is configured
   - whether the expected memories were ever ingested
 
 ## Inspection and troubleshooting
