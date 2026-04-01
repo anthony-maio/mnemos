@@ -29,6 +29,17 @@ Use this checklist before tagging a release candidate or making category-definin
   - provider/storage failures (`mnemos.provider_failure`)
   - retrieval latency (`mnemos.retrieval_latency`)
 
+## PyPI Publish Approval
+- Publish to PyPI only through the GitHub Actions release workflow guarded by the `mnemos-release` environment.
+- Before approving `mnemos-release`, verify:
+  - the Git tag points at the intended release commit
+  - `pyproject.toml` and `mnemos/__init__.py` match the release version
+  - `CHANGELOG.md` and GitHub release notes match the shipped change set
+  - `black --check .`, `mypy .`, and `pytest -q` are green for that commit
+  - the built artifacts for that version were validated locally when needed (`python -m build`, `python -m twine check dist/*`)
+- Cancel stale waiting PyPI publish runs before approving a new one.
+- Treat direct `twine upload` as emergency-only. If used, cancel the waiting GitHub publish run for the same version so the environment does not later re-publish or fail on duplicates.
+
 ## Replacement Claim Gate
 - Claim-driving benchmark pack satisfies:
   - `gates.production_replacement.passed == true`
