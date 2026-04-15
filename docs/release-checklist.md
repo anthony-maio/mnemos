@@ -50,3 +50,24 @@ Use this checklist before tagging a release candidate or making category-definin
 ## Pilot Gate
 - At least two external pilot users/projects complete 2 weeks of daily usage
 - Zero blocker incidents for memory corruption, scope leakage, or startup failure
+
+## Product Hunt Readiness
+- If launching on Product Hunt, confirm the pilot gate is closed or explicitly waived.
+- Product Hunt traffic destination is live and matches the shipped install path:
+  - `pip install "mnemos-memory[mcp]"`
+  - `mnemos ui`
+  - `Starter SQLite`
+  - smoke check
+- Website, README, and [docs/client-compatibility-matrix.md](client-compatibility-matrix.md) agree on host posture:
+  - Claude Code is the strongest current path
+  - Codex and Cursor are documented but secondary
+- Listing asset pack is complete:
+  - square logo or thumbnail
+  - at least three gallery images
+  - short demo video
+- Product Hunt copy is finalized in [docs/product-hunt-launch.md](product-hunt-launch.md):
+  - tagline
+  - short description
+  - first comment
+  - launch-day playbook
+- Launch outreach asks for feedback and discussion, not coordinated upvotes.

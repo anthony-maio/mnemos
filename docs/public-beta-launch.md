@@ -60,6 +60,7 @@ Key docs:
 
 - [README.md](../README.md)
 - [docs/release-checklist.md](release-checklist.md)
+- [docs/product-hunt-launch.md](product-hunt-launch.md)
 - [docs/client-compatibility-matrix.md](client-compatibility-matrix.md)
 - [docs/codex.md](codex.md)
 - [docs/public-release-package.md](public-release-package.md)
@@ -159,7 +160,7 @@ Week 2:
 
 ### What not to do
 
-- do not launch on Product Hunt yet
+- do not launch on Product Hunt before the pilot gate closes; once it does, use [docs/product-hunt-launch.md](product-hunt-launch.md)
 - do not lead with “we replace ClaudeMem”
 - do not sell team or hosted use cases
 - do not claim broad production readiness before the pilot gate closes

@@ -10,7 +10,7 @@ Use one of these labels:
 - release candidate
 - early production evaluation for solo coding-agent workflows
 
-Do not frame Mnemos as the definitive replacement for every agent memory tool yet. The software is credible enough for public adoption, but the pilot gate is still open.
+Do not frame Mnemos as the definitive replacement for every agent memory tool yet. The software is credible enough for public adoption, but stronger public launches should still clear the pilot gate defined below.
 
 ## Approved Short Description
 
@@ -43,6 +43,7 @@ Every release post, repo announcement, or launch note should point to:
 
 - [README.md](../README.md)
 - [docs/public-beta-launch.md](public-beta-launch.md)
+- [docs/product-hunt-launch.md](product-hunt-launch.md)
 - [docs/release-checklist.md](release-checklist.md)
 - [docs/client-compatibility-matrix.md](client-compatibility-matrix.md)
 - [docs/codex.md](codex.md)
@@ -67,9 +68,9 @@ Ask users to include:
 - store, LLM, and embedding provider details
 - exact scope and `scope_id` when relevant
 
-## Pilot Gate Still Open
+## Pilot Gate
 
-Before stronger production claims, Mnemos still needs:
+Before stronger production claims or Product Hunt positioning, Mnemos should have:
 
 - at least two external pilot users or projects
 - two weeks of daily usage
