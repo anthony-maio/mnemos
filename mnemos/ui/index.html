@@ -3,27 +3,29 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>Mnemos Control Plane</title>
+    <title>Mnemos Home</title>
     <link rel="stylesheet" href="/styles.css" />
   </head>
   <body>
     <div class="app-shell">
       <header class="hero">
         <div class="hero-copy">
-          <p class="eyebrow">Local Setup</p>
-          <h1>Mnemos Control Plane</h1>
+          <p class="eyebrow">SQLite-First Setup</p>
+          <h1>Mnemos Home</h1>
           <p class="lede">
-            Configure providers, wire up hosts, verify health, and inspect local memory without
-            hand-editing env vars or MCP config files.
+            Start on the shipped SQLite path, apply a host integration, verify the setup, and
+            inspect why memory behaves the way it does.
           </p>
           <div class="hero-actions">
             <button id="import-button" class="button button-accent">Import Existing Setup</button>
             <button id="smoke-button" class="button button-ghost">Run Smoke Check</button>
+            <button id="consolidate-button" class="button button-ghost">Run Consolidation</button>
           </div>
         </div>
         <div class="hero-status card">
           <p class="section-kicker">Current State</p>
           <div id="hero-status" class="status-cluster">Loading...</div>
+          <div id="hero-metrics" class="metric-grid compact"></div>
         </div>
       </header>
 
@@ -31,8 +33,8 @@
         <section class="card span-2">
           <div class="section-head">
             <div>
-              <p class="section-kicker">Setup</p>
-              <h2>Provider and Storage</h2>
+              <p class="section-kicker">Presets</p>
+              <h2>Guided Setup</h2>
             </div>
             <div class="toggle-row">
               <button id="save-global" class="button">Save Global</button>
@@ -40,14 +42,9 @@
             </div>
           </div>
 
+          <div id="preset-list" class="preset-list"></div>
+
           <div class="form-grid">
-            <label>
-              <span>Onboarding mode</span>
-              <select id="onboarding-mode">
-                <option value="dev">Dev</option>
-                <option value="pro">Pro</option>
-              </select>
-            </label>
             <label>
               <span>Preferred host</span>
               <select id="preferred-host">
@@ -55,6 +52,10 @@
                 <option value="cursor">Cursor</option>
                 <option value="codex">Codex</option>
               </select>
+            </label>
+            <label>
+              <span>SQLite path</span>
+              <input id="sqlite-path" type="text" placeholder=".mnemos/memory.db" />
             </label>
 
             <label>
@@ -86,74 +87,88 @@
               <span>Embedding model</span>
               <input id="embedding-model" type="text" placeholder="text-embedding-3-small" />
             </label>
-
-            <label>
-              <span>Store type</span>
-              <select id="store-type">
-                <option value="sqlite">SQLite</option>
-                <option value="qdrant">Qdrant</option>
-                <option value="memory">In-memory</option>
-              </select>
-            </label>
-            <label>
-              <span>SQLite path</span>
-              <input id="sqlite-path" type="text" placeholder=".mnemos/memory.db" />
-            </label>
-
-            <label>
-              <span>Qdrant path</span>
-              <input id="qdrant-path" type="text" placeholder=".mnemos/qdrant" />
-            </label>
-            <label>
-              <span>Qdrant URL</span>
-              <input id="qdrant-url" type="text" placeholder="http://localhost:6333" />
-            </label>
-
-            <label>
-              <span>Provider base URL</span>
-              <input id="provider-url" type="text" placeholder="http://localhost:11434" />
-            </label>
-            <label>
-              <span>API key</span>
-              <input id="provider-key" type="password" placeholder="leave blank to keep current key" />
-              <small id="provider-key-status"></small>
-            </label>
           </div>
+
+          <div class="settings-note">
+            Start on <strong>Starter SQLite</strong> for the shipped path. Switch to
+            <strong>Stable Memory</strong> when you want recall-gated consolidation in noisier
+            sessions.
+          </div>
+
+          <details class="advanced-panel">
+            <summary>Advanced</summary>
+            <div class="form-grid advanced-grid">
+              <label>
+                <span>Onboarding mode</span>
+                <select id="onboarding-mode">
+                  <option value="dev">Dev</option>
+                  <option value="pro">Pro</option>
+                </select>
+              </label>
+              <label>
+                <span>Store type</span>
+                <select id="store-type">
+                  <option value="sqlite">SQLite</option>
+                  <option value="memory">In-memory (dev only)</option>
+                </select>
+              </label>
+
+              <label class="checkbox-field">
+                <input id="recall-gated-enabled" type="checkbox" />
+                <span>Enable recall-gated consolidation</span>
+              </label>
+              <label>
+                <span>Min supporting episodes</span>
+                <input id="recall-min-supporting-episodes" type="number" min="1" step="1" />
+              </label>
+
+              <label>
+                <span>Recall similarity threshold</span>
+                <input id="recall-similarity-threshold" type="number" min="-1" max="1" step="0.01" />
+              </label>
+              <label>
+                <span>Provider base URL</span>
+                <input id="provider-url" type="text" placeholder="http://localhost:11434" />
+              </label>
+
+              <label>
+                <span>API key</span>
+                <input id="provider-key" type="password" placeholder="leave blank to keep current key" />
+                <small id="provider-key-status"></small>
+              </label>
+            </div>
+          </details>
         </section>
 
         <section class="card">
+          <div class="section-head">
+            <div>
+              <p class="section-kicker">Dashboard</p>
+              <h2>What Mnemos Sees</h2>
+            </div>
+            <button id="refresh-dashboard" class="button button-ghost">Refresh</button>
+          </div>
+          <div id="dashboard-metrics" class="metric-grid"></div>
+          <div class="stack">
+            <div>
+              <p class="section-kicker">Next Actions</p>
+              <ul id="next-actions" class="action-list"></ul>
+            </div>
+            <div>
+              <p class="section-kicker">Latest Activity</p>
+              <div id="activity-cards" class="activity-stack"></div>
+            </div>
+          </div>
+        </section>
+
+        <section class="card span-2">
           <div class="section-head">
             <div>
               <p class="section-kicker">Integrations</p>
               <h2>Host Apply</h2>
             </div>
           </div>
-          <div class="host-stack">
-            <article class="host-card" data-host="claude-code">
-              <h3>Claude Code</h3>
-              <p>Prefer the plugin wrapper when this repo ships it.</p>
-              <div class="host-actions">
-                <button class="button button-ghost preview-host">Preview</button>
-                <button class="button apply-host">Apply</button>
-              </div>
-            </article>
-            <article class="host-card" data-host="cursor">
-              <h3>Cursor</h3>
-              <p>Writes `.cursor/mcp.json` plus a `.cursor/rules/mnemos-memory.mdc` soft-auto rule.</p>
-              <div class="host-actions">
-                <button class="button button-ghost preview-host">Preview</button>
-                <button class="button apply-host">Apply</button>
-              </div>
-            </article>
-            <article class="host-card" data-host="codex">
-              <h3>Codex</h3>
-              <p>Updates `~/.codex/config.toml`; pair it with the AGENTS pack for soft-auto memory use.</p>
-              <div class="host-actions">
-                <button class="button button-ghost preview-host">Preview</button>
-                <button class="button apply-host">Apply</button>
-              </div>
-            </article>
-          </div>
+          <div id="host-stack" class="host-stack"></div>
           <pre id="integration-preview" class="console"></pre>
         </section>
 
@@ -167,21 +182,34 @@
           </div>
           <div id="health-summary" class="status-cluster"></div>
           <ul id="health-checks" class="check-list"></ul>
+          <div class="health-actions">
+            <p class="section-kicker">Guidance</p>
+            <ul id="health-actions" class="action-list compact"></ul>
+          </div>
         </section>
 
         <section class="card span-2">
           <div class="section-head">
             <div>
               <p class="section-kicker">Memory</p>
-              <h2>Recent Chunks</h2>
+              <h2>Inspectability</h2>
             </div>
             <button id="refresh-memory" class="button button-ghost">Refresh</button>
           </div>
           <div id="memory-summary" class="memory-summary"></div>
           <div class="memory-browser">
             <div id="memory-list" class="memory-list"></div>
-            <aside id="memory-detail" class="memory-detail">
-              <p>Select a memory to inspect.</p>
+            <aside class="memory-detail-shell">
+              <div class="memory-query">
+                <label>
+                  <span>Explain Recall</span>
+                  <input id="memory-query" type="text" placeholder="Why would this memory come back for..." />
+                </label>
+                <button id="explain-memory" class="button button-ghost">Explain</button>
+              </div>
+              <aside id="memory-detail" class="memory-detail">
+                <p>Select a memory to inspect.</p>
+              </aside>
             </aside>
           </div>
         </section>

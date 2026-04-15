@@ -380,17 +380,52 @@ def run_health_checks(
         status = "ready"
 
     recommendations: list[str] = []
+    next_actions: list[str] = []
+
+    def add_next_action(message: str) -> None:
+        if message not in next_actions:
+            next_actions.append(message)
+
     if llm_provider == "mock":
         recommendations.append(
             "Set MNEMOS_LLM_PROVIDER=openclaw (or openai/ollama) to enable non-mock cognition."
+        )
+        add_next_action(
+            "Run `mnemos ui`, choose OpenClaw, OpenAI, or Ollama as the LLM provider, and save the global setup."
         )
     if embedding_provider == "simple":
         recommendations.append(
             "Set MNEMOS_EMBEDDING_PROVIDER=openclaw/openai/ollama for production retrieval quality."
         )
+        add_next_action(
+            "Switch embeddings from `simple` to OpenClaw, OpenAI, or Ollama before relying on Mnemos for daily retrieval."
+        )
+    if store_type == "memory":
+        recommendations.append("Use SQLite for the shipped local-first persistence path.")
+        add_next_action(
+            "Run `mnemos ui` and keep the Starter SQLite preset so memory survives restarts in one local database."
+        )
     if legacy_unscoped_chunks is not None and legacy_unscoped_chunks > 0:
         recommendations.append(
             "Legacy unscoped chunks are still readable as global memory, but v1 scope isolation is degraded until you purge or rebuild them."
+        )
+        add_next_action(
+            "Purge or rebuild legacy unscoped chunks so project/workspace/global isolation is fully ready."
+        )
+    if store_type == "sqlite":
+        sqlite_path = settings.storage.sqlite_path
+        parent = Path(sqlite_path).expanduser().resolve().parent
+        if not parent.exists():
+            add_next_action(
+                f"Create the SQLite parent directory or update the configured path before relying on the current store location: {parent}"
+            )
+    if not sqlite_vec_enabled and store_type == "sqlite":
+        recommendations.append(
+            "sqlite-vec is optional, but installing it improves retrieval performance on larger local datasets."
+        )
+    if status != "ready" and not next_actions:
+        add_next_action(
+            "Run `mnemos ui` to review the current setup, then rerun `mnemos-cli doctor` after saving changes."
         )
 
     return {
@@ -419,4 +454,5 @@ def run_health_checks(
         "summary": summary,
         "checks": checks,
         "recommendations": recommendations,
+        "next_actions": next_actions,
     }

@@ -11,7 +11,7 @@ from http import HTTPStatus
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
 from typing import Any, Literal, cast
-from urllib.parse import urlparse
+from urllib.parse import parse_qs, urlparse
 
 from .control_plane import ControlPlaneService
 
@@ -61,6 +61,7 @@ class MnemosUiRouter:
     def handle(self, method: str, raw_path: str, body: bytes | None) -> UiResponse:
         parsed = urlparse(raw_path)
         path = parsed.path
+        query = parse_qs(parsed.query)
 
         if method == "GET" and path == "/":
             return self._asset_response("index.html", "text/html; charset=utf-8")
@@ -69,6 +70,8 @@ class MnemosUiRouter:
         if method == "GET" and path == "/styles.css":
             return self._asset_response("styles.css", "text/css; charset=utf-8")
 
+        if method == "GET" and path == "/api/dashboard":
+            return self._json_response(self.service.get_dashboard_view())
         if method == "GET" and path == "/api/settings":
             return self._json_response(self.service.get_settings_view())
         if method == "GET" and path == "/api/health":
@@ -78,7 +81,20 @@ class MnemosUiRouter:
         if method == "GET" and path.startswith("/api/memory/"):
             chunk_id = path.removeprefix("/api/memory/")
             try:
-                return self._json_response(self.service.get_memory_detail(chunk_id))
+                return self._json_response(
+                    self.service.get_memory_detail(
+                        chunk_id,
+                        query=query.get("query", [None])[0],
+                        current_scope=query.get("current_scope", ["project"])[0],
+                        scope_id=query.get("scope_id", [None])[0],
+                        allowed_scopes=tuple(
+                            scope.strip()
+                            for scope in query.get("allowed_scopes", [""])[0].split(",")
+                            if scope.strip()
+                        )
+                        or None,
+                    )
+                )
             except KeyError:
                 return self._json_response(
                     {"error": f"Memory chunk {chunk_id!r} not found."},
@@ -95,6 +111,8 @@ class MnemosUiRouter:
             return self._json_response(self.service.save_settings(payload, scope="project"))
         if method == "POST" and path == "/api/import":
             return self._json_response(self.service.import_existing_setup())
+        if method == "POST" and path == "/api/consolidate":
+            return self._json_response(self.service.run_consolidation())
         if method == "POST" and path == "/api/smoke":
             return self._json_response(self.service.run_smoke_tests())
 
