@@ -34,7 +34,15 @@ from .antigravity import (
 from .config import MemoryGovernanceConfig, MemorySafetyConfig, MnemosConfig, SurprisalConfig
 from .engine import MnemosEngine
 from .health import run_health_checks
-from .hook_autostore import SUPPORTED_HOOK_EVENTS, decide_autostore, parse_hook_payload
+from .hook_autostore import (
+    SUPPORTED_HOOK_EVENTS,
+    _extract_user_prompt,
+    _scope_id_from_payload,
+    decide_autostore,
+    parse_hook_payload,
+)
+
+SUPPORTED_RETRIEVE_EVENTS: tuple[str, ...] = ("UserPromptSubmit", "SessionStart")
 from .inspectability import build_chunk_inspection
 from .observability import configure_logging, log_event
 from .runtime import (
@@ -862,6 +870,67 @@ async def _cmd_autostore_hook(args: argparse.Namespace) -> None:
     )
 
 
+def _format_retrieved_context(chunks: list[Any], event: str) -> str:
+    if not chunks:
+        return ""
+    lines = [f"Mnemos memory ({event}) -- {len(chunks)} relevant prior memories:"]
+    for idx, chunk in enumerate(chunks, 1):
+        scope = chunk.metadata.get("scope", "global") if chunk.metadata else "global"
+        scope_id = chunk.metadata.get("scope_id") if chunk.metadata else None
+        scope_tag = f"{scope}:{scope_id}" if scope_id else scope
+        content = chunk.content.strip().replace("\n", " ")
+        if len(content) > 400:
+            content = content[:397] + "..."
+        lines.append(f"  {idx}. [{scope_tag}] {content}")
+    return "\n".join(lines)
+
+
+async def _cmd_retrieve_hook(args: argparse.Namespace) -> None:
+    if not _env_bool("MNEMOS_AUTO_RETRIEVE", True):
+        return
+
+    if args.event not in SUPPORTED_RETRIEVE_EVENTS:
+        return
+
+    payload = _read_hook_payload(args.payload)
+    payload_scope_id = _scope_id_from_payload(payload)
+    scope_id = (args.scope_id or payload_scope_id or "default")
+
+    if args.event == "UserPromptSubmit":
+        query = _extract_user_prompt(payload) or ""
+    else:
+        query = payload_scope_id or "project context recent work"
+
+    query = query.strip()
+    if not query or len(query) < 3:
+        return
+
+    try:
+        engine = _build_hook_engine()
+        chunks = await engine.retrieve(
+            query,
+            top_k=args.top_k,
+            reconsolidate=False,
+            current_scope=args.scope,
+            scope_id=scope_id,
+            allowed_scopes=["project", "workspace", "global"],
+        )
+    except Exception:
+        return
+
+    context_text = _format_retrieved_context(list(chunks), args.event)
+    if not context_text:
+        return
+
+    output = {
+        "hookSpecificOutput": {
+            "hookEventName": args.event,
+            "additionalContext": context_text,
+        }
+    }
+    print(json.dumps(output))
+
+
 def _cmd_ui(args: argparse.Namespace) -> None:
     from .control_plane import ControlPlaneService
     from .ui_server import run_ui_server
@@ -1161,6 +1230,31 @@ def main() -> None:
         help="Print decision without storing.",
     )
 
+    sp_retrieve_hook = subparsers.add_parser(
+        "retrieve-hook",
+        help="Retrieve relevant memories for a hook event and emit additionalContext JSON.",
+    )
+    sp_retrieve_hook.add_argument("event", choices=SUPPORTED_RETRIEVE_EVENTS)
+    sp_retrieve_hook.add_argument(
+        "--payload",
+        default="",
+        help="Optional raw JSON payload (stdin is used when omitted).",
+    )
+    sp_retrieve_hook.add_argument(
+        "--top-k", type=int, default=5, help="Max memories to retrieve (default: 5)."
+    )
+    sp_retrieve_hook.add_argument(
+        "--scope",
+        choices=VALID_SCOPES,
+        default="project",
+        help="Current scope for retrieval (default: project).",
+    )
+    sp_retrieve_hook.add_argument(
+        "--scope-id",
+        default="",
+        help="Optional explicit scope id; defaults to payload cwd basename.",
+    )
+
     sp_ui = subparsers.add_parser(
         "ui",
         help="Launch the local Mnemos onboarding and control-plane UI.",
@@ -1208,6 +1302,8 @@ def main() -> None:
         asyncio.run(_cmd_antigravity(args))
     elif args.command == "autostore-hook":
         asyncio.run(_cmd_autostore_hook(args))
+    elif args.command == "retrieve-hook":
+        asyncio.run(_cmd_retrieve_hook(args))
     elif args.command == "ui":
         _cmd_ui(args)
 
