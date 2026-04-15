@@ -271,6 +271,71 @@ class SimpleEmbeddingProvider(EmbeddingProvider):
             ]
 
 
+class FastembedProvider(EmbeddingProvider):
+    """
+    Local-first embedding provider backed by fastembed (quantized ONNX).
+
+    Runs fully in-process on CPU with no daemon, no external services, and
+    no API keys. First use downloads a small ONNX model (~100MB) into the
+    fastembed cache directory; subsequent calls are offline and fast.
+
+    Default model is BAAI/bge-small-en-v1.5 (384 dim), chosen for its
+    balance of retrieval quality, size, and inference speed.
+    """
+
+    def __init__(
+        self,
+        model: str = "BAAI/bge-small-en-v1.5",
+        cache_dir: str | None = None,
+    ) -> None:
+        try:
+            from fastembed import TextEmbedding  # type: ignore[import-untyped]
+        except ImportError as exc:
+            raise MnemosConfigurationError(
+                "fastembed is required for the 'fastembed' embedding provider. "
+                "Install with: pip install mnemos-memory"
+            ) from exc
+
+        self.model = model
+        self._engine = TextEmbedding(model_name=model, cache_dir=cache_dir)
+        self._dim: int | None = None
+
+    @property
+    def dim(self) -> int:
+        if self._dim is None:
+            self.embed("")
+        assert self._dim is not None
+        return self._dim
+
+    @property
+    def should_offload_in_async(self) -> bool:
+        return True
+
+    def _vectors(self, texts: list[str]) -> list[list[float]]:
+        generator = self._engine.embed(texts)
+        vectors: list[list[float]] = []
+        for arr in generator:
+            vec = np.asarray(arr, dtype=np.float32)
+            norm = np.linalg.norm(vec)
+            if norm > 0:
+                vec = vec / norm
+            vectors.append([float(x) for x in vec.tolist()])
+        if vectors:
+            self._dim = len(vectors[0])
+        return vectors
+
+    def embed(self, text: str) -> list[float]:
+        vectors = self._vectors([text or ""])
+        if not vectors:
+            raise RuntimeError("fastembed returned no embeddings.")
+        return vectors[0]
+
+    def embed_batch(self, texts: list[str]) -> list[list[float]]:
+        if not texts:
+            return []
+        return self._vectors(texts)
+
+
 class OllamaEmbeddingProvider(EmbeddingProvider):
     """
     Embedding provider backed by Ollama's embedding endpoints.
