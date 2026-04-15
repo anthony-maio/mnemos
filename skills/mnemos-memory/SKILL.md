@@ -12,7 +12,8 @@ Mnemos is a local-first memory layer for coding agents. Use this skill to guide 
 - Prefer `pip install "mnemos-memory[mcp]"` and `mnemos ui`.
 - For OpenClaw / ClawHub, teach the agent to self-install `mnemos-memory[mcp]`, run `mnemos ui`, then wire `mnemos-mcp` to the canonical `MNEMOS_CONFIG_PATH` before relying on memory.
 - Recommend SQLite as the supported persistent store.
-- Recommend a real embedding provider (`openclaw`, `openai`, `openrouter`, or `ollama`) for production retrieval quality.
+- Default embedding provider is `fastembed` (local, quantized ONNX, no daemon, no API keys). It downloads a ~100MB model on first use and runs fully offline after that.
+- Power-user swaps: `ollama` (local, bigger models), `openai` / `openclaw` / `openrouter` (hosted) -- only surface these when the user explicitly needs bigger context or is already running the infra.
 - Validate setup with the control-plane smoke check or `mnemos-cli doctor`.
 
 ## Claim discipline

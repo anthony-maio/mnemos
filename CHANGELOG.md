@@ -2,6 +2,23 @@
 
 ## Unreleased
 
+## 0.7.0 -- 2026-04-14
+
+Closes the auto-memory loop in Claude Code: retrieval is now deterministic and invisible to the model, not dependent on the model choosing to prime itself.
+
+### Added
+- `mnemos-cli retrieve-hook` subcommand emits Claude Code `hookSpecificOutput.additionalContext` JSON so hooks can inject relevant memories directly into the model context
+- `SessionStart` hook wired in `hooks/hooks.json` -- primes each new session with project-scoped memories
+- Second handler on `UserPromptSubmit` -- query-aware retrieval on every turn, running alongside the existing autostore write
+- `MNEMOS_AUTO_RETRIEVE` env var (default on) so users who want writes without reads can disable auto-priming
+- `FastembedProvider` -- local, quantized ONNX embeddings via `fastembed`. CPU-only, no daemon, no API keys, fully offline after first-run model download (~100MB)
+
+### Changed
+- `hooks/hooks.json` now delivers both sides of the memory loop at install time (write via `autostore-hook`, read via `retrieve-hook`) with no manual `settings.json` edits required
+- **Default embedding provider switched from `simple` (TF-IDF) to `fastembed`** -- a fresh install now produces real semantic retrieval out of the box, no configuration required
+- `ollama`, `openai`, `openclaw`, and `openrouter` providers remain supported as power-user swaps via `MNEMOS_EMBEDDING_PROVIDER`
+- `fastembed>=0.4` is now a hard dependency so the default path works with zero configuration; accepted tradeoff is a larger wheel footprint on uncommon platforms
+
 ## 0.6.0 — 2026-03-31
 
 Beta update focused on making SQLite the only shipped persistence path and exposing recall-gated plasticity on the live runtime.
