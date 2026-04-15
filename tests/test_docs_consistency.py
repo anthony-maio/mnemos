@@ -12,10 +12,14 @@ ROOT = Path(__file__).resolve().parents[1]
 MCP_SERVER_PATH = ROOT / "mnemos" / "mcp_server.py"
 RUNTIME_PATH = ROOT / "mnemos" / "runtime.py"
 README_PATH = ROOT / "README.md"
+WEBSITE_INDEX_PATH = ROOT.parent / "web" / "index.html"
 MCP_INTEGRATION_PATH = ROOT / "docs" / "MCP_INTEGRATION.md"
 MCP_CONTRACT_PATH = ROOT / "docs" / "mcp-transport-contract.md"
 ARCHITECTURE_PATH = ROOT / "ARCHITECTURE.md"
 README_HERO_PATH = ROOT / "docs" / "assets" / "readme-hero.svg"
+FIRST_RUN_DEMO_PATH = ROOT / "docs" / "demos" / "first-run-setup.md"
+INSPECTABILITY_DEMO_PATH = ROOT / "docs" / "demos" / "inspectability-consolidation.md"
+PRODUCT_HUNT_LAUNCH_PATH = ROOT / "docs" / "product-hunt-launch.md"
 MNEMOS_SKILL_PATH = ROOT / "skills" / "mnemos-memory" / "SKILL.md"
 MNEMOS_SKILL_HOSTS_PATH = ROOT / "skills" / "mnemos-memory" / "references" / "hosts.md"
 MNEMOS_SKILL_OPERATIONS_PATH = ROOT / "skills" / "mnemos-memory" / "references" / "operations.md"
@@ -208,3 +212,44 @@ def test_codex_skill_covers_install_and_honest_positioning() -> None:
     assert "curator workflow" in operations.lower()
     assert "mnemos-codex" in codex_guide
     assert "mnemos-codex" in mcp_guide
+
+
+def test_quick_start_surfaces_are_sqlite_first() -> None:
+    readme = README_PATH.read_text(encoding="utf-8")
+    website = WEBSITE_INDEX_PATH.read_text(encoding="utf-8")
+
+    assert "Starter SQLite" in readme
+    assert "Starter SQLite" in website
+    assert "mnemos ui" in readme
+    assert "mnemos ui" in website
+    assert "Move to Qdrant only when" not in website
+    assert "Qdrant" not in readme
+
+
+def test_proof_demo_docs_exist_for_first_run_and_inspectability() -> None:
+    first_run = FIRST_RUN_DEMO_PATH.read_text(encoding="utf-8")
+    inspectability = INSPECTABILITY_DEMO_PATH.read_text(encoding="utf-8")
+
+    assert "mnemos ui" in first_run
+    assert "Starter SQLite" in first_run
+    assert "day two" not in first_run.lower()
+    assert "mnemos inspect" in inspectability
+    assert "consolidation" in inspectability.lower()
+
+
+def test_launch_docs_include_product_hunt_package() -> None:
+    launch_doc = PRODUCT_HUNT_LAUNCH_PATH.read_text(encoding="utf-8")
+    public_beta = (ROOT / "docs" / "public-beta-launch.md").read_text(encoding="utf-8")
+    release_package = (ROOT / "docs" / "public-release-package.md").read_text(
+        encoding="utf-8"
+    )
+    release_checklist = (ROOT / "docs" / "release-checklist.md").read_text(
+        encoding="utf-8"
+    )
+
+    assert "Product Hunt Launch Package" in launch_doc
+    assert "Recommended Tagline" in launch_doc
+    assert "first comment" in launch_doc.lower()
+    assert "product-hunt-launch.md" in public_beta
+    assert "product-hunt-launch.md" in release_package
+    assert "Product Hunt Readiness" in release_checklist
