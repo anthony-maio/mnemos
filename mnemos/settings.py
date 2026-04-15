@@ -401,6 +401,14 @@ class RuntimeSettings(BaseModel):
     debug: bool = False
 
 
+class SleepSettings(BaseModel):
+    model_config = ConfigDict(extra="ignore")
+
+    recall_gated_plasticity_enabled: bool = False
+    recall_min_supporting_episodes: int = 2
+    recall_similarity_threshold: float = 0.82
+
+
 class OnboardingSettings(BaseModel):
     model_config = ConfigDict(extra="ignore")
 
@@ -416,6 +424,7 @@ class AppSettings(BaseModel):
     storage: StorageSettings = Field(default_factory=StorageSettings)
     providers: ProvidersSettings = Field(default_factory=ProvidersSettings)
     runtime: RuntimeSettings = Field(default_factory=RuntimeSettings)
+    sleep: SleepSettings = Field(default_factory=SleepSettings)
     safety: MemorySafetyConfig = Field(default_factory=MemorySafetyConfig)
     governance: MemoryGovernanceConfig = Field(default_factory=MemoryGovernanceConfig)
     onboarding: OnboardingSettings = Field(default_factory=OnboardingSettings)
