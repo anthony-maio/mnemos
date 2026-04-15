@@ -20,6 +20,7 @@ from .config import (
 from .settings import AppSettings, ResolvedSettings, _persistent_env_value, load_settings
 from .utils.embeddings import (
     EmbeddingProvider,
+    FastembedProvider,
     OllamaEmbeddingProvider,
     OpenAIEmbeddingProvider,
     SimpleEmbeddingProvider,
@@ -92,7 +93,12 @@ def build_store_from_settings(settings: AppSettings) -> MemoryStore:
 
 
 def build_embedder_from_settings(settings: AppSettings) -> EmbeddingProvider:
-    provider = settings.embedding.provider or "simple"
+    provider = settings.embedding.provider or "fastembed"
+
+    if provider == "fastembed":
+        return FastembedProvider(
+            model=settings.embedding.model or "BAAI/bge-small-en-v1.5",
+        )
 
     if provider == "simple":
         return SimpleEmbeddingProvider(dim=settings.embedding.dim)
@@ -121,7 +127,7 @@ def build_embedder_from_settings(settings: AppSettings) -> EmbeddingProvider:
 
     raise ValueError(
         f"Unknown embedding provider: {provider!r}. "
-        "Use 'simple', 'ollama', 'openai', 'openclaw', or 'openrouter'."
+        "Use 'fastembed', 'simple', 'ollama', 'openai', 'openclaw', or 'openrouter'."
     )
 
 
@@ -190,7 +196,9 @@ def build_store_from_env(
 
 
 def build_embedder_from_env(
-    default_provider: Literal["simple", "ollama", "openai", "openclaw", "openrouter"] = "simple",
+    default_provider: Literal[
+        "fastembed", "simple", "ollama", "openai", "openclaw", "openrouter"
+    ] = "fastembed",
     *,
     env: Mapping[str, str] | None = None,
     cwd: str | Path | None = None,
@@ -201,7 +209,7 @@ def build_embedder_from_env(
         message = str(exc)
         if "embedding.provider" in message:
             raise ValueError(
-                "Unknown embedding provider. Use 'simple', 'ollama', 'openai', "
+                "Unknown embedding provider. Use 'fastembed', 'simple', 'ollama', 'openai', "
                 "'openclaw', or 'openrouter'."
             ) from exc
         raise

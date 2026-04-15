@@ -351,7 +351,7 @@ def _build_engine() -> MnemosEngine:
         engine = MnemosEngine(
             config=config,
             llm=llm,
-            embedder=build_embedder_from_env(default_provider="simple"),
+            embedder=build_embedder_from_env(default_provider="fastembed"),
             store=build_store_from_env(default_store_type="sqlite"),
         )
     except ValueError as exc:
@@ -391,7 +391,7 @@ def _build_hook_engine() -> MnemosEngine:
         engine = MnemosEngine(
             config=build_mnemos_config_from_env(default_store_type="sqlite"),
             llm=MockLLMProvider(),
-            embedder=build_embedder_from_env(default_provider="simple"),
+            embedder=build_embedder_from_env(default_provider="fastembed"),
             store=build_store_from_env(default_store_type="sqlite"),
         )
     except ValueError as exc:
