@@ -4,6 +4,7 @@ tests/test_control_plane.py — Onboarding control plane service tests.
 
 from __future__ import annotations
 
+import json
 from pathlib import Path
 
 from mnemos.control_plane import ControlPlaneService
@@ -138,3 +139,133 @@ def test_control_plane_memory_detail_returns_inspection_payload(tmp_path: Path) 
     assert payload["scope"] == "project"
     assert payload["provenance"]["stored_by"] == "surprisal_gate"
     assert payload["history"] == []
+
+
+def test_control_plane_settings_view_exposes_sqlite_first_presets(tmp_path: Path) -> None:
+    service = ControlPlaneService(
+        cwd=tmp_path / "repo",
+        home=tmp_path / "home",
+        env={},
+        global_config_path=tmp_path / "Mnemos" / "mnemos.toml",
+    )
+
+    view = service.get_settings_view()
+    preset_ids = [preset["id"] for preset in view["presets"]]
+
+    assert preset_ids == ["starter-sqlite", "stable-memory"]
+    assert view["setup_story"]["primary_store"] == "sqlite"
+    assert view["setup_story"]["advanced_store_types"] == ["memory"]
+    assert "qdrant" not in json.dumps(view).lower()
+
+
+def test_control_plane_memory_snapshot_includes_rollups_and_consolidation_summary(
+    tmp_path: Path,
+) -> None:
+    db_path = tmp_path / "memory.db"
+    global_config = tmp_path / "Mnemos" / "mnemos.toml"
+    service = ControlPlaneService(
+        cwd=tmp_path / "repo",
+        home=tmp_path / "home",
+        env={},
+        global_config_path=global_config,
+    )
+    service.save_settings(
+        {
+            "llm": {"provider": "mock"},
+            "embedding": {"provider": "simple", "dim": 64},
+            "storage": {"type": "sqlite", "sqlite_path": str(db_path)},
+            "sleep": {
+                "recall_gated_plasticity_enabled": True,
+                "recall_min_supporting_episodes": 2,
+                "recall_similarity_threshold": 0.82,
+            },
+        },
+        scope="global",
+    )
+
+    store = SQLiteStore(str(db_path))
+    try:
+        store.store(
+            MemoryChunk(
+                id="global-1",
+                content="Global preference",
+                metadata={"scope": "global"},
+            )
+        )
+        store.store(
+            MemoryChunk(
+                id="project-1",
+                content="Use uv for Python tooling.",
+                metadata={"scope": "project", "scope_id": "repo-alpha"},
+            )
+        )
+        store.store(
+            MemoryChunk(
+                id="workspace-1",
+                content="Workspace deploys go through staging first.",
+                metadata={"scope": "workspace", "scope_id": "ws-main"},
+            )
+        )
+        store.store(
+            MemoryChunk(
+                id="sleep-1",
+                content="Deploys run through fly.toml.",
+                metadata={
+                    "scope": "project",
+                    "scope_id": "repo-alpha",
+                    "source": "sleep_consolidation",
+                    "consolidation_time": "2026-04-02T12:00:00+00:00",
+                    "recall_supporting_episodes": 3,
+                    "recall_support_score": 0.91,
+                    "recall_similarity_threshold": 0.82,
+                    "recall_min_supporting_episodes": 2,
+                },
+            )
+        )
+    finally:
+        store.close()
+
+    snapshot = service.get_memory_snapshot(limit=10)
+
+    assert snapshot["count"] == 4
+    assert snapshot["recent_count"] == 4
+    assert snapshot["counts_by_scope"] == {"global": 1, "project": 2, "workspace": 1}
+    assert snapshot["last_consolidation"]["present"] is True
+    assert snapshot["last_consolidation"]["source"] == "sleep_consolidation"
+    assert snapshot["last_consolidation"]["stored_chunk_count"] == 1
+    assert snapshot["recall_gated"]["enabled"] is True
+    assert snapshot["recall_gated"]["stored_chunk_count"] == 1
+    assert snapshot["recall_gated"]["max_supporting_episodes"] == 3
+
+
+def test_control_plane_dashboard_tracks_last_smoke_and_host_support(tmp_path: Path) -> None:
+    db_path = tmp_path / "memory.db"
+    global_config = tmp_path / "Mnemos" / "mnemos.toml"
+    service = ControlPlaneService(
+        cwd=tmp_path / "repo",
+        home=tmp_path / "home",
+        env={},
+        global_config_path=global_config,
+    )
+    service.save_settings(
+        {
+            "llm": {"provider": "mock"},
+            "embedding": {"provider": "simple", "dim": 64},
+            "storage": {"type": "sqlite", "sqlite_path": str(db_path)},
+            "onboarding": {"preferred_host": "claude-code"},
+        },
+        scope="global",
+    )
+
+    initial_dashboard = service.get_dashboard_view()
+    assert initial_dashboard["activity"]["last_smoke_test"]["present"] is False
+    assert initial_dashboard["host"]["recommended"] == "claude-code"
+    assert initial_dashboard["host"]["current"]["tier"] == "Tier 1"
+
+    smoke = service.run_smoke_tests()
+    dashboard = service.get_dashboard_view()
+
+    assert smoke["status"] == "pass"
+    assert dashboard["activity"]["last_smoke_test"]["present"] is True
+    assert dashboard["activity"]["last_smoke_test"]["status"] == "pass"
+    assert dashboard["next_actions"]

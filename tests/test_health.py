@@ -225,3 +225,24 @@ def test_health_reports_sqlite_vec_acceleration(
     assert report["vector_acceleration"]["enabled"] is True
     assert report["vector_acceleration"]["provider"] == "sqlite-vec"
     assert any(check["name"] == "store.sqlite.vec" for check in report["checks"])
+
+
+def test_health_reports_actionable_next_actions(
+    monkeypatch: pytest.MonkeyPatch, tmp_path: Path
+) -> None:
+    db_path = tmp_path / "mnemos_actionable_health.db"
+    monkeypatch.setenv("MNEMOS_STORE_TYPE", "memory")
+    monkeypatch.setenv("MNEMOS_SQLITE_PATH", str(db_path))
+    monkeypatch.setenv("MNEMOS_LLM_PROVIDER", "mock")
+    monkeypatch.setenv("MNEMOS_EMBEDDING_PROVIDER", "simple")
+
+    report = run_health_checks()
+
+    assert report["status"] == "degraded"
+    assert report["next_actions"]
+    assert any("sqlite" in action.lower() for action in report["next_actions"])
+    assert any("mnemos ui" in action.lower() for action in report["next_actions"])
+    assert any(
+        "openclaw" in action.lower() or "openai" in action.lower()
+        for action in report["next_actions"]
+    )
