@@ -331,6 +331,8 @@ def _default_llm_model(provider: str) -> str | None:
 
 
 def _default_embedding_model(provider: str) -> str | None:
+    if provider == "fastembed":
+        return "BAAI/bge-small-en-v1.5"
     if provider == "ollama":
         return "nomic-embed-text"
     if provider in {"openai", "openclaw", "openrouter"}:
@@ -382,7 +384,9 @@ class LLMSettings(BaseModel):
 class EmbeddingSettings(BaseModel):
     model_config = ConfigDict(extra="ignore")
 
-    provider: Literal["simple", "ollama", "openai", "openclaw", "openrouter"] | None = None
+    provider: (
+        Literal["fastembed", "simple", "ollama", "openai", "openclaw", "openrouter"] | None
+    ) = None
     model: str | None = None
     dim: int = 384
 
@@ -438,7 +442,7 @@ class AppSettings(BaseModel):
                     self.llm.provider,
                 )
             else:
-                self.embedding.provider = "simple"
+                self.embedding.provider = "fastembed"
 
         if not self.llm.model:
             self.llm.model = _default_llm_model(self.llm.provider)
