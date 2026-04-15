@@ -42,7 +42,7 @@ Configuration via environment variables:
   MNEMOS_OPENCLAW_URL   — OpenClaw API base URL (or fallback to MNEMOS_OPENAI_URL)
   MNEMOS_OPENROUTER_API_KEY — OpenRouter API key (required if provider is "openrouter")
   MNEMOS_OPENROUTER_URL — OpenRouter API base URL (default: "https://openrouter.ai/api/v1")
-  MNEMOS_STORE_TYPE     — "memory" (default) or "sqlite"
+  MNEMOS_STORE_TYPE     — "sqlite" (shipped default) or "memory"
   MNEMOS_SQLITE_PATH    — Path for SQLite store (default: "mnemos_memory.db")
   MNEMOS_STORAGE        — Alias for MNEMOS_STORE_TYPE
   MNEMOS_DB_PATH        — Alias for MNEMOS_SQLITE_PATH
@@ -223,7 +223,7 @@ def _build_llm_provider() -> LLMProvider:
 
 def _build_store() -> MemoryStore:
     """Build storage backend from environment variables."""
-    return build_store_from_env(default_store_type="memory")
+    return build_store_from_env(default_store_type="sqlite")
 
 
 def _build_embedder() -> EmbeddingProvider:
@@ -233,7 +233,7 @@ def _build_embedder() -> EmbeddingProvider:
 
 def _build_config() -> MnemosConfig:
     """Build configuration from environment variables."""
-    return build_mnemos_config_from_env(default_store_type="memory")
+    return build_mnemos_config_from_env(default_store_type="sqlite")
 
 
 @dataclass
@@ -274,7 +274,7 @@ def create_mcp_server() -> Any:
             )
         except Exception as exc:
             raise RuntimeError(_format_startup_error(exc)) from exc
-        health = run_health_checks(default_store_type="memory")
+        health = run_health_checks(default_store_type="sqlite")
         log_event(
             "mnemos.startup",
             transport="mcp_stdio",
@@ -555,7 +555,7 @@ def create_mcp_server() -> Any:
             JSON health report including status, checks, and recommendations.
         """
         engine = _engine_from_ctx(ctx, "mnemos_health")
-        report = run_health_checks(default_store_type="memory")
+        report = run_health_checks(default_store_type="sqlite")
         store_stats = engine.store.get_stats()
         report["runtime"] = {
             "store_backend": store_stats.get("backend", "unknown"),
