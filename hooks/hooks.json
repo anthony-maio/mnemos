@@ -1,5 +1,16 @@
 {
   "hooks": {
+    "SessionStart": [
+      {
+        "matcher": "",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "mnemos-cli retrieve-hook SessionStart 2>/dev/null || true"
+          }
+        ]
+      }
+    ],
     "UserPromptSubmit": [
       {
         "matcher": "",
@@ -7,6 +18,10 @@
           {
             "type": "command",
             "command": "mnemos-cli autostore-hook UserPromptSubmit 2>/dev/null || true"
+          },
+          {
+            "type": "command",
+            "command": "mnemos-cli retrieve-hook UserPromptSubmit 2>/dev/null || true"
           }
         ]
       }
