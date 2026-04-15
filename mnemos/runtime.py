@@ -10,7 +10,13 @@ from typing import Literal, Mapping
 
 from pydantic import ValidationError
 
-from .config import MemoryGovernanceConfig, MemorySafetyConfig, MnemosConfig, SurprisalConfig
+from .config import (
+    MemoryGovernanceConfig,
+    MemorySafetyConfig,
+    MnemosConfig,
+    SleepConfig,
+    SurprisalConfig,
+)
 from .settings import AppSettings, ResolvedSettings, _persistent_env_value, load_settings
 from .utils.embeddings import (
     EmbeddingProvider,
@@ -156,6 +162,11 @@ def build_llm_from_settings(settings: AppSettings) -> LLMProvider:
 def build_mnemos_config_from_settings(settings: AppSettings) -> MnemosConfig:
     return MnemosConfig(
         surprisal=SurprisalConfig(threshold=settings.runtime.surprisal_threshold),
+        sleep=SleepConfig(
+            recall_gated_plasticity_enabled=settings.sleep.recall_gated_plasticity_enabled,
+            recall_min_supporting_episodes=settings.sleep.recall_min_supporting_episodes,
+            recall_similarity_threshold=settings.sleep.recall_similarity_threshold,
+        ),
         safety=MemorySafetyConfig.model_validate(settings.safety.model_dump(mode="python")),
         governance=MemoryGovernanceConfig.model_validate(
             settings.governance.model_dump(mode="python")
