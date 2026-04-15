@@ -43,9 +43,15 @@ Mnemos is now in broad public beta. The core engine and onboarding control plane
 
 1. `pip install "mnemos-memory[mcp]"`
 2. `mnemos ui`
-3. Choose a provider and review the local SQLite path
+3. Start on the **Starter SQLite** preset and review the local SQLite path
 4. Apply Claude Code, Cursor, or Codex config from the UI
 5. Run the built-in smoke check before daily use
+
+If you are evaluating Mnemos quickly, the honest shortest path is:
+
+- start with **Starter SQLite**
+- treat **Claude Code** as the strongest current workflow
+- treat **Codex** and **Cursor** as documented, usable secondary setups
 
 If you are coming from an env-var or hand-edited MCP config setup, use the UI's **Import Existing Setup** action first.
 
@@ -62,10 +68,11 @@ mnemos ui
 
 What the control plane gives you:
 
+- opinionated presets: **Starter SQLite** for the shipped path and **Stable Memory** for recall-gated consolidation
 - canonical config in `mnemos.toml`
 - optional project override in `.mnemos/mnemos.toml`
-- guided host setup for Claude Code, Cursor, and Codex
-- health checks, smoke checks, and a light memory viewer with chunk details
+- guided host setup for Claude Code, Cursor, and Codex with honest support tiers
+- health checks, smoke checks, consolidation feedback, and a memory viewer with chunk details
 
 Inspectability entry points:
 
@@ -108,6 +115,7 @@ What curator should skip:
 If you want "memory exists somewhere in the background," Claude's built-in path may be enough. If you want scoped, local, inspectable continuity across coding sessions, Mnemos is the point.
 
 See the side-by-side writeup at [docs/demos/claude-code-continuity.md](docs/demos/claude-code-continuity.md).
+For the 0.7.0 product shell, see [docs/demos/first-run-setup.md](docs/demos/first-run-setup.md) and [docs/demos/inspectability-consolidation.md](docs/demos/inspectability-consolidation.md).
 
 ---
 
