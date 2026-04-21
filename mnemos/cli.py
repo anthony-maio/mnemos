@@ -51,9 +51,14 @@ from .runtime import (
     build_mnemos_config_from_env,
     build_store_from_env,
 )
-from .types import Interaction, RetrievalFeedbackEvent
+from .types import EpisodicEvent, Interaction, MemoryChunk, RetrievalFeedbackEvent
 from .utils.llm import MockLLMProvider, LLMProvider
-from .utils.storage import SQLiteStore
+from .utils.storage import (
+    SQLiteStore,
+    compute_canonical_key,
+    compute_event_fingerprint,
+    normalize_memory_text,
+)
 
 PROFILE_CHOICES = ("default",)
 VALID_SCOPES = ("project", "workspace", "global")
@@ -324,6 +329,71 @@ def _close_store_quietly(store: Any) -> None:
         close()
 
 
+def _merged_canonical_chunk(chunks: list[MemoryChunk]) -> MemoryChunk:
+    canonical = sorted(chunks, key=lambda chunk: (chunk.created_at, chunk.id))[0].model_copy(
+        deep=True
+    )
+    scope, scope_id = _chunk_scope(canonical)
+    canonical.canonical_key = compute_canonical_key(canonical.content, scope, scope_id)
+    canonical.observation_count = sum(max(chunk.observation_count, 1) for chunk in chunks)
+    canonical.last_observed_at = max(
+        (chunk.last_observed_at or chunk.updated_at) for chunk in chunks
+    )
+    canonical.metadata = dict(canonical.metadata)
+    canonical.metadata["merged_duplicate_ids"] = [
+        chunk.id for chunk in chunks if chunk.id != canonical.id
+    ]
+    if canonical.surprisal_status == "unknown":
+        canonical.surprisal_status = "not_applicable"
+    if canonical.cognitive_state_status == "unknown":
+        canonical.cognitive_state_status = "not_applicable"
+    return canonical
+
+
+def _repair_sqlite_db(source_path: str, target_path: str, *, dry_run: bool) -> dict[str, Any]:
+    source_store = SQLiteStore(db_path=source_path)
+    target_store: SQLiteStore | None = None
+    try:
+        if not dry_run:
+            source_resolved = Path(source_path).resolve()
+            target_resolved = Path(target_path).resolve()
+            if source_resolved == target_resolved:
+                raise ValueError("repair-db target must be a different path from the source db.")
+            for suffix in ("", "-wal", "-shm"):
+                candidate = Path(f"{target_path}{suffix}")
+                if candidate.exists():
+                    candidate.unlink()
+            target_store = SQLiteStore(db_path=target_path)
+
+        source_chunks = source_store.get_all()
+        grouped: dict[str, list[MemoryChunk]] = {}
+        for chunk in source_chunks:
+            scope, scope_id = _chunk_scope(chunk)
+            canonical_key = compute_canonical_key(chunk.content, scope, scope_id)
+            grouped.setdefault(canonical_key, []).append(chunk)
+
+        canonical_chunks = [_merged_canonical_chunk(group) for group in grouped.values()]
+        duplicates_collapsed = max(len(source_chunks) - len(canonical_chunks), 0)
+
+        if target_store is not None:
+            for chunk in canonical_chunks:
+                target_store.upsert_canonical(chunk)
+            target_store.rebuild_indexes(rebuild_fts=True, rebuild_vec=True)
+
+        return {
+            "source_chunks": len(source_chunks),
+            "canonical_chunks": len(canonical_chunks),
+            "duplicates_collapsed": duplicates_collapsed,
+            "dry_run": dry_run,
+            "source_path": source_path,
+            "target_path": target_path,
+        }
+    finally:
+        _close_store_quietly(source_store)
+        if target_store is not None:
+            _close_store_quietly(target_store)
+
+
 def _filtered_chunks(
     engine: MnemosEngine,
     *,
@@ -398,6 +468,51 @@ def _build_hook_engine() -> MnemosEngine:
         print(f"Error: {exc}", file=sys.stderr)
         sys.exit(1)
     return engine
+
+
+def _build_hook_store() -> Any:
+    try:
+        return build_store_from_env(default_store_type="sqlite")
+    except ValueError as exc:
+        print(f"Error: {exc}", file=sys.stderr)
+        sys.exit(1)
+
+
+def _persist_episodic_interaction(
+    store: Any,
+    interaction: Interaction,
+    *,
+    scope: str,
+    scope_id: str | None,
+) -> tuple[EpisodicEvent, bool]:
+    source = str(interaction.metadata.get("source", "manual"))
+    hook_event = (
+        str(interaction.metadata.get("hook_event"))
+        if interaction.metadata.get("hook_event") is not None
+        else None
+    )
+    event = EpisodicEvent(
+        event_fingerprint=compute_event_fingerprint(
+            role=interaction.role,
+            content=interaction.content,
+            scope=scope,
+            scope_id=scope_id,
+            source=source,
+            hook_event=hook_event,
+            occurred_at=interaction.timestamp,
+        ),
+        role=interaction.role,
+        content=interaction.content,
+        normalized_content=normalize_memory_text(interaction.content),
+        scope=scope,
+        scope_id=scope_id,
+        source=source,
+        hook_event=hook_event,
+        metadata=dict(interaction.metadata),
+        occurred_at=interaction.timestamp,
+    )
+    persisted = store.append_episodic_event(event)
+    return persisted, persisted.id != event.id
 
 
 async def _cmd_store(args: argparse.Namespace) -> None:
@@ -779,6 +894,17 @@ async def _cmd_migrate_store(args: argparse.Namespace) -> None:
     print(json.dumps(summary, indent=2))
 
 
+async def _cmd_repair_db(args: argparse.Namespace) -> None:
+    if not args.source_sqlite_path or not args.target_sqlite_path:
+        raise ValueError("repair-db requires both --source-sqlite-path and --target-sqlite-path.")
+    summary = _repair_sqlite_db(
+        args.source_sqlite_path,
+        args.target_sqlite_path,
+        dry_run=args.dry_run,
+    )
+    print(json.dumps(summary, indent=2))
+
+
 async def _cmd_antigravity(args: argparse.Namespace) -> None:
     policy = _build_antigravity_artifact(args.host, args.target)
     if args.format == "json":
@@ -849,25 +975,31 @@ async def _cmd_autostore_hook(args: argparse.Namespace) -> None:
         )
         return
 
-    engine = _build_hook_engine()
-    result = await engine.process(
-        decision.interaction,
-        scope=decision.scope,
-        scope_id=decision.scope_id,
-    )
-    print(
-        json.dumps(
-            {
-                "stored": result.stored,
-                "reason": result.reason,
-                "event": args.event,
-                "scope": decision.scope,
-                "scope_id": decision.scope_id,
-                "chunk_id": result.chunk.id if result.chunk else None,
-            },
-            indent=2,
+    store = _build_hook_store()
+    try:
+        persisted, duplicate = _persist_episodic_interaction(
+            store,
+            decision.interaction,
+            scope=decision.scope,
+            scope_id=decision.scope_id,
         )
-    )
+        print(
+            json.dumps(
+                {
+                    "queued": True,
+                    "reason": decision.reason,
+                    "event": args.event,
+                    "scope": decision.scope,
+                    "scope_id": decision.scope_id,
+                    "event_id": persisted.id,
+                    "event_fingerprint": persisted.event_fingerprint,
+                    "duplicate": duplicate,
+                },
+                indent=2,
+            )
+        )
+    finally:
+        _close_store_quietly(store)
 
 
 def _format_retrieved_context(chunks: list[Any], event: str) -> str:
@@ -894,7 +1026,7 @@ async def _cmd_retrieve_hook(args: argparse.Namespace) -> None:
 
     payload = _read_hook_payload(args.payload)
     payload_scope_id = _scope_id_from_payload(payload)
-    scope_id = (args.scope_id or payload_scope_id or "default")
+    scope_id = args.scope_id or payload_scope_id or "default"
 
     if args.event == "UserPromptSubmit":
         query = _extract_user_prompt(payload) or ""
@@ -1174,6 +1306,14 @@ def main() -> None:
     sp_migrate.add_argument("--target-sqlite-path", default="")
     sp_migrate.add_argument("--dry-run", action="store_true")
 
+    sp_repair = subparsers.add_parser(
+        "repair-db",
+        help="Build a clean SQLite database by collapsing exact duplicates and rebuilding indexes.",
+    )
+    sp_repair.add_argument("--source-sqlite-path", required=True)
+    sp_repair.add_argument("--target-sqlite-path", required=True)
+    sp_repair.add_argument("--dry-run", action="store_true")
+
     sp_antigravity = subparsers.add_parser(
         "antigravity",
         help="Generate host autopilot policy text for automatic Mnemos tool use.",
@@ -1298,6 +1438,8 @@ def main() -> None:
         asyncio.run(_cmd_profile(args))
     elif args.command == "migrate-store":
         asyncio.run(_cmd_migrate_store(args))
+    elif args.command == "repair-db":
+        asyncio.run(_cmd_repair_db(args))
     elif args.command == "antigravity":
         asyncio.run(_cmd_antigravity(args))
     elif args.command == "autostore-hook":

@@ -86,7 +86,7 @@ class AffectiveRouter:
         """
         return self._config.classifier_prompt.format(content=content)
 
-    def _parse_state_response(self, response: str) -> CognitiveState:
+    def _parse_state_response(self, response: str) -> CognitiveState | None:
         """
         Parse the LLM's three-number response into a CognitiveState.
 
@@ -119,10 +119,9 @@ class AffectiveRouter:
         except (ValueError, IndexError):
             pass
 
-        # Default: neutral state
-        return CognitiveState(valence=0.0, arousal=0.5, complexity=0.5)
+        return None
 
-    async def classify_state(self, interaction: Interaction) -> CognitiveState:
+    async def classify_state(self, interaction: Interaction) -> CognitiveState | None:
         """
         Classify the emotional/cognitive state of an interaction.
 
@@ -143,14 +142,15 @@ class AffectiveRouter:
             response = await self._llm.predict(prompt)
             state = self._parse_state_response(response)
         except Exception:
-            state = CognitiveState(valence=0.0, arousal=0.5, complexity=0.5)
+            state = None
 
         # Update state history (deque handles maxlen automatically)
-        self._state_history.append(state)
+        if state is not None:
+            self._state_history.append(state)
 
         return state
 
-    def tag_chunk(self, chunk: MemoryChunk, state: CognitiveState) -> MemoryChunk:
+    def tag_chunk(self, chunk: MemoryChunk, state: CognitiveState | None) -> MemoryChunk:
         """
         Attach a CognitiveState to a MemoryChunk (amygdala tagging).
 
@@ -164,7 +164,16 @@ class AffectiveRouter:
         Returns:
             The modified chunk (mutated in-place and returned).
         """
+        if state is None:
+            chunk.cognitive_state = None
+            chunk.cognitive_state_status = "provider_unavailable"
+            chunk.metadata["cognitive_state_status"] = "provider_unavailable"
+            chunk.metadata.pop("cognitive_state", None)
+            return chunk
+
         chunk.cognitive_state = state
+        chunk.cognitive_state_status = "measured"
+        chunk.metadata["cognitive_state_status"] = "measured"
         chunk.metadata["cognitive_state"] = {
             "valence": state.valence,
             "arousal": state.arousal,

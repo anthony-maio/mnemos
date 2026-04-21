@@ -32,7 +32,7 @@ from typing import Any
 
 from ..config import MutableRAGConfig
 from ..memory_safety import MemoryWriteFirewall
-from ..types import MemoryChunk, ProcessResult
+from ..types import MemoryChunk, ReconsolidationJob
 from ..utils.embeddings import EmbeddingProvider, embed_text_async
 from ..utils.llm import LLMProvider
 from ..utils.storage import MemoryStore
@@ -113,6 +113,7 @@ class MutableRAG:
         """
         chunks = self._store.retrieve(query_embedding, top_k=top_k)
         self._total_retrieved += len(chunks)
+        now = datetime.now(timezone.utc)
 
         if self._config.enabled:
             for chunk in chunks:
@@ -120,15 +121,23 @@ class MutableRAG:
                     continue
                 # Flag as labile with the current context
                 self._labile_chunks[chunk.id] = (chunk, current_context)
+                self._store.enqueue_reconsolidation_job(
+                    ReconsolidationJob(
+                        chunk_id=chunk.id,
+                        context=current_context,
+                        due_at=now,
+                    )
+                )
 
         # Increment access counts
         for chunk in chunks:
-            touched_at = datetime.now(timezone.utc)
-            next_access_count = chunk.access_count + 1
-            if self._store.touch(chunk.id, updated_at=touched_at):
-                if chunk.access_count < next_access_count:
-                    chunk.access_count = next_access_count
-                chunk.updated_at = touched_at
+            if self._store.mark_retrieved(chunk.id, retrieved_at=now, reconsolidation_due_at=now):
+                refreshed = self._store.get(chunk.id)
+                if refreshed is not None:
+                    chunk.access_count = refreshed.access_count
+                    chunk.updated_at = refreshed.updated_at
+                    chunk.last_retrieved_at = refreshed.last_retrieved_at
+                    chunk.reconsolidation_due_at = refreshed.reconsolidation_due_at
 
         return chunks
 
@@ -145,6 +154,12 @@ class MutableRAG:
         """
         if self._config.enabled and not self._in_cooldown(chunk.id):
             self._labile_chunks[chunk.id] = (chunk, context)
+            self._store.enqueue_reconsolidation_job(
+                ReconsolidationJob(
+                    chunk_id=chunk.id,
+                    context=context,
+                )
+            )
 
     def _build_reconsolidation_prompt(self, chunk: MemoryChunk, context: str) -> str:
         """
@@ -162,7 +177,13 @@ class MutableRAG:
             context=context if context else "(No new context available)",
         )
 
-    async def reconsolidate(self, chunk: MemoryChunk, new_context: str) -> tuple[MemoryChunk, bool]:
+    async def reconsolidate(
+        self,
+        chunk: MemoryChunk,
+        new_context: str,
+        *,
+        raise_on_error: bool = False,
+    ) -> tuple[MemoryChunk, bool]:
         """
         Evaluate a chunk for staleness and update if necessary.
 
@@ -182,22 +203,25 @@ class MutableRAG:
         try:
             response = await self._llm.predict(prompt)
         except Exception:
-            # LLM failure: leave chunk unchanged
+            if raise_on_error:
+                raise
             return chunk, False
 
         response = response.strip()
 
         if response.upper().startswith("UNCHANGED"):
-            # Memory is still valid — just touch it
+            # Memory is still valid — clear reconsolidation due state without fabricating a rewrite.
             touched_at = datetime.now(timezone.utc)
-            next_access_count = chunk.access_count + 1
-            if self._store.touch(chunk.id, updated_at=touched_at):
-                if chunk.access_count < next_access_count:
-                    chunk.access_count = next_access_count
-                chunk.updated_at = touched_at
+            stable_chunk = chunk.model_copy(
+                update={
+                    "updated_at": touched_at,
+                    "reconsolidation_due_at": None,
+                }
+            )
+            self._store.update(chunk.id, stable_chunk)
             self._total_unchanged += 1
             self._mark_reconsolidated_now(chunk.id)
-            return chunk, False
+            return stable_chunk, False
 
         elif response.upper().startswith("CHANGED"):
             # Extract the updated content (after "CHANGED: ")
@@ -206,25 +230,23 @@ class MutableRAG:
             else:
                 # Response is just "CHANGED" without content — don't modify
                 touched_at = datetime.now(timezone.utc)
-                next_access_count = chunk.access_count + 1
-                if self._store.touch(chunk.id, updated_at=touched_at):
-                    if chunk.access_count < next_access_count:
-                        chunk.access_count = next_access_count
-                    chunk.updated_at = touched_at
+                stable_chunk = chunk.model_copy(
+                    update={"updated_at": touched_at, "reconsolidation_due_at": None}
+                )
+                self._store.update(chunk.id, stable_chunk)
                 self._total_unchanged += 1
                 self._mark_reconsolidated_now(chunk.id)
-                return chunk, False
+                return stable_chunk, False
 
             if not new_content:
                 touched_at = datetime.now(timezone.utc)
-                next_access_count = chunk.access_count + 1
-                if self._store.touch(chunk.id, updated_at=touched_at):
-                    if chunk.access_count < next_access_count:
-                        chunk.access_count = next_access_count
-                    chunk.updated_at = touched_at
+                stable_chunk = chunk.model_copy(
+                    update={"updated_at": touched_at, "reconsolidation_due_at": None}
+                )
+                self._store.update(chunk.id, stable_chunk)
                 self._total_unchanged += 1
                 self._mark_reconsolidated_now(chunk.id)
-                return chunk, False
+                return stable_chunk, False
 
             safe_content = new_content
             redactions: list[str] = []
@@ -232,14 +254,13 @@ class MutableRAG:
                 safety = self._write_firewall.apply(new_content)
                 if not safety.allowed:
                     touched_at = datetime.now(timezone.utc)
-                    next_access_count = chunk.access_count + 1
-                    if self._store.touch(chunk.id, updated_at=touched_at):
-                        if chunk.access_count < next_access_count:
-                            chunk.access_count = next_access_count
-                        chunk.updated_at = touched_at
+                    stable_chunk = chunk.model_copy(
+                        update={"updated_at": touched_at, "reconsolidation_due_at": None}
+                    )
+                    self._store.update(chunk.id, stable_chunk)
                     self._total_unchanged += 1
                     self._mark_reconsolidated_now(chunk.id)
-                    return chunk, False
+                    return stable_chunk, False
                 safe_content = safety.content
                 redactions = [match.label for match in safety.matches]
 
@@ -251,6 +272,7 @@ class MutableRAG:
             updated_chunk.metadata["reconsolidated_at"] = reconsolidated_at
             updated_chunk.metadata["reconsolidation_context"] = new_context[:200]  # Truncate
             updated_chunk.metadata["safety_redactions"] = redactions
+            updated_chunk.reconsolidation_due_at = None
             history = updated_chunk.metadata.get("revision_history", [])
             if not isinstance(history, list):
                 history = []
@@ -275,14 +297,13 @@ class MutableRAG:
         else:
             # Unexpected response format — conservative: leave unchanged
             touched_at = datetime.now(timezone.utc)
-            next_access_count = chunk.access_count + 1
-            if self._store.touch(chunk.id, updated_at=touched_at):
-                if chunk.access_count < next_access_count:
-                    chunk.access_count = next_access_count
-                chunk.updated_at = touched_at
+            stable_chunk = chunk.model_copy(
+                update={"updated_at": touched_at, "reconsolidation_due_at": None}
+            )
+            self._store.update(chunk.id, stable_chunk)
             self._total_unchanged += 1
             self._mark_reconsolidated_now(chunk.id)
-            return chunk, False
+            return stable_chunk, False
 
     async def process_labile_chunks(
         self, max_chunks: int | None = None
@@ -301,10 +322,31 @@ class MutableRAG:
         Returns:
             List of (chunk, was_changed) tuples for each processed chunk.
         """
-        if not self._labile_chunks:
-            return []
-
         limit = max_chunks or self._config.max_labile_chunks
+
+        if not self._labile_chunks:
+            pending_jobs = self._store.list_reconsolidation_jobs(status="pending", limit=limit)
+            if not pending_jobs:
+                return []
+            results: list[tuple[MemoryChunk, bool]] = []
+            for job in pending_jobs:
+                chunk = self._store.get(job.chunk_id)
+                if chunk is None:
+                    self._store.delete_reconsolidation_job(job.chunk_id)
+                    continue
+                try:
+                    result = await self.reconsolidate(chunk, job.context, raise_on_error=True)
+                except Exception as exc:
+                    self._store.update_reconsolidation_job(
+                        job.chunk_id,
+                        status="failed",
+                        error=str(exc),
+                    )
+                    continue
+                self._store.delete_reconsolidation_job(job.chunk_id)
+                results.append(result)
+            return results
+
         to_process = list(self._labile_chunks.items())[:limit]
 
         results = []

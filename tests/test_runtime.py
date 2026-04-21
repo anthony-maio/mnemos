@@ -10,6 +10,7 @@ import pytest
 
 import mnemos.runtime as runtime_module
 from mnemos.runtime import build_embedder_from_env, build_store_from_env, resolve_env_value
+from mnemos.types import MemoryChunk
 from mnemos.utils import (
     OllamaEmbeddingProvider,
     OpenAIEmbeddingProvider,
@@ -63,10 +64,49 @@ def test_build_store_from_env_defaults_to_sqlite_when_requested(
 
 def test_build_embedder_from_env_defaults_to_simple(
     monkeypatch: pytest.MonkeyPatch,
+    tmp_path: Path,
 ) -> None:
     monkeypatch.delenv("MNEMOS_EMBEDDING_PROVIDER", raising=False)
-    embedder = build_embedder_from_env(default_provider="simple")
+    embedder = build_embedder_from_env(
+        default_provider="simple",
+        env={
+            "MNEMOS_CONFIG_PATH": str(tmp_path / "missing-mnemos.toml"),
+            "MNEMOS_LLM_PROVIDER": "mock",
+        },
+    )
     assert isinstance(embedder, SimpleEmbeddingProvider)
+
+
+def test_build_embedder_from_env_uses_sqlite_vec_dim_for_simple_provider(
+    tmp_path: Path,
+) -> None:
+    db_path = tmp_path / "mnemos_vec_dim.sqlite"
+    store = SQLiteStore(db_path=str(db_path))
+    provider = SimpleEmbeddingProvider(dim=768)
+    try:
+        store.store(
+            MemoryChunk(
+                id="chunk-768",
+                content="alpha memory",
+                embedding=provider.embed("alpha memory"),
+                metadata={"scope": "project", "scope_id": "repo-alpha"},
+            )
+        )
+    finally:
+        store.close()
+
+    embedder = build_embedder_from_env(
+        default_provider="simple",
+        env={
+            "MNEMOS_STORE_TYPE": "sqlite",
+            "MNEMOS_SQLITE_PATH": str(db_path),
+            "MNEMOS_LLM_PROVIDER": "mock",
+            "MNEMOS_EMBEDDING_PROVIDER": "simple",
+        },
+    )
+
+    assert isinstance(embedder, SimpleEmbeddingProvider)
+    assert embedder.dim == 768
 
 
 def test_build_embedder_from_env_rejects_unknown_provider(

@@ -19,6 +19,7 @@ All backends implement the same interface, so you can swap them transparently.
 
 from __future__ import annotations
 
+import hashlib
 import json
 import sqlite3
 import threading
@@ -27,8 +28,65 @@ from collections.abc import Callable
 from datetime import datetime, timezone
 from typing import Any, cast
 
-from ..types import CognitiveState, MemoryChunk, RetrievalFeedbackEvent
+from ..types import (
+    CognitiveState,
+    EpisodicEvent,
+    MemoryChunk,
+    ReconsolidationJob,
+    RetrievalFeedbackEvent,
+)
 from .embeddings import cosine_similarity
+
+
+def normalize_memory_text(text: str) -> str:
+    """Normalize text for exact-dedupe and canonical-key generation."""
+    return " ".join(text.strip().lower().split())
+
+
+def compute_canonical_key(content: str, scope: str, scope_id: str | None) -> str:
+    normalized = normalize_memory_text(content)
+    scope_token = scope.strip().lower()
+    scope_id_token = "" if scope_id is None else scope_id.strip().lower()
+    payload = f"{scope_token}|{scope_id_token}|{normalized}".encode("utf-8")
+    return hashlib.sha256(payload).hexdigest()
+
+
+def compute_event_fingerprint(
+    *,
+    role: str,
+    content: str,
+    scope: str,
+    scope_id: str | None,
+    source: str,
+    hook_event: str | None,
+    occurred_at: datetime | None = None,
+) -> str:
+    normalized = normalize_memory_text(content)
+    scope_token = scope.strip().lower()
+    scope_id_token = "" if scope_id is None else scope_id.strip().lower()
+    source_token = source.strip().lower()
+    event_token = "" if hook_event is None else hook_event.strip().lower()
+    occurrence_token = ""
+    if source_token != "claude_hook" and occurred_at is not None:
+        occurrence_token = occurred_at.isoformat()
+    payload = (
+        f"{role.strip().lower()}|{scope_token}|{scope_id_token}|"
+        f"{source_token}|{event_token}|{occurrence_token}|{normalized}"
+    ).encode("utf-8")
+    return hashlib.sha256(payload).hexdigest()
+
+
+def _chunk_scope(chunk: MemoryChunk) -> tuple[str, str | None]:
+    scope_raw = chunk.metadata.get("scope")
+    scope = str(scope_raw).strip().lower() if isinstance(scope_raw, str) else "global"
+    if scope not in {"project", "workspace", "global"}:
+        scope = "global"
+    if scope == "global":
+        return scope, None
+    scope_id_raw = chunk.metadata.get("scope_id")
+    if isinstance(scope_id_raw, str) and scope_id_raw.strip():
+        return scope, scope_id_raw.strip()
+    return scope, "default"
 
 
 class MemoryStore(ABC):
@@ -156,6 +214,94 @@ class MemoryStore(ABC):
         """List stored retrieval-feedback events with optional filters."""
         return []
 
+    def upsert_canonical(self, chunk: MemoryChunk) -> MemoryChunk:
+        """Store or merge a chunk using its canonical key when available."""
+        self.store(chunk)
+        return chunk
+
+    def append_episodic_event(self, event: EpisodicEvent) -> EpisodicEvent:
+        """Persist one episodic event, returning the canonical stored record."""
+        raise NotImplementedError("This storage backend does not support episodic events.")
+
+    def list_episodic_events(
+        self,
+        *,
+        status: str | None = None,
+        scope: str | None = None,
+        scope_id: str | None = None,
+        limit: int = 0,
+    ) -> list[EpisodicEvent]:
+        """List persisted episodic events with optional filters."""
+        return []
+
+    def update_episodic_event(
+        self,
+        event_id: str,
+        *,
+        status: str,
+        error: str | None = None,
+    ) -> bool:
+        """Update episodic event processing status."""
+        return False
+
+    def enqueue_reconsolidation_job(self, job: ReconsolidationJob) -> ReconsolidationJob:
+        """Persist or refresh a reconsolidation job for a chunk."""
+        raise NotImplementedError("This storage backend does not support reconsolidation jobs.")
+
+    def list_reconsolidation_jobs(
+        self,
+        *,
+        status: str | None = None,
+        limit: int = 0,
+    ) -> list[ReconsolidationJob]:
+        """List durable reconsolidation jobs."""
+        return []
+
+    def update_reconsolidation_job(
+        self,
+        chunk_id: str,
+        *,
+        status: str,
+        error: str | None = None,
+    ) -> bool:
+        """Update a reconsolidation job's status or failure reason."""
+        return False
+
+    def delete_reconsolidation_job(self, chunk_id: str) -> bool:
+        """Remove a reconsolidation job after successful processing."""
+        return False
+
+    def mark_retrieved(
+        self,
+        chunk_id: str,
+        *,
+        retrieved_at: datetime | None = None,
+        reconsolidation_due_at: datetime | None = None,
+    ) -> bool:
+        """Persist retrieval-time maintenance fields such as last_retrieved_at."""
+        chunk = self.get(chunk_id)
+        if chunk is None:
+            return False
+        touched_at = retrieved_at or datetime.now(timezone.utc)
+        chunk.access_count += 1
+        chunk.updated_at = touched_at
+        chunk.last_retrieved_at = touched_at
+        chunk.reconsolidation_due_at = reconsolidation_due_at
+        return self.update(chunk_id, chunk)
+
+    def rebuild_indexes(
+        self,
+        *,
+        rebuild_fts: bool = True,
+        rebuild_vec: bool = True,
+    ) -> dict[str, Any]:
+        """Explicit maintenance hook for search/vector index rebuilds."""
+        return {
+            "rebuild_fts": rebuild_fts,
+            "rebuild_vec": rebuild_vec,
+            "performed": False,
+        }
+
     def clear(self) -> None:
         """Remove all chunks from the store. Used for testing and consolidation."""
         for chunk in list(self.get_all()):
@@ -200,6 +346,8 @@ class InMemoryStore(MemoryStore):
         self.name = name
         self._store: dict[str, MemoryChunk] = {}
         self._feedback_events: list[RetrievalFeedbackEvent] = []
+        self._episodic_events: dict[str, EpisodicEvent] = {}
+        self._reconsolidation_jobs: dict[str, ReconsolidationJob] = {}
         self._lock = threading.Lock()
 
     def store(self, chunk: MemoryChunk) -> None:
@@ -268,6 +416,24 @@ class InMemoryStore(MemoryStore):
             chunk.updated_at = updated_at or datetime.now(timezone.utc)
             return True
 
+    def mark_retrieved(
+        self,
+        chunk_id: str,
+        *,
+        retrieved_at: datetime | None = None,
+        reconsolidation_due_at: datetime | None = None,
+    ) -> bool:
+        with self._lock:
+            chunk = self._store.get(chunk_id)
+            if chunk is None:
+                return False
+            touched_at = retrieved_at or datetime.now(timezone.utc)
+            chunk.access_count += 1
+            chunk.updated_at = touched_at
+            chunk.last_retrieved_at = touched_at
+            chunk.reconsolidation_due_at = reconsolidation_due_at
+            return True
+
     def get(self, chunk_id: str) -> MemoryChunk | None:
         """O(1) lookup by ID."""
         with self._lock:
@@ -319,10 +485,177 @@ class InMemoryStore(MemoryStore):
             events = [event for event in events if event.scope_id == scope_id]
         return events
 
+    def upsert_canonical(self, chunk: MemoryChunk) -> MemoryChunk:
+        canonical_key = chunk.canonical_key
+        if not canonical_key:
+            scope, scope_id = _chunk_scope(chunk)
+            canonical_key = compute_canonical_key(chunk.content, scope, scope_id)
+            chunk.canonical_key = canonical_key
+        if chunk.last_observed_at is None:
+            chunk.last_observed_at = chunk.updated_at
+        if chunk.observation_count <= 0:
+            chunk.observation_count = 1
+
+        with self._lock:
+            existing = next(
+                (
+                    stored
+                    for stored in self._store.values()
+                    if stored.canonical_key == canonical_key
+                ),
+                None,
+            )
+            if existing is None:
+                self._store[chunk.id] = chunk
+                return chunk
+
+            merged_duplicate_ids = list(existing.metadata.get("merged_duplicate_ids", []))
+            if chunk.id != existing.id and chunk.id not in merged_duplicate_ids:
+                merged_duplicate_ids.append(chunk.id)
+
+            existing.metadata["merged_duplicate_ids"] = merged_duplicate_ids
+            existing.metadata.update(chunk.metadata)
+            existing.content = chunk.content
+            existing.embedding = chunk.embedding or existing.embedding
+            existing.salience = max(existing.salience, chunk.salience)
+            existing.canonical_key = canonical_key
+            existing.updated_at = max(existing.updated_at, chunk.updated_at)
+            existing.created_at = min(existing.created_at, chunk.created_at)
+            existing.last_observed_at = max(
+                existing.last_observed_at or existing.updated_at,
+                chunk.last_observed_at or chunk.updated_at,
+            )
+            if chunk.id != existing.id:
+                existing.observation_count += max(chunk.observation_count, 1)
+            else:
+                existing.observation_count = max(
+                    existing.observation_count, chunk.observation_count
+                )
+            if chunk.surprisal_score is not None:
+                existing.surprisal_score = chunk.surprisal_score
+            if chunk.surprisal_status != "unknown":
+                existing.surprisal_status = chunk.surprisal_status
+            if chunk.cognitive_state is not None:
+                existing.cognitive_state = chunk.cognitive_state
+            if chunk.cognitive_state_status != "unknown":
+                existing.cognitive_state_status = chunk.cognitive_state_status
+            if chunk.last_retrieved_at is not None:
+                existing.last_retrieved_at = chunk.last_retrieved_at
+            if chunk.reconsolidation_due_at is not None:
+                existing.reconsolidation_due_at = chunk.reconsolidation_due_at
+            self._store[existing.id] = existing
+            return existing
+
+    def append_episodic_event(self, event: EpisodicEvent) -> EpisodicEvent:
+        with self._lock:
+            existing = self._episodic_events.get(event.event_fingerprint)
+            if existing is not None:
+                return existing
+            self._episodic_events[event.event_fingerprint] = event
+            return event
+
+    def list_episodic_events(
+        self,
+        *,
+        status: str | None = None,
+        scope: str | None = None,
+        scope_id: str | None = None,
+        limit: int = 0,
+    ) -> list[EpisodicEvent]:
+        with self._lock:
+            events = list(self._episodic_events.values())
+
+        if status is not None:
+            events = [event for event in events if event.status == status]
+        if scope is not None:
+            events = [event for event in events if event.scope == scope]
+        if scope_id is not None:
+            events = [event for event in events if event.scope_id == scope_id]
+        events.sort(key=lambda event: event.created_at)
+        return events[:limit] if limit > 0 else events
+
+    def update_episodic_event(
+        self,
+        event_id: str,
+        *,
+        status: str,
+        error: str | None = None,
+    ) -> bool:
+        with self._lock:
+            for fingerprint, event in self._episodic_events.items():
+                if event.id != event_id:
+                    continue
+                self._episodic_events[fingerprint] = event.model_copy(
+                    update={"status": status, "error": error}
+                )
+                return True
+        return False
+
+    def enqueue_reconsolidation_job(self, job: ReconsolidationJob) -> ReconsolidationJob:
+        with self._lock:
+            existing = self._reconsolidation_jobs.get(job.chunk_id)
+            if existing is None:
+                self._reconsolidation_jobs[job.chunk_id] = job
+                return job
+            updated = existing.model_copy(
+                update={
+                    "context": job.context,
+                    "status": "pending",
+                    "error": None,
+                    "queued_at": job.queued_at,
+                    "due_at": job.due_at,
+                }
+            )
+            self._reconsolidation_jobs[job.chunk_id] = updated
+            return updated
+
+    def list_reconsolidation_jobs(
+        self,
+        *,
+        status: str | None = None,
+        limit: int = 0,
+    ) -> list[ReconsolidationJob]:
+        with self._lock:
+            jobs = list(self._reconsolidation_jobs.values())
+        if status is not None:
+            jobs = [job for job in jobs if job.status == status]
+        jobs.sort(key=lambda job: job.queued_at)
+        return jobs[:limit] if limit > 0 else jobs
+
+    def update_reconsolidation_job(
+        self,
+        chunk_id: str,
+        *,
+        status: str,
+        error: str | None = None,
+    ) -> bool:
+        with self._lock:
+            job = self._reconsolidation_jobs.get(chunk_id)
+            if job is None:
+                return False
+            self._reconsolidation_jobs[chunk_id] = job.model_copy(
+                update={
+                    "status": status,
+                    "error": error,
+                    "attempt_count": job.attempt_count + 1,
+                    "last_attempt_at": datetime.now(timezone.utc),
+                }
+            )
+            return True
+
+    def delete_reconsolidation_job(self, chunk_id: str) -> bool:
+        with self._lock:
+            if chunk_id not in self._reconsolidation_jobs:
+                return False
+            del self._reconsolidation_jobs[chunk_id]
+            return True
+
     def clear(self) -> None:
         """Clear all chunks atomically."""
         with self._lock:
             self._store.clear()
+            self._episodic_events.clear()
+            self._reconsolidation_jobs.clear()
 
 
 class SQLiteStore(MemoryStore):
@@ -353,8 +686,22 @@ class SQLiteStore(MemoryStore):
             created_at TEXT NOT NULL,
             updated_at TEXT NOT NULL,
             access_count INTEGER NOT NULL DEFAULT 0,
-            version INTEGER NOT NULL DEFAULT 1
+            version INTEGER NOT NULL DEFAULT 1,
+            canonical_key TEXT,
+            surprisal_score REAL,
+            surprisal_status TEXT NOT NULL DEFAULT 'unknown',
+            cognitive_state_status TEXT NOT NULL DEFAULT 'unknown',
+            last_observed_at TEXT,
+            observation_count INTEGER NOT NULL DEFAULT 1,
+            last_retrieved_at TEXT,
+            reconsolidation_due_at TEXT
         );
+    """
+
+    _CREATE_CHUNK_CANONICAL_INDEX_SQL = """
+        CREATE UNIQUE INDEX IF NOT EXISTS idx_memory_chunks_canonical_key
+        ON memory_chunks(canonical_key)
+        WHERE canonical_key IS NOT NULL;
     """
 
     _CREATE_META_TABLE_SQL = """
@@ -369,12 +716,56 @@ class SQLiteStore(MemoryStore):
             source_id TEXT NOT NULL,
             target_id TEXT NOT NULL,
             weight REAL NOT NULL,
-            edge_type TEXT NOT NULL DEFAULT 'RELATED_TO',
+            edge_type TEXT NOT NULL DEFAULT 'SEMANTIC_SIMILAR',
             updated_at TEXT NOT NULL,
             PRIMARY KEY (source_id, target_id, edge_type),
             FOREIGN KEY (source_id) REFERENCES memory_chunks(id) ON DELETE CASCADE,
             FOREIGN KEY (target_id) REFERENCES memory_chunks(id) ON DELETE CASCADE
         );
+    """
+
+    _CREATE_EPISODIC_EVENTS_TABLE_SQL = """
+        CREATE TABLE IF NOT EXISTS episodic_events (
+            id TEXT PRIMARY KEY,
+            event_fingerprint TEXT NOT NULL UNIQUE,
+            role TEXT NOT NULL,
+            content TEXT NOT NULL,
+            normalized_content TEXT NOT NULL,
+            scope TEXT NOT NULL,
+            scope_id TEXT,
+            source TEXT NOT NULL,
+            hook_event TEXT,
+            metadata TEXT NOT NULL DEFAULT '{}',
+            status TEXT NOT NULL DEFAULT 'pending',
+            error TEXT,
+            created_at TEXT NOT NULL,
+            occurred_at TEXT NOT NULL
+        );
+    """
+
+    _CREATE_EPISODIC_EVENTS_STATUS_INDEX_SQL = """
+        CREATE INDEX IF NOT EXISTS idx_episodic_events_status
+        ON episodic_events(status, scope, scope_id, created_at ASC);
+    """
+
+    _CREATE_RECONSOLIDATION_TABLE_SQL = """
+        CREATE TABLE IF NOT EXISTS reconsolidation_jobs (
+            id TEXT PRIMARY KEY,
+            chunk_id TEXT NOT NULL UNIQUE,
+            context TEXT NOT NULL,
+            status TEXT NOT NULL DEFAULT 'pending',
+            error TEXT,
+            attempt_count INTEGER NOT NULL DEFAULT 0,
+            queued_at TEXT NOT NULL,
+            due_at TEXT NOT NULL,
+            last_attempt_at TEXT,
+            FOREIGN KEY (chunk_id) REFERENCES memory_chunks(id) ON DELETE CASCADE
+        );
+    """
+
+    _CREATE_RECONSOLIDATION_STATUS_INDEX_SQL = """
+        CREATE INDEX IF NOT EXISTS idx_reconsolidation_jobs_status
+        ON reconsolidation_jobs(status, due_at ASC, queued_at ASC);
     """
 
     _CREATE_FEEDBACK_TABLE_SQL = """
@@ -442,8 +833,8 @@ class SQLiteStore(MemoryStore):
         END;
     """
 
-    _SCHEMA_VERSION = "2"
-    _GRAPH_EDGE_TYPE = "RELATED_TO"
+    _SCHEMA_VERSION = "3"
+    _GRAPH_EDGE_TYPE = "SEMANTIC_SIMILAR"
     _SQLITE_VEC_DIM_KEY = "sqlite_vec_dim"
 
     def __init__(self, db_path: str = "mnemos_memory.db", name: str = "sqlite") -> None:
@@ -487,8 +878,39 @@ class SQLiteStore(MemoryStore):
         self._sqlite_vec_enabled = True
         self._sqlite_vec_module = sqlite_vec
 
+    def _ensure_column(self, table: str, column: str, definition: str) -> None:
+        columns = {
+            str(row[1]) for row in self._conn.execute(f"PRAGMA table_info({table})").fetchall()
+        }
+        if column not in columns:
+            self._conn.execute(f"ALTER TABLE {table} ADD COLUMN {column} {definition}")
+
+    def _ensure_chunk_columns(self) -> None:
+        self._ensure_column("memory_chunks", "canonical_key", "TEXT")
+        self._ensure_column("memory_chunks", "surprisal_score", "REAL")
+        self._ensure_column(
+            "memory_chunks",
+            "surprisal_status",
+            "TEXT NOT NULL DEFAULT 'unknown'",
+        )
+        self._ensure_column(
+            "memory_chunks",
+            "cognitive_state_status",
+            "TEXT NOT NULL DEFAULT 'unknown'",
+        )
+        self._ensure_column("memory_chunks", "last_observed_at", "TEXT")
+        self._ensure_column(
+            "memory_chunks",
+            "observation_count",
+            "INTEGER NOT NULL DEFAULT 1",
+        )
+        self._ensure_column("memory_chunks", "last_retrieved_at", "TEXT")
+        self._ensure_column("memory_chunks", "reconsolidation_due_at", "TEXT")
+
     def _initialize_schema(self) -> None:
         self._conn.execute(self._CREATE_TABLE_SQL)
+        self._ensure_chunk_columns()
+        self._conn.execute(self._CREATE_CHUNK_CANONICAL_INDEX_SQL)
         self._conn.execute(self._CREATE_META_TABLE_SQL)
         self._conn.execute(self._CREATE_EDGES_TABLE_SQL)
         self._conn.execute(self._CREATE_EDGES_SOURCE_INDEX_SQL)
@@ -496,6 +918,10 @@ class SQLiteStore(MemoryStore):
         self._conn.execute(self._CREATE_FEEDBACK_TABLE_SQL)
         self._conn.execute(self._CREATE_FEEDBACK_TYPE_INDEX_SQL)
         self._conn.execute(self._CREATE_FEEDBACK_SCOPE_INDEX_SQL)
+        self._conn.execute(self._CREATE_EPISODIC_EVENTS_TABLE_SQL)
+        self._conn.execute(self._CREATE_EPISODIC_EVENTS_STATUS_INDEX_SQL)
+        self._conn.execute(self._CREATE_RECONSOLIDATION_TABLE_SQL)
+        self._conn.execute(self._CREATE_RECONSOLIDATION_STATUS_INDEX_SQL)
         self._conn.execute(self._CREATE_FTS_SQL)
         self._conn.execute(self._CREATE_FTS_INSERT_TRIGGER_SQL)
         self._conn.execute(self._CREATE_FTS_DELETE_TRIGGER_SQL)
@@ -508,8 +934,8 @@ class SQLiteStore(MemoryStore):
             """,
             (self._SCHEMA_VERSION,),
         )
-        # Keep the external-content FTS table consistent for existing databases.
-        self._conn.execute("INSERT INTO memory_fts(memory_fts) VALUES ('rebuild');")
+        if self._fts_needs_rebuild():
+            self._conn.execute("INSERT INTO memory_fts(memory_fts) VALUES ('rebuild');")
         if self._sqlite_vec_enabled:
             existing_dim = self._meta_value(self._SQLITE_VEC_DIM_KEY)
             if existing_dim not in (None, ""):
@@ -530,8 +956,17 @@ class SQLiteStore(MemoryStore):
                         self._sqlite_vec_dim = len(embedding)
             if self._sqlite_vec_dim is not None:
                 self._ensure_vec_table(self._sqlite_vec_dim)
-                self._rebuild_vec_index()
         self._conn.commit()
+
+    def _fts_needs_rebuild(self) -> bool:
+        chunk_count = self._conn.execute("SELECT COUNT(*) FROM memory_chunks").fetchone()[0]
+        if chunk_count == 0:
+            return False
+        try:
+            fts_count = self._conn.execute("SELECT COUNT(*) FROM memory_fts").fetchone()[0]
+        except sqlite3.DatabaseError:
+            return True
+        return int(fts_count) != int(chunk_count)
 
     def _meta_value(self, key: str) -> str | None:
         row = self._conn.execute("SELECT value FROM mnemos_meta WHERE key = ?", (key,)).fetchone()
@@ -623,6 +1058,15 @@ class SQLiteStore(MemoryStore):
             (rowid, self._serialize_vec(embedding)),
         )
 
+    @staticmethod
+    def _parse_dt(value: str | None) -> datetime | None:
+        if value in (None, ""):
+            return None
+        dt = datetime.fromisoformat(str(value))
+        if dt.tzinfo is None:
+            dt = dt.replace(tzinfo=timezone.utc)
+        return dt
+
     def _chunk_to_row(self, chunk: MemoryChunk) -> tuple[Any, ...]:
         """Serialize a MemoryChunk to a database row tuple."""
         embedding_json = json.dumps(chunk.embedding) if chunk.embedding is not None else None
@@ -640,6 +1084,18 @@ class SQLiteStore(MemoryStore):
             chunk.updated_at.isoformat(),
             chunk.access_count,
             chunk.version,
+            chunk.canonical_key,
+            chunk.surprisal_score,
+            chunk.surprisal_status,
+            chunk.cognitive_state_status,
+            chunk.last_observed_at.isoformat() if chunk.last_observed_at is not None else None,
+            chunk.observation_count,
+            chunk.last_retrieved_at.isoformat() if chunk.last_retrieved_at is not None else None,
+            (
+                chunk.reconsolidation_due_at.isoformat()
+                if chunk.reconsolidation_due_at is not None
+                else None
+            ),
         )
 
     def _row_to_chunk(self, row: tuple[Any, ...]) -> MemoryChunk:
@@ -655,6 +1111,14 @@ class SQLiteStore(MemoryStore):
             updated_at,
             access_count,
             version,
+            canonical_key,
+            surprisal_score,
+            surprisal_status,
+            cognitive_state_status,
+            last_observed_at,
+            observation_count,
+            last_retrieved_at,
+            reconsolidation_due_at,
         ) = row
 
         embedding = json.loads(embedding_json) if embedding_json else None
@@ -665,12 +1129,6 @@ class SQLiteStore(MemoryStore):
             else None
         )
 
-        def _parse_dt(s: str) -> datetime:
-            dt = datetime.fromisoformat(s)
-            if dt.tzinfo is None:
-                dt = dt.replace(tzinfo=timezone.utc)
-            return dt
-
         return MemoryChunk(
             id=id_,
             content=content,
@@ -678,10 +1136,18 @@ class SQLiteStore(MemoryStore):
             metadata=metadata,
             salience=salience,
             cognitive_state=cognitive_state,
-            created_at=_parse_dt(created_at),
-            updated_at=_parse_dt(updated_at),
+            created_at=cast(datetime, self._parse_dt(str(created_at))),
+            updated_at=cast(datetime, self._parse_dt(str(updated_at))),
             access_count=access_count,
             version=version,
+            canonical_key=(str(canonical_key) if canonical_key not in (None, "") else None),
+            surprisal_score=(float(surprisal_score) if surprisal_score not in (None, "") else None),
+            surprisal_status=str(surprisal_status or "unknown"),
+            cognitive_state_status=str(cognitive_state_status or "unknown"),
+            last_observed_at=self._parse_dt(cast(str | None, last_observed_at)),
+            observation_count=int(observation_count or 0),
+            last_retrieved_at=self._parse_dt(cast(str | None, last_retrieved_at)),
+            reconsolidation_due_at=self._parse_dt(cast(str | None, reconsolidation_due_at)),
         )
 
     def _feedback_event_to_row(self, event: RetrievalFeedbackEvent) -> tuple[Any, ...]:
@@ -724,6 +1190,95 @@ class SQLiteStore(MemoryStore):
             created_at=created_dt,
         )
 
+    def _episodic_event_to_row(self, event: EpisodicEvent) -> tuple[Any, ...]:
+        return (
+            event.id,
+            event.event_fingerprint,
+            event.role,
+            event.content,
+            event.normalized_content,
+            event.scope,
+            event.scope_id,
+            event.source,
+            event.hook_event,
+            json.dumps(event.metadata),
+            event.status,
+            event.error,
+            event.created_at.isoformat(),
+            event.occurred_at.isoformat(),
+        )
+
+    def _row_to_episodic_event(self, row: tuple[Any, ...]) -> EpisodicEvent:
+        (
+            event_id,
+            event_fingerprint,
+            role,
+            content,
+            normalized_content,
+            scope,
+            scope_id,
+            source,
+            hook_event,
+            metadata_json,
+            status,
+            error,
+            created_at,
+            occurred_at,
+        ) = row
+        return EpisodicEvent(
+            id=str(event_id),
+            event_fingerprint=str(event_fingerprint),
+            role=str(role),
+            content=str(content),
+            normalized_content=str(normalized_content),
+            scope=str(scope),
+            scope_id=(str(scope_id) if scope_id is not None else None),
+            source=str(source),
+            hook_event=(str(hook_event) if hook_event is not None else None),
+            metadata=json.loads(metadata_json) if metadata_json else {},
+            status=str(status),
+            error=(str(error) if error is not None else None),
+            created_at=cast(datetime, self._parse_dt(str(created_at))),
+            occurred_at=cast(datetime, self._parse_dt(str(occurred_at))),
+        )
+
+    def _reconsolidation_job_to_row(self, job: ReconsolidationJob) -> tuple[Any, ...]:
+        return (
+            job.id,
+            job.chunk_id,
+            job.context,
+            job.status,
+            job.error,
+            job.attempt_count,
+            job.queued_at.isoformat(),
+            job.due_at.isoformat(),
+            job.last_attempt_at.isoformat() if job.last_attempt_at is not None else None,
+        )
+
+    def _row_to_reconsolidation_job(self, row: tuple[Any, ...]) -> ReconsolidationJob:
+        (
+            job_id,
+            chunk_id,
+            context,
+            status,
+            error,
+            attempt_count,
+            queued_at,
+            due_at,
+            last_attempt_at,
+        ) = row
+        return ReconsolidationJob(
+            id=str(job_id),
+            chunk_id=str(chunk_id),
+            context=str(context),
+            status=str(status),
+            error=(str(error) if error is not None else None),
+            attempt_count=int(attempt_count or 0),
+            queued_at=cast(datetime, self._parse_dt(str(queued_at))),
+            due_at=cast(datetime, self._parse_dt(str(due_at))),
+            last_attempt_at=self._parse_dt(cast(str | None, last_attempt_at)),
+        )
+
     def store(self, chunk: MemoryChunk) -> None:
         """Insert or replace a chunk by ID."""
         row = self._chunk_to_row(chunk)
@@ -732,8 +1287,10 @@ class SQLiteStore(MemoryStore):
                 """
                 INSERT INTO memory_chunks
                 (id, content, embedding, metadata, salience, cognitive_state,
-                 created_at, updated_at, access_count, version)
-                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                 created_at, updated_at, access_count, version, canonical_key,
+                 surprisal_score, surprisal_status, cognitive_state_status,
+                 last_observed_at, observation_count, last_retrieved_at, reconsolidation_due_at)
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
                 ON CONFLICT(id) DO UPDATE SET
                     content=excluded.content,
                     embedding=excluded.embedding,
@@ -743,12 +1300,99 @@ class SQLiteStore(MemoryStore):
                     created_at=excluded.created_at,
                     updated_at=excluded.updated_at,
                     access_count=excluded.access_count,
-                    version=excluded.version
+                    version=excluded.version,
+                    canonical_key=excluded.canonical_key,
+                    surprisal_score=excluded.surprisal_score,
+                    surprisal_status=excluded.surprisal_status,
+                    cognitive_state_status=excluded.cognitive_state_status,
+                    last_observed_at=excluded.last_observed_at,
+                    observation_count=excluded.observation_count,
+                    last_retrieved_at=excluded.last_retrieved_at,
+                    reconsolidation_due_at=excluded.reconsolidation_due_at
                 """,
                 row,
             )
             self._sync_vec_row(chunk.id, chunk.embedding)
             self._conn.commit()
+
+    def upsert_canonical(self, chunk: MemoryChunk) -> MemoryChunk:
+        canonical_key = chunk.canonical_key
+        if not canonical_key:
+            scope, scope_id = _chunk_scope(chunk)
+            canonical_key = compute_canonical_key(chunk.content, scope, scope_id)
+            chunk.canonical_key = canonical_key
+        if chunk.last_observed_at is None:
+            chunk.last_observed_at = chunk.updated_at
+        if chunk.observation_count <= 0:
+            chunk.observation_count = 1
+
+        with self._lock:
+            existing_row = self._conn.execute(
+                "SELECT * FROM memory_chunks WHERE canonical_key = ?",
+                (canonical_key,),
+            ).fetchone()
+
+        if existing_row is None:
+            self.store(chunk)
+            return chunk
+
+        existing = self._row_to_chunk(existing_row)
+        merged_duplicate_ids = list(existing.metadata.get("merged_duplicate_ids", []))
+        if chunk.id != existing.id and chunk.id not in merged_duplicate_ids:
+            merged_duplicate_ids.append(chunk.id)
+
+        merged_metadata = dict(existing.metadata)
+        merged_metadata.update(chunk.metadata)
+        merged_metadata["merged_duplicate_ids"] = merged_duplicate_ids
+
+        merged = existing.model_copy(
+            update={
+                "content": chunk.content,
+                "embedding": chunk.embedding or existing.embedding,
+                "metadata": merged_metadata,
+                "salience": max(existing.salience, chunk.salience),
+                "updated_at": max(existing.updated_at, chunk.updated_at),
+                "created_at": min(existing.created_at, chunk.created_at),
+                "canonical_key": canonical_key,
+                "last_observed_at": max(
+                    existing.last_observed_at or existing.updated_at,
+                    chunk.last_observed_at or chunk.updated_at,
+                ),
+                "observation_count": (
+                    existing.observation_count + max(chunk.observation_count, 1)
+                    if chunk.id != existing.id
+                    else max(existing.observation_count, chunk.observation_count)
+                ),
+                "surprisal_score": (
+                    chunk.surprisal_score
+                    if chunk.surprisal_score is not None
+                    else existing.surprisal_score
+                ),
+                "surprisal_status": (
+                    chunk.surprisal_status
+                    if chunk.surprisal_status != "unknown"
+                    else existing.surprisal_status
+                ),
+                "cognitive_state": (
+                    chunk.cognitive_state
+                    if chunk.cognitive_state is not None
+                    else existing.cognitive_state
+                ),
+                "cognitive_state_status": (
+                    chunk.cognitive_state_status
+                    if chunk.cognitive_state_status != "unknown"
+                    else existing.cognitive_state_status
+                ),
+                "last_retrieved_at": chunk.last_retrieved_at or existing.last_retrieved_at,
+                "reconsolidation_due_at": (
+                    chunk.reconsolidation_due_at
+                    if chunk.reconsolidation_due_at is not None
+                    else existing.reconsolidation_due_at
+                ),
+            }
+        )
+        self.store(merged)
+        return merged
 
     def retrieve(
         self,
@@ -823,6 +1467,32 @@ class SQLiteStore(MemoryStore):
                 if row is not None:
                     self._conn.execute("DELETE FROM memory_vec WHERE rowid = ?", (int(row[0]),))
             cursor = self._conn.execute("DELETE FROM memory_chunks WHERE id = ?", (chunk_id,))
+            self._conn.commit()
+            return cursor.rowcount > 0
+
+    def mark_retrieved(
+        self,
+        chunk_id: str,
+        *,
+        retrieved_at: datetime | None = None,
+        reconsolidation_due_at: datetime | None = None,
+    ) -> bool:
+        touched_at = retrieved_at or datetime.now(timezone.utc)
+        due_at_iso = (
+            reconsolidation_due_at.isoformat() if reconsolidation_due_at is not None else None
+        )
+        with self._lock:
+            cursor = self._conn.execute(
+                """
+                UPDATE memory_chunks
+                SET updated_at = ?,
+                    access_count = access_count + 1,
+                    last_retrieved_at = ?,
+                    reconsolidation_due_at = ?
+                WHERE id = ?
+                """,
+                (touched_at.isoformat(), touched_at.isoformat(), due_at_iso, chunk_id),
+            )
             self._conn.commit()
             return cursor.rowcount > 0
 
@@ -926,6 +1596,173 @@ class SQLiteStore(MemoryStore):
             rows = self._conn.execute(query, tuple(params)).fetchall()
         return [self._row_to_feedback_event(row) for row in rows]
 
+    def append_episodic_event(self, event: EpisodicEvent) -> EpisodicEvent:
+        with self._lock:
+            existing_row = self._conn.execute(
+                """
+                SELECT id, event_fingerprint, role, content, normalized_content, scope, scope_id,
+                       source, hook_event, metadata, status, error, created_at, occurred_at
+                FROM episodic_events
+                WHERE event_fingerprint = ?
+                """,
+                (event.event_fingerprint,),
+            ).fetchone()
+            if existing_row is not None:
+                return self._row_to_episodic_event(existing_row)
+
+            self._conn.execute(
+                """
+                INSERT INTO episodic_events
+                (id, event_fingerprint, role, content, normalized_content, scope, scope_id,
+                 source, hook_event, metadata, status, error, created_at, occurred_at)
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                """,
+                self._episodic_event_to_row(event),
+            )
+            self._conn.commit()
+            return event
+
+    def list_episodic_events(
+        self,
+        *,
+        status: str | None = None,
+        scope: str | None = None,
+        scope_id: str | None = None,
+        limit: int = 0,
+    ) -> list[EpisodicEvent]:
+        query = """
+            SELECT id, event_fingerprint, role, content, normalized_content, scope, scope_id,
+                   source, hook_event, metadata, status, error, created_at, occurred_at
+            FROM episodic_events
+        """
+        clauses: list[str] = []
+        params: list[Any] = []
+        if status is not None:
+            clauses.append("status = ?")
+            params.append(status)
+        if scope is not None:
+            clauses.append("scope = ?")
+            params.append(scope)
+        if scope_id is not None:
+            clauses.append("scope_id = ?")
+            params.append(scope_id)
+        if clauses:
+            query += " WHERE " + " AND ".join(clauses)
+        query += " ORDER BY created_at ASC"
+        if limit > 0:
+            query += " LIMIT ?"
+            params.append(limit)
+
+        with self._lock:
+            rows = self._conn.execute(query, tuple(params)).fetchall()
+        return [self._row_to_episodic_event(row) for row in rows]
+
+    def update_episodic_event(
+        self,
+        event_id: str,
+        *,
+        status: str,
+        error: str | None = None,
+    ) -> bool:
+        with self._lock:
+            cursor = self._conn.execute(
+                """
+                UPDATE episodic_events
+                SET status = ?, error = ?
+                WHERE id = ?
+                """,
+                (status, error, event_id),
+            )
+            self._conn.commit()
+            return cursor.rowcount > 0
+
+    def enqueue_reconsolidation_job(self, job: ReconsolidationJob) -> ReconsolidationJob:
+        with self._lock:
+            self._conn.execute(
+                """
+                INSERT INTO reconsolidation_jobs
+                (id, chunk_id, context, status, error, attempt_count, queued_at, due_at, last_attempt_at)
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+                ON CONFLICT(chunk_id) DO UPDATE SET
+                    context=excluded.context,
+                    status='pending',
+                    error=NULL,
+                    queued_at=excluded.queued_at,
+                    due_at=excluded.due_at
+                """,
+                self._reconsolidation_job_to_row(job),
+            )
+            self._conn.commit()
+            row = self._conn.execute(
+                """
+                SELECT id, chunk_id, context, status, error, attempt_count, queued_at, due_at,
+                       last_attempt_at
+                FROM reconsolidation_jobs
+                WHERE chunk_id = ?
+                """,
+                (job.chunk_id,),
+            ).fetchone()
+        return self._row_to_reconsolidation_job(cast(tuple[Any, ...], row))
+
+    def list_reconsolidation_jobs(
+        self,
+        *,
+        status: str | None = None,
+        limit: int = 0,
+    ) -> list[ReconsolidationJob]:
+        query = """
+            SELECT id, chunk_id, context, status, error, attempt_count, queued_at, due_at,
+                   last_attempt_at
+            FROM reconsolidation_jobs
+        """
+        params: list[Any] = []
+        if status is not None:
+            query += " WHERE status = ?"
+            params.append(status)
+        query += " ORDER BY due_at ASC, queued_at ASC"
+        if limit > 0:
+            query += " LIMIT ?"
+            params.append(limit)
+        with self._lock:
+            rows = self._conn.execute(query, tuple(params)).fetchall()
+        return [self._row_to_reconsolidation_job(row) for row in rows]
+
+    def update_reconsolidation_job(
+        self,
+        chunk_id: str,
+        *,
+        status: str,
+        error: str | None = None,
+    ) -> bool:
+        attempted_at = datetime.now(timezone.utc).isoformat()
+        with self._lock:
+            cursor = self._conn.execute(
+                """
+                UPDATE reconsolidation_jobs
+                SET status = ?,
+                    error = ?,
+                    attempt_count = attempt_count + 1,
+                    last_attempt_at = ?
+                WHERE chunk_id = ?
+                """,
+                (status, error, attempted_at, chunk_id),
+            )
+            self._conn.commit()
+            return cursor.rowcount > 0
+
+    def delete_reconsolidation_job(self, chunk_id: str) -> bool:
+        with self._lock:
+            cursor = self._conn.execute(
+                "DELETE FROM reconsolidation_jobs WHERE chunk_id = ?",
+                (chunk_id,),
+            )
+            self._conn.execute(
+                "UPDATE memory_chunks SET reconsolidation_due_at = NULL WHERE id = ?",
+                (chunk_id,),
+            )
+            self._conn.commit()
+            return cursor.rowcount > 0
+
     def get_graph_edges(self, chunk_ids: list[str] | None = None) -> dict[str, dict[str, float]]:
         query = """
             SELECT source_id, target_id, weight
@@ -1007,6 +1844,12 @@ class SQLiteStore(MemoryStore):
                 "SELECT COUNT(*) FROM memory_edges WHERE edge_type = ?",
                 (self._GRAPH_EDGE_TYPE,),
             ).fetchone()[0]
+            episodic_pending = self._conn.execute(
+                "SELECT COUNT(*) FROM episodic_events WHERE status = 'pending'"
+            ).fetchone()[0]
+            reconsolidation_pending = self._conn.execute(
+                "SELECT COUNT(*) FROM reconsolidation_jobs WHERE status = 'pending'"
+            ).fetchone()[0]
             schema_version_raw = self._conn.execute(
                 "SELECT value FROM mnemos_meta WHERE key = 'schema_version'"
             ).fetchone()
@@ -1026,11 +1869,49 @@ class SQLiteStore(MemoryStore):
             "average_salience": round(avg_salience, 4),
             "average_access_count": round(avg_access, 4),
             "related_edges": int(directed_edges // 2),
+            "semantic_similar_edges": int(directed_edges // 2),
+            "pending_episodic_events": int(episodic_pending),
+            "pending_reconsolidation_jobs": int(reconsolidation_pending),
             "fts_enabled": bool(fts_exists),
             "schema_version": int(schema_version_raw[0]) if schema_version_raw else None,
             "sqlite_vec_enabled": self._sqlite_vec_enabled,
             "sqlite_vec_indexed": self._vec_table_exists(),
             "sqlite_vec_dim": self._sqlite_vec_dim,
+        }
+
+    def rebuild_indexes(
+        self,
+        *,
+        rebuild_fts: bool = True,
+        rebuild_vec: bool = True,
+    ) -> dict[str, Any]:
+        performed = False
+        with self._lock:
+            if rebuild_fts:
+                self._conn.execute("INSERT INTO memory_fts(memory_fts) VALUES ('rebuild');")
+                performed = True
+            if rebuild_vec and self._sqlite_vec_enabled:
+                if self._vec_table_exists():
+                    self._conn.execute("DROP TABLE memory_vec")
+                    self._conn.execute(
+                        "DELETE FROM mnemos_meta WHERE key = ?",
+                        (self._SQLITE_VEC_DIM_KEY,),
+                    )
+                    self._sqlite_vec_dim = None
+                first_embedding = self._conn.execute(
+                    "SELECT embedding FROM memory_chunks WHERE embedding IS NOT NULL LIMIT 1"
+                ).fetchone()
+                if first_embedding is not None and first_embedding[0]:
+                    embedding = json.loads(first_embedding[0])
+                    if isinstance(embedding, list) and embedding:
+                        self._ensure_vec_table(len(embedding))
+                        self._rebuild_vec_index()
+                        performed = True
+            self._conn.commit()
+        return {
+            "rebuild_fts": rebuild_fts,
+            "rebuild_vec": rebuild_vec,
+            "performed": performed,
         }
 
     def close(self) -> None:

@@ -240,12 +240,8 @@ def test_proof_demo_docs_exist_for_first_run_and_inspectability() -> None:
 def test_launch_docs_include_product_hunt_package() -> None:
     launch_doc = PRODUCT_HUNT_LAUNCH_PATH.read_text(encoding="utf-8")
     public_beta = (ROOT / "docs" / "public-beta-launch.md").read_text(encoding="utf-8")
-    release_package = (ROOT / "docs" / "public-release-package.md").read_text(
-        encoding="utf-8"
-    )
-    release_checklist = (ROOT / "docs" / "release-checklist.md").read_text(
-        encoding="utf-8"
-    )
+    release_package = (ROOT / "docs" / "public-release-package.md").read_text(encoding="utf-8")
+    release_checklist = (ROOT / "docs" / "release-checklist.md").read_text(encoding="utf-8")
 
     assert "Product Hunt Launch Package" in launch_doc
     assert "Recommended Tagline" in launch_doc

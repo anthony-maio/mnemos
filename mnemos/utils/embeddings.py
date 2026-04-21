@@ -289,7 +289,7 @@ class FastembedProvider(EmbeddingProvider):
         cache_dir: str | None = None,
     ) -> None:
         try:
-            from fastembed import TextEmbedding  # type: ignore[import-untyped]
+            from fastembed import TextEmbedding
         except ImportError as exc:
             raise MnemosConfigurationError(
                 "fastembed is required for the 'fastembed' embedding provider. "

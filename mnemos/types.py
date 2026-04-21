@@ -140,6 +140,41 @@ class MemoryChunk(BaseModel):
         ge=1,
         description="Reconsolidation version counter; increments on each rewrite.",
     )
+    canonical_key: str | None = Field(
+        default=None,
+        description="Deterministic key used to collapse exact semantic duplicates.",
+    )
+    surprisal_score: float | None = Field(
+        default=None,
+        ge=0.0,
+        le=2.0,
+        description="Measured surprisal score when available. Null means unknown/not measured.",
+    )
+    surprisal_status: str = Field(
+        default="unknown",
+        description="Whether surprisal was measured, unavailable, or not applicable.",
+    )
+    cognitive_state_status: str = Field(
+        default="unknown",
+        description="Whether affective/cognitive state was measured, unavailable, or not applicable.",
+    )
+    last_observed_at: datetime | None = Field(
+        default=None,
+        description="Most recent time this semantic memory was observed again in source events.",
+    )
+    observation_count: int = Field(
+        default=1,
+        ge=0,
+        description="Number of exact observations merged into this canonical memory.",
+    )
+    last_retrieved_at: datetime | None = Field(
+        default=None,
+        description="Last time this chunk was returned by retrieval.",
+    )
+    reconsolidation_due_at: datetime | None = Field(
+        default=None,
+        description="When this chunk next needs mutable-RAG maintenance.",
+    )
 
     model_config = {"frozen": False}
 
@@ -173,7 +208,121 @@ class MemoryChunk(BaseModel):
             updated_at=_utcnow(),
             access_count=self.access_count + 1,
             version=self.version + 1,
+            canonical_key=self.canonical_key,
+            surprisal_score=self.surprisal_score,
+            surprisal_status=self.surprisal_status,
+            cognitive_state_status=self.cognitive_state_status,
+            last_observed_at=self.last_observed_at,
+            observation_count=self.observation_count,
+            last_retrieved_at=self.last_retrieved_at,
+            reconsolidation_due_at=self.reconsolidation_due_at,
         )
+
+
+class EpisodicEvent(BaseModel):
+    """
+    A durable episodic record captured quickly at ingest time before consolidation.
+    """
+
+    id: str = Field(
+        default_factory=lambda: str(uuid.uuid4()),
+        description="Unique identifier for this episodic event.",
+    )
+    event_fingerprint: str = Field(
+        description="Deterministic fingerprint used to collapse duplicate hook fires.",
+    )
+    role: str = Field(description="Speaker role associated with the episodic event.")
+    content: str = Field(description="Original event content.")
+    normalized_content: str = Field(description="Normalized content used for dedupe and scoring.")
+    scope: str = Field(
+        default="project",
+        description="Scope used for later consolidation: project, workspace, or global.",
+    )
+    scope_id: str | None = Field(
+        default="default",
+        description="Scope identifier for project/workspace events.",
+    )
+    source: str = Field(
+        default="manual", description="Ingest source such as manual or claude_hook."
+    )
+    hook_event: str | None = Field(
+        default=None,
+        description="Hook event name when the event came from host automation.",
+    )
+    metadata: dict[str, Any] = Field(
+        default_factory=dict,
+        description="Additional ingestion metadata preserved for maintenance.",
+    )
+    status: str = Field(
+        default="pending",
+        description="Processing state: pending, consolidated, failed, or skipped.",
+    )
+    error: str | None = Field(
+        default=None,
+        description="Last processing error if consolidation failed.",
+    )
+    created_at: datetime = Field(
+        default_factory=_utcnow,
+        description="UTC timestamp when this episodic event was persisted.",
+    )
+    occurred_at: datetime = Field(
+        default_factory=_utcnow,
+        description="UTC timestamp when the original event happened.",
+    )
+
+    @field_validator("role")
+    @classmethod
+    def validate_episodic_role(cls, v: str) -> str:
+        if not v.strip():
+            raise ValueError("Role must not be empty.")
+        return v.lower().strip()
+
+    @field_validator("scope")
+    @classmethod
+    def validate_episodic_scope(cls, v: str) -> str:
+        normalized = v.strip().lower()
+        if normalized not in {"project", "workspace", "global"}:
+            raise ValueError("scope must be one of: project, workspace, global.")
+        return normalized
+
+    @field_validator("scope_id")
+    @classmethod
+    def normalize_episodic_scope_id(cls, v: str | None, info: Any) -> str | None:
+        scope = str(info.data.get("scope", "project")).strip().lower()
+        if scope == "global":
+            return None
+        if v is None:
+            return "default"
+        trimmed = v.strip()
+        return trimmed or "default"
+
+
+class ReconsolidationJob(BaseModel):
+    """
+    Durable mutable-RAG job persisted across process boundaries.
+    """
+
+    id: str = Field(
+        default_factory=lambda: str(uuid.uuid4()),
+        description="Unique identifier for this reconsolidation job.",
+    )
+    chunk_id: str = Field(description="Target chunk ID to reconsolidate.")
+    context: str = Field(description="Retrieval context that made the chunk labile.")
+    status: str = Field(default="pending", description="pending, done, or failed")
+    error: str | None = Field(default=None, description="Last processing error.")
+    attempt_count: int = Field(default=0, ge=0, description="Number of maintenance attempts.")
+    queued_at: datetime = Field(
+        default_factory=_utcnow,
+        description="UTC timestamp when the job was queued.",
+    )
+    due_at: datetime = Field(
+        default_factory=_utcnow,
+        description="UTC timestamp when the job becomes eligible to run.",
+    )
+    last_attempt_at: datetime | None = Field(
+        default=None,
+        description="UTC timestamp of the last maintenance attempt.",
+    )
 
 
 class RetrievalFeedbackEvent(BaseModel):

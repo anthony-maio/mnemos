@@ -387,41 +387,40 @@ class MnemosEngine:
                 ),
             )
 
-        # Always add to episodic buffer for eventual consolidation
-        # (The hippocampus stores everything briefly, even mundane inputs)
-        self.sleep_daemon.add_episode(scoped_interaction)
-
-        # Step 1: Surprisal gate — filter by prediction error
-        result = await self.surprisal_gate.process(scoped_interaction)
-
-        if not result.stored or result.chunk is None:
-            return result
-
-        safety = self._write_firewall.apply(result.chunk.content)
+        safety = self._write_firewall.apply(scoped_interaction.content)
         if not safety.allowed:
-            self._store.delete(result.chunk.id)
             return ProcessResult(
                 stored=False,
                 chunk=None,
-                salience=result.salience,
+                salience=0.0,
                 reason=f"Blocked by safety policy: {safety.reason}",
             )
 
-        skip_reason = durable_memory_skip_reason(safety.content)
+        safe_metadata = dict(scoped_interaction.metadata)
+        if safety.content != scoped_interaction.content:
+            safe_metadata["safety_redactions"] = [match.label for match in safety.matches]
+        safe_interaction = scoped_interaction.model_copy(
+            update={"content": safety.content, "metadata": safe_metadata}
+        )
+
+        skip_reason = durable_memory_skip_reason(safe_interaction.content)
         if skip_reason is not None:
-            self._store.delete(result.chunk.id)
             return ProcessResult(
                 stored=False,
                 chunk=None,
-                salience=result.salience,
+                salience=0.0,
                 reason=f"Skipped transient/noisy memory: {skip_reason}.",
             )
 
-        if safety.content != result.chunk.content:
-            result.chunk.content = safety.content
-            result.chunk.embedding = await embed_text_async(self._embedder, safety.content)
-            result.chunk.metadata["safety_redactions"] = [match.label for match in safety.matches]
-            self._store.update(result.chunk.id, result.chunk)
+        # Always add to episodic buffer for eventual consolidation
+        # (The hippocampus stores everything briefly, even mundane inputs)
+        self.sleep_daemon.add_episode(safe_interaction)
+
+        # Step 1: Surprisal gate — filter by prediction error
+        result = await self.surprisal_gate.process(safe_interaction)
+
+        if not result.stored or result.chunk is None:
+            return result
 
         # Ensure scope tags are always present on persisted chunks.
         result.chunk.metadata["scope"] = normalized_scope
@@ -433,11 +432,11 @@ class MnemosEngine:
         result.chunk.metadata["encoding_reason"] = result.reason
 
         # Step 2: Affective tagging — classify and attach cognitive state
-        state = await self.affective_router.classify_state(scoped_interaction)
+        state = await self.affective_router.classify_state(safe_interaction)
         self.affective_router.tag_chunk(result.chunk, state)
 
         # Update the stored chunk with the affective tag
-        self._store.update(result.chunk.id, result.chunk)
+        result.chunk = self._store.upsert_canonical(result.chunk)
 
         # Step 3: Add to spreading activation graph
         self.spreading_activation.add_node_from_chunk(result.chunk)
@@ -536,7 +535,10 @@ class MnemosEngine:
         affective_chunks: list[MemoryChunk] = []
         if use_affective:
             query_interaction = Interaction(role="user", content=query)
-            current_state = await self.affective_router.classify_state(query_interaction)
+            current_state = (
+                await self.affective_router.classify_state(query_interaction)
+                or self.affective_router.get_current_state()
+            )
             affective_chunks = await self.affective_router.retrieve(
                 query=query,
                 current_state=current_state,
@@ -614,11 +616,17 @@ class MnemosEngine:
         # Step 4: MutableRAG — flag as labile and optionally reconsolidate
         for chunk in final_chunks:
             touched_at = datetime.now(timezone.utc)
-            next_access_count = chunk.access_count + 1
-            if self._store.touch(chunk.id, updated_at=touched_at):
-                if chunk.access_count < next_access_count:
-                    chunk.access_count = next_access_count
-                chunk.updated_at = touched_at
+            if self._store.mark_retrieved(
+                chunk.id,
+                retrieved_at=touched_at,
+                reconsolidation_due_at=touched_at,
+            ):
+                refreshed = self._store.get(chunk.id)
+                if refreshed is not None:
+                    chunk.access_count = refreshed.access_count
+                    chunk.updated_at = refreshed.updated_at
+                    chunk.last_retrieved_at = refreshed.last_retrieved_at
+                    chunk.reconsolidation_due_at = refreshed.reconsolidation_due_at
             self.mutable_rag.mark_labile(chunk, query)
 
         if reconsolidate and final_chunks:
@@ -656,6 +664,8 @@ class MnemosEngine:
         Returns:
             ConsolidationResult with facts extracted, chunks pruned, tools generated.
         """
+        reconsolidation_results = await self.mutable_rag.process_labile_chunks()
+
         result = await self.sleep_daemon.consolidate(
             llm_provider=self._llm,
             embedder=self._embedder,
@@ -680,7 +690,8 @@ class MnemosEngine:
         if self.config.debug:
             logger.debug(
                 f"[MnemosEngine] Consolidated: {len(result.facts_extracted)} facts, "
-                f"{result.chunks_pruned} episodes pruned"
+                f"{result.chunks_pruned} episodes pruned, "
+                f"{len(reconsolidation_results)} reconsolidation jobs processed"
             )
 
         return result

@@ -51,7 +51,7 @@ from typing import Any
 
 from ..config import SleepConfig
 from ..memory_safety import MemoryWriteFirewall
-from ..types import ConsolidationResult, Interaction, MemoryChunk
+from ..types import ConsolidationResult, EpisodicEvent, Interaction, MemoryChunk
 from ..utils.embeddings import (
     EmbeddingProvider,
     cosine_similarity,
@@ -59,7 +59,12 @@ from ..utils.embeddings import (
     embed_text_async,
 )
 from ..utils.llm import LLMProvider
-from ..utils.storage import MemoryStore
+from ..utils.storage import (
+    MemoryStore,
+    compute_canonical_key,
+    compute_event_fingerprint,
+    normalize_memory_text,
+)
 
 _VALID_SCOPES = ("project", "workspace", "global")
 _DEFAULT_SCOPE_ID = "default"
@@ -126,10 +131,45 @@ class SleepDaemon:
         Args:
             interaction: The interaction to buffer.
         """
-        self._episodic_buffer[_scope_partition_key(interaction)].append(interaction)
+        partition_key = _scope_partition_key(interaction)
+        self._episodic_buffer[partition_key].append(interaction)
+        scope, scope_id = partition_key
+        self._store.append_episodic_event(
+            EpisodicEvent(
+                event_fingerprint=compute_event_fingerprint(
+                    role=interaction.role,
+                    content=interaction.content,
+                    scope=scope,
+                    scope_id=scope_id,
+                    source=str(interaction.metadata.get("source", "manual")),
+                    hook_event=(
+                        str(interaction.metadata.get("hook_event"))
+                        if interaction.metadata.get("hook_event") is not None
+                        else None
+                    ),
+                    occurred_at=interaction.timestamp,
+                ),
+                role=interaction.role,
+                content=interaction.content,
+                normalized_content=normalize_memory_text(interaction.content),
+                scope=scope,
+                scope_id=scope_id,
+                source=str(interaction.metadata.get("source", "manual")),
+                hook_event=(
+                    str(interaction.metadata.get("hook_event"))
+                    if interaction.metadata.get("hook_event") is not None
+                    else None
+                ),
+                metadata=dict(interaction.metadata),
+                occurred_at=interaction.timestamp,
+            )
+        )
 
     def get_episode_count(self) -> int:
         """Return the number of interactions currently in the episodic buffer."""
+        pending_events = self._store.list_episodic_events(status="pending")
+        if pending_events:
+            return len(pending_events)
         return sum(len(episodes) for episodes in self._episodic_buffer.values())
 
     def should_consolidate(self) -> bool:
@@ -143,10 +183,20 @@ class SleepDaemon:
         Returns:
             True if consolidation should run now.
         """
-        episode_threshold = any(
-            len(episodes) >= self._config.min_episodes_before_consolidation
-            for episodes in self._episodic_buffer.values()
-        )
+        pending_events = self._store.list_episodic_events(status="pending")
+        if pending_events:
+            partition_counts: dict[tuple[str, str | None], int] = defaultdict(int)
+            for event in pending_events:
+                partition_counts[(event.scope, event.scope_id)] += 1
+            episode_threshold = any(
+                count >= self._config.min_episodes_before_consolidation
+                for count in partition_counts.values()
+            )
+        else:
+            episode_threshold = any(
+                len(episodes) >= self._config.min_episodes_before_consolidation
+                for episodes in self._episodic_buffer.values()
+            )
         time_threshold = (
             time.time() - self._last_consolidation >= self._config.consolidation_interval_seconds
         )
@@ -241,20 +291,75 @@ class SleepDaemon:
         successful_partitions = 0
         recall_filtered = 0
         recall_supported = 0
+        pending_events = self._store.list_episodic_events(status="pending")
+        partitioned_events: dict[tuple[str, str | None], list[EpisodicEvent]] = defaultdict(list)
+        for event in pending_events:
+            partitioned_events[(event.scope, event.scope_id)].append(event)
 
-        for partition_key, buffered_episodes in list(self._episodic_buffer.items()):
-            if not buffered_episodes:
+        if not partitioned_events:
+            for partition_key, buffered_episodes in self._episodic_buffer.items():
+                for interaction in buffered_episodes:
+                    scope, scope_id = partition_key
+                    partitioned_events[partition_key].append(
+                        EpisodicEvent(
+                            event_fingerprint=compute_event_fingerprint(
+                                role=interaction.role,
+                                content=interaction.content,
+                                scope=scope,
+                                scope_id=scope_id,
+                                source=str(interaction.metadata.get("source", "manual")),
+                                hook_event=(
+                                    str(interaction.metadata.get("hook_event"))
+                                    if interaction.metadata.get("hook_event") is not None
+                                    else None
+                                ),
+                                occurred_at=interaction.timestamp,
+                            ),
+                            role=interaction.role,
+                            content=interaction.content,
+                            normalized_content=normalize_memory_text(interaction.content),
+                            scope=scope,
+                            scope_id=scope_id,
+                            source=str(interaction.metadata.get("source", "manual")),
+                            hook_event=(
+                                str(interaction.metadata.get("hook_event"))
+                                if interaction.metadata.get("hook_event") is not None
+                                else None
+                            ),
+                            metadata=dict(interaction.metadata),
+                            occurred_at=interaction.timestamp,
+                        )
+                    )
+
+        for partition_key, partition_events in partitioned_events.items():
+            if not partition_events:
                 continue
 
-            episodes = buffered_episodes[-self._config.max_episodes_per_consolidation :]
+            partition_events.sort(key=lambda event: event.occurred_at)
+            selected_events = partition_events[-self._config.max_episodes_per_consolidation :]
+            episodes = [
+                Interaction(
+                    role=event.role,
+                    content=event.content,
+                    timestamp=event.occurred_at,
+                    metadata=event.metadata,
+                )
+                for event in selected_events
+            ]
             episodes_text = self._format_episodes_for_prompt(episodes)
-            episodes_to_prune = len(episodes)
+            episodes_to_prune = len(selected_events)
             scope, scope_id = partition_key
 
             consolidation_prompt = self._config.consolidation_prompt.format(episodes=episodes_text)
             try:
                 raw_facts = await llm_provider.predict(consolidation_prompt)
             except Exception:
+                for event in selected_events:
+                    self._store.update_episodic_event(
+                        event.id,
+                        status="failed",
+                        error="provider_unavailable",
+                    )
                 continue
 
             facts = self._parse_fact_list(raw_facts)
@@ -307,13 +412,22 @@ class SleepDaemon:
                         embedding=await embed_text_async(embedder, safe_fact),
                         metadata=metadata,
                         salience=0.7,  # Consolidated facts have high salience
+                        canonical_key=compute_canonical_key(safe_fact, scope, scope_id),
+                        surprisal_status="not_applicable",
+                        cognitive_state_status="not_applicable",
+                        last_observed_at=max(episode.timestamp for episode in episodes),
+                        observation_count=1,
                     )
                 )
                 stored_facts.append(safe_fact)
 
             for chunk in semantic_chunks:
-                self._store.store(chunk)
+                self._store.upsert_canonical(chunk)
 
+            for event in selected_events:
+                self._store.update_episodic_event(event.id, status="consolidated", error=None)
+
+            buffered_episodes = self._episodic_buffer.get(partition_key, [])
             if episodes_to_prune >= len(buffered_episodes):
                 self._episodic_buffer.pop(partition_key, None)
             else:
@@ -469,11 +583,22 @@ class SleepDaemon:
     def get_stats(self) -> dict[str, Any]:
         """Return statistics about the SleepDaemon module."""
         time_since_last = time.time() - self._last_consolidation
-        ready_partitions = sum(
-            1
-            for episodes in self._episodic_buffer.values()
-            if len(episodes) >= self._config.min_episodes_before_consolidation
-        )
+        pending_events = self._store.list_episodic_events(status="pending")
+        if pending_events:
+            partition_counts: dict[tuple[str, str | None], int] = defaultdict(int)
+            for event in pending_events:
+                partition_counts[(event.scope, event.scope_id)] += 1
+            ready_partitions = sum(
+                1
+                for count in partition_counts.values()
+                if count >= self._config.min_episodes_before_consolidation
+            )
+        else:
+            ready_partitions = sum(
+                1
+                for episodes in self._episodic_buffer.values()
+                if len(episodes) >= self._config.min_episodes_before_consolidation
+            )
         return {
             "module": "SleepDaemon",
             "episodic_buffer_size": self.get_episode_count(),
