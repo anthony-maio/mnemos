@@ -41,9 +41,9 @@ def test_health_reports_degraded_when_using_mock_llm(monkeypatch: pytest.MonkeyP
 
     report = run_health_checks()
 
-    assert report["status"] == "degraded"
-    assert report["degraded_mode"] is True
-    assert report["summary"]["warn"] >= 1
+    assert report["status"] == "not_ready"
+    assert report["degraded_mode"] is False
+    assert report["summary"]["fail"] >= 1
 
 
 def test_health_reports_ready_for_openclaw_default_profile(

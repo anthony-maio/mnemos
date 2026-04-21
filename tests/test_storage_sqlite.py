@@ -42,11 +42,11 @@ def test_sqlite_store_initializes_graph_schema_and_stats(tmp_path: Path) -> None
     assert "memory_edges" in tables
     assert "retrieval_feedback_events" in tables
     assert "memory_fts" in tables
-    assert schema_version == ("2",)
+    assert schema_version == ("3",)
     assert stats["total_chunks"] == 0
     assert stats["related_edges"] == 0
     assert stats["fts_enabled"] is True
-    assert stats["schema_version"] == 2
+    assert stats["schema_version"] == 3
     assert stats["sqlite_vec_enabled"] is True
 
 

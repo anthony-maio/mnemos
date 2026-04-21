@@ -33,7 +33,7 @@ from ..config import SurprisalConfig
 from ..types import Interaction, MemoryChunk, ProcessResult
 from ..utils.embeddings import EmbeddingProvider, cosine_distance, embed_text_async
 from ..utils.llm import LLMProvider
-from ..utils.storage import MemoryStore
+from ..utils.storage import MemoryStore, compute_canonical_key, normalize_memory_text
 
 
 class SurprisalGate:
@@ -69,7 +69,40 @@ class SurprisalGate:
         self._total_processed: int = 0
         self._total_stored: int = 0
 
-    def _build_prediction_prompt(self, current_interaction: Interaction) -> str:
+    def _prediction_history(self, interaction: Interaction) -> list[Interaction]:
+        history = list(self._history)
+        if len(history) >= self._config.history_window:
+            return history[-self._config.history_window :]
+
+        scope = str(interaction.metadata.get("scope", "project"))
+        scope_id_raw = interaction.metadata.get("scope_id")
+        scope_id = scope_id_raw if isinstance(scope_id_raw, str) else None
+        persisted_history = self._store.list_episodic_events(
+            scope=scope,
+            scope_id=scope_id,
+            limit=self._config.history_window,
+        )
+        for event in persisted_history:
+            if event.occurred_at >= interaction.timestamp and normalize_memory_text(
+                event.content
+            ) == normalize_memory_text(interaction.content):
+                continue
+            history.append(
+                Interaction(
+                    role=event.role,
+                    content=event.content,
+                    timestamp=event.occurred_at,
+                    metadata=event.metadata,
+                )
+            )
+        history.sort(key=lambda turn: turn.timestamp)
+        return history[-self._config.history_window :]
+
+    def _build_prediction_prompt(
+        self,
+        current_interaction: Interaction,
+        history: list[Interaction],
+    ) -> str:
         """
         Build the LLM prompt for predicting the user's next intent.
 
@@ -83,7 +116,7 @@ class SurprisalGate:
             A formatted prompt string.
         """
         history_lines = []
-        for turn in self._history:
+        for turn in history:
             role_label = turn.role.capitalize()
             history_lines.append(f"{role_label}: {turn.content}")
 
@@ -97,7 +130,7 @@ class SurprisalGate:
             "Predicted next user input:"
         )
 
-    async def _compute_surprisal(self, interaction: Interaction) -> float:
+    async def _compute_surprisal(self, interaction: Interaction) -> tuple[float | None, str]:
         """
         Compute the surprisal score for an interaction.
 
@@ -113,27 +146,24 @@ class SurprisalGate:
             Surprisal score in [0, 2], typically [0, 1] for text embeddings.
             Higher = more surprising = higher salience.
         """
-        if not self._history:
-            # No history to predict from — treat as moderately surprising
-            return 0.5
+        history = self._prediction_history(interaction)
 
         # Step 1: Get prediction from LLM
-        prediction_prompt = self._build_prediction_prompt(interaction)
+        prediction_prompt = self._build_prediction_prompt(interaction, history)
         try:
             prediction = await self._llm.predict(prediction_prompt)
         except Exception:
-            # If LLM fails, fall back to moderate surprisal
-            return 0.5
+            return None, "provider_unavailable"
 
         if not prediction.strip():
-            return 0.5
+            return None, "provider_unavailable"
 
         # Step 2: Embed both prediction and actual input
         prediction_embedding = await embed_text_async(self._embedder, prediction)
         actual_embedding = await embed_text_async(self._embedder, interaction.content)
 
         # Step 3: Cosine distance = semantic divergence = surprisal score
-        return cosine_distance(prediction_embedding, actual_embedding)
+        return cosine_distance(prediction_embedding, actual_embedding), "measured"
 
     def _salience_from_surprisal(self, surprisal: float) -> float:
         """
@@ -182,12 +212,24 @@ class SurprisalGate:
             )
 
         # Compute surprisal score
-        surprisal = await self._compute_surprisal(interaction)
+        surprisal, surprisal_status = await self._compute_surprisal(interaction)
 
         # Always update history buffer (even if not stored)
         self._history.append(interaction)
 
-        if surprisal <= self._config.threshold:
+        if surprisal is None:
+            if self._config.threshold > 0.0:
+                return ProcessResult(
+                    stored=False,
+                    salience=0.0,
+                    reason=(
+                        "Surprisal unavailable "
+                        f"({surprisal_status.replace('_', ' ')}); threshold "
+                        f"{self._config.threshold:.3f} requires a measured score."
+                    ),
+                )
+            salience = 1.0
+        elif surprisal <= self._config.threshold:
             return ProcessResult(
                 stored=False,
                 salience=surprisal,
@@ -196,25 +238,36 @@ class SurprisalGate:
                     "Interaction matched prediction — not encoded."
                 ),
             )
+        else:
+            salience = self._salience_from_surprisal(surprisal)
 
         # High surprisal: encode as a memory chunk
-        salience = self._salience_from_surprisal(surprisal)
         embedding = await embed_text_async(self._embedder, interaction.content)
+        scope = str(interaction.metadata.get("scope", "project"))
+        scope_id_raw = interaction.metadata.get("scope_id")
+        scope_id = scope_id_raw if isinstance(scope_id_raw, str) else None
 
         chunk = MemoryChunk(
             content=interaction.content,
             embedding=embedding,
             metadata={
-                "role": interaction.role,
-                "surprisal_score": surprisal,
                 "source": "surprisal_gate",
                 "original_timestamp": interaction.timestamp.isoformat(),
                 **interaction.metadata,
             },
             salience=salience,
+            canonical_key=compute_canonical_key(interaction.content, scope, scope_id),
+            surprisal_score=surprisal,
+            surprisal_status=surprisal_status,
+            last_observed_at=interaction.timestamp,
+            observation_count=1,
         )
 
-        self._store.store(chunk)
+        if surprisal is not None:
+            chunk.metadata["surprisal_score"] = surprisal
+        chunk.metadata["surprisal_status"] = surprisal_status
+
+        chunk = self._store.upsert_canonical(chunk)
         self._total_stored += 1
 
         return ProcessResult(
@@ -222,8 +275,15 @@ class SurprisalGate:
             chunk=chunk,
             salience=salience,
             reason=(
-                f"High surprisal ({surprisal:.3f} > threshold {self._config.threshold:.3f}). "
-                f"Encoded with salience {salience:.3f}."
+                (
+                    f"High surprisal ({surprisal:.3f} > threshold {self._config.threshold:.3f}). "
+                    f"Encoded with salience {salience:.3f}."
+                )
+                if surprisal is not None
+                else (
+                    "Stored because threshold 0.000 explicitly disables surprisal gating and "
+                    f"the score was unavailable ({surprisal_status.replace('_', ' ')})."
+                )
             ),
         )
 

@@ -2,7 +2,7 @@
 
 ## Unreleased
 
-## 0.7.0 -- 2026-04-14
+## 0.7.0 -- 2026-04-21
 
 Closes the auto-memory loop in Claude Code: retrieval is now deterministic and invisible to the model, not dependent on the model choosing to prime itself.
 
@@ -18,6 +18,13 @@ Closes the auto-memory loop in Claude Code: retrieval is now deterministic and i
 - **Default embedding provider switched from `simple` (TF-IDF) to `fastembed`** -- a fresh install now produces real semantic retrieval out of the box, no configuration required
 - `ollama`, `openai`, `openclaw`, and `openrouter` providers remain supported as power-user swaps via `MNEMOS_EMBEDDING_PROVIDER`
 - `fastembed>=0.4` is now a hard dependency so the default path works with zero configuration; accepted tradeoff is a larger wheel footprint on uncommon platforms
+
+### Fixed
+- `mnemos-cli autostore-hook` now queues idempotent episodic events instead of writing semantic memory directly, so duplicate hook fires collapse cleanly and consolidation works across process restarts
+- `mnemos-cli repair-db` migrates bloated SQLite stores into a clean target DB, exact-dedupes canonical chunks, and rebuilds FTS plus `sqlite-vec` once instead of carrying shadow-table bloat forward
+- surprisal and affective fields now stay null when unmeasured instead of serializing fake midpoint defaults
+- retrieval now queues durable reconsolidation jobs and later consolidation updates the same chunk in place with revision history
+- repaired SQLite stores now persist typed `SEMANTIC_SIMILAR` edges, and the runtime can infer the correct simple-embedder dimension from an existing SQLite vector store during CLI and MCP startup
 
 ## 0.6.0 — 2026-03-31
 

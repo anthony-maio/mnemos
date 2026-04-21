@@ -775,25 +775,27 @@ class TestEngineRetrievePersistence:
 
     @pytest.mark.asyncio
     async def test_retrieve_uses_backend_managed_touch_increment(self) -> None:
-        """retrieve() should let the store apply its own increment semantics."""
+        """retrieve() should let the store persist retrieval maintenance in one backend call."""
 
         class RecordingStore(InMemoryStore):
             def __init__(self) -> None:
                 super().__init__()
-                self.touch_access_count_args: list[int | None] = []
+                self.mark_retrieved_calls: list[tuple[str, bool, bool]] = []
 
-            def touch(
+            def mark_retrieved(
                 self,
                 chunk_id: str,
                 *,
-                access_count: int | None = None,
-                updated_at: datetime | None = None,
+                retrieved_at: datetime | None = None,
+                reconsolidation_due_at: datetime | None = None,
             ) -> bool:
-                self.touch_access_count_args.append(access_count)
-                return super().touch(
+                self.mark_retrieved_calls.append(
+                    (chunk_id, retrieved_at is not None, reconsolidation_due_at is not None)
+                )
+                return super().mark_retrieved(
                     chunk_id,
-                    access_count=access_count,
-                    updated_at=updated_at,
+                    retrieved_at=retrieved_at,
+                    reconsolidation_due_at=reconsolidation_due_at,
                 )
 
         store = RecordingStore()
@@ -822,7 +824,7 @@ class TestEngineRetrievePersistence:
         )
 
         assert len(results) == 1
-        assert store.touch_access_count_args == [None]
+        assert store.mark_retrieved_calls == [(results[0].id, True, True)]
 
     @pytest.mark.asyncio
     async def test_retrieve_top_one_skips_spreading_activation(self) -> None:

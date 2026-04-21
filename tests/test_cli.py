@@ -188,7 +188,7 @@ async def test_cli_doctor_prints_report(monkeypatch: pytest.MonkeyPatch, capsys:
     )
     captured = capsys.readouterr().out
     assert '"profile": "default"' in captured
-    assert '"status": "degraded"' in captured
+    assert '"status": "not_ready"' in captured
 
 
 def test_build_profile_env_default_defaults() -> None:
@@ -421,6 +421,48 @@ async def test_cli_inspect_supports_query_context(
     payload = capsys.readouterr().out
     assert '"retrieval"' in payload
     assert '"semantic_rank": 1' in payload
+
+
+@pytest.mark.asyncio
+async def test_cli_inspect_uses_existing_sqlite_vec_dim_for_simple_provider(
+    monkeypatch: pytest.MonkeyPatch,
+    tmp_path: Path,
+    capsys: Any,
+) -> None:
+    db_path = tmp_path / "inspect-existing-dim.sqlite"
+    store = SQLiteStore(db_path=str(db_path))
+    provider = SimpleEmbeddingProvider(dim=768)
+    try:
+        store.store(
+            MemoryChunk(
+                id="chunk-768",
+                content="Alpha memory uses uv, ruff, pyright, and pytest.",
+                embedding=provider.embed("Alpha memory uses uv, ruff, pyright, and pytest."),
+                metadata={"scope": "project", "scope_id": "repo-alpha"},
+            )
+        )
+    finally:
+        store.close()
+
+    monkeypatch.setenv("MNEMOS_STORE_TYPE", "sqlite")
+    monkeypatch.setenv("MNEMOS_SQLITE_PATH", str(db_path))
+    monkeypatch.setenv("MNEMOS_LLM_PROVIDER", "mock")
+    monkeypatch.setenv("MNEMOS_EMBEDDING_PROVIDER", "simple")
+    monkeypatch.delenv("MNEMOS_EMBEDDING_DIM", raising=False)
+
+    await _cmd_inspect(
+        Namespace(
+            chunk_id="chunk-768",
+            query="uv ruff pyright pytest",
+            current_scope="project",
+            scope_id="repo-alpha",
+            allowed_scopes="project,global",
+        )
+    )
+
+    payload = capsys.readouterr().out
+    assert '"id": "chunk-768"' in payload
+    assert '"retrieval"' in payload
 
 
 @pytest.mark.asyncio
@@ -696,31 +738,16 @@ async def test_cli_autostore_hook_dry_run_prints_decision(capsys: Any) -> None:
 async def test_cli_autostore_hook_stores_when_decision_allows(
     monkeypatch: pytest.MonkeyPatch, capsys: Any
 ) -> None:
-    class DummyEngine:
+    class DummyStore:
         def __init__(self) -> None:
-            self.scope: str | None = None
-            self.scope_id: str | None = None
+            self.events: list[Any] = []
 
-        async def process(
-            self,
-            interaction: Any,
-            scope: str = "project",
-            scope_id: str | None = None,
-        ) -> ProcessResult:
-            self.scope = scope
-            self.scope_id = scope_id
-            return ProcessResult(
-                stored=True,
-                salience=0.8,
-                reason="stored",
-                chunk=MemoryChunk(
-                    content=interaction.content,
-                    metadata={"scope": scope, "scope_id": scope_id},
-                ),
-            )
+        def append_episodic_event(self, event: Any) -> Any:
+            self.events.append(event)
+            return event
 
-    engine = DummyEngine()
-    monkeypatch.setattr("mnemos.cli._build_hook_engine", lambda: engine)
+    store = DummyStore()
+    monkeypatch.setattr("mnemos.cli._build_hook_store", lambda: store)
 
     payload = '{"prompt":"Set deployment target to ECS in this repository","cwd":"/tmp/repo-alpha"}'
     await _cmd_autostore_hook(
@@ -733,44 +760,30 @@ async def test_cli_autostore_hook_stores_when_decision_allows(
             dry_run=False,
         )
     )
-    assert engine.scope == "project"
-    assert engine.scope_id == "repo-alpha"
+    assert len(store.events) == 1
+    assert store.events[0].scope == "project"
+    assert store.events[0].scope_id == "repo-alpha"
     captured = capsys.readouterr().out
-    assert '"stored": true' in captured.lower()
+    assert '"queued": true' in captured.lower()
 
 
 @pytest.mark.asyncio
 async def test_cli_autostore_hook_uses_fast_hook_engine(
     monkeypatch: pytest.MonkeyPatch, capsys: Any
 ) -> None:
-    class DummyEngine:
+    class DummyStore:
         def __init__(self) -> None:
-            self.scope: str | None = None
-            self.scope_id: str | None = None
+            self.events: list[Any] = []
 
-        async def process(
-            self,
-            interaction: Any,
-            scope: str = "project",
-            scope_id: str | None = None,
-        ) -> ProcessResult:
-            self.scope = scope
-            self.scope_id = scope_id
-            return ProcessResult(
-                stored=True,
-                salience=0.6,
-                reason="fast-hook",
-                chunk=MemoryChunk(
-                    content=interaction.content,
-                    metadata={"scope": scope, "scope_id": scope_id},
-                ),
-            )
+        def append_episodic_event(self, event: Any) -> Any:
+            self.events.append(event)
+            return event
 
-    engine = DummyEngine()
-    monkeypatch.setattr("mnemos.cli._build_hook_engine", lambda: engine, raising=False)
+    store = DummyStore()
+    monkeypatch.setattr("mnemos.cli._build_hook_store", lambda: store, raising=False)
 
-    def _unexpected_default_engine() -> DummyEngine:
-        raise AssertionError("autostore-hook should use fast hook engine")
+    def _unexpected_default_engine() -> Any:
+        raise AssertionError("autostore-hook should not build the default engine")
 
     monkeypatch.setattr("mnemos.cli._build_engine", _unexpected_default_engine)
 
@@ -786,10 +799,11 @@ async def test_cli_autostore_hook_uses_fast_hook_engine(
         )
     )
 
-    assert engine.scope == "project"
-    assert engine.scope_id == "repo-fast"
+    assert len(store.events) == 1
+    assert store.events[0].scope == "project"
+    assert store.events[0].scope_id == "repo-fast"
     captured = capsys.readouterr().out
-    assert '"stored": true' in captured.lower()
+    assert '"queued": true' in captured.lower()
 
 
 def test_migrate_chunks_dry_run_reports_counts_without_writing() -> None:

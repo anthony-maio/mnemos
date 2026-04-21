@@ -4,7 +4,9 @@ mnemos/runtime.py — Shared runtime settings and provider/store factories.
 
 from __future__ import annotations
 
+import json
 import os
+import sqlite3
 from pathlib import Path
 from typing import Literal, Mapping
 
@@ -27,6 +29,39 @@ from .utils.embeddings import (
 )
 from .utils.llm import LLMProvider, MockLLMProvider, OllamaProvider, OpenAIProvider
 from .utils.storage import InMemoryStore, MemoryStore, SQLiteStore
+
+
+def _infer_sqlite_embedding_dim(sqlite_path: str | None) -> int | None:
+    if not sqlite_path:
+        return None
+
+    path = Path(sqlite_path)
+    if not path.exists():
+        return None
+
+    try:
+        conn = sqlite3.connect(f"file:{path.as_posix()}?mode=ro", uri=True)
+    except sqlite3.Error:
+        return None
+
+    try:
+        row = conn.execute("SELECT value FROM mnemos_meta WHERE key = 'sqlite_vec_dim'").fetchone()
+        if row and row[0] not in (None, ""):
+            dim = int(str(row[0]))
+            return dim if dim > 0 else None
+
+        sample = conn.execute(
+            "SELECT embedding FROM memory_chunks WHERE embedding IS NOT NULL LIMIT 1"
+        ).fetchone()
+        if sample and sample[0]:
+            embedding = json.loads(sample[0])
+            if isinstance(embedding, list) and embedding:
+                return len(embedding)
+    except (json.JSONDecodeError, sqlite3.Error, TypeError, ValueError):
+        return None
+    finally:
+        conn.close()
+    return None
 
 
 def resolve_env_value(
@@ -101,7 +136,12 @@ def build_embedder_from_settings(settings: AppSettings) -> EmbeddingProvider:
         )
 
     if provider == "simple":
-        return SimpleEmbeddingProvider(dim=settings.embedding.dim)
+        dim = settings.embedding.dim
+        if settings.storage.type == "sqlite":
+            inferred_dim = _infer_sqlite_embedding_dim(settings.storage.sqlite_path)
+            if inferred_dim is not None:
+                dim = inferred_dim
+        return SimpleEmbeddingProvider(dim=dim)
 
     if provider == "ollama":
         return OllamaEmbeddingProvider(
@@ -214,8 +254,18 @@ def build_embedder_from_env(
             ) from exc
         raise
     settings = resolved.settings
-    if settings.embedding.provider is None and default_provider and settings.llm.provider == "mock":
-        settings.embedding.provider = default_provider  # pragma: no cover
+    explicit_embedding_provider = resolve_env_value(
+        "MNEMOS_EMBEDDING_PROVIDER",
+        env=env,
+    )
+    if (
+        explicit_embedding_provider is None
+        and default_provider
+        and settings.llm.provider == "mock"
+        and not resolved.global_config_path.exists()
+        and resolved.project_config_path is None
+    ):
+        settings.embedding.provider = default_provider
     return build_embedder_from_settings(settings)
 
 
