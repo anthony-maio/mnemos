@@ -956,6 +956,20 @@ class SQLiteStore(MemoryStore):
                 (chunk_id, self._GRAPH_EDGE_TYPE),
             )
 
+            # Skip edge persistence if the source chunk is not in memory_chunks.
+            # With multiple concurrent MCP server processes sharing the same SQLite
+            # database, each process maintains its own in-memory spreading activation
+            # graph that can diverge from what is currently stored. Without this guard,
+            # _sync_persisted_graph_edges() fires FOREIGN KEY constraint failed on
+            # source_id and aborts the entire write transaction. The target IDs are
+            # already filtered by the existing_targets query below — this adds the
+            # symmetric guard for the source.
+            if neighbors and not self._conn.execute(
+                "SELECT 1 FROM memory_chunks WHERE id = ?", (chunk_id,)
+            ).fetchone():
+                self._conn.commit()
+                return
+
             if neighbors:
                 target_ids = [target_id for target_id in neighbors if target_id != chunk_id]
                 existing_targets: set[str] = set()
