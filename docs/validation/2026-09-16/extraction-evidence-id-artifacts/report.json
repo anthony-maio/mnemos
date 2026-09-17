@@ -1,0 +1,2013 @@
+{
+  "counts": {
+    "citations": {
+      "invalid_ids_verified_as_fact_ids": 30,
+      "invalid_source_event_ids": 30,
+      "invalid_support_only": 11,
+      "mixed_invalid_and_valid": 19,
+      "total": 55,
+      "valid_source_event_ids": 25
+    },
+    "complete_with_invalid_evidence": 0,
+    "errors": {
+      "jobs_not_completed": 30
+    },
+    "invalid_support_only_observations": 11,
+    "mixed_invalid_and_valid_observations": 19,
+    "observations": 36,
+    "operations": {
+      "maintenance": 36,
+      "remember": 36,
+      "response": 36,
+      "restart": 36,
+      "retrieve": 108
+    },
+    "partial_with_invalid_evidence": 30,
+    "status": {
+      "complete": 6,
+      "partial": 30
+    }
+  },
+  "interpretation": {
+    "guard_assessment": "The runtime evidence-ID guard is correct: fact IDs are not source-event IDs.",
+    "next_step": "Clarify SOURCE EVENTS-only evidence_ids, retain the runtime guard, and run a small new development diagnostic before a fresh heldout matrix.",
+    "prompt_ambiguity": "Inference from the prompt fields and outputs: existing fact IDs and source-event IDs were both visible, while the evidence_ids versus target_fact_id distinction was not stated explicitly enough for these support responses."
+  },
+  "measurement_status": "complete",
+  "method": {
+    "fact_id_membership": "verified by SELECT id FROM memory_chunks",
+    "format_lengths_are_descriptive_only": true,
+    "raw_model_response_persisted": false,
+    "source": "checkpoint provider_trace.predict_calls responses plus matching SQLite rows",
+    "source_id_membership": "verified by SELECT id FROM episodic_events per observation database"
+  },
+  "observations": [
+    {
+      "db": {
+        "bytes": 3371008,
+        "path": ".venv/real-model-work-v3/lifecycle/attempts/full/8e96c7185f9e4ba8927f7fb48832b65d/full-heldout-001-full-r1.db",
+        "sha256": "5a3b232042d2680fc7c21629080a8f4b8e22299039aaca48d2b3860b2da9fbaa"
+      },
+      "error_names": [
+        "jobs_not_completed"
+      ],
+      "evidence_ids": [
+        "6e6fa268-e889-4e60-9206-79b5d78275dc"
+      ],
+      "execution_status": "partial",
+      "fact_ids": [
+        "6e6fa268-e889-4e60-9206-79b5d78275dc"
+      ],
+      "invalid_evidence_ids": [
+        "6e6fa268-e889-4e60-9206-79b5d78275dc"
+      ],
+      "invalid_ids_verified_as_fact_ids": [
+        "6e6fa268-e889-4e60-9206-79b5d78275dc"
+      ],
+      "proposals": [
+        {
+          "evidence_ids": [
+            "6e6fa268-e889-4e60-9206-79b5d78275dc"
+          ],
+          "operation": "support",
+          "target_fact_id": "6e6fa268-e889-4e60-9206-79b5d78275dc"
+        }
+      ],
+      "repetition": 1,
+      "session_id": "heldout-001",
+      "source_event_ids": [
+        "028e3fdf1a44a36d3b1b931b181fbcab8a56dc35a599aaaf6fdd96fb1050da0c",
+        "d53e7dfb65f9b0f1a7092319bc2844d786a41d267a999ee64796ef60d923681d"
+      ],
+      "source_event_status": {
+        "028e3fdf1a44a36d3b1b931b181fbcab8a56dc35a599aaaf6fdd96fb1050da0c": "pending",
+        "d53e7dfb65f9b0f1a7092319bc2844d786a41d267a999ee64796ef60d923681d": "consolidated"
+      },
+      "valid_source_event_evidence_ids": []
+    },
+    {
+      "db": {
+        "bytes": 3371008,
+        "path": ".venv/real-model-work-v3/lifecycle/attempts/full/8e96c7185f9e4ba8927f7fb48832b65d/full-heldout-001-full-r2.db",
+        "sha256": "e156466773f349cab8be33b7fbfb1992832272da4048b5db471977788e6d055c"
+      },
+      "error_names": [
+        "jobs_not_completed"
+      ],
+      "evidence_ids": [
+        "bff92873-54f8-4235-8308-a88a627d0ec4"
+      ],
+      "execution_status": "partial",
+      "fact_ids": [
+        "bff92873-54f8-4235-8308-a88a627d0ec4"
+      ],
+      "invalid_evidence_ids": [
+        "bff92873-54f8-4235-8308-a88a627d0ec4"
+      ],
+      "invalid_ids_verified_as_fact_ids": [
+        "bff92873-54f8-4235-8308-a88a627d0ec4"
+      ],
+      "proposals": [
+        {
+          "evidence_ids": [
+            "bff92873-54f8-4235-8308-a88a627d0ec4"
+          ],
+          "operation": "support",
+          "target_fact_id": "bff92873-54f8-4235-8308-a88a627d0ec4"
+        }
+      ],
+      "repetition": 2,
+      "session_id": "heldout-001",
+      "source_event_ids": [
+        "161a9a555d967620c1635045dc4a9111a87427b668e64273d4923d81d8ff0e74",
+        "9fd6c711d7ccf7369aee93e446278db917552a1050314e92c1328b272317e536"
+      ],
+      "source_event_status": {
+        "161a9a555d967620c1635045dc4a9111a87427b668e64273d4923d81d8ff0e74": "pending",
+        "9fd6c711d7ccf7369aee93e446278db917552a1050314e92c1328b272317e536": "consolidated"
+      },
+      "valid_source_event_evidence_ids": []
+    },
+    {
+      "db": {
+        "bytes": 3371008,
+        "path": ".venv/real-model-work-v3/lifecycle/attempts/full/8e96c7185f9e4ba8927f7fb48832b65d/full-heldout-001-full-r3.db",
+        "sha256": "540671c9cb111ffb988f7d272e2d8c25f14a9c05c4cbe0ba010a8aa9a06924b0"
+      },
+      "error_names": [
+        "jobs_not_completed"
+      ],
+      "evidence_ids": [
+        "a9b7fc87-6778-4d56-a27b-0112d03876c3",
+        "50c5d19cacb795da0fb66de600278c1c9b2f233905bf7bfff28ca21e97826f62"
+      ],
+      "execution_status": "partial",
+      "fact_ids": [
+        "a9b7fc87-6778-4d56-a27b-0112d03876c3"
+      ],
+      "invalid_evidence_ids": [
+        "a9b7fc87-6778-4d56-a27b-0112d03876c3"
+      ],
+      "invalid_ids_verified_as_fact_ids": [
+        "a9b7fc87-6778-4d56-a27b-0112d03876c3"
+      ],
+      "proposals": [
+        {
+          "evidence_ids": [
+            "a9b7fc87-6778-4d56-a27b-0112d03876c3"
+          ],
+          "operation": "support",
+          "target_fact_id": "a9b7fc87-6778-4d56-a27b-0112d03876c3"
+        },
+        {
+          "evidence_ids": [
+            "50c5d19cacb795da0fb66de600278c1c9b2f233905bf7bfff28ca21e97826f62"
+          ],
+          "operation": "add",
+          "target_fact_id": null
+        }
+      ],
+      "repetition": 3,
+      "session_id": "heldout-001",
+      "source_event_ids": [
+        "4f6ff63e6c0a312ec512249c9dde7c9c271181c5cc54ebc778d58d6678c86f32",
+        "50c5d19cacb795da0fb66de600278c1c9b2f233905bf7bfff28ca21e97826f62"
+      ],
+      "source_event_status": {
+        "4f6ff63e6c0a312ec512249c9dde7c9c271181c5cc54ebc778d58d6678c86f32": "consolidated",
+        "50c5d19cacb795da0fb66de600278c1c9b2f233905bf7bfff28ca21e97826f62": "pending"
+      },
+      "valid_source_event_evidence_ids": [
+        "50c5d19cacb795da0fb66de600278c1c9b2f233905bf7bfff28ca21e97826f62"
+      ]
+    },
+    {
+      "db": {
+        "bytes": 3371008,
+        "path": ".venv/real-model-work-v3/lifecycle/attempts/full/8e96c7185f9e4ba8927f7fb48832b65d/full-heldout-002-full-r1.db",
+        "sha256": "b380fdec1993309fc5b3b69f6baa74bce618a1010afa7beab173b5817cf28120"
+      },
+      "error_names": [
+        "jobs_not_completed"
+      ],
+      "evidence_ids": [
+        "5920e9e5-7a3f-4e71-9178-4f577dec29d9",
+        "0d92c3dc0994c426f3e65c007a69d7ced8ea2ea385a855dcb03350f1105259cb"
+      ],
+      "execution_status": "partial",
+      "fact_ids": [
+        "5920e9e5-7a3f-4e71-9178-4f577dec29d9"
+      ],
+      "invalid_evidence_ids": [
+        "5920e9e5-7a3f-4e71-9178-4f577dec29d9"
+      ],
+      "invalid_ids_verified_as_fact_ids": [
+        "5920e9e5-7a3f-4e71-9178-4f577dec29d9"
+      ],
+      "proposals": [
+        {
+          "evidence_ids": [
+            "5920e9e5-7a3f-4e71-9178-4f577dec29d9"
+          ],
+          "operation": "support",
+          "target_fact_id": "5920e9e5-7a3f-4e71-9178-4f577dec29d9"
+        },
+        {
+          "evidence_ids": [
+            "0d92c3dc0994c426f3e65c007a69d7ced8ea2ea385a855dcb03350f1105259cb"
+          ],
+          "operation": "add",
+          "target_fact_id": null
+        }
+      ],
+      "repetition": 1,
+      "session_id": "heldout-002",
+      "source_event_ids": [
+        "0d92c3dc0994c426f3e65c007a69d7ced8ea2ea385a855dcb03350f1105259cb",
+        "26cf11b1a8848d9bb9095d7f1b91264c6fd01c90c168873e5111355ef7acb045"
+      ],
+      "source_event_status": {
+        "0d92c3dc0994c426f3e65c007a69d7ced8ea2ea385a855dcb03350f1105259cb": "pending",
+        "26cf11b1a8848d9bb9095d7f1b91264c6fd01c90c168873e5111355ef7acb045": "consolidated"
+      },
+      "valid_source_event_evidence_ids": [
+        "0d92c3dc0994c426f3e65c007a69d7ced8ea2ea385a855dcb03350f1105259cb"
+      ]
+    },
+    {
+      "db": {
+        "bytes": 3371008,
+        "path": ".venv/real-model-work-v3/lifecycle/attempts/full/8e96c7185f9e4ba8927f7fb48832b65d/full-heldout-002-full-r2.db",
+        "sha256": "9fa756f09de4e71a18c0c0eaacd52898381570eabdbb4bfe0f87c7a7e2402b2d"
+      },
+      "error_names": [
+        "jobs_not_completed"
+      ],
+      "evidence_ids": [
+        "a00d1408-b9de-4c94-bc1e-87fdd8855b16",
+        "d833034e77ee8d0be6beeb6af5299256579ae205a18c0b811a5aa3cd40801280"
+      ],
+      "execution_status": "partial",
+      "fact_ids": [
+        "a00d1408-b9de-4c94-bc1e-87fdd8855b16"
+      ],
+      "invalid_evidence_ids": [
+        "a00d1408-b9de-4c94-bc1e-87fdd8855b16"
+      ],
+      "invalid_ids_verified_as_fact_ids": [
+        "a00d1408-b9de-4c94-bc1e-87fdd8855b16"
+      ],
+      "proposals": [
+        {
+          "evidence_ids": [
+            "a00d1408-b9de-4c94-bc1e-87fdd8855b16"
+          ],
+          "operation": "support",
+          "target_fact_id": "a00d1408-b9de-4c94-bc1e-87fdd8855b16"
+        },
+        {
+          "evidence_ids": [
+            "d833034e77ee8d0be6beeb6af5299256579ae205a18c0b811a5aa3cd40801280"
+          ],
+          "operation": "add",
+          "target_fact_id": null
+        }
+      ],
+      "repetition": 2,
+      "session_id": "heldout-002",
+      "source_event_ids": [
+        "b012619d3ef9b5430a81d1073d083517c6f085ebecdad0db688c4367607f50e2",
+        "d833034e77ee8d0be6beeb6af5299256579ae205a18c0b811a5aa3cd40801280"
+      ],
+      "source_event_status": {
+        "b012619d3ef9b5430a81d1073d083517c6f085ebecdad0db688c4367607f50e2": "consolidated",
+        "d833034e77ee8d0be6beeb6af5299256579ae205a18c0b811a5aa3cd40801280": "pending"
+      },
+      "valid_source_event_evidence_ids": [
+        "d833034e77ee8d0be6beeb6af5299256579ae205a18c0b811a5aa3cd40801280"
+      ]
+    },
+    {
+      "db": {
+        "bytes": 3371008,
+        "path": ".venv/real-model-work-v3/lifecycle/attempts/full/8e96c7185f9e4ba8927f7fb48832b65d/full-heldout-002-full-r3.db",
+        "sha256": "5d2f47ee70b10360efac6155e7dc82b87bb5165ff2bd2b8eaf96f60ad20c981b"
+      },
+      "error_names": [
+        "jobs_not_completed"
+      ],
+      "evidence_ids": [
+        "7e1b5358-7c2f-4a19-a8d9-201f64630cca",
+        "48da44577b3857e8277a4a6a204651a0c464e64f55b81b0b8860051a79fc3f24"
+      ],
+      "execution_status": "partial",
+      "fact_ids": [
+        "7e1b5358-7c2f-4a19-a8d9-201f64630cca"
+      ],
+      "invalid_evidence_ids": [
+        "7e1b5358-7c2f-4a19-a8d9-201f64630cca"
+      ],
+      "invalid_ids_verified_as_fact_ids": [
+        "7e1b5358-7c2f-4a19-a8d9-201f64630cca"
+      ],
+      "proposals": [
+        {
+          "evidence_ids": [
+            "7e1b5358-7c2f-4a19-a8d9-201f64630cca"
+          ],
+          "operation": "support",
+          "target_fact_id": "7e1b5358-7c2f-4a19-a8d9-201f64630cca"
+        },
+        {
+          "evidence_ids": [
+            "48da44577b3857e8277a4a6a204651a0c464e64f55b81b0b8860051a79fc3f24"
+          ],
+          "operation": "add",
+          "target_fact_id": null
+        }
+      ],
+      "repetition": 3,
+      "session_id": "heldout-002",
+      "source_event_ids": [
+        "17e75476c9635d0b91ac49c6dcc268f7450f18f10ca1456db0d34983211c776f",
+        "48da44577b3857e8277a4a6a204651a0c464e64f55b81b0b8860051a79fc3f24"
+      ],
+      "source_event_status": {
+        "17e75476c9635d0b91ac49c6dcc268f7450f18f10ca1456db0d34983211c776f": "consolidated",
+        "48da44577b3857e8277a4a6a204651a0c464e64f55b81b0b8860051a79fc3f24": "pending"
+      },
+      "valid_source_event_evidence_ids": [
+        "48da44577b3857e8277a4a6a204651a0c464e64f55b81b0b8860051a79fc3f24"
+      ]
+    },
+    {
+      "db": {
+        "bytes": 3371008,
+        "path": ".venv/real-model-work-v3/lifecycle/attempts/full/8e96c7185f9e4ba8927f7fb48832b65d/full-heldout-003-full-r1.db",
+        "sha256": "3132c753c3436855dd8cde5f4f0110c7e6552c57dd9864b1b0e7f3be7a01ce95"
+      },
+      "error_names": [
+        "jobs_not_completed"
+      ],
+      "evidence_ids": [
+        "9561cad1-3dd2-4f6c-8216-68d899be13c6",
+        "d71cbecb8735e8c47ba43d33a276b65a53050f5a57f5d9688eea569be4c8278b"
+      ],
+      "execution_status": "partial",
+      "fact_ids": [
+        "9561cad1-3dd2-4f6c-8216-68d899be13c6"
+      ],
+      "invalid_evidence_ids": [
+        "9561cad1-3dd2-4f6c-8216-68d899be13c6"
+      ],
+      "invalid_ids_verified_as_fact_ids": [
+        "9561cad1-3dd2-4f6c-8216-68d899be13c6"
+      ],
+      "proposals": [
+        {
+          "evidence_ids": [
+            "9561cad1-3dd2-4f6c-8216-68d899be13c6"
+          ],
+          "operation": "support",
+          "target_fact_id": "9561cad1-3dd2-4f6c-8216-68d899be13c6"
+        },
+        {
+          "evidence_ids": [
+            "d71cbecb8735e8c47ba43d33a276b65a53050f5a57f5d9688eea569be4c8278b"
+          ],
+          "operation": "add",
+          "target_fact_id": null
+        }
+      ],
+      "repetition": 1,
+      "session_id": "heldout-003",
+      "source_event_ids": [
+        "39ebf817d53dbd0a249c037094d3d9e25ec1097844b5f50287ac0aedadf35b45",
+        "d71cbecb8735e8c47ba43d33a276b65a53050f5a57f5d9688eea569be4c8278b"
+      ],
+      "source_event_status": {
+        "39ebf817d53dbd0a249c037094d3d9e25ec1097844b5f50287ac0aedadf35b45": "consolidated",
+        "d71cbecb8735e8c47ba43d33a276b65a53050f5a57f5d9688eea569be4c8278b": "pending"
+      },
+      "valid_source_event_evidence_ids": [
+        "d71cbecb8735e8c47ba43d33a276b65a53050f5a57f5d9688eea569be4c8278b"
+      ]
+    },
+    {
+      "db": {
+        "bytes": 3371008,
+        "path": ".venv/real-model-work-v3/lifecycle/attempts/full/8e96c7185f9e4ba8927f7fb48832b65d/full-heldout-003-full-r2.db",
+        "sha256": "54fdd4d6ca50bcd11de7eb4d2927f439cd3e745fedb231528710257a8f0d43b4"
+      },
+      "error_names": [
+        "jobs_not_completed"
+      ],
+      "evidence_ids": [
+        "d26ad41119d619e1a0f70ce6f0666eb4b3e5db8ac782e677e6479e1271d7f353",
+        "73e64953-656c-4a46-9610-1e26519c8e1c"
+      ],
+      "execution_status": "partial",
+      "fact_ids": [
+        "73e64953-656c-4a46-9610-1e26519c8e1c"
+      ],
+      "invalid_evidence_ids": [
+        "73e64953-656c-4a46-9610-1e26519c8e1c"
+      ],
+      "invalid_ids_verified_as_fact_ids": [
+        "73e64953-656c-4a46-9610-1e26519c8e1c"
+      ],
+      "proposals": [
+        {
+          "evidence_ids": [
+            "d26ad41119d619e1a0f70ce6f0666eb4b3e5db8ac782e677e6479e1271d7f353"
+          ],
+          "operation": "add",
+          "target_fact_id": null
+        },
+        {
+          "evidence_ids": [
+            "73e64953-656c-4a46-9610-1e26519c8e1c"
+          ],
+          "operation": "support",
+          "target_fact_id": "73e64953-656c-4a46-9610-1e26519c8e1c"
+        }
+      ],
+      "repetition": 2,
+      "session_id": "heldout-003",
+      "source_event_ids": [
+        "bc3a13a22487d03f8a39ab860a6c69cf3e60ec60e1c615f2b3c0f2ee1e2838bb",
+        "d26ad41119d619e1a0f70ce6f0666eb4b3e5db8ac782e677e6479e1271d7f353"
+      ],
+      "source_event_status": {
+        "bc3a13a22487d03f8a39ab860a6c69cf3e60ec60e1c615f2b3c0f2ee1e2838bb": "consolidated",
+        "d26ad41119d619e1a0f70ce6f0666eb4b3e5db8ac782e677e6479e1271d7f353": "pending"
+      },
+      "valid_source_event_evidence_ids": [
+        "d26ad41119d619e1a0f70ce6f0666eb4b3e5db8ac782e677e6479e1271d7f353"
+      ]
+    },
+    {
+      "db": {
+        "bytes": 3371008,
+        "path": ".venv/real-model-work-v3/lifecycle/attempts/full/8e96c7185f9e4ba8927f7fb48832b65d/full-heldout-003-full-r3.db",
+        "sha256": "db6c3488af9be84142f302750149150a4fdf725701636fdd34e8b3f6f4281ce1"
+      },
+      "error_names": [
+        "jobs_not_completed"
+      ],
+      "evidence_ids": [
+        "3d36bc59-4ad0-4e6f-8146-ff2853378455",
+        "163e37ce9f397b2577b495eb0332070ecdf80055ee837af3cb5b82878b2ac51b"
+      ],
+      "execution_status": "partial",
+      "fact_ids": [
+        "3d36bc59-4ad0-4e6f-8146-ff2853378455"
+      ],
+      "invalid_evidence_ids": [
+        "3d36bc59-4ad0-4e6f-8146-ff2853378455"
+      ],
+      "invalid_ids_verified_as_fact_ids": [
+        "3d36bc59-4ad0-4e6f-8146-ff2853378455"
+      ],
+      "proposals": [
+        {
+          "evidence_ids": [
+            "3d36bc59-4ad0-4e6f-8146-ff2853378455"
+          ],
+          "operation": "support",
+          "target_fact_id": "3d36bc59-4ad0-4e6f-8146-ff2853378455"
+        },
+        {
+          "evidence_ids": [
+            "163e37ce9f397b2577b495eb0332070ecdf80055ee837af3cb5b82878b2ac51b"
+          ],
+          "operation": "add",
+          "target_fact_id": null
+        }
+      ],
+      "repetition": 3,
+      "session_id": "heldout-003",
+      "source_event_ids": [
+        "163e37ce9f397b2577b495eb0332070ecdf80055ee837af3cb5b82878b2ac51b",
+        "66ad502db2b418366bcc451e1dc363e6a97befb800fc5287fa99c0f45d8b7467"
+      ],
+      "source_event_status": {
+        "163e37ce9f397b2577b495eb0332070ecdf80055ee837af3cb5b82878b2ac51b": "pending",
+        "66ad502db2b418366bcc451e1dc363e6a97befb800fc5287fa99c0f45d8b7467": "consolidated"
+      },
+      "valid_source_event_evidence_ids": [
+        "163e37ce9f397b2577b495eb0332070ecdf80055ee837af3cb5b82878b2ac51b"
+      ]
+    },
+    {
+      "db": {
+        "bytes": 3371008,
+        "path": ".venv/real-model-work-v3/lifecycle/attempts/full/8e96c7185f9e4ba8927f7fb48832b65d/full-heldout-004-full-r1.db",
+        "sha256": "a2e464365ce609493545ef2857b600e66af977cb3304e01f970ec6c98c9e3304"
+      },
+      "error_names": [
+        "jobs_not_completed"
+      ],
+      "evidence_ids": [
+        "8b66264b-2c7b-4569-b04b-c6816fa89256"
+      ],
+      "execution_status": "partial",
+      "fact_ids": [
+        "8b66264b-2c7b-4569-b04b-c6816fa89256"
+      ],
+      "invalid_evidence_ids": [
+        "8b66264b-2c7b-4569-b04b-c6816fa89256"
+      ],
+      "invalid_ids_verified_as_fact_ids": [
+        "8b66264b-2c7b-4569-b04b-c6816fa89256"
+      ],
+      "proposals": [
+        {
+          "evidence_ids": [
+            "8b66264b-2c7b-4569-b04b-c6816fa89256"
+          ],
+          "operation": "support",
+          "target_fact_id": "8b66264b-2c7b-4569-b04b-c6816fa89256"
+        }
+      ],
+      "repetition": 1,
+      "session_id": "heldout-004",
+      "source_event_ids": [
+        "8ea224a7f7938353e9eaf034a62280c5dc92e58e15ccc069f6a728549efeff47",
+        "d088cca238c39b7fab133e48873dcf8544a26ebc50dd13c8d1d6f4ce7d5f3847"
+      ],
+      "source_event_status": {
+        "8ea224a7f7938353e9eaf034a62280c5dc92e58e15ccc069f6a728549efeff47": "pending",
+        "d088cca238c39b7fab133e48873dcf8544a26ebc50dd13c8d1d6f4ce7d5f3847": "consolidated"
+      },
+      "valid_source_event_evidence_ids": []
+    },
+    {
+      "db": {
+        "bytes": 3371008,
+        "path": ".venv/real-model-work-v3/lifecycle/attempts/full/8e96c7185f9e4ba8927f7fb48832b65d/full-heldout-004-full-r2.db",
+        "sha256": "c1e092fa7bae79de1dd67b904ccb23b584a19436a64ba735ac500ae9de4197a2"
+      },
+      "error_names": [
+        "jobs_not_completed"
+      ],
+      "evidence_ids": [
+        "c297db7a-db8e-4871-bbd7-cba37f36d210",
+        "9c48a64a2e0fc14e42c8e2ce3b3de554cf896e2b2b7cde4970def5a44f2f5b71"
+      ],
+      "execution_status": "partial",
+      "fact_ids": [
+        "c297db7a-db8e-4871-bbd7-cba37f36d210"
+      ],
+      "invalid_evidence_ids": [
+        "c297db7a-db8e-4871-bbd7-cba37f36d210"
+      ],
+      "invalid_ids_verified_as_fact_ids": [
+        "c297db7a-db8e-4871-bbd7-cba37f36d210"
+      ],
+      "proposals": [
+        {
+          "evidence_ids": [
+            "c297db7a-db8e-4871-bbd7-cba37f36d210"
+          ],
+          "operation": "support",
+          "target_fact_id": "c297db7a-db8e-4871-bbd7-cba37f36d210"
+        },
+        {
+          "evidence_ids": [
+            "9c48a64a2e0fc14e42c8e2ce3b3de554cf896e2b2b7cde4970def5a44f2f5b71"
+          ],
+          "operation": "add",
+          "target_fact_id": null
+        }
+      ],
+      "repetition": 2,
+      "session_id": "heldout-004",
+      "source_event_ids": [
+        "67a14dd3eb0ef49292affa39056caba207bc963e24116e729a825e064ec942ee",
+        "9c48a64a2e0fc14e42c8e2ce3b3de554cf896e2b2b7cde4970def5a44f2f5b71"
+      ],
+      "source_event_status": {
+        "67a14dd3eb0ef49292affa39056caba207bc963e24116e729a825e064ec942ee": "consolidated",
+        "9c48a64a2e0fc14e42c8e2ce3b3de554cf896e2b2b7cde4970def5a44f2f5b71": "pending"
+      },
+      "valid_source_event_evidence_ids": [
+        "9c48a64a2e0fc14e42c8e2ce3b3de554cf896e2b2b7cde4970def5a44f2f5b71"
+      ]
+    },
+    {
+      "db": {
+        "bytes": 3371008,
+        "path": ".venv/real-model-work-v3/lifecycle/attempts/full/8e96c7185f9e4ba8927f7fb48832b65d/full-heldout-004-full-r3.db",
+        "sha256": "ada52d095e1e5940292b6c5b3a70134127a8cbf3123b16e92d08354708f36777"
+      },
+      "error_names": [
+        "jobs_not_completed"
+      ],
+      "evidence_ids": [
+        "b0cf67a4-25d6-4035-ad99-1529ccf3af46",
+        "b5e365e846766f02b3420af0e523364620651eaf8466e30db15da0cc527b802f"
+      ],
+      "execution_status": "partial",
+      "fact_ids": [
+        "b0cf67a4-25d6-4035-ad99-1529ccf3af46"
+      ],
+      "invalid_evidence_ids": [
+        "b0cf67a4-25d6-4035-ad99-1529ccf3af46"
+      ],
+      "invalid_ids_verified_as_fact_ids": [
+        "b0cf67a4-25d6-4035-ad99-1529ccf3af46"
+      ],
+      "proposals": [
+        {
+          "evidence_ids": [
+            "b0cf67a4-25d6-4035-ad99-1529ccf3af46"
+          ],
+          "operation": "support",
+          "target_fact_id": "b0cf67a4-25d6-4035-ad99-1529ccf3af46"
+        },
+        {
+          "evidence_ids": [
+            "b5e365e846766f02b3420af0e523364620651eaf8466e30db15da0cc527b802f"
+          ],
+          "operation": "add",
+          "target_fact_id": null
+        }
+      ],
+      "repetition": 3,
+      "session_id": "heldout-004",
+      "source_event_ids": [
+        "51888a484b0b7b9a6cbeaeb55b1583fb9aa225eb79710fd77ae50fa40d4510b8",
+        "b5e365e846766f02b3420af0e523364620651eaf8466e30db15da0cc527b802f"
+      ],
+      "source_event_status": {
+        "51888a484b0b7b9a6cbeaeb55b1583fb9aa225eb79710fd77ae50fa40d4510b8": "consolidated",
+        "b5e365e846766f02b3420af0e523364620651eaf8466e30db15da0cc527b802f": "pending"
+      },
+      "valid_source_event_evidence_ids": [
+        "b5e365e846766f02b3420af0e523364620651eaf8466e30db15da0cc527b802f"
+      ]
+    },
+    {
+      "db": {
+        "bytes": 3395584,
+        "path": ".venv/real-model-work-v3/lifecycle/attempts/full/8e96c7185f9e4ba8927f7fb48832b65d/full-heldout-005-full-r1.db",
+        "sha256": "a60381af2718e3b7a720aa644078ae0c7fa0b67e0d70d444318626127acfeab7"
+      },
+      "error_names": [],
+      "evidence_ids": [
+        "e4ce4886613eaf235ef1e065db14a8d9aa173c835b976c57e242b32376a4a658"
+      ],
+      "execution_status": "complete",
+      "fact_ids": [
+        "1f6f5d45-21d4-4558-b176-f2b49cd2b34c",
+        "55803272-e465-458a-8139-2552f4fbf53c"
+      ],
+      "invalid_evidence_ids": [],
+      "invalid_ids_verified_as_fact_ids": [],
+      "proposals": [
+        {
+          "evidence_ids": [
+            "e4ce4886613eaf235ef1e065db14a8d9aa173c835b976c57e242b32376a4a658"
+          ],
+          "operation": "add",
+          "target_fact_id": null
+        }
+      ],
+      "repetition": 1,
+      "session_id": "heldout-005",
+      "source_event_ids": [
+        "6925b0070f8393151713afff196f8cbaaa8fc9269fa9d4ce327a5489eac7db84",
+        "e4ce4886613eaf235ef1e065db14a8d9aa173c835b976c57e242b32376a4a658"
+      ],
+      "source_event_status": {
+        "6925b0070f8393151713afff196f8cbaaa8fc9269fa9d4ce327a5489eac7db84": "consolidated",
+        "e4ce4886613eaf235ef1e065db14a8d9aa173c835b976c57e242b32376a4a658": "consolidated"
+      },
+      "valid_source_event_evidence_ids": [
+        "e4ce4886613eaf235ef1e065db14a8d9aa173c835b976c57e242b32376a4a658"
+      ]
+    },
+    {
+      "db": {
+        "bytes": 3371008,
+        "path": ".venv/real-model-work-v3/lifecycle/attempts/full/8e96c7185f9e4ba8927f7fb48832b65d/full-heldout-005-full-r2.db",
+        "sha256": "b02af2b4e992dd468a33fe2c630f2ff0846f8c1add8fbefd4a45a6f0932df53c"
+      },
+      "error_names": [
+        "jobs_not_completed"
+      ],
+      "evidence_ids": [
+        "e5b5a63a-4c81-4cec-8130-bf671ac4814f"
+      ],
+      "execution_status": "partial",
+      "fact_ids": [
+        "e5b5a63a-4c81-4cec-8130-bf671ac4814f"
+      ],
+      "invalid_evidence_ids": [
+        "e5b5a63a-4c81-4cec-8130-bf671ac4814f"
+      ],
+      "invalid_ids_verified_as_fact_ids": [
+        "e5b5a63a-4c81-4cec-8130-bf671ac4814f"
+      ],
+      "proposals": [
+        {
+          "evidence_ids": [
+            "e5b5a63a-4c81-4cec-8130-bf671ac4814f"
+          ],
+          "operation": "support",
+          "target_fact_id": "e5b5a63a-4c81-4cec-8130-bf671ac4814f"
+        }
+      ],
+      "repetition": 2,
+      "session_id": "heldout-005",
+      "source_event_ids": [
+        "602b5168313f15e93ee7bd1797612c40fe06a59f7fb8b4bc35b7b1f3acf512c7",
+        "81ffc10b36cc5976dd6afbdd12b7670d03a5951bd593a0f1a81258bd5c0279de"
+      ],
+      "source_event_status": {
+        "602b5168313f15e93ee7bd1797612c40fe06a59f7fb8b4bc35b7b1f3acf512c7": "pending",
+        "81ffc10b36cc5976dd6afbdd12b7670d03a5951bd593a0f1a81258bd5c0279de": "consolidated"
+      },
+      "valid_source_event_evidence_ids": []
+    },
+    {
+      "db": {
+        "bytes": 3371008,
+        "path": ".venv/real-model-work-v3/lifecycle/attempts/full/8e96c7185f9e4ba8927f7fb48832b65d/full-heldout-005-full-r3.db",
+        "sha256": "42710142a715ca4ced022275215e06e19b928418a62eca0365cea6ead63344fb"
+      },
+      "error_names": [
+        "jobs_not_completed"
+      ],
+      "evidence_ids": [
+        "9df2c9ce-36b5-43ca-91b1-39e8368fb08d"
+      ],
+      "execution_status": "partial",
+      "fact_ids": [
+        "9df2c9ce-36b5-43ca-91b1-39e8368fb08d"
+      ],
+      "invalid_evidence_ids": [
+        "9df2c9ce-36b5-43ca-91b1-39e8368fb08d"
+      ],
+      "invalid_ids_verified_as_fact_ids": [
+        "9df2c9ce-36b5-43ca-91b1-39e8368fb08d"
+      ],
+      "proposals": [
+        {
+          "evidence_ids": [
+            "9df2c9ce-36b5-43ca-91b1-39e8368fb08d"
+          ],
+          "operation": "support",
+          "target_fact_id": "9df2c9ce-36b5-43ca-91b1-39e8368fb08d"
+        }
+      ],
+      "repetition": 3,
+      "session_id": "heldout-005",
+      "source_event_ids": [
+        "36e757dee426b165b4aba917d23a0ad2ea6471a8b1fdb79301e960566bf35afb",
+        "84c2ff80c60966233451f0cdfa3e04d409b406a885490b9359384e80e9c6df20"
+      ],
+      "source_event_status": {
+        "36e757dee426b165b4aba917d23a0ad2ea6471a8b1fdb79301e960566bf35afb": "pending",
+        "84c2ff80c60966233451f0cdfa3e04d409b406a885490b9359384e80e9c6df20": "consolidated"
+      },
+      "valid_source_event_evidence_ids": []
+    },
+    {
+      "db": {
+        "bytes": 3371008,
+        "path": ".venv/real-model-work-v3/lifecycle/attempts/full/8e96c7185f9e4ba8927f7fb48832b65d/full-heldout-006-full-r1.db",
+        "sha256": "c5c6f6e34dd7ed40f5937925e32e01ff8760e73eaf6b44ebdbf21ca257b51e3e"
+      },
+      "error_names": [
+        "jobs_not_completed"
+      ],
+      "evidence_ids": [
+        "9d5111b7-0fce-440f-9dab-74c86cb64e7f"
+      ],
+      "execution_status": "partial",
+      "fact_ids": [
+        "9d5111b7-0fce-440f-9dab-74c86cb64e7f"
+      ],
+      "invalid_evidence_ids": [
+        "9d5111b7-0fce-440f-9dab-74c86cb64e7f"
+      ],
+      "invalid_ids_verified_as_fact_ids": [
+        "9d5111b7-0fce-440f-9dab-74c86cb64e7f"
+      ],
+      "proposals": [
+        {
+          "evidence_ids": [
+            "9d5111b7-0fce-440f-9dab-74c86cb64e7f"
+          ],
+          "operation": "support",
+          "target_fact_id": "9d5111b7-0fce-440f-9dab-74c86cb64e7f"
+        }
+      ],
+      "repetition": 1,
+      "session_id": "heldout-006",
+      "source_event_ids": [
+        "66e931b32327db5a17c6d21076766e568bd32179029d64bd9f599c921126980f",
+        "7d2e8f1944fae056f6397a48285ce9513375d733b16609a524c84d48f2bf2261"
+      ],
+      "source_event_status": {
+        "66e931b32327db5a17c6d21076766e568bd32179029d64bd9f599c921126980f": "consolidated",
+        "7d2e8f1944fae056f6397a48285ce9513375d733b16609a524c84d48f2bf2261": "pending"
+      },
+      "valid_source_event_evidence_ids": []
+    },
+    {
+      "db": {
+        "bytes": 3371008,
+        "path": ".venv/real-model-work-v3/lifecycle/attempts/full/8e96c7185f9e4ba8927f7fb48832b65d/full-heldout-006-full-r2.db",
+        "sha256": "e0f2efd9e27298b97d0499233179de535c0fa5f6f2f0396e464cc68632b7c202"
+      },
+      "error_names": [
+        "jobs_not_completed"
+      ],
+      "evidence_ids": [
+        "2aeb55b4-dcf6-4112-b648-a35fab5638ae"
+      ],
+      "execution_status": "partial",
+      "fact_ids": [
+        "2aeb55b4-dcf6-4112-b648-a35fab5638ae"
+      ],
+      "invalid_evidence_ids": [
+        "2aeb55b4-dcf6-4112-b648-a35fab5638ae"
+      ],
+      "invalid_ids_verified_as_fact_ids": [
+        "2aeb55b4-dcf6-4112-b648-a35fab5638ae"
+      ],
+      "proposals": [
+        {
+          "evidence_ids": [
+            "2aeb55b4-dcf6-4112-b648-a35fab5638ae"
+          ],
+          "operation": "support",
+          "target_fact_id": "2aeb55b4-dcf6-4112-b648-a35fab5638ae"
+        }
+      ],
+      "repetition": 2,
+      "session_id": "heldout-006",
+      "source_event_ids": [
+        "7153788611a197ede9d180cfb2ee1cde1a01ba09aae6e9ddab036cc31a7a724f",
+        "df9b90b0f87569b3f527dff785c24d787b754a9e9c9ee23d4152375575d86598"
+      ],
+      "source_event_status": {
+        "7153788611a197ede9d180cfb2ee1cde1a01ba09aae6e9ddab036cc31a7a724f": "consolidated",
+        "df9b90b0f87569b3f527dff785c24d787b754a9e9c9ee23d4152375575d86598": "pending"
+      },
+      "valid_source_event_evidence_ids": []
+    },
+    {
+      "db": {
+        "bytes": 3371008,
+        "path": ".venv/real-model-work-v3/lifecycle/attempts/full/8e96c7185f9e4ba8927f7fb48832b65d/full-heldout-006-full-r3.db",
+        "sha256": "3077752b23f72cda7bf562582a39091e512347a4908cb80506ab2071acf1ab24"
+      },
+      "error_names": [
+        "jobs_not_completed"
+      ],
+      "evidence_ids": [
+        "ec9fa1bf-00fa-4c62-ba71-0360e5ce7b5a"
+      ],
+      "execution_status": "partial",
+      "fact_ids": [
+        "ec9fa1bf-00fa-4c62-ba71-0360e5ce7b5a"
+      ],
+      "invalid_evidence_ids": [
+        "ec9fa1bf-00fa-4c62-ba71-0360e5ce7b5a"
+      ],
+      "invalid_ids_verified_as_fact_ids": [
+        "ec9fa1bf-00fa-4c62-ba71-0360e5ce7b5a"
+      ],
+      "proposals": [
+        {
+          "evidence_ids": [
+            "ec9fa1bf-00fa-4c62-ba71-0360e5ce7b5a"
+          ],
+          "operation": "support",
+          "target_fact_id": "ec9fa1bf-00fa-4c62-ba71-0360e5ce7b5a"
+        }
+      ],
+      "repetition": 3,
+      "session_id": "heldout-006",
+      "source_event_ids": [
+        "2127f2e7215f6973b6ed792bd37129980904611c546885917d1c6c11fb84af16",
+        "9c52772c6be6c9a13340311f52fc9703e357215d14e86d71b131e98ad5872f81"
+      ],
+      "source_event_status": {
+        "2127f2e7215f6973b6ed792bd37129980904611c546885917d1c6c11fb84af16": "pending",
+        "9c52772c6be6c9a13340311f52fc9703e357215d14e86d71b131e98ad5872f81": "consolidated"
+      },
+      "valid_source_event_evidence_ids": []
+    },
+    {
+      "db": {
+        "bytes": 3371008,
+        "path": ".venv/real-model-work-v3/lifecycle/attempts/full/8e96c7185f9e4ba8927f7fb48832b65d/full-heldout-007-full-r1.db",
+        "sha256": "df8e84f393d53bcee15bf5bfcbbb8d42f0e8078f49c456f49c31c50d8a07fbaf"
+      },
+      "error_names": [
+        "jobs_not_completed"
+      ],
+      "evidence_ids": [
+        "363a66c9-4db2-41be-a45e-f823bccf8ff7"
+      ],
+      "execution_status": "partial",
+      "fact_ids": [
+        "363a66c9-4db2-41be-a45e-f823bccf8ff7"
+      ],
+      "invalid_evidence_ids": [
+        "363a66c9-4db2-41be-a45e-f823bccf8ff7"
+      ],
+      "invalid_ids_verified_as_fact_ids": [
+        "363a66c9-4db2-41be-a45e-f823bccf8ff7"
+      ],
+      "proposals": [
+        {
+          "evidence_ids": [
+            "363a66c9-4db2-41be-a45e-f823bccf8ff7"
+          ],
+          "operation": "support",
+          "target_fact_id": "363a66c9-4db2-41be-a45e-f823bccf8ff7"
+        }
+      ],
+      "repetition": 1,
+      "session_id": "heldout-007",
+      "source_event_ids": [
+        "a47d9d38e9d2935c0c43915983675bc4c0655131a3a55a33762c257c253bf6e7",
+        "eb97817b8c08c4ab210e93172e7111e0c33b626600c625980d5995ce8da93c16"
+      ],
+      "source_event_status": {
+        "a47d9d38e9d2935c0c43915983675bc4c0655131a3a55a33762c257c253bf6e7": "pending",
+        "eb97817b8c08c4ab210e93172e7111e0c33b626600c625980d5995ce8da93c16": "consolidated"
+      },
+      "valid_source_event_evidence_ids": []
+    },
+    {
+      "db": {
+        "bytes": 3395584,
+        "path": ".venv/real-model-work-v3/lifecycle/attempts/full/8e96c7185f9e4ba8927f7fb48832b65d/full-heldout-007-full-r2.db",
+        "sha256": "4e253449d665fcf497e1a53bcdc0084457d077ce430052255391b9d68d5e81db"
+      },
+      "error_names": [],
+      "evidence_ids": [
+        "0e3995fc3704b3e59e02974ba80bcfdc1cae5aad3d20095126a02420594b6f48"
+      ],
+      "execution_status": "complete",
+      "fact_ids": [
+        "39bbb5ec-c697-4216-a79b-274ac29ffd05",
+        "e7744520-0e9d-41d7-9290-117acd851cd7"
+      ],
+      "invalid_evidence_ids": [],
+      "invalid_ids_verified_as_fact_ids": [],
+      "proposals": [
+        {
+          "evidence_ids": [
+            "0e3995fc3704b3e59e02974ba80bcfdc1cae5aad3d20095126a02420594b6f48"
+          ],
+          "operation": "add",
+          "target_fact_id": null
+        }
+      ],
+      "repetition": 2,
+      "session_id": "heldout-007",
+      "source_event_ids": [
+        "0e3995fc3704b3e59e02974ba80bcfdc1cae5aad3d20095126a02420594b6f48",
+        "c291e0d89c0ddc8a3ae5594d3ec6dca2c84ead098fe7adfceb26af7a3374f70a"
+      ],
+      "source_event_status": {
+        "0e3995fc3704b3e59e02974ba80bcfdc1cae5aad3d20095126a02420594b6f48": "consolidated",
+        "c291e0d89c0ddc8a3ae5594d3ec6dca2c84ead098fe7adfceb26af7a3374f70a": "consolidated"
+      },
+      "valid_source_event_evidence_ids": [
+        "0e3995fc3704b3e59e02974ba80bcfdc1cae5aad3d20095126a02420594b6f48"
+      ]
+    },
+    {
+      "db": {
+        "bytes": 3395584,
+        "path": ".venv/real-model-work-v3/lifecycle/attempts/full/8e96c7185f9e4ba8927f7fb48832b65d/full-heldout-007-full-r3.db",
+        "sha256": "2849354e91802237be4c6eaeddca7806634060a91b84da3f5ac5426dc99baab0"
+      },
+      "error_names": [],
+      "evidence_ids": [
+        "d32198182a292bde1d5138a09cbdece4815015efee0ea5e0d655f0877138d02f"
+      ],
+      "execution_status": "complete",
+      "fact_ids": [
+        "6a8f112a-5105-4b1b-8dd3-61aa054cc4c3",
+        "b57b11e9-0619-4ccf-bfcb-e44be50496aa"
+      ],
+      "invalid_evidence_ids": [],
+      "invalid_ids_verified_as_fact_ids": [],
+      "proposals": [
+        {
+          "evidence_ids": [
+            "d32198182a292bde1d5138a09cbdece4815015efee0ea5e0d655f0877138d02f"
+          ],
+          "operation": "add",
+          "target_fact_id": null
+        }
+      ],
+      "repetition": 3,
+      "session_id": "heldout-007",
+      "source_event_ids": [
+        "d32198182a292bde1d5138a09cbdece4815015efee0ea5e0d655f0877138d02f",
+        "e1dc2b0a7ba77253af9b28b590f0702a16514cfb7676f10e815e711d9523db29"
+      ],
+      "source_event_status": {
+        "d32198182a292bde1d5138a09cbdece4815015efee0ea5e0d655f0877138d02f": "consolidated",
+        "e1dc2b0a7ba77253af9b28b590f0702a16514cfb7676f10e815e711d9523db29": "consolidated"
+      },
+      "valid_source_event_evidence_ids": [
+        "d32198182a292bde1d5138a09cbdece4815015efee0ea5e0d655f0877138d02f"
+      ]
+    },
+    {
+      "db": {
+        "bytes": 3371008,
+        "path": ".venv/real-model-work-v3/lifecycle/attempts/full/8e96c7185f9e4ba8927f7fb48832b65d/full-heldout-008-full-r1.db",
+        "sha256": "d89778ce9d679799f7f113894c6a4ed517fbc262eafbc1e5cfe202e4f4d31f7d"
+      },
+      "error_names": [
+        "jobs_not_completed"
+      ],
+      "evidence_ids": [
+        "e3be48e5-6712-40e2-b22f-9eafdc663fbf"
+      ],
+      "execution_status": "partial",
+      "fact_ids": [
+        "e3be48e5-6712-40e2-b22f-9eafdc663fbf"
+      ],
+      "invalid_evidence_ids": [
+        "e3be48e5-6712-40e2-b22f-9eafdc663fbf"
+      ],
+      "invalid_ids_verified_as_fact_ids": [
+        "e3be48e5-6712-40e2-b22f-9eafdc663fbf"
+      ],
+      "proposals": [
+        {
+          "evidence_ids": [
+            "e3be48e5-6712-40e2-b22f-9eafdc663fbf"
+          ],
+          "operation": "support",
+          "target_fact_id": "e3be48e5-6712-40e2-b22f-9eafdc663fbf"
+        }
+      ],
+      "repetition": 1,
+      "session_id": "heldout-008",
+      "source_event_ids": [
+        "3061a15e446a75f5b02b5b5f9a48e795fbd781e0105d64d19a6ef5fb8003bf7c",
+        "d4b643df0e296ec0922f9866647a2ec1502dcffba3566abd54faf4252de5a68b"
+      ],
+      "source_event_status": {
+        "3061a15e446a75f5b02b5b5f9a48e795fbd781e0105d64d19a6ef5fb8003bf7c": "consolidated",
+        "d4b643df0e296ec0922f9866647a2ec1502dcffba3566abd54faf4252de5a68b": "pending"
+      },
+      "valid_source_event_evidence_ids": []
+    },
+    {
+      "db": {
+        "bytes": 3371008,
+        "path": ".venv/real-model-work-v3/lifecycle/attempts/full/8e96c7185f9e4ba8927f7fb48832b65d/full-heldout-008-full-r2.db",
+        "sha256": "21876522feaf0aac27a832cf48d7a3e52cfa2c6ba937c7fd7bd01b96e98aa4dc"
+      },
+      "error_names": [
+        "jobs_not_completed"
+      ],
+      "evidence_ids": [
+        "a2658d17-9ca8-4d15-8272-a1359049fa79",
+        "7a0ef714ebf51546f2fe1381316055cd732ab9018cdb979f80b05998a5757499"
+      ],
+      "execution_status": "partial",
+      "fact_ids": [
+        "a2658d17-9ca8-4d15-8272-a1359049fa79"
+      ],
+      "invalid_evidence_ids": [
+        "a2658d17-9ca8-4d15-8272-a1359049fa79"
+      ],
+      "invalid_ids_verified_as_fact_ids": [
+        "a2658d17-9ca8-4d15-8272-a1359049fa79"
+      ],
+      "proposals": [
+        {
+          "evidence_ids": [
+            "a2658d17-9ca8-4d15-8272-a1359049fa79"
+          ],
+          "operation": "support",
+          "target_fact_id": "a2658d17-9ca8-4d15-8272-a1359049fa79"
+        },
+        {
+          "evidence_ids": [
+            "7a0ef714ebf51546f2fe1381316055cd732ab9018cdb979f80b05998a5757499"
+          ],
+          "operation": "add",
+          "target_fact_id": null
+        }
+      ],
+      "repetition": 2,
+      "session_id": "heldout-008",
+      "source_event_ids": [
+        "6fe2247647f1e419c454f3fe78c4890c0a8c609b17df3ee9388e219b8e829843",
+        "7a0ef714ebf51546f2fe1381316055cd732ab9018cdb979f80b05998a5757499"
+      ],
+      "source_event_status": {
+        "6fe2247647f1e419c454f3fe78c4890c0a8c609b17df3ee9388e219b8e829843": "consolidated",
+        "7a0ef714ebf51546f2fe1381316055cd732ab9018cdb979f80b05998a5757499": "pending"
+      },
+      "valid_source_event_evidence_ids": [
+        "7a0ef714ebf51546f2fe1381316055cd732ab9018cdb979f80b05998a5757499"
+      ]
+    },
+    {
+      "db": {
+        "bytes": 3371008,
+        "path": ".venv/real-model-work-v3/lifecycle/attempts/full/8e96c7185f9e4ba8927f7fb48832b65d/full-heldout-008-full-r3.db",
+        "sha256": "d0e2d95eb103f2b7c3a297ba64c6dec2ff5b66e4d90807b7575a21ed16a7293f"
+      },
+      "error_names": [
+        "jobs_not_completed"
+      ],
+      "evidence_ids": [
+        "b965c993-c6c2-4be3-81b7-41e95abf970b",
+        "499e44b3ed89c6c5590b3027c7a6745356ac584eef0567f984e36cb17b0e8580"
+      ],
+      "execution_status": "partial",
+      "fact_ids": [
+        "b965c993-c6c2-4be3-81b7-41e95abf970b"
+      ],
+      "invalid_evidence_ids": [
+        "b965c993-c6c2-4be3-81b7-41e95abf970b"
+      ],
+      "invalid_ids_verified_as_fact_ids": [
+        "b965c993-c6c2-4be3-81b7-41e95abf970b"
+      ],
+      "proposals": [
+        {
+          "evidence_ids": [
+            "b965c993-c6c2-4be3-81b7-41e95abf970b"
+          ],
+          "operation": "support",
+          "target_fact_id": "b965c993-c6c2-4be3-81b7-41e95abf970b"
+        },
+        {
+          "evidence_ids": [
+            "499e44b3ed89c6c5590b3027c7a6745356ac584eef0567f984e36cb17b0e8580"
+          ],
+          "operation": "add",
+          "target_fact_id": null
+        }
+      ],
+      "repetition": 3,
+      "session_id": "heldout-008",
+      "source_event_ids": [
+        "32e82527ba28d4dfcf24c544d636f4d915599ba972d504fe4a7496914e5a8475",
+        "499e44b3ed89c6c5590b3027c7a6745356ac584eef0567f984e36cb17b0e8580"
+      ],
+      "source_event_status": {
+        "32e82527ba28d4dfcf24c544d636f4d915599ba972d504fe4a7496914e5a8475": "consolidated",
+        "499e44b3ed89c6c5590b3027c7a6745356ac584eef0567f984e36cb17b0e8580": "pending"
+      },
+      "valid_source_event_evidence_ids": [
+        "499e44b3ed89c6c5590b3027c7a6745356ac584eef0567f984e36cb17b0e8580"
+      ]
+    },
+    {
+      "db": {
+        "bytes": 3395584,
+        "path": ".venv/real-model-work-v3/lifecycle/attempts/full/8e96c7185f9e4ba8927f7fb48832b65d/full-heldout-009-full-r1.db",
+        "sha256": "7b06a21c3828d7eca309d9025a158ad8725ce21738142db330a52217796275a6"
+      },
+      "error_names": [],
+      "evidence_ids": [
+        "bbd6ab69616f3dd8aa7c25c1453895d6567b81abfa5b67a43179fd63f7e87d2c"
+      ],
+      "execution_status": "complete",
+      "fact_ids": [
+        "14015e9e-2524-44ee-9d94-fa34e163a751",
+        "982b88d9-a4f1-4803-920e-d9995c038dfe"
+      ],
+      "invalid_evidence_ids": [],
+      "invalid_ids_verified_as_fact_ids": [],
+      "proposals": [
+        {
+          "evidence_ids": [
+            "bbd6ab69616f3dd8aa7c25c1453895d6567b81abfa5b67a43179fd63f7e87d2c"
+          ],
+          "operation": "add",
+          "target_fact_id": null
+        }
+      ],
+      "repetition": 1,
+      "session_id": "heldout-009",
+      "source_event_ids": [
+        "8568358991c41b77cec0c6b23fd0f9faaaaf21d2aed0fdaeb2a10df4e0f97e87",
+        "bbd6ab69616f3dd8aa7c25c1453895d6567b81abfa5b67a43179fd63f7e87d2c"
+      ],
+      "source_event_status": {
+        "8568358991c41b77cec0c6b23fd0f9faaaaf21d2aed0fdaeb2a10df4e0f97e87": "consolidated",
+        "bbd6ab69616f3dd8aa7c25c1453895d6567b81abfa5b67a43179fd63f7e87d2c": "consolidated"
+      },
+      "valid_source_event_evidence_ids": [
+        "bbd6ab69616f3dd8aa7c25c1453895d6567b81abfa5b67a43179fd63f7e87d2c"
+      ]
+    },
+    {
+      "db": {
+        "bytes": 3371008,
+        "path": ".venv/real-model-work-v3/lifecycle/attempts/full/8e96c7185f9e4ba8927f7fb48832b65d/full-heldout-009-full-r2.db",
+        "sha256": "0e759cff24f8fcf8d5622f9496ad10705a2266d67d3473c04dad4bbe57103b7a"
+      },
+      "error_names": [
+        "jobs_not_completed"
+      ],
+      "evidence_ids": [
+        "bb2b1139-2edd-4371-a11b-7655bb8ebf08",
+        "f934951f83ddf14362e221af5340d731ca6f06d59a6c1b54387e468b5df5f9c4"
+      ],
+      "execution_status": "partial",
+      "fact_ids": [
+        "bb2b1139-2edd-4371-a11b-7655bb8ebf08"
+      ],
+      "invalid_evidence_ids": [
+        "bb2b1139-2edd-4371-a11b-7655bb8ebf08"
+      ],
+      "invalid_ids_verified_as_fact_ids": [
+        "bb2b1139-2edd-4371-a11b-7655bb8ebf08"
+      ],
+      "proposals": [
+        {
+          "evidence_ids": [
+            "bb2b1139-2edd-4371-a11b-7655bb8ebf08"
+          ],
+          "operation": "support",
+          "target_fact_id": "bb2b1139-2edd-4371-a11b-7655bb8ebf08"
+        },
+        {
+          "evidence_ids": [
+            "f934951f83ddf14362e221af5340d731ca6f06d59a6c1b54387e468b5df5f9c4"
+          ],
+          "operation": "add",
+          "target_fact_id": null
+        }
+      ],
+      "repetition": 2,
+      "session_id": "heldout-009",
+      "source_event_ids": [
+        "83b7f043f73297253299e39fac222cc8bb40812da584ef38d05d861cbabf9904",
+        "f934951f83ddf14362e221af5340d731ca6f06d59a6c1b54387e468b5df5f9c4"
+      ],
+      "source_event_status": {
+        "83b7f043f73297253299e39fac222cc8bb40812da584ef38d05d861cbabf9904": "consolidated",
+        "f934951f83ddf14362e221af5340d731ca6f06d59a6c1b54387e468b5df5f9c4": "pending"
+      },
+      "valid_source_event_evidence_ids": [
+        "f934951f83ddf14362e221af5340d731ca6f06d59a6c1b54387e468b5df5f9c4"
+      ]
+    },
+    {
+      "db": {
+        "bytes": 3395584,
+        "path": ".venv/real-model-work-v3/lifecycle/attempts/full/8e96c7185f9e4ba8927f7fb48832b65d/full-heldout-009-full-r3.db",
+        "sha256": "ce56d15c49cc3cc422ee7eac4c44bf8ff5f4caf83cbdb553638b9ac63cd403c0"
+      },
+      "error_names": [],
+      "evidence_ids": [
+        "7d4de6616bb1b1f34d23afd6e077b227818803d1754dd227cd5d8467cb52da99"
+      ],
+      "execution_status": "complete",
+      "fact_ids": [
+        "3f7d8a79-6ede-45a9-ab58-0903f959599d",
+        "df80b3c4-1d4e-498b-bbd1-5a2a87bdeaea"
+      ],
+      "invalid_evidence_ids": [],
+      "invalid_ids_verified_as_fact_ids": [],
+      "proposals": [
+        {
+          "evidence_ids": [
+            "7d4de6616bb1b1f34d23afd6e077b227818803d1754dd227cd5d8467cb52da99"
+          ],
+          "operation": "add",
+          "target_fact_id": null
+        }
+      ],
+      "repetition": 3,
+      "session_id": "heldout-009",
+      "source_event_ids": [
+        "5515b64ae721f6e3127626f2fd1e20807af1a0e852f868feb6a1170cf7e46f5e",
+        "7d4de6616bb1b1f34d23afd6e077b227818803d1754dd227cd5d8467cb52da99"
+      ],
+      "source_event_status": {
+        "5515b64ae721f6e3127626f2fd1e20807af1a0e852f868feb6a1170cf7e46f5e": "consolidated",
+        "7d4de6616bb1b1f34d23afd6e077b227818803d1754dd227cd5d8467cb52da99": "consolidated"
+      },
+      "valid_source_event_evidence_ids": [
+        "7d4de6616bb1b1f34d23afd6e077b227818803d1754dd227cd5d8467cb52da99"
+      ]
+    },
+    {
+      "db": {
+        "bytes": 3371008,
+        "path": ".venv/real-model-work-v3/lifecycle/attempts/full/8e96c7185f9e4ba8927f7fb48832b65d/full-heldout-010-full-r1.db",
+        "sha256": "b0552ed393b5bbc9b4742def2b8ced22643b41c371aac6eba11a857abdf7fe15"
+      },
+      "error_names": [
+        "jobs_not_completed"
+      ],
+      "evidence_ids": [
+        "c04e3e42-9859-4367-b7da-b140b30313c9",
+        "82f055ea49430067d2c757e3737b9139d8594a5e37e6402b65b9b4a8aaff0518"
+      ],
+      "execution_status": "partial",
+      "fact_ids": [
+        "c04e3e42-9859-4367-b7da-b140b30313c9"
+      ],
+      "invalid_evidence_ids": [
+        "c04e3e42-9859-4367-b7da-b140b30313c9"
+      ],
+      "invalid_ids_verified_as_fact_ids": [
+        "c04e3e42-9859-4367-b7da-b140b30313c9"
+      ],
+      "proposals": [
+        {
+          "evidence_ids": [
+            "c04e3e42-9859-4367-b7da-b140b30313c9"
+          ],
+          "operation": "support",
+          "target_fact_id": "c04e3e42-9859-4367-b7da-b140b30313c9"
+        },
+        {
+          "evidence_ids": [
+            "82f055ea49430067d2c757e3737b9139d8594a5e37e6402b65b9b4a8aaff0518"
+          ],
+          "operation": "add",
+          "target_fact_id": null
+        }
+      ],
+      "repetition": 1,
+      "session_id": "heldout-010",
+      "source_event_ids": [
+        "5726c5f3187bf033f829669d1b832f33401a38691a15c232fd73708dd98dd919",
+        "82f055ea49430067d2c757e3737b9139d8594a5e37e6402b65b9b4a8aaff0518"
+      ],
+      "source_event_status": {
+        "5726c5f3187bf033f829669d1b832f33401a38691a15c232fd73708dd98dd919": "consolidated",
+        "82f055ea49430067d2c757e3737b9139d8594a5e37e6402b65b9b4a8aaff0518": "pending"
+      },
+      "valid_source_event_evidence_ids": [
+        "82f055ea49430067d2c757e3737b9139d8594a5e37e6402b65b9b4a8aaff0518"
+      ]
+    },
+    {
+      "db": {
+        "bytes": 3371008,
+        "path": ".venv/real-model-work-v3/lifecycle/attempts/full/8e96c7185f9e4ba8927f7fb48832b65d/full-heldout-010-full-r2.db",
+        "sha256": "172074462afa5e806b4372165f48bb6fb4fd77e37e95cb108f3622ebe79f2f67"
+      },
+      "error_names": [
+        "jobs_not_completed"
+      ],
+      "evidence_ids": [
+        "9a516149-cf2b-40a2-b92b-b869d128ab47",
+        "d6fa231362a3849516591709cbe9c88bebaa3abb8c3829c65af1ad9b834166dc"
+      ],
+      "execution_status": "partial",
+      "fact_ids": [
+        "9a516149-cf2b-40a2-b92b-b869d128ab47"
+      ],
+      "invalid_evidence_ids": [
+        "9a516149-cf2b-40a2-b92b-b869d128ab47"
+      ],
+      "invalid_ids_verified_as_fact_ids": [
+        "9a516149-cf2b-40a2-b92b-b869d128ab47"
+      ],
+      "proposals": [
+        {
+          "evidence_ids": [
+            "9a516149-cf2b-40a2-b92b-b869d128ab47"
+          ],
+          "operation": "support",
+          "target_fact_id": "9a516149-cf2b-40a2-b92b-b869d128ab47"
+        },
+        {
+          "evidence_ids": [
+            "d6fa231362a3849516591709cbe9c88bebaa3abb8c3829c65af1ad9b834166dc"
+          ],
+          "operation": "add",
+          "target_fact_id": null
+        }
+      ],
+      "repetition": 2,
+      "session_id": "heldout-010",
+      "source_event_ids": [
+        "94fb4e64a8864774bf915009a59dc6397d23ddb66499f5895159b34335e021c9",
+        "d6fa231362a3849516591709cbe9c88bebaa3abb8c3829c65af1ad9b834166dc"
+      ],
+      "source_event_status": {
+        "94fb4e64a8864774bf915009a59dc6397d23ddb66499f5895159b34335e021c9": "consolidated",
+        "d6fa231362a3849516591709cbe9c88bebaa3abb8c3829c65af1ad9b834166dc": "pending"
+      },
+      "valid_source_event_evidence_ids": [
+        "d6fa231362a3849516591709cbe9c88bebaa3abb8c3829c65af1ad9b834166dc"
+      ]
+    },
+    {
+      "db": {
+        "bytes": 3371008,
+        "path": ".venv/real-model-work-v3/lifecycle/attempts/full/8e96c7185f9e4ba8927f7fb48832b65d/full-heldout-010-full-r3.db",
+        "sha256": "a174fcdfe7fff9025aef5770f38ffa61a4ae2a3f0329da60b42d4ade63dd28b0"
+      },
+      "error_names": [
+        "jobs_not_completed"
+      ],
+      "evidence_ids": [
+        "969cdb14-1812-4929-89dd-bed33359c301",
+        "917a11d7e8337fcc0ed5e88ef2a03f136322b5b1bcfb2f7f27abea93b187b39a"
+      ],
+      "execution_status": "partial",
+      "fact_ids": [
+        "969cdb14-1812-4929-89dd-bed33359c301"
+      ],
+      "invalid_evidence_ids": [
+        "969cdb14-1812-4929-89dd-bed33359c301"
+      ],
+      "invalid_ids_verified_as_fact_ids": [
+        "969cdb14-1812-4929-89dd-bed33359c301"
+      ],
+      "proposals": [
+        {
+          "evidence_ids": [
+            "969cdb14-1812-4929-89dd-bed33359c301"
+          ],
+          "operation": "support",
+          "target_fact_id": "969cdb14-1812-4929-89dd-bed33359c301"
+        },
+        {
+          "evidence_ids": [
+            "917a11d7e8337fcc0ed5e88ef2a03f136322b5b1bcfb2f7f27abea93b187b39a"
+          ],
+          "operation": "add",
+          "target_fact_id": null
+        }
+      ],
+      "repetition": 3,
+      "session_id": "heldout-010",
+      "source_event_ids": [
+        "917a11d7e8337fcc0ed5e88ef2a03f136322b5b1bcfb2f7f27abea93b187b39a",
+        "d97b4a41fc9c842f9dcbfe7ef50e8cc2dd4eaee58f836068a1c8a7aee8aaca48"
+      ],
+      "source_event_status": {
+        "917a11d7e8337fcc0ed5e88ef2a03f136322b5b1bcfb2f7f27abea93b187b39a": "pending",
+        "d97b4a41fc9c842f9dcbfe7ef50e8cc2dd4eaee58f836068a1c8a7aee8aaca48": "consolidated"
+      },
+      "valid_source_event_evidence_ids": [
+        "917a11d7e8337fcc0ed5e88ef2a03f136322b5b1bcfb2f7f27abea93b187b39a"
+      ]
+    },
+    {
+      "db": {
+        "bytes": 3371008,
+        "path": ".venv/real-model-work-v3/lifecycle/attempts/full/8e96c7185f9e4ba8927f7fb48832b65d/full-heldout-011-full-r1.db",
+        "sha256": "fa9bd538db5bf1e54fac53284b6e32051f14de16a3afe05277da750a625d6e1e"
+      },
+      "error_names": [
+        "jobs_not_completed"
+      ],
+      "evidence_ids": [
+        "c6617b02-a2ea-4292-970b-e5099a42194f"
+      ],
+      "execution_status": "partial",
+      "fact_ids": [
+        "c6617b02-a2ea-4292-970b-e5099a42194f"
+      ],
+      "invalid_evidence_ids": [
+        "c6617b02-a2ea-4292-970b-e5099a42194f"
+      ],
+      "invalid_ids_verified_as_fact_ids": [
+        "c6617b02-a2ea-4292-970b-e5099a42194f"
+      ],
+      "proposals": [
+        {
+          "evidence_ids": [
+            "c6617b02-a2ea-4292-970b-e5099a42194f"
+          ],
+          "operation": "support",
+          "target_fact_id": "c6617b02-a2ea-4292-970b-e5099a42194f"
+        }
+      ],
+      "repetition": 1,
+      "session_id": "heldout-011",
+      "source_event_ids": [
+        "2ec86ce163d9ad932fedac98371b30cab1b594481dc75e479caebaf3a2c39607",
+        "9579430a0b717566ef36746b509eb33b65389ed67bdefc53af5a2effa24c82ca"
+      ],
+      "source_event_status": {
+        "2ec86ce163d9ad932fedac98371b30cab1b594481dc75e479caebaf3a2c39607": "pending",
+        "9579430a0b717566ef36746b509eb33b65389ed67bdefc53af5a2effa24c82ca": "consolidated"
+      },
+      "valid_source_event_evidence_ids": []
+    },
+    {
+      "db": {
+        "bytes": 3371008,
+        "path": ".venv/real-model-work-v3/lifecycle/attempts/full/8e96c7185f9e4ba8927f7fb48832b65d/full-heldout-011-full-r2.db",
+        "sha256": "ab9fe42f81f7681a3f81e9781bcee0480ebbcfeb5b3a9190b35edc807c611565"
+      },
+      "error_names": [
+        "jobs_not_completed"
+      ],
+      "evidence_ids": [
+        "05ab8293-a271-4867-93e6-d298cb5e9d28",
+        "edf93b3af1f18d384be6e6b26ccd66704bc6b0f7acced4ac72bcdc70d55656d8"
+      ],
+      "execution_status": "partial",
+      "fact_ids": [
+        "05ab8293-a271-4867-93e6-d298cb5e9d28"
+      ],
+      "invalid_evidence_ids": [
+        "05ab8293-a271-4867-93e6-d298cb5e9d28"
+      ],
+      "invalid_ids_verified_as_fact_ids": [
+        "05ab8293-a271-4867-93e6-d298cb5e9d28"
+      ],
+      "proposals": [
+        {
+          "evidence_ids": [
+            "05ab8293-a271-4867-93e6-d298cb5e9d28"
+          ],
+          "operation": "support",
+          "target_fact_id": "05ab8293-a271-4867-93e6-d298cb5e9d28"
+        },
+        {
+          "evidence_ids": [
+            "edf93b3af1f18d384be6e6b26ccd66704bc6b0f7acced4ac72bcdc70d55656d8"
+          ],
+          "operation": "add",
+          "target_fact_id": null
+        }
+      ],
+      "repetition": 2,
+      "session_id": "heldout-011",
+      "source_event_ids": [
+        "94751aae9106d54e223b7b5290c13bd1279d778672d13699736fcc28ddc8c8d3",
+        "edf93b3af1f18d384be6e6b26ccd66704bc6b0f7acced4ac72bcdc70d55656d8"
+      ],
+      "source_event_status": {
+        "94751aae9106d54e223b7b5290c13bd1279d778672d13699736fcc28ddc8c8d3": "consolidated",
+        "edf93b3af1f18d384be6e6b26ccd66704bc6b0f7acced4ac72bcdc70d55656d8": "pending"
+      },
+      "valid_source_event_evidence_ids": [
+        "edf93b3af1f18d384be6e6b26ccd66704bc6b0f7acced4ac72bcdc70d55656d8"
+      ]
+    },
+    {
+      "db": {
+        "bytes": 3395584,
+        "path": ".venv/real-model-work-v3/lifecycle/attempts/full/8e96c7185f9e4ba8927f7fb48832b65d/full-heldout-011-full-r3.db",
+        "sha256": "c4b69a00cd22c9fa2b6000638aab7d2f8cdd0c77639d058287fd751759b3049a"
+      },
+      "error_names": [],
+      "evidence_ids": [
+        "70b61892e431e75e6b00f65726c0dfa9dfa6d542adf08227bc8973c6eeef7955"
+      ],
+      "execution_status": "complete",
+      "fact_ids": [
+        "6d052aa5-e720-429e-a98d-c00c42bddd8b",
+        "f2ed554b-d00c-4032-b9f4-105ec67d8aee"
+      ],
+      "invalid_evidence_ids": [],
+      "invalid_ids_verified_as_fact_ids": [],
+      "proposals": [
+        {
+          "evidence_ids": [
+            "70b61892e431e75e6b00f65726c0dfa9dfa6d542adf08227bc8973c6eeef7955"
+          ],
+          "operation": "add",
+          "target_fact_id": null
+        }
+      ],
+      "repetition": 3,
+      "session_id": "heldout-011",
+      "source_event_ids": [
+        "70b61892e431e75e6b00f65726c0dfa9dfa6d542adf08227bc8973c6eeef7955",
+        "d40fa6b817cafe42f7c473d56874cf965e4ee54022c021f205d22d985ce7db76"
+      ],
+      "source_event_status": {
+        "70b61892e431e75e6b00f65726c0dfa9dfa6d542adf08227bc8973c6eeef7955": "consolidated",
+        "d40fa6b817cafe42f7c473d56874cf965e4ee54022c021f205d22d985ce7db76": "consolidated"
+      },
+      "valid_source_event_evidence_ids": [
+        "70b61892e431e75e6b00f65726c0dfa9dfa6d542adf08227bc8973c6eeef7955"
+      ]
+    },
+    {
+      "db": {
+        "bytes": 3371008,
+        "path": ".venv/real-model-work-v3/lifecycle/attempts/full/8e96c7185f9e4ba8927f7fb48832b65d/full-heldout-012-full-r1.db",
+        "sha256": "d36a9f138745b487e863e960691af81cad17d8f6efe98ac883f6b003512a96d4"
+      },
+      "error_names": [
+        "jobs_not_completed"
+      ],
+      "evidence_ids": [
+        "2d7081fa-b8d6-4490-8c58-fe2ca2d93582",
+        "3e88a2c2006d544d6d7638465ff2b7364b17b69134a5b0b4cb2261cbee096301"
+      ],
+      "execution_status": "partial",
+      "fact_ids": [
+        "2d7081fa-b8d6-4490-8c58-fe2ca2d93582"
+      ],
+      "invalid_evidence_ids": [
+        "2d7081fa-b8d6-4490-8c58-fe2ca2d93582"
+      ],
+      "invalid_ids_verified_as_fact_ids": [
+        "2d7081fa-b8d6-4490-8c58-fe2ca2d93582"
+      ],
+      "proposals": [
+        {
+          "evidence_ids": [
+            "2d7081fa-b8d6-4490-8c58-fe2ca2d93582"
+          ],
+          "operation": "support",
+          "target_fact_id": "2d7081fa-b8d6-4490-8c58-fe2ca2d93582"
+        },
+        {
+          "evidence_ids": [
+            "3e88a2c2006d544d6d7638465ff2b7364b17b69134a5b0b4cb2261cbee096301"
+          ],
+          "operation": "add",
+          "target_fact_id": null
+        }
+      ],
+      "repetition": 1,
+      "session_id": "heldout-012",
+      "source_event_ids": [
+        "187016f745412e8f101ff08fa840ad326275030f898f470b7b02f8b2558236dd",
+        "3e88a2c2006d544d6d7638465ff2b7364b17b69134a5b0b4cb2261cbee096301"
+      ],
+      "source_event_status": {
+        "187016f745412e8f101ff08fa840ad326275030f898f470b7b02f8b2558236dd": "consolidated",
+        "3e88a2c2006d544d6d7638465ff2b7364b17b69134a5b0b4cb2261cbee096301": "pending"
+      },
+      "valid_source_event_evidence_ids": [
+        "3e88a2c2006d544d6d7638465ff2b7364b17b69134a5b0b4cb2261cbee096301"
+      ]
+    },
+    {
+      "db": {
+        "bytes": 3371008,
+        "path": ".venv/real-model-work-v3/lifecycle/attempts/full/8e96c7185f9e4ba8927f7fb48832b65d/full-heldout-012-full-r2.db",
+        "sha256": "c2ec496b48035a33defe2d4020048faa4fe450c5cd6f9fd77dfac803b5883bae"
+      },
+      "error_names": [
+        "jobs_not_completed"
+      ],
+      "evidence_ids": [
+        "9e9d0f89-ce17-4e3a-938e-f7c4db963fe9",
+        "c41b16503f0d4e15b6cedf9926ffaeb59ce820355db663c3679064367009e065"
+      ],
+      "execution_status": "partial",
+      "fact_ids": [
+        "9e9d0f89-ce17-4e3a-938e-f7c4db963fe9"
+      ],
+      "invalid_evidence_ids": [
+        "9e9d0f89-ce17-4e3a-938e-f7c4db963fe9"
+      ],
+      "invalid_ids_verified_as_fact_ids": [
+        "9e9d0f89-ce17-4e3a-938e-f7c4db963fe9"
+      ],
+      "proposals": [
+        {
+          "evidence_ids": [
+            "9e9d0f89-ce17-4e3a-938e-f7c4db963fe9"
+          ],
+          "operation": "support",
+          "target_fact_id": "9e9d0f89-ce17-4e3a-938e-f7c4db963fe9"
+        },
+        {
+          "evidence_ids": [
+            "c41b16503f0d4e15b6cedf9926ffaeb59ce820355db663c3679064367009e065"
+          ],
+          "operation": "add",
+          "target_fact_id": null
+        }
+      ],
+      "repetition": 2,
+      "session_id": "heldout-012",
+      "source_event_ids": [
+        "79b2cdc86081362c50571d25e3444784857d31e08060ee2804c9eb1a0d55740f",
+        "c41b16503f0d4e15b6cedf9926ffaeb59ce820355db663c3679064367009e065"
+      ],
+      "source_event_status": {
+        "79b2cdc86081362c50571d25e3444784857d31e08060ee2804c9eb1a0d55740f": "consolidated",
+        "c41b16503f0d4e15b6cedf9926ffaeb59ce820355db663c3679064367009e065": "pending"
+      },
+      "valid_source_event_evidence_ids": [
+        "c41b16503f0d4e15b6cedf9926ffaeb59ce820355db663c3679064367009e065"
+      ]
+    },
+    {
+      "db": {
+        "bytes": 3371008,
+        "path": ".venv/real-model-work-v3/lifecycle/attempts/full/8e96c7185f9e4ba8927f7fb48832b65d/full-heldout-012-full-r3.db",
+        "sha256": "0277f326b7730de7cadd3bee3f68666b826826f10e0efad825c57ad40e673a4f"
+      },
+      "error_names": [
+        "jobs_not_completed"
+      ],
+      "evidence_ids": [
+        "11af6201-bd95-45d3-8fc1-c3a760ac338b",
+        "09b9303fbb10d3f2fb71ed55111d410b5437651efc9051293de5b3aa8dc3c1e8"
+      ],
+      "execution_status": "partial",
+      "fact_ids": [
+        "11af6201-bd95-45d3-8fc1-c3a760ac338b"
+      ],
+      "invalid_evidence_ids": [
+        "11af6201-bd95-45d3-8fc1-c3a760ac338b"
+      ],
+      "invalid_ids_verified_as_fact_ids": [
+        "11af6201-bd95-45d3-8fc1-c3a760ac338b"
+      ],
+      "proposals": [
+        {
+          "evidence_ids": [
+            "11af6201-bd95-45d3-8fc1-c3a760ac338b"
+          ],
+          "operation": "support",
+          "target_fact_id": "11af6201-bd95-45d3-8fc1-c3a760ac338b"
+        },
+        {
+          "evidence_ids": [
+            "09b9303fbb10d3f2fb71ed55111d410b5437651efc9051293de5b3aa8dc3c1e8"
+          ],
+          "operation": "add",
+          "target_fact_id": null
+        }
+      ],
+      "repetition": 3,
+      "session_id": "heldout-012",
+      "source_event_ids": [
+        "09b9303fbb10d3f2fb71ed55111d410b5437651efc9051293de5b3aa8dc3c1e8",
+        "f4984410a59d628ec481ffd0f1cab3c2058b8fdca211857280690509c16bb831"
+      ],
+      "source_event_status": {
+        "09b9303fbb10d3f2fb71ed55111d410b5437651efc9051293de5b3aa8dc3c1e8": "pending",
+        "f4984410a59d628ec481ffd0f1cab3c2058b8fdca211857280690509c16bb831": "consolidated"
+      },
+      "valid_source_event_evidence_ids": [
+        "09b9303fbb10d3f2fb71ed55111d410b5437651efc9051293de5b3aa8dc3c1e8"
+      ]
+    }
+  ],
+  "provenance": {
+    "checkpoint": {
+      "bytes": 1388406,
+      "code_sha256": "043f80b0ab29a9c6ed1f1a0b325791a93db8ae72f79187fa122fc48a0521dbf6",
+      "config_sha256": "bb79c492cdf190545e2c97277fbc9bc0938e88f9241e002f688c7dc825f664ef",
+      "dataset_sha256": "036fa51ee13271a85a14a62a2fe4ef65d13eaeb290331fe325aa5bf32ce893fc",
+      "embedding_sha256": "0a109f422b47e3a30ba2b10eca18548e944e8a23073ee3f3e947efcf3c45e59f",
+      "model_sha256": "a2af6cc3eb7fa8be8504abaf9b04e88f17a119ec3f04a3addf55f92841195f5a",
+      "path": ".venv/real-model-work-v3/lifecycle/full.checkpoint.json",
+      "run_id": "t18-heldout-local-memory-heldout-v3-full",
+      "sha256": "8c6ad2481beb12b2a0fba010f83ea69d0997dc76473bdc22e0faf72f46c5c065",
+      "status": "running"
+    },
+    "database_count": 37,
+    "database_inventory": [
+      {
+        "bytes": 3371008,
+        "path": ".venv/real-model-work-v3/lifecycle/attempts/full/8e96c7185f9e4ba8927f7fb48832b65d/full-heldout-001-full-r1.db",
+        "sha256": "5a3b232042d2680fc7c21629080a8f4b8e22299039aaca48d2b3860b2da9fbaa"
+      },
+      {
+        "bytes": 3371008,
+        "path": ".venv/real-model-work-v3/lifecycle/attempts/full/8e96c7185f9e4ba8927f7fb48832b65d/full-heldout-001-full-r2.db",
+        "sha256": "e156466773f349cab8be33b7fbfb1992832272da4048b5db471977788e6d055c"
+      },
+      {
+        "bytes": 3371008,
+        "path": ".venv/real-model-work-v3/lifecycle/attempts/full/8e96c7185f9e4ba8927f7fb48832b65d/full-heldout-001-full-r3.db",
+        "sha256": "540671c9cb111ffb988f7d272e2d8c25f14a9c05c4cbe0ba010a8aa9a06924b0"
+      },
+      {
+        "bytes": 3371008,
+        "path": ".venv/real-model-work-v3/lifecycle/attempts/full/8e96c7185f9e4ba8927f7fb48832b65d/full-heldout-002-full-r1.db",
+        "sha256": "b380fdec1993309fc5b3b69f6baa74bce618a1010afa7beab173b5817cf28120"
+      },
+      {
+        "bytes": 3371008,
+        "path": ".venv/real-model-work-v3/lifecycle/attempts/full/8e96c7185f9e4ba8927f7fb48832b65d/full-heldout-002-full-r2.db",
+        "sha256": "9fa756f09de4e71a18c0c0eaacd52898381570eabdbb4bfe0f87c7a7e2402b2d"
+      },
+      {
+        "bytes": 3371008,
+        "path": ".venv/real-model-work-v3/lifecycle/attempts/full/8e96c7185f9e4ba8927f7fb48832b65d/full-heldout-002-full-r3.db",
+        "sha256": "5d2f47ee70b10360efac6155e7dc82b87bb5165ff2bd2b8eaf96f60ad20c981b"
+      },
+      {
+        "bytes": 3371008,
+        "path": ".venv/real-model-work-v3/lifecycle/attempts/full/8e96c7185f9e4ba8927f7fb48832b65d/full-heldout-003-full-r1.db",
+        "sha256": "3132c753c3436855dd8cde5f4f0110c7e6552c57dd9864b1b0e7f3be7a01ce95"
+      },
+      {
+        "bytes": 3371008,
+        "path": ".venv/real-model-work-v3/lifecycle/attempts/full/8e96c7185f9e4ba8927f7fb48832b65d/full-heldout-003-full-r2.db",
+        "sha256": "54fdd4d6ca50bcd11de7eb4d2927f439cd3e745fedb231528710257a8f0d43b4"
+      },
+      {
+        "bytes": 3371008,
+        "path": ".venv/real-model-work-v3/lifecycle/attempts/full/8e96c7185f9e4ba8927f7fb48832b65d/full-heldout-003-full-r3.db",
+        "sha256": "db6c3488af9be84142f302750149150a4fdf725701636fdd34e8b3f6f4281ce1"
+      },
+      {
+        "bytes": 3371008,
+        "path": ".venv/real-model-work-v3/lifecycle/attempts/full/8e96c7185f9e4ba8927f7fb48832b65d/full-heldout-004-full-r1.db",
+        "sha256": "a2e464365ce609493545ef2857b600e66af977cb3304e01f970ec6c98c9e3304"
+      },
+      {
+        "bytes": 3371008,
+        "path": ".venv/real-model-work-v3/lifecycle/attempts/full/8e96c7185f9e4ba8927f7fb48832b65d/full-heldout-004-full-r2.db",
+        "sha256": "c1e092fa7bae79de1dd67b904ccb23b584a19436a64ba735ac500ae9de4197a2"
+      },
+      {
+        "bytes": 3371008,
+        "path": ".venv/real-model-work-v3/lifecycle/attempts/full/8e96c7185f9e4ba8927f7fb48832b65d/full-heldout-004-full-r3.db",
+        "sha256": "ada52d095e1e5940292b6c5b3a70134127a8cbf3123b16e92d08354708f36777"
+      },
+      {
+        "bytes": 3395584,
+        "path": ".venv/real-model-work-v3/lifecycle/attempts/full/8e96c7185f9e4ba8927f7fb48832b65d/full-heldout-005-full-r1.db",
+        "sha256": "a60381af2718e3b7a720aa644078ae0c7fa0b67e0d70d444318626127acfeab7"
+      },
+      {
+        "bytes": 3371008,
+        "path": ".venv/real-model-work-v3/lifecycle/attempts/full/8e96c7185f9e4ba8927f7fb48832b65d/full-heldout-005-full-r2.db",
+        "sha256": "b02af2b4e992dd468a33fe2c630f2ff0846f8c1add8fbefd4a45a6f0932df53c"
+      },
+      {
+        "bytes": 3371008,
+        "path": ".venv/real-model-work-v3/lifecycle/attempts/full/8e96c7185f9e4ba8927f7fb48832b65d/full-heldout-005-full-r3.db",
+        "sha256": "42710142a715ca4ced022275215e06e19b928418a62eca0365cea6ead63344fb"
+      },
+      {
+        "bytes": 3371008,
+        "path": ".venv/real-model-work-v3/lifecycle/attempts/full/8e96c7185f9e4ba8927f7fb48832b65d/full-heldout-006-full-r1.db",
+        "sha256": "c5c6f6e34dd7ed40f5937925e32e01ff8760e73eaf6b44ebdbf21ca257b51e3e"
+      },
+      {
+        "bytes": 3371008,
+        "path": ".venv/real-model-work-v3/lifecycle/attempts/full/8e96c7185f9e4ba8927f7fb48832b65d/full-heldout-006-full-r2.db",
+        "sha256": "e0f2efd9e27298b97d0499233179de535c0fa5f6f2f0396e464cc68632b7c202"
+      },
+      {
+        "bytes": 3371008,
+        "path": ".venv/real-model-work-v3/lifecycle/attempts/full/8e96c7185f9e4ba8927f7fb48832b65d/full-heldout-006-full-r3.db",
+        "sha256": "3077752b23f72cda7bf562582a39091e512347a4908cb80506ab2071acf1ab24"
+      },
+      {
+        "bytes": 3371008,
+        "path": ".venv/real-model-work-v3/lifecycle/attempts/full/8e96c7185f9e4ba8927f7fb48832b65d/full-heldout-007-full-r1.db",
+        "sha256": "df8e84f393d53bcee15bf5bfcbbb8d42f0e8078f49c456f49c31c50d8a07fbaf"
+      },
+      {
+        "bytes": 3395584,
+        "path": ".venv/real-model-work-v3/lifecycle/attempts/full/8e96c7185f9e4ba8927f7fb48832b65d/full-heldout-007-full-r2.db",
+        "sha256": "4e253449d665fcf497e1a53bcdc0084457d077ce430052255391b9d68d5e81db"
+      },
+      {
+        "bytes": 3395584,
+        "path": ".venv/real-model-work-v3/lifecycle/attempts/full/8e96c7185f9e4ba8927f7fb48832b65d/full-heldout-007-full-r3.db",
+        "sha256": "2849354e91802237be4c6eaeddca7806634060a91b84da3f5ac5426dc99baab0"
+      },
+      {
+        "bytes": 3371008,
+        "path": ".venv/real-model-work-v3/lifecycle/attempts/full/8e96c7185f9e4ba8927f7fb48832b65d/full-heldout-008-full-r1.db",
+        "sha256": "d89778ce9d679799f7f113894c6a4ed517fbc262eafbc1e5cfe202e4f4d31f7d"
+      },
+      {
+        "bytes": 3371008,
+        "path": ".venv/real-model-work-v3/lifecycle/attempts/full/8e96c7185f9e4ba8927f7fb48832b65d/full-heldout-008-full-r2.db",
+        "sha256": "21876522feaf0aac27a832cf48d7a3e52cfa2c6ba937c7fd7bd01b96e98aa4dc"
+      },
+      {
+        "bytes": 3371008,
+        "path": ".venv/real-model-work-v3/lifecycle/attempts/full/8e96c7185f9e4ba8927f7fb48832b65d/full-heldout-008-full-r3.db",
+        "sha256": "d0e2d95eb103f2b7c3a297ba64c6dec2ff5b66e4d90807b7575a21ed16a7293f"
+      },
+      {
+        "bytes": 3395584,
+        "path": ".venv/real-model-work-v3/lifecycle/attempts/full/8e96c7185f9e4ba8927f7fb48832b65d/full-heldout-009-full-r1.db",
+        "sha256": "7b06a21c3828d7eca309d9025a158ad8725ce21738142db330a52217796275a6"
+      },
+      {
+        "bytes": 3371008,
+        "path": ".venv/real-model-work-v3/lifecycle/attempts/full/8e96c7185f9e4ba8927f7fb48832b65d/full-heldout-009-full-r2.db",
+        "sha256": "0e759cff24f8fcf8d5622f9496ad10705a2266d67d3473c04dad4bbe57103b7a"
+      },
+      {
+        "bytes": 3395584,
+        "path": ".venv/real-model-work-v3/lifecycle/attempts/full/8e96c7185f9e4ba8927f7fb48832b65d/full-heldout-009-full-r3.db",
+        "sha256": "ce56d15c49cc3cc422ee7eac4c44bf8ff5f4caf83cbdb553638b9ac63cd403c0"
+      },
+      {
+        "bytes": 3371008,
+        "path": ".venv/real-model-work-v3/lifecycle/attempts/full/8e96c7185f9e4ba8927f7fb48832b65d/full-heldout-010-full-r1.db",
+        "sha256": "b0552ed393b5bbc9b4742def2b8ced22643b41c371aac6eba11a857abdf7fe15"
+      },
+      {
+        "bytes": 3371008,
+        "path": ".venv/real-model-work-v3/lifecycle/attempts/full/8e96c7185f9e4ba8927f7fb48832b65d/full-heldout-010-full-r2.db",
+        "sha256": "172074462afa5e806b4372165f48bb6fb4fd77e37e95cb108f3622ebe79f2f67"
+      },
+      {
+        "bytes": 3371008,
+        "path": ".venv/real-model-work-v3/lifecycle/attempts/full/8e96c7185f9e4ba8927f7fb48832b65d/full-heldout-010-full-r3.db",
+        "sha256": "a174fcdfe7fff9025aef5770f38ffa61a4ae2a3f0329da60b42d4ade63dd28b0"
+      },
+      {
+        "bytes": 3371008,
+        "path": ".venv/real-model-work-v3/lifecycle/attempts/full/8e96c7185f9e4ba8927f7fb48832b65d/full-heldout-011-full-r1.db",
+        "sha256": "fa9bd538db5bf1e54fac53284b6e32051f14de16a3afe05277da750a625d6e1e"
+      },
+      {
+        "bytes": 3371008,
+        "path": ".venv/real-model-work-v3/lifecycle/attempts/full/8e96c7185f9e4ba8927f7fb48832b65d/full-heldout-011-full-r2.db",
+        "sha256": "ab9fe42f81f7681a3f81e9781bcee0480ebbcfeb5b3a9190b35edc807c611565"
+      },
+      {
+        "bytes": 3395584,
+        "path": ".venv/real-model-work-v3/lifecycle/attempts/full/8e96c7185f9e4ba8927f7fb48832b65d/full-heldout-011-full-r3.db",
+        "sha256": "c4b69a00cd22c9fa2b6000638aab7d2f8cdd0c77639d058287fd751759b3049a"
+      },
+      {
+        "bytes": 3371008,
+        "path": ".venv/real-model-work-v3/lifecycle/attempts/full/8e96c7185f9e4ba8927f7fb48832b65d/full-heldout-012-full-r1.db",
+        "sha256": "d36a9f138745b487e863e960691af81cad17d8f6efe98ac883f6b003512a96d4"
+      },
+      {
+        "bytes": 3371008,
+        "path": ".venv/real-model-work-v3/lifecycle/attempts/full/8e96c7185f9e4ba8927f7fb48832b65d/full-heldout-012-full-r2.db",
+        "sha256": "c2ec496b48035a33defe2d4020048faa4fe450c5cd6f9fd77dfac803b5883bae"
+      },
+      {
+        "bytes": 3371008,
+        "path": ".venv/real-model-work-v3/lifecycle/attempts/full/8e96c7185f9e4ba8927f7fb48832b65d/full-heldout-012-full-r3.db",
+        "sha256": "0277f326b7730de7cadd3bee3f68666b826826f10e0efad825c57ad40e673a4f"
+      },
+      {
+        "bytes": 3371008,
+        "path": ".venv/real-model-work-v3/lifecycle/attempts/full/8e96c7185f9e4ba8927f7fb48832b65d/full-heldout-013-full-r1.db",
+        "sha256": "8eddb45116142bd3dffe4bcce2e1d22a30f0f2469d80ed46b9451db22e0c2c54"
+      }
+    ],
+    "matched_observation_database_count": 36,
+    "serializer_repair_commit": "f3da6487c74b75ead193e028d9783edc10c5dfb5",
+    "source_snapshot_observed_in_failure_log": ".venv/graph-v4-frozen",
+    "unmatched_database_paths": [
+      ".venv/real-model-work-v3/lifecycle/attempts/full/8e96c7185f9e4ba8927f7fb48832b65d/full-heldout-013-full-r1.db"
+    ]
+  },
+  "representative_observations": [
+    {
+      "error_names": [
+        "jobs_not_completed"
+      ],
+      "fact_ids": [
+        "6e6fa268-e889-4e60-9206-79b5d78275dc"
+      ],
+      "invalid_evidence_ids": [
+        "6e6fa268-e889-4e60-9206-79b5d78275dc"
+      ],
+      "repetition": 1,
+      "session_id": "heldout-001",
+      "source_event_ids": [
+        "028e3fdf1a44a36d3b1b931b181fbcab8a56dc35a599aaaf6fdd96fb1050da0c",
+        "d53e7dfb65f9b0f1a7092319bc2844d786a41d267a999ee64796ef60d923681d"
+      ],
+      "valid_source_event_evidence_ids": []
+    },
+    {
+      "error_names": [
+        "jobs_not_completed"
+      ],
+      "fact_ids": [
+        "bff92873-54f8-4235-8308-a88a627d0ec4"
+      ],
+      "invalid_evidence_ids": [
+        "bff92873-54f8-4235-8308-a88a627d0ec4"
+      ],
+      "repetition": 2,
+      "session_id": "heldout-001",
+      "source_event_ids": [
+        "161a9a555d967620c1635045dc4a9111a87427b668e64273d4923d81d8ff0e74",
+        "9fd6c711d7ccf7369aee93e446278db917552a1050314e92c1328b272317e536"
+      ],
+      "valid_source_event_evidence_ids": []
+    }
+  ],
+  "schema_version": "extraction-evidence-diagnosis-v1"
+}

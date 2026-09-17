@@ -4,6 +4,14 @@ This record covers the unreleased `wt/functional-local-memory` worktree. It
 separates implemented behavior from acceptance evidence. The original task
 boundaries and thresholds remain in the [implementation plan](../../plans/2026-09-16-functional-local-memory.md).
 
+Latest checkpoint: source `7dd3071` adds provisional Claude capture and includes
+the MCP metadata and benchmark trace repairs. Focused tests pass; full frozen
+verification is running. The old sourceb7 real-model lifecycle run has stopped
+with a checkpoint serialization failure after a completed baseline and 36
+full-profile observations. Its [archived record](lifecycle-serialization-failure/README.md)
+contains six complete and 30 partial full observations. No new model run is
+currently active, and full-pipeline quality remains unproved.
+
 | Plan item | Implemented behavior | Evidence and remaining acceptance |
 | --- | --- | --- |
 | T01 Runtime | Configured providers, SQLite default, explicit mock rejection, observed readiness probe | Runtime and health tests; actual Ollama smoke; installed-wheel lifecycle and assets passed |
@@ -23,7 +31,7 @@ boundaries and thresholds remain in the [implementation plan](../../plans/2026-0
 | T15 UI | Project enable/pause, observed readiness, facts/history/correction/forget, reviewed captured-copy removal, job state, legacy and routing review | API and browser checks include profile-filtered diagnostic dismissal, source expiry, and related-forget selection/stale/cancel behavior; integrated deletion survives restart/replay. Bounded-list and active-store labels disclosed |
 | T16 Recovery | Consistent backup, new-path restore, suppression merge, staged reindex and activation backup | Backup, integrity, identity, ownership, and reindex tests |
 | T17 Cross-host | One service contract for all three host contexts | Synthetic adapter continuity passes across restart/correct/forget; complete native matrix and two-week pilot remain open |
-| T18 Evaluation | Frozen lifecycle datasets, real provider adapter, seven profiles, checkpoints, raw traces, intervals | Failed v2 lifecycle and original mechanism development runs preserved. V3 names actual lifecycle targets; schema repair passed four real correction/forget/replay/restart development cases. Repaired mechanism development completed with passing graph controls and no graph utility evidence; classifier fidelity passed 15/30 observations. Frozen `b7a9d9d` held-out mechanism phase completed: graph eligibility 0/50 fails coverage; synthetic-state affective top-1 0.33 versus 0.00, classifier fidelity 154/300. Lifecycle phase is running |
+| T18 Evaluation | Frozen lifecycle datasets, real provider adapter, seven profiles, checkpoints, raw traces, intervals | Failed v2 lifecycle and original mechanism development runs preserved. V3 names actual lifecycle targets; schema repair passed four real correction/forget/replay/restart development cases. Repaired mechanism development completed with passing graph controls and no graph utility evidence; classifier fidelity passed 15/30 observations. Frozen `b7a9d9d` held-out mechanism phase completed: graph eligibility 0/50 fails coverage; synthetic-state affective top-1 0.33 versus 0.00, classifier fidelity 154/300. Lifecycle stopped on serialization failure after baseline600 and full36 (6 complete, 30 partial); repaired recorder passed 36 focused tests. Fresh full/ablation acceptance is pending |
 | T19 Claims and packaging | Operational docs, host matrix, paper errata, packaged UI and helper agents | Frozen source9e passed 703 tests, two WSL skips, Black, strict mypy, JavaScript, build, and Twine, plus installed-wheel replay, Hermes wheel discovery, and offline Codex API preflight. Earlier source236 startup failure remains preserved. Native claims remain bound to their observed source20f fixtures. Related-forget source c805cc2 passed 738 tests, two optional skips, formatting, typing, JavaScript, build, and Twine, plus installed-wheel replay, Hermes discovery, generated Codex MCP preflight, and instrumented Claude adapter timing. Native Codex calls were cancelled by the client; complete native lifecycle and cross-host acceptance remain open. Real-model lifecycle quality is pending |
 
 The current capture recommendation is a hybrid: automatically capture enabled
@@ -65,7 +73,7 @@ and is retained as an invalid overlap fixture. A [previewed related-removal
 plan](../../plans/2026-09-17-related-forget.md) preserves single-record behavior
 and adds explicitly selected matching copies within the same project/profile.
 Its implementation is committed in `c805cc2`; [focused and browser checks](related-forget-verification/README.md)
-passed, and full frozen-source/package verification is running. This does not
+passed, as did full frozen-source/package verification. This does not
 claim paraphrase or universal semantic erasure.
 
 The v2 performance runner removes extra diagnostic writes and reads between

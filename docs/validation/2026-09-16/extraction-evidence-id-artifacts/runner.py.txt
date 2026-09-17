@@ -1,0 +1,272 @@
+"""Recompute the frozen lifecycle extraction evidence-ID diagnosis offline."""
+
+from __future__ import annotations
+
+import hashlib
+import json
+import sqlite3
+from collections import Counter
+from pathlib import Path
+from typing import Any
+
+
+def _sha256(path: Path) -> str:
+    digest = hashlib.sha256()
+    with path.open("rb") as stream:
+        for block in iter(lambda: stream.read(1024 * 1024), b""):
+            digest.update(block)
+    return digest.hexdigest()
+
+
+def _evidence_ids(response: str) -> list[str]:
+    try:
+        payload = json.loads(response)
+    except (TypeError, json.JSONDecodeError):
+        return []
+    if not isinstance(payload, dict):
+        return []
+    values: list[str] = []
+    facts = payload.get("facts")
+    if not isinstance(facts, list):
+        return values
+    for fact in facts:
+        if not isinstance(fact, dict):
+            continue
+        evidence = fact.get("evidence_ids")
+        if isinstance(evidence, list):
+            values.extend(str(item) for item in evidence)
+    return values
+
+
+def _db_for(dbs: list[Path], session_id: str, repetition: int) -> Path:
+    name = f"full-{session_id}-full-r{repetition}.db"
+    matches = [path for path in dbs if path.name == name]
+    if len(matches) != 1:
+        raise ValueError(f"expected one database for {session_id}:r{repetition}, found {matches}")
+    return matches[0]
+
+
+def _sqlite_ids(path: Path) -> tuple[set[str], set[str], dict[str, str]]:
+    connection = sqlite3.connect(path)
+    try:
+        source_rows = connection.execute("SELECT id, status FROM episodic_events").fetchall()
+        fact_rows = connection.execute("SELECT id FROM memory_chunks").fetchall()
+    finally:
+        connection.close()
+    source_ids = {str(row[0]) for row in source_rows}
+    fact_ids = {str(row[0]) for row in fact_rows}
+    source_status = {str(row[0]): str(row[1]) for row in source_rows}
+    return source_ids, fact_ids, source_status
+
+
+def build_report() -> dict[str, Any]:
+    repo_root = Path(__file__).resolve().parents[1]
+    checkpoint_path = (
+        repo_root / ".venv" / "real-model-work-v3" / "lifecycle" / "full.checkpoint.json"
+    )
+    db_root = repo_root / ".venv" / "real-model-work-v3" / "lifecycle" / "attempts" / "full"
+    checkpoint = json.loads(checkpoint_path.read_text(encoding="utf-8"))
+    observations = checkpoint.get("completed_observations")
+    if not isinstance(observations, list):
+        raise ValueError("checkpoint completed_observations must be a list")
+    dbs = sorted(db_root.glob("*/*.db"))
+    status_counts = Counter()
+    error_counts = Counter()
+    operation_counts = Counter()
+    citation_counts = Counter()
+    rows: list[dict[str, Any]] = []
+
+    for observation in observations:
+        if not isinstance(observation, dict):
+            raise ValueError("checkpoint observation must be an object")
+        session_id = str(observation["session_id"])
+        repetition = int(observation["repetition"])
+        db_path = _db_for(dbs, session_id, repetition)
+        source_ids, fact_ids, source_status = _sqlite_ids(db_path)
+        status = str(observation.get("execution_status"))
+        status_counts[status] += 1
+        raw_output = observation.get("raw_output")
+        if not isinstance(raw_output, dict):
+            raw_output = {}
+        for error in raw_output.get("errors", []):
+            if isinstance(error, dict):
+                error_counts[str(error.get("error", "unknown"))] += 1
+        for operation in raw_output.get("operations", []):
+            if isinstance(operation, dict):
+                operation_counts[str(operation.get("operation", "unknown"))] += 1
+
+        trace = raw_output.get("provider_trace")
+        if not isinstance(trace, dict):
+            trace = {}
+        citations: list[str] = []
+        proposals: list[dict[str, Any]] = []
+        for call in trace.get("predict_calls", []):
+            if not isinstance(call, dict):
+                continue
+            response = call.get("response")
+            if not isinstance(response, str):
+                continue
+            try:
+                payload = json.loads(response)
+            except json.JSONDecodeError:
+                continue
+            if not isinstance(payload, dict) or not isinstance(payload.get("facts"), list):
+                continue
+            for fact in payload["facts"]:
+                if not isinstance(fact, dict):
+                    continue
+                evidence = [str(item) for item in fact.get("evidence_ids", []) if item is not None]
+                citations.extend(evidence)
+                proposals.append(
+                    {
+                        "operation": fact.get("operation"),
+                        "target_fact_id": fact.get("target_fact_id"),
+                        "evidence_ids": evidence,
+                    }
+                )
+        valid_source = sorted({item for item in citations if item in source_ids})
+        fact_references = sorted({item for item in citations if item in fact_ids})
+        invalid = sorted({item for item in citations if item not in source_ids})
+        citation_counts["total"] += len(citations)
+        citation_counts["valid_source_event_ids"] += len(valid_source)
+        citation_counts["invalid_source_event_ids"] += len(invalid)
+        citation_counts["invalid_ids_verified_as_fact_ids"] += len(fact_references)
+        has_invalid = bool(invalid)
+        has_valid = bool(valid_source)
+        if has_invalid and has_valid:
+            citation_counts["mixed_invalid_and_valid"] += 1
+        elif has_invalid:
+            citation_counts["invalid_support_only"] += 1
+        rows.append(
+            {
+                "session_id": session_id,
+                "repetition": repetition,
+                "execution_status": status,
+                "db": {
+                    "path": db_path.relative_to(repo_root).as_posix(),
+                    "bytes": db_path.stat().st_size,
+                    "sha256": _sha256(db_path),
+                },
+                "source_event_ids": sorted(source_ids),
+                "source_event_status": source_status,
+                "fact_ids": sorted(fact_ids),
+                "evidence_ids": citations,
+                "valid_source_event_evidence_ids": valid_source,
+                "invalid_evidence_ids": invalid,
+                "invalid_ids_verified_as_fact_ids": fact_references,
+                "proposals": proposals,
+                "error_names": sorted(
+                    str(error.get("error", "unknown"))
+                    for error in raw_output.get("errors", [])
+                    if isinstance(error, dict)
+                ),
+            }
+        )
+
+    partial_rows = [row for row in rows if row["execution_status"] == "partial"]
+    complete_rows = [row for row in rows if row["execution_status"] == "complete"]
+    invalid_partial_rows = [row for row in partial_rows if row["invalid_evidence_ids"]]
+    mixed_rows = [
+        row
+        for row in rows
+        if row["invalid_evidence_ids"] and row["valid_source_event_evidence_ids"]
+    ]
+    support_only_rows = [
+        row
+        for row in rows
+        if row["invalid_evidence_ids"] and not row["valid_source_event_evidence_ids"]
+    ]
+    representative = []
+    for row in invalid_partial_rows[:2]:
+        representative.append(
+            {
+                "session_id": row["session_id"],
+                "repetition": row["repetition"],
+                "source_event_ids": row["source_event_ids"],
+                "fact_ids": row["fact_ids"],
+                "invalid_evidence_ids": row["invalid_evidence_ids"],
+                "valid_source_event_evidence_ids": row["valid_source_event_evidence_ids"],
+                "error_names": row["error_names"],
+            }
+        )
+    db_inventory = [
+        {
+            "path": path.relative_to(repo_root).as_posix(),
+            "bytes": path.stat().st_size,
+            "sha256": _sha256(path),
+        }
+        for path in dbs
+    ]
+    matched_paths = {row["db"]["path"] for row in rows}
+    return {
+        "schema_version": "extraction-evidence-diagnosis-v1",
+        "measurement_status": "complete",
+        "method": {
+            "source": "checkpoint provider_trace.predict_calls responses plus matching SQLite rows",
+            "fact_id_membership": "verified by SELECT id FROM memory_chunks",
+            "source_id_membership": "verified by SELECT id FROM episodic_events per observation database",
+            "format_lengths_are_descriptive_only": True,
+            "raw_model_response_persisted": False,
+        },
+        "provenance": {
+            "checkpoint": {
+                "path": checkpoint_path.relative_to(repo_root).as_posix(),
+                "bytes": checkpoint_path.stat().st_size,
+                "sha256": _sha256(checkpoint_path),
+                "run_id": checkpoint.get("run_id"),
+                "status": checkpoint.get("status"),
+                "dataset_sha256": checkpoint.get("dataset_sha256"),
+                "config_sha256": checkpoint.get("config_sha256"),
+                "code_sha256": checkpoint.get("code_sha256"),
+                "model_sha256": checkpoint.get("model_sha256"),
+                "embedding_sha256": checkpoint.get("embedding_sha256"),
+            },
+            "source_snapshot_observed_in_failure_log": ".venv/graph-v4-frozen",
+            "serializer_repair_commit": "f3da6487c74b75ead193e028d9783edc10c5dfb5",
+            "database_count": len(db_inventory),
+            "matched_observation_database_count": len(matched_paths),
+            "database_inventory": db_inventory,
+            "unmatched_database_paths": sorted(
+                item["path"] for item in db_inventory if item["path"] not in matched_paths
+            ),
+        },
+        "counts": {
+            "observations": len(rows),
+            "status": dict(sorted(status_counts.items())),
+            "partial_with_invalid_evidence": len(invalid_partial_rows),
+            "complete_with_invalid_evidence": sum(
+                bool(row["invalid_evidence_ids"]) for row in complete_rows
+            ),
+            "mixed_invalid_and_valid_observations": len(mixed_rows),
+            "invalid_support_only_observations": len(support_only_rows),
+            "errors": dict(sorted(error_counts.items())),
+            "operations": dict(sorted(operation_counts.items())),
+            "citations": dict(sorted(citation_counts.items())),
+        },
+        "representative_observations": representative,
+        "observations": rows,
+        "interpretation": {
+            "guard_assessment": "The runtime evidence-ID guard is correct: fact IDs are not source-event IDs.",
+            "prompt_ambiguity": (
+                "Inference from the prompt fields and outputs: existing fact IDs and source-event IDs "
+                "were both visible, while the evidence_ids versus target_fact_id distinction was not "
+                "stated explicitly enough for these support responses."
+            ),
+            "next_step": "Clarify SOURCE EVENTS-only evidence_ids, retain the runtime guard, and run a small new development diagnostic before a fresh heldout matrix.",
+        },
+    }
+
+
+def main() -> int:
+    repo_root = Path(__file__).resolve().parents[1]
+    output = repo_root / ".venv" / "extraction_evidence_diagnosis_v1.json"
+    report = build_report()
+    output.write_text(
+        json.dumps(report, indent=2, sort_keys=True, ensure_ascii=True) + "\n", encoding="utf-8"
+    )
+    print(json.dumps(report["counts"], sort_keys=True))
+    return 0
+
+
+if __name__ == "__main__":
+    raise SystemExit(main())

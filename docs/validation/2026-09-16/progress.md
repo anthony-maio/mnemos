@@ -719,3 +719,20 @@ database. Of the 36 checkpointed full observations, six are complete and
 30 are partial. The final failed observation's in-memory model trace was
 not saved. It is not included in any completed result. A clean frozen
 checkout of `7dd3071` is now running the full suite and package checks.
+
+## Full tests passed; archive formatting repair
+
+Source7dd passed 754 tests with two optional skips. Black then found the
+preserved Hermes discovery `payload.py` in the evidence tree. Its bytes are
+unchanged; its archive filename is now `payload.py.txt`, and its evidence
+index is updated. The [first validation attempt](provisional-checks-first-attempt/README.md)
+remains preserved. The later typing, JavaScript, build, and package gates
+were not reached in that attempt and need a new frozen verification.
+
+The [extraction diagnosis](extraction-evidence-id-diagnosis.md) verifies that
+all 30 partial full-profile observations cited existing fact IDs as source
+evidence. The runtime rejected them correctly. This is separate from the
+checkpoint serializer failure. Further development must distinguish source
+citations from target-fact IDs and test actual source support, without
+weakening the evidence guard or reusing partial observations as successful
+measurements.
