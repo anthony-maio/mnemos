@@ -102,3 +102,31 @@ exception. The browser and temporary fixture were then stopped.
 Evidence: [initial review layout](../../../output/playwright/ui-review-queues.png),
 [intermediate layout](../../../output/playwright/ui-review-queues-fixed.png), and
 [final wrapped evidence](../../../output/playwright/ui-review-queues-final.png).
+
+## Graph readiness development check
+
+The dashboard now renders the running service's graph status as disabled,
+not observed, rebuilding, or ready. A disposable review fixture with one scoped
+fact and one unassigned legacy fact displayed `Memory links: rebuilding`.
+The status remained visible after manual maintenance, with zero document
+overflow and no new application exception. The favicon 404 and password-field
+diagnostic remained unchanged.
+
+This check exposed an unfinished graph recovery path in the development draft:
+the service reported one pending source but no rebuild cursor after maintenance.
+The UI correctly reflected pending state; completion of the rebuild was not
+observed. The graph repair must address this before a ready-state check can
+pass. The temporary browser and fixture processes were stopped.
+
+Evidence: [pending graph](../../../output/playwright/ui-graph-rebuilding.png)
+and [still pending after maintenance](../../../output/playwright/ui-graph-after-maintenance.png).
+
+After the repair, a fresh fixture changed from `Memory links: rebuilding` to
+`Memory links: ready` after one manual maintenance run. The service reported
+two completed source markers, zero pending sources, and no rebuild cursor.
+Document overflow remained zero. The scoped fact and separate legacy review
+row were preserved. This checks status wiring and recovery in the disposable
+fixture, using synthetic embeddings; it is not graph retrieval-quality evidence.
+The browser and fixture were stopped after the check.
+
+Evidence: [completed memory links](../../../output/playwright/ui-graph-ready-final.png).

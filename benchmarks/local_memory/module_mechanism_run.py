@@ -314,7 +314,7 @@ def main() -> int:
     parser.add_argument(
         "--protocol",
         type=Path,
-        default=root / "docs/plans/2026-09-16-module-evaluation-protocol.md",
+        default=root / "docs/plans/2026-09-17-module-evaluation-protocol-v2.md",
     )
     parser.add_argument("--output-dir", type=Path, required=True)
     parser.add_argument("--work-dir", type=Path, required=True)

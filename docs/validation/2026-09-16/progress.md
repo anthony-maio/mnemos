@@ -280,3 +280,34 @@ profiles, and suppression of forgotten facts after replay and restart. The
 failed and passing raw outputs remain in `lifecycle-target-development-v3/`
 and `lifecycle-target-development-v4/`. This clears the lifecycle dispatch
 preflight; it does not establish extraction precision or held-out quality.
+
+## Deterministic graph repair and recovery
+
+Graph builder v4 persists directed preferences separately from reciprocal
+traversable links. Source markers include completed empty neighbor sets. The
+builder uses all compatible authoritative records, so insertion order, another
+project's refresh, and partial startup hydration do not change the neighbor
+rule. Storage commits preferences, projected edges, and markers atomically.
+Correction and deletion invalidate affected sources; incomplete state remains
+visible and disables graph scoring until bounded maintenance completes it.
+
+Review caught and repaired missing empty-source state, promotion of uncomputed
+sources during bounded recovery, incomplete in-memory preferences after a
+mid-rebuild restart, and the standalone APIs' remaining greedy construction.
+The standalone builder now follows the same mutual rule, including retained
+custom source thresholds and candidate boundaries. Tests include the preserved
+seven-fact real-vector development counterexample and a separate degree-one
+counterexample checked against an independent nearest-neighbor calculation.
+
+The service graph suite passed 19 focused regressions, engine/evaluator tests
+passed 66, and subsequent transaction/version-marker and standalone checks
+passed. Final frozen broad checks remain pending. A fresh browser fixture
+completed its pending scoped and legacy source links in one maintenance run
+and displayed ready with no document overflow.
+
+The [v2 mechanism protocol](../../plans/2026-09-17-module-evaluation-protocol-v2.md)
+records the graph construction amendment before any held-out mechanism case.
+It preserves the original dataset, labels, budgets, thresholds, and coverage
+minimums. Structural paths are counted without conditioning on successful
+activation, so low-energy targets remain negative outcomes. No held-out graph
+or affective utility claim follows from these implementation checks.

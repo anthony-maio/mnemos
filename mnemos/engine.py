@@ -41,7 +41,7 @@ from .modules.mutable_rag import MutableRAG
 from .modules.sleep import SleepDaemon
 from .modules.spreading import SpreadingActivation
 from .modules.surprisal import SurprisalGate
-from .types import ConsolidationResult, Interaction, MemoryChunk, ProcessResult
+from .types import ActivationNode, ConsolidationResult, Interaction, MemoryChunk, ProcessResult
 from .observability import log_event
 from .retrieval import score_candidate, context_token_upper_bound
 from .utils.embeddings import EmbeddingProvider, embed_text_async
@@ -278,8 +278,17 @@ class MnemosEngine:
             return 0
         chunks = self._store.list_chunks(limit=limit, after_id=cursor)
         for chunk in chunks:
-            self.refresh_graph_chunk(chunk)
-        self._store.set_graph_rebuild_cursor(chunks[-1].id if chunks else None)
+            self.refresh_graph_chunk(chunk, _rebuild_source_ids={chunk.id})
+        status_reader = getattr(self._store, "graph_derivation_status", None)
+        status = status_reader() if callable(status_reader) else {"pending_count": 0}
+        if int(status.get("pending_count", 0)) == 0:
+            self._store.set_graph_rebuild_cursor(None)
+        elif chunks:
+            self._store.set_graph_rebuild_cursor(chunks[-1].id)
+        else:
+            # An invalidated source can sort before the previous cursor.
+            # Keep recovery runnable instead of leaving pending work stranded.
+            self._store.set_graph_rebuild_cursor("")
         return len(chunks)
 
     def _validated_context_metadata(
@@ -310,13 +319,58 @@ class MnemosEngine:
     def _delete_chunk_everywhere(self, chunk_id: str) -> None:
         deleted = self._store.delete(chunk_id)
         if deleted and self.spreading_activation.get_node(chunk_id) is not None:
+            all_chunks = self._store.get_all()
+            records = [
+                ActivationNode(
+                    id=item.id,
+                    content=item.content,
+                    embedding=item.embedding,
+                    metadata=dict(item.metadata),
+                )
+                for item in all_chunks
+                if item.embedding is not None
+            ]
+            self.spreading_activation.set_authoritative_snapshot(records)
+            affected = self.spreading_activation.derive_authoritative_node(
+                chunk_id, deleted_id=chunk_id
+            )
+            batch = getattr(self._store, "replace_graph_preferences_batch", None)
+            if callable(batch):
+                batch(
+                    {
+                        source_id: self.spreading_activation.get_preferences().get(source_id, {})
+                        for source_id in affected
+                        if source_id != chunk_id
+                    },
+                    builder_version=SpreadingActivation.EDGE_BUILDER_VERSION,
+                )
             self.spreading_activation.remove_node(chunk_id)
+            self._sync_persisted_graph_edges()
 
     def _sync_persisted_graph_edges(self) -> None:
+        preference_reader = getattr(self._store, "get_graph_preferences", None)
+        projector = getattr(self._store, "project_graph_edges", None)
+        if callable(preference_reader) and callable(projector):
+            status_reader = getattr(self._store, "graph_derivation_status", None)
+            status = status_reader() if callable(status_reader) else None
+            # SQLite graph state is managed by directed preferences even when
+            # every completed source has an empty map. Projecting an empty
+            # set clears stale semantic edges without entering legacy mode.
+            if status is not None and status.get("managed_preferences", False):
+                projector()
+                self.spreading_activation.refresh_projected_edges()
+                return
+            preferences = preference_reader()
+            if preferences:
+                projector()
+                self.spreading_activation.refresh_projected_edges()
+                return
         for node in self.spreading_activation.get_all_nodes():
             self._store.replace_graph_neighbors(node.id, dict(node.neighbors))
 
-    def refresh_graph_chunk(self, chunk: MemoryChunk) -> None:
+    def refresh_graph_chunk(
+        self, chunk: MemoryChunk, *, _rebuild_source_ids: set[str] | None = None
+    ) -> None:
         """Refresh one fact from bounded scoped neighbors, including unhydrated rows."""
         if not self.config.modules.spreading or not chunk.embedding:
             return
@@ -391,19 +445,62 @@ class MnemosEngine:
             top_k=self.config.spreading.max_neighbors_per_node * 4 + 1,
             filter_fn=permitted,
         )
-        affected = {chunk.id, *(item.id for item in nearby)}
-        for node_id in list(affected):
-            node = self.spreading_activation.get_node(node_id)
-            if node is not None:
-                affected.update(node.neighbors)
         for item in nearby:
             self.spreading_activation.add_node_from_chunk(item)
         self.spreading_activation.add_node_from_chunk(chunk)
-        self.spreading_activation.connect_node(chunk.id, candidate_ids={item.id for item in nearby})
-        for node_id in affected:
-            node = self.spreading_activation.get_node(node_id)
-            if node is not None:
-                self._store.replace_graph_neighbors(node.id, dict(node.neighbors))
+        # Derivation sees the complete authoritative snapshot. Scope
+        # compatibility is checked for each source-target pair in the graph
+        # module; restricting this snapshot to the changed partition would
+        # silently change global and workspace preferences.
+        authoritative = self._store.get_all()
+        self.spreading_activation.set_authoritative_snapshot(
+            [
+                ActivationNode(
+                    id=item.id,
+                    content=item.content,
+                    embedding=item.embedding,
+                    metadata=dict(item.metadata),
+                )
+                for item in authoritative
+                if item.embedding is not None
+            ]
+        )
+        graph_status_reader = getattr(self._store, "graph_derivation_status", None)
+        graph_status = graph_status_reader() if callable(graph_status_reader) else {}
+        managed_preferences = bool(graph_status.get("managed_preferences", False))
+        if managed_preferences:
+            # The durable completed sources are authoritative across partial
+            # rebuilds, restarts, corrections, and direct store invalidations.
+            # Never promote a stale source's remaining preference rows merely
+            # because a new target happens to fit its old cutoff.
+            self.spreading_activation.hydrate_preferences(
+                self._store.get_graph_preferences(completed_only=True)
+            )
+        preferences = self.spreading_activation.get_preferences()
+        if _rebuild_source_ids is not None:
+            affected = self.spreading_activation.derive_authoritative_nodes(_rebuild_source_ids)
+        elif managed_preferences:
+            # New facts require one source scan plus one cutoff comparison per
+            # completed source. Dirty sources left by correction/restart are
+            # recomputed in bounded groups; maintenance drains any remainder.
+            pending_ids = sorted(
+                item.id for item in authoritative if item.embedding and item.id not in preferences
+            )
+            refresh_limit = self.config.spreading.max_neighbors_per_node * 4 + 1
+            affected = self.spreading_activation.derive_authoritative_nodes(
+                {chunk.id, *pending_ids[:refresh_limit]}
+            )
+            affected |= self.spreading_activation.derive_authoritative_node(chunk.id)
+        else:
+            affected = self.spreading_activation.derive_authoritative_node(chunk.id)
+        batch = getattr(self._store, "replace_graph_preferences_batch", None)
+        if managed_preferences and callable(batch):
+            preferences = self.spreading_activation.get_preferences()
+            batch(
+                {source_id: preferences.get(source_id, {}) for source_id in affected},
+                builder_version=SpreadingActivation.EDGE_BUILDER_VERSION,
+            )
+        self._sync_persisted_graph_edges()
 
     def _apply_governance(
         self,
@@ -457,6 +554,20 @@ class MnemosEngine:
         if not stored_chunks:
             return
 
+        authoritative = self._store.get_all()
+        self.spreading_activation.set_authoritative_snapshot(
+            [
+                ActivationNode(
+                    id=item.id,
+                    content=item.content,
+                    embedding=item.embedding,
+                    metadata=dict(item.metadata),
+                )
+                for item in authoritative
+                if item.embedding is not None
+            ]
+        )
+
         limit = spreading_cfg.startup_hydration_limit
         chunks_to_load = stored_chunks[:limit]
 
@@ -464,12 +575,37 @@ class MnemosEngine:
             if self.spreading_activation.get_node(chunk.id) is None:
                 self.spreading_activation.add_node_from_chunk(chunk)
 
-        persisted_edges = self._store.get_graph_edges([chunk.id for chunk in chunks_to_load])
-        if persisted_edges:
-            self.spreading_activation.hydrate_edges(persisted_edges)
-        elif spreading_cfg.startup_auto_connect and len(chunks_to_load) > 1:
-            self.spreading_activation.auto_connect(exclude_existing=False)
-            self._sync_persisted_graph_edges()
+        cursor_reader = getattr(self._store, "graph_rebuild_cursor", None)
+        cursor = cursor_reader() if callable(cursor_reader) else None
+        preference_reader = getattr(self._store, "get_graph_preferences", None)
+        preferences = preference_reader() if callable(preference_reader) else {}
+        status_reader = getattr(self._store, "graph_derivation_status", None)
+        graph_status = status_reader() if callable(status_reader) else {}
+        managed_graph_pending = (
+            graph_status.get("managed_preferences", False) and graph_status.get("ready") is not True
+        )
+        if cursor == "" or managed_graph_pending:
+            self.spreading_activation.set_graph_pending()
+        elif (
+            graph_status.get("managed_preferences", False)
+            and graph_status.get("ready") is True
+            and not graph_status.get("legacy_graph", False)
+        ):
+            self.spreading_activation.hydrate_preferences(preferences)
+            persisted_edges = self._store.get_graph_edges([chunk.id for chunk in chunks_to_load])
+            if persisted_edges:
+                self.spreading_activation.hydrate_edges(persisted_edges)
+        else:
+            persisted_edges = self._store.get_graph_edges([chunk.id for chunk in chunks_to_load])
+            if persisted_edges:
+                self.spreading_activation.hydrate_edges(persisted_edges)
+            elif (
+                spreading_cfg.startup_auto_connect
+                and len(chunks_to_load) > 1
+                and (not callable(status_reader) or graph_status.get("ready") is True)
+            ):
+                self.spreading_activation.auto_connect(exclude_existing=False)
+                self._sync_persisted_graph_edges()
 
         if self.config.debug and len(stored_chunks) > limit:
             logger.debug(
@@ -702,11 +838,19 @@ class MnemosEngine:
         lexical_ids = {chunk.id for chunk in lexical_chunks}
         candidates = {chunk.id: chunk for chunk in baseline_chunks}
         candidates.update((chunk.id, chunk) for chunk in lexical_chunks)
-        use_spreading = (
+        graph_requested = (
             selected_profile == "biomimetic"
             and self.config.retrieval.spreading_enabled
             and self.config.modules.spreading
         )
+        graph_status_reader = getattr(self._store, "graph_derivation_status", None)
+        graph_status = (
+            graph_status_reader()
+            if graph_requested and callable(graph_status_reader)
+            else {"ready": True}
+        )
+        graph_ready = bool(graph_status.get("ready", True))
+        use_spreading = graph_requested and graph_ready
         activation = {}
         if use_spreading and baseline_chunks:
             # Refresh semantic seeds from authoritative rows, including corrections.
@@ -832,7 +976,11 @@ class MnemosEngine:
                 "scope_match": True,
                 "context_token_upper_bound": cost,
                 "token_count_method": "utf8_bytes_upper_bound",
-                "graph_status": "enabled" if use_spreading else "disabled",
+                "graph_status": (
+                    "enabled"
+                    if use_spreading
+                    else ("pending" if graph_requested and not graph_ready else "disabled")
+                ),
                 "candidate_backend": retrieval_backend,
                 "lexical_candidate": chunk.id in lexical_ids,
                 "lexical_status": "candidate_union" if callable(lexical_search) else "unavailable",
@@ -951,6 +1099,13 @@ class MnemosEngine:
             Dict with stats from each module plus overall engine stats.
         """
         store_stats = self._store.get_stats()
+        spreading_stats = self.spreading_activation.get_stats()
+        graph_status = self._store.graph_derivation_status()
+        if graph_status.get("managed_preferences", False):
+            spreading_stats["graph_derivation_status"] = (
+                "ready" if graph_status.get("ready") else "pending"
+            )
+            spreading_stats["pending_sources"] = graph_status.get("pending_count", 0)
         return {
             "engine": {
                 "store_backend": store_stats.get("backend", "unknown"),
@@ -960,7 +1115,7 @@ class MnemosEngine:
             "mutable_rag": self.mutable_rag.get_stats(),
             "affective_router": self.affective_router.get_stats(),
             "sleep_daemon": self.sleep_daemon.get_stats(),
-            "spreading_activation": self.spreading_activation.get_stats(),
+            "spreading_activation": spreading_stats,
             "store": store_stats,
         }
 

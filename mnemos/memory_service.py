@@ -790,6 +790,7 @@ class LocalMemoryService:
                 "schema_version": 1,
                 "completed": await self.maintenance.run_once(force=True),
                 "maintenance": self.maintenance.health(),
+                "graph": self._graph_status(),
             }
         if operation == "forget":
             context = self.registry.validate_context(
@@ -863,7 +864,13 @@ class LocalMemoryService:
                     "background_maintenance": self.maintenance.health()["scheduler_running"],
                 },
                 "maintenance": self.maintenance.health(),
+                "graph": self._graph_status(),
                 "cognition_provider": type(self.engine.llm).__name__,
                 "provider_state": {"cognition": dict(self._cognition_probe)},
             }
         raise ValueError(f"Unsupported memory operation: {operation}")
+
+    def _graph_status(self) -> dict[str, Any]:
+        reader = getattr(self.engine.store, "graph_derivation_status", None)
+        state = reader() if callable(reader) else {"ready": False, "status": "unavailable"}
+        return {"enabled": self.engine.config.modules.spreading, **state}

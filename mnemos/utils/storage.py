@@ -21,6 +21,7 @@ from __future__ import annotations
 
 import hashlib
 import json
+import math
 import os
 from pathlib import Path
 import re
@@ -273,6 +274,29 @@ class MemoryStore(ABC):
     def get_graph_edges(self, chunk_ids: list[str] | None = None) -> dict[str, dict[str, float]]:
         """Return persisted graph edges keyed by source chunk ID."""
         return {}
+
+    def get_graph_preferences(
+        self, source_ids: list[str] | None = None, *, completed_only: bool = False
+    ) -> dict[str, dict[str, float]]:
+        """Return persisted directed graph preferences keyed by source ID."""
+        return {}
+
+    def replace_graph_preferences(self, source_id: str, preferences: dict[str, float]) -> None:
+        """Replace one source's directed top-k graph preferences."""
+        return None
+
+    def replace_graph_preferences_batch(
+        self, updates: dict[str, dict[str, float]], *, builder_version: str
+    ) -> None:
+        for source_id, preferences in updates.items():
+            self.replace_graph_preferences(source_id, preferences)
+
+    def graph_derivation_status(self) -> dict[str, Any]:
+        return {"ready": True, "pending_count": 0, "cursor": None, "managed_preferences": False}
+
+    def project_graph_edges(self) -> None:
+        """Project reciprocal preferences into traversable graph edges."""
+        return None
 
     def replace_graph_neighbors(self, chunk_id: str, neighbors: dict[str, float]) -> None:
         """Replace the outgoing graph-neighbor set for a chunk."""
@@ -1192,6 +1216,9 @@ class SQLiteStore(MemoryStore):
         observation_count, last_retrieved_at, reconsolidation_due_at
     """
     _GRAPH_EDGE_TYPE = "SEMANTIC_SIMILAR"
+    _GRAPH_PREFERENCE_EDGE_TYPE = "SEMANTIC_PREFERENCE"
+    _GRAPH_PREFERENCE_MARKER_KEY = "graph_preference_sources"
+    _GRAPH_LEGACY_EDGE_KEY = "graph_legacy_edges"
     _SQLITE_VEC_DIM_KEY = "sqlite_vec_dim"
 
     def __init__(self, db_path: str = "mnemos_memory.db", name: str = "sqlite") -> None:
@@ -1290,12 +1317,35 @@ class SQLiteStore(MemoryStore):
                 separators=(",", ":"),
             )
             if self._meta_value("graph_contract") == encoded:
+                status = self.graph_derivation_status()
+                if status.get("ready") is True:
+                    return
+                if self._meta_value("graph_rebuild_after") is None:
+                    self._conn.execute(
+                        "INSERT INTO mnemos_meta(key,value) VALUES ('graph_rebuild_after','') "
+                        "ON CONFLICT(key) DO UPDATE SET value=''"
+                    )
+                self._conn.commit()
                 return
             self._conn.execute("DELETE FROM memory_edges")
             self._conn.executemany(
                 "INSERT INTO mnemos_meta(key,value) VALUES (?,?) "
                 "ON CONFLICT(key) DO UPDATE SET value=excluded.value",
-                [("graph_contract", encoded), ("graph_rebuild_after", "")],
+                [
+                    ("graph_contract", encoded),
+                    ("graph_rebuild_after", ""),
+                    (self._GRAPH_LEGACY_EDGE_KEY, "0"),
+                    (
+                        self._GRAPH_PREFERENCE_MARKER_KEY,
+                        json.dumps(
+                            {
+                                "version": contract.get("edge_builder_version"),
+                                "sources": [],
+                            },
+                            sort_keys=True,
+                        ),
+                    ),
+                ],
             )
             self._conn.commit()
 
@@ -1882,6 +1932,19 @@ class SQLiteStore(MemoryStore):
         row = self._chunk_to_row(chunk)
         with self._lock:
             prior_dimension = self._sqlite_vec_dim
+            prior_row = self._conn.execute(
+                "SELECT content, embedding, metadata FROM memory_chunks WHERE id=?",
+                (chunk.id,),
+            ).fetchone()
+            graph_changed = bool(
+                prior_row is not None
+                and (
+                    str(prior_row[0]) != chunk.content
+                    or (json.loads(prior_row[1]) if prior_row[1] else None) != chunk.embedding
+                    or (json.loads(prior_row[2]) if prior_row[2] else {}) != chunk.metadata
+                )
+            )
+            graph_added = prior_row is None and chunk.embedding is not None
             self._conn.execute("SAVEPOINT mnemos_store_write")
             try:
                 self._conn.execute(
@@ -1915,6 +1978,13 @@ class SQLiteStore(MemoryStore):
                     row,
                 )
                 self._sync_vec_row(chunk.id, chunk.embedding)
+                if graph_changed:
+                    self._invalidate_graph_derivation_locked({chunk.id})
+                elif graph_added and self._meta_value("graph_contract") is not None:
+                    self._conn.execute(
+                        "INSERT INTO mnemos_meta(key,value) VALUES ('graph_rebuild_after','') "
+                        "ON CONFLICT(key) DO UPDATE SET value=''"
+                    )
                 self._conn.execute("RELEASE SAVEPOINT mnemos_store_write")
             except Exception:
                 self._conn.execute("ROLLBACK TO SAVEPOINT mnemos_store_write")
@@ -2145,6 +2215,7 @@ class SQLiteStore(MemoryStore):
                 ).fetchone()
                 if row is not None:
                     self._conn.execute("DELETE FROM memory_vec WHERE rowid = ?", (int(row[0]),))
+            self._invalidate_graph_derivation_locked({chunk_id})
             cursor = self._conn.execute("DELETE FROM memory_chunks WHERE id = ?", (chunk_id,))
             self._conn.commit()
             return cursor.rowcount > 0
@@ -2458,10 +2529,7 @@ class SQLiteStore(MemoryStore):
                     if prior is not None and (
                         prior.content != accepted.content or prior.embedding != accepted.embedding
                     ):
-                        self._conn.execute(
-                            "DELETE FROM memory_edges WHERE source_id=? OR target_id=?",
-                            (accepted.id, accepted.id),
-                        )
+                        self._invalidate_graph_derivation_locked({accepted.id})
 
                 if suppressed_ids and not accepted_chunks:
                     result_payload["decision"] = "suppressed"
@@ -2803,6 +2871,7 @@ class SQLiteStore(MemoryStore):
                         "(SELECT rowid FROM memory_chunks WHERE id=?)",
                         (fact_id,),
                     )
+                self._invalidate_graph_derivation_locked({fact_id})
                 self._conn.execute("DELETE FROM memory_chunks WHERE id=?", (fact_id,))
                 self._conn.commit()
                 return True
@@ -3304,13 +3373,23 @@ class SQLiteStore(MemoryStore):
         with self._lock:
             rows = self._conn.execute(
                 f"SELECT {self._CHUNK_SELECT_COLUMNS}, (SELECT MAX(weight) FROM memory_edges "
-                "WHERE (source_id=? AND target_id=memory_chunks.id) "
-                "OR (target_id=? AND source_id=memory_chunks.id)) AS edge_weight "
+                "WHERE edge_type=? AND ((source_id=? AND target_id=memory_chunks.id) "
+                "OR (target_id=? AND source_id=memory_chunks.id))) AS edge_weight "
                 f"FROM memory_chunks WHERE {where} AND id IN "
-                "(SELECT target_id FROM memory_edges WHERE source_id=? UNION "
-                "SELECT source_id FROM memory_edges WHERE target_id=?) "
+                "(SELECT target_id FROM memory_edges WHERE edge_type=? AND source_id=? UNION "
+                "SELECT source_id FROM memory_edges WHERE edge_type=? AND target_id=?) "
                 "ORDER BY edge_weight DESC, id LIMIT ?",
-                [source_id, source_id, *bindings, source_id, source_id, max(0, limit)],
+                [
+                    self._GRAPH_EDGE_TYPE,
+                    source_id,
+                    source_id,
+                    *bindings,
+                    self._GRAPH_EDGE_TYPE,
+                    source_id,
+                    self._GRAPH_EDGE_TYPE,
+                    source_id,
+                    max(0, limit),
+                ],
             ).fetchall()
         return [(self._row_to_chunk(row[:-1]), float(row[-1])) for row in rows]
 
@@ -3336,6 +3415,367 @@ class SQLiteStore(MemoryStore):
                 continue
             edge_map.setdefault(str(source_id), {})[str(target_id)] = float(weight)
         return edge_map
+
+    def get_graph_preferences(
+        self, source_ids: list[str] | None = None, *, completed_only: bool = False
+    ) -> dict[str, dict[str, float]]:
+        query = """
+            SELECT source_id, target_id, weight
+            FROM memory_edges
+            WHERE edge_type = ?
+        """
+        params: list[Any] = [self._GRAPH_PREFERENCE_EDGE_TYPE]
+        if source_ids:
+            placeholders = ", ".join("?" for _ in source_ids)
+            query += f" AND source_id IN ({placeholders})"
+            params.extend(source_ids)
+        with self._lock:
+            rows = self._conn.execute(query, tuple(params)).fetchall()
+            raw_marker = self._meta_value(self._GRAPH_PREFERENCE_MARKER_KEY)
+            raw_contract = self._meta_value("graph_contract")
+            current = dict(
+                self._conn.execute(
+                    "SELECT id, version FROM memory_chunks WHERE embedding IS NOT NULL"
+                ).fetchall()
+            )
+        result: dict[str, dict[str, float]] = {}
+        for source_id, target_id, weight in rows:
+            if source_id != target_id:
+                result.setdefault(str(source_id), {})[str(target_id)] = float(weight)
+
+        # A completed source with no neighbors has no preference rows.  Its
+        # marker is still durable state and must be hydrated as an explicit
+        # empty map, otherwise a restart forgets that this source was built
+        # and a later insertion cannot compare it as an incoming candidate.
+        completed: set[str] = set()
+        if raw_marker:
+            try:
+                marker = json.loads(raw_marker)
+            except (TypeError, ValueError):
+                marker = None
+            marked = marker.get("sources") if isinstance(marker, dict) else None
+            try:
+                contract = json.loads(raw_contract) if raw_contract else {}
+            except (TypeError, ValueError):
+                contract = {}
+            version_matches = (
+                isinstance(marker, dict)
+                and isinstance(contract, dict)
+                and (
+                    not raw_contract
+                    or marker.get("version") == contract.get("edge_builder_version")
+                )
+            )
+            if isinstance(marked, dict):
+                requested = set(source_ids) if source_ids else None
+                for source_id, identity in marked.items():
+                    source_id = str(source_id)
+                    if requested is not None and source_id not in requested:
+                        continue
+                    if not isinstance(identity, list) or len(identity) < 1:
+                        continue
+                    if version_matches and current.get(source_id) == identity[0]:
+                        completed.add(source_id)
+                        result.setdefault(source_id, {})
+        if completed_only:
+            return {source: targets for source, targets in result.items() if source in completed}
+        return result
+
+    def replace_graph_preferences(self, source_id: str, preferences: dict[str, float]) -> None:
+        self.replace_graph_preferences_batch({source_id: preferences}, builder_version="")
+
+    def replace_graph_preferences_batch(
+        self, updates: dict[str, dict[str, float]], *, builder_version: str
+    ) -> None:
+        validated: dict[str, dict[str, float]] = {}
+        for source_id, preferences in updates.items():
+            checked: dict[str, float] = {}
+            for target_id, raw_weight in preferences.items():
+                try:
+                    weight = float(raw_weight)
+                except (TypeError, ValueError) as exc:
+                    raise ValueError("graph preference weights must be finite numbers") from exc
+                if not math.isfinite(weight) or not 0.0 <= weight <= 1.0:
+                    raise ValueError("graph preference weights must be between 0 and 1")
+                checked[str(target_id)] = weight
+            validated[str(source_id)] = checked
+        with self._lock:
+            self._conn.execute("BEGIN IMMEDIATE")
+            try:
+                all_targets = {
+                    target for preferences in validated.values() for target in preferences
+                }
+                existing: set[str] = set()
+                if all_targets:
+                    placeholders = ", ".join("?" for _ in all_targets)
+                    existing = {
+                        str(row[0])
+                        for row in self._conn.execute(
+                            f"SELECT id FROM memory_chunks WHERE id IN ({placeholders})",
+                            tuple(all_targets),
+                        ).fetchall()
+                    }
+                now = datetime.now(timezone.utc).isoformat()
+                for source_id, preferences in validated.items():
+                    self._conn.execute(
+                        "DELETE FROM memory_edges WHERE source_id = ? AND edge_type = ?",
+                        (source_id, self._GRAPH_PREFERENCE_EDGE_TYPE),
+                    )
+                    rows = [
+                        (source_id, target, float(weight), self._GRAPH_PREFERENCE_EDGE_TYPE, now)
+                        for target, weight in preferences.items()
+                        if target in existing and target != source_id
+                    ]
+                    if rows:
+                        self._conn.executemany(
+                            """
+                            INSERT INTO memory_edges(source_id, target_id, weight, edge_type, updated_at)
+                            VALUES (?, ?, ?, ?, ?)
+                            ON CONFLICT(source_id, target_id, edge_type) DO UPDATE SET
+                                weight=excluded.weight, updated_at=excluded.updated_at
+                            """,
+                            rows,
+                        )
+                raw = self._meta_value(self._GRAPH_PREFERENCE_MARKER_KEY)
+                marker: dict[str, Any] = {"version": builder_version, "sources": []}
+                if raw:
+                    try:
+                        loaded = json.loads(raw)
+                        if isinstance(loaded, dict) and (
+                            not builder_version or loaded.get("version") == builder_version
+                        ):
+                            marker.update(loaded)
+                    except (TypeError, ValueError):
+                        pass
+                marker["version"] = builder_version or marker.get("version")
+                marked_raw = marker.get("sources", {})
+                marked = (
+                    {str(key): value for key, value in marked_raw.items()}
+                    if isinstance(marked_raw, dict)
+                    else {}
+                )
+                rows = self._conn.execute(
+                    "SELECT id, version, content, embedding, metadata FROM memory_chunks "
+                    "WHERE id IN ({})".format(",".join("?" for _ in validated) or "NULL"),
+                    tuple(validated),
+                ).fetchall()
+                marked.update(
+                    {
+                        str(row[0]): [
+                            int(row[1]),
+                            self._graph_fact_fingerprint(str(row[2]), row[3], row[4]),
+                        ]
+                        for row in rows
+                    }
+                )
+                marker["sources"] = marked
+                self._conn.execute(
+                    "INSERT INTO mnemos_meta(key,value) VALUES (?,?) "
+                    "ON CONFLICT(key) DO UPDATE SET value=excluded.value",
+                    (self._GRAPH_PREFERENCE_MARKER_KEY, json.dumps(marker, sort_keys=True)),
+                )
+                current_rows = self._conn.execute(
+                    "SELECT id, version FROM memory_chunks WHERE embedding IS NOT NULL"
+                ).fetchall()
+                if all(
+                    isinstance(marked.get(str(row[0])), list)
+                    and len(marked[str(row[0])]) > 0
+                    and marked[str(row[0])][0] == int(row[1])
+                    for row in current_rows
+                ):
+                    self._conn.execute("DELETE FROM mnemos_meta WHERE key='graph_rebuild_after'")
+                self._project_graph_edges_locked(now)
+                self._conn.commit()
+            except Exception:
+                self._conn.rollback()
+                raise
+
+    def _project_graph_edges_locked(self, now: str) -> None:
+        self._conn.execute("DELETE FROM memory_edges WHERE edge_type = ?", (self._GRAPH_EDGE_TYPE,))
+        self._conn.execute(
+            """
+            INSERT INTO memory_edges(source_id, target_id, weight, edge_type, updated_at)
+            SELECT p.source_id, p.target_id,
+                   CASE WHEN p.weight < q.weight THEN p.weight ELSE q.weight END,
+                   ?, ?
+            FROM memory_edges AS p
+            JOIN memory_edges AS q
+              ON q.source_id = p.target_id AND q.target_id = p.source_id
+             AND q.edge_type = ?
+            WHERE p.edge_type = ? AND p.source_id < p.target_id
+            UNION ALL
+            SELECT p.target_id, p.source_id,
+                   CASE WHEN p.weight < q.weight THEN p.weight ELSE q.weight END,
+                   ?, ?
+            FROM memory_edges AS p
+            JOIN memory_edges AS q
+              ON q.source_id = p.target_id AND q.target_id = p.source_id
+             AND q.edge_type = ?
+            WHERE p.edge_type = ? AND p.source_id < p.target_id
+            """,
+            (
+                self._GRAPH_EDGE_TYPE,
+                now,
+                self._GRAPH_PREFERENCE_EDGE_TYPE,
+                self._GRAPH_PREFERENCE_EDGE_TYPE,
+                self._GRAPH_EDGE_TYPE,
+                now,
+                self._GRAPH_PREFERENCE_EDGE_TYPE,
+                self._GRAPH_PREFERENCE_EDGE_TYPE,
+            ),
+        )
+
+    def graph_derivation_status(self) -> dict[str, Any]:
+        with self._lock:
+            raw = self._meta_value(self._GRAPH_PREFERENCE_MARKER_KEY)
+            marker: dict[str, Any] = {}
+            if raw:
+                try:
+                    parsed = json.loads(raw)
+                    if isinstance(parsed, dict):
+                        marker = parsed
+                except (TypeError, ValueError):
+                    marker = {}
+            source_ids = marker.get("sources")
+            marked = source_ids if isinstance(source_ids, dict) else {}
+            # Readiness is a hot-path query during retrieval and health.  The
+            # write path invalidates markers whenever content, metadata, or
+            # vectors change, so checking the durable version identity here
+            # avoids reparsing every stored embedding on every request.
+            rows = self._conn.execute(
+                "SELECT id, version FROM memory_chunks WHERE embedding IS NOT NULL"
+            ).fetchall()
+            current = {str(row[0]): int(row[1]) for row in rows}
+            total = len(current)
+            cursor = self._meta_value("graph_rebuild_after")
+            contract_raw = self._meta_value("graph_contract")
+            expected_version = None
+            if contract_raw:
+                try:
+                    contract = json.loads(contract_raw)
+                    if isinstance(contract, dict):
+                        expected_version = contract.get("edge_builder_version")
+                except (TypeError, ValueError):
+                    pass
+            version_ok = expected_version is not None and marker.get("version") == expected_version
+            pending = sum(
+                1
+                for source_id, version in current.items()
+                if not (
+                    isinstance(marked.get(source_id), list)
+                    and len(marked[source_id]) > 0
+                    and marked[source_id][0] == version
+                )
+            )
+            if not version_ok:
+                pending = total
+            preference_count = int(
+                self._conn.execute(
+                    "SELECT COUNT(*) FROM memory_edges WHERE edge_type=?",
+                    (self._GRAPH_PREFERENCE_EDGE_TYPE,),
+                ).fetchone()[0]
+            )
+            semantic_count = int(
+                self._conn.execute(
+                    "SELECT COUNT(*) FROM memory_edges WHERE edge_type=?",
+                    (self._GRAPH_EDGE_TYPE,),
+                ).fetchone()[0]
+            )
+            # Managed graph contracts require preference markers.  The
+            # legacy flag is reserved for explicit contextless fixtures and
+            # must never make a lost v4 marker appear ready.
+            legacy_graph = (
+                not contract_raw
+                and cursor is None
+                and preference_count == 0
+                and semantic_count > 0
+                and self._meta_value(self._GRAPH_LEGACY_EDGE_KEY) == "1"
+            )
+            return {
+                "managed_preferences": True,
+                "ready": (
+                    legacy_graph
+                    or (cursor is None and pending == 0 and bool(version_ok or total == 0))
+                ),
+                "pending_count": pending,
+                "cursor": cursor,
+                "marked_sources": sum(
+                    1
+                    for source_id, identity in current.items()
+                    if (
+                        isinstance(marked.get(source_id), list)
+                        and len(marked[source_id]) > 0
+                        and marked[source_id][0] == identity
+                        and version_ok
+                    )
+                ),
+                "total_sources": total,
+                "legacy_graph": legacy_graph,
+            }
+
+    @staticmethod
+    def _graph_fact_fingerprint(content: str, embedding: str | None, metadata: str | None) -> str:
+        payload = json.dumps(
+            [
+                content,
+                json.loads(embedding) if embedding else None,
+                json.loads(metadata) if metadata else {},
+            ],
+            sort_keys=True,
+            separators=(",", ":"),
+        )
+        return hashlib.sha256(payload.encode("utf-8")).hexdigest()
+
+    def _invalidate_graph_derivation_locked(self, target_ids: set[str]) -> None:
+        affected_rows = self._conn.execute(
+            "SELECT DISTINCT source_id FROM memory_edges WHERE edge_type=? "
+            "AND (source_id IN ({0}) OR target_id IN ({0}))".format(
+                ",".join("?" for _ in target_ids) or "NULL"
+            ),
+            [self._GRAPH_PREFERENCE_EDGE_TYPE, *target_ids, *target_ids],
+        ).fetchall()
+        self._conn.execute(
+            "DELETE FROM memory_edges WHERE edge_type IN (?, ?) "
+            "AND (source_id IN ({0}) OR target_id IN ({0}))".format(
+                ",".join("?" for _ in target_ids) or "NULL"
+            ),
+            [self._GRAPH_EDGE_TYPE, self._GRAPH_PREFERENCE_EDGE_TYPE, *target_ids, *target_ids],
+        )
+        raw = self._meta_value(self._GRAPH_PREFERENCE_MARKER_KEY)
+        marker: dict[str, Any] = {"version": None, "sources": []}
+        if raw:
+            try:
+                loaded = json.loads(raw)
+                if isinstance(loaded, dict):
+                    marker.update(loaded)
+            except (TypeError, ValueError):
+                pass
+        affected_ids = target_ids | {str(row[0]) for row in affected_rows}
+        marked_raw = marker.get("sources", {})
+        marked = (
+            {str(key): value for key, value in marked_raw.items()}
+            if isinstance(marked_raw, dict)
+            else {}
+        )
+        for affected_id in affected_ids:
+            marked.pop(affected_id, None)
+        marker["sources"] = marked
+        self._conn.execute(
+            "INSERT INTO mnemos_meta(key,value) VALUES (?,?) "
+            "ON CONFLICT(key) DO UPDATE SET value=excluded.value",
+            (self._GRAPH_PREFERENCE_MARKER_KEY, json.dumps(marker, sort_keys=True)),
+        )
+        self._conn.execute(
+            "INSERT INTO mnemos_meta(key,value) VALUES ('graph_rebuild_after','') "
+            "ON CONFLICT(key) DO UPDATE SET value=''"
+        )
+
+    def project_graph_edges(self) -> None:
+        """Rebuild reciprocal semantic edges from directed preferences."""
+        with self._lock:
+            now = datetime.now(timezone.utc).isoformat()
+            self._project_graph_edges_locked(now)
+            self._conn.commit()
 
     def replace_graph_neighbors(self, chunk_id: str, neighbors: dict[str, float]) -> None:
         with self._lock:
@@ -3374,6 +3814,12 @@ class SQLiteStore(MemoryStore):
                         """,
                         rows,
                     )
+
+            self._conn.execute(
+                "INSERT INTO mnemos_meta(key,value) VALUES (?, '1') "
+                "ON CONFLICT(key) DO UPDATE SET value='1'",
+                (self._GRAPH_LEGACY_EDGE_KEY,),
+            )
 
             self._conn.commit()
 

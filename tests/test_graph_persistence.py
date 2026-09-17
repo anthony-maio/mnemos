@@ -37,14 +37,16 @@ def test_graph_refresh_discovers_explicit_workspace_members_only(tmp_path, refre
     try:
         for fact in facts:
             store.store(fact)
-        # Only the actual refresh candidate path may introduce this edge.
+        # The production builder and bounded recovery must find shared members
+        # regardless of which permitted fact triggers the initial refresh.
         engine.refresh_graph_chunk(next(f for f in facts if f.id == refresh_id))
+        while engine.rebuild_graph_batch(limit=2):
+            pass
         edges = store.get_graph_edges()
         assert edges["project"]["workspace"] == pytest.approx(1.0)
-        assert ("member-project" in edges.get("workspace", {})) is (refresh_id == "workspace")
-        assert not any(
-            "foreign" in node for source, targets in edges.items() for node in (source, *targets)
-        )
+        assert "member-project" in edges["workspace"]
+        for source in ("project", "workspace", "member-project"):
+            assert not any("foreign" in target for target in edges.get(source, {}))
         store.close()
         store = SQLiteStore(path)
         MnemosEngine(embedder=SimpleEmbeddingProvider(dim=2), store=store)
@@ -75,8 +77,10 @@ async def test_persisted_neighbor_beyond_startup_and_semantic_pool_is_loaded(tmp
                 metadata={"scope": "project", "scope_id": "project"},
             )
         )
-    store.replace_graph_neighbors("a", {"z": 0.9})
-    store.set_graph_rebuild_cursor(None)
+    store.replace_graph_preferences_batch(
+        {"a": {"z": 0.9}, "b": {}, "z": {"a": 0.9}},
+        builder_version=engine.spreading_activation.EDGE_BUILDER_VERSION,
+    )
     store.close()
     reopened = SQLiteStore(path)
     try:

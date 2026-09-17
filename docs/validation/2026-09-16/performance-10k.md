@@ -52,3 +52,37 @@ The runner is [performance.py](../../../benchmarks/local_memory/performance.py).
 These results are a negative performance baseline and a measurement of this
 machine, endpoint, provider, and implementation snapshot. They do not close
 the release gate or establish semantic retrieval quality.
+
+## Instrumented diagnostic at 996e9ab
+
+A later run from detached `996e9ab` added timing around the store methods used
+inside each actual retrieval call. The source hashes remained consistent
+throughout the run. The original follow-up probes remain available, but they
+request 120 candidates; actual retrieval requests 30. Those probe timings must
+not be presented as the actual call's component timings.
+
+The instrumented run measured warm retrieval p95 **458.516 ms**, passing the
+500 ms point-estimate gate for that run. Its maximum was 500.164 ms. This was a
+different source snapshot and distribution, without a deliberate retrieval
+latency optimization. It does not establish an improvement over the preserved
+506.111 ms failure or certify the subsequent graph repair.
+
+| Actual stage | p95 ms |
+| --- | ---: |
+| Query embedding | 224.190 |
+| Scoped semantic selection, 30 candidates | 59.168 |
+| Lexical selection, up to 30 candidates | 130.450 |
+| Durable access update | 115.447 |
+| Read current returned facts | 1.367 |
+
+The stage distributions are measured within full retrieval calls and their
+percentiles must not be added. Thirteen queries returned 30 lexical candidates
+and averaged 444.39 ms overall; twenty returned none and averaged 322.57 ms.
+Lexical work and durable commits explain much of the observed variation.
+Capture again passed its existing threshold. No cognition or extraction calls
+were made, and semantic quality remains unmeasured for this synthetic load.
+
+The raw record is [performance-10k-instrumented-v1.json](performance-10k-instrumented-v1.json).
+Candidate limits, matching, and durable access updates remain unchanged. Any
+future concurrency optimization needs a separate controlled experiment that
+preserves correction, forgetting, and scope behavior.

@@ -1,0 +1,4047 @@
+{
+  "capture": {
+    "ack_statuses": [
+      "committed",
+      "committed",
+      "committed",
+      "committed",
+      "committed",
+      "committed",
+      "committed",
+      "committed",
+      "committed",
+      "committed",
+      "committed",
+      "committed",
+      "committed",
+      "committed",
+      "committed",
+      "committed",
+      "committed",
+      "committed",
+      "committed",
+      "committed",
+      "committed",
+      "committed",
+      "committed",
+      "committed",
+      "committed",
+      "committed",
+      "committed",
+      "committed",
+      "committed",
+      "committed",
+      "committed",
+      "committed",
+      "committed",
+      "committed",
+      "committed",
+      "committed",
+      "committed",
+      "committed",
+      "committed",
+      "committed",
+      "committed",
+      "committed",
+      "committed",
+      "committed",
+      "committed",
+      "committed",
+      "committed",
+      "committed",
+      "committed",
+      "committed"
+    ],
+    "bytes_after_sync": 4648960,
+    "capture_gate": "PASS",
+    "capture_gate_ms": 100.0,
+    "event_count": 50,
+    "full_sync_ms": 6500.633,
+    "full_sync_response": {
+      "completed": 51,
+      "status": null
+    },
+    "http_client_warmup_ms": 264.145,
+    "status": "completed",
+    "warm_http_capture": {
+      "count": 50,
+      "max_ms": 79.35,
+      "mean_ms": 50.765,
+      "min_ms": 37.007,
+      "p50_ms": 49.184,
+      "p95_ms": 64.41
+    }
+  },
+  "code_provenance": {
+    "after": {
+      "benchmarks/local_memory/performance.py": "eb3532439c474eb34d260c195c4dc58599218f495f9b94eefc006eca1180c2a8",
+      "mnemos/client.py": "9a032323567766acea37dc137e2562bbb2c7f75da0095125d46bde9572016b92",
+      "mnemos/engine.py": "e92c6505baf9805facb646daa4d7dcfcb5db1f1e88225cee0ad848e56fcf89c1",
+      "mnemos/memory_service.py": "87816065f4f4138a6ef3abeb857e06bfccf8dc11580abbeb8463345b53efe0fd",
+      "mnemos/service.py": "1ccf97a42a605f9e2b8696d56af49ebd13e94c6f31231cbd26eb78124adc4e84",
+      "mnemos/utils/embeddings.py": "10ec627170f3136ce8de57d0d3771c563f9a73d192469aaafd6d078294b6b8b2",
+      "mnemos/utils/storage.py": "29a264d22924839d4964c0e6b4fa546e034ee67f9f04478750a0df7461ca5986"
+    },
+    "before": {
+      "benchmarks/local_memory/performance.py": "eb3532439c474eb34d260c195c4dc58599218f495f9b94eefc006eca1180c2a8",
+      "mnemos/client.py": "9a032323567766acea37dc137e2562bbb2c7f75da0095125d46bde9572016b92",
+      "mnemos/engine.py": "e92c6505baf9805facb646daa4d7dcfcb5db1f1e88225cee0ad848e56fcf89c1",
+      "mnemos/memory_service.py": "87816065f4f4138a6ef3abeb857e06bfccf8dc11580abbeb8463345b53efe0fd",
+      "mnemos/service.py": "1ccf97a42a605f9e2b8696d56af49ebd13e94c6f31231cbd26eb78124adc4e84",
+      "mnemos/utils/embeddings.py": "10ec627170f3136ce8de57d0d3771c563f9a73d192469aaafd6d078294b6b8b2",
+      "mnemos/utils/storage.py": "29a264d22924839d4964c0e6b4fa546e034ee67f9f04478750a0df7461ca5986"
+    },
+    "consistent": true
+  },
+  "cold_cli_hook": {
+    "host": "synthetic Codex adapter subprocess; real Codex session NOT RUN",
+    "latency_ms": 1024.451,
+    "returncode": 0,
+    "status": "completed"
+  },
+  "configuration": {
+    "capture_events": 50,
+    "capture_provider": "simple(dim=768)",
+    "capture_warmup_events": 1,
+    "cognition_calls": 0,
+    "modules": {
+      "affective": false,
+      "mutable_rag": false,
+      "sleep": false,
+      "spreading": false,
+      "surprisal": false
+    },
+    "retrieval_profile": "baseline",
+    "retrieval_top_k": 5,
+    "retrieval_warmup_queries": 3,
+    "scoped_sql_candidate_top_k": 120
+  },
+  "created_at": "2026-09-17T04:34:00.216003+00:00",
+  "ended_at": "2026-09-17T04:34:00.216012+00:00",
+  "environment": {
+    "cpu_count": 20,
+    "machine": "AMD64",
+    "platform": "Windows-11-10.0.26200-SP0",
+    "processor": "Intel64 Family 6 Model 151 Stepping 2, GenuineIntel",
+    "python": "3.13.7"
+  },
+  "function_trace": [
+    "OllamaEmbeddingProvider.embed",
+    "MnemosEngine.retrieve",
+    "SQLiteStore.retrieve",
+    "SQLiteStore.retrieve_lexical",
+    "SQLiteStore.mark_retrieved_many",
+    "SQLiteStore.get",
+    "MnemosClient.capture",
+    "MnemosClient.request(maintenance)",
+    "mnemos.adapters.codex subprocess"
+  ],
+  "measurement_scope": {
+    "cognition": "not used; no extraction model calls",
+    "database": "isolated temporary SQLite database",
+    "semantic_quality": "NOT RUN for synthetic 10,000-row vector load"
+  },
+  "provider": {
+    "cognition_digest": "a2af6cc3eb7fa8be8504abaf9b04e88f17a119ec3f04a3addf55f92841195f5a",
+    "cognition_model": "gemma3:4b",
+    "embedding_digest": "0a109f422b47e3a30ba2b10eca18548e944e8a23073ee3f3e947efcf3c45e59f",
+    "embedding_model": "nomic-embed-text:latest",
+    "endpoint": "http://192.168.86.35:11434",
+    "tags_observed": true
+  },
+  "retrieval": {
+    "actual_store_stage_latency": {
+      "get": {
+        "count": 33,
+        "max_ms": 1.416,
+        "mean_ms": 1.216,
+        "min_ms": 1.067,
+        "p50_ms": 1.194,
+        "p95_ms": 1.367
+      },
+      "mark_retrieved_many": {
+        "count": 33,
+        "max_ms": 151.374,
+        "mean_ms": 50.617,
+        "min_ms": 30.507,
+        "p50_ms": 41.733,
+        "p95_ms": 115.447
+      },
+      "retrieve": {
+        "count": 33,
+        "max_ms": 64.707,
+        "mean_ms": 56.553,
+        "min_ms": 54.7,
+        "p50_ms": 56.236,
+        "p95_ms": 59.168
+      },
+      "retrieve_lexical": {
+        "count": 33,
+        "max_ms": 130.596,
+        "mean_ms": 48.166,
+        "min_ms": 0.298,
+        "p50_ms": 0.38,
+        "p95_ms": 130.45
+      }
+    },
+    "actual_store_stage_timing_note": "Per-call store timings are nested within full retrieval latency and must not be summed.",
+    "bytes_after_load": 324862864,
+    "embedding_dimension": 768,
+    "embedding_latency": {
+      "count": 33,
+      "max_ms": 225.55,
+      "mean_ms": 207.678,
+      "min_ms": 198.901,
+      "p50_ms": 203.764,
+      "p95_ms": 224.19
+    },
+    "facts": 10000,
+    "lexical_candidate_latency": {
+      "count": 33,
+      "max_ms": 150.329,
+      "mean_ms": 56.22,
+      "min_ms": 0.328,
+      "p50_ms": 0.852,
+      "p95_ms": 146.025
+    },
+    "load_fixture": "synthetic vectors derived from one observed Ollama embedding; semantic quality NOT RUN",
+    "load_insert_ms": 28007.626,
+    "mark_and_refresh_latency": {
+      "count": 33,
+      "max_ms": 292.87,
+      "mean_ms": 56.661,
+      "min_ms": 30.406,
+      "p50_ms": 43.17,
+      "p95_ms": 154.986
+    },
+    "observed_seed_embedding_ms": 481.364,
+    "query_count": 33,
+    "raw_queries": [
+      {
+        "actual_store_calls": {
+          "events": [
+            {
+              "elapsed_ms": 55.044,
+              "method": "retrieve",
+              "requested_top_k": 30,
+              "result_count": 30,
+              "status": "completed"
+            },
+            {
+              "elapsed_ms": 125.678,
+              "method": "retrieve_lexical",
+              "requested_top_k": 30,
+              "result_count": 30,
+              "status": "completed"
+            },
+            {
+              "chunk_id_count": 5,
+              "elapsed_ms": 44.549,
+              "method": "mark_retrieved_many",
+              "status": "completed"
+            },
+            {
+              "elapsed_ms": 0.35,
+              "method": "get",
+              "result_present": true,
+              "status": "completed"
+            },
+            {
+              "elapsed_ms": 0.236,
+              "method": "get",
+              "result_present": true,
+              "status": "completed"
+            },
+            {
+              "elapsed_ms": 0.259,
+              "method": "get",
+              "result_present": true,
+              "status": "completed"
+            },
+            {
+              "elapsed_ms": 0.234,
+              "method": "get",
+              "result_present": true,
+              "status": "completed"
+            },
+            {
+              "elapsed_ms": 0.207,
+              "method": "get",
+              "result_present": true,
+              "status": "completed"
+            }
+          ],
+          "get": {
+            "call_count": 5,
+            "completed_count": 5,
+            "elapsed_ms": 1.286,
+            "error_count": 0,
+            "error_types": [],
+            "result_present": [
+              true,
+              true,
+              true,
+              true,
+              true
+            ]
+          },
+          "mark_retrieved_many": {
+            "call_count": 1,
+            "chunk_id_counts": [
+              5
+            ],
+            "completed_count": 1,
+            "elapsed_ms": 44.549,
+            "error_count": 0,
+            "error_types": []
+          },
+          "retrieve": {
+            "call_count": 1,
+            "completed_count": 1,
+            "elapsed_ms": 55.044,
+            "error_count": 0,
+            "error_types": [],
+            "requested_top_ks": [
+              30
+            ],
+            "result_counts": [
+              30
+            ]
+          },
+          "retrieve_lexical": {
+            "call_count": 1,
+            "completed_count": 1,
+            "elapsed_ms": 125.678,
+            "error_count": 0,
+            "error_types": [],
+            "requested_top_ks": [
+              30
+            ],
+            "result_counts": [
+              30
+            ]
+          }
+        },
+        "embedding_ms": 225.55,
+        "index": 0,
+        "latency_ms": 458.516,
+        "lexical_candidate_count": 120,
+        "lexical_candidate_ms": 144.008,
+        "mark_and_refresh_ms": 43.335,
+        "result_count": 5,
+        "scoped_sql_ranking_ms": 91.124,
+        "sql_candidate_count": 120
+      },
+      {
+        "actual_store_calls": {
+          "events": [
+            {
+              "elapsed_ms": 56.544,
+              "method": "retrieve",
+              "requested_top_k": 30,
+              "result_count": 30,
+              "status": "completed"
+            },
+            {
+              "elapsed_ms": 0.298,
+              "method": "retrieve_lexical",
+              "requested_top_k": 30,
+              "result_count": 0,
+              "status": "completed"
+            },
+            {
+              "chunk_id_count": 5,
+              "elapsed_ms": 48.943,
+              "method": "mark_retrieved_many",
+              "status": "completed"
+            },
+            {
+              "elapsed_ms": 0.276,
+              "method": "get",
+              "result_present": true,
+              "status": "completed"
+            },
+            {
+              "elapsed_ms": 0.214,
+              "method": "get",
+              "result_present": true,
+              "status": "completed"
+            },
+            {
+              "elapsed_ms": 0.252,
+              "method": "get",
+              "result_present": true,
+              "status": "completed"
+            },
+            {
+              "elapsed_ms": 0.211,
+              "method": "get",
+              "result_present": true,
+              "status": "completed"
+            },
+            {
+              "elapsed_ms": 0.24,
+              "method": "get",
+              "result_present": true,
+              "status": "completed"
+            }
+          ],
+          "get": {
+            "call_count": 5,
+            "completed_count": 5,
+            "elapsed_ms": 1.193,
+            "error_count": 0,
+            "error_types": [],
+            "result_present": [
+              true,
+              true,
+              true,
+              true,
+              true
+            ]
+          },
+          "mark_retrieved_many": {
+            "call_count": 1,
+            "chunk_id_counts": [
+              5
+            ],
+            "completed_count": 1,
+            "elapsed_ms": 48.943,
+            "error_count": 0,
+            "error_types": []
+          },
+          "retrieve": {
+            "call_count": 1,
+            "completed_count": 1,
+            "elapsed_ms": 56.544,
+            "error_count": 0,
+            "error_types": [],
+            "requested_top_ks": [
+              30
+            ],
+            "result_counts": [
+              30
+            ]
+          },
+          "retrieve_lexical": {
+            "call_count": 1,
+            "completed_count": 1,
+            "elapsed_ms": 0.298,
+            "error_count": 0,
+            "error_types": [],
+            "requested_top_ks": [
+              30
+            ],
+            "result_counts": [
+              0
+            ]
+          }
+        },
+        "embedding_ms": 199.607,
+        "index": 1,
+        "latency_ms": 315.91,
+        "lexical_candidate_count": 0,
+        "lexical_candidate_ms": 0.828,
+        "mark_and_refresh_ms": 39.896,
+        "result_count": 5,
+        "scoped_sql_ranking_ms": 94.597,
+        "sql_candidate_count": 120
+      },
+      {
+        "actual_store_calls": {
+          "events": [
+            {
+              "elapsed_ms": 55.819,
+              "method": "retrieve",
+              "requested_top_k": 30,
+              "result_count": 30,
+              "status": "completed"
+            },
+            {
+              "elapsed_ms": 0.337,
+              "method": "retrieve_lexical",
+              "requested_top_k": 30,
+              "result_count": 0,
+              "status": "completed"
+            },
+            {
+              "chunk_id_count": 5,
+              "elapsed_ms": 151.374,
+              "method": "mark_retrieved_many",
+              "status": "completed"
+            },
+            {
+              "elapsed_ms": 0.285,
+              "method": "get",
+              "result_present": true,
+              "status": "completed"
+            },
+            {
+              "elapsed_ms": 0.258,
+              "method": "get",
+              "result_present": true,
+              "status": "completed"
+            },
+            {
+              "elapsed_ms": 0.295,
+              "method": "get",
+              "result_present": true,
+              "status": "completed"
+            },
+            {
+              "elapsed_ms": 0.226,
+              "method": "get",
+              "result_present": true,
+              "status": "completed"
+            },
+            {
+              "elapsed_ms": 0.249,
+              "method": "get",
+              "result_present": true,
+              "status": "completed"
+            }
+          ],
+          "get": {
+            "call_count": 5,
+            "completed_count": 5,
+            "elapsed_ms": 1.313,
+            "error_count": 0,
+            "error_types": [],
+            "result_present": [
+              true,
+              true,
+              true,
+              true,
+              true
+            ]
+          },
+          "mark_retrieved_many": {
+            "call_count": 1,
+            "chunk_id_counts": [
+              5
+            ],
+            "completed_count": 1,
+            "elapsed_ms": 151.374,
+            "error_count": 0,
+            "error_types": []
+          },
+          "retrieve": {
+            "call_count": 1,
+            "completed_count": 1,
+            "elapsed_ms": 55.819,
+            "error_count": 0,
+            "error_types": [],
+            "requested_top_ks": [
+              30
+            ],
+            "result_counts": [
+              30
+            ]
+          },
+          "retrieve_lexical": {
+            "call_count": 1,
+            "completed_count": 1,
+            "elapsed_ms": 0.337,
+            "error_count": 0,
+            "error_types": [],
+            "requested_top_ks": [
+              30
+            ],
+            "result_counts": [
+              0
+            ]
+          }
+        },
+        "embedding_ms": 203.216,
+        "index": 2,
+        "latency_ms": 417.756,
+        "lexical_candidate_count": 0,
+        "lexical_candidate_ms": 0.355,
+        "mark_and_refresh_ms": 114.456,
+        "result_count": 5,
+        "scoped_sql_ranking_ms": 162.135,
+        "sql_candidate_count": 120
+      },
+      {
+        "actual_store_calls": {
+          "events": [
+            {
+              "elapsed_ms": 55.099,
+              "method": "retrieve",
+              "requested_top_k": 30,
+              "result_count": 30,
+              "status": "completed"
+            },
+            {
+              "elapsed_ms": 0.381,
+              "method": "retrieve_lexical",
+              "requested_top_k": 30,
+              "result_count": 0,
+              "status": "completed"
+            },
+            {
+              "chunk_id_count": 5,
+              "elapsed_ms": 67.696,
+              "method": "mark_retrieved_many",
+              "status": "completed"
+            },
+            {
+              "elapsed_ms": 0.269,
+              "method": "get",
+              "result_present": true,
+              "status": "completed"
+            },
+            {
+              "elapsed_ms": 0.207,
+              "method": "get",
+              "result_present": true,
+              "status": "completed"
+            },
+            {
+              "elapsed_ms": 0.215,
+              "method": "get",
+              "result_present": true,
+              "status": "completed"
+            },
+            {
+              "elapsed_ms": 0.187,
+              "method": "get",
+              "result_present": true,
+              "status": "completed"
+            },
+            {
+              "elapsed_ms": 0.191,
+              "method": "get",
+              "result_present": true,
+              "status": "completed"
+            }
+          ],
+          "get": {
+            "call_count": 5,
+            "completed_count": 5,
+            "elapsed_ms": 1.069,
+            "error_count": 0,
+            "error_types": [],
+            "result_present": [
+              true,
+              true,
+              true,
+              true,
+              true
+            ]
+          },
+          "mark_retrieved_many": {
+            "call_count": 1,
+            "chunk_id_counts": [
+              5
+            ],
+            "completed_count": 1,
+            "elapsed_ms": 67.696,
+            "error_count": 0,
+            "error_types": []
+          },
+          "retrieve": {
+            "call_count": 1,
+            "completed_count": 1,
+            "elapsed_ms": 55.099,
+            "error_count": 0,
+            "error_types": [],
+            "requested_top_ks": [
+              30
+            ],
+            "result_counts": [
+              30
+            ]
+          },
+          "retrieve_lexical": {
+            "call_count": 1,
+            "completed_count": 1,
+            "elapsed_ms": 0.381,
+            "error_count": 0,
+            "error_types": [],
+            "requested_top_ks": [
+              30
+            ],
+            "result_counts": [
+              0
+            ]
+          }
+        },
+        "embedding_ms": 209.268,
+        "index": 3,
+        "latency_ms": 338.64,
+        "lexical_candidate_count": 0,
+        "lexical_candidate_ms": 0.381,
+        "mark_and_refresh_ms": 33.14,
+        "result_count": 5,
+        "scoped_sql_ranking_ms": 95.026,
+        "sql_candidate_count": 120
+      },
+      {
+        "actual_store_calls": {
+          "events": [
+            {
+              "elapsed_ms": 57.716,
+              "method": "retrieve",
+              "requested_top_k": 30,
+              "result_count": 30,
+              "status": "completed"
+            },
+            {
+              "elapsed_ms": 130.596,
+              "method": "retrieve_lexical",
+              "requested_top_k": 30,
+              "result_count": 30,
+              "status": "completed"
+            },
+            {
+              "chunk_id_count": 5,
+              "elapsed_ms": 53.049,
+              "method": "mark_retrieved_many",
+              "status": "completed"
+            },
+            {
+              "elapsed_ms": 0.284,
+              "method": "get",
+              "result_present": true,
+              "status": "completed"
+            },
+            {
+              "elapsed_ms": 0.248,
+              "method": "get",
+              "result_present": true,
+              "status": "completed"
+            },
+            {
+              "elapsed_ms": 0.2,
+              "method": "get",
+              "result_present": true,
+              "status": "completed"
+            },
+            {
+              "elapsed_ms": 0.191,
+              "method": "get",
+              "result_present": true,
+              "status": "completed"
+            },
+            {
+              "elapsed_ms": 0.202,
+              "method": "get",
+              "result_present": true,
+              "status": "completed"
+            }
+          ],
+          "get": {
+            "call_count": 5,
+            "completed_count": 5,
+            "elapsed_ms": 1.125,
+            "error_count": 0,
+            "error_types": [],
+            "result_present": [
+              true,
+              true,
+              true,
+              true,
+              true
+            ]
+          },
+          "mark_retrieved_many": {
+            "call_count": 1,
+            "chunk_id_counts": [
+              5
+            ],
+            "completed_count": 1,
+            "elapsed_ms": 53.049,
+            "error_count": 0,
+            "error_types": []
+          },
+          "retrieve": {
+            "call_count": 1,
+            "completed_count": 1,
+            "elapsed_ms": 57.716,
+            "error_count": 0,
+            "error_types": [],
+            "requested_top_ks": [
+              30
+            ],
+            "result_counts": [
+              30
+            ]
+          },
+          "retrieve_lexical": {
+            "call_count": 1,
+            "completed_count": 1,
+            "elapsed_ms": 130.596,
+            "error_count": 0,
+            "error_types": [],
+            "requested_top_ks": [
+              30
+            ],
+            "result_counts": [
+              30
+            ]
+          }
+        },
+        "embedding_ms": 198.979,
+        "index": 4,
+        "latency_ms": 448.255,
+        "lexical_candidate_count": 120,
+        "lexical_candidate_ms": 150.329,
+        "mark_and_refresh_ms": 60.254,
+        "result_count": 5,
+        "scoped_sql_ranking_ms": 95.083,
+        "sql_candidate_count": 120
+      },
+      {
+        "actual_store_calls": {
+          "events": [
+            {
+              "elapsed_ms": 56.427,
+              "method": "retrieve",
+              "requested_top_k": 30,
+              "result_count": 30,
+              "status": "completed"
+            },
+            {
+              "elapsed_ms": 0.38,
+              "method": "retrieve_lexical",
+              "requested_top_k": 30,
+              "result_count": 0,
+              "status": "completed"
+            },
+            {
+              "chunk_id_count": 5,
+              "elapsed_ms": 32.886,
+              "method": "mark_retrieved_many",
+              "status": "completed"
+            },
+            {
+              "elapsed_ms": 0.28,
+              "method": "get",
+              "result_present": true,
+              "status": "completed"
+            },
+            {
+              "elapsed_ms": 0.212,
+              "method": "get",
+              "result_present": true,
+              "status": "completed"
+            },
+            {
+              "elapsed_ms": 0.258,
+              "method": "get",
+              "result_present": true,
+              "status": "completed"
+            },
+            {
+              "elapsed_ms": 0.231,
+              "method": "get",
+              "result_present": true,
+              "status": "completed"
+            },
+            {
+              "elapsed_ms": 0.2,
+              "method": "get",
+              "result_present": true,
+              "status": "completed"
+            }
+          ],
+          "get": {
+            "call_count": 5,
+            "completed_count": 5,
+            "elapsed_ms": 1.181,
+            "error_count": 0,
+            "error_types": [],
+            "result_present": [
+              true,
+              true,
+              true,
+              true,
+              true
+            ]
+          },
+          "mark_retrieved_many": {
+            "call_count": 1,
+            "chunk_id_counts": [
+              5
+            ],
+            "completed_count": 1,
+            "elapsed_ms": 32.886,
+            "error_count": 0,
+            "error_types": []
+          },
+          "retrieve": {
+            "call_count": 1,
+            "completed_count": 1,
+            "elapsed_ms": 56.427,
+            "error_count": 0,
+            "error_types": [],
+            "requested_top_ks": [
+              30
+            ],
+            "result_counts": [
+              30
+            ]
+          },
+          "retrieve_lexical": {
+            "call_count": 1,
+            "completed_count": 1,
+            "elapsed_ms": 0.38,
+            "error_count": 0,
+            "error_types": [],
+            "requested_top_ks": [
+              30
+            ],
+            "result_counts": [
+              0
+            ]
+          }
+        },
+        "embedding_ms": 219.714,
+        "index": 5,
+        "latency_ms": 315.45,
+        "lexical_candidate_count": 0,
+        "lexical_candidate_ms": 1.083,
+        "mark_and_refresh_ms": 50.47,
+        "result_count": 5,
+        "scoped_sql_ranking_ms": 94.769,
+        "sql_candidate_count": 120
+      },
+      {
+        "actual_store_calls": {
+          "events": [
+            {
+              "elapsed_ms": 64.707,
+              "method": "retrieve",
+              "requested_top_k": 30,
+              "result_count": 30,
+              "status": "completed"
+            },
+            {
+              "elapsed_ms": 125.768,
+              "method": "retrieve_lexical",
+              "requested_top_k": 30,
+              "result_count": 30,
+              "status": "completed"
+            },
+            {
+              "chunk_id_count": 5,
+              "elapsed_ms": 48.243,
+              "method": "mark_retrieved_many",
+              "status": "completed"
+            },
+            {
+              "elapsed_ms": 0.275,
+              "method": "get",
+              "result_present": true,
+              "status": "completed"
+            },
+            {
+              "elapsed_ms": 0.212,
+              "method": "get",
+              "result_present": true,
+              "status": "completed"
+            },
+            {
+              "elapsed_ms": 0.2,
+              "method": "get",
+              "result_present": true,
+              "status": "completed"
+            },
+            {
+              "elapsed_ms": 0.247,
+              "method": "get",
+              "result_present": true,
+              "status": "completed"
+            },
+            {
+              "elapsed_ms": 0.206,
+              "method": "get",
+              "result_present": true,
+              "status": "completed"
+            }
+          ],
+          "get": {
+            "call_count": 5,
+            "completed_count": 5,
+            "elapsed_ms": 1.14,
+            "error_count": 0,
+            "error_types": [],
+            "result_present": [
+              true,
+              true,
+              true,
+              true,
+              true
+            ]
+          },
+          "mark_retrieved_many": {
+            "call_count": 1,
+            "chunk_id_counts": [
+              5
+            ],
+            "completed_count": 1,
+            "elapsed_ms": 48.243,
+            "error_count": 0,
+            "error_types": []
+          },
+          "retrieve": {
+            "call_count": 1,
+            "completed_count": 1,
+            "elapsed_ms": 64.707,
+            "error_count": 0,
+            "error_types": [],
+            "requested_top_ks": [
+              30
+            ],
+            "result_counts": [
+              30
+            ]
+          },
+          "retrieve_lexical": {
+            "call_count": 1,
+            "completed_count": 1,
+            "elapsed_ms": 125.768,
+            "error_count": 0,
+            "error_types": [],
+            "requested_top_ks": [
+              30
+            ],
+            "result_counts": [
+              30
+            ]
+          }
+        },
+        "embedding_ms": 202.661,
+        "index": 6,
+        "latency_ms": 448.982,
+        "lexical_candidate_count": 120,
+        "lexical_candidate_ms": 145.42,
+        "mark_and_refresh_ms": 154.986,
+        "result_count": 5,
+        "scoped_sql_ranking_ms": 94.106,
+        "sql_candidate_count": 120
+      },
+      {
+        "actual_store_calls": {
+          "events": [
+            {
+              "elapsed_ms": 56.014,
+              "method": "retrieve",
+              "requested_top_k": 30,
+              "result_count": 30,
+              "status": "completed"
+            },
+            {
+              "elapsed_ms": 0.326,
+              "method": "retrieve_lexical",
+              "requested_top_k": 30,
+              "result_count": 0,
+              "status": "completed"
+            },
+            {
+              "chunk_id_count": 5,
+              "elapsed_ms": 39.778,
+              "method": "mark_retrieved_many",
+              "status": "completed"
+            },
+            {
+              "elapsed_ms": 0.277,
+              "method": "get",
+              "result_present": true,
+              "status": "completed"
+            },
+            {
+              "elapsed_ms": 0.314,
+              "method": "get",
+              "result_present": true,
+              "status": "completed"
+            },
+            {
+              "elapsed_ms": 0.227,
+              "method": "get",
+              "result_present": true,
+              "status": "completed"
+            },
+            {
+              "elapsed_ms": 0.196,
+              "method": "get",
+              "result_present": true,
+              "status": "completed"
+            },
+            {
+              "elapsed_ms": 0.204,
+              "method": "get",
+              "result_present": true,
+              "status": "completed"
+            }
+          ],
+          "get": {
+            "call_count": 5,
+            "completed_count": 5,
+            "elapsed_ms": 1.218,
+            "error_count": 0,
+            "error_types": [],
+            "result_present": [
+              true,
+              true,
+              true,
+              true,
+              true
+            ]
+          },
+          "mark_retrieved_many": {
+            "call_count": 1,
+            "chunk_id_counts": [
+              5
+            ],
+            "completed_count": 1,
+            "elapsed_ms": 39.778,
+            "error_count": 0,
+            "error_types": []
+          },
+          "retrieve": {
+            "call_count": 1,
+            "completed_count": 1,
+            "elapsed_ms": 56.014,
+            "error_count": 0,
+            "error_types": [],
+            "requested_top_ks": [
+              30
+            ],
+            "result_counts": [
+              30
+            ]
+          },
+          "retrieve_lexical": {
+            "call_count": 1,
+            "completed_count": 1,
+            "elapsed_ms": 0.326,
+            "error_count": 0,
+            "error_types": [],
+            "requested_top_ks": [
+              30
+            ],
+            "result_counts": [
+              0
+            ]
+          }
+        },
+        "embedding_ms": 224.19,
+        "index": 7,
+        "latency_ms": 326.494,
+        "lexical_candidate_count": 0,
+        "lexical_candidate_ms": 0.811,
+        "mark_and_refresh_ms": 41.011,
+        "result_count": 5,
+        "scoped_sql_ranking_ms": 93.269,
+        "sql_candidate_count": 120
+      },
+      {
+        "actual_store_calls": {
+          "events": [
+            {
+              "elapsed_ms": 56.558,
+              "method": "retrieve",
+              "requested_top_k": 30,
+              "result_count": 30,
+              "status": "completed"
+            },
+            {
+              "elapsed_ms": 0.659,
+              "method": "retrieve_lexical",
+              "requested_top_k": 30,
+              "result_count": 0,
+              "status": "completed"
+            },
+            {
+              "chunk_id_count": 5,
+              "elapsed_ms": 40.202,
+              "method": "mark_retrieved_many",
+              "status": "completed"
+            },
+            {
+              "elapsed_ms": 0.495,
+              "method": "get",
+              "result_present": true,
+              "status": "completed"
+            },
+            {
+              "elapsed_ms": 0.223,
+              "method": "get",
+              "result_present": true,
+              "status": "completed"
+            },
+            {
+              "elapsed_ms": 0.237,
+              "method": "get",
+              "result_present": true,
+              "status": "completed"
+            },
+            {
+              "elapsed_ms": 0.219,
+              "method": "get",
+              "result_present": true,
+              "status": "completed"
+            },
+            {
+              "elapsed_ms": 0.193,
+              "method": "get",
+              "result_present": true,
+              "status": "completed"
+            }
+          ],
+          "get": {
+            "call_count": 5,
+            "completed_count": 5,
+            "elapsed_ms": 1.367,
+            "error_count": 0,
+            "error_types": [],
+            "result_present": [
+              true,
+              true,
+              true,
+              true,
+              true
+            ]
+          },
+          "mark_retrieved_many": {
+            "call_count": 1,
+            "chunk_id_counts": [
+              5
+            ],
+            "completed_count": 1,
+            "elapsed_ms": 40.202,
+            "error_count": 0,
+            "error_types": []
+          },
+          "retrieve": {
+            "call_count": 1,
+            "completed_count": 1,
+            "elapsed_ms": 56.558,
+            "error_count": 0,
+            "error_types": [],
+            "requested_top_ks": [
+              30
+            ],
+            "result_counts": [
+              30
+            ]
+          },
+          "retrieve_lexical": {
+            "call_count": 1,
+            "completed_count": 1,
+            "elapsed_ms": 0.659,
+            "error_count": 0,
+            "error_types": [],
+            "requested_top_ks": [
+              30
+            ],
+            "result_counts": [
+              0
+            ]
+          }
+        },
+        "embedding_ms": 201.448,
+        "index": 8,
+        "latency_ms": 305.511,
+        "lexical_candidate_count": 0,
+        "lexical_candidate_ms": 0.342,
+        "mark_and_refresh_ms": 43.17,
+        "result_count": 5,
+        "scoped_sql_ranking_ms": 91.44,
+        "sql_candidate_count": 120
+      },
+      {
+        "actual_store_calls": {
+          "events": [
+            {
+              "elapsed_ms": 57.191,
+              "method": "retrieve",
+              "requested_top_k": 30,
+              "result_count": 30,
+              "status": "completed"
+            },
+            {
+              "elapsed_ms": 0.366,
+              "method": "retrieve_lexical",
+              "requested_top_k": 30,
+              "result_count": 0,
+              "status": "completed"
+            },
+            {
+              "chunk_id_count": 5,
+              "elapsed_ms": 97.259,
+              "method": "mark_retrieved_many",
+              "status": "completed"
+            },
+            {
+              "elapsed_ms": 0.334,
+              "method": "get",
+              "result_present": true,
+              "status": "completed"
+            },
+            {
+              "elapsed_ms": 0.274,
+              "method": "get",
+              "result_present": true,
+              "status": "completed"
+            },
+            {
+              "elapsed_ms": 0.287,
+              "method": "get",
+              "result_present": true,
+              "status": "completed"
+            },
+            {
+              "elapsed_ms": 0.244,
+              "method": "get",
+              "result_present": true,
+              "status": "completed"
+            },
+            {
+              "elapsed_ms": 0.217,
+              "method": "get",
+              "result_present": true,
+              "status": "completed"
+            }
+          ],
+          "get": {
+            "call_count": 5,
+            "completed_count": 5,
+            "elapsed_ms": 1.356,
+            "error_count": 0,
+            "error_types": [],
+            "result_present": [
+              true,
+              true,
+              true,
+              true,
+              true
+            ]
+          },
+          "mark_retrieved_many": {
+            "call_count": 1,
+            "chunk_id_counts": [
+              5
+            ],
+            "completed_count": 1,
+            "elapsed_ms": 97.259,
+            "error_count": 0,
+            "error_types": []
+          },
+          "retrieve": {
+            "call_count": 1,
+            "completed_count": 1,
+            "elapsed_ms": 57.191,
+            "error_count": 0,
+            "error_types": [],
+            "requested_top_ks": [
+              30
+            ],
+            "result_counts": [
+              30
+            ]
+          },
+          "retrieve_lexical": {
+            "call_count": 1,
+            "completed_count": 1,
+            "elapsed_ms": 0.366,
+            "error_count": 0,
+            "error_types": [],
+            "requested_top_ks": [
+              30
+            ],
+            "result_counts": [
+              0
+            ]
+          }
+        },
+        "embedding_ms": 221.128,
+        "index": 9,
+        "latency_ms": 382.842,
+        "lexical_candidate_count": 0,
+        "lexical_candidate_ms": 0.328,
+        "mark_and_refresh_ms": 55.235,
+        "result_count": 5,
+        "scoped_sql_ranking_ms": 93.084,
+        "sql_candidate_count": 120
+      },
+      {
+        "actual_store_calls": {
+          "events": [
+            {
+              "elapsed_ms": 59.168,
+              "method": "retrieve",
+              "requested_top_k": 30,
+              "result_count": 30,
+              "status": "completed"
+            },
+            {
+              "elapsed_ms": 122.262,
+              "method": "retrieve_lexical",
+              "requested_top_k": 30,
+              "result_count": 30,
+              "status": "completed"
+            },
+            {
+              "chunk_id_count": 5,
+              "elapsed_ms": 45.689,
+              "method": "mark_retrieved_many",
+              "status": "completed"
+            },
+            {
+              "elapsed_ms": 0.275,
+              "method": "get",
+              "result_present": true,
+              "status": "completed"
+            },
+            {
+              "elapsed_ms": 0.215,
+              "method": "get",
+              "result_present": true,
+              "status": "completed"
+            },
+            {
+              "elapsed_ms": 0.199,
+              "method": "get",
+              "result_present": true,
+              "status": "completed"
+            },
+            {
+              "elapsed_ms": 0.195,
+              "method": "get",
+              "result_present": true,
+              "status": "completed"
+            },
+            {
+              "elapsed_ms": 0.241,
+              "method": "get",
+              "result_present": true,
+              "status": "completed"
+            }
+          ],
+          "get": {
+            "call_count": 5,
+            "completed_count": 5,
+            "elapsed_ms": 1.125,
+            "error_count": 0,
+            "error_types": [],
+            "result_present": [
+              true,
+              true,
+              true,
+              true,
+              true
+            ]
+          },
+          "mark_retrieved_many": {
+            "call_count": 1,
+            "chunk_id_counts": [
+              5
+            ],
+            "completed_count": 1,
+            "elapsed_ms": 45.689,
+            "error_count": 0,
+            "error_types": []
+          },
+          "retrieve": {
+            "call_count": 1,
+            "completed_count": 1,
+            "elapsed_ms": 59.168,
+            "error_count": 0,
+            "error_types": [],
+            "requested_top_ks": [
+              30
+            ],
+            "result_counts": [
+              30
+            ]
+          },
+          "retrieve_lexical": {
+            "call_count": 1,
+            "completed_count": 1,
+            "elapsed_ms": 122.262,
+            "error_count": 0,
+            "error_types": [],
+            "requested_top_ks": [
+              30
+            ],
+            "result_counts": [
+              30
+            ]
+          }
+        },
+        "embedding_ms": 201.903,
+        "index": 10,
+        "latency_ms": 436.664,
+        "lexical_candidate_count": 120,
+        "lexical_candidate_ms": 141.355,
+        "mark_and_refresh_ms": 40.238,
+        "result_count": 5,
+        "scoped_sql_ranking_ms": 98.123,
+        "sql_candidate_count": 120
+      },
+      {
+        "actual_store_calls": {
+          "events": [
+            {
+              "elapsed_ms": 56.236,
+              "method": "retrieve",
+              "requested_top_k": 30,
+              "result_count": 30,
+              "status": "completed"
+            },
+            {
+              "elapsed_ms": 0.325,
+              "method": "retrieve_lexical",
+              "requested_top_k": 30,
+              "result_count": 0,
+              "status": "completed"
+            },
+            {
+              "chunk_id_count": 5,
+              "elapsed_ms": 33.308,
+              "method": "mark_retrieved_many",
+              "status": "completed"
+            },
+            {
+              "elapsed_ms": 0.281,
+              "method": "get",
+              "result_present": true,
+              "status": "completed"
+            },
+            {
+              "elapsed_ms": 0.286,
+              "method": "get",
+              "result_present": true,
+              "status": "completed"
+            },
+            {
+              "elapsed_ms": 0.229,
+              "method": "get",
+              "result_present": true,
+              "status": "completed"
+            },
+            {
+              "elapsed_ms": 0.21,
+              "method": "get",
+              "result_present": true,
+              "status": "completed"
+            },
+            {
+              "elapsed_ms": 0.314,
+              "method": "get",
+              "result_present": true,
+              "status": "completed"
+            }
+          ],
+          "get": {
+            "call_count": 5,
+            "completed_count": 5,
+            "elapsed_ms": 1.32,
+            "error_count": 0,
+            "error_types": [],
+            "result_present": [
+              true,
+              true,
+              true,
+              true,
+              true
+            ]
+          },
+          "mark_retrieved_many": {
+            "call_count": 1,
+            "chunk_id_counts": [
+              5
+            ],
+            "completed_count": 1,
+            "elapsed_ms": 33.308,
+            "error_count": 0,
+            "error_types": []
+          },
+          "retrieve": {
+            "call_count": 1,
+            "completed_count": 1,
+            "elapsed_ms": 56.236,
+            "error_count": 0,
+            "error_types": [],
+            "requested_top_ks": [
+              30
+            ],
+            "result_counts": [
+              30
+            ]
+          },
+          "retrieve_lexical": {
+            "call_count": 1,
+            "completed_count": 1,
+            "elapsed_ms": 0.325,
+            "error_count": 0,
+            "error_types": [],
+            "requested_top_ks": [
+              30
+            ],
+            "result_counts": [
+              0
+            ]
+          }
+        },
+        "embedding_ms": 201.355,
+        "index": 11,
+        "latency_ms": 304.536,
+        "lexical_candidate_count": 0,
+        "lexical_candidate_ms": 1.053,
+        "mark_and_refresh_ms": 35.639,
+        "result_count": 5,
+        "scoped_sql_ranking_ms": 92.094,
+        "sql_candidate_count": 120
+      },
+      {
+        "actual_store_calls": {
+          "events": [
+            {
+              "elapsed_ms": 58.33,
+              "method": "retrieve",
+              "requested_top_k": 30,
+              "result_count": 30,
+              "status": "completed"
+            },
+            {
+              "elapsed_ms": 0.346,
+              "method": "retrieve_lexical",
+              "requested_top_k": 30,
+              "result_count": 0,
+              "status": "completed"
+            },
+            {
+              "chunk_id_count": 5,
+              "elapsed_ms": 40.827,
+              "method": "mark_retrieved_many",
+              "status": "completed"
+            },
+            {
+              "elapsed_ms": 0.339,
+              "method": "get",
+              "result_present": true,
+              "status": "completed"
+            },
+            {
+              "elapsed_ms": 0.221,
+              "method": "get",
+              "result_present": true,
+              "status": "completed"
+            },
+            {
+              "elapsed_ms": 0.205,
+              "method": "get",
+              "result_present": true,
+              "status": "completed"
+            },
+            {
+              "elapsed_ms": 0.217,
+              "method": "get",
+              "result_present": true,
+              "status": "completed"
+            },
+            {
+              "elapsed_ms": 0.198,
+              "method": "get",
+              "result_present": true,
+              "status": "completed"
+            }
+          ],
+          "get": {
+            "call_count": 5,
+            "completed_count": 5,
+            "elapsed_ms": 1.18,
+            "error_count": 0,
+            "error_types": [],
+            "result_present": [
+              true,
+              true,
+              true,
+              true,
+              true
+            ]
+          },
+          "mark_retrieved_many": {
+            "call_count": 1,
+            "chunk_id_counts": [
+              5
+            ],
+            "completed_count": 1,
+            "elapsed_ms": 40.827,
+            "error_count": 0,
+            "error_types": []
+          },
+          "retrieve": {
+            "call_count": 1,
+            "completed_count": 1,
+            "elapsed_ms": 58.33,
+            "error_count": 0,
+            "error_types": [],
+            "requested_top_ks": [
+              30
+            ],
+            "result_counts": [
+              30
+            ]
+          },
+          "retrieve_lexical": {
+            "call_count": 1,
+            "completed_count": 1,
+            "elapsed_ms": 0.346,
+            "error_count": 0,
+            "error_types": [],
+            "requested_top_ks": [
+              30
+            ],
+            "result_counts": [
+              0
+            ]
+          }
+        },
+        "embedding_ms": 198.901,
+        "index": 12,
+        "latency_ms": 304.486,
+        "lexical_candidate_count": 0,
+        "lexical_candidate_ms": 0.353,
+        "mark_and_refresh_ms": 52.612,
+        "result_count": 5,
+        "scoped_sql_ranking_ms": 94.078,
+        "sql_candidate_count": 120
+      },
+      {
+        "actual_store_calls": {
+          "events": [
+            {
+              "elapsed_ms": 55.161,
+              "method": "retrieve",
+              "requested_top_k": 30,
+              "result_count": 30,
+              "status": "completed"
+            },
+            {
+              "elapsed_ms": 0.344,
+              "method": "retrieve_lexical",
+              "requested_top_k": 30,
+              "result_count": 0,
+              "status": "completed"
+            },
+            {
+              "chunk_id_count": 5,
+              "elapsed_ms": 32.823,
+              "method": "mark_retrieved_many",
+              "status": "completed"
+            },
+            {
+              "elapsed_ms": 0.27,
+              "method": "get",
+              "result_present": true,
+              "status": "completed"
+            },
+            {
+              "elapsed_ms": 0.25,
+              "method": "get",
+              "result_present": true,
+              "status": "completed"
+            },
+            {
+              "elapsed_ms": 0.204,
+              "method": "get",
+              "result_present": true,
+              "status": "completed"
+            },
+            {
+              "elapsed_ms": 0.192,
+              "method": "get",
+              "result_present": true,
+              "status": "completed"
+            },
+            {
+              "elapsed_ms": 0.261,
+              "method": "get",
+              "result_present": true,
+              "status": "completed"
+            }
+          ],
+          "get": {
+            "call_count": 5,
+            "completed_count": 5,
+            "elapsed_ms": 1.177,
+            "error_count": 0,
+            "error_types": [],
+            "result_present": [
+              true,
+              true,
+              true,
+              true,
+              true
+            ]
+          },
+          "mark_retrieved_many": {
+            "call_count": 1,
+            "chunk_id_counts": [
+              5
+            ],
+            "completed_count": 1,
+            "elapsed_ms": 32.823,
+            "error_count": 0,
+            "error_types": []
+          },
+          "retrieve": {
+            "call_count": 1,
+            "completed_count": 1,
+            "elapsed_ms": 55.161,
+            "error_count": 0,
+            "error_types": [],
+            "requested_top_ks": [
+              30
+            ],
+            "result_counts": [
+              30
+            ]
+          },
+          "retrieve_lexical": {
+            "call_count": 1,
+            "completed_count": 1,
+            "elapsed_ms": 0.344,
+            "error_count": 0,
+            "error_types": [],
+            "requested_top_ks": [
+              30
+            ],
+            "result_counts": [
+              0
+            ]
+          }
+        },
+        "embedding_ms": 198.912,
+        "index": 13,
+        "latency_ms": 293.58,
+        "lexical_candidate_count": 0,
+        "lexical_candidate_ms": 0.347,
+        "mark_and_refresh_ms": 48.192,
+        "result_count": 5,
+        "scoped_sql_ranking_ms": 97.531,
+        "sql_candidate_count": 120
+      },
+      {
+        "actual_store_calls": {
+          "events": [
+            {
+              "elapsed_ms": 55.163,
+              "method": "retrieve",
+              "requested_top_k": 30,
+              "result_count": 30,
+              "status": "completed"
+            },
+            {
+              "elapsed_ms": 110.254,
+              "method": "retrieve_lexical",
+              "requested_top_k": 30,
+              "result_count": 30,
+              "status": "completed"
+            },
+            {
+              "chunk_id_count": 5,
+              "elapsed_ms": 115.447,
+              "method": "mark_retrieved_many",
+              "status": "completed"
+            },
+            {
+              "elapsed_ms": 0.383,
+              "method": "get",
+              "result_present": true,
+              "status": "completed"
+            },
+            {
+              "elapsed_ms": 0.224,
+              "method": "get",
+              "result_present": true,
+              "status": "completed"
+            },
+            {
+              "elapsed_ms": 0.209,
+              "method": "get",
+              "result_present": true,
+              "status": "completed"
+            },
+            {
+              "elapsed_ms": 0.199,
+              "method": "get",
+              "result_present": true,
+              "status": "completed"
+            },
+            {
+              "elapsed_ms": 0.278,
+              "method": "get",
+              "result_present": true,
+              "status": "completed"
+            }
+          ],
+          "get": {
+            "call_count": 5,
+            "completed_count": 5,
+            "elapsed_ms": 1.293,
+            "error_count": 0,
+            "error_types": [],
+            "result_present": [
+              true,
+              true,
+              true,
+              true,
+              true
+            ]
+          },
+          "mark_retrieved_many": {
+            "call_count": 1,
+            "chunk_id_counts": [
+              5
+            ],
+            "completed_count": 1,
+            "elapsed_ms": 115.447,
+            "error_count": 0,
+            "error_types": []
+          },
+          "retrieve": {
+            "call_count": 1,
+            "completed_count": 1,
+            "elapsed_ms": 55.163,
+            "error_count": 0,
+            "error_types": [],
+            "requested_top_ks": [
+              30
+            ],
+            "result_counts": [
+              30
+            ]
+          },
+          "retrieve_lexical": {
+            "call_count": 1,
+            "completed_count": 1,
+            "elapsed_ms": 110.254,
+            "error_count": 0,
+            "error_types": [],
+            "requested_top_ks": [
+              30
+            ],
+            "result_counts": [
+              30
+            ]
+          }
+        },
+        "embedding_ms": 210.671,
+        "index": 14,
+        "latency_ms": 500.164,
+        "lexical_candidate_count": 120,
+        "lexical_candidate_ms": 138.784,
+        "mark_and_refresh_ms": 30.406,
+        "result_count": 5,
+        "scoped_sql_ranking_ms": 95.437,
+        "sql_candidate_count": 120
+      },
+      {
+        "actual_store_calls": {
+          "events": [
+            {
+              "elapsed_ms": 55.813,
+              "method": "retrieve",
+              "requested_top_k": 30,
+              "result_count": 30,
+              "status": "completed"
+            },
+            {
+              "elapsed_ms": 0.304,
+              "method": "retrieve_lexical",
+              "requested_top_k": 30,
+              "result_count": 0,
+              "status": "completed"
+            },
+            {
+              "chunk_id_count": 5,
+              "elapsed_ms": 38.158,
+              "method": "mark_retrieved_many",
+              "status": "completed"
+            },
+            {
+              "elapsed_ms": 0.364,
+              "method": "get",
+              "result_present": true,
+              "status": "completed"
+            },
+            {
+              "elapsed_ms": 0.216,
+              "method": "get",
+              "result_present": true,
+              "status": "completed"
+            },
+            {
+              "elapsed_ms": 0.196,
+              "method": "get",
+              "result_present": true,
+              "status": "completed"
+            },
+            {
+              "elapsed_ms": 0.243,
+              "method": "get",
+              "result_present": true,
+              "status": "completed"
+            },
+            {
+              "elapsed_ms": 0.231,
+              "method": "get",
+              "result_present": true,
+              "status": "completed"
+            }
+          ],
+          "get": {
+            "call_count": 5,
+            "completed_count": 5,
+            "elapsed_ms": 1.25,
+            "error_count": 0,
+            "error_types": [],
+            "result_present": [
+              true,
+              true,
+              true,
+              true,
+              true
+            ]
+          },
+          "mark_retrieved_many": {
+            "call_count": 1,
+            "chunk_id_counts": [
+              5
+            ],
+            "completed_count": 1,
+            "elapsed_ms": 38.158,
+            "error_count": 0,
+            "error_types": []
+          },
+          "retrieve": {
+            "call_count": 1,
+            "completed_count": 1,
+            "elapsed_ms": 55.813,
+            "error_count": 0,
+            "error_types": [],
+            "requested_top_ks": [
+              30
+            ],
+            "result_counts": [
+              30
+            ]
+          },
+          "retrieve_lexical": {
+            "call_count": 1,
+            "completed_count": 1,
+            "elapsed_ms": 0.304,
+            "error_count": 0,
+            "error_types": [],
+            "requested_top_ks": [
+              30
+            ],
+            "result_counts": [
+              0
+            ]
+          }
+        },
+        "embedding_ms": 204.902,
+        "index": 15,
+        "latency_ms": 305.321,
+        "lexical_candidate_count": 0,
+        "lexical_candidate_ms": 0.852,
+        "mark_and_refresh_ms": 56.807,
+        "result_count": 5,
+        "scoped_sql_ranking_ms": 99.68,
+        "sql_candidate_count": 120
+      },
+      {
+        "actual_store_calls": {
+          "events": [
+            {
+              "elapsed_ms": 55.289,
+              "method": "retrieve",
+              "requested_top_k": 30,
+              "result_count": 30,
+              "status": "completed"
+            },
+            {
+              "elapsed_ms": 0.32,
+              "method": "retrieve_lexical",
+              "requested_top_k": 30,
+              "result_count": 0,
+              "status": "completed"
+            },
+            {
+              "chunk_id_count": 5,
+              "elapsed_ms": 36.261,
+              "method": "mark_retrieved_many",
+              "status": "completed"
+            },
+            {
+              "elapsed_ms": 0.274,
+              "method": "get",
+              "result_present": true,
+              "status": "completed"
+            },
+            {
+              "elapsed_ms": 0.211,
+              "method": "get",
+              "result_present": true,
+              "status": "completed"
+            },
+            {
+              "elapsed_ms": 0.241,
+              "method": "get",
+              "result_present": true,
+              "status": "completed"
+            },
+            {
+              "elapsed_ms": 0.203,
+              "method": "get",
+              "result_present": true,
+              "status": "completed"
+            },
+            {
+              "elapsed_ms": 0.239,
+              "method": "get",
+              "result_present": true,
+              "status": "completed"
+            }
+          ],
+          "get": {
+            "call_count": 5,
+            "completed_count": 5,
+            "elapsed_ms": 1.168,
+            "error_count": 0,
+            "error_types": [],
+            "result_present": [
+              true,
+              true,
+              true,
+              true,
+              true
+            ]
+          },
+          "mark_retrieved_many": {
+            "call_count": 1,
+            "chunk_id_counts": [
+              5
+            ],
+            "completed_count": 1,
+            "elapsed_ms": 36.261,
+            "error_count": 0,
+            "error_types": []
+          },
+          "retrieve": {
+            "call_count": 1,
+            "completed_count": 1,
+            "elapsed_ms": 55.289,
+            "error_count": 0,
+            "error_types": [],
+            "requested_top_ks": [
+              30
+            ],
+            "result_counts": [
+              30
+            ]
+          },
+          "retrieve_lexical": {
+            "call_count": 1,
+            "completed_count": 1,
+            "elapsed_ms": 0.32,
+            "error_count": 0,
+            "error_types": [],
+            "requested_top_ks": [
+              30
+            ],
+            "result_counts": [
+              0
+            ]
+          }
+        },
+        "embedding_ms": 206.869,
+        "index": 16,
+        "latency_ms": 305.112,
+        "lexical_candidate_count": 0,
+        "lexical_candidate_ms": 0.336,
+        "mark_and_refresh_ms": 41.365,
+        "result_count": 5,
+        "scoped_sql_ranking_ms": 93.874,
+        "sql_candidate_count": 120
+      },
+      {
+        "actual_store_calls": {
+          "events": [
+            {
+              "elapsed_ms": 55.376,
+              "method": "retrieve",
+              "requested_top_k": 30,
+              "result_count": 30,
+              "status": "completed"
+            },
+            {
+              "elapsed_ms": 0.411,
+              "method": "retrieve_lexical",
+              "requested_top_k": 30,
+              "result_count": 0,
+              "status": "completed"
+            },
+            {
+              "chunk_id_count": 5,
+              "elapsed_ms": 50.172,
+              "method": "mark_retrieved_many",
+              "status": "completed"
+            },
+            {
+              "elapsed_ms": 0.31,
+              "method": "get",
+              "result_present": true,
+              "status": "completed"
+            },
+            {
+              "elapsed_ms": 0.243,
+              "method": "get",
+              "result_present": true,
+              "status": "completed"
+            },
+            {
+              "elapsed_ms": 0.202,
+              "method": "get",
+              "result_present": true,
+              "status": "completed"
+            },
+            {
+              "elapsed_ms": 0.202,
+              "method": "get",
+              "result_present": true,
+              "status": "completed"
+            },
+            {
+              "elapsed_ms": 0.398,
+              "method": "get",
+              "result_present": true,
+              "status": "completed"
+            }
+          ],
+          "get": {
+            "call_count": 5,
+            "completed_count": 5,
+            "elapsed_ms": 1.355,
+            "error_count": 0,
+            "error_types": [],
+            "result_present": [
+              true,
+              true,
+              true,
+              true,
+              true
+            ]
+          },
+          "mark_retrieved_many": {
+            "call_count": 1,
+            "chunk_id_counts": [
+              5
+            ],
+            "completed_count": 1,
+            "elapsed_ms": 50.172,
+            "error_count": 0,
+            "error_types": []
+          },
+          "retrieve": {
+            "call_count": 1,
+            "completed_count": 1,
+            "elapsed_ms": 55.376,
+            "error_count": 0,
+            "error_types": [],
+            "requested_top_ks": [
+              30
+            ],
+            "result_counts": [
+              30
+            ]
+          },
+          "retrieve_lexical": {
+            "call_count": 1,
+            "completed_count": 1,
+            "elapsed_ms": 0.411,
+            "error_count": 0,
+            "error_types": [],
+            "requested_top_ks": [
+              30
+            ],
+            "result_counts": [
+              0
+            ]
+          }
+        },
+        "embedding_ms": 207.773,
+        "index": 17,
+        "latency_ms": 320.382,
+        "lexical_candidate_count": 0,
+        "lexical_candidate_ms": 0.381,
+        "mark_and_refresh_ms": 36.414,
+        "result_count": 5,
+        "scoped_sql_ranking_ms": 98.115,
+        "sql_candidate_count": 120
+      },
+      {
+        "actual_store_calls": {
+          "events": [
+            {
+              "elapsed_ms": 54.7,
+              "method": "retrieve",
+              "requested_top_k": 30,
+              "result_count": 30,
+              "status": "completed"
+            },
+            {
+              "elapsed_ms": 121.739,
+              "method": "retrieve_lexical",
+              "requested_top_k": 30,
+              "result_count": 30,
+              "status": "completed"
+            },
+            {
+              "chunk_id_count": 5,
+              "elapsed_ms": 42.239,
+              "method": "mark_retrieved_many",
+              "status": "completed"
+            },
+            {
+              "elapsed_ms": 0.282,
+              "method": "get",
+              "result_present": true,
+              "status": "completed"
+            },
+            {
+              "elapsed_ms": 0.209,
+              "method": "get",
+              "result_present": true,
+              "status": "completed"
+            },
+            {
+              "elapsed_ms": 0.247,
+              "method": "get",
+              "result_present": true,
+              "status": "completed"
+            },
+            {
+              "elapsed_ms": 0.2,
+              "method": "get",
+              "result_present": true,
+              "status": "completed"
+            },
+            {
+              "elapsed_ms": 0.272,
+              "method": "get",
+              "result_present": true,
+              "status": "completed"
+            }
+          ],
+          "get": {
+            "call_count": 5,
+            "completed_count": 5,
+            "elapsed_ms": 1.21,
+            "error_count": 0,
+            "error_types": [],
+            "result_present": [
+              true,
+              true,
+              true,
+              true,
+              true
+            ]
+          },
+          "mark_retrieved_many": {
+            "call_count": 1,
+            "chunk_id_counts": [
+              5
+            ],
+            "completed_count": 1,
+            "elapsed_ms": 42.239,
+            "error_count": 0,
+            "error_types": []
+          },
+          "retrieve": {
+            "call_count": 1,
+            "completed_count": 1,
+            "elapsed_ms": 54.7,
+            "error_count": 0,
+            "error_types": [],
+            "requested_top_ks": [
+              30
+            ],
+            "result_counts": [
+              30
+            ]
+          },
+          "retrieve_lexical": {
+            "call_count": 1,
+            "completed_count": 1,
+            "elapsed_ms": 121.739,
+            "error_count": 0,
+            "error_types": [],
+            "requested_top_ks": [
+              30
+            ],
+            "result_counts": [
+              30
+            ]
+          }
+        },
+        "embedding_ms": 199.471,
+        "index": 18,
+        "latency_ms": 426.237,
+        "lexical_candidate_count": 120,
+        "lexical_candidate_ms": 140.436,
+        "mark_and_refresh_ms": 292.87,
+        "result_count": 5,
+        "scoped_sql_ranking_ms": 92.268,
+        "sql_candidate_count": 120
+      },
+      {
+        "actual_store_calls": {
+          "events": [
+            {
+              "elapsed_ms": 55.529,
+              "method": "retrieve",
+              "requested_top_k": 30,
+              "result_count": 30,
+              "status": "completed"
+            },
+            {
+              "elapsed_ms": 0.307,
+              "method": "retrieve_lexical",
+              "requested_top_k": 30,
+              "result_count": 0,
+              "status": "completed"
+            },
+            {
+              "chunk_id_count": 5,
+              "elapsed_ms": 77.814,
+              "method": "mark_retrieved_many",
+              "status": "completed"
+            },
+            {
+              "elapsed_ms": 0.308,
+              "method": "get",
+              "result_present": true,
+              "status": "completed"
+            },
+            {
+              "elapsed_ms": 0.245,
+              "method": "get",
+              "result_present": true,
+              "status": "completed"
+            },
+            {
+              "elapsed_ms": 0.216,
+              "method": "get",
+              "result_present": true,
+              "status": "completed"
+            },
+            {
+              "elapsed_ms": 0.193,
+              "method": "get",
+              "result_present": true,
+              "status": "completed"
+            },
+            {
+              "elapsed_ms": 0.26,
+              "method": "get",
+              "result_present": true,
+              "status": "completed"
+            }
+          ],
+          "get": {
+            "call_count": 5,
+            "completed_count": 5,
+            "elapsed_ms": 1.222,
+            "error_count": 0,
+            "error_types": [],
+            "result_present": [
+              true,
+              true,
+              true,
+              true,
+              true
+            ]
+          },
+          "mark_retrieved_many": {
+            "call_count": 1,
+            "chunk_id_counts": [
+              5
+            ],
+            "completed_count": 1,
+            "elapsed_ms": 77.814,
+            "error_count": 0,
+            "error_types": []
+          },
+          "retrieve": {
+            "call_count": 1,
+            "completed_count": 1,
+            "elapsed_ms": 55.529,
+            "error_count": 0,
+            "error_types": [],
+            "requested_top_ks": [
+              30
+            ],
+            "result_counts": [
+              30
+            ]
+          },
+          "retrieve_lexical": {
+            "call_count": 1,
+            "completed_count": 1,
+            "elapsed_ms": 0.307,
+            "error_count": 0,
+            "error_types": [],
+            "requested_top_ks": [
+              30
+            ],
+            "result_counts": [
+              0
+            ]
+          }
+        },
+        "embedding_ms": 223.896,
+        "index": 19,
+        "latency_ms": 363.667,
+        "lexical_candidate_count": 0,
+        "lexical_candidate_ms": 0.788,
+        "mark_and_refresh_ms": 46.905,
+        "result_count": 5,
+        "scoped_sql_ranking_ms": 99.257,
+        "sql_candidate_count": 120
+      },
+      {
+        "actual_store_calls": {
+          "events": [
+            {
+              "elapsed_ms": 55.468,
+              "method": "retrieve",
+              "requested_top_k": 30,
+              "result_count": 30,
+              "status": "completed"
+            },
+            {
+              "elapsed_ms": 100.224,
+              "method": "retrieve_lexical",
+              "requested_top_k": 30,
+              "result_count": 30,
+              "status": "completed"
+            },
+            {
+              "chunk_id_count": 5,
+              "elapsed_ms": 39.561,
+              "method": "mark_retrieved_many",
+              "status": "completed"
+            },
+            {
+              "elapsed_ms": 0.279,
+              "method": "get",
+              "result_present": true,
+              "status": "completed"
+            },
+            {
+              "elapsed_ms": 0.237,
+              "method": "get",
+              "result_present": true,
+              "status": "completed"
+            },
+            {
+              "elapsed_ms": 0.203,
+              "method": "get",
+              "result_present": true,
+              "status": "completed"
+            },
+            {
+              "elapsed_ms": 0.21,
+              "method": "get",
+              "result_present": true,
+              "status": "completed"
+            },
+            {
+              "elapsed_ms": 0.238,
+              "method": "get",
+              "result_present": true,
+              "status": "completed"
+            }
+          ],
+          "get": {
+            "call_count": 5,
+            "completed_count": 5,
+            "elapsed_ms": 1.167,
+            "error_count": 0,
+            "error_types": [],
+            "result_present": [
+              true,
+              true,
+              true,
+              true,
+              true
+            ]
+          },
+          "mark_retrieved_many": {
+            "call_count": 1,
+            "chunk_id_counts": [
+              5
+            ],
+            "completed_count": 1,
+            "elapsed_ms": 39.561,
+            "error_count": 0,
+            "error_types": []
+          },
+          "retrieve": {
+            "call_count": 1,
+            "completed_count": 1,
+            "elapsed_ms": 55.468,
+            "error_count": 0,
+            "error_types": [],
+            "requested_top_ks": [
+              30
+            ],
+            "result_counts": [
+              30
+            ]
+          },
+          "retrieve_lexical": {
+            "call_count": 1,
+            "completed_count": 1,
+            "elapsed_ms": 100.224,
+            "error_count": 0,
+            "error_types": [],
+            "requested_top_ks": [
+              30
+            ],
+            "result_counts": [
+              30
+            ]
+          }
+        },
+        "embedding_ms": 201.236,
+        "index": 20,
+        "latency_ms": 404.505,
+        "lexical_candidate_count": 120,
+        "lexical_candidate_ms": 122.761,
+        "mark_and_refresh_ms": 39.769,
+        "result_count": 5,
+        "scoped_sql_ranking_ms": 94.586,
+        "sql_candidate_count": 120
+      },
+      {
+        "actual_store_calls": {
+          "events": [
+            {
+              "elapsed_ms": 56.108,
+              "method": "retrieve",
+              "requested_top_k": 30,
+              "result_count": 30,
+              "status": "completed"
+            },
+            {
+              "elapsed_ms": 0.315,
+              "method": "retrieve_lexical",
+              "requested_top_k": 30,
+              "result_count": 0,
+              "status": "completed"
+            },
+            {
+              "chunk_id_count": 5,
+              "elapsed_ms": 38.379,
+              "method": "mark_retrieved_many",
+              "status": "completed"
+            },
+            {
+              "elapsed_ms": 0.266,
+              "method": "get",
+              "result_present": true,
+              "status": "completed"
+            },
+            {
+              "elapsed_ms": 0.204,
+              "method": "get",
+              "result_present": true,
+              "status": "completed"
+            },
+            {
+              "elapsed_ms": 0.246,
+              "method": "get",
+              "result_present": true,
+              "status": "completed"
+            },
+            {
+              "elapsed_ms": 0.207,
+              "method": "get",
+              "result_present": true,
+              "status": "completed"
+            },
+            {
+              "elapsed_ms": 0.212,
+              "method": "get",
+              "result_present": true,
+              "status": "completed"
+            }
+          ],
+          "get": {
+            "call_count": 5,
+            "completed_count": 5,
+            "elapsed_ms": 1.135,
+            "error_count": 0,
+            "error_types": [],
+            "result_present": [
+              true,
+              true,
+              true,
+              true,
+              true
+            ]
+          },
+          "mark_retrieved_many": {
+            "call_count": 1,
+            "chunk_id_counts": [
+              5
+            ],
+            "completed_count": 1,
+            "elapsed_ms": 38.379,
+            "error_count": 0,
+            "error_types": []
+          },
+          "retrieve": {
+            "call_count": 1,
+            "completed_count": 1,
+            "elapsed_ms": 56.108,
+            "error_count": 0,
+            "error_types": [],
+            "requested_top_ks": [
+              30
+            ],
+            "result_counts": [
+              30
+            ]
+          },
+          "retrieve_lexical": {
+            "call_count": 1,
+            "completed_count": 1,
+            "elapsed_ms": 0.315,
+            "error_count": 0,
+            "error_types": [],
+            "requested_top_ks": [
+              30
+            ],
+            "result_counts": [
+              0
+            ]
+          }
+        },
+        "embedding_ms": 203.416,
+        "index": 21,
+        "latency_ms": 304.458,
+        "lexical_candidate_count": 0,
+        "lexical_candidate_ms": 0.835,
+        "mark_and_refresh_ms": 40.368,
+        "result_count": 5,
+        "scoped_sql_ranking_ms": 94.011,
+        "sql_candidate_count": 120
+      },
+      {
+        "actual_store_calls": {
+          "events": [
+            {
+              "elapsed_ms": 56.593,
+              "method": "retrieve",
+              "requested_top_k": 30,
+              "result_count": 30,
+              "status": "completed"
+            },
+            {
+              "elapsed_ms": 0.305,
+              "method": "retrieve_lexical",
+              "requested_top_k": 30,
+              "result_count": 0,
+              "status": "completed"
+            },
+            {
+              "chunk_id_count": 5,
+              "elapsed_ms": 30.507,
+              "method": "mark_retrieved_many",
+              "status": "completed"
+            },
+            {
+              "elapsed_ms": 0.314,
+              "method": "get",
+              "result_present": true,
+              "status": "completed"
+            },
+            {
+              "elapsed_ms": 0.22,
+              "method": "get",
+              "result_present": true,
+              "status": "completed"
+            },
+            {
+              "elapsed_ms": 0.199,
+              "method": "get",
+              "result_present": true,
+              "status": "completed"
+            },
+            {
+              "elapsed_ms": 0.239,
+              "method": "get",
+              "result_present": true,
+              "status": "completed"
+            },
+            {
+              "elapsed_ms": 0.2,
+              "method": "get",
+              "result_present": true,
+              "status": "completed"
+            }
+          ],
+          "get": {
+            "call_count": 5,
+            "completed_count": 5,
+            "elapsed_ms": 1.172,
+            "error_count": 0,
+            "error_types": [],
+            "result_present": [
+              true,
+              true,
+              true,
+              true,
+              true
+            ]
+          },
+          "mark_retrieved_many": {
+            "call_count": 1,
+            "chunk_id_counts": [
+              5
+            ],
+            "completed_count": 1,
+            "elapsed_ms": 30.507,
+            "error_count": 0,
+            "error_types": []
+          },
+          "retrieve": {
+            "call_count": 1,
+            "completed_count": 1,
+            "elapsed_ms": 56.593,
+            "error_count": 0,
+            "error_types": [],
+            "requested_top_ks": [
+              30
+            ],
+            "result_counts": [
+              30
+            ]
+          },
+          "retrieve_lexical": {
+            "call_count": 1,
+            "completed_count": 1,
+            "elapsed_ms": 0.305,
+            "error_count": 0,
+            "error_types": [],
+            "requested_top_ks": [
+              30
+            ],
+            "result_counts": [
+              0
+            ]
+          }
+        },
+        "embedding_ms": 200.497,
+        "index": 22,
+        "latency_ms": 294.107,
+        "lexical_candidate_count": 0,
+        "lexical_candidate_ms": 0.358,
+        "mark_and_refresh_ms": 42.131,
+        "result_count": 5,
+        "scoped_sql_ranking_ms": 92.635,
+        "sql_candidate_count": 120
+      },
+      {
+        "actual_store_calls": {
+          "events": [
+            {
+              "elapsed_ms": 57.515,
+              "method": "retrieve",
+              "requested_top_k": 30,
+              "result_count": 30,
+              "status": "completed"
+            },
+            {
+              "elapsed_ms": 0.369,
+              "method": "retrieve_lexical",
+              "requested_top_k": 30,
+              "result_count": 0,
+              "status": "completed"
+            },
+            {
+              "chunk_id_count": 5,
+              "elapsed_ms": 36.323,
+              "method": "mark_retrieved_many",
+              "status": "completed"
+            },
+            {
+              "elapsed_ms": 0.279,
+              "method": "get",
+              "result_present": true,
+              "status": "completed"
+            },
+            {
+              "elapsed_ms": 0.229,
+              "method": "get",
+              "result_present": true,
+              "status": "completed"
+            },
+            {
+              "elapsed_ms": 0.203,
+              "method": "get",
+              "result_present": true,
+              "status": "completed"
+            },
+            {
+              "elapsed_ms": 0.196,
+              "method": "get",
+              "result_present": true,
+              "status": "completed"
+            },
+            {
+              "elapsed_ms": 0.211,
+              "method": "get",
+              "result_present": true,
+              "status": "completed"
+            }
+          ],
+          "get": {
+            "call_count": 5,
+            "completed_count": 5,
+            "elapsed_ms": 1.118,
+            "error_count": 0,
+            "error_types": [],
+            "result_present": [
+              true,
+              true,
+              true,
+              true,
+              true
+            ]
+          },
+          "mark_retrieved_many": {
+            "call_count": 1,
+            "chunk_id_counts": [
+              5
+            ],
+            "completed_count": 1,
+            "elapsed_ms": 36.323,
+            "error_count": 0,
+            "error_types": []
+          },
+          "retrieve": {
+            "call_count": 1,
+            "completed_count": 1,
+            "elapsed_ms": 57.515,
+            "error_count": 0,
+            "error_types": [],
+            "requested_top_ks": [
+              30
+            ],
+            "result_counts": [
+              30
+            ]
+          },
+          "retrieve_lexical": {
+            "call_count": 1,
+            "completed_count": 1,
+            "elapsed_ms": 0.369,
+            "error_count": 0,
+            "error_types": [],
+            "requested_top_ks": [
+              30
+            ],
+            "result_counts": [
+              0
+            ]
+          }
+        },
+        "embedding_ms": 203.764,
+        "index": 23,
+        "latency_ms": 304.364,
+        "lexical_candidate_count": 0,
+        "lexical_candidate_ms": 0.347,
+        "mark_and_refresh_ms": 37.609,
+        "result_count": 5,
+        "scoped_sql_ranking_ms": 97.984,
+        "sql_candidate_count": 120
+      },
+      {
+        "actual_store_calls": {
+          "events": [
+            {
+              "elapsed_ms": 56.373,
+              "method": "retrieve",
+              "requested_top_k": 30,
+              "result_count": 30,
+              "status": "completed"
+            },
+            {
+              "elapsed_ms": 125.092,
+              "method": "retrieve_lexical",
+              "requested_top_k": 30,
+              "result_count": 30,
+              "status": "completed"
+            },
+            {
+              "chunk_id_count": 5,
+              "elapsed_ms": 45.893,
+              "method": "mark_retrieved_many",
+              "status": "completed"
+            },
+            {
+              "elapsed_ms": 0.276,
+              "method": "get",
+              "result_present": true,
+              "status": "completed"
+            },
+            {
+              "elapsed_ms": 0.211,
+              "method": "get",
+              "result_present": true,
+              "status": "completed"
+            },
+            {
+              "elapsed_ms": 0.207,
+              "method": "get",
+              "result_present": true,
+              "status": "completed"
+            },
+            {
+              "elapsed_ms": 0.196,
+              "method": "get",
+              "result_present": true,
+              "status": "completed"
+            },
+            {
+              "elapsed_ms": 0.251,
+              "method": "get",
+              "result_present": true,
+              "status": "completed"
+            }
+          ],
+          "get": {
+            "call_count": 5,
+            "completed_count": 5,
+            "elapsed_ms": 1.141,
+            "error_count": 0,
+            "error_types": [],
+            "result_present": [
+              true,
+              true,
+              true,
+              true,
+              true
+            ]
+          },
+          "mark_retrieved_many": {
+            "call_count": 1,
+            "chunk_id_counts": [
+              5
+            ],
+            "completed_count": 1,
+            "elapsed_ms": 45.893,
+            "error_count": 0,
+            "error_types": []
+          },
+          "retrieve": {
+            "call_count": 1,
+            "completed_count": 1,
+            "elapsed_ms": 56.373,
+            "error_count": 0,
+            "error_types": [],
+            "requested_top_ks": [
+              30
+            ],
+            "result_counts": [
+              30
+            ]
+          },
+          "retrieve_lexical": {
+            "call_count": 1,
+            "completed_count": 1,
+            "elapsed_ms": 125.092,
+            "error_count": 0,
+            "error_types": [],
+            "requested_top_ks": [
+              30
+            ],
+            "result_counts": [
+              30
+            ]
+          }
+        },
+        "embedding_ms": 213.472,
+        "index": 24,
+        "latency_ms": 448.427,
+        "lexical_candidate_count": 120,
+        "lexical_candidate_ms": 146.025,
+        "mark_and_refresh_ms": 46.22,
+        "result_count": 5,
+        "scoped_sql_ranking_ms": 98.237,
+        "sql_candidate_count": 120
+      },
+      {
+        "actual_store_calls": {
+          "events": [
+            {
+              "elapsed_ms": 56.729,
+              "method": "retrieve",
+              "requested_top_k": 30,
+              "result_count": 30,
+              "status": "completed"
+            },
+            {
+              "elapsed_ms": 124.919,
+              "method": "retrieve_lexical",
+              "requested_top_k": 30,
+              "result_count": 30,
+              "status": "completed"
+            },
+            {
+              "chunk_id_count": 5,
+              "elapsed_ms": 39.231,
+              "method": "mark_retrieved_many",
+              "status": "completed"
+            },
+            {
+              "elapsed_ms": 0.301,
+              "method": "get",
+              "result_present": true,
+              "status": "completed"
+            },
+            {
+              "elapsed_ms": 0.215,
+              "method": "get",
+              "result_present": true,
+              "status": "completed"
+            },
+            {
+              "elapsed_ms": 0.202,
+              "method": "get",
+              "result_present": true,
+              "status": "completed"
+            },
+            {
+              "elapsed_ms": 0.194,
+              "method": "get",
+              "result_present": true,
+              "status": "completed"
+            },
+            {
+              "elapsed_ms": 0.293,
+              "method": "get",
+              "result_present": true,
+              "status": "completed"
+            }
+          ],
+          "get": {
+            "call_count": 5,
+            "completed_count": 5,
+            "elapsed_ms": 1.205,
+            "error_count": 0,
+            "error_types": [],
+            "result_present": [
+              true,
+              true,
+              true,
+              true,
+              true
+            ]
+          },
+          "mark_retrieved_many": {
+            "call_count": 1,
+            "chunk_id_counts": [
+              5
+            ],
+            "completed_count": 1,
+            "elapsed_ms": 39.231,
+            "error_count": 0,
+            "error_types": []
+          },
+          "retrieve": {
+            "call_count": 1,
+            "completed_count": 1,
+            "elapsed_ms": 56.729,
+            "error_count": 0,
+            "error_types": [],
+            "requested_top_ks": [
+              30
+            ],
+            "result_counts": [
+              30
+            ]
+          },
+          "retrieve_lexical": {
+            "call_count": 1,
+            "completed_count": 1,
+            "elapsed_ms": 124.919,
+            "error_count": 0,
+            "error_types": [],
+            "requested_top_ks": [
+              30
+            ],
+            "result_counts": [
+              30
+            ]
+          }
+        },
+        "embedding_ms": 208.183,
+        "index": 25,
+        "latency_ms": 437.321,
+        "lexical_candidate_count": 120,
+        "lexical_candidate_ms": 141.212,
+        "mark_and_refresh_ms": 49.54,
+        "result_count": 5,
+        "scoped_sql_ranking_ms": 98.952,
+        "sql_candidate_count": 120
+      },
+      {
+        "actual_store_calls": {
+          "events": [
+            {
+              "elapsed_ms": 57.176,
+              "method": "retrieve",
+              "requested_top_k": 30,
+              "result_count": 30,
+              "status": "completed"
+            },
+            {
+              "elapsed_ms": 0.298,
+              "method": "retrieve_lexical",
+              "requested_top_k": 30,
+              "result_count": 0,
+              "status": "completed"
+            },
+            {
+              "chunk_id_count": 5,
+              "elapsed_ms": 41.733,
+              "method": "mark_retrieved_many",
+              "status": "completed"
+            },
+            {
+              "elapsed_ms": 0.283,
+              "method": "get",
+              "result_present": true,
+              "status": "completed"
+            },
+            {
+              "elapsed_ms": 0.215,
+              "method": "get",
+              "result_present": true,
+              "status": "completed"
+            },
+            {
+              "elapsed_ms": 0.26,
+              "method": "get",
+              "result_present": true,
+              "status": "completed"
+            },
+            {
+              "elapsed_ms": 0.239,
+              "method": "get",
+              "result_present": true,
+              "status": "completed"
+            },
+            {
+              "elapsed_ms": 0.197,
+              "method": "get",
+              "result_present": true,
+              "status": "completed"
+            }
+          ],
+          "get": {
+            "call_count": 5,
+            "completed_count": 5,
+            "elapsed_ms": 1.194,
+            "error_count": 0,
+            "error_types": [],
+            "result_present": [
+              true,
+              true,
+              true,
+              true,
+              true
+            ]
+          },
+          "mark_retrieved_many": {
+            "call_count": 1,
+            "chunk_id_counts": [
+              5
+            ],
+            "completed_count": 1,
+            "elapsed_ms": 41.733,
+            "error_count": 0,
+            "error_types": []
+          },
+          "retrieve": {
+            "call_count": 1,
+            "completed_count": 1,
+            "elapsed_ms": 57.176,
+            "error_count": 0,
+            "error_types": [],
+            "requested_top_ks": [
+              30
+            ],
+            "result_counts": [
+              30
+            ]
+          },
+          "retrieve_lexical": {
+            "call_count": 1,
+            "completed_count": 1,
+            "elapsed_ms": 0.298,
+            "error_count": 0,
+            "error_types": [],
+            "requested_top_ks": [
+              30
+            ],
+            "result_counts": [
+              0
+            ]
+          }
+        },
+        "embedding_ms": 199.924,
+        "index": 26,
+        "latency_ms": 305.381,
+        "lexical_candidate_count": 0,
+        "lexical_candidate_ms": 1.028,
+        "mark_and_refresh_ms": 47.265,
+        "result_count": 5,
+        "scoped_sql_ranking_ms": 97.778,
+        "sql_candidate_count": 120
+      },
+      {
+        "actual_store_calls": {
+          "events": [
+            {
+              "elapsed_ms": 55.069,
+              "method": "retrieve",
+              "requested_top_k": 30,
+              "result_count": 30,
+              "status": "completed"
+            },
+            {
+              "elapsed_ms": 121.544,
+              "method": "retrieve_lexical",
+              "requested_top_k": 30,
+              "result_count": 30,
+              "status": "completed"
+            },
+            {
+              "chunk_id_count": 5,
+              "elapsed_ms": 42.395,
+              "method": "mark_retrieved_many",
+              "status": "completed"
+            },
+            {
+              "elapsed_ms": 0.356,
+              "method": "get",
+              "result_present": true,
+              "status": "completed"
+            },
+            {
+              "elapsed_ms": 0.285,
+              "method": "get",
+              "result_present": true,
+              "status": "completed"
+            },
+            {
+              "elapsed_ms": 0.226,
+              "method": "get",
+              "result_present": true,
+              "status": "completed"
+            },
+            {
+              "elapsed_ms": 0.207,
+              "method": "get",
+              "result_present": true,
+              "status": "completed"
+            },
+            {
+              "elapsed_ms": 0.342,
+              "method": "get",
+              "result_present": true,
+              "status": "completed"
+            }
+          ],
+          "get": {
+            "call_count": 5,
+            "completed_count": 5,
+            "elapsed_ms": 1.416,
+            "error_count": 0,
+            "error_types": [],
+            "result_present": [
+              true,
+              true,
+              true,
+              true,
+              true
+            ]
+          },
+          "mark_retrieved_many": {
+            "call_count": 1,
+            "chunk_id_counts": [
+              5
+            ],
+            "completed_count": 1,
+            "elapsed_ms": 42.395,
+            "error_count": 0,
+            "error_types": []
+          },
+          "retrieve": {
+            "call_count": 1,
+            "completed_count": 1,
+            "elapsed_ms": 55.069,
+            "error_count": 0,
+            "error_types": [],
+            "requested_top_ks": [
+              30
+            ],
+            "result_counts": [
+              30
+            ]
+          },
+          "retrieve_lexical": {
+            "call_count": 1,
+            "completed_count": 1,
+            "elapsed_ms": 121.544,
+            "error_count": 0,
+            "error_types": [],
+            "requested_top_ks": [
+              30
+            ],
+            "result_counts": [
+              30
+            ]
+          }
+        },
+        "embedding_ms": 199.583,
+        "index": 27,
+        "latency_ms": 426.542,
+        "lexical_candidate_count": 120,
+        "lexical_candidate_ms": 140.943,
+        "mark_and_refresh_ms": 46.348,
+        "result_count": 5,
+        "scoped_sql_ranking_ms": 92.005,
+        "sql_candidate_count": 120
+      },
+      {
+        "actual_store_calls": {
+          "events": [
+            {
+              "elapsed_ms": 55.613,
+              "method": "retrieve",
+              "requested_top_k": 30,
+              "result_count": 30,
+              "status": "completed"
+            },
+            {
+              "elapsed_ms": 121.839,
+              "method": "retrieve_lexical",
+              "requested_top_k": 30,
+              "result_count": 30,
+              "status": "completed"
+            },
+            {
+              "chunk_id_count": 5,
+              "elapsed_ms": 60.001,
+              "method": "mark_retrieved_many",
+              "status": "completed"
+            },
+            {
+              "elapsed_ms": 0.277,
+              "method": "get",
+              "result_present": true,
+              "status": "completed"
+            },
+            {
+              "elapsed_ms": 0.308,
+              "method": "get",
+              "result_present": true,
+              "status": "completed"
+            },
+            {
+              "elapsed_ms": 0.213,
+              "method": "get",
+              "result_present": true,
+              "status": "completed"
+            },
+            {
+              "elapsed_ms": 0.196,
+              "method": "get",
+              "result_present": true,
+              "status": "completed"
+            },
+            {
+              "elapsed_ms": 0.206,
+              "method": "get",
+              "result_present": true,
+              "status": "completed"
+            }
+          ],
+          "get": {
+            "call_count": 5,
+            "completed_count": 5,
+            "elapsed_ms": 1.2,
+            "error_count": 0,
+            "error_types": [],
+            "result_present": [
+              true,
+              true,
+              true,
+              true,
+              true
+            ]
+          },
+          "mark_retrieved_many": {
+            "call_count": 1,
+            "chunk_id_counts": [
+              5
+            ],
+            "completed_count": 1,
+            "elapsed_ms": 60.001,
+            "error_count": 0,
+            "error_types": []
+          },
+          "retrieve": {
+            "call_count": 1,
+            "completed_count": 1,
+            "elapsed_ms": 55.613,
+            "error_count": 0,
+            "error_types": [],
+            "requested_top_ks": [
+              30
+            ],
+            "result_counts": [
+              30
+            ]
+          },
+          "retrieve_lexical": {
+            "call_count": 1,
+            "completed_count": 1,
+            "elapsed_ms": 121.839,
+            "error_count": 0,
+            "error_types": [],
+            "requested_top_ks": [
+              30
+            ],
+            "result_counts": [
+              30
+            ]
+          }
+        },
+        "embedding_ms": 203.229,
+        "index": 28,
+        "latency_ms": 455.714,
+        "lexical_candidate_count": 120,
+        "lexical_candidate_ms": 144.54,
+        "mark_and_refresh_ms": 44.988,
+        "result_count": 5,
+        "scoped_sql_ranking_ms": 93.651,
+        "sql_candidate_count": 120
+      },
+      {
+        "actual_store_calls": {
+          "events": [
+            {
+              "elapsed_ms": 55.837,
+              "method": "retrieve",
+              "requested_top_k": 30,
+              "result_count": 30,
+              "status": "completed"
+            },
+            {
+              "elapsed_ms": 122.127,
+              "method": "retrieve_lexical",
+              "requested_top_k": 30,
+              "result_count": 30,
+              "status": "completed"
+            },
+            {
+              "chunk_id_count": 5,
+              "elapsed_ms": 43.932,
+              "method": "mark_retrieved_many",
+              "status": "completed"
+            },
+            {
+              "elapsed_ms": 0.266,
+              "method": "get",
+              "result_present": true,
+              "status": "completed"
+            },
+            {
+              "elapsed_ms": 0.217,
+              "method": "get",
+              "result_present": true,
+              "status": "completed"
+            },
+            {
+              "elapsed_ms": 0.194,
+              "method": "get",
+              "result_present": true,
+              "status": "completed"
+            },
+            {
+              "elapsed_ms": 0.19,
+              "method": "get",
+              "result_present": true,
+              "status": "completed"
+            },
+            {
+              "elapsed_ms": 0.2,
+              "method": "get",
+              "result_present": true,
+              "status": "completed"
+            }
+          ],
+          "get": {
+            "call_count": 5,
+            "completed_count": 5,
+            "elapsed_ms": 1.067,
+            "error_count": 0,
+            "error_types": [],
+            "result_present": [
+              true,
+              true,
+              true,
+              true,
+              true
+            ]
+          },
+          "mark_retrieved_many": {
+            "call_count": 1,
+            "chunk_id_counts": [
+              5
+            ],
+            "completed_count": 1,
+            "elapsed_ms": 43.932,
+            "error_count": 0,
+            "error_types": []
+          },
+          "retrieve": {
+            "call_count": 1,
+            "completed_count": 1,
+            "elapsed_ms": 55.837,
+            "error_count": 0,
+            "error_types": [],
+            "requested_top_ks": [
+              30
+            ],
+            "result_counts": [
+              30
+            ]
+          },
+          "retrieve_lexical": {
+            "call_count": 1,
+            "completed_count": 1,
+            "elapsed_ms": 122.127,
+            "error_count": 0,
+            "error_types": [],
+            "requested_top_ks": [
+              30
+            ],
+            "result_counts": [
+              30
+            ]
+          }
+        },
+        "embedding_ms": 218.427,
+        "index": 29,
+        "latency_ms": 448.428,
+        "lexical_candidate_count": 120,
+        "lexical_candidate_ms": 143.741,
+        "mark_and_refresh_ms": 40.909,
+        "result_count": 5,
+        "scoped_sql_ranking_ms": 93.734,
+        "sql_candidate_count": 120
+      },
+      {
+        "actual_store_calls": {
+          "events": [
+            {
+              "elapsed_ms": 59.067,
+              "method": "retrieve",
+              "requested_top_k": 30,
+              "result_count": 30,
+              "status": "completed"
+            },
+            {
+              "elapsed_ms": 0.304,
+              "method": "retrieve_lexical",
+              "requested_top_k": 30,
+              "result_count": 0,
+              "status": "completed"
+            },
+            {
+              "chunk_id_count": 5,
+              "elapsed_ms": 39.649,
+              "method": "mark_retrieved_many",
+              "status": "completed"
+            },
+            {
+              "elapsed_ms": 0.348,
+              "method": "get",
+              "result_present": true,
+              "status": "completed"
+            },
+            {
+              "elapsed_ms": 0.269,
+              "method": "get",
+              "result_present": true,
+              "status": "completed"
+            },
+            {
+              "elapsed_ms": 0.239,
+              "method": "get",
+              "result_present": true,
+              "status": "completed"
+            },
+            {
+              "elapsed_ms": 0.199,
+              "method": "get",
+              "result_present": true,
+              "status": "completed"
+            },
+            {
+              "elapsed_ms": 0.296,
+              "method": "get",
+              "result_present": true,
+              "status": "completed"
+            }
+          ],
+          "get": {
+            "call_count": 5,
+            "completed_count": 5,
+            "elapsed_ms": 1.351,
+            "error_count": 0,
+            "error_types": [],
+            "result_present": [
+              true,
+              true,
+              true,
+              true,
+              true
+            ]
+          },
+          "mark_retrieved_many": {
+            "call_count": 1,
+            "chunk_id_counts": [
+              5
+            ],
+            "completed_count": 1,
+            "elapsed_ms": 39.649,
+            "error_count": 0,
+            "error_types": []
+          },
+          "retrieve": {
+            "call_count": 1,
+            "completed_count": 1,
+            "elapsed_ms": 59.067,
+            "error_count": 0,
+            "error_types": [],
+            "requested_top_ks": [
+              30
+            ],
+            "result_counts": [
+              30
+            ]
+          },
+          "retrieve_lexical": {
+            "call_count": 1,
+            "completed_count": 1,
+            "elapsed_ms": 0.304,
+            "error_count": 0,
+            "error_types": [],
+            "requested_top_ks": [
+              30
+            ],
+            "result_counts": [
+              0
+            ]
+          }
+        },
+        "embedding_ms": 222.455,
+        "index": 30,
+        "latency_ms": 327.796,
+        "lexical_candidate_count": 0,
+        "lexical_candidate_ms": 0.745,
+        "mark_and_refresh_ms": 38.656,
+        "result_count": 5,
+        "scoped_sql_ranking_ms": 95.445,
+        "sql_candidate_count": 120
+      },
+      {
+        "actual_store_calls": {
+          "events": [
+            {
+              "elapsed_ms": 56.302,
+              "method": "retrieve",
+              "requested_top_k": 30,
+              "result_count": 30,
+              "status": "completed"
+            },
+            {
+              "elapsed_ms": 0.301,
+              "method": "retrieve_lexical",
+              "requested_top_k": 30,
+              "result_count": 0,
+              "status": "completed"
+            },
+            {
+              "chunk_id_count": 5,
+              "elapsed_ms": 38.831,
+              "method": "mark_retrieved_many",
+              "status": "completed"
+            },
+            {
+              "elapsed_ms": 0.283,
+              "method": "get",
+              "result_present": true,
+              "status": "completed"
+            },
+            {
+              "elapsed_ms": 0.21,
+              "method": "get",
+              "result_present": true,
+              "status": "completed"
+            },
+            {
+              "elapsed_ms": 0.339,
+              "method": "get",
+              "result_present": true,
+              "status": "completed"
+            },
+            {
+              "elapsed_ms": 0.236,
+              "method": "get",
+              "result_present": true,
+              "status": "completed"
+            },
+            {
+              "elapsed_ms": 0.208,
+              "method": "get",
+              "result_present": true,
+              "status": "completed"
+            }
+          ],
+          "get": {
+            "call_count": 5,
+            "completed_count": 5,
+            "elapsed_ms": 1.276,
+            "error_count": 0,
+            "error_types": [],
+            "result_present": [
+              true,
+              true,
+              true,
+              true,
+              true
+            ]
+          },
+          "mark_retrieved_many": {
+            "call_count": 1,
+            "chunk_id_counts": [
+              5
+            ],
+            "completed_count": 1,
+            "elapsed_ms": 38.831,
+            "error_count": 0,
+            "error_types": []
+          },
+          "retrieve": {
+            "call_count": 1,
+            "completed_count": 1,
+            "elapsed_ms": 56.302,
+            "error_count": 0,
+            "error_types": [],
+            "requested_top_ks": [
+              30
+            ],
+            "result_counts": [
+              30
+            ]
+          },
+          "retrieve_lexical": {
+            "call_count": 1,
+            "completed_count": 1,
+            "elapsed_ms": 0.301,
+            "error_count": 0,
+            "error_types": [],
+            "requested_top_ks": [
+              30
+            ],
+            "result_counts": [
+              0
+            ]
+          }
+        },
+        "embedding_ms": 213.538,
+        "index": 31,
+        "latency_ms": 315.531,
+        "lexical_candidate_count": 0,
+        "lexical_candidate_ms": 0.365,
+        "mark_and_refresh_ms": 38.516,
+        "result_count": 5,
+        "scoped_sql_ranking_ms": 97.044,
+        "sql_candidate_count": 120
+      },
+      {
+        "actual_store_calls": {
+          "events": [
+            {
+              "elapsed_ms": 56.511,
+              "method": "retrieve",
+              "requested_top_k": 30,
+              "result_count": 30,
+              "status": "completed"
+            },
+            {
+              "elapsed_ms": 130.45,
+              "method": "retrieve_lexical",
+              "requested_top_k": 30,
+              "result_count": 30,
+              "status": "completed"
+            },
+            {
+              "chunk_id_count": 5,
+              "elapsed_ms": 37.216,
+              "method": "mark_retrieved_many",
+              "status": "completed"
+            },
+            {
+              "elapsed_ms": 0.317,
+              "method": "get",
+              "result_present": true,
+              "status": "completed"
+            },
+            {
+              "elapsed_ms": 0.218,
+              "method": "get",
+              "result_present": true,
+              "status": "completed"
+            },
+            {
+              "elapsed_ms": 0.211,
+              "method": "get",
+              "result_present": true,
+              "status": "completed"
+            },
+            {
+              "elapsed_ms": 0.196,
+              "method": "get",
+              "result_present": true,
+              "status": "completed"
+            },
+            {
+              "elapsed_ms": 0.191,
+              "method": "get",
+              "result_present": true,
+              "status": "completed"
+            }
+          ],
+          "get": {
+            "call_count": 5,
+            "completed_count": 5,
+            "elapsed_ms": 1.133,
+            "error_count": 0,
+            "error_types": [],
+            "result_present": [
+              true,
+              true,
+              true,
+              true,
+              true
+            ]
+          },
+          "mark_retrieved_many": {
+            "call_count": 1,
+            "chunk_id_counts": [
+              5
+            ],
+            "completed_count": 1,
+            "elapsed_ms": 37.216,
+            "error_count": 0,
+            "error_types": []
+          },
+          "retrieve": {
+            "call_count": 1,
+            "completed_count": 1,
+            "elapsed_ms": 56.511,
+            "error_count": 0,
+            "error_types": [],
+            "requested_top_ks": [
+              30
+            ],
+            "result_counts": [
+              30
+            ]
+          },
+          "retrieve_lexical": {
+            "call_count": 1,
+            "completed_count": 1,
+            "elapsed_ms": 130.45,
+            "error_count": 0,
+            "error_types": [],
+            "requested_top_ks": [
+              30
+            ],
+            "result_counts": [
+              30
+            ]
+          }
+        },
+        "embedding_ms": 205.24,
+        "index": 32,
+        "latency_ms": 437.269,
+        "lexical_candidate_count": 120,
+        "lexical_candidate_ms": 143.798,
+        "mark_and_refresh_ms": 40.099,
+        "result_count": 5,
+        "scoped_sql_ranking_ms": 106.871,
+        "sql_candidate_count": 120
+      }
+    ],
+    "recall_gate": "PASS",
+    "recall_gate_ms": 500.0,
+    "result_count_mean": 5,
+    "rows_indexed": 10000,
+    "scoped_sql_ranking_latency": {
+      "count": 33,
+      "max_ms": 162.135,
+      "mean_ms": 97.516,
+      "min_ms": 91.124,
+      "p50_ms": 94.769,
+      "p95_ms": 106.871
+    },
+    "sqlite": {
+      "journal_mode": "wal",
+      "synchronous": "2",
+      "synchronous_label": "FULL"
+    },
+    "status": "completed",
+    "warm_recall": {
+      "count": 33,
+      "max_ms": 500.164,
+      "mean_ms": 370.556,
+      "min_ms": 293.58,
+      "p50_ms": 338.64,
+      "p95_ms": 458.516
+    }
+  },
+  "schema_version": "local-memory-performance-v1",
+  "started_at": "2026-09-17T04:32:56.320217+00:00",
+  "status": "completed",
+  "total_elapsed_ms": 63947.457
+}

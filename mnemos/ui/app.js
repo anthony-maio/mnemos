@@ -195,12 +195,19 @@ function renderDashboard(dashboard) {
   const scope = dashboard.scope || {};
   if (scope.profile) document.getElementById("project-profile").value = scope.profile;
   const jobs = dashboard.jobs || {};
+  const graph = health.service?.graph;
 
   document.getElementById("hero-status").innerHTML = [
     statusPill(`Setup: ${setup.status}`, setup.status === "ready" ? "pass" : setup.status === "degraded" ? "warn" : "fail"),
     statusPill(`Host: ${host.label} (${host.tier})`, host.tier === "Tier 1" ? "pass" : "warn"),
     statusPill(`Store: ${setup.store_type}`),
     statusPill(`Chunks: ${memory.count}${memory.count_at_least ? "+" : ""}`),
+    graph
+      ? statusPill(
+          `Memory links: ${graph.enabled === false ? "disabled" : graph.status === "unavailable" ? "not observed" : graph.ready ? "ready" : "rebuilding"}`,
+          graph.enabled === false ? "" : graph.ready ? "pass" : "warn",
+        )
+      : "",
   ].join("");
 
   document.getElementById("hero-metrics").innerHTML = [

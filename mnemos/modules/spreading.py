@@ -30,7 +30,7 @@ class SpreadingActivation:
     # versions alongside the rows so an incompatible graph can be discarded
     # and rebuilt without changing the authoritative memory facts.
     PERSISTENCE_SCHEMA_VERSION = "1"
-    EDGE_BUILDER_VERSION = "3"
+    EDGE_BUILDER_VERSION = "4"
     TRAVERSAL_VERSION = ALGORITHM_VERSION
 
     def __init__(
@@ -41,6 +41,18 @@ class SpreadingActivation:
         self._embedder = embedder
         self._config = config or SpreadingConfig()
         self._nodes: dict[str, ActivationNode] = {}
+        # Directed nearest-neighbor preferences are the authoritative in
+        # memory derivation state. Persisted edges are reciprocal mutual-kNN
+        # edges, so keeping preferences separate prevents a greedy insertion
+        # from changing an unrelated node's choice.
+        self._preferences: dict[str, dict[str, float]] = {}
+        # This is a derivation-only view of authoritative facts.  It may
+        # contain records which are not hydrated into ``_nodes`` and is never
+        # traversed directly.
+        self._authoritative: dict[str, ActivationNode] = {}
+        self._has_external_authoritative_snapshot = False
+        self._source_policies: dict[str, tuple[float, set[str] | None]] = {}
+        self._preferences_initialized = False
         self._total_activations = 0
 
     @staticmethod
@@ -104,6 +116,7 @@ class SpreadingActivation:
         nid = node_id or str(uuid.uuid4())
         old = self._nodes.get(nid)
         old_neighbors = dict(old.neighbors) if old is not None else {}
+        normalized_metadata = dict(metadata or {})
         if old is not None:
             for other in self._nodes.values():
                 if other.id != nid:
@@ -114,7 +127,7 @@ class SpreadingActivation:
             energy=0.0,
             neighbors={},
             embedding=embedding,
-            metadata=dict(metadata or {}),
+            metadata=normalized_metadata,
         )
         self._nodes[nid] = node
         for neighbor_id, weight in old_neighbors.items():
@@ -130,6 +143,8 @@ class SpreadingActivation:
             if self._nodes_can_connect(node, neighbor):
                 node.neighbors[neighbor_id] = numeric_weight
                 neighbor.neighbors[nid] = numeric_weight
+        if not self._has_external_authoritative_snapshot and embedding is not None:
+            self._authoritative[nid] = node
         return node
 
     def refresh_node(
@@ -153,6 +168,253 @@ class SpreadingActivation:
 
     def _max_neighbors(self) -> int:
         return max(int(self._config.max_neighbors_per_node), 1)
+
+    def set_authoritative_snapshot(self, records: Iterable[ActivationNode]) -> None:
+        """Replace the derivation view without hydrating traversal nodes."""
+        snapshot: dict[str, ActivationNode] = {}
+        for record in records:
+            if record.embedding is None:
+                continue
+            snapshot[record.id] = record
+        self._authoritative = snapshot
+        self._has_external_authoritative_snapshot = True
+
+    def _ensure_loaded_authoritative(self) -> None:
+        """Use loaded nodes as the authority for standalone graph APIs."""
+        if self._has_external_authoritative_snapshot:
+            return
+        self._authoritative = {
+            node_id: node for node_id, node in self._nodes.items() if node.embedding is not None
+        }
+
+    def _source_policy(
+        self,
+        source_id: str,
+        *,
+        threshold: float | None = None,
+        candidate_ids: set[str] | None = None,
+    ) -> tuple[float, set[str] | None]:
+        if threshold is None and candidate_ids is None and source_id in self._source_policies:
+            stored_threshold, stored_candidates = self._source_policies[source_id]
+            return stored_threshold, (None if stored_candidates is None else set(stored_candidates))
+        return (
+            float(self._config.auto_connect_threshold if threshold is None else threshold),
+            None if candidate_ids is None else set(candidate_ids),
+        )
+
+    def _nearest_authoritative(
+        self,
+        source: ActivationNode,
+        *,
+        threshold: float | None = None,
+        candidate_ids: set[str] | None = None,
+    ) -> dict[str, float]:
+        threshold = float(self._config.auto_connect_threshold if threshold is None else threshold)
+        candidates: list[tuple[float, str]] = []
+        for target_id, target in self._authoritative.items():
+            if (
+                target_id == source.id
+                or (candidate_ids is not None and target_id not in candidate_ids)
+                or not self._nodes_can_connect(source, target)
+            ):
+                continue
+            similarity = float(cosine_similarity(source.embedding or [], target.embedding or []))
+            if math.isfinite(similarity) and similarity >= threshold:
+                candidates.append((similarity, target_id))
+        candidates.sort(key=lambda item: (-item[0], item[1]))
+        return {target_id: score for score, target_id in candidates[: self._max_neighbors()]}
+
+    def hydrate_preferences(self, preference_map: Mapping[str, Any]) -> int:
+        """Hydrate directed top-k preferences persisted by the engine."""
+        normalized: dict[str, dict[str, float]] = {}
+        for source_id, raw_targets in preference_map.items():
+            if source_id not in self._authoritative and source_id not in self._nodes:
+                continue
+            if not isinstance(raw_targets, Mapping):
+                continue
+            targets: dict[str, float] = {}
+            for target_id, raw_weight in raw_targets.items():
+                if target_id == source_id:
+                    continue
+                try:
+                    weight = float(raw_weight)
+                except (TypeError, ValueError):
+                    continue
+                if not math.isfinite(weight) or not 0.0 <= weight <= 1.0:
+                    continue
+                targets[str(target_id)] = weight
+            normalized[source_id] = dict(
+                sorted(targets.items(), key=lambda item: (-item[1], item[0]))[
+                    : self._max_neighbors()
+                ]
+            )
+        self._preferences = normalized
+        self._source_policies = {
+            source_id: (float(self._config.auto_connect_threshold), None)
+            for source_id in normalized
+        }
+        self._preferences_initialized = True
+        self._rebuild_mutual_edges()
+        return self.get_edge_count() // 2
+
+    def get_preferences(self) -> dict[str, dict[str, float]]:
+        return {source: dict(targets) for source, targets in self._preferences.items()}
+
+    def derive_authoritative_nodes(self, source_ids: set[str]) -> set[str]:
+        """Build a bounded set of sources for an initial rebuild step."""
+        preferences = dict(self._preferences)
+        computed: set[str] = set()
+        for source_id in sorted(source_ids):
+            source = self._authoritative.get(source_id)
+            if source is not None:
+                source_threshold, source_candidates = self._source_policy(source_id)
+                self._source_policies[source_id] = (source_threshold, source_candidates)
+                preferences[source_id] = self._nearest_authoritative(
+                    source,
+                    threshold=source_threshold,
+                    candidate_ids=source_candidates,
+                )
+                computed.add(source_id)
+        self._preferences = preferences
+        self._preferences_initialized = True
+        self._rebuild_mutual_edges()
+        return computed
+
+    def derive_authoritative_node(
+        self,
+        node_id: str,
+        *,
+        deleted_id: str | None = None,
+        threshold: float | None = None,
+        candidate_ids: set[str] | None = None,
+    ) -> set[str]:
+        """Update top-k preferences after one authoritative fact change.
+
+        Insertions compare the new fact once with each authoritative record.
+        A correction or deletion refills only sources whose preference was
+        affected.  The caller persists the returned source rows.
+        """
+        if deleted_id is not None:
+            self._authoritative.pop(deleted_id, None)
+            self._preferences.pop(deleted_id, None)
+            self._source_policies.pop(deleted_id, None)
+            affected = {
+                source_id
+                for source_id, targets in self._preferences.items()
+                if deleted_id in targets
+            }
+            for targets in self._preferences.values():
+                targets.pop(deleted_id, None)
+            for source_id in affected:
+                source = self._authoritative.get(source_id)
+                if source is not None:
+                    source_threshold, source_candidates = self._source_policy(source_id)
+                    self._preferences[source_id] = self._nearest_authoritative(
+                        source,
+                        threshold=source_threshold,
+                        candidate_ids=source_candidates,
+                    )
+            self._rebuild_mutual_edges()
+            return affected | {deleted_id}
+
+        source = self._authoritative.get(node_id)
+        if source is None:
+            return set()
+        effective_threshold, effective_candidates = self._source_policy(
+            node_id,
+            threshold=threshold,
+            candidate_ids=candidate_ids,
+        )
+        self._source_policies[node_id] = (effective_threshold, effective_candidates)
+        incoming_before = {
+            source_id for source_id, targets in self._preferences.items() if node_id in targets
+        }
+        for targets in self._preferences.values():
+            targets.pop(node_id, None)
+        self._preferences[node_id] = self._nearest_authoritative(
+            source, threshold=effective_threshold, candidate_ids=effective_candidates
+        )
+        affected = {node_id}
+        # A correction can lower an existing preference.  Refill every source
+        # that previously selected this target; insertions use the bounded
+        # cutoff path below instead.
+        for source_id in sorted(incoming_before):
+            if source_id == node_id:
+                continue
+            candidate = self._authoritative.get(source_id)
+            if candidate is not None:
+                source_threshold, source_candidates = self._source_policy(source_id)
+                self._preferences[source_id] = self._nearest_authoritative(
+                    candidate,
+                    threshold=source_threshold,
+                    candidate_ids=source_candidates,
+                )
+                affected.add(source_id)
+        # A new or corrected target can displace a source's current cutoff.
+        # This is one comparison per source, rather than a source-by-source
+        # full candidate scan. Sources already refilled above are skipped.
+        for source_id, candidate in self._authoritative.items():
+            if (
+                source_id == node_id
+                or source_id in incoming_before
+                or source_id not in self._preferences
+            ):
+                continue
+            if not self._nodes_can_connect(candidate, source):
+                continue
+            source_threshold, source_candidates = self._source_policy(source_id)
+            if source_candidates is not None and node_id not in source_candidates:
+                continue
+            similarity = float(cosine_similarity(candidate.embedding or [], source.embedding or []))
+            if not math.isfinite(similarity) or similarity < source_threshold:
+                continue
+            targets = dict(self._preferences[source_id])
+            previous = targets.get(node_id)
+            if previous is None and len(targets) >= self._max_neighbors():
+                cutoff = min(targets.values())
+                cutoff_id = max(target for target, weight in targets.items() if weight == cutoff)
+                if similarity < cutoff or (similarity == cutoff and node_id >= cutoff_id):
+                    continue
+                targets.pop(cutoff_id)
+            targets[node_id] = similarity
+            self._preferences[source_id] = dict(
+                sorted(targets.items(), key=lambda item: (-item[1], item[0]))[
+                    : self._max_neighbors()
+                ]
+            )
+            affected.add(source_id)
+        self._preferences_initialized = True
+        self._rebuild_mutual_edges()
+        return affected
+
+    def refresh_projected_edges(self) -> int:
+        """Project the current directed preferences into loaded neighbors."""
+        self._rebuild_mutual_edges()
+        return self.get_edge_count() // 2
+
+    def set_graph_pending(self) -> None:
+        """Clear derived preferences while an invalidated rebuild is running."""
+        self._preferences.clear()
+        self._preferences_initialized = False
+        self.clear_all_edges()
+
+    def _rebuild_mutual_edges(self) -> None:
+        for node in self._nodes.values():
+            node.neighbors.clear()
+        for source_id in sorted(self._preferences):
+            for target_id, weight in sorted(self._preferences[source_id].items()):
+                if source_id >= target_id:
+                    continue
+                if source_id not in self._preferences.get(target_id, {}):
+                    continue
+                source = self._nodes.get(source_id)
+                target = self._nodes.get(target_id)
+                if source is None or target is None or not self._nodes_can_connect(source, target):
+                    continue
+                target_weight = self._preferences[target_id][source_id]
+                stable_weight = min(float(weight), float(target_weight))
+                source.neighbors[target_id] = stable_weight
+                target.neighbors[source_id] = stable_weight
 
     @classmethod
     def _normalized_scope_data(cls, node: ActivationNode) -> tuple[str, str | None]:
@@ -322,65 +584,77 @@ class SpreadingActivation:
     def connect_node(
         self, node_id: str, threshold: float | None = None, *, candidate_ids: set[str] | None = None
     ) -> int:
-        """Connect one node to its strongest bounded set of eligible neighbors."""
+        """Derive one node through the bounded mutual top-k builder.
+
+        ``candidate_ids`` retains the legacy candidate-pool boundary for the
+        source's own preferences.  The resulting loaded edges are still
+        projected only when both directed preferences agree.
+        """
         node = self._nodes.get(node_id)
         if node is None or node.embedding is None:
             return 0
-        thresh = threshold if threshold is not None else self._config.auto_connect_threshold
-        limit = self._max_neighbors()
-        self.clear_edges(node_id)
-        candidates: list[tuple[float, str]] = []
-        for other in self._nodes.values():
-            if (
-                other.id == node_id
-                or (candidate_ids is not None and other.id not in candidate_ids)
-                or other.embedding is None
-                or not self._nodes_can_connect(node, other)
-            ):
-                continue
-            similarity = cosine_similarity(node.embedding, other.embedding)
-            if similarity >= thresh:
-                candidates.append((similarity, other.id))
-        edges_added = 0
-        for similarity, other_id in sorted(candidates, key=lambda item: (-item[0], item[1])):
-            node = self._nodes[node_id]
-            other = self._nodes[other_id]
-            if len(node.neighbors) >= limit:
-                break
-            if len(other.neighbors) >= limit:
-                weakest_id, weakest_weight = min(
-                    other.neighbors.items(), key=lambda item: (item[1], item[0])
-                )
-                if weakest_weight > similarity or (
-                    weakest_weight == similarity and weakest_id <= node_id
-                ):
-                    continue
-                self.remove_edge(other_id, weakest_id)
-            if self.add_edge(node_id, other_id, similarity):
-                edges_added += 1
-        return edges_added
+        self._ensure_loaded_authoritative()
+        before = {
+            tuple(sorted((source_id, target_id)))
+            for source_id, source in self._nodes.items()
+            for target_id in source.neighbors
+            if source_id < target_id
+        }
+        self.derive_authoritative_node(
+            node_id,
+            threshold=threshold,
+            candidate_ids=candidate_ids,
+        )
+        after = {
+            tuple(sorted((source_id, target_id)))
+            for source_id, source in self._nodes.items()
+            for target_id in source.neighbors
+            if source_id < target_id
+        }
+        return len(after - before)
 
     def auto_connect(
         self,
         threshold: float | None = None,
         exclude_existing: bool = True,
     ) -> int:
-        """Build a bounded sparse graph from all currently loaded nodes."""
-        thresh = threshold if threshold is not None else self._config.auto_connect_threshold
-        if not exclude_existing:
-            self.clear_all_edges()
-        node_list = list(self._nodes.values())
-        candidates: list[tuple[float, str, str]] = []
-        for index, node_a in enumerate(node_list):
-            for node_b in node_list[index + 1 :]:
-                if node_a.embedding is None or node_b.embedding is None:
-                    continue
-                if not self._nodes_can_connect(node_a, node_b):
-                    continue
-                similarity = cosine_similarity(node_a.embedding, node_b.embedding)
-                if similarity >= thresh:
-                    candidates.append((similarity, node_a.id, node_b.id))
-        return self._apply_candidate_pairs(candidates, exclude_existing=exclude_existing)
+        """Build a deterministic bounded mutual top-k graph.
+
+        The historical ``exclude_existing`` switch remains accepted for API
+        compatibility.  Calling this derived builder is a rebuild boundary,
+        so existing derived or manually added adjacency is replaced by the
+        mutual projection rather than allowed to create non-mutual edges.
+        Explicit ``add_edge`` calls remain available for manual graph use.
+        """
+        del exclude_existing
+        self._ensure_loaded_authoritative()
+        before = {
+            tuple(sorted((source_id, target_id)))
+            for source_id, source in self._nodes.items()
+            for target_id in source.neighbors
+            if source_id < target_id
+        }
+        self._preferences = {}
+        self.clear_all_edges()
+        effective_threshold = float(
+            self._config.auto_connect_threshold if threshold is None else threshold
+        )
+        self._source_policies = {
+            source_id: (effective_threshold, None) for source_id in self._authoritative
+        }
+        for source_id in sorted(self._authoritative):
+            self._preferences[source_id] = self._nearest_authoritative(
+                self._authoritative[source_id], threshold=effective_threshold
+            )
+        self._preferences_initialized = True
+        self._rebuild_mutual_edges()
+        after = {
+            tuple(sorted((source_id, target_id)))
+            for source_id, source in self._nodes.items()
+            for target_id in source.neighbors
+            if source_id < target_id
+        }
+        return len(after - before)
 
     def _query_policy(
         self,
@@ -649,7 +923,26 @@ class SpreadingActivation:
     def remove_node(self, node_id: str) -> bool:
         if node_id not in self._nodes:
             return False
+        affected = {
+            source_id for source_id, targets in self._preferences.items() if node_id in targets
+        }
         del self._nodes[node_id]
+        self._authoritative.pop(node_id, None)
+        self._preferences.pop(node_id, None)
+        self._source_policies.pop(node_id, None)
+        for targets in self._preferences.values():
+            targets.pop(node_id, None)
+        if self._preferences_initialized:
+            for source_id in affected:
+                source = self._authoritative.get(source_id)
+                if source is not None:
+                    source_threshold, source_candidates = self._source_policy(source_id)
+                    self._preferences[source_id] = self._nearest_authoritative(
+                        source,
+                        threshold=source_threshold,
+                        candidate_ids=source_candidates,
+                    )
+            self._rebuild_mutual_edges()
         for node in self._nodes.values():
             node.neighbors.pop(node_id, None)
         return True
@@ -673,6 +966,7 @@ class SpreadingActivation:
             "energized_nodes": energized,
             "average_degree": round(average_degree, 2),
             "total_activations": self._total_activations,
+            "graph_derivation_status": "ready" if self._preferences_initialized else "pending",
             "config": {
                 "initial_energy": self._config.initial_energy,
                 "decay_rate": self._config.decay_rate,

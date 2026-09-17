@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- Replaced insertion-dependent graph construction with persisted mutual top-k preferences in builder v4, including empty-source restart and bounded recovery. Automatic standalone rebuilds replace existing adjacency; explicit manual edges remain available.
+- Fixed structured extraction alternatives so each decoder branch requires fact content and source evidence. Baseline and full Ollama development checks now preserve correction and forgetting across restart.
 - Added a shared authenticated loopback service for CLI, MCP, UI, and host adapters, with one SQLite writer, durable jobs, recovery leases, private runtime files, and sanitized capture outboxes.
 - Added registered profile/project/workspace identities, scoped retrieval and graph traversal, source evidence, expected-version correction, and forget suppression across restart and replay.
 - Added typed local-model extraction, independent module switches, baseline retrieval by default, bounded graph rebuilding, and measured score traces. Recall no longer silently rewrites facts.

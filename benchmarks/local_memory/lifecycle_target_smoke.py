@@ -302,8 +302,7 @@ def _diagnose_observation(session: SessionScenario, observation: RunObservation)
             row.get("status") == "committed" for row in _operation(raw, "remember")
         )
         forget_dispatched = any(
-            row.get("status") == "committed" and row.get("forgotten") is True
-            for row in forget_rows
+            row.get("status") == "committed" and row.get("forgotten") is True for row in forget_rows
         )
         remember_job_processed = _maintenance_completed(raw, before="forget", kind="remember")
         replay_suppressed = any(

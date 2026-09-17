@@ -102,6 +102,23 @@ These are the implemented mechanism contracts. Their neuroscience analogies are 
 4. Spreading activation transfers `E_next = E_current * (1 - decay_rate) * edge_weight`. A query stores the greatest energy found for each node from a bounded seed path. Energy is query-local, cycles cannot amplify it, and node visits, neighbors, and hops are bounded. Seeds, intermediate nodes, and edges use the same profile and scope predicate.
 5. Mutable RAG uses source-backed, expected-version corrections. Query-only recall updates access metadata and retrieval traces; it does not silently rewrite fact content.
 
+Automatic memory links use persisted directed top-k preferences. Two facts get
+a traversable link only when each selects the other, with stable ID tie-breaking.
+The builder considers all compatible authoritative facts, even when only part
+of the graph is loaded for traversal. Completed sources with no neighbors are
+also persisted. Correction, forgetting, incompatible versions, and interrupted
+rebuilds leave explicit pending state until the affected sources are rebuilt.
+Recall falls back to semantic/lexical scoring while the graph is pending; its
+trace reports that state. The dashboard displays `Memory links: rebuilding`
+or `Memory links: ready` from the running service.
+
+The standalone `connect_node` and `auto_connect` APIs use the same mutual
+selection rule. Explicit `add_edge` calls remain available for manual graphs.
+Calling `auto_connect` rebuilds derived adjacency and replaces manual links;
+the historical `exclude_existing` argument remains accepted but no longer
+preserves adjacency across a derived rebuild. Persisted builder version 4
+invalidates older derived links while preserving facts and evidence.
+
 ## Backups, restore, and reindex
 
 `mnemos backup <new-archive.zip>` takes a consistent snapshot through the owning service. It uses SQLite's backup API, includes the scope registry and a hashed manifest, and runs integrity checks. `mnemos restore <archive.zip> <new-database.sqlite>` restores to a new destination and merges current suppression records so an old snapshot does not silently resurrect a forgotten fact. Restore does not activate the new database or replace the registry. Keep the original until the restored copy passes integrity and identity checks.
