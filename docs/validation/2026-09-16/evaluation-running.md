@@ -1,6 +1,13 @@
 # Real-model evaluation status
 
-Current status: the v2 lifecycle matrix is stopped. It preserved 600 baseline
+Current status: the repaired mechanism development run is active from frozen
+`b7a9d9d`. Its complete repository verification passed: 624 tests passed,
+2 skipped, followed by formatting, typing, JavaScript syntax, packaging, and
+installed-wheel lifecycle checks. The [verification record](graph-v4-verification.md)
+preserves the logs and artifact hashes. The fresh lifecycle matrix and held-out
+mechanism run have not started.
+
+The superseded v2 lifecycle matrix is stopped. It preserved 600 baseline
 observations and 12 full-profile observations before a target-mapping defect
 was confirmed. All 60 baseline correction attempts and 60 forget attempts
 failed in the evaluator before reaching the corresponding service operation.
@@ -20,8 +27,19 @@ and exact frozen-text matching is narrower than semantic correctness.
 Processes 47644 and 55876 were stopped intentionally after command-line
 identity verification. Do not resume this v2 run or its old coordinator. The
 files below are retained diagnostic evidence. The replacement lifecycle run
-has not started. The mechanism development run was also stopped after a
-production graph correctness failure. No model experiment is currently running.
+has not started. The original mechanism development run was also stopped after
+a production graph correctness failure. A repaired development run is now
+active from detached checkpoint `b7a9d9d`.
+
+The current development run uses graph builder v4 and the complete
+`2026-09-17-module-evaluation-protocol-v2.md` amendment. It retains five graph
+cases, five affective pairs, and three repetitions, with unchanged authored
+labels and model pins. Its artifacts are in `mechanism-development-v2/` and
+persistent fixtures in `.venv/mechanism-development-work-v2/`. The binding is
+`ac58f07c79c20e91bee95394c7e5f47348a4d51fe897861abe465211fff272b5`.
+The frozen-vector digest is
+`1370c4ad2cde46bfb9c333f75eaaf8a53bf978c0b916b5aedead530b755efc36`.
+Full check logs and pytest XML are preserved in `graph-v4-verification/`.
 
 The mechanism development run used detached source `e9d8ca2` in
 `.venv/mechanism-frozen-v1`, five development graph cases and five development
@@ -77,7 +95,7 @@ replay suppression, and restart. Model pins, token budget, prompts, and scenario
 labels remained unchanged. Runtime evidence and operation validation remain in
 place. Artifacts are preserved in `lifecycle-target-development-v4/`; this
 development gate does not establish held-out quality or graph correctness.
-The matrix remains stopped while graph construction is repaired and validated.
+The matrix remains stopped while the repaired graph checkpoint is validated.
 
 The stopped run used frozen source commit `5e852e7` in
 `.venv/eval-frozen-v2`. It started on September 16, 2026 local time, after

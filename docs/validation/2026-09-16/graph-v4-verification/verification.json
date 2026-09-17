@@ -1,0 +1,109 @@
+{
+  "source_commit": "b7a9d9d4d9d6947564696457b0e2754f7e95a801",
+  "source_checkout": "D:\\Development\\mnemos\\mnemos\\.worktrees\\functional-local-memory\\.venv\\graph-v4-frozen",
+  "status": "passed",
+  "started_at": "2026-09-17T04:48:18.579557+00:00",
+  "checks": [
+    {
+      "name": "pytest",
+      "command": [
+        "D:\\Development\\mnemos\\mnemos\\.worktrees\\functional-local-memory\\.venv\\Scripts\\python.exe",
+        "-m",
+        "pytest",
+        "-q",
+        "--junitxml",
+        "D:\\Development\\mnemos\\mnemos\\.worktrees\\functional-local-memory\\.venv\\graph-v4-checks\\pytest.xml"
+      ],
+      "status": "passed",
+      "started_at": "2026-09-17T04:48:18.580650+00:00",
+      "exit_code": 0,
+      "finished_at": "2026-09-17T04:56:48.018981+00:00",
+      "counts": {
+        "tests": 626,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 2
+      }
+    },
+    {
+      "name": "black",
+      "command": [
+        "D:\\Development\\mnemos\\mnemos\\.worktrees\\functional-local-memory\\.venv\\Scripts\\python.exe",
+        "-m",
+        "black",
+        "--check",
+        "."
+      ],
+      "status": "passed",
+      "started_at": "2026-09-17T04:56:48.031884+00:00",
+      "exit_code": 0,
+      "finished_at": "2026-09-17T04:56:50.607221+00:00"
+    },
+    {
+      "name": "mypy",
+      "command": [
+        "D:\\Development\\mnemos\\mnemos\\.worktrees\\functional-local-memory\\.venv\\compat-py310\\Scripts\\python.exe",
+        "-m",
+        "mypy",
+        "."
+      ],
+      "status": "passed",
+      "started_at": "2026-09-17T04:56:50.607981+00:00",
+      "exit_code": 0,
+      "finished_at": "2026-09-17T04:56:59.315596+00:00"
+    },
+    {
+      "name": "javascript",
+      "command": [
+        "node",
+        "--check",
+        "mnemos/ui/app.js"
+      ],
+      "status": "passed",
+      "started_at": "2026-09-17T04:56:59.316307+00:00",
+      "exit_code": 0,
+      "finished_at": "2026-09-17T04:56:59.383678+00:00"
+    },
+    {
+      "name": "build",
+      "command": [
+        "D:\\Development\\mnemos\\mnemos\\.worktrees\\functional-local-memory\\.venv\\Scripts\\python.exe",
+        "-m",
+        "build",
+        "--outdir",
+        "D:\\Development\\mnemos\\mnemos\\.worktrees\\functional-local-memory\\.venv\\graph-v4-checks\\dist"
+      ],
+      "status": "passed",
+      "started_at": "2026-09-17T04:56:59.389690+00:00",
+      "exit_code": 0,
+      "finished_at": "2026-09-17T04:57:28.486877+00:00"
+    },
+    {
+      "name": "twine",
+      "command": [
+        "D:\\Development\\mnemos\\mnemos\\.worktrees\\functional-local-memory\\.venv\\Scripts\\python.exe",
+        "-m",
+        "twine",
+        "check",
+        "D:\\Development\\mnemos\\mnemos\\.worktrees\\functional-local-memory\\.venv\\graph-v4-checks\\dist\\mnemos_memory-0.7.0-py3-none-any.whl",
+        "D:\\Development\\mnemos\\mnemos\\.worktrees\\functional-local-memory\\.venv\\graph-v4-checks\\dist\\mnemos_memory-0.7.0.tar.gz"
+      ],
+      "exit_code": 0,
+      "status": "passed"
+    }
+  ],
+  "runner_sha256": "d2f05b5e2189e3d3ba5ce9b535d8f5adc98d0c5409037cfff7f4460fac0bdfd6",
+  "updated_at": "2026-09-17T04:57:29.045292+00:00",
+  "artifacts": [
+    {
+      "file": "D:\\Development\\mnemos\\mnemos\\.worktrees\\functional-local-memory\\.venv\\graph-v4-checks\\dist\\mnemos_memory-0.7.0-py3-none-any.whl",
+      "bytes": 259269,
+      "sha256": "a440021bd04479fa97458b6397b163046f61f35a73a7056b0082dc71279e84fe"
+    },
+    {
+      "file": "D:\\Development\\mnemos\\mnemos\\.worktrees\\functional-local-memory\\.venv\\graph-v4-checks\\dist\\mnemos_memory-0.7.0.tar.gz",
+      "bytes": 976021,
+      "sha256": "adc082103da50709870ff890d6c27392fa7fdb1d6a4a1e9dfdf6904fa5609894"
+    }
+  ]
+}

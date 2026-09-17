@@ -311,3 +311,15 @@ It preserves the original dataset, labels, budgets, thresholds, and coverage
 minimums. Structural paths are counted without conditioning on successful
 activation, so low-energy targets remain negative outcomes. No held-out graph
 or affective utility claim follows from these implementation checks.
+
+## Frozen graph v4 package verification
+
+The complete suite at detached `b7a9d9d` passed with 624 tests and 2 explicit
+WSL integration skips in 508.75 seconds. Black, strict mypy, JavaScript syntax,
+wheel/source build, and Twine all passed. The installed wheel then passed
+explicit-write, evidence, review, retry, restart, correction, forgetting, and
+graph-readiness checks from outside the checkout. It also contained the UI and
+host helper assets. This smoke used simple embeddings and unavailable
+cognition. The [verification record](graph-v4-verification.md) preserves logs,
+skip reasons, exact commands, and package hashes. Real-model quality remains
+under evaluation.
