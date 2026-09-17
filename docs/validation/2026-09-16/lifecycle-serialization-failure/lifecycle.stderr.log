@@ -1,0 +1,53 @@
+Traceback (most recent call last):
+  File "<frozen runpy>", line 198, in _run_module_as_main
+  File "<frozen runpy>", line 88, in _run_code
+  File "D:\Development\mnemos\mnemos\.worktrees\functional-local-memory\.venv\graph-v4-frozen\benchmarks\local_memory\heldout_run.py", line 310, in <module>
+    raise SystemExit(main())
+                     ~~~~^^
+  File "D:\Development\mnemos\mnemos\.worktrees\functional-local-memory\.venv\graph-v4-frozen\benchmarks\local_memory\heldout_run.py", line 294, in main
+    reports = run_heldout(
+        dataset_path=args.dataset,
+    ...<7 lines>...
+        module_challenge_path=args.module_challenge_dataset,
+    )
+  File "D:\Development\mnemos\mnemos\.worktrees\functional-local-memory\.venv\graph-v4-frozen\benchmarks\local_memory\heldout_run.py", line 242, in run_heldout
+    artifact = ExperimentHarness(dataset, config).run(
+        adapter, checkpoint_path=checkpoint, run_id=run_id
+    )
+  File "D:\Development\mnemos\mnemos\.worktrees\functional-local-memory\.venv\graph-v4-frozen\benchmarks\local_memory\harness.py", line 269, in run
+    save_checkpoint(checkpoint_path, checkpoint)
+    ~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "D:\Development\mnemos\mnemos\.worktrees\functional-local-memory\.venv\graph-v4-frozen\benchmarks\local_memory\resumption.py", line 45, in save_checkpoint
+    json.dump(payload, handle, indent=2, sort_keys=True, ensure_ascii=True)
+    ~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\Ant\AppData\Roaming\uv\python\cpython-3.13.7-windows-x86_64-none\Lib\json\__init__.py", line 179, in dump
+    for chunk in iterable:
+                 ^^^^^^^^
+  File "C:\Users\Ant\AppData\Roaming\uv\python\cpython-3.13.7-windows-x86_64-none\Lib\json\encoder.py", line 433, in _iterencode
+    yield from _iterencode_dict(o, _current_indent_level)
+  File "C:\Users\Ant\AppData\Roaming\uv\python\cpython-3.13.7-windows-x86_64-none\Lib\json\encoder.py", line 407, in _iterencode_dict
+    yield from chunks
+  File "C:\Users\Ant\AppData\Roaming\uv\python\cpython-3.13.7-windows-x86_64-none\Lib\json\encoder.py", line 326, in _iterencode_list
+    yield from chunks
+  File "C:\Users\Ant\AppData\Roaming\uv\python\cpython-3.13.7-windows-x86_64-none\Lib\json\encoder.py", line 407, in _iterencode_dict
+    yield from chunks
+  File "C:\Users\Ant\AppData\Roaming\uv\python\cpython-3.13.7-windows-x86_64-none\Lib\json\encoder.py", line 407, in _iterencode_dict
+    yield from chunks
+  File "C:\Users\Ant\AppData\Roaming\uv\python\cpython-3.13.7-windows-x86_64-none\Lib\json\encoder.py", line 407, in _iterencode_dict
+    yield from chunks
+  File "C:\Users\Ant\AppData\Roaming\uv\python\cpython-3.13.7-windows-x86_64-none\Lib\json\encoder.py", line 326, in _iterencode_list
+    yield from chunks
+  File "C:\Users\Ant\AppData\Roaming\uv\python\cpython-3.13.7-windows-x86_64-none\Lib\json\encoder.py", line 407, in _iterencode_dict
+    yield from chunks
+  File "C:\Users\Ant\AppData\Roaming\uv\python\cpython-3.13.7-windows-x86_64-none\Lib\json\encoder.py", line 326, in _iterencode_list
+    yield from chunks
+  File "C:\Users\Ant\AppData\Roaming\uv\python\cpython-3.13.7-windows-x86_64-none\Lib\json\encoder.py", line 407, in _iterencode_dict
+    yield from chunks
+  File "C:\Users\Ant\AppData\Roaming\uv\python\cpython-3.13.7-windows-x86_64-none\Lib\json\encoder.py", line 407, in _iterencode_dict
+    yield from chunks
+  File "C:\Users\Ant\AppData\Roaming\uv\python\cpython-3.13.7-windows-x86_64-none\Lib\json\encoder.py", line 440, in _iterencode
+    o = _default(o)
+  File "C:\Users\Ant\AppData\Roaming\uv\python\cpython-3.13.7-windows-x86_64-none\Lib\json\encoder.py", line 180, in default
+    raise TypeError(f'Object of type {o.__class__.__name__} '
+                    f'is not JSON serializable')
+TypeError: Object of type ValueError is not JSON serializable

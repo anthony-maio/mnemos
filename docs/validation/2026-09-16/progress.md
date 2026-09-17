@@ -711,3 +711,11 @@ new capture test file reports untyped test helpers.
 
 Native Claude acceptance and full verification of this new source are
 pending. The original v6 duplicate-raw-event failure remains preserved.
+
+The [failed lifecycle archive](lifecycle-serialization-failure/README.md)
+now preserves the completed baseline, the last full checkpoint, manifests,
+queue state, logs, and a read-only diagnostic of the failed observation's
+database. Of the 36 checkpointed full observations, six are complete and
+30 are partial. The final failed observation's in-memory model trace was
+not saved. It is not included in any completed result. A clean frozen
+checkout of `7dd3071` is now running the full suite and package checks.
