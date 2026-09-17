@@ -153,12 +153,12 @@ Current evidence has these boundaries:
 
 | Evidence | Status |
 | --- | --- |
-| Deterministic module and storage tests | Latest committed broad checkpoint: 521 passed, 2 optional WSL checks skipped; later review and graph-discovery changes are undergoing broad verification; see the dated validation record |
+| Deterministic module and storage tests | Source 20f271d: 669 passed, two optional WSL checks skipped; formatting, typing, build, and installed-wheel scope lifecycle checks passed. The first broad attempt carries an environment-sync caveat; unchanged stable repeat pending. See [verification](validation/2026-09-16/claude-scope-verification.md) |
 | Synthetic local service and SQLite restart flow | Observed for one provider-backed fact |
-| Full real-model ablation and held-out quality evaluation | v2 stopped after an evaluator target-mapping defect; 600 baseline and 12 full observations preserved; replacement verification pending; see [run record](validation/2026-09-16/evaluation-running.md) |
-| Installed Claude Code, Codex, and Hermes host smoke | Adapter/service contracts pass; actual WSL bridge and installed Hermes API observed; complete native conversation matrix NOT RUN |
+| Full real-model ablation and held-out quality evaluation | Failed v2 observations preserved; repaired real-model lifecycle preflight passed four cases. Frozen b7 held-out mechanism evaluation is running; seven-profile lifecycle evaluation follows. Quality and module benefit remain unproved; see [run record](validation/2026-09-16/evaluation-running.md) |
+| Installed Claude Code, Codex, and Hermes host smoke | Native d17 Claude capture and restart observed with degraded transcript coverage. Installed 20f Codex generated hooks delivered a random canary and captured both roles across restart using constant fixture vectors. Actual WSL bridge and installed Hermes API observed; complete native lifecycle matrix and Desktop checks remain open |
 | Two-week pilot with external users or projects | NOT RUN |
-| 10,000-fact latency and growth acceptance | Real query embeddings with synthetic facts: recall 506.111 ms p95 fails the 500 ms gate; durable capture 68.228 ms p95 passes the 100 ms gate; database 324,862,864 bytes |
+| 10,000-fact latency and growth acceptance | Frozen b7, real query embeddings with synthetic facts: recall 1,314.583 ms p95 fails the 500 ms gate; durable capture 57.410 ms p95 passes the 100 ms gate; database 324,862,864 bytes. Earlier failed and passing timings remain preserved |
 | Published release acceptance | NOT RUN |
 
 CLI, MCP, UI, backup, and reindex paths have isolated integration checks. Remaining acceptance work includes complete native-host continuity, held-out real-model quality, the failed recall latency gate, and the two-week pilot. Baseline remains the default until measured results justify a different choice.

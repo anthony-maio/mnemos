@@ -599,7 +599,7 @@ Once configured, you can tell your agent:
 
 The agent's memory can filter mundane input, tag emotional context, update stale facts through versioned corrections, and compress captured sessions into lasting knowledge. Automatic processing depends on an enabled project, a reachable configured provider, and successful durable maintenance.
 
-For Claude Code command-hook wiring, use the current host integration in [hooks/hooks.json](hooks/hooks.json). It sends documented lifecycle events and transcript deltas through the service client. Codex and Hermes remain documented adapter paths without a complete real-host smoke in this worktree.
+For Claude Code command-hook wiring, use the current host integration in [hooks/hooks.json](hooks/hooks.json). It sends documented lifecycle events and transcript deltas through the service client. The unreleased local-memory worktree has native Claude capture and restart evidence, and native Codex evidence using generated hook configuration. Hermes has installed-provider and WSL bridge checks, but its native model turn did not complete. These are bounded checks, not the complete cross-host lifecycle matrix. See the [implementation status](docs/validation/2026-09-16/implementation-status.md).
 
 Memory writes now pass through a shared safety firewall across ingestion, reconsolidation, and sleep consolidation. Configure with:
 - `MNEMOS_MEMORY_SAFETY_ENABLED` (`true` by default)
@@ -747,14 +747,15 @@ If `MNEMOS_EMBEDDING_PROVIDER` is unset, Mnemos now infers it from `MNEMOS_LLM_P
 
 ## Compatibility and Release Posture
 
-Mnemos is an active public beta. It is not ready for definitive replacement claims across every host and workflow. The current evidence surface is:
+Mnemos is an active public beta. It is not ready for definitive replacement claims across every host and workflow. The evidence below includes unreleased local-memory worktree changes; it does not certify the published package:
 
 | Client / Surface | Status | Notes |
 |---|---|---|
-| Claude Code | Tier 1 candidate | Adapter, plugin, and transport tests pass; no installed Claude Code session is recorded here. |
+| Claude Code | Native capture observed, lifecycle acceptance open | Installed d17 wheel captured both roles, returned seeded context, and survived restart; transcript coverage was degraded. The newer scope-identity repair has separate adapter and installed-wheel tests. |
 | Claude Desktop | Tier 1 candidate | The checked-in stdio shape passes a local service subprocess test; no installed desktop session is recorded here. |
 | Generic MCP stdio hosts | Tier 1 candidate | The checked-in stdio shape passes a local service subprocess test. |
-| Codex | Tier 2 documented | Supported through MCP + a stronger `AGENTS.md` pack and optional maintenance Automations; host-hook auto-capture is still not shipped. |
+| Codex CLI | Generated native hooks observed, lifecycle acceptance open | Installed 20f wheel's generated TOML hooks delivered a random memory canary, captured both roles, and retained them across restart. Constant fixture vectors and unavailable cognition isolate transport from semantic quality; Desktop and full lifecycle checks remain open. |
+| Hermes | Installed API and bridge observed | The installed MemoryProvider API and WSL-to-Windows bridge passed isolated checks. No native model turn completed. |
 | Cursor / Windsurf / Cline | Tier 2 best effort | Configs and docs exist; Cursor now has a `.cursor/rules` soft-auto path, but host-hook auto-capture is not yet shipped. |
 
 The current product promise is narrower than the architecture story:
