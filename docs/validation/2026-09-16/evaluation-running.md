@@ -1,6 +1,12 @@
 # Real-model evaluation status
 
-## Current checkpoint: September 17, 2026, 18:29 UTC
+## Current checkpoint: September 17, 2026, 19:55 UTC
+
+The resumed held-out mechanism worker completed with exit code zero at
+19:48 UTC. The coordinator then started lifecycle worker PID 47588, observed
+live at this checkpoint. The seven-profile lifecycle matrix is now running.
+The completed mechanism phase has not been used to tune the frozen settings,
+and no quality conclusion is accepted before the complete comparison.
 
 The v4 queue resumed at 18:29 UTC after the local machine's power interruption
 and restart at 18:09 UTC. The original process handle and worker PIDs were
@@ -17,8 +23,8 @@ The [interruption snapshot](../2026-09-17/queue-interruption-v1/README.md) and
 The interrupted run uses frozen `d94ded6`, `qwen3.5:9b`
 with thinking disabled and `nomic-embed-text:latest`. Development mechanism,
 lifecycle preflight, and 10,000-fact performance phases completed. The
-held-out mechanism phase is continuing; the seven-profile lifecycle matrix
-has not started. Recovery retained 62 completed case/pair IDs, 112 graph
+held-out mechanism phase finished; the seven-profile lifecycle matrix
+is continuing. Recovery retained 62 completed case/pair IDs, 112 graph
 observation rows, and 150 affective observation rows, including partial cases.
 Those counts are execution progress, not quality outcomes.
 No held-out quality conclusion is accepted yet.
@@ -34,12 +40,12 @@ status and outputs are under `real-model-v4/`, with persistent checkpoints
 under `.venv/real-model-work-v4/`. The queue retains its original source,
 dataset, model-digest, and option bindings. Later embedding-role and
 conflict-collision changes are not part of this run. The latest complete
-package checkpoint is separate source `6600dc2`, with 865 tests passed and
+package checkpoint is separate source `56182d9`, with 898 tests passed and
 four skipped, followed by formatting, typing, JavaScript, build, and Twine
-checks. Its fresh installed wheel passed all 42 selected contract cases and
+checks. Its fresh installed wheel passed all 87 selected contract cases and
 the synthetic Stop replay assertions on C: SSD fixtures. These checks do not
 promote the frozen evaluation's quality results or resolve the earlier D:
-storage timeouts. See the [package checkpoint](ssd-package-checkpoint-v1/README.md).
+storage timeouts. See the [package checkpoint](../2026-09-17/service-runtime-package-checkpoint-v1/README.md).
 
 Current model pins:
 

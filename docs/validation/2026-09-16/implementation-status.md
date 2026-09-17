@@ -4,14 +4,14 @@ This record covers the unreleased `wt/functional-local-memory` worktree. It
 separates implemented behavior from acceptance evidence. The original task
 boundaries and thresholds remain in the [implementation plan](../../plans/2026-09-16-functional-local-memory.md).
 
-The latest package checkpoint is source `6600dc2`. Its frozen verification
-passed 865 tests with four platform-specific skips, formatting, typing,
-JavaScript, build, and Twine checks. A fresh installed wheel passed 42
+The latest package checkpoint is source `56182d9`. Its frozen verification
+passed 898 tests with four platform-specific skips, formatting, typing,
+JavaScript, build, and Twine checks. A fresh installed wheel passed 87
 contract cases and seven replay assertions. These are package and installed
 runtime checks; they do not close native-host, real-model, latency, pilot, or
-publication gates. See the [SSD package checkpoint](ssd-package-checkpoint-v1/README.md).
+publication gates. See the [service/runtime package checkpoint](../2026-09-17/service-runtime-package-checkpoint-v1/README.md).
 
-A newer full-suite attempt at `e1fd56e` finished with 897 passed, one failed,
+An earlier full-suite attempt at `e1fd56e` finished with 897 passed, one failed,
 and four skipped. A list response in the synthetic Codex continuity fixture
 lacked `facts`; its cause is under investigation. The runner stopped before
 building a new wheel. The [failed checkpoint](../2026-09-17/service-runtime-checkpoint-failure-v1/README.md)
@@ -42,7 +42,7 @@ capture diagnostics and complete lifecycle acceptance remain open.
 
 | Plan item | Current implementation and evidence | Acceptance state |
 | --- | --- | --- |
-| T01 Runtime | Configured providers, SQLite default, explicit mock rejection, readiness checks, health reporting, and installed entry points are covered by the package and wheel checks. | Installed doctor v5 passed empty-store, legacy-row, and mock-rejection cases against source 6600dc2. These are configuration checks; provider reachability was not probed. Later managed service logging and omitted-provider startup repairs pass focused tests, including actual subprocess recall, and await a new full/package checkpoint. |
+| T01 Runtime | Configured providers, SQLite default, explicit mock rejection, readiness checks, health reporting, and installed entry points are covered by the package and wheel checks. | Installed doctor v5 passed configuration cases at 6600dc2 without a provider reachability probe. Managed service logging and omitted-provider startup repairs are now covered by the full 56182d9 checkpoint and its 87 installed contract cases, including actual subprocess recall. |
 | T02 Scope | Profile, project, workspace, membership, enabled-project capture, foreign-project filtering, and legacy/routing review are implemented and covered by contract tests. | Local scope contract tested. Native identity coverage across every host remains open. |
 | T03 Durable writes | Atomic source and job creation, leases, retries, CAS, revisions, evidence, rollback, and restart persistence are implemented and tested. | Local durability tested. Long-running operational recovery remains open. |
 | T04 Local service | Authenticated loopback ownership, private descriptors, outbox handling, bounded shutdown, and HTTP/subprocess paths are implemented and tested. | Local service and installed replay checks pass. Native host lifecycle remains open. |
@@ -54,7 +54,7 @@ capture diagnostics and complete lifecycle acceptance remain open.
 | T10 Graph | Persisted mutual top-k links, scope-safe traversal, bounded recovery, insertion-order controls, and capacity diagnostics are implemented and tested. | Structural controls pass. Graph utility and eligible-target coverage are not established by the available evidence. |
 | T11 Forget | Exact fact deletion, suppression, replay protection, inflight handling, restore behavior, and selected related-removal preview/apply are implemented and tested. | Local and installed related-forget checks pass. Native lifecycle remains open. Logical forgetting does not erase external transcripts or historical backups. |
 | T12 Claude Code | Hook capture, transcript deltas, checkpoints, capture-before-recall, identity diagnostics, and replay repair are implemented. | Native v12 passed health and retrieve calls against the intended project store, plus three hooks, identity, restart, and replay. The v11 pending-server failure is preserved. Native extraction, correction, and forget acceptance remain open. See the [native read archive](../2026-09-17/native-claude-mcp-v12/README.md). |
-| T13 Codex | Generated hook configuration, native payload handling, explicit MCP fallback, and bounded transport checks are implemented. | Generated-config canary and restart/replay evidence pass. Full native MCP mutation and cross-host lifecycle acceptance remain open. |
+| T13 Codex | Generated hook configuration, native payload handling, explicit MCP fallback, and bounded transport checks are implemented. | Generated-config canary and restart/replay evidence pass. Native retrieve v2 against installed 56182d9 was cancelled by the host before returning a result. Native retrieval, mutation, and cross-host lifecycle acceptance remain open. See the [cancelled read probe](../2026-09-17/native-codex-retrieve-v2/README.md). |
 | T14 Hermes | Installed provider integration, registry handling, Windows/WSL bridge behavior, and entry-point discovery are implemented and tested. | Installed bridge checks pass. A native model turn has not passed. |
 | T15 UI | Project enable/pause, readiness, facts/history, correction/forget, captured-copy review, job state, and routing review are exposed and covered by API/browser checks. | Local UI and control-plane checks pass. Operational pilot and native-host coverage remain open. |
 | T16 Recovery | Backup, integrity, new-path restore, suppression merge, staged reindex, and activation backup behavior are implemented and tested. | Local recovery contracts pass, including a backup during an active writer transaction. Live data migration remains separately authorization-bound. |

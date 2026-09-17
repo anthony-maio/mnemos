@@ -1,0 +1,8 @@
+{"type":"thread.started","thread_id":"01a0b0eb-ce34-7041-903b-d79b4bfb2bfb"}
+{"type":"turn.started"}
+{"type":"item.completed","item":{"id":"item_0","type":"error","message":"Skill descriptions were shortened to fit the 2% skills context budget. Codex can still see every skill, but some descriptions are shorter. Disable unused skills or plugins to leave more room for the rest."}}
+{"type":"item.completed","item":{"id":"item_1","type":"agent_message","text":"I’ll retrieve the project-scoped memory exactly once and report it verbatim."}}
+{"type":"item.started","item":{"id":"item_2","type":"mcp_tool_call","server":"mnemos","tool":"mnemos_retrieve","arguments":{"query":"Native retrieval fixture marker alpha.","current_scope":"project","allowed_scopes":["project"]},"result":null,"error":null,"status":"in_progress"}}
+{"type":"item.completed","item":{"id":"item_2","type":"mcp_tool_call","server":"mnemos","tool":"mnemos_retrieve","arguments":{"query":"Native retrieval fixture marker alpha.","current_scope":"project","allowed_scopes":["project"]},"result":null,"error":{"message":"user cancelled MCP tool call"},"status":"failed"}}
+{"type":"item.completed","item":{"id":"item_3","type":"agent_message","text":"The Mnemos retrieval was called exactly once, but the tool returned: “user cancelled MCP tool call.” No fact was returned."}}
+{"type":"turn.completed","usage":{"input_tokens":38748,"cached_input_tokens":29568,"cache_write_input_tokens":0,"output_tokens":253,"reasoning_output_tokens":97}}
