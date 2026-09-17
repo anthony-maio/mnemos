@@ -18,7 +18,7 @@ from urllib.request import Request, urlopen
 
 from mnemos.scopes import ProjectIdentity, ScopeRegistry, WorkspaceIdentity
 
-from .artifacts import ArtifactRecorder
+from .artifacts import ArtifactRecorder, environment_metadata
 from .contracts import HeldoutDataset, load_dataset
 from .dev_smoke import _code_provenance
 from .harness import (
@@ -129,6 +129,7 @@ def run_heldout(
         "timeout_seconds": 120.0,
         "top_k": 5,
         "max_context_tokens": 1200,
+        "runtime": environment_metadata(),
     }
     options_sha256 = hashlib.sha256(
         json.dumps(options, sort_keys=True, separators=(",", ":")).encode("utf-8")
@@ -279,7 +280,7 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument(
         "--dataset",
         type=Path,
-        default=Path(__file__).with_name("datasets") / "local-memory-heldout-v2.jsonl",
+        default=Path(__file__).with_name("datasets") / "local-memory-heldout-v3.jsonl",
     )
     parser.add_argument("--module-challenge-dataset", type=Path)
     parser.add_argument("--output-dir", type=Path, required=True)

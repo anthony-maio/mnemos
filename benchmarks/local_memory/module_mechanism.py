@@ -1194,8 +1194,10 @@ def _graph_correctness(rows: Sequence[Mapping[str, Any]]) -> dict[str, Any]:
                 missing.append({**identity, "check": check})
             elif passed is not True:
                 failures.append({**identity, "check": check})
+    status = "FAIL" if failures else ("NOT MEASURED" if missing or not rows else "PASS")
     return {
-        "status": "FAIL" if failures else ("NOT MEASURED" if missing or not rows else "PASS"),
+        "status": status,
+        "correctness_pass": status == "PASS",
         "failures": failures,
         "missing": missing,
         "cycle_observations": cycle_observations,
@@ -1515,10 +1517,18 @@ def evaluate_dataset(
         report["coverage"]["failed"]
         or report["coverage"]["affective_pairs_with_all_conditions_and_repetitions"] < 50
     )
+    report["correctness_pass"] = report["graph_correctness"]["correctness_pass"]
+    report["overall_mechanism_gates_pass"] = bool(
+        report["execution"]["complete"]
+        and not report["coverage"]["failed"]
+        and report["correctness_pass"]
+    )
     report["acceptance"] = {
         "status": "NOT RUN",
         "coverage_pass": not report["coverage"]["failed"],
         "graph_correctness": report["graph_correctness"]["status"],
+        "correctness_pass": report["correctness_pass"],
+        "overall_mechanism_gates_pass": report["overall_mechanism_gates_pass"],
         "reason": "coverage and mechanism observations require separate scientific interpretation",
     }
     if output_dir is not None:
@@ -1554,6 +1564,8 @@ def evaluate_dataset(
             f"Execution seed: {EXECUTION_SEED}",
             f"Coverage failed: {report['coverage']['failed']}",
             f"Graph correctness: {report['graph_correctness']['status']}",
+            f"Correctness pass: {report['correctness_pass']}",
+            f"Overall mechanism gates pass: {report['overall_mechanism_gates_pass']}",
             "Graph observations use production SQLite snapshots. Affective ranking uses synthetic gold states and the production scorer; model classifier fidelity is separate.",
             "Embedding and classifier provider provenance is recorded by the launcher. Offline observations alone do not establish real-model use or semantic quality.",
             "",

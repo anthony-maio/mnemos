@@ -228,3 +228,36 @@ and thread handle on timeout, and permits a later stop to finish cleanup
 without interrupting an asynchronous close. Service and cross-host checks
 passed after the fix, including a deliberately delayed close and repeated
 stop attempts. Broad verification of the final source remains pending.
+
+## Evaluator repair and mechanism development
+
+The lifecycle v2 run was subsequently stopped after 600 baseline and 12 full
+observations. Every baseline correction and forget attempt failed evaluator
+target resolution before the service action. These files remain diagnostic
+evidence; the earlier entries describing that process as ongoing are historical.
+The v3 amendment preserves all 800 source events and adds explicit target
+metadata. It is a repaired rerun of observed labels, not a fresh unseen dataset.
+
+The replacement mechanism harness is committed at `e9d8ca2`. An offline
+development fixture completed three persistent SQLite graph repetitions and
+six controlled affective observations using synthetic embeddings. Graph
+correctness passed; no model calls occurred and held-out coverage was not met.
+The real-embedding mechanism development run now uses a detached checkout of
+that commit. Its current status and artifact paths are in
+[evaluation-running.md](evaluation-running.md).
+
+The product wheel built from `4f0ec79` passed an installed-package smoke from
+`D:/WindowsTemp`, covering evidence, restart, correction, forget, exhausted-job
+retry, legacy review, routing diagnostic dismissal, and packaged assets. The
+smoke used unavailable cognition and synthetic embeddings. A fixture type
+narrowing followed in `8fb2972`; final source verification remains separate
+from model-quality acceptance.
+
+The first completed real-embedding graph development repetition exposed
+insertion-order dependence: reversing insertion changed persisted edges and
+ranked results, although the independent activation-energy calculation matched.
+The development run was stopped with its databases and raw observations
+preserved. This is a production graph construction investigation, and it blocks
+the held-out mechanism run. The focused evaluator and graph suite passed
+38 tests in 92.18 seconds; those tests did not establish this real-embedding
+insertion-order property.

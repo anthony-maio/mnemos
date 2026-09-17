@@ -19,8 +19,34 @@ and exact frozen-text matching is narrower than semantic correctness.
 
 Processes 47644 and 55876 were stopped intentionally after command-line
 identity verification. Do not resume this v2 run or its old coordinator. The
-files below are retained diagnostic evidence. No model experiment is currently
-running; the replacement is undergoing offline verification.
+files below are retained diagnostic evidence. The replacement lifecycle run
+has not started. The mechanism development run was also stopped after a
+production graph correctness failure. No model experiment is currently running.
+
+The mechanism development run used detached source `e9d8ca2` in
+`.venv/mechanism-frozen-v1`, five development graph cases and five development
+affective pairs, with three repetitions. Its artifacts are in
+`mechanism-development-v1/`; persistent fixtures are in
+`.venv/mechanism-development-work-v1/`. Live provider metadata matches the
+model pins below. The manifest binding is
+`4738f773f7a56919c459ba1ea36c69d9893085ba16a7775f527305b8545109b9`.
+Its first completed graph repetition changed both persisted edges and ranked
+results when the fact insertion order was reversed. The energy oracle still
+matched production. Processes 29796 and 31636 were stopped after command-line
+identity verification; `mechanism-development-v1/stopped.json` records the
+completed measurement hash. The databases and partial next repetition remain
+intact. No held-out mechanism case was executed.
+
+This development run cannot meet the held-out coverage minimums and cannot
+establish quality acceptance. A preceding offline fixture completed three
+production SQLite graph repetitions with synthetic embeddings and passed the
+graph correctness controls. It made no model calls.
+
+The lifecycle v3 amendment preserves every original v2 event, fact, and query.
+It adds source-event target identifiers and separates correction content from
+the action instruction. Since the v2 labels were already observed, v3 is a
+repaired rerun, not new unseen held-out evidence. A new development fixture
+will exercise actual correction and forget dispatch before the matrix restarts.
 
 The stopped run used frozen source commit `5e852e7` in
 `.venv/eval-frozen-v2`. It started on September 16, 2026 local time, after

@@ -314,6 +314,8 @@ def test_affective_report_labels_observations_and_coverage_separately(tmp_path: 
     assert report["interpretation"].startswith("observations only")
     assert report["acceptance"]["status"] == "NOT RUN"
     assert report["coverage"]["failed"] is True
+    assert report["acceptance"]["coverage_pass"] is False
+    assert report["acceptance"]["overall_mechanism_gates_pass"] is False
     assert report["affective"]["summary"]["incomplete_pair_ids"] == []
 
 

@@ -175,7 +175,7 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument(
         "--dataset",
         type=Path,
-        default=Path(__file__).with_name("datasets") / "local-memory-heldout-v2.jsonl",
+        default=Path(__file__).with_name("datasets") / "local-memory-heldout-v3.jsonl",
     )
     parser.add_argument("--output-dir", type=Path, required=True)
     parser.add_argument("--session", default="dev-001")

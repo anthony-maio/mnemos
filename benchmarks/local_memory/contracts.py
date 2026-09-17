@@ -15,6 +15,8 @@ from pathlib import Path
 from typing import Any
 
 DATASET_VERSION = "local-memory-heldout-v2"
+LIFECYCLE_V3_VERSION = "local-memory-heldout-v3"
+SUPPORTED_DATASET_VERSIONS = {DATASET_VERSION, LIFECYCLE_V3_VERSION}
 MINIMUMS = {
     "heldout_sessions": 200,
     "critical_facts": 100,
@@ -67,6 +69,9 @@ class SourceEvent:
     target_user_profile_id: str | None = None
     target_project_id: str | None = None
     target_workspace_id: str | None = None
+    target_source_event_id: str | None = None
+    target_fact_id: str | None = None
+    replacement_content: str | None = None
 
 
 @dataclass(frozen=True)
@@ -217,6 +222,21 @@ def _parse_event(raw: Any, location: str) -> SourceEvent:
         target_workspace_id=(
             _required_text(raw.get("target_workspace_id"), "target_workspace_id", location)
             if raw.get("target_workspace_id") is not None
+            else None
+        ),
+        target_source_event_id=(
+            _required_text(raw.get("target_source_event_id"), "target_source_event_id", location)
+            if raw.get("target_source_event_id") is not None
+            else None
+        ),
+        target_fact_id=(
+            _required_text(raw.get("target_fact_id"), "target_fact_id", location)
+            if raw.get("target_fact_id") is not None
+            else None
+        ),
+        replacement_content=(
+            _required_text(raw.get("replacement_content"), "replacement_content", location)
+            if raw.get("replacement_content") is not None
             else None
         ),
     )
@@ -372,6 +392,112 @@ def _canonical_lines(path: Path) -> bytes:
     return path.read_bytes()
 
 
+def _validate_v3_lifecycle_targets(
+    session: SessionScenario,
+    events_by_id: dict[str, SourceEvent],
+    facts_by_id: dict[str, FactRecord],
+) -> None:
+    """Validate explicit action targets added by the v3 amendment."""
+
+    event_positions = {event.event_id: index for index, event in enumerate(session.events)}
+
+    def resolved_context(event: SourceEvent) -> dict[str, str | None]:
+        return {
+            "target_user_profile_id": event.target_user_profile_id,
+            "target_project_id": event.target_project_id or session.project_id,
+            "target_workspace_id": event.target_workspace_id,
+        }
+
+    for event in session.events:
+        has_target = any(
+            value is not None
+            for value in (
+                event.target_source_event_id,
+                event.target_fact_id,
+                event.replacement_content,
+            )
+        )
+        if event.lifecycle_operation not in {"correct", "forget"}:
+            if has_target:
+                raise ValueError(
+                    f"event {event.event_id}: target metadata is only valid for correct or forget"
+                )
+            continue
+        if event.target_source_event_id is None or event.target_fact_id is None:
+            raise ValueError(f"event {event.event_id}: lifecycle target metadata is required")
+        target_event = events_by_id.get(event.target_source_event_id)
+        target_fact = facts_by_id.get(event.target_fact_id)
+        if target_event is None:
+            raise ValueError(
+                f"event {event.event_id}: target_source_event_id does not exist before action"
+            )
+        if target_fact is None:
+            raise ValueError(f"event {event.event_id}: target_fact_id does not exist")
+        if event_positions[target_event.event_id] >= event_positions[event.event_id]:
+            raise ValueError(
+                f"event {event.event_id}: target event must precede action in event order"
+            )
+        if target_event.occurred_at >= event.occurred_at:
+            raise ValueError(f"event {event.event_id}: target event must precede action")
+        if (
+            target_event.role != "user"
+            or target_event.lifecycle_operation not in {"capture", "remember"}
+            or (
+                target_event.lifecycle_operation == "remember"
+                and target_event.write_mode != "explicit"
+            )
+        ):
+            raise ValueError(
+                f"event {event.event_id}: target must be an earlier user capture or explicit user remember"
+            )
+        target_context = resolved_context(target_event)
+        action_context = resolved_context(event)
+        for field in target_context:
+            if target_context[field] != action_context[field]:
+                raise ValueError(
+                    f"event {event.event_id}: target event context mismatch for {field}"
+                )
+        if target_event.evidence_fact_ids.count(event.target_fact_id) != 1:
+            raise ValueError(
+                f"event {event.event_id}: target event must evidence target_fact_id exactly once"
+            )
+        if event.target_source_event_id not in target_fact.evidence_event_ids:
+            raise ValueError(
+                f"event {event.event_id}: target source event is not gold evidence for target_fact_id"
+            )
+        if event.lifecycle_operation == "forget":
+            if event.replacement_content is not None:
+                raise ValueError(f"event {event.event_id}: forget cannot have replacement_content")
+            if target_fact.gold_status != "forgotten":
+                raise ValueError(f"event {event.event_id}: forget target must be forgotten")
+        else:
+            replacement = event.replacement_content
+            if replacement is None or not replacement.strip():
+                raise ValueError(f"event {event.event_id}: correct needs replacement_content")
+            if target_fact.gold_status != "superseded":
+                raise ValueError(f"event {event.event_id}: correct target must be superseded")
+            replacement_facts = [
+                fact
+                for fact in facts_by_id.values()
+                if fact.fact_id != target_fact.fact_id and fact.content == replacement
+            ]
+            if len(replacement_facts) != 1:
+                raise ValueError(
+                    f"event {event.event_id}: replacement_content must identify one new fact"
+                )
+            replacement_fact = replacement_facts[0]
+            if replacement_fact.gold_status != "supported":
+                raise ValueError(f"event {event.event_id}: replacement fact must be supported")
+            if replacement_fact.fact_id not in event.evidence_fact_ids:
+                raise ValueError(
+                    f"event {event.event_id}: replacement fact must be evidenced by correct action"
+                )
+            if event.event_id not in replacement_fact.evidence_event_ids:
+                raise ValueError(
+                    f"event {event.event_id}: replacement fact must be evidenced by correct action"
+                )
+
+
 def validate_dataset(dataset: HeldoutDataset) -> HeldoutDataset:
     """Validate counts, labels, uniqueness, and development/held-out separation."""
     sessions = dataset.sessions
@@ -446,6 +572,7 @@ def validate_dataset(dataset: HeldoutDataset) -> HeldoutDataset:
         fact_ids_for_session = {fact.fact_id for fact in session.facts}
         event_ids_for_session = set(event_ids)
         events_by_id = {event.event_id: event for event in session.events}
+        facts_by_id = {fact.fact_id: fact for fact in session.facts}
         for fact in session.facts:
             if set(fact.evidence_event_ids) - event_ids_for_session:
                 raise ValueError(f"fact {fact.fact_id} references an unknown evidence event")
@@ -460,6 +587,8 @@ def validate_dataset(dataset: HeldoutDataset) -> HeldoutDataset:
         for event in session.events:
             if set(event.evidence_fact_ids) - fact_ids_for_session:
                 raise ValueError(f"event {event.event_id} references an unknown fact")
+        if dataset.version == LIFECYCLE_V3_VERSION:
+            _validate_v3_lifecycle_targets(session, events_by_id, facts_by_id)
         if not any(event.lifecycle_operation == "restart" for event in session.events):
             raise ValueError(f"session {session.session_id} needs a restart boundary")
     query_ids = [query.query_id for query in queries]
@@ -524,7 +653,7 @@ def load_dataset(path: Path) -> HeldoutDataset:
     if manifest.get("advertised_as_real") is not False:
         raise ValueError("synthetic dataset cannot be advertised as real")
     version = _required_text(manifest.get("dataset_version"), "dataset_version", "manifest")
-    if version != DATASET_VERSION:
+    if version not in SUPPORTED_DATASET_VERSIONS:
         raise ValueError(f"unsupported dataset version {version!r}")
     sessions = tuple(_parse_session(item, index) for index, item in enumerate(records))
     development_ids = tuple(str(value) for value in manifest.get("development_session_ids", []))

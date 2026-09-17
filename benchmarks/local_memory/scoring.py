@@ -72,7 +72,11 @@ def paired_bootstrap_interval(
 
     Resampling is paired by index, preserving the same session/query cases in
     both profiles. A fixed seed makes reports reproducible and is recorded by
-    the harness. This function performs no model work.
+    the harness. With cluster IDs, each draw selects whole clusters with
+    replacement, retaining every observation in each selected cluster. The
+    estimand remains the observation-weighted mean, so unequal cluster sizes
+    can produce resamples of different lengths. This function performs no
+    model work.
     """
     if len(baseline) != len(treatment) or not baseline:
         raise ValueError("paired samples must have equal non-zero lengths")

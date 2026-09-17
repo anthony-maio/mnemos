@@ -155,3 +155,35 @@ def test_path_oracle_uses_strongest_allowed_path_without_cycle_amplification() -
     assert measured["bridge"] == pytest.approx(0.8 * 0.9)
     assert measured["target"] == pytest.approx(0.8 * 0.9 * 0.8 * 0.95)
     assert "foreign" not in measured
+
+
+def test_structural_path_is_retained_when_activation_is_below_threshold() -> None:
+    from benchmarks.local_memory.graph_measurement import _paths
+    from mnemos.config import SpreadingConfig
+
+    config = SpreadingConfig(max_hops=3, activation_threshold=0.3, decay_rate=0.2)
+    edges = {"seed": {"bridge": 0.9}, "bridge": {"target": 0.5}}
+    activation = _paths(edges, "seed", "target", {"seed", "bridge", "target"}, config)
+    structural = _paths(
+        edges,
+        "seed",
+        "target",
+        {"seed", "bridge", "target"},
+        config,
+        min_energy=0.0,
+    )
+    assert activation == []
+    assert structural[0]["nodes"] == ["seed", "bridge", "target"]
+    assert structural[0]["energy"] == pytest.approx(0.288)
+
+
+def test_three_node_cycle_reports_scope_allowed_ids() -> None:
+    from benchmarks.local_memory.graph_measurement import _three_node_cycles
+
+    edges = {
+        "a": {"b": 0.8, "foreign": 0.8},
+        "b": {"a": 0.8, "c": 0.8},
+        "c": {"a": 0.8, "b": 0.8},
+        "foreign": {"a": 0.8},
+    }
+    assert _three_node_cycles(edges, {"a", "b", "c"}) == [["a", "b", "c"]]

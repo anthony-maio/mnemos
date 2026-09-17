@@ -15,6 +15,7 @@ import json
 import re
 import time
 from collections.abc import Callable, Mapping
+from datetime import datetime
 from pathlib import Path
 from typing import Any, cast
 
@@ -95,6 +96,29 @@ class OllamaEvaluatorAdapter:
         operations: list[dict[str, Any]] = []
         errors: list[dict[str, Any]] = []
         unsupported: list[str] = []
+        lifecycle_summary: dict[str, dict[str, int]] = {
+            operation: {
+                "attempted": 0,
+                "committed": 0,
+                "rejected": 0,
+                "mapping_invalid": 0,
+                "missing_target": 0,
+            }
+            for operation in ("correct", "forget")
+        }
+
+        def note_lifecycle(operation: str, status: str) -> None:
+            summary = lifecycle_summary.get(operation)
+            if summary is None:
+                return
+            summary["attempted"] += 1
+            bucket = {
+                "target_mapping_invalid": "mapping_invalid",
+                "missing_accepted_target": "missing_target",
+                "committed": "committed",
+            }.get(status, "rejected")
+            summary[bucket] += 1
+
         retrievals: dict[str, Mapping[str, Any] | None] = {}
         service: Any | None = None
         cold_latency_ms: float | None = None
@@ -126,6 +150,7 @@ class OllamaEvaluatorAdapter:
                 continue
             if service is None:
                 errors.append({"operation": operation, "error": "service_unavailable"})
+                note_lifecycle(operation, "rejected")
                 continue
             try:
                 if operation in {"correct", "forget"}:
@@ -146,15 +171,54 @@ class OllamaEvaluatorAdapter:
                     ),
                 }
                 if isinstance(result, Mapping):
-                    for field in ("job_id", "processing_status"):
+                    for field in (
+                        "job_id",
+                        "processing_status",
+                        "fact_id",
+                        "forgotten",
+                        "expected_version",
+                    ):
                         value = result.get(field)
                         if value is not None:
                             operation_record[field] = value
                 operations.append(operation_record)
-                if operation == "forget" and isinstance(result, Mapping):
-                    if result.get("status") in {"unsupported", "rejected"}:
-                        unsupported.append("forget")
+                if operation in {"correct", "forget"}:
+                    result_status = (
+                        str(result.get("status", "returned"))
+                        if isinstance(result, Mapping)
+                        else "returned"
+                    )
+                    note_lifecycle(operation, result_status)
+                    if result_status != "committed":
+                        if result_status in {"unsupported", "rejected"}:
+                            unsupported.append(operation)
+                        errors.append(
+                            {
+                                "operation": operation,
+                                "event_id": event.event_id,
+                                "error": "lifecycle_not_committed",
+                                "status": result_status,
+                            }
+                        )
+            except _TargetMappingError as exc:
+                note_lifecycle(operation, exc.status)
+                operations.append(
+                    {
+                        "operation": operation,
+                        "event_id": event.event_id,
+                        "status": exc.status,
+                    }
+                )
+                errors.append(
+                    {
+                        "operation": operation,
+                        "event_id": event.event_id,
+                        "error": exc.status,
+                        "reason": exc.reason,
+                    }
+                )
             except _UnsupportedOperation as exc:
+                note_lifecycle(operation, "rejected")
                 unsupported.append(operation)
                 operations.append(
                     {"operation": operation, "event_id": event.event_id, "status": "unsupported"}
@@ -163,6 +227,7 @@ class OllamaEvaluatorAdapter:
                     {"operation": operation, "event_id": event.event_id, "error": str(exc)}
                 )
             except Exception as exc:
+                note_lifecycle(operation, "rejected")
                 errors.append(self._error(operation, exc, event.event_id))
 
         if service is not None:
@@ -324,6 +389,7 @@ class OllamaEvaluatorAdapter:
                     "source": "service_factory",
                 },
                 "operations": operations,
+                "lifecycle_summary": lifecycle_summary,
                 "errors": errors,
                 "unsupported_operations": sorted(set(unsupported)),
                 "unsupported_modules": profile_gaps,
@@ -347,6 +413,7 @@ class OllamaEvaluatorAdapter:
                     "State pairs use paired natural-language queries; no same-text embedding control is claimed.",
                     "surprisal_filter_kept is derived from durable job encoding_diagnostics and remains null when a job result is unavailable.",
                     "length_filter_kept is a frozen counterfactual shadow policy, not an applied service filter decision.",
+                    "stale_fact_rate is a returned-row substring proxy, not a unique-fact or query-level accuracy measure.",
                 ],
                 "provenance": {
                     "model_sha256": self.model_sha256 or None,
@@ -372,7 +439,7 @@ class OllamaEvaluatorAdapter:
         profile: ExperimentProfile,
         repetition: int,
     ) -> Mapping[str, Any]:
-        event_id = f"{event.event_id}-{profile.name}-r{repetition}"
+        event_id = self._runtime_event_id(event.event_id, profile, repetition)
         if event.lifecycle_operation in {"capture", "noise", "response"}:
             event_context = self._target_context(context, event)
             return self._dispatch(
@@ -399,19 +466,36 @@ class OllamaEvaluatorAdapter:
                 },
             )
         if event.lifecycle_operation in {"correct", "forget"}:
-            target = self._resolve_runtime_target(service, event, session)
+            action_context = self._target_context(context, event)
+            target = self._resolve_runtime_target(
+                service,
+                event,
+                session,
+                context=context,
+                profile=profile,
+                repetition=repetition,
+            )
             if target is None:
                 raise _UnsupportedOperation(
                     f"{event.lifecycle_operation} target is not resolvable from runtime facts"
                 )
             payload = {
                 "event_id": event_id,
-                "context": dict(context),
-                "content": event.content,
+                "context": dict(action_context),
+                # v3 supplies the replacement separately from the action's
+                # natural-language instruction. Keep the v2 payload behavior
+                # when loading an older fixture.
+                "content": event.replacement_content or event.content,
                 "fact_id": target["id"],
                 "expected_version": target.get("version", 1),
             }
-            return self._dispatch(service, event.lifecycle_operation, payload)
+            result = dict(self._dispatch(service, event.lifecycle_operation, payload))
+            # Services may return only the job envelope for correction. Keep
+            # the resolved identity and CAS version in the raw operation trace
+            # so a lifecycle result remains auditable after the service closes.
+            result.setdefault("fact_id", target["id"])
+            result.setdefault("expected_version", target.get("version", 1))
+            return result
         raise _UnsupportedOperation(f"lifecycle operation {event.lifecycle_operation!r}")
 
     def _run_retrieval(
@@ -425,7 +509,7 @@ class OllamaEvaluatorAdapter:
         query_id: str,
     ) -> Mapping[str, Any] | None:
         try:
-            result = self._dispatch(
+            raw_result = self._dispatch(
                 service,
                 "retrieve",
                 {
@@ -437,20 +521,148 @@ class OllamaEvaluatorAdapter:
                     "profile": "biomimetic" if profile.name != "baseline" else "baseline",
                 },
             )
+            result, scope_validation = self._validate_retrieval_scope(
+                service, raw_result, context, errors, query_id
+            )
             operation_record: dict[str, Any] = {
                 "operation": "retrieve",
                 "query_id": query_id,
-                "status": "returned",
+                "status": scope_validation["status"],
+                "scope_validation": scope_validation,
             }
+            if isinstance(raw_result.get("facts"), list):
+                # Keep the host response auditable while exposing only the
+                # validated candidates to metric helpers and later callers.
+                operation_record["observed_facts"] = raw_result["facts"]
             if isinstance(result, Mapping) and isinstance(result.get("facts"), list):
                 # Preserve the observed candidate order and production score
                 # breakdown, including graph energy, for module diagnostics.
                 operation_record["facts"] = result["facts"]
             operations.append(operation_record)
-            return result if isinstance(result, Mapping) else None
+            return result
         except Exception as exc:
             errors.append(self._error("retrieve", exc, query_id))
             return None
+
+    def _validate_retrieval_scope(
+        self,
+        service: Any,
+        result: Mapping[str, Any],
+        context: Mapping[str, Any],
+        errors: list[dict[str, Any]],
+        query_id: str,
+    ) -> tuple[Mapping[str, Any] | None, dict[str, Any]]:
+        """Filter foreign candidates before any retrieval metric sees them.
+
+        Production retrievals must return the profile and scope metadata that
+        made a candidate eligible. Injected fixtures may omit that metadata so
+        older offline tests remain usable, but the trace labels those rows as
+        unverified instead of claiming a scope-safe hit.
+        """
+        raw_facts = result.get("facts")
+        if not isinstance(raw_facts, list):
+            errors.append(
+                {
+                    "operation": "retrieve",
+                    "query_id": query_id,
+                    "error": "scope_validation_failed",
+                    "foreign_count": 0,
+                    "missing_metadata_count": 0,
+                    "malformed_count": 1,
+                }
+            )
+            return None, {
+                "status": "malformed_result",
+                "returned_count": 0,
+                "accepted_count": 0,
+                "verified_count": 0,
+                "missing_metadata_count": 0,
+                "foreign_count": 0,
+                "malformed_count": 1,
+            }
+        allowed_scopes = ("project", "global")
+        query_context = ScopeContext.model_validate(context)
+        filtered: list[Any] = []
+        missing_metadata = 0
+        foreign = 0
+        malformed = 0
+        verified = 0
+        required = ("user_profile_id", "scope", "scope_id")
+        store = getattr(getattr(service, "engine", None), "store", None)
+        for item in raw_facts:
+            if not isinstance(item, Mapping):
+                malformed += 1
+                continue
+            metadata = item.get("metadata")
+            # Service responses currently expose scope fields at the fact
+            # level. Accepting a nested metadata mapping keeps this boundary
+            # compatible with lower-level adapters without guessing identity.
+            if not isinstance(metadata, Mapping):
+                metadata = item
+            # The public service response intentionally omits profile identity.
+            # Resolve it from the authoritative store row before validating;
+            # only fixture adapters without a store may use response metadata.
+            item_id = item.get("id")
+            get_chunk = getattr(store, "get", None)
+            stored_chunk = get_chunk(str(item_id)) if callable(get_chunk) and item_id else None
+            stored_metadata = getattr(stored_chunk, "metadata", None)
+            if callable(get_chunk) and (not item_id or stored_chunk is None):
+                missing_metadata += 1
+                if not self.real_model:
+                    filtered.append(item)
+                continue
+            if isinstance(stored_metadata, Mapping):
+                response_scope = (item.get("scope"), item.get("scope_id"))
+                stored_scope = (
+                    stored_metadata.get("scope"),
+                    stored_metadata.get("scope_id"),
+                )
+                if response_scope != stored_scope:
+                    foreign += 1
+                    continue
+                metadata = stored_metadata
+            if any(field not in metadata for field in required):
+                missing_metadata += 1
+                if not self.real_model:
+                    filtered.append(item)
+                continue
+            if not scope_allows(metadata, query_context, allowed_scopes):
+                foreign += 1
+                continue
+            verified += 1
+            filtered.append(item)
+        if foreign or (missing_metadata and self.real_model) or malformed:
+            errors.append(
+                {
+                    "operation": "retrieve",
+                    "query_id": query_id,
+                    "error": "scope_validation_failed",
+                    "foreign_count": foreign,
+                    "missing_metadata_count": missing_metadata,
+                    "malformed_count": malformed,
+                }
+            )
+        if foreign:
+            status = "scope_violation"
+        elif missing_metadata:
+            status = "not_scope_verified"
+        elif malformed:
+            status = "malformed_result"
+        elif raw_facts:
+            status = "verified"
+        else:
+            status = "no_returned_facts"
+        sanitized = dict(result)
+        sanitized["facts"] = filtered
+        return sanitized, {
+            "status": status,
+            "returned_count": len(raw_facts),
+            "accepted_count": len(filtered),
+            "verified_count": verified,
+            "missing_metadata_count": missing_metadata,
+            "foreign_count": foreign,
+            "malformed_count": malformed,
+        }
 
     def _controlled_state_pairs(
         self,
@@ -794,8 +1006,216 @@ class OllamaEvaluatorAdapter:
             return result
         raise TypeError(f"service dispatch {operation!r} returned a non-mapping result")
 
+    @staticmethod
+    def _runtime_event_id(event_id: str, profile: ExperimentProfile, repetition: int) -> str:
+        return f"{event_id}-{profile.name}-r{repetition}"
+
     def _resolve_runtime_target(
-        self, service: Any, event: SourceEvent, session: SessionScenario
+        self,
+        service: Any,
+        event: SourceEvent,
+        session: SessionScenario,
+        *,
+        context: Mapping[str, Any] | None = None,
+        profile: ExperimentProfile | None = None,
+        repetition: int | None = None,
+    ) -> Mapping[str, Any] | None:
+        """Resolve a lifecycle target from durable evidence.
+
+        v3 actions carry the identity of an earlier user source event. That
+        identity is resolved through the service's persisted episodic event and
+        fact evidence, then checked against the requested scope. Content and
+        gold labels are deliberately not used for this path. The optional
+        arguments keep the old v2 test seam available for compatibility.
+        """
+        strict = any(
+            value is not None
+            for value in (
+                event.target_source_event_id,
+                event.target_fact_id,
+                event.replacement_content,
+            )
+        )
+        if strict:
+            return self._resolve_v3_runtime_target(
+                service,
+                event,
+                session,
+                context=context,
+                profile=profile,
+                repetition=repetition,
+            )
+
+        return self._resolve_v2_runtime_target(service, event, session)
+
+    def _resolve_v3_runtime_target(
+        self,
+        service: Any,
+        event: SourceEvent,
+        session: SessionScenario,
+        *,
+        context: Mapping[str, Any] | None,
+        profile: ExperimentProfile | None,
+        repetition: int | None,
+    ) -> Mapping[str, Any]:
+        if (
+            event.target_source_event_id is None
+            or event.target_fact_id is None
+            or (event.lifecycle_operation == "correct" and event.replacement_content is None)
+            or (event.lifecycle_operation == "forget" and event.replacement_content is not None)
+        ):
+            raise _TargetMappingError(
+                "target_mapping_invalid", "incomplete lifecycle target metadata"
+            )
+
+        target_fact = next(
+            (fact for fact in session.facts if fact.fact_id == event.target_fact_id), None
+        )
+        if target_fact is None:
+            raise _TargetMappingError("target_mapping_invalid", "declared target fact is unknown")
+        target_event = next(
+            (item for item in session.events if item.event_id == event.target_source_event_id),
+            None,
+        )
+        if target_event is None or target_event.lifecycle_operation not in {"capture", "remember"}:
+            raise _TargetMappingError(
+                "target_mapping_invalid", "declared target source event is unknown"
+            )
+        if target_event.role != "user" or target_event.write_mode == "none":
+            raise _TargetMappingError(
+                "target_mapping_invalid", "target source event is not a user memory event"
+            )
+        try:
+            target_occurred_at = datetime.fromisoformat(
+                target_event.occurred_at.replace("Z", "+00:00")
+            )
+            action_occurred_at = datetime.fromisoformat(event.occurred_at.replace("Z", "+00:00"))
+        except ValueError as exc:
+            raise _TargetMappingError(
+                "target_mapping_invalid", "lifecycle timestamps are not valid ISO-8601"
+            ) from exc
+        if target_occurred_at >= action_occurred_at:
+            raise _TargetMappingError(
+                "target_mapping_invalid", "target source event does not precede action"
+            )
+        if target_event.evidence_fact_ids.count(event.target_fact_id) != 1:
+            raise _TargetMappingError(
+                "target_mapping_invalid", "target source event does not uniquely evidence fact"
+            )
+
+        store = getattr(getattr(service, "engine", None), "store", None)
+        get_all = getattr(store, "get_all", None)
+        get_event = getattr(store, "get_episodic_event", None)
+        list_evidence = getattr(store, "list_fact_evidence", None)
+        if not callable(get_all) or not callable(get_event):
+            raise _TargetMappingError(
+                "missing_accepted_target", "durable source evidence is unavailable"
+            )
+        if context is None or profile is None or repetition is None:
+            raise _TargetMappingError(
+                "target_mapping_invalid", "runtime target context is unavailable"
+            )
+
+        target_context = self._target_context(context, event)
+        for field in ("user_profile_id", "project_id", "workspace_id"):
+            declared = getattr(target_event, "target_" + field)
+            if declared is not None and declared != target_context.get(field):
+                raise _TargetMappingError(
+                    "target_mapping_invalid", "target source event context does not match action"
+                )
+        if target_fact.evidence_event_ids.count(event.target_source_event_id) != 1:
+            raise _TargetMappingError(
+                "target_mapping_invalid", "target fact does not uniquely cite source event"
+            )
+        runtime_source_id = self._runtime_event_id(
+            event.target_source_event_id, profile, repetition
+        )
+        durable_source_id = self._durable_event_id(target_context, runtime_source_id)
+        source_event = get_event(durable_source_id)
+        if source_event is None:
+            raise _TargetMappingError(
+                "missing_accepted_target", "accepted source event is unavailable"
+            )
+
+        expected_identity = {
+            "user_profile_id": target_context.get("user_profile_id"),
+            "project_id": target_context.get("project_id"),
+            "workspace_id": target_context.get("workspace_id"),
+        }
+        source_metadata = getattr(source_event, "metadata", {})
+        if any(source_metadata.get(key) != value for key, value in expected_identity.items()):
+            raise _TargetMappingError("target_mapping_invalid", "source event scope does not match")
+
+        if target_fact.scope == "project":
+            expected_scope_id = target_context.get("project_id")
+        elif target_fact.scope == "workspace":
+            expected_scope_id = target_context.get("workspace_id")
+        elif target_fact.scope == "global":
+            expected_scope_id = None
+        else:
+            raise _TargetMappingError("target_mapping_invalid", "target fact has an invalid scope")
+
+        candidates: list[Mapping[str, Any]] = []
+        invalid_scope = False
+        for chunk in get_all():
+            metadata = getattr(chunk, "metadata", {})
+            if any(metadata.get(key) != value for key, value in expected_identity.items()):
+                continue
+            evidence_ids = metadata.get("source_event_ids") or ()
+            if not isinstance(evidence_ids, (list, tuple, set, frozenset)):
+                evidence_ids = (evidence_ids,)
+            has_metadata_evidence = durable_source_id in evidence_ids
+            has_table_evidence = False
+            if callable(list_evidence):
+                has_table_evidence = any(
+                    getattr(item, "source_event_id", None) == durable_source_id
+                    for item in list_evidence(str(getattr(chunk, "id")))
+                )
+            # A same-profile fact with a different scope is relevant to this
+            # mapping decision only when it cites the declared source. This
+            # keeps unrelated rows from changing a missing-target diagnosis.
+            if not (has_metadata_evidence or has_table_evidence):
+                continue
+            if (
+                metadata.get("scope") != target_fact.scope
+                or metadata.get("scope_id") != expected_scope_id
+            ):
+                invalid_scope = True
+                continue
+            candidates.append(
+                {
+                    "id": str(getattr(chunk, "id")),
+                    "version": int(getattr(chunk, "version", 1)),
+                    "scope": metadata.get("scope", target_fact.scope),
+                }
+            )
+        if not candidates:
+            if invalid_scope:
+                raise _TargetMappingError(
+                    "target_mapping_invalid", "accepted fact evidence scope does not match target"
+                )
+            raise _TargetMappingError(
+                "missing_accepted_target", "no accepted fact evidence matches target"
+            )
+        if len(candidates) != 1:
+            raise _TargetMappingError(
+                "target_mapping_invalid", "target evidence maps to multiple facts"
+            )
+        return candidates[0]
+
+    @staticmethod
+    def _durable_event_id(context: Mapping[str, Any], runtime_event_id: str) -> str:
+        identity = [
+            context.get("user_profile_id"),
+            context.get("host"),
+            context.get("session_id"),
+            runtime_event_id,
+        ]
+        return hashlib.sha256(json.dumps(identity).encode("utf-8")).hexdigest()
+
+    @staticmethod
+    def _resolve_v2_runtime_target(
+        service: Any, event: SourceEvent, session: SessionScenario
     ) -> Mapping[str, Any] | None:
         store = getattr(getattr(service, "engine", None), "store", None)
         get_all = getattr(store, "get_all", None)
@@ -1134,6 +1554,13 @@ class OllamaEvaluatorAdapter:
 
 class _UnsupportedOperation(RuntimeError):
     pass
+
+
+class _TargetMappingError(RuntimeError):
+    def __init__(self, status: str, reason: str) -> None:
+        super().__init__(reason)
+        self.status = status
+        self.reason = reason
 
 
 def _run_awaitable(awaitable: Any) -> Any:

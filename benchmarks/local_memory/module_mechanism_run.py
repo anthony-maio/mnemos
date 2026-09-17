@@ -15,7 +15,9 @@ from typing import Any
 from mnemos.modules.spreading import SpreadingActivation
 from mnemos.utils.embeddings import EmbeddingProvider, OllamaEmbeddingProvider
 from mnemos.utils.llm import OllamaProvider
+from mnemos.utils.storage import SQLiteStore
 
+from .artifacts import environment_metadata
 from .dev_smoke import _code_provenance
 from .heldout_run import _live_model_metadata
 
@@ -187,6 +189,8 @@ def run_mechanisms(
         "code_sha256": code_sha256,
         "code_files": code_files,
         "python": platform.python_version(),
+        "runtime": environment_metadata(),
+        "storage_schema_version": SQLiteStore._SCHEMA_VERSION,
         "provider": {
             "endpoint": endpoint,
             "model": metadata[model],

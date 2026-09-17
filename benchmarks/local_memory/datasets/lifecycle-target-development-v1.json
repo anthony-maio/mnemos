@@ -1,0 +1,149 @@
+{
+  "schema_version": "local-memory-lifecycle-target-smoke-v1",
+  "source_label": "authored_development",
+  "human_acceptance": "not_run",
+  "advertised_as_real": false,
+  "scenarios": [
+    {
+      "session_id": "development-correct-restart",
+      "split": "development",
+      "host": "codex",
+      "project_id": "lifecycle-correct-project",
+      "scenario_types": ["development", "correction"],
+      "facts": [
+        {
+          "fact_id": "correct-old-cache-fact",
+          "content": "The cache layer uses Redis for session tokens.",
+          "critical": true,
+          "scope": "project",
+          "source_label": "authored_development",
+          "gold_status": "superseded",
+          "evidence_event_ids": ["correct-capture-source"]
+        },
+        {
+          "fact_id": "correct-new-cache-fact",
+          "content": "The cache layer uses SQLite for session tokens.",
+          "critical": true,
+          "scope": "project",
+          "source_label": "authored_development",
+          "gold_status": "supported",
+          "evidence_event_ids": ["correct-action"]
+        }
+      ],
+      "events": [
+        {
+          "event_id": "correct-capture-source",
+          "occurred_at": "2026-09-16T12:00:01Z",
+          "role": "user",
+          "content": "The cache layer uses Redis for session tokens.",
+          "source_kind": "authored_development",
+          "write_mode": "automatic",
+          "lifecycle_operation": "capture",
+          "evidence_fact_ids": ["correct-old-cache-fact"]
+        },
+        {
+          "event_id": "correct-action",
+          "occurred_at": "2026-09-16T12:00:02Z",
+          "role": "user",
+          "content": "Correction: the cache layer uses SQLite for session tokens.",
+          "source_kind": "user_correction",
+          "write_mode": "explicit",
+          "lifecycle_operation": "correct",
+          "evidence_fact_ids": ["correct-new-cache-fact"],
+          "target_source_event_id": "correct-capture-source",
+          "target_fact_id": "correct-old-cache-fact",
+          "replacement_content": "The cache layer uses SQLite for session tokens."
+        },
+        {
+          "event_id": "correct-restart",
+          "occurred_at": "2026-09-16T12:00:03Z",
+          "role": "system",
+          "content": "The local memory service restarted.",
+          "source_kind": "runtime",
+          "write_mode": "none",
+          "lifecycle_operation": "restart",
+          "evidence_fact_ids": []
+        }
+      ],
+      "queries": [
+        {
+          "query_id": "correct-retrieval-query",
+          "text": "Which cache stores session tokens?",
+          "kind": "answerable",
+          "relevant_fact_ids": ["correct-new-cache-fact"],
+          "expected_answer": "SQLite"
+        }
+      ]
+    },
+    {
+      "session_id": "development-forget-replay",
+      "split": "development",
+      "host": "claude-code",
+      "project_id": "lifecycle-forget-project",
+      "scenario_types": ["development", "forgotten_replay"],
+      "facts": [
+        {
+          "fact_id": "forget-wrapped-source-fact",
+          "content": "The temporary export is stored in the local archive.",
+          "critical": true,
+          "scope": "project",
+          "source_label": "authored_development",
+          "gold_status": "forgotten",
+          "evidence_event_ids": ["remember-wrapped-source"]
+        }
+      ],
+      "events": [
+        {
+          "event_id": "remember-wrapped-source",
+          "occurred_at": "2026-09-16T13:00:01Z",
+          "role": "user",
+          "content": "Please remember this explicit fact: the temporary export is stored in the local archive.",
+          "source_kind": "explicit_remember",
+          "write_mode": "explicit",
+          "lifecycle_operation": "remember",
+          "evidence_fact_ids": ["forget-wrapped-source-fact"]
+        },
+        {
+          "event_id": "forget-action",
+          "occurred_at": "2026-09-16T13:00:02Z",
+          "role": "user",
+          "content": "Forget the previously remembered temporary export fact.",
+          "source_kind": "user_forget",
+          "write_mode": "explicit",
+          "lifecycle_operation": "forget",
+          "evidence_fact_ids": ["forget-wrapped-source-fact"],
+          "target_source_event_id": "remember-wrapped-source",
+          "target_fact_id": "forget-wrapped-source-fact"
+        },
+        {
+          "event_id": "remember-wrapped-source",
+          "occurred_at": "2026-09-16T13:00:03Z",
+          "role": "user",
+          "content": "Please remember this explicit fact: the temporary export is stored in the local archive.",
+          "source_kind": "explicit_remember_replay",
+          "write_mode": "explicit",
+          "lifecycle_operation": "remember",
+          "evidence_fact_ids": ["forget-wrapped-source-fact"]
+        },
+        {
+          "event_id": "forget-restart",
+          "occurred_at": "2026-09-16T13:00:04Z",
+          "role": "system",
+          "content": "The local memory service restarted after replay.",
+          "source_kind": "runtime",
+          "write_mode": "none",
+          "lifecycle_operation": "restart",
+          "evidence_fact_ids": []
+        }
+      ],
+      "queries": [
+        {
+          "query_id": "forget-abstention-query",
+          "text": "Where is the temporary export stored?",
+          "kind": "no_answer",
+          "relevant_fact_ids": []
+        }
+      ]
+    }
+  ]
+}

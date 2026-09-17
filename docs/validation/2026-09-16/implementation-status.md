@@ -15,7 +15,7 @@ boundaries and thresholds remain in the [implementation plan](../../plans/2026-0
 | T07 Surprisal | Automatic gating, explicit-remember bypass, session-safe history and diagnostics | Deterministic mechanism tests; real filtering comparison pending |
 | T08 Correction | Stable identity, expected-version CAS, revisions, canonical and graph refresh | Correction, duplicate, evidence, and graph regression tests |
 | T09 Retrieval | Exact scoped cosine, lexical candidate union, one scoring contract, context budget | Native/fallback scope and top-1 tests; real-query scale recall p95 506.111 ms fails the 500 ms gate; held-out quality pending |
-| T10 Graph | Persisted, versioned edges; bounded scope-safe traversal and rebuild; workspace membership discovery | Cycle, energy, isolation, restart, and out-of-page neighbor tests; current edge-builder v3 differs from frozen lifecycle v2; real utility pending |
+| T10 Graph | Persisted, versioned edges; bounded scope-safe traversal and rebuild; workspace membership discovery | Real development embeddings exposed insertion-order-dependent edges and results in edge-builder v3. Deterministic construction repair is underway; held-out utility remains blocked |
 | T11 Forget | Live deletion and suppression across replay, retry, inflight extraction, restore | Lifecycle and backup tests; historical backups/transcripts can retain content |
 | T12 Claude Code | Native hooks, transcript deltas, capture-before-recall, durable checkpoints | One native seeded recall turn observed; extraction and full native lifecycle matrix pending |
 | T13 Codex | Hook configuration, native payload/output adapter, explicit MCP fallback | Adapter tests pass; two installed CLI turns produced no observed Mnemos callbacks; desktop not run |
@@ -23,7 +23,7 @@ boundaries and thresholds remain in the [implementation plan](../../plans/2026-0
 | T15 UI | Project enable/pause, observed readiness, facts/history/correction/forget, job state, legacy and routing review | API and browser checks include profile-filtered diagnostic dismissal and source expiry; bounded-list and active-store labels disclosed |
 | T16 Recovery | Consistent backup, new-path restore, suppression merge, staged reindex and activation backup | Backup, integrity, identity, ownership, and reindex tests |
 | T17 Cross-host | One service contract for all three host contexts | Synthetic adapter continuity passes across restart/correct/forget; complete native matrix and two-week pilot remain open |
-| T18 Evaluation | Frozen lifecycle datasets, real provider adapter, seven profiles, checkpoints, raw traces, intervals | v2 stopped with 600 baseline and 12 full observations after target-mapping defect; explicit target contract repair underway; valid graph/affective supplement and quality acceptance pending |
+| T18 Evaluation | Frozen lifecycle datasets, real provider adapter, seven profiles, checkpoints, raw traces, intervals | v2 stopped with 600 baseline and 12 full observations after target-mapping defect. V3 preserves the original source events and adds explicit targets; local service preflight passes with test providers. Mechanism development stopped after graph insertion-order failure; real-model reruns and quality acceptance pending |
 | T19 Claims and packaging | Operational docs, host matrix, paper errata, packaged UI and helper agents | Broad suite passed; frozen source/wheel build and metadata checks passed; installed-wheel lifecycle and assets passed |
 
 The current capture recommendation is a hybrid: automatically capture enabled

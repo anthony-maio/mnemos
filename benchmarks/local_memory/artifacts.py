@@ -6,7 +6,9 @@ import hashlib
 import json
 import os
 import platform
+import sqlite3
 import tempfile
+from importlib.metadata import PackageNotFoundError, version
 from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any
@@ -31,12 +33,19 @@ def json_digest(value: Any) -> str:
 
 
 def environment_metadata() -> dict[str, str]:
-    return {
+    metadata = {
         "python": platform.python_version(),
         "platform": platform.platform(),
         "machine": platform.machine(),
         "processor": platform.processor(),
+        "sqlite": sqlite3.sqlite_version,
     }
+    for package in ("numpy", "pydantic", "httpx", "sqlite-vec"):
+        try:
+            metadata[package] = version(package)
+        except PackageNotFoundError:
+            metadata[package] = "not_installed"
+    return metadata
 
 
 def build_not_run_artifact(

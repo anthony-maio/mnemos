@@ -211,10 +211,20 @@ def _paths(
     target_id: str,
     allowed_ids: set[str],
     config: Any,
+    *,
+    min_energy: float | None = None,
 ) -> list[dict[str, Any]]:
-    """Enumerate bounded simple paths using the live activation policy."""
+    """Enumerate bounded simple paths with optional activation pruning.
 
-    threshold = float(config.activation_threshold)
+    The default mirrors production activation and prunes below-threshold
+    transfers.  ``min_energy=0`` is the structural persisted-path view: it
+    retains a finite, scope-allowed edge path even when activation cannot
+    carry enough energy to return the target.
+    """
+
+    threshold = (
+        float(config.activation_threshold) if min_energy is None else max(0.0, float(min_energy))
+    )
     attenuation = 1.0 - float(config.decay_rate)
     hop_limit = max(0, int(config.max_hops))
     paths: list[dict[str, Any]] = []
@@ -260,6 +270,24 @@ def _has_cycle(edges: Mapping[str, Mapping[str, float]], allowed_ids: set[str]) 
         return False
 
     return any(node_id not in seen and visit(node_id, None) for node_id in sorted(allowed_ids))
+
+
+def _three_node_cycles(
+    edges: Mapping[str, Mapping[str, float]], allowed_ids: set[str]
+) -> list[list[str]]:
+    """Return canonical persisted three-node cycles within the allowed scope."""
+
+    cycles: set[tuple[str, str, str]] = set()
+    for first in sorted(allowed_ids):
+        for second in edges.get(first, {}):
+            if second not in allowed_ids or second <= first:
+                continue
+            for third in edges.get(second, {}):
+                if third not in allowed_ids or third <= second or third == first:
+                    continue
+                if first in edges.get(third, {}):
+                    cycles.add((first, second, third))
+    return [list(cycle) for cycle in sorted(cycles)]
 
 
 def _query(engine: Any, case: Any, context: Any, profile: str) -> tuple[list[Any], float]:
@@ -438,12 +466,20 @@ def measure_graph_repetition(case: Any, *, work_dir: Path, repetition: int) -> d
     independent = _independent_activation(
         graph_edges, selected_seed, allowed_ids, graph_engine.config.spreading
     )
-    paths = _paths(
+    activation_paths = _paths(
         graph_edges,
         selected_seed,
         case.target_id,
         allowed_ids,
         graph_engine.config.spreading,
+    )
+    structural_paths = _paths(
+        graph_edges,
+        selected_seed,
+        case.target_id,
+        allowed_ids,
+        graph_engine.config.spreading,
+        min_energy=0.0,
     )
     target_chunk = chunks.get(case.target_id)
     target_similarity = (
@@ -489,17 +525,26 @@ def measure_graph_repetition(case: Any, *, work_dir: Path, repetition: int) -> d
         else (cut_direct_vector[0] if cut_direct_vector else None)
     )
     cut_activation: dict[str, float] = {}
-    cut_paths: list[dict[str, Any]] = []
+    cut_activation_paths: list[dict[str, Any]] = []
+    cut_structural_paths: list[dict[str, Any]] = []
     if cut_seed is not None:
         cut_activation, _ = _activation(cut_engine, case, predicate, cut_seed)
         cut_chunks = {chunk.id: chunk for chunk in cut_store.get_all()}
         cut_allowed_ids = {chunk.id for chunk in cut_chunks.values() if predicate(chunk)}
-        cut_paths = _paths(
+        cut_activation_paths = _paths(
             cut_store.get_graph_edges(),
             cut_seed,
             case.target_id,
             cut_allowed_ids,
             cut_engine.config.spreading,
+        )
+        cut_structural_paths = _paths(
+            cut_store.get_graph_edges(),
+            cut_seed,
+            case.target_id,
+            cut_allowed_ids,
+            cut_engine.config.spreading,
+            min_energy=0.0,
         )
     cut_ids = [chunk.id for chunk in cut_results]
     _close_engines(cut_store)
@@ -518,13 +563,22 @@ def measure_graph_repetition(case: Any, *, work_dir: Path, repetition: int) -> d
         "reverse_insertion": _snapshot(reverse_path),
     }
     semantic_floor = target_similarity >= float(graph_engine.config.retrieval.relevance_floor)
-    valid_path = bool(paths)
+    structural_valid_path = bool(structural_paths)
+    activation_valid_path = bool(activation_paths)
+    structural_target_path_energy = max(
+        (float(path["energy"]) for path in structural_paths), default=0.0
+    )
+    activation_target_path_energy = max(
+        (float(path["energy"]) for path in activation_paths), default=0.0
+    )
     target_energy = float(activation.get(case.target_id, 0.0))
     target_absent_after_cut = case.target_id not in cut_activation
-    eligible = case.target_id not in direct_ids and semantic_floor and valid_path
+    three_node_cycle_ids = _three_node_cycles(graph_edges, allowed_ids)
+    eligible = case.target_id not in direct_ids and semantic_floor and structural_valid_path
     success = (
         eligible
         and case.target_id in graph_ids
+        and activation_valid_path
         and target_energy >= float(graph_engine.config.spreading.activation_threshold)
     )
     controls = {
@@ -541,10 +595,18 @@ def measure_graph_repetition(case: Any, *, work_dir: Path, repetition: int) -> d
         "edge_cut": {
             "query_executed": True,
             "result_ids_after_cut": cut_ids,
-            "alternate_paths_before": paths,
-            "alternate_paths_after": cut_paths,
+            "alternate_paths_before": activation_paths,
+            "alternate_paths_after": cut_activation_paths,
+            "activation_paths_before": activation_paths,
+            "activation_paths_after": cut_activation_paths,
+            "structural_paths_before": structural_paths,
+            "structural_paths_after": cut_structural_paths,
             "target_energy_after": float(cut_activation.get(case.target_id, 0.0)),
             "target_present_after": case.target_id in cut_activation,
+        },
+        "cycle": {
+            "three_node_cycle_ids": three_node_cycle_ids,
+            "three_node_cycle_count": len(three_node_cycle_ids),
         },
         "insertion_order": {
             "reverse_query_executed": True,
@@ -600,7 +662,22 @@ def measure_graph_repetition(case: Any, *, work_dir: Path, repetition: int) -> d
             "semantic_floor": semantic_floor,
             "target_energy": target_energy,
             "target_in_graph_results": case.target_id in graph_ids,
-            "valid_path": valid_path,
+            "valid_path": structural_valid_path,
+            "structural_valid_path": structural_valid_path,
+            "activation_valid_path": activation_valid_path,
+            "structural_paths": structural_paths,
+            "activation_paths": activation_paths,
+            "structural_target_path_energy": structural_target_path_energy,
+            "activation_target_path_energy": activation_target_path_energy,
+            "path_reason": (
+                "no_persisted_path"
+                if not structural_valid_path
+                else (
+                    "persisted_path_below_activation_threshold"
+                    if not activation_valid_path
+                    else "activation_path_observed"
+                )
+            ),
             "target_absent_after_edge_cut": target_absent_after_cut,
             "scope_control_ids_permitted_observed": [
                 fact.id
@@ -627,7 +704,11 @@ def measure_graph_repetition(case: Any, *, work_dir: Path, repetition: int) -> d
         "negative_cases": {
             "target_directly_eligible": case.target_id in direct_ids,
             "below_semantic_floor": not semantic_floor,
-            "no_valid_path": not valid_path,
+            "no_valid_path": not structural_valid_path,
+            "no_activation_path": not activation_valid_path,
+            "persisted_path_below_activation_threshold": (
+                structural_valid_path and not activation_valid_path
+            ),
             "missing_from_graph_results": case.target_id not in graph_ids,
             "below_activation_threshold": target_energy
             < float(graph_engine.config.spreading.activation_threshold),
@@ -650,7 +731,8 @@ def measure_graph_repetition(case: Any, *, work_dir: Path, repetition: int) -> d
             "reverse_retrieve": round(reverse_latency, 6),
         },
         "coverage": {
-            "cycle_observed": bool(_has_cycle(graph_edges, allowed_ids)),
+            "cycle_observed": bool(three_node_cycle_ids),
+            "three_node_cycle_ids": three_node_cycle_ids,
             "activation_comparison_measured": True,
             "activation_comparison_matches": controls["activation_vs_independent_path"]["matches"],
             "edge_cut_query_measured": controls["edge_cut"]["query_executed"],

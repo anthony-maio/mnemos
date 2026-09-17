@@ -420,67 +420,21 @@ def build_completed_artifact(
     sessions_by_id = {session.session_id: session for session in dataset.heldout_sessions}
     for observation in observations:
         _validate_observation_shape(sessions_by_id[observation.session_id], observation)
-    retention = [item for observation in observations for item in observation.critical_retention]
-    retrieval = [item for observation in observations for item in observation.critical_retrieval]
-    precision = [item for observation in observations for item in observation.supported_precision]
-    answerable = [item for observation in observations for item in observation.answerable_hits]
-    no_answer = [item for observation in observations for item in observation.no_answer_correct]
-    state_semantic = [
-        item for observation in observations for item in observation.state_pair_semantic_hits
+    metrics = _build_observation_metrics(observations, config.confidence)
+    complete_observations = [
+        observation for observation in observations if observation.execution_status == "complete"
     ]
-    state_state = [
-        item for observation in observations for item in observation.state_pair_state_hits
-    ]
-    surprise_filter = [
-        item for observation in observations for item in observation.surprisal_filter_kept
-    ]
-    length_filter = [
-        item for observation in observations for item in observation.length_filter_kept
-    ]
-    metrics: dict[str, Any] = {}
-    for name, all_values in (
-        ("critical_retention", retention),
-        ("critical_retrieval", retrieval),
-        ("supported_precision", precision),
-        ("answerable_recall_at_k", answerable),
-        ("no_answer_accuracy", no_answer),
-        ("state_pair_semantic", state_semantic),
-        ("state_pair_state", state_state),
-        ("surprisal_filter_kept", surprise_filter),
-        ("length_filter_kept", length_filter),
-    ):
-        values = [item for item in all_values if item is not None]
-        missing_count = len(all_values) - len(values)
-        if values:
-            metric = binary_interval(values, config.confidence).as_dict()
-        else:
-            metric = {"status": "NOT MEASURED", "sample_count": 0}
-        metric.update(
-            {
-                "measured_count": len(values),
-                "total_count": len(all_values),
-                "unjudged_count": missing_count,
-                "missing_count": missing_count,
-            }
-        )
-        metrics[name] = metric
-    latencies = [item.latency_ms for item in observations if item.latency_ms is not None]
-    cold_latencies = [
-        item.cold_latency_ms for item in observations if item.cold_latency_ms is not None
-    ]
-    metrics["latency_ms"] = _numeric_summary(latencies)
-    metrics["latency_ms"]["measurement"] = "end_to_end_session_wall_clock"
-    metrics["cold_latency_ms"] = _numeric_summary(cold_latencies)
-    metrics["cold_latency_ms"]["measurement"] = "service_construction_only"
-    metrics["stale_fact_rate"] = _rate_from_counts(
-        observations, "stale_fact_count", "retrieved_fact_count"
-    )
-    metrics["row_or_byte_growth"] = _byte_summary(observations)
-    metrics["token_cost"] = _numeric_summary(
-        [item.token_cost for item in observations if item.token_cost is not None]
-    )
-    metrics["extraction_precision"] = metrics["supported_precision"]
-    metrics["retrieval_accuracy"] = metrics["answerable_recall_at_k"]
+    incomplete_count = len(observations) - len(complete_observations)
+    for metric in metrics.values():
+        if isinstance(metric, dict):
+            metric["diagnostic_when_incomplete"] = incomplete_count > 0
+            metric["aggregation_scope"] = "all_observations"
+    complete_metrics = _build_observation_metrics(complete_observations, config.confidence)
+    for metric in complete_metrics.values():
+        if isinstance(metric, dict):
+            metric["diagnostic_when_incomplete"] = False
+            metric["parent_run_incomplete"] = incomplete_count > 0
+            metric["aggregation_scope"] = "complete_observations"
     provider_values = sorted({item.provider for item in observations if item.provider})
     model_values = sorted({item.model_revision for item in observations if item.model_revision})
     embedding_values = sorted(
@@ -586,6 +540,14 @@ def build_completed_artifact(
             "state_pairs": len(dataset.state_pairs),
         },
         "measurements": metrics,
+        "complete_observation_diagnostics": {
+            "observation_count": len(complete_observations),
+            "excluded_incomplete_observation_count": incomplete_count,
+            "parent_run_incomplete": incomplete_count > 0,
+            "status": "ready" if incomplete_count == 0 else "partial_available",
+            "measurements": complete_metrics,
+        },
+        "lifecycle_operations": _aggregate_lifecycle_operations(observations),
         "raw_outputs": [observation.as_dict() for observation in observations],
     }
 
@@ -596,7 +558,7 @@ def compare_observation_metrics(
     *,
     config: ExperimentConfig,
 ) -> dict[str, Any]:
-    """Compare paired raw observations without dropping missing measurements."""
+    """Compare paired raw observations, reporting eligible and excluded pairs."""
     base_rows = {
         (str(row.get("session_id")), int(row.get("repetition", 0))): row
         for row in baseline_artifact.get("raw_outputs", [])
@@ -608,7 +570,11 @@ def compare_observation_metrics(
         if isinstance(row, Mapping)
     }
     paired_keys = sorted(set(base_rows) & set(treatment_rows))
-    result: dict[str, Any] = {"paired_observations": len(paired_keys), "metrics": {}}
+    result: dict[str, Any] = {
+        "paired_observations": len(paired_keys),
+        "metrics": {},
+        "pair_counts": {},
+    }
     for metric in (
         "answerable_hits",
         "no_answer_correct",
@@ -618,15 +584,41 @@ def compare_observation_metrics(
         baseline_values: list[float] = []
         treatment_values: list[float] = []
         paired_clusters: list[str] = []
+        excluded_reasons = {
+            "incomplete_execution": 0,
+            "missing_components": 0,
+            "no_applicable_observations": 0,
+        }
         for key in paired_keys:
-            baseline_value = _mean_bool(base_rows[key].get(metric))
-            treatment_value = _mean_bool(treatment_rows[key].get(metric))
+            baseline_row = base_rows[key]
+            treatment_row = treatment_rows[key]
+            baseline_status = baseline_row.get("execution_status")
+            treatment_status = treatment_row.get("execution_status")
+            if baseline_status != "complete" or treatment_status != "complete":
+                excluded_reasons["incomplete_execution"] += 1
+                continue
+            baseline_raw = baseline_row.get(metric)
+            treatment_raw = treatment_row.get(metric)
+            if baseline_raw in ([], ()) or treatment_raw in ([], ()):
+                excluded_reasons["no_applicable_observations"] += 1
+                continue
+            baseline_value = _mean_bool(baseline_raw)
+            treatment_value = _mean_bool(treatment_raw)
             if baseline_value is not None and treatment_value is not None:
                 baseline_values.append(baseline_value)
                 treatment_values.append(treatment_value)
                 paired_clusters.append(key[0])
+            else:
+                excluded_reasons["missing_components"] += 1
+        eligible_count = len(baseline_values)
+        result["pair_counts"][metric] = {
+            "total_count": len(paired_keys),
+            "eligible_count": eligible_count,
+            "excluded_count": len(paired_keys) - eligible_count,
+            "excluded_reasons": excluded_reasons,
+        }
         if baseline_values:
-            result["metrics"][metric] = paired_bootstrap_interval(
+            interval = paired_bootstrap_interval(
                 baseline_values,
                 treatment_values,
                 confidence=config.confidence,
@@ -634,18 +626,23 @@ def compare_observation_metrics(
                 seed=config.bootstrap_seed,
                 cluster_ids=paired_clusters,
             ).as_dict()
+            interval.update(result["pair_counts"][metric])
+            result["metrics"][metric] = interval
         else:
-            result["metrics"][metric] = {"status": "NOT MEASURED", "sample_count": 0}
+            result["metrics"][metric] = {
+                "status": "NOT MEASURED",
+                "sample_count": 0,
+                **result["pair_counts"][metric],
+            }
     return result
 
 
 def _mean_bool(raw: Any) -> float | None:
     if not isinstance(raw, (list, tuple)) or not raw:
         return None
-    values = [value for value in raw if value is not None]
-    if not values:
+    if any(value is None for value in raw):
         return None
-    return sum(bool(value) for value in values) / len(values)
+    return sum(bool(value) for value in raw) / len(raw)
 
 
 def evaluate_with_adapter(
@@ -680,6 +677,102 @@ def run_experiment(
         output=output,
         checkpoint_path=checkpoint_path,
     )
+
+
+def _build_observation_metrics(
+    observations: Sequence[RunObservation], confidence: float
+) -> dict[str, Any]:
+    """Aggregate one explicitly named observation population."""
+    fields = {
+        "critical_retention": [
+            item for observation in observations for item in observation.critical_retention
+        ],
+        "critical_retrieval": [
+            item for observation in observations for item in observation.critical_retrieval
+        ],
+        "supported_precision": [
+            item for observation in observations for item in observation.supported_precision
+        ],
+        "answerable_recall_at_k": [
+            item for observation in observations for item in observation.answerable_hits
+        ],
+        "no_answer_accuracy": [
+            item for observation in observations for item in observation.no_answer_correct
+        ],
+        "state_pair_semantic": [
+            item for observation in observations for item in observation.state_pair_semantic_hits
+        ],
+        "state_pair_state": [
+            item for observation in observations for item in observation.state_pair_state_hits
+        ],
+        "surprisal_filter_kept": [
+            item for observation in observations for item in observation.surprisal_filter_kept
+        ],
+        "length_filter_kept": [
+            item for observation in observations for item in observation.length_filter_kept
+        ],
+    }
+    metrics: dict[str, Any] = {}
+    for name, all_values in fields.items():
+        values = [item for item in all_values if item is not None]
+        missing_count = len(all_values) - len(values)
+        metric = (
+            binary_interval(values, confidence).as_dict()
+            if values
+            else {"status": "NOT MEASURED", "sample_count": 0}
+        )
+        metric.update(
+            {
+                "measured_count": len(values),
+                "total_count": len(all_values),
+                "unjudged_count": missing_count,
+                "missing_count": missing_count,
+            }
+        )
+        metrics[name] = metric
+    metrics["latency_ms"] = _numeric_summary(
+        [item.latency_ms for item in observations if item.latency_ms is not None]
+    )
+    metrics["latency_ms"]["measurement"] = "end_to_end_session_wall_clock"
+    metrics["cold_latency_ms"] = _numeric_summary(
+        [item.cold_latency_ms for item in observations if item.cold_latency_ms is not None]
+    )
+    metrics["cold_latency_ms"]["measurement"] = "service_construction_only"
+    metrics["stale_fact_rate"] = _rate_from_counts(
+        observations, "stale_fact_count", "retrieved_fact_count"
+    )
+    metrics["stale_fact_rate"]["measurement"] = "returned_row_substring_proxy"
+    metrics["stale_fact_rate"][
+        "interpretation"
+    ] = "Returned-row substring proxy; it is not unique-fact or query-level accuracy."
+    metrics["row_or_byte_growth"] = _byte_summary(observations)
+    metrics["token_cost"] = _numeric_summary(
+        [item.token_cost for item in observations if item.token_cost is not None]
+    )
+    metrics["extraction_precision"] = metrics["supported_precision"]
+    metrics["retrieval_accuracy"] = metrics["answerable_recall_at_k"]
+    return metrics
+
+
+def _aggregate_lifecycle_operations(
+    observations: Sequence[RunObservation],
+) -> dict[str, dict[str, int]]:
+    """Combine per-observation lifecycle outcomes without inventing results."""
+    fields = ("attempted", "committed", "rejected", "mapping_invalid", "missing_target")
+    totals = {operation: {field: 0 for field in fields} for operation in ("correct", "forget")}
+    for observation in observations:
+        summary = observation.raw_output.get("lifecycle_summary")
+        if not isinstance(summary, Mapping):
+            continue
+        for operation in totals:
+            counts = summary.get(operation)
+            if not isinstance(counts, Mapping):
+                continue
+            for field in fields:
+                value = counts.get(field)
+                if isinstance(value, int) and not isinstance(value, bool) and value >= 0:
+                    totals[operation][field] += value
+    return totals
 
 
 def _numeric_summary(values: Sequence[float]) -> dict[str, Any]:

@@ -282,8 +282,26 @@ def test_checkpoint_rejects_dataset_or_config_drift(tmp_path: Path) -> None:
 
 
 def test_paired_comparison_uses_same_observation_keys() -> None:
-    base = {"raw_outputs": [{"session_id": "s1", "repetition": 1, "answerable_hits": [False]}]}
-    treatment = {"raw_outputs": [{"session_id": "s1", "repetition": 1, "answerable_hits": [True]}]}
+    base = {
+        "raw_outputs": [
+            {
+                "session_id": "s1",
+                "repetition": 1,
+                "execution_status": "complete",
+                "answerable_hits": [False],
+            }
+        ]
+    }
+    treatment = {
+        "raw_outputs": [
+            {
+                "session_id": "s1",
+                "repetition": 1,
+                "execution_status": "complete",
+                "answerable_hits": [True],
+            }
+        ]
+    }
     result = compare_observation_metrics(base, treatment, config=ExperimentConfig())
     assert result["paired_observations"] == 1
     assert result["metrics"]["answerable_hits"]["estimate"] == 1.0
