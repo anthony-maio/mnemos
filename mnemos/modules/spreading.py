@@ -30,7 +30,7 @@ class SpreadingActivation:
     # versions alongside the rows so an incompatible graph can be discarded
     # and rebuilt without changing the authoritative memory facts.
     PERSISTENCE_SCHEMA_VERSION = "1"
-    EDGE_BUILDER_VERSION = "2"
+    EDGE_BUILDER_VERSION = "3"
     TRAVERSAL_VERSION = ALGORITHM_VERSION
 
     def __init__(

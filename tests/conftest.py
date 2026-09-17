@@ -8,3 +8,4 @@ import pytest
 @pytest.fixture(autouse=True)
 def isolate_user_mnemos_config(monkeypatch: pytest.MonkeyPatch, tmp_path: Path) -> None:
     monkeypatch.setenv("MNEMOS_CONFIG_PATH", str(tmp_path / "global-mnemos.toml"))
+    monkeypatch.setenv("MNEMOS_ROUTING_REVIEW_DIR", str(tmp_path / "routing-review"))

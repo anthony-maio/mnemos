@@ -7,20 +7,20 @@ boundaries and thresholds remain in the [implementation plan](../../plans/2026-0
 | Plan item | Implemented behavior | Evidence and remaining acceptance |
 | --- | --- | --- |
 | T01 Runtime | Configured providers, SQLite default, explicit mock rejection, observed readiness probe | Runtime and health tests; actual Ollama smoke; installed-wheel lifecycle and assets passed |
-| T02 Scope | Registered profile/project/workspace identities and explicit membership | Scope, canonical identity, foreign-project and foreign-profile contract tests |
+| T02 Scope | Registered profile/project/workspace identities and explicit membership; read-only legacy review | Scope, canonical identity, foreign-project and foreign-profile contract tests; offline repair preserves ambiguous legacy ownership |
 | T03 Durable writes | Atomic source/job creation, leased processing, evidence/revision commits | Retry, lease, CAS, rollback, and persistence tests |
 | T04 Local service | One authenticated loopback owner, private descriptor, outbox, explicit shutdown | Real HTTP and subprocess tests; duplicate launcher regression passes |
 | T05 Maintenance | Service-owned scheduler, bounded batches, visible pending/retry/failure state | Scheduler and durable-job tests; daily-use pilot not run |
-| T06 Evidence and safety | Shared write firewall, source validation, role labels, governed explicit writes | Safety and lifecycle tests; real extraction precision remains unproved |
+| T06 Evidence and safety | Shared write firewall, source validation, role labels, governed explicit writes, local-original availability | Safety, retention, restart, and lifecycle tests; real extraction precision remains unproved |
 | T07 Surprisal | Automatic gating, explicit-remember bypass, session-safe history and diagnostics | Deterministic mechanism tests; real filtering comparison pending |
 | T08 Correction | Stable identity, expected-version CAS, revisions, canonical and graph refresh | Correction, duplicate, evidence, and graph regression tests |
 | T09 Retrieval | Exact scoped cosine, lexical candidate union, one scoring contract, context budget | Native/fallback scope and top-1 tests; real-query scale recall p95 506.111 ms fails the 500 ms gate; held-out quality pending |
-| T10 Graph | Persisted, versioned edges; bounded scope-safe traversal and rebuild | Cycle, energy, isolation, restart, and out-of-page neighbor tests; real utility pending |
+| T10 Graph | Persisted, versioned edges; bounded scope-safe traversal and rebuild; workspace membership discovery | Cycle, energy, isolation, restart, and out-of-page neighbor tests; current edge-builder v3 differs from frozen lifecycle v2; real utility pending |
 | T11 Forget | Live deletion and suppression across replay, retry, inflight extraction, restore | Lifecycle and backup tests; historical backups/transcripts can retain content |
 | T12 Claude Code | Native hooks, transcript deltas, capture-before-recall, durable checkpoints | One native seeded recall turn observed; extraction and full native lifecycle matrix pending |
 | T13 Codex | Hook configuration, native payload/output adapter, explicit MCP fallback | Adapter tests pass; two installed CLI turns produced no observed Mnemos callbacks; desktop not run |
 | T14 Hermes | Optional installed MemoryProvider integration and explicit Windows/WSL bridge | Installed API and actual bridge observed; native model turn did not complete |
-| T15 UI | Project enable/pause, observed readiness, facts/history/correction/forget, job state | API and browser checks; bounded-list and active-store labels disclosed |
+| T15 UI | Project enable/pause, observed readiness, facts/history/correction/forget, job state, legacy and routing review | API and browser checks include profile-filtered diagnostic dismissal and source expiry; bounded-list and active-store labels disclosed |
 | T16 Recovery | Consistent backup, new-path restore, suppression merge, staged reindex and activation backup | Backup, integrity, identity, ownership, and reindex tests |
 | T17 Cross-host | One service contract for all three host contexts | Synthetic adapter continuity passes across restart/correct/forget; complete native matrix and two-week pilot remain open |
 | T18 Evaluation | Frozen lifecycle dataset, real provider adapter, seven profiles, checkpoints, raw traces, intervals | Real lifecycle run in progress from `5e852e7`; supplement v1 held for invalid module-utility design; valid graph/affective supplement and quality acceptance pending |

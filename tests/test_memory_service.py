@@ -7,6 +7,8 @@ from mnemos.contracts import CaptureEvent, FactProposal
 from mnemos.engine import MnemosEngine
 from mnemos.memory_service import LocalMemoryService
 from mnemos.scopes import ScopeRegistry
+from mnemos.scopes import context_metadata
+from mnemos.types import MemoryChunk
 from mnemos.utils.embeddings import SimpleEmbeddingProvider
 from mnemos.utils.llm import UnavailableLLMProvider
 from mnemos.utils.llm import MockLLMProvider
@@ -221,6 +223,37 @@ def test_capture_rejects_secrets_and_disabled_projects_before_disk(tmp_path):
         with pytest.raises(ValueError, match="enabled"):
             memory.capture(event.model_copy(update={"content": "Safe content"}))
         assert memory.engine.store.list_episodic_events() == []
+    finally:
+        memory.engine.store.close()
+
+
+@pytest.mark.asyncio
+async def test_legacy_review_is_read_only_and_scoped_retrieval_excludes_legacy_rows(tmp_path):
+    memory, context = service(tmp_path)
+    try:
+        for chunk_id, metadata in (
+            ("a-foreign", {"user_profile_id": "other-profile", "scope": "project"}),
+            ("b-legacy", {}),
+            ("c-profile-key", {"profile_id": "other-profile"}),
+            ("d-legacy", {}),
+        ):
+            memory.engine.store.store(MemoryChunk(id=chunk_id, content=chunk_id, metadata=metadata))
+
+        reviewed = await memory.dispatch(
+            "legacy_review", {"context": context.model_dump(), "limit": 2}
+        )
+        assert [item["id"] for item in reviewed["facts"]] == ["b-legacy", "d-legacy"]
+        assert reviewed["read_only"] is True
+        assert reviewed["migration_required"] is True
+        assert reviewed["truncated"] is False
+        assert reviewed["next_cursor"] is None
+
+        retrieved = await memory.dispatch(
+            "retrieve",
+            {"context": context.model_dump(), "query": "b-legacy", "top_k": 5},
+        )
+        assert all(item["id"] not in {"b-legacy", "d-legacy"} for item in retrieved["facts"])
+        assert memory.engine.store.get("b-legacy").content == "b-legacy"
     finally:
         memory.engine.store.close()
 

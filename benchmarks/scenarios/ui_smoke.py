@@ -9,6 +9,7 @@ from __future__ import annotations
 
 import asyncio
 import argparse
+import os
 from datetime import datetime, timedelta, timezone
 import signal
 import threading
@@ -22,6 +23,8 @@ from mnemos.control_plane import ControlPlaneService
 from mnemos.engine import MnemosEngine
 from mnemos.memory_service import LocalMemoryService
 from mnemos.scopes import ScopeRegistry
+from mnemos.routing_review import enqueue_routing_failure
+from mnemos.types import MemoryChunk
 from mnemos.service import MnemosService
 from mnemos.ui_server import MnemosUiRouter, _MnemosUiHandler
 from mnemos.utils.embeddings import SimpleEmbeddingProvider
@@ -32,7 +35,7 @@ HTML_FIXTURE = '<img src=x onerror="window.__mnemos_xss = true"> Keep this escap
 
 
 def _build_fixture(
-    root: Path, *, exhausted_job: bool = False
+    root: Path, *, exhausted_job: bool = False, review_queues: bool = False
 ) -> tuple[MnemosService, ControlPlaneService, ScopeRegistry]:
     project = root / "project"
     project.mkdir()
@@ -107,6 +110,28 @@ def _build_fixture(
                 error="ConnectionError",
                 now=now,
             )
+    if review_queues:
+        engine.store.store(
+            MemoryChunk(
+                id="legacy-review-fixture",
+                content="<b>Legacy convention</b>: review before assignment.",
+                embedding=engine.embedder.embed("Legacy convention"),
+                metadata={},
+            )
+        )
+        for profile in ("ui-smoke", "foreign-profile", None):
+            enqueue_routing_failure(
+                host="codex",
+                event="SessionStart",
+                reason="project_not_enabled" if profile else "missing_user_profile",
+                session_id="fixture-" + str(profile),
+                project_hint=str(project),
+                configured_profile=profile,
+                directory=root / "routing-review",
+            )
+        engine.store.prune_processed_evidence(
+            before=datetime.now(timezone.utc) + timedelta(seconds=1)
+        )
     control = ControlPlaneService(
         cwd=project,
         env={"MNEMOS_USER_PROFILE_ID": "ui-smoke", "MNEMOS_SCOPE_REGISTRY": str(registry_path)},
@@ -119,11 +144,16 @@ def _build_fixture(
 def main() -> None:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--exhausted-job", action="store_true")
+    parser.add_argument("--review-queues", action="store_true")
     args = parser.parse_args()
     stop = threading.Event()
     with TemporaryDirectory(prefix="mnemos-ui-smoke-") as directory:
         root = Path(directory)
-        service, control, _ = _build_fixture(root, exhausted_job=args.exhausted_job)
+        # This variable belongs only to the disposable fixture process.
+        os.environ["MNEMOS_ROUTING_REVIEW_DIR"] = str(root / "routing-review")
+        service, control, _ = _build_fixture(
+            root, exhausted_job=args.exhausted_job, review_queues=args.review_queues
+        )
         router = MnemosUiRouter(control)
 
         class Handler(_MnemosUiHandler):

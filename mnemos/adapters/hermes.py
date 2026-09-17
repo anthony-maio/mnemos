@@ -197,16 +197,29 @@ class MnemosHermesProvider(_HermesMemoryProvider):  # type: ignore[misc]  # Opti
         self._context = self._resolve_context(self.session_id)
 
     def _resolve_context(self, session_id: str) -> ScopeContext:
-        if self.registry is None:
-            raise ValueError("Mnemos scope registry is not configured")
-        if not self.user_profile_id:
-            raise ValueError("Hermes profile identity is not configured")
-        return self.registry.resolve(
-            self.cwd,
-            user_profile_id=self.user_profile_id,
-            session_id=session_id,
-            host="hermes",
-        )
+        from ..routing_review import reason_for_context_error, record_unresolved_routing_failure
+
+        try:
+            if self.registry is None:
+                raise ValueError("Mnemos scope registry is not configured")
+            if not self.user_profile_id:
+                raise ValueError("Hermes profile identity is not configured")
+            return self.registry.resolve(
+                self.cwd,
+                user_profile_id=self.user_profile_id,
+                session_id=session_id,
+                host="hermes",
+            )
+        except Exception as exc:
+            record_unresolved_routing_failure(
+                host="hermes",
+                event="ContextResolve",
+                reason=reason_for_context_error(exc),
+                session_id=session_id,
+                project_hint=self.cwd,
+                configured_profile=self.user_profile_id,
+            )
+            raise
 
     def _current_context(self, session_id: str = "") -> ScopeContext:
         chosen = str(session_id or self.session_id).strip()

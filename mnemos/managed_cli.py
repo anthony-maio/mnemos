@@ -78,6 +78,9 @@ async def run_command(args: Namespace) -> dict[str, Any]:
         if command == "jobs":
             data.update(status=args.status, limit=args.limit)
             response = await client.request("jobs", data)
+        elif command == "legacy-review":
+            data.update(limit=args.limit, after_id=args.after_id)
+            response = await client.request("legacy_review", data)
         elif command in {"job-status", "retry-job"}:
             data["job_id"] = args.job_id
             response = await client.request("job" if command == "job-status" else "retry_job", data)

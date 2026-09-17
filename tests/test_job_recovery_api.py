@@ -135,6 +135,11 @@ def test_cli_and_ui_expose_scoped_job_recovery(tmp_path):
         router = MnemosUiRouter(control)
         response = router.handle("GET", "/api/jobs/exhausted", None)
         assert json.loads(response.body)["jobs"][0]["id"] == job.id
+        legacy_response = router.handle("GET", "/api/legacy-review?limit=10", None)
+        assert legacy_response.status == 200
+        legacy_payload = json.loads(legacy_response.body)
+        assert legacy_payload["read_only"] is True
+        assert legacy_payload["facts"] == []
         headers = {"Host": "127.0.0.1", "X-Mnemos-CSRF": router.csrf_token}
         body = json.dumps({"job_id": job.id}).encode()
         assert router.handle("POST", "/api/jobs/retry", body, {"Host": "127.0.0.1"}).status == 403
@@ -142,6 +147,7 @@ def test_cli_and_ui_expose_scoped_job_recovery(tmp_path):
         assert response.status == 200
         assert json.loads(response.body)["retried"] is True
         assert cli("job-status", job.id)["job"]["status"] == "pending"
+        assert cli("legacy-review")["facts"] == []
         another = memory.engine.store.enqueue_job(
             DurableJob(
                 kind="extract",

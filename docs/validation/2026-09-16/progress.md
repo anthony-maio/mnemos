@@ -185,3 +185,46 @@ independent affective target labels. The coordinator was stopped intentionally;
 the lifecycle worker continues independently from the unchanged frozen source.
 A replacement mechanism protocol is being implemented. Neither completed unit
 tests nor an evaluation observation's execution status establish model quality.
+
+## Source availability, scope discovery, and local review
+
+Source inspection now distinguishes a retained local original, an unavailable
+original, and a fact without source evidence. Retention may remove the
+original episode while preserving its excerpt and identifier. Restart and
+retention regressions passed, and the browser rendered this distinction.
+
+Graph refresh previously failed to discover permitted project/workspace
+neighbors even though the connectivity rule allowed them. Discovery now uses
+the registered workspace membership while preserving profile isolation. The
+persisted edge-builder version is 3 so derived edges rebuild. Focused graph,
+scope, retrieval, and restart tests passed. This changes the current product's
+graph construction; the ongoing lifecycle run remains bound to version 2 in
+`5e852e7`. Any new graph mechanism result must identify the later source.
+
+The service, CLI, and UI now expose a read-only review of unassigned legacy
+facts. Offline duplicate repair preserves unassigned or invalid scope metadata
+and uses a separate canonical identity instead of silently assigning global
+scope. No live legacy data was assigned or migrated.
+
+Unresolved Claude Code, Codex, and Hermes routing now leaves a bounded local
+diagnostic containing fixed categories and hashed identity hints. Conversation
+content and raw paths are excluded. Profile-filtered review and dismissal work
+without a running memory service; unconfigured-profile diagnostics require an
+explicit selection. This queue records routing failures, not replayable
+conversation content. Adapter, privacy, scope, CLI, and UI checks passed.
+
+The replacement graph/affective harness is under review. Its authored labels
+are frozen before embedding, and no replacement mechanism model calls have
+been made. Interruption, resume, and aggregate reporting checks remain part of
+the launch gate. See the [protocol](../../plans/2026-09-16-module-evaluation-protocol.md)
+and [browser evidence](ui-smoke.md).
+
+The follow-up broad run recorded 537 passes, 2 optional skips, and one
+restart failure in 813.55 seconds. Shutdown joined the owner thread using
+the startup timeout and then released ownership even if SQLite was still
+closing. An immediate reopen could therefore fail with `database is locked`.
+Shutdown now has its own 30-second deadline, preserves the ownership lock
+and thread handle on timeout, and permits a later stop to finish cleanup
+without interrupting an asynchronous close. Service and cross-host checks
+passed after the fix, including a deliberately delayed close and repeated
+stop attempts. Broad verification of the final source remains pending.

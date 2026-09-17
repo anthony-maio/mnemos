@@ -567,7 +567,15 @@ class LocalMemoryService:
                 "status": "committed",
                 "projects": len(self.registry.projects),
             }
-        if operation in {"list", "feedback", "feedback_list", "job", "jobs", "retry_job"}:
+        if operation in {
+            "list",
+            "legacy_review",
+            "feedback",
+            "feedback_list",
+            "job",
+            "jobs",
+            "retry_job",
+        }:
             context = self.registry.validate_context(
                 ScopeContext.model_validate(payload["context"])
             )
@@ -606,6 +614,32 @@ class LocalMemoryService:
                         workspace_id=context.workspace_id,
                     ),
                     "next_cursor": chunks[-1].id if chunks else None,
+                }
+            if operation == "legacy_review":
+                limit = min(max(int(payload.get("limit", 50)), 1), 500)
+                chunks = self.engine.store.list_legacy_chunks(
+                    limit=limit + 1,
+                    after_id=str(payload.get("after_id") or ""),
+                )
+                page = chunks[:limit]
+                return {
+                    "schema_version": 1,
+                    "status": "committed",
+                    "read_only": True,
+                    "migration_required": True,
+                    "facts": [
+                        {
+                            "id": chunk.id,
+                            "content": chunk.content,
+                            "version": chunk.version,
+                            "created_at": chunk.created_at.isoformat(),
+                            "updated_at": chunk.updated_at.isoformat(),
+                        }
+                        for chunk in page
+                    ],
+                    "truncated": len(chunks) > limit,
+                    "next_cursor": page[-1].id if len(chunks) > limit and page else None,
+                    "limit": limit,
                 }
             if operation == "jobs":
                 status = payload.get("status")

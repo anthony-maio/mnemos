@@ -7,6 +7,52 @@ from mnemos.utils.embeddings import SimpleEmbeddingProvider
 from mnemos.utils.storage import SQLiteStore
 
 
+@pytest.mark.parametrize("refresh_id", ["project", "workspace"])
+def test_graph_refresh_discovers_explicit_workspace_members_only(tmp_path, refresh_id):
+    path = str(tmp_path / "workspace-graph.sqlite")
+    store = SQLiteStore(path)
+    engine = MnemosEngine(embedder=SimpleEmbeddingProvider(dim=2), store=store)
+    facts = [
+        MemoryChunk(
+            id=identifier,
+            content="Shared dependency " + identifier,
+            embedding=[1.0, 0.0],
+            metadata={
+                "scope": scope,
+                "scope_id": scope_id,
+                "project_id": project,
+                "workspace_id": workspace,
+                "user_profile_id": profile,
+            },
+        )
+        for identifier, scope, scope_id, project, workspace, profile in [
+            ("project", "project", "p", "p", "w", "owner"),
+            ("workspace", "workspace", "w", "p", "w", "owner"),
+            ("member-project", "project", "member-p", "member-p", "w", "owner"),
+            ("foreign-workspace", "workspace", "other", "p", "other", "owner"),
+            ("foreign-project", "project", "q", "q", "other", "owner"),
+            ("foreign-profile", "workspace", "w", "p", "w", "other-owner"),
+        ]
+    ]
+    try:
+        for fact in facts:
+            store.store(fact)
+        # Only the actual refresh candidate path may introduce this edge.
+        engine.refresh_graph_chunk(next(f for f in facts if f.id == refresh_id))
+        edges = store.get_graph_edges()
+        assert edges["project"]["workspace"] == pytest.approx(1.0)
+        assert ("member-project" in edges.get("workspace", {})) is (refresh_id == "workspace")
+        assert not any(
+            "foreign" in node for source, targets in edges.items() for node in (source, *targets)
+        )
+        store.close()
+        store = SQLiteStore(path)
+        MnemosEngine(embedder=SimpleEmbeddingProvider(dim=2), store=store)
+        assert store.get_graph_edges()["project"]["workspace"] == pytest.approx(1.0)
+    finally:
+        store.close()
+
+
 @pytest.mark.asyncio
 async def test_persisted_neighbor_beyond_startup_and_semantic_pool_is_loaded(tmp_path):
     path = str(tmp_path / "graph.sqlite")

@@ -510,7 +510,7 @@ def run_health_checks(
             add_check(
                 "scope.isolation",
                 "warn",
-                f"Found {legacy_unscoped_chunks} legacy unscoped chunks. Scope isolation is not fully ready.",
+                f"Found {legacy_unscoped_chunks} legacy unscoped chunks. They are excluded from scoped recall and need read-only review before any explicit migration.",
             )
         else:
             add_check(
@@ -579,10 +579,10 @@ def run_health_checks(
         )
     if legacy_unscoped_chunks is not None and legacy_unscoped_chunks > 0:
         recommendations.append(
-            "Legacy unscoped chunks are still readable as global memory, but v1 scope isolation is degraded until you purge or rebuild them."
+            "Legacy unscoped chunks are excluded from scoped recall. Review them in the read-only legacy view before an explicit migration."
         )
         add_next_action(
-            "Purge or rebuild legacy unscoped chunks so project/workspace/global isolation is fully ready."
+            "Review legacy unscoped chunks in the read-only legacy view; assign them only through an explicit reviewed migration."
         )
     if store_type == "sqlite":
         sqlite_path = settings.storage.sqlite_path

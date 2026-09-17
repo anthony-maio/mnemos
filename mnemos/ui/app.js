@@ -692,6 +692,82 @@ async function refreshJobs() {
   }
 }
 
+async function refreshLegacyReview(afterId = "") {
+  const container = document.getElementById("legacy-review-list");
+  const message = document.getElementById("legacy-review-status");
+  try {
+    const query = afterId ? `?limit=50&after_id=${encodeURIComponent(afterId)}` : "?limit=50";
+    const result = await api(`/api/legacy-review${query}`);
+    if (result.error || result.status === "degraded") throw new Error(result.error || "Service unavailable");
+    container.replaceChildren();
+    const facts = result.facts || [];
+    message.textContent = facts.length
+      ? `${facts.length} unassigned fact${facts.length === 1 ? "" : "s"} available for review. Read-only.`
+      : "No unassigned legacy facts available for review.";
+    for (const fact of facts) {
+      const row = document.createElement("p");
+      row.textContent = `${fact.id} -- v${fact.version}: ${fact.content}`;
+      container.append(row);
+    }
+    if (result.next_cursor) {
+      const next = document.createElement("button");
+      next.className = "button button-ghost";
+      next.textContent = "Load next page";
+      next.addEventListener("click", () => refreshLegacyReview(result.next_cursor));
+      container.append(next);
+    }
+  } catch (error) {
+    message.textContent = error.message;
+  }
+}
+
+function routingReasonLabel(reason) {
+  return String(reason || "identity_resolution_failed").replaceAll("_", " ");
+}
+
+async function refreshRoutingReview() {
+  const container = document.getElementById("routing-review-list");
+  const message = document.getElementById("routing-review-status");
+  const unconfigured = document.getElementById("routing-review-unconfigured").checked;
+  try {
+    const suffix = unconfigured ? "?unconfigured=1" : "";
+    const result = await api(`/api/routing-review${suffix}`);
+    if (result.error) throw new Error(result.error);
+    container.replaceChildren();
+    const records = result.records || [];
+    message.textContent = records.length
+      ? `${records.length} unresolved routing record${records.length === 1 ? "" : "s"}. Metadata only.`
+      : "No unresolved routing failures for this profile.";
+    for (const record of records) {
+      const row = document.createElement("div");
+      row.className = "check-row";
+      const label = document.createElement("span");
+      label.textContent = `${record.host} / ${record.event} -- ${routingReasonLabel(record.reason)} -- ${record.timestamp_utc}`;
+      const button = document.createElement("button");
+      button.className = "button button-ghost";
+      button.textContent = "Dismiss";
+      button.addEventListener("click", async () => {
+        button.disabled = true;
+        try {
+          const acknowledged = await api("/api/routing-review/ack", {
+            method: "POST",
+            body: JSON.stringify({ record_id: record.record_id, unconfigured }),
+          });
+          if (!acknowledged.acknowledged) throw new Error("Record was not dismissed");
+          await refreshRoutingReview();
+        } catch (error) {
+          message.textContent = error.message;
+          button.disabled = false;
+        }
+      });
+      row.append(label, button);
+      container.append(row);
+    }
+  } catch (error) {
+    message.textContent = error.message;
+  }
+}
+
 async function refreshMemory() {
   if (!state.dashboard) {
     await refreshDashboard();
@@ -761,6 +837,9 @@ function bindEvents() {
   document.getElementById("refresh-health").addEventListener("click", refreshDashboard);
   document.getElementById("refresh-memory").addEventListener("click", refreshDashboard);
   document.getElementById("refresh-jobs").addEventListener("click", refreshJobs);
+  document.getElementById("refresh-legacy").addEventListener("click", () => refreshLegacyReview());
+  document.getElementById("refresh-routing-review").addEventListener("click", refreshRoutingReview);
+  document.getElementById("routing-review-unconfigured").addEventListener("change", refreshRoutingReview);
   document.getElementById("refresh-dashboard").addEventListener("click", refreshDashboard);
   document.getElementById("explain-memory").addEventListener("click", refreshMemoryDetail);
   document.getElementById("correct-memory").addEventListener("click", correctMemory);

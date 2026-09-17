@@ -67,6 +67,14 @@ The default combines automatic evidence capture in enabled projects with explici
 
 Automatic capture is available through Claude Code and Codex command-hook adapters and the optional Hermes memory provider. Installed-host acceptance is recorded separately in the [host matrix](client-compatibility-matrix.md). Capture accepts a sanitized, role-tagged event and durable source identity. It returns `committed` when that event and its job are durable, while `pending` or `processing` describes fact processing. The event acknowledgment does not mean a durable fact already exists.
 
+When a host event cannot resolve a profile or project, the adapter records only a bounded routing diagnostic: host, hook event, fixed reason, timestamp, and hashed identity hints. It does not save conversation content, create a replay backlog, or recover the failed event. After fixing profile or project settings, start a new capture. Use `mnemos routing-review` with a configured `MNEMOS_USER_PROFILE_ID` to inspect that profile's diagnostics, then `mnemos routing-review-ack <record-id>` to dismiss one. `--unconfigured` is an explicit local-owner view of records created without a profile; it is never implied by a missing configuration. The UI exposes the same metadata-only review and requires CSRF for dismissal.
+
+Routing diagnostics keep at most 256 records in the private runtime directory.
+`MNEMOS_ROUTING_REVIEW_DIR` selects a different local directory when needed.
+Oldest diagnostics may be evicted as new failures arrive; this bounded list
+is not a complete capture history. Queue write failures remain nonblocking
+for the host.
+
 Explicit `remember` bypasses the surprisal decision, but it still passes the safety firewall and scope checks. Maintenance claims a leased job, runs model work outside the write transaction, and commits accepted facts, evidence, revisions, and job completion atomically. `mnemos_job_status` exposes the durable job state without exposing lease credentials or raw payloads.
 
 After resolving an outage or configuration failure, use `mnemos jobs --status exhausted` to list affected jobs, `mnemos job-status <job-id>` to inspect one, and `mnemos retry-job <job-id>` to requeue it. The UI exposes the same operation under **Recover failed processing**. Listing and retry require the current profile, project, and workspace to match. Only exhausted jobs can be reset; a running or completed job cannot be replayed with this command. Requeueing does not mean extraction succeeded. Maintenance processes the pending work and preserves the normal evidence, correction, and forget checks.
@@ -102,6 +110,14 @@ Reindex requires exclusive ownership of the stopped runtime. Stop clients and ru
 
 Legacy migrate-store and repair-db copying is restricted to legacy stores and a new target path while the owning service is stopped. Managed stores must use backup/restore so evidence, jobs, revisions, and forget suppression records survive the move.
 
+Use `mnemos legacy-review --limit 50` or **Review legacy unassigned memory**
+in the UI to inspect facts that have no profile assignment. The CLI accepts
+`--after-id` for subsequent pages. This is a read-only local-owner review;
+these facts stay excluded from scoped recall. Offline duplicate repair keeps
+different legacy owners and scopes separate and preserves their original
+metadata. It does not assign them to the current project or make them global.
+Assigning legacy facts still requires a separately reviewed migration.
+
 ## Privacy and retention
 
 The shared write firewall screens event identity, content, source references, feedback, and outbox payloads. Secret and PII handling is controlled by the `MNEMOS_MEMORY_SECRET_ACTION` and `MNEMOS_MEMORY_PII_ACTION` settings. Runtime descriptors, locks, databases, registries, checkpoints, and outboxes are intended to be user-private.
@@ -116,7 +132,7 @@ Current evidence has these boundaries:
 
 | Evidence | Status |
 | --- | --- |
-| Deterministic module and storage tests | 508 passed, 2 optional WSL checks skipped in the broad run; both WSL checks passed when explicitly enabled; subsequent benchmark artifact regression suite: 29 passed |
+| Deterministic module and storage tests | Latest committed broad checkpoint: 521 passed, 2 optional WSL checks skipped; later review and graph-discovery changes are undergoing broad verification; see the dated validation record |
 | Synthetic local service and SQLite restart flow | Observed for one provider-backed fact |
 | Full real-model ablation and held-out quality evaluation | RUNNING from frozen commit `5e852e7`; no completed acceptance result yet; see [run record](validation/2026-09-16/evaluation-running.md) |
 | Installed Claude Code, Codex, and Hermes host smoke | Adapter/service contracts pass; actual WSL bridge and installed Hermes API observed; complete native conversation matrix NOT RUN |

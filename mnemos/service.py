@@ -417,10 +417,16 @@ class MnemosService:
         max_body_bytes: int = DEFAULT_MAX_BODY_BYTES,
         startup_timeout: float = DEFAULT_STARTUP_TIMEOUT,
         dispatch_timeout: float = DEFAULT_DISPATCH_TIMEOUT,
+        shutdown_timeout: float = 30.0,
     ) -> None:
         if dispatcher is not None and dispatcher_factory is not None:
             raise ValueError("pass dispatcher or dispatcher_factory, not both")
-        if max_body_bytes <= 0 or startup_timeout <= 0 or dispatch_timeout <= 0:
+        if (
+            max_body_bytes <= 0
+            or startup_timeout <= 0
+            or dispatch_timeout <= 0
+            or shutdown_timeout <= 0
+        ):
             raise ValueError("service limits must be positive")
         self.descriptor_path = (
             Path(descriptor_path).expanduser() if descriptor_path else default_descriptor_path()
@@ -431,6 +437,7 @@ class MnemosService:
         self.max_body_bytes = max_body_bytes
         self.startup_timeout = startup_timeout
         self.dispatch_timeout = dispatch_timeout
+        self.shutdown_timeout = shutdown_timeout
         self._dispatcher = dispatcher
         self._dispatcher_factory = dispatcher_factory
         self._owner_lock = _ProcessLock(self.lock_path)
@@ -438,6 +445,7 @@ class MnemosService:
         self._external = False
         self._loop: asyncio.AbstractEventLoop | None = None
         self._owner_thread: threading.Thread | None = None
+        self._owner_stopping = False
         self._owner_ready = threading.Event()
         self.shutdown_requested = threading.Event()
         self._owner_error: BaseException | None = None
@@ -616,10 +624,16 @@ class MnemosService:
             self._http_thread.join(timeout=self.startup_timeout)
             self._http_thread = None
         loop = self._loop
-        if loop is not None:
+        if loop is not None and not loop.is_closed() and not self._owner_stopping:
+            self._owner_stopping = True
             loop.call_soon_threadsafe(loop.stop)
         if self._owner_thread is not None:
-            self._owner_thread.join(timeout=self.startup_timeout)
+            self._owner_thread.join(timeout=self.shutdown_timeout)
+            if self._owner_thread.is_alive():
+                # Closing SQLite can outlast startup, particularly while a
+                # durable write is finishing. Keep ownership and the thread
+                # handle so a later stop can finish cleanup safely.
+                raise TimeoutError("Mnemos owner has not finished shutting down")
             self._owner_thread = None
         if self._owns_process:
             try:
@@ -634,6 +648,7 @@ class MnemosService:
                 pass
             self._owner_lock.release()
         self._owns_process = False
+        self._owner_stopping = False
         self._descriptor = None
         self.token = ""
 

@@ -347,6 +347,9 @@ class MnemosEngine:
                 current_scope=scope, scope_id=scope_id, allowed_scopes=(scope, "global")
             )
         else:
+            member_workspace_id = (
+                scope_id if scope == "workspace" else chunk.metadata.get("workspace_id")
+            )
 
             def partition_permitted(candidate: MemoryChunk) -> bool:
                 return candidate.metadata.get("user_profile_id") == profile_id and (
@@ -354,6 +357,20 @@ class MnemosEngine:
                     or (
                         candidate.metadata.get("scope") == scope
                         and candidate.metadata.get("scope_id") == scope_id
+                    )
+                    or (
+                        member_workspace_id is not None
+                        and (
+                            (
+                                candidate.metadata.get("scope") == "workspace"
+                                and candidate.metadata.get("scope_id") == member_workspace_id
+                            )
+                            or (
+                                scope == "workspace"
+                                and candidate.metadata.get("scope") == "project"
+                                and candidate.metadata.get("workspace_id") == member_workspace_id
+                            )
+                        )
                     )
                 )
 
@@ -364,8 +381,9 @@ class MnemosEngine:
                 {
                     "user_profile_id": profile_id,
                     "project_id": scope_id if scope == "project" else None,
-                    "workspace_id": scope_id if scope == "workspace" else None,
-                    "allowed_scopes": (scope, "global"),
+                    "workspace_id": member_workspace_id,
+                    "member_workspace_id": member_workspace_id if scope == "workspace" else None,
+                    "allowed_scopes": ("project", "workspace", "global"),
                 },
             )
         nearby = self._store.retrieve(

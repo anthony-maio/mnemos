@@ -24,6 +24,7 @@ from typing import Any, Mapping
 
 from ..client import MnemosClient
 from ..scopes import ScopeContext, ScopeRegistry, default_registry_path as shared_registry_path
+from ..routing_review import reason_for_context_error, record_unresolved_routing_failure
 from .diagnostics import emit_hook_diagnostic
 
 SUPPORTED_EVENTS = (
@@ -268,7 +269,20 @@ class CodexAdapter:
         try:
             context = self._context(payload)
         except Exception as exc:
-            return CodexHookResult(status="manual_mcp", degraded=True, error=str(exc))
+            reason = reason_for_context_error(exc)
+            record_unresolved_routing_failure(
+                host="codex",
+                event=event,
+                reason=reason,
+                session_id=(
+                    payload.get("session_id")
+                    if isinstance(payload.get("session_id"), str)
+                    else None
+                ),
+                project_hint=(payload.get("cwd") if isinstance(payload.get("cwd"), str) else None),
+                configured_profile=self.user_profile_id,
+            )
+            return CodexHookResult(status="manual_mcp", degraded=True, error=reason)
 
         captured = 0
         ids: list[str] = []

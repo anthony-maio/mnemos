@@ -78,3 +78,27 @@ longer stretch to the height of the evidence panel.
 
 Evidence: [recovered job](../../../output/playwright/ui-job-recovery.png) and
 [updated form and layout](../../../output/playwright/ui-job-recovery-fixed.png).
+
+## Legacy, routing, and source review follow-up
+
+The `--review-queues` fixture exercised the read-only legacy list and the
+metadata-only unresolved-routing queue. The browser displayed the unassigned
+legacy fact separately from the one scoped fact. Its HTML remained literal
+text. The configured profile saw one routing record; the foreign profile's
+record remained hidden. Dismissal removed the selected record, and explicitly
+selecting the unconfigured-profile view exposed its separate diagnostic.
+
+The processed source episode had expired in this fixture. The detail panel
+showed `Unavailable locally`, while the retained evidence excerpt and source
+identifier remained readable. No transcript was reopened to infer availability.
+
+This check exposed overflow in the memory detail panel. After the layout fix,
+the browser measured zero document overflow, a 363-pixel detail width and
+scroll width, and a recall input spanning its 364.72-pixel container. The
+HTML execution marker remained false. The console contained a favicon 404
+and the existing password-field-in-form diagnostic, with no application
+exception. The browser and temporary fixture were then stopped.
+
+Evidence: [initial review layout](../../../output/playwright/ui-review-queues.png),
+[intermediate layout](../../../output/playwright/ui-review-queues-fixed.png), and
+[final wrapped evidence](../../../output/playwright/ui-review-queues-final.png).

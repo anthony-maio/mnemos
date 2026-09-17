@@ -140,6 +140,24 @@ class MnemosUiRouter:
                 return self._json_response(self.service.get_jobs())
             except (ValueError, KeyError) as exc:
                 return self._json_response({"error": str(exc)}, status=HTTPStatus.BAD_REQUEST)
+        if method == "GET" and path == "/api/legacy-review":
+            try:
+                limit = int(query.get("limit", [50])[0] or 50)
+                after_id = query.get("after_id", [""])[0] or ""
+                return self._json_response(
+                    self.service.get_legacy_review(limit=limit, after_id=after_id)
+                )
+            except (ValueError, KeyError) as exc:
+                return self._json_response({"error": str(exc)}, status=HTTPStatus.BAD_REQUEST)
+        if method == "GET" and path == "/api/routing-review":
+            try:
+                unconfigured = query.get("unconfigured", ["0"])[0] in {"1", "true", "yes"}
+                limit = int(query.get("limit", [256])[0] or 256)
+                return self._json_response(
+                    self.service.get_routing_review(unconfigured=unconfigured, limit=limit)
+                )
+            except (ValueError, KeyError, OSError) as exc:
+                return self._json_response({"error": str(exc)}, status=HTTPStatus.BAD_REQUEST)
 
         if method == "POST" and not self._csrf_allowed(headers):
             return self._json_response(
@@ -181,6 +199,15 @@ class MnemosUiRouter:
             try:
                 return self._json_response(self.service.retry_job(str(payload["job_id"])))
             except (ValueError, KeyError) as exc:
+                return self._json_response({"error": str(exc)}, status=HTTPStatus.BAD_REQUEST)
+        if method == "POST" and path == "/api/routing-review/ack":
+            try:
+                record_id = str(payload["record_id"])
+                unconfigured = payload.get("unconfigured") is True
+                return self._json_response(
+                    self.service.ack_routing_review(record_id, unconfigured=unconfigured)
+                )
+            except (KeyError, ValueError, OSError) as exc:
                 return self._json_response({"error": str(exc)}, status=HTTPStatus.BAD_REQUEST)
         if method == "POST" and path == "/api/smoke":
             return self._json_response(self.service.run_smoke_tests())

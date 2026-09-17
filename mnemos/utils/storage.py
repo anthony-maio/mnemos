@@ -249,6 +249,27 @@ class MemoryStore(ABC):
             if chunk.id > after_id and (filter_fn is None or filter_fn(chunk))
         ][: max(0, limit)]
 
+    def list_legacy_chunks(self, *, limit: int = 100, after_id: str = "") -> list[MemoryChunk]:
+        """List unassigned legacy facts for explicit, read-only review.
+
+        A chunk is legacy only when neither its storage column nor either
+        supported metadata spelling declares a profile.  The profile checks
+        happen before pagination so profiled facts cannot consume the page.
+        """
+
+        def is_unassigned(chunk: MemoryChunk) -> bool:
+            profile = chunk.metadata.get("user_profile_id")
+            legacy_profile = chunk.metadata.get("profile_id")
+            return all(
+                value is None or not str(value).strip() for value in (profile, legacy_profile)
+            )
+
+        return self.list_chunks(
+            limit=limit,
+            after_id=after_id,
+            filter_fn=is_unassigned,
+        )
+
     def get_graph_edges(self, chunk_ids: list[str] | None = None) -> dict[str, dict[str, float]]:
         """Return persisted graph edges keyed by source chunk ID."""
         return {}
@@ -1998,6 +2019,13 @@ class SQLiteStore(MemoryStore):
             if scope == "global":
                 clauses.append("json_extract(metadata, '$.scope') = 'global'")
             elif scope in {"project", "workspace"}:
+                if scoped and scope == "project" and spec.get("member_workspace_id") is not None:
+                    clauses.append(
+                        "(json_extract(metadata, '$.scope') = 'project' AND "
+                        "json_extract(metadata, '$.workspace_id') = ?)"
+                    )
+                    bindings.append(spec["member_workspace_id"])
+                    continue
                 if spec.get("all_profile_scopes") is True:
                     clauses.append("json_extract(metadata, '$.scope') = ?")
                     bindings.append(scope)
@@ -3240,6 +3268,31 @@ class SQLiteStore(MemoryStore):
                 "AND id > ? ORDER BY id LIMIT ?",
                 [*bindings, after_id, max(0, limit)],
             ).fetchall()
+        return [self._row_to_chunk(row) for row in rows]
+
+    def list_legacy_chunks(self, *, limit: int = 100, after_id: str = "") -> list[MemoryChunk]:
+        """List unassigned legacy facts with filtering before pagination."""
+        page_size = max(0, limit)
+        if page_size == 0:
+            return []
+        query = f"""
+            SELECT {self._CHUNK_SELECT_COLUMNS}
+            FROM memory_chunks
+            WHERE id > ?
+              AND (user_profile_id IS NULL OR TRIM(user_profile_id) = '')
+              AND (
+                    json_extract(metadata, '$.user_profile_id') IS NULL
+                    OR TRIM(CAST(json_extract(metadata, '$.user_profile_id') AS TEXT)) = ''
+                  )
+              AND (
+                    json_extract(metadata, '$.profile_id') IS NULL
+                    OR TRIM(CAST(json_extract(metadata, '$.profile_id') AS TEXT)) = ''
+                  )
+            ORDER BY id
+            LIMIT ?
+        """
+        with self._lock:
+            rows = self._conn.execute(query, (after_id, page_size)).fetchall()
         return [self._row_to_chunk(row) for row in rows]
 
     def get_graph_neighbors(

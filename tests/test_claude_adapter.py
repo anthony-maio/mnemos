@@ -296,14 +296,20 @@ async def test_missing_profile_fails_closed_without_shared_default(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch
 ) -> None:
     monkeypatch.delenv("MNEMOS_USER_PROFILE_ID", raising=False)
+    monkeypatch.setenv("MNEMOS_ROUTING_REVIEW_DIR", str(tmp_path / "routing-review"))
     adapter = ClaudeCodeAdapter(client=FakeClient(), registry=registry_for(tmp_path))
 
-    with pytest.raises(ValueError, match="PROFILE_ID"):
-        await adapter.handle("SessionStart", {"session_id": "session-a", "cwd": str(tmp_path)})
+    result = await adapter.handle("SessionStart", {"session_id": "session-a", "cwd": str(tmp_path)})
+    assert result.status == "degraded"
+    assert result.committed is False
+    assert result.error == "missing_user_profile"
 
 
 @pytest.mark.asyncio
-async def test_unknown_or_disabled_project_fails_closed(tmp_path: Path) -> None:
+async def test_unknown_or_disabled_project_fails_closed(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    monkeypatch.setenv("MNEMOS_ROUTING_REVIEW_DIR", str(tmp_path / "routing-review"))
     registry = ScopeRegistry(
         projects={
             "project-a": ProjectIdentity(
@@ -315,8 +321,10 @@ async def test_unknown_or_disabled_project_fails_closed(tmp_path: Path) -> None:
         }
     )
     adapter = ClaudeCodeAdapter(client=FakeClient(), registry=registry, user_profile_id="profile-a")
-    with pytest.raises(ValueError, match="Project is not enabled"):
-        await adapter.handle("SessionStart", {"session_id": "s", "cwd": str(tmp_path)})
+    result = await adapter.handle("SessionStart", {"session_id": "s", "cwd": str(tmp_path)})
+    assert result.status == "degraded"
+    assert result.committed is False
+    assert result.error == "project_not_enabled"
 
 
 def test_malformed_hook_process_is_silent(

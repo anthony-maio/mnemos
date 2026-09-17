@@ -15,6 +15,7 @@ from typing import Any, Literal, Mapping
 from .client import MnemosClient
 from .health import run_health_checks
 from .hosts import apply_host_integration, preview_host_integration
+from .routing_review import ack_routing_failure, list_routing_failures
 from .scopes import ScopeContext, ScopeRegistry, default_registry_path
 from .settings import AppSettings, import_existing_setup, load_settings, save_settings
 
@@ -466,6 +467,55 @@ class ControlPlaneService:
             "retry_job", {"context": self._context_payload(), "job_id": job_id}
         )
 
+    def _routing_review_directory(self) -> str | None:
+        return self.env.get("MNEMOS_ROUTING_REVIEW_DIR") or os.environ.get(
+            "MNEMOS_ROUTING_REVIEW_DIR"
+        )
+
+    def _routing_review_profile(self, *, unconfigured: bool) -> str | None:
+        if unconfigured:
+            return None
+        profile = self._configured_profile()
+        if not profile:
+            raise ValueError("MNEMOS_USER_PROFILE_ID is required to review routing failures")
+        return profile
+
+    def get_routing_review(self, *, unconfigured: bool = False, limit: int = 256) -> dict[str, Any]:
+        profile = self._routing_review_profile(unconfigured=unconfigured)
+        records = list_routing_failures(
+            configured_profile=profile,
+            directory=self._routing_review_directory(),
+            limit=limit,
+        )
+        return {
+            "schema_version": 1,
+            "status": "committed",
+            "read_only": True,
+            "unconfigured": unconfigured,
+            "records": records,
+        }
+
+    def ack_routing_review(self, record_id: str, *, unconfigured: bool = False) -> dict[str, Any]:
+        profile = self._routing_review_profile(unconfigured=unconfigured)
+        acknowledged = ack_routing_failure(
+            record_id,
+            configured_profile=profile,
+            directory=self._routing_review_directory(),
+        )
+        return {
+            "schema_version": 1,
+            "status": "committed",
+            "acknowledged": acknowledged,
+            "record_id": record_id,
+            "unconfigured": unconfigured,
+        }
+
+    def get_legacy_review(self, *, limit: int = 50, after_id: str = "") -> dict[str, Any]:
+        payload: dict[str, Any] = {"context": self._context_payload(), "limit": limit}
+        if after_id:
+            payload["after_id"] = after_id
+        return self._service_request("legacy_review", payload)
+
     def get_memory_snapshot(self, *, limit: int = 10) -> dict[str, Any]:
         try:
             response = self._service_request(
@@ -607,9 +657,7 @@ class ControlPlaneService:
             },
             "history": inspected.get("revisions", []),
             "evidence": inspected.get("evidence", []),
-            "original_source_status": inspected.get(
-                "original_source_status", "no_source_evidence"
-            ),
+            "original_source_status": inspected.get("original_source_status", "no_source_evidence"),
             "graph": {"present": False, "neighbor_count": 0, "neighbors": []},
             "retrieval": None,
             "metadata": metadata,

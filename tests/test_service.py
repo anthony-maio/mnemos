@@ -356,3 +356,44 @@ def test_outbox_rejects_secret_source_metadata_before_persistence(tmp_path):
     with pytest.raises(ValueError):
         outbox.append({"event_id": "one", "content": "safe", "source_ref": "api_key=neverpersist"})
     assert not outbox.path.exists()
+
+
+def test_slow_dispatcher_close_keeps_ownership_until_stop_completes(tmp_path: Path) -> None:
+    from mnemos.service import _ProcessLock
+
+    closing = threading.Event()
+    release = threading.Event()
+
+    class SlowClose(RecordingDispatcher):
+        async def close(self) -> None:
+            closing.set()
+            for _ in range(500):
+                if release.is_set():
+                    return
+                await asyncio.sleep(0.01)
+
+    service = MnemosService(
+        dispatcher=SlowClose(),
+        descriptor_path=tmp_path / "slow-close.json",
+        shutdown_timeout=0.05,
+    )
+    service.start()
+    contender = _ProcessLock(service.lock_path)
+    try:
+        with pytest.raises(TimeoutError, match="shutting down"):
+            service.stop()
+        assert closing.is_set()
+        assert service._owner_thread is not None and service._owner_thread.is_alive()
+        assert not contender.acquire()
+        with pytest.raises(TimeoutError, match="shutting down"):
+            service.stop()
+        assert not contender.acquire()
+        release.set()
+        service._owner_thread.join(timeout=2)
+        service.stop()
+        assert contender.acquire()
+        assert not service.descriptor_path.exists()
+    finally:
+        release.set()
+        contender.release()
+        service.stop()

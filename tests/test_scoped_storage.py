@@ -114,6 +114,25 @@ def test_exact_binary_vectors_survive_fallback_updates_and_cache_rebuild(tmp_pat
         store.close()
 
 
+def test_sqlite_legacy_review_filters_declared_profiles_before_limit(tmp_path):
+    store = SQLiteStore(str(tmp_path / "legacy-review.sqlite"))
+    try:
+        for chunk_id, metadata in (
+            ("a-profile", {"user_profile_id": "alice"}),
+            ("b-legacy", {}),
+            ("c-profile-key", {"profile_id": "alice"}),
+            ("d-legacy", {}),
+        ):
+            store.store(MemoryChunk(id=chunk_id, content=chunk_id, metadata=metadata))
+
+        first = store.list_legacy_chunks(limit=2)
+        assert [chunk.id for chunk in first] == ["b-legacy", "d-legacy"]
+        assert store.list_legacy_chunks(limit=1, after_id="b-legacy")[0].id == "d-legacy"
+        assert store.list_legacy_chunks(limit=10) == first
+    finally:
+        store.close()
+
+
 def test_batch_retrieval_metadata_preserves_facts_and_search_index(tmp_path):
     store = SQLiteStore(str(tmp_path / "batch-access.sqlite"))
     try:

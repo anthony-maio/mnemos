@@ -455,14 +455,40 @@ small {
 
 .memory-detail-shell {
   display: grid;
+  min-width: 0;
   gap: 12px;
+}
+
+.memory-detail-shell > *,
+.memory-query > * {
+  min-width: 0;
+}
+
+.detail-section {
+  overflow-wrap: anywhere;
 }
 
 .memory-query {
   display: grid;
-  grid-template-columns: 1fr auto auto auto;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
   gap: 10px;
   align-items: end;
+}
+
+.memory-query > label {
+  grid-column: 1 / -1;
+}
+
+.check-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  align-items: center;
+}
+
+#legacy-review-list,
+#routing-review-list {
+  overflow-wrap: anywhere;
 }
 
 .action-status {

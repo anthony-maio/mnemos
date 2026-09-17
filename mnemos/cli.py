@@ -178,6 +178,50 @@ def _chunk_scope(chunk: Any) -> tuple[str, str | None]:
     return scope, scope_id
 
 
+def _repair_chunk_is_unassigned(chunk: MemoryChunk) -> bool:
+    """Keep legacy rows distinct from explicitly profiled memory on repair."""
+    metadata = chunk.metadata or {}
+    return all(
+        value is None or not str(value).strip()
+        for value in (metadata.get("user_profile_id"), metadata.get("profile_id"))
+    )
+
+
+def _repair_canonical_key(chunk: MemoryChunk) -> str:
+    metadata = chunk.metadata
+    scope = metadata.get("scope")
+    scope_id = metadata.get("scope_id")
+    profile = metadata.get("user_profile_id")
+    profile_id = str(profile).strip() if profile is not None and str(profile).strip() else None
+    valid_scope = scope == "global" or (
+        scope in {"project", "workspace"} and isinstance(scope_id, str) and bool(scope_id.strip())
+    )
+    if profile_id and valid_scope and not metadata.get("profile_id"):
+        return compute_canonical_key(
+            chunk.content, str(scope), None if scope == "global" else scope_id, profile_id
+        )
+    # Ambiguous ownership is preserved verbatim. In particular, old profile_id
+    # aliases and different unassigned project scopes must never be collapsed
+    # together or promoted into ordinary global memory by a repair.
+    identity = json.dumps(
+        {
+            key: metadata.get(key)
+            for key in (
+                "user_profile_id",
+                "profile_id",
+                "scope",
+                "scope_id",
+                "project_id",
+                "workspace_id",
+            )
+        },
+        sort_keys=True,
+        separators=(",", ":"),
+    )
+    sentinel = "legacy-unassigned" if _repair_chunk_is_unassigned(chunk) else "legacy-review"
+    return compute_canonical_key(chunk.content, sentinel, identity, "legacy-repair-identity")
+
+
 def _scope_filter(chunk: Any, scope: str, scope_id: str) -> bool:
     if scope == "all":
         return True
@@ -333,8 +377,7 @@ def _merged_canonical_chunk(chunks: list[MemoryChunk]) -> MemoryChunk:
     canonical = sorted(chunks, key=lambda chunk: (chunk.created_at, chunk.id))[0].model_copy(
         deep=True
     )
-    scope, scope_id = _chunk_scope(canonical)
-    canonical.canonical_key = compute_canonical_key(canonical.content, scope, scope_id)
+    canonical.canonical_key = _repair_canonical_key(canonical)
     canonical.observation_count = sum(max(chunk.observation_count, 1) for chunk in chunks)
     canonical.last_observed_at = max(
         (chunk.last_observed_at or chunk.updated_at) for chunk in chunks
@@ -368,8 +411,7 @@ def _repair_sqlite_db(source_path: str, target_path: str, *, dry_run: bool) -> d
         source_chunks = source_store.get_all()
         grouped: dict[str, list[MemoryChunk]] = {}
         for chunk in source_chunks:
-            scope, scope_id = _chunk_scope(chunk)
-            canonical_key = compute_canonical_key(chunk.content, scope, scope_id)
+            canonical_key = _repair_canonical_key(chunk)
             grouped.setdefault(canonical_key, []).append(chunk)
 
         canonical_chunks = [_merged_canonical_chunk(group) for group in grouped.values()]
@@ -377,7 +419,9 @@ def _repair_sqlite_db(source_path: str, target_path: str, *, dry_run: bool) -> d
 
         if target_store is not None:
             for chunk in canonical_chunks:
-                target_store.upsert_canonical(chunk)
+                # Grouping already produced one fact per canonical key. Keep
+                # that key and its original ownership metadata unchanged.
+                target_store.store(chunk)
             target_store.rebuild_indexes(rebuild_fts=True, rebuild_vec=True)
 
         return {
@@ -1412,6 +1456,25 @@ def main() -> None:
         "--status", choices=["pending", "leased", "completed", "failed", "exhausted"]
     )
     sp_jobs.add_argument("--limit", type=int, default=50)
+    sp_legacy = subparsers.add_parser(
+        "legacy-review", help="Review unassigned legacy facts (read-only)"
+    )
+    sp_legacy.add_argument("--limit", type=int, default=50)
+    sp_legacy.add_argument("--after-id", default="")
+    sp_routing = subparsers.add_parser(
+        "routing-review", help="Review unresolved host routing diagnostics (metadata only)"
+    )
+    sp_routing.add_argument("--limit", type=int, default=256)
+    sp_routing.add_argument(
+        "--unconfigured",
+        action="store_true",
+        help="Review records explicitly recorded without a configured profile",
+    )
+    sp_routing_ack = subparsers.add_parser(
+        "routing-review-ack", help="Dismiss one unresolved host routing diagnostic"
+    )
+    sp_routing_ack.add_argument("record_id")
+    sp_routing_ack.add_argument("--unconfigured", action="store_true")
     for job_command, job_help in (
         ("job-status", "Inspect one processing job in the current scope"),
         ("retry-job", "Requeue an exhausted job after fixing its failure"),
@@ -1451,6 +1514,42 @@ def main() -> None:
     sp_retrieve.add_argument("--max-context-tokens", type=int, default=1200)
 
     args = parser.parse_args()
+    if args.command in {"routing-review", "routing-review-ack"}:
+        from .routing_review import ack_routing_failure, list_routing_failures
+
+        profile = os.environ.get("MNEMOS_USER_PROFILE_ID", "").strip() or None
+        if profile is None and not args.unconfigured:
+            parser.error("Set MNEMOS_USER_PROFILE_ID or pass --unconfigured explicitly")
+        directory = os.environ.get("MNEMOS_ROUTING_REVIEW_DIR") or None
+        try:
+            if args.command == "routing-review":
+                result = {
+                    "schema_version": 1,
+                    "status": "committed",
+                    "read_only": True,
+                    "unconfigured": args.unconfigured,
+                    "records": list_routing_failures(
+                        configured_profile=None if args.unconfigured else profile,
+                        directory=directory,
+                        limit=args.limit,
+                    ),
+                }
+            else:
+                result = {
+                    "schema_version": 1,
+                    "status": "committed",
+                    "acknowledged": ack_routing_failure(
+                        args.record_id,
+                        configured_profile=None if args.unconfigured else profile,
+                        directory=directory,
+                    ),
+                    "record_id": args.record_id,
+                    "unconfigured": args.unconfigured,
+                }
+        except (OSError, TypeError, ValueError) as exc:
+            parser.error(str(exc))
+        print(json.dumps(result, indent=2))
+        return
     if args.command in {"migrate-store", "repair-db"}:
         import sqlite3
         from contextlib import closing
@@ -1525,6 +1624,7 @@ def main() -> None:
         return
     if args.command in {
         "jobs",
+        "legacy-review",
         "job-status",
         "retry-job",
         "service-stop",

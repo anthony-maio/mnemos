@@ -22,6 +22,7 @@ from typing import Any, Mapping
 from ..client import MnemosClient
 from .diagnostics import emit_hook_diagnostic
 from ..scopes import ScopeContext, ScopeRegistry, default_registry_path as shared_registry_path
+from ..routing_review import reason_for_context_error, record_unresolved_routing_failure
 from ..service import _protect_private_path, default_runtime_directory
 
 MAX_TRANSCRIPT_LINE = 200_000
@@ -391,7 +392,25 @@ class ClaudeCodeAdapter:
         self, event: str, payload: Mapping[str, Any], *, include_retrieval: bool = True
     ) -> HookResult:
         if event in {"SessionStart", "UserPromptSubmit"}:
-            context = self._context(payload)
+            try:
+                context = self._context(payload)
+            except Exception as exc:
+                reason = reason_for_context_error(exc)
+                record_unresolved_routing_failure(
+                    host="claude-code",
+                    event=event,
+                    reason=reason,
+                    session_id=(
+                        payload.get("session_id")
+                        if isinstance(payload.get("session_id"), str)
+                        else None
+                    ),
+                    project_hint=(
+                        payload.get("cwd") if isinstance(payload.get("cwd"), str) else None
+                    ),
+                    configured_profile=self.user_profile_id,
+                )
+                return HookResult(status="degraded", committed=False, error=reason)
 
             async def recall() -> HookResult:
                 if not include_retrieval:
@@ -428,7 +447,25 @@ class ClaudeCodeAdapter:
                 error=retrieved.error,
             )
         if event in {"Stop", "PreCompact", "PostCompact"}:
-            context = self._context(payload)
+            try:
+                context = self._context(payload)
+            except Exception as exc:
+                reason = reason_for_context_error(exc)
+                record_unresolved_routing_failure(
+                    host="claude-code",
+                    event=event,
+                    reason=reason,
+                    session_id=(
+                        payload.get("session_id")
+                        if isinstance(payload.get("session_id"), str)
+                        else None
+                    ),
+                    project_hint=(
+                        payload.get("cwd") if isinstance(payload.get("cwd"), str) else None
+                    ),
+                    configured_profile=self.user_profile_id,
+                )
+                return HookResult(status="degraded", committed=False, error=reason)
             captured, transcript_contents = await self._capture_transcript(payload, context)
             if event == "Stop":
                 assistant = payload.get("last_assistant_message")

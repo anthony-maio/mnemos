@@ -213,6 +213,24 @@
             <p id="job-action-status" class="action-status" aria-live="polite"></p>
             <div id="exhausted-jobs" class="check-list"></div>
           </details>
+          <details class="legacy-review">
+            <summary>Review legacy unassigned memory</summary>
+            <p>These facts remain outside scoped recall. Review them here before an explicit, reviewed migration.</p>
+            <button id="refresh-legacy" class="button button-ghost">Load legacy facts</button>
+            <p id="legacy-review-status" class="action-status" aria-live="polite"></p>
+            <div id="legacy-review-list" class="check-list"></div>
+          </details>
+          <details class="routing-review">
+            <summary>Review unresolved host routing</summary>
+            <p>These captures could not be matched to an enabled project and profile. Resolve the settings, then start a new capture. No conversation content was saved and nothing can be replayed from this list.</p>
+            <label class="checkbox-field">
+              <input id="routing-review-unconfigured" type="checkbox" />
+              <span>Show records without a configured profile</span>
+            </label>
+            <button id="refresh-routing-review" class="button button-ghost">Load routing failures</button>
+            <p id="routing-review-status" class="action-status" aria-live="polite"></p>
+            <div id="routing-review-list" class="check-list"></div>
+          </details>
           <div class="memory-browser">
             <div id="memory-list" class="memory-list"></div>
             <aside class="memory-detail-shell">
