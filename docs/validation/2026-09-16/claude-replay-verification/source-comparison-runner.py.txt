@@ -1,0 +1,36 @@
+"""Record static parity without relabeling a frozen evaluation as a later build."""
+from datetime import datetime, timezone
+import hashlib
+import json
+from pathlib import Path
+import subprocess
+
+root = Path(__file__).resolve().parents[1]
+old = "b7a9d9d4d9d6947564696457b0e2754f7e95a801"
+new = "554a2517dc85bbdb6190b5e523f8511efa54cccf"
+
+def tree(commit):
+    output = subprocess.check_output(["git", "ls-tree", "-r", commit, "mnemos", "benchmarks/local_memory"], cwd=root, text=True)
+    return {line.split("\t", 1)[1]: line.split("\t", 1)[0].split()[2] for line in output.splitlines()}
+
+before, after = tree(old), tree(new)
+paths = sorted(set(before) | set(after))
+groups = {
+    "memory_core": [path for path in paths if path in {"mnemos/engine.py", "mnemos/config.py", "mnemos/scopes.py"} or path.startswith(("mnemos/modules/", "mnemos/utils/"))],
+    "quality_harness_and_fixtures": [path for path in paths if path.startswith("benchmarks/local_memory/") and path != "benchmarks/local_memory/performance.py"],
+}
+report = {
+    "recorded_at": datetime.now(timezone.utc).isoformat(),
+    "evaluation_source": old,
+    "verification_source": new,
+    "git_object_format": subprocess.check_output(["git", "rev-parse", "--show-object-format"], cwd=root, text=True).strip(),
+    "runner_sha256": hashlib.sha256(Path(__file__).read_bytes()).hexdigest(),
+    "groups": {name: {"all_blobs_equal": all(before.get(path) == after.get(path) for path in selected), "paths": {path: {"evaluation_blob": before.get(path), "verification_blob": after.get(path)} for path in selected}} for name, selected in groups.items()},
+    "changed_paths": {path: {"evaluation_blob": before.get(path), "verification_blob": after.get(path)} for path in paths if before.get(path) != after.get(path)},
+    "interpretation": "Static source parity only. Evaluation artifacts remain bound to b7; latest host and service changes need their own validation. This does not establish whole-program or runtime-environment equivalence, and does not remove the recorded environment-sync caveat.",
+}
+target = root / ".venv/evaluation-source-parity-b7-554.json"
+if target.exists():
+    raise SystemExit("Refusing to overwrite prior comparison")
+target.write_text(json.dumps(report, indent=2) + "\n", encoding="utf-8")
+print(json.dumps({"groups": {name: {"files": len(value["paths"]), "all_blobs_equal": value["all_blobs_equal"]} for name, value in report["groups"].items()}, "changed_paths": list(report["changed_paths"])}))

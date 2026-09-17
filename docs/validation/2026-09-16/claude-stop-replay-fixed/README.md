@@ -28,11 +28,15 @@ not be silently discarded.
 Focused validation passed 54 adapter and identity tests, formatting, and type
 checking. The benchmark-only change passed four focused tests, including a
 check through the measurement function for one metadata write per engine
-query. Full-suite verification for the frozen source is still running.
+query. The frozen source subsequently passed 691 tests, two optional WSL
+skips, formatting, typing, JavaScript, build, and package checks. Its freshly
+installed wheel also passed the seven replay assertions; see the
+[full and installed verification](../claude-replay-verification/README.md).
 
 This probe uses real SQLite and the local service contract with constant
 vectors and unavailable cognition. It is a source-checkout check, not an
-installed-wheel or native Claude acceptance result. The original negative
+native Claude acceptance result. The separate installed check is linked above.
+The original negative
 probe remains in [claude-stop-replay](../claude-stop-replay/README.md).
 
 The exact positive verifier, unchanged original reproducer, original report,

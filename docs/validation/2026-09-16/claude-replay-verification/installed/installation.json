@@ -1,0 +1,76 @@
+{
+  "source_commit": "554a2517dc85bbdb6190b5e523f8511efa54cccf",
+  "started_at": "2026-09-17T08:39:48.742902+00:00",
+  "status": "passed",
+  "wheel": {
+    "file": "D:\\Development\\mnemos\\mnemos\\.worktrees\\functional-local-memory\\.venv\\claude-replay-checks-v1\\dist\\mnemos_memory-0.7.0-py3-none-any.whl",
+    "bytes": 264332,
+    "sha256": "92dabd9bd79fa5e4f13685923f8ce2e1181fb5ab80bef72a2a5de9101d6a81a6"
+  },
+  "environment": "D:\\WindowsTemp\\mnemos-replay-wheel-20260917-v1",
+  "runner_sha256": "36959af13063edba2ed7a6958cf796a8ca65817dd5fda4e598d15460b157e970",
+  "commands": [
+    {
+      "name": "create_environment",
+      "command": [
+        "C:\\Users\\Ant\\.local\\bin\\uv.exe",
+        "venv",
+        "D:\\WindowsTemp\\mnemos-replay-wheel-20260917-v1",
+        "--python",
+        "D:\\Development\\mnemos\\mnemos\\.worktrees\\functional-local-memory\\.venv\\Scripts\\python.exe"
+      ],
+      "started_at": "2026-09-17T08:39:48.743239+00:00",
+      "exit_code": 0,
+      "finished_at": "2026-09-17T08:39:49.603484+00:00"
+    },
+    {
+      "name": "install_wheel",
+      "command": [
+        "C:\\Users\\Ant\\.local\\bin\\uv.exe",
+        "pip",
+        "install",
+        "--python",
+        "D:\\WindowsTemp\\mnemos-replay-wheel-20260917-v1\\Scripts\\python.exe",
+        "D:\\Development\\mnemos\\mnemos\\.worktrees\\functional-local-memory\\.venv\\claude-replay-checks-v1\\dist\\mnemos_memory-0.7.0-py3-none-any.whl"
+      ],
+      "started_at": "2026-09-17T08:39:49.603499+00:00",
+      "exit_code": 0,
+      "finished_at": "2026-09-17T08:40:35.183414+00:00"
+    },
+    {
+      "name": "freeze_environment",
+      "command": [
+        "C:\\Users\\Ant\\.local\\bin\\uv.exe",
+        "pip",
+        "freeze",
+        "--python",
+        "D:\\WindowsTemp\\mnemos-replay-wheel-20260917-v1\\Scripts\\python.exe"
+      ],
+      "started_at": "2026-09-17T08:40:35.183432+00:00",
+      "exit_code": 0,
+      "finished_at": "2026-09-17T08:40:35.497343+00:00"
+    },
+    {
+      "name": "replay_probe",
+      "command": [
+        "D:\\WindowsTemp\\mnemos-replay-wheel-20260917-v1\\Scripts\\python.exe",
+        "-I",
+        "D:\\Development\\mnemos\\mnemos\\.worktrees\\functional-local-memory\\.venv\\verify_claude_stop_replay.py",
+        "--snapshot",
+        "D:\\Development\\mnemos\\mnemos\\.worktrees\\functional-local-memory\\.venv\\claude-replay-frozen-v1",
+        "--commit",
+        "554a2517dc85bbdb6190b5e523f8511efa54cccf",
+        "--output",
+        "D:\\Development\\mnemos\\mnemos\\.worktrees\\functional-local-memory\\.venv\\claude-replay-installed-v1\\probe.json",
+        "--installed-package",
+        "D:\\WindowsTemp\\mnemos-replay-wheel-20260917-v1\\Lib\\site-packages",
+        "--wheel",
+        "D:\\Development\\mnemos\\mnemos\\.worktrees\\functional-local-memory\\.venv\\claude-replay-checks-v1\\dist\\mnemos_memory-0.7.0-py3-none-any.whl"
+      ],
+      "started_at": "2026-09-17T08:40:35.497357+00:00",
+      "exit_code": 0,
+      "finished_at": "2026-09-17T08:40:54.175072+00:00"
+    }
+  ],
+  "finished_at": "2026-09-17T08:40:54.185104+00:00"
+}

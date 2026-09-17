@@ -501,3 +501,20 @@ ambiguity; full native deduplication is still open.
 Full verification is running against an immutable `554a251` checkout.
 The installed package and native host checks for this new source remain
 pending; prior source20f checks cannot certify the repair.
+
+## Replay repair full suite and installed wheel passed
+
+Frozen `554a251` completed verification at 08:39:22 UTC on September 17:
+691 tests passed, two optional WSL tests skipped, and formatting, typing,
+JavaScript, build, and package checks passed. A fresh disposable installation
+of that wheel passed all seven SQLite replay assertions. The exact logs,
+commands, package hashes, and runners are preserved in
+[the verification record](claude-replay-verification/README.md).
+
+Native host acceptance remains open. The Claude
+[identity contract](claude-host-identity-contract.md) explains why older hooks
+cannot always associate fallback text with a later transcript UUID. A separate
+Hermes discovery probe found a registry-path availability defect; its repair
+passed focused tests and real disposable WSL plugin loading. Full verification
+of that newer source is pending. The held-out model queue continues on its
+original frozen source, and the corrected latency benchmark has not run.

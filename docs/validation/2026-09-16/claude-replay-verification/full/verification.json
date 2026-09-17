@@ -1,0 +1,109 @@
+{
+  "source_commit": "554a2517dc85bbdb6190b5e523f8511efa54cccf",
+  "source_checkout": "D:\\Development\\mnemos\\mnemos\\.worktrees\\functional-local-memory\\.venv\\claude-replay-frozen-v1",
+  "status": "passed",
+  "started_at": "2026-09-17T08:23:41.489712+00:00",
+  "checks": [
+    {
+      "name": "pytest",
+      "command": [
+        "D:\\Development\\mnemos\\mnemos\\.worktrees\\functional-local-memory\\.venv\\Scripts\\python.exe",
+        "-m",
+        "pytest",
+        "-q",
+        "--junitxml",
+        "D:\\Development\\mnemos\\mnemos\\.worktrees\\functional-local-memory\\.venv\\claude-replay-checks-v1\\pytest.xml"
+      ],
+      "status": "passed",
+      "started_at": "2026-09-17T08:23:41.490489+00:00",
+      "exit_code": 0,
+      "finished_at": "2026-09-17T08:38:47.199767+00:00",
+      "counts": {
+        "tests": 693,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 2
+      }
+    },
+    {
+      "name": "black",
+      "command": [
+        "D:\\Development\\mnemos\\mnemos\\.worktrees\\functional-local-memory\\.venv\\Scripts\\python.exe",
+        "-m",
+        "black",
+        "--check",
+        "."
+      ],
+      "status": "passed",
+      "started_at": "2026-09-17T08:38:47.208238+00:00",
+      "exit_code": 0,
+      "finished_at": "2026-09-17T08:38:49.785242+00:00"
+    },
+    {
+      "name": "mypy",
+      "command": [
+        "D:\\Development\\mnemos\\mnemos\\.worktrees\\functional-local-memory\\.venv\\compat-py310\\Scripts\\python.exe",
+        "-m",
+        "mypy",
+        "."
+      ],
+      "status": "passed",
+      "started_at": "2026-09-17T08:38:49.785970+00:00",
+      "exit_code": 0,
+      "finished_at": "2026-09-17T08:38:58.519360+00:00"
+    },
+    {
+      "name": "javascript",
+      "command": [
+        "node",
+        "--check",
+        "mnemos/ui/app.js"
+      ],
+      "status": "passed",
+      "started_at": "2026-09-17T08:38:58.598706+00:00",
+      "exit_code": 0,
+      "finished_at": "2026-09-17T08:38:58.672528+00:00"
+    },
+    {
+      "name": "build",
+      "command": [
+        "D:\\Development\\mnemos\\mnemos\\.worktrees\\functional-local-memory\\.venv\\Scripts\\python.exe",
+        "-m",
+        "build",
+        "--outdir",
+        "D:\\Development\\mnemos\\mnemos\\.worktrees\\functional-local-memory\\.venv\\claude-replay-checks-v1\\dist"
+      ],
+      "status": "passed",
+      "started_at": "2026-09-17T08:38:58.673311+00:00",
+      "exit_code": 0,
+      "finished_at": "2026-09-17T08:39:22.155377+00:00"
+    },
+    {
+      "name": "twine",
+      "command": [
+        "D:\\Development\\mnemos\\mnemos\\.worktrees\\functional-local-memory\\.venv\\Scripts\\python.exe",
+        "-m",
+        "twine",
+        "check",
+        "D:\\Development\\mnemos\\mnemos\\.worktrees\\functional-local-memory\\.venv\\claude-replay-checks-v1\\dist\\mnemos_memory-0.7.0-py3-none-any.whl",
+        "D:\\Development\\mnemos\\mnemos\\.worktrees\\functional-local-memory\\.venv\\claude-replay-checks-v1\\dist\\mnemos_memory-0.7.0.tar.gz"
+      ],
+      "exit_code": 0,
+      "status": "passed"
+    }
+  ],
+  "runner_sha256": "d2f05b5e2189e3d3ba5ce9b535d8f5adc98d0c5409037cfff7f4460fac0bdfd6",
+  "updated_at": "2026-09-17T08:39:22.710092+00:00",
+  "artifacts": [
+    {
+      "file": "D:\\Development\\mnemos\\mnemos\\.worktrees\\functional-local-memory\\.venv\\claude-replay-checks-v1\\dist\\mnemos_memory-0.7.0-py3-none-any.whl",
+      "bytes": 264332,
+      "sha256": "92dabd9bd79fa5e4f13685923f8ce2e1181fb5ab80bef72a2a5de9101d6a81a6"
+    },
+    {
+      "file": "D:\\Development\\mnemos\\mnemos\\.worktrees\\functional-local-memory\\.venv\\claude-replay-checks-v1\\dist\\mnemos_memory-0.7.0.tar.gz",
+      "bytes": 2353452,
+      "sha256": "0c8a4eb6a262400fe921fa92150370650f2d1ee2029e972b1133aece7514c2c3"
+    }
+  ]
+}
