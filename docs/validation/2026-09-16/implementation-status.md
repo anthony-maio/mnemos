@@ -17,6 +17,17 @@ lacked `facts`; its cause is under investigation. The runner stopped before
 building a new wheel. The [failed checkpoint](../2026-09-17/service-runtime-checkpoint-failure-v1/README.md)
 remains separate from the earlier passing package checkpoint.
 
+The [isolated rerun](../2026-09-17/crosshost-isolated-diagnostic-v1/README.md)
+passed that exact parameter with its original timeout and durability settings.
+All 40 traced requests completed, including a list response with one fact.
+It did not reproduce or explain the full-suite failure.
+
+The [Claude capture diagnosis](../2026-09-17/claude-capture-association-diagnostic-v1/README.md)
+reproduced the provisional-user association warning when the prompt hook lacks
+a native prompt ID. A completed-transcript control succeeds when supplied that
+ID, but does not establish whether it exists at prompt-hook time. Native
+hook-time observation and complete lifecycle acceptance remain open.
+
 | Plan item | Current implementation and evidence | Acceptance state |
 | --- | --- | --- |
 | T01 Runtime | Configured providers, SQLite default, explicit mock rejection, readiness checks, health reporting, and installed entry points are covered by the package and wheel checks. | Installed doctor v5 passed empty-store, legacy-row, and mock-rejection cases against source 6600dc2. These are configuration checks; provider reachability was not probed. Later managed service logging and omitted-provider startup repairs pass focused tests, including actual subprocess recall, and await a new full/package checkpoint. |

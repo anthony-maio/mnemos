@@ -1,0 +1,78 @@
+"""Preserve bounded diagnostics without promoting the original failed gates."""
+from pathlib import Path
+import hashlib
+import json
+
+root = Path(__file__).resolve().parents[1]
+
+def digest(path):
+    return hashlib.sha256(path.read_bytes()).hexdigest()
+
+cross = Path('C:/Users/Ant/AppData/Local/Temp/mnemos-crosshost-e1fd56e-diagnostic-v1b')
+report = json.loads((cross / 'diagnostic.json').read_text(encoding='utf-8'))
+cross_runner = root / '.venv/crosshost_e1fd56e_diagnostic_v1.py'
+assert digest(cross_runner) == report['runner_sha256']
+assert report['status'] == 'passed_test' and report['pytest']['exit_code'] == 0
+for key in ('junit', 'pytest_stdout_log', 'pytest_stderr_log'):
+    item = report['pytest'][key]
+    assert digest(Path(item['path'])) == item['sha256']
+
+capture = root / '.venv/claude-v13-capture-diagnosis-v1'
+capture_report = json.loads((capture / 'report.json').read_text(encoding='utf-8'))
+assert digest(Path(capture_report['imported_adapter'])) == capture_report['adapter_sha256']
+assert capture_report['probes']['unbound']['stop_result']['error'] == 'ambiguous_transcript_association'
+assert capture_report['probes']['associated_prompt_id_control']['stop_result']['status'] == 'ok'
+
+specs = [
+    ('crosshost-isolated-diagnostic-v1', {
+        'diagnostic.json': cross / 'diagnostic.json',
+        'diagnostic.junit.xml': cross / 'diagnostic.junit.xml',
+        'pytest.stdout.log': cross / 'pytest.stdout.log',
+        'pytest.stderr.log': cross / 'pytest.stderr.log',
+        'runner.py.txt': cross_runner,
+    }, '''# Isolated cross-host diagnostic
+
+The single Codex parameter that failed in the full e1fd56e suite passed in
+a fresh external fixture: one test, 4.32 seconds, all 40 traced requests
+completed. The list response contained one fact and no degraded/error flag.
+The original five-second client timeout and durability settings were retained.
+
+This run did not reproduce the original missing-facts response. Its cause
+remains unknown, and the full-suite failure remains open. This is a synthetic
+adapter/service contract test, not a native Codex session. The diagnostic uses
+an in-process request observer and importlib test loading; it does not recreate
+the earlier full-suite execution environment or ordering.
+'''),
+    ('claude-capture-association-diagnostic-v1', {
+        'report.json': capture / 'report.json',
+        'runner.py.txt': root / '.venv/claude_v13_capture_diagnosis_v1.py',
+    }, '''# Claude capture association diagnostic
+
+An offline fake-client replay against the installed 6600dc2 adapter reproduced
+the v13 capture warnings. A prompt hook without prompt_id created a provisional
+user record; Stop could not safely associate it with the transcript user row
+and reported ambiguous_transcript_association. Assistant capture succeeded.
+
+Supplying the final transcript prompt ID as a control produced five captures
+and successful hook responses, compared with six captures in the unbound case.
+The extra unbound record is provisional and is not evidence of duplicate
+durable facts. This control used a completed transcript, so it does not prove
+that the identifier existed when the actual prompt hook ran. A separate native
+hook-time observation is required before designing an association repair.
+
+The report and helper are preserved byte for byte. The adapter hash is verified
+at archival time; the original report does not bind a helper hash at execution.
+No new native host call or model inference was performed by this diagnostic.
+'''),
+]
+for name, files, readme in specs:
+    destination = root / 'docs/validation/2026-09-17' / name
+    destination.mkdir(parents=True, exist_ok=False)
+    for target, source in files.items():
+        (destination / target).write_bytes(source.read_bytes())
+    (destination / 'archive-helper.py.txt').write_bytes(Path(__file__).read_bytes())
+    (destination / 'README.md').write_text(readme, encoding='utf-8')
+    index = {p.name: {'bytes': p.stat().st_size, 'sha256': digest(p)}
+             for p in sorted(destination.iterdir()) if p.is_file()}
+    (destination / 'evidence-index.json').write_text(json.dumps({'files': index}, indent=2) + '\n', encoding='utf-8')
+    print(json.dumps({'archive': str(destination), 'files': len(index)}))

@@ -1,0 +1,1314 @@
+{
+  "schema_version": 1,
+  "status": "passed_test",
+  "started_at": "2026-09-17T19:29:56.955767+00:00",
+  "source_commit": "e1fd56e36c17f1b1b05ead6c579619cb5ad372dd",
+  "snapshot": "C:\\Users\\Ant\\AppData\\Local\\Temp\\mnemos-source-e1fd56e",
+  "snapshot_test": "C:\\Users\\Ant\\AppData\\Local\\Temp\\mnemos-source-e1fd56e\\tests\\test_cross_host_contract.py",
+  "snapshot_test_sha256": "ee7d927e17edcf749ca8f8cfb8bd200ec754d70cc16acc094f63a18a3139816d",
+  "fixture": "C:\\Users\\Ant\\AppData\\Local\\Temp\\mnemos-crosshost-e1fd56e-48rcwn2i",
+  "basetemp": "C:\\Users\\Ant\\AppData\\Local\\Temp\\mnemos-crosshost-e1fd56e-48rcwn2i\\pytest",
+  "nodeid": "test_cross_host_contract.py::test_codex_claude_hermes_share_durable_scoped_lifecycle[codex]",
+  "request_trace": [
+    {
+      "sequence": 1,
+      "operation": "remember",
+      "param_keys": [
+        "content",
+        "context",
+        "event_id",
+        "role",
+        "scope",
+        "source_ref"
+      ],
+      "elapsed_ms": 274.318,
+      "response": {
+        "type": "mapping",
+        "keys": [
+          "event_id",
+          "fact_eligible",
+          "identity_status",
+          "job_id",
+          "processing_status",
+          "schema_version",
+          "status"
+        ],
+        "status": "committed",
+        "processing_status": "pending",
+        "degraded": false,
+        "has_error": false,
+        "facts_type": null,
+        "fact_count": null,
+        "context_type": null,
+        "maintenance_type": null
+      }
+    },
+    {
+      "sequence": 2,
+      "operation": "maintenance",
+      "param_keys": [
+        "context"
+      ],
+      "elapsed_ms": 19.16,
+      "response": {
+        "type": "mapping",
+        "keys": [
+          "completed",
+          "graph",
+          "maintenance",
+          "schema_version"
+        ],
+        "status": null,
+        "processing_status": null,
+        "degraded": false,
+        "has_error": false,
+        "facts_type": null,
+        "fact_count": null,
+        "context_type": null,
+        "maintenance_type": "dict"
+      }
+    },
+    {
+      "sequence": 3,
+      "operation": "list",
+      "param_keys": [
+        "allowed_scopes",
+        "context",
+        "limit"
+      ],
+      "elapsed_ms": 12.722,
+      "response": {
+        "type": "mapping",
+        "keys": [
+          "facts",
+          "jobs",
+          "next_cursor",
+          "schema_version"
+        ],
+        "status": null,
+        "processing_status": null,
+        "degraded": false,
+        "has_error": false,
+        "facts_type": "list",
+        "fact_count": 1,
+        "context_type": null,
+        "maintenance_type": null
+      }
+    },
+    {
+      "sequence": 4,
+      "operation": "inspect",
+      "param_keys": [
+        "context",
+        "fact_id"
+      ],
+      "elapsed_ms": 9.47,
+      "response": {
+        "type": "mapping",
+        "keys": [
+          "evidence",
+          "fact",
+          "original_source_status",
+          "revisions",
+          "schema_version"
+        ],
+        "status": null,
+        "processing_status": null,
+        "degraded": false,
+        "has_error": false,
+        "facts_type": null,
+        "fact_count": null,
+        "context_type": null,
+        "maintenance_type": null
+      }
+    },
+    {
+      "sequence": 5,
+      "operation": "retrieve",
+      "param_keys": [
+        "allowed_scopes",
+        "context",
+        "max_context_tokens",
+        "profile",
+        "query",
+        "top_k"
+      ],
+      "elapsed_ms": 230.398,
+      "response": {
+        "type": "mapping",
+        "keys": [
+          "context",
+          "context_token_upper_bound",
+          "facts",
+          "profile",
+          "schema_version",
+          "token_count_method"
+        ],
+        "status": null,
+        "processing_status": null,
+        "degraded": false,
+        "has_error": false,
+        "facts_type": "list",
+        "fact_count": 1,
+        "context_type": "str",
+        "maintenance_type": null
+      }
+    },
+    {
+      "sequence": 6,
+      "operation": "retrieve",
+      "param_keys": [
+        "allowed_scopes",
+        "context",
+        "max_context_tokens",
+        "profile",
+        "query",
+        "top_k"
+      ],
+      "elapsed_ms": 10.627,
+      "response": {
+        "type": "mapping",
+        "keys": [
+          "context",
+          "context_token_upper_bound",
+          "facts",
+          "profile",
+          "schema_version",
+          "token_count_method"
+        ],
+        "status": null,
+        "processing_status": null,
+        "degraded": false,
+        "has_error": false,
+        "facts_type": "list",
+        "fact_count": 1,
+        "context_type": "str",
+        "maintenance_type": null
+      }
+    },
+    {
+      "sequence": 7,
+      "operation": "retrieve",
+      "param_keys": [
+        "allowed_scopes",
+        "context",
+        "max_context_tokens",
+        "profile",
+        "query",
+        "top_k"
+      ],
+      "elapsed_ms": 9.778,
+      "response": {
+        "type": "mapping",
+        "keys": [
+          "context",
+          "context_token_upper_bound",
+          "facts",
+          "profile",
+          "schema_version",
+          "token_count_method"
+        ],
+        "status": null,
+        "processing_status": null,
+        "degraded": false,
+        "has_error": false,
+        "facts_type": "list",
+        "fact_count": 1,
+        "context_type": "str",
+        "maintenance_type": null
+      }
+    },
+    {
+      "sequence": 8,
+      "operation": "correct",
+      "param_keys": [
+        "content",
+        "context",
+        "event_id",
+        "expected_version",
+        "fact_id",
+        "source_ref"
+      ],
+      "elapsed_ms": 10.537,
+      "response": {
+        "type": "mapping",
+        "keys": [
+          "event_id",
+          "fact_eligible",
+          "identity_status",
+          "job_id",
+          "processing_status",
+          "schema_version",
+          "status"
+        ],
+        "status": "committed",
+        "processing_status": "pending",
+        "degraded": false,
+        "has_error": false,
+        "facts_type": null,
+        "fact_count": null,
+        "context_type": null,
+        "maintenance_type": null
+      }
+    },
+    {
+      "sequence": 9,
+      "operation": "maintenance",
+      "param_keys": [
+        "context"
+      ],
+      "elapsed_ms": 18.922,
+      "response": {
+        "type": "mapping",
+        "keys": [
+          "completed",
+          "graph",
+          "maintenance",
+          "schema_version"
+        ],
+        "status": null,
+        "processing_status": null,
+        "degraded": false,
+        "has_error": false,
+        "facts_type": null,
+        "fact_count": null,
+        "context_type": null,
+        "maintenance_type": "dict"
+      }
+    },
+    {
+      "sequence": 10,
+      "operation": "inspect",
+      "param_keys": [
+        "context",
+        "fact_id"
+      ],
+      "elapsed_ms": 7.441,
+      "response": {
+        "type": "mapping",
+        "keys": [
+          "evidence",
+          "fact",
+          "original_source_status",
+          "revisions",
+          "schema_version"
+        ],
+        "status": null,
+        "processing_status": null,
+        "degraded": false,
+        "has_error": false,
+        "facts_type": null,
+        "fact_count": null,
+        "context_type": null,
+        "maintenance_type": null
+      }
+    },
+    {
+      "sequence": 11,
+      "operation": "retrieve",
+      "param_keys": [
+        "allowed_scopes",
+        "context",
+        "max_context_tokens",
+        "profile",
+        "query",
+        "top_k"
+      ],
+      "elapsed_ms": 10.291,
+      "response": {
+        "type": "mapping",
+        "keys": [
+          "context",
+          "context_token_upper_bound",
+          "facts",
+          "profile",
+          "schema_version",
+          "token_count_method"
+        ],
+        "status": null,
+        "processing_status": null,
+        "degraded": false,
+        "has_error": false,
+        "facts_type": "list",
+        "fact_count": 1,
+        "context_type": "str",
+        "maintenance_type": null
+      }
+    },
+    {
+      "sequence": 12,
+      "operation": "retrieve",
+      "param_keys": [
+        "allowed_scopes",
+        "context",
+        "max_context_tokens",
+        "profile",
+        "query",
+        "top_k"
+      ],
+      "elapsed_ms": 9.875,
+      "response": {
+        "type": "mapping",
+        "keys": [
+          "context",
+          "context_token_upper_bound",
+          "facts",
+          "profile",
+          "schema_version",
+          "token_count_method"
+        ],
+        "status": null,
+        "processing_status": null,
+        "degraded": false,
+        "has_error": false,
+        "facts_type": "list",
+        "fact_count": 1,
+        "context_type": "str",
+        "maintenance_type": null
+      }
+    },
+    {
+      "sequence": 13,
+      "operation": "retrieve",
+      "param_keys": [
+        "allowed_scopes",
+        "context",
+        "max_context_tokens",
+        "profile",
+        "query",
+        "top_k"
+      ],
+      "elapsed_ms": 13.973,
+      "response": {
+        "type": "mapping",
+        "keys": [
+          "context",
+          "context_token_upper_bound",
+          "facts",
+          "profile",
+          "schema_version",
+          "token_count_method"
+        ],
+        "status": null,
+        "processing_status": null,
+        "degraded": false,
+        "has_error": false,
+        "facts_type": "list",
+        "fact_count": 1,
+        "context_type": "str",
+        "maintenance_type": null
+      }
+    },
+    {
+      "sequence": 14,
+      "operation": "retrieve",
+      "param_keys": [
+        "allowed_scopes",
+        "context",
+        "max_context_tokens",
+        "profile",
+        "query",
+        "top_k"
+      ],
+      "elapsed_ms": 244.935,
+      "response": {
+        "type": "mapping",
+        "keys": [
+          "context",
+          "context_token_upper_bound",
+          "facts",
+          "profile",
+          "schema_version",
+          "token_count_method"
+        ],
+        "status": null,
+        "processing_status": null,
+        "degraded": false,
+        "has_error": false,
+        "facts_type": "list",
+        "fact_count": 1,
+        "context_type": "str",
+        "maintenance_type": null
+      }
+    },
+    {
+      "sequence": 15,
+      "operation": "retrieve",
+      "param_keys": [
+        "allowed_scopes",
+        "context",
+        "max_context_tokens",
+        "profile",
+        "query",
+        "top_k"
+      ],
+      "elapsed_ms": 12.719,
+      "response": {
+        "type": "mapping",
+        "keys": [
+          "context",
+          "context_token_upper_bound",
+          "facts",
+          "profile",
+          "schema_version",
+          "token_count_method"
+        ],
+        "status": null,
+        "processing_status": null,
+        "degraded": false,
+        "has_error": false,
+        "facts_type": "list",
+        "fact_count": 1,
+        "context_type": "str",
+        "maintenance_type": null
+      }
+    },
+    {
+      "sequence": 16,
+      "operation": "retrieve",
+      "param_keys": [
+        "allowed_scopes",
+        "context",
+        "max_context_tokens",
+        "profile",
+        "query",
+        "top_k"
+      ],
+      "elapsed_ms": 13.346,
+      "response": {
+        "type": "mapping",
+        "keys": [
+          "context",
+          "context_token_upper_bound",
+          "facts",
+          "profile",
+          "schema_version",
+          "token_count_method"
+        ],
+        "status": null,
+        "processing_status": null,
+        "degraded": false,
+        "has_error": false,
+        "facts_type": "list",
+        "fact_count": 1,
+        "context_type": "str",
+        "maintenance_type": null
+      }
+    },
+    {
+      "sequence": 17,
+      "operation": "inspect",
+      "param_keys": [
+        "context",
+        "fact_id"
+      ],
+      "elapsed_ms": 7.094,
+      "response": {
+        "type": "mapping",
+        "keys": [
+          "evidence",
+          "fact",
+          "original_source_status",
+          "revisions",
+          "schema_version"
+        ],
+        "status": null,
+        "processing_status": null,
+        "degraded": false,
+        "has_error": false,
+        "facts_type": null,
+        "fact_count": null,
+        "context_type": null,
+        "maintenance_type": null
+      }
+    },
+    {
+      "sequence": 18,
+      "operation": "remember",
+      "param_keys": [
+        "content",
+        "context",
+        "event_id",
+        "role",
+        "scope",
+        "source_ref"
+      ],
+      "elapsed_ms": 15.531,
+      "response": {
+        "type": "mapping",
+        "keys": [
+          "event_id",
+          "fact_eligible",
+          "identity_status",
+          "job_id",
+          "processing_status",
+          "schema_version",
+          "status"
+        ],
+        "status": "committed",
+        "processing_status": "pending",
+        "degraded": false,
+        "has_error": false,
+        "facts_type": null,
+        "fact_count": null,
+        "context_type": null,
+        "maintenance_type": null
+      }
+    },
+    {
+      "sequence": 19,
+      "operation": "maintenance",
+      "param_keys": [
+        "context"
+      ],
+      "elapsed_ms": 22.433,
+      "response": {
+        "type": "mapping",
+        "keys": [
+          "completed",
+          "graph",
+          "maintenance",
+          "schema_version"
+        ],
+        "status": null,
+        "processing_status": null,
+        "degraded": false,
+        "has_error": false,
+        "facts_type": null,
+        "fact_count": null,
+        "context_type": null,
+        "maintenance_type": "dict"
+      }
+    },
+    {
+      "sequence": 20,
+      "operation": "retrieve",
+      "param_keys": [
+        "allowed_scopes",
+        "context",
+        "max_context_tokens",
+        "profile",
+        "query",
+        "top_k"
+      ],
+      "elapsed_ms": 15.087,
+      "response": {
+        "type": "mapping",
+        "keys": [
+          "context",
+          "context_token_upper_bound",
+          "facts",
+          "profile",
+          "schema_version",
+          "token_count_method"
+        ],
+        "status": null,
+        "processing_status": null,
+        "degraded": false,
+        "has_error": false,
+        "facts_type": "list",
+        "fact_count": 1,
+        "context_type": "str",
+        "maintenance_type": null
+      }
+    },
+    {
+      "sequence": 21,
+      "operation": "retrieve",
+      "param_keys": [
+        "allowed_scopes",
+        "context",
+        "max_context_tokens",
+        "profile",
+        "query",
+        "top_k"
+      ],
+      "elapsed_ms": 10.643,
+      "response": {
+        "type": "mapping",
+        "keys": [
+          "context",
+          "context_token_upper_bound",
+          "facts",
+          "profile",
+          "schema_version",
+          "token_count_method"
+        ],
+        "status": null,
+        "processing_status": null,
+        "degraded": false,
+        "has_error": false,
+        "facts_type": "list",
+        "fact_count": 0,
+        "context_type": "str",
+        "maintenance_type": null
+      }
+    },
+    {
+      "sequence": 22,
+      "operation": "retrieve",
+      "param_keys": [
+        "allowed_scopes",
+        "context",
+        "max_context_tokens",
+        "profile",
+        "query",
+        "top_k"
+      ],
+      "elapsed_ms": 12.06,
+      "response": {
+        "type": "mapping",
+        "keys": [
+          "context",
+          "context_token_upper_bound",
+          "facts",
+          "profile",
+          "schema_version",
+          "token_count_method"
+        ],
+        "status": null,
+        "processing_status": null,
+        "degraded": false,
+        "has_error": false,
+        "facts_type": "list",
+        "fact_count": 1,
+        "context_type": "str",
+        "maintenance_type": null
+      }
+    },
+    {
+      "sequence": 23,
+      "operation": "retrieve",
+      "param_keys": [
+        "allowed_scopes",
+        "context",
+        "max_context_tokens",
+        "profile",
+        "query",
+        "top_k"
+      ],
+      "elapsed_ms": 12.359,
+      "response": {
+        "type": "mapping",
+        "keys": [
+          "context",
+          "context_token_upper_bound",
+          "facts",
+          "profile",
+          "schema_version",
+          "token_count_method"
+        ],
+        "status": null,
+        "processing_status": null,
+        "degraded": false,
+        "has_error": false,
+        "facts_type": "list",
+        "fact_count": 0,
+        "context_type": "str",
+        "maintenance_type": null
+      }
+    },
+    {
+      "sequence": 24,
+      "operation": "retrieve",
+      "param_keys": [
+        "allowed_scopes",
+        "context",
+        "max_context_tokens",
+        "profile",
+        "query",
+        "top_k"
+      ],
+      "elapsed_ms": 16.946,
+      "response": {
+        "type": "mapping",
+        "keys": [
+          "context",
+          "context_token_upper_bound",
+          "facts",
+          "profile",
+          "schema_version",
+          "token_count_method"
+        ],
+        "status": null,
+        "processing_status": null,
+        "degraded": false,
+        "has_error": false,
+        "facts_type": "list",
+        "fact_count": 1,
+        "context_type": "str",
+        "maintenance_type": null
+      }
+    },
+    {
+      "sequence": 25,
+      "operation": "retrieve",
+      "param_keys": [
+        "allowed_scopes",
+        "context",
+        "max_context_tokens",
+        "profile",
+        "query",
+        "top_k"
+      ],
+      "elapsed_ms": 10.457,
+      "response": {
+        "type": "mapping",
+        "keys": [
+          "context",
+          "context_token_upper_bound",
+          "facts",
+          "profile",
+          "schema_version",
+          "token_count_method"
+        ],
+        "status": null,
+        "processing_status": null,
+        "degraded": false,
+        "has_error": false,
+        "facts_type": "list",
+        "fact_count": 0,
+        "context_type": "str",
+        "maintenance_type": null
+      }
+    },
+    {
+      "sequence": 26,
+      "operation": "retrieve",
+      "param_keys": [
+        "allowed_scopes",
+        "context",
+        "max_context_tokens",
+        "profile",
+        "query",
+        "top_k"
+      ],
+      "elapsed_ms": 12.765,
+      "response": {
+        "type": "mapping",
+        "keys": [
+          "context",
+          "context_token_upper_bound",
+          "facts",
+          "profile",
+          "schema_version",
+          "token_count_method"
+        ],
+        "status": null,
+        "processing_status": null,
+        "degraded": false,
+        "has_error": false,
+        "facts_type": "list",
+        "fact_count": 1,
+        "context_type": "str",
+        "maintenance_type": null
+      }
+    },
+    {
+      "sequence": 27,
+      "operation": "retrieve",
+      "param_keys": [
+        "allowed_scopes",
+        "context",
+        "max_context_tokens",
+        "profile",
+        "query",
+        "top_k"
+      ],
+      "elapsed_ms": 12.924,
+      "response": {
+        "type": "mapping",
+        "keys": [
+          "context",
+          "context_token_upper_bound",
+          "facts",
+          "profile",
+          "schema_version",
+          "token_count_method"
+        ],
+        "status": null,
+        "processing_status": null,
+        "degraded": false,
+        "has_error": false,
+        "facts_type": "list",
+        "fact_count": 0,
+        "context_type": "str",
+        "maintenance_type": null
+      }
+    },
+    {
+      "sequence": 28,
+      "operation": "retrieve",
+      "param_keys": [
+        "allowed_scopes",
+        "context",
+        "max_context_tokens",
+        "profile",
+        "query",
+        "top_k"
+      ],
+      "elapsed_ms": 23.1,
+      "response": {
+        "type": "mapping",
+        "keys": [
+          "context",
+          "context_token_upper_bound",
+          "facts",
+          "profile",
+          "schema_version",
+          "token_count_method"
+        ],
+        "status": null,
+        "processing_status": null,
+        "degraded": false,
+        "has_error": false,
+        "facts_type": "list",
+        "fact_count": 1,
+        "context_type": "str",
+        "maintenance_type": null
+      }
+    },
+    {
+      "sequence": 29,
+      "operation": "retrieve",
+      "param_keys": [
+        "allowed_scopes",
+        "context",
+        "max_context_tokens",
+        "profile",
+        "query",
+        "top_k"
+      ],
+      "elapsed_ms": 8.559,
+      "response": {
+        "type": "mapping",
+        "keys": [
+          "context",
+          "context_token_upper_bound",
+          "facts",
+          "profile",
+          "schema_version",
+          "token_count_method"
+        ],
+        "status": null,
+        "processing_status": null,
+        "degraded": false,
+        "has_error": false,
+        "facts_type": "list",
+        "fact_count": 0,
+        "context_type": "str",
+        "maintenance_type": null
+      }
+    },
+    {
+      "sequence": 30,
+      "operation": "retrieve",
+      "param_keys": [
+        "allowed_scopes",
+        "context",
+        "max_context_tokens",
+        "profile",
+        "query",
+        "top_k"
+      ],
+      "elapsed_ms": 10.063,
+      "response": {
+        "type": "mapping",
+        "keys": [
+          "context",
+          "context_token_upper_bound",
+          "facts",
+          "profile",
+          "schema_version",
+          "token_count_method"
+        ],
+        "status": null,
+        "processing_status": null,
+        "degraded": false,
+        "has_error": false,
+        "facts_type": "list",
+        "fact_count": 1,
+        "context_type": "str",
+        "maintenance_type": null
+      }
+    },
+    {
+      "sequence": 31,
+      "operation": "retrieve",
+      "param_keys": [
+        "allowed_scopes",
+        "context",
+        "max_context_tokens",
+        "profile",
+        "query",
+        "top_k"
+      ],
+      "elapsed_ms": 6.878,
+      "response": {
+        "type": "mapping",
+        "keys": [
+          "context",
+          "context_token_upper_bound",
+          "facts",
+          "profile",
+          "schema_version",
+          "token_count_method"
+        ],
+        "status": null,
+        "processing_status": null,
+        "degraded": false,
+        "has_error": false,
+        "facts_type": "list",
+        "fact_count": 0,
+        "context_type": "str",
+        "maintenance_type": null
+      }
+    },
+    {
+      "sequence": 32,
+      "operation": "forget",
+      "param_keys": [
+        "context",
+        "expected_version",
+        "fact_id"
+      ],
+      "elapsed_ms": 12.067,
+      "response": {
+        "type": "mapping",
+        "keys": [
+          "erasure_scope",
+          "fact_id",
+          "forgotten",
+          "schema_version",
+          "status"
+        ],
+        "status": "committed",
+        "processing_status": null,
+        "degraded": false,
+        "has_error": false,
+        "facts_type": null,
+        "fact_count": null,
+        "context_type": null,
+        "maintenance_type": null
+      }
+    },
+    {
+      "sequence": 33,
+      "operation": "remember",
+      "param_keys": [
+        "content",
+        "context",
+        "event_id",
+        "role",
+        "scope",
+        "source_ref"
+      ],
+      "elapsed_ms": 6.629,
+      "response": {
+        "type": "mapping",
+        "keys": [
+          "event_id",
+          "job_id",
+          "processing_status",
+          "schema_version",
+          "status"
+        ],
+        "status": "committed",
+        "processing_status": "suppressed",
+        "degraded": false,
+        "has_error": false,
+        "facts_type": null,
+        "fact_count": null,
+        "context_type": null,
+        "maintenance_type": null
+      }
+    },
+    {
+      "sequence": 34,
+      "operation": "maintenance",
+      "param_keys": [
+        "context"
+      ],
+      "elapsed_ms": 12.256,
+      "response": {
+        "type": "mapping",
+        "keys": [
+          "completed",
+          "graph",
+          "maintenance",
+          "schema_version"
+        ],
+        "status": null,
+        "processing_status": null,
+        "degraded": false,
+        "has_error": false,
+        "facts_type": null,
+        "fact_count": null,
+        "context_type": null,
+        "maintenance_type": "dict"
+      }
+    },
+    {
+      "sequence": 35,
+      "operation": "retrieve",
+      "param_keys": [
+        "allowed_scopes",
+        "context",
+        "max_context_tokens",
+        "profile",
+        "query",
+        "top_k"
+      ],
+      "elapsed_ms": 237.64,
+      "response": {
+        "type": "mapping",
+        "keys": [
+          "context",
+          "context_token_upper_bound",
+          "facts",
+          "profile",
+          "schema_version",
+          "token_count_method"
+        ],
+        "status": null,
+        "processing_status": null,
+        "degraded": false,
+        "has_error": false,
+        "facts_type": "list",
+        "fact_count": 0,
+        "context_type": "str",
+        "maintenance_type": null
+      }
+    },
+    {
+      "sequence": 36,
+      "operation": "retrieve",
+      "param_keys": [
+        "allowed_scopes",
+        "context",
+        "max_context_tokens",
+        "profile",
+        "query",
+        "top_k"
+      ],
+      "elapsed_ms": 7.169,
+      "response": {
+        "type": "mapping",
+        "keys": [
+          "context",
+          "context_token_upper_bound",
+          "facts",
+          "profile",
+          "schema_version",
+          "token_count_method"
+        ],
+        "status": null,
+        "processing_status": null,
+        "degraded": false,
+        "has_error": false,
+        "facts_type": "list",
+        "fact_count": 0,
+        "context_type": "str",
+        "maintenance_type": null
+      }
+    },
+    {
+      "sequence": 37,
+      "operation": "retrieve",
+      "param_keys": [
+        "allowed_scopes",
+        "context",
+        "max_context_tokens",
+        "profile",
+        "query",
+        "top_k"
+      ],
+      "elapsed_ms": 7.295,
+      "response": {
+        "type": "mapping",
+        "keys": [
+          "context",
+          "context_token_upper_bound",
+          "facts",
+          "profile",
+          "schema_version",
+          "token_count_method"
+        ],
+        "status": null,
+        "processing_status": null,
+        "degraded": false,
+        "has_error": false,
+        "facts_type": "list",
+        "fact_count": 0,
+        "context_type": "str",
+        "maintenance_type": null
+      }
+    },
+    {
+      "sequence": 38,
+      "operation": "retrieve",
+      "param_keys": [
+        "allowed_scopes",
+        "context",
+        "max_context_tokens",
+        "profile",
+        "query",
+        "top_k"
+      ],
+      "elapsed_ms": 11.866,
+      "response": {
+        "type": "mapping",
+        "keys": [
+          "context",
+          "context_token_upper_bound",
+          "facts",
+          "profile",
+          "schema_version",
+          "token_count_method"
+        ],
+        "status": null,
+        "processing_status": null,
+        "degraded": false,
+        "has_error": false,
+        "facts_type": "list",
+        "fact_count": 1,
+        "context_type": "str",
+        "maintenance_type": null
+      }
+    },
+    {
+      "sequence": 39,
+      "operation": "retrieve",
+      "param_keys": [
+        "allowed_scopes",
+        "context",
+        "max_context_tokens",
+        "profile",
+        "query",
+        "top_k"
+      ],
+      "elapsed_ms": 13.428,
+      "response": {
+        "type": "mapping",
+        "keys": [
+          "context",
+          "context_token_upper_bound",
+          "facts",
+          "profile",
+          "schema_version",
+          "token_count_method"
+        ],
+        "status": null,
+        "processing_status": null,
+        "degraded": false,
+        "has_error": false,
+        "facts_type": "list",
+        "fact_count": 1,
+        "context_type": "str",
+        "maintenance_type": null
+      }
+    },
+    {
+      "sequence": 40,
+      "operation": "retrieve",
+      "param_keys": [
+        "allowed_scopes",
+        "context",
+        "max_context_tokens",
+        "profile",
+        "query",
+        "top_k"
+      ],
+      "elapsed_ms": 10.652,
+      "response": {
+        "type": "mapping",
+        "keys": [
+          "context",
+          "context_token_upper_bound",
+          "facts",
+          "profile",
+          "schema_version",
+          "token_count_method"
+        ],
+        "status": null,
+        "processing_status": null,
+        "degraded": false,
+        "has_error": false,
+        "facts_type": "list",
+        "fact_count": 1,
+        "context_type": "str",
+        "maintenance_type": null
+      }
+    }
+  ],
+  "pytest": {
+    "exit_code": 0,
+    "elapsed_ms": 4316.824,
+    "argv": [
+      "C:\\Users\\Ant\\AppData\\Local\\Temp\\mnemos-source-e1fd56e\\tests\\test_cross_host_contract.py::test_codex_claude_hermes_share_durable_scoped_lifecycle[codex]",
+      "--rootdir=C:\\Users\\Ant\\AppData\\Local\\Temp\\mnemos-source-e1fd56e",
+      "--basetemp=C:\\Users\\Ant\\AppData\\Local\\Temp\\mnemos-crosshost-e1fd56e-48rcwn2i\\pytest",
+      "--junitxml=C:\\Users\\Ant\\AppData\\Local\\Temp\\mnemos-crosshost-e1fd56e-diagnostic-v1b\\diagnostic.junit.xml",
+      "--import-mode=importlib",
+      "-q"
+    ],
+    "junit": {
+      "path": "C:\\Users\\Ant\\AppData\\Local\\Temp\\mnemos-crosshost-e1fd56e-diagnostic-v1b\\diagnostic.junit.xml",
+      "bytes": 380,
+      "sha256": "aa4947015b2e3fc14a32909ddf3179e2fa4ff83a078e8f03523b9baa3f85566f"
+    },
+    "pytest_stdout_log": {
+      "path": "C:\\Users\\Ant\\AppData\\Local\\Temp\\mnemos-crosshost-e1fd56e-diagnostic-v1b\\pytest.stdout.log",
+      "bytes": 100,
+      "sha256": "a54a0a14c6c14c4db198d6e42ed2be48752d76c4385e6fa8d9f185dc8cb8f484"
+    },
+    "pytest_stderr_log": {
+      "path": "C:\\Users\\Ant\\AppData\\Local\\Temp\\mnemos-crosshost-e1fd56e-diagnostic-v1b\\pytest.stderr.log",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    }
+  },
+  "original_failure_artifacts": {
+    "verification.json": {
+      "path": "C:\\Users\\Ant\\AppData\\Local\\Temp\\mnemos-package-checks-e1fd56e-v1\\verification.json",
+      "bytes": 1934,
+      "sha256": "6bbb5353b4ef671e717d75f43f0b54988a034277d617144b5618c75a7147dc42"
+    },
+    "pytest.log": {
+      "path": "C:\\Users\\Ant\\AppData\\Local\\Temp\\mnemos-package-checks-e1fd56e-v1\\pytest.log",
+      "bytes": 6008,
+      "sha256": "6053b241529d21c7248ddfd07a257430a2db03ebca2a6832ad94cc8c71d1f042"
+    },
+    "pytest.xml": {
+      "path": "C:\\Users\\Ant\\AppData\\Local\\Temp\\mnemos-package-checks-e1fd56e-v1\\pytest.xml",
+      "bytes": 122087,
+      "sha256": "c284b3e0b64c06eb754b75bb1897293619b3cdd36d88bd4c61b1a3ca53dac4d7"
+    }
+  },
+  "runner_sha256": "b41f59018dc558023e4eb1ad52fcaceb8359027183d9b1c92d78da1e37838124",
+  "finished_at": "2026-09-17T19:30:01.898377+00:00",
+  "finding": {
+    "list_request_count": 1,
+    "list_response_shapes": [
+      {
+        "type": "mapping",
+        "keys": [
+          "facts",
+          "jobs",
+          "next_cursor",
+          "schema_version"
+        ],
+        "status": null,
+        "processing_status": null,
+        "degraded": false,
+        "has_error": false,
+        "facts_type": "list",
+        "fact_count": 1,
+        "context_type": null,
+        "maintenance_type": null
+      }
+    ],
+    "keyerror_in_original_case": false,
+    "interpretation": "Request tracing identifies response shape and timing; it does not by itself establish whether a missing facts field came from transport or memory behavior."
+  }
+}

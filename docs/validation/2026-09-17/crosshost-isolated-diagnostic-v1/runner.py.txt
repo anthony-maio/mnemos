@@ -1,0 +1,225 @@
+"""Run the single frozen cross-host continuity failure with safe request tracing."""
+
+from __future__ import annotations
+
+import argparse
+import contextlib
+import hashlib
+import importlib
+import io
+import json
+import os
+import subprocess
+import sys
+import tempfile
+import time
+from datetime import datetime, timezone
+from pathlib import Path
+from typing import Any, Mapping
+
+
+SOURCE_COMMIT = "e1fd56e36c17f1b1b05ead6c579619cb5ad372dd"
+NODEID = "test_cross_host_contract.py::test_codex_claude_hermes_share_durable_scoped_lifecycle[codex]"
+
+
+def _sha256(path: Path) -> str:
+    digest = hashlib.sha256()
+    with path.open("rb") as stream:
+        for block in iter(lambda: stream.read(1024 * 1024), b""):
+            digest.update(block)
+    return digest.hexdigest()
+
+
+def _git_root(path: Path) -> str | None:
+    result = subprocess.run(
+        ["git", "-C", str(path), "rev-parse", "--show-toplevel"],
+        capture_output=True,
+        text=True,
+        check=False,
+    )
+    return result.stdout.strip() if result.returncode == 0 else None
+
+
+def _safe_response(result: Any) -> dict[str, Any]:
+    if not isinstance(result, Mapping):
+        return {"type": type(result).__name__}
+    facts = result.get("facts")
+    return {
+        "type": "mapping",
+        "keys": sorted(str(key) for key in result.keys()),
+        "status": result.get("status") if isinstance(result.get("status"), str) else None,
+        "processing_status": (
+            result.get("processing_status")
+            if isinstance(result.get("processing_status"), str)
+            else None
+        ),
+        "degraded": result.get("degraded") is True,
+        "has_error": bool(result.get("error")) or result.get("error_type") is not None,
+        "facts_type": type(facts).__name__ if facts is not None else None,
+        "fact_count": len(facts) if isinstance(facts, list) else None,
+        "context_type": type(result.get("context")).__name__
+        if result.get("context") is not None
+        else None,
+        "maintenance_type": type(result.get("maintenance")).__name__
+        if result.get("maintenance") is not None
+        else None,
+    }
+
+
+def _parse_args() -> argparse.Namespace:
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument("--snapshot", type=Path, required=True)
+    parser.add_argument("--fixture-parent", type=Path, required=True)
+    parser.add_argument("--output", type=Path, required=True)
+    return parser.parse_args()
+
+
+def main() -> int:
+    args = _parse_args()
+    snapshot = args.snapshot.resolve()
+    fixture_parent = args.fixture_parent.resolve()
+    output = args.output.resolve()
+    if output.exists():
+        raise RuntimeError("diagnostic output already exists")
+    git_snapshot_root = _git_root(snapshot)
+    if (
+        not snapshot.is_dir()
+        or git_snapshot_root is None
+        or Path(git_snapshot_root).resolve() != snapshot
+    ):
+        raise RuntimeError("snapshot is not the expected clean Git checkout")
+    if not fixture_parent.is_dir() or _git_root(fixture_parent) is not None:
+        raise RuntimeError("fixture parent must be an existing directory outside Git")
+    if not output.parent.is_dir() or _git_root(output.parent) is not None:
+        raise RuntimeError("output parent must be an existing directory outside Git")
+    if subprocess.check_output(["git", "-C", str(snapshot), "rev-parse", "HEAD"], text=True).strip() != SOURCE_COMMIT:
+        raise RuntimeError("snapshot commit does not match the frozen source")
+    if subprocess.check_output(["git", "-C", str(snapshot), "status", "--porcelain"], text=True).strip():
+        raise RuntimeError("snapshot has uncommitted changes")
+
+    fixture = Path(tempfile.mkdtemp(prefix="mnemos-crosshost-e1fd56e-", dir=fixture_parent))
+    basetemp = fixture / "pytest"
+    output.mkdir(parents=False)
+    report: dict[str, Any] = {
+        "schema_version": 1,
+        "status": "not_run",
+        "started_at": datetime.now(timezone.utc).isoformat(),
+        "source_commit": SOURCE_COMMIT,
+        "snapshot": str(snapshot),
+        "snapshot_test": str(snapshot / "tests" / "test_cross_host_contract.py"),
+        "snapshot_test_sha256": _sha256(snapshot / "tests" / "test_cross_host_contract.py"),
+        "fixture": str(fixture),
+        "basetemp": str(basetemp),
+        "nodeid": NODEID,
+        "request_trace": [],
+        "pytest": {},
+        "original_failure_artifacts": {},
+        "runner_sha256": _sha256(Path(__file__).resolve()),
+    }
+    original_dir = Path("C:/Users/Ant/AppData/Local/Temp/mnemos-package-checks-e1fd56e-v1")
+    for name in ("verification.json", "pytest.log", "pytest.xml"):
+        path = original_dir / name
+        if path.is_file():
+            report["original_failure_artifacts"][name] = {
+                "path": str(path),
+                "bytes": path.stat().st_size,
+                "sha256": _sha256(path),
+            }
+
+    worktree = Path(__file__).resolve().parents[1]
+    sys.path[:] = [entry for entry in sys.path if entry and Path(entry).resolve() != worktree]
+    sys.path.insert(0, str(snapshot))
+    try:
+        client_module = importlib.import_module("mnemos.client")
+        client_class = client_module.MnemosClient
+        original_request = client_class.request
+
+        async def traced_request(self: Any, operation: str, params: Mapping[str, Any], **kwargs: Any) -> Any:
+            started = time.perf_counter()
+            trace: dict[str, Any] = {
+                "sequence": len(report["request_trace"]) + 1,
+                "operation": operation,
+                "param_keys": sorted(str(key) for key in params),
+            }
+            try:
+                result = await original_request(self, operation, params, **kwargs)
+            except BaseException as exc:
+                trace.update(
+                    {
+                        "elapsed_ms": round((time.perf_counter() - started) * 1000, 3),
+                        "exception_type": type(exc).__name__,
+                    }
+                )
+                report["request_trace"].append(trace)
+                raise
+            trace.update(
+                {
+                    "elapsed_ms": round((time.perf_counter() - started) * 1000, 3),
+                    "response": _safe_response(result),
+                }
+            )
+            report["request_trace"].append(trace)
+            return result
+
+        client_class.request = traced_request
+        pytest = importlib.import_module("pytest")
+        stdout_buffer = io.StringIO()
+        stderr_buffer = io.StringIO()
+        junit = output / "diagnostic.junit.xml"
+        test_path = snapshot / "tests" / "test_cross_host_contract.py"
+        argv = [
+            str(test_path) + "::" + NODEID.split("::", 1)[1],
+            "--rootdir=" + str(snapshot),
+            "--basetemp=" + str(basetemp),
+            "--junitxml=" + str(junit),
+            "--import-mode=importlib",
+            "-q",
+        ]
+        started = time.perf_counter()
+        with contextlib.redirect_stdout(stdout_buffer), contextlib.redirect_stderr(stderr_buffer):
+            exit_code = int(pytest.main(argv))
+        report["pytest"] = {
+            "exit_code": exit_code,
+            "elapsed_ms": round((time.perf_counter() - started) * 1000, 3),
+            "argv": argv,
+        }
+    except BaseException as exc:
+        report["status"] = "diagnostic_failed"
+        report["setup_exception_type"] = type(exc).__name__
+    finally:
+        if "stdout_buffer" in locals():
+            (output / "pytest.stdout.log").write_text(stdout_buffer.getvalue(), encoding="utf-8")
+            (output / "pytest.stderr.log").write_text(stderr_buffer.getvalue(), encoding="utf-8")
+        if junit.is_file():
+            report["pytest"]["junit"] = {
+                "path": str(junit),
+                "bytes": junit.stat().st_size,
+                "sha256": _sha256(junit),
+            }
+        for name in ("pytest.stdout.log", "pytest.stderr.log"):
+            path = output / name
+            if path.is_file():
+                report["pytest"][name.replace(".", "_")] = {
+                    "path": str(path),
+                    "bytes": path.stat().st_size,
+                    "sha256": _sha256(path),
+                }
+        report["finished_at"] = datetime.now(timezone.utc).isoformat()
+
+    if report.get("status") == "not_run":
+        exit_code = report.get("pytest", {}).get("exit_code")
+        report["status"] = "passed_test" if exit_code == 0 else "failed_test"
+    list_rows = [item for item in report["request_trace"] if item.get("operation") == "list"]
+    report["finding"] = {
+        "list_request_count": len(list_rows),
+        "list_response_shapes": [item.get("response", {}) for item in list_rows],
+        "keyerror_in_original_case": report.get("pytest", {}).get("exit_code") == 1,
+        "interpretation": "Request tracing identifies response shape and timing; it does not by itself establish whether a missing facts field came from transport or memory behavior.",
+    }
+    (output / "diagnostic.json").write_text(json.dumps(report, indent=2) + "\n", encoding="utf-8")
+    print(json.dumps({"status": report["status"], "output": str(output)}))
+    return 0
+
+
+if __name__ == "__main__":
+    raise SystemExit(main())

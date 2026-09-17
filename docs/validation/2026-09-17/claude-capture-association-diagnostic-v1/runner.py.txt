@@ -1,0 +1,221 @@
+"""Reproduce the degraded v13 Claude capture with an offline fake client."""
+
+from __future__ import annotations
+
+import asyncio
+from dataclasses import asdict
+import hashlib
+import json
+import shutil
+import sys
+from pathlib import Path
+from typing import Any
+
+
+FIXTURE = Path(r"C:\Users\Ant\AppData\Local\Temp\mnemos-native-claude-lifecycle-v13-h1m6shyk")
+INSTALLED_ENV = Path(r"C:\Users\Ant\AppData\Local\Temp\mnemos-installed-6600dc2-v1")
+OUTPUT = Path(".venv/claude-v13-capture-diagnosis-v1")
+SESSION_ID = "525cde22-7e4a-4b72-b255-9b5bd40d66e9"
+PROFILE_ID = "native-claude-lifecycle-v13"
+SOURCE_COMMIT = "6600dc262927661d61ce9962c812a022014281c7"
+
+
+class FakeClient:
+    def __init__(self) -> None:
+        self.captures: list[dict[str, Any]] = []
+
+    async def capture(self, payload: dict[str, Any]) -> dict[str, Any]:
+        self.captures.append(dict(payload))
+        return {"status": "committed", "committed": True}
+
+    async def retrieve(self, payload: dict[str, Any]) -> dict[str, Any]:
+        return {"facts": []}
+
+
+def _sha256(path: Path) -> str:
+    return hashlib.sha256(path.read_bytes()).hexdigest()
+
+
+def _text(value: Any) -> str:
+    if isinstance(value, str):
+        return value
+    if isinstance(value, list):
+        return "".join(_text(item) for item in value)
+    if isinstance(value, dict):
+        if isinstance(value.get("text"), str):
+            return value["text"]
+        return _text(value.get("content", ""))
+    return ""
+
+
+def _transcript_rows(path: Path) -> list[dict[str, Any]]:
+    rows: list[dict[str, Any]] = []
+    for line in path.read_text(encoding="utf-8").splitlines():
+        try:
+            value = json.loads(line)
+        except json.JSONDecodeError:
+            continue
+        if isinstance(value, dict):
+            rows.append(value)
+    return rows
+
+
+def _copy_fixture_inputs(destination: Path) -> tuple[Path, str, str]:
+    destination.mkdir(parents=True)
+    source_transcript = next(
+        (
+            path
+            for path in (FIXTURE / "claude-home" / ".claude" / "projects").rglob("*.jsonl")
+        ),
+        None,
+    )
+    if source_transcript is None:
+        raise FileNotFoundError("v13 transcript")
+    transcript = destination / "transcript.jsonl"
+    shutil.copy2(source_transcript, transcript)
+    shutil.copy2(FIXTURE / "memory.sqlite", destination / "memory.sqlite")
+    checkpoint = next((path for path in (FIXTURE / "checkpoints").glob("*.json")), None)
+    if checkpoint is None:
+        raise FileNotFoundError("v13 checkpoint")
+    shutil.copy2(checkpoint, destination / "input-checkpoint.json")
+    return transcript, _sha256(transcript), _sha256(checkpoint)
+
+
+async def _probe(
+    *,
+    adapter_module: Any,
+    destination: Path,
+    transcript: Path,
+    user_content: str,
+    assistant_content: str,
+    prompt_id: str | None,
+) -> dict[str, Any]:
+    from mnemos.scopes import ScopeRegistry
+
+    project = destination / "project"
+    project.mkdir()
+    registry = ScopeRegistry()
+    identity = registry.register_project(project, user_profile_id=PROFILE_ID, enabled=True)
+    client = FakeClient()
+    adapter = adapter_module.ClaudeCodeAdapter(
+        client=client,
+        registry=registry,
+        user_profile_id=PROFILE_ID,
+        checkpoint_directory=destination / "checkpoints",
+    )
+    user_payload: dict[str, Any] = {
+        "hook_event_name": "UserPromptSubmit",
+        "session_id": SESSION_ID,
+        "cwd": str(project),
+        "prompt": user_content,
+    }
+    if prompt_id is not None:
+        user_payload["prompt_id"] = prompt_id
+    user_result = await adapter.handle("UserPromptSubmit", user_payload, include_retrieval=False)
+    stop_result = await adapter.handle(
+        "Stop",
+        {
+            "hook_event_name": "Stop",
+            "session_id": SESSION_ID,
+            "cwd": str(project),
+            "transcript_path": str(transcript),
+            "last_assistant_message": assistant_content,
+        },
+    )
+    checkpoint_path = adapter._checkpoint_path(
+        registry.resolve(
+            project,
+            user_profile_id=PROFILE_ID,
+            session_id=SESSION_ID,
+            host="claude-code",
+        )
+    )
+    checkpoint = json.loads(checkpoint_path.read_text(encoding="utf-8"))
+    return {
+        "prompt_id_supplied": prompt_id is not None,
+        "project_id": identity.id,
+        "user_result": asdict(user_result),
+        "stop_result": asdict(stop_result),
+        "capture_count": len(client.captures),
+        "captures": [
+            {
+                "role": item.get("role"),
+                "source_ref": item.get("source_ref"),
+                "identity_status": item.get("identity_status"),
+            }
+            for item in client.captures
+        ],
+        "checkpoint": {
+            "offset": checkpoint.get("offset"),
+            "pending_dedup": checkpoint.get("pending_dedup"),
+            "last_assistant": checkpoint.get("last_assistant"),
+        },
+    }
+
+
+async def _run() -> dict[str, Any]:
+    if OUTPUT.exists():
+        raise RuntimeError(f"refusing to overwrite {OUTPUT}")
+    site_packages = INSTALLED_ENV / "Lib" / "site-packages"
+    sys.path.insert(0, str(site_packages))
+    import mnemos
+    import mnemos.adapters.claude_code as adapter_module
+
+    module_path = Path(str(adapter_module.__file__)).resolve()
+    if site_packages not in module_path.parents:
+        raise RuntimeError(f"unexpected adapter import: {module_path}")
+    destination = OUTPUT
+    transcript, transcript_sha, checkpoint_sha = _copy_fixture_inputs(destination / "unbound")
+    rows = _transcript_rows(transcript)
+    user_row = next(row for row in rows if row.get("type") == "user")
+    assistant_rows = [row for row in rows if row.get("type") == "assistant"]
+    user_message = user_row.get("message", {})
+    user_content = _text(user_message.get("content"))
+    assistant_content = _text(assistant_rows[-1].get("message", {}).get("content"))
+    prompt_id = user_row.get("promptId")
+    if not isinstance(prompt_id, str) or not prompt_id:
+        raise RuntimeError("fixture user promptId missing")
+
+    associated_destination = destination / "associated"
+    associated_transcript, _, _ = _copy_fixture_inputs(associated_destination)
+    associated = await _probe(
+        adapter_module=adapter_module,
+        destination=associated_destination,
+        transcript=associated_transcript,
+        user_content=user_content,
+        assistant_content=assistant_content,
+        prompt_id=prompt_id,
+    )
+    unbound = await _probe(
+        adapter_module=adapter_module,
+        destination=destination / "unbound",
+        transcript=transcript,
+        user_content=user_content,
+        assistant_content=assistant_content,
+        prompt_id=None,
+    )
+    return {
+        "fixture": str(FIXTURE),
+        "source_commit": SOURCE_COMMIT,
+        "installed_environment": str(INSTALLED_ENV),
+        "imported_mnemos": str(Path(str(mnemos.__file__)).resolve()),
+        "imported_adapter": str(module_path),
+        "adapter_sha256": _sha256(module_path),
+        "transcript_sha256": transcript_sha,
+        "original_checkpoint_sha256": checkpoint_sha,
+        "transcript_rows": len(rows),
+        "unbound_payload": "UserPromptSubmit omitted prompt_id; Stop used transcript and last_assistant_message",
+        "probes": {"unbound": unbound, "associated_prompt_id_control": associated},
+    }
+
+
+def main() -> None:
+    report = asyncio.run(_run())
+    OUTPUT.mkdir(parents=True, exist_ok=True)
+    (OUTPUT / "report.json").write_text(
+        json.dumps(report, indent=2, sort_keys=True), encoding="utf-8"
+    )
+
+
+if __name__ == "__main__":
+    main()
