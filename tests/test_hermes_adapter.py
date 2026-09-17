@@ -5,6 +5,7 @@ from typing import Any
 
 import pytest
 
+import mnemos.adapters.hermes as hermes_adapter
 from mnemos.adapters.hermes import (
     HERMES_API_AVAILABLE,
     HermesMemoryProvider,
@@ -12,6 +13,14 @@ from mnemos.adapters.hermes import (
     capabilities,
 )
 from mnemos.scopes import ScopeRegistry
+
+
+class ProviderCollector:
+    def __init__(self) -> None:
+        self.provider: Any | None = None
+
+    def register_memory_provider(self, provider: Any) -> None:
+        self.provider = provider
 
 
 class FakeClient:
@@ -45,6 +54,116 @@ def test_optional_contract_is_honest_when_hermes_is_absent() -> None:
     assert capabilities().fallback == "manual_mcp"
     assert capabilities().api_available is HERMES_API_AVAILABLE
     assert HermesMemoryProvider is MnemosHermesProvider
+
+
+def test_register_uses_valid_environment_registry(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    registry_path = tmp_path / "scopes.json"
+    ScopeRegistry(profiles=["alice"]).save(registry_path)
+    monkeypatch.setattr(hermes_adapter, "HERMES_API_AVAILABLE", True)
+    monkeypatch.setenv("MNEMOS_SCOPE_REGISTRY", str(registry_path))
+    monkeypatch.setenv("MNEMOS_USER_PROFILE_ID", "alice")
+
+    collector = ProviderCollector()
+    assert hermes_adapter.register(collector) is True
+    assert isinstance(collector.provider, MnemosHermesProvider)
+    assert collector.provider.registry_path == registry_path
+    assert collector.provider.is_available() is True
+
+
+def test_registry_path_explicit_value_precedes_environment(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    env_path = tmp_path / "environment.json"
+    explicit_path = tmp_path / "explicit.json"
+    monkeypatch.setenv("MNEMOS_SCOPE_REGISTRY", str(env_path))
+    provider = MnemosHermesProvider(
+        registry_path=explicit_path,
+        user_profile_id="alice",
+    )
+
+    assert provider.registry_path == explicit_path
+
+
+@pytest.mark.parametrize(
+    ("registry_value", "expected_reason"),
+    [
+        (None, "Mnemos scope registry is not configured"),
+        ("directory", "Mnemos scope registry is not configured"),
+        ("missing", "Mnemos scope registry is not configured"),
+        ("malformed", "Mnemos scope registry is invalid"),
+    ],
+)
+def test_provider_availability_rejects_unusable_registry(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+    registry_value: str | None,
+    expected_reason: str,
+) -> None:
+    monkeypatch.setattr(hermes_adapter, "HERMES_API_AVAILABLE", True)
+    monkeypatch.setenv("MNEMOS_USER_PROFILE_ID", "alice")
+    if registry_value == "directory":
+        target = tmp_path / "scopes"
+        target.mkdir()
+        monkeypatch.setenv("MNEMOS_SCOPE_REGISTRY", str(target))
+    elif registry_value == "missing":
+        monkeypatch.setenv("MNEMOS_SCOPE_REGISTRY", str(tmp_path / "missing.json"))
+    elif registry_value == "malformed":
+        target = tmp_path / "scopes.json"
+        target.write_text("not-json", encoding="utf-8")
+        monkeypatch.setenv("MNEMOS_SCOPE_REGISTRY", str(target))
+    else:
+        monkeypatch.delenv("MNEMOS_SCOPE_REGISTRY", raising=False)
+        monkeypatch.setattr(
+            hermes_adapter,
+            "default_registry_path",
+            lambda: tmp_path / "default-scopes.json",
+        )
+
+    provider = MnemosHermesProvider()
+    assert provider.is_available() is False
+    assert provider.unavailable_reason() == expected_reason
+
+
+def test_injected_registry_does_not_require_registry_file(monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.setattr(hermes_adapter, "HERMES_API_AVAILABLE", True)
+    provider = MnemosHermesProvider(
+        registry=ScopeRegistry(profiles=["alice"]),
+        user_profile_id="alice",
+    )
+
+    assert provider.is_available() is True
+
+
+def test_provider_availability_rejects_missing_profile(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    registry_path = tmp_path / "scopes.json"
+    ScopeRegistry().save(registry_path)
+    monkeypatch.setattr(hermes_adapter, "HERMES_API_AVAILABLE", True)
+    monkeypatch.setenv("MNEMOS_SCOPE_REGISTRY", str(registry_path))
+    monkeypatch.delenv("MNEMOS_USER_PROFILE_ID", raising=False)
+
+    provider = MnemosHermesProvider()
+    assert provider.is_available() is False
+    assert provider.unavailable_reason() == (
+        "MNEMOS_USER_PROFILE_ID or Hermes agent_identity is required"
+    )
+
+
+def test_provider_availability_rejects_missing_hermes_api(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    registry_path = tmp_path / "scopes.json"
+    ScopeRegistry(profiles=["alice"]).save(registry_path)
+    monkeypatch.setattr(hermes_adapter, "HERMES_API_AVAILABLE", False)
+    monkeypatch.setenv("MNEMOS_SCOPE_REGISTRY", str(registry_path))
+    monkeypatch.setenv("MNEMOS_USER_PROFILE_ID", "alice")
+
+    provider = MnemosHermesProvider()
+    assert provider.is_available() is False
+    assert provider.unavailable_reason() == ("Hermes Agent memory_provider API is not installed")
 
 
 def test_initialize_uses_session_cwd_and_profile_scope(tmp_path: Path) -> None:

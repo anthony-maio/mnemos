@@ -148,7 +148,12 @@ class MnemosHermesProvider(_HermesMemoryProvider):  # type: ignore[misc]  # Opti
             self.client = MnemosClient(descriptor_path=descriptor_path)
             self.transport = "local_client"
         self.registry = registry
-        self.registry_path = Path(registry_path).expanduser() if registry_path else None
+        configured_registry_path = str(registry_path).strip() if registry_path is not None else ""
+        self.registry_path = (
+            Path(configured_registry_path).expanduser()
+            if configured_registry_path
+            else default_registry_path()
+        )
         self.user_profile_id = user_profile_id or os.environ.get("MNEMOS_USER_PROFILE_ID")
         self.max_context_tokens = max(0, min(int(max_context_tokens), 32_000))
         self.session_id = ""
@@ -168,8 +173,13 @@ class MnemosHermesProvider(_HermesMemoryProvider):  # type: ignore[misc]  # Opti
     def unavailable_reason(self) -> str:
         if not HERMES_API_AVAILABLE:
             return "Hermes Agent memory_provider API is not installed"
-        if self.registry is None and not self.registry_path:
-            return "Mnemos scope registry is not configured"
+        if self.registry is None:
+            if not self.registry_path or not self.registry_path.is_file():
+                return "Mnemos scope registry is not configured"
+            try:
+                ScopeRegistry.load(self.registry_path)
+            except (AttributeError, OSError, TypeError, ValueError, json.JSONDecodeError):
+                return "Mnemos scope registry is invalid"
         if not self.user_profile_id:
             return "MNEMOS_USER_PROFILE_ID or Hermes agent_identity is required"
         return ""
