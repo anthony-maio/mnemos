@@ -228,6 +228,16 @@ Automatic capture creates raw evidence first. Maintenance defaults to a 30-day r
 
 ## Verification boundary
 
+Automatic conflict proposals cannot relabel an existing non-conflict fact
+through exact canonical deduplication. The storage commit rejects that
+collision, preserves the fact and its existing evidence, and rolls back the
+whole extraction batch. Maintenance reports `conflict_canonical_collision`;
+the source remains pending while the job follows its retry policy. New conflict
+content and repeats of an already-conflicted fact remain supported. This is a
+conservative collision rule, not a semantic entailment check. A real
+contradiction whose proposal repeats the old assertion may need correction or
+review instead of automatic merging.
+
 The implementation record in [validation progress](validation/2026-09-16/progress.md) is the source for the current test snapshot. The recorded Ollama checks used a reachable local endpoint and selected models, including `gemma3:4b` and `nomic-embed-text:latest`. They prove provider reachability and one synthetic service flow. They do not prove extraction precision, held-out retrieval quality, or daily-use reliability.
 
 Current evidence has these boundaries:

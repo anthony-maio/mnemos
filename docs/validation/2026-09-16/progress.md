@@ -994,3 +994,22 @@ still pauses embedding to exercise the same forget race. Thirty-five combined
 embedding, benchmark-role, lifecycle, and conflict-collision checks passed.
 Full repository Black passed 164 files, and compatible strict mypy passed all
 70 source files. Full package verification for this new source is next.
+
+## Conflict canonical-collision safeguard
+
+InMemory and SQLite canonical upserts now reject incoming conflict status when
+the existing canonical fact has another status, including missing legacy
+status. SQLite holds one lock through lookup, validation, merge, and write;
+the service's existing transaction rolls back fact, evidence, source-status,
+and job-result changes together. Maintenance records the stable
+`conflict_canonical_collision` error and retains the pending source for its
+retry policy. New targetless conflicts and repeats of existing conflicts are
+still accepted, with evidence deduplication.
+
+Six new regressions cover canonical normalization, legacy rows, preserved
+evidence after reopen, mixed-batch rollback, retryable failure, and valid
+conflict writes. Thirty-one focused conflict, evidence, maintenance, and service
+checks passed. The parent's subsequent 35-test combined integration run also
+passed with the role-aware in-flight-forget fixture. Black and compatible
+strict mypy passed. This closes the observed relabeling path; it does not prove
+that other extracted claims are semantically supported by their sources.

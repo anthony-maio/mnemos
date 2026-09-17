@@ -45,6 +45,10 @@ from ..jobs import DurableJob, FactEvidence, FactRevision, JobStatus
 from .embeddings import cosine_similarity
 
 
+class ConflictCanonicalCollisionError(ValueError):
+    """A conflict proposal tried to relabel an existing non-conflict fact."""
+
+
 def normalize_memory_text(text: str) -> str:
     """Normalize text for exact-dedupe and canonical-key generation."""
     return " ".join(text.strip().lower().split())
@@ -115,6 +119,16 @@ def _chunk_scope(chunk: MemoryChunk) -> tuple[str, str | None]:
     if isinstance(scope_id_raw, str) and scope_id_raw.strip():
         return scope, scope_id_raw.strip()
     return scope, "default"
+
+
+def _reject_conflict_canonical_collision(existing: MemoryChunk, incoming: MemoryChunk) -> None:
+    if (
+        incoming.metadata.get("assertion_status") == "conflict"
+        and existing.metadata.get("assertion_status") != "conflict"
+    ):
+        raise ConflictCanonicalCollisionError(
+            "conflict proposal collides with a non-conflict canonical fact"
+        )
 
 
 def _source_identity_key(event: EpisodicEvent) -> str | None:
@@ -799,6 +813,7 @@ class InMemoryStore(MemoryStore):
             if existing is None:
                 self._store[chunk.id] = chunk
                 return chunk
+            _reject_conflict_canonical_collision(existing, chunk)
 
             merged_duplicate_ids = list(existing.metadata.get("merged_duplicate_ids", []))
             if chunk.id != existing.id and chunk.id not in merged_duplicate_ids:
@@ -2126,68 +2141,68 @@ class SQLiteStore(MemoryStore):
                 f"SELECT {self._CHUNK_SELECT_COLUMNS} FROM memory_chunks WHERE canonical_key = ?",
                 (canonical_key,),
             ).fetchone()
+            if existing_row is None:
+                self.store(chunk)
+                return chunk
 
-        if existing_row is None:
-            self.store(chunk)
-            return chunk
+            existing = self._row_to_chunk(existing_row)
+            _reject_conflict_canonical_collision(existing, chunk)
+            merged_duplicate_ids = list(existing.metadata.get("merged_duplicate_ids", []))
+            if chunk.id != existing.id and chunk.id not in merged_duplicate_ids:
+                merged_duplicate_ids.append(chunk.id)
 
-        existing = self._row_to_chunk(existing_row)
-        merged_duplicate_ids = list(existing.metadata.get("merged_duplicate_ids", []))
-        if chunk.id != existing.id and chunk.id not in merged_duplicate_ids:
-            merged_duplicate_ids.append(chunk.id)
+            merged_metadata = dict(existing.metadata)
+            merged_metadata.update(chunk.metadata)
+            merged_metadata["merged_duplicate_ids"] = merged_duplicate_ids
 
-        merged_metadata = dict(existing.metadata)
-        merged_metadata.update(chunk.metadata)
-        merged_metadata["merged_duplicate_ids"] = merged_duplicate_ids
-
-        merged = existing.model_copy(
-            update={
-                "content": chunk.content,
-                "embedding": chunk.embedding or existing.embedding,
-                "metadata": merged_metadata,
-                "salience": max(existing.salience, chunk.salience),
-                "updated_at": max(existing.updated_at, chunk.updated_at),
-                "created_at": min(existing.created_at, chunk.created_at),
-                "canonical_key": canonical_key,
-                "last_observed_at": max(
-                    existing.last_observed_at or existing.updated_at,
-                    chunk.last_observed_at or chunk.updated_at,
-                ),
-                "observation_count": (
-                    existing.observation_count + max(chunk.observation_count, 1)
-                    if chunk.id != existing.id
-                    else max(existing.observation_count, chunk.observation_count)
-                ),
-                "surprisal_score": (
-                    chunk.surprisal_score
-                    if chunk.surprisal_score is not None
-                    else existing.surprisal_score
-                ),
-                "surprisal_status": (
-                    chunk.surprisal_status
-                    if chunk.surprisal_status != "unknown"
-                    else existing.surprisal_status
-                ),
-                "cognitive_state": (
-                    chunk.cognitive_state
-                    if chunk.cognitive_state is not None
-                    else existing.cognitive_state
-                ),
-                "cognitive_state_status": (
-                    chunk.cognitive_state_status
-                    if chunk.cognitive_state_status != "unknown"
-                    else existing.cognitive_state_status
-                ),
-                "last_retrieved_at": chunk.last_retrieved_at or existing.last_retrieved_at,
-                "reconsolidation_due_at": (
-                    chunk.reconsolidation_due_at
-                    if chunk.reconsolidation_due_at is not None
-                    else existing.reconsolidation_due_at
-                ),
-            }
-        )
-        self.store(merged)
-        return merged
+            merged = existing.model_copy(
+                update={
+                    "content": chunk.content,
+                    "embedding": chunk.embedding or existing.embedding,
+                    "metadata": merged_metadata,
+                    "salience": max(existing.salience, chunk.salience),
+                    "updated_at": max(existing.updated_at, chunk.updated_at),
+                    "created_at": min(existing.created_at, chunk.created_at),
+                    "canonical_key": canonical_key,
+                    "last_observed_at": max(
+                        existing.last_observed_at or existing.updated_at,
+                        chunk.last_observed_at or chunk.updated_at,
+                    ),
+                    "observation_count": (
+                        existing.observation_count + max(chunk.observation_count, 1)
+                        if chunk.id != existing.id
+                        else max(existing.observation_count, chunk.observation_count)
+                    ),
+                    "surprisal_score": (
+                        chunk.surprisal_score
+                        if chunk.surprisal_score is not None
+                        else existing.surprisal_score
+                    ),
+                    "surprisal_status": (
+                        chunk.surprisal_status
+                        if chunk.surprisal_status != "unknown"
+                        else existing.surprisal_status
+                    ),
+                    "cognitive_state": (
+                        chunk.cognitive_state
+                        if chunk.cognitive_state is not None
+                        else existing.cognitive_state
+                    ),
+                    "cognitive_state_status": (
+                        chunk.cognitive_state_status
+                        if chunk.cognitive_state_status != "unknown"
+                        else existing.cognitive_state_status
+                    ),
+                    "last_retrieved_at": chunk.last_retrieved_at or existing.last_retrieved_at,
+                    "reconsolidation_due_at": (
+                        chunk.reconsolidation_due_at
+                        if chunk.reconsolidation_due_at is not None
+                        else existing.reconsolidation_due_at
+                    ),
+                }
+            )
+            self.store(merged)
+            return merged
 
     @staticmethod
     def _scope_sql(filter_fn: Callable[[MemoryChunk], bool] | None) -> tuple[str, list[Any], bool]:

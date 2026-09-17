@@ -8,7 +8,7 @@ from datetime import datetime, timedelta, timezone
 from uuid import uuid4
 
 from .jobs import DurableJob
-from .utils.storage import MemoryStore
+from .utils.storage import ConflictCanonicalCollisionError, MemoryStore
 
 
 class MaintenanceScheduler:
@@ -90,7 +90,11 @@ class MaintenanceScheduler:
                     # Shutdown leaves the lease recoverable after expiry.
                     raise
                 except Exception as exc:
-                    self.last_error = type(exc).__name__
+                    self.last_error = (
+                        "conflict_canonical_collision"
+                        if isinstance(exc, ConflictCanonicalCollisionError)
+                        else type(exc).__name__
+                    )
                     self.failed_count += 1
                     self.store.fail_job(
                         job.id,
