@@ -1,0 +1,704 @@
+"""Offline diagnostic for native Claude checkpoint and hook latency.
+
+The helper invokes only the Mnemos adapter against a disposable local service.
+It does not invoke Claude, a model, or a network provider.  A child process
+keeps per-operation trace records flushed before each operation completes so a
+timeout still leaves evidence for the checkpoint write boundary.
+"""
+
+from __future__ import annotations
+
+import argparse
+from datetime import datetime, timezone
+import faulthandler
+import hashlib
+import json
+import os
+from pathlib import Path
+import subprocess
+import sys
+import tempfile
+import time
+import traceback
+from typing import Any, Mapping
+import zipfile
+
+WORKTREE = Path(__file__).resolve().parents[1]
+OUTPUT_DIR = WORKTREE / "docs" / "validation" / "2026-09-16" / "claude-checkpoint-diagnostic"
+SOURCE_COMMIT = "20f271d93bbf02990a78b51aa74694deaf5a9bf7"
+TEMP_PARENT = Path(r"D:\WindowsTemp")
+EXPECTED_ENV_ROOT = Path(r"D:\WindowsTemp\mnemos-scope-wheel-20260917-0659")
+CHILD_TIMEOUT_SECONDS = 10
+FAULT_DUMP_SECONDS = 8
+PROFILE = "claude-checkpoint-diagnostic"
+
+
+def _sha256(value: bytes | str) -> str:
+    raw = value.encode("utf-8") if isinstance(value, str) else value
+    return hashlib.sha256(raw).hexdigest()
+
+
+def _pinned_package_provenance(
+    package_path: Path, *, wheel_path: Path, expected_wheel_sha256: str
+) -> dict[str, Any]:
+    listing = subprocess.run(
+        [
+            "git",
+            "-C",
+            str(WORKTREE),
+            "ls-tree",
+            "-r",
+            "--name-only",
+            SOURCE_COMMIT,
+            "mnemos",
+        ],
+        capture_output=True,
+        text=True,
+        check=True,
+        timeout=10,
+    )
+    files = [Path(item) for item in listing.stdout.splitlines() if item.strip()]
+    if not files:
+        raise RuntimeError("pinned source has no mnemos package files")
+    mismatches: list[str] = []
+    for relative in files:
+        expected = subprocess.run(
+            ["git", "-C", str(WORKTREE), "show", f"{SOURCE_COMMIT}:{relative.as_posix()}"],
+            capture_output=True,
+            check=True,
+            timeout=10,
+        ).stdout.replace(b"\r\n", b"\n")
+        installed = (
+            (package_path.parent / Path(*relative.parts[1:])).read_bytes().replace(b"\r\n", b"\n")
+        )
+        if installed != expected:
+            mismatches.append(relative.as_posix())
+    if mismatches:
+        raise RuntimeError("installed package differs from pinned source")
+    observed_wheel_sha256 = _sha256(wheel_path.read_bytes())
+    if observed_wheel_sha256 != expected_wheel_sha256:
+        raise RuntimeError("wheel archive does not match the expected digest")
+    wheel_members = 0
+    with zipfile.ZipFile(wheel_path) as archive:
+        for item in archive.infolist():
+            if item.is_dir() or not item.filename.startswith("mnemos/"):
+                continue
+            wheel_members += 1
+            installed = package_path.parent / Path(*Path(item.filename).parts[1:])
+            if installed.read_bytes() != archive.read(item):
+                raise RuntimeError("installed package bytes differ from wheel")
+    return {
+        "source_commit": SOURCE_COMMIT,
+        "package_files_checked": len(files),
+        "wheel_package_members_checked": wheel_members,
+        "wheel_path": str(wheel_path),
+        "wheel_sha256_expected": expected_wheel_sha256,
+        "wheel_sha256_observed": observed_wheel_sha256,
+    }
+
+
+def _private_mkdir(path: Path) -> None:
+    from mnemos.service import _protect_private_path
+
+    path.mkdir(parents=True, exist_ok=False)
+    _protect_private_path(path)
+
+
+def _clean_environment(overrides: Mapping[str, str]) -> dict[str, str]:
+    environment = dict(os.environ)
+    for key in list(environment):
+        if key.startswith("MNEMOS_") or key in {"PYTHONPATH", "CLAUDE_CONFIG_DIR"}:
+            environment.pop(key, None)
+    environment.update(overrides)
+    return environment
+
+
+def _terminate_process_tree(process: subprocess.Popen[str]) -> bool:
+    if process.poll() is not None:
+        return False
+    if os.name == "nt":
+        subprocess.run(
+            ["taskkill", "/PID", str(process.pid), "/T", "/F"],
+            capture_output=True,
+            text=True,
+            check=False,
+            timeout=10,
+        )
+    else:  # pragma: no cover - the diagnostic runs on Windows
+        process.kill()
+    try:
+        process.wait(timeout=10)
+    except subprocess.TimeoutExpired:
+        process.kill()
+        process.wait(timeout=10)
+    return True
+
+
+def _write_child_probe(path: Path) -> None:
+    path.write_text(
+        """from __future__ import annotations
+
+import asyncio
+import faulthandler
+import hashlib
+import json
+import os
+from pathlib import Path
+import sys
+import time
+from typing import Any
+
+import mnemos.adapters.claude_code as claude_code
+
+TRACE = Path(sys.argv[2])
+STACK = Path(sys.argv[3])
+EVENT = sys.argv[1]
+_real_fsync = os.fsync
+_real_replace = os.replace
+_trace_lock = None
+
+
+def trace(operation: str, phase: str, **fields: Any) -> None:
+    row = {
+        "monotonic_ns": time.monotonic_ns(),
+        "pid": os.getpid(),
+        "event": EVENT,
+        "operation": operation,
+        "phase": phase,
+        **fields,
+    }
+    with TRACE.open("a", encoding="utf-8") as handle:
+        handle.write(json.dumps(row, sort_keys=True, separators=(",", ":")) + "\\n")
+        handle.flush()
+        # Flush to the OS so process termination retains the trace. Do not add
+        # an fsync here: extra durable writes would confound the operation under test.
+
+
+def timed_fsync(fd: int) -> None:
+    started = time.monotonic_ns()
+    trace("os.fsync", "start", fd_type=type(fd).__name__)
+    try:
+        _real_fsync(fd)
+    except BaseException as exc:
+        trace("os.fsync", "error", elapsed_ns=time.monotonic_ns() - started, error_type=type(exc).__name__)
+        raise
+    trace("os.fsync", "end", elapsed_ns=time.monotonic_ns() - started)
+
+
+def timed_replace(source: str | os.PathLike[str], target: str | os.PathLike[str]) -> None:
+    started = time.monotonic_ns()
+    trace("os.replace", "start")
+    try:
+        _real_replace(source, target)
+    except BaseException as exc:
+        trace("os.replace", "error", elapsed_ns=time.monotonic_ns() - started, error_type=type(exc).__name__)
+        raise
+    trace("os.replace", "end", elapsed_ns=time.monotonic_ns() - started)
+
+
+def timed_protect(path: Path) -> None:
+    started = time.monotonic_ns()
+    trace("_protect_private_path", "start", path_kind=path.suffix or "directory")
+    try:
+        _original_protect(path)
+    except BaseException as exc:
+        trace("_protect_private_path", "error", elapsed_ns=time.monotonic_ns() - started, error_type=type(exc).__name__)
+        raise
+    trace("_protect_private_path", "end", elapsed_ns=time.monotonic_ns() - started)
+
+
+_original_protect = claude_code._protect_private_path
+claude_code._protect_private_path = timed_protect
+claude_code.os.fsync = timed_fsync
+claude_code.os.replace = timed_replace
+
+_original_capture = claude_code.ClaudeCodeAdapter._capture
+_original_pending = claude_code.ClaudeCodeAdapter._remember_pending_duplicate
+_original_retrieve = claude_code.ClaudeCodeAdapter.retrieve_context
+_original_transcript = claude_code.ClaudeCodeAdapter._capture_transcript
+
+
+async def timed_capture(self: Any, *args: Any, **kwargs: Any) -> Any:
+    started = time.monotonic_ns()
+    trace("adapter.capture", "start")
+    try:
+        result = await _original_capture(self, *args, **kwargs)
+    except BaseException as exc:
+        trace("adapter.capture", "error", elapsed_ns=time.monotonic_ns() - started, error_type=type(exc).__name__)
+        raise
+    trace("adapter.capture", "end", elapsed_ns=time.monotonic_ns() - started, accepted=bool(result[0]))
+    return result
+
+
+def timed_pending(self: Any, *args: Any, **kwargs: Any) -> Any:
+    started = time.monotonic_ns()
+    trace("adapter.pending_duplicate", "start")
+    try:
+        result = _original_pending(self, *args, **kwargs)
+    except BaseException as exc:
+        trace("adapter.pending_duplicate", "error", elapsed_ns=time.monotonic_ns() - started, error_type=type(exc).__name__)
+        raise
+    trace("adapter.pending_duplicate", "end", elapsed_ns=time.monotonic_ns() - started)
+    return result
+
+
+async def timed_retrieve(self: Any, *args: Any, **kwargs: Any) -> Any:
+    started = time.monotonic_ns()
+    trace("adapter.retrieve_context", "start")
+    try:
+        result = await _original_retrieve(self, *args, **kwargs)
+    except BaseException as exc:
+        trace("adapter.retrieve_context", "error", elapsed_ns=time.monotonic_ns() - started, error_type=type(exc).__name__)
+        raise
+    trace("adapter.retrieve_context", "end", elapsed_ns=time.monotonic_ns() - started, status=result.status)
+    return result
+
+
+async def timed_transcript(self: Any, *args: Any, **kwargs: Any) -> Any:
+    started = time.monotonic_ns()
+    trace("adapter.capture_transcript", "start")
+    try:
+        result = await _original_transcript(self, *args, **kwargs)
+    except BaseException as exc:
+        trace("adapter.capture_transcript", "error", elapsed_ns=time.monotonic_ns() - started, error_type=type(exc).__name__)
+        raise
+    trace("adapter.capture_transcript", "end", elapsed_ns=time.monotonic_ns() - started, captured=result[0])
+    return result
+
+
+claude_code.ClaudeCodeAdapter._capture = timed_capture
+claude_code.ClaudeCodeAdapter._remember_pending_duplicate = timed_pending
+claude_code.ClaudeCodeAdapter.retrieve_context = timed_retrieve
+claude_code.ClaudeCodeAdapter._capture_transcript = timed_transcript
+
+stack_handle = STACK.open("a", encoding="utf-8")
+faulthandler.dump_traceback_later(8, file=stack_handle, repeat=False)
+try:
+    payload = json.loads(sys.stdin.read())
+    started = time.monotonic_ns()
+    trace("adapter.handle", "start")
+    result = asyncio.run(claude_code.run_hook(EVENT, payload))
+    trace(
+        "adapter.handle",
+        "end",
+        elapsed_ns=time.monotonic_ns() - started,
+        status=result.status,
+        committed=result.committed,
+        queued=result.queued,
+        captured=result.captured,
+        error_type=type(result.error).__name__ if result.error else None,
+    )
+    print(json.dumps({
+        "status": result.status,
+        "committed": result.committed,
+        "queued": result.queued,
+        "captured": result.captured,
+        "error_present": result.error is not None,
+    }, separators=(",", ":")), flush=True)
+finally:
+    faulthandler.cancel_dump_traceback_later()
+    stack_handle.flush()
+    stack_handle.close()
+""",
+        encoding="utf-8",
+    )
+
+
+def _run_probe(
+    *,
+    child: Path,
+    event: str,
+    payload: Mapping[str, Any],
+    trace: Path,
+    stack: Path,
+    cwd: Path,
+    environment: Mapping[str, str],
+) -> dict[str, Any]:
+    started = time.monotonic()
+    process = subprocess.Popen(
+        [sys.executable, str(child), event, str(trace), str(stack)],
+        cwd=str(cwd),
+        env=dict(environment),
+        stdin=subprocess.PIPE,
+        stdout=subprocess.PIPE,
+        stderr=subprocess.PIPE,
+        text=True,
+        encoding="utf-8",
+        errors="replace",
+        shell=False,
+        creationflags=getattr(subprocess, "CREATE_NEW_PROCESS_GROUP", 0),
+    )
+    timed_out = False
+    try:
+        stdout, stderr = process.communicate(
+            input=json.dumps(dict(payload), separators=(",", ":")),
+            timeout=CHILD_TIMEOUT_SECONDS,
+        )
+    except subprocess.TimeoutExpired:
+        timed_out = True
+        _terminate_process_tree(process)
+        stdout, stderr = process.communicate(timeout=15)
+    finally:
+        if process.poll() is None:
+            _terminate_process_tree(process)
+    result: dict[str, Any] = {
+        "event": event,
+        "returncode": process.returncode,
+        "timed_out": timed_out,
+        "elapsed_ms": round((time.monotonic() - started) * 1000, 1),
+        "stdout_sha256": _sha256(stdout),
+        "stdout_bytes": len(stdout.encode("utf-8")),
+        "stderr_sha256": _sha256(stderr),
+        "stderr_bytes": len(stderr.encode("utf-8")),
+        "trace_path": str(trace),
+        "trace_bytes": trace.stat().st_size if trace.exists() else 0,
+        "stack_path": str(stack),
+        "stack_bytes": stack.stat().st_size if stack.exists() else 0,
+    }
+    if stdout.strip():
+        try:
+            parsed = json.loads(stdout)
+            if isinstance(parsed, Mapping):
+                result["adapter_result"] = dict(parsed)
+        except json.JSONDecodeError:
+            result["adapter_result_parse_error"] = True
+    return result
+
+
+def _trace_summary(path: Path) -> dict[str, Any]:
+    rows: list[dict[str, Any]] = []
+    if path.exists():
+        for line in path.read_text(encoding="utf-8").splitlines():
+            try:
+                row = json.loads(line)
+            except json.JSONDecodeError:
+                continue
+            if isinstance(row, Mapping):
+                rows.append(dict(row))
+    operations: dict[str, dict[str, int]] = {}
+    for row in rows:
+        operation = str(row.get("operation"))
+        phases = operations.setdefault(operation, {})
+        phase = str(row.get("phase"))
+        phases[phase] = phases.get(phase, 0) + 1
+    return {"path": str(path), "row_count": len(rows), "operations": operations, "rows": rows}
+
+
+def _checkpoint_summary(directory: Path) -> list[dict[str, Any]]:
+    result: list[dict[str, Any]] = []
+    for path in sorted([*directory.glob("*.json"), *directory.glob("*.tmp")]):
+        try:
+            value = json.loads(path.read_text(encoding="utf-8"))
+        except (OSError, json.JSONDecodeError):
+            result.append({"path": str(path), "json_complete": False})
+            continue
+        if not isinstance(value, Mapping):
+            continue
+        scope = value.get("scope")
+        result.append(
+            {
+                "path": str(path),
+                "sha256": _sha256(path.read_bytes()),
+                "keys": sorted(str(key) for key in value),
+                "offset": value.get("offset"),
+                "identity_version": value.get("identity_version"),
+                "scope_keys": (
+                    sorted(str(key) for key in scope) if isinstance(scope, Mapping) else []
+                ),
+                "scope_host": scope.get("host") if isinstance(scope, Mapping) else None,
+            }
+        )
+    return result
+
+
+def _parse_args(argv: list[str] | None) -> argparse.Namespace:
+    parser = argparse.ArgumentParser(
+        description="Diagnose Mnemos Claude checkpoint latency offline."
+    )
+    parser.add_argument("--wheel", type=Path, required=True, help="installed wheel archive")
+    parser.add_argument("--expected-wheel-sha256", required=True, help="wheel SHA256 digest")
+    args = parser.parse_args(argv)
+    digest = args.expected_wheel_sha256.lower()
+    if len(digest) != 64 or any(char not in "0123456789abcdef" for char in digest):
+        parser.error("--expected-wheel-sha256 must be a 64-character hexadecimal digest")
+    args.expected_wheel_sha256 = digest
+    return args
+
+
+def main(argv: list[str] | None = None) -> int:
+    args = _parse_args(argv)
+    if OUTPUT_DIR.exists():
+        raise FileExistsError(f"refusing to overwrite evidence directory: {OUTPUT_DIR}")
+    if not TEMP_PARENT.is_dir():
+        raise FileNotFoundError(f"required private fixture parent is missing: {TEMP_PARENT}")
+    OUTPUT_DIR.mkdir(parents=True)
+    report: dict[str, Any] = {
+        "runner": "claude-checkpoint-diagnostic",
+        "source_commit": SOURCE_COMMIT,
+        "runner_sha256": _sha256(Path(__file__).read_bytes()),
+        "started_at": datetime.now(timezone.utc).isoformat(),
+        "status": "not_observed",
+        "scope": "offline direct Mnemos Claude adapter against local service; no native Claude or model call",
+        "child_timeout_seconds": CHILD_TIMEOUT_SECONDS,
+        "fault_dump_seconds": FAULT_DUMP_SECONDS,
+        "native_host_auth_used": False,
+        "loopback_service_auth": "private runtime token",
+        "network_provider_used": False,
+        "concurrent_load": "Frozen b7 real-model evaluation and focused verification share this Windows machine. These are diagnostic operation traces, not isolated latency measurements.",
+        "wheel_argument": str(args.wheel),
+        "expected_wheel_sha256": args.expected_wheel_sha256,
+    }
+    fixture = Path(tempfile.mkdtemp(prefix="mnemos-claude-checkpoint-diagnostic-", dir=TEMP_PARENT))
+    service: Any | None = None
+    store: Any | None = None
+    try:
+        from mnemos import __file__ as mnemos_file
+        from mnemos.config import MnemosConfig
+        from mnemos.engine import MnemosEngine
+        from mnemos.memory_service import LocalMemoryService
+        from mnemos.scopes import ScopeRegistry
+        from mnemos.service import MnemosService, _protect_private_path
+        from mnemos.utils.embeddings import SimpleEmbeddingProvider
+        from mnemos.utils.llm import UnavailableLLMProvider
+        from mnemos.utils.storage import SQLiteStore
+
+        _protect_private_path(fixture)
+        package_path = Path(mnemos_file).resolve()
+        if "site-packages" not in {part.lower() for part in package_path.parts}:
+            raise RuntimeError(f"installed-wheel isolation failed: imported {package_path}")
+        executable_path = Path(sys.executable).resolve()
+        try:
+            executable_path.relative_to(EXPECTED_ENV_ROOT.resolve())
+        except ValueError as exc:
+            raise RuntimeError(
+                f"diagnostic requires the installed environment {EXPECTED_ENV_ROOT}"
+            ) from exc
+        report["python"] = {
+            "executable": str(executable_path),
+            "mnemos_package": str(package_path),
+            "site_packages_asserted": True,
+            "expected_environment_root": str(EXPECTED_ENV_ROOT),
+        }
+        report["package_provenance"] = _pinned_package_provenance(
+            package_path,
+            wheel_path=args.wheel,
+            expected_wheel_sha256=args.expected_wheel_sha256,
+        )
+        project = fixture / "project"
+        config_dir = fixture / "claude-config"
+        trace_dir = fixture / "traces"
+        checkpoints = fixture / "checkpoints"
+        runtime = fixture / "runtime"
+        routing = fixture / "routing"
+        for directory in (project, config_dir, trace_dir, checkpoints, runtime, routing):
+            _private_mkdir(directory)
+        transcript = config_dir / "projects" / "diagnostic" / "session.jsonl"
+        transcript.parent.mkdir(parents=True, exist_ok=False)
+        _protect_private_path(transcript.parent)
+        session_id = "claude-checkpoint-diagnostic-session"
+        prompt = "Which private diagnostic label was seeded for this scoped project?"
+        assistant = "The private diagnostic label is present in project memory."
+        transcript.write_text(
+            json.dumps(
+                {
+                    "type": "user",
+                    "uuid": "diagnostic-transcript-user",
+                    "sessionId": session_id,
+                    "message": {"role": "user", "content": [{"type": "text", "text": prompt}]},
+                },
+                separators=(",", ":"),
+            )
+            + "\n"
+            + json.dumps(
+                {
+                    "type": "assistant",
+                    "uuid": "diagnostic-transcript-assistant",
+                    "sessionId": session_id,
+                    "message": {
+                        "role": "assistant",
+                        "content": [{"type": "text", "text": assistant}],
+                    },
+                },
+                separators=(",", ":"),
+            )
+            + "\n",
+            encoding="utf-8",
+        )
+        _protect_private_path(transcript)
+        registry = ScopeRegistry()
+        identity = registry.register_project(project, user_profile_id=PROFILE, enabled=True)
+        registry.save(fixture / "scopes.json")
+        config = MnemosConfig()
+        for name in ("surprisal", "mutable_rag", "affective", "sleep", "spreading"):
+            setattr(config.modules, name, False)
+
+        class ConstantFixtureEmbeddings(SimpleEmbeddingProvider):
+            def embed(self, text: str) -> list[float]:
+                del text
+                return [1.0] + [0.0] * 63
+
+            def embed_batch(self, texts: list[str]) -> list[list[float]]:
+                return [self.embed(text) for text in texts]
+
+        store = SQLiteStore(str(fixture / "memory.sqlite"))
+        engine = MnemosEngine(
+            config=config,
+            llm=UnavailableLLMProvider("offline checkpoint diagnostic cognition unavailable"),
+            embedder=ConstantFixtureEmbeddings(dim=64),
+            store=store,
+            scope_registry=registry,
+            require_scope_context=True,
+        )
+        service = MnemosService(
+            dispatcher=LocalMemoryService(engine, registry),
+            descriptor_path=fixture / "runtime.json",
+            lock_path=fixture / "service.lock",
+            startup_timeout=5,
+            dispatch_timeout=20,
+        )
+        service.start()
+        context = registry.resolve(
+            project,
+            user_profile_id=PROFILE,
+            session_id=session_id,
+            host="claude-code",
+        )
+        seed_label = "diagnostic-label-constant"
+        seed = service.submit(
+            "remember",
+            {
+                "context": context.model_dump(mode="json"),
+                "event_id": "claude-checkpoint-diagnostic-seed",
+                "content": "The private diagnostic label is " + seed_label + ".",
+                "scope": "project",
+            },
+        )
+        service.submit("maintenance", {"context": context.model_dump(mode="json")})
+        environment = _clean_environment(
+            {
+                "MNEMOS_RUNTIME_DESCRIPTOR": str(fixture / "runtime.json"),
+                "MNEMOS_SCOPE_REGISTRY": str(fixture / "scopes.json"),
+                "MNEMOS_USER_PROFILE_ID": PROFILE,
+                "MNEMOS_PROJECT_ROOT": str(project),
+                "MNEMOS_RUNTIME_DIR": str(runtime),
+                "MNEMOS_CLAUDE_CHECKPOINT_DIR": str(checkpoints),
+                "MNEMOS_ROUTING_REVIEW_DIR": str(routing),
+                "MNEMOS_AUTO_START": "false",
+                "MNEMOS_AUTO_RETRIEVE": "true",
+                "CLAUDE_CONFIG_DIR": str(config_dir),
+            }
+        )
+        child = fixture / "child_probe.py"
+        _write_child_probe(child)
+        user_trace = trace_dir / "user-prompt.jsonl"
+        user_stack = trace_dir / "user-prompt.stack.txt"
+        stop_trace = trace_dir / "stop.jsonl"
+        stop_stack = trace_dir / "stop.stack.txt"
+        user_payload = {
+            "hook_event_name": "UserPromptSubmit",
+            "session_id": session_id,
+            "cwd": str(project),
+            "prompt": prompt,
+            "transcript_path": str(transcript),
+        }
+        stop_payload = {
+            "hook_event_name": "Stop",
+            "session_id": session_id,
+            "cwd": str(project),
+            "transcript_path": str(transcript),
+            "last_assistant_message": assistant,
+        }
+        user_probe = _run_probe(
+            child=child,
+            event="UserPromptSubmit",
+            payload=user_payload,
+            trace=user_trace,
+            stack=user_stack,
+            cwd=project,
+            environment=environment,
+        )
+        report["checkpoint_after_user_prompt"] = _checkpoint_summary(checkpoints)
+        stop_probe = _run_probe(
+            child=child,
+            event="Stop",
+            payload=stop_payload,
+            trace=stop_trace,
+            stack=stop_stack,
+            cwd=project,
+            environment=environment,
+        )
+        service.submit("maintenance", {"context": context.model_dump(mode="json")})
+        events = list(store.list_episodic_events())
+        report["fixture"] = str(fixture)
+        report["seed"] = {
+            "project_id": identity.id,
+            "status": seed.get("status"),
+            "committed": seed.get("committed"),
+            "content_sha256": _sha256("The private diagnostic label is " + seed_label + "."),
+        }
+        report["probes"] = {"UserPromptSubmit": user_probe, "Stop": stop_probe}
+        report["trace_summary"] = {
+            "UserPromptSubmit": _trace_summary(user_trace),
+            "Stop": _trace_summary(stop_trace),
+        }
+        report["checkpoint_summary"] = _checkpoint_summary(checkpoints)
+        report["transcript"] = {
+            "path": str(transcript),
+            "sha256": _sha256(transcript.read_bytes()),
+            "bytes": transcript.stat().st_size,
+            "line_count": len(transcript.read_text(encoding="utf-8").splitlines()),
+        }
+        report["episodic_summary"] = {
+            "count": len(events),
+            "role_counts": {
+                "user": sum(event.role == "user" for event in events),
+                "assistant": sum(event.role == "assistant" for event in events),
+            },
+            "source_kind_counts": {
+                str(kind): sum(event.metadata.get("source_kind") == kind for event in events)
+                for kind in sorted(
+                    {
+                        str(event.metadata["source_kind"])
+                        for event in events
+                        if event.metadata.get("source_kind") is not None
+                    }
+                )
+            },
+            "source_ref_sha256": [
+                _sha256(str(event.metadata["source_ref"]))
+                for event in events
+                if isinstance(event.metadata.get("source_ref"), str)
+            ],
+        }
+        report["status"] = "diagnostic_complete"
+    except Exception as exc:
+        report.update(
+            {
+                "status": "failed",
+                "error_type": type(exc).__name__,
+                "error_digest": _sha256(str(exc)),
+            }
+        )
+        if "fixture" not in report:
+            report["fixture"] = str(fixture)
+        (fixture / "runner-error.txt").write_text(traceback.format_exc(), encoding="utf-8")
+    finally:
+        if service is not None:
+            try:
+                service.stop()
+            except Exception:
+                pass
+        if store is not None:
+            store.close()
+        report["descriptor_absent_after_shutdown"] = not (fixture / "runtime.json").exists()
+        report["private_fixture_preserved"] = True
+        report["finished_at"] = datetime.now(timezone.utc).isoformat()
+        (OUTPUT_DIR / "report.json").write_text(
+            json.dumps(report, indent=2) + "\n", encoding="utf-8"
+        )
+    print(json.dumps({key: report.get(key) for key in ("status", "fixture", "error_type")}))
+    return 0 if report["status"] == "diagnostic_complete" else 1
+
+
+if __name__ == "__main__":
+    raise SystemExit(main())

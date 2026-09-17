@@ -1,0 +1,564 @@
+{
+  "runner": "claude-checkpoint-diagnostic",
+  "source_commit": "20f271d93bbf02990a78b51aa74694deaf5a9bf7",
+  "runner_sha256": "a284b768377c887bb13b9727aba3967e25d1537a7c56fe1db2aba56fff20b975",
+  "started_at": "2026-09-17T08:09:51.725123+00:00",
+  "status": "diagnostic_complete",
+  "scope": "offline direct Mnemos Claude adapter against local service; no native Claude or model call",
+  "child_timeout_seconds": 10,
+  "fault_dump_seconds": 8,
+  "native_host_auth_used": false,
+  "loopback_service_auth": "private runtime token",
+  "network_provider_used": false,
+  "concurrent_load": "Frozen b7 real-model evaluation and focused verification share this Windows machine. These are diagnostic operation traces, not isolated latency measurements.",
+  "wheel_argument": ".venv\\claude-scope-checks-v2\\dist\\mnemos_memory-0.7.0-py3-none-any.whl",
+  "expected_wheel_sha256": "0ecaa634fe447621d6366b93accad7abfa2495063d9b425e6043973ea7b86663",
+  "python": {
+    "executable": "D:\\WindowsTemp\\mnemos-scope-wheel-20260917-0659\\Scripts\\python.exe",
+    "mnemos_package": "D:\\WindowsTemp\\mnemos-scope-wheel-20260917-0659\\Lib\\site-packages\\mnemos\\__init__.py",
+    "site_packages_asserted": true,
+    "expected_environment_root": "D:\\WindowsTemp\\mnemos-scope-wheel-20260917-0659"
+  },
+  "package_provenance": {
+    "source_commit": "20f271d93bbf02990a78b51aa74694deaf5a9bf7",
+    "package_files_checked": 53,
+    "wheel_package_members_checked": 56,
+    "wheel_path": ".venv\\claude-scope-checks-v2\\dist\\mnemos_memory-0.7.0-py3-none-any.whl",
+    "wheel_sha256_expected": "0ecaa634fe447621d6366b93accad7abfa2495063d9b425e6043973ea7b86663",
+    "wheel_sha256_observed": "0ecaa634fe447621d6366b93accad7abfa2495063d9b425e6043973ea7b86663"
+  },
+  "checkpoint_after_user_prompt": [
+    {
+      "path": "D:\\WindowsTemp\\mnemos-claude-checkpoint-diagnostic-jn1ik106\\checkpoints\\f58a1e1f322ab4d33f860dd747db9cc9f7d4eaa7f3b9f1cd185a5bdcec9505e1.json",
+      "sha256": "35153344853e782118ff6c7d13e2924e318a603b95ae55fa8e6ed9531dd29688",
+      "keys": [
+        "identity_version",
+        "pending_dedup",
+        "scope"
+      ],
+      "offset": null,
+      "identity_version": 2,
+      "scope_keys": [
+        "host",
+        "project_id",
+        "session_id",
+        "user_profile_id",
+        "workspace_id"
+      ],
+      "scope_host": "claude-code"
+    }
+  ],
+  "fixture": "D:\\WindowsTemp\\mnemos-claude-checkpoint-diagnostic-jn1ik106",
+  "seed": {
+    "project_id": "ff563686-692f-471f-952a-b196e253647e",
+    "status": "committed",
+    "committed": null,
+    "content_sha256": "30fa722947c0ef44e34e657f810af312a2f1c92873266818341e8594561e57aa"
+  },
+  "probes": {
+    "UserPromptSubmit": {
+      "event": "UserPromptSubmit",
+      "returncode": 0,
+      "timed_out": false,
+      "elapsed_ms": 1291.0,
+      "stdout_sha256": "437b827064c24b6aaaeb95b48c03d0b3ae5a6f9ffecc5a31d119d2a4f01c39fc",
+      "stdout_bytes": 88,
+      "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "stderr_bytes": 0,
+      "trace_path": "D:\\WindowsTemp\\mnemos-claude-checkpoint-diagnostic-jn1ik106\\traces\\user-prompt.jsonl",
+      "trace_bytes": 3184,
+      "stack_path": "D:\\WindowsTemp\\mnemos-claude-checkpoint-diagnostic-jn1ik106\\traces\\user-prompt.stack.txt",
+      "stack_bytes": 0,
+      "adapter_result": {
+        "status": "degraded",
+        "committed": true,
+        "queued": false,
+        "captured": 1,
+        "error_present": true
+      }
+    },
+    "Stop": {
+      "event": "Stop",
+      "returncode": 0,
+      "timed_out": false,
+      "elapsed_ms": 1050.3,
+      "stdout_sha256": "043fa37314cf102a8961c4b4ff2578ba635a097e3f877e5afddfee33180d6809",
+      "stdout_bytes": 83,
+      "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "stderr_bytes": 0,
+      "trace_path": "D:\\WindowsTemp\\mnemos-claude-checkpoint-diagnostic-jn1ik106\\traces\\stop.jsonl",
+      "trace_bytes": 2595,
+      "stack_path": "D:\\WindowsTemp\\mnemos-claude-checkpoint-diagnostic-jn1ik106\\traces\\stop.stack.txt",
+      "stack_bytes": 0,
+      "adapter_result": {
+        "status": "ok",
+        "committed": true,
+        "queued": false,
+        "captured": 1,
+        "error_present": false
+      }
+    }
+  },
+  "trace_summary": {
+    "UserPromptSubmit": {
+      "path": "D:\\WindowsTemp\\mnemos-claude-checkpoint-diagnostic-jn1ik106\\traces\\user-prompt.jsonl",
+      "row_count": 22,
+      "operations": {
+        "adapter.handle": {
+          "start": 1,
+          "end": 1
+        },
+        "_protect_private_path": {
+          "start": 5,
+          "error": 2,
+          "end": 3
+        },
+        "adapter.capture": {
+          "start": 1,
+          "end": 1
+        },
+        "adapter.pending_duplicate": {
+          "start": 1,
+          "end": 1
+        },
+        "os.fsync": {
+          "start": 1,
+          "end": 1
+        },
+        "os.replace": {
+          "start": 1,
+          "end": 1
+        },
+        "adapter.retrieve_context": {
+          "start": 1,
+          "end": 1
+        }
+      },
+      "rows": [
+        {
+          "event": "UserPromptSubmit",
+          "monotonic_ns": 93968429309800,
+          "operation": "adapter.handle",
+          "phase": "start",
+          "pid": 51096
+        },
+        {
+          "event": "UserPromptSubmit",
+          "monotonic_ns": 93968482260800,
+          "operation": "_protect_private_path",
+          "path_kind": ".json",
+          "phase": "start",
+          "pid": 51096
+        },
+        {
+          "elapsed_ns": 332500,
+          "error_type": "FileNotFoundError",
+          "event": "UserPromptSubmit",
+          "monotonic_ns": 93968482572400,
+          "operation": "_protect_private_path",
+          "phase": "error",
+          "pid": 51096
+        },
+        {
+          "event": "UserPromptSubmit",
+          "monotonic_ns": 93968482914400,
+          "operation": "adapter.capture",
+          "phase": "start",
+          "pid": 51096
+        },
+        {
+          "accepted": true,
+          "elapsed_ns": 338742800,
+          "event": "UserPromptSubmit",
+          "monotonic_ns": 93968821658400,
+          "operation": "adapter.capture",
+          "phase": "end",
+          "pid": 51096
+        },
+        {
+          "event": "UserPromptSubmit",
+          "monotonic_ns": 93968821808600,
+          "operation": "adapter.pending_duplicate",
+          "phase": "start",
+          "pid": 51096
+        },
+        {
+          "event": "UserPromptSubmit",
+          "monotonic_ns": 93968859264700,
+          "operation": "_protect_private_path",
+          "path_kind": ".json",
+          "phase": "start",
+          "pid": 51096
+        },
+        {
+          "elapsed_ns": 765200,
+          "error_type": "FileNotFoundError",
+          "event": "UserPromptSubmit",
+          "monotonic_ns": 93968860006000,
+          "operation": "_protect_private_path",
+          "phase": "error",
+          "pid": 51096
+        },
+        {
+          "event": "UserPromptSubmit",
+          "monotonic_ns": 93968860321900,
+          "operation": "_protect_private_path",
+          "path_kind": "directory",
+          "phase": "start",
+          "pid": 51096
+        },
+        {
+          "elapsed_ns": 649800,
+          "event": "UserPromptSubmit",
+          "monotonic_ns": 93968860971500,
+          "operation": "_protect_private_path",
+          "phase": "end",
+          "pid": 51096
+        },
+        {
+          "event": "UserPromptSubmit",
+          "monotonic_ns": 93968861375200,
+          "operation": "_protect_private_path",
+          "path_kind": ".tmp",
+          "phase": "start",
+          "pid": 51096
+        },
+        {
+          "elapsed_ns": 477000,
+          "event": "UserPromptSubmit",
+          "monotonic_ns": 93968861842300,
+          "operation": "_protect_private_path",
+          "phase": "end",
+          "pid": 51096
+        },
+        {
+          "event": "UserPromptSubmit",
+          "fd_type": "int",
+          "monotonic_ns": 93968862216800,
+          "operation": "os.fsync",
+          "phase": "start",
+          "pid": 51096
+        },
+        {
+          "elapsed_ns": 160654700,
+          "event": "UserPromptSubmit",
+          "monotonic_ns": 93969022872700,
+          "operation": "os.fsync",
+          "phase": "end",
+          "pid": 51096
+        },
+        {
+          "event": "UserPromptSubmit",
+          "monotonic_ns": 93969023247400,
+          "operation": "os.replace",
+          "phase": "start",
+          "pid": 51096
+        },
+        {
+          "elapsed_ns": 563000,
+          "event": "UserPromptSubmit",
+          "monotonic_ns": 93969023811700,
+          "operation": "os.replace",
+          "phase": "end",
+          "pid": 51096
+        },
+        {
+          "event": "UserPromptSubmit",
+          "monotonic_ns": 93969023968600,
+          "operation": "_protect_private_path",
+          "path_kind": ".json",
+          "phase": "start",
+          "pid": 51096
+        },
+        {
+          "elapsed_ns": 448900,
+          "event": "UserPromptSubmit",
+          "monotonic_ns": 93969024415100,
+          "operation": "_protect_private_path",
+          "phase": "end",
+          "pid": 51096
+        },
+        {
+          "elapsed_ns": 202828400,
+          "event": "UserPromptSubmit",
+          "monotonic_ns": 93969024637700,
+          "operation": "adapter.pending_duplicate",
+          "phase": "end",
+          "pid": 51096
+        },
+        {
+          "event": "UserPromptSubmit",
+          "monotonic_ns": 93969024756700,
+          "operation": "adapter.retrieve_context",
+          "phase": "start",
+          "pid": 51096
+        },
+        {
+          "elapsed_ns": 111450000,
+          "event": "UserPromptSubmit",
+          "monotonic_ns": 93969136207500,
+          "operation": "adapter.retrieve_context",
+          "phase": "end",
+          "pid": 51096,
+          "status": "ok"
+        },
+        {
+          "captured": 1,
+          "committed": true,
+          "elapsed_ns": 707459200,
+          "error_type": "str",
+          "event": "UserPromptSubmit",
+          "monotonic_ns": 93969136771200,
+          "operation": "adapter.handle",
+          "phase": "end",
+          "pid": 51096,
+          "queued": false,
+          "status": "degraded"
+        }
+      ]
+    },
+    "Stop": {
+      "path": "D:\\WindowsTemp\\mnemos-claude-checkpoint-diagnostic-jn1ik106\\traces\\stop.jsonl",
+      "row_count": 20,
+      "operations": {
+        "adapter.handle": {
+          "start": 1,
+          "end": 1
+        },
+        "adapter.capture_transcript": {
+          "start": 1,
+          "end": 1
+        },
+        "_protect_private_path": {
+          "start": 5,
+          "end": 5
+        },
+        "adapter.capture": {
+          "start": 1,
+          "end": 1
+        },
+        "os.fsync": {
+          "start": 1,
+          "end": 1
+        },
+        "os.replace": {
+          "start": 1,
+          "end": 1
+        }
+      },
+      "rows": [
+        {
+          "event": "Stop",
+          "monotonic_ns": 93969616559100,
+          "operation": "adapter.handle",
+          "phase": "start",
+          "pid": 56596
+        },
+        {
+          "event": "Stop",
+          "monotonic_ns": 93969663843500,
+          "operation": "adapter.capture_transcript",
+          "phase": "start",
+          "pid": 56596
+        },
+        {
+          "event": "Stop",
+          "monotonic_ns": 93969664194100,
+          "operation": "_protect_private_path",
+          "path_kind": ".json",
+          "phase": "start",
+          "pid": 56596
+        },
+        {
+          "elapsed_ns": 1270100,
+          "event": "Stop",
+          "monotonic_ns": 93969665442100,
+          "operation": "_protect_private_path",
+          "phase": "end",
+          "pid": 56596
+        },
+        {
+          "event": "Stop",
+          "monotonic_ns": 93969671185000,
+          "operation": "adapter.capture",
+          "phase": "start",
+          "pid": 56596
+        },
+        {
+          "accepted": true,
+          "elapsed_ns": 305782700,
+          "event": "Stop",
+          "monotonic_ns": 93969976968700,
+          "operation": "adapter.capture",
+          "phase": "end",
+          "pid": 56596
+        },
+        {
+          "event": "Stop",
+          "monotonic_ns": 93970000281300,
+          "operation": "_protect_private_path",
+          "path_kind": "directory",
+          "phase": "start",
+          "pid": 56596
+        },
+        {
+          "elapsed_ns": 1078600,
+          "event": "Stop",
+          "monotonic_ns": 93970001358000,
+          "operation": "_protect_private_path",
+          "phase": "end",
+          "pid": 56596
+        },
+        {
+          "event": "Stop",
+          "monotonic_ns": 93970001833400,
+          "operation": "_protect_private_path",
+          "path_kind": ".tmp",
+          "phase": "start",
+          "pid": 56596
+        },
+        {
+          "elapsed_ns": 488100,
+          "event": "Stop",
+          "monotonic_ns": 93970002310200,
+          "operation": "_protect_private_path",
+          "phase": "end",
+          "pid": 56596
+        },
+        {
+          "event": "Stop",
+          "fd_type": "int",
+          "monotonic_ns": 93970002572800,
+          "operation": "os.fsync",
+          "phase": "start",
+          "pid": 56596
+        },
+        {
+          "elapsed_ns": 180207100,
+          "event": "Stop",
+          "monotonic_ns": 93970182782800,
+          "operation": "os.fsync",
+          "phase": "end",
+          "pid": 56596
+        },
+        {
+          "event": "Stop",
+          "monotonic_ns": 93970183335500,
+          "operation": "os.replace",
+          "phase": "start",
+          "pid": 56596
+        },
+        {
+          "elapsed_ns": 455700,
+          "event": "Stop",
+          "monotonic_ns": 93970183792100,
+          "operation": "os.replace",
+          "phase": "end",
+          "pid": 56596
+        },
+        {
+          "event": "Stop",
+          "monotonic_ns": 93970183937600,
+          "operation": "_protect_private_path",
+          "path_kind": ".json",
+          "phase": "start",
+          "pid": 56596
+        },
+        {
+          "elapsed_ns": 511300,
+          "event": "Stop",
+          "monotonic_ns": 93970184446700,
+          "operation": "_protect_private_path",
+          "phase": "end",
+          "pid": 56596
+        },
+        {
+          "captured": 1,
+          "elapsed_ns": 520835300,
+          "event": "Stop",
+          "monotonic_ns": 93970184679900,
+          "operation": "adapter.capture_transcript",
+          "phase": "end",
+          "pid": 56596
+        },
+        {
+          "event": "Stop",
+          "monotonic_ns": 93970184872100,
+          "operation": "_protect_private_path",
+          "path_kind": ".json",
+          "phase": "start",
+          "pid": 56596
+        },
+        {
+          "elapsed_ns": 500100,
+          "event": "Stop",
+          "monotonic_ns": 93970185354900,
+          "operation": "_protect_private_path",
+          "phase": "end",
+          "pid": 56596
+        },
+        {
+          "captured": 1,
+          "committed": true,
+          "elapsed_ns": 573842900,
+          "error_type": null,
+          "event": "Stop",
+          "monotonic_ns": 93970190403400,
+          "operation": "adapter.handle",
+          "phase": "end",
+          "pid": 56596,
+          "queued": false,
+          "status": "ok"
+        }
+      ]
+    }
+  },
+  "checkpoint_summary": [
+    {
+      "path": "D:\\WindowsTemp\\mnemos-claude-checkpoint-diagnostic-jn1ik106\\checkpoints\\f58a1e1f322ab4d33f860dd747db9cc9f7d4eaa7f3b9f1cd185a5bdcec9505e1.json",
+      "sha256": "c51307d8aef5821c51b7d8bf2aaa20a248688b06d964ef463b98fd3081da4a2e",
+      "keys": [
+        "identity",
+        "identity_version",
+        "offset",
+        "path",
+        "pending_dedup",
+        "scope"
+      ],
+      "offset": 475,
+      "identity_version": 2,
+      "scope_keys": [
+        "host",
+        "project_id",
+        "session_id",
+        "user_profile_id",
+        "workspace_id"
+      ],
+      "scope_host": "claude-code"
+    }
+  ],
+  "transcript": {
+    "path": "D:\\WindowsTemp\\mnemos-claude-checkpoint-diagnostic-jn1ik106\\claude-config\\projects\\diagnostic\\session.jsonl",
+    "sha256": "df33ceb12bf175a61464b989d02eab592f23a47609a1aff3e6876e58af17fd0f",
+    "bytes": 475,
+    "line_count": 2
+  },
+  "episodic_summary": {
+    "count": 3,
+    "role_counts": {
+      "user": 2,
+      "assistant": 1
+    },
+    "source_kind_counts": {
+      "claude_code_transcript": 2,
+      "explicit_remember": 1
+    },
+    "source_ref_sha256": [
+      "e3303c363362b789bfcff8942c9af4701f6e0c72c2d732a3a892f9db40dea059",
+      "48b5fe023458cd543e17e6d795a8ca25b50b20c43032312fb23561ed50c60c9b"
+    ]
+  },
+  "descriptor_absent_after_shutdown": true,
+  "private_fixture_preserved": true,
+  "finished_at": "2026-09-17T08:11:34.823011+00:00"
+}

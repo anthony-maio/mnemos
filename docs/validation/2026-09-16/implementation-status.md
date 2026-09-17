@@ -35,10 +35,18 @@ evaluation; explicit-only storage is easier to inspect but misses information
 an agent does not select. See the [operating guide](../../functional-local-memory.md).
 
 A subsequent local SQLite check found a [Claude Stop replay defect](claude-stop-replay/README.md)
-in the verified `20f271d` source: replay after transcript consumption and
-restart can capture the assistant again under the fallback identity. A repair
-and focused regressions are in progress. The 669-test pass did not cover that
-sequence and does not close this correctness gap.
+in the verified `20f271d` source. The [repair](claude-stop-replay-fixed/README.md)
+now keeps the same two events after restart and replay in the frozen `554a251`
+source. Fifty-four focused adapter/identity tests pass; full verification for
+that source is running. Unknown fallback-to-transcript associations remain
+explicitly degraded and can retain more than one observation. This does not
+close complete native deduplication or persistent-host acceptance.
+
+The v2 performance runner removes extra diagnostic writes and reads between
+timed retrievals. Its focused regressions pass, but the corrected latency
+measurement has not run. The preserved 1,314.583 ms failure now carries the
+documented interleaved-workload caveat. The 500 ms gate and WAL/FULL durability
+are unchanged.
 
 The five modules are independently configurable mechanisms. Passing their unit
 contracts does not establish a quality improvement. The frozen v2 lifecycle

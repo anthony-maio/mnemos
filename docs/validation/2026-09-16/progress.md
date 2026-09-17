@@ -466,3 +466,38 @@ after reading the full transcript and restarting, replaying the same Stop
 created a second assistant event under the fallback source reference. The
 earlier broad test pass did not cover this sequence. A scoped adapter repair
 and new regressions are in progress; native persistent capture remains open.
+
+## Checkpoint timeout diagnostic and benchmark instrumentation review
+
+The installed source20f direct adapter diagnostic completed UserPromptSubmit
+in 1,291.0 ms and Stop in 1,050.3 ms, preserving the 10-second deadline.
+Both checkpoint writes completed; fsync took 160.655 and 180.207 ms.
+The original native persistent timeout did not reproduce and remains
+unexplained. No native host or model was invoked. The report, exact runner,
+and operation traces are preserved in
+[the checkpoint diagnostic](claude-checkpoint-diagnostic/README.md).
+
+Source review also found extra metadata writes and diagnostic reads between
+timed performance queries. The recorded 1,314.583 ms recall failure remains
+preserved, with this workload confound now explicit in
+[the performance record](performance-10k.md). A benchmark-only correction
+is being verified; no new latency result is claimed.
+
+## Claude replay repair and v2 benchmark committed
+
+The Claude replay repair is committed as `8d85894`; benchmark instrumentation
+v2 is committed separately as `554a251`. Fifty-four focused adapter/identity
+tests and four benchmark tests pass. Source type checking and formatting pass.
+The earlier broad benchmark-file test attempt was interrupted after nine
+reported tests stalled; it is not a broad pass. Only that owned pytest
+process was interrupted, and the frozen evaluation continued.
+
+The pinned real SQLite probe passes all seven positive assertions: two
+events remain two after restart and replay, with unchanged IDs and one
+native assistant record. Missing prompt identity remains degraded.
+Unknown fallback/native associations preserve native records with explicit
+ambiguity; full native deduplication is still open.
+
+Full verification is running against an immutable `554a251` checkout.
+The installed package and native host checks for this new source remain
+pending; prior source20f checks cannot certify the repair.

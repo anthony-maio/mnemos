@@ -29,6 +29,12 @@
       "status_at_recording": "passed",
       "purpose": "Repeat verification after the shared-environment sync, without further synchronization",
       "finished_at": "2026-09-17T07:19:50.916069+00:00"
+    },
+    {
+      "source_commit": "554a2517dc85bbdb6190b5e523f8511efa54cccf",
+      "started_at": "2026-09-17T08:23:41.489712+00:00",
+      "status_at_recording": "running",
+      "purpose": "Full verification of Claude replay repair and benchmark instrumentation v2"
     }
   ],
   "host_probes": [
@@ -100,6 +106,27 @@
     {
       "time_utc": "2026-09-17T06:47:09Z",
       "evidence": "environment-sync-incident/evidence-index.json"
+    }
+  ],
+  "offline_diagnostics": [
+    {
+      "name": "claude-checkpoint-diagnostic",
+      "source_commit": "20f271d93bbf02990a78b51aa74694deaf5a9bf7",
+      "started_at": "2026-09-17T08:09:51.725123+00:00",
+      "finished_at": "2026-09-17T08:11:34.823011+00:00",
+      "status": "diagnostic_complete",
+      "models": "None; constant fixture vectors and unavailable cognition",
+      "limitations": "Direct adapter check did not reproduce native timeout; no native host acceptance claim",
+      "evidence": "claude-checkpoint-diagnostic/evidence-index.json"
+    },
+    {
+      "name": "claude-stop-replay-fixed",
+      "source_commit": "554a2517dc85bbdb6190b5e523f8511efa54cccf",
+      "started_at": "2026-09-17T08:23:51.599574+00:00",
+      "finished_at": "2026-09-17T08:23:57.373819+00:00",
+      "status": "passed",
+      "models": "None; constant fixture vectors and unavailable cognition",
+      "evidence": "claude-stop-replay-fixed/evidence-index.json"
     }
   ]
 }

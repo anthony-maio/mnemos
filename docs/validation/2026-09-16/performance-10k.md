@@ -128,3 +128,30 @@ operations. Run this outside the active evaluation to avoid competing disk
 load. A separate metadata table is only a candidate if the probe confirms
 large-row write amplification; it would require migration and consistency
 tests. Deferred commits and reduced durability are not part of this repair.
+
+## Duplicate benchmark write found during source review
+
+The v1 runner performs a second `mark_retrieved_many` call and five reads
+after each timed retrieval. That extra WAL/FULL commit is outside the recorded
+latency, but it changes the database before the next timed query. Additional
+semantic and lexical diagnostic reads also run between measured queries. The
+measurement therefore includes an interleaved diagnostic workload, not just
+the production retrieval sequence.
+
+This distinction is visible in the frozen artifact: query 0's separate
+mark-plus-refresh probe took 1,145.564 ms while its actual engine metadata
+update took 49.853 ms. Queries 1 and 4 still contain the actual engine stalls
+reported above. The extra writes are a confound, not a proven explanation for
+those stalls, and the failing result remains preserved.
+
+Before the next latency comparison, remove duplicate mutations from the timed
+query sequence and derive component timings from the existing actual-call
+trace. Keep any standalone diagnostics in a separate phase or disposable
+fixture. Then rerun the unchanged 500 ms gate with WAL/FULL durability and
+record the instrumentation change. No product storage optimization is justified
+by the current evidence alone. This corrected measurement has not run.
+
+The benchmark-only correction is committed as `554a251`. Its v2 artifact
+schema identifies the changed measurement method and the actual 30-candidate
+engine request. Four focused tests pass, including a small offline fixture
+through `measure_retrieval` that checks one metadata update per engine query.

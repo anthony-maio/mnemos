@@ -1,0 +1,91 @@
+{
+  "assertions": {
+    "first_stop_captured_two": true,
+    "first_stop_ok": true,
+    "first_store_has_two_events": true,
+    "one_native_assistant": true,
+    "replay_captured_zero": true,
+    "replay_explicitly_degraded_without_turn_id": true,
+    "restarted_store_has_same_two_events": true
+  },
+  "finished_at": "2026-09-17T08:23:57.373819+00:00",
+  "fixture_directory": "D:\\WindowsTemp\\mnemos-claude-stop-fixed-6x80il6_",
+  "import_mode": "source_checkout",
+  "imported_mnemos": "D:\\Development\\mnemos\\mnemos\\.worktrees\\functional-local-memory\\.venv\\claude-replay-frozen-v1\\mnemos\\__init__.py",
+  "probe": "claude_stop_replay_positive_assertions",
+  "providers": {
+    "cognition": "unavailable",
+    "embedding": "constant"
+  },
+  "reproducer_path": "D:\\Development\\mnemos\\mnemos\\.worktrees\\functional-local-memory\\.venv\\claude-replay-frozen-v1\\docs\\validation\\2026-09-16\\claude-stop-replay\\runner.py.txt",
+  "reproducer_sha256": "63c44dad666bd4764184c77ff2a8b7438a7386031d7cc16291989a9a1cd5d342",
+  "reproduction": {
+    "assistant_source_refs_after_restart": [
+      "native-assistant-uuid"
+    ],
+    "checkpoint": "D:\\WindowsTemp\\mnemos-claude-stop-fixed-6x80il6_\\checkpoints\\9df9f67ec9df4ec210b7c132cdb52d9d42e768d767e9e85a91e5b2dba4a7158f.json",
+    "checkpoint_offset": 364,
+    "events_after_first_stop": [
+      {
+        "content_length": 38,
+        "content_sha256": "c66d9436d3da49787effce5ad93c5a02ffa42720c55c629049478b64fb52b942",
+        "id": "3f85cadd846c5bf56d385675b2b0bba21f9975b8670b8e9b2d72777e61b6620f",
+        "role": "user",
+        "source_event_id": "claude:v2:687ff5d219d574a9ac22dc6efaa3e0105b6aef4bc609a9e2fe9d7a473a427764",
+        "source_ref": "native-user-uuid"
+      },
+      {
+        "content_length": 47,
+        "content_sha256": "9ab209bcf6e9704f78e6233831c2e6d32f8c9344d904676041e20d742baa7271",
+        "id": "64c10cea2335ce4b66c4dadf897d20837a6cbf64bdb951d584b9adb67b1b7636",
+        "role": "assistant",
+        "source_event_id": "claude:v2:353c8f8db9723cc4a7ea909292b83fa4fd7b8dc3100bfb39d02bc7f88f47a063",
+        "source_ref": "native-assistant-uuid"
+      }
+    ],
+    "events_after_second_stop": [
+      {
+        "content_length": 38,
+        "content_sha256": "c66d9436d3da49787effce5ad93c5a02ffa42720c55c629049478b64fb52b942",
+        "id": "3f85cadd846c5bf56d385675b2b0bba21f9975b8670b8e9b2d72777e61b6620f",
+        "role": "user",
+        "source_event_id": "claude:v2:687ff5d219d574a9ac22dc6efaa3e0105b6aef4bc609a9e2fe9d7a473a427764",
+        "source_ref": "native-user-uuid"
+      },
+      {
+        "content_length": 47,
+        "content_sha256": "9ab209bcf6e9704f78e6233831c2e6d32f8c9344d904676041e20d742baa7271",
+        "id": "64c10cea2335ce4b66c4dadf897d20837a6cbf64bdb951d584b9adb67b1b7636",
+        "role": "assistant",
+        "source_event_id": "claude:v2:353c8f8db9723cc4a7ea909292b83fa4fd7b8dc3100bfb39d02bc7f88f47a063",
+        "source_ref": "native-assistant-uuid"
+      }
+    ],
+    "expected_behavior": "The first Stop consumes transcript deltas; an identical Stop after restart must not capture a fallback assistant event.",
+    "first_stop": {
+      "captured": 2,
+      "committed": true,
+      "error": null,
+      "queued": false,
+      "status": "ok"
+    },
+    "minimal_fix_principle": "Persist the last captured assistant source reference, content fingerprint, and native turn identity in the v2 checkpoint. Suppress a fallback only when those durable fields identify the same turn. If no native turn identity is available, return a degraded result and wait for a transcript delta rather than synthesizing last_assistant_message as a new event. This avoids duplicate replay while leaving same-text responses from later turns eligible when their turn identity differs.",
+    "project_id": "3e64b2d4-69da-4128-b8c3-9aa884db7532",
+    "second_stop_after_restart": {
+      "captured": 0,
+      "committed": false,
+      "error": "identity_reference_unavailable",
+      "queued": false,
+      "status": "degraded"
+    },
+    "status": "not_reproduced",
+    "transcript": "D:\\WindowsTemp\\mnemos-claude-stop-fixed-6x80il6_\\transcript.jsonl"
+  },
+  "runner_sha256": "f785255cccb39e1603869a0d3ba7239d5febe2169dbc947d7165d135196f3ebd",
+  "schema_version": 1,
+  "source_checkout": "D:\\Development\\mnemos\\mnemos\\.worktrees\\functional-local-memory\\.venv\\claude-replay-frozen-v1",
+  "source_commit_actual": "554a2517dc85bbdb6190b5e523f8511efa54cccf",
+  "source_commit_expected": "554a2517dc85bbdb6190b5e523f8511efa54cccf",
+  "started_at": "2026-09-17T08:23:51.599574+00:00",
+  "status": "passed"
+}
