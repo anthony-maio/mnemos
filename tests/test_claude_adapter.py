@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import json
 from pathlib import Path
+from typing import Any
 
 import pytest
 
@@ -73,6 +74,34 @@ async def test_disabled_recall_keeps_prompt_capture(tmp_path: Path, monkeypatch)
     )
     assert result.captured == 1
     assert client.retrievals == []
+
+
+@pytest.mark.asyncio
+async def test_rejected_prompt_capture_is_degraded_but_keeps_recall_context(
+    tmp_path: Path,
+) -> None:
+    client = FakeClient(capture_status="degraded")
+    adapter = ClaudeCodeAdapter(
+        client=client,
+        registry=registry_for(tmp_path),
+        user_profile_id="profile-a",
+        checkpoint_directory=tmp_path / "checkpoints",
+    )
+
+    result = await adapter.handle(
+        "UserPromptSubmit",
+        {
+            "session_id": "session-a",
+            "cwd": str(tmp_path),
+            "prompt": "Keep this durable fact",
+        },
+    )
+
+    assert result.status == "degraded"
+    assert result.committed is False
+    assert result.captured == 0
+    assert result.error == "capture_not_acknowledged"
+    assert "bounded test command" in result.context
 
 
 def registry_for(path: Path) -> ScopeRegistry:
@@ -236,6 +265,358 @@ async def test_rotation_restarts_offset_and_stop_deduplicates_final_message(tmp_
     result = await adapter.handle("Stop", payload)
     assert result.captured == 1
     assert [item["content"] for item in client.captures] == ["First response.", "Second response."]
+
+
+@pytest.mark.asyncio
+async def test_stop_falls_back_to_last_assistant_message_when_transcript_is_missing(
+    tmp_path: Path,
+) -> None:
+    client = FakeClient()
+    adapter = ClaudeCodeAdapter(
+        client=client,
+        registry=registry_for(tmp_path),
+        user_profile_id="profile-a",
+        checkpoint_directory=tmp_path / "checkpoints",
+    )
+    payload = hook_payload(tmp_path, tmp_path / "missing-session.jsonl")
+
+    result = await adapter.handle("Stop", payload)
+
+    assert result.status == "degraded"
+    assert result.committed is True
+    assert result.captured == 1
+    assert client.captures[0]["role"] == "assistant"
+    assert client.captures[0]["content"] == "The work is complete."
+    checkpoint = json.loads(
+        (tmp_path / "checkpoints" / adapter._checkpoint_path("session-a").name).read_text(
+            encoding="utf-8"
+        )
+    )
+    assert "path" not in checkpoint
+    assert "offset" not in checkpoint
+
+
+@pytest.mark.asyncio
+async def test_stop_transcript_read_failure_keeps_fallback_and_does_not_advance_checkpoint(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    from mnemos.adapters import claude_code
+
+    transcript = tmp_path / "session.jsonl"
+    transcript.write_text("not read", encoding="utf-8")
+
+    def fail_read(*args: Any, **kwargs: Any) -> None:
+        raise PermissionError("transcript unavailable")
+
+    monkeypatch.setattr(claude_code, "read_transcript_deltas", fail_read)
+    client = FakeClient()
+    adapter = ClaudeCodeAdapter(
+        client=client,
+        registry=registry_for(tmp_path),
+        user_profile_id="profile-a",
+        checkpoint_directory=tmp_path / "checkpoints",
+    )
+
+    result = await adapter.handle("Stop", hook_payload(tmp_path, transcript))
+
+    assert result.status == "degraded"
+    assert result.committed is True
+    assert result.captured == 1
+    checkpoint = json.loads(
+        (tmp_path / "checkpoints" / adapter._checkpoint_path("session-a").name).read_text(
+            encoding="utf-8"
+        )
+    )
+    assert "path" not in checkpoint
+    assert "offset" not in checkpoint
+
+
+@pytest.mark.asyncio
+async def test_missing_transcript_fallback_is_idempotent_and_later_transcript_deduplicates(
+    tmp_path: Path,
+) -> None:
+    transcript = tmp_path / "session.jsonl"
+    client = FakeClient()
+    adapter = ClaudeCodeAdapter(
+        client=client,
+        registry=registry_for(tmp_path),
+        user_profile_id="profile-a",
+        checkpoint_directory=tmp_path / "checkpoints",
+    )
+    payload = hook_payload(tmp_path, transcript)
+
+    first = await adapter.handle("Stop", payload)
+    replay = await adapter.handle("Stop", payload)
+    assert first.captured == 1
+    assert replay.captured == 0
+    assert len(client.captures) == 1
+
+    transcript.write_text(
+        json.dumps(
+            {
+                "type": "assistant",
+                "uuid": "assistant-1",
+                "message": {"role": "assistant", "content": "The work is complete."},
+            }
+        )
+        + "\n",
+        encoding="utf-8",
+    )
+    later = await adapter.handle("Stop", payload)
+
+    assert later.captured == 0
+    assert len(client.captures) == 1
+    checkpoint = json.loads(
+        (tmp_path / "checkpoints" / adapter._checkpoint_path("session-a").name).read_text(
+            encoding="utf-8"
+        )
+    )
+    assert checkpoint["offset"] == transcript.stat().st_size
+    assert checkpoint["pending_dedup"] == []
+
+
+@pytest.mark.asyncio
+async def test_missing_transcript_distinct_prompt_ids_preserve_identical_messages(
+    tmp_path: Path,
+) -> None:
+    transcript = tmp_path / "missing-session.jsonl"
+    client = FakeClient()
+    adapter = ClaudeCodeAdapter(
+        client=client,
+        registry=registry_for(tmp_path),
+        user_profile_id="profile-a",
+        checkpoint_directory=tmp_path / "checkpoints",
+    )
+    base = hook_payload(tmp_path, transcript)
+
+    first = await adapter.handle("Stop", {**base, "prompt_id": "turn-1"})
+    retry = await adapter.handle("Stop", {**base, "prompt_id": "turn-1"})
+    second = await adapter.handle("Stop", {**base, "prompt_id": "turn-2"})
+
+    assert first.captured == 1
+    assert retry.captured == 0
+    assert second.captured == 1
+    assert len(client.captures) == 2
+    assert [item["source_ref"] for item in client.captures] == ["turn-1", "turn-2"]
+
+    transcript.write_text(
+        "\n".join(
+            json.dumps(
+                {
+                    "type": "assistant",
+                    "uuid": uuid,
+                    "message": {"role": "assistant", "content": "The work is complete."},
+                }
+            )
+            for uuid in ("assistant-1", "assistant-2")
+        )
+        + "\n",
+        encoding="utf-8",
+    )
+    later = await adapter.handle("Stop", {**base, "prompt_id": "turn-2"})
+
+    assert later.captured == 0
+    assert len(client.captures) == 2
+    checkpoint = json.loads(
+        (tmp_path / "checkpoints" / adapter._checkpoint_path("session-a").name).read_text(
+            encoding="utf-8"
+        )
+    )
+    assert checkpoint["pending_dedup"] == []
+
+
+@pytest.mark.asyncio
+async def test_missing_transcript_without_fallback_is_degraded_and_uncommitted(
+    tmp_path: Path,
+) -> None:
+    client = FakeClient()
+    adapter = ClaudeCodeAdapter(
+        client=client,
+        registry=registry_for(tmp_path),
+        user_profile_id="profile-a",
+        checkpoint_directory=tmp_path / "checkpoints",
+    )
+
+    result = await adapter.handle(
+        "Stop",
+        {
+            "session_id": "session-a",
+            "transcript_path": str(tmp_path / "missing-session.jsonl"),
+            "cwd": str(tmp_path),
+        },
+    )
+
+    assert result.status == "degraded"
+    assert result.committed is False
+    assert result.captured == 0
+    assert client.captures == []
+
+
+@pytest.mark.asyncio
+async def test_corrupt_checkpoint_is_distinct_from_unavailable_transcript(
+    tmp_path: Path,
+) -> None:
+    client = FakeClient()
+    adapter = ClaudeCodeAdapter(
+        client=client,
+        registry=registry_for(tmp_path),
+        user_profile_id="profile-a",
+        checkpoint_directory=tmp_path / "checkpoints",
+    )
+    checkpoint = adapter._checkpoint_path("session-a")
+    checkpoint.parent.mkdir(parents=True)
+    checkpoint.write_text("{not-json", encoding="utf-8")
+
+    with pytest.raises(ValueError, match="checkpoint is corrupt"):
+        await adapter.handle("Stop", hook_payload(tmp_path, tmp_path / "missing.jsonl"))
+
+    assert client.captures == []
+
+
+@pytest.mark.asyncio
+async def test_checkpoint_write_failure_is_not_reported_as_transcript_failure(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    transcript = tmp_path / "session.jsonl"
+    transcript.write_text(
+        json.dumps(
+            {
+                "type": "assistant",
+                "uuid": "assistant-1",
+                "message": {"role": "assistant", "content": "A transcript response."},
+            }
+        )
+        + "\n",
+        encoding="utf-8",
+    )
+    client = FakeClient()
+    adapter = ClaudeCodeAdapter(
+        client=client,
+        registry=registry_for(tmp_path),
+        user_profile_id="profile-a",
+        checkpoint_directory=tmp_path / "checkpoints",
+    )
+
+    def fail_write(*args: Any, **kwargs: Any) -> None:
+        raise OSError("checkpoint write failed")
+
+    monkeypatch.setattr(adapter, "_write_checkpoint", fail_write)
+    with pytest.raises(OSError, match="checkpoint write failed"):
+        await adapter.handle("PreCompact", hook_payload(tmp_path, transcript))
+
+    assert [item["content"] for item in client.captures] == ["A transcript response."]
+
+
+@pytest.mark.asyncio
+async def test_readable_transcript_capture_rejection_is_degraded_and_uncommitted(
+    tmp_path: Path,
+) -> None:
+    transcript = tmp_path / "session.jsonl"
+    transcript.write_text(
+        json.dumps(
+            {
+                "type": "assistant",
+                "uuid": "assistant-1",
+                "message": {"role": "assistant", "content": "A transcript response."},
+            }
+        )
+        + "\n",
+        encoding="utf-8",
+    )
+    client = FakeClient(capture_status="degraded")
+    adapter = ClaudeCodeAdapter(
+        client=client,
+        registry=registry_for(tmp_path),
+        user_profile_id="profile-a",
+        checkpoint_directory=tmp_path / "checkpoints",
+    )
+
+    result = await adapter.handle("PreCompact", hook_payload(tmp_path, transcript))
+
+    assert result.status == "degraded"
+    assert result.committed is False
+    assert result.captured == 0
+    assert result.error == "capture_not_acknowledged"
+    assert not (tmp_path / "checkpoints").exists()
+
+
+@pytest.mark.asyncio
+async def test_fallback_capture_rejection_is_degraded_and_uncommitted(tmp_path: Path) -> None:
+    client = FakeClient(capture_status="degraded")
+    adapter = ClaudeCodeAdapter(
+        client=client,
+        registry=registry_for(tmp_path),
+        user_profile_id="profile-a",
+        checkpoint_directory=tmp_path / "checkpoints",
+    )
+
+    result = await adapter.handle(
+        "Stop", hook_payload(tmp_path, tmp_path / "missing-session.jsonl")
+    )
+
+    assert result.status == "degraded"
+    assert result.committed is False
+    assert result.captured == 0
+    assert result.error == "capture_not_acknowledged"
+    assert not (tmp_path / "checkpoints").exists()
+
+
+@pytest.mark.asyncio
+async def test_non_object_checkpoint_is_corrupt(tmp_path: Path) -> None:
+    client = FakeClient()
+    adapter = ClaudeCodeAdapter(
+        client=client,
+        registry=registry_for(tmp_path),
+        user_profile_id="profile-a",
+        checkpoint_directory=tmp_path / "checkpoints",
+    )
+    checkpoint = adapter._checkpoint_path("session-a")
+    checkpoint.parent.mkdir(parents=True)
+    checkpoint.write_text("[]", encoding="utf-8")
+
+    with pytest.raises(ValueError, match="checkpoint is corrupt"):
+        await adapter.handle("Stop", hook_payload(tmp_path, tmp_path / "missing.jsonl"))
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize("bad_offset", [True, "1", -1])
+async def test_malformed_checkpoint_offsets_are_corrupt(tmp_path: Path, bad_offset: Any) -> None:
+    client = FakeClient()
+    adapter = ClaudeCodeAdapter(
+        client=client,
+        registry=registry_for(tmp_path),
+        user_profile_id="profile-a",
+        checkpoint_directory=tmp_path / "checkpoints",
+    )
+    checkpoint = adapter._checkpoint_path("session-a")
+    checkpoint.parent.mkdir(parents=True)
+    checkpoint.write_text(json.dumps({"offset": bad_offset}), encoding="utf-8")
+    transcript = tmp_path / "session.jsonl"
+    transcript.write_text("", encoding="utf-8")
+
+    with pytest.raises(ValueError, match="checkpoint is corrupt"):
+        await adapter.handle("Stop", hook_payload(tmp_path, transcript))
+
+
+@pytest.mark.asyncio
+async def test_malformed_offset_is_rejected_before_missing_transcript_fallback(
+    tmp_path: Path,
+) -> None:
+    client = FakeClient()
+    adapter = ClaudeCodeAdapter(
+        client=client,
+        registry=registry_for(tmp_path),
+        user_profile_id="profile-a",
+        checkpoint_directory=tmp_path / "checkpoints",
+    )
+    checkpoint = adapter._checkpoint_path("session-a")
+    checkpoint.parent.mkdir(parents=True)
+    checkpoint.write_text(json.dumps({"offset": True}), encoding="utf-8")
+
+    with pytest.raises(ValueError, match="checkpoint is corrupt"):
+        await adapter.handle("Stop", hook_payload(tmp_path, tmp_path / "missing.jsonl"))
+
+    assert client.captures == []
 
 
 @pytest.mark.asyncio

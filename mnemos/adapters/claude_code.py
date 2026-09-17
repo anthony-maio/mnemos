@@ -28,6 +28,8 @@ from ..service import _protect_private_path, default_runtime_directory
 MAX_TRANSCRIPT_LINE = 200_000
 MAX_TRANSCRIPT_BYTES_PER_HOOK = 2_000_000
 MAX_CONTEXT_CHARS = 8_000
+TRANSCRIPT_UNAVAILABLE = "transcript_unavailable"
+CAPTURE_NOT_ACKNOWLEDGED = "capture_not_acknowledged"
 
 
 @dataclass(frozen=True)
@@ -233,14 +235,45 @@ class ClaudeCodeAdapter:
     def _content_fingerprint(role: str, content: str) -> str:
         return hashlib.sha256(f"{role}\0{content}".encode("utf-8")).hexdigest()
 
+    @staticmethod
+    def _pending_records(checkpoint: Mapping[str, Any]) -> list[dict[str, str | None]]:
+        raw = checkpoint.get("pending_dedup", [])
+        if not isinstance(raw, list):
+            return []
+        records: list[dict[str, str | None]] = []
+        for item in raw:
+            if isinstance(item, str) and item:
+                records.append({"fingerprint": item, "source_ref": None})
+            elif isinstance(item, Mapping):
+                fingerprint = item.get("fingerprint")
+                source_ref = item.get("source_ref")
+                if isinstance(fingerprint, str) and fingerprint:
+                    records.append(
+                        {
+                            "fingerprint": fingerprint,
+                            "source_ref": source_ref if isinstance(source_ref, str) else None,
+                        }
+                    )
+        return records
+
     def _read_checkpoint(self, session_id: str) -> dict[str, Any]:
         target = self._checkpoint_path(session_id)
         try:
             _protect_private_path(target)
             value = json.loads(target.read_text(encoding="utf-8"))
-        except (OSError, json.JSONDecodeError):
+        except FileNotFoundError:
             return {}
-        return value if isinstance(value, dict) else {}
+        except json.JSONDecodeError as exc:
+            raise ValueError("Claude checkpoint is corrupt") from exc
+        except OSError as exc:
+            raise RuntimeError("Claude checkpoint could not be read") from exc
+        if not isinstance(value, dict):
+            raise ValueError("Claude checkpoint is corrupt")
+        if "offset" in value:
+            offset = value["offset"]
+            if type(offset) is not int or offset < 0:
+                raise ValueError("Claude checkpoint is corrupt")
+        return value
 
     def _write_checkpoint(self, session_id: str, value: Mapping[str, Any]) -> None:
         self.checkpoint_directory.mkdir(parents=True, exist_ok=True)
@@ -262,14 +295,17 @@ class ClaudeCodeAdapter:
         finally:
             temporary.unlink(missing_ok=True)
 
-    def _remember_pending_duplicate(self, session_id: str, role: str, content: str) -> None:
+    def _remember_pending_duplicate(
+        self, session_id: str, role: str, content: str, *, source_ref: str
+    ) -> None:
         checkpoint = self._read_checkpoint(session_id)
-        pending = checkpoint.get("pending_dedup", [])
-        if not isinstance(pending, list):
-            pending = []
+        pending = self._pending_records(checkpoint)
         fingerprint = self._content_fingerprint(role, content)
-        if fingerprint not in pending:
-            pending.append(fingerprint)
+        if not any(
+            item["fingerprint"] == fingerprint and item["source_ref"] == source_ref
+            for item in pending
+        ):
+            pending.append({"fingerprint": fingerprint, "source_ref": source_ref})
         checkpoint["pending_dedup"] = pending[-16:]
         self._write_checkpoint(session_id, checkpoint)
 
@@ -303,32 +339,48 @@ class ClaudeCodeAdapter:
 
     async def _capture_transcript(
         self, payload: Mapping[str, Any], context: ScopeContext
-    ) -> tuple[int, set[str]]:
+    ) -> tuple[int, set[str], str | None]:
+        checkpoint = self._read_checkpoint(context.session_id)
         transcript = payload.get("transcript_path")
         if not isinstance(transcript, str) or not transcript.strip():
-            return 0, set()
-        checkpoint = self._read_checkpoint(context.session_id)
+            return 0, set(), TRANSCRIPT_UNAVAILABLE
         target = Path(transcript).expanduser()
-        current_identity = _current_transcript_identity(target)
+        try:
+            current_identity = _current_transcript_identity(target)
+        except OSError:
+            return 0, set(), TRANSCRIPT_UNAVAILABLE
         checkpoint_path = str(target.resolve())
-        offset = int(checkpoint.get("offset", 0) or 0)
+        raw_offset = checkpoint.get("offset", 0)
+        if type(raw_offset) is not int or raw_offset < 0:
+            raise ValueError("Claude checkpoint is corrupt")
+        offset = raw_offset
         if (
             checkpoint.get("path") != checkpoint_path
             or checkpoint.get("identity") != current_identity
         ):
             offset = 0
-        deltas, next_offset, identity = read_transcript_deltas(
-            transcript,
-            offset=offset,
-        )
+        try:
+            deltas, next_offset, identity = read_transcript_deltas(
+                transcript,
+                offset=offset,
+            )
+        except OSError:
+            return 0, set(), TRANSCRIPT_UNAVAILABLE
         captured = 0
         contents: set[str] = set()
-        pending = checkpoint.get("pending_dedup", [])
-        pending_fingerprints = set(pending) if isinstance(pending, list) else set()
+        pending_records = self._pending_records(checkpoint)
         for delta in deltas:
             fingerprint = self._content_fingerprint(delta.role, delta.content)
-            if fingerprint in pending_fingerprints:
-                pending_fingerprints.remove(fingerprint)
+            pending_index = next(
+                (
+                    index
+                    for index, item in enumerate(pending_records)
+                    if item["fingerprint"] == fingerprint
+                ),
+                None,
+            )
+            if pending_index is not None:
+                pending_records.pop(pending_index)
                 contents.add(delta.content)
                 continue
             if not await self._capture(
@@ -338,7 +390,7 @@ class ClaudeCodeAdapter:
                 source_ref=delta.source_ref,
                 occurred_at=delta.occurred_at,
             ):
-                return captured, contents
+                return captured, contents, CAPTURE_NOT_ACKNOWLEDGED
             captured += 1
             contents.add(delta.content)
         if deltas or next_offset != offset or checkpoint.get("identity") != identity:
@@ -348,10 +400,10 @@ class ClaudeCodeAdapter:
                     "path": checkpoint_path,
                     "identity": identity,
                     "offset": next_offset,
-                    "pending_dedup": sorted(pending_fingerprints),
+                    "pending_dedup": pending_records[-16:],
                 },
             )
-        return captured, contents
+        return captured, contents, None
 
     @staticmethod
     def _query(payload: Mapping[str, Any], event: str) -> str:
@@ -424,6 +476,7 @@ class ClaudeCodeAdapter:
                 return await recall()
             prompt = payload.get("prompt")
             captured = 0
+            capture_error: str | None = None
             if isinstance(prompt, str) and prompt.strip():
                 source_ref = str(
                     payload.get("prompt_id")
@@ -437,14 +490,25 @@ class ClaudeCodeAdapter:
                     occurred_at=datetime.now(timezone.utc),
                 ):
                     captured += 1
-                    self._remember_pending_duplicate(context.session_id, "user", prompt.strip())
+                    self._remember_pending_duplicate(
+                        context.session_id,
+                        "user",
+                        prompt.strip(),
+                        source_ref=source_ref,
+                    )
+                else:
+                    capture_error = CAPTURE_NOT_ACKNOWLEDGED
             retrieved = await recall()
             return HookResult(
-                status="degraded" if retrieved.status == "degraded" else "ok",
+                status=(
+                    "degraded"
+                    if capture_error is not None or retrieved.status == "degraded"
+                    else "ok"
+                ),
                 committed=captured > 0,
                 captured=captured,
                 context=retrieved.context,
-                error=retrieved.error,
+                error=capture_error or retrieved.error,
             )
         if event in {"Stop", "PreCompact", "PostCompact"}:
             try:
@@ -466,27 +530,47 @@ class ClaudeCodeAdapter:
                     configured_profile=self.user_profile_id,
                 )
                 return HookResult(status="degraded", committed=False, error=reason)
-            captured, transcript_contents = await self._capture_transcript(payload, context)
+            captured, transcript_contents, transcript_error = await self._capture_transcript(
+                payload, context
+            )
             if event == "Stop":
                 assistant = payload.get("last_assistant_message")
+                assistant_content = assistant.strip() if isinstance(assistant, str) else ""
+                checkpoint = self._read_checkpoint(context.session_id)
+                pending_records = self._pending_records(checkpoint)
+                source_ref = str(payload.get("prompt_id") or "last_assistant_message")
                 if (
-                    isinstance(assistant, str)
-                    and assistant.strip()
-                    and assistant.strip() not in transcript_contents
+                    assistant_content
+                    and assistant_content not in transcript_contents
+                    and not any(
+                        item["fingerprint"]
+                        == self._content_fingerprint("assistant", assistant_content)
+                        and item["source_ref"] == source_ref
+                        for item in pending_records
+                    )
                 ):
-                    source_ref = str(payload.get("prompt_id") or "last_assistant_message")
                     if await self._capture(
                         context,
                         role="assistant",
-                        content=assistant.strip(),
+                        content=assistant_content,
                         source_ref=source_ref,
                         occurred_at=datetime.now(timezone.utc),
                     ):
                         captured += 1
                         self._remember_pending_duplicate(
-                            context.session_id, "assistant", assistant.strip()
+                            context.session_id,
+                            "assistant",
+                            assistant_content,
+                            source_ref=source_ref,
                         )
-            return HookResult(status="ok", committed=captured > 0, captured=captured)
+                    else:
+                        transcript_error = CAPTURE_NOT_ACKNOWLEDGED
+            return HookResult(
+                status="degraded" if transcript_error else "ok",
+                committed=captured > 0,
+                captured=captured,
+                error=transcript_error,
+            )
         return HookResult(status="skipped", committed=False, error=f"unsupported event: {event}")
 
 
