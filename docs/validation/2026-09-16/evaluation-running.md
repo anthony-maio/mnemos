@@ -1,11 +1,25 @@
 # Real-model evaluation status
 
-Current status: the repaired mechanism development run is active from frozen
-`b7a9d9d`. Its complete repository verification passed: 624 tests passed,
+Current status: the fresh v3 evaluation queue is running from frozen
+`b7a9d9d`, starting with the integrated lifecycle preflight. The repaired
+mechanism development run completed all observations and passed its graph
+correctness controls; it established no graph recall benefit. See the
+[development observations](mechanism-development-v2.md).
+Complete repository verification passed: 624 tests passed,
 2 skipped, followed by formatting, typing, JavaScript syntax, packaging, and
 installed-wheel lifecycle checks. The [verification record](graph-v4-verification.md)
-preserves the logs and artifact hashes. The fresh lifecycle matrix and held-out
-mechanism run have not started.
+preserves the logs and artifact hashes.
+
+The serialized queue runs lifecycle preflight, 10,000-fact performance,
+held-out mechanism evaluation, then the seven-profile lifecycle matrix. Its
+status and logs are in `real-model-v3/`; persistent fixtures and checkpoints
+are in `.venv/real-model-work-v3/`. The coordinator is
+`.venv/run_graph_v4_evaluations.py`, with its SHA-256 recorded in
+`real-model-v3/queue-status.json`. It requires matching model digests, a clean
+frozen checkout, passing broad/wheel checks, and completed development
+correctness controls. Resume rejects a still-active prior coordinator or
+child process. Negative quality and coverage results are retained separately
+from execution and correctness failures.
 
 The superseded v2 lifecycle matrix is stopped. It preserved 600 baseline
 observations and 12 full-profile observations before a target-mapping defect
@@ -29,9 +43,9 @@ identity verification. Do not resume this v2 run or its old coordinator. The
 files below are retained diagnostic evidence. The replacement lifecycle run
 has not started. The original mechanism development run was also stopped after
 a production graph correctness failure. A repaired development run is now
-active from detached checkpoint `b7a9d9d`.
+complete from detached checkpoint `b7a9d9d`.
 
-The current development run uses graph builder v4 and the complete
+The completed development run uses graph builder v4 and the complete
 `2026-09-17-module-evaluation-protocol-v2.md` amendment. It retains five graph
 cases, five affective pairs, and three repetitions, with unchanged authored
 labels and model pins. Its artifacts are in `mechanism-development-v2/` and

@@ -1,0 +1,186 @@
+"""One serialized, source-bound queue. Preserve every completed phase on resume."""
+import argparse
+import ctypes
+from datetime import datetime, timezone
+import hashlib
+import json
+import os
+from pathlib import Path
+import subprocess
+import sys
+from urllib.request import urlopen
+
+parser = argparse.ArgumentParser()
+parser.add_argument('--resume', action='store_true')
+args = parser.parse_args()
+workspace = Path(__file__).resolve().parent.parent
+snapshot = workspace / '.venv/graph-v4-frozen'
+results = workspace / 'docs/validation/2026-09-16/real-model-v3'
+work = workspace / '.venv/real-model-work-v3'
+expected_commit = 'b7a9d9d4d9d6947564696457b0e2754f7e95a801'
+endpoint = 'http://192.168.86.35:11434'
+models = {
+    'gemma3:4b': 'a2af6cc3eb7fa8be8504abaf9b04e88f17a119ec3f04a3addf55f92841195f5a',
+    'nomic-embed-text:latest': '0a109f422b47e3a30ba2b10eca18548e944e8a23073ee3f3e947efcf3c45e59f',
+}
+
+def now():
+    return datetime.now(timezone.utc).isoformat()
+
+def read(path):
+    return json.loads(path.read_text(encoding='utf-8-sig'))
+
+def digest(path):
+    return hashlib.sha256(path.read_bytes()).hexdigest()
+
+def pid_alive(pid):
+    if os.name != 'nt':
+        raise RuntimeError('This queue requires the recorded Windows runtime')
+    kernel = ctypes.WinDLL('kernel32', use_last_error=True)
+    kernel.OpenProcess.restype = ctypes.c_void_p
+    kernel.OpenProcess.argtypes = [ctypes.c_uint32, ctypes.c_int, ctypes.c_uint32]
+    kernel.GetExitCodeProcess.argtypes = [ctypes.c_void_p, ctypes.POINTER(ctypes.c_uint32)]
+    kernel.CloseHandle.argtypes = [ctypes.c_void_p]
+    handle = kernel.OpenProcess(0x1000, False, int(pid))
+    if not handle:
+        if ctypes.get_last_error() == 87:
+            return False
+        raise RuntimeError('Cannot verify previous process state: ' + str(pid))
+    try:
+        code = ctypes.c_uint32()
+        if not kernel.GetExitCodeProcess(handle, ctypes.byref(code)):
+            raise RuntimeError('Cannot query previous process: ' + str(pid))
+        return code.value == 259
+    finally:
+        kernel.CloseHandle(handle)
+
+def source_and_models():
+    commit = subprocess.check_output(['git', 'rev-parse', 'HEAD'], cwd=snapshot, text=True).strip()
+    if commit != expected_commit or subprocess.check_output(
+        ['git', 'status', '--porcelain'], cwd=snapshot, text=True
+    ).strip():
+        raise RuntimeError('Frozen source changed')
+    with urlopen(endpoint + '/api/tags', timeout=30) as response:
+        records = json.load(response)['models']
+    observed = {row['name']: row['digest'] for row in records}
+    if any(observed.get(name) != value for name, value in models.items()):
+        raise RuntimeError('Pinned Ollama models changed or disappeared')
+
+checks = read(workspace / '.venv/graph-v4-checks/verification.json')
+wheel = read(workspace / '.venv/graph-v4-checks/installed-wheel.json')
+development = read(workspace / 'docs/validation/2026-09-16/mechanism-development-v2/module-mechanism.json')
+if checks['status'] != 'passed' or checks['source_commit'] != expected_commit:
+    raise RuntimeError('Full checkpoint checks have not passed')
+if wheel['status'] != 'passed' or wheel['source_commit'] != expected_commit:
+    raise RuntimeError('Installed wheel check has not passed for this source')
+if not development['execution']['complete'] or not development['correctness_pass']:
+    raise RuntimeError('Development mechanism execution or correctness failed')
+source_and_models()
+results.mkdir(parents=True, exist_ok=True)
+work.mkdir(parents=True, exist_ok=True)
+status_path = results / 'queue-status.json'
+script_sha256 = digest(Path(__file__))
+if status_path.exists():
+    if not args.resume:
+        raise SystemExit('Queue exists; inspect its process and artifacts before --resume')
+    status = read(status_path)
+    if status['source_commit'] != expected_commit or status['runner_sha256'] != script_sha256:
+        raise RuntimeError('Queue provenance changed')
+    prior_pids = [status.get('coordinator_pid')] + [phase.get('pid') for phase in status['phases']
+                                                   if phase['status'] != 'finished']
+    if any(pid and pid_alive(pid) for pid in prior_pids):
+        raise RuntimeError('A previous queue process is still alive; inspect before resuming')
+else:
+    if args.resume:
+        raise SystemExit('No queue to resume')
+    status = {'source_commit': expected_commit, 'source_checkout': str(snapshot),
+              'runner_sha256': script_sha256, 'started_at': now(), 'phases': []}
+status.update(status='running', coordinator_pid=os.getpid(), resumed_at=now())
+env = {key: value for key, value in os.environ.items()
+       if not key.startswith('MNEMOS_') and key != 'PYTHONPATH'}
+env['PYTHONUNBUFFERED'] = '1'
+
+def save():
+    status['updated_at'] = now()
+    temporary = status_path.with_suffix('.tmp')
+    temporary.write_text(json.dumps(status, indent=2) + '\n', encoding='utf-8')
+    temporary.replace(status_path)
+
+common = ['--endpoint', endpoint, '--model', 'gemma3:4b', '--embedding-model', 'nomic-embed-text:latest']
+phases = [
+    ('lifecycle-preflight', 'lifecycle_target_smoke', common + [
+        '--output-dir', str(results / 'lifecycle-preflight'), '--work-dir', str(work / 'lifecycle-preflight')]),
+    ('performance', 'performance', ['--output', str(results / 'performance-10k.json'),
+        '--endpoint', endpoint, '--embedding-model', 'nomic-embed-text:latest', '--cognition-model', 'gemma3:4b']),
+    ('mechanism-heldout', 'module_mechanism_run', common + [
+        '--split', 'heldout', '--repetitions', '3', '--output-dir', str(results / 'mechanism-heldout'),
+        '--work-dir', str(work / 'mechanism-heldout')]),
+    ('lifecycle', 'heldout_run', common + ['--repetitions', '3',
+        '--output-dir', str(results / 'lifecycle'), '--work-dir', str(work / 'lifecycle')]),
+]
+save()
+try:
+    for name, module, options in phases:
+        prior = next((phase for phase in reversed(status['phases'])
+                      if phase['name'] == name and phase['status'] == 'finished'), None)
+        if prior:
+            for path, expected in prior['artifacts'].items():
+                if digest(Path(path)) != expected:
+                    raise RuntimeError('Completed phase artifact changed: ' + path)
+            continue
+        source_and_models()
+        command = [sys.executable, '-u', '-m', 'benchmarks.local_memory.' + module, *options]
+        phase = {'name': name, 'command': command, 'status': 'running', 'started_at': now()}
+        status['phases'].append(phase)
+        save()
+        with (results / (name + '.stdout.log')).open('a', encoding='utf-8') as stdout, \
+             (results / (name + '.stderr.log')).open('a', encoding='utf-8') as stderr:
+            process = subprocess.Popen(command, cwd=snapshot, env=env, stdout=stdout, stderr=stderr,
+                                       creationflags=getattr(subprocess, 'CREATE_NO_WINDOW', 0))
+            phase['pid'] = process.pid
+            save()
+            code = process.wait()
+        phase.update(exit_code=code, finished_at=now())
+        if code:
+            phase['status'] = 'failed'
+            raise RuntimeError(name + ' exited with code ' + str(code))
+        if name == 'lifecycle-preflight':
+            artifacts = list((results / name).glob('lifecycle-target-smoke-*.json'))
+            report_paths = [path for path in artifacts if 'manifest' not in path.name]
+            report = read(max(report_paths, key=lambda path: path.stat().st_mtime_ns)) if report_paths else {}
+            runs = report.get('runs', [])
+            if (report.get('status') != 'complete' or len(runs) != 4
+                    or set(report.get('profiles', [])) != {'baseline', 'full'}
+                    or any(run.get('status') != 'complete' for run in runs)):
+                raise RuntimeError('Lifecycle preflight did not complete')
+        elif name == 'performance':
+            artifacts = [results / 'performance-10k.json']
+            report = read(artifacts[0])
+            if report['status'] != 'completed' or not report['code_provenance']['consistent']:
+                raise RuntimeError('Performance measurement invalid')
+        elif name == 'mechanism-heldout':
+            artifacts = list((results / name).glob('*'))
+            report = read(results / name / 'module-mechanism.json')
+            phase['coverage'] = report['coverage']
+            phase['graph_correctness'] = report['graph_correctness']['status']
+            if not report['execution']['complete'] or not report['correctness_pass']:
+                raise RuntimeError('Heldout mechanism execution or correctness failed; preserve evidence')
+        else:
+            artifacts = list((results / name).glob('*'))
+            reports = {path.stem: read(path) for path in artifacts
+                       if path.suffix == '.json' and '.raw' not in path.name}
+            phase['reported_statuses'] = {key: value.get('status') for key, value in reports.items()}
+            if len(reports) != 7 or any(value.get('status') != 'completed' for value in reports.values()):
+                raise RuntimeError('Lifecycle matrix incomplete; preserve partial observations')
+        phase['artifacts'] = {str(path): digest(path) for path in artifacts if path.is_file()}
+        phase['status'] = 'finished'
+        save()
+    status['status'] = 'finished'
+except BaseException as exc:
+    status.update(status='failed', error_type=type(exc).__name__, error=str(exc))
+    if status['phases'] and status['phases'][-1]['status'] == 'running':
+        status['phases'][-1]['status'] = 'failed'
+    save()
+    raise
+save()
+print(json.dumps({'status': status['status'], 'source_commit': expected_commit}))
