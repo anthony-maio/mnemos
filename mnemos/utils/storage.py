@@ -381,6 +381,9 @@ class MemoryStore(ABC):
         *,
         status: str | None = None,
         limit: int = 0,
+        user_profile_id: str | None = None,
+        project_id: str | None = None,
+        workspace_id: str | None = None,
     ) -> list[DurableJob]:
         raise NotImplementedError("This storage backend does not support durable jobs.")
 
@@ -388,7 +391,12 @@ class MemoryStore(ABC):
         raise NotImplementedError("This storage backend does not support fact evidence.")
 
     def job_summary(
-        self, *, now: datetime, user_profile_id: str | None = None, project_id: str | None = None
+        self,
+        *,
+        now: datetime,
+        user_profile_id: str | None = None,
+        project_id: str | None = None,
+        workspace_id: str | None = None,
     ) -> dict[str, Any]:
         jobs = self.list_jobs()
         if user_profile_id is not None:
@@ -397,6 +405,7 @@ class MemoryStore(ABC):
                 for job in jobs
                 if job.payload.get("context", {}).get("user_profile_id") == user_profile_id
                 and job.payload.get("context", {}).get("project_id") == project_id
+                and job.payload.get("context", {}).get("workspace_id") == workspace_id
             ]
         unfinished = [job for job in jobs if job.status != "completed"]
         pending = [job for job in jobs if job.status == "pending"]
@@ -2587,14 +2596,34 @@ class SQLiteStore(MemoryStore):
             ).fetchone()
         return self._row_to_job(row) if row else None
 
-    def list_jobs(self, *, status: str | None = None, limit: int = 0) -> list[DurableJob]:
+    def list_jobs(
+        self,
+        *,
+        status: str | None = None,
+        limit: int = 0,
+        user_profile_id: str | None = None,
+        project_id: str | None = None,
+        workspace_id: str | None = None,
+    ) -> list[DurableJob]:
         query = """SELECT id, kind, payload, status, attempt_count, max_attempts, available_at,
                    lease_owner, lease_token, lease_until, last_error, result, created_at, updated_at
                    FROM memory_jobs"""
         params: list[Any] = []
+        clauses = []
         if status is not None:
-            query += " WHERE status=?"
+            clauses.append("status=?")
             params.append(status)
+        if user_profile_id is not None:
+            clauses.extend(
+                [
+                    "json_extract(payload, '$.context.user_profile_id')=?",
+                    "json_extract(payload, '$.context.project_id') IS ?",
+                    "json_extract(payload, '$.context.workspace_id') IS ?",
+                ]
+            )
+            params.extend([user_profile_id, project_id, workspace_id])
+        if clauses:
+            query += " WHERE " + " AND ".join(clauses)
         query += " ORDER BY available_at ASC, created_at ASC"
         if limit > 0:
             query += " LIMIT ?"
@@ -2604,12 +2633,17 @@ class SQLiteStore(MemoryStore):
         return [self._row_to_job(row) for row in rows]
 
     def job_summary(
-        self, *, now: datetime, user_profile_id: str | None = None, project_id: str | None = None
+        self,
+        *,
+        now: datetime,
+        user_profile_id: str | None = None,
+        project_id: str | None = None,
+        workspace_id: str | None = None,
     ) -> dict[str, Any]:
         where, parameters = "", []
         if user_profile_id is not None:
-            where = " WHERE json_extract(payload, '$.context.user_profile_id')=? AND json_extract(payload, '$.context.project_id') IS ?"
-            parameters = [user_profile_id, project_id]
+            where = " WHERE json_extract(payload, '$.context.user_profile_id')=? AND json_extract(payload, '$.context.project_id') IS ? AND json_extract(payload, '$.context.workspace_id') IS ?"
+            parameters = [user_profile_id, project_id, workspace_id]
         with self._lock:
             rows = self._conn.execute(
                 "SELECT status, COUNT(*), MIN(created_at), "

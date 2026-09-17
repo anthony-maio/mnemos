@@ -24,6 +24,7 @@ from typing import Any, Mapping
 
 from ..client import MnemosClient
 from ..scopes import ScopeContext, ScopeRegistry, default_registry_path as shared_registry_path
+from .diagnostics import emit_hook_diagnostic
 
 SUPPORTED_EVENTS = (
     "SessionStart",
@@ -352,6 +353,7 @@ def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(description="Mnemos Codex lifecycle hook")
     parser.add_argument("event", nargs="?", default="")
     args = parser.parse_args(argv)
+    event = args.event
     try:
         raw = sys.stdin.read()
         payload = json.loads(raw) if raw.strip() else {}
@@ -361,11 +363,14 @@ def main(argv: list[str] | None = None) -> int:
         if not event:
             return 0
         result = asyncio.run(run_hook(event, payload))
+        if result.degraded or result.status == "degraded":
+            emit_hook_diagnostic(host="codex", event=event, status=result.status)
         output = hook_output(event, result)
         if output:
             print(json.dumps(output, separators=(",", ":")))
-    except Exception:
+    except Exception as exc:
         # Hook failures must not block coding or expose captured content.
+        emit_hook_diagnostic(host="codex", event=event, status="error", exception=exc)
         if args.event == "Stop":
             print(json.dumps({"continue": True}, separators=(",", ":")))
     return 0

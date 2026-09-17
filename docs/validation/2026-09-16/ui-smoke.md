@@ -57,3 +57,24 @@ or paid model was used.
 After the UI fix, a fresh 1280 pixel reload showed the path wrapped inside its
 card. Running maintenance then showed `0 completed`, `0 pending`, and `0
 exhausted`; no unsupported promotion or filtering metrics were rendered.
+
+## Exhausted-job recovery follow-up
+
+The fixture now accepts `--exhausted-job`, which creates one explicit write
+and exhausts its five processing attempts before browser interaction. The
+browser expanded **Recover failed processing**, loaded the scoped exhausted
+job, and showed its attempt count and `ConnectionError` category. Clicking
+Retry removed it from the exhausted list and reported pending processing.
+Running consolidation completed one job and increased the fact count from
+one to two. The recovered convention appeared exactly once. This is an
+isolated control/persistence check using unavailable cognition and simple
+embeddings, not extraction-quality evidence.
+
+The browser also exposed missing FastEmbed selection and stale embedded-preset
+guidance. The form now includes FastEmbed, labels unconfigured mock cognition
+as disabled in the service, and removes the managed-service implication from
+the embedded recall setting. Long diagnostic paths wrap, and memory cards no
+longer stretch to the height of the evidence panel.
+
+Evidence: [recovered job](../../../output/playwright/ui-job-recovery.png) and
+[updated form and layout](../../../output/playwright/ui-job-recovery-fixed.png).

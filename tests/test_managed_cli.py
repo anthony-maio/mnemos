@@ -115,6 +115,22 @@ def test_cli_stops_isolated_service_and_releases_offline_lock(tmp_path):
             process.wait(timeout=5)
 
 
+def test_legacy_hook_failure_is_visible_without_leaking_content(monkeypatch, capsys):
+    from mnemos.cli import main
+
+    def fail_payload(*args):
+        raise ValueError("private conversation and secret-token")
+
+    monkeypatch.setattr("mnemos.cli._read_hook_payload", fail_payload)
+    monkeypatch.setattr(sys, "argv", ["mnemos", "autostore-hook", "UserPromptSubmit"])
+    main()
+    result = capsys.readouterr()
+    assert result.out == ""
+    assert "exception=ValueError" in result.err
+    assert "private conversation" not in result.err
+    assert "secret-token" not in result.err
+
+
 def test_cli_degraded_result_has_failure_exit_status(monkeypatch, capsys):
     import pytest
     from mnemos.cli import main

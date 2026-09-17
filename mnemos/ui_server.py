@@ -135,6 +135,11 @@ class MnemosUiRouter:
 
         if method == "GET" and path == "/api/jobs":
             return self._json_response(self.service.get_memory_snapshot(limit=0).get("jobs", {}))
+        if method == "GET" and path == "/api/jobs/exhausted":
+            try:
+                return self._json_response(self.service.get_jobs())
+            except (ValueError, KeyError) as exc:
+                return self._json_response({"error": str(exc)}, status=HTTPStatus.BAD_REQUEST)
 
         if method == "POST" and not self._csrf_allowed(headers):
             return self._json_response(
@@ -172,6 +177,11 @@ class MnemosUiRouter:
             return self._json_response(self.service.import_existing_setup())
         if method == "POST" and path == "/api/consolidate":
             return self._json_response(self.service.run_consolidation())
+        if method == "POST" and path == "/api/jobs/retry":
+            try:
+                return self._json_response(self.service.retry_job(str(payload["job_id"])))
+            except (ValueError, KeyError) as exc:
+                return self._json_response({"error": str(exc)}, status=HTTPStatus.BAD_REQUEST)
         if method == "POST" and path == "/api/smoke":
             return self._json_response(self.service.run_smoke_tests())
         if method == "POST" and path == "/api/memory/remember":

@@ -75,7 +75,13 @@ async def run_command(args: Namespace) -> dict[str, Any]:
         expected_id = context.workspace_id if current_scope == "workspace" else context.project_id
         if supplied_id not in {None, "", "default", expected_id}:
             raise ValueError("scope-id conflicts with the registered project or workspace")
-        if command == "store":
+        if command == "jobs":
+            data.update(status=args.status, limit=args.limit)
+            response = await client.request("jobs", data)
+        elif command in {"job-status", "retry-job"}:
+            data["job_id"] = args.job_id
+            response = await client.request("job" if command == "job-status" else "retry_job", data)
+        elif command == "store":
             data.update(content=args.content, scope=args.scope, role=args.role)
             response = await client.request("remember", data)
         elif command == "retrieve":

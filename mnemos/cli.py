@@ -1407,6 +1407,16 @@ def main() -> None:
     sp_ui.add_argument("--no-browser", action="store_true")
 
     subparsers.add_parser("service-stop", help="Stop the owning service before offline maintenance")
+    sp_jobs = subparsers.add_parser("jobs", help="List processing jobs in the current scope")
+    sp_jobs.add_argument(
+        "--status", choices=["pending", "leased", "completed", "failed", "exhausted"]
+    )
+    sp_jobs.add_argument("--limit", type=int, default=50)
+    for job_command, job_help in (
+        ("job-status", "Inspect one processing job in the current scope"),
+        ("retry-job", "Requeue an exhausted job after fixing its failure"),
+    ):
+        subparsers.add_parser(job_command, help=job_help).add_argument("job_id")
     sp_enable = subparsers.add_parser(
         "enable-project", help="Register and enable this project for local memory"
     )
@@ -1487,6 +1497,7 @@ def main() -> None:
         return
     if args.command in {"autostore-hook", "retrieve-hook"}:
         from .adapters.claude_code import ClaudeCodeAdapter, _native_output
+        from .adapters.diagnostics import emit_hook_diagnostic
 
         try:
             if args.command == "autostore-hook" and args.dry_run:
@@ -1496,15 +1507,26 @@ def main() -> None:
             adapter = ClaudeCodeAdapter(top_k=getattr(args, "top_k", 5))
             if args.command == "retrieve-hook":
                 hook_result = asyncio.run(adapter.retrieve_context(args.event, payload))
+                if hook_result.status == "degraded":
+                    emit_hook_diagnostic(host="claude-code", event=args.event, status="degraded")
                 output = _native_output(args.event, hook_result)
                 if output:
                     print(json.dumps(output))
             else:
-                asyncio.run(adapter.handle(args.event, payload, include_retrieval=False))
-        except Exception:
-            pass  # Hooks must not expose conversation data or block the host on failure.
+                hook_result = asyncio.run(
+                    adapter.handle(args.event, payload, include_retrieval=False)
+                )
+                if hook_result.status == "degraded":
+                    emit_hook_diagnostic(host="claude-code", event=args.event, status="degraded")
+        except Exception as exc:
+            emit_hook_diagnostic(
+                host="claude-code", event=args.event, status="error", exception=exc
+            )
         return
     if args.command in {
+        "jobs",
+        "job-status",
+        "retry-job",
         "service-stop",
         "enable-project",
         "backup",

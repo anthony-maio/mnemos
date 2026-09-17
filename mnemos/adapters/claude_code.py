@@ -20,6 +20,7 @@ from pathlib import Path
 from typing import Any, Mapping
 
 from ..client import MnemosClient
+from .diagnostics import emit_hook_diagnostic
 from ..scopes import ScopeContext, ScopeRegistry, default_registry_path as shared_registry_path
 from ..service import _protect_private_path, default_runtime_directory
 
@@ -472,6 +473,7 @@ def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser()
     parser.add_argument("event", nargs="?", default="")
     args = parser.parse_args(argv)
+    event = args.event
     try:
         raw = sys.stdin.read()
         payload = json.loads(raw) if raw.strip() else {}
@@ -481,14 +483,17 @@ def main(argv: list[str] | None = None) -> int:
         if not event:
             return 0
         result = asyncio.run(run_hook(event, payload))
+        if result.status == "degraded":
+            emit_hook_diagnostic(host="claude-code", event=event, status=result.status)
         if event in {"SessionStart", "UserPromptSubmit"}:
             output = _native_output(event, result)
             if output:
                 print(json.dumps(output, separators=(",", ":")))
         return 0
-    except Exception:
+    except Exception as exc:
         # Hook capture is best effort and must never block Claude or expose
         # payloads and credentials through stderr.
+        emit_hook_diagnostic(host="claude-code", event=event, status="error", exception=exc)
         return 0
 
 

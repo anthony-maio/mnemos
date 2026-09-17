@@ -329,3 +329,55 @@ def test_malformed_hook_process_is_silent(
     )
     assert claude_code.main([]) == 0
     assert capsys.readouterr().out == ""
+
+
+def test_hook_exception_reports_sanitized_diagnostic_without_blocking(
+    monkeypatch: pytest.MonkeyPatch, capsys: pytest.CaptureFixture[str]
+) -> None:
+    from mnemos.adapters import claude_code
+
+    async def fail(*args, **kwargs):
+        raise RuntimeError("password=super-secret C:/private/transcript.jsonl")
+
+    monkeypatch.setattr(claude_code, "run_hook", fail)
+    monkeypatch.setattr(
+        claude_code.sys,
+        "stdin",
+        type("Input", (), {"read": lambda self: json.dumps({"hook_event_name": "Stop"})})(),
+    )
+
+    assert claude_code.main([]) == 0
+    captured = capsys.readouterr()
+    assert captured.out == ""
+    assert "host=claude-code" in captured.err
+    assert "event=Stop" in captured.err
+    assert "status=error" in captured.err
+    assert "exception=RuntimeError" in captured.err
+    assert "super-secret" not in captured.err
+    assert "private/transcript" not in captured.err
+
+
+def test_degraded_hook_reports_status_without_payload(
+    monkeypatch: pytest.MonkeyPatch, capsys: pytest.CaptureFixture[str]
+) -> None:
+    from mnemos.adapters import claude_code
+
+    async def degraded(*args, **kwargs):
+        from mnemos.adapters.claude_code import HookResult
+
+        return HookResult(status="degraded", committed=False, error="token=secret")
+
+    monkeypatch.setattr(claude_code, "run_hook", degraded)
+    monkeypatch.setattr(
+        claude_code.sys,
+        "stdin",
+        type("Input", (), {"read": lambda self: json.dumps({"hook_event_name": "SessionStart"})})(),
+    )
+
+    assert claude_code.main([]) == 0
+    captured = capsys.readouterr()
+    assert captured.out == ""
+    assert "host=claude-code" in captured.err
+    assert "event=SessionStart" in captured.err
+    assert "status=degraded" in captured.err
+    assert "secret" not in captured.err

@@ -203,3 +203,53 @@ def test_post_compact_output_uses_only_published_fields() -> None:
 
     result = CodexHookResult(status="ok", context="restored context")
     assert hook_output("PostCompact", result) == {"continue": True}
+
+
+def test_hook_exception_reports_sanitized_diagnostic_and_stop_stays_nonblocking(
+    monkeypatch: pytest.MonkeyPatch, capsys: pytest.CaptureFixture[str]
+) -> None:
+    from mnemos.adapters import codex
+
+    async def fail(*args, **kwargs):
+        raise RuntimeError("api_key=super-secret C:/private/session.jsonl")
+
+    monkeypatch.setattr(codex, "run_hook", fail)
+    monkeypatch.setattr(
+        codex.sys,
+        "stdin",
+        type("Input", (), {"read": lambda self: "{}"})(),
+    )
+
+    assert codex.main(["Stop"]) == 0
+    captured = capsys.readouterr()
+    assert captured.out == '{"continue":true}\n'
+    assert "host=codex" in captured.err
+    assert "event=Stop" in captured.err
+    assert "status=error" in captured.err
+    assert "exception=RuntimeError" in captured.err
+    assert "super-secret" not in captured.err
+    assert "private/session" not in captured.err
+
+
+def test_degraded_hook_reports_allowlisted_status_without_payload(
+    monkeypatch: pytest.MonkeyPatch, capsys: pytest.CaptureFixture[str]
+) -> None:
+    from mnemos.adapters import codex
+
+    async def degraded(*args, **kwargs):
+        return codex.CodexHookResult(status="degraded", degraded=True, error="credential=secret")
+
+    monkeypatch.setattr(codex, "run_hook", degraded)
+    monkeypatch.setattr(
+        codex.sys,
+        "stdin",
+        type("Input", (), {"read": lambda self: '{"hook_event_name":"SessionStart"}'})(),
+    )
+
+    assert codex.main([]) == 0
+    captured = capsys.readouterr()
+    assert captured.out == ""
+    assert "host=codex" in captured.err
+    assert "event=SessionStart" in captured.err
+    assert "status=degraded" in captured.err
+    assert "secret" not in captured.err

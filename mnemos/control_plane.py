@@ -456,6 +456,16 @@ class ControlPlaneService:
             save_settings(global_settings, resolved.global_config_path, scope="global")
         return result
 
+    def get_jobs(self, *, status: str | None = "exhausted", limit: int = 50) -> dict[str, Any]:
+        return self._service_request(
+            "jobs", {"context": self._context_payload(), "status": status, "limit": limit}
+        )
+
+    def retry_job(self, job_id: str) -> dict[str, Any]:
+        return self._service_request(
+            "retry_job", {"context": self._context_payload(), "job_id": job_id}
+        )
+
     def get_memory_snapshot(self, *, limit: int = 10) -> dict[str, Any]:
         try:
             response = self._service_request(

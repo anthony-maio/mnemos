@@ -236,7 +236,7 @@ function renderDashboard(dashboard) {
       memory.recall_gated.enabled ? "Enabled" : "Off",
       memory.recall_gated.enabled
         ? `${memory.recall_gated.stored_chunk_count} stored chunks carry recall support metadata`
-        : "Use Stable Memory when you want more selective consolidation",
+        : "Embedded API setting; managed extraction is separate",
     ),
     metricCard(
       "Scope",
@@ -639,6 +639,43 @@ async function refreshDashboard() {
   renderDashboard(dashboard);
 }
 
+async function refreshJobs() {
+  const container = document.getElementById("exhausted-jobs");
+  const message = document.getElementById("job-action-status");
+  try {
+    const result = await api("/api/jobs/exhausted");
+    if (result.error || result.status === "degraded") throw new Error(result.error || "Service unavailable");
+    container.replaceChildren();
+    const jobs = result.jobs || [];
+    message.textContent = jobs.length ? `${jobs.length} exhausted job${jobs.length === 1 ? "" : "s"}${result.truncated ? "; more available after retrying these" : ""}.` : "No exhausted jobs in this project and workspace.";
+    for (const job of jobs) {
+      const row = document.createElement("p");
+      const label = document.createElement("span");
+      label.textContent = `${job.kind}: ${job.id} -- ${job.attempt_count} attempts; ${job.last_error || "failure not recorded"} `;
+      const button = document.createElement("button");
+      button.className = "button button-ghost";
+      button.textContent = "Retry";
+      button.addEventListener("click", async () => {
+        button.disabled = true;
+        try {
+          const retried = await api("/api/jobs/retry", {method: "POST", body: JSON.stringify({job_id: job.id})});
+          if (!retried.retried) throw new Error(retried.error || "Job was not requeued");
+          await refreshJobs();
+          message.textContent = "Job requeued. Processing is pending.";
+          await refreshDashboard();
+        } catch (error) {
+          message.textContent = error.message;
+          button.disabled = false;
+        }
+      });
+      row.append(label, button);
+      container.append(row);
+    }
+  } catch (error) {
+    message.textContent = error.message;
+  }
+}
+
 async function refreshMemory() {
   if (!state.dashboard) {
     await refreshDashboard();
@@ -707,6 +744,7 @@ function bindEvents() {
   document.getElementById("consolidate-button").addEventListener("click", runConsolidation);
   document.getElementById("refresh-health").addEventListener("click", refreshDashboard);
   document.getElementById("refresh-memory").addEventListener("click", refreshDashboard);
+  document.getElementById("refresh-jobs").addEventListener("click", refreshJobs);
   document.getElementById("refresh-dashboard").addEventListener("click", refreshDashboard);
   document.getElementById("explain-memory").addEventListener("click", refreshMemoryDetail);
   document.getElementById("correct-memory").addEventListener("click", correctMemory);

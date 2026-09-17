@@ -8,6 +8,8 @@ driver. Stop it with Ctrl+C after the browser evidence is captured.
 from __future__ import annotations
 
 import asyncio
+import argparse
+from datetime import datetime, timedelta, timezone
 import signal
 import threading
 from http.server import ThreadingHTTPServer
@@ -26,11 +28,12 @@ from mnemos.utils.embeddings import SimpleEmbeddingProvider
 from mnemos.utils.llm import UnavailableLLMProvider
 from mnemos.utils.storage import SQLiteStore
 
-
 HTML_FIXTURE = '<img src=x onerror="window.__mnemos_xss = true"> Keep this escaped.'
 
 
-def _build_fixture(root: Path) -> tuple[MnemosService, ControlPlaneService, ScopeRegistry]:
+def _build_fixture(
+    root: Path, *, exhausted_job: bool = False
+) -> tuple[MnemosService, ControlPlaneService, ScopeRegistry]:
     project = root / "project"
     project.mkdir()
     registry = ScopeRegistry()
@@ -57,12 +60,53 @@ def _build_fixture(root: Path) -> tuple[MnemosService, ControlPlaneService, Scop
     )
     service.start()
     client = MnemosClient(descriptor_path=service.descriptor_path, auto_start=False)
-    context = registry.resolve(project, user_profile_id="ui-smoke", session_id="ui-smoke-session", host="manual")
-    result = asyncio.run(client.request("remember", {"context": context.model_dump(mode="json"), "event_id": "ui-smoke-seed", "content": HTML_FIXTURE, "scope": "project"}, queue_on_failure=False))
+    context = registry.resolve(
+        project, user_profile_id="ui-smoke", session_id="ui-smoke-session", host="manual"
+    )
+    result = asyncio.run(
+        client.request(
+            "remember",
+            {
+                "context": context.model_dump(mode="json"),
+                "event_id": "ui-smoke-seed",
+                "content": HTML_FIXTURE,
+                "scope": "project",
+            },
+            queue_on_failure=False,
+        )
+    )
     if result.get("status") != "committed":
         service.stop()
         raise RuntimeError(f"fixture seed failed: {result}")
-    asyncio.run(client.request("maintenance", {"context": context.model_dump(mode="json")}, queue_on_failure=False))
+    asyncio.run(
+        client.request(
+            "maintenance", {"context": context.model_dump(mode="json")}, queue_on_failure=False
+        )
+    )
+    if exhausted_job:
+        captured = asyncio.run(
+            client.request(
+                "remember",
+                {
+                    "context": context.model_dump(mode="json"),
+                    "content": "The recovery fixture uses SQLite after the provider returns.",
+                    "event_id": "ui-retry-seed",
+                    "scope": "project",
+                },
+                queue_on_failure=False,
+            )
+        )
+        for attempt in range(5):
+            now = datetime.now(timezone.utc) + timedelta(minutes=attempt * 2)
+            claimed = engine.store.claim_jobs(owner="ui-outage", now=now)[0]
+            assert claimed.id == captured["job_id"]
+            assert engine.store.fail_job(
+                claimed.id,
+                owner="ui-outage",
+                lease_token=claimed.lease_token,
+                error="ConnectionError",
+                now=now,
+            )
     control = ControlPlaneService(
         cwd=project,
         env={"MNEMOS_USER_PROFILE_ID": "ui-smoke", "MNEMOS_SCOPE_REGISTRY": str(registry_path)},
@@ -73,10 +117,13 @@ def _build_fixture(root: Path) -> tuple[MnemosService, ControlPlaneService, Scop
 
 
 def main() -> None:
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument("--exhausted-job", action="store_true")
+    args = parser.parse_args()
     stop = threading.Event()
     with TemporaryDirectory(prefix="mnemos-ui-smoke-") as directory:
         root = Path(directory)
-        service, control, _ = _build_fixture(root)
+        service, control, _ = _build_fixture(root, exhausted_job=args.exhausted_job)
         router = MnemosUiRouter(control)
 
         class Handler(_MnemosUiHandler):

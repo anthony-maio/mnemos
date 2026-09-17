@@ -518,7 +518,7 @@ class LocalMemoryService:
                 "status": "committed",
                 "projects": len(self.registry.projects),
             }
-        if operation in {"list", "feedback", "feedback_list", "job"}:
+        if operation in {"list", "feedback", "feedback_list", "job", "jobs", "retry_job"}:
             context = self.registry.validate_context(
                 ScopeContext.model_validate(payload["context"])
             )
@@ -554,10 +554,32 @@ class LocalMemoryService:
                         now=datetime.now(timezone.utc),
                         user_profile_id=context.user_profile_id,
                         project_id=context.project_id,
+                        workspace_id=context.workspace_id,
                     ),
                     "next_cursor": chunks[-1].id if chunks else None,
                 }
-            if operation == "job":
+            if operation == "jobs":
+                status = payload.get("status")
+                if status not in {None, "pending", "leased", "completed", "failed", "exhausted"}:
+                    raise ValueError("Invalid job status")
+                limit = min(max(int(payload.get("limit", 50)), 1), 500)
+                jobs = self.engine.store.list_jobs(
+                    status=status,
+                    limit=limit + 1,
+                    user_profile_id=context.user_profile_id,
+                    project_id=context.project_id,
+                    workspace_id=context.workspace_id,
+                )
+                return {
+                    "schema_version": 1,
+                    "jobs": [
+                        job.model_dump(mode="json", exclude={"payload", "lease_token"})
+                        for job in jobs[:limit]
+                    ],
+                    "truncated": len(jobs) > limit,
+                    "limit": limit,
+                }
+            if operation in {"job", "retry_job"}:
                 job = self.engine.store.get_job(payload["job_id"])
                 if (
                     job is None
@@ -571,6 +593,19 @@ class LocalMemoryService:
                     or job_context.workspace_id != context.workspace_id
                 ):
                     raise KeyError("Job not found in the requested scope")
+                if operation == "retry_job":
+                    if not self.engine.store.retry_job(job.id):
+                        raise ValueError("Only exhausted jobs can be manually retried")
+                    retried_job = self.engine.store.get_job(job.id)
+                    assert retried_job is not None
+                    return {
+                        "schema_version": 1,
+                        "status": "committed",
+                        "retried": True,
+                        "job": retried_job.model_dump(
+                            mode="json", exclude={"payload", "lease_token"}
+                        ),
+                    }
                 return {
                     "schema_version": 1,
                     "job": job.model_dump(mode="json", exclude={"payload", "lease_token"}),

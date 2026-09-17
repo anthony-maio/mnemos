@@ -70,7 +70,7 @@
             <label>
               <span>LLM provider</span>
               <select id="llm-provider">
-                <option value="mock">Mock</option>
+                <option value="mock">Unconfigured (mock disabled in service)</option>
                 <option value="ollama">Ollama</option>
                 <option value="openai">OpenAI</option>
                 <option value="openclaw">OpenClaw</option>
@@ -85,7 +85,8 @@
             <label>
               <span>Embedding provider</span>
               <select id="embedding-provider">
-                <option value="simple">Simple</option>
+                <option value="fastembed">FastEmbed (local)</option>
+                <option value="simple">Simple (test only)</option>
                 <option value="ollama">Ollama</option>
                 <option value="openai">OpenAI</option>
                 <option value="openclaw">OpenClaw</option>
@@ -99,9 +100,8 @@
           </div>
 
           <div class="settings-note">
-            Start on <strong>Starter SQLite</strong> for the shipped path. Switch to
-            <strong>Stable Memory</strong> when you want recall-gated consolidation in noisier
-            sessions.
+            Start on <strong>Starter SQLite</strong> and select your local providers and models.
+            The embedded API recall experiment does not change managed-service extraction.
           </div>
 
           <details class="advanced-panel">
@@ -206,6 +206,13 @@
             <button id="refresh-memory" class="button button-ghost">Refresh</button>
           </div>
           <div id="memory-summary" class="memory-summary"></div>
+          <details>
+            <summary>Recover failed processing</summary>
+            <p>Fix the provider or configuration problem, then retry jobs that exhausted automatic retries. This requeues evidence; it does not immediately create a fact.</p>
+            <button id="refresh-jobs" class="button button-ghost">Load exhausted jobs</button>
+            <p id="job-action-status" class="action-status" aria-live="polite"></p>
+            <div id="exhausted-jobs" class="check-list"></div>
+          </details>
           <div class="memory-browser">
             <div id="memory-list" class="memory-list"></div>
             <aside class="memory-detail-shell">

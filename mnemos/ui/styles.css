@@ -359,6 +359,8 @@ small {
 .action-list li,
 .check-list li,
 .detail-list li {
+  min-width: 0;
+  overflow-wrap: anywhere;
   padding: 12px 14px;
   border-radius: 16px;
   border: 1px solid var(--line);
@@ -421,10 +423,12 @@ small {
 
 .memory-list {
   display: grid;
+  align-content: start;
   gap: 12px;
 }
 
 .memory-item {
+  overflow-wrap: anywhere;
   appearance: none;
   border: 1px solid var(--line);
   border-radius: 18px;
@@ -527,4 +531,8 @@ small {
   .section-head {
     flex-direction: column;
   }
+}
+
+#exhausted-jobs {
+  overflow-wrap: anywhere;
 }
