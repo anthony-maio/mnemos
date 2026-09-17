@@ -1,0 +1,89 @@
+{
+  "timestamp": "2026-09-17T19:03:01.304454+00:00",
+  "status": "not_ready",
+  "degraded_mode": false,
+  "profile": "default",
+  "store_type": "sqlite",
+  "llm_provider": "mock",
+  "embedding_provider": "ollama",
+  "upgrade_signals": {
+    "sqlite_chunk_count": 0,
+    "sqlite_chunk_threshold": 5000,
+    "observed_latency_p95_ms": null,
+    "latency_p95_threshold_ms": 250.0,
+    "threshold_exceeded": false
+  },
+  "scope_isolation": {
+    "legacy_unscoped_chunks": 0,
+    "ready": true
+  },
+  "vector_acceleration": {
+    "enabled": true,
+    "provider": "sqlite-vec"
+  },
+  "provider_state": {
+    "llm": {
+      "provider": "mock",
+      "configured": false,
+      "reachable": "not_applicable",
+      "model_ready": "not_applicable",
+      "status": "failed"
+    },
+    "embedding": {
+      "provider": "ollama",
+      "configured": true,
+      "reachable": "not_checked",
+      "model_ready": "not_checked",
+      "status": "configured"
+    }
+  },
+  "probe_requested": false,
+  "summary": {
+    "pass": 5,
+    "warn": 1,
+    "fail": 1
+  },
+  "checks": [
+    {
+      "name": "store.sqlite",
+      "status": "pass",
+      "message": "SQLite backend ready at C:\\Users\\Ant\\AppData\\Local\\Temp\\mnemos-installed-doctor-6600-v5\\mock_llm_rejected\\memory.db."
+    },
+    {
+      "name": "store.sqlite.vec",
+      "status": "pass",
+      "message": "sqlite-vec dependency available for in-process vector acceleration."
+    },
+    {
+      "name": "llm.mock",
+      "status": "warn",
+      "message": "Mock LLM provider is active. Cognitive modules run in degraded/mock mode."
+    },
+    {
+      "name": "runtime.cognition",
+      "status": "fail",
+      "message": "Persistent SQLite runtime cannot be marked ready while mock cognition is active."
+    },
+    {
+      "name": "embedding.ollama",
+      "status": "pass",
+      "message": "Ollama embedding provider configured at http://127.0.0.1:9."
+    },
+    {
+      "name": "scope.isolation",
+      "status": "pass",
+      "message": "All SQLite chunks include scope metadata for v1 isolation."
+    },
+    {
+      "name": "store.sqlite.scale_signal",
+      "status": "pass",
+      "message": "SQLite scale signal within threshold (chunks=0, threshold=5000)."
+    }
+  ],
+  "recommendations": [
+    "Set MNEMOS_LLM_PROVIDER=openclaw (or openai/ollama) to enable non-mock cognition."
+  ],
+  "next_actions": [
+    "Run `mnemos ui`, choose OpenClaw, OpenAI, or Ollama as the LLM provider, and save the global setup."
+  ]
+}

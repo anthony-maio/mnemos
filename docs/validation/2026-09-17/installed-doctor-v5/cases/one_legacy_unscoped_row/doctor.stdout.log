@@ -1,0 +1,84 @@
+{
+  "timestamp": "2026-09-17T19:02:58.448164+00:00",
+  "status": "degraded",
+  "degraded_mode": true,
+  "profile": "default",
+  "store_type": "sqlite",
+  "llm_provider": "ollama",
+  "embedding_provider": "ollama",
+  "upgrade_signals": {
+    "sqlite_chunk_count": 1,
+    "sqlite_chunk_threshold": 5000,
+    "observed_latency_p95_ms": null,
+    "latency_p95_threshold_ms": 250.0,
+    "threshold_exceeded": false
+  },
+  "scope_isolation": {
+    "legacy_unscoped_chunks": 1,
+    "ready": false
+  },
+  "vector_acceleration": {
+    "enabled": true,
+    "provider": "sqlite-vec"
+  },
+  "provider_state": {
+    "llm": {
+      "provider": "ollama",
+      "configured": true,
+      "reachable": "not_checked",
+      "model_ready": "not_checked",
+      "status": "configured"
+    },
+    "embedding": {
+      "provider": "ollama",
+      "configured": true,
+      "reachable": "not_checked",
+      "model_ready": "not_checked",
+      "status": "configured"
+    }
+  },
+  "probe_requested": false,
+  "summary": {
+    "pass": 5,
+    "warn": 1,
+    "fail": 0
+  },
+  "checks": [
+    {
+      "name": "store.sqlite",
+      "status": "pass",
+      "message": "SQLite backend ready at C:\\Users\\Ant\\AppData\\Local\\Temp\\mnemos-installed-doctor-6600-v5\\one_legacy_unscoped_row\\memory.db."
+    },
+    {
+      "name": "store.sqlite.vec",
+      "status": "pass",
+      "message": "sqlite-vec dependency available for in-process vector acceleration."
+    },
+    {
+      "name": "llm.ollama",
+      "status": "pass",
+      "message": "Ollama provider configured at http://127.0.0.1:9."
+    },
+    {
+      "name": "embedding.ollama",
+      "status": "pass",
+      "message": "Ollama embedding provider configured at http://127.0.0.1:9."
+    },
+    {
+      "name": "scope.isolation",
+      "status": "warn",
+      "message": "Found 1 legacy unscoped chunks. They are excluded from scoped recall and need read-only review before any explicit migration."
+    },
+    {
+      "name": "store.sqlite.scale_signal",
+      "status": "pass",
+      "message": "SQLite scale signal within threshold (chunks=1, threshold=5000)."
+    }
+  ],
+  "recommendations": [
+    "Legacy unscoped chunks are excluded from scoped recall. Review them in the read-only legacy view before an explicit migration."
+  ],
+  "next_actions": [
+    "Review legacy unscoped chunks in the read-only legacy view; assign them only through an explicit reviewed migration."
+  ]
+}

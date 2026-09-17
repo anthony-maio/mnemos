@@ -1,0 +1,445 @@
+"""Run an isolated installed-wheel doctor and logging contract probe.
+
+This probe uses only synthetic configuration. It never contacts an Ollama
+endpoint. The child process blocks socket connects before importing Mnemos.
+"""
+
+from __future__ import annotations
+
+import argparse
+from datetime import datetime, timezone
+import hashlib
+import json
+import os
+from pathlib import Path
+import subprocess
+import sys
+import zipfile
+from typing import Any
+
+SOURCE_COMMIT = "6600dc262927661d61ce9962c812a022014281c7"
+WHEEL_SHA256 = "349737206735f15b59562f3c7d53af51464176473b5de1fa12d2783cf039a25a"
+DEFAULT_SOURCE = Path("C:/Users/Ant/AppData/Local/Temp/mnemos-source-6600dc2")
+DEFAULT_INSTALL = Path("C:/Users/Ant/AppData/Local/Temp/mnemos-installed-6600dc2-v1")
+DEFAULT_WHEEL = Path(
+    "C:/Users/Ant/AppData/Local/Temp/"
+    "mnemos-package-checks-20260917-v2/dist/mnemos_memory-0.7.0-py3-none-any.whl"
+)
+DEFAULT_OUTPUT = Path("C:/Users/Ant/AppData/Local/Temp/mnemos-installed-doctor-6600-v1")
+
+
+def _sha256_bytes(value: bytes) -> str:
+    return hashlib.sha256(value).hexdigest()
+
+
+def _sha256(path: Path) -> str:
+    return _sha256_bytes(path.read_bytes())
+
+
+def _normalized_sha256(value: bytes) -> str:
+    return _sha256_bytes(value.replace(b"\r\n", b"\n"))
+
+
+def _run(
+    command: list[str],
+    *,
+    env: dict[str, str],
+    cwd: Path,
+) -> subprocess.CompletedProcess[str]:
+    return subprocess.run(
+        command,
+        cwd=str(cwd),
+        env=env,
+        text=True,
+        encoding="utf-8",
+        errors="replace",
+        capture_output=True,
+        timeout=30,
+        check=False,
+    )
+
+
+def _base_environment(case_dir: Path) -> dict[str, str]:
+    allowed = {
+        "ComSpec",
+        "LOCALAPPDATA",
+        "PATH",
+        "PATHEXT",
+        "SYSTEMROOT",
+        "TEMP",
+        "TMP",
+        "WINDIR",
+    }
+    env = {key: value for key, value in os.environ.items() if key in allowed}
+    temp_dir = case_dir / "child-temp"
+    temp_dir.mkdir(parents=True, exist_ok=True)
+    env.update(
+        {
+            "PYTHONNOUSERSITE": "1",
+            "PYTHONUNBUFFERED": "1",
+            "TEMP": str(temp_dir),
+            "TMP": str(temp_dir),
+            "MNEMOS_CONFIG_PATH": str(case_dir / "mnemos.toml"),
+            "MNEMOS_SQLITE_PATH": str(case_dir / "memory.db"),
+            "MNEMOS_STORE_TYPE": "sqlite",
+            "MNEMOS_EMBEDDING_PROVIDER": "ollama",
+            "MNEMOS_EMBEDDING_MODEL": "nomic-embed-text:latest",
+            "MNEMOS_LLM_PROVIDER": "ollama",
+            "MNEMOS_LLM_MODEL": "gemma3:4b",
+            "MNEMOS_OLLAMA_URL": "http://127.0.0.1:9",
+            "MNEMOS_LOG_LEVEL": "INFO",
+        }
+    )
+    return env
+
+
+def _write_config(case_dir: Path) -> Path:
+    config = case_dir / "mnemos.toml"
+    config.write_text(
+        "\n".join(
+            [
+                "[llm]",
+                'provider = "ollama"',
+                'model = "gemma3:4b"',
+                "",
+                "[embedding]",
+                'provider = "ollama"',
+                'model = "nomic-embed-text:latest"',
+                "",
+                "[storage]",
+                'type = "sqlite"',
+                f'sqlite_path = "{(case_dir / "memory.db").as_posix()}"',
+                "",
+                "[providers.ollama]",
+                'base_url = "http://127.0.0.1:9"',
+            ]
+        )
+        + "\n",
+        encoding="utf-8",
+    )
+    return config
+
+
+def _import_proof(python: Path, env: dict[str, str], case_dir: Path) -> dict[str, Any]:
+    code = r"""
+import importlib.metadata
+import hashlib
+import json
+import pathlib
+import sys
+import mnemos
+import mnemos.cli
+import mnemos.health
+import mnemos.observability
+
+site = pathlib.Path(mnemos.__file__).resolve().parents[1]
+modules = [mnemos, mnemos.cli, mnemos.health, mnemos.observability]
+origins = {module.__name__: str(pathlib.Path(module.__file__).resolve()) for module in modules}
+if any(not pathlib.Path(path).is_relative_to(site) for path in origins.values()):
+    raise RuntimeError("Mnemos import escaped installed site-packages")
+hashes = {
+    name: hashlib.sha256(pathlib.Path(path).read_bytes()).hexdigest()
+    for name, path in origins.items()
+}
+print(json.dumps({
+    "python": sys.executable,
+    "prefix": sys.prefix,
+    "site_packages": str(site),
+    "mnemos_version": importlib.metadata.version("mnemos-memory"),
+    "origins": origins,
+    "module_hashes": hashes,
+}, sort_keys=True))
+"""
+    result = _run([str(python), "-I", "-c", code], env=env, cwd=case_dir)
+    if result.returncode != 0:
+        raise RuntimeError(f"installed import proof failed: {result.stderr[-1000:]}")
+    lines = [line for line in result.stdout.splitlines() if line.strip()]
+    if len(lines) != 1:
+        raise RuntimeError("installed import proof returned unexpected stdout")
+    proof = json.loads(lines[0])
+    if not isinstance(proof, dict):
+        raise RuntimeError("installed import proof was not an object")
+    proof["stdout_sha256"] = _sha256_bytes(result.stdout.encode("utf-8"))
+    proof["stderr"] = result.stderr
+    return proof
+
+
+def _setup_sqlite(
+    python: Path,
+    env: dict[str, str],
+    case_dir: Path,
+    *,
+    legacy: bool,
+) -> dict[str, Any]:
+    code = r"""
+import json
+import os
+from mnemos.types import MemoryChunk
+from mnemos.utils.storage import SQLiteStore
+
+path = os.environ["MNEMOS_SQLITE_PATH"]
+store = SQLiteStore(db_path=path)
+try:
+    if os.environ.get("MNEMOS_DOCTOR_LEGACY") == "1":
+        store.store(MemoryChunk(content="fixture legacy unscoped row", embedding=[0.1, 0.2, 0.3], metadata={}))
+finally:
+    store.close()
+print(json.dumps({"database": path, "legacy": os.environ.get("MNEMOS_DOCTOR_LEGACY") == "1"}))
+"""
+    setup_env = dict(env)
+    setup_env["MNEMOS_DOCTOR_LEGACY"] = "1" if legacy else "0"
+    result = _run([str(python), "-I", "-c", code], env=setup_env, cwd=case_dir)
+    if result.returncode != 0:
+        raise RuntimeError(f"installed SQLite setup failed: {result.stderr[-1000:]}")
+    return {
+        "returncode": result.returncode,
+        "stdout": result.stdout,
+        "stderr": result.stderr,
+    }
+
+
+def _doctor(
+    python: Path,
+    env: dict[str, str],
+    case_dir: Path,
+    *,
+    mock: bool,
+) -> dict[str, Any]:
+    doctor_env = dict(env)
+    if mock:
+        doctor_env["MNEMOS_LLM_PROVIDER"] = "mock"
+    code = r"""
+import socket
+import sys
+
+real_connect = socket.socket.connect
+
+def deny(*args, **kwargs):
+    address = args[1] if len(args) > 1 else kwargs.get("address")
+    host = address[0] if isinstance(address, tuple) and address else ""
+    port = address[1] if isinstance(address, tuple) and len(address) > 1 else None
+    # Windows asyncio creates a loopback self-pipe before running the doctor.
+    # Permit that internal plumbing, but reject the configured dummy Ollama
+    # endpoint and every non-loopback destination.
+    if host in {"127.0.0.1", "::1", "localhost"} and port != 9:
+        return real_connect(*args, **kwargs)
+    raise RuntimeError("provider socket connect blocked by installed doctor probe")
+
+socket.socket.connect = deny
+socket.create_connection = lambda *args, **kwargs: (_ for _ in ()).throw(
+    RuntimeError("provider socket connect blocked by installed doctor probe")
+)
+sys.argv = ["mnemos-cli", "doctor"]
+from mnemos.cli import main
+main()
+    """
+    result = _run([str(python), "-I", "-c", code], env=doctor_env, cwd=case_dir)
+    try:
+        report = json.loads(result.stdout)
+    except json.JSONDecodeError as exc:
+        raise RuntimeError(f"doctor did not return JSON: {result.stdout[-1000:]}") from exc
+    if not isinstance(report, dict):
+        raise RuntimeError("doctor report was not an object")
+    return {
+        "returncode": result.returncode,
+        "stdout": result.stdout,
+        "stderr": result.stderr,
+        "report": report,
+        "mock": mock,
+    }
+
+
+def _assert_doctor(case: dict[str, Any], *, expected_status: str, legacy: bool) -> None:
+    result = case["doctor"]
+    if result["returncode"] != 0:
+        raise RuntimeError(f"doctor process failed for {case['name']}")
+    report = result["report"]
+    if report.get("status") != expected_status:
+        raise RuntimeError(
+            f"doctor status mismatch for {case['name']}: "
+            f"{report.get('status')!r} != {expected_status!r}"
+        )
+    if report.get("store_type") != "sqlite":
+        raise RuntimeError("doctor did not report sqlite")
+    if report.get("probe_requested") is not False:
+        raise RuntimeError("doctor unexpectedly requested a provider probe")
+    state = report.get("provider_state", {})
+    for name in ("llm", "embedding"):
+        provider = state.get(name)
+        if not isinstance(provider, dict):
+            raise RuntimeError(f"doctor omitted {name} provider state")
+        if result["mock"]:
+            if name == "llm" and (
+                provider.get("reachable") != "not_applicable"
+                or provider.get("model_ready") != "not_applicable"
+                or provider.get("status") != "failed"
+            ):
+                raise RuntimeError("doctor did not reject mock cognition explicitly")
+        elif (
+            provider.get("reachable") != "not_checked"
+            or provider.get("model_ready") != "not_checked"
+        ):
+            raise RuntimeError(f"doctor performed or claimed a {name} provider probe")
+    isolation = report.get("scope_isolation")
+    if not isinstance(isolation, dict):
+        raise RuntimeError("doctor omitted scope isolation")
+    count = isolation.get("legacy_unscoped_chunks")
+    if count != (1 if legacy else 0):
+        raise RuntimeError(f"legacy count mismatch: {count!r}")
+    if isolation.get("ready") == (not legacy):
+        return
+    raise RuntimeError("scope isolation readiness mismatch")
+
+
+def _source_and_wheel_binding(source: Path, wheel: Path) -> dict[str, Any]:
+    if (
+        subprocess.check_output(["git", "rev-parse", "HEAD"], cwd=source, text=True).strip()
+        != SOURCE_COMMIT
+    ):
+        raise RuntimeError("source snapshot commit differs")
+    if subprocess.check_output(["git", "status", "--porcelain"], cwd=source, text=True).strip():
+        raise RuntimeError("source snapshot has changes")
+    actual_wheel_hash = _sha256(wheel)
+    if actual_wheel_hash != WHEEL_SHA256:
+        raise RuntimeError("wheel bytes differ from the verified 6600 artifact")
+    source_hashes: dict[str, str] = {}
+    wheel_hashes: dict[str, str] = {}
+    with zipfile.ZipFile(wheel) as archive:
+        names = sorted(
+            name
+            for name in archive.namelist()
+            if name.startswith("mnemos/") and name.endswith(".py")
+        )
+        if not names:
+            raise RuntimeError("wheel has no Mnemos Python files")
+        for name in names:
+            source_file = source / name
+            if not source_file.is_file():
+                raise RuntimeError(f"wheel member missing from source snapshot: {name}")
+            wheel_bytes = archive.read(name)
+            source_hashes[name] = _normalized_sha256(source_file.read_bytes())
+            wheel_hashes[name] = _normalized_sha256(wheel_bytes)
+    mismatches = [name for name in names if source_hashes[name] != wheel_hashes[name]]
+    if mismatches:
+        raise RuntimeError(f"wheel/source file mismatch: {mismatches[0]}")
+    return {
+        "source_commit": SOURCE_COMMIT,
+        "source_snapshot": str(source),
+        "source_status": "clean",
+        "wheel": {"path": str(wheel), "sha256": actual_wheel_hash},
+        "wheel_python_file_count": len(names),
+        "wheel_source_normalized_hashes": source_hashes,
+    }
+
+
+def _hashable_process(result: dict[str, Any]) -> dict[str, Any]:
+    return {
+        "returncode": result.get("returncode"),
+        "stdout_sha256": _sha256_bytes(str(result.get("stdout", "")).encode("utf-8")),
+        "stderr_sha256": _sha256_bytes(str(result.get("stderr", "")).encode("utf-8")),
+    }
+
+
+def main() -> int:
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument("--source", type=Path, default=DEFAULT_SOURCE)
+    parser.add_argument("--install", type=Path, default=DEFAULT_INSTALL)
+    parser.add_argument("--wheel", type=Path, default=DEFAULT_WHEEL)
+    parser.add_argument("--output", type=Path, default=DEFAULT_OUTPUT)
+    args = parser.parse_args()
+
+    source = args.source.resolve()
+    install = args.install.resolve()
+    wheel = args.wheel.resolve()
+    output = args.output.resolve()
+    if output.exists():
+        raise SystemExit(f"refusing to overwrite doctor evidence: {output}")
+    python = install / "Scripts" / "python.exe"
+    if not python.is_file():
+        raise SystemExit(f"installed interpreter is missing: {python}")
+    if not source.is_dir() or not wheel.is_file():
+        raise SystemExit("source snapshot or wheel is unavailable")
+    binding = _source_and_wheel_binding(source, wheel)
+    output.mkdir(parents=True)
+    report: dict[str, Any] = {
+        "schema_version": 1,
+        "probe": "installed_doctor_operational_readiness",
+        "status": "running",
+        "started_at": datetime.now(timezone.utc).isoformat(),
+        "binding": binding,
+        "installed_interpreter": str(python),
+        "socket_policy": "configured Ollama endpoint and non-loopback connects blocked before Mnemos import; asyncio loopback self-pipe permitted",
+        "provider_policy": "ollama configuration only; endpoint is unreachable loopback dummy; probe=false",
+        "cases": [],
+    }
+    try:
+        for name, legacy, mock, expected in (
+            ("empty_sqlite", False, False, "ready"),
+            ("one_legacy_unscoped_row", True, False, "degraded"),
+            ("mock_llm_rejected", False, True, "not_ready"),
+        ):
+            case_dir = output / name
+            case_dir.mkdir()
+            config = _write_config(case_dir)
+            env = _base_environment(case_dir)
+            setup = _setup_sqlite(python, env, case_dir, legacy=legacy)
+            before = _import_proof(python, env, case_dir)
+            doctor = _doctor(python, env, case_dir, mock=mock)
+            _assert_doctor(
+                {"name": name, "doctor": doctor}, expected_status=expected, legacy=legacy
+            )
+            after = _import_proof(python, env, case_dir)
+            if before.get("origins") != after.get("origins") or before.get(
+                "module_hashes"
+            ) != after.get("module_hashes"):
+                raise RuntimeError(f"installed module origins changed for {name}")
+            case = {
+                "name": name,
+                "legacy_seed": legacy,
+                "mock_llm": mock,
+                "config_path": str(config),
+                "database_path": str(case_dir / "memory.db"),
+                "commands": {
+                    "setup": [str(python), "-I", "-c", "installed SQLiteStore setup"],
+                    "doctor": [
+                        str(python),
+                        "-I",
+                        "-c",
+                        "socket-guarded installed mnemos.cli.main doctor",
+                    ],
+                },
+                "environment": {
+                    key: value
+                    for key, value in sorted(env.items())
+                    if key.startswith("MNEMOS_")
+                    or key in {"PYTHONNOUSERSITE", "PYTHONUNBUFFERED", "TEMP", "TMP"}
+                },
+                "setup": _hashable_process(setup),
+                "import_before": before,
+                "doctor": {
+                    **_hashable_process(doctor),
+                    "report": doctor["report"],
+                },
+                "import_after": after,
+                "expected_status": expected,
+            }
+            (case_dir / "setup.stdout.log").write_text(setup["stdout"], encoding="utf-8")
+            (case_dir / "setup.stderr.log").write_text(setup["stderr"], encoding="utf-8")
+            (case_dir / "doctor.stdout.log").write_text(doctor["stdout"], encoding="utf-8")
+            (case_dir / "doctor.stderr.log").write_text(doctor["stderr"], encoding="utf-8")
+            report["cases"].append(case)
+        report["status"] = "passed"
+    except Exception as exc:
+        report.update({"status": "failed", "error_type": type(exc).__name__, "error": str(exc)})
+    finally:
+        report["finished_at"] = datetime.now(timezone.utc).isoformat()
+        report_path = output / "report.json"
+        report_path.write_text(
+            json.dumps(report, indent=2, sort_keys=True) + "\n", encoding="utf-8"
+        )
+    print(json.dumps({"status": report["status"], "output": str(output)}))
+    return 0 if report["status"] == "passed" else 1
+
+
+if __name__ == "__main__":
+    raise SystemExit(main())

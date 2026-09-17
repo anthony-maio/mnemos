@@ -1258,3 +1258,18 @@ The combined provider, embedding, and Ollama checks passed 41 cases; Black and
 strict Python 3.10 mypy passed the changed source files. The frozen model queue
 and installed native-client fixture remain unchanged. This focused check does
 not replace a new full/package verification of later service logging changes.
+
+## Installed doctor configuration checks
+
+The installed wheel from source `6600dc2` passed three isolated doctor cases:
+an empty SQLite store reported `ready`, one legacy unscoped row reported
+`degraded`, and explicit mock cognition reported `not_ready`. The configured
+Ollama endpoint and non-loopback socket connections were blocked in the child
+bootstrap. This verifies configuration readiness and legacy-row reporting;
+it does not verify model reachability. The report checks installed Python
+files against the wheel before and after each case.
+
+The [doctor archive](../2026-09-17/installed-doctor-v5/README.md) includes
+the executed helper, reports, and command output. Earlier attempts remain
+separate, including two failed probes. Earlier helper bytes were not preserved
+for every attempt; only v5 carries the full checked execution record.

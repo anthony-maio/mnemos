@@ -1,0 +1,109 @@
+"""Archive the installed doctor evidence without copying private fixtures."""
+
+from __future__ import annotations
+
+import hashlib
+import json
+from pathlib import Path
+import shutil
+
+V5_ROOT = Path("C:/Users/Ant/AppData/Local/Temp/mnemos-installed-doctor-6600-v5")
+HISTORICAL_ROOT = Path("C:/Users/Ant/AppData/Local/Temp")
+ARCHIVE_ROOT = Path("docs/validation/2026-09-17/installed-doctor-v5")
+EXPECTED_RUNNER_SHA256 = "9bb2ab2988c63bba5c5662c9f53747dcdd40c7a9840393c255f53d47fc670ec2"
+EXPECTED_WHEEL_SHA256 = "349737206735f15b59562f3c7d53af51464176473b5de1fa12d2783cf039a25a"
+
+
+def _sha256(path: Path) -> str:
+    return hashlib.sha256(path.read_bytes()).hexdigest()
+
+
+def _copy(source: Path, destination: Path) -> None:
+    if not source.is_file():
+        raise RuntimeError(f"required evidence is missing: {source}")
+    destination.parent.mkdir(parents=True, exist_ok=True)
+    shutil.copyfile(source, destination)
+
+
+def _index(root: Path) -> dict[str, dict[str, int | str]]:
+    result: dict[str, dict[str, int | str]] = {}
+    for path in sorted(root.rglob("*")):
+        if path.is_file() and path.name != "evidence-index.json":
+            relative = path.relative_to(root).as_posix()
+            result[relative] = {
+                "bytes": path.stat().st_size,
+                "sha256": _sha256(path),
+            }
+    return result
+
+
+def _historical_report(name: str) -> Path:
+    return HISTORICAL_ROOT / f"mnemos-installed-doctor-6600-{name}" / "report.json"
+
+
+def main() -> int:
+    if ARCHIVE_ROOT.exists():
+        raise SystemExit(f"refusing to overwrite evidence archive: {ARCHIVE_ROOT}")
+    report_path = V5_ROOT / "report.json"
+    runner_path = V5_ROOT / "runner.py.txt"
+    report = json.loads(report_path.read_text(encoding="utf-8"))
+    if report.get("status") != "passed":
+        raise RuntimeError("v5 report is not a passed run")
+    if report.get("binding", {}).get("wheel", {}).get("sha256") != EXPECTED_WHEEL_SHA256:
+        raise RuntimeError("v5 report is bound to an unexpected wheel")
+    runner = report.get("runner", {})
+    if runner.get("sha256") != EXPECTED_RUNNER_SHA256:
+        raise RuntimeError("v5 report is bound to an unexpected helper")
+    if not runner_path.is_file() or _sha256(runner_path) != EXPECTED_RUNNER_SHA256:
+        raise RuntimeError("v5 runner archive does not match its reported hash")
+    expected_cases = {"empty_sqlite", "one_legacy_unscoped_row", "mock_llm_rejected"}
+    actual_cases = {str(case.get("name")) for case in report.get("cases", [])}
+    if actual_cases != expected_cases:
+        raise RuntimeError(f"unexpected v5 cases: {sorted(actual_cases)}")
+
+    ARCHIVE_ROOT.mkdir(parents=True)
+    _copy(report_path, ARCHIVE_ROOT / "run-report.json")
+    _copy(runner_path, ARCHIVE_ROOT / "runner.py.txt")
+    for case_name in sorted(expected_cases):
+        case_root = V5_ROOT / case_name
+        for stem in (
+            "setup.stdout.log",
+            "setup.stderr.log",
+            "doctor.stdout.log",
+            "doctor.stderr.log",
+        ):
+            _copy(case_root / stem, ARCHIVE_ROOT / "cases" / case_name / stem)
+
+    historical_status: dict[str, str] = {}
+    for version in ("v1", "v2", "v3", "v4"):
+        source = _historical_report(version)
+        destination = ARCHIVE_ROOT / "historical" / f"{version}-report.json"
+        _copy(source, destination)
+        historical = json.loads(source.read_text(encoding="utf-8"))
+        historical_status[version] = str(historical.get("status", "unknown"))
+        old_runner = source.parent / "runner-executed.py.txt"
+        if old_runner.is_file():
+            _copy(old_runner, ARCHIVE_ROOT / "historical" / f"{version}-runner-executed.py.txt")
+
+    helper_copy = ARCHIVE_ROOT / "archive-helper.py.txt"
+    _copy(Path(__file__).resolve(), helper_copy)
+    readme = ARCHIVE_ROOT / "README.md"
+    readme.write_text(
+        "# Installed doctor checkpoint\n\n"
+        "This archive records one isolated installed-wheel doctor run for the 6600dc2 source and verified wheel. The v5 run passed three configuration-readiness cases: an empty SQLite store reported ready, one legacy unscoped row reported degraded, and a mock cognition configuration reported not_ready. The mock case was a rejection check; the embedding provider state was still required to remain not_checked.\n\n"
+        "The child processes used a socket guard that blocked the configured loopback Ollama endpoint and non-loopback connections before importing Mnemos, while permitting Windows asyncio loopback plumbing. This is configuration-readiness evidence, not a bare console doctor run and not live provider reachability evidence. No model or provider request was made.\n\n"
+        "The report contains exact child command arguments, stdout and stderr hashes, full installed Mnemos Python-file hashes against the wheel, and before/after import provenance. Temporary SQLite databases and private TOML configuration files were intentionally excluded from this archive.\n\n"
+        f"Historical report statuses were v1={historical_status['v1']}, v2={historical_status['v2']}, v3={historical_status['v3']}, and v4={historical_status['v4']}. These are preserved attempts, not combined results. Prior runner bytes are included only where they existed in the historical output directories.\n\n"
+        "The evidence index covers every archived file except the index itself, whose self-hash would be circular.\n",
+        encoding="utf-8",
+    )
+    index = _index(ARCHIVE_ROOT)
+    (ARCHIVE_ROOT / "evidence-index.json").write_text(
+        json.dumps(index, indent=2, sort_keys=True) + "\n", encoding="utf-8"
+    )
+    print(json.dumps({"status": "passed", "archive": str(ARCHIVE_ROOT), "files": len(index)}))
+    return 0
+
+
+if __name__ == "__main__":
+    raise SystemExit(main())
