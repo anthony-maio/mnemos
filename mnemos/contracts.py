@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+from copy import deepcopy
 from datetime import datetime
 from typing import Any, Literal, cast
 
@@ -11,25 +12,27 @@ from .scopes import ScopeContext
 
 
 def _fact_proposal_json_schema(schema: dict[str, Any]) -> None:
-    """Expose proposal cross-field requirements to structured-output providers."""
-    schema["oneOf"] = [
-        {
-            "properties": {"operation": {"enum": ["add"]}},
-            "required": ["operation"],
-        },
-        {
-            "properties": {"operation": {"enum": ["support"]}},
-            "required": ["operation", "target_fact_id"],
-        },
-        {
-            "properties": {"operation": {"enum": ["correct"]}},
-            "required": ["operation", "target_fact_id", "expected_version"],
-        },
-        {
-            "properties": {"operation": {"enum": ["conflict"]}},
-            "required": ["operation"],
-        },
-    ]
+    """Use complete alternatives for grammar converters that select union branches.
+
+    A partial oneOf alongside shared properties is valid JSON Schema, but some
+    constrained decoders compile only the alternatives. Each alternative must
+    therefore carry the content, evidence, and operation requirements itself.
+    Runtime validation still checks the full proposal and its source evidence.
+    """
+    base = deepcopy(schema)
+    branches = []
+    for operation in ("add", "support", "correct", "conflict"):
+        branch = deepcopy(base)
+        branch["properties"]["operation"] = {"type": "string", "enum": [operation]}
+        if operation in {"support", "correct"}:
+            branch["required"].append("target_fact_id")
+            branch["properties"]["target_fact_id"] = {"type": "string", "minLength": 1}
+        if operation == "correct":
+            branch["required"].append("expected_version")
+            branch["properties"]["expected_version"] = {"type": "integer", "minimum": 1}
+        branches.append(branch)
+    schema.clear()
+    schema["oneOf"] = branches
 
 
 class CaptureEvent(BaseModel):

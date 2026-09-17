@@ -719,8 +719,9 @@ async def test_sleep_passes_schema_to_structured_provider() -> None:
     assert proposals[0].operation == "add"
     schema = provider.kwargs["format"]
     assert isinstance(schema, dict)
-    assert "operation" in schema["$defs"]["FactProposal"]["required"]
-    assert len(schema["$defs"]["FactProposal"]["oneOf"]) == 4
+    branches = schema["$defs"]["FactProposal"]["oneOf"]
+    assert len(branches) == 4
+    assert all("operation" in branch["required"] for branch in branches)
 
     class MalformedProvider(StructuredProvider):
         async def predict(self, prompt: str, **kwargs: object) -> str:

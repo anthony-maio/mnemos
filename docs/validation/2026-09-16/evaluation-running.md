@@ -46,7 +46,25 @@ The lifecycle v3 amendment preserves every original v2 event, fact, and query.
 It adds source-event target identifiers and separates correction content from
 the action instruction. Since the v2 labels were already observed, v3 is a
 repaired rerun, not new unseen held-out evidence. A new development fixture
-will exercise actual correction and forget dispatch before the matrix restarts.
+now exercises actual correction and forget dispatch before the matrix restarts.
+
+The first real v3 development preflight used source `634b460` and attempt
+`8ce175be0c894d83928e8309ecb3724b`. Three of four runs passed: baseline
+correction preserved the corrected fact ID and version after restart, and
+both baseline and full profiles passed forget, replay suppression, and restart.
+Full-profile correction was blocked before correction dispatch: its extraction
+response repeated `{"operation":"add"}` objects without content or evidence
+until the unchanged 512-token budget was exhausted. JSON parsing failed and
+the durable extraction job remained pending. The evaluator correctly reported
+no accepted target instead of guessing a fact to correct. Raw responses and
+manifests are preserved in `lifecycle-target-development-v3/`. This is a
+development result, not quality acceptance.
+
+The extraction schema is being repaired so every operation alternative carries
+all required fields. The old schema combined common object constraints with
+partial `oneOf` branches. The replacement keeps runtime evidence and operation
+validation and does not raise the token budget. It requires a fresh source-bound
+development run before the full matrix restarts.
 
 The stopped run used frozen source commit `5e852e7` in
 `.venv/eval-frozen-v2`. It started on September 16, 2026 local time, after
