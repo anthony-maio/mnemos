@@ -1191,6 +1191,27 @@ class SQLiteStore(MemoryStore):
         );
     """
 
+    _CREATE_CHUNK_ACCESS_SQL = """
+        CREATE TABLE IF NOT EXISTS memory_chunk_access (
+            chunk_id TEXT PRIMARY KEY,
+            access_count INTEGER NOT NULL DEFAULT 0,
+            last_retrieved_at TEXT,
+            reconsolidation_due_at TEXT,
+            FOREIGN KEY (chunk_id) REFERENCES memory_chunks(id) ON DELETE CASCADE
+        ) WITHOUT ROWID;
+    """
+
+    _CREATE_CHUNK_ACCESS_INSERT_TRIGGER_SQL = """
+        CREATE TRIGGER IF NOT EXISTS memory_chunk_access_ai
+        AFTER INSERT ON memory_chunks
+        BEGIN
+            INSERT INTO memory_chunk_access
+                (chunk_id, access_count, last_retrieved_at, reconsolidation_due_at)
+            VALUES
+                (new.id, new.access_count, new.last_retrieved_at, new.reconsolidation_due_at);
+        END;
+    """
+
     _CREATE_JOB_INDEX_SQL = """
         CREATE INDEX IF NOT EXISTS idx_memory_jobs_available
         ON memory_jobs(status, available_at, lease_until, created_at);
@@ -1233,12 +1254,46 @@ class SQLiteStore(MemoryStore):
         END;
     """
 
-    _SCHEMA_VERSION = "7"
+    _SCHEMA_VERSION = "8"
     _CHUNK_SELECT_COLUMNS = """
         id, content, embedding, metadata, salience, cognitive_state,
-        created_at, updated_at, access_count, version, canonical_key, user_profile_id,
+        created_at, updated_at,
+        COALESCE((SELECT access_count FROM memory_chunk_access
+                  WHERE chunk_id=memory_chunks.id), memory_chunks.access_count) AS access_count,
+        version, canonical_key, user_profile_id,
         surprisal_score, surprisal_status, cognitive_state_status, last_observed_at,
-        observation_count, last_retrieved_at, reconsolidation_due_at
+        observation_count,
+        CASE WHEN EXISTS (SELECT 1 FROM memory_chunk_access
+                          WHERE chunk_id=memory_chunks.id)
+             THEN (SELECT last_retrieved_at FROM memory_chunk_access
+                   WHERE chunk_id=memory_chunks.id)
+             ELSE memory_chunks.last_retrieved_at END AS last_retrieved_at,
+        CASE WHEN EXISTS (SELECT 1 FROM memory_chunk_access
+                          WHERE chunk_id=memory_chunks.id)
+             THEN (SELECT reconsolidation_due_at FROM memory_chunk_access
+                   WHERE chunk_id=memory_chunks.id)
+             ELSE memory_chunks.reconsolidation_due_at END AS reconsolidation_due_at
+    """
+    _CHUNK_SELECT_COLUMNS_QUALIFIED = """
+        memory_chunks.id, memory_chunks.content, memory_chunks.embedding, memory_chunks.metadata,
+        memory_chunks.salience, memory_chunks.cognitive_state,
+        memory_chunks.created_at, memory_chunks.updated_at,
+        COALESCE((SELECT access_count FROM memory_chunk_access
+                  WHERE chunk_id=memory_chunks.id), memory_chunks.access_count) AS access_count,
+        memory_chunks.version, memory_chunks.canonical_key, memory_chunks.user_profile_id,
+        memory_chunks.surprisal_score, memory_chunks.surprisal_status,
+        memory_chunks.cognitive_state_status, memory_chunks.last_observed_at,
+        memory_chunks.observation_count,
+        CASE WHEN EXISTS (SELECT 1 FROM memory_chunk_access
+                          WHERE chunk_id=memory_chunks.id)
+             THEN (SELECT last_retrieved_at FROM memory_chunk_access
+                   WHERE chunk_id=memory_chunks.id)
+             ELSE memory_chunks.last_retrieved_at END AS last_retrieved_at,
+        CASE WHEN EXISTS (SELECT 1 FROM memory_chunk_access
+                          WHERE chunk_id=memory_chunks.id)
+             THEN (SELECT reconsolidation_due_at FROM memory_chunk_access
+                   WHERE chunk_id=memory_chunks.id)
+             ELSE memory_chunks.reconsolidation_due_at END AS reconsolidation_due_at
     """
     _GRAPH_EDGE_TYPE = "SEMANTIC_SIMILAR"
     _GRAPH_PREFERENCE_EDGE_TYPE = "SEMANTIC_PREFERENCE"
@@ -1464,6 +1519,17 @@ class SQLiteStore(MemoryStore):
         self._conn.execute(self._CREATE_FACT_EVIDENCE_SQL)
         self._conn.execute(self._CREATE_FACT_REVISIONS_SQL)
         self._conn.execute(self._CREATE_MEMORY_SUPPRESSIONS_SQL)
+        self._conn.execute(self._CREATE_CHUNK_ACCESS_SQL)
+        if self._meta_value("migration_8") != "applied":
+            self._conn.execute("""INSERT OR IGNORE INTO memory_chunk_access
+                   (chunk_id, access_count, last_retrieved_at, reconsolidation_due_at)
+                   SELECT id, access_count, last_retrieved_at, reconsolidation_due_at
+                   FROM memory_chunks""")
+            self._conn.execute(
+                "INSERT INTO mnemos_meta(key, value) VALUES ('migration_8', 'applied') "
+                "ON CONFLICT(key) DO UPDATE SET value = excluded.value"
+            )
+        self._conn.execute(self._CREATE_CHUNK_ACCESS_INSERT_TRIGGER_SQL)
         self._conn.execute(self._CREATE_JOB_INDEX_SQL)
         self._conn.execute(self._CREATE_EPISODIC_SCOPE_INDEX_SQL)
         self._conn.execute(
@@ -1960,6 +2026,24 @@ class SQLiteStore(MemoryStore):
             last_attempt_at=self._parse_dt(cast(str | None, last_attempt_at)),
         )
 
+    def _upsert_chunk_access(self, chunk: MemoryChunk) -> None:
+        """Keep retrieval metadata in its narrow side table."""
+        self._conn.execute(
+            """INSERT INTO memory_chunk_access
+               (chunk_id, access_count, last_retrieved_at, reconsolidation_due_at)
+               VALUES (?, ?, ?, ?)
+               ON CONFLICT(chunk_id) DO UPDATE SET
+                   access_count=excluded.access_count,
+                   last_retrieved_at=excluded.last_retrieved_at,
+                   reconsolidation_due_at=excluded.reconsolidation_due_at""",
+            (
+                chunk.id,
+                chunk.access_count,
+                chunk.last_retrieved_at.isoformat() if chunk.last_retrieved_at else None,
+                chunk.reconsolidation_due_at.isoformat() if chunk.reconsolidation_due_at else None,
+            ),
+        )
+
     def store(self, chunk: MemoryChunk) -> None:
         """Insert or replace a chunk by ID."""
         row = self._chunk_to_row(chunk)
@@ -2010,6 +2094,7 @@ class SQLiteStore(MemoryStore):
                     """,
                     row,
                 )
+                self._upsert_chunk_access(chunk)
                 self._sync_vec_row(chunk.id, chunk.embedding)
                 if graph_changed:
                     self._invalidate_graph_derivation_locked({chunk.id})
@@ -2214,9 +2299,7 @@ class SQLiteStore(MemoryStore):
         if not compiled:
             # An arbitrary predicate cannot safely be applied after a bounded SQL limit.
             return []
-        columns = ", ".join(
-            f"memory_chunks.{column.strip()}" for column in self._CHUNK_SELECT_COLUMNS.split(",")
-        )
+        columns = self._CHUNK_SELECT_COLUMNS_QUALIFIED
         with self._lock:
             rows = self._conn.execute(
                 f"SELECT {columns} FROM memory_fts "
@@ -3678,18 +3761,34 @@ class SQLiteStore(MemoryStore):
             return 0
         touched_at = retrieved_at or datetime.now(timezone.utc)
         with self._lock:
+            nested = self._transaction_active
+            if nested:
+                self._conn.execute("SAVEPOINT mnemos_mark_retrieved_many")
             try:
+                placeholders = ",".join("?" for _ in identities)
+                self._conn.execute(
+                    """INSERT OR IGNORE INTO memory_chunk_access
+                       (chunk_id, access_count, last_retrieved_at, reconsolidation_due_at)
+                       SELECT id, access_count, last_retrieved_at, reconsolidation_due_at
+                       FROM memory_chunks WHERE id IN (""" + placeholders + ")",
+                    identities,
+                )
                 cursor = self._conn.execute(
-                    "UPDATE memory_chunks SET access_count=access_count+1, "
+                    "UPDATE memory_chunk_access SET access_count=access_count+1, "
                     "last_retrieved_at=?, reconsolidation_due_at=NULL "
-                    "WHERE id IN (" + ",".join("?" for _ in identities) + ")",
+                    "WHERE chunk_id IN (" + placeholders + ")",
                     [touched_at.isoformat(), *identities],
                 )
-                if not self._transaction_active:
+                if nested:
+                    self._conn.execute("RELEASE SAVEPOINT mnemos_mark_retrieved_many")
+                else:
                     self._conn.commit()
                 return cursor.rowcount
-            except Exception:
-                if not self._transaction_active:
+            except BaseException:
+                if nested:
+                    self._conn.execute("ROLLBACK TO SAVEPOINT mnemos_mark_retrieved_many")
+                    self._conn.execute("RELEASE SAVEPOINT mnemos_mark_retrieved_many")
+                else:
                     self._conn.rollback()
                 raise
 
@@ -3705,18 +3804,39 @@ class SQLiteStore(MemoryStore):
             reconsolidation_due_at.isoformat() if reconsolidation_due_at is not None else None
         )
         with self._lock:
-            cursor = self._conn.execute(
-                """
-                UPDATE memory_chunks
-                SET access_count = access_count + 1,
-                    last_retrieved_at = ?,
-                    reconsolidation_due_at = ?
-                WHERE id = ?
-                """,
-                (touched_at.isoformat(), due_at_iso, chunk_id),
-            )
-            self._conn.commit()
-            return cursor.rowcount > 0
+            nested = self._transaction_active
+            if nested:
+                self._conn.execute("SAVEPOINT mnemos_mark_retrieved")
+            try:
+                self._conn.execute(
+                    """INSERT OR IGNORE INTO memory_chunk_access
+                       (chunk_id, access_count, last_retrieved_at, reconsolidation_due_at)
+                       SELECT id, access_count, last_retrieved_at, reconsolidation_due_at
+                       FROM memory_chunks WHERE id=?""",
+                    (chunk_id,),
+                )
+                cursor = self._conn.execute(
+                    """
+                    UPDATE memory_chunk_access
+                    SET access_count = access_count + 1,
+                        last_retrieved_at = ?,
+                        reconsolidation_due_at = ?
+                    WHERE chunk_id = ?
+                    """,
+                    (touched_at.isoformat(), due_at_iso, chunk_id),
+                )
+                if nested:
+                    self._conn.execute("RELEASE SAVEPOINT mnemos_mark_retrieved")
+                else:
+                    self._conn.commit()
+                return cursor.rowcount > 0
+            except BaseException:
+                if nested:
+                    self._conn.execute("ROLLBACK TO SAVEPOINT mnemos_mark_retrieved")
+                    self._conn.execute("RELEASE SAVEPOINT mnemos_mark_retrieved")
+                else:
+                    self._conn.rollback()
+                raise
 
     def touch(
         self,
@@ -3728,26 +3848,51 @@ class SQLiteStore(MemoryStore):
         """Persist access_count/updated_at with a narrow UPDATE statement."""
         touched_at = updated_at or datetime.now(timezone.utc)
         with self._lock:
-            if access_count is None:
+            nested = self._transaction_active
+            if nested:
+                self._conn.execute("SAVEPOINT mnemos_touch")
+            try:
+                exists = self._conn.execute(
+                    "SELECT 1 FROM memory_chunks WHERE id = ?", (chunk_id,)
+                ).fetchone()
+                if exists is None:
+                    if nested:
+                        self._conn.execute("RELEASE SAVEPOINT mnemos_touch")
+                    return False
+                self._conn.execute(
+                    """INSERT OR IGNORE INTO memory_chunk_access
+                       (chunk_id, access_count, last_retrieved_at, reconsolidation_due_at)
+                       SELECT id, access_count, last_retrieved_at, reconsolidation_due_at
+                       FROM memory_chunks WHERE id=?""",
+                    (chunk_id,),
+                )
                 cursor = self._conn.execute(
-                    """
-                    UPDATE memory_chunks
-                    SET updated_at = ?, access_count = access_count + 1
-                    WHERE id = ?
-                    """,
+                    "UPDATE memory_chunks SET updated_at = ? WHERE id = ?",
                     (touched_at.isoformat(), chunk_id),
                 )
-            else:
-                cursor = self._conn.execute(
-                    """
-                    UPDATE memory_chunks
-                    SET updated_at = ?, access_count = ?
-                    WHERE id = ?
-                    """,
-                    (touched_at.isoformat(), access_count, chunk_id),
-                )
-            self._conn.commit()
-            return cursor.rowcount > 0
+                if access_count is None:
+                    self._conn.execute(
+                        "UPDATE memory_chunk_access SET access_count = access_count + 1 "
+                        "WHERE chunk_id = ?",
+                        (chunk_id,),
+                    )
+                else:
+                    self._conn.execute(
+                        "UPDATE memory_chunk_access SET access_count = ? WHERE chunk_id = ?",
+                        (access_count, chunk_id),
+                    )
+                if nested:
+                    self._conn.execute("RELEASE SAVEPOINT mnemos_touch")
+                else:
+                    self._conn.commit()
+                return cursor.rowcount > 0
+            except BaseException:
+                if nested:
+                    self._conn.execute("ROLLBACK TO SAVEPOINT mnemos_touch")
+                    self._conn.execute("RELEASE SAVEPOINT mnemos_touch")
+                else:
+                    self._conn.rollback()
+                raise
 
     def get(self, chunk_id: str) -> MemoryChunk | None:
         """O(1) lookup by primary key."""
@@ -4022,7 +4167,7 @@ class SQLiteStore(MemoryStore):
                 (chunk_id,),
             )
             self._conn.execute(
-                "UPDATE memory_chunks SET reconsolidation_due_at = NULL WHERE id = ?",
+                "UPDATE memory_chunk_access SET reconsolidation_due_at = NULL WHERE chunk_id = ?",
                 (chunk_id,),
             )
             self._conn.commit()
@@ -4538,7 +4683,9 @@ class SQLiteStore(MemoryStore):
                 self._conn.execute("SELECT AVG(salience) FROM memory_chunks").fetchone()[0] or 0.0
             )
             avg_access = (
-                self._conn.execute("SELECT AVG(access_count) FROM memory_chunks").fetchone()[0]
+                self._conn.execute("""SELECT AVG(COALESCE(a.access_count, c.access_count))
+                       FROM memory_chunks AS c
+                       LEFT JOIN memory_chunk_access AS a ON a.chunk_id = c.id""").fetchone()[0]
                 or 0.0
             )
             with_embedding = self._conn.execute(

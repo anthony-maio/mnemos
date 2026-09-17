@@ -28,6 +28,15 @@ python -m mnemos.service
 
 Most clients auto-start one bounded service process when the descriptor is absent. Set `MNEMOS_RUNTIME_DESCRIPTOR` consistently in every process when isolating a separate runtime. If startup fails, automatic capture can enter a sanitized local outbox; explicit writes report failure. An outbox entry is not a committed service event. `mnemos service-stop` requests authenticated shutdown and waits for confirmation. Stop host clients before offline maintenance so a new request does not restart the service.
 
+Schema 8 stores access counts, retrieval timestamps, and reconsolidation due
+times in `memory_chunk_access`. Retrieval updates this small table with the
+existing WAL/FULL durability policy. Opening an older database first creates
+a pre-migration backup, then seeds these fields in one migration transaction.
+The old columns in `memory_chunks` remain compatibility seeds; use the storage
+API to read current access metadata. Migration and rollback checks use
+disposable databases. The separate 10,000-fact recall gate still needs a new
+measurement before this change can claim a latency improvement.
+
 ## Local model configuration
 
 Mock cognition and simple embeddings are useful for deterministic tests. They are not evidence of retrieval quality. For a local model profile, configure Ollama explicitly and select both models:
