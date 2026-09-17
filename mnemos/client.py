@@ -253,13 +253,27 @@ class MnemosClient:
             raise ServiceClientError("Mnemos service could not be started") from exc
 
     async def _wait_for_descriptor(self) -> dict[str, Any] | None:
-        deadline = asyncio.get_running_loop().time() + self.startup_timeout
-        while asyncio.get_running_loop().time() < deadline:
+        loop = asyncio.get_running_loop()
+        deadline = loop.time() + self.startup_timeout
+        while True:
             descriptor = self._descriptor()
             if descriptor is not None:
                 return descriptor
-            await asyncio.sleep(0.05)
-        return self._descriptor()
+            exit_code = self._child.poll() if self._child is not None else None
+            if exit_code is not None:
+                # A competing owner can publish its descriptor while this
+                # launcher exits. Prefer that owner before reporting failure.
+                descriptor = self._descriptor()
+                if descriptor is not None:
+                    return descriptor
+                raise ServiceClientError(
+                    f"Mnemos service exited before startup (exit code {exit_code})",
+                    unavailable=True,
+                )
+            remaining = deadline - loop.time()
+            if remaining <= 0:
+                raise ServiceClientError("Mnemos service startup timed out", unavailable=True)
+            await asyncio.sleep(min(0.05, remaining))
 
     async def _dispatch_http(
         self, operation: str, payload: dict[str, Any], descriptor: dict[str, Any]
