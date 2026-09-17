@@ -1,0 +1,453 @@
+"""No-install verifier for Mnemos' Hermes memory-provider wheel entry point.
+
+This helper is intentionally not executed by the pinned discovery task. It
+extracts a supplied wheel into a temporary WSL directory and imports it with
+the installed Hermes interpreter, leaving both environments unchanged.
+"""
+
+from __future__ import annotations
+
+import argparse
+from datetime import datetime, timezone
+import hashlib
+import json
+import re
+from pathlib import Path
+import subprocess
+import tomllib
+
+WSL_PYTHON = "/home/anthony/.hermes/hermes-agent/venv/bin/python"
+EXPECTED_SOURCE = "c805cc25bce39ae8c2849c754303f5558f8ad7b3"
+
+PAYLOAD = r"""
+import hashlib
+import importlib.metadata as metadata
+import json
+import os
+from pathlib import Path
+import socket
+import subprocess
+import sys
+import tempfile
+import zipfile
+
+wheel = Path(__WHEEL__)
+expected_project_name = __PROJECT_NAME__
+expected_dist_info_prefix = __DIST_INFO_PREFIX__
+expected_wheel_sha256 = __WHEEL_SHA256__
+expected_source_adapter_sha256 = __SOURCE_ADAPTER_SHA256__
+expected_source_hashes = __SOURCE_HASHES__
+expected_asset_hashes = __ASSET_HASHES__
+hermes_source = Path("/home/anthony/.hermes/hermes-agent")
+sys.dont_write_bytecode = True
+
+def normalized_sha256(path):
+    raw = path.read_bytes()
+    try:
+        data = raw.decode("utf-8").replace("\r\n", "\n").replace("\r", "\n").encode("utf-8")
+    except UnicodeDecodeError:
+        data = raw
+    return hashlib.sha256(data).hexdigest()
+
+actual_wheel_sha256 = hashlib.sha256(wheel.read_bytes()).hexdigest()
+if actual_wheel_sha256 != expected_wheel_sha256:
+    raise AssertionError("wheel hash does not match the requested exact hash")
+
+with tempfile.TemporaryDirectory(prefix="mnemos-hermes-wheel-") as raw:
+    root = Path(raw)
+    home = root / "hermes-home"
+    project = root / "project"
+    extracted = root / "wheel"
+    registry = root / "registry.json"
+    home.mkdir()
+    project.mkdir()
+    (home / "plugins").mkdir()
+    registry.write_text(
+        '{"schema_version": 1, "projects": {}, "workspaces": {}, "profiles": ["probe-user"]}',
+        encoding="utf-8",
+    )
+    (home / "config.yaml").write_text("memory:\n  provider: mnemos\n", encoding="utf-8")
+    extracted.mkdir()
+    with zipfile.ZipFile(wheel) as archive:
+        archive.extractall(extracted)
+    dist_infos = [
+        path for path in extracted.glob("*.dist-info")
+        if path.name.startswith(expected_dist_info_prefix + "-")
+    ]
+    if len(dist_infos) != 1:
+        raise AssertionError("wheel must contain exactly one project dist-info directory")
+
+    package_files = sorted(
+        path.relative_to(extracted).as_posix()
+        for path in extracted.glob("mnemos/**/*")
+        if path.is_file()
+    )
+    expected_source_files = sorted(expected_source_hashes)
+    expected_asset_files = sorted(expected_asset_hashes)
+    expected_files = sorted(expected_source_files + expected_asset_files)
+    if package_files != expected_files:
+        raise AssertionError("wheel package file set differs from the clean source snapshot")
+    with zipfile.ZipFile(wheel) as archive:
+        wheel_package_members = sorted(
+            item.filename
+            for item in archive.infolist()
+            if not item.is_dir() and item.filename.startswith("mnemos/")
+        )
+        if wheel_package_members != package_files:
+            raise AssertionError("extracted mnemos package files differ from wheel members")
+        for relative in package_files:
+            if (extracted / relative).read_bytes() != archive.read(relative):
+                raise AssertionError(f"extracted wheel bytes differ for {relative}")
+    for relative in expected_source_files:
+        extracted_path = extracted / relative
+        if normalized_sha256(extracted_path) != expected_source_hashes[relative]:
+            raise AssertionError(f"wheel package file differs from clean source: {relative}")
+    for relative in expected_asset_files:
+        extracted_path = extracted / relative
+        if hashlib.sha256(extracted_path.read_bytes()).hexdigest() != expected_asset_hashes[relative]:
+            raise AssertionError(f"packaged asset differs from clean source: {relative}")
+
+    # env -i is supplied by the parent command. These are the only runtime
+    # variables introduced for the disposable provider check.
+    os.environ.clear()
+    os.environ.update({
+        "PATH": "/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin",
+        "HOME": str(root / "home"),
+        "TMPDIR": str(root),
+        "HERMES_HOME": str(home),
+        "HERMES_ENABLE_PROJECT_PLUGINS": "0",
+        "MNEMOS_SCOPE_REGISTRY": str(registry),
+        "MNEMOS_USER_PROFILE_ID": "probe-user",
+    })
+    os.chdir(project)
+    sys.path[:] = [item for item in sys.path if item not in ("", str(extracted), str(hermes_source))]
+    sys.path.insert(0, str(hermes_source))
+    sys.path.insert(0, str(extracted))
+
+    network_calls = []
+
+    def blocked_network(*args, **kwargs):
+        network_calls.append("socket.connect")
+        raise AssertionError("wheel verification attempted socket.connect")
+
+    socket.socket.connect = blocked_network
+    import mnemos.client as mnemos_client
+
+    service_calls = []
+
+    def blocked_service_method(*args, **kwargs):
+        service_calls.append("MnemosClient")
+        raise AssertionError("wheel verification attempted a MnemosClient service call")
+
+    for method_name in ("request", "replay_outbox", "capture", "retrieve", "close"):
+        setattr(mnemos_client.MnemosClient, method_name, blocked_service_method)
+
+    from plugins.memory import find_provider_dir, find_provider_entry_point, load_memory_provider
+    import mnemos.adapters.hermes as mnemos_hermes
+
+    entry_point = find_provider_entry_point("mnemos")
+    if entry_point is None:
+        raise AssertionError("wheel did not expose mnemos memory-provider entry point")
+    if entry_point.value != "mnemos.adapters.hermes:register":
+        raise AssertionError(f"unexpected memory-provider entry point: {entry_point.value!r}")
+    if not callable(entry_point.load()):
+        raise AssertionError("memory-provider entry point did not load a callable")
+    provider_dir = find_provider_dir("mnemos")
+    # Hermes returns a filesystem directory only for package entry points whose
+    # module origin is __init__.py. Mnemos exposes a module entry point, so the
+    # documented loader result is None; the distribution and imported module
+    # origins below provide the wheel binding proof.
+    if provider_dir is not None:
+        raise AssertionError("entry-point provider unexpectedly resolved as a filesystem provider")
+    if list((home / "plugins").iterdir()):
+        raise AssertionError("disposable Hermes home unexpectedly contains another provider directory")
+    distribution = getattr(entry_point, "dist", None)
+    if distribution is None or distribution.metadata.get("Name") != expected_project_name:
+        raise AssertionError("entry point is not owned by the project distribution")
+    distribution_root = Path(distribution.locate_file("")).resolve()
+    if distribution_root != extracted.resolve():
+        raise AssertionError("entry-point distribution does not originate in the extracted wheel")
+    provider = load_memory_provider("mnemos", register_skills=False)
+    adapter_path = Path(mnemos_hermes.__file__).resolve()
+    expected_adapter_path = (extracted / "mnemos" / "adapters" / "hermes.py").resolve()
+    if adapter_path != expected_adapter_path:
+        raise AssertionError(f"adapter imported outside extracted wheel: {adapter_path}")
+    adapter_normalized = normalized_sha256(adapter_path)
+    if adapter_normalized != expected_source_adapter_sha256:
+        raise AssertionError("wheel adapter does not match the verified source snapshot")
+    if provider is None or not provider.is_available():
+        raise AssertionError("actual wheel entry point did not load an available provider")
+    if network_calls or service_calls:
+        raise AssertionError("wheel discovery contacted a network or Mnemos service")
+    source_revision = None
+    try:
+        revision = subprocess.run(
+            ["git", "-C", str(hermes_source), "rev-parse", "HEAD"],
+            capture_output=True, text=True, timeout=5, check=False,
+        )
+        if revision.returncode == 0:
+            source_revision = revision.stdout.strip()
+    except (OSError, subprocess.TimeoutExpired):
+        pass
+    print(json.dumps({
+        "hermes_version": metadata.version("hermes-agent"),
+        "hermes_source_revision": source_revision,
+        "hermes_source_revision_status": "observed" if source_revision else "unavailable",
+        "mnemos_version": metadata.version(expected_project_name),
+        "project_name": expected_project_name,
+        "distribution_name": distribution.metadata.get("Name"),
+        "entry_point_value": entry_point.value,
+        "entry_point_origin": str(adapter_path),
+        "entry_point_origin_matches_extracted_wheel": adapter_path == expected_adapter_path,
+        "provider_dir": None,
+        "wheel_sha256": actual_wheel_sha256,
+        "adapter_sha256_normalized": adapter_normalized,
+        "source_files_checked": len(expected_source_files),
+        "packaged_assets_checked": len(expected_asset_files),
+        "provider_loaded": True,
+        "provider_available": True,
+        "network_calls": network_calls,
+        "service_calls": service_calls,
+        "bridge_env_present": "MNEMOS_BRIDGE_COMMAND" in os.environ,
+        "pythonpath_env_present": "PYTHONPATH" in os.environ,
+        "service_contact_attempted": False,
+    }, sort_keys=True))
+"""
+
+
+def _wsl_path(path: Path) -> str:
+    resolved = path.resolve()
+    drive = resolved.drive.rstrip(":").lower()
+    tail = str(resolved)[len(resolved.anchor) :].replace("\\", "/").lstrip("/")
+    return "/mnt/" + drive + "/" + tail
+
+
+def _sha256(path: Path) -> str:
+    return hashlib.sha256(path.read_bytes()).hexdigest()
+
+
+def _normalized_bytes(data: bytes) -> bytes:
+    try:
+        return data.decode("utf-8").replace("\r\n", "\n").replace("\r", "\n").encode("utf-8")
+    except UnicodeDecodeError:
+        return data
+
+
+def _source_hashes(snapshot: Path, commit: str) -> dict[str, str]:
+    listing = subprocess.run(
+        ["git", "-C", str(snapshot), "ls-tree", "-r", "--name-only", commit, "mnemos"],
+        capture_output=True,
+        check=True,
+        text=True,
+    )
+    paths = [item.strip() for item in listing.stdout.splitlines() if item.strip()]
+    if len(paths) != 53:
+        raise SystemExit(f"expected 53 tracked mnemos files, found {len(paths)}")
+    hashes: dict[str, str] = {}
+    for relative in paths:
+        data = subprocess.run(
+            ["git", "-C", str(snapshot), "show", f"{commit}:{relative}"],
+            capture_output=True,
+            check=True,
+        ).stdout
+        hashes[relative.replace("\\", "/")] = hashlib.sha256(_normalized_bytes(data)).hexdigest()
+    return hashes
+
+
+def _asset_hashes(snapshot: Path, commit: str) -> dict[str, str]:
+    listing = subprocess.run(
+        ["git", "-C", str(snapshot), "ls-tree", "-r", "--name-only", commit, "agents"],
+        capture_output=True,
+        check=True,
+        text=True,
+    )
+    paths = [item.strip() for item in listing.stdout.splitlines() if item.strip()]
+    if len(paths) != 3:
+        raise SystemExit(f"expected 3 tracked agent assets, found {len(paths)}")
+    hashes: dict[str, str] = {}
+    for relative in paths:
+        data = subprocess.run(
+            ["git", "-C", str(snapshot), "show", f"{commit}:{relative}"],
+            capture_output=True,
+            check=True,
+        ).stdout
+        target = "mnemos/resources/" + relative.replace("\\", "/")
+        checkout_data = (snapshot / relative).read_bytes()
+        if _normalized_bytes(checkout_data) != _normalized_bytes(data):
+            raise SystemExit(f"asset checkout differs from source commit: {relative}")
+        # The wheel contains checkout bytes, including Windows line endings.
+        hashes[target] = hashlib.sha256(checkout_data).hexdigest()
+    return hashes
+
+
+def main() -> int:
+    parser = argparse.ArgumentParser()
+    parser.add_argument("--wheel", required=True, type=Path)
+    parser.add_argument("--wheel-sha256", required=True)
+    parser.add_argument("--verification", required=True, type=Path)
+    parser.add_argument("--output", required=True, type=Path)
+    args = parser.parse_args()
+    wheel = args.wheel.resolve()
+    verification_path = args.verification.resolve()
+    output = args.output.resolve()
+    if output.exists():
+        raise SystemExit(f"refusing to overwrite {output}")
+    verification = json.loads(verification_path.read_text(encoding="utf-8"))
+    if verification.get("status") != "passed":
+        raise SystemExit("verification report is not passed")
+    if verification.get("source_commit") != EXPECTED_SOURCE:
+        raise SystemExit("verification report is not pinned to the repaired source")
+    source_checkout = Path(verification.get("source_checkout", "")).resolve()
+    if not source_checkout.is_dir():
+        raise SystemExit("verification report source checkout is missing")
+    source_head = subprocess.run(
+        ["git", "-C", str(source_checkout), "rev-parse", "HEAD"],
+        capture_output=True,
+        text=True,
+        check=True,
+    ).stdout.strip()
+    if source_head != EXPECTED_SOURCE:
+        raise SystemExit("verification source checkout is not at the expected commit")
+    if subprocess.run(
+        ["git", "-C", str(source_checkout), "status", "--porcelain", "--untracked-files=all"],
+        capture_output=True,
+        text=True,
+        check=True,
+    ).stdout.strip():
+        raise SystemExit("verification source checkout is dirty")
+    source_hashes = _source_hashes(source_checkout, EXPECTED_SOURCE)
+    asset_hashes = _asset_hashes(source_checkout, EXPECTED_SOURCE)
+    expected_adapter_sha256 = source_hashes["mnemos/adapters/hermes.py"]
+    pyproject_path = source_checkout / "pyproject.toml"
+    try:
+        project_name = str(
+            tomllib.loads(pyproject_path.read_text(encoding="utf-8"))["project"]["name"]
+        ).strip()
+    except (OSError, KeyError, TypeError, tomllib.TOMLDecodeError) as exc:
+        raise SystemExit("verified source pyproject has no readable project name") from exc
+    if not project_name:
+        raise SystemExit("verified source pyproject has an empty project name")
+    dist_info_prefix = re.sub(r"[-_.]+", "_", project_name)
+    artifacts = verification.get("artifacts")
+    if not isinstance(artifacts, list):
+        raise SystemExit("full verification report has no artifact records")
+    matching_artifacts = []
+    for artifact in artifacts:
+        if not isinstance(artifact, dict) or not artifact.get("file"):
+            continue
+        artifact_path = Path(str(artifact["file"]))
+        if not artifact_path.is_absolute():
+            artifact_path = (verification_path.parent / artifact_path).resolve()
+        if artifact_path == wheel:
+            matching_artifacts.append(artifact)
+    if len(matching_artifacts) != 1:
+        raise SystemExit("full verification report does not identify this wheel path exactly once")
+    recorded_wheel_sha256 = str(matching_artifacts[0].get("sha256", "")).lower()
+    if recorded_wheel_sha256 != args.wheel_sha256.lower():
+        raise SystemExit("wheel hash differs from the full verification artifact record")
+    if _sha256(wheel).lower() != args.wheel_sha256.lower():
+        raise SystemExit("wheel hash does not match --wheel-sha256")
+    output.mkdir(parents=True)
+    payload = (
+        PAYLOAD.replace("__WHEEL__", json.dumps(_wsl_path(wheel)))
+        .replace("__PROJECT_NAME__", repr(project_name))
+        .replace("__DIST_INFO_PREFIX__", repr(dist_info_prefix))
+        .replace("__WHEEL_SHA256__", repr(args.wheel_sha256))
+        .replace("__SOURCE_ADAPTER_SHA256__", repr(expected_adapter_sha256))
+        .replace("__SOURCE_HASHES__", repr(source_hashes))
+        .replace("__ASSET_HASHES__", repr(asset_hashes))
+    )
+    (output / "payload.py").write_text(payload, encoding="utf-8")
+    started = datetime.now(timezone.utc)
+    command = [
+        "wsl.exe",
+        "-d",
+        "Debian",
+        "--",
+        "env",
+        "-i",
+        "PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin",
+        "HOME=/tmp/mnemos-hermes-wheel-runner",
+        WSL_PYTHON,
+        "-B",
+        "-c",
+        payload,
+    ]
+    try:
+        result = subprocess.run(command, capture_output=True, text=True, timeout=30, check=False)
+    except subprocess.TimeoutExpired as exc:
+        finished = datetime.now(timezone.utc)
+        stdout = (
+            exc.stdout.decode(errors="replace")
+            if isinstance(exc.stdout, bytes)
+            else (exc.stdout or "")
+        )
+        stderr = (
+            exc.stderr.decode(errors="replace")
+            if isinstance(exc.stderr, bytes)
+            else (exc.stderr or "")
+        )
+        timeout_report = {
+            "status": "failed",
+            "wheel": str(wheel),
+            "wheel_sha256": args.wheel_sha256,
+            "verification": str(verification_path),
+            "verification_commit": EXPECTED_SOURCE,
+            "source_checkout": str(source_checkout),
+            "source_files_checked": len(source_hashes),
+            "packaged_assets_checked": len(asset_hashes),
+            "runner": str(Path(__file__).resolve()),
+            "runner_sha256": _sha256(Path(__file__).resolve()),
+            "started_utc": started.isoformat(),
+            "finished_utc": finished.isoformat(),
+            "command": [*command[:-1], "<payload.py contents>"],
+            "payload_file": "payload.py",
+            "payload_sha256": _sha256(output / "payload.py"),
+            "returncode": None,
+            "timed_out": True,
+            "stdout_log": "stdout.txt",
+            "stderr_log": "stderr.txt",
+            "child": None,
+        }
+        (output / "stdout.txt").write_text(stdout, encoding="utf-8")
+        (output / "stderr.txt").write_text(stderr, encoding="utf-8")
+        (output / "report.json").write_text(
+            json.dumps(timeout_report, indent=2, sort_keys=True) + "\n", encoding="utf-8"
+        )
+        raise
+    finished = datetime.now(timezone.utc)
+    lines = [line for line in result.stdout.splitlines() if line.strip()]
+    child = json.loads(lines[-1]) if lines and result.returncode == 0 else None
+    report = {
+        "status": "passed" if result.returncode == 0 and child else "failed",
+        "wheel": str(wheel),
+        "wheel_sha256": args.wheel_sha256,
+        "verification": str(verification_path),
+        "verification_commit": EXPECTED_SOURCE,
+        "source_checkout": str(source_checkout),
+        "source_files_checked": len(source_hashes),
+        "packaged_assets_checked": len(asset_hashes),
+        "verification_artifact": matching_artifacts[0],
+        "runner": str(Path(__file__).resolve()),
+        "runner_sha256": _sha256(Path(__file__).resolve()),
+        "started_utc": started.isoformat(),
+        "finished_utc": finished.isoformat(),
+        "command": [*command[:-1], "<payload.py contents>"],
+        "payload_file": "payload.py",
+        "payload_sha256": _sha256(output / "payload.py"),
+        "returncode": result.returncode,
+        "stdout_log": "stdout.txt",
+        "stderr_log": "stderr.txt",
+        "child": child,
+    }
+    (output / "stdout.txt").write_text(result.stdout, encoding="utf-8")
+    (output / "stderr.txt").write_text(result.stderr, encoding="utf-8")
+    (output / "report.json").write_text(
+        json.dumps(report, indent=2, sort_keys=True) + "\n", encoding="utf-8"
+    )
+    print(json.dumps(report, indent=2, sort_keys=True))
+    return 0 if report["status"] == "passed" else 1
+
+
+if __name__ == "__main__":
+    raise SystemExit(main())

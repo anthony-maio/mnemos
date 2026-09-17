@@ -1,0 +1,76 @@
+{
+  "source_commit": "c805cc25bce39ae8c2849c754303f5558f8ad7b3",
+  "started_at": "2026-09-17T11:35:35.262457+00:00",
+  "status": "passed",
+  "wheel": {
+    "file": "D:\\Development\\mnemos\\mnemos\\.worktrees\\functional-local-memory\\.venv\\related-forget-checks-v1\\dist\\mnemos_memory-0.7.0-py3-none-any.whl",
+    "bytes": 273064,
+    "sha256": "7d723e1bbcd095dfb9eb06f1490e10ef2699db42a55263f95df6d4b3dfe27c12"
+  },
+  "environment": "D:\\WindowsTemp\\mnemos-related-forget-mcp-wheel-20260917-v1",
+  "runner_sha256": "7a8d47129f1bae65cc715a166351f4cf79e453970e77293283b9ac3144c2143a",
+  "commands": [
+    {
+      "name": "create_environment",
+      "command": [
+        "C:\\Users\\Ant\\.local\\bin\\uv.exe",
+        "venv",
+        "D:\\WindowsTemp\\mnemos-related-forget-mcp-wheel-20260917-v1",
+        "--python",
+        "D:\\Development\\mnemos\\mnemos\\.worktrees\\functional-local-memory\\.venv\\Scripts\\python.exe"
+      ],
+      "started_at": "2026-09-17T11:35:35.267164+00:00",
+      "exit_code": 0,
+      "finished_at": "2026-09-17T11:35:35.729353+00:00"
+    },
+    {
+      "name": "install_wheel",
+      "command": [
+        "C:\\Users\\Ant\\.local\\bin\\uv.exe",
+        "pip",
+        "install",
+        "--python",
+        "D:\\WindowsTemp\\mnemos-related-forget-mcp-wheel-20260917-v1\\Scripts\\python.exe",
+        "mnemos-memory[mcp] @ file:///D:/Development/mnemos/mnemos/.worktrees/functional-local-memory/.venv/related-forget-checks-v1/dist/mnemos_memory-0.7.0-py3-none-any.whl"
+      ],
+      "started_at": "2026-09-17T11:35:35.729368+00:00",
+      "exit_code": 0,
+      "finished_at": "2026-09-17T11:35:53.132024+00:00"
+    },
+    {
+      "name": "freeze_environment",
+      "command": [
+        "C:\\Users\\Ant\\.local\\bin\\uv.exe",
+        "pip",
+        "freeze",
+        "--python",
+        "D:\\WindowsTemp\\mnemos-related-forget-mcp-wheel-20260917-v1\\Scripts\\python.exe"
+      ],
+      "started_at": "2026-09-17T11:35:53.132046+00:00",
+      "exit_code": 0,
+      "finished_at": "2026-09-17T11:35:53.212288+00:00"
+    },
+    {
+      "name": "replay_probe",
+      "command": [
+        "D:\\WindowsTemp\\mnemos-related-forget-mcp-wheel-20260917-v1\\Scripts\\python.exe",
+        "-I",
+        "D:\\Development\\mnemos\\mnemos\\.worktrees\\functional-local-memory\\.venv\\verify_claude_stop_replay.py",
+        "--snapshot",
+        "D:\\Development\\mnemos\\mnemos\\.worktrees\\functional-local-memory\\.venv\\related-forget-frozen-v1",
+        "--commit",
+        "c805cc25bce39ae8c2849c754303f5558f8ad7b3",
+        "--output",
+        "D:\\Development\\mnemos\\mnemos\\.worktrees\\functional-local-memory\\.venv\\related-forget-mcp-installed-v1\\probe.json",
+        "--installed-package",
+        "D:\\WindowsTemp\\mnemos-related-forget-mcp-wheel-20260917-v1\\Lib\\site-packages",
+        "--wheel",
+        "D:\\Development\\mnemos\\mnemos\\.worktrees\\functional-local-memory\\.venv\\related-forget-checks-v1\\dist\\mnemos_memory-0.7.0-py3-none-any.whl"
+      ],
+      "started_at": "2026-09-17T11:35:53.212310+00:00",
+      "exit_code": 0,
+      "finished_at": "2026-09-17T11:36:50.581598+00:00"
+    }
+  ],
+  "finished_at": "2026-09-17T11:36:50.593224+00:00"
+}

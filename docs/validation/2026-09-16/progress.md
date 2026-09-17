@@ -607,3 +607,25 @@ checkout. Installed-wheel and native lifecycle acceptance remain pending. The
 native Codex runner has passed offline parser and protocol checks, which do not
 constitute a native conversation. The real-model lifecycle queue remains on
 its original frozen `b7a9d9d4` source.
+
+
+## Sourcec805 package and installed transport checks passed
+
+The clean frozen source passed 738 tests with two optional skips, Black,
+strict mypy, JavaScript, build, and Twine. Its exact wheel passed installed
+Claude replay, actual Hermes entry-point discovery, and generated Codex MCP
+handshake and scoped retrieval. An instrumented Claude adapter run captured
+both roles, persisted its checkpoint, and replayed after reopen without
+duplicate events, within each fixed ten-second deadline. SessionStart and
+native Claude latency are outside that diagnostic gate.
+
+The first native Codex attempt exposed an incomplete test installation:
+the base wheel had no optional MCP SDK, and the API-only preflight missed
+that condition. A fresh MCP-extra installation and actual transport preflight
+passed. The subsequent native turn discovered all required tools, but its
+store, consolidate, and retrieve calls were cancelled by the client before
+successful results. Both failures remain preserved; no completed native
+lifecycle is claimed. See the [checkpoint evidence](related-forget-verification/README.md).
+
+The real-model lifecycle queue remains on frozen b7a9d9d4 and is still running.
+No live host configuration, live memory data, or release was changed.

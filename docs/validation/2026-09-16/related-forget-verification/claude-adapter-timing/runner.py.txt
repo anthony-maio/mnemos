@@ -1,0 +1,945 @@
+"""Bounded no-model timing check for the installed Claude adapter.
+
+The helper invokes only the installed Mnemos adapter against a disposable
+loopback service. It does not invoke Claude, a model, or a network provider. A
+child process keeps per-operation trace records flushed before each operation
+completes so a timeout still leaves stage evidence.
+"""
+
+from __future__ import annotations
+
+import argparse
+from datetime import datetime, timezone
+import faulthandler
+import hashlib
+from importlib import metadata as importlib_metadata
+import json
+import os
+from pathlib import Path
+import subprocess
+import sys
+import tempfile
+import time
+import traceback
+from typing import Any, Mapping
+import zipfile
+from uuid import UUID
+
+WORKTREE = Path(__file__).resolve().parents[1]
+OUTPUT_DIR = WORKTREE / ".venv" / "claude-adapter-timing-v1"
+TEMP_PARENT = Path(r"D:\WindowsTemp")
+CHILD_TIMEOUT_SECONDS = 10
+FAULT_DUMP_SECONDS = 8
+PROFILE = "claude-adapter-timing-v1"
+
+
+def _sha256(value: bytes | str) -> str:
+    raw = value.encode("utf-8") if isinstance(value, str) else value
+    return hashlib.sha256(raw).hexdigest()
+
+
+def _pinned_package_provenance(
+    package_path: Path,
+    *,
+    wheel_path: Path,
+    expected_wheel_sha256: str,
+    source_commit: str,
+) -> dict[str, Any]:
+    listing = subprocess.run(
+        [
+            "git",
+            "-C",
+            str(WORKTREE),
+            "ls-tree",
+            "-r",
+            "--name-only",
+            source_commit,
+            "mnemos",
+        ],
+        capture_output=True,
+        text=True,
+        check=True,
+        timeout=10,
+    )
+    files = [Path(item) for item in listing.stdout.splitlines() if item.strip()]
+    if not files:
+        raise RuntimeError("pinned source has no mnemos package files")
+    mismatches: list[str] = []
+    for relative in files:
+        expected = subprocess.run(
+            ["git", "-C", str(WORKTREE), "show", f"{source_commit}:{relative.as_posix()}"],
+            capture_output=True,
+            check=True,
+            timeout=10,
+        ).stdout.replace(b"\r\n", b"\n")
+        installed = (
+            (package_path.parent / Path(*relative.parts[1:])).read_bytes().replace(b"\r\n", b"\n")
+        )
+        if installed != expected:
+            mismatches.append(relative.as_posix())
+    if mismatches:
+        raise RuntimeError("installed package differs from pinned source")
+    observed_wheel_sha256 = _sha256(wheel_path.read_bytes())
+    if observed_wheel_sha256 != expected_wheel_sha256:
+        raise RuntimeError("wheel archive does not match the expected digest")
+    wheel_members = 0
+    with zipfile.ZipFile(wheel_path) as archive:
+        for item in archive.infolist():
+            if item.is_dir() or not item.filename.startswith("mnemos/"):
+                continue
+            if item.filename.endswith(".dist-info/RECORD"):
+                continue
+            wheel_members += 1
+            installed = package_path.parent / Path(*Path(item.filename).parts[1:])
+            if installed.read_bytes() != archive.read(item):
+                raise RuntimeError("installed package bytes differ from wheel")
+    return {
+        "source_commit": source_commit,
+        "package_files_checked": len(files),
+        "wheel_package_members_checked": wheel_members,
+        "wheel_path": str(wheel_path),
+        "wheel_sha256_expected": expected_wheel_sha256,
+        "wheel_sha256_observed": observed_wheel_sha256,
+    }
+
+
+def _verify_build(
+    verification_path: Path, *, source_commit: str, wheel_path: Path, wheel_sha256: str
+) -> dict[str, Any]:
+    """Require the wheel and source to come from a passed full verification."""
+    value = json.loads(verification_path.read_text(encoding="utf-8"))
+    if not isinstance(value, Mapping) or value.get("status") != "passed":
+        raise RuntimeError("build verification is not passed")
+    if value.get("source_commit") != source_commit:
+        raise RuntimeError("build verification source commit differs from explicit pin")
+    artifacts = value.get("artifacts")
+    if not isinstance(artifacts, list):
+        raise RuntimeError("build verification has no artifact list")
+    matches = []
+    for item in artifacts:
+        if not isinstance(item, Mapping) or not isinstance(item.get("file"), str):
+            continue
+        if Path(item["file"]).resolve() == wheel_path.resolve():
+            matches.append(item)
+    if len(matches) != 1 or matches[0].get("sha256") != wheel_sha256:
+        raise RuntimeError("wheel does not match the passed build verification")
+    return {
+        "path": str(verification_path),
+        "status": value.get("status"),
+        "source_commit": source_commit,
+        "wheel_path": str(wheel_path),
+        "wheel_sha256": wheel_sha256,
+    }
+
+
+def _private_mkdir(path: Path) -> None:
+    from mnemos.service import _protect_private_path
+
+    path.mkdir(parents=True, exist_ok=False)
+    _protect_private_path(path)
+
+
+def _clean_environment(overrides: Mapping[str, str]) -> dict[str, str]:
+    environment = dict(os.environ)
+    blocked = {
+        "ANTHROPIC_API_KEY",
+        "ANTHROPIC_AUTH_TOKEN",
+        "CLAUDE_CODE_OAUTH_TOKEN",
+        "AWS_ACCESS_KEY_ID",
+        "AWS_SECRET_ACCESS_KEY",
+        "AWS_SESSION_TOKEN",
+        "GOOGLE_APPLICATION_CREDENTIALS",
+    }
+    for key in list(environment):
+        if (
+            key.startswith("MNEMOS_")
+            or key in {"PYTHONPATH", "CLAUDE_CONFIG_DIR", "VIRTUAL_ENV"}
+            or key in blocked
+        ):
+            environment.pop(key, None)
+    environment.update(overrides)
+    return environment
+
+
+def _terminate_process_tree(process: subprocess.Popen[str]) -> bool:
+    if process.poll() is not None:
+        return False
+    if os.name == "nt":
+        subprocess.run(
+            ["taskkill", "/PID", str(process.pid), "/T", "/F"],
+            capture_output=True,
+            text=True,
+            check=False,
+            timeout=10,
+        )
+    else:  # pragma: no cover - the diagnostic runs on Windows
+        process.kill()
+    try:
+        process.wait(timeout=10)
+    except subprocess.TimeoutExpired:
+        process.kill()
+        process.wait(timeout=10)
+    return True
+
+
+def _write_child_probe(path: Path) -> None:
+    path.write_text(
+        """from __future__ import annotations
+
+import asyncio
+import faulthandler
+import hashlib
+import json
+import os
+from pathlib import Path
+import sys
+import time
+from typing import Any
+
+import mnemos.adapters.claude_code as claude_code
+
+TRACE = Path(sys.argv[2])
+STACK = Path(sys.argv[3])
+EVENT = sys.argv[1]
+_real_fsync = os.fsync
+_real_replace = os.replace
+_trace_lock = None
+
+
+def trace(operation: str, phase: str, **fields: Any) -> None:
+    row = {
+        "monotonic_ns": time.monotonic_ns(),
+        "pid": os.getpid(),
+        "event": EVENT,
+        "operation": operation,
+        "phase": phase,
+        **fields,
+    }
+    with TRACE.open("a", encoding="utf-8") as handle:
+        handle.write(json.dumps(row, sort_keys=True, separators=(",", ":")) + "\\n")
+        handle.flush()
+        # Flush to the OS so process termination retains the trace. Do not add
+        # an fsync here: extra durable writes would confound the operation under test.
+
+
+def timed_fsync(fd: int) -> None:
+    started = time.monotonic_ns()
+    trace("os.fsync", "start", fd_type=type(fd).__name__)
+    try:
+        _real_fsync(fd)
+    except BaseException as exc:
+        trace("os.fsync", "error", elapsed_ns=time.monotonic_ns() - started, error_type=type(exc).__name__)
+        raise
+    trace("os.fsync", "end", elapsed_ns=time.monotonic_ns() - started)
+
+
+def timed_replace(source: str | os.PathLike[str], target: str | os.PathLike[str]) -> None:
+    started = time.monotonic_ns()
+    trace("os.replace", "start")
+    try:
+        _real_replace(source, target)
+    except BaseException as exc:
+        trace("os.replace", "error", elapsed_ns=time.monotonic_ns() - started, error_type=type(exc).__name__)
+        raise
+    trace("os.replace", "end", elapsed_ns=time.monotonic_ns() - started)
+
+
+def timed_protect(path: Path) -> None:
+    started = time.monotonic_ns()
+    trace("_protect_private_path", "start", path_kind=path.suffix or "directory")
+    try:
+        _original_protect(path)
+    except BaseException as exc:
+        trace("_protect_private_path", "error", elapsed_ns=time.monotonic_ns() - started, error_type=type(exc).__name__)
+        raise
+    trace("_protect_private_path", "end", elapsed_ns=time.monotonic_ns() - started)
+
+
+_original_protect = claude_code._protect_private_path
+claude_code._protect_private_path = timed_protect
+claude_code.os.fsync = timed_fsync
+claude_code.os.replace = timed_replace
+
+_original_capture = claude_code.ClaudeCodeAdapter._capture
+_original_pending = claude_code.ClaudeCodeAdapter._remember_pending_duplicate
+_original_retrieve = claude_code.ClaudeCodeAdapter.retrieve_context
+_original_transcript = claude_code.ClaudeCodeAdapter._capture_transcript
+
+
+async def timed_capture(self: Any, *args: Any, **kwargs: Any) -> Any:
+    started = time.monotonic_ns()
+    trace("adapter.capture", "start")
+    try:
+        result = await _original_capture(self, *args, **kwargs)
+    except BaseException as exc:
+        trace("adapter.capture", "error", elapsed_ns=time.monotonic_ns() - started, error_type=type(exc).__name__)
+        raise
+    trace("adapter.capture", "end", elapsed_ns=time.monotonic_ns() - started, accepted=bool(result[0]))
+    return result
+
+
+def timed_pending(self: Any, *args: Any, **kwargs: Any) -> Any:
+    started = time.monotonic_ns()
+    trace("adapter.pending_duplicate", "start")
+    try:
+        result = _original_pending(self, *args, **kwargs)
+    except BaseException as exc:
+        trace("adapter.pending_duplicate", "error", elapsed_ns=time.monotonic_ns() - started, error_type=type(exc).__name__)
+        raise
+    trace("adapter.pending_duplicate", "end", elapsed_ns=time.monotonic_ns() - started)
+    return result
+
+
+async def timed_retrieve(self: Any, *args: Any, **kwargs: Any) -> Any:
+    started = time.monotonic_ns()
+    trace("adapter.retrieve_context", "start")
+    try:
+        result = await _original_retrieve(self, *args, **kwargs)
+    except BaseException as exc:
+        trace("adapter.retrieve_context", "error", elapsed_ns=time.monotonic_ns() - started, error_type=type(exc).__name__)
+        raise
+    trace("adapter.retrieve_context", "end", elapsed_ns=time.monotonic_ns() - started, status=result.status)
+    return result
+
+
+async def timed_transcript(self: Any, *args: Any, **kwargs: Any) -> Any:
+    started = time.monotonic_ns()
+    trace("adapter.capture_transcript", "start")
+    try:
+        result = await _original_transcript(self, *args, **kwargs)
+    except BaseException as exc:
+        trace("adapter.capture_transcript", "error", elapsed_ns=time.monotonic_ns() - started, error_type=type(exc).__name__)
+        raise
+    trace("adapter.capture_transcript", "end", elapsed_ns=time.monotonic_ns() - started, captured=result[0])
+    return result
+
+
+claude_code.ClaudeCodeAdapter._capture = timed_capture
+claude_code.ClaudeCodeAdapter._remember_pending_duplicate = timed_pending
+claude_code.ClaudeCodeAdapter.retrieve_context = timed_retrieve
+claude_code.ClaudeCodeAdapter._capture_transcript = timed_transcript
+
+stack_handle = STACK.open("a", encoding="utf-8")
+faulthandler.dump_traceback_later(8, file=stack_handle, repeat=False)
+try:
+    payload = json.loads(sys.stdin.read())
+    started = time.monotonic_ns()
+    trace("adapter.handle", "start")
+    result = asyncio.run(claude_code.run_hook(EVENT, payload))
+    trace(
+        "adapter.handle",
+        "end",
+        elapsed_ns=time.monotonic_ns() - started,
+        status=result.status,
+        committed=result.committed,
+        queued=result.queued,
+        captured=result.captured,
+        error_type=type(result.error).__name__ if result.error else None,
+    )
+    response = {
+        "status": result.status,
+        "committed": result.committed,
+        "queued": result.queued,
+        "captured": result.captured,
+        "context": result.context,
+        "error": result.error,
+        "error_present": result.error is not None,
+    }
+    response_started = time.monotonic_ns()
+    trace("adapter.response", "start")
+    serialized = json.dumps(response, separators=(",", ":")) + "\\n"
+    sys.stdout.write(serialized)
+    sys.stdout.flush()
+    trace(
+        "adapter.response",
+        "end",
+        elapsed_ns=time.monotonic_ns() - response_started,
+        serialized_bytes=len(serialized.encode("utf-8")),
+    )
+finally:
+    faulthandler.cancel_dump_traceback_later()
+    stack_handle.flush()
+    stack_handle.close()
+""",
+        encoding="utf-8",
+    )
+
+
+def _run_probe(
+    *,
+    child: Path,
+    event: str,
+    payload: Mapping[str, Any],
+    trace: Path,
+    stack: Path,
+    cwd: Path,
+    environment: Mapping[str, str],
+) -> dict[str, Any]:
+    started = time.monotonic()
+    process = subprocess.Popen(
+        [sys.executable, str(child), event, str(trace), str(stack)],
+        cwd=str(cwd),
+        env=dict(environment),
+        stdin=subprocess.PIPE,
+        stdout=subprocess.PIPE,
+        stderr=subprocess.PIPE,
+        text=True,
+        encoding="utf-8",
+        errors="replace",
+        shell=False,
+        creationflags=getattr(subprocess, "CREATE_NEW_PROCESS_GROUP", 0),
+    )
+    timed_out = False
+    stdout = ""
+    stderr = ""
+    try:
+        stdout, stderr = process.communicate(
+            input=json.dumps(dict(payload), separators=(",", ":")),
+            timeout=CHILD_TIMEOUT_SECONDS,
+        )
+    except subprocess.TimeoutExpired:
+        timed_out = True
+        _terminate_process_tree(process)
+        stdout, stderr = process.communicate(timeout=15)
+    finally:
+        if process.poll() is None:
+            _terminate_process_tree(process)
+    stdout_path = trace.with_suffix(".stdout")
+    stderr_path = trace.with_suffix(".stderr")
+    stdout_path.write_text(stdout, encoding="utf-8")
+    stderr_path.write_text(stderr, encoding="utf-8")
+    result: dict[str, Any] = {
+        "event": event,
+        "returncode": process.returncode,
+        "timed_out": timed_out,
+        "elapsed_ms": round((time.monotonic() - started) * 1000, 1),
+        "stdout_sha256": _sha256(stdout),
+        "stdout_bytes": len(stdout.encode("utf-8")),
+        "stderr_sha256": _sha256(stderr),
+        "stderr_bytes": len(stderr.encode("utf-8")),
+        "trace_path": str(trace),
+        "trace_bytes": trace.stat().st_size if trace.exists() else 0,
+        "stack_path": str(stack),
+        "stack_bytes": stack.stat().st_size if stack.exists() else 0,
+        "raw_stdout_path": str(stdout_path),
+        "raw_stderr_path": str(stderr_path),
+    }
+    if stdout.strip():
+        try:
+            parsed = json.loads(stdout)
+            if isinstance(parsed, Mapping):
+                result["adapter_result"] = dict(parsed)
+        except json.JSONDecodeError:
+            result["adapter_result_parse_error"] = True
+    return result
+
+
+def _trace_summary(path: Path) -> dict[str, Any]:
+    rows: list[dict[str, Any]] = []
+    if path.exists():
+        for line in path.read_text(encoding="utf-8").splitlines():
+            try:
+                row = json.loads(line)
+            except json.JSONDecodeError:
+                continue
+            if isinstance(row, Mapping):
+                rows.append(dict(row))
+    operations: dict[str, dict[str, int]] = {}
+    for row in rows:
+        operation = str(row.get("operation"))
+        phases = operations.setdefault(operation, {})
+        phase = str(row.get("phase"))
+        phases[phase] = phases.get(phase, 0) + 1
+    return {"path": str(path), "row_count": len(rows), "operations": operations, "rows": rows}
+
+
+def _checkpoint_summary(directory: Path) -> list[dict[str, Any]]:
+    result: list[dict[str, Any]] = []
+    for path in sorted([*directory.glob("*.json"), *directory.glob("*.tmp")]):
+        try:
+            value = json.loads(path.read_text(encoding="utf-8"))
+        except (OSError, json.JSONDecodeError):
+            result.append({"path": str(path), "json_complete": False})
+            continue
+        if not isinstance(value, Mapping):
+            continue
+        scope = value.get("scope")
+        result.append(
+            {
+                "path": str(path),
+                "sha256": _sha256(path.read_bytes()),
+                "keys": sorted(str(key) for key in value),
+                "offset": value.get("offset"),
+                "identity_version": value.get("identity_version"),
+                "scope_keys": (
+                    sorted(str(key) for key in scope) if isinstance(scope, Mapping) else []
+                ),
+                "scope_host": scope.get("host") if isinstance(scope, Mapping) else None,
+            }
+        )
+    return result
+
+
+def _parse_args(argv: list[str] | None = None) -> argparse.Namespace:
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument("--wheel", type=Path, required=True, help="wheel archive")
+    parser.add_argument("--expected-wheel-sha256", required=True, help="wheel SHA256 digest")
+    parser.add_argument("--source-commit", required=True, help="source commit bound to the wheel")
+    parser.add_argument(
+        "--build-verification", type=Path, required=True, help="passed full-check report"
+    )
+    parser.add_argument("--output", type=Path, default=OUTPUT_DIR, help="new evidence directory")
+    args = parser.parse_args(argv)
+    digest = args.expected_wheel_sha256.lower()
+    if len(digest) != 64 or any(char not in "0123456789abcdef" for char in digest):
+        parser.error("--expected-wheel-sha256 must be a 64-character hexadecimal digest")
+    args.expected_wheel_sha256 = digest
+    if len(args.source_commit) != 40 or any(
+        char not in "0123456789abcdefABCDEF" for char in args.source_commit
+    ):
+        parser.error("--source-commit must be a 40-character hexadecimal commit")
+    args.source_commit = args.source_commit.lower()
+    args.wheel = args.wheel.resolve()
+    args.build_verification = args.build_verification.resolve()
+    args.output = args.output.resolve()
+    return args
+
+
+def main(argv: list[str] | None = None) -> int:
+    args = _parse_args(argv)
+    if args.output.exists():
+        raise FileExistsError(f"Refusing to overwrite evidence directory: {args.output}")
+    if not TEMP_PARENT.is_dir():
+        raise FileNotFoundError(f"Required private fixture parent is missing: {TEMP_PARENT}")
+    args.output.mkdir(parents=True)
+    report: dict[str, Any] = {
+        "runner": "claude-adapter-timing-v1",
+        "source_commit": args.source_commit,
+        "runner_sha256": _sha256(Path(__file__).read_bytes()),
+        "started_at": datetime.now(timezone.utc).isoformat(),
+        "status": "not_observed",
+        "scope": "offline direct installed Mnemos Claude adapter against a disposable loopback service",
+        "child_timeout_seconds": CHILD_TIMEOUT_SECONDS,
+        "fault_dump_seconds": FAULT_DUMP_SECONDS,
+        "provider": {"embedding": "constant fixture", "cognition": "unavailable"},
+        "native_claude_called": False,
+        "model_calls": 0,
+        "network_provider_called": False,
+        "auth_used": False,
+        "session_start_tested": False,
+        "session_start_limitation": "SessionStart is intentionally outside this adapter timing gate.",
+        "instrumentation": {
+            "child_monkeypatches": [
+                "ClaudeCodeAdapter._capture",
+                "ClaudeCodeAdapter._capture_transcript",
+                "ClaudeCodeAdapter.retrieve_context",
+                "ClaudeCodeAdapter._remember_pending_duplicate",
+            ],
+            "interpretation": "Stage timings include probe instrumentation and are not unmodified native host timings.",
+            "raw_child_stdout_stderr": "private fixture files",
+        },
+        "wheel_argument": str(args.wheel),
+        "expected_wheel_sha256": args.expected_wheel_sha256,
+        "build_verification_argument": str(args.build_verification),
+    }
+    fixture = Path(tempfile.mkdtemp(prefix="mnemos-claude-adapter-timing-v1-", dir=TEMP_PARENT))
+    service: Any | None = None
+    store: Any | None = None
+    restart_service: Any | None = None
+    restart_store: Any | None = None
+    try:
+        from mnemos import __file__ as mnemos_file
+        import mnemos.adapters.claude_code as claude_code_module
+        from mnemos.config import MnemosConfig
+        from mnemos.engine import MnemosEngine
+        from mnemos.memory_service import LocalMemoryService
+        from mnemos.scopes import ScopeRegistry
+        from mnemos.service import MnemosService, _protect_private_path
+        from mnemos.utils.embeddings import SimpleEmbeddingProvider
+        from mnemos.utils.llm import UnavailableLLMProvider
+        from mnemos.utils.storage import SQLiteStore
+
+        _protect_private_path(fixture)
+        package_path = Path(mnemos_file).resolve()
+        if "site-packages" not in {part.lower() for part in package_path.parts}:
+            raise RuntimeError(f"Installed-wheel isolation failed: imported {package_path}")
+        report["python"] = {
+            "executable": str(Path(sys.executable).resolve()),
+            "mnemos_package": str(package_path),
+            "site_packages_asserted": True,
+        }
+        report["build_verification"] = _verify_build(
+            args.build_verification,
+            source_commit=args.source_commit,
+            wheel_path=args.wheel,
+            wheel_sha256=args.expected_wheel_sha256,
+        )
+        report["package_provenance"] = _pinned_package_provenance(
+            package_path,
+            wheel_path=args.wheel,
+            expected_wheel_sha256=args.expected_wheel_sha256,
+            source_commit=args.source_commit,
+        )
+        adapter_module_path = Path(claude_code_module.__file__).resolve()
+        if adapter_module_path != package_path.parent / "adapters" / "claude_code.py":
+            raise RuntimeError("imported Claude adapter is outside the verified package")
+        distribution = importlib_metadata.distribution("mnemos-memory")
+        distribution_name = distribution.metadata.get("Name")
+        if distribution_name != "mnemos-memory" or not distribution.version:
+            raise RuntimeError("installed Mnemos distribution identity is incomplete")
+        report["package_provenance"].update(
+            {
+                "adapter_module": str(adapter_module_path),
+                "adapter_module_sha256": _sha256(adapter_module_path.read_bytes()),
+                "distribution_name": distribution_name,
+                "distribution_version": distribution.version,
+                "distribution_location": str(distribution.locate_file("")),
+                "resolved_wheel_path": str(args.wheel.resolve()),
+            }
+        )
+
+        project = fixture / "project"
+        runtime = fixture / "runtime"
+        routing = fixture / "routing"
+        checkpoints = fixture / "checkpoints"
+        config_dir = fixture / "claude-config"
+        traces = fixture / "traces"
+        for directory in (project, runtime, routing, checkpoints, config_dir, traces):
+            _private_mkdir(directory)
+        transcript = config_dir / "projects" / "timing" / "session.jsonl"
+        transcript.parent.mkdir(parents=True, exist_ok=False)
+        _protect_private_path(transcript.parent)
+
+        registry = ScopeRegistry()
+        identity = registry.register_project(project, user_profile_id=PROFILE, enabled=True)
+        registry.save(fixture / "scopes.json")
+        config = MnemosConfig()
+        for name in ("surprisal", "mutable_rag", "affective", "sleep", "spreading"):
+            setattr(config.modules, name, False)
+
+        class ConstantFixtureEmbeddings(SimpleEmbeddingProvider):
+            def embed(self, text: str) -> list[float]:
+                del text
+                return [1.0] + [0.0] * 63
+
+            def embed_batch(self, texts: list[str]) -> list[list[float]]:
+                return [self.embed(text) for text in texts]
+
+        session_id = "4e1f2d65-4ca2-4ef3-b7d4-12f4d1d9d9b0"
+        prompt_id = "f4a2c7d0-c7d2-4d4d-8f7d-5c2fbd7d7ab1"
+        user_source_id = "b1c0d7e2-8c14-46d7-a2a1-2e6c7b4c4a90"
+        assistant_source_id = "c9d5f7a1-3a6b-4bf4-9a2a-8b9e8d4f5c01"
+        for identifier in (session_id, prompt_id, user_source_id, assistant_source_id):
+            try:
+                UUID(identifier)
+            except ValueError as exc:
+                raise RuntimeError("fixture identity is not UUID-shaped") from exc
+        prompt = "Which private diagnostic label was seeded for this scoped project?"
+        assistant = "The private diagnostic label is present in project memory."
+        seed_content = "The private diagnostic label is timing-label-constant."
+
+        def transcript_record(role: str, source_id: str, content: str) -> str:
+            return (
+                json.dumps(
+                    {
+                        "type": role,
+                        "uuid": source_id,
+                        "sessionId": session_id,
+                        "promptId": prompt_id,
+                        "message": {"role": role, "content": [{"type": "text", "text": content}]},
+                    },
+                    separators=(",", ":"),
+                )
+                + "\n"
+            )
+
+        transcript.write_text(transcript_record("user", user_source_id, prompt), encoding="utf-8")
+        _protect_private_path(transcript)
+
+        def start_service() -> tuple[Any, Any, Any]:
+            new_store = SQLiteStore(str(fixture / "memory.sqlite"))
+            engine = MnemosEngine(
+                config=config,
+                llm=UnavailableLLMProvider("timing fixture cognition unavailable"),
+                embedder=ConstantFixtureEmbeddings(dim=64),
+                store=new_store,
+                scope_registry=registry,
+                require_scope_context=True,
+            )
+            new_service = MnemosService(
+                dispatcher=LocalMemoryService(engine, registry),
+                descriptor_path=fixture / "runtime.json",
+                lock_path=fixture / "service.lock",
+                startup_timeout=5,
+                dispatch_timeout=20,
+            )
+            new_service.start()
+            new_context = registry.resolve(
+                project,
+                user_profile_id=PROFILE,
+                session_id=session_id,
+                host="claude-code",
+            )
+            return new_service, new_store, new_context
+
+        service, store, context = start_service()
+        seed = service.submit(
+            "remember",
+            {
+                "context": context.model_dump(mode="json"),
+                "event_id": "claude-adapter-timing-seed",
+                "content": seed_content,
+                "scope": "project",
+            },
+        )
+        if seed.get("status") != "committed":
+            raise RuntimeError("fixture seed was not committed")
+        maintenance = service.submit("maintenance", {"context": context.model_dump(mode="json")})
+        if not isinstance(maintenance, Mapping):
+            raise RuntimeError("fixture maintenance did not return an object")
+        environment = _clean_environment(
+            {
+                "MNEMOS_RUNTIME_DESCRIPTOR": str(fixture / "runtime.json"),
+                "MNEMOS_SCOPE_REGISTRY": str(fixture / "scopes.json"),
+                "MNEMOS_USER_PROFILE_ID": PROFILE,
+                "MNEMOS_PROJECT_ROOT": str(project),
+                "MNEMOS_RUNTIME_DIR": str(runtime),
+                "MNEMOS_CLAUDE_CHECKPOINT_DIR": str(checkpoints),
+                "MNEMOS_ROUTING_REVIEW_DIR": str(routing),
+                "MNEMOS_AUTO_START": "false",
+                "MNEMOS_AUTO_RETRIEVE": "true",
+                "CLAUDE_CONFIG_DIR": str(config_dir),
+            }
+        )
+        child = fixture / "adapter_probe.py"
+        _write_child_probe(child)
+        user_payload = {
+            "hook_event_name": "UserPromptSubmit",
+            "session_id": session_id,
+            "prompt_id": prompt_id,
+            "cwd": str(project),
+            "prompt": prompt,
+            "transcript_path": str(transcript),
+        }
+        stop_payload = {
+            "hook_event_name": "Stop",
+            "session_id": session_id,
+            "prompt_id": prompt_id,
+            "cwd": str(project),
+            "transcript_path": str(transcript),
+            "last_assistant_message": assistant,
+        }
+        user_probe = _run_probe(
+            child=child,
+            event="UserPromptSubmit",
+            payload=user_payload,
+            trace=traces / "user-prompt.jsonl",
+            stack=traces / "user-prompt.stack.txt",
+            cwd=project,
+            environment=environment,
+        )
+        report["probes"] = {"UserPromptSubmit": user_probe}
+        if user_probe.get("timed_out") or user_probe.get("returncode") != 0:
+            raise RuntimeError("UserPromptSubmit adapter probe failed")
+        user_result = user_probe.get("adapter_result")
+        if not isinstance(user_result, Mapping):
+            raise RuntimeError("UserPromptSubmit returned no parseable adapter result")
+        if user_result.get("committed") is not True:
+            raise RuntimeError("UserPromptSubmit did not acknowledge capture")
+        if seed_content not in str(user_result.get("context", "")):
+            raise RuntimeError("UserPromptSubmit retrieval omitted the seeded fact")
+
+        with transcript.open("a", encoding="utf-8") as handle:
+            handle.write(transcript_record("assistant", assistant_source_id, assistant))
+        _protect_private_path(transcript)
+        stop_probe = _run_probe(
+            child=child,
+            event="Stop",
+            payload=stop_payload,
+            trace=traces / "stop.jsonl",
+            stack=traces / "stop.stack.txt",
+            cwd=project,
+            environment=environment,
+        )
+        report["probes"]["Stop"] = stop_probe
+        if stop_probe.get("timed_out") or stop_probe.get("returncode") != 0:
+            raise RuntimeError("Stop adapter probe failed")
+        stop_result = stop_probe.get("adapter_result")
+        if not isinstance(stop_result, Mapping) or stop_result.get("committed") is not True:
+            raise RuntimeError("Stop did not acknowledge assistant capture")
+        service.submit("maintenance", {"context": context.model_dump(mode="json")})
+        events_before_restart = list(store.list_episodic_events())
+        captured_before_restart = [
+            event
+            for event in events_before_restart
+            if event.metadata.get("source_kind") == "claude_code_transcript"
+        ]
+        if not any(
+            event.role == "user" and event.content == prompt for event in captured_before_restart
+        ):
+            raise RuntimeError("User transcript event was not captured")
+        if not any(
+            event.role == "assistant" and event.content == assistant
+            for event in captured_before_restart
+        ):
+            raise RuntimeError("Assistant transcript event was not captured")
+        expected_source_refs = {
+            "user": prompt_id,
+            "assistant": assistant_source_id,
+        }
+        for role, source_ref in expected_source_refs.items():
+            matching = [
+                event
+                for event in captured_before_restart
+                if event.role == role and event.content in {prompt, assistant}
+            ]
+            if len(matching) != 1 or matching[0].metadata.get("source_ref") != source_ref:
+                raise RuntimeError(f"{role} transcript source identity was not preserved")
+            if (
+                matching[0].metadata.get("user_profile_id") != PROFILE
+                or matching[0].metadata.get("scope_id") != identity.id
+            ):
+                raise RuntimeError(f"{role} transcript scope was not preserved")
+        checkpoint_before = _checkpoint_summary(checkpoints)
+        if not checkpoint_before:
+            raise RuntimeError("Stop did not write a scoped checkpoint")
+        report["before_restart"] = {
+            "event_count": len(events_before_restart),
+            "transcript_event_count": len(captured_before_restart),
+            "checkpoint_count": len(checkpoint_before),
+            "checkpoint_summary": checkpoint_before,
+            "event_id_sha256": sorted(_sha256(event.id) for event in events_before_restart),
+            "transcript_source_id_sha256": sorted(
+                _sha256(source_ref) for source_ref in (user_source_id, assistant_source_id)
+            ),
+            "pending_prompt_id_sha256": _sha256(prompt_id),
+            "captured_source_ref_sha256": sorted(
+                _sha256(str(event.metadata["source_ref"]))
+                for event in captured_before_restart
+                if isinstance(event.metadata.get("source_ref"), str)
+            ),
+        }
+
+        service.stop()
+        service = None
+        store.close()
+        store = None
+        if (fixture / "runtime.json").exists():
+            raise RuntimeError("service descriptor survived shutdown")
+        restart_service, restart_store, restart_context = start_service()
+        restart_environment = dict(environment)
+        replay_probe = _run_probe(
+            child=child,
+            event="Stop",
+            payload=stop_payload,
+            trace=traces / "stop-replay.jsonl",
+            stack=traces / "stop-replay.stack.txt",
+            cwd=project,
+            environment=restart_environment,
+        )
+        report["probes"]["StopReplayAfterReopen"] = replay_probe
+        if replay_probe.get("timed_out") or replay_probe.get("returncode") != 0:
+            raise RuntimeError("Stop replay adapter probe failed")
+        replay_result = replay_probe.get("adapter_result")
+        if not isinstance(replay_result, Mapping):
+            raise RuntimeError("Stop replay returned no parseable adapter result")
+        if replay_result.get("captured") != 0 or replay_result.get("committed") is not False:
+            raise RuntimeError("Stop replay created a duplicate event")
+        events_after_replay = list(restart_store.list_episodic_events())
+        if sorted(event.id for event in events_after_replay) != sorted(
+            event.id for event in events_before_restart
+        ):
+            raise RuntimeError("Stop replay changed durable event IDs")
+        report["after_reopen"] = {
+            "event_count": len(events_after_replay),
+            "event_id_sha256": sorted(_sha256(event.id) for event in events_after_replay),
+            "checkpoint_summary": _checkpoint_summary(checkpoints),
+            "replay_captured": replay_result.get("captured"),
+            "replay_status": replay_result.get("status"),
+        }
+        report["fixture"] = str(fixture)
+        report["fixture_layout"] = {
+            "project": str(project),
+            "database": str(fixture / "memory.sqlite"),
+            "runtime_descriptor": str(fixture / "runtime.json"),
+            "checkpoint_directory": str(checkpoints),
+            "transcript_root": str(config_dir),
+            "raw_trace_directory": str(traces),
+        }
+        report["trace_summary"] = {
+            name: _trace_summary(path)
+            for name, path in {
+                "UserPromptSubmit": traces / "user-prompt.jsonl",
+                "Stop": traces / "stop.jsonl",
+                "StopReplayAfterReopen": traces / "stop-replay.jsonl",
+            }.items()
+        }
+        report["criteria"] = {
+            "wheel_and_source_bound": True,
+            "user_prompt_completed": True,
+            "user_capture_acknowledged": True,
+            "retrieval_context_observed": True,
+            "stop_completed": True,
+            "assistant_capture_acknowledged": True,
+            "checkpoint_written": True,
+            "reopen_replay_completed": True,
+            "replay_created_no_duplicate": True,
+            "native_claude_called": False,
+            "model_calls": 0,
+            "network_provider_called": False,
+        }
+        report["status"] = "passed"
+    except Exception as exc:
+        report.update(
+            {
+                "status": "failed",
+                "error_type": type(exc).__name__,
+                "error_digest": _sha256(str(exc)),
+            }
+        )
+        report["fixture"] = str(fixture)
+        trace_dir = fixture / "traces"
+        if trace_dir.exists():
+            report["trace_summary"] = {
+                path.stem: _trace_summary(path) for path in sorted(trace_dir.glob("*.jsonl"))
+            }
+        checkpoint_dir = fixture / "checkpoints"
+        if checkpoint_dir.exists():
+            report["checkpoint_summary"] = _checkpoint_summary(checkpoint_dir)
+        (fixture / "runner-error.txt").write_text(traceback.format_exc(), encoding="utf-8")
+    finally:
+        cleanup_errors: list[str] = []
+        for active in (restart_service, service):
+            if active is not None:
+                try:
+                    active.stop()
+                except Exception as exc:
+                    cleanup_errors.append(f"{type(exc).__name__}:service")
+        for active_store in (restart_store, store):
+            if active_store is not None:
+                try:
+                    active_store.close()
+                except Exception as exc:
+                    cleanup_errors.append(f"{type(exc).__name__}:store")
+        report["cleanup_errors"] = cleanup_errors
+        report["descriptor_absent_after_shutdown"] = not (fixture / "runtime.json").exists()
+        report["private_fixture_preserved"] = True
+        report["finished_at"] = datetime.now(timezone.utc).isoformat()
+        args.output.mkdir(parents=True, exist_ok=True)
+        (args.output / "report.json").write_text(
+            json.dumps(report, indent=2) + "\n", encoding="utf-8"
+        )
+    print(
+        json.dumps(
+            {
+                "status": report["status"],
+                "fixture": report.get("fixture"),
+                "error_type": report.get("error_type"),
+            }
+        )
+    )
+    return 0 if report["status"] == "passed" else 1
+
+
+if __name__ == "__main__":
+    raise SystemExit(main())

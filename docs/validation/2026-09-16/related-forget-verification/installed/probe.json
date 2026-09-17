@@ -1,0 +1,99 @@
+{
+  "assertions": {
+    "first_stop_captured_two": true,
+    "first_stop_ok": true,
+    "first_store_has_two_events": true,
+    "one_native_assistant": true,
+    "replay_captured_zero": true,
+    "replay_explicitly_degraded_without_turn_id": true,
+    "restarted_store_has_same_two_events": true
+  },
+  "finished_at": "2026-09-17T11:27:18.711773+00:00",
+  "fixture_directory": "D:\\WindowsTemp\\mnemos-claude-stop-fixed-gcdsw3uv",
+  "import_mode": "installed_wheel",
+  "imported_mnemos": "D:\\WindowsTemp\\mnemos-related-forget-wheel-20260917-v1\\Lib\\site-packages\\mnemos\\__init__.py",
+  "package_binding": {
+    "exact_wheel_members": 56,
+    "source_files_normalized_lf": 53
+  },
+  "probe": "claude_stop_replay_positive_assertions",
+  "providers": {
+    "cognition": "unavailable",
+    "embedding": "constant"
+  },
+  "reproducer_path": "D:\\Development\\mnemos\\mnemos\\.worktrees\\functional-local-memory\\.venv\\related-forget-frozen-v1\\docs\\validation\\2026-09-16\\claude-stop-replay\\runner.py.txt",
+  "reproducer_sha256": "63c44dad666bd4764184c77ff2a8b7438a7386031d7cc16291989a9a1cd5d342",
+  "reproduction": {
+    "assistant_source_refs_after_restart": [
+      "native-assistant-uuid"
+    ],
+    "checkpoint": "D:\\WindowsTemp\\mnemos-claude-stop-fixed-gcdsw3uv\\checkpoints\\f621fce3965f1929352d44077060542e9baabbf0b2e7c691c2c1bb4f1e80c1fd.json",
+    "checkpoint_offset": 364,
+    "events_after_first_stop": [
+      {
+        "content_length": 38,
+        "content_sha256": "c66d9436d3da49787effce5ad93c5a02ffa42720c55c629049478b64fb52b942",
+        "id": "52ffaae1c1f1748e6bafe7b6e802d338ef669dfd704943085a4612fc9d722bcf",
+        "role": "user",
+        "source_event_id": "claude:v2:1287d06bc9d406b2c43a0aca350f0f235a0f6f80252fd4780fc13f151d871d47",
+        "source_ref": "native-user-uuid"
+      },
+      {
+        "content_length": 47,
+        "content_sha256": "9ab209bcf6e9704f78e6233831c2e6d32f8c9344d904676041e20d742baa7271",
+        "id": "9d399324d717a45fd3416c4ad067b59349e94748a44f3593bfed88f734142cf1",
+        "role": "assistant",
+        "source_event_id": "claude:v2:133cbb29bddc765d3cb5c8be8061d61435e7e267774cdbb61f37b2d6bbabaeec",
+        "source_ref": "native-assistant-uuid"
+      }
+    ],
+    "events_after_second_stop": [
+      {
+        "content_length": 38,
+        "content_sha256": "c66d9436d3da49787effce5ad93c5a02ffa42720c55c629049478b64fb52b942",
+        "id": "52ffaae1c1f1748e6bafe7b6e802d338ef669dfd704943085a4612fc9d722bcf",
+        "role": "user",
+        "source_event_id": "claude:v2:1287d06bc9d406b2c43a0aca350f0f235a0f6f80252fd4780fc13f151d871d47",
+        "source_ref": "native-user-uuid"
+      },
+      {
+        "content_length": 47,
+        "content_sha256": "9ab209bcf6e9704f78e6233831c2e6d32f8c9344d904676041e20d742baa7271",
+        "id": "9d399324d717a45fd3416c4ad067b59349e94748a44f3593bfed88f734142cf1",
+        "role": "assistant",
+        "source_event_id": "claude:v2:133cbb29bddc765d3cb5c8be8061d61435e7e267774cdbb61f37b2d6bbabaeec",
+        "source_ref": "native-assistant-uuid"
+      }
+    ],
+    "expected_behavior": "The first Stop consumes transcript deltas; an identical Stop after restart must not capture a fallback assistant event.",
+    "first_stop": {
+      "captured": 2,
+      "committed": true,
+      "error": null,
+      "queued": false,
+      "status": "ok"
+    },
+    "minimal_fix_principle": "Persist the last captured assistant source reference, content fingerprint, and native turn identity in the v2 checkpoint. Suppress a fallback only when those durable fields identify the same turn. If no native turn identity is available, return a degraded result and wait for a transcript delta rather than synthesizing last_assistant_message as a new event. This avoids duplicate replay while leaving same-text responses from later turns eligible when their turn identity differs.",
+    "project_id": "8ac5d71b-f841-4ff2-b050-e908f00a16ed",
+    "second_stop_after_restart": {
+      "captured": 0,
+      "committed": false,
+      "error": "identity_reference_unavailable",
+      "queued": false,
+      "status": "degraded"
+    },
+    "status": "not_reproduced",
+    "transcript": "D:\\WindowsTemp\\mnemos-claude-stop-fixed-gcdsw3uv\\transcript.jsonl"
+  },
+  "runner_sha256": "f785255cccb39e1603869a0d3ba7239d5febe2169dbc947d7165d135196f3ebd",
+  "schema_version": 1,
+  "source_checkout": "D:\\Development\\mnemos\\mnemos\\.worktrees\\functional-local-memory\\.venv\\related-forget-frozen-v1",
+  "source_commit_actual": "c805cc25bce39ae8c2849c754303f5558f8ad7b3",
+  "source_commit_expected": "c805cc25bce39ae8c2849c754303f5558f8ad7b3",
+  "started_at": "2026-09-17T11:27:09.864432+00:00",
+  "status": "passed",
+  "wheel": {
+    "path": "D:\\Development\\mnemos\\mnemos\\.worktrees\\functional-local-memory\\.venv\\related-forget-checks-v1\\dist\\mnemos_memory-0.7.0-py3-none-any.whl",
+    "sha256": "7d723e1bbcd095dfb9eb06f1490e10ef2699db42a55263f95df6d4b3dfe27c12"
+  }
+}

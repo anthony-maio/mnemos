@@ -1,0 +1,109 @@
+{
+  "source_commit": "c805cc25bce39ae8c2849c754303f5558f8ad7b3",
+  "source_checkout": "D:\\Development\\mnemos\\mnemos\\.worktrees\\functional-local-memory\\.venv\\related-forget-frozen-v1",
+  "status": "passed",
+  "started_at": "2026-09-17T11:14:20.280371+00:00",
+  "checks": [
+    {
+      "name": "pytest",
+      "command": [
+        "D:\\Development\\mnemos\\mnemos\\.worktrees\\functional-local-memory\\.venv\\Scripts\\python.exe",
+        "-m",
+        "pytest",
+        "-q",
+        "--junitxml",
+        "D:\\Development\\mnemos\\mnemos\\.worktrees\\functional-local-memory\\.venv\\related-forget-checks-v1\\pytest.xml"
+      ],
+      "status": "passed",
+      "started_at": "2026-09-17T11:14:20.281167+00:00",
+      "exit_code": 0,
+      "finished_at": "2026-09-17T11:25:14.678740+00:00",
+      "counts": {
+        "tests": 740,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 2
+      }
+    },
+    {
+      "name": "black",
+      "command": [
+        "D:\\Development\\mnemos\\mnemos\\.worktrees\\functional-local-memory\\.venv\\Scripts\\python.exe",
+        "-m",
+        "black",
+        "--check",
+        "."
+      ],
+      "status": "passed",
+      "started_at": "2026-09-17T11:25:14.694079+00:00",
+      "exit_code": 0,
+      "finished_at": "2026-09-17T11:25:17.563399+00:00"
+    },
+    {
+      "name": "mypy",
+      "command": [
+        "D:\\Development\\mnemos\\mnemos\\.worktrees\\functional-local-memory\\.venv\\compat-py310\\Scripts\\python.exe",
+        "-m",
+        "mypy",
+        "."
+      ],
+      "status": "passed",
+      "started_at": "2026-09-17T11:25:17.565690+00:00",
+      "exit_code": 0,
+      "finished_at": "2026-09-17T11:25:38.265756+00:00"
+    },
+    {
+      "name": "javascript",
+      "command": [
+        "node",
+        "--check",
+        "mnemos/ui/app.js"
+      ],
+      "status": "passed",
+      "started_at": "2026-09-17T11:25:38.268371+00:00",
+      "exit_code": 0,
+      "finished_at": "2026-09-17T11:25:38.363623+00:00"
+    },
+    {
+      "name": "build",
+      "command": [
+        "D:\\Development\\mnemos\\mnemos\\.worktrees\\functional-local-memory\\.venv\\Scripts\\python.exe",
+        "-m",
+        "build",
+        "--outdir",
+        "D:\\Development\\mnemos\\mnemos\\.worktrees\\functional-local-memory\\.venv\\related-forget-checks-v1\\dist"
+      ],
+      "status": "passed",
+      "started_at": "2026-09-17T11:25:38.364958+00:00",
+      "exit_code": 0,
+      "finished_at": "2026-09-17T11:26:51.490423+00:00"
+    },
+    {
+      "name": "twine",
+      "command": [
+        "D:\\Development\\mnemos\\mnemos\\.worktrees\\functional-local-memory\\.venv\\Scripts\\python.exe",
+        "-m",
+        "twine",
+        "check",
+        "D:\\Development\\mnemos\\mnemos\\.worktrees\\functional-local-memory\\.venv\\related-forget-checks-v1\\dist\\mnemos_memory-0.7.0-py3-none-any.whl",
+        "D:\\Development\\mnemos\\mnemos\\.worktrees\\functional-local-memory\\.venv\\related-forget-checks-v1\\dist\\mnemos_memory-0.7.0.tar.gz"
+      ],
+      "exit_code": 0,
+      "status": "passed"
+    }
+  ],
+  "runner_sha256": "d2f05b5e2189e3d3ba5ce9b535d8f5adc98d0c5409037cfff7f4460fac0bdfd6",
+  "updated_at": "2026-09-17T11:26:52.339993+00:00",
+  "artifacts": [
+    {
+      "file": "D:\\Development\\mnemos\\mnemos\\.worktrees\\functional-local-memory\\.venv\\related-forget-checks-v1\\dist\\mnemos_memory-0.7.0-py3-none-any.whl",
+      "bytes": 273064,
+      "sha256": "7d723e1bbcd095dfb9eb06f1490e10ef2699db42a55263f95df6d4b3dfe27c12"
+    },
+    {
+      "file": "D:\\Development\\mnemos\\mnemos\\.worktrees\\functional-local-memory\\.venv\\related-forget-checks-v1\\dist\\mnemos_memory-0.7.0.tar.gz",
+      "bytes": 12348191,
+      "sha256": "2418f07beb862609bb5630507c9a617fcfb6d3ebe4fe9f293ab8511927534fe2"
+    }
+  ]
+}

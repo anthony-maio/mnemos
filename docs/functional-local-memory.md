@@ -108,7 +108,7 @@ unselected dependencies prevent deletion, including references in queued jobs
 after source text expires. Matching uses the full current or historical
 assertion within the same project and profile; it does not identify paraphrases.
 The [verification record](validation/2026-09-16/related-forget-verification/README.md)
-separates passing focused/browser checks from pending full-package and native
+separates passing focused/browser/package checks from pending native
 acceptance.
 All five module switches default to enabled; the baseline retrieval profile
 is a separate ranking setting.
@@ -170,7 +170,7 @@ Current evidence has these boundaries:
 
 | Evidence | Status |
 | --- | --- |
-| Deterministic module and storage tests | Source 9e25339: 703 tests passed with two optional WSL skips, plus formatting, typing, JavaScript, build, and package checks. Its wheel passed Claude replay, Hermes entry-point discovery, and offline Codex API preflight. Native host results remain bound to the earlier source20f package. See [package verification](validation/2026-09-16/atomic-schema-verification/README.md). Related-forget source c805cc2 has passing focused/browser checks; its full frozen-source run is in progress |
+| Deterministic module and storage tests | Source c805cc2: 738 tests passed with two optional skips, plus formatting, typing, JavaScript, build, and package checks. Its wheel passed Claude replay and instrumented adapter timing, Hermes entry-point discovery, and generated Codex MCP transport preflight. Native Codex calls were cancelled by the client, so full native lifecycle acceptance remains open. See [package and host verification](validation/2026-09-16/related-forget-verification/README.md) |
 | Synthetic local service and SQLite restart flow | Observed for one provider-backed fact |
 | Full real-model ablation and held-out quality evaluation | Failed v2 observations preserved; repaired real-model lifecycle preflight passed four cases. Frozen b7 held-out mechanism phase completed: graph correctness passed, graph coverage failed with zero eligible cases, synthetic-state affective top-1 was 0.33 versus 0.00, and classifier fidelity passed 154/300 observations. Seven-profile lifecycle evaluation is running. See [mechanism results and limits](validation/2026-09-16/real-model-v3/mechanism-heldout/REVIEW.md) |
 | Installed Claude Code, Codex, and Hermes host smoke | Installed 20f Claude and Codex returned random canaries and captured both roles across restart using constant fixture vectors. Claude reported degraded transcript/identity coverage; Codex used generated TOML hooks. Actual WSL bridge and installed Hermes API observed; complete native lifecycle matrix and Desktop checks remain open |
