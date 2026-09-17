@@ -35,6 +35,67 @@ def _fact_proposal_json_schema(schema: dict[str, Any]) -> None:
     schema["oneOf"] = branches
 
 
+def _extraction_response_json_schema(schema: dict[str, Any]) -> None:
+    """Keep each extraction decision complete for constrained decoders.
+
+    Some structured-output grammar converters inspect only ``oneOf``
+    alternatives and ignore sibling object properties.  Put the decision,
+    facts, and reason constraints on each complete alternative so a decoder
+    cannot emit a no-facts response without its required explanation.
+    """
+
+    original = deepcopy(schema)
+    properties = original.get("properties")
+    if not isinstance(properties, dict):
+        raise ValueError("Extraction response schema has no properties")
+    facts = properties.get("facts")
+    reason = properties.get("reason")
+    if not isinstance(facts, dict) or not isinstance(reason, dict):
+        raise ValueError("Extraction response schema is missing facts or reason")
+
+    nonempty_reason = {
+        "anyOf": [
+            {"pattern": r"^[\s\S]*\S[\s\S]*$", "type": "string"},
+            {"type": "null"},
+        ]
+    }
+    facts_branch = {
+        "additionalProperties": False,
+        "properties": {
+            "decision": {"enum": ["facts"], "type": "string"},
+            "facts": {**facts, "minItems": 1},
+            "reason": nonempty_reason,
+        },
+        "required": ["decision", "facts"],
+        "type": "object",
+    }
+    no_facts_branch = {
+        "additionalProperties": False,
+        "properties": {
+            "decision": {"enum": ["no_durable_facts"], "type": "string"},
+            "facts": {**facts, "maxItems": 0},
+            "reason": {
+                "pattern": r"^[\s\S]*\S[\s\S]*$",
+                "type": "string",
+            },
+        },
+        "required": ["decision", "facts", "reason"],
+        "type": "object",
+    }
+
+    definitions = original.get("$defs")
+    title = original.get("title")
+    description = original.get("description")
+    schema.clear()
+    if isinstance(definitions, dict):
+        schema["$defs"] = definitions
+    if isinstance(description, str):
+        schema["description"] = description
+    if isinstance(title, str):
+        schema["title"] = title
+    schema["oneOf"] = [facts_branch, no_facts_branch]
+
+
 class CaptureEvent(BaseModel):
     model_config = ConfigDict(extra="forbid")
     identity_version: Literal[1, 2] = 1
@@ -80,7 +141,7 @@ class FactProposal(BaseModel):
 class ExtractionResponse(BaseModel):
     """The complete, schema-checked response from sleep extraction."""
 
-    model_config = ConfigDict(extra="forbid")
+    model_config = ConfigDict(extra="forbid", json_schema_extra=_extraction_response_json_schema)
     decision: Literal["facts", "no_durable_facts"]
     facts: list[FactProposal]
     reason: str | None = None
