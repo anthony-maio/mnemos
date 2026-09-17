@@ -668,3 +668,8 @@ and a versioned correction. All six inspection calls preserve every logical
 table, including after reopen. Black and compatible strict mypy passed.
 These focused checks do not supersede the sourcec805 full-suite/package
 checkpoint or establish native lifecycle acceptance for the new source.
+
+The future benchmark report note now accurately describes extraction
+precision as an exact-text, scope, and evidence proxy. Unmatched text,
+including paraphrases, counts as false. This changes the explanation only;
+the scorer, frozen sourceb7 run, thresholds, and prior artifacts are unchanged.

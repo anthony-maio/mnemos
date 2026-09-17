@@ -409,7 +409,7 @@ class OllamaEvaluatorAdapter:
                     "Correction and forget use runtime fact IDs resolved from the service store.",
                     "Provider token counters are recorded when returned; billing cost is not inferred.",
                     "latency_ms is end-to-end session wall clock; cold_latency_ms covers service construction only.",
-                    "Extraction precision uses exact frozen fact text and source role/evidence checks; paraphrases are unjudged.",
+                    "Extraction precision is an exact frozen text, scope, and source-evidence proxy; unmatched text, including paraphrases, counts as false. It does not measure semantic factual precision.",
                     "State pairs use paired natural-language queries; no same-text embedding control is claimed.",
                     "surprisal_filter_kept is derived from durable job encoding_diagnostics and remains null when a job result is unavailable.",
                     "length_filter_kept is a frozen counterfactual shadow policy, not an applied service filter decision.",
