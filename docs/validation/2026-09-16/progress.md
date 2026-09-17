@@ -673,3 +673,19 @@ The future benchmark report note now accurately describes extraction
 precision as an exact-text, scope, and evidence proxy. Unmatched text,
 including paraphrases, counts as false. This changes the explanation only;
 the scorer, frozen sourceb7 run, thresholds, and prior artifacts are unchanged.
+
+## Lifecycle run stopped on validation-trace serialization
+
+The sourceb7 coordinator exited with code 1 at 12:21:39 UTC on September 17.
+The baseline completed 600 observations; the last intact full-pipeline
+checkpoint contains 36. During the next observation, a Pydantic validation
+error left a `ValueError` object in its diagnostic context. JSON checkpoint
+serialization then failed. The remaining profiles did not run.
+
+The working benchmark now serializes Pydantic validation details through
+their JSON representation, retaining the error type, location, message,
+input, and context message. The original validation failure is still raised
+and recorded. A regression reproduced the checkpoint crash before the fix;
+all 36 affected benchmark tests pass afterward. No scorer or acceptance
+threshold changed. The frozen source and failed run remain unchanged;
+a resumed or replacement experiment must record the repaired code identity.

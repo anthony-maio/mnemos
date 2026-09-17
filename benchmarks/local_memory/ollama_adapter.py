@@ -19,6 +19,8 @@ from datetime import datetime
 from pathlib import Path
 from typing import Any, cast
 
+from pydantic import ValidationError
+
 from .contracts import FactRecord, QueryRecord, SessionScenario, SourceEvent, StatePair
 from .harness import ExperimentProfile, RunObservation
 from mnemos.retrieval import score_candidate
@@ -1730,7 +1732,14 @@ def make_ollama_service_factory(
                 errors = getattr(exc, "errors", None)
                 if callable(errors):
                     try:
-                        detail["validation_errors"] = errors()
+                        # Pydantic errors() can retain exception objects in
+                        # ctx. Its JSON serializer preserves their messages
+                        # without making the durable trace unserializable.
+                        detail["validation_errors"] = (
+                            json.loads(exc.json())
+                            if isinstance(exc, ValidationError)
+                            else json.loads(json.dumps(errors()))
+                        )
                     except Exception:
                         detail["validation_errors"] = "unavailable"
                 trace.setdefault("job_exceptions", []).append(detail)
