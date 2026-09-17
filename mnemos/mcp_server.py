@@ -186,9 +186,12 @@ def _format_startup_error(exc: Exception) -> str:
     )
 
 
-def _parse_allowed_scopes(raw: str) -> tuple[str, ...]:
-    scopes = [scope.strip().lower() for scope in raw.split(",") if scope.strip()]
+def _parse_allowed_scopes(raw: str | list[str]) -> tuple[str, ...]:
+    values = raw.split(",") if isinstance(raw, str) else raw
+    scopes = [scope.strip().lower() for scope in values if scope.strip()]
     if not scopes:
+        if isinstance(raw, list):
+            raise ValueError("allowed_scopes must contain at least one scope")
         return VALID_SCOPES
     invalid = [scope for scope in scopes if scope not in VALID_SCOPES]
     if invalid:
@@ -504,9 +507,10 @@ def _register_service_tools(mcp: Any) -> None:
         reconsolidate: bool = True,
         current_scope: str = "project",
         scope_id: str = "",
-        allowed_scopes: str = "project,workspace,global",
+        allowed_scopes: str | list[str] = "project,workspace,global",
         ctx: Context[Any, Any, Any] | None = None,
     ) -> str:
+        """Retrieve scoped facts; allowed_scopes accepts a list or comma-separated string."""
         service_context = _service_context_from_ctx(ctx, "mnemos_retrieve")
         checked_scope, context = _resolved_scope_payload(service_context, current_scope, scope_id)
         del reconsolidate
