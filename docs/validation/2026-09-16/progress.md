@@ -1135,3 +1135,25 @@ fixture diagnostic, not a product latency claim. The
 samples and the executed helper. Full verification of frozen `82b7116` has
 started with fresh C: source and temporary fixtures; that result and a fresh
 installed-package run are pending. Previous D: failures remain preserved.
+
+## SSD package and installed continuity checkpoint
+
+The first C: full run passed 864 tests, skipped four, and failed one documentation
+test because its ancestor-based website lookup could not locate the separate
+D: checkout. The [failed run](ssd-source-check-failure-v1/README.md) is preserved.
+The test now accepts an explicit website input; its assertions are unchanged.
+
+Frozen `6600dc2` then passed 865 tests with four skips in 177.02 seconds, followed
+by Black, strict mypy, JavaScript syntax, build, and Twine. The website file's
+SHA-256 matched before and after verification. A fresh installed wheel passed
+the same 42 selected contract cases in 23.22 seconds, with every loaded Mnemos
+module verified to come from that installed environment. Synthetic Stop replay
+also passed all seven positive assertions, including unchanged event identity
+after restart and zero replay capture. Helper, source, input, and wheel bindings
+were unchanged across installation and validation.
+
+The [package archive](ssd-package-checkpoint-v1/README.md) records this C: result
+separately from the D: failures. No relaxed timeout, weaker durability setting,
+or product performance repair is claimed. Native plugin execution, full native
+cross-host continuity, real-model utility, recall latency, and pilot gates remain
+open. No live configuration or memory data was changed.

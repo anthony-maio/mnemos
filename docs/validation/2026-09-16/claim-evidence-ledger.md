@@ -4,10 +4,17 @@ Assessment date: September 17, 2026. This covers the unreleased
 functional-local-memory worktree, not the installed public package or website.
 The capability IDs come from the original implementation plan.
 
-The latest complete package verification is frozen source `312b8d6`:
-858 tests passed with four skips, plus Black, strict mypy, JavaScript syntax,
-build, and Twine. This includes embedding roles, conflict collision protection,
-concurrent backup consistency, and the expanded cross-adapter fixture. The
+The latest complete package verification is frozen source `6600dc2`:
+865 tests passed with four skips, plus Black, strict mypy, JavaScript syntax,
+build, and Twine. A fresh installed wheel passed all 42 selected contract cases
+and the synthetic Stop replay assertions. Source, fixtures, and the installed
+environment were on C:, outside the development checkout. The
+[SSD package checkpoint](ssd-package-checkpoint-v1/README.md) binds the wheel,
+source, helpers, dependencies, exact test cases, and external website input.
+It includes the repaired Claude plugin launcher and strengthened continuity
+assertions, but does not establish native plugin-session acceptance.
+
+Historical source `312b8d6` passed 858 tests with four skips. Its
 [fresh installed-wheel check](combined-package-checkpoint-v2/README.md) then
 finished with 40 passing tests and two continuity failures. A subsequent
 [installed diagnostic](installed-continuity-diagnostics-v1/README.md) reproduced
@@ -15,11 +22,15 @@ HTTP read timeouts and multi-second retrieval metadata updates. A later
 [SQL timing profile](installed-continuity-sql-profile-v3/README.md) passed both
 cases and located commit as the dominant storage cost in that run; the earlier
 multi-second stalls did not recur and no repair is claimed. The separate installed replay
-probe did not run. The combined `9aba209` run's
+probe did not run. The new C: pass does not prove the earlier D: timeouts cannot
+recur or close the 10,000-fact recall gate. The
+[drive comparison](storage-drive-calibration-v1/README.md) supports storage
+latency as a contributing factor, without establishing an exclusive cause.
+The combined `9aba209` run's
 benchmark compatibility failure and its repair remain preserved in the
 [failed checkpoint](combined-package-failure-v1/README.md). Claude plugin runtime
-repair `ec0f95e` passed 50 focused tests with two opt-in skips. It is not covered
-by the `312b8d6` full package result; native plugin-session acceptance remains open.
+repair `ec0f95e` passed 50 focused tests with two opt-in skips and is now included
+in the `6600dc2` full source checks; native plugin-session acceptance remains open.
 An implemented capability does not close its quality, native-host, or pilot
 acceptance gate.
 
@@ -27,7 +38,7 @@ acceptance gate.
 
 | ID | Claim | Evidence and supported scope | Acceptance still open |
 | --- | --- | --- | --- |
-| C01 | Persistent local memory | SQLite/service regression checks cover durable events, jobs, restart, retry, and fact persistence in the [combined source checkpoint](combined-package-checkpoint-v2/README.md). | Installed continuity failures, continuous daily operation, and the two-week pilot. |
+| C01 | Persistent local memory | SQLite/service regression checks cover durable events, jobs, restart, retry, and fact persistence. The [SSD source and installed checkpoint](ssd-package-checkpoint-v1/README.md) passes the selected lifecycle contracts. | Behavior under recurring slow-storage stalls, continuous daily operation, and the two-week pilot. |
 | C02 | Project, workspace, and global isolation | Scope and lifecycle regressions are included in that package. Registry identities and membership replace folder-name identity. | Complete native-host isolation matrix. Passing fixtures do not prove every external client supplies correct identity. |
 | C03 | Surprisal-gated encoding | Mechanism tests cover distance bounds, scoped prediction history, explicit-write bypass, and the later symmetric embedding role. | Real-model retention/noise benefit over baseline and simple filtering. The historical 40 percent claim remains unverified. |
 | C04 | Evidence-based mutable memory | Expected-version corrections, revisions, graph refresh, and canonical handling have regression coverage. Source `46cc101` additionally rejects a conflict proposal that would relabel an existing canonical assertion. | General semantic support of extracted proposals. The collision rule is conservative and does not establish entailment. |
@@ -48,6 +59,7 @@ remain attributed to the source that produced them.
 
 - [Package verification index](access-metadata-package-verification/evidence-index.json): source `2494e31`, including schema 8. No later embedding-role or conflict-collision code is covered by this full checkpoint.
 - [Combined checkpoint index](combined-package-checkpoint-v2/evidence-index.json): source `312b8d6`, passing source/package checks and the failed installed continuity check. The separate installed replay probe did not run.
+- [SSD checkpoint index](ssd-package-checkpoint-v1/evidence-index.json): source `6600dc2`, all six source/package checks, 42 installed contract cases, and synthetic Stop replay. This is separate from native host and real-model evidence.
 - [Installed diagnostic index](installed-continuity-diagnostics-v1/evidence-index.json): valid timeout reproduction plus the excluded first diagnostic whose fixture was incorrectly placed inside Git.
 - [SQL timing index](installed-continuity-sql-profile-v3/evidence-index.json): two passing instrumented cases with separate SQLite execute/commit timings; not a repaired or isolated performance result.
 - [Performance index](performance-corrected-v4/evidence-index.json): frozen d94 run with real query embeddings and synthetic load facts. It is not a semantic-quality test.
