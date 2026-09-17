@@ -292,7 +292,15 @@ class MnemosClient:
                 )
                 self._http_loop = loop
             response = await self._http_client.post(url, headers=headers, json=body)
-        except (httpx.ConnectError, httpx.TimeoutException, httpx.NetworkError, OSError) as exc:
+        except (
+            httpx.ConnectError,
+            httpx.TimeoutException,
+            httpx.NetworkError,
+            httpx.RemoteProtocolError,
+            OSError,
+        ) as exc:
+            # A committed capture can lose its response. Keep its stable event
+            # identity on the existing retry/outbox path until acknowledged.
             raise ServiceClientError("Mnemos service is unavailable", unavailable=True) from exc
         if response.status_code in {401, 403}:
             raise ServiceClientError(
