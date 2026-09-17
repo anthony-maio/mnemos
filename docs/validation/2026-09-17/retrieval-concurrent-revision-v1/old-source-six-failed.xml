@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="utf-8"?><testsuites name="pytest tests"><testsuite name="pytest" errors="0" failures="6" skipped="0" tests="6" time="1.082" timestamp="2026-09-17T17:05:03.643355-04:00" hostname="Aurora"><testcase classname="tests.test_retrieval_concurrent_revision" name="test_revision_during_state_classification_is_ranked_and_budgeted[irrelevant-False]" time="0.163"><failure message="AssertionError: assert ['5e6a01d7-fa...9aca6361382b'] == ['46d20c54-86...9a212771f42d']&#10;  &#10;  At index 0 diff: '5e6a01d7-fa72-4c89-b4ba-9aca6361382b' != '46d20c54-8629-4525-b6ba-9a212771f42d'&#10;  Use -v to get more diff">tests\test_retrieval_concurrent_revision.py:104: in test_revision_during_state_classification_is_ranked_and_budgeted
+    assert [fact["id"] for fact in result["facts"]] == [fallback.id]
+E   AssertionError: assert ['5e6a01d7-fa...9aca6361382b'] == ['46d20c54-86...9a212771f42d']
+E     
+E     At index 0 diff: '5e6a01d7-fa72-4c89-b4ba-9aca6361382b' != '46d20c54-8629-4525-b6ba-9a212771f42d'
+E     Use -v to get more diff</failure></testcase><testcase classname="tests.test_retrieval_concurrent_revision" name="test_revision_during_state_classification_is_ranked_and_budgeted[irrelevant-True]" time="0.160"><failure message="AssertionError: assert ['8cd52adf-01...1162b3a36f59'] == ['2a0f0c4e-e9...bf1e71a72929']&#10;  &#10;  At index 0 diff: '8cd52adf-0142-409d-8a9a-1162b3a36f59' != '2a0f0c4e-e958-4176-96dc-bf1e71a72929'&#10;  Use -v to get more diff">tests\test_retrieval_concurrent_revision.py:104: in test_revision_during_state_classification_is_ranked_and_budgeted
+    assert [fact["id"] for fact in result["facts"]] == [fallback.id]
+E   AssertionError: assert ['8cd52adf-01...1162b3a36f59'] == ['2a0f0c4e-e9...bf1e71a72929']
+E     
+E     At index 0 diff: '8cd52adf-0142-409d-8a9a-1162b3a36f59' != '2a0f0c4e-e958-4176-96dc-bf1e71a72929'
+E     Use -v to get more diff</failure></testcase><testcase classname="tests.test_retrieval_concurrent_revision" name="test_revision_during_state_classification_is_ranked_and_budgeted[over-budget-False]" time="0.158"><failure message="assert 2150 &lt;= 300">tests\test_retrieval_concurrent_revision.py:103: in test_revision_during_state_classification_is_ranked_and_budgeted
+    assert result["context_token_upper_bound"] &lt;= 300
+E   assert 2150 &lt;= 300</failure></testcase><testcase classname="tests.test_retrieval_concurrent_revision" name="test_revision_during_state_classification_is_ranked_and_budgeted[over-budget-True]" time="0.152"><failure message="assert 2150 &lt;= 300">tests\test_retrieval_concurrent_revision.py:103: in test_revision_during_state_classification_is_ranked_and_budgeted
+    assert result["context_token_upper_bound"] &lt;= 300
+E   assert 2150 &lt;= 300</failure></testcase><testcase classname="tests.test_retrieval_concurrent_revision" name="test_revision_during_state_classification_is_ranked_and_budgeted[forgotten-False]" time="0.137"><failure message="AssertionError: assert [] == ['68cd74db-b5...6389c6d49367']&#10;  &#10;  Right contains one more item: '68cd74db-b555-4866-9cb7-6389c6d49367'&#10;  Use -v to get more diff">tests\test_retrieval_concurrent_revision.py:104: in test_revision_during_state_classification_is_ranked_and_budgeted
+    assert [fact["id"] for fact in result["facts"]] == [fallback.id]
+E   AssertionError: assert [] == ['68cd74db-b5...6389c6d49367']
+E     
+E     Right contains one more item: '68cd74db-b555-4866-9cb7-6389c6d49367'
+E     Use -v to get more diff</failure></testcase><testcase classname="tests.test_retrieval_concurrent_revision" name="test_revision_during_state_classification_is_ranked_and_budgeted[forgotten-True]" time="0.140"><failure message="AssertionError: assert [] == ['cc7a146e-1a...4e2095ffadfa']&#10;  &#10;  Right contains one more item: 'cc7a146e-1aa1-4302-97c1-4e2095ffadfa'&#10;  Use -v to get more diff">tests\test_retrieval_concurrent_revision.py:104: in test_revision_during_state_classification_is_ranked_and_budgeted
+    assert [fact["id"] for fact in result["facts"]] == [fallback.id]
+E   AssertionError: assert [] == ['cc7a146e-1a...4e2095ffadfa']
+E     
+E     Right contains one more item: 'cc7a146e-1aa1-4302-97c1-4e2095ffadfa'
+E     Use -v to get more diff</failure></testcase></testsuite></testsuites>

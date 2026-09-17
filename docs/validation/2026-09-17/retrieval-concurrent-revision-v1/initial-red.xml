@@ -1,0 +1,275 @@
+<?xml version="1.0" encoding="utf-8"?><testsuites name="pytest tests"><testsuite name="pytest" errors="0" failures="4" skipped="0" tests="4" time="1.931" timestamp="2026-09-17T17:00:22.315841-04:00" hostname="Aurora"><testcase classname="tests.test_retrieval_concurrent_revision" name="test_revision_during_state_classification_is_ranked_and_budgeted[Unrelated gardening convention-False]" time="0.223"><failure message="AssertionError: assert ['d8c08a46-62...adde5a83a552'] == ['5eb85da5-96...2480e3865fde']&#10;  &#10;  At index 0 diff: 'd8c08a46-6297-4535-8f9d-adde5a83a552' != '5eb85da5-9663-404b-b3b7-2480e3865fde'&#10;  Use -v to get more diff">tmp_path = WindowsPath('C:/Users/Ant/AppData/Local/Temp/mnemos-retrieval-revision-red-v1/test_revision_during_state_cla0')
+monkeypatch = &lt;_pytest.monkeypatch.MonkeyPatch object at 0x000002607FBB8E90&gt;
+spreading = False, replacement = 'Unrelated gardening convention'
+
+    @pytest.mark.asyncio
+    @pytest.mark.parametrize("spreading", [False, True])
+    @pytest.mark.parametrize("replacement", ["Unrelated gardening convention", "Python " * 300])
+    async def test_revision_during_state_classification_is_ranked_and_budgeted(
+        tmp_path, monkeypatch, spreading, replacement
+    ):
+        registry = ScopeRegistry()
+        registry.register_project(tmp_path, user_profile_id="local", enabled=True)
+        context = registry.resolve(tmp_path, user_profile_id="local", session_id="s", host="codex")
+        store = SQLiteStore(str(tmp_path / "memory.sqlite"))
+        engine = MnemosEngine(llm=UnavailableLLMProvider(), embedder=RevisionEmbeddings(), store=store)
+        engine.config.retrieval.spreading_enabled = spreading
+        memory = LocalMemoryService(engine, registry)
+        payload = {"context": context.model_dump(mode="json")}
+        entered, release = asyncio.Event(), asyncio.Event()
+        task = None
+        try:
+            for event_id, content in [("target", "Python convention"), ("fallback", "Fallback Python")]:
+                await memory.dispatch("remember", {**payload, "event_id": event_id, "content": content})
+            await memory.dispatch("maintenance", payload)
+            target = next(fact for fact in store.get_all() if fact.content == "Python convention")
+            fallback = next(fact for fact in store.get_all() if fact.content == "Fallback Python")
+    
+            async def classify(interaction):
+                if interaction.content == "Python":
+                    entered.set()
+                    await release.wait()
+                return CognitiveState(valence=0, arousal=0, complexity=0)
+    
+            monkeypatch.setattr(engine.affective_router, "classify_state", classify)
+            task = asyncio.create_task(
+                memory.dispatch(
+                    "retrieve",
+                    {
+                        **payload,
+                        "query": "Python",
+                        "profile": "biomimetic",
+                        "top_k": 1,
+                        "max_context_tokens": 300,
+                    },
+                )
+            )
+            await asyncio.wait_for(entered.wait(), timeout=5)
+            await memory.dispatch(
+                "correct",
+                {
+                    **payload,
+                    "event_id": "correction",
+                    "fact_id": target.id,
+                    "expected_version": target.version,
+                    "content": replacement,
+                },
+            )
+            await memory.dispatch("maintenance", payload)
+            revised = store.get(target.id)
+            assert revised.version == 2
+            assert revised.content == replacement
+            release.set()
+            result = await asyncio.wait_for(task, timeout=5)
+            assert result["context_token_upper_bound"] &lt;= 300
+&gt;           assert [fact["id"] for fact in result["facts"]] == [fallback.id]
+E           AssertionError: assert ['d8c08a46-62...adde5a83a552'] == ['5eb85da5-96...2480e3865fde']
+E             
+E             At index 0 diff: 'd8c08a46-6297-4535-8f9d-adde5a83a552' != '5eb85da5-9663-404b-b3b7-2480e3865fde'
+E             Use -v to get more diff
+
+tests\test_retrieval_concurrent_revision.py:92: AssertionError</failure></testcase><testcase classname="tests.test_retrieval_concurrent_revision" name="test_revision_during_state_classification_is_ranked_and_budgeted[Unrelated gardening convention-True]" time="0.204"><failure message="AssertionError: assert ['e4910c7f-81...5f80899e6809'] == ['886895fe-6e...bd8da71f69d6']&#10;  &#10;  At index 0 diff: 'e4910c7f-8168-4e42-9044-5f80899e6809' != '886895fe-6e33-4425-a972-bd8da71f69d6'&#10;  Use -v to get more diff">tmp_path = WindowsPath('C:/Users/Ant/AppData/Local/Temp/mnemos-retrieval-revision-red-v1/test_revision_during_state_cla1')
+monkeypatch = &lt;_pytest.monkeypatch.MonkeyPatch object at 0x000002607FB4FE30&gt;
+spreading = True, replacement = 'Unrelated gardening convention'
+
+    @pytest.mark.asyncio
+    @pytest.mark.parametrize("spreading", [False, True])
+    @pytest.mark.parametrize("replacement", ["Unrelated gardening convention", "Python " * 300])
+    async def test_revision_during_state_classification_is_ranked_and_budgeted(
+        tmp_path, monkeypatch, spreading, replacement
+    ):
+        registry = ScopeRegistry()
+        registry.register_project(tmp_path, user_profile_id="local", enabled=True)
+        context = registry.resolve(tmp_path, user_profile_id="local", session_id="s", host="codex")
+        store = SQLiteStore(str(tmp_path / "memory.sqlite"))
+        engine = MnemosEngine(llm=UnavailableLLMProvider(), embedder=RevisionEmbeddings(), store=store)
+        engine.config.retrieval.spreading_enabled = spreading
+        memory = LocalMemoryService(engine, registry)
+        payload = {"context": context.model_dump(mode="json")}
+        entered, release = asyncio.Event(), asyncio.Event()
+        task = None
+        try:
+            for event_id, content in [("target", "Python convention"), ("fallback", "Fallback Python")]:
+                await memory.dispatch("remember", {**payload, "event_id": event_id, "content": content})
+            await memory.dispatch("maintenance", payload)
+            target = next(fact for fact in store.get_all() if fact.content == "Python convention")
+            fallback = next(fact for fact in store.get_all() if fact.content == "Fallback Python")
+    
+            async def classify(interaction):
+                if interaction.content == "Python":
+                    entered.set()
+                    await release.wait()
+                return CognitiveState(valence=0, arousal=0, complexity=0)
+    
+            monkeypatch.setattr(engine.affective_router, "classify_state", classify)
+            task = asyncio.create_task(
+                memory.dispatch(
+                    "retrieve",
+                    {
+                        **payload,
+                        "query": "Python",
+                        "profile": "biomimetic",
+                        "top_k": 1,
+                        "max_context_tokens": 300,
+                    },
+                )
+            )
+            await asyncio.wait_for(entered.wait(), timeout=5)
+            await memory.dispatch(
+                "correct",
+                {
+                    **payload,
+                    "event_id": "correction",
+                    "fact_id": target.id,
+                    "expected_version": target.version,
+                    "content": replacement,
+                },
+            )
+            await memory.dispatch("maintenance", payload)
+            revised = store.get(target.id)
+            assert revised.version == 2
+            assert revised.content == replacement
+            release.set()
+            result = await asyncio.wait_for(task, timeout=5)
+            assert result["context_token_upper_bound"] &lt;= 300
+&gt;           assert [fact["id"] for fact in result["facts"]] == [fallback.id]
+E           AssertionError: assert ['e4910c7f-81...5f80899e6809'] == ['886895fe-6e...bd8da71f69d6']
+E             
+E             At index 0 diff: 'e4910c7f-8168-4e42-9044-5f80899e6809' != '886895fe-6e33-4425-a972-bd8da71f69d6'
+E             Use -v to get more diff
+
+tests\test_retrieval_concurrent_revision.py:92: AssertionError</failure></testcase><testcase classname="tests.test_retrieval_concurrent_revision" name="test_revision_during_state_classification_is_ranked_and_budgeted[Python Python Python Python Python Python Python Python Python Python Python Python Python Python Python Python Python Python Python Python Python Python Python Python Python Python Python Python Python Python Python Python Python Python Python Python Python Python Python Python Python Python Python Python Python Python Python Python Python Python Python Python Python Python Python Python Python Python Python Python Python Python Python Python Python Python Python Python Python Python Python Python Python Python Python Python Python Python Python Python Python Python Python Python Python Python Python Python Python Python Python Python Python Python Python Python Python Python Python Python Python Python Python Python Python Python Python Python Python Python Python Python Python Python Python Python Python Python Python Python Python Python Python Python Python Python Python Python Python Python Python Python Python Python Python Python Python Python Python Python Python Python Python Python Python Python Python Python Python Python Python Python Python Python Python Python Python Python Python Python Python Python Python Python Python Python Python Python Python Python Python Python Python Python Python Python Python Python Python Python Python Python Python Python Python Python Python Python Python Python Python Python Python Python Python Python Python Python Python Python Python Python Python Python Python Python Python Python Python Python Python Python Python Python Python Python Python Python Python Python Python Python Python Python Python Python Python Python Python Python Python Python Python Python Python Python Python Python Python Python Python Python Python Python Python Python Python Python Python Python Python Python Python Python Python Python Python Python Python Python Python Python Python Python Python Python Python Python Python Python Python Python Python Python Python Python Python Python Python Python Python Python Python Python Python Python Python Python Python Python Python Python Python Python Python Python Python Python Python Python -False]" time="0.211"><failure message="assert 2150 &lt;= 300">tmp_path = WindowsPath('C:/Users/Ant/AppData/Local/Temp/mnemos-retrieval-revision-red-v1/test_revision_during_state_cla2')
+monkeypatch = &lt;_pytest.monkeypatch.MonkeyPatch object at 0x000002607FBA0490&gt;
+spreading = False
+replacement = 'Python Python Python Python Python Python Python Python Python Python Python Python Python Python Python Python Pytho...ython Python Python Python Python Python Python Python Python Python Python Python Python Python Python Python Python '
+
+    @pytest.mark.asyncio
+    @pytest.mark.parametrize("spreading", [False, True])
+    @pytest.mark.parametrize("replacement", ["Unrelated gardening convention", "Python " * 300])
+    async def test_revision_during_state_classification_is_ranked_and_budgeted(
+        tmp_path, monkeypatch, spreading, replacement
+    ):
+        registry = ScopeRegistry()
+        registry.register_project(tmp_path, user_profile_id="local", enabled=True)
+        context = registry.resolve(tmp_path, user_profile_id="local", session_id="s", host="codex")
+        store = SQLiteStore(str(tmp_path / "memory.sqlite"))
+        engine = MnemosEngine(llm=UnavailableLLMProvider(), embedder=RevisionEmbeddings(), store=store)
+        engine.config.retrieval.spreading_enabled = spreading
+        memory = LocalMemoryService(engine, registry)
+        payload = {"context": context.model_dump(mode="json")}
+        entered, release = asyncio.Event(), asyncio.Event()
+        task = None
+        try:
+            for event_id, content in [("target", "Python convention"), ("fallback", "Fallback Python")]:
+                await memory.dispatch("remember", {**payload, "event_id": event_id, "content": content})
+            await memory.dispatch("maintenance", payload)
+            target = next(fact for fact in store.get_all() if fact.content == "Python convention")
+            fallback = next(fact for fact in store.get_all() if fact.content == "Fallback Python")
+    
+            async def classify(interaction):
+                if interaction.content == "Python":
+                    entered.set()
+                    await release.wait()
+                return CognitiveState(valence=0, arousal=0, complexity=0)
+    
+            monkeypatch.setattr(engine.affective_router, "classify_state", classify)
+            task = asyncio.create_task(
+                memory.dispatch(
+                    "retrieve",
+                    {
+                        **payload,
+                        "query": "Python",
+                        "profile": "biomimetic",
+                        "top_k": 1,
+                        "max_context_tokens": 300,
+                    },
+                )
+            )
+            await asyncio.wait_for(entered.wait(), timeout=5)
+            await memory.dispatch(
+                "correct",
+                {
+                    **payload,
+                    "event_id": "correction",
+                    "fact_id": target.id,
+                    "expected_version": target.version,
+                    "content": replacement,
+                },
+            )
+            await memory.dispatch("maintenance", payload)
+            revised = store.get(target.id)
+            assert revised.version == 2
+            assert revised.content == replacement
+            release.set()
+            result = await asyncio.wait_for(task, timeout=5)
+&gt;           assert result["context_token_upper_bound"] &lt;= 300
+E           assert 2150 &lt;= 300
+
+tests\test_retrieval_concurrent_revision.py:91: AssertionError</failure></testcase><testcase classname="tests.test_retrieval_concurrent_revision" name="test_revision_during_state_classification_is_ranked_and_budgeted[Python Python Python Python Python Python Python Python Python Python Python Python Python Python Python Python Python Python Python Python Python Python Python Python Python Python Python Python Python Python Python Python Python Python Python Python Python Python Python Python Python Python Python Python Python Python Python Python Python Python Python Python Python Python Python Python Python Python Python Python Python Python Python Python Python Python Python Python Python Python Python Python Python Python Python Python Python Python Python Python Python Python Python Python Python Python Python Python Python Python Python Python Python Python Python Python Python Python Python Python Python Python Python Python Python Python Python Python Python Python Python Python Python Python Python Python Python Python Python Python Python Python Python Python Python Python Python Python Python Python Python Python Python Python Python Python Python Python Python Python Python Python Python Python Python Python Python Python Python Python Python Python Python Python Python Python Python Python Python Python Python Python Python Python Python Python Python Python Python Python Python Python Python Python Python Python Python Python Python Python Python Python Python Python Python Python Python Python Python Python Python Python Python Python Python Python Python Python Python Python Python Python Python Python Python Python Python Python Python Python Python Python Python Python Python Python Python Python Python Python Python Python Python Python Python Python Python Python Python Python Python Python Python Python Python Python Python Python Python Python Python Python Python Python Python Python Python Python Python Python Python Python Python Python Python Python Python Python Python Python Python Python Python Python Python Python Python Python Python Python Python Python Python Python Python Python Python Python Python Python Python Python Python Python Python Python Python Python Python Python Python Python Python Python Python Python Python Python Python Python -True]" time="0.178"><failure message="assert 2150 &lt;= 300">tmp_path = WindowsPath('C:/Users/Ant/AppData/Local/Temp/mnemos-retrieval-revision-red-v1/test_revision_during_state_cla3')
+monkeypatch = &lt;_pytest.monkeypatch.MonkeyPatch object at 0x000002607FCAD250&gt;
+spreading = True
+replacement = 'Python Python Python Python Python Python Python Python Python Python Python Python Python Python Python Python Pytho...ython Python Python Python Python Python Python Python Python Python Python Python Python Python Python Python Python '
+
+    @pytest.mark.asyncio
+    @pytest.mark.parametrize("spreading", [False, True])
+    @pytest.mark.parametrize("replacement", ["Unrelated gardening convention", "Python " * 300])
+    async def test_revision_during_state_classification_is_ranked_and_budgeted(
+        tmp_path, monkeypatch, spreading, replacement
+    ):
+        registry = ScopeRegistry()
+        registry.register_project(tmp_path, user_profile_id="local", enabled=True)
+        context = registry.resolve(tmp_path, user_profile_id="local", session_id="s", host="codex")
+        store = SQLiteStore(str(tmp_path / "memory.sqlite"))
+        engine = MnemosEngine(llm=UnavailableLLMProvider(), embedder=RevisionEmbeddings(), store=store)
+        engine.config.retrieval.spreading_enabled = spreading
+        memory = LocalMemoryService(engine, registry)
+        payload = {"context": context.model_dump(mode="json")}
+        entered, release = asyncio.Event(), asyncio.Event()
+        task = None
+        try:
+            for event_id, content in [("target", "Python convention"), ("fallback", "Fallback Python")]:
+                await memory.dispatch("remember", {**payload, "event_id": event_id, "content": content})
+            await memory.dispatch("maintenance", payload)
+            target = next(fact for fact in store.get_all() if fact.content == "Python convention")
+            fallback = next(fact for fact in store.get_all() if fact.content == "Fallback Python")
+    
+            async def classify(interaction):
+                if interaction.content == "Python":
+                    entered.set()
+                    await release.wait()
+                return CognitiveState(valence=0, arousal=0, complexity=0)
+    
+            monkeypatch.setattr(engine.affective_router, "classify_state", classify)
+            task = asyncio.create_task(
+                memory.dispatch(
+                    "retrieve",
+                    {
+                        **payload,
+                        "query": "Python",
+                        "profile": "biomimetic",
+                        "top_k": 1,
+                        "max_context_tokens": 300,
+                    },
+                )
+            )
+            await asyncio.wait_for(entered.wait(), timeout=5)
+            await memory.dispatch(
+                "correct",
+                {
+                    **payload,
+                    "event_id": "correction",
+                    "fact_id": target.id,
+                    "expected_version": target.version,
+                    "content": replacement,
+                },
+            )
+            await memory.dispatch("maintenance", payload)
+            revised = store.get(target.id)
+            assert revised.version == 2
+            assert revised.content == replacement
+            release.set()
+            result = await asyncio.wait_for(task, timeout=5)
+&gt;           assert result["context_token_upper_bound"] &lt;= 300
+E           assert 2150 &lt;= 300
+
+tests\test_retrieval_concurrent_revision.py:91: AssertionError</failure></testcase></testsuite></testsuites>

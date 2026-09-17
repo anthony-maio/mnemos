@@ -1,0 +1,295 @@
+<?xml version="1.0" encoding="utf-8"?><testsuites name="pytest tests"><testsuite name="pytest" errors="0" failures="4" skipped="0" tests="75" time="11.722" timestamp="2026-09-17T17:02:23.130491-04:00" hostname="Aurora"><testcase classname="tests.test_retrieval_concurrent_revision" name="test_revision_during_state_classification_is_ranked_and_budgeted[Unrelated gardening convention-False]" time="0.252"><failure message="AssertionError: assert 1 == 0&#10; +  where 1 = MemoryChunk(id='35309027-9bfd-47a8-a057-3398dc85d952', content='Unrelated gardening convention', embedding=[0.0, 1.0],...2, 30, 603699, tzinfo=datetime.timezone.utc), observation_count=1, last_retrieved_at=None, reconsolidation_due_at=None).access_count&#10; +    where MemoryChunk(id='35309027-9bfd-47a8-a057-3398dc85d952', content='Unrelated gardening convention', embedding=[0.0, 1.0],...2, 30, 603699, tzinfo=datetime.timezone.utc), observation_count=1, last_retrieved_at=None, reconsolidation_due_at=None) = get('35309027-9bfd-47a8-a057-3398dc85d952')&#10; +      where get = &lt;mnemos.utils.storage.SQLiteStore object at 0x00000202FFDB4D70&gt;.get&#10; +      and   '35309027-9bfd-47a8-a057-3398dc85d952' = MemoryChunk(id='35309027-9bfd-47a8-a057-3398dc85d952', content='Python convention', embedding=[1.0, 0.0], metadata={'u...2, 30, 547885, tzinfo=datetime.timezone.utc), observation_count=1, last_retrieved_at=None, reconsolidation_due_at=None).id">tmp_path = WindowsPath('C:/Users/Ant/AppData/Local/Temp/mnemos-retrieval-revision-green-v2/test_revision_during_state_cla0')
+monkeypatch = &lt;_pytest.monkeypatch.MonkeyPatch object at 0x00000202FFD37100&gt;
+spreading = False, replacement = 'Unrelated gardening convention'
+
+    @pytest.mark.asyncio
+    @pytest.mark.parametrize("spreading", [False, True])
+    @pytest.mark.parametrize("replacement", ["Unrelated gardening convention", "Python " * 300])
+    async def test_revision_during_state_classification_is_ranked_and_budgeted(
+        tmp_path, monkeypatch, spreading, replacement
+    ):
+        registry = ScopeRegistry()
+        registry.register_project(tmp_path, user_profile_id="local", enabled=True)
+        context = registry.resolve(tmp_path, user_profile_id="local", session_id="s", host="codex")
+        store = SQLiteStore(str(tmp_path / "memory.sqlite"))
+        engine = MnemosEngine(llm=UnavailableLLMProvider(), embedder=RevisionEmbeddings(), store=store)
+        engine.config.retrieval.spreading_enabled = spreading
+        memory = LocalMemoryService(engine, registry)
+        payload = {"context": context.model_dump(mode="json")}
+        entered, release = asyncio.Event(), asyncio.Event()
+        task = None
+        try:
+            for event_id, content in [("target", "Python convention"), ("fallback", "Fallback Python")]:
+                await memory.dispatch("remember", {**payload, "event_id": event_id, "content": content})
+            await memory.dispatch("maintenance", payload)
+            target = next(fact for fact in store.get_all() if fact.content == "Python convention")
+            fallback = next(fact for fact in store.get_all() if fact.content == "Fallback Python")
+    
+            async def classify(interaction):
+                if interaction.content == "Python":
+                    entered.set()
+                    await release.wait()
+                return CognitiveState(valence=0, arousal=0, complexity=0)
+    
+            monkeypatch.setattr(engine.affective_router, "classify_state", classify)
+            task = asyncio.create_task(
+                memory.dispatch(
+                    "retrieve",
+                    {
+                        **payload,
+                        "query": "Python",
+                        "profile": "biomimetic",
+                        "top_k": 1,
+                        "max_context_tokens": 300,
+                    },
+                )
+            )
+            await asyncio.wait_for(entered.wait(), timeout=5)
+            await memory.dispatch(
+                "correct",
+                {
+                    **payload,
+                    "event_id": "correction",
+                    "fact_id": target.id,
+                    "expected_version": target.version,
+                    "content": replacement,
+                },
+            )
+            await memory.dispatch("maintenance", payload)
+            revised = store.get(target.id)
+            assert revised.version == 2
+            assert revised.content == replacement
+            release.set()
+            result = await asyncio.wait_for(task, timeout=5)
+            assert result["context_token_upper_bound"] &lt;= 300
+            assert [fact["id"] for fact in result["facts"]] == [fallback.id]
+            assert result["facts"][0]["scores"]["semantic"] == pytest.approx(0.8)
+&gt;           assert store.get(target.id).access_count == 0
+E           AssertionError: assert 1 == 0
+E            +  where 1 = MemoryChunk(id='35309027-9bfd-47a8-a057-3398dc85d952', content='Unrelated gardening convention', embedding=[0.0, 1.0],...2, 30, 603699, tzinfo=datetime.timezone.utc), observation_count=1, last_retrieved_at=None, reconsolidation_due_at=None).access_count
+E            +    where MemoryChunk(id='35309027-9bfd-47a8-a057-3398dc85d952', content='Unrelated gardening convention', embedding=[0.0, 1.0],...2, 30, 603699, tzinfo=datetime.timezone.utc), observation_count=1, last_retrieved_at=None, reconsolidation_due_at=None) = get('35309027-9bfd-47a8-a057-3398dc85d952')
+E            +      where get = &lt;mnemos.utils.storage.SQLiteStore object at 0x00000202FFDB4D70&gt;.get
+E            +      and   '35309027-9bfd-47a8-a057-3398dc85d952' = MemoryChunk(id='35309027-9bfd-47a8-a057-3398dc85d952', content='Python convention', embedding=[1.0, 0.0], metadata={'u...2, 30, 547885, tzinfo=datetime.timezone.utc), observation_count=1, last_retrieved_at=None, reconsolidation_due_at=None).id
+
+tests\test_retrieval_concurrent_revision.py:94: AssertionError</failure></testcase><testcase classname="tests.test_retrieval_concurrent_revision" name="test_revision_during_state_classification_is_ranked_and_budgeted[Unrelated gardening convention-True]" time="0.195"><failure message="AssertionError: assert 1 == 0&#10; +  where 1 = MemoryChunk(id='091ca890-bb76-4b2c-ab0b-8f043bb8464d', content='Unrelated gardening convention', embedding=[0.0, 1.0],...2, 31, 154664, tzinfo=datetime.timezone.utc), observation_count=1, last_retrieved_at=None, reconsolidation_due_at=None).access_count&#10; +    where MemoryChunk(id='091ca890-bb76-4b2c-ab0b-8f043bb8464d', content='Unrelated gardening convention', embedding=[0.0, 1.0],...2, 31, 154664, tzinfo=datetime.timezone.utc), observation_count=1, last_retrieved_at=None, reconsolidation_due_at=None) = get('091ca890-bb76-4b2c-ab0b-8f043bb8464d')&#10; +      where get = &lt;mnemos.utils.storage.SQLiteStore object at 0x00000202FFDBB750&gt;.get&#10; +      and   '091ca890-bb76-4b2c-ab0b-8f043bb8464d' = MemoryChunk(id='091ca890-bb76-4b2c-ab0b-8f043bb8464d', content='Python convention', embedding=[1.0, 0.0], metadata={'u...2, 31, 120377, tzinfo=datetime.timezone.utc), observation_count=1, last_retrieved_at=None, reconsolidation_due_at=None).id">tmp_path = WindowsPath('C:/Users/Ant/AppData/Local/Temp/mnemos-retrieval-revision-green-v2/test_revision_during_state_cla1')
+monkeypatch = &lt;_pytest.monkeypatch.MonkeyPatch object at 0x00000202FFDBC830&gt;
+spreading = True, replacement = 'Unrelated gardening convention'
+
+    @pytest.mark.asyncio
+    @pytest.mark.parametrize("spreading", [False, True])
+    @pytest.mark.parametrize("replacement", ["Unrelated gardening convention", "Python " * 300])
+    async def test_revision_during_state_classification_is_ranked_and_budgeted(
+        tmp_path, monkeypatch, spreading, replacement
+    ):
+        registry = ScopeRegistry()
+        registry.register_project(tmp_path, user_profile_id="local", enabled=True)
+        context = registry.resolve(tmp_path, user_profile_id="local", session_id="s", host="codex")
+        store = SQLiteStore(str(tmp_path / "memory.sqlite"))
+        engine = MnemosEngine(llm=UnavailableLLMProvider(), embedder=RevisionEmbeddings(), store=store)
+        engine.config.retrieval.spreading_enabled = spreading
+        memory = LocalMemoryService(engine, registry)
+        payload = {"context": context.model_dump(mode="json")}
+        entered, release = asyncio.Event(), asyncio.Event()
+        task = None
+        try:
+            for event_id, content in [("target", "Python convention"), ("fallback", "Fallback Python")]:
+                await memory.dispatch("remember", {**payload, "event_id": event_id, "content": content})
+            await memory.dispatch("maintenance", payload)
+            target = next(fact for fact in store.get_all() if fact.content == "Python convention")
+            fallback = next(fact for fact in store.get_all() if fact.content == "Fallback Python")
+    
+            async def classify(interaction):
+                if interaction.content == "Python":
+                    entered.set()
+                    await release.wait()
+                return CognitiveState(valence=0, arousal=0, complexity=0)
+    
+            monkeypatch.setattr(engine.affective_router, "classify_state", classify)
+            task = asyncio.create_task(
+                memory.dispatch(
+                    "retrieve",
+                    {
+                        **payload,
+                        "query": "Python",
+                        "profile": "biomimetic",
+                        "top_k": 1,
+                        "max_context_tokens": 300,
+                    },
+                )
+            )
+            await asyncio.wait_for(entered.wait(), timeout=5)
+            await memory.dispatch(
+                "correct",
+                {
+                    **payload,
+                    "event_id": "correction",
+                    "fact_id": target.id,
+                    "expected_version": target.version,
+                    "content": replacement,
+                },
+            )
+            await memory.dispatch("maintenance", payload)
+            revised = store.get(target.id)
+            assert revised.version == 2
+            assert revised.content == replacement
+            release.set()
+            result = await asyncio.wait_for(task, timeout=5)
+            assert result["context_token_upper_bound"] &lt;= 300
+            assert [fact["id"] for fact in result["facts"]] == [fallback.id]
+            assert result["facts"][0]["scores"]["semantic"] == pytest.approx(0.8)
+&gt;           assert store.get(target.id).access_count == 0
+E           AssertionError: assert 1 == 0
+E            +  where 1 = MemoryChunk(id='091ca890-bb76-4b2c-ab0b-8f043bb8464d', content='Unrelated gardening convention', embedding=[0.0, 1.0],...2, 31, 154664, tzinfo=datetime.timezone.utc), observation_count=1, last_retrieved_at=None, reconsolidation_due_at=None).access_count
+E            +    where MemoryChunk(id='091ca890-bb76-4b2c-ab0b-8f043bb8464d', content='Unrelated gardening convention', embedding=[0.0, 1.0],...2, 31, 154664, tzinfo=datetime.timezone.utc), observation_count=1, last_retrieved_at=None, reconsolidation_due_at=None) = get('091ca890-bb76-4b2c-ab0b-8f043bb8464d')
+E            +      where get = &lt;mnemos.utils.storage.SQLiteStore object at 0x00000202FFDBB750&gt;.get
+E            +      and   '091ca890-bb76-4b2c-ab0b-8f043bb8464d' = MemoryChunk(id='091ca890-bb76-4b2c-ab0b-8f043bb8464d', content='Python convention', embedding=[1.0, 0.0], metadata={'u...2, 31, 120377, tzinfo=datetime.timezone.utc), observation_count=1, last_retrieved_at=None, reconsolidation_due_at=None).id
+
+tests\test_retrieval_concurrent_revision.py:94: AssertionError</failure></testcase><testcase classname="tests.test_retrieval_concurrent_revision" name="test_revision_during_state_classification_is_ranked_and_budgeted[Python Python Python Python Python Python Python Python Python Python Python Python Python Python Python Python Python Python Python Python Python Python Python Python Python Python Python Python Python Python Python Python Python Python Python Python Python Python Python Python Python Python Python Python Python Python Python Python Python Python Python Python Python Python Python Python Python Python Python Python Python Python Python Python Python Python Python Python Python Python Python Python Python Python Python Python Python Python Python Python Python Python Python Python Python Python Python Python Python Python Python Python Python Python Python Python Python Python Python Python Python Python Python Python Python Python Python Python Python Python Python Python Python Python Python Python Python Python Python Python Python Python Python Python Python Python Python Python Python Python Python Python Python Python Python Python Python Python Python Python Python Python Python Python Python Python Python Python Python Python Python Python Python Python Python Python Python Python Python Python Python Python Python Python Python Python Python Python Python Python Python Python Python Python Python Python Python Python Python Python Python Python Python Python Python Python Python Python Python Python Python Python Python Python Python Python Python Python Python Python Python Python Python Python Python Python Python Python Python Python Python Python Python Python Python Python Python Python Python Python Python Python Python Python Python Python Python Python Python Python Python Python Python Python Python Python Python Python Python Python Python Python Python Python Python Python Python Python Python Python Python Python Python Python Python Python Python Python Python Python Python Python Python Python Python Python Python Python Python Python Python Python Python Python Python Python Python Python Python Python Python Python Python Python Python Python Python Python Python Python Python Python Python Python Python Python Python Python Python Python -False]" time="0.184"><failure message="AssertionError: assert 1 == 0&#10; +  where 1 = MemoryChunk(id='5a7b4711-5f32-452f-92ea-e507c3c8b21e', content='Python Python Python Python Python Python Python Pytho...2, 31, 342842, tzinfo=datetime.timezone.utc), observation_count=1, last_retrieved_at=None, reconsolidation_due_at=None).access_count&#10; +    where MemoryChunk(id='5a7b4711-5f32-452f-92ea-e507c3c8b21e', content='Python Python Python Python Python Python Python Pytho...2, 31, 342842, tzinfo=datetime.timezone.utc), observation_count=1, last_retrieved_at=None, reconsolidation_due_at=None) = get('5a7b4711-5f32-452f-92ea-e507c3c8b21e')&#10; +      where get = &lt;mnemos.utils.storage.SQLiteStore object at 0x00000202FFEC4910&gt;.get&#10; +      and   '5a7b4711-5f32-452f-92ea-e507c3c8b21e' = MemoryChunk(id='5a7b4711-5f32-452f-92ea-e507c3c8b21e', content='Python convention', embedding=[1.0, 0.0], metadata={'u...2, 31, 312285, tzinfo=datetime.timezone.utc), observation_count=1, last_retrieved_at=None, reconsolidation_due_at=None).id">tmp_path = WindowsPath('C:/Users/Ant/AppData/Local/Temp/mnemos-retrieval-revision-green-v2/test_revision_during_state_cla2')
+monkeypatch = &lt;_pytest.monkeypatch.MonkeyPatch object at 0x00000202FFD3F020&gt;
+spreading = False
+replacement = 'Python Python Python Python Python Python Python Python Python Python Python Python Python Python Python Python Pytho...ython Python Python Python Python Python Python Python Python Python Python Python Python Python Python Python Python '
+
+    @pytest.mark.asyncio
+    @pytest.mark.parametrize("spreading", [False, True])
+    @pytest.mark.parametrize("replacement", ["Unrelated gardening convention", "Python " * 300])
+    async def test_revision_during_state_classification_is_ranked_and_budgeted(
+        tmp_path, monkeypatch, spreading, replacement
+    ):
+        registry = ScopeRegistry()
+        registry.register_project(tmp_path, user_profile_id="local", enabled=True)
+        context = registry.resolve(tmp_path, user_profile_id="local", session_id="s", host="codex")
+        store = SQLiteStore(str(tmp_path / "memory.sqlite"))
+        engine = MnemosEngine(llm=UnavailableLLMProvider(), embedder=RevisionEmbeddings(), store=store)
+        engine.config.retrieval.spreading_enabled = spreading
+        memory = LocalMemoryService(engine, registry)
+        payload = {"context": context.model_dump(mode="json")}
+        entered, release = asyncio.Event(), asyncio.Event()
+        task = None
+        try:
+            for event_id, content in [("target", "Python convention"), ("fallback", "Fallback Python")]:
+                await memory.dispatch("remember", {**payload, "event_id": event_id, "content": content})
+            await memory.dispatch("maintenance", payload)
+            target = next(fact for fact in store.get_all() if fact.content == "Python convention")
+            fallback = next(fact for fact in store.get_all() if fact.content == "Fallback Python")
+    
+            async def classify(interaction):
+                if interaction.content == "Python":
+                    entered.set()
+                    await release.wait()
+                return CognitiveState(valence=0, arousal=0, complexity=0)
+    
+            monkeypatch.setattr(engine.affective_router, "classify_state", classify)
+            task = asyncio.create_task(
+                memory.dispatch(
+                    "retrieve",
+                    {
+                        **payload,
+                        "query": "Python",
+                        "profile": "biomimetic",
+                        "top_k": 1,
+                        "max_context_tokens": 300,
+                    },
+                )
+            )
+            await asyncio.wait_for(entered.wait(), timeout=5)
+            await memory.dispatch(
+                "correct",
+                {
+                    **payload,
+                    "event_id": "correction",
+                    "fact_id": target.id,
+                    "expected_version": target.version,
+                    "content": replacement,
+                },
+            )
+            await memory.dispatch("maintenance", payload)
+            revised = store.get(target.id)
+            assert revised.version == 2
+            assert revised.content == replacement
+            release.set()
+            result = await asyncio.wait_for(task, timeout=5)
+            assert result["context_token_upper_bound"] &lt;= 300
+            assert [fact["id"] for fact in result["facts"]] == [fallback.id]
+            assert result["facts"][0]["scores"]["semantic"] == pytest.approx(0.8)
+&gt;           assert store.get(target.id).access_count == 0
+E           AssertionError: assert 1 == 0
+E            +  where 1 = MemoryChunk(id='5a7b4711-5f32-452f-92ea-e507c3c8b21e', content='Python Python Python Python Python Python Python Pytho...2, 31, 342842, tzinfo=datetime.timezone.utc), observation_count=1, last_retrieved_at=None, reconsolidation_due_at=None).access_count
+E            +    where MemoryChunk(id='5a7b4711-5f32-452f-92ea-e507c3c8b21e', content='Python Python Python Python Python Python Python Pytho...2, 31, 342842, tzinfo=datetime.timezone.utc), observation_count=1, last_retrieved_at=None, reconsolidation_due_at=None) = get('5a7b4711-5f32-452f-92ea-e507c3c8b21e')
+E            +      where get = &lt;mnemos.utils.storage.SQLiteStore object at 0x00000202FFEC4910&gt;.get
+E            +      and   '5a7b4711-5f32-452f-92ea-e507c3c8b21e' = MemoryChunk(id='5a7b4711-5f32-452f-92ea-e507c3c8b21e', content='Python convention', embedding=[1.0, 0.0], metadata={'u...2, 31, 312285, tzinfo=datetime.timezone.utc), observation_count=1, last_retrieved_at=None, reconsolidation_due_at=None).id
+
+tests\test_retrieval_concurrent_revision.py:94: AssertionError</failure></testcase><testcase classname="tests.test_retrieval_concurrent_revision" name="test_revision_during_state_classification_is_ranked_and_budgeted[Python Python Python Python Python Python Python Python Python Python Python Python Python Python Python Python Python Python Python Python Python Python Python Python Python Python Python Python Python Python Python Python Python Python Python Python Python Python Python Python Python Python Python Python Python Python Python Python Python Python Python Python Python Python Python Python Python Python Python Python Python Python Python Python Python Python Python Python Python Python Python Python Python Python Python Python Python Python Python Python Python Python Python Python Python Python Python Python Python Python Python Python Python Python Python Python Python Python Python Python Python Python Python Python Python Python Python Python Python Python Python Python Python Python Python Python Python Python Python Python Python Python Python Python Python Python Python Python Python Python Python Python Python Python Python Python Python Python Python Python Python Python Python Python Python Python Python Python Python Python Python Python Python Python Python Python Python Python Python Python Python Python Python Python Python Python Python Python Python Python Python Python Python Python Python Python Python Python Python Python Python Python Python Python Python Python Python Python Python Python Python Python Python Python Python Python Python Python Python Python Python Python Python Python Python Python Python Python Python Python Python Python Python Python Python Python Python Python Python Python Python Python Python Python Python Python Python Python Python Python Python Python Python Python Python Python Python Python Python Python Python Python Python Python Python Python Python Python Python Python Python Python Python Python Python Python Python Python Python Python Python Python Python Python Python Python Python Python Python Python Python Python Python Python Python Python Python Python Python Python Python Python Python Python Python Python Python Python Python Python Python Python Python Python Python Python Python Python Python Python -True]" time="0.208"><failure message="AssertionError: assert 1 == 0&#10; +  where 1 = MemoryChunk(id='af0bf585-6444-4d86-aa6e-d4583d082541', content='Python Python Python Python Python Python Python Pytho...2, 31, 562481, tzinfo=datetime.timezone.utc), observation_count=1, last_retrieved_at=None, reconsolidation_due_at=None).access_count&#10; +    where MemoryChunk(id='af0bf585-6444-4d86-aa6e-d4583d082541', content='Python Python Python Python Python Python Python Pytho...2, 31, 562481, tzinfo=datetime.timezone.utc), observation_count=1, last_retrieved_at=None, reconsolidation_due_at=None) = get('af0bf585-6444-4d86-aa6e-d4583d082541')&#10; +      where get = &lt;mnemos.utils.storage.SQLiteStore object at 0x00000202FFE490F0&gt;.get&#10; +      and   'af0bf585-6444-4d86-aa6e-d4583d082541' = MemoryChunk(id='af0bf585-6444-4d86-aa6e-d4583d082541', content='Python convention', embedding=[1.0, 0.0], metadata={'u...2, 31, 527671, tzinfo=datetime.timezone.utc), observation_count=1, last_retrieved_at=None, reconsolidation_due_at=None).id">tmp_path = WindowsPath('C:/Users/Ant/AppData/Local/Temp/mnemos-retrieval-revision-green-v2/test_revision_during_state_cla3')
+monkeypatch = &lt;_pytest.monkeypatch.MonkeyPatch object at 0x00000202FFE4D350&gt;
+spreading = True
+replacement = 'Python Python Python Python Python Python Python Python Python Python Python Python Python Python Python Python Pytho...ython Python Python Python Python Python Python Python Python Python Python Python Python Python Python Python Python '
+
+    @pytest.mark.asyncio
+    @pytest.mark.parametrize("spreading", [False, True])
+    @pytest.mark.parametrize("replacement", ["Unrelated gardening convention", "Python " * 300])
+    async def test_revision_during_state_classification_is_ranked_and_budgeted(
+        tmp_path, monkeypatch, spreading, replacement
+    ):
+        registry = ScopeRegistry()
+        registry.register_project(tmp_path, user_profile_id="local", enabled=True)
+        context = registry.resolve(tmp_path, user_profile_id="local", session_id="s", host="codex")
+        store = SQLiteStore(str(tmp_path / "memory.sqlite"))
+        engine = MnemosEngine(llm=UnavailableLLMProvider(), embedder=RevisionEmbeddings(), store=store)
+        engine.config.retrieval.spreading_enabled = spreading
+        memory = LocalMemoryService(engine, registry)
+        payload = {"context": context.model_dump(mode="json")}
+        entered, release = asyncio.Event(), asyncio.Event()
+        task = None
+        try:
+            for event_id, content in [("target", "Python convention"), ("fallback", "Fallback Python")]:
+                await memory.dispatch("remember", {**payload, "event_id": event_id, "content": content})
+            await memory.dispatch("maintenance", payload)
+            target = next(fact for fact in store.get_all() if fact.content == "Python convention")
+            fallback = next(fact for fact in store.get_all() if fact.content == "Fallback Python")
+    
+            async def classify(interaction):
+                if interaction.content == "Python":
+                    entered.set()
+                    await release.wait()
+                return CognitiveState(valence=0, arousal=0, complexity=0)
+    
+            monkeypatch.setattr(engine.affective_router, "classify_state", classify)
+            task = asyncio.create_task(
+                memory.dispatch(
+                    "retrieve",
+                    {
+                        **payload,
+                        "query": "Python",
+                        "profile": "biomimetic",
+                        "top_k": 1,
+                        "max_context_tokens": 300,
+                    },
+                )
+            )
+            await asyncio.wait_for(entered.wait(), timeout=5)
+            await memory.dispatch(
+                "correct",
+                {
+                    **payload,
+                    "event_id": "correction",
+                    "fact_id": target.id,
+                    "expected_version": target.version,
+                    "content": replacement,
+                },
+            )
+            await memory.dispatch("maintenance", payload)
+            revised = store.get(target.id)
+            assert revised.version == 2
+            assert revised.content == replacement
+            release.set()
+            result = await asyncio.wait_for(task, timeout=5)
+            assert result["context_token_upper_bound"] &lt;= 300
+            assert [fact["id"] for fact in result["facts"]] == [fallback.id]
+            assert result["facts"][0]["scores"]["semantic"] == pytest.approx(0.8)
+&gt;           assert store.get(target.id).access_count == 0
+E           AssertionError: assert 1 == 0
+E            +  where 1 = MemoryChunk(id='af0bf585-6444-4d86-aa6e-d4583d082541', content='Python Python Python Python Python Python Python Pytho...2, 31, 562481, tzinfo=datetime.timezone.utc), observation_count=1, last_retrieved_at=None, reconsolidation_due_at=None).access_count
+E            +    where MemoryChunk(id='af0bf585-6444-4d86-aa6e-d4583d082541', content='Python Python Python Python Python Python Python Pytho...2, 31, 562481, tzinfo=datetime.timezone.utc), observation_count=1, last_retrieved_at=None, reconsolidation_due_at=None) = get('af0bf585-6444-4d86-aa6e-d4583d082541')
+E            +      where get = &lt;mnemos.utils.storage.SQLiteStore object at 0x00000202FFE490F0&gt;.get
+E            +      and   'af0bf585-6444-4d86-aa6e-d4583d082541' = MemoryChunk(id='af0bf585-6444-4d86-aa6e-d4583d082541', content='Python convention', embedding=[1.0, 0.0], metadata={'u...2, 31, 527671, tzinfo=datetime.timezone.utc), observation_count=1, last_retrieved_at=None, reconsolidation_due_at=None).id
+
+tests\test_retrieval_concurrent_revision.py:94: AssertionError</failure></testcase><testcase classname="tests.test_retrieval_contract" name="test_biomimetic_top_one_uses_actual_state_score" time="0.009" /><testcase classname="tests.test_retrieval_contract" name="test_question_cannot_become_reconsolidation_evidence" time="0.009" /><testcase classname="tests.test_retrieval_contract" name="test_relevance_floor_and_context_budget_are_enforced" time="0.008" /><testcase classname="tests.test_retrieval_contract" name="test_unresolved_conflict_label_is_included_in_context_budget" time="0.011" /><testcase classname="tests.test_retrieval_contract" name="test_missing_state_falls_back_to_semantic_scores" time="0.010" /><testcase classname="tests.test_inspectability" name="test_build_chunk_inspection_reports_scope_provenance_and_graph_context" time="0.027" /><testcase classname="tests.test_inspectability" name="test_build_chunk_inspection_can_explain_retrieval_relevance" time="0.013" /><testcase classname="tests.test_inspectability" name="test_reconsolidation_appends_revision_history" time="0.009" /><testcase classname="tests.test_memory_service" name="test_project_enable_pause_persists_through_single_owner" time="0.355" /><testcase classname="tests.test_memory_service" name="test_cognition_probe_requires_input_specific_extraction_without_writes" time="0.168" /><testcase classname="tests.test_memory_service" name="test_automatic_correction_switch_changes_lifecycle_not_retrieval_query[True]" time="0.204" /><testcase classname="tests.test_memory_service" name="test_automatic_correction_switch_changes_lifecycle_not_retrieval_query[False]" time="0.195" /><testcase classname="tests.test_memory_service" name="test_all_modules_disabled_retains_role_tagged_events_without_cognition" time="0.139" /><testcase classname="tests.test_memory_service" name="test_capture_is_idempotent_durable_and_does_not_require_a_model" time="0.159" /><testcase classname="tests.test_memory_service" name="test_capture_rejects_secrets_and_disabled_projects_before_disk" time="0.128" /><testcase classname="tests.test_memory_service" name="test_legacy_review_is_read_only_and_scoped_retrieval_excludes_legacy_rows" time="0.145" /><testcase classname="tests.test_memory_service" name="test_fact_proposal_cannot_be_an_unversioned_correction" time="0.005" /><testcase classname="tests.test_memory_service" name="test_explicit_remember_and_versioned_correction_keep_identity" time="0.203" /><testcase classname="tests.test_memory_service" name="test_bad_extraction_keeps_source_pending[]" time="0.156" /><testcase classname="tests.test_memory_service" name="test_bad_extraction_keeps_source_pending[{}]" time="0.149" /><testcase classname="tests.test_memory_service" name="test_bad_extraction_keeps_source_pending[{&quot;decision&quot;:&quot;facts&quot;,&quot;facts&quot;:[]}]" time="0.149" /><testcase classname="tests.test_memory_service" name="test_bad_extraction_keeps_source_pending[{&quot;decision&quot;:&quot;facts&quot;,&quot;facts&quot;:[{&quot;content&quot;:&quot;Invented fact&quot;,&quot;evidence_ids&quot;:[&quot;missing&quot;],&quot;operation&quot;:&quot;add&quot;}]}]" time="0.140" /><testcase classname="tests.test_engine.TestEngineProcess" name="test_process_stores_interaction" time="0.009" /><testcase classname="tests.test_engine.TestEngineProcess" name="test_process_adds_to_episodic_buffer" time="0.014" /><testcase classname="tests.test_engine.TestEngineProcess" name="test_process_tags_chunk_with_cognitive_state" time="0.009" /><testcase classname="tests.test_engine.TestEngineProcess" name="test_process_adds_to_spreading_activation_graph" time="0.009" /><testcase classname="tests.test_engine.TestEngineProcess" name="test_process_multiple_interactions" time="0.012" /><testcase classname="tests.test_engine.TestEngineProcess" name="test_process_returns_process_result" time="0.008" /><testcase classname="tests.test_engine.TestEngineProcess" name="test_process_chunk_has_embedding" time="0.009" /><testcase classname="tests.test_engine.TestEngineProcess" name="test_process_blocks_secret_content_via_safety_firewall" time="0.007" /><testcase classname="tests.test_engine.TestEngineProcess" name="test_process_redacts_pii_content_via_safety_firewall" time="0.008" /><testcase classname="tests.test_engine.TestEngineProcess" name="test_curator_process_stores_stable_repo_preference" time="0.009" /><testcase classname="tests.test_engine.TestEngineProcess" name="test_curator_process_skips_transient_timestamp_noise" time="0.006" /><testcase classname="tests.test_engine.TestEngineProcess" name="test_curator_process_skips_repetitive_status_noise" time="0.007" /><testcase classname="tests.test_engine.TestEngineRetrieve" name="test_retrieve_returns_relevant_chunks" time="0.012" /><testcase classname="tests.test_engine.TestEngineRetrieve" name="test_retrieve_empty_store" time="0.008" /><testcase classname="tests.test_engine.TestEngineRetrieve" name="test_retrieve_respects_top_k" time="0.021" /><testcase classname="tests.test_engine.TestEngineRetrieve" name="test_retrieve_results_are_memory_chunks" time="0.012" /><testcase classname="tests.test_engine.TestEngineRetrieve" name="test_retrieve_full_pipeline" time="0.017" /><testcase classname="tests.test_engine.TestEngineRetrieve" name="test_retrieve_reuses_single_store_candidate_pool" time="0.011" /><testcase classname="tests.test_engine.TestEngineScopedMemory" name="test_process_persists_scope_metadata" time="0.010" /><testcase classname="tests.test_engine.TestEngineScopedMemory" name="test_retrieve_filters_by_scope_id_and_allowed_scopes" time="0.013" /><testcase classname="tests.test_engine.TestEngineScopedMemory" name="test_retrieve_prefers_current_scope_over_global" time="0.014" /><testcase classname="tests.test_engine.TestEngineScopedMemory" name="test_consolidate_preserves_scope_and_isolates_projects" time="0.018" /><testcase classname="tests.test_engine.TestEngineGovernance" name="test_capture_mode_hooks_only_blocks_manual_process" time="0.012" /><testcase classname="tests.test_engine.TestEngineGovernance" name="test_max_chunks_per_scope_cap_prunes_oldest" time="0.024" /><testcase classname="tests.test_engine.TestEngineGovernance" name="test_retention_ttl_prunes_old_chunks" time="0.031" /><testcase classname="tests.test_engine.TestEngineConsolidate" name="test_consolidate_extracts_facts" time="0.054" /><testcase classname="tests.test_engine.TestEngineConsolidate" name="test_consolidate_clears_episodic_buffer" time="0.052" /><testcase classname="tests.test_engine.TestEngineConsolidate" name="test_consolidate_stores_semantic_chunks" time="0.032" /><testcase classname="tests.test_engine.TestEngineConsolidate" name="test_consolidate_empty_buffer" time="0.008" /><testcase classname="tests.test_engine.TestEngineFullPipeline" name="test_full_encode_retrieve_cycle" time="0.025" /><testcase classname="tests.test_engine.TestEngineFullPipeline" name="test_process_batch" time="0.018" /><testcase classname="tests.test_engine.TestEngineFullPipeline" name="test_stats_returns_all_module_stats" time="0.011" /><testcase classname="tests.test_engine.TestEngineFullPipeline" name="test_engine_default_construction" time="0.008" /><testcase classname="tests.test_engine.TestEngineFullPipeline" name="test_consolidation_in_pipeline" time="0.019" /><testcase classname="tests.test_engine.TestEngineFullPipeline" name="test_spreading_activation_builds_graph" time="0.012" /><testcase classname="tests.test_engine.TestEngineFullPipeline" name="test_engine_properties" time="0.007" /><testcase classname="tests.test_engine.TestEngineRetrievePersistence" name="test_retrieve_persists_access_count_and_touch[memory]" time="0.009" /><testcase classname="tests.test_engine.TestEngineRetrievePersistence" name="test_retrieve_persists_access_count_and_touch[sqlite]" time="0.065" /><testcase classname="tests.test_engine.TestEngineRetrievePersistence" name="test_retrieve_does_not_call_store_stats_on_hot_path" time="0.009" /><testcase classname="tests.test_engine.TestEngineRetrievePersistence" name="test_retrieve_uses_backend_managed_touch_increment" time="0.009" /><testcase classname="tests.test_engine.TestEngineRetrievePersistence" name="test_retrieve_top_one_skips_spreading_activation" time="0.009" /><testcase classname="tests.test_engine.TestEngineRetrievePersistence" name="test_retrieve_top_one_skips_affective_reranking" time="0.009" /><testcase classname="tests.test_engine.TestEnginePersistence" name="test_spreading_graph_hydrates_persisted_edges" time="0.006" /><testcase classname="tests.test_engine.TestEnginePersistence" name="test_spreading_graph_hydrates_from_persistent_store" time="0.100" /><testcase classname="tests.test_engine.TestEnginePersistence" name="test_process_keeps_cross_scope_nodes_disconnected" time="0.006" /><testcase classname="tests.test_engine.TestPackageExports" name="test_version_is_exported" time="0.005" /><testcase classname="tests.test_engine.TestPackageExports" name="test_all_main_classes_exported" time="0.004" /><testcase classname="tests.test_engine.TestPackageExports" name="test_config_classes_exported" time="0.005" /><testcase classname="tests.test_engine.TestPackageExports" name="test_utility_functions_exported" time="0.004" /></testsuite></testsuites>
