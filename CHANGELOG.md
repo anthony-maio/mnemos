@@ -2,6 +2,7 @@
 
 ## Unreleased
 
+- Provider failure logs now record exception types instead of exception messages, keeping request content and credentials out of those structured events while preserving exceptions and retry behavior for callers.
 - Replaced insertion-dependent graph construction with persisted mutual top-k preferences in builder v4, including empty-source restart and bounded recovery. Automatic standalone rebuilds replace existing adjacency; explicit manual edges remain available.
 - Fixed structured extraction alternatives so each decoder branch requires fact content and source evidence. Baseline and full Ollama development checks now preserve correction and forgetting across restart.
 - Added a shared authenticated loopback service for CLI, MCP, UI, and host adapters, with one SQLite writer, durable jobs, recovery leases, private runtime files, and sanitized capture outboxes.

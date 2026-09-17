@@ -1243,3 +1243,18 @@ preserve these separate outcomes. This comparison supports a mode-related
 hypothesis without proving it the sole cause of the prior pending state.
 Providers remain synthetic, so this does not establish semantic quality or
 complete native correction/forget continuity.
+
+## Provider failure log privacy
+
+An operational audit found provider wrappers copying exception messages into
+structured failure events. Eighteen synthetic regression cases reproduced a
+private-content and authorization canary appearing in the log across Ollama,
+OpenAI-compatible, and OpenRouter generation and embedding paths. The wrappers
+now emit `error_type` instead of `error`, while rethrowing the same exception and
+preserving fallback behavior. All eighteen cases pass, including ordinary and
+configuration failures, single/batch embeddings, and credential fallback paths.
+
+The combined provider, embedding, and Ollama checks passed 41 cases; Black and
+strict Python 3.10 mypy passed the changed source files. The frozen model queue
+and installed native-client fixture remain unchanged. This focused check does
+not replace a new full/package verification of later service logging changes.

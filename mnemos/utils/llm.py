@@ -327,7 +327,7 @@ class OllamaProvider(LLMProvider):
                 level=logging.ERROR,
                 provider="ollama",
                 operation="predict",
-                error=str(exc),
+                error_type=type(exc).__name__,
             )
             raise
 
@@ -516,7 +516,7 @@ class OpenAIProvider(LLMProvider):
                 level=logging.ERROR,
                 provider=provider_name,
                 operation="predict",
-                error=str(error),
+                error_type=type(error).__name__,
             )
             raise error
         except Exception as exc:
@@ -525,7 +525,7 @@ class OpenAIProvider(LLMProvider):
                 level=logging.ERROR,
                 provider=provider_name,
                 operation="predict",
-                error=str(exc),
+                error_type=type(exc).__name__,
             )
             raise
 

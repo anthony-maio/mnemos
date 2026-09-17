@@ -525,7 +525,7 @@ class OllamaEmbeddingProvider(EmbeddingProvider):
                     level=logging.ERROR,
                     provider="ollama",
                     operation="embed",
-                    error=str(exc),
+                    error_type=type(exc).__name__,
                 )
                 raise
 
@@ -555,7 +555,7 @@ class OllamaEmbeddingProvider(EmbeddingProvider):
                 level=logging.ERROR,
                 provider="ollama",
                 operation="embed_batch",
-                error=str(exc),
+                error_type=type(exc).__name__,
             )
 
         # Graceful fallback if batch endpoint is unavailable.
@@ -685,7 +685,7 @@ class OpenAIEmbeddingProvider(EmbeddingProvider):
                 level=logging.ERROR,
                 provider=provider_name,
                 operation="embed",
-                error=str(error),
+                error_type=type(error).__name__,
             )
             raise error
         except Exception as exc:
@@ -694,7 +694,7 @@ class OpenAIEmbeddingProvider(EmbeddingProvider):
                 level=logging.ERROR,
                 provider=provider_name,
                 operation="embed",
-                error=str(exc),
+                error_type=type(exc).__name__,
             )
             raise
 
@@ -727,7 +727,7 @@ class OpenAIEmbeddingProvider(EmbeddingProvider):
                 level=logging.ERROR,
                 provider=provider_name,
                 operation="embed_batch",
-                error=str(error),
+                error_type=type(error).__name__,
             )
             raise error
         except Exception as exc:
@@ -736,7 +736,7 @@ class OpenAIEmbeddingProvider(EmbeddingProvider):
                 level=logging.ERROR,
                 provider=provider_name,
                 operation="embed_batch",
-                error=str(exc),
+                error_type=type(exc).__name__,
             )
             raise
 
