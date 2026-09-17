@@ -1,6 +1,47 @@
 # Real-model evaluation status
 
-Current status: the fresh v3 evaluation queue is running from frozen
+## Current checkpoint: September 17, 2026, 15:56 UTC
+
+The v4 queue is running from frozen `d94ded6`, using `qwen3.5:9b`
+with thinking disabled and `nomic-embed-text:latest`. Development mechanism,
+lifecycle preflight, and 10,000-fact performance phases completed. The
+held-out mechanism phase is active; the seven-profile lifecycle matrix has
+not started. The worker process was observed alive and its raw-output file
+was still advancing. No held-out quality conclusion is accepted yet.
+
+The corrected performance measurement recorded recall p95 1,088.094 ms
+against a 500 ms gate and capture p95 64.279 ms against 100 ms. See the
+[preserved performance evidence](performance-corrected-v4/README.md).
+The later [metadata-write comparison](access-metadata-comparison-v1/README.md)
+does not establish a reliable speedup or close the recall gate.
+
+The current coordinator is `.venv/run_thinking_evaluations_v1.py`;
+status and outputs are under `real-model-v4/`, with persistent checkpoints
+under `.venv/real-model-work-v4/`. The queue retains its original source,
+dataset, model-digest, and option bindings. Later embedding-role and
+conflict-collision changes are not part of this run. The latest complete
+package checkpoint is separate source `2494e31`, with 824 tests passed and
+four skipped; the combined later source still needs full verification.
+
+Current model pins:
+
+- Cognition: `qwen3.5:9b`, digest
+  `6488c96fa5faab64bb65cbd30d4289e20e6130ef535a93ef9a49f42eda893ea7`.
+- Embeddings: `nomic-embed-text:latest`, digest
+  `0a109f422b47e3a30ba2b10eca18548e944e8a23073ee3f3e947efcf3c45e59f`.
+- Temperature 0, output budget 512, provider timeout 120 seconds,
+  three repetitions, `think=false`, no explicit embedding prefixes.
+
+The v3 queue terminated with a lifecycle serialization failure. Its
+[failure archive](lifecycle-serialization-failure/README.md) and earlier
+results are preserved. It is not the active evaluation. The sections below
+retain historical status and estimates, not current readiness claims.
+See the [claim and evidence ledger](claim-evidence-ledger.md) for remaining
+acceptance gates.
+
+## Historical v3 checkpoint
+
+At this earlier checkpoint, the fresh v3 evaluation queue was running from frozen
 `b7a9d9d`. All four integrated lifecycle preflight cases passed. The 10,000-fact
 performance phase completed: capture passed at 57.410 ms p95; recall failed at
 1,314.583 ms p95 with two stalls inside durable retrieval metadata updates.

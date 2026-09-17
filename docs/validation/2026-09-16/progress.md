@@ -1049,3 +1049,16 @@ The new [claim and evidence ledger](claim-evidence-ledger.md) maps the twelve
 original capability promises to verified artifacts and remaining acceptance
 gates. It also clarifies that configured embedding revision is an identity
 label, not automatic verification of a mutable Ollama tag's digest.
+
+## Backup during an active writer transaction
+
+The additional T16 regression uses a separate SQLite connection and thread
+barriers to hold two uncommitted row updates while the owning connection
+creates a backup. After the writer commits, the live database contains both
+new values, while the restored backup contains both prior committed values.
+The restored registry, fact count, and SQLite integrity also pass.
+`tests/test_backup_concurrent.py` and `tests/test_backup_restore.py` passed
+all four tests. This uses temporary databases, not live memory data.
+
+The evaluation-status page now identifies the active v4 queue and explicitly
+labels the old v3 status as historical. Raw reports were not changed.
