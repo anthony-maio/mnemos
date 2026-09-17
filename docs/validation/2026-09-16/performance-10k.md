@@ -111,3 +111,20 @@ remains unmeasured by this load test.
 
 Raw query timings and provider/source identity are in
 [real-model-v3/performance-10k.json](real-model-v3/performance-10k.json).
+
+Source review localized the operation to a primary-key access-counter/timestamp
+update followed by commit. It does not rebuild vectors, FTS, or graph state;
+the FTS trigger only fires on content updates. The embedding is stored in the
+same table row, so large-row WAL writes and automatic checkpoint/flush cost
+are plausible explanations, not measured causes. The prior same-size run's
+maximum metadata-update time was 151.374 ms, which also argues against
+claiming a repeatable query-plan regression from these two stalls.
+
+The next bounded diagnostic is an offline comparison of 10,000-row fixtures
+with 768-dimensional versus absent embeddings, preserving five-ID updates and
+WAL/FULL commits. Record page size, checkpoint configuration, database/WAL
+bytes, and per-update timing, then inspect checkpoint state after the timed
+operations. Run this outside the active evaluation to avoid competing disk
+load. A separate metadata table is only a candidate if the probe confirms
+large-row write amplification; it would require migration and consistency
+tests. Deferred commits and reduced durability are not part of this repair.
