@@ -4,14 +4,22 @@ Assessment date: September 17, 2026. This covers the unreleased
 functional-local-memory worktree, not the installed public package or website.
 The capability IDs come from the original implementation plan.
 
-The latest complete package verification is frozen source `8d865a5`:
-903 tests passed with four skips, plus Black, strict mypy, JavaScript syntax,
-build, and Twine. A fresh installed wheel passed 110 selected contract cases
+The latest complete package verification is frozen source `62fe164`:
+909 tests passed with four skips, plus Black, strict mypy, JavaScript syntax,
+build, and Twine. A fresh installed wheel passed 116 selected contract cases
 with two matching platform skips and seven synthetic Stop replay assertions. Source, fixtures, and the installed
 environment were on C:, outside the development checkout. The
-[host provenance package checkpoint](../2026-09-17/host-provenance-package-checkpoint-v1/README.md)
+[retrieval revision package checkpoint](../2026-09-17/retrieval-revision-package-checkpoint-v1/README.md)
 binds the wheel, source, helpers, dependencies, exact test cases, and installed
 package origins. It does not establish native plugin-session acceptance.
+
+The [concurrent revision regression](../2026-09-17/retrieval-concurrent-revision-v1/README.md)
+reproduces stale candidate scoring and context-budget violations while a
+correction commits during state classification. The repair reloads candidates
+after that await. Six cases cover correction and forget, with graph expansion
+on and off; all six fail on the old source and pass in the new source and wheel.
+The active real-model run retains its original source and does not measure this
+repair. Native Claude v17 remains bound to `8d865a5`.
 
 The earlier complete package checkpoint was frozen source `6600dc2`, with
 865 tests passed and 42 installed contract cases. It remains historical
