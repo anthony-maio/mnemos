@@ -776,3 +776,10 @@ hook-trust override was used; no hook callbacks were observed. The earlier
 cancelled run selected a different launcher on inherited PATH. Two probe-only
 errors were also retained (missing helper and Path.casefold); neither is a
 product failure. [Native MCP record](codex-health-installation-binding/README.md).
+
+Hook command review also found a preexisting POSIX quoting gap. Interpreter
+paths now use shell-aware quoting on POSIX; Cmd fallback rejects percent/quote
+paths that cannot be represented safely. PowerShell literal quoting is
+unchanged. Host tests pass (20 passed, two POSIX subprocess cases skipped on
+Windows), with Black and compatible production mypy passing. These skips are
+not POSIX execution evidence.

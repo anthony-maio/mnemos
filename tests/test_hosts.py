@@ -6,7 +6,10 @@ from __future__ import annotations
 
 import json
 import os
+import shlex
+import shutil
 import subprocess
+import sys
 import tomllib
 from pathlib import Path
 
@@ -348,7 +351,70 @@ def test_codex_hook_command_preserves_posix_shell_shape(monkeypatch, tmp_path: P
         home=tmp_path / "home",
     )
     generated = tomllib.loads(preview.rendered_config)["hooks"]["UserPromptSubmit"][-1]["hooks"][0]
-    assert generated["command"] == f'"{python_path}" -m mnemos.adapters.codex'
+    assert shlex.split(generated["command"]) == [python_path, "-m", "mnemos.adapters.codex"]
+
+
+@pytest.mark.parametrize("explicit_env", [False, True])
+@pytest.mark.skipif(os.name == "nt", reason="requires a POSIX executable and shell")
+def test_codex_posix_hook_command_executes_quoted_interpreter_path(
+    monkeypatch, tmp_path: Path, explicit_env: bool
+) -> None:
+    shell = shutil.which("sh")
+    if shell is None:
+        pytest.skip("POSIX sh is unavailable")
+
+    real_python = sys.executable
+    interpreter = tmp_path / "Mnemos $`tick' Python" / "python"
+    interpreter.parent.mkdir(parents=True)
+    interpreter.symlink_to(real_python)
+    package = tmp_path / "stub package" / "mnemos" / "adapters"
+    package.mkdir(parents=True)
+    (package.parent / "__init__.py").write_text("", encoding="utf-8")
+    (package / "__init__.py").write_text("", encoding="utf-8")
+    (package / "codex.py").write_text(
+        "import json, os, sys\n"
+        "payload = json.load(sys.stdin)\n"
+        "print(json.dumps({'event_id': payload['event_id'], "
+        "'profile': os.environ.get('MNEMOS_USER_PROFILE_ID'), "
+        "'registry': os.environ.get('MNEMOS_SCOPE_REGISTRY')}))\n",
+        encoding="utf-8",
+    )
+    monkeypatch.setattr(hosts.sys, "platform", "linux")
+    monkeypatch.setattr(hosts.sys, "executable", str(interpreter))
+    integration_env = (
+        {
+            "MNEMOS_USER_PROFILE_ID": "posix-profile",
+            "MNEMOS_SCOPE_REGISTRY": str(tmp_path / "scopes.json"),
+        }
+        if explicit_env
+        else None
+    )
+    command = hosts._codex_hook_command(integration_env)
+    child_env = {**os.environ, "PYTHONPATH": str(tmp_path / "stub package")}
+    for key in ("MNEMOS_USER_PROFILE_ID", "MNEMOS_SCOPE_REGISTRY"):
+        child_env.pop(key, None)
+    completed = subprocess.run(
+        [shell, "-c", command],
+        input='{"event_id":"quoted-path"}',
+        capture_output=True,
+        text=True,
+        env=child_env,
+        check=False,
+        timeout=10,
+    )
+    assert completed.returncode == 0, completed.stderr
+    record = json.loads(completed.stdout)
+    assert record["event_id"] == "quoted-path"
+    assert record["profile"] == ("posix-profile" if explicit_env else None)
+    assert record["registry"] == (str(tmp_path / "scopes.json") if explicit_env else None)
+
+
+@pytest.mark.parametrize("python_path", ["/tmp/mnemos-python\n", "/tmp/mnemos-python\x00"])
+def test_codex_hook_command_rejects_nul_and_newline_paths(monkeypatch, python_path: str) -> None:
+    monkeypatch.setattr(hosts.sys, "platform", "linux")
+    monkeypatch.setattr(hosts.sys, "executable", python_path)
+    with pytest.raises(ValueError, match="NUL or newline"):
+        hosts._codex_hook_command(None)
 
 
 def test_codex_hook_command_uses_cmd_fallback_when_powershell_missing(
@@ -366,6 +432,17 @@ def test_codex_hook_command_uses_cmd_fallback_when_powershell_missing(
     )
     generated = tomllib.loads(preview.rendered_config)["hooks"]["UserPromptSubmit"][-1]["hooks"][0]
     assert generated["command"] == f'"{python_path}" -m mnemos.adapters.codex'
+
+
+@pytest.mark.parametrize(
+    "python_path", [r"C:\Mnemos%PATH%\python.exe", 'C:\\Mnemos"quoted\\python.exe']
+)
+def test_codex_cmd_fallback_rejects_unsafe_interpreter_path(monkeypatch, python_path: str) -> None:
+    monkeypatch.setattr(hosts.sys, "platform", "win32")
+    monkeypatch.setattr(hosts, "_powershell_executable", lambda: None)
+    monkeypatch.setattr(hosts.sys, "executable", python_path)
+    with pytest.raises(ValueError, match="unsupported by Cmd"):
+        hosts._codex_hook_command(None)
 
 
 def test_codex_powershell_bootstrap_executes_allowlisted_env_and_stdin(
