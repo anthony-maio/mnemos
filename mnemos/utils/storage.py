@@ -1254,7 +1254,7 @@ class SQLiteStore(MemoryStore):
                         _protect_private_path(auxiliary)
             self._load_sqlite_vec_extension()
             self._initialize_schema()
-        except Exception:
+        except BaseException:
             self._conn.close()
             raise
 
@@ -1460,6 +1460,15 @@ class SQLiteStore(MemoryStore):
             if existing is not None and int(existing) > int(self._SCHEMA_VERSION):
                 self._conn.close()
                 raise ValueError("Database schema is newer than this Mnemos version")
+        self._conn.execute("BEGIN")
+        try:
+            self._initialize_schema_in_transaction()
+            self._conn.commit()
+        except BaseException:
+            self._conn.rollback()
+            raise
+
+    def _initialize_schema_in_transaction(self) -> None:
         self._conn.execute(self._CREATE_TABLE_SQL)
         self._ensure_chunk_columns()
         self._conn.execute(self._CREATE_CHUNK_CANONICAL_INDEX_SQL)
@@ -1525,7 +1534,6 @@ class SQLiteStore(MemoryStore):
                         self._sqlite_vec_dim = len(embedding)
             if self._sqlite_vec_dim is not None:
                 self._ensure_vec_table(self._sqlite_vec_dim)
-        self._conn.commit()
 
     def _fts_needs_rebuild(self) -> bool:
         chunk_count = self._conn.execute("SELECT COUNT(*) FROM memory_chunks").fetchone()[0]
