@@ -382,3 +382,24 @@ answered PostgreSQL, so seeded recall failed and the overall native acceptance
 status remains `not_observed`. The report, exact runner, reviewed host output,
 and cleanup checks are preserved under
 `native-codex-capture-v5/`; native Codex support remains pending.
+
+## Native Codex capture v6
+
+The second repaired native run completed in 24.858 seconds with the installed
+d17 wheel and a disposable service. `SessionStart`, `UserPromptSubmit`, and
+`Stop` each invoked the wrapper and returned 0. The prompt hook returned the
+seeded SQLite context. User and assistant capture rows survived restart, and
+the host answered `The project uses SQLite.` The v6 report records those
+capture and seeded-recall criteria as observed.
+
+The run used the manual PowerShell wrapper from the probe rather than the later
+production renderer package, so it does not validate that renderer in a native
+Codex turn.
+
+The fixture used simple embeddings and unavailable cognition. The host did not
+report a model name, and the answer does not establish causal memory use,
+model quality, or performance. The warm direct adapter preflight was excluded
+from native counts. The exact runner, reviewed synthetic stdout observations,
+and cleanup evidence are preserved under
+`native-codex-capture-v6/`; the earlier v5 failure remains open alongside this
+new partial success.

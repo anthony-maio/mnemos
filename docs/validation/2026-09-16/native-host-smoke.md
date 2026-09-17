@@ -275,3 +275,28 @@ fixture remains at
 and service descriptor were removed, and no matching probe process remained.
 Native Codex support therefore stays pending, with MCP and manual fallback
 retained.
+
+## Codex native capture v6
+
+A second repaired run used the installed d17 wheel in a disposable project with
+simple embeddings and cognition unavailable. The native command returned 0 and
+the wrapper recorded three hook calls: `SessionStart`, `UserPromptSubmit`, and
+`Stop`. Each returned 0. The prompt hook returned the seeded SQLite context,
+and both user and assistant capture rows survived the SQLite service restart.
+The hook used the manual PowerShell wrapper from the probe, so this run does
+not exercise the later production renderer package.
+
+Codex answered `The project uses SQLite.` for the seeded prompt, so the v6
+seeded recall criteria are recorded as observed. That sentence is an observed
+host answer, not a model-quality result. The run does not measure whether the
+answer was caused by the retrieved context, and it does not establish a
+performance bound. The host did not report a model name. The warm direct
+adapter preflight was excluded from native invocation counts.
+
+The [v6 report](native-codex-capture-v6/report.json) is unchanged. Its exact
+runner, reviewed synthetic stdout observations, and hashes are indexed in the
+[v6 evidence index](native-codex-capture-v6/evidence-index.json). The private
+fixture remains preserved at
+`D:\WindowsTemp\mnemos-native-codex-capture-v6-ftt13i5g`; its copied auth file
+and runtime descriptor were removed, and no matching probe process remained at
+cleanup. No live Codex configuration, host memory, or Ollama service changed.

@@ -1,0 +1,55 @@
+{
+  "artifact": "native-codex-capture-v6",
+  "status": "observed",
+  "source_commit": "d17dd249424f3e2c11b8fefee4a20bba8f50cf9f",
+  "cli": {
+    "version": "codex-cli 0.146.0",
+    "native_command_returncode": 0,
+    "native_elapsed_ms": 24857.5,
+    "model_name_reported": false,
+    "model_quality_claim": "none"
+  },
+  "native_stdout_review": {
+    "json_line_count": 7,
+    "non_json_line_count": 0,
+    "hook_wrapper_calls": 3,
+    "hook_events": [
+      {"event": "SessionStart", "returncode": 0, "context_present": true, "seed_present": true},
+      {"event": "UserPromptSubmit", "returncode": 0, "context_present": true, "seed_present": true},
+      {"event": "Stop", "returncode": 0, "context_present": false, "seed_present": false}
+    ],
+    "host_event_types": ["item.completed", "thread.started", "turn.completed", "turn.started"],
+    "host_error_items": 3,
+    "answer_text": "The project uses SQLite.",
+    "answer_mentions_seed": true,
+    "usage": {
+      "input_tokens": 18899,
+      "cached_input_tokens": 10624,
+      "output_tokens": 9,
+      "model_name": null
+    }
+  },
+  "durability": {
+    "roles_before_restart": {"user": true, "assistant": true},
+    "events_survive_restart": true,
+    "event_count_after_restart": 3,
+    "role_counts_after_restart": {"user": 2, "assistant": 1}
+  },
+  "criteria": {
+    "native_lifecycle_complete": true,
+    "user_capture": true,
+    "assistant_capture": true,
+    "seed_context": true,
+    "model_answer": true,
+    "capture_criteria_complete": true,
+    "seeded_recall_criteria_complete": true
+  },
+  "limits": [
+    "Cognition was unavailable and embeddings were simple deterministic embeddings.",
+    "The run used the manual PowerShell wrapper from the probe, not the later production renderer package.",
+    "The answer and context delivery are observed; causal attribution to memory is not measured.",
+    "Host timing and token telemetry are retained evidence, not performance acceptance.",
+    "The model name was not reported, so model-specific quality cannot be claimed.",
+    "The warm direct adapter preflight was excluded from native invocation counts."
+  ]
+}
