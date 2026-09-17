@@ -357,8 +357,10 @@ supplied the seeded SQLite memory, and retained both events after restart.
 
 The first full suite on this checkpoint recorded 638 passes, 1 failure, and
 2 skips. The service-start fixture did not become ready within 15 seconds;
-the unchanged isolated retry passed in 4.68 seconds. The failure is preserved
-and a second full run is pending. The [verification record](native-host-repair-verification.md)
+the unchanged isolated retry passed in 4.68 seconds. The failure remains
+preserved. A second full verification recorded 639 passes and 2 explicit
+skips in 959.85 seconds; Black, strict mypy across 69 source files, JavaScript,
+build, and Twine checks passed. The [verification record](native-host-repair-verification.md)
 does not claim the intermittent startup issue is fixed.
 
 Native Codex dispatched a Windows marker through `hooks.json`, and a separate
@@ -372,3 +374,11 @@ and does not authorize migration of live data.
 Indexed host and graph verification artifacts now preserve their original
 line endings in Git. This fixes a Windows checkout normalization mismatch
 between captured byte hashes and stored blobs; it does not change test results.
+
+Native Codex capture v5 partially dispatched through the installed d17 wheel:
+UserPromptSubmit and Stop completed, SessionStart timed out, both conversation
+roles survived restart, and the prompt hook returned the SQLite seed. Codex
+answered PostgreSQL, so seeded recall failed and the overall native acceptance
+status remains `not_observed`. The report, exact runner, reviewed host output,
+and cleanup checks are preserved under
+`native-codex-capture-v5/`; native Codex support remains pending.

@@ -1,0 +1,382 @@
+"""Offline reproduction of Codex's Windows PowerShell hook invocation."""
+
+from __future__ import annotations
+
+import hashlib
+import json
+import os
+import shutil
+import subprocess
+import sys
+import tempfile
+import time
+from datetime import datetime, timezone
+from importlib.metadata import version
+from pathlib import Path
+from typing import Any
+
+WORKTREE = Path(__file__).resolve().parents[1]
+OUTPUT_DIR = WORKTREE / "docs" / "validation" / "2026-09-16" / "codex-powershell-probe"
+WHEEL_VENV = Path(r"D:\WindowsTemp\wheel-smoke")
+WHEEL_PATH = Path(r"D:\WindowsTemp\mnemos-shell-wheel-build\mnemos_memory-0.7.0-py3-none-any.whl")
+WHEEL_SHA256 = "a078ce7392bd8fc6181148cf270928805b23a191cc710b5da716fb2291b88614"
+TEMP_PARENT = Path(r"D:\WindowsTemp")
+PROFILE = "codex-powershell-probe"
+SEED = "PowerShell probe seed is durable local memory."
+MAX_SECONDS = 60
+
+
+def _clean_env(overrides: dict[str, str]) -> dict[str, str]:
+    env = dict(os.environ)
+    for key in list(env):
+        if key.startswith("MNEMOS_") or key in {"PYTHONPATH", "CODEX_HOME"}:
+            env.pop(key, None)
+    env.update(overrides)
+    return env
+
+
+def _find_tagged_powershell() -> Path:
+    # This follows rust-v0.146.0 shell_detect.rs: pwsh is searched first,
+    # then powershell, with the Windows fallback paths after PATH lookup.
+    for name in ("pwsh", "powershell"):
+        found = shutil.which(name)
+        if found:
+            return Path(found).resolve()
+    candidates = (
+        Path(r"C:\Program Files\PowerShell\7\pwsh.exe"),
+        Path(r"C:\Windows\System32\WindowsPowerShell\v1.0\powershell.exe"),
+    )
+    for candidate in candidates:
+        if candidate.is_file():
+            return candidate
+    raise FileNotFoundError("tagged Codex PowerShell executable is unavailable")
+
+
+def _protect(path: Path) -> None:
+    from mnemos.service import _protect_private_path
+
+    _protect_private_path(path)
+
+
+def _invoke(
+    powershell: Path,
+    command: str,
+    payload: dict[str, Any],
+    *,
+    cwd: Path,
+    env: dict[str, str],
+    label: str,
+) -> dict[str, Any]:
+    started = time.perf_counter()
+    completed = subprocess.run(
+        [str(powershell), "-NoProfile", "-Command", command],
+        input=json.dumps(payload, ensure_ascii=False),
+        capture_output=True,
+        text=True,
+        encoding="utf-8",
+        errors="replace",
+        cwd=str(cwd),
+        env=env,
+        shell=False,
+        timeout=20,
+        check=False,
+    )
+    stdout = completed.stdout.strip()
+    parsed: Any = None
+    parse_error: str | None = None
+    if stdout:
+        try:
+            parsed = json.loads(stdout)
+        except json.JSONDecodeError as exc:
+            parse_error = type(exc).__name__
+    return {
+        "label": label,
+        "returncode": completed.returncode,
+        "elapsed_ms": round((time.perf_counter() - started) * 1000, 2),
+        "stdout": stdout,
+        "stderr": completed.stderr,
+        "parsed": parsed,
+        "stdout_parse_error": parse_error,
+        "input_event_id": payload["event_id"],
+        "input_turn_id": payload["turn_id"],
+    }
+
+
+def _context_from_result(result: dict[str, Any]) -> str:
+    parsed = result.get("parsed")
+    if not isinstance(parsed, dict):
+        return ""
+    hook_output = parsed.get("hookSpecificOutput")
+    if not isinstance(hook_output, dict):
+        return ""
+    value = hook_output.get("additionalContext")
+    return value if isinstance(value, str) else ""
+
+
+def _hash(value: str) -> str:
+    return hashlib.sha256(value.encode("utf-8")).hexdigest()
+
+
+def main() -> int:
+    if (OUTPUT_DIR / "result.json").exists():
+        raise FileExistsError(f"refusing to overwrite evidence directory: {OUTPUT_DIR}")
+    OUTPUT_DIR.mkdir(parents=True, exist_ok=True)
+    started_at = datetime.now(timezone.utc).isoformat()
+    fixture = Path(tempfile.mkdtemp(prefix="mnemos powershell probe-", dir=TEMP_PARENT))
+    _protect(fixture)
+    project = fixture / "project with spaces"
+    project.mkdir()
+    _protect(project)
+    registry_path = fixture / "scopes.json"
+    descriptor_path = fixture / "runtime.json"
+    config_path = fixture / "settings.toml"
+    service_lock = fixture / "service.lock"
+    service: Any | None = None
+    restart_service: Any | None = None
+    result: dict[str, Any] = {
+        "probe": "codex-powershell-probe",
+        "host_calls": False,
+        "model_calls": False,
+        "started_at": started_at,
+        "fixture": str(fixture),
+        "fixture_retained": True,
+    }
+    try:
+        if os.environ.get("PYTHONPATH"):
+            raise RuntimeError("probe runner inherited PYTHONPATH")
+        expected_site = WHEEL_VENV / "Lib" / "site-packages"
+        import mnemos
+
+        package_path = Path(mnemos.__file__).resolve()
+        if expected_site not in package_path.parents:
+            raise RuntimeError(f"wheel isolation failed: imported {package_path}")
+        observed_wheel_sha = hashlib.sha256(WHEEL_PATH.read_bytes()).hexdigest()
+        if observed_wheel_sha != WHEEL_SHA256:
+            raise RuntimeError("installed probe wheel digest does not match pinned d17 wheel")
+
+        from mnemos.config import MnemosConfig
+        from mnemos.engine import MnemosEngine
+        from mnemos.hosts import _codex_hook_command
+        from mnemos.memory_service import LocalMemoryService
+        from mnemos.scopes import ScopeRegistry
+        from mnemos.service import MnemosService
+        from mnemos.utils.embeddings import SimpleEmbeddingProvider
+        from mnemos.utils.llm import UnavailableLLMProvider
+        from mnemos.utils.storage import SQLiteStore
+
+        powershell = _find_tagged_powershell()
+        registry = ScopeRegistry()
+        project_identity = registry.register_project(
+            project, user_profile_id=PROFILE, enabled=True
+        )
+        registry.save(registry_path)
+        config = MnemosConfig()
+        for module_name in ("surprisal", "mutable_rag", "affective", "sleep", "spreading"):
+            setattr(config.modules, module_name, False)
+        store = SQLiteStore(str(fixture / "memory.sqlite"))
+        engine = MnemosEngine(
+            config=config,
+            llm=UnavailableLLMProvider("offline PowerShell probe cognition unavailable"),
+            embedder=SimpleEmbeddingProvider(dim=64),
+            store=store,
+            scope_registry=registry,
+            require_scope_context=True,
+        )
+        service = MnemosService(
+            dispatcher=LocalMemoryService(engine, registry),
+            descriptor_path=descriptor_path,
+            lock_path=service_lock,
+            startup_timeout=3,
+            dispatch_timeout=10,
+        )
+        service.start()
+        context = registry.resolve(
+            project,
+            user_profile_id=PROFILE,
+            session_id="powershell-seed-session",
+            host="codex",
+        )
+        integration_values = {
+            "MNEMOS_CONFIG_PATH": str(config_path),
+            "MNEMOS_RUNTIME_DESCRIPTOR": str(descriptor_path),
+            "MNEMOS_SCOPE_REGISTRY": str(registry_path),
+            "MNEMOS_USER_PROFILE_ID": PROFILE,
+        }
+        child_env = _clean_env(integration_values)
+        seed_result = service.submit(
+            "remember",
+            {
+                "context": context.model_dump(mode="json"),
+                "event_id": "powershell-probe-seed",
+                "content": SEED,
+                "scope": "project",
+            },
+        )
+        seed_maintenance = service.submit(
+            "maintenance", {"context": context.model_dump(mode="json")}
+        )
+        command = _codex_hook_command(integration_values)
+        payload_base = {
+            "hook_event_name": "UserPromptSubmit",
+            "cwd": str(project),
+            "timestamp": datetime.now(timezone.utc).isoformat(),
+        }
+        malformed_payload = {
+            **payload_base,
+            "event_id": "powershell-unmodified-event",
+            "session_id": "powershell-unmodified-session",
+            "turn_id": "powershell-unmodified-turn",
+            "prompt": "PowerShell unmodified command probe",
+        }
+        corrected_payload = {
+            **payload_base,
+            "event_id": "powershell-ampersand-event",
+            "session_id": "powershell-ampersand-session",
+            "turn_id": "powershell-ampersand-turn",
+            "prompt": "PowerShell ampersand command probe",
+        }
+        malformed = _invoke(
+            powershell,
+            command,
+            malformed_payload,
+            cwd=project,
+            env=child_env,
+            label="codex_command_unmodified",
+        )
+        corrected = _invoke(
+            powershell,
+            "& " + command,
+            corrected_payload,
+            cwd=project,
+            env=child_env,
+            label="codex_command_ampersand",
+        )
+        if _context_from_result(corrected).find(SEED) < 0:
+            raise AssertionError("PowerShell ampersand command did not return seeded context")
+        if corrected.get("returncode") != 0:
+            raise AssertionError("PowerShell ampersand command did not exit successfully")
+        post_capture = service.submit(
+            "maintenance", {"context": context.model_dump(mode="json")}
+        )
+        before = service.submit(
+            "list",
+            {
+                "context": context.model_dump(mode="json"),
+                "allowed_scopes": ["project"],
+                "limit": 100,
+            },
+        )
+        facts_before = [
+            item.get("content") for item in before.get("facts", []) if isinstance(item, dict)
+        ]
+        expected_corrected = corrected_payload["prompt"]
+        if expected_corrected not in facts_before:
+            raise AssertionError("corrected PowerShell prompt was not durably captured")
+        if malformed_payload["prompt"] in facts_before:
+            raise AssertionError("unmodified malformed command unexpectedly captured input")
+
+        service.stop()
+        service = None
+        restart_registry = ScopeRegistry.load(registry_path)
+        restart_store = SQLiteStore(str(fixture / "memory.sqlite"))
+        restart_engine = MnemosEngine(
+            config=config,
+            llm=UnavailableLLMProvider("offline PowerShell probe cognition unavailable"),
+            embedder=SimpleEmbeddingProvider(dim=64),
+            store=restart_store,
+            scope_registry=restart_registry,
+            require_scope_context=True,
+        )
+        restart_service = MnemosService(
+            dispatcher=LocalMemoryService(restart_engine, restart_registry),
+            descriptor_path=fixture / "runtime-restart.json",
+            lock_path=fixture / "service-restart.lock",
+            startup_timeout=3,
+            dispatch_timeout=10,
+        )
+        restart_service.start()
+        restart_context = restart_registry.resolve(
+            project,
+            user_profile_id=PROFILE,
+            session_id="powershell-restart-session",
+            host="codex",
+        )
+        after = restart_service.submit(
+            "list",
+            {
+                "context": restart_context.model_dump(mode="json"),
+                "allowed_scopes": ["project"],
+                "limit": 100,
+            },
+        )
+        facts_after = [
+            item.get("content") for item in after.get("facts", []) if isinstance(item, dict)
+        ]
+        if expected_corrected not in facts_after:
+            raise AssertionError("corrected PowerShell prompt did not survive restart")
+        result.update(
+            {
+                "status": "complete",
+                "source_checkpoint": subprocess.run(
+                    ["git", "-C", str(WORKTREE), "rev-parse", "HEAD"],
+                    capture_output=True,
+                    text=True,
+                    check=True,
+                    timeout=5,
+                ).stdout.strip(),
+                "python": {
+                    "executable": str(Path(sys.executable).resolve()),
+                    "version": sys.version.split()[0],
+                    "package": version("mnemos-memory"),
+                    "module_path": str(package_path),
+                },
+                "wheel": {
+                    "path": str(WHEEL_PATH),
+                    "sha256": observed_wheel_sha,
+                    "expected_sha256": WHEEL_SHA256,
+                    "source_commit": "d17dd249424f3e2c11b8fefee4a20bba8f50cf9f",
+                },
+                "powershell": {"path": str(powershell), "selection_order": ["pwsh", "powershell"]},
+                "project_identity": project_identity.id,
+                "generated_command": command,
+                "corrected_command": "& " + command,
+                "seed": {"remember": seed_result, "maintenance": seed_maintenance},
+                "unmodified": malformed,
+                "ampersand": corrected,
+                "capture_maintenance": post_capture,
+                "before_restart": {"fact_contents": facts_before},
+                "after_restart": {"fact_contents": facts_after},
+                "restart_prompt_survives": expected_corrected in facts_after,
+                "input_ids": {
+                    "unmodified_event": malformed_payload["event_id"],
+                    "ampersand_event": corrected_payload["event_id"],
+                },
+                "stdout_stderr_retained_in_report": True,
+            }
+        )
+    except Exception as exc:
+        result.update(
+            {
+                "status": "failed",
+                "error_type": type(exc).__name__,
+                "error_digest": _hash(str(exc)),
+            }
+        )
+    finally:
+        for active in (restart_service, service):
+            if active is not None:
+                try:
+                    active.stop()
+                except Exception:
+                    pass
+        result["finished_at"] = datetime.now(timezone.utc).isoformat()
+        result["runner_sha256"] = hashlib.sha256(Path(__file__).read_bytes()).hexdigest()
+        (OUTPUT_DIR / "result.json").write_text(
+            json.dumps(result, indent=2, ensure_ascii=False) + "\n", encoding="utf-8"
+        )
+    print(json.dumps({"status": result.get("status"), "fixture": str(fixture)}))
+    return 0 if result.get("status") == "complete" else 1
+
+
+if __name__ == "__main__":
+    raise SystemExit(main())

@@ -23,13 +23,23 @@ schema initialization. It does not identify which wait caused the delay. The
 file hashes and schema inspection are preserved with attempt v1; a private
 copy remains under `.venv/service-startup-failure-v1`.
 
+Reopening a separate copy with the unchanged SQLite store completed schema
+initialization in 1.866 seconds, produced schema version 7 with 43 schema
+objects, and passed `PRAGMA integrity_check`. This [recovery observation](native-host-repair-verification/attempt-v1/startup-recovery.json)
+shows that this interrupted synthetic initialization can recover. It does not
+diagnose the delay or establish a startup latency guarantee.
+
 The unchanged test passed alone in 4.68 seconds. Both outcomes are preserved
 under [attempt-v1](native-host-repair-verification/attempt-v1/verification.json).
-No timeout, assertion, or durability setting was relaxed. The independent retry
-does not turn the failed full run into a pass. A second full run is in progress
-against the same frozen source, writing to `.venv/native-host-repair-checks-v2`.
+No timeout, assertion, or durability setting was relaxed. The intermittent
+startup failure remains open even though the independent retry passed.
 
-The first verification coordinator stopped after pytest failed, so its Black,
-strict mypy, JavaScript, build, and Twine stages were not run. Earlier `b7a9d9d`
-checks remain valid for that earlier source. This checkpoint is not yet fully
-verified. No release or live data migration has occurred.
+A second full verification against the same d17 source passed 639 tests with 2
+explicit skips in 959.85 seconds. Its Black check, strict mypy check across 69
+source files, JavaScript syntax check, wheel and source build, and Twine
+metadata check all passed. The first 638-pass, 1-failure, 2-skip run and its
+startup fixture remain preserved under attempt-v1; the second pass does not
+diagnose or erase that earlier deadline failure. No release or live data
+migration has occurred.
+The second-run logs, XML result, package comparison, and tool checks are
+preserved under [attempt-v2](native-host-repair-verification/attempt-v2/).

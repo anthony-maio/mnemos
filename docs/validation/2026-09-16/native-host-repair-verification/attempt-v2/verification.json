@@ -1,0 +1,109 @@
+{
+  "source_commit": "d17dd249424f3e2c11b8fefee4a20bba8f50cf9f",
+  "source_checkout": "D:\\Development\\mnemos\\mnemos\\.worktrees\\functional-local-memory\\.venv\\native-host-repair-frozen-v1",
+  "status": "passed",
+  "started_at": "2026-09-17T05:50:42.771764+00:00",
+  "checks": [
+    {
+      "name": "pytest",
+      "command": [
+        "D:\\Development\\mnemos\\mnemos\\.worktrees\\functional-local-memory\\.venv\\Scripts\\python.exe",
+        "-m",
+        "pytest",
+        "-q",
+        "--junitxml",
+        "D:\\Development\\mnemos\\mnemos\\.worktrees\\functional-local-memory\\.venv\\native-host-repair-checks-v2\\pytest.xml"
+      ],
+      "status": "passed",
+      "started_at": "2026-09-17T05:50:42.772560+00:00",
+      "exit_code": 0,
+      "finished_at": "2026-09-17T06:06:43.310990+00:00",
+      "counts": {
+        "tests": 641,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 2
+      }
+    },
+    {
+      "name": "black",
+      "command": [
+        "D:\\Development\\mnemos\\mnemos\\.worktrees\\functional-local-memory\\.venv\\Scripts\\python.exe",
+        "-m",
+        "black",
+        "--check",
+        "."
+      ],
+      "status": "passed",
+      "started_at": "2026-09-17T06:06:43.320715+00:00",
+      "exit_code": 0,
+      "finished_at": "2026-09-17T06:06:45.916095+00:00"
+    },
+    {
+      "name": "mypy",
+      "command": [
+        "D:\\Development\\mnemos\\mnemos\\.worktrees\\functional-local-memory\\.venv\\compat-py310\\Scripts\\python.exe",
+        "-m",
+        "mypy",
+        "."
+      ],
+      "status": "passed",
+      "started_at": "2026-09-17T06:06:45.916774+00:00",
+      "exit_code": 0,
+      "finished_at": "2026-09-17T06:06:55.461409+00:00"
+    },
+    {
+      "name": "javascript",
+      "command": [
+        "node",
+        "--check",
+        "mnemos/ui/app.js"
+      ],
+      "status": "passed",
+      "started_at": "2026-09-17T06:06:55.487403+00:00",
+      "exit_code": 0,
+      "finished_at": "2026-09-17T06:06:55.537098+00:00"
+    },
+    {
+      "name": "build",
+      "command": [
+        "D:\\Development\\mnemos\\mnemos\\.worktrees\\functional-local-memory\\.venv\\Scripts\\python.exe",
+        "-m",
+        "build",
+        "--outdir",
+        "D:\\Development\\mnemos\\mnemos\\.worktrees\\functional-local-memory\\.venv\\native-host-repair-checks-v2\\dist"
+      ],
+      "status": "passed",
+      "started_at": "2026-09-17T06:06:55.537864+00:00",
+      "exit_code": 0,
+      "finished_at": "2026-09-17T06:07:45.235371+00:00"
+    },
+    {
+      "name": "twine",
+      "command": [
+        "D:\\Development\\mnemos\\mnemos\\.worktrees\\functional-local-memory\\.venv\\Scripts\\python.exe",
+        "-m",
+        "twine",
+        "check",
+        "D:\\Development\\mnemos\\mnemos\\.worktrees\\functional-local-memory\\.venv\\native-host-repair-checks-v2\\dist\\mnemos_memory-0.7.0-py3-none-any.whl",
+        "D:\\Development\\mnemos\\mnemos\\.worktrees\\functional-local-memory\\.venv\\native-host-repair-checks-v2\\dist\\mnemos_memory-0.7.0.tar.gz"
+      ],
+      "exit_code": 0,
+      "status": "passed"
+    }
+  ],
+  "runner_sha256": "d2f05b5e2189e3d3ba5ce9b535d8f5adc98d0c5409037cfff7f4460fac0bdfd6",
+  "updated_at": "2026-09-17T06:07:46.004811+00:00",
+  "artifacts": [
+    {
+      "file": "D:\\Development\\mnemos\\mnemos\\.worktrees\\functional-local-memory\\.venv\\native-host-repair-checks-v2\\dist\\mnemos_memory-0.7.0-py3-none-any.whl",
+      "bytes": 259860,
+      "sha256": "66ac0ae1d782b0f33b86ec2097c0ba9d2fa378275fd3fbc0f4b3e8682a11f663"
+    },
+    {
+      "file": "D:\\Development\\mnemos\\mnemos\\.worktrees\\functional-local-memory\\.venv\\native-host-repair-checks-v2\\dist\\mnemos_memory-0.7.0.tar.gz",
+      "bytes": 2124910,
+      "sha256": "95cfa4ce7c72a03d6b69e9aee9a4d149a2de28e5a615048cd2558eedf63ad4b3"
+    }
+  ]
+}

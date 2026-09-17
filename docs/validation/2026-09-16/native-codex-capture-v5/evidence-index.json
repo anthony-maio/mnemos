@@ -1,0 +1,45 @@
+{
+  "artifact": "native-codex-capture-v5",
+  "source_commit": "d17dd249424f3e2c11b8fefee4a20bba8f50cf9f",
+  "report": {
+    "path": "report.json",
+    "sha256": "0d0a7b7fc7dece2041045ee5dc13c68def379d57dd9167c945161400c6c81fc1",
+    "bytes_preserved": true
+  },
+  "runner": {
+    "path": "runner.py.txt",
+    "sha256": "933044d0236d03dec5485360a21054ac7e7f196661a3d55812f7ee8a1595c228",
+    "matches_report_runner_sha256": true
+  },
+  "observations": {
+    "path": "observations.json",
+    "sha256": "216b80ea1c328ddb5c1a7d43771c0d12e438ef9251e173bbd574d2c1dc03dd2a",
+    "derived_only_from_private_stdout": true,
+    "private_stdout_sha256": "3fb00730fd197e3c19cacf86f239e561d0707fb76d7b60a38bae37f8eda0634f"
+  },
+  "private_fixture": {
+    "path": "D:\\WindowsTemp\\mnemos-native-codex-capture-v5-yedmb2ex",
+    "retained": true,
+    "native_stdout": "native-stdout.jsonl",
+    "native_stderr": "native-stderr.log",
+    "hook_trace_directory": "hooks",
+    "auth_copy_removed": true,
+    "service_descriptor_removed": true,
+    "matching_probe_processes_after_run": 0
+  },
+  "acceptance": {
+    "wrapper_invocations": 3,
+    "user_capture": true,
+    "assistant_capture": true,
+    "capture_survives_restart": true,
+    "seeded_context_returned_by_prompt_hook": true,
+    "native_answer_matches_seed": false,
+    "status": "not_observed"
+  },
+  "boundaries": [
+    "The three wrapper invocations prove partial native hook dispatch, not complete lifecycle capture.",
+    "SessionStart timed out; Stop and UserPromptSubmit completed.",
+    "The host answer was PostgreSQL while the seed was SQLite, so native seeded recall failed.",
+    "Simple embeddings and unavailable Mnemos cognition make this a host capture and recall transport check only."
+  ]
+}

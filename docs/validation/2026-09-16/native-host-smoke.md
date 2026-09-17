@@ -237,3 +237,41 @@ copy and service descriptor were removed, and no matching Codex, Python, or
 cmd process remained. The next investigation compares the host's actual shell
 selection with the CMD transport already tested offline; no shell diagnosis
 is claimed from the missing callback alone.
+
+The next offline probe reproduced a real renderer defect. Tagged Codex shell
+detection selected `C:\Program Files\PowerShell\7\pwsh.exe`. The generated
+Mnemos command failed under `-NoProfile -Command` with a parser error at `-c`.
+Adding PowerShell's `&` call operator to the same command invoked the adapter,
+returned the seeded context, and captured the distinct prompt across restart.
+The fixture paths included spaces. See the [PowerShell probe](codex-powershell-probe/README.md).
+
+This explains why the prior CMD-only test could pass while leaving the
+default Windows command invalid. The production renderer repair and another
+native-host check remain pending. The offline result does not retroactively
+prove which shell or dispatch path caused every earlier native failure.
+
+## Codex native capture v5
+
+After the offline PowerShell renderer repair, a fresh Codex 0.146.0 run used
+the installed d17 wheel, a disposable `CODEX_HOME`, `hooks.json`, and the
+same unavailable-cognition Mnemos fixture. The host process returned code 0 in
+47.611 seconds. The wrapper recorded three native hook calls: `SessionStart`
+timed out, while `UserPromptSubmit` and `Stop` completed. The prompt hook
+returned the seeded SQLite context. Both user and assistant events were
+captured and survived the SQLite service restart.
+
+The acceptance result remains `not_observed` because Codex answered
+`The project uses PostgreSQL.` despite the SQLite seed. This is a failed native
+seeded-recall outcome. The run proves partial native dispatch and prompt
+context delivery only; it does not prove complete lifecycle capture, correct
+host recall, or extraction quality. The three host error items were trust
+notices and a shortened skill-description notice, not a Mnemos diagnosis.
+
+The [v5 report](native-codex-capture-v5/report.json) is preserved unchanged.
+Its exact runner, reviewed host output, and artifact hashes are indexed in
+[the evidence index](native-codex-capture-v5/evidence-index.json). The private
+fixture remains at
+`D:\WindowsTemp\mnemos-native-codex-capture-v5-yedmb2ex`; the copied auth file
+and service descriptor were removed, and no matching probe process remained.
+Native Codex support therefore stays pending, with MCP and manual fallback
+retained.
