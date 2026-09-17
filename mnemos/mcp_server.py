@@ -387,7 +387,42 @@ def _resolved_scope_payload(
 
 
 def _register_service_tools(mcp: Any) -> None:
-    @mcp.tool()
+    # MCP annotations are approval hints; the service remains authoritative
+    # for scope checks, concurrency, and destructive-operation authorization.
+    from mcp.types import ToolAnnotations
+
+    read_only = ToolAnnotations(
+        readOnlyHint=True,
+        destructiveHint=False,
+        idempotentHint=True,
+        openWorldHint=False,
+    )
+    durable_write = ToolAnnotations(
+        readOnlyHint=False,
+        destructiveHint=False,
+        idempotentHint=False,
+        openWorldHint=False,
+    )
+    provider_write = ToolAnnotations(
+        readOnlyHint=False,
+        destructiveHint=False,
+        idempotentHint=False,
+        openWorldHint=True,
+    )
+    maintenance_write = ToolAnnotations(
+        readOnlyHint=False,
+        destructiveHint=True,
+        idempotentHint=False,
+        openWorldHint=True,
+    )
+    durable_update = ToolAnnotations(
+        readOnlyHint=False,
+        destructiveHint=True,
+        idempotentHint=False,
+        openWorldHint=False,
+    )
+
+    @mcp.tool(annotations=provider_write)
     async def mnemos_store(
         content: str,
         role: str = "user",
@@ -429,7 +464,7 @@ def _register_service_tools(mcp: Any) -> None:
         )
         return _service_json(result)
 
-    @mcp.tool()
+    @mcp.tool(annotations=durable_write)
     async def mnemos_capture(
         content: str,
         role: str = "user",
@@ -461,7 +496,8 @@ def _register_service_tools(mcp: Any) -> None:
         result.setdefault("event_committed", result.get("status") == "committed")
         return _service_json(result)
 
-    @mcp.tool()
+    # Retrieval updates durable access metadata, so it is not read-only.
+    @mcp.tool(annotations=provider_write)
     async def mnemos_retrieve(
         query: str,
         top_k: int = 5,
@@ -494,7 +530,7 @@ def _register_service_tools(mcp: Any) -> None:
                     fact.setdefault("scope", checked_scope)
         return _service_json(result)
 
-    @mcp.tool()
+    @mcp.tool(annotations=durable_write)
     async def mnemos_feedback(
         event_type: str,
         query: str,
@@ -529,12 +565,12 @@ def _register_service_tools(mcp: Any) -> None:
             )
         )
 
-    @mcp.tool()
+    @mcp.tool(annotations=maintenance_write)
     async def mnemos_consolidate(ctx: Context[Any, Any, Any] | None = None) -> str:
         service_context = _service_context_from_ctx(ctx, "mnemos_consolidate")
         return _service_json(await _service_request(service_context, "maintenance", {}))
 
-    @mcp.tool()
+    @mcp.tool(annotations=read_only)
     async def mnemos_job_status(
         job_id: str,
         ctx: Context[Any, Any, Any] | None = None,
@@ -549,7 +585,7 @@ def _register_service_tools(mcp: Any) -> None:
             )
         )
 
-    @mcp.tool()
+    @mcp.tool(annotations=durable_update)
     async def mnemos_correct(
         fact_id: str,
         content: str,
@@ -568,7 +604,7 @@ def _register_service_tools(mcp: Any) -> None:
         }
         return _service_json(await _service_request(service_context, "correct", payload))
 
-    @mcp.tool()
+    @mcp.tool(annotations=durable_update)
     async def mnemos_forget(
         chunk_id: str,
         expected_version: int | None = None,
@@ -600,7 +636,7 @@ def _register_service_tools(mcp: Any) -> None:
             )
         )
 
-    @mcp.tool()
+    @mcp.tool(annotations=read_only)
     async def mnemos_forget_preview(
         fact_id: str,
         expected_version: StrictInt,
@@ -632,7 +668,7 @@ def _register_service_tools(mcp: Any) -> None:
             )
         )
 
-    @mcp.tool()
+    @mcp.tool(annotations=durable_update)
     async def mnemos_forget_related(
         fact_id: str,
         expected_version: StrictInt,
@@ -673,17 +709,17 @@ def _register_service_tools(mcp: Any) -> None:
             )
         )
 
-    @mcp.tool()
+    @mcp.tool(annotations=read_only)
     async def mnemos_stats(ctx: Context[Any, Any, Any] | None = None) -> str:
         service_context = _service_context_from_ctx(ctx, "mnemos_stats")
         return _service_json(await _service_health(service_context))
 
-    @mcp.tool()
+    @mcp.tool(annotations=read_only)
     async def mnemos_health(ctx: Context[Any, Any, Any] | None = None) -> str:
         service_context = _service_context_from_ctx(ctx, "mnemos_health")
         return _service_json(await _service_health(service_context))
 
-    @mcp.tool()
+    @mcp.tool(annotations=read_only)
     async def mnemos_inspect(
         chunk_id: str,
         ctx: Context[Any, Any, Any] | None = None,
@@ -697,7 +733,7 @@ def _register_service_tools(mcp: Any) -> None:
             )
         )
 
-    @mcp.tool()
+    @mcp.tool(annotations=read_only)
     async def mnemos_list(
         limit: int = 20,
         sort_by: str = "created_at",

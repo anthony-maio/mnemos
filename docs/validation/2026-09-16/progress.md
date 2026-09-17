@@ -653,3 +653,18 @@ unjudged, while the implementation counts unmatched text as false. The
 [interim record](baseline-interim/README.md) preserves that distinction and the
 failed gates. The full and ablation profiles are still running on unchanged
 sourceb7; there is no full-pipeline or module-benefit conclusion yet.
+
+## MCP operation metadata repaired
+
+The MCP service tools now declare read-only, destructive, idempotent, and
+external-provider effects. Six inspection handlers are read-only; retrieval
+retains its write classification because it updates access metadata. Provider
+operations and destructive maintenance keep conservative approval hints.
+
+The affected MCP and related-forget transport checks passed 20 tests. The
+expanded two-test annotation suite also verifies successful responses against
+a populated SQLite store with an accepted fact, evidence, a completed job,
+and a versioned correction. All six inspection calls preserve every logical
+table, including after reopen. Black and compatible strict mypy passed.
+These focused checks do not supersede the sourcec805 full-suite/package
+checkpoint or establish native lifecycle acceptance for the new source.

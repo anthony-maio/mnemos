@@ -46,7 +46,7 @@ def test_mcp_related_forget_tools_validate_and_inject_context() -> None:
         def __init__(self) -> None:
             self.tools: dict[str, Any] = {}
 
-        def tool(self) -> Any:
+        def tool(self, **_options: Any) -> Any:
             return lambda function: self.tools.setdefault(function.__name__, function)
 
         def resource(self, _uri: str) -> Any:
