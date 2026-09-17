@@ -7,7 +7,12 @@ from typing import Any
 import pytest
 
 from mnemos.adapters.claude_code import ClaudeCodeAdapter, _native_output
-from mnemos.scopes import ProjectIdentity, ScopeRegistry, canonical_project_root
+from mnemos.scopes import (
+    ProjectIdentity,
+    ScopeContext,
+    ScopeRegistry,
+    canonical_project_root,
+)
 
 
 class FakeClient:
@@ -125,6 +130,19 @@ def hook_payload(tmp_path: Path, transcript: Path) -> dict:
         "hook_event_name": "Stop",
         "last_assistant_message": "The work is complete.",
     }
+
+
+def scoped_checkpoint_path(adapter: ClaudeCodeAdapter) -> Path:
+    return adapter._checkpoint_path(scoped_test_context())
+
+
+def scoped_test_context() -> ScopeContext:
+    return ScopeContext(
+        user_profile_id="profile-a",
+        project_id="project-a",
+        session_id="session-a",
+        host="claude-code",
+    )
 
 
 @pytest.mark.asyncio
@@ -287,11 +305,7 @@ async def test_stop_falls_back_to_last_assistant_message_when_transcript_is_miss
     assert result.captured == 1
     assert client.captures[0]["role"] == "assistant"
     assert client.captures[0]["content"] == "The work is complete."
-    checkpoint = json.loads(
-        (tmp_path / "checkpoints" / adapter._checkpoint_path("session-a").name).read_text(
-            encoding="utf-8"
-        )
-    )
+    checkpoint = json.loads(scoped_checkpoint_path(adapter).read_text(encoding="utf-8"))
     assert "path" not in checkpoint
     assert "offset" not in checkpoint
 
@@ -322,11 +336,7 @@ async def test_stop_transcript_read_failure_keeps_fallback_and_does_not_advance_
     assert result.status == "degraded"
     assert result.committed is True
     assert result.captured == 1
-    checkpoint = json.loads(
-        (tmp_path / "checkpoints" / adapter._checkpoint_path("session-a").name).read_text(
-            encoding="utf-8"
-        )
-    )
+    checkpoint = json.loads(scoped_checkpoint_path(adapter).read_text(encoding="utf-8"))
     assert "path" not in checkpoint
     assert "offset" not in checkpoint
 
@@ -366,11 +376,7 @@ async def test_missing_transcript_fallback_is_idempotent_and_later_transcript_de
 
     assert later.captured == 0
     assert len(client.captures) == 1
-    checkpoint = json.loads(
-        (tmp_path / "checkpoints" / adapter._checkpoint_path("session-a").name).read_text(
-            encoding="utf-8"
-        )
-    )
+    checkpoint = json.loads(scoped_checkpoint_path(adapter).read_text(encoding="utf-8"))
     assert checkpoint["offset"] == transcript.stat().st_size
     assert checkpoint["pending_dedup"] == []
 
@@ -417,11 +423,7 @@ async def test_missing_transcript_distinct_prompt_ids_preserve_identical_message
 
     assert later.captured == 0
     assert len(client.captures) == 2
-    checkpoint = json.loads(
-        (tmp_path / "checkpoints" / adapter._checkpoint_path("session-a").name).read_text(
-            encoding="utf-8"
-        )
-    )
+    checkpoint = json.loads(scoped_checkpoint_path(adapter).read_text(encoding="utf-8"))
     assert checkpoint["pending_dedup"] == []
 
 
@@ -463,7 +465,7 @@ async def test_corrupt_checkpoint_is_distinct_from_unavailable_transcript(
         user_profile_id="profile-a",
         checkpoint_directory=tmp_path / "checkpoints",
     )
-    checkpoint = adapter._checkpoint_path("session-a")
+    checkpoint = scoped_checkpoint_path(adapter)
     checkpoint.parent.mkdir(parents=True)
     checkpoint.write_text("{not-json", encoding="utf-8")
 
@@ -570,7 +572,7 @@ async def test_non_object_checkpoint_is_corrupt(tmp_path: Path) -> None:
         user_profile_id="profile-a",
         checkpoint_directory=tmp_path / "checkpoints",
     )
-    checkpoint = adapter._checkpoint_path("session-a")
+    checkpoint = scoped_checkpoint_path(adapter)
     checkpoint.parent.mkdir(parents=True)
     checkpoint.write_text("[]", encoding="utf-8")
 
@@ -588,9 +590,18 @@ async def test_malformed_checkpoint_offsets_are_corrupt(tmp_path: Path, bad_offs
         user_profile_id="profile-a",
         checkpoint_directory=tmp_path / "checkpoints",
     )
-    checkpoint = adapter._checkpoint_path("session-a")
+    checkpoint = scoped_checkpoint_path(adapter)
     checkpoint.parent.mkdir(parents=True)
-    checkpoint.write_text(json.dumps({"offset": bad_offset}), encoding="utf-8")
+    checkpoint.write_text(
+        json.dumps(
+            {
+                "identity_version": 2,
+                "scope": adapter._checkpoint_scope(scoped_test_context()),
+                "offset": bad_offset,
+            }
+        ),
+        encoding="utf-8",
+    )
     transcript = tmp_path / "session.jsonl"
     transcript.write_text("", encoding="utf-8")
 
@@ -609,9 +620,18 @@ async def test_malformed_offset_is_rejected_before_missing_transcript_fallback(
         user_profile_id="profile-a",
         checkpoint_directory=tmp_path / "checkpoints",
     )
-    checkpoint = adapter._checkpoint_path("session-a")
+    checkpoint = scoped_checkpoint_path(adapter)
     checkpoint.parent.mkdir(parents=True)
-    checkpoint.write_text(json.dumps({"offset": True}), encoding="utf-8")
+    checkpoint.write_text(
+        json.dumps(
+            {
+                "identity_version": 2,
+                "scope": adapter._checkpoint_scope(scoped_test_context()),
+                "offset": True,
+            }
+        ),
+        encoding="utf-8",
+    )
 
     with pytest.raises(ValueError, match="checkpoint is corrupt"):
         await adapter.handle("Stop", hook_payload(tmp_path, tmp_path / "missing.jsonl"))
@@ -669,6 +689,7 @@ async def test_distinct_native_prompt_ids_preserve_identical_prompt_events(tmp_p
     assert first.captured == second.captured == 1
     assert len(client.captures) == 2
     assert client.captures[0]["event_id"] != client.captures[1]["event_id"]
+    assert all(item["identity_version"] == 2 for item in client.captures)
     assert [item["source_ref"] for item in client.captures] == ["prompt-1", "prompt-2"]
 
 

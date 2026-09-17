@@ -20,6 +20,7 @@ from pathlib import Path
 from typing import Any, Mapping
 
 from ..client import MnemosClient
+from ..claude_identity import claude_v2_event_id
 from .diagnostics import emit_hook_diagnostic
 from ..scopes import ScopeContext, ScopeRegistry, default_registry_path as shared_registry_path
 from ..routing_review import reason_for_context_error, record_unresolved_routing_failure
@@ -30,6 +31,8 @@ MAX_TRANSCRIPT_BYTES_PER_HOOK = 2_000_000
 MAX_CONTEXT_CHARS = 8_000
 TRANSCRIPT_UNAVAILABLE = "transcript_unavailable"
 CAPTURE_NOT_ACKNOWLEDGED = "capture_not_acknowledged"
+IDENTITY_REDACTION_AMBIGUOUS = "identity_redaction_ambiguous"
+IDENTITY_REFERENCE_UNAVAILABLE = "identity_reference_unavailable"
 
 
 @dataclass(frozen=True)
@@ -51,6 +54,10 @@ class HookResult:
     captured: int = 0
     context: str = ""
     error: str | None = None
+
+
+class CheckpointScopeError(ValueError):
+    """A legacy checkpoint cannot be used without an explicit scope bind."""
 
 
 def _env_path(name: str, default: Path) -> Path:
@@ -223,12 +230,20 @@ class ClaudeCodeAdapter:
         )
 
     @staticmethod
-    def _event_id(session_id: str, source_ref: str, role: str, content: str) -> str:
-        material = "\0".join(("claude-code", session_id, source_ref, role, content))
-        return "claude:" + hashlib.sha256(material.encode("utf-8")).hexdigest()
+    def _event_id(context: ScopeContext, source_ref: str, role: str, content: str) -> str:
+        return claude_v2_event_id(context, source_ref, role, content)
 
-    def _checkpoint_path(self, session_id: str) -> Path:
-        digest = hashlib.sha256(session_id.encode("utf-8")).hexdigest()
+    def _checkpoint_path(self, context: ScopeContext) -> Path:
+        identity = [
+            "claude-code",
+            2,
+            context.user_profile_id,
+            context.project_id,
+            context.workspace_id,
+            context.session_id,
+        ]
+        material = json.dumps(identity, ensure_ascii=False, separators=(",", ":"))
+        digest = hashlib.sha256(material.encode("utf-8")).hexdigest()
         return self.checkpoint_directory / f"{digest}.json"
 
     @staticmethod
@@ -256,12 +271,28 @@ class ClaudeCodeAdapter:
                     )
         return records
 
-    def _read_checkpoint(self, session_id: str) -> dict[str, Any]:
-        target = self._checkpoint_path(session_id)
+    def _legacy_checkpoint_path(self, session_id: str) -> Path:
+        digest = hashlib.sha256(session_id.encode("utf-8")).hexdigest()
+        return self.checkpoint_directory / f"{digest}.json"
+
+    @staticmethod
+    def _checkpoint_scope(context: ScopeContext) -> dict[str, Any]:
+        return {
+            "user_profile_id": context.user_profile_id,
+            "project_id": context.project_id,
+            "workspace_id": context.workspace_id,
+            "session_id": context.session_id,
+            "host": context.host,
+        }
+
+    def _read_checkpoint(self, context: ScopeContext) -> dict[str, Any]:
+        target = self._checkpoint_path(context)
         try:
             _protect_private_path(target)
             value = json.loads(target.read_text(encoding="utf-8"))
         except FileNotFoundError:
+            if self._legacy_checkpoint_path(context.session_id).exists():
+                raise CheckpointScopeError("Claude checkpoint requires explicit scope binding")
             return {}
         except json.JSONDecodeError as exc:
             raise ValueError("Claude checkpoint is corrupt") from exc
@@ -269,16 +300,23 @@ class ClaudeCodeAdapter:
             raise RuntimeError("Claude checkpoint could not be read") from exc
         if not isinstance(value, dict):
             raise ValueError("Claude checkpoint is corrupt")
+        if value.get("identity_version") != 2 or value.get("scope") != self._checkpoint_scope(
+            context
+        ):
+            raise ValueError("Claude checkpoint is corrupt")
         if "offset" in value:
             offset = value["offset"]
             if type(offset) is not int or offset < 0:
                 raise ValueError("Claude checkpoint is corrupt")
         return value
 
-    def _write_checkpoint(self, session_id: str, value: Mapping[str, Any]) -> None:
+    def _write_checkpoint(self, context: ScopeContext, value: Mapping[str, Any]) -> None:
         self.checkpoint_directory.mkdir(parents=True, exist_ok=True)
         _protect_private_path(self.checkpoint_directory)
-        target = self._checkpoint_path(session_id)
+        target = self._checkpoint_path(context)
+        checkpoint = dict(value)
+        checkpoint["identity_version"] = 2
+        checkpoint["scope"] = self._checkpoint_scope(context)
         descriptor_fd, temporary_name = tempfile.mkstemp(
             prefix=f".{target.name}.", suffix=".tmp", dir=self.checkpoint_directory
         )
@@ -287,7 +325,7 @@ class ClaudeCodeAdapter:
         try:
             _protect_private_path(temporary)
             with temporary.open("w", encoding="utf-8") as handle:
-                json.dump(dict(value), handle, sort_keys=True)
+                json.dump(checkpoint, handle, sort_keys=True)
                 handle.flush()
                 os.fsync(handle.fileno())
             os.replace(temporary, target)
@@ -296,9 +334,9 @@ class ClaudeCodeAdapter:
             temporary.unlink(missing_ok=True)
 
     def _remember_pending_duplicate(
-        self, session_id: str, role: str, content: str, *, source_ref: str
+        self, context: ScopeContext, role: str, content: str, *, source_ref: str
     ) -> None:
-        checkpoint = self._read_checkpoint(session_id)
+        checkpoint = self._read_checkpoint(context)
         pending = self._pending_records(checkpoint)
         fingerprint = self._content_fingerprint(role, content)
         if not any(
@@ -307,7 +345,7 @@ class ClaudeCodeAdapter:
         ):
             pending.append({"fingerprint": fingerprint, "source_ref": source_ref})
         checkpoint["pending_dedup"] = pending[-16:]
-        self._write_checkpoint(session_id, checkpoint)
+        self._write_checkpoint(context, checkpoint)
 
     async def _capture(
         self,
@@ -317,30 +355,53 @@ class ClaudeCodeAdapter:
         content: str,
         source_ref: str,
         occurred_at: datetime,
-    ) -> bool:
-        result = await self.client.capture(
-            {
-                "event_id": self._event_id(context.session_id, source_ref, role, content),
-                "context": context.model_dump(mode="json"),
-                "occurred_at": occurred_at.isoformat(),
-                "role": role,
-                "content": content,
-                "source_kind": "claude_code_transcript",
-                "source_ref": source_ref,
-            }
-        )
+    ) -> tuple[bool, str | None]:
+        # MnemosClient sanitizes capture payloads before HTTP and outbox
+        # persistence.  Hash only the exact values that will cross that
+        # boundary; a redacted identity cannot be safely mapped to a legacy
+        # tombstone or replayed after restart.
+        if "[REDACTED_" in content or "[REDACTED_" in source_ref:
+            return False, IDENTITY_REDACTION_AMBIGUOUS
+        sanitizer = getattr(getattr(self.client, "outbox", None), "sanitize", None)
+        if callable(sanitizer):
+            try:
+                sanitized = sanitizer({"content": content, "source_ref": source_ref})
+            except (TypeError, ValueError):
+                return False, CAPTURE_NOT_ACKNOWLEDGED
+            if not isinstance(sanitized, Mapping):
+                return False, IDENTITY_REDACTION_AMBIGUOUS
+            safe_content = sanitized.get("content")
+            safe_source_ref = sanitized.get("source_ref")
+            if safe_content != content or safe_source_ref != source_ref:
+                return False, IDENTITY_REDACTION_AMBIGUOUS
+        try:
+            result = await self.client.capture(
+                {
+                    "event_id": self._event_id(context, source_ref, role, content),
+                    "identity_version": 2,
+                    "context": context.model_dump(mode="json"),
+                    "occurred_at": occurred_at.isoformat(),
+                    "role": role,
+                    "content": content,
+                    "source_kind": "claude_code_transcript",
+                    "source_ref": source_ref,
+                }
+            )
+        except Exception:
+            return False, CAPTURE_NOT_ACKNOWLEDGED
         if not isinstance(result, Mapping):
-            return False
-        return (
+            return False, CAPTURE_NOT_ACKNOWLEDGED
+        accepted = (
             result.get("committed") is True
             or result.get("status") == "committed"
             or result.get("status") == "queued"
         )
+        return bool(accepted), None if accepted else CAPTURE_NOT_ACKNOWLEDGED
 
     async def _capture_transcript(
         self, payload: Mapping[str, Any], context: ScopeContext
     ) -> tuple[int, set[str], str | None]:
-        checkpoint = self._read_checkpoint(context.session_id)
+        checkpoint = self._read_checkpoint(context)
         transcript = payload.get("transcript_path")
         if not isinstance(transcript, str) or not transcript.strip():
             return 0, set(), TRANSCRIPT_UNAVAILABLE
@@ -383,20 +444,23 @@ class ClaudeCodeAdapter:
                 pending_records.pop(pending_index)
                 contents.add(delta.content)
                 continue
-            if not await self._capture(
+            accepted, capture_error = await self._capture(
                 context,
                 role=delta.role,
                 content=delta.content,
                 source_ref=delta.source_ref,
                 occurred_at=delta.occurred_at,
-            ):
-                return captured, contents, CAPTURE_NOT_ACKNOWLEDGED
+            )
+            if not accepted:
+                return captured, contents, capture_error or CAPTURE_NOT_ACKNOWLEDGED
             captured += 1
             contents.add(delta.content)
         if deltas or next_offset != offset or checkpoint.get("identity") != identity:
             self._write_checkpoint(
-                context.session_id,
+                context,
                 {
+                    "identity_version": 2,
+                    "scope": self._checkpoint_scope(context),
                     "path": checkpoint_path,
                     "identity": identity,
                     "offset": next_offset,
@@ -474,30 +538,42 @@ class ClaudeCodeAdapter:
 
             if event == "SessionStart":
                 return await recall()
+            try:
+                self._read_checkpoint(context)
+            except CheckpointScopeError as exc:
+                return HookResult(status="degraded", committed=False, error=str(exc))
             prompt = payload.get("prompt")
             captured = 0
             capture_error: str | None = None
             if isinstance(prompt, str) and prompt.strip():
-                source_ref = str(
-                    payload.get("prompt_id")
-                    or f"prompt:{hashlib.sha256(prompt.encode()).hexdigest()}"
+                native_prompt_id = payload.get("prompt_id")
+                has_native_prompt_id = isinstance(native_prompt_id, str) and bool(
+                    native_prompt_id.strip()
                 )
-                if await self._capture(
+                source_ref = str(
+                    native_prompt_id
+                    if has_native_prompt_id
+                    else f"prompt:{hashlib.sha256(prompt.encode()).hexdigest()}"
+                )
+                accepted, capture_reason = await self._capture(
                     context,
                     role="user",
                     content=prompt.strip(),
                     source_ref=source_ref,
                     occurred_at=datetime.now(timezone.utc),
-                ):
+                )
+                if accepted:
                     captured += 1
                     self._remember_pending_duplicate(
-                        context.session_id,
+                        context,
                         "user",
                         prompt.strip(),
                         source_ref=source_ref,
                     )
+                    if not has_native_prompt_id:
+                        capture_error = IDENTITY_REFERENCE_UNAVAILABLE
                 else:
-                    capture_error = CAPTURE_NOT_ACKNOWLEDGED
+                    capture_error = capture_reason or CAPTURE_NOT_ACKNOWLEDGED
             retrieved = await recall()
             return HookResult(
                 status=(
@@ -530,13 +606,16 @@ class ClaudeCodeAdapter:
                     configured_profile=self.user_profile_id,
                 )
                 return HookResult(status="degraded", committed=False, error=reason)
-            captured, transcript_contents, transcript_error = await self._capture_transcript(
-                payload, context
-            )
+            try:
+                captured, transcript_contents, transcript_error = await self._capture_transcript(
+                    payload, context
+                )
+            except CheckpointScopeError as exc:
+                return HookResult(status="degraded", committed=False, error=str(exc))
             if event == "Stop":
                 assistant = payload.get("last_assistant_message")
                 assistant_content = assistant.strip() if isinstance(assistant, str) else ""
-                checkpoint = self._read_checkpoint(context.session_id)
+                checkpoint = self._read_checkpoint(context)
                 pending_records = self._pending_records(checkpoint)
                 source_ref = str(payload.get("prompt_id") or "last_assistant_message")
                 if (
@@ -549,22 +628,25 @@ class ClaudeCodeAdapter:
                         for item in pending_records
                     )
                 ):
-                    if await self._capture(
+                    accepted, capture_reason = await self._capture(
                         context,
                         role="assistant",
                         content=assistant_content,
                         source_ref=source_ref,
                         occurred_at=datetime.now(timezone.utc),
-                    ):
+                    )
+                    if accepted:
                         captured += 1
                         self._remember_pending_duplicate(
-                            context.session_id,
+                            context,
                             "assistant",
                             assistant_content,
                             source_ref=source_ref,
                         )
+                        if not payload.get("prompt_id"):
+                            transcript_error = transcript_error or IDENTITY_REFERENCE_UNAVAILABLE
                     else:
-                        transcript_error = CAPTURE_NOT_ACKNOWLEDGED
+                        transcript_error = capture_reason or CAPTURE_NOT_ACKNOWLEDGED
             return HookResult(
                 status="degraded" if transcript_error else "ok",
                 committed=captured > 0,

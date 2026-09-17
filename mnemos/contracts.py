@@ -37,6 +37,7 @@ def _fact_proposal_json_schema(schema: dict[str, Any]) -> None:
 
 class CaptureEvent(BaseModel):
     model_config = ConfigDict(extra="forbid")
+    identity_version: Literal[1, 2] = 1
     event_id: str = Field(min_length=1, max_length=512)
     context: ScopeContext
     scope: Literal["project", "workspace", "global"] = "project"

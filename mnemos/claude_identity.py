@@ -1,0 +1,44 @@
+"""Deterministic Claude capture identities shared by host and service code."""
+
+from __future__ import annotations
+
+import hashlib
+import json
+
+from .scopes import ScopeContext
+
+CLAUDE_IDENTITY_VERSION = 2
+
+
+def _capture_content(content: str) -> str:
+    """Match the adapter's existing boundary normalization exactly."""
+    return content.strip()
+
+
+def legacy_event_id(session_id: str, source_ref: str, role: str, content: str) -> str:
+    """Reproduce the unscoped identity emitted before the v2 repair."""
+    material = "\0".join(("claude-code", session_id, source_ref, role, content))
+    return "claude:" + hashlib.sha256(material.encode("utf-8")).hexdigest()
+
+
+def scoped_event_id(context: ScopeContext, source_ref: str, role: str, content: str) -> str:
+    """Build a scope-bound identity from the service-verifiable capture fields."""
+    identity = [
+        "claude-code",
+        CLAUDE_IDENTITY_VERSION,
+        context.user_profile_id,
+        context.project_id,
+        context.workspace_id,
+        context.session_id,
+        source_ref,
+        role,
+        _capture_content(content),
+    ]
+    material = json.dumps(identity, ensure_ascii=False, separators=(",", ":"))
+    return "claude:v2:" + hashlib.sha256(material.encode("utf-8")).hexdigest()
+
+
+# Descriptive names keep adapter call sites readable while the short names
+# provide a small stable API for service-side verification.
+claude_legacy_event_id = legacy_event_id
+claude_v2_event_id = scoped_event_id

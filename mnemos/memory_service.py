@@ -9,6 +9,7 @@ from typing import Any
 from uuid import uuid4
 
 from .contracts import CaptureEvent, FactProposal, RetrievalRequest
+from .claude_identity import legacy_event_id, scoped_event_id
 from .engine import MnemosEngine
 from .jobs import DurableJob, FactEvidence, FactRevision
 from .maintenance import MaintenanceScheduler
@@ -115,6 +116,32 @@ class LocalMemoryService:
             event.event_id,
         ]
         key = hashlib.sha256(json.dumps(identity).encode("utf-8")).hexdigest()
+        if event.identity_version == 2 or event.event_id.startswith("claude:v2:"):
+            # An alias is derived from the verified capture, never selected by
+            # a caller. Redaction makes old content-derived identities ambiguous.
+            if (
+                event.identity_version != 2
+                or event.context.host != "claude-code"
+                or event.source_kind != "claude_code_transcript"
+                or explicit
+                or correction is not None
+                or source_ref is None
+                or not source_ref.strip()
+                or event.role not in {"user", "assistant"}
+                or scope != "project"
+                or safety.content != event.content
+                or event.content != event.content.strip()
+                or source_ref != event.source_ref
+                or "[REDACTED_" in event.content
+                or "[REDACTED_" in source_ref
+                or event.event_id
+                != scoped_event_id(event.context, source_ref, event.role, event.content)
+            ):
+                return {
+                    "schema_version": 1,
+                    "status": "rejected",
+                    "reason": "Claude scoped identity cannot be verified",
+                }
         canonical = compute_canonical_key(
             safety.content, scope, metadata["scope_id"], event.context.user_profile_id
         )
@@ -128,6 +155,69 @@ class LocalMemoryService:
                 "processing_status": "suppressed",
                 "job_id": None,
             }
+        if event.event_id.startswith("claude:v2:"):
+            assert source_ref is not None
+            old_adapter_id = legacy_event_id(
+                event.context.session_id, source_ref, event.role, event.content
+            )
+            old_key = hashlib.sha256(
+                json.dumps([*identity[:3], old_adapter_id]).encode("utf-8")
+            ).hexdigest()
+            if self.engine.store.is_suppressed(source_event_id=old_key):
+                # Old tombstones lack project ownership after source erasure.
+                # Keep the suppression even if this causes a conservative block.
+                return {
+                    "schema_version": 1,
+                    "status": "committed",
+                    "event_id": key,
+                    "processing_status": "suppressed",
+                    "reason": "legacy_source_suppressed",
+                    "job_id": None,
+                }
+            old_event = self.engine.store.get_episodic_event(old_key)
+            old_job = self.engine.store.get_job("event:" + old_key)
+            expected_payload = {
+                "event_id": old_key,
+                "context": event.context.model_dump(),
+                "scope": scope,
+                "source_digest": hashlib.sha256(
+                    json.dumps([event.role, safety.content, scope, metadata["scope_id"]]).encode(
+                        "utf-8"
+                    )
+                ).hexdigest(),
+            }
+            exact_event = old_event is None or (
+                old_event.content == safety.content
+                and old_event.role == event.role
+                and old_event.scope == scope
+                and old_event.scope_id == metadata["scope_id"]
+                and all(old_event.metadata.get(k) == v for k, v in metadata.items())
+                and old_event.metadata.get("source_ref") == source_ref
+                and old_event.metadata.get("source_kind") == event.source_kind
+            )
+            if (
+                old_job is not None
+                and old_job.kind == "extract"
+                and old_job.payload == expected_payload
+                and exact_event
+            ):
+                if old_event is None and old_job.status != "completed":
+                    return {
+                        "schema_version": 1,
+                        "status": "rejected",
+                        "reason": "Legacy Claude source is unavailable",
+                    }
+                return {
+                    "schema_version": 1,
+                    "status": "committed",
+                    "event_id": old_key,
+                    "processing_status": (
+                        "consolidated"
+                        if old_job.status == "completed"
+                        else old_event.status if old_event is not None else "pending"
+                    ),
+                    "job_id": old_job.id,
+                }
         metadata.update(
             {
                 "source_event_id": event.event_id,
