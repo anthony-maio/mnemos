@@ -19,7 +19,8 @@ correction commits during state classification. The repair reloads candidates
 after that await. Six cases cover correction and forget, with graph expansion
 on and off; all six fail on the old source and pass in the new source and wheel.
 The active real-model run retains its original source and does not measure this
-repair. Native Claude v17 remains bound to `8d865a5`.
+repair. Native Claude v17 remains bound to `8d865a5`; the separate v18 run uses
+`dedfcfd` and includes this repair and the Claude startup default.
 
 The earlier complete package checkpoint was frozen source `6600dc2`, with
 865 tests passed and 42 installed contract cases. It remains historical
@@ -78,6 +79,13 @@ reconstructed Stop replay, and preservation of an unrelated fact. Its lexical
 vectors are a transport fixture, not a semantic-quality evaluation. Degraded
 hook capture keeps the overall result partial; extraction and full native
 capture acceptance remain open.
+The [v18 lifecycle run](../2026-09-17/native-claude-lifecycle-v18/README.md)
+repeated all 15 fact-lifecycle criteria successfully using installed `dedfcfd`,
+the unchanged v17 runner, and the new per-server startup default with global
+nonblocking startup enabled. Both tool inventories were ready. Capture remained
+degraded, so the overall result is partial. A service response logged a
+connection abort without an observed fact-criterion failure; its cause is
+unproven. No semantic-quality claim follows from the lexical fixture.
 The later [exact-query comparison](../2026-09-17/claude-v16-retrieval-diagnosis-v2/README.md)
 verified the corrected target remained stored. All fixture embeddings were
 identical, and ranking ties plus context budgeting excluded that target.

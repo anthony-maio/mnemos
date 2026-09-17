@@ -4,7 +4,7 @@ Updated September 17, 2026 for the unreleased functional-local-memory worktree. 
 
 | Client | Implemented integration | Observed evidence | Native conversation acceptance |
 | --- | --- | --- | --- |
-| Claude Code | Command hooks, transcript deltas, context injection, MCP tools; provisional missing-ID capture excluded from extraction | Installed source8d865a5 completed native correction, consolidation, retrieval, and forgetting through the actual 2.1.191 plugin, with restart and reconstructed Stop replay checks | All 15 bounded fact-lifecycle criteria passed in v17. Degraded capture keeps the overall result partial. Extraction quality and complete capture acceptance remain open |
+| Claude Code | Command hooks, transcript deltas, context injection, MCP tools; provisional missing-ID capture excluded from extraction | Installed source dedfcfd completed native correction, consolidation, retrieval, and forgetting through the actual 2.1.191 plugin, with restart and reconstructed Stop replay checks | All 15 bounded fact-lifecycle criteria passed in v18 with the new startup default. Degraded capture keeps the overall result partial. Extraction quality and complete capture acceptance remain open |
 | Codex CLI | Command lifecycle hooks, supported context output, MCP tools | Native 0.146.0 used source20f's generated TOML commands, returned a random canary absent from its prompt, and captured both roles across restart | Bounded hook transport observed with fixture vectors and unavailable cognition. Full native correction/forget lifecycle remains open |
 | Codex Desktop | Same command hooks and MCP fallback | Shared adapter coverage; no current desktop conversation evidence | Pending |
 | Hermes Agent | Optional MemoryProvider and explicit Windows/WSL bridge | Installed 0.21.3 API calls and actual WSL -> Windows authenticated transport. Sourcec805 passed full verification and discovery through the actual wheel entry point in WSL | Model turn has not completed; cross-host native recall remains open |
@@ -141,5 +141,14 @@ nonblocking startup enabled. Claude 2.1.191 exposed all 14 tools at initializati
 and completed one health call against the intended database, profile, and
 project. This supports the server-specific startup setting; it is separate from
 the v17 lifecycle result and does not remove capture limitations.
+
+The [v18 lifecycle run](validation/2026-09-17/native-claude-lifecycle-v18/README.md)
+used the complete `dedfcfd` source and installed wheel with no manifest overlay,
+the unchanged v17 runner, and global nonblocking startup enabled. Both native
+phases exposed the required tools at initialization. All 15 fact-lifecycle
+criteria passed; degraded capture kept the overall result partial. A service
+response logged `ConnectionAbortedError` during the run; no fact criterion
+failed, and the connection-abort cause remains unproven. This isolated run
+does not establish general startup reliability or semantic retrieval quality.
 
 All clients need an enabled project, registered profile, and the same runtime descriptor. A repository basename is not a scope identity. Mock cognition is rejected by the normal configured service; use a real provider and input-specific readiness probe. See [functional local memory](functional-local-memory.md), [Codex setup](codex.md), and [Hermes setup](integrations/hermes.md).
