@@ -1062,3 +1062,20 @@ all four tests. This uses temporary databases, not live memory data.
 
 The evaluation-status page now identifies the active v4 queue and explicitly
 labels the old v3 status as historical. Raw reports were not changed.
+
+## Source-backed continuity fixture
+
+The planned `benchmarks/scenarios/local-memory-continuity.jsonl` now records
+synthetic source events and expected outcomes consumed by the authenticated
+service test. Three cases rotate the teaching adapter through Codex, Claude
+Code, and Hermes. They retrieve after teaching and restart, correct with a
+stable fact ID and advancing version, and retrieve the correction after a
+second restart. Each project has a positive retrieval control before all
+three adapter contexts check exclusion in the other project.
+
+Forget, source replay, maintenance, and a final restart leave both old and
+corrected content absent while the unrelated project's canary remains
+retrievable. The parent combined run of cross-host, MCP compatibility, and
+documentation checks passed 18 tests in 57.38 seconds. Black passed for the
+continuity and concurrent-backup tests. Providers remain synthetic, and no
+native-host or real-model gate is promoted by these checks.

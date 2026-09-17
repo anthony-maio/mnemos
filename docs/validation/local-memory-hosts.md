@@ -12,12 +12,18 @@ context types: Codex, Claude Code, and Hermes. Cognition is deliberately
 synthetic and disabled for this transport fixture. That makes this a durable
 identity and scope test, not a model quality result.
 
-The fixture captures one explicit fact per host, processes each durable job,
-corrects the Codex fact through the Claude Code context, and verifies that the
-fact keeps its ID while moving to the next version. It stops and restarts the
-service, verifies the corrected fact, forgets it through the Hermes context,
-and replays the original Codex event. The replay is suppressed. A second
-enabled project writes a canary that is absent from project A retrieval.
+The source events and expected outcomes are recorded in
+[`local-memory-continuity.jsonl`](../../benchmarks/scenarios/local-memory-continuity.jsonl).
+The test rotates the teaching context through all three adapters. It verifies
+source evidence, retrieves the taught fact after restart, corrects it through
+the Claude Code context, and checks that its ID survives while its version
+advances. A further restart preserves the corrected content.
+
+Both enabled projects have positive retrieval controls before the test checks
+that each project's fact is absent from the other project's results. The
+Hermes context forgets the original fact, and replaying the source event is
+suppressed. Maintenance and another restart must preserve that suppression
+and the absence of both the original and corrected content.
 
 Run it with:
 
