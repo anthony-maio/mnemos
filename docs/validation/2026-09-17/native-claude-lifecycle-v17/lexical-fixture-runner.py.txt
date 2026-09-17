@@ -1,0 +1,355 @@
+"""Offline lexical-fixture check for the native Claude v17 runner.
+
+This helper reindexes disposable copies of the preserved v16 database, then
+uses the installed production engine for bounded retrieval controls.  It does
+not invoke Claude, Ollama, or any cognition provider.
+"""
+
+from __future__ import annotations
+
+import argparse
+import asyncio
+from datetime import datetime, timezone
+import hashlib
+import importlib.util
+import json
+from pathlib import Path
+import re
+import shutil
+import sqlite3
+import sys
+import time
+from typing import Any, Mapping
+
+SOURCE_COMMIT = "56182d97c5809a4909ae31f81bc6240be6cae58b"
+DEFAULT_FIXTURE = Path(
+    "C:/Users/Ant/AppData/Local/Temp/mnemos-native-claude-lifecycle-v16-hax727t_"
+)
+DEFAULT_OUTPUT = Path("C:/Users/Ant/AppData/Local/Temp/mnemos-claude-v17-fixture-check-v1")
+DEFAULT_PYTHON = Path(
+    "C:/Users/Ant/AppData/Local/Temp/mnemos-installed-56182d9-v1/Scripts/python.exe"
+)
+
+
+def _sha256(value: bytes | str) -> str:
+    raw = value.encode("utf-8") if isinstance(value, str) else value
+    return hashlib.sha256(raw).hexdigest()
+
+
+def _json(path: Path, value: Any) -> None:
+    path.write_text(json.dumps(value, indent=2, ensure_ascii=True) + "\n", encoding="utf-8")
+
+
+def _load_v17_embedder(path: Path) -> type[Any]:
+    spec = importlib.util.spec_from_file_location("native_claude_lifecycle_v17", path)
+    if spec is None or spec.loader is None:
+        raise RuntimeError("could not load v17 runner")
+    module = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(module)
+    embedder = getattr(module, "LexicalFixtureEmbeddings", None)
+    if not isinstance(embedder, type):
+        raise RuntimeError("v17 runner has no lexical fixture embedder")
+    return embedder
+
+
+def _native_query(path: Path) -> str:
+    def nodes(value: Any):
+        if isinstance(value, Mapping):
+            yield value
+            for child in value.values():
+                yield from nodes(child)
+        elif isinstance(value, list):
+            for child in value:
+                yield from nodes(child)
+
+    query: str | None = None
+    for line in path.read_text(encoding="utf-8").splitlines():
+        try:
+            row = json.loads(line)
+        except json.JSONDecodeError:
+            continue
+        for item in nodes(row):
+            if item.get("type") != "tool_use":
+                continue
+            name = item.get("name")
+            arguments = item.get("input")
+            candidate = arguments.get("query") if isinstance(arguments, Mapping) else None
+            if (
+                isinstance(name, str)
+                and name.endswith("__mnemos_retrieve")
+                and isinstance(candidate, str)
+            ):
+                query = candidate
+    if query is None:
+        raise RuntimeError("native retrieve query missing from preserved stream")
+    return query
+
+
+def _target_from_db(path: Path, report_path: Path) -> tuple[str, str, int, str]:
+    native_report = json.loads(report_path.read_text(encoding="utf-8"))
+    seed = native_report.get("seed") if isinstance(native_report, Mapping) else None
+    target_id = seed.get("target_fact_id") if isinstance(seed, Mapping) else None
+    expected_hash = seed.get("replacement_content_sha256") if isinstance(seed, Mapping) else None
+    if not isinstance(target_id, str) or not isinstance(expected_hash, str):
+        raise RuntimeError("native report has no target ID")
+    connection = sqlite3.connect(f"file:{path.as_posix()}?mode=ro", uri=True)
+    try:
+        row = connection.execute(
+            "SELECT content, version, metadata FROM memory_chunks WHERE id = ?", (target_id,)
+        ).fetchone()
+    finally:
+        connection.close()
+    if row is None or not isinstance(row[0], str) or not isinstance(row[1], int):
+        raise RuntimeError("target fact is absent")
+    if _sha256(row[0]) != expected_hash:
+        raise RuntimeError("target content does not match preserved native report")
+    metadata = json.loads(row[2])
+    scope = metadata.get("scope") if isinstance(metadata, Mapping) else None
+    return target_id, row[0], row[1], str(scope)
+
+
+def _reindex_clone(path: Path, embedder_type: type[Any]) -> dict[str, Any]:
+    from mnemos.utils.storage import SQLiteStore
+
+    store = SQLiteStore(str(path))
+    embedder = embedder_type(dim=1024)
+    try:
+        rows = store._conn.execute("SELECT id, content FROM memory_chunks").fetchall()
+        with store._lock:
+            for fact_id, content in rows:
+                embedding = json.dumps(embedder.embed(str(content)))
+                store._conn.execute(
+                    "UPDATE memory_chunks SET embedding = ? WHERE id = ?", (embedding, fact_id)
+                )
+            store._conn.commit()
+        index_result = store.rebuild_indexes(rebuild_fts=False, rebuild_vec=True)
+        return {
+            "facts_reindexed": len(rows),
+            "embedding_dimension": embedder.dim,
+            "index_rebuild": index_result,
+        }
+    finally:
+        store.close()
+
+
+async def _retrieve(
+    db_path: Path,
+    registry_path: Path,
+    embedder_type: type[Any],
+    *,
+    query: str,
+    project_id: str,
+    profile_id: str,
+    session_id: str,
+    allowed_scopes: list[str],
+) -> dict[str, Any]:
+    from mnemos.config import MnemosConfig
+    from mnemos.engine import MnemosEngine
+    from mnemos.scopes import ScopeContext, ScopeRegistry
+    from mnemos.utils.llm import UnavailableLLMProvider
+    from mnemos.utils.storage import SQLiteStore
+
+    store = SQLiteStore(str(db_path))
+    config = MnemosConfig()
+    for module_name in ("surprisal", "mutable_rag", "affective", "sleep", "spreading"):
+        setattr(config.modules, module_name, False)
+    registry = ScopeRegistry.load(registry_path)
+    context = ScopeContext(
+        user_profile_id=profile_id,
+        project_id=project_id,
+        session_id=session_id,
+        host="claude-code",
+    )
+    engine = MnemosEngine(
+        config=config,
+        llm=UnavailableLLMProvider(),
+        embedder=embedder_type(dim=1024),
+        store=store,
+        scope_registry=registry,
+        require_scope_context=True,
+    )
+    started = time.monotonic()
+    try:
+        chunks = await engine.retrieve(
+            query,
+            top_k=5,
+            current_scope="project",
+            allowed_scopes=allowed_scopes,
+            context=context,
+            profile="baseline",
+            max_context_tokens=1200,
+        )
+        return {
+            "query_sha256": _sha256(query),
+            "query_utf8_bytes": len(query.encode("utf-8")),
+            "allowed_scopes": allowed_scopes,
+            "elapsed_ms": round((time.monotonic() - started) * 1000, 3),
+            "returned": [
+                {
+                    "id": chunk.id,
+                    "version": chunk.version,
+                    "content_sha256": _sha256(chunk.content),
+                    "scope": chunk.metadata.get("scope"),
+                    "project_id": chunk.metadata.get("project_id"),
+                }
+                for chunk in chunks
+            ],
+            "returned_count": len(chunks),
+        }
+    finally:
+        store.close()
+
+
+def main() -> int:
+    parser = argparse.ArgumentParser(description="Check the Claude v17 lexical fixture offline.")
+    parser.add_argument("--fixture", type=Path, default=DEFAULT_FIXTURE)
+    parser.add_argument("--output", type=Path, default=DEFAULT_OUTPUT)
+    parser.add_argument("--python", type=Path, default=DEFAULT_PYTHON)
+    parser.add_argument(
+        "--v17-runner",
+        type=Path,
+        default=Path(__file__).with_name("native_claude_lifecycle_v17.py"),
+    )
+    args = parser.parse_args()
+    fixture = args.fixture.resolve()
+    output = args.output.resolve()
+    if output.exists():
+        raise SystemExit(f"refusing existing output: {output}")
+    if not fixture.is_dir() or not args.python.is_file() or not args.v17_runner.is_file():
+        raise SystemExit("fixture, interpreter, or v17 runner is unavailable")
+    source_db = fixture / "memory.sqlite"
+    source_registry = fixture / "scopes.json"
+    source_stream = fixture / "native-correct-stdout.jsonl"
+    native_report = Path(
+        "C:/Users/Ant/AppData/Local/Temp/mnemos-native-claude-lifecycle-v16/report.json"
+    )
+    for path in (source_db, source_registry, source_stream, native_report):
+        if not path.is_file():
+            raise SystemExit(f"required file is missing: {path}")
+    source_hash_before = _sha256(source_db.read_bytes())
+    source_wal = Path(str(source_db) + "-wal")
+    if source_wal.exists() and source_wal.stat().st_size:
+        raise SystemExit("preserved source database has a nonempty WAL")
+    output.mkdir(parents=True)
+    (output / "runner.py.txt").write_bytes(Path(__file__).read_bytes())
+    source_runner_hash = _sha256(args.v17_runner.read_bytes())
+    native_query = _native_query(source_stream)
+    target_id, target_content, target_version, target_scope = _target_from_db(
+        source_db, native_report
+    )
+    if target_version != 2 or target_scope != "project":
+        raise SystemExit("preserved target is not the expected corrected project fact")
+    if not target_content.startswith("The private release codename for this project is "):
+        raise SystemExit("target does not match the v17 seed contract")
+    direct_query = target_content[len("The private release codename for this project is ") : -1]
+    if not direct_query or not target_content.endswith("."):
+        raise SystemExit("target does not have a terminal-period seed form")
+    registry_data = json.loads(source_registry.read_text(encoding="utf-8"))
+    projects = registry_data.get("projects", {})
+    profiles = registry_data.get("profiles", [])
+    if not isinstance(projects, Mapping) or len(projects) != 1 or not isinstance(profiles, list):
+        raise SystemExit("fixture identity registry is not bounded")
+    project_id = next(iter(projects))
+    if len(profiles) != 1 or not isinstance(profiles[0], str):
+        raise SystemExit("fixture must contain one profile")
+    profile_id = profiles[0]
+    embedder_type = _load_v17_embedder(args.v17_runner)
+    probe = embedder_type(dim=1024)
+    stable_texts = [target_content, direct_query, native_query]
+    vectors_a = [probe.embed(text) for text in stable_texts]
+    vectors_b = [embedder_type(dim=1024).embed(text) for text in stable_texts]
+    if vectors_a != vectors_b or any(len(vector) != 1024 for vector in vectors_a):
+        raise SystemExit("lexical fixture vectors are not stable 1024-dimensional vectors")
+    arms = {
+        "native_query": (native_query, ["project"]),
+        "direct_query": (direct_query, ["project"]),
+        "irrelevant_query": ("unrelated query with no seeded release token", ["project"]),
+        "foreign_scope": (direct_query, ["workspace", "global"]),
+    }
+    results: dict[str, Any] = {}
+
+    async def run() -> None:
+        for name, (query, scopes) in arms.items():
+            clone = output / f"database-{name}.sqlite"
+            shutil.copy2(source_db, clone)
+            before = _sha256(clone.read_bytes())
+            if before != source_hash_before:
+                raise RuntimeError(f"clone hash mismatch before reindex: {name}")
+            reindex = _reindex_clone(clone, embedder_type)
+            retrieved = await _retrieve(
+                clone,
+                source_registry,
+                embedder_type,
+                query=query,
+                project_id=project_id,
+                profile_id=profile_id,
+                session_id=f"v17-fixture-{name}",
+                allowed_scopes=scopes,
+            )
+            results[name] = {
+                "database_path": str(clone),
+                "database_sha256_before_reindex": before,
+                "reindex": reindex,
+                "retrieval": retrieved,
+            }
+
+    asyncio.run(run())
+    source_hash_after = _sha256(source_db.read_bytes())
+    if source_hash_after != source_hash_before:
+        raise RuntimeError("preserved source database changed")
+    target_hash = _sha256(target_content)
+    report = {
+        "status": "completed",
+        "started_at": datetime.now(timezone.utc).isoformat(),
+        "source_commit": SOURCE_COMMIT,
+        "python_argument": str(args.python.resolve()),
+        "sys_executable": str(Path(sys.executable).resolve()),
+        "fixture": str(fixture),
+        "v17_runner": str(args.v17_runner.resolve()),
+        "v17_runner_sha256": source_runner_hash,
+        "runner_sha256": _sha256(Path(__file__).read_bytes()),
+        "source_database_sha256_before": source_hash_before,
+        "source_database_sha256_after": source_hash_after,
+        "source_database_wal_bytes": source_wal.stat().st_size if source_wal.exists() else 0,
+        "target": {
+            "fact_id": target_id,
+            "version": target_version,
+            "scope": target_scope,
+            "content_sha256": target_hash,
+            "embedding_dimension": 1024,
+        },
+        "queries": {
+            "native": {"sha256": _sha256(native_query), "utf8_bytes": len(native_query.encode())},
+            "direct": {"sha256": _sha256(direct_query), "utf8_bytes": len(direct_query.encode())},
+        },
+        "native_stream": {
+            "sha256": _sha256(source_stream.read_bytes()),
+            "cost_usd_observed": [],
+            "calls_replayed": 0,
+        },
+        "controls": {
+            "stable_vectors_across_instances": True,
+            "target_expected_in_native_and_direct": all(
+                target_id in [row["id"] for row in results[name]["retrieval"]["returned"]]
+                for name in ("native_query", "direct_query")
+            ),
+            "irrelevant_expected_absent": target_id
+            not in [row["id"] for row in results["irrelevant_query"]["retrieval"]["returned"]],
+            "foreign_scope_expected_absent": target_id
+            not in [row["id"] for row in results["foreign_scope"]["retrieval"]["returned"]],
+        },
+        "arms": results,
+        "limits": [
+            "Synthetic lexical hash vectors test fixture transport and ranking controls only.",
+            "No native Claude, Ollama, or cognition call was made.",
+            "Results do not establish semantic retrieval quality or native lifecycle success.",
+        ],
+        "finished_at": datetime.now(timezone.utc).isoformat(),
+    }
+    _json(output / "report.json", report)
+    print(json.dumps(report, indent=2, ensure_ascii=True))
+    return 0
+
+
+if __name__ == "__main__":
+    raise SystemExit(main())

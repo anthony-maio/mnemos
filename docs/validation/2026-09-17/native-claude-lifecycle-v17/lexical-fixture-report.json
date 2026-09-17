@@ -1,0 +1,187 @@
+{
+  "status": "completed",
+  "started_at": "2026-09-17T20:43:51.854181+00:00",
+  "source_commit": "56182d97c5809a4909ae31f81bc6240be6cae58b",
+  "python_argument": "C:\\Users\\Ant\\AppData\\Local\\Temp\\mnemos-installed-56182d9-v1\\Scripts\\python.exe",
+  "sys_executable": "C:\\Users\\Ant\\AppData\\Local\\Temp\\mnemos-installed-56182d9-v1\\Scripts\\python.exe",
+  "fixture": "C:\\Users\\Ant\\AppData\\Local\\Temp\\mnemos-native-claude-lifecycle-v16-hax727t_",
+  "v17_runner": "D:\\Development\\mnemos\\mnemos\\.worktrees\\functional-local-memory\\.venv\\native_claude_lifecycle_v17.py",
+  "v17_runner_sha256": "85940cccb99d46f7b56a6184d912495831f66c3933f0b0fc03cdf36217691342",
+  "runner_sha256": "f468e62fe1a0a27ca0fb48ed772f3a3b35ac4821fb88cc7c9d66dddd36016918",
+  "source_database_sha256_before": "9893ccc822e7fac6dd81d6691b154cd01eb5ce5b3704969e24466280573cf7f2",
+  "source_database_sha256_after": "9893ccc822e7fac6dd81d6691b154cd01eb5ce5b3704969e24466280573cf7f2",
+  "source_database_wal_bytes": 0,
+  "target": {
+    "fact_id": "f36c519a-4607-450a-a0ac-207e693ba3b6",
+    "version": 2,
+    "scope": "project",
+    "content_sha256": "d0a85f5dd1158f7702fbe8ddfc9bf5e210d3626f8664fbe34f59122fcbb20037",
+    "embedding_dimension": 1024
+  },
+  "queries": {
+    "native": {
+      "sha256": "df0f47cf8d3aafbf0d928af2737189253afa2503a337acfc010453e5f538a17b",
+      "utf8_bytes": 71
+    },
+    "direct": {
+      "sha256": "b1ad2205fb5f3d3ff58310fcce1b9c6f67039ef1fc5078ee3eb61bb9cf5dedeb",
+      "utf8_bytes": 29
+    }
+  },
+  "native_stream": {
+    "sha256": "da2e845ae43a53fe85ec4af70d7bc3d173b262942f4136d22222a300f8c4014c",
+    "cost_usd_observed": [],
+    "calls_replayed": 0
+  },
+  "controls": {
+    "stable_vectors_across_instances": true,
+    "target_expected_in_native_and_direct": true,
+    "irrelevant_expected_absent": true,
+    "foreign_scope_expected_absent": true
+  },
+  "arms": {
+    "native_query": {
+      "database_path": "C:\\Users\\Ant\\AppData\\Local\\Temp\\mnemos-claude-v17-fixture-check-v1\\database-native_query.sqlite",
+      "database_sha256_before_reindex": "9893ccc822e7fac6dd81d6691b154cd01eb5ce5b3704969e24466280573cf7f2",
+      "reindex": {
+        "facts_reindexed": 7,
+        "embedding_dimension": 1024,
+        "index_rebuild": {
+          "rebuild_fts": false,
+          "rebuild_vec": true,
+          "performed": true
+        }
+      },
+      "retrieval": {
+        "query_sha256": "df0f47cf8d3aafbf0d928af2737189253afa2503a337acfc010453e5f538a17b",
+        "query_utf8_bytes": 71,
+        "allowed_scopes": [
+          "project"
+        ],
+        "elapsed_ms": 9.179,
+        "returned": [
+          {
+            "id": "f36c519a-4607-450a-a0ac-207e693ba3b6",
+            "version": 2,
+            "content_sha256": "d0a85f5dd1158f7702fbe8ddfc9bf5e210d3626f8664fbe34f59122fcbb20037",
+            "scope": "project",
+            "project_id": "10267d4b-20c6-458e-85d2-c27f5f6f58f9"
+          },
+          {
+            "id": "bab751f0-6d18-4fbe-88d2-20fcf69e3902",
+            "version": 1,
+            "content_sha256": "6778a9d67e4376508c22a26a12bcccc0b93b5741cbdb97c8088190e5abf16fa9",
+            "scope": "project",
+            "project_id": "10267d4b-20c6-458e-85d2-c27f5f6f58f9"
+          },
+          {
+            "id": "e84b79f2-d555-499b-a324-f728f385a870",
+            "version": 1,
+            "content_sha256": "bdb929474c8e8074c2dd1175c9e03c83bfd7bb8b43dbfa01153e0ba362421531",
+            "scope": "project",
+            "project_id": "10267d4b-20c6-458e-85d2-c27f5f6f58f9"
+          }
+        ],
+        "returned_count": 3
+      }
+    },
+    "direct_query": {
+      "database_path": "C:\\Users\\Ant\\AppData\\Local\\Temp\\mnemos-claude-v17-fixture-check-v1\\database-direct_query.sqlite",
+      "database_sha256_before_reindex": "9893ccc822e7fac6dd81d6691b154cd01eb5ce5b3704969e24466280573cf7f2",
+      "reindex": {
+        "facts_reindexed": 7,
+        "embedding_dimension": 1024,
+        "index_rebuild": {
+          "rebuild_fts": false,
+          "rebuild_vec": true,
+          "performed": true
+        }
+      },
+      "retrieval": {
+        "query_sha256": "b1ad2205fb5f3d3ff58310fcce1b9c6f67039ef1fc5078ee3eb61bb9cf5dedeb",
+        "query_utf8_bytes": 29,
+        "allowed_scopes": [
+          "project"
+        ],
+        "elapsed_ms": 12.318,
+        "returned": [
+          {
+            "id": "f36c519a-4607-450a-a0ac-207e693ba3b6",
+            "version": 2,
+            "content_sha256": "d0a85f5dd1158f7702fbe8ddfc9bf5e210d3626f8664fbe34f59122fcbb20037",
+            "scope": "project",
+            "project_id": "10267d4b-20c6-458e-85d2-c27f5f6f58f9"
+          },
+          {
+            "id": "6fb77466-4c50-48a7-a217-e72c3e3a65a4",
+            "version": 1,
+            "content_sha256": "73f3b98634ca24ce774499204b7dbfdcdcf0fb93a0d166069e7e801a70a75e5a",
+            "scope": "project",
+            "project_id": "10267d4b-20c6-458e-85d2-c27f5f6f58f9"
+          },
+          {
+            "id": "e84b79f2-d555-499b-a324-f728f385a870",
+            "version": 1,
+            "content_sha256": "bdb929474c8e8074c2dd1175c9e03c83bfd7bb8b43dbfa01153e0ba362421531",
+            "scope": "project",
+            "project_id": "10267d4b-20c6-458e-85d2-c27f5f6f58f9"
+          }
+        ],
+        "returned_count": 3
+      }
+    },
+    "irrelevant_query": {
+      "database_path": "C:\\Users\\Ant\\AppData\\Local\\Temp\\mnemos-claude-v17-fixture-check-v1\\database-irrelevant_query.sqlite",
+      "database_sha256_before_reindex": "9893ccc822e7fac6dd81d6691b154cd01eb5ce5b3704969e24466280573cf7f2",
+      "reindex": {
+        "facts_reindexed": 7,
+        "embedding_dimension": 1024,
+        "index_rebuild": {
+          "rebuild_fts": false,
+          "rebuild_vec": true,
+          "performed": true
+        }
+      },
+      "retrieval": {
+        "query_sha256": "77a0a76fbbe878df406d42e12b8933aa0186fd85f727e751c0ec7e2a8fe523fb",
+        "query_utf8_bytes": 44,
+        "allowed_scopes": [
+          "project"
+        ],
+        "elapsed_ms": 2.87,
+        "returned": [],
+        "returned_count": 0
+      }
+    },
+    "foreign_scope": {
+      "database_path": "C:\\Users\\Ant\\AppData\\Local\\Temp\\mnemos-claude-v17-fixture-check-v1\\database-foreign_scope.sqlite",
+      "database_sha256_before_reindex": "9893ccc822e7fac6dd81d6691b154cd01eb5ce5b3704969e24466280573cf7f2",
+      "reindex": {
+        "facts_reindexed": 7,
+        "embedding_dimension": 1024,
+        "index_rebuild": {
+          "rebuild_fts": false,
+          "rebuild_vec": true,
+          "performed": true
+        }
+      },
+      "retrieval": {
+        "query_sha256": "b1ad2205fb5f3d3ff58310fcce1b9c6f67039ef1fc5078ee3eb61bb9cf5dedeb",
+        "query_utf8_bytes": 29,
+        "allowed_scopes": [
+          "workspace",
+          "global"
+        ],
+        "elapsed_ms": 1.102,
+        "returned": [],
+        "returned_count": 0
+      }
+    }
+  },
+  "limits": [
+    "Synthetic lexical hash vectors test fixture transport and ranking controls only.",
+    "No native Claude, Ollama, or cognition call was made.",
+    "Results do not establish semantic retrieval quality or native lifecycle success."
+  ],
+  "finished_at": "2026-09-17T20:43:51.855589+00:00"
+}

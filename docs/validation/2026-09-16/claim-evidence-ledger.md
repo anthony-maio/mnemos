@@ -4,18 +4,19 @@ Assessment date: September 17, 2026. This covers the unreleased
 functional-local-memory worktree, not the installed public package or website.
 The capability IDs come from the original implementation plan.
 
-The latest complete package verification is frozen source `56182d9`:
-898 tests passed with four skips, plus Black, strict mypy, JavaScript syntax,
-build, and Twine. A fresh installed wheel passed 87 selected contract cases
-and seven synthetic Stop replay assertions. Source, fixtures, and the installed
+The latest complete package verification is frozen source `8d865a5`:
+903 tests passed with four skips, plus Black, strict mypy, JavaScript syntax,
+build, and Twine. A fresh installed wheel passed 110 selected contract cases
+with two matching platform skips and seven synthetic Stop replay assertions. Source, fixtures, and the installed
 environment were on C:, outside the development checkout. The
-[service/runtime package checkpoint](../2026-09-17/service-runtime-package-checkpoint-v1/README.md)
+[host provenance package checkpoint](../2026-09-17/host-provenance-package-checkpoint-v1/README.md)
 binds the wheel, source, helpers, dependencies, exact test cases, and installed
 package origins. It does not establish native plugin-session acceptance.
 
-The preceding complete package checkpoint was frozen source `6600dc2`, with
+The earlier complete package checkpoint was frozen source `6600dc2`, with
 865 tests passed and 42 installed contract cases. It remains historical
-evidence and does not override the newer 56182d9 checkpoint.
+evidence and does not override the newer checkpoint. Source `56182d9` also remains
+preserved with 898 passing source tests and 87 passing installed contract cases.
 
 Historical source `312b8d6` passed 858 tests with four skips. Its
 [fresh installed-wheel check](combined-package-checkpoint-v2/README.md) then
@@ -51,7 +52,8 @@ of v13 recovered the nested correction payload and verified its target and
 replacement hash, but the native attempt still contained degraded capture
 diagnostics and did not run restart or forget. The [v15 attempt](../2026-09-17/native-claude-lifecycle-v15/README.md)
 reported a pending plugin with zero tools and made no native calls. Native
-correction, forget, extraction, and complete cross-host continuity remain open.
+correction and forgetting were unobserved at that point. Extraction and complete
+cross-host continuity remain open.
 The separate [hook-time identity observation](../2026-09-17/native-claude-hook-identity-v3/README.md)
 found no prompt ID and no transcript file at UserPromptSubmit; identifiers
 appeared by Stop. Both capture hooks still emitted diagnostics, so this
@@ -61,6 +63,17 @@ then observed a connected catalog and passed all six native correction-phase
 checks. Its direct post-maintenance retrieval failed before restart and forget,
 so the complete lifecycle remains failed. Degraded hook capture is retained
 separately from the successful native correction operation.
+The later [v17 lifecycle check](../2026-09-17/native-claude-lifecycle-v17/README.md)
+at installed `8d865a5` passed all 15 fact-lifecycle criteria: native correction,
+consolidation, retrieval, forgetting, restart persistence, no resurrection after
+reconstructed Stop replay, and preservation of an unrelated fact. Its lexical
+vectors are a transport fixture, not a semantic-quality evaluation. Degraded
+hook capture keeps the overall result partial; extraction and full native
+capture acceptance remain open.
+The later [exact-query comparison](../2026-09-17/claude-v16-retrieval-diagnosis-v2/README.md)
+verified the corrected target remained stored. All fixture embeddings were
+identical, and ranking ties plus context budgeting excluded that target.
+The broader diagnostic query does not count as a passed native lifecycle.
 An implemented capability does not close its quality, native-host, or pilot
 acceptance gate.
 
@@ -90,6 +103,7 @@ remain attributed to the source that produced them.
 - [Package verification index](access-metadata-package-verification/evidence-index.json): source `2494e31`, including schema 8. No later embedding-role or conflict-collision code is covered by this full checkpoint.
 - [Combined checkpoint index](combined-package-checkpoint-v2/evidence-index.json): source `312b8d6`, passing source/package checks and the failed installed continuity check. The separate installed replay probe did not run.
 - [Service/runtime package checkpoint index](../2026-09-17/service-runtime-package-checkpoint-v1/evidence-index.json): source `56182d9`, all six source/package checks, 87 installed contract cases, and seven synthetic Stop replay assertions. This is separate from native host and real-model evidence.
+- [Host provenance package checkpoint index](../2026-09-17/host-provenance-package-checkpoint-v1/evidence-index.json): source `8d865a5`, 903 passing source tests with four skips, 110 passing installed contract cases with two matching skips, and seven synthetic Stop replay assertions.
 - [Historical SSD checkpoint index](ssd-package-checkpoint-v1/evidence-index.json): source `6600dc2`, all six source/package checks and 42 installed contract cases. It remains separate historical evidence.
 - [Native plugin index](native-plugin-checkpoint-v1/evidence-index.json): source `6600dc2`, failed budget-limited v9, v10 native plugin observations and remaining capture gates, plus the installed adapter timing preflight.
 - [Installed diagnostic index](installed-continuity-diagnostics-v1/evidence-index.json): valid timeout reproduction plus the excluded first diagnostic whose fixture was incorrectly placed inside Git.

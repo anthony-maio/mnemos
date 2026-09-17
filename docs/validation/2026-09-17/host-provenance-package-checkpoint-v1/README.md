@@ -1,0 +1,7 @@
+# Host provenance package checkpoint
+
+Frozen source `8d865a5206aa99becdf6171c204161543ab60bb1` completed its recorded checks with status `passed`. The pytest row reported 903 passed, 4 skips, and 0 failures. Black, strict mypy, JavaScript syntax, package build, and Twine results are preserved verbatim.
+
+The installed-package run is preserved with terminal status `passed`. All 112 selected contract cases have the same case identities, 110 passes, and two platform skips with the exact frozen skip reasons. All seven synthetic Stop replay assertions passed. The installed package was loaded from the verified wheel, with the recorded source subset and namespace origins. All available raw logs, JUnit/XML reports, dependency freezes, expected-case files, the wheel, reports, and helper bytes are archived without normalization. The large source distribution is omitted; its recorded hash remains in the source verification. The earlier installed v5 attempt is preserved separately with its pre-install failure and no executed installation commands.
+
+This is local source, wheel, and service evidence. It does not establish native host conversations, real-model quality, hosted behavior, or human acceptance. The historical focused PowerShell timeout was console-only and has no durable artifact in this archive. No cause is inferred from that earlier result, and no product speedup or reliability repair is claimed. The distribution archives remain at their recorded paths with their original hashes.

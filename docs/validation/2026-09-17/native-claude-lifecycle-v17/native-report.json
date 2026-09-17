@@ -1,0 +1,518 @@
+{
+  "runner": "native-claude-lifecycle-v17",
+  "runner_sha256": "85940cccb99d46f7b56a6184d912495831f66c3933f0b0fc03cdf36217691342",
+  "source_commit": "8d865a5206aa99becdf6171c204161543ab60bb1",
+  "started_at": "2026-09-17T20:48:45.312378+00:00",
+  "status": "partial",
+  "scope": "native Claude correction and forget lifecycle with restart; no cognition or quality claim",
+  "model_quality_claim": "none",
+  "embedding_fixture": "Deterministic normalized lexical hash vectors, 1024 dimensions; semantic retrieval quality is not evaluated",
+  "cognition": "UnavailableLLMProvider; all modules disabled",
+  "max_native_seconds": 60,
+  "hook_timeout_seconds": 20,
+  "snapshot_argument": "C:\\Users\\Ant\\AppData\\Local\\Temp\\mnemos-source-host-provenance-v1",
+  "wheel_argument": "C:\\Users\\Ant\\AppData\\Local\\Temp\\mnemos-package-checks-host-provenance-v1\\dist\\mnemos_memory-0.7.0-py3-none-any.whl",
+  "expected_wheel_sha256": "9996d2bca5166dae7e3757f240e3cb90c2f09ab713aa8cbdfe23e7849b12b948",
+  "build_verification_argument": "C:\\Users\\Ant\\AppData\\Local\\Temp\\mnemos-package-checks-host-provenance-v1\\verification.json",
+  "timing_report_argument": "C:\\Users\\Ant\\AppData\\Local\\Temp\\mnemos-claude-adapter-timing-v5\\report.json",
+  "timing_runner_argument": "D:\\Development\\mnemos\\mnemos\\.worktrees\\functional-local-memory\\.venv\\claude_adapter_timing_v5.py",
+  "environment_argument": "C:\\Users\\Ant\\AppData\\Local\\Temp\\mnemos-installed-host-provenance-v2",
+  "mcp_connection_nonblocking": "0",
+  "mcp_connection_nonblocking_scope": "native Claude child process environment only",
+  "fixture_parent_argument": "C:\\Users\\Ant\\AppData\\Local\\Temp",
+  "profile": "native-claude-lifecycle-v17",
+  "initial_tool_inventory": {
+    "status": "ready",
+    "system_init_observed": true,
+    "mnemos_connected": true,
+    "required_tools": [
+      "mcp__plugin_mnemos-memory_mnemos__mnemos_correct",
+      "mcp__plugin_mnemos-memory_mnemos__mnemos_consolidate",
+      "mcp__plugin_mnemos-memory_mnemos__mnemos_retrieve"
+    ],
+    "required_tools_present": true,
+    "mcp_servers": [
+      {
+        "name": "plugin:mnemos-memory:mnemos",
+        "status": "connected"
+      }
+    ],
+    "mcp_tools": [
+      "mcp__plugin_mnemos-memory_mnemos__mnemos_capture",
+      "mcp__plugin_mnemos-memory_mnemos__mnemos_consolidate",
+      "mcp__plugin_mnemos-memory_mnemos__mnemos_correct",
+      "mcp__plugin_mnemos-memory_mnemos__mnemos_feedback",
+      "mcp__plugin_mnemos-memory_mnemos__mnemos_forget",
+      "mcp__plugin_mnemos-memory_mnemos__mnemos_forget_preview",
+      "mcp__plugin_mnemos-memory_mnemos__mnemos_forget_related",
+      "mcp__plugin_mnemos-memory_mnemos__mnemos_health",
+      "mcp__plugin_mnemos-memory_mnemos__mnemos_inspect",
+      "mcp__plugin_mnemos-memory_mnemos__mnemos_job_status",
+      "mcp__plugin_mnemos-memory_mnemos__mnemos_list",
+      "mcp__plugin_mnemos-memory_mnemos__mnemos_retrieve",
+      "mcp__plugin_mnemos-memory_mnemos__mnemos_stats",
+      "mcp__plugin_mnemos-memory_mnemos__mnemos_store"
+    ]
+  },
+  "plugin_snapshot": {
+    "snapshot": "C:\\Users\\Ant\\AppData\\Local\\Temp\\mnemos-source-host-provenance-v1",
+    "source_commit": "8d865a5206aa99becdf6171c204161543ab60bb1",
+    "clean": true,
+    "files": {
+      ".claude-plugin/plugin.json": {
+        "bytes": 963,
+        "sha256": "3e7549c3b2c7416f6e0fd620b000b89470d809f822cb29b04d22a7e9ff7b3928"
+      },
+      ".claude-plugin/run_mnemos_hook.py": {
+        "bytes": 1430,
+        "sha256": "9ca11e4a0efa9b61dea647e0675729a523e1b9aed0fb56468af08079d04512c0"
+      },
+      ".claude-plugin/run_mnemos_mcp.py": {
+        "bytes": 7222,
+        "sha256": "81bf0d833d132bb3136cf624933177a7a9b35ccb830db66234b2a78e19bcfde8"
+      },
+      "hooks/hooks.json": {
+        "bytes": 1350,
+        "sha256": "7ca43bda20e14e4363c84fd2fddd26fd257afaa9ba3146bff2a389c52817d1a7"
+      }
+    },
+    "hook_dispatch": "hooks/hooks.json -> python ${CLAUDE_PLUGIN_ROOT}/.claude-plugin/run_mnemos_hook.py <event>",
+    "mcp_dispatch": "plugin.json -> .claude-plugin/run_mnemos_mcp.py -> explicit MNEMOS_PLUGIN_PYTHON"
+  },
+  "package_provenance": {
+    "source_commit": "8d865a5206aa99becdf6171c204161543ab60bb1",
+    "package_files_checked": 53,
+    "wheel_package_members_checked": 56,
+    "wheel_path": "C:\\Users\\Ant\\AppData\\Local\\Temp\\mnemos-package-checks-host-provenance-v1\\dist\\mnemos_memory-0.7.0-py3-none-any.whl",
+    "wheel_sha256_expected": "9996d2bca5166dae7e3757f240e3cb90c2f09ab713aa8cbdfe23e7849b12b948",
+    "wheel_sha256_observed": "9996d2bca5166dae7e3757f240e3cb90c2f09ab713aa8cbdfe23e7849b12b948"
+  },
+  "build_verification": {
+    "path": "C:\\Users\\Ant\\AppData\\Local\\Temp\\mnemos-package-checks-host-provenance-v1\\verification.json",
+    "status": "passed",
+    "source_commit": "8d865a5206aa99becdf6171c204161543ab60bb1",
+    "wheel_path": "C:\\Users\\Ant\\AppData\\Local\\Temp\\mnemos-package-checks-host-provenance-v1\\dist\\mnemos_memory-0.7.0-py3-none-any.whl",
+    "wheel_sha256": "9996d2bca5166dae7e3757f240e3cb90c2f09ab713aa8cbdfe23e7849b12b948"
+  },
+  "adapter_timing_gate": {
+    "path": "C:\\Users\\Ant\\AppData\\Local\\Temp\\mnemos-claude-adapter-timing-v5\\report.json",
+    "sha256": "f43785a3072856efed120ae610a33ea79514dd3af5cd73aad834628d48f6142b",
+    "runner_path": ".venv\\claude_adapter_timing_v5.py",
+    "runner_sha256": "a453e4659cf9e34f99556c8282003c1b813384457ec0d09915ba68b140cdfc8e",
+    "source_commit": "8d865a5206aa99becdf6171c204161543ab60bb1",
+    "wheel_sha256": "9996d2bca5166dae7e3757f240e3cb90c2f09ab713aa8cbdfe23e7849b12b948",
+    "status": "passed"
+  },
+  "claude": {
+    "path": "C:\\Users\\Ant\\.local\\bin\\claude.exe",
+    "version": "2.1.191 (Claude Code)"
+  },
+  "seed": {
+    "target_fact_id": "c7c09258-74d5-4e4d-b850-86dc2d80e1b1",
+    "target_version": 1,
+    "unrelated_fact_id": "8c3e9503-a4a8-4225-8270-1012b8aa1265",
+    "maintenance_status": null,
+    "target_content_sha256": "43a984e611c2eedd0fc6d4663f4994b8b731f14dac37dfe79b5744114459fc53",
+    "replacement_content_sha256": "16725de2365c8e16c7061fbf9aebf9cd79ef2bf880c71e46c587e9d024314fd8"
+  },
+  "phase1_hook_contract": {
+    "required_events": true,
+    "responses_successful": true,
+    "no_degraded_diagnostic": false
+  },
+  "phase1_hook_diagnostic_statuses": [
+    {
+      "event": "UserPromptSubmit",
+      "status": "degraded"
+    },
+    {
+      "event": "UserPromptSubmit",
+      "status": "degraded"
+    },
+    {
+      "event": "Stop",
+      "status": "degraded"
+    },
+    {
+      "event": "Stop",
+      "status": "degraded"
+    }
+  ],
+  "capture_status": {
+    "phase1": {
+      "status": "degraded",
+      "contract": {
+        "required_events": true,
+        "responses_successful": true,
+        "no_degraded_diagnostic": false
+      },
+      "diagnostics": [
+        {
+          "event": "UserPromptSubmit",
+          "status": "degraded"
+        },
+        {
+          "event": "UserPromptSubmit",
+          "status": "degraded"
+        },
+        {
+          "event": "Stop",
+          "status": "degraded"
+        },
+        {
+          "event": "Stop",
+          "status": "degraded"
+        }
+      ],
+      "limitations": [
+        "Claude reported one or more degraded hook captures; fact lifecycle evidence remains separate."
+      ]
+    },
+    "phase1_hook_contract": {
+      "required_events": true,
+      "responses_successful": true,
+      "no_degraded_diagnostic": false
+    },
+    "phase2": {
+      "status": "degraded",
+      "contract": {
+        "required_events": true,
+        "responses_successful": true,
+        "no_degraded_diagnostic": false
+      },
+      "diagnostics": [
+        {
+          "event": "UserPromptSubmit",
+          "status": "degraded"
+        },
+        {
+          "event": "UserPromptSubmit",
+          "status": "degraded"
+        },
+        {
+          "event": "Stop",
+          "status": "degraded"
+        },
+        {
+          "event": "Stop",
+          "status": "degraded"
+        }
+      ],
+      "limitations": [
+        "Claude reported one or more degraded hook captures; fact lifecycle evidence remains separate."
+      ]
+    },
+    "hook_contracts": {
+      "correct": {
+        "required_events": true,
+        "responses_successful": true,
+        "no_degraded_diagnostic": false
+      },
+      "forget": {
+        "required_events": true,
+        "responses_successful": true,
+        "no_degraded_diagnostic": false
+      }
+    },
+    "status": "degraded",
+    "limitations": [
+      "One or more hook responses reported degraded capture; this keeps the overall result partial or failed."
+    ]
+  },
+  "phase1": {
+    "summary": {
+      "calls": [
+        {
+          "id": "toolu_01KWJyYrfpyUYDC11Bw6n1RP",
+          "name": "mcp__plugin_mnemos-memory_mnemos__mnemos_correct"
+        },
+        {
+          "id": "toolu_0172Yqo98HJ9BbxNPWhxxWbT",
+          "name": "mcp__plugin_mnemos-memory_mnemos__mnemos_consolidate"
+        },
+        {
+          "id": "toolu_01UHZ2Tc28PZbjFCVVh82BAV",
+          "name": "mcp__plugin_mnemos-memory_mnemos__mnemos_retrieve"
+        }
+      ],
+      "results": [
+        {
+          "id": "toolu_01KWJyYrfpyUYDC11Bw6n1RP",
+          "is_error": false,
+          "sha256": "58782f02f52a4ff59927bf69989f9d440a07787be2de048c47241d0ab9208b89"
+        },
+        {
+          "id": "toolu_0172Yqo98HJ9BbxNPWhxxWbT",
+          "is_error": false,
+          "sha256": "21a9ddb122bb8c2b2e89b47061a0720987444131a8b343b883c5016c433dfbeb"
+        },
+        {
+          "id": "toolu_01UHZ2Tc28PZbjFCVVh82BAV",
+          "is_error": false,
+          "sha256": "c4663f2800bd8d0100b23d4b61f7122b0d21c8874fa0715920e5324015562e5f"
+        }
+      ],
+      "call_names": [
+        "mcp__plugin_mnemos-memory_mnemos__mnemos_correct",
+        "mcp__plugin_mnemos-memory_mnemos__mnemos_consolidate",
+        "mcp__plugin_mnemos-memory_mnemos__mnemos_retrieve"
+      ],
+      "forbidden_call_names": [],
+      "call_result_ids_match": true,
+      "successful_results": [
+        "toolu_01KWJyYrfpyUYDC11Bw6n1RP",
+        "toolu_0172Yqo98HJ9BbxNPWhxxWbT",
+        "toolu_01UHZ2Tc28PZbjFCVVh82BAV"
+      ],
+      "rows": 79,
+      "json_lines": 79,
+      "phase": "correct",
+      "returncode": 0,
+      "timed_out": false,
+      "elapsed_ms": 22676.2,
+      "stdout_sha256": "f8c0d572dbd3fc835e75dbf9d85bd219280897767312cc3928313cef9eef3587",
+      "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "allowed_tool_names": [
+        "mcp__plugin_mnemos-memory_mnemos__mnemos_correct",
+        "mcp__plugin_mnemos-memory_mnemos__mnemos_consolidate",
+        "mcp__plugin_mnemos-memory_mnemos__mnemos_retrieve"
+      ]
+    },
+    "contract": {
+      "call_order": true,
+      "correct_queued_only": true,
+      "consolidation_completed": true,
+      "native_retrieved_corrected_fact": true,
+      "native_retrieve_has_no_old_target_version": true,
+      "all_results_successful": true
+    },
+    "native_retrieve_result_count": 1
+  },
+  "fact_lifecycle_status": "succeeded",
+  "correction": {
+    "status": null,
+    "maintenance_present": true,
+    "fact_id_stable": true,
+    "version": 2,
+    "content_sha256": "16725de2365c8e16c7061fbf9aebf9cd79ef2bf880c71e46c587e9d024314fd8",
+    "retrieved_after_maintenance": true
+  },
+  "correction_restart": {
+    "fact_id_stable": true,
+    "version": 2,
+    "retrieved_after_restart": true
+  },
+  "phase2_tool_inventory": {
+    "status": "ready",
+    "system_init_observed": true,
+    "mnemos_connected": true,
+    "required_tools": [
+      "mcp__plugin_mnemos-memory_mnemos__mnemos_forget",
+      "mcp__plugin_mnemos-memory_mnemos__mnemos_retrieve"
+    ],
+    "required_tools_present": true,
+    "mcp_servers": [
+      {
+        "name": "plugin:mnemos-memory:mnemos",
+        "status": "connected"
+      }
+    ],
+    "mcp_tools": [
+      "mcp__plugin_mnemos-memory_mnemos__mnemos_capture",
+      "mcp__plugin_mnemos-memory_mnemos__mnemos_consolidate",
+      "mcp__plugin_mnemos-memory_mnemos__mnemos_correct",
+      "mcp__plugin_mnemos-memory_mnemos__mnemos_feedback",
+      "mcp__plugin_mnemos-memory_mnemos__mnemos_forget",
+      "mcp__plugin_mnemos-memory_mnemos__mnemos_forget_preview",
+      "mcp__plugin_mnemos-memory_mnemos__mnemos_forget_related",
+      "mcp__plugin_mnemos-memory_mnemos__mnemos_health",
+      "mcp__plugin_mnemos-memory_mnemos__mnemos_inspect",
+      "mcp__plugin_mnemos-memory_mnemos__mnemos_job_status",
+      "mcp__plugin_mnemos-memory_mnemos__mnemos_list",
+      "mcp__plugin_mnemos-memory_mnemos__mnemos_retrieve",
+      "mcp__plugin_mnemos-memory_mnemos__mnemos_stats",
+      "mcp__plugin_mnemos-memory_mnemos__mnemos_store"
+    ]
+  },
+  "hook_contracts": {
+    "correct": {
+      "required_events": true,
+      "responses_successful": true,
+      "no_degraded_diagnostic": false
+    },
+    "forget": {
+      "required_events": true,
+      "responses_successful": true,
+      "no_degraded_diagnostic": false
+    }
+  },
+  "phase2": {
+    "summary": {
+      "calls": [
+        {
+          "id": "toolu_01Kjf29tuwz6vmEpgFxPkPi5",
+          "name": "mcp__plugin_mnemos-memory_mnemos__mnemos_forget"
+        },
+        {
+          "id": "toolu_01BccFMnkC2uJbeaCdt72mHM",
+          "name": "mcp__plugin_mnemos-memory_mnemos__mnemos_retrieve"
+        }
+      ],
+      "results": [
+        {
+          "id": "toolu_01Kjf29tuwz6vmEpgFxPkPi5",
+          "is_error": false,
+          "sha256": "c458ba979aca2a3e331cf64072a61f9ecbd59ea5e62d91d30887403c7d221e74"
+        },
+        {
+          "id": "toolu_01BccFMnkC2uJbeaCdt72mHM",
+          "is_error": false,
+          "sha256": "cd501ef2737454efec926c8b16f321ba90590561f62bd88fc5320335f883a93e"
+        }
+      ],
+      "call_names": [
+        "mcp__plugin_mnemos-memory_mnemos__mnemos_forget",
+        "mcp__plugin_mnemos-memory_mnemos__mnemos_retrieve"
+      ],
+      "forbidden_call_names": [],
+      "call_result_ids_match": true,
+      "successful_results": [
+        "toolu_01Kjf29tuwz6vmEpgFxPkPi5",
+        "toolu_01BccFMnkC2uJbeaCdt72mHM"
+      ],
+      "rows": 70,
+      "json_lines": 70,
+      "phase": "forget",
+      "returncode": 0,
+      "timed_out": false,
+      "elapsed_ms": 16308.6,
+      "stdout_sha256": "b7b800ecd11eb8e2647ca1d8b5f7ffb9046f92322255c0f8909d377fea0073db",
+      "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "allowed_tool_names": [
+        "mcp__plugin_mnemos-memory_mnemos__mnemos_forget",
+        "mcp__plugin_mnemos-memory_mnemos__mnemos_retrieve"
+      ]
+    },
+    "contract": {
+      "call_order": true,
+      "forget_committed": true,
+      "native_retrieved_unrelated_fact": true,
+      "native_retrieve_excludes_target": true,
+      "all_results_successful": true
+    },
+    "target_absent": true,
+    "unrelated_fact_preserved": true,
+    "unrelated_retrieved": true
+  },
+  "native_hook_trace": {
+    "events": [
+      "SessionStart",
+      "Stop",
+      "UserPromptSubmit"
+    ],
+    "record_count": 12,
+    "phase_contracts": {
+      "correct": {
+        "required_events": true,
+        "responses_successful": true,
+        "no_degraded_diagnostic": false
+      },
+      "forget": {
+        "required_events": true,
+        "responses_successful": true,
+        "no_degraded_diagnostic": false
+      }
+    },
+    "payloads_retained_as_private_stream": true
+  },
+  "replay": {
+    "status": "reconstructed_plugin_hook",
+    "original_native_payload_replayed": false,
+    "phase_replays": [
+      {
+        "returncode": 0,
+        "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "no_extra_events": true,
+        "payload_fields": [
+          "cwd",
+          "hook_event_name",
+          "session_id",
+          "source",
+          "stop_hook_active",
+          "transcript_path"
+        ]
+      },
+      {
+        "returncode": 0,
+        "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "no_extra_events": true,
+        "payload_fields": [
+          "cwd",
+          "hook_event_name",
+          "session_id",
+          "source",
+          "stop_hook_active",
+          "transcript_path"
+        ]
+      }
+    ],
+    "no_extra_events": true,
+    "maintenance_status": null
+  },
+  "restart": {
+    "target_absent_after_second_restart_and_replay": true,
+    "unrelated_present_after_second_restart_and_replay": true,
+    "events_survive_restart": true
+  },
+  "criteria": {
+    "native_correct_forget_phases_completed": true,
+    "native_hook_events_reported": false,
+    "correct_was_queued_before_maintenance": true,
+    "native_consolidation_completed": true,
+    "native_retrieved_corrected_fact": true,
+    "maintenance_committed_stable_correction": true,
+    "correction_preserved_fact_id": true,
+    "corrected_fact_retrieved": true,
+    "corrected_fact_survives_first_restart": true,
+    "native_forget_succeeded": true,
+    "forgotten_target_absent": true,
+    "native_retrieved_unrelated_fact": true,
+    "native_retrieve_excludes_target": true,
+    "unrelated_fact_survives_second_restart": true,
+    "reconstructed_stop_no_extra_events": true,
+    "target_does_not_resurrect": true
+  },
+  "plugin_snapshot_after": {
+    "snapshot": "C:\\Users\\Ant\\AppData\\Local\\Temp\\mnemos-source-host-provenance-v1",
+    "source_commit": "8d865a5206aa99becdf6171c204161543ab60bb1",
+    "clean": true,
+    "files": {
+      ".claude-plugin/plugin.json": {
+        "bytes": 963,
+        "sha256": "3e7549c3b2c7416f6e0fd620b000b89470d809f822cb29b04d22a7e9ff7b3928"
+      },
+      ".claude-plugin/run_mnemos_hook.py": {
+        "bytes": 1430,
+        "sha256": "9ca11e4a0efa9b61dea647e0675729a523e1b9aed0fb56468af08079d04512c0"
+      },
+      ".claude-plugin/run_mnemos_mcp.py": {
+        "bytes": 7222,
+        "sha256": "81bf0d833d132bb3136cf624933177a7a9b35ccb830db66234b2a78e19bcfde8"
+      },
+      "hooks/hooks.json": {
+        "bytes": 1350,
+        "sha256": "7ca43bda20e14e4363c84fd2fddd26fd257afaa9ba3146bff2a389c52817d1a7"
+      }
+    },
+    "hook_dispatch": "hooks/hooks.json -> python ${CLAUDE_PLUGIN_ROOT}/.claude-plugin/run_mnemos_hook.py <event>",
+    "mcp_dispatch": "plugin.json -> .claude-plugin/run_mnemos_mcp.py -> explicit MNEMOS_PLUGIN_PYTHON"
+  },
+  "overall_status": "partial",
+  "fixture": "C:\\Users\\Ant\\AppData\\Local\\Temp\\mnemos-native-claude-lifecycle-v17-juln99q3",
+  "private_fixture_preserved": true,
+  "auth_copy_removed": true,
+  "runtime_descriptor_absent": true,
+  "finished_at": "2026-09-17T20:49:30.758344+00:00"
+}

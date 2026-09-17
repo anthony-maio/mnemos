@@ -1,0 +1,446 @@
+"""Diagnose a native Claude retrieval miss from a preserved SQLite snapshot.
+
+The native turn and its model response are not replayed.  This helper copies
+the closed Mnemos database into separate diagnostic databases and calls the
+installed production engine with the fixture's persisted constant embedding.
+The result describes ranking and context-budget behavior only.
+"""
+
+from __future__ import annotations
+
+import argparse
+import asyncio
+from datetime import datetime, timezone
+import hashlib
+import json
+from pathlib import Path
+import shutil
+import sqlite3
+import subprocess
+import sys
+import time
+from typing import Any, Mapping
+import zipfile
+
+SOURCE_COMMIT = "56182d97c5809a4909ae31f81bc6240be6cae58b"
+WHEEL_SHA256 = "adc44b54ec31010f0ba841899b3e1b83d41f45f900b268561211db5d70f6b6df"
+DEFAULT_FIXTURE = Path(
+    "C:/Users/Ant/AppData/Local/Temp/mnemos-native-claude-lifecycle-v16-hax727t_"
+)
+DEFAULT_OUTPUT = Path("C:/Users/Ant/AppData/Local/Temp/mnemos-claude-v16-retrieval-diagnosis-v1")
+DEFAULT_PYTHON = Path(
+    "C:/Users/Ant/AppData/Local/Temp/mnemos-installed-56182d9-v1/Scripts/python.exe"
+)
+DEFAULT_WHEEL = Path(
+    "C:/Users/Ant/AppData/Local/Temp/mnemos-package-checks-56182d9-v1/dist/"
+    "mnemos_memory-0.7.0-py3-none-any.whl"
+)
+SOURCE_ROOT = Path(__file__).resolve().parents[1]
+SEED_PREFIX = "The private release codename for this project is "
+
+
+def _sha256(data: bytes | str) -> str:
+    raw = data.encode("utf-8") if isinstance(data, str) else data
+    return hashlib.sha256(raw).hexdigest()
+
+
+def _write_json(path: Path, value: Any) -> None:
+    path.write_text(json.dumps(value, indent=2, ensure_ascii=True) + "\n", encoding="utf-8")
+
+
+def _native_cost(path: Path) -> list[float | int]:
+    costs: list[float | int] = []
+
+    def nodes(value: Any):
+        if isinstance(value, Mapping):
+            yield value
+            for child in value.values():
+                yield from nodes(child)
+        elif isinstance(value, list):
+            for child in value:
+                yield from nodes(child)
+
+    for line in path.read_text(encoding="utf-8").splitlines():
+        try:
+            row = json.loads(line)
+        except json.JSONDecodeError:
+            continue
+        if not isinstance(row, Mapping):
+            continue
+        if row.get("type") == "result":
+            cost = row.get("total_cost_usd")
+            if isinstance(cost, (int, float)) and not isinstance(cost, bool):
+                costs.append(cost)
+    return costs
+
+
+class _FixtureEmbedder:
+    """Constant provider implementing the installed embedding contract."""
+
+    def __init__(self, vector: list[float]) -> None:
+        self.vector = vector
+        self.calls: list[dict[str, str]] = []
+
+    def embed(self, text: str) -> list[float]:
+        self.calls.append({"role": "legacy", "text_sha256": _sha256(text)})
+        return list(self.vector)
+
+    def embed_batch(self, texts: list[str]) -> list[list[float]]:
+        self.calls.extend({"role": "batch", "text_sha256": _sha256(text)} for text in texts)
+        return [list(self.vector) for _ in texts]
+
+    def embed_query(self, text: str) -> list[float]:
+        self.calls.append({"role": "query", "text_sha256": _sha256(text)})
+        return list(self.vector)
+
+    def embed_document(self, text: str) -> list[float]:
+        self.calls.append({"role": "document", "text_sha256": _sha256(text)})
+        return list(self.vector)
+
+
+def _safe_chunk(chunk: Any) -> dict[str, Any]:
+    trace = chunk.metadata.get("retrieval_trace", {})
+    return {
+        "id": chunk.id,
+        "version": chunk.version,
+        "content_sha256": _sha256(chunk.content),
+        "content_bytes": len(chunk.content.encode("utf-8")),
+        "metadata_source": chunk.metadata.get("source"),
+        "retrieval_trace": dict(trace) if isinstance(trace, Mapping) else {},
+    }
+
+
+def _db_facts(path: Path) -> tuple[list[dict[str, Any]], list[float]]:
+    connection = sqlite3.connect(f"file:{path.as_posix()}?mode=ro", uri=True)
+    try:
+        rows = connection.execute(
+            "SELECT id, version, content, embedding, metadata FROM memory_chunks ORDER BY id"
+        ).fetchall()
+        facts: list[dict[str, Any]] = []
+        vector: list[float] | None = None
+        for fact_id, version, content, embedding, metadata_raw in rows:
+            decoded = json.loads(embedding) if embedding else None
+            if vector is None and isinstance(decoded, list):
+                vector = [float(item) for item in decoded]
+            metadata = json.loads(metadata_raw)
+            facts.append(
+                {
+                    "id": fact_id,
+                    "version": version,
+                    "content_sha256": _sha256(content),
+                    "content_bytes": len(content.encode("utf-8")),
+                    "source": metadata.get("source"),
+                    "scope": metadata.get("scope"),
+                    "project_id": metadata.get("project_id"),
+                }
+            )
+        if vector is None:
+            raise RuntimeError("fixture has no persisted embedding")
+        return facts, vector
+    finally:
+        connection.close()
+
+
+def _direct_query(source_db: Path, report_path: Path) -> tuple[str, str, str]:
+    report = json.loads(report_path.read_text(encoding="utf-8"))
+    if not isinstance(report, Mapping):
+        raise RuntimeError("preserved native report is not an object")
+    seed = report.get("seed")
+    if not isinstance(seed, Mapping):
+        raise RuntimeError("preserved native report has no seed metadata")
+    target_id = seed.get("target_fact_id")
+    expected_hash = seed.get("replacement_content_sha256")
+    if not isinstance(target_id, str) or not isinstance(expected_hash, str):
+        raise RuntimeError("preserved native report has no replacement target binding")
+    connection = sqlite3.connect(f"file:{source_db.as_posix()}?mode=ro", uri=True)
+    try:
+        row = connection.execute(
+            "SELECT content, version FROM memory_chunks WHERE id = ?", (target_id,)
+        ).fetchone()
+    finally:
+        connection.close()
+    if row is None or not isinstance(row[0], str):
+        raise RuntimeError("replacement target is absent from the preserved database")
+    content = row[0]
+    if _sha256(content) != expected_hash:
+        raise RuntimeError("preserved target content does not match native report")
+    if not content.startswith(SEED_PREFIX) or not content.endswith("."):
+        raise RuntimeError("target content does not match the pinned seed format")
+    query = content[len(SEED_PREFIX) : -1]
+    if not query or query != query.strip():
+        raise RuntimeError("seed-derived direct query is empty or malformed")
+    return query, target_id, expected_hash
+
+
+def _package_provenance(package_path: Path, wheel_path: Path, python_path: Path) -> dict[str, Any]:
+    executable = Path(sys.executable).resolve()
+    expected_executable = python_path.resolve()
+    if executable != expected_executable:
+        raise RuntimeError(f"wrong interpreter: {executable} != {expected_executable}")
+    environment = expected_executable.parent.parent
+    if not package_path.is_relative_to(environment) or "site-packages" not in {
+        part.lower() for part in package_path.parts
+    }:
+        raise RuntimeError("mnemos import is outside the installed environment")
+    wheel_digest = _sha256(wheel_path.read_bytes())
+    if wheel_digest != WHEEL_SHA256:
+        raise RuntimeError("wheel does not match the pinned digest")
+    checked = 0
+    with zipfile.ZipFile(wheel_path) as archive:
+        for member in archive.infolist():
+            if member.is_dir() or not member.filename.startswith("mnemos/"):
+                continue
+            installed = package_path.parent / Path(*Path(member.filename).parts[1:])
+            if not installed.is_file() or installed.read_bytes() != archive.read(member):
+                raise RuntimeError(f"installed package differs from wheel: {member.filename}")
+            checked += 1
+    if checked == 0:
+        raise RuntimeError("wheel has no mnemos package files")
+    source_files = subprocess.run(
+        ["git", "-C", str(SOURCE_ROOT), "ls-tree", "-r", "--name-only", SOURCE_COMMIT, "mnemos"],
+        capture_output=True,
+        text=True,
+        check=True,
+        timeout=10,
+    ).stdout.splitlines()
+    source_checked = 0
+    for name in source_files:
+        relative = Path(name)
+        expected = subprocess.run(
+            ["git", "-C", str(SOURCE_ROOT), "show", f"{SOURCE_COMMIT}:{name}"],
+            capture_output=True,
+            check=True,
+            timeout=10,
+        ).stdout.replace(b"\r\n", b"\n")
+        installed = package_path.parent / Path(*relative.parts[1:])
+        if installed.read_bytes().replace(b"\r\n", b"\n") != expected:
+            raise RuntimeError(f"installed package differs from pinned source: {name}")
+        source_checked += 1
+    if source_checked == 0:
+        raise RuntimeError("pinned source has no mnemos package files")
+    return {
+        "sys_executable": str(executable),
+        "expected_python": str(expected_executable),
+        "mnemos_origin": str(package_path),
+        "environment": str(environment),
+        "wheel_path": str(wheel_path.resolve()),
+        "wheel_sha256": wheel_digest,
+        "wheel_members_checked": checked,
+        "source_files_checked": source_checked,
+    }
+
+
+async def _retrieve(
+    db_path: Path,
+    registry_path: Path,
+    *,
+    query: str,
+    project_id: str,
+    profile: str,
+    top_k: int,
+    max_context_tokens: int,
+    session_id: str,
+) -> dict[str, Any]:
+    from mnemos.config import MnemosConfig
+    from mnemos.engine import MnemosEngine
+    from mnemos.scopes import ScopeContext, ScopeRegistry
+    from mnemos.utils.llm import UnavailableLLMProvider
+    from mnemos.utils.storage import SQLiteStore
+
+    facts, vector = _db_facts(db_path)
+    store = SQLiteStore(str(db_path))
+    embedder = _FixtureEmbedder(vector)
+    config = MnemosConfig()
+    for module_name in ("surprisal", "mutable_rag", "affective", "sleep", "spreading"):
+        setattr(config.modules, module_name, False)
+    registry = ScopeRegistry.load(registry_path)
+    profile_id = next(iter(registry.profiles))
+    context = ScopeContext(
+        user_profile_id=profile_id,
+        project_id=project_id,
+        session_id=session_id,
+        host="claude-code",
+    )
+    engine = MnemosEngine(
+        config=config,
+        llm=UnavailableLLMProvider(),
+        embedder=embedder,
+        store=store,
+        scope_registry=registry,
+        require_scope_context=True,
+    )
+    started = time.monotonic()
+    try:
+        chunks = await engine.retrieve(
+            query,
+            top_k=top_k,
+            current_scope="project",
+            allowed_scopes=["project"],
+            context=context,
+            profile=profile,
+            max_context_tokens=max_context_tokens,
+        )
+        return {
+            "top_k": top_k,
+            "max_context_tokens": max_context_tokens,
+            "elapsed_ms": round((time.monotonic() - started) * 1000, 3),
+            "returned_count": len(chunks),
+            "returned": [_safe_chunk(chunk) for chunk in chunks],
+            "embedder_calls": embedder.calls,
+            "persisted_fact_count_before_query": len(facts),
+        }
+    finally:
+        store.close()
+
+
+def main() -> int:
+    parser = argparse.ArgumentParser(description="Diagnose the native Claude v16 retrieval miss.")
+    parser.add_argument("--fixture", type=Path, default=DEFAULT_FIXTURE)
+    parser.add_argument("--output", type=Path, default=DEFAULT_OUTPUT)
+    parser.add_argument("--python", type=Path, default=DEFAULT_PYTHON)
+    parser.add_argument("--wheel", type=Path, default=DEFAULT_WHEEL)
+    args = parser.parse_args()
+    fixture = args.fixture.resolve()
+    output = args.output.resolve()
+    if output.exists():
+        raise SystemExit(f"refusing existing output: {output}")
+    if not fixture.is_dir() or not args.python.is_file() or not args.wheel.is_file():
+        raise SystemExit("fixture or installed interpreter is unavailable")
+    source_db = fixture / "memory.sqlite"
+    source_registry = fixture / "scopes.json"
+    source_stream = fixture / "native-correct-stdout.jsonl"
+    for path in (source_db, source_registry, source_stream):
+        if not path.is_file():
+            raise SystemExit(f"required fixture file is missing: {path}")
+    source_wal = Path(str(source_db) + "-wal")
+    source_shm = Path(str(source_db) + "-shm")
+    source_wal_size = source_wal.stat().st_size if source_wal.exists() else 0
+    if source_wal_size:
+        raise SystemExit("preserved source database has a nonempty SQLite WAL")
+
+    output.mkdir(parents=True)
+    (output / "runner.py.txt").write_bytes(Path(__file__).read_bytes())
+    started_at = datetime.now(timezone.utc).isoformat()
+    native_costs = _native_cost(source_stream)
+    original_facts, vector = _db_facts(source_db)
+    report_json = Path(
+        "C:/Users/Ant/AppData/Local/Temp/mnemos-native-claude-lifecycle-v16/report.json"
+    )
+    query, target_id, target_content_hash = _direct_query(source_db, report_json)
+    import mnemos
+
+    package_path = Path(mnemos.__file__).resolve()
+    package_provenance = _package_provenance(package_path, args.wheel.resolve(), args.python)
+    registry_data = json.loads(source_registry.read_text(encoding="utf-8"))
+    projects = registry_data.get("projects", {})
+    if not isinstance(projects, Mapping) or len(projects) != 1:
+        raise SystemExit("fixture must contain exactly one project identity")
+    project_id = next(iter(projects))
+    db5 = output / "database-top5.sqlite"
+    db100 = output / "database-top100.sqlite"
+    shutil.copy2(source_db, db5)
+    shutil.copy2(source_db, db100)
+    source_hash = _sha256(source_db.read_bytes())
+    db5_hash_before = _sha256(db5.read_bytes())
+    db100_hash_before = _sha256(db100.read_bytes())
+    if db5_hash_before != source_hash or db100_hash_before != source_hash:
+        raise SystemExit("database copy hash mismatch")
+
+    async def run() -> dict[str, Any]:
+        return {
+            "top5": await _retrieve(
+                db5,
+                source_registry,
+                query=query,
+                project_id=project_id,
+                profile="baseline",
+                top_k=5,
+                max_context_tokens=1200,
+                session_id="diagnostic-top5",
+            ),
+            "top100": await _retrieve(
+                db100,
+                source_registry,
+                query=query,
+                project_id=project_id,
+                profile="baseline",
+                top_k=100,
+                max_context_tokens=32000,
+                session_id="diagnostic-top100",
+            ),
+        }
+
+    results = asyncio.run(run())
+    top5_ids = [item["id"] for item in results["top5"]["returned"]]
+    broad_ids = [item["id"] for item in results["top100"]["returned"]]
+    broad_rank = broad_ids.index(target_id) + 1 if target_id in broad_ids else None
+    report: dict[str, Any] = {
+        "status": "completed",
+        "started_at": started_at,
+        "source_commit": SOURCE_COMMIT,
+        "wheel_sha256": WHEEL_SHA256,
+        "runner_sha256": _sha256(Path(__file__).read_bytes()),
+        "python_argument": str(args.python.resolve()),
+        "wheel_argument": str(args.wheel.resolve()),
+        "package_provenance": package_provenance,
+        "fixture": str(fixture),
+        "source_database_sha256": source_hash,
+        "source_database_sidecars_before": {
+            "wal": {"exists": source_wal.exists(), "bytes": source_wal_size},
+            "shm": source_shm.exists(),
+        },
+        "database_copies": {
+            "top5": {"path": str(db5), "sha256_before": db5_hash_before},
+            "top100": {"path": str(db100), "sha256_before": db100_hash_before},
+        },
+        "query": {
+            "sha256": _sha256(query),
+            "utf8_bytes": len(query.encode("utf-8")),
+            "source": "persisted target content with SEED_PREFIX and final period removed",
+            "target_content_sha256": target_content_hash,
+        },
+        "native_stream": {
+            "cost_usd_observed": native_costs,
+            "stream_sha256": _sha256(source_stream.read_bytes()),
+            "calls_replayed": 0,
+        },
+        "target": {
+            "fact_id": target_id,
+            "persisted_facts": original_facts,
+            "broad_rank": broad_rank,
+            "in_top5": target_id in top5_ids,
+            "in_top100": target_id in broad_ids,
+        },
+        "retrieval_arms": results,
+        "interpretation": {
+            "constant_embedding_fixture": True,
+            "model_calls": 0,
+            "production_engine_path": True,
+            "diagnosis": (
+                "The broad arm reports the target's structural rank after maintenance. "
+                "The top5 arm reports whether the production top-k and 1200-token budget "
+                "return it. This is a ranking and context-budget diagnosis, not a native replay."
+            ),
+        },
+        "finished_at": datetime.now(timezone.utc).isoformat(),
+    }
+    for arm in ("top5", "top100"):
+        report["database_copies"][arm]["sha256_after"] = _sha256(
+            Path(report["database_copies"][arm]["path"]).read_bytes()
+        )
+    source_after = _sha256(source_db.read_bytes())
+    source_wal_size_after = source_wal.stat().st_size if source_wal.exists() else 0
+    if source_after != source_hash or source_wal_size_after:
+        raise RuntimeError("source database changed or gained a nonempty SQLite WAL")
+    report["source_database_sha256_after"] = source_after
+    report["source_database_sidecars_after"] = {
+        "wal": {"exists": source_wal.exists(), "bytes": source_wal_size_after},
+        "shm": source_shm.exists(),
+    }
+    _write_json(output / "report.json", report)
+    print(json.dumps(report, indent=2, ensure_ascii=True))
+    return 0
+
+
+if __name__ == "__main__":
+    raise SystemExit(main())

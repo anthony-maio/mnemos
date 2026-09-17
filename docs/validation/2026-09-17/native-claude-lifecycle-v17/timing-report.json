@@ -1,0 +1,807 @@
+{
+  "runner": "claude-adapter-timing-v5",
+  "source_commit": "8d865a5206aa99becdf6171c204161543ab60bb1",
+  "runner_sha256": "a453e4659cf9e34f99556c8282003c1b813384457ec0d09915ba68b140cdfc8e",
+  "started_at": "2026-09-17T20:48:19.525721+00:00",
+  "status": "passed",
+  "scope": "offline direct installed Mnemos Claude adapter against a disposable loopback service",
+  "child_timeout_seconds": 10,
+  "fault_dump_seconds": 8,
+  "provider": {
+    "embedding": "constant fixture",
+    "cognition": "unavailable"
+  },
+  "native_claude_called": false,
+  "model_calls": 0,
+  "network_provider_called": false,
+  "auth_used": false,
+  "session_start_tested": false,
+  "session_start_limitation": "SessionStart is intentionally outside this adapter timing gate.",
+  "instrumentation": {
+    "child_monkeypatches": [
+      "ClaudeCodeAdapter._capture",
+      "ClaudeCodeAdapter._capture_transcript",
+      "ClaudeCodeAdapter.retrieve_context",
+      "ClaudeCodeAdapter._remember_pending_duplicate"
+    ],
+    "interpretation": "Stage timings include probe instrumentation and are not unmodified native host timings.",
+    "raw_child_stdout_stderr": "private fixture files"
+  },
+  "wheel_argument": "C:\\Users\\Ant\\AppData\\Local\\Temp\\mnemos-package-checks-host-provenance-v1\\dist\\mnemos_memory-0.7.0-py3-none-any.whl",
+  "expected_wheel_sha256": "9996d2bca5166dae7e3757f240e3cb90c2f09ab713aa8cbdfe23e7849b12b948",
+  "build_verification_argument": "C:\\Users\\Ant\\AppData\\Local\\Temp\\mnemos-package-checks-host-provenance-v1\\verification.json",
+  "environment_argument": "C:\\Users\\Ant\\AppData\\Local\\Temp\\mnemos-installed-host-provenance-v2",
+  "python": {
+    "executable": "C:\\Users\\Ant\\AppData\\Local\\Temp\\mnemos-installed-host-provenance-v2\\Scripts\\python.exe",
+    "expected_executable": "C:\\Users\\Ant\\AppData\\Local\\Temp\\mnemos-installed-host-provenance-v2\\Scripts\\python.exe",
+    "mnemos_package": "C:\\Users\\Ant\\AppData\\Local\\Temp\\mnemos-installed-host-provenance-v2\\Lib\\site-packages\\mnemos\\__init__.py",
+    "environment": "C:\\Users\\Ant\\AppData\\Local\\Temp\\mnemos-installed-host-provenance-v2",
+    "site_packages_asserted": true
+  },
+  "build_verification": {
+    "path": "C:\\Users\\Ant\\AppData\\Local\\Temp\\mnemos-package-checks-host-provenance-v1\\verification.json",
+    "status": "passed",
+    "source_commit": "8d865a5206aa99becdf6171c204161543ab60bb1",
+    "wheel_path": "C:\\Users\\Ant\\AppData\\Local\\Temp\\mnemos-package-checks-host-provenance-v1\\dist\\mnemos_memory-0.7.0-py3-none-any.whl",
+    "wheel_sha256": "9996d2bca5166dae7e3757f240e3cb90c2f09ab713aa8cbdfe23e7849b12b948"
+  },
+  "package_provenance": {
+    "source_commit": "8d865a5206aa99becdf6171c204161543ab60bb1",
+    "package_files_checked": 53,
+    "wheel_package_members_checked": 56,
+    "wheel_path": "C:\\Users\\Ant\\AppData\\Local\\Temp\\mnemos-package-checks-host-provenance-v1\\dist\\mnemos_memory-0.7.0-py3-none-any.whl",
+    "wheel_sha256_expected": "9996d2bca5166dae7e3757f240e3cb90c2f09ab713aa8cbdfe23e7849b12b948",
+    "wheel_sha256_observed": "9996d2bca5166dae7e3757f240e3cb90c2f09ab713aa8cbdfe23e7849b12b948",
+    "adapter_module": "C:\\Users\\Ant\\AppData\\Local\\Temp\\mnemos-installed-host-provenance-v2\\Lib\\site-packages\\mnemos\\adapters\\claude_code.py",
+    "adapter_module_sha256": "d6798c841727481248f6b8f33ecb6ac0eed0c3d477da37557f69bba461569f8f",
+    "distribution_name": "mnemos-memory",
+    "distribution_version": "0.7.0",
+    "distribution_location": "C:\\Users\\Ant\\AppData\\Local\\Temp\\mnemos-installed-host-provenance-v2\\Lib\\site-packages",
+    "resolved_wheel_path": "C:\\Users\\Ant\\AppData\\Local\\Temp\\mnemos-package-checks-host-provenance-v1\\dist\\mnemos_memory-0.7.0-py3-none-any.whl"
+  },
+  "probes": {
+    "UserPromptSubmit": {
+      "event": "UserPromptSubmit",
+      "returncode": 0,
+      "timed_out": false,
+      "elapsed_ms": 1273.0,
+      "stdout_sha256": "90ee24d48f863d14143d0dca2fe314005b1dfd0032be21bdd8f57ea972bf76e4",
+      "stdout_bytes": 166,
+      "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "stderr_bytes": 0,
+      "trace_path": "C:\\Users\\Ant\\AppData\\Local\\Temp\\mnemos-claude-adapter-timing-v5-43vr4j0g\\traces\\user-prompt.jsonl",
+      "trace_bytes": 3432,
+      "stack_path": "C:\\Users\\Ant\\AppData\\Local\\Temp\\mnemos-claude-adapter-timing-v5-43vr4j0g\\traces\\user-prompt.stack.txt",
+      "stack_bytes": 0,
+      "raw_stdout_path": "C:\\Users\\Ant\\AppData\\Local\\Temp\\mnemos-claude-adapter-timing-v5-43vr4j0g\\traces\\user-prompt.stdout",
+      "raw_stderr_path": "C:\\Users\\Ant\\AppData\\Local\\Temp\\mnemos-claude-adapter-timing-v5-43vr4j0g\\traces\\user-prompt.stderr",
+      "adapter_result": {
+        "status": "ok",
+        "committed": true,
+        "queued": false,
+        "captured": 1,
+        "context": "1. The private diagnostic label is timing-label-constant.",
+        "error": null,
+        "error_present": false
+      }
+    },
+    "Stop": {
+      "event": "Stop",
+      "returncode": 0,
+      "timed_out": false,
+      "elapsed_ms": 1162.5,
+      "stdout_sha256": "050459727990e561334d354ea3c6417714b8d23d4dc230f908b1a7090f576f1d",
+      "stdout_bytes": 109,
+      "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "stderr_bytes": 0,
+      "trace_path": "C:\\Users\\Ant\\AppData\\Local\\Temp\\mnemos-claude-adapter-timing-v5-43vr4j0g\\traces\\stop.jsonl",
+      "trace_bytes": 2826,
+      "stack_path": "C:\\Users\\Ant\\AppData\\Local\\Temp\\mnemos-claude-adapter-timing-v5-43vr4j0g\\traces\\stop.stack.txt",
+      "stack_bytes": 0,
+      "raw_stdout_path": "C:\\Users\\Ant\\AppData\\Local\\Temp\\mnemos-claude-adapter-timing-v5-43vr4j0g\\traces\\stop.stdout",
+      "raw_stderr_path": "C:\\Users\\Ant\\AppData\\Local\\Temp\\mnemos-claude-adapter-timing-v5-43vr4j0g\\traces\\stop.stderr",
+      "adapter_result": {
+        "status": "ok",
+        "committed": true,
+        "queued": false,
+        "captured": 1,
+        "context": "",
+        "error": null,
+        "error_present": false
+      }
+    },
+    "StopReplayAfterReopen": {
+      "event": "Stop",
+      "returncode": 0,
+      "timed_out": false,
+      "elapsed_ms": 710.7,
+      "stdout_sha256": "54e962871da758a17e7584aeca9afec197fba049d92276a1d6b22b564ad3f983",
+      "stdout_bytes": 110,
+      "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "stderr_bytes": 0,
+      "trace_path": "C:\\Users\\Ant\\AppData\\Local\\Temp\\mnemos-claude-adapter-timing-v5-43vr4j0g\\traces\\stop-replay.jsonl",
+      "trace_bytes": 1344,
+      "stack_path": "C:\\Users\\Ant\\AppData\\Local\\Temp\\mnemos-claude-adapter-timing-v5-43vr4j0g\\traces\\stop-replay.stack.txt",
+      "stack_bytes": 0,
+      "raw_stdout_path": "C:\\Users\\Ant\\AppData\\Local\\Temp\\mnemos-claude-adapter-timing-v5-43vr4j0g\\traces\\stop-replay.stdout",
+      "raw_stderr_path": "C:\\Users\\Ant\\AppData\\Local\\Temp\\mnemos-claude-adapter-timing-v5-43vr4j0g\\traces\\stop-replay.stderr",
+      "adapter_result": {
+        "status": "ok",
+        "committed": false,
+        "queued": false,
+        "captured": 0,
+        "context": "",
+        "error": null,
+        "error_present": false
+      }
+    }
+  },
+  "before_restart": {
+    "event_count": 3,
+    "transcript_event_count": 2,
+    "checkpoint_count": 1,
+    "checkpoint_summary": [
+      {
+        "path": "C:\\Users\\Ant\\AppData\\Local\\Temp\\mnemos-claude-adapter-timing-v5-43vr4j0g\\checkpoints\\29b32baf1022bd2965061ab381125c0861bb9f0faf13816c1a4130cc464dbbd9.json",
+        "sha256": "b1fc7ecfe528f6e68ebd35e83e107fa8e3aa8395f5b71bd61486ef60e4f3f1b3",
+        "keys": [
+          "identity",
+          "identity_version",
+          "last_assistant",
+          "offset",
+          "path",
+          "pending_dedup",
+          "scope"
+        ],
+        "offset": 590,
+        "identity_version": 2,
+        "scope_keys": [
+          "host",
+          "project_id",
+          "session_id",
+          "user_profile_id",
+          "workspace_id"
+        ],
+        "scope_host": "claude-code"
+      }
+    ],
+    "event_id_sha256": [
+      "62986e4fecd3d4ba590fc7df312526b0ecece4cff20725767676830c5f02279d",
+      "7538c35b3cee9af88e29577205b9e6e194079ac501632c658ced9d16791d9456",
+      "8b1397c459b43a08f5f5f5aa7067f4a1d26870ec1c2b3d2ae0a9be1feef0c600"
+    ],
+    "transcript_source_id_sha256": [
+      "cecf26a55bdf8d0c39c98e4826f2bf031eb08d791253fe3a9128ca724fd1b619",
+      "ec7b35188b6c88387deaf06886e0c8c5c31084c7277626c6cdb66c391ba66865"
+    ],
+    "pending_prompt_id_sha256": "a729b7aa8638555f1da9743b0011c34a3aaddf9760a22ad4cbf737a0dcd628d9",
+    "captured_source_ref_sha256": [
+      "a729b7aa8638555f1da9743b0011c34a3aaddf9760a22ad4cbf737a0dcd628d9",
+      "ec7b35188b6c88387deaf06886e0c8c5c31084c7277626c6cdb66c391ba66865"
+    ]
+  },
+  "after_reopen": {
+    "event_count": 3,
+    "event_id_sha256": [
+      "62986e4fecd3d4ba590fc7df312526b0ecece4cff20725767676830c5f02279d",
+      "7538c35b3cee9af88e29577205b9e6e194079ac501632c658ced9d16791d9456",
+      "8b1397c459b43a08f5f5f5aa7067f4a1d26870ec1c2b3d2ae0a9be1feef0c600"
+    ],
+    "checkpoint_summary": [
+      {
+        "path": "C:\\Users\\Ant\\AppData\\Local\\Temp\\mnemos-claude-adapter-timing-v5-43vr4j0g\\checkpoints\\29b32baf1022bd2965061ab381125c0861bb9f0faf13816c1a4130cc464dbbd9.json",
+        "sha256": "b1fc7ecfe528f6e68ebd35e83e107fa8e3aa8395f5b71bd61486ef60e4f3f1b3",
+        "keys": [
+          "identity",
+          "identity_version",
+          "last_assistant",
+          "offset",
+          "path",
+          "pending_dedup",
+          "scope"
+        ],
+        "offset": 590,
+        "identity_version": 2,
+        "scope_keys": [
+          "host",
+          "project_id",
+          "session_id",
+          "user_profile_id",
+          "workspace_id"
+        ],
+        "scope_host": "claude-code"
+      }
+    ],
+    "replay_captured": 0,
+    "replay_status": "ok"
+  },
+  "fixture": "C:\\Users\\Ant\\AppData\\Local\\Temp\\mnemos-claude-adapter-timing-v5-43vr4j0g",
+  "fixture_layout": {
+    "project": "C:\\Users\\Ant\\AppData\\Local\\Temp\\mnemos-claude-adapter-timing-v5-43vr4j0g\\project",
+    "database": "C:\\Users\\Ant\\AppData\\Local\\Temp\\mnemos-claude-adapter-timing-v5-43vr4j0g\\memory.sqlite",
+    "runtime_descriptor": "C:\\Users\\Ant\\AppData\\Local\\Temp\\mnemos-claude-adapter-timing-v5-43vr4j0g\\runtime.json",
+    "checkpoint_directory": "C:\\Users\\Ant\\AppData\\Local\\Temp\\mnemos-claude-adapter-timing-v5-43vr4j0g\\checkpoints",
+    "transcript_root": "C:\\Users\\Ant\\AppData\\Local\\Temp\\mnemos-claude-adapter-timing-v5-43vr4j0g\\claude-config",
+    "raw_trace_directory": "C:\\Users\\Ant\\AppData\\Local\\Temp\\mnemos-claude-adapter-timing-v5-43vr4j0g\\traces"
+  },
+  "trace_summary": {
+    "UserPromptSubmit": {
+      "path": "C:\\Users\\Ant\\AppData\\Local\\Temp\\mnemos-claude-adapter-timing-v5-43vr4j0g\\traces\\user-prompt.jsonl",
+      "row_count": 24,
+      "operations": {
+        "adapter.handle": {
+          "start": 1,
+          "end": 1
+        },
+        "_protect_private_path": {
+          "start": 5,
+          "error": 2,
+          "end": 3
+        },
+        "adapter.capture": {
+          "start": 1,
+          "end": 1
+        },
+        "adapter.pending_duplicate": {
+          "start": 1,
+          "end": 1
+        },
+        "os.fsync": {
+          "start": 1,
+          "end": 1
+        },
+        "os.replace": {
+          "start": 1,
+          "end": 1
+        },
+        "adapter.retrieve_context": {
+          "start": 1,
+          "end": 1
+        },
+        "adapter.response": {
+          "start": 1,
+          "end": 1
+        }
+      },
+      "rows": [
+        {
+          "event": "UserPromptSubmit",
+          "monotonic_ns": 9549919400400,
+          "operation": "adapter.handle",
+          "phase": "start",
+          "pid": 43064
+        },
+        {
+          "event": "UserPromptSubmit",
+          "monotonic_ns": 9549986076400,
+          "operation": "_protect_private_path",
+          "path_kind": ".json",
+          "phase": "start",
+          "pid": 43064
+        },
+        {
+          "elapsed_ns": 736900,
+          "error_type": "FileNotFoundError",
+          "event": "UserPromptSubmit",
+          "monotonic_ns": 9549986787500,
+          "operation": "_protect_private_path",
+          "phase": "error",
+          "pid": 43064
+        },
+        {
+          "event": "UserPromptSubmit",
+          "monotonic_ns": 9549987637700,
+          "operation": "adapter.capture",
+          "phase": "start",
+          "pid": 43064
+        },
+        {
+          "accepted": true,
+          "elapsed_ns": 353776500,
+          "event": "UserPromptSubmit",
+          "monotonic_ns": 9550341415400,
+          "operation": "adapter.capture",
+          "phase": "end",
+          "pid": 43064
+        },
+        {
+          "event": "UserPromptSubmit",
+          "monotonic_ns": 9550341972900,
+          "operation": "adapter.pending_duplicate",
+          "phase": "start",
+          "pid": 43064
+        },
+        {
+          "event": "UserPromptSubmit",
+          "monotonic_ns": 9550342425800,
+          "operation": "_protect_private_path",
+          "path_kind": ".json",
+          "phase": "start",
+          "pid": 43064
+        },
+        {
+          "elapsed_ns": 899200,
+          "error_type": "FileNotFoundError",
+          "event": "UserPromptSubmit",
+          "monotonic_ns": 9550343305700,
+          "operation": "_protect_private_path",
+          "phase": "error",
+          "pid": 43064
+        },
+        {
+          "event": "UserPromptSubmit",
+          "monotonic_ns": 9550344039200,
+          "operation": "_protect_private_path",
+          "path_kind": "directory",
+          "phase": "start",
+          "pid": 43064
+        },
+        {
+          "elapsed_ns": 1062700,
+          "event": "UserPromptSubmit",
+          "monotonic_ns": 9550345101400,
+          "operation": "_protect_private_path",
+          "phase": "end",
+          "pid": 43064
+        },
+        {
+          "event": "UserPromptSubmit",
+          "monotonic_ns": 9550345768400,
+          "operation": "_protect_private_path",
+          "path_kind": ".tmp",
+          "phase": "start",
+          "pid": 43064
+        },
+        {
+          "elapsed_ns": 1873500,
+          "event": "UserPromptSubmit",
+          "monotonic_ns": 9550347631600,
+          "operation": "_protect_private_path",
+          "phase": "end",
+          "pid": 43064
+        },
+        {
+          "event": "UserPromptSubmit",
+          "fd_type": "int",
+          "monotonic_ns": 9550348252700,
+          "operation": "os.fsync",
+          "phase": "start",
+          "pid": 43064
+        },
+        {
+          "elapsed_ns": 4620000,
+          "event": "UserPromptSubmit",
+          "monotonic_ns": 9550352919100,
+          "operation": "os.fsync",
+          "phase": "end",
+          "pid": 43064
+        },
+        {
+          "event": "UserPromptSubmit",
+          "monotonic_ns": 9550353410000,
+          "operation": "os.replace",
+          "phase": "start",
+          "pid": 43064
+        },
+        {
+          "elapsed_ns": 1467800,
+          "event": "UserPromptSubmit",
+          "monotonic_ns": 9550354879200,
+          "operation": "os.replace",
+          "phase": "end",
+          "pid": 43064
+        },
+        {
+          "event": "UserPromptSubmit",
+          "monotonic_ns": 9550355156000,
+          "operation": "_protect_private_path",
+          "path_kind": ".json",
+          "phase": "start",
+          "pid": 43064
+        },
+        {
+          "elapsed_ns": 1862900,
+          "event": "UserPromptSubmit",
+          "monotonic_ns": 9550357016000,
+          "operation": "_protect_private_path",
+          "phase": "end",
+          "pid": 43064
+        },
+        {
+          "elapsed_ns": 15990700,
+          "event": "UserPromptSubmit",
+          "monotonic_ns": 9550357964400,
+          "operation": "adapter.pending_duplicate",
+          "phase": "end",
+          "pid": 43064
+        },
+        {
+          "event": "UserPromptSubmit",
+          "monotonic_ns": 9550358390800,
+          "operation": "adapter.retrieve_context",
+          "phase": "start",
+          "pid": 43064
+        },
+        {
+          "elapsed_ns": 54922200,
+          "event": "UserPromptSubmit",
+          "monotonic_ns": 9550413313700,
+          "operation": "adapter.retrieve_context",
+          "phase": "end",
+          "pid": 43064,
+          "status": "ok"
+        },
+        {
+          "captured": 1,
+          "committed": true,
+          "elapsed_ns": 494628600,
+          "error_type": null,
+          "event": "UserPromptSubmit",
+          "monotonic_ns": 9550414030400,
+          "operation": "adapter.handle",
+          "phase": "end",
+          "pid": 43064,
+          "queued": false,
+          "status": "ok"
+        },
+        {
+          "event": "UserPromptSubmit",
+          "monotonic_ns": 9550414319100,
+          "operation": "adapter.response",
+          "phase": "start",
+          "pid": 43064
+        },
+        {
+          "elapsed_ns": 220700,
+          "event": "UserPromptSubmit",
+          "monotonic_ns": 9550414541300,
+          "operation": "adapter.response",
+          "phase": "end",
+          "pid": 43064,
+          "serialized_bytes": 166
+        }
+      ]
+    },
+    "Stop": {
+      "path": "C:\\Users\\Ant\\AppData\\Local\\Temp\\mnemos-claude-adapter-timing-v5-43vr4j0g\\traces\\stop.jsonl",
+      "row_count": 22,
+      "operations": {
+        "adapter.handle": {
+          "start": 1,
+          "end": 1
+        },
+        "adapter.capture_transcript": {
+          "start": 1,
+          "end": 1
+        },
+        "_protect_private_path": {
+          "start": 5,
+          "end": 5
+        },
+        "adapter.capture": {
+          "start": 1,
+          "end": 1
+        },
+        "os.fsync": {
+          "start": 1,
+          "end": 1
+        },
+        "os.replace": {
+          "start": 1,
+          "end": 1
+        },
+        "adapter.response": {
+          "start": 1,
+          "end": 1
+        }
+      },
+      "rows": [
+        {
+          "event": "Stop",
+          "monotonic_ns": 9551161546100,
+          "operation": "adapter.handle",
+          "phase": "start",
+          "pid": 36084
+        },
+        {
+          "event": "Stop",
+          "monotonic_ns": 9551223357500,
+          "operation": "adapter.capture_transcript",
+          "phase": "start",
+          "pid": 36084
+        },
+        {
+          "event": "Stop",
+          "monotonic_ns": 9551223823800,
+          "operation": "_protect_private_path",
+          "path_kind": ".json",
+          "phase": "start",
+          "pid": 36084
+        },
+        {
+          "elapsed_ns": 1694100,
+          "event": "Stop",
+          "monotonic_ns": 9551225491300,
+          "operation": "_protect_private_path",
+          "phase": "end",
+          "pid": 36084
+        },
+        {
+          "event": "Stop",
+          "monotonic_ns": 9551236890500,
+          "operation": "adapter.capture",
+          "phase": "start",
+          "pid": 36084
+        },
+        {
+          "accepted": true,
+          "elapsed_ns": 324715900,
+          "event": "Stop",
+          "monotonic_ns": 9551561607500,
+          "operation": "adapter.capture",
+          "phase": "end",
+          "pid": 36084
+        },
+        {
+          "event": "Stop",
+          "monotonic_ns": 9551562099500,
+          "operation": "_protect_private_path",
+          "path_kind": "directory",
+          "phase": "start",
+          "pid": 36084
+        },
+        {
+          "elapsed_ns": 894100,
+          "event": "Stop",
+          "monotonic_ns": 9551562992300,
+          "operation": "_protect_private_path",
+          "phase": "end",
+          "pid": 36084
+        },
+        {
+          "event": "Stop",
+          "monotonic_ns": 9551563747800,
+          "operation": "_protect_private_path",
+          "path_kind": ".tmp",
+          "phase": "start",
+          "pid": 36084
+        },
+        {
+          "elapsed_ns": 1035000,
+          "event": "Stop",
+          "monotonic_ns": 9551564770000,
+          "operation": "_protect_private_path",
+          "phase": "end",
+          "pid": 36084
+        },
+        {
+          "event": "Stop",
+          "fd_type": "int",
+          "monotonic_ns": 9551565809700,
+          "operation": "os.fsync",
+          "phase": "start",
+          "pid": 36084
+        },
+        {
+          "elapsed_ns": 3123500,
+          "event": "Stop",
+          "monotonic_ns": 9551568933200,
+          "operation": "os.fsync",
+          "phase": "end",
+          "pid": 36084
+        },
+        {
+          "event": "Stop",
+          "monotonic_ns": 9551569262800,
+          "operation": "os.replace",
+          "phase": "start",
+          "pid": 36084
+        },
+        {
+          "elapsed_ns": 529900,
+          "event": "Stop",
+          "monotonic_ns": 9551569793600,
+          "operation": "os.replace",
+          "phase": "end",
+          "pid": 36084
+        },
+        {
+          "event": "Stop",
+          "monotonic_ns": 9551570007700,
+          "operation": "_protect_private_path",
+          "path_kind": ".json",
+          "phase": "start",
+          "pid": 36084
+        },
+        {
+          "elapsed_ns": 876000,
+          "event": "Stop",
+          "monotonic_ns": 9551570882300,
+          "operation": "_protect_private_path",
+          "phase": "end",
+          "pid": 36084
+        },
+        {
+          "captured": 1,
+          "elapsed_ns": 347899600,
+          "event": "Stop",
+          "monotonic_ns": 9551571257900,
+          "operation": "adapter.capture_transcript",
+          "phase": "end",
+          "pid": 36084
+        },
+        {
+          "event": "Stop",
+          "monotonic_ns": 9551571525100,
+          "operation": "_protect_private_path",
+          "path_kind": ".json",
+          "phase": "start",
+          "pid": 36084
+        },
+        {
+          "elapsed_ns": 801600,
+          "event": "Stop",
+          "monotonic_ns": 9551572306800,
+          "operation": "_protect_private_path",
+          "phase": "end",
+          "pid": 36084
+        },
+        {
+          "captured": 1,
+          "committed": true,
+          "elapsed_ns": 418438700,
+          "error_type": null,
+          "event": "Stop",
+          "monotonic_ns": 9551579987300,
+          "operation": "adapter.handle",
+          "phase": "end",
+          "pid": 36084,
+          "queued": false,
+          "status": "ok"
+        },
+        {
+          "event": "Stop",
+          "monotonic_ns": 9551580336000,
+          "operation": "adapter.response",
+          "phase": "start",
+          "pid": 36084
+        },
+        {
+          "elapsed_ns": 250000,
+          "event": "Stop",
+          "monotonic_ns": 9551580587500,
+          "operation": "adapter.response",
+          "phase": "end",
+          "pid": 36084,
+          "serialized_bytes": 109
+        }
+      ]
+    },
+    "StopReplayAfterReopen": {
+      "path": "C:\\Users\\Ant\\AppData\\Local\\Temp\\mnemos-claude-adapter-timing-v5-43vr4j0g\\traces\\stop-replay.jsonl",
+      "row_count": 10,
+      "operations": {
+        "adapter.handle": {
+          "start": 1,
+          "end": 1
+        },
+        "adapter.capture_transcript": {
+          "start": 1,
+          "end": 1
+        },
+        "_protect_private_path": {
+          "start": 2,
+          "end": 2
+        },
+        "adapter.response": {
+          "start": 1,
+          "end": 1
+        }
+      },
+      "rows": [
+        {
+          "event": "Stop",
+          "monotonic_ns": 9552727509800,
+          "operation": "adapter.handle",
+          "phase": "start",
+          "pid": 50252
+        },
+        {
+          "event": "Stop",
+          "monotonic_ns": 9552779205500,
+          "operation": "adapter.capture_transcript",
+          "phase": "start",
+          "pid": 50252
+        },
+        {
+          "event": "Stop",
+          "monotonic_ns": 9552780058200,
+          "operation": "_protect_private_path",
+          "path_kind": ".json",
+          "phase": "start",
+          "pid": 50252
+        },
+        {
+          "elapsed_ns": 1780600,
+          "event": "Stop",
+          "monotonic_ns": 9552781803900,
+          "operation": "_protect_private_path",
+          "phase": "end",
+          "pid": 50252
+        },
+        {
+          "captured": 0,
+          "elapsed_ns": 4312100,
+          "event": "Stop",
+          "monotonic_ns": 9552783517900,
+          "operation": "adapter.capture_transcript",
+          "phase": "end",
+          "pid": 50252
+        },
+        {
+          "event": "Stop",
+          "monotonic_ns": 9552783951600,
+          "operation": "_protect_private_path",
+          "path_kind": ".json",
+          "phase": "start",
+          "pid": 50252
+        },
+        {
+          "elapsed_ns": 869700,
+          "event": "Stop",
+          "monotonic_ns": 9552784804100,
+          "operation": "_protect_private_path",
+          "phase": "end",
+          "pid": 50252
+        },
+        {
+          "captured": 0,
+          "committed": false,
+          "elapsed_ns": 58734200,
+          "error_type": null,
+          "event": "Stop",
+          "monotonic_ns": 9552786245800,
+          "operation": "adapter.handle",
+          "phase": "end",
+          "pid": 50252,
+          "queued": false,
+          "status": "ok"
+        },
+        {
+          "event": "Stop",
+          "monotonic_ns": 9552786545800,
+          "operation": "adapter.response",
+          "phase": "start",
+          "pid": 50252
+        },
+        {
+          "elapsed_ns": 237500,
+          "event": "Stop",
+          "monotonic_ns": 9552786784900,
+          "operation": "adapter.response",
+          "phase": "end",
+          "pid": 50252,
+          "serialized_bytes": 110
+        }
+      ]
+    }
+  },
+  "criteria": {
+    "wheel_and_source_bound": true,
+    "user_prompt_completed": true,
+    "user_capture_acknowledged": true,
+    "retrieval_context_observed": true,
+    "stop_completed": true,
+    "assistant_capture_acknowledged": true,
+    "checkpoint_written": true,
+    "reopen_replay_completed": true,
+    "replay_created_no_duplicate": true,
+    "native_claude_called": false,
+    "model_calls": 0,
+    "network_provider_called": false
+  },
+  "cleanup_errors": [],
+  "descriptor_absent_after_shutdown": true,
+  "private_fixture_preserved": true,
+  "finished_at": "2026-09-17T20:48:26.412986+00:00"
+}

@@ -4,7 +4,7 @@ Updated September 17, 2026 for the unreleased functional-local-memory worktree. 
 
 | Client | Implemented integration | Observed evidence | Native conversation acceptance |
 | --- | --- | --- | --- |
-| Claude Code | Command hooks, transcript deltas, context injection, MCP tools; provisional missing-ID capture excluded from extraction | Installed source6600 completed native 2.1.191 health and retrieve calls through the actual plugin against the intended project store, plus three lifecycle hooks, seeded recall, restart, and reconstructed Stop replay | Bounded native read and provisional identity contracts passed. Original exact-two-raw-events gate remains failed. Complete extraction/correction/forget lifecycle remains open |
+| Claude Code | Command hooks, transcript deltas, context injection, MCP tools; provisional missing-ID capture excluded from extraction | Installed source8d865a5 completed native correction, consolidation, retrieval, and forgetting through the actual 2.1.191 plugin, with restart and reconstructed Stop replay checks | All 15 bounded fact-lifecycle criteria passed in v17. Degraded capture keeps the overall result partial. Extraction quality and complete capture acceptance remain open |
 | Codex CLI | Command lifecycle hooks, supported context output, MCP tools | Native 0.146.0 used source20f's generated TOML commands, returned a random canary absent from its prompt, and captured both roles across restart | Bounded hook transport observed with fixture vectors and unavailable cognition. Full native correction/forget lifecycle remains open |
 | Codex Desktop | Same command hooks and MCP fallback | Shared adapter coverage; no current desktop conversation evidence | Pending |
 | Hermes Agent | Optional MemoryProvider and explicit Windows/WSL bridge | Installed 0.21.3 API calls and actual WSL -> Windows authenticated transport. Sourcec805 passed full verification and discovery through the actual wheel entry point in WSL | Model turn has not completed; cross-host native recall remains open |
@@ -105,6 +105,19 @@ correct/consolidate/retrieve sequence passed. A subsequent direct retrieval
 after maintenance failed before restart or forget. Capture diagnostics also
 remained degraded. This records a successful native correction sequence;
 complete lifecycle and general startup reliability remain open.
+The [exact-query diagnosis](validation/2026-09-17/claude-v16-retrieval-diagnosis-v2/README.md)
+found the corrected record persisted at version 2. Constant fixture embeddings
+left all seven records tied; ID ordering and the unchanged context budget
+excluded the target. This explains the diagnostic retrieval miss without
+promoting the unrun native restart and forget phases.
+The subsequent [v17 lifecycle check](validation/2026-09-17/native-claude-lifecycle-v17/README.md)
+used installed `8d865a5` and deterministic lexical fixture vectors. Native
+correction, consolidation, retrieval, and forgetting succeeded. The correction
+survived restart; the forgotten target stayed absent after a second restart
+and reconstructed Stop replay, while the unrelated fact remained retrievable.
+All 15 fact-lifecycle criteria passed. Hook capture retained degraded diagnostics,
+so the overall result remains partial. This verifies the bounded native fact
+lifecycle, not extraction quality or complete capture acceptance.
 The v9 attempt preserves a budget-limit failure with inherited account-level
 connectors; v10 disabled those connectors only in its disposable process.
 
@@ -113,5 +126,11 @@ Python interpreter that generated it, matching the hook installation. This
 prevents a bare `mnemos-mcp` command from selecting an older installation on
 the host's PATH. Regenerate the configuration if that Python environment moves.
 Existing plugin wrappers retain their explicit interpreter binding.
+Generated Codex and Claude MCP entries also bind their actual host identity,
+and the Claude plugin wrapper sets `MNEMOS_HOST=claude-code` in its child
+environment. This prevents new MCP evidence from falling back to `manual`
+or inheriting another client's identity. Existing installations need the
+updated launcher or regenerated configuration; historical evidence is not
+rewritten by this change.
 
 All clients need an enabled project, registered profile, and the same runtime descriptor. A repository basename is not a scope identity. Mock cognition is rejected by the normal configured service; use a real provider and input-specific readiness probe. See [functional local memory](functional-local-memory.md), [Codex setup](codex.md), and [Hermes setup](integrations/hermes.md).

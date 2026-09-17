@@ -1,10 +1,12 @@
 # Real-model evaluation status
 
-## Current checkpoint: September 17, 2026, 19:55 UTC
+## Current checkpoint: September 17, 2026, 20:50 UTC
 
 The resumed held-out mechanism worker completed with exit code zero at
 19:48 UTC. The coordinator then started lifecycle worker PID 47588, observed
-live at this checkpoint. The seven-profile lifecycle matrix is now running.
+live at this checkpoint. The seven-profile lifecycle matrix is running; the
+baseline checkpoint contains 138 completed observations with next session index
+45. Ollama on `.35` responds with both originally pinned model digests.
 The completed mechanism phase has not been used to tune the frozen settings,
 and no quality conclusion is accepted before the complete comparison.
 
@@ -40,12 +42,13 @@ status and outputs are under `real-model-v4/`, with persistent checkpoints
 under `.venv/real-model-work-v4/`. The queue retains its original source,
 dataset, model-digest, and option bindings. Later embedding-role and
 conflict-collision changes are not part of this run. The latest complete
-package checkpoint is separate source `56182d9`, with 898 tests passed and
+package checkpoint is separate source `8d865a5`, with 903 tests passed and
 four skipped, followed by formatting, typing, JavaScript, build, and Twine
-checks. Its fresh installed wheel passed all 87 selected contract cases and
+checks. Its fresh installed wheel passed 110 selected contract cases with two
+matching platform skips and
 the synthetic Stop replay assertions on C: SSD fixtures. These checks do not
 promote the frozen evaluation's quality results or resolve the earlier D:
-storage timeouts. See the [package checkpoint](../2026-09-17/service-runtime-package-checkpoint-v1/README.md).
+storage timeouts. See the [package checkpoint](../2026-09-17/host-provenance-package-checkpoint-v1/README.md).
 
 Current model pins:
 
