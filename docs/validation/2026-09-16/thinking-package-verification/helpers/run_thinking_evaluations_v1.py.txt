@@ -1,0 +1,542 @@
+"""Run the serialized, source-bound Qwen T18 evaluation queue.
+
+This coordinator is intentionally a launcher. The benchmark modules own
+dataset validation, durable checkpoints, raw provider traces, and metric
+artifacts. A failed execution or provenance check stops the queue; a negative
+quality or coverage result remains in the artifact for review.
+"""
+
+from __future__ import annotations
+
+import argparse
+import ctypes
+from datetime import datetime, timezone
+import hashlib
+import json
+import os
+from pathlib import Path
+import subprocess
+import sys
+from typing import Any
+from urllib.request import urlopen
+from uuid import uuid4
+
+WORKSPACE = Path(__file__).resolve().parent.parent
+DEFAULT_SNAPSHOT = WORKSPACE / ".venv" / "thinking-frozen-v1"
+DEFAULT_RESULTS = WORKSPACE / "docs" / "validation" / "2026-09-16" / "real-model-v4"
+DEFAULT_WORK = WORKSPACE / ".venv" / "real-model-work-v4"
+DEFAULT_VERIFICATION = WORKSPACE / ".venv" / "thinking-checks-v1" / "verification.json"
+DEFAULT_INSTALLED = WORKSPACE / ".venv" / "thinking-installed-v1" / "installation.json"
+DEFAULT_ENDPOINT = "http://192.168.86.35:11434"
+DEFAULT_MODEL = "qwen3.5:9b"
+DEFAULT_EMBEDDING_MODEL = "nomic-embed-text:latest"
+MODEL_DIGESTS = {
+    DEFAULT_MODEL: "6488c96fa5faab64bb65cbd30d4289e20e6130ef535a93ef9a49f42eda893ea7",
+    DEFAULT_EMBEDDING_MODEL: "0a109f422b47e3a30ba2b10eca18548e944e8a23073ee3f3e947efcf3c45e59f",
+}
+PROFILES = (
+    "baseline",
+    "full",
+    "ablate-surprisal_gating",
+    "ablate-mutable_rag",
+    "ablate-affective_routing",
+    "ablate-sleep_consolidation",
+    "ablate-spreading_activation",
+)
+
+
+def _now() -> str:
+    return datetime.now(timezone.utc).isoformat()
+
+
+def _read(path: Path) -> dict[str, Any]:
+    value = json.loads(path.read_text(encoding="utf-8-sig"))
+    if not isinstance(value, dict):
+        raise RuntimeError(f"Expected a JSON object: {path}")
+    return value
+
+
+def _sha256(path: Path) -> str:
+    return hashlib.sha256(path.read_bytes()).hexdigest()
+
+
+def _pid_alive(pid: int) -> bool:
+    if pid <= 0:
+        return False
+    if os.name != "nt":
+        try:
+            os.kill(pid, 0)
+        except OSError:
+            return False
+        return True
+    kernel = ctypes.WinDLL("kernel32", use_last_error=True)
+    kernel.OpenProcess.restype = ctypes.c_void_p
+    kernel.OpenProcess.argtypes = [ctypes.c_uint32, ctypes.c_int, ctypes.c_uint32]
+    kernel.GetExitCodeProcess.argtypes = [ctypes.c_void_p, ctypes.POINTER(ctypes.c_uint32)]
+    kernel.CloseHandle.argtypes = [ctypes.c_void_p]
+    handle = kernel.OpenProcess(0x1000, False, pid)
+    if not handle:
+        if ctypes.get_last_error() == 87:
+            return False
+        raise RuntimeError(f"Cannot verify process state: {pid}")
+    try:
+        code = ctypes.c_uint32()
+        if not kernel.GetExitCodeProcess(handle, ctypes.byref(code)):
+            raise RuntimeError(f"Cannot query process state: {pid}")
+        return code.value == 259
+    finally:
+        kernel.CloseHandle(handle)
+
+
+def _git(snapshot: Path, *args: str) -> str:
+    return subprocess.check_output(
+        ["git", *args], cwd=snapshot, text=True, stderr=subprocess.STDOUT
+    ).strip()
+
+
+def _verify_reports(
+    verification_path: Path, installed_path: Path, source_commit: str
+) -> tuple[dict[str, Any], dict[str, Any]]:
+    verification = _read(verification_path)
+    installed = _read(installed_path)
+    if verification.get("status") != "passed":
+        raise RuntimeError("Full verification report is not passed")
+    if installed.get("status") != "passed":
+        raise RuntimeError("Installed package report is not passed")
+    for label, report in (("verification", verification), ("installed", installed)):
+        if report.get("source_commit") != source_commit:
+            raise RuntimeError(f"{label} report is bound to another source commit")
+    checks = verification.get("checks")
+    if not isinstance(checks, list) or not checks:
+        raise RuntimeError("Full verification report has no checks")
+    if any(not isinstance(check, dict) or check.get("status") != "passed" for check in checks):
+        raise RuntimeError("Full verification contains a failed or incomplete check")
+    return verification, installed
+
+
+def _verify_source_and_models(
+    snapshot: Path,
+    source_commit: str,
+    endpoint: str,
+    model: str,
+    embedding_model: str,
+) -> dict[str, str]:
+    if _git(snapshot, "rev-parse", "HEAD") != source_commit:
+        raise RuntimeError("Frozen source commit changed")
+    if _git(snapshot, "status", "--porcelain"):
+        raise RuntimeError("Frozen source checkout is dirty")
+    expected = {model: MODEL_DIGESTS[model], embedding_model: MODEL_DIGESTS[embedding_model]}
+    with urlopen(endpoint.rstrip("/") + "/api/tags", timeout=30) as response:
+        body = json.load(response)
+    records = body.get("models") if isinstance(body, dict) else None
+    if not isinstance(records, list):
+        raise RuntimeError("Ollama tags response has no models list")
+    observed = {
+        row.get("name"): row.get("digest")
+        for row in records
+        if isinstance(row, dict) and isinstance(row.get("name"), str)
+    }
+    for name, digest in expected.items():
+        if observed.get(name) != digest:
+            raise RuntimeError(f"Pinned model changed or disappeared: {name}")
+    return {"model": observed[model], "embedding_model": observed[embedding_model]}
+
+
+def _atomic_json(path: Path, value: dict[str, Any]) -> None:
+    temporary = path.with_name(path.name + ".tmp")
+    temporary.write_text(json.dumps(value, indent=2, sort_keys=True) + "\n", encoding="utf-8")
+    temporary.replace(path)
+
+
+def _new_lock(path: Path) -> None:
+    path.parent.mkdir(parents=True, exist_ok=True)
+    try:
+        descriptor = os.open(path, os.O_CREAT | os.O_EXCL | os.O_WRONLY)
+    except FileExistsError as exc:
+        try:
+            prior = _read(path)
+            prior_pid = int(prior.get("pid", 0))
+        except (OSError, TypeError, ValueError, json.JSONDecodeError) as parse_error:
+            raise RuntimeError("Coordinator lock exists and is unreadable") from parse_error
+        if _pid_alive(prior_pid):
+            raise RuntimeError(f"Another coordinator is running (pid {prior_pid})")
+        raise RuntimeError("A stale coordinator lock exists; remove it only after review") from exc
+    with os.fdopen(descriptor, "w", encoding="utf-8") as handle:
+        json.dump({"pid": os.getpid(), "created_at": _now()}, handle)
+
+
+def _phase_artifacts(directory: Path) -> dict[str, str]:
+    return {
+        str(path): _sha256(path)
+        for path in directory.rglob("*")
+        if path.is_file() and path.name != "queue-status.json"
+    }
+
+
+def _assert_saved_artifacts(phase: dict[str, Any]) -> None:
+    artifacts = phase.get("artifacts")
+    if not isinstance(artifacts, dict) or not artifacts:
+        raise RuntimeError(f"Completed phase has no artifact digest: {phase.get('name')}")
+    for filename, expected in artifacts.items():
+        path = Path(filename)
+        if not path.is_file() or _sha256(path) != expected:
+            raise RuntimeError(f"Completed phase artifact changed: {filename}")
+
+
+def _report_for(phase_name: str, output_dir: Path) -> list[Path]:
+    if phase_name == "performance":
+        return [output_dir / "performance-10k.json"]
+    if phase_name == "lifecycle-preflight":
+        return [
+            path
+            for path in output_dir.glob("lifecycle-target-smoke-*.json")
+            if "manifest" not in path.name
+        ]
+    if phase_name in {"development-mechanism", "mechanism-heldout"}:
+        return [output_dir / "manifest.json", output_dir / "module-mechanism.json"]
+    if phase_name == "mechanism-heldout":
+        return [output_dir / "manifest.json", output_dir / "module-mechanism.json"]
+    return [path for path in output_dir.glob("*.json") if ".manifest" not in path.name]
+
+
+def _validate_phase(phase_name: str, output_dir: Path) -> None:
+    paths = [path for path in _report_for(phase_name, output_dir) if path.is_file()]
+    if phase_name == "performance":
+        report = _read(paths[0]) if len(paths) == 1 else {}
+        provenance = report.get("code_provenance")
+        if (
+            len(paths) != 1
+            or report.get("status") != "completed"
+            or not isinstance(provenance, dict)
+            or provenance.get("consistent") is not True
+        ):
+            raise RuntimeError("Performance stage did not complete")
+        return
+    if phase_name == "lifecycle-preflight":
+        if len(paths) != 1:
+            raise RuntimeError("Lifecycle preflight did not write one report")
+        report = _read(paths[0])
+        runs = report.get("runs")
+        if report.get("status") != "complete" or not isinstance(runs, list):
+            raise RuntimeError("Lifecycle preflight execution failed")
+        if len(runs) != 4 or set(report.get("profiles", [])) != {"baseline", "full"}:
+            raise RuntimeError("Lifecycle preflight coverage is incomplete")
+        if any(not isinstance(run, dict) or run.get("status") != "complete" for run in runs):
+            raise RuntimeError("Lifecycle preflight has an incomplete run")
+        return
+    if phase_name in {"development-mechanism", "mechanism-heldout"}:
+        report_path = output_dir / "module-mechanism.json"
+        report = _read(report_path) if report_path.is_file() else {}
+        execution = report.get("execution")
+        if report.get("status") != "complete" or not isinstance(execution, dict):
+            raise RuntimeError(f"{phase_name} did not complete execution")
+        if execution.get("complete") is not True or report.get("correctness_pass") is not True:
+            raise RuntimeError(f"{phase_name} execution or correctness failed")
+        return
+    expected = set(PROFILES)
+    reports = {_path.stem: _read(_path) for _path in paths if _path.is_file()}
+    if set(reports) != expected:
+        raise RuntimeError("Lifecycle matrix is missing one or more profiles")
+    if any(report.get("status") != "completed" for report in reports.values()):
+        raise RuntimeError("Lifecycle matrix has an incomplete profile")
+
+
+def _arguments() -> argparse.Namespace:
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument("--source-commit", required=True)
+    parser.add_argument("--resume", action="store_true")
+    parser.add_argument("--run-performance", action="store_true")
+    parser.add_argument("--snapshot", type=Path, default=DEFAULT_SNAPSHOT)
+    parser.add_argument("--output-dir", type=Path, default=DEFAULT_RESULTS)
+    parser.add_argument("--work-dir", type=Path, default=DEFAULT_WORK)
+    parser.add_argument("--verification-report", type=Path, default=DEFAULT_VERIFICATION)
+    parser.add_argument("--installed-report", type=Path, default=DEFAULT_INSTALLED)
+    parser.add_argument("--endpoint", default=DEFAULT_ENDPOINT)
+    parser.add_argument("--model", choices=(DEFAULT_MODEL,), default=DEFAULT_MODEL)
+    parser.add_argument(
+        "--embedding-model", choices=(DEFAULT_EMBEDDING_MODEL,), default=DEFAULT_EMBEDDING_MODEL
+    )
+    return parser.parse_args()
+
+
+def main() -> int:
+    args = _arguments()
+    if not args.snapshot.is_dir():
+        raise RuntimeError(f"Frozen snapshot does not exist: {args.snapshot}")
+    if any(
+        old in path.name.lower()
+        for path in (args.snapshot, args.output_dir, args.work_dir)
+        for old in ("graph-v4", "real-model-v3", "mechanism-v1")
+    ):
+        raise RuntimeError("This queue cannot reuse an older evaluation path")
+    if args.model not in MODEL_DIGESTS or args.embedding_model not in MODEL_DIGESTS:
+        raise RuntimeError("No digest pin exists for the selected model")
+    _verify_reports(args.verification_report, args.installed_report, args.source_commit)
+    runner_sha = _sha256(Path(__file__))
+    status_path = args.output_dir / "queue-status.json"
+    lock_path = args.work_dir / "coordinator.lock"
+    if status_path.exists() and not args.resume:
+        raise RuntimeError("Queue exists; inspect artifacts and use --resume")
+    if not status_path.exists() and args.resume:
+        raise RuntimeError("No queue exists to resume")
+    if not args.resume:
+        if any(args.output_dir.glob("*")) or any(args.work_dir.glob("*")):
+            raise RuntimeError("Refusing to clobber an existing evaluation directory")
+    status: dict[str, Any] = {"phases": []}
+    status_accepted = False
+    _new_lock(lock_path)
+    try:
+        model_binding = _verify_source_and_models(
+            args.snapshot, args.source_commit, args.endpoint, args.model, args.embedding_model
+        )
+        if status_path.exists():
+            status = _read(status_path)
+            expected = {
+                "source_commit": args.source_commit,
+                "runner_sha256": runner_sha,
+                "snapshot": str(args.snapshot),
+                "output_dir": str(args.output_dir),
+                "work_dir": str(args.work_dir),
+                "model": args.model,
+                "embedding_model": args.embedding_model,
+                "run_performance": args.run_performance,
+                "endpoint": args.endpoint,
+                "think": False,
+            }
+            if any(status.get(key) != value for key, value in expected.items()):
+                raise RuntimeError("Resume provenance does not match this invocation")
+            if (
+                status.get("model_digest") != model_binding["model"]
+                or status.get("embedding_digest") != model_binding["embedding_model"]
+            ):
+                raise RuntimeError("Resume model binding changed")
+            prior_pids = [status.get("coordinator_pid")]
+            prior_pids.extend(
+                phase.get("pid")
+                for phase in status.get("phases", [])
+                if isinstance(phase, dict) and phase.get("status") != "finished"
+            )
+            if any(
+                isinstance(pid, int) and pid != os.getpid() and _pid_alive(pid)
+                for pid in prior_pids
+            ):
+                raise RuntimeError("A previous queue or phase process is still running")
+        else:
+            status = {
+                "schema_version": "thinking-evaluations-v1",
+                "source_commit": args.source_commit,
+                "runner_sha256": runner_sha,
+                "snapshot": str(args.snapshot),
+                "output_dir": str(args.output_dir),
+                "work_dir": str(args.work_dir),
+                "model": args.model,
+                "embedding_model": args.embedding_model,
+                "model_digest": model_binding["model"],
+                "embedding_digest": model_binding["embedding_model"],
+                "run_performance": args.run_performance,
+                "endpoint": args.endpoint,
+                "think": False,
+                "started_at": _now(),
+                "phases": [],
+            }
+        args.output_dir.mkdir(parents=True, exist_ok=True)
+        args.work_dir.mkdir(parents=True, exist_ok=True)
+        status_accepted = True
+        status.update(status="running", coordinator_pid=os.getpid(), updated_at=_now())
+
+        def save() -> None:
+            status["updated_at"] = _now()
+            _atomic_json(status_path, status)
+
+        common = [
+            "--endpoint",
+            args.endpoint,
+            "--model",
+            args.model,
+            "--embedding-model",
+            args.embedding_model,
+            "--think",
+            "false",
+        ]
+        phase_specs: list[tuple[str, str, list[str]]] = [
+            (
+                "development-mechanism",
+                "module_mechanism_run",
+                common
+                + [
+                    "--split",
+                    "development",
+                    "--repetitions",
+                    "3",
+                    "--output-dir",
+                    str(args.output_dir / "mechanism-development"),
+                    "--work-dir",
+                    str(args.work_dir / "mechanism-development"),
+                ],
+            ),
+            (
+                "lifecycle-preflight",
+                "lifecycle_target_smoke",
+                common
+                + [
+                    "--output-dir",
+                    str(args.output_dir / "lifecycle-preflight"),
+                    "--work-dir",
+                    str(args.work_dir / "lifecycle-preflight"),
+                ],
+            ),
+            (
+                "mechanism-heldout",
+                "module_mechanism_run",
+                common
+                + [
+                    "--split",
+                    "heldout",
+                    "--repetitions",
+                    "3",
+                    "--output-dir",
+                    str(args.output_dir / "mechanism-heldout"),
+                    "--work-dir",
+                    str(args.work_dir / "mechanism-heldout"),
+                ],
+            ),
+            (
+                "lifecycle",
+                "heldout_run",
+                common
+                + [
+                    "--repetitions",
+                    "3",
+                    "--output-dir",
+                    str(args.output_dir / "lifecycle"),
+                    "--work-dir",
+                    str(args.work_dir / "lifecycle"),
+                ],
+            ),
+        ]
+        if args.run_performance:
+            phase_specs.insert(
+                2,
+                (
+                    "performance",
+                    "performance",
+                    [
+                        "--output",
+                        str(args.output_dir / "performance-10k" / "performance-10k.json"),
+                        "--endpoint",
+                        args.endpoint,
+                        "--embedding-model",
+                        args.embedding_model,
+                        "--cognition-model",
+                        args.model,
+                    ],
+                ),
+            )
+        save()
+        for name, module, options in phase_specs:
+            previous = next(
+                (
+                    phase
+                    for phase in reversed(status["phases"])
+                    if phase.get("name") == name and phase.get("status") == "finished"
+                ),
+                None,
+            )
+            if previous is not None:
+                _assert_saved_artifacts(previous)
+                continue
+            _verify_reports(args.verification_report, args.installed_report, args.source_commit)
+            current_binding = _verify_source_and_models(
+                args.snapshot,
+                args.source_commit,
+                args.endpoint,
+                args.model,
+                args.embedding_model,
+            )
+            if current_binding != model_binding:
+                raise RuntimeError("Model binding changed during evaluation")
+            output_names = {
+                "development-mechanism": "mechanism-development",
+                "lifecycle-preflight": "lifecycle-preflight",
+                "performance": "performance-10k",
+                "mechanism-heldout": "mechanism-heldout",
+                "lifecycle": "lifecycle",
+            }
+            output_dir = args.output_dir / output_names[name]
+            if name == "lifecycle-preflight":
+                output_dir = output_dir / ("attempt-" + uuid4().hex)
+                options = list(options)
+                options[options.index("--output-dir") + 1] = str(output_dir)
+            output_dir.mkdir(parents=True, exist_ok=True)
+            command = [sys.executable, "-u", "-m", "benchmarks.local_memory." + module, *options]
+            phase: dict[str, Any] = {
+                "name": name,
+                "module": module,
+                "command": command,
+                "output_dir": str(output_dir),
+                "status": "running",
+                "started_at": _now(),
+            }
+            status["phases"].append(phase)
+            save()
+            stdout_path = args.output_dir / f"{name}.stdout.log"
+            stderr_path = args.output_dir / f"{name}.stderr.log"
+            with (
+                stdout_path.open("a", encoding="utf-8") as stdout,
+                stderr_path.open("a", encoding="utf-8") as stderr,
+            ):
+                process = subprocess.Popen(
+                    command,
+                    cwd=args.snapshot,
+                    env={
+                        key: value
+                        for key, value in os.environ.items()
+                        if key != "PYTHONPATH" and not key.startswith("MNEMOS_")
+                    }
+                    | {"PYTHONUNBUFFERED": "1"},
+                    stdout=stdout,
+                    stderr=stderr,
+                    creationflags=getattr(subprocess, "CREATE_NO_WINDOW", 0),
+                )
+                phase["pid"] = process.pid
+                save()
+                exit_code = process.wait()
+            phase.update(exit_code=exit_code, finished_at=_now())
+            if exit_code:
+                phase["status"] = "failed"
+                save()
+                raise RuntimeError(f"{name} exited with code {exit_code}")
+            _validate_phase(name, output_dir)
+            phase["artifacts"] = _phase_artifacts(output_dir)
+            phase["artifacts"][str(stdout_path)] = _sha256(stdout_path)
+            phase["artifacts"][str(stderr_path)] = _sha256(stderr_path)
+            phase["status"] = "finished"
+            save()
+        status.update(status="finished", finished_at=_now())
+        save()
+        print(json.dumps({"status": status["status"], "source_commit": args.source_commit}))
+        return 0
+    except BaseException as exc:
+        try:
+            status["status"] = "failed"
+            status["error_type"] = type(exc).__name__
+            status["error"] = str(exc)
+            if (
+                status_accepted
+                and status.get("phases")
+                and status["phases"][-1].get("status") == "running"
+            ):
+                status["phases"][-1]["status"] = "failed"
+            if status_accepted and status_path.parent.exists():
+                _atomic_json(status_path, status)
+        finally:
+            raise
+    finally:
+        try:
+            lock_path.unlink()
+        except FileNotFoundError:
+            pass
+
+
+if __name__ == "__main__":
+    raise SystemExit(main())

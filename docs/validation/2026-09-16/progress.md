@@ -846,3 +846,29 @@ the distinction between requirements and completed actions. Source, role,
 scope, evidence, and version guards remain unchanged. A separate disjoint
 development check will test that clarification, including questions,
 quotations, hypothetical preferences, and assistant suggestions.
+
+## Verified thinking configuration and fresh evaluation queue
+
+Frozen source `d94ded6` passed 811 tests with four platform-specific skips,
+Black, compatible strict mypy, JavaScript syntax, build, and Twine. Its wheel
+passed fresh MCP-enabled installation, source/asset parity, and instrumented
+restart/replay checks. [Package checkpoint](thinking-package-verification/README.md).
+This adds no new native-host conversation claim.
+
+The disjoint eight-call preference probe produced eight runtime-valid
+responses. Its frozen exact text-match proxy remains 4/8. Separate qualitative
+review against the authored criteria accepts seven cases: both preference
+cases, explicit correction, and all four abstentions. The undeployed Redis
+requirement fails because the model returns the old SQLite statement as a
+conflict with an unsupported current-source citation. All 49 archived Python
+source files match the frozen product after newline normalization.
+[Raw observations and qualitative review](preference-contract-development-v1/README.md).
+
+The new `real-model-v4` queue started against this frozen source, Qwen3.5:9b
+digest `6488c96fa5faab64bb65cbd30d4289e20e6130ef535a93ef9a49f42eda893ea7`,
+Nomic embedding digest `0a109f422b47e3a30ba2b10eca18548e944e8a23073ee3f3e947efcf3c45e59f`,
+and `think=false`. It runs development mechanisms, lifecycle preflight, the
+corrected latency measurement, held-out mechanisms, and all seven lifecycle
+profiles with three repetitions. Output and checkpoints are new; prior
+failures remain intact. At this checkpoint the development phase is running,
+so no completed held-out result or latency improvement is claimed.

@@ -1,0 +1,90 @@
+"""Offline check for lifecycle preflight attempt isolation."""
+
+from __future__ import annotations
+
+from datetime import datetime, timezone
+import hashlib
+import importlib.util
+import json
+from pathlib import Path
+import inspect
+from types import ModuleType
+
+ROOT = Path(__file__).resolve().parents[1]
+QUEUE = ROOT / ".venv" / "run_thinking_evaluations_v1.py"
+OUTPUT = ROOT / ".venv" / "check-thinking-queue-v2"
+
+
+def _load_queue() -> ModuleType:
+    spec = importlib.util.spec_from_file_location("thinking_queue_check", QUEUE)
+    if spec is None or spec.loader is None:
+        raise RuntimeError("queue helper could not be imported")
+    module = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(module)
+    return module
+
+
+def _report() -> dict[str, object]:
+    return {
+        "status": "complete",
+        "profiles": ["baseline", "full"],
+        "runs": [
+            {"status": "complete", "profile": "baseline", "run": 1},
+            {"status": "complete", "profile": "full", "run": 1},
+            {"status": "complete", "profile": "baseline", "run": 2},
+            {"status": "complete", "profile": "full", "run": 2},
+        ],
+    }
+
+
+def main() -> int:
+    if OUTPUT.exists():
+        raise RuntimeError(f"Refusing to overwrite check output: {OUTPUT}")
+    queue = _load_queue()
+    old = OUTPUT / "lifecycle-preflight" / "attempt-old"
+    new = OUTPUT / "lifecycle-preflight" / "attempt-new"
+    old.mkdir(parents=True)
+    new.mkdir(parents=True)
+    for directory in (old, new):
+        (directory / "lifecycle-target-smoke-run.json").write_text(
+            json.dumps(_report(), sort_keys=True) + "\n", encoding="utf-8"
+        )
+        queue._validate_phase("lifecycle-preflight", directory)
+    reports = queue._report_for("lifecycle-preflight", old)
+    if len(reports) != 1 or not old.joinpath(reports[0].name).is_file():
+        raise RuntimeError("A selected lifecycle attempt was not validated")
+    if (
+        not (old / "lifecycle-target-smoke-run.json").is_file()
+        or not (new / "lifecycle-target-smoke-run.json").is_file()
+    ):
+        raise RuntimeError("Retry evidence was not preserved")
+    source = inspect.getsource(queue.main)
+    required_source = (
+        '"attempt-" + uuid4().hex',
+        'options[options.index("--output-dir") + 1] = str(output_dir)',
+        '"output_dir": str(output_dir)',
+    )
+    if any(fragment not in source for fragment in required_source):
+        raise RuntimeError("Coordinator does not bind lifecycle output to its attempt")
+    result = {
+        "schema_version": 1,
+        "status": "passed",
+        "runner": "check-thinking-queue-v2",
+        "runner_sha256": hashlib.sha256(Path(__file__).read_bytes()).hexdigest(),
+        "queue_sha256": hashlib.sha256(QUEUE.read_bytes()).hexdigest(),
+        "checked_at": datetime.now(timezone.utc).isoformat(),
+        "execution": {"network": False, "model": False, "native": False},
+        "phase": "lifecycle-preflight",
+        "attempts_validated": ["attempt-old", "attempt-new"],
+        "reports_preserved": True,
+        "output": str(OUTPUT),
+    }
+    (OUTPUT / "report.json").write_text(
+        json.dumps(result, indent=2, sort_keys=True) + "\n", encoding="utf-8"
+    )
+    print(json.dumps({"status": "passed", "report": str(OUTPUT / "report.json")}))
+    return 0
+
+
+if __name__ == "__main__":
+    raise SystemExit(main())

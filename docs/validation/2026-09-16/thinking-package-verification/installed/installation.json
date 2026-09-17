@@ -1,0 +1,76 @@
+{
+  "source_commit": "d94ded67a6b3fe6b6f7474a74518d4efb143698e",
+  "started_at": "2026-09-17T13:59:54.934129+00:00",
+  "status": "passed",
+  "wheel": {
+    "file": "D:\\Development\\mnemos\\mnemos\\.worktrees\\functional-local-memory\\.venv\\thinking-checks-v1\\dist\\mnemos_memory-0.7.0-py3-none-any.whl",
+    "bytes": 276700,
+    "sha256": "af0ba55d1b39498133bf9cd0e022a00850291e4f778edd77213d51ee4b54d008"
+  },
+  "environment": "D:\\WindowsTemp\\mnemos-thinking-wheel-20260917-v1",
+  "runner_sha256": "1059a035a78546b29ec17629fd1ff6ce4f425b6f8cea864f6f76371d756b0d7e",
+  "commands": [
+    {
+      "name": "create_environment",
+      "command": [
+        "C:\\Users\\Ant\\.local\\bin\\uv.exe",
+        "venv",
+        "D:\\WindowsTemp\\mnemos-thinking-wheel-20260917-v1",
+        "--python",
+        "D:\\Development\\mnemos\\mnemos\\.worktrees\\functional-local-memory\\.venv\\Scripts\\python.exe"
+      ],
+      "started_at": "2026-09-17T13:59:54.939030+00:00",
+      "exit_code": 0,
+      "finished_at": "2026-09-17T13:59:54.985663+00:00"
+    },
+    {
+      "name": "install_wheel",
+      "command": [
+        "C:\\Users\\Ant\\.local\\bin\\uv.exe",
+        "pip",
+        "install",
+        "--python",
+        "D:\\WindowsTemp\\mnemos-thinking-wheel-20260917-v1\\Scripts\\python.exe",
+        "mnemos-memory[mcp] @ file:///D:/Development/mnemos/mnemos/.worktrees/functional-local-memory/.venv/thinking-checks-v1/dist/mnemos_memory-0.7.0-py3-none-any.whl"
+      ],
+      "started_at": "2026-09-17T13:59:54.985682+00:00",
+      "exit_code": 0,
+      "finished_at": "2026-09-17T13:59:57.844285+00:00"
+    },
+    {
+      "name": "freeze_environment",
+      "command": [
+        "C:\\Users\\Ant\\.local\\bin\\uv.exe",
+        "pip",
+        "freeze",
+        "--python",
+        "D:\\WindowsTemp\\mnemos-thinking-wheel-20260917-v1\\Scripts\\python.exe"
+      ],
+      "started_at": "2026-09-17T13:59:57.844302+00:00",
+      "exit_code": 0,
+      "finished_at": "2026-09-17T13:59:57.892820+00:00"
+    },
+    {
+      "name": "replay_probe",
+      "command": [
+        "D:\\WindowsTemp\\mnemos-thinking-wheel-20260917-v1\\Scripts\\python.exe",
+        "-I",
+        "D:\\Development\\mnemos\\mnemos\\.worktrees\\functional-local-memory\\.venv\\verify_claude_stop_replay.py",
+        "--snapshot",
+        "D:\\Development\\mnemos\\mnemos\\.worktrees\\functional-local-memory\\.venv\\thinking-frozen-v1",
+        "--commit",
+        "d94ded67a6b3fe6b6f7474a74518d4efb143698e",
+        "--output",
+        "D:\\Development\\mnemos\\mnemos\\.worktrees\\functional-local-memory\\.venv\\thinking-installed-v1\\probe.json",
+        "--installed-package",
+        "D:\\WindowsTemp\\mnemos-thinking-wheel-20260917-v1\\Lib\\site-packages",
+        "--wheel",
+        "D:\\Development\\mnemos\\mnemos\\.worktrees\\functional-local-memory\\.venv\\thinking-checks-v1\\dist\\mnemos_memory-0.7.0-py3-none-any.whl"
+      ],
+      "started_at": "2026-09-17T13:59:57.892842+00:00",
+      "exit_code": 0,
+      "finished_at": "2026-09-17T14:00:04.186610+00:00"
+    }
+  ],
+  "finished_at": "2026-09-17T14:00:04.196578+00:00"
+}

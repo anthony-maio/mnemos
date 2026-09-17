@@ -1,0 +1,50 @@
+{
+  "review_type": "post-run qualitative review against pre-request authored criteria",
+  "heldout": false,
+  "human_acceptance": false,
+  "cases_passed": 7,
+  "cases_total": 8,
+  "frozen_exact_proxy_passed": 4,
+  "observations": [
+    {
+      "case": "preference_with_unrelated_existing_fact",
+      "semantic_criterion_pass": true,
+      "rationale": "The returned preference is a supported paraphrase, with an add operation and the current source ID."
+    },
+    {
+      "case": "preference_without_existing_fact",
+      "semantic_criterion_pass": true,
+      "rationale": "The returned preference is a supported paraphrase, with an add operation and the current source ID."
+    },
+    {
+      "case": "undeployed_requirement_with_unrelated_existing_fact",
+      "semantic_criterion_pass": false,
+      "rationale": "The proposal repeats the stored SQLite statement and cites a source that states a Redis requirement and no deployment. It omits the requirement and does not have current-source support for the returned statement."
+    },
+    {
+      "case": "explicit_cache_correction",
+      "semantic_criterion_pass": true,
+      "rationale": "The explicit replacement is represented as Redis caching, with correct operation, supplied target, current version 1, and current source evidence."
+    },
+    {
+      "case": "question_no_durable_fact",
+      "semantic_criterion_pass": true,
+      "rationale": "The response abstains without proposals; the source does not establish a user preference or completed action."
+    },
+    {
+      "case": "assistant_claim_no_durable_fact",
+      "semantic_criterion_pass": true,
+      "rationale": "The response abstains without proposals; the source does not establish a user preference or completed action."
+    },
+    {
+      "case": "quoted_preference_no_durable_fact",
+      "semantic_criterion_pass": true,
+      "rationale": "The response abstains without proposals; the source does not establish a user preference or completed action."
+    },
+    {
+      "case": "hypothetical_preference_no_durable_fact",
+      "semantic_criterion_pass": true,
+      "rationale": "The response abstains without proposals; the source does not establish a user preference or completed action."
+    }
+  ]
+}
