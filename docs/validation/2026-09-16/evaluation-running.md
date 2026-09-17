@@ -40,9 +40,9 @@ does not establish a reliable speedup or close the recall gate.
 The current coordinator is `.venv/run_thinking_evaluations_v1.py`;
 status and outputs are under `real-model-v4/`, with persistent checkpoints
 under `.venv/real-model-work-v4/`. The queue retains its original source,
-dataset, model-digest, and option bindings. Later embedding-role and
-conflict-collision changes and the concurrent-retrieval repair are not part of
-this run. The latest complete
+dataset, model-digest, and option bindings. Later product changes, including
+embedding roles, conflict collisions, concurrent retrieval, Claude startup,
+and lost capture acknowledgments, are not part of this run. The latest complete
 package checkpoint is separate source `dedfcfd`, with 914 tests passed and
 four skipped, followed by formatting, typing, JavaScript, build, and Twine
 checks. Its fresh installed wheel passed 120 selected contract cases with two

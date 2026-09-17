@@ -1,0 +1,66 @@
+{
+  "archive": "service-lost-ack-regression-v1",
+  "focused_v1": {
+    "result": "35 passed"
+  },
+  "green_v1": {
+    "basetemp": "C:/Users/Ant/AppData/Local/Temp/mnemos-lost-ack-green-v1",
+    "result": "4 passed after the narrow client catch"
+  },
+  "red_v2": {
+    "basetemp": "C:/Users/Ant/AppData/Local/Temp/mnemos-lost-ack-red-v2",
+    "command": ".venv/Scripts/python.exe -m pytest -q tests/test_service_lost_ack.py --basetemp C:/Users/Ant/AppData/Local/Temp/mnemos-lost-ack-red-v2 --junitxml=.venv/lost-ack-red-v2.xml -s",
+    "failure": "httpx.RemoteProtocolError at the simulated committed-response drop"
+  },
+  "runs": {
+    "lost-ack-focused-v1.xml": {
+      "junit": {
+        "errors": "0",
+        "failures": "0",
+        "skipped": "0",
+        "tests": "35",
+        "time": "36.956"
+      },
+      "sha256": "f97b07476ed6f36b450425833e7c5bde1542a3d4e1e5d61cebf0b628f900b195"
+    },
+    "lost-ack-green-v1.xml": {
+      "junit": {
+        "errors": "0",
+        "failures": "0",
+        "skipped": "0",
+        "tests": "4",
+        "time": "8.191"
+      },
+      "sha256": "c0fa7e570651f7ee74c367c78d8c3221c0f74100f3769b679baa03f40f7cd997"
+    },
+    "lost-ack-red-v1.xml": {
+      "junit": {
+        "errors": "0",
+        "failures": "4",
+        "skipped": "0",
+        "tests": "4",
+        "time": "18.696"
+      },
+      "sha256": "71e659776ab9b6d5404866783890d305642cc43b54349d433f20bdafc1a922ad"
+    },
+    "lost-ack-red-v2.xml": {
+      "junit": {
+        "errors": "0",
+        "failures": "4",
+        "skipped": "0",
+        "tests": "4",
+        "time": "4.600"
+      },
+      "sha256": "5652edbdbc69b753c18d3623feb6843ce2fe98771880930b8bb5d397a4893294"
+    }
+  },
+  "source_after": {
+    "commit": "6cde46561c0c42c0d6124d86a09d1e2832542c9d",
+    "role": "client and regression source after the narrow fix"
+  },
+  "source_before": {
+    "commit": "b346f9318e3a8c602736d9422e9223d7a04d8c8c",
+    "role": "client source before the narrow RemoteProtocolError fix"
+  },
+  "test_sha256": "5aff00d3ef6e25ab46d29be3aa2ad26b0dc6f77947fdd8206073ba33a338f2f1"
+}

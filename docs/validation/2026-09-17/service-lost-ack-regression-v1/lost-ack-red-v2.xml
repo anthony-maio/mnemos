@@ -1,0 +1,941 @@
+<?xml version="1.0" encoding="utf-8"?><testsuites name="pytest tests"><testsuite name="pytest" errors="0" failures="4" skipped="0" tests="4" time="4.600" timestamp="2026-09-17T17:40:53.002060-04:00" hostname="Aurora"><testcase classname="tests.test_service_lost_ack" name="test_committed_capture_lost_ack_replays_once_after_restart[extract-one_lost_ack]" time="0.887"><failure message="httpx.RemoteProtocolError: Server disconnected without sending a response.">@contextlib.contextmanager
+    def map_httpcore_exceptions() -&gt; typing.Iterator[None]:
+        global HTTPCORE_EXC_MAP
+        if len(HTTPCORE_EXC_MAP) == 0:
+            HTTPCORE_EXC_MAP = _load_httpcore_exceptions()
+        try:
+&gt;           yield
+
+.venv\Lib\site-packages\httpx\_transports\default.py:101: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+.venv\Lib\site-packages\httpx\_transports\default.py:394: in handle_async_request
+    resp = await self._pool.handle_async_request(req)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+.venv\Lib\site-packages\httpcore\_async\connection_pool.py:256: in handle_async_request
+    raise exc from None
+.venv\Lib\site-packages\httpcore\_async\connection_pool.py:236: in handle_async_request
+    response = await connection.handle_async_request(
+.venv\Lib\site-packages\httpcore\_async\connection.py:103: in handle_async_request
+    return await self._connection.handle_async_request(request)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+.venv\Lib\site-packages\httpcore\_async\http11.py:136: in handle_async_request
+    raise exc
+.venv\Lib\site-packages\httpcore\_async\http11.py:106: in handle_async_request
+    ) = await self._receive_response_headers(**kwargs)
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+.venv\Lib\site-packages\httpcore\_async\http11.py:177: in _receive_response_headers
+    event = await self._receive_event(timeout=timeout)
+            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+self = &lt;AsyncHTTP11Connection ['http://127.0.0.1:54591', CLOSED, Request Count: 1]&gt;
+timeout = 2
+
+    async def _receive_event(
+        self, timeout: float | None = None
+    ) -&gt; h11.Event | type[h11.PAUSED]:
+        while True:
+            with map_exceptions({h11.RemoteProtocolError: RemoteProtocolError}):
+                event = self._h11_state.next_event()
+    
+            if event is h11.NEED_DATA:
+                data = await self._network_stream.read(
+                    self.READ_NUM_BYTES, timeout=timeout
+                )
+    
+                # If we feed this case through h11 we'll raise an exception like:
+                #
+                #     httpcore.RemoteProtocolError: can't handle event type
+                #     ConnectionClosed when role=SERVER and state=SEND_RESPONSE
+                #
+                # Which is accurate, but not very informative from an end-user
+                # perspective. Instead we handle this case distinctly and treat
+                # it as a ConnectError.
+                if data == b"" and self._h11_state.their_state == h11.SEND_RESPONSE:
+                    msg = "Server disconnected without sending a response."
+&gt;                   raise RemoteProtocolError(msg)
+E                   httpcore.RemoteProtocolError: Server disconnected without sending a response.
+
+.venv\Lib\site-packages\httpcore\_async\http11.py:231: RemoteProtocolError
+
+The above exception was the direct cause of the following exception:
+
+tmp_path = WindowsPath('C:/Users/Ant/AppData/Local/Temp/mnemos-lost-ack-red-v2/test_committed_capture_lost_ac0')
+monkeypatch = &lt;_pytest.monkeypatch.MonkeyPatch object at 0x000001A5F7795E00&gt;
+ack_losses = 1, identity_status = 'normal'
+
+    @pytest.mark.asyncio
+    @pytest.mark.parametrize("ack_losses", [1, 2], ids=["one_lost_ack", "two_lost_acks"])
+    @pytest.mark.parametrize(
+        "identity_status", ["normal", "provisional_unassociated"], ids=["extract", "capture_only"]
+    )
+    async def test_committed_capture_lost_ack_replays_once_after_restart(
+        tmp_path: Path,
+        monkeypatch: pytest.MonkeyPatch,
+        ack_losses: int,
+        identity_status: str,
+    ) -&gt; None:
+        project = tmp_path / "project"
+        project.mkdir()
+        registry = ScopeRegistry()
+        registry.register_project(project, user_profile_id="profile-lost-ack", enabled=True)
+        registry_path = tmp_path / "scopes.json"
+        registry.save(registry_path)
+        descriptor = tmp_path / "runtime.json"
+        database = tmp_path / "memory.sqlite"
+        outbox_path = tmp_path / "outbox.json"
+        context = registry.resolve(
+            project,
+            user_profile_id="profile-lost-ack",
+            session_id="session-lost-ack",
+            host="claude-code",
+        )
+        content = f"The {identity_status} lost acknowledgement uses cedar-ack-731."
+        source_ref = "prompt:" + hashlib.sha256(content.encode("utf-8")).hexdigest()
+        event_id = (
+            scoped_event_id(context, source_ref, "user", content)
+            if identity_status == "provisional_unassociated"
+            else "lost-ack-normal-event"
+        )
+        payload = {
+            "identity_version": 2 if identity_status == "provisional_unassociated" else 1,
+            "identity_status": identity_status,
+            "event_id": event_id,
+            "context": context.model_dump(mode="json"),
+            "occurred_at": datetime.now(timezone.utc).isoformat(),
+            "role": "user",
+            "content": content,
+            "source_kind": (
+                "claude_code_transcript"
+                if identity_status == "provisional_unassociated"
+                else "test_capture"
+            ),
+            "source_ref": source_ref,
+        }
+        expected_kind = "capture_only" if identity_status == "provisional_unassociated" else "extract"
+        expected_status = "deferred" if identity_status == "provisional_unassociated" else "pending"
+    
+        def start() -&gt; tuple[MnemosService, SQLiteStore]:
+            current_registry = ScopeRegistry.load(registry_path)
+            store = SQLiteStore(str(database))
+            config = MnemosConfig(
+                modules=ModuleConfig(**{name: False for name in ModuleConfig.model_fields})
+            )
+            engine = MnemosEngine(
+                config=config,
+                llm=UnavailableLLMProvider(),
+                embedder=NoEmbeddingCalls(),
+                store=store,
+                scope_registry=current_registry,
+                require_scope_context=True,
+            )
+            service = MnemosService(
+                dispatcher=LocalMemoryService(engine, current_registry),
+                descriptor_path=descriptor,
+                lock_path=tmp_path / "runtime.lock",
+                startup_timeout=2,
+                dispatch_timeout=3,
+            )
+            service.start()
+            return service, store
+    
+        service: MnemosService | None = None
+        store: SQLiteStore | None = None
+        restarted_service: MnemosService | None = None
+        restarted_store: SQLiteStore | None = None
+        client = MnemosClient(
+            descriptor_path=descriptor,
+            outbox_path=outbox_path,
+            auto_start=False,
+            request_timeout=2,
+        )
+        dropped = 0
+        dispatcher_committed_before_drop = False
+        import mnemos.service as service_module
+    
+        original_write_json = service_module._RequestHandler._write_json
+    
+        def drop_committed_response(handler: Any, status: int, body: Mapping[str, Any]) -&gt; None:
+            nonlocal dropped, dispatcher_committed_before_drop
+            if (
+                dropped &lt; ack_losses
+                and status == 200
+                and (body.get("committed") is True or body.get("status") == "committed")
+            ):
+                dropped += 1
+                dispatcher_committed_before_drop = True
+                raise ConnectionAbortedError("simulated lost acknowledgement")
+            original_write_json(handler, status, body)
+    
+        monkeypatch.setattr(service_module._RequestHandler, "_write_json", drop_committed_response)
+        replay_client: MnemosClient | None = None
+        try:
+            service, store = start()
+&gt;           queued = await client.capture(payload)
+                     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+tests\test_service_lost_ack.py:136: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+mnemos\client.py:420: in capture
+    return await self.request("capture", payload)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+mnemos\client.py:349: in request
+    result = await self._dispatch_http(operation.strip(), data, descriptor)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+mnemos\client.py:294: in _dispatch_http
+    response = await self._http_client.post(url, headers=headers, json=body)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+.venv\Lib\site-packages\httpx\_client.py:1859: in post
+    return await self.request(
+.venv\Lib\site-packages\httpx\_client.py:1540: in request
+    return await self.send(request, auth=auth, follow_redirects=follow_redirects)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+.venv\Lib\site-packages\httpx\_client.py:1629: in send
+    response = await self._send_handling_auth(
+.venv\Lib\site-packages\httpx\_client.py:1657: in _send_handling_auth
+    response = await self._send_handling_redirects(
+.venv\Lib\site-packages\httpx\_client.py:1694: in _send_handling_redirects
+    response = await self._send_single_request(request)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+.venv\Lib\site-packages\httpx\_client.py:1730: in _send_single_request
+    response = await transport.handle_async_request(request)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+.venv\Lib\site-packages\httpx\_transports\default.py:393: in handle_async_request
+    with map_httpcore_exceptions():
+         ^^^^^^^^^^^^^^^^^^^^^^^^^
+C:\Users\Ant\AppData\Roaming\uv\python\cpython-3.13.7-windows-x86_64-none\Lib\contextlib.py:162: in __exit__
+    self.gen.throw(value)
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+    @contextlib.contextmanager
+    def map_httpcore_exceptions() -&gt; typing.Iterator[None]:
+        global HTTPCORE_EXC_MAP
+        if len(HTTPCORE_EXC_MAP) == 0:
+            HTTPCORE_EXC_MAP = _load_httpcore_exceptions()
+        try:
+            yield
+        except Exception as exc:
+            mapped_exc = None
+    
+            for from_exc, to_exc in HTTPCORE_EXC_MAP.items():
+                if not isinstance(exc, from_exc):
+                    continue
+                # We want to map to the most specific exception we can find.
+                # Eg if `exc` is an `httpcore.ReadTimeout`, we want to map to
+                # `httpx.ReadTimeout`, not just `httpx.TimeoutException`.
+                if mapped_exc is None or issubclass(to_exc, mapped_exc):
+                    mapped_exc = to_exc
+    
+            if mapped_exc is None:  # pragma: no cover
+                raise
+    
+            message = str(exc)
+&gt;           raise mapped_exc(message) from exc
+E           httpx.RemoteProtocolError: Server disconnected without sending a response.
+
+.venv\Lib\site-packages\httpx\_transports\default.py:118: RemoteProtocolError</failure></testcase><testcase classname="tests.test_service_lost_ack" name="test_committed_capture_lost_ack_replays_once_after_restart[extract-two_lost_acks]" time="0.840"><failure message="httpx.RemoteProtocolError: Server disconnected without sending a response.">@contextlib.contextmanager
+    def map_httpcore_exceptions() -&gt; typing.Iterator[None]:
+        global HTTPCORE_EXC_MAP
+        if len(HTTPCORE_EXC_MAP) == 0:
+            HTTPCORE_EXC_MAP = _load_httpcore_exceptions()
+        try:
+&gt;           yield
+
+.venv\Lib\site-packages\httpx\_transports\default.py:101: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+.venv\Lib\site-packages\httpx\_transports\default.py:394: in handle_async_request
+    resp = await self._pool.handle_async_request(req)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+.venv\Lib\site-packages\httpcore\_async\connection_pool.py:256: in handle_async_request
+    raise exc from None
+.venv\Lib\site-packages\httpcore\_async\connection_pool.py:236: in handle_async_request
+    response = await connection.handle_async_request(
+.venv\Lib\site-packages\httpcore\_async\connection.py:103: in handle_async_request
+    return await self._connection.handle_async_request(request)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+.venv\Lib\site-packages\httpcore\_async\http11.py:136: in handle_async_request
+    raise exc
+.venv\Lib\site-packages\httpcore\_async\http11.py:106: in handle_async_request
+    ) = await self._receive_response_headers(**kwargs)
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+.venv\Lib\site-packages\httpcore\_async\http11.py:177: in _receive_response_headers
+    event = await self._receive_event(timeout=timeout)
+            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+self = &lt;AsyncHTTP11Connection ['http://127.0.0.1:57425', CLOSED, Request Count: 1]&gt;
+timeout = 2
+
+    async def _receive_event(
+        self, timeout: float | None = None
+    ) -&gt; h11.Event | type[h11.PAUSED]:
+        while True:
+            with map_exceptions({h11.RemoteProtocolError: RemoteProtocolError}):
+                event = self._h11_state.next_event()
+    
+            if event is h11.NEED_DATA:
+                data = await self._network_stream.read(
+                    self.READ_NUM_BYTES, timeout=timeout
+                )
+    
+                # If we feed this case through h11 we'll raise an exception like:
+                #
+                #     httpcore.RemoteProtocolError: can't handle event type
+                #     ConnectionClosed when role=SERVER and state=SEND_RESPONSE
+                #
+                # Which is accurate, but not very informative from an end-user
+                # perspective. Instead we handle this case distinctly and treat
+                # it as a ConnectError.
+                if data == b"" and self._h11_state.their_state == h11.SEND_RESPONSE:
+                    msg = "Server disconnected without sending a response."
+&gt;                   raise RemoteProtocolError(msg)
+E                   httpcore.RemoteProtocolError: Server disconnected without sending a response.
+
+.venv\Lib\site-packages\httpcore\_async\http11.py:231: RemoteProtocolError
+
+The above exception was the direct cause of the following exception:
+
+tmp_path = WindowsPath('C:/Users/Ant/AppData/Local/Temp/mnemos-lost-ack-red-v2/test_committed_capture_lost_ac1')
+monkeypatch = &lt;_pytest.monkeypatch.MonkeyPatch object at 0x000001A5F677B650&gt;
+ack_losses = 2, identity_status = 'normal'
+
+    @pytest.mark.asyncio
+    @pytest.mark.parametrize("ack_losses", [1, 2], ids=["one_lost_ack", "two_lost_acks"])
+    @pytest.mark.parametrize(
+        "identity_status", ["normal", "provisional_unassociated"], ids=["extract", "capture_only"]
+    )
+    async def test_committed_capture_lost_ack_replays_once_after_restart(
+        tmp_path: Path,
+        monkeypatch: pytest.MonkeyPatch,
+        ack_losses: int,
+        identity_status: str,
+    ) -&gt; None:
+        project = tmp_path / "project"
+        project.mkdir()
+        registry = ScopeRegistry()
+        registry.register_project(project, user_profile_id="profile-lost-ack", enabled=True)
+        registry_path = tmp_path / "scopes.json"
+        registry.save(registry_path)
+        descriptor = tmp_path / "runtime.json"
+        database = tmp_path / "memory.sqlite"
+        outbox_path = tmp_path / "outbox.json"
+        context = registry.resolve(
+            project,
+            user_profile_id="profile-lost-ack",
+            session_id="session-lost-ack",
+            host="claude-code",
+        )
+        content = f"The {identity_status} lost acknowledgement uses cedar-ack-731."
+        source_ref = "prompt:" + hashlib.sha256(content.encode("utf-8")).hexdigest()
+        event_id = (
+            scoped_event_id(context, source_ref, "user", content)
+            if identity_status == "provisional_unassociated"
+            else "lost-ack-normal-event"
+        )
+        payload = {
+            "identity_version": 2 if identity_status == "provisional_unassociated" else 1,
+            "identity_status": identity_status,
+            "event_id": event_id,
+            "context": context.model_dump(mode="json"),
+            "occurred_at": datetime.now(timezone.utc).isoformat(),
+            "role": "user",
+            "content": content,
+            "source_kind": (
+                "claude_code_transcript"
+                if identity_status == "provisional_unassociated"
+                else "test_capture"
+            ),
+            "source_ref": source_ref,
+        }
+        expected_kind = "capture_only" if identity_status == "provisional_unassociated" else "extract"
+        expected_status = "deferred" if identity_status == "provisional_unassociated" else "pending"
+    
+        def start() -&gt; tuple[MnemosService, SQLiteStore]:
+            current_registry = ScopeRegistry.load(registry_path)
+            store = SQLiteStore(str(database))
+            config = MnemosConfig(
+                modules=ModuleConfig(**{name: False for name in ModuleConfig.model_fields})
+            )
+            engine = MnemosEngine(
+                config=config,
+                llm=UnavailableLLMProvider(),
+                embedder=NoEmbeddingCalls(),
+                store=store,
+                scope_registry=current_registry,
+                require_scope_context=True,
+            )
+            service = MnemosService(
+                dispatcher=LocalMemoryService(engine, current_registry),
+                descriptor_path=descriptor,
+                lock_path=tmp_path / "runtime.lock",
+                startup_timeout=2,
+                dispatch_timeout=3,
+            )
+            service.start()
+            return service, store
+    
+        service: MnemosService | None = None
+        store: SQLiteStore | None = None
+        restarted_service: MnemosService | None = None
+        restarted_store: SQLiteStore | None = None
+        client = MnemosClient(
+            descriptor_path=descriptor,
+            outbox_path=outbox_path,
+            auto_start=False,
+            request_timeout=2,
+        )
+        dropped = 0
+        dispatcher_committed_before_drop = False
+        import mnemos.service as service_module
+    
+        original_write_json = service_module._RequestHandler._write_json
+    
+        def drop_committed_response(handler: Any, status: int, body: Mapping[str, Any]) -&gt; None:
+            nonlocal dropped, dispatcher_committed_before_drop
+            if (
+                dropped &lt; ack_losses
+                and status == 200
+                and (body.get("committed") is True or body.get("status") == "committed")
+            ):
+                dropped += 1
+                dispatcher_committed_before_drop = True
+                raise ConnectionAbortedError("simulated lost acknowledgement")
+            original_write_json(handler, status, body)
+    
+        monkeypatch.setattr(service_module._RequestHandler, "_write_json", drop_committed_response)
+        replay_client: MnemosClient | None = None
+        try:
+            service, store = start()
+&gt;           queued = await client.capture(payload)
+                     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+tests\test_service_lost_ack.py:136: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+mnemos\client.py:420: in capture
+    return await self.request("capture", payload)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+mnemos\client.py:349: in request
+    result = await self._dispatch_http(operation.strip(), data, descriptor)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+mnemos\client.py:294: in _dispatch_http
+    response = await self._http_client.post(url, headers=headers, json=body)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+.venv\Lib\site-packages\httpx\_client.py:1859: in post
+    return await self.request(
+.venv\Lib\site-packages\httpx\_client.py:1540: in request
+    return await self.send(request, auth=auth, follow_redirects=follow_redirects)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+.venv\Lib\site-packages\httpx\_client.py:1629: in send
+    response = await self._send_handling_auth(
+.venv\Lib\site-packages\httpx\_client.py:1657: in _send_handling_auth
+    response = await self._send_handling_redirects(
+.venv\Lib\site-packages\httpx\_client.py:1694: in _send_handling_redirects
+    response = await self._send_single_request(request)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+.venv\Lib\site-packages\httpx\_client.py:1730: in _send_single_request
+    response = await transport.handle_async_request(request)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+.venv\Lib\site-packages\httpx\_transports\default.py:393: in handle_async_request
+    with map_httpcore_exceptions():
+         ^^^^^^^^^^^^^^^^^^^^^^^^^
+C:\Users\Ant\AppData\Roaming\uv\python\cpython-3.13.7-windows-x86_64-none\Lib\contextlib.py:162: in __exit__
+    self.gen.throw(value)
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+    @contextlib.contextmanager
+    def map_httpcore_exceptions() -&gt; typing.Iterator[None]:
+        global HTTPCORE_EXC_MAP
+        if len(HTTPCORE_EXC_MAP) == 0:
+            HTTPCORE_EXC_MAP = _load_httpcore_exceptions()
+        try:
+            yield
+        except Exception as exc:
+            mapped_exc = None
+    
+            for from_exc, to_exc in HTTPCORE_EXC_MAP.items():
+                if not isinstance(exc, from_exc):
+                    continue
+                # We want to map to the most specific exception we can find.
+                # Eg if `exc` is an `httpcore.ReadTimeout`, we want to map to
+                # `httpx.ReadTimeout`, not just `httpx.TimeoutException`.
+                if mapped_exc is None or issubclass(to_exc, mapped_exc):
+                    mapped_exc = to_exc
+    
+            if mapped_exc is None:  # pragma: no cover
+                raise
+    
+            message = str(exc)
+&gt;           raise mapped_exc(message) from exc
+E           httpx.RemoteProtocolError: Server disconnected without sending a response.
+
+.venv\Lib\site-packages\httpx\_transports\default.py:118: RemoteProtocolError</failure></testcase><testcase classname="tests.test_service_lost_ack" name="test_committed_capture_lost_ack_replays_once_after_restart[capture_only-one_lost_ack]" time="0.881"><failure message="httpx.RemoteProtocolError: Server disconnected without sending a response.">@contextlib.contextmanager
+    def map_httpcore_exceptions() -&gt; typing.Iterator[None]:
+        global HTTPCORE_EXC_MAP
+        if len(HTTPCORE_EXC_MAP) == 0:
+            HTTPCORE_EXC_MAP = _load_httpcore_exceptions()
+        try:
+&gt;           yield
+
+.venv\Lib\site-packages\httpx\_transports\default.py:101: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+.venv\Lib\site-packages\httpx\_transports\default.py:394: in handle_async_request
+    resp = await self._pool.handle_async_request(req)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+.venv\Lib\site-packages\httpcore\_async\connection_pool.py:256: in handle_async_request
+    raise exc from None
+.venv\Lib\site-packages\httpcore\_async\connection_pool.py:236: in handle_async_request
+    response = await connection.handle_async_request(
+.venv\Lib\site-packages\httpcore\_async\connection.py:103: in handle_async_request
+    return await self._connection.handle_async_request(request)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+.venv\Lib\site-packages\httpcore\_async\http11.py:136: in handle_async_request
+    raise exc
+.venv\Lib\site-packages\httpcore\_async\http11.py:106: in handle_async_request
+    ) = await self._receive_response_headers(**kwargs)
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+.venv\Lib\site-packages\httpcore\_async\http11.py:177: in _receive_response_headers
+    event = await self._receive_event(timeout=timeout)
+            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+self = &lt;AsyncHTTP11Connection ['http://127.0.0.1:57432', CLOSED, Request Count: 1]&gt;
+timeout = 2
+
+    async def _receive_event(
+        self, timeout: float | None = None
+    ) -&gt; h11.Event | type[h11.PAUSED]:
+        while True:
+            with map_exceptions({h11.RemoteProtocolError: RemoteProtocolError}):
+                event = self._h11_state.next_event()
+    
+            if event is h11.NEED_DATA:
+                data = await self._network_stream.read(
+                    self.READ_NUM_BYTES, timeout=timeout
+                )
+    
+                # If we feed this case through h11 we'll raise an exception like:
+                #
+                #     httpcore.RemoteProtocolError: can't handle event type
+                #     ConnectionClosed when role=SERVER and state=SEND_RESPONSE
+                #
+                # Which is accurate, but not very informative from an end-user
+                # perspective. Instead we handle this case distinctly and treat
+                # it as a ConnectError.
+                if data == b"" and self._h11_state.their_state == h11.SEND_RESPONSE:
+                    msg = "Server disconnected without sending a response."
+&gt;                   raise RemoteProtocolError(msg)
+E                   httpcore.RemoteProtocolError: Server disconnected without sending a response.
+
+.venv\Lib\site-packages\httpcore\_async\http11.py:231: RemoteProtocolError
+
+The above exception was the direct cause of the following exception:
+
+tmp_path = WindowsPath('C:/Users/Ant/AppData/Local/Temp/mnemos-lost-ack-red-v2/test_committed_capture_lost_ac2')
+monkeypatch = &lt;_pytest.monkeypatch.MonkeyPatch object at 0x000001A5F7C16BE0&gt;
+ack_losses = 1, identity_status = 'provisional_unassociated'
+
+    @pytest.mark.asyncio
+    @pytest.mark.parametrize("ack_losses", [1, 2], ids=["one_lost_ack", "two_lost_acks"])
+    @pytest.mark.parametrize(
+        "identity_status", ["normal", "provisional_unassociated"], ids=["extract", "capture_only"]
+    )
+    async def test_committed_capture_lost_ack_replays_once_after_restart(
+        tmp_path: Path,
+        monkeypatch: pytest.MonkeyPatch,
+        ack_losses: int,
+        identity_status: str,
+    ) -&gt; None:
+        project = tmp_path / "project"
+        project.mkdir()
+        registry = ScopeRegistry()
+        registry.register_project(project, user_profile_id="profile-lost-ack", enabled=True)
+        registry_path = tmp_path / "scopes.json"
+        registry.save(registry_path)
+        descriptor = tmp_path / "runtime.json"
+        database = tmp_path / "memory.sqlite"
+        outbox_path = tmp_path / "outbox.json"
+        context = registry.resolve(
+            project,
+            user_profile_id="profile-lost-ack",
+            session_id="session-lost-ack",
+            host="claude-code",
+        )
+        content = f"The {identity_status} lost acknowledgement uses cedar-ack-731."
+        source_ref = "prompt:" + hashlib.sha256(content.encode("utf-8")).hexdigest()
+        event_id = (
+            scoped_event_id(context, source_ref, "user", content)
+            if identity_status == "provisional_unassociated"
+            else "lost-ack-normal-event"
+        )
+        payload = {
+            "identity_version": 2 if identity_status == "provisional_unassociated" else 1,
+            "identity_status": identity_status,
+            "event_id": event_id,
+            "context": context.model_dump(mode="json"),
+            "occurred_at": datetime.now(timezone.utc).isoformat(),
+            "role": "user",
+            "content": content,
+            "source_kind": (
+                "claude_code_transcript"
+                if identity_status == "provisional_unassociated"
+                else "test_capture"
+            ),
+            "source_ref": source_ref,
+        }
+        expected_kind = "capture_only" if identity_status == "provisional_unassociated" else "extract"
+        expected_status = "deferred" if identity_status == "provisional_unassociated" else "pending"
+    
+        def start() -&gt; tuple[MnemosService, SQLiteStore]:
+            current_registry = ScopeRegistry.load(registry_path)
+            store = SQLiteStore(str(database))
+            config = MnemosConfig(
+                modules=ModuleConfig(**{name: False for name in ModuleConfig.model_fields})
+            )
+            engine = MnemosEngine(
+                config=config,
+                llm=UnavailableLLMProvider(),
+                embedder=NoEmbeddingCalls(),
+                store=store,
+                scope_registry=current_registry,
+                require_scope_context=True,
+            )
+            service = MnemosService(
+                dispatcher=LocalMemoryService(engine, current_registry),
+                descriptor_path=descriptor,
+                lock_path=tmp_path / "runtime.lock",
+                startup_timeout=2,
+                dispatch_timeout=3,
+            )
+            service.start()
+            return service, store
+    
+        service: MnemosService | None = None
+        store: SQLiteStore | None = None
+        restarted_service: MnemosService | None = None
+        restarted_store: SQLiteStore | None = None
+        client = MnemosClient(
+            descriptor_path=descriptor,
+            outbox_path=outbox_path,
+            auto_start=False,
+            request_timeout=2,
+        )
+        dropped = 0
+        dispatcher_committed_before_drop = False
+        import mnemos.service as service_module
+    
+        original_write_json = service_module._RequestHandler._write_json
+    
+        def drop_committed_response(handler: Any, status: int, body: Mapping[str, Any]) -&gt; None:
+            nonlocal dropped, dispatcher_committed_before_drop
+            if (
+                dropped &lt; ack_losses
+                and status == 200
+                and (body.get("committed") is True or body.get("status") == "committed")
+            ):
+                dropped += 1
+                dispatcher_committed_before_drop = True
+                raise ConnectionAbortedError("simulated lost acknowledgement")
+            original_write_json(handler, status, body)
+    
+        monkeypatch.setattr(service_module._RequestHandler, "_write_json", drop_committed_response)
+        replay_client: MnemosClient | None = None
+        try:
+            service, store = start()
+&gt;           queued = await client.capture(payload)
+                     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+tests\test_service_lost_ack.py:136: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+mnemos\client.py:420: in capture
+    return await self.request("capture", payload)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+mnemos\client.py:349: in request
+    result = await self._dispatch_http(operation.strip(), data, descriptor)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+mnemos\client.py:294: in _dispatch_http
+    response = await self._http_client.post(url, headers=headers, json=body)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+.venv\Lib\site-packages\httpx\_client.py:1859: in post
+    return await self.request(
+.venv\Lib\site-packages\httpx\_client.py:1540: in request
+    return await self.send(request, auth=auth, follow_redirects=follow_redirects)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+.venv\Lib\site-packages\httpx\_client.py:1629: in send
+    response = await self._send_handling_auth(
+.venv\Lib\site-packages\httpx\_client.py:1657: in _send_handling_auth
+    response = await self._send_handling_redirects(
+.venv\Lib\site-packages\httpx\_client.py:1694: in _send_handling_redirects
+    response = await self._send_single_request(request)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+.venv\Lib\site-packages\httpx\_client.py:1730: in _send_single_request
+    response = await transport.handle_async_request(request)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+.venv\Lib\site-packages\httpx\_transports\default.py:393: in handle_async_request
+    with map_httpcore_exceptions():
+         ^^^^^^^^^^^^^^^^^^^^^^^^^
+C:\Users\Ant\AppData\Roaming\uv\python\cpython-3.13.7-windows-x86_64-none\Lib\contextlib.py:162: in __exit__
+    self.gen.throw(value)
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+    @contextlib.contextmanager
+    def map_httpcore_exceptions() -&gt; typing.Iterator[None]:
+        global HTTPCORE_EXC_MAP
+        if len(HTTPCORE_EXC_MAP) == 0:
+            HTTPCORE_EXC_MAP = _load_httpcore_exceptions()
+        try:
+            yield
+        except Exception as exc:
+            mapped_exc = None
+    
+            for from_exc, to_exc in HTTPCORE_EXC_MAP.items():
+                if not isinstance(exc, from_exc):
+                    continue
+                # We want to map to the most specific exception we can find.
+                # Eg if `exc` is an `httpcore.ReadTimeout`, we want to map to
+                # `httpx.ReadTimeout`, not just `httpx.TimeoutException`.
+                if mapped_exc is None or issubclass(to_exc, mapped_exc):
+                    mapped_exc = to_exc
+    
+            if mapped_exc is None:  # pragma: no cover
+                raise
+    
+            message = str(exc)
+&gt;           raise mapped_exc(message) from exc
+E           httpx.RemoteProtocolError: Server disconnected without sending a response.
+
+.venv\Lib\site-packages\httpx\_transports\default.py:118: RemoteProtocolError</failure></testcase><testcase classname="tests.test_service_lost_ack" name="test_committed_capture_lost_ack_replays_once_after_restart[capture_only-two_lost_acks]" time="1.063"><failure message="httpx.RemoteProtocolError: Server disconnected without sending a response.">@contextlib.contextmanager
+    def map_httpcore_exceptions() -&gt; typing.Iterator[None]:
+        global HTTPCORE_EXC_MAP
+        if len(HTTPCORE_EXC_MAP) == 0:
+            HTTPCORE_EXC_MAP = _load_httpcore_exceptions()
+        try:
+&gt;           yield
+
+.venv\Lib\site-packages\httpx\_transports\default.py:101: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+.venv\Lib\site-packages\httpx\_transports\default.py:394: in handle_async_request
+    resp = await self._pool.handle_async_request(req)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+.venv\Lib\site-packages\httpcore\_async\connection_pool.py:256: in handle_async_request
+    raise exc from None
+.venv\Lib\site-packages\httpcore\_async\connection_pool.py:236: in handle_async_request
+    response = await connection.handle_async_request(
+.venv\Lib\site-packages\httpcore\_async\connection.py:103: in handle_async_request
+    return await self._connection.handle_async_request(request)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+.venv\Lib\site-packages\httpcore\_async\http11.py:136: in handle_async_request
+    raise exc
+.venv\Lib\site-packages\httpcore\_async\http11.py:106: in handle_async_request
+    ) = await self._receive_response_headers(**kwargs)
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+.venv\Lib\site-packages\httpcore\_async\http11.py:177: in _receive_response_headers
+    event = await self._receive_event(timeout=timeout)
+            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+self = &lt;AsyncHTTP11Connection ['http://127.0.0.1:57440', CLOSED, Request Count: 1]&gt;
+timeout = 2
+
+    async def _receive_event(
+        self, timeout: float | None = None
+    ) -&gt; h11.Event | type[h11.PAUSED]:
+        while True:
+            with map_exceptions({h11.RemoteProtocolError: RemoteProtocolError}):
+                event = self._h11_state.next_event()
+    
+            if event is h11.NEED_DATA:
+                data = await self._network_stream.read(
+                    self.READ_NUM_BYTES, timeout=timeout
+                )
+    
+                # If we feed this case through h11 we'll raise an exception like:
+                #
+                #     httpcore.RemoteProtocolError: can't handle event type
+                #     ConnectionClosed when role=SERVER and state=SEND_RESPONSE
+                #
+                # Which is accurate, but not very informative from an end-user
+                # perspective. Instead we handle this case distinctly and treat
+                # it as a ConnectError.
+                if data == b"" and self._h11_state.their_state == h11.SEND_RESPONSE:
+                    msg = "Server disconnected without sending a response."
+&gt;                   raise RemoteProtocolError(msg)
+E                   httpcore.RemoteProtocolError: Server disconnected without sending a response.
+
+.venv\Lib\site-packages\httpcore\_async\http11.py:231: RemoteProtocolError
+
+The above exception was the direct cause of the following exception:
+
+tmp_path = WindowsPath('C:/Users/Ant/AppData/Local/Temp/mnemos-lost-ack-red-v2/test_committed_capture_lost_ac3')
+monkeypatch = &lt;_pytest.monkeypatch.MonkeyPatch object at 0x000001A5F7C33050&gt;
+ack_losses = 2, identity_status = 'provisional_unassociated'
+
+    @pytest.mark.asyncio
+    @pytest.mark.parametrize("ack_losses", [1, 2], ids=["one_lost_ack", "two_lost_acks"])
+    @pytest.mark.parametrize(
+        "identity_status", ["normal", "provisional_unassociated"], ids=["extract", "capture_only"]
+    )
+    async def test_committed_capture_lost_ack_replays_once_after_restart(
+        tmp_path: Path,
+        monkeypatch: pytest.MonkeyPatch,
+        ack_losses: int,
+        identity_status: str,
+    ) -&gt; None:
+        project = tmp_path / "project"
+        project.mkdir()
+        registry = ScopeRegistry()
+        registry.register_project(project, user_profile_id="profile-lost-ack", enabled=True)
+        registry_path = tmp_path / "scopes.json"
+        registry.save(registry_path)
+        descriptor = tmp_path / "runtime.json"
+        database = tmp_path / "memory.sqlite"
+        outbox_path = tmp_path / "outbox.json"
+        context = registry.resolve(
+            project,
+            user_profile_id="profile-lost-ack",
+            session_id="session-lost-ack",
+            host="claude-code",
+        )
+        content = f"The {identity_status} lost acknowledgement uses cedar-ack-731."
+        source_ref = "prompt:" + hashlib.sha256(content.encode("utf-8")).hexdigest()
+        event_id = (
+            scoped_event_id(context, source_ref, "user", content)
+            if identity_status == "provisional_unassociated"
+            else "lost-ack-normal-event"
+        )
+        payload = {
+            "identity_version": 2 if identity_status == "provisional_unassociated" else 1,
+            "identity_status": identity_status,
+            "event_id": event_id,
+            "context": context.model_dump(mode="json"),
+            "occurred_at": datetime.now(timezone.utc).isoformat(),
+            "role": "user",
+            "content": content,
+            "source_kind": (
+                "claude_code_transcript"
+                if identity_status == "provisional_unassociated"
+                else "test_capture"
+            ),
+            "source_ref": source_ref,
+        }
+        expected_kind = "capture_only" if identity_status == "provisional_unassociated" else "extract"
+        expected_status = "deferred" if identity_status == "provisional_unassociated" else "pending"
+    
+        def start() -&gt; tuple[MnemosService, SQLiteStore]:
+            current_registry = ScopeRegistry.load(registry_path)
+            store = SQLiteStore(str(database))
+            config = MnemosConfig(
+                modules=ModuleConfig(**{name: False for name in ModuleConfig.model_fields})
+            )
+            engine = MnemosEngine(
+                config=config,
+                llm=UnavailableLLMProvider(),
+                embedder=NoEmbeddingCalls(),
+                store=store,
+                scope_registry=current_registry,
+                require_scope_context=True,
+            )
+            service = MnemosService(
+                dispatcher=LocalMemoryService(engine, current_registry),
+                descriptor_path=descriptor,
+                lock_path=tmp_path / "runtime.lock",
+                startup_timeout=2,
+                dispatch_timeout=3,
+            )
+            service.start()
+            return service, store
+    
+        service: MnemosService | None = None
+        store: SQLiteStore | None = None
+        restarted_service: MnemosService | None = None
+        restarted_store: SQLiteStore | None = None
+        client = MnemosClient(
+            descriptor_path=descriptor,
+            outbox_path=outbox_path,
+            auto_start=False,
+            request_timeout=2,
+        )
+        dropped = 0
+        dispatcher_committed_before_drop = False
+        import mnemos.service as service_module
+    
+        original_write_json = service_module._RequestHandler._write_json
+    
+        def drop_committed_response(handler: Any, status: int, body: Mapping[str, Any]) -&gt; None:
+            nonlocal dropped, dispatcher_committed_before_drop
+            if (
+                dropped &lt; ack_losses
+                and status == 200
+                and (body.get("committed") is True or body.get("status") == "committed")
+            ):
+                dropped += 1
+                dispatcher_committed_before_drop = True
+                raise ConnectionAbortedError("simulated lost acknowledgement")
+            original_write_json(handler, status, body)
+    
+        monkeypatch.setattr(service_module._RequestHandler, "_write_json", drop_committed_response)
+        replay_client: MnemosClient | None = None
+        try:
+            service, store = start()
+&gt;           queued = await client.capture(payload)
+                     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+tests\test_service_lost_ack.py:136: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+mnemos\client.py:420: in capture
+    return await self.request("capture", payload)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+mnemos\client.py:349: in request
+    result = await self._dispatch_http(operation.strip(), data, descriptor)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+mnemos\client.py:294: in _dispatch_http
+    response = await self._http_client.post(url, headers=headers, json=body)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+.venv\Lib\site-packages\httpx\_client.py:1859: in post
+    return await self.request(
+.venv\Lib\site-packages\httpx\_client.py:1540: in request
+    return await self.send(request, auth=auth, follow_redirects=follow_redirects)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+.venv\Lib\site-packages\httpx\_client.py:1629: in send
+    response = await self._send_handling_auth(
+.venv\Lib\site-packages\httpx\_client.py:1657: in _send_handling_auth
+    response = await self._send_handling_redirects(
+.venv\Lib\site-packages\httpx\_client.py:1694: in _send_handling_redirects
+    response = await self._send_single_request(request)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+.venv\Lib\site-packages\httpx\_client.py:1730: in _send_single_request
+    response = await transport.handle_async_request(request)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+.venv\Lib\site-packages\httpx\_transports\default.py:393: in handle_async_request
+    with map_httpcore_exceptions():
+         ^^^^^^^^^^^^^^^^^^^^^^^^^
+C:\Users\Ant\AppData\Roaming\uv\python\cpython-3.13.7-windows-x86_64-none\Lib\contextlib.py:162: in __exit__
+    self.gen.throw(value)
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+    @contextlib.contextmanager
+    def map_httpcore_exceptions() -&gt; typing.Iterator[None]:
+        global HTTPCORE_EXC_MAP
+        if len(HTTPCORE_EXC_MAP) == 0:
+            HTTPCORE_EXC_MAP = _load_httpcore_exceptions()
+        try:
+            yield
+        except Exception as exc:
+            mapped_exc = None
+    
+            for from_exc, to_exc in HTTPCORE_EXC_MAP.items():
+                if not isinstance(exc, from_exc):
+                    continue
+                # We want to map to the most specific exception we can find.
+                # Eg if `exc` is an `httpcore.ReadTimeout`, we want to map to
+                # `httpx.ReadTimeout`, not just `httpx.TimeoutException`.
+                if mapped_exc is None or issubclass(to_exc, mapped_exc):
+                    mapped_exc = to_exc
+    
+            if mapped_exc is None:  # pragma: no cover
+                raise
+    
+            message = str(exc)
+&gt;           raise mapped_exc(message) from exc
+E           httpx.RemoteProtocolError: Server disconnected without sending a response.
+
+.venv\Lib\site-packages\httpx\_transports\default.py:118: RemoteProtocolError</failure></testcase></testsuite></testsuites>

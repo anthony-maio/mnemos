@@ -1,0 +1,114 @@
+"""Trace one unchanged startup regression in its frozen source checkout."""
+
+from __future__ import annotations
+
+from datetime import datetime, timezone
+import hashlib
+import json
+import os
+from pathlib import Path
+import subprocess
+import sys
+import time
+
+SNAPSHOT = Path("C:/Users/Ant/AppData/Local/Temp/mnemos-source-lost-ack-v1")
+OUTPUT = Path("C:/Users/Ant/AppData/Local/Temp/mnemos-service-startup-trace-v1")
+FIXTURES = Path("C:/Users/Ant/AppData/Local/Temp/mnemos-service-startup-fixtures-v1")
+COMMIT = "6cde46561c0c42c0d6124d86a09d1e2832542c9d"
+NODE = "tests/test_service_observability.py::test_autostarted_service_logs_real_retrieval_without_console"
+
+
+def sha(path: Path) -> str:
+    return hashlib.sha256(path.read_bytes()).hexdigest()
+
+
+assert (
+    subprocess.check_output(["git", "-C", str(SNAPSHOT), "rev-parse", "HEAD"], text=True).strip()
+    == COMMIT
+)
+assert not subprocess.check_output(
+    ["git", "-C", str(SNAPSHOT), "status", "--porcelain"], text=True
+).strip()
+OUTPUT.mkdir(exist_ok=False)
+FIXTURES.mkdir(exist_ok=False)
+for key in list(os.environ):
+    if key.startswith("MNEMOS_") or key == "PYTHONPATH":
+        del os.environ[key]
+for key in ("TEMP", "TMP", "TMPDIR"):
+    os.environ[key] = str(FIXTURES)
+os.chdir(SNAPSHOT)
+sys.path.insert(0, str(SNAPSHOT))
+import mnemos
+import pytest
+from mnemos.client import MnemosClient
+
+assert Path(mnemos.__file__).resolve() == SNAPSHOT / "mnemos/__init__.py"
+record = {
+    "source_commit": COMMIT,
+    "snapshot": str(SNAPSHOT),
+    "runner_sha256": sha(Path(__file__)),
+    "python": sys.executable,
+    "imported_mnemos": str(mnemos.__file__),
+    "started_at": datetime.now(timezone.utc).isoformat(),
+    "source_hashes": {
+        p: sha(SNAPSHOT / p)
+        for p in ("mnemos/client.py", "mnemos/service.py", "tests/test_service_observability.py")
+    },
+    "node": NODE,
+    "fixture_root": str(FIXTURES),
+    "startup_timeout_unchanged": 10,
+    "calls": [],
+    "limitations": "One isolated instrumented rerun; not a cause attribution or a replacement for the failed full suite.",
+}
+original = MnemosClient.request
+
+
+async def traced(self, operation, payload=None, **kwargs):
+    start = time.perf_counter()
+    entry = {"operation": operation, "started_at": datetime.now(timezone.utc).isoformat()}
+    try:
+        result = await original(self, operation, payload, **kwargs)
+        entry["result"] = {
+            key: result[key]
+            for key in ("status", "committed", "degraded", "error")
+            if key in result
+        }
+        return result
+    except BaseException as exc:
+        entry["exception_type"] = type(exc).__name__
+        raise
+    finally:
+        entry.update(
+            {
+                "elapsed_ms": round((time.perf_counter() - start) * 1000, 3),
+                "descriptor_exists": self.descriptor_path.exists(),
+                "service_log_exists": self.descriptor_path.with_name("service.log").exists(),
+                "child_pid": self._child.pid if self._child is not None else None,
+                "child_returncode": self._child.poll() if self._child is not None else None,
+            }
+        )
+        record["calls"].append(entry)
+
+
+MnemosClient.request = traced
+try:
+    record["exit_code"] = int(
+        pytest.main(
+            [
+                NODE,
+                "-q",
+                "--basetemp",
+                str(FIXTURES / "pytest"),
+                "--junitxml",
+                str(OUTPUT / "pytest.xml"),
+            ]
+        )
+    )
+finally:
+    MnemosClient.request = original
+    record["finished_at"] = datetime.now(timezone.utc).isoformat()
+    record["source_hashes_after"] = {p: sha(SNAPSHOT / p) for p in record["source_hashes"]}
+    assert record["source_hashes"] == record["source_hashes_after"]
+    record["status"] = "passed" if record.get("exit_code") == 0 else "failed"
+    (OUTPUT / "report.json").write_text(json.dumps(record, indent=2) + "\n", encoding="utf-8")
+raise SystemExit(record["exit_code"])

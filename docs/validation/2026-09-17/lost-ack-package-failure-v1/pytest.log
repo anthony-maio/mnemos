@@ -1,0 +1,65 @@
+..................................................ss.................... [  7%]
+........................................................................ [ 15%]
+........................................................................ [ 23%]
+........................................................................ [ 31%]
+........................................................................ [ 39%]
+.................................................ss..................... [ 46%]
+........................................................................ [ 54%]
+........................................................................ [ 62%]
+........................................................................ [ 70%]
+........................................................................ [ 78%]
+........................................................................ [ 85%]
+........F............................................................... [ 93%]
+..........................................................               [100%]
+================================== FAILURES ===================================
+________ test_autostarted_service_logs_real_retrieval_without_console _________
+
+tmp_path = WindowsPath('C:/Users/Ant/AppData/Local/Temp/mnemos-check-fixtures-lost-ack-v1/pytest/test_autostarted_service_logs_0')
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x00000199314687C0>
+
+    @pytest.mark.asyncio
+    async def test_autostarted_service_logs_real_retrieval_without_console(
+        tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
+        for key in list(os.environ):
+            if key.startswith("MNEMOS_"):
+                monkeypatch.delenv(key)
+        project = tmp_path / "project"
+        project.mkdir()
+        registry = ScopeRegistry()
+        registry.register_project(project, user_profile_id="log-fixture", enabled=True)
+        registry_path = tmp_path / "scopes.json"
+        registry.save(registry_path)
+        context = registry.resolve(
+            project, user_profile_id="log-fixture", session_id="log-session", host="manual"
+        ).model_dump(mode="json")
+        config = tmp_path / "config.toml"
+        config.write_text(
+            '[embedding]\nprovider = "simple"\ndim = 64\n'
+            "[modules]\nsurprisal = false\nmutable_rag = false\n"
+            "affective = false\nsleep = false\nspreading = false\n",
+            encoding="utf-8",
+        )
+        for key, value in {
+            "MNEMOS_CONFIG_PATH": str(config),
+            "MNEMOS_SQLITE_PATH": str(tmp_path / "memory.sqlite"),
+            "MNEMOS_STORE_TYPE": "sqlite",
+            "MNEMOS_SCOPE_REGISTRY": str(registry_path),
+            "MNEMOS_RUNTIME_DIR": str(tmp_path / "runtime"),
+        }.items():
+            monkeypatch.setenv(key, value)
+        descriptor = tmp_path / "runtime" / "descriptor.json"
+        client = MnemosClient(descriptor_path=descriptor, startup_timeout=10)
+        content = "The project logging fixture uses cobalt notebooks."
+        try:
+            health = await client.request("health", {})
+>           assert health["status"] == "running"
+E           AssertionError: assert 'degraded' == 'running'
+E             
+E             - running
+E             + degraded
+
+tests\test_service_observability.py:344: AssertionError
+=========================== short test summary info ===========================
+FAILED tests/test_service_observability.py::test_autostarted_service_logs_real_retrieval_without_console
+1 failed, 917 passed, 4 skipped in 178.34s (0:02:58)

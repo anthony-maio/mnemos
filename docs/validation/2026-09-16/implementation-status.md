@@ -23,6 +23,22 @@ using an older wheel with a manifest overlay, passed nine startup/routing
 criteria. See the
 [startup control](../2026-09-17/native-claude-alwaysload-v2/README.md).
 
+Source `6cde465` adds capture recovery when the service commits an event but
+loses its HTTP response. The client now handles `httpx.RemoteProtocolError`
+through the existing durable outbox path. Four injected HTTP/SQLite cases
+failed before the repair and passed afterward; 35 related service cases pass.
+Full source and installed-package verification are separate from the complete
+checkpoint above. See the [lost-acknowledgment regression](../2026-09-17/service-lost-ack-regression-v1/README.md).
+
+The first full run of `6cde465` stopped with 917 passed, four skipped, and one
+failed service auto-start check. Its initial health response was `degraded`;
+the preserved fixture had no runtime directory or service log at inspection.
+The unchanged isolated test subsequently passed, with health returning in
+952.09 ms under the original ten-second startup limit. This does not establish
+the cause of the full-run failure. Both the [failed checkpoint](../2026-09-17/lost-ack-package-failure-v1/README.md)
+and [isolated diagnostic](../2026-09-17/lost-ack-startup-diagnostic-v1/README.md)
+remain separate evidence.
+
 An earlier full-suite attempt at `e1fd56e` finished with 897 passed, one failed,
 and four skipped. A list response in the synthetic Codex continuity fixture
 lacked `facts`; its cause is under investigation. The runner stopped before
