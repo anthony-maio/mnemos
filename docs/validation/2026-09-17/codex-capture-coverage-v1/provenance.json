@@ -1,0 +1,23 @@
+{
+  "before_commit": "58218f06ee608a2088796d0c79ce932995130d69",
+  "after_adapter_sha256": "45cbba1115a54732beaebef0e3bdef782da1b5b7e59a7ab739b2b001b2fd4d21",
+  "counts": {
+    "red": {
+      "tests": 10,
+      "failures": 9,
+      "errors": 0,
+      "skipped": 0
+    },
+    "green": {
+      "tests": 52,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 2
+    }
+  },
+  "commands": {
+    "red": "python -m pytest tests/test_codex_capture_coverage.py -q",
+    "green": "python -m pytest tests/test_codex_capture_coverage.py tests/test_codex_adapter.py tests/test_hosts.py -q"
+  },
+  "scope": "adapter reporting and hook diagnostics, not native host capture acceptance"
+}

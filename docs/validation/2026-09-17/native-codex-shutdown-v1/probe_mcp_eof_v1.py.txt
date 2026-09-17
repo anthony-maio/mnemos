@@ -1,0 +1,71 @@
+"""Measure installed MCP shutdown after initialized stdio EOF, without inference."""
+import hashlib
+import json
+import os
+from pathlib import Path
+import queue
+import subprocess
+import threading
+import time
+
+fixture = Path('C:/Users/Ant/AppData/Local/Temp/mnemos-codex-interactive-lpn39it5')
+python = Path('C:/Users/Ant/AppData/Local/Temp/mnemos-installed-scope-arguments-v1/Scripts/python.exe')
+out = Path('C:/Users/Ant/AppData/Local/Temp/mnemos-mcp-eof-v1.json')
+assert not out.exists()
+env = {k: v for k, v in os.environ.items() if not k.startswith('MNEMOS_') and k not in ('PYTHONPATH', 'PYTHONHOME')}
+env.update(PYTHONSAFEPATH='1', MNEMOS_SCOPE_REGISTRY=str(fixture/'scopes.json'),
+           MNEMOS_USER_PROFILE_ID='native-codex-interactive-v2',
+           MNEMOS_CONFIG_PATH=str(fixture/'settings.toml'),
+           MNEMOS_PROJECT_ROOT=str(fixture/'project'), MNEMOS_HOST='codex',
+           MNEMOS_SESSION_ID='eof-probe', MNEMOS_AUTO_START='false',
+           MNEMOS_RUNTIME_DESCRIPTOR=str(fixture/'runtime.json'))
+process = subprocess.Popen([str(python), '-m', 'mnemos.mcp_server'], cwd=fixture/'project',
+                           env=env, stdin=subprocess.PIPE, stdout=subprocess.PIPE,
+                           stderr=subprocess.PIPE, creationflags=subprocess.CREATE_NO_WINDOW)
+lines = queue.Queue()
+errors = []
+def read_stdout():
+    for line in process.stdout:
+        lines.put(line)
+def read_stderr():
+    errors.extend(process.stderr.readlines())
+threads = [threading.Thread(target=read_stdout, daemon=True), threading.Thread(target=read_stderr, daemon=True)]
+for thread in threads:
+    thread.start()
+report = {'source_commit': '30eaf4209bc6921b8a4a30f35ecd86fb68e1aae3',
+          'wheel_sha256':'642cded3d32b486b73e781fb28b179a79394580e7b5570107b98db27a280e0af',
+          'python':str(python),'pid':process.pid,'initialized':False,'eof_exit':False,
+          'service_descriptor_absent_before':not (fixture/'runtime.json').exists(),
+          'scope':'installed MCP initialize and EOF only; no service calls or model inference'}
+try:
+    message = {'jsonrpc':'2.0','id':1,'method':'initialize','params':{'protocolVersion':'2025-03-26','capabilities':{},'clientInfo':{'name':'mnemos-eof-probe','version':'1'}}}
+    process.stdin.write((json.dumps(message)+'\n').encode())
+    process.stdin.flush()
+    response = json.loads(lines.get(timeout=10))
+    assert response['id'] == 1 and 'result' in response and 'error' not in response
+    report['initialized'] = True
+    report['server_info'] = response['result']['serverInfo']
+    process.stdin.write(b'{"jsonrpc":"2.0","method":"notifications/initialized"}\n')
+    process.stdin.flush()
+    start = time.monotonic()
+    process.stdin.close()
+    report['returncode'] = process.wait(timeout=5)
+    report['eof_elapsed_ms'] = round((time.monotonic()-start)*1000,3)
+    report['eof_exit'] = True
+except Exception as exc:
+    report['error_type'] = type(exc).__name__
+finally:
+    if process.poll() is None:
+        process.kill()
+        process.wait(timeout=5)
+    for thread in threads:
+        thread.join(timeout=2)
+    stderr = b''.join(errors)
+    report['stderr_bytes'] = len(stderr)
+    report['stderr_sha256'] = hashlib.sha256(stderr).hexdigest()
+    report['process_terminal'] = process.poll() is not None
+    report['service_descriptor_absent_after'] = not (fixture/'runtime.json').exists()
+    report['runner_sha256'] = hashlib.sha256(Path(__file__).read_bytes()).hexdigest()
+    report['status'] = 'passed' if report['initialized'] and report['eof_exit'] and report['returncode']==0 else 'failed'
+    out.write_text(json.dumps(report,indent=2)+'\n',encoding='utf-8')
+    print(json.dumps(report))

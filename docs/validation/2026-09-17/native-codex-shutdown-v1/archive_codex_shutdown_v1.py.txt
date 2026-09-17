@@ -1,0 +1,79 @@
+"""Preserve bounded shutdown evidence without archiving private host logs."""
+import hashlib
+import json
+from pathlib import Path
+import re
+import shutil
+import sqlite3
+import zipfile
+
+archive = Path('docs/validation/2026-09-17/native-codex-shutdown-v1')
+assert not archive.exists()
+temp = Path('C:/Users/Ant/AppData/Local/Temp')
+fixture = temp/'mnemos-codex-interactive-lpn39it5'
+log = fixture/'codex-home/.codex/logs_2.sqlite'
+connection = sqlite3.connect(log.as_uri()+'?mode=ro',uri=True)
+rows = connection.execute('select id,ts,ts_nanos,level,target,feedback_log_body from logs where id between 334 and 338 order by id').fetchall()
+assert len(rows) == 5
+records = []
+for row in rows:
+    body = row[5]
+    if row[0] == 334:
+        assert 'clearing thread listener during app-server shutdown' in body
+        observation = 'clearing thread listener during app-server shutdown; had_active_turn=false'
+    elif row[0] == 335:
+        assert 'op: Shutdown' in body
+        observation = 'session received Shutdown submission'
+    else:
+        assert set(re.findall(r'server_name=([^}\s]+)', body)) == {'mnemos'}
+        observation = body.rsplit(': ',1)[-1]
+        if row[0] == 337:
+            assert 'Child exited gracefully exit code: 1' in body
+            observation = 'Child exited gracefully exit code: 1'
+        assert observation in ('input stream terminated','Child exited gracefully exit code: 1','serve finished quit_reason=Closed')
+    records.append({'row_id':row[0],'ts':row[1],'ts_nanos':row[2],'level':row[3],'target':row[4],
+                    'observation':observation,'original_body_sha256':hashlib.sha256(body.encode()).hexdigest()})
+connection.close()
+wheel = temp/'mnemos-package-checks-scope-arguments-v2/dist/mnemos_memory-0.7.0-py3-none-any.whl'
+assert hashlib.sha256(wheel.read_bytes()).hexdigest() == '642cded3d32b486b73e781fb28b179a79394580e7b5570107b98db27a280e0af'
+binding = json.loads((temp/'mnemos-mcp-eof-binding-v1.json').read_text())
+site = temp/'mnemos-installed-scope-arguments-v1/Lib/site-packages'
+with zipfile.ZipFile(wheel) as z:
+    for name, expected in binding['installed_files'].items():
+        raw = (site/name).read_bytes()
+        assert raw == z.read(name)
+        assert hashlib.sha256(raw).hexdigest() == expected['sha256']
+archive.mkdir(parents=True)
+shutil.copyfile(temp/'mnemos-mcp-eof-v1.json',archive/'eof-report.json')
+shutil.copyfile(temp/'mnemos-mcp-eof-binding-v1.json',archive/'installed-binding.json')
+shutil.copyfile('.venv/probe_mcp_eof_v1.py',archive/'probe_mcp_eof_v1.py.txt')
+shutil.copyfile(__file__,archive/'archive_codex_shutdown_v1.py.txt')
+(archive/'selected-shutdown-events.json').write_text(json.dumps({'kind':'derived sanitized SQLite log observations','source_path':str(log),'rows':records},indent=2)+'\n',encoding='utf-8')
+(archive/'.gitattributes').write_text('* -text\n',encoding='utf-8')
+(archive/'README.md').write_text('''# Native Codex shutdown diagnosis
+
+The interactive v2 process reached its 180-second watchdog after a successful
+MCP retrieval. Selected native host log rows show shutdown beginning at
+23:15:55 UTC and the Mnemos MCP child exiting with code 1 at 23:15:56 UTC.
+Codex recorded the Mnemos transport as closed. The parent process nevertheless
+remained alive until the watchdog. This narrows the observed hang to work
+remaining after that child exited; the parent hang and child exit-code causes
+are not established.
+
+A separate installed-package control initialized the MCP stdio server, sent
+the initialized notification, then closed stdin. The server exited with code
+0 in 74.425 ms and emitted no stderr. All 56 installed package files matched
+the source30eaf42 wheel. This control did not call a service tool, launch a
+native host, or run model inference. It does not reproduce the native shutdown
+sequence or establish that all MCP shutdown paths are reliable.
+
+The selected log observations retain row IDs, timestamps, targets, and hashes
+of the original bodies. They are derived sanitized observations, not complete
+raw logs. Authentication, HTTP headers, prompts, and the private log database
+are excluded. The original interactive report remains failed.
+''',encoding='utf-8')
+index={'files':{}}
+for p in sorted(archive.iterdir()):
+    raw=p.read_bytes();index['files'][p.name]={'bytes':len(raw),'sha256':hashlib.sha256(raw).hexdigest()}
+(archive/'evidence-index.json').write_text(json.dumps(index,indent=2)+'\n',encoding='utf-8')
+print('Archived',len(index['files']),'files')

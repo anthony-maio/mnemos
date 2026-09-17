@@ -4,6 +4,13 @@ This record covers the unreleased `wt/functional-local-memory` worktree. It
 separates implemented behavior from acceptance evidence. The original task
 boundaries and thresholds remain in the [implementation plan](../../plans/2026-09-16-functional-local-memory.md).
 
+The current adapter also reports degraded capture when a Codex capture hook
+has no usable text. Nine regression cases failed before this change; all ten
+new cases and related adapter/configuration checks now pass (50 passed, two
+platform skips). This repairs a reporting defect. Whether missing Stop text
+caused the latest native capture gap remains unproven. See the
+[coverage regression](../2026-09-17/codex-capture-coverage-v1/README.md).
+
 Source `d58e082` repairs an argument mismatch observed in a native Codex
 interactive call: MCP retrieval now accepts structured scope lists as well as
 legacy comma-separated strings. Empty or invalid lists are rejected, and the

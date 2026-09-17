@@ -1,0 +1,213 @@
+<?xml version="1.0" encoding="utf-8"?><testsuites name="pytest tests"><testsuite name="pytest" errors="0" failures="9" skipped="0" tests="10" time="10.595" timestamp="2026-09-17T19:34:38.612017-04:00" hostname="Aurora"><testcase classname="tests.test_codex_capture_coverage" name="test_missing_capture_text_reports_degraded_without_writing[fields0-Stop-last_assistant_message]" time="0.141"><failure message="AssertionError: assert 'ok' == 'degraded'&#10;  &#10;  - degraded&#10;  + ok">tmp_path = WindowsPath('D:/WindowsTemp/pytest-of-Ant/pytest-3545/test_missing_capture_text_repo0')
+event = 'Stop', field = 'last_assistant_message', fields = {}
+
+    @pytest.mark.asyncio
+    @pytest.mark.parametrize(
+        "event,field", [("Stop", "last_assistant_message"), ("UserPromptSubmit", "prompt")]
+    )
+    @pytest.mark.parametrize("fields", [{}, {"value": ""}, {"value": " \n "}, {"value": []}])
+    async def test_missing_capture_text_reports_degraded_without_writing(
+        tmp_path: Path, event: str, field: str, fields: dict
+    ) -&gt; None:
+        client = RecordingClient()
+        adapter, payload = make_adapter(tmp_path, client)
+        if "value" in fields:
+            payload[field] = fields["value"]
+    
+        result = await adapter.handle(event, payload)
+    
+&gt;       assert result.status == "degraded"
+E       AssertionError: assert 'ok' == 'degraded'
+E         
+E         - degraded
+E         + ok
+
+tests\test_codex_capture_coverage.py:30: AssertionError</failure></testcase><testcase classname="tests.test_codex_capture_coverage" name="test_missing_capture_text_reports_degraded_without_writing[fields0-UserPromptSubmit-prompt]" time="0.080"><failure message="AssertionError: assert 'ok' == 'degraded'&#10;  &#10;  - degraded&#10;  + ok">tmp_path = WindowsPath('D:/WindowsTemp/pytest-of-Ant/pytest-3545/test_missing_capture_text_repo1')
+event = 'UserPromptSubmit', field = 'prompt', fields = {}
+
+    @pytest.mark.asyncio
+    @pytest.mark.parametrize(
+        "event,field", [("Stop", "last_assistant_message"), ("UserPromptSubmit", "prompt")]
+    )
+    @pytest.mark.parametrize("fields", [{}, {"value": ""}, {"value": " \n "}, {"value": []}])
+    async def test_missing_capture_text_reports_degraded_without_writing(
+        tmp_path: Path, event: str, field: str, fields: dict
+    ) -&gt; None:
+        client = RecordingClient()
+        adapter, payload = make_adapter(tmp_path, client)
+        if "value" in fields:
+            payload[field] = fields["value"]
+    
+        result = await adapter.handle(event, payload)
+    
+&gt;       assert result.status == "degraded"
+E       AssertionError: assert 'ok' == 'degraded'
+E         
+E         - degraded
+E         + ok
+
+tests\test_codex_capture_coverage.py:30: AssertionError</failure></testcase><testcase classname="tests.test_codex_capture_coverage" name="test_missing_capture_text_reports_degraded_without_writing[fields1-Stop-last_assistant_message]" time="0.077"><failure message="AssertionError: assert 'ok' == 'degraded'&#10;  &#10;  - degraded&#10;  + ok">tmp_path = WindowsPath('D:/WindowsTemp/pytest-of-Ant/pytest-3545/test_missing_capture_text_repo2')
+event = 'Stop', field = 'last_assistant_message', fields = {'value': ''}
+
+    @pytest.mark.asyncio
+    @pytest.mark.parametrize(
+        "event,field", [("Stop", "last_assistant_message"), ("UserPromptSubmit", "prompt")]
+    )
+    @pytest.mark.parametrize("fields", [{}, {"value": ""}, {"value": " \n "}, {"value": []}])
+    async def test_missing_capture_text_reports_degraded_without_writing(
+        tmp_path: Path, event: str, field: str, fields: dict
+    ) -&gt; None:
+        client = RecordingClient()
+        adapter, payload = make_adapter(tmp_path, client)
+        if "value" in fields:
+            payload[field] = fields["value"]
+    
+        result = await adapter.handle(event, payload)
+    
+&gt;       assert result.status == "degraded"
+E       AssertionError: assert 'ok' == 'degraded'
+E         
+E         - degraded
+E         + ok
+
+tests\test_codex_capture_coverage.py:30: AssertionError</failure></testcase><testcase classname="tests.test_codex_capture_coverage" name="test_missing_capture_text_reports_degraded_without_writing[fields1-UserPromptSubmit-prompt]" time="0.077"><failure message="AssertionError: assert 'ok' == 'degraded'&#10;  &#10;  - degraded&#10;  + ok">tmp_path = WindowsPath('D:/WindowsTemp/pytest-of-Ant/pytest-3545/test_missing_capture_text_repo3')
+event = 'UserPromptSubmit', field = 'prompt', fields = {'value': ''}
+
+    @pytest.mark.asyncio
+    @pytest.mark.parametrize(
+        "event,field", [("Stop", "last_assistant_message"), ("UserPromptSubmit", "prompt")]
+    )
+    @pytest.mark.parametrize("fields", [{}, {"value": ""}, {"value": " \n "}, {"value": []}])
+    async def test_missing_capture_text_reports_degraded_without_writing(
+        tmp_path: Path, event: str, field: str, fields: dict
+    ) -&gt; None:
+        client = RecordingClient()
+        adapter, payload = make_adapter(tmp_path, client)
+        if "value" in fields:
+            payload[field] = fields["value"]
+    
+        result = await adapter.handle(event, payload)
+    
+&gt;       assert result.status == "degraded"
+E       AssertionError: assert 'ok' == 'degraded'
+E         
+E         - degraded
+E         + ok
+
+tests\test_codex_capture_coverage.py:30: AssertionError</failure></testcase><testcase classname="tests.test_codex_capture_coverage" name="test_missing_capture_text_reports_degraded_without_writing[fields2-Stop-last_assistant_message]" time="0.077"><failure message="AssertionError: assert 'ok' == 'degraded'&#10;  &#10;  - degraded&#10;  + ok">tmp_path = WindowsPath('D:/WindowsTemp/pytest-of-Ant/pytest-3545/test_missing_capture_text_repo4')
+event = 'Stop', field = 'last_assistant_message', fields = {'value': ' \n '}
+
+    @pytest.mark.asyncio
+    @pytest.mark.parametrize(
+        "event,field", [("Stop", "last_assistant_message"), ("UserPromptSubmit", "prompt")]
+    )
+    @pytest.mark.parametrize("fields", [{}, {"value": ""}, {"value": " \n "}, {"value": []}])
+    async def test_missing_capture_text_reports_degraded_without_writing(
+        tmp_path: Path, event: str, field: str, fields: dict
+    ) -&gt; None:
+        client = RecordingClient()
+        adapter, payload = make_adapter(tmp_path, client)
+        if "value" in fields:
+            payload[field] = fields["value"]
+    
+        result = await adapter.handle(event, payload)
+    
+&gt;       assert result.status == "degraded"
+E       AssertionError: assert 'ok' == 'degraded'
+E         
+E         - degraded
+E         + ok
+
+tests\test_codex_capture_coverage.py:30: AssertionError</failure></testcase><testcase classname="tests.test_codex_capture_coverage" name="test_missing_capture_text_reports_degraded_without_writing[fields2-UserPromptSubmit-prompt]" time="0.078"><failure message="AssertionError: assert 'ok' == 'degraded'&#10;  &#10;  - degraded&#10;  + ok">tmp_path = WindowsPath('D:/WindowsTemp/pytest-of-Ant/pytest-3545/test_missing_capture_text_repo5')
+event = 'UserPromptSubmit', field = 'prompt', fields = {'value': ' \n '}
+
+    @pytest.mark.asyncio
+    @pytest.mark.parametrize(
+        "event,field", [("Stop", "last_assistant_message"), ("UserPromptSubmit", "prompt")]
+    )
+    @pytest.mark.parametrize("fields", [{}, {"value": ""}, {"value": " \n "}, {"value": []}])
+    async def test_missing_capture_text_reports_degraded_without_writing(
+        tmp_path: Path, event: str, field: str, fields: dict
+    ) -&gt; None:
+        client = RecordingClient()
+        adapter, payload = make_adapter(tmp_path, client)
+        if "value" in fields:
+            payload[field] = fields["value"]
+    
+        result = await adapter.handle(event, payload)
+    
+&gt;       assert result.status == "degraded"
+E       AssertionError: assert 'ok' == 'degraded'
+E         
+E         - degraded
+E         + ok
+
+tests\test_codex_capture_coverage.py:30: AssertionError</failure></testcase><testcase classname="tests.test_codex_capture_coverage" name="test_missing_capture_text_reports_degraded_without_writing[fields3-Stop-last_assistant_message]" time="0.074"><failure message="AssertionError: assert 'ok' == 'degraded'&#10;  &#10;  - degraded&#10;  + ok">tmp_path = WindowsPath('D:/WindowsTemp/pytest-of-Ant/pytest-3545/test_missing_capture_text_repo6')
+event = 'Stop', field = 'last_assistant_message', fields = {'value': []}
+
+    @pytest.mark.asyncio
+    @pytest.mark.parametrize(
+        "event,field", [("Stop", "last_assistant_message"), ("UserPromptSubmit", "prompt")]
+    )
+    @pytest.mark.parametrize("fields", [{}, {"value": ""}, {"value": " \n "}, {"value": []}])
+    async def test_missing_capture_text_reports_degraded_without_writing(
+        tmp_path: Path, event: str, field: str, fields: dict
+    ) -&gt; None:
+        client = RecordingClient()
+        adapter, payload = make_adapter(tmp_path, client)
+        if "value" in fields:
+            payload[field] = fields["value"]
+    
+        result = await adapter.handle(event, payload)
+    
+&gt;       assert result.status == "degraded"
+E       AssertionError: assert 'ok' == 'degraded'
+E         
+E         - degraded
+E         + ok
+
+tests\test_codex_capture_coverage.py:30: AssertionError</failure></testcase><testcase classname="tests.test_codex_capture_coverage" name="test_missing_capture_text_reports_degraded_without_writing[fields3-UserPromptSubmit-prompt]" time="0.072"><failure message="AssertionError: assert 'ok' == 'degraded'&#10;  &#10;  - degraded&#10;  + ok">tmp_path = WindowsPath('D:/WindowsTemp/pytest-of-Ant/pytest-3545/test_missing_capture_text_repo7')
+event = 'UserPromptSubmit', field = 'prompt', fields = {'value': []}
+
+    @pytest.mark.asyncio
+    @pytest.mark.parametrize(
+        "event,field", [("Stop", "last_assistant_message"), ("UserPromptSubmit", "prompt")]
+    )
+    @pytest.mark.parametrize("fields", [{}, {"value": ""}, {"value": " \n "}, {"value": []}])
+    async def test_missing_capture_text_reports_degraded_without_writing(
+        tmp_path: Path, event: str, field: str, fields: dict
+    ) -&gt; None:
+        client = RecordingClient()
+        adapter, payload = make_adapter(tmp_path, client)
+        if "value" in fields:
+            payload[field] = fields["value"]
+    
+        result = await adapter.handle(event, payload)
+    
+&gt;       assert result.status == "degraded"
+E       AssertionError: assert 'ok' == 'degraded'
+E         
+E         - degraded
+E         + ok
+
+tests\test_codex_capture_coverage.py:30: AssertionError</failure></testcase><testcase classname="tests.test_codex_capture_coverage" name="test_missing_stop_text_emits_diagnostic_and_stays_nonblocking" time="0.073"><failure message="assert 'host=codex event=Stop status=degraded' in ''&#10; +  where '' = CaptureResult(out='{&quot;continue&quot;:true}\n', err='').err">tmp_path = WindowsPath('D:/WindowsTemp/pytest-of-Ant/pytest-3545/test_missing_stop_text_emits_d0')
+monkeypatch = &lt;_pytest.monkeypatch.MonkeyPatch object at 0x000001FAAD9BA990&gt;
+capsys = &lt;_pytest.capture.CaptureFixture object at 0x000001FAAC5C7E00&gt;
+
+    def test_missing_stop_text_emits_diagnostic_and_stays_nonblocking(
+        tmp_path: Path, monkeypatch: pytest.MonkeyPatch, capsys: pytest.CaptureFixture[str]
+    ) -&gt; None:
+        adapter, payload = make_adapter(tmp_path)
+        payload["hook_event_name"] = "Stop"
+        monkeypatch.setattr(codex, "CodexAdapter", lambda: adapter)
+        monkeypatch.setattr(codex.sys, "stdin", io.StringIO(json.dumps(payload)))
+    
+        assert codex.main([]) == 0
+    
+        result = capsys.readouterr()
+        assert json.loads(result.out) == {"continue": True}
+&gt;       assert "host=codex event=Stop status=degraded" in result.err
+E       assert 'host=codex event=Stop status=degraded' in ''
+E        +  where '' = CaptureResult(out='{"continue":true}\n', err='').err
+
+tests\test_codex_capture_coverage.py:51: AssertionError</failure></testcase><testcase classname="tests.test_codex_capture_coverage" name="test_stop_reentry_without_text_remains_intentionally_skipped" time="0.084" /></testsuite></testsuites>

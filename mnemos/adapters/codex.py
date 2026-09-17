@@ -307,6 +307,10 @@ class CodexAdapter:
                     captured = 1
                     ids.append(event_id)
                 degraded = degraded or queued or not accepted
+            else:
+                # The host supplied no usable text at a capture boundary.
+                # Keep the hook nonblocking, but do not claim complete capture.
+                degraded = True
         elif event in {"PreCompact", "SessionEnd"}:
             degraded = not await self._maintenance(context)
 

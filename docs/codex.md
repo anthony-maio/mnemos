@@ -23,6 +23,12 @@ The adapter accepts SessionStart, UserPromptSubmit, PreCompact, PostCompact, Sto
 
 Capture commits evidence before acknowledging it; fact extraction happens later. A sanitized outbox can retain automatic events during an outage. Queued events are not reported as committed facts. Scope, identity, safety, and expected-version rules are enforced by the service.
 
+Capture requires usable text in the host payload: `prompt` for UserPromptSubmit
+and `last_assistant_message` for Stop. Missing, empty, or invalid text reports
+degraded capture through a sanitized hook diagnostic. Stop still returns
+`continue: true`; it never requests another model turn. The adapter does not
+reconstruct missing text from Codex's internal transcript format.
+
 See the [Codex hook reference](https://learn.chatgpt.com/docs/hooks) for the host contract. Installed-version behavior still needs the native smoke recorded in the compatibility matrix.
 
 ## Explicit memory and project instructions
@@ -47,5 +53,12 @@ does not establish which host policy caused the cancellation. A successful
 health call alone does not verify retrieval or mutation permissions; verify
 those operations in the intended Codex session and review any actual host
 approval prompt there.
+
+The later [interactive read checkpoint](validation/2026-09-17/native-codex-interactive-v2/README.md)
+returned the scoped seed through an approved MCP call using installed source
+`30eaf42`. Its shutdown timed out and assistant capture was absent. The
+[shutdown diagnosis](validation/2026-09-17/native-codex-shutdown-v1/README.md)
+records the MCP child exiting before the parent watchdog and a separate clean
+stdio EOF control. Neither result closes complete conversation capture.
 
 Optional Codex Automations can schedule maintenance. They do not prove lifecycle capture and are unnecessary for the built-in maintenance scheduler.
