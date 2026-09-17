@@ -12,7 +12,7 @@ from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Any, Literal, Mapping, cast
 
-from pydantic import BaseModel, ConfigDict, Field, model_validator
+from pydantic import BaseModel, ConfigDict, Field, StrictBool, model_validator
 
 from .config import MemoryGovernanceConfig, MemorySafetyConfig, ModuleConfig
 from .retrieval import RetrievalConfig
@@ -364,6 +364,7 @@ class OllamaProviderSettings(BaseModel):
     model_config = ConfigDict(extra="ignore")
 
     base_url: str = "http://localhost:11434"
+    think: StrictBool | Literal["low", "medium", "high", "max"] | None = None
 
 
 class ProvidersSettings(BaseModel):

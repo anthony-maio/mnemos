@@ -1,0 +1,345 @@
+"""Run four candidate extraction calls through OllamaProvider think=false."""
+
+from __future__ import annotations
+
+import argparse
+from datetime import datetime, timezone
+import hashlib
+import json
+import os
+from pathlib import Path
+import subprocess
+import sys
+from typing import Any
+
+import httpx
+
+DEFAULT_ENDPOINT = "http://192.168.86.35:11434"
+MODEL = "qwen3.5:9b"
+EXPECTED_DIGEST = "6488c96fa5faab64bb65cbd30d4289e20e6130ef535a93ef9a49f42eda893ea7"
+EXPECTED_REVISION = "64471f5b12102e6ba94079fb74417b087223bc24"
+
+CASES: tuple[dict[str, Any], ...] = (
+    {
+        "name": "supported_existing_fact",
+        "source_content": "The user confirms that the cache uses SQLite.",
+        "existing_content": "The cache uses SQLite.",
+        "expected": {
+            "decision": "facts",
+            "operation": "support",
+            "content": "The cache uses SQLite.",
+        },
+    },
+    {
+        "name": "explicit_correction",
+        "source_content": "The user now requires PostgreSQL for this project.",
+        "existing_content": "The project uses SQLite.",
+        "expected": {
+            "decision": "facts",
+            "operation": "correct",
+            "content": "The project uses PostgreSQL.",
+        },
+    },
+    {
+        "name": "unrelated_new_fact",
+        "source_content": "The user prefers a dark editor theme.",
+        "existing_content": "The cache uses SQLite.",
+        "expected": {
+            "decision": "facts",
+            "operation": "add",
+            "content": "The user prefers a dark editor theme.",
+        },
+    },
+    {
+        "name": "question_no_fact",
+        "source_content": "Should we use SQLite for this prototype?",
+        "existing_content": "The cache uses SQLite.",
+        "expected": {"decision": "no_durable_facts"},
+    },
+)
+
+
+CHILD = r"""
+from __future__ import annotations
+
+import asyncio
+from datetime import datetime, timezone
+import hashlib
+import json
+from pathlib import Path
+from typing import Any
+
+from jsonschema import Draft202012Validator
+
+from mnemos.contracts import ExtractionResponse
+from mnemos.modules.sleep import SleepDaemon
+from mnemos.types import EpisodicEvent, MemoryChunk
+from mnemos.utils.llm import OllamaProvider
+from mnemos.utils.storage import InMemoryStore
+
+
+class RecordingProvider(OllamaProvider):
+    def __init__(self, *, model: str, endpoint: str) -> None:
+        self.raw_responses: list[dict[str, Any]] = []
+        self.last_prompt = ""
+        self.last_kwargs: dict[str, Any] = {}
+        super().__init__(
+            model=model,
+            base_url=endpoint,
+            timeout=120.0,
+            temperature=0.0,
+            max_tokens=512,
+            response_observer=self.raw_responses.append,
+            think=False,
+        )
+
+    async def predict(self, prompt: str, **kwargs: Any) -> str:
+        self.last_prompt = prompt
+        self.last_kwargs = dict(kwargs)
+        return await super().predict(prompt, **kwargs)
+
+
+def make_event(event_id: str, content: str) -> EpisodicEvent:
+    return EpisodicEvent(
+        id=event_id,
+        event_fingerprint="fingerprint-" + event_id,
+        role="user",
+        content=content,
+        normalized_content=content.lower(),
+        scope="project",
+        scope_id="development-project",
+        metadata={"user_profile_id": "development-profile"},
+        occurred_at=datetime.now(timezone.utc),
+    )
+
+
+def make_fact(fact_id: str, content: str) -> MemoryChunk:
+    return MemoryChunk(
+        id=fact_id,
+        content=content,
+        metadata={
+            "user_profile_id": "development-profile",
+            "scope": "project",
+            "scope_id": "development-project",
+        },
+    )
+
+
+def review_all(
+    proposals: list[dict[str, Any]], expected: dict[str, Any], source_id: str, fact_id: str
+) -> list[dict[str, Any]]:
+    return [
+        {
+            "proposal": proposal,
+            "operation_matches": proposal.get("operation") == expected.get("operation"),
+            "content_matches": proposal.get("content") == expected.get("content"),
+            "evidence_is_current_source": proposal.get("evidence_ids") == [source_id],
+            "target_matches": proposal.get("target_fact_id") == fact_id,
+            "version_matches": proposal.get("expected_version") == 1,
+        }
+        for proposal in proposals
+    ]
+
+
+async def run(case: dict[str, Any], *, model: str, endpoint: str, source_root: str) -> None:
+    name = str(case["name"])
+    source_id = "source-" + name
+    fact_id = "fact-" + name
+    provider = RecordingProvider(model=model, endpoint=endpoint)
+    source = make_event(source_id, str(case["source_content"]))
+    existing = make_fact(fact_id, str(case["existing_content"]))
+    started = datetime.now(timezone.utc).isoformat()
+    error: str | None = None
+    proposals: list[dict[str, Any]] = []
+    payload: dict[str, Any] | None = None
+    try:
+        returned = await SleepDaemon(InMemoryStore()).propose_facts(
+            [source], provider, existing_facts=[existing]
+        )
+        proposals = [item.model_dump(mode="json") for item in returned]
+    except Exception as exc:
+        error = type(exc).__name__ + ": " + str(exc)
+    response_text = ""
+    if provider.raw_responses:
+        raw = provider.raw_responses[-1].get("response")
+        if isinstance(raw, str):
+            response_text = raw
+            try:
+                decoded = json.loads(raw)
+                if isinstance(decoded, dict):
+                    payload = decoded
+            except (TypeError, ValueError):
+                pass
+    schema_valid = None
+    runtime_valid = False
+    if payload is not None:
+        schema_valid = Draft202012Validator(ExtractionResponse.model_json_schema()).is_valid(payload)
+        try:
+            ExtractionResponse.model_validate(payload)
+            runtime_valid = True
+        except Exception:
+            runtime_valid = False
+        raw_facts = payload.get("facts")
+        if isinstance(raw_facts, list):
+            proposals = [item for item in raw_facts if isinstance(item, dict)]
+    expected = case["expected"]
+    reviews = review_all(proposals, expected, source_id, fact_id)
+    if expected.get("decision") == "no_durable_facts":
+        proxy = (
+            error is None
+            and payload is not None
+            and payload.get("decision") == "no_durable_facts"
+            and payload.get("facts") == []
+            and isinstance(payload.get("reason"), str)
+            and bool(payload["reason"].strip())
+        )
+    else:
+        proxy = (
+            error is None
+            and payload is not None
+            and payload.get("decision") == "facts"
+            and len(reviews) == 1
+            and all(
+                review["operation_matches"]
+                and review["content_matches"]
+                and review["evidence_is_current_source"]
+                and (expected.get("operation") == "add" or review["target_matches"])
+                and (expected.get("operation") != "correct" or review["version_matches"])
+                for review in reviews
+            )
+        )
+    digest = hashlib.sha256()
+    root = Path(source_root)
+    for path in sorted((root / "mnemos").rglob("*.py")):
+        digest.update(path.relative_to(root).as_posix().encode())
+        digest.update(path.read_bytes())
+    print(json.dumps({
+        "case": name,
+        "started_at": started,
+        "finished_at": datetime.now(timezone.utc).isoformat(),
+        "source_root": source_root,
+        "source_code_sha256": digest.hexdigest(),
+        "model": model,
+        "endpoint": endpoint,
+        "provider_constructor": {"temperature": 0.0, "max_tokens": 512, "timeout": 120.0, "think": False},
+        "response_text": response_text,
+        "raw_provider_responses": provider.raw_responses,
+        "prompt": provider.last_prompt,
+        "predict_kwargs": provider.last_kwargs,
+        "response_payload": payload,
+        "schema_checks": {"response_schema_valid": schema_valid, "runtime_model_valid": runtime_valid},
+        "provider_call_count": len(provider.raw_responses),
+        "error": error,
+        "all_proposals_review": reviews,
+        "exact_case_proxy": proxy,
+        "semantic_review": {"status": "unjudged", "note": "Exact field comparison is a contract proxy."},
+    }, ensure_ascii=True, sort_keys=True))
+
+
+case = json.loads(__import__("sys").argv[1])
+asyncio.run(run(case, model=__import__("sys").argv[2], endpoint=__import__("sys").argv[3], source_root=__import__("sys").argv[4]))
+"""
+
+
+def main() -> int:
+    parser = argparse.ArgumentParser()
+    parser.add_argument("--endpoint", default=DEFAULT_ENDPOINT)
+    parser.add_argument(
+        "--output", type=Path, default=Path(__file__).with_name("ollama-thinking-integration-v1")
+    )
+    args = parser.parse_args()
+    output = args.output.resolve()
+    if output.exists():
+        raise SystemExit(f"Refusing to overwrite existing output directory: {output}")
+    candidate = Path(__file__).with_name("ollama-thinking-candidate-v1").resolve()
+    revision = subprocess.run(
+        ["git", "-C", str(candidate), "rev-parse", "HEAD"],
+        capture_output=True,
+        text=True,
+        check=False,
+    ).stdout.strip()
+    if revision != EXPECTED_REVISION:
+        raise SystemExit(f"Candidate revision mismatch: {revision}")
+    source_hash = digest_source(candidate)
+    metadata = current_model_metadata(args.endpoint, MODEL)
+    if metadata.get("digest") != EXPECTED_DIGEST:
+        raise SystemExit("Current qwen model digest differs from the stored diagnostic")
+    output.mkdir(parents=True)
+    (output / "raw").mkdir()
+    runner_hash = hashlib.sha256(Path(__file__).read_bytes()).hexdigest()
+    manifest = {
+        "diagnostic": "ollama-thinking-integration-v1",
+        "development_only": True,
+        "heldout": False,
+        "endpoint": args.endpoint,
+        "model": MODEL,
+        "model_digest": metadata["digest"],
+        "candidate_revision": revision,
+        "candidate_code_sha256": source_hash,
+        "runner_sha256": runner_hash,
+        "temperature": 0.0,
+        "max_tokens": 512,
+        "timeout": 120.0,
+        "think": False,
+        "cases": [case["name"] for case in CASES],
+        "created_at": datetime.now(timezone.utc).isoformat(),
+        "provider_path": "candidate OllamaProvider through SleepDaemon.propose_facts",
+    }
+    (output / "manifest.json").write_text(
+        json.dumps(manifest, indent=2, sort_keys=True) + "\n", encoding="utf-8"
+    )
+    python = Path(sys.executable)
+    rows: list[dict[str, Any]] = []
+    for case in CASES:
+        completed = subprocess.run(
+            [python, "-c", CHILD, json.dumps(case), MODEL, args.endpoint, str(candidate)],
+            cwd=candidate,
+            env={**os.environ, "PYTHONPATH": str(candidate)},
+            capture_output=True,
+            text=True,
+            timeout=150,
+            check=False,
+        )
+        lines = [line for line in completed.stdout.splitlines() if line.strip()]
+        if completed.returncode != 0 or not lines:
+            row = {
+                "case": case["name"],
+                "process_returncode": completed.returncode,
+                "stdout": completed.stdout,
+                "stderr": completed.stderr,
+            }
+        else:
+            row = json.loads(lines[-1])
+            row["process_returncode"] = completed.returncode
+            row["stderr"] = completed.stderr
+        rows.append(row)
+        (output / "raw" / f"candidate-{case['name']}.json").write_text(
+            json.dumps(row, indent=2, sort_keys=True) + "\n", encoding="utf-8"
+        )
+    report = {"manifest": manifest, "observations": rows}
+    (output / "report.json").write_text(
+        json.dumps(report, indent=2, sort_keys=True) + "\n", encoding="utf-8"
+    )
+    print(json.dumps({"output": str(output), "observations": len(rows)}, sort_keys=True))
+    return 0
+
+
+def digest_source(source: Path) -> str:
+    digest = hashlib.sha256()
+    for path in sorted((source / "mnemos").rglob("*.py")):
+        digest.update(path.relative_to(source).as_posix().encode("utf-8"))
+        digest.update(path.read_bytes())
+    return digest.hexdigest()
+
+
+def current_model_metadata(endpoint: str, model: str) -> dict[str, Any]:
+    response = httpx.get(endpoint.rstrip("/") + "/api/tags", timeout=20.0)
+    response.raise_for_status()
+    for item in response.json().get("models", []):
+        if isinstance(item, dict) and item.get("name") == model:
+            return item
+    raise RuntimeError(f"Model {model!r} is not present in current Ollama tags")
+
+
+if __name__ == "__main__":
+    raise SystemExit(main())

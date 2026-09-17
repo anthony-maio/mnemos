@@ -6,6 +6,14 @@ The unreleased managed-service evaluation lives in [benchmarks/local_memory](../
 
 See [validation progress](validation/2026-09-16/progress.md) and [10,000-fact performance](validation/2026-09-16/performance-10k.md). The older harness below is a reproduction/development tool. Its mock/simple-provider results and production_replacement field do not establish production readiness. Its default unscoped baseline is unsuitable for a fair quality comparison with scoped retrieval.
 
+The `heldout_run`, `module_mechanism_run`, and `lifecycle_target_smoke`
+modules accept `--think false`, `--think true`, or a model-supported level
+(`low`, `medium`, `high`, `max`). Omit the option to preserve the Ollama model's
+default. An explicitly selected mode is part of the recorded generation
+options and provenance fingerprint. Use new output and work directories when
+changing it; checkpoints from different modes cannot be combined. This option
+does not change the default model, dataset, labels, or acceptance thresholds.
+
 ## Historical harness
 
 Mnemos ships a benchmark harness via `mnemos-benchmark` to measure retrieval quality and latency across retrieval modes and local store implementations.

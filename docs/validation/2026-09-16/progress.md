@@ -826,3 +826,23 @@ remains failed; a future disjoint case must state supersession explicitly.
 The direct request repair is not yet integrated provider behavior. An isolated
 candidate is adding an explicit optional Ollama thinking setting and a typed
 empty-final-response failure. No reasoning text is promoted into facts.
+
+## Ollama provider integration and preference omission
+
+The candidate provider completed the same four development cases through
+`SleepDaemon.propose_facts` with `think=False`. All four passed runtime
+validation; three matched the frozen exact proxy. Each case made one observed
+provider call. This is actual candidate provider execution, separate from the
+earlier direct HTTP diagnostic. It remains a four-case development result,
+not a held-out quality estimate.
+[Source binding and raw responses](ollama-thinking-provider-integration/README.md).
+
+The model again omitted the editor preference, explaining that it was not a
+durable system-state fact. That exclusion conflicts with Mnemos's intended
+preference extraction. The actual runtime prompt names durable facts but does
+not explicitly include preferences. A prompt clarification now names stated
+preferences and continuing requirements, permits new topics, and preserves
+the distinction between requirements and completed actions. Source, role,
+scope, evidence, and version guards remain unchanged. A separate disjoint
+development check will test that clarification, including questions,
+quotations, hypothetical preferences, and assistant suggestions.

@@ -1,0 +1,7 @@
+# Ollama thinking provider integration
+
+This is a development-only diagnostic of the Ollama provider through `SleepDaemon.propose_facts`. It ran four authored runtime cases against `qwen3.5:9b` at the recorded local endpoint. Three of four cases matched their exact contract proxy: supported existing fact, explicit correction, and question abstention. The model rejected the preference case, which is recorded as an observed omission, not as a quality result.
+
+The manifest pins base revision `64471f5b12102e6ba94079fb74417b087223bc24`, while the dirty candidate source snapshot used by the run has candidate code hash `4b1b76a6f1ada3a9d616b47366340f8c0be07cb850cbf16f74e0b1397d0a43a8`. The archived source snapshot preserves the three production files that identify the dirty candidate: `mnemos/runtime.py`, `mnemos/settings.py`, and `mnemos/utils/llm.py`. They were copied after the run. Reconstructing the source from the frozen base checkout plus these three files reproduces the aggregate source hash recorded in all four observations. Benchmark and test files were changing after the run and are intentionally not presented as frozen source evidence.
+
+The four runtime calls validated response shape, model identity, and exact authored proxy fields. They do not establish general semantic quality, preference utility, extraction quality across conversations, or heldout performance. Raw provider responses are retained for review. No database, settings, auth material, or distribution binary is archived.

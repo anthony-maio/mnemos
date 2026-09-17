@@ -20,12 +20,17 @@ import logging
 import re
 from abc import ABC, abstractmethod
 from collections.abc import Callable
-from typing import Any
+from typing import Any, Literal, cast
 
 import httpx
 
 from ..observability import log_event
-from .reliability import MnemosConfigurationError, RetryPolicy, call_with_async_retry
+from .reliability import (
+    MnemosConfigurationError,
+    MnemosExternalServiceError,
+    RetryPolicy,
+    call_with_async_retry,
+)
 
 
 def _provider_name_from_base_url(base_url: str) -> str:
@@ -193,6 +198,19 @@ class UnavailableLLMProvider(LLMProvider):
         raise MnemosConfigurationError(self.reason)
 
 
+_OLLAMA_THINK_LEVELS = frozenset({"low", "medium", "high", "max"})
+
+
+def _validate_ollama_think(
+    value: Any,
+) -> bool | Literal["low", "medium", "high", "max"] | None:
+    if value is None or type(value) is bool:
+        return value
+    if isinstance(value, str) and value in _OLLAMA_THINK_LEVELS:
+        return cast(Literal["low", "medium", "high", "max"], value)
+    raise ValueError("think must be a boolean or one of low, medium, high, max")
+
+
 class OllamaProvider(LLMProvider):
     """
     LLM provider using a locally-running Ollama server.
@@ -209,6 +227,8 @@ class OllamaProvider(LLMProvider):
         timeout: HTTP request timeout in seconds.
         temperature: Sampling temperature (0.0 = deterministic, 1.0 = creative).
         max_tokens: Maximum tokens to generate per response.
+        think: Optional Ollama reasoning mode. ``None`` leaves the model default
+            unchanged; booleans and documented reasoning levels are supported.
     """
 
     supports_structured_output = True
@@ -221,12 +241,15 @@ class OllamaProvider(LLMProvider):
         temperature: float = 0.1,
         max_tokens: int = 512,
         response_observer: Callable[[dict[str, Any]], None] | None = None,
+        *,
+        think: bool | Literal["low", "medium", "high", "max"] | None = None,
     ) -> None:
         self.model = model
         self.base_url = base_url.rstrip("/")
         self.timeout = timeout
         self.temperature = temperature
         self.max_tokens = max_tokens
+        self.think = _validate_ollama_think(think)
         self.response_observer = response_observer
 
     async def predict(self, prompt: str, **kwargs: Any) -> str:
@@ -243,9 +266,11 @@ class OllamaProvider(LLMProvider):
         Raises:
             httpx.HTTPStatusError: If Ollama returns an error status.
             httpx.ConnectError: If Ollama is not running.
+            MnemosExternalServiceError: If Ollama does not return a final text response.
         """
         temperature = kwargs.get("temperature", self.temperature)
         max_tokens = kwargs.get("max_tokens", self.max_tokens)
+        think = _validate_ollama_think(kwargs.get("think", self.think))
 
         payload = {
             "model": self.model,
@@ -258,6 +283,8 @@ class OllamaProvider(LLMProvider):
         }
         if "format" in kwargs and kwargs["format"] is not None:
             payload["format"] = kwargs["format"]
+        if think is not None:
+            payload["think"] = think
 
         async def _request() -> str:
             async with httpx.AsyncClient(timeout=self.timeout) as client:
@@ -267,6 +294,8 @@ class OllamaProvider(LLMProvider):
                 )
                 response.raise_for_status()
                 data = response.json()
+                if not isinstance(data, dict):
+                    raise MnemosExternalServiceError("Ollama returned a non-object response")
                 if self.response_observer is not None:
                     try:
                         self.response_observer(data)
@@ -277,10 +306,13 @@ class OllamaProvider(LLMProvider):
                             provider="ollama",
                             operation="predict_observer",
                         )
-                text = data.get("response", "")
+                text = data.get("response")
                 if not isinstance(text, str):
-                    text = str(text)
-                return text.strip()
+                    raise MnemosExternalServiceError("Ollama returned a non-string final response")
+                final = text.strip()
+                if not final:
+                    raise MnemosExternalServiceError("Ollama returned an empty final response")
+                return final
 
         try:
             return await call_with_async_retry(

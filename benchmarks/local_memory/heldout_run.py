@@ -27,7 +27,14 @@ from .harness import (
     ExperimentHarness,
     compare_observation_metrics,
 )
-from .ollama_adapter import OllamaEvaluatorAdapter, make_ollama_service_factory
+from .ollama_adapter import (
+    OllamaEvaluatorAdapter,
+    OllamaThink,
+    add_ollama_think,
+    make_ollama_service_factory,
+    ollama_options_sha256,
+    parse_ollama_think,
+)
 from .module_challenge import load_module_challenge_dataset
 
 
@@ -110,6 +117,7 @@ def run_heldout(
     profile_names: set[str] | None = None,
     module_challenge_path: Path | None = None,
     root: Path | None = None,
+    think: OllamaThink = None,
 ) -> dict[str, dict[str, Any]]:
     dataset = load_dataset(dataset_path)
     if len(dataset.heldout_sessions) < 200:
@@ -131,9 +139,8 @@ def run_heldout(
         "max_context_tokens": 1200,
         "runtime": environment_metadata(),
     }
-    options_sha256 = hashlib.sha256(
-        json.dumps(options, sort_keys=True, separators=(",", ":")).encode("utf-8")
-    ).hexdigest()
+    add_ollama_think(options, think)
+    options_sha256 = ollama_options_sha256(options)
     code_sha256, code_files = _code_provenance(
         (root or Path(__file__).resolve().parents[2]).resolve()
     )
@@ -222,6 +229,7 @@ def run_heldout(
             timeout=float(options["timeout_seconds"]),
             temperature=float(options["temperature"]),
             max_tokens=int(options["max_tokens"]),
+            think=think,
         )
         adapter = OllamaEvaluatorAdapter(
             factory,
@@ -290,6 +298,7 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("--embedding-model", default="nomic-embed-text:latest")
     parser.add_argument("--repetitions", type=int, default=3)
     parser.add_argument("--profile", action="append", dest="profiles")
+    parser.add_argument("--think", type=parse_ollama_think, default=None)
     args = parser.parse_args(argv)
     reports = run_heldout(
         dataset_path=args.dataset,
@@ -301,6 +310,7 @@ def main(argv: list[str] | None = None) -> int:
         repetitions=args.repetitions,
         profile_names=set(args.profiles) if args.profiles else None,
         module_challenge_path=args.module_challenge_dataset,
+        think=args.think,
     )
     print(json.dumps({name: report["status"] for name, report in reports.items()}, sort_keys=True))
     return 0

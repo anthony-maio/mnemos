@@ -44,6 +44,27 @@ MNEMOS_SQLITE_PATH=.mnemos/memory.db
 
 These are environment entries; use your shell's environment syntax or save equivalent values in the canonical configuration. Prefer absolute database paths. Use the endpoint reachable from the service process. Mnemos has no cloud fallback when a local model fails. Durable capture can continue while enrichment waits. Semantic recall still requires the configured embedding provider. Saving configuration requires a service restart before the new providers apply.
 
+For a thinking-capable Ollama model, the canonical TOML configuration can also
+select a thinking mode explicitly:
+
+```toml
+[providers.ollama]
+think = false
+```
+
+Omitting `think` preserves the model's default. Mnemos accepts TOML booleans
+and the strings `"low"`, `"medium"`, `"high"`, and `"max"`; support depends on
+the selected model. There is no corresponding environment override. Ollama
+returns reasoning separately from its final response. Mnemos uses only the
+final response and reports a provider error when it is empty or not text.
+See [Ollama thinking configuration](https://docs.ollama.com/capabilities/thinking).
+
+In a four-case development probe, `qwen3.5:9b` with `think = false` returned
+four runtime-valid extraction responses through the provider. Three matched
+the predefined exact proxy; the model omitted a stated editor preference.
+This establishes a working provider option, not general extraction accuracy.
+[Probe and limitations](validation/2026-09-16/ollama-thinking-provider-integration/README.md).
+
 ## Scope and host identity
 
 The runtime resolves a `ScopeContext` from the persisted registry and process environment:

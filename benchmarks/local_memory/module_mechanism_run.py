@@ -20,6 +20,7 @@ from mnemos.utils.storage import SQLiteStore
 from .artifacts import environment_metadata
 from .dev_smoke import _code_provenance
 from .heldout_run import _live_model_metadata
+from .ollama_adapter import OllamaThink, add_ollama_think, parse_ollama_think
 
 
 def _digest(value: Any) -> str:
@@ -156,6 +157,7 @@ def run_mechanisms(
     split: str = "heldout",
     repetitions: int = 3,
     prepare_only: bool = False,
+    think: OllamaThink = None,
 ) -> dict[str, Any]:
     from .module_mechanism import (
         evaluate_dataset,
@@ -178,6 +180,15 @@ def run_mechanisms(
         raise ValueError("Held-out mechanism protocol requires at least 50 cases of each kind")
     metadata = _live_model_metadata(endpoint, (model, embedding_model))
     code_sha256, code_files = _code_provenance(Path(__file__).resolve().parents[2])
+    options: dict[str, Any] = {
+        "temperature": 0.0,
+        "max_tokens": 512,
+        "timeout_seconds": 120,
+        "top_k": 5,
+        "embedding_batch_size": 16,
+        "normalization": "provider vectors unchanged; production cosine normalizes during scoring",
+    }
+    add_ollama_think(options, think)
     pins = {
         "schema_version": "module-mechanism-run-v1",
         "dataset_sha256": hashlib.sha256(dataset_path.read_bytes()).hexdigest(),
@@ -197,14 +208,7 @@ def run_mechanisms(
             "embedding_model": metadata[embedding_model],
         },
         "graph_contract": SpreadingActivation.persistence_contract(),
-        "options": {
-            "temperature": 0.0,
-            "max_tokens": 512,
-            "timeout_seconds": 120,
-            "top_k": 5,
-            "embedding_batch_size": 16,
-            "normalization": "provider vectors unchanged; production cosine normalizes during scoring",
-        },
+        "options": options,
     }
     binding = _digest(pins)
     manifest_path = output_dir / "manifest.json"
@@ -275,6 +279,7 @@ def run_mechanisms(
         timeout=120,
         temperature=0.0,
         max_tokens=512,
+        think=think,
     )
     try:
         report = evaluate_dataset(
@@ -324,6 +329,7 @@ def main() -> int:
     parser.add_argument("--split", choices=("development", "heldout"), default="heldout")
     parser.add_argument("--repetitions", type=int, default=3)
     parser.add_argument("--prepare-only", action="store_true")
+    parser.add_argument("--think", type=parse_ollama_think, default=None)
     args = parser.parse_args()
     result = run_mechanisms(
         dataset_path=args.dataset,
@@ -336,6 +342,7 @@ def main() -> int:
         split=args.split,
         repetitions=args.repetitions,
         prepare_only=args.prepare_only,
+        think=args.think,
     )
     print(json.dumps({"status": result["status"], "binding": result["binding"]}))
     return 0

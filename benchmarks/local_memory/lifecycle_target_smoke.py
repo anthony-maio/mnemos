@@ -24,7 +24,14 @@ from .contracts import FactRecord, QueryRecord, SessionScenario, SourceEvent
 from .dev_smoke import _code_provenance
 from .harness import DEFAULT_PROFILES, ExperimentProfile, RunObservation
 from .heldout_run import _live_model_metadata
-from .ollama_adapter import OllamaEvaluatorAdapter, make_ollama_service_factory
+from .ollama_adapter import (
+    OllamaEvaluatorAdapter,
+    OllamaThink,
+    add_ollama_think,
+    make_ollama_service_factory,
+    ollama_options_sha256,
+    parse_ollama_think,
+)
 
 DEFAULT_DATASET = Path(__file__).with_name("datasets") / "lifecycle-target-development-v1.json"
 USER_PROFILE_ID = "lifecycle-target-smoke-profile"
@@ -362,6 +369,7 @@ def run_lifecycle_target_smoke(
     model_metadata_loader: Callable[
         [str, tuple[str, ...]], dict[str, dict[str, Any]]
     ] = _live_model_metadata,
+    think: OllamaThink = None,
 ) -> dict[str, Any]:
     scenarios = load_target_scenarios(dataset_path)
     requested = {str(name) for name in profile_names}
@@ -384,9 +392,8 @@ def run_lifecycle_target_smoke(
         "top_k": 5,
         "max_context_tokens": 1200,
     }
-    options_sha256 = hashlib.sha256(
-        json.dumps(options, sort_keys=True, separators=(",", ":")).encode("utf-8")
-    ).hexdigest()
+    add_ollama_think(options, think)
+    options_sha256 = ollama_options_sha256(options)
     attempt_id = uuid4().hex
     attempt_root = work_dir / "attempts" / attempt_id
     attempt_root.mkdir(parents=True, exist_ok=True)
@@ -417,6 +424,8 @@ def run_lifecycle_target_smoke(
                 "endpoint": endpoint.rstrip("/"),
                 "model": model,
                 "embedding_model": embedding_model,
+                "options": options,
+                "options_sha256": options_sha256,
             },
             "attempt_id": attempt_id,
             "runs": [],
@@ -487,15 +496,20 @@ def run_lifecycle_target_smoke(
             try:
                 profile_root = attempt_root / f"{scenario.session_id}-{profile.name}"
                 profile_root.mkdir(parents=True, exist_ok=True)
+                factory_options: dict[str, Any] = {
+                    "base_url": endpoint,
+                    "model": model,
+                    "embedding_model": embedding_model,
+                    "timeout": options["timeout_seconds"],
+                    "temperature": options["temperature"],
+                    "max_tokens": options["max_tokens"],
+                }
+                if think is not None:
+                    factory_options["think"] = think
                 factory = service_factory_builder(
                     profile_root / f"{profile.name}.sqlite",
                     registry,
-                    base_url=endpoint,
-                    model=model,
-                    embedding_model=embedding_model,
-                    timeout=options["timeout_seconds"],
-                    temperature=options["temperature"],
-                    max_tokens=options["max_tokens"],
+                    **factory_options,
                 )
                 adapter = adapter_type(
                     factory,
@@ -589,6 +603,7 @@ def main(argv: Sequence[str] | None = None) -> int:
     parser.add_argument("--output-dir", type=Path, required=True)
     parser.add_argument("--work-dir", type=Path, required=True)
     parser.add_argument("--profile", action="append", choices=("baseline", "full"))
+    parser.add_argument("--think", type=parse_ollama_think, default=None)
     args = parser.parse_args(argv)
     report = run_lifecycle_target_smoke(
         dataset_path=args.dataset,
@@ -598,6 +613,7 @@ def main(argv: Sequence[str] | None = None) -> int:
         model=args.model,
         embedding_model=args.embedding_model,
         profile_names=tuple(args.profile or ("baseline", "full")),
+        think=args.think,
     )
     print(
         json.dumps(

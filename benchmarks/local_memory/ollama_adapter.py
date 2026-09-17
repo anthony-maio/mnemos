@@ -17,7 +17,7 @@ import time
 from collections.abc import Callable, Mapping
 from datetime import datetime
 from pathlib import Path
-from typing import Any, cast
+from typing import Any, Literal, cast
 
 from pydantic import ValidationError
 
@@ -28,9 +28,36 @@ from mnemos.scopes import ScopeContext, scope_allows
 from mnemos.types import Interaction, MemoryChunk
 from mnemos.utils.embeddings import EmbeddingProvider
 from mnemos.utils.embeddings import embed_text_async
-from mnemos.utils.llm import LLMProvider
+from mnemos.utils.llm import LLMProvider, _validate_ollama_think
 
 ServiceFactory = Callable[..., Any]
+OllamaThink = bool | Literal["low", "medium", "high", "max"] | None
+
+
+def parse_ollama_think(value: str) -> OllamaThink:
+    """Parse the CLI spelling used by Ollama's ``think`` option."""
+    normalized = value.strip().lower()
+    if normalized == "true":
+        return True
+    if normalized == "false":
+        return False
+    return _validate_ollama_think(normalized)
+
+
+def add_ollama_think(options: dict[str, Any], think: OllamaThink) -> dict[str, Any]:
+    """Add an explicit thinking mode without changing the default shape."""
+    selected = _validate_ollama_think(think)
+    if selected is not None:
+        options["think"] = selected
+    return options
+
+
+def ollama_options_sha256(options: Mapping[str, Any]) -> str:
+    """Hash the exact serialized generation options used by an evaluation."""
+    return hashlib.sha256(
+        json.dumps(options, sort_keys=True, separators=(",", ":")).encode("utf-8")
+    ).hexdigest()
+
 
 # These values are frozen protocol metadata for the comparison artifact. The
 # length/noise rule is a counterfactual shadow measurement because the service
@@ -1585,6 +1612,7 @@ def make_ollama_service_factory(
     timeout: float = 120.0,
     temperature: float = 0.0,
     max_tokens: int = 512,
+    think: OllamaThink = None,
 ) -> ServiceFactory:
     """Build a profile-aware Ollama service factory over one SQLite file.
 
@@ -1593,6 +1621,7 @@ def make_ollama_service_factory(
     constructor grows new module settings.
     """
 
+    selected_think = _validate_ollama_think(think)
     traces: dict[tuple[str, str], dict[str, Any]] = {}
 
     def factory(profile: ExperimentProfile, run_key: str | None = None) -> Any:
@@ -1651,6 +1680,7 @@ def make_ollama_service_factory(
                 "embed_calls": [],
                 "response_metadata": [],
             }
+            add_ollama_think(trace["config"], selected_think)
             traces[trace_key] = trace
         trace["service_instances"] = int(trace.get("service_instances", 0)) + 1
 
@@ -1692,6 +1722,7 @@ def make_ollama_service_factory(
                 temperature=temperature,
                 max_tokens=max_tokens,
                 response_observer=observe_llm,
+                think=selected_think,
             ),
             trace,
         )
