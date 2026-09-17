@@ -1,0 +1,35 @@
+"""Run the stable follow-up only after the first frozen verification passes."""
+import hashlib
+import json
+import os
+from pathlib import Path
+import subprocess
+import sys
+import time
+
+root = Path(__file__).resolve().parent.parent
+first = root / '.venv/claude-scope-checks-v1/verification.json'
+second = root / '.venv/claude-scope-checks-v2'
+snapshot = root / '.venv/claude-scope-frozen-v1'
+runner = root / '.venv/final_checkpoint_checks.py'
+expected = '20f271d93bbf02990a78b51aa74694deaf5a9bf7'
+if second.exists():
+    raise SystemExit('Refusing to overwrite or duplicate the stable follow-up')
+if hashlib.sha256(runner.read_bytes()).hexdigest() != 'd2f05b5e2189e3d3ba5ce9b535d8f5adc98d0c5409037cfff7f4460fac0bdfd6':
+    raise SystemExit('Verification runner changed')
+deadline = time.monotonic() + 6 * 60 * 60
+while time.monotonic() < deadline:
+    record = json.loads(first.read_text())
+    if record['source_commit'] != expected:
+        raise SystemExit('Unexpected first-attempt source')
+    if record['status'] != 'running':
+        break
+    time.sleep(5)
+else:
+    raise SystemExit('First verification did not finish within six hours')
+if record['status'] != 'passed':
+    raise SystemExit('First verification failed; review it before a follow-up')
+command = [sys.executable, str(runner), '--snapshot', str(snapshot), '--output', str(second)]
+result = subprocess.run(command, cwd=root,
+                        creationflags=getattr(subprocess, 'CREATE_NO_WINDOW', 0))
+raise SystemExit(result.returncode)

@@ -440,3 +440,18 @@ used constant unit vectors and unavailable cognition. It verifies native
 delivery and persistence without claiming semantic quality or full lifecycle
 coverage. The [v8 record](native-codex-generated-v8/README.md) preserves exact
 provenance and the preceding SimpleEmbeddingProvider preflight failure.
+
+The stable full repeat on `20f271d` completed at 07:19:50 UTC. All 669 tests
+passed, with two optional WSL skips, in 972.25 seconds. Black, strict mypy,
+JavaScript syntax, build, and Twine also passed. No further shared-environment
+synchronization occurred during the repeat. Its wheel and source archive are
+byte-identical to the first build; installed-wheel evidence uses those same
+wheel bytes. Both attempts and the original environment caveat remain in the
+[verification record](claude-scope-verification.md).
+
+The current wheel also passed a native Claude 2.1.191 canary turn at 07:21 UTC.
+Both roles used scoped v2 source identities and survived restart. The run used
+constant fixture vectors and unavailable cognition, and cost $0.009372.
+UserPromptSubmit and Stop reported degraded adapter status; the test used no
+session persistence and does not establish complete transcript coverage or
+native correction/forget. See the [native record](native-claude-scope-v4/README.md).

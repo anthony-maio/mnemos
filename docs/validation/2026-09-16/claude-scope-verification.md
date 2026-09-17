@@ -9,7 +9,10 @@ That attempt overlapped an unintended shared-environment synchronization at
 06:47 UTC. The [incident audit](environment-sync-incident/README.md) records
 what changed and the limits of the subsequent checks. A second full run on
 the same frozen source began at 07:02:43 UTC, without further synchronization.
-Its result remains pending. Neither attempt establishes real-model quality.
+It passed 669 tests with two explicit WSL skips in 972.25 seconds, then passed
+Black, strict mypy, JavaScript syntax, build, and Twine at 07:19:50 UTC. No
+further shared-environment synchronization occurred during that repeat.
+Neither attempt establishes real-model quality.
 
 The first build's wheel is 262591 bytes, SHA256
 `0ecaa634fe447621d6366b93accad7abfa2495063d9b425e6043973ea7b86663`.
@@ -31,3 +34,8 @@ not alter the shared environment or live memory data.
 
 The [evidence index](claude-scope-verification/attempt-v1/evidence-index.json)
 binds the logs, report, and exact verification and installed-wheel runners.
+The [stable repeat index](claude-scope-verification/attempt-v2/evidence-index.json)
+preserves the second run. Direct hashing confirms that both attempts produced
+byte-identical wheel and source archives. The installed-wheel scope smoke and
+native Codex generated-configuration check therefore use the same wheel bytes
+as the stable build.

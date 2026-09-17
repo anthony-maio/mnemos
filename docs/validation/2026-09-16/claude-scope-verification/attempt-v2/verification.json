@@ -1,0 +1,109 @@
+{
+  "source_commit": "20f271d93bbf02990a78b51aa74694deaf5a9bf7",
+  "source_checkout": "D:\\Development\\mnemos\\mnemos\\.worktrees\\functional-local-memory\\.venv\\claude-scope-frozen-v1",
+  "status": "passed",
+  "started_at": "2026-09-17T07:02:43.149791+00:00",
+  "checks": [
+    {
+      "name": "pytest",
+      "command": [
+        "D:\\Development\\mnemos\\mnemos\\.worktrees\\functional-local-memory\\.venv\\Scripts\\python.exe",
+        "-m",
+        "pytest",
+        "-q",
+        "--junitxml",
+        "D:\\Development\\mnemos\\mnemos\\.worktrees\\functional-local-memory\\.venv\\claude-scope-checks-v2\\pytest.xml"
+      ],
+      "status": "passed",
+      "started_at": "2026-09-17T07:02:43.150586+00:00",
+      "exit_code": 0,
+      "finished_at": "2026-09-17T07:18:56.128366+00:00",
+      "counts": {
+        "tests": 671,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 2
+      }
+    },
+    {
+      "name": "black",
+      "command": [
+        "D:\\Development\\mnemos\\mnemos\\.worktrees\\functional-local-memory\\.venv\\Scripts\\python.exe",
+        "-m",
+        "black",
+        "--check",
+        "."
+      ],
+      "status": "passed",
+      "started_at": "2026-09-17T07:18:56.137603+00:00",
+      "exit_code": 0,
+      "finished_at": "2026-09-17T07:18:58.829618+00:00"
+    },
+    {
+      "name": "mypy",
+      "command": [
+        "D:\\Development\\mnemos\\mnemos\\.worktrees\\functional-local-memory\\.venv\\compat-py310\\Scripts\\python.exe",
+        "-m",
+        "mypy",
+        "."
+      ],
+      "status": "passed",
+      "started_at": "2026-09-17T07:18:58.830279+00:00",
+      "exit_code": 0,
+      "finished_at": "2026-09-17T07:19:08.706742+00:00"
+    },
+    {
+      "name": "javascript",
+      "command": [
+        "node",
+        "--check",
+        "mnemos/ui/app.js"
+      ],
+      "status": "passed",
+      "started_at": "2026-09-17T07:19:08.742305+00:00",
+      "exit_code": 0,
+      "finished_at": "2026-09-17T07:19:08.791663+00:00"
+    },
+    {
+      "name": "build",
+      "command": [
+        "D:\\Development\\mnemos\\mnemos\\.worktrees\\functional-local-memory\\.venv\\Scripts\\python.exe",
+        "-m",
+        "build",
+        "--outdir",
+        "D:\\Development\\mnemos\\mnemos\\.worktrees\\functional-local-memory\\.venv\\claude-scope-checks-v2\\dist"
+      ],
+      "status": "passed",
+      "started_at": "2026-09-17T07:19:08.792417+00:00",
+      "exit_code": 0,
+      "finished_at": "2026-09-17T07:19:50.373758+00:00"
+    },
+    {
+      "name": "twine",
+      "command": [
+        "D:\\Development\\mnemos\\mnemos\\.worktrees\\functional-local-memory\\.venv\\Scripts\\python.exe",
+        "-m",
+        "twine",
+        "check",
+        "D:\\Development\\mnemos\\mnemos\\.worktrees\\functional-local-memory\\.venv\\claude-scope-checks-v2\\dist\\mnemos_memory-0.7.0-py3-none-any.whl",
+        "D:\\Development\\mnemos\\mnemos\\.worktrees\\functional-local-memory\\.venv\\claude-scope-checks-v2\\dist\\mnemos_memory-0.7.0.tar.gz"
+      ],
+      "exit_code": 0,
+      "status": "passed"
+    }
+  ],
+  "runner_sha256": "d2f05b5e2189e3d3ba5ce9b535d8f5adc98d0c5409037cfff7f4460fac0bdfd6",
+  "updated_at": "2026-09-17T07:19:50.916069+00:00",
+  "artifacts": [
+    {
+      "file": "D:\\Development\\mnemos\\mnemos\\.worktrees\\functional-local-memory\\.venv\\claude-scope-checks-v2\\dist\\mnemos_memory-0.7.0-py3-none-any.whl",
+      "bytes": 262591,
+      "sha256": "0ecaa634fe447621d6366b93accad7abfa2495063d9b425e6043973ea7b86663"
+    },
+    {
+      "file": "D:\\Development\\mnemos\\mnemos\\.worktrees\\functional-local-memory\\.venv\\claude-scope-checks-v2\\dist\\mnemos_memory-0.7.0.tar.gz",
+      "bytes": 2228367,
+      "sha256": "a389695a8c1a427fa02abb5348192de78550223a64a22234498c1a76f72a5cfd"
+    }
+  ]
+}

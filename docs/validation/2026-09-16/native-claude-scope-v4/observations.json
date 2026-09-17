@@ -1,0 +1,170 @@
+{
+  "result_records": [
+    {
+      "type": "result",
+      "subtype": "success",
+      "is_error": false,
+      "api_error_status": null,
+      "duration_ms": 4371,
+      "duration_api_ms": 2117,
+      "ttft_ms": 3296,
+      "ttft_stream_ms": 3179,
+      "time_to_request_ms": 1203,
+      "num_turns": 1,
+      "result": "The private release codename for this project is **mnemos-7f73ced73ac9**.",
+      "stop_reason": "end_turn",
+      "session_id": "f6ff63f5-b570-42af-951e-03d1374ccda5",
+      "total_cost_usd": 0.009372,
+      "usage": {
+        "input_tokens": 3,
+        "cache_creation_input_tokens": 1498,
+        "cache_read_input_tokens": 0,
+        "output_tokens": 25,
+        "server_tool_use": {
+          "web_search_requests": 0,
+          "web_fetch_requests": 0
+        },
+        "service_tier": "standard",
+        "cache_creation": {
+          "ephemeral_1h_input_tokens": 1498,
+          "ephemeral_5m_input_tokens": 0
+        },
+        "inference_geo": "not_available",
+        "iterations": [
+          {
+            "input_tokens": 3,
+            "output_tokens": 25,
+            "cache_read_input_tokens": 0,
+            "cache_creation_input_tokens": 1498,
+            "cache_creation": {
+              "ephemeral_5m_input_tokens": 0,
+              "ephemeral_1h_input_tokens": 1498
+            },
+            "type": "message"
+          }
+        ],
+        "speed": "standard"
+      },
+      "modelUsage": {
+        "claude-sonnet-4-6": {
+          "inputTokens": 3,
+          "outputTokens": 25,
+          "cacheReadInputTokens": 0,
+          "cacheCreationInputTokens": 1498,
+          "webSearchRequests": 0,
+          "costUSD": 0.009372,
+          "contextWindow": 200000,
+          "maxOutputTokens": 32000
+        }
+      },
+      "permission_denials": [],
+      "terminal_reason": "completed",
+      "fast_mode_state": "off",
+      "uuid": "09108645-30bd-49cb-99e5-cb8edcda0d72"
+    }
+  ],
+  "assistant_messages": [
+    {
+      "model": "claude-sonnet-4-6",
+      "id": "msg_011Cf8cFRsaxU9m38eRPF5J6",
+      "type": "message",
+      "role": "assistant",
+      "content": [
+        {
+          "type": "text",
+          "text": "The private release codename for this project is **mnemos-7f73ced73ac9**."
+        }
+      ],
+      "container": null,
+      "stop_reason": null,
+      "stop_sequence": null,
+      "stop_details": null,
+      "usage": {
+        "input_tokens": 3,
+        "cache_creation_input_tokens": 1498,
+        "cache_read_input_tokens": 0,
+        "cache_creation": {
+          "ephemeral_5m_input_tokens": 0,
+          "ephemeral_1h_input_tokens": 1498
+        },
+        "output_tokens": 1,
+        "service_tier": "standard",
+        "inference_geo": "not_available"
+      },
+      "diagnostics": null,
+      "context_management": null
+    }
+  ],
+  "hook_events": [
+    {
+      "type": "system",
+      "subtype": "hook_started",
+      "hook_id": "45a39eb8-1587-41dc-a558-0746ae1fdd85",
+      "hook_name": "SessionStart:startup",
+      "hook_event": "SessionStart",
+      "uuid": "222c367d-5ec0-4497-9c86-656ee1e48b89",
+      "session_id": "f6ff63f5-b570-42af-951e-03d1374ccda5"
+    },
+    {
+      "type": "system",
+      "subtype": "hook_response",
+      "hook_id": "45a39eb8-1587-41dc-a558-0746ae1fdd85",
+      "hook_name": "SessionStart:startup",
+      "hook_event": "SessionStart",
+      "output": "{\"hookSpecificOutput\":{\"hookEventName\":\"SessionStart\",\"additionalContext\":\"1. The private release codename for this project is mnemos-7f73ced73ac9.\"}}\r\n",
+      "stdout": "{\"hookSpecificOutput\":{\"hookEventName\":\"SessionStart\",\"additionalContext\":\"1. The private release codename for this project is mnemos-7f73ced73ac9.\"}}\r\n",
+      "stderr": "",
+      "exit_code": 0,
+      "outcome": "success",
+      "uuid": "11dde854-e828-4b43-8337-2d8ed09d0100",
+      "session_id": "f6ff63f5-b570-42af-951e-03d1374ccda5"
+    },
+    {
+      "type": "system",
+      "subtype": "hook_started",
+      "hook_id": "50da9ec5-c6a9-4c3f-bf6f-77cd802e1dad",
+      "hook_name": "UserPromptSubmit",
+      "hook_event": "UserPromptSubmit",
+      "uuid": "1702f6ba-46dd-4335-8730-23420f25e129",
+      "session_id": "f6ff63f5-b570-42af-951e-03d1374ccda5"
+    },
+    {
+      "type": "system",
+      "subtype": "hook_response",
+      "hook_id": "50da9ec5-c6a9-4c3f-bf6f-77cd802e1dad",
+      "hook_name": "UserPromptSubmit",
+      "hook_event": "UserPromptSubmit",
+      "output": "mnemos hook diagnostic host=claude-code event=UserPromptSubmit status=degraded\r\n{\"hookSpecificOutput\":{\"hookEventName\":\"UserPromptSubmit\",\"additionalContext\":\"1. The private release codename for this project is mnemos-7f73ced73ac9.\"}}\r\n",
+      "stdout": "{\"hookSpecificOutput\":{\"hookEventName\":\"UserPromptSubmit\",\"additionalContext\":\"1. The private release codename for this project is mnemos-7f73ced73ac9.\"}}\r\n",
+      "stderr": "mnemos hook diagnostic host=claude-code event=UserPromptSubmit status=degraded\r\n",
+      "exit_code": 0,
+      "outcome": "success",
+      "uuid": "4ad90a80-416f-4871-b3ef-dce1746e9c96",
+      "session_id": "f6ff63f5-b570-42af-951e-03d1374ccda5"
+    },
+    {
+      "type": "system",
+      "subtype": "hook_started",
+      "hook_id": "4dd20877-c4d2-45a9-a48a-a0fdc617dc11",
+      "hook_name": "Stop",
+      "hook_event": "Stop",
+      "uuid": "03d39232-fbc3-45b0-b7ae-2e49e43f0202",
+      "session_id": "f6ff63f5-b570-42af-951e-03d1374ccda5"
+    },
+    {
+      "type": "system",
+      "subtype": "hook_response",
+      "hook_id": "4dd20877-c4d2-45a9-a48a-a0fdc617dc11",
+      "hook_name": "Stop",
+      "hook_event": "Stop",
+      "output": "mnemos hook diagnostic host=claude-code event=Stop status=degraded\r\n",
+      "stdout": "",
+      "stderr": "mnemos hook diagnostic host=claude-code event=Stop status=degraded\r\n",
+      "exit_code": 0,
+      "outcome": "success",
+      "uuid": "af583807-52ce-4a5d-a05a-1cbb3d1130bc",
+      "session_id": "f6ff63f5-b570-42af-951e-03d1374ccda5"
+    }
+  ],
+  "note": "Synthetic fixture results and hook events; host init and account rate-limit records omitted"
+}

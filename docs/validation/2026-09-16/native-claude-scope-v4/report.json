@@ -1,0 +1,389 @@
+{
+  "runner": "native-claude-scope-v4",
+  "source_commit": "20f271d93bbf02990a78b51aa74694deaf5a9bf7",
+  "runner_sha256": "b4f78e040397feed98983f1b75935dd28956acaa2b4c21a7144cf4133e012996",
+  "started_at": "2026-09-17T07:21:22.552294+00:00",
+  "status": "observed",
+  "scope": "native Claude hooks, scoped seed, durable restart; no cognition quality claim",
+  "model_quality_claim": "none",
+  "embedding_fixture": "Constant unit vectors for every text; no semantic retrieval claim",
+  "cognition": "UnavailableLLMProvider; all modules disabled",
+  "max_native_seconds": 60,
+  "hook_timeout_seconds": 20,
+  "wheel_argument": "D:\\Development\\mnemos\\mnemos\\.worktrees\\functional-local-memory\\.venv\\claude-scope-checks-v2\\dist\\mnemos_memory-0.7.0-py3-none-any.whl",
+  "expected_wheel_sha256": "0ecaa634fe447621d6366b93accad7abfa2495063d9b425e6043973ea7b86663",
+  "python": {
+    "executable": "D:\\WindowsTemp\\mnemos-scope-wheel-20260917-0659\\Scripts\\python.exe",
+    "mnemos_package": "D:\\WindowsTemp\\mnemos-scope-wheel-20260917-0659\\Lib\\site-packages\\mnemos\\__init__.py",
+    "site_packages_asserted": true
+  },
+  "package_provenance": {
+    "source_commit": "20f271d93bbf02990a78b51aa74694deaf5a9bf7",
+    "package_files_checked": 53,
+    "wheel_package_members_checked": 56,
+    "wheel_path": "D:\\Development\\mnemos\\mnemos\\.worktrees\\functional-local-memory\\.venv\\claude-scope-checks-v2\\dist\\mnemos_memory-0.7.0-py3-none-any.whl",
+    "wheel_sha256_expected": "0ecaa634fe447621d6366b93accad7abfa2495063d9b425e6043973ea7b86663",
+    "wheel_sha256_observed": "0ecaa634fe447621d6366b93accad7abfa2495063d9b425e6043973ea7b86663"
+  },
+  "claude": {
+    "path": "C:\\Users\\Ant\\.local\\bin\\claude.exe",
+    "version": "2.1.191 (Claude Code)"
+  },
+  "command": [
+    "C:\\Users\\Ant\\.local\\bin\\claude.exe",
+    "--print",
+    "--verbose",
+    "--output-format",
+    "stream-json",
+    "--include-hook-events",
+    "--setting-sources",
+    "project",
+    "--settings",
+    "D:\\WindowsTemp\\mnemos-native-claude-scope-v4-piu7ghls\\claude-settings.json",
+    "--strict-mcp-config",
+    "--mcp-config",
+    "D:\\WindowsTemp\\mnemos-native-claude-scope-v4-piu7ghls\\empty-mcp.json",
+    "--tools",
+    "",
+    "--disable-slash-commands",
+    "--permission-mode",
+    "plan",
+    "--no-session-persistence",
+    "--model",
+    "claude-sonnet-4-6",
+    "--max-budget-usd",
+    "0.08",
+    "--system-prompt",
+    "Answer briefly using only supplied project memory. Do not use tools.",
+    "<random-codename prompt>"
+  ],
+  "fixture_layout": {
+    "project": "D:\\WindowsTemp\\mnemos-native-claude-scope-v4-piu7ghls\\project",
+    "private_trace_dir": "D:\\WindowsTemp\\mnemos-native-claude-scope-v4-piu7ghls\\hooks",
+    "private_native_stdout": "D:\\WindowsTemp\\mnemos-native-claude-scope-v4-piu7ghls\\native-stdout.jsonl",
+    "private_native_stderr": "D:\\WindowsTemp\\mnemos-native-claude-scope-v4-piu7ghls\\native-stderr.log",
+    "project_runtime_descriptor_present": false,
+    "auth_copy_performed": false
+  },
+  "native_process": {
+    "returncode": 0,
+    "timed_out": false,
+    "elapsed_ms": 6644.4,
+    "stdout_sha256": "5a3586c2aa0720d76c8ede5ba91b21672a6b61c255c67b1ecf255a33b95a6eef",
+    "stdout_bytes": 5717,
+    "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "stderr_bytes": 0,
+    "private_stdout": "D:\\WindowsTemp\\mnemos-native-claude-scope-v4-piu7ghls\\native-stdout.jsonl",
+    "private_stderr": "D:\\WindowsTemp\\mnemos-native-claude-scope-v4-piu7ghls\\native-stderr.log",
+    "stream": {
+      "record_count": 10,
+      "non_json_line_count": 0,
+      "rows": [
+        {
+          "type": "system",
+          "subtype": "hook_started",
+          "item_type": null,
+          "usage": {},
+          "numeric_cost_fields": {},
+          "answer_digest": null
+        },
+        {
+          "type": "system",
+          "subtype": "hook_response",
+          "item_type": null,
+          "usage": {},
+          "numeric_cost_fields": {},
+          "answer_digest": null
+        },
+        {
+          "type": "system",
+          "subtype": "hook_started",
+          "item_type": null,
+          "usage": {},
+          "numeric_cost_fields": {},
+          "answer_digest": null
+        },
+        {
+          "type": "system",
+          "subtype": "hook_response",
+          "item_type": null,
+          "usage": {},
+          "numeric_cost_fields": {},
+          "answer_digest": null
+        },
+        {
+          "type": "system",
+          "subtype": "init",
+          "item_type": null,
+          "usage": {},
+          "numeric_cost_fields": {},
+          "answer_digest": null
+        },
+        {
+          "type": "assistant",
+          "subtype": null,
+          "item_type": null,
+          "usage": {},
+          "numeric_cost_fields": {},
+          "answer_digest": null
+        },
+        {
+          "type": "rate_limit_event",
+          "subtype": null,
+          "item_type": null,
+          "usage": {},
+          "numeric_cost_fields": {},
+          "answer_digest": null
+        },
+        {
+          "type": "system",
+          "subtype": "hook_started",
+          "item_type": null,
+          "usage": {},
+          "numeric_cost_fields": {},
+          "answer_digest": null
+        },
+        {
+          "type": "system",
+          "subtype": "hook_response",
+          "item_type": null,
+          "usage": {},
+          "numeric_cost_fields": {},
+          "answer_digest": null
+        },
+        {
+          "type": "result",
+          "subtype": "success",
+          "item_type": null,
+          "usage": {
+            "input_tokens": 3,
+            "cache_creation_input_tokens": 1498,
+            "cache_read_input_tokens": 0,
+            "output_tokens": 25
+          },
+          "numeric_cost_fields": {
+            "total_cost_usd": 0.009372
+          },
+          "answer_digest": "145c6b99fd56dceafa78e41d5665b77a9632e606c5d7b2236ee9ad1dfe955d53"
+        }
+      ],
+      "hook_rows": [
+        {
+          "subtype": "hook_started",
+          "hook_event": "SessionStart",
+          "hook_name": "SessionStart:startup",
+          "outcome": null,
+          "exit_code": null,
+          "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+          "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+          "output_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+          "session_id_sha256": "1755da4205daa7a24aca3d42048b7bddc48c7264166b6fca44f1863017ac6ef9"
+        },
+        {
+          "subtype": "hook_response",
+          "hook_event": "SessionStart",
+          "hook_name": "SessionStart:startup",
+          "outcome": "success",
+          "exit_code": 0,
+          "stdout_sha256": "ebe6565641650251f40b9ebdc31dd54799489f333e6a54575004acf4e9ba9879",
+          "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+          "output_sha256": "ebe6565641650251f40b9ebdc31dd54799489f333e6a54575004acf4e9ba9879",
+          "session_id_sha256": "1755da4205daa7a24aca3d42048b7bddc48c7264166b6fca44f1863017ac6ef9"
+        },
+        {
+          "subtype": "hook_started",
+          "hook_event": "UserPromptSubmit",
+          "hook_name": "UserPromptSubmit",
+          "outcome": null,
+          "exit_code": null,
+          "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+          "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+          "output_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+          "session_id_sha256": "1755da4205daa7a24aca3d42048b7bddc48c7264166b6fca44f1863017ac6ef9"
+        },
+        {
+          "subtype": "hook_response",
+          "hook_event": "UserPromptSubmit",
+          "hook_name": "UserPromptSubmit",
+          "outcome": "success",
+          "exit_code": 0,
+          "stdout_sha256": "13a4cbf11c8cc0980e21811bea2ba88176e322a01c9f30568c9ff00638e2d715",
+          "stderr_sha256": "6803835cb43f59b43d40cbe167c694462dea1617b17c94e39b49df37dc1a07c0",
+          "output_sha256": "78722abfcdf6a8bd14fcdf6777ed0dab0926f90a76cd054bd793c07f45352624",
+          "session_id_sha256": "1755da4205daa7a24aca3d42048b7bddc48c7264166b6fca44f1863017ac6ef9"
+        },
+        {
+          "subtype": "hook_started",
+          "hook_event": "Stop",
+          "hook_name": "Stop",
+          "outcome": null,
+          "exit_code": null,
+          "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+          "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+          "output_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+          "session_id_sha256": "1755da4205daa7a24aca3d42048b7bddc48c7264166b6fca44f1863017ac6ef9"
+        },
+        {
+          "subtype": "hook_response",
+          "hook_event": "Stop",
+          "hook_name": "Stop",
+          "outcome": "success",
+          "exit_code": 0,
+          "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+          "stderr_sha256": "66e753edaccd703ff773b5007c0b9e45b1df3b48b3dd66b997445acb70b437a1",
+          "output_sha256": "66e753edaccd703ff773b5007c0b9e45b1df3b48b3dd66b997445acb70b437a1",
+          "session_id_sha256": "1755da4205daa7a24aca3d42048b7bddc48c7264166b6fca44f1863017ac6ef9"
+        }
+      ],
+      "answer_text_digests": [
+        "145c6b99fd56dceafa78e41d5665b77a9632e606c5d7b2236ee9ad1dfe955d53"
+      ],
+      "answer_mentions_random_canary": true,
+      "tool_call_observed": false,
+      "tool_item_types": [],
+      "cost_usd_observed": [
+        0.009372
+      ],
+      "total_cost_usd": 0.009372,
+      "usage_observed": true
+    }
+  },
+  "seed": {
+    "project_id": "cfca9219-249b-41d6-850d-90e6242b6772",
+    "remember_status": "committed",
+    "remember_committed": null,
+    "maintenance_status": null,
+    "codename_sha256": "82af708581c831551acddeb864fb3de8348deca22b7eed6a6b9fd39c9d7af483",
+    "seed_content_sha256": "f77c2f434b762641d47c8dd13f6dd369404e3f51b30ef12962ed2de7401850f4"
+  },
+  "native_hook_trace": {
+    "available": true,
+    "private_exact_payload_dir": "D:\\WindowsTemp\\mnemos-native-claude-scope-v4-piu7ghls\\hooks",
+    "records": [
+      {
+        "trace_file": "D:\\WindowsTemp\\mnemos-native-claude-scope-v4-piu7ghls\\hooks\\SessionStart-000e4ed029874db988cd93d343ef2b9b.json",
+        "event": "SessionStart",
+        "payload_sha256": "e80329d6040bb9ad0bfe313cec6faa2543bbc05e2e19c096bdf794e90273ea9a",
+        "returncode": 0,
+        "stdout_sha256": "ab30b90ace86f209a7b3aab648499ab3182665b98d4277d53f8c6aa43e48aab6",
+        "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "diagnostic_status": null,
+        "native_payload_fields": [
+          "cwd",
+          "hook_event_name",
+          "session_id",
+          "source",
+          "transcript_path"
+        ],
+        "session_id_sha256": "1755da4205daa7a24aca3d42048b7bddc48c7264166b6fca44f1863017ac6ef9",
+        "prompt_id_sha256": null,
+        "cwd_present": true,
+        "prompt_present": false,
+        "last_assistant_message_present": false,
+        "transcript_state": "path_provided_uninspected",
+        "native_output_context_present": true,
+        "adapter_output_sha256": "ab30b90ace86f209a7b3aab648499ab3182665b98d4277d53f8c6aa43e48aab6"
+      },
+      {
+        "trace_file": "D:\\WindowsTemp\\mnemos-native-claude-scope-v4-piu7ghls\\hooks\\Stop-0f3ac3acaf0f4a75a3cb870850daf564.json",
+        "event": "Stop",
+        "payload_sha256": "d19e92cf3ba47eefcb25a3041d6483c6e6f2fb4c90b3100d3d29c95f808d5275",
+        "returncode": 0,
+        "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "stderr_sha256": "9d1923741dc47c6d6474a6dae956442459b6cacd387e05bb457bcdea8866fdc1",
+        "diagnostic_status": "degraded",
+        "native_payload_fields": [
+          "background_tasks",
+          "cwd",
+          "effort",
+          "hook_event_name",
+          "last_assistant_message",
+          "permission_mode",
+          "session_crons",
+          "session_id",
+          "stop_hook_active",
+          "transcript_path"
+        ],
+        "session_id_sha256": "1755da4205daa7a24aca3d42048b7bddc48c7264166b6fca44f1863017ac6ef9",
+        "prompt_id_sha256": null,
+        "cwd_present": true,
+        "prompt_present": false,
+        "last_assistant_message_present": true,
+        "transcript_state": "path_provided_uninspected",
+        "native_output_context_present": false,
+        "adapter_output_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      {
+        "trace_file": "D:\\WindowsTemp\\mnemos-native-claude-scope-v4-piu7ghls\\hooks\\UserPromptSubmit-6f045810331646658010ebed18967f5d.json",
+        "event": "UserPromptSubmit",
+        "payload_sha256": "a0ea328319d5e15f6bbb3ca7613251c002f969d2aa283d1225ecfcb6b89e0acf",
+        "returncode": 0,
+        "stdout_sha256": "3fb74ca848242b2663740e73aba277a0fc123b8042d0c905c43d7897b0cf580e",
+        "stderr_sha256": "052bf968e796057c4de8241d65fe81b70da87942b685db53ca8ee475c5f36c94",
+        "diagnostic_status": "degraded",
+        "native_payload_fields": [
+          "cwd",
+          "hook_event_name",
+          "permission_mode",
+          "prompt",
+          "session_id",
+          "transcript_path"
+        ],
+        "session_id_sha256": "1755da4205daa7a24aca3d42048b7bddc48c7264166b6fca44f1863017ac6ef9",
+        "prompt_id_sha256": null,
+        "cwd_present": true,
+        "prompt_present": true,
+        "last_assistant_message_present": false,
+        "transcript_state": "path_provided_uninspected",
+        "native_output_context_present": true,
+        "adapter_output_sha256": "3fb74ca848242b2663740e73aba277a0fc123b8042d0c905c43d7897b0cf580e"
+      }
+    ],
+    "payload_retention": "exact payloads and adapter stdout/stderr are private fixture files; report stores digests and safe markers"
+  },
+  "captured_roles_before_restart": {
+    "event_count": 2,
+    "user_capture": true,
+    "assistant_capture": true,
+    "claude_v2_identity": true
+  },
+  "transcript_coverage": {
+    "status": "partial_hook_payloads_only",
+    "payload_without_transcript_path_count": 0,
+    "path_provided_uninspected_count": 3,
+    "limitation": "Native Claude transcript files are not copied or inspected by this runner; adapter hook status and fallback degradation are retained in the private trace."
+  },
+  "restart": {
+    "events_survive_restart": true,
+    "event_count_after_restart": 3,
+    "claude_v2_ids_after_restart": true
+  },
+  "reviewed_synthetic_answer": {
+    "answer_text_digests": [
+      "145c6b99fd56dceafa78e41d5665b77a9632e606c5d7b2236ee9ad1dfe955d53"
+    ],
+    "random_canary_exact_match": true,
+    "quality_claim": "none"
+  },
+  "cost": {
+    "total_cost_usd": 0.009372,
+    "observed_cost_values": [
+      0.009372
+    ],
+    "source": "native Claude stream result fields; null means the native output did not expose numeric cost"
+  },
+  "criteria": {
+    "native_completed": true,
+    "hook_payloads_recorded": true,
+    "user_capture": true,
+    "assistant_capture": true,
+    "claude_v2_identity": true,
+    "events_survive_restart": true,
+    "exact_canary_answer": true,
+    "no_tool_turn": true
+  },
+  "fixture": "D:\\WindowsTemp\\mnemos-native-claude-scope-v4-piu7ghls",
+  "private_fixture_preserved": true,
+  "runtime_descriptor_absent": true,
+  "finished_at": "2026-09-17T07:21:52.935647+00:00"
+}

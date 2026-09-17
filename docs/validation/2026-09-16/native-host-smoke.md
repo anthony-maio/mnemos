@@ -315,3 +315,14 @@ The preceding [v7 preflight failure](native-codex-generated-v7/README.md) remain
 preserved: its fallback embedding scored the generic query below the unchanged
 relevance floor, and no native model turn started. This motivated separating
 the transport fixture from semantic-quality evaluation.
+
+## Native Claude scoped identity on source 20f271d
+
+The current installed wheel passed a fresh Claude 2.1.191 turn with Sonnet 4-6:
+it returned a random memory canary, captured both roles with scoped v2 source
+identities, and retained the events across service restart. Actual cost was
+$0.009372. UserPromptSubmit and Stop emitted degraded adapter diagnostics;
+native prompt IDs and usable persisted transcript coverage remain unproven
+in this no-session-persistence fixture. Constant vectors and unavailable
+cognition establish transport only. See the [v4 record](native-claude-scope-v4/README.md)
+for exact evidence and limitations.

@@ -751,7 +751,7 @@ Mnemos is an active public beta. It is not ready for definitive replacement clai
 
 | Client / Surface | Status | Notes |
 |---|---|---|
-| Claude Code | Native capture observed, lifecycle acceptance open | Installed d17 wheel captured both roles, returned seeded context, and survived restart; transcript coverage was degraded. The newer scope-identity repair has separate adapter and installed-wheel tests. |
+| Claude Code | Native capture observed, lifecycle acceptance open | Installed 20f wheel delivered a random canary, captured both roles with scoped identities, and retained them across restart. The no-session-persistence fixture reported degraded coverage; full transcript and lifecycle checks remain open. |
 | Claude Desktop | Tier 1 candidate | The checked-in stdio shape passes a local service subprocess test; no installed desktop session is recorded here. |
 | Generic MCP stdio hosts | Tier 1 candidate | The checked-in stdio shape passes a local service subprocess test. |
 | Codex CLI | Generated native hooks observed, lifecycle acceptance open | Installed 20f wheel's generated TOML hooks delivered a random memory canary, captured both roles, and retained them across restart. Constant fixture vectors and unavailable cognition isolate transport from semantic quality; Desktop and full lifecycle checks remain open. |
