@@ -81,6 +81,10 @@ After resolving an outage or configuration failure, use `mnemos jobs --status ex
 
 Native Claude and Codex hooks remain nonblocking on failure. They emit a sanitized diagnostic to stderr with the host, known event, status, and exception type. The diagnostic excludes captured content and exception messages; normal host context continues to use the host's stdout protocol.
 
+Codex CLI 0.146 supports inline hooks in `config.toml` and a separate `hooks.json` file. Mnemos generates inline hooks. Its installer preserves an existing `[features].hooks = false`, which disables automatic capture even when the hook commands are present. Enable that feature intentionally in Codex before expecting automatic capture; the MCP integration remains a separate path. Avoid copying the generated hooks into both files, since Codex loads both representations. These details are specific to the [tagged 0.146 hook discovery](https://raw.githubusercontent.com/openai/codex/rust-v0.146.0/codex-rs/hooks/src/engine/discovery.rs).
+
+Claude scope identity upgrades preserve old forget suppressions and reject unbound legacy checkpoints. Redaction and missing stable native event IDs can also leave capture degraded. See the [scope repair and recovery limits](validation/2026-09-16/claude-scope-repair.md) before continuing an older session across an upgrade.
+
 Retrieval returns versioned facts with their source references, support status, and score breakdown. The default retrieval profile is `baseline`. `biomimetic` enables the experimental state and graph contributions through the same scoped candidate set. The lexical search path contributes additional candidates to the union; it does not invent an FTS score that is combined with semantic similarity.
 
 Corrections use a stable fact ID and an expected version:

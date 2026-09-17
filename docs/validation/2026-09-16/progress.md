@@ -403,3 +403,13 @@ from native counts. The exact runner, reviewed synthetic stdout observations,
 and cleanup evidence are preserved under
 `native-codex-capture-v6/`; the earlier v5 failure remains open alongside this
 new partial success.
+
+
+Source `20f271d` binds Claude event IDs and checkpoints to their resolved scope.
+The service derives and checks old source suppressions before accepting a new
+identity, retains exact legacy deduplication, and rejects ambiguous redaction.
+A version field prevents older services from silently accepting v2 identities.
+The 34 adapter/helper and 20 service identity tests passed. Full verification
+started against a frozen checkout at 06:35 UTC on September 17. Native d17
+results remain separate evidence. See [scope repair](claude-scope-repair.md) for
+legacy checkpoint recovery and incomplete transcript coverage.
