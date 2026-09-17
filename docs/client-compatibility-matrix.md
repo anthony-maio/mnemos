@@ -1,10 +1,10 @@
 # Client compatibility and observed evidence
 
-Updated September 16, 2026 for the unreleased functional-local-memory worktree. Implementation, protocol tests, and native conversation acceptance are separate claims.
+Updated September 17, 2026 for the unreleased functional-local-memory worktree. Implementation, protocol tests, and native conversation acceptance are separate claims.
 
 | Client | Implemented integration | Observed evidence | Native conversation acceptance |
 | --- | --- | --- | --- |
-| Claude Code | Command hooks, transcript deltas, context injection, MCP tools | Adapter tests, real MCP/service subprocess lifecycle, and one native seeded-fact recall turn on 2.1.191 | Full lifecycle matrix pending; other installed hooks were present in the native smoke |
+| Claude Code | Command hooks, transcript deltas, context injection, MCP tools | Native 2.1.191 seeded recall and durable user-prompt capture observed with an isolated hook set; event survives restart | Missing transcript caused Stop to skip the available assistant-message fallback; repair in progress. Full lifecycle matrix pending |
 | Codex | Command lifecycle hooks, supported context output, MCP tools | Adapter contracts and shared service continuity pass; two native CLI 0.146.0 turns completed without observed hook callbacks or recall | Native automatic capture and recall unproven |
 | Hermes Agent | Optional MemoryProvider and explicit Windows/WSL bridge | Installed Hermes 0.21.3 API calls and actual WSL -> Windows authenticated transport | Pending |
 | Generic MCP stdio | MCP server as service client | Subprocess capture, job status, inspect, retrieve, correct, forget | Host-specific acceptance pending |

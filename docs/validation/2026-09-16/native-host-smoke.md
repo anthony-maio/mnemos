@@ -120,3 +120,31 @@ inline `config.toml` hooks are supported and that bypassing hook trust runs
 vetted hooks for one-off automation. This installed CLI run did not exercise
 that path in `codex exec`; an interactive Codex session or a version-specific
 trust flow remains required before claiming native Codex hook parity.
+
+## Isolated Claude capture follow-up on September 17
+
+A fresh native Claude 2.1.191 turn used the installed `b7a9d9d` wheel, a
+private disposable fixture, `--setting-sources project`, explicit settings,
+no tools, no MCP servers, and `claude-sonnet-4-6`. The command used
+`--no-session-persistence` and an $0.08 budget. These invocation flags are
+documented in the [Claude CLI reference](https://code.claude.com/docs/en/cli-reference).
+The event stream recorded exactly one SessionStart, UserPromptSubmit, and
+Stop invocation. The actual cost was $0.009033.
+
+The user prompt was durably captured and survived service restart. The native
+UserPromptSubmit hook supplied the seeded SQLite fact to Claude, which
+answered with that convention. This supplies native prompt-capture and
+seeded-recall evidence under the isolated hook set.
+
+The Stop hook exposed a production adapter defect: its payload contained both
+a nonexistent transcript path and a valid `last_assistant_message`. Reading
+the transcript raised `FileNotFoundError` before the adapter reached the
+last-message fallback. The host returned success while the adapter emitted
+its error diagnostic; no assistant event was stored. This is partial capture,
+not a successful complete conversation-capture check. The failed result is
+preserved in [native-claude-capture-v2/report.json](native-claude-capture-v2/report.json).
+
+The fixture used simple embeddings and unavailable cognition. Durable event
+capture is separate from accepted-fact extraction, which this run did not
+measure. Its private database and hook traces remain at
+`D:\WindowsTemp\mnemos-native-claude-capture-o36uj8e0`.

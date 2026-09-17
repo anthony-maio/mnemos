@@ -1,0 +1,327 @@
+{
+  "source_commit": "b7a9d9d4d9d6947564696457b0e2754f7e95a801",
+  "package": "D:\\Development\\mnemos\\mnemos\\.worktrees\\functional-local-memory\\.venv\\wheel-smoke\\Lib\\site-packages\\mnemos\\__init__.py",
+  "fixture": "D:\\WindowsTemp\\mnemos-native-claude-capture-o36uj8e0",
+  "started_at": "2026-09-17T05:13:34.921243+00:00",
+  "host_version": "2.1.191 (Claude Code)",
+  "command": [
+    "C:\\Users\\Ant\\.local\\bin\\claude.exe",
+    "--print",
+    "--verbose",
+    "--output-format",
+    "stream-json",
+    "--include-hook-events",
+    "--setting-sources",
+    "project",
+    "--settings",
+    "D:\\WindowsTemp\\mnemos-native-claude-capture-o36uj8e0\\claude-settings.json",
+    "--strict-mcp-config",
+    "--mcp-config",
+    "D:\\WindowsTemp\\mnemos-native-claude-capture-o36uj8e0\\mcp.json",
+    "--tools",
+    "",
+    "--disable-slash-commands",
+    "--permission-mode",
+    "plan",
+    "--no-session-persistence",
+    "--model",
+    "claude-sonnet-4-6",
+    "--max-budget-usd",
+    "0.08",
+    "--system-prompt",
+    "Answer the user briefly using the supplied project memory. Do not use tools.",
+    "Remember that the project release label is bronze finch. In one short sentence, tell me which database this project uses from the supplied project memory."
+  ],
+  "runner_sha256": "42785e2cd83cb496d46ae08358f4b9a3286ae4f36ac820067c43a6dee4893024",
+  "scope": "native hook capture and seeded recall; unavailable cognition, simple embeddings; no extraction quality claim",
+  "returncode": 0,
+  "result_records": [
+    {
+      "type": "result",
+      "subtype": "success",
+      "is_error": false,
+      "api_error_status": null,
+      "duration_ms": 3208,
+      "duration_api_ms": 1309,
+      "ttft_ms": 2538,
+      "ttft_stream_ms": 2383,
+      "time_to_request_ms": 1243,
+      "num_turns": 1,
+      "result": "Based on the project memory, this project uses **SQLite** for durable memory storage.",
+      "stop_reason": "end_turn",
+      "session_id": "0a45a50f-1e46-4dfa-8807-9437272ae00b",
+      "total_cost_usd": 0.009033000000000001,
+      "usage": {
+        "input_tokens": 3,
+        "cache_creation_input_tokens": 1449,
+        "cache_read_input_tokens": 0,
+        "output_tokens": 22,
+        "server_tool_use": {
+          "web_search_requests": 0,
+          "web_fetch_requests": 0
+        },
+        "service_tier": "standard",
+        "cache_creation": {
+          "ephemeral_1h_input_tokens": 1449,
+          "ephemeral_5m_input_tokens": 0
+        },
+        "inference_geo": "not_available",
+        "iterations": [
+          {
+            "input_tokens": 3,
+            "output_tokens": 22,
+            "cache_read_input_tokens": 0,
+            "cache_creation_input_tokens": 1449,
+            "cache_creation": {
+              "ephemeral_5m_input_tokens": 0,
+              "ephemeral_1h_input_tokens": 1449
+            },
+            "type": "message"
+          }
+        ],
+        "speed": "standard"
+      },
+      "modelUsage": {
+        "claude-sonnet-4-6": {
+          "inputTokens": 3,
+          "outputTokens": 22,
+          "cacheReadInputTokens": 0,
+          "cacheCreationInputTokens": 1449,
+          "webSearchRequests": 0,
+          "costUSD": 0.009033000000000001,
+          "contextWindow": 200000,
+          "maxOutputTokens": 32000
+        }
+      },
+      "permission_denials": [],
+      "terminal_reason": "completed",
+      "fast_mode_state": "off",
+      "uuid": "3847802e-47f3-4bc1-9fde-ca8d08935fca"
+    }
+  ],
+  "hook_events": [
+    {
+      "type": "system",
+      "subtype": "hook_started",
+      "hook_id": "18ee8a12-c82f-46a8-98de-0a230f3f3b26",
+      "hook_name": "SessionStart:startup",
+      "hook_event": "SessionStart",
+      "uuid": "63ba02db-a088-4391-8ecc-ce5df1d921d1",
+      "session_id": "0a45a50f-1e46-4dfa-8807-9437272ae00b"
+    },
+    {
+      "type": "system",
+      "subtype": "hook_response",
+      "hook_id": "18ee8a12-c82f-46a8-98de-0a230f3f3b26",
+      "hook_name": "SessionStart:startup",
+      "hook_event": "SessionStart",
+      "output": "",
+      "stdout": "",
+      "stderr": "",
+      "exit_code": 0,
+      "outcome": "success",
+      "uuid": "b9f208d6-684f-44e4-bd4f-fd70c2fac38e",
+      "session_id": "0a45a50f-1e46-4dfa-8807-9437272ae00b"
+    },
+    {
+      "type": "system",
+      "subtype": "hook_started",
+      "hook_id": "5502b7e6-2f9c-4809-990d-449122b3d51f",
+      "hook_name": "UserPromptSubmit",
+      "hook_event": "UserPromptSubmit",
+      "uuid": "256034db-ba0c-4a5e-aa66-5b426c246884",
+      "session_id": "0a45a50f-1e46-4dfa-8807-9437272ae00b"
+    },
+    {
+      "type": "system",
+      "subtype": "hook_response",
+      "hook_id": "5502b7e6-2f9c-4809-990d-449122b3d51f",
+      "hook_name": "UserPromptSubmit",
+      "hook_event": "UserPromptSubmit",
+      "output": "{\"hookSpecificOutput\":{\"hookEventName\":\"UserPromptSubmit\",\"additionalContext\":\"1. The project uses SQLite for durable memory storage.\"}}\r\n",
+      "stdout": "{\"hookSpecificOutput\":{\"hookEventName\":\"UserPromptSubmit\",\"additionalContext\":\"1. The project uses SQLite for durable memory storage.\"}}\r\n",
+      "stderr": "",
+      "exit_code": 0,
+      "outcome": "success",
+      "uuid": "67235f18-2679-4b18-a856-b9233db1e70d",
+      "session_id": "0a45a50f-1e46-4dfa-8807-9437272ae00b"
+    },
+    {
+      "type": "system",
+      "subtype": "hook_started",
+      "hook_id": "63f9f355-3306-4c8f-bb73-0495aa4ab98e",
+      "hook_name": "Stop",
+      "hook_event": "Stop",
+      "uuid": "3e09e4da-5593-413a-81bc-3355a052d102",
+      "session_id": "0a45a50f-1e46-4dfa-8807-9437272ae00b"
+    },
+    {
+      "type": "system",
+      "subtype": "hook_response",
+      "hook_id": "63f9f355-3306-4c8f-bb73-0495aa4ab98e",
+      "hook_name": "Stop",
+      "hook_event": "Stop",
+      "output": "mnemos hook diagnostic host=claude-code event=Stop status=error exception=FileNotFoundError\r\n",
+      "stdout": "",
+      "stderr": "mnemos hook diagnostic host=claude-code event=Stop status=error exception=FileNotFoundError\r\n",
+      "exit_code": 0,
+      "outcome": "success",
+      "uuid": "ad6246c4-c480-4bd9-8cce-be8be3aeaf54",
+      "session_id": "0a45a50f-1e46-4dfa-8807-9437272ae00b"
+    }
+  ],
+  "adapter_invocations": [
+    {
+      "event": "SessionStart",
+      "payload": {
+        "session_id": "0a45a50f-1e46-4dfa-8807-9437272ae00b",
+        "transcript_path": "C:\\Users\\Ant\\.claude\\projects\\D--WindowsTemp-mnemos-native-claude-capture-o36uj8e0-project\\0a45a50f-1e46-4dfa-8807-9437272ae00b.jsonl",
+        "cwd": "D:\\WindowsTemp\\mnemos-native-claude-capture-o36uj8e0\\project",
+        "hook_event_name": "SessionStart",
+        "source": "startup"
+      },
+      "returncode": 0,
+      "stdout": "",
+      "stderr": ""
+    },
+    {
+      "event": "Stop",
+      "payload": {
+        "session_id": "0a45a50f-1e46-4dfa-8807-9437272ae00b",
+        "transcript_path": "C:\\Users\\Ant\\.claude\\projects\\D--WindowsTemp-mnemos-native-claude-capture-o36uj8e0-project\\0a45a50f-1e46-4dfa-8807-9437272ae00b.jsonl",
+        "cwd": "D:\\WindowsTemp\\mnemos-native-claude-capture-o36uj8e0\\project",
+        "permission_mode": "plan",
+        "effort": {
+          "level": "high"
+        },
+        "hook_event_name": "Stop",
+        "stop_hook_active": false,
+        "last_assistant_message": "Based on the project memory, this project uses **SQLite** for durable memory storage.",
+        "background_tasks": [],
+        "session_crons": []
+      },
+      "returncode": 0,
+      "stdout": "",
+      "stderr": "mnemos hook diagnostic host=claude-code event=Stop status=error exception=FileNotFoundError\n"
+    },
+    {
+      "event": "UserPromptSubmit",
+      "payload": {
+        "session_id": "0a45a50f-1e46-4dfa-8807-9437272ae00b",
+        "transcript_path": "C:\\Users\\Ant\\.claude\\projects\\D--WindowsTemp-mnemos-native-claude-capture-o36uj8e0-project\\0a45a50f-1e46-4dfa-8807-9437272ae00b.jsonl",
+        "cwd": "D:\\WindowsTemp\\mnemos-native-claude-capture-o36uj8e0\\project",
+        "permission_mode": "plan",
+        "hook_event_name": "UserPromptSubmit",
+        "prompt": "Remember that the project release label is bronze finch. In one short sentence, tell me which database this project uses from the supplied project memory."
+      },
+      "returncode": 0,
+      "stdout": "{\"hookSpecificOutput\":{\"hookEventName\":\"UserPromptSubmit\",\"additionalContext\":\"1. The project uses SQLite for durable memory storage.\"}}\n",
+      "stderr": ""
+    }
+  ],
+  "captured_events": [
+    {
+      "id": "4238b67d350c1bc059d28966d08fef8e61bb3e816307216541878fff3ad732ff",
+      "event_fingerprint": "4238b67d350c1bc059d28966d08fef8e61bb3e816307216541878fff3ad732ff",
+      "role": "user",
+      "content": "Remember that the project release label is bronze finch. In one short sentence, tell me which database this project uses from the supplied project memory.",
+      "normalized_content": "remember that the project release label is bronze finch. in one short sentence, tell me which database this project uses from the supplied project memory.",
+      "scope": "project",
+      "scope_id": "d85ede1c-3531-4244-924d-687748e9f0b8",
+      "source": "claude-code",
+      "hook_event": null,
+      "metadata": {
+        "user_profile_id": "native-claude-capture-fixture",
+        "project_id": "d85ede1c-3531-4244-924d-687748e9f0b8",
+        "workspace_id": null,
+        "session_id": "0a45a50f-1e46-4dfa-8807-9437272ae00b",
+        "host": "claude-code",
+        "scope": "project",
+        "scope_id": "d85ede1c-3531-4244-924d-687748e9f0b8",
+        "source_event_id": "claude:dff74594a635fbc2b2629291af7c70250474c309fd2f8e7760778ff5a2cf8eb9",
+        "source_ref": "prompt:a36ced0127b01d42fe0fb8b5b03c7d62f0e736161c1e20b72e988186dcf54a17",
+        "source_kind": "claude_code_transcript",
+        "explicit_remember": false
+      },
+      "status": "pending",
+      "error": null,
+      "created_at": "2026-09-17T05:13:41.941210Z",
+      "occurred_at": "2026-09-17T05:13:41.698935Z"
+    }
+  ],
+  "jobs_before_restart": [
+    {
+      "id": "event:18e119a95f3be70bb98a86e9ba85e360f3b70e03b6e710ef719a26c2853da8a3",
+      "kind": "remember",
+      "payload": {
+        "event_id": "18e119a95f3be70bb98a86e9ba85e360f3b70e03b6e710ef719a26c2853da8a3",
+        "context": {
+          "user_profile_id": "native-claude-capture-fixture",
+          "project_id": "d85ede1c-3531-4244-924d-687748e9f0b8",
+          "workspace_id": null,
+          "session_id": "371ed4a8-8cd9-4f06-83d3-4e5c8bb9e9ef",
+          "host": "manual"
+        },
+        "scope": "project",
+        "source_digest": "fc4c42b0c3e26915813e845b835bd346943a35c470072243f59ca99e436b290e"
+      },
+      "status": "completed",
+      "attempt_count": 1,
+      "max_attempts": 5,
+      "available_at": "2026-09-17T05:13:38.234186Z",
+      "lease_owner": null,
+      "lease_token": null,
+      "lease_until": null,
+      "last_error": null,
+      "result": {
+        "decision": "facts",
+        "fact_ids": [
+          "479811b7-c00d-4d4f-8c5e-f5f45f538687"
+        ]
+      },
+      "created_at": "2026-09-17T05:13:38.234188Z",
+      "updated_at": "2026-09-17T05:13:39.100567Z"
+    },
+    {
+      "id": "event:4238b67d350c1bc059d28966d08fef8e61bb3e816307216541878fff3ad732ff",
+      "kind": "extract",
+      "payload": {
+        "event_id": "4238b67d350c1bc059d28966d08fef8e61bb3e816307216541878fff3ad732ff",
+        "context": {
+          "user_profile_id": "native-claude-capture-fixture",
+          "project_id": "d85ede1c-3531-4244-924d-687748e9f0b8",
+          "workspace_id": null,
+          "session_id": "0a45a50f-1e46-4dfa-8807-9437272ae00b",
+          "host": "claude-code"
+        },
+        "scope": "project",
+        "source_digest": "9e0f8ea40b98e01650a1b4d0c2fcea0a9f411fe0bfedf6be593c03df5e9e267c"
+      },
+      "status": "pending",
+      "attempt_count": 0,
+      "max_attempts": 5,
+      "available_at": "2026-09-17T05:13:41.941233Z",
+      "lease_owner": null,
+      "lease_token": null,
+      "lease_until": null,
+      "last_error": null,
+      "result": null,
+      "created_at": "2026-09-17T05:13:41.941234Z",
+      "updated_at": "2026-09-17T05:13:41.941235Z"
+    }
+  ],
+  "event_ids_after_restart": [
+    "18e119a95f3be70bb98a86e9ba85e360f3b70e03b6e710ef719a26c2853da8a3",
+    "4238b67d350c1bc059d28966d08fef8e61bb3e816307216541878fff3ad732ff"
+  ],
+  "events_survive_restart": true,
+  "user_prompt_captured": true,
+  "assistant_captured": false,
+  "invoked_events": [
+    "SessionStart",
+    "Stop",
+    "UserPromptSubmit"
+  ],
+  "status": "not_observed",
+  "finished_at": "2026-09-17T05:13:46.020398+00:00"
+}
