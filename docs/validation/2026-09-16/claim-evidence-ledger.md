@@ -4,15 +4,18 @@ Assessment date: September 17, 2026. This covers the unreleased
 functional-local-memory worktree, not the installed public package or website.
 The capability IDs come from the original implementation plan.
 
-The latest complete package verification is frozen source `6600dc2`:
-865 tests passed with four skips, plus Black, strict mypy, JavaScript syntax,
-build, and Twine. A fresh installed wheel passed all 42 selected contract cases
-and the synthetic Stop replay assertions. Source, fixtures, and the installed
+The latest complete package verification is frozen source `56182d9`:
+898 tests passed with four skips, plus Black, strict mypy, JavaScript syntax,
+build, and Twine. A fresh installed wheel passed 87 selected contract cases
+and seven synthetic Stop replay assertions. Source, fixtures, and the installed
 environment were on C:, outside the development checkout. The
-[SSD package checkpoint](ssd-package-checkpoint-v1/README.md) binds the wheel,
-source, helpers, dependencies, exact test cases, and external website input.
-It includes the repaired Claude plugin launcher and strengthened continuity
-assertions, but does not establish native plugin-session acceptance.
+[service/runtime package checkpoint](../2026-09-17/service-runtime-package-checkpoint-v1/README.md)
+binds the wheel, source, helpers, dependencies, exact test cases, and installed
+package origins. It does not establish native plugin-session acceptance.
+
+The preceding complete package checkpoint was frozen source `6600dc2`, with
+865 tests passed and 42 installed contract cases. It remains historical
+evidence and does not override the newer 56182d9 checkpoint.
 
 Historical source `312b8d6` passed 858 tests with four skips. Its
 [fresh installed-wheel check](combined-package-checkpoint-v2/README.md) then
@@ -41,10 +44,18 @@ The [v11 native read attempt](../2026-09-17/native-claude-mcp-v11/README.md)
 subsequently left the MCP server pending and made no tool calls. Its successful
 hook-context recall did not close native MCP retrieval acceptance.
 The [v12 native read check](../2026-09-17/native-claude-mcp-v12/README.md)
-then observed successful health and retrieve calls, matching the intended
+observed successful health and retrieve calls, matching the intended
 database/profile/project and returning the project-scoped seed. Its bounded
-read, identity, restart, and replay criteria all passed. Native correction,
-forget, extraction, and cross-host continuity remain separate open gates.
+read, identity, restart, and replay criteria all passed. An offline diagnosis
+of v13 recovered the nested correction payload and verified its target and
+replacement hash, but the native attempt still contained degraded capture
+diagnostics and did not run restart or forget. The [v15 attempt](../2026-09-17/native-claude-lifecycle-v15/README.md)
+reported a pending plugin with zero tools and made no native calls. Native
+correction, forget, extraction, and complete cross-host continuity remain open.
+The separate [hook-time identity observation](../2026-09-17/native-claude-hook-identity-v3/README.md)
+found no prompt ID and no transcript file at UserPromptSubmit; identifiers
+appeared by Stop. Both capture hooks still emitted diagnostics, so this
+association limit remains an open native acceptance condition.
 An implemented capability does not close its quality, native-host, or pilot
 acceptance gate.
 
@@ -62,7 +73,7 @@ acceptance gate.
 | C08 | Independently usable, composable modules | Standalone and integrated module regression checks exercise write filtering, scope, graph state, and lifecycle behavior. | Completed real-model baseline, full-pipeline, and five module-disabled comparisons. Mechanical correctness does not establish usefulness. |
 | C09 | Inspectable, correctable, forgettable memory | Facts expose status, version, evidence, and ranking traces. Correction and forget/replay suppression have persistent-service checks. | Complete native correction/forget continuity. Logical forgetting does not erase historical backups or external host transcripts. |
 | C10 | Truthful local setup and readiness | Configured runtime, explicit providers, generated interpreter-bound host commands, and input-specific readiness checks are implemented. | Full native installation acceptance. Embedding revision is an operator-managed identity label; the runtime does not automatically verify a mutable Ollama tag's digest. |
-| C11 | Shared memory across Codex, Claude Code, and Hermes | [Host records](../../client-compatibility-matrix.md) distinguish authenticated synthetic continuity, installed provider/bridge calls, bounded native capture, and native lifecycle attempts. | Complete native lifecycle and Codex Desktop acceptance. The latest [Codex attempt](native-codex-lifecycle-v4/README.md) ended at a cancelled store call without a successful write. |
+| C11 | Shared memory across Codex, Claude Code, and Hermes | [Host records](../../client-compatibility-matrix.md) distinguish authenticated synthetic continuity, installed provider/bridge calls, bounded native capture, and native lifecycle attempts. Claude v12 observed scoped health and retrieve calls; later v13 and v15 attempts retain failed lifecycle evidence. | Complete native lifecycle and Codex Desktop acceptance. The latest [Codex retrieve v2 attempt](../2026-09-17/native-codex-retrieve-v2/README.md) was cancelled by the host before returning a result. A prior native Codex health call proves health transport only; it does not prove mutation or retrieval. |
 | C12 | Proven retrieval, compression, or replacement advantage | The [corrected performance run](performance-corrected-v4/README.md) measured recall p95 1,088.094 ms against a 500 ms gate and durable capture p95 64.279 ms against 100 ms. The database after loading was 324,862,864 bytes. | Recall latency passes, completed real-model ablations, retained-information accuracy, and external pilot evidence. No general superiority or replacement claim is accepted. |
 
 ## Evidence bindings
@@ -73,7 +84,8 @@ remain attributed to the source that produced them.
 
 - [Package verification index](access-metadata-package-verification/evidence-index.json): source `2494e31`, including schema 8. No later embedding-role or conflict-collision code is covered by this full checkpoint.
 - [Combined checkpoint index](combined-package-checkpoint-v2/evidence-index.json): source `312b8d6`, passing source/package checks and the failed installed continuity check. The separate installed replay probe did not run.
-- [SSD checkpoint index](ssd-package-checkpoint-v1/evidence-index.json): source `6600dc2`, all six source/package checks, 42 installed contract cases, and synthetic Stop replay. This is separate from native host and real-model evidence.
+- [Service/runtime package checkpoint index](../2026-09-17/service-runtime-package-checkpoint-v1/evidence-index.json): source `56182d9`, all six source/package checks, 87 installed contract cases, and seven synthetic Stop replay assertions. This is separate from native host and real-model evidence.
+- [Historical SSD checkpoint index](ssd-package-checkpoint-v1/evidence-index.json): source `6600dc2`, all six source/package checks and 42 installed contract cases. It remains separate historical evidence.
 - [Native plugin index](native-plugin-checkpoint-v1/evidence-index.json): source `6600dc2`, failed budget-limited v9, v10 native plugin observations and remaining capture gates, plus the installed adapter timing preflight.
 - [Installed diagnostic index](installed-continuity-diagnostics-v1/evidence-index.json): valid timeout reproduction plus the excluded first diagnostic whose fixture was incorrectly placed inside Git.
 - [SQL timing index](installed-continuity-sql-profile-v3/evidence-index.json): two passing instrumented cases with separate SQLite execute/commit timings; not a repaired or isolated performance result.

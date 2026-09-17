@@ -37,4 +37,15 @@ Review older instruction packs before applying them. Scoped requests use the reg
 
 Use mnemos_retrieve to recall supported facts, mnemos_store for an explicit durable assertion, and mnemos_inspect to review evidence and revision history. Use mnemos_correct with the current expected_version to revise the same fact, and mnemos_forget with the current expected_version to suppress replay. mnemos_consolidate requests maintenance; mnemos_job_status distinguishes pending processing from completed facts.
 
+Retrieval updates access metadata, so its MCP annotation correctly reports a
+write effect. Codex supports server and per-tool approval policies, including
+a mode that prompts for tools without a read-only annotation. See the
+[Codex MCP configuration reference](https://learn.chatgpt.com/docs/extend/mcp?surface=cli).
+In the [installed native read probe](validation/2026-09-17/native-codex-retrieve-v2/README.md),
+the host cancelled the call before returning any memory result. That observation
+does not establish which host policy caused the cancellation. A successful
+health call alone does not verify retrieval or mutation permissions; verify
+those operations in the intended Codex session and review any actual host
+approval prompt there.
+
 Optional Codex Automations can schedule maintenance. They do not prove lifecycle capture and are unnecessary for the built-in maintenance scheduler.

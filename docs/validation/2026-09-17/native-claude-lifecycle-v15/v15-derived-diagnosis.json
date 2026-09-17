@@ -1,0 +1,119 @@
+{
+  "conclusion": {
+    "allowlist_violation_observed": false,
+    "native_process_completed": true,
+    "operation_evidence_present": false,
+    "phase1_should_be_accepted": false,
+    "phase2_should_run": false,
+    "result_id_alias_issue_observed": false
+  },
+  "diagnosis": "parser_correct_zero_tool_turn",
+  "interpretation": {
+    "host_called_wrong_tools": false,
+    "limits": [
+      "The stream proves transport completion, not successful Mnemos operation execution.",
+      "No internal cause for the pending MCP state is inferred from this stream alone.",
+      "Assistant prose and final success status are not operation evidence."
+    ],
+    "next_action": "Investigate MCP/plugin discovery and readiness for this invocation. Rerun a fresh lifecycle only after the native stream exposes the expected Mnemos tools and correlated results. Keep the zero-call phase1 attempt failed and do not run dependent phase2 operations.",
+    "parser_defect": false,
+    "why": "The stream contains no tool_use, mcp_tool_use, server_tool_use, or corresponding tool_result rows. The init row reports tools=[] and the Mnemos MCP server remains pending. A successful assistant result cannot substitute for an allowlisted operation call."
+  },
+  "observed_native_stream": {
+    "final": {
+      "is_error": false,
+      "num_turns": 1,
+      "result_sha256": "5e367aac784eb97e454f30a1e0055164562ae8f6ab36329a3f3bf02d50c6406c",
+      "stop_reason": "end_turn",
+      "subtype": "success",
+      "terminal_reason": "completed",
+      "total_cost_usd": 0.019146000000000003,
+      "type": "result"
+    },
+    "hook_diagnostic_statuses": [
+      {
+        "event": "UserPromptSubmit",
+        "status": "degraded"
+      },
+      {
+        "event": "UserPromptSubmit",
+        "status": "degraded"
+      },
+      {
+        "event": "Stop",
+        "status": "degraded"
+      },
+      {
+        "event": "Stop",
+        "status": "degraded"
+      }
+    ],
+    "hook_rows": [
+      {
+        "exit_code": null,
+        "outcome": null,
+        "subtype": "hook_started"
+      },
+      {
+        "exit_code": 0,
+        "outcome": "success",
+        "subtype": "hook_response"
+      },
+      {
+        "exit_code": null,
+        "outcome": null,
+        "subtype": "hook_started"
+      },
+      {
+        "exit_code": 0,
+        "outcome": "success",
+        "subtype": "hook_response"
+      },
+      {
+        "exit_code": null,
+        "outcome": null,
+        "subtype": "hook_started"
+      },
+      {
+        "exit_code": 0,
+        "outcome": "success",
+        "subtype": "hook_response"
+      }
+    ],
+    "init_tools": [],
+    "json_rows": 92,
+    "mcp_servers": [
+      {
+        "name": "plugin:mnemos-memory:mnemos",
+        "status": "pending"
+      }
+    ],
+    "native_version": "2.1.191",
+    "stdout_bytes": 31400,
+    "stdout_sha256": "1b11e2506a2ed07cf7ab86330a7ee1e4b5afae1ef20f4fc28d43da4e9719f0f7"
+  },
+  "operation_parser": {
+    "allowed_call_names": [
+      "mcp__plugin_mnemos-memory_mnemos__mnemos_consolidate",
+      "mcp__plugin_mnemos-memory_mnemos__mnemos_correct",
+      "mcp__plugin_mnemos-memory_mnemos__mnemos_retrieve"
+    ],
+    "call_names": [],
+    "call_result_ids_match": false,
+    "calls": [],
+    "forbidden_call_names": [],
+    "results": []
+  },
+  "preserved_inputs": {
+    "current_runner_sha256": "b2db84b92309e264bc9005b14204dec615279dfab8f5f2fa992e3bb63ff3c2a4",
+    "executed_report_sha256": "db099d555c4ad4208bcdf42aee74a0c77d25bbacb5f334a2c1b21410e78ad899",
+    "executed_runner_sha256_report": "b2db84b92309e264bc9005b14204dec615279dfab8f5f2fa992e3bb63ff3c2a4",
+    "fixture": "C:\\Users\\Ant\\AppData\\Local\\Temp\\mnemos-native-claude-lifecycle-v15-xbkjy7h2",
+    "runner_error_contains": true,
+    "runner_error_sha256": "2ba60312161f782eb2b8c450f0fd97f380671754c6eef5a2f456a99f09ea0cad",
+    "runner_hash_matches_report": true,
+    "stderr_bytes": 0,
+    "stdout": "C:\\Users\\Ant\\AppData\\Local\\Temp\\mnemos-native-claude-lifecycle-v15-xbkjy7h2\\native-correct-stdout.jsonl"
+  },
+  "schema_version": 1
+}

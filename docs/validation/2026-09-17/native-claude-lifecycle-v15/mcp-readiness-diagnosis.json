@@ -1,0 +1,120 @@
+{
+  "checked_at": "2026-09-17T20:01:28.659564+00:00",
+  "command": [
+    "C:\\Users\\Ant\\AppData\\Local\\Temp\\mnemos-installed-56182d9-v1\\Scripts\\python.exe",
+    "C:\\Users\\Ant\\AppData\\Local\\Temp\\mnemos-source-56182d9\\.claude-plugin\\run_mnemos_mcp.py"
+  ],
+  "elapsed_ms": 1853.185,
+  "expected_tool_subset_present": true,
+  "interpretation": {
+    "acceptance_boundary": "Do not accept assistant prose or a successful final result as a replacement for correlated allowlisted tool calls.",
+    "installed_wrapper_catalog_ok": true,
+    "limitations": [
+      "The direct catalog exchange exercises MCP initialize/tools/list, not the Claude native host.",
+      "The direct exchange does not prove native startup readiness under Claude Code.",
+      "The v15 stream does not identify the internal reason the server remained pending."
+    ],
+    "native_readiness_ok": false,
+    "next_action": "Investigate Claude plugin MCP discovery/readiness for the v15 invocation and repeat a fresh native lifecycle only after init exposes Mnemos tools.",
+    "parser_or_allowlist_fault": false
+  },
+  "native_v15_comparison": {
+    "native_call_names": [],
+    "native_forbidden_call_names": [],
+    "native_init_tools": [],
+    "native_json_rows": 92,
+    "native_mcp_servers": [
+      {
+        "name": "plugin:mnemos-memory:mnemos",
+        "status": "pending"
+      }
+    ],
+    "native_process_cost_usd": 0.019146000000000003,
+    "native_process_subtype": "success",
+    "native_result_ids": [],
+    "native_stdout_sha256": "1b11e2506a2ed07cf7ab86330a7ee1e4b5afae1ef20f4fc28d43da4e9719f0f7"
+  },
+  "official_current_docs": [
+    "https://code.claude.com/docs/en/env-vars",
+    "https://code.claude.com/docs/en/mcp"
+  ],
+  "probe": "installed_mcp_initialize_tools_list",
+  "requests": [
+    {
+      "id": 1,
+      "method": "initialize"
+    },
+    {
+      "method": "notifications/initialized"
+    },
+    {
+      "id": 2,
+      "method": "tools/list"
+    }
+  ],
+  "responses": [
+    {
+      "error": null,
+      "id": 1,
+      "result_keys": [
+        "capabilities",
+        "protocolVersion",
+        "serverInfo"
+      ]
+    },
+    {
+      "error": null,
+      "id": 2,
+      "result_keys": [
+        "tools"
+      ]
+    }
+  ],
+  "returncode": 0,
+  "schema_version": 1,
+  "scope": "offline installed-package MCP catalog readiness; no Claude native turn, model call, or active fixture service",
+  "selectors": {
+    "host": "claude-code",
+    "installed_python": "C:\\Users\\Ant\\AppData\\Local\\Temp\\mnemos-installed-56182d9-v1\\Scripts\\python.exe",
+    "private_fixture": "C:\\Users\\Ant\\AppData\\Local\\Temp\\mnemos-native-claude-lifecycle-v15-xbkjy7h2",
+    "profile": "native-claude-lifecycle-v15",
+    "project_root": "C:\\Users\\Ant\\AppData\\Local\\Temp\\mnemos-native-claude-lifecycle-v15-xbkjy7h2\\project",
+    "runtime_descriptor": "C:\\Users\\Ant\\AppData\\Local\\Temp\\mnemos-native-claude-lifecycle-v15-xbkjy7h2\\runtime.json",
+    "scope_registry": "C:\\Users\\Ant\\AppData\\Local\\Temp\\mnemos-native-claude-lifecycle-v15-xbkjy7h2\\scopes.json",
+    "source_snapshot": "C:\\Users\\Ant\\AppData\\Local\\Temp\\mnemos-source-56182d9"
+  },
+  "source_commit": "56182d97c5809a4909ae31f81bc6240be6cae58b",
+  "status": "responses_received",
+  "stderr": {
+    "bytes": 44,
+    "sha256": "cd20d1aa93e658cb9030369423498ab01104fe5a67117f3b778e1b23cebbc5b8"
+  },
+  "stdout": {
+    "bytes": 9641,
+    "sha256": "e0094043891f5987c3182b3632821be55280e07bba995657ee4de9ea0208d101"
+  },
+  "tool_names": [
+    "mnemos_capture",
+    "mnemos_consolidate",
+    "mnemos_correct",
+    "mnemos_feedback",
+    "mnemos_forget",
+    "mnemos_forget_preview",
+    "mnemos_forget_related",
+    "mnemos_health",
+    "mnemos_inspect",
+    "mnemos_job_status",
+    "mnemos_list",
+    "mnemos_retrieve",
+    "mnemos_stats",
+    "mnemos_store"
+  ],
+  "v12_control": {
+    "health_then_retrieve_correlated": true,
+    "native_mcp_status": "connected",
+    "report": "C:\\Users\\Ant\\AppData\\Local\\Temp\\mnemos-native-claude-mcp-v12\\report.json",
+    "source_commit": "6600dc262927661d61ce9962c812a022014281c7",
+    "tools_observed": 14
+  },
+  "wheel_sha256": "adc44b54ec31010f0ba841899b3e1b83d41f45f900b268561211db5d70f6b6df"
+}

@@ -46,6 +46,13 @@ reach the remaining native lifecycle steps. No approval or hook-trust bypass
 was used, and cleanup removed the private auth copy and runtime descriptor.
 [Preserved native attempt](validation/2026-09-16/native-codex-lifecycle-v4/README.md).
 
+The installed `56182d9` wheel then reached a single native `mnemos_retrieve`
+call in a fresh fixture. Codex returned `user cancelled MCP tool call` with
+no result. This independently leaves retrieval acceptance open, even though
+the package and 87 installed contract cases passed. The
+[read probe](validation/2026-09-17/native-codex-retrieve-v2/README.md) preserves
+its exact command, stream, installation binding, and cleanup evidence.
+
 The [native provisional capture record](validation/2026-09-16/provisional-native-claude-v8/README.md)
 preserves the original duplicate gate alongside the separate identity result.
 
@@ -69,6 +76,11 @@ The provisional event remained deferred and ineligible for fact extraction;
 its identity contract passed. The original exact-two-raw-event gate and the
 runner's aggregate association check across all user events remained failed.
 Matching identical text alone is not a safe way to merge repeated prompts.
+The later [hook-time observation](validation/2026-09-17/native-claude-hook-identity-v3/README.md)
+confirmed that the native prompt payload had no prompt ID and its transcript
+did not yet exist during UserPromptSubmit. The transcript was available by
+Stop. This observed host timing prevents an earlier transcript lookup from
+resolving that provisional event's identity.
 The later [native MCP read attempt](validation/2026-09-17/native-claude-mcp-v11/README.md)
 completed its native turn and passed capture identity, restart, and replay
 checks, but initialization left Mnemos pending with no tools or tool calls.
@@ -80,6 +92,12 @@ and retrieve calls and their correlated successful results were observed;
 health matched the fixture database, profile, and project, and retrieve returned
 the project-scoped canary. All new read criteria passed, including identity,
 restart, and replay. This does not prove native extraction or mutation behavior.
+The installed `56182d9` wheel's [v15 lifecycle attempt](validation/2026-09-17/native-claude-lifecycle-v15/README.md)
+again started with an empty native tool list and Mnemos pending. It executed
+no lifecycle tool calls; phase 2 was not run. A separate installed-package
+MCP exchange exposed all 14 tools in 1.853 seconds. That control verifies the
+catalog in isolation, but does not explain the native startup failure or
+establish correction and forget acceptance.
 The v9 attempt preserves a budget-limit failure with inherited account-level
 connectors; v10 disabled those connectors only in its disposable process.
 
