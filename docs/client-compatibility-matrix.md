@@ -4,7 +4,7 @@ Updated September 17, 2026 for the unreleased functional-local-memory worktree. 
 
 | Client | Implemented integration | Observed evidence | Native conversation acceptance |
 | --- | --- | --- | --- |
-| Claude Code | Command hooks, transcript deltas, context injection, MCP tools; provisional missing-ID capture excluded from extraction | Sourcec805 completed a persistent native 2.1.191 turn, captured both roles, and survived restart/replay, but retained two raw user events. Source7dd's provisional capture repair passes deterministic service/outbox tests | Exact-two-raw-events gate remains failed. The provisional repair has not yet passed native acceptance; complete lifecycle remains open |
+| Claude Code | Command hooks, transcript deltas, context injection, MCP tools; provisional missing-ID capture excluded from extraction | Installed sourcea38 completed a persistent native 2.1.191 turn and restart/replay. Two normal transcript-associated events and one deferred capture-only fallback were observed; maintenance created no facts/evidence from the fallback. Instrumented hook settings were supplied explicitly | Provisional identity contract passed. Original exact-two-raw-events gate remains failed; complete lifecycle and plugin discovery remain open |
 | Codex CLI | Command lifecycle hooks, supported context output, MCP tools | Native 0.146.0 used source20f's generated TOML commands, returned a random canary absent from its prompt, and captured both roles across restart | Bounded hook transport observed with fixture vectors and unavailable cognition. Full native correction/forget lifecycle remains open |
 | Codex Desktop | Same command hooks and MCP fallback | Shared adapter coverage; no current desktop conversation evidence | Pending |
 | Hermes Agent | Optional MemoryProvider and explicit Windows/WSL bridge | Installed 0.21.3 API calls and actual WSL -> Windows authenticated transport. Sourcec805 passed full verification and discovery through the actual wheel entry point in WSL | Model turn has not completed; cross-host native recall remains open |
@@ -29,5 +29,14 @@ also preserves the cancelled sourcec805 native Codex lifecycle attempt and
 matched annotated/unannotated recorder probes. Sourceb179 now declares
 accurate MCP operation effects; focused tests pass. Native dispatch of that
 new Mnemos source is still pending.
+
+The [native provisional capture record](validation/2026-09-16/provisional-native-claude-v8/README.md)
+preserves the original duplicate gate alongside the separate identity result.
+
+Generated Codex, Cursor, and fallback Claude MCP configuration now binds the
+Python interpreter that generated it, matching the hook installation. This
+prevents a bare `mnemos-mcp` command from selecting an older installation on
+the host's PATH. Regenerate the configuration if that Python environment moves.
+Existing plugin wrappers retain their explicit interpreter binding.
 
 All clients need an enabled project, registered profile, and the same runtime descriptor. A repository basename is not a scope identity. Mock cognition is rejected by the normal configured service; use a real provider and input-specific readiness probe. See [functional local memory](functional-local-memory.md), [Codex setup](codex.md), and [Hermes setup](integrations/hermes.md).

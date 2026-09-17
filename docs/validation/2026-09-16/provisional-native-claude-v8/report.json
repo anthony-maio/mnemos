@@ -1,0 +1,697 @@
+{
+  "runner": "native-claude-persistent-v8",
+  "source_commit": "a38ee70d19f2ce8413d1ab7c9ce2ff26ffd07b46",
+  "runner_sha256": "7b27b88c0e9d847db76587fc70af4bc5b47d28b39c127f83a6846412829614a6",
+  "started_at": "2026-09-17T13:05:44.622345+00:00",
+  "status": "not_observed",
+  "scope": "native Claude hooks with persistent transcript, scoped seed, durable restart, replay; no cognition quality claim",
+  "model_quality_claim": "none",
+  "embedding_fixture": "Constant unit vectors for every text; no semantic retrieval claim",
+  "cognition": "UnavailableLLMProvider; all modules disabled",
+  "max_native_seconds": 60,
+  "hook_timeout_seconds": 20,
+  "wheel_argument": ".venv\\provisional-capture-checks-v2\\dist\\mnemos_memory-0.7.0-py3-none-any.whl",
+  "expected_wheel_sha256": "94b19bb5fd758e715031a8a6d6e3599c0a6955145e5717bf9325607900096ecc",
+  "build_verification_argument": ".venv\\provisional-capture-checks-v2\\verification.json",
+  "timing_report_argument": ".venv\\claude-adapter-timing-v2\\report.json",
+  "timing_runner_argument": ".venv\\claude_adapter_timing_v2.py",
+  "config_generation": {
+    "method": "mnemos.hosts.apply_host_integration",
+    "host": "claude-code",
+    "status": "generated_and_bound",
+    "config_path": "D:\\WindowsTemp\\mnemos-native-claude-persistent-v8-l7894bhh\\project\\.mcp.json",
+    "config_sha256": "b17947cb1c33ece3e8301b6bf792eb699ec4146f659f37d1fb973970f9f4bcd5",
+    "config_bytes": 508,
+    "config_root": "D:\\WindowsTemp\\mnemos-native-claude-persistent-v8-l7894bhh\\claude-home\\.claude",
+    "agents_dir": "D:\\WindowsTemp\\mnemos-native-claude-persistent-v8-l7894bhh\\claude-home\\.claude\\agents",
+    "private_root_asserted": true,
+    "consumed_by_native_mcp_config_argument": true,
+    "hook_configuration": "explicit disposable settings.json passed with --settings; apply_host_integration does not render Claude hooks",
+    "hook_settings_path": "D:\\WindowsTemp\\mnemos-native-claude-persistent-v8-l7894bhh\\claude-home\\.claude\\settings.json",
+    "hook_settings_sha256": "3d9df6f58bfda116a4590aa3ffed0fb9c8ad3ba0ce7fa8f1fb23a931ae6022ad",
+    "resolved_mcp_command": "D:\\WindowsTemp\\mnemos-provisional-mcp-wheel-20260917-v2\\Scripts\\mnemos-mcp.EXE"
+  },
+  "python": {
+    "executable": "D:\\WindowsTemp\\mnemos-provisional-mcp-wheel-20260917-v2\\Scripts\\python.exe",
+    "mnemos_package": "D:\\WindowsTemp\\mnemos-provisional-mcp-wheel-20260917-v2\\Lib\\site-packages\\mnemos\\__init__.py",
+    "site_packages_asserted": true
+  },
+  "package_provenance": {
+    "source_commit": "a38ee70d19f2ce8413d1ab7c9ce2ff26ffd07b46",
+    "package_files_checked": 53,
+    "wheel_package_members_checked": 56,
+    "wheel_path": ".venv\\provisional-capture-checks-v2\\dist\\mnemos_memory-0.7.0-py3-none-any.whl",
+    "wheel_sha256_expected": "94b19bb5fd758e715031a8a6d6e3599c0a6955145e5717bf9325607900096ecc",
+    "wheel_sha256_observed": "94b19bb5fd758e715031a8a6d6e3599c0a6955145e5717bf9325607900096ecc"
+  },
+  "build_verification": {
+    "path": ".venv\\provisional-capture-checks-v2\\verification.json",
+    "status": "passed",
+    "source_commit": "a38ee70d19f2ce8413d1ab7c9ce2ff26ffd07b46",
+    "wheel_path": ".venv\\provisional-capture-checks-v2\\dist\\mnemos_memory-0.7.0-py3-none-any.whl",
+    "wheel_sha256": "94b19bb5fd758e715031a8a6d6e3599c0a6955145e5717bf9325607900096ecc"
+  },
+  "adapter_timing_gate": {
+    "path": ".venv\\claude-adapter-timing-v2\\report.json",
+    "sha256": "939541a5bb5c416ba3753e90237f0ac2100d6f16fc7f9fe60ec80b5373f0c36f",
+    "runner_path": ".venv\\claude_adapter_timing_v2.py",
+    "runner_sha256": "3ddb00111b12e4c0d41a1e2a7933b225b1f857198dd9fdbde949710f34e30973",
+    "source_commit": "a38ee70d19f2ce8413d1ab7c9ce2ff26ffd07b46",
+    "wheel_sha256": "94b19bb5fd758e715031a8a6d6e3599c0a6955145e5717bf9325607900096ecc",
+    "status": "passed"
+  },
+  "claude": {
+    "path": "C:\\Users\\Ant\\.local\\bin\\claude.exe",
+    "version": "2.1.191 (Claude Code)"
+  },
+  "command": [
+    "C:\\Users\\Ant\\.local\\bin\\claude.exe",
+    "--print",
+    "--verbose",
+    "--output-format",
+    "stream-json",
+    "--include-hook-events",
+    "--setting-sources",
+    "project",
+    "--settings",
+    "D:\\WindowsTemp\\mnemos-native-claude-persistent-v8-l7894bhh\\claude-home\\.claude\\settings.json",
+    "--strict-mcp-config",
+    "--mcp-config",
+    "D:\\WindowsTemp\\mnemos-native-claude-persistent-v8-l7894bhh\\project\\.mcp.json",
+    "--tools",
+    "",
+    "--disable-slash-commands",
+    "--permission-mode",
+    "plan",
+    "--session-id",
+    "17fd8c3f-321e-46d7-b57d-9521af75cc9b",
+    "--model",
+    "claude-sonnet-4-6",
+    "--max-budget-usd",
+    "0.08",
+    "--system-prompt",
+    "Answer briefly using only supplied project memory. Do not use tools.",
+    "<random-codename prompt>"
+  ],
+  "fixture_layout": {
+    "project": "D:\\WindowsTemp\\mnemos-native-claude-persistent-v8-l7894bhh\\project",
+    "claude_config_dir": "D:\\WindowsTemp\\mnemos-native-claude-persistent-v8-l7894bhh\\claude-home\\.claude",
+    "private_trace_dir": "D:\\WindowsTemp\\mnemos-native-claude-persistent-v8-l7894bhh\\hooks",
+    "private_native_stdout": "D:\\WindowsTemp\\mnemos-native-claude-persistent-v8-l7894bhh\\native-stdout.jsonl",
+    "private_native_stderr": "D:\\WindowsTemp\\mnemos-native-claude-persistent-v8-l7894bhh\\native-stderr.log",
+    "project_runtime_descriptor_present": false,
+    "auth_copy_performed": true
+  },
+  "native_process": {
+    "returncode": 0,
+    "timed_out": false,
+    "elapsed_ms": 9727.9,
+    "stdout_sha256": "672083783cfb9b67b54c8e2d873198a403366b678cdaddba9b1c535ae4164b30",
+    "stdout_bytes": 9745,
+    "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "stderr_bytes": 0,
+    "private_stdout": "D:\\WindowsTemp\\mnemos-native-claude-persistent-v8-l7894bhh\\native-stdout.jsonl",
+    "private_stderr": "D:\\WindowsTemp\\mnemos-native-claude-persistent-v8-l7894bhh\\native-stderr.log",
+    "stream": {
+      "record_count": 21,
+      "non_json_line_count": 0,
+      "rows": [
+        {
+          "type": "system",
+          "subtype": "hook_started",
+          "item_type": null,
+          "is_error": null,
+          "stop_reason": null,
+          "usage": {},
+          "numeric_cost_fields": {},
+          "answer_digest": null
+        },
+        {
+          "type": "system",
+          "subtype": "hook_response",
+          "item_type": null,
+          "is_error": null,
+          "stop_reason": null,
+          "usage": {},
+          "numeric_cost_fields": {},
+          "answer_digest": null
+        },
+        {
+          "type": "system",
+          "subtype": "hook_started",
+          "item_type": null,
+          "is_error": null,
+          "stop_reason": null,
+          "usage": {},
+          "numeric_cost_fields": {},
+          "answer_digest": null
+        },
+        {
+          "type": "system",
+          "subtype": "hook_response",
+          "item_type": null,
+          "is_error": null,
+          "stop_reason": null,
+          "usage": {},
+          "numeric_cost_fields": {},
+          "answer_digest": null
+        },
+        {
+          "type": "system",
+          "subtype": "init",
+          "item_type": null,
+          "is_error": null,
+          "stop_reason": null,
+          "usage": {},
+          "numeric_cost_fields": {},
+          "answer_digest": null
+        },
+        {
+          "type": "system",
+          "subtype": "thinking_tokens",
+          "item_type": null,
+          "is_error": null,
+          "stop_reason": null,
+          "usage": {},
+          "numeric_cost_fields": {},
+          "answer_digest": null
+        },
+        {
+          "type": "system",
+          "subtype": "thinking_tokens",
+          "item_type": null,
+          "is_error": null,
+          "stop_reason": null,
+          "usage": {},
+          "numeric_cost_fields": {},
+          "answer_digest": null
+        },
+        {
+          "type": "system",
+          "subtype": "thinking_tokens",
+          "item_type": null,
+          "is_error": null,
+          "stop_reason": null,
+          "usage": {},
+          "numeric_cost_fields": {},
+          "answer_digest": null
+        },
+        {
+          "type": "system",
+          "subtype": "thinking_tokens",
+          "item_type": null,
+          "is_error": null,
+          "stop_reason": null,
+          "usage": {},
+          "numeric_cost_fields": {},
+          "answer_digest": null
+        },
+        {
+          "type": "system",
+          "subtype": "thinking_tokens",
+          "item_type": null,
+          "is_error": null,
+          "stop_reason": null,
+          "usage": {},
+          "numeric_cost_fields": {},
+          "answer_digest": null
+        },
+        {
+          "type": "system",
+          "subtype": "thinking_tokens",
+          "item_type": null,
+          "is_error": null,
+          "stop_reason": null,
+          "usage": {},
+          "numeric_cost_fields": {},
+          "answer_digest": null
+        },
+        {
+          "type": "system",
+          "subtype": "thinking_tokens",
+          "item_type": null,
+          "is_error": null,
+          "stop_reason": null,
+          "usage": {},
+          "numeric_cost_fields": {},
+          "answer_digest": null
+        },
+        {
+          "type": "system",
+          "subtype": "thinking_tokens",
+          "item_type": null,
+          "is_error": null,
+          "stop_reason": null,
+          "usage": {},
+          "numeric_cost_fields": {},
+          "answer_digest": null
+        },
+        {
+          "type": "system",
+          "subtype": "thinking_tokens",
+          "item_type": null,
+          "is_error": null,
+          "stop_reason": null,
+          "usage": {},
+          "numeric_cost_fields": {},
+          "answer_digest": null
+        },
+        {
+          "type": "system",
+          "subtype": "thinking_tokens",
+          "item_type": null,
+          "is_error": null,
+          "stop_reason": null,
+          "usage": {},
+          "numeric_cost_fields": {},
+          "answer_digest": null
+        },
+        {
+          "type": "assistant",
+          "subtype": null,
+          "item_type": null,
+          "is_error": null,
+          "stop_reason": null,
+          "usage": {},
+          "numeric_cost_fields": {},
+          "answer_digest": null
+        },
+        {
+          "type": "assistant",
+          "subtype": null,
+          "item_type": null,
+          "is_error": null,
+          "stop_reason": null,
+          "usage": {},
+          "numeric_cost_fields": {},
+          "answer_digest": null
+        },
+        {
+          "type": "rate_limit_event",
+          "subtype": null,
+          "item_type": null,
+          "is_error": null,
+          "stop_reason": null,
+          "usage": {},
+          "numeric_cost_fields": {},
+          "answer_digest": null
+        },
+        {
+          "type": "system",
+          "subtype": "hook_started",
+          "item_type": null,
+          "is_error": null,
+          "stop_reason": null,
+          "usage": {},
+          "numeric_cost_fields": {},
+          "answer_digest": null
+        },
+        {
+          "type": "system",
+          "subtype": "hook_response",
+          "item_type": null,
+          "is_error": null,
+          "stop_reason": null,
+          "usage": {},
+          "numeric_cost_fields": {},
+          "answer_digest": null
+        },
+        {
+          "type": "result",
+          "subtype": "success",
+          "item_type": null,
+          "is_error": false,
+          "stop_reason": "end_turn",
+          "usage": {
+            "input_tokens": 3,
+            "cache_creation_input_tokens": 4026,
+            "cache_read_input_tokens": 0,
+            "output_tokens": 84
+          },
+          "numeric_cost_fields": {
+            "total_cost_usd": 0.025425
+          },
+          "answer_digest": "f6758ca61d67c9c39f18034a2fcb67eca6b790768383e7c6ede7c6227d71a9a3"
+        }
+      ],
+      "hook_rows": [
+        {
+          "subtype": "hook_started",
+          "hook_event": "SessionStart",
+          "hook_name": "SessionStart:startup",
+          "outcome": null,
+          "exit_code": null,
+          "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+          "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+          "output_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+          "session_id_sha256": "02a38eeb2622beaf59d66ecc846fbe5a1cc4af97726228f2f6e3ceee5f6a654f"
+        },
+        {
+          "subtype": "hook_response",
+          "hook_event": "SessionStart",
+          "hook_name": "SessionStart:startup",
+          "outcome": "success",
+          "exit_code": 0,
+          "stdout_sha256": "69bbbe6867d066b9f6bcbd5153df5c786068c8800e7a3d96dcf06a0848ec777b",
+          "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+          "output_sha256": "69bbbe6867d066b9f6bcbd5153df5c786068c8800e7a3d96dcf06a0848ec777b",
+          "session_id_sha256": "02a38eeb2622beaf59d66ecc846fbe5a1cc4af97726228f2f6e3ceee5f6a654f"
+        },
+        {
+          "subtype": "hook_started",
+          "hook_event": "UserPromptSubmit",
+          "hook_name": "UserPromptSubmit",
+          "outcome": null,
+          "exit_code": null,
+          "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+          "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+          "output_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+          "session_id_sha256": "02a38eeb2622beaf59d66ecc846fbe5a1cc4af97726228f2f6e3ceee5f6a654f"
+        },
+        {
+          "subtype": "hook_response",
+          "hook_event": "UserPromptSubmit",
+          "hook_name": "UserPromptSubmit",
+          "outcome": "success",
+          "exit_code": 0,
+          "stdout_sha256": "eacefde2c2e78fff888628c6bdd92984e0768a34cc410397933a6e54ac5f7764",
+          "stderr_sha256": "6803835cb43f59b43d40cbe167c694462dea1617b17c94e39b49df37dc1a07c0",
+          "output_sha256": "97cfcc1fade5a6edde804ca332b22ad4f77f65429248afc7bf1e58331ad0140d",
+          "session_id_sha256": "02a38eeb2622beaf59d66ecc846fbe5a1cc4af97726228f2f6e3ceee5f6a654f"
+        },
+        {
+          "subtype": "hook_started",
+          "hook_event": "Stop",
+          "hook_name": "Stop",
+          "outcome": null,
+          "exit_code": null,
+          "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+          "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+          "output_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+          "session_id_sha256": "02a38eeb2622beaf59d66ecc846fbe5a1cc4af97726228f2f6e3ceee5f6a654f"
+        },
+        {
+          "subtype": "hook_response",
+          "hook_event": "Stop",
+          "hook_name": "Stop",
+          "outcome": "success",
+          "exit_code": 0,
+          "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+          "stderr_sha256": "66e753edaccd703ff773b5007c0b9e45b1df3b48b3dd66b997445acb70b437a1",
+          "output_sha256": "66e753edaccd703ff773b5007c0b9e45b1df3b48b3dd66b997445acb70b437a1",
+          "session_id_sha256": "02a38eeb2622beaf59d66ecc846fbe5a1cc4af97726228f2f6e3ceee5f6a654f"
+        }
+      ],
+      "answer_text_digests": [
+        "f6758ca61d67c9c39f18034a2fcb67eca6b790768383e7c6ede7c6227d71a9a3"
+      ],
+      "answer_mentions_random_canary": true,
+      "tool_call_observed": false,
+      "tool_item_types": [],
+      "cost_usd_observed": [
+        0.025425
+      ],
+      "total_cost_usd": 0.025425,
+      "usage_observed": true
+    }
+  },
+  "seed": {
+    "project_id": "219fd078-9771-410e-922a-68994fef91e6",
+    "remember_status": "committed",
+    "remember_committed": null,
+    "maintenance_status": null,
+    "codename_sha256": "24614ce9ea38f91e3efb31309049f766bda8ae5de2c7c4cb3bf2b5789eefb22f",
+    "seed_content_sha256": "2e66febd9ee6e162d6715224090826fd13af3b7ce1b1fa05e0d377b7bc6fdbfe"
+  },
+  "native_hook_trace": {
+    "available": true,
+    "private_exact_payload_dir": "D:\\WindowsTemp\\mnemos-native-claude-persistent-v8-l7894bhh\\hooks",
+    "records": [
+      {
+        "trace_file": "D:\\WindowsTemp\\mnemos-native-claude-persistent-v8-l7894bhh\\hooks\\SessionStart-3796e6d2b4954f489f1f1a22b3030842.json",
+        "event": "SessionStart",
+        "payload_sha256": "347dc7f8ff6ad709de7bdde12088d9c6b30c75eb3cb7320045ccd12963b3f38c",
+        "returncode": 0,
+        "adapter_completed": true,
+        "adapter_elapsed_ms": 946.007,
+        "timed_out": false,
+        "stdout_sha256": "a6aa4e2c21a4fe79b676ec90b37eb90af541b82f8091d780c8a97289e4ebecad",
+        "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "diagnostic_status": null,
+        "native_payload_fields": [
+          "cwd",
+          "hook_event_name",
+          "session_id",
+          "source",
+          "transcript_path"
+        ],
+        "session_id_sha256": "02a38eeb2622beaf59d66ecc846fbe5a1cc4af97726228f2f6e3ceee5f6a654f",
+        "prompt_id_sha256": null,
+        "cwd_present": true,
+        "prompt_present": false,
+        "last_assistant_message_present": false,
+        "transcript_state": "path_provided_uninspected",
+        "native_output_context_present": true,
+        "adapter_output_sha256": "a6aa4e2c21a4fe79b676ec90b37eb90af541b82f8091d780c8a97289e4ebecad"
+      },
+      {
+        "trace_file": "D:\\WindowsTemp\\mnemos-native-claude-persistent-v8-l7894bhh\\hooks\\Stop-04fb41e8a23940bdbe8f2287815640a0.json",
+        "event": "Stop",
+        "payload_sha256": "09d288cd9894505001ebd1a84e3191fbf15069cad7f4129ec6e499c25498abbf",
+        "returncode": 0,
+        "adapter_completed": true,
+        "adapter_elapsed_ms": 980.375,
+        "timed_out": false,
+        "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "stderr_sha256": "9d1923741dc47c6d6474a6dae956442459b6cacd387e05bb457bcdea8866fdc1",
+        "diagnostic_status": "degraded",
+        "native_payload_fields": [
+          "background_tasks",
+          "cwd",
+          "effort",
+          "hook_event_name",
+          "last_assistant_message",
+          "permission_mode",
+          "session_crons",
+          "session_id",
+          "stop_hook_active",
+          "transcript_path"
+        ],
+        "session_id_sha256": "02a38eeb2622beaf59d66ecc846fbe5a1cc4af97726228f2f6e3ceee5f6a654f",
+        "prompt_id_sha256": null,
+        "cwd_present": true,
+        "prompt_present": false,
+        "last_assistant_message_present": true,
+        "transcript_state": "path_provided_uninspected",
+        "native_output_context_present": false,
+        "adapter_output_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      {
+        "trace_file": "D:\\WindowsTemp\\mnemos-native-claude-persistent-v8-l7894bhh\\hooks\\UserPromptSubmit-30784dcf56c64d2ca7e1fee9d5526714.json",
+        "event": "UserPromptSubmit",
+        "payload_sha256": "30a002fa7ecd5f5d5a53e5fb4baf06d2c232501f33131d624ea65848a61ebc15",
+        "returncode": 0,
+        "adapter_completed": true,
+        "adapter_elapsed_ms": 2176.323,
+        "timed_out": false,
+        "stdout_sha256": "f24f795b9c5027ebbc7e603c452922df7228218d25cd0fdb6e0c3eb0d3ade580",
+        "stderr_sha256": "052bf968e796057c4de8241d65fe81b70da87942b685db53ca8ee475c5f36c94",
+        "diagnostic_status": "degraded",
+        "native_payload_fields": [
+          "cwd",
+          "hook_event_name",
+          "permission_mode",
+          "prompt",
+          "session_id",
+          "transcript_path"
+        ],
+        "session_id_sha256": "02a38eeb2622beaf59d66ecc846fbe5a1cc4af97726228f2f6e3ceee5f6a654f",
+        "prompt_id_sha256": null,
+        "cwd_present": true,
+        "prompt_present": true,
+        "last_assistant_message_present": false,
+        "transcript_state": "path_provided_uninspected",
+        "native_output_context_present": true,
+        "adapter_output_sha256": "f24f795b9c5027ebbc7e603c452922df7228218d25cd0fdb6e0c3eb0d3ade580"
+      }
+    ],
+    "payload_retention": "exact payloads and adapter stdout/stderr are private fixture files; report stores digests and safe markers"
+  },
+  "persistent_transcript": {
+    "path": "D:\\WindowsTemp\\mnemos-native-claude-persistent-v8-l7894bhh\\claude-home\\.claude\\projects\\D--WindowsTemp-mnemos-native-claude-persistent-v8-l7894bhh-project\\17fd8c3f-321e-46d7-b57d-9521af75cc9b.jsonl",
+    "sha256": "86f86f4a66a0001be216c5863769a997dfe93a83da6f47803e9c05a6a603cc54",
+    "bytes": 9477,
+    "line_count": 12,
+    "roles": [
+      "user",
+      "assistant",
+      "assistant"
+    ],
+    "source_ref_sha256": [
+      "aeed3926880bbdaaa968ae511e33d674f99ad1982320837e37550082be4d0d89",
+      "a7410150f7941d278352eca5ceaadf40938d2d5af474307e5cad480fcf79d238",
+      "42d21152feba6526bcca097e5533c7b6e4852fe4bf20a2a42ff6bcae46540cc6",
+      "98b1c6a65f9e9ad77f9c54e2861aebb6137553b2125a444726b8bfc38fae9987",
+      "ab25834c45380b0607e3128648d19df60702da18fbf819d4b905b284653941be",
+      "f4f6b68287032876a31a25298908e8746ce2a1b1fe0c0de40b40681cb546f122",
+      "ed3e26996c2d58a24e0f67b779125fb6a4322544aea9467290e58251de5983eb",
+      "b5a5f0d8959adabec0c8e5308ca20b70d32d6ff7298b9bd0339fc42dd8ed27a8",
+      "22d12168f6fc8d204ddd36ad64beddf82eb5758dc9ae4d156e15325138539dc2"
+    ],
+    "source_ref_role_by_sha256": {
+      "42d21152feba6526bcca097e5533c7b6e4852fe4bf20a2a42ff6bcae46540cc6": "user",
+      "ed3e26996c2d58a24e0f67b779125fb6a4322544aea9467290e58251de5983eb": "assistant",
+      "b5a5f0d8959adabec0c8e5308ca20b70d32d6ff7298b9bd0339fc42dd8ed27a8": "assistant"
+    }
+  },
+  "checkpoint": {
+    "path": "D:\\WindowsTemp\\mnemos-native-claude-persistent-v8-l7894bhh\\checkpoints\\89e1c389309f02157eb5c3a9b531d6acb34f903dc9fd5883c270457cb1ba7c35.json",
+    "sha256": "df90b99c9ee84509276d621b721887e78aaf722bf41f83c954b40c8158d2959c",
+    "offset": 8245,
+    "transcript_bytes": 9477,
+    "scope": {
+      "host": "claude-code",
+      "project_id": "219fd078-9771-410e-922a-68994fef91e6",
+      "session_id": "17fd8c3f-321e-46d7-b57d-9521af75cc9b",
+      "user_profile_id": "native-claude-persistent-v8",
+      "workspace_id": null
+    },
+    "identity_version": 2,
+    "pending_dedup_count": 1
+  },
+  "captured_roles_before_restart": {
+    "event_count": 3,
+    "role_counts": {
+      "user": 2,
+      "assistant": 1
+    },
+    "single_turn_expected": true,
+    "extra_capture_count": 1,
+    "exactly_one_user": false,
+    "exactly_one_assistant": true,
+    "user_capture": true,
+    "assistant_capture": true,
+    "user_transcript_association": false,
+    "assistant_transcript_association": true,
+    "claude_v2_identity": true,
+    "transcript_source_ref_observed": true
+  },
+  "transcript_coverage": {
+    "status": "private_persistent_jsonl_verified",
+    "payload_without_transcript_path_count": 0,
+    "path_provided_uninspected_count": 3,
+    "limitation": "The transcript remains private to the disposable CLAUDE_CONFIG_DIR; the report stores its path, digest, JSONL role summary, and source reference digests only."
+  },
+  "provisional_diagnostics": {
+    "identity_status_counts": {
+      "normal": 2,
+      "provisional_unassociated": 1,
+      "unknown_or_missing": 0
+    },
+    "normal_transcript_associated_user": true,
+    "normal_transcript_associated_user_count": 1,
+    "normal_transcript_associated_assistant": true,
+    "normal_transcript_associated_assistant_count": 1,
+    "provisional_fallbacks": [
+      {
+        "event_id": "79aabfd8a656e4c08d39b8f11a720e86f75f66c272079f26a626d136e087e4eb",
+        "event_status": "deferred",
+        "job_id": "event:79aabfd8a656e4c08d39b8f11a720e86f75f66c272079f26a626d136e087e4eb",
+        "job_kind": "capture_only",
+        "job_status": "pending",
+        "fact_eligible": false
+      }
+    ],
+    "fallback_contract_before_restart": true,
+    "provisional_event_ids": [
+      "79aabfd8a656e4c08d39b8f11a720e86f75f66c272079f26a626d136e087e4eb"
+    ],
+    "provisional_capture_contract_status": "required",
+    "provisional_capture_contract_reason": "A missing native identity fallback was observed and must remain capture-only.",
+    "provisional_event_ids_are_extraction_ineligible": true,
+    "fallback_contract_after_one_fixture_maintenance": true,
+    "provisional_fallbacks_after_maintenance": [
+      {
+        "event_id": "79aabfd8a656e4c08d39b8f11a720e86f75f66c272079f26a626d136e087e4eb",
+        "event_status": "deferred",
+        "job_id": "event:79aabfd8a656e4c08d39b8f11a720e86f75f66c272079f26a626d136e087e4eb",
+        "job_kind": "capture_only",
+        "job_status": "completed",
+        "fact_eligible": false
+      }
+    ],
+    "provisional_fact_metadata_ids_after_maintenance": [],
+    "provisional_evidence_fact_ids_after_maintenance": [],
+    "no_facts_or_evidence_derived_from_provisional_ids": true,
+    "criteria": {
+      "one_normal_transcript_associated_user": true,
+      "one_normal_transcript_associated_assistant": true,
+      "normal_identity_event_count_exactly_two": true,
+      "unknown_or_missing_identity_count_zero": true,
+      "missing_id_fallback_deferred_capture_only": true,
+      "provisional_event_metadata_is_extraction_ineligible": true,
+      "provisional_ids_have_no_derived_facts_or_evidence": true
+    }
+  },
+  "raw_duplicate_gate": {
+    "name": "exactly_two_native_captures",
+    "passed": false,
+    "captured_event_count": 3,
+    "independent_of_provisional_diagnostics": true,
+    "note": "This is the original v6 duplicate gate; provisional diagnostics do not turn a duplicate into a pass."
+  },
+  "replay": {
+    "returncode": 0,
+    "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "stderr_sha256": "9d1923741dc47c6d6474a6dae956442459b6cacd387e05bb457bcdea8866fdc1",
+    "event_count_before": 4,
+    "event_count_after": 4,
+    "no_extra_events": true,
+    "maintenance_status": null,
+    "checkpoint_offset_after": 9477,
+    "checkpoint_offset_non_decreasing": true
+  },
+  "restart": {
+    "events_survive_restart": true,
+    "event_count_after_restart": 4,
+    "claude_v2_ids_after_restart": true
+  },
+  "reviewed_synthetic_answer": {
+    "answer_text_digests": [
+      "f6758ca61d67c9c39f18034a2fcb67eca6b790768383e7c6ede7c6227d71a9a3"
+    ],
+    "random_canary_exact_match": true,
+    "quality_claim": "none"
+  },
+  "cost": {
+    "total_cost_usd": 0.025425,
+    "observed_cost_values": [
+      0.025425
+    ],
+    "source": "native Claude stream result fields; null means the native output did not expose numeric cost"
+  },
+  "criteria": {
+    "native_completed": true,
+    "hook_payloads_recorded": true,
+    "user_capture": true,
+    "assistant_capture": true,
+    "user_transcript_association": false,
+    "assistant_transcript_association": true,
+    "claude_v2_identity": true,
+    "transcript_source_ref_observed": true,
+    "persistent_transcript_valid": true,
+    "checkpoint_valid": true,
+    "events_survive_restart": true,
+    "replay_no_extra_events": true,
+    "exactly_two_native_captures": false,
+    "checkpoint_offset_non_decreasing": true,
+    "exact_canary_answer": true,
+    "no_tool_turn": true,
+    "provisional_identity_contract": true
+  },
+  "fixture": "D:\\WindowsTemp\\mnemos-native-claude-persistent-v8-l7894bhh",
+  "private_fixture_preserved": true,
+  "auth_copy_removed": true,
+  "runtime_descriptor_absent": true,
+  "finished_at": "2026-09-17T13:06:00.928912+00:00"
+}

@@ -190,8 +190,7 @@ def _merge_json_host_config(
     env.update(rendered_env)
     mnemos_entry["command"] = command
     mnemos_entry["env"] = env
-    if args:
-        mnemos_entry["args"] = args
+    mnemos_entry["args"] = args or []
     servers["mnemos"] = mnemos_entry
     return json.dumps(payload, indent=2) + "\n"
 
@@ -265,7 +264,10 @@ def _merge_codex_config(
     env: dict[str, Any] = dict(existing_env) if isinstance(existing_env, Mapping) else {}
     rendered_env = _integration_environment(mnemos_config_path, integration_env)
     env.update(rendered_env)
-    mnemos_entry["command"] = "mnemos-mcp"
+    # MCP and hooks must use the installation that generated this config.
+    # A bare console script can resolve to an older installation on PATH.
+    mnemos_entry["command"] = sys.executable
+    mnemos_entry["args"] = ["-m", "mnemos.mcp_server"]
     mnemos_entry["env"] = env
     servers["mnemos"] = mnemos_entry
     base = {key: value for key, value in payload.items() if key != "hooks"}
@@ -453,8 +455,8 @@ def _render_host_config(
     if host == "cursor":
         return _merge_json_host_config(
             existing_text,
-            command="mnemos-mcp",
-            args=None,
+            command=sys.executable,
+            args=["-m", "mnemos.mcp_server"],
             mnemos_config_path=mnemos_config_path,
             integration_env=integration_env,
         )
@@ -470,8 +472,8 @@ def _render_host_config(
         )
     return _merge_json_host_config(
         existing_text,
-        command="mnemos-mcp",
-        args=None,
+        command=sys.executable,
+        args=["-m", "mnemos.mcp_server"],
         mnemos_config_path=mnemos_config_path,
         integration_env=integration_env,
     )

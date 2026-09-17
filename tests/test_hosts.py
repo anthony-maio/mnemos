@@ -54,7 +54,8 @@ def test_cursor_integration_apply_writes_minimal_config_and_backup(tmp_path: Pat
     assert result.backup_path.exists()
     payload = json.loads(config_path.read_text(encoding="utf-8"))
     assert payload["mcpServers"]["other"]["command"] == "other-mcp"
-    assert payload["mcpServers"]["mnemos"]["command"] == "mnemos-mcp"
+    assert payload["mcpServers"]["mnemos"]["command"] == hosts.sys.executable
+    assert payload["mcpServers"]["mnemos"]["args"] == ["-m", "mnemos.mcp_server"]
     assert (
         payload["mcpServers"]["mnemos"]["env"]["MNEMOS_CONFIG_PATH"]
         == mnemos_config_path.as_posix()
@@ -154,7 +155,9 @@ command = "other-mcp"
     assert result.backup_path.exists()
     text = config_path.read_text(encoding="utf-8")
     assert "[mcp_servers.mnemos]" in text
-    assert 'command = "mnemos-mcp"' in text
+    server = tomllib.loads(text)["mcp_servers"]["mnemos"]
+    assert server["command"] == hosts.sys.executable
+    assert server["args"] == ["-m", "mnemos.mcp_server"]
     assert "[mcp_servers.mnemos.env]" in text
     assert f'MNEMOS_CONFIG_PATH = "{mnemos_config_path.as_posix()}"' in text
     assert "[mcp_servers.other]" in text
@@ -163,6 +166,43 @@ command = "other-mcp"
     assert "## Mnemos Memory" in agents_text
     assert "mnemos_retrieve" in agents_text
     assert "mnemos_consolidate" in agents_text
+
+
+@pytest.mark.parametrize("host", ["codex", "cursor", "claude-code"])
+def test_mcp_launch_binding_replaces_old_args_without_path_lookup(
+    tmp_path: Path, monkeypatch, host: str
+) -> None:
+    project = tmp_path / "project"
+    home = tmp_path / "home"
+    interpreter = str(tmp_path / "Chosen Python" / "python.exe")
+    monkeypatch.setattr(hosts.sys, "executable", interpreter)
+    monkeypatch.setenv("PATH", str(tmp_path / "old-installation"))
+    path = hosts._config_path_for_host(host, cwd=project, home=home)
+    path.parent.mkdir(parents=True)
+    original = {
+        "mnemos": {"command": "mnemos-mcp", "args": ["old-wrapper.py"], "timeout": 23},
+        "other": {"command": "other-mcp", "args": ["keep"]},
+    }
+    if host == "codex":
+        path.write_text(
+            "\n".join(hosts._emit_toml_sections({"mcp_servers": original})), encoding="utf-8"
+        )
+    else:
+        path.write_text(json.dumps({"mcpServers": original}), encoding="utf-8")
+    preview = preview_host_integration(
+        host, mnemos_config_path=tmp_path / "settings.toml", cwd=project, home=home
+    )
+    payload = (
+        tomllib.loads(preview.rendered_config)["mcp_servers"]
+        if host == "codex"
+        else json.loads(preview.rendered_config)["mcpServers"]
+    )
+    assert payload["mnemos"]["command"] == interpreter
+    assert payload["mnemos"]["args"] == ["-m", "mnemos.mcp_server"]
+    assert payload["mnemos"]["timeout"] == 23
+    assert payload["other"] == original["other"]
+    # Preview must not alter the saved host settings.
+    assert "old-wrapper.py" in path.read_text(encoding="utf-8")
 
 
 def test_codex_explicit_integration_env_reaches_mcp_and_hook_bootstrap(tmp_path: Path) -> None:

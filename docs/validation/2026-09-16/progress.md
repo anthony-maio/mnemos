@@ -751,3 +751,20 @@ Native probes are next. The extraction schema/prompt candidate is isolated
 from this package checkpoint and is undergoing a small, newly defined
 development comparison with Ollama. The stopped lifecycle queue and all
 negative results remain preserved; no held-out acceptance threshold changed.
+
+## Native provisional identity and MCP installation binding
+
+Native Claude v8 against the installed a38 wheel completed its canary turn,
+captured one normal transcript-associated event per role, and kept the extra
+unidentified prompt fallback deferred and capture-only. Maintenance completed
+that job without derived facts or evidence; restart/replay passed. The original
+three-raw-events failure remains visible. This uses instrumented explicit hook
+settings, not plugin discovery. [Native record](provisional-native-claude-v8/README.md).
+
+Generated MCP settings used a bare console-script command even though hooks
+used the current Python interpreter. The MCP command now uses the same Python
+installation and replaces obsolete launcher arguments. Regression checks cover
+Codex, Cursor, and fallback Claude, including paths with spaces, retained
+unrelated settings, and preview-only behavior. The affected host/control/settings
+suite passed 40 tests; Black and compatible production mypy passed. This repair
+is newer than the verified a38 wheel and needs a new package checkpoint.
