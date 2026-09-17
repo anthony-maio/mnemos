@@ -1,0 +1,906 @@
+"""Prepare a private, hook-time Claude identity probe.
+
+Native execution is opt-in through ``--run-native``.  The default safety
+boundary is preparation only; ``--offline-self-test`` exercises the generated
+wrapper in a disposable temporary directory without Claude, Mnemos, or a
+network connection.
+"""
+
+from __future__ import annotations
+
+import argparse
+import hashlib
+import json
+import os
+from pathlib import Path
+import shutil
+import signal
+import subprocess
+import sys
+import tempfile
+import time
+from typing import Any, Mapping
+from uuid import uuid4
+
+FIXED_PROMPT = "Read the Mnemos hook identity probe and return one short sentence."
+MAX_NATIVE_SECONDS = 60.0
+MAX_BUDGET_USD = "0.08"
+REQUIRED_PLUGIN_FILES = (
+    Path(".claude-plugin/plugin.json"),
+    Path(".claude-plugin/run_mnemos_hook.py"),
+    Path(".claude-plugin/run_mnemos_mcp.py"),
+    Path("hooks/hooks.json"),
+)
+
+
+def _sha256(value: bytes | str) -> str:
+    raw = value.encode("utf-8") if isinstance(value, str) else value
+    return hashlib.sha256(raw).hexdigest()
+
+
+def _protect(path: Path) -> None:
+    try:
+        from mnemos.service import _protect_private_path
+    except ImportError:
+        if os.name == "nt":
+            raise RuntimeError("Mnemos private-path protection is unavailable") from None
+        path.chmod(0o700)
+        return
+    _protect_private_path(path)
+
+
+def _private_mkdir(path: Path) -> None:
+    path.mkdir(parents=True, exist_ok=False)
+    _protect(path)
+
+
+def _private_file(path: Path, content: bytes = b"") -> None:
+    path.parent.mkdir(parents=True, exist_ok=True)
+    descriptor = os.open(str(path), os.O_WRONLY | os.O_CREAT | os.O_EXCL, 0o600)
+    try:
+        with os.fdopen(descriptor, "wb") as stream:
+            descriptor = -1
+            stream.write(content)
+            stream.flush()
+            os.fsync(stream.fileno())
+    finally:
+        if descriptor != -1:
+            os.close(descriptor)
+    _protect(path)
+
+
+def _inside(path: Path, root: Path) -> bool:
+    try:
+        path.resolve(strict=False).relative_to(root.resolve(strict=False))
+    except ValueError:
+        return False
+    return True
+
+
+def _text_leaves(value: Any) -> list[str]:
+    if isinstance(value, str):
+        return [value]
+    if isinstance(value, Mapping):
+        result: list[str] = []
+        for child in value.values():
+            result.extend(_text_leaves(child))
+        return result
+    if isinstance(value, list):
+        result = []
+        for child in value:
+            result.extend(_text_leaves(child))
+        return result
+    return []
+
+
+def _record_text(record: Mapping[str, Any]) -> str:
+    message = record.get("message")
+    content = message.get("content") if isinstance(message, Mapping) else record.get("content")
+    return "\n".join(_text_leaves(content))
+
+
+def _transcript_metadata(
+    path_value: Any,
+    *,
+    fixture_root: Path,
+    prompt: str | None,
+) -> dict[str, Any]:
+    result: dict[str, Any] = {
+        "present": False,
+        "path_inside_fixture": False,
+        "bytes": 0,
+        "sha256": None,
+        "rows": 0,
+        "json_rows": 0,
+        "malformed_rows": 0,
+        "latest_normal_user": None,
+    }
+    if not isinstance(path_value, str) or not path_value.strip():
+        return result
+    path = Path(path_value).expanduser().resolve(strict=False)
+    result["path_inside_fixture"] = _inside(path, fixture_root)
+    if not result["path_inside_fixture"] or not path.is_file():
+        return result
+    raw = path.read_bytes()
+    result.update({"present": True, "bytes": len(raw), "sha256": _sha256(raw)})
+    users: list[Mapping[str, Any]] = []
+    for line in raw.splitlines():
+        result["rows"] += 1
+        try:
+            value = json.loads(line)
+        except (UnicodeDecodeError, json.JSONDecodeError):
+            result["malformed_rows"] += 1
+            continue
+        if isinstance(value, Mapping):
+            result["json_rows"] += 1
+            if value.get("type") == "user" and value.get("isSidechain") is not True:
+                users.append(value)
+    if users:
+        row = users[-1]
+        native_uuid = row.get("uuid") or row.get("id")
+        native_prompt_id = row.get("prompt_id") or row.get("promptId")
+        result["latest_normal_user"] = {
+            "uuid_present": isinstance(native_uuid, str) and bool(native_uuid.strip()),
+            "prompt_id_present": isinstance(native_prompt_id, str)
+            and bool(native_prompt_id.strip()),
+            "exact_prompt_match": bool(prompt) and _record_text(row) == prompt,
+            "timestamp": row.get("timestamp") if isinstance(row.get("timestamp"), str) else None,
+        }
+    return result
+
+
+def _payload_metadata(
+    event: str,
+    payload: Mapping[str, Any],
+    *,
+    fixture_root: Path,
+) -> dict[str, Any]:
+    raw_session = payload.get("session_id") or payload.get("sessionId")
+    session = raw_session.strip() if isinstance(raw_session, str) else ""
+    raw_prompt_id = payload.get("prompt_id") or payload.get("promptId")
+    prompt_id = raw_prompt_id.strip() if isinstance(raw_prompt_id, str) else ""
+    prompt = payload.get("prompt") if isinstance(payload.get("prompt"), str) else None
+    return {
+        "event": event,
+        "payload_fields": sorted(str(key) for key in payload),
+        "session_id_present": bool(session),
+        "session_id_sha256": _sha256(session) if session else None,
+        "prompt_id_present": bool(prompt_id),
+        "prompt_id_sha256": _sha256(prompt_id) if prompt_id else None,
+        "prompt_sha256": _sha256(prompt) if prompt else None,
+        "transcript": _transcript_metadata(
+            payload.get("transcript_path"), fixture_root=fixture_root, prompt=prompt
+        ),
+    }
+
+
+def _wrapper_source() -> str:
+    return """from __future__ import annotations
+
+import hashlib
+import json
+import os
+from pathlib import Path
+import subprocess
+import sys
+import time
+
+
+def _sha256(value):
+    raw = value.encode("utf-8") if isinstance(value, str) else value
+    return hashlib.sha256(raw).hexdigest()
+
+
+def _inside(path, root):
+    try:
+        path.resolve(strict=False).relative_to(root.resolve(strict=False))
+    except ValueError:
+        return False
+    return True
+
+
+def _text_leaves(value):
+    if isinstance(value, str):
+        return [value]
+    if isinstance(value, dict):
+        result = []
+        for child in value.values():
+            result.extend(_text_leaves(child))
+        return result
+    if isinstance(value, list):
+        result = []
+        for child in value:
+            result.extend(_text_leaves(child))
+        return result
+    return []
+
+
+def _record_text(record):
+    message = record.get("message")
+    content = message.get("content") if isinstance(message, dict) else record.get("content")
+    return "\\n".join(_text_leaves(content))
+
+
+def _transcript(path_value, root, prompt):
+    result = {"present": False, "path_inside_fixture": False, "bytes": 0,
+              "sha256": None, "rows": 0, "json_rows": 0, "malformed_rows": 0,
+              "latest_normal_user": None}
+    if not isinstance(path_value, str) or not path_value.strip():
+        return result
+    path = Path(path_value).expanduser().resolve(strict=False)
+    if not _inside(path, root):
+        return result
+    result["path_inside_fixture"] = True
+    if not path.is_file():
+        return result
+    raw = path.read_bytes()
+    result.update({"present": True, "bytes": len(raw), "sha256": _sha256(raw)})
+    users = []
+    for line in raw.splitlines():
+        result["rows"] += 1
+        try:
+            value = json.loads(line)
+        except (UnicodeDecodeError, json.JSONDecodeError):
+            result["malformed_rows"] += 1
+            continue
+        if isinstance(value, dict):
+            result["json_rows"] += 1
+            if value.get("type") == "user" and value.get("isSidechain") is not True:
+                users.append(value)
+    if users:
+        row = users[-1]
+        native_uuid = row.get("uuid") or row.get("id")
+        native_prompt_id = row.get("prompt_id") or row.get("promptId")
+        result["latest_normal_user"] = {
+            "uuid_present": isinstance(native_uuid, str) and bool(native_uuid.strip()),
+            "prompt_id_present": isinstance(native_prompt_id, str) and bool(native_prompt_id.strip()),
+            "exact_prompt_match": bool(prompt) and _record_text(row) == prompt,
+            "timestamp": row.get("timestamp") if isinstance(row.get("timestamp"), str) else None,
+        }
+    return result
+
+
+def _payload(event, payload, root):
+    session = payload.get("session_id") or payload.get("sessionId")
+    session = session.strip() if isinstance(session, str) else ""
+    prompt_id = payload.get("prompt_id") or payload.get("promptId")
+    prompt_id = prompt_id.strip() if isinstance(prompt_id, str) else ""
+    prompt = payload.get("prompt") if isinstance(payload.get("prompt"), str) else None
+    return {
+        "event": event,
+        "payload_fields": sorted(str(key) for key in payload),
+        "session_id_present": bool(session),
+        "session_id_sha256": _sha256(session) if session else None,
+        "prompt_id_present": bool(prompt_id),
+        "prompt_id_sha256": _sha256(prompt_id) if prompt_id else None,
+        "prompt_sha256": _sha256(prompt) if prompt else None,
+        "transcript": _transcript(payload.get("transcript_path"), root, prompt),
+    }
+
+
+def _append(path, record):
+    with path.open("a", encoding="utf-8", newline="\\n") as stream:
+        stream.write(json.dumps(record, sort_keys=True, separators=(",", ":")))
+        stream.write("\\n")
+        stream.flush()
+
+
+def main():
+    if len(sys.argv) != 2 or not sys.argv[1].strip():
+        print("Mnemos Claude hook requires one event name", file=sys.stderr)
+        return 2
+    event = sys.argv[1].strip()
+    root = Path(os.environ["MNEMOS_HOOK_PROBE_FIXTURE_ROOT"])
+    probe_log = Path(os.environ["MNEMOS_HOOK_PROBE_LOG"])
+    raw = sys.stdin.buffer.read()
+    try:
+        payload = json.loads(raw.decode("utf-8"))
+    except (UnicodeDecodeError, json.JSONDecodeError):
+        payload = {}
+    if not isinstance(payload, dict):
+        payload = {}
+    before = _payload(event, payload, root)
+    started = time.monotonic()
+    child = subprocess.run(
+        [sys.executable, str(Path(__file__).with_name("run_mnemos_hook.original.py")), event],
+        input=raw,
+        stdout=subprocess.PIPE,
+        stderr=subprocess.PIPE,
+        check=False,
+        env=dict(os.environ),
+    )
+    after = _payload(event, payload, root)
+    _append(probe_log, {
+        "event": event,
+        "before": before,
+        "after": after,
+        "delegate": {
+            "returncode": child.returncode,
+            "elapsed_ms": round((time.monotonic() - started) * 1000, 1),
+            "stdout_bytes": len(child.stdout),
+            "stdout_sha256": _sha256(child.stdout),
+            "stderr_bytes": len(child.stderr),
+            "stderr_sha256": _sha256(child.stderr),
+        },
+    })
+    sys.stdout.buffer.write(child.stdout)
+    sys.stdout.buffer.flush()
+    sys.stderr.buffer.write(child.stderr)
+    sys.stderr.buffer.flush()
+    return int(child.returncode)
+
+
+if __name__ == "__main__":
+    raise SystemExit(main())
+"""
+
+
+def _install_wrapper(plugin_root: Path, probe_log: Path) -> dict[str, Any]:
+    wrapper = plugin_root / ".claude-plugin" / "run_mnemos_hook.py"
+    original = plugin_root / ".claude-plugin" / "run_mnemos_hook.original.py"
+    if not wrapper.is_file() or original.exists():
+        raise RuntimeError("invalid fresh plugin wrapper layout")
+    shutil.copy2(wrapper, original)
+    wrapper.write_text(_wrapper_source(), encoding="utf-8", newline="\n")
+    _protect(original)
+    _protect(wrapper)
+    return {
+        "wrapper_sha256": _sha256(wrapper.read_bytes()),
+        "original_sha256": _sha256(original.read_bytes()),
+        "probe_log_name": probe_log.name,
+    }
+
+
+def _copy_plugin(source: Path, destination: Path, probe_log: Path) -> dict[str, Any]:
+    shutil.copytree(
+        source,
+        destination,
+        ignore=shutil.ignore_patterns(".git", ".venv", "__pycache__"),
+    )
+    source_files: dict[str, dict[str, int | str]] = {}
+    for relative in REQUIRED_PLUGIN_FILES:
+        source_path = source / relative
+        destination_path = destination / relative
+        if not source_path.is_file() or not destination_path.is_file():
+            raise RuntimeError(f"plugin file is missing: {relative.as_posix()}")
+        source_files[relative.as_posix()] = {
+            "bytes": source_path.stat().st_size,
+            "sha256": _sha256(source_path.read_bytes()),
+        }
+    hooks = json.loads((source / "hooks/hooks.json").read_text(encoding="utf-8"))
+    event_map = hooks.get("hooks") if isinstance(hooks, Mapping) else None
+    if not isinstance(event_map, Mapping) or not {"UserPromptSubmit", "Stop"}.issubset(event_map):
+        raise RuntimeError("plugin hooks do not declare UserPromptSubmit and Stop")
+    installed = _install_wrapper(destination, probe_log)
+    return {
+        "source_files": source_files,
+        "hook_events": sorted(str(event) for event in event_map),
+        "private_wrapper": installed,
+    }
+
+
+def _clean_environment(overrides: Mapping[str, str]) -> dict[str, str]:
+    environment = dict(os.environ)
+    blocked = {
+        "ANTHROPIC_API_KEY",
+        "ANTHROPIC_AUTH_TOKEN",
+        "CLAUDE_CODE_OAUTH_TOKEN",
+        "AWS_PROFILE",
+        "AWS_ACCESS_KEY_ID",
+        "AWS_SECRET_ACCESS_KEY",
+        "AWS_SESSION_TOKEN",
+        "GOOGLE_APPLICATION_CREDENTIALS",
+        "PYTHONPATH",
+        "CLAUDE_CONFIG_DIR",
+        "ANTHROPIC_CONFIG_DIR",
+    }
+    for key in list(environment):
+        if key.startswith("MNEMOS_") or key in blocked:
+            environment.pop(key, None)
+    environment.update(overrides)
+    return environment
+
+
+def _copy_auth(config_dir: Path) -> Path | None:
+    source = Path.home() / ".claude" / ".credentials.json"
+    if not source.is_file():
+        return None
+    target = config_dir / ".credentials.json"
+    shutil.copy2(source, target)
+    _protect(target)
+    return target
+
+
+def _source_binding(source: Path, source_commit: str) -> dict[str, Any]:
+    if not source_commit:
+        raise ValueError("--source-commit is required for native provenance")
+    head = subprocess.run(
+        ["git", "-C", str(source), "rev-parse", "HEAD"],
+        capture_output=True,
+        text=True,
+        check=True,
+        timeout=10,
+    ).stdout.strip()
+    if head != source_commit:
+        raise RuntimeError("source checkout HEAD differs from --source-commit")
+    dirty = subprocess.run(
+        ["git", "-C", str(source), "status", "--short"],
+        capture_output=True,
+        text=True,
+        check=True,
+        timeout=10,
+    ).stdout.strip()
+    if dirty:
+        raise RuntimeError("source checkout is dirty")
+    files = {}
+    for relative in REQUIRED_PLUGIN_FILES:
+        path = source / relative
+        files[relative.as_posix()] = _sha256(path.read_bytes())
+    return {"source_commit": source_commit, "clean": True, "plugin_file_sha256": files}
+
+
+def _runtime_binding(runtime_python: Path, expected_sha256: str | None) -> dict[str, Any]:
+    script = (
+        "import hashlib, importlib.util, pathlib; "
+        "spec=importlib.util.find_spec('mnemos.adapters.claude_code'); "
+        "path=pathlib.Path(spec.origin).resolve() if spec and spec.origin else None; "
+        "print(str(path) if path else '')"
+    )
+    result = subprocess.run(
+        [str(runtime_python), "-c", script],
+        capture_output=True,
+        text=True,
+        check=True,
+        timeout=15,
+    )
+    path = Path(result.stdout.strip())
+    if not path.is_file():
+        raise RuntimeError("runtime adapter module was not found")
+    digest = _sha256(path.read_bytes())
+    if expected_sha256 and digest.lower() != expected_sha256.lower():
+        raise RuntimeError("runtime adapter digest differs from expected binding")
+    return {
+        "runtime_adapter_sha256": digest,
+        "expected_adapter_sha256": expected_sha256,
+        "inside_site_packages": "site-packages" in {part.lower() for part in path.parts},
+    }
+
+
+def _constant_service(fixture: Path, project: Path) -> tuple[Any, Any]:
+    """Start the proven v12-style disposable service with fixed vectors."""
+
+    from mnemos.config import MnemosConfig
+    from mnemos.engine import MnemosEngine
+    from mnemos.memory_service import LocalMemoryService
+    from mnemos.scopes import ScopeRegistry
+    from mnemos.service import MnemosService
+    from mnemos.utils.embeddings import SimpleEmbeddingProvider
+    from mnemos.utils.llm import UnavailableLLMProvider
+    from mnemos.utils.storage import SQLiteStore
+
+    profile = "native-claude-hook-identity-v2"
+    registry = ScopeRegistry()
+    registry.register_project(project, user_profile_id=profile, enabled=True)
+    registry.save(fixture / "scopes.json")
+    _protect(fixture / "scopes.json")
+    config = MnemosConfig()
+    for module_name in ("surprisal", "mutable_rag", "affective", "sleep", "spreading"):
+        setattr(config.modules, module_name, False)
+
+    class ConstantEmbedding(SimpleEmbeddingProvider):
+        def embed(self, text: str) -> list[float]:
+            del text
+            return [1.0] + [0.0] * 63
+
+        def embed_batch(self, texts: list[str]) -> list[list[float]]:
+            return [self.embed(text) for text in texts]
+
+    store = SQLiteStore(str(fixture / "memory.sqlite"))
+    engine = MnemosEngine(
+        config=config,
+        llm=UnavailableLLMProvider("native hook identity cognition unavailable"),
+        embedder=ConstantEmbedding(dim=64),
+        store=store,
+        scope_registry=registry,
+        require_scope_context=True,
+    )
+    service = MnemosService(
+        dispatcher=LocalMemoryService(engine, registry),
+        descriptor_path=fixture / "runtime.json",
+        lock_path=fixture / "service.lock",
+        startup_timeout=5,
+        dispatch_timeout=20,
+    )
+    service.start()
+    return service, store
+
+
+def _terminate_tree(process: subprocess.Popen[bytes]) -> None:
+    if process.poll() is not None:
+        return
+    if os.name == "nt":
+        subprocess.run(
+            ["taskkill", "/PID", str(process.pid), "/T", "/F"],
+            capture_output=True,
+            check=False,
+            timeout=10,
+        )
+    else:  # pragma: no cover - native probe is Windows-oriented
+        os.killpg(process.pid, signal.SIGKILL)
+
+
+def _claude_command(
+    executable: Path,
+    plugin: Path,
+    session_id: str,
+    model: str,
+) -> list[str]:
+    return [
+        str(executable),
+        "--print",
+        "--verbose",
+        "--output-format",
+        "stream-json",
+        "--include-hook-events",
+        "--setting-sources",
+        "project",
+        "--plugin-dir",
+        str(plugin),
+        "--tools",
+        "",
+        "--allowed-tools",
+        "",
+        "--disable-slash-commands",
+        "--permission-mode",
+        "default",
+        "--session-id",
+        session_id,
+        "--model",
+        model,
+        "--max-budget-usd",
+        MAX_BUDGET_USD,
+        "--system-prompt",
+        "Use the fixed identity probe prompt and do not call tools.",
+        FIXED_PROMPT,
+    ]
+
+
+def _run_native_process(
+    command: list[str], *, cwd: Path, environment: Mapping[str, str], fixture: Path
+) -> dict[str, Any]:
+    started = time.monotonic()
+    process = subprocess.Popen(
+        command,
+        cwd=str(cwd),
+        env=dict(environment),
+        stdin=subprocess.DEVNULL,
+        stdout=subprocess.PIPE,
+        stderr=subprocess.PIPE,
+        shell=False,
+        creationflags=getattr(subprocess, "CREATE_NEW_PROCESS_GROUP", 0),
+    )
+    timed_out = False
+    try:
+        stdout, stderr = process.communicate(timeout=MAX_NATIVE_SECONDS)
+    except subprocess.TimeoutExpired:
+        timed_out = True
+        _terminate_tree(process)
+        stdout, stderr = process.communicate(timeout=15)
+    stdout_path = fixture / "native-stdout.bin"
+    stderr_path = fixture / "native-stderr.bin"
+    stdout_path.write_bytes(stdout)
+    stderr_path.write_bytes(stderr)
+    _protect(stdout_path)
+    _protect(stderr_path)
+    return {
+        "returncode": process.returncode,
+        "timed_out": timed_out,
+        "elapsed_ms": round((time.monotonic() - started) * 1000, 1),
+        "stdout_bytes": len(stdout),
+        "stdout_sha256": _sha256(stdout),
+        "stderr_bytes": len(stderr),
+        "stderr_sha256": _sha256(stderr),
+    }
+
+
+def _read_probe_log(path: Path) -> list[dict[str, Any]]:
+    records: list[dict[str, Any]] = []
+    for line in path.read_text(encoding="utf-8").splitlines():
+        value = json.loads(line)
+        if not isinstance(value, dict):
+            raise RuntimeError("probe observation is not an object")
+        records.append(value)
+    return records
+
+
+def _offline_wrapper_controls() -> dict[str, Any]:
+    with tempfile.TemporaryDirectory(prefix="mnemos-hook-wrapper-v2-") as name:
+        root = Path(name)
+        plugin = root / "plugin"
+        claude = root / "claude"
+        probe_log = root / "observations.jsonl"
+        (plugin / ".claude-plugin").mkdir(parents=True)
+        (plugin / "hooks").mkdir()
+        fake_original = """import json
+import os
+from pathlib import Path
+import sys
+
+if os.environ.get("PROBE_APPEND_ROW") == "1":
+    path = Path(os.environ["PROBE_TRANSCRIPT"])
+    path.write_text(
+        json.dumps(
+            {
+                "type": "user",
+                "uuid": "late-user",
+                "promptId": "late-prompt",
+                "message": {"content": "fixed synthetic prompt"},
+            }
+        )
+        + "\\n",
+        encoding="utf-8",
+    )
+sys.stdout.write("fake stdout\\n")
+sys.stderr.write("fake stderr\\n")
+raise SystemExit(7)
+"""
+        (plugin / ".claude-plugin" / "run_mnemos_hook.py").write_text(
+            fake_original, encoding="utf-8"
+        )
+        _install_wrapper(plugin, probe_log)
+
+        def invoke(
+            label: str, *, row: dict[str, Any] | None, append: bool, prompt: str
+        ) -> dict[str, Any]:
+            transcript = root / f"{label}.jsonl"
+            if row is not None:
+                transcript.write_text(json.dumps(row) + "\n", encoding="utf-8")
+            environment = {
+                **os.environ,
+                "MNEMOS_HOOK_PROBE_FIXTURE_ROOT": str(root),
+                "MNEMOS_HOOK_PROBE_LOG": str(probe_log),
+                "PROBE_APPEND_ROW": "1" if append else "0",
+                "PROBE_TRANSCRIPT": str(transcript),
+            }
+            payload = {
+                "session_id": "offline-session",
+                "prompt": prompt,
+                "transcript_path": str(transcript),
+            }
+            completed = subprocess.run(
+                [
+                    sys.executable,
+                    str(plugin / ".claude-plugin" / "run_mnemos_hook.py"),
+                    "UserPromptSubmit",
+                ],
+                input=json.dumps(payload).encode("utf-8"),
+                stdout=subprocess.PIPE,
+                stderr=subprocess.PIPE,
+                env=environment,
+                check=False,
+            )
+            observation = _read_probe_log(probe_log)[-1]
+            return {
+                "label": label,
+                "returncode": completed.returncode,
+                "stdout": completed.stdout.decode("utf-8"),
+                "stderr": completed.stderr.decode("utf-8"),
+                "before": observation["before"],
+                "after": observation["after"],
+            }
+
+        positive = invoke(
+            "positive",
+            row={
+                "type": "user",
+                "uuid": "native-user",
+                "promptId": "native-prompt",
+                "message": {"content": FIXED_PROMPT},
+                "timestamp": "2026-09-17T00:00:00Z",
+            },
+            append=False,
+            prompt=FIXED_PROMPT,
+        )
+        missing = invoke("missing", row=None, append=False, prompt=FIXED_PROMPT)
+        mismatch = invoke(
+            "mismatch",
+            row={"type": "user", "uuid": "other", "message": {"content": "other prompt"}},
+            append=False,
+            prompt=FIXED_PROMPT,
+        )
+        late = invoke("late", row=None, append=True, prompt=FIXED_PROMPT)
+        expected_stdout = "fake stdout" + os.linesep
+        expected_stderr = "fake stderr" + os.linesep
+        for case in (positive, missing, mismatch, late):
+            if (
+                case["returncode"] != 7
+                or case["stdout"] != expected_stdout
+                or case["stderr"] != expected_stderr
+            ):
+                raise AssertionError(
+                    "generated wrapper did not preserve delegate transport: "
+                    + repr({key: case[key] for key in ("label", "returncode", "stdout", "stderr")})
+                )
+        if not positive["before"]["transcript"]["latest_normal_user"]["exact_prompt_match"]:
+            raise AssertionError("positive transcript control failed")
+        if missing["before"]["transcript"]["present"]:
+            raise AssertionError("missing transcript control failed")
+        if mismatch["before"]["transcript"]["latest_normal_user"]["exact_prompt_match"]:
+            raise AssertionError("mismatched transcript control failed")
+        if late["before"]["transcript"]["present"] or not late["after"]["transcript"]["present"]:
+            raise AssertionError("late transcript control failed")
+        return {
+            "status": "passed",
+            "delegate_transport": "stdout/stderr/exit preserved",
+            "cases": [positive, missing, mismatch, late],
+        }
+
+
+def _parse_args(argv: list[str] | None = None) -> argparse.Namespace:
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument("--run-native", action="store_true")
+    parser.add_argument("--offline-self-test", action="store_true")
+    parser.add_argument("--source-root", type=Path, default=Path.cwd())
+    parser.add_argument("--source-commit", default="")
+    parser.add_argument("--runtime-python", type=Path, default=Path(sys.executable))
+    parser.add_argument("--expected-adapter-sha256")
+    parser.add_argument("--claude-executable", type=Path)
+    parser.add_argument("--output-dir", type=Path)
+    parser.add_argument("--fixture-parent", type=Path)
+    parser.add_argument("--model", default="claude-sonnet-4-6")
+    parser.add_argument("--copy-auth", action="store_true")
+    return parser.parse_args(argv)
+
+
+def _run(args: argparse.Namespace) -> int:
+    if args.output_dir is None or args.claude_executable is None:
+        raise ValueError("--run-native requires --output-dir and --claude-executable")
+    output = args.output_dir.expanduser().resolve()
+    if output.exists():
+        raise FileExistsError(f"refusing to reuse output directory: {output}")
+    source = args.source_root.expanduser().resolve()
+    runtime_python = args.runtime_python.expanduser().resolve()
+    if Path(sys.executable).resolve() != runtime_python:
+        raise RuntimeError("Run the probe with its explicit installed runtime Python")
+    claude = args.claude_executable.expanduser().resolve()
+    fixture_parent = (
+        args.fixture_parent.expanduser().resolve()
+        if args.fixture_parent is not None
+        else Path(tempfile.gettempdir()).resolve()
+    )
+    output.mkdir(parents=True, exist_ok=False)
+    fixture = Path(tempfile.mkdtemp(prefix="mnemos-native-hook-identity-v2-", dir=fixture_parent))
+    service: Any | None = None
+    store: Any | None = None
+    auth_copy: Path | None = None
+    report: dict[str, Any] = {
+        "runner": "native-claude-hook-identity-v3",
+        "fixture": str(fixture),
+        "runner_sha256": _sha256(Path(__file__).read_bytes()),
+        "source_commit": args.source_commit,
+        "prompt_sha256": _sha256(FIXED_PROMPT),
+        "max_native_seconds": MAX_NATIVE_SECONDS,
+        "max_budget_usd": MAX_BUDGET_USD,
+        "mcp_calls_requested": False,
+        "status": "started",
+    }
+    try:
+        _protect(fixture)
+        project = fixture / "project"
+        config_home = fixture / "claude-home"
+        config_dir = config_home / ".claude"
+        plugin = fixture / "plugin"
+        checkpoints = fixture / "checkpoints"
+        runtime_dir = fixture / "runtime"
+        routing_dir = fixture / "routing"
+        for directory in (
+            project,
+            config_home,
+            config_dir,
+            checkpoints,
+            runtime_dir,
+            routing_dir,
+        ):
+            _private_mkdir(directory)
+        (project / "README.txt").write_text("Native hook identity probe.\n", encoding="utf-8")
+        _protect(project / "README.txt")
+        probe_log = fixture / "hook-observations.jsonl"
+        _private_file(probe_log)
+        report["source_binding"] = _source_binding(source, args.source_commit)
+        report["runtime_binding"] = _runtime_binding(runtime_python, args.expected_adapter_sha256)
+        if not report["runtime_binding"]["inside_site_packages"]:
+            raise RuntimeError("Runtime adapter must come from the installed package")
+        report["plugin"] = _copy_plugin(source, plugin, probe_log)
+        config_path = fixture / "config.toml"
+        _private_file(config_path, b"# private hook identity fixture\n")
+        auth_copy = _copy_auth(config_dir) if args.copy_auth else None
+        service, store = _constant_service(fixture, project)
+        session_id = str(uuid4())
+        environment = _clean_environment(
+            {
+                "CLAUDE_CONFIG_DIR": str(config_dir),
+                "CLAUDE_PLUGIN_ROOT": str(plugin),
+                "MNEMOS_HOOK_PROBE_FIXTURE_ROOT": str(fixture),
+                "MNEMOS_HOOK_PROBE_LOG": str(probe_log),
+                "MNEMOS_CONFIG_PATH": str(config_path),
+                "MNEMOS_RUNTIME_DESCRIPTOR": str(fixture / "runtime.json"),
+                "MNEMOS_RUNTIME_DIR": str(runtime_dir),
+                "MNEMOS_SCOPE_REGISTRY": str(fixture / "scopes.json"),
+                "MNEMOS_USER_PROFILE_ID": "native-claude-hook-identity-v2",
+                "MNEMOS_PROJECT_ROOT": str(project),
+                "MNEMOS_SESSION_ID": session_id,
+                "MNEMOS_HOST": "claude-code",
+                "MNEMOS_SQLITE_PATH": str(fixture / "memory.sqlite"),
+                "MNEMOS_CLAUDE_CHECKPOINT_DIR": str(checkpoints),
+                "MNEMOS_ROUTING_REVIEW_DIR": str(routing_dir),
+                "MNEMOS_AUTO_START": "false",
+                "MNEMOS_AUTO_RETRIEVE": "false",
+                "MNEMOS_PLUGIN_PYTHON": str(runtime_python),
+                "ENABLE_CLAUDEAI_MCP_SERVERS": "false",
+                "DISABLE_AUTOUPDATER": "1",
+                "PATH": str(runtime_python.parent) + os.pathsep + os.environ.get("PATH", ""),
+            }
+        )
+        process_result = _run_native_process(
+            _claude_command(claude, plugin, session_id, args.model),
+            cwd=project,
+            environment=environment,
+            fixture=fixture,
+        )
+        records = _read_probe_log(probe_log)
+        events = [record.get("event") for record in records]
+        report["hook_observations"] = {
+            "records": records,
+            "log_sha256": _sha256(probe_log.read_bytes()),
+            "record_count": len(records),
+            "events": events,
+            "required_events_present": {
+                event: event in events for event in ("UserPromptSubmit", "Stop")
+            },
+        }
+        report["native"] = process_result
+        if process_result["timed_out"] or process_result["returncode"] != 0:
+            report["status"] = "failed"
+        elif not all(event in events for event in ("UserPromptSubmit", "Stop")):
+            report["status"] = "failed"
+        else:
+            report["status"] = "completed"
+    except BaseException as exc:
+        report.update({"status": "failed", "error_type": type(exc).__name__})
+    finally:
+        if service is not None:
+            try:
+                service.stop()
+            except BaseException:
+                report.setdefault("cleanup_errors", []).append("service_stop")
+        if store is not None:
+            try:
+                store.close()
+            except BaseException:
+                report.setdefault("cleanup_errors", []).append("store_close")
+        if auth_copy is not None:
+            auth_copy.unlink(missing_ok=True)
+        report["auth_copy_removed"] = auth_copy is None or not auth_copy.exists()
+        report["descriptor_removed"] = not (fixture / "runtime.json").exists()
+        report["fixture_preserved"] = fixture.is_dir()
+        report_path = output / "report.json"
+        report_path.write_text(
+            json.dumps(report, indent=2, sort_keys=True) + "\n", encoding="utf-8"
+        )
+        _protect(report_path)
+    return 0 if report["status"] == "completed" else 1
+
+
+def main(argv: list[str] | None = None) -> int:
+    args = _parse_args(argv)
+    if args.offline_self_test:
+        print(json.dumps(_offline_wrapper_controls(), sort_keys=True))
+        return 0
+    if not args.run_native:
+        print("Preparation only. Pass --run-native to execute the native probe.", file=sys.stderr)
+        return 2
+    return _run(args)
+
+
+if __name__ == "__main__":
+    raise SystemExit(main())

@@ -34,8 +34,11 @@ does not establish the cause of either earlier timeout or response failure.
 The [Claude capture diagnosis](../2026-09-17/claude-capture-association-diagnostic-v1/README.md)
 reproduced the provisional-user association warning when the prompt hook lacks
 a native prompt ID. A completed-transcript control succeeds when supplied that
-ID, but does not establish whether it exists at prompt-hook time. Native
-hook-time observation and complete lifecycle acceptance remain open.
+ID. The [native hook-time probe](../2026-09-17/native-claude-hook-identity-v3/README.md)
+then observed no prompt ID and no transcript file before or after the actual
+prompt hook. The transcript appeared by Stop with native identifiers. Reading
+the transcript earlier cannot resolve that observed turn's association;
+capture diagnostics and complete lifecycle acceptance remain open.
 
 | Plan item | Current implementation and evidence | Acceptance state |
 | --- | --- | --- |

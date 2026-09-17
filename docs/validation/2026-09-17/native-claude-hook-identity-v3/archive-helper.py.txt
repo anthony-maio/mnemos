@@ -1,0 +1,65 @@
+"""Archive the hook-time observation without raw private transcript content."""
+from pathlib import Path
+import hashlib
+import json
+
+root = Path(__file__).resolve().parents[1]
+source = Path('C:/Users/Ant/AppData/Local/Temp/mnemos-native-hook-identity-v3')
+report = json.loads((source / 'report.json').read_text(encoding='utf-8'))
+fixture = Path(report['fixture'])
+runner = root / '.venv/native_claude_hook_identity_v3.py'
+digest = lambda path: hashlib.sha256(path.read_bytes()).hexdigest()
+assert digest(runner) == report['runner_sha256']
+assert report['status'] == 'completed' and report['native']['returncode'] == 0
+assert report['auth_copy_removed'] and report['descriptor_removed']
+assert digest(fixture / 'native-stdout.bin') == report['native']['stdout_sha256']
+assert digest(fixture / 'native-stderr.bin') == report['native']['stderr_sha256']
+assert digest(fixture / 'hook-observations.jsonl') == report['hook_observations']['log_sha256']
+rows = [json.loads(line) for line in (fixture / 'native-stdout.bin').read_bytes().splitlines()]
+result = next(row for row in rows if row.get('type') == 'result')
+initial = next(row for row in rows if row.get('type') == 'system' and row.get('subtype') == 'init')
+tools = [item for row in rows if row.get('type') == 'assistant'
+         for item in row.get('message', {}).get('content', [])
+         if isinstance(item, dict) and item.get('type') == 'tool_use']
+assert not tools
+assert result['is_error'] is False
+summary = {'claude_version': initial['claude_code_version'], 'model': initial['model'],
+           'reported_cost_usd': result['total_cost_usd'], 'native_tool_calls': len(tools),
+           'native_result_subtype': result['subtype'], 'native_num_turns': result['num_turns'],
+           'raw_stdout_sha256': report['native']['stdout_sha256']}
+destination = root / 'docs/validation/2026-09-17/native-claude-hook-identity-v3'
+destination.mkdir(parents=True, exist_ok=False)
+for target, path in {'report.json': source / 'report.json', 'runner.py.txt': runner,
+                     'archive-helper.py.txt': Path(__file__),
+                     'hook-observations.jsonl': fixture / 'hook-observations.jsonl'}.items():
+    (destination / target).write_bytes(path.read_bytes())
+(destination / 'native-summary.json').write_text(json.dumps(summary, indent=2) + '\n', encoding='utf-8')
+(destination / 'README.md').write_text('''# Native Claude hook-time identity observation
+
+Claude Code 2.1.191 completed one fixed synthetic prompt with
+claude-sonnet-4-6 in 8.962 seconds. Reported cost was $0.003708, and its
+stream contained no tool calls. The disposable service used the installed
+6600dc2 package, constant vectors, unavailable cognition, and private paths.
+Copied authentication was removed and the service descriptor was cleaned up.
+
+The wrapper observed the real hook payload and transcript immediately before
+and after delegating to the unchanged installed adapter. UserPromptSubmit
+contained no prompt ID, and its transcript file did not yet exist at either
+observation. By Stop, the transcript contained six rows and a user record
+with both UUID and promptId. Stop supplies no prompt text, so its false
+exact_prompt_match field does not mean the transcript text mismatched.
+
+This rules out reading a preexisting native transcript identity during the
+prompt hook for this observed turn. It does not justify text-only association
+or removal of the capture warning. Both capture hooks still emitted diagnostic
+stderr. This is timing and identity evidence, not successful capture-health,
+fact-lifecycle, extraction-quality, or cross-host acceptance.
+
+The report retains the v2 fixture/profile prefix used by the v3 helper. The
+executed helper hash and native byte hashes bind the observation. Raw native
+streams remain in the private fixture; this archive contains metadata only.
+''', encoding='utf-8')
+index = {p.name: {'bytes': p.stat().st_size, 'sha256': digest(p)}
+         for p in sorted(destination.iterdir()) if p.is_file()}
+(destination / 'evidence-index.json').write_text(json.dumps({'files': index}, indent=2) + '\n', encoding='utf-8')
+print(json.dumps({'archive': str(destination), 'files': len(index)}))
