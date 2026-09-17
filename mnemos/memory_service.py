@@ -34,6 +34,42 @@ class LocalMemoryService:
         )
         self._cognition_probe: dict[str, Any] = {"status": "not_observed"}
 
+    def _original_source_status(
+        self,
+        fact: MemoryChunk,
+        evidence: FactEvidence,
+        context: ScopeContext,
+        allowed_scopes: tuple[str, ...],
+    ) -> str:
+        """Report only whether the retained local source episode is still present."""
+
+        source_event_id = evidence.source_event_id
+        if not source_event_id:
+            return "no_source_evidence"
+        source_event = self.engine.store.get_episodic_event(source_event_id)
+        if source_event is None:
+            # This includes the documented processed-event retention expiry. An
+            # external transcript or host file is never probed here.
+            return "unavailable_locally"
+        if not scope_allows(source_event.metadata, context, allowed_scopes):
+            return "unavailable_locally"
+        fact_scope = fact.metadata.get("scope")
+        fact_scope_id = fact.metadata.get("scope_id")
+        if (
+            source_event.metadata.get("scope") != fact_scope
+            or source_event.metadata.get("scope_id") != fact_scope_id
+        ):
+            return "unavailable_locally"
+        return "retained_locally"
+
+    @staticmethod
+    def _source_status_summary(statuses: list[str]) -> str:
+        if "retained_locally" in statuses:
+            return "retained_locally"
+        if "unavailable_locally" in statuses:
+            return "unavailable_locally"
+        return "no_source_evidence"
+
     def capture(
         self,
         event: CaptureEvent,
@@ -385,6 +421,19 @@ class LocalMemoryService:
         facts = []
         for chunk in chunks:
             support = self.engine.store.list_fact_evidence(chunk.id)
+            sources = []
+            source_statuses = []
+            for item in support:
+                source_status = self._original_source_status(
+                    chunk, item, request.context, tuple(request.allowed_scopes)
+                )
+                source_statuses.append(source_status)
+                sources.append(
+                    {
+                        **item.model_dump(mode="json"),
+                        "original_source_status": source_status,
+                    }
+                )
             facts.append(
                 {
                     "id": chunk.id,
@@ -392,9 +441,9 @@ class LocalMemoryService:
                     "content": chunk.content,
                     "scope": chunk.metadata.get("scope"),
                     "scope_id": chunk.metadata.get("scope_id"),
-                    "sources": [item.model_dump(mode="json") for item in support],
+                    "sources": sources,
                     "support_available": bool(support),
-                    "original_source_status": "not_checked",
+                    "original_source_status": self._source_status_summary(source_statuses),
                     "scores": chunk.metadata.get("retrieval_trace", {}),
                 }
             )
@@ -742,13 +791,22 @@ class LocalMemoryService:
                 chunk.metadata, context, ("project", "workspace", "global")
             ):
                 raise KeyError("Memory not found in the requested scope")
+            evidence = [
+                {
+                    **item.model_dump(mode="json"),
+                    "original_source_status": self._original_source_status(
+                        chunk, item, context, ("project", "workspace", "global")
+                    ),
+                }
+                for item in self.engine.store.list_fact_evidence(chunk.id)
+            ]
             return {
                 "schema_version": 1,
                 "fact": chunk.model_dump(mode="json", exclude={"embedding"}),
-                "evidence": [
-                    item.model_dump(mode="json")
-                    for item in self.engine.store.list_fact_evidence(chunk.id)
-                ],
+                "evidence": evidence,
+                "original_source_status": self._source_status_summary(
+                    [item["original_source_status"] for item in evidence]
+                ),
                 "revisions": [
                     item.model_dump(mode="json")
                     for item in self.engine.store.list_fact_revisions(chunk.id)

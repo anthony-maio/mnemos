@@ -7,6 +7,8 @@ from mnemos.contracts import CaptureEvent
 from mnemos.engine import MnemosEngine
 from mnemos.memory_service import LocalMemoryService
 from mnemos.utils.storage import SQLiteStore
+from mnemos.types import MemoryChunk
+from mnemos.scopes import context_metadata
 from tests.test_memory_service import service
 
 
@@ -142,5 +144,88 @@ async def test_retention_only_prunes_processed_raw_evidence(tmp_path):
         assert replay["processing_status"] == "consolidated"
         assert len(memory.engine.store.list_episodic_events()) == 1
         assert memory.engine.store.get(fact.id).observation_count == 1
+    finally:
+        memory.engine.store.close()
+
+
+@pytest.mark.asyncio
+async def test_inspection_reports_source_liveness_after_retention_and_restart(tmp_path):
+    memory, context = service(tmp_path)
+    try:
+        await memory.dispatch(
+            "remember",
+            {
+                "context": context.model_dump(),
+                "event_id": "inspect-source",
+                "content": "Use SQLite for this project",
+            },
+        )
+        await memory.maintenance.run_once(force=True)
+        fact = memory.engine.store.get_all()[0]
+
+        active = await memory.dispatch(
+            "inspect", {"context": context.model_dump(), "fact_id": fact.id}
+        )
+        assert active["evidence"][0]["original_source_status"] == "retained_locally"
+        assert active["evidence"][0]["source_event_id"]
+        assert active["evidence"][0]["excerpt"] == "Use SQLite for this project"
+
+        retrieved = await memory.dispatch(
+            "retrieve",
+            {
+                "context": context.model_dump(),
+                "query": "SQLite project",
+                "top_k": 1,
+            },
+        )
+        assert retrieved["facts"][0]["original_source_status"] == "retained_locally"
+
+        assert (
+            memory.engine.store.prune_processed_evidence(
+                before=datetime.now(timezone.utc) + timedelta(seconds=1)
+            )
+            == 1
+        )
+        expired = await memory.dispatch(
+            "inspect", {"context": context.model_dump(), "fact_id": fact.id}
+        )
+        assert expired["evidence"][0]["original_source_status"] == "unavailable_locally"
+        assert expired["evidence"][0]["source_event_id"]
+        assert expired["evidence"][0]["excerpt"] == "Use SQLite for this project"
+
+        registry, embedder, llm = memory.registry, memory.engine.embedder, memory.engine.llm
+        memory.engine.store.close()
+        reopened = SQLiteStore(str(tmp_path / "memory.sqlite"))
+        restarted = LocalMemoryService(
+            MnemosEngine(store=reopened, embedder=embedder, llm=llm), registry
+        )
+        try:
+            after_restart = await restarted.dispatch(
+                "inspect", {"context": context.model_dump(), "fact_id": fact.id}
+            )
+            assert after_restart["evidence"][0]["original_source_status"] == "unavailable_locally"
+            assert after_restart["evidence"][0]["excerpt"] == "Use SQLite for this project"
+        finally:
+            reopened.close()
+    except Exception:
+        memory.engine.store.close()
+        raise
+
+
+@pytest.mark.asyncio
+async def test_inspection_distinguishes_fact_without_linked_source(tmp_path):
+    memory, context = service(tmp_path)
+    try:
+        fact = MemoryChunk(
+            content="Legacy imported fact",
+            metadata=context_metadata(context, "project"),
+            embedding=None,
+        )
+        memory.engine.store.store(fact)
+        inspected = await memory.dispatch(
+            "inspect", {"context": context.model_dump(), "fact_id": fact.id}
+        )
+        assert inspected["evidence"] == []
+        assert inspected["original_source_status"] == "no_source_evidence"
     finally:
         memory.engine.store.close()

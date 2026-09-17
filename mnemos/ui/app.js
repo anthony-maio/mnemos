@@ -36,6 +36,14 @@ function escapeHtml(value) {
     .replaceAll("'", "&#39;");
 }
 
+function sourceStatusLabel(status) {
+  return {
+    retained_locally: "Retained locally",
+    unavailable_locally: "Unavailable locally",
+    no_source_evidence: "No linked source",
+  }[status] || "Not observed";
+}
+
 function statusPill(label, tone = "pass") {
   return `<span class="pill ${escapeHtml(tone)}">${escapeHtml(label)}</span>`;
 }
@@ -493,6 +501,7 @@ async function refreshMemoryDetail() {
           <li>
             <span>${escapeHtml(entry.excerpt || "Recorded evidence")}</span>
             <span>${escapeHtml(entry.source_ref || entry.source_event_id || "")}</span>
+            <span>Source: ${escapeHtml(sourceStatusLabel(entry.original_source_status))}</span>
             <span>${escapeHtml(entry.created_at || entry.occurred_at || "")}</span>
           </li>
         `,
@@ -537,7 +546,14 @@ async function refreshMemoryDetail() {
           </ul>
         `,
       ),
-      detailSection("Evidence", `<ul class="detail-list">${evidence || "<li>No linked evidence recorded.</li>"}</ul>`),
+      detailSection(
+        "Original source",
+        `<p>${escapeHtml(sourceStatusLabel(payload.original_source_status))}</p>`,
+      ),
+      detailSection(
+        "Evidence",
+        `<ul class="detail-list">${evidence || "<li>No linked evidence recorded.</li>"}</ul>`,
+      ),
       detailSection("Consolidation", consolidation),
       detailSection("Why Retrieved", retrieval),
       detailSection("Revision History", `<ul class="detail-list">${history || "<li>No rewrites yet.</li>"}</ul>`),

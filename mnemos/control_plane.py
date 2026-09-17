@@ -607,6 +607,9 @@ class ControlPlaneService:
             },
             "history": inspected.get("revisions", []),
             "evidence": inspected.get("evidence", []),
+            "original_source_status": inspected.get(
+                "original_source_status", "no_source_evidence"
+            ),
             "graph": {"present": False, "neighbor_count": 0, "neighbors": []},
             "retrieval": None,
             "metadata": metadata,
