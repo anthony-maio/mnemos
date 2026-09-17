@@ -1,0 +1,329 @@
+{
+  "status": "completed_baseline_interim_diagnostic",
+  "source_commit": "b7a9d9d4d9d6947564696457b0e2754f7e95a801",
+  "baseline_report_sha256_at_observation": "bba8d156a351fb0ad9912776cb190e1ce0cc72a2445ff3743fb92a771b245611",
+  "report_may_gain_paired_comparisons": true,
+  "baseline_raw_outputs_sha256": "3ddfea27283a2a105f152aee6228e825b289fe08ed3648cb4fa3e7a0caab28ef",
+  "source_blob_sha256": {
+    "benchmarks/local_memory/ollama_adapter.py": "729436a6480772b12d490cd10bff78b6edea7af6a4c3b42912c1508494946bfb",
+    "benchmarks/local_memory/harness.py": "2b1f8571a2dbd4f69bb07d05fde81f2e6cb3e324444d8cb21fc2a1b2a3b5c254",
+    "mnemos/retrieval.py": "6a317cd0bccde1dd466b589e544d4e82979cab4334e64bc3d378101e1fc4dbc0"
+  },
+  "dataset": {
+    "advertised_as_real": false,
+    "bytes": 407891,
+    "sha256": "036fa51ee13271a85a14a62a2fe4ef65d13eaeb290331fe325aa5bf32ce893fc",
+    "source_label": "synthetic_seed",
+    "version": "local-memory-heldout-v3"
+  },
+  "sample_counts": {
+    "answerable_queries": 100,
+    "critical_facts": 100,
+    "no_answer_queries": 100,
+    "observations": 600,
+    "sessions": 200,
+    "state_pairs": 50
+  },
+  "gates": {
+    "controlled_state_ablation": "NOT MEASURED",
+    "human_acceptance": "NOT RUN",
+    "length_filter_decision": "NOT MEASURED",
+    "real_embedding": "OBSERVED",
+    "real_model": "NOT VERIFIED"
+  },
+  "measurements": {
+    "answerable_recall_at_k": {
+      "aggregation_scope": "all_observations",
+      "cluster_count": null,
+      "confidence": 0.95,
+      "diagnostic_when_incomplete": false,
+      "estimate": 0.4,
+      "lower": 0.346165190544259,
+      "measured_count": 300,
+      "method": "wilson",
+      "missing_count": 0,
+      "sample_count": 300,
+      "total_count": 300,
+      "unjudged_count": 0,
+      "upper": 0.45636340370467277
+    },
+    "cold_latency_ms": {
+      "aggregation_scope": "all_observations",
+      "diagnostic_when_incomplete": false,
+      "max": 36851.17739999259,
+      "mean": 502.8715338333859,
+      "measurement": "service_construction_only",
+      "min": 112.35869998927228,
+      "p95": 852.7487000101246,
+      "sample_count": 600
+    },
+    "critical_retention": {
+      "aggregation_scope": "all_observations",
+      "cluster_count": null,
+      "confidence": 0.95,
+      "diagnostic_when_incomplete": false,
+      "estimate": 0.4,
+      "lower": 0.346165190544259,
+      "measured_count": 300,
+      "method": "wilson",
+      "missing_count": 0,
+      "sample_count": 300,
+      "total_count": 300,
+      "unjudged_count": 0,
+      "upper": 0.45636340370467277
+    },
+    "critical_retrieval": {
+      "aggregation_scope": "all_observations",
+      "cluster_count": null,
+      "confidence": 0.95,
+      "diagnostic_when_incomplete": false,
+      "estimate": 0.4,
+      "lower": 0.346165190544259,
+      "measured_count": 300,
+      "method": "wilson",
+      "missing_count": 0,
+      "sample_count": 300,
+      "total_count": 300,
+      "unjudged_count": 0,
+      "upper": 0.45636340370467277
+    },
+    "extraction_precision": {
+      "aggregation_scope": "all_observations",
+      "cluster_count": null,
+      "confidence": 0.95,
+      "diagnostic_when_incomplete": false,
+      "estimate": 0.08333333333333333,
+      "lower": 0.07014268353714014,
+      "measured_count": 1440,
+      "method": "wilson",
+      "missing_count": 0,
+      "sample_count": 1440,
+      "total_count": 1440,
+      "unjudged_count": 0,
+      "upper": 0.09874113492933038
+    },
+    "latency_ms": {
+      "aggregation_scope": "all_observations",
+      "diagnostic_when_incomplete": false,
+      "max": 210892.35259999987,
+      "mean": 9930.412462333334,
+      "measurement": "end_to_end_session_wall_clock",
+      "min": 2227.1810000092955,
+      "p95": 24013.288200003444,
+      "sample_count": 600
+    },
+    "length_filter_kept": {
+      "aggregation_scope": "all_observations",
+      "cluster_count": null,
+      "confidence": 0.95,
+      "diagnostic_when_incomplete": false,
+      "estimate": 0.9538461538461539,
+      "lower": 0.9367660045410441,
+      "measured_count": 780,
+      "method": "wilson",
+      "missing_count": 0,
+      "sample_count": 780,
+      "total_count": 780,
+      "unjudged_count": 0,
+      "upper": 0.9664778747245545
+    },
+    "no_answer_accuracy": {
+      "aggregation_scope": "all_observations",
+      "cluster_count": null,
+      "confidence": 0.95,
+      "diagnostic_when_incomplete": false,
+      "estimate": 0.0,
+      "lower": 0.0,
+      "measured_count": 300,
+      "method": "wilson",
+      "missing_count": 0,
+      "sample_count": 300,
+      "total_count": 300,
+      "unjudged_count": 0,
+      "upper": 0.012642971244658604
+    },
+    "retrieval_accuracy": {
+      "aggregation_scope": "all_observations",
+      "cluster_count": null,
+      "confidence": 0.95,
+      "diagnostic_when_incomplete": false,
+      "estimate": 0.4,
+      "lower": 0.346165190544259,
+      "measured_count": 300,
+      "method": "wilson",
+      "missing_count": 0,
+      "sample_count": 300,
+      "total_count": 300,
+      "unjudged_count": 0,
+      "upper": 0.45636340370467277
+    },
+    "row_or_byte_growth": {
+      "actual_bytes_reported": true,
+      "aggregation_scope": "all_observations",
+      "diagnostic_when_incomplete": false,
+      "mean_growth_bytes": 4352125.6,
+      "sample_count": 600,
+      "total_growth_bytes": 2611275360
+    },
+    "stale_fact_rate": {
+      "aggregation_scope": "all_observations",
+      "denominator": 2160,
+      "diagnostic_when_incomplete": false,
+      "estimate": 0.027777777777777776,
+      "interpretation": "Returned-row substring proxy; it is not unique-fact or query-level accuracy.",
+      "measurement": "returned_row_substring_proxy",
+      "numerator": 60,
+      "sample_count": 600
+    },
+    "state_pair_semantic": {
+      "aggregation_scope": "all_observations",
+      "cluster_count": null,
+      "confidence": 0.95,
+      "diagnostic_when_incomplete": false,
+      "estimate": 0.6,
+      "lower": 0.520049158424086,
+      "measured_count": 150,
+      "method": "wilson",
+      "missing_count": 0,
+      "sample_count": 150,
+      "total_count": 150,
+      "unjudged_count": 0,
+      "upper": 0.6749567926944533
+    },
+    "state_pair_state": {
+      "aggregation_scope": "all_observations",
+      "cluster_count": null,
+      "confidence": 0.95,
+      "diagnostic_when_incomplete": false,
+      "estimate": 0.6,
+      "lower": 0.520049158424086,
+      "measured_count": 150,
+      "method": "wilson",
+      "missing_count": 0,
+      "sample_count": 150,
+      "total_count": 150,
+      "unjudged_count": 0,
+      "upper": 0.6749567926944533
+    },
+    "supported_precision": {
+      "aggregation_scope": "all_observations",
+      "cluster_count": null,
+      "confidence": 0.95,
+      "diagnostic_when_incomplete": false,
+      "estimate": 0.08333333333333333,
+      "lower": 0.07014268353714014,
+      "measured_count": 1440,
+      "method": "wilson",
+      "missing_count": 0,
+      "sample_count": 1440,
+      "total_count": 1440,
+      "unjudged_count": 0,
+      "upper": 0.09874113492933038
+    },
+    "surprisal_filter_kept": {
+      "aggregation_scope": "all_observations",
+      "cluster_count": null,
+      "confidence": 0.95,
+      "diagnostic_when_incomplete": false,
+      "estimate": 1.0,
+      "lower": 0.995099189021422,
+      "measured_count": 780,
+      "method": "wilson",
+      "missing_count": 0,
+      "sample_count": 780,
+      "total_count": 780,
+      "unjudged_count": 0,
+      "upper": 1.0
+    },
+    "token_cost": {
+      "aggregation_scope": "all_observations",
+      "diagnostic_when_incomplete": false,
+      "sample_count": 0,
+      "status": "NOT MEASURED"
+    }
+  },
+  "lifecycle_operations": {
+    "correct": {
+      "attempted": 60,
+      "committed": 60,
+      "mapping_invalid": 0,
+      "missing_target": 0,
+      "rejected": 0
+    },
+    "forget": {
+      "attempted": 60,
+      "committed": 60,
+      "mapping_invalid": 0,
+      "missing_target": 0,
+      "rejected": 0
+    }
+  },
+  "precision_proxy_breakdown": {
+    "no_exact_supported_text_and_scope_match": 1320,
+    "accepted_exact_text_evidence": 120
+  },
+  "retrieval_scope_validation_totals": {
+    "foreign_count": 0,
+    "missing_metadata_count": 0,
+    "malformed_count": 0,
+    "verified_count": 2160
+  },
+  "provider_trace_numeric_totals": {
+    "service_instances": 1200
+  },
+  "samples": [
+    {
+      "session_id": "heldout-001",
+      "measurement_notes": [
+        "Missing retrievals remain null and are excluded from interval numerators.",
+        "Correction and forget use runtime fact IDs resolved from the service store.",
+        "Provider token counters are recorded when returned; billing cost is not inferred.",
+        "latency_ms is end-to-end session wall clock; cold_latency_ms covers service construction only.",
+        "Extraction precision uses exact frozen fact text and source role/evidence checks; paraphrases are unjudged.",
+        "State pairs use paired natural-language queries; no same-text embedding control is claimed.",
+        "surprisal_filter_kept is derived from durable job encoding_diagnostics and remains null when a job result is unavailable.",
+        "length_filter_kept is a frozen counterfactual shadow policy, not an applied service filter decision.",
+        "stale_fact_rate is a returned-row substring proxy, not a unique-fact or query-level accuracy measure."
+      ],
+      "provider_trace_keys": [
+        "classify_calls",
+        "config",
+        "embed_calls",
+        "predict_calls",
+        "response_metadata",
+        "service_instances",
+        "trace_key"
+      ]
+    },
+    {
+      "session_id": "heldout-001",
+      "measurement_notes": [
+        "Missing retrievals remain null and are excluded from interval numerators.",
+        "Correction and forget use runtime fact IDs resolved from the service store.",
+        "Provider token counters are recorded when returned; billing cost is not inferred.",
+        "latency_ms is end-to-end session wall clock; cold_latency_ms covers service construction only.",
+        "Extraction precision uses exact frozen fact text and source role/evidence checks; paraphrases are unjudged.",
+        "State pairs use paired natural-language queries; no same-text embedding control is claimed.",
+        "surprisal_filter_kept is derived from durable job encoding_diagnostics and remains null when a job result is unavailable.",
+        "length_filter_kept is a frozen counterfactual shadow policy, not an applied service filter decision.",
+        "stale_fact_rate is a returned-row substring proxy, not a unique-fact or query-level accuracy measure."
+      ],
+      "provider_trace_keys": [
+        "classify_calls",
+        "config",
+        "embed_calls",
+        "predict_calls",
+        "response_metadata",
+        "service_instances",
+        "trace_key"
+      ]
+    }
+  ],
+  "limitations": [
+    "Full and leave-one-module-out profiles remain unfinished.",
+    "Baseline has no enabled biomimetic modules; its model-call verification gate is not met.",
+    "Supported precision is an exact frozen text and evidence proxy, not adjudicated semantic factuality.",
+    "No-answer correctness requires an empty retrieved facts list; it does not measure a downstream assistant answer.",
+    "This preserves failed gates and does not tune source, thresholds, or labels against heldout outputs."
+  ]
+}

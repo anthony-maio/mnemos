@@ -629,3 +629,27 @@ lifecycle is claimed. See the [checkpoint evidence](related-forget-verification/
 
 The real-model lifecycle queue remains on frozen b7a9d9d4 and is still running.
 No live host configuration, live memory data, or release was changed.
+
+## Native diagnostics and completed baseline
+
+The sourcec805 persistent Claude test now completes a native turn and preserves
+the actual transcript, checkpoint, both captured roles, and restart/replay.
+It still fails acceptance because the prompt is captured twice: the native
+hook omits its turn identifier, while the later transcript has a UUID and
+`promptId`. The adapter refuses to associate them by text alone and reports
+degraded coverage. That failure remains explicit in the
+[host evidence](related-forget-verification/README.md).
+
+A matched Codex recorder test succeeds with accurate read-only annotations
+and is cancelled before server dispatch without them. This explains a concrete
+metadata gap to repair in the inspection tools. Mutating tool approval remains
+a separate host policy; the recorder does not prove the Mnemos lifecycle.
+
+The frozen baseline completed all 600 observations. Exact answerable recall
+and critical retention are 40%; no-answer empty retrieval is 0%. The 8.3%
+supported-text/evidence score is an exact-match proxy and does not establish
+semantic factual precision. Its frozen note incorrectly says paraphrases are
+unjudged, while the implementation counts unmatched text as false. The
+[interim record](baseline-interim/README.md) preserves that distinction and the
+failed gates. The full and ablation profiles are still running on unchanged
+sourceb7; there is no full-pipeline or module-benefit conclusion yet.

@@ -66,6 +66,30 @@ store, consolidate, and retrieve. Every call returned the client error
 runner stopped after that turn. The client cancellation is under investigation
 and does not establish a completed native memory lifecycle or a service defect.
 
+## Native follow-up diagnosis
+
+A separate fixed-response MCP recorder isolated tool metadata. With explicit
+read-only, non-destructive, idempotent, closed-world annotations, Codex 0.146.0
+initialized, listed, and successfully called the recorder under the same
+read-only sandbox. Without annotations, it initialized and listed the tool,
+then returned `user cancelled MCP tool call`; the server received no tool call.
+Both versions passed the Python MCP-client check. This is one matched diagnostic
+pair, not a completed Mnemos lifecycle. The recorder uses its own private config
+and does not exercise the generated Mnemos integration. No approval bypass was used.
+
+The sourcec805 persistent Claude v6 run completed a native Sonnet 4.6 turn,
+returned the hidden canary, invoked all three fixture hooks, and wrote a native
+transcript and scoped checkpoint. Both roles survived restart, and replay
+created no additional events. Native reported cost was $0.025425. Acceptance
+still failed: the single turn produced two user events and one assistant event,
+and one user event could not be associated with a native transcript UUID.
+
+This Claude run consumed generated MCP configuration and explicitly supplied
+instrumented hook settings. It does not prove plugin hook discovery. Fixture
+embeddings and unavailable cognition isolate transport and persistence; they
+do not establish semantic quality. The duplicate capture is retained as a
+failure requiring diagnosis rather than counted as native lifecycle success.
+
 The browser uses fixture embeddings and unavailable cognition, with module
 switches disabled to reproduce raw-capture overlap. It is not a model-quality
 or native-host test. Exact normalized assertion containment does not cover

@@ -1,0 +1,641 @@
+"""Probe Codex MCP dispatch separately from the Mnemos MCP server.
+
+The default mode is offline and talks only to this disposable stdio recorder
+through the installed MCP Python package. Native mode is explicit and is for a
+later single Codex invocation. It never uses a model or approval bypass in
+offline mode and does not configure the Mnemos integration.
+"""
+
+from __future__ import annotations
+
+import argparse
+import asyncio
+from contextlib import redirect_stderr
+from datetime import datetime, timezone
+import hashlib
+import importlib.metadata
+import json
+import os
+from pathlib import Path
+import shutil
+import subprocess
+import sys
+import tempfile
+import time
+from typing import Any, Mapping
+
+WORKTREE = Path(__file__).resolve().parents[1]
+TEMP_PARENT = Path(r"D:\WindowsTemp")
+MAX_NATIVE_SECONDS = 60
+TOOL_NAME = "dispatch_probe"
+RUNNER_NAME = "codex-mcp-dispatch-probe-v1"
+CODEX_EXE = (
+    Path(r"C:\Users\Ant\AppData\Roaming\npm\node_modules\@openai\codex")
+    / "node_modules"
+    / "@openai"
+    / "codex-win32-x64"
+    / "vendor"
+    / "x86_64-pc-windows-msvc"
+    / "bin"
+    / "codex.exe"
+)
+
+
+def _sha256(value: bytes | str) -> str:
+    raw = value.encode("utf-8") if isinstance(value, str) else value
+    return hashlib.sha256(raw).hexdigest()
+
+
+def _trace(path: Path, operation: str, phase: str, **fields: Any) -> None:
+    row = {
+        "utc": datetime.now(timezone.utc).isoformat(),
+        "monotonic_ns": time.monotonic_ns(),
+        "pid": os.getpid(),
+        "operation": operation,
+        "phase": phase,
+        **fields,
+    }
+    with path.open("a", encoding="utf-8") as handle:
+        handle.write(json.dumps(row, sort_keys=True, separators=(",", ":")) + "\n")
+        handle.flush()
+
+
+def _protect(path: Path) -> None:
+    try:
+        from mnemos.service import _protect_private_path
+    except Exception:
+        return
+    _protect_private_path(path)
+
+
+def _private_mkdir(path: Path) -> None:
+    path.mkdir(parents=True, exist_ok=False)
+    _protect(path)
+
+
+def _clean_environment(overrides: Mapping[str, str]) -> dict[str, str]:
+    environment = dict(os.environ)
+    blocked = {
+        "PYTHONPATH",
+        "VIRTUAL_ENV",
+        "CLAUDE_CONFIG_DIR",
+        "CODEX_HOME",
+        "OPENAI_API_KEY",
+        "OPENAI_ORG_ID",
+        "ANTHROPIC_API_KEY",
+        "ANTHROPIC_AUTH_TOKEN",
+        "CLAUDE_CODE_OAUTH_TOKEN",
+        "AWS_ACCESS_KEY_ID",
+        "AWS_SECRET_ACCESS_KEY",
+        "AWS_SESSION_TOKEN",
+        "GOOGLE_APPLICATION_CREDENTIALS",
+    }
+    for key in list(environment):
+        if key.startswith("MNEMOS_") or key in blocked:
+            environment.pop(key, None)
+    environment.update(overrides)
+    return environment
+
+
+def _toml_string(value: str) -> str:
+    return json.dumps(value, ensure_ascii=False)
+
+
+def _write_codex_config(
+    path: Path, *, python: Path, script: Path, trace: Path, stderr: Path
+) -> None:
+    path.parent.mkdir(parents=True, exist_ok=True)
+    content = "\n".join(
+        [
+            "[mcp_servers.dispatch_probe]",
+            f"command = {_toml_string(str(python))}",
+            "args = [",
+            f"  \"-B\", {_toml_string(str(script))},",
+            '  "--server",',
+            f"  \"--trace\", {_toml_string(str(trace))},",
+            f"  \"--stderr\", {_toml_string(str(stderr))},",
+            "]",
+            "",
+        ]
+    )
+    path.write_text(content, encoding="utf-8")
+    _protect(path)
+
+
+def _sdk_provenance(python: Path) -> dict[str, str]:
+    code = (
+        "import importlib.metadata, json, mcp, pathlib; "
+        "print(json.dumps({'mcp_version': importlib.metadata.version('mcp'), "
+        "'mcp_file': str(pathlib.Path(mcp.__file__).resolve())}))"
+    )
+    result = subprocess.run(
+        [str(python), "-B", "-c", code],
+        capture_output=True,
+        text=True,
+        encoding="utf-8",
+        errors="replace",
+        check=True,
+        timeout=10,
+        env=_clean_environment({}),
+    )
+    value = json.loads(result.stdout)
+    if not isinstance(value, dict) or not all(
+        isinstance(value.get(key), str) for key in ("mcp_version", "mcp_file")
+    ):
+        raise RuntimeError("MCP SDK provenance was not parseable")
+    return {"mcp_version": value["mcp_version"], "mcp_file": value["mcp_file"]}
+
+
+def _codex_version(executable: Path) -> str:
+    result = subprocess.run(
+        [str(executable), "--version"],
+        capture_output=True,
+        text=True,
+        encoding="utf-8",
+        errors="replace",
+        check=True,
+        timeout=10,
+        shell=False,
+    )
+    return (result.stdout or result.stderr).strip()
+
+
+def _read_trace(path: Path) -> list[dict[str, Any]]:
+    rows: list[dict[str, Any]] = []
+    if not path.exists():
+        return rows
+    for line in path.read_text(encoding="utf-8", errors="replace").splitlines():
+        try:
+            value = json.loads(line)
+        except json.JSONDecodeError:
+            continue
+        if isinstance(value, dict):
+            rows.append(value)
+    return rows
+
+
+def _trace_flags(rows: list[Mapping[str, Any]]) -> dict[str, bool]:
+    received = {
+        str(row.get("operation")): row.get("phase") == "received"
+        for row in rows
+        if row.get("phase") == "received"
+    }
+    completed = {
+        str(row.get("operation")): row.get("phase") == "completed"
+        for row in rows
+        if row.get("phase") == "completed"
+    }
+    return {
+        "server_started": any(
+            row.get("operation") == "server" and row.get("phase") == "started" for row in rows
+        ),
+        "initialize_received": received.get("initialize", False),
+        "list_tools_received": received.get("list_tools", False),
+        "call_received": received.get("call_tool", False),
+        "call_completed": completed.get("call_tool", False),
+    }
+
+
+def _native_summary(stdout: str) -> dict[str, Any]:
+    rows: list[dict[str, Any]] = []
+    non_json = 0
+    call_rows: list[dict[str, Any]] = []
+    for line in stdout.splitlines():
+        try:
+            value = json.loads(line)
+        except json.JSONDecodeError:
+            non_json += 1
+            continue
+        if not isinstance(value, dict):
+            continue
+        rows.append(value)
+        item = value.get("item")
+        item_value = item if isinstance(item, dict) else value
+        item_type = item_value.get("type") if isinstance(item_value, dict) else None
+        if item_type != "mcp_tool_call" or not isinstance(item_value, dict):
+            continue
+        names = [item_value.get("name"), item_value.get("tool"), item_value.get("tool_name")]
+        name = next((item for item in names if isinstance(item, str)), None)
+        if name != TOOL_NAME:
+            continue
+        result = item_value.get("result")
+        if result is None:
+            result = item_value.get("output")
+        result_present = result is not None
+        result_error = bool(
+            item_value.get("error")
+            or item_value.get("isError") is True
+            or item_value.get("status") in {"failed", "error"}
+        )
+        call_rows.append(
+            {
+                "status": item_value.get("status"),
+                "result_present": result_present,
+                "result_error": result_error,
+            }
+        )
+    return {
+        "record_count": len(rows),
+        "non_json_line_count": non_json,
+        "tool_call_count": len(call_rows),
+        "tool_calls": call_rows,
+        "successful_tool_result_seen": any(
+            call["result_present"] and not call["result_error"] for call in call_rows
+        ),
+    }
+
+
+class _TraceServer:
+    """Loaded only by --server, using the installed MCP low-level API."""
+
+    @staticmethod
+    async def serve(trace_path: Path) -> None:
+        from mcp import types
+        from mcp.server.lowlevel import NotificationOptions, Server
+        import mcp.server.lowlevel.server as lowlevel_server
+        from mcp.server.session import ServerSession
+        from mcp.server.stdio import stdio_server
+
+        class TracingServerSession(ServerSession):
+            async def _received_request(self, responder: Any) -> None:
+                if isinstance(responder.request.root, types.InitializeRequest):
+                    _trace(trace_path, "initialize", "received")
+                await super()._received_request(responder)
+
+        lowlevel_server.ServerSession = TracingServerSession  # type: ignore[assignment]
+
+        class ServerWithTrace(Server[Any, Any]):
+            async def _handle_request(
+                self,
+                message: Any,
+                req: Any,
+                session: Any,
+                lifespan_context: Any,
+                raise_exceptions: bool,
+            ) -> Any:
+                type_name = type(req).__name__
+                operation = {
+                    "InitializeRequest": "initialize",
+                    "ListToolsRequest": "list_tools",
+                    "CallToolRequest": "call_tool",
+                }.get(type_name)
+                if operation is not None:
+                    _trace(trace_path, operation, "received")
+                try:
+                    result = await super()._handle_request(
+                        message, req, session, lifespan_context, raise_exceptions
+                    )
+                except BaseException as exc:
+                    if operation is not None:
+                        _trace(trace_path, operation, "error", error_type=type(exc).__name__)
+                    raise
+                if operation is not None:
+                    _trace(trace_path, operation, "completed")
+                return result
+
+        server = ServerWithTrace("Codex MCP dispatch probe", version="1")
+
+        @server.list_tools()
+        async def list_tools() -> list[types.Tool]:
+            return [
+                types.Tool(
+                    name=TOOL_NAME,
+                    description="Return one fixed benign dispatch marker.",
+                    inputSchema={"type": "object", "additionalProperties": False},
+                    annotations=types.ToolAnnotations(
+                        readOnlyHint=True,
+                        destructiveHint=False,
+                        idempotentHint=True,
+                        openWorldHint=False,
+                    ),
+                )
+            ]
+
+        @server.call_tool()
+        async def call_tool(name: str, arguments: dict[str, Any]) -> dict[str, Any]:
+            if name != TOOL_NAME:
+                raise ValueError("unexpected probe tool")
+            if arguments:
+                raise ValueError("probe tool accepts no arguments")
+            return {"probe": "ok", "tool": TOOL_NAME, "read_only": True}
+
+        _trace(trace_path, "server", "started", mcp_version=importlib.metadata.version("mcp"))
+        async with stdio_server() as (read_stream, write_stream):
+            await server.run(
+                read_stream,
+                write_stream,
+                server.create_initialization_options(NotificationOptions()),
+            )
+        _trace(trace_path, "server", "stopped")
+
+
+def _server_main(trace_path: Path, stderr_path: Path | None) -> int:
+    stderr_path and stderr_path.parent.mkdir(parents=True, exist_ok=True)
+    if stderr_path is None:
+        asyncio.run(_TraceServer.serve(trace_path))
+        return 0
+    with stderr_path.open("a", encoding="utf-8") as error_log, redirect_stderr(error_log):
+        asyncio.run(_TraceServer.serve(trace_path))
+    return 0
+
+
+async def _offline_roundtrip(trace_path: Path, stderr_path: Path, fixture: Path) -> dict[str, Any]:
+    from mcp import ClientSession, StdioServerParameters
+    from mcp.client.stdio import stdio_client
+
+    parameters = StdioServerParameters(
+        command=sys.executable,
+        args=[
+            "-B",
+            str(Path(__file__).resolve()),
+            "--server",
+            "--trace",
+            str(trace_path),
+            "--stderr",
+            str(stderr_path),
+        ],
+        env=_clean_environment({}),
+        cwd=str(fixture),
+    )
+    with stderr_path.open("w", encoding="utf-8") as error_log:
+        async with stdio_client(parameters, errlog=error_log) as (reader, writer):
+            async with ClientSession(reader, writer) as session:
+                initialized = await session.initialize()
+                listed = await session.list_tools()
+                names = sorted(tool.name for tool in listed.tools)
+                result = await session.call_tool(TOOL_NAME, {})
+                return {
+                    "initialized": initialized.serverInfo.name == "Codex MCP dispatch probe",
+                    "listed": TOOL_NAME in names,
+                    "call_result_is_error": result.isError,
+                    "tool_names": names,
+                    "result_content_types": [item.type for item in result.content],
+                }
+
+
+def _offline(output: Path) -> int:
+    if output.exists():
+        raise FileExistsError(f"Refusing to overwrite {output}")
+    output.mkdir(parents=True)
+    fixture = Path(tempfile.mkdtemp(prefix="codex-mcp-dispatch-offline-", dir=TEMP_PARENT))
+    _protect(fixture)
+    trace_path = fixture / "server-trace.jsonl"
+    stderr_path = fixture / "server-stderr.log"
+    report: dict[str, Any] = {
+        "runner": RUNNER_NAME,
+        "mode": "offline",
+        "status": "not_observed",
+        "runner_sha256": _sha256(Path(__file__).read_bytes()),
+        "started_at": datetime.now(timezone.utc).isoformat(),
+        "native_invocation": False,
+        "model_calls": 0,
+        "auth_used": False,
+        "mnemos_integration_tested": False,
+        "fixture": str(fixture),
+    }
+    try:
+        report["python"] = {"executable": str(Path(sys.executable).resolve())}
+        report["mcp_sdk"] = _sdk_provenance(Path(sys.executable).resolve())
+        response = asyncio.run(_offline_roundtrip(trace_path, stderr_path, fixture))
+        rows = _read_trace(trace_path)
+        flags = _trace_flags(rows)
+        report["response"] = response
+        report["server_trace"] = {"path": str(trace_path), "rows": rows, "flags": flags}
+        report["server_stderr"] = {
+            "path": str(stderr_path),
+            "sha256": _sha256(stderr_path.read_bytes()),
+            "bytes": stderr_path.stat().st_size,
+        }
+        expected = response["initialized"] and response["listed"] and not response["call_result_is_error"]
+        report["status"] = "passed" if expected and flags["call_completed"] else "failed"
+    except Exception as exc:
+        report.update({"status": "failed", "error_type": type(exc).__name__})
+    finally:
+        report["finished_at"] = datetime.now(timezone.utc).isoformat()
+        (output / "report.json").write_text(json.dumps(report, indent=2) + "\n", encoding="utf-8")
+    return 0 if report["status"] == "passed" else 1
+
+
+def _copy_auth(source: Path, target: Path) -> None:
+    if not source.is_file():
+        raise FileNotFoundError("Explicit auth source is unavailable")
+    target.parent.mkdir(parents=True, exist_ok=True)
+    shutil.copy2(source, target)
+    _protect(target)
+
+
+def _terminate(process: subprocess.Popen[str]) -> None:
+    if process.poll() is not None:
+        return
+    if os.name == "nt":
+        subprocess.run(
+            ["taskkill", "/PID", str(process.pid), "/T", "/F"],
+            capture_output=True,
+            check=False,
+            timeout=10,
+        )
+    else:
+        process.kill()
+    try:
+        process.wait(timeout=10)
+    except subprocess.TimeoutExpired:
+        process.kill()
+        process.wait(timeout=10)
+
+
+def _execute(args: argparse.Namespace) -> int:
+    if not TEMP_PARENT.is_dir():
+        raise FileNotFoundError(f"Fixture parent is missing: {TEMP_PARENT}")
+    if args.output.exists():
+        raise FileExistsError(f"Refusing to overwrite {args.output}")
+    if not args.auth_source:
+        raise ValueError("Native mode requires an explicit --auth-source")
+    python = args.python.resolve()
+    codex = args.codex.resolve()
+    if not codex.is_file():
+        raise FileNotFoundError(f"Codex executable is missing: {codex}")
+    args.output.mkdir(parents=True)
+    fixture = Path(tempfile.mkdtemp(prefix="codex-mcp-dispatch-native-", dir=TEMP_PARENT))
+    _protect(fixture)
+    project = fixture / "project"
+    codex_home = fixture / "codex-home" / ".codex"
+    _private_mkdir(project)
+    _private_mkdir(codex_home.parent)
+    _private_mkdir(codex_home)
+    trace_path = fixture / "server-trace.jsonl"
+    stderr_path = fixture / "server-stderr.log"
+    config_path = codex_home / "config.toml"
+    _write_codex_config(
+        config_path,
+        python=python,
+        script=Path(__file__).resolve(),
+        trace=trace_path,
+        stderr=stderr_path,
+    )
+    auth_target = codex_home / "auth.json"
+    process: subprocess.Popen[str] | None = None
+    report: dict[str, Any] = {
+        "runner": RUNNER_NAME,
+        "mode": "native",
+        "status": "not_observed",
+        "runner_sha256": _sha256(Path(__file__).read_bytes()),
+        "started_at": datetime.now(timezone.utc).isoformat(),
+        "native_invocation": True,
+        "model_calls": "not_verified",
+        "auth_used": True,
+        "mnemos_integration_tested": False,
+        "fixture": str(fixture),
+        "private_codex_home": str(codex_home),
+        "config_path": str(config_path),
+        "config_sha256": _sha256(config_path.read_bytes()),
+        "native_timeout_seconds": MAX_NATIVE_SECONDS,
+        "codex": {"path": str(codex), "version": _codex_version(codex)},
+        "python": {"executable": str(python)},
+        "mcp_sdk": _sdk_provenance(python),
+        "command": [
+            str(codex),
+            "exec",
+            "--json",
+            "--sandbox",
+            "read-only",
+            "--cd",
+            str(project),
+            "--skip-git-repo-check",
+            "--ephemeral",
+            "<private dispatch prompt>",
+        ],
+        "limitation": "This recorder does not test generated Mnemos MCP integration.",
+    }
+    stdout = ""
+    stderr = ""
+    timed_out = False
+    try:
+        _copy_auth(args.auth_source.resolve(), auth_target)
+        prompt = (
+            "Use only the dispatch_probe MCP tool. Call it exactly once with no arguments. "
+            "Do not use shell or any other tool. Report the fixed result."
+        )
+        command = [
+            str(codex),
+            "exec",
+            "--json",
+            "--sandbox",
+            "read-only",
+            "--cd",
+            str(project),
+            "--skip-git-repo-check",
+            "--ephemeral",
+            prompt,
+        ]
+        environment = _clean_environment({"CODEX_HOME": str(codex_home)})
+        process = subprocess.Popen(
+            command,
+            cwd=str(project),
+            env=environment,
+            stdin=subprocess.DEVNULL,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+            text=True,
+            encoding="utf-8",
+            errors="replace",
+            shell=False,
+            creationflags=getattr(subprocess, "CREATE_NEW_PROCESS_GROUP", 0),
+        )
+        started = time.monotonic()
+        try:
+            stdout, stderr = process.communicate(timeout=MAX_NATIVE_SECONDS)
+        except subprocess.TimeoutExpired:
+            timed_out = True
+            _terminate(process)
+            stdout, stderr = process.communicate(timeout=15)
+        summary = _native_summary(stdout)
+        trace_rows = _read_trace(trace_path)
+        flags = _trace_flags(trace_rows)
+        report.update(
+            {
+                "elapsed_ms": round((time.monotonic() - started) * 1000, 1),
+                "returncode": process.returncode,
+                "timed_out": timed_out,
+                "native_stdout": {
+                    "path": str(fixture / "native-stdout.jsonl"),
+                    "sha256": _sha256(stdout),
+                    "bytes": len(stdout.encode("utf-8")),
+                },
+                "native_stderr": {
+                    "path": str(fixture / "native-stderr.log"),
+                    "sha256": _sha256(stderr),
+                    "bytes": len(stderr.encode("utf-8")),
+                },
+                "native_summary": summary,
+                "server_trace": {"path": str(trace_path), "rows": trace_rows, "flags": flags},
+            }
+        )
+        (fixture / "native-stdout.jsonl").write_text(stdout, encoding="utf-8")
+        (fixture / "native-stderr.log").write_text(stderr, encoding="utf-8")
+        _protect(fixture / "native-stdout.jsonl")
+        _protect(fixture / "native-stderr.log")
+        report["status"] = (
+            "passed"
+            if process.returncode == 0
+            and not timed_out
+            and flags["initialize_received"]
+            and flags["list_tools_received"]
+            and flags["call_received"]
+            and flags["call_completed"]
+            and summary["successful_tool_result_seen"]
+            else "failed"
+        )
+    finally:
+        cleanup_errors: list[str] = []
+        if process is not None and process.poll() is None:
+            try:
+                _terminate(process)
+            except Exception as exc:
+                cleanup_errors.append("process_terminate:" + type(exc).__name__)
+        try:
+            auth_target.unlink(missing_ok=True)
+        except OSError as exc:
+            cleanup_errors.append("auth_remove:" + type(exc).__name__)
+        if auth_target.exists():
+            cleanup_errors.append("auth_copy_remains")
+        report["cleanup_errors"] = cleanup_errors
+        report["process_terminal"] = process is None or process.poll() is not None
+        report["auth_copy_removed"] = not auth_target.exists()
+        report["finished_at"] = datetime.now(timezone.utc).isoformat()
+        (args.output / "report.json").write_text(json.dumps(report, indent=2) + "\n", encoding="utf-8")
+    return 0 if report["status"] == "passed" and not report["cleanup_errors"] else 1
+
+
+def _parse_args(argv: list[str] | None = None) -> argparse.Namespace:
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument("--server", action="store_true", help=argparse.SUPPRESS)
+    parser.add_argument("--trace", type=Path, help=argparse.SUPPRESS)
+    parser.add_argument("--stderr", type=Path, help=argparse.SUPPRESS)
+    parser.add_argument("--offline", action="store_true", help="run the no-model stdio check")
+    parser.add_argument("--execute", action="store_true", help="run one native Codex invocation")
+    parser.add_argument("--output", type=Path, default=WORKTREE / ".venv" / RUNNER_NAME)
+    parser.add_argument("--python", type=Path, default=Path(sys.executable))
+    parser.add_argument("--codex", type=Path, default=CODEX_EXE)
+    parser.add_argument("--auth-source", type=Path)
+    args = parser.parse_args(argv)
+    if args.server:
+        if args.trace is None:
+            parser.error("--server requires --trace")
+        return args
+    if args.offline == args.execute:
+        parser.error("choose exactly one of --offline or --execute")
+    args.output = args.output.resolve()
+    return args
+
+
+def main(argv: list[str] | None = None) -> int:
+    args = _parse_args(argv)
+    if args.server:
+        return _server_main(args.trace.resolve(), args.stderr.resolve() if args.stderr else None)
+    if args.offline:
+        return _offline(args.output)
+    return _execute(args)
+
+
+if __name__ == "__main__":
+    raise SystemExit(main())

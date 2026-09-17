@@ -1,0 +1,130 @@
+{
+  "runner": "codex-mcp-dispatch-probe-v1",
+  "mode": "native",
+  "status": "passed",
+  "runner_sha256": "12c61017e1b85384187f39fd05711556db9a7594d0326a3191b4a909997cae19",
+  "started_at": "2026-09-17T11:56:15.615537+00:00",
+  "native_invocation": true,
+  "model_calls": "not_verified",
+  "auth_used": true,
+  "mnemos_integration_tested": false,
+  "fixture": "D:\\WindowsTemp\\codex-mcp-dispatch-native-crmikwpl",
+  "private_codex_home": "D:\\WindowsTemp\\codex-mcp-dispatch-native-crmikwpl\\codex-home\\.codex",
+  "config_path": "D:\\WindowsTemp\\codex-mcp-dispatch-native-crmikwpl\\codex-home\\.codex\\config.toml",
+  "config_sha256": "10a8683c56b8d8a1fda0fb178c397e93b573eaef35900e691539a68b46380640",
+  "native_timeout_seconds": 60,
+  "codex": {
+    "path": "C:\\Users\\Ant\\AppData\\Roaming\\npm\\node_modules\\@openai\\codex\\node_modules\\@openai\\codex-win32-x64\\vendor\\x86_64-pc-windows-msvc\\bin\\codex.exe",
+    "version": "codex-cli 0.146.0"
+  },
+  "python": {
+    "executable": "D:\\WindowsTemp\\mnemos-related-forget-mcp-wheel-20260917-v1\\Scripts\\python.exe"
+  },
+  "mcp_sdk": {
+    "mcp_version": "1.30.0",
+    "mcp_file": "D:\\WindowsTemp\\mnemos-related-forget-mcp-wheel-20260917-v1\\Lib\\site-packages\\mcp\\__init__.py"
+  },
+  "command": [
+    "C:\\Users\\Ant\\AppData\\Roaming\\npm\\node_modules\\@openai\\codex\\node_modules\\@openai\\codex-win32-x64\\vendor\\x86_64-pc-windows-msvc\\bin\\codex.exe",
+    "exec",
+    "--json",
+    "--sandbox",
+    "read-only",
+    "--cd",
+    "D:\\WindowsTemp\\codex-mcp-dispatch-native-crmikwpl\\project",
+    "--skip-git-repo-check",
+    "--ephemeral",
+    "<private dispatch prompt>"
+  ],
+  "limitation": "This recorder does not test generated Mnemos MCP integration.",
+  "elapsed_ms": 13852.5,
+  "returncode": 0,
+  "timed_out": false,
+  "native_stdout": {
+    "path": "D:\\WindowsTemp\\codex-mcp-dispatch-native-crmikwpl\\native-stdout.jsonl",
+    "sha256": "61b034f94420117e82de87bc6d6e5654e5bcd4fa549c98c4a8588beb4adbf21f",
+    "bytes": 1401
+  },
+  "native_stderr": {
+    "path": "D:\\WindowsTemp\\codex-mcp-dispatch-native-crmikwpl\\native-stderr.log",
+    "sha256": "97b07b61c286c45d7901a1c726f0100d71484115a7f48eb839a24b5272001ea5",
+    "bytes": 444
+  },
+  "native_summary": {
+    "record_count": 8,
+    "non_json_line_count": 0,
+    "tool_call_count": 2,
+    "tool_calls": [
+      {
+        "status": "in_progress",
+        "result_present": false,
+        "result_error": false
+      },
+      {
+        "status": "completed",
+        "result_present": true,
+        "result_error": false
+      }
+    ],
+    "successful_tool_result_seen": true
+  },
+  "server_trace": {
+    "path": "D:\\WindowsTemp\\codex-mcp-dispatch-native-crmikwpl\\server-trace.jsonl",
+    "rows": [
+      {
+        "mcp_version": "1.30.0",
+        "monotonic_ns": 107468832587900,
+        "operation": "server",
+        "phase": "started",
+        "pid": 61124,
+        "utc": "2026-09-17T11:56:20.145679+00:00"
+      },
+      {
+        "monotonic_ns": 107468845328800,
+        "operation": "initialize",
+        "phase": "received",
+        "pid": 61124,
+        "utc": "2026-09-17T11:56:20.158424+00:00"
+      },
+      {
+        "monotonic_ns": 107468847270900,
+        "operation": "list_tools",
+        "phase": "received",
+        "pid": 61124,
+        "utc": "2026-09-17T11:56:20.160367+00:00"
+      },
+      {
+        "monotonic_ns": 107468847730900,
+        "operation": "list_tools",
+        "phase": "completed",
+        "pid": 61124,
+        "utc": "2026-09-17T11:56:20.160828+00:00"
+      },
+      {
+        "monotonic_ns": 107475974123700,
+        "operation": "call_tool",
+        "phase": "received",
+        "pid": 61124,
+        "utc": "2026-09-17T11:56:27.287219+00:00"
+      },
+      {
+        "monotonic_ns": 107475975356000,
+        "operation": "call_tool",
+        "phase": "completed",
+        "pid": 61124,
+        "utc": "2026-09-17T11:56:27.288454+00:00"
+      }
+    ],
+    "flags": {
+      "server_started": true,
+      "initialize_received": true,
+      "list_tools_received": true,
+      "call_received": true,
+      "call_completed": true
+    }
+  },
+  "cleanup_errors": [],
+  "process_terminal": true,
+  "auth_copy_removed": true,
+  "finished_at": "2026-09-17T11:56:30.587376+00:00"
+}
