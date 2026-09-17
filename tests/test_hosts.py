@@ -17,6 +17,8 @@ import pytest
 
 import mnemos.hosts as hosts
 from mnemos.hosts import apply_host_integration, preview_host_integration
+from mnemos.mcp_server import _service_scope_context
+from mnemos.scopes import ScopeRegistry
 
 
 def test_cursor_integration_apply_writes_minimal_config_and_backup(tmp_path: Path) -> None:
@@ -163,6 +165,7 @@ command = "other-mcp"
     assert server["args"] == ["-m", "mnemos.mcp_server"]
     assert "[mcp_servers.mnemos.env]" in text
     assert f'MNEMOS_CONFIG_PATH = "{mnemos_config_path.as_posix()}"' in text
+    assert server["env"]["MNEMOS_HOST"] == "codex"
     assert "[mcp_servers.other]" in text
     agents_text = agents_path.read_text(encoding="utf-8")
     assert "# Repo Instructions" in agents_text
@@ -227,6 +230,7 @@ def test_codex_explicit_integration_env_reaches_mcp_and_hook_bootstrap(tmp_path:
     assert mcp_env["MNEMOS_SCOPE_REGISTRY"] == r"D:\scopes.json"
     assert mcp_env["MNEMOS_RUNTIME_DESCRIPTOR"] == r"D:\runtime.json"
     assert "MNEMOS_CONFIG_PATH" in mcp_env
+    assert mcp_env["MNEMOS_HOST"] == "codex"
 
     command = rendered["hooks"]["UserPromptSubmit"][-1]["hooks"][0]["command"]
     assert " -c " in command
@@ -592,9 +596,96 @@ def test_claude_integration_apply_installs_mnemos_agents(tmp_path: Path) -> None
     mcp_env = mcp_payload["mcpServers"]["mnemos"]["env"]
     assert mcp_env["MNEMOS_USER_PROFILE_ID"] == "alice"
     assert mcp_env["MNEMOS_SCOPE_REGISTRY"] == str(tmp_path / "scopes.json")
+    assert mcp_env["MNEMOS_HOST"] == "claude-code"
     recall_path = home_dir / ".claude" / "agents" / "mnemos-recall.md"
     curator_path = home_dir / ".claude" / "agents" / "mnemos-curator.md"
     assert recall_path.exists()
     assert curator_path.exists()
     assert "mnemos_retrieve" in recall_path.read_text(encoding="utf-8")
     assert "mnemos_store" in curator_path.read_text(encoding="utf-8")
+
+
+def test_known_mcp_host_overrides_stale_host_value(tmp_path: Path) -> None:
+    config_path = tmp_path / "project" / ".mcp.json"
+    config_path.parent.mkdir(parents=True)
+    config_path.write_text(
+        json.dumps(
+            {
+                "mcpServers": {
+                    "mnemos": {
+                        "command": "old-mnemos",
+                        "env": {"MNEMOS_HOST": "manual", "OTHER": "preserve"},
+                    }
+                }
+            }
+        ),
+        encoding="utf-8",
+    )
+
+    preview = preview_host_integration(
+        "claude-code",
+        mnemos_config_path=tmp_path / "settings.toml",
+        cwd=config_path.parent,
+        home=tmp_path / "home",
+    )
+
+    payload = json.loads(preview.rendered_config)
+    env = payload["mcpServers"]["mnemos"]["env"]
+    assert env["MNEMOS_HOST"] == "claude-code"
+    assert env["OTHER"] == "preserve"
+
+
+@pytest.mark.parametrize("host", ["codex", "claude-code"])
+def test_generated_mcp_env_resolves_known_scope_host(
+    host: str, monkeypatch: pytest.MonkeyPatch, tmp_path: Path
+) -> None:
+    project = tmp_path / "project"
+    project.mkdir()
+    home = tmp_path / "home"
+    registry_path = tmp_path / "scopes.json"
+    registry = ScopeRegistry()
+    registry.register_project(project, user_profile_id="alice", enabled=True)
+    registry.save(registry_path)
+
+    if host == "codex":
+        config_path = home / ".codex" / "config.toml"
+        config_path.parent.mkdir(parents=True)
+        config_path.write_text(
+            "[mcp_servers.mnemos]\n"
+            'command = "old-mnemos"\n'
+            "[mcp_servers.mnemos.env]\n"
+            'MNEMOS_HOST = "manual"\n',
+            encoding="utf-8",
+        )
+    else:
+        config_path = project / ".mcp.json"
+        config_path.write_text(
+            json.dumps({"mcpServers": {"mnemos": {"env": {"MNEMOS_HOST": "manual"}}}}),
+            encoding="utf-8",
+        )
+
+    preview = preview_host_integration(
+        host,
+        mnemos_config_path=tmp_path / "settings.toml",
+        cwd=project,
+        home=home,
+        integration_env={
+            "MNEMOS_SCOPE_REGISTRY": str(registry_path),
+            "MNEMOS_USER_PROFILE_ID": "alice",
+        },
+    )
+    if host == "codex":
+        generated_env = tomllib.loads(preview.rendered_config)["mcp_servers"]["mnemos"]["env"]
+    else:
+        generated_env = json.loads(preview.rendered_config)["mcpServers"]["mnemos"]["env"]
+
+    monkeypatch.setenv("MNEMOS_HOST", "manual")
+    monkeypatch.setenv("MNEMOS_PROJECT_ROOT", str(project))
+    for key in ("MNEMOS_CONFIG_PATH", "MNEMOS_SCOPE_REGISTRY", "MNEMOS_USER_PROFILE_ID"):
+        monkeypatch.setenv(key, str(generated_env[key]))
+    monkeypatch.setenv("MNEMOS_HOST", str(generated_env["MNEMOS_HOST"]))
+
+    context = _service_scope_context()
+
+    assert generated_env["MNEMOS_HOST"] == host
+    assert context.host == host

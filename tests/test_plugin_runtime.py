@@ -154,3 +154,25 @@ def test_hook_wrapper_is_a_real_stdio_subprocess(tmp_path: Path) -> None:
     assert completed.returncode == 23
     assert completed.stdout == 'received:{"hook_event_name":"Stop"}'
     assert completed.stderr == ""
+
+
+def test_plugin_mcp_child_receives_claude_host(monkeypatch) -> None:
+    wrapper = _load_wrapper()
+    captured: dict[str, object] = {}
+    monkeypatch.setenv("MNEMOS_HOST", "manual")
+    monkeypatch.setattr(wrapper, "_resolve_runtime_python", lambda root, env: sys.executable)
+
+    def fake_run(args, *, env, check):
+        captured["args"] = args
+        captured["env"] = env
+        captured["check"] = check
+        return type("Completed", (), {"returncode": 0})()
+
+    monkeypatch.setattr(wrapper.subprocess, "run", fake_run)
+
+    assert wrapper.main() == 0
+    assert captured["args"] == [sys.executable, "-m", "mnemos.mcp_server"]
+    child_env = captured["env"]
+    assert isinstance(child_env, dict)
+    assert child_env["MNEMOS_HOST"] == "claude-code"
+    assert captured["check"] is False

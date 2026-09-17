@@ -146,6 +146,15 @@ def test_plugin_wrapper_preserves_explicit_runtime_configuration(
         assert env[key] == value
 
 
+def test_plugin_wrapper_binds_claude_host_over_inherited_value(monkeypatch) -> None:
+    wrapper = _load_plugin_wrapper()
+    monkeypatch.setenv("MNEMOS_HOST", "manual")
+
+    env = wrapper._apply_default_env(Path("."))
+
+    assert env["MNEMOS_HOST"] == "claude-code"
+
+
 def test_plugin_wrapper_required_extras_are_fixed_to_mcp(monkeypatch) -> None:
     wrapper = _load_plugin_wrapper()
 

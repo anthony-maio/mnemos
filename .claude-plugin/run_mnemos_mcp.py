@@ -191,7 +191,11 @@ def _is_windows() -> bool:
 def _apply_default_env(plugin_root: Path) -> dict[str, str]:
     """Preserve explicit settings and let the managed runtime own defaults."""
     _ = plugin_root
-    return dict(os.environ)
+    env = dict(os.environ)
+    # This wrapper is the Claude Code plugin entrypoint.  The host identity is
+    # integration-owned and must not inherit a stale manual or other-host value.
+    env["MNEMOS_HOST"] = "claude-code"
+    return env
 
 
 def main() -> int:
