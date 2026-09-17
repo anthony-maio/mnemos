@@ -105,6 +105,22 @@ class LocalMemoryService:
         safety = self.firewall.apply(event.content)
         if not safety.allowed:
             return {"schema_version": 1, "status": "rejected", "reason": safety.reason}
+        if event.identity_status == "provisional_unassociated" and (
+            event.identity_version != 2
+            or event.context.host != "claude-code"
+            or event.source_kind != "claude_code_transcript"
+            or explicit
+            or correction is not None
+            or event.role not in {"user", "assistant"}
+            or (scope or event.scope) != "project"
+            or event.source_ref is None
+            or not event.source_ref.strip()
+        ):
+            return {
+                "schema_version": 1,
+                "status": "rejected",
+                "reason": "Provisional identity is only valid for non-explicit Claude captures",
+            }
         source_ref = event.source_ref
         if source_ref is not None:
             safe_ref = self.firewall.apply(source_ref)
@@ -161,7 +177,7 @@ class LocalMemoryService:
                 "processing_status": "suppressed",
                 "job_id": None,
             }
-        if event.event_id.startswith("claude:v2:"):
+        if event.event_id.startswith("claude:v2:") and event.identity_status == "normal":
             assert source_ref is not None
             old_adapter_id = legacy_event_id(
                 event.context.session_id, source_ref, event.role, event.content
@@ -223,6 +239,8 @@ class LocalMemoryService:
                         else old_event.status if old_event is not None else "pending"
                     ),
                     "job_id": old_job.id,
+                    "identity_status": event.identity_status,
+                    "fact_eligible": event.identity_status == "normal",
                 }
         metadata.update(
             {
@@ -230,6 +248,7 @@ class LocalMemoryService:
                 "source_ref": source_ref,
                 "source_kind": event.source_kind,
                 "explicit_remember": explicit,
+                "identity_status": event.identity_status,
             }
         )
         record = EpisodicEvent(
@@ -243,33 +262,59 @@ class LocalMemoryService:
             source=event.context.host,
             metadata=metadata,
             occurred_at=event.occurred_at.astimezone(timezone.utc),
+            status=(
+                "deferred" if event.identity_status == "provisional_unassociated" else "pending"
+            ),
         )
+        job_payload = {
+            "event_id": key,
+            "context": event.context.model_dump(),
+            "scope": scope,
+            "source_digest": hashlib.sha256(
+                json.dumps([event.role, safety.content, scope, metadata["scope_id"]]).encode(
+                    "utf-8"
+                )
+            ).hexdigest(),
+            **(correction or {}),
+        }
+        if event.identity_status == "provisional_unassociated":
+            job_payload["identity_status"] = event.identity_status
         job = DurableJob(
             id="event:" + key,
-            kind="correct" if correction else "remember" if explicit else "extract",
-            payload={
-                "event_id": key,
-                "context": event.context.model_dump(),
-                "scope": scope,
-                "source_digest": hashlib.sha256(
-                    json.dumps([event.role, safety.content, scope, metadata["scope_id"]]).encode(
-                        "utf-8"
-                    )
-                ).hexdigest(),
-                **(correction or {}),
-            },
+            kind=(
+                "capture_only"
+                if event.identity_status == "provisional_unassociated"
+                else "correct" if correction else "remember" if explicit else "extract"
+            ),
+            payload=job_payload,
         )
         existing_job = self.engine.store.get_job(job.id)
         if existing_job is not None:
-            if existing_job.kind != job.kind or existing_job.payload != job.payload:
+            same_payload = existing_job.payload == job.payload
+            legacy_payload = dict(job.payload)
+            legacy_payload.pop("identity_status", None)
+            is_legacy_payload = existing_job.payload == legacy_payload
+            if is_legacy_payload and event.identity_status == "provisional_unassociated":
+                return {
+                    "schema_version": 1,
+                    "status": "rejected",
+                    "reason": "Existing legacy capture cannot be reclassified as provisional",
+                }
+            if existing_job.kind != job.kind or not (same_payload or is_legacy_payload):
                 raise ValueError("Source event identity already has a different payload")
             if existing_job.status == "completed":
                 return {
                     "schema_version": 1,
                     "status": "committed",
                     "event_id": key,
-                    "processing_status": "consolidated",
+                    "processing_status": (
+                        "deferred"
+                        if event.identity_status == "provisional_unassociated"
+                        else "consolidated"
+                    ),
                     "job_id": job.id,
+                    "identity_status": event.identity_status,
+                    "fact_eligible": event.identity_status == "normal",
                 }
         stored = self.engine.store.capture_event_and_job(record, job)
         self.maintenance.note_activity()
@@ -279,6 +324,8 @@ class LocalMemoryService:
             "event_id": stored.id,
             "processing_status": stored.status,
             "job_id": job.id,
+            "identity_status": event.identity_status,
+            "fact_eligible": event.identity_status == "normal",
         }
 
     async def process_job(self, job: DurableJob) -> None:
@@ -295,6 +342,11 @@ class LocalMemoryService:
         event = self.engine.store.get_episodic_event(job.payload["event_id"])
         if event is None:
             raise ValueError("Source event is unavailable")
+        event_identity_status = event.metadata.get("identity_status", "normal")
+        if event_identity_status == "provisional_unassociated" and job.kind != "capture_only":
+            raise ValueError("Provisional source events cannot run extraction jobs")
+        if job.kind == "capture_only" and event_identity_status != "provisional_unassociated":
+            raise ValueError("Capture-only jobs require provisional source events")
         scope = job.payload["scope"]
         if not scope_allows(event.metadata, context, (scope,)):
             raise ValueError("Source event is outside the requested scope")
@@ -308,6 +360,20 @@ class LocalMemoryService:
                 result={"decision": "already_processed"},
             ):
                 raise RuntimeError("Job lease expired")
+            return
+        if job.kind == "capture_only":
+            committed = self.engine.store.commit_fact_and_job(
+                job.id,
+                owner=job.lease_owner,
+                lease_token=job.lease_token,
+                chunks=[],
+                evidence=[],
+                revisions=[],
+                processed_event_ids=[event.id],
+                result={"decision": "identity_pending", "fact_eligible": False},
+            )
+            if not committed:
+                raise RuntimeError("Job lease expired before provisional capture was recorded")
             return
         interaction = Interaction(
             role=event.role,

@@ -2499,10 +2499,19 @@ class SQLiteStore(MemoryStore):
                 "no_durable_facts",
                 "surprisal_filtered",
                 "suppressed",
+                "identity_pending",
             }:
                 raise ValueError(
                     "A no-fact commit requires processed events and an explicit decision"
                 )
+        if result_payload.get("decision") == "identity_pending" and (
+            fact_chunks
+            or evidence
+            or revisions
+            or revision is not None
+            or result_payload.get("fact_ids")
+        ):
+            raise ValueError("An identity-pending commit cannot contain durable facts")
         all_revisions = list(revisions or [])
         if revision is not None:
             all_revisions.insert(0, revision)
@@ -2519,6 +2528,49 @@ class SQLiteStore(MemoryStore):
                 if lease_row is None:
                     self._conn.rollback()
                     return False
+                leased_payload = json.loads(lease_row[1] or "{}")
+                if (
+                    lease_row[0] == "capture_only"
+                    and result_payload.get("decision") != "identity_pending"
+                ):
+                    raise ValueError("Capture-only jobs require an identity-pending result")
+                leased_event_id = leased_payload.get("event_id")
+                leased_event_row = (
+                    self._conn.execute(
+                        "SELECT metadata FROM episodic_events WHERE id=?", (leased_event_id,)
+                    ).fetchone()
+                    if isinstance(leased_event_id, str)
+                    else None
+                )
+                leased_event_status = (
+                    json.loads(leased_event_row[0] or "{}").get("identity_status")
+                    if leased_event_row is not None
+                    else None
+                )
+                if (
+                    leased_event_status == "provisional_unassociated"
+                    and result_payload.get("decision") != "identity_pending"
+                ):
+                    raise ValueError("Provisional source events cannot commit durable facts")
+                if result_payload.get("decision") == "identity_pending":
+                    if lease_row[0] != "capture_only":
+                        raise ValueError("Identity-pending results require a capture-only job")
+                    if processed_event_ids != [leased_payload.get("event_id")]:
+                        raise ValueError(
+                            "Identity-pending results must process their capture event only"
+                        )
+                    for event_id in processed_event_ids or []:
+                        event_row = self._conn.execute(
+                            "SELECT metadata FROM episodic_events WHERE id=?", (event_id,)
+                        ).fetchone()
+                        if (
+                            event_row is None
+                            or json.loads(event_row[0] or "{}").get("identity_status")
+                            != "provisional_unassociated"
+                        ):
+                            raise ValueError(
+                                "Identity-pending results require provisional source events"
+                            )
 
                 if expected_version is not None:
                     current = self._conn.execute(
@@ -2607,10 +2659,15 @@ class SQLiteStore(MemoryStore):
                             fact_revision.created_at.isoformat(),
                         ),
                     )
+                event_status = (
+                    "deferred"
+                    if result_payload.get("decision") == "identity_pending"
+                    else "consolidated"
+                )
                 for event_id in processed_event_ids or []:
                     updated_event = self._conn.execute(
-                        """UPDATE episodic_events SET status='consolidated', error=NULL WHERE id=?""",
-                        (event_id,),
+                        """UPDATE episodic_events SET status=?, error=NULL WHERE id=?""",
+                        (event_status, event_id),
                     )
                     if updated_event.rowcount != 1:
                         raise ValueError(
@@ -2634,7 +2691,7 @@ class SQLiteStore(MemoryStore):
                 if updated.rowcount != 1:
                     raise RuntimeError("Job lease was lost while committing fact")
                 self._conn.commit()
-            except Exception:
+            except BaseException:
                 self._conn.rollback()
                 raise
             finally:
@@ -2698,7 +2755,7 @@ class SQLiteStore(MemoryStore):
                     raise ValueError("Job identity already has a different payload")
                 self._conn.commit()
                 return stored_event
-            except Exception:
+            except BaseException:
                 self._conn.rollback()
                 raise
             finally:
@@ -3536,7 +3593,7 @@ class SQLiteStore(MemoryStore):
         with self._lock:
             cursor = self._conn.execute(
                 "DELETE FROM episodic_events WHERE id IN (SELECT id FROM episodic_events "
-                "WHERE status='consolidated' AND created_at < ? "
+                "WHERE status IN ('consolidated', 'deferred') AND created_at < ? "
                 "AND NOT EXISTS (SELECT 1 FROM memory_jobs WHERE "
                 "json_extract(payload, '$.event_id')=episodic_events.id "
                 "AND status != 'completed') ORDER BY created_at LIMIT ?)",

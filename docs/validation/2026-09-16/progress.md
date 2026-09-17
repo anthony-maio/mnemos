@@ -689,3 +689,25 @@ and recorded. A regression reproduced the checkpoint crash before the fix;
 all 36 affected benchmark tests pass afterward. No scorer or acceptance
 threshold changed. The frozen source and failed run remain unchanged;
 a resumed or replacement experiment must record the repaired code identity.
+
+## Provisional Claude capture implemented
+
+Missing-occurrence-ID Claude fallbacks now persist as deferred raw events
+with capture-only jobs. Their completed result is `identity_pending`, with
+no fact IDs. Both processing and SQLite commit guards reject attempts to
+extract or commit facts from those events. Native transcript identities
+remain independent, and legacy normal jobs retain replay compatibility.
+The two affected transactions now roll back on interruption as well as
+ordinary exceptions. Retention removes only completed deferred events;
+their completed jobs prevent raw-event resurrection on replay.
+
+The affected adapter, identity, service, and outbox suite passed 77 tests.
+The expanded 13-test provisional suite also passes, including the real
+client outage/rejected-ACK/restart test, deferred retention, and injected
+interruptions after event insertion and before job completion. Black and
+strict mypy over the four changed production files pass. Tests remain
+outside the repository's configured mypy scope; explicitly checking the
+new capture test file reports untyped test helpers.
+
+Native Claude acceptance and full verification of this new source are
+pending. The original v6 duplicate-raw-event failure remains preserved.

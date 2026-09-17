@@ -38,6 +38,11 @@ def _fact_proposal_json_schema(schema: dict[str, Any]) -> None:
 class CaptureEvent(BaseModel):
     model_config = ConfigDict(extra="forbid")
     identity_version: Literal[1, 2] = 1
+    # A provisional native hook event was durably acknowledged before a
+    # transcript occurrence identifier was available.  Such an event is
+    # retained as raw evidence only; the status is deliberately a single
+    # typed field so it cannot disagree with a second capture-only flag.
+    identity_status: Literal["normal", "provisional_unassociated"] = "normal"
     event_id: str = Field(min_length=1, max_length=512)
     context: ScopeContext
     scope: Literal["project", "workspace", "global"] = "project"

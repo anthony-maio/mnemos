@@ -438,6 +438,7 @@ class ClaudeCodeAdapter:
         content: str,
         source_ref: str,
         occurred_at: datetime,
+        identity_status: str = "normal",
     ) -> tuple[bool, str | None]:
         # MnemosClient sanitizes capture payloads before HTTP and outbox
         # persistence.  Hash only the exact values that will cross that
@@ -462,6 +463,7 @@ class ClaudeCodeAdapter:
                 {
                     "event_id": self._event_id(context, source_ref, role, content),
                     "identity_version": 2,
+                    "identity_status": identity_status,
                     "context": context.model_dump(mode="json"),
                     "occurred_at": occurred_at.isoformat(),
                     "role": role,
@@ -688,6 +690,9 @@ class ClaudeCodeAdapter:
                     content=prompt.strip(),
                     source_ref=source_ref,
                     occurred_at=datetime.now(timezone.utc),
+                    identity_status=(
+                        "normal" if has_native_prompt_id else "provisional_unassociated"
+                    ),
                 )
                 if accepted:
                     captured += 1
@@ -807,6 +812,9 @@ class ClaudeCodeAdapter:
                             content=assistant_content,
                             source_ref=source_ref,
                             occurred_at=datetime.now(timezone.utc),
+                            identity_status=(
+                                "normal" if has_prompt_id else "provisional_unassociated"
+                            ),
                         )
                         if accepted:
                             captured += 1
