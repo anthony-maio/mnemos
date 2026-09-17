@@ -6,6 +6,7 @@ from __future__ import annotations
 
 import json
 import re
+import shutil
 import sys
 from dataclasses import dataclass
 from datetime import datetime, timezone
@@ -296,6 +297,18 @@ def _toml_scalar(value: Any) -> str:
     return _toml_string(str(value))
 
 
+def _powershell_executable() -> str | None:
+    """Return the shell Codex 0.146 selects first on Windows, when present."""
+    if sys.platform != "win32":
+        return None
+    return shutil.which("pwsh") or shutil.which("powershell")
+
+
+def _powershell_literal(value: str) -> str:
+    """Quote one PowerShell argument without interpolation or expansion."""
+    return "'" + value.replace("'", "''") + "'"
+
+
 def _codex_hook_command(integration_env: IntegrationEnv) -> str:
     """Return a hook command with explicit env without shell interpolation.
 
@@ -304,7 +317,16 @@ def _codex_hook_command(integration_env: IntegrationEnv) -> str:
     them before running the adapter.  The command contains only generated
     interpreter/module syntax and an alphanumeric payload.
     """
-    command = f'"{sys.executable}" -m mnemos.adapters.codex'
+    powershell = _powershell_executable()
+    if powershell is not None:
+        interpreter = _powershell_literal(sys.executable)
+        command_prefix = f"& {interpreter}"
+    else:
+        # Codex's tagged Windows detector falls back to Cmd when PowerShell
+        # cannot be found. The direct quoted command also preserves POSIX
+        # behavior under the shell's normal command runner.
+        command_prefix = f'"{sys.executable}"'
+    command = f"{command_prefix} -m mnemos.adapters.codex"
     if integration_env is None:
         return command
     import base64
@@ -317,7 +339,9 @@ def _codex_hook_command(integration_env: IntegrationEnv) -> str:
         f"os.environ.update(json.loads(base64.b64decode({encoded!r})));"
         "runpy.run_module('mnemos.adapters.codex',run_name='__main__')"
     )
-    return f'"{sys.executable}" -c "{bootstrap}"'
+    if powershell is not None:
+        return f"{command_prefix} -c {_powershell_literal(bootstrap)}"
+    return f'{command_prefix} -c "{bootstrap}"'
 
 
 def _render_codex_hooks(

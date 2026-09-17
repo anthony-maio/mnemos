@@ -5,6 +5,8 @@ tests/test_hosts.py — Host adapter preview/apply coverage.
 from __future__ import annotations
 
 import json
+import os
+import subprocess
 import tomllib
 from pathlib import Path
 
@@ -186,7 +188,8 @@ def test_codex_explicit_integration_env_reaches_mcp_and_hook_bootstrap(tmp_path:
     command = rendered["hooks"]["UserPromptSubmit"][-1]["hooks"][0]["command"]
     assert " -c " in command
     assert "OPENAI_API_KEY" not in command
-    encoded = command.split("base64.b64decode('", 1)[1].split("')", 1)[0]
+    encoded = command.split("base64.b64decode(", 1)[1].split(")", 1)[0]
+    encoded = encoded.strip("'").replace("''", "'")
     import base64
 
     hook_env = json.loads(base64.b64decode(encoded))
@@ -273,7 +276,7 @@ command = "echo existing"
 
 
 def test_codex_hook_command_quotes_installed_python_path(tmp_path: Path, monkeypatch) -> None:
-    python_path = r"C:\Program Files\Mnemos\python.exe"
+    python_path = "C:\\Program Files\\Mnemos`$bin\\py'thon.exe"
     monkeypatch.setattr(hosts.sys, "executable", python_path)
     preview = preview_host_integration(
         "codex",
@@ -284,8 +287,108 @@ def test_codex_hook_command_quotes_installed_python_path(tmp_path: Path, monkeyp
 
     rendered = tomllib.loads(preview.rendered_config)
     generated = rendered["hooks"]["UserPromptSubmit"][-1]["hooks"][0]
-    assert generated["command"] == f'"{python_path}" -m mnemos.adapters.codex'
+    if hosts._powershell_executable() is not None:
+        assert generated["command"] == (
+            "& 'C:\\Program Files\\Mnemos`$bin\\py''thon.exe' -m mnemos.adapters.codex"
+        )
+    else:
+        assert generated["command"] == f'"{python_path}" -m mnemos.adapters.codex'
     assert "command_windows" not in generated
+
+
+def test_codex_hook_command_preserves_posix_shell_shape(monkeypatch, tmp_path: Path) -> None:
+    monkeypatch.setattr(hosts.sys, "platform", "linux")
+    python_path = "/opt/Mnemos Python/bin/python"
+    monkeypatch.setattr(hosts.sys, "executable", python_path)
+
+    preview = preview_host_integration(
+        "codex",
+        mnemos_config_path=tmp_path / "Mnemos" / "mnemos.toml",
+        cwd=tmp_path / "repo",
+        home=tmp_path / "home",
+    )
+    generated = tomllib.loads(preview.rendered_config)["hooks"]["UserPromptSubmit"][-1]["hooks"][0]
+    assert generated["command"] == f'"{python_path}" -m mnemos.adapters.codex'
+
+
+def test_codex_hook_command_uses_cmd_fallback_when_powershell_missing(
+    monkeypatch, tmp_path: Path
+) -> None:
+    monkeypatch.setattr(hosts, "_powershell_executable", lambda: None)
+    python_path = r"C:\Program Files\Mnemos\python.exe"
+    monkeypatch.setattr(hosts.sys, "executable", python_path)
+
+    preview = preview_host_integration(
+        "codex",
+        mnemos_config_path=tmp_path / "Mnemos" / "mnemos.toml",
+        cwd=tmp_path / "repo",
+        home=tmp_path / "home",
+    )
+    generated = tomllib.loads(preview.rendered_config)["hooks"]["UserPromptSubmit"][-1]["hooks"][0]
+    assert generated["command"] == f'"{python_path}" -m mnemos.adapters.codex'
+
+
+def test_codex_powershell_bootstrap_executes_allowlisted_env_and_stdin(
+    tmp_path: Path,
+) -> None:
+    powershell = hosts._powershell_executable()
+    if powershell is None:
+        pytest.skip("PowerShell is unavailable on this host")
+
+    stub_root = tmp_path / "stub package"
+    stub_module = stub_root / "mnemos" / "adapters"
+    stub_module.mkdir(parents=True)
+    (stub_root / "mnemos" / "__init__.py").write_text("", encoding="utf-8")
+    (stub_module / "__init__.py").write_text("", encoding="utf-8")
+    output_path = tmp_path / "path $ O'Brien with spaces" / "hook-output.json"
+    output_path.parent.mkdir()
+    (stub_module / "codex.py").write_text(
+        "import json, os, sys\n"
+        "payload = json.load(sys.stdin)\n"
+        "record = {'profile': os.environ.get('MNEMOS_USER_PROFILE_ID'), "
+        "'scope_registry': os.environ.get('MNEMOS_SCOPE_REGISTRY'), "
+        "'event_id': payload.get('event_id'), 'prompt': payload.get('prompt')}\n"
+        "path = os.environ['MNEMOS_RUNTIME_DESCRIPTOR']\n"
+        "open(path, 'w', encoding='utf-8').write(json.dumps(record))\n"
+        "print(json.dumps({'continue': True, 'record': record}))\n",
+        encoding="utf-8",
+    )
+    env_values = {
+        "MNEMOS_CONFIG_PATH": str(tmp_path / "config $ O'Brien.toml"),
+        "MNEMOS_USER_PROFILE_ID": "Power'Shell $ Profile caf\u00e9",
+        "MNEMOS_SCOPE_REGISTRY": str(tmp_path / "registry $ O'Brien with spaces.json"),
+        "MNEMOS_RUNTIME_DESCRIPTOR": str(output_path),
+    }
+    command = hosts._codex_hook_command(env_values)
+    payload = {
+        "hook_event_name": "UserPromptSubmit",
+        "event_id": "powershell-stub-event",
+        "prompt": "stdin reaches the generated bootstrap caf\u00e9",
+    }
+    env = dict(os.environ)
+    env["PYTHONPATH"] = str(stub_root)
+    for key in env_values:
+        env.pop(key, None)
+    env["PYTHONUTF8"] = "1"
+    completed = subprocess.run(
+        [powershell, "-NoProfile", "-Command", command],
+        input=json.dumps(payload, ensure_ascii=False),
+        capture_output=True,
+        text=True,
+        encoding="utf-8",
+        errors="replace",
+        env=env,
+        cwd=str(tmp_path),
+        check=False,
+        timeout=10,
+    )
+    assert completed.returncode == 0, completed.stderr
+    output = json.loads(completed.stdout)
+    assert output["record"]["profile"] == "Power'Shell $ Profile caf\u00e9"
+    assert output["record"]["scope_registry"] == env_values["MNEMOS_SCOPE_REGISTRY"]
+    assert output["record"]["event_id"] == payload["event_id"]
+    assert output["record"]["prompt"] == payload["prompt"]
+    assert json.loads(output_path.read_text(encoding="utf-8")) == output["record"]
 
 
 def test_hermes_integration_selects_provider_without_rewriting_config(tmp_path: Path) -> None:
