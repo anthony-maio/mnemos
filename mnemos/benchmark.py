@@ -25,6 +25,7 @@ from .config import MnemosConfig, MutableRAGConfig, SurprisalConfig
 from .engine import MnemosEngine
 from .runtime import build_embedder_from_env
 from .types import Interaction, MemoryChunk, RetrievalFeedbackEvent
+from .utils.embeddings import embed_batch_for_role, embed_text_for_role
 from .utils.llm import MockLLMProvider
 from .utils.storage import InMemoryStore, MemoryStore, SQLiteStore
 
@@ -805,7 +806,9 @@ def run_retrieval_benchmark(
     latencies_ms: list[float] = []
 
     if retriever == "baseline":
-        document_embeddings = embedder.embed_batch([doc.content for doc in documents])
+        document_embeddings = embed_batch_for_role(
+            embedder, [doc.content for doc in documents], role="document"
+        )
         if not document_embeddings:
             raise ValueError("Unable to generate document embeddings.")
         id_map: dict[str, str] = {}
@@ -827,7 +830,7 @@ def run_retrieval_benchmark(
 
         for query in benchmark_queries:
             start = time.perf_counter()
-            query_embedding = embedder.embed(query.text)
+            query_embedding = embed_text_for_role(embedder, query.text, role="query")
             scope_filter = _scope_filter_for_query(query) if baseline_scope_aware else None
             chunks = store.retrieve(query_embedding, top_k=top_k, filter_fn=scope_filter)
             elapsed_ms = (time.perf_counter() - start) * 1000.0

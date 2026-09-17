@@ -276,7 +276,7 @@ class AffectiveRouter:
 
         # Embed the query
         if query_embedding is None:
-            query_embedding = await embed_text_async(self._embedder, query)
+            query_embedding = await embed_text_async(self._embedder, query, role="query")
 
         if candidates is None:
             # Fetch a larger candidate pool for re-ranking

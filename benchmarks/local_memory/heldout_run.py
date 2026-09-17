@@ -17,6 +17,7 @@ from typing import Any
 from urllib.request import Request, urlopen
 
 from mnemos.scopes import ProjectIdentity, ScopeRegistry, WorkspaceIdentity
+from mnemos.runtime import embedding_task_contract
 
 from .artifacts import ArtifactRecorder, environment_metadata
 from .contracts import HeldoutDataset, load_dataset
@@ -118,6 +119,9 @@ def run_heldout(
     module_challenge_path: Path | None = None,
     root: Path | None = None,
     think: OllamaThink = None,
+    query_prefix: str = "",
+    document_prefix: str = "",
+    symmetric_prefix: str = "",
 ) -> dict[str, dict[str, Any]]:
     dataset = load_dataset(dataset_path)
     if len(dataset.heldout_sessions) < 200:
@@ -140,6 +144,13 @@ def run_heldout(
         "runtime": environment_metadata(),
     }
     add_ollama_think(options, think)
+    task_contract = embedding_task_contract(
+        query_prefix=query_prefix,
+        document_prefix=document_prefix,
+        symmetric_prefix=symmetric_prefix,
+    )
+    if task_contract is not None:
+        options["embedding_task_contract"] = task_contract
     options_sha256 = ollama_options_sha256(options)
     code_sha256, code_files = _code_provenance(
         (root or Path(__file__).resolve().parents[2]).resolve()
@@ -230,6 +241,9 @@ def run_heldout(
             temperature=float(options["temperature"]),
             max_tokens=int(options["max_tokens"]),
             think=think,
+            query_prefix=query_prefix,
+            document_prefix=document_prefix,
+            symmetric_prefix=symmetric_prefix,
         )
         adapter = OllamaEvaluatorAdapter(
             factory,
@@ -299,6 +313,9 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("--repetitions", type=int, default=3)
     parser.add_argument("--profile", action="append", dest="profiles")
     parser.add_argument("--think", type=parse_ollama_think, default=None)
+    parser.add_argument("--query-prefix", default="")
+    parser.add_argument("--document-prefix", default="")
+    parser.add_argument("--symmetric-prefix", default="")
     args = parser.parse_args(argv)
     reports = run_heldout(
         dataset_path=args.dataset,
@@ -311,6 +328,9 @@ def main(argv: list[str] | None = None) -> int:
         profile_names=set(args.profiles) if args.profiles else None,
         module_challenge_path=args.module_challenge_dataset,
         think=args.think,
+        query_prefix=args.query_prefix,
+        document_prefix=args.document_prefix,
+        symmetric_prefix=args.symmetric_prefix,
     )
     print(json.dumps({name: report["status"] for name, report in reports.items()}, sort_keys=True))
     return 0

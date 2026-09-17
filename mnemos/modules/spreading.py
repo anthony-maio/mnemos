@@ -16,7 +16,7 @@ from typing import Any, Callable, Iterable
 
 from ..config import SpreadingConfig
 from ..types import ActivationNode, MemoryChunk
-from ..utils.embeddings import EmbeddingProvider, cosine_similarity
+from ..utils.embeddings import EmbeddingProvider, cosine_similarity, embed_text_for_role
 
 NodeFilter = Callable[[ActivationNode], bool]
 
@@ -112,7 +112,7 @@ class SpreadingActivation:
     ) -> ActivationNode:
         """Add a node, or replace its content while retaining valid neighbors."""
         if embedding is None:
-            embedding = self._embedder.embed(content)
+            embedding = embed_text_for_role(self._embedder, content, role="document")
         nid = node_id or str(uuid.uuid4())
         old = self._nodes.get(nid)
         old_neighbors = dict(old.neighbors) if old is not None else {}
@@ -158,7 +158,9 @@ class SpreadingActivation:
         return self.add_node(content, embedding=embedding, node_id=node_id, metadata=metadata)
 
     def add_node_from_chunk(self, chunk: MemoryChunk) -> ActivationNode:
-        embedding = chunk.embedding or self._embedder.embed(chunk.content)
+        embedding = chunk.embedding or embed_text_for_role(
+            self._embedder, chunk.content, role="document"
+        )
         return self.add_node(
             content=chunk.content,
             embedding=embedding,

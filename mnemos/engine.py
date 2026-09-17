@@ -823,7 +823,7 @@ class MnemosEngine:
         selected_profile = profile or self.config.retrieval.profile
         if selected_profile not in {"baseline", "biomimetic"}:
             raise ValueError("Unknown retrieval profile")
-        query_embedding = await embed_text_async(self._embedder, query)
+        query_embedding = await embed_text_async(self._embedder, query, role="query")
         candidate_pool_k = min(max(top_k * 6, 20), self.config.retrieval.max_candidates)
         baseline_chunks = self._store.retrieve(
             query_embedding, top_k=candidate_pool_k, filter_fn=scope_filter

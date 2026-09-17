@@ -74,6 +74,26 @@ the predefined exact proxy; the model omitted a stated editor preference.
 This establishes a working provider option, not general extraction accuracy.
 [Probe and limitations](validation/2026-09-16/ollama-thinking-provider-integration/README.md).
 
+Embedding task prefixes can be configured explicitly in canonical TOML:
+
+```toml
+[embedding]
+query_prefix = "search_query: "
+document_prefix = "search_document: "
+symmetric_prefix = "clustering: "
+```
+
+Use the task contract documented by the selected embedding model; these values
+are not automatically inferred from its name. Retrieval uses the query prefix,
+stored facts and reindexing use the document prefix, and prediction/evidence
+comparisons use the symmetric prefix. Prefixes default to empty strings for
+compatibility and have no environment overrides. Changing any prefix changes
+the persistent embedding identity and requires a new index generation before
+activation. Do not point a new query configuration at an unchanged old index.
+Deterministic tests cover the payloads and migration boundary; the quality
+effect of prefixes on the selected local model remains unmeasured.
+[Implementation and evaluation boundary](validation/2026-09-16/embedding-task-contract.md).
+
 ## Scope and host identity
 
 The runtime resolves a `ScopeContext` from the persisted registry and process environment:
@@ -214,12 +234,12 @@ Current evidence has these boundaries:
 
 | Evidence | Status |
 | --- | --- |
-| Deterministic module and storage tests | Source c805cc2: 738 tests passed with two optional skips, plus formatting, typing, JavaScript, build, and package checks. Its wheel passed Claude replay and instrumented adapter timing, Hermes entry-point discovery, and generated Codex MCP transport preflight. Native Codex calls were cancelled by the client, so full native lifecycle acceptance remains open. See [package and host verification](validation/2026-09-16/related-forget-verification/README.md) |
+| Deterministic module and storage tests | Frozen source 2494e31, including schema 8: 824 tests passed with four skips, plus formatting, typing, JavaScript, build, and package checks. Later embedding-role and conflict-collision changes are tracked separately. See [package verification](validation/2026-09-16/access-metadata-package-verification/README.md) |
 | Synthetic local service and SQLite restart flow | Observed for one provider-backed fact |
-| Full real-model ablation and held-out quality evaluation | Failed v2 observations preserved; repaired real-model lifecycle preflight passed four cases. Frozen b7 held-out mechanism phase completed: graph correctness passed, graph coverage failed with zero eligible cases, synthetic-state affective top-1 was 0.33 versus 0.00, and classifier fidelity passed 154/300 observations. Seven-profile lifecycle evaluation is running. See [mechanism results and limits](validation/2026-09-16/real-model-v3/mechanism-heldout/REVIEW.md) |
-| Installed Claude Code, Codex, and Hermes host smoke | Installed 20f Claude and Codex returned random canaries and captured both roles across restart using constant fixture vectors. Claude reported degraded transcript/identity coverage; Codex used generated TOML hooks. Actual WSL bridge and installed Hermes API observed; complete native lifecycle matrix and Desktop checks remain open |
+| Full real-model ablation and held-out quality evaluation | The older b7 queue stopped on a validation-trace serialization error; its negative results remain preserved. The repaired d94 queue completed development mechanisms and four lifecycle preflight runs; held-out mechanisms are running, followed by seven lifecycle profiles. All 15 development graph observations lacked a structural seed-to-target path. The queue uses its frozen unprefixed embedding contract. See [current progress](validation/2026-09-16/progress.md) and [older mechanism results](validation/2026-09-16/real-model-v3/mechanism-heldout/REVIEW.md) |
+| Installed Claude Code, Codex, and Hermes host smoke | Native capture and installed adapter checks have partial evidence. The latest d94 Codex lifecycle attempt passed transport preflight, then received a client cancellation at mnemos_store without a successful write; correction, forget, and native restart were not reached. Hermes provider loading and the WSL bridge were observed, but its full native model turn remains unproved. Complete native continuity and Codex Desktop checks remain open. See [native Codex attempt](validation/2026-09-16/native-codex-lifecycle-v4/README.md) |
 | Two-week pilot with external users or projects | NOT RUN |
-| 10,000-fact latency and growth acceptance | Frozen b7, real query embeddings with synthetic facts: recall 1,314.583 ms p95 fails the 500 ms gate; durable capture 57.410 ms p95 passes the 100 ms gate; database 324,862,864 bytes. Earlier failed and passing timings remain preserved |
+| 10,000-fact latency and growth acceptance | Frozen d94 with corrected instrumentation, real query embeddings and synthetic facts: recall 1,088.094 ms p95 fails the 500 ms gate; durable capture 64.279 ms p95 passes the 100 ms gate; database 324,862,864 bytes. Schema 8 still needs a separately bound performance comparison. Earlier timings remain preserved. See [performance evidence](validation/2026-09-16/performance-corrected-v4/README.md) |
 | Published release acceptance | NOT RUN |
 
 CLI, MCP, UI, backup, and reindex paths have isolated integration checks. Remaining acceptance work includes complete native-host continuity, held-out real-model quality, the failed recall latency gate, and the two-week pilot. Baseline remains the default until measured results justify a different choice.

@@ -13,7 +13,14 @@ from pathlib import Path
 from typing import Any
 
 from mnemos.modules.spreading import SpreadingActivation
-from mnemos.utils.embeddings import EmbeddingProvider, OllamaEmbeddingProvider
+from mnemos.runtime import embedding_task_contract
+from mnemos.utils.embeddings import (
+    EmbeddingProvider,
+    EmbeddingRole,
+    OllamaEmbeddingProvider,
+    PrefixEmbeddingProvider,
+    embed_batch_for_role,
+)
 from mnemos.utils.llm import OllamaProvider
 from mnemos.utils.storage import SQLiteStore
 
@@ -44,12 +51,23 @@ class CheckpointedEmbeddingProvider(EmbeddingProvider):
     """Bounded batches with a persistent, provenance-bound exact-text cache."""
 
     def __init__(
-        self, provider: EmbeddingProvider, path: Path, binding: str, *, batch_size: int = 16
+        self,
+        provider: EmbeddingProvider,
+        path: Path,
+        binding: str,
+        *,
+        batch_size: int = 16,
+        task_contract: dict[str, str] | None = None,
     ) -> None:
         self.provider = provider
         self.path = path
         self.binding = binding
         self.batch_size = batch_size
+        self.task_contract = task_contract
+        self._role_vectors: dict[str, dict[str, list[float]]] = {
+            "query": {},
+            "document": {},
+        }
         self.vectors: dict[str, list[float]] = {}
         if batch_size < 1:
             raise ValueError("batch_size must be positive")
@@ -57,8 +75,22 @@ class CheckpointedEmbeddingProvider(EmbeddingProvider):
             prior = json.loads(path.read_text(encoding="utf-8"))
             if prior.get("binding") != binding:
                 raise ValueError("Embedding checkpoint provenance mismatch")
+            if prior.get("task_contract") != task_contract:
+                raise ValueError("Embedding checkpoint task contract mismatch")
             self.vectors = prior["vectors"]
             self._validate(list(self.vectors.values()))
+            role_vectors = prior.get("role_vectors", {})
+            if role_vectors and not isinstance(role_vectors, dict):
+                raise ValueError("Embedding checkpoint role_vectors must be an object")
+            for role in self._role_vectors:
+                values = role_vectors.get(role, {}) if isinstance(role_vectors, dict) else {}
+                if not isinstance(values, dict):
+                    raise ValueError("Embedding checkpoint role vectors must be objects")
+                self._validate(list(values.values()))
+                self._role_vectors[role] = {
+                    str(text): list(map(float, vector)) for text, vector in values.items()
+                }
+            self._validate(self._all_vectors())
 
     @staticmethod
     def _validate(vectors: list[list[float]]) -> None:
@@ -71,24 +103,60 @@ class CheckpointedEmbeddingProvider(EmbeddingProvider):
 
     @property
     def dim(self) -> int:
-        return len(next(iter(self.vectors.values()))) if self.vectors else self.provider.dim
+        values = self._all_vectors()
+        return len(values[0]) if values else self.provider.dim
+
+    def _all_vectors(self) -> list[list[float]]:
+        return list(self.vectors.values()) + [
+            vector for values in self._role_vectors.values() for vector in values.values()
+        ]
 
     def embed(self, text: str) -> list[float]:
         return self.embed_batch([text])[0]
 
     def embed_batch(self, texts: list[str]) -> list[list[float]]:
-        missing = list(dict.fromkeys(text for text in texts if text not in self.vectors))
+        return self._embed_batch_role(texts, "symmetric")
+
+    def _embed_batch_role(self, texts: list[str], role: EmbeddingRole) -> list[list[float]]:
+        cache = self.vectors if role == "symmetric" else self._role_vectors[role]
+        missing = list(dict.fromkeys(text for text in texts if text not in cache))
         for start in range(0, len(missing), self.batch_size):
             batch = missing[start : start + self.batch_size]
-            vectors = self.provider.embed_batch(batch)
+            vectors = embed_batch_for_role(self.provider, batch, role=role)
             if len(vectors) != len(batch):
                 raise ValueError("Embedding provider returned the wrong number of vectors")
             self._validate(vectors)
-            if self.vectors and vectors and len(vectors[0]) != self.dim:
+            if self._all_vectors() and vectors and len(vectors[0]) != self.dim:
                 raise ValueError("Embedding dimensions changed between batches")
-            self.vectors.update(zip(batch, vectors))
-            _write_json(self.path, {"binding": self.binding, "vectors": self.vectors})
-        return [list(self.vectors[text]) for text in texts]
+            cache.update(zip(batch, vectors))
+            payload: dict[str, Any] = {
+                "binding": self.binding,
+                "vectors": self.vectors,
+            }
+            if self.task_contract is not None:
+                payload["task_contract"] = self.task_contract
+            if any(self._role_vectors.values()):
+                payload["role_vectors"] = self._role_vectors
+            _write_json(self.path, payload)
+        return [list(cache[text]) for text in texts]
+
+    def embed_query(self, text: str) -> list[float]:
+        return self._embed_batch_role([text], "query")[0]
+
+    def embed_document(self, text: str) -> list[float]:
+        return self._embed_batch_role([text], "document")[0]
+
+    def embed_symmetric(self, text: str) -> list[float]:
+        return self.embed(text)
+
+    def embed_batch_queries(self, texts: list[str]) -> list[list[float]]:
+        return self._embed_batch_role(texts, "query")
+
+    def embed_batch_documents(self, texts: list[str]) -> list[list[float]]:
+        return self._embed_batch_role(texts, "document")
+
+    def embed_batch_symmetric(self, texts: list[str]) -> list[list[float]]:
+        return self.embed_batch(texts)
 
 
 class RecordedOllamaProvider(OllamaProvider):
@@ -158,6 +226,9 @@ def run_mechanisms(
     repetitions: int = 3,
     prepare_only: bool = False,
     think: OllamaThink = None,
+    query_prefix: str = "",
+    document_prefix: str = "",
+    symmetric_prefix: str = "",
 ) -> dict[str, Any]:
     from .module_mechanism import (
         evaluate_dataset,
@@ -188,6 +259,13 @@ def run_mechanisms(
         "embedding_batch_size": 16,
         "normalization": "provider vectors unchanged; production cosine normalizes during scoring",
     }
+    task_contract = embedding_task_contract(
+        query_prefix=query_prefix,
+        document_prefix=document_prefix,
+        symmetric_prefix=symmetric_prefix,
+    )
+    if task_contract is not None:
+        options["embedding_task_contract"] = task_contract
     add_ollama_think(options, think)
     pins = {
         "schema_version": "module-mechanism-run-v1",
@@ -243,7 +321,15 @@ def run_mechanisms(
         ),
         work_dir / "embeddings.checkpoint.json",
         binding,
+        task_contract=task_contract,
     )
+    if task_contract is not None:
+        cache.provider = PrefixEmbeddingProvider(
+            cache.provider,
+            query_prefix=query_prefix,
+            document_prefix=document_prefix,
+            symmetric_prefix=symmetric_prefix,
+        )
     if not prepared.exists():
         temporary = work_dir / "vectors-in-progress.json"
         # An incomplete fixture is never accepted as a frozen input. Completed
@@ -330,6 +416,9 @@ def main() -> int:
     parser.add_argument("--repetitions", type=int, default=3)
     parser.add_argument("--prepare-only", action="store_true")
     parser.add_argument("--think", type=parse_ollama_think, default=None)
+    parser.add_argument("--query-prefix", default="")
+    parser.add_argument("--document-prefix", default="")
+    parser.add_argument("--symmetric-prefix", default="")
     args = parser.parse_args()
     result = run_mechanisms(
         dataset_path=args.dataset,
@@ -343,6 +432,9 @@ def main() -> int:
         repetitions=args.repetitions,
         prepare_only=args.prepare_only,
         think=args.think,
+        query_prefix=args.query_prefix,
+        document_prefix=args.document_prefix,
+        symmetric_prefix=args.symmetric_prefix,
     )
     print(json.dumps({"status": result["status"], "binding": result["binding"]}))
     return 0

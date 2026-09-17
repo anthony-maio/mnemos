@@ -432,7 +432,7 @@ class LocalMemoryService:
                 )
                 existing = (
                     self.engine.store.retrieve(
-                        await embed_text_async(self.engine.embedder, event.content),
+                        await embed_text_async(self.engine.embedder, event.content, role="query"),
                         top_k=5,
                         filter_fn=same_partition,
                     )
@@ -508,7 +508,7 @@ class LocalMemoryService:
                 "encoding_diagnostics": diagnostics,
                 "assertion_status": "conflict" if proposal.operation == "conflict" else "asserted",
             }
-            embedding = await embed_text_async(self.engine.embedder, safe.content)
+            embedding = await embed_text_async(self.engine.embedder, safe.content, role="document")
             if proposal.operation == "correct":
                 previous, _ = self.engine.mutable_rag._validate_proposal(proposal)
                 if previous is None or not scope_allows(previous.metadata, context, (scope,)):

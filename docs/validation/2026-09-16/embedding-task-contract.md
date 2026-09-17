@@ -40,4 +40,30 @@ would perform. Do not rewrite its inputs, checkpoints, labels, or reports.
    task contract, keeping graph capacity and gates unchanged. Record negative
    results. Any subsequent full evaluation needs new outputs and fingerprints.
 
-This follow-up is not implemented or quality-validated at this checkpoint.
+## Implementation checkpoint
+
+The working implementation now distinguishes query, document, and symmetric
+roles in the provider interface, async helpers, runtime, memory service,
+modules, reindexing, and the basic retrieval benchmark. Prefixes are explicit
+settings with empty defaults. Empty defaults preserve the existing persistent
+identity; any nonempty prefix adds an `explicit-prefix-v1` task contract.
+Changing that contract rejects the existing index identity until a new
+generation is built and activated.
+
+The provider foundation and initial runtime tests passed 19 checks. A subsequent
+79-test runtime integration run passed, including saved TOML to actual mocked
+Ollama request payloads, SQLite restart, identity mismatch rejection, atomic
+reindex activation, and symmetric surprisal and recall-support comparisons.
+Benchmark integration now preserves separate query/document vectors even for
+identical text. Role-specific caches validate the task contract and dimensions
+across roles and restart. Symmetric calls preserve the legacy flat cache.
+The mechanism, held-out lifecycle, lifecycle preflight, and performance
+launchers accept explicit prefix options and record the contract in their
+run configuration. Traces retain role labels and actual prefixed provider
+inputs; the existing frozen queue is unchanged.
+
+The combined role, lifecycle, and conflict-safety set passed 35 tests. The
+repository's strict mypy gate passed all 70 source files, and Black passed
+164 files. These are deterministic correctness checks, not a full package
+checkpoint for the new source. No prefixed real-model quality comparison has
+run.

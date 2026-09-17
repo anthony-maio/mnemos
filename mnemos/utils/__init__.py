@@ -6,6 +6,7 @@ from .embeddings import (
     EmbeddingProvider,
     OllamaEmbeddingProvider,
     OpenAIEmbeddingProvider,
+    PrefixEmbeddingProvider,
     SimpleEmbeddingProvider,
     cosine_distance,
     cosine_similarity,
@@ -32,6 +33,7 @@ __all__ = [
     "SimpleEmbeddingProvider",
     "OllamaEmbeddingProvider",
     "OpenAIEmbeddingProvider",
+    "PrefixEmbeddingProvider",
     "cosine_similarity",
     "cosine_distance",
     # LLM

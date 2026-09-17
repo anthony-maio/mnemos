@@ -275,7 +275,7 @@ class MutableRAG:
             return target, False
 
         updated = target.reconsolidate(safe.content)
-        updated.embedding = await embed_text_async(self._embedder, safe.content)
+        updated.embedding = await embed_text_async(self._embedder, safe.content, role="document")
         updated.canonical_key = compute_canonical_key(
             safe.content,
             str(updated.metadata.get("scope", "global")),

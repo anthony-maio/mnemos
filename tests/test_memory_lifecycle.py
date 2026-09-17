@@ -6,6 +6,7 @@ import pytest
 from mnemos.contracts import CaptureEvent
 from mnemos.engine import MnemosEngine
 from mnemos.memory_service import LocalMemoryService
+from mnemos.utils.embeddings import embed_text_async
 from mnemos.utils.storage import SQLiteStore
 from mnemos.types import MemoryChunk
 from mnemos.scopes import context_metadata
@@ -35,10 +36,10 @@ async def test_forget_wins_over_an_already_running_extraction(tmp_path, monkeypa
         )
         entered, proceed = asyncio.Event(), asyncio.Event()
 
-        async def delayed_embedding(embedder, content):
+        async def delayed_embedding(embedder, content, *, role="symmetric"):
             entered.set()
             await proceed.wait()
-            return embedder.embed(content)
+            return await embed_text_async(embedder, content, role=role)
 
         monkeypatch.setattr("mnemos.memory_service.embed_text_async", delayed_embedding)
         task = asyncio.create_task(memory.maintenance.run_once(force=True))

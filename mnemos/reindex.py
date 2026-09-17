@@ -70,7 +70,7 @@ async def build_generation(
                 ).fetchone()
             if existing == (chunk.version, fingerprint):
                 continue
-            vector = await embed_text_async(embedder, chunk.content)
+            vector = await embed_text_async(embedder, chunk.content, role="document")
             if not vector or not all(math.isfinite(value) for value in vector):
                 raise ValueError("Embedding provider returned an invalid vector")
             if dimension is not None and len(vector) != dimension:

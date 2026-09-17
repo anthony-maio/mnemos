@@ -216,8 +216,10 @@ class SurprisalGate:
         prediction = safe_prediction.content
 
         # Step 2: Embed both prediction and actual input
-        prediction_embedding = await embed_text_async(self._embedder, prediction)
-        actual_embedding = await embed_text_async(self._embedder, interaction.content)
+        prediction_embedding = await embed_text_async(self._embedder, prediction, role="symmetric")
+        actual_embedding = await embed_text_async(
+            self._embedder, interaction.content, role="symmetric"
+        )
 
         # Step 3: Cosine distance = semantic divergence = surprisal score
         return cosine_distance(prediction_embedding, actual_embedding), "measured", prediction, mode
@@ -319,7 +321,7 @@ class SurprisalGate:
             salience = self._salience_from_surprisal(surprisal)
 
         # High surprisal: encode as a memory chunk
-        embedding = await embed_text_async(self._embedder, interaction.content)
+        embedding = await embed_text_async(self._embedder, interaction.content, role="document")
         scope = str(interaction.metadata.get("scope", "project"))
         scope_id_raw = interaction.metadata.get("scope_id")
         scope_id = scope_id_raw if isinstance(scope_id_raw, str) else None

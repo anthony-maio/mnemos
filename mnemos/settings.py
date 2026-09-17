@@ -404,6 +404,9 @@ class EmbeddingSettings(BaseModel):
     model: str | None = None
     dim: int = 384
     revision: str | None = None
+    query_prefix: str = Field(default="", strict=True)
+    document_prefix: str = Field(default="", strict=True)
+    symmetric_prefix: str = Field(default="", strict=True)
 
 
 class StorageSettings(BaseModel):

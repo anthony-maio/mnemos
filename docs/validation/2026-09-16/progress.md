@@ -945,3 +945,52 @@ access fields provided by its caller, matching the previous API behavior.
 Full frozen-source verification is running. A separately bound write-latency
 comparison is prepared but not executed. The last accepted recall measurement
 is still the failing d94 result, and no live database has been migrated.
+
+## Embedding task-role integration
+
+The working runtime now distinguishes query, document, and symmetric embedding
+roles. Prefix settings default to empty strings, preserving the existing index
+identity. Nonempty settings add an explicit versioned task contract, and a
+contract change requires reindex generation and activation. Surprisal and sleep
+support comparisons use the symmetric role; stored facts use the document
+role; retrieval uses the query role.
+
+The provider foundation and initial integration checks passed 19 tests. A later
+runtime integration set passed 79 tests, and backup/reindex, documentation, and
+basic benchmark checks passed 30. Strict production mypy passed for 49 source
+files. These overlapping test sets are not an updated full-suite total.
+Benchmark role-aware caches, frozen vectors, traces, and launch options remain
+under integration. The real-model queue still uses frozen d94, without prefixes.
+No quality improvement or new full-package acceptance is claimed from these
+deterministic checks.
+
+## Verified access-metadata package checkpoint
+
+Frozen source `2494e31` passed 824 tests with four skips in 1,551.77 seconds.
+Black, compatible strict mypy, JavaScript syntax, build, and Twine passed.
+The archive preserves the executed runner, logs, test XML, source revision,
+and verified distribution hashes. Its ten indexed blobs were verified before
+commit. These checks ran while the graph diagnostic and real-model queue were
+active, so their duration is not a performance measurement.
+[Verification archive](access-metadata-package-verification/README.md).
+
+The checkpoint includes schema 8 and excludes the later embedding-role and
+conflict-collision work. A fresh installed-wheel lifecycle and the separately
+bound metadata-write timing comparison have not run for this revision.
+
+## Embedding integration review completed
+
+Benchmark preparation now keeps query and document vectors separate for the
+same text. Persistent caches bind the task contract, retain dimensions without
+loading the provider after restart, and reject dimension drift across roles.
+Role separation also applies to providers with native role methods and empty
+prefixes. Symmetric calls retain their legacy flat-cache representation.
+Launcher options, manifests, trace records, and performance provenance carry
+the new contract. The frozen real-model queue remains unchanged.
+
+Review caught and repaired a cache role-type annotation and an older in-flight
+forget test fixture that did not forward the new role keyword. The fixture
+still pauses embedding to exercise the same forget race. Thirty-five combined
+embedding, benchmark-role, lifecycle, and conflict-collision checks passed.
+Full repository Black passed 164 files, and compatible strict mypy passed all
+70 source files. Full package verification for this new source is next.

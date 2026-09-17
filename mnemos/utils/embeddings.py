@@ -25,7 +25,7 @@ import threading
 from abc import ABC, abstractmethod
 from collections import Counter
 from collections.abc import Callable
-from typing import Any
+from typing import Any, Literal, cast
 
 import httpx
 import numpy as np
@@ -38,6 +38,9 @@ from .reliability import (
     call_with_retry,
     is_retryable_http_exception,
 )
+
+EmbeddingRole = Literal["query", "document", "symmetric"]
+_EMBEDDING_ROLES = frozenset({"query", "document", "symmetric"})
 
 
 class EmbeddingProvider(ABC):
@@ -83,6 +86,30 @@ class EmbeddingProvider(ABC):
         """
         ...
 
+    def embed_query(self, text: str) -> list[float]:
+        """Embed a retrieval query, falling back to the legacy symmetric call."""
+        return self.embed(text)
+
+    def embed_document(self, text: str) -> list[float]:
+        """Embed durable document content, falling back to the legacy call."""
+        return self.embed(text)
+
+    def embed_symmetric(self, text: str) -> list[float]:
+        """Embed text for a same-space comparison."""
+        return self.embed(text)
+
+    def embed_batch_queries(self, texts: list[str]) -> list[list[float]]:
+        """Batch query embedding with a legacy-provider fallback."""
+        return self.embed_batch(texts)
+
+    def embed_batch_documents(self, texts: list[str]) -> list[list[float]]:
+        """Batch document embedding with a legacy-provider fallback."""
+        return self.embed_batch(texts)
+
+    def embed_batch_symmetric(self, texts: list[str]) -> list[list[float]]:
+        """Batch same-space embedding with a legacy-provider fallback."""
+        return self.embed_batch(texts)
+
     @property
     @abstractmethod
     def dim(self) -> int:
@@ -99,6 +126,74 @@ class EmbeddingProvider(ABC):
         thread-hop overhead on hot paths.
         """
         return True
+
+
+class PrefixEmbeddingProvider(EmbeddingProvider):
+    """Add explicit role prefixes while preserving a legacy provider API.
+
+    The wrapped provider receives the prefixed text through its existing
+    ``embed`` and ``embed_batch`` methods.  Prefixes are intentionally applied
+    here, exactly once, so providers that do not know about task roles remain
+    usable without changes.
+    """
+
+    def __init__(
+        self,
+        inner: EmbeddingProvider,
+        *,
+        query_prefix: str = "",
+        document_prefix: str = "",
+        symmetric_prefix: str = "",
+    ) -> None:
+        self.inner = inner
+        self.query_prefix = query_prefix
+        self.document_prefix = document_prefix
+        self.symmetric_prefix = symmetric_prefix
+
+    @property
+    def dim(self) -> int:
+        return self.inner.dim
+
+    @property
+    def should_offload_in_async(self) -> bool:
+        return self.inner.should_offload_in_async
+
+    def _prefix(self, role: EmbeddingRole) -> str:
+        return {
+            "query": self.query_prefix,
+            "document": self.document_prefix,
+            "symmetric": self.symmetric_prefix,
+        }[role]
+
+    def _with_prefix(self, role: EmbeddingRole, text: str) -> str:
+        return self._prefix(role) + text
+
+    def _batch_with_prefix(self, role: EmbeddingRole, texts: list[str]) -> list[str]:
+        return [self._with_prefix(role, text) for text in texts]
+
+    def embed(self, text: str) -> list[float]:
+        return self.embed_symmetric(text)
+
+    def embed_batch(self, texts: list[str]) -> list[list[float]]:
+        return self.embed_batch_symmetric(texts)
+
+    def embed_query(self, text: str) -> list[float]:
+        return self.inner.embed(self._with_prefix("query", text))
+
+    def embed_document(self, text: str) -> list[float]:
+        return self.inner.embed(self._with_prefix("document", text))
+
+    def embed_symmetric(self, text: str) -> list[float]:
+        return self.inner.embed(self._with_prefix("symmetric", text))
+
+    def embed_batch_queries(self, texts: list[str]) -> list[list[float]]:
+        return self.inner.embed_batch(self._batch_with_prefix("query", texts))
+
+    def embed_batch_documents(self, texts: list[str]) -> list[list[float]]:
+        return self.inner.embed_batch(self._batch_with_prefix("document", texts))
+
+    def embed_batch_symmetric(self, texts: list[str]) -> list[list[float]]:
+        return self.inner.embed_batch(self._batch_with_prefix("symmetric", texts))
 
 
 def _tokenize(text: str) -> list[str]:
@@ -673,18 +768,76 @@ def _http_post_json(
     return raw
 
 
-async def embed_text_async(embedder: EmbeddingProvider, text: str) -> list[float]:
+def _validate_embedding_role(role: str) -> EmbeddingRole:
+    if role not in _EMBEDDING_ROLES:
+        raise ValueError(f"invalid embedding role {role!r}; expected query, document, or symmetric")
+    return role  # type: ignore[return-value]
+
+
+def _role_method(embedder: Any, role: str, *, batch: bool) -> Callable[..., Any]:
+    validated = _validate_embedding_role(role)
+    batch_names = {
+        "query": "embed_batch_queries",
+        "document": "embed_batch_documents",
+        "symmetric": "embed_batch_symmetric",
+    }
+    method_name = batch_names[validated] if batch else f"embed_{validated}"
+    method = getattr(embedder, method_name, None)
+    legacy_name = "embed_batch" if batch else "embed"
+    legacy = getattr(embedder, legacy_name, None)
+    # Keep the default symmetric helper byte-for-byte compatible with the
+    # legacy method for existing providers and observers.  Providers that
+    # explicitly override the symmetric role still receive that dispatch.
+    base_method = (
+        EmbeddingProvider.embed_batch_symmetric if batch else EmbeddingProvider.embed_symmetric
+    )
+    explicit_symmetric = (
+        validated == "symmetric"
+        and callable(method)
+        and (
+            not isinstance(embedder, EmbeddingProvider)
+            or getattr(type(embedder), method_name) is not base_method
+        )
+    )
+    if callable(method) and (validated != "symmetric" or explicit_symmetric):
+        return cast(Callable[..., Any], method)
+    if callable(legacy):
+        return cast(Callable[..., Any], legacy)
+    raise TypeError(f"embedding provider has no callable {method_name} or {legacy_name}")
+
+
+def embed_text_for_role(
+    embedder: Any, text: str, *, role: EmbeddingRole = "symmetric"
+) -> list[float]:
+    """Synchronously embed text using an explicit role when supported."""
+    return cast(list[float], _role_method(embedder, role, batch=False)(text))
+
+
+def embed_batch_for_role(
+    embedder: Any, texts: list[str], *, role: EmbeddingRole = "symmetric"
+) -> list[list[float]]:
+    """Synchronously batch-embed text using an explicit role when supported."""
+    return cast(list[list[float]], _role_method(embedder, role, batch=True)(texts))
+
+
+async def embed_text_async(
+    embedder: Any, text: str, *, role: EmbeddingRole = "symmetric"
+) -> list[float]:
     """Offload synchronous embedding providers from the async event loop."""
-    if not embedder.should_offload_in_async:
-        return embedder.embed(text)
-    return await asyncio.to_thread(embedder.embed, text)
+    method = _role_method(embedder, role, batch=False)
+    if not bool(getattr(embedder, "should_offload_in_async", True)):
+        return cast(list[float], method(text))
+    return cast(list[float], await asyncio.to_thread(method, text))
 
 
-async def embed_batch_async(embedder: EmbeddingProvider, texts: list[str]) -> list[list[float]]:
+async def embed_batch_async(
+    embedder: Any, texts: list[str], *, role: EmbeddingRole = "symmetric"
+) -> list[list[float]]:
     """Offload synchronous batch embedding work from the async event loop."""
-    if not embedder.should_offload_in_async:
-        return embedder.embed_batch(texts)
-    return await asyncio.to_thread(embedder.embed_batch, texts)
+    method = _role_method(embedder, role, batch=True)
+    if not bool(getattr(embedder, "should_offload_in_async", True)):
+        return cast(list[list[float]], method(texts))
+    return cast(list[list[float]], await asyncio.to_thread(method, texts))
 
 
 def cosine_similarity(a: list[float], b: list[float]) -> float:

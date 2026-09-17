@@ -309,7 +309,7 @@ class SleepDaemon:
         if not fact.strip() or not episode_texts:
             return 0, 0.0
 
-        embeddings = await embed_batch_async(embedder, [fact, *episode_texts])
+        embeddings = await embed_batch_async(embedder, [fact, *episode_texts], role="symmetric")
         fact_embedding = embeddings[0]
         similarities = [
             cosine_similarity(fact_embedding, episode_embedding)
@@ -489,7 +489,7 @@ class SleepDaemon:
                 semantic_chunks.append(
                     MemoryChunk(
                         content=safe_fact,
-                        embedding=await embed_text_async(embedder, safe_fact),
+                        embedding=await embed_text_async(embedder, safe_fact, role="document"),
                         metadata=metadata,
                         salience=0.7,  # Consolidated facts have high salience
                         canonical_key=None,

@@ -28,6 +28,7 @@ from .utils.embeddings import (
     FastembedProvider,
     OllamaEmbeddingProvider,
     OpenAIEmbeddingProvider,
+    PrefixEmbeddingProvider,
     SimpleEmbeddingProvider,
 )
 from .utils.llm import (
@@ -140,6 +141,36 @@ def build_store_from_settings(settings: AppSettings) -> MemoryStore:
 
 
 def build_embedder_from_settings(settings: AppSettings) -> EmbeddingProvider:
+    embedder = _build_unprefixed_embedder_from_settings(settings)
+    prefixes = _embedding_prefixes(settings)
+    if any(prefixes.values()):
+        return PrefixEmbeddingProvider(embedder, **prefixes)
+    return embedder
+
+
+def _embedding_prefixes(settings: AppSettings) -> dict[str, str]:
+    return {
+        "query_prefix": settings.embedding.query_prefix,
+        "document_prefix": settings.embedding.document_prefix,
+        "symmetric_prefix": settings.embedding.symmetric_prefix,
+    }
+
+
+def embedding_task_contract(
+    *, query_prefix: str = "", document_prefix: str = "", symmetric_prefix: str = ""
+) -> dict[str, str] | None:
+    """Return the explicit task contract, omitting unchanged legacy behavior."""
+    prefixes = {
+        "query_prefix": query_prefix,
+        "document_prefix": document_prefix,
+        "symmetric_prefix": symmetric_prefix,
+    }
+    if not any(prefixes.values()):
+        return None
+    return {"version": "explicit-prefix-v1", **prefixes}
+
+
+def _build_unprefixed_embedder_from_settings(settings: AppSettings) -> EmbeddingProvider:
     provider = settings.embedding.provider or "fastembed"
 
     if provider == "fastembed":
@@ -248,13 +279,17 @@ def _mock_provider_is_explicit(
 
 
 def embedding_identity(settings: AppSettings) -> dict[str, Any]:
-    return {
+    identity: dict[str, Any] = {
         "provider": settings.embedding.provider,
         "model": settings.embedding.model,
         "revision": settings.embedding.revision,
         "dimension": settings.embedding.dim if settings.embedding.provider == "simple" else None,
         "normalization": "provider_default",
     }
+    contract = embedding_task_contract(**_embedding_prefixes(settings))
+    if contract is not None:
+        identity["task_contract"] = contract
+    return identity
 
 
 def _configured_store(settings: AppSettings) -> MemoryStore:

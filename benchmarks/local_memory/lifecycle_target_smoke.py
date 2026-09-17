@@ -18,6 +18,7 @@ from pathlib import Path
 from typing import Any, Callable, Mapping, Sequence
 from uuid import uuid4
 
+from mnemos.runtime import embedding_task_contract
 from mnemos.scopes import ProjectIdentity, ScopeRegistry
 
 from .contracts import FactRecord, QueryRecord, SessionScenario, SourceEvent
@@ -370,6 +371,9 @@ def run_lifecycle_target_smoke(
         [str, tuple[str, ...]], dict[str, dict[str, Any]]
     ] = _live_model_metadata,
     think: OllamaThink = None,
+    query_prefix: str = "",
+    document_prefix: str = "",
+    symmetric_prefix: str = "",
 ) -> dict[str, Any]:
     scenarios = load_target_scenarios(dataset_path)
     requested = {str(name) for name in profile_names}
@@ -393,6 +397,13 @@ def run_lifecycle_target_smoke(
         "max_context_tokens": 1200,
     }
     add_ollama_think(options, think)
+    task_contract = embedding_task_contract(
+        query_prefix=query_prefix,
+        document_prefix=document_prefix,
+        symmetric_prefix=symmetric_prefix,
+    )
+    if task_contract is not None:
+        options["embedding_task_contract"] = task_contract
     options_sha256 = ollama_options_sha256(options)
     attempt_id = uuid4().hex
     attempt_root = work_dir / "attempts" / attempt_id
@@ -503,6 +514,9 @@ def run_lifecycle_target_smoke(
                     "timeout": options["timeout_seconds"],
                     "temperature": options["temperature"],
                     "max_tokens": options["max_tokens"],
+                    "query_prefix": query_prefix,
+                    "document_prefix": document_prefix,
+                    "symmetric_prefix": symmetric_prefix,
                 }
                 if think is not None:
                     factory_options["think"] = think
@@ -604,6 +618,9 @@ def main(argv: Sequence[str] | None = None) -> int:
     parser.add_argument("--work-dir", type=Path, required=True)
     parser.add_argument("--profile", action="append", choices=("baseline", "full"))
     parser.add_argument("--think", type=parse_ollama_think, default=None)
+    parser.add_argument("--query-prefix", default="")
+    parser.add_argument("--document-prefix", default="")
+    parser.add_argument("--symmetric-prefix", default="")
     args = parser.parse_args(argv)
     report = run_lifecycle_target_smoke(
         dataset_path=args.dataset,
@@ -614,6 +631,9 @@ def main(argv: Sequence[str] | None = None) -> int:
         embedding_model=args.embedding_model,
         profile_names=tuple(args.profile or ("baseline", "full")),
         think=args.think,
+        query_prefix=args.query_prefix,
+        document_prefix=args.document_prefix,
+        symmetric_prefix=args.symmetric_prefix,
     )
     print(
         json.dumps(

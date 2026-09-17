@@ -29,7 +29,7 @@ from mnemos.retrieval import RetrievalConfig, score_candidate
 from mnemos.scopes import ProjectIdentity, ScopeContext, ScopeRegistry, WorkspaceIdentity
 from mnemos.types import CognitiveState, Interaction, MemoryChunk
 from mnemos.jobs import FactEvidence
-from mnemos.utils.embeddings import EmbeddingProvider, cosine_similarity
+from mnemos.utils.embeddings import EmbeddingProvider, cosine_similarity, embed_batch_for_role
 from mnemos.utils.llm import LLMProvider
 from mnemos.utils.storage import InMemoryStore, SQLiteStore
 from .scoring import paired_bootstrap_interval, wilson_interval
@@ -455,43 +455,55 @@ def prepare_frozen_embeddings(
     root = json.loads(source.read_text(encoding="utf-8"))
     if not isinstance(root, dict):
         raise ValueError("embedding preparation requires the object fixture shape")
-    texts: list[str] = []
+    document_texts: list[str] = []
+    query_texts: list[str] = []
 
     def add_fact(fact: dict[str, Any]) -> None:
         if "embedding" not in fact:
-            texts.append(_require_text(fact.get("content"), "fact content"))
+            document_texts.append(_require_text(fact.get("content"), "fact content"))
 
     for case in root.get("graph_cases", []):
         for fact in [*case.get("facts", []), *case.get("scope_controls", [])]:
             add_fact(fact)
         query = case.get("query")
         if isinstance(query, str):
-            texts.append(query)
+            query_texts.append(query)
         elif isinstance(query, dict) and "embedding" not in query:
-            texts.append(_require_text(query.get("text", query.get("query")), "graph query"))
+            query_texts.append(_require_text(query.get("text", query.get("query")), "graph query"))
     for pair in root.get("affective_pairs", []):
         for fact in pair.get("facts", pair.get("candidates", [])):
             add_fact(fact)
         query = pair.get("semantic_query", pair.get("query"))
         if isinstance(query, str):
-            texts.append(query)
+            query_texts.append(query)
         elif isinstance(query, dict) and "embedding" not in query:
-            texts.append(_require_text(query.get("text", query.get("query")), "semantic query"))
-    unique_texts = list(dict.fromkeys(texts))
-    vectors = dict(zip(unique_texts, provider.embed_batch(unique_texts)))
+            query_texts.append(
+                _require_text(query.get("text", query.get("query")), "semantic query")
+            )
+    unique_documents = list(dict.fromkeys(document_texts))
+    unique_queries = list(dict.fromkeys(query_texts))
+    document_vectors = dict(
+        zip(
+            unique_documents,
+            embed_batch_for_role(provider, unique_documents, role="document"),
+        )
+    )
+    query_vectors = dict(
+        zip(unique_queries, embed_batch_for_role(provider, unique_queries, role="query"))
+    )
 
     def fill_fact(fact: dict[str, Any]) -> None:
         if "embedding" not in fact:
-            fact["embedding"] = vectors[_require_text(fact.get("content"), "fact content")]
+            fact["embedding"] = document_vectors[_require_text(fact.get("content"), "fact content")]
 
     for case in root.get("graph_cases", []):
         for fact in [*case.get("facts", []), *case.get("scope_controls", [])]:
             fill_fact(fact)
         query = case.get("query")
         if isinstance(query, str):
-            case["query"] = {"text": query, "embedding": vectors[query]}
+            case["query"] = {"text": query, "embedding": query_vectors[query]}
         elif isinstance(query, dict) and "embedding" not in query:
-            query["embedding"] = vectors[
+            query["embedding"] = query_vectors[
                 _require_text(query.get("text", query.get("query")), "graph query")
             ]
     for pair in root.get("affective_pairs", []):
@@ -499,9 +511,9 @@ def prepare_frozen_embeddings(
             fill_fact(fact)
         query = pair.get("semantic_query", pair.get("query"))
         if isinstance(query, str):
-            pair["semantic_query"] = {"text": query, "embedding": vectors[query]}
+            pair["semantic_query"] = {"text": query, "embedding": query_vectors[query]}
         elif isinstance(query, dict) and "embedding" not in query:
-            query["embedding"] = vectors[
+            query["embedding"] = query_vectors[
                 _require_text(query.get("text", query.get("query")), "semantic query")
             ]
     destination.parent.mkdir(parents=True, exist_ok=True)
@@ -510,17 +522,58 @@ def prepare_frozen_embeddings(
 
 
 class _FrozenEmbedder(EmbeddingProvider):
-    def __init__(self, vectors: Mapping[str, Sequence[float]]) -> None:
+    def __init__(
+        self,
+        vectors: Mapping[str, Sequence[float]],
+        *,
+        query_vectors: Mapping[str, Sequence[float]] | None = None,
+        document_vectors: Mapping[str, Sequence[float]] | None = None,
+    ) -> None:
         self.vectors = {str(key): list(map(float, value)) for key, value in vectors.items()}
-        self._dim = len(next(iter(self.vectors.values()))) if self.vectors else 1
+        self.query_vectors = {
+            str(key): list(map(float, value)) for key, value in (query_vectors or {}).items()
+        }
+        self.document_vectors = {
+            str(key): list(map(float, value)) for key, value in (document_vectors or {}).items()
+        }
+        self._roleful = bool(self.query_vectors or self.document_vectors)
+        all_vectors = {**self.vectors, **self.query_vectors, **self.document_vectors}
+        self._dim = len(next(iter(all_vectors.values()))) if all_vectors else 1
 
     def embed(self, text: str) -> list[float]:
-        if text not in self.vectors:
+        vector = self.vectors.get(text)
+        if vector is None:
             raise ValueError(f"query embedding missing from frozen fixture: {text!r}")
-        return list(self.vectors[text])
+        return list(vector)
 
     def embed_batch(self, texts: list[str]) -> list[list[float]]:
         return [self.embed(text) for text in texts]
+
+    def embed_query(self, text: str) -> list[float]:
+        vector = self.query_vectors.get(text) or self.vectors.get(text)
+        if vector is None:
+            raise ValueError(f"query embedding missing from frozen fixture: {text!r}")
+        return list(vector)
+
+    def embed_document(self, text: str) -> list[float]:
+        vector = self.document_vectors.get(text) or self.vectors.get(text)
+        if vector is None:
+            raise ValueError(f"document embedding missing from frozen fixture: {text!r}")
+        return list(vector)
+
+    def embed_symmetric(self, text: str) -> list[float]:
+        if self._roleful and text not in self.vectors:
+            raise ValueError(f"symmetric embedding missing from frozen fixture: {text!r}")
+        return self.embed(text)
+
+    def embed_batch_queries(self, texts: list[str]) -> list[list[float]]:
+        return [self.embed_query(text) for text in texts]
+
+    def embed_batch_documents(self, texts: list[str]) -> list[list[float]]:
+        return [self.embed_document(text) for text in texts]
+
+    def embed_batch_symmetric(self, texts: list[str]) -> list[list[float]]:
+        return self.embed_batch(texts)
 
     @property
     def dim(self) -> int:
@@ -628,9 +681,14 @@ def _engine_for(
     materialized = list(facts)
     if any(fact.embedding is None for fact in materialized):
         raise ValueError("evaluation requires frozen embeddings for every fact")
-    vectors = {fact.content: fact.embedding for fact in materialized if fact.embedding is not None}
-    vectors[query_text] = query_embedding
-    embedder = _FrozenEmbedder(vectors)
+    document_vectors = {
+        fact.content: fact.embedding for fact in materialized if fact.embedding is not None
+    }
+    embedder = _FrozenEmbedder(
+        document_vectors,
+        query_vectors={query_text: query_embedding},
+        document_vectors=document_vectors,
+    )
     config = MnemosConfig(
         modules=ModuleConfig(affective=affective, spreading=graph),
         retrieval=RetrievalConfig(

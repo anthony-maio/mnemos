@@ -26,7 +26,8 @@ from .harness import ExperimentProfile, RunObservation
 from mnemos.retrieval import score_candidate
 from mnemos.scopes import ScopeContext, scope_allows
 from mnemos.types import Interaction, MemoryChunk
-from mnemos.utils.embeddings import EmbeddingProvider
+from mnemos.runtime import embedding_task_contract
+from mnemos.utils.embeddings import EmbeddingProvider, PrefixEmbeddingProvider
 from mnemos.utils.embeddings import embed_text_async
 from mnemos.utils.llm import LLMProvider, _validate_ollama_think
 
@@ -734,7 +735,9 @@ class OllamaEvaluatorAdapter:
         for pair in session.state_pairs:
             pair_context_data = self._target_context(context, pair)
             pair_context = ScopeContext.model_validate(pair_context_data)
-            query_embedding = _run_awaitable(embed_text_async(embedder, pair.semantic_query))
+            query_embedding = _run_awaitable(
+                embed_text_async(embedder, pair.semantic_query, role="query")
+            )
 
             def permitted(chunk: MemoryChunk) -> bool:
                 return scope_allows(
@@ -1613,6 +1616,9 @@ def make_ollama_service_factory(
     temperature: float = 0.0,
     max_tokens: int = 512,
     think: OllamaThink = None,
+    query_prefix: str = "",
+    document_prefix: str = "",
+    symmetric_prefix: str = "",
 ) -> ServiceFactory:
     """Build a profile-aware Ollama service factory over one SQLite file.
 
@@ -1622,6 +1628,11 @@ def make_ollama_service_factory(
     """
 
     selected_think = _validate_ollama_think(think)
+    task_contract = embedding_task_contract(
+        query_prefix=query_prefix,
+        document_prefix=document_prefix,
+        symmetric_prefix=symmetric_prefix,
+    )
     traces: dict[tuple[str, str], dict[str, Any]] = {}
 
     def factory(profile: ExperimentProfile, run_key: str | None = None) -> Any:
@@ -1681,6 +1692,8 @@ def make_ollama_service_factory(
                 "response_metadata": [],
             }
             add_ollama_think(trace["config"], selected_think)
+            if task_contract is not None:
+                trace["config"]["embedding_task_contract"] = task_contract
             traces[trace_key] = trace
         trace["service_instances"] = int(trace.get("service_instances", 0)) + 1
 
@@ -1726,13 +1739,21 @@ def make_ollama_service_factory(
             ),
             trace,
         )
+        base_embedder: Any = OllamaEmbeddingProvider(
+            model=embedding_model,
+            base_url=base_url,
+            timeout=timeout,
+            response_observer=observe_embedding,
+        )
+        if task_contract is not None:
+            base_embedder = PrefixEmbeddingProvider(
+                base_embedder,
+                query_prefix=query_prefix,
+                document_prefix=document_prefix,
+                symmetric_prefix=symmetric_prefix,
+            )
         embedder = _TracingEmbedder(
-            OllamaEmbeddingProvider(
-                model=embedding_model,
-                base_url=base_url,
-                timeout=timeout,
-                response_observer=observe_embedding,
-            ),
+            base_embedder,
             trace,
         )
         store_path = Path(db_path)
@@ -1844,11 +1865,16 @@ class _TracingEmbedder(EmbeddingProvider):
         self._trace = trace
 
     def embed(self, text: str) -> list[float]:
+        return self._embed_role(text, "symmetric")
+
+    def _embed_role(self, text: str, role: str) -> list[float]:
         started = time.perf_counter()
-        result = cast(list[float], self._provider.embed(text))
+        method = getattr(self._provider, f"embed_{role}", self._provider.embed)
+        result = cast(list[float], method(text))
         self._trace["embed_calls"].append(
             {
                 "latency_ms": (time.perf_counter() - started) * 1000,
+                "role": role,
                 "text_chars": len(text),
                 "vector_dimensions": len(result),
                 "token_usage": _latest_token_usage(self._trace),
@@ -1857,11 +1883,21 @@ class _TracingEmbedder(EmbeddingProvider):
         return result
 
     def embed_batch(self, texts: list[str]) -> list[list[float]]:
+        return self._embed_batch_role(texts, "symmetric")
+
+    def _embed_batch_role(self, texts: list[str], role: str) -> list[list[float]]:
         started = time.perf_counter()
-        result = cast(list[list[float]], self._provider.embed_batch(texts))
+        method_name = {
+            "query": "embed_batch_queries",
+            "document": "embed_batch_documents",
+            "symmetric": "embed_batch_symmetric",
+        }[role]
+        method = getattr(self._provider, method_name, self._provider.embed_batch)
+        result = cast(list[list[float]], method(texts))
         self._trace["embed_calls"].append(
             {
                 "latency_ms": (time.perf_counter() - started) * 1000,
+                "role": role,
                 "text_count": len(texts),
                 "text_chars": sum(len(text) for text in texts),
                 "vector_dimensions": [len(row) for row in result],
@@ -1869,6 +1905,24 @@ class _TracingEmbedder(EmbeddingProvider):
             }
         )
         return result
+
+    def embed_query(self, text: str) -> list[float]:
+        return self._embed_role(text, "query")
+
+    def embed_document(self, text: str) -> list[float]:
+        return self._embed_role(text, "document")
+
+    def embed_symmetric(self, text: str) -> list[float]:
+        return self._embed_role(text, "symmetric")
+
+    def embed_batch_queries(self, texts: list[str]) -> list[list[float]]:
+        return self._embed_batch_role(texts, "query")
+
+    def embed_batch_documents(self, texts: list[str]) -> list[list[float]]:
+        return self._embed_batch_role(texts, "document")
+
+    def embed_batch_symmetric(self, texts: list[str]) -> list[list[float]]:
+        return self._embed_batch_role(texts, "symmetric")
 
     @property
     def dim(self) -> int:

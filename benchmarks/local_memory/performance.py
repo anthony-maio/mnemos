@@ -22,15 +22,20 @@ import tempfile
 import time
 from datetime import datetime, timezone
 from pathlib import Path
-from typing import Any
+from typing import Any, cast
 
 import httpx
 
 from mnemos.config import MnemosConfig, ModuleConfig, SurprisalConfig
 from mnemos.engine import MnemosEngine
 from mnemos.scopes import ScopeContext, ScopeRegistry
+from mnemos.runtime import embedding_task_contract
 from mnemos.types import MemoryChunk
-from mnemos.utils.embeddings import OllamaEmbeddingProvider, SimpleEmbeddingProvider
+from mnemos.utils.embeddings import (
+    OllamaEmbeddingProvider,
+    PrefixEmbeddingProvider,
+    SimpleEmbeddingProvider,
+)
 from mnemos.utils.storage import SQLiteStore
 
 DEFAULT_ENDPOINT = "http://192.168.86.35:11434"
@@ -47,6 +52,8 @@ SOURCE_FILES = (
     "mnemos/service.py",
     "mnemos/memory_service.py",
     "mnemos/utils/embeddings.py",
+    "mnemos/runtime.py",
+    "mnemos/settings.py",
     "benchmarks/local_memory/performance.py",
 )
 
@@ -90,32 +97,61 @@ QUERY_TEXTS = (
 class TimedEmbeddingProvider:
     """Record provider time while retaining the last vector for SQL timing."""
 
-    def __init__(self, inner: OllamaEmbeddingProvider) -> None:
+    def __init__(self, inner: Any) -> None:
         self.inner = inner
         self.last_ms = 0.0
         self.last_vector: list[float] = []
 
     @property
     def dim(self) -> int:
-        return self.inner.dim
+        return cast(int, self.inner.dim)
 
     @property
     def should_offload_in_async(self) -> bool:
         return True
 
     def embed(self, text: str) -> list[float]:
+        return self._embed_role(text, "symmetric")
+
+    def _embed_role(self, text: str, role: str) -> list[float]:
         started = time.perf_counter()
-        vector = self.inner.embed(text)
+        vector = cast(list[float], getattr(self.inner, f"embed_{role}", self.inner.embed)(text))
         self.last_ms = (time.perf_counter() - started) * 1000
         self.last_vector = vector
         return vector
 
     def embed_batch(self, texts: list[str]) -> list[list[float]]:
+        return self._embed_batch_role(texts, "symmetric")
+
+    def _embed_batch_role(self, texts: list[str], role: str) -> list[list[float]]:
         started = time.perf_counter()
-        vectors = self.inner.embed_batch(texts)
+        name = {
+            "query": "embed_batch_queries",
+            "document": "embed_batch_documents",
+            "symmetric": "embed_batch_symmetric",
+        }[role]
+        vectors = cast(list[list[float]], getattr(self.inner, name, self.inner.embed_batch)(texts))
         self.last_ms = (time.perf_counter() - started) * 1000
         self.last_vector = vectors[-1] if vectors else []
         return vectors
+
+    def embed_query(self, text: str) -> list[float]:
+        return self._embed_role(text, "query")
+
+    def embed_document(self, text: str) -> list[float]:
+        return self._embed_role(text, "document")
+
+    def embed_symmetric(self, text: str) -> list[float]:
+        return self._embed_role(text, "symmetric")
+
+    def embed_batch_queries(self, texts: list[str]) -> list[list[float]]:
+        return self._embed_batch_role(texts, "query")
+
+    def embed_batch_documents(self, texts: list[str]) -> list[list[float]]:
+        return self._embed_batch_role(texts, "document")
+
+    def embed_batch_symmetric(self, texts: list[str]) -> list[list[float]]:
+        return self._embed_batch_role(texts, "symmetric")
 
 
 class _StoreCallTrace:
@@ -404,7 +440,14 @@ def _load_facts(store: SQLiteStore, base_vector: list[float], project_id: str) -
 
 
 def measure_retrieval(
-    root: Path, *, endpoint: str, embedding_model: str, cognition_model: str
+    root: Path,
+    *,
+    endpoint: str,
+    embedding_model: str,
+    cognition_model: str,
+    query_prefix: str = "",
+    document_prefix: str = "",
+    symmetric_prefix: str = "",
 ) -> dict[str, Any]:
     repo = root / "project"
     repo.mkdir()
@@ -419,9 +462,21 @@ def measure_retrieval(
         session_id="performance-session",
         host="manual",
     )
-    embedder = OllamaEmbeddingProvider(model=embedding_model, base_url=endpoint, timeout=60.0)
+    embedder: Any = OllamaEmbeddingProvider(model=embedding_model, base_url=endpoint, timeout=60.0)
     observed_started = time.perf_counter()
-    observed = embedder.embed("Observed seed vector for synthetic load construction.")
+    task_contract = embedding_task_contract(
+        query_prefix=query_prefix,
+        document_prefix=document_prefix,
+        symmetric_prefix=symmetric_prefix,
+    )
+    if task_contract is not None:
+        embedder = PrefixEmbeddingProvider(
+            embedder,
+            query_prefix=query_prefix,
+            document_prefix=document_prefix,
+            symmetric_prefix=symmetric_prefix,
+        )
+    observed = embedder.embed_document("Observed seed vector for synthetic load construction.")
     observed_ms = (time.perf_counter() - observed_started) * 1000
     if len(observed) != 768:
         raise ValueError(f"expected 768-dimensional embedding, received {len(observed)}")
@@ -494,6 +549,8 @@ def measure_retrieval(
         "embedding_dimension": len(observed),
         "load_fixture": "synthetic vectors derived from one observed Ollama embedding; semantic quality NOT RUN",
         "observed_seed_embedding_ms": round(observed_ms, 3),
+        "observed_seed_embedding_role": "document",
+        **({"embedding_task_contract": task_contract} if task_contract is not None else {}),
         "load_insert_ms": round(insert_ms, 3),
         "bytes_after_load": bytes_after_load,
         "query_count": len(latencies),
@@ -679,10 +736,22 @@ def asyncio_run(awaitable: Any) -> Any:
 
 
 def run(
-    *, output: Path, endpoint: str, embedding_model: str, cognition_model: str
+    *,
+    output: Path,
+    endpoint: str,
+    embedding_model: str,
+    cognition_model: str,
+    query_prefix: str = "",
+    document_prefix: str = "",
+    symmetric_prefix: str = "",
 ) -> dict[str, Any]:
     started = time.perf_counter()
     started_at = datetime.now(timezone.utc)
+    task_contract = embedding_task_contract(
+        query_prefix=query_prefix,
+        document_prefix=document_prefix,
+        symmetric_prefix=symmetric_prefix,
+    )
     source_root = Path(__file__).resolve().parents[2]
     source_before = _source_provenance(source_root)
     provenance = _ollama_provenance(endpoint, embedding_model, cognition_model)
@@ -693,6 +762,9 @@ def run(
             endpoint=endpoint,
             embedding_model=embedding_model,
             cognition_model=cognition_model,
+            query_prefix=query_prefix,
+            document_prefix=document_prefix,
+            symmetric_prefix=symmetric_prefix,
         )
         capture = measure_capture(root)
         cold_hook = capture.pop("cold_cli_hook")
@@ -735,6 +807,7 @@ def run(
             "capture_warmup_events": 1,
             "capture_provider": "simple(dim=768)",
             "cognition_calls": 0,
+            **({"embedding_task_contract": task_contract} if task_contract is not None else {}),
         },
         "environment": {
             "python": platform.python_version(),
@@ -765,6 +838,9 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("--endpoint", default=DEFAULT_ENDPOINT)
     parser.add_argument("--embedding-model", default=DEFAULT_EMBEDDING_MODEL)
     parser.add_argument("--cognition-model", default=DEFAULT_COGNITION_MODEL)
+    parser.add_argument("--query-prefix", default="")
+    parser.add_argument("--document-prefix", default="")
+    parser.add_argument("--symmetric-prefix", default="")
     args = parser.parse_args(argv)
     try:
         artifact = run(
@@ -772,6 +848,9 @@ def main(argv: list[str] | None = None) -> int:
             endpoint=args.endpoint,
             embedding_model=args.embedding_model,
             cognition_model=args.cognition_model,
+            query_prefix=args.query_prefix,
+            document_prefix=args.document_prefix,
+            symmetric_prefix=args.symmetric_prefix,
         )
     except Exception as exc:
         artifact = {
