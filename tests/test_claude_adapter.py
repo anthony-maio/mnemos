@@ -213,6 +213,362 @@ async def test_transcript_deltas_are_role_tagged_checkpointed_and_idempotent(
 
 
 @pytest.mark.asyncio
+async def test_stop_replay_after_restart_uses_assistant_checkpoint_marker(
+    tmp_path: Path,
+) -> None:
+    transcript = tmp_path / "session.jsonl"
+    assistant = "The durable assistant response."
+    transcript.write_text(
+        "\n".join(
+            [
+                json.dumps(
+                    {
+                        "type": "user",
+                        "uuid": "user-1",
+                        "message": {"role": "user", "content": "Remember this."},
+                    }
+                ),
+                json.dumps(
+                    {
+                        "type": "assistant",
+                        "uuid": "assistant-1",
+                        "message": {"role": "assistant", "content": assistant},
+                    }
+                ),
+            ]
+        )
+        + "\n",
+        encoding="utf-8",
+    )
+    client = FakeClient()
+    checkpoint_directory = tmp_path / "checkpoints"
+    first_adapter = ClaudeCodeAdapter(
+        client=client,
+        registry=registry_for(tmp_path),
+        user_profile_id="profile-a",
+        checkpoint_directory=checkpoint_directory,
+    )
+    payload = {**hook_payload(tmp_path, transcript), "last_assistant_message": assistant}
+
+    first = await first_adapter.handle("Stop", payload)
+    checkpoint = json.loads(scoped_checkpoint_path(first_adapter).read_text(encoding="utf-8"))
+    assert first.captured == 2
+    assert checkpoint["last_assistant"]["source_ref"] == "assistant-1"
+    assert "content" not in checkpoint["last_assistant"]
+
+    restarted = ClaudeCodeAdapter(
+        client=client,
+        registry=registry_for(tmp_path),
+        user_profile_id="profile-a",
+        checkpoint_directory=checkpoint_directory,
+    )
+    replay = await restarted.handle("Stop", payload)
+
+    assert replay.captured == 0
+    assert replay.status == "degraded"
+    assert replay.error == "identity_reference_unavailable"
+    assert len(client.captures) == 2
+
+
+@pytest.mark.asyncio
+async def test_precompact_then_stop_does_not_recapture_assistant(
+    tmp_path: Path,
+) -> None:
+    transcript = tmp_path / "session.jsonl"
+    assistant = "The compacted assistant response."
+    transcript.write_text(
+        json.dumps(
+            {
+                "type": "assistant",
+                "uuid": "assistant-compact-1",
+                "message": {"role": "assistant", "content": assistant},
+            }
+        )
+        + "\n",
+        encoding="utf-8",
+    )
+    client = FakeClient()
+    adapter = ClaudeCodeAdapter(
+        client=client,
+        registry=registry_for(tmp_path),
+        user_profile_id="profile-a",
+        checkpoint_directory=tmp_path / "checkpoints",
+    )
+    payload = {**hook_payload(tmp_path, transcript), "last_assistant_message": assistant}
+
+    compacted = await adapter.handle("PreCompact", payload)
+    stopped = await adapter.handle("Stop", payload)
+
+    assert compacted.captured == 1
+    assert stopped.captured == 0
+    assert stopped.status == "degraded"
+    assert stopped.error == "identity_reference_unavailable"
+    assert len(client.captures) == 1
+
+
+@pytest.mark.asyncio
+async def test_identical_assistant_text_with_new_transcript_uuid_is_captured(
+    tmp_path: Path,
+) -> None:
+    transcript = tmp_path / "session.jsonl"
+    assistant = "The same words can be a new response."
+    transcript.write_text(
+        json.dumps(
+            {
+                "type": "assistant",
+                "uuid": "assistant-1",
+                "message": {"role": "assistant", "content": assistant},
+            }
+        )
+        + "\n",
+        encoding="utf-8",
+    )
+    client = FakeClient()
+    adapter = ClaudeCodeAdapter(
+        client=client,
+        registry=registry_for(tmp_path),
+        user_profile_id="profile-a",
+        checkpoint_directory=tmp_path / "checkpoints",
+    )
+    payload = {**hook_payload(tmp_path, transcript), "last_assistant_message": assistant}
+    await adapter.handle("PreCompact", payload)
+    with transcript.open("a", encoding="utf-8") as handle:
+        handle.write(
+            json.dumps(
+                {
+                    "type": "assistant",
+                    "uuid": "assistant-2",
+                    "message": {"role": "assistant", "content": assistant},
+                }
+            )
+            + "\n"
+        )
+
+    result = await adapter.handle("Stop", payload)
+
+    assert result.captured == 1
+    assert [item["source_ref"] for item in client.captures] == [
+        "assistant-1",
+        "assistant-2",
+    ]
+
+
+@pytest.mark.asyncio
+async def test_delayed_distinct_assistant_transcript_is_not_lost(
+    tmp_path: Path,
+) -> None:
+    transcript = tmp_path / "session.jsonl"
+    transcript.write_text(
+        json.dumps(
+            {
+                "type": "user",
+                "uuid": "user-1",
+                "message": {"role": "user", "content": "Start the response."},
+            }
+        )
+        + "\n",
+        encoding="utf-8",
+    )
+    client = FakeClient()
+    adapter = ClaudeCodeAdapter(
+        client=client,
+        registry=registry_for(tmp_path),
+        user_profile_id="profile-a",
+        checkpoint_directory=tmp_path / "checkpoints",
+    )
+    first_payload = {
+        **hook_payload(tmp_path, transcript),
+        "last_assistant_message": "The first response arrived through the fallback.",
+    }
+    first = await adapter.handle("Stop", first_payload)
+    with transcript.open("a", encoding="utf-8") as handle:
+        handle.write(
+            json.dumps(
+                {
+                    "type": "assistant",
+                    "uuid": "assistant-delayed-2",
+                    "message": {
+                        "role": "assistant",
+                        "content": "A distinct response arrived later.",
+                    },
+                }
+            )
+            + "\n"
+        )
+
+    second = await adapter.handle(
+        "Stop",
+        {**first_payload, "last_assistant_message": "A distinct response arrived later."},
+    )
+
+    assert first.captured == 2
+    assert second.captured == 1
+    assert client.captures[-1]["source_ref"] == "assistant-delayed-2"
+
+
+@pytest.mark.asyncio
+async def test_new_turn_same_text_uses_prompt_id_before_transcript_flush(
+    tmp_path: Path,
+) -> None:
+    transcript = tmp_path / "session.jsonl"
+    assistant = "A repeated response from a later turn."
+    transcript.write_text(
+        json.dumps(
+            {
+                "type": "assistant",
+                "uuid": "assistant-turn-1",
+                "message": {"role": "assistant", "content": assistant},
+            }
+        )
+        + "\n",
+        encoding="utf-8",
+    )
+    client = FakeClient()
+    adapter = ClaudeCodeAdapter(
+        client=client,
+        registry=registry_for(tmp_path),
+        user_profile_id="profile-a",
+        checkpoint_directory=tmp_path / "checkpoints",
+    )
+    first_payload = {
+        **hook_payload(tmp_path, transcript),
+        "prompt_id": "turn-1",
+        "last_assistant_message": assistant,
+    }
+    first = await adapter.handle("PreCompact", first_payload)
+
+    second = await adapter.handle(
+        "Stop",
+        {**first_payload, "prompt_id": "turn-2"},
+    )
+
+    assert first.captured == 1
+    assert second.captured == 1
+    assert client.captures[-1]["source_ref"] == "turn-2"
+
+
+@pytest.mark.asyncio
+async def test_user_only_checkpoint_keeps_unflushed_assistant_fallback_available(
+    tmp_path: Path,
+) -> None:
+    transcript = tmp_path / "session.jsonl"
+    transcript.write_text(
+        json.dumps(
+            {
+                "type": "user",
+                "uuid": "user-only-1",
+                "message": {"role": "user", "content": "The response is still flushing."},
+            }
+        )
+        + "\n",
+        encoding="utf-8",
+    )
+    client = FakeClient()
+    adapter = ClaudeCodeAdapter(
+        client=client,
+        registry=registry_for(tmp_path),
+        user_profile_id="profile-a",
+        checkpoint_directory=tmp_path / "checkpoints",
+    )
+    payload = {
+        **hook_payload(tmp_path, transcript),
+        "last_assistant_message": "The response is still flushing.",
+    }
+
+    compacted = await adapter.handle("PreCompact", payload)
+    stopped = await adapter.handle("Stop", payload)
+
+    assert compacted.captured == 1
+    assert stopped.captured == 1
+    assert stopped.status == "degraded"
+    assert client.captures[-1]["source_ref"] == "last_assistant_message"
+    checkpoint = json.loads(scoped_checkpoint_path(adapter).read_text(encoding="utf-8"))
+    assert checkpoint["last_assistant"] is None
+
+
+@pytest.mark.asyncio
+async def test_eof_checkpoint_without_assistant_marker_degrades_without_capture(
+    tmp_path: Path,
+) -> None:
+    from mnemos.adapters.claude_code import _current_transcript_identity
+
+    transcript = tmp_path / "session.jsonl"
+    assistant = "An assistant response waiting for a trustworthy marker."
+    transcript.write_text(
+        json.dumps(
+            {
+                "type": "assistant",
+                "uuid": "assistant-eof-1",
+                "message": {"role": "assistant", "content": assistant},
+            }
+        )
+        + "\n",
+        encoding="utf-8",
+    )
+    client = FakeClient()
+    adapter = ClaudeCodeAdapter(
+        client=client,
+        registry=registry_for(tmp_path),
+        user_profile_id="profile-a",
+        checkpoint_directory=tmp_path / "checkpoints",
+    )
+    context = scoped_test_context()
+    checkpoint = scoped_checkpoint_path(adapter)
+    adapter._write_checkpoint(
+        context,
+        {
+            "path": str(transcript.resolve()),
+            "identity": _current_transcript_identity(transcript),
+            "offset": transcript.stat().st_size,
+            "pending_dedup": [],
+        },
+    )
+
+    result = await adapter.handle(
+        "Stop",
+        {**hook_payload(tmp_path, transcript), "last_assistant_message": assistant},
+    )
+
+    assert result.captured == 0
+    assert result.status == "degraded"
+    assert result.error == "ambiguous_transcript_replay"
+    assert client.captures == []
+    saved = json.loads(checkpoint.read_text(encoding="utf-8"))
+    assert "last_assistant" not in saved
+
+
+@pytest.mark.asyncio
+async def test_malformed_assistant_marker_fails_closed(
+    tmp_path: Path,
+) -> None:
+    from mnemos.adapters.claude_code import _current_transcript_identity
+
+    transcript = tmp_path / "session.jsonl"
+    transcript.write_text("", encoding="utf-8")
+    client = FakeClient()
+    adapter = ClaudeCodeAdapter(
+        client=client,
+        registry=registry_for(tmp_path),
+        user_profile_id="profile-a",
+        checkpoint_directory=tmp_path / "checkpoints",
+    )
+    adapter._write_checkpoint(
+        scoped_test_context(),
+        {
+            "path": str(transcript.resolve()),
+            "identity": _current_transcript_identity(transcript),
+            "offset": 0,
+            "pending_dedup": [],
+            "last_assistant": {"fingerprint": "missing-required-marker-fields"},
+        },
+    )
+
+    with pytest.raises(ValueError, match="checkpoint is corrupt"):
+        await adapter.handle("Stop", hook_payload(tmp_path, transcript))
+    assert client.captures == []
+
+
+@pytest.mark.asyncio
 async def test_checkpoint_waits_for_durable_or_outbox_ack(tmp_path: Path) -> None:
     transcript = tmp_path / "session.jsonl"
     transcript.write_text(
@@ -241,6 +597,83 @@ async def test_checkpoint_waits_for_durable_or_outbox_ack(tmp_path: Path) -> Non
     second = await adapter.handle("PreCompact", hook_payload(tmp_path, transcript))
     assert second.captured == 1
     assert (tmp_path / "checkpoints").exists()
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize("hook_event", ["PreCompact", "Stop"])
+async def test_partial_transcript_capture_retries_acknowledged_rows_safely(
+    tmp_path: Path,
+    hook_event: str,
+) -> None:
+    class FailOnce(FakeClient):
+        def __init__(self) -> None:
+            super().__init__()
+            self.fail_next = True
+
+        async def capture(self, payload: dict) -> dict:
+            if self.fail_next and payload["role"] == "assistant":
+                self.fail_next = False
+                self.captures.append(payload)
+                return {"status": "degraded", "committed": False}
+            return await super().capture(payload)
+
+    transcript = tmp_path / "session.jsonl"
+    transcript.write_text(
+        "\n".join(
+            [
+                json.dumps(
+                    {
+                        "type": "user",
+                        "uuid": "retry-user",
+                        "message": {"role": "user", "content": "Retry this batch."},
+                    }
+                ),
+                json.dumps(
+                    {
+                        "type": "assistant",
+                        "uuid": "retry-assistant",
+                        "message": {"role": "assistant", "content": "The batch is retried."},
+                    }
+                ),
+            ]
+        )
+        + "\n",
+        encoding="utf-8",
+    )
+    client = FailOnce()
+    adapter = ClaudeCodeAdapter(
+        client=client,
+        registry=registry_for(tmp_path),
+        user_profile_id="profile-a",
+        checkpoint_directory=tmp_path / "checkpoints",
+    )
+
+    payload = {
+        **hook_payload(tmp_path, transcript),
+        "last_assistant_message": "The batch is retried.",
+    }
+    first = await adapter.handle(hook_event, payload)
+    assert first.captured == 1
+    assert first.error == "capture_not_acknowledged"
+    assert not (tmp_path / "checkpoints").exists()
+
+    # A batch checkpoint is written only after every row is accepted. The retry
+    # may replay an acknowledged row, so the service must deduplicate its ID.
+    second = await adapter.handle(hook_event, payload)
+
+    assert second.captured == 2
+    assert [item["source_ref"] for item in client.captures] == [
+        "retry-user",
+        "retry-assistant",
+        "retry-user",
+        "retry-assistant",
+    ]
+    assert (
+        json.loads(scoped_checkpoint_path(adapter).read_text(encoding="utf-8"))["last_assistant"][
+            "source_ref"
+        ]
+        == "retry-assistant"
+    )
 
 
 @pytest.mark.asyncio
@@ -342,7 +775,7 @@ async def test_stop_transcript_read_failure_keeps_fallback_and_does_not_advance_
 
 
 @pytest.mark.asyncio
-async def test_missing_transcript_fallback_is_idempotent_and_later_transcript_deduplicates(
+async def test_missing_transcript_fallback_keeps_later_native_observation(
     tmp_path: Path,
 ) -> None:
     transcript = tmp_path / "session.jsonl"
@@ -374,15 +807,19 @@ async def test_missing_transcript_fallback_is_idempotent_and_later_transcript_de
     )
     later = await adapter.handle("Stop", payload)
 
-    assert later.captured == 0
-    assert len(client.captures) == 1
+    assert later.captured == 1
+    assert len(client.captures) == 2
+    assert client.captures[-1]["source_ref"] == "assistant-1"
+    assert later.status == "degraded"
+    assert later.error == "ambiguous_transcript_association"
     checkpoint = json.loads(scoped_checkpoint_path(adapter).read_text(encoding="utf-8"))
     assert checkpoint["offset"] == transcript.stat().st_size
-    assert checkpoint["pending_dedup"] == []
+    assert len(checkpoint["pending_dedup"]) == 1
+    assert checkpoint["pending_dedup"][0]["turn_ref"] is None
 
 
 @pytest.mark.asyncio
-async def test_missing_transcript_distinct_prompt_ids_preserve_identical_messages(
+async def test_missing_transcript_prompt_association_keeps_distinct_native_observation(
     tmp_path: Path,
 ) -> None:
     transcript = tmp_path / "missing-session.jsonl"
@@ -421,10 +858,194 @@ async def test_missing_transcript_distinct_prompt_ids_preserve_identical_message
     )
     later = await adapter.handle("Stop", {**base, "prompt_id": "turn-2"})
 
-    assert later.captured == 0
-    assert len(client.captures) == 2
+    assert later.captured == 2
+    assert len(client.captures) == 4
+    assert later.status == "degraded"
+    assert later.error == "ambiguous_transcript_association"
+    assert [item["source_ref"] for item in client.captures[-2:]] == [
+        "assistant-1",
+        "assistant-2",
+    ]
     checkpoint = json.loads(scoped_checkpoint_path(adapter).read_text(encoding="utf-8"))
-    assert checkpoint["pending_dedup"] == []
+    assert len(checkpoint["pending_dedup"]) == 2
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize("reference_field", ["prompt_id", "promptId", "turn_id"])
+async def test_fallback_prompt_turn_can_deduplicate_its_later_transcript_flush(
+    tmp_path: Path,
+    reference_field: str,
+) -> None:
+    transcript = tmp_path / "session.jsonl"
+    assistant = "The response was captured before the transcript flushed."
+    client = FakeClient()
+    adapter = ClaudeCodeAdapter(
+        client=client,
+        registry=registry_for(tmp_path),
+        user_profile_id="profile-a",
+        checkpoint_directory=tmp_path / "checkpoints",
+    )
+    base = hook_payload(tmp_path, transcript)
+
+    first = await adapter.handle(
+        "Stop",
+        {**base, "prompt_id": "turn-1", "last_assistant_message": assistant},
+    )
+    transcript.write_text(
+        json.dumps(
+            {
+                "type": "assistant",
+                "uuid": "native-assistant-1",
+                reference_field: "turn-1",
+                "message": {"role": "assistant", "content": assistant},
+            }
+        )
+        + "\n",
+        encoding="utf-8",
+    )
+    flushed = await adapter.handle(
+        "Stop",
+        {**base, "prompt_id": "turn-1", "last_assistant_message": assistant},
+    )
+
+    assert first.captured == 1
+    if reference_field == "turn_id":
+        assert flushed.captured == 1
+        assert len(client.captures) == 2
+        assert flushed.error == "ambiguous_transcript_association"
+    else:
+        assert flushed.captured == 0
+        assert len(client.captures) == 1
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize("hook_event", ["PreCompact", "Stop"])
+async def test_transcript_without_native_id_fails_closed_degraded(
+    tmp_path: Path,
+    hook_event: str,
+) -> None:
+    transcript = tmp_path / "session.jsonl"
+    transcript.write_text(
+        json.dumps(
+            {
+                "type": "assistant",
+                "message": {"role": "assistant", "content": "Offset identity only."},
+            }
+        )
+        + "\n",
+        encoding="utf-8",
+    )
+    client = FakeClient()
+    adapter = ClaudeCodeAdapter(
+        client=client,
+        registry=registry_for(tmp_path),
+        user_profile_id="profile-a",
+        checkpoint_directory=tmp_path / "checkpoints",
+    )
+
+    result = await adapter.handle(hook_event, hook_payload(tmp_path, transcript))
+
+    assert result.captured == 0
+    assert result.status == "degraded"
+    assert result.error == "identity_reference_unavailable"
+    assert client.captures == []
+    assert not scoped_checkpoint_path(adapter).exists()
+
+
+@pytest.mark.asyncio
+async def test_native_prompt_reference_associates_user_capture_with_transcript(
+    tmp_path: Path,
+) -> None:
+    transcript = tmp_path / "session.jsonl"
+    client = FakeClient()
+    adapter = ClaudeCodeAdapter(
+        client=client,
+        registry=registry_for(tmp_path),
+        user_profile_id="profile-a",
+        checkpoint_directory=tmp_path / "checkpoints",
+    )
+    payload = {
+        **hook_payload(tmp_path, transcript),
+        "prompt_id": "native-prompt-1",
+        "prompt": "Keep this native prompt association.",
+    }
+    first = await adapter.handle("UserPromptSubmit", payload, include_retrieval=False)
+    transcript.write_text(
+        json.dumps(
+            {
+                "type": "user",
+                "uuid": "native-user-record-1",
+                "prompt_id": "native-prompt-1",
+                "message": {"role": "user", "content": payload["prompt"]},
+            }
+        )
+        + "\n",
+        encoding="utf-8",
+    )
+    later = await adapter.handle("PreCompact", payload, include_retrieval=False)
+    assert first.captured == 1
+    assert later.captured == 0
+    assert later.status == "ok"
+    assert len(client.captures) == 1
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize("invalid_prompt_id", [17, "   ", {"id": "not-a-string"}])
+async def test_stop_invalid_prompt_id_uses_degraded_fallback(
+    tmp_path: Path,
+    invalid_prompt_id: Any,
+) -> None:
+    transcript = tmp_path / "session.jsonl"
+    transcript.write_text("", encoding="utf-8")
+    client = FakeClient()
+    adapter = ClaudeCodeAdapter(
+        client=client,
+        registry=registry_for(tmp_path),
+        user_profile_id="profile-a",
+        checkpoint_directory=tmp_path / "checkpoints",
+    )
+    payload = {**hook_payload(tmp_path, transcript), "prompt_id": invalid_prompt_id}
+    first = await adapter.handle("Stop", payload)
+    replay = await adapter.handle("Stop", payload)
+    assert first.captured == 1
+    assert first.status == "degraded"
+    assert first.error == "identity_reference_unavailable"
+    assert replay.captured == 0
+    assert len(client.captures) == 1
+    assert client.captures[0]["source_ref"] == "last_assistant_message"
+
+
+@pytest.mark.asyncio
+async def test_missing_id_rotation_with_same_offset_restarts_safely(
+    tmp_path: Path,
+) -> None:
+    transcript = tmp_path / "session.jsonl"
+    first_record = {
+        "type": "assistant",
+        "message": {"role": "assistant", "content": "AAAA"},
+    }
+    second_record = {
+        "type": "assistant",
+        "message": {"role": "assistant", "content": "BBBB"},
+    }
+    transcript.write_text(json.dumps(first_record) + "\n", encoding="utf-8")
+    client = FakeClient()
+    adapter = ClaudeCodeAdapter(
+        client=client,
+        registry=registry_for(tmp_path),
+        user_profile_id="profile-a",
+        checkpoint_directory=tmp_path / "checkpoints",
+    )
+
+    first = await adapter.handle("PreCompact", hook_payload(tmp_path, transcript))
+    transcript.write_text(json.dumps(second_record) + "\n", encoding="utf-8")
+    second = await adapter.handle("PreCompact", hook_payload(tmp_path, transcript))
+
+    assert first.captured == 0
+    assert second.captured == 0
+    assert first.error == "identity_reference_unavailable"
+    assert second.error == "identity_reference_unavailable"
+    assert client.captures == []
 
 
 @pytest.mark.asyncio

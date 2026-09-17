@@ -30,6 +30,8 @@ MAX_TRANSCRIPT_LINE = 200_000
 MAX_TRANSCRIPT_BYTES_PER_HOOK = 2_000_000
 MAX_CONTEXT_CHARS = 8_000
 TRANSCRIPT_UNAVAILABLE = "transcript_unavailable"
+AMBIGUOUS_TRANSCRIPT_REPLAY = "ambiguous_transcript_replay"
+AMBIGUOUS_TRANSCRIPT_ASSOCIATION = "ambiguous_transcript_association"
 CAPTURE_NOT_ACKNOWLEDGED = "capture_not_acknowledged"
 IDENTITY_REDACTION_AMBIGUOUS = "identity_redaction_ambiguous"
 IDENTITY_REFERENCE_UNAVAILABLE = "identity_reference_unavailable"
@@ -42,6 +44,8 @@ class TranscriptDelta:
     source_ref: str
     occurred_at: datetime
     next_offset: int
+    identity_degraded: bool = False
+    turn_ref: str | None = None
 
 
 @dataclass(frozen=True)
@@ -114,7 +118,9 @@ def _transcript_identity(path: Path, prefix: bytes) -> str:
     """Identify the underlying transcript file while allowing normal appends."""
     stat = path.stat()
     if stat.st_ino:
-        return f"{path.resolve()}:{stat.st_dev}:{stat.st_ino}"
+        first_line = prefix.split(b"\n", 1)[0]
+        digest = hashlib.sha256(first_line).hexdigest()
+        return f"{path.resolve()}:{stat.st_dev}:{stat.st_ino}:first:{digest}"
     digest = hashlib.sha256(prefix).hexdigest()
     return f"{path.resolve()}:prefix:{digest}"
 
@@ -173,7 +179,16 @@ def read_transcript_deltas(
                 role = record["type"]
             if role not in {"user", "assistant"} or not content.strip():
                 continue
-            source_ref = str(record.get("uuid") or record.get("id") or line_start)
+            native_source_ref = record.get("uuid") or record.get("id")
+            has_native_source_ref = isinstance(native_source_ref, str) and bool(
+                native_source_ref.strip()
+            )
+            source_ref = str(native_source_ref if has_native_source_ref else line_start)
+            if not has_native_source_ref:
+                source_ref = f"offset:{identity}:{line_start}"
+            turn_ref = record.get("prompt_id") or record.get("promptId")
+            if not isinstance(turn_ref, str) or not turn_ref.strip():
+                turn_ref = None
             deltas.append(
                 TranscriptDelta(
                     role=role,
@@ -181,6 +196,8 @@ def read_transcript_deltas(
                     source_ref=source_ref,
                     occurred_at=_parse_timestamp(record.get("timestamp")),
                     next_offset=next_offset,
+                    identity_degraded=not has_native_source_ref,
+                    turn_ref=turn_ref,
                 )
             )
         return deltas, next_offset, identity
@@ -262,14 +279,58 @@ class ClaudeCodeAdapter:
             elif isinstance(item, Mapping):
                 fingerprint = item.get("fingerprint")
                 source_ref = item.get("source_ref")
+                turn_ref = item.get("turn_ref")
                 if isinstance(fingerprint, str) and fingerprint:
                     records.append(
                         {
                             "fingerprint": fingerprint,
                             "source_ref": source_ref if isinstance(source_ref, str) else None,
+                            "turn_ref": turn_ref if isinstance(turn_ref, str) else None,
                         }
                     )
         return records
+
+    @staticmethod
+    def _pending_matches(
+        item: Mapping[str, str | None], fingerprint: str, delta_turn_ref: str | None
+    ) -> bool:
+        """Only deduplicate transcript deltas when the fallback turn is attributable."""
+        return (
+            item.get("fingerprint") == fingerprint
+            and isinstance(delta_turn_ref, str)
+            and bool(delta_turn_ref.strip())
+            and item.get("turn_ref") == delta_turn_ref
+        )
+
+    @staticmethod
+    def _assistant_marker(checkpoint: Mapping[str, Any]) -> dict[str, Any] | None:
+        raw = checkpoint.get("last_assistant")
+        if raw is None:
+            return None
+        if not isinstance(raw, Mapping):
+            raise ValueError("Claude checkpoint is corrupt")
+        required = ("fingerprint", "source_ref", "path", "identity", "offset")
+        if any(not isinstance(raw.get(key), str) or not raw[key] for key in required[:4]):
+            raise ValueError("Claude checkpoint is corrupt")
+        if set(raw) - {*required, "turn_ref"}:
+            raise ValueError("Claude checkpoint is corrupt")
+        fingerprint = raw["fingerprint"]
+        if len(fingerprint) != 64 or any(char not in "0123456789abcdef" for char in fingerprint):
+            raise ValueError("Claude checkpoint is corrupt")
+        offset = raw.get("offset")
+        if type(offset) is not int or offset <= 0:
+            raise ValueError("Claude checkpoint is corrupt")
+        turn_ref = raw.get("turn_ref")
+        if turn_ref is not None and (not isinstance(turn_ref, str) or not turn_ref):
+            raise ValueError("Claude checkpoint is corrupt")
+        return {
+            "fingerprint": raw["fingerprint"],
+            "source_ref": raw["source_ref"],
+            "path": raw["path"],
+            "identity": raw["identity"],
+            "offset": offset,
+            "turn_ref": turn_ref,
+        }
 
     def _legacy_checkpoint_path(self, session_id: str) -> Path:
         digest = hashlib.sha256(session_id.encode("utf-8")).hexdigest()
@@ -308,6 +369,14 @@ class ClaudeCodeAdapter:
             offset = value["offset"]
             if type(offset) is not int or offset < 0:
                 raise ValueError("Claude checkpoint is corrupt")
+        marker = self._assistant_marker(value)
+        if marker is not None and (
+            value.get("path") != marker["path"]
+            or value.get("identity") != marker["identity"]
+            or type(value.get("offset")) is not int
+            or marker["offset"] > value["offset"]
+        ):
+            raise ValueError("Claude checkpoint is corrupt")
         return value
 
     def _write_checkpoint(self, context: ScopeContext, value: Mapping[str, Any]) -> None:
@@ -334,16 +403,30 @@ class ClaudeCodeAdapter:
             temporary.unlink(missing_ok=True)
 
     def _remember_pending_duplicate(
-        self, context: ScopeContext, role: str, content: str, *, source_ref: str
+        self,
+        context: ScopeContext,
+        role: str,
+        content: str,
+        *,
+        source_ref: str,
+        turn_ref: str | None = None,
     ) -> None:
         checkpoint = self._read_checkpoint(context)
         pending = self._pending_records(checkpoint)
         fingerprint = self._content_fingerprint(role, content)
         if not any(
-            item["fingerprint"] == fingerprint and item["source_ref"] == source_ref
+            item["fingerprint"] == fingerprint
+            and item["source_ref"] == source_ref
+            and item.get("turn_ref") == turn_ref
             for item in pending
         ):
-            pending.append({"fingerprint": fingerprint, "source_ref": source_ref})
+            pending.append(
+                {
+                    "fingerprint": fingerprint,
+                    "source_ref": source_ref,
+                    "turn_ref": turn_ref,
+                }
+            )
         checkpoint["pending_dedup"] = pending[-16:]
         self._write_checkpoint(context, checkpoint)
 
@@ -420,6 +503,9 @@ class ClaudeCodeAdapter:
             or checkpoint.get("identity") != current_identity
         ):
             offset = 0
+            bound_checkpoint = False
+        else:
+            bound_checkpoint = "path" in checkpoint and "identity" in checkpoint
         try:
             deltas, next_offset, identity = read_transcript_deltas(
                 transcript,
@@ -430,20 +516,47 @@ class ClaudeCodeAdapter:
         captured = 0
         contents: set[str] = set()
         pending_records = self._pending_records(checkpoint)
+        assistant_marker = self._assistant_marker(checkpoint) if bound_checkpoint else None
+        turn_ref = payload.get("prompt_id")
+        if not isinstance(turn_ref, str) or not turn_ref.strip():
+            turn_ref = None
+        if any(delta.identity_degraded for delta in deltas):
+            # Offset-only references cannot be verified across an old source
+            # tombstone. Fail closed instead of creating a replayable alias.
+            return 0, set(), IDENTITY_REFERENCE_UNAVAILABLE
+        delta_fingerprint_counts: dict[str, int] = {}
+        association_ambiguous = False
+        for delta in deltas:
+            fingerprint = self._content_fingerprint(delta.role, delta.content)
+            delta_fingerprint_counts[fingerprint] = delta_fingerprint_counts.get(fingerprint, 0) + 1
         for delta in deltas:
             fingerprint = self._content_fingerprint(delta.role, delta.content)
             pending_index = next(
                 (
                     index
                     for index, item in enumerate(pending_records)
-                    if item["fingerprint"] == fingerprint
+                    if delta_fingerprint_counts[fingerprint] == 1
+                    and self._pending_matches(item, fingerprint, delta.turn_ref)
                 ),
                 None,
             )
             if pending_index is not None:
                 pending_records.pop(pending_index)
                 contents.add(delta.content)
+                if delta.role == "assistant":
+                    assistant_marker = {
+                        "fingerprint": fingerprint,
+                        "source_ref": delta.source_ref,
+                        "path": checkpoint_path,
+                        "identity": identity,
+                        "offset": delta.next_offset,
+                        "turn_ref": turn_ref,
+                    }
                 continue
+            if any(item["fingerprint"] == fingerprint for item in pending_records):
+                # Preserve native evidence when a prior fallback cannot be
+                # associated with it. Matching text alone cannot prove identity.
+                association_ambiguous = True
             accepted, capture_error = await self._capture(
                 context,
                 role=delta.role,
@@ -455,19 +568,33 @@ class ClaudeCodeAdapter:
                 return captured, contents, capture_error or CAPTURE_NOT_ACKNOWLEDGED
             captured += 1
             contents.add(delta.content)
-        if deltas or next_offset != offset or checkpoint.get("identity") != identity:
-            self._write_checkpoint(
-                context,
-                {
-                    "identity_version": 2,
-                    "scope": self._checkpoint_scope(context),
+            if delta.role == "assistant":
+                assistant_marker = {
+                    "fingerprint": fingerprint,
+                    "source_ref": delta.source_ref,
                     "path": checkpoint_path,
                     "identity": identity,
-                    "offset": next_offset,
-                    "pending_dedup": pending_records[-16:],
-                },
-            )
-        return captured, contents, None
+                    "offset": delta.next_offset,
+                    "turn_ref": turn_ref,
+                }
+        if bound_checkpoint and not deltas and "last_assistant" not in checkpoint:
+            return captured, contents, AMBIGUOUS_TRANSCRIPT_REPLAY
+        if deltas or next_offset != offset or checkpoint.get("identity") != identity:
+            checkpoint_value: dict[str, Any] = {
+                "identity_version": 2,
+                "scope": self._checkpoint_scope(context),
+                "path": checkpoint_path,
+                "identity": identity,
+                "offset": next_offset,
+                "pending_dedup": pending_records[-16:],
+                "last_assistant": assistant_marker,
+            }
+            self._write_checkpoint(context, checkpoint_value)
+        return (
+            captured,
+            contents,
+            AMBIGUOUS_TRANSCRIPT_ASSOCIATION if association_ambiguous else None,
+        )
 
     @staticmethod
     def _query(payload: Mapping[str, Any], event: str) -> str:
@@ -569,6 +696,7 @@ class ClaudeCodeAdapter:
                         "user",
                         prompt.strip(),
                         source_ref=source_ref,
+                        turn_ref=source_ref if has_native_prompt_id else None,
                     )
                     if not has_native_prompt_id:
                         capture_error = IDENTITY_REFERENCE_UNAVAILABLE
@@ -617,36 +745,86 @@ class ClaudeCodeAdapter:
                 assistant_content = assistant.strip() if isinstance(assistant, str) else ""
                 checkpoint = self._read_checkpoint(context)
                 pending_records = self._pending_records(checkpoint)
-                source_ref = str(payload.get("prompt_id") or "last_assistant_message")
-                if (
-                    assistant_content
-                    and assistant_content not in transcript_contents
-                    and not any(
-                        item["fingerprint"]
-                        == self._content_fingerprint("assistant", assistant_content)
-                        and item["source_ref"] == source_ref
-                        for item in pending_records
+                if transcript_error in {
+                    None,
+                    TRANSCRIPT_UNAVAILABLE,
+                    AMBIGUOUS_TRANSCRIPT_ASSOCIATION,
+                }:
+                    native_prompt_id = payload.get("prompt_id")
+                    has_prompt_id = isinstance(native_prompt_id, str) and bool(
+                        native_prompt_id.strip()
                     )
-                ):
-                    accepted, capture_reason = await self._capture(
-                        context,
-                        role="assistant",
-                        content=assistant_content,
-                        source_ref=source_ref,
-                        occurred_at=datetime.now(timezone.utc),
+                    source_ref = str(
+                        native_prompt_id if has_prompt_id else "last_assistant_message"
                     )
-                    if accepted:
-                        captured += 1
-                        self._remember_pending_duplicate(
-                            context,
-                            "assistant",
-                            assistant_content,
-                            source_ref=source_ref,
+                    fingerprint = self._content_fingerprint("assistant", assistant_content)
+                    marker = self._assistant_marker(checkpoint)
+                    marker_matches = False
+                    if marker is not None and transcript_error in {
+                        None,
+                        AMBIGUOUS_TRANSCRIPT_ASSOCIATION,
+                    }:
+                        try:
+                            marker_matches = (
+                                marker["path"]
+                                == str(Path(str(payload["transcript_path"])).expanduser().resolve())
+                                and marker["identity"]
+                                == _current_transcript_identity(
+                                    Path(str(payload["transcript_path"])).expanduser()
+                                )
+                                and marker["fingerprint"] == fingerprint
+                            )
+                        except (KeyError, OSError):
+                            marker_matches = False
+                    same_turn = (
+                        marker_matches
+                        and marker is not None
+                        and has_prompt_id
+                        and marker["turn_ref"] == source_ref
+                    )
+                    new_turn = (
+                        marker_matches
+                        and marker is not None
+                        and has_prompt_id
+                        and marker["turn_ref"] is not None
+                        and marker["turn_ref"] != source_ref
+                    )
+                    ambiguous_marker = marker_matches and not same_turn and not new_turn
+                    needs_fallback = (
+                        bool(assistant_content) and assistant_content not in transcript_contents
+                    )
+                    if (
+                        needs_fallback
+                        and (not marker_matches or new_turn)
+                        and not any(
+                            item["fingerprint"] == fingerprint and item["source_ref"] == source_ref
+                            for item in pending_records
                         )
-                        if not payload.get("prompt_id"):
-                            transcript_error = transcript_error or IDENTITY_REFERENCE_UNAVAILABLE
-                    else:
-                        transcript_error = capture_reason or CAPTURE_NOT_ACKNOWLEDGED
+                    ):
+                        accepted, capture_reason = await self._capture(
+                            context,
+                            role="assistant",
+                            content=assistant_content,
+                            source_ref=source_ref,
+                            occurred_at=datetime.now(timezone.utc),
+                        )
+                        if accepted:
+                            captured += 1
+                            self._remember_pending_duplicate(
+                                context,
+                                "assistant",
+                                assistant_content,
+                                source_ref=source_ref,
+                                turn_ref=source_ref if has_prompt_id else None,
+                            )
+                            if not has_prompt_id:
+                                transcript_error = (
+                                    transcript_error or IDENTITY_REFERENCE_UNAVAILABLE
+                                )
+                        else:
+                            transcript_error = capture_reason or CAPTURE_NOT_ACKNOWLEDGED
+                    elif needs_fallback and ambiguous_marker:
+                        transcript_error = IDENTITY_REFERENCE_UNAVAILABLE
             return HookResult(
                 status="degraded" if transcript_error else "ok",
                 committed=captured > 0,
