@@ -1,0 +1,81 @@
+<?xml version="1.0" encoding="utf-8"?><testsuites name="pytest tests"><testsuite name="pytest" errors="0" failures="3" skipped="0" tests="6" time="0.664" timestamp="2026-09-17T18:07:51.389910-04:00" hostname="Aurora"><testcase classname="tests.test_client_startup_failure" name="test_exited_autostart_child_reports_exit_code_without_waiting" time="0.007"><failure message="AssertionError: assert 'exited' in 'Mnemos service descriptor is unavailable'&#10; +  where 'Mnemos service descriptor is unavailable' = str('Mnemos service descriptor is unavailable')">tmp_path = WindowsPath('C:/Users/Ant/AppData/Local/Temp/mnemos-startup-exit-red-v3/test_exited_autostart_child_re0')
+monkeypatch = &lt;_pytest.monkeypatch.MonkeyPatch object at 0x00000207F61F96E0&gt;
+
+    @pytest.mark.asyncio
+    async def test_exited_autostart_child_reports_exit_code_without_waiting(
+        tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+    ) -&gt; None:
+        child = FakeProcess(returncode=17)
+        monkeypatch.setattr(client_module.subprocess, "Popen", lambda *a, **k: child)
+        client = MnemosClient(
+            descriptor_path=tmp_path / "runtime.json",
+            auto_start=True,
+            startup_timeout=0.15,
+            request_timeout=1,
+        )
+        monkeypatch.setattr(client, "_descriptor", lambda: None)
+        loop, sleep_calls = patch_virtual_startup(monkeypatch)
+    
+        result = await client.retrieve({"query": "startup failure"})
+    
+        assert result["status"] == "degraded"
+&gt;       assert "exited" in str(result["error"])
+E       AssertionError: assert 'exited' in 'Mnemos service descriptor is unavailable'
+E        +  where 'Mnemos service descriptor is unavailable' = str('Mnemos service descriptor is unavailable')
+
+tests\test_client_startup_failure.py:81: AssertionError</failure></testcase><testcase classname="tests.test_client_startup_failure" name="test_exited_autostart_child_capture_still_queues_with_diagnostic" time="0.020"><failure message="AssertionError: assert 'exited' in 'Mnemos service descriptor is unavailable'&#10; +  where 'Mnemos service descriptor is unavailable' = str('Mnemos service descriptor is unavailable')">tmp_path = WindowsPath('C:/Users/Ant/AppData/Local/Temp/mnemos-startup-exit-red-v3/test_exited_autostart_child_ca0')
+monkeypatch = &lt;_pytest.monkeypatch.MonkeyPatch object at 0x00000207F51B9D90&gt;
+
+    @pytest.mark.asyncio
+    async def test_exited_autostart_child_capture_still_queues_with_diagnostic(
+        tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+    ) -&gt; None:
+        child = FakeProcess(returncode=23)
+        monkeypatch.setattr(client_module.subprocess, "Popen", lambda *a, **k: child)
+        outbox = tmp_path / "outbox.json"
+        client = MnemosClient(
+            descriptor_path=tmp_path / "runtime.json",
+            outbox_path=outbox,
+            auto_start=True,
+            startup_timeout=0.15,
+            request_timeout=1,
+        )
+        monkeypatch.setattr(client, "_descriptor", lambda: None)
+        _loop, sleep_calls = patch_virtual_startup(monkeypatch)
+    
+        result = await client.capture(
+            {"event_id": "startup-failure-capture", "content": "durable startup capture"}
+        )
+    
+        assert result["status"] == "queued"
+        assert result["committed"] is False
+&gt;       assert "exited" in str(result["error"])
+E       AssertionError: assert 'exited' in 'Mnemos service descriptor is unavailable'
+E        +  where 'Mnemos service descriptor is unavailable' = str('Mnemos service descriptor is unavailable')
+
+tests\test_client_startup_failure.py:111: AssertionError</failure></testcase><testcase classname="tests.test_client_startup_failure" name="test_live_child_without_descriptor_reports_startup_timeout" time="0.004"><failure message="AssertionError: assert 'timed out' in 'Mnemos service descriptor is unavailable'&#10; +  where 'Mnemos service descriptor is unavailable' = str('Mnemos service descriptor is unavailable')">tmp_path = WindowsPath('C:/Users/Ant/AppData/Local/Temp/mnemos-startup-exit-red-v3/test_live_child_without_descri0')
+monkeypatch = &lt;_pytest.monkeypatch.MonkeyPatch object at 0x00000207F61ED590&gt;
+
+    @pytest.mark.asyncio
+    async def test_live_child_without_descriptor_reports_startup_timeout(
+        tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+    ) -&gt; None:
+        child = FakeProcess(returncode=None)
+        monkeypatch.setattr(client_module.subprocess, "Popen", lambda *a, **k: child)
+        client = MnemosClient(
+            descriptor_path=tmp_path / "runtime.json",
+            auto_start=True,
+            startup_timeout=0.15,
+            request_timeout=1,
+        )
+        monkeypatch.setattr(client, "_descriptor", lambda: None)
+        loop, sleep_calls = patch_virtual_startup(monkeypatch)
+    
+        result = await client.retrieve({"query": "startup timeout"})
+    
+        assert result["status"] == "degraded"
+&gt;       assert "timed out" in str(result["error"])
+E       AssertionError: assert 'timed out' in 'Mnemos service descriptor is unavailable'
+E        +  where 'Mnemos service descriptor is unavailable' = str('Mnemos service descriptor is unavailable')
+
+tests\test_client_startup_failure.py:136: AssertionError</failure></testcase><testcase classname="tests.test_client_startup_failure" name="test_existing_owner_descriptor_wins_over_exited_launcher" time="0.003" /><testcase classname="tests.test_client_startup_failure" name="test_live_child_becoming_ready_is_accepted" time="0.004" /><testcase classname="tests.test_client_startup_failure" name="test_descriptor_appearing_during_terminal_poll_wins" time="0.004" /></testsuite></testsuites>

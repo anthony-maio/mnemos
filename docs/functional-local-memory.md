@@ -28,6 +28,12 @@ python -m mnemos.service
 
 Most clients auto-start one bounded service process when the descriptor is absent. Set `MNEMOS_RUNTIME_DESCRIPTOR` consistently in every process when isolating a separate runtime. If startup fails, automatic capture can enter a sanitized local outbox; explicit writes report failure. An outbox entry is not a committed service event. `mnemos service-stop` requests authenticated shutdown and waits for confirmation. Stop host clients before offline maintenance so a new request does not restart the service.
 
+The client reports a service process that exits before startup with its exit
+code. A process that remains alive without publishing a descriptor reports a
+startup timeout. A valid existing owner takes precedence over an exited
+launcher. These diagnostics preserve the same capture outbox and bounded
+autostart policy; a timeout does not terminate the shared service.
+
 The managed service writes private JSON events to `service.log` beside its
 runtime descriptor. The log rotates at 1 MiB and retains two backups. It records
 startup, retrieval timing, and failure categories without query text, memory
@@ -269,7 +275,7 @@ Current evidence has these boundaries:
 
 | Evidence | Status |
 | --- | --- |
-| Deterministic module and storage tests | Frozen source 6cde465: 918 tests passed with four skips, plus formatting, typing, JavaScript, build, and Twine checks. The fresh installed wheel passed 124 contract cases with two matching platform skips and seven synthetic Stop replay assertions. An earlier full run at the same source failed an auto-start check; its cause remains unproven. See the [package checkpoint](validation/2026-09-17/lost-ack-package-checkpoint-v3/README.md) and [preserved failure](validation/2026-09-17/lost-ack-package-failure-v1/README.md) |
+| Deterministic module and storage tests | Frozen source a607a5a: 924 tests passed with four skips, plus formatting, typing, JavaScript, build, and Twine checks. The fresh installed wheel passed 130 contract cases with two matching platform skips and seven synthetic Stop replay assertions. An earlier full run at 6cde465 failed an auto-start check; its cause remains unproven. The later client repair distinguishes an exited process from a startup timeout. See the [package checkpoint](validation/2026-09-17/startup-exit-package-checkpoint-v1/README.md) and [preserved failure](validation/2026-09-17/lost-ack-package-failure-v1/README.md) |
 | Synthetic local service and SQLite restart flow | Observed for one provider-backed fact |
 | Full real-model ablation and held-out quality evaluation | The older b7 queue stopped on a validation-trace serialization error; its negative results remain preserved. The repaired d94 queue completed development mechanisms and lifecycle preflight; the held-out mechanism phase completed, and the seven-profile lifecycle matrix remains running. No held-out quality conclusion is accepted. All 15 development graph observations lacked a structural seed-to-target path. The queue uses its frozen unprefixed embedding contract. See [current progress](validation/2026-09-16/progress.md) and [evaluation status](validation/2026-09-16/evaluation-running.md) |
 | Installed Claude Code, Codex, and Hermes host smoke | Native evidence remains partial. Claude v18 on dedfcfd passed all 15 bounded fact-lifecycle criteria with the new startup default, including correction, retrieval, forgetting, restart, and reconstructed Stop replay. Degraded hook capture keeps the overall result partial; native extraction and complete capture acceptance remain open. The latest Codex retrieve v2 call was cancelled before returning a result; a prior Codex health call proves health transport only. Hermes provider loading and the WSL bridge were observed, but no native Hermes model turn passed. Complete cross-host continuity and Codex Desktop checks remain open. See the [Claude lifecycle record](validation/2026-09-17/native-claude-lifecycle-v18/README.md) and [host matrix](client-compatibility-matrix.md) for current and earlier evidence. |

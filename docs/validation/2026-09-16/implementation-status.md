@@ -4,12 +4,12 @@ This record covers the unreleased `wt/functional-local-memory` worktree. It
 separates implemented behavior from acceptance evidence. The original task
 boundaries and thresholds remain in the [implementation plan](../../plans/2026-09-16-functional-local-memory.md).
 
-The latest package checkpoint is source `6cde465`. Its frozen verification
-passed 918 tests with four platform-specific skips, formatting, typing,
-JavaScript, build, and Twine checks. A fresh installed wheel passed 124
+The latest package checkpoint is source `a607a5a`. Its frozen verification
+passed 924 tests with four platform-specific skips, formatting, typing,
+JavaScript, build, and Twine checks. A fresh installed wheel passed 130
 contract cases with two matching platform skips and seven replay assertions. These are package and installed
 runtime checks; they do not close native-host, real-model, latency, pilot, or
-publication gates. See the [lost-acknowledgment package checkpoint](../2026-09-17/lost-ack-package-checkpoint-v3/README.md).
+publication gates. See the [startup exit package checkpoint](../2026-09-17/startup-exit-package-checkpoint-v1/README.md).
 
 This checkpoint repairs retrieval across a concurrent correction or forget:
 candidates are refreshed after asynchronous state classification, so scoring,
@@ -38,6 +38,19 @@ The unchanged isolated test subsequently passed, with health returning in
 the cause of the full-run failure. Both the [failed checkpoint](../2026-09-17/lost-ack-package-failure-v1/README.md)
 and [isolated diagnostic](../2026-09-17/lost-ack-startup-diagnostic-v1/README.md)
 remain separate evidence.
+
+Source `a607a5a` distinguishes an exited auto-start process from a live process
+that reaches its startup deadline. The client reports a numeric exit code
+promptly, accepts a competing owner descriptor, and preserves queued capture.
+The [before-fix installed probe](../2026-09-17/startup-exit-diagnostic-v1/README.md)
+observed a child exit at 652.265 ms followed by a generic client response at
+2,048.842 ms. Six deterministic startup cases and 29 related service cases
+pass with the repair. See the [regression record](../2026-09-17/startup-exit-regression-v1/README.md).
+The [after-fix installed probe](../2026-09-17/startup-exit-diagnostic-v2/README.md)
+observed a child exit at 655.468 ms and an explicit exit-code response at
+686.713 ms under the same two-second deadline. This diagnostic repair is
+included in the package checkpoint above. It does not establish the cause of
+the earlier full-suite startup failure.
 
 An earlier full-suite attempt at `e1fd56e` finished with 897 passed, one failed,
 and four skipped. A list response in the synthetic Codex continuity fixture

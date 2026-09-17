@@ -1,0 +1,300 @@
+"""Probe client behavior when an autostarted service exits before writing a descriptor."""
+from __future__ import annotations
+
+import argparse
+import asyncio
+from datetime import datetime, timezone
+import hashlib
+import importlib.metadata
+import json
+import os
+from pathlib import Path
+import shutil
+import subprocess
+import sys
+import tempfile
+import time
+from typing import Any
+
+SOURCE_COMMIT = "6cde46561c0c42c0d6124d86a09d1e2832542c9d"
+EXPECTED_WHEEL_SHA256 = "f4e270cb2c0469d42a65b1152684297fa9fc61af190dacde8890ab50c3d90b14"
+EXPECTED_WHEEL = Path(
+    r"C:\Users\Ant\AppData\Local\Temp\mnemos-package-checks-lost-ack-v2\dist\mnemos_memory-0.7.0-py3-none-any.whl"
+)
+DEFAULT_OUTPUT = Path(
+    r"C:\Users\Ant\AppData\Local\Temp\mnemos-startup-exit-probe-v1"
+)
+STARTUP_TIMEOUT_SECONDS = 2.0
+MAX_OBSERVATION_SECONDS = 5.0
+FIXTURE_PREFIX = "mnemos-startup-exit-fixture-"
+
+
+def _sha(path: Path) -> str:
+    digest = hashlib.sha256()
+    with path.open("rb") as handle:
+        for block in iter(lambda: handle.read(1024 * 1024), b""):
+            digest.update(block)
+    return digest.hexdigest()
+
+
+def _safe_error(error: BaseException) -> dict[str, str]:
+    return {"type": type(error).__name__, "message": str(error)[:240]}
+
+
+def _not_git_worktree(path: Path) -> bool:
+    result = subprocess.run(
+        ["git", "-C", str(path), "rev-parse", "--show-toplevel"],
+        stdout=subprocess.DEVNULL,
+        stderr=subprocess.DEVNULL,
+        check=False,
+    )
+    return result.returncode != 0
+
+
+def _package_binding() -> dict[str, Any]:
+    import mnemos
+
+    package_root = (Path(sys.executable).resolve().parent.parent / "Lib" / "site-packages").resolve()
+    imported_file = Path(str(getattr(mnemos, "__file__", ""))).resolve()
+    package_paths = [Path(str(item)).resolve() for item in getattr(mnemos, "__path__", [])]
+    return {
+        "distribution": importlib.metadata.version("mnemos-memory"),
+        "module_file": str(imported_file),
+        "module_file_under_installed_site_packages": imported_file.is_relative_to(package_root),
+        "module_paths_under_installed_site_packages": all(
+            item.is_relative_to(package_root) for item in package_paths
+        ),
+        "site_packages": str(package_root),
+        "python": str(Path(sys.executable).resolve()),
+    }
+
+
+async def _observe_client(client: Any) -> dict[str, Any]:
+    started = time.perf_counter()
+    request_task = asyncio.create_task(client.request("health", {}))
+    child_pid: int | None = None
+    child_exit_code: int | None = None
+    child_exit_at: float | None = None
+    request_return_at: float | None = None
+    request_result: dict[str, Any] | None = None
+    request_error: BaseException | None = None
+    deadline = started + MAX_OBSERVATION_SECONDS
+    while time.perf_counter() < deadline and not request_task.done():
+        child = getattr(client, "_child", None)
+        if child is not None:
+            child_pid = int(child.pid)
+            status = child.poll()
+            if status is not None and child_exit_at is None:
+                child_exit_code = int(status)
+                child_exit_at = time.perf_counter()
+        await asyncio.sleep(0.01)
+    try:
+        request_result = await request_task
+    except BaseException as error:
+        request_error = error
+    request_return_at = time.perf_counter()
+    child = getattr(client, "_child", None)
+    if child is not None:
+        child_pid = int(child.pid)
+        status = child.poll()
+        if status is not None and child_exit_at is None:
+            child_exit_code = int(status)
+            child_exit_at = time.perf_counter()
+    result: dict[str, Any] = {
+        "request_duration_ms": round((request_return_at - started) * 1000.0, 3),
+        "child_pid": child_pid,
+        "child_exit_code": child_exit_code,
+        "child_exit_observed_at_ms": (
+            round((child_exit_at - started) * 1000.0, 3) if child_exit_at is not None else None
+        ),
+        "request_returned_at_ms": round((request_return_at - started) * 1000.0, 3),
+        "child_exit_before_request_return": (
+            child_exit_at is not None
+            and request_return_at is not None
+            and child_exit_at <= request_return_at
+        ),
+        "child_exit_observed": child_exit_at is not None,
+    }
+    if request_result is not None:
+        result["response"] = {
+            "status": request_result.get("status"),
+            "committed": request_result.get("committed"),
+            "degraded": request_result.get("degraded"),
+            "error": str(request_result.get("error", ""))[:240]
+            if request_result.get("error") is not None
+            else None,
+            "keys": sorted(str(key) for key in request_result),
+        }
+    if request_error is not None:
+        result["request_error"] = _safe_error(request_error)
+    return result
+
+
+def _cleanup_child(client: Any) -> dict[str, Any]:
+    child = getattr(client, "_child", None)
+    if child is None:
+        return {"present": False, "terminated_by_probe": False, "terminal": True}
+    pid = int(child.pid)
+    status = child.poll()
+    terminated = False
+    if status is None:
+        child.terminate()
+        terminated = True
+        try:
+            child.wait(timeout=2.0)
+        except subprocess.TimeoutExpired:
+            child.kill()
+            child.wait(timeout=2.0)
+    return {
+        "present": True,
+        "pid": pid,
+        "terminated_by_probe": terminated,
+        "terminal": child.poll() is not None,
+        "exit_code": child.returncode,
+    }
+
+
+def main() -> int:
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument("--output", type=Path, default=DEFAULT_OUTPUT)
+    parser.add_argument("--wheel", type=Path, default=EXPECTED_WHEEL)
+    args = parser.parse_args()
+    output = args.output.resolve()
+    wheel = args.wheel.resolve()
+    if output.exists():
+        raise SystemExit(f"Refusing to overwrite existing output: {output}")
+    output.mkdir(parents=True, exist_ok=False)
+    fixture: Path | None = None
+    client: Any | None = None
+    original_cwd = Path.cwd()
+    cwd_changed = False
+    original_env = dict(os.environ)
+    started_at = datetime.now(timezone.utc).isoformat()
+    report: dict[str, Any] = {
+        "schema_version": 1,
+        "status": "failed",
+        "started_at": started_at,
+        "source_commit": SOURCE_COMMIT,
+        "wheel": {"path": str(wheel), "sha256": _sha(wheel) if wheel.is_file() else None},
+        "wheel_sha256_expected": EXPECTED_WHEEL_SHA256,
+        "helper": {"path": str(Path(__file__).resolve()), "sha256_before": _sha(Path(__file__))},
+        "mode": "installed_python_isolated",
+        "client_startup_timeout_seconds": STARTUP_TIMEOUT_SECONDS,
+        "model_or_native_host_calls": False,
+    }
+    try:
+        if not wheel.is_file():
+            raise RuntimeError(f"wheel is unavailable: {wheel}")
+        if _sha(wheel) != EXPECTED_WHEEL_SHA256:
+            raise RuntimeError("wheel SHA256 does not match the verified package")
+        report["package_binding"] = _package_binding()
+        if not report["package_binding"]["module_file_under_installed_site_packages"] or not report[
+            "package_binding"
+        ]["module_paths_under_installed_site_packages"]:
+            raise RuntimeError("mnemos import is not exclusively from installed site-packages")
+        fixture = Path(
+            tempfile.mkdtemp(prefix=FIXTURE_PREFIX, dir=str(output.parent))
+        ).resolve()
+        if not fixture.name.startswith(FIXTURE_PREFIX) or fixture.parent != output.parent:
+            raise RuntimeError("fixture path escaped the private probe parent")
+        if not _not_git_worktree(fixture.parent):
+            raise RuntimeError("probe fixture parent is inside a git worktree")
+        project = fixture / "project"
+        project.mkdir()
+        (fixture / "scopes.json").write_text("{}\n", encoding="utf-8")
+        # Deliberately malformed TOML. Its contents are not retained in the report.
+        (fixture / "config.toml").write_text("[embedding\n", encoding="utf-8")
+        runtime = fixture / "runtime"
+        runtime.mkdir()
+        descriptor = runtime / "descriptor.json"
+        sqlite_path = fixture / "memory.sqlite"
+        configured = {
+            "MNEMOS_CONFIG_PATH": str(fixture / "config.toml"),
+            "MNEMOS_SQLITE_PATH": str(sqlite_path),
+            "MNEMOS_STORE_TYPE": "sqlite",
+            "MNEMOS_SCOPE_REGISTRY": str(fixture / "scopes.json"),
+            "MNEMOS_RUNTIME_DIR": str(runtime),
+        }
+        for key in list(os.environ):
+            if key.startswith("MNEMOS_") or key == "PYTHONPATH":
+                os.environ.pop(key, None)
+        os.environ.update(configured)
+        report["fixture"] = {
+            "root": str(fixture),
+            "project": str(project),
+            "descriptor": str(descriptor),
+            "runtime": str(runtime),
+            "git_parent_is_worktree": False,
+            "configured_keys": sorted(configured),
+            "malformed_config": True,
+        }
+        from mnemos.client import MnemosClient
+
+        client = MnemosClient(
+            descriptor_path=descriptor,
+            auto_start=True,
+            startup_timeout=STARTUP_TIMEOUT_SECONDS,
+            request_timeout=STARTUP_TIMEOUT_SECONDS,
+            python_executable=sys.executable,
+        )
+        # The client launcher does not expose cwd. Move the probe process into
+        # the disposable fixture so the child cannot import the checkout tree.
+        os.chdir(fixture)
+        cwd_changed = True
+        observation = asyncio.run(_observe_client(client))
+        os.chdir(original_cwd)
+        cwd_changed = False
+        report["observation"] = observation
+        report["descriptor"] = {
+            "exists": descriptor.exists(),
+            "bytes": descriptor.stat().st_size if descriptor.exists() else 0,
+        }
+        service_log = runtime / "service.log"
+        report["service_log"] = {
+            "exists": service_log.exists(),
+            "bytes": service_log.stat().st_size if service_log.exists() else 0,
+        }
+        report["lock"] = {
+            "exists": descriptor.with_suffix(".lock").exists(),
+            "bytes": descriptor.with_suffix(".lock").stat().st_size
+            if descriptor.with_suffix(".lock").exists()
+            else 0,
+        }
+        report["status"] = "completed"
+    except BaseException as error:
+        report["failure"] = _safe_error(error)
+    finally:
+        if cwd_changed:
+            os.chdir(original_cwd)
+        if client is not None:
+            report["child_cleanup"] = _cleanup_child(client)
+            try:
+                asyncio.run(client.close())
+            except BaseException as error:
+                report["client_close_error"] = _safe_error(error)
+        os.environ.clear()
+        os.environ.update(original_env)
+        if fixture is not None:
+            safe_fixture = fixture.resolve()
+            if (
+                safe_fixture.name.startswith(FIXTURE_PREFIX)
+                and safe_fixture.parent == output.parent
+                and not safe_fixture.is_relative_to(output)
+            ):
+                shutil.rmtree(safe_fixture)
+            report["fixture_cleanup"] = {
+                "path": str(safe_fixture),
+                "exists_after_cleanup": safe_fixture.exists(),
+            }
+        report["finished_at"] = datetime.now(timezone.utc).isoformat()
+        report["helper"]["sha256_after"] = _sha(Path(__file__))
+        report["report_path"] = str(output / "report.json")
+        (output / "report.json").write_text(
+            json.dumps(report, indent=2, sort_keys=True) + "\n", encoding="utf-8"
+        )
+    print(json.dumps({"status": report["status"], "output": str(output)}))
+    return 0 if report["status"] == "completed" else 1
+
+
+if __name__ == "__main__":
+    raise SystemExit(main())

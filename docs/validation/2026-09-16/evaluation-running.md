@@ -1,12 +1,12 @@
 # Real-model evaluation status
 
-## Current checkpoint: September 17, 2026, 20:50 UTC
+## Current checkpoint: September 17, 2026, 22:17 UTC
 
 The resumed held-out mechanism worker completed with exit code zero at
 19:48 UTC. The coordinator then started lifecycle worker PID 47588, observed
 live at this checkpoint. The seven-profile lifecycle matrix is running; the
-baseline checkpoint contains 138 completed observations with next session index
-45. Ollama on `.35` responds with both originally pinned model digests.
+baseline checkpoint contains 575 completed observations with next session index
+191. Ollama on `.35` responds with both originally pinned model digests.
 The completed mechanism phase has not been used to tune the frozen settings,
 and no quality conclusion is accepted before the complete comparison.
 
@@ -42,14 +42,15 @@ status and outputs are under `real-model-v4/`, with persistent checkpoints
 under `.venv/real-model-work-v4/`. The queue retains its original source,
 dataset, model-digest, and option bindings. Later product changes, including
 embedding roles, conflict collisions, concurrent retrieval, Claude startup,
-and lost capture acknowledgments, are not part of this run. The latest complete
-package checkpoint is separate source `6cde465`, with 918 tests passed and
+lost capture acknowledgments, and service exit diagnostics, are not part of
+this run. The latest complete
+package checkpoint is separate source `a607a5a`, with 924 tests passed and
 four skipped, followed by formatting, typing, JavaScript, build, and Twine
-checks. Its fresh installed wheel passed 124 selected contract cases with two
+checks. Its fresh installed wheel passed 130 selected contract cases with two
 matching platform skips and
 the synthetic Stop replay assertions on C: SSD fixtures. These checks do not
 promote the frozen evaluation's quality results or resolve the earlier D:
-storage timeouts. See the [package checkpoint](../2026-09-17/lost-ack-package-checkpoint-v3/README.md).
+storage timeouts. See the [package checkpoint](../2026-09-17/startup-exit-package-checkpoint-v1/README.md).
 
 Current model pins:
 
