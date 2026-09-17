@@ -134,7 +134,7 @@ Current evidence has these boundaries:
 | --- | --- |
 | Deterministic module and storage tests | Latest committed broad checkpoint: 521 passed, 2 optional WSL checks skipped; later review and graph-discovery changes are undergoing broad verification; see the dated validation record |
 | Synthetic local service and SQLite restart flow | Observed for one provider-backed fact |
-| Full real-model ablation and held-out quality evaluation | RUNNING from frozen commit `5e852e7`; no completed acceptance result yet; see [run record](validation/2026-09-16/evaluation-running.md) |
+| Full real-model ablation and held-out quality evaluation | v2 stopped after an evaluator target-mapping defect; 600 baseline and 12 full observations preserved; replacement verification pending; see [run record](validation/2026-09-16/evaluation-running.md) |
 | Installed Claude Code, Codex, and Hermes host smoke | Adapter/service contracts pass; actual WSL bridge and installed Hermes API observed; complete native conversation matrix NOT RUN |
 | Two-week pilot with external users or projects | NOT RUN |
 | 10,000-fact latency and growth acceptance | Real query embeddings with synthetic facts: recall 506.111 ms p95 fails the 500 ms gate; durable capture 68.228 ms p95 passes the 100 ms gate; database 324,862,864 bytes |

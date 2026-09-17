@@ -23,7 +23,7 @@ boundaries and thresholds remain in the [implementation plan](../../plans/2026-0
 | T15 UI | Project enable/pause, observed readiness, facts/history/correction/forget, job state, legacy and routing review | API and browser checks include profile-filtered diagnostic dismissal and source expiry; bounded-list and active-store labels disclosed |
 | T16 Recovery | Consistent backup, new-path restore, suppression merge, staged reindex and activation backup | Backup, integrity, identity, ownership, and reindex tests |
 | T17 Cross-host | One service contract for all three host contexts | Synthetic adapter continuity passes across restart/correct/forget; complete native matrix and two-week pilot remain open |
-| T18 Evaluation | Frozen lifecycle dataset, real provider adapter, seven profiles, checkpoints, raw traces, intervals | Real lifecycle run in progress from `5e852e7`; supplement v1 held for invalid module-utility design; valid graph/affective supplement and quality acceptance pending |
+| T18 Evaluation | Frozen lifecycle datasets, real provider adapter, seven profiles, checkpoints, raw traces, intervals | v2 stopped with 600 baseline and 12 full observations after target-mapping defect; explicit target contract repair underway; valid graph/affective supplement and quality acceptance pending |
 | T19 Claims and packaging | Operational docs, host matrix, paper errata, packaged UI and helper agents | Broad suite passed; frozen source/wheel build and metadata checks passed; installed-wheel lifecycle and assets passed |
 
 The current capture recommendation is a hybrid: automatically capture enabled
