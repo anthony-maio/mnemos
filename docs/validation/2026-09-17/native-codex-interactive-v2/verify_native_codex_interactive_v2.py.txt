@@ -1,0 +1,71 @@
+"""Correlate archived native MCP evidence without modifying the raw report."""
+import hashlib
+import json
+from pathlib import Path
+
+archive = Path('docs/validation/2026-09-17/native-codex-interactive-v2')
+report = json.loads((archive / 'report.json').read_text())
+selection = json.loads((archive / 'selection.json').read_text())
+raw = (archive / 'selected-mnemos-events.jsonl').read_bytes()
+assert hashlib.sha256(raw).hexdigest() == selection['selected_sha256']
+events = [json.loads(line) for line in raw.splitlines()]
+assert len(events) == 5
+matches = [e['payload'] for e in events if e['payload'].get('type') == 'mcp_tool_call_end']
+assert len(matches) == 1
+event = matches[0]
+invocation = event['invocation']
+assert invocation['server'] == 'mnemos' and invocation['tool'] == 'mnemos_retrieve'
+args = invocation['arguments']
+assert args['allowed_scopes'] == ['project'] and args['current_scope'] == 'project'
+seed = report['seed']
+assert hashlib.sha256(args['query'].encode()).hexdigest() == seed['positive_content_sha256']
+assert set(event['result']) == {'Ok'}
+result = event['result']['Ok']
+assert result['isError'] is False
+texts = [c['text'] for c in result['content'] if c['type'] == 'text']
+assert len(texts) == 1
+payload = json.loads(texts[0])
+assert payload == json.loads(result['structuredContent']['result'])
+assert len(payload['facts']) == 1
+fact = payload['facts'][0]
+assert fact['id'] == seed['positive_fact_id']
+assert fact['version'] == seed['positive_version']
+assert fact['scope'] == 'project' and fact['scope_id'] == seed['project_id']
+assert hashlib.sha256(fact['content'].encode()).hexdigest() == seed['positive_content_sha256']
+assert seed['foreign_fact_id'] not in texts[0]
+assert seed['foreign_project_id'] not in texts[0]
+assert 'Native interactive retrieval fixture marker beta.' not in texts[0]
+trace = [t for t in report['dispatch_trace'] if t['operation'] == 'retrieve' and t['query_sha256'] == seed['positive_content_sha256']]
+assert len(trace) == 1
+assert trace[0]['status'] == 'returned' and trace[0]['project_id'] == seed['project_id']
+assert trace[0]['fact_ids'] == [seed['positive_fact_id']]
+for name in ('positive', 'foreign'):
+    before = report['fact_guard']['before'][name]
+    after = report['fact_guard']['after'][name]
+    assert all(before[k] == after[k] for k in ('content_sha256', 'present', 'version'))
+assert report['fact_access_delta'] == {'positive': 3, 'foreign': 0}
+assert report['cleanup']['auth_copy_removed'] and report['cleanup']['descriptor_absent']
+assert report['cleanup']['errors'] == []
+assert report['status'] == 'failed' and report['timed_out'] is True
+acceptance = {
+    'bounded_native_mcp_retrieval': 'passed',
+    'overall_process_status': report['status'],
+    'shutdown_timed_out': report['timed_out'],
+    'source_commit': report['source_commit'],
+    'wheel_sha256': report['wheel_sha256'],
+    'native_event_call_id': event['call_id'],
+    'correlated_service_session_id': trace[0]['session_id'],
+    'checks': ['successful native MCP completion', 'structured project scope',
+               'one seed with matching ID, version, project, and content hash',
+               'foreign project excluded', 'unique matching service dispatch',
+               'seed content and versions preserved', 'foreign access count unchanged',
+               'private auth and service descriptor cleanup recorded'],
+    'limits': ['deterministic fixture vectors and disabled modules',
+               'no model quality or full lifecycle claim',
+               'capture completeness remains open', 'shutdown failure preserved'],
+    'verifier_sha256': hashlib.sha256(Path(__file__).read_bytes()).hexdigest(),
+}
+output = archive / 'retrieval-acceptance.json'
+assert not output.exists(), 'refusing to overwrite acceptance evidence'
+output.write_text(json.dumps(acceptance, indent=2) + '\n', encoding='utf-8')
+print(json.dumps(acceptance))

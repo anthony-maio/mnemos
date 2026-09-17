@@ -9,8 +9,11 @@ interactive call: MCP retrieval now accepts structured scope lists as well as
 legacy comma-separated strings. Empty or invalid lists are rejected, and the
 stdio regression verifies project isolation. The [native failure](../2026-09-17/native-codex-interactive-v1/README.md)
 and [regression evidence](../2026-09-17/mcp-scope-arguments-v1/README.md) are preserved.
-The complete package verification below includes this repair. Native retrieval
-after the repair remains open.
+The complete package verification below includes this repair. The subsequent
+[native interactive check](../2026-09-17/native-codex-interactive-v2/README.md)
+returned the scoped seed through an approved MCP call against installed
+`30eaf42`. Bounded native retrieval passes. Shutdown timed out and assistant
+capture was absent, so complete conversation and lifecycle acceptance remain open.
 
 The latest package checkpoint is source `30eaf42`. Its frozen verification
 passed 929 tests with four platform-specific skips, formatting, typing,
@@ -112,7 +115,7 @@ capture diagnostics and complete lifecycle acceptance remain open.
 | T10 Graph | Persisted mutual top-k links, scope-safe traversal, bounded recovery, insertion-order controls, and capacity diagnostics are implemented and tested. | Structural controls pass. Graph utility and eligible-target coverage are not established by the available evidence. |
 | T11 Forget | Exact fact deletion, suppression, replay protection, inflight handling, restore behavior, and selected related-removal preview/apply are implemented and tested. | Local and installed related-forget checks pass. Native lifecycle remains open. Logical forgetting does not erase external transcripts or historical backups. |
 | T12 Claude Code | Hook capture, transcript deltas, checkpoints, capture-before-recall, identity diagnostics, and replay repair are implemented. | Native v18 on dedfcfd passed all 15 fact-lifecycle criteria with the new startup default, including correction, forgetting, restart, and reconstructed replay. Degraded hook capture keeps the overall result partial. Native extraction and complete capture acceptance remain open. See the [native lifecycle archive](../2026-09-17/native-claude-lifecycle-v18/README.md). |
-| T13 Codex | Generated hook configuration, native payload handling, explicit MCP fallback, and bounded transport checks are implemented. | Generated-config canary and restart/replay evidence pass. Native retrieve v2 against installed 56182d9 was cancelled by the host before returning a result. Native retrieval, mutation, and cross-host lifecycle acceptance remain open. See the [cancelled read probe](../2026-09-17/native-codex-retrieve-v2/README.md). |
+| T13 Codex | Generated hook configuration, native payload handling, explicit MCP fallback, and bounded transport checks are implemented. | Generated-config canary and restart/replay evidence pass. Interactive v2 against installed 30eaf42 returned the seeded project fact through actual MCP, excluding the foreign fact. Its shutdown timed out and assistant capture was absent. Complete capture, mutation, and cross-host lifecycle acceptance remain open. See the [interactive read checkpoint](../2026-09-17/native-codex-interactive-v2/README.md). |
 | T14 Hermes | Installed provider integration, registry handling, Windows/WSL bridge behavior, and entry-point discovery are implemented and tested. | Installed bridge checks pass. A native model turn has not passed. |
 | T15 UI | Project enable/pause, readiness, facts/history, correction/forget, captured-copy review, job state, and routing review are exposed and covered by API/browser checks. | Local UI and control-plane checks pass. Operational pilot and native-host coverage remain open. |
 | T16 Recovery | Backup, integrity, new-path restore, suppression merge, staged reindex, and activation backup behavior are implemented and tested. | Local recovery contracts pass, including a backup during an active writer transaction. Live data migration remains separately authorization-bound. |

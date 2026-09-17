@@ -28,3 +28,12 @@ tool accepted only a string. The service received no retrieval dispatch.
 This establishes a separate argument compatibility failure, not successful
 retrieval or the sole cause of the earlier cancellation. The earlier run
 and the interactive check also used different source revisions.
+
+The subsequent [interactive v2 check](native-codex-interactive-v2/README.md)
+used installed source `30eaf42`, including support for structured scope lists.
+Normal per-call approval was followed by a successful native MCP result and
+a matching service dispatch. The result contained the seeded project fact
+and excluded the foreign fact. The process later timed out during shutdown.
+This establishes bounded retrieval after the argument repair. Changes in
+source, fixture location, and invocation prevent attributing the earlier
+noninteractive cancellations solely to approval handling.

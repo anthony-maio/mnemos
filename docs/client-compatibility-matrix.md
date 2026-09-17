@@ -5,7 +5,7 @@ Updated September 17, 2026 for the unreleased functional-local-memory worktree. 
 | Client | Implemented integration | Observed evidence | Native conversation acceptance |
 | --- | --- | --- | --- |
 | Claude Code | Command hooks, transcript deltas, context injection, MCP tools; provisional missing-ID capture excluded from extraction | Installed source dedfcfd completed native correction, consolidation, retrieval, and forgetting through the actual 2.1.191 plugin, with restart and reconstructed Stop replay checks | All 15 bounded fact-lifecycle criteria passed in v18 with the new startup default. Degraded capture keeps the overall result partial. Extraction quality and complete capture acceptance remain open |
-| Codex CLI | Command lifecycle hooks, supported context output, MCP tools | Native 0.146.0 used source20f's generated TOML commands, returned a random canary absent from its prompt, and captured both roles across restart | Bounded hook transport observed with fixture vectors and unavailable cognition. Full native correction/forget lifecycle remains open |
+| Codex CLI | Command lifecycle hooks, supported context output, MCP tools | Native 0.146.0 retrieved the seeded project fact through an approved MCP call against installed source30eaf42, excluding the foreign project fact. Earlier source20f separately demonstrated hook recall and both-role capture across restart | Bounded MCP retrieval passes with fixture vectors. The latest process timed out during shutdown and retained only user capture. Complete capture, correction/forget, and cross-host lifecycle acceptance remain open |
 | Codex Desktop | Same command hooks and MCP fallback | Shared adapter coverage; no current desktop conversation evidence | Pending |
 | Hermes Agent | Optional MemoryProvider and explicit Windows/WSL bridge | Installed 0.21.3 API calls and actual WSL -> Windows authenticated transport. Sourcec805 passed full verification and discovery through the actual wheel entry point in WSL | Model turn has not completed; cross-host native recall remains open |
 | Generic MCP stdio | MCP server as service client | Subprocess capture, job status, inspect, retrieve, correct, forget | Host-specific acceptance pending |
@@ -61,8 +61,16 @@ accepted the normal per-call approval, then returned an MCP argument error:
 Codex supplied a scope list while the tool accepted only a string. No retrieval
 reached the service. Source `d58e082` now accepts either form and rejects empty
 or invalid scope lists; [stdio regression checks](validation/2026-09-17/mcp-scope-arguments-v1/README.md)
-cover the original failure and foreign-project isolation. Native retrieval
-with the repair remains unverified.
+cover the original failure and foreign-project isolation. The subsequent
+[interactive v2 check](validation/2026-09-17/native-codex-interactive-v2/README.md)
+used the repaired installed `30eaf42` wheel and normal per-call approval.
+The actual MCP result returned the seeded project fact with its stable ID and
+version, excluding the foreign project fact. A matching service dispatch
+distinguishes this call from two hook-driven recalls. The native process
+later timed out during shutdown; its original failed report is preserved.
+User capture was committed, but assistant capture was absent. This closes
+bounded native MCP retrieval only, with deterministic fixture vectors and no
+model-quality claim. It does not isolate the cause of earlier cancellations.
 
 The [native provisional capture record](validation/2026-09-16/provisional-native-claude-v8/README.md)
 preserves the original duplicate gate alongside the separate identity result.
