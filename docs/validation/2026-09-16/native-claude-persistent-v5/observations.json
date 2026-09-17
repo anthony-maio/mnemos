@@ -1,0 +1,84 @@
+{
+  "assistant_messages": [
+    {
+      "model": "claude-sonnet-4-6",
+      "id": "msg_011Cf8dPuDENCh9C5sq31EHB",
+      "type": "message",
+      "role": "assistant",
+      "content": [
+        {
+          "type": "text",
+          "text": "The private release codename for this project is **mnemos-697dc51a545d**."
+        }
+      ],
+      "container": null,
+      "stop_reason": null,
+      "stop_sequence": null,
+      "stop_details": null,
+      "usage": {
+        "input_tokens": 3,
+        "cache_creation_input_tokens": 1457,
+        "cache_read_input_tokens": 0,
+        "cache_creation": {
+          "ephemeral_5m_input_tokens": 0,
+          "ephemeral_1h_input_tokens": 1457
+        },
+        "output_tokens": 1,
+        "service_tier": "standard",
+        "inference_geo": "not_available"
+      },
+      "diagnostics": null,
+      "context_management": null
+    }
+  ],
+  "hook_events": [
+    {
+      "type": "system",
+      "subtype": "hook_started",
+      "hook_id": "108ea946-f140-4289-ae69-9d14f7b9326f",
+      "hook_name": "SessionStart:startup",
+      "hook_event": "SessionStart",
+      "uuid": "15215dae-bc9d-4742-97ec-0a8468cac055",
+      "session_id": "8a27c865-56a8-4280-af6d-7fc2fc55548a"
+    },
+    {
+      "type": "system",
+      "subtype": "hook_response",
+      "hook_id": "108ea946-f140-4289-ae69-9d14f7b9326f",
+      "hook_name": "SessionStart:startup",
+      "hook_event": "SessionStart",
+      "output": "{\"hookSpecificOutput\":{\"hookEventName\":\"SessionStart\",\"additionalContext\":\"1. The private release codename for this project is mnemos-697dc51a545d.\"}}\r\n",
+      "stdout": "{\"hookSpecificOutput\":{\"hookEventName\":\"SessionStart\",\"additionalContext\":\"1. The private release codename for this project is mnemos-697dc51a545d.\"}}\r\n",
+      "stderr": "",
+      "exit_code": 0,
+      "outcome": "success",
+      "uuid": "29ede567-1602-452b-b8ec-729937df617a",
+      "session_id": "8a27c865-56a8-4280-af6d-7fc2fc55548a"
+    },
+    {
+      "type": "system",
+      "subtype": "hook_started",
+      "hook_id": "0b8db106-25b6-433a-ad04-7f4e93207775",
+      "hook_name": "UserPromptSubmit",
+      "hook_event": "UserPromptSubmit",
+      "uuid": "d633f47c-5bdc-4032-a93d-8b35cc52a270",
+      "session_id": "8a27c865-56a8-4280-af6d-7fc2fc55548a"
+    },
+    {
+      "type": "system",
+      "subtype": "hook_response",
+      "hook_id": "0b8db106-25b6-433a-ad04-7f4e93207775",
+      "hook_name": "UserPromptSubmit",
+      "hook_event": "UserPromptSubmit",
+      "output": "Traceback (most recent call last):\r\n  File \"D:\\WindowsTemp\\mnemos-native-claude-persistent-v5-xl8f1sno\\hook.py\", line 28, in <module>\r\n    completed = subprocess.run(\r\n        [sys.executable, \"-m\", \"mnemos.adapters.claude_code\", event],\r\n    ...<3 lines>...\r\n        timeout=10,\r\n    )\r\n  File \"C:\\Users\\Ant\\AppData\\Roaming\\uv\\python\\cpython-3.13.7-windows-x86_64-none\\Lib\\subprocess.py\", line 556, in run\r\n    stdout, stderr = process.communicate(input, timeout=timeout)\r\n                     ~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^\r\n  File \"C:\\Users\\Ant\\AppData\\Roaming\\uv\\python\\cpython-3.13.7-windows-x86_64-none\\Lib\\subprocess.py\", line 1222, in communicate\r\n    stdout, stderr = self._communicate(input, endtime, timeout)\r\n                     ~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^\r\n  File \"C:\\Users\\Ant\\AppData\\Roaming\\uv\\python\\cpython-3.13.7-windows-x86_64-none\\Lib\\subprocess.py\", line 1646, in _communicate\r\n    raise TimeoutExpired(self.args, orig_timeout)\r\nsubprocess.TimeoutExpired: Command '['D:\\\\WindowsTemp\\\\mnemos-scope-wheel-20260917-0659\\\\Scripts\\\\python.exe', '-m', 'mnemos.adapters.claude_code', 'UserPromptSubmit']' timed out after 10 seconds\r\n",
+      "stdout": "",
+      "stderr": "Traceback (most recent call last):\r\n  File \"D:\\WindowsTemp\\mnemos-native-claude-persistent-v5-xl8f1sno\\hook.py\", line 28, in <module>\r\n    completed = subprocess.run(\r\n        [sys.executable, \"-m\", \"mnemos.adapters.claude_code\", event],\r\n    ...<3 lines>...\r\n        timeout=10,\r\n    )\r\n  File \"C:\\Users\\Ant\\AppData\\Roaming\\uv\\python\\cpython-3.13.7-windows-x86_64-none\\Lib\\subprocess.py\", line 556, in run\r\n    stdout, stderr = process.communicate(input, timeout=timeout)\r\n                     ~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^\r\n  File \"C:\\Users\\Ant\\AppData\\Roaming\\uv\\python\\cpython-3.13.7-windows-x86_64-none\\Lib\\subprocess.py\", line 1222, in communicate\r\n    stdout, stderr = self._communicate(input, endtime, timeout)\r\n                     ~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^\r\n  File \"C:\\Users\\Ant\\AppData\\Roaming\\uv\\python\\cpython-3.13.7-windows-x86_64-none\\Lib\\subprocess.py\", line 1646, in _communicate\r\n    raise TimeoutExpired(self.args, orig_timeout)\r\nsubprocess.TimeoutExpired: Command '['D:\\\\WindowsTemp\\\\mnemos-scope-wheel-20260917-0659\\\\Scripts\\\\python.exe', '-m', 'mnemos.adapters.claude_code', 'UserPromptSubmit']' timed out after 10 seconds\r\n",
+      "exit_code": 1,
+      "outcome": "error",
+      "uuid": "f8cb766a-f9aa-4827-873d-940435b4d097",
+      "session_id": "8a27c865-56a8-4280-af6d-7fc2fc55548a"
+    }
+  ],
+  "result_records": [],
+  "note": "Synthetic fixture stream fragments only; no final result or numeric cost was observed"
+}

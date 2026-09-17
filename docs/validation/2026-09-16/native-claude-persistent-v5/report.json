@@ -1,0 +1,195 @@
+{
+  "runner": "native-claude-persistent-v5",
+  "source_commit": "20f271d93bbf02990a78b51aa74694deaf5a9bf7",
+  "runner_sha256": "c5af0ffb7f743f6653ebb863ae6d95bf18be19a3230f174ea6ed082fd3a0aebb",
+  "started_at": "2026-09-17T07:35:48.124398+00:00",
+  "status": "failed",
+  "scope": "native Claude hooks with persistent transcript, scoped seed, durable restart, replay; no cognition quality claim",
+  "model_quality_claim": "none",
+  "embedding_fixture": "Constant unit vectors for every text; no semantic retrieval claim",
+  "cognition": "UnavailableLLMProvider; all modules disabled",
+  "max_native_seconds": 60,
+  "hook_timeout_seconds": 20,
+  "wheel_argument": "D:\\Development\\mnemos\\mnemos\\.worktrees\\functional-local-memory\\.venv\\claude-scope-checks-v2\\dist\\mnemos_memory-0.7.0-py3-none-any.whl",
+  "expected_wheel_sha256": "0ecaa634fe447621d6366b93accad7abfa2495063d9b425e6043973ea7b86663",
+  "python": {
+    "executable": "D:\\WindowsTemp\\mnemos-scope-wheel-20260917-0659\\Scripts\\python.exe",
+    "mnemos_package": "D:\\WindowsTemp\\mnemos-scope-wheel-20260917-0659\\Lib\\site-packages\\mnemos\\__init__.py",
+    "site_packages_asserted": true
+  },
+  "package_provenance": {
+    "source_commit": "20f271d93bbf02990a78b51aa74694deaf5a9bf7",
+    "package_files_checked": 53,
+    "wheel_package_members_checked": 56,
+    "wheel_path": "D:\\Development\\mnemos\\mnemos\\.worktrees\\functional-local-memory\\.venv\\claude-scope-checks-v2\\dist\\mnemos_memory-0.7.0-py3-none-any.whl",
+    "wheel_sha256_expected": "0ecaa634fe447621d6366b93accad7abfa2495063d9b425e6043973ea7b86663",
+    "wheel_sha256_observed": "0ecaa634fe447621d6366b93accad7abfa2495063d9b425e6043973ea7b86663"
+  },
+  "claude": {
+    "path": "C:\\Users\\Ant\\.local\\bin\\claude.exe",
+    "version": "2.1.191 (Claude Code)"
+  },
+  "command": [
+    "C:\\Users\\Ant\\.local\\bin\\claude.exe",
+    "--print",
+    "--verbose",
+    "--output-format",
+    "stream-json",
+    "--include-hook-events",
+    "--setting-sources",
+    "project",
+    "--settings",
+    "D:\\WindowsTemp\\mnemos-native-claude-persistent-v5-xl8f1sno\\claude-settings.json",
+    "--strict-mcp-config",
+    "--mcp-config",
+    "D:\\WindowsTemp\\mnemos-native-claude-persistent-v5-xl8f1sno\\empty-mcp.json",
+    "--tools",
+    "",
+    "--disable-slash-commands",
+    "--permission-mode",
+    "plan",
+    "--session-id",
+    "8a27c865-56a8-4280-af6d-7fc2fc55548a",
+    "--model",
+    "claude-sonnet-4-6",
+    "--max-budget-usd",
+    "0.08",
+    "--system-prompt",
+    "Answer briefly using only supplied project memory. Do not use tools.",
+    "<random-codename prompt>"
+  ],
+  "fixture_layout": {
+    "project": "D:\\WindowsTemp\\mnemos-native-claude-persistent-v5-xl8f1sno\\project",
+    "claude_config_dir": "D:\\WindowsTemp\\mnemos-native-claude-persistent-v5-xl8f1sno\\claude-config",
+    "private_trace_dir": "D:\\WindowsTemp\\mnemos-native-claude-persistent-v5-xl8f1sno\\hooks",
+    "private_native_stdout": "D:\\WindowsTemp\\mnemos-native-claude-persistent-v5-xl8f1sno\\native-stdout.jsonl",
+    "private_native_stderr": "D:\\WindowsTemp\\mnemos-native-claude-persistent-v5-xl8f1sno\\native-stderr.log",
+    "project_runtime_descriptor_present": false,
+    "auth_copy_performed": true
+  },
+  "native_process": {
+    "returncode": 1,
+    "timed_out": true,
+    "elapsed_ms": 60885.4,
+    "stdout_sha256": "c5afabadb3ea9c35ee2cfabc5bc50c97aa8a25abb8c1f57ff863533e0cb50323",
+    "stdout_bytes": 5544,
+    "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "stderr_bytes": 0,
+    "private_stdout": "D:\\WindowsTemp\\mnemos-native-claude-persistent-v5-xl8f1sno\\native-stdout.jsonl",
+    "private_stderr": "D:\\WindowsTemp\\mnemos-native-claude-persistent-v5-xl8f1sno\\native-stderr.log",
+    "stream": {
+      "record_count": 6,
+      "non_json_line_count": 0,
+      "rows": [
+        {
+          "type": "system",
+          "subtype": "hook_started",
+          "item_type": null,
+          "usage": {},
+          "numeric_cost_fields": {},
+          "answer_digest": null
+        },
+        {
+          "type": "system",
+          "subtype": "hook_response",
+          "item_type": null,
+          "usage": {},
+          "numeric_cost_fields": {},
+          "answer_digest": null
+        },
+        {
+          "type": "system",
+          "subtype": "hook_started",
+          "item_type": null,
+          "usage": {},
+          "numeric_cost_fields": {},
+          "answer_digest": null
+        },
+        {
+          "type": "system",
+          "subtype": "hook_response",
+          "item_type": null,
+          "usage": {},
+          "numeric_cost_fields": {},
+          "answer_digest": null
+        },
+        {
+          "type": "system",
+          "subtype": "init",
+          "item_type": null,
+          "usage": {},
+          "numeric_cost_fields": {},
+          "answer_digest": null
+        },
+        {
+          "type": "assistant",
+          "subtype": null,
+          "item_type": null,
+          "usage": {},
+          "numeric_cost_fields": {},
+          "answer_digest": null
+        }
+      ],
+      "hook_rows": [
+        {
+          "subtype": "hook_started",
+          "hook_event": "SessionStart",
+          "hook_name": "SessionStart:startup",
+          "outcome": null,
+          "exit_code": null,
+          "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+          "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+          "output_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+          "session_id_sha256": "d6a3a698f240bddc6ba293180230f5d7577c7f6f4951bf363c7892f1efbb97c2"
+        },
+        {
+          "subtype": "hook_response",
+          "hook_event": "SessionStart",
+          "hook_name": "SessionStart:startup",
+          "outcome": "success",
+          "exit_code": 0,
+          "stdout_sha256": "1fbaf23938a308e7b1d46235455d260b8ce843e754d2bb653abe45105775f449",
+          "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+          "output_sha256": "1fbaf23938a308e7b1d46235455d260b8ce843e754d2bb653abe45105775f449",
+          "session_id_sha256": "d6a3a698f240bddc6ba293180230f5d7577c7f6f4951bf363c7892f1efbb97c2"
+        },
+        {
+          "subtype": "hook_started",
+          "hook_event": "UserPromptSubmit",
+          "hook_name": "UserPromptSubmit",
+          "outcome": null,
+          "exit_code": null,
+          "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+          "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+          "output_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+          "session_id_sha256": "d6a3a698f240bddc6ba293180230f5d7577c7f6f4951bf363c7892f1efbb97c2"
+        },
+        {
+          "subtype": "hook_response",
+          "hook_event": "UserPromptSubmit",
+          "hook_name": "UserPromptSubmit",
+          "outcome": "error",
+          "exit_code": 1,
+          "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+          "stderr_sha256": "4023e453ef364eb2f6b3ede5f24f536c2f675bff7e0260f67b031f85b3012ca9",
+          "output_sha256": "4023e453ef364eb2f6b3ede5f24f536c2f675bff7e0260f67b031f85b3012ca9",
+          "session_id_sha256": "d6a3a698f240bddc6ba293180230f5d7577c7f6f4951bf363c7892f1efbb97c2"
+        }
+      ],
+      "answer_text_digests": [],
+      "answer_mentions_random_canary": false,
+      "tool_call_observed": false,
+      "tool_item_types": [],
+      "cost_usd_observed": [],
+      "total_cost_usd": null,
+      "usage_observed": false
+    }
+  },
+  "error_type": "RuntimeError",
+  "error_digest": "59ecd3e5a0c3205e7bb06717158b793bcdae5ff288330cd3cb62c7921f5ce466",
+  "fixture": "D:\\WindowsTemp\\mnemos-native-claude-persistent-v5-xl8f1sno",
+  "private_fixture_preserved": true,
+  "auth_copy_removed": true,
+  "runtime_descriptor_absent": true,
+  "finished_at": "2026-09-17T07:37:04.778910+00:00"
+}

@@ -326,3 +326,12 @@ native prompt IDs and usable persisted transcript coverage remain unproven
 in this no-session-persistence fixture. Constant vectors and unavailable
 cognition establish transport only. See the [v4 record](native-claude-scope-v4/README.md)
 for exact evidence and limitations.
+
+The subsequent [persistent-transcript attempt](native-claude-persistent-v5/README.md)
+used a private Claude configuration root and timed out at 60 seconds before
+Stop or a final result. SessionStart delivered the canary, but the prompt
+adapter exceeded its nested deadline. The user prompt persisted; no checkpoint
+or assistant capture was present after shutdown. A partial assistant stream
+contained the canary, while the private transcript lacked an assistant record.
+This preserves a failed persistent-capture attempt and establishes no replay
+acceptance. Final billed cost and the native stream's stall cause are unknown.
