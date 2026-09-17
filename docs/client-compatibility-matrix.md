@@ -53,6 +53,12 @@ the package and 87 installed contract cases passed. The
 [read probe](validation/2026-09-17/native-codex-retrieve-v2/README.md) preserves
 its exact command, stream, installation binding, and cleanup evidence.
 
+A later [approval-path investigation](validation/2026-09-17/native-codex-approval-diagnosis-v1.md)
+identified noninteractive approval handling as a plausible cause. A similar
+upstream report concerns another CLI version, so it does not prove the cause
+here. A normal interactive approval check with service-side tracing remains
+unrun; the native acceptance state is unchanged.
+
 The [native provisional capture record](validation/2026-09-16/provisional-native-claude-v8/README.md)
 preserves the original duplicate gate alongside the separate identity result.
 

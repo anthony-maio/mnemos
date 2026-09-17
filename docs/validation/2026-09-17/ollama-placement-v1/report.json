@@ -1,0 +1,90 @@
+{
+  "checkpoints": {
+    "baseline": {
+      "affective_rows": null,
+      "completed": null,
+      "file": ".venv\\real-model-work-v4\\lifecycle\\baseline.checkpoint.json",
+      "graph_rows": null,
+      "status": "ok"
+    },
+    "full": {
+      "affective_rows": null,
+      "completed": null,
+      "file": ".venv\\real-model-work-v4\\lifecycle\\full.checkpoint.json",
+      "graph_rows": null,
+      "status": "ok"
+    }
+  },
+  "command": [
+    "D:\\Development\\mnemos\\mnemos\\.worktrees\\functional-local-memory\\.venv\\Scripts\\python.exe",
+    ".venv\\observe_ollama_placement_v1.py",
+    "--output",
+    "C:\\Users\\Ant\\AppData\\Local\\Temp\\mnemos-ollama-placement-v1"
+  ],
+  "cwd": "D:\\Development\\mnemos\\mnemos\\.worktrees\\functional-local-memory",
+  "endpoint": "http://192.168.86.35:11434",
+  "helper_sha256": "d71fdea3dae5b1a7c9297cd1955ce435734b4b95e1f737879953ea00300ac1a3",
+  "limitations": [
+    "read-only /api/ps and /api/version observation; no inference, pull, or unload",
+    "process records contain only name and creation time",
+    "checkpoint records contain counts only and no quality inspection",
+    "current placement is not evidence of any causal explanation for latency"
+  ],
+  "observed_at": "2026-09-17T22:27:43.598438+00:00",
+  "ollama": {
+    "endpoint": "http://192.168.86.35:11434",
+    "requests": {
+      "ps": {
+        "elapsed_ms": 52.862,
+        "models": [
+          {
+            "digest": "0a109f422b47e3a30ba2b10eca18548e944e8a23073ee3f3e947efcf3c45e59f",
+            "model": "nomic-embed-text:latest",
+            "name": "nomic-embed-text:latest",
+            "size": 376449269,
+            "size_vram": 0
+          },
+          {
+            "digest": "6488c96fa5faab64bb65cbd30d4289e20e6130ef535a93ef9a49f42eda893ea7",
+            "model": "qwen3.5:9b",
+            "name": "qwen3.5:9b",
+            "size": 6604298647,
+            "size_vram": 0
+          }
+        ],
+        "raw_file": "api-ps.json",
+        "status": "ok"
+      },
+      "version": {
+        "elapsed_ms": 4.205,
+        "raw_file": "api-version.json",
+        "status": "ok",
+        "version": "0.34.1"
+      }
+    }
+  },
+  "processes": {
+    "processes": {
+      "child": {
+        "creation_time": "/Date(1789674522489)/",
+        "pid": 46036,
+        "present": true,
+        "process_name": "python"
+      },
+      "coordinator": {
+        "creation_time": "/Date(1789669749185)/",
+        "pid": 26488,
+        "present": true,
+        "process_name": "python"
+      },
+      "lifecycle": {
+        "creation_time": "/Date(1789674522462)/",
+        "pid": 47588,
+        "present": true,
+        "process_name": "python"
+      }
+    },
+    "status": "ok"
+  },
+  "schema_version": 1
+}

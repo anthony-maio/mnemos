@@ -1,0 +1,175 @@
+"""Bounded read-only Ollama placement observation for the active evaluation."""
+
+from __future__ import annotations
+
+import argparse
+import hashlib
+import json
+import os
+import subprocess
+import sys
+import time
+import urllib.error
+import urllib.request
+from datetime import datetime, timezone
+from pathlib import Path
+from typing import Any
+
+
+DEFAULT_ENDPOINT = "http://192.168.86.35:11434"
+DEFAULT_OUTPUT = Path(r"C:\Users\Ant\AppData\Local\Temp\mnemos-ollama-placement-v1")
+CHECKPOINTS = {
+    "baseline": Path(r".venv\real-model-work-v4\lifecycle\baseline.checkpoint.json"),
+    "full": Path(r".venv\real-model-work-v4\lifecycle\full.checkpoint.json"),
+}
+PIDS = {"coordinator": 26488, "lifecycle": 47588, "child": 46036}
+
+
+def _sha256(path: Path) -> str:
+    digest = hashlib.sha256()
+    with path.open("rb") as stream:
+        for block in iter(lambda: stream.read(1024 * 1024), b""):
+            digest.update(block)
+    return digest.hexdigest()
+
+
+def _get_json(url: str) -> dict[str, Any]:
+    request = urllib.request.Request(url, method="GET")
+    with urllib.request.urlopen(request, timeout=10) as response:
+        payload = json.loads(response.read().decode("utf-8"))
+    if not isinstance(payload, dict):
+        raise ValueError("Ollama response was not a JSON object")
+    return payload
+
+
+def _observe_endpoint(endpoint: str, output: Path) -> dict[str, Any]:
+    result: dict[str, Any] = {"endpoint": endpoint, "requests": {}}
+    for name in ("ps", "version"):
+        started = time.perf_counter()
+        url = f"{endpoint.rstrip('/')}/api/{name}"
+        try:
+            payload = _get_json(url)
+            elapsed_ms = round((time.perf_counter() - started) * 1000, 3)
+            (output / f"api-{name}.json").write_text(
+                json.dumps(payload, indent=2, sort_keys=True) + "\n", encoding="utf-8"
+            )
+            request_result: dict[str, Any] = {
+                "status": "ok",
+                "elapsed_ms": elapsed_ms,
+                "raw_file": f"api-{name}.json",
+            }
+            if name == "ps":
+                models = payload.get("models", [])
+                if isinstance(models, list):
+                    request_result["models"] = [
+                        {
+                            key: item.get(key)
+                            for key in ("name", "model", "digest", "size", "size_vram")
+                            if key in item
+                        }
+                        for item in models
+                        if isinstance(item, dict)
+                    ]
+            else:
+                request_result["version"] = payload.get("version")
+            result["requests"][name] = request_result
+        except (OSError, ValueError, urllib.error.URLError) as exc:
+            result["requests"][name] = {
+                "status": "error",
+                "elapsed_ms": round((time.perf_counter() - started) * 1000, 3),
+                "error_type": type(exc).__name__,
+            }
+    return result
+
+
+def _observe_processes() -> dict[str, Any]:
+    ids = ",".join(str(pid) for pid in PIDS.values())
+    command = (
+        "$ids=@(" + ids + "); "
+        "Get-Process -Id $ids -ErrorAction SilentlyContinue | "
+        "Select-Object Id,ProcessName,StartTime | ConvertTo-Json -Compress"
+    )
+    try:
+        completed = subprocess.run(
+            ["powershell.exe", "-NoProfile", "-NonInteractive", "-Command", command],
+            capture_output=True,
+            text=True,
+            check=False,
+            timeout=5,
+        )
+        if completed.returncode != 0:
+            return {"status": "error", "error_type": "ProcessQueryError"}
+        raw = completed.stdout.strip()
+        parsed = json.loads(raw) if raw else []
+        rows = parsed if isinstance(parsed, list) else [parsed]
+        by_pid = {
+            str(row["Id"]): {
+                "present": True,
+                "process_name": row.get("ProcessName"),
+                "creation_time": row.get("StartTime"),
+            }
+            for row in rows
+            if isinstance(row, dict) and "Id" in row
+        }
+        return {
+            "status": "ok",
+            "processes": {
+                name: {"pid": pid, **by_pid.get(str(pid), {"present": False})}
+                for name, pid in PIDS.items()
+            },
+        }
+    except (OSError, subprocess.SubprocessError, ValueError) as exc:
+        return {"status": "error", "error_type": type(exc).__name__}
+
+
+def _checkpoint_counts(path: Path) -> dict[str, Any]:
+    try:
+        payload = json.loads(path.read_text(encoding="utf-8"))
+        if not isinstance(payload, dict):
+            raise ValueError("checkpoint is not an object")
+        counts: dict[str, Any] = {"file": str(path), "status": "ok"}
+        for key in ("completed", "graph_rows", "affective_rows"):
+            value = payload.get(key)
+            counts[key] = len(value) if isinstance(value, (list, dict)) else None
+        return counts
+    except (OSError, ValueError, json.JSONDecodeError) as exc:
+        return {"file": str(path), "status": "error", "error_type": type(exc).__name__}
+
+
+def main() -> int:
+    parser = argparse.ArgumentParser()
+    parser.add_argument("--endpoint", default=DEFAULT_ENDPOINT)
+    parser.add_argument("--output", type=Path, default=DEFAULT_OUTPUT)
+    args = parser.parse_args()
+    output = args.output.expanduser()
+    if output.exists():
+        raise SystemExit(f"refusing existing output directory: {output}")
+    output.mkdir(parents=True)
+    helper_path = Path(__file__).resolve()
+    report: dict[str, Any] = {
+        "schema_version": 1,
+        "observed_at": datetime.now(timezone.utc).isoformat(),
+        "command": [sys.executable, *sys.argv],
+        "helper_sha256": _sha256(helper_path),
+        "cwd": os.getcwd(),
+        "endpoint": args.endpoint,
+        "ollama": _observe_endpoint(args.endpoint, output),
+        "processes": _observe_processes(),
+        "checkpoints": {
+            name: _checkpoint_counts(path) for name, path in CHECKPOINTS.items()
+        },
+        "limitations": [
+            "read-only /api/ps and /api/version observation; no inference, pull, or unload",
+            "process records contain only name and creation time",
+            "checkpoint records contain counts only and no quality inspection",
+            "current placement is not evidence of any causal explanation for latency",
+        ],
+    }
+    (output / "report.json").write_text(
+        json.dumps(report, indent=2, sort_keys=True) + "\n", encoding="utf-8"
+    )
+    return 0
+
+
+if __name__ == "__main__":
+    raise SystemExit(main())

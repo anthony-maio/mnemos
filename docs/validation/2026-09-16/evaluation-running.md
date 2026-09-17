@@ -1,14 +1,24 @@
 # Real-model evaluation status
 
-## Current checkpoint: September 17, 2026, 22:17 UTC
+## Current checkpoint: September 17, 2026, 22:27 UTC
 
 The resumed held-out mechanism worker completed with exit code zero at
 19:48 UTC. The coordinator then started lifecycle worker PID 47588, observed
-live at this checkpoint. The seven-profile lifecycle matrix is running; the
-baseline checkpoint contains 575 completed observations with next session index
-191. Ollama on `.35` responds with both originally pinned model digests.
+live at this checkpoint. The seven-profile lifecycle matrix is running. The
+baseline completed all 600 observations across 200 sessions; the full profile
+has three completed observations. Ollama on `.35` responds with both originally
+pinned model digests.
 The completed mechanism phase has not been used to tune the frozen settings,
 and no quality conclusion is accepted before the complete comparison.
+
+The [placement snapshot](../2026-09-17/ollama-placement-v1/README.md) reports
+Ollama 0.34.1 and `size_vram: 0` for both loaded models, indicating CPU placement.
+The user expects GPU execution and reports two RTX 3090 cards with 24 GB each.
+Remote GPU availability and Ollama startup logs have not been inspected.
+Historical placement is unknown; this snapshot does not establish that the
+power interruption changed it. The active run remains unchanged while the
+placement discrepancy is investigated. Any recovery must preserve the
+existing evidence and record the execution-condition change explicitly.
 
 The v4 queue resumed at 18:29 UTC after the local machine's power interruption
 and restart at 18:09 UTC. The original process handle and worker PIDs were
