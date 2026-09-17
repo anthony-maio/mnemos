@@ -569,3 +569,19 @@ unrelated inputs and does not support that conclusion. Both are preserved.
 The [related-forget plan](../../plans/2026-09-17-related-forget.md) adds a scoped
 preview and atomic application of explicitly selected captured copies. Native
 lifecycle acceptance remains open while this path is implemented and tested.
+
+## Held-out mechanism phase completed on sourceb7
+
+All 50 graph cases and 50 affective pairs completed three repetitions. The
+[preserved results](real-model-v3/mechanism-heldout/REVIEW.md) pass graph
+correctness controls but fail the graph eligibility gate: zero of 50 cases
+had a valid measured path, against the required 40. Graph recall utility is
+therefore unmeasured. Affective ranking with synthetic gold states records
+top-1 selection of 0.33 versus 0.00 for semantic ranking; the template-clustered
+paired interval is [0.18, 0.47]. Classifier fidelity passes 154/300 observations
+and is a separate measurement. None of these establishes human acceptance.
+
+The completed phase's eight original artifact hashes match the queue record.
+Its source is frozen `b7a9d9d4`, not the later startup or related-forget changes.
+The lifecycle phase is running separately; its mutable outputs are not included
+in this checkpoint.
