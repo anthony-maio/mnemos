@@ -134,6 +134,16 @@ async def test_codex_claude_hermes_share_durable_scoped_lifecycle(
             },
             queue_on_failure=False,
         )
+        assert result.get("degraded") is not True and "error" not in result, (
+            step_id,
+            host,
+            result,
+        )
+        assert isinstance(result.get("facts"), list) and isinstance(result.get("context"), str), (
+            step_id,
+            host,
+            result,
+        )
         contents = [fact["content"] for fact in result.get("facts", [])]
         rendered = result.get("context", "")
         expected = step.get("expected_content")
@@ -141,7 +151,7 @@ async def test_codex_claude_hermes_share_durable_scoped_lifecycle(
             step[key] for key in ("forbidden_content", "forbidden_content_also") if key in step
         ]
         if expected is not None:
-            assert expected in contents
+            assert expected in contents, (step_id, host, result)
         for value in forbidden:
             assert value not in contents
             assert value not in rendered

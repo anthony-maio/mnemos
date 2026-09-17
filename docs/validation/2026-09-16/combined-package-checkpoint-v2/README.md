@@ -2,7 +2,7 @@
 
 Frozen source `312b8d6` passed 858 tests with four skips, Black, strict mypy, JavaScript syntax, package build, and Twine. This includes embedding roles, canonical conflict protection, concurrent backup, and the expanded continuity fixture.
 
-The exact wheel installed in a fresh environment outside the checkout. The selected installed contract run collected 42 cases: 40 passed and two failed. Both failures were in cross-host continuity (Codex and Claude teaching contexts), where a later recall did not return the expected corrected fact. Captured server output includes connection-aborted errors while writing responses. The cause is still under investigation; this record does not establish whether the missing result came from transport failure or memory behavior. The Hermes teaching-context case passed.
+The exact wheel installed in a fresh environment outside the checkout. The selected installed contract run collected 42 cases: 40 passed and two failed. Both failures were in cross-host continuity. The Codex teaching-context case failed to recall the foreign project's canary after restart; the Claude teaching-context case failed to recall the corrected project-A fact. Captured server output includes connection-aborted errors while writing responses. The cause is still under investigation; this record does not establish whether the missing result came from transport failure or memory behavior. The Hermes teaching-context case passed.
 
 The runner stopped after that failure. The separate installed restart/replay probe did not run. Source-checkout success does not close installed-package acceptance. The Claude plugin runtime repair is later work and is not included in this source.
 
