@@ -43,13 +43,13 @@ under `.venv/real-model-work-v4/`. The queue retains its original source,
 dataset, model-digest, and option bindings. Later embedding-role and
 conflict-collision changes and the concurrent-retrieval repair are not part of
 this run. The latest complete
-package checkpoint is separate source `62fe164`, with 909 tests passed and
+package checkpoint is separate source `dedfcfd`, with 914 tests passed and
 four skipped, followed by formatting, typing, JavaScript, build, and Twine
-checks. Its fresh installed wheel passed 116 selected contract cases with two
+checks. Its fresh installed wheel passed 120 selected contract cases with two
 matching platform skips and
 the synthetic Stop replay assertions on C: SSD fixtures. These checks do not
 promote the frozen evaluation's quality results or resolve the earlier D:
-storage timeouts. See the [package checkpoint](../2026-09-17/retrieval-revision-package-checkpoint-v1/README.md).
+storage timeouts. See the [package checkpoint](../2026-09-17/claude-startup-package-checkpoint-v1/README.md).
 
 Current model pins:
 

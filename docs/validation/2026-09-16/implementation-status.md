@@ -4,12 +4,12 @@ This record covers the unreleased `wt/functional-local-memory` worktree. It
 separates implemented behavior from acceptance evidence. The original task
 boundaries and thresholds remain in the [implementation plan](../../plans/2026-09-16-functional-local-memory.md).
 
-The latest package checkpoint is source `62fe164`. Its frozen verification
-passed 909 tests with four platform-specific skips, formatting, typing,
-JavaScript, build, and Twine checks. A fresh installed wheel passed 116
+The latest package checkpoint is source `dedfcfd`. Its frozen verification
+passed 914 tests with four platform-specific skips, formatting, typing,
+JavaScript, build, and Twine checks. A fresh installed wheel passed 120
 contract cases with two matching platform skips and seven replay assertions. These are package and installed
 runtime checks; they do not close native-host, real-model, latency, pilot, or
-publication gates. See the [retrieval revision package checkpoint](../2026-09-17/retrieval-revision-package-checkpoint-v1/README.md).
+publication gates. See the [Claude startup package checkpoint](../2026-09-17/claude-startup-package-checkpoint-v1/README.md).
 
 This checkpoint repairs retrieval across a concurrent correction or forget:
 candidates are refreshed after asynchronous state classification, so scoring,
@@ -17,11 +17,10 @@ graph expansion, and budgeting use current records. All six service-level
 regressions fail on the prior source and pass with the repair. See the
 [concurrency reproduction](../2026-09-17/retrieval-concurrent-revision-v1/README.md).
 
-The later Claude startup default at `dedfcfd` has 43 passing host/plugin checks
-with two platform skips, formatting, and strict typing. Its isolated native
-`alwaysLoad` control passed nine startup/routing criteria. Full source/package
-verification is running from `mnemos-source-claude-startup-v1`; it has not yet
-superseded the complete `62fe164` checkpoint above. See the
+The Claude startup default at `dedfcfd` is included in this complete source and
+installed-package checkpoint. A separate isolated native `alwaysLoad` control,
+using an older wheel with a manifest overlay, passed nine startup/routing
+criteria. See the
 [startup control](../2026-09-17/native-claude-alwaysload-v2/README.md).
 
 An earlier full-suite attempt at `e1fd56e` finished with 897 passed, one failed,
