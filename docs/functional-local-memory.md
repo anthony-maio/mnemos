@@ -208,7 +208,7 @@ invalidates older derived links while preserving facts and evidence.
 
 `mnemos backup <new-archive.zip>` takes a consistent snapshot through the owning service. It uses SQLite's backup API, includes the scope registry and a hashed manifest, and runs integrity checks. `mnemos restore <archive.zip> <new-database.sqlite>` restores to a new destination and merges current suppression records so an old snapshot does not silently resurrect a forgotten fact. Restore does not activate the new database or replace the registry. Keep the original until the restored copy passes integrity and identity checks.
 
-Reindex requires exclusive ownership of the stopped runtime. Stop clients and run `mnemos service-stop`, then save the intended embedding configuration. `mnemos reindex --batch-size 100 --max-batches 10` stages or resumes a generation while preserving the active vectors. Once all current facts have embeddings, `mnemos reindex --activate` creates a private backup and activates the complete generation. Incomplete or stale generations cannot activate. Provider identity includes provider, model, explicit revision, dimension, and normalization; set `MNEMOS_EMBEDDING_REVISION` when pinning a mutable model tag. The next runtime startup rebuilds incompatible derived graph edges in bounded batches.
+Reindex requires exclusive ownership of the stopped runtime. Stop clients and run `mnemos service-stop`, then save the intended embedding configuration. `mnemos reindex --batch-size 100 --max-batches 10` stages or resumes a generation while preserving the active vectors. Once all current facts have embeddings, `mnemos reindex --activate` creates a private backup and activates the complete generation. Incomplete or stale generations cannot activate. Provider identity includes provider, model, explicit revision, dimension, normalization, and any explicit task-prefix contract. `MNEMOS_EMBEDDING_REVISION` is an operator-managed identity label; it does not verify or pin the digest served by a mutable Ollama tag. If that tag changes, update the revision and reindex explicitly. The next runtime startup rebuilds incompatible derived graph edges in bounded batches.
 
 Legacy migrate-store and repair-db copying is restricted to legacy stores and a new target path while the owning service is stopped. Managed stores must use backup/restore so evidence, jobs, revisions, and forget suppression records survive the move.
 
@@ -227,6 +227,10 @@ The shared write firewall screens event identity, content, source references, fe
 Automatic capture creates raw evidence first. Maintenance defaults to a 30-day retention window for processed raw events. Failed or pending source events remain available for recovery. Accepted facts keep source identity and a redacted supporting excerpt; they have no automatic expiration by default. Inspect and retrieve report an original source as `retained_locally` only while its episodic row remains in SQLite, `unavailable_locally` when that row has expired or is otherwise absent, and `no_source_evidence` when no source event was linked. These statuses do not inspect or make claims about external host transcripts. Forget removes live fact content and records suppression identities, including protection against extraction already in flight. Backups and external host transcripts require separate retention decisions.
 
 ## Verification boundary
+
+The dated [claim and evidence ledger](validation/2026-09-16/claim-evidence-ledger.md)
+maps the original capability promises to current evidence and open acceptance
+gates.
 
 Automatic conflict proposals cannot relabel an existing non-conflict fact
 through exact canonical deduplication. The storage commit rejects that

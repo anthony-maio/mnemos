@@ -1029,3 +1029,23 @@ used unchanged frozen d94 source and vectors, with no model calls. Production
 capacity, datasets, and acceptance gates remain unchanged. Earlier v1 higher
 arms changed capacity after construction and are excluded from conclusions.
 [Raw evidence and limits](graph-capacity-diagnostic-v2/README.md).
+
+## Completed metadata-write comparison
+
+The fixed baseline/candidate/candidate/baseline comparison completed all four
+arms. Each loaded 10,000 synthetic 768-dimensional facts and timed 100 durable
+five-ID access updates under WAL/FULL. Reopened counters were all 100, and both
+schema-8 candidates retained all 10,000 metadata rows.
+
+The two candidate p95 values were 137.821 and 82.437 ms. Baseline p95 varied
+from 1,985.947 ms in the first arm to 82.747 ms in the last arm. This does not
+establish a reliable latency improvement. The host was not isolated, and these
+are metadata writes rather than end-to-end recall requests. The 500 ms recall
+gate remains open. Source, actual imports, helper hashes, and unchanged-file
+checks bind every arm to frozen d94 or 2494 source; all raw measurements remain
+preserved. [Comparison archive](access-metadata-comparison-v1/README.md).
+
+The new [claim and evidence ledger](claim-evidence-ledger.md) maps the twelve
+original capability promises to verified artifacts and remaining acceptance
+gates. It also clarifies that configured embedding revision is an identity
+label, not automatic verification of a mutable Ollama tag's digest.

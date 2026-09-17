@@ -1,0 +1,192 @@
+"""Compare durable access writes in pinned baseline and candidate checkouts."""
+
+from __future__ import annotations
+
+import argparse
+from datetime import datetime, timezone
+import hashlib
+import importlib.util
+import json
+import os
+from pathlib import Path
+import subprocess
+import sys
+
+ROOT = Path(__file__).resolve().parents[1]
+FIXTURE_HELPER = ROOT / ".venv/access_update_diagnostic_v1.py"
+FIXTURE_SHA = "11d76e07490a8d549cfa9b7ad9456f2e5370d4135ecc024027d7a8deda637d6f"
+BASE_COMMIT = "d94ded67a6b3fe6b6f7474a74518d4efb143698e"
+
+
+def sha(path: Path) -> str:
+    return hashlib.sha256(path.read_bytes()).hexdigest()
+
+
+def now() -> str:
+    return datetime.now(timezone.utc).isoformat()
+
+
+def save(path: Path, value: dict) -> None:
+    path.write_text(json.dumps(value, indent=2, sort_keys=True) + "\n", encoding="utf-8")
+
+
+def source(snapshot: Path, expected: str) -> dict:
+    def git(*args: str) -> str:
+        return subprocess.check_output(["git", "-C", str(snapshot), *args], text=True).strip()
+
+    assert git("rev-parse", "HEAD") == expected
+    assert not git("status", "--porcelain")
+    return {
+        p.relative_to(snapshot).as_posix(): sha(p)
+        for p in sorted((snapshot / "mnemos").rglob("*.py"))
+    }
+
+
+def worker(snapshot: Path, commit: str, output: Path) -> None:
+    hashes = source(snapshot, commit)
+    assert sha(FIXTURE_HELPER) == FIXTURE_SHA
+    own_hash = sha(Path(__file__))
+    sys.path.insert(0, str(snapshot))
+    import mnemos
+    from mnemos.utils.storage import SQLiteStore
+
+    assert Path(mnemos.__file__).resolve() == snapshot / "mnemos/__init__.py"
+    spec = importlib.util.spec_from_file_location("original_storage_fixture", FIXTURE_HELPER)
+    assert spec is not None and spec.loader is not None
+    fixture = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(fixture)
+    output.mkdir(exist_ok=False)
+    manifest = {
+        "started_at": now(),
+        "source_commit": commit,
+        "snapshot": str(snapshot),
+        "source_hashes": hashes,
+        "runner_sha256": own_hash,
+        "fixture_helper_sha256": FIXTURE_SHA,
+        "python": sys.executable,
+        "command": sys.argv,
+        "updates": 100,
+        "rows": 10000,
+        "embedding_dimension": 768,
+        "imported_mnemos": str(mnemos.__file__),
+    }
+    save(output / "preflight.json", manifest)
+    result = fixture._measure_fixture(output, with_embeddings=True)
+    reopened = SQLiteStore(result["database_path"])
+    try:
+        has_access_table = bool(
+            reopened._conn.execute(
+                "SELECT 1 FROM sqlite_master WHERE type='table' AND name='memory_chunk_access'"
+            ).fetchone()
+        )
+        access_rows = None
+        if has_access_table:
+            access_rows = reopened._conn.execute(
+                "SELECT COUNT(*) FROM memory_chunk_access"
+            ).fetchone()[0]
+            assert access_rows == 10000, access_rows
+        counts = {fact_id: reopened.get(fact_id).access_count for fact_id in fixture.UPDATED_IDS}
+        assert all(value == 100 for value in counts.values()), counts
+    finally:
+        reopened.close()
+    assert source(snapshot, commit) == hashes
+    assert sha(Path(__file__)) == own_hash and sha(FIXTURE_HELPER) == FIXTURE_SHA
+    times = sorted(row["latency_ms"] for row in result["updates"])
+    save(
+        output / "report.json",
+        {
+            "status": "completed",
+            "manifest": manifest,
+            "finished_at": now(),
+            "measurement": result,
+            "reopened_counts": counts,
+            "access_table_rows": access_rows,
+            "summary": {"p50_ms": times[49], "p95_ms": times[94], "max_ms": times[-1]},
+            "source_and_helpers_unchanged": True,
+        },
+    )
+
+
+def main() -> None:
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument("--baseline", type=Path)
+    parser.add_argument("--candidate", type=Path)
+    parser.add_argument("--candidate-commit")
+    parser.add_argument("--output", type=Path, required=True)
+    parser.add_argument("--worker", action="store_true")
+    args = parser.parse_args()
+    if args.worker:
+        worker(args.candidate.resolve(), args.candidate_commit, args.output.resolve())
+        return
+    baseline, candidate, output = (
+        args.baseline.resolve(),
+        args.candidate.resolve(),
+        args.output.resolve(),
+    )
+    source(baseline, BASE_COMMIT)
+    source(candidate, args.candidate_commit)
+    output.mkdir(exist_ok=False)
+    arms = [
+        ("baseline", baseline, BASE_COMMIT),
+        ("candidate", candidate, args.candidate_commit),
+        ("candidate", candidate, args.candidate_commit),
+        ("baseline", baseline, BASE_COMMIT),
+    ]
+    record = {
+        "status": "running",
+        "started_at": now(),
+        "runner_sha256": sha(Path(__file__)),
+        "arm_order": [arm[0] for arm in arms],
+        "python": sys.executable,
+        "fixture_helper_sha256": FIXTURE_SHA,
+        "rows_per_arm": 10000,
+        "updates_per_arm": 100,
+        "durability": "WAL/FULL",
+        "limitations": [
+            "Synthetic vectors; not a recall-gate rerun.",
+            "The host is not isolated: the held-out queue and other host workloads may run concurrently; no causal attribution to filesystem activity.",
+            "WAL file capacity does not measure overwritten frames.",
+        ],
+        "arms": [],
+    }
+    save(output / "preflight.json", record)
+    env = {k: v for k, v in os.environ.items() if k != "PYTHONPATH" and not k.startswith("MNEMOS_")}
+    for index, (name, snapshot, commit) in enumerate(arms):
+        arm_dir = output / f"{index:02d}-{name}"
+        command = [
+            sys.executable,
+            str(Path(__file__).resolve()),
+            "--worker",
+            "--candidate",
+            str(snapshot),
+            "--candidate-commit",
+            commit,
+            "--output",
+            str(arm_dir),
+        ]
+        entry = {"name": name, "command": command, "source_commit": commit, "started_at": now()}
+        record["arms"].append(entry)
+        save(output / "status.json", record)
+        with (output / f"{index:02d}-{name}.log").open("w", encoding="utf-8") as log:
+            completed = subprocess.run(
+                command,
+                env=env,
+                stdout=log,
+                stderr=subprocess.STDOUT,
+                creationflags=getattr(subprocess, "CREATE_NO_WINDOW", 0),
+            )
+        entry.update(exit_code=completed.returncode, finished_at=now())
+        if completed.returncode:
+            record["status"] = "failed"
+            save(output / "report.json", record)
+            raise SystemExit(completed.returncode)
+        result = json.loads((arm_dir / "report.json").read_text())
+        entry.update(report_sha256=sha(arm_dir / "report.json"), summary=result["summary"])
+    assert sha(Path(__file__)) == record["runner_sha256"]
+    record.update(status="completed", finished_at=now())
+    save(output / "report.json", record)
+    print(json.dumps({"status": record["status"], "arms": [a["summary"] for a in record["arms"]]}))
+
+
+if __name__ == "__main__":
+    main()

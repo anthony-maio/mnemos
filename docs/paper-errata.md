@@ -48,4 +48,4 @@ The paper's memory safety firewall remains part of the design. The current servi
 
 The paper's negative baseline cases remain part of the evaluation design. Answerable queries and no-answer queries must be scored separately. A no-answer result is correct only when the system abstains or returns no supported fact; a fabricated response is a failure. No full real-model baseline, ablation, or held-out quality result is accepted in this worktree.
 
-See [functional local memory](functional-local-memory.md) and [host validation](validation/local-memory-hosts.md) for operational setup and current evidence boundaries.
+See the dated [claim and evidence ledger](validation/2026-09-16/claim-evidence-ledger.md), [functional local memory](functional-local-memory.md), and [host validation](validation/local-memory-hosts.md) for current evidence boundaries and operational setup. No paper publishing source has been located in this repository; this errata does not modify the hosted paper.

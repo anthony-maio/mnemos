@@ -1,0 +1,111 @@
+{
+  "arm_order": [
+    "baseline",
+    "candidate",
+    "candidate",
+    "baseline"
+  ],
+  "arms": [
+    {
+      "command": [
+        "D:\\Development\\mnemos\\mnemos\\.worktrees\\functional-local-memory\\.venv\\Scripts\\python.exe",
+        "D:\\Development\\mnemos\\mnemos\\.worktrees\\functional-local-memory\\.venv\\access_metadata_comparison_v1.py",
+        "--worker",
+        "--candidate",
+        "D:\\Development\\mnemos\\mnemos\\.worktrees\\functional-local-memory\\.venv\\thinking-frozen-v1",
+        "--candidate-commit",
+        "d94ded67a6b3fe6b6f7474a74518d4efb143698e",
+        "--output",
+        "D:\\Development\\mnemos\\mnemos\\.worktrees\\functional-local-memory\\.venv\\access-metadata-comparison-v1\\00-baseline"
+      ],
+      "exit_code": 0,
+      "finished_at": "2026-09-17T15:39:37.734888+00:00",
+      "name": "baseline",
+      "report_sha256": "5aa8233597441dfee0f2f83646bc02737fc2fd9e1a1b3c2fad50320bb8212641",
+      "source_commit": "d94ded67a6b3fe6b6f7474a74518d4efb143698e",
+      "started_at": "2026-09-17T15:36:23.602395+00:00",
+      "summary": {
+        "max_ms": 11126.843,
+        "p50_ms": 329.776,
+        "p95_ms": 1985.947
+      }
+    },
+    {
+      "command": [
+        "D:\\Development\\mnemos\\mnemos\\.worktrees\\functional-local-memory\\.venv\\Scripts\\python.exe",
+        "D:\\Development\\mnemos\\mnemos\\.worktrees\\functional-local-memory\\.venv\\access_metadata_comparison_v1.py",
+        "--worker",
+        "--candidate",
+        "D:\\Development\\mnemos\\mnemos\\.worktrees\\functional-local-memory\\.venv\\access-metadata-frozen-v1",
+        "--candidate-commit",
+        "2494e31b339b3d75a18c42eabc3b88b1f0ab2316",
+        "--output",
+        "D:\\Development\\mnemos\\mnemos\\.worktrees\\functional-local-memory\\.venv\\access-metadata-comparison-v1\\01-candidate"
+      ],
+      "exit_code": 0,
+      "finished_at": "2026-09-17T15:41:47.556451+00:00",
+      "name": "candidate",
+      "report_sha256": "73be9f6d482cf9758228177da4f7d867e5c65769b0ecedd1330fe9f53279542d",
+      "source_commit": "2494e31b339b3d75a18c42eabc3b88b1f0ab2316",
+      "started_at": "2026-09-17T15:39:37.743830+00:00",
+      "summary": {
+        "max_ms": 4696.202,
+        "p50_ms": 74.483,
+        "p95_ms": 137.821
+      }
+    },
+    {
+      "command": [
+        "D:\\Development\\mnemos\\mnemos\\.worktrees\\functional-local-memory\\.venv\\Scripts\\python.exe",
+        "D:\\Development\\mnemos\\mnemos\\.worktrees\\functional-local-memory\\.venv\\access_metadata_comparison_v1.py",
+        "--worker",
+        "--candidate",
+        "D:\\Development\\mnemos\\mnemos\\.worktrees\\functional-local-memory\\.venv\\access-metadata-frozen-v1",
+        "--candidate-commit",
+        "2494e31b339b3d75a18c42eabc3b88b1f0ab2316",
+        "--output",
+        "D:\\Development\\mnemos\\mnemos\\.worktrees\\functional-local-memory\\.venv\\access-metadata-comparison-v1\\02-candidate"
+      ],
+      "exit_code": 0,
+      "finished_at": "2026-09-17T15:43:59.679708+00:00",
+      "name": "candidate",
+      "report_sha256": "4b8343e19f7a7a4fffd2cc98909ff220417e0816fdc94cc0a2b9e04c91f15245",
+      "source_commit": "2494e31b339b3d75a18c42eabc3b88b1f0ab2316",
+      "started_at": "2026-09-17T15:41:47.569321+00:00",
+      "summary": {
+        "max_ms": 1095.222,
+        "p50_ms": 62.556,
+        "p95_ms": 82.437
+      }
+    },
+    {
+      "command": [
+        "D:\\Development\\mnemos\\mnemos\\.worktrees\\functional-local-memory\\.venv\\Scripts\\python.exe",
+        "D:\\Development\\mnemos\\mnemos\\.worktrees\\functional-local-memory\\.venv\\access_metadata_comparison_v1.py",
+        "--worker",
+        "--candidate",
+        "D:\\Development\\mnemos\\mnemos\\.worktrees\\functional-local-memory\\.venv\\thinking-frozen-v1",
+        "--candidate-commit",
+        "d94ded67a6b3fe6b6f7474a74518d4efb143698e",
+        "--output",
+        "D:\\Development\\mnemos\\mnemos\\.worktrees\\functional-local-memory\\.venv\\access-metadata-comparison-v1\\03-baseline"
+      ],
+      "name": "baseline",
+      "source_commit": "d94ded67a6b3fe6b6f7474a74518d4efb143698e",
+      "started_at": "2026-09-17T15:43:59.690780+00:00"
+    }
+  ],
+  "durability": "WAL/FULL",
+  "fixture_helper_sha256": "11d76e07490a8d549cfa9b7ad9456f2e5370d4135ecc024027d7a8deda637d6f",
+  "limitations": [
+    "Synthetic vectors; not a recall-gate rerun.",
+    "The host is not isolated: the held-out queue and other host workloads may run concurrently; no causal attribution to filesystem activity.",
+    "WAL file capacity does not measure overwritten frames."
+  ],
+  "python": "D:\\Development\\mnemos\\mnemos\\.worktrees\\functional-local-memory\\.venv\\Scripts\\python.exe",
+  "rows_per_arm": 10000,
+  "runner_sha256": "0617a0f1a3b265101ae09477cc4b35f887e364e0b5f68b352a3486c1c6d70a38",
+  "started_at": "2026-09-17T15:36:23.601635+00:00",
+  "status": "running",
+  "updates_per_arm": 100
+}
