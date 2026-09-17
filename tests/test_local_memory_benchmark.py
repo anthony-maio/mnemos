@@ -869,7 +869,10 @@ async def test_sleep_passes_schema_to_structured_provider() -> None:
     schema = provider.kwargs["format"]
     assert isinstance(schema, dict)
     branches = schema["$defs"]["FactProposal"]["oneOf"]
-    assert len(branches) == 4
+    assert {branch["properties"]["operation"]["enum"][0] for branch in branches} == {
+        "add",
+        "conflict",
+    }
     assert all("operation" in branch["required"] for branch in branches)
 
     class MalformedProvider(StructuredProvider):

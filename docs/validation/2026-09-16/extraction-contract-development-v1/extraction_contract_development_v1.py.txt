@@ -1,0 +1,322 @@
+"""Run a bounded real-Ollama extraction contract development diagnostic.
+
+This script compares the a38 frozen source with the isolated candidate on four
+fixed cases. It is deliberately a development diagnostic, not held-out data.
+"""
+
+from __future__ import annotations
+
+import argparse
+import hashlib
+import json
+import os
+from pathlib import Path
+import subprocess
+import sys
+from datetime import datetime, timezone
+from typing import Any
+
+import httpx
+
+DEFAULT_ENDPOINT = "http://192.168.86.35:11434"
+DEFAULT_MODEL = "gemma3:4b"
+BASE_REVISION = "a38ee70d19f2ce8413d1ab7c9ce2ff26ffd07b46"
+
+CASES: tuple[dict[str, Any], ...] = (
+    {
+        "name": "supported_existing_fact",
+        "source_content": "The user confirms that the cache uses SQLite.",
+        "existing_content": "The cache uses SQLite.",
+        "expected": {
+            "decision": "facts",
+            "operation": "support",
+            "content": "The cache uses SQLite.",
+        },
+    },
+    {
+        "name": "explicit_correction",
+        "source_content": "The user now requires PostgreSQL for this project.",
+        "existing_content": "The project uses SQLite.",
+        "expected": {
+            "decision": "facts",
+            "operation": "correct",
+            "content": "The project uses PostgreSQL.",
+        },
+    },
+    {
+        "name": "unrelated_new_fact",
+        "source_content": "The user prefers a dark editor theme.",
+        "existing_content": "The cache uses SQLite.",
+        "expected": {
+            "decision": "facts",
+            "operation": "add",
+            "content": "The user prefers a dark editor theme.",
+        },
+    },
+    {
+        "name": "question_no_fact",
+        "source_content": "Should we use SQLite for this prototype?",
+        "existing_content": "The cache uses SQLite.",
+        "expected": {"decision": "no_durable_facts"},
+    },
+)
+
+
+CHILD = r"""
+from __future__ import annotations
+
+import asyncio
+import hashlib
+import json
+from pathlib import Path
+import sys
+from datetime import datetime, timezone
+
+from mnemos.modules.sleep import SleepDaemon
+from mnemos.types import EpisodicEvent, MemoryChunk
+from mnemos.utils.llm import OllamaProvider
+from mnemos.utils.storage import InMemoryStore
+from mnemos.contracts import ExtractionResponse
+
+
+class RecordingProvider(OllamaProvider):
+    def __init__(self, *, model: str, endpoint: str) -> None:
+        self.raw_responses: list[dict[str, object]] = []
+        self.last_prompt = ""
+        self.last_kwargs: dict[str, object] = {}
+        super().__init__(
+            model=model,
+            base_url=endpoint,
+            timeout=120.0,
+            temperature=0.0,
+            max_tokens=512,
+            response_observer=self.raw_responses.append,
+        )
+
+    async def predict(self, prompt: str, **kwargs: object) -> str:
+        self.last_prompt = prompt
+        self.last_kwargs = dict(kwargs)
+        return await super().predict(prompt, **kwargs)
+
+
+def make_event(event_id: str, content: str) -> EpisodicEvent:
+    return EpisodicEvent(
+        id=event_id,
+        event_fingerprint="fingerprint-" + event_id,
+        role="user",
+        content=content,
+        normalized_content=content.lower(),
+        scope="project",
+        scope_id="development-project",
+        metadata={"user_profile_id": "development-profile"},
+        occurred_at=datetime.now(timezone.utc),
+    )
+
+
+def make_fact(fact_id: str, content: str) -> MemoryChunk:
+    return MemoryChunk(
+        id=fact_id,
+        content=content,
+        metadata={
+            "user_profile_id": "development-profile",
+            "scope": "project",
+            "scope_id": "development-project",
+        },
+    )
+
+
+async def run(case: dict[str, object], *, model: str, endpoint: str, source_root: str) -> None:
+    name = str(case["name"])
+    source_id = "source-" + name
+    fact_id = "fact-" + name
+    event = make_event(source_id, str(case["source_content"]))
+    existing = make_fact(fact_id, str(case["existing_content"]))
+    provider = RecordingProvider(model=model, endpoint=endpoint)
+    started = datetime.now(timezone.utc).isoformat()
+    response_text = ""
+    error: str | None = None
+    extraction: dict[str, object] | None = None
+    try:
+        proposals = await SleepDaemon(InMemoryStore()).propose_facts(
+            [event], provider, existing_facts=[existing]
+        )
+        if provider.raw_responses:
+            raw = provider.raw_responses[-1].get("response")
+            if isinstance(raw, str):
+                response_text = raw
+        extraction = {
+            "proposals": [item.model_dump(mode="json") for item in proposals],
+            "schema_valid": True,
+        }
+    except Exception as exc:
+        error = type(exc).__name__ + ": " + str(exc)
+        if provider.raw_responses:
+            raw = provider.raw_responses[-1].get("response")
+            if isinstance(raw, str):
+                try:
+                    ExtractionResponse.model_validate(json.loads(raw))
+                    extraction = {"schema_valid": True}
+                except Exception as schema_exc:
+                    extraction = {
+                        "schema_valid": False,
+                        "schema_error": type(schema_exc).__name__ + ": " + str(schema_exc),
+                    }
+    expected = case["expected"]
+    proposals = extraction.get("proposals", []) if extraction else []
+    semantic_match = False
+    if isinstance(expected, dict) and expected.get("decision") == "no_durable_facts":
+        semantic_match = not proposals and error is None
+    elif proposals and isinstance(proposals, list) and isinstance(proposals[0], dict):
+        proposal = proposals[0]
+        semantic_match = (
+            error is None
+            and proposal.get("operation") == expected.get("operation")
+            and proposal.get("content") == expected.get("content")
+            and proposal.get("evidence_ids") == [source_id]
+            and (
+                expected.get("operation") == "add"
+                or proposal.get("target_fact_id") == fact_id
+            )
+        )
+    digest = hashlib.sha256()
+    for path in sorted(Path(source_root, "mnemos").rglob("*.py")):
+        digest.update(path.relative_to(source_root).as_posix().encode())
+        digest.update(path.read_bytes())
+    result = {
+        "case": name,
+        "started_at": started,
+        "finished_at": datetime.now(timezone.utc).isoformat(),
+        "source_root": source_root,
+        "source_revision": "candidate" if "extraction-contract-candidate-v1" in source_root else "a38-frozen",
+        "source_code_sha256": digest.hexdigest(),
+        "model": model,
+        "endpoint": endpoint,
+        "temperature": 0.0,
+        "max_tokens": 512,
+        "event_id": source_id,
+        "existing_fact_id": fact_id,
+        "expected": expected,
+        "response_text": response_text,
+        "raw_provider_responses": provider.raw_responses,
+        "prompt": provider.last_prompt,
+        "predict_kwargs": provider.last_kwargs,
+        "error": error,
+        "extraction": extraction,
+        "semantic_case_match": semantic_match,
+    }
+    print(json.dumps(result, ensure_ascii=True, sort_keys=True))
+
+
+case = json.loads(sys.argv[1])
+asyncio.run(run(case, model=sys.argv[2], endpoint=sys.argv[3], source_root=sys.argv[4]))
+"""
+
+
+def source_digest(source: Path) -> str:
+    digest = hashlib.sha256()
+    for path in sorted((source / "mnemos").rglob("*.py")):
+        digest.update(path.relative_to(source).as_posix().encode("utf-8"))
+        digest.update(path.read_bytes())
+    return digest.hexdigest()
+
+
+def current_model_metadata(endpoint: str, model: str) -> dict[str, Any]:
+    response = httpx.get(endpoint.rstrip("/") + "/api/tags", timeout=20.0)
+    response.raise_for_status()
+    data = response.json()
+    for item in data.get("models", []):
+        if isinstance(item, dict) and item.get("name") == model:
+            return item
+    raise RuntimeError(f"Model {model!r} is not present in current Ollama tags")
+
+
+def main() -> int:
+    parser = argparse.ArgumentParser()
+    parser.add_argument("--endpoint", default=DEFAULT_ENDPOINT)
+    parser.add_argument("--model", default=DEFAULT_MODEL)
+    parser.add_argument(
+        "--output",
+        type=Path,
+        default=Path(__file__).with_name("extraction-contract-development-v1"),
+    )
+    args = parser.parse_args()
+    output: Path = args.output.resolve()
+    if output.exists():
+        raise SystemExit(f"Refusing to overwrite existing output directory: {output}")
+    model_metadata = current_model_metadata(args.endpoint, args.model)
+    digest = model_metadata.get("digest")
+    if not isinstance(digest, str) or len(digest) != 64:
+        raise SystemExit("Current Ollama model digest is unavailable")
+    base_source = Path(__file__).with_name("provisional-capture-frozen-v2").resolve()
+    candidate_source = Path(__file__).with_name("extraction-contract-candidate-v1").resolve()
+    for source in (base_source, candidate_source):
+        if not (source / "mnemos" / "modules" / "sleep.py").is_file():
+            raise SystemExit(f"Missing source checkout: {source}")
+    output.mkdir(parents=True)
+    (output / "raw").mkdir()
+    manifest = {
+        "diagnostic": "extraction-contract-development-v1",
+        "development_only": True,
+        "heldout": False,
+        "base_revision": BASE_REVISION,
+        "endpoint": args.endpoint,
+        "model": args.model,
+        "model_metadata": model_metadata,
+        "temperature": 0.0,
+        "max_tokens": 512,
+        "provider_timeout_seconds": 120,
+        "created_at": datetime.now(timezone.utc).isoformat(),
+        "sources": {
+            "a38_frozen": {"path": str(base_source), "code_sha256": source_digest(base_source)},
+            "candidate": {
+                "path": str(candidate_source),
+                "code_sha256": source_digest(candidate_source),
+            },
+        },
+        "cases": [case["name"] for case in CASES],
+    }
+    (output / "manifest.json").write_text(
+        json.dumps(manifest, indent=2, sort_keys=True) + "\n", encoding="utf-8"
+    )
+    python = Path(sys.executable)
+    rows: list[dict[str, Any]] = []
+    for label, source in (("a38_frozen", base_source), ("candidate", candidate_source)):
+        for case in CASES:
+            env = os.environ.copy()
+            env["PYTHONPATH"] = str(source)
+            completed = subprocess.run(
+                [python, "-c", CHILD, json.dumps(case), args.model, args.endpoint, str(source)],
+                cwd=source,
+                env=env,
+                capture_output=True,
+                text=True,
+                timeout=150,
+                check=False,
+            )
+            if completed.returncode != 0:
+                row = {
+                    "profile": label,
+                    "case": case["name"],
+                    "process_returncode": completed.returncode,
+                    "stderr": completed.stderr,
+                    "stdout": completed.stdout,
+                }
+            else:
+                lines = [line for line in completed.stdout.splitlines() if line.strip()]
+                row = json.loads(lines[-1])
+                row["profile"] = label
+                row["process_returncode"] = completed.returncode
+                row["stderr"] = completed.stderr
+            rows.append(row)
+            raw_path = output / "raw" / f"{label}-{case['name']}.json"
+            raw_path.write_text(json.dumps(row, indent=2, sort_keys=True) + "\n", encoding="utf-8")
+    report = {"manifest": manifest, "observations": rows}
+    (output / "report.json").write_text(
+        json.dumps(report, indent=2, sort_keys=True) + "\n", encoding="utf-8"
+    )
+    print(json.dumps({"output": str(output), "observations": len(rows)}, sort_keys=True))
+    return 0
+
+
+if __name__ == "__main__":
+    raise SystemExit(main())

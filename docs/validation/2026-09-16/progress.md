@@ -783,3 +783,22 @@ paths that cannot be represented safely. PowerShell literal quoting is
 unchanged. Host tests pass (20 passed, two POSIX subprocess cases skipped on
 Windows), with Black and compatible production mypy passing. These skips are
 not POSIX execution evidence.
+
+## Request-bound extraction schema and remaining model errors
+
+The extraction repair now constrains source citations, current fact targets,
+and exact target/version pairs. Complete decision alternatives require at least
+one fact for `facts`, or zero facts and a non-whitespace reason for
+`no_durable_facts`. Runtime guards remain unchanged. Nineteen new contract
+tests pass. A broader 75-test check found one stale assertion requiring four
+operations even without target facts; the corrected assertion now requires
+only add/conflict in that case and passes. Target-operation coverage remains
+in the new tests.
+
+The [original eight-call diagnostic](extraction-contract-development-v1/README.md)
+and [four-call schema repair check](extraction-contract-development-v2/README.md)
+remain separate. The repaired candidate produced four schema/runtime-valid
+responses, but matched the predefined exact case proxy only once. It selected
+add for support and correction, and declined a clear preference. Valid citation
+IDs do not prove good memory decisions. A bounded comparison with the existing
+qwen3.5:9b installation is next; the large held-out queue remains stopped.
