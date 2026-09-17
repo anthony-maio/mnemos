@@ -39,6 +39,13 @@ interpreter command and inherited PATH, verifying the product launcher repair
 without the earlier probe's PATH patch.
 [Current package check](validation/2026-09-16/extraction-contract-package-verification/README.md).
 
+The later d94 installed wheel passed another isolated MCP/API lifecycle
+preflight. Its native Codex run reached `mnemos_store`, then received
+`user cancelled MCP tool call` without a successful service result. It did not
+reach the remaining native lifecycle steps. No approval or hook-trust bypass
+was used, and cleanup removed the private auth copy and runtime descriptor.
+[Preserved native attempt](validation/2026-09-16/native-codex-lifecycle-v4/README.md).
+
 The [native provisional capture record](validation/2026-09-16/provisional-native-claude-v8/README.md)
 preserves the original duplicate gate alongside the separate identity result.
 

@@ -872,3 +872,39 @@ corrected latency measurement, held-out mechanisms, and all seven lifecycle
 profiles with three repetitions. Output and checkpoints are new; prior
 failures remain intact. At this checkpoint the development phase is running,
 so no completed held-out result or latency improvement is claimed.
+
+## Conflict presentation and native lifecycle follow-up
+
+Offline replay of the unsupported conflict proposal confirms that canonical
+deduplication merges it into the existing SQLite fact, preserves its ID and
+version 1, changes its assertion status to conflict, and attaches the Redis
+source as a second evidence record. It creates no Redis fact. The replay uses
+injected recorded output, not another model call, and verifies the frozen
+source import and hashes. Its simple-embedding query returns no facts.
+[Persistence diagnostic](conflict-proposal-persistence-v2/README.md).
+
+A separate retrievable-conflict regression reproduced missing assertion status
+after SQLite restart. Commit `6ba17f5` exposes `assertion_status` in retrieval,
+labels unresolved conflicts in host context, and counts the label in the shared
+context budget. Fifty-nine affected service, retrieval, cross-host, MCP, and
+benchmark tests pass, along with Black and strict production mypy. Full package
+verification for this newer presentation change remains pending; the active
+model queue continues against unchanged frozen `d94ded6`.
+
+The verified d94 wheel also passed a native Codex lifecycle preflight. The
+actual native turn reached `mnemos_store`, then received a client cancellation
+without a successful service result. Correction, forgetting, and native
+restart were not reached. No approval or hook-trust override was added.
+Private auth and runtime descriptor cleanup was verified afterward.
+[Native attempt](native-codex-lifecycle-v4/README.md).
+
+The d94 development mechanism and lifecycle preflight phases have now
+completed. Graph execution and controls passed all 15 development observations,
+but none had a structural seed-to-target path under the frozen vectors and
+mutual top-4 graph. This is a negative coverage result, not demonstrated
+associative retrieval benefit. Held-out mechanisms are still running.
+
+The corrected 10,000-fact measurement still fails warm recall: 1,088.094 ms
+p95 against 500 ms. Durable HTTP capture passes at 64.279 ms p95. Removing
+duplicate diagnostic writes did not eliminate metadata-update stalls.
+[Completed performance phase](performance-corrected-v4/README.md).

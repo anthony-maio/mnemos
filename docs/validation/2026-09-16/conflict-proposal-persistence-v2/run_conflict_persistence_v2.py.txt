@@ -1,0 +1,41 @@
+"""Bind an offline conflict replay to the verified frozen source."""
+import asyncio
+import hashlib
+import importlib.util
+import json
+from pathlib import Path
+import subprocess
+import sys
+
+root = Path(__file__).resolve().parent.parent
+snapshot = root / '.venv/thinking-frozen-v1'
+expected = 'd94ded67a6b3fe6b6f7474a74518d4efb143698e'
+assert subprocess.check_output(['git', 'rev-parse', 'HEAD'], cwd=snapshot, text=True).strip() == expected
+assert not subprocess.check_output(['git', 'status', '--porcelain'], cwd=snapshot, text=True).strip()
+sys.path.insert(0, str(snapshot))
+import mnemos
+assert Path(mnemos.__file__).resolve() == snapshot / 'mnemos/__init__.py'
+source_files = {str(p.relative_to(snapshot)): hashlib.sha256(p.read_bytes()).hexdigest() for p in (snapshot / 'mnemos').rglob('*.py')}
+helper = root / '.venv/conflict_proposal_persistence_v1.py'
+assert hashlib.sha256(helper.read_bytes()).hexdigest() == '4772961b72feca057ddcb7251b28deccc8667ecb0b27cb7c2da8b7ba9032bd20'
+spec = importlib.util.spec_from_file_location('conflict_replay', helper)
+module = importlib.util.module_from_spec(spec)
+spec.loader.exec_module(module)
+output = root / '.venv/conflict-proposal-persistence-v2-frozen-d94'
+report = asyncio.run(module.run(output))
+assert report['status'] == 'complete'
+assert all(hashlib.sha256((snapshot / p).read_bytes()).hexdigest() == h for p,h in source_files.items())
+report['execution_provenance'] = {
+    'source_commit': expected, 'mnemos_import': mnemos.__file__,
+    'source_files': source_files, 'source_unchanged': True,
+    'wrapper_sha256': hashlib.sha256(Path(__file__).read_bytes()).hexdigest(),
+    'replay_helper_sha256': hashlib.sha256(helper.read_bytes()).hexdigest(),
+}
+before = report['before']['facts']
+after = report['after']['facts']
+assert len(before) == len(after) == 1
+assert before[0]['id'] == after[0]['id']
+assert before[0]['assertion_status'] == 'asserted' and after[0]['assertion_status'] == 'conflict'
+assert len(before[0]['evidence']) == 1 and len(after[0]['evidence']) == 2
+(output / 'report.json').write_text(json.dumps(report, indent=2) + '\n', encoding='utf-8')
+print(json.dumps({'status': 'passed', 'source_commit': expected, 'fact_count': len(after), 'after_status': after[0]['assertion_status'], 'evidence_count': len(after[0]['evidence']), 'output': str(output)}))

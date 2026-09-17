@@ -155,3 +155,24 @@ The benchmark-only correction is committed as `554a251`. Its v2 artifact
 schema identifies the changed measurement method and the actual 30-candidate
 engine request. Four focused tests pass, including a small offline fixture
 through `measure_retrieval` that checks one metadata update per engine query.
+
+## Corrected measurement at d94ded6
+
+The v2 measurement completed with consistent frozen source hashes and no
+follow-up store calls between timed retrievals. Warm recall still fails:
+**1,088.094 ms p95** across 33 queries at 10,000 facts, against the unchanged
+500 ms gate. Median recall was 459.713 ms and maximum was 1,131.605 ms.
+Durable HTTP capture passed at **64.279 ms p95** across 50 events. SQLite
+remained WAL/FULL, with 324,862,864 bytes after fixture insertion.
+
+Within those actual retrieval calls, metadata update p95 was 795.750 ms.
+Embedding p95 was 257.696 ms, scoped semantic selection 74.595 ms, and lexical
+selection 160.371 ms. These nested stage percentiles must not be added. The
+remaining metadata stalls show that removing duplicate diagnostic writes did
+not eliminate the latency failure; they do not by themselves identify a cause.
+
+Raw evidence: [v4 performance record](performance-corrected-v4/performance-10k.json).
+This remains a synthetic 10,000-fact load with real query embeddings, not an
+extraction-quality or complete native-host measurement. The next diagnostic
+compares matched metadata updates with and without large embedding payloads
+while preserving WAL/FULL commits. No storage optimization is accepted yet.

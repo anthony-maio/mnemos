@@ -1,0 +1,245 @@
+"""Replay a recorded conflict proposal through the durable local service."""
+
+from __future__ import annotations
+
+import argparse
+import asyncio
+from copy import deepcopy
+from datetime import datetime, timezone
+import hashlib
+import json
+from pathlib import Path
+import shutil
+import tempfile
+from typing import Any
+
+from mnemos.config import MnemosConfig, ModuleConfig
+from mnemos.contracts import CaptureEvent
+from mnemos.engine import MnemosEngine
+from mnemos.memory_service import LocalMemoryService
+from mnemos.scopes import ScopeRegistry
+from mnemos.utils.embeddings import SimpleEmbeddingProvider
+from mnemos.utils.llm import LLMProvider, UnavailableLLMProvider
+from mnemos.utils.storage import SQLiteStore
+
+RECORDED_REPORT = Path(__file__).with_name("preference-contract-development-v1") / "report.json"
+RECORDED_CASE = "undeployed_requirement_with_unrelated_existing_fact"
+SEED_CONTENT = "The cache uses SQLite."
+SOURCE_CONTENT = "This project must use Redis for caching. We have not deployed it yet."
+
+
+class RecordedConflictProvider(LLMProvider):
+    """Return one preserved payload with its evidence ID mechanically rebound."""
+
+    def __init__(self, payload: dict[str, Any], source_event_id: str) -> None:
+        self.payload = deepcopy(payload)
+        facts = self.payload.get("facts")
+        if not isinstance(facts, list) or len(facts) != 1 or not isinstance(facts[0], dict):
+            raise ValueError("Recorded conflict payload must contain one fact proposal")
+        facts[0]["evidence_ids"] = [source_event_id]
+        self.calls = 0
+
+    async def predict(self, prompt: str, **kwargs: Any) -> str:
+        self.calls += 1
+        return json.dumps(self.payload, sort_keys=True)
+
+    async def classify(self, prompt: str, labels: list[str]) -> dict[str, float]:
+        return {}
+
+
+def _digest(path: Path) -> str:
+    return hashlib.sha256(path.read_bytes()).hexdigest()
+
+
+def _json(value: Any) -> Any:
+    if hasattr(value, "model_dump"):
+        return value.model_dump(mode="json")
+    if isinstance(value, list):
+        return [_json(item) for item in value]
+    if isinstance(value, dict):
+        return {str(key): _json(item) for key, item in value.items()}
+    return value
+
+
+def _fact_row(fact: Any, store: SQLiteStore) -> dict[str, Any]:
+    return {
+        "id": fact.id,
+        "content": fact.content,
+        "version": fact.version,
+        "assertion_status": fact.metadata.get("assertion_status"),
+        "canonical_key": fact.canonical_key,
+        "metadata": fact.metadata,
+        "evidence": [_json(item) for item in store.list_fact_evidence(fact.id)],
+    }
+
+
+def _facts(store: SQLiteStore) -> list[dict[str, Any]]:
+    return [_fact_row(fact, store) for fact in store.get_all()]
+
+
+def _jobs(store: SQLiteStore) -> list[dict[str, Any]]:
+    return [_json(job) for job in store.list_jobs()]
+
+
+def _events(store: SQLiteStore) -> list[dict[str, Any]]:
+    return [_json(event) for event in store.list_episodic_events()]
+
+
+async def run(output: Path) -> dict[str, Any]:
+    if output.exists():
+        raise RuntimeError(f"Refusing to overwrite output directory: {output}")
+    if not RECORDED_REPORT.is_file():
+        raise FileNotFoundError(f"Recorded preference report is missing: {RECORDED_REPORT}")
+    recorded_report = json.loads(RECORDED_REPORT.read_text(encoding="utf-8"))
+    recorded = next(
+        (
+            item
+            for item in recorded_report.get("observations", [])
+            if item.get("case") == RECORDED_CASE
+        ),
+        None,
+    )
+    if not isinstance(recorded, dict):
+        raise ValueError(f"Recorded case is missing: {RECORDED_CASE}")
+    payload = recorded.get("response_payload")
+    if not isinstance(payload, dict):
+        raise ValueError("Recorded conflict response has no JSON payload")
+    output.mkdir(parents=True)
+    (output / "raw").mkdir()
+    (output / "raw" / "recorded-conflict-observation.json").write_text(
+        json.dumps(recorded, indent=2, sort_keys=True) + "\n", encoding="utf-8"
+    )
+    manifest = {
+        "diagnostic": "conflict-proposal-persistence-v1",
+        "offline": True,
+        "injected_not_real_model": True,
+        "recorded_case": RECORDED_CASE,
+        "recorded_report": str(RECORDED_REPORT),
+        "recorded_report_sha256": _digest(RECORDED_REPORT),
+        "source_content": SOURCE_CONTENT,
+        "seed_content": SEED_CONTENT,
+        "provider_contract": "deterministic replay; evidence ID mechanically rebound",
+        "created_at": datetime.now(timezone.utc).isoformat(),
+    }
+    (output / "manifest.json").write_text(
+        json.dumps(manifest, indent=2, sort_keys=True) + "\n", encoding="utf-8"
+    )
+    with tempfile.TemporaryDirectory(prefix="mnemos-conflict-persistence-", dir=output) as temp:
+        temp_path = Path(temp)
+        project = temp_path / "project"
+        project.mkdir()
+        registry = ScopeRegistry()
+        project_identity = registry.register_project(
+            project, user_profile_id="conflict-diagnostic-profile", enabled=True
+        )
+        context = registry.resolve(
+            project,
+            user_profile_id="conflict-diagnostic-profile",
+            session_id="conflict-diagnostic-session",
+            host="codex",
+        )
+        config = MnemosConfig(
+            modules=ModuleConfig(
+                surprisal=False,
+                mutable_rag=False,
+                affective=False,
+                sleep=True,
+                spreading=False,
+            )
+        )
+        store = SQLiteStore(str(temp_path / "memory.sqlite"))
+        try:
+            engine = MnemosEngine(
+                config=config,
+                store=store,
+                embedder=SimpleEmbeddingProvider(),
+                llm=UnavailableLLMProvider(),
+            )
+            memory = LocalMemoryService(engine, registry)
+            seed_result = await memory.dispatch(
+                "remember", {"context": context.model_dump(), "content": SEED_CONTENT}
+            )
+            seed_maintenance = await memory.dispatch("maintenance", {})
+            before_facts = _facts(store)
+            before_jobs = _jobs(store)
+            requested_event_id = "conflict-diagnostic-source-event"
+            capture_event = CaptureEvent(
+                event_id=requested_event_id,
+                context=context,
+                occurred_at=datetime.now(timezone.utc),
+                role="user",
+                content=SOURCE_CONTENT,
+                source_kind="recorded_model_replay",
+            )
+            capture_result = memory.capture(capture_event)
+            persisted_event_id = capture_result["event_id"]
+            provider = RecordedConflictProvider(payload, persisted_event_id)
+            engine._llm = provider
+            captured_jobs = _jobs(store)
+            capture_maintenance = await memory.dispatch("maintenance", {})
+            after_facts = _facts(store)
+            after_jobs = _jobs(store)
+            after_events = _events(store)
+            retrieve_result = await memory.dispatch(
+                "retrieve", {"context": context.model_dump(), "query": SOURCE_CONTENT}
+            )
+            db_copy = output / "memory.sqlite"
+            store.close()
+            shutil.copy2(temp_path / "memory.sqlite", db_copy)
+            return {
+                "status": "complete",
+                "manifest": manifest,
+                "context": context.model_dump(mode="json"),
+                "registered_project_id": project_identity.id,
+                "provider_calls": provider.calls,
+                "seed": {"result": seed_result, "maintenance": seed_maintenance},
+                "capture": {
+                    "result": capture_result,
+                    "requested_event_id": requested_event_id,
+                    "persisted_event_id": persisted_event_id,
+                    "maintenance": capture_maintenance,
+                },
+                "before": {"facts": before_facts, "jobs": before_jobs},
+                "captured_jobs": captured_jobs,
+                "after": {"facts": after_facts, "jobs": after_jobs, "events": after_events},
+                "retrieval": retrieve_result,
+                "field_diff": {
+                    "fact_count_before": len(before_facts),
+                    "fact_count_after": len(after_facts),
+                    "fact_ids_before": [fact["id"] for fact in before_facts],
+                    "fact_ids_after": [fact["id"] for fact in after_facts],
+                    "seed_content_survives": any(
+                        fact["content"] == SEED_CONTENT for fact in after_facts
+                    ),
+                    "redis_content_present": any(
+                        "Redis" in fact["content"] for fact in after_facts
+                    ),
+                    "conflict_assertions": [
+                        fact for fact in after_facts if fact["assertion_status"] == "conflict"
+                    ],
+                },
+                "limitations": [
+                    "The proposal and source are injected from a preserved recorded response.",
+                    "This measures durable conflict handling, not real-model extraction quality.",
+                ],
+            }
+        finally:
+            store.close()
+
+
+def main() -> int:
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument(
+        "--output", type=Path, default=Path(__file__).with_name("conflict-proposal-persistence-v1")
+    )
+    args = parser.parse_args()
+    output = args.output.resolve()
+    report = asyncio.run(run(output))
+    report_path = output / "report.json"
+    report_path.write_text(json.dumps(report, indent=2, sort_keys=True) + "\n", encoding="utf-8")
+    print(json.dumps({"output": str(report_path), "status": report["status"]}, sort_keys=True))
+    return 0
+
+
+if __name__ == "__main__":
+    raise SystemExit(main())

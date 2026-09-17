@@ -1,0 +1,8 @@
+{"type":"thread.started","thread_id":"01a0afb5-7ec1-73e1-b4d9-d72b50f103e2"}
+{"type":"turn.started"}
+{"type":"item.completed","item":{"id":"item_0","type":"error","message":"Skill descriptions were shortened to fit the 2% skills context budget. Codex can still see every skill, but some descriptions are shorter. Disable unused skills or plugins to leave more room for the rest."}}
+{"type":"item.completed","item":{"id":"item_1","type":"agent_message","text":"I’ll store the exact project-scoped fact, consolidate it, and retrieve it verbatim using Mnemos only."}}
+{"type":"item.started","item":{"id":"item_2","type":"mcp_tool_call","server":"mnemos","tool":"mnemos_store","arguments":{"content":"The release channel for this project is mnemos-old-1d1c24dcba5c6d15.","scope":"project"},"result":null,"error":null,"status":"in_progress"}}
+{"type":"item.completed","item":{"id":"item_2","type":"mcp_tool_call","server":"mnemos","tool":"mnemos_store","arguments":{"content":"The release channel for this project is mnemos-old-1d1c24dcba5c6d15.","scope":"project"},"result":null,"error":{"message":"user cancelled MCP tool call"},"status":"failed"}}
+{"type":"item.completed","item":{"id":"item_3","type":"agent_message","text":"The Mnemos store call was canceled, so I did not run consolidation or retrieval. No fact was stored."}}
+{"type":"turn.completed","usage":{"input_tokens":60945,"cached_input_tokens":50176,"cache_write_input_tokens":0,"output_tokens":335,"reasoning_output_tokens":167}}
