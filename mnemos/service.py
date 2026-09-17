@@ -7,10 +7,12 @@ import asyncio
 import hmac
 import inspect
 import json
+import logging
 import os
 import secrets
 import signal
 import socket
+import sqlite3
 import sys
 import threading
 import time
@@ -31,6 +33,13 @@ from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
 from typing import Any, Callable, Mapping
 from urllib.parse import urlsplit
+
+from .observability import (
+    ServiceLogBinding,
+    install_service_file_logging,
+    log_event,
+    remove_service_file_logging,
+)
 
 SCHEMA_VERSION = 1
 DEFAULT_MAX_BODY_BYTES = 1_048_576
@@ -418,6 +427,7 @@ class MnemosService:
         startup_timeout: float = DEFAULT_STARTUP_TIMEOUT,
         dispatch_timeout: float = DEFAULT_DISPATCH_TIMEOUT,
         shutdown_timeout: float = 30.0,
+        service_log_path: str | Path | None = None,
     ) -> None:
         if dispatcher is not None and dispatcher_factory is not None:
             raise ValueError("pass dispatcher or dispatcher_factory, not both")
@@ -438,6 +448,17 @@ class MnemosService:
         self.startup_timeout = startup_timeout
         self.dispatch_timeout = dispatch_timeout
         self.shutdown_timeout = shutdown_timeout
+        self.service_log_path = (
+            Path(service_log_path).expanduser()
+            if service_log_path is not None
+            else self.descriptor_path.with_name("service.log")
+        )
+        self._service_logging_enabled = service_log_path is not None or (
+            dispatcher is None and dispatcher_factory is None
+        )
+        self._service_log_binding: ServiceLogBinding | None = None
+        self._maintenance_target: Any | None = None
+        self._previous_maintenance_observer: Any | None = None
         self._dispatcher = dispatcher
         self._dispatcher_factory = dispatcher_factory
         self._owner_lock = _ProcessLock(self.lock_path)
@@ -454,6 +475,71 @@ class MnemosService:
         self._http_thread: threading.Thread | None = None
         self._descriptor: dict[str, Any] | None = None
         self.token = ""
+
+    def _enable_service_logging(self) -> None:
+        if self._service_logging_enabled and self._service_log_binding is None:
+            self._service_log_binding = install_service_file_logging(
+                self.service_log_path,
+                protect_path=_protect_private_path,
+            )
+
+    def _disable_service_logging(self) -> None:
+        binding = self._service_log_binding
+        self._service_log_binding = None
+        remove_service_file_logging(binding)
+
+    def _log_sqlite_failure(self, operation: str, error: BaseException) -> None:
+        if self._service_log_binding is None:
+            return
+        log_event(
+            "mnemos.provider_failure",
+            level=logging.ERROR,
+            provider="sqlite" if isinstance(error, sqlite3.Error) else "runtime",
+            operation=operation,
+            error_type=type(error).__name__,
+        )
+
+    def _log_maintenance_failure(self, error: BaseException) -> None:
+        try:
+            self._log_sqlite_failure("maintenance", error)
+        finally:
+            if callable(self._previous_maintenance_observer):
+                self._previous_maintenance_observer(error)
+
+    def _set_maintenance_observer(self, dispatcher: Any) -> None:
+        maintenance = getattr(dispatcher, "maintenance", None)
+        if maintenance is not None and self._service_log_binding is not None:
+            self._maintenance_target = maintenance
+            self._previous_maintenance_observer = getattr(maintenance, "on_error", None)
+            setattr(maintenance, "on_error", self._log_maintenance_failure)
+
+    def _restore_maintenance_observer(self) -> None:
+        maintenance = self._maintenance_target
+        if maintenance is not None:
+            setattr(maintenance, "on_error", self._previous_maintenance_observer)
+        self._maintenance_target = None
+        self._previous_maintenance_observer = None
+
+    @staticmethod
+    def _component_label(value: Any, fallback: str) -> str:
+        label = type(value).__name__ if value is not None else ""
+        return label if label.isidentifier() else fallback
+
+    def _log_started(self) -> None:
+        if self._service_log_binding is None:
+            return
+        dispatcher = self._dispatcher
+        engine = getattr(dispatcher, "engine", None)
+        store = getattr(engine, "store", None)
+        provider = getattr(engine, "cognition_provider", None)
+        if provider is None:
+            provider = getattr(engine, "llm", None)
+        log_event(
+            "mnemos.startup",
+            status="running",
+            backend=self._component_label(store, "unknown"),
+            provider=self._component_label(provider, "unavailable"),
+        )
 
     @property
     def owner_thread_id(self) -> int | None:
@@ -488,6 +574,7 @@ class MnemosService:
             if self._dispatcher is None:
                 factory = self._dispatcher_factory or self._make_default_dispatcher
                 self._dispatcher = factory()
+            self._set_maintenance_observer(self._dispatcher)
             if created_default:
                 maintenance = getattr(self._dispatcher, "maintenance", None)
                 run_maintenance = getattr(maintenance, "run", None)
@@ -496,6 +583,7 @@ class MnemosService:
             self._owner_ready.set()
             loop.run_forever()
         except BaseException as exc:  # surface initialization failures to start()
+            self._log_sqlite_failure("startup", exc)
             self._owner_error = exc
             self._owner_ready.set()
         finally:
@@ -545,10 +633,13 @@ class MnemosService:
             return dict(existing)
         self._owns_process = True
         self.token = secrets.token_urlsafe(32)
+        self._owner_error = None
+        self._owner_ready.clear()
         self._owner_thread = threading.Thread(
             target=self._owner_main, name="mnemos-owner", daemon=True
         )
         try:
+            self._enable_service_logging()
             self._owner_thread.start()
             if not self._owner_ready.wait(self.startup_timeout):
                 raise TimeoutError("Mnemos service dispatcher did not initialize")
@@ -573,8 +664,11 @@ class MnemosService:
                 "started_at": now,
             }
             _write_private_json(self.descriptor_path, self._descriptor)
+            self._log_started()
             return dict(self._descriptor)
-        except BaseException:
+        except BaseException as exc:
+            if self._owner_error is None:
+                self._log_sqlite_failure("startup", exc)
             self.stop()
             raise
 
@@ -600,7 +694,11 @@ class MnemosService:
         if loop is None or self._external:
             raise RuntimeError("service is not the owning runtime")
         future = asyncio.run_coroutine_threadsafe(self._call_dispatcher(operation, payload), loop)
-        return future.result(self.dispatch_timeout)
+        try:
+            return future.result(self.dispatch_timeout)
+        except BaseException as exc:
+            self._log_sqlite_failure("dispatch", exc)
+            raise
 
     def health(self) -> dict[str, Any]:
         result: dict[str, Any] = {
@@ -628,7 +726,8 @@ class MnemosService:
             self._owner_stopping = True
             loop.call_soon_threadsafe(loop.stop)
         if self._owner_thread is not None:
-            self._owner_thread.join(timeout=self.shutdown_timeout)
+            if self._owner_thread.is_alive():
+                self._owner_thread.join(timeout=self.shutdown_timeout)
             if self._owner_thread.is_alive():
                 # Closing SQLite can outlast startup, particularly while a
                 # durable write is finishing. Keep ownership and the thread
@@ -646,7 +745,9 @@ class MnemosService:
                     self.descriptor_path.unlink(missing_ok=True)
             except OSError:
                 pass
-            self._owner_lock.release()
+        self._restore_maintenance_observer()
+        self._disable_service_logging()
+        self._owner_lock.release()
         self._owns_process = False
         self._owner_stopping = False
         self._descriptor = None

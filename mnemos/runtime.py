@@ -271,11 +271,7 @@ def _mock_provider_is_explicit(
     requested = resolve_env_value("MNEMOS_LLM_PROVIDER", env=env)
     if requested is not None:
         return requested.strip().lower() == "mock"
-    # A config file containing the default mock value is still an explicit
-    # development choice.  The generated in-memory defaults have no config.
-    return settings.llm.provider == "mock" and (
-        resolved.global_config_path.exists() or resolved.project_config_path is not None
-    )
+    return settings.llm.provider == "mock" and resolved.llm_provider_explicit
 
 
 def embedding_identity(settings: AppSettings) -> dict[str, Any]:

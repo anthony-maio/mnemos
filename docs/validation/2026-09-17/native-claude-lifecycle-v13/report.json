@@ -1,0 +1,158 @@
+{
+  "runner": "native-claude-lifecycle-v13",
+  "runner_sha256": "005907254ad29b54fc7ebdff0113576c878e1e18d3e834145be959328ad39756",
+  "source_commit": "6600dc262927661d61ce9962c812a022014281c7",
+  "started_at": "2026-09-17T19:06:04.688611+00:00",
+  "status": "failed",
+  "scope": "native Claude correction and forget lifecycle with restart; no cognition or quality claim",
+  "model_quality_claim": "none",
+  "embedding_fixture": "Constant unit vectors; semantic retrieval quality is not evaluated",
+  "cognition": "UnavailableLLMProvider; all modules disabled",
+  "max_native_seconds": 60,
+  "hook_timeout_seconds": 20,
+  "snapshot_argument": "C:\\Users\\Ant\\AppData\\Local\\Temp\\mnemos-source-6600dc2",
+  "wheel_argument": "C:\\Users\\Ant\\AppData\\Local\\Temp\\mnemos-package-checks-20260917-v2\\dist\\mnemos_memory-0.7.0-py3-none-any.whl",
+  "expected_wheel_sha256": "349737206735f15b59562f3c7d53af51464176473b5de1fa12d2783cf039a25a",
+  "build_verification_argument": "C:\\Users\\Ant\\AppData\\Local\\Temp\\mnemos-package-checks-20260917-v2\\verification.json",
+  "timing_report_argument": "C:\\Users\\Ant\\AppData\\Local\\Temp\\mnemos-claude-adapter-timing-v3\\report.json",
+  "timing_runner_argument": "D:\\Development\\mnemos\\mnemos\\.worktrees\\functional-local-memory\\.venv\\claude_adapter_timing_v3.py",
+  "environment_argument": "C:\\Users\\Ant\\AppData\\Local\\Temp\\mnemos-installed-6600dc2-v1",
+  "fixture_parent_argument": "C:\\Users\\Ant\\AppData\\Local\\Temp",
+  "profile": "native-claude-lifecycle-v13",
+  "plugin_snapshot": {
+    "snapshot": "C:\\Users\\Ant\\AppData\\Local\\Temp\\mnemos-source-6600dc2",
+    "source_commit": "6600dc262927661d61ce9962c812a022014281c7",
+    "clean": true,
+    "files": {
+      ".claude-plugin/plugin.json": {
+        "bytes": 963,
+        "sha256": "3e7549c3b2c7416f6e0fd620b000b89470d809f822cb29b04d22a7e9ff7b3928"
+      },
+      ".claude-plugin/run_mnemos_hook.py": {
+        "bytes": 1430,
+        "sha256": "9ca11e4a0efa9b61dea647e0675729a523e1b9aed0fb56468af08079d04512c0"
+      },
+      ".claude-plugin/run_mnemos_mcp.py": {
+        "bytes": 7005,
+        "sha256": "35abc7d3209e75bad36bba7dea3a14359d36a2d7f9de30228abfd73e61d20efa"
+      },
+      "hooks/hooks.json": {
+        "bytes": 1350,
+        "sha256": "7ca43bda20e14e4363c84fd2fddd26fd257afaa9ba3146bff2a389c52817d1a7"
+      }
+    },
+    "hook_dispatch": "hooks/hooks.json -> python ${CLAUDE_PLUGIN_ROOT}/.claude-plugin/run_mnemos_hook.py <event>",
+    "mcp_dispatch": "plugin.json -> .claude-plugin/run_mnemos_mcp.py -> explicit MNEMOS_PLUGIN_PYTHON"
+  },
+  "package_provenance": {
+    "source_commit": "6600dc262927661d61ce9962c812a022014281c7",
+    "package_files_checked": 53,
+    "wheel_package_members_checked": 56,
+    "wheel_path": "C:\\Users\\Ant\\AppData\\Local\\Temp\\mnemos-package-checks-20260917-v2\\dist\\mnemos_memory-0.7.0-py3-none-any.whl",
+    "wheel_sha256_expected": "349737206735f15b59562f3c7d53af51464176473b5de1fa12d2783cf039a25a",
+    "wheel_sha256_observed": "349737206735f15b59562f3c7d53af51464176473b5de1fa12d2783cf039a25a"
+  },
+  "build_verification": {
+    "path": "C:\\Users\\Ant\\AppData\\Local\\Temp\\mnemos-package-checks-20260917-v2\\verification.json",
+    "status": "passed",
+    "source_commit": "6600dc262927661d61ce9962c812a022014281c7",
+    "wheel_path": "C:\\Users\\Ant\\AppData\\Local\\Temp\\mnemos-package-checks-20260917-v2\\dist\\mnemos_memory-0.7.0-py3-none-any.whl",
+    "wheel_sha256": "349737206735f15b59562f3c7d53af51464176473b5de1fa12d2783cf039a25a"
+  },
+  "adapter_timing_gate": {
+    "path": "C:\\Users\\Ant\\AppData\\Local\\Temp\\mnemos-claude-adapter-timing-v3\\report.json",
+    "sha256": "e420c975b4a18f0ace9fb6b04c973d5ad0fd853e9089a33f7bc7b577a44cf743",
+    "runner_path": ".venv\\claude_adapter_timing_v3.py",
+    "runner_sha256": "db80b7a88f5ee7919f71ddc704b044c87cde4ba2f83fb1ba36ceaa7ad71b069a",
+    "source_commit": "6600dc262927661d61ce9962c812a022014281c7",
+    "wheel_sha256": "349737206735f15b59562f3c7d53af51464176473b5de1fa12d2783cf039a25a",
+    "status": "passed"
+  },
+  "claude": {
+    "path": "C:\\Users\\Ant\\.local\\bin\\claude.exe",
+    "version": "2.1.191 (Claude Code)"
+  },
+  "seed": {
+    "target_fact_id": "dd22cc21-2108-48ad-a7fa-6e793eb2386b",
+    "target_version": 1,
+    "unrelated_fact_id": "b6b7476f-3d9e-409d-8908-8acc1c402b6c",
+    "maintenance_status": null,
+    "target_content_sha256": "34bab681673afc080283161b55dd8b210075d565af63c1e462761590b00e2d35",
+    "replacement_content_sha256": "3c72eb450a434a7e016c139de06e2b6a7cd8746592c05c0991b139e30cb4c3eb"
+  },
+  "phase1": {
+    "summary": {
+      "calls": [
+        {
+          "id": "toolu_01GfJ8ryUps1tZ7gaGnPtPPn",
+          "name": "mcp__plugin_mnemos-memory_mnemos__mnemos_correct"
+        },
+        {
+          "id": "toolu_0171HxWKuqyuVhDC9KGhv8h7",
+          "name": "mcp__plugin_mnemos-memory_mnemos__mnemos_consolidate"
+        },
+        {
+          "id": "toolu_01MQSeXrcseLDrHx9LwsPV17",
+          "name": "mcp__plugin_mnemos-memory_mnemos__mnemos_retrieve"
+        }
+      ],
+      "results": [
+        {
+          "id": "toolu_01GfJ8ryUps1tZ7gaGnPtPPn",
+          "is_error": false,
+          "sha256": "873e3b9277231048d0a0c292a0fada91ad2f23fd3f10b4b228a7f9aec3aac675"
+        },
+        {
+          "id": "toolu_0171HxWKuqyuVhDC9KGhv8h7",
+          "is_error": false,
+          "sha256": "43039ee1db1b1d46f048b9d61fae252865795acc71ad7417d826511866f82acb"
+        },
+        {
+          "id": "toolu_01MQSeXrcseLDrHx9LwsPV17",
+          "is_error": false,
+          "sha256": "54112fa4a3f9b457f3291cd3943b14ba14c950290f81f080c00214f0a5961e5b"
+        }
+      ],
+      "call_names": [
+        "mcp__plugin_mnemos-memory_mnemos__mnemos_correct",
+        "mcp__plugin_mnemos-memory_mnemos__mnemos_consolidate",
+        "mcp__plugin_mnemos-memory_mnemos__mnemos_retrieve"
+      ],
+      "forbidden_call_names": [],
+      "call_result_ids_match": true,
+      "successful_results": [
+        "toolu_01GfJ8ryUps1tZ7gaGnPtPPn",
+        "toolu_0171HxWKuqyuVhDC9KGhv8h7",
+        "toolu_01MQSeXrcseLDrHx9LwsPV17"
+      ],
+      "rows": 77,
+      "json_lines": 77,
+      "phase": "correct",
+      "returncode": 0,
+      "timed_out": false,
+      "elapsed_ms": 21127.3,
+      "stdout_sha256": "9eefa3545fe718ee343f30a4ea7562542d52ccbf58df876cdd0c08b4d4093dd2",
+      "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "allowed_tool_names": [
+        "mcp__plugin_mnemos-memory_mnemos__mnemos_correct",
+        "mcp__plugin_mnemos-memory_mnemos__mnemos_consolidate",
+        "mcp__plugin_mnemos-memory_mnemos__mnemos_retrieve"
+      ]
+    },
+    "contract": {
+      "call_order": true,
+      "correct_queued_only": false,
+      "consolidation_completed": false,
+      "native_retrieved_corrected_fact": false,
+      "native_retrieve_has_no_old_target_version": true,
+      "all_results_successful": true
+    }
+  },
+  "error_type": "RuntimeError",
+  "error_digest": "4debaa52c872717bf2b98a77b5b851824ff5c7d27c535fcc31673307f00982a5",
+  "fixture": "C:\\Users\\Ant\\AppData\\Local\\Temp\\mnemos-native-claude-lifecycle-v13-h1m6shyk",
+  "private_fixture_preserved": true,
+  "auth_copy_removed": true,
+  "runtime_descriptor_absent": true,
+  "finished_at": "2026-09-17T19:06:29.799316+00:00"
+}

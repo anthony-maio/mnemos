@@ -500,6 +500,7 @@ class ResolvedSettings:
     global_config_path: Path
     project_config_path: Path | None
     warnings: list[str] = field(default_factory=list)
+    llm_provider_explicit: bool = False
 
 
 @dataclass(slots=True)
@@ -534,16 +535,20 @@ def load_settings(
     llm_defaults = merged.get("llm")
     if isinstance(llm_defaults, dict):
         llm_defaults["model"] = None
+    global_raw: dict[str, Any] = {}
     if resolved_global_path.exists():
-        merged = _deep_merge(merged, _read_toml_file(resolved_global_path))
+        global_raw = _read_toml_file(resolved_global_path)
+        merged = _deep_merge(merged, global_raw)
 
     project_config_path = find_project_config_path(cwd)
+    project_raw: dict[str, Any] = {}
     if project_config_path is not None:
         project_raw = _read_toml_file(project_config_path)
         project_sanitized = _strip_global_only_sections(project_raw, warnings=warnings)
         merged = _deep_merge(merged, project_sanitized)
 
-    merged = _deep_merge(merged, _env_overrides(source_env))
+    env_overrides = _env_overrides(source_env)
+    merged = _deep_merge(merged, env_overrides)
     merged = _apply_persistent_env_fallbacks(merged)
     settings = AppSettings.model_validate(merged)
     return ResolvedSettings(
@@ -551,6 +556,10 @@ def load_settings(
         global_config_path=resolved_global_path,
         project_config_path=project_config_path,
         warnings=warnings,
+        llm_provider_explicit=any(
+            _nested_value(raw, ("llm", "provider")) not in (None, "")
+            for raw in (global_raw, project_raw, env_overrides)
+        ),
     )
 
 

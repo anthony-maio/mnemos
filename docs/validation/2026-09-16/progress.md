@@ -1273,3 +1273,40 @@ The [doctor archive](../2026-09-17/installed-doctor-v5/README.md) includes
 the executed helper, reports, and command output. Earlier attempts remain
 separate, including two failed probes. Earlier helper bytes were not preserved
 for every attempt; only v5 carries the full checked execution record.
+
+## Managed service logging and omitted-provider startup
+
+The daemon previously discarded console output without installing a persistent
+log handler. It now owns a private rotating `service.log` next to its runtime
+descriptor. Startup, retrieval timing, and provider/storage error categories
+are retained with selected fields; exception text, query text, scope IDs, and
+other content are excluded. Cleanup closes the handler before releasing the
+process lock and preserves existing maintenance observers. A failed start
+clears its readiness state before a retry.
+
+The actual client auto-start test exposed another bug: any existing TOML file
+was treated as an explicit choice of mock cognition when `llm.provider` was
+omitted. Settings now retain whether that field was supplied. Omitted cognition
+uses `UnavailableLLMProvider`; explicit mock remains rejected. Regression cases
+cover global and project configuration. The subprocess test now starts the
+default service with simple embeddings, commits and retrieves a fixture fact,
+observes startup and retrieval log events, and confirms authenticated shutdown.
+No live model or live database participates in that test.
+
+The focused service/configuration/maintenance/provider run passed 76 cases.
+After preserving the previous maintenance callback and adding the explicit
+project-mock rejection case, the affected service-log/runtime checks passed
+27 cases. Black passed. Full/package verification of these changes remains
+separate from the earlier `6600dc2` checkpoint.
+
+## Native Claude lifecycle v13: negative result
+
+The [v13 archive](../2026-09-17/native-claude-lifecycle-v13/README.md) preserves
+a failed native correction phase against the installed `6600dc2` package.
+Three correlated native tools completed in 21.127 seconds, but the evaluator
+did not establish queued correction, completed consolidation, or corrected
+retrieval from their payloads. The forget phase did not run. A Stop diagnostic
+also reported degraded capture despite the host labeling the hook successful.
+Parser and hook diagnostics are being investigated; this attempt does not
+close native lifecycle acceptance. Its report and executed helper remain
+unchanged, and cleanup removed the copied auth file and runtime descriptor.

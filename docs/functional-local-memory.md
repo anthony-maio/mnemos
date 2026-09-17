@@ -28,6 +28,14 @@ python -m mnemos.service
 
 Most clients auto-start one bounded service process when the descriptor is absent. Set `MNEMOS_RUNTIME_DESCRIPTOR` consistently in every process when isolating a separate runtime. If startup fails, automatic capture can enter a sanitized local outbox; explicit writes report failure. An outbox entry is not a committed service event. `mnemos service-stop` requests authenticated shutdown and waits for confirmation. Stop host clients before offline maintenance so a new request does not restart the service.
 
+The managed service writes private JSON events to `service.log` beside its
+runtime descriptor. The log rotates at 1 MiB and retains two backups. It records
+startup, retrieval timing, and failure categories without query text, memory
+content, credentials, paths, or exception messages. A startup event means the
+service is running; it does not establish that a configured model is reachable
+or ready. Embedded callers with an injected dispatcher can opt in with
+`service_log_path`; one file logging binding is supported per process.
+
 Schema 8 stores access counts, retrieval timestamps, and reconsolidation due
 times in `memory_chunk_access`. Retrieval updates this small table with the
 existing WAL/FULL durability policy. Opening an older database first creates

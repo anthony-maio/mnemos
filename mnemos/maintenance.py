@@ -24,6 +24,7 @@ class MaintenanceScheduler:
         batch_limit: int = 100,
         processed_evidence_days: int = 30,
         after_batch: Callable[[], object] | None = None,
+        on_error: Callable[[BaseException], object] | None = None,
     ) -> None:
         if interval_seconds <= 0 or idle_seconds < 0 or max_queue_age_seconds <= 0:
             raise ValueError("Invalid maintenance schedule")
@@ -40,6 +41,7 @@ class MaintenanceScheduler:
         self.batch_limit = batch_limit
         self.processed_evidence_days = processed_evidence_days
         self.after_batch = after_batch
+        self.on_error = on_error
         self.owner = str(uuid4())
         self.last_activity = self.clock()
         self.last_success: datetime | None = None
@@ -49,6 +51,15 @@ class MaintenanceScheduler:
         self._running = False
         self._scheduler_running = False
         self._stop = asyncio.Event()
+
+    def _notify_error(self, error: BaseException) -> None:
+        if self.on_error is None:
+            return
+        try:
+            self.on_error(error)
+        except Exception:
+            # Observability must not alter maintenance's durable error path.
+            pass
 
     def note_activity(self) -> None:
         self.last_activity = self.clock()
@@ -96,6 +107,7 @@ class MaintenanceScheduler:
                         else type(exc).__name__
                     )
                     self.failed_count += 1
+                    self._notify_error(exc)
                     self.store.fail_job(
                         job.id,
                         owner=self.owner,
@@ -126,6 +138,7 @@ class MaintenanceScheduler:
                     raise
                 except Exception as exc:
                     self.last_error = type(exc).__name__
+                    self._notify_error(exc)
                 try:
                     await asyncio.wait_for(self._stop.wait(), timeout=self.interval_seconds)
                 except asyncio.TimeoutError:

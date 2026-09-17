@@ -17,6 +17,7 @@ from mnemos.utils import (
     SimpleEmbeddingProvider,
     SQLiteStore,
 )
+from mnemos.utils.llm import UnavailableLLMProvider
 
 
 def test_resolve_env_value_supports_aliases(monkeypatch: pytest.MonkeyPatch) -> None:
@@ -46,6 +47,59 @@ def test_build_store_from_env_supports_db_path_alias(
     assert isinstance(store, SQLiteStore)
     assert store.db_path == str(db_path)
     store.close()
+
+
+def test_embedding_only_global_config_does_not_select_mock_llm(tmp_path: Path) -> None:
+    config = tmp_path / "global.toml"
+    config.write_text('[embedding]\nprovider = "simple"\ndim = 8\n', encoding="utf-8")
+    engine = runtime_module.build_configured_engine(
+        env={
+            "MNEMOS_CONFIG_PATH": str(config),
+            "MNEMOS_SQLITE_PATH": str(tmp_path / "memory.sqlite"),
+        },
+        cwd=tmp_path,
+    )
+    try:
+        assert isinstance(engine.llm, UnavailableLLMProvider)
+    finally:
+        engine.store.close()
+
+
+def test_embedding_only_project_config_does_not_select_mock_llm(tmp_path: Path) -> None:
+    project = tmp_path / "project"
+    config = project / ".mnemos" / "mnemos.toml"
+    config.parent.mkdir(parents=True)
+    config.write_text('[embedding]\nprovider = "simple"\ndim = 8\n', encoding="utf-8")
+    engine = runtime_module.build_configured_engine(
+        env={
+            "MNEMOS_CONFIG_PATH": str(tmp_path / "missing-global.toml"),
+            "MNEMOS_SQLITE_PATH": str(tmp_path / "memory.sqlite"),
+        },
+        cwd=project,
+    )
+    try:
+        assert isinstance(engine.llm, UnavailableLLMProvider)
+    finally:
+        engine.store.close()
+
+
+@pytest.mark.parametrize("project_config", [False, True])
+def test_configured_mock_provider_remains_explicitly_rejected(
+    tmp_path: Path, project_config: bool
+) -> None:
+    config = tmp_path / ".mnemos" / "mnemos.toml" if project_config else tmp_path / "global.toml"
+    config.parent.mkdir(parents=True, exist_ok=True)
+    config.write_text('[llm]\nprovider = "mock"\n', encoding="utf-8")
+    with pytest.raises(ValueError, match="allow_mock"):
+        runtime_module.build_configured_engine(
+            env={
+                "MNEMOS_CONFIG_PATH": str(
+                    tmp_path / "missing-global.toml" if project_config else config
+                ),
+                "MNEMOS_SQLITE_PATH": str(tmp_path / "memory.sqlite"),
+            },
+            cwd=tmp_path,
+        )
 
 
 def test_build_store_from_env_defaults_to_sqlite_when_requested(
