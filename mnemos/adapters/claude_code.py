@@ -22,6 +22,7 @@ from typing import Any, Mapping
 from ..client import MnemosClient
 from ..claude_identity import claude_v2_event_id
 from .diagnostics import emit_hook_diagnostic
+from .hook_input import read_hook_input
 from ..scopes import ScopeContext, ScopeRegistry, default_registry_path as shared_registry_path
 from ..routing_review import reason_for_context_error, record_unresolved_routing_failure
 from ..service import _protect_private_path, default_runtime_directory
@@ -864,7 +865,7 @@ def main(argv: list[str] | None = None) -> int:
     args = parser.parse_args(argv)
     event = args.event
     try:
-        raw = sys.stdin.read()
+        raw = read_hook_input(sys.stdin)
         payload = json.loads(raw) if raw.strip() else {}
         if not isinstance(payload, dict):
             return 0

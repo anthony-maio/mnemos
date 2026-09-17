@@ -29,6 +29,11 @@ degraded capture through a sanitized hook diagnostic. Stop still returns
 `continue: true`; it never requests another model turn. The adapter does not
 reconstruct missing text from Codex's internal transcript format.
 
+Hook JSON is decoded as UTF-8 regardless of the Windows text-stream locale.
+This preserves non-ASCII prompts and assistant responses before event identity
+and capture. A parsed Stop event still returns nonblocking JSON if capture
+raises an exception.
+
 See the [Codex hook reference](https://learn.chatgpt.com/docs/hooks) for the host contract. Installed-version behavior still needs the native smoke recorded in the compatibility matrix.
 
 ## Explicit memory and project instructions

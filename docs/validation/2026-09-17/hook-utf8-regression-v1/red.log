@@ -1,0 +1,243 @@
+FFFFF                                                                    [100%]
+================================== FAILURES ===================================
+_ test_hook_capture_preserves_utf8_text_under_legacy_stdin[UserPromptSubmit-codex] _
+
+tmp_path = WindowsPath('D:/WindowsTemp/pytest-of-Ant/pytest-3549/test_hook_capture_preserves_ut0')
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x000001F5338AE9E0>
+host = 'codex', event = 'UserPromptSubmit'
+
+    @pytest.mark.parametrize("host", ["codex", "claude-code"])
+    @pytest.mark.parametrize("event", ["UserPromptSubmit", "Stop"])
+    def test_hook_capture_preserves_utf8_text_under_legacy_stdin(
+        tmp_path: Path, monkeypatch: pytest.MonkeyPatch, host: str, event: str
+    ) -> None:
+        content = '\u201cShip it\u201d in \u6771\u4eac \U0001f680'
+        if host == "codex":
+            client = RecordingClient()
+            adapter, payload = make_adapter(tmp_path, client)
+            module = codex
+            monkeypatch.setattr(codex, "CodexAdapter", lambda: adapter)
+        else:
+            client = FakeClient()
+            adapter = claude_code.ClaudeCodeAdapter(
+                client=client,
+                registry=registry_for(tmp_path),
+                user_profile_id="profile-a",
+                checkpoint_directory=tmp_path / "checkpoints",
+            )
+            payload = {"cwd": str(tmp_path), "session_id": "session-1", "prompt_id": "turn-1"}
+            module = claude_code
+            monkeypatch.setattr(claude_code, "ClaudeCodeAdapter", lambda: adapter)
+        payload.update(
+            hook_event_name=event,
+            **{"prompt" if event == "UserPromptSubmit" else "last_assistant_message": content},
+        )
+        wire = json.dumps(payload, ensure_ascii=False).encode("utf-8")
+        stream = io.TextIOWrapper(io.BytesIO(wire), encoding="cp1252", errors="surrogateescape")
+        monkeypatch.setattr(module.sys, "stdin", stream)
+    
+        assert module.main([]) == 0
+    
+>       assert len(client.captures) == 1
+E       assert 0 == 1
+E        +  where 0 = len([])
+E        +    where [] = <tests.test_codex_adapter.RecordingClient object at 0x000001F5338CDBE0>.captures
+
+tests\test_hook_utf8.py:48: AssertionError
+---------------------------- Captured stderr call -----------------------------
+mnemos hook diagnostic host=codex event=UserPromptSubmit status=error exception=UnicodeEncodeError
+_ test_hook_capture_preserves_utf8_text_under_legacy_stdin[UserPromptSubmit-claude-code] _
+
+tmp_path = WindowsPath('D:/WindowsTemp/pytest-of-Ant/pytest-3549/test_hook_capture_preserves_ut1')
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x000001F5338AE780>
+host = 'claude-code', event = 'UserPromptSubmit'
+
+    @pytest.mark.parametrize("host", ["codex", "claude-code"])
+    @pytest.mark.parametrize("event", ["UserPromptSubmit", "Stop"])
+    def test_hook_capture_preserves_utf8_text_under_legacy_stdin(
+        tmp_path: Path, monkeypatch: pytest.MonkeyPatch, host: str, event: str
+    ) -> None:
+        content = '\u201cShip it\u201d in \u6771\u4eac \U0001f680'
+        if host == "codex":
+            client = RecordingClient()
+            adapter, payload = make_adapter(tmp_path, client)
+            module = codex
+            monkeypatch.setattr(codex, "CodexAdapter", lambda: adapter)
+        else:
+            client = FakeClient()
+            adapter = claude_code.ClaudeCodeAdapter(
+                client=client,
+                registry=registry_for(tmp_path),
+                user_profile_id="profile-a",
+                checkpoint_directory=tmp_path / "checkpoints",
+            )
+            payload = {"cwd": str(tmp_path), "session_id": "session-1", "prompt_id": "turn-1"}
+            module = claude_code
+            monkeypatch.setattr(claude_code, "ClaudeCodeAdapter", lambda: adapter)
+        payload.update(
+            hook_event_name=event,
+            **{"prompt" if event == "UserPromptSubmit" else "last_assistant_message": content},
+        )
+        wire = json.dumps(payload, ensure_ascii=False).encode("utf-8")
+        stream = io.TextIOWrapper(io.BytesIO(wire), encoding="cp1252", errors="surrogateescape")
+        monkeypatch.setattr(module.sys, "stdin", stream)
+    
+        assert module.main([]) == 0
+    
+>       assert len(client.captures) == 1
+E       assert 0 == 1
+E        +  where 0 = len([])
+E        +    where [] = <tests.test_claude_adapter.FakeClient object at 0x000001F5338CE660>.captures
+
+tests\test_hook_utf8.py:48: AssertionError
+---------------------------- Captured stdout call -----------------------------
+{"hookSpecificOutput":{"hookEventName":"UserPromptSubmit","additionalContext":"1. Use the repository's bounded test command."}}
+---------------------------- Captured stderr call -----------------------------
+mnemos hook diagnostic host=claude-code event=UserPromptSubmit status=degraded
+____ test_hook_capture_preserves_utf8_text_under_legacy_stdin[Stop-codex] _____
+
+tmp_path = WindowsPath('D:/WindowsTemp/pytest-of-Ant/pytest-3549/test_hook_capture_preserves_ut2')
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x000001F53393D910>
+host = 'codex', event = 'Stop'
+
+    @pytest.mark.parametrize("host", ["codex", "claude-code"])
+    @pytest.mark.parametrize("event", ["UserPromptSubmit", "Stop"])
+    def test_hook_capture_preserves_utf8_text_under_legacy_stdin(
+        tmp_path: Path, monkeypatch: pytest.MonkeyPatch, host: str, event: str
+    ) -> None:
+        content = '\u201cShip it\u201d in \u6771\u4eac \U0001f680'
+        if host == "codex":
+            client = RecordingClient()
+            adapter, payload = make_adapter(tmp_path, client)
+            module = codex
+            monkeypatch.setattr(codex, "CodexAdapter", lambda: adapter)
+        else:
+            client = FakeClient()
+            adapter = claude_code.ClaudeCodeAdapter(
+                client=client,
+                registry=registry_for(tmp_path),
+                user_profile_id="profile-a",
+                checkpoint_directory=tmp_path / "checkpoints",
+            )
+            payload = {"cwd": str(tmp_path), "session_id": "session-1", "prompt_id": "turn-1"}
+            module = claude_code
+            monkeypatch.setattr(claude_code, "ClaudeCodeAdapter", lambda: adapter)
+        payload.update(
+            hook_event_name=event,
+            **{"prompt" if event == "UserPromptSubmit" else "last_assistant_message": content},
+        )
+        wire = json.dumps(payload, ensure_ascii=False).encode("utf-8")
+        stream = io.TextIOWrapper(io.BytesIO(wire), encoding="cp1252", errors="surrogateescape")
+        monkeypatch.setattr(module.sys, "stdin", stream)
+    
+        assert module.main([]) == 0
+    
+>       assert len(client.captures) == 1
+E       assert 0 == 1
+E        +  where 0 = len([])
+E        +    where [] = <tests.test_codex_adapter.RecordingClient object at 0x000001F5338AB390>.captures
+
+tests\test_hook_utf8.py:48: AssertionError
+---------------------------- Captured stderr call -----------------------------
+mnemos hook diagnostic host=codex event=Stop status=error exception=UnicodeEncodeError
+_ test_hook_capture_preserves_utf8_text_under_legacy_stdin[Stop-claude-code] __
+
+tmp_path = WindowsPath('D:/WindowsTemp/pytest-of-Ant/pytest-3549/test_hook_capture_preserves_ut3')
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x000001F53389F130>
+host = 'claude-code', event = 'Stop'
+
+    @pytest.mark.parametrize("host", ["codex", "claude-code"])
+    @pytest.mark.parametrize("event", ["UserPromptSubmit", "Stop"])
+    def test_hook_capture_preserves_utf8_text_under_legacy_stdin(
+        tmp_path: Path, monkeypatch: pytest.MonkeyPatch, host: str, event: str
+    ) -> None:
+        content = '\u201cShip it\u201d in \u6771\u4eac \U0001f680'
+        if host == "codex":
+            client = RecordingClient()
+            adapter, payload = make_adapter(tmp_path, client)
+            module = codex
+            monkeypatch.setattr(codex, "CodexAdapter", lambda: adapter)
+        else:
+            client = FakeClient()
+            adapter = claude_code.ClaudeCodeAdapter(
+                client=client,
+                registry=registry_for(tmp_path),
+                user_profile_id="profile-a",
+                checkpoint_directory=tmp_path / "checkpoints",
+            )
+            payload = {"cwd": str(tmp_path), "session_id": "session-1", "prompt_id": "turn-1"}
+            module = claude_code
+            monkeypatch.setattr(claude_code, "ClaudeCodeAdapter", lambda: adapter)
+        payload.update(
+            hook_event_name=event,
+            **{"prompt" if event == "UserPromptSubmit" else "last_assistant_message": content},
+        )
+        wire = json.dumps(payload, ensure_ascii=False).encode("utf-8")
+        stream = io.TextIOWrapper(io.BytesIO(wire), encoding="cp1252", errors="surrogateescape")
+        monkeypatch.setattr(module.sys, "stdin", stream)
+    
+        assert module.main([]) == 0
+    
+>       assert len(client.captures) == 1
+E       assert 0 == 1
+E        +  where 0 = len([])
+E        +    where [] = <tests.test_claude_adapter.FakeClient object at 0x000001F5339947D0>.captures
+
+tests\test_hook_utf8.py:48: AssertionError
+---------------------------- Captured stderr call -----------------------------
+mnemos hook diagnostic host=claude-code event=Stop status=error exception=UnicodeEncodeError
+____________ test_parsed_stop_error_still_returns_nonblocking_json ____________
+
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x000001F53389FAC0>
+capsys = <_pytest.capture.CaptureFixture object at 0x000001F5338CE900>
+
+    def test_parsed_stop_error_still_returns_nonblocking_json(
+        monkeypatch: pytest.MonkeyPatch, capsys: pytest.CaptureFixture[str]
+    ) -> None:
+        async def fail(*args, **kwargs):
+            raise ValueError("private payload must not appear")
+    
+        monkeypatch.setattr(codex, "run_hook", fail)
+        monkeypatch.setattr(codex.sys, "stdin", io.StringIO('{"hook_event_name":"Stop"}'))
+    
+        assert codex.main([]) == 0
+    
+        result = capsys.readouterr()
+>       assert json.loads(result.out) == {"continue": True}
+               ^^^^^^^^^^^^^^^^^^^^^^
+
+tests\test_hook_utf8.py:65: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+C:\Users\Ant\AppData\Roaming\uv\python\cpython-3.13.7-windows-x86_64-none\Lib\json\__init__.py:346: in loads
+    return _default_decoder.decode(s)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^
+C:\Users\Ant\AppData\Roaming\uv\python\cpython-3.13.7-windows-x86_64-none\Lib\json\decoder.py:345: in decode
+    obj, end = self.raw_decode(s, idx=_w(s, 0).end())
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+self = <json.decoder.JSONDecoder object at 0x000001F509127B60>, s = '', idx = 0
+
+    def raw_decode(self, s, idx=0):
+        """Decode a JSON document from ``s`` (a ``str`` beginning with
+        a JSON document) and return a 2-tuple of the Python
+        representation and the index in ``s`` where the document ended.
+    
+        This can be used to decode a JSON document from a string that may
+        have extraneous data at the end.
+    
+        """
+        try:
+            obj, end = self.scan_once(s, idx)
+        except StopIteration as err:
+>           raise JSONDecodeError("Expecting value", s, err.value) from None
+E           json.decoder.JSONDecodeError: Expecting value: line 1 column 1 (char 0)
+
+C:\Users\Ant\AppData\Roaming\uv\python\cpython-3.13.7-windows-x86_64-none\Lib\json\decoder.py:363: JSONDecodeError
+=========================== short test summary info ===========================
+FAILED tests/test_hook_utf8.py::test_hook_capture_preserves_utf8_text_under_legacy_stdin[UserPromptSubmit-codex]
+FAILED tests/test_hook_utf8.py::test_hook_capture_preserves_utf8_text_under_legacy_stdin[UserPromptSubmit-claude-code]
+FAILED tests/test_hook_utf8.py::test_hook_capture_preserves_utf8_text_under_legacy_stdin[Stop-codex]
+FAILED tests/test_hook_utf8.py::test_hook_capture_preserves_utf8_text_under_legacy_stdin[Stop-claude-code]
+FAILED tests/test_hook_utf8.py::test_parsed_stop_error_still_returns_nonblocking_json
+5 failed in 2.04s
