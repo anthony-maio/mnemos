@@ -98,6 +98,13 @@ no lifecycle tool calls; phase 2 was not run. A separate installed-package
 MCP exchange exposed all 14 tools in 1.853 seconds. That control verifies the
 catalog in isolation, but does not explain the native startup failure or
 establish correction and forget acceptance.
+The [v16 startup-wait control](validation/2026-09-17/native-claude-lifecycle-v16/README.md)
+set `MCP_CONNECTION_NONBLOCKING=0` only for its disposable Claude process.
+Mnemos connected with all 14 tools, and all six checks of the actual native
+correct/consolidate/retrieve sequence passed. A subsequent direct retrieval
+after maintenance failed before restart or forget. Capture diagnostics also
+remained degraded. This records a successful native correction sequence;
+complete lifecycle and general startup reliability remain open.
 The v9 attempt preserves a budget-limit failure with inherited account-level
 connectors; v10 disabled those connectors only in its disposable process.
 

@@ -56,6 +56,11 @@ The separate [hook-time identity observation](../2026-09-17/native-claude-hook-i
 found no prompt ID and no transcript file at UserPromptSubmit; identifiers
 appeared by Stop. Both capture hooks still emitted diagnostics, so this
 association limit remains an open native acceptance condition.
+The [v16 startup-wait control](../2026-09-17/native-claude-lifecycle-v16/README.md)
+then observed a connected catalog and passed all six native correction-phase
+checks. Its direct post-maintenance retrieval failed before restart and forget,
+so the complete lifecycle remains failed. Degraded hook capture is retained
+separately from the successful native correction operation.
 An implemented capability does not close its quality, native-host, or pilot
 acceptance gate.
 
