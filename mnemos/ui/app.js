@@ -4,6 +4,8 @@ const state = {
   selectedMemoryId: null,
   selectedMemoryMeta: null,
   selectedMemoryVersion: null,
+  forgetPreview: null,
+  forgetPreviewRequest: 0,
   csrfToken: null,
 };
 
@@ -435,6 +437,7 @@ function renderMemory(snapshot) {
 
   document.querySelectorAll(".memory-item").forEach((element) => {
     element.addEventListener("click", async () => {
+      clearForgetPreview();
       state.selectedMemoryId = element.dataset.memoryId;
       state.selectedMemoryMeta = {
         id: element.dataset.memoryId,
@@ -609,10 +612,135 @@ function maintenanceDetail(activity, jobs = {}) {
 function setMemoryActionAvailability(enabled) {
   document.getElementById("correct-memory").disabled = !enabled;
   document.getElementById("forget-memory").disabled = !enabled;
+  document.getElementById("preview-forget-memory").disabled =
+    !enabled || state.selectedMemoryMeta?.scope !== "project";
+}
+
+function clearForgetPreview() {
+  state.forgetPreview = null;
+  state.forgetPreviewRequest += 1;
+  const panel = document.getElementById("forget-preview");
+  panel.hidden = true;
+  panel.replaceChildren();
+}
+
+async function previewForgetMemory() {
+  if (!state.selectedMemoryId) return;
+  clearForgetPreview();
+  const request = state.forgetPreviewRequest;
+  const factId = state.selectedMemoryId;
+  const version = Number(state.selectedMemoryVersion);
+  const status = document.getElementById("memory-action-status");
+  status.textContent = "Finding matching captured copies...";
+  try {
+    const preview = await api(`/api/memory/${encodeURIComponent(factId)}/forget-preview`, {
+      method: "POST",
+      body: JSON.stringify({ expected_version: version }),
+    });
+    if (request !== state.forgetPreviewRequest || factId !== state.selectedMemoryId) return;
+    if (preview.status !== "preview" || preview.target?.fact_id !== factId ||
+        preview.target?.version !== version || !Array.isArray(preview.candidates) ||
+        !Array.isArray(preview.source_events) || typeof preview.preview_digest !== "string") {
+      throw new Error("The service did not return a valid deletion preview.");
+    }
+    state.forgetPreview = preview;
+    const retainedSourceIds = new Set(preview.source_events
+      .filter((item) => item.selection_allowed !== false).map((item) => item.source_event_id));
+    const targetSourceIds = new Set(preview.target.source_event_ids || []);
+    const targetSources = (preview.target.affected_sources || []).map((item) =>
+      `<li>${escapeHtml(item.status === "expired" ? "Original source no longer retained." : item.content)}</li>`
+    ).join("");
+    const facts = preview.candidates.map((item, index) => `
+      <label class="checkbox-field">
+        <input type="checkbox" data-forget-fact="${escapeHtml(item.fact_id)}" ${(item.blocked_source_event_ids || []).length ? "disabled" : ""} />
+        <span><strong>Captured fact ${index + 1}:</strong> ${escapeHtml(item.content)}<br />
+          ${(item.blocked_source_event_ids || []).length ? "This copy has a source outside this removal plan and cannot be selected." : ""}
+          ${item.source_event_ids.some((id) => retainedSourceIds.has(id))
+            ? `Also select its ${item.source_event_ids.filter((id) => retainedSourceIds.has(id)).length} retained sources below.`
+            : "No additional source listed in this preview."}</span>
+      </label>`).join("");
+    const sources = preview.source_events.map((item) => `
+      <label class="checkbox-field">
+        <input type="checkbox" data-forget-source="${escapeHtml(item.source_event_id)}"
+          ${item.selection_allowed === false ? "disabled" : targetSourceIds.has(item.source_event_id) ? "checked disabled" : ""} />
+        <span>${escapeHtml(item.content)}<br />${escapeHtml(item.status)}.
+          ${item.selection_allowed === false ? "This source cannot be removed through this plan." : targetSourceIds.has(item.source_event_id) ? "Attached to the required record." : ""}
+          ${escapeHtml(preview.candidates.map((fact, index) =>
+            fact.source_event_ids.includes(item.source_event_id) ? `Required by captured fact ${index + 1}.` : ""
+          ).filter(Boolean).join(" "))}</span>
+      </label>`).join("");
+    const panel = document.getElementById("forget-preview");
+    panel.innerHTML = `
+      <h3>Review records to forget</h3>
+      <p>Matching facts contain the full current or historical assertion text within this project and profile.
+        Their retained sources are listed too.
+        Paraphrases, external transcripts, and historical backups may still contain it.</p>
+      <p><strong>Selected record (required):</strong> ${escapeHtml(preview.target.content)}</p>
+      ${targetSources ? `<details><summary>Sources attached to the required record</summary><ul>${targetSources}</ul></details>` : ""}
+      <p>Deleting a fact also removes its linked evidence and replayable sources.
+        Select any additional captured facts and their sources below. Shared sources may prevent
+        deletion when another retained fact still uses them.</p>
+      <h4>Additional captured facts</h4>${facts || "<p>No matching facts.</p>"}
+      <h4>Captured sources</h4>${sources || "<p>No matching sources.</p>"}
+      ${preview.complete === true ? "" : "<p>This preview is incomplete. Nothing can be deleted from it.</p>"}
+      <button id="apply-related-forget" class="button button-danger" ${preview.complete === true ? "" : "disabled"}>Forget selected records</button>
+      <button id="cancel-related-forget" class="button button-ghost">Cancel</button>`;
+    panel.hidden = false;
+    document.getElementById("apply-related-forget").addEventListener("click", applyRelatedForget);
+    document.getElementById("cancel-related-forget").addEventListener("click", clearForgetPreview);
+    status.textContent = "Review the records, then select any additional copies to remove.";
+  } catch (error) {
+    if (request !== state.forgetPreviewRequest) return;
+    clearForgetPreview();
+    status.textContent = error.message;
+  }
+}
+
+async function applyRelatedForget() {
+  const preview = state.forgetPreview;
+  if (!preview || preview.complete !== true || preview.target.fact_id !== state.selectedMemoryId) return;
+  const panel = document.getElementById("forget-preview");
+  const factIds = [preview.target.fact_id, ...Array.from(
+    panel.querySelectorAll("[data-forget-fact]:checked"), (item) => item.dataset.forgetFact,
+  )];
+  const sourceIds = Array.from(
+    panel.querySelectorAll("[data-forget-source]:checked"), (item) => item.dataset.forgetSource,
+  );
+  const button = document.getElementById("apply-related-forget");
+  button.disabled = true;
+  try {
+    const result = await api(`/api/memory/${encodeURIComponent(preview.target.fact_id)}/forget-related`, {
+      method: "POST",
+      body: JSON.stringify({
+        expected_version: preview.target.version,
+        preview_digest: preview.preview_digest,
+        preview_limit: preview.limit,
+        selected_fact_ids: factIds,
+        selected_source_event_ids: sourceIds,
+      }),
+    });
+    if (result.forgotten !== true || result.status !== "committed") {
+      throw new Error(`Deletion was not confirmed: ${result.status || "unknown"}`);
+    }
+    clearForgetPreview();
+    if (state.selectedMemoryId === preview.target.fact_id) {
+      state.selectedMemoryId = null;
+      state.selectedMemoryMeta = null;
+      state.selectedMemoryVersion = null;
+      setMemoryActionAvailability(false);
+    }
+    document.getElementById("memory-action-status").textContent = "Selected records forgotten.";
+    await refreshDashboard();
+  } catch (error) {
+    clearForgetPreview();
+    document.getElementById("memory-action-status").textContent =
+      `${error.message} Review a fresh preview before trying again.`;
+  }
 }
 
 async function correctMemory() {
   if (!state.selectedMemoryId) return;
+  clearForgetPreview();
   const content = window.prompt("Correct this memory:");
   if (content === null || !content.trim()) return;
   try {
@@ -630,6 +758,7 @@ async function correctMemory() {
 
 async function forgetMemory() {
   if (!state.selectedMemoryId || !window.confirm("Forget this memory?")) return;
+  clearForgetPreview();
   try {
     const result = await api(`/api/memory/${encodeURIComponent(state.selectedMemoryId)}/forget`, {
       method: "POST",
@@ -851,6 +980,7 @@ function bindEvents() {
   document.getElementById("explain-memory").addEventListener("click", refreshMemoryDetail);
   document.getElementById("correct-memory").addEventListener("click", correctMemory);
   document.getElementById("forget-memory").addEventListener("click", forgetMemory);
+  document.getElementById("preview-forget-memory").addEventListener("click", previewForgetMemory);
   document.getElementById("llm-provider").addEventListener("change", refreshProviderFields);
 }
 

@@ -8,7 +8,13 @@ from datetime import datetime, timezone
 from typing import Any
 from uuid import uuid4
 
-from .contracts import CaptureEvent, FactProposal, RetrievalRequest
+from .contracts import (
+    CaptureEvent,
+    FactProposal,
+    ForgetPreviewRequest,
+    ForgetRelatedRequest,
+    RetrievalRequest,
+)
 from .claude_identity import legacy_event_id, scoped_event_id
 from .engine import MnemosEngine
 from .jobs import DurableJob, FactEvidence, FactRevision
@@ -882,6 +888,41 @@ class LocalMemoryService:
                 "maintenance": self.maintenance.health(),
                 "graph": self._graph_status(),
             }
+        if operation == "forget_preview":
+            preview_request = ForgetPreviewRequest.model_validate(payload)
+            context = self.registry.validate_context(preview_request.context)
+            if context.project_id is None:
+                raise ValueError("Related forget requires a project context")
+            preview = self.engine.store.preview_related_forget(
+                fact_id=preview_request.fact_id,
+                expected_version=preview_request.expected_version,
+                user_profile_id=context.user_profile_id,
+                project_id=context.project_id,
+                limit=preview_request.limit,
+            )
+            return {"schema_version": 1, "status": "preview", **preview}
+        if operation == "forget_related":
+            related_request = ForgetRelatedRequest.model_validate(payload)
+            context = self.registry.validate_context(related_request.context)
+            if context.project_id is None:
+                raise ValueError("Related forget requires a project context")
+            result = self.engine.store.forget_related(
+                fact_id=related_request.fact_id,
+                expected_version=related_request.expected_version,
+                user_profile_id=context.user_profile_id,
+                project_id=context.project_id,
+                preview_digest=related_request.preview_digest,
+                limit=related_request.preview_limit,
+                selected_fact_ids=related_request.selected_fact_ids,
+                selected_source_event_ids=related_request.selected_source_event_ids,
+            )
+            for selected_id in result["selected_fact_ids"]:
+                self.engine.spreading_activation.remove_node(selected_id)
+            self.engine.surprisal_gate.clear_history()
+            self.engine.sleep_daemon._episodic_buffer.clear()
+            self.engine.mutable_rag.clear_labile_queue()
+            self.engine._retrieval_traces.clear()
+            return {"schema_version": 1, **result}
         if operation == "forget":
             context = self.registry.validate_context(
                 ScopeContext.model_validate(payload["context"])

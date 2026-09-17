@@ -74,10 +74,13 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import Any, Literal, cast, TYPE_CHECKING
 
+from pydantic import StrictInt
+
 if TYPE_CHECKING:
     from mcp.server.fastmcp import Context
 
 from .config import MemoryGovernanceConfig, MemorySafetyConfig, MnemosConfig, SurprisalConfig
+from .contracts import ForgetPreviewRequest, ForgetRelatedRequest
 from .engine import MnemosEngine
 from .client import MnemosClient
 from .health import run_health_checks
@@ -334,6 +337,22 @@ def _service_json(value: Any) -> str:
     return json.dumps(value, indent=2, default=str)
 
 
+def _strict_positive_int(value: Any, field: str) -> int:
+    if isinstance(value, bool) or not isinstance(value, int):
+        raise ValueError(f"{field} must be an integer")
+    return value
+
+
+def _strict_id_list(value: Any, field: str) -> list[str]:
+    if value is None:
+        return []
+    if not isinstance(value, list) or any(
+        not isinstance(item, str) or not item.strip() for item in value
+    ):
+        raise ValueError(f"{field} must be a list of non-empty strings")
+    return list(value)
+
+
 async def _service_health(service_context: ServiceMCPContext) -> dict[str, Any]:
     result = await _service_request(service_context, "health", {})
     # Keep the long-standing diagnostics names while sourcing every value
@@ -578,6 +597,79 @@ def _register_service_tools(mcp: Any) -> None:
                     "expected_version": expected_version,
                     "context": service_context.scope.model_dump(mode="json"),
                 },
+            )
+        )
+
+    @mcp.tool()
+    async def mnemos_forget_preview(
+        fact_id: str,
+        expected_version: StrictInt,
+        limit: StrictInt = 100,
+        ctx: Context[Any, Any, Any] | None = None,
+    ) -> str:
+        """Preview exact related facts and source events before a reviewed forget.
+
+        The preview is bounded and scoped to the current project. Applying it
+        always removes the target fact and its linked evidence cleanup. Only
+        additional related facts or source events require explicit reviewed
+        selections; stale previews must be regenerated. No other facts are
+        deleted automatically.
+        """
+        service_context = _service_context_from_ctx(ctx, "mnemos_forget_preview")
+        if service_context.scope.project_id is None:
+            raise ValueError("Related forget requires a validated project context")
+        request = ForgetPreviewRequest.model_validate(
+            {
+                "context": service_context.scope.model_dump(mode="json"),
+                "fact_id": fact_id,
+                "expected_version": _strict_positive_int(expected_version, "expected_version"),
+                "limit": _strict_positive_int(limit, "limit"),
+            }
+        )
+        return _service_json(
+            await _service_request(
+                service_context, "forget_preview", request.model_dump(mode="json")
+            )
+        )
+
+    @mcp.tool()
+    async def mnemos_forget_related(
+        fact_id: str,
+        expected_version: StrictInt,
+        preview_digest: str,
+        preview_limit: StrictInt = 100,
+        selected_fact_ids: list[str] | None = None,
+        selected_source_event_ids: list[str] | None = None,
+        ctx: Context[Any, Any, Any] | None = None,
+    ) -> str:
+        """Apply reviewed exact related forget selections with stale checks.
+
+        The target fact is always removed, along with its linked evidence
+        cleanup. Only additional facts or source events are removed when their
+        IDs were explicitly selected from a matching preview. The current
+        project context is injected by the service, and stale previews must be
+        re-previewed. No unselected or automatically inferred memories are
+        deleted.
+        """
+        service_context = _service_context_from_ctx(ctx, "mnemos_forget_related")
+        if service_context.scope.project_id is None:
+            raise ValueError("Related forget requires a validated project context")
+        request = ForgetRelatedRequest.model_validate(
+            {
+                "context": service_context.scope.model_dump(mode="json"),
+                "fact_id": fact_id,
+                "expected_version": _strict_positive_int(expected_version, "expected_version"),
+                "preview_digest": preview_digest,
+                "preview_limit": _strict_positive_int(preview_limit, "preview_limit"),
+                "selected_fact_ids": _strict_id_list(selected_fact_ids, "selected_fact_ids"),
+                "selected_source_event_ids": _strict_id_list(
+                    selected_source_event_ids, "selected_source_event_ids"
+                ),
+            }
+        )
+        return _service_json(
+            await _service_request(
+                service_context, "forget_related", request.model_dump(mode="json")
             )
         )
 

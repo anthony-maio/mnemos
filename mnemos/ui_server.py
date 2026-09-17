@@ -223,16 +223,39 @@ class MnemosUiRouter:
         if method == "POST" and path.startswith("/api/memory/"):
             suffix = path.removeprefix("/api/memory/")
             parts = [part for part in suffix.split("/") if part]
-            if len(parts) == 2 and parts[1] in {"correct", "forget"}:
+            if len(parts) == 2 and parts[1] in {
+                "correct",
+                "forget",
+                "forget-preview",
+                "forget-related",
+            }:
                 try:
                     fact_id = parts[0]
-                    version = int(payload["expected_version"])
                     if parts[1] == "correct":
+                        version = int(payload["expected_version"])
                         result = self.service.correct_memory(
                             fact_id, str(payload["content"]), version
                         )
-                    else:
+                    elif parts[1] == "forget":
+                        # Preserve the historical UI contract: clients may
+                        # submit the optimistic version as a JSON string.
+                        version = int(payload["expected_version"])
                         result = self.service.forget_memory(fact_id, version)
+                    elif parts[1] == "forget-preview":
+                        result = self.service.preview_forget_memory(
+                            fact_id,
+                            payload["expected_version"],
+                            payload.get("limit", 100),
+                        )
+                    else:
+                        result = self.service.forget_related_memory(
+                            fact_id,
+                            payload["expected_version"],
+                            payload["preview_digest"],
+                            payload.get("preview_limit", 100),
+                            payload.get("selected_fact_ids"),
+                            payload.get("selected_source_event_ids"),
+                        )
                     return self._json_response(result)
                 except (KeyError, TypeError, ValueError) as exc:
                     return self._json_response({"error": str(exc)}, status=HTTPStatus.BAD_REQUEST)

@@ -13,6 +13,7 @@ from pathlib import Path
 from typing import Any, Literal, Mapping
 
 from .client import MnemosClient
+from .contracts import ForgetPreviewRequest, ForgetRelatedRequest
 from .health import run_health_checks
 from .hosts import apply_host_integration, preview_host_integration
 from .routing_review import ack_routing_failure, list_routing_failures
@@ -134,6 +135,22 @@ def _host_entry(name: str) -> dict[str, Any]:
 
 def _default_activity(status: str = "not_run") -> dict[str, Any]:
     return {"present": False, "status": status}
+
+
+def _strict_int(value: Any, field: str) -> int:
+    if isinstance(value, bool) or not isinstance(value, int):
+        raise ValueError(f"{field} must be an integer")
+    return value
+
+
+def _strict_id_list(value: Any, field: str) -> list[str]:
+    if value is None:
+        return []
+    if not isinstance(value, list) or any(
+        not isinstance(item, str) or not item.strip() for item in value
+    ):
+        raise ValueError(f"{field} must be a list of non-empty strings")
+    return list(value)
 
 
 class ControlPlaneService:
@@ -807,6 +824,43 @@ class ControlPlaneService:
                 "expected_version": expected_version,
             },
         )
+
+    def preview_forget_memory(
+        self, fact_id: str, expected_version: int, limit: int = 100
+    ) -> dict[str, Any]:
+        request = ForgetPreviewRequest.model_validate(
+            {
+                "context": self._context_payload(),
+                "fact_id": fact_id,
+                "expected_version": _strict_int(expected_version, "expected_version"),
+                "limit": _strict_int(limit, "limit"),
+            }
+        )
+        return self._service_request("forget_preview", request.model_dump(mode="json"))
+
+    def forget_related_memory(
+        self,
+        fact_id: str,
+        expected_version: int,
+        preview_digest: str,
+        preview_limit: int = 100,
+        selected_fact_ids: list[str] | None = None,
+        selected_source_event_ids: list[str] | None = None,
+    ) -> dict[str, Any]:
+        request = ForgetRelatedRequest.model_validate(
+            {
+                "context": self._context_payload(),
+                "fact_id": fact_id,
+                "expected_version": _strict_int(expected_version, "expected_version"),
+                "preview_digest": preview_digest,
+                "preview_limit": _strict_int(preview_limit, "preview_limit"),
+                "selected_fact_ids": _strict_id_list(selected_fact_ids, "selected_fact_ids"),
+                "selected_source_event_ids": _strict_id_list(
+                    selected_source_event_ids, "selected_source_event_ids"
+                ),
+            }
+        )
+        return self._service_request("forget_related", request.model_dump(mode="json"))
 
     def get_dashboard_view(self) -> dict[str, Any]:
         resolved = self._resolved_settings()

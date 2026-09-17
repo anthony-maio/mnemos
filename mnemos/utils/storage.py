@@ -308,6 +308,31 @@ class MemoryStore(ABC):
     def forget_fact(self, fact_id: str, *, expected_version: int) -> bool:
         raise NotImplementedError("This backend does not support durable forget suppression")
 
+    def preview_related_forget(
+        self,
+        *,
+        fact_id: str,
+        expected_version: int,
+        user_profile_id: str,
+        project_id: str,
+        limit: int = 100,
+    ) -> dict[str, Any]:
+        raise NotImplementedError("This storage backend does not support related forget previews")
+
+    def forget_related(
+        self,
+        *,
+        fact_id: str,
+        expected_version: int,
+        user_profile_id: str,
+        project_id: str,
+        preview_digest: str,
+        selected_fact_ids: list[str],
+        selected_source_event_ids: list[str],
+        limit: int = 100,
+    ) -> dict[str, Any]:
+        raise NotImplementedError("This storage backend does not support related forget")
+
     def store_feedback_event(self, event: RetrievalFeedbackEvent) -> None:
         """Persist one retrieval-feedback event."""
         raise NotImplementedError("This storage backend does not support feedback events.")
@@ -2789,98 +2814,715 @@ class SQLiteStore(MemoryStore):
             for row in rows
         ]
 
+    def _related_forget_target(
+        self, fact_id: str, *, expected_version: int, user_profile_id: str, project_id: str
+    ) -> tuple[MemoryChunk, list[str]]:
+        chunk = self.get(fact_id)
+        if chunk is None:
+            raise KeyError("Memory not found")
+        if chunk.version != expected_version:
+            raise ValueError("Forget preview is stale")
+        if (
+            chunk.metadata.get("user_profile_id") != user_profile_id
+            or chunk.metadata.get("scope") != "project"
+            or chunk.metadata.get("scope_id") != project_id
+        ):
+            raise ValueError("Related forget requires a project-scoped fact")
+        assertions = [normalize_memory_text(chunk.content)]
+        assertions.extend(
+            normalize_memory_text(item.content) for item in self.list_fact_revisions(fact_id)
+        )
+        return chunk, list(dict.fromkeys(item for item in assertions if item))
+
+    def _related_forget_fact_dependencies_locked(self, fact_id: str) -> tuple[set[str], set[str]]:
+        """Return every source and job touched by the existing forget cleanup."""
+        source_ids = {
+            item.source_event_id
+            for item in self.list_fact_evidence(fact_id)
+            if item.source_event_id
+        }
+        job_ids: set[str] = set()
+        for row in self._conn.execute(
+            "SELECT id, json_extract(payload, '$.event_id') FROM memory_jobs "
+            "WHERE json_extract(payload, '$.target_fact_id')=?",
+            (fact_id,),
+        ):
+            job_ids.add(str(row[0]))
+            if row[1]:
+                source_ids.add(str(row[1]))
+        for row in self._conn.execute(
+            "SELECT memory_jobs.id, evidence.value FROM memory_jobs, "
+            "json_each(payload, '$.evidence_ids') AS evidence "
+            "WHERE json_extract(payload, '$.target_fact_id')=?",
+            (fact_id,),
+        ):
+            job_ids.add(str(row[0]))
+            if row[1]:
+                source_ids.add(str(row[1]))
+        return {str(item) for item in source_ids}, job_ids
+
+    def _related_forget_source_detail_locked(
+        self,
+        source_event_id: str,
+        assertions: list[str],
+        *,
+        match_type: str = "exact_assertion",
+        user_profile_id: str,
+        project_id: str,
+    ) -> dict[str, Any] | None:
+        job_id_rows = self._conn.execute(
+            "SELECT id FROM memory_jobs WHERE json_extract(payload, '$.event_id')=? "
+            "UNION SELECT memory_jobs.id FROM memory_jobs, "
+            "json_each(payload, '$.evidence_ids') AS evidence "
+            "WHERE evidence.value=? ORDER BY id",
+            (source_event_id, source_event_id),
+        ).fetchall()
+        job_ids = sorted(str(row[0]) for row in job_id_rows)
+        derived_fact_rows = self._conn.execute(
+            "SELECT fact_id FROM fact_evidence WHERE source_event_id=? "
+            "UNION SELECT json_extract(payload, '$.target_fact_id') FROM memory_jobs "
+            "WHERE json_extract(payload, '$.event_id')=? "
+            "UNION SELECT json_extract(memory_jobs.payload, '$.target_fact_id') "
+            "FROM memory_jobs, json_each(payload, '$.evidence_ids') AS evidence "
+            "WHERE evidence.value=? ORDER BY fact_id",
+            (source_event_id, source_event_id, source_event_id),
+        ).fetchall()
+        derived_fact_ids = sorted(str(row[0]) for row in derived_fact_rows if row[0] is not None)
+        event = self.get_episodic_event(source_event_id)
+        if event is None:
+            return {
+                "source_event_id": source_event_id,
+                "status": "expired",
+                "content": "",
+                "match_type": match_type,
+                "matched_assertions": [],
+                "job_ids": job_ids,
+                "derived_fact_ids": derived_fact_ids,
+                "scope": None,
+                "scope_id": None,
+                "user_profile_id": None,
+                "explicit_remember": None,
+                "selection_allowed": False,
+                "source_allowed": False,
+            }
+        metadata_profile = event.metadata.get("user_profile_id")
+        if metadata_profile is None:
+            metadata_profile = event.metadata.get("profile_id")
+        source_allowed = (
+            event.scope == "project"
+            and event.scope_id == project_id
+            and metadata_profile == user_profile_id
+            and event.metadata.get("scope") in (None, "project")
+            and event.metadata.get("scope_id") in (None, project_id)
+        )
+        if not source_allowed:
+            return {
+                "source_event_id": event.id,
+                "status": "blocked",
+                "content": "",
+                "match_type": match_type,
+                "matched_assertions": [],
+                "job_ids": [],
+                "derived_fact_ids": [],
+                "scope": None,
+                "scope_id": None,
+                "user_profile_id": None,
+                "explicit_remember": None,
+                "source_allowed": False,
+                "reason": "linked_source_out_of_scope",
+            }
+        normalized = event.normalized_content or normalize_memory_text(event.content)
+        matches = [assertion for assertion in assertions if assertion in normalized]
+        return {
+            "source_event_id": event.id,
+            "status": event.status,
+            "content": event.content,
+            "match_type": (
+                match_type
+                if match_type != "exact_assertion" or matches
+                else "linked_capture_source"
+            ),
+            "matched_assertions": matches,
+            "job_ids": job_ids,
+            "derived_fact_ids": derived_fact_ids,
+            "scope": event.scope,
+            "scope_id": event.scope_id,
+            "user_profile_id": metadata_profile,
+            "explicit_remember": event.metadata.get("explicit_remember"),
+            "source_allowed": True,
+        }
+
+    def _related_forget_preview_locked(
+        self,
+        *,
+        fact_id: str,
+        expected_version: int,
+        user_profile_id: str,
+        project_id: str,
+        limit: int,
+    ) -> dict[str, Any]:
+        target, assertions = self._related_forget_target(
+            fact_id,
+            expected_version=expected_version,
+            user_profile_id=user_profile_id,
+            project_id=project_id,
+        )
+        revisions = self.list_fact_revisions(fact_id)
+        target_source_event_id_set, target_job_id_set = (
+            self._related_forget_fact_dependencies_locked(target.id)
+        )
+        target_source_event_ids = sorted(target_source_event_id_set)
+        target_job_ids = sorted(target_job_id_set)
+        target_source_details: list[dict[str, Any]] = []
+        target_source_overflow = len(target_source_event_ids) > limit
+        target_omitted_source_event_ids = target_source_event_ids[limit:]
+        for source_event_id in target_source_event_ids[:limit]:
+            detail = self._related_forget_source_detail_locked(
+                source_event_id,
+                assertions,
+                match_type="linked_target_source",
+                user_profile_id=user_profile_id,
+                project_id=project_id,
+            )
+            if detail is None:
+                detail = {
+                    "source_event_id": source_event_id,
+                    "status": "expired",
+                    "content": "",
+                    "match_type": "linked_target_source",
+                    "matched_assertions": [],
+                    "job_ids": [],
+                    "derived_fact_ids": [],
+                    "scope": None,
+                    "scope_id": None,
+                    "user_profile_id": None,
+                    "explicit_remember": None,
+                }
+            target_source_details.append(detail)
+        candidates: list[dict[str, Any]] = []
+        candidate_overflow = False
+        rows = self._conn.execute(
+            f"SELECT {self._CHUNK_SELECT_COLUMNS} FROM memory_chunks "
+            "WHERE (user_profile_id=? OR json_extract(metadata, '$.user_profile_id')=?) "
+            "AND json_extract(metadata, '$.scope')='project' "
+            "AND json_extract(metadata, '$.scope_id')=? AND id != ? ORDER BY id",
+            (user_profile_id, user_profile_id, project_id, fact_id),
+        )
+        for row in rows:
+            chunk = self._row_to_chunk(row)
+            if (
+                chunk.metadata.get("user_profile_id") != user_profile_id
+                or chunk.metadata.get("scope") != "project"
+                or chunk.metadata.get("scope_id") != project_id
+            ):
+                continue
+            if chunk.metadata.get("source") != "sleep_consolidation":
+                continue
+            normalized = normalize_memory_text(chunk.content)
+            matches = [assertion for assertion in assertions if assertion in normalized]
+            if not matches:
+                continue
+            if len(candidates) >= limit:
+                candidate_overflow = True
+                break
+            source_event_id_set, candidate_job_id_set = (
+                self._related_forget_fact_dependencies_locked(chunk.id)
+            )
+            source_event_ids = sorted(source_event_id_set)
+            candidates.append(
+                {
+                    "fact_id": chunk.id,
+                    "version": chunk.version,
+                    "content": chunk.content,
+                    "match_type": "exact_assertion",
+                    "matched_assertions": matches,
+                    "source_event_ids": source_event_ids,
+                    "job_ids": sorted(candidate_job_id_set),
+                }
+            )
+
+        source_events: list[dict[str, Any]] = []
+        source_overflow = False
+        event_patterns = [f"%{assertion}%" for assertion in assertions]
+        pattern_clause = (
+            " OR ".join(
+                "COALESCE(NULLIF(normalized_content, ''), lower(content)) LIKE ?"
+                for _ in assertions
+            )
+            or "0"
+        )
+        event_query = f"""
+            SELECT id, event_fingerprint, role, content, normalized_content, scope, scope_id,
+                   source, hook_event, source_event_id, source_identity_key,
+                   user_profile_id, session_id, metadata, status, error, created_at, occurred_at
+            FROM episodic_events
+            WHERE scope=? AND scope_id=? AND user_profile_id=?
+              AND ({pattern_clause})
+            ORDER BY occurred_at ASC, id ASC
+        """
+        event_params: list[Any] = ["project", project_id, user_profile_id, *event_patterns]
+        for event_row in self._conn.execute(event_query, tuple(event_params)):
+            event = self._row_to_episodic_event(event_row)
+            metadata_profile = event.metadata.get("user_profile_id")
+            if metadata_profile is None:
+                metadata_profile = event.metadata.get("profile_id")
+            if metadata_profile is not None and metadata_profile != user_profile_id:
+                continue
+            metadata_scope = event.metadata.get("scope")
+            if metadata_scope is not None and metadata_scope != "project":
+                continue
+            metadata_scope_id = event.metadata.get("scope_id")
+            if metadata_scope_id is not None and metadata_scope_id != project_id:
+                continue
+            if event.metadata.get("explicit_remember") is not False:
+                continue
+            normalized = event.normalized_content or normalize_memory_text(event.content)
+            matches = [assertion for assertion in assertions if assertion in normalized]
+            if not matches:
+                continue
+            if len(source_events) >= limit:
+                source_overflow = True
+                break
+            detail = self._related_forget_source_detail_locked(
+                event.id,
+                assertions,
+                match_type="exact_assertion",
+                user_profile_id=user_profile_id,
+                project_id=project_id,
+            )
+            if detail is None or detail.get("source_allowed") is not True:
+                continue
+            detail["selection_allowed"] = True
+            source_events.append(detail)
+
+        source_by_id = {item["source_event_id"]: item for item in source_events}
+        for candidate in candidates:
+            required_source_ids: list[str] = []
+            expired_source_ids: list[str] = []
+            blocked_source_ids: list[str] = []
+            unlisted_source_ids: list[str] = []
+            for source_event_id in candidate["source_event_ids"]:
+                detail = source_by_id.get(source_event_id)
+                if detail is not None:
+                    if detail.get("status") == "expired":
+                        expired_source_ids.append(source_event_id)
+                    elif detail.get("selection_allowed", False):
+                        required_source_ids.append(source_event_id)
+                    else:
+                        blocked_source_ids.append(source_event_id)
+                    continue
+                linked_event = self.get_episodic_event(source_event_id)
+                if linked_event is None:
+                    expired_source_ids.append(source_event_id)
+                    if len(source_events) >= limit:
+                        unlisted_source_ids.append(source_event_id)
+                        source_overflow = True
+                        continue
+                    expired = self._related_forget_source_detail_locked(
+                        source_event_id,
+                        assertions,
+                        match_type="expired_linked_source",
+                        user_profile_id=user_profile_id,
+                        project_id=project_id,
+                    )
+                    if expired is not None:
+                        source_events.append(expired)
+                        source_by_id[source_event_id] = expired
+                    continue
+                metadata_profile = linked_event.metadata.get("user_profile_id")
+                if metadata_profile is None:
+                    metadata_profile = linked_event.metadata.get("profile_id")
+                eligible = (
+                    linked_event.scope == "project"
+                    and linked_event.scope_id == project_id
+                    and metadata_profile in (None, user_profile_id)
+                    and linked_event.metadata.get("scope") in (None, "project")
+                    and linked_event.metadata.get("scope_id") in (None, project_id)
+                    and linked_event.metadata.get("explicit_remember") is False
+                )
+                if not eligible:
+                    if len(source_events) >= limit:
+                        unlisted_source_ids.append(source_event_id)
+                        source_overflow = True
+                        blocked_source_ids.append(source_event_id)
+                        continue
+                    blocked = self._related_forget_source_detail_locked(
+                        source_event_id,
+                        assertions,
+                        match_type="blocked_linked_source",
+                        user_profile_id=user_profile_id,
+                        project_id=project_id,
+                    )
+                    if blocked is not None:
+                        blocked["reason"] = "linked_source_not_eligible_capture"
+                        blocked["selection_allowed"] = False
+                        source_events.append(blocked)
+                        source_by_id[source_event_id] = blocked
+                    blocked_source_ids.append(source_event_id)
+                    continue
+                linked = self._related_forget_source_detail_locked(
+                    source_event_id,
+                    assertions,
+                    match_type="linked_capture_source",
+                    user_profile_id=user_profile_id,
+                    project_id=project_id,
+                )
+                if linked is not None:
+                    if len(source_events) >= limit:
+                        unlisted_source_ids.append(source_event_id)
+                        source_overflow = True
+                        continue
+                    source_events.append(linked)
+                    linked["selection_allowed"] = True
+                    source_by_id[source_event_id] = linked
+                    required_source_ids.append(source_event_id)
+            candidate["required_source_event_ids"] = required_source_ids
+            candidate["expired_source_event_ids"] = expired_source_ids
+            candidate["blocked_source_event_ids"] = blocked_source_ids
+            candidate["unlisted_source_event_ids"] = unlisted_source_ids
+
+        complete = not candidate_overflow and not source_overflow and not target_source_overflow
+        digest_state = {
+            "target": {
+                "fact_id": target.id,
+                "version": target.version,
+                "content": normalize_memory_text(target.content),
+                "source_event_ids": target_source_event_ids,
+                "job_ids": target_job_ids,
+                "affected_sources": target_source_details,
+                "omitted_source_event_ids": target_omitted_source_event_ids,
+            },
+            "scope": {"user_profile_id": user_profile_id, "project_id": project_id},
+            "limit": limit,
+            "assertions": assertions,
+            "candidates": [
+                {
+                    "fact_id": item["fact_id"],
+                    "version": item["version"],
+                    "content": normalize_memory_text(item["content"]),
+                    "source_event_ids": item["source_event_ids"],
+                    "job_ids": item["job_ids"],
+                    "required_source_event_ids": item["required_source_event_ids"],
+                    "expired_source_event_ids": item["expired_source_event_ids"],
+                    "blocked_source_event_ids": item["blocked_source_event_ids"],
+                    "unlisted_source_event_ids": item["unlisted_source_event_ids"],
+                }
+                for item in candidates
+            ],
+            "source_events": [
+                {
+                    "source_event_id": item["source_event_id"],
+                    "status": item["status"],
+                    "content": normalize_memory_text(item["content"]),
+                    "job_ids": item["job_ids"],
+                    "derived_fact_ids": item["derived_fact_ids"],
+                    "selection_allowed": item.get("selection_allowed", False),
+                    "source_allowed": item.get("source_allowed", False),
+                    "reason": item.get("reason"),
+                }
+                for item in source_events
+            ],
+            "complete": complete,
+        }
+        digest = hashlib.sha256(
+            json.dumps(digest_state, sort_keys=True, separators=(",", ":")).encode("utf-8")
+        ).hexdigest()
+        return {
+            "matching_policy": "exact_normalized_assertion",
+            "scope": {
+                "user_profile_id": user_profile_id,
+                "project_id": project_id,
+            },
+            "target": {
+                "fact_id": target.id,
+                "version": target.version,
+                "content": target.content,
+                "current_assertion": target.content,
+                "historical_assertions": [item.content for item in revisions],
+                "source_event_ids": target_source_event_ids,
+                "job_ids": target_job_ids,
+                "affected_sources": target_source_details,
+                "omitted_source_event_ids": target_omitted_source_event_ids,
+            },
+            "candidates": candidates,
+            "source_events": source_events,
+            "complete": complete,
+            "limit": limit,
+            "preview_digest": digest,
+        }
+
+    def preview_related_forget(
+        self,
+        *,
+        fact_id: str,
+        expected_version: int,
+        user_profile_id: str,
+        project_id: str,
+        limit: int = 100,
+    ) -> dict[str, Any]:
+        with self._lock:
+            return self._related_forget_preview_locked(
+                fact_id=fact_id,
+                expected_version=expected_version,
+                user_profile_id=user_profile_id,
+                project_id=project_id,
+                limit=max(1, min(limit, 500)),
+            )
+
+    def _forget_fact_locked(
+        self,
+        fact_id: str,
+        *,
+        expected_version: int,
+        preserve_shared_sources: bool = False,
+    ) -> bool:
+        chunk = self.get(fact_id)
+        if chunk is None:
+            return False
+        if chunk.version != expected_version:
+            raise ValueError("Forget version conflict")
+        evidence = self.list_fact_evidence(fact_id)
+        event_ids = {item.source_event_id for item in evidence if item.source_event_id}
+        event_ids.update(
+            row[0]
+            for row in self._conn.execute(
+                "SELECT json_extract(payload, '$.event_id') FROM memory_jobs "
+                "WHERE json_extract(payload, '$.target_fact_id')=?",
+                (fact_id,),
+            ).fetchall()
+            if row[0]
+        )
+        event_ids.update(
+            row[0]
+            for row in self._conn.execute(
+                "SELECT evidence.value FROM memory_jobs, json_each(payload, '$.evidence_ids') AS evidence "
+                "WHERE json_extract(payload, '$.target_fact_id')=?",
+                (fact_id,),
+            ).fetchall()
+            if row[0]
+        )
+        keys = {
+            chunk.canonical_key
+            or compute_canonical_key(
+                chunk.content,
+                chunk.metadata.get("scope", "unassigned"),
+                chunk.metadata.get("scope_id"),
+                chunk.metadata.get("user_profile_id"),
+            )
+        }
+        for revision in self.list_fact_revisions(fact_id):
+            keys.add(
+                compute_canonical_key(
+                    revision.content,
+                    chunk.metadata.get("scope", "unassigned"),
+                    chunk.metadata.get("scope_id"),
+                    chunk.metadata.get("user_profile_id"),
+                )
+            )
+        stamp = datetime.now(timezone.utc).isoformat()
+        for key in keys:
+            self._conn.execute(
+                "INSERT INTO memory_suppressions VALUES (?, ?, ?, NULL, 'explicit_forget', ?)",
+                (str(uuid4()), fact_id, key, stamp),
+            )
+        for event_id in event_ids:
+            shared = (
+                preserve_shared_sources
+                and self._conn.execute(
+                    "SELECT 1 FROM fact_evidence WHERE source_event_id=? AND fact_id != ? LIMIT 1",
+                    (event_id, fact_id),
+                ).fetchone()
+            )
+            self._conn.execute(
+                "INSERT INTO memory_suppressions VALUES (?, ?, NULL, ?, 'explicit_forget', ?)",
+                (str(uuid4()), fact_id, event_id, stamp),
+            )
+            if not shared:
+                self._conn.execute("DELETE FROM episodic_events WHERE id=?", (event_id,))
+                self._conn.execute("DELETE FROM fact_evidence WHERE source_event_id=?", (event_id,))
+                self._conn.execute(
+                    "UPDATE memory_jobs SET status='completed', result=?, last_error=NULL, "
+                    "lease_owner=NULL, lease_token=NULL, lease_until=NULL, updated_at=?, "
+                    "payload=json_remove(payload, '$.content') "
+                    "WHERE json_extract(payload, '$.event_id')=? OR EXISTS ("
+                    "SELECT 1 FROM json_each(memory_jobs.payload, '$.evidence_ids') "
+                    "WHERE value=?)",
+                    (json.dumps({"decision": "forgotten"}), stamp, event_id, event_id),
+                )
+        self._conn.execute(
+            "UPDATE memory_jobs SET status='completed', result=?, last_error=NULL, "
+            "lease_owner=NULL, lease_token=NULL, lease_until=NULL, updated_at=?, "
+            "payload=json_remove(payload, '$.content') WHERE json_extract(payload, '$.target_fact_id')=?",
+            (json.dumps({"decision": "forgotten"}), stamp, fact_id),
+        )
+        self._conn.execute("DELETE FROM fact_evidence WHERE fact_id=?", (fact_id,))
+        self._conn.execute(
+            "DELETE FROM retrieval_feedback_events WHERE EXISTS "
+            "(SELECT 1 FROM json_each(chunk_ids) WHERE value=?)",
+            (fact_id,),
+        )
+        if self._sqlite_vec_enabled and self._vec_table_exists():
+            self._conn.execute(
+                "DELETE FROM memory_vec WHERE rowid IN "
+                "(SELECT rowid FROM memory_chunks WHERE id=?)",
+                (fact_id,),
+            )
+        self._invalidate_graph_derivation_locked({fact_id})
+        self._conn.execute("DELETE FROM memory_chunks WHERE id=?", (fact_id,))
+        return True
+
+    def _suppress_related_source_locked(self, source_event_id: str, *, fact_id: str) -> None:
+        event = self.get_episodic_event(source_event_id)
+        if event is None:
+            return
+        stamp = datetime.now(timezone.utc).isoformat()
+        shared = self._conn.execute(
+            "SELECT 1 FROM fact_evidence WHERE source_event_id=? AND fact_id != ? LIMIT 1",
+            (source_event_id, fact_id),
+        ).fetchone()
+        self._conn.execute(
+            "INSERT INTO memory_suppressions VALUES (?, ?, NULL, ?, 'explicit_forget', ?)",
+            (str(uuid4()), fact_id, source_event_id, stamp),
+        )
+        if shared:
+            raise ValueError("Source selection would remove an unselected derived fact")
+        self._conn.execute("DELETE FROM episodic_events WHERE id=?", (source_event_id,))
+        self._conn.execute("DELETE FROM fact_evidence WHERE source_event_id=?", (source_event_id,))
+        self._conn.execute(
+            "UPDATE memory_jobs SET status='completed', result=?, last_error=NULL, "
+            "lease_owner=NULL, lease_token=NULL, lease_until=NULL, updated_at=?, "
+            "payload=json_remove(payload, '$.content') "
+            "WHERE json_extract(payload, '$.event_id')=? OR EXISTS ("
+            "SELECT 1 FROM json_each(memory_jobs.payload, '$.evidence_ids') "
+            "WHERE value=?)",
+            (json.dumps({"decision": "forgotten"}), stamp, source_event_id, source_event_id),
+        )
+
+    def forget_related(
+        self,
+        *,
+        fact_id: str,
+        expected_version: int,
+        user_profile_id: str,
+        project_id: str,
+        preview_digest: str,
+        selected_fact_ids: list[str],
+        selected_source_event_ids: list[str],
+        limit: int = 100,
+    ) -> dict[str, Any]:
+        if len(set(selected_fact_ids)) != len(selected_fact_ids):
+            raise ValueError("Duplicate selected fact IDs")
+        if len(set(selected_source_event_ids)) != len(selected_source_event_ids):
+            raise ValueError("Duplicate selected source event IDs")
+        with self._lock:
+            self._conn.execute("BEGIN IMMEDIATE")
+            self._transaction_active = True
+            try:
+                preview = self._related_forget_preview_locked(
+                    fact_id=fact_id,
+                    expected_version=expected_version,
+                    user_profile_id=user_profile_id,
+                    project_id=project_id,
+                    limit=max(1, min(limit, 500)),
+                )
+                if not preview["complete"]:
+                    raise ValueError("Forget preview is incomplete")
+                if preview["preview_digest"] != preview_digest:
+                    raise ValueError("Forget preview is stale")
+                candidates = {item["fact_id"]: item for item in preview["candidates"]}
+                sources = {item["source_event_id"]: item for item in preview["source_events"]}
+                selected_facts = [item for item in selected_fact_ids if item != fact_id]
+                unknown_facts = set(selected_facts) - set(candidates)
+                if unknown_facts:
+                    raise ValueError("Selection is not present in the forget preview")
+                unknown_sources = set(selected_source_event_ids) - set(sources)
+                if unknown_sources:
+                    raise ValueError("Source selection is not present in the forget preview")
+                selected_sources = set(selected_source_event_ids)
+                for selected_id in selected_facts:
+                    candidate = candidates[selected_id]
+                    if candidate["blocked_source_event_ids"]:
+                        raise ValueError("Selected fact has an unavailable linked source")
+                    for source_id in candidate["expired_source_event_ids"]:
+                        source = sources.get(source_id)
+                        if source is None:
+                            raise ValueError("Forget preview is stale")
+                        dependencies = set(source["derived_fact_ids"])
+                        unselected_dependencies = dependencies - set(selected_facts) - {fact_id}
+                        if unselected_dependencies:
+                            raise ValueError(
+                                "Source selection would remove an unselected derived fact"
+                            )
+                    missing = set(candidate["required_source_event_ids"]) - selected_sources
+                    if missing:
+                        raise ValueError("Selected fact requires explicit source selection")
+                for selected_id in selected_sources:
+                    if not sources[selected_id].get("selection_allowed", False):
+                        raise ValueError("Selected source is not an eligible capture")
+                    dependencies = set(sources[selected_id]["derived_fact_ids"])
+                    unselected_dependencies = dependencies - set(selected_facts) - {fact_id}
+                    if unselected_dependencies:
+                        raise ValueError("Source selection would remove an unselected derived fact")
+                for source in preview["target"]["affected_sources"]:
+                    dependencies = set(source["derived_fact_ids"])
+                    unselected_dependencies = dependencies - set(selected_facts) - {fact_id}
+                    if unselected_dependencies:
+                        raise ValueError("Target cleanup would remove an unselected derived fact")
+                    if source["status"] != "expired" and (
+                        source["scope"] != "project"
+                        or source["scope_id"] != project_id
+                        or source.get("source_allowed") is not True
+                    ):
+                        raise ValueError("Target cleanup has an out-of-scope linked source")
+
+                target = self.get(fact_id)
+                if target is None or target.version != expected_version:
+                    raise ValueError("Forget preview is stale")
+                changed_ids = [fact_id]
+                if not self._forget_fact_locked(
+                    fact_id, expected_version=expected_version, preserve_shared_sources=True
+                ):
+                    raise KeyError("Memory not found")
+                for selected_id in selected_facts:
+                    candidate = self.get(selected_id)
+                    if candidate is None:
+                        raise ValueError("Forget preview is stale")
+                    self._forget_fact_locked(
+                        selected_id,
+                        expected_version=candidate.version,
+                        preserve_shared_sources=True,
+                    )
+                    changed_ids.append(selected_id)
+                for source_id in selected_sources:
+                    if self.get_episodic_event(source_id) is not None:
+                        self._suppress_related_source_locked(source_id, fact_id=fact_id)
+                self._conn.commit()
+                return {
+                    "status": "committed",
+                    "forgotten": True,
+                    "fact_id": fact_id,
+                    "selected_fact_ids": changed_ids,
+                    "selected_source_event_ids": sorted(selected_sources),
+                    "erasure_scope": "live_memory_and_replay_suppression",
+                }
+            except BaseException:
+                self._conn.rollback()
+                raise
+            finally:
+                self._transaction_active = False
+
     def forget_fact(self, fact_id: str, *, expected_version: int) -> bool:
         """Erase live derivations and atomically leave content-free replay suppressions."""
         with self._lock:
             self._conn.execute("BEGIN IMMEDIATE")
             self._transaction_active = True
             try:
-                chunk = self.get(fact_id)
-                if chunk is None:
+                forgotten = self._forget_fact_locked(
+                    fact_id, expected_version=expected_version, preserve_shared_sources=False
+                )
+                if not forgotten:
                     self._conn.rollback()
                     return False
-                if chunk.version != expected_version:
-                    raise ValueError("Forget version conflict")
-                evidence = self.list_fact_evidence(fact_id)
-                event_ids = {item.source_event_id for item in evidence if item.source_event_id}
-                event_ids.update(
-                    row[0]
-                    for row in self._conn.execute(
-                        "SELECT json_extract(payload, '$.event_id') FROM memory_jobs "
-                        "WHERE json_extract(payload, '$.target_fact_id')=?",
-                        (fact_id,),
-                    ).fetchall()
-                    if row[0]
-                )
-                event_ids.update(
-                    row[0]
-                    for row in self._conn.execute(
-                        "SELECT evidence.value FROM memory_jobs, json_each(payload, '$.evidence_ids') AS evidence "
-                        "WHERE json_extract(payload, '$.target_fact_id')=?",
-                        (fact_id,),
-                    ).fetchall()
-                    if row[0]
-                )
-                keys = {
-                    chunk.canonical_key
-                    or compute_canonical_key(
-                        chunk.content,
-                        chunk.metadata.get("scope", "unassigned"),
-                        chunk.metadata.get("scope_id"),
-                        chunk.metadata.get("user_profile_id"),
-                    )
-                }
-                for revision in self.list_fact_revisions(fact_id):
-                    keys.add(
-                        compute_canonical_key(
-                            revision.content,
-                            chunk.metadata.get("scope", "unassigned"),
-                            chunk.metadata.get("scope_id"),
-                            chunk.metadata.get("user_profile_id"),
-                        )
-                    )
-                stamp = datetime.now(timezone.utc).isoformat()
-                for key in keys:
-                    self._conn.execute(
-                        "INSERT INTO memory_suppressions VALUES (?, ?, ?, NULL, 'explicit_forget', ?)",
-                        (str(uuid4()), fact_id, key, stamp),
-                    )
-                for event_id in event_ids:
-                    self._conn.execute(
-                        "INSERT INTO memory_suppressions VALUES (?, ?, NULL, ?, 'explicit_forget', ?)",
-                        (str(uuid4()), fact_id, event_id, stamp),
-                    )
-                    self._conn.execute("DELETE FROM episodic_events WHERE id=?", (event_id,))
-                    # A shared support excerpt may contain the forgotten assertion too.
-                    self._conn.execute(
-                        "DELETE FROM fact_evidence WHERE source_event_id=?", (event_id,)
-                    )
-                    self._conn.execute(
-                        "UPDATE memory_jobs SET status='completed', result=?, last_error=NULL, "
-                        "lease_owner=NULL, lease_token=NULL, lease_until=NULL, updated_at=? "
-                        "WHERE json_extract(payload, '$.event_id')=?",
-                        (json.dumps({"decision": "forgotten"}), stamp, event_id),
-                    )
-                self._conn.execute(
-                    "UPDATE memory_jobs SET status='completed', result=?, last_error=NULL, "
-                    "lease_owner=NULL, lease_token=NULL, lease_until=NULL, updated_at=?, "
-                    "payload=json_remove(payload, '$.content') "
-                    "WHERE json_extract(payload, '$.target_fact_id')=?",
-                    (json.dumps({"decision": "forgotten"}), stamp, fact_id),
-                )
-                self._conn.execute(
-                    "DELETE FROM retrieval_feedback_events WHERE EXISTS "
-                    "(SELECT 1 FROM json_each(chunk_ids) WHERE value=?)",
-                    (fact_id,),
-                )
-                if self._sqlite_vec_enabled and self._vec_table_exists():
-                    self._conn.execute(
-                        "DELETE FROM memory_vec WHERE rowid IN "
-                        "(SELECT rowid FROM memory_chunks WHERE id=?)",
-                        (fact_id,),
-                    )
-                self._invalidate_graph_derivation_locked({fact_id})
-                self._conn.execute("DELETE FROM memory_chunks WHERE id=?", (fact_id,))
                 self._conn.commit()
                 return True
             except Exception:

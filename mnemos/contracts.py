@@ -111,3 +111,68 @@ class RetrievalRequest(BaseModel):
     top_k: int = Field(default=5, ge=0, le=100)
     max_context_tokens: int = Field(default=1200, ge=0, le=32_000)
     profile: Literal["baseline", "biomimetic"] = "baseline"
+
+
+class ForgetPreviewRequest(BaseModel):
+    """Read-only, bounded plan for removing a fact and reviewed capture copies."""
+
+    model_config = ConfigDict(extra="forbid")
+    context: ScopeContext
+    fact_id: str = Field(min_length=1, max_length=512, strict=True)
+    expected_version: int = Field(ge=1, strict=True)
+    limit: int = Field(default=100, ge=1, le=500, strict=True)
+
+    @field_validator("fact_id", mode="before")
+    @classmethod
+    def normalize_fact_id(cls, value: object) -> str:
+        if not isinstance(value, str):
+            raise ValueError("Fact ID must be a string")
+        value = value.strip()
+        if not 1 <= len(value) <= 512:
+            raise ValueError("Fact ID length is invalid")
+        return value
+
+
+class ForgetRelatedRequest(BaseModel):
+    """Compare-and-set apply request for a previously reviewed forget preview."""
+
+    model_config = ConfigDict(extra="forbid")
+    context: ScopeContext
+    fact_id: str = Field(min_length=1, max_length=512, strict=True)
+    expected_version: int = Field(ge=1, strict=True)
+    preview_digest: str = Field(min_length=64, max_length=64, strict=True)
+    preview_limit: int = Field(default=100, ge=1, le=500, strict=True)
+    selected_fact_ids: list[str] = Field(default_factory=list, max_length=500)
+    selected_source_event_ids: list[str] = Field(default_factory=list, max_length=500)
+
+    @field_validator("fact_id", mode="before")
+    @classmethod
+    def normalize_fact_id(cls, value: object) -> str:
+        if not isinstance(value, str):
+            raise ValueError("Fact ID must be a string")
+        value = value.strip()
+        if not 1 <= len(value) <= 512:
+            raise ValueError("Fact ID length is invalid")
+        return value
+
+    @field_validator("preview_digest")
+    @classmethod
+    def validate_preview_digest(cls, value: str) -> str:
+        if any(char not in "0123456789abcdefABCDEF" for char in value):
+            raise ValueError("Preview digest must be hexadecimal")
+        return value.lower()
+
+    @field_validator("selected_fact_ids", "selected_source_event_ids", mode="before")
+    @classmethod
+    def normalize_selected_ids(cls, value: object) -> list[str]:
+        if not isinstance(value, list):
+            raise ValueError("Selected IDs must be a list")
+        normalized: list[str] = []
+        for item in value:
+            if not isinstance(item, str):
+                raise ValueError("Selected IDs must be strings")
+            item = item.strip()
+            if not 1 <= len(item) <= 512:
+                raise ValueError("Selected ID length is invalid")
+            normalized.append(item)
+        return normalized
