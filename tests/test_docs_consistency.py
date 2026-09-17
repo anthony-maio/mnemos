@@ -5,6 +5,7 @@ tests/test_docs_consistency.py — Keep docs aligned with runtime behavior.
 from __future__ import annotations
 
 import ast
+import os
 import re
 from pathlib import Path
 
@@ -12,13 +13,17 @@ ROOT = Path(__file__).resolve().parents[1]
 MCP_SERVER_PATH = ROOT / "mnemos" / "mcp_server.py"
 RUNTIME_PATH = ROOT / "mnemos" / "runtime.py"
 README_PATH = ROOT / "README.md"
-WEBSITE_INDEX_PATH = next(
-    (
-        parent / "web" / "index.html"
-        for parent in ROOT.parents
-        if (parent / "web" / "index.html").is_file()
-    ),
-    ROOT.parent / "web" / "index.html",
+WEBSITE_INDEX_PATH = (
+    Path(os.environ["MNEMOS_WEBSITE_INDEX"]).resolve()
+    if os.environ.get("MNEMOS_WEBSITE_INDEX")
+    else next(
+        (
+            parent / "web" / "index.html"
+            for parent in ROOT.parents
+            if (parent / "web" / "index.html").is_file()
+        ),
+        ROOT.parent / "web" / "index.html",
+    )
 )
 MCP_INTEGRATION_PATH = ROOT / "docs" / "MCP_INTEGRATION.md"
 MCP_CONTRACT_PATH = ROOT / "docs" / "mcp-transport-contract.md"
