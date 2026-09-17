@@ -119,6 +119,98 @@ class TimedEmbeddingProvider:
         return vectors
 
 
+class _StoreCallTrace:
+    """Trace the store calls made by one engine.retrieve invocation.
+
+    The trace patches one SQLiteStore instance for the duration of a single
+    benchmark call. It records timing and cardinality while allowing every
+    return value and exception to pass through unchanged. Historical follow-up
+    probes remain outside this context and keep their existing fields.
+    """
+
+    _METHODS = ("retrieve", "retrieve_lexical", "mark_retrieved_many", "get")
+
+    def __init__(self, store: SQLiteStore) -> None:
+        self.store = store
+        self.events: list[dict[str, Any]] = []
+        self._originals: dict[str, Any] = {}
+
+    def __enter__(self) -> "_StoreCallTrace":
+        for name in self._METHODS:
+            original = getattr(self.store, name)
+            self._originals[name] = original
+            setattr(self.store, name, self._wrapper(name, original))
+        return self
+
+    def __exit__(self, exc_type: Any, exc_value: Any, traceback: Any) -> None:
+        for name, original in self._originals.items():
+            setattr(self.store, name, original)
+
+    def _wrapper(self, name: str, original: Any) -> Any:
+        def traced(*args: Any, **kwargs: Any) -> Any:
+            started = time.perf_counter()
+            event: dict[str, Any] = {"method": name}
+            if name in {"retrieve", "retrieve_lexical"}:
+                requested_top_k = kwargs.get("top_k")
+                if requested_top_k is None and len(args) > 1:
+                    requested_top_k = args[1]
+                event["requested_top_k"] = requested_top_k
+            try:
+                result = original(*args, **kwargs)
+            except BaseException as error:
+                event.update(
+                    {
+                        "status": "error",
+                        "elapsed_ms": round((time.perf_counter() - started) * 1000, 3),
+                        "error_type": type(error).__name__,
+                    }
+                )
+                self.events.append(event)
+                raise
+            event.update(
+                {
+                    "status": "completed",
+                    "elapsed_ms": round((time.perf_counter() - started) * 1000, 3),
+                }
+            )
+            if name in {"retrieve", "retrieve_lexical"}:
+                event["result_count"] = len(result) if isinstance(result, list) else None
+            elif name == "mark_retrieved_many":
+                identifiers = args[0] if args else kwargs.get("chunk_ids", [])
+                event["chunk_id_count"] = (
+                    len(identifiers) if isinstance(identifiers, list) else None
+                )
+            elif name == "get":
+                event["result_present"] = result is not None
+            self.events.append(event)
+            return result
+
+        return traced
+
+    def artifact(self) -> dict[str, Any]:
+        result: dict[str, Any] = {"events": list(self.events)}
+        for name in self._METHODS:
+            calls = [event for event in self.events if event["method"] == name]
+            completed = [event for event in calls if event["status"] == "completed"]
+            errors = [event for event in calls if event["status"] == "error"]
+            stage: dict[str, Any] = {
+                "call_count": len(calls),
+                "completed_count": len(completed),
+                "error_count": len(errors),
+                "elapsed_ms": round(sum(float(event["elapsed_ms"]) for event in completed), 3),
+                "error_types": [event["error_type"] for event in errors],
+            }
+            if name in {"retrieve", "retrieve_lexical"}:
+                stage["requested_top_ks"] = [event["requested_top_k"] for event in calls]
+                stage["result_counts"] = [event["result_count"] for event in completed]
+            elif name == "mark_retrieved_many":
+                stage["chunk_id_counts"] = [event["chunk_id_count"] for event in completed]
+            else:
+                stage["result_present"] = [event["result_present"] for event in completed]
+            result[name] = stage
+        return result
+
+
 def _percentile(values: list[float], fraction: float) -> float:
     if not values:
         return 0.0
@@ -347,16 +439,17 @@ def measure_retrieval(
     mark_and_refresh_latencies: list[float] = []
     for index, query in enumerate(QUERY_TEXTS):
         started = time.perf_counter()
-        results = asyncio_run(
-            engine.retrieve(
-                query,
-                top_k=5,
-                reconsolidate=False,
-                context=context,
-                allowed_scopes=["project", "workspace", "global"],
-                profile="baseline",
+        with _StoreCallTrace(store) as actual_store_trace:
+            results = asyncio_run(
+                engine.retrieve(
+                    query,
+                    top_k=5,
+                    reconsolidate=False,
+                    context=context,
+                    allowed_scopes=["project", "workspace", "global"],
+                    profile="baseline",
+                )
             )
-        )
         elapsed_ms = (time.perf_counter() - started) * 1000
         sql_started = time.perf_counter()
         sql_results = store.retrieve(
@@ -393,6 +486,7 @@ def measure_retrieval(
                 "lexical_candidate_count": len(lexical_results),
                 "mark_and_refresh_ms": round(mark_ms, 3),
                 "result_count": len(results),
+                "actual_store_calls": actual_store_trace.artifact(),
             }
         )
     stats = store.get_stats()
@@ -416,6 +510,21 @@ def measure_retrieval(
         "scoped_sql_ranking_latency": _summary([item["scoped_sql_ranking_ms"] for item in raw]),
         "lexical_candidate_latency": _summary(lexical_latencies),
         "mark_and_refresh_latency": _summary(mark_and_refresh_latencies),
+        "actual_store_stage_latency": {
+            "retrieve": _summary(
+                [item["actual_store_calls"]["retrieve"]["elapsed_ms"] for item in raw]
+            ),
+            "retrieve_lexical": _summary(
+                [item["actual_store_calls"]["retrieve_lexical"]["elapsed_ms"] for item in raw]
+            ),
+            "mark_retrieved_many": _summary(
+                [item["actual_store_calls"]["mark_retrieved_many"]["elapsed_ms"] for item in raw]
+            ),
+            "get": _summary([item["actual_store_calls"]["get"]["elapsed_ms"] for item in raw]),
+        },
+        "actual_store_stage_timing_note": (
+            "Per-call store timings are nested within full retrieval latency and must not be summed."
+        ),
         "sqlite": sqlite_settings,
         "raw_queries": raw,
     }

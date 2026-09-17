@@ -1,0 +1,3342 @@
+{
+  "attempt_id": "b3fb69233d634934949a2432df377b59",
+  "attempt_root": "D:\\Development\\mnemos\\mnemos\\.worktrees\\functional-local-memory\\.venv\\lifecycle-target-development-v4-work\\attempts\\b3fb69233d634934949a2432df377b59",
+  "blocked_runs": 0,
+  "dataset": {
+    "path": "D:\\Development\\mnemos\\mnemos\\.worktrees\\functional-local-memory\\.venv\\lifecycle-preflight-frozen-v4\\benchmarks\\local_memory\\datasets\\lifecycle-target-development-v1.json",
+    "scenario_count": 2,
+    "sha256": "5fcb1a20d7212ddd07bcf5ef5fd339f1f088ad1d44277bdbb27000eb0e192f0b"
+  },
+  "human_acceptance": "NOT RUN",
+  "interpretation": "development lifecycle diagnostic only; no quality or human-acceptance claim",
+  "manifest_path": "D:\\Development\\mnemos\\mnemos\\.worktrees\\functional-local-memory\\docs\\validation\\2026-09-16\\lifecycle-target-development-v4\\lifecycle-target-smoke-b3fb69233d634934949a2432df377b59.manifest.json",
+  "model_pins": {
+    "embedding_model": {
+      "capabilities": [
+        "embedding"
+      ],
+      "details": {
+        "context_length": 2048,
+        "embedding_length": 768,
+        "families": [
+          "nomic-bert"
+        ],
+        "family": "nomic-bert",
+        "format": "gguf",
+        "parameter_size": "137M",
+        "parent_model": "",
+        "quantization_level": "F16"
+      },
+      "digest": "0a109f422b47e3a30ba2b10eca18548e944e8a23073ee3f3e947efcf3c45e59f",
+      "model": "nomic-embed-text:latest",
+      "modified_at": "2025-11-04T15:15:16.2072724-05:00",
+      "name": "nomic-embed-text:latest",
+      "size": 274302450
+    },
+    "endpoint": "http://192.168.86.35:11434",
+    "model": {
+      "capabilities": [
+        "completion",
+        "vision"
+      ],
+      "details": {
+        "context_length": 131072,
+        "embedding_length": 2560,
+        "families": [
+          "gemma3"
+        ],
+        "family": "gemma3",
+        "format": "gguf",
+        "parameter_size": "4.3B",
+        "parent_model": "",
+        "quantization_level": "Q4_K_M"
+      },
+      "digest": "a2af6cc3eb7fa8be8504abaf9b04e88f17a119ec3f04a3addf55f92841195f5a",
+      "model": "gemma3:4b",
+      "modified_at": "2026-03-11T01:54:24.735623-04:00",
+      "name": "gemma3:4b",
+      "size": 3338801804
+    },
+    "options": {
+      "max_context_tokens": 1200,
+      "max_tokens": 512,
+      "temperature": 0.0,
+      "timeout_seconds": 120.0,
+      "top_k": 5
+    },
+    "options_sha256": "cd97e75dba4a59a7798d1c035d2fac3b6fbf56082118e776067c9f505b7d5704"
+  },
+  "observed_at": "2026-09-17T04:16:28.459859+00:00",
+  "profiles": [
+    "baseline",
+    "full"
+  ],
+  "quality": "NOT MEASURED",
+  "raw_outputs_path": "D:\\Development\\mnemos\\mnemos\\.worktrees\\functional-local-memory\\docs\\validation\\2026-09-16\\lifecycle-target-development-v4\\lifecycle-target-smoke-b3fb69233d634934949a2432df377b59.raw-outputs.jsonl",
+  "report_path": "D:\\Development\\mnemos\\mnemos\\.worktrees\\functional-local-memory\\docs\\validation\\2026-09-16\\lifecycle-target-development-v4\\lifecycle-target-smoke-b3fb69233d634934949a2432df377b59.json",
+  "runs": [
+    {
+      "attempt_id": "b3fb69233d634934949a2432df377b59",
+      "attempt_root": "D:\\Development\\mnemos\\mnemos\\.worktrees\\functional-local-memory\\.venv\\lifecycle-target-development-v4-work\\attempts\\b3fb69233d634934949a2432df377b59",
+      "dataset_sha256": "5fcb1a20d7212ddd07bcf5ef5fd339f1f088ad1d44277bdbb27000eb0e192f0b",
+      "diagnostic": {
+        "correct_dispatched": true,
+        "correct_job_processed": true,
+        "current_version_observed": true,
+        "errors": [],
+        "execution_status": "complete",
+        "human_acceptance": "NOT RUN",
+        "operations": [
+          {
+            "event_id": "correct-capture-source",
+            "job_id": "event:725a50d7e7bda49b778fa1a85f3320ba7b2637edccbaa53946d1618a7cf868d0",
+            "operation": "capture",
+            "processing_status": "pending",
+            "status": "committed"
+          },
+          {
+            "before": "correct",
+            "jobs": [
+              {
+                "attempt_count": 1,
+                "id": "event:725a50d7e7bda49b778fa1a85f3320ba7b2637edccbaa53946d1618a7cf868d0",
+                "kind": "extract",
+                "last_error": null,
+                "status": "completed"
+              }
+            ],
+            "operation": "maintenance",
+            "pending_or_failed_statuses": [],
+            "status": "completed"
+          },
+          {
+            "event_id": "correct-action",
+            "expected_version": 1,
+            "fact_id": "9e21d987-1f4e-498b-9bc7-2ba3c4fbd051",
+            "job_id": "event:5a5cb76d72d642d09430be488b04d3a1073390b63e5be46d079c500e24b9a595",
+            "operation": "correct",
+            "processing_status": "pending",
+            "status": "committed"
+          },
+          {
+            "operation": "restart",
+            "status": "completed"
+          },
+          {
+            "jobs": [
+              {
+                "attempt_count": 1,
+                "id": "event:725a50d7e7bda49b778fa1a85f3320ba7b2637edccbaa53946d1618a7cf868d0",
+                "kind": "extract",
+                "last_error": null,
+                "status": "completed"
+              },
+              {
+                "attempt_count": 1,
+                "id": "event:5a5cb76d72d642d09430be488b04d3a1073390b63e5be46d079c500e24b9a595",
+                "kind": "correct",
+                "last_error": null,
+                "status": "completed"
+              }
+            ],
+            "operation": "maintenance",
+            "pending_or_failed_statuses": [],
+            "status": "completed"
+          },
+          {
+            "facts": [
+              {
+                "content": "The cache layer uses SQLite for session tokens.",
+                "id": "9e21d987-1f4e-498b-9bc7-2ba3c4fbd051",
+                "original_source_status": "retained_locally",
+                "scope": "project",
+                "scope_id": "lifecycle-correct-project",
+                "scores": {
+                  "candidate_backend": "sqlite_vec_scoped_exact_cosine",
+                  "context_token_upper_bound": 97,
+                  "graph_contribution": 0.0,
+                  "graph_energy": 0.0,
+                  "graph_status": "disabled",
+                  "lexical_candidate": true,
+                  "lexical_status": "candidate_union",
+                  "profile": "baseline",
+                  "scope_match": true,
+                  "semantic": 0.7891893982887268,
+                  "state_match": null,
+                  "state_status": "disabled",
+                  "token_count_method": "utf8_bytes_upper_bound",
+                  "total": 0.7891893982887268
+                },
+                "sources": [
+                  {
+                    "created_at": "2026-09-17T04:15:45.430183Z",
+                    "evidence_id": "ef26b663-8cbd-40a0-a44e-4ba08ccf2885",
+                    "excerpt": "The cache layer uses Redis for session tokens.",
+                    "fact_id": "9e21d987-1f4e-498b-9bc7-2ba3c4fbd051",
+                    "original_source_status": "retained_locally",
+                    "source_event_id": "725a50d7e7bda49b778fa1a85f3320ba7b2637edccbaa53946d1618a7cf868d0",
+                    "source_ref": null
+                  },
+                  {
+                    "created_at": "2026-09-17T04:15:46.433503Z",
+                    "evidence_id": "ffa5e44b-b24b-4169-8396-de1feb479984",
+                    "excerpt": "The cache layer uses SQLite for session tokens.",
+                    "fact_id": "9e21d987-1f4e-498b-9bc7-2ba3c4fbd051",
+                    "original_source_status": "retained_locally",
+                    "source_event_id": "5a5cb76d72d642d09430be488b04d3a1073390b63e5be46d079c500e24b9a595",
+                    "source_ref": null
+                  }
+                ],
+                "support_available": true,
+                "version": 2
+              }
+            ],
+            "observed_facts": [
+              {
+                "content": "The cache layer uses SQLite for session tokens.",
+                "id": "9e21d987-1f4e-498b-9bc7-2ba3c4fbd051",
+                "original_source_status": "retained_locally",
+                "scope": "project",
+                "scope_id": "lifecycle-correct-project",
+                "scores": {
+                  "candidate_backend": "sqlite_vec_scoped_exact_cosine",
+                  "context_token_upper_bound": 97,
+                  "graph_contribution": 0.0,
+                  "graph_energy": 0.0,
+                  "graph_status": "disabled",
+                  "lexical_candidate": true,
+                  "lexical_status": "candidate_union",
+                  "profile": "baseline",
+                  "scope_match": true,
+                  "semantic": 0.7891893982887268,
+                  "state_match": null,
+                  "state_status": "disabled",
+                  "token_count_method": "utf8_bytes_upper_bound",
+                  "total": 0.7891893982887268
+                },
+                "sources": [
+                  {
+                    "created_at": "2026-09-17T04:15:45.430183Z",
+                    "evidence_id": "ef26b663-8cbd-40a0-a44e-4ba08ccf2885",
+                    "excerpt": "The cache layer uses Redis for session tokens.",
+                    "fact_id": "9e21d987-1f4e-498b-9bc7-2ba3c4fbd051",
+                    "original_source_status": "retained_locally",
+                    "source_event_id": "725a50d7e7bda49b778fa1a85f3320ba7b2637edccbaa53946d1618a7cf868d0",
+                    "source_ref": null
+                  },
+                  {
+                    "created_at": "2026-09-17T04:15:46.433503Z",
+                    "evidence_id": "ffa5e44b-b24b-4169-8396-de1feb479984",
+                    "excerpt": "The cache layer uses SQLite for session tokens.",
+                    "fact_id": "9e21d987-1f4e-498b-9bc7-2ba3c4fbd051",
+                    "original_source_status": "retained_locally",
+                    "source_event_id": "5a5cb76d72d642d09430be488b04d3a1073390b63e5be46d079c500e24b9a595",
+                    "source_ref": null
+                  }
+                ],
+                "support_available": true,
+                "version": 2
+              }
+            ],
+            "operation": "retrieve",
+            "query_id": "correct-retrieval-query",
+            "scope_validation": {
+              "accepted_count": 1,
+              "foreign_count": 0,
+              "malformed_count": 0,
+              "missing_metadata_count": 0,
+              "returned_count": 1,
+              "status": "verified",
+              "verified_count": 1
+            },
+            "status": "verified"
+          }
+        ],
+        "quality": "NOT MEASURED",
+        "restart_after_correction": true,
+        "restart_observed": true,
+        "retrieved_target_versions": [
+          2
+        ],
+        "retrieved_versions": [
+          2
+        ],
+        "session_id": "development-correct-restart",
+        "status": "complete",
+        "target": "correct"
+      },
+      "model_pins": {
+        "embedding_metadata": {
+          "capabilities": [
+            "embedding"
+          ],
+          "details": {
+            "context_length": 2048,
+            "embedding_length": 768,
+            "families": [
+              "nomic-bert"
+            ],
+            "family": "nomic-bert",
+            "format": "gguf",
+            "parameter_size": "137M",
+            "parent_model": "",
+            "quantization_level": "F16"
+          },
+          "digest": "0a109f422b47e3a30ba2b10eca18548e944e8a23073ee3f3e947efcf3c45e59f",
+          "model": "nomic-embed-text:latest",
+          "modified_at": "2025-11-04T15:15:16.2072724-05:00",
+          "name": "nomic-embed-text:latest",
+          "size": 274302450
+        },
+        "embedding_model": "nomic-embed-text:latest",
+        "embedding_revision": "0a109f422b47e3a30ba2b10eca18548e944e8a23073ee3f3e947efcf3c45e59f",
+        "endpoint": "http://192.168.86.35:11434",
+        "model": "gemma3:4b",
+        "model_metadata": {
+          "capabilities": [
+            "completion",
+            "vision"
+          ],
+          "details": {
+            "context_length": 131072,
+            "embedding_length": 2560,
+            "families": [
+              "gemma3"
+            ],
+            "family": "gemma3",
+            "format": "gguf",
+            "parameter_size": "4.3B",
+            "parent_model": "",
+            "quantization_level": "Q4_K_M"
+          },
+          "digest": "a2af6cc3eb7fa8be8504abaf9b04e88f17a119ec3f04a3addf55f92841195f5a",
+          "model": "gemma3:4b",
+          "modified_at": "2026-03-11T01:54:24.735623-04:00",
+          "name": "gemma3:4b",
+          "size": 3338801804
+        },
+        "model_revision": "a2af6cc3eb7fa8be8504abaf9b04e88f17a119ec3f04a3addf55f92841195f5a",
+        "options": {
+          "max_context_tokens": 1200,
+          "max_tokens": 512,
+          "temperature": 0.0,
+          "timeout_seconds": 120.0,
+          "top_k": 5
+        },
+        "options_sha256": "cd97e75dba4a59a7798d1c035d2fac3b6fbf56082118e776067c9f505b7d5704"
+      },
+      "observation": {
+        "adapter_kind": "real_embedding_observed",
+        "answerable_hits": [
+          true
+        ],
+        "bytes_after": 6712216,
+        "bytes_before": 341776,
+        "cold_latency_ms": 224.447999993572,
+        "critical_retention": [
+          true,
+          true
+        ],
+        "critical_retrieval": [
+          null,
+          true
+        ],
+        "embedding_revision": "0a109f422b47e3a30ba2b10eca18548e944e8a23073ee3f3e947efcf3c45e59f",
+        "execution_status": "complete",
+        "latency_ms": 4507.72720000532,
+        "length_filter_kept": [
+          false
+        ],
+        "model_revision": "a2af6cc3eb7fa8be8504abaf9b04e88f17a119ec3f04a3addf55f92841195f5a",
+        "no_answer_correct": [],
+        "provider": "ollama",
+        "raw_output": {
+          "adapter": "ollama",
+          "base_url": "http://192.168.86.35:11434",
+          "controlled_state_pairs": [],
+          "critical_retention_judgements": [
+            {
+              "expected_identities": [
+                [
+                  "lifecycle-target-smoke-profile",
+                  "project",
+                  "lifecycle-correct-project"
+                ]
+              ],
+              "expected_present": false,
+              "fact_id": "correct-old-cache-fact",
+              "gold_status": "superseded",
+              "judgement": "exact_content_and_scope_in_accepted_store",
+              "observed_present": false,
+              "runtime_fact_ids": []
+            },
+            {
+              "expected_identities": [
+                [
+                  "lifecycle-target-smoke-profile",
+                  "project",
+                  "lifecycle-correct-project"
+                ]
+              ],
+              "expected_present": true,
+              "fact_id": "correct-new-cache-fact",
+              "gold_status": "supported",
+              "judgement": "exact_content_and_scope_in_accepted_store",
+              "observed_present": true,
+              "runtime_fact_ids": [
+                "9e21d987-1f4e-498b-9bc7-2ba3c4fbd051"
+              ]
+            }
+          ],
+          "embedding_model": "nomic-embed-text:latest",
+          "errors": [],
+          "extraction_judgements": [
+            {
+              "accepted": true,
+              "content_nonempty": true,
+              "judgement": "exact_frozen_text_and_evidence_proxy",
+              "matched_supported_fact_id": "correct-new-cache-fact",
+              "observed_source_event_ids": [
+                "correct-action"
+              ],
+              "runtime_fact_id": "9e21d987-1f4e-498b-9bc7-2ba3c4fbd051"
+            }
+          ],
+          "length_filter_policy": {
+            "applied": "counterfactual_shadow_only",
+            "boilerplate_exact_casefold": [
+              "got it",
+              "ok",
+              "okay",
+              "thanks",
+              "thanks!"
+            ],
+            "events": [
+              "correct-capture-source"
+            ],
+            "minimum_chars": 50,
+            "service_decision": "not_exposed"
+          },
+          "lifecycle_summary": {
+            "correct": {
+              "attempted": 1,
+              "committed": 1,
+              "mapping_invalid": 0,
+              "missing_target": 0,
+              "rejected": 0
+            },
+            "forget": {
+              "attempted": 0,
+              "committed": 0,
+              "mapping_invalid": 0,
+              "missing_target": 0,
+              "rejected": 0
+            }
+          },
+          "measurement_notes": [
+            "Missing retrievals remain null and are excluded from interval numerators.",
+            "Correction and forget use runtime fact IDs resolved from the service store.",
+            "Provider token counters are recorded when returned; billing cost is not inferred.",
+            "latency_ms is end-to-end session wall clock; cold_latency_ms covers service construction only.",
+            "Extraction precision uses exact frozen fact text and source role/evidence checks; paraphrases are unjudged.",
+            "State pairs use paired natural-language queries; no same-text embedding control is claimed.",
+            "surprisal_filter_kept is derived from durable job encoding_diagnostics and remains null when a job result is unavailable.",
+            "length_filter_kept is a frozen counterfactual shadow policy, not an applied service filter decision.",
+            "stale_fact_rate is a returned-row substring proxy, not a unique-fact or query-level accuracy measure."
+          ],
+          "model": "gemma3:4b",
+          "module_switches": {
+            "disabled": null,
+            "enabled": [],
+            "source": "service_factory"
+          },
+          "operations": [
+            {
+              "event_id": "correct-capture-source",
+              "job_id": "event:725a50d7e7bda49b778fa1a85f3320ba7b2637edccbaa53946d1618a7cf868d0",
+              "operation": "capture",
+              "processing_status": "pending",
+              "status": "committed"
+            },
+            {
+              "before": "correct",
+              "jobs": [
+                {
+                  "attempt_count": 1,
+                  "id": "event:725a50d7e7bda49b778fa1a85f3320ba7b2637edccbaa53946d1618a7cf868d0",
+                  "kind": "extract",
+                  "last_error": null,
+                  "status": "completed"
+                }
+              ],
+              "operation": "maintenance",
+              "pending_or_failed_statuses": [],
+              "status": "completed"
+            },
+            {
+              "event_id": "correct-action",
+              "expected_version": 1,
+              "fact_id": "9e21d987-1f4e-498b-9bc7-2ba3c4fbd051",
+              "job_id": "event:5a5cb76d72d642d09430be488b04d3a1073390b63e5be46d079c500e24b9a595",
+              "operation": "correct",
+              "processing_status": "pending",
+              "status": "committed"
+            },
+            {
+              "operation": "restart",
+              "status": "completed"
+            },
+            {
+              "jobs": [
+                {
+                  "attempt_count": 1,
+                  "id": "event:725a50d7e7bda49b778fa1a85f3320ba7b2637edccbaa53946d1618a7cf868d0",
+                  "kind": "extract",
+                  "last_error": null,
+                  "status": "completed"
+                },
+                {
+                  "attempt_count": 1,
+                  "id": "event:5a5cb76d72d642d09430be488b04d3a1073390b63e5be46d079c500e24b9a595",
+                  "kind": "correct",
+                  "last_error": null,
+                  "status": "completed"
+                }
+              ],
+              "operation": "maintenance",
+              "pending_or_failed_statuses": [],
+              "status": "completed"
+            },
+            {
+              "facts": [
+                {
+                  "content": "The cache layer uses SQLite for session tokens.",
+                  "id": "9e21d987-1f4e-498b-9bc7-2ba3c4fbd051",
+                  "original_source_status": "retained_locally",
+                  "scope": "project",
+                  "scope_id": "lifecycle-correct-project",
+                  "scores": {
+                    "candidate_backend": "sqlite_vec_scoped_exact_cosine",
+                    "context_token_upper_bound": 97,
+                    "graph_contribution": 0.0,
+                    "graph_energy": 0.0,
+                    "graph_status": "disabled",
+                    "lexical_candidate": true,
+                    "lexical_status": "candidate_union",
+                    "profile": "baseline",
+                    "scope_match": true,
+                    "semantic": 0.7891893982887268,
+                    "state_match": null,
+                    "state_status": "disabled",
+                    "token_count_method": "utf8_bytes_upper_bound",
+                    "total": 0.7891893982887268
+                  },
+                  "sources": [
+                    {
+                      "created_at": "2026-09-17T04:15:45.430183Z",
+                      "evidence_id": "ef26b663-8cbd-40a0-a44e-4ba08ccf2885",
+                      "excerpt": "The cache layer uses Redis for session tokens.",
+                      "fact_id": "9e21d987-1f4e-498b-9bc7-2ba3c4fbd051",
+                      "original_source_status": "retained_locally",
+                      "source_event_id": "725a50d7e7bda49b778fa1a85f3320ba7b2637edccbaa53946d1618a7cf868d0",
+                      "source_ref": null
+                    },
+                    {
+                      "created_at": "2026-09-17T04:15:46.433503Z",
+                      "evidence_id": "ffa5e44b-b24b-4169-8396-de1feb479984",
+                      "excerpt": "The cache layer uses SQLite for session tokens.",
+                      "fact_id": "9e21d987-1f4e-498b-9bc7-2ba3c4fbd051",
+                      "original_source_status": "retained_locally",
+                      "source_event_id": "5a5cb76d72d642d09430be488b04d3a1073390b63e5be46d079c500e24b9a595",
+                      "source_ref": null
+                    }
+                  ],
+                  "support_available": true,
+                  "version": 2
+                }
+              ],
+              "observed_facts": [
+                {
+                  "content": "The cache layer uses SQLite for session tokens.",
+                  "id": "9e21d987-1f4e-498b-9bc7-2ba3c4fbd051",
+                  "original_source_status": "retained_locally",
+                  "scope": "project",
+                  "scope_id": "lifecycle-correct-project",
+                  "scores": {
+                    "candidate_backend": "sqlite_vec_scoped_exact_cosine",
+                    "context_token_upper_bound": 97,
+                    "graph_contribution": 0.0,
+                    "graph_energy": 0.0,
+                    "graph_status": "disabled",
+                    "lexical_candidate": true,
+                    "lexical_status": "candidate_union",
+                    "profile": "baseline",
+                    "scope_match": true,
+                    "semantic": 0.7891893982887268,
+                    "state_match": null,
+                    "state_status": "disabled",
+                    "token_count_method": "utf8_bytes_upper_bound",
+                    "total": 0.7891893982887268
+                  },
+                  "sources": [
+                    {
+                      "created_at": "2026-09-17T04:15:45.430183Z",
+                      "evidence_id": "ef26b663-8cbd-40a0-a44e-4ba08ccf2885",
+                      "excerpt": "The cache layer uses Redis for session tokens.",
+                      "fact_id": "9e21d987-1f4e-498b-9bc7-2ba3c4fbd051",
+                      "original_source_status": "retained_locally",
+                      "source_event_id": "725a50d7e7bda49b778fa1a85f3320ba7b2637edccbaa53946d1618a7cf868d0",
+                      "source_ref": null
+                    },
+                    {
+                      "created_at": "2026-09-17T04:15:46.433503Z",
+                      "evidence_id": "ffa5e44b-b24b-4169-8396-de1feb479984",
+                      "excerpt": "The cache layer uses SQLite for session tokens.",
+                      "fact_id": "9e21d987-1f4e-498b-9bc7-2ba3c4fbd051",
+                      "original_source_status": "retained_locally",
+                      "source_event_id": "5a5cb76d72d642d09430be488b04d3a1073390b63e5be46d079c500e24b9a595",
+                      "source_ref": null
+                    }
+                  ],
+                  "support_available": true,
+                  "version": 2
+                }
+              ],
+              "operation": "retrieve",
+              "query_id": "correct-retrieval-query",
+              "scope_validation": {
+                "accepted_count": 1,
+                "foreign_count": 0,
+                "malformed_count": 0,
+                "missing_metadata_count": 0,
+                "returned_count": 1,
+                "status": "verified",
+                "verified_count": 1
+              },
+              "status": "verified"
+            }
+          ],
+          "profile": {
+            "disabled_module": null,
+            "enabled_modules": [],
+            "name": "baseline"
+          },
+          "provenance": {
+            "code_sha256": "a2beb455d09293677e8a0a94b9d2a1cbd3d776bc7ba12ed0f4102464c69b8f88",
+            "cognition_observed": false,
+            "embedding_metadata": {
+              "capabilities": [
+                "embedding"
+              ],
+              "details": {
+                "context_length": 2048,
+                "embedding_length": 768,
+                "families": [
+                  "nomic-bert"
+                ],
+                "family": "nomic-bert",
+                "format": "gguf",
+                "parameter_size": "137M",
+                "parent_model": "",
+                "quantization_level": "F16"
+              },
+              "digest": "0a109f422b47e3a30ba2b10eca18548e944e8a23073ee3f3e947efcf3c45e59f",
+              "model": "nomic-embed-text:latest",
+              "modified_at": "2025-11-04T15:15:16.2072724-05:00",
+              "name": "nomic-embed-text:latest",
+              "size": 274302450
+            },
+            "embedding_sha256": "0a109f422b47e3a30ba2b10eca18548e944e8a23073ee3f3e947efcf3c45e59f",
+            "embedding_verified": true,
+            "model_metadata": {
+              "capabilities": [
+                "completion",
+                "vision"
+              ],
+              "details": {
+                "context_length": 131072,
+                "embedding_length": 2560,
+                "families": [
+                  "gemma3"
+                ],
+                "family": "gemma3",
+                "format": "gguf",
+                "parameter_size": "4.3B",
+                "parent_model": "",
+                "quantization_level": "Q4_K_M"
+              },
+              "digest": "a2af6cc3eb7fa8be8504abaf9b04e88f17a119ec3f04a3addf55f92841195f5a",
+              "model": "gemma3:4b",
+              "modified_at": "2026-03-11T01:54:24.735623-04:00",
+              "name": "gemma3:4b",
+              "size": 3338801804
+            },
+            "model_sha256": "a2af6cc3eb7fa8be8504abaf9b04e88f17a119ec3f04a3addf55f92841195f5a",
+            "options_sha256": "cd97e75dba4a59a7798d1c035d2fac3b6fbf56082118e776067c9f505b7d5704",
+            "verified": false
+          },
+          "provider": "ollama",
+          "provider_trace": {
+            "classify_calls": [],
+            "config": {
+              "embedding_model": "nomic-embed-text:latest",
+              "endpoint": "http://192.168.86.35:11434",
+              "max_tokens": 512,
+              "model": "gemma3:4b",
+              "temperature": 0.0,
+              "timeout_seconds": 120.0
+            },
+            "embed_calls": [
+              {
+                "latency_ms": 516.0497000033502,
+                "text_chars": 46,
+                "token_usage": {
+                  "prompt_eval_count": 13
+                },
+                "vector_dimensions": 768
+              },
+              {
+                "latency_ms": 204.13769999868236,
+                "text_chars": 47,
+                "token_usage": {
+                  "prompt_eval_count": 13
+                },
+                "vector_dimensions": 768
+              },
+              {
+                "latency_ms": 206.56479999888688,
+                "text_chars": 34,
+                "token_usage": {
+                  "prompt_eval_count": 9
+                },
+                "vector_dimensions": 768
+              }
+            ],
+            "predict_calls": [],
+            "response_metadata": [
+              {
+                "kind": "embedding",
+                "load_duration": 279390800,
+                "model": "nomic-embed-text:latest",
+                "prompt_eval_count": 13,
+                "provider": "ollama",
+                "total_duration": 300945100
+              },
+              {
+                "kind": "embedding",
+                "load_duration": 6511400,
+                "model": "nomic-embed-text:latest",
+                "prompt_eval_count": 13,
+                "provider": "ollama",
+                "total_duration": 23316300
+              },
+              {
+                "kind": "embedding",
+                "load_duration": 5827900,
+                "model": "nomic-embed-text:latest",
+                "prompt_eval_count": 9,
+                "provider": "ollama",
+                "total_duration": 21813500
+              }
+            ],
+            "service_instances": 2,
+            "trace_key": {
+              "profile": "baseline",
+              "run_key": "development-correct-restart-baseline-r1"
+            }
+          },
+          "surprisal_filter_decisions": [
+            {
+              "decision": "facts",
+              "event_id": "correct-capture-source",
+              "job_id": "event:725a50d7e7bda49b778fa1a85f3320ba7b2637edccbaa53946d1618a7cf868d0",
+              "job_status": "completed",
+              "kept": true,
+              "source": "durable_job_result"
+            }
+          ],
+          "unsupported_modules": [],
+          "unsupported_operations": []
+        },
+        "repetition": 1,
+        "retrieved_fact_count": 1,
+        "session_id": "development-correct-restart",
+        "stale_fact_count": 0,
+        "state_pair_semantic_hits": [],
+        "state_pair_state_hits": [],
+        "supported_precision": [
+          true
+        ],
+        "surprisal_filter_kept": [
+          true
+        ],
+        "token_cost": null,
+        "verified_embedding_provenance": true,
+        "verified_model_provenance": false
+      },
+      "profile": {
+        "disabled_module": null,
+        "enabled_modules": [],
+        "name": "baseline"
+      },
+      "session_id": "development-correct-restart",
+      "source_files": [
+        ".claude-plugin/run_mnemos_mcp.py",
+        "benchmarks/local_memory/__init__.py",
+        "benchmarks/local_memory/__main__.py",
+        "benchmarks/local_memory/ablation.py",
+        "benchmarks/local_memory/artifacts.py",
+        "benchmarks/local_memory/contracts.py",
+        "benchmarks/local_memory/dev_smoke.py",
+        "benchmarks/local_memory/generate_lifecycle_v3.py",
+        "benchmarks/local_memory/generate_module_mechanism_dataset.py",
+        "benchmarks/local_memory/graph_measurement.py",
+        "benchmarks/local_memory/harness.py",
+        "benchmarks/local_memory/heldout_run.py",
+        "benchmarks/local_memory/lifecycle_target_smoke.py",
+        "benchmarks/local_memory/module_challenge.py",
+        "benchmarks/local_memory/module_challenge_run.py",
+        "benchmarks/local_memory/module_mechanism.py",
+        "benchmarks/local_memory/module_mechanism_run.py",
+        "benchmarks/local_memory/ollama_adapter.py",
+        "benchmarks/local_memory/performance.py",
+        "benchmarks/local_memory/resumption.py",
+        "benchmarks/local_memory/scoring.py",
+        "benchmarks/scenarios/ui_smoke.py",
+        "examples/basic_usage.py",
+        "examples/full_pipeline.py",
+        "examples/mcp_agent_demo.py",
+        "mnemos/__init__.py",
+        "mnemos/__main__.py",
+        "mnemos/adapters/claude_code.py",
+        "mnemos/adapters/codex.py",
+        "mnemos/adapters/diagnostics.py",
+        "mnemos/adapters/hermes.py",
+        "mnemos/antigravity.py",
+        "mnemos/backup.py",
+        "mnemos/benchmark.py",
+        "mnemos/bridge.py",
+        "mnemos/cli.py",
+        "mnemos/client.py",
+        "mnemos/config.py",
+        "mnemos/contracts.py",
+        "mnemos/control_plane.py",
+        "mnemos/curation.py",
+        "mnemos/engine.py",
+        "mnemos/health.py",
+        "mnemos/hook_autostore.py",
+        "mnemos/hosts.py",
+        "mnemos/inspectability.py",
+        "mnemos/jobs.py",
+        "mnemos/maintenance.py",
+        "mnemos/managed_cli.py",
+        "mnemos/mcp_server.py",
+        "mnemos/memory_safety.py",
+        "mnemos/memory_service.py",
+        "mnemos/modules/__init__.py",
+        "mnemos/modules/affective.py",
+        "mnemos/modules/mutable_rag.py",
+        "mnemos/modules/sleep.py",
+        "mnemos/modules/spreading.py",
+        "mnemos/modules/surprisal.py",
+        "mnemos/observability.py",
+        "mnemos/reindex.py",
+        "mnemos/retrieval.py",
+        "mnemos/routing_review.py",
+        "mnemos/runtime.py",
+        "mnemos/scopes.py",
+        "mnemos/service.py",
+        "mnemos/settings.py",
+        "mnemos/types.py",
+        "mnemos/ui_server.py",
+        "mnemos/utils/__init__.py",
+        "mnemos/utils/embeddings.py",
+        "mnemos/utils/llm.py",
+        "mnemos/utils/reliability.py",
+        "mnemos/utils/storage.py",
+        "pyproject.toml",
+        "tests/__init__.py",
+        "tests/conftest.py",
+        "tests/test_backup_restore.py",
+        "tests/test_benchmark.py",
+        "tests/test_bridge.py",
+        "tests/test_ci_workflow.py",
+        "tests/test_claude_adapter.py",
+        "tests/test_cli.py",
+        "tests/test_clustered_scoring.py",
+        "tests/test_codex_adapter.py",
+        "tests/test_configured_runtime.py",
+        "tests/test_control_plane.py",
+        "tests/test_cross_host_contract.py",
+        "tests/test_docs_consistency.py",
+        "tests/test_durable_jobs.py",
+        "tests/test_durable_memory_repair.py",
+        "tests/test_embeddings.py",
+        "tests/test_engine.py",
+        "tests/test_evaluator_metrics.py",
+        "tests/test_extraction_schema.py",
+        "tests/test_feedback_eval_export.py",
+        "tests/test_feedback_events.py",
+        "tests/test_graph_measurement.py",
+        "tests/test_graph_persistence.py",
+        "tests/test_health.py",
+        "tests/test_hermes_adapter.py",
+        "tests/test_hook_autostore.py",
+        "tests/test_hosts.py",
+        "tests/test_inspectability.py",
+        "tests/test_job_recovery_api.py",
+        "tests/test_legacy_repair.py",
+        "tests/test_lifecycle_smoke_service.py",
+        "tests/test_lifecycle_target_mapping.py",
+        "tests/test_lifecycle_target_smoke.py",
+        "tests/test_lifecycle_v3_contract.py",
+        "tests/test_llm.py",
+        "tests/test_local_memory_benchmark.py",
+        "tests/test_maintenance.py",
+        "tests/test_managed_cli.py",
+        "tests/test_mcp_compatibility.py",
+        "tests/test_mcp_server.py",
+        "tests/test_mcp_tier2_smoke.py",
+        "tests/test_memory_lifecycle.py",
+        "tests/test_memory_safety.py",
+        "tests/test_memory_service.py",
+        "tests/test_module_mechanism.py",
+        "tests/test_module_mechanism_run.py",
+        "tests/test_modules.py",
+        "tests/test_plugin_packaging.py",
+        "tests/test_reconsolidation_contract.py",
+        "tests/test_reliability.py",
+        "tests/test_retrieval_contract.py",
+        "tests/test_routing_review.py",
+        "tests/test_routing_review_api.py",
+        "tests/test_runtime.py",
+        "tests/test_scope_context.py",
+        "tests/test_scoped_storage.py",
+        "tests/test_service.py",
+        "tests/test_settings.py",
+        "tests/test_spreading_activation.py",
+        "tests/test_spreading_isolation.py",
+        "tests/test_storage_sqlite.py",
+        "tests/test_storage_touch.py",
+        "tests/test_surprisal_contract.py",
+        "tests/test_types.py",
+        "tests/test_ui_server.py"
+      ],
+      "source_sha256": "a2beb455d09293677e8a0a94b9d2a1cbd3d776bc7ba12ed0f4102464c69b8f88",
+      "status": "complete"
+    },
+    {
+      "attempt_id": "b3fb69233d634934949a2432df377b59",
+      "attempt_root": "D:\\Development\\mnemos\\mnemos\\.worktrees\\functional-local-memory\\.venv\\lifecycle-target-development-v4-work\\attempts\\b3fb69233d634934949a2432df377b59",
+      "dataset_sha256": "5fcb1a20d7212ddd07bcf5ef5fd339f1f088ad1d44277bdbb27000eb0e192f0b",
+      "diagnostic": {
+        "correct_dispatched": true,
+        "correct_job_processed": true,
+        "current_version_observed": true,
+        "errors": [],
+        "execution_status": "complete",
+        "human_acceptance": "NOT RUN",
+        "operations": [
+          {
+            "event_id": "correct-capture-source",
+            "job_id": "event:2548929f0d0909c55be08f408383188eb4cdffb205147bdf4699bce1621081cb",
+            "operation": "capture",
+            "processing_status": "pending",
+            "status": "committed"
+          },
+          {
+            "before": "correct",
+            "jobs": [
+              {
+                "attempt_count": 1,
+                "id": "event:2548929f0d0909c55be08f408383188eb4cdffb205147bdf4699bce1621081cb",
+                "kind": "extract",
+                "last_error": null,
+                "status": "completed"
+              }
+            ],
+            "operation": "maintenance",
+            "pending_or_failed_statuses": [],
+            "status": "completed"
+          },
+          {
+            "event_id": "correct-action",
+            "expected_version": 1,
+            "fact_id": "d2a07a4c-5e3e-4256-bdd9-6c659b9b7def",
+            "job_id": "event:560748320ca8a61a04d706a1c762ff5c2de087c559aa96c1b1a0bca784dc3295",
+            "operation": "correct",
+            "processing_status": "pending",
+            "status": "committed"
+          },
+          {
+            "operation": "restart",
+            "status": "completed"
+          },
+          {
+            "jobs": [
+              {
+                "attempt_count": 1,
+                "id": "event:2548929f0d0909c55be08f408383188eb4cdffb205147bdf4699bce1621081cb",
+                "kind": "extract",
+                "last_error": null,
+                "status": "completed"
+              },
+              {
+                "attempt_count": 1,
+                "id": "event:560748320ca8a61a04d706a1c762ff5c2de087c559aa96c1b1a0bca784dc3295",
+                "kind": "correct",
+                "last_error": null,
+                "status": "completed"
+              }
+            ],
+            "operation": "maintenance",
+            "pending_or_failed_statuses": [],
+            "status": "completed"
+          },
+          {
+            "facts": [
+              {
+                "content": "The cache layer uses SQLite for session tokens.",
+                "id": "d2a07a4c-5e3e-4256-bdd9-6c659b9b7def",
+                "original_source_status": "retained_locally",
+                "scope": "project",
+                "scope_id": "lifecycle-correct-project",
+                "scores": {
+                  "candidate_backend": "sqlite_vec_scoped_exact_cosine",
+                  "context_token_upper_bound": 97,
+                  "graph_contribution": 0.1,
+                  "graph_energy": 1.0,
+                  "graph_status": "enabled",
+                  "lexical_candidate": true,
+                  "lexical_status": "candidate_union",
+                  "profile": "biomimetic",
+                  "scope_match": true,
+                  "semantic": 0.7891893982887268,
+                  "state_match": 0.9591751709536137,
+                  "state_status": "measured",
+                  "token_count_method": "utf8_bytes_upper_bound",
+                  "total": 0.9401851300881928
+                },
+                "sources": [
+                  {
+                    "created_at": "2026-09-17T04:16:12.690767Z",
+                    "evidence_id": "32902e52-a88a-4476-9683-1866f826379e",
+                    "excerpt": "The cache layer uses Redis for session tokens.",
+                    "fact_id": "d2a07a4c-5e3e-4256-bdd9-6c659b9b7def",
+                    "original_source_status": "retained_locally",
+                    "source_event_id": "2548929f0d0909c55be08f408383188eb4cdffb205147bdf4699bce1621081cb",
+                    "source_ref": null
+                  },
+                  {
+                    "created_at": "2026-09-17T04:16:16.562328Z",
+                    "evidence_id": "9e36597a-d6da-4e93-9cba-a906b5e02739",
+                    "excerpt": "The cache layer uses SQLite for session tokens.",
+                    "fact_id": "d2a07a4c-5e3e-4256-bdd9-6c659b9b7def",
+                    "original_source_status": "retained_locally",
+                    "source_event_id": "560748320ca8a61a04d706a1c762ff5c2de087c559aa96c1b1a0bca784dc3295",
+                    "source_ref": null
+                  }
+                ],
+                "support_available": true,
+                "version": 2
+              }
+            ],
+            "observed_facts": [
+              {
+                "content": "The cache layer uses SQLite for session tokens.",
+                "id": "d2a07a4c-5e3e-4256-bdd9-6c659b9b7def",
+                "original_source_status": "retained_locally",
+                "scope": "project",
+                "scope_id": "lifecycle-correct-project",
+                "scores": {
+                  "candidate_backend": "sqlite_vec_scoped_exact_cosine",
+                  "context_token_upper_bound": 97,
+                  "graph_contribution": 0.1,
+                  "graph_energy": 1.0,
+                  "graph_status": "enabled",
+                  "lexical_candidate": true,
+                  "lexical_status": "candidate_union",
+                  "profile": "biomimetic",
+                  "scope_match": true,
+                  "semantic": 0.7891893982887268,
+                  "state_match": 0.9591751709536137,
+                  "state_status": "measured",
+                  "token_count_method": "utf8_bytes_upper_bound",
+                  "total": 0.9401851300881928
+                },
+                "sources": [
+                  {
+                    "created_at": "2026-09-17T04:16:12.690767Z",
+                    "evidence_id": "32902e52-a88a-4476-9683-1866f826379e",
+                    "excerpt": "The cache layer uses Redis for session tokens.",
+                    "fact_id": "d2a07a4c-5e3e-4256-bdd9-6c659b9b7def",
+                    "original_source_status": "retained_locally",
+                    "source_event_id": "2548929f0d0909c55be08f408383188eb4cdffb205147bdf4699bce1621081cb",
+                    "source_ref": null
+                  },
+                  {
+                    "created_at": "2026-09-17T04:16:16.562328Z",
+                    "evidence_id": "9e36597a-d6da-4e93-9cba-a906b5e02739",
+                    "excerpt": "The cache layer uses SQLite for session tokens.",
+                    "fact_id": "d2a07a4c-5e3e-4256-bdd9-6c659b9b7def",
+                    "original_source_status": "retained_locally",
+                    "source_event_id": "560748320ca8a61a04d706a1c762ff5c2de087c559aa96c1b1a0bca784dc3295",
+                    "source_ref": null
+                  }
+                ],
+                "support_available": true,
+                "version": 2
+              }
+            ],
+            "operation": "retrieve",
+            "query_id": "correct-retrieval-query",
+            "scope_validation": {
+              "accepted_count": 1,
+              "foreign_count": 0,
+              "malformed_count": 0,
+              "missing_metadata_count": 0,
+              "returned_count": 1,
+              "status": "verified",
+              "verified_count": 1
+            },
+            "status": "verified"
+          }
+        ],
+        "quality": "NOT MEASURED",
+        "restart_after_correction": true,
+        "restart_observed": true,
+        "retrieved_target_versions": [
+          2
+        ],
+        "retrieved_versions": [
+          2
+        ],
+        "session_id": "development-correct-restart",
+        "status": "complete",
+        "target": "correct"
+      },
+      "model_pins": {
+        "embedding_metadata": {
+          "capabilities": [
+            "embedding"
+          ],
+          "details": {
+            "context_length": 2048,
+            "embedding_length": 768,
+            "families": [
+              "nomic-bert"
+            ],
+            "family": "nomic-bert",
+            "format": "gguf",
+            "parameter_size": "137M",
+            "parent_model": "",
+            "quantization_level": "F16"
+          },
+          "digest": "0a109f422b47e3a30ba2b10eca18548e944e8a23073ee3f3e947efcf3c45e59f",
+          "model": "nomic-embed-text:latest",
+          "modified_at": "2025-11-04T15:15:16.2072724-05:00",
+          "name": "nomic-embed-text:latest",
+          "size": 274302450
+        },
+        "embedding_model": "nomic-embed-text:latest",
+        "embedding_revision": "0a109f422b47e3a30ba2b10eca18548e944e8a23073ee3f3e947efcf3c45e59f",
+        "endpoint": "http://192.168.86.35:11434",
+        "model": "gemma3:4b",
+        "model_metadata": {
+          "capabilities": [
+            "completion",
+            "vision"
+          ],
+          "details": {
+            "context_length": 131072,
+            "embedding_length": 2560,
+            "families": [
+              "gemma3"
+            ],
+            "family": "gemma3",
+            "format": "gguf",
+            "parameter_size": "4.3B",
+            "parent_model": "",
+            "quantization_level": "Q4_K_M"
+          },
+          "digest": "a2af6cc3eb7fa8be8504abaf9b04e88f17a119ec3f04a3addf55f92841195f5a",
+          "model": "gemma3:4b",
+          "modified_at": "2026-03-11T01:54:24.735623-04:00",
+          "name": "gemma3:4b",
+          "size": 3338801804
+        },
+        "model_revision": "a2af6cc3eb7fa8be8504abaf9b04e88f17a119ec3f04a3addf55f92841195f5a",
+        "options": {
+          "max_context_tokens": 1200,
+          "max_tokens": 512,
+          "temperature": 0.0,
+          "timeout_seconds": 120.0,
+          "top_k": 5
+        },
+        "options_sha256": "cd97e75dba4a59a7798d1c035d2fac3b6fbf56082118e776067c9f505b7d5704"
+      },
+      "observation": {
+        "adapter_kind": "real_model",
+        "answerable_hits": [
+          true
+        ],
+        "bytes_after": 6720456,
+        "bytes_before": 341776,
+        "cold_latency_ms": 135.12239999545272,
+        "critical_retention": [
+          true,
+          true
+        ],
+        "critical_retrieval": [
+          null,
+          true
+        ],
+        "embedding_revision": "0a109f422b47e3a30ba2b10eca18548e944e8a23073ee3f3e947efcf3c45e59f",
+        "execution_status": "complete",
+        "latency_ms": 33331.13289999892,
+        "length_filter_kept": [
+          false
+        ],
+        "model_revision": "a2af6cc3eb7fa8be8504abaf9b04e88f17a119ec3f04a3addf55f92841195f5a",
+        "no_answer_correct": [],
+        "provider": "ollama",
+        "raw_output": {
+          "adapter": "ollama",
+          "base_url": "http://192.168.86.35:11434",
+          "controlled_state_pairs": [],
+          "critical_retention_judgements": [
+            {
+              "expected_identities": [
+                [
+                  "lifecycle-target-smoke-profile",
+                  "project",
+                  "lifecycle-correct-project"
+                ]
+              ],
+              "expected_present": false,
+              "fact_id": "correct-old-cache-fact",
+              "gold_status": "superseded",
+              "judgement": "exact_content_and_scope_in_accepted_store",
+              "observed_present": false,
+              "runtime_fact_ids": []
+            },
+            {
+              "expected_identities": [
+                [
+                  "lifecycle-target-smoke-profile",
+                  "project",
+                  "lifecycle-correct-project"
+                ]
+              ],
+              "expected_present": true,
+              "fact_id": "correct-new-cache-fact",
+              "gold_status": "supported",
+              "judgement": "exact_content_and_scope_in_accepted_store",
+              "observed_present": true,
+              "runtime_fact_ids": [
+                "d2a07a4c-5e3e-4256-bdd9-6c659b9b7def"
+              ]
+            }
+          ],
+          "embedding_model": "nomic-embed-text:latest",
+          "errors": [],
+          "extraction_judgements": [
+            {
+              "accepted": true,
+              "content_nonempty": true,
+              "judgement": "exact_frozen_text_and_evidence_proxy",
+              "matched_supported_fact_id": "correct-new-cache-fact",
+              "observed_source_event_ids": [
+                "correct-action"
+              ],
+              "runtime_fact_id": "d2a07a4c-5e3e-4256-bdd9-6c659b9b7def"
+            }
+          ],
+          "length_filter_policy": {
+            "applied": "counterfactual_shadow_only",
+            "boilerplate_exact_casefold": [
+              "got it",
+              "ok",
+              "okay",
+              "thanks",
+              "thanks!"
+            ],
+            "events": [
+              "correct-capture-source"
+            ],
+            "minimum_chars": 50,
+            "service_decision": "not_exposed"
+          },
+          "lifecycle_summary": {
+            "correct": {
+              "attempted": 1,
+              "committed": 1,
+              "mapping_invalid": 0,
+              "missing_target": 0,
+              "rejected": 0
+            },
+            "forget": {
+              "attempted": 0,
+              "committed": 0,
+              "mapping_invalid": 0,
+              "missing_target": 0,
+              "rejected": 0
+            }
+          },
+          "measurement_notes": [
+            "Missing retrievals remain null and are excluded from interval numerators.",
+            "Correction and forget use runtime fact IDs resolved from the service store.",
+            "Provider token counters are recorded when returned; billing cost is not inferred.",
+            "latency_ms is end-to-end session wall clock; cold_latency_ms covers service construction only.",
+            "Extraction precision uses exact frozen fact text and source role/evidence checks; paraphrases are unjudged.",
+            "State pairs use paired natural-language queries; no same-text embedding control is claimed.",
+            "surprisal_filter_kept is derived from durable job encoding_diagnostics and remains null when a job result is unavailable.",
+            "length_filter_kept is a frozen counterfactual shadow policy, not an applied service filter decision.",
+            "stale_fact_rate is a returned-row substring proxy, not a unique-fact or query-level accuracy measure."
+          ],
+          "model": "gemma3:4b",
+          "module_switches": {
+            "disabled": null,
+            "enabled": [
+              "surprisal_gating",
+              "mutable_rag",
+              "affective_routing",
+              "sleep_consolidation",
+              "spreading_activation"
+            ],
+            "source": "service_factory"
+          },
+          "operations": [
+            {
+              "event_id": "correct-capture-source",
+              "job_id": "event:2548929f0d0909c55be08f408383188eb4cdffb205147bdf4699bce1621081cb",
+              "operation": "capture",
+              "processing_status": "pending",
+              "status": "committed"
+            },
+            {
+              "before": "correct",
+              "jobs": [
+                {
+                  "attempt_count": 1,
+                  "id": "event:2548929f0d0909c55be08f408383188eb4cdffb205147bdf4699bce1621081cb",
+                  "kind": "extract",
+                  "last_error": null,
+                  "status": "completed"
+                }
+              ],
+              "operation": "maintenance",
+              "pending_or_failed_statuses": [],
+              "status": "completed"
+            },
+            {
+              "event_id": "correct-action",
+              "expected_version": 1,
+              "fact_id": "d2a07a4c-5e3e-4256-bdd9-6c659b9b7def",
+              "job_id": "event:560748320ca8a61a04d706a1c762ff5c2de087c559aa96c1b1a0bca784dc3295",
+              "operation": "correct",
+              "processing_status": "pending",
+              "status": "committed"
+            },
+            {
+              "operation": "restart",
+              "status": "completed"
+            },
+            {
+              "jobs": [
+                {
+                  "attempt_count": 1,
+                  "id": "event:2548929f0d0909c55be08f408383188eb4cdffb205147bdf4699bce1621081cb",
+                  "kind": "extract",
+                  "last_error": null,
+                  "status": "completed"
+                },
+                {
+                  "attempt_count": 1,
+                  "id": "event:560748320ca8a61a04d706a1c762ff5c2de087c559aa96c1b1a0bca784dc3295",
+                  "kind": "correct",
+                  "last_error": null,
+                  "status": "completed"
+                }
+              ],
+              "operation": "maintenance",
+              "pending_or_failed_statuses": [],
+              "status": "completed"
+            },
+            {
+              "facts": [
+                {
+                  "content": "The cache layer uses SQLite for session tokens.",
+                  "id": "d2a07a4c-5e3e-4256-bdd9-6c659b9b7def",
+                  "original_source_status": "retained_locally",
+                  "scope": "project",
+                  "scope_id": "lifecycle-correct-project",
+                  "scores": {
+                    "candidate_backend": "sqlite_vec_scoped_exact_cosine",
+                    "context_token_upper_bound": 97,
+                    "graph_contribution": 0.1,
+                    "graph_energy": 1.0,
+                    "graph_status": "enabled",
+                    "lexical_candidate": true,
+                    "lexical_status": "candidate_union",
+                    "profile": "biomimetic",
+                    "scope_match": true,
+                    "semantic": 0.7891893982887268,
+                    "state_match": 0.9591751709536137,
+                    "state_status": "measured",
+                    "token_count_method": "utf8_bytes_upper_bound",
+                    "total": 0.9401851300881928
+                  },
+                  "sources": [
+                    {
+                      "created_at": "2026-09-17T04:16:12.690767Z",
+                      "evidence_id": "32902e52-a88a-4476-9683-1866f826379e",
+                      "excerpt": "The cache layer uses Redis for session tokens.",
+                      "fact_id": "d2a07a4c-5e3e-4256-bdd9-6c659b9b7def",
+                      "original_source_status": "retained_locally",
+                      "source_event_id": "2548929f0d0909c55be08f408383188eb4cdffb205147bdf4699bce1621081cb",
+                      "source_ref": null
+                    },
+                    {
+                      "created_at": "2026-09-17T04:16:16.562328Z",
+                      "evidence_id": "9e36597a-d6da-4e93-9cba-a906b5e02739",
+                      "excerpt": "The cache layer uses SQLite for session tokens.",
+                      "fact_id": "d2a07a4c-5e3e-4256-bdd9-6c659b9b7def",
+                      "original_source_status": "retained_locally",
+                      "source_event_id": "560748320ca8a61a04d706a1c762ff5c2de087c559aa96c1b1a0bca784dc3295",
+                      "source_ref": null
+                    }
+                  ],
+                  "support_available": true,
+                  "version": 2
+                }
+              ],
+              "observed_facts": [
+                {
+                  "content": "The cache layer uses SQLite for session tokens.",
+                  "id": "d2a07a4c-5e3e-4256-bdd9-6c659b9b7def",
+                  "original_source_status": "retained_locally",
+                  "scope": "project",
+                  "scope_id": "lifecycle-correct-project",
+                  "scores": {
+                    "candidate_backend": "sqlite_vec_scoped_exact_cosine",
+                    "context_token_upper_bound": 97,
+                    "graph_contribution": 0.1,
+                    "graph_energy": 1.0,
+                    "graph_status": "enabled",
+                    "lexical_candidate": true,
+                    "lexical_status": "candidate_union",
+                    "profile": "biomimetic",
+                    "scope_match": true,
+                    "semantic": 0.7891893982887268,
+                    "state_match": 0.9591751709536137,
+                    "state_status": "measured",
+                    "token_count_method": "utf8_bytes_upper_bound",
+                    "total": 0.9401851300881928
+                  },
+                  "sources": [
+                    {
+                      "created_at": "2026-09-17T04:16:12.690767Z",
+                      "evidence_id": "32902e52-a88a-4476-9683-1866f826379e",
+                      "excerpt": "The cache layer uses Redis for session tokens.",
+                      "fact_id": "d2a07a4c-5e3e-4256-bdd9-6c659b9b7def",
+                      "original_source_status": "retained_locally",
+                      "source_event_id": "2548929f0d0909c55be08f408383188eb4cdffb205147bdf4699bce1621081cb",
+                      "source_ref": null
+                    },
+                    {
+                      "created_at": "2026-09-17T04:16:16.562328Z",
+                      "evidence_id": "9e36597a-d6da-4e93-9cba-a906b5e02739",
+                      "excerpt": "The cache layer uses SQLite for session tokens.",
+                      "fact_id": "d2a07a4c-5e3e-4256-bdd9-6c659b9b7def",
+                      "original_source_status": "retained_locally",
+                      "source_event_id": "560748320ca8a61a04d706a1c762ff5c2de087c559aa96c1b1a0bca784dc3295",
+                      "source_ref": null
+                    }
+                  ],
+                  "support_available": true,
+                  "version": 2
+                }
+              ],
+              "operation": "retrieve",
+              "query_id": "correct-retrieval-query",
+              "scope_validation": {
+                "accepted_count": 1,
+                "foreign_count": 0,
+                "malformed_count": 0,
+                "missing_metadata_count": 0,
+                "returned_count": 1,
+                "status": "verified",
+                "verified_count": 1
+              },
+              "status": "verified"
+            }
+          ],
+          "profile": {
+            "disabled_module": null,
+            "enabled_modules": [
+              "surprisal_gating",
+              "mutable_rag",
+              "affective_routing",
+              "sleep_consolidation",
+              "spreading_activation"
+            ],
+            "name": "full"
+          },
+          "provenance": {
+            "code_sha256": "a2beb455d09293677e8a0a94b9d2a1cbd3d776bc7ba12ed0f4102464c69b8f88",
+            "cognition_observed": true,
+            "embedding_metadata": {
+              "capabilities": [
+                "embedding"
+              ],
+              "details": {
+                "context_length": 2048,
+                "embedding_length": 768,
+                "families": [
+                  "nomic-bert"
+                ],
+                "family": "nomic-bert",
+                "format": "gguf",
+                "parameter_size": "137M",
+                "parent_model": "",
+                "quantization_level": "F16"
+              },
+              "digest": "0a109f422b47e3a30ba2b10eca18548e944e8a23073ee3f3e947efcf3c45e59f",
+              "model": "nomic-embed-text:latest",
+              "modified_at": "2025-11-04T15:15:16.2072724-05:00",
+              "name": "nomic-embed-text:latest",
+              "size": 274302450
+            },
+            "embedding_sha256": "0a109f422b47e3a30ba2b10eca18548e944e8a23073ee3f3e947efcf3c45e59f",
+            "embedding_verified": true,
+            "model_metadata": {
+              "capabilities": [
+                "completion",
+                "vision"
+              ],
+              "details": {
+                "context_length": 131072,
+                "embedding_length": 2560,
+                "families": [
+                  "gemma3"
+                ],
+                "family": "gemma3",
+                "format": "gguf",
+                "parameter_size": "4.3B",
+                "parent_model": "",
+                "quantization_level": "Q4_K_M"
+              },
+              "digest": "a2af6cc3eb7fa8be8504abaf9b04e88f17a119ec3f04a3addf55f92841195f5a",
+              "model": "gemma3:4b",
+              "modified_at": "2026-03-11T01:54:24.735623-04:00",
+              "name": "gemma3:4b",
+              "size": 3338801804
+            },
+            "model_sha256": "a2af6cc3eb7fa8be8504abaf9b04e88f17a119ec3f04a3addf55f92841195f5a",
+            "options_sha256": "cd97e75dba4a59a7798d1c035d2fac3b6fbf56082118e776067c9f505b7d5704",
+            "verified": true
+          },
+          "provider": "ollama",
+          "provider_trace": {
+            "classify_calls": [],
+            "config": {
+              "embedding_model": "nomic-embed-text:latest",
+              "endpoint": "http://192.168.86.35:11434",
+              "max_tokens": 512,
+              "model": "gemma3:4b",
+              "temperature": 0.0,
+              "timeout_seconds": 120.0
+            },
+            "embed_calls": [
+              {
+                "latency_ms": 229.08199999073986,
+                "text_chars": 28,
+                "token_usage": {
+                  "prompt_eval_count": 8
+                },
+                "vector_dimensions": 768
+              },
+              {
+                "latency_ms": 226.04160000628326,
+                "text_chars": 46,
+                "token_usage": {
+                  "prompt_eval_count": 13
+                },
+                "vector_dimensions": 768
+              },
+              {
+                "latency_ms": 208.6383999994723,
+                "text_chars": 46,
+                "token_usage": {
+                  "prompt_eval_count": 13
+                },
+                "vector_dimensions": 768
+              },
+              {
+                "latency_ms": 211.7914000118617,
+                "text_chars": 46,
+                "token_usage": {
+                  "prompt_eval_count": 13
+                },
+                "vector_dimensions": 768
+              },
+              {
+                "latency_ms": 205.65659999556374,
+                "text_chars": 47,
+                "token_usage": {
+                  "prompt_eval_count": 13
+                },
+                "vector_dimensions": 768
+              },
+              {
+                "latency_ms": 203.78350000828505,
+                "text_chars": 34,
+                "token_usage": {
+                  "prompt_eval_count": 9
+                },
+                "vector_dimensions": 768
+              }
+            ],
+            "predict_calls": [
+              {
+                "latency_ms": 6225.191699995776,
+                "prompt_chars": 255,
+                "response": "Tell me about your features.",
+                "token_usage": {
+                  "eval_count": 7,
+                  "prompt_eval_count": 62
+                }
+              },
+              {
+                "format_schema_sha256": "06fc0c3888e1dbe4dfa32df919fe0eec1ce607a51c61b8fbfe193710dc849ced",
+                "latency_ms": 13751.475600001868,
+                "prompt_chars": 809,
+                "response": "{\"decision\":\"facts\",\"facts\":[{\"content\":\"The cache layer uses Redis for session tokens.\",\"evidence_ids\":[\"2548929f0d0909c55be08f408383188eb4cdffb205147bdf4699bce1621081cb\"],\"operation\":\"add\"}]}",
+                "structured_output_requested": true,
+                "token_usage": {
+                  "eval_count": 88,
+                  "prompt_eval_count": 257
+                }
+              },
+              {
+                "latency_ms": 3193.439499998931,
+                "prompt_chars": 356,
+                "response": "0.1, 0.2, 0.3",
+                "token_usage": {
+                  "eval_count": 15,
+                  "prompt_eval_count": 113
+                }
+              },
+              {
+                "latency_ms": 3243.9848000067286,
+                "prompt_chars": 357,
+                "response": "0.1, 0.2, 0.3",
+                "token_usage": {
+                  "eval_count": 15,
+                  "prompt_eval_count": 113
+                }
+              },
+              {
+                "latency_ms": 3133.0916000006255,
+                "prompt_chars": 344,
+                "response": "0.0, 0.2, 0.3",
+                "token_usage": {
+                  "eval_count": 15,
+                  "prompt_eval_count": 110
+                }
+              }
+            ],
+            "response_metadata": [
+              {
+                "created_at": "2026-09-17T04:15:55.4566798Z",
+                "done": true,
+                "done_reason": "stop",
+                "eval_count": 7,
+                "eval_duration": 745280000,
+                "kind": "generate",
+                "load_duration": 4400992800,
+                "model": "gemma3:4b",
+                "prompt_eval_count": 62,
+                "prompt_eval_duration": 856552000,
+                "provider": "ollama",
+                "total_duration": 6006422800
+              },
+              {
+                "kind": "embedding",
+                "load_duration": 5988800,
+                "model": "nomic-embed-text:latest",
+                "prompt_eval_count": 8,
+                "provider": "ollama",
+                "total_duration": 24429900
+              },
+              {
+                "kind": "embedding",
+                "load_duration": 10237900,
+                "model": "nomic-embed-text:latest",
+                "prompt_eval_count": 13,
+                "provider": "ollama",
+                "total_duration": 27258700
+              },
+              {
+                "kind": "embedding",
+                "load_duration": 7687300,
+                "model": "nomic-embed-text:latest",
+                "prompt_eval_count": 13,
+                "provider": "ollama",
+                "total_duration": 28304000
+              },
+              {
+                "created_at": "2026-09-17T04:16:09.875481Z",
+                "done": true,
+                "done_reason": "stop",
+                "eval_count": 88,
+                "eval_duration": 10265728000,
+                "kind": "generate",
+                "load_duration": 7565400,
+                "model": "gemma3:4b",
+                "prompt_eval_count": 257,
+                "prompt_eval_duration": 3278723000,
+                "provider": "ollama",
+                "total_duration": 13562579100
+              },
+              {
+                "created_at": "2026-09-17T04:16:13.0719099Z",
+                "done": true,
+                "done_reason": "stop",
+                "eval_count": 15,
+                "eval_duration": 1594922000,
+                "kind": "generate",
+                "load_duration": 8639000,
+                "model": "gemma3:4b",
+                "prompt_eval_count": 113,
+                "prompt_eval_duration": 1380341000,
+                "provider": "ollama",
+                "total_duration": 3005831600
+              },
+              {
+                "kind": "embedding",
+                "load_duration": 6375600,
+                "model": "nomic-embed-text:latest",
+                "prompt_eval_count": 13,
+                "provider": "ollama",
+                "total_duration": 24828700
+              },
+              {
+                "created_at": "2026-09-17T04:16:16.9496812Z",
+                "done": true,
+                "done_reason": "stop",
+                "eval_count": 15,
+                "eval_duration": 1696069000,
+                "kind": "generate",
+                "load_duration": 6526100,
+                "model": "gemma3:4b",
+                "prompt_eval_count": 113,
+                "prompt_eval_duration": 1349893000,
+                "provider": "ollama",
+                "total_duration": 3056634700
+              },
+              {
+                "kind": "embedding",
+                "load_duration": 6522400,
+                "model": "nomic-embed-text:latest",
+                "prompt_eval_count": 13,
+                "provider": "ollama",
+                "total_duration": 24199700
+              },
+              {
+                "kind": "embedding",
+                "load_duration": 5898000,
+                "model": "nomic-embed-text:latest",
+                "prompt_eval_count": 9,
+                "provider": "ollama",
+                "total_duration": 20116700
+              },
+              {
+                "created_at": "2026-09-17T04:16:21.2556275Z",
+                "done": true,
+                "done_reason": "stop",
+                "eval_count": 15,
+                "eval_duration": 1585613000,
+                "kind": "generate",
+                "load_duration": 6531600,
+                "model": "gemma3:4b",
+                "prompt_eval_count": 110,
+                "prompt_eval_duration": 1336876000,
+                "provider": "ollama",
+                "total_duration": 2932652500
+              }
+            ],
+            "service_instances": 2,
+            "trace_key": {
+              "profile": "full",
+              "run_key": "development-correct-restart-full-r1"
+            }
+          },
+          "surprisal_filter_decisions": [
+            {
+              "decision": "facts",
+              "event_id": "correct-capture-source",
+              "job_id": "event:2548929f0d0909c55be08f408383188eb4cdffb205147bdf4699bce1621081cb",
+              "job_status": "completed",
+              "kept": true,
+              "source": "durable_job_result"
+            }
+          ],
+          "unsupported_modules": [],
+          "unsupported_operations": []
+        },
+        "repetition": 1,
+        "retrieved_fact_count": 1,
+        "session_id": "development-correct-restart",
+        "stale_fact_count": 0,
+        "state_pair_semantic_hits": [],
+        "state_pair_state_hits": [],
+        "supported_precision": [
+          true
+        ],
+        "surprisal_filter_kept": [
+          true
+        ],
+        "token_cost": null,
+        "verified_embedding_provenance": true,
+        "verified_model_provenance": true
+      },
+      "profile": {
+        "disabled_module": null,
+        "enabled_modules": [
+          "surprisal_gating",
+          "mutable_rag",
+          "affective_routing",
+          "sleep_consolidation",
+          "spreading_activation"
+        ],
+        "name": "full"
+      },
+      "session_id": "development-correct-restart",
+      "source_files": [
+        ".claude-plugin/run_mnemos_mcp.py",
+        "benchmarks/local_memory/__init__.py",
+        "benchmarks/local_memory/__main__.py",
+        "benchmarks/local_memory/ablation.py",
+        "benchmarks/local_memory/artifacts.py",
+        "benchmarks/local_memory/contracts.py",
+        "benchmarks/local_memory/dev_smoke.py",
+        "benchmarks/local_memory/generate_lifecycle_v3.py",
+        "benchmarks/local_memory/generate_module_mechanism_dataset.py",
+        "benchmarks/local_memory/graph_measurement.py",
+        "benchmarks/local_memory/harness.py",
+        "benchmarks/local_memory/heldout_run.py",
+        "benchmarks/local_memory/lifecycle_target_smoke.py",
+        "benchmarks/local_memory/module_challenge.py",
+        "benchmarks/local_memory/module_challenge_run.py",
+        "benchmarks/local_memory/module_mechanism.py",
+        "benchmarks/local_memory/module_mechanism_run.py",
+        "benchmarks/local_memory/ollama_adapter.py",
+        "benchmarks/local_memory/performance.py",
+        "benchmarks/local_memory/resumption.py",
+        "benchmarks/local_memory/scoring.py",
+        "benchmarks/scenarios/ui_smoke.py",
+        "examples/basic_usage.py",
+        "examples/full_pipeline.py",
+        "examples/mcp_agent_demo.py",
+        "mnemos/__init__.py",
+        "mnemos/__main__.py",
+        "mnemos/adapters/claude_code.py",
+        "mnemos/adapters/codex.py",
+        "mnemos/adapters/diagnostics.py",
+        "mnemos/adapters/hermes.py",
+        "mnemos/antigravity.py",
+        "mnemos/backup.py",
+        "mnemos/benchmark.py",
+        "mnemos/bridge.py",
+        "mnemos/cli.py",
+        "mnemos/client.py",
+        "mnemos/config.py",
+        "mnemos/contracts.py",
+        "mnemos/control_plane.py",
+        "mnemos/curation.py",
+        "mnemos/engine.py",
+        "mnemos/health.py",
+        "mnemos/hook_autostore.py",
+        "mnemos/hosts.py",
+        "mnemos/inspectability.py",
+        "mnemos/jobs.py",
+        "mnemos/maintenance.py",
+        "mnemos/managed_cli.py",
+        "mnemos/mcp_server.py",
+        "mnemos/memory_safety.py",
+        "mnemos/memory_service.py",
+        "mnemos/modules/__init__.py",
+        "mnemos/modules/affective.py",
+        "mnemos/modules/mutable_rag.py",
+        "mnemos/modules/sleep.py",
+        "mnemos/modules/spreading.py",
+        "mnemos/modules/surprisal.py",
+        "mnemos/observability.py",
+        "mnemos/reindex.py",
+        "mnemos/retrieval.py",
+        "mnemos/routing_review.py",
+        "mnemos/runtime.py",
+        "mnemos/scopes.py",
+        "mnemos/service.py",
+        "mnemos/settings.py",
+        "mnemos/types.py",
+        "mnemos/ui_server.py",
+        "mnemos/utils/__init__.py",
+        "mnemos/utils/embeddings.py",
+        "mnemos/utils/llm.py",
+        "mnemos/utils/reliability.py",
+        "mnemos/utils/storage.py",
+        "pyproject.toml",
+        "tests/__init__.py",
+        "tests/conftest.py",
+        "tests/test_backup_restore.py",
+        "tests/test_benchmark.py",
+        "tests/test_bridge.py",
+        "tests/test_ci_workflow.py",
+        "tests/test_claude_adapter.py",
+        "tests/test_cli.py",
+        "tests/test_clustered_scoring.py",
+        "tests/test_codex_adapter.py",
+        "tests/test_configured_runtime.py",
+        "tests/test_control_plane.py",
+        "tests/test_cross_host_contract.py",
+        "tests/test_docs_consistency.py",
+        "tests/test_durable_jobs.py",
+        "tests/test_durable_memory_repair.py",
+        "tests/test_embeddings.py",
+        "tests/test_engine.py",
+        "tests/test_evaluator_metrics.py",
+        "tests/test_extraction_schema.py",
+        "tests/test_feedback_eval_export.py",
+        "tests/test_feedback_events.py",
+        "tests/test_graph_measurement.py",
+        "tests/test_graph_persistence.py",
+        "tests/test_health.py",
+        "tests/test_hermes_adapter.py",
+        "tests/test_hook_autostore.py",
+        "tests/test_hosts.py",
+        "tests/test_inspectability.py",
+        "tests/test_job_recovery_api.py",
+        "tests/test_legacy_repair.py",
+        "tests/test_lifecycle_smoke_service.py",
+        "tests/test_lifecycle_target_mapping.py",
+        "tests/test_lifecycle_target_smoke.py",
+        "tests/test_lifecycle_v3_contract.py",
+        "tests/test_llm.py",
+        "tests/test_local_memory_benchmark.py",
+        "tests/test_maintenance.py",
+        "tests/test_managed_cli.py",
+        "tests/test_mcp_compatibility.py",
+        "tests/test_mcp_server.py",
+        "tests/test_mcp_tier2_smoke.py",
+        "tests/test_memory_lifecycle.py",
+        "tests/test_memory_safety.py",
+        "tests/test_memory_service.py",
+        "tests/test_module_mechanism.py",
+        "tests/test_module_mechanism_run.py",
+        "tests/test_modules.py",
+        "tests/test_plugin_packaging.py",
+        "tests/test_reconsolidation_contract.py",
+        "tests/test_reliability.py",
+        "tests/test_retrieval_contract.py",
+        "tests/test_routing_review.py",
+        "tests/test_routing_review_api.py",
+        "tests/test_runtime.py",
+        "tests/test_scope_context.py",
+        "tests/test_scoped_storage.py",
+        "tests/test_service.py",
+        "tests/test_settings.py",
+        "tests/test_spreading_activation.py",
+        "tests/test_spreading_isolation.py",
+        "tests/test_storage_sqlite.py",
+        "tests/test_storage_touch.py",
+        "tests/test_surprisal_contract.py",
+        "tests/test_types.py",
+        "tests/test_ui_server.py"
+      ],
+      "source_sha256": "a2beb455d09293677e8a0a94b9d2a1cbd3d776bc7ba12ed0f4102464c69b8f88",
+      "status": "complete"
+    },
+    {
+      "attempt_id": "b3fb69233d634934949a2432df377b59",
+      "attempt_root": "D:\\Development\\mnemos\\mnemos\\.worktrees\\functional-local-memory\\.venv\\lifecycle-target-development-v4-work\\attempts\\b3fb69233d634934949a2432df377b59",
+      "dataset_sha256": "5fcb1a20d7212ddd07bcf5ef5fd339f1f088ad1d44277bdbb27000eb0e192f0b",
+      "diagnostic": {
+        "abstain_observed": true,
+        "errors": [],
+        "execution_status": "complete",
+        "forget_dispatched": true,
+        "human_acceptance": "NOT RUN",
+        "operations": [
+          {
+            "event_id": "remember-wrapped-source",
+            "job_id": "event:46aa635b843b392b566748149b8868a2cb652c6f43e43fca62b79c6751d41ba1",
+            "operation": "remember",
+            "processing_status": "pending",
+            "status": "committed"
+          },
+          {
+            "before": "forget",
+            "jobs": [
+              {
+                "attempt_count": 1,
+                "id": "event:46aa635b843b392b566748149b8868a2cb652c6f43e43fca62b79c6751d41ba1",
+                "kind": "remember",
+                "last_error": null,
+                "status": "completed"
+              }
+            ],
+            "operation": "maintenance",
+            "pending_or_failed_statuses": [],
+            "status": "completed"
+          },
+          {
+            "event_id": "forget-action",
+            "expected_version": 1,
+            "fact_id": "ff2b886c-fa67-4e8c-a328-c817edfdad48",
+            "forgotten": true,
+            "operation": "forget",
+            "status": "committed"
+          },
+          {
+            "event_id": "remember-wrapped-source",
+            "operation": "remember",
+            "processing_status": "suppressed",
+            "status": "committed"
+          },
+          {
+            "operation": "restart",
+            "status": "completed"
+          },
+          {
+            "jobs": [
+              {
+                "attempt_count": 1,
+                "id": "event:46aa635b843b392b566748149b8868a2cb652c6f43e43fca62b79c6751d41ba1",
+                "kind": "remember",
+                "last_error": null,
+                "status": "completed"
+              }
+            ],
+            "operation": "maintenance",
+            "pending_or_failed_statuses": [],
+            "status": "completed"
+          },
+          {
+            "facts": [],
+            "observed_facts": [],
+            "operation": "retrieve",
+            "query_id": "forget-abstention-query",
+            "scope_validation": {
+              "accepted_count": 0,
+              "foreign_count": 0,
+              "malformed_count": 0,
+              "missing_metadata_count": 0,
+              "returned_count": 0,
+              "status": "no_returned_facts",
+              "verified_count": 0
+            },
+            "status": "no_returned_facts"
+          }
+        ],
+        "quality": "NOT MEASURED",
+        "remember_dispatched": true,
+        "remember_job_processed": true,
+        "replay_suppressed": true,
+        "restart_after_forget": true,
+        "restart_observed": true,
+        "session_id": "development-forget-replay",
+        "status": "complete",
+        "target": "forget"
+      },
+      "model_pins": {
+        "embedding_metadata": {
+          "capabilities": [
+            "embedding"
+          ],
+          "details": {
+            "context_length": 2048,
+            "embedding_length": 768,
+            "families": [
+              "nomic-bert"
+            ],
+            "family": "nomic-bert",
+            "format": "gguf",
+            "parameter_size": "137M",
+            "parent_model": "",
+            "quantization_level": "F16"
+          },
+          "digest": "0a109f422b47e3a30ba2b10eca18548e944e8a23073ee3f3e947efcf3c45e59f",
+          "model": "nomic-embed-text:latest",
+          "modified_at": "2025-11-04T15:15:16.2072724-05:00",
+          "name": "nomic-embed-text:latest",
+          "size": 274302450
+        },
+        "embedding_model": "nomic-embed-text:latest",
+        "embedding_revision": "0a109f422b47e3a30ba2b10eca18548e944e8a23073ee3f3e947efcf3c45e59f",
+        "endpoint": "http://192.168.86.35:11434",
+        "model": "gemma3:4b",
+        "model_metadata": {
+          "capabilities": [
+            "completion",
+            "vision"
+          ],
+          "details": {
+            "context_length": 131072,
+            "embedding_length": 2560,
+            "families": [
+              "gemma3"
+            ],
+            "family": "gemma3",
+            "format": "gguf",
+            "parameter_size": "4.3B",
+            "parent_model": "",
+            "quantization_level": "Q4_K_M"
+          },
+          "digest": "a2af6cc3eb7fa8be8504abaf9b04e88f17a119ec3f04a3addf55f92841195f5a",
+          "model": "gemma3:4b",
+          "modified_at": "2026-03-11T01:54:24.735623-04:00",
+          "name": "gemma3:4b",
+          "size": 3338801804
+        },
+        "model_revision": "a2af6cc3eb7fa8be8504abaf9b04e88f17a119ec3f04a3addf55f92841195f5a",
+        "options": {
+          "max_context_tokens": 1200,
+          "max_tokens": 512,
+          "temperature": 0.0,
+          "timeout_seconds": 120.0,
+          "top_k": 5
+        },
+        "options_sha256": "cd97e75dba4a59a7798d1c035d2fac3b6fbf56082118e776067c9f505b7d5704"
+      },
+      "observation": {
+        "adapter_kind": "real_embedding_observed",
+        "answerable_hits": [],
+        "bytes_after": 3412096,
+        "bytes_before": 341776,
+        "cold_latency_ms": 171.2592000112636,
+        "critical_retention": [
+          true
+        ],
+        "critical_retrieval": [
+          null
+        ],
+        "embedding_revision": "0a109f422b47e3a30ba2b10eca18548e944e8a23073ee3f3e947efcf3c45e59f",
+        "execution_status": "complete",
+        "latency_ms": 2038.1557999935467,
+        "length_filter_kept": [],
+        "model_revision": "a2af6cc3eb7fa8be8504abaf9b04e88f17a119ec3f04a3addf55f92841195f5a",
+        "no_answer_correct": [
+          true
+        ],
+        "provider": "ollama",
+        "raw_output": {
+          "adapter": "ollama",
+          "base_url": "http://192.168.86.35:11434",
+          "controlled_state_pairs": [],
+          "critical_retention_judgements": [
+            {
+              "expected_identities": [
+                [
+                  "lifecycle-target-smoke-profile",
+                  "project",
+                  "lifecycle-forget-project"
+                ]
+              ],
+              "expected_present": false,
+              "fact_id": "forget-wrapped-source-fact",
+              "gold_status": "forgotten",
+              "judgement": "exact_content_and_scope_in_accepted_store",
+              "observed_present": false,
+              "runtime_fact_ids": []
+            }
+          ],
+          "embedding_model": "nomic-embed-text:latest",
+          "errors": [],
+          "extraction_judgements": [],
+          "length_filter_policy": {
+            "applied": "counterfactual_shadow_only",
+            "boilerplate_exact_casefold": [
+              "got it",
+              "ok",
+              "okay",
+              "thanks",
+              "thanks!"
+            ],
+            "events": [],
+            "minimum_chars": 50,
+            "service_decision": "not_exposed"
+          },
+          "lifecycle_summary": {
+            "correct": {
+              "attempted": 0,
+              "committed": 0,
+              "mapping_invalid": 0,
+              "missing_target": 0,
+              "rejected": 0
+            },
+            "forget": {
+              "attempted": 1,
+              "committed": 1,
+              "mapping_invalid": 0,
+              "missing_target": 0,
+              "rejected": 0
+            }
+          },
+          "measurement_notes": [
+            "Missing retrievals remain null and are excluded from interval numerators.",
+            "Correction and forget use runtime fact IDs resolved from the service store.",
+            "Provider token counters are recorded when returned; billing cost is not inferred.",
+            "latency_ms is end-to-end session wall clock; cold_latency_ms covers service construction only.",
+            "Extraction precision uses exact frozen fact text and source role/evidence checks; paraphrases are unjudged.",
+            "State pairs use paired natural-language queries; no same-text embedding control is claimed.",
+            "surprisal_filter_kept is derived from durable job encoding_diagnostics and remains null when a job result is unavailable.",
+            "length_filter_kept is a frozen counterfactual shadow policy, not an applied service filter decision.",
+            "stale_fact_rate is a returned-row substring proxy, not a unique-fact or query-level accuracy measure."
+          ],
+          "model": "gemma3:4b",
+          "module_switches": {
+            "disabled": null,
+            "enabled": [],
+            "source": "service_factory"
+          },
+          "operations": [
+            {
+              "event_id": "remember-wrapped-source",
+              "job_id": "event:46aa635b843b392b566748149b8868a2cb652c6f43e43fca62b79c6751d41ba1",
+              "operation": "remember",
+              "processing_status": "pending",
+              "status": "committed"
+            },
+            {
+              "before": "forget",
+              "jobs": [
+                {
+                  "attempt_count": 1,
+                  "id": "event:46aa635b843b392b566748149b8868a2cb652c6f43e43fca62b79c6751d41ba1",
+                  "kind": "remember",
+                  "last_error": null,
+                  "status": "completed"
+                }
+              ],
+              "operation": "maintenance",
+              "pending_or_failed_statuses": [],
+              "status": "completed"
+            },
+            {
+              "event_id": "forget-action",
+              "expected_version": 1,
+              "fact_id": "ff2b886c-fa67-4e8c-a328-c817edfdad48",
+              "forgotten": true,
+              "operation": "forget",
+              "status": "committed"
+            },
+            {
+              "event_id": "remember-wrapped-source",
+              "operation": "remember",
+              "processing_status": "suppressed",
+              "status": "committed"
+            },
+            {
+              "operation": "restart",
+              "status": "completed"
+            },
+            {
+              "jobs": [
+                {
+                  "attempt_count": 1,
+                  "id": "event:46aa635b843b392b566748149b8868a2cb652c6f43e43fca62b79c6751d41ba1",
+                  "kind": "remember",
+                  "last_error": null,
+                  "status": "completed"
+                }
+              ],
+              "operation": "maintenance",
+              "pending_or_failed_statuses": [],
+              "status": "completed"
+            },
+            {
+              "facts": [],
+              "observed_facts": [],
+              "operation": "retrieve",
+              "query_id": "forget-abstention-query",
+              "scope_validation": {
+                "accepted_count": 0,
+                "foreign_count": 0,
+                "malformed_count": 0,
+                "missing_metadata_count": 0,
+                "returned_count": 0,
+                "status": "no_returned_facts",
+                "verified_count": 0
+              },
+              "status": "no_returned_facts"
+            }
+          ],
+          "profile": {
+            "disabled_module": null,
+            "enabled_modules": [],
+            "name": "baseline"
+          },
+          "provenance": {
+            "code_sha256": "a2beb455d09293677e8a0a94b9d2a1cbd3d776bc7ba12ed0f4102464c69b8f88",
+            "cognition_observed": false,
+            "embedding_metadata": {
+              "capabilities": [
+                "embedding"
+              ],
+              "details": {
+                "context_length": 2048,
+                "embedding_length": 768,
+                "families": [
+                  "nomic-bert"
+                ],
+                "family": "nomic-bert",
+                "format": "gguf",
+                "parameter_size": "137M",
+                "parent_model": "",
+                "quantization_level": "F16"
+              },
+              "digest": "0a109f422b47e3a30ba2b10eca18548e944e8a23073ee3f3e947efcf3c45e59f",
+              "model": "nomic-embed-text:latest",
+              "modified_at": "2025-11-04T15:15:16.2072724-05:00",
+              "name": "nomic-embed-text:latest",
+              "size": 274302450
+            },
+            "embedding_sha256": "0a109f422b47e3a30ba2b10eca18548e944e8a23073ee3f3e947efcf3c45e59f",
+            "embedding_verified": true,
+            "model_metadata": {
+              "capabilities": [
+                "completion",
+                "vision"
+              ],
+              "details": {
+                "context_length": 131072,
+                "embedding_length": 2560,
+                "families": [
+                  "gemma3"
+                ],
+                "family": "gemma3",
+                "format": "gguf",
+                "parameter_size": "4.3B",
+                "parent_model": "",
+                "quantization_level": "Q4_K_M"
+              },
+              "digest": "a2af6cc3eb7fa8be8504abaf9b04e88f17a119ec3f04a3addf55f92841195f5a",
+              "model": "gemma3:4b",
+              "modified_at": "2026-03-11T01:54:24.735623-04:00",
+              "name": "gemma3:4b",
+              "size": 3338801804
+            },
+            "model_sha256": "a2af6cc3eb7fa8be8504abaf9b04e88f17a119ec3f04a3addf55f92841195f5a",
+            "options_sha256": "cd97e75dba4a59a7798d1c035d2fac3b6fbf56082118e776067c9f505b7d5704",
+            "verified": false
+          },
+          "provider": "ollama",
+          "provider_trace": {
+            "classify_calls": [],
+            "config": {
+              "embedding_model": "nomic-embed-text:latest",
+              "endpoint": "http://192.168.86.35:11434",
+              "max_tokens": 512,
+              "model": "gemma3:4b",
+              "temperature": 0.0,
+              "timeout_seconds": 120.0
+            },
+            "embed_calls": [
+              {
+                "latency_ms": 213.14199999324046,
+                "text_chars": 88,
+                "token_usage": {
+                  "prompt_eval_count": 18
+                },
+                "vector_dimensions": 768
+              },
+              {
+                "latency_ms": 221.82160000375006,
+                "text_chars": 37,
+                "token_usage": {
+                  "prompt_eval_count": 9
+                },
+                "vector_dimensions": 768
+              }
+            ],
+            "predict_calls": [],
+            "response_metadata": [
+              {
+                "kind": "embedding",
+                "load_duration": 6482700,
+                "model": "nomic-embed-text:latest",
+                "prompt_eval_count": 18,
+                "provider": "ollama",
+                "total_duration": 27199300
+              },
+              {
+                "kind": "embedding",
+                "load_duration": 6351200,
+                "model": "nomic-embed-text:latest",
+                "prompt_eval_count": 9,
+                "provider": "ollama",
+                "total_duration": 22728300
+              }
+            ],
+            "service_instances": 2,
+            "trace_key": {
+              "profile": "baseline",
+              "run_key": "development-forget-replay-baseline-r1"
+            }
+          },
+          "surprisal_filter_decisions": [],
+          "unsupported_modules": [],
+          "unsupported_operations": []
+        },
+        "repetition": 1,
+        "retrieved_fact_count": 0,
+        "session_id": "development-forget-replay",
+        "stale_fact_count": 0,
+        "state_pair_semantic_hits": [],
+        "state_pair_state_hits": [],
+        "supported_precision": [],
+        "surprisal_filter_kept": [],
+        "token_cost": null,
+        "verified_embedding_provenance": true,
+        "verified_model_provenance": false
+      },
+      "profile": {
+        "disabled_module": null,
+        "enabled_modules": [],
+        "name": "baseline"
+      },
+      "session_id": "development-forget-replay",
+      "source_files": [
+        ".claude-plugin/run_mnemos_mcp.py",
+        "benchmarks/local_memory/__init__.py",
+        "benchmarks/local_memory/__main__.py",
+        "benchmarks/local_memory/ablation.py",
+        "benchmarks/local_memory/artifacts.py",
+        "benchmarks/local_memory/contracts.py",
+        "benchmarks/local_memory/dev_smoke.py",
+        "benchmarks/local_memory/generate_lifecycle_v3.py",
+        "benchmarks/local_memory/generate_module_mechanism_dataset.py",
+        "benchmarks/local_memory/graph_measurement.py",
+        "benchmarks/local_memory/harness.py",
+        "benchmarks/local_memory/heldout_run.py",
+        "benchmarks/local_memory/lifecycle_target_smoke.py",
+        "benchmarks/local_memory/module_challenge.py",
+        "benchmarks/local_memory/module_challenge_run.py",
+        "benchmarks/local_memory/module_mechanism.py",
+        "benchmarks/local_memory/module_mechanism_run.py",
+        "benchmarks/local_memory/ollama_adapter.py",
+        "benchmarks/local_memory/performance.py",
+        "benchmarks/local_memory/resumption.py",
+        "benchmarks/local_memory/scoring.py",
+        "benchmarks/scenarios/ui_smoke.py",
+        "examples/basic_usage.py",
+        "examples/full_pipeline.py",
+        "examples/mcp_agent_demo.py",
+        "mnemos/__init__.py",
+        "mnemos/__main__.py",
+        "mnemos/adapters/claude_code.py",
+        "mnemos/adapters/codex.py",
+        "mnemos/adapters/diagnostics.py",
+        "mnemos/adapters/hermes.py",
+        "mnemos/antigravity.py",
+        "mnemos/backup.py",
+        "mnemos/benchmark.py",
+        "mnemos/bridge.py",
+        "mnemos/cli.py",
+        "mnemos/client.py",
+        "mnemos/config.py",
+        "mnemos/contracts.py",
+        "mnemos/control_plane.py",
+        "mnemos/curation.py",
+        "mnemos/engine.py",
+        "mnemos/health.py",
+        "mnemos/hook_autostore.py",
+        "mnemos/hosts.py",
+        "mnemos/inspectability.py",
+        "mnemos/jobs.py",
+        "mnemos/maintenance.py",
+        "mnemos/managed_cli.py",
+        "mnemos/mcp_server.py",
+        "mnemos/memory_safety.py",
+        "mnemos/memory_service.py",
+        "mnemos/modules/__init__.py",
+        "mnemos/modules/affective.py",
+        "mnemos/modules/mutable_rag.py",
+        "mnemos/modules/sleep.py",
+        "mnemos/modules/spreading.py",
+        "mnemos/modules/surprisal.py",
+        "mnemos/observability.py",
+        "mnemos/reindex.py",
+        "mnemos/retrieval.py",
+        "mnemos/routing_review.py",
+        "mnemos/runtime.py",
+        "mnemos/scopes.py",
+        "mnemos/service.py",
+        "mnemos/settings.py",
+        "mnemos/types.py",
+        "mnemos/ui_server.py",
+        "mnemos/utils/__init__.py",
+        "mnemos/utils/embeddings.py",
+        "mnemos/utils/llm.py",
+        "mnemos/utils/reliability.py",
+        "mnemos/utils/storage.py",
+        "pyproject.toml",
+        "tests/__init__.py",
+        "tests/conftest.py",
+        "tests/test_backup_restore.py",
+        "tests/test_benchmark.py",
+        "tests/test_bridge.py",
+        "tests/test_ci_workflow.py",
+        "tests/test_claude_adapter.py",
+        "tests/test_cli.py",
+        "tests/test_clustered_scoring.py",
+        "tests/test_codex_adapter.py",
+        "tests/test_configured_runtime.py",
+        "tests/test_control_plane.py",
+        "tests/test_cross_host_contract.py",
+        "tests/test_docs_consistency.py",
+        "tests/test_durable_jobs.py",
+        "tests/test_durable_memory_repair.py",
+        "tests/test_embeddings.py",
+        "tests/test_engine.py",
+        "tests/test_evaluator_metrics.py",
+        "tests/test_extraction_schema.py",
+        "tests/test_feedback_eval_export.py",
+        "tests/test_feedback_events.py",
+        "tests/test_graph_measurement.py",
+        "tests/test_graph_persistence.py",
+        "tests/test_health.py",
+        "tests/test_hermes_adapter.py",
+        "tests/test_hook_autostore.py",
+        "tests/test_hosts.py",
+        "tests/test_inspectability.py",
+        "tests/test_job_recovery_api.py",
+        "tests/test_legacy_repair.py",
+        "tests/test_lifecycle_smoke_service.py",
+        "tests/test_lifecycle_target_mapping.py",
+        "tests/test_lifecycle_target_smoke.py",
+        "tests/test_lifecycle_v3_contract.py",
+        "tests/test_llm.py",
+        "tests/test_local_memory_benchmark.py",
+        "tests/test_maintenance.py",
+        "tests/test_managed_cli.py",
+        "tests/test_mcp_compatibility.py",
+        "tests/test_mcp_server.py",
+        "tests/test_mcp_tier2_smoke.py",
+        "tests/test_memory_lifecycle.py",
+        "tests/test_memory_safety.py",
+        "tests/test_memory_service.py",
+        "tests/test_module_mechanism.py",
+        "tests/test_module_mechanism_run.py",
+        "tests/test_modules.py",
+        "tests/test_plugin_packaging.py",
+        "tests/test_reconsolidation_contract.py",
+        "tests/test_reliability.py",
+        "tests/test_retrieval_contract.py",
+        "tests/test_routing_review.py",
+        "tests/test_routing_review_api.py",
+        "tests/test_runtime.py",
+        "tests/test_scope_context.py",
+        "tests/test_scoped_storage.py",
+        "tests/test_service.py",
+        "tests/test_settings.py",
+        "tests/test_spreading_activation.py",
+        "tests/test_spreading_isolation.py",
+        "tests/test_storage_sqlite.py",
+        "tests/test_storage_touch.py",
+        "tests/test_surprisal_contract.py",
+        "tests/test_types.py",
+        "tests/test_ui_server.py"
+      ],
+      "source_sha256": "a2beb455d09293677e8a0a94b9d2a1cbd3d776bc7ba12ed0f4102464c69b8f88",
+      "status": "complete"
+    },
+    {
+      "attempt_id": "b3fb69233d634934949a2432df377b59",
+      "attempt_root": "D:\\Development\\mnemos\\mnemos\\.worktrees\\functional-local-memory\\.venv\\lifecycle-target-development-v4-work\\attempts\\b3fb69233d634934949a2432df377b59",
+      "dataset_sha256": "5fcb1a20d7212ddd07bcf5ef5fd339f1f088ad1d44277bdbb27000eb0e192f0b",
+      "diagnostic": {
+        "abstain_observed": true,
+        "errors": [],
+        "execution_status": "complete",
+        "forget_dispatched": true,
+        "human_acceptance": "NOT RUN",
+        "operations": [
+          {
+            "event_id": "remember-wrapped-source",
+            "job_id": "event:41196e3f3b2b62e8e155f4e24611e5c38d260f30c46809baad4933873c5ff6ba",
+            "operation": "remember",
+            "processing_status": "pending",
+            "status": "committed"
+          },
+          {
+            "before": "forget",
+            "jobs": [
+              {
+                "attempt_count": 1,
+                "id": "event:41196e3f3b2b62e8e155f4e24611e5c38d260f30c46809baad4933873c5ff6ba",
+                "kind": "remember",
+                "last_error": null,
+                "status": "completed"
+              }
+            ],
+            "operation": "maintenance",
+            "pending_or_failed_statuses": [],
+            "status": "completed"
+          },
+          {
+            "event_id": "forget-action",
+            "expected_version": 1,
+            "fact_id": "aa78c323-2d50-4cb6-894d-84718af4e9a9",
+            "forgotten": true,
+            "operation": "forget",
+            "status": "committed"
+          },
+          {
+            "event_id": "remember-wrapped-source",
+            "operation": "remember",
+            "processing_status": "suppressed",
+            "status": "committed"
+          },
+          {
+            "operation": "restart",
+            "status": "completed"
+          },
+          {
+            "jobs": [
+              {
+                "attempt_count": 1,
+                "id": "event:41196e3f3b2b62e8e155f4e24611e5c38d260f30c46809baad4933873c5ff6ba",
+                "kind": "remember",
+                "last_error": null,
+                "status": "completed"
+              }
+            ],
+            "operation": "maintenance",
+            "pending_or_failed_statuses": [],
+            "status": "completed"
+          },
+          {
+            "facts": [],
+            "observed_facts": [],
+            "operation": "retrieve",
+            "query_id": "forget-abstention-query",
+            "scope_validation": {
+              "accepted_count": 0,
+              "foreign_count": 0,
+              "malformed_count": 0,
+              "missing_metadata_count": 0,
+              "returned_count": 0,
+              "status": "no_returned_facts",
+              "verified_count": 0
+            },
+            "status": "no_returned_facts"
+          }
+        ],
+        "quality": "NOT MEASURED",
+        "remember_dispatched": true,
+        "remember_job_processed": true,
+        "replay_suppressed": true,
+        "restart_after_forget": true,
+        "restart_observed": true,
+        "session_id": "development-forget-replay",
+        "status": "complete",
+        "target": "forget"
+      },
+      "model_pins": {
+        "embedding_metadata": {
+          "capabilities": [
+            "embedding"
+          ],
+          "details": {
+            "context_length": 2048,
+            "embedding_length": 768,
+            "families": [
+              "nomic-bert"
+            ],
+            "family": "nomic-bert",
+            "format": "gguf",
+            "parameter_size": "137M",
+            "parent_model": "",
+            "quantization_level": "F16"
+          },
+          "digest": "0a109f422b47e3a30ba2b10eca18548e944e8a23073ee3f3e947efcf3c45e59f",
+          "model": "nomic-embed-text:latest",
+          "modified_at": "2025-11-04T15:15:16.2072724-05:00",
+          "name": "nomic-embed-text:latest",
+          "size": 274302450
+        },
+        "embedding_model": "nomic-embed-text:latest",
+        "embedding_revision": "0a109f422b47e3a30ba2b10eca18548e944e8a23073ee3f3e947efcf3c45e59f",
+        "endpoint": "http://192.168.86.35:11434",
+        "model": "gemma3:4b",
+        "model_metadata": {
+          "capabilities": [
+            "completion",
+            "vision"
+          ],
+          "details": {
+            "context_length": 131072,
+            "embedding_length": 2560,
+            "families": [
+              "gemma3"
+            ],
+            "family": "gemma3",
+            "format": "gguf",
+            "parameter_size": "4.3B",
+            "parent_model": "",
+            "quantization_level": "Q4_K_M"
+          },
+          "digest": "a2af6cc3eb7fa8be8504abaf9b04e88f17a119ec3f04a3addf55f92841195f5a",
+          "model": "gemma3:4b",
+          "modified_at": "2026-03-11T01:54:24.735623-04:00",
+          "name": "gemma3:4b",
+          "size": 3338801804
+        },
+        "model_revision": "a2af6cc3eb7fa8be8504abaf9b04e88f17a119ec3f04a3addf55f92841195f5a",
+        "options": {
+          "max_context_tokens": 1200,
+          "max_tokens": 512,
+          "temperature": 0.0,
+          "timeout_seconds": 120.0,
+          "top_k": 5
+        },
+        "options_sha256": "cd97e75dba4a59a7798d1c035d2fac3b6fbf56082118e776067c9f505b7d5704"
+      },
+      "observation": {
+        "adapter_kind": "real_model",
+        "answerable_hits": [],
+        "bytes_after": 3420336,
+        "bytes_before": 341776,
+        "cold_latency_ms": 123.02849999105092,
+        "critical_retention": [
+          true
+        ],
+        "critical_retrieval": [
+          null
+        ],
+        "embedding_revision": "0a109f422b47e3a30ba2b10eca18548e944e8a23073ee3f3e947efcf3c45e59f",
+        "execution_status": "complete",
+        "latency_ms": 5533.399099993403,
+        "length_filter_kept": [],
+        "model_revision": "a2af6cc3eb7fa8be8504abaf9b04e88f17a119ec3f04a3addf55f92841195f5a",
+        "no_answer_correct": [
+          true
+        ],
+        "provider": "ollama",
+        "raw_output": {
+          "adapter": "ollama",
+          "base_url": "http://192.168.86.35:11434",
+          "controlled_state_pairs": [],
+          "critical_retention_judgements": [
+            {
+              "expected_identities": [
+                [
+                  "lifecycle-target-smoke-profile",
+                  "project",
+                  "lifecycle-forget-project"
+                ]
+              ],
+              "expected_present": false,
+              "fact_id": "forget-wrapped-source-fact",
+              "gold_status": "forgotten",
+              "judgement": "exact_content_and_scope_in_accepted_store",
+              "observed_present": false,
+              "runtime_fact_ids": []
+            }
+          ],
+          "embedding_model": "nomic-embed-text:latest",
+          "errors": [],
+          "extraction_judgements": [],
+          "length_filter_policy": {
+            "applied": "counterfactual_shadow_only",
+            "boilerplate_exact_casefold": [
+              "got it",
+              "ok",
+              "okay",
+              "thanks",
+              "thanks!"
+            ],
+            "events": [],
+            "minimum_chars": 50,
+            "service_decision": "not_exposed"
+          },
+          "lifecycle_summary": {
+            "correct": {
+              "attempted": 0,
+              "committed": 0,
+              "mapping_invalid": 0,
+              "missing_target": 0,
+              "rejected": 0
+            },
+            "forget": {
+              "attempted": 1,
+              "committed": 1,
+              "mapping_invalid": 0,
+              "missing_target": 0,
+              "rejected": 0
+            }
+          },
+          "measurement_notes": [
+            "Missing retrievals remain null and are excluded from interval numerators.",
+            "Correction and forget use runtime fact IDs resolved from the service store.",
+            "Provider token counters are recorded when returned; billing cost is not inferred.",
+            "latency_ms is end-to-end session wall clock; cold_latency_ms covers service construction only.",
+            "Extraction precision uses exact frozen fact text and source role/evidence checks; paraphrases are unjudged.",
+            "State pairs use paired natural-language queries; no same-text embedding control is claimed.",
+            "surprisal_filter_kept is derived from durable job encoding_diagnostics and remains null when a job result is unavailable.",
+            "length_filter_kept is a frozen counterfactual shadow policy, not an applied service filter decision.",
+            "stale_fact_rate is a returned-row substring proxy, not a unique-fact or query-level accuracy measure."
+          ],
+          "model": "gemma3:4b",
+          "module_switches": {
+            "disabled": null,
+            "enabled": [
+              "surprisal_gating",
+              "mutable_rag",
+              "affective_routing",
+              "sleep_consolidation",
+              "spreading_activation"
+            ],
+            "source": "service_factory"
+          },
+          "operations": [
+            {
+              "event_id": "remember-wrapped-source",
+              "job_id": "event:41196e3f3b2b62e8e155f4e24611e5c38d260f30c46809baad4933873c5ff6ba",
+              "operation": "remember",
+              "processing_status": "pending",
+              "status": "committed"
+            },
+            {
+              "before": "forget",
+              "jobs": [
+                {
+                  "attempt_count": 1,
+                  "id": "event:41196e3f3b2b62e8e155f4e24611e5c38d260f30c46809baad4933873c5ff6ba",
+                  "kind": "remember",
+                  "last_error": null,
+                  "status": "completed"
+                }
+              ],
+              "operation": "maintenance",
+              "pending_or_failed_statuses": [],
+              "status": "completed"
+            },
+            {
+              "event_id": "forget-action",
+              "expected_version": 1,
+              "fact_id": "aa78c323-2d50-4cb6-894d-84718af4e9a9",
+              "forgotten": true,
+              "operation": "forget",
+              "status": "committed"
+            },
+            {
+              "event_id": "remember-wrapped-source",
+              "operation": "remember",
+              "processing_status": "suppressed",
+              "status": "committed"
+            },
+            {
+              "operation": "restart",
+              "status": "completed"
+            },
+            {
+              "jobs": [
+                {
+                  "attempt_count": 1,
+                  "id": "event:41196e3f3b2b62e8e155f4e24611e5c38d260f30c46809baad4933873c5ff6ba",
+                  "kind": "remember",
+                  "last_error": null,
+                  "status": "completed"
+                }
+              ],
+              "operation": "maintenance",
+              "pending_or_failed_statuses": [],
+              "status": "completed"
+            },
+            {
+              "facts": [],
+              "observed_facts": [],
+              "operation": "retrieve",
+              "query_id": "forget-abstention-query",
+              "scope_validation": {
+                "accepted_count": 0,
+                "foreign_count": 0,
+                "malformed_count": 0,
+                "missing_metadata_count": 0,
+                "returned_count": 0,
+                "status": "no_returned_facts",
+                "verified_count": 0
+              },
+              "status": "no_returned_facts"
+            }
+          ],
+          "profile": {
+            "disabled_module": null,
+            "enabled_modules": [
+              "surprisal_gating",
+              "mutable_rag",
+              "affective_routing",
+              "sleep_consolidation",
+              "spreading_activation"
+            ],
+            "name": "full"
+          },
+          "provenance": {
+            "code_sha256": "a2beb455d09293677e8a0a94b9d2a1cbd3d776bc7ba12ed0f4102464c69b8f88",
+            "cognition_observed": true,
+            "embedding_metadata": {
+              "capabilities": [
+                "embedding"
+              ],
+              "details": {
+                "context_length": 2048,
+                "embedding_length": 768,
+                "families": [
+                  "nomic-bert"
+                ],
+                "family": "nomic-bert",
+                "format": "gguf",
+                "parameter_size": "137M",
+                "parent_model": "",
+                "quantization_level": "F16"
+              },
+              "digest": "0a109f422b47e3a30ba2b10eca18548e944e8a23073ee3f3e947efcf3c45e59f",
+              "model": "nomic-embed-text:latest",
+              "modified_at": "2025-11-04T15:15:16.2072724-05:00",
+              "name": "nomic-embed-text:latest",
+              "size": 274302450
+            },
+            "embedding_sha256": "0a109f422b47e3a30ba2b10eca18548e944e8a23073ee3f3e947efcf3c45e59f",
+            "embedding_verified": true,
+            "model_metadata": {
+              "capabilities": [
+                "completion",
+                "vision"
+              ],
+              "details": {
+                "context_length": 131072,
+                "embedding_length": 2560,
+                "families": [
+                  "gemma3"
+                ],
+                "family": "gemma3",
+                "format": "gguf",
+                "parameter_size": "4.3B",
+                "parent_model": "",
+                "quantization_level": "Q4_K_M"
+              },
+              "digest": "a2af6cc3eb7fa8be8504abaf9b04e88f17a119ec3f04a3addf55f92841195f5a",
+              "model": "gemma3:4b",
+              "modified_at": "2026-03-11T01:54:24.735623-04:00",
+              "name": "gemma3:4b",
+              "size": 3338801804
+            },
+            "model_sha256": "a2af6cc3eb7fa8be8504abaf9b04e88f17a119ec3f04a3addf55f92841195f5a",
+            "options_sha256": "cd97e75dba4a59a7798d1c035d2fac3b6fbf56082118e776067c9f505b7d5704",
+            "verified": true
+          },
+          "provider": "ollama",
+          "provider_trace": {
+            "classify_calls": [],
+            "config": {
+              "embedding_model": "nomic-embed-text:latest",
+              "endpoint": "http://192.168.86.35:11434",
+              "max_tokens": 512,
+              "model": "gemma3:4b",
+              "temperature": 0.0,
+              "timeout_seconds": 120.0
+            },
+            "embed_calls": [
+              {
+                "latency_ms": 211.24999999301508,
+                "text_chars": 88,
+                "token_usage": {
+                  "prompt_eval_count": 18
+                },
+                "vector_dimensions": 768
+              },
+              {
+                "latency_ms": 206.64369998848997,
+                "text_chars": 37,
+                "token_usage": {
+                  "prompt_eval_count": 9
+                },
+                "vector_dimensions": 768
+              }
+            ],
+            "predict_calls": [
+              {
+                "latency_ms": 3239.4751999963773,
+                "prompt_chars": 398,
+                "response": "0.1, 0.3, 0.8",
+                "token_usage": {
+                  "eval_count": 15,
+                  "prompt_eval_count": 120
+                }
+              }
+            ],
+            "response_metadata": [
+              {
+                "created_at": "2026-09-17T04:16:27.7567154Z",
+                "done": true,
+                "done_reason": "stop",
+                "eval_count": 15,
+                "eval_duration": 1593448000,
+                "kind": "generate",
+                "load_duration": 5929700,
+                "model": "gemma3:4b",
+                "prompt_eval_count": 120,
+                "prompt_eval_duration": 1439780000,
+                "provider": "ollama",
+                "total_duration": 3043058000
+              },
+              {
+                "kind": "embedding",
+                "load_duration": 6695400,
+                "model": "nomic-embed-text:latest",
+                "prompt_eval_count": 18,
+                "provider": "ollama",
+                "total_duration": 27382100
+              },
+              {
+                "kind": "embedding",
+                "load_duration": 7104100,
+                "model": "nomic-embed-text:latest",
+                "prompt_eval_count": 9,
+                "provider": "ollama",
+                "total_duration": 22312700
+              }
+            ],
+            "service_instances": 2,
+            "trace_key": {
+              "profile": "full",
+              "run_key": "development-forget-replay-full-r1"
+            }
+          },
+          "surprisal_filter_decisions": [],
+          "unsupported_modules": [],
+          "unsupported_operations": []
+        },
+        "repetition": 1,
+        "retrieved_fact_count": 0,
+        "session_id": "development-forget-replay",
+        "stale_fact_count": 0,
+        "state_pair_semantic_hits": [],
+        "state_pair_state_hits": [],
+        "supported_precision": [],
+        "surprisal_filter_kept": [],
+        "token_cost": null,
+        "verified_embedding_provenance": true,
+        "verified_model_provenance": true
+      },
+      "profile": {
+        "disabled_module": null,
+        "enabled_modules": [
+          "surprisal_gating",
+          "mutable_rag",
+          "affective_routing",
+          "sleep_consolidation",
+          "spreading_activation"
+        ],
+        "name": "full"
+      },
+      "session_id": "development-forget-replay",
+      "source_files": [
+        ".claude-plugin/run_mnemos_mcp.py",
+        "benchmarks/local_memory/__init__.py",
+        "benchmarks/local_memory/__main__.py",
+        "benchmarks/local_memory/ablation.py",
+        "benchmarks/local_memory/artifacts.py",
+        "benchmarks/local_memory/contracts.py",
+        "benchmarks/local_memory/dev_smoke.py",
+        "benchmarks/local_memory/generate_lifecycle_v3.py",
+        "benchmarks/local_memory/generate_module_mechanism_dataset.py",
+        "benchmarks/local_memory/graph_measurement.py",
+        "benchmarks/local_memory/harness.py",
+        "benchmarks/local_memory/heldout_run.py",
+        "benchmarks/local_memory/lifecycle_target_smoke.py",
+        "benchmarks/local_memory/module_challenge.py",
+        "benchmarks/local_memory/module_challenge_run.py",
+        "benchmarks/local_memory/module_mechanism.py",
+        "benchmarks/local_memory/module_mechanism_run.py",
+        "benchmarks/local_memory/ollama_adapter.py",
+        "benchmarks/local_memory/performance.py",
+        "benchmarks/local_memory/resumption.py",
+        "benchmarks/local_memory/scoring.py",
+        "benchmarks/scenarios/ui_smoke.py",
+        "examples/basic_usage.py",
+        "examples/full_pipeline.py",
+        "examples/mcp_agent_demo.py",
+        "mnemos/__init__.py",
+        "mnemos/__main__.py",
+        "mnemos/adapters/claude_code.py",
+        "mnemos/adapters/codex.py",
+        "mnemos/adapters/diagnostics.py",
+        "mnemos/adapters/hermes.py",
+        "mnemos/antigravity.py",
+        "mnemos/backup.py",
+        "mnemos/benchmark.py",
+        "mnemos/bridge.py",
+        "mnemos/cli.py",
+        "mnemos/client.py",
+        "mnemos/config.py",
+        "mnemos/contracts.py",
+        "mnemos/control_plane.py",
+        "mnemos/curation.py",
+        "mnemos/engine.py",
+        "mnemos/health.py",
+        "mnemos/hook_autostore.py",
+        "mnemos/hosts.py",
+        "mnemos/inspectability.py",
+        "mnemos/jobs.py",
+        "mnemos/maintenance.py",
+        "mnemos/managed_cli.py",
+        "mnemos/mcp_server.py",
+        "mnemos/memory_safety.py",
+        "mnemos/memory_service.py",
+        "mnemos/modules/__init__.py",
+        "mnemos/modules/affective.py",
+        "mnemos/modules/mutable_rag.py",
+        "mnemos/modules/sleep.py",
+        "mnemos/modules/spreading.py",
+        "mnemos/modules/surprisal.py",
+        "mnemos/observability.py",
+        "mnemos/reindex.py",
+        "mnemos/retrieval.py",
+        "mnemos/routing_review.py",
+        "mnemos/runtime.py",
+        "mnemos/scopes.py",
+        "mnemos/service.py",
+        "mnemos/settings.py",
+        "mnemos/types.py",
+        "mnemos/ui_server.py",
+        "mnemos/utils/__init__.py",
+        "mnemos/utils/embeddings.py",
+        "mnemos/utils/llm.py",
+        "mnemos/utils/reliability.py",
+        "mnemos/utils/storage.py",
+        "pyproject.toml",
+        "tests/__init__.py",
+        "tests/conftest.py",
+        "tests/test_backup_restore.py",
+        "tests/test_benchmark.py",
+        "tests/test_bridge.py",
+        "tests/test_ci_workflow.py",
+        "tests/test_claude_adapter.py",
+        "tests/test_cli.py",
+        "tests/test_clustered_scoring.py",
+        "tests/test_codex_adapter.py",
+        "tests/test_configured_runtime.py",
+        "tests/test_control_plane.py",
+        "tests/test_cross_host_contract.py",
+        "tests/test_docs_consistency.py",
+        "tests/test_durable_jobs.py",
+        "tests/test_durable_memory_repair.py",
+        "tests/test_embeddings.py",
+        "tests/test_engine.py",
+        "tests/test_evaluator_metrics.py",
+        "tests/test_extraction_schema.py",
+        "tests/test_feedback_eval_export.py",
+        "tests/test_feedback_events.py",
+        "tests/test_graph_measurement.py",
+        "tests/test_graph_persistence.py",
+        "tests/test_health.py",
+        "tests/test_hermes_adapter.py",
+        "tests/test_hook_autostore.py",
+        "tests/test_hosts.py",
+        "tests/test_inspectability.py",
+        "tests/test_job_recovery_api.py",
+        "tests/test_legacy_repair.py",
+        "tests/test_lifecycle_smoke_service.py",
+        "tests/test_lifecycle_target_mapping.py",
+        "tests/test_lifecycle_target_smoke.py",
+        "tests/test_lifecycle_v3_contract.py",
+        "tests/test_llm.py",
+        "tests/test_local_memory_benchmark.py",
+        "tests/test_maintenance.py",
+        "tests/test_managed_cli.py",
+        "tests/test_mcp_compatibility.py",
+        "tests/test_mcp_server.py",
+        "tests/test_mcp_tier2_smoke.py",
+        "tests/test_memory_lifecycle.py",
+        "tests/test_memory_safety.py",
+        "tests/test_memory_service.py",
+        "tests/test_module_mechanism.py",
+        "tests/test_module_mechanism_run.py",
+        "tests/test_modules.py",
+        "tests/test_plugin_packaging.py",
+        "tests/test_reconsolidation_contract.py",
+        "tests/test_reliability.py",
+        "tests/test_retrieval_contract.py",
+        "tests/test_routing_review.py",
+        "tests/test_routing_review_api.py",
+        "tests/test_runtime.py",
+        "tests/test_scope_context.py",
+        "tests/test_scoped_storage.py",
+        "tests/test_service.py",
+        "tests/test_settings.py",
+        "tests/test_spreading_activation.py",
+        "tests/test_spreading_isolation.py",
+        "tests/test_storage_sqlite.py",
+        "tests/test_storage_touch.py",
+        "tests/test_surprisal_contract.py",
+        "tests/test_types.py",
+        "tests/test_ui_server.py"
+      ],
+      "source_sha256": "a2beb455d09293677e8a0a94b9d2a1cbd3d776bc7ba12ed0f4102464c69b8f88",
+      "status": "complete"
+    }
+  ],
+  "schema_version": "local-memory-lifecycle-target-smoke-v1",
+  "source": {
+    "files": [
+      ".claude-plugin/run_mnemos_mcp.py",
+      "benchmarks/local_memory/__init__.py",
+      "benchmarks/local_memory/__main__.py",
+      "benchmarks/local_memory/ablation.py",
+      "benchmarks/local_memory/artifacts.py",
+      "benchmarks/local_memory/contracts.py",
+      "benchmarks/local_memory/dev_smoke.py",
+      "benchmarks/local_memory/generate_lifecycle_v3.py",
+      "benchmarks/local_memory/generate_module_mechanism_dataset.py",
+      "benchmarks/local_memory/graph_measurement.py",
+      "benchmarks/local_memory/harness.py",
+      "benchmarks/local_memory/heldout_run.py",
+      "benchmarks/local_memory/lifecycle_target_smoke.py",
+      "benchmarks/local_memory/module_challenge.py",
+      "benchmarks/local_memory/module_challenge_run.py",
+      "benchmarks/local_memory/module_mechanism.py",
+      "benchmarks/local_memory/module_mechanism_run.py",
+      "benchmarks/local_memory/ollama_adapter.py",
+      "benchmarks/local_memory/performance.py",
+      "benchmarks/local_memory/resumption.py",
+      "benchmarks/local_memory/scoring.py",
+      "benchmarks/scenarios/ui_smoke.py",
+      "examples/basic_usage.py",
+      "examples/full_pipeline.py",
+      "examples/mcp_agent_demo.py",
+      "mnemos/__init__.py",
+      "mnemos/__main__.py",
+      "mnemos/adapters/claude_code.py",
+      "mnemos/adapters/codex.py",
+      "mnemos/adapters/diagnostics.py",
+      "mnemos/adapters/hermes.py",
+      "mnemos/antigravity.py",
+      "mnemos/backup.py",
+      "mnemos/benchmark.py",
+      "mnemos/bridge.py",
+      "mnemos/cli.py",
+      "mnemos/client.py",
+      "mnemos/config.py",
+      "mnemos/contracts.py",
+      "mnemos/control_plane.py",
+      "mnemos/curation.py",
+      "mnemos/engine.py",
+      "mnemos/health.py",
+      "mnemos/hook_autostore.py",
+      "mnemos/hosts.py",
+      "mnemos/inspectability.py",
+      "mnemos/jobs.py",
+      "mnemos/maintenance.py",
+      "mnemos/managed_cli.py",
+      "mnemos/mcp_server.py",
+      "mnemos/memory_safety.py",
+      "mnemos/memory_service.py",
+      "mnemos/modules/__init__.py",
+      "mnemos/modules/affective.py",
+      "mnemos/modules/mutable_rag.py",
+      "mnemos/modules/sleep.py",
+      "mnemos/modules/spreading.py",
+      "mnemos/modules/surprisal.py",
+      "mnemos/observability.py",
+      "mnemos/reindex.py",
+      "mnemos/retrieval.py",
+      "mnemos/routing_review.py",
+      "mnemos/runtime.py",
+      "mnemos/scopes.py",
+      "mnemos/service.py",
+      "mnemos/settings.py",
+      "mnemos/types.py",
+      "mnemos/ui_server.py",
+      "mnemos/utils/__init__.py",
+      "mnemos/utils/embeddings.py",
+      "mnemos/utils/llm.py",
+      "mnemos/utils/reliability.py",
+      "mnemos/utils/storage.py",
+      "pyproject.toml",
+      "tests/__init__.py",
+      "tests/conftest.py",
+      "tests/test_backup_restore.py",
+      "tests/test_benchmark.py",
+      "tests/test_bridge.py",
+      "tests/test_ci_workflow.py",
+      "tests/test_claude_adapter.py",
+      "tests/test_cli.py",
+      "tests/test_clustered_scoring.py",
+      "tests/test_codex_adapter.py",
+      "tests/test_configured_runtime.py",
+      "tests/test_control_plane.py",
+      "tests/test_cross_host_contract.py",
+      "tests/test_docs_consistency.py",
+      "tests/test_durable_jobs.py",
+      "tests/test_durable_memory_repair.py",
+      "tests/test_embeddings.py",
+      "tests/test_engine.py",
+      "tests/test_evaluator_metrics.py",
+      "tests/test_extraction_schema.py",
+      "tests/test_feedback_eval_export.py",
+      "tests/test_feedback_events.py",
+      "tests/test_graph_measurement.py",
+      "tests/test_graph_persistence.py",
+      "tests/test_health.py",
+      "tests/test_hermes_adapter.py",
+      "tests/test_hook_autostore.py",
+      "tests/test_hosts.py",
+      "tests/test_inspectability.py",
+      "tests/test_job_recovery_api.py",
+      "tests/test_legacy_repair.py",
+      "tests/test_lifecycle_smoke_service.py",
+      "tests/test_lifecycle_target_mapping.py",
+      "tests/test_lifecycle_target_smoke.py",
+      "tests/test_lifecycle_v3_contract.py",
+      "tests/test_llm.py",
+      "tests/test_local_memory_benchmark.py",
+      "tests/test_maintenance.py",
+      "tests/test_managed_cli.py",
+      "tests/test_mcp_compatibility.py",
+      "tests/test_mcp_server.py",
+      "tests/test_mcp_tier2_smoke.py",
+      "tests/test_memory_lifecycle.py",
+      "tests/test_memory_safety.py",
+      "tests/test_memory_service.py",
+      "tests/test_module_mechanism.py",
+      "tests/test_module_mechanism_run.py",
+      "tests/test_modules.py",
+      "tests/test_plugin_packaging.py",
+      "tests/test_reconsolidation_contract.py",
+      "tests/test_reliability.py",
+      "tests/test_retrieval_contract.py",
+      "tests/test_routing_review.py",
+      "tests/test_routing_review_api.py",
+      "tests/test_runtime.py",
+      "tests/test_scope_context.py",
+      "tests/test_scoped_storage.py",
+      "tests/test_service.py",
+      "tests/test_settings.py",
+      "tests/test_spreading_activation.py",
+      "tests/test_spreading_isolation.py",
+      "tests/test_storage_sqlite.py",
+      "tests/test_storage_touch.py",
+      "tests/test_surprisal_contract.py",
+      "tests/test_types.py",
+      "tests/test_ui_server.py"
+    ],
+    "sha256": "a2beb455d09293677e8a0a94b9d2a1cbd3d776bc7ba12ed0f4102464c69b8f88"
+  },
+  "status": "complete"
+}

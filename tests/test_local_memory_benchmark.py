@@ -34,12 +34,13 @@ from benchmarks.local_memory.module_challenge_run import (
     _select_profiles,
     main as module_challenge_main,
 )
+from benchmarks.local_memory.performance import _StoreCallTrace
 from benchmarks.local_memory.resumption import Checkpoint, load_checkpoint
 from mnemos.contracts import ExtractionResponse
 from mnemos.modules.sleep import SleepDaemon
-from mnemos.types import EpisodicEvent
+from mnemos.types import EpisodicEvent, MemoryChunk
 from mnemos.utils.llm import LLMProvider, OllamaProvider
-from mnemos.utils.storage import InMemoryStore
+from mnemos.utils.storage import InMemoryStore, SQLiteStore
 
 DATASET = (
     Path(__file__).parents[1]
@@ -419,6 +420,65 @@ def test_clustered_bootstrap_records_session_clusters() -> None:
     )
     assert interval.cluster_count == 2
     assert interval.sample_count == 4
+
+
+def test_performance_trace_records_actual_engine_store_calls_and_restores_methods() -> None:
+    store = SQLiteStore(":memory:")
+    store.store(
+        MemoryChunk(
+            id="trace-fact",
+            content="Alpha trace fact",
+            embedding=[1.0, 0.0],
+            metadata={"scope": "project", "scope_id": "p", "user_profile_id": "u"},
+        )
+    )
+    original_retrieve = store.retrieve
+
+    with _StoreCallTrace(store) as trace:
+        assert store.retrieve([1.0, 0.0], top_k=1)[0].id == "trace-fact"
+        assert store.retrieve_lexical("alpha", top_k=1)[0].id == "trace-fact"
+        assert store.mark_retrieved_many(["trace-fact"]) == 1
+        assert store.get("trace-fact") is not None
+
+    artifact = trace.artifact()
+    assert [event["method"] for event in artifact["events"]] == [
+        "retrieve",
+        "retrieve_lexical",
+        "mark_retrieved_many",
+        "get",
+    ]
+    assert artifact["retrieve"] == {
+        "call_count": 1,
+        "completed_count": 1,
+        "error_count": 0,
+        "elapsed_ms": artifact["retrieve"]["elapsed_ms"],
+        "error_types": [],
+        "requested_top_ks": [1],
+        "result_counts": [1],
+    }
+    assert artifact["retrieve_lexical"]["result_counts"] == [1]
+    assert artifact["mark_retrieved_many"]["chunk_id_counts"] == [1]
+    assert artifact["get"]["result_present"] == [True]
+    assert store.retrieve.__func__ is original_retrieve.__func__
+    assert store.retrieve.__self__ is original_retrieve.__self__
+    store.close()
+
+
+def test_performance_trace_reraises_store_errors_and_records_type() -> None:
+    store = SQLiteStore(":memory:")
+
+    def fail(*args: object, **kwargs: object) -> None:
+        _ = args, kwargs
+        raise RuntimeError("trace failure")
+
+    store.get = fail  # type: ignore[method-assign]
+    trace = _StoreCallTrace(store)
+    with pytest.raises(RuntimeError, match="trace failure"):
+        with trace:
+            store.get("missing")
+    assert trace.artifact()["get"]["error_types"] == ["RuntimeError"]
+    assert store.get is fail
+    store.close()
 
 
 class _FakeChunk:

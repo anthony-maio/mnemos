@@ -261,3 +261,22 @@ preserved. This is a production graph construction investigation, and it blocks
 the held-out mechanism run. The focused evaluator and graph suite passed
 38 tests in 92.18 seconds; those tests did not establish this real-embedding
 insertion-order property.
+
+## Structured extraction development repair
+
+The real lifecycle target preflight at `634b460` passed baseline correction and
+both forget/replay cases, but full correction had no accepted target because
+automatic extraction generated incomplete objects until its 512-token budget
+was exhausted. Its source event and pending job remained durable. The schema's
+partial `oneOf` alternatives exposed only operation-specific fields to the
+constrained decoder. Each alternative now contains the complete object schema,
+including content, evidence, and operation-specific targets and versions.
+
+Commit `b5a2834` passed 35 focused extraction and evaluator tests and strict
+contract typing. A fresh detached real Ollama run then passed all four
+development cases without changing prompts, scenario labels, model pins, or
+token budget. It verified corrected identity and version after restart in both
+profiles, and suppression of forgotten facts after replay and restart. The
+failed and passing raw outputs remain in `lifecycle-target-development-v3/`
+and `lifecycle-target-development-v4/`. This clears the lifecycle dispatch
+preflight; it does not establish extraction precision or held-out quality.

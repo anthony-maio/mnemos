@@ -60,11 +60,24 @@ no accepted target instead of guessing a fact to correct. Raw responses and
 manifests are preserved in `lifecycle-target-development-v3/`. This is a
 development result, not quality acceptance.
 
-The extraction schema is being repaired so every operation alternative carries
-all required fields. The old schema combined common object constraints with
-partial `oneOf` branches. The replacement keeps runtime evidence and operation
-validation and does not raise the token budget. It requires a fresh source-bound
-development run before the full matrix restarts.
+The extraction schema repair is committed in `b5a2834`. Every operation
+alternative now carries all required fields. The old schema combined common
+object constraints with partial `oneOf` branches. The llama.cpp schema reader
+selects union alternatives before reading sibling object constraints, which
+explains the observed incomplete objects; see its
+[schema reader](https://github.com/ggml-org/llama.cpp/blob/master/common/json-schema.cpp)
+and [grammar converter](https://github.com/ggml-org/llama.cpp/blob/master/common/json-schema-to-grammar.cpp).
+These upstream sources corroborate the failure mechanism; the lab server's
+embedded converter revision was not independently identified.
+
+A fresh source-bound run from detached `b5a2834` passed all four real Ollama
+development cases under attempt `b3fb69233d634934949a2432df377b59`. Both profiles
+preserved corrected identity and version across restart, and both passed forget,
+replay suppression, and restart. Model pins, token budget, prompts, and scenario
+labels remained unchanged. Runtime evidence and operation validation remain in
+place. Artifacts are preserved in `lifecycle-target-development-v4/`; this
+development gate does not establish held-out quality or graph correctness.
+The matrix remains stopped while graph construction is repaired and validated.
 
 The stopped run used frozen source commit `5e852e7` in
 `.venv/eval-frozen-v2`. It started on September 16, 2026 local time, after
