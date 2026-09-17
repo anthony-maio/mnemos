@@ -533,3 +533,22 @@ exceeded its existing five-second deadline. This is not the earlier test-level
 and its complete-schema fixture are preserved. No package was built by this
 attempt; installed-wheel and native lifecycle follow-ups remain pending while
 startup is investigated. The original real-model queue remains active.
+
+## Atomic schema startup repair
+
+Commit `9e25339` wraps schema creation and migration in one explicit SQLite
+transaction and rolls back initialization failures, including interruption.
+The startup deadline, WAL mode, and FULL synchronization are unchanged.
+
+The [frozen-source comparison](service-startup-diagnostic/README.md) used the
+same runner bytes for one fresh start per revision. Source236 failed with the
+dispatcher timeout; source9e25339 started in 2,453.355 ms and read back WAL/FULL.
+Schema initialization measured 4,774.106 ms before the repair and 776.631 ms
+after it. These are local diagnostic observations, not a general latency result.
+
+All three new regressions fail against frozen source236: interrupted creation
+leaves partial schema objects, and failed migration changes an existing trigger.
+They pass on the repaired source, as does the 33-test focused storage, migration,
+and backup suite. The focused results were terminal output; the old-source
+failure report and runner are preserved. Full frozen-source verification is
+running before installation and native host follow-ups.

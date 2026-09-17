@@ -49,8 +49,13 @@ A separate Hermes plugin discovery check found that registration ignored
 the configured registry path and rejected the provider before initialization.
 Its repair has passed focused tests and disposable WSL plugin discovery.
 [Full verification](hermes-registry-verification/README.md) of that newer source
-failed during service dispatcher startup; diagnosis is in progress. No native Hermes model
-turn has passed.
+failed during service dispatcher startup. The subsequent [startup repair](service-startup-diagnostic/README.md)
+groups schema creation and migration into one transaction. In a comparison
+using the same runner, frozen source236 timed out and repaired source9e25339
+started in 2,453.355 ms with WAL/FULL read back from SQLite. Three rollback
+regressions fail on the old source and pass on the repair; the focused storage,
+migration, and backup suite passed 33 tests. Full verification of the repaired
+source is running. No native Hermes model turn has passed.
 
 The v2 performance runner removes extra diagnostic writes and reads between
 timed retrievals. Its focused regressions pass, but the corrected latency

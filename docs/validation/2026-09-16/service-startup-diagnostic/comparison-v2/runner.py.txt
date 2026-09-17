@@ -1,0 +1,637 @@
+"""Protected diagnostic for the managed service's cold startup path.
+
+This runner is intentionally separate from the product package.  The parent
+process creates a fresh private fixture and starts a child in ``--child`` mode.
+The child wraps startup methods and sqlite calls, retaining only stage names,
+transaction state, elapsed times, and exception types.  It never changes the
+service deadline, SQLite durability settings, providers, or cleanup behavior.
+"""
+
+from __future__ import annotations
+
+import argparse
+import contextlib
+from datetime import datetime, timezone
+import faulthandler
+import functools
+import hashlib
+import json
+import os
+from pathlib import Path
+import sqlite3
+import subprocess
+import sys
+import tempfile
+import threading
+import time
+from typing import Any, Callable, Mapping
+
+DEFAULT_OUTPUT = Path(__file__).resolve().parent / "service-startup-diagnostic-pinned-v1"
+WINDOWS_TEMP = Path("D:/WindowsTemp")
+STARTUP_DEADLINE_SECONDS = 5.0
+CHILD_WAIT_SECONDS = 45.0
+MAX_LOG_BYTES = 64 * 1024
+
+
+class Trace:
+    def __init__(self) -> None:
+        self.started = time.perf_counter()
+        self.lock = threading.Lock()
+        self.events: list[dict[str, Any]] = []
+
+    def mark(self, stage: str, **fields: Any) -> None:
+        row: dict[str, Any] = {
+            "stage": stage,
+            "since_start_ms": round((time.perf_counter() - self.started) * 1000.0, 3),
+        }
+        row.update(fields)
+        with self.lock:
+            self.events.append(row)
+
+
+TRACE: Trace | None = None
+
+
+def _trace(stage: str, **fields: Any) -> None:
+    if TRACE is not None:
+        TRACE.mark(stage, **fields)
+
+
+def _safe_exception(exc: BaseException) -> dict[str, str]:
+    return {"type": type(exc).__name__, "message": str(exc)[:240]}
+
+
+class TracedCursor(sqlite3.Cursor):
+    def execute(self, sql: str, parameters: Any = ()) -> sqlite3.Cursor:
+        connection = self.connection
+        before = bool(connection.in_transaction)
+        started = time.perf_counter()
+        try:
+            return super().execute(sql, parameters)
+        finally:
+            _trace(
+                "sqlite.execute",
+                sql=str(sql).strip().split(None, 1)[0].upper() if str(sql).strip() else "",
+                sql_text=" ".join(str(sql).split()).upper()[:240],
+                in_transaction_before=before,
+                in_transaction_after=bool(connection.in_transaction),
+                duration_ms=round((time.perf_counter() - started) * 1000.0, 3),
+            )
+
+    def executemany(self, sql: str, parameters: Any) -> sqlite3.Cursor:
+        connection = self.connection
+        before = bool(connection.in_transaction)
+        started = time.perf_counter()
+        try:
+            return super().executemany(sql, parameters)
+        finally:
+            _trace(
+                "sqlite.executemany",
+                sql=str(sql).strip().split(None, 1)[0].upper() if str(sql).strip() else "",
+                sql_text=" ".join(str(sql).split()).upper()[:240],
+                in_transaction_before=before,
+                in_transaction_after=bool(connection.in_transaction),
+                duration_ms=round((time.perf_counter() - started) * 1000.0, 3),
+            )
+
+
+class TracedConnection(sqlite3.Connection):
+    def cursor(self, *args: Any, **kwargs: Any) -> TracedCursor:
+        kwargs["factory"] = TracedCursor
+        return super().cursor(*args, **kwargs)  # type: ignore[return-value]
+
+    def execute(self, sql: str, parameters: Any = ()) -> sqlite3.Cursor:
+        return self.cursor().execute(sql, parameters)
+
+    def executemany(self, sql: str, parameters: Any) -> sqlite3.Cursor:
+        return self.cursor().executemany(sql, parameters)
+
+    def commit(self) -> None:
+        before = bool(self.in_transaction)
+        started = time.perf_counter()
+        try:
+            return super().commit()
+        finally:
+            _trace(
+                "sqlite.commit",
+                in_transaction_before=before,
+                in_transaction_after=bool(self.in_transaction),
+                duration_ms=round((time.perf_counter() - started) * 1000.0, 3),
+            )
+
+    def rollback(self) -> None:
+        before = bool(self.in_transaction)
+        started = time.perf_counter()
+        try:
+            return super().rollback()
+        finally:
+            _trace(
+                "sqlite.rollback",
+                in_transaction_before=before,
+                in_transaction_after=bool(self.in_transaction),
+                duration_ms=round((time.perf_counter() - started) * 1000.0, 3),
+            )
+
+
+def _patch_method(owner: Any, name: str, stage: str) -> Callable[[], None]:
+    original = getattr(owner, name)
+
+    @functools.wraps(original)
+    def wrapped(*args: Any, **kwargs: Any) -> Any:
+        _trace(f"{stage}.begin")
+        started = time.perf_counter()
+        try:
+            result = original(*args, **kwargs)
+        except BaseException as exc:
+            _trace(
+                f"{stage}.error",
+                duration_ms=round((time.perf_counter() - started) * 1000.0, 3),
+                exception=type(exc).__name__,
+            )
+            raise
+        _trace(
+            f"{stage}.end",
+            duration_ms=round((time.perf_counter() - started) * 1000.0, 3),
+        )
+        return result
+
+    setattr(owner, name, wrapped)
+
+    def restore() -> None:
+        setattr(owner, name, original)
+
+    return restore
+
+
+def _hash_file(path: Path) -> str | None:
+    try:
+        digest = hashlib.sha256()
+        with path.open("rb") as handle:
+            for block in iter(lambda: handle.read(1024 * 1024), b""):
+                digest.update(block)
+        return digest.hexdigest()
+    except OSError:
+        return None
+
+
+def _source_hashes(snapshot: Path, commit: str) -> dict[str, str]:
+    listing = subprocess.run(
+        ["git", "-C", str(snapshot), "ls-tree", "-r", "--name-only", commit, "mnemos"],
+        capture_output=True,
+        check=True,
+        text=True,
+    )
+    paths = [item.strip() for item in listing.stdout.splitlines() if item.strip()]
+    if not paths:
+        raise RuntimeError("the pinned snapshot contains no tracked mnemos source files")
+    hashes: dict[str, str] = {}
+    for relative in paths:
+        data = subprocess.run(
+            ["git", "-C", str(snapshot), "show", f"{commit}:{relative}"],
+            capture_output=True,
+            check=True,
+        ).stdout
+        hashes[relative.replace("\\", "/")] = hashlib.sha256(_normalized_bytes(data)).hexdigest()
+    return hashes
+
+
+def _normalized_bytes(data: bytes) -> bytes:
+    try:
+        return data.decode("utf-8").replace("\r\n", "\n").replace("\r", "\n").encode("utf-8")
+    except UnicodeDecodeError:
+        return data
+
+
+def _write_json(path: Path, value: Mapping[str, Any]) -> None:
+    path.parent.mkdir(parents=True, exist_ok=True)
+    path.write_text(json.dumps(dict(value), indent=2, sort_keys=True), encoding="utf-8")
+
+
+def _child(
+    attempt_dir: Path,
+    snapshot: Path,
+    commit: str,
+    fixture: Path,
+    source_manifest: Path,
+) -> int:
+    global TRACE
+    TRACE = Trace()
+    _trace("child.begin", pid=os.getpid())
+    stack_path = attempt_dir / "startup-stack.txt"
+    stack_handle = stack_path.open("w", encoding="utf-8")
+    restorers: list[Callable[[], None]] = []
+    service: Any | None = None
+    service_stopped = False
+    source_hashes = json.loads(source_manifest.read_text(encoding="utf-8"))
+    if not isinstance(source_hashes, dict):
+        raise RuntimeError("source manifest must contain an object")
+    result: dict[str, Any] = {
+        "status": "failed",
+        "startup_deadline_seconds": STARTUP_DEADLINE_SECONDS,
+        "source_commit": commit,
+        "source_snapshot": str(snapshot),
+        "source_hashes": source_hashes,
+        "python": sys.executable,
+        "pid": os.getpid(),
+        "stages": [],
+    }
+    try:
+        sys.path.insert(0, str(snapshot))
+        import socket
+
+        network_calls: list[str] = []
+        local_socket_calls: list[str] = []
+        socket_connect_original = socket.socket.connect
+        socket_connect_ex_original = socket.socket.connect_ex
+        original_create_connection = socket.create_connection
+
+        def guarded_connect(instance: Any, address: Any) -> Any:
+            host = address[0] if isinstance(address, tuple) and address else None
+            if host in {"127.0.0.1", "::1", "localhost"}:
+                local_socket_calls.append("socket.connect")
+                return socket_connect_original(instance, address)
+            network_calls.append("socket.connect")
+            raise AssertionError("startup diagnostic attempted non-loopback network access")
+
+        def guarded_connect_ex(instance: Any, address: Any) -> Any:
+            host = address[0] if isinstance(address, tuple) and address else None
+            if host in {"127.0.0.1", "::1", "localhost"}:
+                local_socket_calls.append("socket.connect_ex")
+                return socket_connect_ex_original(instance, address)
+            network_calls.append("socket.connect_ex")
+            raise AssertionError("startup diagnostic attempted non-loopback network access")
+
+        def guarded_create_connection(address: Any, *args: Any, **kwargs: Any) -> Any:
+            host = address[0] if isinstance(address, tuple) and address else None
+            if host in {"127.0.0.1", "::1", "localhost"}:
+                local_socket_calls.append("socket.create_connection")
+                return original_create_connection(address, *args, **kwargs)
+            network_calls.append("socket.create_connection")
+            raise AssertionError("startup diagnostic attempted non-loopback network access")
+
+        socket.socket.connect = guarded_connect  # type: ignore[assignment]
+        socket.socket.connect_ex = guarded_connect_ex  # type: ignore[assignment]
+        socket.create_connection = guarded_create_connection  # type: ignore[assignment]
+        restorers.extend(
+            [
+                lambda: setattr(socket.socket, "connect", socket_connect_original),
+                lambda: setattr(socket.socket, "connect_ex", socket_connect_ex_original),
+                lambda: setattr(socket, "create_connection", original_create_connection),
+            ]
+        )
+        _trace("import.mnemos.begin")
+        import mnemos.service as service_module
+        import mnemos.runtime as runtime_module
+        import mnemos.utils.storage as storage_module
+
+        _trace("import.mnemos.end")
+        imported_files = {
+            name: str(Path(module.__file__).resolve())
+            for name, module in {
+                "service": service_module,
+                "runtime": runtime_module,
+                "storage": storage_module,
+            }.items()
+        }
+        if any(snapshot not in Path(path).parents for path in imported_files.values()):
+            raise RuntimeError("startup diagnostic imported Mnemos outside the pinned snapshot")
+        result["imported_module_files"] = imported_files
+        service_module._protect_private_path(attempt_dir.parent)
+        service_module._protect_private_path(attempt_dir)
+        service_module._protect_private_path(fixture)
+        original_connect = storage_module.sqlite3.connect
+
+        def traced_connect(*args: Any, **kwargs: Any) -> sqlite3.Connection:
+            _trace("sqlite.connect.begin")
+            started = time.perf_counter()
+            kwargs["factory"] = TracedConnection
+            try:
+                connection = original_connect(*args, **kwargs)
+            except BaseException as exc:
+                _trace(
+                    "sqlite.connect.error",
+                    duration_ms=round((time.perf_counter() - started) * 1000.0, 3),
+                    exception=type(exc).__name__,
+                )
+                raise
+            _trace(
+                "sqlite.connect.end",
+                duration_ms=round((time.perf_counter() - started) * 1000.0, 3),
+            )
+            return connection
+
+        storage_module.sqlite3.connect = traced_connect
+        restorers.append(lambda: setattr(storage_module.sqlite3, "connect", original_connect))
+        restorers.append(_patch_method(service_module, "_protect_private_path", "acl"))
+        restorers.append(_patch_method(storage_module.SQLiteStore, "_initialize_schema", "schema"))
+        restorers.append(_patch_method(runtime_module, "_configured_store", "runtime.store"))
+        restorers.append(
+            _patch_method(service_module.MnemosService, "_make_default_dispatcher", "dispatcher")
+        )
+        restorers.append(_patch_method(service_module.MnemosService, "_owner_main", "owner"))
+        restorers.append(_patch_method(service_module.MnemosService, "start", "service.start"))
+
+        _trace("startup.stack_timer.begin")
+        faulthandler.dump_traceback_later(4.5, file=stack_handle, repeat=False)
+        service = service_module.MnemosService(startup_timeout=STARTUP_DEADLINE_SECONDS)
+        _trace("service.object_created")
+        started = time.perf_counter()
+        try:
+            descriptor = service.start()
+        except BaseException as exc:
+            result["exception"] = _safe_exception(exc)
+            result["startup_duration_ms"] = round((time.perf_counter() - started) * 1000.0, 3)
+            _trace("service.start.error", exception=type(exc).__name__)
+        else:
+            result["status"] = "passed"
+            result["descriptor_fields"] = sorted(descriptor)
+            result["startup_duration_ms"] = round((time.perf_counter() - started) * 1000.0, 3)
+            _trace("service.start.end")
+            dispatcher = getattr(service, "_dispatcher", None)
+            engine = getattr(dispatcher, "engine", None)
+            store = getattr(engine, "_store", None)
+            connection = getattr(store, "_conn", None)
+            if connection is None:
+                raise RuntimeError("started service has no SQLite connection to inspect")
+            journal_mode = connection.execute("PRAGMA journal_mode").fetchone()[0]
+            synchronous = connection.execute("PRAGMA synchronous").fetchone()[0]
+            result["durability_observed"] = {
+                "journal_mode": str(journal_mode).lower(),
+                "synchronous": int(synchronous),
+            }
+            if str(journal_mode).lower() != "wal" or int(synchronous) != 2:
+                raise AssertionError("SQLite durability settings differ from WAL/FULL")
+            service.stop()
+            service_stopped = True
+            _trace("service.stop.end")
+    except BaseException as exc:
+        result["status"] = "failed"
+        result["exception"] = _safe_exception(exc)
+        _trace("child.error", exception=type(exc).__name__)
+    finally:
+        if service is not None and not service_stopped:
+            try:
+                service.stop()
+                service_stopped = True
+                _trace("service.stop.cleanup_end")
+            except BaseException as exc:
+                result["cleanup_exception"] = _safe_exception(exc)
+                _trace("service.stop.cleanup_error", exception=type(exc).__name__)
+        with contextlib.suppress(Exception):
+            faulthandler.cancel_dump_traceback_later()
+        with contextlib.suppress(Exception):
+            stack_handle.close()
+        for restore in reversed(restorers):
+            with contextlib.suppress(Exception):
+                restore()
+        result["stack_dumped_or_created"] = stack_path.exists()
+        result["network_calls"] = network_calls if "network_calls" in locals() else []
+        result["network_call_count"] = len(result["network_calls"])
+        result["network_block_passed"] = result["network_call_count"] == 0
+        result["local_socket_calls"] = (
+            local_socket_calls if "local_socket_calls" in locals() else []
+        )
+        if result["status"] == "passed" and not result["network_block_passed"]:
+            result["status"] = "failed"
+            result["exception"] = {
+                "type": "NetworkAccessError",
+                "message": "network calls were observed during startup",
+            }
+        result["service_stopped"] = service_stopped
+        descriptor_path = fixture / "runtime.json"
+        owner_thread = getattr(service, "_owner_thread", None) if service is not None else None
+        result["descriptor_present_after_cleanup"] = descriptor_path.exists()
+        result["owner_thread_alive_after_cleanup"] = bool(
+            owner_thread is not None and owner_thread.is_alive()
+        )
+        result["cleanup_passed"] = bool(
+            service_stopped
+            and not result["descriptor_present_after_cleanup"]
+            and not result["owner_thread_alive_after_cleanup"]
+        )
+        if result["status"] == "passed" and not result["cleanup_passed"]:
+            result["status"] = "failed"
+            result["exception"] = {
+                "type": "CleanupError",
+                "message": "service descriptor or owner thread remained after cleanup",
+            }
+        result["stages"] = TRACE.events if TRACE is not None else []
+        _write_json(attempt_dir / "child-report.json", result)
+    return 0 if result["status"] == "passed" else 1
+
+
+def _fixture_environment(fixture: Path) -> dict[str, str]:
+    env = {
+        key: value
+        for key, value in os.environ.items()
+        if not key.startswith(
+            ("MNEMOS_", "OPENAI_", "ANTHROPIC_", "AZURE_OPENAI_", "OLLAMA_", "HF_")
+        )
+        and key != "PYTHONPATH"
+    }
+    env.update(
+        {
+            "MNEMOS_RUNTIME_DESCRIPTOR": str(fixture / "runtime.json"),
+            "MNEMOS_RUNTIME_DIR": str(fixture),
+            "MNEMOS_CONFIG_PATH": str(fixture / "settings.toml"),
+            "MNEMOS_SCOPE_REGISTRY": str(fixture / "scopes.json"),
+            "MNEMOS_LLM_PROVIDER": "ollama",
+            "MNEMOS_LLM_MODEL": "unused-startup-diagnostic",
+            "MNEMOS_OLLAMA_URL": "http://127.0.0.1:1",
+            "MNEMOS_EMBEDDING_PROVIDER": "simple",
+            "MNEMOS_STORE_TYPE": "sqlite",
+            "MNEMOS_SQLITE_PATH": str(fixture / "memory.db"),
+        }
+    )
+    return env
+
+
+def _bounded_text(path: Path) -> str:
+    try:
+        data = path.read_bytes()
+    except OSError:
+        return ""
+    if len(data) > MAX_LOG_BYTES:
+        data = data[-MAX_LOG_BYTES:]
+    return data.decode("utf-8", errors="replace")
+
+
+def _bound_log_file(path: Path) -> None:
+    try:
+        data = path.read_bytes()
+    except OSError:
+        return
+    if len(data) > MAX_LOG_BYTES:
+        path.write_bytes(data[-MAX_LOG_BYTES:])
+
+
+def _run_attempt(
+    output: Path,
+    snapshot: Path,
+    commit: str,
+    source_manifest: Path,
+    ordinal: int,
+) -> dict[str, Any]:
+    fixture = Path(tempfile.mkdtemp(prefix="mnemos-service-startup-", dir=str(WINDOWS_TEMP)))
+    attempt_dir = output / f"attempt-{ordinal:02d}"
+    attempt_dir.mkdir(parents=True, exist_ok=False)
+    env = _fixture_environment(fixture)
+    command = [
+        sys.executable,
+        str(Path(__file__).resolve()),
+        "--child",
+        str(attempt_dir),
+        "--snapshot",
+        str(snapshot),
+        "--commit",
+        commit,
+        "--fixture",
+        str(fixture),
+        "--source-manifest",
+        str(source_manifest),
+    ]
+    stdout_path = attempt_dir / "stdout.txt"
+    stderr_path = attempt_dir / "stderr.txt"
+    started = time.perf_counter()
+    terminated = False
+    killed = False
+    with stdout_path.open("wb") as stdout_handle, stderr_path.open("wb") as stderr_handle:
+        process = subprocess.Popen(
+            command,
+            cwd=str(snapshot),
+            env=env,
+            stdin=subprocess.DEVNULL,
+            stdout=stdout_handle,
+            stderr=stderr_handle,
+            creationflags=getattr(subprocess, "CREATE_NO_WINDOW", 0),
+        )
+        timed_out = False
+        while process.poll() is None and time.perf_counter() - started < CHILD_WAIT_SECONDS:
+            time.sleep(0.05)
+        if process.poll() is None:
+            timed_out = True
+            process.terminate()
+            terminated = True
+            with contextlib.suppress(Exception):
+                process.wait(timeout=5)
+            if process.poll() is None:
+                process.kill()
+                killed = True
+                with contextlib.suppress(Exception):
+                    process.wait(timeout=5)
+    child_report_path = attempt_dir / "child-report.json"
+    child_report: dict[str, Any] = {}
+    if child_report_path.exists():
+        with contextlib.suppress((OSError, json.JSONDecodeError)):
+            raw = json.loads(child_report_path.read_text(encoding="utf-8"))
+            if isinstance(raw, dict):
+                child_report = raw
+    _bound_log_file(stdout_path)
+    _bound_log_file(stderr_path)
+    descriptor_present = (fixture / "runtime.json").exists()
+    return {
+        "ordinal": ordinal,
+        "fixture": str(fixture),
+        "attempt_directory": str(attempt_dir),
+        "command": command,
+        "process_exit_code": process.returncode,
+        "parent_wait_duration_ms": round((time.perf_counter() - started) * 1000.0, 3),
+        "parent_timed_out": timed_out,
+        "parent_terminated_child": terminated,
+        "parent_killed_child": killed,
+        "stdout_log": str(stdout_path),
+        "stderr_log": str(stderr_path),
+        "stdout_excerpt": _bounded_text(stdout_path),
+        "stderr_excerpt": _bounded_text(stderr_path),
+        "descriptor_present_after_parent": descriptor_present,
+        "cleanup_passed": bool(child_report.get("cleanup_passed", not descriptor_present)),
+        "child": child_report,
+    }
+
+
+def _parent(output: Path, snapshot: Path, commit: str) -> int:
+    output = output.resolve()
+    output.mkdir(parents=True, exist_ok=False)
+    source_head = subprocess.run(
+        ["git", "-C", str(snapshot), "rev-parse", "HEAD"],
+        capture_output=True,
+        check=True,
+        text=True,
+    ).stdout.strip()
+    if source_head != commit:
+        raise SystemExit("snapshot is not at the requested commit")
+    if subprocess.run(
+        ["git", "-C", str(snapshot), "status", "--porcelain", "--untracked-files=all"],
+        capture_output=True,
+        check=True,
+        text=True,
+    ).stdout.strip():
+        raise SystemExit("snapshot is dirty")
+    source_hashes = _source_hashes(snapshot, commit)
+    source_manifest = (output / "source-hashes.json").resolve()
+    _write_json(source_manifest, source_hashes)
+    started_at_utc = datetime.now(timezone.utc).isoformat()
+    attempts: list[dict[str, Any]] = []
+    for ordinal in range(1, 2):
+        attempt = _run_attempt(output, snapshot, commit, source_manifest, ordinal)
+        attempts.append(attempt)
+        if attempt["parent_timed_out"] or attempt.get("child", {}).get("status") != "passed":
+            break
+    finished_at_utc = datetime.now(timezone.utc).isoformat()
+    report = {
+        "runner": str(Path(__file__).resolve()),
+        "runner_sha256": _hash_file(Path(__file__).resolve()),
+        "source_snapshot": str(snapshot),
+        "source_commit": commit,
+        "source_clean": True,
+        "source_files_checked": len(source_hashes),
+        "source_hashes": source_hashes,
+        "source_hash_mode": "normalized UTF-8 line endings; raw bytes fallback",
+        "source_hashes_file": str(source_manifest),
+        "python": sys.executable,
+        "started_at_utc": started_at_utc,
+        "finished_at_utc": finished_at_utc,
+        "startup_deadline_seconds": STARTUP_DEADLINE_SECONDS,
+        "child_wait_seconds": CHILD_WAIT_SECONDS,
+        "durability_contract": {"journal_mode": "WAL", "synchronous": "FULL"},
+        "fixture_contract": {
+            "store": "sqlite",
+            "embedding_provider": "simple",
+            "llm_provider": "ollama",
+            "ollama_endpoint": "loopback port 1 only; no request is made",
+            "network_or_model_calls": False,
+        },
+        "attempts": attempts,
+        "status": (
+            "passed"
+            if attempts
+            and all(item.get("child", {}).get("status") == "passed" for item in attempts)
+            else "failed"
+        ),
+    }
+    _write_json(output / "report.json", report)
+    return 0 if report["status"] == "passed" else 1
+
+
+def main() -> int:
+    parser = argparse.ArgumentParser()
+    parser.add_argument("--output", type=Path, default=DEFAULT_OUTPUT)
+    parser.add_argument("--child", type=Path, default=None)
+    parser.add_argument("--snapshot", type=Path, required=True)
+    parser.add_argument("--commit", required=True)
+    parser.add_argument("--fixture", type=Path, default=None)
+    parser.add_argument("--source-manifest", type=Path, default=None)
+    args = parser.parse_args()
+    if args.child is not None:
+        if args.fixture is None or args.source_manifest is None:
+            parser.error("--child requires --fixture and --source-manifest")
+        return _child(
+            args.child, args.snapshot.resolve(), args.commit, args.fixture, args.source_manifest
+        )
+    if args.output.exists():
+        raise SystemExit(f"output already exists: {args.output}")
+    return _parent(args.output, args.snapshot.resolve(), args.commit)
+
+
+if __name__ == "__main__":
+    raise SystemExit(main())

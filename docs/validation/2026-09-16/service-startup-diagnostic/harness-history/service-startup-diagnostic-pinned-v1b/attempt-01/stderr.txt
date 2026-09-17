@@ -1,0 +1,14 @@
+Traceback (most recent call last):
+  File "D:\Development\mnemos\mnemos\.worktrees\functional-local-memory\.venv\service_startup_diagnostic_pinned.py", line 612, in <module>
+    raise SystemExit(main())
+                     ~~~~^^
+  File "D:\Development\mnemos\mnemos\.worktrees\functional-local-memory\.venv\service_startup_diagnostic_pinned.py", line 603, in main
+    return _child(
+        args.child, args.snapshot.resolve(), args.commit, args.fixture, args.source_manifest
+    )
+  File "D:\Development\mnemos\mnemos\.worktrees\functional-local-memory\.venv\service_startup_diagnostic_pinned.py", line 221, in _child
+    stack_handle = stack_path.open("w", encoding="utf-8")
+  File "C:\Users\Ant\AppData\Roaming\uv\python\cpython-3.13.7-windows-x86_64-none\Lib\pathlib\_local.py", line 537, in open
+    return io.open(self, mode, buffering, encoding, errors, newline)
+           ~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+FileNotFoundError: [Errno 2] No such file or directory: '.venv\\service-startup-diagnostic-pinned-v1b\\attempt-01\\startup-stack.txt'

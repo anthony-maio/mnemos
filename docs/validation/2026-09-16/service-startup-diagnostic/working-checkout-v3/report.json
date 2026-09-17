@@ -1,0 +1,653 @@
+{
+  "attempts": [
+    {
+      "attempt_directory": ".venv\\service-startup-diagnostic-v3\\attempt-01",
+      "child": {
+        "exception": {
+          "message": "Mnemos service dispatcher did not initialize",
+          "type": "TimeoutError"
+        },
+        "pid": 50248,
+        "python": "D:\\Development\\mnemos\\mnemos\\.worktrees\\functional-local-memory\\.venv\\Scripts\\python.exe",
+        "source_hashes": {
+          "mnemos\\engine.py": "9692e5c3ab18c439ea5fb7cc2155c10707800cbf08f1ae55608226a3ced37c59",
+          "mnemos\\runtime.py": "4ea7effc4e8722b74616ff4d07e1f839ad640bdfb04aa2c795b2c66e6a12ebab",
+          "mnemos\\service.py": "3e67c06fc8b5da115428e26c88c9b5731270c7631f9e74c05c70a3ff3db53d89",
+          "mnemos\\utils\\storage.py": "71b19a99c589f9b1a123004ae6dfee813e45cedb271e8c2b9fa7d517370e9fb5"
+        },
+        "stack_dumped_or_created": true,
+        "stages": [
+          {
+            "elapsed_ms": 0.005,
+            "pid": 50248,
+            "stage": "child.begin"
+          },
+          {
+            "elapsed_ms": 92.545,
+            "stage": "import.mnemos.begin"
+          },
+          {
+            "elapsed_ms": 534.849,
+            "stage": "import.mnemos.end"
+          },
+          {
+            "elapsed_ms": 534.892,
+            "stage": "startup.stack_timer.begin"
+          },
+          {
+            "elapsed_ms": 535.005,
+            "stage": "service.object_created"
+          },
+          {
+            "elapsed_ms": 535.213,
+            "stage": "acl.begin"
+          },
+          {
+            "elapsed_ms": 1.369,
+            "stage": "acl.end"
+          },
+          {
+            "elapsed_ms": 536.825,
+            "stage": "acl.begin"
+          },
+          {
+            "elapsed_ms": 0.605,
+            "stage": "acl.end"
+          },
+          {
+            "elapsed_ms": 537.849,
+            "stage": "owner.begin"
+          },
+          {
+            "elapsed_ms": 538.776,
+            "stage": "dispatcher.begin"
+          },
+          {
+            "elapsed_ms": 556.129,
+            "stage": "runtime.store.begin"
+          },
+          {
+            "elapsed_ms": 556.729,
+            "stage": "acl.begin"
+          },
+          {
+            "elapsed_ms": 0.347,
+            "stage": "acl.end"
+          },
+          {
+            "elapsed_ms": 557.092,
+            "stage": "sqlite.connect.begin"
+          },
+          {
+            "elapsed_ms": 0.174,
+            "stage": "sqlite.connect.end"
+          },
+          {
+            "elapsed_ms": 0.386,
+            "in_transaction_after": false,
+            "in_transaction_before": false,
+            "sql": "SELECT",
+            "stage": "sqlite.execute"
+          },
+          {
+            "elapsed_ms": 0.013,
+            "in_transaction_after": false,
+            "in_transaction_before": false,
+            "sql": "PRAGMA",
+            "stage": "sqlite.execute"
+          },
+          {
+            "elapsed_ms": 0.278,
+            "in_transaction_after": false,
+            "in_transaction_before": false,
+            "sql": "PRAGMA",
+            "stage": "sqlite.execute"
+          },
+          {
+            "elapsed_ms": 0.021,
+            "in_transaction_after": false,
+            "in_transaction_before": false,
+            "sql": "PRAGMA",
+            "stage": "sqlite.execute"
+          },
+          {
+            "elapsed_ms": 1650.434,
+            "stage": "schema.begin"
+          },
+          {
+            "elapsed_ms": 127.106,
+            "in_transaction_after": false,
+            "in_transaction_before": false,
+            "sql": "SELECT",
+            "stage": "sqlite.execute"
+          },
+          {
+            "elapsed_ms": 833.82,
+            "in_transaction_after": false,
+            "in_transaction_before": false,
+            "sql": "CREATE",
+            "stage": "sqlite.execute"
+          },
+          {
+            "elapsed_ms": 0.032,
+            "in_transaction_after": false,
+            "in_transaction_before": false,
+            "sql": "PRAGMA",
+            "stage": "sqlite.execute"
+          },
+          {
+            "elapsed_ms": 0.023,
+            "in_transaction_after": false,
+            "in_transaction_before": false,
+            "sql": "PRAGMA",
+            "stage": "sqlite.execute"
+          },
+          {
+            "elapsed_ms": 0.012,
+            "in_transaction_after": false,
+            "in_transaction_before": false,
+            "sql": "PRAGMA",
+            "stage": "sqlite.execute"
+          },
+          {
+            "elapsed_ms": 0.006,
+            "in_transaction_after": false,
+            "in_transaction_before": false,
+            "sql": "PRAGMA",
+            "stage": "sqlite.execute"
+          },
+          {
+            "elapsed_ms": 0.007,
+            "in_transaction_after": false,
+            "in_transaction_before": false,
+            "sql": "PRAGMA",
+            "stage": "sqlite.execute"
+          },
+          {
+            "elapsed_ms": 0.006,
+            "in_transaction_after": false,
+            "in_transaction_before": false,
+            "sql": "PRAGMA",
+            "stage": "sqlite.execute"
+          },
+          {
+            "elapsed_ms": 0.005,
+            "in_transaction_after": false,
+            "in_transaction_before": false,
+            "sql": "PRAGMA",
+            "stage": "sqlite.execute"
+          },
+          {
+            "elapsed_ms": 0.005,
+            "in_transaction_after": false,
+            "in_transaction_before": false,
+            "sql": "PRAGMA",
+            "stage": "sqlite.execute"
+          },
+          {
+            "elapsed_ms": 218.808,
+            "in_transaction_after": false,
+            "in_transaction_before": false,
+            "sql": "CREATE",
+            "stage": "sqlite.execute"
+          },
+          {
+            "elapsed_ms": 230.256,
+            "in_transaction_after": false,
+            "in_transaction_before": false,
+            "sql": "CREATE",
+            "stage": "sqlite.execute"
+          },
+          {
+            "elapsed_ms": 207.926,
+            "in_transaction_after": false,
+            "in_transaction_before": false,
+            "sql": "CREATE",
+            "stage": "sqlite.execute"
+          },
+          {
+            "elapsed_ms": 251.454,
+            "in_transaction_after": false,
+            "in_transaction_before": false,
+            "sql": "CREATE",
+            "stage": "sqlite.execute"
+          },
+          {
+            "elapsed_ms": 263.272,
+            "in_transaction_after": false,
+            "in_transaction_before": false,
+            "sql": "CREATE",
+            "stage": "sqlite.execute"
+          },
+          {
+            "elapsed_ms": 207.974,
+            "in_transaction_after": false,
+            "in_transaction_before": false,
+            "sql": "CREATE",
+            "stage": "sqlite.execute"
+          },
+          {
+            "elapsed_ms": 208.059,
+            "in_transaction_after": false,
+            "in_transaction_before": false,
+            "sql": "CREATE",
+            "stage": "sqlite.execute"
+          },
+          {
+            "elapsed_ms": 207.195,
+            "in_transaction_after": false,
+            "in_transaction_before": false,
+            "sql": "CREATE",
+            "stage": "sqlite.execute"
+          },
+          {
+            "elapsed_ms": 230.199,
+            "in_transaction_after": false,
+            "in_transaction_before": false,
+            "sql": "CREATE",
+            "stage": "sqlite.execute"
+          },
+          {
+            "elapsed_ms": 230.122,
+            "in_transaction_after": false,
+            "in_transaction_before": false,
+            "sql": "CREATE",
+            "stage": "sqlite.execute"
+          },
+          {
+            "elapsed_ms": 317.598,
+            "in_transaction_after": false,
+            "in_transaction_before": false,
+            "sql": "CREATE",
+            "stage": "sqlite.execute"
+          },
+          {
+            "elapsed_ms": 230.222,
+            "in_transaction_after": false,
+            "in_transaction_before": false,
+            "sql": "CREATE",
+            "stage": "sqlite.execute"
+          },
+          {
+            "elapsed_ms": 219.125,
+            "in_transaction_after": false,
+            "in_transaction_before": false,
+            "sql": "CREATE",
+            "stage": "sqlite.execute"
+          },
+          {
+            "elapsed_ms": 241.144,
+            "in_transaction_after": false,
+            "in_transaction_before": false,
+            "sql": "CREATE",
+            "stage": "sqlite.execute"
+          },
+          {
+            "elapsed_ms": 251.423,
+            "in_transaction_after": false,
+            "in_transaction_before": false,
+            "sql": "CREATE",
+            "stage": "sqlite.execute"
+          },
+          {
+            "elapsed_ms": 0.031,
+            "in_transaction_after": false,
+            "in_transaction_before": false,
+            "sql": "DROP",
+            "stage": "sqlite.execute"
+          },
+          {
+            "elapsed_ms": 259.184,
+            "in_transaction_after": false,
+            "in_transaction_before": false,
+            "sql": "CREATE",
+            "stage": "sqlite.execute"
+          },
+          {
+            "elapsed_ms": 0.12,
+            "in_transaction_after": false,
+            "in_transaction_before": false,
+            "sql": "PRAGMA",
+            "stage": "sqlite.execute"
+          },
+          {
+            "elapsed_ms": 0.043,
+            "in_transaction_after": false,
+            "in_transaction_before": false,
+            "sql": "PRAGMA",
+            "stage": "sqlite.execute"
+          },
+          {
+            "elapsed_ms": 158.62,
+            "in_transaction_after": false,
+            "in_transaction_before": false,
+            "sql": "ALTER",
+            "stage": "sqlite.execute"
+          },
+          {
+            "elapsed_ms": 0.036,
+            "in_transaction_after": false,
+            "in_transaction_before": false,
+            "sql": "PRAGMA",
+            "stage": "sqlite.execute"
+          },
+          {
+            "elapsed_ms": 0.023,
+            "in_transaction_after": false,
+            "in_transaction_before": false,
+            "sql": "PRAGMA",
+            "stage": "sqlite.execute"
+          },
+          {
+            "elapsed_ms": 0.008,
+            "in_transaction_after": false,
+            "in_transaction_before": false,
+            "sql": "PRAGMA",
+            "stage": "sqlite.execute"
+          },
+          {
+            "elapsed_ms": 0.009,
+            "in_transaction_after": false,
+            "in_transaction_before": false,
+            "sql": "PRAGMA",
+            "stage": "sqlite.execute"
+          },
+          {
+            "elapsed_ms": 0.037,
+            "in_transaction_after": true,
+            "in_transaction_before": false,
+            "sql": "UPDATE",
+            "stage": "sqlite.execute"
+          },
+          {
+            "elapsed_ms": 0.064,
+            "in_transaction_after": true,
+            "in_transaction_before": true,
+            "sql": "CREATE",
+            "stage": "sqlite.execute"
+          },
+          {
+            "elapsed_ms": 0.074,
+            "in_transaction_after": true,
+            "in_transaction_before": true,
+            "sql": "CREATE",
+            "stage": "sqlite.execute"
+          },
+          {
+            "elapsed_ms": 0.01,
+            "in_transaction_after": true,
+            "in_transaction_before": true,
+            "sql": "PRAGMA",
+            "stage": "sqlite.execute"
+          },
+          {
+            "elapsed_ms": 0.045,
+            "in_transaction_after": true,
+            "in_transaction_before": true,
+            "sql": "CREATE",
+            "stage": "sqlite.execute"
+          },
+          {
+            "elapsed_ms": 0.048,
+            "in_transaction_after": true,
+            "in_transaction_before": true,
+            "sql": "CREATE",
+            "stage": "sqlite.execute"
+          },
+          {
+            "elapsed_ms": 0.035,
+            "in_transaction_after": true,
+            "in_transaction_before": true,
+            "sql": "CREATE",
+            "stage": "sqlite.execute"
+          },
+          {
+            "elapsed_ms": 0.061,
+            "in_transaction_after": true,
+            "in_transaction_before": true,
+            "sql": "CREATE",
+            "stage": "sqlite.execute"
+          },
+          {
+            "elapsed_ms": 0.071,
+            "in_transaction_after": true,
+            "in_transaction_before": true,
+            "sql": "CREATE",
+            "stage": "sqlite.execute"
+          },
+          {
+            "elapsed_ms": 0.034,
+            "in_transaction_after": true,
+            "in_transaction_before": true,
+            "sql": "INSERT",
+            "stage": "sqlite.execute"
+          },
+          {
+            "elapsed_ms": 0.061,
+            "in_transaction_after": true,
+            "in_transaction_before": true,
+            "sql": "CREATE",
+            "stage": "sqlite.execute"
+          },
+          {
+            "elapsed_ms": 0.01,
+            "in_transaction_after": true,
+            "in_transaction_before": true,
+            "sql": "INSERT",
+            "stage": "sqlite.execute"
+          },
+          {
+            "elapsed_ms": 0.012,
+            "in_transaction_after": true,
+            "in_transaction_before": true,
+            "sql": "SELECT",
+            "stage": "sqlite.execute"
+          },
+          {
+            "elapsed_ms": 0.046,
+            "in_transaction_after": true,
+            "in_transaction_before": true,
+            "sql": "CREATE",
+            "stage": "sqlite.execute"
+          },
+          {
+            "elapsed_ms": 0.027,
+            "in_transaction_after": true,
+            "in_transaction_before": true,
+            "sql": "CREATE",
+            "stage": "sqlite.execute"
+          },
+          {
+            "elapsed_ms": 0.008,
+            "in_transaction_after": true,
+            "in_transaction_before": true,
+            "sql": "DELETE",
+            "stage": "sqlite.execute"
+          },
+          {
+            "elapsed_ms": 0.009,
+            "in_transaction_after": true,
+            "in_transaction_before": true,
+            "sql": "SELECT",
+            "stage": "sqlite.execute"
+          },
+          {
+            "elapsed_ms": 0.013,
+            "in_transaction_after": true,
+            "in_transaction_before": true,
+            "sql": "INSERT",
+            "stage": "sqlite.execute"
+          },
+          {
+            "elapsed_ms": 0.008,
+            "in_transaction_after": true,
+            "in_transaction_before": true,
+            "sql": "SELECT",
+            "stage": "sqlite.execute"
+          },
+          {
+            "elapsed_ms": 0.007,
+            "in_transaction_after": true,
+            "in_transaction_before": true,
+            "sql": "SELECT",
+            "stage": "sqlite.execute"
+          },
+          {
+            "elapsed_ms": 0.013,
+            "in_transaction_after": true,
+            "in_transaction_before": true,
+            "sql": "SELECT",
+            "stage": "sqlite.execute"
+          },
+          {
+            "elapsed_ms": 0.006,
+            "in_transaction_after": true,
+            "in_transaction_before": true,
+            "sql": "SELECT",
+            "stage": "sqlite.execute"
+          },
+          {
+            "elapsed_ms": 207.13,
+            "in_transaction_after": false,
+            "in_transaction_before": true,
+            "stage": "sqlite.commit"
+          },
+          {
+            "elapsed_ms": 5102.796,
+            "stage": "schema.end"
+          },
+          {
+            "elapsed_ms": 0.033,
+            "in_transaction_after": false,
+            "in_transaction_before": false,
+            "sql": "SELECT",
+            "stage": "sqlite.execute"
+          },
+          {
+            "elapsed_ms": 0.039,
+            "in_transaction_after": false,
+            "in_transaction_before": false,
+            "sql": "SELECT",
+            "stage": "sqlite.execute"
+          },
+          {
+            "elapsed_ms": 0.028,
+            "in_transaction_after": true,
+            "in_transaction_before": false,
+            "sql": "INSERT",
+            "stage": "sqlite.execute"
+          },
+          {
+            "elapsed_ms": 322.361,
+            "in_transaction_after": false,
+            "in_transaction_before": true,
+            "stage": "sqlite.commit"
+          },
+          {
+            "elapsed_ms": 6519.715,
+            "stage": "runtime.store.end"
+          },
+          {
+            "elapsed_ms": 0.024,
+            "in_transaction_after": false,
+            "in_transaction_before": false,
+            "sql": "SELECT",
+            "stage": "sqlite.execute"
+          },
+          {
+            "elapsed_ms": 0.005,
+            "in_transaction_after": false,
+            "in_transaction_before": false,
+            "sql": "SELECT",
+            "stage": "sqlite.execute"
+          },
+          {
+            "elapsed_ms": 0.042,
+            "in_transaction_after": true,
+            "in_transaction_before": false,
+            "sql": "DELETE",
+            "stage": "sqlite.execute"
+          },
+          {
+            "elapsed_ms": 0.029,
+            "in_transaction_after": true,
+            "in_transaction_before": true,
+            "sql": "INSERT",
+            "stage": "sqlite.executemany"
+          },
+          {
+            "elapsed_ms": 271.682,
+            "in_transaction_after": false,
+            "in_transaction_before": true,
+            "stage": "sqlite.commit"
+          },
+          {
+            "elapsed_ms": 0.114,
+            "in_transaction_after": false,
+            "in_transaction_before": false,
+            "sql": "SELECT",
+            "stage": "sqlite.execute"
+          },
+          {
+            "elapsed_ms": 6809.298,
+            "stage": "dispatcher.end"
+          },
+          {
+            "elapsed_ms": 0.047,
+            "in_transaction_after": false,
+            "in_transaction_before": false,
+            "sql": "SELECT",
+            "stage": "sqlite.execute"
+          },
+          {
+            "elapsed_ms": 7180.725,
+            "stage": "owner.end"
+          },
+          {
+            "elapsed_ms": 7718.951,
+            "exception": "TimeoutError",
+            "stage": "service.start.error"
+          }
+        ],
+        "startup_deadline_seconds": 5.0,
+        "startup_elapsed_ms": 7183.937,
+        "status": "failed"
+      },
+      "command": [
+        "D:\\Development\\mnemos\\mnemos\\.worktrees\\functional-local-memory\\.venv\\Scripts\\python.exe",
+        "D:\\Development\\mnemos\\mnemos\\.worktrees\\functional-local-memory\\.venv\\service_startup_diagnostic.py",
+        "--child",
+        ".venv\\service-startup-diagnostic-v3\\attempt-01"
+      ],
+      "fixture": "D:\\WindowsTemp\\mnemos-service-startup-ivvyrsxm",
+      "ordinal": 1,
+      "parent_timed_out": false,
+      "parent_wait_elapsed_ms": 7957.852,
+      "process_exit_code": 1
+    }
+  ],
+  "child_wait_seconds": 40.0,
+  "durability_contract": {
+    "journal_mode": "WAL",
+    "synchronous": "FULL"
+  },
+  "fixture_contract": {
+    "embedding_provider": "simple",
+    "llm_provider": "ollama",
+    "network_or_model_calls": false,
+    "ollama_endpoint": "loopback port 1 only; no request is made",
+    "store": "sqlite"
+  },
+  "python": "D:\\Development\\mnemos\\mnemos\\.worktrees\\functional-local-memory\\.venv\\Scripts\\python.exe",
+  "runner": "D:\\Development\\mnemos\\mnemos\\.worktrees\\functional-local-memory\\.venv\\service_startup_diagnostic.py",
+  "source_hashes": {
+    "mnemos\\engine.py": "9692e5c3ab18c439ea5fb7cc2155c10707800cbf08f1ae55608226a3ced37c59",
+    "mnemos\\runtime.py": "4ea7effc4e8722b74616ff4d07e1f839ad640bdfb04aa2c795b2c66e6a12ebab",
+    "mnemos\\service.py": "3e67c06fc8b5da115428e26c88c9b5731270c7631f9e74c05c70a3ff3db53d89",
+    "mnemos\\utils\\storage.py": "71b19a99c589f9b1a123004ae6dfee813e45cedb271e8c2b9fa7d517370e9fb5"
+  },
+  "source_root": "D:\\Development\\mnemos\\mnemos\\.worktrees\\functional-local-memory",
+  "started_at_utc": "2026-09-17T09:13:23Z",
+  "startup_deadline_seconds": 5.0,
+  "status": "failed"
+}

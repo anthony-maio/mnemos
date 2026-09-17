@@ -1,0 +1,96 @@
+"""Run startup regressions against the immutable 2360891 source tree."""
+
+from __future__ import annotations
+
+import contextlib
+import hashlib
+import io
+import json
+import os
+import subprocess
+import sys
+from datetime import datetime, timezone
+from pathlib import Path
+
+
+WORKTREE = Path(__file__).resolve().parents[1]
+FROZEN = WORKTREE / ".venv" / "hermes-registry-frozen-v1"
+TEST_FILE = WORKTREE / "tests" / "test_storage_startup.py"
+OUTPUT = WORKTREE / ".venv" / "frozen-old-storage-startup-probe.json"
+EXPECTED_COMMIT = "2360891b23f68606092add4593cd9c29d303ee1a"
+
+
+def sha256(path: Path) -> str:
+    digest = hashlib.sha256()
+    with path.open("rb") as handle:
+        for block in iter(lambda: handle.read(1024 * 1024), b""):
+            digest.update(block)
+    return digest.hexdigest()
+
+
+def git(*args: str) -> str:
+    return subprocess.run(
+        ["git", "-C", str(FROZEN), *args],
+        check=True,
+        capture_output=True,
+        text=True,
+    ).stdout.strip()
+
+
+def main() -> int:
+    commit = git("rev-parse", "HEAD")
+    status = git("status", "--short", "--untracked-files=no")
+    if commit != EXPECTED_COMMIT or status:
+        raise RuntimeError(f"frozen source guard failed: commit={commit!r}, status={status!r}")
+
+    for key in list(os.environ):
+        if key == "PYTHONPATH" or key.startswith("MNEMOS"):
+            os.environ.pop(key, None)
+
+    current_root_path = WORKTREE.resolve()
+    sys.path[:] = [
+        str(FROZEN.resolve()),
+        *[
+            entry
+            for entry in sys.path
+            if Path(entry or os.curdir).resolve() not in {
+                current_root_path,
+                current_root_path / "mnemos",
+                current_root_path / "tests",
+            }
+        ],
+    ]
+    import mnemos.utils.storage as storage
+
+    origin = str(Path(storage.__file__).resolve())
+    if not origin.casefold().startswith(str(FROZEN.resolve()).casefold()):
+        raise RuntimeError(f"wrong storage origin: {origin}")
+
+    stdout = io.StringIO()
+    stderr = io.StringIO()
+    command = [sys.executable, "-m", "pytest", str(TEST_FILE), "-vv", "-s", "-p", "no:cacheprovider"]
+    with contextlib.redirect_stdout(stdout), contextlib.redirect_stderr(stderr):
+        exit_code = int(__import__("pytest").main(command[3:]))
+    report = {
+        "recorded_at": datetime.now(timezone.utc).isoformat(),
+        "command": command,
+        "frozen_root": str(FROZEN.resolve()),
+        "frozen_commit": commit,
+        "frozen_status": status,
+        "storage_origin": origin,
+        "storage_source_sha256": sha256(Path(origin)),
+        "test_path": str(TEST_FILE.resolve()),
+        "test_sha256": sha256(TEST_FILE),
+        "pytest_exit_code": exit_code,
+        "stdout": stdout.getvalue(),
+        "stderr": stderr.getvalue(),
+    }
+    OUTPUT.write_text(json.dumps(report, indent=2) + "\n", encoding="utf-8")
+    print(json.dumps({key: report[key] for key in (
+        "frozen_commit", "frozen_status", "storage_origin", "pytest_exit_code"
+    )}, indent=2))
+    return exit_code
+
+
+if __name__ == "__main__":
+    raise SystemExit(main())
