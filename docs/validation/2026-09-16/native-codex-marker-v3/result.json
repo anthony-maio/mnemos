@@ -1,0 +1,82 @@
+{
+  "probe": "native-codex-marker-v3",
+  "host_version": "codex-cli 0.146.0",
+  "launcher": "C:\\Users\\Ant\\AppData\\Roaming\\npm\\codex.cmd",
+  "config_source": "CODEX_HOME/hooks.json only",
+  "hooks_feature_arg": "--enable hooks",
+  "hook_event": "SessionStart",
+  "matcher": "startup",
+  "command_shape": "C:\\Windows\\System32\\cmd.exe /d /c <disposable-project>\\codex-hook-probe.cmd",
+  "stop_output_shape": "{\"continue\":false,\"stopReason\":\"marker probe\"}",
+  "marker_seen": false,
+  "event_marker_seen": true,
+  "killed_for_safety": true,
+  "returncode": 1,
+  "elapsed_ms": 34664.4,
+  "stdout_events": [
+    {
+      "type": "thread.started",
+      "event_type": null,
+      "has_usage": false
+    },
+    {
+      "type": "item.completed",
+      "item_type": "error",
+      "item_id_present": true,
+      "message_present": true
+    },
+    {
+      "type": "item.completed",
+      "item_type": "error",
+      "item_id_present": true,
+      "message_present": true
+    },
+    {
+      "type": "turn.started",
+      "event_type": null,
+      "has_usage": false
+    },
+    {
+      "type": "item.completed",
+      "item_type": "error",
+      "item_id_present": true,
+      "message_present": true
+    },
+    {
+      "type": "turn.completed",
+      "event_type": null,
+      "has_usage": true
+    }
+  ],
+  "stderr_tail": "d=1 elapsed=8.094101s elapsed_secs=8.094101 slow_threshold=1s\n2026-09-17T05:19:21.385857Z  WARN sqlx::pool::acquire: acquired connection, but time to acquire exceeded slow threshold acquired_after_secs=8.0945379 slow_acquire_threshold_secs=2.0\nReading additional input from stdin...\n2026-09-17T05:19:22.934572Z  WARN codex_core::shell_snapshot: Failed to create shell snapshot for powershell: Shell snapshot not supported yet for PowerShell\n2026-09-17T05:19:27.007927Z  WARN sqlx::query: slow statement: execution time exceeded alert threshold summary=\"PRAGMA auto_vacuum = INCREMENTAL; \u2026\" db.statement=\"\\n\\nPRAGMA auto_vacuum = INCREMENTAL; PRAGMA journal_mode = WAL; PRAGMA foreign_keys = ON; PRAGMA synchronous = NORMAL; \\n\" rows_affected=0 rows_returned=1 elapsed=3.416057s elapsed_secs=3.416057 slow_threshold=1s\n2026-09-17T05:19:27.007991Z  WARN sqlx::pool::acquire: acquired connection, but time to acquire exceeded slow threshold acquired_after_secs=3.4173312 slow_acquire_threshold_secs=2.0\n",
+  "model_usage_observed": false,
+  "model_execution_verified": false,
+  "model_usage_signal": "turn.started and a usage field shape appeared; numeric usage was not retained",
+  "usage": null,
+  "error_items": [
+    {
+      "item_type": "error",
+      "message_summary": "not retained"
+    },
+    {
+      "item_type": "error",
+      "message_summary": "not retained"
+    },
+    {
+      "item_type": "error",
+      "message_summary": "not retained"
+    }
+  ],
+  "marker_sampling": {
+    "marker_seen": "sampled during safety loop before launcher kill",
+    "event_marker_seen": "checked after child process collection"
+  },
+  "runner_sha256": "67AC331772E291B554EE310B93BFFB71B2C2499AD90D2DFE00F5322AE6D031A7",
+  "cleanup": {
+    "remaining_disposable_dirs": 0,
+    "remaining_probe_processes": 0,
+    "copied_auth_removed": true,
+    "explicit_acl_applied": false,
+    "verification": "disposable root removed; no matching non-PowerShell process remained"
+  }
+}

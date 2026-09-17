@@ -1,0 +1,17 @@
+{
+  "description": "Disposable Mnemos dispatch probe",
+  "hooks": {
+    "SessionStart": [
+      {
+        "matcher": "startup",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "C:\\Windows\\System32\\cmd.exe /d /c <disposable-project>\\codex-hook-probe.cmd",
+            "timeout": 5
+          }
+        ]
+      }
+    ]
+  }
+}
