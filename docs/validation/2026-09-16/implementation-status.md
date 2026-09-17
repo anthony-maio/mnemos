@@ -17,6 +17,13 @@ graph expansion, and budgeting use current records. All six service-level
 regressions fail on the prior source and pass with the repair. See the
 [concurrency reproduction](../2026-09-17/retrieval-concurrent-revision-v1/README.md).
 
+The later Claude startup default at `dedfcfd` has 43 passing host/plugin checks
+with two platform skips, formatting, and strict typing. Its isolated native
+`alwaysLoad` control passed nine startup/routing criteria. Full source/package
+verification is running from `mnemos-source-claude-startup-v1`; it has not yet
+superseded the complete `62fe164` checkpoint above. See the
+[startup control](../2026-09-17/native-claude-alwaysload-v2/README.md).
+
 An earlier full-suite attempt at `e1fd56e` finished with 897 passed, one failed,
 and four skipped. A list response in the synthetic Codex continuity fixture
 lacked `facts`; its cause is under investigation. The runner stopped before
