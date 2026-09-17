@@ -34,6 +34,11 @@ reported the seeded SQLite store; no hook callbacks were observed. This proves
 MCP health dispatch, not the complete capture or correction/forget lifecycle.
 [Command binding and native health evidence](validation/2026-09-16/codex-health-installation-binding/README.md).
 
+Source644's fresh wheel then passed native health with the generated exact
+interpreter command and inherited PATH, verifying the product launcher repair
+without the earlier probe's PATH patch.
+[Current package check](validation/2026-09-16/extraction-contract-package-verification/README.md).
+
 The [native provisional capture record](validation/2026-09-16/provisional-native-claude-v8/README.md)
 preserves the original duplicate gate alongside the separate identity result.
 

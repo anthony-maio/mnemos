@@ -802,3 +802,27 @@ responses, but matched the predefined exact case proxy only once. It selected
 add for support and correction, and declined a clear preference. Valid citation
 IDs do not prove good memory decisions. A bounded comparison with the existing
 qwen3.5:9b installation is next; the large held-out queue remains stopped.
+
+## Verified extraction package and Qwen thinking diagnostic
+
+Frozen source `64471f5` passed 776 tests with four platform-specific skips,
+Black, strict compatible mypy, JavaScript, build, and Twine. Fresh installation
+passed replay and 53-Python-file/three-asset parity. Native Codex health passed
+using the generated exact Python interpreter command, with inherited PATH,
+no approval override, and no hook-trust bypass. Cleanup removed the copied
+authentication and runtime descriptor. This remains a health-dispatch check,
+not complete host capture acceptance.
+
+Qwen3.5:9b with the current provider defaults produced four empty final
+responses while returning a separate thinking field; all four failed parsing.
+All stopped before the token limit. Replaying the same four prompts/schemas
+directly with only `think:false` added produced four valid final responses and
+two exact proxy passes. It still omitted the preference. The correction case
+contrasts a new requirement with an existing actual deployment, so its add
+operation is not conclusive evidence of a semantic error. Its frozen proxy
+remains failed; a future disjoint case must state supersession explicitly.
+[Diagnostic artifacts](qwen-thinking-control/README.md).
+
+The direct request repair is not yet integrated provider behavior. An isolated
+candidate is adding an explicit optional Ollama thinking setting and a typed
+empty-final-response failure. No reasoning text is promoted into facts.

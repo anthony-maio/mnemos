@@ -1,0 +1,274 @@
+"""Replay the qwen extraction diagnostic with only top-level think=false."""
+
+from __future__ import annotations
+
+import argparse
+from datetime import datetime, timezone
+import hashlib
+import json
+import os
+from pathlib import Path
+import subprocess
+import sys
+from typing import Any
+
+import httpx
+
+DEFAULT_ENDPOINT = "http://192.168.86.35:11434"
+SOURCE_DIR = Path(__file__).with_name("extraction-contract-candidate-v1").resolve()
+INPUT_REPORT = Path(__file__).with_name("extraction-contract-development-qwen35-v1") / "report.json"
+
+
+def digest_source(source: Path) -> str:
+    digest = hashlib.sha256()
+    for path in sorted((source / "mnemos").rglob("*.py")):
+        digest.update(path.relative_to(source).as_posix().encode("utf-8"))
+        digest.update(path.read_bytes())
+    return digest.hexdigest()
+
+
+def model_metadata(endpoint: str, model: str) -> dict[str, Any]:
+    response = httpx.get(endpoint.rstrip("/") + "/api/tags", timeout=20.0)
+    response.raise_for_status()
+    for item in response.json().get("models", []):
+        if isinstance(item, dict) and item.get("name") == model:
+            return item
+    raise RuntimeError(f"Model {model!r} is not present in current Ollama tags")
+
+
+def proposal_review(
+    proposals: list[dict[str, Any]], expected: dict[str, Any], source_id: str, fact_id: str
+) -> list[dict[str, Any]]:
+    return [
+        {
+            "proposal": proposal,
+            "operation_matches": proposal.get("operation") == expected.get("operation"),
+            "content_matches": proposal.get("content") == expected.get("content"),
+            "evidence_is_current_source": proposal.get("evidence_ids") == [source_id],
+            "target_matches": proposal.get("target_fact_id") == fact_id,
+            "version_matches": proposal.get("expected_version") == 1,
+        }
+        for proposal in proposals
+    ]
+
+
+def exact_case_proxy(
+    payload: dict[str, Any] | None,
+    reviews: list[dict[str, Any]],
+    expected: dict[str, Any],
+    error: str | None,
+) -> bool:
+    if error is not None or payload is None:
+        return False
+    if expected.get("decision") == "no_durable_facts":
+        return (
+            payload.get("decision") == "no_durable_facts"
+            and payload.get("facts") == []
+            and isinstance(payload.get("reason"), str)
+            and bool(payload["reason"].strip())
+        )
+    if payload.get("decision") != "facts" or len(reviews) != 1:
+        return False
+    review = reviews[0]
+    return bool(
+        review["operation_matches"]
+        and review["content_matches"]
+        and review["evidence_is_current_source"]
+        and (expected.get("operation") == "add" or review["target_matches"])
+        and (expected.get("operation") != "correct" or review["version_matches"])
+    )
+
+
+def main() -> int:
+    parser = argparse.ArgumentParser()
+    parser.add_argument("--endpoint", default=DEFAULT_ENDPOINT)
+    parser.add_argument("--input-report", type=Path, default=INPUT_REPORT)
+    parser.add_argument(
+        "--output",
+        type=Path,
+        default=Path(__file__).with_name("qwen-thinking-control-v1"),
+    )
+    args = parser.parse_args()
+    input_report = args.input_report.resolve()
+    output = args.output.resolve()
+    if output.exists():
+        raise SystemExit(f"Refusing to overwrite existing output directory: {output}")
+    previous = json.loads(input_report.read_text(encoding="utf-8"))
+    previous_manifest = previous["manifest"]
+    model = previous_manifest["model"]
+    previous_digest = previous_manifest["model_metadata"]["digest"]
+    current = model_metadata(args.endpoint, model)
+    if current.get("digest") != previous_digest:
+        raise SystemExit("Current model digest differs from stored qwen diagnostic")
+    source_revision = subprocess.run(
+        ["git", "-C", str(SOURCE_DIR), "rev-parse", "HEAD"],
+        capture_output=True,
+        text=True,
+        check=False,
+    ).stdout.strip()
+    if not source_revision.startswith(previous_manifest["candidate_revision"][:7]):
+        raise SystemExit(f"Candidate revision differs from stored diagnostic: {source_revision}")
+    source_hash = digest_source(SOURCE_DIR)
+    if source_hash != previous_manifest["candidate_code_sha256"]:
+        raise SystemExit("Candidate source hash differs from stored qwen diagnostic")
+
+    sys.path.insert(0, str(SOURCE_DIR))
+    from jsonschema import Draft202012Validator
+    from mnemos.contracts import ExtractionResponse
+
+    output.mkdir(parents=True)
+    (output / "raw").mkdir()
+    manifest = {
+        "diagnostic": "qwen-thinking-control-v1",
+        "development_only": True,
+        "heldout": False,
+        "input_report": str(input_report),
+        "input_report_sha256": hashlib.sha256(input_report.read_bytes()).hexdigest(),
+        "endpoint": args.endpoint,
+        "model": model,
+        "stored_model_digest": previous_digest,
+        "current_model_metadata": current,
+        "candidate_revision": source_revision,
+        "candidate_code_sha256": source_hash,
+        "temperature": 0.0,
+        "num_predict": 512,
+        "think": False,
+        "provider_behavior": "direct /api/generate diagnostic; not production provider behavior",
+        "created_at": datetime.now(timezone.utc).isoformat(),
+    }
+    (output / "manifest.json").write_text(
+        json.dumps(manifest, indent=2, sort_keys=True) + "\n", encoding="utf-8"
+    )
+
+    rows: list[dict[str, Any]] = []
+    for previous_row in previous["observations"]:
+        case = previous_row["case"]
+        prompt = previous_row["prompt"]
+        predict_kwargs = previous_row["predict_kwargs"]
+        format_schema = predict_kwargs.get("format")
+        if not isinstance(format_schema, dict):
+            raise SystemExit(f"Stored request schema is missing for {case}")
+        request = {
+            "model": model,
+            "prompt": prompt,
+            "format": format_schema,
+            "stream": False,
+            "options": {"temperature": 0.0, "num_predict": 512},
+            "think": False,
+        }
+        request_bytes = json.dumps(request, ensure_ascii=True, sort_keys=True).encode("utf-8")
+        started = datetime.now(timezone.utc).isoformat()
+        error: str | None = None
+        status_code: int | None = None
+        response_bytes = b""
+        response_object: dict[str, Any] | None = None
+        try:
+            response = httpx.post(
+                args.endpoint.rstrip("/") + "/api/generate",
+                json=request,
+                timeout=120.0,
+            )
+            status_code = response.status_code
+            response_bytes = response.content
+            response.raise_for_status()
+            decoded = response.json()
+            if isinstance(decoded, dict):
+                response_object = decoded
+            else:
+                error = "Response JSON was not an object"
+        except Exception as exc:
+            error = type(exc).__name__ + ": " + str(exc)
+        answer = response_object.get("response") if response_object else None
+        answer_text = answer if isinstance(answer, str) else ""
+        payload: dict[str, Any] | None = None
+        parse_error: str | None = None
+        if answer_text:
+            try:
+                decoded_answer = json.loads(answer_text)
+                if isinstance(decoded_answer, dict):
+                    payload = decoded_answer
+                else:
+                    parse_error = "Final response JSON was not an object"
+            except (TypeError, ValueError) as exc:
+                parse_error = type(exc).__name__ + ": " + str(exc)
+        else:
+            parse_error = "Final response field was empty"
+        source_id = previous_row["event_id"]
+        fact_id = previous_row["existing_fact_id"]
+        expected = previous_row["expected"]
+        response_schema_valid = (
+            Draft202012Validator(ExtractionResponse.model_json_schema()).is_valid(payload)
+            if payload is not None
+            else None
+        )
+        request_schema_valid = (
+            Draft202012Validator(format_schema).is_valid(payload) if payload is not None else None
+        )
+        runtime_model_valid = False
+        if payload is not None:
+            try:
+                ExtractionResponse.model_validate(payload)
+                runtime_model_valid = True
+            except Exception:
+                runtime_model_valid = False
+        raw_facts = payload.get("facts") if payload is not None else None
+        proposals = (
+            [item for item in raw_facts if isinstance(item, dict)]
+            if isinstance(raw_facts, list)
+            else []
+        )
+        reviews = proposal_review(proposals, expected, source_id, fact_id)
+        row = {
+            "case": case,
+            "started_at": started,
+            "finished_at": datetime.now(timezone.utc).isoformat(),
+            "request": request,
+            "request_sha256": hashlib.sha256(request_bytes).hexdigest(),
+            "stored_prompt_sha256": hashlib.sha256(prompt.encode()).hexdigest(),
+            "stored_format_sha256": hashlib.sha256(
+                json.dumps(format_schema, ensure_ascii=True, sort_keys=True).encode()
+            ).hexdigest(),
+            "response_http_status": status_code,
+            "response_bytes_sha256": hashlib.sha256(response_bytes).hexdigest(),
+            "response_bytes_length": len(response_bytes),
+            "response_object": response_object,
+            "answer_text": answer_text,
+            "answer_empty": not bool(answer_text),
+            "answer_parse_error": parse_error,
+            "schema_checks": {
+                "response_schema_valid": response_schema_valid,
+                "request_schema_valid": request_schema_valid,
+                "runtime_model_valid": runtime_model_valid,
+            },
+            "error": error,
+            "all_proposals_review": reviews,
+            "exact_case_proxy": exact_case_proxy(payload, reviews, expected, error),
+            "semantic_review": {
+                "status": "unjudged",
+                "note": "Exact field comparison is a contract proxy; semantic entailment requires independent review.",
+            },
+            "source_revision": source_revision,
+            "source_code_sha256": source_hash,
+        }
+        rows.append(row)
+        (output / "raw" / f"candidate-v2-{case}.json").write_text(
+            json.dumps(row, indent=2, sort_keys=True) + "\n", encoding="utf-8"
+        )
+    report = {"manifest": manifest, "observations": rows}
+    report_path = output / "report.json"
+    report_path.write_text(json.dumps(report, indent=2, sort_keys=True) + "\n", encoding="utf-8")
+    print(
+        json.dumps(
+            {
+                "output": str(output),
+                "observations": len(rows),
+                "report_sha256": hashlib.sha256(report_path.read_bytes()).hexdigest(),
+            },
+            sort_keys=True,
+        )
+    )
+    return 0
+
+
+if __name__ == "__main__":
+    raise SystemExit(main())

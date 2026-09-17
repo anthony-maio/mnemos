@@ -1,0 +1,76 @@
+{
+  "source_commit": "64471f5b12102e6ba94079fb74417b087223bc24",
+  "started_at": "2026-09-17T13:31:14.084496+00:00",
+  "status": "passed",
+  "wheel": {
+    "file": "D:\\Development\\mnemos\\mnemos\\.worktrees\\functional-local-memory\\.venv\\extraction-contract-checks-v1\\dist\\mnemos_memory-0.7.0-py3-none-any.whl",
+    "bytes": 276149,
+    "sha256": "7c0e02f95ec08c1d3c622d1a235ef736884fcfba6df9cffa1a96bae84a8b97bd"
+  },
+  "environment": "D:\\WindowsTemp\\mnemos-extraction-contract-wheel-20260917-v1",
+  "runner_sha256": "7a303730dde4261f3cc2cbac9eec97151fe1951e119910c99cc12a1488cb9607",
+  "commands": [
+    {
+      "name": "create_environment",
+      "command": [
+        "C:\\Users\\Ant\\.local\\bin\\uv.exe",
+        "venv",
+        "D:\\WindowsTemp\\mnemos-extraction-contract-wheel-20260917-v1",
+        "--python",
+        "D:\\Development\\mnemos\\mnemos\\.worktrees\\functional-local-memory\\.venv\\Scripts\\python.exe"
+      ],
+      "started_at": "2026-09-17T13:31:14.089714+00:00",
+      "exit_code": 0,
+      "finished_at": "2026-09-17T13:31:14.128365+00:00"
+    },
+    {
+      "name": "install_wheel",
+      "command": [
+        "C:\\Users\\Ant\\.local\\bin\\uv.exe",
+        "pip",
+        "install",
+        "--python",
+        "D:\\WindowsTemp\\mnemos-extraction-contract-wheel-20260917-v1\\Scripts\\python.exe",
+        "mnemos-memory[mcp] @ file:///D:/Development/mnemos/mnemos/.worktrees/functional-local-memory/.venv/extraction-contract-checks-v1/dist/mnemos_memory-0.7.0-py3-none-any.whl"
+      ],
+      "started_at": "2026-09-17T13:31:14.128380+00:00",
+      "exit_code": 0,
+      "finished_at": "2026-09-17T13:31:17.650563+00:00"
+    },
+    {
+      "name": "freeze_environment",
+      "command": [
+        "C:\\Users\\Ant\\.local\\bin\\uv.exe",
+        "pip",
+        "freeze",
+        "--python",
+        "D:\\WindowsTemp\\mnemos-extraction-contract-wheel-20260917-v1\\Scripts\\python.exe"
+      ],
+      "started_at": "2026-09-17T13:31:17.650579+00:00",
+      "exit_code": 0,
+      "finished_at": "2026-09-17T13:31:17.696293+00:00"
+    },
+    {
+      "name": "replay_probe",
+      "command": [
+        "D:\\WindowsTemp\\mnemos-extraction-contract-wheel-20260917-v1\\Scripts\\python.exe",
+        "-I",
+        "D:\\Development\\mnemos\\mnemos\\.worktrees\\functional-local-memory\\.venv\\verify_claude_stop_replay.py",
+        "--snapshot",
+        "D:\\Development\\mnemos\\mnemos\\.worktrees\\functional-local-memory\\.venv\\extraction-contract-frozen-v1",
+        "--commit",
+        "64471f5b12102e6ba94079fb74417b087223bc24",
+        "--output",
+        "D:\\Development\\mnemos\\mnemos\\.worktrees\\functional-local-memory\\.venv\\extraction-contract-installed-v1\\probe.json",
+        "--installed-package",
+        "D:\\WindowsTemp\\mnemos-extraction-contract-wheel-20260917-v1\\Lib\\site-packages",
+        "--wheel",
+        "D:\\Development\\mnemos\\mnemos\\.worktrees\\functional-local-memory\\.venv\\extraction-contract-checks-v1\\dist\\mnemos_memory-0.7.0-py3-none-any.whl"
+      ],
+      "started_at": "2026-09-17T13:31:17.696309+00:00",
+      "exit_code": 0,
+      "finished_at": "2026-09-17T13:31:23.417581+00:00"
+    }
+  ],
+  "finished_at": "2026-09-17T13:31:23.425916+00:00"
+}

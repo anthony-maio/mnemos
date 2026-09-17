@@ -1,0 +1,109 @@
+{
+  "source_commit": "64471f5b12102e6ba94079fb74417b087223bc24",
+  "source_checkout": "D:\\Development\\mnemos\\mnemos\\.worktrees\\functional-local-memory\\.venv\\extraction-contract-frozen-v1",
+  "status": "passed",
+  "started_at": "2026-09-17T13:24:43.515264+00:00",
+  "checks": [
+    {
+      "name": "pytest",
+      "command": [
+        "D:\\Development\\mnemos\\mnemos\\.worktrees\\functional-local-memory\\.venv\\Scripts\\python.exe",
+        "-m",
+        "pytest",
+        "-q",
+        "--junitxml",
+        "D:\\Development\\mnemos\\mnemos\\.worktrees\\functional-local-memory\\.venv\\extraction-contract-checks-v1\\pytest.xml"
+      ],
+      "status": "passed",
+      "started_at": "2026-09-17T13:24:43.516235+00:00",
+      "exit_code": 0,
+      "finished_at": "2026-09-17T13:29:38.129735+00:00",
+      "counts": {
+        "tests": 780,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 4
+      }
+    },
+    {
+      "name": "black",
+      "command": [
+        "D:\\Development\\mnemos\\mnemos\\.worktrees\\functional-local-memory\\.venv\\Scripts\\python.exe",
+        "-m",
+        "black",
+        "--check",
+        "."
+      ],
+      "status": "passed",
+      "started_at": "2026-09-17T13:29:38.138437+00:00",
+      "exit_code": 0,
+      "finished_at": "2026-09-17T13:29:41.108568+00:00"
+    },
+    {
+      "name": "mypy",
+      "command": [
+        "D:\\Development\\mnemos\\mnemos\\.worktrees\\functional-local-memory\\.venv\\compat-py310\\Scripts\\python.exe",
+        "-m",
+        "mypy",
+        "."
+      ],
+      "status": "passed",
+      "started_at": "2026-09-17T13:29:41.109390+00:00",
+      "exit_code": 0,
+      "finished_at": "2026-09-17T13:29:50.241657+00:00"
+    },
+    {
+      "name": "javascript",
+      "command": [
+        "node",
+        "--check",
+        "mnemos/ui/app.js"
+      ],
+      "status": "passed",
+      "started_at": "2026-09-17T13:29:50.242592+00:00",
+      "exit_code": 0,
+      "finished_at": "2026-09-17T13:29:50.307921+00:00"
+    },
+    {
+      "name": "build",
+      "command": [
+        "D:\\Development\\mnemos\\mnemos\\.worktrees\\functional-local-memory\\.venv\\Scripts\\python.exe",
+        "-m",
+        "build",
+        "--outdir",
+        "D:\\Development\\mnemos\\mnemos\\.worktrees\\functional-local-memory\\.venv\\extraction-contract-checks-v1\\dist"
+      ],
+      "status": "passed",
+      "started_at": "2026-09-17T13:29:50.308739+00:00",
+      "exit_code": 0,
+      "finished_at": "2026-09-17T13:30:23.911967+00:00"
+    },
+    {
+      "name": "twine",
+      "command": [
+        "D:\\Development\\mnemos\\mnemos\\.worktrees\\functional-local-memory\\.venv\\Scripts\\python.exe",
+        "-m",
+        "twine",
+        "check",
+        "D:\\Development\\mnemos\\mnemos\\.worktrees\\functional-local-memory\\.venv\\extraction-contract-checks-v1\\dist\\mnemos_memory-0.7.0-py3-none-any.whl",
+        "D:\\Development\\mnemos\\mnemos\\.worktrees\\functional-local-memory\\.venv\\extraction-contract-checks-v1\\dist\\mnemos_memory-0.7.0.tar.gz"
+      ],
+      "exit_code": 0,
+      "status": "passed"
+    }
+  ],
+  "runner_sha256": "d2f05b5e2189e3d3ba5ce9b535d8f5adc98d0c5409037cfff7f4460fac0bdfd6",
+  "updated_at": "2026-09-17T13:30:24.831777+00:00",
+  "artifacts": [
+    {
+      "file": "D:\\Development\\mnemos\\mnemos\\.worktrees\\functional-local-memory\\.venv\\extraction-contract-checks-v1\\dist\\mnemos_memory-0.7.0-py3-none-any.whl",
+      "bytes": 276149,
+      "sha256": "7c0e02f95ec08c1d3c622d1a235ef736884fcfba6df9cffa1a96bae84a8b97bd"
+    },
+    {
+      "file": "D:\\Development\\mnemos\\mnemos\\.worktrees\\functional-local-memory\\.venv\\extraction-contract-checks-v1\\dist\\mnemos_memory-0.7.0.tar.gz",
+      "bytes": 15119828,
+      "sha256": "cef2a52e17c7ddcbf1256312eaed82e669ee385bd167f2687d792b29e6f3be4a"
+    }
+  ]
+}

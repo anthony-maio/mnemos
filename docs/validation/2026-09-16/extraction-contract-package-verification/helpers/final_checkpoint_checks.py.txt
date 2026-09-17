@@ -1,0 +1,75 @@
+"""Record exit codes and logs for one immutable implementation checkpoint."""
+import argparse
+from datetime import datetime, timezone
+import hashlib
+import json
+import os
+from pathlib import Path
+import subprocess
+import sys
+import xml.etree.ElementTree as ET
+
+parser = argparse.ArgumentParser()
+parser.add_argument('--snapshot', type=Path, required=True)
+parser.add_argument('--output', type=Path, required=True)
+args = parser.parse_args()
+snapshot = args.snapshot.resolve()
+output = args.output.resolve()
+output.mkdir(parents=True, exist_ok=False)
+workspace = Path(__file__).resolve().parent.parent
+python = str(workspace / '.venv/Scripts/python.exe')
+mypy_python = str(workspace / '.venv/compat-py310/Scripts/python.exe')
+env = {key: value for key, value in os.environ.items() if not key.startswith('MNEMOS_') and key != 'PYTHONPATH'}
+env['PYTHONUNBUFFERED'] = '1'
+commit = subprocess.check_output(['git', 'rev-parse', 'HEAD'], cwd=snapshot, text=True).strip()
+if subprocess.check_output(['git', 'status', '--porcelain'], cwd=snapshot, text=True).strip():
+    raise SystemExit('Verification snapshot must be clean')
+record = {'source_commit': commit, 'source_checkout': str(snapshot), 'status': 'running',
+          'started_at': datetime.now(timezone.utc).isoformat(), 'checks': [],
+          'runner_sha256': hashlib.sha256(Path(__file__).read_bytes()).hexdigest()}
+
+def save():
+    record['updated_at'] = datetime.now(timezone.utc).isoformat()
+    temporary = output / 'verification.tmp'
+    temporary.write_text(json.dumps(record, indent=2) + '\n', encoding='utf-8')
+    temporary.replace(output / 'verification.json')
+
+checks = [
+ ('pytest', [python, '-m', 'pytest', '-q', '--junitxml', str(output / 'pytest.xml')]),
+ ('black', [python, '-m', 'black', '--check', '.']),
+ ('mypy', [mypy_python, '-m', 'mypy', '.']),
+ ('javascript', ['node', '--check', 'mnemos/ui/app.js']),
+ ('build', [python, '-m', 'build', '--outdir', str(output / 'dist')]),
+]
+save()
+for name, command in checks:
+    entry = {'name': name, 'command': command, 'status': 'running', 'started_at': datetime.now(timezone.utc).isoformat()}
+    record['checks'].append(entry)
+    save()
+    with (output / (name + '.log')).open('w', encoding='utf-8') as log:
+        completed = subprocess.run(command, cwd=snapshot, env=env, stdout=log, stderr=subprocess.STDOUT,
+                                   creationflags=getattr(subprocess, 'CREATE_NO_WINDOW', 0))
+    entry.update(exit_code=completed.returncode, status='passed' if completed.returncode == 0 else 'failed',
+                 finished_at=datetime.now(timezone.utc).isoformat())
+    if name == 'pytest' and (output / 'pytest.xml').exists():
+        suites = list(ET.parse(output / 'pytest.xml').getroot().iter('testsuite'))
+        entry['counts'] = {key: sum(int(suite.attrib.get(key, '0')) for suite in suites)
+                           for key in ('tests', 'failures', 'errors', 'skipped')}
+    save()
+    if completed.returncode:
+        record['status'] = 'failed'
+        save()
+        raise SystemExit(completed.returncode)
+artifacts = list((output / 'dist').glob('*'))
+command = [python, '-m', 'twine', 'check', *map(str, artifacts)]
+with (output / 'twine.log').open('w', encoding='utf-8') as log:
+    result = subprocess.run(command, cwd=snapshot, env=env, stdout=log, stderr=subprocess.STDOUT,
+                            creationflags=getattr(subprocess, 'CREATE_NO_WINDOW', 0))
+record['checks'].append({'name': 'twine', 'command': command, 'exit_code': result.returncode,
+                          'status': 'passed' if result.returncode == 0 else 'failed'})
+record['artifacts'] = [{'file': str(path), 'bytes': path.stat().st_size,
+                       'sha256': hashlib.sha256(path.read_bytes()).hexdigest()} for path in artifacts]
+record['status'] = 'passed' if result.returncode == 0 else 'failed'
+save()
+print(json.dumps({'status': record['status'], 'source_commit': commit, 'record': str(output / 'verification.json')}))
+raise SystemExit(result.returncode)

@@ -4,12 +4,17 @@ This record covers the unreleased `wt/functional-local-memory` worktree. It
 separates implemented behavior from acceptance evidence. The original task
 boundaries and thresholds remain in the [implementation plan](../../plans/2026-09-16-functional-local-memory.md).
 
-Latest verified package: source `a38ee70` includes provisional Claude capture,
-the MCP metadata repair, and the benchmark trace repair. Full frozen verification
-passed 754 tests with two optional skips, formatting, typing, JavaScript, build,
-and Twine. Fresh installed-wheel replay and instrumented Claude adapter timing
-also passed; [package evidence](provisional-package-verification/README.md).
-Native host acceptance and the extraction contract candidate remain separate.
+Latest verified package: source `64471f5` includes provisional Claude capture,
+truthful MCP annotations, explicit host interpreter binding, hook quoting,
+request-bound extraction schemas, and the benchmark trace repair. Full frozen
+verification passed 776 tests with four platform-specific skips, formatting,
+typing, JavaScript, build, and Twine. A fresh wheel passed installation/replay
+and native Codex MCP health through the generated interpreter command without
+a PATH patch or approval override;
+[package evidence](extraction-contract-package-verification/README.md).
+Native Claude's provisional identity contract passed on a38; its original raw
+duplicate gate still fails. Complete host lifecycle and extraction quality
+remain separate acceptance work.
 The old sourceb7 real-model lifecycle run has stopped
 with a checkpoint serialization failure after a completed baseline and 36
 full-profile observations. Its [archived record](lifecycle-serialization-failure/README.md)
