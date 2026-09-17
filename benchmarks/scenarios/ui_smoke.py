@@ -129,6 +129,7 @@ def _build_fixture(
                 configured_profile=profile,
                 directory=root / "routing-review",
             )
+        assert isinstance(engine.store, SQLiteStore)
         engine.store.prune_processed_evidence(
             before=datetime.now(timezone.utc) + timedelta(seconds=1)
         )
