@@ -119,3 +119,15 @@ No release, live host configuration change, or live database migration has occur
   about 42 hours for 4,200 lifecycle observations and another 35 to 70 hours
   for 600 competing-candidate observations. Checkpoints bind dataset, model,
   options, and source hashes. No release or live migration is involved.
+
+## Evaluation launch provenance correction
+
+The first frozen launch from commit `9836bf2` was stopped after five baseline
+observations. The source hasher excluded absolute `.venv` ancestors, so a
+checkout inside `.venv/eval-frozen` produced an empty file list and the hash
+of empty input. Those observations are preserved under `real-model/` as
+invalid provenance and will not be counted toward the accepted evaluation.
+The source exclusion now applies only to paths inside the checkout and rejects
+an empty runnable surface. The replacement run uses a new frozen commit and
+fresh output and checkpoint directories; dataset labels and quality gates
+are unchanged.

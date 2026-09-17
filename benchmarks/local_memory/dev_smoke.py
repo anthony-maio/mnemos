@@ -24,16 +24,19 @@ from .ollama_adapter import OllamaEvaluatorAdapter, make_ollama_service_factory
 
 def _code_provenance(repo_root: Path) -> tuple[str, list[str]]:
     """Hash the runnable Python/config surface used by a development run."""
+    repo_root = repo_root.resolve()
     candidates = [
         path
         for path in repo_root.rglob("*")
         if path.is_file()
         and path.suffix.lower() in {".py", ".toml"}
-        and ".git" not in path.parts
-        and ".venv" not in path.parts
-        and "__pycache__" not in path.parts
+        and ".git" not in path.relative_to(repo_root).parts
+        and ".venv" not in path.relative_to(repo_root).parts
+        and "__pycache__" not in path.relative_to(repo_root).parts
     ]
     candidates.sort()
+    if not candidates:
+        raise ValueError(f"No runnable Python/config files found under {repo_root}")
     digest = hashlib.sha256()
     relative_paths: list[str] = []
     for path in candidates:

@@ -23,6 +23,7 @@ from benchmarks.local_memory.artifacts import ArtifactRecorder
 from benchmarks.local_memory import OllamaEvaluatorAdapter, make_ollama_service_factory
 from benchmarks.local_memory.ollama_adapter import SHADOW_LENGTH_MIN_CHARS
 from benchmarks.local_memory.contracts import MINIMUMS
+from benchmarks.local_memory.dev_smoke import _code_provenance
 from benchmarks.local_memory.harness import compare_observation_metrics, main
 from benchmarks.local_memory.heldout_run import _live_model_metadata, _registry_for_dataset
 from benchmarks.local_memory.module_challenge import load_module_challenge_dataset
@@ -140,6 +141,26 @@ def test_module_challenge_launcher_help_is_available() -> None:
     with pytest.raises(SystemExit) as result:
         module_challenge_main(["--help"])
     assert result.value.code == 0
+
+
+def test_code_provenance_excludes_repo_children_not_venv_ancestors(tmp_path: Path) -> None:
+    repo = tmp_path / ".venv" / "eval-frozen" / "repo"
+    repo.mkdir(parents=True)
+    (repo / "main.py").write_text("print('fixture')\n", encoding="utf-8")
+    (repo / "pyproject.toml").write_text("[project]\nname='fixture'\n", encoding="utf-8")
+    ignored = repo / ".venv" / "Scripts"
+    ignored.mkdir(parents=True)
+    (ignored / "python.py").write_text("ignored = True\n", encoding="utf-8")
+
+    digest, files = _code_provenance(repo)
+
+    assert len(digest) == 64
+    assert files == ["main.py", "pyproject.toml"]
+
+
+def test_code_provenance_rejects_empty_runnable_surface(tmp_path: Path) -> None:
+    with pytest.raises(ValueError, match="No runnable Python/config files"):
+        _code_provenance(tmp_path)
 
 
 def test_uncertainty_helpers_are_reproducible_and_include_counts() -> None:

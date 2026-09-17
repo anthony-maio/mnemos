@@ -1,0 +1,3638 @@
+{
+  "code_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+  "completed_observation_ids": [
+    "heldout-001:r1",
+    "heldout-001:r2",
+    "heldout-001:r3",
+    "heldout-002:r1",
+    "heldout-002:r2"
+  ],
+  "completed_observations": [
+    {
+      "adapter_kind": "real_model",
+      "answerable_hits": [
+        false
+      ],
+      "bytes_after": 3706832,
+      "bytes_before": 341776,
+      "cold_latency_ms": 145.37500000733417,
+      "critical_retention": [
+        false
+      ],
+      "critical_retrieval": [
+        false
+      ],
+      "embedding_revision": "0a109f422b47e3a30ba2b10eca18548e944e8a23073ee3f3e947efcf3c45e59f",
+      "execution_status": "complete",
+      "latency_ms": 16690.357100000256,
+      "length_filter_kept": [],
+      "model_revision": "a2af6cc3eb7fa8be8504abaf9b04e88f17a119ec3f04a3addf55f92841195f5a",
+      "no_answer_correct": [],
+      "provider": "ollama",
+      "raw_output": {
+        "adapter": "ollama",
+        "base_url": "http://192.168.86.35:11434",
+        "controlled_state_pairs": [
+          {
+            "affective_scoring_applied": false,
+            "candidate_count": 2,
+            "candidate_fact_ids": [
+              "121b3c6c-d630-478e-95a7-3cef155d4425",
+              "1a453915-2de1-490d-ad76-c40c8412833b"
+            ],
+            "classifier_states": {
+              "semantic": {
+                "arousal": 0.3,
+                "complexity": 0.3,
+                "valence": -0.2
+              },
+              "state": {
+                "arousal": 0.6,
+                "complexity": 0.4,
+                "valence": 0.2
+              }
+            },
+            "declared_candidate_fact_ids": [],
+            "declared_direct_vector_seed_fact_ids": [],
+            "declared_graph_target_fact_ids": [],
+            "direct_vector_seed_fact_ids_observed": [
+              "121b3c6c-d630-478e-95a7-3cef155d4425",
+              "1a453915-2de1-490d-ad76-c40c8412833b"
+            ],
+            "graph_target_observation": {
+              "status": "not_observed_graph_traversal",
+              "target_ranks_in_direct_seed": {},
+              "targets_in_direct_seed": []
+            },
+            "measurement": "same_semantic_embedding_and_scoped_candidate_pool",
+            "pair_id": "state-pair-001",
+            "rank_delta_state_minus_semantic": {
+              "121b3c6c-d630-478e-95a7-3cef155d4425": 0,
+              "1a453915-2de1-490d-ad76-c40c8412833b": 0
+            },
+            "rankings": {
+              "semantic": [
+                "121b3c6c-d630-478e-95a7-3cef155d4425",
+                "1a453915-2de1-490d-ad76-c40c8412833b"
+              ],
+              "state": [
+                "121b3c6c-d630-478e-95a7-3cef155d4425",
+                "1a453915-2de1-490d-ad76-c40c8412833b"
+              ]
+            },
+            "scores": {
+              "semantic": [
+                {
+                  "content": "Please remember this project decision explicitly: For this project, deployment target is AWS ECS.",
+                  "fact_id": "121b3c6c-d630-478e-95a7-3cef155d4425",
+                  "score": {
+                    "graph_contribution": 0.0,
+                    "graph_energy": 0.0,
+                    "semantic": 0.7740872502326965,
+                    "state_match": null,
+                    "state_status": "disabled",
+                    "total": 0.7740872502326965
+                  }
+                },
+                {
+                  "content": "Assistant reported: I can use that decision when this project comes up again.",
+                  "fact_id": "1a453915-2de1-490d-ad76-c40c8412833b",
+                  "score": {
+                    "graph_contribution": 0.0,
+                    "graph_energy": 0.0,
+                    "semantic": 0.5586639046669006,
+                    "state_match": null,
+                    "state_status": "disabled",
+                    "total": 0.5586639046669006
+                  }
+                }
+              ],
+              "state": [
+                {
+                  "content": "Please remember this project decision explicitly: For this project, deployment target is AWS ECS.",
+                  "fact_id": "121b3c6c-d630-478e-95a7-3cef155d4425",
+                  "score": {
+                    "graph_contribution": 0.0,
+                    "graph_energy": 0.0,
+                    "semantic": 0.7740872502326965,
+                    "state_match": null,
+                    "state_status": "disabled",
+                    "total": 0.7740872502326965
+                  }
+                },
+                {
+                  "content": "Assistant reported: I can use that decision when this project comes up again.",
+                  "fact_id": "1a453915-2de1-490d-ad76-c40c8412833b",
+                  "score": {
+                    "graph_contribution": 0.0,
+                    "graph_energy": 0.0,
+                    "semantic": 0.5586639046669006,
+                    "state_match": null,
+                    "state_status": "disabled",
+                    "total": 0.5586639046669006
+                  }
+                }
+              ]
+            },
+            "semantic_fidelity": {
+              "judgement": "exact_frozen_text_only",
+              "semantic_top_k": false,
+              "state_top_k": false
+            },
+            "top1_changed": false
+          }
+        ],
+        "critical_retention_judgements": [
+          {
+            "expected_identities": [
+              [
+                "t18-synthetic-profile",
+                "project",
+                "project-01"
+              ]
+            ],
+            "expected_present": true,
+            "fact_id": "fact-001",
+            "gold_status": "supported",
+            "judgement": "exact_content_and_scope_in_accepted_store",
+            "observed_present": false,
+            "runtime_fact_ids": []
+          }
+        ],
+        "embedding_model": "nomic-embed-text:latest",
+        "errors": [],
+        "extraction_judgements": [
+          {
+            "accepted": false,
+            "content_nonempty": true,
+            "judgement": "exact_frozen_text_and_evidence_proxy",
+            "matched_supported_fact_id": null,
+            "observed_source_event_ids": [
+              "heldout-001-event-01"
+            ],
+            "runtime_fact_id": "121b3c6c-d630-478e-95a7-3cef155d4425"
+          },
+          {
+            "accepted": false,
+            "content_nonempty": true,
+            "judgement": "exact_frozen_text_and_evidence_proxy",
+            "matched_supported_fact_id": null,
+            "observed_source_event_ids": [
+              "heldout-001-event-02"
+            ],
+            "runtime_fact_id": "1a453915-2de1-490d-ad76-c40c8412833b"
+          }
+        ],
+        "length_filter_policy": {
+          "applied": "counterfactual_shadow_only",
+          "boilerplate_exact_casefold": [
+            "got it",
+            "ok",
+            "okay",
+            "thanks",
+            "thanks!"
+          ],
+          "events": [],
+          "minimum_chars": 50,
+          "service_decision": "not_exposed"
+        },
+        "measurement_notes": [
+          "Missing retrievals remain null and are excluded from interval numerators.",
+          "Correction and forget use runtime fact IDs resolved from the service store.",
+          "Provider token counters are recorded when returned; billing cost is not inferred.",
+          "latency_ms is end-to-end session wall clock; cold_latency_ms covers service construction only.",
+          "Extraction precision uses exact frozen fact text and source role/evidence checks; paraphrases are unjudged.",
+          "State pairs use paired natural-language queries; no same-text embedding control is claimed.",
+          "surprisal_filter_kept is derived from durable job encoding_diagnostics and remains null when a job result is unavailable.",
+          "length_filter_kept is a frozen counterfactual shadow policy, not an applied service filter decision."
+        ],
+        "model": "gemma3:4b",
+        "module_switches": {
+          "disabled": null,
+          "enabled": [],
+          "source": "service_factory"
+        },
+        "operations": [
+          {
+            "event_id": "heldout-001-event-01",
+            "job_id": "event:b1f6d1905c51c4c14cf6c9b226e48d57c2f55174a652b5dd68aeae1894b678ec",
+            "operation": "remember",
+            "processing_status": "pending",
+            "status": "committed"
+          },
+          {
+            "event_id": "heldout-001-event-02",
+            "job_id": "event:705599ca5bcfff44232f644b8b2f090b89c47af1b61ee9d9ff0eedac18937248",
+            "operation": "response",
+            "processing_status": "pending",
+            "status": "committed"
+          },
+          {
+            "operation": "restart",
+            "status": "completed"
+          },
+          {
+            "jobs": [
+              {
+                "attempt_count": 1,
+                "id": "event:b1f6d1905c51c4c14cf6c9b226e48d57c2f55174a652b5dd68aeae1894b678ec",
+                "kind": "remember",
+                "last_error": null,
+                "status": "completed"
+              },
+              {
+                "attempt_count": 1,
+                "id": "event:705599ca5bcfff44232f644b8b2f090b89c47af1b61ee9d9ff0eedac18937248",
+                "kind": "extract",
+                "last_error": null,
+                "status": "completed"
+              }
+            ],
+            "operation": "maintenance",
+            "pending_or_failed_statuses": [],
+            "status": "completed"
+          },
+          {
+            "facts": [
+              {
+                "content": "Please remember this project decision explicitly: For this project, deployment target is AWS ECS.",
+                "id": "121b3c6c-d630-478e-95a7-3cef155d4425",
+                "original_source_status": "not_checked",
+                "scope": "project",
+                "scope_id": "project-01",
+                "scores": {
+                  "candidate_backend": "sqlite_vec_scoped_exact_cosine",
+                  "context_token_upper_bound": 147,
+                  "graph_contribution": 0.0,
+                  "graph_energy": 0.0,
+                  "graph_status": "disabled",
+                  "lexical_candidate": true,
+                  "lexical_status": "candidate_union",
+                  "profile": "baseline",
+                  "scope_match": true,
+                  "semantic": 0.7740872502326965,
+                  "state_match": null,
+                  "state_status": "disabled",
+                  "token_count_method": "utf8_bytes_upper_bound",
+                  "total": 0.7740872502326965
+                },
+                "sources": [
+                  {
+                    "created_at": "2026-09-17T01:46:00.606547Z",
+                    "evidence_id": "fb013fef-c198-4f9f-ada3-24326ccabf95",
+                    "excerpt": "Please remember this project decision explicitly: For this project, deployment target is AWS ECS.",
+                    "fact_id": "121b3c6c-d630-478e-95a7-3cef155d4425",
+                    "source_event_id": "b1f6d1905c51c4c14cf6c9b226e48d57c2f55174a652b5dd68aeae1894b678ec",
+                    "source_ref": null
+                  }
+                ],
+                "support_available": true,
+                "version": 1
+              },
+              {
+                "content": "Assistant reported: I can use that decision when this project comes up again.",
+                "id": "1a453915-2de1-490d-ad76-c40c8412833b",
+                "original_source_status": "not_checked",
+                "scope": "project",
+                "scope_id": "project-01",
+                "scores": {
+                  "candidate_backend": "sqlite_vec_scoped_exact_cosine",
+                  "context_token_upper_bound": 127,
+                  "graph_contribution": 0.0,
+                  "graph_energy": 0.0,
+                  "graph_status": "disabled",
+                  "lexical_candidate": true,
+                  "lexical_status": "candidate_union",
+                  "profile": "baseline",
+                  "scope_match": true,
+                  "semantic": 0.5586639046669006,
+                  "state_match": null,
+                  "state_status": "disabled",
+                  "token_count_method": "utf8_bytes_upper_bound",
+                  "total": 0.5586639046669006
+                },
+                "sources": [
+                  {
+                    "created_at": "2026-09-17T01:46:02.334879Z",
+                    "evidence_id": "181e7c26-9367-4e90-a9c4-d6dcf584ee88",
+                    "excerpt": "I can use that decision when this project comes up again.",
+                    "fact_id": "1a453915-2de1-490d-ad76-c40c8412833b",
+                    "source_event_id": "705599ca5bcfff44232f644b8b2f090b89c47af1b61ee9d9ff0eedac18937248",
+                    "source_ref": null
+                  }
+                ],
+                "support_available": true,
+                "version": 1
+              }
+            ],
+            "operation": "retrieve",
+            "query_id": "query-answerable-001",
+            "status": "returned"
+          },
+          {
+            "facts": [
+              {
+                "content": "Please remember this project decision explicitly: For this project, deployment target is AWS ECS.",
+                "id": "121b3c6c-d630-478e-95a7-3cef155d4425",
+                "original_source_status": "not_checked",
+                "scope": "project",
+                "scope_id": "project-01",
+                "scores": {
+                  "candidate_backend": "sqlite_vec_scoped_exact_cosine",
+                  "context_token_upper_bound": 147,
+                  "graph_contribution": 0.0,
+                  "graph_energy": 0.0,
+                  "graph_status": "disabled",
+                  "lexical_candidate": true,
+                  "lexical_status": "candidate_union",
+                  "profile": "baseline",
+                  "scope_match": true,
+                  "semantic": 0.7740872502326965,
+                  "state_match": null,
+                  "state_status": "disabled",
+                  "token_count_method": "utf8_bytes_upper_bound",
+                  "total": 0.7740872502326965
+                },
+                "sources": [
+                  {
+                    "created_at": "2026-09-17T01:46:00.606547Z",
+                    "evidence_id": "fb013fef-c198-4f9f-ada3-24326ccabf95",
+                    "excerpt": "Please remember this project decision explicitly: For this project, deployment target is AWS ECS.",
+                    "fact_id": "121b3c6c-d630-478e-95a7-3cef155d4425",
+                    "source_event_id": "b1f6d1905c51c4c14cf6c9b226e48d57c2f55174a652b5dd68aeae1894b678ec",
+                    "source_ref": null
+                  }
+                ],
+                "support_available": true,
+                "version": 1
+              },
+              {
+                "content": "Assistant reported: I can use that decision when this project comes up again.",
+                "id": "1a453915-2de1-490d-ad76-c40c8412833b",
+                "original_source_status": "not_checked",
+                "scope": "project",
+                "scope_id": "project-01",
+                "scores": {
+                  "candidate_backend": "sqlite_vec_scoped_exact_cosine",
+                  "context_token_upper_bound": 127,
+                  "graph_contribution": 0.0,
+                  "graph_energy": 0.0,
+                  "graph_status": "disabled",
+                  "lexical_candidate": true,
+                  "lexical_status": "candidate_union",
+                  "profile": "baseline",
+                  "scope_match": true,
+                  "semantic": 0.5586639046669006,
+                  "state_match": null,
+                  "state_status": "disabled",
+                  "token_count_method": "utf8_bytes_upper_bound",
+                  "total": 0.5586639046669006
+                },
+                "sources": [
+                  {
+                    "created_at": "2026-09-17T01:46:02.334879Z",
+                    "evidence_id": "181e7c26-9367-4e90-a9c4-d6dcf584ee88",
+                    "excerpt": "I can use that decision when this project comes up again.",
+                    "fact_id": "1a453915-2de1-490d-ad76-c40c8412833b",
+                    "source_event_id": "705599ca5bcfff44232f644b8b2f090b89c47af1b61ee9d9ff0eedac18937248",
+                    "source_ref": null
+                  }
+                ],
+                "support_available": true,
+                "version": 1
+              }
+            ],
+            "operation": "retrieve",
+            "query_id": "state-pair-001:semantic",
+            "status": "returned"
+          },
+          {
+            "facts": [
+              {
+                "content": "Please remember this project decision explicitly: For this project, deployment target is AWS ECS.",
+                "id": "121b3c6c-d630-478e-95a7-3cef155d4425",
+                "original_source_status": "not_checked",
+                "scope": "project",
+                "scope_id": "project-01",
+                "scores": {
+                  "candidate_backend": "sqlite_vec_scoped_exact_cosine",
+                  "context_token_upper_bound": 147,
+                  "graph_contribution": 0.0,
+                  "graph_energy": 0.0,
+                  "graph_status": "disabled",
+                  "lexical_candidate": true,
+                  "lexical_status": "candidate_union",
+                  "profile": "baseline",
+                  "scope_match": true,
+                  "semantic": 0.7241657972335815,
+                  "state_match": null,
+                  "state_status": "disabled",
+                  "token_count_method": "utf8_bytes_upper_bound",
+                  "total": 0.7241657972335815
+                },
+                "sources": [
+                  {
+                    "created_at": "2026-09-17T01:46:00.606547Z",
+                    "evidence_id": "fb013fef-c198-4f9f-ada3-24326ccabf95",
+                    "excerpt": "Please remember this project decision explicitly: For this project, deployment target is AWS ECS.",
+                    "fact_id": "121b3c6c-d630-478e-95a7-3cef155d4425",
+                    "source_event_id": "b1f6d1905c51c4c14cf6c9b226e48d57c2f55174a652b5dd68aeae1894b678ec",
+                    "source_ref": null
+                  }
+                ],
+                "support_available": true,
+                "version": 1
+              },
+              {
+                "content": "Assistant reported: I can use that decision when this project comes up again.",
+                "id": "1a453915-2de1-490d-ad76-c40c8412833b",
+                "original_source_status": "not_checked",
+                "scope": "project",
+                "scope_id": "project-01",
+                "scores": {
+                  "candidate_backend": "sqlite_vec_scoped_exact_cosine",
+                  "context_token_upper_bound": 127,
+                  "graph_contribution": 0.0,
+                  "graph_energy": 0.0,
+                  "graph_status": "disabled",
+                  "lexical_candidate": true,
+                  "lexical_status": "candidate_union",
+                  "profile": "baseline",
+                  "scope_match": true,
+                  "semantic": 0.5402599573135376,
+                  "state_match": null,
+                  "state_status": "disabled",
+                  "token_count_method": "utf8_bytes_upper_bound",
+                  "total": 0.5402599573135376
+                },
+                "sources": [
+                  {
+                    "created_at": "2026-09-17T01:46:02.334879Z",
+                    "evidence_id": "181e7c26-9367-4e90-a9c4-d6dcf584ee88",
+                    "excerpt": "I can use that decision when this project comes up again.",
+                    "fact_id": "1a453915-2de1-490d-ad76-c40c8412833b",
+                    "source_event_id": "705599ca5bcfff44232f644b8b2f090b89c47af1b61ee9d9ff0eedac18937248",
+                    "source_ref": null
+                  }
+                ],
+                "support_available": true,
+                "version": 1
+              }
+            ],
+            "operation": "retrieve",
+            "query_id": "state-pair-001:state",
+            "status": "returned"
+          }
+        ],
+        "profile": {
+          "disabled_module": null,
+          "enabled_modules": [],
+          "name": "baseline"
+        },
+        "provenance": {
+          "code_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+          "cognition_observed": true,
+          "embedding_metadata": {
+            "capabilities": [
+              "embedding"
+            ],
+            "details": {
+              "context_length": 2048,
+              "embedding_length": 768,
+              "families": [
+                "nomic-bert"
+              ],
+              "family": "nomic-bert",
+              "format": "gguf",
+              "parameter_size": "137M",
+              "parent_model": "",
+              "quantization_level": "F16"
+            },
+            "digest": "0a109f422b47e3a30ba2b10eca18548e944e8a23073ee3f3e947efcf3c45e59f",
+            "model": "nomic-embed-text:latest",
+            "modified_at": "2025-11-04T15:15:16.2072724-05:00",
+            "name": "nomic-embed-text:latest",
+            "size": 274302450
+          },
+          "embedding_sha256": "0a109f422b47e3a30ba2b10eca18548e944e8a23073ee3f3e947efcf3c45e59f",
+          "embedding_verified": true,
+          "model_metadata": {
+            "capabilities": [
+              "completion",
+              "vision"
+            ],
+            "details": {
+              "context_length": 131072,
+              "embedding_length": 2560,
+              "families": [
+                "gemma3"
+              ],
+              "family": "gemma3",
+              "format": "gguf",
+              "parameter_size": "4.3B",
+              "parent_model": "",
+              "quantization_level": "Q4_K_M"
+            },
+            "digest": "a2af6cc3eb7fa8be8504abaf9b04e88f17a119ec3f04a3addf55f92841195f5a",
+            "model": "gemma3:4b",
+            "modified_at": "2026-03-11T01:54:24.735623-04:00",
+            "name": "gemma3:4b",
+            "size": 3338801804
+          },
+          "model_sha256": "a2af6cc3eb7fa8be8504abaf9b04e88f17a119ec3f04a3addf55f92841195f5a",
+          "options_sha256": "cd97e75dba4a59a7798d1c035d2fac3b6fbf56082118e776067c9f505b7d5704",
+          "verified": true
+        },
+        "provider": "ollama",
+        "provider_trace": {
+          "classify_calls": [],
+          "config": {
+            "embedding_model": "nomic-embed-text:latest",
+            "endpoint": "http://192.168.86.35:11434",
+            "max_tokens": 512,
+            "model": "gemma3:4b",
+            "temperature": 0.0,
+            "timeout_seconds": 120.0
+          },
+          "embed_calls": [
+            {
+              "latency_ms": 532.1530000073835,
+              "text_chars": 97,
+              "token_usage": {
+                "prompt_eval_count": 21
+              },
+              "vector_dimensions": 768
+            },
+            {
+              "latency_ms": 226.7505999916466,
+              "text_chars": 77,
+              "token_usage": {
+                "prompt_eval_count": 17
+              },
+              "vector_dimensions": 768
+            },
+            {
+              "latency_ms": 232.09080001106486,
+              "text_chars": 48,
+              "token_usage": {
+                "prompt_eval_count": 10
+              },
+              "vector_dimensions": 768
+            },
+            {
+              "latency_ms": 224.99270000844263,
+              "text_chars": 48,
+              "token_usage": {
+                "prompt_eval_count": 10
+              },
+              "vector_dimensions": 768
+            },
+            {
+              "latency_ms": 214.1039000125602,
+              "text_chars": 66,
+              "token_usage": {
+                "prompt_eval_count": 14
+              },
+              "vector_dimensions": 768
+            },
+            {
+              "latency_ms": 209.94660000724252,
+              "text_chars": 48,
+              "token_usage": {
+                "prompt_eval_count": 10
+              },
+              "vector_dimensions": 768
+            }
+          ],
+          "predict_calls": [
+            {
+              "latency_ms": 8245.981700005359,
+              "prompt_chars": 358,
+              "response": "-0.2, 0.3, 0.3",
+              "token_usage": {
+                "eval_count": 16,
+                "prompt_eval_count": 112
+              }
+            },
+            {
+              "latency_ms": 3471.0665000020526,
+              "prompt_chars": 376,
+              "response": "0.2, 0.6, 0.4",
+              "token_usage": {
+                "eval_count": 15,
+                "prompt_eval_count": 116
+              }
+            }
+          ],
+          "response_metadata": [
+            {
+              "kind": "embedding",
+              "load_duration": 281990900,
+              "model": "nomic-embed-text:latest",
+              "prompt_eval_count": 21,
+              "provider": "ollama",
+              "total_duration": 307166600
+            },
+            {
+              "kind": "embedding",
+              "load_duration": 5775000,
+              "model": "nomic-embed-text:latest",
+              "prompt_eval_count": 17,
+              "provider": "ollama",
+              "total_duration": 30728500
+            },
+            {
+              "kind": "embedding",
+              "load_duration": 7815300,
+              "model": "nomic-embed-text:latest",
+              "prompt_eval_count": 10,
+              "provider": "ollama",
+              "total_duration": 25561500
+            },
+            {
+              "kind": "embedding",
+              "load_duration": 7402700,
+              "model": "nomic-embed-text:latest",
+              "prompt_eval_count": 10,
+              "provider": "ollama",
+              "total_duration": 23323400
+            },
+            {
+              "kind": "embedding",
+              "load_duration": 7443100,
+              "model": "nomic-embed-text:latest",
+              "prompt_eval_count": 14,
+              "provider": "ollama",
+              "total_duration": 30319600
+            },
+            {
+              "kind": "embedding",
+              "load_duration": 7281900,
+              "model": "nomic-embed-text:latest",
+              "prompt_eval_count": 10,
+              "provider": "ollama",
+              "total_duration": 23075300
+            },
+            {
+              "created_at": "2026-09-17T01:46:12.0120522Z",
+              "done": true,
+              "done_reason": "stop",
+              "eval_count": 16,
+              "eval_duration": 1829162000,
+              "kind": "generate",
+              "load_duration": 4680067800,
+              "model": "gemma3:4b",
+              "prompt_eval_count": 112,
+              "prompt_eval_duration": 1504969000,
+              "provider": "ollama",
+              "total_duration": 8018099900
+            },
+            {
+              "created_at": "2026-09-17T01:46:15.4846596Z",
+              "done": true,
+              "done_reason": "stop",
+              "eval_count": 15,
+              "eval_duration": 1733544000,
+              "kind": "generate",
+              "load_duration": 7930500,
+              "model": "gemma3:4b",
+              "prompt_eval_count": 116,
+              "prompt_eval_duration": 1523655000,
+              "provider": "ollama",
+              "total_duration": 3268810500
+            }
+          ],
+          "service_instances": 2,
+          "trace_key": {
+            "profile": "baseline",
+            "run_key": "heldout-001-baseline-r1"
+          }
+        },
+        "surprisal_filter_decisions": [],
+        "unsupported_modules": [],
+        "unsupported_operations": []
+      },
+      "repetition": 1,
+      "retrieved_fact_count": 6,
+      "session_id": "heldout-001",
+      "stale_fact_count": 0,
+      "state_pair_semantic_hits": [
+        false
+      ],
+      "state_pair_state_hits": [
+        false
+      ],
+      "supported_precision": [
+        false,
+        false
+      ],
+      "surprisal_filter_kept": [],
+      "token_cost": null,
+      "verified_embedding_provenance": true,
+      "verified_model_provenance": true
+    },
+    {
+      "adapter_kind": "real_model",
+      "answerable_hits": [
+        false
+      ],
+      "bytes_after": 3706832,
+      "bytes_before": 341776,
+      "cold_latency_ms": 221.42329999769572,
+      "critical_retention": [
+        false
+      ],
+      "critical_retrieval": [
+        false
+      ],
+      "embedding_revision": "0a109f422b47e3a30ba2b10eca18548e944e8a23073ee3f3e947efcf3c45e59f",
+      "execution_status": "complete",
+      "latency_ms": 10224.789300002158,
+      "length_filter_kept": [],
+      "model_revision": "a2af6cc3eb7fa8be8504abaf9b04e88f17a119ec3f04a3addf55f92841195f5a",
+      "no_answer_correct": [],
+      "provider": "ollama",
+      "raw_output": {
+        "adapter": "ollama",
+        "base_url": "http://192.168.86.35:11434",
+        "controlled_state_pairs": [
+          {
+            "affective_scoring_applied": false,
+            "candidate_count": 2,
+            "candidate_fact_ids": [
+              "614a8b22-bf48-47f8-8b0a-70db90876b7a",
+              "fef3ec7c-12d4-4b49-baaf-552a549b724c"
+            ],
+            "classifier_states": {
+              "semantic": {
+                "arousal": 0.3,
+                "complexity": 0.3,
+                "valence": -0.2
+              },
+              "state": {
+                "arousal": 0.6,
+                "complexity": 0.4,
+                "valence": 0.2
+              }
+            },
+            "declared_candidate_fact_ids": [],
+            "declared_direct_vector_seed_fact_ids": [],
+            "declared_graph_target_fact_ids": [],
+            "direct_vector_seed_fact_ids_observed": [
+              "614a8b22-bf48-47f8-8b0a-70db90876b7a",
+              "fef3ec7c-12d4-4b49-baaf-552a549b724c"
+            ],
+            "graph_target_observation": {
+              "status": "not_observed_graph_traversal",
+              "target_ranks_in_direct_seed": {},
+              "targets_in_direct_seed": []
+            },
+            "measurement": "same_semantic_embedding_and_scoped_candidate_pool",
+            "pair_id": "state-pair-001",
+            "rank_delta_state_minus_semantic": {
+              "614a8b22-bf48-47f8-8b0a-70db90876b7a": 0,
+              "fef3ec7c-12d4-4b49-baaf-552a549b724c": 0
+            },
+            "rankings": {
+              "semantic": [
+                "614a8b22-bf48-47f8-8b0a-70db90876b7a",
+                "fef3ec7c-12d4-4b49-baaf-552a549b724c"
+              ],
+              "state": [
+                "614a8b22-bf48-47f8-8b0a-70db90876b7a",
+                "fef3ec7c-12d4-4b49-baaf-552a549b724c"
+              ]
+            },
+            "scores": {
+              "semantic": [
+                {
+                  "content": "Please remember this project decision explicitly: For this project, deployment target is AWS ECS.",
+                  "fact_id": "614a8b22-bf48-47f8-8b0a-70db90876b7a",
+                  "score": {
+                    "graph_contribution": 0.0,
+                    "graph_energy": 0.0,
+                    "semantic": 0.7740872502326965,
+                    "state_match": null,
+                    "state_status": "disabled",
+                    "total": 0.7740872502326965
+                  }
+                },
+                {
+                  "content": "Assistant reported: I can use that decision when this project comes up again.",
+                  "fact_id": "fef3ec7c-12d4-4b49-baaf-552a549b724c",
+                  "score": {
+                    "graph_contribution": 0.0,
+                    "graph_energy": 0.0,
+                    "semantic": 0.5586639046669006,
+                    "state_match": null,
+                    "state_status": "disabled",
+                    "total": 0.5586639046669006
+                  }
+                }
+              ],
+              "state": [
+                {
+                  "content": "Please remember this project decision explicitly: For this project, deployment target is AWS ECS.",
+                  "fact_id": "614a8b22-bf48-47f8-8b0a-70db90876b7a",
+                  "score": {
+                    "graph_contribution": 0.0,
+                    "graph_energy": 0.0,
+                    "semantic": 0.7740872502326965,
+                    "state_match": null,
+                    "state_status": "disabled",
+                    "total": 0.7740872502326965
+                  }
+                },
+                {
+                  "content": "Assistant reported: I can use that decision when this project comes up again.",
+                  "fact_id": "fef3ec7c-12d4-4b49-baaf-552a549b724c",
+                  "score": {
+                    "graph_contribution": 0.0,
+                    "graph_energy": 0.0,
+                    "semantic": 0.5586639046669006,
+                    "state_match": null,
+                    "state_status": "disabled",
+                    "total": 0.5586639046669006
+                  }
+                }
+              ]
+            },
+            "semantic_fidelity": {
+              "judgement": "exact_frozen_text_only",
+              "semantic_top_k": false,
+              "state_top_k": false
+            },
+            "top1_changed": false
+          }
+        ],
+        "critical_retention_judgements": [
+          {
+            "expected_identities": [
+              [
+                "t18-synthetic-profile",
+                "project",
+                "project-01"
+              ]
+            ],
+            "expected_present": true,
+            "fact_id": "fact-001",
+            "gold_status": "supported",
+            "judgement": "exact_content_and_scope_in_accepted_store",
+            "observed_present": false,
+            "runtime_fact_ids": []
+          }
+        ],
+        "embedding_model": "nomic-embed-text:latest",
+        "errors": [],
+        "extraction_judgements": [
+          {
+            "accepted": false,
+            "content_nonempty": true,
+            "judgement": "exact_frozen_text_and_evidence_proxy",
+            "matched_supported_fact_id": null,
+            "observed_source_event_ids": [
+              "heldout-001-event-01"
+            ],
+            "runtime_fact_id": "614a8b22-bf48-47f8-8b0a-70db90876b7a"
+          },
+          {
+            "accepted": false,
+            "content_nonempty": true,
+            "judgement": "exact_frozen_text_and_evidence_proxy",
+            "matched_supported_fact_id": null,
+            "observed_source_event_ids": [
+              "heldout-001-event-02"
+            ],
+            "runtime_fact_id": "fef3ec7c-12d4-4b49-baaf-552a549b724c"
+          }
+        ],
+        "length_filter_policy": {
+          "applied": "counterfactual_shadow_only",
+          "boilerplate_exact_casefold": [
+            "got it",
+            "ok",
+            "okay",
+            "thanks",
+            "thanks!"
+          ],
+          "events": [],
+          "minimum_chars": 50,
+          "service_decision": "not_exposed"
+        },
+        "measurement_notes": [
+          "Missing retrievals remain null and are excluded from interval numerators.",
+          "Correction and forget use runtime fact IDs resolved from the service store.",
+          "Provider token counters are recorded when returned; billing cost is not inferred.",
+          "latency_ms is end-to-end session wall clock; cold_latency_ms covers service construction only.",
+          "Extraction precision uses exact frozen fact text and source role/evidence checks; paraphrases are unjudged.",
+          "State pairs use paired natural-language queries; no same-text embedding control is claimed.",
+          "surprisal_filter_kept is derived from durable job encoding_diagnostics and remains null when a job result is unavailable.",
+          "length_filter_kept is a frozen counterfactual shadow policy, not an applied service filter decision."
+        ],
+        "model": "gemma3:4b",
+        "module_switches": {
+          "disabled": null,
+          "enabled": [],
+          "source": "service_factory"
+        },
+        "operations": [
+          {
+            "event_id": "heldout-001-event-01",
+            "job_id": "event:6966ef9bae115902010cde4eab29b65c3eac2651ca66a3eb0ad70dc68b7a1b43",
+            "operation": "remember",
+            "processing_status": "pending",
+            "status": "committed"
+          },
+          {
+            "event_id": "heldout-001-event-02",
+            "job_id": "event:f21ce970d2fe7e7df0a2332e567c5373c2a39f096a5682f8c91e15cf5a5c573c",
+            "operation": "response",
+            "processing_status": "pending",
+            "status": "committed"
+          },
+          {
+            "operation": "restart",
+            "status": "completed"
+          },
+          {
+            "jobs": [
+              {
+                "attempt_count": 1,
+                "id": "event:6966ef9bae115902010cde4eab29b65c3eac2651ca66a3eb0ad70dc68b7a1b43",
+                "kind": "remember",
+                "last_error": null,
+                "status": "completed"
+              },
+              {
+                "attempt_count": 1,
+                "id": "event:f21ce970d2fe7e7df0a2332e567c5373c2a39f096a5682f8c91e15cf5a5c573c",
+                "kind": "extract",
+                "last_error": null,
+                "status": "completed"
+              }
+            ],
+            "operation": "maintenance",
+            "pending_or_failed_statuses": [],
+            "status": "completed"
+          },
+          {
+            "facts": [
+              {
+                "content": "Please remember this project decision explicitly: For this project, deployment target is AWS ECS.",
+                "id": "614a8b22-bf48-47f8-8b0a-70db90876b7a",
+                "original_source_status": "not_checked",
+                "scope": "project",
+                "scope_id": "project-01",
+                "scores": {
+                  "candidate_backend": "sqlite_vec_scoped_exact_cosine",
+                  "context_token_upper_bound": 147,
+                  "graph_contribution": 0.0,
+                  "graph_energy": 0.0,
+                  "graph_status": "disabled",
+                  "lexical_candidate": true,
+                  "lexical_status": "candidate_union",
+                  "profile": "baseline",
+                  "scope_match": true,
+                  "semantic": 0.7740872502326965,
+                  "state_match": null,
+                  "state_status": "disabled",
+                  "token_count_method": "utf8_bytes_upper_bound",
+                  "total": 0.7740872502326965
+                },
+                "sources": [
+                  {
+                    "created_at": "2026-09-17T01:46:17.505481Z",
+                    "evidence_id": "3841050e-043e-4cb6-a296-7b586b1054a7",
+                    "excerpt": "Please remember this project decision explicitly: For this project, deployment target is AWS ECS.",
+                    "fact_id": "614a8b22-bf48-47f8-8b0a-70db90876b7a",
+                    "source_event_id": "6966ef9bae115902010cde4eab29b65c3eac2651ca66a3eb0ad70dc68b7a1b43",
+                    "source_ref": null
+                  }
+                ],
+                "support_available": true,
+                "version": 1
+              },
+              {
+                "content": "Assistant reported: I can use that decision when this project comes up again.",
+                "id": "fef3ec7c-12d4-4b49-baaf-552a549b724c",
+                "original_source_status": "not_checked",
+                "scope": "project",
+                "scope_id": "project-01",
+                "scores": {
+                  "candidate_backend": "sqlite_vec_scoped_exact_cosine",
+                  "context_token_upper_bound": 127,
+                  "graph_contribution": 0.0,
+                  "graph_energy": 0.0,
+                  "graph_status": "disabled",
+                  "lexical_candidate": true,
+                  "lexical_status": "candidate_union",
+                  "profile": "baseline",
+                  "scope_match": true,
+                  "semantic": 0.5586639046669006,
+                  "state_match": null,
+                  "state_status": "disabled",
+                  "token_count_method": "utf8_bytes_upper_bound",
+                  "total": 0.5586639046669006
+                },
+                "sources": [
+                  {
+                    "created_at": "2026-09-17T01:46:17.934137Z",
+                    "evidence_id": "47464ad4-23bf-457e-bbdf-ac07e83e2092",
+                    "excerpt": "I can use that decision when this project comes up again.",
+                    "fact_id": "fef3ec7c-12d4-4b49-baaf-552a549b724c",
+                    "source_event_id": "f21ce970d2fe7e7df0a2332e567c5373c2a39f096a5682f8c91e15cf5a5c573c",
+                    "source_ref": null
+                  }
+                ],
+                "support_available": true,
+                "version": 1
+              }
+            ],
+            "operation": "retrieve",
+            "query_id": "query-answerable-001",
+            "status": "returned"
+          },
+          {
+            "facts": [
+              {
+                "content": "Please remember this project decision explicitly: For this project, deployment target is AWS ECS.",
+                "id": "614a8b22-bf48-47f8-8b0a-70db90876b7a",
+                "original_source_status": "not_checked",
+                "scope": "project",
+                "scope_id": "project-01",
+                "scores": {
+                  "candidate_backend": "sqlite_vec_scoped_exact_cosine",
+                  "context_token_upper_bound": 147,
+                  "graph_contribution": 0.0,
+                  "graph_energy": 0.0,
+                  "graph_status": "disabled",
+                  "lexical_candidate": true,
+                  "lexical_status": "candidate_union",
+                  "profile": "baseline",
+                  "scope_match": true,
+                  "semantic": 0.7740872502326965,
+                  "state_match": null,
+                  "state_status": "disabled",
+                  "token_count_method": "utf8_bytes_upper_bound",
+                  "total": 0.7740872502326965
+                },
+                "sources": [
+                  {
+                    "created_at": "2026-09-17T01:46:17.505481Z",
+                    "evidence_id": "3841050e-043e-4cb6-a296-7b586b1054a7",
+                    "excerpt": "Please remember this project decision explicitly: For this project, deployment target is AWS ECS.",
+                    "fact_id": "614a8b22-bf48-47f8-8b0a-70db90876b7a",
+                    "source_event_id": "6966ef9bae115902010cde4eab29b65c3eac2651ca66a3eb0ad70dc68b7a1b43",
+                    "source_ref": null
+                  }
+                ],
+                "support_available": true,
+                "version": 1
+              },
+              {
+                "content": "Assistant reported: I can use that decision when this project comes up again.",
+                "id": "fef3ec7c-12d4-4b49-baaf-552a549b724c",
+                "original_source_status": "not_checked",
+                "scope": "project",
+                "scope_id": "project-01",
+                "scores": {
+                  "candidate_backend": "sqlite_vec_scoped_exact_cosine",
+                  "context_token_upper_bound": 127,
+                  "graph_contribution": 0.0,
+                  "graph_energy": 0.0,
+                  "graph_status": "disabled",
+                  "lexical_candidate": true,
+                  "lexical_status": "candidate_union",
+                  "profile": "baseline",
+                  "scope_match": true,
+                  "semantic": 0.5586639046669006,
+                  "state_match": null,
+                  "state_status": "disabled",
+                  "token_count_method": "utf8_bytes_upper_bound",
+                  "total": 0.5586639046669006
+                },
+                "sources": [
+                  {
+                    "created_at": "2026-09-17T01:46:17.934137Z",
+                    "evidence_id": "47464ad4-23bf-457e-bbdf-ac07e83e2092",
+                    "excerpt": "I can use that decision when this project comes up again.",
+                    "fact_id": "fef3ec7c-12d4-4b49-baaf-552a549b724c",
+                    "source_event_id": "f21ce970d2fe7e7df0a2332e567c5373c2a39f096a5682f8c91e15cf5a5c573c",
+                    "source_ref": null
+                  }
+                ],
+                "support_available": true,
+                "version": 1
+              }
+            ],
+            "operation": "retrieve",
+            "query_id": "state-pair-001:semantic",
+            "status": "returned"
+          },
+          {
+            "facts": [
+              {
+                "content": "Please remember this project decision explicitly: For this project, deployment target is AWS ECS.",
+                "id": "614a8b22-bf48-47f8-8b0a-70db90876b7a",
+                "original_source_status": "not_checked",
+                "scope": "project",
+                "scope_id": "project-01",
+                "scores": {
+                  "candidate_backend": "sqlite_vec_scoped_exact_cosine",
+                  "context_token_upper_bound": 147,
+                  "graph_contribution": 0.0,
+                  "graph_energy": 0.0,
+                  "graph_status": "disabled",
+                  "lexical_candidate": true,
+                  "lexical_status": "candidate_union",
+                  "profile": "baseline",
+                  "scope_match": true,
+                  "semantic": 0.7241657972335815,
+                  "state_match": null,
+                  "state_status": "disabled",
+                  "token_count_method": "utf8_bytes_upper_bound",
+                  "total": 0.7241657972335815
+                },
+                "sources": [
+                  {
+                    "created_at": "2026-09-17T01:46:17.505481Z",
+                    "evidence_id": "3841050e-043e-4cb6-a296-7b586b1054a7",
+                    "excerpt": "Please remember this project decision explicitly: For this project, deployment target is AWS ECS.",
+                    "fact_id": "614a8b22-bf48-47f8-8b0a-70db90876b7a",
+                    "source_event_id": "6966ef9bae115902010cde4eab29b65c3eac2651ca66a3eb0ad70dc68b7a1b43",
+                    "source_ref": null
+                  }
+                ],
+                "support_available": true,
+                "version": 1
+              },
+              {
+                "content": "Assistant reported: I can use that decision when this project comes up again.",
+                "id": "fef3ec7c-12d4-4b49-baaf-552a549b724c",
+                "original_source_status": "not_checked",
+                "scope": "project",
+                "scope_id": "project-01",
+                "scores": {
+                  "candidate_backend": "sqlite_vec_scoped_exact_cosine",
+                  "context_token_upper_bound": 127,
+                  "graph_contribution": 0.0,
+                  "graph_energy": 0.0,
+                  "graph_status": "disabled",
+                  "lexical_candidate": true,
+                  "lexical_status": "candidate_union",
+                  "profile": "baseline",
+                  "scope_match": true,
+                  "semantic": 0.5402599573135376,
+                  "state_match": null,
+                  "state_status": "disabled",
+                  "token_count_method": "utf8_bytes_upper_bound",
+                  "total": 0.5402599573135376
+                },
+                "sources": [
+                  {
+                    "created_at": "2026-09-17T01:46:17.934137Z",
+                    "evidence_id": "47464ad4-23bf-457e-bbdf-ac07e83e2092",
+                    "excerpt": "I can use that decision when this project comes up again.",
+                    "fact_id": "fef3ec7c-12d4-4b49-baaf-552a549b724c",
+                    "source_event_id": "f21ce970d2fe7e7df0a2332e567c5373c2a39f096a5682f8c91e15cf5a5c573c",
+                    "source_ref": null
+                  }
+                ],
+                "support_available": true,
+                "version": 1
+              }
+            ],
+            "operation": "retrieve",
+            "query_id": "state-pair-001:state",
+            "status": "returned"
+          }
+        ],
+        "profile": {
+          "disabled_module": null,
+          "enabled_modules": [],
+          "name": "baseline"
+        },
+        "provenance": {
+          "code_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+          "cognition_observed": true,
+          "embedding_metadata": {
+            "capabilities": [
+              "embedding"
+            ],
+            "details": {
+              "context_length": 2048,
+              "embedding_length": 768,
+              "families": [
+                "nomic-bert"
+              ],
+              "family": "nomic-bert",
+              "format": "gguf",
+              "parameter_size": "137M",
+              "parent_model": "",
+              "quantization_level": "F16"
+            },
+            "digest": "0a109f422b47e3a30ba2b10eca18548e944e8a23073ee3f3e947efcf3c45e59f",
+            "model": "nomic-embed-text:latest",
+            "modified_at": "2025-11-04T15:15:16.2072724-05:00",
+            "name": "nomic-embed-text:latest",
+            "size": 274302450
+          },
+          "embedding_sha256": "0a109f422b47e3a30ba2b10eca18548e944e8a23073ee3f3e947efcf3c45e59f",
+          "embedding_verified": true,
+          "model_metadata": {
+            "capabilities": [
+              "completion",
+              "vision"
+            ],
+            "details": {
+              "context_length": 131072,
+              "embedding_length": 2560,
+              "families": [
+                "gemma3"
+              ],
+              "family": "gemma3",
+              "format": "gguf",
+              "parameter_size": "4.3B",
+              "parent_model": "",
+              "quantization_level": "Q4_K_M"
+            },
+            "digest": "a2af6cc3eb7fa8be8504abaf9b04e88f17a119ec3f04a3addf55f92841195f5a",
+            "model": "gemma3:4b",
+            "modified_at": "2026-03-11T01:54:24.735623-04:00",
+            "name": "gemma3:4b",
+            "size": 3338801804
+          },
+          "model_sha256": "a2af6cc3eb7fa8be8504abaf9b04e88f17a119ec3f04a3addf55f92841195f5a",
+          "options_sha256": "cd97e75dba4a59a7798d1c035d2fac3b6fbf56082118e776067c9f505b7d5704",
+          "verified": true
+        },
+        "provider": "ollama",
+        "provider_trace": {
+          "classify_calls": [],
+          "config": {
+            "embedding_model": "nomic-embed-text:latest",
+            "endpoint": "http://192.168.86.35:11434",
+            "max_tokens": 512,
+            "model": "gemma3:4b",
+            "temperature": 0.0,
+            "timeout_seconds": 120.0
+          },
+          "embed_calls": [
+            {
+              "latency_ms": 222.99150000617374,
+              "text_chars": 97,
+              "token_usage": {
+                "prompt_eval_count": 21
+              },
+              "vector_dimensions": 768
+            },
+            {
+              "latency_ms": 234.36060000676662,
+              "text_chars": 77,
+              "token_usage": {
+                "prompt_eval_count": 17
+              },
+              "vector_dimensions": 768
+            },
+            {
+              "latency_ms": 227.7472999994643,
+              "text_chars": 48,
+              "token_usage": {
+                "prompt_eval_count": 10
+              },
+              "vector_dimensions": 768
+            },
+            {
+              "latency_ms": 227.86400000040885,
+              "text_chars": 48,
+              "token_usage": {
+                "prompt_eval_count": 10
+              },
+              "vector_dimensions": 768
+            },
+            {
+              "latency_ms": 215.4793000081554,
+              "text_chars": 66,
+              "token_usage": {
+                "prompt_eval_count": 14
+              },
+              "vector_dimensions": 768
+            },
+            {
+              "latency_ms": 233.35280000173952,
+              "text_chars": 48,
+              "token_usage": {
+                "prompt_eval_count": 10
+              },
+              "vector_dimensions": 768
+            }
+          ],
+          "predict_calls": [
+            {
+              "latency_ms": 3296.4610000053653,
+              "prompt_chars": 358,
+              "response": "-0.2, 0.3, 0.3",
+              "token_usage": {
+                "eval_count": 16,
+                "prompt_eval_count": 112
+              }
+            },
+            {
+              "latency_ms": 3199.2761999863433,
+              "prompt_chars": 376,
+              "response": "0.2, 0.6, 0.4",
+              "token_usage": {
+                "eval_count": 15,
+                "prompt_eval_count": 116
+              }
+            }
+          ],
+          "response_metadata": [
+            {
+              "kind": "embedding",
+              "load_duration": 5781600,
+              "model": "nomic-embed-text:latest",
+              "prompt_eval_count": 21,
+              "provider": "ollama",
+              "total_duration": 30119600
+            },
+            {
+              "kind": "embedding",
+              "load_duration": 7190300,
+              "model": "nomic-embed-text:latest",
+              "prompt_eval_count": 17,
+              "provider": "ollama",
+              "total_duration": 26078400
+            },
+            {
+              "kind": "embedding",
+              "load_duration": 5814800,
+              "model": "nomic-embed-text:latest",
+              "prompt_eval_count": 10,
+              "provider": "ollama",
+              "total_duration": 20433700
+            },
+            {
+              "kind": "embedding",
+              "load_duration": 7364000,
+              "model": "nomic-embed-text:latest",
+              "prompt_eval_count": 10,
+              "provider": "ollama",
+              "total_duration": 24554100
+            },
+            {
+              "kind": "embedding",
+              "load_duration": 6213800,
+              "model": "nomic-embed-text:latest",
+              "prompt_eval_count": 14,
+              "provider": "ollama",
+              "total_duration": 23829200
+            },
+            {
+              "kind": "embedding",
+              "load_duration": 5936900,
+              "model": "nomic-embed-text:latest",
+              "prompt_eval_count": 10,
+              "provider": "ollama",
+              "total_duration": 21057600
+            },
+            {
+              "created_at": "2026-09-17T01:46:22.7911158Z",
+              "done": true,
+              "done_reason": "stop",
+              "eval_count": 16,
+              "eval_duration": 1712887000,
+              "kind": "generate",
+              "load_duration": 8868800,
+              "model": "gemma3:4b",
+              "prompt_eval_count": 112,
+              "prompt_eval_duration": 1382023000,
+              "provider": "ollama",
+              "total_duration": 3107209000
+            },
+            {
+              "created_at": "2026-09-17T01:46:25.9923208Z",
+              "done": true,
+              "done_reason": "stop",
+              "eval_count": 15,
+              "eval_duration": 1586127000,
+              "kind": "generate",
+              "load_duration": 6338300,
+              "model": "gemma3:4b",
+              "prompt_eval_count": 116,
+              "prompt_eval_duration": 1406136000,
+              "provider": "ollama",
+              "total_duration": 3002190600
+            }
+          ],
+          "service_instances": 2,
+          "trace_key": {
+            "profile": "baseline",
+            "run_key": "heldout-001-baseline-r2"
+          }
+        },
+        "surprisal_filter_decisions": [],
+        "unsupported_modules": [],
+        "unsupported_operations": []
+      },
+      "repetition": 2,
+      "retrieved_fact_count": 6,
+      "session_id": "heldout-001",
+      "stale_fact_count": 0,
+      "state_pair_semantic_hits": [
+        false
+      ],
+      "state_pair_state_hits": [
+        false
+      ],
+      "supported_precision": [
+        false,
+        false
+      ],
+      "surprisal_filter_kept": [],
+      "token_cost": null,
+      "verified_embedding_provenance": true,
+      "verified_model_provenance": true
+    },
+    {
+      "adapter_kind": "real_model",
+      "answerable_hits": [
+        false
+      ],
+      "bytes_after": 3706832,
+      "bytes_before": 341776,
+      "cold_latency_ms": 124.84399999084417,
+      "critical_retention": [
+        false
+      ],
+      "critical_retrieval": [
+        false
+      ],
+      "embedding_revision": "0a109f422b47e3a30ba2b10eca18548e944e8a23073ee3f3e947efcf3c45e59f",
+      "execution_status": "complete",
+      "latency_ms": 11833.312999995542,
+      "length_filter_kept": [],
+      "model_revision": "a2af6cc3eb7fa8be8504abaf9b04e88f17a119ec3f04a3addf55f92841195f5a",
+      "no_answer_correct": [],
+      "provider": "ollama",
+      "raw_output": {
+        "adapter": "ollama",
+        "base_url": "http://192.168.86.35:11434",
+        "controlled_state_pairs": [
+          {
+            "affective_scoring_applied": false,
+            "candidate_count": 2,
+            "candidate_fact_ids": [
+              "98fde7a1-1084-4240-9873-5be6363e5309",
+              "d00a4f1c-c736-4cf7-b7dd-13045e1e54c2"
+            ],
+            "classifier_states": {
+              "semantic": {
+                "arousal": 0.3,
+                "complexity": 0.3,
+                "valence": -0.2
+              },
+              "state": {
+                "arousal": 0.6,
+                "complexity": 0.4,
+                "valence": 0.2
+              }
+            },
+            "declared_candidate_fact_ids": [],
+            "declared_direct_vector_seed_fact_ids": [],
+            "declared_graph_target_fact_ids": [],
+            "direct_vector_seed_fact_ids_observed": [
+              "98fde7a1-1084-4240-9873-5be6363e5309",
+              "d00a4f1c-c736-4cf7-b7dd-13045e1e54c2"
+            ],
+            "graph_target_observation": {
+              "status": "not_observed_graph_traversal",
+              "target_ranks_in_direct_seed": {},
+              "targets_in_direct_seed": []
+            },
+            "measurement": "same_semantic_embedding_and_scoped_candidate_pool",
+            "pair_id": "state-pair-001",
+            "rank_delta_state_minus_semantic": {
+              "98fde7a1-1084-4240-9873-5be6363e5309": 0,
+              "d00a4f1c-c736-4cf7-b7dd-13045e1e54c2": 0
+            },
+            "rankings": {
+              "semantic": [
+                "98fde7a1-1084-4240-9873-5be6363e5309",
+                "d00a4f1c-c736-4cf7-b7dd-13045e1e54c2"
+              ],
+              "state": [
+                "98fde7a1-1084-4240-9873-5be6363e5309",
+                "d00a4f1c-c736-4cf7-b7dd-13045e1e54c2"
+              ]
+            },
+            "scores": {
+              "semantic": [
+                {
+                  "content": "Please remember this project decision explicitly: For this project, deployment target is AWS ECS.",
+                  "fact_id": "98fde7a1-1084-4240-9873-5be6363e5309",
+                  "score": {
+                    "graph_contribution": 0.0,
+                    "graph_energy": 0.0,
+                    "semantic": 0.7740872502326965,
+                    "state_match": null,
+                    "state_status": "disabled",
+                    "total": 0.7740872502326965
+                  }
+                },
+                {
+                  "content": "Assistant reported: I can use that decision when this project comes up again.",
+                  "fact_id": "d00a4f1c-c736-4cf7-b7dd-13045e1e54c2",
+                  "score": {
+                    "graph_contribution": 0.0,
+                    "graph_energy": 0.0,
+                    "semantic": 0.5586639046669006,
+                    "state_match": null,
+                    "state_status": "disabled",
+                    "total": 0.5586639046669006
+                  }
+                }
+              ],
+              "state": [
+                {
+                  "content": "Please remember this project decision explicitly: For this project, deployment target is AWS ECS.",
+                  "fact_id": "98fde7a1-1084-4240-9873-5be6363e5309",
+                  "score": {
+                    "graph_contribution": 0.0,
+                    "graph_energy": 0.0,
+                    "semantic": 0.7740872502326965,
+                    "state_match": null,
+                    "state_status": "disabled",
+                    "total": 0.7740872502326965
+                  }
+                },
+                {
+                  "content": "Assistant reported: I can use that decision when this project comes up again.",
+                  "fact_id": "d00a4f1c-c736-4cf7-b7dd-13045e1e54c2",
+                  "score": {
+                    "graph_contribution": 0.0,
+                    "graph_energy": 0.0,
+                    "semantic": 0.5586639046669006,
+                    "state_match": null,
+                    "state_status": "disabled",
+                    "total": 0.5586639046669006
+                  }
+                }
+              ]
+            },
+            "semantic_fidelity": {
+              "judgement": "exact_frozen_text_only",
+              "semantic_top_k": false,
+              "state_top_k": false
+            },
+            "top1_changed": false
+          }
+        ],
+        "critical_retention_judgements": [
+          {
+            "expected_identities": [
+              [
+                "t18-synthetic-profile",
+                "project",
+                "project-01"
+              ]
+            ],
+            "expected_present": true,
+            "fact_id": "fact-001",
+            "gold_status": "supported",
+            "judgement": "exact_content_and_scope_in_accepted_store",
+            "observed_present": false,
+            "runtime_fact_ids": []
+          }
+        ],
+        "embedding_model": "nomic-embed-text:latest",
+        "errors": [],
+        "extraction_judgements": [
+          {
+            "accepted": false,
+            "content_nonempty": true,
+            "judgement": "exact_frozen_text_and_evidence_proxy",
+            "matched_supported_fact_id": null,
+            "observed_source_event_ids": [
+              "heldout-001-event-01"
+            ],
+            "runtime_fact_id": "98fde7a1-1084-4240-9873-5be6363e5309"
+          },
+          {
+            "accepted": false,
+            "content_nonempty": true,
+            "judgement": "exact_frozen_text_and_evidence_proxy",
+            "matched_supported_fact_id": null,
+            "observed_source_event_ids": [
+              "heldout-001-event-02"
+            ],
+            "runtime_fact_id": "d00a4f1c-c736-4cf7-b7dd-13045e1e54c2"
+          }
+        ],
+        "length_filter_policy": {
+          "applied": "counterfactual_shadow_only",
+          "boilerplate_exact_casefold": [
+            "got it",
+            "ok",
+            "okay",
+            "thanks",
+            "thanks!"
+          ],
+          "events": [],
+          "minimum_chars": 50,
+          "service_decision": "not_exposed"
+        },
+        "measurement_notes": [
+          "Missing retrievals remain null and are excluded from interval numerators.",
+          "Correction and forget use runtime fact IDs resolved from the service store.",
+          "Provider token counters are recorded when returned; billing cost is not inferred.",
+          "latency_ms is end-to-end session wall clock; cold_latency_ms covers service construction only.",
+          "Extraction precision uses exact frozen fact text and source role/evidence checks; paraphrases are unjudged.",
+          "State pairs use paired natural-language queries; no same-text embedding control is claimed.",
+          "surprisal_filter_kept is derived from durable job encoding_diagnostics and remains null when a job result is unavailable.",
+          "length_filter_kept is a frozen counterfactual shadow policy, not an applied service filter decision."
+        ],
+        "model": "gemma3:4b",
+        "module_switches": {
+          "disabled": null,
+          "enabled": [],
+          "source": "service_factory"
+        },
+        "operations": [
+          {
+            "event_id": "heldout-001-event-01",
+            "job_id": "event:a35519b489fa6203709af3f1be51e34939dc4d20d431669ac509233cde434045",
+            "operation": "remember",
+            "processing_status": "pending",
+            "status": "committed"
+          },
+          {
+            "event_id": "heldout-001-event-02",
+            "job_id": "event:da5a129908e5df99b22ce132eb3a5330c3e4222927f4254d259ec1596cf11e4b",
+            "operation": "response",
+            "processing_status": "pending",
+            "status": "committed"
+          },
+          {
+            "operation": "restart",
+            "status": "completed"
+          },
+          {
+            "jobs": [
+              {
+                "attempt_count": 1,
+                "id": "event:a35519b489fa6203709af3f1be51e34939dc4d20d431669ac509233cde434045",
+                "kind": "remember",
+                "last_error": null,
+                "status": "completed"
+              },
+              {
+                "attempt_count": 1,
+                "id": "event:da5a129908e5df99b22ce132eb3a5330c3e4222927f4254d259ec1596cf11e4b",
+                "kind": "extract",
+                "last_error": null,
+                "status": "completed"
+              }
+            ],
+            "operation": "maintenance",
+            "pending_or_failed_statuses": [],
+            "status": "completed"
+          },
+          {
+            "facts": [
+              {
+                "content": "Please remember this project decision explicitly: For this project, deployment target is AWS ECS.",
+                "id": "98fde7a1-1084-4240-9873-5be6363e5309",
+                "original_source_status": "not_checked",
+                "scope": "project",
+                "scope_id": "project-01",
+                "scores": {
+                  "candidate_backend": "sqlite_vec_scoped_exact_cosine",
+                  "context_token_upper_bound": 147,
+                  "graph_contribution": 0.0,
+                  "graph_energy": 0.0,
+                  "graph_status": "disabled",
+                  "lexical_candidate": true,
+                  "lexical_status": "candidate_union",
+                  "profile": "baseline",
+                  "scope_match": true,
+                  "semantic": 0.7740872502326965,
+                  "state_match": null,
+                  "state_status": "disabled",
+                  "token_count_method": "utf8_bytes_upper_bound",
+                  "total": 0.7740872502326965
+                },
+                "sources": [
+                  {
+                    "created_at": "2026-09-17T01:46:27.767982Z",
+                    "evidence_id": "f56b9180-694c-4b67-9b16-ebdc7279deb3",
+                    "excerpt": "Please remember this project decision explicitly: For this project, deployment target is AWS ECS.",
+                    "fact_id": "98fde7a1-1084-4240-9873-5be6363e5309",
+                    "source_event_id": "a35519b489fa6203709af3f1be51e34939dc4d20d431669ac509233cde434045",
+                    "source_ref": null
+                  }
+                ],
+                "support_available": true,
+                "version": 1
+              },
+              {
+                "content": "Assistant reported: I can use that decision when this project comes up again.",
+                "id": "d00a4f1c-c736-4cf7-b7dd-13045e1e54c2",
+                "original_source_status": "not_checked",
+                "scope": "project",
+                "scope_id": "project-01",
+                "scores": {
+                  "candidate_backend": "sqlite_vec_scoped_exact_cosine",
+                  "context_token_upper_bound": 127,
+                  "graph_contribution": 0.0,
+                  "graph_energy": 0.0,
+                  "graph_status": "disabled",
+                  "lexical_candidate": true,
+                  "lexical_status": "candidate_union",
+                  "profile": "baseline",
+                  "scope_match": true,
+                  "semantic": 0.5586639046669006,
+                  "state_match": null,
+                  "state_status": "disabled",
+                  "token_count_method": "utf8_bytes_upper_bound",
+                  "total": 0.5586639046669006
+                },
+                "sources": [
+                  {
+                    "created_at": "2026-09-17T01:46:28.159796Z",
+                    "evidence_id": "ab170583-59b6-4c76-8df8-41b02ec23adb",
+                    "excerpt": "I can use that decision when this project comes up again.",
+                    "fact_id": "d00a4f1c-c736-4cf7-b7dd-13045e1e54c2",
+                    "source_event_id": "da5a129908e5df99b22ce132eb3a5330c3e4222927f4254d259ec1596cf11e4b",
+                    "source_ref": null
+                  }
+                ],
+                "support_available": true,
+                "version": 1
+              }
+            ],
+            "operation": "retrieve",
+            "query_id": "query-answerable-001",
+            "status": "returned"
+          },
+          {
+            "facts": [
+              {
+                "content": "Please remember this project decision explicitly: For this project, deployment target is AWS ECS.",
+                "id": "98fde7a1-1084-4240-9873-5be6363e5309",
+                "original_source_status": "not_checked",
+                "scope": "project",
+                "scope_id": "project-01",
+                "scores": {
+                  "candidate_backend": "sqlite_vec_scoped_exact_cosine",
+                  "context_token_upper_bound": 147,
+                  "graph_contribution": 0.0,
+                  "graph_energy": 0.0,
+                  "graph_status": "disabled",
+                  "lexical_candidate": true,
+                  "lexical_status": "candidate_union",
+                  "profile": "baseline",
+                  "scope_match": true,
+                  "semantic": 0.7740872502326965,
+                  "state_match": null,
+                  "state_status": "disabled",
+                  "token_count_method": "utf8_bytes_upper_bound",
+                  "total": 0.7740872502326965
+                },
+                "sources": [
+                  {
+                    "created_at": "2026-09-17T01:46:27.767982Z",
+                    "evidence_id": "f56b9180-694c-4b67-9b16-ebdc7279deb3",
+                    "excerpt": "Please remember this project decision explicitly: For this project, deployment target is AWS ECS.",
+                    "fact_id": "98fde7a1-1084-4240-9873-5be6363e5309",
+                    "source_event_id": "a35519b489fa6203709af3f1be51e34939dc4d20d431669ac509233cde434045",
+                    "source_ref": null
+                  }
+                ],
+                "support_available": true,
+                "version": 1
+              },
+              {
+                "content": "Assistant reported: I can use that decision when this project comes up again.",
+                "id": "d00a4f1c-c736-4cf7-b7dd-13045e1e54c2",
+                "original_source_status": "not_checked",
+                "scope": "project",
+                "scope_id": "project-01",
+                "scores": {
+                  "candidate_backend": "sqlite_vec_scoped_exact_cosine",
+                  "context_token_upper_bound": 127,
+                  "graph_contribution": 0.0,
+                  "graph_energy": 0.0,
+                  "graph_status": "disabled",
+                  "lexical_candidate": true,
+                  "lexical_status": "candidate_union",
+                  "profile": "baseline",
+                  "scope_match": true,
+                  "semantic": 0.5586639046669006,
+                  "state_match": null,
+                  "state_status": "disabled",
+                  "token_count_method": "utf8_bytes_upper_bound",
+                  "total": 0.5586639046669006
+                },
+                "sources": [
+                  {
+                    "created_at": "2026-09-17T01:46:28.159796Z",
+                    "evidence_id": "ab170583-59b6-4c76-8df8-41b02ec23adb",
+                    "excerpt": "I can use that decision when this project comes up again.",
+                    "fact_id": "d00a4f1c-c736-4cf7-b7dd-13045e1e54c2",
+                    "source_event_id": "da5a129908e5df99b22ce132eb3a5330c3e4222927f4254d259ec1596cf11e4b",
+                    "source_ref": null
+                  }
+                ],
+                "support_available": true,
+                "version": 1
+              }
+            ],
+            "operation": "retrieve",
+            "query_id": "state-pair-001:semantic",
+            "status": "returned"
+          },
+          {
+            "facts": [
+              {
+                "content": "Please remember this project decision explicitly: For this project, deployment target is AWS ECS.",
+                "id": "98fde7a1-1084-4240-9873-5be6363e5309",
+                "original_source_status": "not_checked",
+                "scope": "project",
+                "scope_id": "project-01",
+                "scores": {
+                  "candidate_backend": "sqlite_vec_scoped_exact_cosine",
+                  "context_token_upper_bound": 147,
+                  "graph_contribution": 0.0,
+                  "graph_energy": 0.0,
+                  "graph_status": "disabled",
+                  "lexical_candidate": true,
+                  "lexical_status": "candidate_union",
+                  "profile": "baseline",
+                  "scope_match": true,
+                  "semantic": 0.7241657972335815,
+                  "state_match": null,
+                  "state_status": "disabled",
+                  "token_count_method": "utf8_bytes_upper_bound",
+                  "total": 0.7241657972335815
+                },
+                "sources": [
+                  {
+                    "created_at": "2026-09-17T01:46:27.767982Z",
+                    "evidence_id": "f56b9180-694c-4b67-9b16-ebdc7279deb3",
+                    "excerpt": "Please remember this project decision explicitly: For this project, deployment target is AWS ECS.",
+                    "fact_id": "98fde7a1-1084-4240-9873-5be6363e5309",
+                    "source_event_id": "a35519b489fa6203709af3f1be51e34939dc4d20d431669ac509233cde434045",
+                    "source_ref": null
+                  }
+                ],
+                "support_available": true,
+                "version": 1
+              },
+              {
+                "content": "Assistant reported: I can use that decision when this project comes up again.",
+                "id": "d00a4f1c-c736-4cf7-b7dd-13045e1e54c2",
+                "original_source_status": "not_checked",
+                "scope": "project",
+                "scope_id": "project-01",
+                "scores": {
+                  "candidate_backend": "sqlite_vec_scoped_exact_cosine",
+                  "context_token_upper_bound": 127,
+                  "graph_contribution": 0.0,
+                  "graph_energy": 0.0,
+                  "graph_status": "disabled",
+                  "lexical_candidate": true,
+                  "lexical_status": "candidate_union",
+                  "profile": "baseline",
+                  "scope_match": true,
+                  "semantic": 0.5402599573135376,
+                  "state_match": null,
+                  "state_status": "disabled",
+                  "token_count_method": "utf8_bytes_upper_bound",
+                  "total": 0.5402599573135376
+                },
+                "sources": [
+                  {
+                    "created_at": "2026-09-17T01:46:28.159796Z",
+                    "evidence_id": "ab170583-59b6-4c76-8df8-41b02ec23adb",
+                    "excerpt": "I can use that decision when this project comes up again.",
+                    "fact_id": "d00a4f1c-c736-4cf7-b7dd-13045e1e54c2",
+                    "source_event_id": "da5a129908e5df99b22ce132eb3a5330c3e4222927f4254d259ec1596cf11e4b",
+                    "source_ref": null
+                  }
+                ],
+                "support_available": true,
+                "version": 1
+              }
+            ],
+            "operation": "retrieve",
+            "query_id": "state-pair-001:state",
+            "status": "returned"
+          }
+        ],
+        "profile": {
+          "disabled_module": null,
+          "enabled_modules": [],
+          "name": "baseline"
+        },
+        "provenance": {
+          "code_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+          "cognition_observed": true,
+          "embedding_metadata": {
+            "capabilities": [
+              "embedding"
+            ],
+            "details": {
+              "context_length": 2048,
+              "embedding_length": 768,
+              "families": [
+                "nomic-bert"
+              ],
+              "family": "nomic-bert",
+              "format": "gguf",
+              "parameter_size": "137M",
+              "parent_model": "",
+              "quantization_level": "F16"
+            },
+            "digest": "0a109f422b47e3a30ba2b10eca18548e944e8a23073ee3f3e947efcf3c45e59f",
+            "model": "nomic-embed-text:latest",
+            "modified_at": "2025-11-04T15:15:16.2072724-05:00",
+            "name": "nomic-embed-text:latest",
+            "size": 274302450
+          },
+          "embedding_sha256": "0a109f422b47e3a30ba2b10eca18548e944e8a23073ee3f3e947efcf3c45e59f",
+          "embedding_verified": true,
+          "model_metadata": {
+            "capabilities": [
+              "completion",
+              "vision"
+            ],
+            "details": {
+              "context_length": 131072,
+              "embedding_length": 2560,
+              "families": [
+                "gemma3"
+              ],
+              "family": "gemma3",
+              "format": "gguf",
+              "parameter_size": "4.3B",
+              "parent_model": "",
+              "quantization_level": "Q4_K_M"
+            },
+            "digest": "a2af6cc3eb7fa8be8504abaf9b04e88f17a119ec3f04a3addf55f92841195f5a",
+            "model": "gemma3:4b",
+            "modified_at": "2026-03-11T01:54:24.735623-04:00",
+            "name": "gemma3:4b",
+            "size": 3338801804
+          },
+          "model_sha256": "a2af6cc3eb7fa8be8504abaf9b04e88f17a119ec3f04a3addf55f92841195f5a",
+          "options_sha256": "cd97e75dba4a59a7798d1c035d2fac3b6fbf56082118e776067c9f505b7d5704",
+          "verified": true
+        },
+        "provider": "ollama",
+        "provider_trace": {
+          "classify_calls": [],
+          "config": {
+            "embedding_model": "nomic-embed-text:latest",
+            "endpoint": "http://192.168.86.35:11434",
+            "max_tokens": 512,
+            "model": "gemma3:4b",
+            "temperature": 0.0,
+            "timeout_seconds": 120.0
+          },
+          "embed_calls": [
+            {
+              "latency_ms": 259.92650000262074,
+              "text_chars": 97,
+              "token_usage": {
+                "prompt_eval_count": 21
+              },
+              "vector_dimensions": 768
+            },
+            {
+              "latency_ms": 226.41449999355245,
+              "text_chars": 77,
+              "token_usage": {
+                "prompt_eval_count": 17
+              },
+              "vector_dimensions": 768
+            },
+            {
+              "latency_ms": 243.1161999993492,
+              "text_chars": 48,
+              "token_usage": {
+                "prompt_eval_count": 10
+              },
+              "vector_dimensions": 768
+            },
+            {
+              "latency_ms": 243.53510000219103,
+              "text_chars": 48,
+              "token_usage": {
+                "prompt_eval_count": 10
+              },
+              "vector_dimensions": 768
+            },
+            {
+              "latency_ms": 219.4399999862071,
+              "text_chars": 66,
+              "token_usage": {
+                "prompt_eval_count": 14
+              },
+              "vector_dimensions": 768
+            },
+            {
+              "latency_ms": 215.2656999969622,
+              "text_chars": 48,
+              "token_usage": {
+                "prompt_eval_count": 10
+              },
+              "vector_dimensions": 768
+            }
+          ],
+          "predict_calls": [
+            {
+              "latency_ms": 3331.831499992404,
+              "prompt_chars": 358,
+              "response": "-0.2, 0.3, 0.3",
+              "token_usage": {
+                "eval_count": 16,
+                "prompt_eval_count": 112
+              }
+            },
+            {
+              "latency_ms": 3240.3789999953005,
+              "prompt_chars": 376,
+              "response": "0.2, 0.6, 0.4",
+              "token_usage": {
+                "eval_count": 15,
+                "prompt_eval_count": 116
+              }
+            }
+          ],
+          "response_metadata": [
+            {
+              "kind": "embedding",
+              "load_duration": 7153100,
+              "model": "nomic-embed-text:latest",
+              "prompt_eval_count": 21,
+              "provider": "ollama",
+              "total_duration": 33425800
+            },
+            {
+              "kind": "embedding",
+              "load_duration": 6002000,
+              "model": "nomic-embed-text:latest",
+              "prompt_eval_count": 17,
+              "provider": "ollama",
+              "total_duration": 25273200
+            },
+            {
+              "kind": "embedding",
+              "load_duration": 6816900,
+              "model": "nomic-embed-text:latest",
+              "prompt_eval_count": 10,
+              "provider": "ollama",
+              "total_duration": 22302200
+            },
+            {
+              "kind": "embedding",
+              "load_duration": 5847200,
+              "model": "nomic-embed-text:latest",
+              "prompt_eval_count": 10,
+              "provider": "ollama",
+              "total_duration": 21022500
+            },
+            {
+              "kind": "embedding",
+              "load_duration": 6225600,
+              "model": "nomic-embed-text:latest",
+              "prompt_eval_count": 14,
+              "provider": "ollama",
+              "total_duration": 23320900
+            },
+            {
+              "kind": "embedding",
+              "load_duration": 6460100,
+              "model": "nomic-embed-text:latest",
+              "prompt_eval_count": 10,
+              "provider": "ollama",
+              "total_duration": 21030300
+            },
+            {
+              "created_at": "2026-09-17T01:46:33.0502886Z",
+              "done": true,
+              "done_reason": "stop",
+              "eval_count": 16,
+              "eval_duration": 1706262000,
+              "kind": "generate",
+              "load_duration": 6366200,
+              "model": "gemma3:4b",
+              "prompt_eval_count": 112,
+              "prompt_eval_duration": 1416508000,
+              "provider": "ollama",
+              "total_duration": 3132966200
+            },
+            {
+              "created_at": "2026-09-17T01:46:36.2920954Z",
+              "done": true,
+              "done_reason": "stop",
+              "eval_count": 15,
+              "eval_duration": 1596391000,
+              "kind": "generate",
+              "load_duration": 6940100,
+              "model": "gemma3:4b",
+              "prompt_eval_count": 116,
+              "prompt_eval_duration": 1433912000,
+              "provider": "ollama",
+              "total_duration": 3041323800
+            }
+          ],
+          "service_instances": 2,
+          "trace_key": {
+            "profile": "baseline",
+            "run_key": "heldout-001-baseline-r3"
+          }
+        },
+        "surprisal_filter_decisions": [],
+        "unsupported_modules": [],
+        "unsupported_operations": []
+      },
+      "repetition": 3,
+      "retrieved_fact_count": 6,
+      "session_id": "heldout-001",
+      "stale_fact_count": 0,
+      "state_pair_semantic_hits": [
+        false
+      ],
+      "state_pair_state_hits": [
+        false
+      ],
+      "supported_precision": [
+        false,
+        false
+      ],
+      "surprisal_filter_kept": [],
+      "token_cost": null,
+      "verified_embedding_provenance": true,
+      "verified_model_provenance": true
+    },
+    {
+      "adapter_kind": "real_model",
+      "answerable_hits": [
+        false
+      ],
+      "bytes_after": 3706832,
+      "bytes_before": 341776,
+      "cold_latency_ms": 200.58160000189673,
+      "critical_retention": [
+        false
+      ],
+      "critical_retrieval": [
+        false
+      ],
+      "embedding_revision": "0a109f422b47e3a30ba2b10eca18548e944e8a23073ee3f3e947efcf3c45e59f",
+      "execution_status": "complete",
+      "latency_ms": 10704.829599999357,
+      "length_filter_kept": [],
+      "model_revision": "a2af6cc3eb7fa8be8504abaf9b04e88f17a119ec3f04a3addf55f92841195f5a",
+      "no_answer_correct": [],
+      "provider": "ollama",
+      "raw_output": {
+        "adapter": "ollama",
+        "base_url": "http://192.168.86.35:11434",
+        "controlled_state_pairs": [
+          {
+            "affective_scoring_applied": false,
+            "candidate_count": 2,
+            "candidate_fact_ids": [
+              "0a715e67-dc2e-4aa9-8711-1273a4957f2e",
+              "37abdded-a3c8-448f-82f0-f4ce959fbebe"
+            ],
+            "classifier_states": {
+              "semantic": {
+                "arousal": 0.2,
+                "complexity": 0.3,
+                "valence": 0.1
+              },
+              "state": {
+                "arousal": 0.6,
+                "complexity": 0.4,
+                "valence": -0.6
+              }
+            },
+            "declared_candidate_fact_ids": [],
+            "declared_direct_vector_seed_fact_ids": [],
+            "declared_graph_target_fact_ids": [],
+            "direct_vector_seed_fact_ids_observed": [
+              "0a715e67-dc2e-4aa9-8711-1273a4957f2e",
+              "37abdded-a3c8-448f-82f0-f4ce959fbebe"
+            ],
+            "graph_target_observation": {
+              "status": "not_observed_graph_traversal",
+              "target_ranks_in_direct_seed": {},
+              "targets_in_direct_seed": []
+            },
+            "measurement": "same_semantic_embedding_and_scoped_candidate_pool",
+            "pair_id": "state-pair-002",
+            "rank_delta_state_minus_semantic": {
+              "0a715e67-dc2e-4aa9-8711-1273a4957f2e": 0,
+              "37abdded-a3c8-448f-82f0-f4ce959fbebe": 0
+            },
+            "rankings": {
+              "semantic": [
+                "0a715e67-dc2e-4aa9-8711-1273a4957f2e",
+                "37abdded-a3c8-448f-82f0-f4ce959fbebe"
+              ],
+              "state": [
+                "0a715e67-dc2e-4aa9-8711-1273a4957f2e",
+                "37abdded-a3c8-448f-82f0-f4ce959fbebe"
+              ]
+            },
+            "scores": {
+              "semantic": [
+                {
+                  "content": "Please remember this project decision explicitly: For this project, code review is two approvals.",
+                  "fact_id": "0a715e67-dc2e-4aa9-8711-1273a4957f2e",
+                  "score": {
+                    "graph_contribution": 0.0,
+                    "graph_energy": 0.0,
+                    "semantic": 0.8455632925033569,
+                    "state_match": null,
+                    "state_status": "disabled",
+                    "total": 0.8455632925033569
+                  }
+                },
+                {
+                  "content": "Assistant reported: I can use that decision when this project comes up again.",
+                  "fact_id": "37abdded-a3c8-448f-82f0-f4ce959fbebe",
+                  "score": {
+                    "graph_contribution": 0.0,
+                    "graph_energy": 0.0,
+                    "semantic": 0.635287344455719,
+                    "state_match": null,
+                    "state_status": "disabled",
+                    "total": 0.635287344455719
+                  }
+                }
+              ],
+              "state": [
+                {
+                  "content": "Please remember this project decision explicitly: For this project, code review is two approvals.",
+                  "fact_id": "0a715e67-dc2e-4aa9-8711-1273a4957f2e",
+                  "score": {
+                    "graph_contribution": 0.0,
+                    "graph_energy": 0.0,
+                    "semantic": 0.8455632925033569,
+                    "state_match": null,
+                    "state_status": "disabled",
+                    "total": 0.8455632925033569
+                  }
+                },
+                {
+                  "content": "Assistant reported: I can use that decision when this project comes up again.",
+                  "fact_id": "37abdded-a3c8-448f-82f0-f4ce959fbebe",
+                  "score": {
+                    "graph_contribution": 0.0,
+                    "graph_energy": 0.0,
+                    "semantic": 0.635287344455719,
+                    "state_match": null,
+                    "state_status": "disabled",
+                    "total": 0.635287344455719
+                  }
+                }
+              ]
+            },
+            "semantic_fidelity": {
+              "judgement": "exact_frozen_text_only",
+              "semantic_top_k": false,
+              "state_top_k": false
+            },
+            "top1_changed": false
+          }
+        ],
+        "critical_retention_judgements": [
+          {
+            "expected_identities": [
+              [
+                "t18-synthetic-profile",
+                "project",
+                "project-02"
+              ]
+            ],
+            "expected_present": true,
+            "fact_id": "fact-002",
+            "gold_status": "supported",
+            "judgement": "exact_content_and_scope_in_accepted_store",
+            "observed_present": false,
+            "runtime_fact_ids": []
+          }
+        ],
+        "embedding_model": "nomic-embed-text:latest",
+        "errors": [],
+        "extraction_judgements": [
+          {
+            "accepted": false,
+            "content_nonempty": true,
+            "judgement": "exact_frozen_text_and_evidence_proxy",
+            "matched_supported_fact_id": null,
+            "observed_source_event_ids": [
+              "heldout-002-event-01"
+            ],
+            "runtime_fact_id": "0a715e67-dc2e-4aa9-8711-1273a4957f2e"
+          },
+          {
+            "accepted": false,
+            "content_nonempty": true,
+            "judgement": "exact_frozen_text_and_evidence_proxy",
+            "matched_supported_fact_id": null,
+            "observed_source_event_ids": [
+              "heldout-002-event-02"
+            ],
+            "runtime_fact_id": "37abdded-a3c8-448f-82f0-f4ce959fbebe"
+          }
+        ],
+        "length_filter_policy": {
+          "applied": "counterfactual_shadow_only",
+          "boilerplate_exact_casefold": [
+            "got it",
+            "ok",
+            "okay",
+            "thanks",
+            "thanks!"
+          ],
+          "events": [],
+          "minimum_chars": 50,
+          "service_decision": "not_exposed"
+        },
+        "measurement_notes": [
+          "Missing retrievals remain null and are excluded from interval numerators.",
+          "Correction and forget use runtime fact IDs resolved from the service store.",
+          "Provider token counters are recorded when returned; billing cost is not inferred.",
+          "latency_ms is end-to-end session wall clock; cold_latency_ms covers service construction only.",
+          "Extraction precision uses exact frozen fact text and source role/evidence checks; paraphrases are unjudged.",
+          "State pairs use paired natural-language queries; no same-text embedding control is claimed.",
+          "surprisal_filter_kept is derived from durable job encoding_diagnostics and remains null when a job result is unavailable.",
+          "length_filter_kept is a frozen counterfactual shadow policy, not an applied service filter decision."
+        ],
+        "model": "gemma3:4b",
+        "module_switches": {
+          "disabled": null,
+          "enabled": [],
+          "source": "service_factory"
+        },
+        "operations": [
+          {
+            "event_id": "heldout-002-event-01",
+            "job_id": "event:56aee16e37ec1612852cd1282adaad6e686440811276fe55c302f3ec6d8c8e65",
+            "operation": "remember",
+            "processing_status": "pending",
+            "status": "committed"
+          },
+          {
+            "event_id": "heldout-002-event-02",
+            "job_id": "event:b01fa4a2f4c3f45ece7f3bd70d3f1d571337435d676bfa84ed3a3f49fdb147be",
+            "operation": "response",
+            "processing_status": "pending",
+            "status": "committed"
+          },
+          {
+            "operation": "restart",
+            "status": "completed"
+          },
+          {
+            "jobs": [
+              {
+                "attempt_count": 1,
+                "id": "event:56aee16e37ec1612852cd1282adaad6e686440811276fe55c302f3ec6d8c8e65",
+                "kind": "remember",
+                "last_error": null,
+                "status": "completed"
+              },
+              {
+                "attempt_count": 1,
+                "id": "event:b01fa4a2f4c3f45ece7f3bd70d3f1d571337435d676bfa84ed3a3f49fdb147be",
+                "kind": "extract",
+                "last_error": null,
+                "status": "completed"
+              }
+            ],
+            "operation": "maintenance",
+            "pending_or_failed_statuses": [],
+            "status": "completed"
+          },
+          {
+            "facts": [
+              {
+                "content": "Please remember this project decision explicitly: For this project, code review is two approvals.",
+                "id": "0a715e67-dc2e-4aa9-8711-1273a4957f2e",
+                "original_source_status": "not_checked",
+                "scope": "project",
+                "scope_id": "project-02",
+                "scores": {
+                  "candidate_backend": "sqlite_vec_scoped_exact_cosine",
+                  "context_token_upper_bound": 147,
+                  "graph_contribution": 0.0,
+                  "graph_energy": 0.0,
+                  "graph_status": "disabled",
+                  "lexical_candidate": true,
+                  "lexical_status": "candidate_union",
+                  "profile": "baseline",
+                  "scope_match": true,
+                  "semantic": 0.8455632925033569,
+                  "state_match": null,
+                  "state_status": "disabled",
+                  "token_count_method": "utf8_bytes_upper_bound",
+                  "total": 0.8455632925033569
+                },
+                "sources": [
+                  {
+                    "created_at": "2026-09-17T01:46:39.756225Z",
+                    "evidence_id": "996a3afe-dfa5-44e5-abf6-8895a0496da1",
+                    "excerpt": "Please remember this project decision explicitly: For this project, code review is two approvals.",
+                    "fact_id": "0a715e67-dc2e-4aa9-8711-1273a4957f2e",
+                    "source_event_id": "56aee16e37ec1612852cd1282adaad6e686440811276fe55c302f3ec6d8c8e65",
+                    "source_ref": null
+                  }
+                ],
+                "support_available": true,
+                "version": 1
+              },
+              {
+                "content": "Assistant reported: I can use that decision when this project comes up again.",
+                "id": "37abdded-a3c8-448f-82f0-f4ce959fbebe",
+                "original_source_status": "not_checked",
+                "scope": "project",
+                "scope_id": "project-02",
+                "scores": {
+                  "candidate_backend": "sqlite_vec_scoped_exact_cosine",
+                  "context_token_upper_bound": 127,
+                  "graph_contribution": 0.0,
+                  "graph_energy": 0.0,
+                  "graph_status": "disabled",
+                  "lexical_candidate": true,
+                  "lexical_status": "candidate_union",
+                  "profile": "baseline",
+                  "scope_match": true,
+                  "semantic": 0.635287344455719,
+                  "state_match": null,
+                  "state_status": "disabled",
+                  "token_count_method": "utf8_bytes_upper_bound",
+                  "total": 0.635287344455719
+                },
+                "sources": [
+                  {
+                    "created_at": "2026-09-17T01:46:40.087056Z",
+                    "evidence_id": "a2aacabf-daa9-4ae6-b2eb-0d0e8e0d2a4d",
+                    "excerpt": "I can use that decision when this project comes up again.",
+                    "fact_id": "37abdded-a3c8-448f-82f0-f4ce959fbebe",
+                    "source_event_id": "b01fa4a2f4c3f45ece7f3bd70d3f1d571337435d676bfa84ed3a3f49fdb147be",
+                    "source_ref": null
+                  }
+                ],
+                "support_available": true,
+                "version": 1
+              }
+            ],
+            "operation": "retrieve",
+            "query_id": "query-answerable-002",
+            "status": "returned"
+          },
+          {
+            "facts": [
+              {
+                "content": "Please remember this project decision explicitly: For this project, code review is two approvals.",
+                "id": "0a715e67-dc2e-4aa9-8711-1273a4957f2e",
+                "original_source_status": "not_checked",
+                "scope": "project",
+                "scope_id": "project-02",
+                "scores": {
+                  "candidate_backend": "sqlite_vec_scoped_exact_cosine",
+                  "context_token_upper_bound": 147,
+                  "graph_contribution": 0.0,
+                  "graph_energy": 0.0,
+                  "graph_status": "disabled",
+                  "lexical_candidate": true,
+                  "lexical_status": "candidate_union",
+                  "profile": "baseline",
+                  "scope_match": true,
+                  "semantic": 0.8455632925033569,
+                  "state_match": null,
+                  "state_status": "disabled",
+                  "token_count_method": "utf8_bytes_upper_bound",
+                  "total": 0.8455632925033569
+                },
+                "sources": [
+                  {
+                    "created_at": "2026-09-17T01:46:39.756225Z",
+                    "evidence_id": "996a3afe-dfa5-44e5-abf6-8895a0496da1",
+                    "excerpt": "Please remember this project decision explicitly: For this project, code review is two approvals.",
+                    "fact_id": "0a715e67-dc2e-4aa9-8711-1273a4957f2e",
+                    "source_event_id": "56aee16e37ec1612852cd1282adaad6e686440811276fe55c302f3ec6d8c8e65",
+                    "source_ref": null
+                  }
+                ],
+                "support_available": true,
+                "version": 1
+              },
+              {
+                "content": "Assistant reported: I can use that decision when this project comes up again.",
+                "id": "37abdded-a3c8-448f-82f0-f4ce959fbebe",
+                "original_source_status": "not_checked",
+                "scope": "project",
+                "scope_id": "project-02",
+                "scores": {
+                  "candidate_backend": "sqlite_vec_scoped_exact_cosine",
+                  "context_token_upper_bound": 127,
+                  "graph_contribution": 0.0,
+                  "graph_energy": 0.0,
+                  "graph_status": "disabled",
+                  "lexical_candidate": true,
+                  "lexical_status": "candidate_union",
+                  "profile": "baseline",
+                  "scope_match": true,
+                  "semantic": 0.635287344455719,
+                  "state_match": null,
+                  "state_status": "disabled",
+                  "token_count_method": "utf8_bytes_upper_bound",
+                  "total": 0.635287344455719
+                },
+                "sources": [
+                  {
+                    "created_at": "2026-09-17T01:46:40.087056Z",
+                    "evidence_id": "a2aacabf-daa9-4ae6-b2eb-0d0e8e0d2a4d",
+                    "excerpt": "I can use that decision when this project comes up again.",
+                    "fact_id": "37abdded-a3c8-448f-82f0-f4ce959fbebe",
+                    "source_event_id": "b01fa4a2f4c3f45ece7f3bd70d3f1d571337435d676bfa84ed3a3f49fdb147be",
+                    "source_ref": null
+                  }
+                ],
+                "support_available": true,
+                "version": 1
+              }
+            ],
+            "operation": "retrieve",
+            "query_id": "state-pair-002:semantic",
+            "status": "returned"
+          },
+          {
+            "facts": [
+              {
+                "content": "Please remember this project decision explicitly: For this project, code review is two approvals.",
+                "id": "0a715e67-dc2e-4aa9-8711-1273a4957f2e",
+                "original_source_status": "not_checked",
+                "scope": "project",
+                "scope_id": "project-02",
+                "scores": {
+                  "candidate_backend": "sqlite_vec_scoped_exact_cosine",
+                  "context_token_upper_bound": 147,
+                  "graph_contribution": 0.0,
+                  "graph_energy": 0.0,
+                  "graph_status": "disabled",
+                  "lexical_candidate": true,
+                  "lexical_status": "candidate_union",
+                  "profile": "baseline",
+                  "scope_match": true,
+                  "semantic": 0.7929795980453491,
+                  "state_match": null,
+                  "state_status": "disabled",
+                  "token_count_method": "utf8_bytes_upper_bound",
+                  "total": 0.7929795980453491
+                },
+                "sources": [
+                  {
+                    "created_at": "2026-09-17T01:46:39.756225Z",
+                    "evidence_id": "996a3afe-dfa5-44e5-abf6-8895a0496da1",
+                    "excerpt": "Please remember this project decision explicitly: For this project, code review is two approvals.",
+                    "fact_id": "0a715e67-dc2e-4aa9-8711-1273a4957f2e",
+                    "source_event_id": "56aee16e37ec1612852cd1282adaad6e686440811276fe55c302f3ec6d8c8e65",
+                    "source_ref": null
+                  }
+                ],
+                "support_available": true,
+                "version": 1
+              },
+              {
+                "content": "Assistant reported: I can use that decision when this project comes up again.",
+                "id": "37abdded-a3c8-448f-82f0-f4ce959fbebe",
+                "original_source_status": "not_checked",
+                "scope": "project",
+                "scope_id": "project-02",
+                "scores": {
+                  "candidate_backend": "sqlite_vec_scoped_exact_cosine",
+                  "context_token_upper_bound": 127,
+                  "graph_contribution": 0.0,
+                  "graph_energy": 0.0,
+                  "graph_status": "disabled",
+                  "lexical_candidate": true,
+                  "lexical_status": "candidate_union",
+                  "profile": "baseline",
+                  "scope_match": true,
+                  "semantic": 0.6131055951118469,
+                  "state_match": null,
+                  "state_status": "disabled",
+                  "token_count_method": "utf8_bytes_upper_bound",
+                  "total": 0.6131055951118469
+                },
+                "sources": [
+                  {
+                    "created_at": "2026-09-17T01:46:40.087056Z",
+                    "evidence_id": "a2aacabf-daa9-4ae6-b2eb-0d0e8e0d2a4d",
+                    "excerpt": "I can use that decision when this project comes up again.",
+                    "fact_id": "37abdded-a3c8-448f-82f0-f4ce959fbebe",
+                    "source_event_id": "b01fa4a2f4c3f45ece7f3bd70d3f1d571337435d676bfa84ed3a3f49fdb147be",
+                    "source_ref": null
+                  }
+                ],
+                "support_available": true,
+                "version": 1
+              }
+            ],
+            "operation": "retrieve",
+            "query_id": "state-pair-002:state",
+            "status": "returned"
+          }
+        ],
+        "profile": {
+          "disabled_module": null,
+          "enabled_modules": [],
+          "name": "baseline"
+        },
+        "provenance": {
+          "code_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+          "cognition_observed": true,
+          "embedding_metadata": {
+            "capabilities": [
+              "embedding"
+            ],
+            "details": {
+              "context_length": 2048,
+              "embedding_length": 768,
+              "families": [
+                "nomic-bert"
+              ],
+              "family": "nomic-bert",
+              "format": "gguf",
+              "parameter_size": "137M",
+              "parent_model": "",
+              "quantization_level": "F16"
+            },
+            "digest": "0a109f422b47e3a30ba2b10eca18548e944e8a23073ee3f3e947efcf3c45e59f",
+            "model": "nomic-embed-text:latest",
+            "modified_at": "2025-11-04T15:15:16.2072724-05:00",
+            "name": "nomic-embed-text:latest",
+            "size": 274302450
+          },
+          "embedding_sha256": "0a109f422b47e3a30ba2b10eca18548e944e8a23073ee3f3e947efcf3c45e59f",
+          "embedding_verified": true,
+          "model_metadata": {
+            "capabilities": [
+              "completion",
+              "vision"
+            ],
+            "details": {
+              "context_length": 131072,
+              "embedding_length": 2560,
+              "families": [
+                "gemma3"
+              ],
+              "family": "gemma3",
+              "format": "gguf",
+              "parameter_size": "4.3B",
+              "parent_model": "",
+              "quantization_level": "Q4_K_M"
+            },
+            "digest": "a2af6cc3eb7fa8be8504abaf9b04e88f17a119ec3f04a3addf55f92841195f5a",
+            "model": "gemma3:4b",
+            "modified_at": "2026-03-11T01:54:24.735623-04:00",
+            "name": "gemma3:4b",
+            "size": 3338801804
+          },
+          "model_sha256": "a2af6cc3eb7fa8be8504abaf9b04e88f17a119ec3f04a3addf55f92841195f5a",
+          "options_sha256": "cd97e75dba4a59a7798d1c035d2fac3b6fbf56082118e776067c9f505b7d5704",
+          "verified": true
+        },
+        "provider": "ollama",
+        "provider_trace": {
+          "classify_calls": [],
+          "config": {
+            "embedding_model": "nomic-embed-text:latest",
+            "endpoint": "http://192.168.86.35:11434",
+            "max_tokens": 512,
+            "model": "gemma3:4b",
+            "temperature": 0.0,
+            "timeout_seconds": 120.0
+          },
+          "embed_calls": [
+            {
+              "latency_ms": 213.8861999992514,
+              "text_chars": 97,
+              "token_usage": {
+                "prompt_eval_count": 20
+              },
+              "vector_dimensions": 768
+            },
+            {
+              "latency_ms": 209.38920001208317,
+              "text_chars": 77,
+              "token_usage": {
+                "prompt_eval_count": 17
+              },
+              "vector_dimensions": 768
+            },
+            {
+              "latency_ms": 212.58529998885933,
+              "text_chars": 42,
+              "token_usage": {
+                "prompt_eval_count": 10
+              },
+              "vector_dimensions": 768
+            },
+            {
+              "latency_ms": 205.6738000101177,
+              "text_chars": 42,
+              "token_usage": {
+                "prompt_eval_count": 10
+              },
+              "vector_dimensions": 768
+            },
+            {
+              "latency_ms": 207.71590000367723,
+              "text_chars": 63,
+              "token_usage": {
+                "prompt_eval_count": 14
+              },
+              "vector_dimensions": 768
+            },
+            {
+              "latency_ms": 211.22430000104941,
+              "text_chars": 42,
+              "token_usage": {
+                "prompt_eval_count": 10
+              },
+              "vector_dimensions": 768
+            }
+          ],
+          "predict_calls": [
+            {
+              "latency_ms": 3234.9333000020124,
+              "prompt_chars": 352,
+              "response": "0.1, 0.2, 0.3",
+              "token_usage": {
+                "eval_count": 15,
+                "prompt_eval_count": 112
+              }
+            },
+            {
+              "latency_ms": 3310.170600001584,
+              "prompt_chars": 373,
+              "response": "-0.6, 0.6, 0.4",
+              "token_usage": {
+                "eval_count": 16,
+                "prompt_eval_count": 116
+              }
+            }
+          ],
+          "response_metadata": [
+            {
+              "kind": "embedding",
+              "load_duration": 7854600,
+              "model": "nomic-embed-text:latest",
+              "prompt_eval_count": 20,
+              "provider": "ollama",
+              "total_duration": 29990100
+            },
+            {
+              "kind": "embedding",
+              "load_duration": 5908900,
+              "model": "nomic-embed-text:latest",
+              "prompt_eval_count": 17,
+              "provider": "ollama",
+              "total_duration": 25985600
+            },
+            {
+              "kind": "embedding",
+              "load_duration": 5826000,
+              "model": "nomic-embed-text:latest",
+              "prompt_eval_count": 10,
+              "provider": "ollama",
+              "total_duration": 21418600
+            },
+            {
+              "kind": "embedding",
+              "load_duration": 5611500,
+              "model": "nomic-embed-text:latest",
+              "prompt_eval_count": 10,
+              "provider": "ollama",
+              "total_duration": 21562400
+            },
+            {
+              "kind": "embedding",
+              "load_duration": 6615400,
+              "model": "nomic-embed-text:latest",
+              "prompt_eval_count": 14,
+              "provider": "ollama",
+              "total_duration": 23931800
+            },
+            {
+              "kind": "embedding",
+              "load_duration": 5962100,
+              "model": "nomic-embed-text:latest",
+              "prompt_eval_count": 10,
+              "provider": "ollama",
+              "total_duration": 22608300
+            },
+            {
+              "created_at": "2026-09-17T01:46:44.7609562Z",
+              "done": true,
+              "done_reason": "stop",
+              "eval_count": 15,
+              "eval_duration": 1617706000,
+              "kind": "generate",
+              "load_duration": 7155600,
+              "model": "gemma3:4b",
+              "prompt_eval_count": 112,
+              "prompt_eval_duration": 1414038000,
+              "provider": "ollama",
+              "total_duration": 3042445700
+            },
+            {
+              "created_at": "2026-09-17T01:46:48.0724329Z",
+              "done": true,
+              "done_reason": "stop",
+              "eval_count": 16,
+              "eval_duration": 1701953000,
+              "kind": "generate",
+              "load_duration": 6226800,
+              "model": "gemma3:4b",
+              "prompt_eval_count": 116,
+              "prompt_eval_duration": 1403663000,
+              "provider": "ollama",
+              "total_duration": 3115146700
+            }
+          ],
+          "service_instances": 2,
+          "trace_key": {
+            "profile": "baseline",
+            "run_key": "heldout-002-baseline-r1"
+          }
+        },
+        "surprisal_filter_decisions": [],
+        "unsupported_modules": [],
+        "unsupported_operations": []
+      },
+      "repetition": 1,
+      "retrieved_fact_count": 6,
+      "session_id": "heldout-002",
+      "stale_fact_count": 0,
+      "state_pair_semantic_hits": [
+        false
+      ],
+      "state_pair_state_hits": [
+        false
+      ],
+      "supported_precision": [
+        false,
+        false
+      ],
+      "surprisal_filter_kept": [],
+      "token_cost": null,
+      "verified_embedding_provenance": true,
+      "verified_model_provenance": true
+    },
+    {
+      "adapter_kind": "real_model",
+      "answerable_hits": [
+        false
+      ],
+      "bytes_after": 3706832,
+      "bytes_before": 341776,
+      "cold_latency_ms": 156.63700000732206,
+      "critical_retention": [
+        false
+      ],
+      "critical_retrieval": [
+        false
+      ],
+      "embedding_revision": "0a109f422b47e3a30ba2b10eca18548e944e8a23073ee3f3e947efcf3c45e59f",
+      "execution_status": "complete",
+      "latency_ms": 10738.014100003056,
+      "length_filter_kept": [],
+      "model_revision": "a2af6cc3eb7fa8be8504abaf9b04e88f17a119ec3f04a3addf55f92841195f5a",
+      "no_answer_correct": [],
+      "provider": "ollama",
+      "raw_output": {
+        "adapter": "ollama",
+        "base_url": "http://192.168.86.35:11434",
+        "controlled_state_pairs": [
+          {
+            "affective_scoring_applied": false,
+            "candidate_count": 2,
+            "candidate_fact_ids": [
+              "83f334cf-5b67-4ce2-8738-ec9e7f8329f0",
+              "9c01f822-2032-43b8-bccf-620e34c1d976"
+            ],
+            "classifier_states": {
+              "semantic": {
+                "arousal": 0.2,
+                "complexity": 0.3,
+                "valence": 0.1
+              },
+              "state": {
+                "arousal": 0.6,
+                "complexity": 0.4,
+                "valence": -0.6
+              }
+            },
+            "declared_candidate_fact_ids": [],
+            "declared_direct_vector_seed_fact_ids": [],
+            "declared_graph_target_fact_ids": [],
+            "direct_vector_seed_fact_ids_observed": [
+              "83f334cf-5b67-4ce2-8738-ec9e7f8329f0",
+              "9c01f822-2032-43b8-bccf-620e34c1d976"
+            ],
+            "graph_target_observation": {
+              "status": "not_observed_graph_traversal",
+              "target_ranks_in_direct_seed": {},
+              "targets_in_direct_seed": []
+            },
+            "measurement": "same_semantic_embedding_and_scoped_candidate_pool",
+            "pair_id": "state-pair-002",
+            "rank_delta_state_minus_semantic": {
+              "83f334cf-5b67-4ce2-8738-ec9e7f8329f0": 0,
+              "9c01f822-2032-43b8-bccf-620e34c1d976": 0
+            },
+            "rankings": {
+              "semantic": [
+                "83f334cf-5b67-4ce2-8738-ec9e7f8329f0",
+                "9c01f822-2032-43b8-bccf-620e34c1d976"
+              ],
+              "state": [
+                "83f334cf-5b67-4ce2-8738-ec9e7f8329f0",
+                "9c01f822-2032-43b8-bccf-620e34c1d976"
+              ]
+            },
+            "scores": {
+              "semantic": [
+                {
+                  "content": "Please remember this project decision explicitly: For this project, code review is two approvals.",
+                  "fact_id": "83f334cf-5b67-4ce2-8738-ec9e7f8329f0",
+                  "score": {
+                    "graph_contribution": 0.0,
+                    "graph_energy": 0.0,
+                    "semantic": 0.8455632925033569,
+                    "state_match": null,
+                    "state_status": "disabled",
+                    "total": 0.8455632925033569
+                  }
+                },
+                {
+                  "content": "Assistant reported: I can use that decision when this project comes up again.",
+                  "fact_id": "9c01f822-2032-43b8-bccf-620e34c1d976",
+                  "score": {
+                    "graph_contribution": 0.0,
+                    "graph_energy": 0.0,
+                    "semantic": 0.635287344455719,
+                    "state_match": null,
+                    "state_status": "disabled",
+                    "total": 0.635287344455719
+                  }
+                }
+              ],
+              "state": [
+                {
+                  "content": "Please remember this project decision explicitly: For this project, code review is two approvals.",
+                  "fact_id": "83f334cf-5b67-4ce2-8738-ec9e7f8329f0",
+                  "score": {
+                    "graph_contribution": 0.0,
+                    "graph_energy": 0.0,
+                    "semantic": 0.8455632925033569,
+                    "state_match": null,
+                    "state_status": "disabled",
+                    "total": 0.8455632925033569
+                  }
+                },
+                {
+                  "content": "Assistant reported: I can use that decision when this project comes up again.",
+                  "fact_id": "9c01f822-2032-43b8-bccf-620e34c1d976",
+                  "score": {
+                    "graph_contribution": 0.0,
+                    "graph_energy": 0.0,
+                    "semantic": 0.635287344455719,
+                    "state_match": null,
+                    "state_status": "disabled",
+                    "total": 0.635287344455719
+                  }
+                }
+              ]
+            },
+            "semantic_fidelity": {
+              "judgement": "exact_frozen_text_only",
+              "semantic_top_k": false,
+              "state_top_k": false
+            },
+            "top1_changed": false
+          }
+        ],
+        "critical_retention_judgements": [
+          {
+            "expected_identities": [
+              [
+                "t18-synthetic-profile",
+                "project",
+                "project-02"
+              ]
+            ],
+            "expected_present": true,
+            "fact_id": "fact-002",
+            "gold_status": "supported",
+            "judgement": "exact_content_and_scope_in_accepted_store",
+            "observed_present": false,
+            "runtime_fact_ids": []
+          }
+        ],
+        "embedding_model": "nomic-embed-text:latest",
+        "errors": [],
+        "extraction_judgements": [
+          {
+            "accepted": false,
+            "content_nonempty": true,
+            "judgement": "exact_frozen_text_and_evidence_proxy",
+            "matched_supported_fact_id": null,
+            "observed_source_event_ids": [
+              "heldout-002-event-01"
+            ],
+            "runtime_fact_id": "83f334cf-5b67-4ce2-8738-ec9e7f8329f0"
+          },
+          {
+            "accepted": false,
+            "content_nonempty": true,
+            "judgement": "exact_frozen_text_and_evidence_proxy",
+            "matched_supported_fact_id": null,
+            "observed_source_event_ids": [
+              "heldout-002-event-02"
+            ],
+            "runtime_fact_id": "9c01f822-2032-43b8-bccf-620e34c1d976"
+          }
+        ],
+        "length_filter_policy": {
+          "applied": "counterfactual_shadow_only",
+          "boilerplate_exact_casefold": [
+            "got it",
+            "ok",
+            "okay",
+            "thanks",
+            "thanks!"
+          ],
+          "events": [],
+          "minimum_chars": 50,
+          "service_decision": "not_exposed"
+        },
+        "measurement_notes": [
+          "Missing retrievals remain null and are excluded from interval numerators.",
+          "Correction and forget use runtime fact IDs resolved from the service store.",
+          "Provider token counters are recorded when returned; billing cost is not inferred.",
+          "latency_ms is end-to-end session wall clock; cold_latency_ms covers service construction only.",
+          "Extraction precision uses exact frozen fact text and source role/evidence checks; paraphrases are unjudged.",
+          "State pairs use paired natural-language queries; no same-text embedding control is claimed.",
+          "surprisal_filter_kept is derived from durable job encoding_diagnostics and remains null when a job result is unavailable.",
+          "length_filter_kept is a frozen counterfactual shadow policy, not an applied service filter decision."
+        ],
+        "model": "gemma3:4b",
+        "module_switches": {
+          "disabled": null,
+          "enabled": [],
+          "source": "service_factory"
+        },
+        "operations": [
+          {
+            "event_id": "heldout-002-event-01",
+            "job_id": "event:13b0e323e02950dbe7b19cc2b710b5952492362dabb4fdc2ef38811c428af908",
+            "operation": "remember",
+            "processing_status": "pending",
+            "status": "committed"
+          },
+          {
+            "event_id": "heldout-002-event-02",
+            "job_id": "event:a29a2863e7f83c2b07b0fb9ecc7d64f0398ef323503541db96de62b471b8fd8b",
+            "operation": "response",
+            "processing_status": "pending",
+            "status": "committed"
+          },
+          {
+            "operation": "restart",
+            "status": "completed"
+          },
+          {
+            "jobs": [
+              {
+                "attempt_count": 1,
+                "id": "event:13b0e323e02950dbe7b19cc2b710b5952492362dabb4fdc2ef38811c428af908",
+                "kind": "remember",
+                "last_error": null,
+                "status": "completed"
+              },
+              {
+                "attempt_count": 1,
+                "id": "event:a29a2863e7f83c2b07b0fb9ecc7d64f0398ef323503541db96de62b471b8fd8b",
+                "kind": "extract",
+                "last_error": null,
+                "status": "completed"
+              }
+            ],
+            "operation": "maintenance",
+            "pending_or_failed_statuses": [],
+            "status": "completed"
+          },
+          {
+            "facts": [
+              {
+                "content": "Please remember this project decision explicitly: For this project, code review is two approvals.",
+                "id": "83f334cf-5b67-4ce2-8738-ec9e7f8329f0",
+                "original_source_status": "not_checked",
+                "scope": "project",
+                "scope_id": "project-02",
+                "scores": {
+                  "candidate_backend": "sqlite_vec_scoped_exact_cosine",
+                  "context_token_upper_bound": 147,
+                  "graph_contribution": 0.0,
+                  "graph_energy": 0.0,
+                  "graph_status": "disabled",
+                  "lexical_candidate": true,
+                  "lexical_status": "candidate_union",
+                  "profile": "baseline",
+                  "scope_match": true,
+                  "semantic": 0.8455632925033569,
+                  "state_match": null,
+                  "state_status": "disabled",
+                  "token_count_method": "utf8_bytes_upper_bound",
+                  "total": 0.8455632925033569
+                },
+                "sources": [
+                  {
+                    "created_at": "2026-09-17T01:46:49.988474Z",
+                    "evidence_id": "2f65e8be-32a6-4d5e-9dac-e7948603ba6e",
+                    "excerpt": "Please remember this project decision explicitly: For this project, code review is two approvals.",
+                    "fact_id": "83f334cf-5b67-4ce2-8738-ec9e7f8329f0",
+                    "source_event_id": "13b0e323e02950dbe7b19cc2b710b5952492362dabb4fdc2ef38811c428af908",
+                    "source_ref": null
+                  }
+                ],
+                "support_available": true,
+                "version": 1
+              },
+              {
+                "content": "Assistant reported: I can use that decision when this project comes up again.",
+                "id": "9c01f822-2032-43b8-bccf-620e34c1d976",
+                "original_source_status": "not_checked",
+                "scope": "project",
+                "scope_id": "project-02",
+                "scores": {
+                  "candidate_backend": "sqlite_vec_scoped_exact_cosine",
+                  "context_token_upper_bound": 127,
+                  "graph_contribution": 0.0,
+                  "graph_energy": 0.0,
+                  "graph_status": "disabled",
+                  "lexical_candidate": true,
+                  "lexical_status": "candidate_union",
+                  "profile": "baseline",
+                  "scope_match": true,
+                  "semantic": 0.635287344455719,
+                  "state_match": null,
+                  "state_status": "disabled",
+                  "token_count_method": "utf8_bytes_upper_bound",
+                  "total": 0.635287344455719
+                },
+                "sources": [
+                  {
+                    "created_at": "2026-09-17T01:46:50.363092Z",
+                    "evidence_id": "5c2f4e16-237a-4d76-ad9c-86c5ee4de4bc",
+                    "excerpt": "I can use that decision when this project comes up again.",
+                    "fact_id": "9c01f822-2032-43b8-bccf-620e34c1d976",
+                    "source_event_id": "a29a2863e7f83c2b07b0fb9ecc7d64f0398ef323503541db96de62b471b8fd8b",
+                    "source_ref": null
+                  }
+                ],
+                "support_available": true,
+                "version": 1
+              }
+            ],
+            "operation": "retrieve",
+            "query_id": "query-answerable-002",
+            "status": "returned"
+          },
+          {
+            "facts": [
+              {
+                "content": "Please remember this project decision explicitly: For this project, code review is two approvals.",
+                "id": "83f334cf-5b67-4ce2-8738-ec9e7f8329f0",
+                "original_source_status": "not_checked",
+                "scope": "project",
+                "scope_id": "project-02",
+                "scores": {
+                  "candidate_backend": "sqlite_vec_scoped_exact_cosine",
+                  "context_token_upper_bound": 147,
+                  "graph_contribution": 0.0,
+                  "graph_energy": 0.0,
+                  "graph_status": "disabled",
+                  "lexical_candidate": true,
+                  "lexical_status": "candidate_union",
+                  "profile": "baseline",
+                  "scope_match": true,
+                  "semantic": 0.8455632925033569,
+                  "state_match": null,
+                  "state_status": "disabled",
+                  "token_count_method": "utf8_bytes_upper_bound",
+                  "total": 0.8455632925033569
+                },
+                "sources": [
+                  {
+                    "created_at": "2026-09-17T01:46:49.988474Z",
+                    "evidence_id": "2f65e8be-32a6-4d5e-9dac-e7948603ba6e",
+                    "excerpt": "Please remember this project decision explicitly: For this project, code review is two approvals.",
+                    "fact_id": "83f334cf-5b67-4ce2-8738-ec9e7f8329f0",
+                    "source_event_id": "13b0e323e02950dbe7b19cc2b710b5952492362dabb4fdc2ef38811c428af908",
+                    "source_ref": null
+                  }
+                ],
+                "support_available": true,
+                "version": 1
+              },
+              {
+                "content": "Assistant reported: I can use that decision when this project comes up again.",
+                "id": "9c01f822-2032-43b8-bccf-620e34c1d976",
+                "original_source_status": "not_checked",
+                "scope": "project",
+                "scope_id": "project-02",
+                "scores": {
+                  "candidate_backend": "sqlite_vec_scoped_exact_cosine",
+                  "context_token_upper_bound": 127,
+                  "graph_contribution": 0.0,
+                  "graph_energy": 0.0,
+                  "graph_status": "disabled",
+                  "lexical_candidate": true,
+                  "lexical_status": "candidate_union",
+                  "profile": "baseline",
+                  "scope_match": true,
+                  "semantic": 0.635287344455719,
+                  "state_match": null,
+                  "state_status": "disabled",
+                  "token_count_method": "utf8_bytes_upper_bound",
+                  "total": 0.635287344455719
+                },
+                "sources": [
+                  {
+                    "created_at": "2026-09-17T01:46:50.363092Z",
+                    "evidence_id": "5c2f4e16-237a-4d76-ad9c-86c5ee4de4bc",
+                    "excerpt": "I can use that decision when this project comes up again.",
+                    "fact_id": "9c01f822-2032-43b8-bccf-620e34c1d976",
+                    "source_event_id": "a29a2863e7f83c2b07b0fb9ecc7d64f0398ef323503541db96de62b471b8fd8b",
+                    "source_ref": null
+                  }
+                ],
+                "support_available": true,
+                "version": 1
+              }
+            ],
+            "operation": "retrieve",
+            "query_id": "state-pair-002:semantic",
+            "status": "returned"
+          },
+          {
+            "facts": [
+              {
+                "content": "Please remember this project decision explicitly: For this project, code review is two approvals.",
+                "id": "83f334cf-5b67-4ce2-8738-ec9e7f8329f0",
+                "original_source_status": "not_checked",
+                "scope": "project",
+                "scope_id": "project-02",
+                "scores": {
+                  "candidate_backend": "sqlite_vec_scoped_exact_cosine",
+                  "context_token_upper_bound": 147,
+                  "graph_contribution": 0.0,
+                  "graph_energy": 0.0,
+                  "graph_status": "disabled",
+                  "lexical_candidate": true,
+                  "lexical_status": "candidate_union",
+                  "profile": "baseline",
+                  "scope_match": true,
+                  "semantic": 0.7929795980453491,
+                  "state_match": null,
+                  "state_status": "disabled",
+                  "token_count_method": "utf8_bytes_upper_bound",
+                  "total": 0.7929795980453491
+                },
+                "sources": [
+                  {
+                    "created_at": "2026-09-17T01:46:49.988474Z",
+                    "evidence_id": "2f65e8be-32a6-4d5e-9dac-e7948603ba6e",
+                    "excerpt": "Please remember this project decision explicitly: For this project, code review is two approvals.",
+                    "fact_id": "83f334cf-5b67-4ce2-8738-ec9e7f8329f0",
+                    "source_event_id": "13b0e323e02950dbe7b19cc2b710b5952492362dabb4fdc2ef38811c428af908",
+                    "source_ref": null
+                  }
+                ],
+                "support_available": true,
+                "version": 1
+              },
+              {
+                "content": "Assistant reported: I can use that decision when this project comes up again.",
+                "id": "9c01f822-2032-43b8-bccf-620e34c1d976",
+                "original_source_status": "not_checked",
+                "scope": "project",
+                "scope_id": "project-02",
+                "scores": {
+                  "candidate_backend": "sqlite_vec_scoped_exact_cosine",
+                  "context_token_upper_bound": 127,
+                  "graph_contribution": 0.0,
+                  "graph_energy": 0.0,
+                  "graph_status": "disabled",
+                  "lexical_candidate": true,
+                  "lexical_status": "candidate_union",
+                  "profile": "baseline",
+                  "scope_match": true,
+                  "semantic": 0.6131055951118469,
+                  "state_match": null,
+                  "state_status": "disabled",
+                  "token_count_method": "utf8_bytes_upper_bound",
+                  "total": 0.6131055951118469
+                },
+                "sources": [
+                  {
+                    "created_at": "2026-09-17T01:46:50.363092Z",
+                    "evidence_id": "5c2f4e16-237a-4d76-ad9c-86c5ee4de4bc",
+                    "excerpt": "I can use that decision when this project comes up again.",
+                    "fact_id": "9c01f822-2032-43b8-bccf-620e34c1d976",
+                    "source_event_id": "a29a2863e7f83c2b07b0fb9ecc7d64f0398ef323503541db96de62b471b8fd8b",
+                    "source_ref": null
+                  }
+                ],
+                "support_available": true,
+                "version": 1
+              }
+            ],
+            "operation": "retrieve",
+            "query_id": "state-pair-002:state",
+            "status": "returned"
+          }
+        ],
+        "profile": {
+          "disabled_module": null,
+          "enabled_modules": [],
+          "name": "baseline"
+        },
+        "provenance": {
+          "code_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+          "cognition_observed": true,
+          "embedding_metadata": {
+            "capabilities": [
+              "embedding"
+            ],
+            "details": {
+              "context_length": 2048,
+              "embedding_length": 768,
+              "families": [
+                "nomic-bert"
+              ],
+              "family": "nomic-bert",
+              "format": "gguf",
+              "parameter_size": "137M",
+              "parent_model": "",
+              "quantization_level": "F16"
+            },
+            "digest": "0a109f422b47e3a30ba2b10eca18548e944e8a23073ee3f3e947efcf3c45e59f",
+            "model": "nomic-embed-text:latest",
+            "modified_at": "2025-11-04T15:15:16.2072724-05:00",
+            "name": "nomic-embed-text:latest",
+            "size": 274302450
+          },
+          "embedding_sha256": "0a109f422b47e3a30ba2b10eca18548e944e8a23073ee3f3e947efcf3c45e59f",
+          "embedding_verified": true,
+          "model_metadata": {
+            "capabilities": [
+              "completion",
+              "vision"
+            ],
+            "details": {
+              "context_length": 131072,
+              "embedding_length": 2560,
+              "families": [
+                "gemma3"
+              ],
+              "family": "gemma3",
+              "format": "gguf",
+              "parameter_size": "4.3B",
+              "parent_model": "",
+              "quantization_level": "Q4_K_M"
+            },
+            "digest": "a2af6cc3eb7fa8be8504abaf9b04e88f17a119ec3f04a3addf55f92841195f5a",
+            "model": "gemma3:4b",
+            "modified_at": "2026-03-11T01:54:24.735623-04:00",
+            "name": "gemma3:4b",
+            "size": 3338801804
+          },
+          "model_sha256": "a2af6cc3eb7fa8be8504abaf9b04e88f17a119ec3f04a3addf55f92841195f5a",
+          "options_sha256": "cd97e75dba4a59a7798d1c035d2fac3b6fbf56082118e776067c9f505b7d5704",
+          "verified": true
+        },
+        "provider": "ollama",
+        "provider_trace": {
+          "classify_calls": [],
+          "config": {
+            "embedding_model": "nomic-embed-text:latest",
+            "endpoint": "http://192.168.86.35:11434",
+            "max_tokens": 512,
+            "model": "gemma3:4b",
+            "temperature": 0.0,
+            "timeout_seconds": 120.0
+          },
+          "embed_calls": [
+            {
+              "latency_ms": 216.12169999571051,
+              "text_chars": 97,
+              "token_usage": {
+                "prompt_eval_count": 20
+              },
+              "vector_dimensions": 768
+            },
+            {
+              "latency_ms": 236.8675999896368,
+              "text_chars": 77,
+              "token_usage": {
+                "prompt_eval_count": 17
+              },
+              "vector_dimensions": 768
+            },
+            {
+              "latency_ms": 242.89190000854433,
+              "text_chars": 42,
+              "token_usage": {
+                "prompt_eval_count": 10
+              },
+              "vector_dimensions": 768
+            },
+            {
+              "latency_ms": 207.90239999769256,
+              "text_chars": 42,
+              "token_usage": {
+                "prompt_eval_count": 10
+              },
+              "vector_dimensions": 768
+            },
+            {
+              "latency_ms": 217.75690000504255,
+              "text_chars": 63,
+              "token_usage": {
+                "prompt_eval_count": 14
+              },
+              "vector_dimensions": 768
+            },
+            {
+              "latency_ms": 204.4093000004068,
+              "text_chars": 42,
+              "token_usage": {
+                "prompt_eval_count": 10
+              },
+              "vector_dimensions": 768
+            }
+          ],
+          "predict_calls": [
+            {
+              "latency_ms": 3195.512799997232,
+              "prompt_chars": 352,
+              "response": "0.1, 0.2, 0.3",
+              "token_usage": {
+                "eval_count": 15,
+                "prompt_eval_count": 112
+              }
+            },
+            {
+              "latency_ms": 3304.54140000802,
+              "prompt_chars": 373,
+              "response": "-0.6, 0.6, 0.4",
+              "token_usage": {
+                "eval_count": 16,
+                "prompt_eval_count": 116
+              }
+            }
+          ],
+          "response_metadata": [
+            {
+              "kind": "embedding",
+              "load_duration": 6351100,
+              "model": "nomic-embed-text:latest",
+              "prompt_eval_count": 20,
+              "provider": "ollama",
+              "total_duration": 29974400
+            },
+            {
+              "kind": "embedding",
+              "load_duration": 6502200,
+              "model": "nomic-embed-text:latest",
+              "prompt_eval_count": 17,
+              "provider": "ollama",
+              "total_duration": 29399600
+            },
+            {
+              "kind": "embedding",
+              "load_duration": 6463700,
+              "model": "nomic-embed-text:latest",
+              "prompt_eval_count": 10,
+              "provider": "ollama",
+              "total_duration": 23648900
+            },
+            {
+              "kind": "embedding",
+              "load_duration": 5958900,
+              "model": "nomic-embed-text:latest",
+              "prompt_eval_count": 10,
+              "provider": "ollama",
+              "total_duration": 21042100
+            },
+            {
+              "kind": "embedding",
+              "load_duration": 5871100,
+              "model": "nomic-embed-text:latest",
+              "prompt_eval_count": 14,
+              "provider": "ollama",
+              "total_duration": 25932900
+            },
+            {
+              "kind": "embedding",
+              "load_duration": 6960400,
+              "model": "nomic-embed-text:latest",
+              "prompt_eval_count": 10,
+              "provider": "ollama",
+              "total_duration": 22266600
+            },
+            {
+              "created_at": "2026-09-17T01:46:55.0093582Z",
+              "done": true,
+              "done_reason": "stop",
+              "eval_count": 15,
+              "eval_duration": 1616270000,
+              "kind": "generate",
+              "load_duration": 7441400,
+              "model": "gemma3:4b",
+              "prompt_eval_count": 112,
+              "prompt_eval_duration": 1381595000,
+              "provider": "ollama",
+              "total_duration": 3008768700
+            },
+            {
+              "created_at": "2026-09-17T01:46:58.3154803Z",
+              "done": true,
+              "done_reason": "stop",
+              "eval_count": 16,
+              "eval_duration": 1724601000,
+              "kind": "generate",
+              "load_duration": 8003100,
+              "model": "gemma3:4b",
+              "prompt_eval_count": 116,
+              "prompt_eval_duration": 1381986000,
+              "provider": "ollama",
+              "total_duration": 3118860600
+            }
+          ],
+          "service_instances": 2,
+          "trace_key": {
+            "profile": "baseline",
+            "run_key": "heldout-002-baseline-r2"
+          }
+        },
+        "surprisal_filter_decisions": [],
+        "unsupported_modules": [],
+        "unsupported_operations": []
+      },
+      "repetition": 2,
+      "retrieved_fact_count": 6,
+      "session_id": "heldout-002",
+      "stale_fact_count": 0,
+      "state_pair_semantic_hits": [
+        false
+      ],
+      "state_pair_state_hits": [
+        false
+      ],
+      "supported_precision": [
+        false,
+        false
+      ],
+      "surprisal_filter_kept": [],
+      "token_cost": null,
+      "verified_embedding_provenance": true,
+      "verified_model_provenance": true
+    }
+  ],
+  "config_sha256": "5742ad12be7567324ede5edb231342bc911a0cfd35b21c6449b2dbbe77d8f70f",
+  "dataset_sha256": "297e2c3bc4e3bf183ed88e293e3da8e2200ea703ff2a425fbdd302da24c0c776",
+  "embedding_sha256": "0a109f422b47e3a30ba2b10eca18548e944e8a23073ee3f3e947efcf3c45e59f",
+  "model_sha256": "a2af6cc3eb7fa8be8504abaf9b04e88f17a119ec3f04a3addf55f92841195f5a",
+  "next_session_index": 1,
+  "options_sha256": "cd97e75dba4a59a7798d1c035d2fac3b6fbf56082118e776067c9f505b7d5704",
+  "profile": "baseline",
+  "repetitions": 3,
+  "run_id": "t18-heldout-local-memory-heldout-v2-baseline",
+  "schema_version": "local-memory-checkpoint-v1",
+  "status": "running"
+}
