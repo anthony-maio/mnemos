@@ -345,3 +345,30 @@ stall cause is not established. The held-out mechanism run began at 05:05:27
 UTC, followed in the queue by the complete seven-profile lifecycle matrix.
 No passing quality claim or biomimetic-default promotion follows from these
 preflights.
+
+## Native capture repair and verification
+
+The isolated Claude turn exposed a missing-transcript failure before the
+assistant-message fallback. Commit `d17dd24` repairs that path, reports
+unacknowledged capture and unavailable transcript coverage, and validates
+checkpoint corruption separately. All 27 focused adapter tests pass. The
+installed package then captured both roles of a native Claude conversation,
+supplied the seeded SQLite memory, and retained both events after restart.
+
+The first full suite on this checkpoint recorded 638 passes, 1 failure, and
+2 skips. The service-start fixture did not become ready within 15 seconds;
+the unchanged isolated retry passed in 4.68 seconds. The failure is preserved
+and a second full run is pending. The [verification record](native-host-repair-verification.md)
+does not claim the intermittent startup issue is fixed.
+
+Native Codex dispatched a Windows marker through `hooks.json`, and a separate
+installed-wheel check verified distinct prompt captures and seeded recall
+through direct Python and the tagged Windows shell command, including restart.
+Native Mnemos conversation capture in Codex is still unproven. A real-service
+Claude probe also reproduced rejected cross-project capture when session and
+event IDs collide. Its repair design preserves old forgotten-source tombstones
+and does not authorize migration of live data.
+
+Indexed host and graph verification artifacts now preserve their original
+line endings in Git. This fixes a Windows checkout normalization mismatch
+between captured byte hashes and stored blobs; it does not change test results.

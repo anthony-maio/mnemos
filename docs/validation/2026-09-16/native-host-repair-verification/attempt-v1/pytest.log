@@ -1,0 +1,53 @@
+.....................ss................................................. [ 11%]
+........................................................................ [ 22%]
+........................................................................ [ 33%]
+........................................................................ [ 44%]
+.............................................................F.......... [ 56%]
+........................................................................ [ 67%]
+........................................................................ [ 78%]
+........................................................................ [ 89%]
+.................................................................        [100%]
+================================== FAILURES ===================================
+__________ test_cli_stops_isolated_service_and_releases_offline_lock __________
+
+tmp_path = WindowsPath('D:/WindowsTemp/pytest-of-Ant/pytest-3182/test_cli_stops_isolated_servic0')
+
+    def test_cli_stops_isolated_service_and_releases_offline_lock(tmp_path):
+        from mnemos.service import _ProcessLock, read_runtime_descriptor
+    
+        descriptor = tmp_path / "runtime.json"
+        env = {
+            **os.environ,
+            "MNEMOS_RUNTIME_DESCRIPTOR": str(descriptor),
+            "MNEMOS_RUNTIME_DIR": str(tmp_path),
+            "MNEMOS_CONFIG_PATH": str(tmp_path / "settings.toml"),
+            "MNEMOS_SCOPE_REGISTRY": str(tmp_path / "scopes.json"),
+            "MNEMOS_LLM_PROVIDER": "ollama",
+            "MNEMOS_LLM_MODEL": "unused-shutdown-fixture",
+            "MNEMOS_OLLAMA_URL": "http://127.0.0.1:1",
+            "MNEMOS_EMBEDDING_PROVIDER": "simple",
+            "MNEMOS_STORE_TYPE": "sqlite",
+            "MNEMOS_SQLITE_PATH": str(tmp_path / "memory.db"),
+        }
+        process = subprocess.Popen(
+            [sys.executable, "-m", "mnemos.service"],
+            env=env,
+            stdout=subprocess.DEVNULL,
+            stderr=subprocess.PIPE,
+            text=True,
+            creationflags=getattr(subprocess, "CREATE_NO_WINDOW", 0),
+        )
+        try:
+            deadline = time.monotonic() + 15
+            while read_runtime_descriptor(descriptor) is None and time.monotonic() < deadline:
+                if process.poll() is not None:
+                    raise AssertionError(process.communicate()[1])
+                time.sleep(0.05)
+>           assert read_runtime_descriptor(descriptor) is not None
+E           AssertionError: assert None is not None
+E            +  where None = <function read_runtime_descriptor at 0x00000204FFF70D60>(WindowsPath('D:/WindowsTemp/pytest-of-Ant/pytest-3182/test_cli_stops_isolated_servic0/runtime.json'))
+
+tests\test_managed_cli.py:98: AssertionError
+=========================== short test summary info ===========================
+FAILED tests/test_managed_cli.py::test_cli_stops_isolated_service_and_releases_offline_lock
+1 failed, 638 passed, 2 skipped in 840.29s (0:14:00)

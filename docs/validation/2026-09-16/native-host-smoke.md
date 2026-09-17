@@ -174,8 +174,10 @@ transcript checkpoint only after acknowledged capture. Rejected prompt,
 transcript, and fallback captures report degraded status. Corrupt checkpoints
 remain distinct from unavailable transcript files.
 
-The focused adapter suite passes 27 tests. Full frozen-source verification is
-running. The installed-wheel native repeat passed: Claude 2.1.191 invoked
+The focused adapter suite passes 27 tests. The first full run had one service
+startup deadline failure; its isolated retry passed, and a second full run is
+pending. See the [verification record](native-host-repair-verification.md).
+The installed-wheel native repeat passed: Claude 2.1.191 invoked
 SessionStart, UserPromptSubmit, and Stop; its user prompt and assistant reply
 were both captured and survived service restart. UserPromptSubmit supplied the
 SQLite seed and Claude answered with it. Stop emitted a degraded diagnostic for
