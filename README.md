@@ -412,19 +412,12 @@ This repository now includes a native Claude Code plugin package (`.claude-plugi
 /plugin install mnemos-memory@mnemos-marketplace
 ```
 
-On first run, the plugin bootstraps a local virtual environment under `.claude-plugin/.venv`, installs Mnemos with MCP extras, and launches the MCP server over stdio.
+On first run, the plugin bootstraps a local virtual environment under `.claude-plugin/.venv` and installs Mnemos with MCP extras. The MCP server and all five lifecycle hooks share that runtime. Set `MNEMOS_PLUGIN_PYTHON` to use an existing Mnemos Python environment instead. Bootstrap output goes to stderr so it does not interfere with MCP or hook responses.
 It also ships Claude Code subagents for the default Mnemos workflow:
 - `mnemos-recall` to pull scoped repo memory before substantial work
 - `mnemos-curator` to keep only durable facts after meaningful work
 
-Default plugin behavior:
-- persistent SQLite memory store at `.claude-plugin/mnemos.db`
-- automatic provider selection:
- - `openclaw` if `MNEMOS_OPENCLAW_API_KEY` exists
- - otherwise `openai` if `MNEMOS_OPENAI_API_KEY` exists
- - otherwise `ollama` if `MNEMOS_OLLAMA_URL` exists
- - otherwise `mock`
-- embedding provider inferred from the selected LLM provider unless explicitly overridden
+The plugin uses the same configuration and persistent SQLite location as the managed service. It preserves explicit environment settings, including `MNEMOS_CONFIG_PATH`; an API key alone does not select a cloud provider. Configure the service, select a real cognition provider, and enable the project through [local-memory setup](docs/functional-local-memory.md). Installing the plugin by itself does not establish a ready memory service. Existing databases under `.claude-plugin/mnemos.db` are not moved automatically; configure their path explicitly if that is the store you intend to use.
 
 If you apply Claude host integration from the control plane, Mnemos also installs user-level agent files under `~/.claude/agents/` so these recall and curator workflows are available immediately in Claude Code.
 

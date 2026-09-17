@@ -7,6 +7,7 @@ from __future__ import annotations
 import json
 import os
 from pathlib import Path
+import sys
 
 try:
     import tomllib
@@ -19,6 +20,18 @@ from importlib.util import module_from_spec, spec_from_file_location
 def _load_plugin_wrapper():
     wrapper_path = Path(".claude-plugin/run_mnemos_mcp.py")
     spec = spec_from_file_location("mnemos_plugin_wrapper", wrapper_path)
+    assert spec is not None
+    assert spec.loader is not None
+    module = module_from_spec(spec)
+    spec.loader.exec_module(module)
+    return module
+
+
+def _load_hook_wrapper():
+    plugin_wrapper = _load_plugin_wrapper()
+    sys.modules["run_mnemos_mcp"] = plugin_wrapper
+    wrapper_path = Path(".claude-plugin/run_mnemos_hook.py")
+    spec = spec_from_file_location("mnemos_plugin_hook_wrapper", wrapper_path)
     assert spec is not None
     assert spec.loader is not None
     module = module_from_spec(spec)
@@ -82,17 +95,55 @@ def test_plugin_wrapper_exists() -> None:
     assert wrapper.exists()
 
 
-def test_plugin_wrapper_defaults_embedding_provider_from_llm(monkeypatch) -> None:
+def test_plugin_wrapper_leaves_managed_defaults_to_runtime(monkeypatch) -> None:
     wrapper = _load_plugin_wrapper()
     plugin_root = Path(".").resolve()
 
-    monkeypatch.setenv("MNEMOS_LLM_PROVIDER", "openclaw")
-    monkeypatch.setenv("MNEMOS_OPENCLAW_API_KEY", "claw-key")
-    monkeypatch.delenv("MNEMOS_EMBEDDING_PROVIDER", raising=False)
+    for name in (
+        "MNEMOS_CONFIG_PATH",
+        "MNEMOS_STORE_TYPE",
+        "MNEMOS_SQLITE_PATH",
+        "MNEMOS_LLM_PROVIDER",
+        "MNEMOS_EMBEDDING_PROVIDER",
+        "MNEMOS_OPENCLAW_API_KEY",
+        "MNEMOS_OPENAI_API_KEY",
+        "MNEMOS_OLLAMA_URL",
+    ):
+        monkeypatch.delenv(name, raising=False)
 
     env = wrapper._apply_default_env(plugin_root)
 
-    assert env["MNEMOS_EMBEDDING_PROVIDER"] == "openclaw"
+    assert all(
+        name not in env
+        for name in (
+            "MNEMOS_CONFIG_PATH",
+            "MNEMOS_STORE_TYPE",
+            "MNEMOS_SQLITE_PATH",
+            "MNEMOS_LLM_PROVIDER",
+            "MNEMOS_EMBEDDING_PROVIDER",
+        )
+    )
+
+
+def test_plugin_wrapper_preserves_explicit_runtime_configuration(
+    monkeypatch, tmp_path: Path
+) -> None:
+    wrapper = _load_plugin_wrapper()
+    plugin_root = tmp_path / "plugin"
+    explicit = {
+        "MNEMOS_CONFIG_PATH": str(tmp_path / "managed.toml"),
+        "MNEMOS_STORE_TYPE": "sqlite",
+        "MNEMOS_SQLITE_PATH": str(tmp_path / "memory.sqlite"),
+        "MNEMOS_LLM_PROVIDER": "ollama",
+        "MNEMOS_EMBEDDING_PROVIDER": "ollama",
+    }
+    for key, value in explicit.items():
+        monkeypatch.setenv(key, value)
+
+    env = wrapper._apply_default_env(plugin_root)
+
+    for key, value in explicit.items():
+        assert env[key] == value
 
 
 def test_plugin_wrapper_required_extras_are_fixed_to_mcp(monkeypatch) -> None:
@@ -102,21 +153,6 @@ def test_plugin_wrapper_required_extras_are_fixed_to_mcp(monkeypatch) -> None:
     extras = wrapper._required_install_extras(dict(os.environ))
 
     assert extras == ("mcp",)
-
-
-def test_plugin_wrapper_defaults_to_user_config_path(monkeypatch) -> None:
-    wrapper = _load_plugin_wrapper()
-    plugin_root = Path(".").resolve()
-
-    monkeypatch.delenv("MNEMOS_CONFIG_PATH", raising=False)
-    monkeypatch.setenv("APPDATA", r"C:\Users\Test\AppData\Roaming")
-    monkeypatch.setattr(wrapper, "_is_windows", lambda: True)
-
-    env = wrapper._apply_default_env(plugin_root)
-
-    assert env["MNEMOS_CONFIG_PATH"].replace("/", "\\") == (
-        r"C:\Users\Test\AppData\Roaming\Mnemos\mnemos.toml"
-    )
 
 
 def test_plugin_hooks_wire_autostore_and_consolidation() -> None:
@@ -137,11 +173,64 @@ def test_plugin_hooks_wire_autostore_and_consolidation() -> None:
     consolidate_command = hooks["PreCompact"][0]["hooks"][0]["command"]
     stop_command = hooks["Stop"][0]["hooks"][0]["command"]
 
-    assert prompt_command == "python -m mnemos.adapters.claude_code UserPromptSubmit"
-    assert session_command == "python -m mnemos.adapters.claude_code SessionStart"
-    assert consolidate_command == "python -m mnemos.adapters.claude_code PreCompact"
-    assert stop_command == "python -m mnemos.adapters.claude_code Stop"
+    assert prompt_command == (
+        'python "${CLAUDE_PLUGIN_ROOT}/.claude-plugin/run_mnemos_hook.py" UserPromptSubmit'
+    )
+    assert session_command == (
+        'python "${CLAUDE_PLUGIN_ROOT}/.claude-plugin/run_mnemos_hook.py" SessionStart'
+    )
+    assert consolidate_command == (
+        'python "${CLAUDE_PLUGIN_ROOT}/.claude-plugin/run_mnemos_hook.py" PreCompact'
+    )
+    assert stop_command == 'python "${CLAUDE_PLUGIN_ROOT}/.claude-plugin/run_mnemos_hook.py" Stop'
     assert "||" not in consolidate_command
+
+
+def test_plugin_hook_forwards_stdin_stdout_and_explicit_runtime(
+    monkeypatch, tmp_path: Path
+) -> None:
+    wrapper = _load_hook_wrapper()
+    runtime_python = str(tmp_path / "runtime python.exe")
+    captured: dict[str, object] = {}
+
+    monkeypatch.setenv("MNEMOS_PLUGIN_PYTHON", runtime_python)
+    monkeypatch.setattr(wrapper.sys, "argv", ["run_mnemos_hook.py", "Stop"])
+    monkeypatch.setattr(wrapper, "_resolve_runtime_python", lambda root, env: runtime_python)
+
+    def fake_run(args, env, check):
+        captured["args"] = args
+        captured["env"] = env
+        captured["check"] = check
+        return type("Completed", (), {"returncode": 0})()
+
+    monkeypatch.setattr(wrapper.subprocess, "run", fake_run)
+
+    assert wrapper.main() == 0
+    assert captured["args"] == [
+        runtime_python,
+        "-m",
+        "mnemos.adapters.claude_code",
+        "Stop",
+    ]
+    assert captured["env"]["MNEMOS_PLUGIN_PYTHON"] == runtime_python
+    assert captured["check"] is False
+
+
+def test_plugin_bootstrap_sends_subprocess_output_to_stderr(monkeypatch, tmp_path: Path) -> None:
+    wrapper = _load_plugin_wrapper()
+    calls = []
+
+    def fake_run(command, **kwargs):
+        calls.append((command, kwargs))
+        return None
+
+    monkeypatch.setattr(wrapper.subprocess, "run", fake_run)
+
+    wrapper._install_plugin(tmp_path / "python.exe", tmp_path / "plugin", {})
+
+    assert len(calls) == 2
+    assert all(call[1]["stdout"] is sys.stderr for call in calls)
+    assert all(call[1]["stderr"] is sys.stderr for call in calls)
 
 
 def test_plugin_wrapper_uses_explicit_runtime_python(monkeypatch) -> None:

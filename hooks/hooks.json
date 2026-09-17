@@ -6,7 +6,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "python -m mnemos.adapters.claude_code SessionStart"
+            "command": "python \"${CLAUDE_PLUGIN_ROOT}/.claude-plugin/run_mnemos_hook.py\" SessionStart"
           }
         ]
       }
@@ -17,7 +17,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "python -m mnemos.adapters.claude_code UserPromptSubmit"
+            "command": "python \"${CLAUDE_PLUGIN_ROOT}/.claude-plugin/run_mnemos_hook.py\" UserPromptSubmit"
           }
         ]
       }
@@ -28,7 +28,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "python -m mnemos.adapters.claude_code Stop"
+            "command": "python \"${CLAUDE_PLUGIN_ROOT}/.claude-plugin/run_mnemos_hook.py\" Stop"
           }
         ]
       }
@@ -39,7 +39,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "python -m mnemos.adapters.claude_code PreCompact"
+            "command": "python \"${CLAUDE_PLUGIN_ROOT}/.claude-plugin/run_mnemos_hook.py\" PreCompact"
           }
         ]
       }
@@ -50,7 +50,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "python -m mnemos.adapters.claude_code PostCompact"
+            "command": "python \"${CLAUDE_PLUGIN_ROOT}/.claude-plugin/run_mnemos_hook.py\" PostCompact"
           }
         ]
       }
