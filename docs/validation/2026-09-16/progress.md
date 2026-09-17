@@ -923,3 +923,25 @@ and document task prefixes. Nomic's model card specifies those roles. The
 current queue remains evidence for its unchanged, unprefixed configuration;
 the quality effect of a role-aware configuration is not measured yet.
 [Source finding and implementation sequence](embedding-task-contract.md).
+
+## Access-metadata candidate
+
+Commit `2494e31` moves access counts, last-retrieved timestamps, and
+reconsolidation due times into an authoritative small SQLite table. Schema 8
+seeds legacy values once, preserves the existing pre-migration backup, and
+seeds new raw or API inserts through a trigger. Nullable side-table values
+remain authoritative after restart. Reads, stats, lexical projections,
+reconsolidation clearing, and deletion follow the new table; durable writes
+retain WAL/FULL and savepoint rollback behavior.
+
+The new SQL-trace regression fails against frozen d94 because retrieval
+updates the wide chunk row. On the candidate, 57 affected storage, service,
+and retrieval tests passed, along with Black and strict production mypy.
+The migration fixture was then strengthened to remove the new insert trigger
+when reconstructing schema 7 and passed its separate rerun. Review found no
+confirmed correctness defect. A fresh `store()` replacement still uses the
+access fields provided by its caller, matching the previous API behavior.
+
+Full frozen-source verification is running. A separately bound write-latency
+comparison is prepared but not executed. The last accepted recall measurement
+is still the failing d94 result, and no live database has been migrated.
