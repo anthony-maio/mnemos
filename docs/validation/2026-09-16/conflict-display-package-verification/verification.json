@@ -1,0 +1,109 @@
+{
+  "source_commit": "6ba17f5616bc217927b6e2fcacc496a6212a821c",
+  "source_checkout": "D:\\Development\\mnemos\\mnemos\\.worktrees\\functional-local-memory\\.venv\\conflict-display-frozen-v1",
+  "status": "passed",
+  "started_at": "2026-09-17T14:30:02.346323+00:00",
+  "checks": [
+    {
+      "name": "pytest",
+      "command": [
+        "D:\\Development\\mnemos\\mnemos\\.worktrees\\functional-local-memory\\.venv\\Scripts\\python.exe",
+        "-m",
+        "pytest",
+        "-q",
+        "--junitxml",
+        "D:\\Development\\mnemos\\mnemos\\.worktrees\\functional-local-memory\\.venv\\conflict-display-checks-v1\\pytest.xml"
+      ],
+      "status": "passed",
+      "started_at": "2026-09-17T14:30:02.347173+00:00",
+      "exit_code": 0,
+      "finished_at": "2026-09-17T14:46:28.397380+00:00",
+      "counts": {
+        "tests": 816,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 4
+      }
+    },
+    {
+      "name": "black",
+      "command": [
+        "D:\\Development\\mnemos\\mnemos\\.worktrees\\functional-local-memory\\.venv\\Scripts\\python.exe",
+        "-m",
+        "black",
+        "--check",
+        "."
+      ],
+      "status": "passed",
+      "started_at": "2026-09-17T14:46:28.407855+00:00",
+      "exit_code": 0,
+      "finished_at": "2026-09-17T14:46:32.038275+00:00"
+    },
+    {
+      "name": "mypy",
+      "command": [
+        "D:\\Development\\mnemos\\mnemos\\.worktrees\\functional-local-memory\\.venv\\compat-py310\\Scripts\\python.exe",
+        "-m",
+        "mypy",
+        "."
+      ],
+      "status": "passed",
+      "started_at": "2026-09-17T14:46:39.468414+00:00",
+      "exit_code": 0,
+      "finished_at": "2026-09-17T14:47:16.159802+00:00"
+    },
+    {
+      "name": "javascript",
+      "command": [
+        "node",
+        "--check",
+        "mnemos/ui/app.js"
+      ],
+      "status": "passed",
+      "started_at": "2026-09-17T14:47:16.167732+00:00",
+      "exit_code": 0,
+      "finished_at": "2026-09-17T14:47:16.253377+00:00"
+    },
+    {
+      "name": "build",
+      "command": [
+        "D:\\Development\\mnemos\\mnemos\\.worktrees\\functional-local-memory\\.venv\\Scripts\\python.exe",
+        "-m",
+        "build",
+        "--outdir",
+        "D:\\Development\\mnemos\\mnemos\\.worktrees\\functional-local-memory\\.venv\\conflict-display-checks-v1\\dist"
+      ],
+      "status": "passed",
+      "started_at": "2026-09-17T14:47:16.254374+00:00",
+      "exit_code": 0,
+      "finished_at": "2026-09-17T14:48:19.727624+00:00"
+    },
+    {
+      "name": "twine",
+      "command": [
+        "D:\\Development\\mnemos\\mnemos\\.worktrees\\functional-local-memory\\.venv\\Scripts\\python.exe",
+        "-m",
+        "twine",
+        "check",
+        "D:\\Development\\mnemos\\mnemos\\.worktrees\\functional-local-memory\\.venv\\conflict-display-checks-v1\\dist\\mnemos_memory-0.7.0-py3-none-any.whl",
+        "D:\\Development\\mnemos\\mnemos\\.worktrees\\functional-local-memory\\.venv\\conflict-display-checks-v1\\dist\\mnemos_memory-0.7.0.tar.gz"
+      ],
+      "exit_code": 0,
+      "status": "passed"
+    }
+  ],
+  "runner_sha256": "d2f05b5e2189e3d3ba5ce9b535d8f5adc98d0c5409037cfff7f4460fac0bdfd6",
+  "updated_at": "2026-09-17T14:48:20.924875+00:00",
+  "artifacts": [
+    {
+      "file": "D:\\Development\\mnemos\\mnemos\\.worktrees\\functional-local-memory\\.venv\\conflict-display-checks-v1\\dist\\mnemos_memory-0.7.0-py3-none-any.whl",
+      "bytes": 276820,
+      "sha256": "eec90bdf2f6d1adc5f8647f658d2c0752703fdbb7ce02ccb19d1deeaafba3d03"
+    },
+    {
+      "file": "D:\\Development\\mnemos\\mnemos\\.worktrees\\functional-local-memory\\.venv\\conflict-display-checks-v1\\dist\\mnemos_memory-0.7.0.tar.gz",
+      "bytes": 15525086,
+      "sha256": "fea48400f743f75e9eeca4c90d229b68d396401ab1a5db73a847f680fc829690"
+    }
+  ]
+}

@@ -908,3 +908,18 @@ The corrected 10,000-fact measurement still fails warm recall: 1,088.094 ms
 p95 against 500 ms. Durable HTTP capture passes at 64.279 ms p95. Removing
 duplicate diagnostic writes did not eliminate metadata-update stalls.
 [Completed performance phase](performance-corrected-v4/README.md).
+
+## Verified conflict-display checkpoint and embedding follow-up
+
+Frozen `6ba17f5` now passes the full suite: 812 tests passed and four skipped.
+Black, compatible strict mypy, JavaScript syntax, build, and Twine also passed.
+This closes package verification for the presentation repair. It does not add
+installed-wheel or native-host lifecycle evidence and does not include the
+subsequent access-metadata candidate.
+[Verification archive](conflict-display-package-verification/README.md).
+
+Source review found that the Ollama embedding path does not distinguish query
+and document task prefixes. Nomic's model card specifies those roles. The
+current queue remains evidence for its unchanged, unprefixed configuration;
+the quality effect of a role-aware configuration is not measured yet.
+[Source finding and implementation sequence](embedding-task-contract.md).
