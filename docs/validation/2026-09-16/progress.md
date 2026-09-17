@@ -1157,3 +1157,27 @@ separately from the D: failures. No relaxed timeout, weaker durability setting,
 or product performance repair is claimed. Native plugin execution, full native
 cross-host continuity, real-model utility, recall latency, and pilot gates remain
 open. No live configuration or memory data was changed.
+
+## Native Claude plugin execution observed
+
+The verified `6600dc2` wheel passed a fresh installed adapter timing preflight.
+Native Claude 2.1.191 then loaded the actual plugin and executed SessionStart
+and UserPromptSubmit, but the v9 turn stopped at its budget limit before Stop.
+Account-level connectors had been inherited despite the private configuration
+directory. Its reported $0.365532 cost and failure remain preserved.
+
+The v10 test disabled account MCP connectors only in its child environment,
+using Claude's documented `ENABLE_CLAUDEAI_MCP_SERVERS=false` setting. The turn
+completed in 10.567 seconds, reported $0.0291 cost, executed all three lifecycle
+hooks, returned the seeded memory canary, and reported Mnemos connected with
+fourteen tools. No native MCP tool call ran. Restart retained the captured
+events, and a reconstructed Stop payload through the actual plugin replayed the
+native transcript without adding another event. It was not a replay of the
+original native hook payload.
+
+The overall probe remains `not_observed`: three raw captures include one
+intentionally unassociated provisional user event, so the exact-two gate and
+aggregate user/transcript association check fail. The separate provisional
+identity contract passes, including no facts or evidence from that event.
+This preserves ambiguity rather than merging repeated identical prompts by
+text. [Reports and executed helpers](native-plugin-checkpoint-v1/README.md).

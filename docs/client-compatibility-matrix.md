@@ -4,7 +4,7 @@ Updated September 17, 2026 for the unreleased functional-local-memory worktree. 
 
 | Client | Implemented integration | Observed evidence | Native conversation acceptance |
 | --- | --- | --- | --- |
-| Claude Code | Command hooks, transcript deltas, context injection, MCP tools; provisional missing-ID capture excluded from extraction | Installed sourcea38 completed a persistent native 2.1.191 turn and restart/replay. Two normal transcript-associated events and one deferred capture-only fallback were observed; maintenance created no facts/evidence from the fallback. Instrumented hook settings were supplied explicitly | Provisional identity contract passed. Original exact-two-raw-events gate remains failed; complete lifecycle and plugin discovery remain open |
+| Claude Code | Command hooks, transcript deltas, context injection, MCP tools; provisional missing-ID capture excluded from extraction | Installed source6600 completed a native 2.1.191 turn through the actual plugin loader: SessionStart, UserPromptSubmit, Stop, seeded recall, MCP connection and 14-tool inventory, restart, and reconstructed Stop replay were observed | Provisional identity contract passed. Original exact-two-raw-events gate remains failed. Native MCP tool execution and complete correction/forget lifecycle remain open |
 | Codex CLI | Command lifecycle hooks, supported context output, MCP tools | Native 0.146.0 used source20f's generated TOML commands, returned a random canary absent from its prompt, and captured both roles across restart | Bounded hook transport observed with fixture vectors and unavailable cognition. Full native correction/forget lifecycle remains open |
 | Codex Desktop | Same command hooks and MCP fallback | Shared adapter coverage; no current desktop conversation evidence | Pending |
 | Hermes Agent | Optional MemoryProvider and explicit Windows/WSL bridge | Installed 0.21.3 API calls and actual WSL -> Windows authenticated transport. Sourcec805 passed full verification and discovery through the actual wheel entry point in WSL | Model turn has not completed; cross-host native recall remains open |
@@ -55,6 +55,22 @@ against frozen source9aba. Its native metadata commands recognized the session
 plugin and all five hook names. Hook execution and MCP connection were not
 run; list and details disagreed about MCP inventory. This does not close native
 plugin-session acceptance.
+
+The subsequent [native plugin checkpoint](validation/2026-09-16/native-plugin-checkpoint-v1/README.md)
+uses frozen `6600dc2` and the verified installed wheel. Its v10 turn completed
+in 10.567 seconds and reported $0.0291 cost. The actual plugin's three lifecycle
+hooks ran, the seeded canary was recalled, and native initialization reported
+Mnemos connected with fourteen tools. The service retained the captures after
+restart; a reconstructed Stop payload replayed the retained native transcript
+through the plugin without adding an event. No MCP tool call was executed.
+
+Two UUID-backed transcript events and one provisional user event were retained.
+The provisional event remained deferred and ineligible for fact extraction;
+its identity contract passed. The original exact-two-raw-event gate and the
+runner's aggregate association check across all user events remained failed.
+Matching identical text alone is not a safe way to merge repeated prompts.
+The v9 attempt preserves a budget-limit failure with inherited account-level
+connectors; v10 disabled those connectors only in its disposable process.
 
 Generated Codex, Cursor, and fallback Claude MCP configuration now binds the
 Python interpreter that generated it, matching the hook installation. This

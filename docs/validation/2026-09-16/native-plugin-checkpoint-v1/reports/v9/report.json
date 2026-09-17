@@ -1,0 +1,620 @@
+{
+  "runner": "native-claude-plugin-v9",
+  "source_commit": "6600dc262927661d61ce9962c812a022014281c7",
+  "runner_sha256": "89f8bbdac267b82c1e4f28739c2c2ae7e1a92ab1d7c275cd9df234d30b940f84",
+  "started_at": "2026-09-17T17:46:53.616495+00:00",
+  "status": "failed",
+  "scope": "native Claude hooks with persistent transcript, scoped seed, durable restart, replay; no cognition quality claim",
+  "model_quality_claim": "none",
+  "embedding_fixture": "Constant unit vectors for every text; no semantic retrieval claim",
+  "cognition": "UnavailableLLMProvider; all modules disabled",
+  "max_native_seconds": 60,
+  "hook_timeout_seconds": 20,
+  "snapshot_argument": "C:\\Users\\Ant\\AppData\\Local\\Temp\\mnemos-source-6600dc2",
+  "wheel_argument": "C:\\Users\\Ant\\AppData\\Local\\Temp\\mnemos-package-checks-20260917-v2\\dist\\mnemos_memory-0.7.0-py3-none-any.whl",
+  "expected_wheel_sha256": "349737206735f15b59562f3c7d53af51464176473b5de1fa12d2783cf039a25a",
+  "build_verification_argument": "C:\\Users\\Ant\\AppData\\Local\\Temp\\mnemos-package-checks-20260917-v2\\verification.json",
+  "timing_report_argument": "C:\\Users\\Ant\\AppData\\Local\\Temp\\mnemos-claude-adapter-timing-v3\\report.json",
+  "timing_runner_argument": "D:\\Development\\mnemos\\mnemos\\.worktrees\\functional-local-memory\\.venv\\claude_adapter_timing_v3.py",
+  "environment_argument": "C:\\Users\\Ant\\AppData\\Local\\Temp\\mnemos-installed-6600dc2-v1",
+  "claude_executable_argument": "C:\\Users\\Ant\\.local\\bin\\claude.exe",
+  "fixture_parent_argument": "C:\\Users\\Ant\\AppData\\Local\\Temp",
+  "profile": "native-claude-plugin-v9",
+  "config_generation": {
+    "method": "Claude Code --plugin-dir",
+    "host": "claude-code",
+    "status": "plugin_snapshot_bound",
+    "plugin_root": "C:\\Users\\Ant\\AppData\\Local\\Temp\\mnemos-source-6600dc2",
+    "plugin_manifest": "C:\\Users\\Ant\\AppData\\Local\\Temp\\mnemos-source-6600dc2\\.claude-plugin\\plugin.json",
+    "hooks_manifest": "C:\\Users\\Ant\\AppData\\Local\\Temp\\mnemos-source-6600dc2\\hooks\\hooks.json",
+    "config_root": "C:\\Users\\Ant\\AppData\\Local\\Temp\\mnemos-native-claude-plugin-v9-mh924ook\\claude-home\\.claude",
+    "private_root_asserted": true,
+    "consumed_by_native_plugin_dir_argument": true,
+    "hook_configuration": "snapshot hooks/hooks.json; no handmade --settings",
+    "mcp_configuration": "snapshot .claude-plugin/plugin.json and run_mnemos_mcp.py",
+    "runtime_python": "C:\\Users\\Ant\\AppData\\Local\\Temp\\mnemos-installed-6600dc2-v1\\Scripts\\python.exe",
+    "plugin_runtime_env": {
+      "MNEMOS_PLUGIN_PYTHON": "C:\\Users\\Ant\\AppData\\Local\\Temp\\mnemos-installed-6600dc2-v1\\Scripts\\python.exe",
+      "MNEMOS_RUNTIME_DESCRIPTOR": "C:\\Users\\Ant\\AppData\\Local\\Temp\\mnemos-native-claude-plugin-v9-mh924ook\\runtime.json",
+      "MNEMOS_SCOPE_REGISTRY": "C:\\Users\\Ant\\AppData\\Local\\Temp\\mnemos-native-claude-plugin-v9-mh924ook\\scopes.json",
+      "MNEMOS_USER_PROFILE_ID": "native-claude-plugin-v9",
+      "MNEMOS_SQLITE_PATH": "C:\\Users\\Ant\\AppData\\Local\\Temp\\mnemos-native-claude-plugin-v9-mh924ook\\memory.sqlite"
+    }
+  },
+  "plugin_snapshot": {
+    "snapshot": "C:\\Users\\Ant\\AppData\\Local\\Temp\\mnemos-source-6600dc2",
+    "source_commit": "6600dc262927661d61ce9962c812a022014281c7",
+    "clean": true,
+    "files": {
+      ".claude-plugin/plugin.json": {
+        "bytes": 963,
+        "sha256": "3e7549c3b2c7416f6e0fd620b000b89470d809f822cb29b04d22a7e9ff7b3928"
+      },
+      ".claude-plugin/run_mnemos_hook.py": {
+        "bytes": 1430,
+        "sha256": "9ca11e4a0efa9b61dea647e0675729a523e1b9aed0fb56468af08079d04512c0"
+      },
+      ".claude-plugin/run_mnemos_mcp.py": {
+        "bytes": 7005,
+        "sha256": "35abc7d3209e75bad36bba7dea3a14359d36a2d7f9de30228abfd73e61d20efa"
+      },
+      "hooks/hooks.json": {
+        "bytes": 1350,
+        "sha256": "7ca43bda20e14e4363c84fd2fddd26fd257afaa9ba3146bff2a389c52817d1a7"
+      }
+    },
+    "hook_dispatch": "hooks/hooks.json -> python ${CLAUDE_PLUGIN_ROOT}/.claude-plugin/run_mnemos_hook.py <event>",
+    "mcp_dispatch": "plugin.json -> .claude-plugin/run_mnemos_mcp.py -> explicit MNEMOS_PLUGIN_PYTHON"
+  },
+  "python": {
+    "executable": "C:\\Users\\Ant\\AppData\\Local\\Temp\\mnemos-installed-6600dc2-v1\\Scripts\\python.exe",
+    "mnemos_package": "C:\\Users\\Ant\\AppData\\Local\\Temp\\mnemos-installed-6600dc2-v1\\Lib\\site-packages\\mnemos\\__init__.py",
+    "site_packages_asserted": true
+  },
+  "package_provenance": {
+    "source_commit": "6600dc262927661d61ce9962c812a022014281c7",
+    "package_files_checked": 53,
+    "wheel_package_members_checked": 56,
+    "wheel_path": "C:\\Users\\Ant\\AppData\\Local\\Temp\\mnemos-package-checks-20260917-v2\\dist\\mnemos_memory-0.7.0-py3-none-any.whl",
+    "wheel_sha256_expected": "349737206735f15b59562f3c7d53af51464176473b5de1fa12d2783cf039a25a",
+    "wheel_sha256_observed": "349737206735f15b59562f3c7d53af51464176473b5de1fa12d2783cf039a25a"
+  },
+  "build_verification": {
+    "path": "C:\\Users\\Ant\\AppData\\Local\\Temp\\mnemos-package-checks-20260917-v2\\verification.json",
+    "status": "passed",
+    "source_commit": "6600dc262927661d61ce9962c812a022014281c7",
+    "wheel_path": "C:\\Users\\Ant\\AppData\\Local\\Temp\\mnemos-package-checks-20260917-v2\\dist\\mnemos_memory-0.7.0-py3-none-any.whl",
+    "wheel_sha256": "349737206735f15b59562f3c7d53af51464176473b5de1fa12d2783cf039a25a"
+  },
+  "adapter_timing_gate": {
+    "path": "C:\\Users\\Ant\\AppData\\Local\\Temp\\mnemos-claude-adapter-timing-v3\\report.json",
+    "sha256": "e420c975b4a18f0ace9fb6b04c973d5ad0fd853e9089a33f7bc7b577a44cf743",
+    "runner_path": "D:\\Development\\mnemos\\mnemos\\.worktrees\\functional-local-memory\\.venv\\claude_adapter_timing_v3.py",
+    "runner_sha256": "db80b7a88f5ee7919f71ddc704b044c87cde4ba2f83fb1ba36ceaa7ad71b069a",
+    "source_commit": "6600dc262927661d61ce9962c812a022014281c7",
+    "wheel_sha256": "349737206735f15b59562f3c7d53af51464176473b5de1fa12d2783cf039a25a",
+    "status": "passed"
+  },
+  "claude": {
+    "path": "C:\\Users\\Ant\\.local\\bin\\claude.exe",
+    "version": "2.1.191 (Claude Code)"
+  },
+  "plugin_inventory": {
+    "plugin_list": {
+      "returncode": 0,
+      "stdout_sha256": "63f8da02fe5ba9797fa10b9e9103beac26928554bc5b66600b858fd12384e107",
+      "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "stdout_bytes": 373,
+      "stderr_bytes": 0
+    },
+    "plugin_details": {
+      "returncode": 0,
+      "stdout_sha256": "045600ecab154cb5556b5ac3aded304e94af25503a5a9e6c2dde2fd9869c4f6b",
+      "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "stdout_bytes": 751,
+      "stderr_bytes": 0
+    }
+  },
+  "mcp_telemetry": {
+    "status": "not_observed",
+    "source": "native Claude system/init connected server status and tool names",
+    "servers": [
+      {
+        "name": "plugin:mnemos-memory:mnemos",
+        "status": "pending"
+      },
+      {
+        "name": "claude.ai Claude Docs",
+        "status": "connected"
+      },
+      {
+        "name": "claude.ai Todoist",
+        "status": "needs-auth"
+      },
+      {
+        "name": "claude.ai Canva",
+        "status": "connected"
+      },
+      {
+        "name": "claude.ai BioRender",
+        "status": "needs-auth"
+      },
+      {
+        "name": "claude.ai Cloudflare Developer Platform",
+        "status": "needs-auth"
+      },
+      {
+        "name": "claude.ai Vercel",
+        "status": "needs-auth"
+      },
+      {
+        "name": "claude.ai Scholar Gateway",
+        "status": "needs-auth"
+      },
+      {
+        "name": "claude.ai Hugging Face",
+        "status": "connected"
+      },
+      {
+        "name": "claude.ai Google Drive",
+        "status": "connected"
+      },
+      {
+        "name": "claude.ai Gmail",
+        "status": "connected"
+      },
+      {
+        "name": "claude.ai Google Calendar",
+        "status": "connected"
+      },
+      {
+        "name": "claude.ai Indeed",
+        "status": "needs-auth"
+      }
+    ],
+    "tools": [
+      "mcp__claude_ai_Canva__comment-on-design",
+      "mcp__claude_ai_Canva__copy-design",
+      "mcp__claude_ai_Canva__create-brand-template-draft",
+      "mcp__claude_ai_Canva__create-design-from-brand-template",
+      "mcp__claude_ai_Canva__create-design-from-candidate",
+      "mcp__claude_ai_Canva__create-folder",
+      "mcp__claude_ai_Canva__edit-design",
+      "mcp__claude_ai_Canva__export-design",
+      "mcp__claude_ai_Canva__generate-design",
+      "mcp__claude_ai_Canva__generate-design-structured",
+      "mcp__claude_ai_Canva__get-assets",
+      "mcp__claude_ai_Canva__get-brand-template-dataset",
+      "mcp__claude_ai_Canva__get-design-candidates",
+      "mcp__claude_ai_Canva__get-design-dataset",
+      "mcp__claude_ai_Canva__get-design-pages",
+      "mcp__claude_ai_Canva__get-export-formats",
+      "mcp__claude_ai_Canva__help",
+      "mcp__claude_ai_Canva__import-design-from-url",
+      "mcp__claude_ai_Canva__list-brand-kits",
+      "mcp__claude_ai_Canva__list-comments",
+      "mcp__claude_ai_Canva__list-folder-items",
+      "mcp__claude_ai_Canva__list-replies",
+      "mcp__claude_ai_Canva__merge-designs",
+      "mcp__claude_ai_Canva__move-item-to-folder",
+      "mcp__claude_ai_Canva__publish-brand-template",
+      "mcp__claude_ai_Canva__read-design",
+      "mcp__claude_ai_Canva__reply-to-comment",
+      "mcp__claude_ai_Canva__request-outline-review",
+      "mcp__claude_ai_Canva__resize-design",
+      "mcp__claude_ai_Canva__resolve-shortlink",
+      "mcp__claude_ai_Canva__search-brand-templates",
+      "mcp__claude_ai_Canva__search-designs",
+      "mcp__claude_ai_Canva__search-folders",
+      "mcp__claude_ai_Canva__upload-asset-from-url",
+      "mcp__claude_ai_Claude_Docs__batch",
+      "mcp__claude_ai_Claude_Docs__create",
+      "mcp__claude_ai_Claude_Docs__delete",
+      "mcp__claude_ai_Claude_Docs__export",
+      "mcp__claude_ai_Claude_Docs__guide",
+      "mcp__claude_ai_Claude_Docs__query",
+      "mcp__claude_ai_Claude_Docs__read",
+      "mcp__claude_ai_Claude_Docs__update",
+      "mcp__claude_ai_Gmail__apply_sensitive_message_label",
+      "mcp__claude_ai_Gmail__apply_sensitive_thread_label",
+      "mcp__claude_ai_Gmail__create_draft",
+      "mcp__claude_ai_Gmail__create_label",
+      "mcp__claude_ai_Gmail__delete_label",
+      "mcp__claude_ai_Gmail__forward",
+      "mcp__claude_ai_Gmail__get_draft",
+      "mcp__claude_ai_Gmail__get_message",
+      "mcp__claude_ai_Gmail__get_thread",
+      "mcp__claude_ai_Gmail__label_message",
+      "mcp__claude_ai_Gmail__label_thread",
+      "mcp__claude_ai_Gmail__list_drafts",
+      "mcp__claude_ai_Gmail__list_labels",
+      "mcp__claude_ai_Gmail__mark_message_spam",
+      "mcp__claude_ai_Gmail__mark_thread_spam",
+      "mcp__claude_ai_Gmail__reply",
+      "mcp__claude_ai_Gmail__search_threads",
+      "mcp__claude_ai_Gmail__send_message",
+      "mcp__claude_ai_Gmail__trash_message",
+      "mcp__claude_ai_Gmail__trash_thread",
+      "mcp__claude_ai_Gmail__unlabel_message",
+      "mcp__claude_ai_Gmail__unlabel_thread",
+      "mcp__claude_ai_Gmail__unmark_message_spam",
+      "mcp__claude_ai_Gmail__unmark_thread_spam",
+      "mcp__claude_ai_Gmail__untrash_message",
+      "mcp__claude_ai_Gmail__untrash_thread",
+      "mcp__claude_ai_Gmail__update_draft",
+      "mcp__claude_ai_Gmail__update_label",
+      "mcp__claude_ai_Gmail__update_message_labels",
+      "mcp__claude_ai_Google_Calendar__create_event",
+      "mcp__claude_ai_Google_Calendar__delete_event",
+      "mcp__claude_ai_Google_Calendar__get_event",
+      "mcp__claude_ai_Google_Calendar__list_calendars",
+      "mcp__claude_ai_Google_Calendar__list_events",
+      "mcp__claude_ai_Google_Calendar__respond_to_event",
+      "mcp__claude_ai_Google_Calendar__search_events",
+      "mcp__claude_ai_Google_Calendar__suggest_time",
+      "mcp__claude_ai_Google_Calendar__update_event",
+      "mcp__claude_ai_Google_Drive__copy_file",
+      "mcp__claude_ai_Google_Drive__create_file",
+      "mcp__claude_ai_Google_Drive__download_file_content",
+      "mcp__claude_ai_Google_Drive__get_file_metadata",
+      "mcp__claude_ai_Google_Drive__get_file_permissions",
+      "mcp__claude_ai_Google_Drive__list_recent_files",
+      "mcp__claude_ai_Google_Drive__read_file_content",
+      "mcp__claude_ai_Google_Drive__search_files",
+      "mcp__claude_ai_Google_Drive__share_file",
+      "mcp__claude_ai_Google_Drive__trash_file",
+      "mcp__claude_ai_Google_Drive__update_file",
+      "mcp__claude_ai_Hugging_Face__dynamic_space",
+      "mcp__claude_ai_Hugging_Face__hf_fs",
+      "mcp__claude_ai_Hugging_Face__hf_whoami",
+      "mcp__claude_ai_Hugging_Face__hub_repo_details",
+      "mcp__claude_ai_Hugging_Face__hub_repo_search"
+    ],
+    "tool_call_executed": false
+  },
+  "command": [
+    "C:\\Users\\Ant\\.local\\bin\\claude.exe",
+    "--print",
+    "--verbose",
+    "--output-format",
+    "stream-json",
+    "--include-hook-events",
+    "--setting-sources",
+    "project",
+    "--plugin-dir",
+    "C:\\Users\\Ant\\AppData\\Local\\Temp\\mnemos-source-6600dc2",
+    "--tools",
+    "",
+    "--disable-slash-commands",
+    "--permission-mode",
+    "plan",
+    "--session-id",
+    "324fe4a2-5a4b-4c05-9a8e-153c7d4a7f78",
+    "--model",
+    "claude-sonnet-4-6",
+    "--max-budget-usd",
+    "0.08",
+    "--system-prompt",
+    "Answer briefly using only supplied project memory. Do not use tools.",
+    "<random-codename prompt>"
+  ],
+  "fixture_layout": {
+    "project": "C:\\Users\\Ant\\AppData\\Local\\Temp\\mnemos-native-claude-plugin-v9-mh924ook\\project",
+    "claude_config_dir": "C:\\Users\\Ant\\AppData\\Local\\Temp\\mnemos-native-claude-plugin-v9-mh924ook\\claude-home\\.claude",
+    "private_native_stdout": "C:\\Users\\Ant\\AppData\\Local\\Temp\\mnemos-native-claude-plugin-v9-mh924ook\\native-stdout.jsonl",
+    "private_native_stderr": "C:\\Users\\Ant\\AppData\\Local\\Temp\\mnemos-native-claude-plugin-v9-mh924ook\\native-stderr.log",
+    "project_runtime_descriptor_present": false,
+    "auth_copy_performed": true
+  },
+  "native_process": {
+    "returncode": 1,
+    "timed_out": false,
+    "elapsed_ms": 8914.0,
+    "stdout_sha256": "4ecd39e4a92ed9546645216074cead8d35429183e9f47e3d4f2d7f1daa5c7cc0",
+    "stdout_bytes": 9438,
+    "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "stderr_bytes": 0,
+    "private_stdout": "C:\\Users\\Ant\\AppData\\Local\\Temp\\mnemos-native-claude-plugin-v9-mh924ook\\native-stdout.jsonl",
+    "private_stderr": "C:\\Users\\Ant\\AppData\\Local\\Temp\\mnemos-native-claude-plugin-v9-mh924ook\\native-stderr.log",
+    "stream": {
+      "record_count": 7,
+      "non_json_line_count": 0,
+      "rows": [
+        {
+          "type": "system",
+          "subtype": "hook_started",
+          "item_type": null,
+          "is_error": null,
+          "stop_reason": null,
+          "usage": {},
+          "numeric_cost_fields": {},
+          "answer_digest": null
+        },
+        {
+          "type": "system",
+          "subtype": "hook_response",
+          "item_type": null,
+          "is_error": null,
+          "stop_reason": null,
+          "usage": {},
+          "numeric_cost_fields": {},
+          "answer_digest": null
+        },
+        {
+          "type": "system",
+          "subtype": "hook_started",
+          "item_type": null,
+          "is_error": null,
+          "stop_reason": null,
+          "usage": {},
+          "numeric_cost_fields": {},
+          "answer_digest": null
+        },
+        {
+          "type": "system",
+          "subtype": "hook_response",
+          "item_type": null,
+          "is_error": null,
+          "stop_reason": null,
+          "usage": {},
+          "numeric_cost_fields": {},
+          "answer_digest": null
+        },
+        {
+          "type": "system",
+          "subtype": "init",
+          "item_type": null,
+          "is_error": null,
+          "stop_reason": null,
+          "usage": {},
+          "numeric_cost_fields": {},
+          "answer_digest": null
+        },
+        {
+          "type": "assistant",
+          "subtype": null,
+          "item_type": null,
+          "is_error": null,
+          "stop_reason": null,
+          "usage": {},
+          "numeric_cost_fields": {},
+          "answer_digest": null
+        },
+        {
+          "type": "result",
+          "subtype": "error_max_budget_usd",
+          "item_type": null,
+          "is_error": true,
+          "stop_reason": "end_turn",
+          "usage": {
+            "input_tokens": 0,
+            "cache_creation_input_tokens": 0,
+            "cache_read_input_tokens": 0,
+            "output_tokens": 0
+          },
+          "numeric_cost_fields": {
+            "total_cost_usd": 0.365532
+          },
+          "answer_digest": null
+        }
+      ],
+      "hook_rows": [
+        {
+          "subtype": "hook_started",
+          "hook_event": "SessionStart",
+          "hook_name": "SessionStart:startup",
+          "outcome": null,
+          "exit_code": null,
+          "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+          "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+          "output_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+          "session_id_sha256": "298bdbdb1589d1a14e882a439f824d14e280175d7128f991f020f537f5627e35"
+        },
+        {
+          "subtype": "hook_response",
+          "hook_event": "SessionStart",
+          "hook_name": "SessionStart:startup",
+          "outcome": "success",
+          "exit_code": 0,
+          "stdout_sha256": "fba3e01008e547c71c25fe6d6a72b7db4f8932ca1ac7e07c1d469acaf4cb9229",
+          "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+          "output_sha256": "fba3e01008e547c71c25fe6d6a72b7db4f8932ca1ac7e07c1d469acaf4cb9229",
+          "session_id_sha256": "298bdbdb1589d1a14e882a439f824d14e280175d7128f991f020f537f5627e35"
+        },
+        {
+          "subtype": "hook_started",
+          "hook_event": "UserPromptSubmit",
+          "hook_name": "UserPromptSubmit",
+          "outcome": null,
+          "exit_code": null,
+          "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+          "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+          "output_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+          "session_id_sha256": "298bdbdb1589d1a14e882a439f824d14e280175d7128f991f020f537f5627e35"
+        },
+        {
+          "subtype": "hook_response",
+          "hook_event": "UserPromptSubmit",
+          "hook_name": "UserPromptSubmit",
+          "outcome": "success",
+          "exit_code": 0,
+          "stdout_sha256": "6265848e3172fd68b18d0c9b6a74dc91c0182b77b57f68440945e03026bdbade",
+          "stderr_sha256": "6803835cb43f59b43d40cbe167c694462dea1617b17c94e39b49df37dc1a07c0",
+          "output_sha256": "caf3f0e63bd38ddd22f7730c8ae2d69a298ec1c3869ab14b3e33049d9a93ae18",
+          "session_id_sha256": "298bdbdb1589d1a14e882a439f824d14e280175d7128f991f020f537f5627e35"
+        }
+      ],
+      "answer_text_digests": [],
+      "answer_mentions_random_canary": false,
+      "tool_call_observed": false,
+      "tool_item_types": [],
+      "mcp_server_names": [],
+      "mcp_servers_from_native_init": [
+        {
+          "name": "plugin:mnemos-memory:mnemos",
+          "status": "pending"
+        },
+        {
+          "name": "claude.ai Claude Docs",
+          "status": "connected"
+        },
+        {
+          "name": "claude.ai Todoist",
+          "status": "needs-auth"
+        },
+        {
+          "name": "claude.ai Canva",
+          "status": "connected"
+        },
+        {
+          "name": "claude.ai BioRender",
+          "status": "needs-auth"
+        },
+        {
+          "name": "claude.ai Cloudflare Developer Platform",
+          "status": "needs-auth"
+        },
+        {
+          "name": "claude.ai Vercel",
+          "status": "needs-auth"
+        },
+        {
+          "name": "claude.ai Scholar Gateway",
+          "status": "needs-auth"
+        },
+        {
+          "name": "claude.ai Hugging Face",
+          "status": "connected"
+        },
+        {
+          "name": "claude.ai Google Drive",
+          "status": "connected"
+        },
+        {
+          "name": "claude.ai Gmail",
+          "status": "connected"
+        },
+        {
+          "name": "claude.ai Google Calendar",
+          "status": "connected"
+        },
+        {
+          "name": "claude.ai Indeed",
+          "status": "needs-auth"
+        }
+      ],
+      "mcp_tools_from_native_init": [
+        "mcp__claude_ai_Canva__comment-on-design",
+        "mcp__claude_ai_Canva__copy-design",
+        "mcp__claude_ai_Canva__create-brand-template-draft",
+        "mcp__claude_ai_Canva__create-design-from-brand-template",
+        "mcp__claude_ai_Canva__create-design-from-candidate",
+        "mcp__claude_ai_Canva__create-folder",
+        "mcp__claude_ai_Canva__edit-design",
+        "mcp__claude_ai_Canva__export-design",
+        "mcp__claude_ai_Canva__generate-design",
+        "mcp__claude_ai_Canva__generate-design-structured",
+        "mcp__claude_ai_Canva__get-assets",
+        "mcp__claude_ai_Canva__get-brand-template-dataset",
+        "mcp__claude_ai_Canva__get-design-candidates",
+        "mcp__claude_ai_Canva__get-design-dataset",
+        "mcp__claude_ai_Canva__get-design-pages",
+        "mcp__claude_ai_Canva__get-export-formats",
+        "mcp__claude_ai_Canva__help",
+        "mcp__claude_ai_Canva__import-design-from-url",
+        "mcp__claude_ai_Canva__list-brand-kits",
+        "mcp__claude_ai_Canva__list-comments",
+        "mcp__claude_ai_Canva__list-folder-items",
+        "mcp__claude_ai_Canva__list-replies",
+        "mcp__claude_ai_Canva__merge-designs",
+        "mcp__claude_ai_Canva__move-item-to-folder",
+        "mcp__claude_ai_Canva__publish-brand-template",
+        "mcp__claude_ai_Canva__read-design",
+        "mcp__claude_ai_Canva__reply-to-comment",
+        "mcp__claude_ai_Canva__request-outline-review",
+        "mcp__claude_ai_Canva__resize-design",
+        "mcp__claude_ai_Canva__resolve-shortlink",
+        "mcp__claude_ai_Canva__search-brand-templates",
+        "mcp__claude_ai_Canva__search-designs",
+        "mcp__claude_ai_Canva__search-folders",
+        "mcp__claude_ai_Canva__upload-asset-from-url",
+        "mcp__claude_ai_Claude_Docs__batch",
+        "mcp__claude_ai_Claude_Docs__create",
+        "mcp__claude_ai_Claude_Docs__delete",
+        "mcp__claude_ai_Claude_Docs__export",
+        "mcp__claude_ai_Claude_Docs__guide",
+        "mcp__claude_ai_Claude_Docs__query",
+        "mcp__claude_ai_Claude_Docs__read",
+        "mcp__claude_ai_Claude_Docs__update",
+        "mcp__claude_ai_Gmail__apply_sensitive_message_label",
+        "mcp__claude_ai_Gmail__apply_sensitive_thread_label",
+        "mcp__claude_ai_Gmail__create_draft",
+        "mcp__claude_ai_Gmail__create_label",
+        "mcp__claude_ai_Gmail__delete_label",
+        "mcp__claude_ai_Gmail__forward",
+        "mcp__claude_ai_Gmail__get_draft",
+        "mcp__claude_ai_Gmail__get_message",
+        "mcp__claude_ai_Gmail__get_thread",
+        "mcp__claude_ai_Gmail__label_message",
+        "mcp__claude_ai_Gmail__label_thread",
+        "mcp__claude_ai_Gmail__list_drafts",
+        "mcp__claude_ai_Gmail__list_labels",
+        "mcp__claude_ai_Gmail__mark_message_spam",
+        "mcp__claude_ai_Gmail__mark_thread_spam",
+        "mcp__claude_ai_Gmail__reply",
+        "mcp__claude_ai_Gmail__search_threads",
+        "mcp__claude_ai_Gmail__send_message",
+        "mcp__claude_ai_Gmail__trash_message",
+        "mcp__claude_ai_Gmail__trash_thread",
+        "mcp__claude_ai_Gmail__unlabel_message",
+        "mcp__claude_ai_Gmail__unlabel_thread",
+        "mcp__claude_ai_Gmail__unmark_message_spam",
+        "mcp__claude_ai_Gmail__unmark_thread_spam",
+        "mcp__claude_ai_Gmail__untrash_message",
+        "mcp__claude_ai_Gmail__untrash_thread",
+        "mcp__claude_ai_Gmail__update_draft",
+        "mcp__claude_ai_Gmail__update_label",
+        "mcp__claude_ai_Gmail__update_message_labels",
+        "mcp__claude_ai_Google_Calendar__create_event",
+        "mcp__claude_ai_Google_Calendar__delete_event",
+        "mcp__claude_ai_Google_Calendar__get_event",
+        "mcp__claude_ai_Google_Calendar__list_calendars",
+        "mcp__claude_ai_Google_Calendar__list_events",
+        "mcp__claude_ai_Google_Calendar__respond_to_event",
+        "mcp__claude_ai_Google_Calendar__search_events",
+        "mcp__claude_ai_Google_Calendar__suggest_time",
+        "mcp__claude_ai_Google_Calendar__update_event",
+        "mcp__claude_ai_Google_Drive__copy_file",
+        "mcp__claude_ai_Google_Drive__create_file",
+        "mcp__claude_ai_Google_Drive__download_file_content",
+        "mcp__claude_ai_Google_Drive__get_file_metadata",
+        "mcp__claude_ai_Google_Drive__get_file_permissions",
+        "mcp__claude_ai_Google_Drive__list_recent_files",
+        "mcp__claude_ai_Google_Drive__read_file_content",
+        "mcp__claude_ai_Google_Drive__search_files",
+        "mcp__claude_ai_Google_Drive__share_file",
+        "mcp__claude_ai_Google_Drive__trash_file",
+        "mcp__claude_ai_Google_Drive__update_file",
+        "mcp__claude_ai_Hugging_Face__dynamic_space",
+        "mcp__claude_ai_Hugging_Face__hf_fs",
+        "mcp__claude_ai_Hugging_Face__hf_whoami",
+        "mcp__claude_ai_Hugging_Face__hub_repo_details",
+        "mcp__claude_ai_Hugging_Face__hub_repo_search"
+      ],
+      "mnemos_connected_and_tools_observed": false,
+      "mnemos_mcp_telemetry_observed": false,
+      "cost_usd_observed": [
+        0.365532
+      ],
+      "total_cost_usd": 0.365532,
+      "usage_observed": true
+    }
+  },
+  "error_type": "RuntimeError",
+  "error_digest": "0fe94a10abdea623e7a1768e46355ba9240d9c4a529a6c8d3641ebf63a8945ee",
+  "fixture": "C:\\Users\\Ant\\AppData\\Local\\Temp\\mnemos-native-claude-plugin-v9-mh924ook",
+  "private_fixture_preserved": true,
+  "auth_copy_removed": true,
+  "runtime_descriptor_absent": true,
+  "finished_at": "2026-09-17T17:47:07.378045+00:00"
+}

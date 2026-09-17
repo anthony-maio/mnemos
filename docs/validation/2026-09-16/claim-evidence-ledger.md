@@ -31,6 +31,12 @@ benchmark compatibility failure and its repair remain preserved in the
 [failed checkpoint](combined-package-failure-v1/README.md). Claude plugin runtime
 repair `ec0f95e` passed 50 focused tests with two opt-in skips and is now included
 in the `6600dc2` full source checks; native plugin-session acceptance remains open.
+The [subsequent native plugin check](native-plugin-checkpoint-v1/README.md)
+observed all three lifecycle hooks, seeded recall, MCP connection/tool inventory,
+restart persistence, and reconstructed Stop replay. Its original exact-two raw
+capture gate still fails because a separate provisional user event remains;
+that event's exclusion from fact extraction passes. Native MCP tool execution
+and the complete correction/forget conversation remain unproved.
 An implemented capability does not close its quality, native-host, or pilot
 acceptance gate.
 
@@ -60,6 +66,7 @@ remain attributed to the source that produced them.
 - [Package verification index](access-metadata-package-verification/evidence-index.json): source `2494e31`, including schema 8. No later embedding-role or conflict-collision code is covered by this full checkpoint.
 - [Combined checkpoint index](combined-package-checkpoint-v2/evidence-index.json): source `312b8d6`, passing source/package checks and the failed installed continuity check. The separate installed replay probe did not run.
 - [SSD checkpoint index](ssd-package-checkpoint-v1/evidence-index.json): source `6600dc2`, all six source/package checks, 42 installed contract cases, and synthetic Stop replay. This is separate from native host and real-model evidence.
+- [Native plugin index](native-plugin-checkpoint-v1/evidence-index.json): source `6600dc2`, failed budget-limited v9, v10 native plugin observations and remaining capture gates, plus the installed adapter timing preflight.
 - [Installed diagnostic index](installed-continuity-diagnostics-v1/evidence-index.json): valid timeout reproduction plus the excluded first diagnostic whose fixture was incorrectly placed inside Git.
 - [SQL timing index](installed-continuity-sql-profile-v3/evidence-index.json): two passing instrumented cases with separate SQLite execute/commit timings; not a repaired or isolated performance result.
 - [Performance index](performance-corrected-v4/evidence-index.json): frozen d94 run with real query embeddings and synthetic load facts. It is not a semantic-quality test.
