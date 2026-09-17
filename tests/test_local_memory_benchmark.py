@@ -34,7 +34,8 @@ from benchmarks.local_memory.module_challenge_run import (
     _select_profiles,
     main as module_challenge_main,
 )
-from benchmarks.local_memory.performance import _StoreCallTrace
+import benchmarks.local_memory.performance as performance_module
+from benchmarks.local_memory.performance import _StoreCallTrace, _engine_retrieval_components
 from benchmarks.local_memory.resumption import Checkpoint, load_checkpoint
 from mnemos.contracts import ExtractionResponse
 from mnemos.modules.sleep import SleepDaemon
@@ -459,9 +460,97 @@ def test_performance_trace_records_actual_engine_store_calls_and_restores_method
     assert artifact["retrieve_lexical"]["result_counts"] == [1]
     assert artifact["mark_retrieved_many"]["chunk_id_counts"] == [1]
     assert artifact["get"]["result_present"] == [True]
+    components = _engine_retrieval_components(artifact)
+    assert components["sql_candidate_count"] == 1
+    assert components["lexical_candidate_count"] == 1
+    assert components["mark_and_refresh_ms"] >= artifact["mark_retrieved_many"]["elapsed_ms"]
     assert store.retrieve.__func__ is original_retrieve.__func__
     assert store.retrieve.__self__ is original_retrieve.__self__
     store.close()
+
+
+def test_performance_components_reject_duplicate_diagnostic_metadata_write() -> None:
+    store = SQLiteStore(":memory:")
+    store.store(
+        MemoryChunk(
+            id="trace-fact",
+            content="Alpha trace fact",
+            embedding=[1.0, 0.0],
+            metadata={"scope": "project", "scope_id": "p", "user_profile_id": "u"},
+        )
+    )
+    with _StoreCallTrace(store) as trace:
+        store.retrieve([1.0, 0.0], top_k=1)
+        store.retrieve_lexical("alpha", top_k=1)
+        store.mark_retrieved_many(["trace-fact"])
+        store.get("trace-fact")
+    artifact = trace.artifact()
+    artifact["mark_retrieved_many"]["call_count"] = 2
+    with pytest.raises(RuntimeError, match="one completed traced mark_retrieved_many"):
+        _engine_retrieval_components(artifact)
+    assert store.get("trace-fact").access_count == 1  # type: ignore[union-attr]
+    store.close()
+
+
+def test_measure_retrieval_performs_one_metadata_update_per_engine_query(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    class FakeOllama:
+        dim = 768
+
+        def __init__(self, **_: object) -> None:
+            pass
+
+        def embed(self, _text: str) -> list[float]:
+            return [1.0] + [0.0] * 767
+
+    def tiny_load(store: SQLiteStore, base_vector: list[float], project_id: str) -> None:
+        now = datetime.now(timezone.utc)
+        for index in range(2):
+            store.store(
+                MemoryChunk(
+                    id=f"tiny-fact-{index}",
+                    content=f"Tiny benchmark fact {index}",
+                    embedding=list(base_vector),
+                    metadata={
+                        "scope": "project",
+                        "scope_id": project_id,
+                        "user_profile_id": "performance-profile",
+                    },
+                    created_at=now,
+                    updated_at=now,
+                )
+            )
+        store.rebuild_indexes(rebuild_fts=True, rebuild_vec=False)
+
+    mark_calls: list[list[str]] = []
+    original_mark = SQLiteStore.mark_retrieved_many
+
+    def spy_mark(store: SQLiteStore, chunk_ids: list[str], **kwargs: object) -> int:
+        mark_calls.append(list(chunk_ids))
+        return original_mark(store, chunk_ids, **kwargs)
+
+    monkeypatch.setattr(performance_module, "OllamaEmbeddingProvider", FakeOllama)
+    monkeypatch.setattr(performance_module, "_load_facts", tiny_load)
+    monkeypatch.setattr(SQLiteStore, "mark_retrieved_many", spy_mark)
+    monkeypatch.setattr(performance_module, "QUERY_TEXTS", ("tiny query",))
+
+    artifact = performance_module.measure_retrieval(
+        tmp_path,
+        endpoint="http://offline.invalid",
+        embedding_model="offline-embedding",
+        cognition_model="offline-cognition",
+    )
+
+    # One warmup plus one measured query. The old post-query probe would add a
+    # second metadata update for each query.
+    assert len(mark_calls) == len(performance_module.QUERY_TEXTS[:3]) + len(
+        performance_module.QUERY_TEXTS
+    )
+    assert artifact["instrumentation"]["follow_up_store_calls"] == 0
+    assert (
+        artifact["raw_queries"][0]["actual_store_calls"]["mark_retrieved_many"]["call_count"] == 1
+    )
 
 
 def test_performance_trace_reraises_store_errors_and_records_type() -> None:

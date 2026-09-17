@@ -32,7 +32,6 @@ from mnemos.scopes import ScopeContext, ScopeRegistry
 from mnemos.types import MemoryChunk
 from mnemos.utils.embeddings import OllamaEmbeddingProvider, SimpleEmbeddingProvider
 from mnemos.utils.storage import SQLiteStore
-from mnemos.scopes import scope_allows
 
 DEFAULT_ENDPOINT = "http://192.168.86.35:11434"
 DEFAULT_EMBEDDING_MODEL = "nomic-embed-text:latest"
@@ -209,6 +208,34 @@ class _StoreCallTrace:
                 stage["result_present"] = [event["result_present"] for event in completed]
             result[name] = stage
         return result
+
+
+def _engine_retrieval_components(actual_store_calls: dict[str, Any]) -> dict[str, float | int]:
+    """Extract component timings from the calls made by one engine retrieval.
+
+    The performance loop must not issue follow-up store calls just to populate
+    component fields. Requiring one vector, lexical, and metadata update call
+    makes an accidental diagnostic write visible instead of silently changing
+    the measured workload.
+    """
+    required = {
+        name: actual_store_calls[name]
+        for name in ("retrieve", "retrieve_lexical", "mark_retrieved_many")
+    }
+    for name, stage in required.items():
+        if stage["call_count"] != 1 or stage["completed_count"] != 1:
+            raise RuntimeError(f"Expected one completed traced {name} call")
+    get_stage = actual_store_calls["get"]
+    retrieve_stage = required["retrieve"]
+    lexical_stage = required["retrieve_lexical"]
+    return {
+        "scoped_sql_ranking_ms": float(retrieve_stage["elapsed_ms"]),
+        "sql_candidate_count": int(retrieve_stage["result_counts"][0]),
+        "lexical_candidate_ms": float(lexical_stage["elapsed_ms"]),
+        "lexical_candidate_count": int(lexical_stage["result_counts"][0]),
+        "mark_and_refresh_ms": float(required["mark_retrieved_many"]["elapsed_ms"])
+        + float(get_stage["elapsed_ms"]),
+    }
 
 
 def _percentile(values: list[float], fraction: float) -> float:
@@ -407,20 +434,6 @@ def measure_retrieval(
     insert_ms = (time.perf_counter() - insert_started) * 1000
     bytes_after_load = _file_bytes(db_path)
 
-    def scoped_filter(chunk: MemoryChunk) -> bool:
-        return scope_allows(chunk.metadata, context, ("project", "workspace", "global"))
-
-    setattr(
-        scoped_filter,
-        "_mnemos_scope_filter",
-        {
-            "user_profile_id": context.user_profile_id,
-            "project_id": context.project_id,
-            "workspace_id": context.workspace_id,
-            "allowed_scopes": ["project", "workspace", "global"],
-        },
-    )
-
     for query in QUERY_TEXTS[:3]:
         asyncio_run(
             engine.retrieve(
@@ -451,28 +464,10 @@ def measure_retrieval(
                 )
             )
         elapsed_ms = (time.perf_counter() - started) * 1000
-        sql_started = time.perf_counter()
-        sql_results = store.retrieve(
-            timed_embedder.last_vector,
-            top_k=120,
-            filter_fn=scoped_filter,
-        )
-        sql_ms = (time.perf_counter() - sql_started) * 1000
-        lexical_started = time.perf_counter()
-        lexical_results = store.retrieve_lexical(
-            query,
-            top_k=120,
-            filter_fn=scoped_filter,
-        )
-        lexical_ms = (time.perf_counter() - lexical_started) * 1000
-        mark_started = time.perf_counter()
-        selected_ids = [chunk.id for chunk in results[:5]]
-        store.mark_retrieved_many(selected_ids, retrieved_at=datetime.now(timezone.utc))
-        for chunk_id in selected_ids:
-            store.get(chunk_id)
-        mark_ms = (time.perf_counter() - mark_started) * 1000
-        lexical_latencies.append(lexical_ms)
-        mark_and_refresh_latencies.append(mark_ms)
+        actual_store_calls = actual_store_trace.artifact()
+        components = _engine_retrieval_components(actual_store_calls)
+        lexical_latencies.append(float(components["lexical_candidate_ms"]))
+        mark_and_refresh_latencies.append(float(components["mark_and_refresh_ms"]))
         latencies.append(elapsed_ms)
         result_counts.append(len(results))
         raw.append(
@@ -480,13 +475,13 @@ def measure_retrieval(
                 "index": index,
                 "latency_ms": round(elapsed_ms, 3),
                 "embedding_ms": round(timed_embedder.last_ms, 3),
-                "scoped_sql_ranking_ms": round(sql_ms, 3),
-                "sql_candidate_count": len(sql_results),
-                "lexical_candidate_ms": round(lexical_ms, 3),
-                "lexical_candidate_count": len(lexical_results),
-                "mark_and_refresh_ms": round(mark_ms, 3),
+                "scoped_sql_ranking_ms": round(float(components["scoped_sql_ranking_ms"]), 3),
+                "sql_candidate_count": int(components["sql_candidate_count"]),
+                "lexical_candidate_ms": round(float(components["lexical_candidate_ms"]), 3),
+                "lexical_candidate_count": int(components["lexical_candidate_count"]),
+                "mark_and_refresh_ms": round(float(components["mark_and_refresh_ms"]), 3),
                 "result_count": len(results),
-                "actual_store_calls": actual_store_trace.artifact(),
+                "actual_store_calls": actual_store_calls,
             }
         )
     stats = store.get_stats()
@@ -523,8 +518,19 @@ def measure_retrieval(
             "get": _summary([item["actual_store_calls"]["get"]["elapsed_ms"] for item in raw]),
         },
         "actual_store_stage_timing_note": (
-            "Per-call store timings are nested within full retrieval latency and must not be summed."
+            "Per-call store timings are nested within full retrieval latency. The "
+            "mark_and_refresh field sums the traced metadata update and refresh reads "
+            "within that retrieval; do not sum it with other store stages."
         ),
+        "instrumentation": {
+            "version": "engine-call-trace-v2",
+            "follow_up_store_calls": 0,
+            "note": (
+                "Each measured query executes one engine.retrieve call. Component timings and "
+                "candidate counts come from its traced store calls; the v1 post-retrieval "
+                "mark/get probe is not comparable."
+            ),
+        },
         "sqlite": sqlite_settings,
         "raw_queries": raw,
     }
@@ -692,7 +698,7 @@ def run(
         cold_hook = capture.pop("cold_cli_hook")
     source_after = _source_provenance(source_root)
     artifact = {
-        "schema_version": "local-memory-performance-v1",
+        "schema_version": "local-memory-performance-v2",
         "created_at": datetime.now(timezone.utc).isoformat(),
         "started_at": started_at.isoformat(),
         "ended_at": datetime.now(timezone.utc).isoformat(),
@@ -723,7 +729,7 @@ def run(
                 "spreading": False,
             },
             "retrieval_top_k": 5,
-            "scoped_sql_candidate_top_k": 120,
+            "scoped_sql_candidate_top_k": 30,
             "retrieval_warmup_queries": 3,
             "capture_events": CAPTURE_COUNT,
             "capture_warmup_events": 1,
@@ -769,7 +775,7 @@ def main(argv: list[str] | None = None) -> int:
         )
     except Exception as exc:
         artifact = {
-            "schema_version": "local-memory-performance-v1",
+            "schema_version": "local-memory-performance-v2",
             "created_at": datetime.now(timezone.utc).isoformat(),
             "status": "not_run",
             "reason": f"Measurement could not complete: {type(exc).__name__}",
