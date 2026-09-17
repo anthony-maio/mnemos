@@ -11,8 +11,10 @@ concurrent backup consistency, and the expanded cross-adapter fixture. The
 [fresh installed-wheel check](combined-package-checkpoint-v2/README.md) then
 finished with 40 passing tests and two continuity failures. A subsequent
 [installed diagnostic](installed-continuity-diagnostics-v1/README.md) reproduced
-HTTP read timeouts and multi-second retrieval metadata updates; SQL execution,
-locking, and commit time still need separation. The separate installed replay
+HTTP read timeouts and multi-second retrieval metadata updates. A later
+[SQL timing profile](installed-continuity-sql-profile-v3/README.md) passed both
+cases and located commit as the dominant storage cost in that run; the earlier
+multi-second stalls did not recur and no repair is claimed. The separate installed replay
 probe did not run. The combined `9aba209` run's
 benchmark compatibility failure and its repair remain preserved in the
 [failed checkpoint](combined-package-failure-v1/README.md). Claude plugin runtime
@@ -47,6 +49,7 @@ remain attributed to the source that produced them.
 - [Package verification index](access-metadata-package-verification/evidence-index.json): source `2494e31`, including schema 8. No later embedding-role or conflict-collision code is covered by this full checkpoint.
 - [Combined checkpoint index](combined-package-checkpoint-v2/evidence-index.json): source `312b8d6`, passing source/package checks and the failed installed continuity check. The separate installed replay probe did not run.
 - [Installed diagnostic index](installed-continuity-diagnostics-v1/evidence-index.json): valid timeout reproduction plus the excluded first diagnostic whose fixture was incorrectly placed inside Git.
+- [SQL timing index](installed-continuity-sql-profile-v3/evidence-index.json): two passing instrumented cases with separate SQLite execute/commit timings; not a repaired or isolated performance result.
 - [Performance index](performance-corrected-v4/evidence-index.json): frozen d94 run with real query embeddings and synthetic load facts. It is not a semantic-quality test.
 - [Metadata-write comparison index](access-metadata-comparison-v1/evidence-index.json): four fixed-order baseline/candidate arms. Baseline timing varied sharply, so the run does not establish a reliable speedup or close the full recall gate.
 - [Graph diagnostic index](graph-capacity-diagnostic-v2/evidence-index.json): frozen d94 source and vectors, three capacities, development cases only, no new model calls.

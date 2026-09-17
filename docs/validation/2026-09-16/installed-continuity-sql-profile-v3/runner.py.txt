@@ -1,0 +1,449 @@
+"""Diagnose installed-wheel continuity failures without changing the test contract."""
+
+from __future__ import annotations
+
+import argparse
+from datetime import datetime, timezone
+import hashlib
+import json
+import os
+from pathlib import Path
+import subprocess
+import sys
+import threading
+import time
+import zipfile
+import xml.etree.ElementTree as ET
+
+
+CASES = (
+    "tests/test_cross_host_contract.py::test_codex_claude_hermes_share_durable_scoped_lifecycle[codex]",
+    "tests/test_cross_host_contract.py::test_codex_claude_hermes_share_durable_scoped_lifecycle[claude-code]",
+)
+
+
+def _hash(path: Path) -> str:
+    return hashlib.sha256(path.read_bytes()).hexdigest()
+
+
+def _normalized_hash(path: Path) -> str:
+    return hashlib.sha256(path.read_bytes().replace(b"\r\n", b"\n")).hexdigest()
+
+
+def _git(snapshot: Path, *args: str) -> str:
+    import subprocess
+
+    return subprocess.check_output(["git", *args], cwd=snapshot, text=True).strip()
+
+
+def _verify_binding(snapshot: Path, commit: str, wheel: Path, site_packages: Path) -> dict[str, object]:
+    if _git(snapshot, "rev-parse", "HEAD") != commit:
+        raise RuntimeError("Frozen source commit differs")
+    if _git(snapshot, "status", "--porcelain"):
+        raise RuntimeError("Frozen source snapshot has changes")
+    members: dict[str, bytes] = {}
+    with zipfile.ZipFile(wheel) as archive:
+        for name in archive.namelist():
+            if name.startswith("mnemos/") and not name.endswith("/"):
+                members[name] = archive.read(name)
+                if (site_packages / name).read_bytes() != members[name]:
+                    raise RuntimeError(f'Installed package differs from wheel: {name}')
+    tracked = [item for item in _git(snapshot, "ls-files", "mnemos").splitlines() if item]
+    for item in tracked:
+        name = item.replace("\\", "/")
+        if name not in members:
+            raise RuntimeError(f"Wheel omits source file: {item}")
+        if (snapshot / item).read_bytes().replace(b"\r\n", b"\n") != members[name].replace(
+            b"\r\n", b"\n"
+        ):
+            raise RuntimeError(f"Wheel differs from source file: {item}")
+    selected = [
+        snapshot / "tests" / "__init__.py",
+        snapshot / "tests" / "conftest.py",
+        *(snapshot / case.split("::", 1)[0] for case in CASES),
+        snapshot / "benchmarks" / "scenarios" / "local-memory-continuity.jsonl",
+    ]
+    hashes = {
+        str(path.relative_to(snapshot).as_posix()): _normalized_hash(path) for path in selected
+    }
+    return {
+        "source_commit": commit,
+        "source_status": _git(snapshot, "status", "--porcelain"),
+        "wheel_sha256": _hash(wheel),
+        "wheel_source_members": len(members),
+        "tracked_mnemos_files": len(tracked),
+        "source_subset_matches": True,
+        "selected_input_hashes": hashes,
+        "site_packages": str(site_packages),
+    }
+
+
+def _junit_counts(path: Path) -> dict[str, int]:
+    root = ET.parse(path).getroot()
+    suites = [
+        node
+        for node in root.iter("testsuite")
+        if not any(child.tag == "testsuite" for child in node)
+    ]
+    return {
+        key: sum(int(node.attrib.get(key, "0")) for node in suites)
+        for key in ("tests", "failures", "errors", "skipped")
+    }
+
+
+_SQLITE_CALLS = {"execute", "executemany", "executescript", "commit", "rollback"}
+
+
+def _sqlite_call_label(function: object) -> str | None:
+    name = str(getattr(function, "__name__", ""))
+    qualified = str(getattr(function, "__qualname__", ""))
+    module = str(getattr(function, "__module__", ""))
+    if name not in _SQLITE_CALLS:
+        return None
+    if "Connection" not in qualified and module not in {"sqlite3", "_sqlite3"}:
+        return None
+    return name
+
+
+def _install_sqlite_profile(trace: dict[str, object]) -> tuple[object, object, object]:
+    operations = trace.setdefault("sqlite_operations", [])
+    stacks: dict[int, list[tuple[int, str, float]]] = {}
+
+    def profile(_frame, event: str, arg: object) -> None:
+        if event not in {"c_call", "c_return", "c_exception"}:
+            return
+        label = _sqlite_call_label(arg)
+        if label is None:
+            return
+        thread_id = threading.get_ident()
+        stack = stacks.setdefault(thread_id, [])
+        connection_id = id(getattr(arg, '__self__', None))
+        if event == "c_call":
+            stack.append((connection_id, label, time.perf_counter()))
+            return
+        match = None
+        for index in range(len(stack) - 1, -1, -1):
+            if stack[index][0] == connection_id and stack[index][1] == label:
+                match = stack.pop(index)
+                break
+        if match is None:
+            return
+        _, matched_label, started = match
+        operations.append(
+            {
+                "thread_id": thread_id,
+                "operation": matched_label,
+                "started_at": started,
+                "duration_ms": round((time.perf_counter() - started) * 1000, 3),
+                "outcome": "exception" if event == "c_exception" else "returned",
+            }
+        )
+
+    old_sys_profile = sys.getprofile()
+    old_thread_profile = threading.getprofile()
+    sys.setprofile(profile)
+    threading.setprofile(profile)
+    return profile, old_sys_profile, old_thread_profile
+
+
+def _restore_sqlite_profile(state: tuple[object, object, object] | None) -> None:
+    if state is None:
+        return
+    _, old_sys_profile, old_thread_profile = state
+    sys.setprofile(old_sys_profile)
+    threading.setprofile(old_thread_profile)
+
+
+def _package_origins(site_packages: Path) -> dict[str, object]:
+    origins: dict[str, object] = {}
+    for name, module in sorted(sys.modules.items()):
+        if name != "mnemos" and not name.startswith("mnemos."):
+            continue
+        files: list[str] = []
+        origin = getattr(module, "__file__", None)
+        if origin:
+            files.append(str(Path(str(origin)).resolve()))
+        paths = getattr(module, "__path__", None)
+        if paths:
+            files.extend(str(Path(str(path)).resolve()) for path in paths)
+        if not files:
+            raise RuntimeError(f"Loaded {name} has no package origin or path")
+        if any(not Path(path).is_relative_to(site_packages) for path in files):
+            raise RuntimeError(f"Loaded {name} outside installed package: {files}")
+        origins[name] = {"files": sorted(set(files))}
+    return origins
+
+
+def _prepare_fixture_root(path: Path, snapshot: Path, output: Path) -> dict[str, object]:
+    if path.exists():
+        raise ValueError("Fixture root must be a fresh, nonexistent path")
+    if path.is_relative_to(snapshot) or output.is_relative_to(path):
+        raise ValueError("Fixture root must be separate from source and output")
+    path.parent.mkdir(parents=True, exist_ok=True)
+    path.mkdir()
+    try:
+        result = subprocess.run(
+            ["git", "-C", str(path), "rev-parse", "--show-toplevel"],
+            capture_output=True,
+            text=True,
+            check=False,
+        )
+        if result.returncode == 0:
+            raise ValueError("Fixture root is inside a Git repository")
+        return {
+            "path": str(path),
+            "git_discovery_returncode": result.returncode,
+            "git_discovery_stdout": result.stdout.strip(),
+            "git_discovery_stderr": result.stderr.strip(),
+        }
+    except Exception:
+        # The caller owns this fresh directory; preserve it for diagnostics but
+        # do not turn a setup failure into an unverified test result.
+        raise
+
+
+def _safe_result(value: object) -> dict[str, object]:
+    if not isinstance(value, dict):
+        return {"type": type(value).__name__}
+    facts = value.get("facts")
+    return {
+        "keys": sorted(str(key) for key in value),
+        "status": value.get("status"),
+        "processing_status": value.get("processing_status"),
+        "committed": value.get("committed"),
+        "fact_count": len(facts) if isinstance(facts, list) else None,
+        "fact_ids": [
+            str(item.get("id"))
+            for item in facts
+            if isinstance(item, dict) and item.get("id") is not None
+        ]
+        if isinstance(facts, list)
+        else [],
+        "error": value.get("error") if isinstance(value.get("error"), str) else None,
+    }
+
+
+def _install_instrumentation(trace: dict[str, object]) -> None:
+    from mnemos.client import MnemosClient
+    from mnemos.engine import MnemosEngine
+    from mnemos.memory_service import LocalMemoryService
+    from mnemos.service import MnemosService, _RequestHandler
+    from mnemos.utils.storage import SQLiteStore
+
+    requests = trace.setdefault("client_requests", [])
+    submissions = trace.setdefault("service_submissions", [])
+    responses = trace.setdefault("http_responses", [])
+    engine_retrievals = trace.setdefault("engine_retrievals", [])
+    domain_retrievals = trace.setdefault("domain_retrievals", [])
+    access_updates = trace.setdefault("mark_retrieved_many", [])
+    dispatches = trace.setdefault("client_http_dispatches", [])
+    original_dispatch = MnemosClient._dispatch_http
+    original_request = MnemosClient.request
+    original_submit = MnemosService.submit
+    original_write_json = _RequestHandler._write_json
+    original_engine_retrieve = MnemosEngine.retrieve
+    original_domain_retrieve = LocalMemoryService.retrieve
+    original_access_update = SQLiteStore.mark_retrieved_many
+
+    async def dispatch(self, operation, payload, descriptor):
+        started = time.perf_counter()
+        entry = {'operation': str(operation), 'started_at': started, 'case': os.environ.get('PYTEST_CURRENT_TEST')}
+        try:
+            return await original_dispatch(self, operation, payload, descriptor)
+        except Exception as exc:
+            chain = []
+            current = exc
+            while current is not None and len(chain) < 8:
+                chain.append({'type': type(current).__name__, 'message': str(current)})
+                current = current.__cause__
+            entry['exception_chain'] = chain
+            raise
+        finally:
+            entry['duration_ms'] = round((time.perf_counter() - started) * 1000, 3)
+            dispatches.append(entry)
+
+    async def request(self, operation, payload=None, *args, **kwargs):
+        started = time.perf_counter()
+        entry: dict[str, object] = {"operation": str(operation), "started_at": started}
+        try:
+            result = await original_request(self, operation, payload, *args, **kwargs)
+            entry["result"] = _safe_result(result)
+            return result
+        except Exception as exc:
+            entry.update({"error_type": type(exc).__name__, "error": str(exc)})
+            raise
+        finally:
+            entry["duration_ms"] = round((time.perf_counter() - started) * 1000, 3)
+            requests.append(entry)
+
+    def submit(self, operation, payload):
+        started = time.perf_counter()
+        entry: dict[str, object] = {"operation": str(operation), "started_at": started}
+        try:
+            result = original_submit(self, operation, payload)
+            entry["result"] = _safe_result(result)
+            return result
+        except Exception as exc:
+            entry.update({"error_type": type(exc).__name__, "error": str(exc)})
+            raise
+        finally:
+            entry["duration_ms"] = round((time.perf_counter() - started) * 1000, 3)
+            submissions.append(entry)
+
+    def write_json(self, status, body):
+        started = time.perf_counter()
+        entry: dict[str, object] = {
+            "status": int(status),
+            "body": _safe_result(body),
+            "started_at": started,
+        }
+        try:
+            return original_write_json(self, status, body)
+        except Exception as exc:
+            entry.update({"error_type": type(exc).__name__, "error": str(exc)})
+            raise
+        finally:
+            entry["duration_ms"] = round((time.perf_counter() - started) * 1000, 3)
+            responses.append(entry)
+
+    async def engine_retrieve(self, query, *args, **kwargs):
+        started = time.perf_counter()
+        entry: dict[str, object] = {"query_length": len(str(query)), "started_at": started}
+        try:
+            result = await original_engine_retrieve(self, query, *args, **kwargs)
+            entry["result_count"] = len(result)
+            return result
+        except Exception as exc:
+            entry.update({"error_type": type(exc).__name__, "error": str(exc)})
+            raise
+        finally:
+            entry["duration_ms"] = round((time.perf_counter() - started) * 1000, 3)
+            engine_retrievals.append(entry)
+
+    async def domain_retrieve(self, request):
+        started = time.perf_counter()
+        entry: dict[str, object] = {"query_length": len(str(request.query)), "started_at": started}
+        try:
+            result = await original_domain_retrieve(self, request)
+            entry["result"] = _safe_result(result)
+            return result
+        except Exception as exc:
+            entry.update({"error_type": type(exc).__name__, "error": str(exc)})
+            raise
+        finally:
+            entry["duration_ms"] = round((time.perf_counter() - started) * 1000, 3)
+            domain_retrievals.append(entry)
+
+    def access_update(self, chunk_ids, *args, **kwargs):
+        started = time.perf_counter()
+        entry: dict[str, object] = {"id_count": len(chunk_ids), "started_at": started}
+        try:
+            result = original_access_update(self, chunk_ids, *args, **kwargs)
+            entry["updated_count"] = int(result)
+            return result
+        except Exception as exc:
+            entry.update({"error_type": type(exc).__name__, "error": str(exc)})
+            raise
+        finally:
+            entry["duration_ms"] = round((time.perf_counter() - started) * 1000, 3)
+            access_updates.append(entry)
+
+    MnemosClient.request = request
+    MnemosClient._dispatch_http = dispatch
+    MnemosService.submit = submit
+    _RequestHandler._write_json = write_json
+    MnemosEngine.retrieve = engine_retrieve
+    LocalMemoryService.retrieve = domain_retrieve
+    SQLiteStore.mark_retrieved_many = access_update
+
+
+def main() -> int:
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument("--site-packages", required=True, type=Path)
+    parser.add_argument("--wheel", required=True, type=Path)
+    parser.add_argument("--snapshot", required=True, type=Path)
+    parser.add_argument("--commit", required=True)
+    parser.add_argument("--output", required=True, type=Path)
+    parser.add_argument("--fixture-root", required=True, type=Path)
+    args = parser.parse_args()
+    site_packages = args.site_packages.resolve()
+    snapshot = args.snapshot.resolve()
+    wheel = args.wheel.resolve()
+    output = args.output.resolve()
+    fixture_root = args.fixture_root.resolve()
+    if output.exists():
+        raise SystemExit("Refusing to overwrite diagnostic evidence")
+    if output.is_relative_to(snapshot):
+        raise SystemExit("Diagnostic output must be outside source snapshot")
+    if not site_packages.is_dir() or site_packages.is_relative_to(snapshot):
+        raise SystemExit("Installed package directory must be outside source snapshot")
+    if not wheel.is_file():
+        raise SystemExit("Wheel does not exist")
+
+    output.mkdir(parents=True)
+    record: dict[str, object] = {
+        "schema_version": 1,
+        "probe": "installed_continuity_diagnostic",
+        "status": "running",
+        "started_at": datetime.now(timezone.utc).isoformat(),
+        "cases": list(CASES),
+        "runner_sha256": _hash(Path(__file__)),
+        "fixture_root_requested": str(fixture_root),
+    }
+    profile_state: tuple[object, object, object] | None = None
+    try:
+        record["binding_before"] = _verify_binding(snapshot, args.commit, wheel, site_packages)
+        record["fixture_git_discovery"] = _prepare_fixture_root(fixture_root, snapshot, output)
+        for key in list(os.environ):
+            if key.startswith('MNEMOS_') or key in {'PYTHONPATH', 'CODEX_HOME', 'CLAUDE_CONFIG_DIR', 'HERMES_HOME'} or key.endswith(('_API_KEY', '_API_TOKEN')):
+                os.environ.pop(key, None)
+        os.environ["PYTEST_DISABLE_PLUGIN_AUTOLOAD"] = "1"
+        sys.path.insert(0, str(site_packages))
+        import mnemos
+
+        origins_before = _package_origins(site_packages)
+        record["module_origins_before"] = origins_before
+        trace: dict[str, object] = {"package_origins_before": origins_before}
+        _install_instrumentation(trace)
+        profile_state = _install_sqlite_profile(trace)
+        record["fixture_root"] = str(fixture_root)
+
+        import pytest
+
+        junit = output / "diagnostic.junit.xml"
+        exit_code = pytest.main(
+            [
+                "--import-mode=importlib",
+                "-p",
+                "pytest_asyncio.plugin",
+                "--basetemp",
+                str(fixture_root),
+                f"--junitxml={junit}",
+                *(str(snapshot / case) for case in CASES),
+            ]
+        )
+        record["pytest_exit_code"] = int(exit_code)
+        record["junit"] = str(junit)
+        record["junit_counts"] = _junit_counts(junit)
+        if record['junit_counts']['tests'] != len(CASES) or record['junit_counts']['skipped']:
+            raise RuntimeError('Unexpected diagnostic case collection')
+        record["trace"] = trace
+        record["binding_after"] = _verify_binding(snapshot, args.commit, wheel, site_packages)
+        if record["binding_after"] != record["binding_before"]:
+            raise RuntimeError("Source, wheel, or selected test bytes changed during diagnostic")
+        record['module_origins_after'] = _package_origins(site_packages)
+        record["status"] = "passed" if exit_code == 0 else "failed_test"
+    except Exception as exc:
+        record.update({"status": "failed", "error_type": type(exc).__name__, "error": str(exc)})
+    finally:
+        _restore_sqlite_profile(profile_state)
+        record["finished_at"] = datetime.now(timezone.utc).isoformat()
+        (output / "diagnostic.json").write_text(
+            json.dumps(record, indent=2, sort_keys=True) + "\n", encoding="utf-8"
+        )
+    print(json.dumps({"status": record["status"], "output": str(output / "diagnostic.json")}))
+    return 0 if record["status"] == "passed" else 1
+
+
+if __name__ == "__main__":
+    raise SystemExit(main())

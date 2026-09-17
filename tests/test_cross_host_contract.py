@@ -185,7 +185,7 @@ async def test_codex_claude_hermes_share_durable_scoped_lifecycle(
         processed = await client.request(
             "maintenance", {"context": contexts["codex"]}, queue_on_failure=False
         )
-        assert processed.get("completed", 0) >= 0
+        assert processed.get("maintenance") is not None, processed
 
         listed = await client.request(
             "list",
@@ -224,9 +224,10 @@ async def test_codex_claude_hermes_share_durable_scoped_lifecycle(
             queue_on_failure=False,
         )
         assert corrected["status"] == "committed"
-        await client.request(
+        corrected_maintenance = await client.request(
             "maintenance", {"context": contexts["claude-code"]}, queue_on_failure=False
         )
+        assert corrected_maintenance.get("maintenance") is not None, corrected_maintenance
         inspected = await client.request(
             "inspect",
             {"context": contexts["hermes"], "fact_id": target["id"]},
