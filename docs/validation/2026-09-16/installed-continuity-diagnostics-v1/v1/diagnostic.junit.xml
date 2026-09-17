@@ -1,0 +1,411 @@
+<?xml version="1.0" encoding="utf-8"?><testsuites name="pytest tests"><testsuite name="pytest" errors="0" failures="2" skipped="0" tests="2" time="22.194" timestamp="2026-09-17T13:03:55.120074-04:00" hostname="Aurora"><testcase classname="tests.test_cross_host_contract" name="test_codex_claude_hermes_share_durable_scoped_lifecycle[codex]" time="15.933"><failure message="AssertionError: assert 'Project B continuity canary: alpine-orbit-7319.' not in ['Project B continuity canary: alpine-orbit-7319.']">tmp_path = WindowsPath('D:/Development/mnemos/mnemos/.worktrees/functional-local-memory/.venv/installed-continuity-diagnostic-v1/pytest-temp/pytest-of-Ant/pytest-0/test_codex_claude_hermes_share0')
+teaching_host = 'codex'
+
+    @pytest.mark.parametrize("teaching_host", ["codex", "claude-code", "hermes"])
+    @pytest.mark.asyncio
+    async def test_codex_claude_hermes_share_durable_scoped_lifecycle(
+        tmp_path: Path, teaching_host: str
+    ) -&gt; None:
+        scenario = _continuity_scenario()
+        source_events = {event["id"]: event for event in scenario["source_events"]}
+        steps = {step["id"]: step for step in scenario["steps"]}
+        project_a = tmp_path / "project-a"
+        project_b = tmp_path / "project-b"
+        project_a.mkdir()
+        project_b.mkdir()
+        registry = ScopeRegistry()
+        profile = scenario["profile"]
+        project_a_identity = registry.register_project(project_a, user_profile_id=profile, enabled=True)
+        project_b_identity = registry.register_project(project_b, user_profile_id=profile, enabled=True)
+        contexts = _host_contexts(project_a, registry, profile)
+        service = _start_service(tmp_path, registry)
+        client = MnemosClient(
+            descriptor_path=service.descriptor_path, auto_start=False, request_timeout=5
+        )
+    
+        async def retrieve_for(step_id: str, host: str, context: dict | None = None) -&gt; dict:
+            step = steps[step_id]
+            result = await client.request(
+                "retrieve",
+                {
+                    "context": context or contexts[host],
+                    "query": step["query"],
+                    "allowed_scopes": ["project"],
+                    "top_k": 10,
+                    "max_context_tokens": 500,
+                    "profile": "baseline",
+                },
+                queue_on_failure=False,
+            )
+            contents = [fact["content"] for fact in result.get("facts", [])]
+            rendered = result.get("context", "")
+            expected = step.get("expected_content")
+            forbidden = [
+                step[key] for key in ("forbidden_content", "forbidden_content_also") if key in step
+            ]
+            if expected is not None:
+                assert expected in contents
+            for value in forbidden:
+                assert value not in contents
+                assert value not in rendered
+            return result
+    
+        def restart_for(step_id: str) -&gt; None:
+            nonlocal client, service
+            assert steps[step_id]["operation"] == "restart_service"
+            service.stop()
+            service = _start_service(tmp_path, registry)
+            client = MnemosClient(
+                descriptor_path=service.descriptor_path, auto_start=False, request_timeout=5
+            )
+    
+        try:
+            assert service.descriptor and service.descriptor["host"] == "127.0.0.1"
+            teach_event = source_events[steps["teach"]["source_events"][teaching_host]]
+            taught = await client.request(
+                "remember",
+                {
+                    "context": contexts[teaching_host],
+                    "event_id": teach_event["id"],
+                    "content": teach_event["content"],
+                    "role": teach_event["role"],
+                    "source_ref": teach_event["source_ref"],
+                    "scope": teach_event["scope"],
+                },
+                queue_on_failure=False,
+            )
+            assert taught["status"] == "committed"
+            processed = await client.request(
+                "maintenance", {"context": contexts["codex"]}, queue_on_failure=False
+            )
+            assert processed.get("completed", 0) &gt;= 0
+    
+            listed = await client.request(
+                "list",
+                {"context": contexts["codex"], "allowed_scopes": ["project"], "limit": 20},
+                queue_on_failure=False,
+            )
+            facts = listed["facts"]
+            assert len(facts) == 1
+            target = facts[0]
+            assert target["content"] == teach_event["content"]
+            initial_inspection = await client.request(
+                "inspect",
+                {"context": contexts["codex"], "fact_id": target["id"]},
+                queue_on_failure=False,
+            )
+            assert any(
+                source.get("source_ref") == teach_event["source_ref"]
+                for source in initial_inspection.get("evidence", [])
+            )
+            restart_for("restart-after-teach")
+            for host in steps["recall-after-teach-restart"]["hosts"]:
+                await retrieve_for("recall-after-teach-restart", host)
+    
+            correction_step = steps["correct"]
+            correction_event = source_events[correction_step["source_event"]]
+            corrected = await client.request(
+                "correct",
+                {
+                    "context": contexts["claude-code"],
+                    "fact_id": target["id"],
+                    "expected_version": correction_step["expected_version"],
+                    "event_id": correction_event["id"],
+                    "source_ref": correction_event["source_ref"],
+                    "content": correction_event["replacement_content"],
+                },
+                queue_on_failure=False,
+            )
+            assert corrected["status"] == "committed"
+            await client.request(
+                "maintenance", {"context": contexts["claude-code"]}, queue_on_failure=False
+            )
+            inspected = await client.request(
+                "inspect",
+                {"context": contexts["hermes"], "fact_id": target["id"]},
+                queue_on_failure=False,
+            )
+            assert inspected["fact"]["id"] == target["id"]
+            assert inspected["fact"]["version"] == correction_step["expected_version_after"]
+            assert inspected["fact"]["content"] == correction_event["replacement_content"]
+            for host in steps["recall-corrected-before-restart"]["hosts"]:
+                await retrieve_for("recall-corrected-before-restart", host)
+    
+            # A restart must retain the corrected identity and version, and every
+            # other host must retrieve the current content through the same HTTP service.
+            restart_for("restart-after-correction")
+            restart_step = steps["recall-corrected-after-restart"]
+            for host in restart_step["hosts"]:
+                await retrieve_for("recall-corrected-after-restart", host)
+            after_restart = await client.request(
+                "inspect",
+                {"context": contexts["codex"], "fact_id": target["id"]},
+                queue_on_failure=False,
+            )
+            assert after_restart["fact"]["id"] == target["id"]
+            assert after_restart["fact"]["version"] == correction_step["expected_version_after"]
+            assert after_restart["fact"]["content"] == correction_event["replacement_content"]
+    
+            # Prove the canary is visible in its own project before checking that
+            # the project-A context cannot see it while A's corrected fact exists.
+            foreign_event = source_events[steps["foreign-write"]["source_event"]]
+            foreign_contexts = _host_contexts(project_b, registry, profile)
+            foreign_context = foreign_contexts["codex"]
+            foreign_write = await client.request(
+                "remember",
+                {
+                    "context": foreign_context,
+                    "event_id": foreign_event["id"],
+                    "content": foreign_event["content"],
+                    "role": foreign_event["role"],
+                    "source_ref": foreign_event["source_ref"],
+                    "scope": foreign_event["scope"],
+                },
+                queue_on_failure=False,
+            )
+            assert foreign_write["status"] == "committed"
+            foreign_maintenance = await client.request(
+                "maintenance", {"context": foreign_context}, queue_on_failure=False
+            )
+            assert foreign_maintenance.get("maintenance") is not None
+            for host in contexts:
+                await retrieve_for("foreign-read-project-b", host, foreign_contexts[host])
+&gt;               await retrieve_for("foreign-read-project-a-canary", host)
+
+D:\Development\mnemos\mnemos\.worktrees\functional-local-memory\.venv\roles-conflict-frozen-v2\tests\test_cross_host_contract.py:270: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+step_id = 'foreign-read-project-a-canary', host = 'codex', context = None
+
+    async def retrieve_for(step_id: str, host: str, context: dict | None = None) -&gt; dict:
+        step = steps[step_id]
+        result = await client.request(
+            "retrieve",
+            {
+                "context": context or contexts[host],
+                "query": step["query"],
+                "allowed_scopes": ["project"],
+                "top_k": 10,
+                "max_context_tokens": 500,
+                "profile": "baseline",
+            },
+            queue_on_failure=False,
+        )
+        contents = [fact["content"] for fact in result.get("facts", [])]
+        rendered = result.get("context", "")
+        expected = step.get("expected_content")
+        forbidden = [
+            step[key] for key in ("forbidden_content", "forbidden_content_also") if key in step
+        ]
+        if expected is not None:
+            assert expected in contents
+        for value in forbidden:
+&gt;           assert value not in contents
+E           AssertionError: assert 'Project B continuity canary: alpine-orbit-7319.' not in ['Project B continuity canary: alpine-orbit-7319.']
+
+D:\Development\mnemos\mnemos\.worktrees\functional-local-memory\.venv\roles-conflict-frozen-v2\tests\test_cross_host_contract.py:146: AssertionError</failure></testcase><testcase classname="tests.test_cross_host_contract" name="test_codex_claude_hermes_share_durable_scoped_lifecycle[claude-code]" time="6.028"><failure message="AssertionError: assert 'Project B continuity canary: alpine-orbit-7319.' not in ['Project B continuity canary: alpine-orbit-7319.']">tmp_path = WindowsPath('D:/Development/mnemos/mnemos/.worktrees/functional-local-memory/.venv/installed-continuity-diagnostic-v1/pytest-temp/pytest-of-Ant/pytest-0/test_codex_claude_hermes_share1')
+teaching_host = 'claude-code'
+
+    @pytest.mark.parametrize("teaching_host", ["codex", "claude-code", "hermes"])
+    @pytest.mark.asyncio
+    async def test_codex_claude_hermes_share_durable_scoped_lifecycle(
+        tmp_path: Path, teaching_host: str
+    ) -&gt; None:
+        scenario = _continuity_scenario()
+        source_events = {event["id"]: event for event in scenario["source_events"]}
+        steps = {step["id"]: step for step in scenario["steps"]}
+        project_a = tmp_path / "project-a"
+        project_b = tmp_path / "project-b"
+        project_a.mkdir()
+        project_b.mkdir()
+        registry = ScopeRegistry()
+        profile = scenario["profile"]
+        project_a_identity = registry.register_project(project_a, user_profile_id=profile, enabled=True)
+        project_b_identity = registry.register_project(project_b, user_profile_id=profile, enabled=True)
+        contexts = _host_contexts(project_a, registry, profile)
+        service = _start_service(tmp_path, registry)
+        client = MnemosClient(
+            descriptor_path=service.descriptor_path, auto_start=False, request_timeout=5
+        )
+    
+        async def retrieve_for(step_id: str, host: str, context: dict | None = None) -&gt; dict:
+            step = steps[step_id]
+            result = await client.request(
+                "retrieve",
+                {
+                    "context": context or contexts[host],
+                    "query": step["query"],
+                    "allowed_scopes": ["project"],
+                    "top_k": 10,
+                    "max_context_tokens": 500,
+                    "profile": "baseline",
+                },
+                queue_on_failure=False,
+            )
+            contents = [fact["content"] for fact in result.get("facts", [])]
+            rendered = result.get("context", "")
+            expected = step.get("expected_content")
+            forbidden = [
+                step[key] for key in ("forbidden_content", "forbidden_content_also") if key in step
+            ]
+            if expected is not None:
+                assert expected in contents
+            for value in forbidden:
+                assert value not in contents
+                assert value not in rendered
+            return result
+    
+        def restart_for(step_id: str) -&gt; None:
+            nonlocal client, service
+            assert steps[step_id]["operation"] == "restart_service"
+            service.stop()
+            service = _start_service(tmp_path, registry)
+            client = MnemosClient(
+                descriptor_path=service.descriptor_path, auto_start=False, request_timeout=5
+            )
+    
+        try:
+            assert service.descriptor and service.descriptor["host"] == "127.0.0.1"
+            teach_event = source_events[steps["teach"]["source_events"][teaching_host]]
+            taught = await client.request(
+                "remember",
+                {
+                    "context": contexts[teaching_host],
+                    "event_id": teach_event["id"],
+                    "content": teach_event["content"],
+                    "role": teach_event["role"],
+                    "source_ref": teach_event["source_ref"],
+                    "scope": teach_event["scope"],
+                },
+                queue_on_failure=False,
+            )
+            assert taught["status"] == "committed"
+            processed = await client.request(
+                "maintenance", {"context": contexts["codex"]}, queue_on_failure=False
+            )
+            assert processed.get("completed", 0) &gt;= 0
+    
+            listed = await client.request(
+                "list",
+                {"context": contexts["codex"], "allowed_scopes": ["project"], "limit": 20},
+                queue_on_failure=False,
+            )
+            facts = listed["facts"]
+            assert len(facts) == 1
+            target = facts[0]
+            assert target["content"] == teach_event["content"]
+            initial_inspection = await client.request(
+                "inspect",
+                {"context": contexts["codex"], "fact_id": target["id"]},
+                queue_on_failure=False,
+            )
+            assert any(
+                source.get("source_ref") == teach_event["source_ref"]
+                for source in initial_inspection.get("evidence", [])
+            )
+            restart_for("restart-after-teach")
+            for host in steps["recall-after-teach-restart"]["hosts"]:
+                await retrieve_for("recall-after-teach-restart", host)
+    
+            correction_step = steps["correct"]
+            correction_event = source_events[correction_step["source_event"]]
+            corrected = await client.request(
+                "correct",
+                {
+                    "context": contexts["claude-code"],
+                    "fact_id": target["id"],
+                    "expected_version": correction_step["expected_version"],
+                    "event_id": correction_event["id"],
+                    "source_ref": correction_event["source_ref"],
+                    "content": correction_event["replacement_content"],
+                },
+                queue_on_failure=False,
+            )
+            assert corrected["status"] == "committed"
+            await client.request(
+                "maintenance", {"context": contexts["claude-code"]}, queue_on_failure=False
+            )
+            inspected = await client.request(
+                "inspect",
+                {"context": contexts["hermes"], "fact_id": target["id"]},
+                queue_on_failure=False,
+            )
+            assert inspected["fact"]["id"] == target["id"]
+            assert inspected["fact"]["version"] == correction_step["expected_version_after"]
+            assert inspected["fact"]["content"] == correction_event["replacement_content"]
+            for host in steps["recall-corrected-before-restart"]["hosts"]:
+                await retrieve_for("recall-corrected-before-restart", host)
+    
+            # A restart must retain the corrected identity and version, and every
+            # other host must retrieve the current content through the same HTTP service.
+            restart_for("restart-after-correction")
+            restart_step = steps["recall-corrected-after-restart"]
+            for host in restart_step["hosts"]:
+                await retrieve_for("recall-corrected-after-restart", host)
+            after_restart = await client.request(
+                "inspect",
+                {"context": contexts["codex"], "fact_id": target["id"]},
+                queue_on_failure=False,
+            )
+            assert after_restart["fact"]["id"] == target["id"]
+            assert after_restart["fact"]["version"] == correction_step["expected_version_after"]
+            assert after_restart["fact"]["content"] == correction_event["replacement_content"]
+    
+            # Prove the canary is visible in its own project before checking that
+            # the project-A context cannot see it while A's corrected fact exists.
+            foreign_event = source_events[steps["foreign-write"]["source_event"]]
+            foreign_contexts = _host_contexts(project_b, registry, profile)
+            foreign_context = foreign_contexts["codex"]
+            foreign_write = await client.request(
+                "remember",
+                {
+                    "context": foreign_context,
+                    "event_id": foreign_event["id"],
+                    "content": foreign_event["content"],
+                    "role": foreign_event["role"],
+                    "source_ref": foreign_event["source_ref"],
+                    "scope": foreign_event["scope"],
+                },
+                queue_on_failure=False,
+            )
+            assert foreign_write["status"] == "committed"
+            foreign_maintenance = await client.request(
+                "maintenance", {"context": foreign_context}, queue_on_failure=False
+            )
+            assert foreign_maintenance.get("maintenance") is not None
+            for host in contexts:
+                await retrieve_for("foreign-read-project-b", host, foreign_contexts[host])
+&gt;               await retrieve_for("foreign-read-project-a-canary", host)
+
+D:\Development\mnemos\mnemos\.worktrees\functional-local-memory\.venv\roles-conflict-frozen-v2\tests\test_cross_host_contract.py:270: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+step_id = 'foreign-read-project-a-canary', host = 'codex', context = None
+
+    async def retrieve_for(step_id: str, host: str, context: dict | None = None) -&gt; dict:
+        step = steps[step_id]
+        result = await client.request(
+            "retrieve",
+            {
+                "context": context or contexts[host],
+                "query": step["query"],
+                "allowed_scopes": ["project"],
+                "top_k": 10,
+                "max_context_tokens": 500,
+                "profile": "baseline",
+            },
+            queue_on_failure=False,
+        )
+        contents = [fact["content"] for fact in result.get("facts", [])]
+        rendered = result.get("context", "")
+        expected = step.get("expected_content")
+        forbidden = [
+            step[key] for key in ("forbidden_content", "forbidden_content_also") if key in step
+        ]
+        if expected is not None:
+            assert expected in contents
+        for value in forbidden:
+&gt;           assert value not in contents
+E           AssertionError: assert 'Project B continuity canary: alpine-orbit-7319.' not in ['Project B continuity canary: alpine-orbit-7319.']
+
+D:\Development\mnemos\mnemos\.worktrees\functional-local-memory\.venv\roles-conflict-frozen-v2\tests\test_cross_host_contract.py:146: AssertionError</failure></testcase></testsuite></testsuites>
