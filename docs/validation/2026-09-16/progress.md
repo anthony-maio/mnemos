@@ -413,3 +413,20 @@ The 34 adapter/helper and 20 service identity tests passed. Full verification
 started against a frozen checkout at 06:35 UTC on September 17. Native d17
 results remain separate evidence. See [scope repair](claude-scope-repair.md) for
 legacy checkpoint recovery and incomplete transcript coverage.
+
+## Scoped capture verification
+
+Frozen source `20f271d` passed 669 tests with two explicit WSL skips, followed
+by Black, strict mypy, JavaScript syntax, build, and Twine. The installed wheel
+also passed two-project Claude identity separation, independent checkpoints,
+restart, legacy forget/replay suppression, and offline v2 capture queuing.
+These are service and adapter checks using simple embeddings and unavailable
+cognition. Native host and real-model evidence remain separate.
+
+An unintended environment synchronization occurred during the first full
+attempt. The [incident record](environment-sync-incident/README.md) preserves
+the audit and its limits. A second full run began at 07:02:43 UTC against the
+same frozen source with no further shared-environment synchronization. See
+the [verification record](claude-scope-verification.md) for package hashes and
+the first attempt's evidence. The real-model queue continues with the incident
+disclosed; its recorded source and runtime binding still match.

@@ -18,8 +18,16 @@
     {
       "source_commit": "20f271d93bbf02990a78b51aa74694deaf5a9bf7",
       "started_at": "2026-09-17T06:35:14.892275+00:00",
+      "pytest_finished_at": "2026-09-17T07:00:57.997208+00:00",
+      "status_at_recording": "passed",
+      "environment_caveat": "environment-sync-incident/README.md"
+    },
+    {
+      "source_commit": "20f271d93bbf02990a78b51aa74694deaf5a9bf7",
+      "started_at": "2026-09-17T07:02:43.149791+00:00",
       "pytest_finished_at": null,
-      "status_at_recording": "running"
+      "status_at_recording": "running",
+      "purpose": "Repeat verification after the shared-environment sync, without further synchronization"
     }
   ],
   "host_probes": [
@@ -51,6 +59,12 @@
       "criteria": "Three hook calls returned 0; user and assistant capture survived restart; seeded context and SQLite answer observed",
       "limitations": "Simple embeddings and unavailable cognition; manual PowerShell wrapper rather than later production renderer; model name unreported; no model-quality or performance claim",
       "evidence": "native-codex-capture-v6/evidence-index.json"
+    }
+  ],
+  "environment_incidents": [
+    {
+      "time_utc": "2026-09-17T06:47:09Z",
+      "evidence": "environment-sync-incident/evidence-index.json"
     }
   ]
 }

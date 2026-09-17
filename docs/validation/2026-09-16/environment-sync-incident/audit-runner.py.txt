@@ -1,0 +1,66 @@
+import importlib.metadata
+import hashlib
+import json
+import platform
+import sqlite3
+import sys
+from datetime import datetime, timezone
+from pathlib import Path
+
+root = Path(__file__).resolve().parent.parent
+rows = []
+for dist in importlib.metadata.distributions():
+    metadata = Path(dist._path)
+    stamps = [metadata.stat().st_mtime]
+    for name in ('METADATA', 'INSTALLER', 'RECORD', 'direct_url.json'):
+        p = metadata / name
+        if p.exists():
+            stamps.append(p.stat().st_mtime)
+    latest = max(stamps)
+    if latest >= datetime(2026, 9, 17, 6, 30, tzinfo=timezone.utc).timestamp():
+        rows.append({'name':dist.metadata['Name'], 'version':dist.version,
+                     'metadata_path':str(metadata),
+                     'latest_timestamp':datetime.fromtimestamp(latest, timezone.utc).isoformat()})
+lock = root / 'uv.lock'
+record = {'observed_at':datetime.now(timezone.utc).isoformat(), 'recent_distributions':rows,
+          'lock_timestamp':datetime.fromtimestamp(lock.stat().st_mtime, timezone.utc).isoformat() if lock.exists() else None}
+out = root / '.venv/environment-sync-audit.json'
+out.write_text(json.dumps(record,indent=2)+'\n')
+print(json.dumps(record,indent=2))
+manifest = json.loads((root / 'docs/validation/2026-09-16/real-model-v3/mechanism-heldout/manifest.json').read_text())
+print('Manifest top-level keys:', list(manifest))
+print('Recorded runtime:', json.dumps(manifest.get('runtime'), indent=2))
+print('Recorded provider:', json.dumps(manifest.get('provider'), indent=2))
+current_runtime = {
+    'httpx': importlib.metadata.version('httpx'),
+    'numpy': importlib.metadata.version('numpy'),
+    'pydantic': importlib.metadata.version('pydantic'),
+    'sqlite-vec': importlib.metadata.version('sqlite-vec'),
+    'python': platform.python_version(), 'sqlite': sqlite3.sqlite_version,
+    'machine': platform.machine(), 'platform': platform.platform(),
+    'processor': platform.processor(),
+}
+snapshot = root / '.venv/graph-v4-frozen'
+digest = hashlib.sha256()
+for name in manifest['code_files']:
+    digest.update(name.encode('utf-8'))
+    digest.update(b'\0')
+    digest.update((snapshot / name).read_bytes())
+    digest.update(b'\0')
+record['recorded_runtime'] = manifest['runtime']
+record['current_runtime'] = current_runtime
+record['recorded_runtime_matches'] = current_runtime == manifest['runtime']
+record['source_code_sha256'] = digest.hexdigest()
+record['source_code_matches'] = digest.hexdigest() == manifest['code_sha256']
+sys.path.insert(0, str(snapshot))
+import mnemos
+import benchmarks.local_memory.module_mechanism_run as mechanism
+record['fresh_process_import_check'] = {
+    'mnemos': mnemos.__file__, 'evaluator': mechanism.__file__,
+    'filelock_imported': 'filelock' in sys.modules,
+    'scope': 'Fresh audit process, not introspection of the running evaluator',
+}
+out.write_text(json.dumps(record, indent=2)+'\n')
+print('Tracked runtime matches:', record['recorded_runtime_matches'])
+print('Frozen source matches:', record['source_code_matches'])
+print('Import check:', record['fresh_process_import_check'])

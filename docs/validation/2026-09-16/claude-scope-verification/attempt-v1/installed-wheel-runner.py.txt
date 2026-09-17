@@ -1,0 +1,465 @@
+"""Disposable installed-wheel smoke for the scoped Claude lifecycle target."""
+
+from __future__ import annotations
+
+import argparse
+import asyncio
+import hashlib
+import json
+import subprocess
+import sys
+import tempfile
+import zipfile
+from datetime import datetime, timezone
+from pathlib import Path, PurePosixPath
+from typing import Any
+
+SOURCE_COMMIT = "20f271d93bbf02990a78b51aa74694deaf5a9bf7"
+
+
+def _sha256(data: bytes) -> str:
+    return hashlib.sha256(data).hexdigest()
+
+
+def _normalize_source(data: bytes) -> bytes:
+    return data.replace(b"\r\n", b"\n")
+
+
+def _safe_relative(path: str) -> PurePosixPath:
+    relative = PurePosixPath(path)
+    if relative.is_absolute() or ".." in relative.parts:
+        raise RuntimeError(f"Unsafe wheel member: {path}")
+    return relative
+
+
+class WheelInstallError(RuntimeError):
+    def __init__(self, message: str, *, stdout: str = "", stderr: str = "") -> None:
+        super().__init__(message)
+        self.stdout = stdout
+        self.stderr = stderr
+
+
+def _install_wheel(wheel: Path, target: Path) -> None:
+    target.mkdir(parents=True, exist_ok=True)
+    uv = Path(r"C:\Users\Ant\.local\bin\uv.exe")
+    command = [
+        str(uv),
+        "pip",
+        "install",
+        "--python",
+        sys.executable,
+        "--target",
+        str(target),
+        "--no-deps",
+        "--no-index",
+        str(wheel),
+    ]
+    try:
+        completed = subprocess.run(
+            command,
+            check=False,
+            capture_output=True,
+            text=True,
+            timeout=120,
+        )
+    except OSError as exc:
+        raise WheelInstallError(f"Wheel installer could not be launched: {uv}") from exc
+    if completed.returncode:
+        raise WheelInstallError(
+            f"Wheel installation failed with exit code {completed.returncode}",
+            stdout=completed.stdout,
+            stderr=completed.stderr,
+        )
+
+
+def _verify_installed_wheel(wheel: Path, target: Path) -> dict[str, Any]:
+    wheel_files: list[str] = []
+    with zipfile.ZipFile(wheel) as archive:
+        for member in archive.infolist():
+            relative = _safe_relative(member.filename)
+            if member.is_dir():
+                continue
+            wheel_files.append(relative.as_posix())
+            installed = target.joinpath(*relative.parts)
+            if not installed.is_file():
+                raise RuntimeError(f"Wheel member was not installed: {relative}")
+            is_record = relative.name == "RECORD" and any(
+                part.endswith(".dist-info") for part in relative.parts
+            )
+            if not is_record and installed.read_bytes() != archive.read(member):
+                raise RuntimeError(f"Installed wheel member differs: {relative}")
+    return {
+        "member_count": len(wheel_files),
+        "members": sorted(wheel_files),
+        "byte_comparison_exclusions": [
+            name for name in wheel_files if name.endswith(".dist-info/RECORD")
+        ],
+        "exclusion_reason": "Installer rewrites RECORD; all other wheel bytes compared exactly",
+    }
+
+
+def _git_blob(root: Path, revision: str, path: str) -> bytes:
+    try:
+        return subprocess.check_output(
+            ["git", "-C", str(root), "show", f"{revision}:{path}"], stderr=subprocess.DEVNULL
+        )
+    except subprocess.CalledProcessError as exc:
+        raise RuntimeError(f"Source commit is missing package file: {path}") from exc
+
+
+def _verify_source_package(root: Path, revision: str, target: Path) -> dict[str, Any]:
+    listing = subprocess.check_output(
+        ["git", "-C", str(root), "ls-tree", "-r", "--name-only", revision, "--", "mnemos"],
+        text=True,
+    )
+    source_files = [line.strip() for line in listing.splitlines() if line.strip()]
+    if not source_files:
+        raise RuntimeError(f"No mnemos package files found at source commit {revision}")
+    checked = 0
+    for source_path in source_files:
+        relative = PurePosixPath(source_path)
+        installed = target.joinpath(*relative.parts)
+        if not installed.is_file():
+            raise RuntimeError(f"Source package file is absent from wheel: {source_path}")
+        if _normalize_source(_git_blob(root, revision, source_path)) != _normalize_source(
+            installed.read_bytes()
+        ):
+            raise RuntimeError(f"Installed package differs from source commit: {source_path}")
+        checked += 1
+    return {"source_commit": revision, "package_file_count": checked}
+
+
+def _config() -> Any:
+    from mnemos.config import MnemosConfig, ModuleConfig
+
+    return MnemosConfig(modules=ModuleConfig(**{name: False for name in ModuleConfig.model_fields}))
+
+
+def _make_service(root: Path, registry: Any, database: Path) -> tuple[Any, Any]:
+    from mnemos.engine import MnemosEngine
+    from mnemos.memory_service import LocalMemoryService
+    from mnemos.utils.embeddings import SimpleEmbeddingProvider
+    from mnemos.utils.llm import UnavailableLLMProvider
+    from mnemos.utils.storage import SQLiteStore
+
+    store = SQLiteStore(str(database))
+    try:
+        engine = MnemosEngine(
+            config=_config(),
+            store=store,
+            embedder=SimpleEmbeddingProvider(),
+            llm=UnavailableLLMProvider(),
+        )
+        return LocalMemoryService(engine, registry), store
+    except Exception:
+        store.close()
+        raise
+
+
+class _AsyncServiceClient:
+    def __init__(self, service: Any) -> None:
+        self.service = service
+
+    async def capture(self, payload: dict[str, Any]) -> dict[str, Any]:
+        return await self.service.dispatch("capture", payload)
+
+    async def retrieve(self, payload: dict[str, Any]) -> dict[str, Any]:
+        return await self.service.dispatch("retrieve", payload)
+
+
+def _event_payload(
+    context: Any,
+    *,
+    event_id: str,
+    identity_version: int,
+    source_ref: str,
+    role: str,
+    content: str,
+) -> dict[str, Any]:
+    return {
+        "event_id": event_id,
+        "identity_version": identity_version,
+        "context": context.model_dump(mode="json"),
+        "occurred_at": datetime.now(timezone.utc).isoformat(),
+        "role": role,
+        "content": content,
+        "source_kind": "claude_code_transcript",
+        "source_ref": source_ref,
+    }
+
+
+class _LifecycleResources:
+    def __init__(self) -> None:
+        self.stores: list[Any] = []
+        self.clients: list[Any] = []
+
+    async def close(self) -> None:
+        for client in reversed(self.clients):
+            try:
+                await client.close()
+            except Exception:
+                pass
+        for store in reversed(self.stores):
+            try:
+                store.close()
+            except Exception:
+                pass
+
+
+async def _run_lifecycle(root: Path, work: Path) -> dict[str, Any]:
+    resources = _LifecycleResources()
+    try:
+        return await _run_lifecycle_impl(root, work, resources)
+    finally:
+        await resources.close()
+
+
+async def _run_lifecycle_impl(
+    root: Path, work: Path, resources: _LifecycleResources
+) -> dict[str, Any]:
+    from mnemos.adapters.claude_code import ClaudeCodeAdapter
+    from mnemos.claude_identity import legacy_event_id, scoped_event_id
+    from mnemos.client import MnemosClient
+    from mnemos.scopes import ScopeRegistry
+
+    projects_root = work / "projects"
+    project_a_root = projects_root / "project-a"
+    project_b_root = projects_root / "project-b"
+    project_a_root.mkdir(parents=True)
+    project_b_root.mkdir(parents=True)
+    registry = ScopeRegistry()
+    project_a = registry.register_project(project_a_root, user_profile_id="profile-a", enabled=True)
+    project_b = registry.register_project(project_b_root, user_profile_id="profile-a", enabled=True)
+    database = work / "memory.sqlite"
+    service, store = _make_service(root, registry, database)
+    resources.stores.append(store)
+    bridge = _AsyncServiceClient(service)
+    checkpoint_dir = work / "checkpoints"
+    adapter = ClaudeCodeAdapter(
+        client=bridge,
+        registry=registry,
+        user_profile_id="profile-a",
+        checkpoint_directory=checkpoint_dir,
+    )
+    prompt_payload = {
+        "session_id": "shared-session",
+        "prompt": "Keep this scoped wheel smoke fact.",
+        "prompt_id": "native-prompt-1",
+        "hook_event_name": "UserPromptSubmit",
+    }
+    first = await adapter.handle(
+        "UserPromptSubmit",
+        {**prompt_payload, "cwd": str(project_a_root)},
+        include_retrieval=False,
+    )
+    second = await adapter.handle(
+        "UserPromptSubmit",
+        {**prompt_payload, "cwd": str(project_b_root)},
+        include_retrieval=False,
+    )
+    context_a = registry.resolve(
+        project_a_root,
+        user_profile_id="profile-a",
+        session_id="shared-session",
+        host="claude-code",
+    )
+    context_b = registry.resolve(
+        project_b_root,
+        user_profile_id="profile-a",
+        session_id="shared-session",
+        host="claude-code",
+    )
+    checkpoint_a = adapter._checkpoint_path(context_a)
+    checkpoint_b = adapter._checkpoint_path(context_b)
+    if (
+        first.captured != 1
+        or second.captured != 1
+        or checkpoint_a == checkpoint_b
+        or not checkpoint_a.is_file()
+        or not checkpoint_b.is_file()
+        or len(store.list_episodic_events()) != 2
+    ):
+        raise RuntimeError("Scoped native event or checkpoint isolation failed")
+
+    store.close()
+    service, store = _make_service(root, registry, database)
+    resources.stores.append(store)
+    bridge.service = service
+    restarted = await ClaudeCodeAdapter(
+        client=bridge,
+        registry=registry,
+        user_profile_id="profile-a",
+        checkpoint_directory=checkpoint_dir,
+    ).handle(
+        "UserPromptSubmit",
+        {**prompt_payload, "cwd": str(project_a_root)},
+        include_retrieval=False,
+    )
+    if restarted.captured != 1 or len(store.list_episodic_events()) != 2:
+        raise RuntimeError("Scoped event persistence failed after restart")
+
+    source_ref = "legacy-prompt-1"
+    source_role = "assistant"
+    source_content = "Use the stable wheel smoke convention."
+    legacy_context = context_a.model_copy(update={"session_id": "legacy-session"})
+    old_adapter_id = legacy_event_id(
+        legacy_context.session_id, source_ref, source_role, source_content
+    )
+    legacy_result = await bridge.capture(
+        _event_payload(
+            legacy_context,
+            event_id=old_adapter_id,
+            identity_version=1,
+            source_ref=source_ref,
+            role=source_role,
+            content=source_content,
+        )
+    )
+    await service.maintenance.run_once(force=True)
+    source_event_id = str(legacy_result["event_id"])
+    source_facts = [
+        fact
+        for fact in store.get_all()
+        if any(e.source_event_id == source_event_id for e in store.list_fact_evidence(fact.id))
+    ]
+    if not source_facts:
+        raise RuntimeError("Legacy capture did not produce a baseline fact")
+    fact = source_facts[0]
+    if not store.forget_fact(fact.id, expected_version=fact.version):
+        raise RuntimeError("Legacy baseline fact could not be forgotten")
+    store.close()
+    service, store = _make_service(root, registry, database)
+    resources.stores.append(store)
+    bridge.service = service
+    v2_replay = await bridge.capture(
+        _event_payload(
+            legacy_context,
+            event_id=scoped_event_id(legacy_context, source_ref, source_role, source_content),
+            identity_version=2,
+            source_ref=source_ref,
+            role=source_role,
+            content=source_content,
+        )
+    )
+    if (
+        v2_replay.get("processing_status") != "suppressed"
+        or v2_replay.get("reason") != "legacy_source_suppressed"
+        or any(
+            event.metadata.get("source_ref") == source_ref for event in store.list_episodic_events()
+        )
+        or any(
+            any(e.source_event_id == source_event_id for e in store.list_fact_evidence(fact.id))
+            for fact in store.get_all()
+        )
+    ):
+        raise RuntimeError("Forgotten legacy source was resurrected by v2 replay")
+    store.close()
+
+    outbox_path = work / "offline-outbox.json"
+    offline_client = MnemosClient(
+        descriptor_path=work / "missing-runtime.json",
+        outbox_path=outbox_path,
+        auto_start=False,
+        startup_timeout=0.1,
+    )
+    resources.clients.append(offline_client)
+    offline_adapter = ClaudeCodeAdapter(
+        client=offline_client,
+        registry=registry,
+        user_profile_id="profile-a",
+        checkpoint_directory=work / "offline-checkpoints",
+    )
+    queued = await offline_adapter.handle(
+        "UserPromptSubmit",
+        {
+            "cwd": str(project_a_root),
+            "session_id": "offline-session",
+            "prompt": "Queue this v2 event without a service.",
+            "prompt_id": "offline-native-1",
+        },
+        include_retrieval=False,
+    )
+    pending = offline_client.outbox.pending()
+    await offline_client.close()
+    if (
+        queued.captured != 1
+        or len(pending) != 1
+        or pending[0]["payload"].get("identity_version") != 2
+        or not str(pending[0]["payload"].get("event_id", "")).startswith("claude:v2:")
+    ):
+        raise RuntimeError("Queued v2 identity did not survive outbox serialization")
+    return {
+        "scoped_events": 2,
+        "scoped_checkpoints": 2,
+        "restart_persisted": True,
+        "legacy_forget_replay_suppressed": True,
+        "offline_v2_queued": True,
+    }
+
+
+def _run_smoke(root: Path, work: Path, target: Path) -> dict[str, Any]:
+    for name in list(sys.modules):
+        if name == "mnemos" or name.startswith("mnemos."):
+            del sys.modules[name]
+    sys.path.insert(0, str(target))
+    import mnemos
+
+    imported = Path(str(mnemos.__file__)).resolve()
+    installed_root = target.resolve()
+    if not imported.is_relative_to(installed_root) or imported.is_relative_to(root.resolve()):
+        raise RuntimeError(f"mnemos imported from unexpected path: {imported}")
+    from mnemos.service import _protect_private_path
+
+    work.mkdir(parents=True, exist_ok=True)
+    _protect_private_path(work)
+    lifecycle = asyncio.run(_run_lifecycle(root, work))
+    return {"imported_mnemos": str(imported), "lifecycle": lifecycle}
+
+
+def main(argv: list[str] | None = None) -> int:
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument("--wheel", required=True, type=Path)
+    parser.add_argument("--output", required=True, type=Path)
+    parser.add_argument("--source-commit", default=SOURCE_COMMIT)
+    args = parser.parse_args(argv)
+    root = Path(__file__).resolve().parents[1]
+    output = args.output.expanduser().resolve()
+    result: dict[str, Any] = {
+        "schema_version": 1,
+        "smoke": "installed_wheel_claude_scope_lifecycle",
+        "source_commit": args.source_commit,
+        "wheel": str(args.wheel.expanduser().resolve()),
+        "wheel_sha256": None,
+        "status": "failed",
+    }
+    temporary_parent = Path(r"D:\WindowsTemp")
+    temporary_parent.mkdir(parents=True, exist_ok=True)
+    temporary = Path(tempfile.mkdtemp(prefix="mnemos-wheel-smoke-", dir=str(temporary_parent)))
+    result["temporary_directory"] = str(temporary)
+    try:
+        wheel = args.wheel.expanduser().resolve()
+        if not wheel.is_file() or wheel.suffix != ".whl":
+            raise RuntimeError("--wheel must identify an existing .whl file")
+        result["wheel_sha256"] = _sha256(wheel.read_bytes())
+        target = temporary / "site-packages"
+        _install_wheel(wheel, target)
+        result["wheel_install"] = _verify_installed_wheel(wheel, target)
+        result["source_package"] = _verify_source_package(root, args.source_commit, target)
+        result["smoke_result"] = _run_smoke(root, temporary / "fixture", target)
+        result["status"] = "passed"
+        return_code = 0
+    except Exception as exc:
+        result["error"] = type(exc).__name__
+        result["error_detail"] = str(exc)
+        if isinstance(exc, WheelInstallError):
+            result["installer_stdout"] = exc.stdout
+            result["installer_stderr"] = exc.stderr
+        return_code = 1
+    finally:
+        output.parent.mkdir(parents=True, exist_ok=True)
+        output.write_text(json.dumps(result, indent=2, sort_keys=True) + "\n", encoding="utf-8")
+    return return_code
+
+
+if __name__ == "__main__":
+    raise SystemExit(main())
