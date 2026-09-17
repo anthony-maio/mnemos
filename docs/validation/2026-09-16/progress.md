@@ -323,3 +323,25 @@ host helper assets. This smoke used simple embeddings and unavailable
 cognition. The [verification record](graph-v4-verification.md) preserves logs,
 skip reasons, exact commands, and package hashes. Real-model quality remains
 under evaluation.
+
+## Fresh real-model queue at b7a9d9d
+
+The repaired development mechanism run completed 15 graph observations and
+30 affective condition observations. Recorded graph correctness controls
+passed, but no graph case had an eligible target path. Classifier fidelity
+passed 15 of 30 observations. These limitations are preserved in the
+[development report](mechanism-development-v2.md).
+
+The fresh queue started on September 17 at 05:03:42 UTC. All four integrated
+real Ollama lifecycle preflight cases passed, including correction identity,
+version, restart, and forget/replay suppression in baseline and full profiles.
+Attempt `9fd1dc9612bd4f2bbbf24f9c6d97de17` is preserved under
+`real-model-v3/lifecycle-preflight/`.
+
+The same frozen source's 10,000-fact performance run passed capture at
+57.410 ms p95 and failed recall at 1,314.583 ms p95. Two actual access-metadata
+updates account for most of the slow queries' elapsed time; the underlying
+stall cause is not established. The held-out mechanism run began at 05:05:27
+UTC, followed in the queue by the complete seven-profile lifecycle matrix.
+No passing quality claim or biomimetic-default promotion follows from these
+preflights.

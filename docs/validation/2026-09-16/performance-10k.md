@@ -86,3 +86,28 @@ The raw record is [performance-10k-instrumented-v1.json](performance-10k-instrum
 Candidate limits, matching, and durable access updates remain unchanged. Any
 future concurrency optimization needs a separate controlled experiment that
 preserves correction, forgetting, and scope behavior.
+
+## Frozen graph v4 measurement at b7a9d9d
+
+The final-source measurement completed with consistent source hashes and
+preserved SQLite WAL/FULL durability. Warm capture passed at **57.410 ms p95**
+across 50 events. Warm recall failed at **1,314.583 ms p95** across 33 queries
+against 10,000 facts. Median recall was 346.599 ms; maximum was 1,359.907 ms.
+The synthetic load used 324,862,864 bytes after insertion.
+
+Two actual retrieval calls exceeded 500 ms. Query 1 spent 1,083.845 ms inside
+`mark_retrieved_many` out of 1,359.907 ms overall; query 4 spent 924.395 ms
+there out of 1,314.583 ms overall. Their query embeddings took 206.406 and
+202.829 ms respectively. These observed stalls occurred while recording
+retrieval metadata. The trace does not identify whether locking, checkpointing,
+filesystem scheduling, or another operation caused them.
+
+This result supersedes the prior diagnostic for the current source's latency
+gate. The earlier passing and failing runs remain preserved; no result is
+discarded, and no durability setting or threshold was changed to obtain a
+passing number. Follow-up should isolate the metadata-write cost while
+preserving correction/forget ordering and durable behavior. Semantic quality
+remains unmeasured by this load test.
+
+Raw query timings and provider/source identity are in
+[real-model-v3/performance-10k.json](real-model-v3/performance-10k.json).

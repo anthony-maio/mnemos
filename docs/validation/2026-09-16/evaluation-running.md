@@ -1,7 +1,10 @@
 # Real-model evaluation status
 
 Current status: the fresh v3 evaluation queue is running from frozen
-`b7a9d9d`, starting with the integrated lifecycle preflight. The repaired
+`b7a9d9d`. All four integrated lifecycle preflight cases passed. The 10,000-fact
+performance phase completed: capture passed at 57.410 ms p95; recall failed at
+1,314.583 ms p95 with two stalls inside durable retrieval metadata updates.
+The held-out mechanism phase is now active; lifecycle follows it. The repaired
 mechanism development run completed all observations and passed its graph
 correctness controls; it established no graph recall benefit. See the
 [development observations](mechanism-development-v2.md).
