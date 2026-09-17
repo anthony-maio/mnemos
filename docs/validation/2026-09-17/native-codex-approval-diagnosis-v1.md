@@ -21,6 +21,10 @@ approval, actual MCP result, and service-side arrival together. Preserve
 the truthful tool annotation and normal sandbox restrictions. A fabricated
 result or a global approval bypass would not establish this contract.
 
-This investigation made no native call or product/configuration change.
-The interactive check has not run. GPU discovery on the evaluation server
-is being investigated before resuming native-host validation.
+The subsequent [interactive check](native-codex-interactive-v1/README.md)
+displayed a normal per-call approval and returned an actual MCP validation
+error after approval. Codex supplied `allowed_scopes` as a list; the installed
+tool accepted only a string. The service received no retrieval dispatch.
+This establishes a separate argument compatibility failure, not successful
+retrieval or the sole cause of the earlier cancellation. The earlier run
+and the interactive check also used different source revisions.

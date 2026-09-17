@@ -1,0 +1,40 @@
+<?xml version="1.0" encoding="utf-8"?><testsuites name="pytest tests"><testsuite name="pytest" errors="0" failures="1" skipped="0" tests="5" time="12.374" timestamp="2026-09-17T18:57:03.345358-04:00" hostname="Aurora"><testcase classname="tests.test_mcp_scope_arguments" name="test_retrieve_scope_arguments_preserve_project_boundary[legacy-string]" time="2.652" /><testcase classname="tests.test_mcp_scope_arguments" name="test_retrieve_scope_arguments_preserve_project_boundary[structured-list]" time="2.640"><failure message="AssertionError('Error executing tool mnemos_retrieve: 1 validation error for mnemos_retrieveArguments\n  allowed_scopes\n    Input should be a valid string [type=string_type, input_value=[\'project\'], input_type=list]\n      For further information visit https://errors.pydantic.dev/2.13/v/string_type\nassert not True\n +  where True = CallToolResult(meta=None, content=[TextContent(type=\'text\', text=&quot;Error executing tool mnemos_retrieve: 1 validation e...t https://errors.pydantic.dev/2.13/v/string_type&quot;, annotations=None, meta=None)], structuredContent=None, isError=True).isError') [single exception in ExceptionGroup]">+ Exception Group Traceback (most recent call last):
+  |   File "D:\Development\mnemos\mnemos\.worktrees\functional-local-memory\tests\test_mcp_scope_arguments.py", line 68, in test_retrieve_scope_arguments_preserve_project_boundary
+  |     async with stdio_client(params) as (reader, writer):
+  |                ~~~~~~~~~~~~^^^^^^^^
+  |   File "C:\Users\Ant\AppData\Roaming\uv\python\cpython-3.13.7-windows-x86_64-none\Lib\contextlib.py", line 235, in __aexit__
+  |     await self.gen.athrow(value)
+  |   File "D:\Development\mnemos\mnemos\.worktrees\functional-local-memory\.venv\Lib\site-packages\mcp\client\stdio\__init__.py", line 183, in stdio_client
+  |     anyio.create_task_group() as tg,
+  |     ~~~~~~~~~~~~~~~~~~~~~~~^^
+  |   File "D:\Development\mnemos\mnemos\.worktrees\functional-local-memory\.venv\Lib\site-packages\anyio\_backends\_asyncio.py", line 847, in __aexit__
+  |     raise BaseExceptionGroup(
+  |         "unhandled errors in a TaskGroup", self._exceptions
+  |     ) from None
+  | ExceptionGroup: unhandled errors in a TaskGroup (1 sub-exception)
+  +-+---------------- 1 ----------------
+    | Exception Group Traceback (most recent call last):
+    |   File "D:\Development\mnemos\mnemos\.worktrees\functional-local-memory\.venv\Lib\site-packages\mcp\client\stdio\__init__.py", line 189, in stdio_client
+    |     yield read_stream, write_stream
+    |   File "D:\Development\mnemos\mnemos\.worktrees\functional-local-memory\tests\test_mcp_scope_arguments.py", line 69, in test_retrieve_scope_arguments_preserve_project_boundary
+    |     async with ClientSession(reader, writer) as session:
+    |                ~~~~~~~~~~~~~^^^^^^^^^^^^^^^^
+    |   File "D:\Development\mnemos\mnemos\.worktrees\functional-local-memory\.venv\Lib\site-packages\mcp\shared\session.py", line 238, in __aexit__
+    |     return await self._task_group.__aexit__(exc_type, exc_val, exc_tb)
+    |            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    |   File "D:\Development\mnemos\mnemos\.worktrees\functional-local-memory\.venv\Lib\site-packages\anyio\_backends\_asyncio.py", line 847, in __aexit__
+    |     raise BaseExceptionGroup(
+    |         "unhandled errors in a TaskGroup", self._exceptions
+    |     ) from None
+    | ExceptionGroup: unhandled errors in a TaskGroup (1 sub-exception)
+    +-+---------------- 1 ----------------
+      | Traceback (most recent call last):
+      |   File "D:\Development\mnemos\mnemos\.worktrees\functional-local-memory\tests\test_mcp_scope_arguments.py", line 79, in test_retrieve_scope_arguments_preserve_project_boundary
+      |     assert not result.isError, text
+      | AssertionError: Error executing tool mnemos_retrieve: 1 validation error for mnemos_retrieveArguments
+      |   allowed_scopes
+      |     Input should be a valid string [type=string_type, input_value=['project'], input_type=list]
+      |       For further information visit https://errors.pydantic.dev/2.13/v/string_type
+      | assert not True
+      |  +  where True = CallToolResult(meta=None, content=[TextContent(type='text', text="Error executing tool mnemos_retrieve: 1 validation e...t https://errors.pydantic.dev/2.13/v/string_type", annotations=None, meta=None)], structuredContent=None, isError=True).isError
+      +------------------------------------</failure></testcase><testcase classname="tests.test_mcp_scope_arguments" name="test_retrieve_scope_arguments_preserve_project_boundary[empty-list]" time="1.625" /><testcase classname="tests.test_mcp_scope_arguments" name="test_retrieve_scope_arguments_preserve_project_boundary[unknown-scope]" time="1.608" /><testcase classname="tests.test_mcp_scope_arguments" name="test_retrieve_scope_arguments_preserve_project_boundary[non-string]" time="1.622" /></testsuite></testsuites>

@@ -1,0 +1,184 @@
+FFFFF                                                                    [100%]
+================================== FAILURES ===================================
+___ test_retrieve_scope_arguments_preserve_project_boundary[legacy-string] ____
+
+tmp_path = WindowsPath('C:/Users/Ant/AppData/Local/Temp/mnemos-scope-arguments-red-v1/test_retrieve_scope_arguments_0')
+allowed_scopes = 'project', valid = True
+
+    @pytest.mark.asyncio
+    @pytest.mark.parametrize(
+        ("allowed_scopes", "valid"),
+        [
+            ("project", True),
+            (["project"], True),
+            ([], False),
+            (["project", "unknown"], False),
+            (["project", 1], False),
+        ],
+        ids=["legacy-string", "structured-list", "empty-list", "unknown-scope", "non-string"],
+    )
+    async def test_retrieve_scope_arguments_preserve_project_boundary(
+        tmp_path: Path, allowed_scopes: object, valid: bool
+    ) -> None:
+        service, registry_path = _start_scoped_service(tmp_path, "scope-arguments")
+        try:
+            registry = service._dispatcher.registry
+            foreign_project = tmp_path / "foreign-project"
+            foreign_project.mkdir()
+            registry.register_project(foreign_project, user_profile_id=PROFILE_ID, enabled=True)
+            registry.save(registry_path)
+            positive = "Project retrieval scope marker alpha."
+            foreign = "Project retrieval scope marker beta."
+            for index, (root, content) in enumerate(((ROOT, positive), (foreign_project, foreign))):
+>               context = registry.resolve(root, user_profile_id=PROFILE_ID, host="manual")
+                          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E               TypeError: ScopeRegistry.resolve() missing 1 required keyword-only argument: 'session_id'
+
+tests\test_mcp_scope_arguments.py:48: TypeError
+__ test_retrieve_scope_arguments_preserve_project_boundary[structured-list] ___
+
+tmp_path = WindowsPath('C:/Users/Ant/AppData/Local/Temp/mnemos-scope-arguments-red-v1/test_retrieve_scope_arguments_1')
+allowed_scopes = ['project'], valid = True
+
+    @pytest.mark.asyncio
+    @pytest.mark.parametrize(
+        ("allowed_scopes", "valid"),
+        [
+            ("project", True),
+            (["project"], True),
+            ([], False),
+            (["project", "unknown"], False),
+            (["project", 1], False),
+        ],
+        ids=["legacy-string", "structured-list", "empty-list", "unknown-scope", "non-string"],
+    )
+    async def test_retrieve_scope_arguments_preserve_project_boundary(
+        tmp_path: Path, allowed_scopes: object, valid: bool
+    ) -> None:
+        service, registry_path = _start_scoped_service(tmp_path, "scope-arguments")
+        try:
+            registry = service._dispatcher.registry
+            foreign_project = tmp_path / "foreign-project"
+            foreign_project.mkdir()
+            registry.register_project(foreign_project, user_profile_id=PROFILE_ID, enabled=True)
+            registry.save(registry_path)
+            positive = "Project retrieval scope marker alpha."
+            foreign = "Project retrieval scope marker beta."
+            for index, (root, content) in enumerate(((ROOT, positive), (foreign_project, foreign))):
+>               context = registry.resolve(root, user_profile_id=PROFILE_ID, host="manual")
+                          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E               TypeError: ScopeRegistry.resolve() missing 1 required keyword-only argument: 'session_id'
+
+tests\test_mcp_scope_arguments.py:48: TypeError
+_____ test_retrieve_scope_arguments_preserve_project_boundary[empty-list] _____
+
+tmp_path = WindowsPath('C:/Users/Ant/AppData/Local/Temp/mnemos-scope-arguments-red-v1/test_retrieve_scope_arguments_2')
+allowed_scopes = [], valid = False
+
+    @pytest.mark.asyncio
+    @pytest.mark.parametrize(
+        ("allowed_scopes", "valid"),
+        [
+            ("project", True),
+            (["project"], True),
+            ([], False),
+            (["project", "unknown"], False),
+            (["project", 1], False),
+        ],
+        ids=["legacy-string", "structured-list", "empty-list", "unknown-scope", "non-string"],
+    )
+    async def test_retrieve_scope_arguments_preserve_project_boundary(
+        tmp_path: Path, allowed_scopes: object, valid: bool
+    ) -> None:
+        service, registry_path = _start_scoped_service(tmp_path, "scope-arguments")
+        try:
+            registry = service._dispatcher.registry
+            foreign_project = tmp_path / "foreign-project"
+            foreign_project.mkdir()
+            registry.register_project(foreign_project, user_profile_id=PROFILE_ID, enabled=True)
+            registry.save(registry_path)
+            positive = "Project retrieval scope marker alpha."
+            foreign = "Project retrieval scope marker beta."
+            for index, (root, content) in enumerate(((ROOT, positive), (foreign_project, foreign))):
+>               context = registry.resolve(root, user_profile_id=PROFILE_ID, host="manual")
+                          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E               TypeError: ScopeRegistry.resolve() missing 1 required keyword-only argument: 'session_id'
+
+tests\test_mcp_scope_arguments.py:48: TypeError
+___ test_retrieve_scope_arguments_preserve_project_boundary[unknown-scope] ____
+
+tmp_path = WindowsPath('C:/Users/Ant/AppData/Local/Temp/mnemos-scope-arguments-red-v1/test_retrieve_scope_arguments_3')
+allowed_scopes = ['project', 'unknown'], valid = False
+
+    @pytest.mark.asyncio
+    @pytest.mark.parametrize(
+        ("allowed_scopes", "valid"),
+        [
+            ("project", True),
+            (["project"], True),
+            ([], False),
+            (["project", "unknown"], False),
+            (["project", 1], False),
+        ],
+        ids=["legacy-string", "structured-list", "empty-list", "unknown-scope", "non-string"],
+    )
+    async def test_retrieve_scope_arguments_preserve_project_boundary(
+        tmp_path: Path, allowed_scopes: object, valid: bool
+    ) -> None:
+        service, registry_path = _start_scoped_service(tmp_path, "scope-arguments")
+        try:
+            registry = service._dispatcher.registry
+            foreign_project = tmp_path / "foreign-project"
+            foreign_project.mkdir()
+            registry.register_project(foreign_project, user_profile_id=PROFILE_ID, enabled=True)
+            registry.save(registry_path)
+            positive = "Project retrieval scope marker alpha."
+            foreign = "Project retrieval scope marker beta."
+            for index, (root, content) in enumerate(((ROOT, positive), (foreign_project, foreign))):
+>               context = registry.resolve(root, user_profile_id=PROFILE_ID, host="manual")
+                          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E               TypeError: ScopeRegistry.resolve() missing 1 required keyword-only argument: 'session_id'
+
+tests\test_mcp_scope_arguments.py:48: TypeError
+_____ test_retrieve_scope_arguments_preserve_project_boundary[non-string] _____
+
+tmp_path = WindowsPath('C:/Users/Ant/AppData/Local/Temp/mnemos-scope-arguments-red-v1/test_retrieve_scope_arguments_4')
+allowed_scopes = ['project', 1], valid = False
+
+    @pytest.mark.asyncio
+    @pytest.mark.parametrize(
+        ("allowed_scopes", "valid"),
+        [
+            ("project", True),
+            (["project"], True),
+            ([], False),
+            (["project", "unknown"], False),
+            (["project", 1], False),
+        ],
+        ids=["legacy-string", "structured-list", "empty-list", "unknown-scope", "non-string"],
+    )
+    async def test_retrieve_scope_arguments_preserve_project_boundary(
+        tmp_path: Path, allowed_scopes: object, valid: bool
+    ) -> None:
+        service, registry_path = _start_scoped_service(tmp_path, "scope-arguments")
+        try:
+            registry = service._dispatcher.registry
+            foreign_project = tmp_path / "foreign-project"
+            foreign_project.mkdir()
+            registry.register_project(foreign_project, user_profile_id=PROFILE_ID, enabled=True)
+            registry.save(registry_path)
+            positive = "Project retrieval scope marker alpha."
+            foreign = "Project retrieval scope marker beta."
+            for index, (root, content) in enumerate(((ROOT, positive), (foreign_project, foreign))):
+>               context = registry.resolve(root, user_profile_id=PROFILE_ID, host="manual")
+                          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E               TypeError: ScopeRegistry.resolve() missing 1 required keyword-only argument: 'session_id'
+
+tests\test_mcp_scope_arguments.py:48: TypeError
+=========================== short test summary info ===========================
+FAILED tests/test_mcp_scope_arguments.py::test_retrieve_scope_arguments_preserve_project_boundary[legacy-string]
+FAILED tests/test_mcp_scope_arguments.py::test_retrieve_scope_arguments_preserve_project_boundary[structured-list]
+FAILED tests/test_mcp_scope_arguments.py::test_retrieve_scope_arguments_preserve_project_boundary[empty-list]
+FAILED tests/test_mcp_scope_arguments.py::test_retrieve_scope_arguments_preserve_project_boundary[unknown-scope]
+FAILED tests/test_mcp_scope_arguments.py::test_retrieve_scope_arguments_preserve_project_boundary[non-string]
+5 failed in 7.78s

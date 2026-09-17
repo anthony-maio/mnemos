@@ -1,0 +1,94 @@
+F.........                                                               [100%]
+================================== FAILURES ===================================
+___ test_retrieve_scope_arguments_preserve_project_boundary[legacy-string] ____
+
+tmp_path = WindowsPath('C:/Users/Ant/AppData/Local/Temp/mnemos-scope-arguments-green-v1/test_retrieve_scope_arguments_0')
+allowed_scopes = 'project', valid = True
+
+    @pytest.mark.asyncio
+    @pytest.mark.parametrize(
+        ("allowed_scopes", "valid"),
+        [
+            ("project", True),
+            (["project"], True),
+            ([], False),
+            (["project", "unknown"], False),
+            (["project", 1], False),
+        ],
+        ids=["legacy-string", "structured-list", "empty-list", "unknown-scope", "non-string"],
+    )
+    async def test_retrieve_scope_arguments_preserve_project_boundary(
+        tmp_path: Path, allowed_scopes: object, valid: bool
+    ) -> None:
+        service, registry_path = _start_scoped_service(tmp_path, "scope-arguments")
+        try:
+            registry = service._dispatcher.registry
+            foreign_project = tmp_path / "foreign-project"
+            foreign_project.mkdir()
+            registry.register_project(foreign_project, user_profile_id=PROFILE_ID, enabled=True)
+            registry.save(registry_path)
+            positive = "Project retrieval scope marker alpha."
+            foreign = "Project retrieval scope marker beta."
+            for index, (root, content) in enumerate(((ROOT, positive), (foreign_project, foreign))):
+                context = registry.resolve(
+                    root, user_profile_id=PROFILE_ID, session_id=f"scope-seed-{index}", host="manual"
+                )
+                result = service.submit(
+                    "remember",
+                    {
+                        "event_id": f"scope-argument-seed-{index}",
+                        "context": context.model_dump(mode="json"),
+                        "content": content,
+                        "role": "user",
+                        "scope": "project",
+                    },
+                )
+                assert result["status"] == "committed"
+>           service.submit("maintenance", {})
+
+tests\test_mcp_scope_arguments.py:62: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+mnemos\service.py:698: in submit
+    return future.result(self.dispatch_timeout)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+self = None, timeout = 10
+
+    def result(self, timeout=None):
+        """Return the result of the call that the future represents.
+    
+        Args:
+            timeout: The number of seconds to wait for the result if the future
+                isn't done. If None, then there is no limit on the wait time.
+    
+        Returns:
+            The result of the call that the future represents.
+    
+        Raises:
+            CancelledError: If the future was cancelled.
+            TimeoutError: If the future didn't finish executing before the given
+                timeout.
+            Exception: If the call raised then that exception will be raised.
+        """
+        try:
+            with self._condition:
+                if self._state in [CANCELLED, CANCELLED_AND_NOTIFIED]:
+                    raise CancelledError()
+                elif self._state == FINISHED:
+                    return self.__get_result()
+    
+                self._condition.wait(timeout)
+    
+                if self._state in [CANCELLED, CANCELLED_AND_NOTIFIED]:
+                    raise CancelledError()
+                elif self._state == FINISHED:
+                    return self.__get_result()
+                else:
+>                   raise TimeoutError()
+E                   TimeoutError
+
+C:\Users\Ant\AppData\Roaming\uv\python\cpython-3.13.7-windows-x86_64-none\Lib\concurrent\futures\_base.py:458: TimeoutError
+=========================== short test summary info ===========================
+FAILED tests/test_mcp_scope_arguments.py::test_retrieve_scope_arguments_preserve_project_boundary[legacy-string]
+1 failed, 9 passed in 51.65s

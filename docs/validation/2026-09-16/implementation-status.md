@@ -4,6 +4,14 @@ This record covers the unreleased `wt/functional-local-memory` worktree. It
 separates implemented behavior from acceptance evidence. The original task
 boundaries and thresholds remain in the [implementation plan](../../plans/2026-09-16-functional-local-memory.md).
 
+Source `d58e082` repairs an argument mismatch observed in a native Codex
+interactive call: MCP retrieval now accepts structured scope lists as well as
+legacy comma-separated strings. Empty or invalid lists are rejected, and the
+stdio regression verifies project isolation. The [native failure](../2026-09-17/native-codex-interactive-v1/README.md)
+and [regression evidence](../2026-09-17/mcp-scope-arguments-v1/README.md) are preserved.
+Its complete package verification is in progress; native retrieval after the
+repair remains open.
+
 The latest package checkpoint is source `a607a5a`. Its frozen verification
 passed 924 tests with four platform-specific skips, formatting, typing,
 JavaScript, build, and Twine checks. A fresh installed wheel passed 130

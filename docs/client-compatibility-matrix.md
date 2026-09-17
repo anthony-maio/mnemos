@@ -56,8 +56,13 @@ its exact command, stream, installation binding, and cleanup evidence.
 A later [approval-path investigation](validation/2026-09-17/native-codex-approval-diagnosis-v1.md)
 identified noninteractive approval handling as a plausible cause. A similar
 upstream report concerns another CLI version, so it does not prove the cause
-here. A normal interactive approval check with service-side tracing remains
-unrun; the native acceptance state is unchanged.
+here. A subsequent [interactive check](validation/2026-09-17/native-codex-interactive-v1/README.md)
+accepted the normal per-call approval, then returned an MCP argument error:
+Codex supplied a scope list while the tool accepted only a string. No retrieval
+reached the service. Source `d58e082` now accepts either form and rejects empty
+or invalid scope lists; [stdio regression checks](validation/2026-09-17/mcp-scope-arguments-v1/README.md)
+cover the original failure and foreign-project isolation. Native retrieval
+with the repair remains unverified.
 
 The [native provisional capture record](validation/2026-09-16/provisional-native-claude-v8/README.md)
 preserves the original duplicate gate alongside the separate identity result.

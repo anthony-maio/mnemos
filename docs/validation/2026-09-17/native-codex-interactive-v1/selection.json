@@ -1,0 +1,18 @@
+{
+  "paired_call_id_sha256": "334c3dce34509d6c3ce006a446a5037643b7b3e8bce9e9325e3272d7c43162a8",
+  "selected_bytes": 1545,
+  "selected_line_numbers": [
+    12,
+    14
+  ],
+  "selected_sha256": "307ce54c502116052adfeff5c3e79b805ebaf8e81909702b8479fbb097013b57",
+  "selection_rules": [
+    "select exactly one response_item payload.type=custom_tool_call",
+    "require payload.name=exec and input containing mnemos and retrieve",
+    "select exactly one response_item payload.type=custom_tool_call_output with the same call_id",
+    "retain raw JSONL lines only; do not copy the surrounding session"
+  ],
+  "source_bytes": 78595,
+  "source_relative_path": ".codex\\sessions\\2026\\09\\17\\rollout-2026-09-17T18-52-45-01a0b192-8809-7e40-8660-0ca5d01017ed.jsonl",
+  "source_sha256": "7cdebaa747b18b66e8e3b4d44d8d46edb2774edd8c58935160008414742c6a62"
+}

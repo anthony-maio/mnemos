@@ -1,0 +1,794 @@
+"""Prepare a bounded native Codex capture and seeded-recall smoke runner.
+
+The runner is deliberately a real-host experiment, not a unit test. It uses
+the production generated config.toml hook command in a disposable fixture,
+durable restart checks, constant fixture embeddings, and unavailable cognition. The
+smoke therefore makes no general model-quality claim.
+"""
+
+from __future__ import annotations
+
+import argparse
+import hashlib
+import json
+import os
+import re
+import secrets
+from pathlib import Path
+import shutil
+import subprocess
+import sys
+import tempfile
+import time
+import traceback
+import zipfile
+from datetime import datetime, timezone
+from typing import Any, Mapping
+
+WORKTREE = Path(__file__).resolve().parents[1]
+OUTPUT_DIR = WORKTREE / "docs" / "validation" / "2026-09-16" / "native-codex-generated-v8"
+SOURCE_COMMIT = "20f271d93bbf02990a78b51aa74694deaf5a9bf7"
+TEMP_PARENT = Path(r"D:\WindowsTemp")
+CODEX_EXE = (
+    Path(r"C:\Users\Ant\AppData\Roaming\npm\node_modules\@openai\codex")
+    / "node_modules"
+    / "@openai"
+    / "codex-win32-x64"
+    / "vendor"
+    / "x86_64-pc-windows-msvc"
+    / "bin"
+    / "codex.exe"
+)
+MAX_NATIVE_SECONDS = 60
+PROFILE = "native-codex-generated-v8"
+SEED_PREFIX = "The private release codename for this project is "
+NESTED_HOOK_TIMEOUT_SECONDS = 10
+
+
+def _sha256(value: bytes | str) -> str:
+    raw = value.encode("utf-8") if isinstance(value, str) else value
+    return hashlib.sha256(raw).hexdigest()
+
+
+def _git_checkpoint() -> str:
+    completed = subprocess.run(
+        ["git", "-C", str(WORKTREE), "rev-parse", "HEAD"],
+        capture_output=True,
+        text=True,
+        check=True,
+        timeout=5,
+    )
+    return completed.stdout.strip()
+
+
+def _pinned_package_provenance(
+    package_path: Path, *, wheel_path: Path, expected_wheel_sha256: str
+) -> dict[str, Any]:
+    """Compare all installed package files with the pinned source and wheel."""
+    listing = subprocess.run(
+        [
+            "git",
+            "-C",
+            str(WORKTREE),
+            "ls-tree",
+            "-r",
+            "--name-only",
+            SOURCE_COMMIT,
+            "mnemos",
+        ],
+        capture_output=True,
+        text=True,
+        check=True,
+        timeout=10,
+    )
+    files = [Path(item) for item in listing.stdout.splitlines() if item.strip()]
+    mismatches: list[str] = []
+    checked = 0
+    for relative in files:
+        expected = subprocess.run(
+            ["git", "-C", str(WORKTREE), "show", f"{SOURCE_COMMIT}:{relative.as_posix()}"],
+            capture_output=True,
+            check=True,
+            timeout=10,
+        ).stdout.replace(b"\r\n", b"\n")
+        installed = (
+            (package_path.parent / Path(*relative.parts[1:])).read_bytes().replace(b"\r\n", b"\n")
+        )
+        checked += 1
+        if installed != expected:
+            mismatches.append(relative.as_posix())
+    if not files or mismatches:
+        raise RuntimeError("installed package does not match pinned source checkpoint")
+    wheel_digest = _sha256(wheel_path.read_bytes())
+    if wheel_digest != expected_wheel_sha256.lower():
+        raise RuntimeError("wheel archive does not match the expected digest")
+    with zipfile.ZipFile(wheel_path) as archive:
+        for item in archive.infolist():
+            if not item.is_dir() and item.filename.startswith("mnemos/"):
+                installed = package_path.parent / Path(*Path(item.filename).parts[1:])
+                if installed.read_bytes() != archive.read(item):
+                    raise RuntimeError("Installed package bytes differ from wheel")
+    return {
+        "source_commit": SOURCE_COMMIT,
+        "package_files_checked": checked,
+        "mismatches": mismatches,
+        "wheel_sha256_expected": expected_wheel_sha256.lower(),
+        "wheel_sha256_observed": wheel_digest,
+        "wheel_path": str(wheel_path),
+    }
+
+
+def _run_local_cli(args: list[str], *, timeout: float = 5.0) -> subprocess.CompletedProcess[str]:
+    return subprocess.run(
+        [str(CODEX_EXE), *args],
+        capture_output=True,
+        text=True,
+        encoding="utf-8",
+        errors="replace",
+        check=False,
+        timeout=timeout,
+        shell=False,
+    )
+
+
+def _verify_cli() -> dict[str, Any]:
+    """Verify the flags used below without starting a Codex turn."""
+    if os.name != "nt":
+        raise RuntimeError("native Codex runner requires Windows")
+    if not CODEX_EXE.is_file():
+        raise FileNotFoundError(f"direct Codex executable is missing: {CODEX_EXE}")
+    version_result = _run_local_cli(["--version"])
+    top_help_result = _run_local_cli(["--help"])
+    help_result = _run_local_cli(["exec", "--help"])
+    help_text = (help_result.stdout or "") + "\n" + (help_result.stderr or "")
+    required = {
+        "--json",
+        "--dangerously-bypass-hook-trust",
+        "--sandbox",
+        "read-only",
+        "--cd",
+        "--skip-git-repo-check",
+        "--ephemeral",
+    }
+    missing = sorted(flag for flag in required if flag not in help_text)
+    if (
+        version_result.returncode != 0
+        or top_help_result.returncode != 0
+        or help_result.returncode != 0
+    ):
+        raise RuntimeError("Codex CLI capability probe failed")
+    if missing:
+        raise RuntimeError("Codex CLI help is missing required flag(s): " + ", ".join(missing))
+    return {
+        "path": str(CODEX_EXE),
+        "version": (version_result.stdout or version_result.stderr).strip(),
+        "help_flags_verified": sorted(required),
+        "approval_flag_placement": {
+            "top_level": "--ask-for-approval" in (top_help_result.stdout or ""),
+            "exec": "--ask-for-approval" in help_text,
+            "command_uses": False,
+        },
+    }
+
+
+def _private_mkdir(path: Path) -> None:
+    from mnemos.service import _protect_private_path
+
+    path.mkdir(parents=True, exist_ok=False)
+    _protect_private_path(path)
+
+
+def _clean_environment(overrides: Mapping[str, str]) -> dict[str, str]:
+    environment = dict(os.environ)
+    for key in list(environment):
+        if key.startswith("MNEMOS_") or key in {"PYTHONPATH", "CODEX_HOME"}:
+            environment.pop(key, None)
+    environment.update(overrides)
+    return environment
+
+
+def _terminate_process_tree(process: subprocess.Popen[str]) -> bool:
+    """Kill only the spawned Codex PID and descendants, then await them."""
+    if process.poll() is not None:
+        return False
+    if os.name == "nt":
+        subprocess.run(
+            ["taskkill", "/PID", str(process.pid), "/T", "/F"],
+            capture_output=True,
+            text=True,
+            check=False,
+            timeout=10,
+        )
+    else:  # pragma: no cover - the runner is Windows-only
+        process.kill()
+    try:
+        process.wait(timeout=10)
+    except subprocess.TimeoutExpired:
+        process.kill()
+        process.wait(timeout=10)
+    return True
+
+
+def _numeric_usage(value: Any) -> dict[str, int | float]:
+    if not isinstance(value, Mapping):
+        return {}
+    result: dict[str, int | float] = {}
+    for key, item in value.items():
+        if isinstance(item, (int, float)) and not isinstance(item, bool):
+            result[str(key)] = item
+    return result
+
+
+def _native_event_summary(stdout: str, expected_answer: str) -> dict[str, Any]:
+    rows: list[dict[str, Any]] = []
+    non_json = 0
+    answer_mentions_expected = False
+    answer_text_digests: list[str] = []
+    tool_item_types: set[str] = set()
+    unreviewed_errors = 0
+    for line in stdout.splitlines():
+        try:
+            value = json.loads(line)
+        except json.JSONDecodeError:
+            non_json += 1
+            continue
+        if not isinstance(value, Mapping):
+            continue
+        item = value.get("item")
+        item_type = item.get("type") if isinstance(item, Mapping) else None
+        if isinstance(item_type, str) and item_type not in {"agent_message", "reasoning", "error"}:
+            tool_item_types.add(item_type)
+        if item_type == "agent_message" and isinstance(item, Mapping):
+            answer_text = item.get("text")
+            if isinstance(answer_text, str):
+                answer_mentions_expected |= (
+                    re.search(
+                        r"(?<![A-Za-z0-9-])" + re.escape(expected_answer) + r"(?![A-Za-z0-9-])",
+                        answer_text,
+                    )
+                    is not None
+                )
+                answer_text_digests.append(_sha256(answer_text))
+        error_present = item_type == "error" or value.get("type") == "error"
+        error_source = ""
+        if error_present:
+            if isinstance(item, Mapping) and isinstance(item.get("message"), str):
+                error_source = item["message"]
+            elif isinstance(value.get("message"), str):
+                error_source = value["message"]
+            known_notice = error_source in {
+                "`--dangerously-bypass-hook-trust` is enabled. Enabled hooks may run without review for this invocation.",
+                "Skill descriptions were shortened to fit the 2% skills context budget. Codex can still see every skill, but some descriptions are shorter. Disable unused skills or plugins to leave more room for the rest.",
+            }
+            if not known_notice:
+                unreviewed_errors += 1
+        model = value.get("model") if isinstance(value.get("model"), str) else None
+        rows.append(
+            {
+                "type": value.get("type"),
+                "item_type": item_type,
+                "event_type": (
+                    value.get("event", {}).get("type")
+                    if isinstance(value.get("event"), Mapping)
+                    else None
+                ),
+                "model": model,
+                "error_present": error_present,
+                "error_digest": _sha256(error_source) if error_source else None,
+                "usage": _numeric_usage(value.get("usage")),
+            }
+        )
+    return {
+        "record_count": len(rows),
+        "non_json_line_count": non_json,
+        "types": sorted({str(row["type"]) for row in rows if row["type"] is not None}),
+        "rows": rows,
+        "error_count": sum(1 for row in rows if row["error_present"]),
+        "unreviewed_error_count": unreviewed_errors,
+        "models": sorted({row["model"] for row in rows if row["model"]}),
+        "usage_observed": any(bool(row["usage"]) for row in rows),
+        "answer_mentions_expected": answer_mentions_expected,
+        "answer_text_digests": answer_text_digests,
+        "tool_call_observed": bool(tool_item_types),
+        "tool_item_types": sorted(tool_item_types),
+    }
+
+
+def _warm_direct_adapter(
+    *, project: Path, environment: Mapping[str, str], session_id: str, expected_content: str
+) -> dict[str, Any]:
+    """Run one warm SessionStart adapter check outside the native hook wrapper."""
+    payload = {
+        "session_id": session_id,
+        "transcript_path": None,
+        "cwd": str(project),
+        "hook_event_name": "SessionStart",
+        "source": "startup",
+    }
+    started = time.perf_counter()
+    status = "completed"
+    returncode: int | None = None
+    stdout = ""
+    stderr = ""
+    try:
+        completed = subprocess.run(
+            [str(Path(sys.executable).resolve()), "-m", "mnemos.adapters.codex", "SessionStart"],
+            input=json.dumps(payload, separators=(",", ":")),
+            capture_output=True,
+            text=True,
+            encoding="utf-8",
+            errors="replace",
+            check=False,
+            timeout=20,
+            cwd=str(project),
+            env=dict(environment),
+            shell=False,
+        )
+        returncode = completed.returncode
+        stdout = completed.stdout
+        stderr = completed.stderr
+    except subprocess.TimeoutExpired as exc:
+        status = "timeout"
+        stdout = str(exc.stdout or "")
+        stderr = str(exc.stderr or "")
+    except OSError as exc:
+        status = "error"
+        stderr = type(exc).__name__
+    elapsed_ms = round((time.perf_counter() - started) * 1000, 1)
+    output: Any = None
+    if stdout.strip():
+        try:
+            output = json.loads(stdout)
+        except json.JSONDecodeError:
+            status = "invalid_output"
+    hook_specific = output.get("hookSpecificOutput") if isinstance(output, Mapping) else None
+    additional_context = (
+        hook_specific.get("additionalContext") if isinstance(hook_specific, Mapping) else None
+    )
+    return {
+        "invocation_kind": "warm_direct_preflight",
+        "excluded_from_native_adapter_invocations": True,
+        "session_id_digest": _sha256(session_id),
+        "status": status,
+        "returncode": returncode,
+        "elapsed_ms": elapsed_ms,
+        "stdout_digest": _sha256(stdout),
+        "stdout_bytes": len(stdout.encode("utf-8")),
+        "stderr_digest": _sha256(stderr),
+        "stderr_bytes": len(stderr.encode("utf-8")),
+        "context_present": isinstance(additional_context, str) and bool(additional_context),
+        "seed_present": isinstance(additional_context, str)
+        and expected_content in additional_context,
+        "additional_context_digest": (
+            _sha256(additional_context) if isinstance(additional_context, str) else None
+        ),
+    }
+
+
+def _start_service(fixture: Path, registry: Any, config: Any) -> tuple[Any, Any, Any]:
+    from mnemos.engine import MnemosEngine
+    from mnemos.memory_service import LocalMemoryService
+    from mnemos.service import MnemosService
+    from mnemos.utils.embeddings import SimpleEmbeddingProvider
+    from mnemos.utils.llm import UnavailableLLMProvider
+    from mnemos.utils.storage import SQLiteStore
+
+    class ConstantFixtureEmbeddings(SimpleEmbeddingProvider):
+        """Transport fixture only: every text maps to one unit vector.
+
+        This removes semantic quality from the native hook test. The real-model
+        evaluations use their separately pinned providers and criteria.
+        """
+
+        def embed(self, text: str) -> list[float]:
+            return [1.0] + [0.0] * 63
+
+        def embed_batch(self, texts: list[str]) -> list[list[float]]:
+            return [self.embed(text) for text in texts]
+
+    store = SQLiteStore(str(fixture / "memory.sqlite"))
+    engine = MnemosEngine(
+        config=config,
+        llm=UnavailableLLMProvider("native Codex capture smoke cognition unavailable"),
+        embedder=ConstantFixtureEmbeddings(dim=64),
+        store=store,
+        scope_registry=registry,
+        require_scope_context=True,
+    )
+    service = MnemosService(
+        dispatcher=LocalMemoryService(engine, registry),
+        descriptor_path=fixture / "runtime.json",
+        lock_path=fixture / "service.lock",
+        startup_timeout=5,
+        dispatch_timeout=20,
+    )
+    service.start()
+    context = registry.resolve(
+        fixture / "project",
+        user_profile_id=PROFILE,
+        session_id="native-codex-seed-session",
+        host="codex",
+    )
+    return service, store, context
+
+
+def _isolated_codex_command(project: Path, prompt: str) -> list[str]:
+    return [
+        str(CODEX_EXE),
+        "exec",
+        "--json",
+        "--dangerously-bypass-hook-trust",
+        "--sandbox",
+        "read-only",
+        "--cd",
+        str(project),
+        "--skip-git-repo-check",
+        "--ephemeral",
+        prompt,
+    ]
+
+
+def _parse_args(argv: list[str] | None) -> argparse.Namespace:
+    parser = argparse.ArgumentParser(
+        description="Prepare a native Codex smoke using generated Mnemos TOML hooks."
+    )
+    parser.add_argument("--wheel", type=Path, required=True, help="installed wheel archive to hash")
+    parser.add_argument(
+        "--expected-wheel-sha256",
+        required=True,
+        help="expected SHA256 for the wheel archive",
+    )
+    args = parser.parse_args(argv)
+    digest = args.expected_wheel_sha256.lower()
+    if len(digest) != 64 or any(character not in "0123456789abcdef" for character in digest):
+        parser.error("--expected-wheel-sha256 must be a 64-character hexadecimal digest")
+    args.expected_wheel_sha256 = digest
+    return args
+
+
+def main(argv: list[str] | None = None) -> int:
+    args = _parse_args(argv)
+    if OUTPUT_DIR.exists():
+        raise FileExistsError(f"refusing to overwrite evidence directory: {OUTPUT_DIR}")
+    OUTPUT_DIR.mkdir(parents=True)
+    report: dict[str, Any] = {
+        "runner": "native-codex-generated-v8",
+        "source_commit": SOURCE_COMMIT,
+        "runner_sha256": _sha256(Path(__file__).read_bytes()),
+        "started_at": datetime.now(timezone.utc).isoformat(),
+        "status": "not_observed",
+        "scope": "native Codex hooks from generated config.toml; synthetic canary; unavailable cognition",
+        "model_quality_claim": "none",
+        "embedding_fixture": "Constant unit vectors for every text; tests hook transport, not semantic selection",
+        "relevance_floor": "Unmodified product default 0.2",
+        "previous_attempt": "native-codex-generated-v7: generic query fell below relevance floor with SimpleEmbeddingProvider",
+        "native_hook_timeout_seconds": 15,
+        "nested_hook_timeout_seconds": NESTED_HOOK_TIMEOUT_SECONDS,
+        "native_enable_hooks_flag_used": False,
+        "wheel_argument": str(args.wheel),
+        "expected_wheel_sha256": args.expected_wheel_sha256,
+    }
+    if not TEMP_PARENT.is_dir():
+        raise FileNotFoundError(f"required private fixture parent is missing: {TEMP_PARENT}")
+    fixture = Path(tempfile.mkdtemp(prefix="mnemos-native-codex-generated-v8-", dir=TEMP_PARENT))
+    auth_copy: Path | None = None
+    service: Any | None = None
+    restart_service: Any | None = None
+    process: subprocess.Popen[str] | None = None
+    try:
+        report["worktree_head"] = _git_checkpoint()
+        report["cli"] = _verify_cli()
+
+        from mnemos import __file__ as mnemos_file
+        from mnemos.config import MnemosConfig
+        from mnemos.hosts import apply_host_integration, preview_host_integration
+        from mnemos.scopes import ScopeRegistry
+        from mnemos.service import _protect_private_path
+
+        package_path = Path(mnemos_file).resolve()
+        if "site-packages" not in {part.lower() for part in package_path.parts}:
+            raise RuntimeError(f"installed-wheel isolation failed: imported {package_path}")
+        report["python"] = {
+            "executable": str(Path(sys.executable).resolve()),
+            "mnemos_package": str(package_path),
+            "site_packages_asserted": True,
+        }
+        report["package_provenance"] = _pinned_package_provenance(
+            package_path,
+            wheel_path=args.wheel,
+            expected_wheel_sha256=args.expected_wheel_sha256,
+        )
+
+        _protect_private_path(fixture)
+        project = fixture / "project"
+        codex_home = fixture / "codex-home"
+        runtime = fixture / "runtime"
+        routing = fixture / "routing"
+        disabled_home = fixture / "disabled-feature-preview"
+        for directory in (project, codex_home, runtime, routing, disabled_home):
+            _private_mkdir(directory)
+
+        registry = ScopeRegistry()
+        project_identity = registry.register_project(project, user_profile_id=PROFILE, enabled=True)
+        registry.save(fixture / "scopes.json")
+        config = MnemosConfig()
+        config.modules.surprisal = False
+        config.modules.mutable_rag = False
+        config.modules.affective = False
+        config.modules.sleep = False
+        config.modules.spreading = False
+
+        selector_env = {
+            "MNEMOS_CONFIG_PATH": str(fixture / "settings.toml"),
+            "MNEMOS_SCOPE_REGISTRY": str(fixture / "scopes.json"),
+            "MNEMOS_USER_PROFILE_ID": PROFILE,
+            "MNEMOS_RUNTIME_DESCRIPTOR": str(fixture / "runtime.json"),
+        }
+        generated = apply_host_integration(
+            "codex",
+            mnemos_config_path=Path(selector_env["MNEMOS_CONFIG_PATH"]),
+            cwd=project,
+            home=codex_home,
+            integration_env=selector_env,
+        )
+        config_dir = generated.config_path.parent
+        if (config_dir / "hooks.json").exists():
+            raise RuntimeError("generated TOML fixture unexpectedly contains hooks.json")
+        import tomllib
+
+        generated_toml = tomllib.loads(generated.config_path.read_text(encoding="utf-8"))
+        mcp_command = generated_toml.get("mcp_servers", {}).get("mnemos", {}).get("command")
+        if mcp_command != "mnemos-mcp":
+            raise RuntimeError("generated Codex config has an unexpected Mnemos MCP command")
+        report["generated_host_config"] = {
+            "config_path": str(generated.config_path),
+            "config_sha256": _sha256(generated.config_path.read_bytes()),
+            "mcp_command": mcp_command,
+            "runtime_path_prefix": str(Path(sys.executable).resolve().parent),
+            "agents_path": str(project / "AGENTS.md"),
+            "agents_sha256": _sha256((project / "AGENTS.md").read_bytes()),
+            "hooks_json_present": False,
+            "preview_diff_sha256": _sha256(generated.preview_text),
+        }
+
+        disabled_config_dir = disabled_home / ".codex"
+        _private_mkdir(disabled_config_dir)
+        disabled_config = disabled_config_dir / "config.toml"
+        disabled_config.write_text("[features]\nhooks = false\n", encoding="utf-8")
+        disabled_preview = preview_host_integration(
+            "codex",
+            mnemos_config_path=Path(selector_env["MNEMOS_CONFIG_PATH"]),
+            cwd=project,
+            home=disabled_home,
+            integration_env=selector_env,
+        )
+        disabled_rendered = tomllib.loads(disabled_preview.rendered_config)
+        disabled_features = disabled_rendered.get("features", {})
+        report["existing_features_hooks_false_preview"] = {
+            "mode": "offline_preview_only",
+            "input_hooks_enabled": False,
+            "rendered_hooks_enabled": disabled_features.get("hooks"),
+            "hooks_tables_rendered": bool(disabled_rendered.get("hooks")),
+            "limited_feature_case": disabled_features.get("hooks") is False,
+            "preview_diff_sha256": _sha256(disabled_preview.preview_text),
+        }
+
+        auth_source = Path(os.environ.get("USERPROFILE", str(Path.home()))) / ".codex" / "auth.json"
+        if not auth_source.is_file():
+            raise FileNotFoundError("existing Codex auth.json is unavailable")
+        _protect_private_path(config_dir)
+        auth_copy = config_dir / "auth.json"
+        shutil.copy2(auth_source, auth_copy)
+        _protect_private_path(auth_copy)
+
+        registry_context = registry.resolve(
+            project,
+            user_profile_id=PROFILE,
+            session_id="native-codex-generated-v8-seed-session",
+            host="codex",
+        )
+        service, store, context = _start_service(fixture, registry, config)
+        codename = "mnemos-" + secrets.token_hex(6)
+        seed_content = SEED_PREFIX + codename + "."
+        seed = service.submit(
+            "remember",
+            {
+                "context": context.model_dump(mode="json"),
+                "event_id": "native-codex-generated-v8-seed-" + codename,
+                "content": seed_content,
+                "scope": "project",
+            },
+        )
+        seed_maintenance = service.submit(
+            "maintenance", {"context": context.model_dump(mode="json")}
+        )
+        before_ids = {event.id for event in store.list_episodic_events()}
+        prompt = (
+            "Using only the supplied Mnemos project memory, answer in one short sentence: "
+            "what is the private release codename for this project? Do not use tools."
+        )
+        integration_env = _clean_environment(
+            {
+                "CODEX_HOME": str(config_dir),
+                **selector_env,
+                "MNEMOS_AUTO_START": "false",
+                "MNEMOS_RUNTIME_DIR": str(runtime),
+                "MNEMOS_ROUTING_REVIEW_DIR": str(routing),
+                "MNEMOS_AUTO_RETRIEVE": "true",
+                "MNEMOS_PROJECT_ROOT": str(project),
+                "PATH": str(Path(sys.executable).resolve().parent)
+                + os.pathsep
+                + os.environ.get("PATH", ""),
+            }
+        )
+        report["warm_direct_adapter"] = _warm_direct_adapter(
+            project=project,
+            environment=integration_env,
+            session_id="native-codex-generated-v8-warm-session",
+            expected_content=seed_content,
+        )
+        warm = report["warm_direct_adapter"]
+        if warm["returncode"] != 0 or not warm["seed_present"]:
+            raise RuntimeError("Direct adapter preflight failed; native model turn was not started")
+
+        command = _isolated_codex_command(project, prompt)
+        report["command"] = [
+            item if item != prompt else "<synthetic-release-codename prompt>" for item in command
+        ]
+        started = time.monotonic()
+        process = subprocess.Popen(
+            command,
+            cwd=str(project),
+            env=integration_env,
+            stdin=subprocess.DEVNULL,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+            text=True,
+            encoding="utf-8",
+            errors="replace",
+            shell=False,
+            creationflags=subprocess.CREATE_NEW_PROCESS_GROUP,
+        )
+        timed_out = False
+        try:
+            stdout, stderr = process.communicate(timeout=MAX_NATIVE_SECONDS)
+        except subprocess.TimeoutExpired:
+            timed_out = _terminate_process_tree(process)
+            stdout, stderr = process.communicate(timeout=15)
+        elapsed_ms = round((time.monotonic() - started) * 1000, 1)
+        (fixture / "native-stdout.jsonl").write_text(stdout, encoding="utf-8")
+        (fixture / "native-stderr.log").write_text(stderr, encoding="utf-8")
+        native_events = _native_event_summary(stdout, codename)
+        report["native_process"] = {
+            "returncode": process.returncode,
+            "timed_out": timed_out,
+            "elapsed_ms": elapsed_ms,
+            "stdout_path": str(fixture / "native-stdout.jsonl"),
+            "stderr_path": str(fixture / "native-stderr.log"),
+            "stdout_sha256": _sha256(stdout),
+            "stderr_sha256": _sha256(stderr),
+            "events": native_events,
+        }
+
+        maintenance_after = service.submit(
+            "maintenance", {"context": context.model_dump(mode="json")}
+        )
+        events = list(store.list_episodic_events())
+        captured = [event for event in events if event.id not in before_ids]
+        user_capture = any(
+            event.role == "user"
+            and event.content == prompt
+            and event.metadata.get("source_kind") == "codex_hook"
+            for event in captured
+        )
+        assistant_capture = any(
+            event.role == "assistant" and event.metadata.get("source_kind") == "codex_hook"
+            for event in captured
+        )
+        report["seed"] = {
+            "project_id": project_identity.id,
+            "remember": {
+                "status": seed.get("status"),
+                "processing_status": seed.get("processing_status"),
+            },
+            "maintenance": {
+                "completed": maintenance_after.get("completed"),
+                "status": maintenance_after.get("status"),
+                "seed_completed": seed_maintenance.get("completed"),
+            },
+            "codename_sha256": _sha256(codename),
+            "content_sha256": _sha256(seed_content),
+        }
+        report["captured_roles_before_restart"] = {
+            "event_count": len(captured),
+            "user_codex_hook": user_capture,
+            "assistant_codex_hook": assistant_capture,
+        }
+        service.stop()
+        service = None
+        restart_service, restart_store, restart_context = _start_service(fixture, registry, config)
+        del restart_context
+        restart_events = list(restart_store.list_episodic_events())
+        restart_ids = {event.id for event in restart_events}
+        report["restart"] = {
+            "events_survive_restart": all(event.id in restart_ids for event in captured),
+            "event_count_after_restart": len(restart_ids),
+            "role_counts_after_restart": {
+                "user": sum(1 for event in restart_events if event.role == "user"),
+                "assistant": sum(1 for event in restart_events if event.role == "assistant"),
+            },
+        }
+        restart_service.stop()
+        restart_service = None
+
+        report["native_trace"] = {
+            "available": False,
+            "reason": "Generated production command is used directly; no wrapper was inserted.",
+            "durable_source_kind": "codex_hook",
+        }
+        report["criteria"] = {
+            "user_capture": user_capture,
+            "assistant_capture": assistant_capture,
+            "warm_seed_context": warm["seed_present"],
+            "native_seed_context": None,
+            "model_answer_exact_canary": native_events["answer_mentions_expected"],
+            "no_tool_turn": (
+                native_events["record_count"] > 0
+                and native_events["non_json_line_count"] == 0
+                and not native_events["tool_call_observed"]
+            ),
+            "no_unreviewed_errors": native_events["unreviewed_error_count"] == 0,
+            "capture_criteria_complete": user_capture and assistant_capture,
+            "canary_response_criteria_complete": native_events["answer_mentions_expected"],
+        }
+        report["status"] = (
+            "observed"
+            if (
+                process.returncode == 0
+                and not timed_out
+                and user_capture
+                and assistant_capture
+                and report["restart"]["events_survive_restart"]
+                and report["criteria"]["model_answer_exact_canary"]
+                and report["criteria"]["no_tool_turn"]
+                and report["criteria"]["no_unreviewed_errors"]
+            )
+            else "not_observed"
+        )
+    except Exception as exc:
+        (fixture / "runner-error.txt").write_text(traceback.format_exc(), encoding="utf-8")
+        report.update(
+            {
+                "status": "failed",
+                "error_type": type(exc).__name__,
+                "error_digest": _sha256(str(exc)),
+            }
+        )
+    finally:
+        if process is not None and process.poll() is None:
+            try:
+                _terminate_process_tree(process)
+            except Exception:
+                process.kill()
+                process.wait(timeout=10)
+        for active in (service, restart_service):
+            if active is not None:
+                try:
+                    active.stop()
+                except Exception:
+                    pass
+        if auth_copy is not None:
+            auth_copy.unlink(missing_ok=True)
+        report["fixture"] = str(fixture)
+        report["private_fixture_preserved"] = True
+        report["auth_copy_removed"] = auth_copy is None or not auth_copy.exists()
+        report["finished_at"] = datetime.now(timezone.utc).isoformat()
+        (OUTPUT_DIR / "report.json").write_text(
+            json.dumps(report, ensure_ascii=False, indent=2) + "\n", encoding="utf-8"
+        )
+    print(json.dumps({key: report.get(key) for key in ("status", "fixture", "error_type")}))
+    return 0 if report["status"] == "observed" else 1
+
+
+if __name__ == "__main__":
+    raise SystemExit(main())
