@@ -4,14 +4,23 @@ Assessment date: September 17, 2026. This covers the unreleased
 functional-local-memory worktree, not the installed public package or website.
 The capability IDs come from the original implementation plan.
 
-The latest complete package verification is frozen source `dedfcfd`:
-914 tests passed with four skips, plus Black, strict mypy, JavaScript syntax,
-build, and Twine. A fresh installed wheel passed 120 selected contract cases
+The latest complete package verification is frozen source `6cde465`:
+918 tests passed with four skips, plus Black, strict mypy, JavaScript syntax,
+build, and Twine. A fresh installed wheel passed 124 selected contract cases
 with two matching platform skips and seven synthetic Stop replay assertions. Source, fixtures, and the installed
 environment were on C:, outside the development checkout. The
-[Claude startup package checkpoint](../2026-09-17/claude-startup-package-checkpoint-v1/README.md)
+[lost-acknowledgment package checkpoint](../2026-09-17/lost-ack-package-checkpoint-v3/README.md)
 binds the wheel, source, helpers, dependencies, exact test cases, and installed
 package origins. It does not establish native plugin-session acceptance.
+
+The lost-acknowledgment repair keeps capture on the durable outbox path when
+the service commits an event but its HTTP reply is lost. Four injected HTTP
+and SQLite cases cover ordinary and provisional captures, restart, and one
+or two lost replies. All four fail before the repair and pass in source and
+the installed wheel. The first full-suite attempt at the same source failed
+an auto-start health check; an unchanged isolated diagnostic and a fresh full
+run passed afterward. Its cause remains unproven, and the
+[failed run](../2026-09-17/lost-ack-package-failure-v1/README.md) remains preserved.
 
 The [concurrent revision regression](../2026-09-17/retrieval-concurrent-revision-v1/README.md)
 reproduces stale candidate scoring and context-budget violations while a

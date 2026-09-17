@@ -4,12 +4,12 @@ This record covers the unreleased `wt/functional-local-memory` worktree. It
 separates implemented behavior from acceptance evidence. The original task
 boundaries and thresholds remain in the [implementation plan](../../plans/2026-09-16-functional-local-memory.md).
 
-The latest package checkpoint is source `dedfcfd`. Its frozen verification
-passed 914 tests with four platform-specific skips, formatting, typing,
-JavaScript, build, and Twine checks. A fresh installed wheel passed 120
+The latest package checkpoint is source `6cde465`. Its frozen verification
+passed 918 tests with four platform-specific skips, formatting, typing,
+JavaScript, build, and Twine checks. A fresh installed wheel passed 124
 contract cases with two matching platform skips and seven replay assertions. These are package and installed
 runtime checks; they do not close native-host, real-model, latency, pilot, or
-publication gates. See the [Claude startup package checkpoint](../2026-09-17/claude-startup-package-checkpoint-v1/README.md).
+publication gates. See the [lost-acknowledgment package checkpoint](../2026-09-17/lost-ack-package-checkpoint-v3/README.md).
 
 This checkpoint repairs retrieval across a concurrent correction or forget:
 candidates are refreshed after asynchronous state classification, so scoring,
@@ -27,7 +27,7 @@ Source `6cde465` adds capture recovery when the service commits an event but
 loses its HTTP response. The client now handles `httpx.RemoteProtocolError`
 through the existing durable outbox path. Four injected HTTP/SQLite cases
 failed before the repair and passed afterward; 35 related service cases pass.
-Full source and installed-package verification are separate from the complete
+All four recovery cases also pass in the complete source and installed-package
 checkpoint above. See the [lost-acknowledgment regression](../2026-09-17/service-lost-ack-regression-v1/README.md).
 
 The first full run of `6cde465` stopped with 917 passed, four skipped, and one
