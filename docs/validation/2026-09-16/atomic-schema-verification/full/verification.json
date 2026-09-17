@@ -1,0 +1,109 @@
+{
+  "source_commit": "9e253390c58302817a18b6504f55899b36a2c27b",
+  "source_checkout": "D:\\Development\\mnemos\\mnemos\\.worktrees\\functional-local-memory\\.venv\\atomic-schema-frozen-v1",
+  "status": "passed",
+  "started_at": "2026-09-17T09:29:43.266183+00:00",
+  "checks": [
+    {
+      "name": "pytest",
+      "command": [
+        "D:\\Development\\mnemos\\mnemos\\.worktrees\\functional-local-memory\\.venv\\Scripts\\python.exe",
+        "-m",
+        "pytest",
+        "-q",
+        "--junitxml",
+        "D:\\Development\\mnemos\\mnemos\\.worktrees\\functional-local-memory\\.venv\\atomic-schema-checks-v1\\pytest.xml"
+      ],
+      "status": "passed",
+      "started_at": "2026-09-17T09:29:43.267161+00:00",
+      "exit_code": 0,
+      "finished_at": "2026-09-17T09:51:53.265604+00:00",
+      "counts": {
+        "tests": 705,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 2
+      }
+    },
+    {
+      "name": "black",
+      "command": [
+        "D:\\Development\\mnemos\\mnemos\\.worktrees\\functional-local-memory\\.venv\\Scripts\\python.exe",
+        "-m",
+        "black",
+        "--check",
+        "."
+      ],
+      "status": "passed",
+      "started_at": "2026-09-17T09:51:53.275021+00:00",
+      "exit_code": 0,
+      "finished_at": "2026-09-17T09:51:56.223433+00:00"
+    },
+    {
+      "name": "mypy",
+      "command": [
+        "D:\\Development\\mnemos\\mnemos\\.worktrees\\functional-local-memory\\.venv\\compat-py310\\Scripts\\python.exe",
+        "-m",
+        "mypy",
+        "."
+      ],
+      "status": "passed",
+      "started_at": "2026-09-17T09:51:56.224145+00:00",
+      "exit_code": 0,
+      "finished_at": "2026-09-17T09:53:02.363332+00:00"
+    },
+    {
+      "name": "javascript",
+      "command": [
+        "node",
+        "--check",
+        "mnemos/ui/app.js"
+      ],
+      "status": "passed",
+      "started_at": "2026-09-17T09:53:02.410557+00:00",
+      "exit_code": 0,
+      "finished_at": "2026-09-17T09:53:02.535025+00:00"
+    },
+    {
+      "name": "build",
+      "command": [
+        "D:\\Development\\mnemos\\mnemos\\.worktrees\\functional-local-memory\\.venv\\Scripts\\python.exe",
+        "-m",
+        "build",
+        "--outdir",
+        "D:\\Development\\mnemos\\mnemos\\.worktrees\\functional-local-memory\\.venv\\atomic-schema-checks-v1\\dist"
+      ],
+      "status": "passed",
+      "started_at": "2026-09-17T09:53:02.535848+00:00",
+      "exit_code": 0,
+      "finished_at": "2026-09-17T09:54:15.775763+00:00"
+    },
+    {
+      "name": "twine",
+      "command": [
+        "D:\\Development\\mnemos\\mnemos\\.worktrees\\functional-local-memory\\.venv\\Scripts\\python.exe",
+        "-m",
+        "twine",
+        "check",
+        "D:\\Development\\mnemos\\mnemos\\.worktrees\\functional-local-memory\\.venv\\atomic-schema-checks-v1\\dist\\mnemos_memory-0.7.0-py3-none-any.whl",
+        "D:\\Development\\mnemos\\mnemos\\.worktrees\\functional-local-memory\\.venv\\atomic-schema-checks-v1\\dist\\mnemos_memory-0.7.0.tar.gz"
+      ],
+      "exit_code": 0,
+      "status": "passed"
+    }
+  ],
+  "runner_sha256": "d2f05b5e2189e3d3ba5ce9b535d8f5adc98d0c5409037cfff7f4460fac0bdfd6",
+  "updated_at": "2026-09-17T09:54:21.182333+00:00",
+  "artifacts": [
+    {
+      "file": "D:\\Development\\mnemos\\mnemos\\.worktrees\\functional-local-memory\\.venv\\atomic-schema-checks-v1\\dist\\mnemos_memory-0.7.0-py3-none-any.whl",
+      "bytes": 264473,
+      "sha256": "65f0354fd97b6a492a7c5dde2bf0f8eb008c3ff21b81842631e0f9a92c545a62"
+    },
+    {
+      "file": "D:\\Development\\mnemos\\mnemos\\.worktrees\\functional-local-memory\\.venv\\atomic-schema-checks-v1\\dist\\mnemos_memory-0.7.0.tar.gz",
+      "bytes": 2435750,
+      "sha256": "2f3d64e256fd71e6ed112b33b0b5dfb85a2e24c9d53c323f5fb94200e62400c5"
+    }
+  ]
+}

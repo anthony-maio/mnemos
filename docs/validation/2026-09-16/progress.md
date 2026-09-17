@@ -552,3 +552,20 @@ They pass on the repaired source, as does the 33-test focused storage, migration
 and backup suite. The focused results were terminal output; the old-source
 failure report and runner are preserved. Full frozen-source verification is
 running before installation and native host follow-ups.
+
+## Source9e package checks passed; captured-copy removal remains open
+
+The atomic schema repair passed all repository checks: 703 tests, two optional
+WSL skips, Black, strict mypy, JavaScript syntax, build, and Twine. The exact
+wheel passed installed Claude replay, actual Hermes entry-point discovery, and
+an isolated offline Codex API preflight. The [verification record](atomic-schema-verification/README.md)
+preserves commands, hashes, logs, and the initial preflight digest typo. These
+checks do not establish a new native model conversation.
+
+The corrected [overlap probe](capture-forget-overlap/v2/README.md) confirmed that
+record-only forget leaves an independently captured copy of the assertion
+retrievable after restart when extraction is disabled. The first probe used
+unrelated inputs and does not support that conclusion. Both are preserved.
+The [related-forget plan](../../plans/2026-09-17-related-forget.md) adds a scoped
+preview and atomic application of explicitly selected captured copies. Native
+lifecycle acceptance remains open while this path is implemented and tested.

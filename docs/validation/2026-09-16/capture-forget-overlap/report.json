@@ -1,0 +1,580 @@
+{
+  "recorded_at": "2026-09-17T09:44:41.137366+00:00",
+  "command": [
+    "D:\\Development\\mnemos\\mnemos\\.worktrees\\functional-local-memory\\.venv\\Scripts\\python.exe",
+    "D:\\Development\\mnemos\\mnemos\\.worktrees\\functional-local-memory\\.venv\\capture_forget_overlap_probe.py"
+  ],
+  "frozen_root": "D:\\Development\\mnemos\\mnemos\\.worktrees\\functional-local-memory\\.venv\\atomic-schema-frozen-v1",
+  "frozen_commit": "9e253390c58302817a18b6504f55899b36a2c27b",
+  "frozen_status": "",
+  "storage_origin": "D:\\Development\\mnemos\\mnemos\\.worktrees\\functional-local-memory\\.venv\\atomic-schema-frozen-v1\\mnemos\\utils\\storage.py",
+  "source_sha256": {
+    "mnemos/config.py": "fa04e199ec75b4e871a8b47f484c873b425b75f5ec5bb9d4ebaf7ca2e11b1ac2",
+    "mnemos/contracts.py": "e9194e900b8807fab0a4a5a1d45f36cb331f2afae6a7db5fbd3d460acf2c2f76",
+    "mnemos/engine.py": "8e74b4e71af88a03eaf017bd6a9e515f90479c02c535246accf2495bafa2fc16",
+    "mnemos/memory_service.py": "54055f7d80c246b616c6b26c14948805fd4ff372bb1f9dc41f4d5453157ec86e",
+    "mnemos/maintenance.py": "7917e66c579fdd2055d33a5a409d28a007776673e543209cf2aa211687f6fc88",
+    "mnemos/scopes.py": "f436802836f911f6dcc8c8362a7627773b0d10a28efda624d1fd55fdb995c6ab",
+    "mnemos/types.py": "d3c781f1ac2a0190b3195ff70edfe9ca075163a6ffb5a26113a60f31334c9e1d",
+    "mnemos/utils/embeddings.py": "10ec627170f3136ce8de57d0d3771c563f9a73d192469aaafd6d078294b6b8b2",
+    "mnemos/utils/storage.py": "e236d979cb438e0fe660962759b1689d623d537938a76aff9fa69c431775dd87"
+  },
+  "result": {
+    "fixture_root": "D:\\WindowsTemp\\mnemos-capture-forget-qszh4l6u",
+    "database_path": "D:\\WindowsTemp\\mnemos-capture-forget-qszh4l6u\\memory.sqlite",
+    "context": {
+      "user_profile_id": "probe-profile",
+      "project_id": "b077c70d-ae34-4ac7-8aa4-bd7646343ab5",
+      "workspace_id": null,
+      "session_id": "probe-session",
+      "host": "claude-code"
+    },
+    "modules": {
+      "surprisal": false,
+      "mutable_rag": false,
+      "affective": false,
+      "sleep": false,
+      "spreading": false
+    },
+    "providers": {
+      "llm": "UnavailableLLMProvider",
+      "embedder": "SimpleEmbeddingProvider"
+    },
+    "synthetic_inputs": {
+      "prompt": "Conversation carries overlap-canary-7f9d. Please remember this prompt for the hook.",
+      "exact_fact": "The durable deployment policy is SQLite.",
+      "corrected_fact": "The durable deployment policy is PostgreSQL.",
+      "query": "overlap-canary-7f9d"
+    },
+    "operations": {
+      "capture_prompt": {
+        "schema_version": 1,
+        "status": "committed",
+        "event_id": "582cdb8ede79360a84ac0eed9ecf53d4506732530bfbda88480786318de45143",
+        "processing_status": "pending",
+        "job_id": "event:582cdb8ede79360a84ac0eed9ecf53d4506732530bfbda88480786318de45143"
+      },
+      "maintenance_after_capture": {
+        "schema_version": 1,
+        "completed": 1,
+        "maintenance": {
+          "pending": 0,
+          "leased": 0,
+          "exhausted": 0,
+          "completed": 1,
+          "retry_count": 0,
+          "oldest_unfinished_seconds": 0,
+          "oldest_pending_seconds": 0,
+          "running": false,
+          "scheduler_running": false,
+          "last_success": "2026-09-17T09:44:43.761339+00:00",
+          "last_error": null,
+          "processed_count": 1,
+          "failed_count": 0
+        },
+        "graph": {
+          "enabled": false,
+          "managed_preferences": true,
+          "ready": false,
+          "pending_count": 1,
+          "cursor": "",
+          "marked_sources": 0,
+          "total_sources": 1,
+          "legacy_graph": false
+        }
+      },
+      "facts_after_capture": [
+        {
+          "id": "b9e0ca9b-21e1-42f2-9e0c-3cc8fb5acc73",
+          "content": "Conversation carries overlap-canary-7f9d. Please remember this prompt for the hook.",
+          "metadata": {
+            "user_profile_id": "probe-profile",
+            "project_id": "b077c70d-ae34-4ac7-8aa4-bd7646343ab5",
+            "workspace_id": null,
+            "session_id": "probe-session",
+            "host": "claude-code",
+            "scope": "project",
+            "scope_id": "b077c70d-ae34-4ac7-8aa4-bd7646343ab5",
+            "source": "sleep_consolidation",
+            "source_roles": [
+              "user"
+            ],
+            "source_event_ids": [
+              "582cdb8ede79360a84ac0eed9ecf53d4506732530bfbda88480786318de45143"
+            ],
+            "encoding_diagnostics": {
+              "surprisal_score": null,
+              "surprisal_status": "disabled",
+              "prediction": null,
+              "prediction_mode": "disabled",
+              "threshold": 0.3
+            },
+            "assertion_status": "asserted",
+            "cognitive_state_status": "provider_unavailable"
+          },
+          "salience": 0.5,
+          "cognitive_state": null,
+          "created_at": "2026-09-17T09:44:43.443219Z",
+          "updated_at": "2026-09-17T09:44:43.443221Z",
+          "access_count": 0,
+          "version": 1,
+          "canonical_key": "f996c59666d7077577ab0bc62bbb568b561e70d790db33f6c4fd989296f4fed1",
+          "surprisal_score": null,
+          "surprisal_status": "unknown",
+          "cognitive_state_status": "provider_unavailable",
+          "last_observed_at": "2026-09-17T09:44:43.088261Z",
+          "observation_count": 1,
+          "last_retrieved_at": null,
+          "reconsolidation_due_at": null
+        }
+      ],
+      "remember_exact": {
+        "schema_version": 1,
+        "status": "committed",
+        "event_id": "6ce3384d36cc5421dc49278e2370a443b0ab74840625f4b5bad463816bc7186f",
+        "processing_status": "pending",
+        "job_id": "event:6ce3384d36cc5421dc49278e2370a443b0ab74840625f4b5bad463816bc7186f"
+      },
+      "maintenance_after_remember": {
+        "schema_version": 1,
+        "completed": 1,
+        "maintenance": {
+          "pending": 0,
+          "leased": 0,
+          "exhausted": 0,
+          "completed": 2,
+          "retry_count": 0,
+          "oldest_unfinished_seconds": 0,
+          "oldest_pending_seconds": 0,
+          "running": false,
+          "scheduler_running": false,
+          "last_success": "2026-09-17T09:44:44.632942+00:00",
+          "last_error": null,
+          "processed_count": 2,
+          "failed_count": 0
+        },
+        "graph": {
+          "enabled": false,
+          "managed_preferences": true,
+          "ready": false,
+          "pending_count": 2,
+          "cursor": "",
+          "marked_sources": 0,
+          "total_sources": 2,
+          "legacy_graph": false
+        }
+      },
+      "facts_before_correction": [
+        {
+          "id": "b9e0ca9b-21e1-42f2-9e0c-3cc8fb5acc73",
+          "content": "Conversation carries overlap-canary-7f9d. Please remember this prompt for the hook.",
+          "metadata": {
+            "user_profile_id": "probe-profile",
+            "project_id": "b077c70d-ae34-4ac7-8aa4-bd7646343ab5",
+            "workspace_id": null,
+            "session_id": "probe-session",
+            "host": "claude-code",
+            "scope": "project",
+            "scope_id": "b077c70d-ae34-4ac7-8aa4-bd7646343ab5",
+            "source": "sleep_consolidation",
+            "source_roles": [
+              "user"
+            ],
+            "source_event_ids": [
+              "582cdb8ede79360a84ac0eed9ecf53d4506732530bfbda88480786318de45143"
+            ],
+            "encoding_diagnostics": {
+              "surprisal_score": null,
+              "surprisal_status": "disabled",
+              "prediction": null,
+              "prediction_mode": "disabled",
+              "threshold": 0.3
+            },
+            "assertion_status": "asserted",
+            "cognitive_state_status": "provider_unavailable"
+          },
+          "salience": 0.5,
+          "cognitive_state": null,
+          "created_at": "2026-09-17T09:44:43.443219Z",
+          "updated_at": "2026-09-17T09:44:43.443221Z",
+          "access_count": 0,
+          "version": 1,
+          "canonical_key": "f996c59666d7077577ab0bc62bbb568b561e70d790db33f6c4fd989296f4fed1",
+          "surprisal_score": null,
+          "surprisal_status": "unknown",
+          "cognitive_state_status": "provider_unavailable",
+          "last_observed_at": "2026-09-17T09:44:43.088261Z",
+          "observation_count": 1,
+          "last_retrieved_at": null,
+          "reconsolidation_due_at": null
+        },
+        {
+          "id": "9dd1c380-af59-444c-9bd4-ed56d99b44b9",
+          "content": "The durable deployment policy is SQLite.",
+          "metadata": {
+            "user_profile_id": "probe-profile",
+            "project_id": "b077c70d-ae34-4ac7-8aa4-bd7646343ab5",
+            "workspace_id": null,
+            "session_id": "probe-session",
+            "host": "claude-code",
+            "scope": "project",
+            "scope_id": "b077c70d-ae34-4ac7-8aa4-bd7646343ab5",
+            "source": "explicit_remember",
+            "source_roles": [
+              "user"
+            ],
+            "source_event_ids": [
+              "6ce3384d36cc5421dc49278e2370a443b0ab74840625f4b5bad463816bc7186f"
+            ],
+            "encoding_diagnostics": {},
+            "assertion_status": "asserted",
+            "cognitive_state_status": "provider_unavailable"
+          },
+          "salience": 0.5,
+          "cognitive_state": null,
+          "created_at": "2026-09-17T09:44:44.202117Z",
+          "updated_at": "2026-09-17T09:44:44.202119Z",
+          "access_count": 0,
+          "version": 1,
+          "canonical_key": "794eb1523810dce8a83a56ad0234b15c2ab04df32f4f92c132340585133974e2",
+          "surprisal_score": null,
+          "surprisal_status": "unknown",
+          "cognitive_state_status": "provider_unavailable",
+          "last_observed_at": "2026-09-17T09:44:43.833173Z",
+          "observation_count": 1,
+          "last_retrieved_at": null,
+          "reconsolidation_due_at": null
+        }
+      ],
+      "correct_exact": {
+        "schema_version": 1,
+        "status": "committed",
+        "event_id": "b79c55900afe34b3eb13d908ef275ee8ec71ad6ff79dcf5e0efbcca9ca486a6b",
+        "processing_status": "pending",
+        "job_id": "event:b79c55900afe34b3eb13d908ef275ee8ec71ad6ff79dcf5e0efbcca9ca486a6b"
+      },
+      "maintenance_after_correct": {
+        "schema_version": 1,
+        "completed": 1,
+        "maintenance": {
+          "pending": 0,
+          "leased": 0,
+          "exhausted": 0,
+          "completed": 3,
+          "retry_count": 0,
+          "oldest_unfinished_seconds": 0,
+          "oldest_pending_seconds": 0,
+          "running": false,
+          "scheduler_running": false,
+          "last_success": "2026-09-17T09:44:45.604473+00:00",
+          "last_error": null,
+          "processed_count": 3,
+          "failed_count": 0
+        },
+        "graph": {
+          "enabled": false,
+          "managed_preferences": true,
+          "ready": false,
+          "pending_count": 2,
+          "cursor": "",
+          "marked_sources": 0,
+          "total_sources": 2,
+          "legacy_graph": false
+        }
+      },
+      "corrected_fact": {
+        "id": "9dd1c380-af59-444c-9bd4-ed56d99b44b9",
+        "content": "The durable deployment policy is PostgreSQL.",
+        "metadata": {
+          "user_profile_id": "probe-profile",
+          "project_id": "b077c70d-ae34-4ac7-8aa4-bd7646343ab5",
+          "workspace_id": null,
+          "session_id": "probe-session",
+          "host": "claude-code",
+          "scope": "project",
+          "scope_id": "b077c70d-ae34-4ac7-8aa4-bd7646343ab5",
+          "source": "explicit_correction",
+          "source_roles": [
+            "user"
+          ],
+          "source_event_ids": [
+            "b79c55900afe34b3eb13d908ef275ee8ec71ad6ff79dcf5e0efbcca9ca486a6b"
+          ],
+          "encoding_diagnostics": {},
+          "assertion_status": "asserted",
+          "cognitive_state_status": "provider_unavailable",
+          "previous_content": "The durable deployment policy is SQLite."
+        },
+        "salience": 0.5,
+        "cognitive_state": null,
+        "created_at": "2026-09-17T09:44:44.202117Z",
+        "updated_at": "2026-09-17T09:44:45.263942Z",
+        "access_count": 1,
+        "version": 2,
+        "canonical_key": "6119218e1cda4cae6e2158e72630e58d31c92614c41693201d24f378f0ed95bd",
+        "surprisal_score": null,
+        "surprisal_status": "unknown",
+        "cognitive_state_status": "provider_unavailable",
+        "last_observed_at": "2026-09-17T09:44:44.635099Z",
+        "observation_count": 1,
+        "last_retrieved_at": null,
+        "reconsolidation_due_at": null
+      },
+      "forget_corrected": {
+        "schema_version": 1,
+        "status": "committed",
+        "forgotten": true,
+        "fact_id": "9dd1c380-af59-444c-9bd4-ed56d99b44b9",
+        "erasure_scope": "live_memory_and_replay_suppression"
+      },
+      "facts_after_forget": [
+        {
+          "id": "b9e0ca9b-21e1-42f2-9e0c-3cc8fb5acc73",
+          "content": "Conversation carries overlap-canary-7f9d. Please remember this prompt for the hook.",
+          "metadata": {
+            "user_profile_id": "probe-profile",
+            "project_id": "b077c70d-ae34-4ac7-8aa4-bd7646343ab5",
+            "workspace_id": null,
+            "session_id": "probe-session",
+            "host": "claude-code",
+            "scope": "project",
+            "scope_id": "b077c70d-ae34-4ac7-8aa4-bd7646343ab5",
+            "source": "sleep_consolidation",
+            "source_roles": [
+              "user"
+            ],
+            "source_event_ids": [
+              "582cdb8ede79360a84ac0eed9ecf53d4506732530bfbda88480786318de45143"
+            ],
+            "encoding_diagnostics": {
+              "surprisal_score": null,
+              "surprisal_status": "disabled",
+              "prediction": null,
+              "prediction_mode": "disabled",
+              "threshold": 0.3
+            },
+            "assertion_status": "asserted",
+            "cognitive_state_status": "provider_unavailable"
+          },
+          "salience": 0.5,
+          "cognitive_state": null,
+          "created_at": "2026-09-17T09:44:43.443219Z",
+          "updated_at": "2026-09-17T09:44:43.443221Z",
+          "access_count": 0,
+          "version": 1,
+          "canonical_key": "f996c59666d7077577ab0bc62bbb568b561e70d790db33f6c4fd989296f4fed1",
+          "surprisal_score": null,
+          "surprisal_status": "unknown",
+          "cognitive_state_status": "provider_unavailable",
+          "last_observed_at": "2026-09-17T09:44:43.088261Z",
+          "observation_count": 1,
+          "last_retrieved_at": null,
+          "reconsolidation_due_at": null
+        }
+      ],
+      "episodic_after_forget": [
+        {
+          "id": "582cdb8ede79360a84ac0eed9ecf53d4506732530bfbda88480786318de45143",
+          "event_fingerprint": "582cdb8ede79360a84ac0eed9ecf53d4506732530bfbda88480786318de45143",
+          "role": "user",
+          "content": "Conversation carries overlap-canary-7f9d. Please remember this prompt for the hook.",
+          "normalized_content": "conversation carries overlap-canary-7f9d. please remember this prompt for the hook.",
+          "scope": "project",
+          "scope_id": "b077c70d-ae34-4ac7-8aa4-bd7646343ab5",
+          "source": "claude-code",
+          "hook_event": null,
+          "metadata": {
+            "user_profile_id": "probe-profile",
+            "project_id": "b077c70d-ae34-4ac7-8aa4-bd7646343ab5",
+            "workspace_id": null,
+            "session_id": "probe-session",
+            "host": "claude-code",
+            "scope": "project",
+            "scope_id": "b077c70d-ae34-4ac7-8aa4-bd7646343ab5",
+            "source_event_id": "hook-prompt-overlap-1",
+            "source_ref": "probe-transcript.jsonl#prompt-1",
+            "source_kind": "claude_code_transcript",
+            "explicit_remember": false
+          },
+          "status": "consolidated",
+          "error": null,
+          "created_at": "2026-09-17T09:44:43.088528Z",
+          "occurred_at": "2026-09-17T09:44:43.088261Z"
+        }
+      ],
+      "suppressions_after_forget": [
+        {
+          "suppression_id": "046f4a6c-408b-4451-9dd5-9ba841a93678",
+          "fact_id": "9dd1c380-af59-444c-9bd4-ed56d99b44b9",
+          "canonical_key": null,
+          "source_event_id": "6ce3384d36cc5421dc49278e2370a443b0ab74840625f4b5bad463816bc7186f",
+          "reason": "explicit_forget"
+        },
+        {
+          "suppression_id": "4b5b48d6-e0b3-48d3-a94f-5b956758cb2c",
+          "fact_id": "9dd1c380-af59-444c-9bd4-ed56d99b44b9",
+          "canonical_key": "6119218e1cda4cae6e2158e72630e58d31c92614c41693201d24f378f0ed95bd",
+          "source_event_id": null,
+          "reason": "explicit_forget"
+        },
+        {
+          "suppression_id": "5d8abf82-eb03-411a-aaa5-b5b2574eea00",
+          "fact_id": "9dd1c380-af59-444c-9bd4-ed56d99b44b9",
+          "canonical_key": "794eb1523810dce8a83a56ad0234b15c2ab04df32f4f92c132340585133974e2",
+          "source_event_id": null,
+          "reason": "explicit_forget"
+        },
+        {
+          "suppression_id": "c6297fc9-3bb2-40d1-9a6a-02021bc333ed",
+          "fact_id": "9dd1c380-af59-444c-9bd4-ed56d99b44b9",
+          "canonical_key": null,
+          "source_event_id": "b79c55900afe34b3eb13d908ef275ee8ec71ad6ff79dcf5e0efbcca9ca486a6b",
+          "reason": "explicit_forget"
+        }
+      ],
+      "retrieve_after_forget": {
+        "schema_version": 1,
+        "profile": "baseline",
+        "facts": [
+          {
+            "id": "b9e0ca9b-21e1-42f2-9e0c-3cc8fb5acc73",
+            "version": 1,
+            "content": "Conversation carries overlap-canary-7f9d. Please remember this prompt for the hook.",
+            "scope": "project",
+            "scope_id": "b077c70d-ae34-4ac7-8aa4-bd7646343ab5",
+            "sources": [
+              {
+                "evidence_id": "cc31ba96-237f-486e-be61-e96c10612576",
+                "fact_id": "b9e0ca9b-21e1-42f2-9e0c-3cc8fb5acc73",
+                "source_event_id": "582cdb8ede79360a84ac0eed9ecf53d4506732530bfbda88480786318de45143",
+                "excerpt": "Conversation carries overlap-canary-7f9d. Please remember this prompt for the hook.",
+                "source_ref": "probe-transcript.jsonl#prompt-1",
+                "created_at": "2026-09-17T09:44:43.443265Z",
+                "original_source_status": "retained_locally"
+              }
+            ],
+            "support_available": true,
+            "original_source_status": "retained_locally",
+            "scores": {
+              "semantic": 0.4495585560798645,
+              "state_match": null,
+              "graph_energy": 0.0,
+              "graph_contribution": 0.0,
+              "total": 0.4495585560798645,
+              "state_status": "disabled",
+              "profile": "baseline",
+              "scope_match": true,
+              "context_token_upper_bound": 133,
+              "token_count_method": "utf8_bytes_upper_bound",
+              "graph_status": "disabled",
+              "candidate_backend": "sqlite_vec_scoped_exact_cosine",
+              "lexical_candidate": true,
+              "lexical_status": "candidate_union"
+            }
+          }
+        ],
+        "context": "[b9e0ca9b-21e1-42f2-9e0c-3cc8fb5acc73 version 1] Conversation carries overlap-canary-7f9d. Please remember this prompt for the hook.\n",
+        "token_count_method": "utf8_bytes_upper_bound",
+        "context_token_upper_bound": 133
+      },
+      "retrieve_exact_after_forget": {
+        "schema_version": 1,
+        "profile": "baseline",
+        "facts": [],
+        "context": "",
+        "token_count_method": "utf8_bytes_upper_bound",
+        "context_token_upper_bound": 0
+      },
+      "facts_after_restart": [
+        {
+          "id": "b9e0ca9b-21e1-42f2-9e0c-3cc8fb5acc73",
+          "content": "Conversation carries overlap-canary-7f9d. Please remember this prompt for the hook.",
+          "metadata": {
+            "user_profile_id": "probe-profile",
+            "project_id": "b077c70d-ae34-4ac7-8aa4-bd7646343ab5",
+            "workspace_id": null,
+            "session_id": "probe-session",
+            "host": "claude-code",
+            "scope": "project",
+            "scope_id": "b077c70d-ae34-4ac7-8aa4-bd7646343ab5",
+            "source": "sleep_consolidation",
+            "source_roles": [
+              "user"
+            ],
+            "source_event_ids": [
+              "582cdb8ede79360a84ac0eed9ecf53d4506732530bfbda88480786318de45143"
+            ],
+            "encoding_diagnostics": {
+              "surprisal_score": null,
+              "surprisal_status": "disabled",
+              "prediction": null,
+              "prediction_mode": "disabled",
+              "threshold": 0.3
+            },
+            "assertion_status": "asserted",
+            "cognitive_state_status": "provider_unavailable"
+          },
+          "salience": 0.5,
+          "cognitive_state": null,
+          "created_at": "2026-09-17T09:44:43.443219Z",
+          "updated_at": "2026-09-17T09:44:43.443221Z",
+          "access_count": 1,
+          "version": 1,
+          "canonical_key": "f996c59666d7077577ab0bc62bbb568b561e70d790db33f6c4fd989296f4fed1",
+          "surprisal_score": null,
+          "surprisal_status": "unknown",
+          "cognitive_state_status": "provider_unavailable",
+          "last_observed_at": "2026-09-17T09:44:43.088261Z",
+          "observation_count": 1,
+          "last_retrieved_at": "2026-09-17T09:44:46.072459Z",
+          "reconsolidation_due_at": null
+        }
+      ],
+      "retrieve_after_restart": {
+        "schema_version": 1,
+        "profile": "baseline",
+        "facts": [
+          {
+            "id": "b9e0ca9b-21e1-42f2-9e0c-3cc8fb5acc73",
+            "version": 1,
+            "content": "Conversation carries overlap-canary-7f9d. Please remember this prompt for the hook.",
+            "scope": "project",
+            "scope_id": "b077c70d-ae34-4ac7-8aa4-bd7646343ab5",
+            "sources": [
+              {
+                "evidence_id": "cc31ba96-237f-486e-be61-e96c10612576",
+                "fact_id": "b9e0ca9b-21e1-42f2-9e0c-3cc8fb5acc73",
+                "source_event_id": "582cdb8ede79360a84ac0eed9ecf53d4506732530bfbda88480786318de45143",
+                "excerpt": "Conversation carries overlap-canary-7f9d. Please remember this prompt for the hook.",
+                "source_ref": "probe-transcript.jsonl#prompt-1",
+                "created_at": "2026-09-17T09:44:43.443265Z",
+                "original_source_status": "retained_locally"
+              }
+            ],
+            "support_available": true,
+            "original_source_status": "retained_locally",
+            "scores": {
+              "semantic": 0.4495585560798645,
+              "state_match": null,
+              "graph_energy": 0.0,
+              "graph_contribution": 0.0,
+              "total": 0.4495585560798645,
+              "state_status": "disabled",
+              "profile": "baseline",
+              "scope_match": true,
+              "context_token_upper_bound": 133,
+              "token_count_method": "utf8_bytes_upper_bound",
+              "graph_status": "disabled",
+              "candidate_backend": "sqlite_vec_scoped_exact_cosine",
+              "lexical_candidate": true,
+              "lexical_status": "candidate_union"
+            }
+          }
+        ],
+        "context": "[b9e0ca9b-21e1-42f2-9e0c-3cc8fb5acc73 version 1] Conversation carries overlap-canary-7f9d. Please remember this prompt for the hook.\n",
+        "token_count_method": "utf8_bytes_upper_bound",
+        "context_token_upper_bound": 133
+      }
+    }
+  }
+}

@@ -1,0 +1,279 @@
+"""Reproduce capture and explicit-forget overlap on the immutable 9e source."""
+
+from __future__ import annotations
+
+import asyncio
+import hashlib
+import json
+import os
+import sys
+import tempfile
+from datetime import datetime, timezone
+from pathlib import Path
+from typing import Any
+
+
+WORKTREE = Path(__file__).resolve().parents[1]
+FROZEN = WORKTREE / ".venv" / "atomic-schema-frozen-v1"
+OUTPUT_DIR = WORKTREE / ".venv" / "capture-forget-overlap-v1"
+OUTPUT = OUTPUT_DIR / "report.json"
+EXPECTED_COMMIT = "9e253390c58302817a18b6504f55899b36a2c27b"
+
+
+def sha256(path: Path) -> str:
+    digest = hashlib.sha256()
+    with path.open("rb") as handle:
+        for block in iter(lambda: handle.read(1024 * 1024), b""):
+            digest.update(block)
+    return digest.hexdigest()
+
+
+def git(*args: str) -> str:
+    import subprocess
+
+    return subprocess.run(
+        ["git", "-C", str(FROZEN), *args],
+        check=True,
+        capture_output=True,
+        text=True,
+    ).stdout.strip()
+
+
+def chunk_json(store: Any) -> list[dict[str, Any]]:
+    return [
+        chunk.model_dump(mode="json", exclude={"embedding"})
+        for chunk in store.get_all()
+    ]
+
+
+def make_service(db_path: Path, root: Path, registry: Any):
+    from mnemos.config import MnemosConfig, ModuleConfig
+    from mnemos.engine import MnemosEngine
+    from mnemos.memory_service import LocalMemoryService
+    from mnemos.utils.embeddings import SimpleEmbeddingProvider
+    from mnemos.utils.llm import UnavailableLLMProvider
+    from mnemos.utils.storage import SQLiteStore
+
+    config = MnemosConfig(
+        modules=ModuleConfig(
+            surprisal=False,
+            mutable_rag=False,
+            affective=False,
+            sleep=False,
+            spreading=False,
+        )
+    )
+    store = SQLiteStore(str(db_path))
+    engine = MnemosEngine(
+        config=config,
+        llm=UnavailableLLMProvider(),
+        embedder=SimpleEmbeddingProvider(),
+        store=store,
+        scope_registry=registry,
+        require_scope_context=True,
+    )
+    return LocalMemoryService(engine, registry)
+
+
+async def scenario() -> dict[str, Any]:
+    from mnemos.scopes import ScopeRegistry
+
+    fixture_root = Path(tempfile.mkdtemp(prefix="mnemos-capture-forget-", dir="D:/WindowsTemp"))
+    db_path = fixture_root / "memory.sqlite"
+    registry = ScopeRegistry()
+    registry.register_project(fixture_root, user_profile_id="probe-profile", enabled=True)
+    context = registry.resolve(
+        fixture_root,
+        user_profile_id="probe-profile",
+        session_id="probe-session",
+        host="claude-code",
+    )
+    prompt = (
+        "Conversation carries overlap-canary-7f9d. "
+        "Please remember this prompt for the hook."
+    )
+    exact_fact = "The durable deployment policy is SQLite."
+    corrected_fact = "The durable deployment policy is PostgreSQL."
+    context_payload = context.model_dump(mode="json")
+    memory = make_service(db_path, fixture_root, registry)
+    operations: dict[str, Any] = {}
+    try:
+        operations["capture_prompt"] = await memory.dispatch(
+            "capture",
+            {
+                "event_id": "hook-prompt-overlap-1",
+                "context": context_payload,
+                "scope": "project",
+                "occurred_at": datetime.now(timezone.utc).isoformat(),
+                "role": "user",
+                "content": prompt,
+                "source_kind": "claude_code_transcript",
+                "source_ref": "probe-transcript.jsonl#prompt-1",
+            },
+        )
+        operations["maintenance_after_capture"] = await memory.dispatch("maintenance", {})
+        operations["facts_after_capture"] = chunk_json(memory.engine.store)
+
+        operations["remember_exact"] = await memory.dispatch(
+            "remember",
+            {
+                "content": exact_fact,
+                "context": context_payload,
+                "event_id": "explicit-remember-overlap-1",
+            },
+        )
+        operations["maintenance_after_remember"] = await memory.dispatch("maintenance", {})
+        operations["facts_before_correction"] = chunk_json(memory.engine.store)
+        exact_chunk = next(
+            chunk for chunk in memory.engine.store.get_all() if chunk.content == exact_fact
+        )
+
+        operations["correct_exact"] = await memory.dispatch(
+            "correct",
+            {
+                "fact_id": exact_chunk.id,
+                "expected_version": exact_chunk.version,
+                "content": corrected_fact,
+                "context": context_payload,
+                "event_id": "explicit-correct-overlap-1",
+            },
+        )
+        operations["maintenance_after_correct"] = await memory.dispatch("maintenance", {})
+        revised = memory.engine.store.get(exact_chunk.id)
+        assert revised is not None
+        operations["corrected_fact"] = revised.model_dump(mode="json", exclude={"embedding"})
+
+        operations["forget_corrected"] = await memory.dispatch(
+            "forget",
+            {
+                "fact_id": exact_chunk.id,
+                "expected_version": revised.version,
+                "context": context_payload,
+            },
+        )
+        operations["facts_after_forget"] = chunk_json(memory.engine.store)
+        operations["episodic_after_forget"] = [
+            event.model_dump(mode="json")
+            for event in memory.engine.store.list_episodic_events()
+        ]
+        operations["suppressions_after_forget"] = [
+            {
+                "suppression_id": row[0],
+                "fact_id": row[1],
+                "canonical_key": row[2],
+                "source_event_id": row[3],
+                "reason": row[4],
+            }
+            for row in memory.engine.store._conn.execute(  # noqa: SLF001
+                "SELECT suppression_id, fact_id, canonical_key, source_event_id, reason "
+                "FROM memory_suppressions ORDER BY suppression_id"
+            ).fetchall()
+        ]
+        operations["retrieve_after_forget"] = await memory.dispatch(
+            "retrieve",
+            {
+                "query": "overlap-canary-7f9d",
+                "context": context_payload,
+                "top_k": 10,
+            },
+        )
+        operations["retrieve_exact_after_forget"] = await memory.dispatch(
+            "retrieve",
+            {
+                "query": "durable deployment policy SQLite PostgreSQL",
+                "context": context_payload,
+                "top_k": 10,
+            },
+        )
+    finally:
+        memory.engine.store.close()
+
+    restarted = make_service(db_path, fixture_root, registry)
+    try:
+        operations["facts_after_restart"] = chunk_json(restarted.engine.store)
+        operations["retrieve_after_restart"] = await restarted.dispatch(
+            "retrieve",
+            {
+                "query": "overlap-canary-7f9d",
+                "context": context_payload,
+                "top_k": 10,
+            },
+        )
+    finally:
+        restarted.engine.store.close()
+    return {
+        "fixture_root": str(fixture_root),
+        "database_path": str(db_path),
+        "context": context_payload,
+        "modules": {
+            "surprisal": False,
+            "mutable_rag": False,
+            "affective": False,
+            "sleep": False,
+            "spreading": False,
+        },
+        "providers": {"llm": "UnavailableLLMProvider", "embedder": "SimpleEmbeddingProvider"},
+        "synthetic_inputs": {
+            "prompt": prompt,
+            "exact_fact": exact_fact,
+            "corrected_fact": corrected_fact,
+            "query": "overlap-canary-7f9d",
+        },
+        "operations": operations,
+    }
+
+
+def main() -> int:
+    commit = git("rev-parse", "HEAD")
+    status = git("status", "--short", "--untracked-files=no")
+    if commit != EXPECTED_COMMIT or status:
+        raise RuntimeError(f"frozen source guard failed: commit={commit!r}, status={status!r}")
+    for key in list(os.environ):
+        if key == "PYTHONPATH" or key.startswith("MNEMOS"):
+            os.environ.pop(key, None)
+    current_root = WORKTREE.resolve()
+    sys.path[:] = [
+        str(FROZEN.resolve()),
+        *[
+            entry
+            for entry in sys.path
+            if Path(entry or os.curdir).resolve()
+            not in {current_root, current_root / "mnemos", current_root / "tests"}
+        ],
+    ]
+    import mnemos
+    import mnemos.memory_service
+    import mnemos.utils.storage as storage
+
+    origin = Path(storage.__file__).resolve()
+    if not str(origin).casefold().startswith(str(FROZEN.resolve()).casefold()):
+        raise RuntimeError(f"wrong storage origin: {origin}")
+    source_files = [
+        "mnemos/config.py",
+        "mnemos/contracts.py",
+        "mnemos/engine.py",
+        "mnemos/memory_service.py",
+        "mnemos/maintenance.py",
+        "mnemos/scopes.py",
+        "mnemos/types.py",
+        "mnemos/utils/embeddings.py",
+        "mnemos/utils/storage.py",
+    ]
+    report = {
+        "recorded_at": datetime.now(timezone.utc).isoformat(),
+        "command": [sys.executable, str(Path(__file__).resolve())],
+        "frozen_root": str(FROZEN.resolve()),
+        "frozen_commit": commit,
+        "frozen_status": status,
+        "storage_origin": str(origin),
+        "source_sha256": {path: sha256(FROZEN / path) for path in source_files},
+        "result": asyncio.run(scenario()),
+    }
+    OUTPUT_DIR.mkdir(parents=True, exist_ok=True)
+    OUTPUT.write_text(json.dumps(report, indent=2) + "\n", encoding="utf-8")
+    print(json.dumps({"output": str(OUTPUT), "frozen_commit": commit}, indent=2))
+    return 0
+
+
+if __name__ == "__main__":
+    raise SystemExit(main())

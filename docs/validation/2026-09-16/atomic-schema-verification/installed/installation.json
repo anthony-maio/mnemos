@@ -1,0 +1,76 @@
+{
+  "source_commit": "9e253390c58302817a18b6504f55899b36a2c27b",
+  "started_at": "2026-09-17T09:54:48.581395+00:00",
+  "status": "passed",
+  "wheel": {
+    "file": "D:\\Development\\mnemos\\mnemos\\.worktrees\\functional-local-memory\\.venv\\atomic-schema-checks-v1\\dist\\mnemos_memory-0.7.0-py3-none-any.whl",
+    "bytes": 264473,
+    "sha256": "65f0354fd97b6a492a7c5dde2bf0f8eb008c3ff21b81842631e0f9a92c545a62"
+  },
+  "environment": "D:\\WindowsTemp\\mnemos-atomic-schema-wheel-20260917-v1",
+  "runner_sha256": "186a4a3bb0612171fca53a6e12dfb1b45938334c704bdacb1456fb03632fae6d",
+  "commands": [
+    {
+      "name": "create_environment",
+      "command": [
+        "C:\\Users\\Ant\\.local\\bin\\uv.exe",
+        "venv",
+        "D:\\WindowsTemp\\mnemos-atomic-schema-wheel-20260917-v1",
+        "--python",
+        "D:\\Development\\mnemos\\mnemos\\.worktrees\\functional-local-memory\\.venv\\Scripts\\python.exe"
+      ],
+      "started_at": "2026-09-17T09:54:48.581671+00:00",
+      "exit_code": 0,
+      "finished_at": "2026-09-17T09:54:48.807145+00:00"
+    },
+    {
+      "name": "install_wheel",
+      "command": [
+        "C:\\Users\\Ant\\.local\\bin\\uv.exe",
+        "pip",
+        "install",
+        "--python",
+        "D:\\WindowsTemp\\mnemos-atomic-schema-wheel-20260917-v1\\Scripts\\python.exe",
+        "D:\\Development\\mnemos\\mnemos\\.worktrees\\functional-local-memory\\.venv\\atomic-schema-checks-v1\\dist\\mnemos_memory-0.7.0-py3-none-any.whl"
+      ],
+      "started_at": "2026-09-17T09:54:48.807160+00:00",
+      "exit_code": 0,
+      "finished_at": "2026-09-17T09:54:52.905693+00:00"
+    },
+    {
+      "name": "freeze_environment",
+      "command": [
+        "C:\\Users\\Ant\\.local\\bin\\uv.exe",
+        "pip",
+        "freeze",
+        "--python",
+        "D:\\WindowsTemp\\mnemos-atomic-schema-wheel-20260917-v1\\Scripts\\python.exe"
+      ],
+      "started_at": "2026-09-17T09:54:52.905705+00:00",
+      "exit_code": 0,
+      "finished_at": "2026-09-17T09:54:52.943182+00:00"
+    },
+    {
+      "name": "replay_probe",
+      "command": [
+        "D:\\WindowsTemp\\mnemos-atomic-schema-wheel-20260917-v1\\Scripts\\python.exe",
+        "-I",
+        "D:\\Development\\mnemos\\mnemos\\.worktrees\\functional-local-memory\\.venv\\verify_claude_stop_replay.py",
+        "--snapshot",
+        "D:\\Development\\mnemos\\mnemos\\.worktrees\\functional-local-memory\\.venv\\atomic-schema-frozen-v1",
+        "--commit",
+        "9e253390c58302817a18b6504f55899b36a2c27b",
+        "--output",
+        "D:\\Development\\mnemos\\mnemos\\.worktrees\\functional-local-memory\\.venv\\atomic-schema-installed-v1\\probe.json",
+        "--installed-package",
+        "D:\\WindowsTemp\\mnemos-atomic-schema-wheel-20260917-v1\\Lib\\site-packages",
+        "--wheel",
+        "D:\\Development\\mnemos\\mnemos\\.worktrees\\functional-local-memory\\.venv\\atomic-schema-checks-v1\\dist\\mnemos_memory-0.7.0-py3-none-any.whl"
+      ],
+      "started_at": "2026-09-17T09:54:52.943197+00:00",
+      "exit_code": 0,
+      "finished_at": "2026-09-17T09:54:59.040650+00:00"
+    }
+  ],
+  "finished_at": "2026-09-17T09:54:59.051702+00:00"
+}

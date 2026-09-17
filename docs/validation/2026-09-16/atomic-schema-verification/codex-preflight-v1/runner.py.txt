@@ -1,0 +1,1413 @@
+"""Run a bounded native Codex MCP correction and forget lifecycle check.
+
+This is a real-host experiment, rather than a quality benchmark.  It uses a
+private project, a private SQLite service, constant embeddings, and disabled
+cognition.  The native agent must perform every memory mutation through the
+Mnemos MCP tools.  Direct service calls are limited to lifecycle control and
+independent readback.
+"""
+
+from __future__ import annotations
+
+import argparse
+from datetime import datetime, timezone
+import hashlib
+import json
+import os
+from pathlib import Path
+import secrets
+import shutil
+import subprocess
+import sys
+import tempfile
+import time
+import traceback
+import zipfile
+from typing import Any, Mapping
+
+WORKTREE = Path(__file__).resolve().parents[1]
+SOURCE_COMMIT = "9e253390c58302817a18b6504f55899b36a2c27b"
+V8_HELPER_PATH = WORKTREE / ".venv" / "native_codex_generated_v8.py"
+V8_HELPER_SHA256 = "dd9ebebe7480fa5a172bb41135a4690baf94d2c585f5357a77f17265e7acb58b12"
+OUTPUT_DIR = WORKTREE / "docs" / "validation" / "2026-09-16" / "native-codex-lifecycle-v1"
+TEMP_PARENT = Path(r"D:\WindowsTemp")
+CODEX_EXE = (
+    Path(r"C:\Users\Ant\AppData\Roaming\npm\node_modules\@openai\codex")
+    / "node_modules"
+    / "@openai"
+    / "codex-win32-x64"
+    / "vendor"
+    / "x86_64-pc-windows-msvc"
+    / "bin"
+    / "codex.exe"
+)
+MAX_NATIVE_SECONDS = 60
+PROFILE = "native-codex-lifecycle-v1"
+V8_SOURCE_NOTE = "Copied provenance and cleanup patterns from native_codex_generated_v8.py"
+
+
+def _sha256(value: bytes | str) -> str:
+    raw = value.encode("utf-8") if isinstance(value, str) else value
+    return hashlib.sha256(raw).hexdigest()
+
+
+def _assert_v8_helper_source() -> str:
+    observed = _sha256(V8_HELPER_PATH.read_bytes())
+    if observed != V8_HELPER_SHA256:
+        raise RuntimeError("The pinned v8 helper source changed")
+    return observed
+
+
+def _pinned_package_provenance(
+    package_path: Path, *, wheel_path: Path, expected_wheel_sha256: str
+) -> dict[str, Any]:
+    """Compare installed package files with the pinned source and wheel."""
+    listing = subprocess.run(
+        [
+            "git",
+            "-C",
+            str(WORKTREE),
+            "ls-tree",
+            "-r",
+            "--name-only",
+            SOURCE_COMMIT,
+            "mnemos",
+        ],
+        capture_output=True,
+        text=True,
+        check=True,
+        timeout=10,
+    )
+    files = [Path(item) for item in listing.stdout.splitlines() if item.strip()]
+    if not files:
+        raise RuntimeError("Pinned source has no package files")
+    mismatches: list[str] = []
+    for relative in files:
+        expected = subprocess.run(
+            ["git", "-C", str(WORKTREE), "show", f"{SOURCE_COMMIT}:{relative.as_posix()}"],
+            capture_output=True,
+            check=True,
+            timeout=10,
+        ).stdout.replace(b"\r\n", b"\n")
+        installed = (
+            (package_path.parent / Path(*relative.parts[1:])).read_bytes().replace(b"\r\n", b"\n")
+        )
+        if installed != expected:
+            mismatches.append(relative.as_posix())
+    wheel_digest = _sha256(wheel_path.read_bytes())
+    if wheel_digest != expected_wheel_sha256:
+        raise RuntimeError("Wheel archive does not match the expected digest")
+    with zipfile.ZipFile(wheel_path) as archive:
+        for item in archive.infolist():
+            if item.is_dir() or not item.filename.startswith("mnemos/"):
+                continue
+            installed = package_path.parent / Path(*Path(item.filename).parts[1:])
+            if installed.read_bytes() != archive.read(item):
+                mismatches.append("wheel:" + item.filename)
+    if mismatches:
+        raise RuntimeError("Installed package differs from pinned source or wheel")
+    return {
+        "source_commit": SOURCE_COMMIT,
+        "package_files_checked": len(files),
+        "mismatches": [],
+        "wheel_sha256_expected": expected_wheel_sha256,
+        "wheel_sha256_observed": wheel_digest,
+        "wheel_path": str(wheel_path),
+    }
+
+
+def _run_local_cli(args: list[str], *, timeout: float = 5.0) -> subprocess.CompletedProcess[str]:
+    return subprocess.run(
+        [str(CODEX_EXE), *args],
+        capture_output=True,
+        text=True,
+        encoding="utf-8",
+        errors="replace",
+        check=False,
+        timeout=timeout,
+        shell=False,
+    )
+
+
+def _verify_cli() -> dict[str, Any]:
+    if os.name != "nt":
+        raise RuntimeError("Native Codex lifecycle runner requires Windows")
+    if not CODEX_EXE.is_file():
+        raise FileNotFoundError(f"Direct Codex executable is missing: {CODEX_EXE}")
+    version = _run_local_cli(["--version"])
+    top_help = _run_local_cli(["--help"])
+    exec_help = _run_local_cli(["exec", "--help"])
+    help_text = (exec_help.stdout or "") + "\n" + (exec_help.stderr or "")
+    required = {
+        "--json",
+        "--dangerously-bypass-hook-trust",
+        "--sandbox",
+        "read-only",
+        "--cd",
+        "--skip-git-repo-check",
+        "--ephemeral",
+    }
+    missing = sorted(flag for flag in required if flag not in help_text)
+    if version.returncode or top_help.returncode or exec_help.returncode or missing:
+        raise RuntimeError("Codex CLI capability probe failed: " + ", ".join(missing))
+    return {
+        "path": str(CODEX_EXE),
+        "version": (version.stdout or version.stderr).strip(),
+        "help_flags_verified": sorted(required),
+        "approval_flag_placement": {
+            "top_level": "--ask-for-approval" in (top_help.stdout or ""),
+            "exec": "--ask-for-approval" in help_text,
+            "command_uses": False,
+        },
+    }
+
+
+def _private_mkdir(path: Path) -> None:
+    from mnemos.service import _protect_private_path
+
+    path.mkdir(parents=True, exist_ok=False)
+    _protect_private_path(path)
+
+
+def _protect_file(path: Path) -> None:
+    from mnemos.service import _protect_private_path
+
+    _protect_private_path(path)
+
+
+def _clean_environment(overrides: Mapping[str, str]) -> dict[str, str]:
+    environment = dict(os.environ)
+    for key in list(environment):
+        if key.startswith("MNEMOS_") or key in {
+            "PYTHONPATH",
+            "VIRTUAL_ENV",
+            "CODEX_HOME",
+        }:
+            environment.pop(key, None)
+    environment.update(overrides)
+    return environment
+
+
+def _terminate_process_tree(process: subprocess.Popen[str]) -> bool:
+    if process.poll() is not None:
+        return False
+    if os.name == "nt":
+        subprocess.run(
+            ["taskkill", "/PID", str(process.pid), "/T", "/F"],
+            capture_output=True,
+            text=True,
+            check=False,
+            timeout=10,
+        )
+    else:  # pragma: no cover - the runner is Windows-only
+        process.kill()
+    try:
+        process.wait(timeout=10)
+    except subprocess.TimeoutExpired:
+        process.kill()
+        process.wait(timeout=10)
+    return True
+
+
+def _numeric_usage(value: Any) -> dict[str, int | float]:
+    if not isinstance(value, Mapping):
+        return {}
+    return {
+        str(key): item
+        for key, item in value.items()
+        if isinstance(item, (int, float)) and not isinstance(item, bool)
+    }
+
+
+def _native_event_summary(
+    stdout: str, *, expected_strings: Mapping[str, str] | None = None
+) -> dict[str, Any]:
+    expected_strings = expected_strings or {}
+    rows: list[dict[str, Any]] = []
+    tool_names: set[str] = set()
+    tool_calls: list[dict[str, Any]] = []
+    non_json = 0
+    unreviewed_errors = 0
+    answer_digests: list[str] = []
+    for line in stdout.splitlines():
+        try:
+            value = json.loads(line)
+        except json.JSONDecodeError:
+            non_json += 1
+            continue
+        if not isinstance(value, Mapping):
+            continue
+        item = value.get("item")
+        item_type = (
+            item.get("type")
+            if isinstance(item, Mapping)
+            else value.get("type") if isinstance(value.get("type"), str) else None
+        )
+        name_values: list[Any] = []
+        tool_record = item if isinstance(item, Mapping) else value
+        if isinstance(tool_record, Mapping):
+            name_values.extend(
+                [tool_record.get("name"), tool_record.get("tool_name"), tool_record.get("tool")]
+            )
+            function = tool_record.get("function")
+            if isinstance(function, Mapping):
+                name_values.append(function.get("name"))
+            text_value = tool_record.get("text")
+            if isinstance(text_value, str) and item_type == "agent_message":
+                answer_digests.append(_sha256(text_value))
+        tool_name = next(
+            (
+                candidate
+                for candidate in name_values
+                if isinstance(candidate, str) and candidate.startswith("mnemos_")
+            ),
+            None,
+        )
+        server = tool_record.get("server") if isinstance(tool_record, Mapping) else None
+        is_mnemos_tool_call = (
+            item_type == "mcp_tool_call" and server == "mnemos" and tool_name is not None
+        )
+        if not is_mnemos_tool_call:
+            tool_name = None
+        else:
+            tool_names.add(tool_name)
+        if tool_name is not None and isinstance(tool_record, Mapping):
+            raw_result = tool_record.get("result")
+            if raw_result is None:
+                raw_result = tool_record.get("output")
+            if raw_result is None:
+                raw_result = value.get("result")
+            if raw_result is None:
+                raw_result = value.get("output")
+            result_text = (
+                raw_result
+                if isinstance(raw_result, str)
+                else (
+                    json.dumps(raw_result, ensure_ascii=True, sort_keys=True, default=str)
+                    if raw_result is not None
+                    else ""
+                )
+            )
+            result_error_marker = bool(
+                tool_record.get("isError") is True
+                or value.get("isError") is True
+                or tool_record.get("error") not in (None, False, "")
+                or value.get("error") not in (None, False, "")
+                or tool_record.get("status") in {"error", "failed"}
+                or value.get("status") in {"error", "failed"}
+                or (
+                    isinstance(raw_result, Mapping)
+                    and (
+                        raw_result.get("isError") is True
+                        or raw_result.get("error") not in (None, False, "")
+                        or raw_result.get("status") in {"error", "failed"}
+                    )
+                )
+            )
+            result_object: Mapping[str, Any] | None = None
+            result_parseable = False
+            if isinstance(raw_result, Mapping):
+                result_object = raw_result
+                result_parseable = True
+            elif result_text:
+                try:
+                    parsed_result = json.loads(result_text)
+                except json.JSONDecodeError:
+                    parsed_result = None
+                if isinstance(parsed_result, Mapping):
+                    result_object = parsed_result
+                    result_parseable = True
+            if result_object is not None and isinstance(result_object.get("content"), list):
+                for content_item in result_object["content"]:
+                    if not isinstance(content_item, Mapping):
+                        continue
+                    content_text = content_item.get("text")
+                    if not isinstance(content_text, str):
+                        continue
+                    try:
+                        parsed_content = json.loads(content_text)
+                    except json.JSONDecodeError:
+                        continue
+                    if isinstance(parsed_content, Mapping):
+                        result_object = parsed_content
+                        result_parseable = True
+                        break
+            item_status = (
+                tool_record.get("status")
+                if isinstance(tool_record.get("status"), str)
+                else (
+                    value.get("status")
+                    if isinstance(value.get("status"), str)
+                    else (
+                        "completed"
+                        if isinstance(value.get("type"), str)
+                        and (
+                            value["type"].lower().endswith((".completed", "_completed"))
+                            or value["type"].lower() in {"mcp_tool_result", "tool_result"}
+                        )
+                        else None
+                    )
+                )
+            )
+            service_status = (
+                result_object.get("status")
+                if result_object is not None and isinstance(result_object.get("status"), str)
+                else None
+            )
+            tool_calls.append(
+                {
+                    "name": tool_name,
+                    "server": (
+                        tool_record.get("server")
+                        if isinstance(tool_record.get("server"), str)
+                        else None
+                    ),
+                    "item_type": item_type,
+                    "item_status": item_status,
+                    "service_status": service_status,
+                    "result_present": raw_result is not None,
+                    "result_parseable": result_parseable,
+                    "result_sha256": _sha256(result_text) if result_text else None,
+                    "result_bytes": len(result_text.encode("utf-8")),
+                    "result_contains": {
+                        label: bool(value and value in result_text)
+                        for label, value in expected_strings.items()
+                    },
+                    "result_forgotten": (
+                        result_object.get("forgotten") is True
+                        if result_object is not None
+                        else False
+                    ),
+                    "result_error": bool(
+                        result_error_marker
+                        or (
+                            result_object is not None
+                            and (
+                                result_object.get("isError") is True
+                                or result_object.get("error") not in (None, False, "")
+                                or result_object.get("status") in {"error", "failed"}
+                            )
+                        )
+                    ),
+                }
+            )
+        error_present = item_type == "error" or value.get("type") == "error"
+        if error_present:
+            message = ""
+            if isinstance(item, Mapping) and isinstance(item.get("message"), str):
+                message = item["message"]
+            elif isinstance(value.get("message"), str):
+                message = value["message"]
+            known_notice = message in {
+                "`--dangerously-bypass-hook-trust` is enabled. Enabled hooks may run without review for this invocation.",
+                "Skill descriptions were shortened to fit the 2% skills context budget. Codex can still see every skill, but some descriptions are shorter. Disable unused skills or plugins to leave more room for the rest.",
+            }
+            if not known_notice:
+                unreviewed_errors += 1
+        rows.append(
+            {
+                "type": value.get("type"),
+                "item_type": item_type,
+                "model": value.get("model") if isinstance(value.get("model"), str) else None,
+                "error_present": error_present,
+                "usage": _numeric_usage(value.get("usage")),
+            }
+        )
+    return {
+        "record_count": len(rows),
+        "non_json_line_count": non_json,
+        "rows": rows,
+        "tool_names": sorted(tool_names),
+        "tool_calls": tool_calls,
+        "mcp_servers": sorted(
+            {
+                call["server"]
+                for call in tool_calls
+                if isinstance(call.get("server"), str) and call["server"]
+            }
+        ),
+        "stdout_contains": {
+            label: bool(value and value in stdout) for label, value in expected_strings.items()
+        },
+        "tool_call_observed": bool(tool_names),
+        "error_count": sum(1 for row in rows if row["error_present"]),
+        "unreviewed_error_count": unreviewed_errors,
+        "models": sorted({row["model"] for row in rows if row["model"]}),
+        "usage_observed": any(bool(row["usage"]) for row in rows),
+        "answer_text_digests": answer_digests,
+    }
+
+
+def _successful_call(call: Mapping[str, Any]) -> bool:
+    return (
+        call.get("item_type") == "mcp_tool_call"
+        and call.get("server") == "mnemos"
+        and call.get("item_status") in {"completed", "success", "succeeded", "ok"}
+        and call.get("result_present") is True
+        and call.get("result_parseable") is True
+        and call.get("result_error") is False
+    )
+
+
+def _successful_tool(summary: Mapping[str, Any], name: str) -> bool:
+    """Require a completed native call with a returned, non-error result."""
+    calls = summary.get("tool_calls")
+    if not isinstance(calls, list):
+        return False
+    return any(
+        isinstance(call, Mapping) and call.get("name") == name and _successful_call(call)
+        for call in calls
+    )
+
+
+def _result_contains(summary: Mapping[str, Any], name: str, label: str) -> bool:
+    calls = summary.get("tool_calls")
+    if not isinstance(calls, list):
+        return False
+    return any(
+        isinstance(call, Mapping)
+        and call.get("name") == name
+        and _successful_call(call)
+        and isinstance(call.get("result_contains"), Mapping)
+        and call["result_contains"].get(label) is True
+        for call in calls
+    )
+
+
+def _result_contains_any(summary: Mapping[str, Any], name: str, labels: tuple[str, ...]) -> bool:
+    return any(_result_contains(summary, name, label) for label in labels)
+
+
+def _service_status(summary: Mapping[str, Any], name: str) -> list[str]:
+    calls = summary.get("tool_calls")
+    if not isinstance(calls, list):
+        return []
+    return sorted(
+        {
+            str(call["service_status"])
+            for call in calls
+            if isinstance(call, Mapping)
+            and call.get("name") == name
+            and _successful_call(call)
+            and isinstance(call.get("service_status"), str)
+        }
+    )
+
+
+def _successful_service_status(summary: Mapping[str, Any], name: str, status: str) -> bool:
+    calls = summary.get("tool_calls")
+    if not isinstance(calls, list):
+        return False
+    return any(
+        isinstance(call, Mapping)
+        and call.get("name") == name
+        and _successful_call(call)
+        and call.get("service_status") == status
+        for call in calls
+    )
+
+
+def _start_service(fixture: Path, registry: Any, config: Any) -> tuple[Any, Any]:
+    from mnemos.engine import MnemosEngine
+    from mnemos.memory_service import LocalMemoryService
+    from mnemos.service import MnemosService
+    from mnemos.utils.embeddings import SimpleEmbeddingProvider
+    from mnemos.utils.llm import UnavailableLLMProvider
+    from mnemos.utils.storage import SQLiteStore
+
+    class ConstantFixtureEmbeddings(SimpleEmbeddingProvider):
+        """Transport fixture only; no semantic retrieval claim."""
+
+        def embed(self, text: str) -> list[float]:
+            del text
+            return [1.0] + [0.0] * 63
+
+        def embed_batch(self, texts: list[str]) -> list[list[float]]:
+            return [self.embed(text) for text in texts]
+
+    store = SQLiteStore(str(fixture / "memory.sqlite"))
+    service: Any | None = None
+    try:
+        engine = MnemosEngine(
+            config=config,
+            llm=UnavailableLLMProvider("native lifecycle cognition unavailable"),
+            embedder=ConstantFixtureEmbeddings(dim=64),
+            store=store,
+            scope_registry=registry,
+            require_scope_context=True,
+        )
+        service = MnemosService(
+            dispatcher=LocalMemoryService(engine, registry),
+            descriptor_path=fixture / "runtime.json",
+            lock_path=fixture / "service.lock",
+            startup_timeout=5,
+            dispatch_timeout=20,
+        )
+        service.start()
+        return service, store
+    except Exception:
+        cleanup_errors = _close_service(service, store)
+        if cleanup_errors:
+            raise RuntimeError("Service startup cleanup failed")
+        raise
+
+
+def _close_service(service: Any | None, store: Any | None) -> list[str]:
+    errors: list[str] = []
+    service_stopped = True
+    if service is not None:
+        try:
+            service.stop()
+        except Exception as exc:
+            service_stopped = False
+            errors.append("service_stop:" + type(exc).__name__)
+    # A store belongs to the service owner thread. Do not close it after a
+    # failed stop, since that can race an owner still using SQLite.
+    if store is not None and service_stopped:
+        try:
+            store.close()
+        except Exception as exc:
+            errors.append("store_close:" + type(exc).__name__)
+    return errors
+
+
+def _isolated_codex_command(project: Path, prompt: str) -> list[str]:
+    return [
+        str(CODEX_EXE),
+        "exec",
+        "--json",
+        "--dangerously-bypass-hook-trust",
+        "--sandbox",
+        "read-only",
+        "--cd",
+        str(project),
+        "--skip-git-repo-check",
+        "--ephemeral",
+        prompt,
+    ]
+
+
+def _auth_copy(config_dir: Path) -> Path:
+    source = Path(os.environ.get("USERPROFILE", str(Path.home()))) / ".codex" / "auth.json"
+    if not source.is_file():
+        raise FileNotFoundError("Existing Codex auth.json is unavailable")
+    _protect_file(config_dir)
+    target = config_dir / "auth.json"
+    try:
+        shutil.copy2(source, target)
+        _protect_file(target)
+    except Exception:
+        target.unlink(missing_ok=True)
+        raise
+    return target
+
+
+def _cleanup_native_resources(
+    process: subprocess.Popen[str] | None, auth_copy: Path | None
+) -> list[str]:
+    """Attempt process and auth cleanup independently, preserving both errors."""
+    errors: list[str] = []
+    if process is not None and process.poll() is None:
+        try:
+            _terminate_process_tree(process)
+        except Exception as exc:
+            errors.append("process_terminate:" + type(exc).__name__)
+        if process.poll() is None:
+            errors.append("process_still_running")
+    if auth_copy is not None:
+        try:
+            auth_copy.unlink(missing_ok=True)
+        except OSError as exc:
+            errors.append("auth_remove:" + type(exc).__name__)
+        if auth_copy.exists():
+            errors.append("auth_copy_remains")
+    return errors
+
+
+def _run_turn(
+    *,
+    fixture: Path,
+    project: Path,
+    turn_name: str,
+    prompt: str,
+    registry_path: Path,
+    settings_path: Path,
+    runtime_dir: Path,
+    routing_dir: Path,
+    profile: str,
+    target_python: Path,
+    expected_strings: Mapping[str, str] | None = None,
+) -> dict[str, Any]:
+    from mnemos.hosts import apply_host_integration
+
+    turn_dir = fixture / ("turn-" + turn_name)
+    _private_mkdir(turn_dir)
+    home = turn_dir / "codex-home"
+    _private_mkdir(home)
+    session_id = "native-codex-lifecycle-" + turn_name + "-" + secrets.token_hex(8)
+    selector_env = {
+        "MNEMOS_CONFIG_PATH": str(settings_path),
+        "MNEMOS_SCOPE_REGISTRY": str(registry_path),
+        "MNEMOS_USER_PROFILE_ID": profile,
+        "MNEMOS_RUNTIME_DESCRIPTOR": str(fixture / "runtime.json"),
+        "MNEMOS_RUNTIME_DIR": str(runtime_dir),
+        "MNEMOS_ROUTING_REVIEW_DIR": str(routing_dir),
+        "MNEMOS_AUTO_START": "false",
+        "MNEMOS_AUTO_RETRIEVE": "true",
+        "MNEMOS_PROJECT_ROOT": str(project),
+        "MNEMOS_HOST": "codex",
+        "MNEMOS_SESSION_ID": session_id,
+        "PATH": str(target_python.resolve().parent) + os.pathsep + os.environ.get("PATH", ""),
+    }
+    generated = apply_host_integration(
+        "codex",
+        mnemos_config_path=settings_path,
+        cwd=project,
+        home=home,
+        # The host renderer deliberately accepts only selectors safe to write
+        # into a config file. The complete selector environment is still
+        # inherited by the native process and its MCP child.
+        integration_env={
+            key: selector_env[key]
+            for key in (
+                "MNEMOS_CONFIG_PATH",
+                "MNEMOS_SCOPE_REGISTRY",
+                "MNEMOS_USER_PROFILE_ID",
+                "MNEMOS_RUNTIME_DESCRIPTOR",
+            )
+        },
+    )
+    config_path = generated.config_path
+    if not config_path.is_file():
+        raise RuntimeError("Generated Codex config was not written")
+    codex_home = config_path.parent
+    if codex_home != (home / ".codex").resolve():
+        raise RuntimeError("Generated Codex config is outside the requested Codex home")
+    auth_copy: Path | None = None
+    process: subprocess.Popen[str] | None = None
+    started = time.monotonic()
+    native_stdout = ""
+    native_stderr = ""
+    timed_out = False
+    try:
+        auth_copy = _auth_copy(config_path.parent)
+        environment = _clean_environment({"CODEX_HOME": str(codex_home), **selector_env})
+        command = _isolated_codex_command(project, prompt)
+        process = subprocess.Popen(
+            command,
+            cwd=str(project),
+            env=environment,
+            stdin=subprocess.DEVNULL,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+            text=True,
+            encoding="utf-8",
+            errors="replace",
+            shell=False,
+            creationflags=subprocess.CREATE_NEW_PROCESS_GROUP,
+        )
+        try:
+            native_stdout, native_stderr = process.communicate(timeout=MAX_NATIVE_SECONDS)
+        except subprocess.TimeoutExpired:
+            timed_out = _terminate_process_tree(process)
+            native_stdout, native_stderr = process.communicate(timeout=15)
+        summary = _native_event_summary(native_stdout, expected_strings=expected_strings)
+        stdout_path = turn_dir / "native-stdout.jsonl"
+        stderr_path = turn_dir / "native-stderr.log"
+        stdout_path.write_text(native_stdout, encoding="utf-8")
+        stderr_path.write_text(native_stderr, encoding="utf-8")
+        _protect_file(stdout_path)
+        _protect_file(stderr_path)
+        return {
+            "turn": turn_name,
+            "session_id_digest": _sha256(session_id),
+            "project_root_digest": _sha256(str(project.resolve())),
+            "status": "completed" if process.returncode == 0 and not timed_out else "failed",
+            "returncode": process.returncode,
+            "timed_out": timed_out,
+            "elapsed_ms": round((time.monotonic() - started) * 1000, 1),
+            "codex_home": str(codex_home),
+            "config_path": str(config_path),
+            "config_sha256": _sha256(config_path.read_bytes()),
+            "agents_path": str(project / "AGENTS.md"),
+            "agents_sha256": _sha256((project / "AGENTS.md").read_bytes()),
+            "command": [
+                item if item != prompt else "<private lifecycle prompt>" for item in command
+            ],
+            "stdout_path": str(stdout_path),
+            "stdout_sha256": _sha256(native_stdout),
+            "stdout_bytes": len(native_stdout.encode("utf-8")),
+            "stderr_path": str(stderr_path),
+            "stderr_sha256": _sha256(native_stderr),
+            "stderr_bytes": len(native_stderr.encode("utf-8")),
+            "native": summary,
+        }
+    finally:
+        cleanup_errors = _cleanup_native_resources(process, auth_copy)
+        if cleanup_errors:
+            raise RuntimeError("Native cleanup failed: " + ",".join(cleanup_errors))
+
+
+def _fact_summary(fact: Any) -> dict[str, Any]:
+    return {
+        "id": fact.id,
+        "version": fact.version,
+        "content_sha256": _sha256(fact.content),
+        "content_length": len(fact.content),
+        "scope": fact.metadata.get("scope"),
+        "scope_id": fact.metadata.get("scope_id"),
+        "user_profile_id": fact.metadata.get("user_profile_id"),
+        "host": fact.metadata.get("host"),
+        "session_id_digest": (
+            _sha256(str(fact.metadata["session_id"])) if fact.metadata.get("session_id") else None
+        ),
+        "source": fact.metadata.get("source"),
+        "source_event_ids": list(fact.metadata.get("source_event_ids", [])),
+    }
+
+
+def _find_facts(store: Any, content: str) -> list[Any]:
+    return [fact for fact in store.list_chunks(limit=10_000) if fact.content == content]
+
+
+def _offline_service_api_preflight() -> dict[str, Any]:
+    """Exercise the installed service API in a disposable, no-model fixture."""
+    from mnemos.config import MnemosConfig
+    from mnemos.scopes import ScopeRegistry
+    from mnemos.service import _protect_private_path
+
+    fixture = Path(tempfile.mkdtemp(prefix="mnemos-native-codex-api-preflight-", dir=TEMP_PARENT))
+    _protect_private_path(fixture)
+    service: Any | None = None
+    store: Any | None = None
+    try:
+        project = fixture / "project"
+        project.mkdir()
+        _protect_private_path(project)
+        runtime_dir = fixture / "runtime"
+        runtime_dir.mkdir()
+        _protect_private_path(runtime_dir)
+        registry = ScopeRegistry()
+        identity = registry.register_project(project, user_profile_id=PROFILE, enabled=True)
+        config = MnemosConfig()
+        for name in ("surprisal", "mutable_rag", "affective", "sleep", "spreading"):
+            setattr(config.modules, name, False)
+        service, store = _start_service(fixture, registry, config)
+        context = registry.resolve(
+            project,
+            user_profile_id=PROFILE,
+            session_id="api-preflight-session",
+            host="manual",
+        )
+        content = "Offline API preflight fact."
+        remembered = service.submit(
+            "remember",
+            {
+                "event_id": "api-preflight-remember",
+                "context": context.model_dump(mode="json"),
+                "content": content,
+                "role": "user",
+                "scope": "project",
+            },
+        )
+        if remembered.get("status") != "committed":
+            raise RuntimeError("Offline remember API preflight failed")
+        maintained = service.submit("maintenance", {})
+        if not isinstance(maintained, Mapping) or "maintenance" not in maintained:
+            raise RuntimeError("Offline maintenance API preflight failed")
+        retrieved = service.submit(
+            "retrieve",
+            {
+                "query": content,
+                "context": context.model_dump(mode="json"),
+                "allowed_scopes": ["project", "global"],
+                "top_k": 5,
+                "max_context_tokens": 1200,
+                "profile": "baseline",
+            },
+        )
+        facts = retrieved.get("facts") if isinstance(retrieved, Mapping) else None
+        if not isinstance(facts, list) or not any(
+            isinstance(fact, Mapping) and fact.get("content") == content for fact in facts
+        ):
+            raise RuntimeError("Offline retrieve API preflight did not return the fact")
+        stored_facts = _find_facts(store, content)
+        if len(stored_facts) != 1:
+            raise RuntimeError("Offline preflight did not produce exactly one fact")
+        stored_fact = stored_facts[0]
+        if (
+            stored_fact.metadata.get("source") != "explicit_remember"
+            or stored_fact.metadata.get("scope_id") != identity.id
+            or stored_fact.metadata.get("user_profile_id") != PROFILE
+        ):
+            raise RuntimeError("Offline preflight fact provenance is incorrect")
+        return {
+            "status": "passed",
+            "project_id": identity.id,
+            "remember_status": remembered.get("status"),
+            "maintenance_response": {
+                "has_maintenance": "maintenance" in maintained,
+                "has_graph": "graph" in maintained,
+            },
+            "retrieve_fact_observed": True,
+            "fact_provenance": _fact_summary(stored_fact),
+        }
+    finally:
+        cleanup_errors = _close_service(service, store)
+        if cleanup_errors:
+            raise RuntimeError("Offline preflight cleanup failed")
+        # Retain the private preflight fixture for diagnosis and readback.
+
+
+def _verify_preflight_report(
+    path: Path, *, wheel_path: Path, expected_wheel_sha256: str
+) -> dict[str, Any]:
+    """Bind an execution to a successful, matching, immutable preflight."""
+    if not path.is_file():
+        raise FileNotFoundError(f"Verification report is missing: {path}")
+    try:
+        value = json.loads(path.read_text(encoding="utf-8"))
+    except (OSError, UnicodeDecodeError, json.JSONDecodeError) as exc:
+        raise RuntimeError("Verification report is not valid JSON") from exc
+    if not isinstance(value, Mapping):
+        raise RuntimeError("Verification report must be a JSON object")
+    if value.get("status") != "preflight_passed":
+        raise RuntimeError("Verification report is not a passed preflight")
+    if value.get("source_commit") != SOURCE_COMMIT:
+        raise RuntimeError("Verification report source commit does not match")
+    if value.get("expected_wheel_sha256") != expected_wheel_sha256:
+        raise RuntimeError("Verification report wheel digest does not match")
+    provenance = value.get("package_provenance")
+    if not isinstance(provenance, Mapping):
+        raise RuntimeError("Verification report lacks package provenance")
+    if provenance.get("wheel_sha256_observed") != expected_wheel_sha256:
+        raise RuntimeError("Verification report wheel artifact digest does not match")
+    recorded_path = provenance.get("wheel_path")
+    if not isinstance(recorded_path, str) or Path(recorded_path).resolve() != wheel_path.resolve():
+        raise RuntimeError("Verification report wheel artifact path does not match")
+    python_info = value.get("python")
+    package_path = (
+        Path(str(python_info.get("mnemos_package"))) if isinstance(python_info, Mapping) else None
+    )
+    if (
+        not isinstance(python_info, Mapping)
+        or python_info.get("site_packages_asserted") is not True
+        or package_path is None
+        or not package_path.is_file()
+        or "site-packages" not in {part.lower() for part in package_path.parts}
+    ):
+        raise RuntimeError("Verification report lacks a valid installed package path")
+    return {
+        "report_path": str(path.resolve()),
+        "report_sha256": _sha256(path.read_bytes()),
+        "source_commit": SOURCE_COMMIT,
+        "wheel_path": str(wheel_path.resolve()),
+        "wheel_sha256": expected_wheel_sha256,
+        "installed_package": str(package_path),
+    }
+
+
+def _verify_build_report(path: Path, wheel: Path, digest: str) -> dict[str, Any]:
+    value = json.loads(path.read_text(encoding="utf-8"))
+    if value.get("status") != "passed" or value.get("source_commit") != SOURCE_COMMIT:
+        raise RuntimeError("The exact source must pass full verification before native preflight")
+    artifacts = [
+        item
+        for item in value.get("artifacts", [])
+        if Path(item["file"]).resolve() == wheel.resolve() and item.get("sha256") == digest
+    ]
+    if len(artifacts) != 1 or _sha256(wheel.read_bytes()) != digest:
+        raise RuntimeError("Wheel is not the exact artifact of the passed full verification")
+    return {
+        "report_path": str(path.resolve()),
+        "report_sha256": _sha256(path.read_bytes()),
+        "source_commit": SOURCE_COMMIT,
+        "wheel": artifacts[0],
+    }
+
+
+def _parse_args(argv: list[str] | None) -> argparse.Namespace:
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument("--wheel", type=Path, required=True)
+    parser.add_argument("--expected-wheel-sha256", required=True)
+    parser.add_argument("--build-verification", type=Path, required=True)
+    parser.add_argument("--preflight-only", action="store_true")
+    parser.add_argument(
+        "--verification",
+        type=Path,
+        help="Passed preflight report required for a native execution",
+    )
+    parser.add_argument(
+        "--output",
+        type=Path,
+        help="New evidence directory (defaults to the versioned output directory)",
+    )
+    args = parser.parse_args(argv)
+    digest = args.expected_wheel_sha256.lower()
+    if len(digest) != 64 or any(char not in "0123456789abcdef" for char in digest):
+        parser.error("--expected-wheel-sha256 must be a 64-character hexadecimal digest")
+    args.expected_wheel_sha256 = digest
+    return args
+
+
+def main(argv: list[str] | None = None) -> int:
+    args = _parse_args(argv)
+    output_dir = (args.output or OUTPUT_DIR).expanduser().resolve()
+    if output_dir.exists():
+        raise FileExistsError(f"Refusing to overwrite evidence directory: {output_dir}")
+    output_dir.mkdir(parents=True)
+    report: dict[str, Any] = {
+        "schema_version": 1,
+        "runner": "native-codex-lifecycle-v1",
+        "source_commit": SOURCE_COMMIT,
+        "runner_sha256": _sha256(Path(__file__).read_bytes()),
+        "v8_helper_source": V8_SOURCE_NOTE,
+        "v8_helper_sha256_expected": V8_HELPER_SHA256,
+        "started_at": datetime.now(timezone.utc).isoformat(),
+        "status": "not_observed",
+        "claim_scope": "Codex lifecycle only; this does not establish four hosts or three hosts.",
+        "model_quality_claim": "none",
+        "embedding_fixture": "Constant unit vectors; transport and durability only.",
+        "cognition": "Unavailable; no extraction or semantic-quality claim.",
+        "native_turn_timeout_seconds": MAX_NATIVE_SECONDS,
+        "administrative_mutations": "none in native run; preflight uses disposable fixture writes",
+        "tool_mutation_requirement": ["mnemos_store", "mnemos_correct", "mnemos_forget"],
+        "wheel_argument": str(args.wheel),
+        "expected_wheel_sha256": args.expected_wheel_sha256,
+        "output_directory": str(output_dir),
+    }
+    fixture: Path | None = None
+    service: Any | None = None
+    store: Any | None = None
+    try:
+        if not TEMP_PARENT.is_dir():
+            raise FileNotFoundError(f"Required private fixture parent is missing: {TEMP_PARENT}")
+        report["build_verification"] = _verify_build_report(
+            args.build_verification.resolve(), args.wheel.resolve(), args.expected_wheel_sha256
+        )
+        if not sys.flags.isolated:
+            raise RuntimeError("Use the fresh installed interpreter with python -I")
+        report["python_isolated_mode"] = True
+        helper_hash = _assert_v8_helper_source()
+        report["v8_helper_sha256_observed"] = helper_hash
+        report["cli"] = _verify_cli()
+        import mnemos
+        from mnemos.config import MnemosConfig
+        from mnemos.scopes import ScopeRegistry
+        from mnemos.service import _protect_private_path
+
+        package_path = Path(str(mnemos.__file__)).resolve()
+        if "site-packages" not in {part.lower() for part in package_path.parts}:
+            raise RuntimeError(f"Installed-wheel isolation failed: imported {package_path}")
+        report["python"] = {
+            "executable": str(Path(sys.executable).resolve()),
+            "mnemos_package": str(package_path),
+            "site_packages_asserted": True,
+        }
+        report["package_provenance"] = _pinned_package_provenance(
+            package_path,
+            wheel_path=args.wheel.resolve(),
+            expected_wheel_sha256=args.expected_wheel_sha256,
+        )
+        if args.preflight_only:
+            if args.verification is not None:
+                raise RuntimeError("--verification is only valid for a native execution")
+            report["service_api_preflight"] = _offline_service_api_preflight()
+            report["preflight_only"] = True
+            report["status"] = "preflight_passed"
+            return_code = 0
+            return return_code
+
+        if args.verification is None:
+            raise RuntimeError("Native execution requires --verification from a passed preflight")
+        report["verification"] = _verify_preflight_report(
+            args.verification.resolve(),
+            wheel_path=args.wheel.resolve(),
+            expected_wheel_sha256=args.expected_wheel_sha256,
+        )
+
+        fixture = Path(
+            tempfile.mkdtemp(prefix="mnemos-native-codex-lifecycle-v1-", dir=TEMP_PARENT)
+        )
+        _protect_private_path(fixture)
+        project_a = fixture / "project-a"
+        project_b = fixture / "project-b"
+        runtime_dir = fixture / "runtime"
+        routing_dir = fixture / "routing"
+        for directory in (project_a, project_b, runtime_dir, routing_dir):
+            _private_mkdir(directory)
+        registry = ScopeRegistry()
+        identity_a = registry.register_project(project_a, user_profile_id=PROFILE, enabled=True)
+        identity_b = registry.register_project(project_b, user_profile_id=PROFILE, enabled=True)
+        registry_path = fixture / "scopes.json"
+        registry.save(registry_path)
+        settings_path = fixture / "settings.toml"
+        settings_path.write_text("# private lifecycle fixture settings\n", encoding="utf-8")
+        _protect_private_path(settings_path)
+        config = MnemosConfig()
+        for name in ("surprisal", "mutable_rag", "affective", "sleep", "spreading"):
+            setattr(config.modules, name, False)
+        service, store = _start_service(fixture, registry, config)
+        old_token = "mnemos-old-" + secrets.token_hex(8)
+        new_token = "mnemos-new-" + secrets.token_hex(8)
+        old_content = "The release channel for this project is " + old_token + "."
+        new_content = "The release channel for this project is " + new_token + "."
+        target_python = Path(sys.executable).resolve()
+
+        turns: list[dict[str, Any]] = []
+
+        def record_turn(**kwargs: Any) -> dict[str, Any]:
+            turn = _run_turn(**kwargs)
+            turns.append(turn)
+            report["turns"] = list(turns)
+            if turn["native"]["unreviewed_error_count"]:
+                raise RuntimeError("Native turn emitted an unreviewed error")
+            return turn
+
+        teach_turn = record_turn(
+            fixture=fixture,
+            project=project_a,
+            turn_name="a-teach",
+            prompt=(
+                "Use only Mnemos MCP tools. Call mnemos_store with this exact project fact: "
+                + old_content
+                + " Then call mnemos_consolidate, then mnemos_retrieve for that exact fact. "
+                "Do not use shell or any other tool."
+            ),
+            registry_path=registry_path,
+            settings_path=settings_path,
+            runtime_dir=runtime_dir,
+            routing_dir=routing_dir,
+            profile=PROFILE,
+            target_python=target_python,
+            expected_strings={
+                "old": old_content,
+                "new": new_content,
+                "old_token": old_token,
+                "new_token": new_token,
+            },
+        )
+        if teach_turn["status"] != "completed":
+            raise RuntimeError("Native teach turn failed")
+        if not {"mnemos_store", "mnemos_consolidate", "mnemos_retrieve"}.issubset(
+            teach_turn["native"]["tool_names"]
+        ):
+            raise RuntimeError("Teach turn did not show the required Mnemos tool calls")
+        if not _successful_tool(teach_turn["native"], "mnemos_retrieve") or not _result_contains(
+            teach_turn["native"], "mnemos_retrieve", "old"
+        ):
+            raise RuntimeError("Teach retrieve did not return the stored fact")
+        if not _successful_tool(teach_turn["native"], "mnemos_store"):
+            raise RuntimeError("Teach store did not return a successful result")
+        if not _successful_service_status(teach_turn["native"], "mnemos_store", "committed"):
+            raise RuntimeError("Teach store did not report committed status")
+        if not _successful_tool(teach_turn["native"], "mnemos_consolidate"):
+            raise RuntimeError("Teach consolidate did not return a successful result")
+        facts = _find_facts(store, old_content)
+        if len(facts) != 1:
+            raise RuntimeError("Teach turn did not create exactly one fact")
+        target = facts[0]
+        target_id = target.id
+        target_version = target.version
+        report["fact_after_teach"] = _fact_summary(target)
+
+        cross_project_turn = record_turn(
+            fixture=fixture,
+            project=project_b,
+            turn_name="b-cross-project-read",
+            prompt=(
+                "Use only Mnemos MCP tool mnemos_retrieve for the project release channel. "
+                "Do not write, forget, correct, use shell, or use any other tool. Report whether "
+                "a release channel fact is present in this project."
+            ),
+            registry_path=registry_path,
+            settings_path=settings_path,
+            runtime_dir=runtime_dir,
+            routing_dir=routing_dir,
+            profile=PROFILE,
+            target_python=target_python,
+            expected_strings={
+                "old": old_content,
+                "new": new_content,
+                "old_token": old_token,
+                "new_token": new_token,
+            },
+        )
+        if cross_project_turn["status"] != "completed" or not _successful_tool(
+            cross_project_turn["native"], "mnemos_retrieve"
+        ):
+            raise RuntimeError("Native cross-project retrieve did not complete successfully")
+        if _result_contains_any(
+            cross_project_turn["native"],
+            "mnemos_retrieve",
+            ("old", "new", "old_token", "new_token"),
+        ):
+            raise RuntimeError("Project B native retrieve returned a project A canary")
+        report["cross_project_observer_before_mutation"] = {
+            "project_a_id": identity_a.id,
+            "project_b_id": identity_b.id,
+            "project_a_fact_still_present": store.get(target_id) is not None,
+            "project_b_canary_fact_count": sum(
+                1
+                for fact in store.list_chunks(limit=10_000)
+                if fact.metadata.get("scope_id") == identity_b.id
+                and fact.content in {old_content, new_content}
+            ),
+            "native_retrieve_contains_project_a_canary": _result_contains_any(
+                cross_project_turn["native"],
+                "mnemos_retrieve",
+                ("old", "new", "old_token", "new_token"),
+            ),
+            "native_stdout_contains_project_a_canary": any(
+                cross_project_turn["native"].get("stdout_contains", {}).get(label) is True
+                for label in ("old", "new", "old_token", "new_token")
+            ),
+        }
+        if store.get(target_id) is None:
+            raise RuntimeError("Cross-project read unexpectedly removed the project A fact")
+
+        if cleanup_errors := _close_service(service, store):
+            raise RuntimeError("Service cleanup failed: " + ",".join(cleanup_errors))
+        service = None
+        store = None
+        service, store = _start_service(fixture, registry, config)
+        correct_turn = record_turn(
+            fixture=fixture,
+            project=project_a,
+            turn_name="c-correct",
+            prompt=(
+                "Use only Mnemos MCP tools. First call mnemos_retrieve for the project release "
+                "channel fact. Then call mnemos_correct on that returned fact using its current "
+                "fact ID and expected_version, replacing it with this exact content: "
+                + new_content
+                + " Then call mnemos_consolidate. Do not use shell or any other tool."
+            ),
+            registry_path=registry_path,
+            settings_path=settings_path,
+            runtime_dir=runtime_dir,
+            routing_dir=routing_dir,
+            profile=PROFILE,
+            target_python=target_python,
+            expected_strings={
+                "old": old_content,
+                "new": new_content,
+                "old_token": old_token,
+                "new_token": new_token,
+            },
+        )
+        if correct_turn["status"] != "completed" or not {
+            "mnemos_retrieve",
+            "mnemos_correct",
+            "mnemos_consolidate",
+        }.issubset(correct_turn["native"]["tool_names"]):
+            raise RuntimeError("Correct turn did not show the required Mnemos tool calls")
+        if not _successful_tool(correct_turn["native"], "mnemos_retrieve") or not _result_contains(
+            correct_turn["native"], "mnemos_retrieve", "old"
+        ):
+            raise RuntimeError("Correct retrieve did not return the pre-correction fact")
+        if not _successful_tool(correct_turn["native"], "mnemos_correct"):
+            raise RuntimeError("Correct call did not return a successful result")
+        if not _successful_service_status(correct_turn["native"], "mnemos_correct", "committed"):
+            raise RuntimeError("Correct call did not report committed status")
+        if not _successful_tool(correct_turn["native"], "mnemos_consolidate"):
+            raise RuntimeError("Correct consolidate did not return a successful result")
+        corrected = store.get(target_id)
+        if (
+            corrected is None
+            or corrected.content != new_content
+            or corrected.version != target_version + 1
+            or len(_find_facts(store, new_content)) != 1
+            or _find_facts(store, old_content)
+        ):
+            raise RuntimeError("Correct turn did not produce the expected versioned fact")
+        report["fact_after_correct"] = _fact_summary(corrected)
+
+        if cleanup_errors := _close_service(service, store):
+            raise RuntimeError("Service cleanup failed: " + ",".join(cleanup_errors))
+        service = None
+        store = None
+        service, store = _start_service(fixture, registry, config)
+        forget_turn = record_turn(
+            fixture=fixture,
+            project=project_a,
+            turn_name="d-forget",
+            prompt=(
+                "Use only Mnemos MCP tools. Call mnemos_retrieve for the current project release "
+                "channel fact, then call mnemos_forget for the returned fact ID and current version. "
+                "Do not use shell or any other tool."
+            ),
+            registry_path=registry_path,
+            settings_path=settings_path,
+            runtime_dir=runtime_dir,
+            routing_dir=routing_dir,
+            profile=PROFILE,
+            target_python=target_python,
+            expected_strings={
+                "old": old_content,
+                "new": new_content,
+                "old_token": old_token,
+                "new_token": new_token,
+            },
+        )
+        if forget_turn["status"] != "completed" or not {
+            "mnemos_retrieve",
+            "mnemos_forget",
+        }.issubset(forget_turn["native"]["tool_names"]):
+            raise RuntimeError("Forget turn did not show the required Mnemos tool calls")
+        if not _successful_tool(forget_turn["native"], "mnemos_retrieve") or not _result_contains(
+            forget_turn["native"], "mnemos_retrieve", "new"
+        ):
+            raise RuntimeError("Forget retrieve did not return the corrected fact")
+        if not _successful_tool(forget_turn["native"], "mnemos_forget"):
+            raise RuntimeError("Forget call did not return a successful result")
+        if not _successful_service_status(forget_turn["native"], "mnemos_forget", "committed"):
+            raise RuntimeError("Forget call did not report committed status")
+        if not any(
+            call.get("result_forgotten") is True and _successful_call(call)
+            for call in forget_turn["native"].get("tool_calls", [])
+            if isinstance(call, Mapping) and call.get("name") == "mnemos_forget"
+        ):
+            raise RuntimeError("Forget result did not acknowledge suppression")
+        report["forget_observer_before_restart"] = {
+            "live_fact_present": store.get(target_id) is not None,
+            "fact_suppressed": store.is_suppressed(fact_id=target_id),
+        }
+        if store.get(target_id) is not None or not store.is_suppressed(fact_id=target_id):
+            raise RuntimeError("Forget turn did not suppress the corrected fact")
+
+        if cleanup_errors := _close_service(service, store):
+            raise RuntimeError("Service cleanup failed: " + ",".join(cleanup_errors))
+        service = None
+        store = None
+        service, store = _start_service(fixture, registry, config)
+        post_forget_turn = record_turn(
+            fixture=fixture,
+            project=project_a,
+            turn_name="e-post-forget-read",
+            prompt=(
+                "Use only the Mnemos MCP tool mnemos_retrieve for the project release channel. "
+                "Do not write, forget, correct, use shell, or use any other tool. Report whether "
+                "the current release channel fact is present."
+            ),
+            registry_path=registry_path,
+            settings_path=settings_path,
+            runtime_dir=runtime_dir,
+            routing_dir=routing_dir,
+            profile=PROFILE,
+            target_python=target_python,
+            expected_strings={
+                "old": old_content,
+                "new": new_content,
+                "old_token": old_token,
+                "new_token": new_token,
+            },
+        )
+        if post_forget_turn["status"] != "completed" or not _successful_tool(
+            post_forget_turn["native"], "mnemos_retrieve"
+        ):
+            raise RuntimeError("Native post-restart read turn failed")
+        if _result_contains_any(
+            post_forget_turn["native"],
+            "mnemos_retrieve",
+            ("old", "new", "old_token", "new_token"),
+        ):
+            raise RuntimeError("Post-forget native retrieve returned the forgotten canary")
+        if any(
+            post_forget_turn["native"].get("stdout_contains", {}).get(label) is True
+            for label in ("old", "new", "old_token", "new_token")
+        ):
+            raise RuntimeError("Post-forget native output returned the forgotten canary")
+        after_restart = store.get(target_id)
+        report["after_restart"] = {
+            "live_fact_present": after_restart is not None,
+            "fact_suppressed": store.is_suppressed(fact_id=target_id),
+        }
+        if after_restart is not None or not store.is_suppressed(fact_id=target_id):
+            raise RuntimeError("Forgotten fact returned after restart")
+
+        report["turns"] = turns
+        report["criteria"] = {
+            "native_errors_reviewed": all(
+                isinstance(turn.get("native", {}).get("error_count"), int)
+                and turn.get("native", {}).get("unreviewed_error_count") == 0
+                for turn in turns
+            ),
+            "teach_mcp_write_observed": {"mnemos_store", "mnemos_consolidate"}.issubset(
+                teach_turn["native"]["tool_names"]
+            ),
+            "teach_retrieve_result_observed": _result_contains(
+                teach_turn["native"], "mnemos_retrieve", "old"
+            ),
+            "correct_mcp_write_observed": _successful_tool(
+                correct_turn["native"], "mnemos_correct"
+            ),
+            "forget_mcp_write_observed": _successful_tool(forget_turn["native"], "mnemos_forget"),
+            "corrected_fact_versioned": report["fact_after_correct"]["version"] > target_version,
+            "teach_scope_and_profile_recorded": report["fact_after_teach"]["scope_id"]
+            == identity_a.id
+            and report["fact_after_teach"]["user_profile_id"] == PROFILE
+            and target.metadata.get("host") == "codex"
+            and target.metadata.get("source") == "explicit_remember",
+            "correct_scope_and_profile_recorded": report["fact_after_correct"]["scope_id"]
+            == identity_a.id
+            and report["fact_after_correct"]["user_profile_id"] == PROFILE
+            and corrected.metadata.get("host") == "codex"
+            and corrected.metadata.get("source") == "explicit_correction",
+            "forgotten_before_restart": report["forget_observer_before_restart"]["fact_suppressed"],
+            "forgotten_after_restart": not report["after_restart"]["live_fact_present"]
+            and report["after_restart"]["fact_suppressed"],
+            "cross_project_isolated": report["cross_project_observer_before_mutation"][
+                "project_b_canary_fact_count"
+            ]
+            == 0,
+            "cross_project_retrieve_result_observed": _successful_tool(
+                cross_project_turn["native"], "mnemos_retrieve"
+            )
+            and not _result_contains_any(
+                cross_project_turn["native"],
+                "mnemos_retrieve",
+                ("old", "new", "old_token", "new_token"),
+            ),
+            "cross_project_stdout_isolated": not report["cross_project_observer_before_mutation"][
+                "native_stdout_contains_project_a_canary"
+            ],
+            "post_forget_retrieve_result_observed": _successful_tool(
+                post_forget_turn["native"], "mnemos_retrieve"
+            ),
+            "post_forget_stdout_isolated": not any(
+                post_forget_turn["native"].get("stdout_contains", {}).get(label) is True
+                for label in ("old", "new", "old_token", "new_token")
+            ),
+        }
+        if not all(report["criteria"].values()):
+            raise RuntimeError("One or more lifecycle criteria failed")
+        report["status"] = "observed"
+        return_code = 0
+    except Exception as exc:
+        report["status"] = "failed"
+        report["error_type"] = type(exc).__name__
+        report["error_digest"] = _sha256(str(exc))
+        if fixture is not None:
+            (fixture / "runner-error.txt").write_text(traceback.format_exc(), encoding="utf-8")
+            _protect_file(fixture / "runner-error.txt")
+        return_code = 1
+    finally:
+        cleanup_errors = _close_service(service, store)
+        if cleanup_errors:
+            report["cleanup_errors"] = cleanup_errors
+            if report["status"] == "observed":
+                report["status"] = "failed"
+                return_code = 1
+        report["fixture"] = str(fixture) if fixture is not None else None
+        report["private_fixture_preserved"] = fixture is not None
+        report["finished_at"] = datetime.now(timezone.utc).isoformat()
+        (output_dir / "report.json").write_text(
+            json.dumps(report, ensure_ascii=True, indent=2, sort_keys=True) + "\n",
+            encoding="utf-8",
+        )
+        print(json.dumps({"status": report["status"], "report": str(output_dir / "report.json")}))
+    return return_code
+
+
+if __name__ == "__main__":
+    raise SystemExit(main())

@@ -39,7 +39,7 @@ These version checks were read-only:
 | Codex CLI | `codex-cli 0.146.0` | Installed source20f generated TOML hooks returned a random canary and captured both roles across restart | Bounded native transport observed; full correction/forget lifecycle pending |
 | Codex Desktop | Installed desktop app; no isolated native run | Shared adapter tests only | NOT RUN |
 | Claude Code | `2.1.191` | Installed source20f native canary recall and both-role capture survived restart; prompt and Stop identity coverage was degraded | Partial; persistent-transcript attempt timed out. Extraction and full lifecycle matrix remain open |
-| Hermes Agent in WSL | `v0.21.3`, upstream `97962358` at initial inspection | Installed provider API and authenticated Windows bridge exercised; configured-registry repair passed disposable plugin discovery | Native model conversation did not complete |
+| Hermes Agent in WSL | `v0.21.3`; initial inspection `97962358`, later wheel discovery `36842e639a178741b70c821e0f4cdd129cd0dfe3` | Installed provider API and authenticated Windows bridge exercised; verified source9e wheel entry point loaded and reported available without service/network calls | Native model conversation did not complete |
 
 The Hermes package is installed under
 `/home/anthony/.hermes/hermes-agent` in WSL. The Windows Mnemos environment
