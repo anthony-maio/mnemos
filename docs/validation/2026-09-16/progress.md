@@ -1013,3 +1013,19 @@ checks passed. The parent's subsequent 35-test combined integration run also
 passed with the role-aware in-flight-forget fixture. Black and compatible
 strict mypy passed. This closes the observed relabeling path; it does not prove
 that other extracted claims are semantically supported by their sources.
+
+## Graph capacity diagnostic completed
+
+The corrected offline diagnostic ran the same five frozen development cases
+once at each neighbor capacity: 4, 8, and 16. Eligible counts were 0/5, 0/5,
+and 1/5; successful recall was 0/5 in every arm. The one eligible capacity-16
+case had a two-hop activation path with energy 0.45954, but its target did not
+appear in the five graph results. A retained path alone did not satisfy the
+recall criterion.
+
+All 75 constructed stores persisted the intended capacity. Activation-oracle
+and insertion-order controls passed for all 15 observations. The diagnostic
+used unchanged frozen d94 source and vectors, with no model calls. Production
+capacity, datasets, and acceptance gates remain unchanged. Earlier v1 higher
+arms changed capacity after construction and are excluded from conclusions.
+[Raw evidence and limits](graph-capacity-diagnostic-v2/README.md).

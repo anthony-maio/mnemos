@@ -1,0 +1,307 @@
+"""Measure frozen development graph cases under pre-registered capacities.
+
+This is a development-only diagnostic. It wraps the evaluation factory in the
+runner process and does not change production or benchmark source files.
+"""
+
+from __future__ import annotations
+
+import argparse
+from datetime import datetime, timezone
+import hashlib
+import json
+from pathlib import Path
+import platform
+import sys
+from typing import Any
+
+WORKTREE = Path(__file__).resolve().parents[1]
+DEFAULT_SNAPSHOT = WORKTREE / ".venv" / "thinking-frozen-v1"
+DEFAULT_VECTORS = (
+    WORKTREE / ".venv" / "real-model-work-v4" / "mechanism-development" / "frozen-vectors.json"
+)
+DEFAULT_OUTPUT = Path(__file__).with_name("graph-capacity-diagnostic-v2")
+SOURCE_COMMIT = "d94ded67a6b3fe6b6f7474a74518d4efb143698e"
+CAPACITIES = (4, 8, 16)
+
+
+def _now() -> str:
+    return datetime.now(timezone.utc).isoformat()
+
+
+def _file_sha256(path: Path) -> str:
+    digest = hashlib.sha256()
+    with path.open("rb") as stream:
+        for block in iter(lambda: stream.read(1024 * 1024), b""):
+            digest.update(block)
+    return digest.hexdigest()
+
+
+def _source_files(snapshot: Path) -> dict[str, Path]:
+    return {
+        name: snapshot / relative
+        for name, relative in {
+            "measurement": "benchmarks/local_memory/graph_measurement.py",
+            "mechanism_adapter": "benchmarks/local_memory/module_mechanism.py",
+            "engine": "mnemos/engine.py",
+            "spreading": "mnemos/modules/spreading.py",
+            "storage": "mnemos/utils/storage.py",
+        }.items()
+    }
+
+
+def _verify_snapshot(snapshot: Path) -> dict[str, str]:
+    import subprocess
+
+    commit = subprocess.check_output(
+        ["git", "-C", str(snapshot), "rev-parse", "HEAD"], text=True
+    ).strip()
+    if commit != SOURCE_COMMIT:
+        raise RuntimeError(f"Frozen source commit mismatch: {commit}")
+    status = subprocess.check_output(
+        ["git", "-C", str(snapshot), "status", "--porcelain"], text=True
+    ).strip()
+    if status:
+        raise RuntimeError("Frozen source checkout is dirty")
+    paths = _source_files(snapshot)
+    missing = [str(path) for path in paths.values() if not path.is_file()]
+    if missing:
+        raise RuntimeError("Frozen source files are missing: " + ", ".join(missing))
+    return {name: _file_sha256(path) for name, path in paths.items()}
+
+
+def _measurement_summary(row: dict[str, Any]) -> dict[str, Any]:
+    production = row.get("production", {})
+    controls = row.get("correctness_controls", {})
+    return {
+        "case_id": row.get("case_id"),
+        "repetition": row.get("repetition"),
+        "measurement_status": row.get("measurement_status"),
+        "eligible": row.get("eligible"),
+        "success": row.get("success"),
+        "actual_selected_seed_id": row.get("query", {}).get("actual_selected_seed_id"),
+        "target_in_direct_pool": production.get("target_in_direct_pool"),
+        "target_in_graph_results": production.get("target_in_graph_results"),
+        "target_similarity": production.get("target_similarity"),
+        "target_energy": production.get("target_energy"),
+        "structural_valid_path": production.get("structural_valid_path"),
+        "activation_valid_path": production.get("activation_valid_path"),
+        "path_reason": production.get("path_reason"),
+        "structural_paths": production.get("structural_paths", []),
+        "activation_paths": production.get("activation_paths", []),
+        "graph_result_ids": production.get("graph_result_ids", []),
+        "graph_edge_count": production.get("graph_edge_count"),
+        "activation_comparison_matches": controls.get("activation_vs_independent_path", {}).get(
+            "matches"
+        ),
+        "insertion_edges_equal": controls.get("insertion_order", {}).get("edges_equal"),
+        "insertion_results_equal": controls.get("insertion_order", {}).get("results_equal"),
+        "cycle_count": controls.get("cycle", {}).get("three_node_cycle_count"),
+        "artifacts": row.get("artifacts", {}),
+    }
+
+
+def run(*, snapshot: Path, vectors: Path, output: Path) -> dict[str, Any]:
+    if output.exists():
+        raise RuntimeError(f"Refusing to overwrite diagnostic output: {output}")
+    source_hashes = _verify_snapshot(snapshot)
+    if not vectors.is_file():
+        raise FileNotFoundError(vectors)
+    vectors_hash = _file_sha256(vectors)
+
+    # Imports are intentionally delayed until after the snapshot check.  The
+    # caller must set PYTHONPATH to the frozen checkout before starting this
+    # process; this assertion makes an accidental live-tree import fail closed.
+    import benchmarks.local_memory.graph_measurement as measurement
+    import benchmarks.local_memory.module_mechanism as mechanism
+
+    # Resolve every production module from its loaded module path.  This avoids
+    # accepting a live-tree transitive import when the runner is misconfigured.
+    import mnemos.engine as engine_module
+    import mnemos.modules.spreading as spreading_module
+    import mnemos.utils.storage as storage_module
+
+    imported = {
+        "measurement": Path(measurement.__file__).resolve(),
+        "mechanism_adapter": Path(mechanism.__file__).resolve(),
+        "engine": Path(engine_module.__file__).resolve(),
+        "spreading": Path(spreading_module.__file__).resolve(),
+        "storage": Path(storage_module.__file__).resolve(),
+    }
+    for name, path in imported.items():
+        if path != _source_files(snapshot)[name].resolve():
+            raise RuntimeError(f"Imported {name} outside frozen snapshot: {path}")
+    dataset = mechanism.load_mechanism_dataset(vectors)
+    cases = tuple(dataset.graph_cases)
+    if len(cases) != 5 or any(case.split != "development" for case in cases):
+        raise RuntimeError("Expected exactly the five frozen development graph cases")
+
+    output.mkdir(parents=True)
+    manifest: dict[str, Any] = {
+        "diagnostic": "graph-capacity-diagnostic-v2",
+        "development_only": True,
+        "source_commit": SOURCE_COMMIT,
+        "source_checkout": str(snapshot.resolve()),
+        "source_hashes": source_hashes,
+        "vectors": str(vectors.resolve()),
+        "vectors_sha256": vectors_hash,
+        "python": platform.python_version(),
+        "capacities": list(CAPACITIES),
+        "cases": [case.id for case in cases],
+        "measurement": "production graph_measurement with factory-only capacity override",
+        "pre_registered": True,
+        "created_at": _now(),
+        "runner_sha256": _file_sha256(Path(__file__).resolve()),
+        "python_executable": str(Path(sys.executable).resolve()),
+        "command": [str(Path(sys.executable).resolve()), *sys.argv],
+        "imported_paths": {name: str(path) for name, path in imported.items()},
+        "imported_hashes": {name: _file_sha256(path) for name, path in imported.items()},
+    }
+    (output / "manifest.json").write_text(
+        json.dumps(manifest, indent=2, sort_keys=True) + "\n", encoding="utf-8"
+    )
+
+    rows: list[dict[str, Any]] = []
+    original_factory = mechanism._engine_for
+    try:
+        for capacity in CAPACITIES:
+            if _file_sha256(Path(__file__).resolve()) != manifest["runner_sha256"]:
+                raise RuntimeError("Diagnostic runner changed during execution")
+            arm_root = output / f"capacity-{capacity:02d}"
+            arm_work = arm_root / "work"
+            arm_work.mkdir(parents=True)
+
+            original_spreading_config = mechanism.SpreadingConfig
+            constructed_stores: list[dict[str, Any]] = []
+
+            def capacity_spreading_config(
+                *args: Any, _capacity: int = capacity, **kwargs: Any
+            ) -> Any:
+                kwargs["max_neighbors_per_node"] = _capacity
+                return original_spreading_config(*args, **kwargs)
+
+            mechanism.SpreadingConfig = capacity_spreading_config
+
+            def capacity_factory(*args: Any, **kwargs: Any) -> Any:
+                engine, store = original_factory(*args, **kwargs)
+                config = engine.spreading_activation.persistence_contract()
+                persisted: dict[str, Any] = {}
+                meta_reader = getattr(store, "_meta_value", None)
+                if callable(meta_reader):
+                    raw_contract = meta_reader("graph_contract")
+                    if raw_contract:
+                        try:
+                            decoded = json.loads(raw_contract)
+                        except (TypeError, ValueError):
+                            decoded = None
+                        if isinstance(decoded, dict):
+                            persisted = decoded
+                graph_contract = getattr(store, "graph_contract", None)
+                if isinstance(graph_contract, dict):
+                    persisted = dict(graph_contract)
+                constructed_stores.append(
+                    {
+                        "store_type": type(store).__name__,
+                        "configured_max_neighbors": engine.config.spreading.max_neighbors_per_node,
+                        "persistence_contract": config,
+                        "persisted_graph_contract": persisted,
+                        "persisted_max_neighbors": persisted.get("max_neighbors"),
+                    }
+                )
+                return engine, store
+
+            mechanism._engine_for = capacity_factory
+            arm_rows: list[dict[str, Any]] = []
+            try:
+                for case in cases:
+                    before = _verify_snapshot(snapshot)
+                    if before != source_hashes or _file_sha256(vectors) != vectors_hash:
+                        raise RuntimeError("Frozen input changed before measurement")
+                    row = measurement.measure_graph_repetition(
+                        case, work_dir=arm_work, repetition=0
+                    )
+                    after = _verify_snapshot(snapshot)
+                    if after != source_hashes or _file_sha256(vectors) != vectors_hash:
+                        raise RuntimeError("Frozen input changed after measurement")
+                    summary = _measurement_summary(row)
+                    summary["capacity"] = capacity
+                    arm_rows.append(summary)
+                    rows.append(summary)
+            finally:
+                mechanism.SpreadingConfig = original_spreading_config
+            invalid_contracts = [
+                record
+                for record in constructed_stores
+                if record["configured_max_neighbors"] != capacity
+                or record["persisted_max_neighbors"] != capacity
+            ]
+            if invalid_contracts:
+                raise RuntimeError(
+                    f"Capacity {capacity} was not bound into every constructed store: "
+                    f"{invalid_contracts!r}"
+                )
+            (arm_root / "summary.json").write_text(
+                json.dumps(
+                    {
+                        "capacity": capacity,
+                        "rows": arm_rows,
+                        "constructed_stores": constructed_stores,
+                    },
+                    indent=2,
+                    sort_keys=True,
+                )
+                + "\n",
+                encoding="utf-8",
+            )
+            if _file_sha256(Path(__file__).resolve()) != manifest["runner_sha256"]:
+                raise RuntimeError("Diagnostic runner changed after arm")
+            if _verify_snapshot(snapshot) != source_hashes or _file_sha256(vectors) != vectors_hash:
+                raise RuntimeError("Frozen input changed after arm")
+    finally:
+        mechanism._engine_for = original_factory
+
+    report = {
+        "status": "complete",
+        "manifest": manifest,
+        "observations": rows,
+        "summary": {
+            "arms": len(CAPACITIES),
+            "cases_per_arm": len(cases),
+            "observations": len(rows),
+            "eligible_by_capacity": {
+                str(capacity): sum(
+                    row["eligible"] is True for row in rows if row["capacity"] == capacity
+                )
+                for capacity in CAPACITIES
+            },
+            "success_by_capacity": {
+                str(capacity): sum(
+                    row["success"] is True for row in rows if row["capacity"] == capacity
+                )
+                for capacity in CAPACITIES
+            },
+        },
+    }
+    (output / "report.json").write_text(
+        json.dumps(report, indent=2, sort_keys=True) + "\n", encoding="utf-8"
+    )
+    return report
+
+
+def main() -> int:
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument("--snapshot", type=Path, default=DEFAULT_SNAPSHOT)
+    parser.add_argument("--vectors", type=Path, default=DEFAULT_VECTORS)
+    parser.add_argument("--output", type=Path, default=DEFAULT_OUTPUT)
+    args = parser.parse_args()
+    report = run(
+        snapshot=args.snapshot.resolve(),
+        vectors=args.vectors.resolve(),
+        output=args.output.resolve(),
+    )
+    print(json.dumps({"output": str(args.output.resolve()), "status": report["status"]}))
+    return 0
+
+
+if __name__ == "__main__":
+    raise SystemExit(main())
