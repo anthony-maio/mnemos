@@ -4,13 +4,17 @@ This record covers the unreleased `wt/functional-local-memory` worktree. It
 separates implemented behavior from acceptance evidence. The original task
 boundaries and thresholds remain in the [implementation plan](../../plans/2026-09-16-functional-local-memory.md).
 
-Latest checkpoint: source `7dd3071` adds provisional Claude capture and includes
-the MCP metadata and benchmark trace repairs. Focused tests pass; full frozen
-verification is running. The old sourceb7 real-model lifecycle run has stopped
+Latest verified package: source `a38ee70` includes provisional Claude capture,
+the MCP metadata repair, and the benchmark trace repair. Full frozen verification
+passed 754 tests with two optional skips, formatting, typing, JavaScript, build,
+and Twine. Fresh installed-wheel replay and instrumented Claude adapter timing
+also passed; [package evidence](provisional-package-verification/README.md).
+Native host acceptance and the extraction contract candidate remain separate.
+The old sourceb7 real-model lifecycle run has stopped
 with a checkpoint serialization failure after a completed baseline and 36
 full-profile observations. Its [archived record](lifecycle-serialization-failure/README.md)
 contains six complete and 30 partial full observations. No new model run is
-currently active, and full-pipeline quality remains unproved.
+currently active in that queue, and full-pipeline quality remains unproved.
 
 | Plan item | Implemented behavior | Evidence and remaining acceptance |
 | --- | --- | --- |

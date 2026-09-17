@@ -1,0 +1,105 @@
+"""Install only a fully verified replay-repair wheel into a new disposable environment."""
+
+from datetime import datetime, timezone
+import hashlib
+import json
+import os
+from pathlib import Path
+import subprocess
+import sys
+
+root = Path(__file__).resolve().parents[1]
+expected_source = "a38ee70d19f2ce8413d1ab7c9ce2ff26ffd07b46"
+checks = root / ".venv/provisional-capture-checks-v2"
+verification = json.loads((checks / "verification.json").read_text(encoding="utf-8"))
+if verification["source_commit"] != expected_source or verification["status"] != "passed":
+    raise SystemExit("The exact source must pass full verification before installation")
+wheel_record = next(item for item in verification["artifacts"] if item["file"].endswith(".whl"))
+wheel = Path(wheel_record["file"])
+if hashlib.sha256(wheel.read_bytes()).hexdigest() != wheel_record["sha256"]:
+    raise SystemExit("Verified wheel bytes changed")
+output = root / ".venv/provisional-mcp-installed-v2"
+environment = Path(r"D:\WindowsTemp\mnemos-provisional-mcp-wheel-20260917-v2")
+if output.exists() or environment.exists():
+    raise SystemExit("Refusing to overwrite a prior installation or evidence")
+output.mkdir()
+record = {
+    "source_commit": expected_source,
+    "started_at": datetime.now(timezone.utc).isoformat(),
+    "status": "running",
+    "wheel": wheel_record,
+    "environment": str(environment),
+    "runner_sha256": hashlib.sha256(Path(__file__).read_bytes()).hexdigest(),
+    "commands": [],
+}
+env = {
+    key: value
+    for key, value in os.environ.items()
+    if not key.startswith("MNEMOS_")
+    and key not in {"PYTHONPATH", "VIRTUAL_ENV", "UV_PROJECT_ENVIRONMENT"}
+}
+uv = str(Path(r"C:\Users\Ant\.local\bin\uv.exe"))
+python = environment / "Scripts/python.exe"
+commands = [
+    (
+        "create_environment",
+        [uv, "venv", str(environment), "--python", str(root / ".venv/Scripts/python.exe")],
+    ),
+    (
+        "install_wheel",
+        [uv, "pip", "install", "--python", str(python), "mnemos-memory[mcp] @ " + wheel.as_uri()],
+    ),
+    ("freeze_environment", [uv, "pip", "freeze", "--python", str(python)]),
+    (
+        "replay_probe",
+        [
+            str(python),
+            "-I",
+            str(root / ".venv/verify_claude_stop_replay.py"),
+            "--snapshot",
+            str(root / ".venv/provisional-capture-frozen-v2"),
+            "--commit",
+            expected_source,
+            "--output",
+            str(output / "probe.json"),
+            "--installed-package",
+            str(environment / "Lib/site-packages"),
+            "--wheel",
+            str(wheel),
+        ],
+    ),
+]
+try:
+    for name, command in commands:
+        entry = {
+            "name": name,
+            "command": command,
+            "started_at": datetime.now(timezone.utc).isoformat(),
+        }
+        record["commands"].append(entry)
+        with (output / (name + ".log")).open("w", encoding="utf-8") as log:
+            result = subprocess.run(
+                command,
+                cwd=root,
+                env=env,
+                stdout=log,
+                stderr=subprocess.STDOUT,
+                creationflags=getattr(subprocess, "CREATE_NO_WINDOW", 0),
+                timeout=300,
+            )
+        entry.update(
+            exit_code=result.returncode, finished_at=datetime.now(timezone.utc).isoformat()
+        )
+        if result.returncode:
+            raise RuntimeError(name + " failed")
+    probe = json.loads((output / "probe.json").read_text(encoding="utf-8"))
+    if probe["status"] != "passed" or not all(probe["assertions"].values()):
+        raise RuntimeError("Installed probe did not pass its positive assertions")
+    record["status"] = "passed"
+except Exception as exc:
+    record.update(status="failed", error_type=type(exc).__name__, error=str(exc))
+finally:
+    record["finished_at"] = datetime.now(timezone.utc).isoformat()
+    (output / "installation.json").write_text(json.dumps(record, indent=2) + "\n", encoding="utf-8")
+print(json.dumps({"status": record["status"], "record": str(output / "installation.json")}))
+raise SystemExit(0 if record["status"] == "passed" else 1)

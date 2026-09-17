@@ -736,3 +736,18 @@ checkpoint serializer failure. Further development must distinguish source
 citations from target-fact IDs and test actual source support, without
 weakening the evidence guard or reusing partial observations as successful
 measurements.
+
+## Provisional capture package checkpoint
+
+Frozen source `a38ee70` passed 754 tests with two optional skips, Black,
+strict compatible mypy, JavaScript syntax, build, and Twine. The new wheel
+passed fresh MCP-enabled installation, source/asset parity, and capture
+restart/replay checks. Installed Claude adapter instrumentation also passed
+the existing 10-second per-command bound. It does not exercise native Claude
+or SessionStart. [Reports and original runner bytes](provisional-package-verification/README.md)
+bind these results to the exact source and wheel hashes.
+
+Native probes are next. The extraction schema/prompt candidate is isolated
+from this package checkpoint and is undergoing a small, newly defined
+development comparison with Ollama. The stopped lifecycle queue and all
+negative results remain preserved; no held-out acceptance threshold changed.
