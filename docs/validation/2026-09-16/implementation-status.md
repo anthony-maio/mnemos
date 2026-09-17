@@ -52,6 +52,15 @@ observed a child exit at 655.468 ms and an explicit exit-code response at
 included in the package checkpoint above. It does not establish the cause of
 the earlier full-suite startup failure.
 
+The later [access-metadata phase probe](../2026-09-17/access-metadata-phases-v1/README.md)
+times the current storage implementation on two fresh 10,000-fact fixtures.
+Across 100 five-fact updates on D:, total p95 was 313.7343 ms and commit p95
+was 313.5566 ms; the SQL stages stayed below 0.5 ms per call. The same helper
+on C: reported total p95 2.58 ms and commit p95 2.4211 ms. Both retained
+WAL/FULL and all counters after reopen. The D-then-C order and concurrent
+work prevent a controlled speedup claim. This localizes the observed cost to
+the durability boundary and does not close the end-to-end recall gate.
+
 An earlier full-suite attempt at `e1fd56e` finished with 897 passed, one failed,
 and four skipped. A list response in the synthetic Codex continuity fixture
 lacked `facts`; its cause is under investigation. The runner stopped before

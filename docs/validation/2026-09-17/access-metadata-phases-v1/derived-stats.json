@@ -1,0 +1,86 @@
+{
+  "interpretation": {
+    "c": "The second sequential run is much faster; this is a comparison observation, not a controlled speedup.",
+    "d": "On the first sequential run, commit timing dominates the measured mark call."
+  },
+  "percentile": "p95_nearest_rank, rank ceil(0.95 * 100)",
+  "runner_sha256": "31a939d5c2800ef46988049f1becaf11343ae0458c70cc29d69fb142d0ba0a19",
+  "runs": {
+    "c": {
+      "call_count": 100,
+      "instrumented_ms": {
+        "max": 3.0327,
+        "median": 1.9394,
+        "p95_nearest_rank": 2.5363
+      },
+      "remaining_overhead_ms": {
+        "max": 0.0622,
+        "median": 0.023,
+        "p95_nearest_rank": 0.0373
+      },
+      "stages_ms": {
+        "access_insert_or_ignore": {
+          "max": 0.2159,
+          "median": 0.05175,
+          "p95_nearest_rank": 0.0929
+        },
+        "access_update": {
+          "max": 0.0827,
+          "median": 0.0177,
+          "p95_nearest_rank": 0.0258
+        },
+        "commit": {
+          "max": 2.9624,
+          "median": 1.875,
+          "p95_nearest_rank": 2.4211
+        }
+      },
+      "total_ms": {
+        "max": 3.0604,
+        "median": 1.96225,
+        "p95_nearest_rank": 2.58
+      }
+    },
+    "d": {
+      "call_count": 100,
+      "instrumented_ms": {
+        "max": 673.9881,
+        "median": 103.96645,
+        "p95_nearest_rank": 313.6831
+      },
+      "remaining_overhead_ms": {
+        "max": 0.1016,
+        "median": 0.04205,
+        "p95_nearest_rank": 0.0646
+      },
+      "stages_ms": {
+        "access_insert_or_ignore": {
+          "max": 0.3663,
+          "median": 0.11255,
+          "p95_nearest_rank": 0.1576
+        },
+        "access_update": {
+          "max": 0.06,
+          "median": 0.0219,
+          "p95_nearest_rank": 0.0439
+        },
+        "commit": {
+          "max": 673.843,
+          "median": 103.8346,
+          "p95_nearest_rank": 313.5566
+        }
+      },
+      "total_ms": {
+        "max": 674.0321,
+        "median": 104.0086,
+        "p95_nearest_rank": 313.7343
+      }
+    }
+  },
+  "runs_in_observed_order": [
+    "d",
+    "c"
+  ],
+  "schema_version": 1,
+  "source_commit": "a607a5a6b0a8c2d4f0c4ed00e3b21167cf96f854"
+}

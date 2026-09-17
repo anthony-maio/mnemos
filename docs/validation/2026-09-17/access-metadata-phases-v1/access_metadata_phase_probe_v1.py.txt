@@ -1,0 +1,462 @@
+"""Localize SQLite access-metadata timing without changing durability settings."""
+
+from __future__ import annotations
+
+import argparse
+from datetime import datetime, timedelta, timezone
+import hashlib
+import importlib.util
+import json
+from pathlib import Path
+import subprocess
+import sys
+import time
+from typing import Any
+
+SOURCE_COMMIT = "a607a5a6b0a8c2d4f0c4ed00e3b21167cf96f854"
+DEFAULT_SOURCE_ROOT = Path(r"C:\Users\Ant\AppData\Local\Temp\mnemos-source-startup-exit-v1")
+FIXTURE_HELPER_RELATIVE = Path(".venv/access_update_diagnostic_v1.py")
+FIXTURE_HELPER_SHA256 = "11d76e07490a8d549cfa9b7ad9456f2e5370d4135ecc024027d7a8deda637d6f"
+ROWS = 10_000
+UPDATE_COUNT = 100
+UPDATED_IDS = [f"performance-fact-{index:05d}" for index in range(5)]
+
+
+def _sha256_bytes(value: bytes) -> str:
+    return hashlib.sha256(value).hexdigest()
+
+
+def _sha256_file(path: Path) -> str:
+    return _sha256_bytes(path.read_bytes())
+
+
+def _normalized(value: bytes) -> bytes:
+    return value.replace(b"\r\n", b"\n")
+
+
+def _file_bytes(path: Path) -> int:
+    try:
+        return path.stat().st_size
+    except FileNotFoundError:
+        return 0
+
+
+def _git_file(source_root: Path, relative: str) -> bytes:
+    completed = subprocess.run(
+        ["git", "-C", str(source_root), "show", f"{SOURCE_COMMIT}:{relative}"],
+        capture_output=True,
+        check=True,
+        timeout=10,
+    )
+    return completed.stdout
+
+
+def _python_file_hashes(root: Path) -> dict[str, str]:
+    package_root = root / "mnemos"
+    return {
+        str(path.relative_to(root)).replace("\\", "/"): _sha256_bytes(
+            _normalized(path.read_bytes())
+        )
+        for path in sorted(package_root.rglob("*.py"))
+    }
+
+
+def _import_source_package(source_root: Path) -> tuple[Any, Path]:
+    sys.path.insert(0, str(source_root))
+    import mnemos
+
+    package_file = Path(mnemos.__file__).resolve()
+    source_root_resolved = source_root.resolve()
+    try:
+        package_file.relative_to(source_root_resolved)
+    except ValueError as exc:
+        raise RuntimeError("imported mnemos package is outside the frozen source root") from exc
+    return mnemos, package_file.parent
+
+
+def _source_provenance(source_root: Path, helper_path: Path) -> dict[str, Any]:
+    source_root = source_root.resolve()
+    if not source_root.is_dir():
+        raise FileNotFoundError(source_root)
+    head = subprocess.run(
+        ["git", "-C", str(source_root), "rev-parse", "HEAD"],
+        capture_output=True,
+        check=True,
+        text=True,
+        timeout=10,
+    ).stdout.strip()
+    if head != SOURCE_COMMIT:
+        raise RuntimeError(f"frozen source commit mismatch: expected {SOURCE_COMMIT}, got {head}")
+    status = subprocess.run(
+        ["git", "-C", str(source_root), "status", "--porcelain", "--untracked-files=all"],
+        capture_output=True,
+        text=True,
+        check=True,
+        timeout=10,
+    ).stdout
+    if status:
+        raise RuntimeError("frozen source checkout is not clean")
+    mnemos, package_root = _import_source_package(source_root)
+    del mnemos
+    expected_package_root = (source_root / "mnemos").resolve()
+    if package_root != expected_package_root:
+        raise RuntimeError("imported package root does not match the frozen checkout")
+
+    storage_relative = "mnemos/utils/storage.py"
+    expected_storage = _git_file(source_root, storage_relative)
+    checkout_storage = source_root / storage_relative
+    imported_storage = package_root / "utils" / "storage.py"
+    for label, actual in (
+        ("checkout", checkout_storage.read_bytes()),
+        ("imported", imported_storage.read_bytes()),
+    ):
+        if _normalized(actual) != _normalized(expected_storage):
+            raise RuntimeError(f"{label} storage.py does not match frozen source commit")
+    python_hashes = _python_file_hashes(source_root)
+    return {
+        "source_commit": SOURCE_COMMIT,
+        "runner_sha256": _sha256_file(Path(__file__).resolve()),
+        "source_root": str(source_root),
+        "python": str(Path(sys.executable).resolve()),
+        "imported_package": str(package_root),
+        "storage_source_sha256": _sha256_bytes(_normalized(expected_storage)),
+        "storage_checkout_sha256": _sha256_bytes(_normalized(checkout_storage.read_bytes())),
+        "storage_imported_sha256": _sha256_bytes(_normalized(imported_storage.read_bytes())),
+        "python_source_hashes": python_hashes,
+        "python_source_file_count": len(python_hashes),
+        "fixture_helper": str(helper_path),
+        "fixture_helper_sha256": _sha256_file(helper_path),
+    }
+
+
+def _load_fixture_inserter(helper_path: Path) -> Any:
+    actual_hash = _sha256_file(helper_path)
+    if actual_hash != FIXTURE_HELPER_SHA256:
+        raise RuntimeError(
+            f"fixture helper hash mismatch: expected {FIXTURE_HELPER_SHA256}, got {actual_hash}"
+        )
+    spec = importlib.util.spec_from_file_location("access_update_fixture_helper", helper_path)
+    if spec is None or spec.loader is None:
+        raise RuntimeError("could not load fixture helper")
+    module = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(module)
+    inserter = getattr(module, "_insert_fixture", None)
+    if not callable(inserter):
+        raise RuntimeError("fixture helper has no callable _insert_fixture")
+    return inserter
+
+
+def _sqlite_settings(store: Any) -> dict[str, Any]:
+    with store._lock:
+        connection = store._conn
+        page_size = int(connection.execute("PRAGMA page_size").fetchone()[0])
+        journal_mode = str(connection.execute("PRAGMA journal_mode").fetchone()[0])
+        synchronous = int(connection.execute("PRAGMA synchronous").fetchone()[0])
+        wal_autocheckpoint = int(connection.execute("PRAGMA wal_autocheckpoint").fetchone()[0])
+    return {
+        "page_size": page_size,
+        "journal_mode": journal_mode,
+        "synchronous": synchronous,
+        "synchronous_label": {0: "OFF", 1: "NORMAL", 2: "FULL", 3: "EXTRA"}.get(
+            synchronous, "unknown"
+        ),
+        "wal_autocheckpoint": wal_autocheckpoint,
+    }
+
+
+def _table_counts(store: Any) -> dict[str, int]:
+    with store._lock:
+        chunks = int(store._conn.execute("SELECT COUNT(*) FROM memory_chunks").fetchone()[0])
+        access = int(store._conn.execute("SELECT COUNT(*) FROM memory_chunk_access").fetchone()[0])
+    return {"memory_chunks": chunks, "memory_chunk_access": access}
+
+
+def _updated_access_counts(store: Any) -> dict[str, int]:
+    with store._lock:
+        rows = store._conn.execute(
+            "SELECT chunk_id, access_count FROM memory_chunk_access "
+            "WHERE chunk_id IN (?, ?, ?, ?, ?) ORDER BY chunk_id",
+            UPDATED_IDS,
+        ).fetchall()
+    return {str(row[0]): int(row[1]) for row in rows}
+
+
+def _file_state(database_path: Path) -> dict[str, int]:
+    return {
+        "database_bytes": _file_bytes(database_path),
+        "wal_bytes": _file_bytes(Path(str(database_path) + "-wal")),
+        "shm_bytes": _file_bytes(Path(str(database_path) + "-shm")),
+    }
+
+
+class _TimingConnection:
+    """Transparent connection proxy for the statements used by the timed call."""
+
+    def __init__(self, connection: Any) -> None:
+        self._connection = connection
+        self.events: list[dict[str, Any]] = []
+        self.current_call: int | None = None
+
+    @staticmethod
+    def _stage(sql: Any) -> str | None:
+        normalized = " ".join(str(sql).split()).upper()
+        if normalized.startswith("INSERT OR IGNORE INTO MEMORY_CHUNK_ACCESS"):
+            return "access_insert_or_ignore"
+        if normalized.startswith("UPDATE MEMORY_CHUNK_ACCESS"):
+            return "access_update"
+        return None
+
+    def execute(self, sql: Any, parameters: Any = ()) -> Any:
+        stage = self._stage(sql)
+        started = time.perf_counter() if stage is not None else 0.0
+        cursor = self._connection.execute(sql, parameters)
+        if stage is not None:
+            self.events.append(
+                {
+                    "call_index": self.current_call,
+                    "stage": stage,
+                    "elapsed_ms": round((time.perf_counter() - started) * 1000, 6),
+                    "rowcount": int(cursor.rowcount),
+                }
+            )
+        return cursor
+
+    def commit(self) -> None:
+        started = time.perf_counter()
+        self._connection.commit()
+        self.events.append(
+            {
+                "call_index": self.current_call,
+                "stage": "commit",
+                "elapsed_ms": round((time.perf_counter() - started) * 1000, 6),
+            }
+        )
+
+    def __getattr__(self, name: str) -> Any:
+        return getattr(self._connection, name)
+
+
+def _measure(store: Any, database_path: Path) -> dict[str, Any]:
+    settings = _sqlite_settings(store)
+    before = {
+        "files": _file_state(database_path),
+        "table_counts": _table_counts(store),
+        "settings": settings,
+        "updated_access_counts": _updated_access_counts(store),
+    }
+    if before["table_counts"].get("memory_chunk_access") != ROWS:
+        raise RuntimeError("fixture did not seed one access row per memory chunk")
+
+    original_connection = store._conn
+    timed_connection = _TimingConnection(original_connection)
+    store._conn = timed_connection
+    calls: list[dict[str, Any]] = []
+    try:
+        timestamps = [
+            datetime(2026, 1, 1, tzinfo=timezone.utc) + timedelta(seconds=index)
+            for index in range(UPDATE_COUNT)
+        ]
+        sequence_started = time.perf_counter()
+        for index, timestamp in enumerate(timestamps):
+            timed_connection.current_call = index
+            event_start = len(timed_connection.events)
+            call_started = time.perf_counter()
+            rowcount = store.mark_retrieved_many(UPDATED_IDS, retrieved_at=timestamp)
+            total_ms = (time.perf_counter() - call_started) * 1000
+            events = timed_connection.events[event_start:]
+            stage_ms = {
+                stage: round(
+                    sum(float(event["elapsed_ms"]) for event in events if event["stage"] == stage),
+                    6,
+                )
+                for stage in ("access_insert_or_ignore", "access_update", "commit")
+            }
+            stage_event_counts = {
+                stage: sum(1 for event in events if event["stage"] == stage)
+                for stage in ("access_insert_or_ignore", "access_update", "commit")
+            }
+            instrumented_ms = sum(stage_ms.values())
+            calls.append(
+                {
+                    "index": index,
+                    "rowcount": int(rowcount),
+                    "total_ms": round(total_ms, 6),
+                    "instrumented_ms": round(instrumented_ms, 6),
+                    "remaining_overhead_ms": round(total_ms - instrumented_ms, 6),
+                    "stages_ms": stage_ms,
+                    "stage_event_counts": stage_event_counts,
+                    "event_count": len(events),
+                }
+            )
+        sequence_ms = (time.perf_counter() - sequence_started) * 1000
+        after = {
+            "files": _file_state(database_path),
+            "table_counts": _table_counts(store),
+            "settings": _sqlite_settings(store),
+            "updated_access_counts": _updated_access_counts(store),
+        }
+        call_shape_valid = all(
+            call["rowcount"] == len(UPDATED_IDS)
+            and call["event_count"] == 3
+            and all(value == 1 for value in call["stage_event_counts"].values())
+            for call in calls
+        )
+        settings_valid = all(
+            item["settings"]["journal_mode"].lower() == "wal"
+            and item["settings"]["synchronous"] == 2
+            for item in (before, after)
+        )
+        counts_valid = before["table_counts"] == {
+            "memory_chunks": ROWS,
+            "memory_chunk_access": ROWS,
+        } and after["table_counts"] == {"memory_chunks": ROWS, "memory_chunk_access": ROWS}
+        access_counts_valid = len(after["updated_access_counts"]) == len(UPDATED_IDS) and all(
+            value == UPDATE_COUNT for value in after["updated_access_counts"].values()
+        )
+        return {
+            "rows": ROWS,
+            "update_count": UPDATE_COUNT,
+            "updated_ids": UPDATED_IDS,
+            "calls": calls,
+            "sequence_total_ms": round(sequence_ms, 6),
+            "stage_event_count": len(timed_connection.events),
+            "stage_events": timed_connection.events,
+            "before_timed_updates": before,
+            "after_timed_updates": after,
+            "checkpoint_calls_during_timing": 0,
+            "validation": {
+                "call_shape_valid": call_shape_valid,
+                "settings_wal_full_before_after": settings_valid,
+                "table_counts_10000_before_after": counts_valid,
+                "all_five_access_counts_100_after_timing": access_counts_valid,
+            },
+        }
+    finally:
+        store._conn = original_connection
+
+
+def _parser() -> argparse.ArgumentParser:
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument("--output", type=Path, required=True)
+    parser.add_argument("--fixture-root", type=Path, required=True)
+    parser.add_argument("--source-root", type=Path, default=DEFAULT_SOURCE_ROOT)
+    return parser
+
+
+def main(argv: list[str] | None = None) -> int:
+    args = _parser().parse_args(argv)
+    output = args.output.expanduser().resolve()
+    fixture_root = args.fixture_root.expanduser().resolve()
+    source_root = args.source_root.expanduser().resolve()
+    if output.is_relative_to(fixture_root) or fixture_root.is_relative_to(output):
+        raise ValueError("output and fixture directories must be disjoint")
+    if output.exists():
+        raise FileExistsError(f"refusing existing output: {output}")
+    if fixture_root.exists():
+        raise FileExistsError(f"refusing existing fixture root: {fixture_root}")
+    helper_path = (Path(__file__).resolve().parents[1] / FIXTURE_HELPER_RELATIVE).resolve()
+    provenance = _source_provenance(source_root, helper_path)
+    output.mkdir(parents=True)
+    manifest = {
+        "schema_version": 1,
+        "status": "prepared",
+        "command": [
+            str(Path(sys.executable).resolve()),
+            str(Path(__file__).resolve()),
+            *sys.argv[1:],
+        ],
+        "started_at": datetime.now(timezone.utc).isoformat(),
+        "provenance": provenance,
+        "fixture_root": str(fixture_root),
+        "output": str(output),
+        "fixture": {
+            "rows": ROWS,
+            "update_count": UPDATE_COUNT,
+            "updated_ids": UPDATED_IDS,
+            "embedding_dimension": 768,
+            "reopen_before_timing": True,
+            "transaction_policy": "SQLiteStore defaults WAL and synchronous FULL; one commit per mark_retrieved_many call",
+            "checkpoint_policy": "No checkpoint calls during timing; WAL sizes are observed before and after",
+        },
+    }
+    (output / "run-manifest.json").write_text(
+        json.dumps(manifest, ensure_ascii=True, indent=2, sort_keys=True) + "\n", encoding="utf-8"
+    )
+
+    report: dict[str, Any] = dict(manifest)
+    report["status"] = "running"
+    database_path = fixture_root / "access-metadata.sqlite"
+    try:
+        fixture_root.mkdir(parents=True)
+        from mnemos.utils.storage import SQLiteStore
+
+        insert_fixture = _load_fixture_inserter(helper_path)
+        store = SQLiteStore(str(database_path))
+        try:
+            insert_fixture(store, with_embeddings=True, project_id="diagnostic-project")
+        finally:
+            store.close()
+
+        reopened = SQLiteStore(str(database_path))
+        try:
+            report["measurement"] = _measure(reopened, database_path)
+        finally:
+            reopened.close()
+        reopened_after_close = SQLiteStore(str(database_path))
+        try:
+            report["after_close_reopen"] = {
+                "files": _file_state(database_path),
+                "table_counts": _table_counts(reopened_after_close),
+                "settings": _sqlite_settings(reopened_after_close),
+                "updated_access_counts": _updated_access_counts(reopened_after_close),
+            }
+        finally:
+            reopened_after_close.close()
+        final_reopen = report["after_close_reopen"]
+        if final_reopen["table_counts"] != {"memory_chunks": ROWS, "memory_chunk_access": ROWS}:
+            raise RuntimeError("post-close reopen table counts changed")
+        if len(final_reopen["updated_access_counts"]) != len(UPDATED_IDS) or any(
+            value != UPDATE_COUNT for value in final_reopen["updated_access_counts"].values()
+        ):
+            raise RuntimeError("post-close reopen access counts changed")
+        if (
+            final_reopen["settings"]["journal_mode"].lower() != "wal"
+            or final_reopen["settings"]["synchronous"] != 2
+        ):
+            raise RuntimeError("post-close reopen SQLite durability settings changed")
+        if not all(report["measurement"]["validation"].values()):
+            raise RuntimeError("timed access update shape or durability validation failed")
+        report["fixture_preserved"] = True
+        report["status"] = "completed"
+    except Exception as exc:
+        report["status"] = "failed"
+        report["error_type"] = type(exc).__name__
+        report["error_digest"] = _sha256_bytes(str(exc).encode("utf-8"))
+    finally:
+        report["finished_at"] = datetime.now(timezone.utc).isoformat()
+        report["fixture_preserved"] = fixture_root.exists()
+        try:
+            provenance_after = _source_provenance(source_root, helper_path)
+            report["provenance_after"] = provenance_after
+            report["provenance_unchanged"] = provenance_after == provenance
+            if not report["provenance_unchanged"]:
+                report["status"] = "failed"
+        except Exception as exc:
+            report["provenance_after_error_type"] = type(exc).__name__
+            report["provenance_after_error_digest"] = _sha256_bytes(str(exc).encode("utf-8"))
+            report["provenance_unchanged"] = False
+            if report["status"] == "completed":
+                report["status"] = "failed"
+        report["fixture_helper_sha256_after"] = _sha256_file(helper_path)
+        if report["fixture_helper_sha256_after"] != provenance["fixture_helper_sha256"]:
+            report["provenance_unchanged"] = False
+            if report["status"] == "completed":
+                report["status"] = "failed"
+        (output / "report.json").write_text(
+            json.dumps(report, ensure_ascii=True, indent=2, sort_keys=True) + "\n", encoding="utf-8"
+        )
+    return 0 if report["status"] == "completed" else 1
+
+
+if __name__ == "__main__":
+    raise SystemExit(main())

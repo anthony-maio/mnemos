@@ -1,0 +1,3761 @@
+{
+  "after_close_reopen": {
+    "files": {
+      "database_bytes": 256901120,
+      "shm_bytes": 32768,
+      "wal_bytes": 8272
+    },
+    "settings": {
+      "journal_mode": "wal",
+      "page_size": 4096,
+      "synchronous": 2,
+      "synchronous_label": "FULL",
+      "wal_autocheckpoint": 1000
+    },
+    "table_counts": {
+      "memory_chunk_access": 10000,
+      "memory_chunks": 10000
+    },
+    "updated_access_counts": {
+      "performance-fact-00000": 100,
+      "performance-fact-00001": 100,
+      "performance-fact-00002": 100,
+      "performance-fact-00003": 100,
+      "performance-fact-00004": 100
+    }
+  },
+  "command": [
+    "D:\\Development\\mnemos\\mnemos\\.worktrees\\functional-local-memory\\.venv\\Scripts\\python.exe",
+    "D:\\Development\\mnemos\\mnemos\\.worktrees\\functional-local-memory\\.venv\\access_metadata_phase_probe_v1.py",
+    "--output",
+    "C:/Users/Ant/AppData/Local/Temp/mnemos-access-metadata-phases-c-v1",
+    "--fixture-root",
+    "C:/Users/Ant/AppData/Local/Temp/mnemos-access-metadata-phases-fixture-c-v1"
+  ],
+  "finished_at": "2026-09-17T22:35:49.187210+00:00",
+  "fixture": {
+    "checkpoint_policy": "No checkpoint calls during timing; WAL sizes are observed before and after",
+    "embedding_dimension": 768,
+    "reopen_before_timing": true,
+    "rows": 10000,
+    "transaction_policy": "SQLiteStore defaults WAL and synchronous FULL; one commit per mark_retrieved_many call",
+    "update_count": 100,
+    "updated_ids": [
+      "performance-fact-00000",
+      "performance-fact-00001",
+      "performance-fact-00002",
+      "performance-fact-00003",
+      "performance-fact-00004"
+    ]
+  },
+  "fixture_helper_sha256_after": "11d76e07490a8d549cfa9b7ad9456f2e5370d4135ecc024027d7a8deda637d6f",
+  "fixture_preserved": true,
+  "fixture_root": "C:\\Users\\Ant\\AppData\\Local\\Temp\\mnemos-access-metadata-phases-fixture-c-v1",
+  "measurement": {
+    "after_timed_updates": {
+      "files": {
+        "database_bytes": 256901120,
+        "shm_bytes": 32768,
+        "wal_bytes": 428512
+      },
+      "settings": {
+        "journal_mode": "wal",
+        "page_size": 4096,
+        "synchronous": 2,
+        "synchronous_label": "FULL",
+        "wal_autocheckpoint": 1000
+      },
+      "table_counts": {
+        "memory_chunk_access": 10000,
+        "memory_chunks": 10000
+      },
+      "updated_access_counts": {
+        "performance-fact-00000": 100,
+        "performance-fact-00001": 100,
+        "performance-fact-00002": 100,
+        "performance-fact-00003": 100,
+        "performance-fact-00004": 100
+      }
+    },
+    "before_timed_updates": {
+      "files": {
+        "database_bytes": 256901120,
+        "shm_bytes": 32768,
+        "wal_bytes": 16512
+      },
+      "settings": {
+        "journal_mode": "wal",
+        "page_size": 4096,
+        "synchronous": 2,
+        "synchronous_label": "FULL",
+        "wal_autocheckpoint": 1000
+      },
+      "table_counts": {
+        "memory_chunk_access": 10000,
+        "memory_chunks": 10000
+      },
+      "updated_access_counts": {
+        "performance-fact-00000": 0,
+        "performance-fact-00001": 0,
+        "performance-fact-00002": 0,
+        "performance-fact-00003": 0,
+        "performance-fact-00004": 0
+      }
+    },
+    "calls": [
+      {
+        "event_count": 3,
+        "index": 0,
+        "instrumented_ms": 2.5363,
+        "remaining_overhead_ms": 0.0437,
+        "rowcount": 5,
+        "stage_event_counts": {
+          "access_insert_or_ignore": 1,
+          "access_update": 1,
+          "commit": 1
+        },
+        "stages_ms": {
+          "access_insert_or_ignore": 0.0775,
+          "access_update": 0.0377,
+          "commit": 2.4211
+        },
+        "total_ms": 2.58
+      },
+      {
+        "event_count": 3,
+        "index": 1,
+        "instrumented_ms": 1.9069,
+        "remaining_overhead_ms": 0.0299,
+        "rowcount": 5,
+        "stage_event_counts": {
+          "access_insert_or_ignore": 1,
+          "access_update": 1,
+          "commit": 1
+        },
+        "stages_ms": {
+          "access_insert_or_ignore": 0.0958,
+          "access_update": 0.0197,
+          "commit": 1.7914
+        },
+        "total_ms": 1.9368
+      },
+      {
+        "event_count": 3,
+        "index": 2,
+        "instrumented_ms": 2.0785,
+        "remaining_overhead_ms": 0.0237,
+        "rowcount": 5,
+        "stage_event_counts": {
+          "access_insert_or_ignore": 1,
+          "access_update": 1,
+          "commit": 1
+        },
+        "stages_ms": {
+          "access_insert_or_ignore": 0.071,
+          "access_update": 0.0197,
+          "commit": 1.9878
+        },
+        "total_ms": 2.1022
+      },
+      {
+        "event_count": 3,
+        "index": 3,
+        "instrumented_ms": 1.9371,
+        "remaining_overhead_ms": 0.0217,
+        "rowcount": 5,
+        "stage_event_counts": {
+          "access_insert_or_ignore": 1,
+          "access_update": 1,
+          "commit": 1
+        },
+        "stages_ms": {
+          "access_insert_or_ignore": 0.0453,
+          "access_update": 0.0172,
+          "commit": 1.8746
+        },
+        "total_ms": 1.9588
+      },
+      {
+        "event_count": 3,
+        "index": 4,
+        "instrumented_ms": 1.8856,
+        "remaining_overhead_ms": 0.022,
+        "rowcount": 5,
+        "stage_event_counts": {
+          "access_insert_or_ignore": 1,
+          "access_update": 1,
+          "commit": 1
+        },
+        "stages_ms": {
+          "access_insert_or_ignore": 0.0465,
+          "access_update": 0.0177,
+          "commit": 1.8214
+        },
+        "total_ms": 1.9076
+      },
+      {
+        "event_count": 3,
+        "index": 5,
+        "instrumented_ms": 1.9246,
+        "remaining_overhead_ms": 0.0185,
+        "rowcount": 5,
+        "stage_event_counts": {
+          "access_insert_or_ignore": 1,
+          "access_update": 1,
+          "commit": 1
+        },
+        "stages_ms": {
+          "access_insert_or_ignore": 0.042,
+          "access_update": 0.0167,
+          "commit": 1.8659
+        },
+        "total_ms": 1.9431
+      },
+      {
+        "event_count": 3,
+        "index": 6,
+        "instrumented_ms": 2.0767,
+        "remaining_overhead_ms": 0.0192,
+        "rowcount": 5,
+        "stage_event_counts": {
+          "access_insert_or_ignore": 1,
+          "access_update": 1,
+          "commit": 1
+        },
+        "stages_ms": {
+          "access_insert_or_ignore": 0.0368,
+          "access_update": 0.0166,
+          "commit": 2.0233
+        },
+        "total_ms": 2.0959
+      },
+      {
+        "event_count": 3,
+        "index": 7,
+        "instrumented_ms": 1.9302,
+        "remaining_overhead_ms": 0.0209,
+        "rowcount": 5,
+        "stage_event_counts": {
+          "access_insert_or_ignore": 1,
+          "access_update": 1,
+          "commit": 1
+        },
+        "stages_ms": {
+          "access_insert_or_ignore": 0.0519,
+          "access_update": 0.0181,
+          "commit": 1.8602
+        },
+        "total_ms": 1.9511
+      },
+      {
+        "event_count": 3,
+        "index": 8,
+        "instrumented_ms": 2.0261,
+        "remaining_overhead_ms": 0.0209,
+        "rowcount": 5,
+        "stage_event_counts": {
+          "access_insert_or_ignore": 1,
+          "access_update": 1,
+          "commit": 1
+        },
+        "stages_ms": {
+          "access_insert_or_ignore": 0.0457,
+          "access_update": 0.018,
+          "commit": 1.9624
+        },
+        "total_ms": 2.047
+      },
+      {
+        "event_count": 3,
+        "index": 9,
+        "instrumented_ms": 1.9606,
+        "remaining_overhead_ms": 0.0186,
+        "rowcount": 5,
+        "stage_event_counts": {
+          "access_insert_or_ignore": 1,
+          "access_update": 1,
+          "commit": 1
+        },
+        "stages_ms": {
+          "access_insert_or_ignore": 0.0416,
+          "access_update": 0.0169,
+          "commit": 1.9021
+        },
+        "total_ms": 1.9792
+      },
+      {
+        "event_count": 3,
+        "index": 10,
+        "instrumented_ms": 1.9211,
+        "remaining_overhead_ms": 0.0174,
+        "rowcount": 5,
+        "stage_event_counts": {
+          "access_insert_or_ignore": 1,
+          "access_update": 1,
+          "commit": 1
+        },
+        "stages_ms": {
+          "access_insert_or_ignore": 0.0368,
+          "access_update": 0.0177,
+          "commit": 1.8666
+        },
+        "total_ms": 1.9385
+      },
+      {
+        "event_count": 3,
+        "index": 11,
+        "instrumented_ms": 1.9343,
+        "remaining_overhead_ms": 0.0199,
+        "rowcount": 5,
+        "stage_event_counts": {
+          "access_insert_or_ignore": 1,
+          "access_update": 1,
+          "commit": 1
+        },
+        "stages_ms": {
+          "access_insert_or_ignore": 0.0387,
+          "access_update": 0.0164,
+          "commit": 1.8792
+        },
+        "total_ms": 1.9542
+      },
+      {
+        "event_count": 3,
+        "index": 12,
+        "instrumented_ms": 1.9393,
+        "remaining_overhead_ms": 0.0239,
+        "rowcount": 5,
+        "stage_event_counts": {
+          "access_insert_or_ignore": 1,
+          "access_update": 1,
+          "commit": 1
+        },
+        "stages_ms": {
+          "access_insert_or_ignore": 0.0463,
+          "access_update": 0.0183,
+          "commit": 1.8747
+        },
+        "total_ms": 1.9632
+      },
+      {
+        "event_count": 3,
+        "index": 13,
+        "instrumented_ms": 2.0705,
+        "remaining_overhead_ms": 0.0261,
+        "rowcount": 5,
+        "stage_event_counts": {
+          "access_insert_or_ignore": 1,
+          "access_update": 1,
+          "commit": 1
+        },
+        "stages_ms": {
+          "access_insert_or_ignore": 0.0515,
+          "access_update": 0.0179,
+          "commit": 2.0011
+        },
+        "total_ms": 2.0966
+      },
+      {
+        "event_count": 3,
+        "index": 14,
+        "instrumented_ms": 1.9501,
+        "remaining_overhead_ms": 0.024,
+        "rowcount": 5,
+        "stage_event_counts": {
+          "access_insert_or_ignore": 1,
+          "access_update": 1,
+          "commit": 1
+        },
+        "stages_ms": {
+          "access_insert_or_ignore": 0.0529,
+          "access_update": 0.0182,
+          "commit": 1.879
+        },
+        "total_ms": 1.9741
+      },
+      {
+        "event_count": 3,
+        "index": 15,
+        "instrumented_ms": 1.9122,
+        "remaining_overhead_ms": 0.0221,
+        "rowcount": 5,
+        "stage_event_counts": {
+          "access_insert_or_ignore": 1,
+          "access_update": 1,
+          "commit": 1
+        },
+        "stages_ms": {
+          "access_insert_or_ignore": 0.0514,
+          "access_update": 0.0176,
+          "commit": 1.8432
+        },
+        "total_ms": 1.9343
+      },
+      {
+        "event_count": 3,
+        "index": 16,
+        "instrumented_ms": 2.0618,
+        "remaining_overhead_ms": 0.0191,
+        "rowcount": 5,
+        "stage_event_counts": {
+          "access_insert_or_ignore": 1,
+          "access_update": 1,
+          "commit": 1
+        },
+        "stages_ms": {
+          "access_insert_or_ignore": 0.0415,
+          "access_update": 0.017,
+          "commit": 2.0033
+        },
+        "total_ms": 2.0809
+      },
+      {
+        "event_count": 3,
+        "index": 17,
+        "instrumented_ms": 1.9371,
+        "remaining_overhead_ms": 0.02,
+        "rowcount": 5,
+        "stage_event_counts": {
+          "access_insert_or_ignore": 1,
+          "access_update": 1,
+          "commit": 1
+        },
+        "stages_ms": {
+          "access_insert_or_ignore": 0.0356,
+          "access_update": 0.0157,
+          "commit": 1.8858
+        },
+        "total_ms": 1.9571
+      },
+      {
+        "event_count": 3,
+        "index": 18,
+        "instrumented_ms": 1.9403,
+        "remaining_overhead_ms": 0.0229,
+        "rowcount": 5,
+        "stage_event_counts": {
+          "access_insert_or_ignore": 1,
+          "access_update": 1,
+          "commit": 1
+        },
+        "stages_ms": {
+          "access_insert_or_ignore": 0.0492,
+          "access_update": 0.0185,
+          "commit": 1.8726
+        },
+        "total_ms": 1.9632
+      },
+      {
+        "event_count": 3,
+        "index": 19,
+        "instrumented_ms": 1.8904,
+        "remaining_overhead_ms": 0.0227,
+        "rowcount": 5,
+        "stage_event_counts": {
+          "access_insert_or_ignore": 1,
+          "access_update": 1,
+          "commit": 1
+        },
+        "stages_ms": {
+          "access_insert_or_ignore": 0.0492,
+          "access_update": 0.0175,
+          "commit": 1.8237
+        },
+        "total_ms": 1.9131
+      },
+      {
+        "event_count": 3,
+        "index": 20,
+        "instrumented_ms": 2.0422,
+        "remaining_overhead_ms": 0.023,
+        "rowcount": 5,
+        "stage_event_counts": {
+          "access_insert_or_ignore": 1,
+          "access_update": 1,
+          "commit": 1
+        },
+        "stages_ms": {
+          "access_insert_or_ignore": 0.0539,
+          "access_update": 0.0173,
+          "commit": 1.971
+        },
+        "total_ms": 2.0652
+      },
+      {
+        "event_count": 3,
+        "index": 21,
+        "instrumented_ms": 1.8725,
+        "remaining_overhead_ms": 0.0215,
+        "rowcount": 5,
+        "stage_event_counts": {
+          "access_insert_or_ignore": 1,
+          "access_update": 1,
+          "commit": 1
+        },
+        "stages_ms": {
+          "access_insert_or_ignore": 0.0488,
+          "access_update": 0.0178,
+          "commit": 1.8059
+        },
+        "total_ms": 1.894
+      },
+      {
+        "event_count": 3,
+        "index": 22,
+        "instrumented_ms": 1.8943,
+        "remaining_overhead_ms": 0.0193,
+        "rowcount": 5,
+        "stage_event_counts": {
+          "access_insert_or_ignore": 1,
+          "access_update": 1,
+          "commit": 1
+        },
+        "stages_ms": {
+          "access_insert_or_ignore": 0.041,
+          "access_update": 0.0173,
+          "commit": 1.836
+        },
+        "total_ms": 1.9136
+      },
+      {
+        "event_count": 3,
+        "index": 23,
+        "instrumented_ms": 1.9746,
+        "remaining_overhead_ms": 0.0179,
+        "rowcount": 5,
+        "stage_event_counts": {
+          "access_insert_or_ignore": 1,
+          "access_update": 1,
+          "commit": 1
+        },
+        "stages_ms": {
+          "access_insert_or_ignore": 0.0388,
+          "access_update": 0.017,
+          "commit": 1.9188
+        },
+        "total_ms": 1.9925
+      },
+      {
+        "event_count": 3,
+        "index": 24,
+        "instrumented_ms": 2.1094,
+        "remaining_overhead_ms": 0.0195,
+        "rowcount": 5,
+        "stage_event_counts": {
+          "access_insert_or_ignore": 1,
+          "access_update": 1,
+          "commit": 1
+        },
+        "stages_ms": {
+          "access_insert_or_ignore": 0.0351,
+          "access_update": 0.0157,
+          "commit": 2.0586
+        },
+        "total_ms": 2.1289
+      },
+      {
+        "event_count": 3,
+        "index": 25,
+        "instrumented_ms": 1.8813,
+        "remaining_overhead_ms": 0.0274,
+        "rowcount": 5,
+        "stage_event_counts": {
+          "access_insert_or_ignore": 1,
+          "access_update": 1,
+          "commit": 1
+        },
+        "stages_ms": {
+          "access_insert_or_ignore": 0.055,
+          "access_update": 0.0174,
+          "commit": 1.8089
+        },
+        "total_ms": 1.9087
+      },
+      {
+        "event_count": 3,
+        "index": 26,
+        "instrumented_ms": 1.9158,
+        "remaining_overhead_ms": 0.0286,
+        "rowcount": 5,
+        "stage_event_counts": {
+          "access_insert_or_ignore": 1,
+          "access_update": 1,
+          "commit": 1
+        },
+        "stages_ms": {
+          "access_insert_or_ignore": 0.0617,
+          "access_update": 0.0179,
+          "commit": 1.8362
+        },
+        "total_ms": 1.9444
+      },
+      {
+        "event_count": 3,
+        "index": 27,
+        "instrumented_ms": 1.9231,
+        "remaining_overhead_ms": 0.032,
+        "rowcount": 5,
+        "stage_event_counts": {
+          "access_insert_or_ignore": 1,
+          "access_update": 1,
+          "commit": 1
+        },
+        "stages_ms": {
+          "access_insert_or_ignore": 0.0653,
+          "access_update": 0.0197,
+          "commit": 1.8381
+        },
+        "total_ms": 1.9551
+      },
+      {
+        "event_count": 3,
+        "index": 28,
+        "instrumented_ms": 2.0943,
+        "remaining_overhead_ms": 0.0278,
+        "rowcount": 5,
+        "stage_event_counts": {
+          "access_insert_or_ignore": 1,
+          "access_update": 1,
+          "commit": 1
+        },
+        "stages_ms": {
+          "access_insert_or_ignore": 0.067,
+          "access_update": 0.019,
+          "commit": 2.0083
+        },
+        "total_ms": 2.1221
+      },
+      {
+        "event_count": 3,
+        "index": 29,
+        "instrumented_ms": 1.8807,
+        "remaining_overhead_ms": 0.0236,
+        "rowcount": 5,
+        "stage_event_counts": {
+          "access_insert_or_ignore": 1,
+          "access_update": 1,
+          "commit": 1
+        },
+        "stages_ms": {
+          "access_insert_or_ignore": 0.0661,
+          "access_update": 0.0187,
+          "commit": 1.7959
+        },
+        "total_ms": 1.9043
+      },
+      {
+        "event_count": 3,
+        "index": 30,
+        "instrumented_ms": 1.948,
+        "remaining_overhead_ms": 0.022,
+        "rowcount": 5,
+        "stage_event_counts": {
+          "access_insert_or_ignore": 1,
+          "access_update": 1,
+          "commit": 1
+        },
+        "stages_ms": {
+          "access_insert_or_ignore": 0.0507,
+          "access_update": 0.0181,
+          "commit": 1.8792
+        },
+        "total_ms": 1.97
+      },
+      {
+        "event_count": 3,
+        "index": 31,
+        "instrumented_ms": 2.1037,
+        "remaining_overhead_ms": 0.0208,
+        "rowcount": 5,
+        "stage_event_counts": {
+          "access_insert_or_ignore": 1,
+          "access_update": 1,
+          "commit": 1
+        },
+        "stages_ms": {
+          "access_insert_or_ignore": 0.0396,
+          "access_update": 0.0161,
+          "commit": 2.048
+        },
+        "total_ms": 2.1245
+      },
+      {
+        "event_count": 3,
+        "index": 32,
+        "instrumented_ms": 1.8674,
+        "remaining_overhead_ms": 0.023,
+        "rowcount": 5,
+        "stage_event_counts": {
+          "access_insert_or_ignore": 1,
+          "access_update": 1,
+          "commit": 1
+        },
+        "stages_ms": {
+          "access_insert_or_ignore": 0.0561,
+          "access_update": 0.0161,
+          "commit": 1.7952
+        },
+        "total_ms": 1.8904
+      },
+      {
+        "event_count": 3,
+        "index": 33,
+        "instrumented_ms": 1.9729,
+        "remaining_overhead_ms": 0.0268,
+        "rowcount": 5,
+        "stage_event_counts": {
+          "access_insert_or_ignore": 1,
+          "access_update": 1,
+          "commit": 1
+        },
+        "stages_ms": {
+          "access_insert_or_ignore": 0.0579,
+          "access_update": 0.0192,
+          "commit": 1.8958
+        },
+        "total_ms": 1.9997
+      },
+      {
+        "event_count": 3,
+        "index": 34,
+        "instrumented_ms": 1.0826,
+        "remaining_overhead_ms": 0.0306,
+        "rowcount": 5,
+        "stage_event_counts": {
+          "access_insert_or_ignore": 1,
+          "access_update": 1,
+          "commit": 1
+        },
+        "stages_ms": {
+          "access_insert_or_ignore": 0.0676,
+          "access_update": 0.0827,
+          "commit": 0.9323
+        },
+        "total_ms": 1.1132
+      },
+      {
+        "event_count": 3,
+        "index": 35,
+        "instrumented_ms": 1.7887,
+        "remaining_overhead_ms": 0.0248,
+        "rowcount": 5,
+        "stage_event_counts": {
+          "access_insert_or_ignore": 1,
+          "access_update": 1,
+          "commit": 1
+        },
+        "stages_ms": {
+          "access_insert_or_ignore": 0.0516,
+          "access_update": 0.0181,
+          "commit": 1.719
+        },
+        "total_ms": 1.8135
+      },
+      {
+        "event_count": 3,
+        "index": 36,
+        "instrumented_ms": 1.9465,
+        "remaining_overhead_ms": 0.0313,
+        "rowcount": 5,
+        "stage_event_counts": {
+          "access_insert_or_ignore": 1,
+          "access_update": 1,
+          "commit": 1
+        },
+        "stages_ms": {
+          "access_insert_or_ignore": 0.0491,
+          "access_update": 0.0171,
+          "commit": 1.8803
+        },
+        "total_ms": 1.9778
+      },
+      {
+        "event_count": 3,
+        "index": 37,
+        "instrumented_ms": 2.0291,
+        "remaining_overhead_ms": 0.0342,
+        "rowcount": 5,
+        "stage_event_counts": {
+          "access_insert_or_ignore": 1,
+          "access_update": 1,
+          "commit": 1
+        },
+        "stages_ms": {
+          "access_insert_or_ignore": 0.0763,
+          "access_update": 0.0187,
+          "commit": 1.9341
+        },
+        "total_ms": 2.0633
+      },
+      {
+        "event_count": 3,
+        "index": 38,
+        "instrumented_ms": 1.9356,
+        "remaining_overhead_ms": 0.0312,
+        "rowcount": 5,
+        "stage_event_counts": {
+          "access_insert_or_ignore": 1,
+          "access_update": 1,
+          "commit": 1
+        },
+        "stages_ms": {
+          "access_insert_or_ignore": 0.0797,
+          "access_update": 0.0204,
+          "commit": 1.8355
+        },
+        "total_ms": 1.9668
+      },
+      {
+        "event_count": 3,
+        "index": 39,
+        "instrumented_ms": 1.9012,
+        "remaining_overhead_ms": 0.0301,
+        "rowcount": 5,
+        "stage_event_counts": {
+          "access_insert_or_ignore": 1,
+          "access_update": 1,
+          "commit": 1
+        },
+        "stages_ms": {
+          "access_insert_or_ignore": 0.0782,
+          "access_update": 0.0185,
+          "commit": 1.8045
+        },
+        "total_ms": 1.9313
+      },
+      {
+        "event_count": 3,
+        "index": 40,
+        "instrumented_ms": 1.9445,
+        "remaining_overhead_ms": 0.0329,
+        "rowcount": 5,
+        "stage_event_counts": {
+          "access_insert_or_ignore": 1,
+          "access_update": 1,
+          "commit": 1
+        },
+        "stages_ms": {
+          "access_insert_or_ignore": 0.069,
+          "access_update": 0.0172,
+          "commit": 1.8583
+        },
+        "total_ms": 1.9774
+      },
+      {
+        "event_count": 3,
+        "index": 41,
+        "instrumented_ms": 2.0192,
+        "remaining_overhead_ms": 0.0344,
+        "rowcount": 5,
+        "stage_event_counts": {
+          "access_insert_or_ignore": 1,
+          "access_update": 1,
+          "commit": 1
+        },
+        "stages_ms": {
+          "access_insert_or_ignore": 0.0965,
+          "access_update": 0.0196,
+          "commit": 1.9031
+        },
+        "total_ms": 2.0536
+      },
+      {
+        "event_count": 3,
+        "index": 42,
+        "instrumented_ms": 1.916,
+        "remaining_overhead_ms": 0.0301,
+        "rowcount": 5,
+        "stage_event_counts": {
+          "access_insert_or_ignore": 1,
+          "access_update": 1,
+          "commit": 1
+        },
+        "stages_ms": {
+          "access_insert_or_ignore": 0.0816,
+          "access_update": 0.0186,
+          "commit": 1.8158
+        },
+        "total_ms": 1.9461
+      },
+      {
+        "event_count": 3,
+        "index": 43,
+        "instrumented_ms": 3.0006,
+        "remaining_overhead_ms": 0.0253,
+        "rowcount": 5,
+        "stage_event_counts": {
+          "access_insert_or_ignore": 1,
+          "access_update": 1,
+          "commit": 1
+        },
+        "stages_ms": {
+          "access_insert_or_ignore": 0.0683,
+          "access_update": 0.0183,
+          "commit": 2.914
+        },
+        "total_ms": 3.0259
+      },
+      {
+        "event_count": 3,
+        "index": 44,
+        "instrumented_ms": 2.0485,
+        "remaining_overhead_ms": 0.0245,
+        "rowcount": 5,
+        "stage_event_counts": {
+          "access_insert_or_ignore": 1,
+          "access_update": 1,
+          "commit": 1
+        },
+        "stages_ms": {
+          "access_insert_or_ignore": 0.0671,
+          "access_update": 0.0181,
+          "commit": 1.9633
+        },
+        "total_ms": 2.073
+      },
+      {
+        "event_count": 3,
+        "index": 45,
+        "instrumented_ms": 1.8198,
+        "remaining_overhead_ms": 0.0211,
+        "rowcount": 5,
+        "stage_event_counts": {
+          "access_insert_or_ignore": 1,
+          "access_update": 1,
+          "commit": 1
+        },
+        "stages_ms": {
+          "access_insert_or_ignore": 0.0556,
+          "access_update": 0.0172,
+          "commit": 1.747
+        },
+        "total_ms": 1.8409
+      },
+      {
+        "event_count": 3,
+        "index": 46,
+        "instrumented_ms": 1.9395,
+        "remaining_overhead_ms": 0.0194,
+        "rowcount": 5,
+        "stage_event_counts": {
+          "access_insert_or_ignore": 1,
+          "access_update": 1,
+          "commit": 1
+        },
+        "stages_ms": {
+          "access_insert_or_ignore": 0.0428,
+          "access_update": 0.016,
+          "commit": 1.8807
+        },
+        "total_ms": 1.9589
+      },
+      {
+        "event_count": 3,
+        "index": 47,
+        "instrumented_ms": 2.0714,
+        "remaining_overhead_ms": 0.0213,
+        "rowcount": 5,
+        "stage_event_counts": {
+          "access_insert_or_ignore": 1,
+          "access_update": 1,
+          "commit": 1
+        },
+        "stages_ms": {
+          "access_insert_or_ignore": 0.0464,
+          "access_update": 0.0176,
+          "commit": 2.0074
+        },
+        "total_ms": 2.0927
+      },
+      {
+        "event_count": 3,
+        "index": 48,
+        "instrumented_ms": 1.9287,
+        "remaining_overhead_ms": 0.0204,
+        "rowcount": 5,
+        "stage_event_counts": {
+          "access_insert_or_ignore": 1,
+          "access_update": 1,
+          "commit": 1
+        },
+        "stages_ms": {
+          "access_insert_or_ignore": 0.0475,
+          "access_update": 0.0175,
+          "commit": 1.8637
+        },
+        "total_ms": 1.9491
+      },
+      {
+        "event_count": 3,
+        "index": 49,
+        "instrumented_ms": 1.8934,
+        "remaining_overhead_ms": 0.0198,
+        "rowcount": 5,
+        "stage_event_counts": {
+          "access_insert_or_ignore": 1,
+          "access_update": 1,
+          "commit": 1
+        },
+        "stages_ms": {
+          "access_insert_or_ignore": 0.0399,
+          "access_update": 0.0163,
+          "commit": 1.8372
+        },
+        "total_ms": 1.9132
+      },
+      {
+        "event_count": 3,
+        "index": 50,
+        "instrumented_ms": 2.0799,
+        "remaining_overhead_ms": 0.02,
+        "rowcount": 5,
+        "stage_event_counts": {
+          "access_insert_or_ignore": 1,
+          "access_update": 1,
+          "commit": 1
+        },
+        "stages_ms": {
+          "access_insert_or_ignore": 0.0395,
+          "access_update": 0.0173,
+          "commit": 2.0231
+        },
+        "total_ms": 2.0999
+      },
+      {
+        "event_count": 3,
+        "index": 51,
+        "instrumented_ms": 1.919,
+        "remaining_overhead_ms": 0.0219,
+        "rowcount": 5,
+        "stage_event_counts": {
+          "access_insert_or_ignore": 1,
+          "access_update": 1,
+          "commit": 1
+        },
+        "stages_ms": {
+          "access_insert_or_ignore": 0.0474,
+          "access_update": 0.0171,
+          "commit": 1.8545
+        },
+        "total_ms": 1.9409
+      },
+      {
+        "event_count": 3,
+        "index": 52,
+        "instrumented_ms": 1.9503,
+        "remaining_overhead_ms": 0.0196,
+        "rowcount": 5,
+        "stage_event_counts": {
+          "access_insert_or_ignore": 1,
+          "access_update": 1,
+          "commit": 1
+        },
+        "stages_ms": {
+          "access_insert_or_ignore": 0.0465,
+          "access_update": 0.0169,
+          "commit": 1.8869
+        },
+        "total_ms": 1.9699
+      },
+      {
+        "event_count": 3,
+        "index": 53,
+        "instrumented_ms": 1.9149,
+        "remaining_overhead_ms": 0.0197,
+        "rowcount": 5,
+        "stage_event_counts": {
+          "access_insert_or_ignore": 1,
+          "access_update": 1,
+          "commit": 1
+        },
+        "stages_ms": {
+          "access_insert_or_ignore": 0.0394,
+          "access_update": 0.0158,
+          "commit": 1.8597
+        },
+        "total_ms": 1.9346
+      },
+      {
+        "event_count": 3,
+        "index": 54,
+        "instrumented_ms": 2.0627,
+        "remaining_overhead_ms": 0.0233,
+        "rowcount": 5,
+        "stage_event_counts": {
+          "access_insert_or_ignore": 1,
+          "access_update": 1,
+          "commit": 1
+        },
+        "stages_ms": {
+          "access_insert_or_ignore": 0.0526,
+          "access_update": 0.0174,
+          "commit": 1.9927
+        },
+        "total_ms": 2.086
+      },
+      {
+        "event_count": 3,
+        "index": 55,
+        "instrumented_ms": 1.9412,
+        "remaining_overhead_ms": 0.0207,
+        "rowcount": 5,
+        "stage_event_counts": {
+          "access_insert_or_ignore": 1,
+          "access_update": 1,
+          "commit": 1
+        },
+        "stages_ms": {
+          "access_insert_or_ignore": 0.0482,
+          "access_update": 0.0177,
+          "commit": 1.8753
+        },
+        "total_ms": 1.9619
+      },
+      {
+        "event_count": 3,
+        "index": 56,
+        "instrumented_ms": 1.9166,
+        "remaining_overhead_ms": 0.0202,
+        "rowcount": 5,
+        "stage_event_counts": {
+          "access_insert_or_ignore": 1,
+          "access_update": 1,
+          "commit": 1
+        },
+        "stages_ms": {
+          "access_insert_or_ignore": 0.0409,
+          "access_update": 0.0173,
+          "commit": 1.8584
+        },
+        "total_ms": 1.9368
+      },
+      {
+        "event_count": 3,
+        "index": 57,
+        "instrumented_ms": 2.0926,
+        "remaining_overhead_ms": 0.0276,
+        "rowcount": 5,
+        "stage_event_counts": {
+          "access_insert_or_ignore": 1,
+          "access_update": 1,
+          "commit": 1
+        },
+        "stages_ms": {
+          "access_insert_or_ignore": 0.0404,
+          "access_update": 0.0166,
+          "commit": 2.0356
+        },
+        "total_ms": 2.1202
+      },
+      {
+        "event_count": 3,
+        "index": 58,
+        "instrumented_ms": 1.9044,
+        "remaining_overhead_ms": 0.022,
+        "rowcount": 5,
+        "stage_event_counts": {
+          "access_insert_or_ignore": 1,
+          "access_update": 1,
+          "commit": 1
+        },
+        "stages_ms": {
+          "access_insert_or_ignore": 0.0457,
+          "access_update": 0.0166,
+          "commit": 1.8421
+        },
+        "total_ms": 1.9264
+      },
+      {
+        "event_count": 3,
+        "index": 59,
+        "instrumented_ms": 3.0327,
+        "remaining_overhead_ms": 0.0277,
+        "rowcount": 5,
+        "stage_event_counts": {
+          "access_insert_or_ignore": 1,
+          "access_update": 1,
+          "commit": 1
+        },
+        "stages_ms": {
+          "access_insert_or_ignore": 0.0526,
+          "access_update": 0.0177,
+          "commit": 2.9624
+        },
+        "total_ms": 3.0604
+      },
+      {
+        "event_count": 3,
+        "index": 60,
+        "instrumented_ms": 2.8538,
+        "remaining_overhead_ms": 0.0306,
+        "rowcount": 5,
+        "stage_event_counts": {
+          "access_insert_or_ignore": 1,
+          "access_update": 1,
+          "commit": 1
+        },
+        "stages_ms": {
+          "access_insert_or_ignore": 0.2159,
+          "access_update": 0.0207,
+          "commit": 2.6172
+        },
+        "total_ms": 2.8844
+      },
+      {
+        "event_count": 3,
+        "index": 61,
+        "instrumented_ms": 1.8803,
+        "remaining_overhead_ms": 0.0213,
+        "rowcount": 5,
+        "stage_event_counts": {
+          "access_insert_or_ignore": 1,
+          "access_update": 1,
+          "commit": 1
+        },
+        "stages_ms": {
+          "access_insert_or_ignore": 0.0562,
+          "access_update": 0.0166,
+          "commit": 1.8075
+        },
+        "total_ms": 1.9016
+      },
+      {
+        "event_count": 3,
+        "index": 62,
+        "instrumented_ms": 2.063,
+        "remaining_overhead_ms": 0.0189,
+        "rowcount": 5,
+        "stage_event_counts": {
+          "access_insert_or_ignore": 1,
+          "access_update": 1,
+          "commit": 1
+        },
+        "stages_ms": {
+          "access_insert_or_ignore": 0.0416,
+          "access_update": 0.0156,
+          "commit": 2.0058
+        },
+        "total_ms": 2.0819
+      },
+      {
+        "event_count": 3,
+        "index": 63,
+        "instrumented_ms": 1.9495,
+        "remaining_overhead_ms": 0.0209,
+        "rowcount": 5,
+        "stage_event_counts": {
+          "access_insert_or_ignore": 1,
+          "access_update": 1,
+          "commit": 1
+        },
+        "stages_ms": {
+          "access_insert_or_ignore": 0.0475,
+          "access_update": 0.0169,
+          "commit": 1.8851
+        },
+        "total_ms": 1.9704
+      },
+      {
+        "event_count": 3,
+        "index": 64,
+        "instrumented_ms": 2.077,
+        "remaining_overhead_ms": 0.0204,
+        "rowcount": 5,
+        "stage_event_counts": {
+          "access_insert_or_ignore": 1,
+          "access_update": 1,
+          "commit": 1
+        },
+        "stages_ms": {
+          "access_insert_or_ignore": 0.0436,
+          "access_update": 0.0243,
+          "commit": 2.0091
+        },
+        "total_ms": 2.0974
+      },
+      {
+        "event_count": 3,
+        "index": 65,
+        "instrumented_ms": 2.9045,
+        "remaining_overhead_ms": 0.0622,
+        "rowcount": 5,
+        "stage_event_counts": {
+          "access_insert_or_ignore": 1,
+          "access_update": 1,
+          "commit": 1
+        },
+        "stages_ms": {
+          "access_insert_or_ignore": 0.0929,
+          "access_update": 0.0258,
+          "commit": 2.7858
+        },
+        "total_ms": 2.9667
+      },
+      {
+        "event_count": 3,
+        "index": 66,
+        "instrumented_ms": 2.7844,
+        "remaining_overhead_ms": 0.0609,
+        "rowcount": 5,
+        "stage_event_counts": {
+          "access_insert_or_ignore": 1,
+          "access_update": 1,
+          "commit": 1
+        },
+        "stages_ms": {
+          "access_insert_or_ignore": 0.1301,
+          "access_update": 0.0416,
+          "commit": 2.6127
+        },
+        "total_ms": 2.8453
+      },
+      {
+        "event_count": 3,
+        "index": 67,
+        "instrumented_ms": 2.0495,
+        "remaining_overhead_ms": 0.0373,
+        "rowcount": 5,
+        "stage_event_counts": {
+          "access_insert_or_ignore": 1,
+          "access_update": 1,
+          "commit": 1
+        },
+        "stages_ms": {
+          "access_insert_or_ignore": 0.0975,
+          "access_update": 0.0202,
+          "commit": 1.9318
+        },
+        "total_ms": 2.0868
+      },
+      {
+        "event_count": 3,
+        "index": 68,
+        "instrumented_ms": 1.8948,
+        "remaining_overhead_ms": 0.0273,
+        "rowcount": 5,
+        "stage_event_counts": {
+          "access_insert_or_ignore": 1,
+          "access_update": 1,
+          "commit": 1
+        },
+        "stages_ms": {
+          "access_insert_or_ignore": 0.0879,
+          "access_update": 0.0186,
+          "commit": 1.7883
+        },
+        "total_ms": 1.9221
+      },
+      {
+        "event_count": 3,
+        "index": 69,
+        "instrumented_ms": 1.9853,
+        "remaining_overhead_ms": 0.0248,
+        "rowcount": 5,
+        "stage_event_counts": {
+          "access_insert_or_ignore": 1,
+          "access_update": 1,
+          "commit": 1
+        },
+        "stages_ms": {
+          "access_insert_or_ignore": 0.0538,
+          "access_update": 0.0174,
+          "commit": 1.9141
+        },
+        "total_ms": 2.0101
+      },
+      {
+        "event_count": 3,
+        "index": 70,
+        "instrumented_ms": 1.8543,
+        "remaining_overhead_ms": 0.0262,
+        "rowcount": 5,
+        "stage_event_counts": {
+          "access_insert_or_ignore": 1,
+          "access_update": 1,
+          "commit": 1
+        },
+        "stages_ms": {
+          "access_insert_or_ignore": 0.0772,
+          "access_update": 0.0188,
+          "commit": 1.7583
+        },
+        "total_ms": 1.8805
+      },
+      {
+        "event_count": 3,
+        "index": 71,
+        "instrumented_ms": 0.8545,
+        "remaining_overhead_ms": 0.0211,
+        "rowcount": 5,
+        "stage_event_counts": {
+          "access_insert_or_ignore": 1,
+          "access_update": 1,
+          "commit": 1
+        },
+        "stages_ms": {
+          "access_insert_or_ignore": 0.0753,
+          "access_update": 0.0179,
+          "commit": 0.7613
+        },
+        "total_ms": 0.8756
+      },
+      {
+        "event_count": 3,
+        "index": 72,
+        "instrumented_ms": 2.1117,
+        "remaining_overhead_ms": 0.0212,
+        "rowcount": 5,
+        "stage_event_counts": {
+          "access_insert_or_ignore": 1,
+          "access_update": 1,
+          "commit": 1
+        },
+        "stages_ms": {
+          "access_insert_or_ignore": 0.0398,
+          "access_update": 0.0171,
+          "commit": 2.0548
+        },
+        "total_ms": 2.1329
+      },
+      {
+        "event_count": 3,
+        "index": 73,
+        "instrumented_ms": 2.011,
+        "remaining_overhead_ms": 0.0238,
+        "rowcount": 5,
+        "stage_event_counts": {
+          "access_insert_or_ignore": 1,
+          "access_update": 1,
+          "commit": 1
+        },
+        "stages_ms": {
+          "access_insert_or_ignore": 0.0564,
+          "access_update": 0.018,
+          "commit": 1.9366
+        },
+        "total_ms": 2.0348
+      },
+      {
+        "event_count": 3,
+        "index": 74,
+        "instrumented_ms": 1.9314,
+        "remaining_overhead_ms": 0.0234,
+        "rowcount": 5,
+        "stage_event_counts": {
+          "access_insert_or_ignore": 1,
+          "access_update": 1,
+          "commit": 1
+        },
+        "stages_ms": {
+          "access_insert_or_ignore": 0.0574,
+          "access_update": 0.0175,
+          "commit": 1.8565
+        },
+        "total_ms": 1.9548
+      },
+      {
+        "event_count": 3,
+        "index": 75,
+        "instrumented_ms": 1.917,
+        "remaining_overhead_ms": 0.0251,
+        "rowcount": 5,
+        "stage_event_counts": {
+          "access_insert_or_ignore": 1,
+          "access_update": 1,
+          "commit": 1
+        },
+        "stages_ms": {
+          "access_insert_or_ignore": 0.0573,
+          "access_update": 0.0181,
+          "commit": 1.8416
+        },
+        "total_ms": 1.9421
+      },
+      {
+        "event_count": 3,
+        "index": 76,
+        "instrumented_ms": 1.9211,
+        "remaining_overhead_ms": 0.0216,
+        "rowcount": 5,
+        "stage_event_counts": {
+          "access_insert_or_ignore": 1,
+          "access_update": 1,
+          "commit": 1
+        },
+        "stages_ms": {
+          "access_insert_or_ignore": 0.0509,
+          "access_update": 0.0176,
+          "commit": 1.8526
+        },
+        "total_ms": 1.9427
+      },
+      {
+        "event_count": 3,
+        "index": 77,
+        "instrumented_ms": 2.0621,
+        "remaining_overhead_ms": 0.022,
+        "rowcount": 5,
+        "stage_event_counts": {
+          "access_insert_or_ignore": 1,
+          "access_update": 1,
+          "commit": 1
+        },
+        "stages_ms": {
+          "access_insert_or_ignore": 0.0473,
+          "access_update": 0.0172,
+          "commit": 1.9976
+        },
+        "total_ms": 2.0841
+      },
+      {
+        "event_count": 3,
+        "index": 78,
+        "instrumented_ms": 1.9335,
+        "remaining_overhead_ms": 0.0221,
+        "rowcount": 5,
+        "stage_event_counts": {
+          "access_insert_or_ignore": 1,
+          "access_update": 1,
+          "commit": 1
+        },
+        "stages_ms": {
+          "access_insert_or_ignore": 0.0424,
+          "access_update": 0.0174,
+          "commit": 1.8737
+        },
+        "total_ms": 1.9556
+      },
+      {
+        "event_count": 3,
+        "index": 79,
+        "instrumented_ms": 1.9549,
+        "remaining_overhead_ms": 0.0206,
+        "rowcount": 5,
+        "stage_event_counts": {
+          "access_insert_or_ignore": 1,
+          "access_update": 1,
+          "commit": 1
+        },
+        "stages_ms": {
+          "access_insert_or_ignore": 0.0482,
+          "access_update": 0.0176,
+          "commit": 1.8891
+        },
+        "total_ms": 1.9755
+      },
+      {
+        "event_count": 3,
+        "index": 80,
+        "instrumented_ms": 2.0325,
+        "remaining_overhead_ms": 0.0366,
+        "rowcount": 5,
+        "stage_event_counts": {
+          "access_insert_or_ignore": 1,
+          "access_update": 1,
+          "commit": 1
+        },
+        "stages_ms": {
+          "access_insert_or_ignore": 0.0693,
+          "access_update": 0.0384,
+          "commit": 1.9248
+        },
+        "total_ms": 2.0691
+      },
+      {
+        "event_count": 3,
+        "index": 81,
+        "instrumented_ms": 1.9145,
+        "remaining_overhead_ms": 0.0213,
+        "rowcount": 5,
+        "stage_event_counts": {
+          "access_insert_or_ignore": 1,
+          "access_update": 1,
+          "commit": 1
+        },
+        "stages_ms": {
+          "access_insert_or_ignore": 0.0503,
+          "access_update": 0.0188,
+          "commit": 1.8454
+        },
+        "total_ms": 1.9358
+      },
+      {
+        "event_count": 3,
+        "index": 82,
+        "instrumented_ms": 1.9396,
+        "remaining_overhead_ms": 0.023,
+        "rowcount": 5,
+        "stage_event_counts": {
+          "access_insert_or_ignore": 1,
+          "access_update": 1,
+          "commit": 1
+        },
+        "stages_ms": {
+          "access_insert_or_ignore": 0.0429,
+          "access_update": 0.017,
+          "commit": 1.8797
+        },
+        "total_ms": 1.9626
+      },
+      {
+        "event_count": 3,
+        "index": 83,
+        "instrumented_ms": 1.9303,
+        "remaining_overhead_ms": 0.0268,
+        "rowcount": 5,
+        "stage_event_counts": {
+          "access_insert_or_ignore": 1,
+          "access_update": 1,
+          "commit": 1
+        },
+        "stages_ms": {
+          "access_insert_or_ignore": 0.0622,
+          "access_update": 0.0186,
+          "commit": 1.8495
+        },
+        "total_ms": 1.9571
+      },
+      {
+        "event_count": 3,
+        "index": 84,
+        "instrumented_ms": 0.9037,
+        "remaining_overhead_ms": 0.0303,
+        "rowcount": 5,
+        "stage_event_counts": {
+          "access_insert_or_ignore": 1,
+          "access_update": 1,
+          "commit": 1
+        },
+        "stages_ms": {
+          "access_insert_or_ignore": 0.0624,
+          "access_update": 0.0182,
+          "commit": 0.8231
+        },
+        "total_ms": 0.934
+      },
+      {
+        "event_count": 3,
+        "index": 85,
+        "instrumented_ms": 2.0667,
+        "remaining_overhead_ms": 0.0378,
+        "rowcount": 5,
+        "stage_event_counts": {
+          "access_insert_or_ignore": 1,
+          "access_update": 1,
+          "commit": 1
+        },
+        "stages_ms": {
+          "access_insert_or_ignore": 0.0823,
+          "access_update": 0.035,
+          "commit": 1.9494
+        },
+        "total_ms": 2.1045
+      },
+      {
+        "event_count": 3,
+        "index": 86,
+        "instrumented_ms": 2.02,
+        "remaining_overhead_ms": 0.0255,
+        "rowcount": 5,
+        "stage_event_counts": {
+          "access_insert_or_ignore": 1,
+          "access_update": 1,
+          "commit": 1
+        },
+        "stages_ms": {
+          "access_insert_or_ignore": 0.0658,
+          "access_update": 0.0187,
+          "commit": 1.9355
+        },
+        "total_ms": 2.0455
+      },
+      {
+        "event_count": 3,
+        "index": 87,
+        "instrumented_ms": 1.9206,
+        "remaining_overhead_ms": 0.0213,
+        "rowcount": 5,
+        "stage_event_counts": {
+          "access_insert_or_ignore": 1,
+          "access_update": 1,
+          "commit": 1
+        },
+        "stages_ms": {
+          "access_insert_or_ignore": 0.0503,
+          "access_update": 0.0172,
+          "commit": 1.8531
+        },
+        "total_ms": 1.9419
+      },
+      {
+        "event_count": 3,
+        "index": 88,
+        "instrumented_ms": 1.936,
+        "remaining_overhead_ms": 0.021,
+        "rowcount": 5,
+        "stage_event_counts": {
+          "access_insert_or_ignore": 1,
+          "access_update": 1,
+          "commit": 1
+        },
+        "stages_ms": {
+          "access_insert_or_ignore": 0.0488,
+          "access_update": 0.0172,
+          "commit": 1.87
+        },
+        "total_ms": 1.957
+      },
+      {
+        "event_count": 3,
+        "index": 89,
+        "instrumented_ms": 1.9037,
+        "remaining_overhead_ms": 0.0251,
+        "rowcount": 5,
+        "stage_event_counts": {
+          "access_insert_or_ignore": 1,
+          "access_update": 1,
+          "commit": 1
+        },
+        "stages_ms": {
+          "access_insert_or_ignore": 0.0531,
+          "access_update": 0.0173,
+          "commit": 1.8333
+        },
+        "total_ms": 1.9288
+      },
+      {
+        "event_count": 3,
+        "index": 90,
+        "instrumented_ms": 2.0725,
+        "remaining_overhead_ms": 0.0287,
+        "rowcount": 5,
+        "stage_event_counts": {
+          "access_insert_or_ignore": 1,
+          "access_update": 1,
+          "commit": 1
+        },
+        "stages_ms": {
+          "access_insert_or_ignore": 0.0626,
+          "access_update": 0.0186,
+          "commit": 1.9913
+        },
+        "total_ms": 2.1012
+      },
+      {
+        "event_count": 3,
+        "index": 91,
+        "instrumented_ms": 1.9069,
+        "remaining_overhead_ms": 0.0319,
+        "rowcount": 5,
+        "stage_event_counts": {
+          "access_insert_or_ignore": 1,
+          "access_update": 1,
+          "commit": 1
+        },
+        "stages_ms": {
+          "access_insert_or_ignore": 0.0707,
+          "access_update": 0.0185,
+          "commit": 1.8177
+        },
+        "total_ms": 1.9388
+      },
+      {
+        "event_count": 3,
+        "index": 92,
+        "instrumented_ms": 1.903,
+        "remaining_overhead_ms": 0.0392,
+        "rowcount": 5,
+        "stage_event_counts": {
+          "access_insert_or_ignore": 1,
+          "access_update": 1,
+          "commit": 1
+        },
+        "stages_ms": {
+          "access_insert_or_ignore": 0.0764,
+          "access_update": 0.019,
+          "commit": 1.8076
+        },
+        "total_ms": 1.9422
+      },
+      {
+        "event_count": 3,
+        "index": 93,
+        "instrumented_ms": 1.9341,
+        "remaining_overhead_ms": 0.0226,
+        "rowcount": 5,
+        "stage_event_counts": {
+          "access_insert_or_ignore": 1,
+          "access_update": 1,
+          "commit": 1
+        },
+        "stages_ms": {
+          "access_insert_or_ignore": 0.0602,
+          "access_update": 0.0178,
+          "commit": 1.8561
+        },
+        "total_ms": 1.9567
+      },
+      {
+        "event_count": 3,
+        "index": 94,
+        "instrumented_ms": 2.0355,
+        "remaining_overhead_ms": 0.018,
+        "rowcount": 5,
+        "stage_event_counts": {
+          "access_insert_or_ignore": 1,
+          "access_update": 1,
+          "commit": 1
+        },
+        "stages_ms": {
+          "access_insert_or_ignore": 0.0423,
+          "access_update": 0.0166,
+          "commit": 1.9766
+        },
+        "total_ms": 2.0535
+      },
+      {
+        "event_count": 3,
+        "index": 95,
+        "instrumented_ms": 2.1725,
+        "remaining_overhead_ms": 0.0197,
+        "rowcount": 5,
+        "stage_event_counts": {
+          "access_insert_or_ignore": 1,
+          "access_update": 1,
+          "commit": 1
+        },
+        "stages_ms": {
+          "access_insert_or_ignore": 0.0412,
+          "access_update": 0.016,
+          "commit": 2.1153
+        },
+        "total_ms": 2.1922
+      },
+      {
+        "event_count": 3,
+        "index": 96,
+        "instrumented_ms": 0.8182,
+        "remaining_overhead_ms": 0.0266,
+        "rowcount": 5,
+        "stage_event_counts": {
+          "access_insert_or_ignore": 1,
+          "access_update": 1,
+          "commit": 1
+        },
+        "stages_ms": {
+          "access_insert_or_ignore": 0.0581,
+          "access_update": 0.0193,
+          "commit": 0.7408
+        },
+        "total_ms": 0.8448
+      },
+      {
+        "event_count": 3,
+        "index": 97,
+        "instrumented_ms": 1.8954,
+        "remaining_overhead_ms": 0.0231,
+        "rowcount": 5,
+        "stage_event_counts": {
+          "access_insert_or_ignore": 1,
+          "access_update": 1,
+          "commit": 1
+        },
+        "stages_ms": {
+          "access_insert_or_ignore": 0.067,
+          "access_update": 0.019,
+          "commit": 1.8094
+        },
+        "total_ms": 1.9185
+      },
+      {
+        "event_count": 3,
+        "index": 98,
+        "instrumented_ms": 1.9096,
+        "remaining_overhead_ms": 0.0237,
+        "rowcount": 5,
+        "stage_event_counts": {
+          "access_insert_or_ignore": 1,
+          "access_update": 1,
+          "commit": 1
+        },
+        "stages_ms": {
+          "access_insert_or_ignore": 0.0472,
+          "access_update": 0.0173,
+          "commit": 1.8451
+        },
+        "total_ms": 1.9333
+      },
+      {
+        "event_count": 3,
+        "index": 99,
+        "instrumented_ms": 2.0624,
+        "remaining_overhead_ms": 0.027,
+        "rowcount": 5,
+        "stage_event_counts": {
+          "access_insert_or_ignore": 1,
+          "access_update": 1,
+          "commit": 1
+        },
+        "stages_ms": {
+          "access_insert_or_ignore": 0.0615,
+          "access_update": 0.0182,
+          "commit": 1.9827
+        },
+        "total_ms": 2.0894
+      }
+    ],
+    "checkpoint_calls_during_timing": 0,
+    "rows": 10000,
+    "sequence_total_ms": 201.6471,
+    "stage_event_count": 300,
+    "stage_events": [
+      {
+        "call_index": 0,
+        "elapsed_ms": 0.0775,
+        "rowcount": 0,
+        "stage": "access_insert_or_ignore"
+      },
+      {
+        "call_index": 0,
+        "elapsed_ms": 0.0377,
+        "rowcount": 5,
+        "stage": "access_update"
+      },
+      {
+        "call_index": 0,
+        "elapsed_ms": 2.4211,
+        "stage": "commit"
+      },
+      {
+        "call_index": 1,
+        "elapsed_ms": 0.0958,
+        "rowcount": 0,
+        "stage": "access_insert_or_ignore"
+      },
+      {
+        "call_index": 1,
+        "elapsed_ms": 0.0197,
+        "rowcount": 5,
+        "stage": "access_update"
+      },
+      {
+        "call_index": 1,
+        "elapsed_ms": 1.7914,
+        "stage": "commit"
+      },
+      {
+        "call_index": 2,
+        "elapsed_ms": 0.071,
+        "rowcount": 0,
+        "stage": "access_insert_or_ignore"
+      },
+      {
+        "call_index": 2,
+        "elapsed_ms": 0.0197,
+        "rowcount": 5,
+        "stage": "access_update"
+      },
+      {
+        "call_index": 2,
+        "elapsed_ms": 1.9878,
+        "stage": "commit"
+      },
+      {
+        "call_index": 3,
+        "elapsed_ms": 0.0453,
+        "rowcount": 0,
+        "stage": "access_insert_or_ignore"
+      },
+      {
+        "call_index": 3,
+        "elapsed_ms": 0.0172,
+        "rowcount": 5,
+        "stage": "access_update"
+      },
+      {
+        "call_index": 3,
+        "elapsed_ms": 1.8746,
+        "stage": "commit"
+      },
+      {
+        "call_index": 4,
+        "elapsed_ms": 0.0465,
+        "rowcount": 0,
+        "stage": "access_insert_or_ignore"
+      },
+      {
+        "call_index": 4,
+        "elapsed_ms": 0.0177,
+        "rowcount": 5,
+        "stage": "access_update"
+      },
+      {
+        "call_index": 4,
+        "elapsed_ms": 1.8214,
+        "stage": "commit"
+      },
+      {
+        "call_index": 5,
+        "elapsed_ms": 0.042,
+        "rowcount": 0,
+        "stage": "access_insert_or_ignore"
+      },
+      {
+        "call_index": 5,
+        "elapsed_ms": 0.0167,
+        "rowcount": 5,
+        "stage": "access_update"
+      },
+      {
+        "call_index": 5,
+        "elapsed_ms": 1.8659,
+        "stage": "commit"
+      },
+      {
+        "call_index": 6,
+        "elapsed_ms": 0.0368,
+        "rowcount": 0,
+        "stage": "access_insert_or_ignore"
+      },
+      {
+        "call_index": 6,
+        "elapsed_ms": 0.0166,
+        "rowcount": 5,
+        "stage": "access_update"
+      },
+      {
+        "call_index": 6,
+        "elapsed_ms": 2.0233,
+        "stage": "commit"
+      },
+      {
+        "call_index": 7,
+        "elapsed_ms": 0.0519,
+        "rowcount": 0,
+        "stage": "access_insert_or_ignore"
+      },
+      {
+        "call_index": 7,
+        "elapsed_ms": 0.0181,
+        "rowcount": 5,
+        "stage": "access_update"
+      },
+      {
+        "call_index": 7,
+        "elapsed_ms": 1.8602,
+        "stage": "commit"
+      },
+      {
+        "call_index": 8,
+        "elapsed_ms": 0.0457,
+        "rowcount": 0,
+        "stage": "access_insert_or_ignore"
+      },
+      {
+        "call_index": 8,
+        "elapsed_ms": 0.018,
+        "rowcount": 5,
+        "stage": "access_update"
+      },
+      {
+        "call_index": 8,
+        "elapsed_ms": 1.9624,
+        "stage": "commit"
+      },
+      {
+        "call_index": 9,
+        "elapsed_ms": 0.0416,
+        "rowcount": 0,
+        "stage": "access_insert_or_ignore"
+      },
+      {
+        "call_index": 9,
+        "elapsed_ms": 0.0169,
+        "rowcount": 5,
+        "stage": "access_update"
+      },
+      {
+        "call_index": 9,
+        "elapsed_ms": 1.9021,
+        "stage": "commit"
+      },
+      {
+        "call_index": 10,
+        "elapsed_ms": 0.0368,
+        "rowcount": 0,
+        "stage": "access_insert_or_ignore"
+      },
+      {
+        "call_index": 10,
+        "elapsed_ms": 0.0177,
+        "rowcount": 5,
+        "stage": "access_update"
+      },
+      {
+        "call_index": 10,
+        "elapsed_ms": 1.8666,
+        "stage": "commit"
+      },
+      {
+        "call_index": 11,
+        "elapsed_ms": 0.0387,
+        "rowcount": 0,
+        "stage": "access_insert_or_ignore"
+      },
+      {
+        "call_index": 11,
+        "elapsed_ms": 0.0164,
+        "rowcount": 5,
+        "stage": "access_update"
+      },
+      {
+        "call_index": 11,
+        "elapsed_ms": 1.8792,
+        "stage": "commit"
+      },
+      {
+        "call_index": 12,
+        "elapsed_ms": 0.0463,
+        "rowcount": 0,
+        "stage": "access_insert_or_ignore"
+      },
+      {
+        "call_index": 12,
+        "elapsed_ms": 0.0183,
+        "rowcount": 5,
+        "stage": "access_update"
+      },
+      {
+        "call_index": 12,
+        "elapsed_ms": 1.8747,
+        "stage": "commit"
+      },
+      {
+        "call_index": 13,
+        "elapsed_ms": 0.0515,
+        "rowcount": 0,
+        "stage": "access_insert_or_ignore"
+      },
+      {
+        "call_index": 13,
+        "elapsed_ms": 0.0179,
+        "rowcount": 5,
+        "stage": "access_update"
+      },
+      {
+        "call_index": 13,
+        "elapsed_ms": 2.0011,
+        "stage": "commit"
+      },
+      {
+        "call_index": 14,
+        "elapsed_ms": 0.0529,
+        "rowcount": 0,
+        "stage": "access_insert_or_ignore"
+      },
+      {
+        "call_index": 14,
+        "elapsed_ms": 0.0182,
+        "rowcount": 5,
+        "stage": "access_update"
+      },
+      {
+        "call_index": 14,
+        "elapsed_ms": 1.879,
+        "stage": "commit"
+      },
+      {
+        "call_index": 15,
+        "elapsed_ms": 0.0514,
+        "rowcount": 0,
+        "stage": "access_insert_or_ignore"
+      },
+      {
+        "call_index": 15,
+        "elapsed_ms": 0.0176,
+        "rowcount": 5,
+        "stage": "access_update"
+      },
+      {
+        "call_index": 15,
+        "elapsed_ms": 1.8432,
+        "stage": "commit"
+      },
+      {
+        "call_index": 16,
+        "elapsed_ms": 0.0415,
+        "rowcount": 0,
+        "stage": "access_insert_or_ignore"
+      },
+      {
+        "call_index": 16,
+        "elapsed_ms": 0.017,
+        "rowcount": 5,
+        "stage": "access_update"
+      },
+      {
+        "call_index": 16,
+        "elapsed_ms": 2.0033,
+        "stage": "commit"
+      },
+      {
+        "call_index": 17,
+        "elapsed_ms": 0.0356,
+        "rowcount": 0,
+        "stage": "access_insert_or_ignore"
+      },
+      {
+        "call_index": 17,
+        "elapsed_ms": 0.0157,
+        "rowcount": 5,
+        "stage": "access_update"
+      },
+      {
+        "call_index": 17,
+        "elapsed_ms": 1.8858,
+        "stage": "commit"
+      },
+      {
+        "call_index": 18,
+        "elapsed_ms": 0.0492,
+        "rowcount": 0,
+        "stage": "access_insert_or_ignore"
+      },
+      {
+        "call_index": 18,
+        "elapsed_ms": 0.0185,
+        "rowcount": 5,
+        "stage": "access_update"
+      },
+      {
+        "call_index": 18,
+        "elapsed_ms": 1.8726,
+        "stage": "commit"
+      },
+      {
+        "call_index": 19,
+        "elapsed_ms": 0.0492,
+        "rowcount": 0,
+        "stage": "access_insert_or_ignore"
+      },
+      {
+        "call_index": 19,
+        "elapsed_ms": 0.0175,
+        "rowcount": 5,
+        "stage": "access_update"
+      },
+      {
+        "call_index": 19,
+        "elapsed_ms": 1.8237,
+        "stage": "commit"
+      },
+      {
+        "call_index": 20,
+        "elapsed_ms": 0.0539,
+        "rowcount": 0,
+        "stage": "access_insert_or_ignore"
+      },
+      {
+        "call_index": 20,
+        "elapsed_ms": 0.0173,
+        "rowcount": 5,
+        "stage": "access_update"
+      },
+      {
+        "call_index": 20,
+        "elapsed_ms": 1.971,
+        "stage": "commit"
+      },
+      {
+        "call_index": 21,
+        "elapsed_ms": 0.0488,
+        "rowcount": 0,
+        "stage": "access_insert_or_ignore"
+      },
+      {
+        "call_index": 21,
+        "elapsed_ms": 0.0178,
+        "rowcount": 5,
+        "stage": "access_update"
+      },
+      {
+        "call_index": 21,
+        "elapsed_ms": 1.8059,
+        "stage": "commit"
+      },
+      {
+        "call_index": 22,
+        "elapsed_ms": 0.041,
+        "rowcount": 0,
+        "stage": "access_insert_or_ignore"
+      },
+      {
+        "call_index": 22,
+        "elapsed_ms": 0.0173,
+        "rowcount": 5,
+        "stage": "access_update"
+      },
+      {
+        "call_index": 22,
+        "elapsed_ms": 1.836,
+        "stage": "commit"
+      },
+      {
+        "call_index": 23,
+        "elapsed_ms": 0.0388,
+        "rowcount": 0,
+        "stage": "access_insert_or_ignore"
+      },
+      {
+        "call_index": 23,
+        "elapsed_ms": 0.017,
+        "rowcount": 5,
+        "stage": "access_update"
+      },
+      {
+        "call_index": 23,
+        "elapsed_ms": 1.9188,
+        "stage": "commit"
+      },
+      {
+        "call_index": 24,
+        "elapsed_ms": 0.0351,
+        "rowcount": 0,
+        "stage": "access_insert_or_ignore"
+      },
+      {
+        "call_index": 24,
+        "elapsed_ms": 0.0157,
+        "rowcount": 5,
+        "stage": "access_update"
+      },
+      {
+        "call_index": 24,
+        "elapsed_ms": 2.0586,
+        "stage": "commit"
+      },
+      {
+        "call_index": 25,
+        "elapsed_ms": 0.055,
+        "rowcount": 0,
+        "stage": "access_insert_or_ignore"
+      },
+      {
+        "call_index": 25,
+        "elapsed_ms": 0.0174,
+        "rowcount": 5,
+        "stage": "access_update"
+      },
+      {
+        "call_index": 25,
+        "elapsed_ms": 1.8089,
+        "stage": "commit"
+      },
+      {
+        "call_index": 26,
+        "elapsed_ms": 0.0617,
+        "rowcount": 0,
+        "stage": "access_insert_or_ignore"
+      },
+      {
+        "call_index": 26,
+        "elapsed_ms": 0.0179,
+        "rowcount": 5,
+        "stage": "access_update"
+      },
+      {
+        "call_index": 26,
+        "elapsed_ms": 1.8362,
+        "stage": "commit"
+      },
+      {
+        "call_index": 27,
+        "elapsed_ms": 0.0653,
+        "rowcount": 0,
+        "stage": "access_insert_or_ignore"
+      },
+      {
+        "call_index": 27,
+        "elapsed_ms": 0.0197,
+        "rowcount": 5,
+        "stage": "access_update"
+      },
+      {
+        "call_index": 27,
+        "elapsed_ms": 1.8381,
+        "stage": "commit"
+      },
+      {
+        "call_index": 28,
+        "elapsed_ms": 0.067,
+        "rowcount": 0,
+        "stage": "access_insert_or_ignore"
+      },
+      {
+        "call_index": 28,
+        "elapsed_ms": 0.019,
+        "rowcount": 5,
+        "stage": "access_update"
+      },
+      {
+        "call_index": 28,
+        "elapsed_ms": 2.0083,
+        "stage": "commit"
+      },
+      {
+        "call_index": 29,
+        "elapsed_ms": 0.0661,
+        "rowcount": 0,
+        "stage": "access_insert_or_ignore"
+      },
+      {
+        "call_index": 29,
+        "elapsed_ms": 0.0187,
+        "rowcount": 5,
+        "stage": "access_update"
+      },
+      {
+        "call_index": 29,
+        "elapsed_ms": 1.7959,
+        "stage": "commit"
+      },
+      {
+        "call_index": 30,
+        "elapsed_ms": 0.0507,
+        "rowcount": 0,
+        "stage": "access_insert_or_ignore"
+      },
+      {
+        "call_index": 30,
+        "elapsed_ms": 0.0181,
+        "rowcount": 5,
+        "stage": "access_update"
+      },
+      {
+        "call_index": 30,
+        "elapsed_ms": 1.8792,
+        "stage": "commit"
+      },
+      {
+        "call_index": 31,
+        "elapsed_ms": 0.0396,
+        "rowcount": 0,
+        "stage": "access_insert_or_ignore"
+      },
+      {
+        "call_index": 31,
+        "elapsed_ms": 0.0161,
+        "rowcount": 5,
+        "stage": "access_update"
+      },
+      {
+        "call_index": 31,
+        "elapsed_ms": 2.048,
+        "stage": "commit"
+      },
+      {
+        "call_index": 32,
+        "elapsed_ms": 0.0561,
+        "rowcount": 0,
+        "stage": "access_insert_or_ignore"
+      },
+      {
+        "call_index": 32,
+        "elapsed_ms": 0.0161,
+        "rowcount": 5,
+        "stage": "access_update"
+      },
+      {
+        "call_index": 32,
+        "elapsed_ms": 1.7952,
+        "stage": "commit"
+      },
+      {
+        "call_index": 33,
+        "elapsed_ms": 0.0579,
+        "rowcount": 0,
+        "stage": "access_insert_or_ignore"
+      },
+      {
+        "call_index": 33,
+        "elapsed_ms": 0.0192,
+        "rowcount": 5,
+        "stage": "access_update"
+      },
+      {
+        "call_index": 33,
+        "elapsed_ms": 1.8958,
+        "stage": "commit"
+      },
+      {
+        "call_index": 34,
+        "elapsed_ms": 0.0676,
+        "rowcount": 0,
+        "stage": "access_insert_or_ignore"
+      },
+      {
+        "call_index": 34,
+        "elapsed_ms": 0.0827,
+        "rowcount": 5,
+        "stage": "access_update"
+      },
+      {
+        "call_index": 34,
+        "elapsed_ms": 0.9323,
+        "stage": "commit"
+      },
+      {
+        "call_index": 35,
+        "elapsed_ms": 0.0516,
+        "rowcount": 0,
+        "stage": "access_insert_or_ignore"
+      },
+      {
+        "call_index": 35,
+        "elapsed_ms": 0.0181,
+        "rowcount": 5,
+        "stage": "access_update"
+      },
+      {
+        "call_index": 35,
+        "elapsed_ms": 1.719,
+        "stage": "commit"
+      },
+      {
+        "call_index": 36,
+        "elapsed_ms": 0.0491,
+        "rowcount": 0,
+        "stage": "access_insert_or_ignore"
+      },
+      {
+        "call_index": 36,
+        "elapsed_ms": 0.0171,
+        "rowcount": 5,
+        "stage": "access_update"
+      },
+      {
+        "call_index": 36,
+        "elapsed_ms": 1.8803,
+        "stage": "commit"
+      },
+      {
+        "call_index": 37,
+        "elapsed_ms": 0.0763,
+        "rowcount": 0,
+        "stage": "access_insert_or_ignore"
+      },
+      {
+        "call_index": 37,
+        "elapsed_ms": 0.0187,
+        "rowcount": 5,
+        "stage": "access_update"
+      },
+      {
+        "call_index": 37,
+        "elapsed_ms": 1.9341,
+        "stage": "commit"
+      },
+      {
+        "call_index": 38,
+        "elapsed_ms": 0.0797,
+        "rowcount": 0,
+        "stage": "access_insert_or_ignore"
+      },
+      {
+        "call_index": 38,
+        "elapsed_ms": 0.0204,
+        "rowcount": 5,
+        "stage": "access_update"
+      },
+      {
+        "call_index": 38,
+        "elapsed_ms": 1.8355,
+        "stage": "commit"
+      },
+      {
+        "call_index": 39,
+        "elapsed_ms": 0.0782,
+        "rowcount": 0,
+        "stage": "access_insert_or_ignore"
+      },
+      {
+        "call_index": 39,
+        "elapsed_ms": 0.0185,
+        "rowcount": 5,
+        "stage": "access_update"
+      },
+      {
+        "call_index": 39,
+        "elapsed_ms": 1.8045,
+        "stage": "commit"
+      },
+      {
+        "call_index": 40,
+        "elapsed_ms": 0.069,
+        "rowcount": 0,
+        "stage": "access_insert_or_ignore"
+      },
+      {
+        "call_index": 40,
+        "elapsed_ms": 0.0172,
+        "rowcount": 5,
+        "stage": "access_update"
+      },
+      {
+        "call_index": 40,
+        "elapsed_ms": 1.8583,
+        "stage": "commit"
+      },
+      {
+        "call_index": 41,
+        "elapsed_ms": 0.0965,
+        "rowcount": 0,
+        "stage": "access_insert_or_ignore"
+      },
+      {
+        "call_index": 41,
+        "elapsed_ms": 0.0196,
+        "rowcount": 5,
+        "stage": "access_update"
+      },
+      {
+        "call_index": 41,
+        "elapsed_ms": 1.9031,
+        "stage": "commit"
+      },
+      {
+        "call_index": 42,
+        "elapsed_ms": 0.0816,
+        "rowcount": 0,
+        "stage": "access_insert_or_ignore"
+      },
+      {
+        "call_index": 42,
+        "elapsed_ms": 0.0186,
+        "rowcount": 5,
+        "stage": "access_update"
+      },
+      {
+        "call_index": 42,
+        "elapsed_ms": 1.8158,
+        "stage": "commit"
+      },
+      {
+        "call_index": 43,
+        "elapsed_ms": 0.0683,
+        "rowcount": 0,
+        "stage": "access_insert_or_ignore"
+      },
+      {
+        "call_index": 43,
+        "elapsed_ms": 0.0183,
+        "rowcount": 5,
+        "stage": "access_update"
+      },
+      {
+        "call_index": 43,
+        "elapsed_ms": 2.914,
+        "stage": "commit"
+      },
+      {
+        "call_index": 44,
+        "elapsed_ms": 0.0671,
+        "rowcount": 0,
+        "stage": "access_insert_or_ignore"
+      },
+      {
+        "call_index": 44,
+        "elapsed_ms": 0.0181,
+        "rowcount": 5,
+        "stage": "access_update"
+      },
+      {
+        "call_index": 44,
+        "elapsed_ms": 1.9633,
+        "stage": "commit"
+      },
+      {
+        "call_index": 45,
+        "elapsed_ms": 0.0556,
+        "rowcount": 0,
+        "stage": "access_insert_or_ignore"
+      },
+      {
+        "call_index": 45,
+        "elapsed_ms": 0.0172,
+        "rowcount": 5,
+        "stage": "access_update"
+      },
+      {
+        "call_index": 45,
+        "elapsed_ms": 1.747,
+        "stage": "commit"
+      },
+      {
+        "call_index": 46,
+        "elapsed_ms": 0.0428,
+        "rowcount": 0,
+        "stage": "access_insert_or_ignore"
+      },
+      {
+        "call_index": 46,
+        "elapsed_ms": 0.016,
+        "rowcount": 5,
+        "stage": "access_update"
+      },
+      {
+        "call_index": 46,
+        "elapsed_ms": 1.8807,
+        "stage": "commit"
+      },
+      {
+        "call_index": 47,
+        "elapsed_ms": 0.0464,
+        "rowcount": 0,
+        "stage": "access_insert_or_ignore"
+      },
+      {
+        "call_index": 47,
+        "elapsed_ms": 0.0176,
+        "rowcount": 5,
+        "stage": "access_update"
+      },
+      {
+        "call_index": 47,
+        "elapsed_ms": 2.0074,
+        "stage": "commit"
+      },
+      {
+        "call_index": 48,
+        "elapsed_ms": 0.0475,
+        "rowcount": 0,
+        "stage": "access_insert_or_ignore"
+      },
+      {
+        "call_index": 48,
+        "elapsed_ms": 0.0175,
+        "rowcount": 5,
+        "stage": "access_update"
+      },
+      {
+        "call_index": 48,
+        "elapsed_ms": 1.8637,
+        "stage": "commit"
+      },
+      {
+        "call_index": 49,
+        "elapsed_ms": 0.0399,
+        "rowcount": 0,
+        "stage": "access_insert_or_ignore"
+      },
+      {
+        "call_index": 49,
+        "elapsed_ms": 0.0163,
+        "rowcount": 5,
+        "stage": "access_update"
+      },
+      {
+        "call_index": 49,
+        "elapsed_ms": 1.8372,
+        "stage": "commit"
+      },
+      {
+        "call_index": 50,
+        "elapsed_ms": 0.0395,
+        "rowcount": 0,
+        "stage": "access_insert_or_ignore"
+      },
+      {
+        "call_index": 50,
+        "elapsed_ms": 0.0173,
+        "rowcount": 5,
+        "stage": "access_update"
+      },
+      {
+        "call_index": 50,
+        "elapsed_ms": 2.0231,
+        "stage": "commit"
+      },
+      {
+        "call_index": 51,
+        "elapsed_ms": 0.0474,
+        "rowcount": 0,
+        "stage": "access_insert_or_ignore"
+      },
+      {
+        "call_index": 51,
+        "elapsed_ms": 0.0171,
+        "rowcount": 5,
+        "stage": "access_update"
+      },
+      {
+        "call_index": 51,
+        "elapsed_ms": 1.8545,
+        "stage": "commit"
+      },
+      {
+        "call_index": 52,
+        "elapsed_ms": 0.0465,
+        "rowcount": 0,
+        "stage": "access_insert_or_ignore"
+      },
+      {
+        "call_index": 52,
+        "elapsed_ms": 0.0169,
+        "rowcount": 5,
+        "stage": "access_update"
+      },
+      {
+        "call_index": 52,
+        "elapsed_ms": 1.8869,
+        "stage": "commit"
+      },
+      {
+        "call_index": 53,
+        "elapsed_ms": 0.0394,
+        "rowcount": 0,
+        "stage": "access_insert_or_ignore"
+      },
+      {
+        "call_index": 53,
+        "elapsed_ms": 0.0158,
+        "rowcount": 5,
+        "stage": "access_update"
+      },
+      {
+        "call_index": 53,
+        "elapsed_ms": 1.8597,
+        "stage": "commit"
+      },
+      {
+        "call_index": 54,
+        "elapsed_ms": 0.0526,
+        "rowcount": 0,
+        "stage": "access_insert_or_ignore"
+      },
+      {
+        "call_index": 54,
+        "elapsed_ms": 0.0174,
+        "rowcount": 5,
+        "stage": "access_update"
+      },
+      {
+        "call_index": 54,
+        "elapsed_ms": 1.9927,
+        "stage": "commit"
+      },
+      {
+        "call_index": 55,
+        "elapsed_ms": 0.0482,
+        "rowcount": 0,
+        "stage": "access_insert_or_ignore"
+      },
+      {
+        "call_index": 55,
+        "elapsed_ms": 0.0177,
+        "rowcount": 5,
+        "stage": "access_update"
+      },
+      {
+        "call_index": 55,
+        "elapsed_ms": 1.8753,
+        "stage": "commit"
+      },
+      {
+        "call_index": 56,
+        "elapsed_ms": 0.0409,
+        "rowcount": 0,
+        "stage": "access_insert_or_ignore"
+      },
+      {
+        "call_index": 56,
+        "elapsed_ms": 0.0173,
+        "rowcount": 5,
+        "stage": "access_update"
+      },
+      {
+        "call_index": 56,
+        "elapsed_ms": 1.8584,
+        "stage": "commit"
+      },
+      {
+        "call_index": 57,
+        "elapsed_ms": 0.0404,
+        "rowcount": 0,
+        "stage": "access_insert_or_ignore"
+      },
+      {
+        "call_index": 57,
+        "elapsed_ms": 0.0166,
+        "rowcount": 5,
+        "stage": "access_update"
+      },
+      {
+        "call_index": 57,
+        "elapsed_ms": 2.0356,
+        "stage": "commit"
+      },
+      {
+        "call_index": 58,
+        "elapsed_ms": 0.0457,
+        "rowcount": 0,
+        "stage": "access_insert_or_ignore"
+      },
+      {
+        "call_index": 58,
+        "elapsed_ms": 0.0166,
+        "rowcount": 5,
+        "stage": "access_update"
+      },
+      {
+        "call_index": 58,
+        "elapsed_ms": 1.8421,
+        "stage": "commit"
+      },
+      {
+        "call_index": 59,
+        "elapsed_ms": 0.0526,
+        "rowcount": 0,
+        "stage": "access_insert_or_ignore"
+      },
+      {
+        "call_index": 59,
+        "elapsed_ms": 0.0177,
+        "rowcount": 5,
+        "stage": "access_update"
+      },
+      {
+        "call_index": 59,
+        "elapsed_ms": 2.9624,
+        "stage": "commit"
+      },
+      {
+        "call_index": 60,
+        "elapsed_ms": 0.2159,
+        "rowcount": 0,
+        "stage": "access_insert_or_ignore"
+      },
+      {
+        "call_index": 60,
+        "elapsed_ms": 0.0207,
+        "rowcount": 5,
+        "stage": "access_update"
+      },
+      {
+        "call_index": 60,
+        "elapsed_ms": 2.6172,
+        "stage": "commit"
+      },
+      {
+        "call_index": 61,
+        "elapsed_ms": 0.0562,
+        "rowcount": 0,
+        "stage": "access_insert_or_ignore"
+      },
+      {
+        "call_index": 61,
+        "elapsed_ms": 0.0166,
+        "rowcount": 5,
+        "stage": "access_update"
+      },
+      {
+        "call_index": 61,
+        "elapsed_ms": 1.8075,
+        "stage": "commit"
+      },
+      {
+        "call_index": 62,
+        "elapsed_ms": 0.0416,
+        "rowcount": 0,
+        "stage": "access_insert_or_ignore"
+      },
+      {
+        "call_index": 62,
+        "elapsed_ms": 0.0156,
+        "rowcount": 5,
+        "stage": "access_update"
+      },
+      {
+        "call_index": 62,
+        "elapsed_ms": 2.0058,
+        "stage": "commit"
+      },
+      {
+        "call_index": 63,
+        "elapsed_ms": 0.0475,
+        "rowcount": 0,
+        "stage": "access_insert_or_ignore"
+      },
+      {
+        "call_index": 63,
+        "elapsed_ms": 0.0169,
+        "rowcount": 5,
+        "stage": "access_update"
+      },
+      {
+        "call_index": 63,
+        "elapsed_ms": 1.8851,
+        "stage": "commit"
+      },
+      {
+        "call_index": 64,
+        "elapsed_ms": 0.0436,
+        "rowcount": 0,
+        "stage": "access_insert_or_ignore"
+      },
+      {
+        "call_index": 64,
+        "elapsed_ms": 0.0243,
+        "rowcount": 5,
+        "stage": "access_update"
+      },
+      {
+        "call_index": 64,
+        "elapsed_ms": 2.0091,
+        "stage": "commit"
+      },
+      {
+        "call_index": 65,
+        "elapsed_ms": 0.0929,
+        "rowcount": 0,
+        "stage": "access_insert_or_ignore"
+      },
+      {
+        "call_index": 65,
+        "elapsed_ms": 0.0258,
+        "rowcount": 5,
+        "stage": "access_update"
+      },
+      {
+        "call_index": 65,
+        "elapsed_ms": 2.7858,
+        "stage": "commit"
+      },
+      {
+        "call_index": 66,
+        "elapsed_ms": 0.1301,
+        "rowcount": 0,
+        "stage": "access_insert_or_ignore"
+      },
+      {
+        "call_index": 66,
+        "elapsed_ms": 0.0416,
+        "rowcount": 5,
+        "stage": "access_update"
+      },
+      {
+        "call_index": 66,
+        "elapsed_ms": 2.6127,
+        "stage": "commit"
+      },
+      {
+        "call_index": 67,
+        "elapsed_ms": 0.0975,
+        "rowcount": 0,
+        "stage": "access_insert_or_ignore"
+      },
+      {
+        "call_index": 67,
+        "elapsed_ms": 0.0202,
+        "rowcount": 5,
+        "stage": "access_update"
+      },
+      {
+        "call_index": 67,
+        "elapsed_ms": 1.9318,
+        "stage": "commit"
+      },
+      {
+        "call_index": 68,
+        "elapsed_ms": 0.0879,
+        "rowcount": 0,
+        "stage": "access_insert_or_ignore"
+      },
+      {
+        "call_index": 68,
+        "elapsed_ms": 0.0186,
+        "rowcount": 5,
+        "stage": "access_update"
+      },
+      {
+        "call_index": 68,
+        "elapsed_ms": 1.7883,
+        "stage": "commit"
+      },
+      {
+        "call_index": 69,
+        "elapsed_ms": 0.0538,
+        "rowcount": 0,
+        "stage": "access_insert_or_ignore"
+      },
+      {
+        "call_index": 69,
+        "elapsed_ms": 0.0174,
+        "rowcount": 5,
+        "stage": "access_update"
+      },
+      {
+        "call_index": 69,
+        "elapsed_ms": 1.9141,
+        "stage": "commit"
+      },
+      {
+        "call_index": 70,
+        "elapsed_ms": 0.0772,
+        "rowcount": 0,
+        "stage": "access_insert_or_ignore"
+      },
+      {
+        "call_index": 70,
+        "elapsed_ms": 0.0188,
+        "rowcount": 5,
+        "stage": "access_update"
+      },
+      {
+        "call_index": 70,
+        "elapsed_ms": 1.7583,
+        "stage": "commit"
+      },
+      {
+        "call_index": 71,
+        "elapsed_ms": 0.0753,
+        "rowcount": 0,
+        "stage": "access_insert_or_ignore"
+      },
+      {
+        "call_index": 71,
+        "elapsed_ms": 0.0179,
+        "rowcount": 5,
+        "stage": "access_update"
+      },
+      {
+        "call_index": 71,
+        "elapsed_ms": 0.7613,
+        "stage": "commit"
+      },
+      {
+        "call_index": 72,
+        "elapsed_ms": 0.0398,
+        "rowcount": 0,
+        "stage": "access_insert_or_ignore"
+      },
+      {
+        "call_index": 72,
+        "elapsed_ms": 0.0171,
+        "rowcount": 5,
+        "stage": "access_update"
+      },
+      {
+        "call_index": 72,
+        "elapsed_ms": 2.0548,
+        "stage": "commit"
+      },
+      {
+        "call_index": 73,
+        "elapsed_ms": 0.0564,
+        "rowcount": 0,
+        "stage": "access_insert_or_ignore"
+      },
+      {
+        "call_index": 73,
+        "elapsed_ms": 0.018,
+        "rowcount": 5,
+        "stage": "access_update"
+      },
+      {
+        "call_index": 73,
+        "elapsed_ms": 1.9366,
+        "stage": "commit"
+      },
+      {
+        "call_index": 74,
+        "elapsed_ms": 0.0574,
+        "rowcount": 0,
+        "stage": "access_insert_or_ignore"
+      },
+      {
+        "call_index": 74,
+        "elapsed_ms": 0.0175,
+        "rowcount": 5,
+        "stage": "access_update"
+      },
+      {
+        "call_index": 74,
+        "elapsed_ms": 1.8565,
+        "stage": "commit"
+      },
+      {
+        "call_index": 75,
+        "elapsed_ms": 0.0573,
+        "rowcount": 0,
+        "stage": "access_insert_or_ignore"
+      },
+      {
+        "call_index": 75,
+        "elapsed_ms": 0.0181,
+        "rowcount": 5,
+        "stage": "access_update"
+      },
+      {
+        "call_index": 75,
+        "elapsed_ms": 1.8416,
+        "stage": "commit"
+      },
+      {
+        "call_index": 76,
+        "elapsed_ms": 0.0509,
+        "rowcount": 0,
+        "stage": "access_insert_or_ignore"
+      },
+      {
+        "call_index": 76,
+        "elapsed_ms": 0.0176,
+        "rowcount": 5,
+        "stage": "access_update"
+      },
+      {
+        "call_index": 76,
+        "elapsed_ms": 1.8526,
+        "stage": "commit"
+      },
+      {
+        "call_index": 77,
+        "elapsed_ms": 0.0473,
+        "rowcount": 0,
+        "stage": "access_insert_or_ignore"
+      },
+      {
+        "call_index": 77,
+        "elapsed_ms": 0.0172,
+        "rowcount": 5,
+        "stage": "access_update"
+      },
+      {
+        "call_index": 77,
+        "elapsed_ms": 1.9976,
+        "stage": "commit"
+      },
+      {
+        "call_index": 78,
+        "elapsed_ms": 0.0424,
+        "rowcount": 0,
+        "stage": "access_insert_or_ignore"
+      },
+      {
+        "call_index": 78,
+        "elapsed_ms": 0.0174,
+        "rowcount": 5,
+        "stage": "access_update"
+      },
+      {
+        "call_index": 78,
+        "elapsed_ms": 1.8737,
+        "stage": "commit"
+      },
+      {
+        "call_index": 79,
+        "elapsed_ms": 0.0482,
+        "rowcount": 0,
+        "stage": "access_insert_or_ignore"
+      },
+      {
+        "call_index": 79,
+        "elapsed_ms": 0.0176,
+        "rowcount": 5,
+        "stage": "access_update"
+      },
+      {
+        "call_index": 79,
+        "elapsed_ms": 1.8891,
+        "stage": "commit"
+      },
+      {
+        "call_index": 80,
+        "elapsed_ms": 0.0693,
+        "rowcount": 0,
+        "stage": "access_insert_or_ignore"
+      },
+      {
+        "call_index": 80,
+        "elapsed_ms": 0.0384,
+        "rowcount": 5,
+        "stage": "access_update"
+      },
+      {
+        "call_index": 80,
+        "elapsed_ms": 1.9248,
+        "stage": "commit"
+      },
+      {
+        "call_index": 81,
+        "elapsed_ms": 0.0503,
+        "rowcount": 0,
+        "stage": "access_insert_or_ignore"
+      },
+      {
+        "call_index": 81,
+        "elapsed_ms": 0.0188,
+        "rowcount": 5,
+        "stage": "access_update"
+      },
+      {
+        "call_index": 81,
+        "elapsed_ms": 1.8454,
+        "stage": "commit"
+      },
+      {
+        "call_index": 82,
+        "elapsed_ms": 0.0429,
+        "rowcount": 0,
+        "stage": "access_insert_or_ignore"
+      },
+      {
+        "call_index": 82,
+        "elapsed_ms": 0.017,
+        "rowcount": 5,
+        "stage": "access_update"
+      },
+      {
+        "call_index": 82,
+        "elapsed_ms": 1.8797,
+        "stage": "commit"
+      },
+      {
+        "call_index": 83,
+        "elapsed_ms": 0.0622,
+        "rowcount": 0,
+        "stage": "access_insert_or_ignore"
+      },
+      {
+        "call_index": 83,
+        "elapsed_ms": 0.0186,
+        "rowcount": 5,
+        "stage": "access_update"
+      },
+      {
+        "call_index": 83,
+        "elapsed_ms": 1.8495,
+        "stage": "commit"
+      },
+      {
+        "call_index": 84,
+        "elapsed_ms": 0.0624,
+        "rowcount": 0,
+        "stage": "access_insert_or_ignore"
+      },
+      {
+        "call_index": 84,
+        "elapsed_ms": 0.0182,
+        "rowcount": 5,
+        "stage": "access_update"
+      },
+      {
+        "call_index": 84,
+        "elapsed_ms": 0.8231,
+        "stage": "commit"
+      },
+      {
+        "call_index": 85,
+        "elapsed_ms": 0.0823,
+        "rowcount": 0,
+        "stage": "access_insert_or_ignore"
+      },
+      {
+        "call_index": 85,
+        "elapsed_ms": 0.035,
+        "rowcount": 5,
+        "stage": "access_update"
+      },
+      {
+        "call_index": 85,
+        "elapsed_ms": 1.9494,
+        "stage": "commit"
+      },
+      {
+        "call_index": 86,
+        "elapsed_ms": 0.0658,
+        "rowcount": 0,
+        "stage": "access_insert_or_ignore"
+      },
+      {
+        "call_index": 86,
+        "elapsed_ms": 0.0187,
+        "rowcount": 5,
+        "stage": "access_update"
+      },
+      {
+        "call_index": 86,
+        "elapsed_ms": 1.9355,
+        "stage": "commit"
+      },
+      {
+        "call_index": 87,
+        "elapsed_ms": 0.0503,
+        "rowcount": 0,
+        "stage": "access_insert_or_ignore"
+      },
+      {
+        "call_index": 87,
+        "elapsed_ms": 0.0172,
+        "rowcount": 5,
+        "stage": "access_update"
+      },
+      {
+        "call_index": 87,
+        "elapsed_ms": 1.8531,
+        "stage": "commit"
+      },
+      {
+        "call_index": 88,
+        "elapsed_ms": 0.0488,
+        "rowcount": 0,
+        "stage": "access_insert_or_ignore"
+      },
+      {
+        "call_index": 88,
+        "elapsed_ms": 0.0172,
+        "rowcount": 5,
+        "stage": "access_update"
+      },
+      {
+        "call_index": 88,
+        "elapsed_ms": 1.87,
+        "stage": "commit"
+      },
+      {
+        "call_index": 89,
+        "elapsed_ms": 0.0531,
+        "rowcount": 0,
+        "stage": "access_insert_or_ignore"
+      },
+      {
+        "call_index": 89,
+        "elapsed_ms": 0.0173,
+        "rowcount": 5,
+        "stage": "access_update"
+      },
+      {
+        "call_index": 89,
+        "elapsed_ms": 1.8333,
+        "stage": "commit"
+      },
+      {
+        "call_index": 90,
+        "elapsed_ms": 0.0626,
+        "rowcount": 0,
+        "stage": "access_insert_or_ignore"
+      },
+      {
+        "call_index": 90,
+        "elapsed_ms": 0.0186,
+        "rowcount": 5,
+        "stage": "access_update"
+      },
+      {
+        "call_index": 90,
+        "elapsed_ms": 1.9913,
+        "stage": "commit"
+      },
+      {
+        "call_index": 91,
+        "elapsed_ms": 0.0707,
+        "rowcount": 0,
+        "stage": "access_insert_or_ignore"
+      },
+      {
+        "call_index": 91,
+        "elapsed_ms": 0.0185,
+        "rowcount": 5,
+        "stage": "access_update"
+      },
+      {
+        "call_index": 91,
+        "elapsed_ms": 1.8177,
+        "stage": "commit"
+      },
+      {
+        "call_index": 92,
+        "elapsed_ms": 0.0764,
+        "rowcount": 0,
+        "stage": "access_insert_or_ignore"
+      },
+      {
+        "call_index": 92,
+        "elapsed_ms": 0.019,
+        "rowcount": 5,
+        "stage": "access_update"
+      },
+      {
+        "call_index": 92,
+        "elapsed_ms": 1.8076,
+        "stage": "commit"
+      },
+      {
+        "call_index": 93,
+        "elapsed_ms": 0.0602,
+        "rowcount": 0,
+        "stage": "access_insert_or_ignore"
+      },
+      {
+        "call_index": 93,
+        "elapsed_ms": 0.0178,
+        "rowcount": 5,
+        "stage": "access_update"
+      },
+      {
+        "call_index": 93,
+        "elapsed_ms": 1.8561,
+        "stage": "commit"
+      },
+      {
+        "call_index": 94,
+        "elapsed_ms": 0.0423,
+        "rowcount": 0,
+        "stage": "access_insert_or_ignore"
+      },
+      {
+        "call_index": 94,
+        "elapsed_ms": 0.0166,
+        "rowcount": 5,
+        "stage": "access_update"
+      },
+      {
+        "call_index": 94,
+        "elapsed_ms": 1.9766,
+        "stage": "commit"
+      },
+      {
+        "call_index": 95,
+        "elapsed_ms": 0.0412,
+        "rowcount": 0,
+        "stage": "access_insert_or_ignore"
+      },
+      {
+        "call_index": 95,
+        "elapsed_ms": 0.016,
+        "rowcount": 5,
+        "stage": "access_update"
+      },
+      {
+        "call_index": 95,
+        "elapsed_ms": 2.1153,
+        "stage": "commit"
+      },
+      {
+        "call_index": 96,
+        "elapsed_ms": 0.0581,
+        "rowcount": 0,
+        "stage": "access_insert_or_ignore"
+      },
+      {
+        "call_index": 96,
+        "elapsed_ms": 0.0193,
+        "rowcount": 5,
+        "stage": "access_update"
+      },
+      {
+        "call_index": 96,
+        "elapsed_ms": 0.7408,
+        "stage": "commit"
+      },
+      {
+        "call_index": 97,
+        "elapsed_ms": 0.067,
+        "rowcount": 0,
+        "stage": "access_insert_or_ignore"
+      },
+      {
+        "call_index": 97,
+        "elapsed_ms": 0.019,
+        "rowcount": 5,
+        "stage": "access_update"
+      },
+      {
+        "call_index": 97,
+        "elapsed_ms": 1.8094,
+        "stage": "commit"
+      },
+      {
+        "call_index": 98,
+        "elapsed_ms": 0.0472,
+        "rowcount": 0,
+        "stage": "access_insert_or_ignore"
+      },
+      {
+        "call_index": 98,
+        "elapsed_ms": 0.0173,
+        "rowcount": 5,
+        "stage": "access_update"
+      },
+      {
+        "call_index": 98,
+        "elapsed_ms": 1.8451,
+        "stage": "commit"
+      },
+      {
+        "call_index": 99,
+        "elapsed_ms": 0.0615,
+        "rowcount": 0,
+        "stage": "access_insert_or_ignore"
+      },
+      {
+        "call_index": 99,
+        "elapsed_ms": 0.0182,
+        "rowcount": 5,
+        "stage": "access_update"
+      },
+      {
+        "call_index": 99,
+        "elapsed_ms": 1.9827,
+        "stage": "commit"
+      }
+    ],
+    "update_count": 100,
+    "updated_ids": [
+      "performance-fact-00000",
+      "performance-fact-00001",
+      "performance-fact-00002",
+      "performance-fact-00003",
+      "performance-fact-00004"
+    ],
+    "validation": {
+      "all_five_access_counts_100_after_timing": true,
+      "call_shape_valid": true,
+      "settings_wal_full_before_after": true,
+      "table_counts_10000_before_after": true
+    }
+  },
+  "output": "C:\\Users\\Ant\\AppData\\Local\\Temp\\mnemos-access-metadata-phases-c-v1",
+  "provenance": {
+    "fixture_helper": "D:\\Development\\mnemos\\mnemos\\.worktrees\\functional-local-memory\\.venv\\access_update_diagnostic_v1.py",
+    "fixture_helper_sha256": "11d76e07490a8d549cfa9b7ad9456f2e5370d4135ecc024027d7a8deda637d6f",
+    "imported_package": "C:\\Users\\Ant\\AppData\\Local\\Temp\\mnemos-source-startup-exit-v1\\mnemos",
+    "python": "D:\\Development\\mnemos\\mnemos\\.worktrees\\functional-local-memory\\.venv\\Scripts\\python.exe",
+    "python_source_file_count": 49,
+    "python_source_hashes": {
+      "mnemos/__init__.py": "c33a887cd18ff275c73f0b2f13e3b60ca6f9c1b3c62e6f05ae3165c0ce85670e",
+      "mnemos/__main__.py": "67cda77fe285e9b33d67c36f521701cee9847dec705074249265ec5e2df69eaf",
+      "mnemos/adapters/claude_code.py": "0be685410e504798958079f76660f5db3fcbe693d0c1de47a6ee8f1d62402dc9",
+      "mnemos/adapters/codex.py": "56b9bb227b9131b0f19b4d41b074c04d992d7b9a74bd6f08895610db6453d998",
+      "mnemos/adapters/diagnostics.py": "2fde394c9a9f47faee74181219bbbdfdca7158b516c0568845e0d6f64174fd19",
+      "mnemos/adapters/hermes.py": "1a15f936393c3905322455c513c1cf09d6c2dc691c59422adf7866ba9d738eb2",
+      "mnemos/antigravity.py": "76155276bbe660b317a24cfe796205018a9cdd0cd1d15e410168715cf008b698",
+      "mnemos/backup.py": "8d269fd553993d46af6ba8eef417994e17622ef0da345ebae0d592b5279a7fa1",
+      "mnemos/benchmark.py": "27ea161a5b1a4680d8c71a188e206df577b4d614946eac5ad31effae709e0af4",
+      "mnemos/bridge.py": "4d79d9734bade1d5eebc2bc81fadcbccde6092fb2ce2f2ea6f5ae8791113f286",
+      "mnemos/claude_identity.py": "0336e7561c6680d9d6a9aeaabdc6ac3127f994dbe5bb4adf7441a17639eb3e7a",
+      "mnemos/cli.py": "1a9d85f37593bcd4460ed986a8bdcc177b3842d82e5e9409e6fc22325e2a81be",
+      "mnemos/client.py": "eba454c3b222c0b4f3d764af927063e21f0ecb7e5736eaef4f08af2376a4213b",
+      "mnemos/config.py": "02c48310a7e51e01b79245d89560071bf2de6c35089f4dd19ed723a402cf3912",
+      "mnemos/contracts.py": "60aad1931232efedd193c20004fe5de1c106a713357bfc5b9c5108629dfb7cbb",
+      "mnemos/control_plane.py": "1bbce804c6875cb0a3c4988db11741130fce9ff6f5111f0b3c4116398ababa16",
+      "mnemos/curation.py": "114e4dbdd0ad89d97b1f94559d1ec7ed1aa5b1c8e9f991763f51d8240eaa5b41",
+      "mnemos/engine.py": "1bcd1591e6ca607d509dc4ede368ba3533a527d73e224029520e15ef3aa302c5",
+      "mnemos/health.py": "aa03d3dd4e97de4522476e14fd8dbdbcce12ed6027cdf79e150f37665946d8fa",
+      "mnemos/hook_autostore.py": "97c72c1a05de7b9422f44c866e97e31599c47c5b563cdb77986a3fa3ceee2079",
+      "mnemos/hosts.py": "1046e94ede8182efeb1caaa3f15fb98533d96becad328c6d52d736135d23b842",
+      "mnemos/inspectability.py": "2c654e4a6351e6ae94fcaddbd5ca58a13bc92938b8dd36d125ab4dc8253e487c",
+      "mnemos/jobs.py": "05fdb84eeab86e7ddca061ab4d7c5a81ccd258c481f5904bcdee0c7df875549a",
+      "mnemos/maintenance.py": "ca533fe46c5ae6b4b1ede2b67bed60e7d997a6511be2bc2edf5711a90237a65c",
+      "mnemos/managed_cli.py": "cf76b08bb0fd2d12a5d9ab6e16aa6f65220c6f52f0120cf7aa8117283c6040c7",
+      "mnemos/mcp_server.py": "1a90f4b4f08b61510f63ed74548814efa05e8637cf51119262eaed859154c1fa",
+      "mnemos/memory_safety.py": "112d8439c7aef8c014b57069ff2b4450afb447d5143066f555abc9fccab6599e",
+      "mnemos/memory_service.py": "d01cc75f28340ee983c233b9aa2a252302ca03dd7653882aeb2d6da848dffb7e",
+      "mnemos/modules/__init__.py": "50895ef983cd017a898783f081d0bdbf26de050d80ccff056d462e47e06f1891",
+      "mnemos/modules/affective.py": "3abdbd2259acf4995ecf9457933241e5b7e121b1543fad8e0f971aa2357169b4",
+      "mnemos/modules/mutable_rag.py": "e31d1ce46bb05891c6de38640b70d54ffab0c83dde3cf4bfd8baf724672928d7",
+      "mnemos/modules/sleep.py": "7952a47b44ea1a3c0e423b7510962a39cefda29234c18ea63dc117814c10f1be",
+      "mnemos/modules/spreading.py": "623a6cf24f97d633bb0d6736e880411ea6723749b04b4cc95e4c1296dbf04a0c",
+      "mnemos/modules/surprisal.py": "36e7d917b88f5089c2c9331325671395d9cdcfb4638a7366d8292733af86475d",
+      "mnemos/observability.py": "f3cf053a9438426249f4aa0b73354b583b7fbb16a7583389c68d870752b743ff",
+      "mnemos/reindex.py": "a1ab841800a5ccaaf343c1232e0f2a9d5f2a887bf8feaa8e24bcef49e7b99498",
+      "mnemos/retrieval.py": "4fa2ebec86a07296477bb6899cd9d43a7cb533162534074e795330f96b22f962",
+      "mnemos/routing_review.py": "9426ab700e800df87d66f43e85e88224de5133487af616fc9d4be083d531d1d3",
+      "mnemos/runtime.py": "5bcddede55641085aa139462d1c2678a200b5418eefedd7ecd86437b4731878e",
+      "mnemos/scopes.py": "dec25405fead5441f7279d8cbc9f379539f74f4df1f8110d06a23be7cb3c2b60",
+      "mnemos/service.py": "5b3b3e863b4ed1e73cd9582e3dad848417ebd96deca7d40f2ea37e9f56611166",
+      "mnemos/settings.py": "14c389047fc180fb36874b1b1b15ca851d5ca1c0a7166bf05421d3641afd267f",
+      "mnemos/types.py": "56c54698412d4e2072b736235b2fc629282bd3adb142053a0691cd887d7a9293",
+      "mnemos/ui_server.py": "20dc3b2766a240e277c64d501b87895ae06aafff8cb352ea217ce622c4bb78e5",
+      "mnemos/utils/__init__.py": "54f8563f1d55b683710042587b561ba50739e42ef3e30d31fe91e7e11bbb2893",
+      "mnemos/utils/embeddings.py": "a9ded5943b46cd3b2244174258402d8c639f2fc882e0a9a00bdb7b2ca71e397c",
+      "mnemos/utils/llm.py": "b4a3b06058de29513a46f038e06b204b71dd11841ff57764d5c7fa48b1d92e49",
+      "mnemos/utils/reliability.py": "f6faa3cf5198fa5213e675a907dce4b455b5f996941168106e88e14753e2f106",
+      "mnemos/utils/storage.py": "6cd8c2b73c6846a477e68b14fe4f2ec2394ef7b8fcc1a5515c879828f3312ab7"
+    },
+    "runner_sha256": "31a939d5c2800ef46988049f1becaf11343ae0458c70cc29d69fb142d0ba0a19",
+    "source_commit": "a607a5a6b0a8c2d4f0c4ed00e3b21167cf96f854",
+    "source_root": "C:\\Users\\Ant\\AppData\\Local\\Temp\\mnemos-source-startup-exit-v1",
+    "storage_checkout_sha256": "6cd8c2b73c6846a477e68b14fe4f2ec2394ef7b8fcc1a5515c879828f3312ab7",
+    "storage_imported_sha256": "6cd8c2b73c6846a477e68b14fe4f2ec2394ef7b8fcc1a5515c879828f3312ab7",
+    "storage_source_sha256": "6cd8c2b73c6846a477e68b14fe4f2ec2394ef7b8fcc1a5515c879828f3312ab7"
+  },
+  "provenance_after": {
+    "fixture_helper": "D:\\Development\\mnemos\\mnemos\\.worktrees\\functional-local-memory\\.venv\\access_update_diagnostic_v1.py",
+    "fixture_helper_sha256": "11d76e07490a8d549cfa9b7ad9456f2e5370d4135ecc024027d7a8deda637d6f",
+    "imported_package": "C:\\Users\\Ant\\AppData\\Local\\Temp\\mnemos-source-startup-exit-v1\\mnemos",
+    "python": "D:\\Development\\mnemos\\mnemos\\.worktrees\\functional-local-memory\\.venv\\Scripts\\python.exe",
+    "python_source_file_count": 49,
+    "python_source_hashes": {
+      "mnemos/__init__.py": "c33a887cd18ff275c73f0b2f13e3b60ca6f9c1b3c62e6f05ae3165c0ce85670e",
+      "mnemos/__main__.py": "67cda77fe285e9b33d67c36f521701cee9847dec705074249265ec5e2df69eaf",
+      "mnemos/adapters/claude_code.py": "0be685410e504798958079f76660f5db3fcbe693d0c1de47a6ee8f1d62402dc9",
+      "mnemos/adapters/codex.py": "56b9bb227b9131b0f19b4d41b074c04d992d7b9a74bd6f08895610db6453d998",
+      "mnemos/adapters/diagnostics.py": "2fde394c9a9f47faee74181219bbbdfdca7158b516c0568845e0d6f64174fd19",
+      "mnemos/adapters/hermes.py": "1a15f936393c3905322455c513c1cf09d6c2dc691c59422adf7866ba9d738eb2",
+      "mnemos/antigravity.py": "76155276bbe660b317a24cfe796205018a9cdd0cd1d15e410168715cf008b698",
+      "mnemos/backup.py": "8d269fd553993d46af6ba8eef417994e17622ef0da345ebae0d592b5279a7fa1",
+      "mnemos/benchmark.py": "27ea161a5b1a4680d8c71a188e206df577b4d614946eac5ad31effae709e0af4",
+      "mnemos/bridge.py": "4d79d9734bade1d5eebc2bc81fadcbccde6092fb2ce2f2ea6f5ae8791113f286",
+      "mnemos/claude_identity.py": "0336e7561c6680d9d6a9aeaabdc6ac3127f994dbe5bb4adf7441a17639eb3e7a",
+      "mnemos/cli.py": "1a9d85f37593bcd4460ed986a8bdcc177b3842d82e5e9409e6fc22325e2a81be",
+      "mnemos/client.py": "eba454c3b222c0b4f3d764af927063e21f0ecb7e5736eaef4f08af2376a4213b",
+      "mnemos/config.py": "02c48310a7e51e01b79245d89560071bf2de6c35089f4dd19ed723a402cf3912",
+      "mnemos/contracts.py": "60aad1931232efedd193c20004fe5de1c106a713357bfc5b9c5108629dfb7cbb",
+      "mnemos/control_plane.py": "1bbce804c6875cb0a3c4988db11741130fce9ff6f5111f0b3c4116398ababa16",
+      "mnemos/curation.py": "114e4dbdd0ad89d97b1f94559d1ec7ed1aa5b1c8e9f991763f51d8240eaa5b41",
+      "mnemos/engine.py": "1bcd1591e6ca607d509dc4ede368ba3533a527d73e224029520e15ef3aa302c5",
+      "mnemos/health.py": "aa03d3dd4e97de4522476e14fd8dbdbcce12ed6027cdf79e150f37665946d8fa",
+      "mnemos/hook_autostore.py": "97c72c1a05de7b9422f44c866e97e31599c47c5b563cdb77986a3fa3ceee2079",
+      "mnemos/hosts.py": "1046e94ede8182efeb1caaa3f15fb98533d96becad328c6d52d736135d23b842",
+      "mnemos/inspectability.py": "2c654e4a6351e6ae94fcaddbd5ca58a13bc92938b8dd36d125ab4dc8253e487c",
+      "mnemos/jobs.py": "05fdb84eeab86e7ddca061ab4d7c5a81ccd258c481f5904bcdee0c7df875549a",
+      "mnemos/maintenance.py": "ca533fe46c5ae6b4b1ede2b67bed60e7d997a6511be2bc2edf5711a90237a65c",
+      "mnemos/managed_cli.py": "cf76b08bb0fd2d12a5d9ab6e16aa6f65220c6f52f0120cf7aa8117283c6040c7",
+      "mnemos/mcp_server.py": "1a90f4b4f08b61510f63ed74548814efa05e8637cf51119262eaed859154c1fa",
+      "mnemos/memory_safety.py": "112d8439c7aef8c014b57069ff2b4450afb447d5143066f555abc9fccab6599e",
+      "mnemos/memory_service.py": "d01cc75f28340ee983c233b9aa2a252302ca03dd7653882aeb2d6da848dffb7e",
+      "mnemos/modules/__init__.py": "50895ef983cd017a898783f081d0bdbf26de050d80ccff056d462e47e06f1891",
+      "mnemos/modules/affective.py": "3abdbd2259acf4995ecf9457933241e5b7e121b1543fad8e0f971aa2357169b4",
+      "mnemos/modules/mutable_rag.py": "e31d1ce46bb05891c6de38640b70d54ffab0c83dde3cf4bfd8baf724672928d7",
+      "mnemos/modules/sleep.py": "7952a47b44ea1a3c0e423b7510962a39cefda29234c18ea63dc117814c10f1be",
+      "mnemos/modules/spreading.py": "623a6cf24f97d633bb0d6736e880411ea6723749b04b4cc95e4c1296dbf04a0c",
+      "mnemos/modules/surprisal.py": "36e7d917b88f5089c2c9331325671395d9cdcfb4638a7366d8292733af86475d",
+      "mnemos/observability.py": "f3cf053a9438426249f4aa0b73354b583b7fbb16a7583389c68d870752b743ff",
+      "mnemos/reindex.py": "a1ab841800a5ccaaf343c1232e0f2a9d5f2a887bf8feaa8e24bcef49e7b99498",
+      "mnemos/retrieval.py": "4fa2ebec86a07296477bb6899cd9d43a7cb533162534074e795330f96b22f962",
+      "mnemos/routing_review.py": "9426ab700e800df87d66f43e85e88224de5133487af616fc9d4be083d531d1d3",
+      "mnemos/runtime.py": "5bcddede55641085aa139462d1c2678a200b5418eefedd7ecd86437b4731878e",
+      "mnemos/scopes.py": "dec25405fead5441f7279d8cbc9f379539f74f4df1f8110d06a23be7cb3c2b60",
+      "mnemos/service.py": "5b3b3e863b4ed1e73cd9582e3dad848417ebd96deca7d40f2ea37e9f56611166",
+      "mnemos/settings.py": "14c389047fc180fb36874b1b1b15ca851d5ca1c0a7166bf05421d3641afd267f",
+      "mnemos/types.py": "56c54698412d4e2072b736235b2fc629282bd3adb142053a0691cd887d7a9293",
+      "mnemos/ui_server.py": "20dc3b2766a240e277c64d501b87895ae06aafff8cb352ea217ce622c4bb78e5",
+      "mnemos/utils/__init__.py": "54f8563f1d55b683710042587b561ba50739e42ef3e30d31fe91e7e11bbb2893",
+      "mnemos/utils/embeddings.py": "a9ded5943b46cd3b2244174258402d8c639f2fc882e0a9a00bdb7b2ca71e397c",
+      "mnemos/utils/llm.py": "b4a3b06058de29513a46f038e06b204b71dd11841ff57764d5c7fa48b1d92e49",
+      "mnemos/utils/reliability.py": "f6faa3cf5198fa5213e675a907dce4b455b5f996941168106e88e14753e2f106",
+      "mnemos/utils/storage.py": "6cd8c2b73c6846a477e68b14fe4f2ec2394ef7b8fcc1a5515c879828f3312ab7"
+    },
+    "runner_sha256": "31a939d5c2800ef46988049f1becaf11343ae0458c70cc29d69fb142d0ba0a19",
+    "source_commit": "a607a5a6b0a8c2d4f0c4ed00e3b21167cf96f854",
+    "source_root": "C:\\Users\\Ant\\AppData\\Local\\Temp\\mnemos-source-startup-exit-v1",
+    "storage_checkout_sha256": "6cd8c2b73c6846a477e68b14fe4f2ec2394ef7b8fcc1a5515c879828f3312ab7",
+    "storage_imported_sha256": "6cd8c2b73c6846a477e68b14fe4f2ec2394ef7b8fcc1a5515c879828f3312ab7",
+    "storage_source_sha256": "6cd8c2b73c6846a477e68b14fe4f2ec2394ef7b8fcc1a5515c879828f3312ab7"
+  },
+  "provenance_unchanged": true,
+  "schema_version": 1,
+  "started_at": "2026-09-17T22:35:37.688964+00:00",
+  "status": "completed"
+}
