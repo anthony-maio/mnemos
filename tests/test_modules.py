@@ -22,7 +22,7 @@ from mnemos.modules.mutable_rag import MutableRAG
 from mnemos.modules.sleep import SleepDaemon
 from mnemos.modules.spreading import SpreadingActivation
 from mnemos.modules.surprisal import SurprisalGate
-from mnemos.types import CognitiveState, Interaction, MemoryChunk
+from mnemos.types import CognitiveState, EpisodicEvent, Interaction, MemoryChunk
 from mnemos.utils.embeddings import SimpleEmbeddingProvider, cosine_similarity
 from mnemos.utils.llm import MockLLMProvider
 from mnemos.utils.storage import InMemoryStore
@@ -47,6 +47,27 @@ def mock_llm():
 
 def make_interaction(content: str, role: str = "user") -> Interaction:
     return Interaction(role=role, content=content)
+
+
+def add_review_event(store, content: str, event_id: str = "review-source") -> str:
+    event = EpisodicEvent(
+        id=event_id,
+        event_fingerprint=f"fingerprint-{event_id}",
+        role="user",
+        content=content,
+        normalized_content=content.lower(),
+        scope="project",
+        scope_id="default",
+        source="manual",
+        metadata={
+            "scope": "project",
+            "scope_id": "default",
+            "user_profile_id": "profile-a",
+            "source_event_id": event_id,
+        },
+    )
+    store.append_episodic_event(event)
+    return event.id
 
 
 # ─── SurprisalGate tests ──────────────────────────────────────────────────────
@@ -184,7 +205,7 @@ class TestMutableRAG:
         retrieved = rag.retrieve(query_embedding, top_k=2)
 
         assert len(retrieved) == 2
-        assert rag.get_labile_count() == 2
+        assert rag.get_labile_count() == 0
 
     @pytest.mark.asyncio
     async def test_reconsolidate_unchanged(self, embedder, store):
@@ -195,11 +216,15 @@ class TestMutableRAG:
         chunk = MemoryChunk(
             content="User uses Python for ML",
             embedding=embedder.embed("User uses Python for ML"),
+            metadata={"scope": "project", "scope_id": "default", "user_profile_id": "profile-a"},
         )
         store.store(chunk)
+        source_id = add_review_event(store, "User still uses Python for ML", "source-unchanged")
         original_version = chunk.version
 
-        updated_chunk, changed = await rag.reconsolidate(chunk, "New context")
+        updated_chunk, changed = await rag.reconsolidate(
+            chunk, "New context", evidence_refs=[source_id]
+        )
         assert changed is False
         assert updated_chunk.version == original_version
 
@@ -216,10 +241,14 @@ class TestMutableRAG:
         chunk = MemoryChunk(
             content="User uses Python for ML",
             embedding=embedder.embed("User uses Python for ML"),
+            metadata={"scope": "project", "scope_id": "default", "user_profile_id": "profile-a"},
         )
         store.store(chunk)
+        source_id = add_review_event(store, "User migrated from Python to Rust", "source-rust")
 
-        updated_chunk, changed = await rag.reconsolidate(chunk, "User mentioned migrating to Rust")
+        updated_chunk, changed = await rag.reconsolidate(
+            chunk, "did we switch to Rust?", evidence_refs=[source_id]
+        )
         assert changed is True
         assert "Rust" in updated_chunk.content
         assert updated_chunk.version == 2
@@ -235,10 +264,14 @@ class TestMutableRAG:
         chunk = MemoryChunk(
             content="User prefers Python",
             embedding=embedder.embed("User prefers Python"),
+            metadata={"scope": "project", "scope_id": "default", "user_profile_id": "profile-a"},
         )
         store.store(chunk)
+        source_id = add_review_event(store, "User now prefers Rust", "source-prefers-rust")
 
-        updated_chunk, changed = await rag.reconsolidate(chunk, "new context")
+        updated_chunk, changed = await rag.reconsolidate(
+            chunk, "irrelevant query", evidence_refs=[source_id]
+        )
         assert changed is True
         assert updated_chunk.embedding is not None
 
@@ -252,9 +285,15 @@ class TestMutableRAG:
             chunk = MemoryChunk(
                 content=f"memory {i}",
                 embedding=embedder.embed(f"memory {i}"),
+                metadata={
+                    "scope": "project",
+                    "scope_id": "default",
+                    "user_profile_id": "profile-a",
+                },
             )
             store.store(chunk)
-            rag._labile_chunks[chunk.id] = (chunk, "current context")
+            source_id = add_review_event(store, f"memory {i} remains valid", f"source-{i}")
+            rag._labile_chunks[chunk.id] = (chunk, [source_id])
 
         assert rag.get_labile_count() == 3
         results = await rag.process_labile_chunks()
@@ -290,24 +329,26 @@ class TestMutableRAG:
         chunk = MemoryChunk(
             content="User uses Python",
             embedding=embedder.embed("User uses Python"),
+            metadata={"scope": "project", "scope_id": "default", "user_profile_id": "profile-a"},
         )
         store.store(chunk)
+        source_id = add_review_event(store, "User still uses Python", "source-python")
 
         # First retrieval cycle at t=1000
         monkeypatch.setattr("mnemos.modules.mutable_rag.time.time", lambda: 1000.0)
-        rag.mark_labile(chunk, "initial context")
+        rag.mark_labile(chunk, "initial context", evidence_refs=[source_id])
         assert rag.get_labile_count() == 1
         await rag.process_labile_chunks()
         assert rag.get_labile_count() == 0
 
         # Within cooldown at t=1020: should not be re-queued
         monkeypatch.setattr("mnemos.modules.mutable_rag.time.time", lambda: 1020.0)
-        rag.mark_labile(chunk, "second context")
+        rag.mark_labile(chunk, "second context", evidence_refs=[source_id])
         assert rag.get_labile_count() == 0
 
         # After cooldown at t=1061: allowed again
         monkeypatch.setattr("mnemos.modules.mutable_rag.time.time", lambda: 1061.0)
-        rag.mark_labile(chunk, "third context")
+        rag.mark_labile(chunk, "third context", evidence_refs=[source_id])
         assert rag.get_labile_count() == 1
 
 

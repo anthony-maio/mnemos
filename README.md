@@ -37,15 +37,18 @@ This is not a hosted memory platform, team memory system, or remote sync product
 
 ---
 
-## Public Beta
+## Current release posture
 
-Mnemos is now in broad public beta. The core engine and onboarding control plane are ready for real coding-agent usage, and the intended setup path is:
+Mnemos is an active public beta for local evaluation by solo coding-agent workflows. The implementation now has a local service, scoped registry, durable jobs, and a SQLite-first path. The complete real-host, real-model, long-running acceptance gates remain open. Read [the functional local memory guide](docs/functional-local-memory.md) before treating a passing mechanism test as product evidence.
+
+The intended setup path is:
 
 1. `pip install "mnemos-memory[mcp]"`
 2. `mnemos ui`
 3. Start on the **Starter SQLite** preset and review the local SQLite path
-4. Apply Claude Code, Cursor, or Codex config from the UI
-5. Run the built-in smoke check before daily use
+4. Enable each project with a stable profile identity
+5. Apply Claude Code, Cursor, or Codex config from the UI
+6. Run the built-in smoke check before daily use
 
 If you are evaluating Mnemos quickly, the honest shortest path is:
 
@@ -53,9 +56,18 @@ If you are evaluating Mnemos quickly, the honest shortest path is:
 - treat **Claude Code** as the strongest current workflow
 - treat **Codex** and **Cursor** as documented, usable secondary setups
 
+After saving the profile, enable the current repository explicitly:
+
+```bash
+mnemos enable-project --path . --profile anthony-local
+mnemos doctor
+```
+
+The MCP and CLI paths use one authenticated loopback service. A committed event can still have a pending processing job. Check maintenance and job status before assuming that a durable fact exists. Configure a local Ollama model explicitly for cognition; the mock provider is for development and deterministic tests.
+
 If you are coming from an env-var or hand-edited MCP config setup, use the UI's **Import Existing Setup** action first.
 
-Manual env-var setup is still supported for advanced users, but it is no longer the primary onboarding path. This beta is meant for real users and real workflows, but it is still a beta: use it, stress it, and report where setup, retrieval quality, or host behavior breaks down.
+Manual env-var setup is still supported for advanced users, but it is no longer the primary onboarding path. This beta is meant for real workflows, but it is still a beta: use it, stress it, and report where setup, retrieval quality, or host behavior breaks down.
 
 ---
 
@@ -88,6 +100,22 @@ Feedback review loop:
 - export events for offline eval work with `mnemos-cli feedback-export --format jsonl --output feedback-events.jsonl`
 
 For advanced/manual setup, see [docs/MCP_INTEGRATION.md](docs/MCP_INTEGRATION.md).
+
+### Runtime identity variables
+
+The managed service resolves host identity from the local registry. Set these for a manual MCP client or an adapter process:
+
+```text
+MNEMOS_USER_PROFILE_ID   registered local profile (required)
+MNEMOS_PROJECT_ROOT      project root; defaults to the process cwd
+MNEMOS_SCOPE_REGISTRY    optional path to the persisted scope registry
+MNEMOS_WORKSPACE_ID      registered workspace membership, when used
+MNEMOS_SESSION_ID        host session identity; otherwise a process UUID is used
+MNEMOS_HOST              codex, claude-code, hermes, or manual
+MNEMOS_RUNTIME_DESCRIPTOR  private loopback service descriptor path
+```
+
+Unknown or disabled projects fail closed. An explicit scope ID must match the registry identity. A folder name is never used as a shared default identity.
 
 ---
 
@@ -153,8 +181,8 @@ mnemos implements these mechanisms as composable Python modules. They can be use
                     │   │  config   │          │    setup     │           │
                     │   └───────────┘          └──────────────┘           │
                     │                                                     │
-                    │   Energy decays 20% per hop. Nodes above 0.3       │
-                    │   threshold are returned — surfacing associative    │
+                    │   Energy decays by the configured rate per hop.     │
+                    │   Bounded nodes above threshold join the result.    │
                     │   context that vector search alone would miss.      │
                     └─────────────────────────────────────────────────────┘
 ```
@@ -163,7 +191,7 @@ mnemos implements these mechanisms as composable Python modules. They can be use
 
 > *Inspired by Friston's Active Inference / Predictive Processing: the brain encodes only prediction errors, not the expected.*
 
-A fast LLM continuously predicts the user's next intent. When a new input arrives, mnemos computes the cosine distance between the prediction embedding and the actual input embedding. Low divergence (expected input) → discarded. High divergence (genuine surprise) → stored with a salience weight proportional to the prediction error.
+A fast LLM continuously predicts the user's next intent. When a new input arrives, mnemos computes the cosine distance between the prediction embedding and the actual input embedding. Low divergence is discarded. High divergence is stored with a salience weight proportional to the prediction error. A cosine distance of 0.3 corresponds to about 45.6 degrees.
 
 This eliminates context bloat at the ingestion layer. A routine "sounds good" never touches long-term memory. "My production database just corrupted" gets maximum salience.
 
@@ -172,7 +200,7 @@ from mnemos import MnemosEngine, MnemosConfig, SurprisalConfig, Interaction
 
 engine = MnemosEngine(
     config=MnemosConfig(
-        surprisal=SurprisalConfig(threshold=0.3)  # ~72° in embedding space
+        surprisal=SurprisalConfig(threshold=0.3)  # cosine distance
     )
 )
 
@@ -276,10 +304,10 @@ Vector search is a point-in-space lookup. It retrieves exact mathematical matche
                          node: "Ubuntu 22.04 server config"
                               │(0.64)
                               ▼
-                         node: "nginx reverse proxy setup"  ← threshold: 0.3 ✓
+                         node: "nginx reverse proxy setup"  <- threshold: 0.3
                               │(0.51)
                               ▼
-                         node: "old nginx config"           ← threshold: 0.3 ✓
+                         node: "old nginx config"           <- threshold: 0.3
 ```
 
 ```python
@@ -301,7 +329,7 @@ sa = SpreadingActivation(
 
 > **Note:** The PyPI package is `mnemos-memory` but the import name is just `import mnemos`.
 
-Zero external dependencies are required for experimentation. The default configuration uses `MockLLMProvider` and `SimpleEmbeddingProvider`, which are appropriate for demos and tests, not production retrieval quality.
+The development configuration uses `MockLLMProvider` and `SimpleEmbeddingProvider`, which are appropriate for demos and tests, not production retrieval quality. The supported local runtime path is SQLite with an explicitly configured provider.
 
 ### Python API
 
@@ -400,15 +428,18 @@ Default plugin behavior:
 
 If you apply Claude host integration from the control plane, Mnemos also installs user-level agent files under `~/.claude/agents/` so these recall and curator workflows are available immediately in Claude Code.
 
-The server exposes eight tools:
+The managed service exposes eleven tools:
 
 | Tool | Description |
 |------|-------------|
-| `mnemos_store` | Process a memory through the full pipeline (surprisal gate → affective tagging → graph), with optional `scope` + `scope_id` |
-| `mnemos_retrieve` | Retrieve with spreading activation + emotional re-ranking + reconsolidation, with scoped filtering (`current_scope`, `scope_id`, `allowed_scopes`) |
+| `mnemos_store` | Accept a sanitized, scoped memory event and return its durable event or processing-job status |
+| `mnemos_retrieve` | Retrieve versioned facts from the scoped baseline candidate set (`current_scope`, `scope_id`, `allowed_scopes`) |
+| `mnemos_feedback` | Record a scoped helpful, not-helpful, or missed-memory outcome |
 | `mnemos_consolidate` | Trigger sleep consolidation: episodic buffer → semantic long-term memory |
-| `mnemos_forget` | Delete a specific memory by ID |
-| `mnemos_stats` | System-wide statistics across all modules |
+| `mnemos_job_status` | Inspect the status and result of a durable processing job |
+| `mnemos_correct` | Apply an expected-version correction to a stored fact |
+| `mnemos_forget` | Apply an expected-version suppression to a stored fact |
+| `mnemos_stats` | Report service health and scoped store statistics |
 | `mnemos_health` | Profile readiness and dependency diagnostics |
 | `mnemos_inspect` | Full details on a specific memory chunk |
 | `mnemos_list` | List all stored memories |
@@ -566,9 +597,9 @@ Once configured, you can tell your agent:
 "Forget the memory about the old server IP."
 ```
 
-The agent's memory now filters the mundane, tags emotional context, updates stale facts on recall, and compresses session logs into lasting knowledge — automatically.
+The agent's memory can filter mundane input, tag emotional context, update stale facts through versioned corrections, and compress captured sessions into lasting knowledge. Automatic processing depends on an enabled project, a reachable configured provider, and successful durable maintenance.
 
-For deterministic Claude Code auto-memory, use the shipped hook config at [docs/claude-code-hooks.json](docs/claude-code-hooks.json). It auto-ingests user prompts and high-signal tool failures via `mnemos-cli autostore-hook`, then consolidates on `PreCompact`/`Stop`.
+For Claude Code command-hook wiring, use the current host integration in [hooks/hooks.json](hooks/hooks.json). It sends documented lifecycle events and transcript deltas through the service client. Codex and Hermes remain documented adapter paths without a complete real-host smoke in this worktree.
 
 Memory writes now pass through a shared safety firewall across ingestion, reconsolidation, and sleep consolidation. Configure with:
 - `MNEMOS_MEMORY_SAFETY_ENABLED` (`true` by default)
@@ -716,13 +747,13 @@ If `MNEMOS_EMBEDDING_PROVIDER` is unset, Mnemos now infers it from `MNEMOS_LLM_P
 
 ## Compatibility and Release Posture
 
-Mnemos is ready for a disciplined public open-source release. It is not yet ready for “definitive replacement” claims across every host and workflow. The verified public surface today is:
+Mnemos is an active public beta. It is not ready for definitive replacement claims across every host and workflow. The current evidence surface is:
 
 | Client / Surface | Status | Notes |
 |---|---|---|
-| Claude Code | Tier 1 supported | Primary install path via plugin; validated end-to-end on the default local SQLite path. |
-| Claude Desktop | Tier 1 supported | Minimal tested stdio config ships in the repo. |
-| Generic MCP stdio hosts | Tier 1 supported | Validated against the live MCP server. |
+| Claude Code | Tier 1 candidate | Adapter, plugin, and transport tests pass; no installed Claude Code session is recorded here. |
+| Claude Desktop | Tier 1 candidate | The checked-in stdio shape passes a local service subprocess test; no installed desktop session is recorded here. |
+| Generic MCP stdio hosts | Tier 1 candidate | The checked-in stdio shape passes a local service subprocess test. |
 | Codex | Tier 2 documented | Supported through MCP + a stronger `AGENTS.md` pack and optional maintenance Automations; host-hook auto-capture is still not shipped. |
 | Cursor / Windsurf / Cline | Tier 2 best effort | Configs and docs exist; Cursor now has a `.cursor/rules` soft-auto path, but host-hook auto-capture is not yet shipped. |
 
@@ -731,10 +762,13 @@ The current product promise is narrower than the architecture story:
 - safe scoped memory for solo coding-agent workflows
 - local-first persistence with a single SQLite database
 - biomimetic retrieval and consolidation under the hood
-- verified Tier 1 support for Claude Code, Claude Desktop, and generic MCP hosts
+- focused transport and adapter evidence for Claude Code, Claude Desktop, and generic MCP hosts
 
 Source-of-truth release docs:
 
+- [docs/functional-local-memory.md](docs/functional-local-memory.md)
+- [docs/validation/local-memory-hosts.md](docs/validation/local-memory-hosts.md)
+- [docs/paper-errata.md](docs/paper-errata.md)
 - [docs/public-release-package.md](docs/public-release-package.md)
 - [docs/release-checklist.md](docs/release-checklist.md)
 - [docs/client-compatibility-matrix.md](docs/client-compatibility-matrix.md)
@@ -788,6 +822,13 @@ mnemos-benchmark --stores memory --retrievers baseline,engine --dataset-pack cla
 ```
 
 Gate output fields live under `gates.production_replacement.*`.
+
+The current isolated 10,000-fact validation is recorded in
+[performance-10k.md](docs/validation/2026-09-16/performance-10k.md). With
+real Ollama query embeddings and a synthetic vector fixture, warm retrieval
+p95 is 506.111 ms against the 500 ms gate, while durable loopback capture p95
+is 68.228 ms against the 100 ms gate. Semantic retrieval quality and real-host
+latency remain NOT RUN.
 Use `--baseline-scope-aware` if you want baseline retrieval to apply scope filters in scoped-memory datasets.
 
 ## Release Checklist

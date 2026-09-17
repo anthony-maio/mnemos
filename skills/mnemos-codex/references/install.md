@@ -65,6 +65,7 @@ If you are validating Codex specifically, make sure the query uses the repo scop
 
 ```text
 current_scope=project
-scope_id=<workspace-or-repo-name>
-allowed_scopes=project,global
+allowed_scopes=project
 ```
+
+Enable the project with `mnemos enable-project --path . --profile <profile>` and set MNEMOS_USER_PROFILE_ID in the client environment. Omit scope_id unless supplying the registry's stable project UUID. A repository basename is not an identity. This checkout's command-hook adapter is documented in docs/codex.md; the package-manager example above installs the published version, which may differ.

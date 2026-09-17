@@ -1,143 +1,40 @@
 # Mnemos for Codex
 
-Codex support in Mnemos is MCP-first. There is no separate Codex plugin format for v1.
+This unreleased checkout implements MCP tools and Codex lifecycle command hooks. Adapter tests pass; native conversation acceptance is tracked in the [compatibility matrix](client-compatibility-matrix.md). Verify generated configuration against the installed Codex version before treating automatic capture as active.
 
-## Status
+## Install and enable
 
-- Current compatibility tier: Tier 2
-- Install surface: MCP server + repo-level `AGENTS.md`
-- Promotion to Tier 1 requires verified end-to-end daily-use validation, not just config checks
+Install this checkout into the Python environment that will run the hooks:
 
-## 1. Install Mnemos with MCP support
-
-```bash
-pip install "mnemos-memory[mcp]"
-```
-
-Then launch the control plane:
-
-```bash
+```powershell
+python -m pip install -e ".[mcp]"
 mnemos ui
+mnemos enable-project --path . --profile anthony-local
+$env:MNEMOS_USER_PROFILE_ID = "anthony-local"
 ```
 
-Use it to:
+Configure real cognition and embeddings in the canonical configuration. Prefer absolute paths. The shared service owns persistence; each Codex MCP process is a client. See [functional local memory](functional-local-memory.md) for providers, scope, maintenance, and retention.
 
-- choose `Dev` or `Pro` onboarding mode
-- configure your provider and review the local SQLite path
-- preview/apply the Codex MCP config and repo `AGENTS.md` memory block
-- run the built-in smoke check
+The control plane previews Codex TOML changes before applying them. It generates an MCP entry and command hooks using the selected interpreter, preserving unrelated handlers. Review profile, project root, descriptor, and interpreter paths for the environment launching Codex. Saving Mnemos configuration requires a service restart.
 
-For reliable scoped memory, prefer a real embedding provider and the default SQLite storage:
+## Automatic capture
 
-```bash
-$env:MNEMOS_LLM_PROVIDER="openclaw"
-$env:MNEMOS_EMBEDDING_PROVIDER="openclaw"
-$env:MNEMOS_STORE_TYPE="sqlite"
-$env:MNEMOS_SQLITE_PATH=".mnemos/memory.db"
-```
+The adapter accepts SessionStart, UserPromptSubmit, PreCompact, PostCompact, Stop, and SessionEnd. UserPromptSubmit and Stop capture role-tagged evidence with stable identities. SessionStart and UserPromptSubmit can inject scoped recall through additionalContext output. PostCompact does not inject unsupported fields. PreCompact and SessionEnd request bounded maintenance.
 
-## 2. Register the MCP server for Codex
+Capture commits evidence before acknowledging it; fact extraction happens later. A sanitized outbox can retain automatic events during an outage. Queued events are not reported as committed facts. Scope, identity, safety, and expected-version rules are enforced by the service.
 
-Use [mcp-configs/codex.json](mcp-configs/codex.json) as the starting point. The checked-in template stays runnable from a source checkout with `python -m mnemos.mcp_server`, while the control plane writes the installed-package form automatically.
+See the [Codex hook reference](https://learn.chatgpt.com/docs/hooks) for the host contract. Installed-version behavior still needs the native smoke recorded in the compatibility matrix.
 
-```json
-{
-  "mcpServers": {
-    "mnemos": {
-      "command": "python",
-      "args": ["-m", "mnemos.mcp_server"],
-      "env": {
-        "MNEMOS_CONFIG_PATH": "~/.config/Mnemos/mnemos.toml"
-      }
-    }
-  }
-}
-```
+## Explicit memory and project instructions
 
-## 2b. Optional local Codex skill
+The optional [mnemos-codex skill](../skills/mnemos-codex/SKILL.md) provides recall and curator workflows. Generate a repository AGENTS.md instruction block with:
 
-This repo now ships a Codex onboarding skill at [`skills/mnemos-codex/SKILL.md`](../skills/mnemos-codex/SKILL.md).
-
-Copy `skills/mnemos-codex` into your local Codex skills directory if you want Codex itself to have Mnemos install and usage guidance. The `mnemos-codex` skill teaches the same supported path documented here: MCP config, repo `AGENTS.md`, and optional maintenance Automations. It does not imply hard auto-capture hooks.
-
-## 3. Add an `AGENTS.md` memory policy
-
-This repo now ships a ready-to-use example at [AGENTS.md](../AGENTS.md).
-
-Generate a Codex-specific policy block:
-
-```bash
+```text
 mnemos-cli antigravity codex --target codex-agents
 ```
 
-Add the generated policy to your repo-level `AGENTS.md` if you want to customize it. The minimum workflow is:
+Review older instruction packs before applying them. Scoped requests use the registry's stable project identity; omit scope_id when the client resolves it. Do not substitute the repository basename.
 
-1. Start each task with `mnemos_retrieve`.
-2. Use `current_scope=project` and `scope_id` equal to the repo name.
-3. Store only durable facts with `mnemos_store`.
-4. Finish substantial work with `mnemos_consolidate`.
-5. Use `mnemos_inspect` when you need to verify why a memory exists or how it changed.
+Use mnemos_retrieve to recall supported facts, mnemos_store for an explicit durable assertion, and mnemos_inspect to review evidence and revision history. Use mnemos_correct with the current expected_version to revise the same fact, and mnemos_forget with the current expected_version to suppress replay. mnemos_consolidate requests maintenance; mnemos_job_status distinguishes pending processing from completed facts.
 
-Ready-to-copy snippet:
-
-```md
-## Mnemos Memory
-
-Use Mnemos through MCP automatically on every substantial coding task in this repository.
-
-1. At the start of every substantial user task, call `mnemos_retrieve` with a focused query tied to the task.
-2. Use `current_scope=project`, set `scope_id` to the current repository name, and include `allowed_scopes=project,global` unless broader scope is needed.
-3. During execution, call `mnemos_store` only for durable facts:
-   - stable user or maintainer preferences
-   - project architecture decisions and rationale
-   - environment and tooling facts that will matter again
-   - recurring bug patterns and their fixes
-4. Before finishing substantial work, call `mnemos_consolidate`.
-5. If a retrieved memory looks suspicious, call `mnemos_inspect` before storing a correction.
-6. Never store secrets, credentials, tokens, or transient chatter.
-7. If Mnemos MCP tools are unavailable in the current host, continue normally without blocking work.
-```
-
-## 3b. Optional Codex Automations
-
-Codex Automations are useful for scheduled Mnemos maintenance, not chat-session capture. Generate a prompt you can paste into a Codex Automation with:
-
-```bash
-mnemos-cli antigravity codex --target codex-automation
-```
-
-Use it for recurring hygiene checks such as `mnemos-cli doctor` and `mnemos-cli stats`. Do not treat Codex Automations as a substitute for host lifecycle hooks.
-
-## 4. Recommended v1 operating mode
-
-- Default store: SQLite
-- Treat `SimpleEmbeddingProvider` as development-only
-- Audit for legacy unscoped chunks with `mnemos-cli doctor` before claiming v1 isolation
-- Use `mnemos-cli migrate-store` only to import older memories into SQLite
-
-## Validation Loop
-
-Run at least one real Codex session through:
-
-1. `mnemos_retrieve`
-2. normal coding work
-3. `mnemos_store`
-4. `mnemos_consolidate`
-
-Until that flow is verified in daily use, Codex remains documented as Tier 2 in [client-compatibility-matrix.md](client-compatibility-matrix.md).
-
-The best current mental model for Codex is not "automatic memory." It is a two-step soft-auto loop:
-
-1. recall first with `mnemos_retrieve`
-2. curate durable facts with `mnemos_store` and finish with `mnemos_consolidate`
-
-That framing is what the shipped `mnemos-codex` skill now teaches.
-
-## Inspectability in Codex
-
-If a retrieved memory looks wrong, inspect it before storing more state:
-
-1. call `mnemos_inspect`
-2. verify scope and provenance
-3. review revision history if the fact was reconsolidated
-4. only then decide whether to store a correcting fact or forget the chunk
+Optional Codex Automations can schedule maintenance. They do not prove lifecycle capture and are unnecessary for the built-in maintenance scheduler.

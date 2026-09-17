@@ -1,0 +1,978 @@
+{
+  "dataset": {
+    "advertised_as_real": false,
+    "session_id": "dev-001",
+    "sha256": "297e2c3bc4e3bf183ed88e293e3da8e2200ea703ff2a425fbdd302da24c0c776",
+    "source_label": "synthetic_seed",
+    "version": "local-memory-heldout-v2"
+  },
+  "gates": {
+    "human_acceptance": "NOT RUN",
+    "real_cognition": "OBSERVED",
+    "real_embedding": "OBSERVED"
+  },
+  "observation": {
+    "adapter_kind": "real_model",
+    "answerable_hits": [
+      false
+    ],
+    "bytes_after": 332576,
+    "bytes_before": 329416,
+    "cold_latency_ms": 2.8257000012672506,
+    "critical_retention": [],
+    "embedding_revision": "0a109f422b47e3a30ba2b10eca18548e944e8a23073ee3f3e947efcf3c45e59f",
+    "execution_status": "partial",
+    "latency_ms": 116149.49970000453,
+    "length_filter_kept": [],
+    "model_revision": "a2af6cc3eb7fa8be8504abaf9b04e88f17a119ec3f04a3addf55f92841195f5a",
+    "no_answer_correct": [],
+    "provider": "ollama",
+    "raw_output": {
+      "adapter": "ollama",
+      "base_url": "http://192.168.86.35:11434",
+      "embedding_model": "nomic-embed-text:latest",
+      "errors": [
+        {
+          "error": "jobs_not_completed",
+          "operation": "maintenance",
+          "statuses": [
+            "pending"
+          ]
+        }
+      ],
+      "extraction_judgements": [],
+      "measurement_notes": [
+        "Missing retrievals remain null and are excluded from interval numerators.",
+        "Correction and forget use runtime fact IDs resolved from the service store.",
+        "No model token usage was exposed by the current provider API.",
+        "Extraction precision uses exact frozen fact text and source role/evidence checks; paraphrases are unjudged."
+      ],
+      "model": "gemma3:4b",
+      "module_switches": {
+        "disabled": "affective_routing",
+        "enabled": [
+          "surprisal_gating",
+          "mutable_rag",
+          "sleep_consolidation",
+          "spreading_activation"
+        ],
+        "source": "service_factory"
+      },
+      "operations": [
+        {
+          "event_id": "dev-001-event-01",
+          "operation": "capture",
+          "status": "committed"
+        },
+        {
+          "event_id": "dev-001-event-02",
+          "operation": "response",
+          "status": "committed"
+        },
+        {
+          "operation": "restart",
+          "status": "completed"
+        },
+        {
+          "operation": "maintenance",
+          "pending_or_failed_statuses": [
+            "pending"
+          ],
+          "status": "incomplete"
+        },
+        {
+          "operation": "retrieve",
+          "query_id": "dev-query-001",
+          "status": "returned"
+        }
+      ],
+      "profile": {
+        "disabled_module": "affective_routing",
+        "enabled_modules": [
+          "surprisal_gating",
+          "mutable_rag",
+          "sleep_consolidation",
+          "spreading_activation"
+        ],
+        "name": "ablate-affective_routing"
+      },
+      "provenance": {
+        "code_sha256": "63280e3e884b0646ba4690bb3cd6aeab22615facee46f73436084d08b3a1cf23",
+        "cognition_observed": true,
+        "embedding_metadata": {},
+        "embedding_sha256": "0a109f422b47e3a30ba2b10eca18548e944e8a23073ee3f3e947efcf3c45e59f",
+        "embedding_verified": false,
+        "model_metadata": {},
+        "model_sha256": "a2af6cc3eb7fa8be8504abaf9b04e88f17a119ec3f04a3addf55f92841195f5a",
+        "options_sha256": "a5787e3ed51bcac5908a165ca32b2e6cf4bf648da32f17847a1ea7abc6cfbd68",
+        "verified": false
+      },
+      "provider": "ollama",
+      "provider_trace": {
+        "classify_calls": [],
+        "config": {
+          "embedding_model": "nomic-embed-text:latest",
+          "endpoint": "http://192.168.86.35:11434",
+          "max_tokens": 512,
+          "model": "gemma3:4b",
+          "temperature": 0.0,
+          "timeout_seconds": 120.0
+        },
+        "embed_calls": [
+          {
+            "latency_ms": 238.34270000224933,
+            "text_chars": 28,
+            "token_usage": {
+              "prompt_eval_count": 8
+            },
+            "vector_dimensions": 768
+          },
+          {
+            "latency_ms": 214.0718000009656,
+            "text_chars": 58,
+            "token_usage": {
+              "prompt_eval_count": 14
+            },
+            "vector_dimensions": 768
+          },
+          {
+            "latency_ms": 244.36859999696026,
+            "text_chars": 58,
+            "token_usage": {
+              "prompt_eval_count": 14
+            },
+            "vector_dimensions": 768
+          },
+          {
+            "latency_ms": 219.30559999600518,
+            "text_chars": 22,
+            "token_usage": {
+              "prompt_eval_count": 10
+            },
+            "vector_dimensions": 768
+          },
+          {
+            "latency_ms": 244.06140000064624,
+            "text_chars": 61,
+            "token_usage": {
+              "prompt_eval_count": 12
+            },
+            "vector_dimensions": 768
+          },
+          {
+            "latency_ms": 232.10580000159098,
+            "text_chars": 61,
+            "token_usage": {
+              "prompt_eval_count": 12
+            },
+            "vector_dimensions": 768
+          },
+          {
+            "latency_ms": 213.66169999964768,
+            "text_chars": 28,
+            "token_usage": {
+              "prompt_eval_count": 8
+            },
+            "vector_dimensions": 768
+          },
+          {
+            "latency_ms": 218.35680000367574,
+            "text_chars": 58,
+            "token_usage": {
+              "prompt_eval_count": 14
+            },
+            "vector_dimensions": 768
+          },
+          {
+            "latency_ms": 217.23100000235718,
+            "text_chars": 58,
+            "token_usage": {
+              "prompt_eval_count": 14
+            },
+            "vector_dimensions": 768
+          },
+          {
+            "latency_ms": 218.97879999596626,
+            "text_chars": 22,
+            "token_usage": {
+              "prompt_eval_count": 10
+            },
+            "vector_dimensions": 768
+          },
+          {
+            "latency_ms": 228.83900000306312,
+            "text_chars": 61,
+            "token_usage": {
+              "prompt_eval_count": 12
+            },
+            "vector_dimensions": 768
+          },
+          {
+            "latency_ms": 206.07980000204407,
+            "text_chars": 61,
+            "token_usage": {
+              "prompt_eval_count": 12
+            },
+            "vector_dimensions": 768
+          },
+          {
+            "latency_ms": 204.4845999989775,
+            "text_chars": 28,
+            "token_usage": {
+              "prompt_eval_count": 8
+            },
+            "vector_dimensions": 768
+          },
+          {
+            "latency_ms": 210.0847999972757,
+            "text_chars": 58,
+            "token_usage": {
+              "prompt_eval_count": 14
+            },
+            "vector_dimensions": 768
+          },
+          {
+            "latency_ms": 219.66140000586165,
+            "text_chars": 58,
+            "token_usage": {
+              "prompt_eval_count": 14
+            },
+            "vector_dimensions": 768
+          },
+          {
+            "latency_ms": 211.807100000442,
+            "text_chars": 22,
+            "token_usage": {
+              "prompt_eval_count": 10
+            },
+            "vector_dimensions": 768
+          },
+          {
+            "latency_ms": 207.8629000025103,
+            "text_chars": 61,
+            "token_usage": {
+              "prompt_eval_count": 12
+            },
+            "vector_dimensions": 768
+          },
+          {
+            "latency_ms": 223.37519999564392,
+            "text_chars": 61,
+            "token_usage": {
+              "prompt_eval_count": 12
+            },
+            "vector_dimensions": 768
+          },
+          {
+            "latency_ms": 205.33849999628728,
+            "text_chars": 28,
+            "token_usage": {
+              "prompt_eval_count": 8
+            },
+            "vector_dimensions": 768
+          },
+          {
+            "latency_ms": 210.86379999906057,
+            "text_chars": 58,
+            "token_usage": {
+              "prompt_eval_count": 14
+            },
+            "vector_dimensions": 768
+          },
+          {
+            "latency_ms": 228.878200003237,
+            "text_chars": 58,
+            "token_usage": {
+              "prompt_eval_count": 14
+            },
+            "vector_dimensions": 768
+          },
+          {
+            "latency_ms": 222.50270000222372,
+            "text_chars": 22,
+            "token_usage": {
+              "prompt_eval_count": 10
+            },
+            "vector_dimensions": 768
+          },
+          {
+            "latency_ms": 215.90520000609104,
+            "text_chars": 61,
+            "token_usage": {
+              "prompt_eval_count": 12
+            },
+            "vector_dimensions": 768
+          },
+          {
+            "latency_ms": 214.55270000296878,
+            "text_chars": 61,
+            "token_usage": {
+              "prompt_eval_count": 12
+            },
+            "vector_dimensions": 768
+          },
+          {
+            "latency_ms": 205.66320000216365,
+            "text_chars": 61,
+            "token_usage": {
+              "prompt_eval_count": 12
+            },
+            "vector_dimensions": 768
+          }
+        ],
+        "predict_calls": [
+          {
+            "latency_ms": 1175.4690000016126,
+            "prompt_chars": 255,
+            "response": "Tell me about your features.",
+            "token_usage": {
+              "eval_count": 7,
+              "prompt_eval_count": 62
+            }
+          },
+          {
+            "latency_ms": 13962.667600004352,
+            "prompt_chars": 821,
+            "response": "```json\n{\"decision\":\"facts\",\"facts\":[{\"content\":\"The development fixture records primary database as MySQL.\",\"evidence_ids\":[\"8777ff781cdad5a400e737bca16fad1d23a378ac86d7aa20055d136e53a50d8b\"]}]}\n```",
+            "token_usage": {
+              "eval_count": 87,
+              "prompt_eval_count": 256
+            }
+          },
+          {
+            "latency_ms": 1721.8619999985094,
+            "prompt_chars": 301,
+            "response": "What version of MySQL?",
+            "token_usage": {
+              "eval_count": 6,
+              "prompt_eval_count": 68
+            }
+          },
+          {
+            "latency_ms": 13834.025200005271,
+            "prompt_chars": 829,
+            "response": "```json\n{\"decision\":\"facts\",\"facts\":[{\"content\":\"The assistant recorded a development fixture for later evaluation.\",\"evidence_ids\":[\"31df4f7481fa36901cd215adaeb1e56c6cad227ad3f608dd769411e895bf52a7\"]}]}\n```",
+            "token_usage": {
+              "eval_count": 85,
+              "prompt_eval_count": 254
+            }
+          },
+          {
+            "latency_ms": 1891.042399998696,
+            "prompt_chars": 255,
+            "response": "Tell me about your features.",
+            "token_usage": {
+              "eval_count": 7,
+              "prompt_eval_count": 62
+            }
+          },
+          {
+            "latency_ms": 11365.16169999959,
+            "prompt_chars": 821,
+            "response": "```json\n{\"decision\":\"facts\",\"facts\":[{\"content\":\"The development fixture records primary database as MySQL\",\"evidence_ids\":[\"8777ff781cdad5a400e737bca16fad1d23a378ac86d7aa20055d136e53a50d8b\"]}]}\n```",
+            "token_usage": {
+              "eval_count": 86,
+              "prompt_eval_count": 256
+            }
+          },
+          {
+            "latency_ms": 1800.6569999997737,
+            "prompt_chars": 301,
+            "response": "What version of MySQL?",
+            "token_usage": {
+              "eval_count": 6,
+              "prompt_eval_count": 68
+            }
+          },
+          {
+            "latency_ms": 11353.498199998285,
+            "prompt_chars": 829,
+            "response": "```json\n{\"decision\":\"facts\",\"facts\":[{\"content\":\"The assistant recorded a development fixture for later evaluation.\",\"evidence_ids\":[\"31df4f7481fa36901cd215adaeb1e56c6cad227ad3f608dd769411e895bf52a7\"]}]}\n```",
+            "token_usage": {
+              "eval_count": 85,
+              "prompt_eval_count": 254
+            }
+          },
+          {
+            "latency_ms": 1864.0663999976823,
+            "prompt_chars": 255,
+            "response": "Tell me about your features.",
+            "token_usage": {
+              "eval_count": 7,
+              "prompt_eval_count": 62
+            }
+          },
+          {
+            "latency_ms": 11526.713699997345,
+            "prompt_chars": 821,
+            "response": "```json\n{\"decision\":\"facts\",\"facts\":[{\"content\":\"The development fixture records primary database as MySQL\",\"evidence_ids\":[\"8777ff781cdad5a400e737bca16fad1d23a378ac86d7aa20055d136e53a50d8b\"]}]}\n```",
+            "token_usage": {
+              "eval_count": 86,
+              "prompt_eval_count": 256
+            }
+          },
+          {
+            "latency_ms": 1803.667600004701,
+            "prompt_chars": 301,
+            "response": "What version of MySQL?",
+            "token_usage": {
+              "eval_count": 6,
+              "prompt_eval_count": 68
+            }
+          },
+          {
+            "latency_ms": 11212.092400004622,
+            "prompt_chars": 829,
+            "response": "```json\n{\"decision\":\"facts\",\"facts\":[{\"content\":\"The assistant recorded a development fixture for later evaluation.\",\"evidence_ids\":[\"31df4f7481fa36901cd215adaeb1e56c6cad227ad3f608dd769411e895bf52a7\"]}]}\n```",
+            "token_usage": {
+              "eval_count": 85,
+              "prompt_eval_count": 254
+            }
+          },
+          {
+            "latency_ms": 1880.5143999998108,
+            "prompt_chars": 255,
+            "response": "Tell me about your features.",
+            "token_usage": {
+              "eval_count": 7,
+              "prompt_eval_count": 62
+            }
+          },
+          {
+            "latency_ms": 11348.271000002569,
+            "prompt_chars": 821,
+            "response": "```json\n{\"decision\":\"facts\",\"facts\":[{\"content\":\"The development fixture records primary database as MySQL\",\"evidence_ids\":[\"8777ff781cdad5a400e737bca16fad1d23a378ac86d7aa20055d136e53a50d8b\"]}]}\n```",
+            "token_usage": {
+              "eval_count": 86,
+              "prompt_eval_count": 256
+            }
+          },
+          {
+            "latency_ms": 1741.166699997848,
+            "prompt_chars": 301,
+            "response": "What version of MySQL?",
+            "token_usage": {
+              "eval_count": 6,
+              "prompt_eval_count": 68
+            }
+          },
+          {
+            "latency_ms": 10913.91460000159,
+            "prompt_chars": 829,
+            "response": "```json\n{\"decision\":\"facts\",\"facts\":[{\"content\":\"The assistant recorded a development fixture for later evaluation.\",\"evidence_ids\":[\"31df4f7481fa36901cd215adaeb1e56c6cad227ad3f608dd769411e895bf52a7\"]}]}\n```",
+            "token_usage": {
+              "eval_count": 85,
+              "prompt_eval_count": 254
+            }
+          }
+        ],
+        "response_metadata": [
+          {
+            "created_at": "2026-09-16T23:54:56.4435206Z",
+            "done": true,
+            "done_reason": "stop",
+            "eval_count": 7,
+            "eval_duration": 718328000,
+            "kind": "generate",
+            "load_duration": 6941000,
+            "model": "gemma3:4b",
+            "prompt_eval_count": 62,
+            "prompt_eval_duration": 224105000,
+            "provider": "ollama",
+            "total_duration": 983699400
+          },
+          {
+            "kind": "embedding",
+            "load_duration": 6496100,
+            "model": "nomic-embed-text:latest",
+            "prompt_eval_count": 8,
+            "provider": "ollama",
+            "total_duration": 22285400
+          },
+          {
+            "kind": "embedding",
+            "load_duration": 6289900,
+            "model": "nomic-embed-text:latest",
+            "prompt_eval_count": 14,
+            "provider": "ollama",
+            "total_duration": 25244600
+          },
+          {
+            "kind": "embedding",
+            "load_duration": 8552600,
+            "model": "nomic-embed-text:latest",
+            "prompt_eval_count": 14,
+            "provider": "ollama",
+            "total_duration": 27059900
+          },
+          {
+            "created_at": "2026-09-16T23:55:11.1046539Z",
+            "done": true,
+            "done_reason": "stop",
+            "eval_count": 87,
+            "eval_duration": 10543813000,
+            "kind": "generate",
+            "load_duration": 7999800,
+            "model": "gemma3:4b",
+            "prompt_eval_count": 256,
+            "prompt_eval_duration": 3190537000,
+            "provider": "ollama",
+            "total_duration": 13764106700
+          },
+          {
+            "created_at": "2026-09-16T23:55:12.8273567Z",
+            "done": true,
+            "done_reason": "stop",
+            "eval_count": 6,
+            "eval_duration": 604210000,
+            "kind": "generate",
+            "load_duration": 7629000,
+            "model": "gemma3:4b",
+            "prompt_eval_count": 68,
+            "prompt_eval_duration": 888671000,
+            "provider": "ollama",
+            "total_duration": 1524313900
+          },
+          {
+            "kind": "embedding",
+            "load_duration": 8522200,
+            "model": "nomic-embed-text:latest",
+            "prompt_eval_count": 10,
+            "provider": "ollama",
+            "total_duration": 25331500
+          },
+          {
+            "kind": "embedding",
+            "load_duration": 7907100,
+            "model": "nomic-embed-text:latest",
+            "prompt_eval_count": 12,
+            "provider": "ollama",
+            "total_duration": 26551100
+          },
+          {
+            "kind": "embedding",
+            "load_duration": 7703200,
+            "model": "nomic-embed-text:latest",
+            "prompt_eval_count": 12,
+            "provider": "ollama",
+            "total_duration": 30327000
+          },
+          {
+            "created_at": "2026-09-16T23:55:27.357526Z",
+            "done": true,
+            "done_reason": "stop",
+            "eval_count": 85,
+            "eval_duration": 10463039000,
+            "kind": "generate",
+            "load_duration": 6384100,
+            "model": "gemma3:4b",
+            "prompt_eval_count": 254,
+            "prompt_eval_duration": 3151207000,
+            "provider": "ollama",
+            "total_duration": 13640507600
+          },
+          {
+            "created_at": "2026-09-16T23:55:29.2485696Z",
+            "done": true,
+            "done_reason": "stop",
+            "eval_count": 7,
+            "eval_duration": 811972000,
+            "kind": "generate",
+            "load_duration": 6296800,
+            "model": "gemma3:4b",
+            "prompt_eval_count": 62,
+            "prompt_eval_duration": 841128000,
+            "provider": "ollama",
+            "total_duration": 1683881100
+          },
+          {
+            "kind": "embedding",
+            "load_duration": 9574100,
+            "model": "nomic-embed-text:latest",
+            "prompt_eval_count": 8,
+            "provider": "ollama",
+            "total_duration": 26668200
+          },
+          {
+            "kind": "embedding",
+            "load_duration": 5829400,
+            "model": "nomic-embed-text:latest",
+            "prompt_eval_count": 14,
+            "provider": "ollama",
+            "total_duration": 25286900
+          },
+          {
+            "kind": "embedding",
+            "load_duration": 8924400,
+            "model": "nomic-embed-text:latest",
+            "prompt_eval_count": 14,
+            "provider": "ollama",
+            "total_duration": 28561400
+          },
+          {
+            "created_at": "2026-09-16T23:55:41.26419Z",
+            "done": true,
+            "done_reason": "stop",
+            "eval_count": 86,
+            "eval_duration": 10882717000,
+            "kind": "generate",
+            "load_duration": 6806700,
+            "model": "gemma3:4b",
+            "prompt_eval_count": 256,
+            "prompt_eval_duration": 266510000,
+            "provider": "ollama",
+            "total_duration": 11175396400
+          },
+          {
+            "created_at": "2026-09-16T23:55:43.0659149Z",
+            "done": true,
+            "done_reason": "stop",
+            "eval_count": 6,
+            "eval_duration": 642572000,
+            "kind": "generate",
+            "load_duration": 8115800,
+            "model": "gemma3:4b",
+            "prompt_eval_count": 68,
+            "prompt_eval_duration": 921951000,
+            "provider": "ollama",
+            "total_duration": 1608452000
+          },
+          {
+            "kind": "embedding",
+            "load_duration": 6821900,
+            "model": "nomic-embed-text:latest",
+            "prompt_eval_count": 10,
+            "provider": "ollama",
+            "total_duration": 23208300
+          },
+          {
+            "kind": "embedding",
+            "load_duration": 7053200,
+            "model": "nomic-embed-text:latest",
+            "prompt_eval_count": 12,
+            "provider": "ollama",
+            "total_duration": 24530800
+          },
+          {
+            "kind": "embedding",
+            "load_duration": 8818500,
+            "model": "nomic-embed-text:latest",
+            "prompt_eval_count": 12,
+            "provider": "ollama",
+            "total_duration": 25635900
+          },
+          {
+            "created_at": "2026-09-16T23:55:55.0746378Z",
+            "done": true,
+            "done_reason": "stop",
+            "eval_count": 85,
+            "eval_duration": 10833620000,
+            "kind": "generate",
+            "load_duration": 7498800,
+            "model": "gemma3:4b",
+            "prompt_eval_count": 254,
+            "prompt_eval_duration": 285126000,
+            "provider": "ollama",
+            "total_duration": 11149701400
+          },
+          {
+            "created_at": "2026-09-16T23:55:56.939887Z",
+            "done": true,
+            "done_reason": "stop",
+            "eval_count": 7,
+            "eval_duration": 762805000,
+            "kind": "generate",
+            "load_duration": 6896900,
+            "model": "gemma3:4b",
+            "prompt_eval_count": 62,
+            "prompt_eval_duration": 872339000,
+            "provider": "ollama",
+            "total_duration": 1674075900
+          },
+          {
+            "kind": "embedding",
+            "load_duration": 6600200,
+            "model": "nomic-embed-text:latest",
+            "prompt_eval_count": 8,
+            "provider": "ollama",
+            "total_duration": 23663200
+          },
+          {
+            "kind": "embedding",
+            "load_duration": 8908900,
+            "model": "nomic-embed-text:latest",
+            "prompt_eval_count": 14,
+            "provider": "ollama",
+            "total_duration": 28431900
+          },
+          {
+            "kind": "embedding",
+            "load_duration": 6412400,
+            "model": "nomic-embed-text:latest",
+            "prompt_eval_count": 14,
+            "provider": "ollama",
+            "total_duration": 23329700
+          },
+          {
+            "created_at": "2026-09-16T23:56:09.1005677Z",
+            "done": true,
+            "done_reason": "stop",
+            "eval_count": 86,
+            "eval_duration": 11044855000,
+            "kind": "generate",
+            "load_duration": 9069600,
+            "model": "gemma3:4b",
+            "prompt_eval_count": 256,
+            "prompt_eval_duration": 261872000,
+            "provider": "ollama",
+            "total_duration": 11334591600
+          },
+          {
+            "created_at": "2026-09-16T23:56:10.9055679Z",
+            "done": true,
+            "done_reason": "stop",
+            "eval_count": 6,
+            "eval_duration": 621330000,
+            "kind": "generate",
+            "load_duration": 8847200,
+            "model": "gemma3:4b",
+            "prompt_eval_count": 68,
+            "prompt_eval_duration": 949612000,
+            "provider": "ollama",
+            "total_duration": 1611177500
+          },
+          {
+            "kind": "embedding",
+            "load_duration": 6924400,
+            "model": "nomic-embed-text:latest",
+            "prompt_eval_count": 10,
+            "provider": "ollama",
+            "total_duration": 22628300
+          },
+          {
+            "kind": "embedding",
+            "load_duration": 5844100,
+            "model": "nomic-embed-text:latest",
+            "prompt_eval_count": 12,
+            "provider": "ollama",
+            "total_duration": 28318300
+          },
+          {
+            "kind": "embedding",
+            "load_duration": 7181800,
+            "model": "nomic-embed-text:latest",
+            "prompt_eval_count": 12,
+            "provider": "ollama",
+            "total_duration": 26400600
+          },
+          {
+            "created_at": "2026-09-16T23:56:22.7613031Z",
+            "done": true,
+            "done_reason": "stop",
+            "eval_count": 85,
+            "eval_duration": 10690076000,
+            "kind": "generate",
+            "load_duration": 7075200,
+            "model": "gemma3:4b",
+            "prompt_eval_count": 254,
+            "prompt_eval_duration": 297068000,
+            "provider": "ollama",
+            "total_duration": 11012474900
+          },
+          {
+            "created_at": "2026-09-16T23:56:24.6440565Z",
+            "done": true,
+            "done_reason": "stop",
+            "eval_count": 7,
+            "eval_duration": 784689000,
+            "kind": "generate",
+            "load_duration": 9037400,
+            "model": "gemma3:4b",
+            "prompt_eval_count": 62,
+            "prompt_eval_duration": 862344000,
+            "provider": "ollama",
+            "total_duration": 1689839200
+          },
+          {
+            "kind": "embedding",
+            "load_duration": 7474400,
+            "model": "nomic-embed-text:latest",
+            "prompt_eval_count": 8,
+            "provider": "ollama",
+            "total_duration": 23194300
+          },
+          {
+            "kind": "embedding",
+            "load_duration": 6055400,
+            "model": "nomic-embed-text:latest",
+            "prompt_eval_count": 14,
+            "provider": "ollama",
+            "total_duration": 27704900
+          },
+          {
+            "kind": "embedding",
+            "load_duration": 8091500,
+            "model": "nomic-embed-text:latest",
+            "prompt_eval_count": 14,
+            "provider": "ollama",
+            "total_duration": 30914400
+          },
+          {
+            "created_at": "2026-09-16T23:56:36.6377921Z",
+            "done": true,
+            "done_reason": "stop",
+            "eval_count": 86,
+            "eval_duration": 10878971000,
+            "kind": "generate",
+            "load_duration": 6667600,
+            "model": "gemma3:4b",
+            "prompt_eval_count": 256,
+            "prompt_eval_duration": 255718000,
+            "provider": "ollama",
+            "total_duration": 11159160400
+          },
+          {
+            "created_at": "2026-09-16T23:56:38.3800928Z",
+            "done": true,
+            "done_reason": "stop",
+            "eval_count": 6,
+            "eval_duration": 602288000,
+            "kind": "generate",
+            "load_duration": 7009400,
+            "model": "gemma3:4b",
+            "prompt_eval_count": 68,
+            "prompt_eval_duration": 913457000,
+            "provider": "ollama",
+            "total_duration": 1553534300
+          },
+          {
+            "kind": "embedding",
+            "load_duration": 7567600,
+            "model": "nomic-embed-text:latest",
+            "prompt_eval_count": 10,
+            "provider": "ollama",
+            "total_duration": 22560000
+          },
+          {
+            "kind": "embedding",
+            "load_duration": 6679300,
+            "model": "nomic-embed-text:latest",
+            "prompt_eval_count": 12,
+            "provider": "ollama",
+            "total_duration": 27309500
+          },
+          {
+            "kind": "embedding",
+            "load_duration": 8288500,
+            "model": "nomic-embed-text:latest",
+            "prompt_eval_count": 12,
+            "provider": "ollama",
+            "total_duration": 25284200
+          },
+          {
+            "created_at": "2026-09-16T23:56:49.9466831Z",
+            "done": true,
+            "done_reason": "stop",
+            "eval_count": 85,
+            "eval_duration": 10417890000,
+            "kind": "generate",
+            "load_duration": 6957900,
+            "model": "gemma3:4b",
+            "prompt_eval_count": 254,
+            "prompt_eval_duration": 279170000,
+            "provider": "ollama",
+            "total_duration": 10722093100
+          },
+          {
+            "kind": "embedding",
+            "load_duration": 6886500,
+            "model": "nomic-embed-text:latest",
+            "prompt_eval_count": 12,
+            "provider": "ollama",
+            "total_duration": 24502100
+          }
+        ]
+      },
+      "unsupported_modules": [],
+      "unsupported_operations": []
+    },
+    "repetition": 1,
+    "retrieved_fact_count": 0,
+    "session_id": "dev-001",
+    "stale_fact_count": 0,
+    "state_pair_semantic_hits": [],
+    "state_pair_state_hits": [],
+    "supported_precision": [],
+    "surprisal_filter_kept": [],
+    "token_cost": null,
+    "verified_model_provenance": false
+  },
+  "observed_at": "2026-09-16T23:56:50.310065+00:00",
+  "profile": {
+    "disabled_module": "affective_routing",
+    "enabled_modules": [
+      "surprisal_gating",
+      "mutable_rag",
+      "sleep_consolidation",
+      "spreading_activation"
+    ],
+    "name": "ablate-affective_routing"
+  },
+  "provider": {
+    "embedding_metadata": {
+      "capabilities": [
+        "embedding"
+      ],
+      "details": {
+        "context_length": 2048,
+        "embedding_length": 768,
+        "families": [
+          "nomic-bert"
+        ],
+        "family": "nomic-bert",
+        "format": "gguf",
+        "parameter_size": "137M",
+        "parent_model": "",
+        "quantization_level": "F16"
+      },
+      "digest": "0a109f422b47e3a30ba2b10eca18548e944e8a23073ee3f3e947efcf3c45e59f",
+      "model": "nomic-embed-text:latest",
+      "modified_at": "2025-11-04T15:15:16.2072724-05:00",
+      "name": "nomic-embed-text:latest",
+      "size": 274302450
+    },
+    "embedding_model": "nomic-embed-text:latest",
+    "endpoint": "http://192.168.86.35:11434",
+    "model": "gemma3:4b",
+    "model_metadata": {
+      "capabilities": [
+        "completion",
+        "vision"
+      ],
+      "details": {
+        "context_length": 131072,
+        "embedding_length": 2560,
+        "families": [
+          "gemma3"
+        ],
+        "family": "gemma3",
+        "format": "gguf",
+        "parameter_size": "4.3B",
+        "parent_model": "",
+        "quantization_level": "Q4_K_M"
+      },
+      "digest": "a2af6cc3eb7fa8be8504abaf9b04e88f17a119ec3f04a3addf55f92841195f5a",
+      "model": "gemma3:4b",
+      "modified_at": "2026-03-11T01:54:24.735623-04:00",
+      "name": "gemma3:4b",
+      "size": 3338801804
+    },
+    "options": {
+      "max_tokens": 512,
+      "temperature": 0.0,
+      "timeout_seconds": 120.0
+    }
+  },
+  "schema_version": "local-memory-development-smoke-v1",
+  "status": "partial"
+}

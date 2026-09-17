@@ -1,0 +1,131 @@
+{
+  "observed_at": "2026-09-16T23:08:02.113164+00:00",
+  "label": "synthetic real-provider service smoke; not ablation acceptance",
+  "endpoint": "http://192.168.86.35:11434",
+  "llm": "gemma3:4b",
+  "embedding": "nomic-embed-text:latest",
+  "temperature": 0,
+  "max_output_tokens": 64,
+  "steps": [
+    {
+      "operation": "capture_explicit_remember",
+      "response": {
+        "schema_version": 1,
+        "status": "committed",
+        "event_id": "7894d4d37e97dd7becd84c4af63b95d6fc1f6a530ee1d848799401fc91bf6a54",
+        "processing_status": "pending",
+        "job_id": "event:7894d4d37e97dd7becd84c4af63b95d6fc1f6a530ee1d848799401fc91bf6a54"
+      },
+      "elapsed_ms": 0.7581000027130358
+    },
+    {
+      "operation": "process",
+      "completed": 1,
+      "health": {
+        "running": false,
+        "pending": 0,
+        "leased": 0,
+        "exhausted": 0,
+        "retry_count": 0,
+        "oldest_unfinished_seconds": 0,
+        "last_success": "2026-09-16T23:08:11.291775+00:00",
+        "last_error": null,
+        "processed_count": 1,
+        "failed_count": 0
+      },
+      "elapsed_ms": 8672.93129999598
+    },
+    {
+      "operation": "retrieve_after_restart",
+      "profile": "baseline",
+      "response": {
+        "schema_version": 1,
+        "profile": "baseline",
+        "facts": [
+          {
+            "id": "698695bc-e578-4d5e-bfff-4ae2df584abc",
+            "version": 1,
+            "content": "Project Juniper stores local memory in SQLite.",
+            "scope": "project",
+            "scope_id": "aebd1b3d-b9d1-4009-9590-e8db14886487",
+            "sources": [
+              {
+                "evidence_id": "77b2d70d-dc31-4ca2-99b5-027a969974c8",
+                "fact_id": "698695bc-e578-4d5e-bfff-4ae2df584abc",
+                "source_event_id": "7894d4d37e97dd7becd84c4af63b95d6fc1f6a530ee1d848799401fc91bf6a54",
+                "excerpt": "Project Juniper stores local memory in SQLite.",
+                "source_ref": null,
+                "created_at": "2026-09-16T23:08:11.280042Z"
+              }
+            ],
+            "support_available": true,
+            "original_source_status": "not_checked",
+            "scores": {
+              "semantic": 0.8649408221244812,
+              "state_match": null,
+              "graph_energy": 0.0,
+              "graph_contribution": 0.0,
+              "total": 0.8649408221244812,
+              "state_status": "disabled",
+              "profile": "baseline",
+              "scope_match": true,
+              "context_token_upper_bound": 96,
+              "token_count_method": "utf8_bytes_upper_bound",
+              "graph_status": "disabled"
+            }
+          }
+        ],
+        "context": "[698695bc-e578-4d5e-bfff-4ae2df584abc version 1] Project Juniper stores local memory in SQLite.\n",
+        "token_count_method": "utf8_bytes_upper_bound",
+        "context_token_upper_bound": 96
+      },
+      "elapsed_ms": 414.8280000008526
+    },
+    {
+      "operation": "retrieve_after_restart",
+      "profile": "biomimetic",
+      "response": {
+        "schema_version": 1,
+        "profile": "biomimetic",
+        "facts": [
+          {
+            "id": "698695bc-e578-4d5e-bfff-4ae2df584abc",
+            "version": 1,
+            "content": "Project Juniper stores local memory in SQLite.",
+            "scope": "project",
+            "scope_id": "aebd1b3d-b9d1-4009-9590-e8db14886487",
+            "sources": [
+              {
+                "evidence_id": "77b2d70d-dc31-4ca2-99b5-027a969974c8",
+                "fact_id": "698695bc-e578-4d5e-bfff-4ae2df584abc",
+                "source_event_id": "7894d4d37e97dd7becd84c4af63b95d6fc1f6a530ee1d848799401fc91bf6a54",
+                "excerpt": "Project Juniper stores local memory in SQLite.",
+                "source_ref": null,
+                "created_at": "2026-09-16T23:08:11.280042Z"
+              }
+            ],
+            "support_available": true,
+            "original_source_status": "not_checked",
+            "scores": {
+              "semantic": 0.8649408221244812,
+              "state_match": 0.864599359922734,
+              "graph_energy": 1.0,
+              "graph_contribution": 0.1,
+              "total": 0.964838383463957,
+              "state_status": "measured",
+              "profile": "biomimetic",
+              "scope_match": true,
+              "context_token_upper_bound": 96,
+              "token_count_method": "utf8_bytes_upper_bound",
+              "graph_status": "enabled"
+            }
+          }
+        ],
+        "context": "[698695bc-e578-4d5e-bfff-4ae2df584abc version 1] Project Juniper stores local memory in SQLite.\n",
+        "token_count_method": "utf8_bytes_upper_bound",
+        "context_token_upper_bound": 96
+      },
+      "elapsed_ms": 3784.2574000023887
+    }
+  ]
+}

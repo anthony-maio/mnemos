@@ -1,0 +1,558 @@
+{
+  "dataset": {
+    "advertised_as_real": false,
+    "session_id": "dev-001",
+    "sha256": "297e2c3bc4e3bf183ed88e293e3da8e2200ea703ff2a425fbdd302da24c0c776",
+    "source_label": "synthetic_seed",
+    "version": "local-memory-heldout-v2"
+  },
+  "gates": {
+    "human_acceptance": "NOT RUN",
+    "real_cognition": "OBSERVED",
+    "real_embedding": "OBSERVED"
+  },
+  "observation": {
+    "adapter_kind": "real_model",
+    "answerable_hits": [
+      true
+    ],
+    "bytes_after": 3756296,
+    "bytes_before": 337656,
+    "cold_latency_ms": 4.357300000265241,
+    "critical_retention": [],
+    "embedding_revision": "0a109f422b47e3a30ba2b10eca18548e944e8a23073ee3f3e947efcf3c45e59f",
+    "execution_status": "complete",
+    "latency_ms": 42682.07130000519,
+    "length_filter_kept": [],
+    "model_revision": "a2af6cc3eb7fa8be8504abaf9b04e88f17a119ec3f04a3addf55f92841195f5a",
+    "no_answer_correct": [],
+    "provider": "ollama",
+    "raw_output": {
+      "adapter": "ollama",
+      "base_url": "http://192.168.86.35:11434",
+      "embedding_model": "nomic-embed-text:latest",
+      "errors": [],
+      "extraction_judgements": [
+        {
+          "accepted": true,
+          "content_nonempty": true,
+          "judgement": "exact_frozen_text_and_evidence",
+          "matched_supported_fact_id": "dev-fact-001",
+          "observed_source_event_ids": [
+            "dev-001-event-01"
+          ],
+          "runtime_fact_id": "627b1024-141d-4321-804a-2a24be82f560"
+        },
+        {
+          "accepted": false,
+          "content_nonempty": true,
+          "judgement": "exact_frozen_text_and_evidence",
+          "matched_supported_fact_id": null,
+          "observed_source_event_ids": [
+            "dev-001-event-02"
+          ],
+          "runtime_fact_id": "8ce8c931-5aa9-4999-9134-949ea35a6726"
+        }
+      ],
+      "measurement_notes": [
+        "Missing retrievals remain null and are excluded from interval numerators.",
+        "Correction and forget use runtime fact IDs resolved from the service store.",
+        "No model token usage was exposed by the current provider API.",
+        "Extraction precision uses exact frozen fact text and source role/evidence checks; paraphrases are unjudged."
+      ],
+      "model": "gemma3:4b",
+      "module_switches": {
+        "disabled": "surprisal_gating",
+        "enabled": [
+          "mutable_rag",
+          "affective_routing",
+          "sleep_consolidation",
+          "spreading_activation"
+        ],
+        "source": "service_factory"
+      },
+      "operations": [
+        {
+          "event_id": "dev-001-event-01",
+          "operation": "capture",
+          "status": "committed"
+        },
+        {
+          "event_id": "dev-001-event-02",
+          "operation": "response",
+          "status": "committed"
+        },
+        {
+          "operation": "restart",
+          "status": "completed"
+        },
+        {
+          "jobs": [
+            {
+              "attempt_count": 1,
+              "id": "event:e12e24e4fbe12fb817f3e7aa7478d3281b3f0a04515c099fef31d647c9b603e4",
+              "kind": "extract",
+              "last_error": null,
+              "status": "completed"
+            },
+            {
+              "attempt_count": 1,
+              "id": "event:faf53aa99fd9844725900be3d8381cea9807dd21b7f45d740877305e616c5b74",
+              "kind": "extract",
+              "last_error": null,
+              "status": "completed"
+            }
+          ],
+          "operation": "maintenance",
+          "pending_or_failed_statuses": [],
+          "status": "completed"
+        },
+        {
+          "operation": "retrieve",
+          "query_id": "dev-query-001",
+          "status": "returned"
+        }
+      ],
+      "profile": {
+        "disabled_module": "surprisal_gating",
+        "enabled_modules": [
+          "mutable_rag",
+          "affective_routing",
+          "sleep_consolidation",
+          "spreading_activation"
+        ],
+        "name": "ablate-surprisal_gating"
+      },
+      "provenance": {
+        "code_sha256": "071717bd078091e27236e9e7cf5f130e81acb2f6bda2cda6de51b4efa40e9f34",
+        "cognition_observed": true,
+        "embedding_metadata": {},
+        "embedding_sha256": "0a109f422b47e3a30ba2b10eca18548e944e8a23073ee3f3e947efcf3c45e59f",
+        "embedding_verified": false,
+        "model_metadata": {},
+        "model_sha256": "a2af6cc3eb7fa8be8504abaf9b04e88f17a119ec3f04a3addf55f92841195f5a",
+        "options_sha256": "a5787e3ed51bcac5908a165ca32b2e6cf4bf648da32f17847a1ea7abc6cfbd68",
+        "verified": false
+      },
+      "provider": "ollama",
+      "provider_trace": {
+        "classify_calls": [],
+        "config": {
+          "embedding_model": "nomic-embed-text:latest",
+          "endpoint": "http://192.168.86.35:11434",
+          "max_tokens": 512,
+          "model": "gemma3:4b",
+          "temperature": 0.0,
+          "timeout_seconds": 120.0
+        },
+        "embed_calls": [
+          {
+            "latency_ms": 224.535500005004,
+            "text_chars": 58,
+            "token_usage": {
+              "prompt_eval_count": 14
+            },
+            "vector_dimensions": 768
+          },
+          {
+            "latency_ms": 227.3948000074597,
+            "text_chars": 58,
+            "token_usage": {
+              "prompt_eval_count": 14
+            },
+            "vector_dimensions": 768
+          },
+          {
+            "latency_ms": 229.49340000923257,
+            "text_chars": 61,
+            "token_usage": {
+              "prompt_eval_count": 12
+            },
+            "vector_dimensions": 768
+          },
+          {
+            "latency_ms": 242.60379999759607,
+            "text_chars": 65,
+            "token_usage": {
+              "prompt_eval_count": 12
+            },
+            "vector_dimensions": 768
+          },
+          {
+            "latency_ms": 230.97319999942556,
+            "text_chars": 61,
+            "token_usage": {
+              "prompt_eval_count": 12
+            },
+            "vector_dimensions": 768
+          }
+        ],
+        "predict_calls": [
+          {
+            "format_schema_sha256": "291796d655682d116d770786742a2d7f2387a885f330ab93038edaa1b533471d",
+            "latency_ms": 13826.145400002133,
+            "prompt_chars": 821,
+            "response": "{\"decision\":\"facts\",\"facts\":[{\"content\":\"The development fixture records primary database as MySQL.\",\"evidence_ids\":[\"e12e24e4fbe12fb817f3e7aa7478d3281b3f0a04515c099fef31d647c9b603e4\"],\"operation\":\"add\"}]}",
+            "structured_output_requested": true,
+            "token_usage": {
+              "eval_count": 91,
+              "prompt_eval_count": 260
+            }
+          },
+          {
+            "latency_ms": 3265.9849999909056,
+            "prompt_chars": 368,
+            "response": "0.1, 0.2, 0.3",
+            "token_usage": {
+              "eval_count": 15,
+              "prompt_eval_count": 113
+            }
+          },
+          {
+            "format_schema_sha256": "291796d655682d116d770786742a2d7f2387a885f330ab93038edaa1b533471d",
+            "latency_ms": 14727.584799999022,
+            "prompt_chars": 1395,
+            "response": "{\"decision\":\"facts\",\"facts\":[{\"content\":\"The assistant recorded a development fixture.\", \"evidence_ids\":[\"faf53aa99fd9844725900be3d8381cea9807dd21b7f45d740877305e616c5b74\"],\"operation\":\"add\"}]}",
+            "structured_output_requested": true,
+            "token_usage": {
+              "eval_count": 84,
+              "prompt_eval_count": 404
+            }
+          },
+          {
+            "latency_ms": 3298.169700006838,
+            "prompt_chars": 371,
+            "response": "0.1, 0.3, 0.2",
+            "token_usage": {
+              "eval_count": 15,
+              "prompt_eval_count": 114
+            }
+          },
+          {
+            "latency_ms": 3309.319799998775,
+            "prompt_chars": 371,
+            "response": "-0.2, 0.3, 0.4",
+            "token_usage": {
+              "eval_count": 16,
+              "prompt_eval_count": 114
+            }
+          }
+        ],
+        "response_metadata": [
+          {
+            "kind": "embedding",
+            "load_duration": 5963100,
+            "model": "nomic-embed-text:latest",
+            "prompt_eval_count": 14,
+            "provider": "ollama",
+            "total_duration": 23839800
+          },
+          {
+            "created_at": "2026-09-17T00:26:43.4708338Z",
+            "done": true,
+            "done_reason": "stop",
+            "eval_count": 91,
+            "eval_duration": 10489868000,
+            "kind": "generate",
+            "load_duration": 6880100,
+            "model": "gemma3:4b",
+            "prompt_eval_count": 260,
+            "prompt_eval_duration": 3115777000,
+            "provider": "ollama",
+            "total_duration": 13640147500
+          },
+          {
+            "created_at": "2026-09-17T00:26:46.7370119Z",
+            "done": true,
+            "done_reason": "stop",
+            "eval_count": 15,
+            "eval_duration": 1584578000,
+            "kind": "generate",
+            "load_duration": 6808300,
+            "model": "gemma3:4b",
+            "prompt_eval_count": 113,
+            "prompt_eval_duration": 1457724000,
+            "provider": "ollama",
+            "total_duration": 3081939500
+          },
+          {
+            "kind": "embedding",
+            "load_duration": 6970500,
+            "model": "nomic-embed-text:latest",
+            "prompt_eval_count": 14,
+            "provider": "ollama",
+            "total_duration": 24647400
+          },
+          {
+            "kind": "embedding",
+            "load_duration": 6833900,
+            "model": "nomic-embed-text:latest",
+            "prompt_eval_count": 12,
+            "provider": "ollama",
+            "total_duration": 22329300
+          },
+          {
+            "created_at": "2026-09-17T00:27:02.1484454Z",
+            "done": true,
+            "done_reason": "stop",
+            "eval_count": 84,
+            "eval_duration": 9708438000,
+            "kind": "generate",
+            "load_duration": 6010200,
+            "model": "gemma3:4b",
+            "prompt_eval_count": 404,
+            "prompt_eval_duration": 4800276000,
+            "provider": "ollama",
+            "total_duration": 14539862600
+          },
+          {
+            "created_at": "2026-09-17T00:27:05.4478134Z",
+            "done": true,
+            "done_reason": "stop",
+            "eval_count": 15,
+            "eval_duration": 1624503000,
+            "kind": "generate",
+            "load_duration": 7001100,
+            "model": "gemma3:4b",
+            "prompt_eval_count": 114,
+            "prompt_eval_duration": 1427357000,
+            "provider": "ollama",
+            "total_duration": 3098634300
+          },
+          {
+            "kind": "embedding",
+            "load_duration": 8562600,
+            "model": "nomic-embed-text:latest",
+            "prompt_eval_count": 12,
+            "provider": "ollama",
+            "total_duration": 27112800
+          },
+          {
+            "kind": "embedding",
+            "load_duration": 7106600,
+            "model": "nomic-embed-text:latest",
+            "prompt_eval_count": 12,
+            "provider": "ollama",
+            "total_duration": 26227700
+          },
+          {
+            "created_at": "2026-09-17T00:27:09.6403627Z",
+            "done": true,
+            "done_reason": "stop",
+            "eval_count": 16,
+            "eval_duration": 1692157000,
+            "kind": "generate",
+            "load_duration": 8624200,
+            "model": "gemma3:4b",
+            "prompt_eval_count": 114,
+            "prompt_eval_duration": 1400765000,
+            "provider": "ollama",
+            "total_duration": 3105352000
+          }
+        ]
+      },
+      "unsupported_modules": [],
+      "unsupported_operations": []
+    },
+    "repetition": 1,
+    "retrieved_fact_count": 2,
+    "session_id": "dev-001",
+    "stale_fact_count": 0,
+    "state_pair_semantic_hits": [],
+    "state_pair_state_hits": [],
+    "supported_precision": [
+      true,
+      false
+    ],
+    "surprisal_filter_kept": [],
+    "token_cost": null,
+    "verified_model_provenance": false
+  },
+  "observed_at": "2026-09-17T00:27:09.637426+00:00",
+  "profile": {
+    "disabled_module": "surprisal_gating",
+    "enabled_modules": [
+      "mutable_rag",
+      "affective_routing",
+      "sleep_consolidation",
+      "spreading_activation"
+    ],
+    "name": "ablate-surprisal_gating"
+  },
+  "provider": {
+    "code_provenance": {
+      "files": [
+        ".claude-plugin/run_mnemos_mcp.py",
+        "benchmarks/local_memory/__init__.py",
+        "benchmarks/local_memory/__main__.py",
+        "benchmarks/local_memory/ablation.py",
+        "benchmarks/local_memory/artifacts.py",
+        "benchmarks/local_memory/contracts.py",
+        "benchmarks/local_memory/dev_smoke.py",
+        "benchmarks/local_memory/harness.py",
+        "benchmarks/local_memory/ollama_adapter.py",
+        "benchmarks/local_memory/resumption.py",
+        "benchmarks/local_memory/scoring.py",
+        "benchmarks/scenarios/ui_smoke.py",
+        "examples/basic_usage.py",
+        "examples/full_pipeline.py",
+        "examples/mcp_agent_demo.py",
+        "mnemos/__init__.py",
+        "mnemos/__main__.py",
+        "mnemos/adapters/claude_code.py",
+        "mnemos/adapters/codex.py",
+        "mnemos/adapters/hermes.py",
+        "mnemos/antigravity.py",
+        "mnemos/backup.py",
+        "mnemos/benchmark.py",
+        "mnemos/bridge.py",
+        "mnemos/cli.py",
+        "mnemos/client.py",
+        "mnemos/config.py",
+        "mnemos/contracts.py",
+        "mnemos/control_plane.py",
+        "mnemos/curation.py",
+        "mnemos/engine.py",
+        "mnemos/health.py",
+        "mnemos/hook_autostore.py",
+        "mnemos/hosts.py",
+        "mnemos/inspectability.py",
+        "mnemos/jobs.py",
+        "mnemos/maintenance.py",
+        "mnemos/managed_cli.py",
+        "mnemos/mcp_server.py",
+        "mnemos/memory_safety.py",
+        "mnemos/memory_service.py",
+        "mnemos/modules/__init__.py",
+        "mnemos/modules/affective.py",
+        "mnemos/modules/mutable_rag.py",
+        "mnemos/modules/sleep.py",
+        "mnemos/modules/spreading.py",
+        "mnemos/modules/surprisal.py",
+        "mnemos/observability.py",
+        "mnemos/reindex.py",
+        "mnemos/retrieval.py",
+        "mnemos/runtime.py",
+        "mnemos/scopes.py",
+        "mnemos/service.py",
+        "mnemos/settings.py",
+        "mnemos/types.py",
+        "mnemos/ui_server.py",
+        "mnemos/utils/__init__.py",
+        "mnemos/utils/embeddings.py",
+        "mnemos/utils/llm.py",
+        "mnemos/utils/reliability.py",
+        "mnemos/utils/storage.py",
+        "pyproject.toml",
+        "tests/__init__.py",
+        "tests/conftest.py",
+        "tests/test_backup_restore.py",
+        "tests/test_benchmark.py",
+        "tests/test_bridge.py",
+        "tests/test_ci_workflow.py",
+        "tests/test_claude_adapter.py",
+        "tests/test_cli.py",
+        "tests/test_codex_adapter.py",
+        "tests/test_configured_runtime.py",
+        "tests/test_control_plane.py",
+        "tests/test_cross_host_contract.py",
+        "tests/test_docs_consistency.py",
+        "tests/test_durable_jobs.py",
+        "tests/test_durable_memory_repair.py",
+        "tests/test_embeddings.py",
+        "tests/test_engine.py",
+        "tests/test_feedback_eval_export.py",
+        "tests/test_feedback_events.py",
+        "tests/test_graph_persistence.py",
+        "tests/test_health.py",
+        "tests/test_hermes_adapter.py",
+        "tests/test_hook_autostore.py",
+        "tests/test_hosts.py",
+        "tests/test_inspectability.py",
+        "tests/test_llm.py",
+        "tests/test_local_memory_benchmark.py",
+        "tests/test_maintenance.py",
+        "tests/test_managed_cli.py",
+        "tests/test_mcp_compatibility.py",
+        "tests/test_mcp_server.py",
+        "tests/test_mcp_tier2_smoke.py",
+        "tests/test_memory_lifecycle.py",
+        "tests/test_memory_safety.py",
+        "tests/test_memory_service.py",
+        "tests/test_modules.py",
+        "tests/test_plugin_packaging.py",
+        "tests/test_reconsolidation_contract.py",
+        "tests/test_reliability.py",
+        "tests/test_retrieval_contract.py",
+        "tests/test_runtime.py",
+        "tests/test_scope_context.py",
+        "tests/test_scoped_storage.py",
+        "tests/test_service.py",
+        "tests/test_settings.py",
+        "tests/test_spreading_activation.py",
+        "tests/test_spreading_isolation.py",
+        "tests/test_storage_sqlite.py",
+        "tests/test_storage_touch.py",
+        "tests/test_surprisal_contract.py",
+        "tests/test_types.py",
+        "tests/test_ui_server.py"
+      ],
+      "sha256": "071717bd078091e27236e9e7cf5f130e81acb2f6bda2cda6de51b4efa40e9f34"
+    },
+    "embedding_metadata": {
+      "capabilities": [
+        "embedding"
+      ],
+      "details": {
+        "context_length": 2048,
+        "embedding_length": 768,
+        "families": [
+          "nomic-bert"
+        ],
+        "family": "nomic-bert",
+        "format": "gguf",
+        "parameter_size": "137M",
+        "parent_model": "",
+        "quantization_level": "F16"
+      },
+      "digest": "0a109f422b47e3a30ba2b10eca18548e944e8a23073ee3f3e947efcf3c45e59f",
+      "model": "nomic-embed-text:latest",
+      "modified_at": "2025-11-04T15:15:16.2072724-05:00",
+      "name": "nomic-embed-text:latest",
+      "size": 274302450
+    },
+    "embedding_model": "nomic-embed-text:latest",
+    "endpoint": "http://192.168.86.35:11434",
+    "model": "gemma3:4b",
+    "model_metadata": {
+      "capabilities": [
+        "completion",
+        "vision"
+      ],
+      "details": {
+        "context_length": 131072,
+        "embedding_length": 2560,
+        "families": [
+          "gemma3"
+        ],
+        "family": "gemma3",
+        "format": "gguf",
+        "parameter_size": "4.3B",
+        "parent_model": "",
+        "quantization_level": "Q4_K_M"
+      },
+      "digest": "a2af6cc3eb7fa8be8504abaf9b04e88f17a119ec3f04a3addf55f92841195f5a",
+      "model": "gemma3:4b",
+      "modified_at": "2026-03-11T01:54:24.735623-04:00",
+      "name": "gemma3:4b",
+      "size": 3338801804
+    },
+    "options": {
+      "max_tokens": 512,
+      "temperature": 0.0,
+      "timeout_seconds": 120.0
+    }
+  },
+  "schema_version": "local-memory-development-smoke-v1",
+  "status": "complete"
+}

@@ -5,12 +5,13 @@ mnemos/ui_server.py — Local browser UI for Mnemos onboarding and health.
 from __future__ import annotations
 
 import json
+import secrets
 import webbrowser
 from dataclasses import dataclass
 from http import HTTPStatus
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
-from typing import Any, Literal, cast
+from typing import Any, Literal, Mapping, cast
 from urllib.parse import parse_qs, urlparse
 
 from .control_plane import ControlPlaneService
@@ -31,6 +32,7 @@ class MnemosUiRouter:
     def __init__(self, service: ControlPlaneService) -> None:
         self.service = service
         self.assets_dir = _ui_assets_dir()
+        self.csrf_token = secrets.token_urlsafe(24)
 
     def _json_response(self, payload: Any, *, status: int = HTTPStatus.OK) -> UiResponse:
         return UiResponse(
@@ -58,10 +60,34 @@ class MnemosUiRouter:
             body=path.read_bytes(),
         )
 
-    def handle(self, method: str, raw_path: str, body: bytes | None) -> UiResponse:
+    def _csrf_allowed(self, headers: Mapping[str, str] | None) -> bool:
+        # Direct router calls are an in-process test/API surface. HTTP requests
+        # must prove same-origin and carry the per-server mutation token.
+        if headers is None:
+            return True
+        origin = headers.get("Origin")
+        host = headers.get("Host")
+        if origin and urlparse(origin).netloc != host:
+            return False
+        return headers.get("X-Mnemos-CSRF") == self.csrf_token
+
+    def handle(
+        self,
+        method: str,
+        raw_path: str,
+        body: bytes | None,
+        headers: Mapping[str, str] | None = None,
+    ) -> UiResponse:
         parsed = urlparse(raw_path)
         path = parsed.path
         query = parse_qs(parsed.query)
+
+        if headers is not None:
+            host = urlparse("//" + headers.get("Host", "")).hostname
+            if host not in {"127.0.0.1", "localhost", "::1"}:
+                return self._json_response(
+                    {"error": "Loopback Host header required."}, status=HTTPStatus.FORBIDDEN
+                )
 
         if method == "GET" and path == "/":
             return self._asset_response("index.html", "text/html; charset=utf-8")
@@ -69,6 +95,8 @@ class MnemosUiRouter:
             return self._asset_response("app.js", "application/javascript; charset=utf-8")
         if method == "GET" and path == "/styles.css":
             return self._asset_response("styles.css", "text/css; charset=utf-8")
+        if method == "GET" and path == "/api/csrf":
+            return self._json_response({"csrf_token": self.csrf_token})
 
         if method == "GET" and path == "/api/dashboard":
             return self._json_response(self.service.get_dashboard_view())
@@ -100,13 +128,44 @@ class MnemosUiRouter:
                     {"error": f"Memory chunk {chunk_id!r} not found."},
                     status=HTTPStatus.NOT_FOUND,
                 )
+            except ValueError as exc:
+                return self._json_response(
+                    {"error": str(exc)}, status=HTTPStatus.SERVICE_UNAVAILABLE
+                )
+
+        if method == "GET" and path == "/api/jobs":
+            return self._json_response(self.service.get_memory_snapshot(limit=0).get("jobs", {}))
+
+        if method == "POST" and not self._csrf_allowed(headers):
+            return self._json_response(
+                {"error": "CSRF validation failed."}, status=HTTPStatus.FORBIDDEN
+            )
 
         payload: dict[str, Any] = {}
         if body:
-            payload = json.loads(body.decode("utf-8"))
+            try:
+                parsed_payload = json.loads(body.decode("utf-8"))
+            except (UnicodeDecodeError, json.JSONDecodeError):
+                return self._json_response(
+                    {"error": "Request body must be valid JSON."}, status=HTTPStatus.BAD_REQUEST
+                )
+            if not isinstance(parsed_payload, dict):
+                return self._json_response(
+                    {"error": "Request body must be a JSON object."}, status=HTTPStatus.BAD_REQUEST
+                )
+            payload = parsed_payload
 
         if method == "POST" and path == "/api/settings/global":
             return self._json_response(self.service.save_settings(payload, scope="global"))
+        if method == "POST" and path == "/api/project":
+            try:
+                if not isinstance(payload.get("enabled"), bool):
+                    raise ValueError("enabled must be a boolean")
+                return self._json_response(
+                    self.service.configure_project(str(payload["profile"]), payload["enabled"])
+                )
+            except (KeyError, ValueError) as exc:
+                return self._json_response({"error": str(exc)}, status=HTTPStatus.BAD_REQUEST)
         if method == "POST" and path == "/api/settings/project":
             return self._json_response(self.service.save_settings(payload, scope="project"))
         if method == "POST" and path == "/api/import":
@@ -115,6 +174,31 @@ class MnemosUiRouter:
             return self._json_response(self.service.run_consolidation())
         if method == "POST" and path == "/api/smoke":
             return self._json_response(self.service.run_smoke_tests())
+        if method == "POST" and path == "/api/memory/remember":
+            try:
+                return self._json_response(
+                    self.service.remember_memory(
+                        str(payload["content"]), scope=str(payload.get("scope", "project"))
+                    )
+                )
+            except (KeyError, ValueError) as exc:
+                return self._json_response({"error": str(exc)}, status=HTTPStatus.BAD_REQUEST)
+        if method == "POST" and path.startswith("/api/memory/"):
+            suffix = path.removeprefix("/api/memory/")
+            parts = [part for part in suffix.split("/") if part]
+            if len(parts) == 2 and parts[1] in {"correct", "forget"}:
+                try:
+                    fact_id = parts[0]
+                    version = int(payload["expected_version"])
+                    if parts[1] == "correct":
+                        result = self.service.correct_memory(
+                            fact_id, str(payload["content"]), version
+                        )
+                    else:
+                        result = self.service.forget_memory(fact_id, version)
+                    return self._json_response(result)
+                except (KeyError, TypeError, ValueError) as exc:
+                    return self._json_response({"error": str(exc)}, status=HTTPStatus.BAD_REQUEST)
 
         integration_prefix = "/api/integrations/"
         if method == "POST" and path.startswith(integration_prefix):
@@ -122,9 +206,9 @@ class MnemosUiRouter:
             parts = [part for part in suffix.split("/") if part]
             if len(parts) == 2 and parts[1] in {"preview", "apply"}:
                 host_name = parts[0]
-                if host_name not in {"claude-code", "cursor", "codex"}:
+                if host_name not in {"claude-code", "cursor", "codex", "hermes"}:
                     return self._text_response("Unknown host", status=HTTPStatus.NOT_FOUND)
-                host = cast(Literal["claude-code", "cursor", "codex"], host_name)
+                host = cast(Literal["claude-code", "cursor", "codex", "hermes"], host_name)
                 if parts[1] == "preview":
                     return self._json_response(self.service.preview_integration(host))
                 return self._json_response(self.service.apply_integration(host))
@@ -136,13 +220,24 @@ class _MnemosUiHandler(BaseHTTPRequestHandler):
     router: MnemosUiRouter
 
     def do_GET(self) -> None:  # noqa: N802
-        response = self.router.handle("GET", self.path, None)
+        response = self.router.handle("GET", self.path, None, dict(self.headers))
         self._write_response(response)
 
     def do_POST(self) -> None:  # noqa: N802
-        content_length = int(self.headers.get("Content-Length", "0"))
+        try:
+            content_length = int(self.headers.get("Content-Length", "0"))
+        except ValueError:
+            self._write_response(
+                self.router._json_response({"error": "Invalid content length."}, status=400)
+            )
+            return
+        if content_length < 0 or content_length > 1_048_576:
+            self._write_response(
+                self.router._json_response({"error": "Request body too large."}, status=413)
+            )
+            return
         body = self.rfile.read(content_length) if content_length > 0 else None
-        response = self.router.handle("POST", self.path, body)
+        response = self.router.handle("POST", self.path, body, dict(self.headers))
         self._write_response(response)
 
     def log_message(self, format: str, *args: object) -> None:  # noqa: A003
@@ -152,6 +247,12 @@ class _MnemosUiHandler(BaseHTTPRequestHandler):
         self.send_response(response.status)
         self.send_header("Content-Type", response.content_type)
         self.send_header("Content-Length", str(len(response.body)))
+        self.send_header("Cache-Control", "no-store")
+        self.send_header("X-Content-Type-Options", "nosniff")
+        self.send_header(
+            "Content-Security-Policy",
+            "default-src 'self'; connect-src 'self'; style-src 'self' 'unsafe-inline'",
+        )
         self.end_headers()
         self.wfile.write(response.body)
 
@@ -163,6 +264,8 @@ def run_ui_server(
     port: int = 8765,
     open_browser: bool = True,
 ) -> None:
+    if host not in {"127.0.0.1", "localhost", "::1"}:
+        raise ValueError("Mnemos UI must bind to a loopback address")
     router = MnemosUiRouter(service)
 
     class Handler(_MnemosUiHandler):

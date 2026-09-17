@@ -321,6 +321,39 @@ base_url = "https://openrouter.ai/api/v1"
     assert 'provider = "openrouter"' in text
 
 
+def test_import_existing_setup_reads_claude_code_profile(tmp_path: Path) -> None:
+    import json
+
+    project = tmp_path / "project"
+    project.mkdir()
+    (project / ".mcp.json").write_text(
+        json.dumps(
+            {
+                "mcpServers": {
+                    "mnemos": {
+                        "command": "mnemos-mcp",
+                        "env": {
+                            "MNEMOS_USER_PROFILE_ID": "selected-profile",
+                            "MNEMOS_LLM_MODEL": "configured-model",
+                        },
+                    }
+                }
+            }
+        ),
+        encoding="utf-8",
+    )
+    imported = import_existing_setup(
+        env={},
+        cwd=project,
+        home=tmp_path / "home",
+        global_config_path=tmp_path / "settings.toml",
+    )
+    assert imported.settings.onboarding.user_profile_id == "selected-profile"
+    assert imported.settings.llm.model == "configured-model"
+    assert "claude-code" in imported.sources
+    assert "claude-desktop" not in imported.sources
+
+
 def test_import_existing_setup_reads_codex_host_config(tmp_path: Path) -> None:
     home_dir = tmp_path / "home"
     codex_config = home_dir / ".codex" / "config.toml"

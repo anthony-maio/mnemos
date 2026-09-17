@@ -1,0 +1,40 @@
+{
+  "hermes_version": "0.21.3",
+  "memory_provider_api": {
+    "module": "agent.memory_provider",
+    "base_class_imported": true,
+    "lifecycle_methods_present": true
+  },
+  "transport_fixture": {
+    "service": "temporary authenticated Windows MnemosService",
+    "transport": "explicit Windows bridge from WSL",
+    "seed_status": "committed",
+    "seed_maintenance_completed": 1,
+    "scope": "native-hermes-smoke"
+  },
+  "attempts": [
+    {
+      "model": "anthony-maio/eve-2-moe-it-272m:q4-k-m",
+      "status": "rejected_before_turn",
+      "reason": "Hermes requires a context window of at least 64000 tokens; Ollama reports 2048"
+    },
+    {
+      "model": "gemma3:4b",
+      "status": "rejected_by_provider",
+      "reason": "Ollama reports that this model does not support tools"
+    },
+    {
+      "model": "qwen3.5:9b",
+      "status": "timed_out",
+      "deadline_seconds": 240,
+      "stdout": "",
+      "stderr": ""
+    }
+  ],
+  "native_agent_turn_completed": false,
+  "native_prefetch_observed": false,
+  "native_sync_turn_observed": false,
+  "native_recall_observed": false,
+  "post_turn_fact_count": 1,
+  "diagnosis": "The installed Hermes API and disposable plugin path are available, and the explicit WSL-to-Windows bridge seeds and services memory. No qualifying local model completed an agent turn within the bounded run: the small model failed Hermes context validation, the 4B model failed tool capability validation, and the tool-capable 9B model timed out. Native Hermes CLI continuity remains unproven."
+}

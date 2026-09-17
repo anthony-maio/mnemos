@@ -127,17 +127,21 @@ def test_plugin_hooks_wire_autostore_and_consolidation() -> None:
     hooks = data["hooks"]
 
     assert "UserPromptSubmit" in hooks
-    assert "PostToolUse" in hooks
+    assert "SessionStart" in hooks
     assert "PreCompact" in hooks
     assert "Stop" in hooks
+    assert "PostCompact" in hooks
 
     prompt_command = hooks["UserPromptSubmit"][0]["hooks"][0]["command"]
-    tool_command = hooks["PostToolUse"][0]["hooks"][0]["command"]
+    session_command = hooks["SessionStart"][0]["hooks"][0]["command"]
     consolidate_command = hooks["PreCompact"][0]["hooks"][0]["command"]
+    stop_command = hooks["Stop"][0]["hooks"][0]["command"]
 
-    assert "mnemos-cli autostore-hook UserPromptSubmit" in prompt_command
-    assert "mnemos-cli autostore-hook PostToolUse" in tool_command
-    assert "mnemos-cli consolidate" in consolidate_command
+    assert prompt_command == "python -m mnemos.adapters.claude_code UserPromptSubmit"
+    assert session_command == "python -m mnemos.adapters.claude_code SessionStart"
+    assert consolidate_command == "python -m mnemos.adapters.claude_code PreCompact"
+    assert stop_command == "python -m mnemos.adapters.claude_code Stop"
+    assert "||" not in consolidate_command
 
 
 def test_plugin_wrapper_uses_explicit_runtime_python(monkeypatch) -> None:

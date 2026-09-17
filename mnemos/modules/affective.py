@@ -34,11 +34,12 @@ Mnemos Implementation:
 from __future__ import annotations
 
 import re
-from collections import deque
+from collections import OrderedDict, deque
 from collections.abc import Callable
 from typing import Any
 
 from ..config import AffectiveConfig
+from ..scopes import interaction_partition
 from ..types import CognitiveState, Interaction, MemoryChunk
 from ..utils.embeddings import EmbeddingProvider, cosine_similarity, embed_text_async
 from ..utils.llm import LLMProvider
@@ -70,6 +71,7 @@ class AffectiveRouter:
         self._config = config or AffectiveConfig()
         # Running window of recent states (last N interactions)
         self._state_history: deque[CognitiveState] = deque(maxlen=10)
+        self._states: OrderedDict[tuple[str, str, str, str], deque[CognitiveState]] = OrderedDict()
         # Stats
         self._total_classified: int = 0
         self._total_retrieved: int = 0
@@ -147,6 +149,11 @@ class AffectiveRouter:
         # Update state history (deque handles maxlen automatically)
         if state is not None:
             self._state_history.append(state)
+            partition = interaction_partition(interaction.metadata)
+            self._states.setdefault(partition, deque(maxlen=10)).append(state)
+            self._states.move_to_end(partition)
+            while len(self._states) > 256:
+                self._states.popitem(last=False)
 
         return state
 
@@ -292,7 +299,7 @@ class AffectiveRouter:
         scored.sort(key=lambda x: x[0], reverse=True)
         return [chunk for _, chunk in scored[:top_k]]
 
-    def get_current_state(self) -> CognitiveState:
+    def get_current_state(self, metadata: dict[str, Any] | None = None) -> CognitiveState:
         """
         Return the most recent cognitive state from history.
 
@@ -301,11 +308,12 @@ class AffectiveRouter:
         Returns:
             The last classified CognitiveState, or neutral defaults.
         """
-        if self._state_history:
-            return self._state_history[-1]
+        history = self._states.get(interaction_partition(metadata or {}), ())
+        if history:
+            return history[-1]
         return CognitiveState(valence=0.0, arousal=0.5, complexity=0.5)
 
-    def get_average_state(self) -> CognitiveState:
+    def get_average_state(self, metadata: dict[str, Any] | None = None) -> CognitiveState:
         """
         Compute the average cognitive state across the history window.
 
@@ -315,14 +323,15 @@ class AffectiveRouter:
         Returns:
             Averaged CognitiveState across history.
         """
-        if not self._state_history:
+        history = self._states.get(interaction_partition(metadata or {}), ())
+        if not history:
             return CognitiveState(valence=0.0, arousal=0.5, complexity=0.5)
 
-        n = len(self._state_history)
+        n = len(history)
         return CognitiveState(
-            valence=sum(s.valence for s in self._state_history) / n,
-            arousal=sum(s.arousal for s in self._state_history) / n,
-            complexity=sum(s.complexity for s in self._state_history) / n,
+            valence=sum(s.valence for s in history) / n,
+            arousal=sum(s.arousal for s in history) / n,
+            complexity=sum(s.complexity for s in history) / n,
         )
 
     def get_stats(self) -> dict[str, Any]:

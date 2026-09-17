@@ -29,14 +29,14 @@ def _host_label(host: AntigravityHost) -> str:
 def _workflow_lines() -> list[str]:
     return [
         "1. At the start of every substantial user task, call `mnemos_retrieve` with a focused query tied to the task.",
-        "2. Use `current_scope=project`, set `scope_id` to the current repository/workspace name, and include `allowed_scopes=project,global` unless the user asks for broader scope.",
+        "2. Use `current_scope=project` and `allowed_scopes=project`. Let the client resolve the enabled project's registered identity; never use a folder basename as `scope_id`. Include global or workspace only when the task needs those scopes.",
         "3. During execution, call `mnemos_store` only for durable facts:",
         "   - stable user or maintainer preferences",
         "   - project architecture decisions and rationale",
         "   - environment and tooling facts that will matter again",
         "   - recurring bug patterns and their fixes",
         "4. Before finishing substantial work, call `mnemos_consolidate`.",
-        "5. If a retrieved memory looks suspicious, call `mnemos_inspect` before storing a correction.",
+        "5. If a retrieved memory looks suspicious, call `mnemos_inspect`, then `mnemos_correct` with its fact ID and current expected_version. Use `mnemos_forget` for an explicit deletion.",
         "6. Never store secrets, credentials, tokens, or one-off transient chatter.",
         "7. If Mnemos MCP tools are unavailable, continue normally without blocking work.",
     ]
@@ -94,7 +94,7 @@ def _build_codex_automation_prompt() -> str:
         "2. Run `mnemos-cli doctor` and `mnemos-cli stats` in the repository root.",
         "3. Summarize degraded checks, missing setup, or retrieval/storage risks.",
         "4. If `AGENTS.md` is missing the Mnemos block, propose the output of `mnemos-cli antigravity codex --target codex-agents` instead of silently editing unrelated instructions.",
-        "5. Do not claim automatic host hooks; this Codex path depends on MCP plus repo instructions.",
+        "5. Report command-hook capture as active only after observing installed Codex lifecycle events. An instruction pack alone does not establish automatic capture.",
     ]
     return "\n".join(body).strip() + "\n"
 

@@ -2,6 +2,15 @@
 
 ## Unreleased
 
+- Added a shared authenticated loopback service for CLI, MCP, UI, and host adapters, with one SQLite writer, durable jobs, recovery leases, private runtime files, and sanitized capture outboxes.
+- Added registered profile/project/workspace identities, scoped retrieval and graph traversal, source evidence, expected-version correction, and forget suppression across restart and replay.
+- Added typed local-model extraction, independent module switches, baseline retrieval by default, bounded graph rebuilding, and measured score traces. Recall no longer silently rewrites facts.
+- Added Codex lifecycle hooks, updated Claude transcript capture, and an optional Hermes provider with an explicit Windows/WSL bridge. Native host acceptance remains separately recorded.
+- Added project enable/pause and fact inspection/correction/forget in the UI, input-specific provider probing, consistent backup/restore, resumable offline reindex, and authenticated service-stop.
+- Added schema-migration backups, FULL SQLite synchronization, atomic fact/vector writes, and explicit embedding identity checks.
+- Added real-model evaluation and 10,000-fact performance harnesses. Passing mechanism tests does not establish a biomimetic quality advantage; negative measurements remain part of the record.
+- These changes are unreleased. See docs/validation/2026-09-16/progress.md for observed validation and open acceptance gates.
+
 ## 0.7.0 -- 2026-04-21
 
 Closes the auto-memory loop in Claude Code: retrieval is now deterministic and invisible to the model, not dependent on the model choosing to prime itself.

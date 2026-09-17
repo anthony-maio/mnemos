@@ -1,0 +1,742 @@
+"""Scope-validated domain operations owned by the persistent local service."""
+
+from __future__ import annotations
+
+import hashlib
+import json
+from datetime import datetime, timezone
+from typing import Any
+from uuid import uuid4
+
+from .contracts import CaptureEvent, FactProposal, RetrievalRequest
+from .engine import MnemosEngine
+from .jobs import DurableJob, FactEvidence, FactRevision
+from .maintenance import MaintenanceScheduler
+from .memory_safety import MemoryWriteFirewall
+from .retrieval import render_context_chunk
+from .scopes import ScopeContext, ScopeRegistry, context_metadata, scope_allows
+from .types import EpisodicEvent, Interaction, MemoryChunk, RetrievalFeedbackEvent
+from .utils.embeddings import embed_text_async
+from .utils.storage import SQLiteStore, compute_canonical_key, normalize_memory_text
+
+
+class LocalMemoryService:
+    """No host-provided metadata can override resolved scope or write policy."""
+
+    def __init__(self, engine: MnemosEngine, registry: ScopeRegistry) -> None:
+        self.engine = engine
+        self.registry = registry
+        self.engine._scope_registry = registry
+        self.engine._require_scope_context = True
+        self.firewall = MemoryWriteFirewall(engine.config.safety)
+        self.maintenance = MaintenanceScheduler(
+            engine.store, self.process_job, after_batch=engine.rebuild_graph_batch
+        )
+        self._cognition_probe: dict[str, Any] = {"status": "not_observed"}
+
+    def capture(
+        self,
+        event: CaptureEvent,
+        *,
+        scope: str | None = None,
+        explicit: bool = False,
+        correction: dict[str, Any] | None = None,
+    ) -> dict[str, Any]:
+        self.registry.validate_context(event.context)
+        scope = scope or event.scope
+        if not self.engine._capture_channel_allowed("manual" if explicit else "hook"):
+            return {
+                "schema_version": 1,
+                "status": "rejected",
+                "reason": "Capture channel is disabled",
+            }
+        metadata = context_metadata(event.context, scope)
+        for identity_field in (event.event_id, event.context.session_id, event.source_kind):
+            decision = self.firewall.apply(identity_field)
+            if not decision.allowed or decision.content != identity_field:
+                return {
+                    "schema_version": 1,
+                    "status": "rejected",
+                    "reason": "Source metadata violates write policy",
+                }
+        safety = self.firewall.apply(event.content)
+        if not safety.allowed:
+            return {"schema_version": 1, "status": "rejected", "reason": safety.reason}
+        source_ref = event.source_ref
+        if source_ref is not None:
+            safe_ref = self.firewall.apply(source_ref)
+            if not safe_ref.allowed:
+                return {
+                    "schema_version": 1,
+                    "status": "rejected",
+                    "reason": "Source reference violates write policy",
+                }
+            source_ref = safe_ref.content
+        identity = [
+            event.context.user_profile_id,
+            event.context.host,
+            event.context.session_id,
+            event.event_id,
+        ]
+        key = hashlib.sha256(json.dumps(identity).encode("utf-8")).hexdigest()
+        canonical = compute_canonical_key(
+            safety.content, scope, metadata["scope_id"], event.context.user_profile_id
+        )
+        if self.engine.store.is_suppressed(source_event_id=key) or (
+            not explicit and self.engine.store.is_suppressed(canonical_key=canonical)
+        ):
+            return {
+                "schema_version": 1,
+                "status": "committed",
+                "event_id": key,
+                "processing_status": "suppressed",
+                "job_id": None,
+            }
+        metadata.update(
+            {
+                "source_event_id": event.event_id,
+                "source_ref": source_ref,
+                "source_kind": event.source_kind,
+                "explicit_remember": explicit,
+            }
+        )
+        record = EpisodicEvent(
+            id=key,
+            event_fingerprint=key,
+            role=event.role,
+            content=safety.content,
+            normalized_content=normalize_memory_text(safety.content),
+            scope=scope,
+            scope_id=metadata["scope_id"],
+            source=event.context.host,
+            metadata=metadata,
+            occurred_at=event.occurred_at.astimezone(timezone.utc),
+        )
+        job = DurableJob(
+            id="event:" + key,
+            kind="correct" if correction else "remember" if explicit else "extract",
+            payload={
+                "event_id": key,
+                "context": event.context.model_dump(),
+                "scope": scope,
+                "source_digest": hashlib.sha256(
+                    json.dumps([event.role, safety.content, scope, metadata["scope_id"]]).encode(
+                        "utf-8"
+                    )
+                ).hexdigest(),
+                **(correction or {}),
+            },
+        )
+        existing_job = self.engine.store.get_job(job.id)
+        if existing_job is not None:
+            if existing_job.kind != job.kind or existing_job.payload != job.payload:
+                raise ValueError("Source event identity already has a different payload")
+            if existing_job.status == "completed":
+                return {
+                    "schema_version": 1,
+                    "status": "committed",
+                    "event_id": key,
+                    "processing_status": "consolidated",
+                    "job_id": job.id,
+                }
+        stored = self.engine.store.capture_event_and_job(record, job)
+        self.maintenance.note_activity()
+        return {
+            "schema_version": 1,
+            "status": "committed",
+            "event_id": stored.id,
+            "processing_status": stored.status,
+            "job_id": job.id,
+        }
+
+    async def process_job(self, job: DurableJob) -> None:
+        """Model work happens outside the transaction that accepts its results."""
+        if job.kind == "reconsolidate_review":
+            await self.engine.mutable_rag.process_job(job)
+            chunk = self.engine.store.get(job.payload["target_fact_id"])
+            if chunk is not None:
+                self.engine.refresh_graph_chunk(chunk)
+            return
+        context = self.registry.validate_context(
+            ScopeContext.model_validate(job.payload["context"])
+        )
+        event = self.engine.store.get_episodic_event(job.payload["event_id"])
+        if event is None:
+            raise ValueError("Source event is unavailable")
+        scope = job.payload["scope"]
+        if not scope_allows(event.metadata, context, (scope,)):
+            raise ValueError("Source event is outside the requested scope")
+        if not job.lease_owner or not job.lease_token:
+            raise ValueError("A live job lease is required")
+        if event.status == "consolidated":
+            if not self.engine.store.complete_job(
+                job.id,
+                owner=job.lease_owner,
+                lease_token=job.lease_token,
+                result={"decision": "already_processed"},
+            ):
+                raise RuntimeError("Job lease expired")
+            return
+        interaction = Interaction(
+            role=event.role,
+            content=event.content,
+            timestamp=event.occurred_at,
+            metadata=event.metadata,
+        )
+        diagnostics = {}
+        decision = "facts"
+        if job.kind in {"remember", "correct"}:
+            proposals = [
+                FactProposal(
+                    content=event.content,
+                    evidence_ids=[event.id],
+                    operation="correct" if job.kind == "correct" else "add",
+                    target_fact_id=job.payload.get("target_fact_id"),
+                    expected_version=job.payload.get("expected_version"),
+                )
+            ]
+        elif job.kind == "extract":
+            surprise, status, prediction, mode = (
+                await self.engine.surprisal_gate._compute_surprisal(interaction)
+                if self.engine.config.modules.surprisal
+                else (None, "disabled", None, "disabled")
+            )
+            diagnostics = {
+                "surprisal_score": surprise,
+                "surprisal_status": status,
+                "prediction": prediction,
+                "prediction_mode": mode,
+                "threshold": self.engine.config.surprisal.threshold,
+            }
+            if (
+                self.engine.config.modules.surprisal
+                and surprise is None
+                and self.engine.config.surprisal.threshold > 0
+            ):
+                raise ConnectionError("Surprisal prediction is unavailable")
+            if surprise is not None and surprise <= self.engine.config.surprisal.threshold:
+                proposals = []
+                decision = "surprisal_filtered"
+            else:
+
+                def same_partition(chunk: MemoryChunk) -> bool:
+                    return scope_allows(chunk.metadata, context, (scope,))
+
+                setattr(
+                    same_partition,
+                    "_mnemos_scope_filter",
+                    {
+                        "user_profile_id": context.user_profile_id,
+                        "project_id": context.project_id,
+                        "workspace_id": context.workspace_id,
+                        "allowed_scopes": [scope],
+                    },
+                )
+                existing = (
+                    self.engine.store.retrieve(
+                        await embed_text_async(self.engine.embedder, event.content),
+                        top_k=5,
+                        filter_fn=same_partition,
+                    )
+                    if self.engine.config.modules.sleep
+                    else []
+                )
+                proposals = (
+                    await self.engine.sleep_daemon.propose_facts(
+                        [event], self.engine.llm, existing_facts=existing
+                    )
+                    if self.engine.config.modules.sleep
+                    else [
+                        FactProposal(
+                            content=event.content, evidence_ids=[event.id], operation="add"
+                        )
+                    ]
+                )
+                if not proposals:
+                    decision = "no_durable_facts"
+        else:
+            raise ValueError("Unsupported maintenance job kind")
+        state = (
+            await self.engine.affective_router.classify_state(interaction)
+            if proposals and self.engine.config.modules.affective
+            else None
+        )
+        chunks = []
+        evidence = []
+        revisions = []
+        expected_versions = {}
+        seen_keys = set()
+        for proposal in proposals:
+            if set(proposal.evidence_ids) != {event.id}:
+                raise ValueError("Fact proposal has unauthorized evidence")
+            proposed_content = proposal.content
+            if proposal.operation == "support":
+                assert proposal.target_fact_id is not None
+                supported = self.engine.store.get(proposal.target_fact_id)
+                if supported is None or not scope_allows(supported.metadata, context, (scope,)):
+                    raise ValueError("Support target is unavailable in this scope")
+                proposed_content = supported.content
+            if (
+                proposal.operation == "correct"
+                and job.kind != "correct"
+                and not self.engine.config.modules.mutable_rag
+            ):
+                proposal.operation = "conflict"
+            if event.role != "user":
+                proposed_content = f"{event.role.capitalize()} reported: {proposed_content}"
+            safe = self.firewall.apply(proposed_content)
+            if not safe.allowed:
+                raise ValueError("Fact proposal violates write policy")
+            canonical_key = compute_canonical_key(
+                safe.content, scope, event.scope_id, context.user_profile_id
+            )
+            if canonical_key in seen_keys:
+                continue
+            seen_keys.add(canonical_key)
+            if job.kind == "extract" and self.engine.store.is_suppressed(
+                canonical_key=canonical_key, source_event_id=event.id
+            ):
+                decision = "suppressed"
+                continue
+            metadata = {
+                **context_metadata(context, scope),
+                "source": (
+                    "explicit_remember"
+                    if job.kind == "remember"
+                    else "explicit_correction" if job.kind == "correct" else "sleep_consolidation"
+                ),
+                "source_roles": [event.role],
+                "source_event_ids": [event.id],
+                "encoding_diagnostics": diagnostics,
+                "assertion_status": "conflict" if proposal.operation == "conflict" else "asserted",
+            }
+            embedding = await embed_text_async(self.engine.embedder, safe.content)
+            if proposal.operation == "correct":
+                previous, _ = self.engine.mutable_rag._validate_proposal(proposal)
+                if previous is None or not scope_allows(previous.metadata, context, (scope,)):
+                    raise ValueError("Correction target is unavailable in this scope")
+                if previous.version != proposal.expected_version:
+                    raise ValueError("Correction version conflict")
+                if previous.id in expected_versions:
+                    raise ValueError("A single extraction cannot correct a fact twice")
+                expected_versions[previous.id] = previous.version
+                chunk = previous.reconsolidate(safe.content)
+                chunk.embedding = embedding
+                chunk.metadata = {**chunk.metadata, **metadata}
+                chunk.canonical_key = canonical_key
+                revisions.append(
+                    FactRevision(
+                        fact_id=chunk.id,
+                        version=previous.version,
+                        content=previous.content,
+                        reason="Before source-backed correction",
+                    )
+                )
+            else:
+                chunk = MemoryChunk(
+                    content=safe.content,
+                    embedding=embedding,
+                    metadata=metadata,
+                    canonical_key=canonical_key,
+                )
+            chunk.last_observed_at = event.occurred_at
+            self.engine.affective_router.tag_chunk(chunk, state)
+            chunks.append(chunk)
+            evidence.append(
+                FactEvidence(
+                    fact_id=chunk.id,
+                    source_event_id=event.id,
+                    excerpt=event.content[:1000],
+                    source_ref=event.metadata.get("source_ref"),
+                )
+            )
+        committed = self.engine.store.commit_fact_and_job(
+            job.id,
+            owner=job.lease_owner,
+            lease_token=job.lease_token,
+            chunks=chunks,
+            evidence=evidence,
+            revisions=revisions,
+            processed_event_ids=[event.id],
+            expected_version=job.payload.get("expected_version"),
+            expected_versions=expected_versions,
+            result={"decision": decision},
+        )
+        if not committed:
+            raise RuntimeError("Job lease expired before results could be committed")
+        self.engine.surprisal_gate.add_to_history(interaction)
+        committed_job = self.engine.store.get_job(job.id)
+        accepted_ids = (committed_job.result or {}).get("fact_ids", []) if committed_job else []
+        for fact_id in accepted_ids:
+            current = self.engine.store.get(fact_id)
+            if current is not None:
+                self.engine.refresh_graph_chunk(current)
+
+    async def retrieve(self, request: RetrievalRequest) -> dict[str, Any]:
+        self.registry.validate_context(request.context)
+        chunks = await self.engine.retrieve(
+            request.query,
+            top_k=request.top_k,
+            context=request.context,
+            allowed_scopes=tuple(request.allowed_scopes),
+            profile=request.profile,
+            max_context_tokens=request.max_context_tokens,
+        )
+        facts = []
+        for chunk in chunks:
+            support = self.engine.store.list_fact_evidence(chunk.id)
+            facts.append(
+                {
+                    "id": chunk.id,
+                    "version": chunk.version,
+                    "content": chunk.content,
+                    "scope": chunk.metadata.get("scope"),
+                    "scope_id": chunk.metadata.get("scope_id"),
+                    "sources": [item.model_dump(mode="json") for item in support],
+                    "support_available": bool(support),
+                    "original_source_status": "not_checked",
+                    "scores": chunk.metadata.get("retrieval_trace", {}),
+                }
+            )
+        return {
+            "schema_version": 1,
+            "profile": request.profile,
+            "facts": facts,
+            "context": "".join(render_context_chunk(chunk) for chunk in chunks),
+            "token_count_method": "utf8_bytes_upper_bound",
+            "context_token_upper_bound": sum(
+                len(render_context_chunk(chunk).encode("utf-8")) for chunk in chunks
+            ),
+        }
+
+    async def dispatch(self, operation: str, payload: dict[str, Any]) -> dict[str, Any]:
+        if operation == "configure_project":
+            from pathlib import Path
+            from .scopes import default_registry_path
+
+            path = Path(payload["path"]).expanduser()
+            if not path.is_dir() or not isinstance(payload.get("enabled"), bool):
+                raise ValueError("Project path must be a directory and enabled must be a boolean")
+            profile = payload["user_profile_id"]
+            if not isinstance(profile, str) or not profile.strip():
+                raise ValueError("A nonempty user profile is required")
+            updated = self.registry.model_copy(deep=True)
+            project = updated.register_project(
+                path, user_profile_id=profile, enabled=payload["enabled"]
+            )
+            project.enabled = payload["enabled"]
+            if payload.get("workspace_id"):
+                updated.add_membership(project.id, payload["workspace_id"])
+            updated.save(default_registry_path())
+            self.registry = updated
+            self.engine._scope_registry = updated
+            return {
+                "schema_version": 1,
+                "status": "committed",
+                "project": project.model_dump(mode="json"),
+            }
+        if operation == "probe_cognition":
+            from .utils.llm import MockLLMProvider, UnavailableLLMProvider
+
+            context = self.registry.validate_context(
+                ScopeContext.model_validate(payload["context"])
+            )
+            self._cognition_probe = {"status": "failed", "input_specific_extraction": False}
+            if isinstance(self.engine.llm, (MockLLMProvider, UnavailableLLMProvider)):
+                return {
+                    "schema_version": 1,
+                    **self._cognition_probe,
+                    "reason": "A configured real cognition provider is required",
+                }
+            label = "mnemos-probe-" + uuid4().hex
+            content = f"The validation project uses deployment label {label}."
+            probe_event = EpisodicEvent(
+                id=str(uuid4()),
+                role="user",
+                content=content,
+                normalized_content=normalize_memory_text(content),
+                event_fingerprint=label,
+                scope="project",
+                scope_id=context.project_id,
+                metadata=context_metadata(context, "project"),
+            )
+            try:
+                proposals = await self.engine.sleep_daemon.propose_facts(
+                    [probe_event], self.engine.llm
+                )
+                passed = any(
+                    label in fact.content and probe_event.id in fact.evidence_ids
+                    for fact in proposals
+                )
+                self._cognition_probe = {
+                    "status": "observed" if passed else "failed",
+                    "input_specific_extraction": passed,
+                    "observed_at": datetime.now(timezone.utc).isoformat(),
+                    "provider": type(self.engine.llm).__name__,
+                }
+            except Exception as exc:
+                self._cognition_probe["error"] = type(exc).__name__
+            return {"schema_version": 1, **self._cognition_probe}
+        if operation == "backup":
+            from .backup import create_backup
+
+            if not isinstance(self.engine.store, SQLiteStore):
+                raise ValueError("Backup requires SQLite storage")
+            manifest = create_backup(self.engine.store, payload["destination"], self.registry)
+            return {
+                "schema_version": 1,
+                "status": "committed",
+                "manifest": manifest,
+                "destination": payload["destination"],
+            }
+        if operation == "restore":
+            from .backup import restore_backup
+
+            if not isinstance(self.engine.store, SQLiteStore):
+                raise ValueError("Restore requires SQLite storage")
+            manifest, registry = restore_backup(
+                payload["archive"],
+                payload["destination"],
+                current_store=self.engine.store,
+                current_registry=self.registry,
+            )
+            return {
+                "schema_version": 1,
+                "status": "committed",
+                "manifest": manifest,
+                "destination": payload["destination"],
+                "registry": registry.model_dump(mode="json"),
+                "activated": False,
+            }
+        if operation == "reload_registry":
+            from .scopes import default_registry_path
+
+            self.registry = ScopeRegistry.load(default_registry_path())
+            self.engine._scope_registry = self.registry
+            return {
+                "schema_version": 1,
+                "status": "committed",
+                "projects": len(self.registry.projects),
+            }
+        if operation in {"list", "feedback", "feedback_list", "job"}:
+            context = self.registry.validate_context(
+                ScopeContext.model_validate(payload["context"])
+            )
+            allowed = payload.get("allowed_scopes", ["project", "global"])
+            if any(scope not in {"project", "workspace", "global"} for scope in allowed):
+                raise ValueError("Invalid allowed scopes")
+
+            def permitted(chunk: MemoryChunk) -> bool:
+                return scope_allows(chunk.metadata, context, allowed)
+
+            setattr(
+                permitted,
+                "_mnemos_scope_filter",
+                {
+                    "user_profile_id": context.user_profile_id,
+                    "project_id": context.project_id,
+                    "workspace_id": context.workspace_id,
+                    "allowed_scopes": allowed,
+                },
+            )
+            if operation == "list":
+                chunks = self.engine.store.list_chunks(
+                    limit=min(max(int(payload.get("limit", 50)), 0), 500),
+                    after_id=payload.get("after_id", ""),
+                    filter_fn=permitted,
+                )
+                return {
+                    "schema_version": 1,
+                    "facts": [
+                        chunk.model_dump(mode="json", exclude={"embedding"}) for chunk in chunks
+                    ],
+                    "jobs": self.engine.store.job_summary(
+                        now=datetime.now(timezone.utc),
+                        user_profile_id=context.user_profile_id,
+                        project_id=context.project_id,
+                    ),
+                    "next_cursor": chunks[-1].id if chunks else None,
+                }
+            if operation == "job":
+                job = self.engine.store.get_job(payload["job_id"])
+                if (
+                    job is None
+                    or job.payload.get("context", {}).get("user_profile_id")
+                    != context.user_profile_id
+                ):
+                    raise KeyError("Job not found in the requested profile")
+                job_context = ScopeContext.model_validate(job.payload["context"])
+                if (
+                    job_context.project_id != context.project_id
+                    or job_context.workspace_id != context.workspace_id
+                ):
+                    raise KeyError("Job not found in the requested scope")
+                return {
+                    "schema_version": 1,
+                    "job": job.model_dump(mode="json", exclude={"payload", "lease_token"}),
+                }
+            if operation == "feedback_list":
+                events = self.engine.store.list_feedback_events(
+                    user_profile_id=context.user_profile_id, event_type=payload.get("event_type")
+                )
+                events = [
+                    event
+                    for event in events
+                    if scope_allows(
+                        {
+                            "user_profile_id": event.user_profile_id,
+                            "scope": event.scope,
+                            "scope_id": event.scope_id,
+                        },
+                        context,
+                        allowed,
+                    )
+                ]
+                return {
+                    "schema_version": 1,
+                    "events": [event.model_dump(mode="json") for event in events],
+                }
+            chunk_ids = payload.get("chunk_ids", [])
+            for fact_id in chunk_ids:
+                fact = self.engine.store.get(fact_id)
+                if fact is None or not permitted(fact):
+                    raise ValueError("Feedback references a fact outside the permitted scope")
+            query, notes = self.firewall.apply(payload["query"]), self.firewall.apply(
+                payload.get("notes", "")
+            )
+            if not query.allowed or not notes.allowed:
+                return {"schema_version": 1, "status": "rejected", "stored": False}
+            metadata = context_metadata(context, payload.get("scope", "project"))
+            feedback = RetrievalFeedbackEvent(
+                event_type=payload["event_type"],
+                query=query.content,
+                notes=notes.content,
+                chunk_ids=chunk_ids,
+                scope=metadata["scope"],
+                scope_id=metadata["scope_id"],
+                user_profile_id=context.user_profile_id,
+            )
+            self.engine.store.store_feedback_event(feedback)
+            return {
+                "schema_version": 1,
+                "status": "committed",
+                "stored": True,
+                "event_type": feedback.event_type,
+                "chunk_ids": chunk_ids,
+                "id": feedback.id,
+            }
+        if operation == "capture":
+            return self.capture(CaptureEvent.model_validate(payload))
+        if operation == "remember":
+            context = ScopeContext.model_validate(payload["context"])
+            event = CaptureEvent(
+                event_id=payload.get("event_id") or str(uuid4()),
+                context=context,
+                occurred_at=datetime.now(timezone.utc),
+                role=payload.get("role", "user"),
+                content=payload["content"],
+                source_kind="explicit_remember",
+                source_ref=payload.get("source_ref"),
+            )
+            return self.capture(event, scope=payload.get("scope", "project"), explicit=True)
+        if operation == "retrieve":
+            return await self.retrieve(RetrievalRequest.model_validate(payload))
+        if operation == "correct":
+            context = self.registry.validate_context(
+                ScopeContext.model_validate(payload["context"])
+            )
+            previous = self.engine.store.get(payload["fact_id"])
+            if previous is None or not scope_allows(
+                previous.metadata, context, ("project", "workspace", "global")
+            ):
+                raise KeyError("Correction target not found in the requested scope")
+            if previous.version != payload["expected_version"]:
+                raise ValueError("Correction version conflict")
+            event = CaptureEvent(
+                event_id=payload.get("event_id") or str(uuid4()),
+                context=context,
+                occurred_at=datetime.now(timezone.utc),
+                role="user",
+                content=payload["content"],
+                source_kind="explicit_correction",
+                source_ref=payload.get("source_ref"),
+            )
+            return self.capture(
+                event,
+                scope=previous.metadata["scope"],
+                explicit=True,
+                correction={"target_fact_id": previous.id, "expected_version": previous.version},
+            )
+        if operation == "maintenance":
+            return {
+                "schema_version": 1,
+                "completed": await self.maintenance.run_once(force=True),
+                "maintenance": self.maintenance.health(),
+            }
+        if operation == "forget":
+            context = self.registry.validate_context(
+                ScopeContext.model_validate(payload["context"])
+            )
+            chunk = self.engine.store.get(payload["fact_id"])
+            if chunk is None or not scope_allows(
+                chunk.metadata, context, ("project", "workspace", "global")
+            ):
+                raise KeyError("Memory not found in the requested scope")
+            forgotten = self.engine.store.forget_fact(
+                chunk.id, expected_version=payload["expected_version"]
+            )
+            if forgotten:
+                self.engine.spreading_activation.remove_node(chunk.id)
+                self.engine.surprisal_gate.clear_history()
+                self.engine.sleep_daemon._episodic_buffer.clear()
+                self.engine.mutable_rag.clear_labile_queue()
+                self.engine._retrieval_traces.clear()
+            return {
+                "schema_version": 1,
+                "status": "committed",
+                "forgotten": forgotten,
+                "fact_id": chunk.id,
+                "erasure_scope": "live_memory_and_replay_suppression",
+            }
+        if operation == "inspect":
+            context = self.registry.validate_context(
+                ScopeContext.model_validate(payload["context"])
+            )
+            chunk = self.engine.store.get(payload["fact_id"])
+            if chunk is None or not scope_allows(
+                chunk.metadata, context, ("project", "workspace", "global")
+            ):
+                raise KeyError("Memory not found in the requested scope")
+            return {
+                "schema_version": 1,
+                "fact": chunk.model_dump(mode="json", exclude={"embedding"}),
+                "evidence": [
+                    item.model_dump(mode="json")
+                    for item in self.engine.store.list_fact_evidence(chunk.id)
+                ],
+                "revisions": [
+                    item.model_dump(mode="json")
+                    for item in self.engine.store.list_fact_revisions(chunk.id)
+                ],
+            }
+        if operation == "health":
+            return {
+                "schema_version": 1,
+                "status": "running",
+                "store": self.engine.store.get_stats(),
+                "runtime": {
+                    "store_type": type(self.engine.store).__name__,
+                    "database_path": getattr(self.engine.store, "db_path", None),
+                    "cognition_provider": type(self.engine.llm).__name__,
+                    "embedding_provider": type(self.engine.embedder).__name__,
+                },
+                "capabilities": {
+                    "capture": True,
+                    "retrieve": True,
+                    "background_maintenance": self.maintenance.health()["scheduler_running"],
+                },
+                "maintenance": self.maintenance.health(),
+                "cognition_provider": type(self.engine.llm).__name__,
+                "provider_state": {"cognition": dict(self._cognition_probe)},
+            }
+        raise ValueError(f"Unsupported memory operation: {operation}")

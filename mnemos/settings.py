@@ -14,11 +14,12 @@ from typing import Any, Literal, Mapping, cast
 
 from pydantic import BaseModel, ConfigDict, Field, model_validator
 
-from .config import MemoryGovernanceConfig, MemorySafetyConfig
+from .config import MemoryGovernanceConfig, MemorySafetyConfig, ModuleConfig
+from .retrieval import RetrievalConfig
 
-try:
+if sys.version_info >= (3, 11):
     import tomllib
-except ImportError:  # pragma: no cover
+else:  # pragma: no cover
     import tomli as tomllib
 
 
@@ -231,6 +232,10 @@ def _strip_global_only_sections(
 def _env_overrides(env: Mapping[str, str]) -> dict[str, Any]:
     overrides: dict[str, Any] = {}
 
+    user_profile_id = _env_value(env, "MNEMOS_USER_PROFILE_ID")
+    if user_profile_id is not None:
+        _set_nested(overrides, ("onboarding", "user_profile_id"), user_profile_id)
+
     llm_provider = _env_value(env, "MNEMOS_LLM_PROVIDER")
     if llm_provider is not None:
         _set_nested(overrides, ("llm", "provider"), llm_provider.lower())
@@ -246,6 +251,14 @@ def _env_overrides(env: Mapping[str, str]) -> dict[str, Any]:
     embedding_model = _env_value(env, "MNEMOS_EMBEDDING_MODEL")
     if embedding_model is not None:
         _set_nested(overrides, ("embedding", "model"), embedding_model)
+
+    embedding_revision = _env_value(env, "MNEMOS_EMBEDDING_REVISION")
+    if embedding_revision is not None:
+        _set_nested(overrides, ("embedding", "revision"), embedding_revision)
+    for module in ModuleConfig.model_fields:
+        enabled = _env_bool(env, f"MNEMOS_MODULE_{module.upper()}")
+        if enabled is not None:
+            _set_nested(overrides, ("modules", module), enabled)
 
     embedding_dim = _env_int(env, "MNEMOS_EMBEDDING_DIM")
     if embedding_dim is not None:
@@ -389,13 +402,16 @@ class EmbeddingSettings(BaseModel):
     ) = None
     model: str | None = None
     dim: int = 384
+    revision: str | None = None
 
 
 class StorageSettings(BaseModel):
     model_config = ConfigDict(extra="ignore")
 
     type: Literal["memory", "sqlite"] = "sqlite"
-    sqlite_path: str = "mnemos_memory.db"
+    sqlite_path: str = Field(
+        default_factory=lambda: str(default_global_config_path().with_name("memory.sqlite"))
+    )
 
 
 class RuntimeSettings(BaseModel):
@@ -417,7 +433,8 @@ class OnboardingSettings(BaseModel):
     model_config = ConfigDict(extra="ignore")
 
     mode: Literal["dev", "pro"] = "dev"
-    preferred_host: Literal["claude-code", "cursor", "codex"] = "claude-code"
+    preferred_host: Literal["claude-code", "cursor", "codex", "hermes"] = "claude-code"
+    user_profile_id: str | None = None
 
 
 class AppSettings(BaseModel):
@@ -428,6 +445,8 @@ class AppSettings(BaseModel):
     storage: StorageSettings = Field(default_factory=StorageSettings)
     providers: ProvidersSettings = Field(default_factory=ProvidersSettings)
     runtime: RuntimeSettings = Field(default_factory=RuntimeSettings)
+    modules: ModuleConfig = Field(default_factory=ModuleConfig)
+    retrieval: RetrievalConfig = Field(default_factory=RetrievalConfig)
     sleep: SleepSettings = Field(default_factory=SleepSettings)
     safety: MemorySafetyConfig = Field(default_factory=MemorySafetyConfig)
     governance: MemoryGovernanceConfig = Field(default_factory=MemoryGovernanceConfig)
@@ -437,10 +456,7 @@ class AppSettings(BaseModel):
     def apply_inferred_defaults(self) -> "AppSettings":
         if self.embedding.provider is None:
             if self.llm.provider in {"ollama", "openai", "openclaw", "openrouter"}:
-                self.embedding.provider = cast(
-                    Literal["ollama", "openai", "openclaw", "openrouter"],
-                    self.llm.provider,
-                )
+                self.embedding.provider = self.llm.provider
             else:
                 self.embedding.provider = "fastembed"
 
@@ -510,6 +526,10 @@ def load_settings(
     embedding_defaults = merged.get("embedding")
     if isinstance(embedding_defaults, dict):
         embedding_defaults["provider"] = None
+        embedding_defaults["model"] = None
+    llm_defaults = merged.get("llm")
+    if isinstance(llm_defaults, dict):
+        llm_defaults["model"] = None
     if resolved_global_path.exists():
         merged = _deep_merge(merged, _read_toml_file(resolved_global_path))
 
@@ -606,8 +626,9 @@ def import_existing_setup(
 
     host_sources = [
         ("cursor", cwd_path / ".cursor" / "mcp.json", _extract_mnemos_env_from_json),
+        ("claude-code", cwd_path / ".mcp.json", _extract_mnemos_env_from_json),
         (
-            "claude-code",
+            "claude-desktop",
             home_path / ".claude" / "claude_desktop_config.json",
             _extract_mnemos_env_from_json,
         ),
@@ -688,4 +709,20 @@ def save_settings(
     if scope == "project":
         payload.pop("providers", None)
     text = "\n".join(_emit_toml_sections(payload)).strip() + "\n"
-    target.write_text(text, encoding="utf-8")
+    from uuid import uuid4
+    from .service import _protect_private_path
+
+    temporary = target.with_name(f".{target.name}.{uuid4().hex}.tmp")
+    fd = os.open(temporary, os.O_CREAT | os.O_EXCL | os.O_WRONLY, 0o600)
+    try:
+        _protect_private_path(temporary)
+        with os.fdopen(fd, "w", encoding="utf-8") as handle:
+            fd = -1
+            handle.write(text)
+            handle.flush()
+            os.fsync(handle.fileno())
+        os.replace(temporary, target)
+    finally:
+        if fd != -1:
+            os.close(fd)
+        temporary.unlink(missing_ok=True)

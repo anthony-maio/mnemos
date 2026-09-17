@@ -21,11 +21,16 @@ from __future__ import annotations
 
 import hashlib
 import json
+import os
+from pathlib import Path
+import re
 import sqlite3
+import struct
 import threading
+from uuid import uuid4
 from abc import ABC, abstractmethod
 from collections.abc import Callable
-from datetime import datetime, timezone
+from datetime import datetime, timedelta, timezone
 from typing import Any, cast
 
 from ..types import (
@@ -35,6 +40,7 @@ from ..types import (
     ReconsolidationJob,
     RetrievalFeedbackEvent,
 )
+from ..jobs import DurableJob, FactEvidence, FactRevision, JobStatus
 from .embeddings import cosine_similarity
 
 
@@ -43,11 +49,32 @@ def normalize_memory_text(text: str) -> str:
     return " ".join(text.strip().lower().split())
 
 
-def compute_canonical_key(content: str, scope: str, scope_id: str | None) -> str:
-    normalized = normalize_memory_text(content)
+def compute_canonical_key(
+    content: str,
+    scope: str,
+    scope_id: str | None,
+    user_profile_id: str | None = None,
+) -> str:
+    """Hash content, scope, and optional profile into a canonical identity.
+
+    Canonical content deliberately preserves case.  Existing callers that omit
+    a profile retain the legacy key shape and remain readable.
+    """
+    normalized = " ".join(content.strip().split())
     scope_token = scope.strip().lower()
-    scope_id_token = "" if scope_id is None else scope_id.strip().lower()
-    payload = f"{scope_token}|{scope_id_token}|{normalized}".encode("utf-8")
+    scope_id_token = "" if scope_id is None else scope_id.strip()
+    if user_profile_id is None:
+        # Preserve the legacy no-profile key format for existing databases.
+        payload_text = f"{scope_token}|{scope_id_token.lower()}|{normalized.lower()}"
+    else:
+        # Profile identities and scope IDs are opaque and case-sensitive.  A
+        # structured payload avoids delimiter collisions between identities.
+        payload_text = json.dumps(
+            [user_profile_id.strip(), scope_token, scope_id_token, normalized],
+            ensure_ascii=False,
+            separators=(",", ":"),
+        )
+    payload = payload_text.encode("utf-8")
     return hashlib.sha256(payload).hexdigest()
 
 
@@ -87,6 +114,22 @@ def _chunk_scope(chunk: MemoryChunk) -> tuple[str, str | None]:
     if isinstance(scope_id_raw, str) and scope_id_raw.strip():
         return scope, scope_id_raw.strip()
     return scope, "default"
+
+
+def _source_identity_key(event: EpisodicEvent) -> str | None:
+    """Build a case-sensitive identity for an externally supplied event ID."""
+    metadata = event.metadata
+    raw_id = metadata.get("source_event_id") or metadata.get("event_id")
+    if raw_id is None or not str(raw_id):
+        return None
+    host = metadata.get("host") or metadata.get("source_host") or event.source
+    profile = metadata.get("user_profile_id") or ""
+    session = metadata.get("session_id") or ""
+    return json.dumps(
+        [str(host), str(profile), str(session), str(raw_id)],
+        ensure_ascii=False,
+        separators=(",", ":"),
+    )
 
 
 class MemoryStore(ABC):
@@ -192,6 +235,20 @@ class MemoryStore(ABC):
                 return chunk
         return None
 
+    def list_chunks(
+        self,
+        *,
+        limit: int = 100,
+        after_id: str = "",
+        filter_fn: Callable[[MemoryChunk], bool] | None = None,
+    ) -> list[MemoryChunk]:
+        chunks = sorted(self.get_all(), key=lambda chunk: chunk.id)
+        return [
+            chunk
+            for chunk in chunks
+            if chunk.id > after_id and (filter_fn is None or filter_fn(chunk))
+        ][: max(0, limit)]
+
     def get_graph_edges(self, chunk_ids: list[str] | None = None) -> dict[str, dict[str, float]]:
         """Return persisted graph edges keyed by source chunk ID."""
         return {}
@@ -199,6 +256,12 @@ class MemoryStore(ABC):
     def replace_graph_neighbors(self, chunk_id: str, neighbors: dict[str, float]) -> None:
         """Replace the outgoing graph-neighbor set for a chunk."""
         return None
+
+    def set_graph_rebuild_cursor(self, cursor: str | None) -> None:
+        raise NotImplementedError("This backend does not support durable graph rebuilding")
+
+    def forget_fact(self, fact_id: str, *, expected_version: int) -> bool:
+        raise NotImplementedError("This backend does not support durable forget suppression")
 
     def store_feedback_event(self, event: RetrievalFeedbackEvent) -> None:
         """Persist one retrieval-feedback event."""
@@ -208,6 +271,7 @@ class MemoryStore(ABC):
         self,
         *,
         event_type: str | None = None,
+        user_profile_id: str | None = None,
         scope: str | None = None,
         scope_id: str | None = None,
     ) -> list[RetrievalFeedbackEvent]:
@@ -223,16 +287,154 @@ class MemoryStore(ABC):
         """Persist one episodic event, returning the canonical stored record."""
         raise NotImplementedError("This storage backend does not support episodic events.")
 
+    def get_episodic_event(self, event_id: str) -> EpisodicEvent | None:
+        for event in self.list_episodic_events():
+            if event.id == event_id:
+                return event
+        return None
+
+    def capture_event_and_job(self, event: EpisodicEvent, job: DurableJob) -> EpisodicEvent:
+        stored = self.append_episodic_event(event)
+        self.enqueue_job(job)
+        return stored
+
     def list_episodic_events(
         self,
         *,
         status: str | None = None,
         scope: str | None = None,
         scope_id: str | None = None,
+        user_profile_id: str | None = None,
+        session_id: str | None = None,
+        before: datetime | None = None,
+        newest_first: bool = False,
         limit: int = 0,
     ) -> list[EpisodicEvent]:
         """List persisted episodic events with optional filters."""
         return []
+
+    def enqueue_job(self, job: DurableJob) -> DurableJob:
+        """Queue a durable maintenance job."""
+        raise NotImplementedError("This storage backend does not support durable jobs.")
+
+    def get_job(self, job_id: str) -> DurableJob | None:
+        return next((job for job in self.list_jobs() if job.id == job_id), None)
+
+    def claim_jobs(
+        self,
+        *,
+        owner: str,
+        limit: int = 1,
+        lease_seconds: int = 300,
+        job_id: str | None = None,
+        now: datetime | None = None,
+    ) -> list[DurableJob]:
+        """Claim available jobs, recovering leases that have expired."""
+        raise NotImplementedError("This storage backend does not support durable jobs.")
+
+    def complete_job(
+        self,
+        job_id: str,
+        *,
+        owner: str,
+        lease_token: str | None = None,
+        result: dict[str, Any] | None = None,
+        now: datetime | None = None,
+    ) -> bool:
+        raise NotImplementedError("This storage backend does not support durable jobs.")
+
+    def fail_job(
+        self,
+        job_id: str,
+        *,
+        owner: str,
+        lease_token: str | None = None,
+        error: str,
+        now: datetime | None = None,
+    ) -> bool:
+        raise NotImplementedError("This storage backend does not support durable jobs.")
+
+    def commit_fact_and_job(
+        self,
+        job_id: str,
+        *,
+        owner: str,
+        lease_token: str | None = None,
+        chunk: MemoryChunk | None = None,
+        chunks: list[MemoryChunk] | None = None,
+        evidence: list[FactEvidence] | None = None,
+        revision: FactRevision | None = None,
+        revisions: list[FactRevision] | None = None,
+        processed_event_ids: list[str] | None = None,
+        expected_version: int | None = None,
+        expected_versions: dict[str, int] | None = None,
+        result: dict[str, Any] | None = None,
+        now: datetime | None = None,
+    ) -> bool:
+        raise NotImplementedError("This storage backend does not support durable jobs.")
+
+    def retry_job(self, job_id: str, *, now: datetime | None = None) -> bool:
+        raise NotImplementedError("This storage backend does not support durable jobs.")
+
+    def list_jobs(
+        self,
+        *,
+        status: str | None = None,
+        limit: int = 0,
+    ) -> list[DurableJob]:
+        raise NotImplementedError("This storage backend does not support durable jobs.")
+
+    def list_fact_evidence(self, fact_id: str) -> list[FactEvidence]:
+        raise NotImplementedError("This storage backend does not support fact evidence.")
+
+    def job_summary(
+        self, *, now: datetime, user_profile_id: str | None = None, project_id: str | None = None
+    ) -> dict[str, Any]:
+        jobs = self.list_jobs()
+        if user_profile_id is not None:
+            jobs = [
+                job
+                for job in jobs
+                if job.payload.get("context", {}).get("user_profile_id") == user_profile_id
+                and job.payload.get("context", {}).get("project_id") == project_id
+            ]
+        unfinished = [job for job in jobs if job.status != "completed"]
+        pending = [job for job in jobs if job.status == "pending"]
+        return {
+            **{
+                status: sum(job.status == status for job in jobs)
+                for status in ("pending", "leased", "exhausted", "completed")
+            },
+            "retry_count": sum(max(0, job.attempt_count - 1) for job in jobs),
+            "oldest_unfinished_seconds": max(
+                ((now - job.created_at).total_seconds() for job in unfinished), default=0
+            ),
+            "oldest_pending_seconds": max(
+                ((now - job.created_at).total_seconds() for job in pending), default=0
+            ),
+        }
+
+    def list_fact_revisions(self, fact_id: str) -> list[FactRevision]:
+        raise NotImplementedError("This storage backend does not support fact revisions.")
+
+    def record_suppression(
+        self,
+        *,
+        fact_id: str | None = None,
+        canonical_key: str | None = None,
+        source_event_id: str | None = None,
+        reason: str,
+    ) -> str:
+        raise NotImplementedError("This storage backend does not support suppressions.")
+
+    def is_suppressed(
+        self,
+        *,
+        fact_id: str | None = None,
+        canonical_key: str | None = None,
+        source_event_id: str | None = None,
+    ) -> bool:
+        raise NotImplementedError("This storage backend does not support suppressions.")
 
     def update_episodic_event(
         self,
@@ -284,10 +486,18 @@ class MemoryStore(ABC):
             return False
         touched_at = retrieved_at or datetime.now(timezone.utc)
         chunk.access_count += 1
-        chunk.updated_at = touched_at
         chunk.last_retrieved_at = touched_at
         chunk.reconsolidation_due_at = reconsolidation_due_at
         return self.update(chunk_id, chunk)
+
+    def mark_retrieved_many(
+        self, chunk_ids: list[str], *, retrieved_at: datetime | None = None
+    ) -> int:
+        """Record one retrieval for each distinct selected fact."""
+        return sum(
+            self.mark_retrieved(chunk_id, retrieved_at=retrieved_at)
+            for chunk_id in dict.fromkeys(chunk_ids)
+        )
 
     def rebuild_indexes(
         self,
@@ -429,7 +639,6 @@ class InMemoryStore(MemoryStore):
                 return False
             touched_at = retrieved_at or datetime.now(timezone.utc)
             chunk.access_count += 1
-            chunk.updated_at = touched_at
             chunk.last_retrieved_at = touched_at
             chunk.reconsolidation_due_at = reconsolidation_due_at
             return True
@@ -471,12 +680,15 @@ class InMemoryStore(MemoryStore):
         self,
         *,
         event_type: str | None = None,
+        user_profile_id: str | None = None,
         scope: str | None = None,
         scope_id: str | None = None,
     ) -> list[RetrievalFeedbackEvent]:
         with self._lock:
             events = list(self._feedback_events)
 
+        if user_profile_id is not None:
+            events = [event for event in events if event.user_profile_id == user_profile_id]
         if event_type is not None:
             events = [event for event in events if event.event_type == event_type]
         if scope is not None:
@@ -486,11 +698,11 @@ class InMemoryStore(MemoryStore):
         return events
 
     def upsert_canonical(self, chunk: MemoryChunk) -> MemoryChunk:
-        canonical_key = chunk.canonical_key
-        if not canonical_key:
-            scope, scope_id = _chunk_scope(chunk)
-            canonical_key = compute_canonical_key(chunk.content, scope, scope_id)
-            chunk.canonical_key = canonical_key
+        scope, scope_id = _chunk_scope(chunk)
+        profile = chunk.metadata.get("user_profile_id")
+        profile_id = profile.strip() if isinstance(profile, str) and profile.strip() else None
+        canonical_key = compute_canonical_key(chunk.content, scope, scope_id, profile_id)
+        chunk.canonical_key = canonical_key
         if chunk.last_observed_at is None:
             chunk.last_observed_at = chunk.updated_at
         if chunk.observation_count <= 0:
@@ -548,11 +760,37 @@ class InMemoryStore(MemoryStore):
 
     def append_episodic_event(self, event: EpisodicEvent) -> EpisodicEvent:
         with self._lock:
+            source_identity = _source_identity_key(event)
+            if source_identity is not None:
+                existing_by_source = next(
+                    (
+                        stored
+                        for stored in self._episodic_events.values()
+                        if _source_identity_key(stored) == source_identity
+                    ),
+                    None,
+                )
+                if existing_by_source is not None:
+                    if (
+                        existing_by_source.content != event.content
+                        or existing_by_source.role != event.role
+                        or existing_by_source.scope != event.scope
+                        or existing_by_source.scope_id != event.scope_id
+                    ):
+                        raise ValueError("Source event identity already has a different payload")
+                    return existing_by_source
             existing = self._episodic_events.get(event.event_fingerprint)
             if existing is not None:
                 return existing
             self._episodic_events[event.event_fingerprint] = event
             return event
+
+    def get_episodic_event(self, event_id: str) -> EpisodicEvent | None:
+        with self._lock:
+            return next(
+                (event for event in self._episodic_events.values() if event.id == event_id),
+                None,
+            )
 
     def list_episodic_events(
         self,
@@ -560,6 +798,10 @@ class InMemoryStore(MemoryStore):
         status: str | None = None,
         scope: str | None = None,
         scope_id: str | None = None,
+        user_profile_id: str | None = None,
+        session_id: str | None = None,
+        before: datetime | None = None,
+        newest_first: bool = False,
         limit: int = 0,
     ) -> list[EpisodicEvent]:
         with self._lock:
@@ -571,7 +813,17 @@ class InMemoryStore(MemoryStore):
             events = [event for event in events if event.scope == scope]
         if scope_id is not None:
             events = [event for event in events if event.scope_id == scope_id]
-        events.sort(key=lambda event: event.created_at)
+        if user_profile_id is not None:
+            events = [
+                event
+                for event in events
+                if event.metadata.get("user_profile_id") == user_profile_id
+            ]
+        if session_id is not None:
+            events = [event for event in events if event.metadata.get("session_id") == session_id]
+        if before is not None:
+            events = [event for event in events if event.occurred_at < before]
+        events.sort(key=lambda event: (event.occurred_at, event.id), reverse=newest_first)
         return events[:limit] if limit > 0 else events
 
     def update_episodic_event(
@@ -688,6 +940,7 @@ class SQLiteStore(MemoryStore):
             access_count INTEGER NOT NULL DEFAULT 0,
             version INTEGER NOT NULL DEFAULT 1,
             canonical_key TEXT,
+            user_profile_id TEXT,
             surprisal_score REAL,
             surprisal_status TEXT NOT NULL DEFAULT 'unknown',
             cognitive_state_status TEXT NOT NULL DEFAULT 'unknown',
@@ -735,6 +988,10 @@ class SQLiteStore(MemoryStore):
             scope_id TEXT,
             source TEXT NOT NULL,
             hook_event TEXT,
+            source_event_id TEXT,
+            source_identity_key TEXT,
+            user_profile_id TEXT,
+            session_id TEXT,
             metadata TEXT NOT NULL DEFAULT '{}',
             status TEXT NOT NULL DEFAULT 'pending',
             error TEXT,
@@ -801,6 +1058,70 @@ class SQLiteStore(MemoryStore):
         ON memory_edges(edge_type, target_id);
     """
 
+    _CREATE_DURABLE_JOBS_SQL = """
+        CREATE TABLE IF NOT EXISTS memory_jobs (
+            id TEXT PRIMARY KEY,
+            kind TEXT NOT NULL,
+            payload TEXT NOT NULL DEFAULT '{}',
+            status TEXT NOT NULL DEFAULT 'pending',
+            attempt_count INTEGER NOT NULL DEFAULT 0,
+            max_attempts INTEGER NOT NULL DEFAULT 5,
+            available_at TEXT NOT NULL,
+            lease_owner TEXT,
+            lease_token TEXT,
+            lease_until TEXT,
+            last_error TEXT,
+            result TEXT,
+            created_at TEXT NOT NULL,
+            updated_at TEXT NOT NULL
+        );
+    """
+
+    _CREATE_FACT_EVIDENCE_SQL = """
+        CREATE TABLE IF NOT EXISTS fact_evidence (
+            evidence_id TEXT PRIMARY KEY,
+            fact_id TEXT NOT NULL,
+            source_event_id TEXT,
+            excerpt TEXT NOT NULL,
+            source_ref TEXT,
+            created_at TEXT NOT NULL,
+            FOREIGN KEY (fact_id) REFERENCES memory_chunks(id) ON DELETE CASCADE
+        );
+    """
+
+    _CREATE_FACT_REVISIONS_SQL = """
+        CREATE TABLE IF NOT EXISTS fact_revisions (
+            revision_id TEXT PRIMARY KEY,
+            fact_id TEXT NOT NULL,
+            version INTEGER NOT NULL,
+            content TEXT NOT NULL,
+            reason TEXT,
+            created_at TEXT NOT NULL,
+            FOREIGN KEY (fact_id) REFERENCES memory_chunks(id) ON DELETE CASCADE
+        );
+    """
+
+    _CREATE_MEMORY_SUPPRESSIONS_SQL = """
+        CREATE TABLE IF NOT EXISTS memory_suppressions (
+            suppression_id TEXT PRIMARY KEY,
+            fact_id TEXT,
+            canonical_key TEXT,
+            source_event_id TEXT,
+            reason TEXT NOT NULL,
+            created_at TEXT NOT NULL
+        );
+    """
+
+    _CREATE_JOB_INDEX_SQL = """
+        CREATE INDEX IF NOT EXISTS idx_memory_jobs_available
+        ON memory_jobs(status, available_at, lease_until, created_at);
+    """
+
+    _CREATE_EPISODIC_SCOPE_INDEX_SQL = """
+        CREATE INDEX IF NOT EXISTS idx_episodic_events_scope_time
+        ON episodic_events(user_profile_id, session_id, scope, scope_id, occurred_at);
+    """
+
     _CREATE_FTS_SQL = """
         CREATE VIRTUAL TABLE IF NOT EXISTS memory_fts
         USING fts5(content, content='memory_chunks', content_rowid='rowid');
@@ -825,7 +1146,7 @@ class SQLiteStore(MemoryStore):
 
     _CREATE_FTS_UPDATE_TRIGGER_SQL = """
         CREATE TRIGGER IF NOT EXISTS memory_chunks_au
-        AFTER UPDATE ON memory_chunks
+        AFTER UPDATE OF content ON memory_chunks
         BEGIN
             INSERT INTO memory_fts(memory_fts, rowid, content)
             VALUES ('delete', old.rowid, old.content);
@@ -833,26 +1154,136 @@ class SQLiteStore(MemoryStore):
         END;
     """
 
-    _SCHEMA_VERSION = "3"
+    _SCHEMA_VERSION = "7"
+    _CHUNK_SELECT_COLUMNS = """
+        id, content, embedding, metadata, salience, cognitive_state,
+        created_at, updated_at, access_count, version, canonical_key, user_profile_id,
+        surprisal_score, surprisal_status, cognitive_state_status, last_observed_at,
+        observation_count, last_retrieved_at, reconsolidation_due_at
+    """
     _GRAPH_EDGE_TYPE = "SEMANTIC_SIMILAR"
     _SQLITE_VEC_DIM_KEY = "sqlite_vec_dim"
 
     def __init__(self, db_path: str = "mnemos_memory.db", name: str = "sqlite") -> None:
         self.db_path = db_path
         self.name = name
-        self._lock = threading.Lock()
+        self._lock = threading.RLock()
+        self._transaction_active = False
         self._sqlite_vec_enabled = False
         self._sqlite_vec_dim: int | None = None
         self._sqlite_vec_module: Any | None = None
+        self.migration_backup: str | None = None
+        if str(db_path) != ":memory:":
+            from ..service import _protect_private_path
+
+            database_path = Path(db_path)
+            if not database_path.exists():
+                fd = os.open(database_path, os.O_CREAT | os.O_EXCL | os.O_RDWR, 0o600)
+                os.close(fd)
+            _protect_private_path(database_path)
         self._conn = sqlite3.connect(
             db_path,
             check_same_thread=False,
         )
-        self._conn.execute("PRAGMA foreign_keys=ON;")
-        self._conn.execute("PRAGMA journal_mode=WAL;")  # Better concurrent access
-        self._conn.execute("PRAGMA synchronous=NORMAL;")  # Lower fsync cost for high-read local use
-        self._load_sqlite_vec_extension()
-        self._initialize_schema()
+        try:
+            self._backup_before_migration()
+            self._conn.execute("PRAGMA foreign_keys=ON;")
+            self._conn.execute("PRAGMA journal_mode=WAL;")
+            self._conn.execute("PRAGMA synchronous=FULL;")
+            if str(db_path) != ":memory:":
+                for suffix in ("-wal", "-shm"):
+                    auxiliary = Path(str(db_path) + suffix)
+                    if auxiliary.exists():
+                        _protect_private_path(auxiliary)
+            self._load_sqlite_vec_extension()
+            self._initialize_schema()
+        except Exception:
+            self._conn.close()
+            raise
+
+    def _backup_before_migration(self) -> None:
+        tables = {
+            row[0]
+            for row in self._conn.execute("SELECT name FROM sqlite_master WHERE type='table'")
+        }
+        existing = self._meta_value("schema_version") if "mnemos_meta" in tables else None
+        if existing is not None and int(existing) > int(self._SCHEMA_VERSION):
+            raise ValueError("Database schema is newer than this Mnemos version")
+        if not tables or existing == self._SCHEMA_VERSION or str(self.db_path) == ":memory:":
+            return
+        from ..service import _protect_private_path
+
+        backup_path = Path(
+            str(self.db_path) + f".pre-schema-{self._SCHEMA_VERSION}-{uuid4().hex}.sqlite"
+        )
+        fd = os.open(backup_path, os.O_CREAT | os.O_EXCL | os.O_RDWR, 0o600)
+        os.close(fd)
+        _protect_private_path(backup_path)
+        destination = sqlite3.connect(str(backup_path))
+        try:
+            self._conn.backup(destination)
+            # Reading the schema marker verifies that the snapshot is readable
+            # without requiring optional virtual-table extensions on this connection.
+            destination.execute("SELECT COUNT(*) FROM sqlite_master").fetchone()
+        finally:
+            destination.close()
+        self.migration_backup = str(backup_path.resolve())
+
+    def bind_embedding_identity(self, identity: dict[str, Any]) -> None:
+        """Reject same-dimension model swaps instead of silently mixing vector spaces."""
+        encoded = json.dumps(identity, sort_keys=True, separators=(",", ":"))
+        with self._lock:
+            existing = self._meta_value("embedding_identity")
+            if existing is not None and existing != encoded:
+                raise ValueError(
+                    "Embedding identity changed; build and activate a reindex generation"
+                )
+            if existing is None:
+                count = self._conn.execute(
+                    "SELECT COUNT(*) FROM memory_chunks WHERE embedding IS NOT NULL"
+                ).fetchone()[0]
+                if count:
+                    raise ValueError(
+                        "Existing embeddings have no verified identity; explicit reindex is required"
+                    )
+                self._conn.execute(
+                    "INSERT INTO mnemos_meta(key,value) VALUES ('embedding_identity',?)", (encoded,)
+                )
+                self._conn.commit()
+
+    def bind_graph_contract(self, contract: dict[str, Any]) -> None:
+        """Invalidate incompatible derived edges and resume rebuilding in bounded batches."""
+        with self._lock:
+            encoded = json.dumps(
+                {**contract, "embedding_identity": self._meta_value("embedding_identity")},
+                sort_keys=True,
+                separators=(",", ":"),
+            )
+            if self._meta_value("graph_contract") == encoded:
+                return
+            self._conn.execute("DELETE FROM memory_edges")
+            self._conn.executemany(
+                "INSERT INTO mnemos_meta(key,value) VALUES (?,?) "
+                "ON CONFLICT(key) DO UPDATE SET value=excluded.value",
+                [("graph_contract", encoded), ("graph_rebuild_after", "")],
+            )
+            self._conn.commit()
+
+    def graph_rebuild_cursor(self) -> str | None:
+        with self._lock:
+            return self._meta_value("graph_rebuild_after")
+
+    def set_graph_rebuild_cursor(self, cursor: str | None) -> None:
+        with self._lock:
+            if cursor is None:
+                self._conn.execute("DELETE FROM mnemos_meta WHERE key='graph_rebuild_after'")
+            else:
+                self._conn.execute(
+                    "INSERT INTO mnemos_meta(key,value) VALUES ('graph_rebuild_after',?) "
+                    "ON CONFLICT(key) DO UPDATE SET value=excluded.value",
+                    (cursor,),
+                )
+            self._conn.commit()
 
     def _load_sqlite_vec_extension(self) -> None:
         try:
@@ -907,7 +1338,48 @@ class SQLiteStore(MemoryStore):
         self._ensure_column("memory_chunks", "last_retrieved_at", "TEXT")
         self._ensure_column("memory_chunks", "reconsolidation_due_at", "TEXT")
 
+    def _apply_migrations(self) -> None:
+        """Apply additive numbered migrations without rewriting existing data."""
+        self._ensure_column("memory_chunks", "user_profile_id", "TEXT")
+        self._ensure_column("retrieval_feedback_events", "user_profile_id", "TEXT")
+        self._ensure_column("episodic_events", "source_event_id", "TEXT")
+        self._ensure_column("episodic_events", "source_identity_key", "TEXT")
+        self._ensure_column("episodic_events", "user_profile_id", "TEXT")
+        self._ensure_column("episodic_events", "session_id", "TEXT")
+        self._conn.execute("""UPDATE episodic_events
+               SET source_identity_key = source || '|' || COALESCE(user_profile_id, '') || '|'
+                   || COALESCE(session_id, '') || '|' || source_event_id
+               WHERE source_event_id IS NOT NULL AND source_identity_key IS NULL""")
+        self._conn.execute(
+            "CREATE UNIQUE INDEX IF NOT EXISTS idx_episodic_source_event "
+            "ON episodic_events(source_identity_key) WHERE source_identity_key IS NOT NULL"
+        )
+        self._conn.execute(self._CREATE_DURABLE_JOBS_SQL)
+        self._ensure_column("memory_jobs", "lease_token", "TEXT")
+        self._conn.execute(self._CREATE_FACT_EVIDENCE_SQL)
+        self._conn.execute(self._CREATE_FACT_REVISIONS_SQL)
+        self._conn.execute(self._CREATE_MEMORY_SUPPRESSIONS_SQL)
+        self._conn.execute(self._CREATE_JOB_INDEX_SQL)
+        self._conn.execute(self._CREATE_EPISODIC_SCOPE_INDEX_SQL)
+        self._conn.execute(
+            "INSERT INTO mnemos_meta(key, value) VALUES ('migration_4', 'applied') "
+            "ON CONFLICT(key) DO UPDATE SET value = excluded.value"
+        )
+        self._conn.execute("""CREATE INDEX IF NOT EXISTS idx_memory_chunks_scope
+            ON memory_chunks(user_profile_id, json_extract(metadata, '$.scope'),
+                             json_extract(metadata, '$.scope_id'))""")
+        self._conn.execute(
+            "INSERT OR IGNORE INTO mnemos_meta(key, value) VALUES ('migration_5', 'applied')"
+        )
+
     def _initialize_schema(self) -> None:
+        if self._conn.execute(
+            "SELECT 1 FROM sqlite_master WHERE type='table' AND name='mnemos_meta'"
+        ).fetchone():
+            existing = self._meta_value("schema_version")
+            if existing is not None and int(existing) > int(self._SCHEMA_VERSION):
+                self._conn.close()
+                raise ValueError("Database schema is newer than this Mnemos version")
         self._conn.execute(self._CREATE_TABLE_SQL)
         self._ensure_chunk_columns()
         self._conn.execute(self._CREATE_CHUNK_CANONICAL_INDEX_SQL)
@@ -925,7 +1397,24 @@ class SQLiteStore(MemoryStore):
         self._conn.execute(self._CREATE_FTS_SQL)
         self._conn.execute(self._CREATE_FTS_INSERT_TRIGGER_SQL)
         self._conn.execute(self._CREATE_FTS_DELETE_TRIGGER_SQL)
+        self._conn.execute("DROP TRIGGER IF EXISTS memory_chunks_au")
         self._conn.execute(self._CREATE_FTS_UPDATE_TRIGGER_SQL)
+        self._apply_migrations()
+        # A regular table gives scoped exact cosine queries inexpensive primary
+        # key lookups. vec0 point reads repeatedly decode internal vector blocks.
+        # This is derived data; the JSON vectors remain the portable authority.
+        vector_values_existed = self._conn.execute(
+            "SELECT 1 FROM sqlite_master WHERE type='table' AND name='memory_vector_values'"
+        ).fetchone()
+        self._conn.execute("""CREATE TABLE IF NOT EXISTS memory_vector_values (
+            rowid INTEGER PRIMARY KEY, embedding BLOB NOT NULL, dimension INTEGER NOT NULL
+        )""")
+        self._conn.execute("""CREATE TRIGGER IF NOT EXISTS memory_vector_values_delete
+            AFTER DELETE ON memory_chunks BEGIN
+                DELETE FROM memory_vector_values WHERE rowid=OLD.rowid;
+            END""")
+        if not vector_values_existed:
+            self._rebuild_vector_values()
         self._conn.execute(
             """
             INSERT INTO mnemos_meta(key, value)
@@ -1008,6 +1497,7 @@ class SQLiteStore(MemoryStore):
         return self._sqlite_vec_module.serialize_float32(embedding)
 
     def _rebuild_vec_index(self) -> None:
+        self._rebuild_vector_values()
         if (
             not self._sqlite_vec_enabled
             or self._sqlite_vec_dim is None
@@ -1033,10 +1523,26 @@ class SQLiteStore(MemoryStore):
                 payload,
             )
 
-    def _sync_vec_row(self, chunk_id: str, embedding: list[float] | None) -> None:
-        if not self._sqlite_vec_enabled:
-            return
+    def _rebuild_vector_values(self) -> None:
+        """Rebuild the portable binary cache inside the caller's transaction."""
+        self._conn.execute("DELETE FROM memory_vector_values")
+        rows = self._conn.execute(
+            "SELECT rowid, embedding FROM memory_chunks WHERE embedding IS NOT NULL"
+        )
+        while batch := rows.fetchmany(100):
+            payload = []
+            for rowid, raw in batch:
+                embedding = json.loads(raw)
+                if isinstance(embedding, list) and embedding:
+                    payload.append(
+                        (int(rowid), struct.pack(f"<{len(embedding)}f", *embedding), len(embedding))
+                    )
+            self._conn.executemany(
+                "INSERT INTO memory_vector_values(rowid, embedding, dimension) VALUES (?, ?, ?)",
+                payload,
+            )
 
+    def _sync_vec_row(self, chunk_id: str, embedding: list[float] | None) -> None:
         row = self._conn.execute(
             "SELECT rowid FROM memory_chunks WHERE id = ?",
             (chunk_id,),
@@ -1044,6 +1550,15 @@ class SQLiteStore(MemoryStore):
         if row is None:
             return
         rowid = int(row[0])
+
+        self._conn.execute("DELETE FROM memory_vector_values WHERE rowid=?", (rowid,))
+        if embedding:
+            self._conn.execute(
+                "INSERT INTO memory_vector_values(rowid, embedding, dimension) VALUES (?, ?, ?)",
+                (rowid, struct.pack(f"<{len(embedding)}f", *embedding), len(embedding)),
+            )
+        if not self._sqlite_vec_enabled:
+            return
 
         if self._vec_table_exists():
             self._conn.execute("DELETE FROM memory_vec WHERE rowid = ?", (rowid,))
@@ -1085,6 +1600,11 @@ class SQLiteStore(MemoryStore):
             chunk.access_count,
             chunk.version,
             chunk.canonical_key,
+            (
+                str(chunk.metadata.get("user_profile_id"))
+                if chunk.metadata.get("user_profile_id") not in (None, "")
+                else None
+            ),
             chunk.surprisal_score,
             chunk.surprisal_status,
             chunk.cognitive_state_status,
@@ -1100,29 +1620,55 @@ class SQLiteStore(MemoryStore):
 
     def _row_to_chunk(self, row: tuple[Any, ...]) -> MemoryChunk:
         """Deserialize a database row into a MemoryChunk."""
-        (
-            id_,
-            content,
-            embedding_json,
-            metadata_json,
-            salience,
-            cognitive_state_json,
-            created_at,
-            updated_at,
-            access_count,
-            version,
-            canonical_key,
-            surprisal_score,
-            surprisal_status,
-            cognitive_state_status,
-            last_observed_at,
-            observation_count,
-            last_retrieved_at,
-            reconsolidation_due_at,
-        ) = row
+        if len(row) == 19:
+            (
+                id_,
+                content,
+                embedding_json,
+                metadata_json,
+                salience,
+                cognitive_state_json,
+                created_at,
+                updated_at,
+                access_count,
+                version,
+                canonical_key,
+                user_profile_id,
+                surprisal_score,
+                surprisal_status,
+                cognitive_state_status,
+                last_observed_at,
+                observation_count,
+                last_retrieved_at,
+                reconsolidation_due_at,
+            ) = row
+        else:
+            (
+                id_,
+                content,
+                embedding_json,
+                metadata_json,
+                salience,
+                cognitive_state_json,
+                created_at,
+                updated_at,
+                access_count,
+                version,
+                canonical_key,
+                surprisal_score,
+                surprisal_status,
+                cognitive_state_status,
+                last_observed_at,
+                observation_count,
+                last_retrieved_at,
+                reconsolidation_due_at,
+            ) = row
+            user_profile_id = None
 
         embedding = json.loads(embedding_json) if embedding_json else None
         metadata = json.loads(metadata_json) if metadata_json else {}
+        if user_profile_id not in (None, ""):
+            metadata.setdefault("user_profile_id", str(user_profile_id))
         cognitive_state = (
             CognitiveState.model_validate_json(cognitive_state_json)
             if cognitive_state_json
@@ -1160,6 +1706,7 @@ class SQLiteStore(MemoryStore):
             json.dumps(event.chunk_ids),
             event.notes,
             event.created_at.isoformat(),
+            event.user_profile_id,
         )
 
     def _row_to_feedback_event(self, row: tuple[Any, ...]) -> RetrievalFeedbackEvent:
@@ -1172,6 +1719,7 @@ class SQLiteStore(MemoryStore):
             chunk_ids_json,
             notes,
             created_at,
+            user_profile_id,
         ) = row
 
         chunk_ids = json.loads(chunk_ids_json) if chunk_ids_json else []
@@ -1188,9 +1736,14 @@ class SQLiteStore(MemoryStore):
             chunk_ids=[str(chunk_id) for chunk_id in chunk_ids],
             notes=str(notes),
             created_at=created_dt,
+            user_profile_id=user_profile_id,
         )
 
     def _episodic_event_to_row(self, event: EpisodicEvent) -> tuple[Any, ...]:
+        source_event_id = event.metadata.get("source_event_id") or event.metadata.get("event_id")
+        profile_id = event.metadata.get("user_profile_id")
+        session_id = event.metadata.get("session_id")
+        source_identity_key = _source_identity_key(event)
         return (
             event.id,
             event.event_fingerprint,
@@ -1201,6 +1754,10 @@ class SQLiteStore(MemoryStore):
             event.scope_id,
             event.source,
             event.hook_event,
+            source_event_id if isinstance(source_event_id, str) else None,
+            source_identity_key,
+            profile_id if isinstance(profile_id, str) else None,
+            session_id if isinstance(session_id, str) else None,
             json.dumps(event.metadata),
             event.status,
             event.error,
@@ -1219,12 +1776,23 @@ class SQLiteStore(MemoryStore):
             scope_id,
             source,
             hook_event,
+            source_event_id,
+            source_identity_key,
+            profile_id,
+            session_id,
             metadata_json,
             status,
             error,
             created_at,
             occurred_at,
         ) = row
+        metadata = json.loads(metadata_json) if metadata_json else {}
+        if source_event_id is not None:
+            metadata.setdefault("source_event_id", str(source_event_id))
+        if profile_id is not None:
+            metadata.setdefault("user_profile_id", str(profile_id))
+        if session_id is not None:
+            metadata.setdefault("session_id", str(session_id))
         return EpisodicEvent(
             id=str(event_id),
             event_fingerprint=str(event_fingerprint),
@@ -1235,7 +1803,7 @@ class SQLiteStore(MemoryStore):
             scope_id=(str(scope_id) if scope_id is not None else None),
             source=str(source),
             hook_event=(str(hook_event) if hook_event is not None else None),
-            metadata=json.loads(metadata_json) if metadata_json else {},
+            metadata=metadata,
             status=str(status),
             error=(str(error) if error is not None else None),
             created_at=cast(datetime, self._parse_dt(str(created_at))),
@@ -1283,44 +1851,53 @@ class SQLiteStore(MemoryStore):
         """Insert or replace a chunk by ID."""
         row = self._chunk_to_row(chunk)
         with self._lock:
-            self._conn.execute(
-                """
-                INSERT INTO memory_chunks
-                (id, content, embedding, metadata, salience, cognitive_state,
-                 created_at, updated_at, access_count, version, canonical_key,
-                 surprisal_score, surprisal_status, cognitive_state_status,
-                 last_observed_at, observation_count, last_retrieved_at, reconsolidation_due_at)
-                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-                ON CONFLICT(id) DO UPDATE SET
-                    content=excluded.content,
-                    embedding=excluded.embedding,
-                    metadata=excluded.metadata,
-                    salience=excluded.salience,
-                    cognitive_state=excluded.cognitive_state,
-                    created_at=excluded.created_at,
-                    updated_at=excluded.updated_at,
-                    access_count=excluded.access_count,
-                    version=excluded.version,
-                    canonical_key=excluded.canonical_key,
-                    surprisal_score=excluded.surprisal_score,
-                    surprisal_status=excluded.surprisal_status,
-                    cognitive_state_status=excluded.cognitive_state_status,
-                    last_observed_at=excluded.last_observed_at,
-                    observation_count=excluded.observation_count,
-                    last_retrieved_at=excluded.last_retrieved_at,
-                    reconsolidation_due_at=excluded.reconsolidation_due_at
-                """,
-                row,
-            )
-            self._sync_vec_row(chunk.id, chunk.embedding)
-            self._conn.commit()
+            prior_dimension = self._sqlite_vec_dim
+            self._conn.execute("SAVEPOINT mnemos_store_write")
+            try:
+                self._conn.execute(
+                    """
+                    INSERT INTO memory_chunks
+                    (id, content, embedding, metadata, salience, cognitive_state,
+                     created_at, updated_at, access_count, version, canonical_key,
+                     user_profile_id, surprisal_score, surprisal_status, cognitive_state_status,
+                     last_observed_at, observation_count, last_retrieved_at, reconsolidation_due_at)
+                    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                    ON CONFLICT(id) DO UPDATE SET
+                        content=excluded.content,
+                        embedding=excluded.embedding,
+                        metadata=excluded.metadata,
+                        salience=excluded.salience,
+                        cognitive_state=excluded.cognitive_state,
+                        created_at=excluded.created_at,
+                        updated_at=excluded.updated_at,
+                        access_count=excluded.access_count,
+                        version=excluded.version,
+                        canonical_key=excluded.canonical_key,
+                        user_profile_id=excluded.user_profile_id,
+                        surprisal_score=excluded.surprisal_score,
+                        surprisal_status=excluded.surprisal_status,
+                        cognitive_state_status=excluded.cognitive_state_status,
+                        last_observed_at=excluded.last_observed_at,
+                        observation_count=excluded.observation_count,
+                        last_retrieved_at=excluded.last_retrieved_at,
+                        reconsolidation_due_at=excluded.reconsolidation_due_at
+                    """,
+                    row,
+                )
+                self._sync_vec_row(chunk.id, chunk.embedding)
+                self._conn.execute("RELEASE SAVEPOINT mnemos_store_write")
+            except Exception:
+                self._conn.execute("ROLLBACK TO SAVEPOINT mnemos_store_write")
+                self._conn.execute("RELEASE SAVEPOINT mnemos_store_write")
+                self._sqlite_vec_dim = prior_dimension
+                raise
 
     def upsert_canonical(self, chunk: MemoryChunk) -> MemoryChunk:
-        canonical_key = chunk.canonical_key
-        if not canonical_key:
-            scope, scope_id = _chunk_scope(chunk)
-            canonical_key = compute_canonical_key(chunk.content, scope, scope_id)
-            chunk.canonical_key = canonical_key
+        scope, scope_id = _chunk_scope(chunk)
+        profile = chunk.metadata.get("user_profile_id")
+        profile_id = profile.strip() if isinstance(profile, str) and profile.strip() else None
+        canonical_key = compute_canonical_key(chunk.content, scope, scope_id, profile_id)
+        chunk.canonical_key = canonical_key
         if chunk.last_observed_at is None:
             chunk.last_observed_at = chunk.updated_at
         if chunk.observation_count <= 0:
@@ -1328,7 +1905,7 @@ class SQLiteStore(MemoryStore):
 
         with self._lock:
             existing_row = self._conn.execute(
-                "SELECT * FROM memory_chunks WHERE canonical_key = ?",
+                f"SELECT {self._CHUNK_SELECT_COLUMNS} FROM memory_chunks WHERE canonical_key = ?",
                 (canonical_key,),
             ).fetchone()
 
@@ -1394,56 +1971,121 @@ class SQLiteStore(MemoryStore):
         self.store(merged)
         return merged
 
+    @staticmethod
+    def _scope_sql(filter_fn: Callable[[MemoryChunk], bool] | None) -> tuple[str, list[Any], bool]:
+        """Compile engine-owned scope predicates before loading or ranking candidates."""
+        if filter_fn is None:
+            return "1", [], True
+        spec = getattr(filter_fn, "_mnemos_scope_filter", None)
+        if not isinstance(spec, dict):
+            return "1", [], False
+        clauses: list[str] = []
+        bindings: list[Any] = []
+        scoped = "user_profile_id" in spec
+        profile_clause = "user_profile_id = ?" if scoped else "user_profile_id IS NULL"
+        if scoped:
+            bindings.append(spec["user_profile_id"])
+        for scope in spec.get("allowed_scopes", ()):
+            if scope == "global":
+                clauses.append("json_extract(metadata, '$.scope') = 'global'")
+            elif scope in {"project", "workspace"}:
+                if spec.get("all_profile_scopes") is True:
+                    clauses.append("json_extract(metadata, '$.scope') = ?")
+                    bindings.append(scope)
+                    continue
+                identity = spec.get(scope + "_id") if scoped else spec.get("scope_id")
+                if identity is not None:
+                    # Legacy embedded callers historically used an implicit default id.
+                    identity_expr = "json_extract(metadata, '$.scope_id')"
+                    if not scoped:
+                        identity_expr = (
+                            "COALESCE(NULLIF(trim(" + identity_expr + "), ''), 'default')"
+                        )
+                    clauses.append(
+                        "(json_extract(metadata, '$.scope') = ? AND " + identity_expr + " = ?)"
+                    )
+                    bindings.extend([scope, identity])
+        return profile_clause + " AND (" + (" OR ".join(clauses) or "0") + ")", bindings, True
+
     def retrieve(
         self,
         query_embedding: list[float],
         top_k: int = 5,
         filter_fn: Callable[[MemoryChunk], bool] | None = None,
     ) -> list[MemoryChunk]:
-        """Retrieve top-k chunks by cosine similarity (loads all, scores in Python)."""
-        if (
-            filter_fn is None
-            and top_k > 0
-            and self._sqlite_vec_enabled
-            and self._sqlite_vec_dim == len(query_embedding)
-            and self._vec_table_exists()
-        ):
+        """Exact cosine top-k, with scope predicates applied in SQLite first.
+
+        Native sqlite-vec scalar distance avoids the old L2 vec0 ranking mismatch.
+        Without the extension, only authorized rows reach the Python fallback.
+        Arbitrary caller predicates are an explicitly reported Python fallback.
+        """
+        if top_k <= 0 or not query_embedding:
+            return []
+        where, bindings, compiled = self._scope_sql(filter_fn)
+        if compiled and self._sqlite_vec_enabled:
             with self._lock:
+                distance = """COALESCE((SELECT 1.0 - vec_distance_cosine(embedding, ?)
+                    FROM memory_vector_values WHERE rowid=memory_chunks.rowid
+                    AND dimension=?), 0.0)"""
+                vector_bindings = [self._serialize_vec(query_embedding), len(query_embedding)]
                 rows = self._conn.execute(
-                    """
-                    SELECT rowid, distance
-                    FROM memory_vec
-                    WHERE embedding MATCH ?
-                    ORDER BY distance
-                    LIMIT ?
-                    """,
-                    (self._serialize_vec(query_embedding), top_k),
+                    f"SELECT {self._CHUNK_SELECT_COLUMNS}, {distance} AS similarity "
+                    f"FROM memory_chunks WHERE {where} ORDER BY similarity DESC, id LIMIT ?",
+                    [*vector_bindings, *bindings, top_k],
                 ).fetchall()
-                ordered_rows = []
-                for rowid, _distance in rows:
-                    row = self._conn.execute(
-                        "SELECT * FROM memory_chunks WHERE rowid = ?",
-                        (int(rowid),),
-                    ).fetchone()
-                    if row is not None:
-                        ordered_rows.append(row)
-            return [self._row_to_chunk(row) for row in ordered_rows]
-
-        all_chunks = self.get_all()
-
+            self.last_retrieval_backend = "sqlite_vec_scoped_exact_cosine"
+            return [self._row_to_chunk(row[:-1]) for row in rows]
+        with self._lock:
+            rows = self._conn.execute(
+                f"SELECT {self._CHUNK_SELECT_COLUMNS} FROM memory_chunks WHERE {where}", bindings
+            ).fetchall()
+        candidates = [self._row_to_chunk(row) for row in rows]
         if filter_fn is not None:
-            all_chunks = [c for c in all_chunks if filter_fn(c)]
-
-        scored: list[tuple[float, MemoryChunk]] = []
-        for chunk in all_chunks:
-            if chunk.embedding is not None and len(chunk.embedding) == len(query_embedding):
-                sim = cosine_similarity(query_embedding, chunk.embedding)
-            else:
-                sim = 0.0
-            scored.append((sim, chunk))
-
-        scored.sort(key=lambda x: x[0], reverse=True)
+            candidates = [chunk for chunk in candidates if filter_fn(chunk)]
+        scored = [
+            (
+                (
+                    cosine_similarity(query_embedding, chunk.embedding)
+                    if chunk.embedding and len(chunk.embedding) == len(query_embedding)
+                    else 0.0
+                ),
+                chunk,
+            )
+            for chunk in candidates
+        ]
+        scored.sort(key=lambda item: (-item[0], item[1].id))
+        self.last_retrieval_backend = (
+            "python_scoped_exact_cosine" if compiled else "python_custom_predicate_exact_cosine"
+        )
         return [chunk for _, chunk in scored[:top_k]]
+
+    def retrieve_lexical(
+        self,
+        query: str,
+        top_k: int = 20,
+        filter_fn: Callable[[MemoryChunk], bool] | None = None,
+    ) -> list[MemoryChunk]:
+        """Bounded FTS5 candidates; user text is never interpreted as FTS syntax."""
+        tokens = re.findall(r"\w+", query, flags=re.UNICODE)[:64]
+        if not tokens or top_k <= 0:
+            return []
+        match = " OR ".join('"' + token.replace('"', '""') + '"' for token in tokens)
+        where, bindings, compiled = self._scope_sql(filter_fn)
+        if not compiled:
+            # An arbitrary predicate cannot safely be applied after a bounded SQL limit.
+            return []
+        columns = ", ".join(
+            f"memory_chunks.{column.strip()}" for column in self._CHUNK_SELECT_COLUMNS.split(",")
+        )
+        with self._lock:
+            rows = self._conn.execute(
+                f"SELECT {columns} FROM memory_fts "
+                "JOIN memory_chunks ON memory_chunks.rowid=memory_fts.rowid "
+                f"WHERE {where} AND memory_fts MATCH ? "
+                "ORDER BY bm25(memory_fts), memory_chunks.id LIMIT ?",
+                [*bindings, match, top_k],
+            ).fetchall()
+        return [self._row_to_chunk(row) for row in rows]
 
     def update(self, chunk_id: str, chunk: MemoryChunk) -> bool:
         """Update existing chunk; returns False if not found."""
@@ -1470,6 +2112,749 @@ class SQLiteStore(MemoryStore):
             self._conn.commit()
             return cursor.rowcount > 0
 
+    @staticmethod
+    def _job_to_row(job: DurableJob) -> tuple[Any, ...]:
+        return (
+            job.id,
+            job.kind,
+            json.dumps(job.payload),
+            job.status,
+            job.attempt_count,
+            job.max_attempts,
+            job.available_at.isoformat(),
+            job.lease_owner,
+            job.lease_token,
+            job.lease_until.isoformat() if job.lease_until is not None else None,
+            job.last_error,
+            json.dumps(job.result) if job.result is not None else None,
+            job.created_at.isoformat(),
+            job.updated_at.isoformat(),
+        )
+
+    def _row_to_job(self, row: tuple[Any, ...]) -> DurableJob:
+        (
+            job_id,
+            kind,
+            payload,
+            status,
+            attempt_count,
+            max_attempts,
+            available_at,
+            lease_owner,
+            lease_token,
+            lease_until,
+            last_error,
+            result,
+            created_at,
+            updated_at,
+        ) = row
+        return DurableJob(
+            id=str(job_id),
+            kind=str(kind),
+            payload=json.loads(payload) if payload else {},
+            status=cast(JobStatus, str(status)),
+            attempt_count=int(attempt_count),
+            max_attempts=int(max_attempts),
+            available_at=cast(datetime, self._parse_dt(str(available_at))),
+            lease_owner=str(lease_owner) if lease_owner is not None else None,
+            lease_token=str(lease_token) if lease_token is not None else None,
+            lease_until=self._parse_dt(cast(str | None, lease_until)),
+            last_error=str(last_error) if last_error is not None else None,
+            result=json.loads(result) if result else None,
+            created_at=cast(datetime, self._parse_dt(str(created_at))),
+            updated_at=cast(datetime, self._parse_dt(str(updated_at))),
+        )
+
+    def enqueue_job(self, job: DurableJob) -> DurableJob:
+        with self._lock:
+            self._conn.execute(
+                """
+                INSERT INTO memory_jobs
+                (id, kind, payload, status, attempt_count, max_attempts, available_at,
+                 lease_owner, lease_token, lease_until, last_error, result, created_at, updated_at)
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                ON CONFLICT(id) DO NOTHING
+                """,
+                self._job_to_row(job),
+            )
+            self._conn.commit()
+            row = self._conn.execute(
+                """SELECT id, kind, payload, status, attempt_count, max_attempts, available_at,
+                        lease_owner, lease_token, lease_until, last_error, result, created_at, updated_at
+                 FROM memory_jobs WHERE id = ?""",
+                (job.id,),
+            ).fetchone()
+        return self._row_to_job(cast(tuple[Any, ...], row))
+
+    def claim_jobs(
+        self,
+        *,
+        owner: str,
+        limit: int = 1,
+        lease_seconds: int = 300,
+        job_id: str | None = None,
+        now: datetime | None = None,
+    ) -> list[DurableJob]:
+        claimed_at = now or datetime.now(timezone.utc)
+        lease_until = claimed_at + timedelta(seconds=max(1, lease_seconds))
+        with self._lock:
+            self._conn.execute("BEGIN IMMEDIATE")
+            try:
+                self._conn.execute(
+                    """UPDATE memory_jobs SET
+                       status=CASE WHEN attempt_count >= max_attempts THEN 'exhausted' ELSE 'pending' END,
+                       lease_owner=NULL, lease_token=NULL, lease_until=NULL,
+                       updated_at=? WHERE status='leased' AND lease_until <= ?""",
+                    (claimed_at.isoformat(), claimed_at.isoformat()),
+                )
+                rows = self._conn.execute(
+                    """SELECT id FROM memory_jobs
+                       WHERE status='pending' AND attempt_count < max_attempts AND available_at <= ?
+                         AND (? IS NULL OR id=?)
+                       ORDER BY available_at ASC, created_at ASC LIMIT ?""",
+                    (claimed_at.isoformat(), job_id, job_id, max(0, limit)),
+                ).fetchall()
+                ids = [str(row[0]) for row in rows]
+                lease_tokens: dict[str, str] = {}
+                for job_id in ids:
+                    token = str(uuid4())
+                    lease_tokens[job_id] = token
+                    self._conn.execute(
+                        """UPDATE memory_jobs SET status='leased', lease_owner=?, lease_token=?,
+                           lease_until=?, attempt_count=attempt_count + 1, updated_at=? WHERE id=?""",
+                        (owner, token, lease_until.isoformat(), claimed_at.isoformat(), job_id),
+                    )
+                self._conn.commit()
+            except Exception:
+                self._conn.rollback()
+                raise
+            if not ids:
+                return []
+            placeholders = ",".join("?" for _ in ids)
+            claimed_rows = self._conn.execute(
+                f"""SELECT id, kind, payload, status, attempt_count, max_attempts, available_at,
+                    lease_owner, lease_token, lease_until, last_error, result, created_at, updated_at
+                    FROM memory_jobs WHERE id IN ({placeholders})""",
+                tuple(ids),
+            ).fetchall()
+        by_id = {str(row[0]): self._row_to_job(row) for row in claimed_rows}
+        return [by_id[job_id] for job_id in ids]
+
+    def complete_job(
+        self,
+        job_id: str,
+        *,
+        owner: str,
+        lease_token: str | None = None,
+        result: dict[str, Any] | None = None,
+        now: datetime | None = None,
+    ) -> bool:
+        completed_at = now or datetime.now(timezone.utc)
+        with self._lock:
+            self._conn.execute("BEGIN IMMEDIATE")
+            try:
+                cursor = self._conn.execute(
+                    """UPDATE memory_jobs SET status='completed', result=?, lease_owner=NULL,
+                       lease_token=NULL, lease_until=NULL, updated_at=?
+                       WHERE id=? AND status='leased' AND lease_owner=? AND lease_token=?
+                         AND lease_until > ?""",
+                    (
+                        json.dumps(result) if result is not None else None,
+                        completed_at.isoformat(),
+                        job_id,
+                        owner,
+                        lease_token,
+                        completed_at.isoformat(),
+                    ),
+                )
+                self._conn.commit()
+                return cursor.rowcount > 0
+            except Exception:
+                self._conn.rollback()
+                raise
+
+    def fail_job(
+        self,
+        job_id: str,
+        *,
+        owner: str,
+        lease_token: str | None = None,
+        error: str,
+        now: datetime | None = None,
+    ) -> bool:
+        failed_at = now or datetime.now(timezone.utc)
+        with self._lock:
+            self._conn.execute("BEGIN IMMEDIATE")
+            try:
+                row = self._conn.execute(
+                    """SELECT attempt_count, max_attempts FROM memory_jobs
+                     WHERE id=? AND status='leased' AND lease_owner=? AND lease_token=?
+                       AND lease_until > ?""",
+                    (job_id, owner, lease_token, failed_at.isoformat()),
+                ).fetchone()
+                if row is None:
+                    self._conn.rollback()
+                    return False
+                attempts = int(row[0])
+                max_attempts = int(row[1])
+                status = "exhausted" if attempts >= max_attempts else "pending"
+                backoff = min(3600, 2 ** min(attempts, 10))
+                available_at = failed_at + timedelta(seconds=backoff)
+                self._conn.execute(
+                    """UPDATE memory_jobs SET status=?, available_at=?,
+                       lease_owner=NULL, lease_token=NULL, lease_until=NULL,
+                       last_error=?, updated_at=? WHERE id=?""",
+                    (status, available_at.isoformat(), error, failed_at.isoformat(), job_id),
+                )
+                self._conn.commit()
+                return True
+            except Exception:
+                self._conn.rollback()
+                raise
+
+    def retry_job(self, job_id: str, *, now: datetime | None = None) -> bool:
+        retried_at = now or datetime.now(timezone.utc)
+        with self._lock:
+            self._conn.execute("BEGIN IMMEDIATE")
+            try:
+                cursor = self._conn.execute(
+                    """UPDATE memory_jobs SET status='pending', attempt_count=0,
+                       available_at=?, lease_owner=NULL, lease_token=NULL, lease_until=NULL,
+                       last_error=NULL, result=NULL, updated_at=?
+                       WHERE id=? AND status='exhausted'""",
+                    (retried_at.isoformat(), retried_at.isoformat(), job_id),
+                )
+                self._conn.commit()
+                return cursor.rowcount > 0
+            except Exception:
+                self._conn.rollback()
+                raise
+
+    def commit_fact_and_job(
+        self,
+        job_id: str,
+        *,
+        owner: str,
+        lease_token: str | None = None,
+        chunk: MemoryChunk | None = None,
+        chunks: list[MemoryChunk] | None = None,
+        evidence: list[FactEvidence] | None = None,
+        revision: FactRevision | None = None,
+        revisions: list[FactRevision] | None = None,
+        processed_event_ids: list[str] | None = None,
+        expected_version: int | None = None,
+        expected_versions: dict[str, int] | None = None,
+        result: dict[str, Any] | None = None,
+        now: datetime | None = None,
+    ) -> bool:
+        committed_at = now or datetime.now(timezone.utc)
+        fact_chunks = list(chunks or [])
+        if chunk is not None:
+            fact_chunks.insert(0, chunk)
+        result_payload = dict(result or {})
+        if not fact_chunks:
+            decision = result_payload.get("decision")
+            if not processed_event_ids or decision not in {
+                "no_durable_facts",
+                "surprisal_filtered",
+                "suppressed",
+            }:
+                raise ValueError(
+                    "A no-fact commit requires processed events and an explicit decision"
+                )
+        all_revisions = list(revisions or [])
+        if revision is not None:
+            all_revisions.insert(0, revision)
+        with self._lock:
+            self._conn.execute("BEGIN IMMEDIATE")
+            self._transaction_active = True
+            try:
+                lease_row = self._conn.execute(
+                    """SELECT kind, payload FROM memory_jobs
+                       WHERE id=? AND status='leased' AND lease_owner=? AND lease_token=?
+                         AND lease_until > ?""",
+                    (job_id, owner, lease_token, committed_at.isoformat()),
+                ).fetchone()
+                if lease_row is None:
+                    self._conn.rollback()
+                    return False
+
+                if expected_version is not None:
+                    current = self._conn.execute(
+                        "SELECT version FROM memory_chunks WHERE id=?", (fact_chunks[0].id,)
+                    ).fetchone()
+                    if current is None or int(current[0]) != expected_version:
+                        raise RuntimeError("Fact version changed before atomic commit")
+
+                for target_id, version in (expected_versions or {}).items():
+                    current = self._conn.execute(
+                        "SELECT version FROM memory_chunks WHERE id=?", (target_id,)
+                    ).fetchone()
+                    if current is None or int(current[0]) != version:
+                        raise RuntimeError("Fact version changed before atomic commit")
+
+                accepted_by_input: dict[str, str] = {}
+                accepted_chunks: list[MemoryChunk] = []
+                suppressed_ids: set[str] = set()
+                for index, candidate in enumerate(fact_chunks):
+                    if lease_row[0] == "extract":
+                        canonical = compute_canonical_key(
+                            candidate.content,
+                            candidate.metadata.get("scope", "unassigned"),
+                            candidate.metadata.get("scope_id"),
+                            candidate.metadata.get("user_profile_id"),
+                        )
+                        source_id = json.loads(lease_row[1]).get("event_id")
+                        if self.is_suppressed(canonical_key=canonical, source_event_id=source_id):
+                            suppressed_ids.add(candidate.id)
+                            continue
+                    prior = self.get(candidate.id)
+                    accepted = self.upsert_canonical(candidate)
+                    if (
+                        (expected_version is not None and index == 0)
+                        or candidate.id in (expected_versions or {})
+                    ) and accepted.id != candidate.id:
+                        raise RuntimeError("Expected-version correction collided with another fact")
+                    accepted_chunks.append(accepted)
+                    accepted_by_input[candidate.id] = accepted.id
+                    accepted_by_input[accepted.id] = accepted.id
+                    if prior is not None and (
+                        prior.content != accepted.content or prior.embedding != accepted.embedding
+                    ):
+                        self._conn.execute(
+                            "DELETE FROM memory_edges WHERE source_id=? OR target_id=?",
+                            (accepted.id, accepted.id),
+                        )
+
+                if suppressed_ids and not accepted_chunks:
+                    result_payload["decision"] = "suppressed"
+                for item in evidence or []:
+                    if item.fact_id in suppressed_ids:
+                        continue
+                    accepted_fact_id = accepted_by_input.get(item.fact_id, item.fact_id)
+                    if item.source_event_id is not None:
+                        duplicate_evidence = self._conn.execute(
+                            """SELECT 1 FROM fact_evidence
+                               WHERE fact_id=? AND source_event_id=? LIMIT 1""",
+                            (accepted_fact_id, item.source_event_id),
+                        ).fetchone()
+                        if duplicate_evidence is not None:
+                            continue
+                    self._conn.execute(
+                        """INSERT INTO fact_evidence
+                           (evidence_id, fact_id, source_event_id, excerpt, source_ref, created_at)
+                           VALUES (?, ?, ?, ?, ?, ?)""",
+                        (
+                            item.evidence_id,
+                            accepted_fact_id,
+                            item.source_event_id,
+                            item.excerpt,
+                            item.source_ref,
+                            item.created_at.isoformat(),
+                        ),
+                    )
+                for fact_revision in all_revisions:
+                    if fact_revision.fact_id in suppressed_ids:
+                        continue
+                    self._conn.execute(
+                        """INSERT INTO fact_revisions
+                           (revision_id, fact_id, version, content, reason, created_at)
+                           VALUES (?, ?, ?, ?, ?, ?)""",
+                        (
+                            fact_revision.revision_id,
+                            accepted_by_input.get(fact_revision.fact_id, fact_revision.fact_id),
+                            fact_revision.version,
+                            fact_revision.content,
+                            fact_revision.reason,
+                            fact_revision.created_at.isoformat(),
+                        ),
+                    )
+                for event_id in processed_event_ids or []:
+                    updated_event = self._conn.execute(
+                        """UPDATE episodic_events SET status='consolidated', error=NULL WHERE id=?""",
+                        (event_id,),
+                    )
+                    if updated_event.rowcount != 1:
+                        raise ValueError(
+                            f"Cannot mark missing episodic event as processed: {event_id}"
+                        )
+                result_payload.setdefault("fact_ids", [item.id for item in accepted_chunks])
+                updated = self._conn.execute(
+                    """UPDATE memory_jobs SET status='completed', result=?, lease_owner=NULL,
+                       lease_token=NULL, lease_until=NULL, updated_at=?
+                       WHERE id=? AND status='leased' AND lease_owner=? AND lease_token=?
+                         AND lease_until > ?""",
+                    (
+                        json.dumps(result_payload),
+                        committed_at.isoformat(),
+                        job_id,
+                        owner,
+                        lease_token,
+                        committed_at.isoformat(),
+                    ),
+                )
+                if updated.rowcount != 1:
+                    raise RuntimeError("Job lease was lost while committing fact")
+                self._conn.commit()
+            except Exception:
+                self._conn.rollback()
+                raise
+            finally:
+                self._transaction_active = False
+            return True
+
+    def capture_event_and_job(self, event: EpisodicEvent, job: DurableJob) -> EpisodicEvent:
+        """Persist an ingest event and its processing job in one transaction."""
+        source_identity_key = _source_identity_key(event)
+        with self._lock:
+            self._conn.execute("BEGIN IMMEDIATE")
+            self._transaction_active = True
+            try:
+                existing_row = self._conn.execute(
+                    """SELECT id, event_fingerprint, role, content, normalized_content, scope, scope_id,
+                              source, hook_event, source_event_id, source_identity_key,
+                              user_profile_id, session_id, metadata, status, error, created_at, occurred_at
+                       FROM episodic_events
+                       WHERE event_fingerprint=?
+                          OR (? IS NOT NULL AND source_identity_key=?)""",
+                    (event.event_fingerprint, source_identity_key, source_identity_key),
+                ).fetchone()
+                if existing_row is None:
+                    self._conn.execute(
+                        """INSERT INTO episodic_events
+                           (id, event_fingerprint, role, content, normalized_content, scope, scope_id,
+                            source, hook_event, source_event_id, source_identity_key, user_profile_id,
+                            session_id, metadata, status, error, created_at, occurred_at)
+                           VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)""",
+                        self._episodic_event_to_row(event),
+                    )
+                    stored_event = event
+                else:
+                    stored_event = self._row_to_episodic_event(existing_row)
+                    if source_identity_key is not None and existing_row[10] == source_identity_key:
+                        if (
+                            stored_event.content != event.content
+                            or stored_event.role != event.role
+                            or stored_event.scope != event.scope
+                            or stored_event.scope_id != event.scope_id
+                        ):
+                            raise ValueError(
+                                "Source event identity already has a different payload"
+                            )
+
+                existing_job = self._conn.execute(
+                    "SELECT kind, payload FROM memory_jobs WHERE id=?", (job.id,)
+                ).fetchone()
+                if existing_job is None:
+                    self._conn.execute(
+                        """INSERT INTO memory_jobs
+                           (id, kind, payload, status, attempt_count, max_attempts, available_at,
+                            lease_owner, lease_token, lease_until, last_error, result, created_at, updated_at)
+                           VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)""",
+                        self._job_to_row(job),
+                    )
+                elif (
+                    str(existing_job[0]) != job.kind
+                    or json.loads(existing_job[1] or "{}") != job.payload
+                ):
+                    raise ValueError("Job identity already has a different payload")
+                self._conn.commit()
+                return stored_event
+            except Exception:
+                self._conn.rollback()
+                raise
+            finally:
+                self._transaction_active = False
+
+    def get_episodic_event(self, event_id: str) -> EpisodicEvent | None:
+        with self._lock:
+            row = self._conn.execute(
+                """SELECT id, event_fingerprint, role, content, normalized_content, scope, scope_id,
+                          source, hook_event, source_event_id, source_identity_key,
+                          user_profile_id, session_id, metadata, status, error, created_at, occurred_at
+                   FROM episodic_events WHERE id=?""",
+                (event_id,),
+            ).fetchone()
+        return self._row_to_episodic_event(row) if row is not None else None
+
+    def get_job(self, job_id: str) -> DurableJob | None:
+        with self._lock:
+            row = self._conn.execute(
+                "SELECT id, kind, payload, status, attempt_count, max_attempts, available_at, "
+                "lease_owner, lease_token, lease_until, last_error, result, created_at, updated_at "
+                "FROM memory_jobs WHERE id=?",
+                (job_id,),
+            ).fetchone()
+        return self._row_to_job(row) if row else None
+
+    def list_jobs(self, *, status: str | None = None, limit: int = 0) -> list[DurableJob]:
+        query = """SELECT id, kind, payload, status, attempt_count, max_attempts, available_at,
+                   lease_owner, lease_token, lease_until, last_error, result, created_at, updated_at
+                   FROM memory_jobs"""
+        params: list[Any] = []
+        if status is not None:
+            query += " WHERE status=?"
+            params.append(status)
+        query += " ORDER BY available_at ASC, created_at ASC"
+        if limit > 0:
+            query += " LIMIT ?"
+            params.append(limit)
+        with self._lock:
+            rows = self._conn.execute(query, tuple(params)).fetchall()
+        return [self._row_to_job(row) for row in rows]
+
+    def job_summary(
+        self, *, now: datetime, user_profile_id: str | None = None, project_id: str | None = None
+    ) -> dict[str, Any]:
+        where, parameters = "", []
+        if user_profile_id is not None:
+            where = " WHERE json_extract(payload, '$.context.user_profile_id')=? AND json_extract(payload, '$.context.project_id') IS ?"
+            parameters = [user_profile_id, project_id]
+        with self._lock:
+            rows = self._conn.execute(
+                "SELECT status, COUNT(*), MIN(created_at), "
+                "COALESCE(SUM(MAX(attempt_count-1, 0)), 0) FROM memory_jobs"
+                + where
+                + " GROUP BY status",
+                parameters,
+            ).fetchall()
+        result: dict[str, Any] = {
+            status: 0 for status in ("pending", "leased", "exhausted", "completed")
+        }
+        result.update(retry_count=0, oldest_unfinished_seconds=0, oldest_pending_seconds=0)
+        for status, count, oldest, retries in rows:
+            result[status] = count
+            result["retry_count"] += retries
+            age = max(0, (now - datetime.fromisoformat(oldest)).total_seconds())
+            if status != "completed":
+                result["oldest_unfinished_seconds"] = max(result["oldest_unfinished_seconds"], age)
+            if status == "pending":
+                result["oldest_pending_seconds"] = age
+        return result
+
+    def list_fact_evidence(self, fact_id: str) -> list[FactEvidence]:
+        with self._lock:
+            rows = self._conn.execute(
+                """SELECT evidence_id, fact_id, source_event_id, excerpt, source_ref, created_at
+                 FROM fact_evidence WHERE fact_id=? ORDER BY created_at ASC""",
+                (fact_id,),
+            ).fetchall()
+        return [
+            FactEvidence(
+                evidence_id=str(row[0]),
+                fact_id=str(row[1]),
+                source_event_id=str(row[2]) if row[2] is not None else None,
+                excerpt=str(row[3]),
+                source_ref=str(row[4]) if row[4] is not None else None,
+                created_at=cast(datetime, self._parse_dt(str(row[5]))),
+            )
+            for row in rows
+        ]
+
+    def forget_fact(self, fact_id: str, *, expected_version: int) -> bool:
+        """Erase live derivations and atomically leave content-free replay suppressions."""
+        with self._lock:
+            self._conn.execute("BEGIN IMMEDIATE")
+            self._transaction_active = True
+            try:
+                chunk = self.get(fact_id)
+                if chunk is None:
+                    self._conn.rollback()
+                    return False
+                if chunk.version != expected_version:
+                    raise ValueError("Forget version conflict")
+                evidence = self.list_fact_evidence(fact_id)
+                event_ids = {item.source_event_id for item in evidence if item.source_event_id}
+                event_ids.update(
+                    row[0]
+                    for row in self._conn.execute(
+                        "SELECT json_extract(payload, '$.event_id') FROM memory_jobs "
+                        "WHERE json_extract(payload, '$.target_fact_id')=?",
+                        (fact_id,),
+                    ).fetchall()
+                    if row[0]
+                )
+                event_ids.update(
+                    row[0]
+                    for row in self._conn.execute(
+                        "SELECT evidence.value FROM memory_jobs, json_each(payload, '$.evidence_ids') AS evidence "
+                        "WHERE json_extract(payload, '$.target_fact_id')=?",
+                        (fact_id,),
+                    ).fetchall()
+                    if row[0]
+                )
+                keys = {
+                    chunk.canonical_key
+                    or compute_canonical_key(
+                        chunk.content,
+                        chunk.metadata.get("scope", "unassigned"),
+                        chunk.metadata.get("scope_id"),
+                        chunk.metadata.get("user_profile_id"),
+                    )
+                }
+                for revision in self.list_fact_revisions(fact_id):
+                    keys.add(
+                        compute_canonical_key(
+                            revision.content,
+                            chunk.metadata.get("scope", "unassigned"),
+                            chunk.metadata.get("scope_id"),
+                            chunk.metadata.get("user_profile_id"),
+                        )
+                    )
+                stamp = datetime.now(timezone.utc).isoformat()
+                for key in keys:
+                    self._conn.execute(
+                        "INSERT INTO memory_suppressions VALUES (?, ?, ?, NULL, 'explicit_forget', ?)",
+                        (str(uuid4()), fact_id, key, stamp),
+                    )
+                for event_id in event_ids:
+                    self._conn.execute(
+                        "INSERT INTO memory_suppressions VALUES (?, ?, NULL, ?, 'explicit_forget', ?)",
+                        (str(uuid4()), fact_id, event_id, stamp),
+                    )
+                    self._conn.execute("DELETE FROM episodic_events WHERE id=?", (event_id,))
+                    # A shared support excerpt may contain the forgotten assertion too.
+                    self._conn.execute(
+                        "DELETE FROM fact_evidence WHERE source_event_id=?", (event_id,)
+                    )
+                    self._conn.execute(
+                        "UPDATE memory_jobs SET status='completed', result=?, last_error=NULL, "
+                        "lease_owner=NULL, lease_token=NULL, lease_until=NULL, updated_at=? "
+                        "WHERE json_extract(payload, '$.event_id')=?",
+                        (json.dumps({"decision": "forgotten"}), stamp, event_id),
+                    )
+                self._conn.execute(
+                    "UPDATE memory_jobs SET status='completed', result=?, last_error=NULL, "
+                    "lease_owner=NULL, lease_token=NULL, lease_until=NULL, updated_at=?, "
+                    "payload=json_remove(payload, '$.content') "
+                    "WHERE json_extract(payload, '$.target_fact_id')=?",
+                    (json.dumps({"decision": "forgotten"}), stamp, fact_id),
+                )
+                self._conn.execute(
+                    "DELETE FROM retrieval_feedback_events WHERE EXISTS "
+                    "(SELECT 1 FROM json_each(chunk_ids) WHERE value=?)",
+                    (fact_id,),
+                )
+                if self._sqlite_vec_enabled and self._vec_table_exists():
+                    self._conn.execute(
+                        "DELETE FROM memory_vec WHERE rowid IN "
+                        "(SELECT rowid FROM memory_chunks WHERE id=?)",
+                        (fact_id,),
+                    )
+                self._conn.execute("DELETE FROM memory_chunks WHERE id=?", (fact_id,))
+                self._conn.commit()
+                return True
+            except Exception:
+                self._conn.rollback()
+                raise
+            finally:
+                self._transaction_active = False
+
+    def prune_processed_evidence(self, *, before: datetime, limit: int = 100) -> int:
+        """Expire processed raw events; retained support excerpts remain inspectable."""
+        with self._lock:
+            cursor = self._conn.execute(
+                "DELETE FROM episodic_events WHERE id IN (SELECT id FROM episodic_events "
+                "WHERE status='consolidated' AND created_at < ? "
+                "AND NOT EXISTS (SELECT 1 FROM memory_jobs WHERE "
+                "json_extract(payload, '$.event_id')=episodic_events.id "
+                "AND status != 'completed') ORDER BY created_at LIMIT ?)",
+                (before.isoformat(), max(0, min(limit, 1000))),
+            )
+            self._conn.commit()
+            return cursor.rowcount
+
+    def record_suppression(
+        self,
+        *,
+        fact_id: str | None = None,
+        canonical_key: str | None = None,
+        source_event_id: str | None = None,
+        reason: str,
+    ) -> str:
+        suppression_id = str(uuid4())
+        with self._lock:
+            self._conn.execute(
+                """INSERT INTO memory_suppressions
+                   (suppression_id, fact_id, canonical_key, source_event_id, reason, created_at)
+                   VALUES (?, ?, ?, ?, ?, ?)""",
+                (
+                    suppression_id,
+                    fact_id,
+                    canonical_key,
+                    source_event_id,
+                    reason,
+                    datetime.now(timezone.utc).isoformat(),
+                ),
+            )
+            self._conn.commit()
+        return suppression_id
+
+    def is_suppressed(
+        self,
+        *,
+        fact_id: str | None = None,
+        canonical_key: str | None = None,
+        source_event_id: str | None = None,
+    ) -> bool:
+        selectors = [
+            ("fact_id", fact_id),
+            ("canonical_key", canonical_key),
+            ("source_event_id", source_event_id),
+        ]
+        selectors = [(column, value) for column, value in selectors if value is not None]
+        if not selectors:
+            return False
+        where = " OR ".join(f"{column} = ?" for column, _ in selectors)
+        with self._lock:
+            row = self._conn.execute(
+                f"SELECT 1 FROM memory_suppressions WHERE {where} LIMIT 1",
+                tuple(value for _, value in selectors),
+            ).fetchone()
+        return row is not None
+
+    def list_fact_revisions(self, fact_id: str) -> list[FactRevision]:
+        with self._lock:
+            rows = self._conn.execute(
+                """SELECT revision_id, fact_id, version, content, reason, created_at
+                 FROM fact_revisions WHERE fact_id=? ORDER BY version ASC""",
+                (fact_id,),
+            ).fetchall()
+        return [
+            FactRevision(
+                revision_id=str(row[0]),
+                fact_id=str(row[1]),
+                version=int(row[2]),
+                content=str(row[3]),
+                reason=str(row[4]) if row[4] is not None else None,
+                created_at=cast(datetime, self._parse_dt(str(row[5]))),
+            )
+            for row in rows
+        ]
+
+    def mark_retrieved_many(
+        self, chunk_ids: list[str], *, retrieved_at: datetime | None = None
+    ) -> int:
+        identities = list(dict.fromkeys(chunk_ids))
+        if not identities:
+            return 0
+        touched_at = retrieved_at or datetime.now(timezone.utc)
+        with self._lock:
+            try:
+                cursor = self._conn.execute(
+                    "UPDATE memory_chunks SET access_count=access_count+1, "
+                    "last_retrieved_at=?, reconsolidation_due_at=NULL "
+                    "WHERE id IN (" + ",".join("?" for _ in identities) + ")",
+                    [touched_at.isoformat(), *identities],
+                )
+                if not self._transaction_active:
+                    self._conn.commit()
+                return cursor.rowcount
+            except Exception:
+                if not self._transaction_active:
+                    self._conn.rollback()
+                raise
+
     def mark_retrieved(
         self,
         chunk_id: str,
@@ -1485,13 +2870,12 @@ class SQLiteStore(MemoryStore):
             cursor = self._conn.execute(
                 """
                 UPDATE memory_chunks
-                SET updated_at = ?,
-                    access_count = access_count + 1,
+                SET access_count = access_count + 1,
                     last_retrieved_at = ?,
                     reconsolidation_due_at = ?
                 WHERE id = ?
                 """,
-                (touched_at.isoformat(), touched_at.isoformat(), due_at_iso, chunk_id),
+                (touched_at.isoformat(), due_at_iso, chunk_id),
             )
             self._conn.commit()
             return cursor.rowcount > 0
@@ -1530,7 +2914,10 @@ class SQLiteStore(MemoryStore):
     def get(self, chunk_id: str) -> MemoryChunk | None:
         """O(1) lookup by primary key."""
         with self._lock:
-            cursor = self._conn.execute("SELECT * FROM memory_chunks WHERE id = ?", (chunk_id,))
+            cursor = self._conn.execute(
+                f"SELECT {self._CHUNK_SELECT_COLUMNS} FROM memory_chunks WHERE id = ?",
+                (chunk_id,),
+            )
             row = cursor.fetchone()
         if row is None:
             return None
@@ -1539,7 +2926,7 @@ class SQLiteStore(MemoryStore):
     def get_all(self) -> list[MemoryChunk]:
         """Load all chunks from the database."""
         with self._lock:
-            cursor = self._conn.execute("SELECT * FROM memory_chunks")
+            cursor = self._conn.execute(f"SELECT {self._CHUNK_SELECT_COLUMNS} FROM memory_chunks")
             rows = cursor.fetchall()
         return [self._row_to_chunk(row) for row in rows]
 
@@ -1549,8 +2936,8 @@ class SQLiteStore(MemoryStore):
             self._conn.execute(
                 """
                 INSERT INTO retrieval_feedback_events
-                (id, event_type, query, scope, scope_id, chunk_ids, notes, created_at)
-                VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+                (id, event_type, query, scope, scope_id, chunk_ids, notes, created_at, user_profile_id)
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
                 ON CONFLICT(id) DO UPDATE SET
                     event_type=excluded.event_type,
                     query=excluded.query,
@@ -1558,7 +2945,8 @@ class SQLiteStore(MemoryStore):
                     scope_id=excluded.scope_id,
                     chunk_ids=excluded.chunk_ids,
                     notes=excluded.notes,
-                    created_at=excluded.created_at
+                    created_at=excluded.created_at,
+                    user_profile_id=excluded.user_profile_id
                 """,
                 row,
             )
@@ -1568,16 +2956,20 @@ class SQLiteStore(MemoryStore):
         self,
         *,
         event_type: str | None = None,
+        user_profile_id: str | None = None,
         scope: str | None = None,
         scope_id: str | None = None,
     ) -> list[RetrievalFeedbackEvent]:
         query = """
-            SELECT id, event_type, query, scope, scope_id, chunk_ids, notes, created_at
+            SELECT id, event_type, query, scope, scope_id, chunk_ids, notes, created_at, user_profile_id
             FROM retrieval_feedback_events
         """
         clauses: list[str] = []
         params: list[Any] = []
 
+        if user_profile_id is not None:
+            clauses.append("user_profile_id = ?")
+            params.append(user_profile_id)
         if event_type is not None:
             clauses.append("event_type = ?")
             params.append(event_type)
@@ -1597,29 +2989,44 @@ class SQLiteStore(MemoryStore):
         return [self._row_to_feedback_event(row) for row in rows]
 
     def append_episodic_event(self, event: EpisodicEvent) -> EpisodicEvent:
+        source_event_id = event.metadata.get("source_event_id") or event.metadata.get("event_id")
+        source_identity_key = _source_identity_key(event)
         with self._lock:
             existing_row = self._conn.execute(
                 """
                 SELECT id, event_fingerprint, role, content, normalized_content, scope, scope_id,
-                       source, hook_event, metadata, status, error, created_at, occurred_at
+                       source, hook_event, source_event_id, source_identity_key,
+                       user_profile_id, session_id,
+                       metadata, status, error, created_at, occurred_at
                 FROM episodic_events
                 WHERE event_fingerprint = ?
+                   OR (? IS NOT NULL AND source_identity_key = ?)
                 """,
-                (event.event_fingerprint,),
+                (event.event_fingerprint, source_identity_key, source_identity_key),
             ).fetchone()
             if existing_row is not None:
+                if source_identity_key is not None and existing_row[10] == source_identity_key:
+                    if (
+                        str(existing_row[3]) != event.content
+                        or str(existing_row[2]) != event.role
+                        or str(existing_row[5]) != event.scope
+                        or existing_row[6] != event.scope_id
+                    ):
+                        raise ValueError("Source event identity already has a different payload")
                 return self._row_to_episodic_event(existing_row)
 
             self._conn.execute(
                 """
                 INSERT INTO episodic_events
                 (id, event_fingerprint, role, content, normalized_content, scope, scope_id,
-                 source, hook_event, metadata, status, error, created_at, occurred_at)
-                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                 source, hook_event, source_event_id, source_identity_key, user_profile_id,
+                 session_id, metadata, status, error, created_at, occurred_at)
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
                 """,
                 self._episodic_event_to_row(event),
             )
-            self._conn.commit()
+            if not self._transaction_active:
+                self._conn.commit()
             return event
 
     def list_episodic_events(
@@ -1628,11 +3035,17 @@ class SQLiteStore(MemoryStore):
         status: str | None = None,
         scope: str | None = None,
         scope_id: str | None = None,
+        user_profile_id: str | None = None,
+        session_id: str | None = None,
+        before: datetime | None = None,
+        newest_first: bool = False,
         limit: int = 0,
     ) -> list[EpisodicEvent]:
         query = """
             SELECT id, event_fingerprint, role, content, normalized_content, scope, scope_id,
-                   source, hook_event, metadata, status, error, created_at, occurred_at
+                   source, hook_event, source_event_id, source_identity_key,
+                   user_profile_id, session_id,
+                   metadata, status, error, created_at, occurred_at
             FROM episodic_events
         """
         clauses: list[str] = []
@@ -1646,9 +3059,23 @@ class SQLiteStore(MemoryStore):
         if scope_id is not None:
             clauses.append("scope_id = ?")
             params.append(scope_id)
+        if user_profile_id is not None:
+            clauses.append("user_profile_id = ?")
+            params.append(user_profile_id)
+        if session_id is not None:
+            clauses.append("session_id = ?")
+            params.append(session_id)
+        if before is not None:
+            clauses.append("occurred_at < ?")
+            params.append(before.isoformat())
         if clauses:
             query += " WHERE " + " AND ".join(clauses)
-        query += " ORDER BY created_at ASC"
+        query += (
+            " ORDER BY occurred_at "
+            + ("DESC" if newest_first else "ASC")
+            + ", id "
+            + ("DESC" if newest_first else "ASC")
+        )
         if limit > 0:
             query += " LIMIT ?"
             params.append(limit)
@@ -1763,6 +3190,43 @@ class SQLiteStore(MemoryStore):
             self._conn.commit()
             return cursor.rowcount > 0
 
+    def list_chunks(
+        self,
+        *,
+        limit: int = 100,
+        after_id: str = "",
+        filter_fn: Callable[[MemoryChunk], bool] | None = None,
+    ) -> list[MemoryChunk]:
+        where, bindings, compiled = self._scope_sql(filter_fn)
+        if not compiled:
+            return super().list_chunks(limit=limit, after_id=after_id, filter_fn=filter_fn)
+        with self._lock:
+            rows = self._conn.execute(
+                f"SELECT {self._CHUNK_SELECT_COLUMNS} FROM memory_chunks WHERE {where} "
+                "AND id > ? ORDER BY id LIMIT ?",
+                [*bindings, after_id, max(0, limit)],
+            ).fetchall()
+        return [self._row_to_chunk(row) for row in rows]
+
+    def get_graph_neighbors(
+        self, source_id: str, *, filter_fn: Callable[[MemoryChunk], bool], limit: int = 32
+    ) -> list[tuple[MemoryChunk, float]]:
+        where, bindings, compiled = self._scope_sql(filter_fn)
+        if not compiled:
+            return []
+        with self._lock:
+            rows = self._conn.execute(
+                f"SELECT {self._CHUNK_SELECT_COLUMNS}, (SELECT MAX(weight) FROM memory_edges "
+                "WHERE (source_id=? AND target_id=memory_chunks.id) "
+                "OR (target_id=? AND source_id=memory_chunks.id)) AS edge_weight "
+                f"FROM memory_chunks WHERE {where} AND id IN "
+                "(SELECT target_id FROM memory_edges WHERE source_id=? UNION "
+                "SELECT source_id FROM memory_edges WHERE target_id=?) "
+                "ORDER BY edge_weight DESC, id LIMIT ?",
+                [source_id, source_id, *bindings, source_id, source_id, max(0, limit)],
+            ).fetchall()
+        return [(self._row_to_chunk(row[:-1]), float(row[-1])) for row in rows]
+
     def get_graph_edges(self, chunk_ids: list[str] | None = None) -> dict[str, dict[str, float]]:
         query = """
             SELECT source_id, target_id, weight
@@ -1864,6 +3328,7 @@ class SQLiteStore(MemoryStore):
             "backend": "SQLiteStore",
             "name": self.name,
             "db_path": self.db_path,
+            "migration_backup": self.migration_backup,
             "total_chunks": total,
             "chunks_with_embeddings": with_embedding,
             "average_salience": round(avg_salience, 4),

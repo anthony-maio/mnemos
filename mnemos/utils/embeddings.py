@@ -24,10 +24,12 @@ import re
 import threading
 from abc import ABC, abstractmethod
 from collections import Counter
+from collections.abc import Callable
 from typing import Any
 
 import httpx
 import numpy as np
+from numpy.typing import NDArray
 
 from ..observability import log_event
 from .reliability import (
@@ -161,7 +163,7 @@ class SimpleEmbeddingProvider(EmbeddingProvider):
         self._doc_freq: Counter[str] = Counter()
         self._doc_count: int = 0
         # Projection matrix for hash trick (words → dim-space via random projection)
-        self._projection: dict[str, np.ndarray] = {}
+        self._projection: dict[str, NDArray[np.float32]] = {}
 
     @property
     def dim(self) -> int:
@@ -172,7 +174,7 @@ class SimpleEmbeddingProvider(EmbeddingProvider):
         """Simple local embeddings are cheap enough to run inline."""
         return False
 
-    def _get_word_vector(self, word: str) -> np.ndarray:
+    def _get_word_vector(self, word: str) -> NDArray[np.float32]:
         """
         Get a deterministic random projection vector for a word.
 
@@ -190,7 +192,7 @@ class SimpleEmbeddingProvider(EmbeddingProvider):
             self._projection[word] = vec
         return self._projection[word]
 
-    def _compute_tfidf_vector(self, tokens: list[str]) -> np.ndarray:
+    def _compute_tfidf_vector(self, tokens: list[str]) -> NDArray[np.float32]:
         """
         Compute a TF-IDF weighted embedding for a list of tokens.
 
@@ -349,11 +351,13 @@ class OllamaEmbeddingProvider(EmbeddingProvider):
         model: str = "nomic-embed-text",
         base_url: str = "http://localhost:11434",
         timeout: float = 30.0,
+        response_observer: Callable[[dict[str, Any]], None] | None = None,
     ) -> None:
         self.model = model
         self.base_url = base_url.rstrip("/")
         self.timeout = timeout
         self._dim: int | None = None
+        self.response_observer = response_observer
 
     @property
     def dim(self) -> int:
@@ -376,6 +380,20 @@ class OllamaEmbeddingProvider(EmbeddingProvider):
         self._dim = len(vec)
         return vec
 
+    def _observed_post(self, url: str, *, payload: dict[str, Any]) -> dict[str, Any]:
+        response = _http_post_json(url, payload=payload, timeout=self.timeout)
+        if self.response_observer is not None:
+            try:
+                self.response_observer(response)
+            except Exception:
+                log_event(
+                    "mnemos.provider_observer_failure",
+                    level=logging.WARNING,
+                    provider="ollama",
+                    operation="embed_observer",
+                )
+        return response
+
     def embed(self, text: str) -> list[float]:
         # Prefer modern /api/embed endpoint.
         try:
@@ -385,10 +403,9 @@ class OllamaEmbeddingProvider(EmbeddingProvider):
                 policy=RetryPolicy(),
                 should_retry=is_retryable_http_exception,
                 fn=lambda: self._parse_vector(
-                    _http_post_json(
+                    self._observed_post(
                         f"{self.base_url}/api/embed",
                         payload={"model": self.model, "input": text},
-                        timeout=self.timeout,
                     )
                 ),
             )
@@ -401,10 +418,9 @@ class OllamaEmbeddingProvider(EmbeddingProvider):
                     policy=RetryPolicy(),
                     should_retry=is_retryable_http_exception,
                     fn=lambda: self._parse_vector(
-                        _http_post_json(
+                        self._observed_post(
                             f"{self.base_url}/api/embeddings",
                             payload={"model": self.model, "prompt": text},
-                            timeout=self.timeout,
                         )
                     ),
                 )
@@ -428,10 +444,9 @@ class OllamaEmbeddingProvider(EmbeddingProvider):
                 operation="embed_batch",
                 policy=RetryPolicy(),
                 should_retry=is_retryable_http_exception,
-                fn=lambda: _http_post_json(
+                fn=lambda: self._observed_post(
                     f"{self.base_url}/api/embed",
                     payload={"model": self.model, "input": texts},
-                    timeout=self.timeout,
                 ),
             )
             embeddings = payload.get("embeddings")
@@ -701,7 +716,9 @@ def cosine_similarity(a: list[float], b: list[float]) -> float:
     norm_b = np.linalg.norm(vb)
     if norm_a == 0 or norm_b == 0:
         return 0.0
-    return float(np.dot(va, vb) / (norm_a * norm_b))
+    # Float32 roundoff can put even a vector's self-similarity above 1,
+    # producing negative surprise and invalid graph weights.
+    return float(np.clip(np.dot(va, vb) / (norm_a * norm_b), -1.0, 1.0))
 
 
 def cosine_distance(a: list[float], b: list[float]) -> float:

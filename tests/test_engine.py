@@ -276,6 +276,7 @@ class TestEngineRetrieve:
 
         await engine.process(make_interaction("Python services deploy with uv and Docker"))
         await engine.process(make_interaction("PostgreSQL backs the production app"))
+        store.retrieve_calls = 0  # Measure recall separately from incremental graph construction.
 
         results = await engine.retrieve("python deploy tooling", top_k=2, reconsolidate=False)
 
@@ -300,6 +301,8 @@ class TestEngineScopedMemory:
     @pytest.mark.asyncio
     async def test_retrieve_filters_by_scope_id_and_allowed_scopes(self, engine):
         """retrieve() should isolate project scope while allowing selected global memory."""
+        # This test covers authorization independently of relevance ranking.
+        engine.config.retrieval.relevance_floor = 0
         await engine.process(
             make_interaction("alpha project uses terraform"),
             scope="project",
@@ -824,7 +827,8 @@ class TestEngineRetrievePersistence:
         )
 
         assert len(results) == 1
-        assert store.mark_retrieved_calls == [(results[0].id, True, True)]
+        assert store.mark_retrieved_calls == [(results[0].id, True, False)]
+        assert store.list_reconsolidation_jobs() == []
 
     @pytest.mark.asyncio
     async def test_retrieve_top_one_skips_spreading_activation(self) -> None:

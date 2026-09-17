@@ -14,6 +14,7 @@ Neuroscience inspiration:
 from __future__ import annotations
 
 import math
+from copy import deepcopy
 import uuid
 from datetime import datetime, timezone
 from typing import Any
@@ -201,7 +202,7 @@ class MemoryChunk(BaseModel):
             id=self.id,  # Same ID — same memory, new version
             content=new_content,
             embedding=None,  # Will need re-embedding
-            metadata={**self.metadata, "previous_content": self.content},
+            metadata={**deepcopy(self.metadata), "previous_content": self.content},
             salience=self.salience,
             cognitive_state=self.cognitive_state,
             created_at=self.created_at,
@@ -338,6 +339,7 @@ class RetrievalFeedbackEvent(BaseModel):
         default_factory=lambda: str(uuid.uuid4()),
         description="Unique identifier for this feedback event.",
     )
+    user_profile_id: str | None = None
     event_type: str = Field(
         description="Retrieval feedback type: helpful, not_helpful, or missed_memory.",
     )
@@ -430,6 +432,7 @@ class ProcessResult(BaseModel):
     reason explaining the memory gate's decision.
     """
 
+    diagnostics: dict[str, Any] = Field(default_factory=dict)
     stored: bool = Field(
         description="Whether this interaction was committed to long-term memory.",
     )

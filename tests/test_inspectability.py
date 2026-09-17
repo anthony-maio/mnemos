@@ -6,7 +6,7 @@ from mnemos.config import MnemosConfig, SleepConfig, SurprisalConfig
 from mnemos.engine import MnemosEngine
 from mnemos.inspectability import build_chunk_inspection
 from mnemos.modules.mutable_rag import MutableRAG
-from mnemos.types import Interaction, MemoryChunk
+from mnemos.types import Interaction, MemoryChunk, EpisodicEvent
 from mnemos.utils.embeddings import SimpleEmbeddingProvider
 from mnemos.utils.llm import MockLLMProvider
 from mnemos.utils.storage import InMemoryStore
@@ -79,6 +79,13 @@ async def test_build_chunk_inspection_can_explain_retrieval_relevance(
 
     engine.spreading_activation.add_edge(first.chunk.id, second.chunk.id, 0.88)
 
+    await engine.retrieve(
+        "python tooling",
+        current_scope="project",
+        scope_id="repo-alpha",
+        allowed_scopes=("project", "global"),
+    )
+
     payload = build_chunk_inspection(
         engine,
         first.chunk.id,
@@ -111,12 +118,26 @@ async def test_reconsolidation_appends_revision_history() -> None:
     chunk = MemoryChunk(
         content="User uses React",
         embedding=embedder.embed("User uses React"),
+        metadata={"user_profile_id": "local", "scope": "global", "scope_id": None},
     )
     store.store(chunk)
 
+    evidence = store.append_episodic_event(
+        EpisodicEvent(
+            event_fingerprint="explicit-change",
+            role="user",
+            content="User migrated from React to Svelte",
+            normalized_content="user migrated from react to svelte",
+            scope="global",
+            scope_id=None,
+            source="manual",
+            metadata={"user_profile_id": "local"},
+        )
+    )
     updated_chunk, changed = await rag.reconsolidate(
         chunk,
         "User mentioned migrating to Svelte this week",
+        evidence_refs=[evidence.id],
     )
 
     assert changed is True
@@ -125,4 +146,5 @@ async def test_reconsolidation_appends_revision_history() -> None:
     assert history[0]["to_version"] == 2
     assert history[0]["previous_content"] == "User uses React"
     assert history[0]["new_content"] == "User migrated from React to Svelte"
-    assert "Svelte" in history[0]["context"]
+    assert history[0]["context"] == "source-backed review"
+    assert updated_chunk.metadata["source_event_ids"] == [evidence.id]

@@ -1,0 +1,668 @@
+{
+  "dataset": {
+    "advertised_as_real": false,
+    "session_id": "dev-001",
+    "sha256": "297e2c3bc4e3bf183ed88e293e3da8e2200ea703ff2a425fbdd302da24c0c776",
+    "source_label": "synthetic_seed",
+    "version": "local-memory-heldout-v2"
+  },
+  "gates": {
+    "human_acceptance": "NOT RUN",
+    "real_cognition": "OBSERVED",
+    "real_embedding": "OBSERVED"
+  },
+  "observation": {
+    "adapter_kind": "real_model",
+    "answerable_hits": [
+      true
+    ],
+    "bytes_after": 3542056,
+    "bytes_before": 337656,
+    "cold_latency_ms": 8.525399985956028,
+    "critical_retention": [],
+    "embedding_revision": "0a109f422b47e3a30ba2b10eca18548e944e8a23073ee3f3e947efcf3c45e59f",
+    "execution_status": "partial",
+    "latency_ms": 49620.511400004034,
+    "length_filter_kept": [],
+    "model_revision": "a2af6cc3eb7fa8be8504abaf9b04e88f17a119ec3f04a3addf55f92841195f5a",
+    "no_answer_correct": [],
+    "provider": "ollama",
+    "raw_output": {
+      "adapter": "ollama",
+      "base_url": "http://192.168.86.35:11434",
+      "embedding_model": "nomic-embed-text:latest",
+      "errors": [
+        {
+          "error": "jobs_not_completed",
+          "jobs": [
+            {
+              "attempt_count": 1,
+              "id": "event:91b9c3ad6d943e1041b3d2b364eedb129a661cf850a854bbff422dc72366cb63",
+              "kind": "extract",
+              "last_error": null,
+              "status": "completed"
+            },
+            {
+              "attempt_count": 1,
+              "id": "event:6a54d9b5495a46d6077b3d8901fbf5b033c1474e8ab67b2f3777505ec9cac3ee",
+              "kind": "extract",
+              "last_error": "ValidationError",
+              "status": "pending"
+            }
+          ],
+          "operation": "maintenance",
+          "statuses": [
+            "pending"
+          ]
+        }
+      ],
+      "extraction_judgements": [
+        {
+          "accepted": true,
+          "content_nonempty": true,
+          "judgement": "exact_frozen_text_and_evidence",
+          "matched_supported_fact_id": "dev-fact-001",
+          "observed_source_event_ids": [
+            "dev-001-event-01"
+          ],
+          "runtime_fact_id": "7d5d6122-a87e-42a2-8a24-e8cbb143b9b1"
+        }
+      ],
+      "measurement_notes": [
+        "Missing retrievals remain null and are excluded from interval numerators.",
+        "Correction and forget use runtime fact IDs resolved from the service store.",
+        "No model token usage was exposed by the current provider API.",
+        "Extraction precision uses exact frozen fact text and source role/evidence checks; paraphrases are unjudged."
+      ],
+      "model": "gemma3:4b",
+      "module_switches": {
+        "disabled": "mutable_rag",
+        "enabled": [
+          "surprisal_gating",
+          "affective_routing",
+          "sleep_consolidation",
+          "spreading_activation"
+        ],
+        "source": "service_factory"
+      },
+      "operations": [
+        {
+          "event_id": "dev-001-event-01",
+          "operation": "capture",
+          "status": "committed"
+        },
+        {
+          "event_id": "dev-001-event-02",
+          "operation": "response",
+          "status": "committed"
+        },
+        {
+          "operation": "restart",
+          "status": "completed"
+        },
+        {
+          "jobs": [
+            {
+              "attempt_count": 1,
+              "id": "event:91b9c3ad6d943e1041b3d2b364eedb129a661cf850a854bbff422dc72366cb63",
+              "kind": "extract",
+              "last_error": null,
+              "status": "completed"
+            },
+            {
+              "attempt_count": 1,
+              "id": "event:6a54d9b5495a46d6077b3d8901fbf5b033c1474e8ab67b2f3777505ec9cac3ee",
+              "kind": "extract",
+              "last_error": "ValidationError",
+              "status": "pending"
+            }
+          ],
+          "operation": "maintenance",
+          "pending_or_failed_statuses": [
+            "pending"
+          ],
+          "status": "incomplete"
+        },
+        {
+          "operation": "retrieve",
+          "query_id": "dev-query-001",
+          "status": "returned"
+        }
+      ],
+      "profile": {
+        "disabled_module": "mutable_rag",
+        "enabled_modules": [
+          "surprisal_gating",
+          "affective_routing",
+          "sleep_consolidation",
+          "spreading_activation"
+        ],
+        "name": "ablate-mutable_rag"
+      },
+      "provenance": {
+        "code_sha256": "5feadf0718c84d425f203be3c98abe4af50512fb18adbb8ce9128a22240d111c",
+        "cognition_observed": true,
+        "embedding_metadata": {},
+        "embedding_sha256": "0a109f422b47e3a30ba2b10eca18548e944e8a23073ee3f3e947efcf3c45e59f",
+        "embedding_verified": false,
+        "model_metadata": {},
+        "model_sha256": "a2af6cc3eb7fa8be8504abaf9b04e88f17a119ec3f04a3addf55f92841195f5a",
+        "options_sha256": "a5787e3ed51bcac5908a165ca32b2e6cf4bf648da32f17847a1ea7abc6cfbd68",
+        "verified": false
+      },
+      "provider": "ollama",
+      "provider_trace": {
+        "classify_calls": [],
+        "config": {
+          "embedding_model": "nomic-embed-text:latest",
+          "endpoint": "http://192.168.86.35:11434",
+          "max_tokens": 512,
+          "model": "gemma3:4b",
+          "temperature": 0.0,
+          "timeout_seconds": 120.0
+        },
+        "embed_calls": [
+          {
+            "latency_ms": 215.53260000655428,
+            "text_chars": 28,
+            "token_usage": {
+              "prompt_eval_count": 8
+            },
+            "vector_dimensions": 768
+          },
+          {
+            "latency_ms": 214.8763000004692,
+            "text_chars": 58,
+            "token_usage": {
+              "prompt_eval_count": 14
+            },
+            "vector_dimensions": 768
+          },
+          {
+            "latency_ms": 231.51949999737553,
+            "text_chars": 58,
+            "token_usage": {
+              "prompt_eval_count": 14
+            },
+            "vector_dimensions": 768
+          },
+          {
+            "latency_ms": 267.4223000067286,
+            "text_chars": 58,
+            "token_usage": {
+              "prompt_eval_count": 14
+            },
+            "vector_dimensions": 768
+          },
+          {
+            "latency_ms": 217.4584999884246,
+            "text_chars": 22,
+            "token_usage": {
+              "prompt_eval_count": 10
+            },
+            "vector_dimensions": 768
+          },
+          {
+            "latency_ms": 218.19299999333452,
+            "text_chars": 61,
+            "token_usage": {
+              "prompt_eval_count": 12
+            },
+            "vector_dimensions": 768
+          },
+          {
+            "latency_ms": 211.03569999104366,
+            "text_chars": 61,
+            "token_usage": {
+              "prompt_eval_count": 12
+            },
+            "vector_dimensions": 768
+          },
+          {
+            "latency_ms": 217.88279998872895,
+            "text_chars": 61,
+            "token_usage": {
+              "prompt_eval_count": 12
+            },
+            "vector_dimensions": 768
+          }
+        ],
+        "job_exceptions": [
+          {
+            "exception": "1 validation error for ExtractionResponse\nfacts.0\n  Value error, Support and correction proposals need a target fact [type=value_error, input_value={'content': 'The developm... 'operation': 'support'}, input_type=dict]\n    For further information visit https://errors.pydantic.dev/2.13/v/value_error",
+            "exception_type": "ValidationError",
+            "job_id": "event:6a54d9b5495a46d6077b3d8901fbf5b033c1474e8ab67b2f3777505ec9cac3ee",
+            "kind": "extract",
+            "validation_errors": [
+              {
+                "ctx": {
+                  "error": "Support and correction proposals need a target fact"
+                },
+                "input": {
+                  "content": "The development fixture records primary database as MySQL.",
+                  "evidence_ids": [
+                    "7d5d6122-a87e-42a2-8a24-e8cbb143b9b1"
+                  ],
+                  "operation": "support"
+                },
+                "loc": [
+                  "facts",
+                  0
+                ],
+                "msg": "Value error, Support and correction proposals need a target fact",
+                "type": "value_error",
+                "url": "https://errors.pydantic.dev/2.13/v/value_error"
+              }
+            ]
+          }
+        ],
+        "predict_calls": [
+          {
+            "latency_ms": 1697.121999997762,
+            "prompt_chars": 255,
+            "response": "Tell me about your features.",
+            "token_usage": {
+              "eval_count": 7,
+              "prompt_eval_count": 62
+            }
+          },
+          {
+            "latency_ms": 13506.236999994144,
+            "prompt_chars": 821,
+            "response": "{\"decision\":\"facts\",\"facts\":[{\"content\":\"The development fixture records primary database as MySQL.\", \"evidence_ids\":[\"91b9c3ad6d943e1041b3d2b364eedb129a661cf850a854bbff422dc72366cb63\"],\"operation\":\"add\"}]}",
+            "token_usage": {
+              "eval_count": 87,
+              "prompt_eval_count": 256
+            }
+          },
+          {
+            "latency_ms": 3248.9028999989387,
+            "prompt_chars": 368,
+            "response": "0.1, 0.2, 0.3",
+            "token_usage": {
+              "eval_count": 15,
+              "prompt_eval_count": 113
+            }
+          },
+          {
+            "latency_ms": 1670.4793999961112,
+            "prompt_chars": 301,
+            "response": "What version of MySQL?",
+            "token_usage": {
+              "eval_count": 6,
+              "prompt_eval_count": 68
+            }
+          },
+          {
+            "latency_ms": 22381.360100000165,
+            "prompt_chars": 1395,
+            "response": "{\"decision\":\"facts\",\"facts\":[{\"content\":\"The development fixture records primary database as MySQL.\", \"evidence_ids\":[\"7d5d6122-a87e-42a2-8a24-e8cbb143b9b1\"],\"operation\":\"support\"},{\"content\":\"I have recorded the development fixture for later evaluation.\", \"evidence_ids\":[\"6a54d9b5495a46d6077b3d8901fbf5b033c1474e8ab67b2f3777505ec9cac3ee\"],\"operation\":\"add\"}]}",
+            "token_usage": {
+              "eval_count": 147,
+              "prompt_eval_count": 406
+            }
+          },
+          {
+            "latency_ms": 3375.107999992906,
+            "prompt_chars": 371,
+            "response": "-0.2, 0.3, 0.4",
+            "token_usage": {
+              "eval_count": 16,
+              "prompt_eval_count": 114
+            }
+          }
+        ],
+        "response_metadata": [
+          {
+            "created_at": "2026-09-17T00:20:36.2533196Z",
+            "done": true,
+            "done_reason": "stop",
+            "eval_count": 7,
+            "eval_duration": 686367000,
+            "kind": "generate",
+            "load_duration": 6072200,
+            "model": "gemma3:4b",
+            "prompt_eval_count": 62,
+            "prompt_eval_duration": 798896000,
+            "provider": "ollama",
+            "total_duration": 1506607200
+          },
+          {
+            "kind": "embedding",
+            "load_duration": 7462600,
+            "model": "nomic-embed-text:latest",
+            "prompt_eval_count": 8,
+            "provider": "ollama",
+            "total_duration": 21018700
+          },
+          {
+            "kind": "embedding",
+            "load_duration": 5840000,
+            "model": "nomic-embed-text:latest",
+            "prompt_eval_count": 14,
+            "provider": "ollama",
+            "total_duration": 26648100
+          },
+          {
+            "kind": "embedding",
+            "load_duration": 6322700,
+            "model": "nomic-embed-text:latest",
+            "prompt_eval_count": 14,
+            "provider": "ollama",
+            "total_duration": 23524500
+          },
+          {
+            "created_at": "2026-09-17T00:20:50.4233701Z",
+            "done": true,
+            "done_reason": "stop",
+            "eval_count": 87,
+            "eval_duration": 10160752000,
+            "kind": "generate",
+            "load_duration": 5996700,
+            "model": "gemma3:4b",
+            "prompt_eval_count": 256,
+            "prompt_eval_duration": 3098689000,
+            "provider": "ollama",
+            "total_duration": 13287708100
+          },
+          {
+            "created_at": "2026-09-17T00:20:53.6724377Z",
+            "done": true,
+            "done_reason": "stop",
+            "eval_count": 15,
+            "eval_duration": 1610912000,
+            "kind": "generate",
+            "load_duration": 8155900,
+            "model": "gemma3:4b",
+            "prompt_eval_count": 113,
+            "prompt_eval_duration": 1416039000,
+            "provider": "ollama",
+            "total_duration": 3060821400
+          },
+          {
+            "kind": "embedding",
+            "load_duration": 6361200,
+            "model": "nomic-embed-text:latest",
+            "prompt_eval_count": 14,
+            "provider": "ollama",
+            "total_duration": 22960600
+          },
+          {
+            "created_at": "2026-09-17T00:20:55.7589166Z",
+            "done": true,
+            "done_reason": "stop",
+            "eval_count": 6,
+            "eval_duration": 570978000,
+            "kind": "generate",
+            "load_duration": 6336800,
+            "model": "gemma3:4b",
+            "prompt_eval_count": 68,
+            "prompt_eval_duration": 878449000,
+            "provider": "ollama",
+            "total_duration": 1469175400
+          },
+          {
+            "kind": "embedding",
+            "load_duration": 6060400,
+            "model": "nomic-embed-text:latest",
+            "prompt_eval_count": 10,
+            "provider": "ollama",
+            "total_duration": 21814400
+          },
+          {
+            "kind": "embedding",
+            "load_duration": 6297500,
+            "model": "nomic-embed-text:latest",
+            "prompt_eval_count": 12,
+            "provider": "ollama",
+            "total_duration": 23616400
+          },
+          {
+            "kind": "embedding",
+            "load_duration": 7092200,
+            "model": "nomic-embed-text:latest",
+            "prompt_eval_count": 12,
+            "provider": "ollama",
+            "total_duration": 23857100
+          },
+          {
+            "created_at": "2026-09-17T00:21:18.7878096Z",
+            "done": true,
+            "done_reason": "stop",
+            "eval_count": 147,
+            "eval_duration": 17217660000,
+            "kind": "generate",
+            "load_duration": 6364800,
+            "model": "gemma3:4b",
+            "prompt_eval_count": 406,
+            "prompt_eval_duration": 4925419000,
+            "provider": "ollama",
+            "total_duration": 22170024900
+          },
+          {
+            "kind": "embedding",
+            "load_duration": 8745400,
+            "model": "nomic-embed-text:latest",
+            "prompt_eval_count": 12,
+            "provider": "ollama",
+            "total_duration": 27225100
+          },
+          {
+            "created_at": "2026-09-17T00:21:22.4968897Z",
+            "done": true,
+            "done_reason": "stop",
+            "eval_count": 16,
+            "eval_duration": 1689894000,
+            "kind": "generate",
+            "load_duration": 9416400,
+            "model": "gemma3:4b",
+            "prompt_eval_count": 114,
+            "prompt_eval_duration": 1444202000,
+            "provider": "ollama",
+            "total_duration": 3183594800
+          }
+        ]
+      },
+      "unsupported_modules": [],
+      "unsupported_operations": []
+    },
+    "repetition": 1,
+    "retrieved_fact_count": 1,
+    "session_id": "dev-001",
+    "stale_fact_count": 0,
+    "state_pair_semantic_hits": [],
+    "state_pair_state_hits": [],
+    "supported_precision": [
+      true
+    ],
+    "surprisal_filter_kept": [],
+    "token_cost": null,
+    "verified_model_provenance": false
+  },
+  "observed_at": "2026-09-17T00:21:22.648070+00:00",
+  "profile": {
+    "disabled_module": "mutable_rag",
+    "enabled_modules": [
+      "surprisal_gating",
+      "affective_routing",
+      "sleep_consolidation",
+      "spreading_activation"
+    ],
+    "name": "ablate-mutable_rag"
+  },
+  "provider": {
+    "code_provenance": {
+      "files": [
+        ".claude-plugin/run_mnemos_mcp.py",
+        "benchmarks/local_memory/__init__.py",
+        "benchmarks/local_memory/__main__.py",
+        "benchmarks/local_memory/ablation.py",
+        "benchmarks/local_memory/artifacts.py",
+        "benchmarks/local_memory/contracts.py",
+        "benchmarks/local_memory/dev_smoke.py",
+        "benchmarks/local_memory/harness.py",
+        "benchmarks/local_memory/ollama_adapter.py",
+        "benchmarks/local_memory/resumption.py",
+        "benchmarks/local_memory/scoring.py",
+        "examples/basic_usage.py",
+        "examples/full_pipeline.py",
+        "examples/mcp_agent_demo.py",
+        "mnemos/__init__.py",
+        "mnemos/__main__.py",
+        "mnemos/adapters/claude_code.py",
+        "mnemos/adapters/codex.py",
+        "mnemos/adapters/hermes.py",
+        "mnemos/antigravity.py",
+        "mnemos/backup.py",
+        "mnemos/benchmark.py",
+        "mnemos/bridge.py",
+        "mnemos/cli.py",
+        "mnemos/client.py",
+        "mnemos/config.py",
+        "mnemos/contracts.py",
+        "mnemos/control_plane.py",
+        "mnemos/curation.py",
+        "mnemos/engine.py",
+        "mnemos/health.py",
+        "mnemos/hook_autostore.py",
+        "mnemos/hosts.py",
+        "mnemos/inspectability.py",
+        "mnemos/jobs.py",
+        "mnemos/maintenance.py",
+        "mnemos/managed_cli.py",
+        "mnemos/mcp_server.py",
+        "mnemos/memory_safety.py",
+        "mnemos/memory_service.py",
+        "mnemos/modules/__init__.py",
+        "mnemos/modules/affective.py",
+        "mnemos/modules/mutable_rag.py",
+        "mnemos/modules/sleep.py",
+        "mnemos/modules/spreading.py",
+        "mnemos/modules/surprisal.py",
+        "mnemos/observability.py",
+        "mnemos/reindex.py",
+        "mnemos/retrieval.py",
+        "mnemos/runtime.py",
+        "mnemos/scopes.py",
+        "mnemos/service.py",
+        "mnemos/settings.py",
+        "mnemos/types.py",
+        "mnemos/ui_server.py",
+        "mnemos/utils/__init__.py",
+        "mnemos/utils/embeddings.py",
+        "mnemos/utils/llm.py",
+        "mnemos/utils/reliability.py",
+        "mnemos/utils/storage.py",
+        "pyproject.toml",
+        "tests/__init__.py",
+        "tests/conftest.py",
+        "tests/test_backup_restore.py",
+        "tests/test_benchmark.py",
+        "tests/test_bridge.py",
+        "tests/test_ci_workflow.py",
+        "tests/test_claude_adapter.py",
+        "tests/test_cli.py",
+        "tests/test_codex_adapter.py",
+        "tests/test_configured_runtime.py",
+        "tests/test_control_plane.py",
+        "tests/test_cross_host_contract.py",
+        "tests/test_docs_consistency.py",
+        "tests/test_durable_jobs.py",
+        "tests/test_durable_memory_repair.py",
+        "tests/test_embeddings.py",
+        "tests/test_engine.py",
+        "tests/test_feedback_eval_export.py",
+        "tests/test_feedback_events.py",
+        "tests/test_graph_persistence.py",
+        "tests/test_health.py",
+        "tests/test_hermes_adapter.py",
+        "tests/test_hook_autostore.py",
+        "tests/test_hosts.py",
+        "tests/test_inspectability.py",
+        "tests/test_llm.py",
+        "tests/test_local_memory_benchmark.py",
+        "tests/test_maintenance.py",
+        "tests/test_managed_cli.py",
+        "tests/test_mcp_compatibility.py",
+        "tests/test_mcp_server.py",
+        "tests/test_mcp_tier2_smoke.py",
+        "tests/test_memory_lifecycle.py",
+        "tests/test_memory_safety.py",
+        "tests/test_memory_service.py",
+        "tests/test_modules.py",
+        "tests/test_plugin_packaging.py",
+        "tests/test_reconsolidation_contract.py",
+        "tests/test_reliability.py",
+        "tests/test_retrieval_contract.py",
+        "tests/test_runtime.py",
+        "tests/test_scope_context.py",
+        "tests/test_scoped_storage.py",
+        "tests/test_service.py",
+        "tests/test_settings.py",
+        "tests/test_spreading_activation.py",
+        "tests/test_spreading_isolation.py",
+        "tests/test_storage_sqlite.py",
+        "tests/test_storage_touch.py",
+        "tests/test_surprisal_contract.py",
+        "tests/test_types.py",
+        "tests/test_ui_server.py"
+      ],
+      "sha256": "5feadf0718c84d425f203be3c98abe4af50512fb18adbb8ce9128a22240d111c"
+    },
+    "embedding_metadata": {
+      "capabilities": [
+        "embedding"
+      ],
+      "details": {
+        "context_length": 2048,
+        "embedding_length": 768,
+        "families": [
+          "nomic-bert"
+        ],
+        "family": "nomic-bert",
+        "format": "gguf",
+        "parameter_size": "137M",
+        "parent_model": "",
+        "quantization_level": "F16"
+      },
+      "digest": "0a109f422b47e3a30ba2b10eca18548e944e8a23073ee3f3e947efcf3c45e59f",
+      "model": "nomic-embed-text:latest",
+      "modified_at": "2025-11-04T15:15:16.2072724-05:00",
+      "name": "nomic-embed-text:latest",
+      "size": 274302450
+    },
+    "embedding_model": "nomic-embed-text:latest",
+    "endpoint": "http://192.168.86.35:11434",
+    "model": "gemma3:4b",
+    "model_metadata": {
+      "capabilities": [
+        "completion",
+        "vision"
+      ],
+      "details": {
+        "context_length": 131072,
+        "embedding_length": 2560,
+        "families": [
+          "gemma3"
+        ],
+        "family": "gemma3",
+        "format": "gguf",
+        "parameter_size": "4.3B",
+        "parent_model": "",
+        "quantization_level": "Q4_K_M"
+      },
+      "digest": "a2af6cc3eb7fa8be8504abaf9b04e88f17a119ec3f04a3addf55f92841195f5a",
+      "model": "gemma3:4b",
+      "modified_at": "2026-03-11T01:54:24.735623-04:00",
+      "name": "gemma3:4b",
+      "size": 3338801804
+    },
+    "options": {
+      "max_tokens": 512,
+      "temperature": 0.0,
+      "timeout_seconds": 120.0
+    }
+  },
+  "schema_version": "local-memory-development-smoke-v1",
+  "status": "partial"
+}

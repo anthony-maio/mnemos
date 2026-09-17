@@ -1,0 +1,1191 @@
+{
+  "dataset": {
+    "advertised_as_real": false,
+    "session_id": "dev-001",
+    "sha256": "297e2c3bc4e3bf183ed88e293e3da8e2200ea703ff2a425fbdd302da24c0c776",
+    "source_label": "synthetic_seed",
+    "version": "local-memory-heldout-v2"
+  },
+  "gates": {
+    "human_acceptance": "NOT RUN",
+    "real_cognition": "OBSERVED",
+    "real_embedding": "OBSERVED"
+  },
+  "observation": {
+    "adapter_kind": "real_model",
+    "answerable_hits": [
+      false
+    ],
+    "bytes_after": 332576,
+    "bytes_before": 329416,
+    "cold_latency_ms": 3.323400000226684,
+    "critical_retention": [],
+    "embedding_revision": "0a109f422b47e3a30ba2b10eca18548e944e8a23073ee3f3e947efcf3c45e59f",
+    "execution_status": "partial",
+    "latency_ms": 112801.69749999914,
+    "length_filter_kept": [],
+    "model_revision": "a2af6cc3eb7fa8be8504abaf9b04e88f17a119ec3f04a3addf55f92841195f5a",
+    "no_answer_correct": [],
+    "provider": "ollama",
+    "raw_output": {
+      "adapter": "ollama",
+      "base_url": "http://192.168.86.35:11434",
+      "embedding_model": "nomic-embed-text:latest",
+      "errors": [
+        {
+          "error": "jobs_not_completed",
+          "jobs": [
+            {
+              "attempt_count": 4,
+              "id": "event:fb565886cc612ba229b7dade852c99ab23ccb12939caaf233541ab85b67845bb",
+              "kind": "extract",
+              "last_error": "ValidationError",
+              "status": "pending"
+            },
+            {
+              "attempt_count": 4,
+              "id": "event:a26f9102f543a37381f84f62b460c97a59028cac76bfb318a22acaa0858307c7",
+              "kind": "extract",
+              "last_error": "ValidationError",
+              "status": "pending"
+            }
+          ],
+          "operation": "maintenance",
+          "statuses": [
+            "pending"
+          ]
+        }
+      ],
+      "extraction_judgements": [],
+      "measurement_notes": [
+        "Missing retrievals remain null and are excluded from interval numerators.",
+        "Correction and forget use runtime fact IDs resolved from the service store.",
+        "No model token usage was exposed by the current provider API.",
+        "Extraction precision uses exact frozen fact text and source role/evidence checks; paraphrases are unjudged."
+      ],
+      "model": "gemma3:4b",
+      "module_switches": {
+        "disabled": null,
+        "enabled": [
+          "surprisal_gating",
+          "mutable_rag",
+          "affective_routing",
+          "sleep_consolidation",
+          "spreading_activation"
+        ],
+        "source": "service_factory"
+      },
+      "operations": [
+        {
+          "event_id": "dev-001-event-01",
+          "operation": "capture",
+          "status": "committed"
+        },
+        {
+          "event_id": "dev-001-event-02",
+          "operation": "response",
+          "status": "committed"
+        },
+        {
+          "operation": "restart",
+          "status": "completed"
+        },
+        {
+          "jobs": [
+            {
+              "attempt_count": 4,
+              "id": "event:fb565886cc612ba229b7dade852c99ab23ccb12939caaf233541ab85b67845bb",
+              "kind": "extract",
+              "last_error": "ValidationError",
+              "status": "pending"
+            },
+            {
+              "attempt_count": 4,
+              "id": "event:a26f9102f543a37381f84f62b460c97a59028cac76bfb318a22acaa0858307c7",
+              "kind": "extract",
+              "last_error": "ValidationError",
+              "status": "pending"
+            }
+          ],
+          "operation": "maintenance",
+          "pending_or_failed_statuses": [
+            "pending"
+          ],
+          "status": "incomplete"
+        },
+        {
+          "operation": "retrieve",
+          "query_id": "dev-query-001",
+          "status": "returned"
+        }
+      ],
+      "profile": {
+        "disabled_module": null,
+        "enabled_modules": [
+          "surprisal_gating",
+          "mutable_rag",
+          "affective_routing",
+          "sleep_consolidation",
+          "spreading_activation"
+        ],
+        "name": "full"
+      },
+      "provenance": {
+        "code_sha256": "ac43747e10a609feb1ca478c6b0ee430fe867030ce1fee9ddd4d731a3853c306",
+        "cognition_observed": true,
+        "embedding_metadata": {},
+        "embedding_sha256": "0a109f422b47e3a30ba2b10eca18548e944e8a23073ee3f3e947efcf3c45e59f",
+        "embedding_verified": false,
+        "model_metadata": {},
+        "model_sha256": "a2af6cc3eb7fa8be8504abaf9b04e88f17a119ec3f04a3addf55f92841195f5a",
+        "options_sha256": "a5787e3ed51bcac5908a165ca32b2e6cf4bf648da32f17847a1ea7abc6cfbd68",
+        "verified": false
+      },
+      "provider": "ollama",
+      "provider_trace": {
+        "classify_calls": [],
+        "config": {
+          "embedding_model": "nomic-embed-text:latest",
+          "endpoint": "http://192.168.86.35:11434",
+          "max_tokens": 512,
+          "model": "gemma3:4b",
+          "temperature": 0.0,
+          "timeout_seconds": 120.0
+        },
+        "embed_calls": [
+          {
+            "latency_ms": 252.84850000025472,
+            "text_chars": 28,
+            "token_usage": {
+              "prompt_eval_count": 8
+            },
+            "vector_dimensions": 768
+          },
+          {
+            "latency_ms": 231.00690000137547,
+            "text_chars": 58,
+            "token_usage": {
+              "prompt_eval_count": 14
+            },
+            "vector_dimensions": 768
+          },
+          {
+            "latency_ms": 232.76000000623753,
+            "text_chars": 58,
+            "token_usage": {
+              "prompt_eval_count": 14
+            },
+            "vector_dimensions": 768
+          },
+          {
+            "latency_ms": 217.83380000124453,
+            "text_chars": 22,
+            "token_usage": {
+              "prompt_eval_count": 10
+            },
+            "vector_dimensions": 768
+          },
+          {
+            "latency_ms": 206.50620000378694,
+            "text_chars": 61,
+            "token_usage": {
+              "prompt_eval_count": 12
+            },
+            "vector_dimensions": 768
+          },
+          {
+            "latency_ms": 236.29329999675974,
+            "text_chars": 61,
+            "token_usage": {
+              "prompt_eval_count": 12
+            },
+            "vector_dimensions": 768
+          },
+          {
+            "latency_ms": 219.74449999834178,
+            "text_chars": 28,
+            "token_usage": {
+              "prompt_eval_count": 8
+            },
+            "vector_dimensions": 768
+          },
+          {
+            "latency_ms": 236.85359999944922,
+            "text_chars": 58,
+            "token_usage": {
+              "prompt_eval_count": 14
+            },
+            "vector_dimensions": 768
+          },
+          {
+            "latency_ms": 217.21689999685623,
+            "text_chars": 58,
+            "token_usage": {
+              "prompt_eval_count": 14
+            },
+            "vector_dimensions": 768
+          },
+          {
+            "latency_ms": 245.77470000076573,
+            "text_chars": 22,
+            "token_usage": {
+              "prompt_eval_count": 10
+            },
+            "vector_dimensions": 768
+          },
+          {
+            "latency_ms": 253.3181999970111,
+            "text_chars": 61,
+            "token_usage": {
+              "prompt_eval_count": 12
+            },
+            "vector_dimensions": 768
+          },
+          {
+            "latency_ms": 224.18330000073183,
+            "text_chars": 61,
+            "token_usage": {
+              "prompt_eval_count": 12
+            },
+            "vector_dimensions": 768
+          },
+          {
+            "latency_ms": 215.63700000115205,
+            "text_chars": 28,
+            "token_usage": {
+              "prompt_eval_count": 8
+            },
+            "vector_dimensions": 768
+          },
+          {
+            "latency_ms": 236.47660000278847,
+            "text_chars": 58,
+            "token_usage": {
+              "prompt_eval_count": 14
+            },
+            "vector_dimensions": 768
+          },
+          {
+            "latency_ms": 209.38420000311453,
+            "text_chars": 58,
+            "token_usage": {
+              "prompt_eval_count": 14
+            },
+            "vector_dimensions": 768
+          },
+          {
+            "latency_ms": 216.4238000041223,
+            "text_chars": 22,
+            "token_usage": {
+              "prompt_eval_count": 10
+            },
+            "vector_dimensions": 768
+          },
+          {
+            "latency_ms": 223.64630000083707,
+            "text_chars": 61,
+            "token_usage": {
+              "prompt_eval_count": 12
+            },
+            "vector_dimensions": 768
+          },
+          {
+            "latency_ms": 221.91190000012284,
+            "text_chars": 61,
+            "token_usage": {
+              "prompt_eval_count": 12
+            },
+            "vector_dimensions": 768
+          },
+          {
+            "latency_ms": 242.13030000100844,
+            "text_chars": 28,
+            "token_usage": {
+              "prompt_eval_count": 8
+            },
+            "vector_dimensions": 768
+          },
+          {
+            "latency_ms": 241.8958999987808,
+            "text_chars": 58,
+            "token_usage": {
+              "prompt_eval_count": 14
+            },
+            "vector_dimensions": 768
+          },
+          {
+            "latency_ms": 218.21429999545217,
+            "text_chars": 58,
+            "token_usage": {
+              "prompt_eval_count": 14
+            },
+            "vector_dimensions": 768
+          },
+          {
+            "latency_ms": 237.80649999389425,
+            "text_chars": 22,
+            "token_usage": {
+              "prompt_eval_count": 10
+            },
+            "vector_dimensions": 768
+          },
+          {
+            "latency_ms": 234.60169999452773,
+            "text_chars": 61,
+            "token_usage": {
+              "prompt_eval_count": 12
+            },
+            "vector_dimensions": 768
+          },
+          {
+            "latency_ms": 236.00979999901028,
+            "text_chars": 61,
+            "token_usage": {
+              "prompt_eval_count": 12
+            },
+            "vector_dimensions": 768
+          },
+          {
+            "latency_ms": 230.09190000448143,
+            "text_chars": 61,
+            "token_usage": {
+              "prompt_eval_count": 12
+            },
+            "vector_dimensions": 768
+          }
+        ],
+        "job_exceptions": [
+          {
+            "exception": "1 validation error for FactProposal\noperation\n  Field required [type=missing, input_value={'content': 'The developm...aaf233541ab85b67845bb']}, input_type=dict]\n    For further information visit https://errors.pydantic.dev/2.13/v/missing",
+            "exception_type": "ValidationError",
+            "job_id": "event:fb565886cc612ba229b7dade852c99ab23ccb12939caaf233541ab85b67845bb",
+            "kind": "extract",
+            "validation_errors": [
+              {
+                "input": {
+                  "content": "The development fixture records primary database as MySQL.",
+                  "evidence_ids": [
+                    "fb565886cc612ba229b7dade852c99ab23ccb12939caaf233541ab85b67845bb"
+                  ]
+                },
+                "loc": [
+                  "operation"
+                ],
+                "msg": "Field required",
+                "type": "missing",
+                "url": "https://errors.pydantic.dev/2.13/v/missing"
+              }
+            ]
+          },
+          {
+            "exception": "1 validation error for FactProposal\noperation\n  Field required [type=missing, input_value={'content': 'The assistan...fb318a22acaa0858307c7']}, input_type=dict]\n    For further information visit https://errors.pydantic.dev/2.13/v/missing",
+            "exception_type": "ValidationError",
+            "job_id": "event:a26f9102f543a37381f84f62b460c97a59028cac76bfb318a22acaa0858307c7",
+            "kind": "extract",
+            "validation_errors": [
+              {
+                "input": {
+                  "content": "The assistant recorded a development fixture.",
+                  "evidence_ids": [
+                    "a26f9102f543a37381f84f62b460c97a59028cac76bfb318a22acaa0858307c7"
+                  ]
+                },
+                "loc": [
+                  "operation"
+                ],
+                "msg": "Field required",
+                "type": "missing",
+                "url": "https://errors.pydantic.dev/2.13/v/missing"
+              }
+            ]
+          },
+          {
+            "exception": "1 validation error for FactProposal\noperation\n  Field required [type=missing, input_value={'content': 'The developm...aaf233541ab85b67845bb']}, input_type=dict]\n    For further information visit https://errors.pydantic.dev/2.13/v/missing",
+            "exception_type": "ValidationError",
+            "job_id": "event:fb565886cc612ba229b7dade852c99ab23ccb12939caaf233541ab85b67845bb",
+            "kind": "extract",
+            "validation_errors": [
+              {
+                "input": {
+                  "content": "The development fixture records primary database as MySQL.",
+                  "evidence_ids": [
+                    "fb565886cc612ba229b7dade852c99ab23ccb12939caaf233541ab85b67845bb"
+                  ]
+                },
+                "loc": [
+                  "operation"
+                ],
+                "msg": "Field required",
+                "type": "missing",
+                "url": "https://errors.pydantic.dev/2.13/v/missing"
+              }
+            ]
+          },
+          {
+            "exception": "1 validation error for FactProposal\noperation\n  Field required [type=missing, input_value={'content': 'The assistan...fb318a22acaa0858307c7']}, input_type=dict]\n    For further information visit https://errors.pydantic.dev/2.13/v/missing",
+            "exception_type": "ValidationError",
+            "job_id": "event:a26f9102f543a37381f84f62b460c97a59028cac76bfb318a22acaa0858307c7",
+            "kind": "extract",
+            "validation_errors": [
+              {
+                "input": {
+                  "content": "The assistant recorded a development fixture.",
+                  "evidence_ids": [
+                    "a26f9102f543a37381f84f62b460c97a59028cac76bfb318a22acaa0858307c7"
+                  ]
+                },
+                "loc": [
+                  "operation"
+                ],
+                "msg": "Field required",
+                "type": "missing",
+                "url": "https://errors.pydantic.dev/2.13/v/missing"
+              }
+            ]
+          },
+          {
+            "exception": "1 validation error for FactProposal\noperation\n  Field required [type=missing, input_value={'content': 'The developm...aaf233541ab85b67845bb']}, input_type=dict]\n    For further information visit https://errors.pydantic.dev/2.13/v/missing",
+            "exception_type": "ValidationError",
+            "job_id": "event:fb565886cc612ba229b7dade852c99ab23ccb12939caaf233541ab85b67845bb",
+            "kind": "extract",
+            "validation_errors": [
+              {
+                "input": {
+                  "content": "The development fixture records primary database as MySQL.",
+                  "evidence_ids": [
+                    "fb565886cc612ba229b7dade852c99ab23ccb12939caaf233541ab85b67845bb"
+                  ]
+                },
+                "loc": [
+                  "operation"
+                ],
+                "msg": "Field required",
+                "type": "missing",
+                "url": "https://errors.pydantic.dev/2.13/v/missing"
+              }
+            ]
+          },
+          {
+            "exception": "1 validation error for FactProposal\noperation\n  Field required [type=missing, input_value={'content': 'The assistan...fb318a22acaa0858307c7']}, input_type=dict]\n    For further information visit https://errors.pydantic.dev/2.13/v/missing",
+            "exception_type": "ValidationError",
+            "job_id": "event:a26f9102f543a37381f84f62b460c97a59028cac76bfb318a22acaa0858307c7",
+            "kind": "extract",
+            "validation_errors": [
+              {
+                "input": {
+                  "content": "The assistant recorded a development fixture.",
+                  "evidence_ids": [
+                    "a26f9102f543a37381f84f62b460c97a59028cac76bfb318a22acaa0858307c7"
+                  ]
+                },
+                "loc": [
+                  "operation"
+                ],
+                "msg": "Field required",
+                "type": "missing",
+                "url": "https://errors.pydantic.dev/2.13/v/missing"
+              }
+            ]
+          },
+          {
+            "exception": "1 validation error for FactProposal\noperation\n  Field required [type=missing, input_value={'content': 'The developm...aaf233541ab85b67845bb']}, input_type=dict]\n    For further information visit https://errors.pydantic.dev/2.13/v/missing",
+            "exception_type": "ValidationError",
+            "job_id": "event:fb565886cc612ba229b7dade852c99ab23ccb12939caaf233541ab85b67845bb",
+            "kind": "extract",
+            "validation_errors": [
+              {
+                "input": {
+                  "content": "The development fixture records primary database as MySQL.",
+                  "evidence_ids": [
+                    "fb565886cc612ba229b7dade852c99ab23ccb12939caaf233541ab85b67845bb"
+                  ]
+                },
+                "loc": [
+                  "operation"
+                ],
+                "msg": "Field required",
+                "type": "missing",
+                "url": "https://errors.pydantic.dev/2.13/v/missing"
+              }
+            ]
+          },
+          {
+            "exception": "1 validation error for FactProposal\noperation\n  Field required [type=missing, input_value={'content': 'The assistan...fb318a22acaa0858307c7']}, input_type=dict]\n    For further information visit https://errors.pydantic.dev/2.13/v/missing",
+            "exception_type": "ValidationError",
+            "job_id": "event:a26f9102f543a37381f84f62b460c97a59028cac76bfb318a22acaa0858307c7",
+            "kind": "extract",
+            "validation_errors": [
+              {
+                "input": {
+                  "content": "The assistant recorded a development fixture.",
+                  "evidence_ids": [
+                    "a26f9102f543a37381f84f62b460c97a59028cac76bfb318a22acaa0858307c7"
+                  ]
+                },
+                "loc": [
+                  "operation"
+                ],
+                "msg": "Field required",
+                "type": "missing",
+                "url": "https://errors.pydantic.dev/2.13/v/missing"
+              }
+            ]
+          }
+        ],
+        "predict_calls": [
+          {
+            "latency_ms": 1927.7680999948643,
+            "prompt_chars": 255,
+            "response": "Tell me about your features.",
+            "token_usage": {
+              "eval_count": 7,
+              "prompt_eval_count": 62
+            }
+          },
+          {
+            "latency_ms": 11297.609200002626,
+            "prompt_chars": 821,
+            "response": "```json\n{\"decision\":\"facts\",\"facts\":[{\"content\":\"The development fixture records primary database as MySQL.\",\"evidence_ids\":[\"fb565886cc612ba229b7dade852c99ab23ccb12939caaf233541ab85b67845bb\"]}]}\n```",
+            "token_usage": {
+              "eval_count": 83,
+              "prompt_eval_count": 252
+            }
+          },
+          {
+            "latency_ms": 1814.067300001625,
+            "prompt_chars": 301,
+            "response": "What version of MySQL?",
+            "token_usage": {
+              "eval_count": 6,
+              "prompt_eval_count": 68
+            }
+          },
+          {
+            "latency_ms": 11905.848599999445,
+            "prompt_chars": 829,
+            "response": "```json\n{\"decision\":\"facts\",\"facts\":[{\"content\":\"The assistant recorded a development fixture.\", \"evidence_ids\":[\"a26f9102f543a37381f84f62b460c97a59028cac76bfb318a22acaa0858307c7\"]}]}\n```",
+            "token_usage": {
+              "eval_count": 88,
+              "prompt_eval_count": 260
+            }
+          },
+          {
+            "latency_ms": 1948.495600001479,
+            "prompt_chars": 255,
+            "response": "Tell me about your features.",
+            "token_usage": {
+              "eval_count": 7,
+              "prompt_eval_count": 62
+            }
+          },
+          {
+            "latency_ms": 11194.342299997516,
+            "prompt_chars": 821,
+            "response": "```json\n{\"decision\":\"facts\",\"facts\":[{\"content\":\"The development fixture records primary database as MySQL.\",\"evidence_ids\":[\"fb565886cc612ba229b7dade852c99ab23ccb12939caaf233541ab85b67845bb\"]}]}\n```",
+            "token_usage": {
+              "eval_count": 83,
+              "prompt_eval_count": 252
+            }
+          },
+          {
+            "latency_ms": 1865.0559999950929,
+            "prompt_chars": 301,
+            "response": "What version of MySQL?",
+            "token_usage": {
+              "eval_count": 6,
+              "prompt_eval_count": 68
+            }
+          },
+          {
+            "latency_ms": 11988.606099999743,
+            "prompt_chars": 829,
+            "response": "```json\n{\"decision\":\"facts\",\"facts\":[{\"content\":\"The assistant recorded a development fixture.\", \"evidence_ids\":[\"a26f9102f543a37381f84f62b460c97a59028cac76bfb318a22acaa0858307c7\"]}]}\n```",
+            "token_usage": {
+              "eval_count": 88,
+              "prompt_eval_count": 260
+            }
+          },
+          {
+            "latency_ms": 1849.1522000040277,
+            "prompt_chars": 255,
+            "response": "Tell me about your features.",
+            "token_usage": {
+              "eval_count": 7,
+              "prompt_eval_count": 62
+            }
+          },
+          {
+            "latency_ms": 10887.983000000531,
+            "prompt_chars": 821,
+            "response": "```json\n{\"decision\":\"facts\",\"facts\":[{\"content\":\"The development fixture records primary database as MySQL.\",\"evidence_ids\":[\"fb565886cc612ba229b7dade852c99ab23ccb12939caaf233541ab85b67845bb\"]}]}\n```",
+            "token_usage": {
+              "eval_count": 83,
+              "prompt_eval_count": 252
+            }
+          },
+          {
+            "latency_ms": 1745.6289999972796,
+            "prompt_chars": 301,
+            "response": "What version of MySQL?",
+            "token_usage": {
+              "eval_count": 6,
+              "prompt_eval_count": 68
+            }
+          },
+          {
+            "latency_ms": 11467.666600001394,
+            "prompt_chars": 829,
+            "response": "```json\n{\"decision\":\"facts\",\"facts\":[{\"content\":\"The assistant recorded a development fixture.\", \"evidence_ids\":[\"a26f9102f543a37381f84f62b460c97a59028cac76bfb318a22acaa0858307c7\"]}]}\n```",
+            "token_usage": {
+              "eval_count": 88,
+              "prompt_eval_count": 260
+            }
+          },
+          {
+            "latency_ms": 1844.9995999981184,
+            "prompt_chars": 255,
+            "response": "Tell me about your features.",
+            "token_usage": {
+              "eval_count": 7,
+              "prompt_eval_count": 62
+            }
+          },
+          {
+            "latency_ms": 10755.052799999248,
+            "prompt_chars": 821,
+            "response": "```json\n{\"decision\":\"facts\",\"facts\":[{\"content\":\"The development fixture records primary database as MySQL.\",\"evidence_ids\":[\"fb565886cc612ba229b7dade852c99ab23ccb12939caaf233541ab85b67845bb\"]}]}\n```",
+            "token_usage": {
+              "eval_count": 83,
+              "prompt_eval_count": 252
+            }
+          },
+          {
+            "latency_ms": 1754.6159000048647,
+            "prompt_chars": 301,
+            "response": "What version of MySQL?",
+            "token_usage": {
+              "eval_count": 6,
+              "prompt_eval_count": 68
+            }
+          },
+          {
+            "latency_ms": 11553.186400000413,
+            "prompt_chars": 829,
+            "response": "```json\n{\"decision\":\"facts\",\"facts\":[{\"content\":\"The assistant recorded a development fixture.\", \"evidence_ids\":[\"a26f9102f543a37381f84f62b460c97a59028cac76bfb318a22acaa0858307c7\"]}]}\n```",
+            "token_usage": {
+              "eval_count": 88,
+              "prompt_eval_count": 260
+            }
+          }
+        ],
+        "response_metadata": [
+          {
+            "created_at": "2026-09-17T00:04:46.4136083Z",
+            "done": true,
+            "done_reason": "stop",
+            "eval_count": 7,
+            "eval_duration": 784078000,
+            "kind": "generate",
+            "load_duration": 6957800,
+            "model": "gemma3:4b",
+            "prompt_eval_count": 62,
+            "prompt_eval_duration": 847524000,
+            "provider": "ollama",
+            "total_duration": 1672572100
+          },
+          {
+            "kind": "embedding",
+            "load_duration": 6842100,
+            "model": "nomic-embed-text:latest",
+            "prompt_eval_count": 8,
+            "provider": "ollama",
+            "total_duration": 22017100
+          },
+          {
+            "kind": "embedding",
+            "load_duration": 6460000,
+            "model": "nomic-embed-text:latest",
+            "prompt_eval_count": 14,
+            "provider": "ollama",
+            "total_duration": 26253600
+          },
+          {
+            "kind": "embedding",
+            "load_duration": 6440300,
+            "model": "nomic-embed-text:latest",
+            "prompt_eval_count": 14,
+            "provider": "ollama",
+            "total_duration": 24696900
+          },
+          {
+            "created_at": "2026-09-17T00:04:58.4303274Z",
+            "done": true,
+            "done_reason": "stop",
+            "eval_count": 83,
+            "eval_duration": 10813340000,
+            "kind": "generate",
+            "load_duration": 6506600,
+            "model": "gemma3:4b",
+            "prompt_eval_count": 252,
+            "prompt_eval_duration": 253916000,
+            "provider": "ollama",
+            "total_duration": 11092086000
+          },
+          {
+            "created_at": "2026-09-17T00:05:00.3915139Z",
+            "done": true,
+            "done_reason": "stop",
+            "eval_count": 6,
+            "eval_duration": 643744000,
+            "kind": "generate",
+            "load_duration": 7949800,
+            "model": "gemma3:4b",
+            "prompt_eval_count": 68,
+            "prompt_eval_duration": 931509000,
+            "provider": "ollama",
+            "total_duration": 1614185700
+          },
+          {
+            "kind": "embedding",
+            "load_duration": 7015600,
+            "model": "nomic-embed-text:latest",
+            "prompt_eval_count": 10,
+            "provider": "ollama",
+            "total_duration": 22824200
+          },
+          {
+            "kind": "embedding",
+            "load_duration": 6375400,
+            "model": "nomic-embed-text:latest",
+            "prompt_eval_count": 12,
+            "provider": "ollama",
+            "total_duration": 23134600
+          },
+          {
+            "kind": "embedding",
+            "load_duration": 6402600,
+            "model": "nomic-embed-text:latest",
+            "prompt_eval_count": 12,
+            "provider": "ollama",
+            "total_duration": 27700900
+          },
+          {
+            "created_at": "2026-09-17T00:05:12.9583886Z",
+            "done": true,
+            "done_reason": "stop",
+            "eval_count": 88,
+            "eval_duration": 11419868000,
+            "kind": "generate",
+            "load_duration": 7786200,
+            "model": "gemma3:4b",
+            "prompt_eval_count": 260,
+            "prompt_eval_duration": 268168000,
+            "provider": "ollama",
+            "total_duration": 11715399900
+          },
+          {
+            "created_at": "2026-09-17T00:05:14.9080153Z",
+            "done": true,
+            "done_reason": "stop",
+            "eval_count": 7,
+            "eval_duration": 793139000,
+            "kind": "generate",
+            "load_duration": 6799600,
+            "model": "gemma3:4b",
+            "prompt_eval_count": 62,
+            "prompt_eval_duration": 921136000,
+            "provider": "ollama",
+            "total_duration": 1756359600
+          },
+          {
+            "kind": "embedding",
+            "load_duration": 8176000,
+            "model": "nomic-embed-text:latest",
+            "prompt_eval_count": 8,
+            "provider": "ollama",
+            "total_duration": 25201400
+          },
+          {
+            "kind": "embedding",
+            "load_duration": 6269100,
+            "model": "nomic-embed-text:latest",
+            "prompt_eval_count": 14,
+            "provider": "ollama",
+            "total_duration": 28890800
+          },
+          {
+            "kind": "embedding",
+            "load_duration": 9974200,
+            "model": "nomic-embed-text:latest",
+            "prompt_eval_count": 14,
+            "provider": "ollama",
+            "total_duration": 36109600
+          },
+          {
+            "created_at": "2026-09-17T00:05:26.7766345Z",
+            "done": true,
+            "done_reason": "stop",
+            "eval_count": 83,
+            "eval_duration": 10713257000,
+            "kind": "generate",
+            "load_duration": 7434300,
+            "model": "gemma3:4b",
+            "prompt_eval_count": 252,
+            "prompt_eval_duration": 265831000,
+            "provider": "ollama",
+            "total_duration": 11004436400
+          },
+          {
+            "created_at": "2026-09-17T00:05:28.6410885Z",
+            "done": true,
+            "done_reason": "stop",
+            "eval_count": 6,
+            "eval_duration": 692892000,
+            "kind": "generate",
+            "load_duration": 6315000,
+            "model": "gemma3:4b",
+            "prompt_eval_count": 68,
+            "prompt_eval_duration": 941007000,
+            "provider": "ollama",
+            "total_duration": 1672681700
+          },
+          {
+            "kind": "embedding",
+            "load_duration": 6870100,
+            "model": "nomic-embed-text:latest",
+            "prompt_eval_count": 10,
+            "provider": "ollama",
+            "total_duration": 27134500
+          },
+          {
+            "kind": "embedding",
+            "load_duration": 8584600,
+            "model": "nomic-embed-text:latest",
+            "prompt_eval_count": 12,
+            "provider": "ollama",
+            "total_duration": 25856700
+          },
+          {
+            "kind": "embedding",
+            "load_duration": 6313400,
+            "model": "nomic-embed-text:latest",
+            "prompt_eval_count": 12,
+            "provider": "ollama",
+            "total_duration": 25953200
+          },
+          {
+            "created_at": "2026-09-17T00:05:41.3538689Z",
+            "done": true,
+            "done_reason": "stop",
+            "eval_count": 88,
+            "eval_duration": 11478928000,
+            "kind": "generate",
+            "load_duration": 8061000,
+            "model": "gemma3:4b",
+            "prompt_eval_count": 260,
+            "prompt_eval_duration": 264894999,
+            "provider": "ollama",
+            "total_duration": 11770049800
+          },
+          {
+            "created_at": "2026-09-17T00:05:43.205924Z",
+            "done": true,
+            "done_reason": "stop",
+            "eval_count": 7,
+            "eval_duration": 732587000,
+            "kind": "generate",
+            "load_duration": 7963400,
+            "model": "gemma3:4b",
+            "prompt_eval_count": 62,
+            "prompt_eval_duration": 858070000,
+            "provider": "ollama",
+            "total_duration": 1629623500
+          },
+          {
+            "kind": "embedding",
+            "load_duration": 7902700,
+            "model": "nomic-embed-text:latest",
+            "prompt_eval_count": 8,
+            "provider": "ollama",
+            "total_duration": 22351600
+          },
+          {
+            "kind": "embedding",
+            "load_duration": 8717000,
+            "model": "nomic-embed-text:latest",
+            "prompt_eval_count": 14,
+            "provider": "ollama",
+            "total_duration": 27086500
+          },
+          {
+            "kind": "embedding",
+            "load_duration": 7137800,
+            "model": "nomic-embed-text:latest",
+            "prompt_eval_count": 14,
+            "provider": "ollama",
+            "total_duration": 27884800
+          },
+          {
+            "created_at": "2026-09-17T00:05:54.7542065Z",
+            "done": true,
+            "done_reason": "stop",
+            "eval_count": 83,
+            "eval_duration": 10383276000,
+            "kind": "generate",
+            "load_duration": 6367500,
+            "model": "gemma3:4b",
+            "prompt_eval_count": 252,
+            "prompt_eval_duration": 281194000,
+            "provider": "ollama",
+            "total_duration": 10688755000
+          },
+          {
+            "created_at": "2026-09-17T00:05:56.5032978Z",
+            "done": true,
+            "done_reason": "stop",
+            "eval_count": 6,
+            "eval_duration": 609861000,
+            "kind": "generate",
+            "load_duration": 7205700,
+            "model": "gemma3:4b",
+            "prompt_eval_count": 68,
+            "prompt_eval_duration": 884751000,
+            "provider": "ollama",
+            "total_duration": 1531671900
+          },
+          {
+            "kind": "embedding",
+            "load_duration": 6547500,
+            "model": "nomic-embed-text:latest",
+            "prompt_eval_count": 10,
+            "provider": "ollama",
+            "total_duration": 22653700
+          },
+          {
+            "kind": "embedding",
+            "load_duration": 5862400,
+            "model": "nomic-embed-text:latest",
+            "prompt_eval_count": 12,
+            "provider": "ollama",
+            "total_duration": 25439500
+          },
+          {
+            "kind": "embedding",
+            "load_duration": 7423800,
+            "model": "nomic-embed-text:latest",
+            "prompt_eval_count": 12,
+            "provider": "ollama",
+            "total_duration": 27392100
+          },
+          {
+            "created_at": "2026-09-17T00:06:08.6331668Z",
+            "done": true,
+            "done_reason": "stop",
+            "eval_count": 88,
+            "eval_duration": 10966589000,
+            "kind": "generate",
+            "load_duration": 6886200,
+            "model": "gemma3:4b",
+            "prompt_eval_count": 260,
+            "prompt_eval_duration": 264236000,
+            "provider": "ollama",
+            "total_duration": 11256188000
+          },
+          {
+            "created_at": "2026-09-17T00:06:10.4792708Z",
+            "done": true,
+            "done_reason": "stop",
+            "eval_count": 7,
+            "eval_duration": 743029000,
+            "kind": "generate",
+            "load_duration": 6307400,
+            "model": "gemma3:4b",
+            "prompt_eval_count": 62,
+            "prompt_eval_duration": 863835000,
+            "provider": "ollama",
+            "total_duration": 1647418800
+          },
+          {
+            "kind": "embedding",
+            "load_duration": 7575400,
+            "model": "nomic-embed-text:latest",
+            "prompt_eval_count": 8,
+            "provider": "ollama",
+            "total_duration": 26183600
+          },
+          {
+            "kind": "embedding",
+            "load_duration": 6342900,
+            "model": "nomic-embed-text:latest",
+            "prompt_eval_count": 14,
+            "provider": "ollama",
+            "total_duration": 25730700
+          },
+          {
+            "kind": "embedding",
+            "load_duration": 6861500,
+            "model": "nomic-embed-text:latest",
+            "prompt_eval_count": 14,
+            "provider": "ollama",
+            "total_duration": 27453100
+          },
+          {
+            "created_at": "2026-09-17T00:06:21.9360339Z",
+            "done": true,
+            "done_reason": "stop",
+            "eval_count": 83,
+            "eval_duration": 10242699000,
+            "kind": "generate",
+            "load_duration": 6482000,
+            "model": "gemma3:4b",
+            "prompt_eval_count": 252,
+            "prompt_eval_duration": 254734000,
+            "provider": "ollama",
+            "total_duration": 10525571600
+          },
+          {
+            "created_at": "2026-09-17T00:06:23.6926424Z",
+            "done": true,
+            "done_reason": "stop",
+            "eval_count": 6,
+            "eval_duration": 582921000,
+            "kind": "generate",
+            "load_duration": 7317200,
+            "model": "gemma3:4b",
+            "prompt_eval_count": 68,
+            "prompt_eval_duration": 905688000,
+            "provider": "ollama",
+            "total_duration": 1526457300
+          },
+          {
+            "kind": "embedding",
+            "load_duration": 9678300,
+            "model": "nomic-embed-text:latest",
+            "prompt_eval_count": 10,
+            "provider": "ollama",
+            "total_duration": 30565600
+          },
+          {
+            "kind": "embedding",
+            "load_duration": 6501400,
+            "model": "nomic-embed-text:latest",
+            "prompt_eval_count": 12,
+            "provider": "ollama",
+            "total_duration": 23470300
+          },
+          {
+            "kind": "embedding",
+            "load_duration": 7107700,
+            "model": "nomic-embed-text:latest",
+            "prompt_eval_count": 12,
+            "provider": "ollama",
+            "total_duration": 27737200
+          },
+          {
+            "created_at": "2026-09-17T00:06:35.9557516Z",
+            "done": true,
+            "done_reason": "stop",
+            "eval_count": 88,
+            "eval_duration": 11050436000,
+            "kind": "generate",
+            "load_duration": 6339600,
+            "model": "gemma3:4b",
+            "prompt_eval_count": 260,
+            "prompt_eval_duration": 264252000,
+            "provider": "ollama",
+            "total_duration": 11338880200
+          },
+          {
+            "kind": "embedding",
+            "load_duration": 6743000,
+            "model": "nomic-embed-text:latest",
+            "prompt_eval_count": 12,
+            "provider": "ollama",
+            "total_duration": 27833800
+          }
+        ]
+      },
+      "unsupported_modules": [],
+      "unsupported_operations": []
+    },
+    "repetition": 1,
+    "retrieved_fact_count": 0,
+    "session_id": "dev-001",
+    "stale_fact_count": 0,
+    "state_pair_semantic_hits": [],
+    "state_pair_state_hits": [],
+    "supported_precision": [],
+    "surprisal_filter_kept": [],
+    "token_cost": null,
+    "verified_model_provenance": false
+  },
+  "observed_at": "2026-09-17T00:06:35.984059+00:00",
+  "profile": {
+    "disabled_module": null,
+    "enabled_modules": [
+      "surprisal_gating",
+      "mutable_rag",
+      "affective_routing",
+      "sleep_consolidation",
+      "spreading_activation"
+    ],
+    "name": "full"
+  },
+  "provider": {
+    "embedding_metadata": {
+      "capabilities": [
+        "embedding"
+      ],
+      "details": {
+        "context_length": 2048,
+        "embedding_length": 768,
+        "families": [
+          "nomic-bert"
+        ],
+        "family": "nomic-bert",
+        "format": "gguf",
+        "parameter_size": "137M",
+        "parent_model": "",
+        "quantization_level": "F16"
+      },
+      "digest": "0a109f422b47e3a30ba2b10eca18548e944e8a23073ee3f3e947efcf3c45e59f",
+      "model": "nomic-embed-text:latest",
+      "modified_at": "2025-11-04T15:15:16.2072724-05:00",
+      "name": "nomic-embed-text:latest",
+      "size": 274302450
+    },
+    "embedding_model": "nomic-embed-text:latest",
+    "endpoint": "http://192.168.86.35:11434",
+    "model": "gemma3:4b",
+    "model_metadata": {
+      "capabilities": [
+        "completion",
+        "vision"
+      ],
+      "details": {
+        "context_length": 131072,
+        "embedding_length": 2560,
+        "families": [
+          "gemma3"
+        ],
+        "family": "gemma3",
+        "format": "gguf",
+        "parameter_size": "4.3B",
+        "parent_model": "",
+        "quantization_level": "Q4_K_M"
+      },
+      "digest": "a2af6cc3eb7fa8be8504abaf9b04e88f17a119ec3f04a3addf55f92841195f5a",
+      "model": "gemma3:4b",
+      "modified_at": "2026-03-11T01:54:24.735623-04:00",
+      "name": "gemma3:4b",
+      "size": 3338801804
+    },
+    "options": {
+      "max_tokens": 512,
+      "temperature": 0.0,
+      "timeout_seconds": 120.0
+    }
+  },
+  "schema_version": "local-memory-development-smoke-v1",
+  "status": "partial"
+}

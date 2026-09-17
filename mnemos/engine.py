@@ -35,6 +35,7 @@ from typing import Any
 from .config import MnemosConfig
 from .curation import durable_memory_skip_reason
 from .memory_safety import MemoryWriteFirewall
+from .scopes import ScopeContext, ScopeRegistry, context_metadata, scope_allows
 from .modules.affective import AffectiveRouter
 from .modules.mutable_rag import MutableRAG
 from .modules.sleep import SleepDaemon
@@ -42,6 +43,7 @@ from .modules.spreading import SpreadingActivation
 from .modules.surprisal import SurprisalGate
 from .types import ConsolidationResult, Interaction, MemoryChunk, ProcessResult
 from .observability import log_event
+from .retrieval import score_candidate, context_token_upper_bound
 from .utils.embeddings import EmbeddingProvider, embed_text_async
 from .utils.llm import LLMProvider
 from .utils.storage import MemoryStore
@@ -96,10 +98,10 @@ def _chunk_scope_data(chunk: MemoryChunk) -> tuple[str, str | None]:
         try:
             scope = _normalize_scope(scope_raw)
         except ValueError:
-            scope = "global"
+            scope = "unassigned"
     else:
         # Backward-compatibility for chunks that predate scoped metadata.
-        scope = "global"
+        scope = "unassigned"
 
     if scope == "global":
         return scope, None
@@ -117,6 +119,8 @@ def _build_scope_filter(
     allowed_scopes: tuple[str, ...],
 ) -> Callable[[MemoryChunk], bool]:
     def _is_allowed(chunk: MemoryChunk) -> bool:
+        if chunk.metadata.get("user_profile_id") is not None:
+            return False
         chunk_scope, chunk_scope_id = _chunk_scope_data(chunk)
         if chunk_scope not in allowed_scopes:
             return False
@@ -198,15 +202,20 @@ class MnemosEngine:
         llm: LLMProvider | None = None,
         embedder: EmbeddingProvider | None = None,
         store: MemoryStore | None = None,
+        scope_registry: ScopeRegistry | None = None,
+        require_scope_context: bool = False,
     ) -> None:
-        from .utils.llm import MockLLMProvider
+        from .utils.llm import UnavailableLLMProvider
         from .utils.embeddings import SimpleEmbeddingProvider
         from .utils.storage import InMemoryStore
 
         self.config = config or MnemosConfig()
+        self._scope_registry = scope_registry
+        self._require_scope_context = require_scope_context
+        self._retrieval_traces: dict[tuple[Any, ...], dict[str, Any]] = {}
 
         # Wire up providers with defaults for zero-config startup
-        self._llm = llm or MockLLMProvider()
+        self._llm = llm or UnavailableLLMProvider()
         self._embedder = embedder or SimpleEmbeddingProvider(
             dim=self.config.surprisal.embedding_dim
         )
@@ -219,6 +228,7 @@ class MnemosEngine:
             embedder=self._embedder,
             store=self._store,
             config=self.config.surprisal,
+            write_firewall=self._write_firewall,
         )
 
         self.mutable_rag = MutableRAG(
@@ -248,7 +258,44 @@ class MnemosEngine:
 
         # Rebuild associative graph from persisted storage so retrieval
         # keeps working across process restarts.
+        bind_graph = getattr(self._store, "bind_graph_contract", None)
+        if callable(bind_graph):
+            bind_graph(
+                {
+                    **self.spreading_activation.persistence_contract(),
+                    "edge_threshold": self.config.spreading.auto_connect_threshold,
+                    "max_neighbors": self.config.spreading.max_neighbors_per_node,
+                }
+            )
         self._hydrate_spreading_graph_from_store()
+
+    def rebuild_graph_batch(self, limit: int = 10) -> int:
+        cursor_reader = getattr(self._store, "graph_rebuild_cursor", None)
+        if not self.config.modules.spreading or not callable(cursor_reader):
+            return 0
+        cursor = cursor_reader()
+        if cursor is None:
+            return 0
+        chunks = self._store.list_chunks(limit=limit, after_id=cursor)
+        for chunk in chunks:
+            self.refresh_graph_chunk(chunk)
+        self._store.set_graph_rebuild_cursor(chunks[-1].id if chunks else None)
+        return len(chunks)
+
+    def _validated_context_metadata(
+        self, context: ScopeContext | None, scope: str, scope_id: str | None
+    ) -> dict[str, Any] | None:
+        if context is None:
+            if self._require_scope_context:
+                raise ValueError("A resolved scope context is required")
+            return None
+        if self._scope_registry is None:
+            raise ValueError("A scope registry is required to validate membership")
+        self._scope_registry.validate_context(context)
+        metadata = context_metadata(context, scope)
+        if scope_id is not None and scope_id != metadata["scope_id"]:
+            raise ValueError("Explicit scope_id conflicts with the resolved scope context")
+        return metadata
 
     def _capture_channel_allowed(self, ingest_channel: str) -> bool:
         mode = self.config.governance.capture_mode
@@ -268,6 +315,77 @@ class MnemosEngine:
     def _sync_persisted_graph_edges(self) -> None:
         for node in self.spreading_activation.get_all_nodes():
             self._store.replace_graph_neighbors(node.id, dict(node.neighbors))
+
+    def refresh_graph_chunk(self, chunk: MemoryChunk) -> None:
+        """Refresh one fact from bounded scoped neighbors, including unhydrated rows."""
+        if not self.config.modules.spreading or not chunk.embedding:
+            return
+        scope, scope_id = _chunk_scope_data(chunk)
+        profile_id = chunk.metadata.get("user_profile_id")
+        permitted: Callable[[MemoryChunk], bool]
+        if scope == "global":
+
+            def global_permitted(candidate: MemoryChunk) -> bool:
+                return candidate.metadata.get(
+                    "user_profile_id"
+                ) == profile_id and candidate.metadata.get("scope") in {
+                    "project",
+                    "workspace",
+                    "global",
+                }
+
+            permitted = global_permitted
+            spec = {
+                "allowed_scopes": ("project", "workspace", "global"),
+                "all_profile_scopes": True,
+            }
+            if profile_id is not None:
+                spec["user_profile_id"] = profile_id
+            setattr(permitted, "_mnemos_scope_filter", spec)
+        elif profile_id is None:
+            permitted = _build_scope_filter(
+                current_scope=scope, scope_id=scope_id, allowed_scopes=(scope, "global")
+            )
+        else:
+
+            def partition_permitted(candidate: MemoryChunk) -> bool:
+                return candidate.metadata.get("user_profile_id") == profile_id and (
+                    candidate.metadata.get("scope") == "global"
+                    or (
+                        candidate.metadata.get("scope") == scope
+                        and candidate.metadata.get("scope_id") == scope_id
+                    )
+                )
+
+            permitted = partition_permitted
+            setattr(
+                permitted,
+                "_mnemos_scope_filter",
+                {
+                    "user_profile_id": profile_id,
+                    "project_id": scope_id if scope == "project" else None,
+                    "workspace_id": scope_id if scope == "workspace" else None,
+                    "allowed_scopes": (scope, "global"),
+                },
+            )
+        nearby = self._store.retrieve(
+            chunk.embedding,
+            top_k=self.config.spreading.max_neighbors_per_node * 4 + 1,
+            filter_fn=permitted,
+        )
+        affected = {chunk.id, *(item.id for item in nearby)}
+        for node_id in list(affected):
+            node = self.spreading_activation.get_node(node_id)
+            if node is not None:
+                affected.update(node.neighbors)
+        for item in nearby:
+            self.spreading_activation.add_node_from_chunk(item)
+        self.spreading_activation.add_node_from_chunk(chunk)
+        self.spreading_activation.connect_node(chunk.id, candidate_ids={item.id for item in nearby})
+        for node_id in affected:
+            node = self.spreading_activation.get_node(node_id)
+            if node is not None:
+                self._store.replace_graph_neighbors(node.id, dict(node.neighbors))
 
     def _apply_governance(
         self,
@@ -317,7 +435,7 @@ class MnemosEngine:
         if not spreading_cfg.hydrate_on_startup:
             return
 
-        stored_chunks = self._store.get_all()
+        stored_chunks = self._store.list_chunks(limit=spreading_cfg.startup_hydration_limit)
         if not stored_chunks:
             return
 
@@ -331,7 +449,6 @@ class MnemosEngine:
         persisted_edges = self._store.get_graph_edges([chunk.id for chunk in chunks_to_load])
         if persisted_edges:
             self.spreading_activation.hydrate_edges(persisted_edges)
-            self._sync_persisted_graph_edges()
         elif spreading_cfg.startup_auto_connect and len(chunks_to_load) > 1:
             self.spreading_activation.auto_connect(exclude_existing=False)
             self._sync_persisted_graph_edges()
@@ -349,6 +466,8 @@ class MnemosEngine:
         *,
         scope: str = _DEFAULT_SCOPE,
         scope_id: str | None = None,
+        context: ScopeContext | None = None,
+        explicit_remember: bool = False,
     ) -> ProcessResult:
         """
         Process an interaction through the full encoding pipeline.
@@ -367,8 +486,15 @@ class MnemosEngine:
         """
         normalized_scope = _normalize_scope(scope)
         normalized_scope_id = _normalize_scope_id(normalized_scope, scope_id)
+        identity_metadata = self._validated_context_metadata(context, normalized_scope, scope_id)
+        if identity_metadata is not None:
+            normalized_scope_id = identity_metadata["scope_id"]
+        elif interaction.metadata.get("user_profile_id") is not None:
+            raise ValueError("Profile-scoped writes require a validated scope context")
 
         scoped_metadata = dict(interaction.metadata)
+        if identity_metadata is not None:
+            scoped_metadata.update(identity_metadata)
         scoped_metadata["scope"] = normalized_scope
         if normalized_scope_id is None:
             scoped_metadata.pop("scope_id", None)
@@ -404,7 +530,7 @@ class MnemosEngine:
         )
 
         skip_reason = durable_memory_skip_reason(safe_interaction.content)
-        if skip_reason is not None:
+        if skip_reason is not None and not explicit_remember:
             return ProcessResult(
                 stored=False,
                 chunk=None,
@@ -417,7 +543,7 @@ class MnemosEngine:
         self.sleep_daemon.add_episode(safe_interaction)
 
         # Step 1: Surprisal gate — filter by prediction error
-        result = await self.surprisal_gate.process(safe_interaction)
+        result = await self.surprisal_gate.process(safe_interaction, force_encode=explicit_remember)
 
         if not result.stored or result.chunk is None:
             return result
@@ -443,8 +569,7 @@ class MnemosEngine:
 
         # Connect the new node to its strongest eligible scoped neighbors and
         # persist the resulting sparse graph when the backend supports it.
-        self.spreading_activation.connect_node(result.chunk.id)
-        self._sync_persisted_graph_edges()
+        self.refresh_graph_chunk(result.chunk)
 
         if self.config.debug:
             logger.debug(
@@ -459,6 +584,23 @@ class MnemosEngine:
 
         return result
 
+    async def remember(
+        self,
+        content: str,
+        *,
+        context: ScopeContext | None = None,
+        scope: str = "project",
+        scope_id: str | None = None,
+    ) -> ProcessResult:
+        """Honor an explicit memory write while preserving safety and scope checks."""
+        return await self.process(
+            Interaction(role="user", content=content),
+            context=context,
+            scope=scope,
+            scope_id=scope_id,
+            explicit_remember=True,
+        )
+
     async def retrieve(
         self,
         query: str,
@@ -468,6 +610,9 @@ class MnemosEngine:
         current_scope: str = _DEFAULT_SCOPE,
         scope_id: str | None = None,
         allowed_scopes: tuple[str, ...] | list[str] | None = None,
+        context: ScopeContext | None = None,
+        profile: str | None = None,
+        max_context_tokens: int = 1200,
     ) -> list[MemoryChunk]:
         """
         Retrieve memories through the contextual retrieval pipeline.
@@ -491,148 +636,213 @@ class MnemosEngine:
         normalized_current_scope = _normalize_scope(current_scope)
         normalized_scope_id = _normalize_scope_id(normalized_current_scope, scope_id)
         normalized_allowed_scopes = _normalize_allowed_scopes(allowed_scopes)
+        identity_metadata = self._validated_context_metadata(
+            context, normalized_current_scope, scope_id
+        )
+        if identity_metadata is not None:
+            normalized_scope_id = identity_metadata["scope_id"]
+            if allowed_scopes is None:
+                normalized_allowed_scopes = ("project", "global")
         scope_filter = _build_scope_filter(
             current_scope=normalized_current_scope,
             scope_id=normalized_scope_id,
             allowed_scopes=normalized_allowed_scopes,
         )
+        if context is not None:
 
-        # Step 1: Embed query once for every downstream retrieval stage.
-        query_embedding = await embed_text_async(self._embedder, query)
+            def scope_filter(chunk: MemoryChunk) -> bool:
+                return scope_allows(chunk.metadata, context, normalized_allowed_scopes)
 
-        # Step 2: SpreadingActivation — find associatively connected neighbors
-        # Single-result lookups are better served by the direct semantic path.
-        # Associative expansion adds fixed overhead without improving top-1
-        # quality on our scoped coding-agent workloads.
-        use_spreading = top_k > 1 and self.spreading_activation.get_node_count() > 1
-        activated_nodes = (
-            self.spreading_activation.retrieve(
-                query_embedding,
-                top_k=top_k * 3,  # Get larger pool for re-ranking
+            setattr(
+                scope_filter,
+                "_mnemos_scope_filter",
+                {
+                    "user_profile_id": context.user_profile_id,
+                    "project_id": context.project_id,
+                    "workspace_id": context.workspace_id,
+                    "allowed_scopes": normalized_allowed_scopes,
+                },
             )
-            if use_spreading
+
+        if top_k <= 0 or max_context_tokens <= 0 or not query.strip():
+            return []
+        selected_profile = profile or self.config.retrieval.profile
+        if selected_profile not in {"baseline", "biomimetic"}:
+            raise ValueError("Unknown retrieval profile")
+        query_embedding = await embed_text_async(self._embedder, query)
+        candidate_pool_k = min(max(top_k * 6, 20), self.config.retrieval.max_candidates)
+        baseline_chunks = self._store.retrieve(
+            query_embedding, top_k=candidate_pool_k, filter_fn=scope_filter
+        )
+        retrieval_backend = getattr(self._store, "last_retrieval_backend", "embedded_cosine")
+        lexical_search = getattr(self._store, "retrieve_lexical", None)
+        lexical_chunks = (
+            lexical_search(query, top_k=candidate_pool_k, filter_fn=scope_filter)
+            if callable(lexical_search)
             else []
         )
-        candidate_pool_k = max(top_k * 6, 20)
-        baseline_chunks = self._store.retrieve(
-            query_embedding,
-            top_k=candidate_pool_k,
-            filter_fn=scope_filter,
+        lexical_ids = {chunk.id for chunk in lexical_chunks}
+        candidates = {chunk.id: chunk for chunk in baseline_chunks}
+        candidates.update((chunk.id, chunk) for chunk in lexical_chunks)
+        use_spreading = (
+            selected_profile == "biomimetic"
+            and self.config.retrieval.spreading_enabled
+            and self.config.modules.spreading
         )
-
-        # Gather IDs of activated nodes to boost them in final scoring
-        activated_ids: set[str] = {node.id for node in activated_nodes}
-        query_lower = query.lower()
-        recency_hint = any(
-            token in query_lower for token in ("current", "now", "latest", "today", "recent")
-        )
-
-        # Step 3: AffectiveRouter — retrieve and re-rank from store
-        # State-dependent reranking is most useful when returning multiple
-        # options. For top-1, the direct semantic/scoped path is both faster
-        # and more deterministic.
-        use_affective = top_k > 1
-        affective_chunks: list[MemoryChunk] = []
-        if use_affective:
-            query_interaction = Interaction(role="user", content=query)
-            current_state = (
-                await self.affective_router.classify_state(query_interaction)
-                or self.affective_router.get_current_state()
+        activation = {}
+        if use_spreading and baseline_chunks:
+            # Refresh semantic seeds from authoritative rows, including corrections.
+            for chunk in baseline_chunks:
+                node = self.spreading_activation.get_node(chunk.id)
+                if (
+                    node is None
+                    or node.content != chunk.content
+                    or node.embedding != chunk.embedding
+                    or node.metadata != chunk.metadata
+                ):
+                    self.spreading_activation.add_node_from_chunk(chunk)
+            neighborhood = getattr(self._store, "get_graph_neighbors", None)
+            if callable(neighborhood):
+                frontier = [chunk.id for chunk in baseline_chunks]
+                visited = set(frontier)
+                for _hop in range(self.config.spreading.max_hops):
+                    next_frontier = []
+                    for source_id in frontier:
+                        remaining = self.config.spreading.max_visited - len(visited)
+                        if remaining <= 0:
+                            break
+                        for neighbor, weight in neighborhood(
+                            source_id, filter_fn=scope_filter, limit=min(remaining, 32)
+                        ):
+                            existing = self.spreading_activation.get_node(neighbor.id)
+                            if (
+                                existing is None
+                                or existing.content != neighbor.content
+                                or existing.embedding != neighbor.embedding
+                            ):
+                                self.spreading_activation.add_node_from_chunk(neighbor)
+                            self.spreading_activation.add_edge(source_id, neighbor.id, weight)
+                            if neighbor.id not in visited:
+                                visited.add(neighbor.id)
+                                next_frontier.append(neighbor.id)
+                    frontier = next_frontier
+                    if not frontier:
+                        break
+            nodes = self.spreading_activation.retrieve(
+                query_embedding,
+                top_k=candidate_pool_k,
+                filter_fn=lambda node: scope_filter(
+                    MemoryChunk(id=node.id, content=node.content, metadata=node.metadata)
+                ),
+                seed_ids=[chunk.id for chunk in baseline_chunks],
+                max_visited=self.config.spreading.max_visited,
             )
-            affective_chunks = await self.affective_router.retrieve(
-                query=query,
-                current_state=current_state,
-                store=self._store,
-                top_k=top_k * 2,  # Slightly larger pool
-                query_embedding=query_embedding,
-                candidates=baseline_chunks,
-            )
-
-        # Merge activated nodes: boost chunks that appear in activation graph
-        chunk_scores: dict[str, tuple[float, MemoryChunk]] = {}
-        now = datetime.now(timezone.utc)
-        for i, chunk in enumerate(baseline_chunks):
-            semantic_rank_score = 1.0 - (i / max(len(baseline_chunks), 1))
-            base_score = 0.9 * semantic_rank_score
-            chunk_scope, _ = _chunk_scope_data(chunk)
-            base_score += _scope_match_boost(chunk_scope, normalized_current_scope)
-            if recency_hint:
-                age_seconds = max((now - chunk.updated_at).total_seconds(), 0.0)
-                recency_weight = 1.0 / (1.0 + (age_seconds / 86400.0))
-                base_score = (0.35 * semantic_rank_score) + (0.85 * recency_weight)
-                base_score += _scope_match_boost(chunk_scope, normalized_current_scope)
-            chunk_scores[chunk.id] = (base_score, chunk)
-
-        for i, chunk in enumerate(affective_chunks):
-            # Base score: inverse rank from affective retrieval
-            base_score = 0.4 * (1.0 - (i / max(len(affective_chunks), 1)))
-            chunk_scope, _ = _chunk_scope_data(chunk)
-            base_score += _scope_match_boost(chunk_scope, normalized_current_scope)
-            # Activation boost: chunks in the spreading graph get a 20% boost
-            if chunk.id in activated_ids:
-                base_score *= 1.2
-            if recency_hint:
-                age_seconds = max((now - chunk.updated_at).total_seconds(), 0.0)
-                recency_weight = 1.0 / (1.0 + (age_seconds / 86400.0))
-                base_score += 0.35 * recency_weight
-            existing = chunk_scores.get(chunk.id)
-            if existing is None:
-                chunk_scores[chunk.id] = (base_score, chunk)
-            else:
-                chunk_scores[chunk.id] = (existing[0] + base_score, chunk)
-
-        # Also include any activated nodes not in the affective results
-        missing_ids = activated_ids - set(chunk_scores.keys())
-        if missing_ids:
-            for node in activated_nodes:
-                if node.id not in missing_ids:
-                    continue
+            for node in nodes:
                 candidate = self._store.get(node.id)
                 if candidate is None or not scope_filter(candidate):
                     continue
-                chunk = candidate
-                # Score based on activation energy
-                score = node.energy * 0.5  # Activation-only score (lower weight)
-                chunk_scope, _ = _chunk_scope_data(chunk)
-                score += _scope_match_boost(chunk_scope, normalized_current_scope)
-                chunk_scores[node.id] = (score, chunk)
+                candidates[candidate.id] = candidate
+                activation[candidate.id] = node.energy
 
-        # Sort by score and take top_k
-        sorted_chunks = sorted(
-            chunk_scores.values(),
-            key=lambda x: x[0],
-            reverse=True,
+        use_affective = (
+            selected_profile == "biomimetic"
+            and self.config.retrieval.affective_enabled
+            and self.config.modules.affective
         )
-        if recency_hint and len(sorted_chunks) > 1:
-            head_count = min(len(sorted_chunks), max(top_k * 2, 2))
-            recency_head = sorted(
-                sorted_chunks[:head_count],
-                key=lambda x: x[1].updated_at,
-                reverse=True,
+        current_state = None
+        if use_affective and candidates:
+            query_metadata = identity_metadata or {
+                "scope": normalized_current_scope,
+                "scope_id": normalized_scope_id,
+            }
+            current_state = await self.affective_router.classify_state(
+                Interaction(role="user", content=query, metadata=query_metadata)
             )
-            sorted_chunks = recency_head + sorted_chunks[head_count:]
-        final_chunks = [chunk for _, chunk in sorted_chunks[:top_k]]
-
-        # Step 4: MutableRAG — flag as labile and optionally reconsolidate
-        for chunk in final_chunks:
-            touched_at = datetime.now(timezone.utc)
-            if self._store.mark_retrieved(
-                chunk.id,
-                retrieved_at=touched_at,
-                reconsolidation_due_at=touched_at,
-            ):
-                refreshed = self._store.get(chunk.id)
-                if refreshed is not None:
-                    chunk.access_count = refreshed.access_count
-                    chunk.updated_at = refreshed.updated_at
-                    chunk.last_retrieved_at = refreshed.last_retrieved_at
-                    chunk.reconsolidation_due_at = refreshed.reconsolidation_due_at
-            self.mutable_rag.mark_labile(chunk, query)
-
-        if reconsolidate and final_chunks:
-            # Run reconsolidation as a background task (non-blocking)
-            task = asyncio.create_task(self.mutable_rag.process_labile_chunks())
-            task.add_done_callback(_on_reconsolidation_done)
+        scored = []
+        for chunk in candidates.values():
+            score = score_candidate(
+                chunk,
+                query_embedding,
+                current_state=current_state,
+                affective=use_affective,
+                similarity_weight=self.config.affective.weight_similarity,
+                state_weight=self.config.affective.weight_state,
+                graph_energy=activation.get(chunk.id, 0),
+                graph_weight=self.config.retrieval.graph_weight if use_spreading else 0,
+            )
+            # State or graph energy cannot turn an irrelevant fact into an answer.
+            if score.semantic < self.config.retrieval.relevance_floor:
+                continue
+            scored.append((score, chunk))
+        scored.sort(
+            key=lambda item: (
+                -item[0].total,
+                _chunk_scope_data(item[1])[0] != normalized_current_scope,
+                item[1].id,
+            )
+        )
+        final_chunks = []
+        remaining_budget = max_context_tokens
+        trace_key = (
+            query.strip(),
+            normalized_current_scope,
+            normalized_scope_id,
+            normalized_allowed_scopes,
+            context.user_profile_id if context else None,
+            context.session_id if context else None,
+        )
+        trace_rows = {}
+        for score, chunk in scored:
+            trace_rows[chunk.id] = {
+                **score.model_dump(),
+                "version": chunk.version,
+                "profile": selected_profile,
+                "scope_match": True,
+                "semantic_rank": next(
+                    (i + 1 for i, item in enumerate(baseline_chunks) if item.id == chunk.id), None
+                ),
+                "selected": False,
+                "status": "observed",
+            }
+            cost = context_token_upper_bound(chunk)
+            if cost > remaining_budget:
+                continue
+            returned = chunk.model_copy(deep=True)
+            returned.metadata["retrieval_trace"] = {
+                **score.model_dump(),
+                "profile": selected_profile,
+                "scope_match": True,
+                "context_token_upper_bound": cost,
+                "token_count_method": "utf8_bytes_upper_bound",
+                "graph_status": "enabled" if use_spreading else "disabled",
+                "candidate_backend": retrieval_backend,
+                "lexical_candidate": chunk.id in lexical_ids,
+                "lexical_status": "candidate_union" if callable(lexical_search) else "unavailable",
+            }
+            final_chunks.append(returned)
+            trace_rows[chunk.id].update(returned.metadata["retrieval_trace"])
+            trace_rows[chunk.id]["selected"] = True
+            remaining_budget -= cost
+            if len(final_chunks) == top_k:
+                break
+        # Persist this retrieval as one durable metadata update. A top-five
+        # result should not require five independent FULL-synchronous commits.
+        self._store.mark_retrieved_many(
+            [chunk.id for chunk in final_chunks], retrieved_at=datetime.now(timezone.utc)
+        )
+        refreshed_chunks = []
+        for returned in final_chunks:
+            refreshed = self._store.get(returned.id)
+            if refreshed is not None:
+                refreshed = refreshed.model_copy(deep=True)
+                refreshed.metadata["retrieval_trace"] = returned.metadata["retrieval_trace"]
+                refreshed_chunks.append(refreshed)
+        final_chunks = refreshed_chunks
+        # Retained for call compatibility; review requires new evidence or a correction.
+        _ = reconsolidate
+        self._retrieval_traces[trace_key] = trace_rows
+        while len(self._retrieval_traces) > 32:
+            del self._retrieval_traces[next(iter(self._retrieval_traces))]
 
         if self.config.debug:
             logger.debug(
@@ -681,9 +891,10 @@ class MnemosEngine:
                 self.spreading_activation.add_node_from_chunk(chunk)
 
         # Rebuild connections for newly added nodes
-        if new_chunks:
-            self.spreading_activation.auto_connect(exclude_existing=False)
-            self._sync_persisted_graph_edges()
+        changed_ids = {chunk.id for chunk, changed in reconsolidation_results if changed}
+        for chunk in new_chunks:
+            if chunk.id in changed_ids or chunk.metadata.get("source") == "sleep_consolidation":
+                self.refresh_graph_chunk(chunk)
 
         self._apply_governance()
 

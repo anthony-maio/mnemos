@@ -12,6 +12,8 @@ from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any, Mapping
 
+import httpx
+
 from .settings import load_settings
 
 
@@ -35,6 +37,73 @@ def _resolve_env_value(
 
 def _module_available(module_name: str) -> bool:
     return importlib.util.find_spec(module_name) is not None
+
+
+def _probe_http_provider(
+    provider: str,
+    base_url: str,
+    *,
+    api_key: str | None = None,
+    model: str | None = None,
+) -> tuple[str, str]:
+    """Probe a provider only when explicitly requested by the caller."""
+    headers = {"Authorization": f"Bearer {api_key}"} if api_key else {}
+    endpoint = (
+        f"{base_url.rstrip('/')}/api/tags"
+        if provider == "ollama"
+        else f"{base_url.rstrip('/')}/models"
+    )
+    try:
+        response = httpx.get(endpoint, headers=headers, timeout=1.0)
+        response.raise_for_status()
+        if provider == "ollama":
+            payload = response.json()
+            models = payload.get("models", []) if isinstance(payload, dict) else []
+            names = {str(item.get("name", "")) for item in models if isinstance(item, dict)}
+            return "reachable", "ready" if not model or model in names else "model_missing"
+        # OpenAI-compatible endpoints may not disclose model readiness.
+        return "reachable", "not_checked"
+    except Exception:
+        return "unreachable", "unknown"
+
+
+def _provider_state(
+    provider: str,
+    *,
+    configured: bool,
+    probe: bool,
+    base_url: str | None = None,
+    api_key: str | None = None,
+    model: str | None = None,
+) -> dict[str, Any]:
+    if not configured:
+        return {
+            "provider": provider,
+            "configured": False,
+            "reachable": "not_applicable",
+            "model_ready": "not_applicable",
+            "status": "failed",
+        }
+    reachable = "not_checked"
+    model_ready = "not_checked"
+    if probe and base_url:
+        reachable, model_ready = _probe_http_provider(
+            provider, base_url, api_key=api_key, model=model
+        )
+    status = "configured"
+    if reachable == "reachable" and model_ready in {"ready", "not_checked"}:
+        status = "ready"
+    elif reachable == "unreachable":
+        status = "unreachable"
+    elif model_ready == "model_missing":
+        status = "model_missing"
+    return {
+        "provider": provider,
+        "configured": True,
+        "reachable": reachable,
+        "model_ready": model_ready,
+        "status": status,
+    }
 
 
 def _safe_int(value: str | None, default: int) -> int:
@@ -131,8 +200,13 @@ def run_health_checks(
     env: Mapping[str, str] | None = None,
     *,
     default_store_type: str = "sqlite",
+    probe: bool = False,
 ) -> dict[str, Any]:
-    """Evaluate readiness for the current local runtime and provider dependencies."""
+    """Evaluate configuration and optional provider readiness.
+
+    Network/model probes are disabled by default and only run with
+    ``probe=True``.  Their results remain separate from configuration checks.
+    """
     checks: list[dict[str, str]] = []
     resolved = load_settings(
         env=env,
@@ -176,6 +250,7 @@ def run_health_checks(
     sqlite_chunk_count: int | None = None
     legacy_unscoped_chunks: int | None = None
     sqlite_vec_enabled = False
+    provider_state: dict[str, dict[str, Any]] = {}
 
     if store_type == "memory":
         add_check(
@@ -219,42 +294,85 @@ def run_health_checks(
             "warn",
             "Mock LLM provider is active. Cognitive modules run in degraded/mock mode.",
         )
+        if store_type == "sqlite":
+            add_check(
+                "runtime.cognition",
+                "fail",
+                "Persistent SQLite runtime cannot be marked ready while mock cognition is active.",
+            )
+        provider_state["llm"] = _provider_state("mock", configured=False, probe=probe)
     elif llm_provider == "ollama":
         ollama_url = settings.base_url_for("ollama") or "http://localhost:11434"
         if ollama_url:
             add_check("llm.ollama", "pass", f"Ollama provider configured at {ollama_url}.")
+            provider_state["llm"] = _provider_state(
+                "ollama",
+                configured=True,
+                probe=probe,
+                base_url=ollama_url,
+                model=settings.llm.model,
+            )
         else:
             add_check("llm.ollama", "fail", "MNEMOS_OLLAMA_URL is required for ollama provider.")
+            provider_state["llm"] = _provider_state("ollama", configured=False, probe=probe)
     elif llm_provider == "openai":
         api_key = settings.api_key_for("openai")
         if api_key:
             add_check("llm.openai", "pass", "OpenAI provider API key configured.")
+            provider_state["llm"] = _provider_state(
+                "openai",
+                configured=True,
+                probe=probe,
+                base_url=settings.base_url_for("openai"),
+                api_key=api_key,
+                model=settings.llm.model,
+            )
         else:
             add_check(
                 "llm.openai", "fail", "MNEMOS_OPENAI_API_KEY is required for openai provider."
             )
+            provider_state["llm"] = _provider_state("openai", configured=False, probe=probe)
     elif llm_provider == "openclaw":
         api_key = settings.api_key_for("openclaw")
         if api_key:
             add_check("llm.openclaw", "pass", "OpenClaw provider API key configured.")
+            provider_state["llm"] = _provider_state(
+                "openclaw",
+                configured=True,
+                probe=probe,
+                base_url=settings.base_url_for("openclaw"),
+                api_key=api_key,
+                model=settings.llm.model,
+            )
         else:
             add_check(
                 "llm.openclaw",
                 "fail",
                 "MNEMOS_OPENCLAW_API_KEY (or MNEMOS_OPENAI_API_KEY) is required for openclaw provider.",
             )
+            provider_state["llm"] = _provider_state("openclaw", configured=False, probe=probe)
     elif llm_provider == "openrouter":
         api_key = settings.api_key_for("openrouter")
         if api_key:
             add_check("llm.openrouter", "pass", "OpenRouter provider API key configured.")
+            provider_state["llm"] = _provider_state(
+                "openrouter",
+                configured=True,
+                probe=probe,
+                base_url=settings.base_url_for("openrouter"),
+                api_key=api_key,
+                model=settings.llm.model,
+            )
         else:
             add_check(
                 "llm.openrouter",
                 "fail",
                 "MNEMOS_OPENROUTER_API_KEY is required for openrouter provider.",
             )
+            provider_state["llm"] = _provider_state("openrouter", configured=False, probe=probe)
     else:
         add_check("llm.provider", "fail", f"Unsupported MNEMOS_LLM_PROVIDER: {llm_provider!r}")
+        provider_state["llm"] = _provider_state(llm_provider, configured=False, probe=probe)
 
     if embedding_provider == "simple":
         add_check(
@@ -262,11 +380,32 @@ def run_health_checks(
             "warn",
             "Simple embeddings are for development; use openclaw/openai/ollama for production retrieval quality.",
         )
+        provider_state["embedding"] = _provider_state("simple", configured=True, probe=probe)
+    elif embedding_provider == "fastembed":
+        if _module_available("fastembed"):
+            add_check(
+                "embedding.fastembed",
+                "pass",
+                "FastEmbed dependency is available; model readiness is reported separately.",
+            )
+            provider_state["embedding"] = _provider_state("fastembed", configured=True, probe=probe)
+        else:
+            add_check("embedding.fastembed", "fail", "FastEmbed is not installed.")
+            provider_state["embedding"] = _provider_state(
+                "fastembed", configured=False, probe=probe
+            )
     elif embedding_provider == "ollama":
         ollama_url = settings.base_url_for("ollama") or "http://localhost:11434"
         if ollama_url:
             add_check(
                 "embedding.ollama", "pass", f"Ollama embedding provider configured at {ollama_url}."
+            )
+            provider_state["embedding"] = _provider_state(
+                "ollama",
+                configured=True,
+                probe=probe,
+                base_url=ollama_url,
+                model=settings.embedding.model,
             )
         else:
             add_check(
@@ -274,21 +413,39 @@ def run_health_checks(
                 "fail",
                 "MNEMOS_OLLAMA_URL is required for ollama embedding provider.",
             )
+            provider_state["embedding"] = _provider_state("ollama", configured=False, probe=probe)
     elif embedding_provider == "openai":
         api_key = settings.api_key_for("openai")
         if api_key:
             add_check("embedding.openai", "pass", "OpenAI embedding provider API key configured.")
+            provider_state["embedding"] = _provider_state(
+                "openai",
+                configured=True,
+                probe=probe,
+                base_url=settings.base_url_for("openai"),
+                api_key=api_key,
+                model=settings.embedding.model,
+            )
         else:
             add_check(
                 "embedding.openai",
                 "fail",
                 "MNEMOS_OPENAI_API_KEY is required for openai embedding provider.",
             )
+            provider_state["embedding"] = _provider_state("openai", configured=False, probe=probe)
     elif embedding_provider == "openclaw":
         api_key = settings.api_key_for("openclaw")
         if api_key:
             add_check(
                 "embedding.openclaw", "pass", "OpenClaw embedding provider API key configured."
+            )
+            provider_state["embedding"] = _provider_state(
+                "openclaw",
+                configured=True,
+                probe=probe,
+                base_url=settings.base_url_for("openclaw"),
+                api_key=api_key,
+                model=settings.embedding.model,
             )
         else:
             add_check(
@@ -296,6 +453,7 @@ def run_health_checks(
                 "fail",
                 "MNEMOS_OPENCLAW_API_KEY (or MNEMOS_OPENAI_API_KEY) is required for openclaw embeddings.",
             )
+            provider_state["embedding"] = _provider_state("openclaw", configured=False, probe=probe)
     elif embedding_provider == "openrouter":
         api_key = settings.api_key_for("openrouter")
         if api_key:
@@ -304,15 +462,29 @@ def run_health_checks(
                 "pass",
                 "OpenRouter embedding provider API key configured.",
             )
+            provider_state["embedding"] = _provider_state(
+                "openrouter",
+                configured=True,
+                probe=probe,
+                base_url=settings.base_url_for("openrouter"),
+                api_key=api_key,
+                model=settings.embedding.model,
+            )
         else:
             add_check(
                 "embedding.openrouter",
                 "fail",
                 "MNEMOS_OPENROUTER_API_KEY is required for openrouter embeddings.",
             )
+            provider_state["embedding"] = _provider_state(
+                "openrouter", configured=False, probe=probe
+            )
     else:
         add_check(
             "embedding.provider", "fail", f"Unsupported embedding provider: {embedding_provider!r}"
+        )
+        provider_state["embedding"] = _provider_state(
+            embedding_provider, configured=False, probe=probe
         )
 
     for index, warning in enumerate(resolved.warnings, start=1):
@@ -451,6 +623,8 @@ def run_health_checks(
             "enabled": sqlite_vec_enabled,
             "provider": "sqlite-vec" if sqlite_vec_enabled else None,
         },
+        "provider_state": provider_state,
+        "probe_requested": probe,
         "summary": summary,
         "checks": checks,
         "recommendations": recommendations,

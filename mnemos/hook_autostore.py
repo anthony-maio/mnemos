@@ -52,6 +52,18 @@ class AutoStoreDecision:
     scope_id: str | None
 
 
+async def run_claude_hook(event: str, payload: dict[str, Any]) -> Any:
+    """Run the operational Claude adapter through the local service client.
+
+    The legacy decision helpers below remain available to embedded callers;
+    configured Claude hooks use this service boundary instead of opening the
+    SQLite store or constructing an inference engine in the hook process.
+    """
+    from .adapters.claude_code import run_hook
+
+    return await run_hook(event, payload)
+
+
 def _normalize_text(value: str) -> str:
     return " ".join(value.split())
 

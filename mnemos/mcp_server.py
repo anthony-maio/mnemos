@@ -8,9 +8,12 @@ discover and call natively.
 
 MCP Tools provided:
   - mnemos_store:       Process and store a memory through the full pipeline
+  - mnemos_capture:     Accept evidence for service-owned processing
   - mnemos_retrieve:    Retrieve memories with affective + spreading activation
   - mnemos_feedback:    Record whether a retrieval was helpful, wrong, or missing
   - mnemos_consolidate: Trigger sleep consolidation (episodic → semantic)
+  - mnemos_correct:     Submit a version-checked fact correction
+  - mnemos_job_status:  Read durable processing status
   - mnemos_forget:      Delete a specific memory by ID
   - mnemos_stats:       Get system statistics across all modules
   - mnemos_health:      Profile readiness and dependency diagnostics
@@ -63,14 +66,20 @@ import builtins
 import json
 import os
 import sys
+from datetime import datetime, timezone
+from uuid import uuid4
 from contextlib import asynccontextmanager
 from collections.abc import AsyncIterator
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Any, Literal, cast
+from typing import Any, Literal, cast, TYPE_CHECKING
+
+if TYPE_CHECKING:
+    from mcp.server.fastmcp import Context
 
 from .config import MemoryGovernanceConfig, MemorySafetyConfig, MnemosConfig, SurprisalConfig
 from .engine import MnemosEngine
+from .client import MnemosClient
 from .health import run_health_checks
 from .inspectability import build_chunk_inspection
 from .observability import configure_logging, log_event
@@ -81,6 +90,7 @@ from .runtime import (
     build_store_from_env,
 )
 from .types import Interaction, RetrievalFeedbackEvent
+from .scopes import ScopeContext, ScopeRegistry, default_registry_path
 from .utils.embeddings import EmbeddingProvider
 from .utils.llm import MockLLMProvider, LLMProvider
 from .utils.storage import MemoryStore
@@ -95,7 +105,7 @@ if _builtins_base_exception_group is not None:
 try:
     from exceptiongroup import BaseExceptionGroup as _backport_base_exception_group
 except ImportError:  # pragma: no cover - only used on Python < 3.11
-    _backport_base_exception_group = None
+    pass
 else:
     if _backport_base_exception_group not in _exception_group_types:
         _exception_group_types.append(_backport_base_exception_group)
@@ -250,6 +260,395 @@ class MnemosContext:
 
 def create_mcp_server() -> Any:
     """Create and configure the MCP server with all mnemos tools and resources."""
+    return _create_service_mcp_server()
+
+
+@dataclass
+class ServiceMCPContext:
+    client: MnemosClient
+    scope: ScopeContext
+
+
+def _service_scope_context() -> ScopeContext:
+    registry_path = default_registry_path()
+    if not registry_path.exists():
+        raise ValueError("Mnemos scope registry is not configured")
+    profile = os.environ.get("MNEMOS_USER_PROFILE_ID", "").strip()
+    if not profile:
+        raise ValueError("MNEMOS_USER_PROFILE_ID is required")
+    root = os.environ.get("MNEMOS_PROJECT_ROOT", "").strip() or os.getcwd()
+    session_id = os.environ.get("MNEMOS_SESSION_ID", "").strip() or str(uuid4())
+    host = os.environ.get("MNEMOS_HOST", "manual").strip() or "manual"
+    if host not in {"codex", "claude-code", "hermes", "manual"}:
+        raise ValueError("MNEMOS_HOST is invalid")
+    registry = ScopeRegistry.load(registry_path)
+    return registry.resolve(
+        root,
+        user_profile_id=profile,
+        session_id=session_id,
+        host=cast(Any, host),
+        workspace_id=os.environ.get("MNEMOS_WORKSPACE_ID") or None,
+    )
+
+
+def _service_context_from_ctx(
+    ctx: Any,
+    tool_name: str,
+) -> ServiceMCPContext:
+    if ctx is None:
+        raise RuntimeError(f"MCP context was not injected for {tool_name}.")
+    value = ctx.request_context.lifespan_context
+    if not isinstance(value, ServiceMCPContext):
+        raise RuntimeError(f"MCP service context was not initialized for {tool_name}.")
+    return value
+
+
+def _validate_scope(scope: str, scope_id: str, context: ScopeContext) -> str:
+    if scope not in VALID_SCOPES:
+        raise ValueError(f"Invalid scope: {scope}")
+    expected = context.project_id if scope == "project" else context.workspace_id
+    if scope == "global":
+        if scope_id:
+            raise ValueError("global scope does not accept scope_id")
+    elif scope_id and scope_id != expected:
+        raise ValueError("scope_id does not match the resolved identity")
+    if scope != "global" and expected is None:
+        raise ValueError(f"A {scope} identity is not configured")
+    return scope
+
+
+async def _service_request(
+    service_context: ServiceMCPContext,
+    operation: str,
+    payload: dict[str, Any],
+) -> dict[str, Any]:
+    result = await service_context.client.request(
+        operation,
+        payload,
+        queue_on_failure=operation in {"capture", "mnemos_capture"},
+    )
+    return dict(result)
+
+
+def _service_json(value: Any) -> str:
+    return json.dumps(value, indent=2, default=str)
+
+
+async def _service_health(service_context: ServiceMCPContext) -> dict[str, Any]:
+    result = await _service_request(service_context, "health", {})
+    # Keep the long-standing diagnostics names while sourcing every value
+    # from the live service response.
+    store = result.get("store")
+    if isinstance(store, dict):
+        result.setdefault(
+            "runtime",
+            {
+                "store_backend": store.get("backend", "unknown"),
+                "total_chunks": store.get("total_chunks", 0),
+            },
+        )
+    result.setdefault(
+        "scope_isolation",
+        {
+            "user_profile_id": service_context.scope.user_profile_id,
+            "project_id": service_context.scope.project_id,
+            "workspace_id": service_context.scope.workspace_id,
+        },
+    )
+    return result
+
+
+def _resolved_scope_payload(
+    service_context: ServiceMCPContext,
+    scope: str,
+    scope_id: str,
+) -> tuple[str, dict[str, Any]]:
+    checked_scope = _validate_scope(scope, scope_id, service_context.scope)
+    return checked_scope, service_context.scope.model_dump(mode="json")
+
+
+def _register_service_tools(mcp: Any) -> None:
+    @mcp.tool()
+    async def mnemos_store(
+        content: str,
+        role: str = "user",
+        metadata: str = "{}",
+        scope: str = "project",
+        scope_id: str = "",
+        ctx: Context[Any, Any, Any] | None = None,
+    ) -> str:
+        service_context = _service_context_from_ctx(ctx, "mnemos_store")
+        checked_scope, context = _resolved_scope_payload(service_context, scope, scope_id)
+        try:
+            parsed_metadata = json.loads(metadata)
+        except json.JSONDecodeError:
+            parsed_metadata = {}
+        payload = {
+            "event_id": "mcp:" + uuid4().hex,
+            "context": context,
+            "content": content,
+            "role": role,
+            "scope": checked_scope,
+            "source_kind": "mcp_remember",
+            "metadata": parsed_metadata if isinstance(parsed_metadata, dict) else {},
+        }
+        result = await _service_request(service_context, "remember", payload)
+        if parsed_metadata:
+            result["metadata_status"] = "ignored"
+            result["metadata_note"] = (
+                "Custom metadata is not persisted; scope and provenance are service-owned."
+            )
+        result.setdefault("event_committed", result.get("status") == "committed")
+        result.setdefault("scope", checked_scope)
+        result.setdefault(
+            "scope_id",
+            (
+                context.get("project_id")
+                if checked_scope == "project"
+                else context.get("workspace_id")
+            ),
+        )
+        return _service_json(result)
+
+    @mcp.tool()
+    async def mnemos_capture(
+        content: str,
+        role: str = "user",
+        source_kind: str = "mcp_capture",
+        source_ref: str | None = None,
+        scope: str = "project",
+        scope_id: str = "",
+        ctx: Context[Any, Any, Any] | None = None,
+    ) -> str:
+        """Accept scoped evidence for later service-owned processing."""
+        service_context = _service_context_from_ctx(ctx, "mnemos_capture")
+        checked_scope, context = _resolved_scope_payload(service_context, scope, scope_id)
+        result = await _service_request(
+            service_context,
+            "capture",
+            {
+                "event_id": "mcp:capture:" + uuid4().hex,
+                "context": context,
+                "occurred_at": datetime.now(timezone.utc).isoformat(),
+                "role": role,
+                "content": content,
+                "source_kind": source_kind,
+                "source_ref": source_ref,
+                "scope": checked_scope,
+            },
+        )
+        result.setdefault("scope", checked_scope)
+        result.setdefault("scope_id", context.get("project_id"))
+        result.setdefault("event_committed", result.get("status") == "committed")
+        return _service_json(result)
+
+    @mcp.tool()
+    async def mnemos_retrieve(
+        query: str,
+        top_k: int = 5,
+        reconsolidate: bool = True,
+        current_scope: str = "project",
+        scope_id: str = "",
+        allowed_scopes: str = "project,workspace,global",
+        ctx: Context[Any, Any, Any] | None = None,
+    ) -> str:
+        service_context = _service_context_from_ctx(ctx, "mnemos_retrieve")
+        checked_scope, context = _resolved_scope_payload(service_context, current_scope, scope_id)
+        del reconsolidate
+        result = await _service_request(
+            service_context,
+            "retrieve",
+            {
+                "query": query,
+                "context": context,
+                "allowed_scopes": list(_parse_allowed_scopes(allowed_scopes)),
+                "top_k": max(0, min(int(top_k), 100)),
+                "max_context_tokens": 1200,
+                "profile": "baseline",
+            },
+        )
+        facts = result.get("facts", [])
+        if isinstance(facts, list):
+            for fact in facts:
+                if isinstance(fact, dict):
+                    fact.setdefault("schema_version", result.get("schema_version", 1))
+                    fact.setdefault("scope", checked_scope)
+        return _service_json(result)
+
+    @mcp.tool()
+    async def mnemos_feedback(
+        event_type: str,
+        query: str,
+        scope: str = "project",
+        scope_id: str = "",
+        chunk_ids: list[str] | None = None,
+        notes: str = "",
+        ctx: Context[Any, Any, Any] | None = None,
+    ) -> str:
+        service_context = _service_context_from_ctx(ctx, "mnemos_feedback")
+        checked_scope, context = _resolved_scope_payload(service_context, scope, scope_id)
+        return _service_json(
+            await _service_request(
+                service_context,
+                "feedback",
+                {
+                    "event_type": event_type,
+                    "query": query,
+                    "scope": checked_scope,
+                    "scope_id": (
+                        context.get("project_id")
+                        if checked_scope == "project"
+                        else context.get("workspace_id")
+                    ),
+                    "allowed_scopes": (
+                        [checked_scope, "global"] if checked_scope != "global" else ["global"]
+                    ),
+                    "chunk_ids": list(chunk_ids or []),
+                    "notes": notes,
+                    "context": context,
+                },
+            )
+        )
+
+    @mcp.tool()
+    async def mnemos_consolidate(ctx: Context[Any, Any, Any] | None = None) -> str:
+        service_context = _service_context_from_ctx(ctx, "mnemos_consolidate")
+        return _service_json(await _service_request(service_context, "maintenance", {}))
+
+    @mcp.tool()
+    async def mnemos_job_status(
+        job_id: str,
+        ctx: Context[Any, Any, Any] | None = None,
+    ) -> str:
+        """Return durable processing status without exposing job payloads."""
+        service_context = _service_context_from_ctx(ctx, "mnemos_job_status")
+        return _service_json(
+            await _service_request(
+                service_context,
+                "job",
+                {"job_id": job_id, "context": service_context.scope.model_dump(mode="json")},
+            )
+        )
+
+    @mcp.tool()
+    async def mnemos_correct(
+        fact_id: str,
+        content: str,
+        expected_version: int,
+        source_ref: str | None = None,
+        ctx: Context[Any, Any, Any] | None = None,
+    ) -> str:
+        service_context = _service_context_from_ctx(ctx, "mnemos_correct")
+        payload = {
+            "fact_id": fact_id,
+            "content": content,
+            "expected_version": expected_version,
+            "source_ref": source_ref,
+            "context": service_context.scope.model_dump(mode="json"),
+            "event_id": "mcp:correct:" + uuid4().hex,
+        }
+        return _service_json(await _service_request(service_context, "correct", payload))
+
+    @mcp.tool()
+    async def mnemos_forget(
+        chunk_id: str,
+        expected_version: int | None = None,
+        ctx: Context[Any, Any, Any] | None = None,
+    ) -> str:
+        service_context = _service_context_from_ctx(ctx, "mnemos_forget")
+        # The service requires an optimistic-concurrency version.  Keep the
+        # historical one-argument MCP shape usable by resolving the current
+        # version through the same authenticated, scoped service first.
+        if expected_version is None:
+            inspected = await _service_request(
+                service_context,
+                "inspect",
+                {"fact_id": chunk_id, "context": service_context.scope.model_dump(mode="json")},
+            )
+            fact = inspected.get("fact")
+            if not isinstance(fact, dict) or not isinstance(fact.get("version"), int):
+                return _service_json(inspected)
+            expected_version = int(fact["version"])
+        return _service_json(
+            await _service_request(
+                service_context,
+                "forget",
+                {
+                    "fact_id": chunk_id,
+                    "expected_version": expected_version,
+                    "context": service_context.scope.model_dump(mode="json"),
+                },
+            )
+        )
+
+    @mcp.tool()
+    async def mnemos_stats(ctx: Context[Any, Any, Any] | None = None) -> str:
+        service_context = _service_context_from_ctx(ctx, "mnemos_stats")
+        return _service_json(await _service_health(service_context))
+
+    @mcp.tool()
+    async def mnemos_health(ctx: Context[Any, Any, Any] | None = None) -> str:
+        service_context = _service_context_from_ctx(ctx, "mnemos_health")
+        return _service_json(await _service_health(service_context))
+
+    @mcp.tool()
+    async def mnemos_inspect(
+        chunk_id: str,
+        ctx: Context[Any, Any, Any] | None = None,
+    ) -> str:
+        service_context = _service_context_from_ctx(ctx, "mnemos_inspect")
+        return _service_json(
+            await _service_request(
+                service_context,
+                "inspect",
+                {"fact_id": chunk_id, "context": service_context.scope.model_dump(mode="json")},
+            )
+        )
+
+    @mcp.tool()
+    async def mnemos_list(
+        limit: int = 20,
+        sort_by: str = "created_at",
+        ctx: Context[Any, Any, Any] | None = None,
+    ) -> str:
+        service_context = _service_context_from_ctx(ctx, "mnemos_list")
+        return _service_json(
+            await _service_request(
+                service_context,
+                "list",
+                {
+                    "limit": max(0, min(int(limit), 100)),
+                    "sort_by": sort_by,
+                    "context": service_context.scope.model_dump(mode="json"),
+                    "allowed_scopes": ["project", "workspace", "global"],
+                },
+            )
+        )
+
+    @mcp.resource("mnemos://stats")
+    async def resource_stats() -> str:
+        # FastMCP resource callbacks do not receive a Context on every version;
+        # report the live descriptor-backed health through a short-lived client.
+        client = MnemosClient(auto_start=False)
+        return _service_json(await client.request("health", {}, queue_on_failure=False))
+
+    @mcp.resource("mnemos://architecture")
+    async def resource_architecture() -> str:
+        return _service_json(
+            {
+                "schema_version": 1,
+                "transport": "authenticated loopback Mnemos service",
+                "pipeline": {
+                    "capture": "host -> MCP/client -> local service -> SQLite",
+                    "retrieve": "MCP/client -> local service -> scoped facts",
+                    "maintenance": "service-owned scheduler and durable jobs",
+                },
+            }
+        )
+
+
+def _create_service_mcp_server() -> Any:
+    """Create the stdio facade over the already-running local service."""
     try:
         from mcp.server.fastmcp import Context, FastMCP
     except ImportError:
@@ -262,439 +661,26 @@ def create_mcp_server() -> Any:
     globals()["Context"] = Context
 
     @asynccontextmanager
-    async def mnemos_lifespan(server: FastMCP) -> AsyncIterator[MnemosContext]:
-        """Initialize the MnemosEngine on startup, clean up on shutdown."""
+    async def mnemos_lifespan(server: FastMCP) -> AsyncIterator[ServiceMCPContext]:
+        """Connect to the local service without opening a competing writer."""
         _ = server
         try:
-            engine = MnemosEngine(
-                config=_build_config(),
-                llm=_build_llm_provider(),
-                embedder=_build_embedder(),
-                store=_build_store(),
-            )
+            scope = _service_scope_context()
+            client = MnemosClient()
         except Exception as exc:
             raise RuntimeError(_format_startup_error(exc)) from exc
-        health = run_health_checks(default_store_type="sqlite")
-        log_event(
-            "mnemos.startup",
-            transport="mcp_stdio",
-            status=health["status"],
-            profile=health["profile"],
-            store_type=health["store_type"],
-            llm_provider=health["llm_provider"],
-            embedding_provider=health["embedding_provider"],
-        )
-        if health["status"] != "ready":
-            log_event(
-                "mnemos.degraded_mode",
-                transport="mcp_stdio",
-                status=health["status"],
-                summary=health["summary"],
-            )
+        service_context = ServiceMCPContext(client=client, scope=scope)
         try:
-            yield MnemosContext(engine=engine)
+            yield service_context
         finally:
-            # Future: clean up additional long-lived runtime resources here.
-            pass
+            await client.close()
 
     mcp = FastMCP(
         "Mnemos",
         dependencies=["mnemos", "numpy", "pydantic"],
         lifespan=mnemos_lifespan,
     )
-
-    def _engine_from_ctx(
-        ctx: Context[Any, Any, Any] | None,
-        tool_name: str,
-    ) -> MnemosEngine:
-        if ctx is None:
-            raise RuntimeError(f"MCP context was not injected for {tool_name}.")
-        return cast(MnemosEngine, ctx.request_context.lifespan_context.engine)
-
-    # -----------------------------------------------------------------------
-    # TOOLS
-    # -----------------------------------------------------------------------
-
-    @mcp.tool()
-    async def mnemos_store(
-        content: str,
-        role: str = "user",
-        metadata: str = "{}",
-        scope: str = "project",
-        scope_id: str = "default",
-        ctx: Context[Any, Any, Any] | None = None,
-    ) -> str:
-        """Store a memory through the full biomimetic pipeline.
-
-        The memory passes through:
-        1. Surprisal Gate — only stores if content is surprising (high prediction error)
-        2. Affective Router — tags with emotional/cognitive state
-        3. Spreading Activation — connects to related memories in the graph
-
-        Args:
-            content: The text content to potentially memorize.
-            role: Speaker role — "user", "assistant", or "system".
-            metadata: JSON string of additional metadata to attach.
-
-        Returns:
-            JSON with storage decision, salience score, and reason.
-        """
-        engine = _engine_from_ctx(ctx, "mnemos_store")
-
-        try:
-            meta = json.loads(metadata)
-        except json.JSONDecodeError:
-            meta = {}
-
-        interaction = Interaction(role=role, content=content, metadata=meta)
-        result = await engine.process(
-            interaction,
-            scope=scope,
-            scope_id=(scope_id or None),
-        )
-
-        return json.dumps(
-            {
-                "stored": result.stored,
-                "salience": round(result.salience, 4),
-                "reason": result.reason,
-                "chunk_id": result.chunk.id if result.chunk else None,
-                "content": result.chunk.content if result.chunk else None,
-                "scope": (result.chunk.metadata.get("scope") if result.chunk else None),
-                "scope_id": (result.chunk.metadata.get("scope_id") if result.chunk else None),
-            },
-            indent=2,
-        )
-
-    @mcp.tool()
-    async def mnemos_retrieve(
-        query: str,
-        top_k: int = 5,
-        reconsolidate: bool = True,
-        current_scope: str = "project",
-        scope_id: str = "default",
-        allowed_scopes: str = "project,workspace,global",
-        ctx: Context[Any, Any, Any] | None = None,
-    ) -> str:
-        """Retrieve memories using the full contextual retrieval pipeline.
-
-        Pipeline:
-        1. Classifies current emotional/cognitive state from query
-        2. Spreading Activation — finds associatively connected context
-        3. Affective Router — re-ranks by emotional state match
-        4. Mutable RAG — flags retrieved memories for reconsolidation
-
-        Args:
-            query: What to search for in memory.
-            top_k: Maximum number of memories to return.
-            reconsolidate: Whether to update stale memories after retrieval.
-
-        Returns:
-            JSON array of matching memories with content, salience, and metadata.
-        """
-        engine = _engine_from_ctx(ctx, "mnemos_retrieve")
-        parsed_allowed_scopes = _parse_allowed_scopes(allowed_scopes)
-        chunks = await engine.retrieve(
-            query,
-            top_k=top_k,
-            reconsolidate=reconsolidate,
-            current_scope=current_scope,
-            scope_id=(scope_id or None),
-            allowed_scopes=parsed_allowed_scopes,
-        )
-
-        results = []
-        for chunk in chunks:
-            results.append(
-                {
-                    "id": chunk.id,
-                    "content": chunk.content,
-                    "salience": round(chunk.salience, 4),
-                    "version": chunk.version,
-                    "access_count": chunk.access_count,
-                    "cognitive_state": (
-                        {
-                            "valence": round(chunk.cognitive_state.valence, 3),
-                            "arousal": round(chunk.cognitive_state.arousal, 3),
-                            "complexity": round(chunk.cognitive_state.complexity, 3),
-                        }
-                        if chunk.cognitive_state
-                        else None
-                    ),
-                    "created_at": chunk.created_at.isoformat(),
-                    "updated_at": chunk.updated_at.isoformat(),
-                    "scope": chunk.metadata.get("scope", "global"),
-                    "scope_id": chunk.metadata.get("scope_id"),
-                }
-            )
-
-        return json.dumps(results, indent=2)
-
-    @mcp.tool()
-    async def mnemos_feedback(
-        event_type: str,
-        query: str,
-        scope: str = "project",
-        scope_id: str = "default",
-        chunk_ids: list[str] | None = None,
-        notes: str = "",
-        ctx: Context[Any, Any, Any] | None = None,
-    ) -> str:
-        """Record whether a retrieval was helpful, wrong, or missing."""
-        engine = _engine_from_ctx(ctx, "mnemos_feedback")
-        event = RetrievalFeedbackEvent(
-            event_type=event_type,
-            query=query,
-            scope=scope,
-            scope_id=(scope_id or None),
-            chunk_ids=list(chunk_ids or []),
-            notes=notes,
-        )
-        engine.store.store_feedback_event(event)
-
-        return json.dumps(
-            {
-                "stored": True,
-                "event_id": event.id,
-                "event_type": event.event_type,
-                "query": event.query,
-                "scope": event.scope,
-                "scope_id": event.scope_id,
-                "chunk_ids": event.chunk_ids,
-                "notes": event.notes,
-                "created_at": event.created_at.isoformat(),
-            },
-            indent=2,
-        )
-
-    @mcp.tool()
-    async def mnemos_consolidate(ctx: Context[Any, Any, Any] | None = None) -> str:
-        """Trigger sleep consolidation — compress episodic memories into semantic facts.
-
-        Mimics the hippocampal-neocortical transfer during sleep:
-        - Replays recent episodic interactions
-        - Extracts permanent facts and user preferences
-        - Optionally applies recall-gated plasticity before long-term writes
-        - Stores distilled knowledge as long-term semantic memory
-        - Prunes raw episode buffer to save capacity
-
-        Returns:
-            JSON with facts extracted, episodes pruned, and any tools generated.
-        """
-        engine = _engine_from_ctx(ctx, "mnemos_consolidate")
-        result = await engine.consolidate()
-
-        return json.dumps(
-            {
-                "facts_extracted": result.facts_extracted,
-                "chunks_pruned": result.chunks_pruned,
-                "tools_generated": result.tools_generated,
-                "duration_seconds": round(result.duration_seconds, 3),
-            },
-            indent=2,
-        )
-
-    @mcp.tool()
-    async def mnemos_forget(
-        chunk_id: str,
-        ctx: Context[Any, Any, Any] | None = None,
-    ) -> str:
-        """Delete a specific memory by its ID.
-
-        Permanent removal — the memory cannot be recovered.
-
-        Args:
-            chunk_id: The UUID of the memory to delete.
-
-        Returns:
-            JSON confirming deletion or reporting the memory was not found.
-        """
-        engine = _engine_from_ctx(ctx, "mnemos_forget")
-        deleted = engine.store.delete(chunk_id)
-
-        # Also remove from spreading activation graph if present
-        node = engine.spreading_activation.get_node(chunk_id)
-        if node:
-            engine.spreading_activation.remove_node(chunk_id)
-
-        return json.dumps(
-            {
-                "deleted": deleted,
-                "chunk_id": chunk_id,
-            },
-            indent=2,
-        )
-
-    @mcp.tool()
-    async def mnemos_stats(ctx: Context[Any, Any, Any] | None = None) -> str:
-        """Get system-wide statistics from all memory modules.
-
-        Returns stats for: engine, surprisal gate, mutable RAG,
-        affective router, sleep daemon, spreading activation, and store.
-        """
-        engine = _engine_from_ctx(ctx, "mnemos_stats")
-        stats = engine.get_stats()
-
-        # Make sure everything is JSON-serializable
-        def _clean(obj: Any) -> Any:
-            if isinstance(obj, dict):
-                return {k: _clean(v) for k, v in obj.items()}
-            if isinstance(obj, (list, tuple)):
-                return [_clean(item) for item in obj]
-            if isinstance(obj, float):
-                return round(obj, 4)
-            return obj
-
-        return json.dumps(_clean(stats), indent=2)
-
-    @mcp.tool()
-    async def mnemos_health(ctx: Context[Any, Any, Any] | None = None) -> str:
-        """Run profile readiness diagnostics and dependency checks.
-
-        Returns:
-            JSON health report including status, checks, and recommendations.
-        """
-        engine = _engine_from_ctx(ctx, "mnemos_health")
-        report = run_health_checks(default_store_type="sqlite")
-        store_stats = engine.store.get_stats()
-        report["runtime"] = {
-            "store_backend": store_stats.get("backend", "unknown"),
-            "total_chunks": store_stats.get("total_chunks", 0),
-        }
-        return json.dumps(report, indent=2)
-
-    @mcp.tool()
-    async def mnemos_inspect(
-        chunk_id: str,
-        ctx: Context[Any, Any, Any] | None = None,
-    ) -> str:
-        """Inspect a specific memory chunk by its ID.
-
-        Returns the full memory record including content, metadata,
-        salience, cognitive state, version history, and access count.
-
-        Args:
-            chunk_id: The UUID of the memory to inspect.
-        """
-        engine = _engine_from_ctx(ctx, "mnemos_inspect")
-
-        payload = build_chunk_inspection(engine, chunk_id)
-        if payload is not None:
-            return json.dumps(payload, indent=2)
-
-        return json.dumps({"error": f"Memory chunk {chunk_id!r} not found."})
-
-    @mcp.tool()
-    async def mnemos_list(
-        limit: int = 20,
-        sort_by: str = "created_at",
-        ctx: Context[Any, Any, Any] | None = None,
-    ) -> str:
-        """List all stored memories.
-
-        Args:
-            limit: Maximum number of memories to return (default 20).
-            sort_by: Sort field — "created_at", "salience", or "access_count".
-
-        Returns:
-            JSON array of memory summaries.
-        """
-        engine = _engine_from_ctx(ctx, "mnemos_list")
-        all_chunks = engine.store.get_all()
-
-        # Sort
-        if sort_by == "salience":
-            all_chunks.sort(key=lambda c: c.salience, reverse=True)
-        elif sort_by == "access_count":
-            all_chunks.sort(key=lambda c: c.access_count, reverse=True)
-        else:
-            all_chunks.sort(key=lambda c: c.created_at, reverse=True)
-
-        # Limit
-        chunks = all_chunks[:limit]
-
-        results = []
-        for chunk in chunks:
-            results.append(
-                {
-                    "id": chunk.id,
-                    "content": chunk.content[:200] + ("..." if len(chunk.content) > 200 else ""),
-                    "salience": round(chunk.salience, 4),
-                    "version": chunk.version,
-                    "access_count": chunk.access_count,
-                    "created_at": chunk.created_at.isoformat(),
-                }
-            )
-
-        return json.dumps(
-            {
-                "total": len(all_chunks),
-                "showing": len(chunks),
-                "memories": results,
-            },
-            indent=2,
-        )
-
-    # -----------------------------------------------------------------------
-    # RESOURCES
-    # -----------------------------------------------------------------------
-
-    @mcp.resource("mnemos://stats")
-    async def resource_stats() -> str:
-        """Live system statistics across all memory modules."""
-        # Note: resources don't get Context in the same way —
-        # this is a static resource that returns basic info
-        return json.dumps(
-            {
-                "name": "Mnemos",
-                "version": "0.1.0",
-                "description": "Biomimetic memory architecture for LLMs",
-                "modules": [
-                    "SurprisalGate (Predictive Coding)",
-                    "MutableRAG (Memory Reconsolidation)",
-                    "AffectiveRouter (Amygdala Filter)",
-                    "SleepDaemon (Hippocampal Consolidation)",
-                    "SpreadingActivation (Graph RAG)",
-                ],
-            },
-            indent=2,
-        )
-
-    @mcp.resource("mnemos://architecture")
-    async def resource_architecture() -> str:
-        """Description of the biomimetic memory architecture and its modules."""
-        return json.dumps(
-            {
-                "pipeline": {
-                    "encode": [
-                        "Input → SurprisalGate (prediction error filter)",
-                        "→ AffectiveRouter (emotional state tagging)",
-                        "→ SpreadingActivation (graph integration)",
-                        "→ SleepDaemon episodic buffer",
-                    ],
-                    "retrieve": [
-                        "Query → SpreadingActivation (associative context)",
-                        "→ AffectiveRouter (state-dependent re-ranking)",
-                        "→ MutableRAG (reconsolidation of stale facts)",
-                        "→ Ranked results",
-                    ],
-                    "consolidate": [
-                        "Idle → SleepDaemon (episodic → semantic transfer)",
-                        "→ Fact extraction + optional recall gate + episode pruning",
-                        "→ Optional proceduralization (tool generation)",
-                    ],
-                },
-                "neuroscience_inspiration": {
-                    "surprisal_gate": "Predictive coding / active inference — only encode prediction errors",
-                    "mutable_rag": "Memory reconsolidation — recalled memories enter labile state, get rewritten",
-                    "affective_router": "Amygdala-mediated state-dependent memory — emotional context shapes retrieval",
-                    "sleep_daemon": "Hippocampal-neocortical transfer during sleep, with optional recall-gated plasticity — episodic replay must support semantic updates",
-                    "spreading_activation": "Collins & Loftus (1975) — activation energy propagates through semantic graph",
-                },
-            },
-            indent=2,
-        )
-
+    _register_service_tools(mcp)
     return mcp
 
 

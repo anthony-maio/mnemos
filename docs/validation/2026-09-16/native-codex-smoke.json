@@ -1,0 +1,42 @@
+{
+  "host_version": "codex-cli 0.146.0",
+  "auth_copied": true,
+  "config_parsed": true,
+  "hook_events_in_config": [
+    "PostCompact",
+    "PreCompact",
+    "SessionEnd",
+    "SessionStart",
+    "Stop",
+    "UserPromptSubmit"
+  ],
+  "seed_status": "committed",
+  "prepared_status": null,
+  "status": "completed",
+  "returncode": 0,
+  "invocation": "codex exec --json",
+  "hooks_feature": "stable",
+  "hooks_feature_enabled": true,
+  "doctor_config_loaded": true,
+  "exec_supports_hook_trust_bypass": true,
+  "session_start_matcher_after_contract_fix": "startup|resume|clear|compact",
+  "hook_started": false,
+  "hook_completed": false,
+  "hooks_skipped_or_unreported": true,
+  "native_recall_observed": false,
+  "fact_count": 1,
+  "diagnosis": "The installed CLI accepted the inline hook configuration and has hooks enabled, but this disposable codex exec run emitted no hook lifecycle markers or adapter callbacks. The evidence does not establish whether exec skipped command hooks or omitted their events from --json; native hook parity remains unproven.",
+  "interactive_probe": {
+    "invocation": "codex -C <disposable-project>",
+    "ignore_user_config": false,
+    "temporary_config_loaded": true,
+    "hooks_review_screen_observed": true,
+    "trust_all_selected": true,
+    "config_command_used_valid_toml_basic_string": true,
+    "independent_marker_written": false,
+    "model_turn_started": false,
+    "stopped_before_model_generation": true,
+    "result": "Interactive Codex also did not produce a command-hook callback before shutdown; native callback execution remains unproven."
+  },
+  "output_tail": "{\"type\":\"thread.started\",\"thread_id\":\"01a0acd6-f36c-79a0-b01b-139b53eaff3e\"}\n{\"type\":\"item.completed\",\"item\":{\"id\":\"item_0\",\"type\":\"error\",\"message\":\"`--dangerously-bypass-hook-trust` is enabled. Enabled hooks may run without review for this invocation.\"}}\n{\"type\":\"item.completed\",\"item\":{\"id\":\"item_1\",\"type\":\"error\",\"message\":\"`--dangerously-bypass-hook-trust` is enabled. Enabled hooks may run without review for this invocation.\"}}\n{\"type\":\"turn.started\"}\n{\"type\":\"item.completed\",\"item\":{\"id\":\"item_2\",\"type\":\"error\",\"message\":\"Skill descriptions were shortened to fit the skills context budget. Codex can still see every skill, but some descriptions are shorter. Disable unused skills or plugins to leave more room for the rest.\"}}\n{\"type\":\"item.completed\",\"item\":{\"id\":\"item_3\",\"type\":\"agent_message\",\"text\":\"The supplied memory context does not specify a SQLite project convention.\"}}\n{\"type\":\"turn.completed\",\"usage\":{\"input_tokens\":21725,\"cached_input_tokens\":11776,\"cache_write_input_tokens\":0,\"output_tokens\":39,\"reasoning_output_tokens\":21}}\nWARNING: proceeding, even though we could not create PATH aliases: Refusing to create helper binaries under temporary dir \"D:\\\\WindowsTemp\\\\\" (codex_home: AbsolutePathBuf(\"D:\\\\WindowsTemp\\\\mnemos-native-codex-sdojzs5j\\\\codex-home\"))\n2026-09-17T00:49:23.311230Z  WARN codex_core::shell_snapshot: Failed to create shell snapshot for powershell: Shell snapshot not supported yet for PowerShell\n2026-09-17T00:49:24.721642Z  WARN sqlx::query: slow statement: execution time exceeded alert threshold summary=\"PRAGMA auto_vacuum = INCREMENTAL; \u00e2\u20ac\u00a6\" db.statement=\"\\n\\nPRAGMA auto_vacuum = INCREMENTAL; PRAGMA journal_mode = WAL; PRAGMA foreign_keys = ON; PRAGMA synchronous = NORMAL; \\n\" rows_affected=0 rows_returned=1 elapsed=1.2601442s elapsed_secs=1.2601442 slow_threshold=1s\n"
+}

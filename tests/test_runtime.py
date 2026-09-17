@@ -77,7 +77,7 @@ def test_build_embedder_from_env_defaults_to_simple(
     assert isinstance(embedder, SimpleEmbeddingProvider)
 
 
-def test_build_embedder_from_env_uses_sqlite_vec_dim_for_simple_provider(
+def test_build_embedder_from_env_respects_configured_dimension_for_reindex(
     tmp_path: Path,
 ) -> None:
     db_path = tmp_path / "mnemos_vec_dim.sqlite"
@@ -102,11 +102,12 @@ def test_build_embedder_from_env_uses_sqlite_vec_dim_for_simple_provider(
             "MNEMOS_SQLITE_PATH": str(db_path),
             "MNEMOS_LLM_PROVIDER": "mock",
             "MNEMOS_EMBEDDING_PROVIDER": "simple",
+            "MNEMOS_EMBEDDING_DIM": "64",
         },
     )
 
     assert isinstance(embedder, SimpleEmbeddingProvider)
-    assert embedder.dim == 768
+    assert embedder.dim == 64
 
 
 def test_build_embedder_from_env_rejects_unknown_provider(

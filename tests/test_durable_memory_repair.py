@@ -135,7 +135,7 @@ async def test_consolidate_promotes_persisted_episodic_events_across_restarts(
 
 
 @pytest.mark.asyncio
-async def test_retrieve_queues_durable_reconsolidation_and_later_consolidate_applies_it(
+async def test_retrieve_does_not_queue_query_reconsolidation_after_restart(
     tmp_path: Path,
 ) -> None:
     db_path = tmp_path / "reconsolidation.sqlite"
@@ -183,14 +183,12 @@ async def test_retrieve_queues_durable_reconsolidation_and_later_consolidate_app
         second_store.close()
 
     assert len(retrieved) == 1
-    assert len(jobs) == 1
+    assert jobs == []
 
     third_store = SQLiteStore(db_path=str(db_path))
     third_engine = MnemosEngine(
         config=config,
-        llm=MockLLMProvider(
-            responses={"has this stored memory": "CHANGED: placeholder changed after retrieval"}
-        ),
+        llm=MockLLMProvider(),
         embedder=SimpleEmbeddingProvider(dim=64),
         store=third_store,
     )
@@ -202,10 +200,10 @@ async def test_retrieve_queues_durable_reconsolidation_and_later_consolidate_app
         third_store.close()
 
     assert updated is not None
-    assert updated.version == 2
+    assert updated.version == 1
     assert updated.last_retrieved_at is not None
     assert updated.reconsolidation_due_at is None
-    assert "changed after retrieval" in updated.content
+    assert updated.content == "placeholder"
     assert remaining_jobs == []
 
 

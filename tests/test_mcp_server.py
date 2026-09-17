@@ -20,7 +20,10 @@ from mnemos.mcp_server import (
     _build_llm_provider,
     _build_store,
     _format_startup_error,
+    _service_scope_context,
+    _validate_scope,
 )
+from mnemos.scopes import ScopeContext, ScopeRegistry
 from mnemos.utils import OpenAIEmbeddingProvider, OpenAIProvider, SQLiteStore
 
 
@@ -163,3 +166,36 @@ def test_format_startup_error_prefers_nested_actionable_message() -> None:
     assert message.startswith("Mnemos MCP startup failed.")
     assert "storage.type invalid" in message
     assert "ExceptionGroup" not in message
+
+
+def test_service_scope_resolution_uses_persisted_registry(
+    monkeypatch: pytest.MonkeyPatch, tmp_path: Path
+) -> None:
+    registry = ScopeRegistry()
+    project = registry.register_project(tmp_path, user_profile_id="profile-a", enabled=True)
+    registry_path = tmp_path / "scopes.json"
+    registry.save(registry_path)
+    monkeypatch.setenv("MNEMOS_SCOPE_REGISTRY", str(registry_path))
+    monkeypatch.setenv("MNEMOS_USER_PROFILE_ID", "profile-a")
+    monkeypatch.setenv("MNEMOS_PROJECT_ROOT", str(tmp_path))
+    monkeypatch.setenv("MNEMOS_SESSION_ID", "session-a")
+    monkeypatch.setenv("MNEMOS_HOST", "manual")
+
+    context = _service_scope_context()
+
+    assert context.project_id == project.id
+    assert context.user_profile_id == "profile-a"
+    assert context.session_id == "session-a"
+
+
+def test_service_scope_id_cannot_override_resolved_identity() -> None:
+    context = ScopeContext(
+        user_profile_id="profile-a",
+        project_id="project-a",
+        session_id="session-a",
+        host="manual",
+    )
+    with pytest.raises(ValueError, match="does not match"):
+        _validate_scope("project", "foreign-project", context)
+    with pytest.raises(ValueError, match="does not accept"):
+        _validate_scope("global", "foreign-global", context)

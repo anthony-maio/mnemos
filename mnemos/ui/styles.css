@@ -176,6 +176,18 @@ body::before {
   background: transparent;
 }
 
+.button-danger {
+  background: transparent;
+  color: #a13d3d;
+  border-color: rgba(161, 61, 61, 0.28);
+}
+
+.button:disabled {
+  cursor: not-allowed;
+  opacity: 0.45;
+  transform: none;
+}
+
 .preset-list,
 .host-stack,
 .stack,
@@ -312,11 +324,26 @@ small {
 .metric-card,
 .activity-card {
   padding: 16px 18px;
+  min-width: 0;
 }
 
 .metric-card h3,
 .activity-card h3 {
   font-size: 1.5rem;
+}
+
+#hero-metrics .metric-card:first-child h3 {
+  font-family: var(--mono);
+  font-size: 0.95rem;
+  line-height: 1.35;
+}
+
+.metric-card h3,
+.metric-card p,
+.activity-card h3,
+.activity-card p,
+.host-best-path {
+  overflow-wrap: anywhere;
 }
 
 .action-list,
@@ -429,9 +456,15 @@ small {
 
 .memory-query {
   display: grid;
-  grid-template-columns: 1fr auto;
+  grid-template-columns: 1fr auto auto auto;
   gap: 10px;
   align-items: end;
+}
+
+.action-status {
+  min-height: 1.3em;
+  margin: 8px 0 0;
+  color: var(--muted);
 }
 
 .memory-detail {

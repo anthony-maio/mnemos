@@ -12,7 +12,14 @@ ROOT = Path(__file__).resolve().parents[1]
 MCP_SERVER_PATH = ROOT / "mnemos" / "mcp_server.py"
 RUNTIME_PATH = ROOT / "mnemos" / "runtime.py"
 README_PATH = ROOT / "README.md"
-WEBSITE_INDEX_PATH = ROOT.parent / "web" / "index.html"
+WEBSITE_INDEX_PATH = next(
+    (
+        parent / "web" / "index.html"
+        for parent in ROOT.parents
+        if (parent / "web" / "index.html").is_file()
+    ),
+    ROOT.parent / "web" / "index.html",
+)
 MCP_INTEGRATION_PATH = ROOT / "docs" / "MCP_INTEGRATION.md"
 MCP_CONTRACT_PATH = ROOT / "docs" / "mcp-transport-contract.md"
 ARCHITECTURE_PATH = ROOT / "ARCHITECTURE.md"

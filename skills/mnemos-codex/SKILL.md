@@ -21,8 +21,8 @@ Use this skill to put Mnemos on the supported Codex path without overstating hos
 ## Claim discipline
 
 - Safe to claim: Mnemos works in Codex through MCP, shared `MNEMOS_CONFIG_PATH`, repo-level `AGENTS.md`, and optional maintenance Automations.
-- Do not claim built-in prompt/tool lifecycle hooks or Claude Code parity.
-- Hard auto-capture in Codex is host-dependent and not shipped by Mnemos today.
+- This unreleased checkout implements Codex lifecycle command hooks; installed-host behavior needs separate validation.
+- Hard auto-capture requires observed native hook invocation. MCP configuration alone does not establish it.
 
 ## Daily loop
 
@@ -36,7 +36,7 @@ Use this skill to put Mnemos on the supported Codex path without overstating hos
 
 - Use at the start of coding, debugging, review, or handoff tasks.
 - Query for architecture, current repo conventions, recent fixes, environment quirks, and user preferences that matter for this task.
-- In Codex, prefer `current_scope=project`, `scope_id=<workspace or repo name>`, and `allowed_scopes=project,global`.
+- Prefer `current_scope=project` and `allowed_scopes=project`. Let the client resolve the registered project identity; never use a folder basename as scope_id.
 
 ## Curator mode
 

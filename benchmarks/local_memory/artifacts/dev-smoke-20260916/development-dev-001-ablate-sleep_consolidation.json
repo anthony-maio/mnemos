@@ -1,0 +1,451 @@
+{
+  "dataset": {
+    "advertised_as_real": false,
+    "session_id": "dev-001",
+    "sha256": "297e2c3bc4e3bf183ed88e293e3da8e2200ea703ff2a425fbdd302da24c0c776",
+    "source_label": "synthetic_seed",
+    "version": "local-memory-heldout-v2"
+  },
+  "gates": {
+    "human_acceptance": "NOT RUN",
+    "real_cognition": "OBSERVED",
+    "real_embedding": "OBSERVED"
+  },
+  "observation": {
+    "adapter_kind": "real_model",
+    "answerable_hits": [
+      true
+    ],
+    "bytes_after": 3669776,
+    "bytes_before": 329416,
+    "cold_latency_ms": 2.7817999944090843,
+    "critical_retention": [],
+    "embedding_revision": "0a109f422b47e3a30ba2b10eca18548e944e8a23073ee3f3e947efcf3c45e59f",
+    "execution_status": "complete",
+    "latency_ms": 17375.745499994082,
+    "length_filter_kept": [],
+    "model_revision": "a2af6cc3eb7fa8be8504abaf9b04e88f17a119ec3f04a3addf55f92841195f5a",
+    "no_answer_correct": [],
+    "provider": "ollama",
+    "raw_output": {
+      "adapter": "ollama",
+      "base_url": "http://192.168.86.35:11434",
+      "embedding_model": "nomic-embed-text:latest",
+      "errors": [],
+      "extraction_judgements": [
+        {
+          "accepted": true,
+          "content_nonempty": true,
+          "judgement": "exact_frozen_text_and_evidence",
+          "matched_supported_fact_id": "dev-fact-001",
+          "observed_source_event_ids": [
+            "dev-001-event-01"
+          ],
+          "runtime_fact_id": "63e9531f-ed09-490c-9b9a-d6b2e5987f2e"
+        },
+        {
+          "accepted": false,
+          "content_nonempty": true,
+          "judgement": "exact_frozen_text_and_evidence",
+          "matched_supported_fact_id": null,
+          "observed_source_event_ids": [
+            "dev-001-event-02"
+          ],
+          "runtime_fact_id": "4b9779ca-82e0-4501-9ca6-726975371623"
+        }
+      ],
+      "measurement_notes": [
+        "Missing retrievals remain null and are excluded from interval numerators.",
+        "Correction and forget use runtime fact IDs resolved from the service store.",
+        "No model token usage was exposed by the current provider API.",
+        "Extraction precision uses exact frozen fact text and source role/evidence checks; paraphrases are unjudged."
+      ],
+      "model": "gemma3:4b",
+      "module_switches": {
+        "disabled": "sleep_consolidation",
+        "enabled": [
+          "surprisal_gating",
+          "mutable_rag",
+          "affective_routing",
+          "spreading_activation"
+        ],
+        "source": "service_factory"
+      },
+      "operations": [
+        {
+          "event_id": "dev-001-event-01",
+          "operation": "capture",
+          "status": "committed"
+        },
+        {
+          "event_id": "dev-001-event-02",
+          "operation": "response",
+          "status": "committed"
+        },
+        {
+          "operation": "restart",
+          "status": "completed"
+        },
+        {
+          "operation": "maintenance",
+          "pending_or_failed_statuses": [],
+          "status": "completed"
+        },
+        {
+          "operation": "retrieve",
+          "query_id": "dev-query-001",
+          "status": "returned"
+        }
+      ],
+      "profile": {
+        "disabled_module": "sleep_consolidation",
+        "enabled_modules": [
+          "surprisal_gating",
+          "mutable_rag",
+          "affective_routing",
+          "spreading_activation"
+        ],
+        "name": "ablate-sleep_consolidation"
+      },
+      "provenance": {
+        "code_sha256": "63280e3e884b0646ba4690bb3cd6aeab22615facee46f73436084d08b3a1cf23",
+        "cognition_observed": true,
+        "embedding_metadata": {},
+        "embedding_sha256": "0a109f422b47e3a30ba2b10eca18548e944e8a23073ee3f3e947efcf3c45e59f",
+        "embedding_verified": false,
+        "model_metadata": {},
+        "model_sha256": "a2af6cc3eb7fa8be8504abaf9b04e88f17a119ec3f04a3addf55f92841195f5a",
+        "options_sha256": "a5787e3ed51bcac5908a165ca32b2e6cf4bf648da32f17847a1ea7abc6cfbd68",
+        "verified": false
+      },
+      "provider": "ollama",
+      "provider_trace": {
+        "classify_calls": [],
+        "config": {
+          "embedding_model": "nomic-embed-text:latest",
+          "endpoint": "http://192.168.86.35:11434",
+          "max_tokens": 512,
+          "model": "gemma3:4b",
+          "temperature": 0.0,
+          "timeout_seconds": 120.0
+        },
+        "embed_calls": [
+          {
+            "latency_ms": 202.49490000423975,
+            "text_chars": 28,
+            "token_usage": {
+              "prompt_eval_count": 8
+            },
+            "vector_dimensions": 768
+          },
+          {
+            "latency_ms": 210.186899996188,
+            "text_chars": 58,
+            "token_usage": {
+              "prompt_eval_count": 14
+            },
+            "vector_dimensions": 768
+          },
+          {
+            "latency_ms": 212.7180999959819,
+            "text_chars": 58,
+            "token_usage": {
+              "prompt_eval_count": 14
+            },
+            "vector_dimensions": 768
+          },
+          {
+            "latency_ms": 210.92620000126772,
+            "text_chars": 22,
+            "token_usage": {
+              "prompt_eval_count": 10
+            },
+            "vector_dimensions": 768
+          },
+          {
+            "latency_ms": 206.7661999972188,
+            "text_chars": 61,
+            "token_usage": {
+              "prompt_eval_count": 12
+            },
+            "vector_dimensions": 768
+          },
+          {
+            "latency_ms": 207.03810000122758,
+            "text_chars": 81,
+            "token_usage": {
+              "prompt_eval_count": 15
+            },
+            "vector_dimensions": 768
+          },
+          {
+            "latency_ms": 206.3276000044425,
+            "text_chars": 61,
+            "token_usage": {
+              "prompt_eval_count": 12
+            },
+            "vector_dimensions": 768
+          }
+        ],
+        "predict_calls": [
+          {
+            "latency_ms": 1803.8374000025215,
+            "prompt_chars": 255,
+            "response": "Tell me about your features.",
+            "token_usage": {
+              "eval_count": 7,
+              "prompt_eval_count": 62
+            }
+          },
+          {
+            "latency_ms": 3502.441299999191,
+            "prompt_chars": 368,
+            "response": "0.1, 0.2, 0.3",
+            "token_usage": {
+              "eval_count": 15,
+              "prompt_eval_count": 113
+            }
+          },
+          {
+            "latency_ms": 1742.911200002709,
+            "prompt_chars": 301,
+            "response": "What version of MySQL?",
+            "token_usage": {
+              "eval_count": 6,
+              "prompt_eval_count": 68
+            }
+          },
+          {
+            "latency_ms": 3473.3019999985117,
+            "prompt_chars": 371,
+            "response": "0.1, 0.3, 0.2",
+            "token_usage": {
+              "eval_count": 15,
+              "prompt_eval_count": 114
+            }
+          },
+          {
+            "latency_ms": 3464.334399999643,
+            "prompt_chars": 371,
+            "response": "-0.2, 0.3, 0.4",
+            "token_usage": {
+              "eval_count": 16,
+              "prompt_eval_count": 114
+            }
+          }
+        ],
+        "response_metadata": [
+          {
+            "created_at": "2026-09-16T23:56:53.8972046Z",
+            "done": true,
+            "done_reason": "stop",
+            "eval_count": 7,
+            "eval_duration": 732200000,
+            "kind": "generate",
+            "load_duration": 6744000,
+            "model": "gemma3:4b",
+            "prompt_eval_count": 62,
+            "prompt_eval_duration": 842556000,
+            "provider": "ollama",
+            "total_duration": 1612758300
+          },
+          {
+            "kind": "embedding",
+            "load_duration": 7958800,
+            "model": "nomic-embed-text:latest",
+            "prompt_eval_count": 8,
+            "provider": "ollama",
+            "total_duration": 23430100
+          },
+          {
+            "kind": "embedding",
+            "load_duration": 7453000,
+            "model": "nomic-embed-text:latest",
+            "prompt_eval_count": 14,
+            "provider": "ollama",
+            "total_duration": 27106700
+          },
+          {
+            "created_at": "2026-09-16T23:56:57.8141902Z",
+            "done": true,
+            "done_reason": "stop",
+            "eval_count": 15,
+            "eval_duration": 1784747000,
+            "kind": "generate",
+            "load_duration": 8926100,
+            "model": "gemma3:4b",
+            "prompt_eval_count": 113,
+            "prompt_eval_duration": 1508266000,
+            "provider": "ollama",
+            "total_duration": 3310477200
+          },
+          {
+            "kind": "embedding",
+            "load_duration": 6319800,
+            "model": "nomic-embed-text:latest",
+            "prompt_eval_count": 14,
+            "provider": "ollama",
+            "total_duration": 25158400
+          },
+          {
+            "created_at": "2026-09-16T23:56:59.7819668Z",
+            "done": true,
+            "done_reason": "stop",
+            "eval_count": 6,
+            "eval_duration": 610470000,
+            "kind": "generate",
+            "load_duration": 6485000,
+            "model": "gemma3:4b",
+            "prompt_eval_count": 68,
+            "prompt_eval_duration": 919499000,
+            "provider": "ollama",
+            "total_duration": 1550391900
+          },
+          {
+            "kind": "embedding",
+            "load_duration": 6809300,
+            "model": "nomic-embed-text:latest",
+            "prompt_eval_count": 10,
+            "provider": "ollama",
+            "total_duration": 27067800
+          },
+          {
+            "kind": "embedding",
+            "load_duration": 6942600,
+            "model": "nomic-embed-text:latest",
+            "prompt_eval_count": 12,
+            "provider": "ollama",
+            "total_duration": 23554700
+          },
+          {
+            "created_at": "2026-09-16T23:57:03.6735262Z",
+            "done": true,
+            "done_reason": "stop",
+            "eval_count": 15,
+            "eval_duration": 1757037000,
+            "kind": "generate",
+            "load_duration": 6340300,
+            "model": "gemma3:4b",
+            "prompt_eval_count": 114,
+            "prompt_eval_duration": 1503503000,
+            "provider": "ollama",
+            "total_duration": 3280609900
+          },
+          {
+            "kind": "embedding",
+            "load_duration": 7214300,
+            "model": "nomic-embed-text:latest",
+            "prompt_eval_count": 15,
+            "provider": "ollama",
+            "total_duration": 27026800
+          },
+          {
+            "kind": "embedding",
+            "load_duration": 7030500,
+            "model": "nomic-embed-text:latest",
+            "prompt_eval_count": 12,
+            "provider": "ollama",
+            "total_duration": 28007600
+          },
+          {
+            "created_at": "2026-09-16T23:57:07.5582563Z",
+            "done": true,
+            "done_reason": "stop",
+            "eval_count": 16,
+            "eval_duration": 1794610000,
+            "kind": "generate",
+            "load_duration": 7452100,
+            "model": "gemma3:4b",
+            "prompt_eval_count": 114,
+            "prompt_eval_duration": 1465135000,
+            "provider": "ollama",
+            "total_duration": 3270655800
+          }
+        ]
+      },
+      "unsupported_modules": [],
+      "unsupported_operations": []
+    },
+    "repetition": 1,
+    "retrieved_fact_count": 2,
+    "session_id": "dev-001",
+    "stale_fact_count": 0,
+    "state_pair_semantic_hits": [],
+    "state_pair_state_hits": [],
+    "supported_precision": [
+      true,
+      false
+    ],
+    "surprisal_filter_kept": [],
+    "token_cost": null,
+    "verified_model_provenance": false
+  },
+  "observed_at": "2026-09-16T23:57:07.687816+00:00",
+  "profile": {
+    "disabled_module": "sleep_consolidation",
+    "enabled_modules": [
+      "surprisal_gating",
+      "mutable_rag",
+      "affective_routing",
+      "spreading_activation"
+    ],
+    "name": "ablate-sleep_consolidation"
+  },
+  "provider": {
+    "embedding_metadata": {
+      "capabilities": [
+        "embedding"
+      ],
+      "details": {
+        "context_length": 2048,
+        "embedding_length": 768,
+        "families": [
+          "nomic-bert"
+        ],
+        "family": "nomic-bert",
+        "format": "gguf",
+        "parameter_size": "137M",
+        "parent_model": "",
+        "quantization_level": "F16"
+      },
+      "digest": "0a109f422b47e3a30ba2b10eca18548e944e8a23073ee3f3e947efcf3c45e59f",
+      "model": "nomic-embed-text:latest",
+      "modified_at": "2025-11-04T15:15:16.2072724-05:00",
+      "name": "nomic-embed-text:latest",
+      "size": 274302450
+    },
+    "embedding_model": "nomic-embed-text:latest",
+    "endpoint": "http://192.168.86.35:11434",
+    "model": "gemma3:4b",
+    "model_metadata": {
+      "capabilities": [
+        "completion",
+        "vision"
+      ],
+      "details": {
+        "context_length": 131072,
+        "embedding_length": 2560,
+        "families": [
+          "gemma3"
+        ],
+        "family": "gemma3",
+        "format": "gguf",
+        "parameter_size": "4.3B",
+        "parent_model": "",
+        "quantization_level": "Q4_K_M"
+      },
+      "digest": "a2af6cc3eb7fa8be8504abaf9b04e88f17a119ec3f04a3addf55f92841195f5a",
+      "model": "gemma3:4b",
+      "modified_at": "2026-03-11T01:54:24.735623-04:00",
+      "name": "gemma3:4b",
+      "size": 3338801804
+    },
+    "options": {
+      "max_tokens": 512,
+      "temperature": 0.0,
+      "timeout_seconds": 120.0
+    }
+  },
+  "schema_version": "local-memory-development-smoke-v1",
+  "status": "complete"
+}

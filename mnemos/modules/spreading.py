@@ -1,61 +1,37 @@
-"""
-mnemos/modules/spreading.py — Spreading Activation (Energy-Based Graph RAG).
+"""Scoped, bounded spreading activation for associative memory retrieval.
 
-Neuroscience Basis:
-    Collins & Loftus (1975) proposed that semantic memory is organized as a
-    network of concepts linked by typed associations. Memory retrieval works
-    via 'spreading activation': when a concept is activated (recalled), that
-    activation energy propagates along semantic links to related concepts,
-    pre-activating (priming) them for rapid subsequent recall.
-
-    For example, hearing "doctor" activates "hospital", "nurse", "medicine",
-    "illness" — even without explicitly querying for them. This associative
-    priming is why human recall has a 'train of thought' quality that pure
-    vector search lacks.
-
-    Key properties of neural spreading activation:
-    - Energy decays with each synaptic hop (typically 20-50% per hop)
-    - Propagation is limited in depth (only 3-5 meaningful hops in humans)
-    - Nodes below a threshold are not 'primed' (threshold prevents noise)
-    - Energy decays naturally over time (forgetting; cortical inhibition)
-
-Mnemos Implementation:
-    Memory chunks are nodes in an activation graph. Edges connect semantically
-    similar nodes (cosine similarity above a threshold). When a query arrives:
-    1. Find the closest node by embedding similarity (initial lookup)
-    2. Inject activation energy at that node
-    3. Let energy spread BFS-style through edges, decaying by decay_rate each hop
-    4. Return all nodes with energy above activation_threshold
-
-    This creates a fluid 'spotlight' of context — the LLM gets not just the
-    exact match, but the full associative neighborhood, enabling human-like
-    contextual recall without requiring multi-million token windows.
+The current traversal algorithm is version 2. It records the greatest energy
+available at each node from one seed to a bounded depth. Energies belong to a
+single call, so a previous query cannot prime a later query through mutable node
+state.
 """
 
 from __future__ import annotations
 
+import math
 import uuid
-from collections import defaultdict, deque
-from typing import Any
+from collections import deque
+from collections.abc import Mapping
+from typing import Any, Callable, Iterable
 
 from ..config import SpreadingConfig
 from ..types import ActivationNode, MemoryChunk
 from ..utils.embeddings import EmbeddingProvider, cosine_similarity
 
+NodeFilter = Callable[[ActivationNode], bool]
+
 
 class SpreadingActivation:
-    """
-    Graph-based memory retrieval with energy-based spreading activation.
+    """A sparse semantic graph with bounded, scope aware activation."""
 
-    Maintains a graph of ActivationNodes where edges represent semantic
-    associations. Energy injected at a seed node propagates through the
-    graph, with each hop attenuating the signal — just as neural activation
-    energy dissipates across synapses.
-
-    Args:
-        embedder: Embedding provider for similarity-based edge construction.
-        config: SpreadingConfig controlling energy propagation parameters.
-    """
+    ALGORITHM_VERSION = "2"
+    GRAPH_VERSION = "2"
+    # Persisted edges are derived state.  Keep the derivation and traversal
+    # versions alongside the rows so an incompatible graph can be discarded
+    # and rebuilt without changing the authoritative memory facts.
+    PERSISTENCE_SCHEMA_VERSION = "1"
+    EDGE_BUILDER_VERSION = "2"
+    TRAVERSAL_VERSION = ALGORITHM_VERSION
 
     def __init__(
         self,
@@ -64,10 +40,56 @@ class SpreadingActivation:
     ) -> None:
         self._embedder = embedder
         self._config = config or SpreadingConfig()
-        # Node storage: node_id → ActivationNode
         self._nodes: dict[str, ActivationNode] = {}
-        # Stats
-        self._total_activations: int = 0
+        self._total_activations = 0
+
+    @staticmethod
+    def _metadata(node: ActivationNode) -> dict[str, Any]:
+        return node.metadata if isinstance(node.metadata, dict) else {}
+
+    @classmethod
+    def _scope_data(cls, node: ActivationNode) -> tuple[str, str | None, str | None, str | None]:
+        """Return scope, scope id, profile id, and workspace id."""
+        metadata = cls._metadata(node)
+        raw_scope = metadata.get("scope")
+        scope = str(raw_scope).strip().lower() if isinstance(raw_scope, str) else "global"
+        if scope not in {"project", "workspace", "global"}:
+            scope = "global"
+
+        def clean(value: Any) -> str | None:
+            return value.strip() if isinstance(value, str) and value.strip() else None
+
+        profile = clean(metadata.get("user_profile_id")) or clean(metadata.get("profile_id"))
+        project_id = clean(metadata.get("project_id"))
+        workspace_id = clean(metadata.get("workspace_id"))
+        scope_id = clean(metadata.get("scope_id"))
+        if scope == "project":
+            return scope, project_id or scope_id, profile, workspace_id
+        if scope == "workspace":
+            return scope, workspace_id or scope_id, profile, workspace_id
+        return scope, None, profile, workspace_id
+
+    @staticmethod
+    def _clean_id(value: str | None) -> str | None:
+        return value.strip() if isinstance(value, str) and value.strip() else None
+
+    def _nodes_can_connect(self, node_a: ActivationNode, node_b: ActivationNode) -> bool:
+        scope_a, id_a, profile_a, workspace_a = self._scope_data(node_a)
+        scope_b, id_b, profile_b, workspace_b = self._scope_data(node_b)
+        # Legacy nodes may connect to legacy nodes. A missing profile cannot be
+        # mixed into a profiled graph where it could become a cross-user bridge.
+        if profile_a != profile_b:
+            return False
+        if scope_a == "global" or scope_b == "global":
+            return True
+        if scope_a == scope_b:
+            return id_a is not None and id_a == id_b
+        # A project may carry explicit workspace membership.
+        if scope_a == "project" and scope_b == "workspace":
+            return workspace_a is not None and id_b == workspace_a
+        if scope_a == "workspace" and scope_b == "project":
+            return workspace_b is not None and id_a == workspace_b
+        return False
 
     def add_node(
         self,
@@ -76,26 +98,16 @@ class SpreadingActivation:
         node_id: str | None = None,
         metadata: dict[str, Any] | None = None,
     ) -> ActivationNode:
-        """
-        Add a new concept node to the activation graph.
-
-        If embedding is not provided, it is computed from the content.
-        After adding, call auto_connect() to build edges based on similarity.
-
-        Args:
-            content: The concept/memory content for this node.
-            embedding: Optional pre-computed embedding. Computed if not provided.
-            node_id: Optional explicit ID. Auto-generated UUID if not provided.
-            metadata: Optional metadata dict (stored in ActivationNode, not in the type
-                      but tracked in the internal metadata dict).
-
-        Returns:
-            The created ActivationNode.
-        """
+        """Add a node, or replace its content while retaining valid neighbors."""
         if embedding is None:
             embedding = self._embedder.embed(content)
-
         nid = node_id or str(uuid.uuid4())
+        old = self._nodes.get(nid)
+        old_neighbors = dict(old.neighbors) if old is not None else {}
+        if old is not None:
+            for other in self._nodes.values():
+                if other.id != nid:
+                    other.neighbors.pop(nid, None)
         node = ActivationNode(
             id=nid,
             content=content,
@@ -105,22 +117,32 @@ class SpreadingActivation:
             metadata=dict(metadata or {}),
         )
         self._nodes[nid] = node
+        for neighbor_id, weight in old_neighbors.items():
+            neighbor = self._nodes.get(neighbor_id)
+            if neighbor is None or neighbor_id == nid:
+                continue
+            try:
+                numeric_weight = float(weight)
+            except (TypeError, ValueError):
+                continue
+            if not math.isfinite(numeric_weight) or not 0.0 <= numeric_weight <= 1.0:
+                continue
+            if self._nodes_can_connect(node, neighbor):
+                node.neighbors[neighbor_id] = numeric_weight
+                neighbor.neighbors[nid] = numeric_weight
         return node
 
+    def refresh_node(
+        self,
+        node_id: str,
+        content: str,
+        embedding: list[float] | None = None,
+        metadata: dict[str, Any] | None = None,
+    ) -> ActivationNode:
+        """Replace corrected content and preserve still valid graph links."""
+        return self.add_node(content, embedding=embedding, node_id=node_id, metadata=metadata)
+
     def add_node_from_chunk(self, chunk: MemoryChunk) -> ActivationNode:
-        """
-        Add a MemoryChunk as a node in the activation graph.
-
-        Uses the chunk's existing embedding (or computes one if absent).
-        The chunk's ID becomes the node's ID, enabling cross-referencing
-        between the activation graph and the memory store.
-
-        Args:
-            chunk: The MemoryChunk to add as a graph node.
-
-        Returns:
-            The created ActivationNode.
-        """
         embedding = chunk.embedding or self._embedder.embed(chunk.content)
         return self.add_node(
             content=chunk.content,
@@ -129,35 +151,14 @@ class SpreadingActivation:
             metadata=dict(chunk.metadata),
         )
 
-    @staticmethod
-    def _normalized_scope_data(node: ActivationNode) -> tuple[str, str | None]:
-        metadata = node.metadata if isinstance(node.metadata, dict) else {}
-        scope_raw = metadata.get("scope")
-        scope = str(scope_raw).strip().lower() if isinstance(scope_raw, str) else "global"
-        if scope not in {"project", "workspace", "global"}:
-            scope = "global"
-        scope_id_raw = metadata.get("scope_id")
-        scope_id = (
-            scope_id_raw.strip() if isinstance(scope_id_raw, str) and scope_id_raw.strip() else None
-        )
-        if scope == "global":
-            return scope, None
-        return scope, scope_id
-
-    def _nodes_can_connect(self, node_a: ActivationNode, node_b: ActivationNode) -> bool:
-        scope_a, scope_a_id = self._normalized_scope_data(node_a)
-        scope_b, scope_b_id = self._normalized_scope_data(node_b)
-        if scope_a == "global" or scope_b == "global":
-            return True
-        return (
-            scope_a == scope_b
-            and scope_a in {"project", "workspace"}
-            and scope_a_id is not None
-            and scope_a_id == scope_b_id
-        )
-
     def _max_neighbors(self) -> int:
         return max(int(self._config.max_neighbors_per_node), 1)
+
+    @classmethod
+    def _normalized_scope_data(cls, node: ActivationNode) -> tuple[str, str | None]:
+        """Compatibility view of the original scope helper."""
+        scope, scope_id, _, _ = cls._scope_data(node)
+        return scope, scope_id
 
     def remove_edge(
         self,
@@ -166,7 +167,6 @@ class SpreadingActivation:
         *,
         bidirectional: bool = True,
     ) -> bool:
-        """Remove an edge between two nodes if it exists."""
         if node_a_id not in self._nodes or node_b_id not in self._nodes:
             return False
         removed = self._nodes[node_a_id].neighbors.pop(node_b_id, None) is not None
@@ -175,7 +175,6 @@ class SpreadingActivation:
         return removed
 
     def clear_edges(self, node_id: str) -> bool:
-        """Remove all inbound and outbound edges for a node."""
         node = self._nodes.get(node_id)
         if node is None:
             return False
@@ -187,9 +186,26 @@ class SpreadingActivation:
         return True
 
     def clear_all_edges(self) -> None:
-        """Remove all graph edges while preserving nodes."""
         for node in self._nodes.values():
             node.neighbors.clear()
+
+    def add_edge(
+        self,
+        node_a_id: str,
+        node_b_id: str,
+        weight: float,
+        bidirectional: bool = True,
+    ) -> bool:
+        if node_a_id not in self._nodes or node_b_id not in self._nodes:
+            return False
+        if node_a_id == node_b_id or not math.isfinite(weight) or not 0.0 <= weight <= 1.0:
+            return False
+        if not self._nodes_can_connect(self._nodes[node_a_id], self._nodes[node_b_id]):
+            return False
+        self._nodes[node_a_id].neighbors[node_b_id] = float(weight)
+        if bidirectional:
+            self._nodes[node_b_id].neighbors[node_a_id] = float(weight)
+        return True
 
     def _apply_candidate_pairs(
         self,
@@ -200,7 +216,7 @@ class SpreadingActivation:
         limit = self._max_neighbors()
         edges_added = 0
         for similarity, node_a_id, node_b_id in sorted(
-            candidates, key=lambda item: item[0], reverse=True
+            candidates, key=lambda item: (-item[0], item[1], item[2])
         ):
             node_a = self._nodes.get(node_a_id)
             node_b = self._nodes.get(node_b_id)
@@ -210,343 +226,452 @@ class SpreadingActivation:
                 continue
             if len(node_a.neighbors) >= limit or len(node_b.neighbors) >= limit:
                 continue
-            if not self.add_edge(node_a_id, node_b_id, similarity):
-                continue
-            edges_added += 1
+            if self.add_edge(node_a_id, node_b_id, similarity):
+                edges_added += 1
         return edges_added
 
-    def hydrate_edges(self, edge_map: dict[str, dict[str, float]]) -> int:
-        """Load persisted edges into the in-memory graph while enforcing graph policy."""
+    @classmethod
+    def persistence_contract(cls) -> dict[str, str]:
+        """Return the versions required to interpret persisted graph edges."""
+        return {
+            "schema_version": cls.PERSISTENCE_SCHEMA_VERSION,
+            "edge_builder_version": cls.EDGE_BUILDER_VERSION,
+            "traversal_version": cls.TRAVERSAL_VERSION,
+        }
+
+    @classmethod
+    def get_persistence_contract(cls) -> dict[str, str]:
+        """Compatibility alias for callers exposing graph metadata."""
+        return cls.persistence_contract()
+
+    @classmethod
+    def validate_persistence_contract(cls, metadata: Mapping[str, Any]) -> None:
+        """Reject derived state from a graph algorithm this class cannot read."""
+        if not isinstance(metadata, Mapping):
+            raise ValueError("persisted graph metadata must be an object")
+        expected = cls.persistence_contract()
+        missing = [key for key in expected if key not in metadata]
+        incompatible = [
+            key
+            for key, value in expected.items()
+            if key in metadata and str(metadata[key]) != value
+        ]
+        if missing or incompatible:
+            detail = ", ".join(missing + incompatible)
+            raise ValueError(f"incompatible persisted graph contract: {detail}")
+
+    def export_edges(self) -> dict[str, Any]:
+        """Return a versioned envelope suitable for persisting derived edges."""
+        return {
+            **self.persistence_contract(),
+            "edges": {
+                node_id: dict(node.neighbors)
+                for node_id, node in self._nodes.items()
+                if node.neighbors
+            },
+        }
+
+    def hydrate_edges(
+        self,
+        edge_map: Mapping[str, Any],
+        *,
+        persistence_metadata: Mapping[str, Any] | None = None,
+    ) -> int:
+        """Load persisted edges while applying profile and scope policy.
+
+        New callers should pass the versioned envelope returned by
+        :meth:`export_edges`, or pass its metadata separately.  A raw edge map
+        remains accepted for old storage implementations; it is treated as a
+        legacy compatibility path and is never used to validate a versioned
+        envelope silently.
+        """
+        if not isinstance(edge_map, Mapping):
+            raise ValueError("persisted graph edges must be an object")
+        raw_edges: Mapping[str, Any] = edge_map
+        envelope_metadata = persistence_metadata
+        if "edges" in edge_map and (
+            "schema_version" in edge_map
+            or "edge_builder_version" in edge_map
+            or "traversal_version" in edge_map
+        ):
+            envelope_metadata = edge_map
+            raw_edges = edge_map.get("edges")  # type: ignore[assignment]
+            if not isinstance(raw_edges, Mapping):
+                raise ValueError("persisted graph envelope edges must be an object")
+        if envelope_metadata is not None:
+            self.validate_persistence_contract(envelope_metadata)
         unique_pairs: dict[tuple[str, str], float] = {}
-        for source_id, neighbors in edge_map.items():
+        for source_id, neighbors in raw_edges.items():
             if source_id not in self._nodes or not isinstance(neighbors, dict):
                 continue
             for target_id, weight in neighbors.items():
                 if target_id not in self._nodes or source_id == target_id:
                     continue
-                sorted_pair = sorted((source_id, target_id))
-                pair = (sorted_pair[0], sorted_pair[1])
-                unique_pairs[pair] = max(float(weight), unique_pairs.get(pair, 0.0))
-
+                try:
+                    numeric_weight = float(weight)
+                except (TypeError, ValueError):
+                    continue
+                if not math.isfinite(numeric_weight) or not 0.0 <= numeric_weight <= 1.0:
+                    continue
+                pair = tuple(sorted((source_id, target_id)))
+                unique_pairs[pair] = max(numeric_weight, unique_pairs.get(pair, 0.0))
         self.clear_all_edges()
-        candidates = [
-            (weight, node_a_id, node_b_id)
-            for (node_a_id, node_b_id), weight in unique_pairs.items()
-        ]
+        candidates = [(weight, pair[0], pair[1]) for pair, weight in unique_pairs.items()]
         return self._apply_candidate_pairs(candidates, exclude_existing=False)
 
-    def connect_node(self, node_id: str, threshold: float | None = None) -> int:
-        """Connect a single node to its strongest eligible neighbors."""
+    def connect_node(
+        self, node_id: str, threshold: float | None = None, *, candidate_ids: set[str] | None = None
+    ) -> int:
+        """Connect one node to its strongest bounded set of eligible neighbors."""
         node = self._nodes.get(node_id)
         if node is None or node.embedding is None:
             return 0
-
         thresh = threshold if threshold is not None else self._config.auto_connect_threshold
         limit = self._max_neighbors()
         self.clear_edges(node_id)
-
         candidates: list[tuple[float, str]] = []
         for other in self._nodes.values():
-            if other.id == node_id or other.embedding is None:
-                continue
-            if not self._nodes_can_connect(node, other):
+            if (
+                other.id == node_id
+                or (candidate_ids is not None and other.id not in candidate_ids)
+                or other.embedding is None
+                or not self._nodes_can_connect(node, other)
+            ):
                 continue
             similarity = cosine_similarity(node.embedding, other.embedding)
             if similarity >= thresh:
                 candidates.append((similarity, other.id))
-
         edges_added = 0
-        for similarity, other_id in sorted(candidates, key=lambda item: item[0], reverse=True):
-            node = self._nodes.get(node_id)
-            other_node = self._nodes.get(other_id)
-            if node is None or other_node is None:
-                continue
+        for similarity, other_id in sorted(candidates, key=lambda item: (-item[0], item[1])):
+            node = self._nodes[node_id]
+            other = self._nodes[other_id]
             if len(node.neighbors) >= limit:
                 break
-            if len(other_node.neighbors) >= limit:
-                weakest_neighbor_id, weakest_weight = min(
-                    other_node.neighbors.items(),
-                    key=lambda item: item[1],
+            if len(other.neighbors) >= limit:
+                weakest_id, weakest_weight = min(
+                    other.neighbors.items(), key=lambda item: (item[1], item[0])
                 )
-                if weakest_weight >= similarity:
+                if weakest_weight > similarity or (
+                    weakest_weight == similarity and weakest_id <= node_id
+                ):
                     continue
-                self.remove_edge(other_id, weakest_neighbor_id)
+                self.remove_edge(other_id, weakest_id)
             if self.add_edge(node_id, other_id, similarity):
                 edges_added += 1
         return edges_added
-
-    def add_edge(
-        self,
-        node_a_id: str,
-        node_b_id: str,
-        weight: float,
-        bidirectional: bool = True,
-    ) -> bool:
-        """
-        Add a weighted edge between two nodes.
-
-        Edges represent semantic associations. Weight controls how much
-        activation energy flows across this edge during propagation.
-        Higher weight = stronger association = more energy transfer.
-
-        Args:
-            node_a_id: ID of the first node.
-            node_b_id: ID of the second node.
-            weight: Edge weight in [0, 1].
-            bidirectional: If True, adds edges in both directions (default).
-
-        Returns:
-            True if both nodes exist and edge was added, False otherwise.
-        """
-        if node_a_id not in self._nodes or node_b_id not in self._nodes:
-            return False
-        if node_a_id == node_b_id:
-            return False
-        if not self._nodes_can_connect(self._nodes[node_a_id], self._nodes[node_b_id]):
-            return False
-
-        self._nodes[node_a_id].neighbors[node_b_id] = weight
-        if bidirectional:
-            self._nodes[node_b_id].neighbors[node_a_id] = weight
-        return True
 
     def auto_connect(
         self,
         threshold: float | None = None,
         exclude_existing: bool = True,
     ) -> int:
-        """
-        Automatically connect nodes whose embeddings exceed a similarity threshold.
-
-        Scans all pairs of nodes and creates edges where cosine similarity
-        exceeds the threshold. This builds the initial semantic graph structure.
-
-        For N nodes this is O(N²) — use sparingly on large graphs or restrict
-        to newly-added nodes.
-
-        Args:
-            threshold: Minimum cosine similarity for connection.
-                       Defaults to config.auto_connect_threshold.
-            exclude_existing: Skip pairs that already have an edge (default True).
-
-        Returns:
-            Number of new edges created.
-        """
+        """Build a bounded sparse graph from all currently loaded nodes."""
         thresh = threshold if threshold is not None else self._config.auto_connect_threshold
         if not exclude_existing:
             self.clear_all_edges()
-
         node_list = list(self._nodes.values())
         candidates: list[tuple[float, str, str]] = []
-        for i, node_a in enumerate(node_list):
-            for node_b in node_list[i + 1 :]:
+        for index, node_a in enumerate(node_list):
+            for node_b in node_list[index + 1 :]:
                 if node_a.embedding is None or node_b.embedding is None:
                     continue
                 if not self._nodes_can_connect(node_a, node_b):
                     continue
-                sim = cosine_similarity(node_a.embedding, node_b.embedding)
-                if sim >= thresh:
-                    candidates.append((sim, node_a.id, node_b.id))
-
+                similarity = cosine_similarity(node_a.embedding, node_b.embedding)
+                if similarity >= thresh:
+                    candidates.append((similarity, node_a.id, node_b.id))
         return self._apply_candidate_pairs(candidates, exclude_existing=exclude_existing)
 
-    def activate(self, node_id: str, energy: float | None = None) -> dict[str, float]:
-        """
-        Inject activation energy at a node and propagate through the graph.
+    def _query_policy(
+        self,
+        *,
+        current_scope: str | None,
+        scope_id: str | None,
+        allowed_scopes: Iterable[str] | None,
+        user_profile_id: str | None,
+        project_id: str | None,
+        workspace_id: str | None,
+    ) -> tuple[str | None, str | None, str | None, str | None, tuple[str, ...], bool]:
+        profile = self._clean_id(user_profile_id)
+        current = current_scope.strip().lower() if isinstance(current_scope, str) else None
+        if current is not None and current not in {"project", "workspace", "global"}:
+            raise ValueError("current_scope must be project, workspace, or global")
+        project = self._clean_id(project_id)
+        workspace = self._clean_id(workspace_id)
+        sid = self._clean_id(scope_id)
+        if current == "project" and project is None:
+            project = sid
+        if current == "workspace" and workspace is None:
+            workspace = sid
+        if current == "global":
+            project = None
+            workspace = None
+        permitted: tuple[str, ...]
+        if allowed_scopes is None:
+            permitted = ("project", "workspace", "global")
+        else:
+            permitted_list: list[str] = []
+            for raw_scope in allowed_scopes:
+                normalized = str(raw_scope).strip().lower()
+                if normalized not in {"project", "workspace", "global"}:
+                    raise ValueError("allowed_scopes contains an invalid scope")
+                if normalized not in permitted_list:
+                    permitted_list.append(normalized)
+            permitted = tuple(permitted_list)
+        legacy = (
+            profile is None
+            and current is None
+            and sid is None
+            and project is None
+            and workspace is None
+            and allowed_scopes is None
+        )
+        return current, project, workspace, profile, permitted, legacy
 
-        Propagation algorithm (BFS-based):
-        1. Set seed node energy = initial_energy
-        2. For each neighbor at each hop:
-           neighbor_energy += current_energy × (1 - decay_rate) × edge_weight
-        3. Only propagate to nodes whose received energy exceeds threshold
-        4. Continue until max_hops reached or no nodes above threshold remain
+    def _eligible_node(
+        self,
+        node: ActivationNode,
+        *,
+        policy: tuple[str | None, str | None, str | None, str | None, tuple[str, ...], bool],
+        filter_fn: NodeFilter | None,
+    ) -> bool:
+        current, project, workspace, profile, permitted, legacy = policy
+        scope, node_id, node_profile, _ = self._scope_data(node)
+        if filter_fn is not None and not filter_fn(node):
+            return False
+        if legacy:
+            # A contextless embedded call may use an entirely legacy graph.
+            # It must not turn a profiled node into implicitly shared memory.
+            # A supplied predicate is the explicit compatibility boundary used
+            # by the engine, and is responsible for validating its full scope.
+            return node_profile is None or filter_fn is not None
+        if profile is None and node_profile is None:
+            if scope not in permitted:
+                return False
+            if scope == "global":
+                return True
+            if scope == "project":
+                return project is not None and node_id == project
+            if scope == "workspace":
+                return workspace is not None and node_id == workspace
+            return current == scope and node_id is not None
+        if profile is None or node_profile != profile or scope not in permitted:
+            return False
+        if scope == "global":
+            return True
+        if scope == "project":
+            return project is not None and node_id == project
+        if scope == "workspace":
+            return workspace is not None and node_id == workspace
+        return current == scope and node_id is not None
 
-        This is a simplified version of the biologically-inspired spreading
-        activation: energy flows from the seed, decaying with each hop,
-        creating a gradient of activation across the semantic neighborhood.
-
-        Args:
-            node_id: ID of the seed node to activate.
-            energy: Initial energy to inject (defaults to config.initial_energy).
-
-        Returns:
-            Dict mapping node_id → final energy for all activated nodes.
-
-        Raises:
-            KeyError: If node_id is not in the graph.
-        """
+    def activate(
+        self,
+        node_id: str,
+        energy: float | None = None,
+        *,
+        current_scope: str | None = None,
+        scope_id: str | None = None,
+        allowed_scopes: Iterable[str] | None = None,
+        user_profile_id: str | None = None,
+        project_id: str | None = None,
+        workspace_id: str | None = None,
+        filter_fn: NodeFilter | None = None,
+        max_hops: int | None = None,
+        max_visited: int | None = None,
+    ) -> dict[str, float]:
+        """Activate one seed using maximum propagated path energy."""
         if node_id not in self._nodes:
             raise KeyError(f"Node '{node_id}' not found in activation graph.")
-
+        policy = self._query_policy(
+            current_scope=current_scope,
+            scope_id=scope_id,
+            allowed_scopes=allowed_scopes,
+            user_profile_id=user_profile_id,
+            project_id=project_id,
+            workspace_id=workspace_id,
+        )
+        if not self._eligible_node(self._nodes[node_id], policy=policy, filter_fn=filter_fn):
+            raise KeyError(f"Node '{node_id}' is outside the permitted activation graph.")
         self._total_activations += 1
-        initial = energy if energy is not None else self._config.initial_energy
-
-        # Reset all energies
-        for node in self._nodes.values():
-            node.energy = 0.0
-
-        # BFS propagation
-        # Queue items: (node_id, energy, hop_depth)
-        queue: deque[tuple[str, float, int]] = deque()
-        queue.append((node_id, initial, 0))
-        self._nodes[node_id].energy = initial
-
-        # Track visited to avoid infinite loops in cyclic graphs
-        visited: set[str] = {node_id}
-        activated: dict[str, float] = {node_id: initial}
-
-        while queue:
-            current_id, current_energy, depth = queue.popleft()
-
-            if depth >= self._config.max_hops:
+        initial = float(energy if energy is not None else self._config.initial_energy)
+        if not math.isfinite(initial) or initial < 0.0:
+            raise ValueError("activation energy must be finite and non-negative")
+        hop_limit = max(0, int(max_hops if max_hops is not None else self._config.max_hops))
+        visit_limit = max_visited
+        if visit_limit is None:
+            visit_limit = max(1, 1 + hop_limit * self._max_neighbors())
+        visit_limit = max(1, int(visit_limit))
+        threshold = float(self._config.activation_threshold)
+        attenuation = 1.0 - float(self._config.decay_rate)
+        best_energy: dict[str, float] = {node_id: initial}
+        frontier: deque[tuple[str, float, int]] = deque([(node_id, initial, 0)])
+        discovered: set[str] = {node_id}
+        expanded_energy: dict[str, float] = {}
+        while frontier:
+            current_id, current_energy, depth = frontier.popleft()
+            if current_energy <= expanded_energy.get(current_id, -1.0):
                 continue
-
+            expanded_energy[current_id] = current_energy
+            if depth >= hop_limit:
+                continue
             current_node = self._nodes.get(current_id)
             if current_node is None:
                 continue
 
-            for neighbor_id, edge_weight in current_node.neighbors.items():
-                # Energy transferred to this neighbor
-                transferred_energy = current_energy * (1.0 - self._config.decay_rate) * edge_weight
+            def edge_order(item: tuple[str, float]) -> tuple[float, str]:
+                try:
+                    weight = float(item[1])
+                except (TypeError, ValueError):
+                    weight = -1.0
+                return (-weight, item[0])
 
-                if transferred_energy < self._config.activation_threshold:
+            for neighbor_id, edge_weight in sorted(current_node.neighbors.items(), key=edge_order):
+                neighbor = self._nodes.get(neighbor_id)
+                if neighbor is None or not self._eligible_node(
+                    neighbor, policy=policy, filter_fn=filter_fn
+                ):
                     continue
-
-                if neighbor_id in self._nodes:
-                    # Accumulate (a node can receive energy from multiple paths)
-                    self._nodes[neighbor_id].energy += transferred_energy
-                    final_energy = self._nodes[neighbor_id].energy
-
-                    if final_energy > self._config.activation_threshold:
-                        activated[neighbor_id] = final_energy
-
-                    # Only continue BFS from this node if not yet visited
-                    # at this depth (prevents exponential blowup)
-                    if neighbor_id not in visited:
-                        visited.add(neighbor_id)
-                        queue.append((neighbor_id, transferred_energy, depth + 1))
-
-        return activated
+                try:
+                    numeric_edge_weight = float(edge_weight)
+                except (TypeError, ValueError):
+                    continue
+                if not math.isfinite(numeric_edge_weight) or not 0.0 <= numeric_edge_weight <= 1.0:
+                    continue
+                transferred = current_energy * attenuation * numeric_edge_weight
+                if transferred < threshold and neighbor_id not in best_energy:
+                    continue
+                previous = best_energy.get(neighbor_id, -1.0)
+                if transferred <= previous:
+                    continue
+                if neighbor_id not in discovered:
+                    if len(discovered) >= visit_limit:
+                        continue
+                    discovered.add(neighbor_id)
+                best_energy[neighbor_id] = transferred
+                frontier.append((neighbor_id, transferred, depth + 1))
+        include_subthreshold_seed = policy[3] is None
+        return {
+            nid: value
+            for nid, value in best_energy.items()
+            if (nid == node_id and (include_subthreshold_seed or value >= threshold))
+            or value >= threshold
+        }
 
     def retrieve(
         self,
         query_embedding: list[float],
         top_k: int = 5,
+        *,
+        current_scope: str | None = None,
+        scope_id: str | None = None,
+        allowed_scopes: Iterable[str] | None = None,
+        user_profile_id: str | None = None,
+        project_id: str | None = None,
+        workspace_id: str | None = None,
+        filter_fn: NodeFilter | None = None,
+        seed_ids: Iterable[str] | None = None,
+        max_hops: int | None = None,
+        max_visited: int | None = None,
     ) -> list[ActivationNode]:
-        """
-        Retrieve nodes using spreading activation from the closest match.
-
-        Algorithm:
-        1. Find the node with highest cosine similarity to the query embedding
-        2. Inject activation energy at that seed node
-        3. Return all nodes with energy above threshold, sorted by energy
-
-        Args:
-            query_embedding: Embedding of the current query.
-            top_k: Maximum number of activated nodes to return.
-
-        Returns:
-            List of ActivationNodes sorted by descending activation energy.
-            Returns empty list if graph is empty.
-        """
-        if not self._nodes:
+        """Retrieve a bounded associative neighborhood for a query embedding."""
+        if top_k <= 0 or not self._nodes:
             return []
-
-        # Step 1: Find seed node by embedding similarity
-        best_sim = -1.0
-        best_node_id = None
-
-        for node in self._nodes.values():
-            if node.embedding is None:
-                continue
-            sim = cosine_similarity(query_embedding, node.embedding)
-            if sim > best_sim:
-                best_sim = sim
-                best_node_id = node.id
-
-        if best_node_id is None:
+        policy = self._query_policy(
+            current_scope=current_scope,
+            scope_id=scope_id,
+            allowed_scopes=allowed_scopes,
+            user_profile_id=user_profile_id,
+            project_id=project_id,
+            workspace_id=workspace_id,
+        )
+        permitted_ids = {
+            nid
+            for nid, node in self._nodes.items()
+            if self._eligible_node(node, policy=policy, filter_fn=filter_fn)
+        }
+        if not permitted_ids:
             return []
-
-        # Step 2: Spread activation from seed node
-        activated = self.activate(best_node_id)
-
-        # Step 3: Sort by energy and return top_k
-        activated_nodes = [self._nodes[nid] for nid in activated if nid in self._nodes]
-        activated_nodes.sort(key=lambda n: n.energy, reverse=True)
-        return activated_nodes[:top_k]
+        seed_candidates = permitted_ids
+        if seed_ids is not None:
+            seed_candidates = permitted_ids.intersection({str(seed_id) for seed_id in seed_ids})
+            if not seed_candidates:
+                return []
+        seed_id = min(
+            seed_candidates,
+            key=lambda nid: (
+                -cosine_similarity(query_embedding, self._nodes[nid].embedding or []),
+                nid,
+            ),
+        )
+        activated = self.activate(
+            seed_id,
+            current_scope=current_scope,
+            scope_id=scope_id,
+            allowed_scopes=allowed_scopes,
+            user_profile_id=user_profile_id,
+            project_id=project_id,
+            workspace_id=workspace_id,
+            filter_fn=filter_fn,
+            max_hops=max_hops,
+            max_visited=max_visited,
+        )
+        result = [
+            self._nodes[nid].model_copy(update={"energy": value})
+            for nid, value in activated.items()
+            if nid in permitted_ids
+        ]
+        result.sort(key=lambda node: (-node.energy, node.id))
+        return result[:top_k]
 
     def decay_all(self, rate: float | None = None) -> None:
-        """
-        Apply natural forgetting by decaying all node energies.
-
-        Analogous to cortical inhibition and passive forgetting:
-        without reinforcement, activation fades over time.
-        Call this periodically to prevent stale activation states.
-
-        Args:
-            rate: Decay rate in [0, 1]. Defaults to config.natural_decay_rate.
-                  A rate of 0.05 reduces all energies by 5%.
-        """
+        """Decay explicit standalone node state; retrieval never uses this state."""
         decay = rate if rate is not None else self._config.natural_decay_rate
         for node in self._nodes.values():
             node.energy = max(0.0, node.energy * (1.0 - decay))
 
     def get_node(self, node_id: str) -> ActivationNode | None:
-        """Retrieve a node by ID."""
         return self._nodes.get(node_id)
 
     def get_all_nodes(self) -> list[ActivationNode]:
-        """Return all nodes in the graph."""
         return list(self._nodes.values())
 
     def get_node_count(self) -> int:
-        """Return the total number of nodes."""
         return len(self._nodes)
 
     def get_edge_count(self) -> int:
-        """Return the total number of directed edges (bidirectional edges counted twice)."""
-        return sum(len(n.neighbors) for n in self._nodes.values())
+        return sum(len(node.neighbors) for node in self._nodes.values())
 
     def clear_energies(self) -> None:
-        """Reset all node energies to zero."""
         for node in self._nodes.values():
             node.energy = 0.0
 
     def remove_node(self, node_id: str) -> bool:
-        """
-        Remove a node and all edges pointing to it.
-
-        Args:
-            node_id: ID of the node to remove.
-
-        Returns:
-            True if node existed and was removed, False otherwise.
-        """
         if node_id not in self._nodes:
             return False
-
         del self._nodes[node_id]
-
-        # Remove all incoming edges from other nodes
         for node in self._nodes.values():
             node.neighbors.pop(node_id, None)
-
         return True
 
     def get_stats(self) -> dict[str, Any]:
-        """Return statistics about the spreading activation graph."""
-        energized = sum(1 for n in self._nodes.values() if n.energy > 0)
-        avg_degree = (
-            sum(len(n.neighbors) for n in self._nodes.values()) / len(self._nodes)
+        energized = sum(1 for node in self._nodes.values() if node.energy > 0)
+        average_degree = (
+            sum(len(node.neighbors) for node in self._nodes.values()) / len(self._nodes)
             if self._nodes
             else 0.0
         )
         return {
             "module": "SpreadingActivation",
+            "algorithm_version": self.ALGORITHM_VERSION,
+            "graph_version": self.GRAPH_VERSION,
+            "persistence_schema_version": self.PERSISTENCE_SCHEMA_VERSION,
+            "edge_builder_version": self.EDGE_BUILDER_VERSION,
+            "traversal_version": self.TRAVERSAL_VERSION,
             "total_nodes": len(self._nodes),
-            "total_edges": self.get_edge_count() // 2,  # Undirected count
+            "total_edges": self.get_edge_count() // 2,
             "energized_nodes": energized,
-            "average_degree": round(avg_degree, 2),
+            "average_degree": round(average_degree, 2),
             "total_activations": self._total_activations,
             "config": {
                 "initial_energy": self._config.initial_energy,

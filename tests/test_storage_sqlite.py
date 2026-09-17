@@ -5,10 +5,25 @@ tests/test_storage_sqlite.py — SQLiteStore graph persistence and schema tests.
 from __future__ import annotations
 
 import sqlite3
+import pytest
 from pathlib import Path
 
 from mnemos.types import MemoryChunk
 from mnemos.utils.storage import SQLiteStore
+
+
+def test_failed_vector_write_rolls_back_fact_and_leaves_connection_usable(tmp_path):
+    store = SQLiteStore(str(tmp_path / "atomic.sqlite"))
+    try:
+        store.store(MemoryChunk(id="original", content="Keep original", embedding=[1.0, 0.0]))
+        with pytest.raises(ValueError, match="dimension mismatch"):
+            store.store(MemoryChunk(id="bad", content="Never committed", embedding=[1.0, 0.0, 0.0]))
+        assert store.get("bad") is None
+        assert store._conn.in_transaction is False
+        store.store(MemoryChunk(id="valid", content="Still works", embedding=[0.0, 1.0]))
+        assert len(store.get_all()) == 2
+    finally:
+        store.close()
 
 
 def _make_chunk(chunk_id: str, scope_id: str = "repo-alpha") -> MemoryChunk:
@@ -42,11 +57,11 @@ def test_sqlite_store_initializes_graph_schema_and_stats(tmp_path: Path) -> None
     assert "memory_edges" in tables
     assert "retrieval_feedback_events" in tables
     assert "memory_fts" in tables
-    assert schema_version == ("3",)
+    assert schema_version == ("7",)
     assert stats["total_chunks"] == 0
     assert stats["related_edges"] == 0
     assert stats["fts_enabled"] is True
-    assert stats["schema_version"] == 3
+    assert stats["schema_version"] == 7
     assert stats["sqlite_vec_enabled"] is True
 
 

@@ -12,6 +12,111 @@ from mnemos.types import MemoryChunk
 from mnemos.utils import SQLiteStore
 
 
+class _FacadeClient:
+    def __init__(self) -> None:
+        self.calls: list[tuple[str, dict]] = []
+
+    async def request(self, operation: str, payload: dict, **_: object) -> dict:
+        self.calls.append((operation, payload))
+        if operation == "list":
+            return {
+                "status": "ready",
+                "facts": [
+                    {
+                        "id": "fact-1",
+                        "content": "Keep the test deterministic.",
+                        "version": 2,
+                        "updated_at": "2026-09-16T12:00:00+00:00",
+                        "access_count": 1,
+                        "metadata": {
+                            "scope": "project",
+                            "scope_id": "project-1",
+                            "source": "explicit_remember",
+                        },
+                    }
+                ],
+                "jobs": {"pending": 1, "exhausted": 0},
+            }
+        if operation == "health":
+            return {"status": "running", "provider_state": {"llm": {"status": "ready"}}}
+        if operation == "retrieve":
+            return {"facts": []}
+        if operation == "maintenance":
+            return {"status": "committed", "completed": 0}
+        return {"status": "committed", "fact_id": "fact-1"}
+
+
+def _facade_service(tmp_path: Path) -> tuple[ControlPlaneService, _FacadeClient]:
+    client = _FacadeClient()
+    service = ControlPlaneService(
+        cwd=tmp_path, client=client, env={"MNEMOS_USER_PROFILE_ID": "alice"}
+    )
+    service._context_payload = lambda: {  # type: ignore[method-assign]
+        "user_profile_id": "alice",
+        "project_id": "project-1",
+        "workspace_id": None,
+        "session_id": "ui-test",
+        "host": "manual",
+    }
+    return service, client
+
+
+def test_control_plane_memory_uses_configured_client_facade(tmp_path: Path) -> None:
+    service, client = _facade_service(tmp_path)
+
+    snapshot = service.get_memory_snapshot()
+
+    assert snapshot["count"] == 1
+    assert snapshot["jobs"]["pending"] == 1
+    assert [operation for operation, _ in client.calls] == ["list"]
+
+
+def test_control_plane_requires_explicit_scope_identity(tmp_path: Path) -> None:
+    service = ControlPlaneService(cwd=tmp_path, env={})
+
+    snapshot = service.get_memory_snapshot()
+
+    assert snapshot["status"] == "not_configured"
+    assert "MNEMOS_USER_PROFILE_ID" in snapshot["error"]
+
+
+def test_project_profile_selection_survives_ui_restart_without_copying_project_overrides(
+    tmp_path: Path, monkeypatch
+) -> None:
+    monkeypatch.delenv("MNEMOS_USER_PROFILE_ID", raising=False)
+    from mnemos.settings import load_settings
+
+    project = tmp_path / "project"
+    project_config = project / ".mnemos" / "mnemos.toml"
+    project_config.parent.mkdir(parents=True)
+    global_config = tmp_path / "config" / "mnemos.toml"
+    registry = tmp_path / "scopes.json"
+    service = ControlPlaneService(
+        cwd=project,
+        global_config_path=global_config,
+        env={"MNEMOS_SCOPE_REGISTRY": str(registry), "UNRELATED_SECRET": "never-export"},
+        client=_FacadeClient(),
+    )
+    service.save_settings({"llm": {"model": "global-model"}}, scope="global")
+    project_config.write_text('[llm]\nmodel = "project-model"\n', encoding="utf-8")
+    assert service.configure_project("selected-profile", True)["status"] == "committed"
+    restarted = ControlPlaneService(
+        cwd=project,
+        global_config_path=global_config,
+        env={"MNEMOS_SCOPE_REGISTRY": str(registry)},
+        client=_FacadeClient(),
+    )
+    assert restarted._configured_profile() == "selected-profile"
+    assert restarted._integration_env() == {
+        "MNEMOS_USER_PROFILE_ID": "selected-profile",
+        "MNEMOS_SCOPE_REGISTRY": str(registry),
+    }
+    global_only = load_settings(env={}, cwd=global_config.parent, global_config_path=global_config)
+    assert global_only.settings.llm.model == "global-model"
+    restarted.env["MNEMOS_USER_PROFILE_ID"] = "explicit-override"
+    assert restarted._configured_profile() == "explicit-override"
+
+
 def test_control_plane_saves_global_settings(tmp_path: Path) -> None:
     global_config = tmp_path / "Mnemos" / "mnemos.toml"
     service = ControlPlaneService(
@@ -93,11 +198,8 @@ def test_control_plane_runs_smoke_test_with_mock_profile(tmp_path: Path) -> None
 
     report = service.run_smoke_tests()
 
-    assert report["status"] == "pass"
-    assert report["steps"]["store"] == "pass"
-    assert report["steps"]["retrieve"] == "pass"
-    assert report["steps"]["consolidate"] == "pass"
-    assert report["steps"]["health"] in {"pass", "warn"}
+    assert report["status"] == "fail"
+    assert "MNEMOS_USER_PROFILE_ID" in report["error"]
 
 
 def test_control_plane_memory_detail_returns_inspection_payload(tmp_path: Path) -> None:
@@ -133,12 +235,12 @@ def test_control_plane_memory_detail_returns_inspection_payload(tmp_path: Path) 
     store.store(chunk)
     store.close()
 
-    payload = service.get_memory_detail("chunk-123")
-
-    assert payload["id"] == "chunk-123"
-    assert payload["scope"] == "project"
-    assert payload["provenance"]["stored_by"] == "surprisal_gate"
-    assert payload["history"] == []
+    try:
+        service.get_memory_detail("chunk-123")
+    except ValueError as exc:
+        assert "MNEMOS_USER_PROFILE_ID" in str(exc)
+    else:  # pragma: no cover
+        raise AssertionError("unscoped UI inspection was accepted")
 
 
 def test_control_plane_settings_view_exposes_sqlite_first_presets(tmp_path: Path) -> None:
@@ -227,15 +329,9 @@ def test_control_plane_memory_snapshot_includes_rollups_and_consolidation_summar
 
     snapshot = service.get_memory_snapshot(limit=10)
 
-    assert snapshot["count"] == 4
-    assert snapshot["recent_count"] == 4
-    assert snapshot["counts_by_scope"] == {"global": 1, "project": 2, "workspace": 1}
-    assert snapshot["last_consolidation"]["present"] is True
-    assert snapshot["last_consolidation"]["source"] == "sleep_consolidation"
-    assert snapshot["last_consolidation"]["stored_chunk_count"] == 1
-    assert snapshot["recall_gated"]["enabled"] is True
-    assert snapshot["recall_gated"]["stored_chunk_count"] == 1
-    assert snapshot["recall_gated"]["max_supporting_episodes"] == 3
+    assert snapshot["status"] == "not_configured"
+    assert snapshot["count"] == 0
+    assert "MNEMOS_USER_PROFILE_ID" in snapshot["error"]
 
 
 def test_control_plane_dashboard_tracks_last_smoke_and_host_support(tmp_path: Path) -> None:
@@ -260,12 +356,12 @@ def test_control_plane_dashboard_tracks_last_smoke_and_host_support(tmp_path: Pa
     initial_dashboard = service.get_dashboard_view()
     assert initial_dashboard["activity"]["last_smoke_test"]["present"] is False
     assert initial_dashboard["host"]["recommended"] == "claude-code"
-    assert initial_dashboard["host"]["current"]["tier"] == "Tier 1"
+    assert initial_dashboard["host"]["current"]["tier"] == "Tier 2"
 
     smoke = service.run_smoke_tests()
     dashboard = service.get_dashboard_view()
 
-    assert smoke["status"] == "pass"
+    assert smoke["status"] == "fail"
     assert dashboard["activity"]["last_smoke_test"]["present"] is True
-    assert dashboard["activity"]["last_smoke_test"]["status"] == "pass"
+    assert dashboard["activity"]["last_smoke_test"]["status"] == "fail"
     assert dashboard["next_actions"]

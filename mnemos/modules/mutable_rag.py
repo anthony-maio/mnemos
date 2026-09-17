@@ -14,10 +14,9 @@ Neuroscience Basis:
     Key insight: In humans, the very act of remembering modifies what is remembered.
 
 Mnemos Implementation:
-    When chunks are retrieved, they are flagged as 'labile'. An async background
-    process then asks the LLM: "Has this fact changed given the new context?"
-    If yes, the chunk is overwritten in-place with an updated version (version++).
-    If no, the access count is incremented and the chunk is left unchanged.
+    Retrieval records access metadata only. A later review must cite durable
+    same-scope source events and a typed expected-version proposal before the
+    LLM can produce a correction.
 
     This creates a *self-healing* database that naturally adapts to new information
     without accumulating contradictory entries — solving the classic RAG problem
@@ -27,15 +26,18 @@ Mnemos Implementation:
 from __future__ import annotations
 
 import time
+from collections.abc import Sequence
 from datetime import datetime, timezone
 from typing import Any
 
 from ..config import MutableRAGConfig
+from ..contracts import FactProposal
+from ..jobs import DurableJob, FactEvidence, FactRevision
 from ..memory_safety import MemoryWriteFirewall
-from ..types import MemoryChunk, ReconsolidationJob
+from ..types import EpisodicEvent, MemoryChunk
 from ..utils.embeddings import EmbeddingProvider, embed_text_async
 from ..utils.llm import LLMProvider
-from ..utils.storage import MemoryStore
+from ..utils.storage import MemoryStore, compute_canonical_key
 
 _MAX_REVISION_HISTORY = 10
 
@@ -44,9 +46,8 @@ class MutableRAG:
     """
     Memory reconsolidation module — makes the vector database self-healing.
 
-    On retrieval, chunks are marked as 'labile' (unstable). A reconsolidation
-    pass then evaluates each labile chunk against the current conversation
-    context and rewrites stale facts in-place.
+    Retrieval does not provide correcting evidence. A reconsolidation pass can
+    evaluate a chunk only after explicit source events have been validated.
 
     Args:
         llm: LLM provider used for staleness evaluation.
@@ -67,9 +68,9 @@ class MutableRAG:
         self._embedder = embedder
         self._store = store
         self._config = config or MutableRAGConfig()
-        self._write_firewall = write_firewall
-        # Labile chunk queue: chunk_id → (chunk, context_when_retrieved)
-        self._labile_chunks: dict[str, tuple[MemoryChunk, str]] = {}
+        self._write_firewall = write_firewall or MemoryWriteFirewall()
+        # Labile chunk queue: chunk_id → (chunk, explicit source event IDs).
+        self._labile_chunks: dict[str, tuple[MemoryChunk, list[str]]] = {}
         # Last reconsolidation timestamp per chunk (seconds since epoch)
         self._last_reconsolidation_at: dict[str, float] = {}
         # Stats
@@ -96,17 +97,16 @@ class MutableRAG:
         current_context: str = "",
     ) -> list[MemoryChunk]:
         """
-        Retrieve chunks by similarity and flag them as labile.
+        Retrieve chunks by similarity and update access metadata.
 
-        Each retrieved chunk is queued for reconsolidation — the next time
-        process_labile_chunks() runs, they will be evaluated for staleness.
-        This mirrors how biological memory destabilizes upon retrieval.
+        The query is deliberately not queued as correcting evidence. Use
+        ``review`` or ``mark_labile(..., evidence_refs=...)`` for an explicit
+        source-backed review.
 
         Args:
             query_embedding: Embedding of the current query.
             top_k: Maximum number of chunks to return.
-            current_context: The current conversation context (used for
-                             reconsolidation evaluation).
+            current_context: Retained for compatibility and ignored for writes.
 
         Returns:
             List of top-k MemoryChunks by cosine similarity.
@@ -114,20 +114,6 @@ class MutableRAG:
         chunks = self._store.retrieve(query_embedding, top_k=top_k)
         self._total_retrieved += len(chunks)
         now = datetime.now(timezone.utc)
-
-        if self._config.enabled:
-            for chunk in chunks:
-                if self._in_cooldown(chunk.id):
-                    continue
-                # Flag as labile with the current context
-                self._labile_chunks[chunk.id] = (chunk, current_context)
-                self._store.enqueue_reconsolidation_job(
-                    ReconsolidationJob(
-                        chunk_id=chunk.id,
-                        context=current_context,
-                        due_at=now,
-                    )
-                )
 
         # Increment access counts
         for chunk in chunks:
@@ -141,25 +127,215 @@ class MutableRAG:
 
         return chunks
 
-    def mark_labile(self, chunk: MemoryChunk, context: str) -> None:
+    def mark_labile(
+        self,
+        chunk: MemoryChunk,
+        context: str = "",
+        *,
+        evidence_refs: Sequence[str] | None = None,
+    ) -> None:
         """
-        Flag a chunk as labile (unstable) for future reconsolidation.
+        Flag a chunk as labile for future source-backed reconsolidation.
 
         Called by MnemosEngine after retrieval to queue chunks for
         staleness evaluation without accessing private internals.
 
         Args:
             chunk: The retrieved chunk to mark as labile.
-            context: The query/context that triggered retrieval.
+            context: Retained for compatibility and ignored as evidence.
         """
+        del context  # Legacy context is never treated as correcting evidence.
+        refs = [str(item) for item in (evidence_refs or []) if str(item)]
+        if not refs:
+            return
+        self._validate_evidence(chunk, refs)
         if self._config.enabled and not self._in_cooldown(chunk.id):
-            self._labile_chunks[chunk.id] = (chunk, context)
-            self._store.enqueue_reconsolidation_job(
-                ReconsolidationJob(
-                    chunk_id=chunk.id,
-                    context=context,
-                )
+            self._labile_chunks[chunk.id] = (chunk, refs)
+
+    def _validate_evidence(
+        self, chunk: MemoryChunk, evidence_refs: Sequence[str]
+    ) -> list[EpisodicEvent]:
+        """Resolve source events and require an exact profile and scope match."""
+        events: list[EpisodicEvent] = []
+        chunk_profile = chunk.metadata.get("user_profile_id")
+        chunk_scope = chunk.metadata.get("scope", "global")
+        chunk_scope_id = chunk.metadata.get("scope_id")
+        seen: set[str] = set()
+        for ref in evidence_refs:
+            event_id = str(ref)
+            if event_id in seen:
+                continue
+            seen.add(event_id)
+            event = self._store.get_episodic_event(event_id)
+            if event is None:
+                raise ValueError(f"Evidence event does not exist: {event_id}")
+            event_profile = event.metadata.get("user_profile_id")
+            event_scope = event.metadata.get("scope", event.scope)
+            event_scope_id = event.metadata.get("scope_id", event.scope_id)
+            if not chunk_profile or not event_profile or event_profile != chunk_profile:
+                raise ValueError(f"Evidence event is outside the fact profile: {event_id}")
+            if event_scope != chunk_scope or event_scope_id != chunk_scope_id:
+                raise ValueError(f"Evidence event is outside the fact scope: {event_id}")
+            events.append(event)
+        if not events:
+            raise ValueError("At least one explicit evidence event is required")
+        return events
+
+    def _validate_proposal(
+        self,
+        proposal: FactProposal,
+        *,
+        evidence_refs: Sequence[str] | None = None,
+    ) -> tuple[MemoryChunk, list[EpisodicEvent]]:
+        if proposal.operation != "correct" or not proposal.target_fact_id:
+            raise ValueError("Mutable review requires a typed correction proposal")
+        refs = list(evidence_refs or proposal.evidence_ids)
+        if set(refs) != set(proposal.evidence_ids):
+            raise ValueError("Evidence references must match the typed proposal")
+        target = self._store.get(proposal.target_fact_id)
+        if target is None:
+            raise ValueError("Correction target does not exist")
+        if proposal.expected_version is None:
+            raise ValueError("Correction proposal requires an expected version")
+        if target.version != proposal.expected_version:
+            raise ValueError("Correction version conflict")
+        return target, self._validate_evidence(target, refs)
+
+    async def review(
+        self,
+        proposal: FactProposal,
+        *,
+        evidence_refs: Sequence[str] | None = None,
+    ) -> tuple[MemoryChunk, bool]:
+        """Validate and persist one source-backed typed correction proposal."""
+        target, _events = self._validate_proposal(proposal, evidence_refs=evidence_refs)
+        refs = list(evidence_refs or proposal.evidence_ids)
+        job = DurableJob(
+            kind="reconsolidate_review",
+            payload={
+                "content": proposal.content,
+                "evidence_ids": refs,
+                "operation": proposal.operation,
+                "target_fact_id": target.id,
+                "expected_version": proposal.expected_version,
+            },
+        )
+        if self._store.__class__.commit_fact_and_job is MemoryStore.commit_fact_and_job:
+            return await self._apply_review_job(job)
+
+        self._store.enqueue_job(job)
+        owner = f"mutable-rag:{id(self)}"
+        claimed = self._store.claim_jobs(owner=owner, job_id=job.id, limit=1)
+        if not claimed:
+            raise RuntimeError("Mutable review job could not be claimed")
+        lease = claimed[0]
+        try:
+            return await self._apply_review_job(lease)
+        except Exception as exc:
+            self._store.fail_job(
+                lease.id,
+                owner=owner,
+                lease_token=lease.lease_token,
+                error=str(exc),
             )
+            raise
+
+    async def process_job(self, job: DurableJob) -> tuple[MemoryChunk, bool]:
+        """Resume a claimed source-backed review job after restart."""
+        if job.kind != "reconsolidate_review":
+            raise ValueError(f"Unsupported MutableRAG job kind: {job.kind}")
+        return await self._apply_review_job(job)
+
+    async def _apply_review_job(self, job: DurableJob) -> tuple[MemoryChunk, bool]:
+        payload = job.payload
+        proposal = FactProposal.model_validate(
+            {
+                "content": payload.get("content"),
+                "evidence_ids": payload.get("evidence_ids"),
+                "operation": payload.get("operation"),
+                "target_fact_id": payload.get("target_fact_id"),
+                "expected_version": payload.get("expected_version"),
+            }
+        )
+        target, events = self._validate_proposal(proposal)
+        safe = self._write_firewall.apply(proposal.content)
+        if not safe.allowed:
+            raise ValueError(safe.reason or "Correction violates write policy")
+        if safe.content == target.content:
+            if job.lease_owner and job.lease_token:
+                if not self._store.complete_job(
+                    job.id,
+                    owner=job.lease_owner,
+                    lease_token=job.lease_token,
+                    result={"decision": "unchanged"},
+                ):
+                    raise RuntimeError("Mutable review lease expired")
+            self._total_unchanged += 1
+            self._mark_reconsolidated_now(target.id)
+            return target, False
+
+        updated = target.reconsolidate(safe.content)
+        updated.embedding = await embed_text_async(self._embedder, safe.content)
+        updated.canonical_key = compute_canonical_key(
+            safe.content,
+            str(updated.metadata.get("scope", "global")),
+            updated.metadata.get("scope_id"),
+            str(updated.metadata["user_profile_id"]),
+        )
+        updated.metadata["reconsolidation_context"] = "source-backed review"
+        updated.metadata["source_event_ids"] = [event.id for event in events]
+        updated.metadata["safety_redactions"] = [match.label for match in safe.matches]
+        history = updated.metadata.get("revision_history", [])
+        if not isinstance(history, list):
+            history = []
+        history.append(
+            {
+                "from_version": target.version,
+                "to_version": updated.version,
+                "previous_content": target.content,
+                "new_content": safe.content,
+                "context": "source-backed review",
+                "changed_at": updated.updated_at.isoformat(),
+            }
+        )
+        updated.metadata["revision_history"] = history[-_MAX_REVISION_HISTORY:]
+        evidence = [
+            FactEvidence(
+                fact_id=updated.id,
+                source_event_id=event.id,
+                excerpt=event.content[:1000],
+                source_ref=event.metadata.get("source_ref"),
+            )
+            for event in events
+        ]
+        revision = FactRevision(
+            fact_id=updated.id,
+            version=target.version,
+            content=target.content,
+            reason="Before explicit source-backed correction",
+        )
+        if job.lease_owner and job.lease_token:
+            committed = self._store.commit_fact_and_job(
+                job.id,
+                owner=job.lease_owner,
+                lease_token=job.lease_token,
+                chunks=[updated],
+                evidence=evidence,
+                revisions=[revision],
+                expected_version=target.version,
+                result={"decision": "corrected"},
+            )
+            if not committed:
+                raise RuntimeError("Mutable review lease expired before commit")
+        else:
+            current = self._store.get(target.id)
+            if current is None or current.version != target.version:
+                raise ValueError("Correction version conflict")
+            self._store.update(target.id, updated)
+
+        self._total_reconsolidated += 1
+        self._mark_reconsolidated_now(target.id)
+        return updated, True
 
     def _build_reconsolidation_prompt(self, chunk: MemoryChunk, context: str) -> str:
         """
@@ -182,23 +358,36 @@ class MutableRAG:
         chunk: MemoryChunk,
         new_context: str,
         *,
+        evidence_refs: Sequence[str] | None = None,
         raise_on_error: bool = False,
     ) -> tuple[MemoryChunk, bool]:
         """
         Evaluate a chunk for staleness and update if necessary.
 
-        Asks the LLM: "Has this memory changed given new context?"
-        - If UNCHANGED: increment access_count, return original chunk
-        - If CHANGED: create new chunk (version+1), re-embed, overwrite in store
+        Asks the LLM about validated source events. A query alone cannot alter
+        a fact, and an unchanged or malformed response performs no write.
 
         Args:
             chunk: The labile chunk to evaluate.
-            new_context: The current conversation context.
+            new_context: Compatibility label; source event content supplies the review context.
 
         Returns:
             Tuple of (resulting_chunk, was_changed: bool).
         """
-        prompt = self._build_reconsolidation_prompt(chunk, new_context)
+        refs = [str(item) for item in (evidence_refs or []) if str(item)]
+        if not refs:
+            # A query or free-form context is never a correction source.
+            return chunk, False
+        try:
+            evidence = self._validate_evidence(chunk, refs)
+        except Exception:
+            if raise_on_error:
+                raise
+            return chunk, False
+        # The review prompt receives source events, never the retrieval query.
+        prompt = self._build_reconsolidation_prompt(
+            chunk, "\n".join(event.content for event in evidence)
+        )
 
         try:
             response = await self._llm.predict(prompt)
@@ -210,15 +399,8 @@ class MutableRAG:
         response = response.strip()
 
         if response.upper().startswith("UNCHANGED"):
-            # Memory is still valid — clear reconsolidation due state without fabricating a rewrite.
-            touched_at = datetime.now(timezone.utc)
-            stable_chunk = chunk.model_copy(
-                update={
-                    "updated_at": touched_at,
-                    "reconsolidation_due_at": None,
-                }
-            )
-            self._store.update(chunk.id, stable_chunk)
+            # An unchanged review must not make the fact appear newly observed.
+            stable_chunk = chunk
             self._total_unchanged += 1
             self._mark_reconsolidated_now(chunk.id)
             return stable_chunk, False
@@ -228,79 +410,40 @@ class MutableRAG:
             if ":" in response:
                 new_content = response.split(":", 1)[1].strip()
             else:
-                # Response is just "CHANGED" without content — don't modify
-                touched_at = datetime.now(timezone.utc)
-                stable_chunk = chunk.model_copy(
-                    update={"updated_at": touched_at, "reconsolidation_due_at": None}
-                )
-                self._store.update(chunk.id, stable_chunk)
+                # Response is just "CHANGED" without content -- do not modify.
+                stable_chunk = chunk
                 self._total_unchanged += 1
                 self._mark_reconsolidated_now(chunk.id)
                 return stable_chunk, False
 
             if not new_content:
-                touched_at = datetime.now(timezone.utc)
-                stable_chunk = chunk.model_copy(
-                    update={"updated_at": touched_at, "reconsolidation_due_at": None}
-                )
-                self._store.update(chunk.id, stable_chunk)
+                stable_chunk = chunk
                 self._total_unchanged += 1
                 self._mark_reconsolidated_now(chunk.id)
                 return stable_chunk, False
 
             safe_content = new_content
-            redactions: list[str] = []
             if self._write_firewall is not None:
                 safety = self._write_firewall.apply(new_content)
                 if not safety.allowed:
-                    touched_at = datetime.now(timezone.utc)
-                    stable_chunk = chunk.model_copy(
-                        update={"updated_at": touched_at, "reconsolidation_due_at": None}
-                    )
-                    self._store.update(chunk.id, stable_chunk)
+                    stable_chunk = chunk
                     self._total_unchanged += 1
                     self._mark_reconsolidated_now(chunk.id)
                     return stable_chunk, False
                 safe_content = safety.content
-                redactions = [match.label for match in safety.matches]
 
-            # Create reconsolidated version
-            updated_chunk = chunk.reconsolidate(safe_content)
-            # Re-embed the new content
-            updated_chunk.embedding = await embed_text_async(self._embedder, safe_content)
-            reconsolidated_at = datetime.now(timezone.utc).isoformat()
-            updated_chunk.metadata["reconsolidated_at"] = reconsolidated_at
-            updated_chunk.metadata["reconsolidation_context"] = new_context[:200]  # Truncate
-            updated_chunk.metadata["safety_redactions"] = redactions
-            updated_chunk.reconsolidation_due_at = None
-            history = updated_chunk.metadata.get("revision_history", [])
-            if not isinstance(history, list):
-                history = []
-            history.append(
-                {
-                    "from_version": chunk.version,
-                    "to_version": updated_chunk.version,
-                    "previous_content": chunk.content,
-                    "new_content": safe_content,
-                    "context": new_context[:200],
-                    "changed_at": reconsolidated_at,
-                }
+            proposal = FactProposal(
+                content=safe_content,
+                evidence_ids=refs,
+                operation="correct",
+                target_fact_id=chunk.id,
+                expected_version=chunk.version,
             )
-            updated_chunk.metadata["revision_history"] = history[-_MAX_REVISION_HISTORY:]
-
-            # Overwrite in store (same ID, new version)
-            self._store.update(chunk.id, updated_chunk)
-            self._total_reconsolidated += 1
-            self._mark_reconsolidated_now(chunk.id)
-            return updated_chunk, True
+            return await self.review(proposal, evidence_refs=refs)
 
         else:
             # Unexpected response format — conservative: leave unchanged
-            touched_at = datetime.now(timezone.utc)
-            stable_chunk = chunk.model_copy(
-                update={"updated_at": touched_at, "reconsolidation_due_at": None}
-            )
-            self._store.update(chunk.id, stable_chunk)
+            stable_chunk = chunk
             self._total_unchanged += 1
             self._mark_reconsolidated_now(chunk.id)
             return stable_chunk, False
@@ -334,24 +477,20 @@ class MutableRAG:
                 if chunk is None:
                     self._store.delete_reconsolidation_job(job.chunk_id)
                     continue
-                try:
-                    result = await self.reconsolidate(chunk, job.context, raise_on_error=True)
-                except Exception as exc:
-                    self._store.update_reconsolidation_job(
-                        job.chunk_id,
-                        status="failed",
-                        error=str(exc),
-                    )
-                    continue
-                self._store.delete_reconsolidation_job(job.chunk_id)
-                results.append(result)
+                # Historical queue rows contain only retrieval context and cannot
+                # authorize a write. Keep the row visible for migration review.
+                self._store.update_reconsolidation_job(
+                    job.chunk_id,
+                    status="failed",
+                    error="Explicit source evidence is required for mutable review",
+                )
             return results
 
         to_process = list(self._labile_chunks.items())[:limit]
 
         results = []
-        for chunk_id, (chunk, context) in to_process:
-            result = await self.reconsolidate(chunk, context)
+        for chunk_id, (chunk, evidence_refs) in to_process:
+            result = await self.reconsolidate(chunk, "", evidence_refs=evidence_refs)
             results.append(result)
             # Remove from labile queue after processing
             self._labile_chunks.pop(chunk_id, None)

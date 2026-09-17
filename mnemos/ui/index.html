@@ -46,11 +46,20 @@
 
           <div class="form-grid">
             <label>
+              <span>Local profile identity</span>
+              <input id="project-profile" type="text" placeholder="Your local profile name" />
+            </label>
+            <div class="toggle-row">
+              <button id="enable-project" class="button">Enable this project</button>
+              <button id="pause-project" class="button button-ghost">Pause this project</button>
+            </div>
+            <label>
               <span>Preferred host</span>
               <select id="preferred-host">
                 <option value="claude-code">Claude Code</option>
                 <option value="cursor">Cursor</option>
                 <option value="codex">Codex</option>
+                <option value="hermes">Hermes</option>
               </select>
             </label>
             <label>
@@ -206,7 +215,10 @@
                   <input id="memory-query" type="text" placeholder="Why would this memory come back for..." />
                 </label>
                 <button id="explain-memory" class="button button-ghost">Explain</button>
+                <button id="correct-memory" class="button button-ghost" disabled>Correct</button>
+                <button id="forget-memory" class="button button-danger" disabled>Forget</button>
               </div>
+              <p id="memory-action-status" class="action-status" aria-live="polite"></p>
               <aside id="memory-detail" class="memory-detail">
                 <p>Select a memory to inspect.</p>
               </aside>

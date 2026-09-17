@@ -227,6 +227,23 @@ def test_health_reports_sqlite_vec_acceleration(
     assert any(check["name"] == "store.sqlite.vec" for check in report["checks"])
 
 
+def test_health_recognizes_fastembed_and_reports_provider_state(
+    monkeypatch: pytest.MonkeyPatch, tmp_path: Path
+) -> None:
+    monkeypatch.setenv("MNEMOS_STORE_TYPE", "sqlite")
+    monkeypatch.setenv("MNEMOS_SQLITE_PATH", str(tmp_path / "fastembed.db"))
+    monkeypatch.setenv("MNEMOS_LLM_PROVIDER", "ollama")
+    monkeypatch.setenv("MNEMOS_EMBEDDING_PROVIDER", "fastembed")
+
+    report = run_health_checks()
+
+    assert report["embedding_provider"] == "fastembed"
+    assert any(check["name"] == "embedding.fastembed" for check in report["checks"])
+    assert report["provider_state"]["llm"]["configured"] is True
+    assert report["provider_state"]["llm"]["reachable"] == "not_checked"
+    assert report["provider_state"]["llm"]["model_ready"] == "not_checked"
+
+
 def test_health_reports_actionable_next_actions(
     monkeypatch: pytest.MonkeyPatch, tmp_path: Path
 ) -> None:

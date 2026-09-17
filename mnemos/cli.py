@@ -1067,6 +1067,8 @@ def _cmd_ui(args: argparse.Namespace) -> None:
     from .control_plane import ControlPlaneService
     from .ui_server import run_ui_server
 
+    if args.config_path:
+        os.environ["MNEMOS_CONFIG_PATH"] = str(Path(args.config_path).resolve())
     service = ControlPlaneService(
         cwd=Path.cwd(),
         env=os.environ,
@@ -1404,7 +1406,134 @@ def main() -> None:
     sp_ui.add_argument("--config-path", default="")
     sp_ui.add_argument("--no-browser", action="store_true")
 
+    subparsers.add_parser("service-stop", help="Stop the owning service before offline maintenance")
+    sp_enable = subparsers.add_parser(
+        "enable-project", help="Register and enable this project for local memory"
+    )
+    sp_backup = subparsers.add_parser("backup", help="Create a consistent private memory snapshot")
+    sp_backup.add_argument("destination")
+    sp_restore = subparsers.add_parser(
+        "restore", help="Restore a snapshot to a new database; preserve current forget records"
+    )
+    sp_restore.add_argument("archive")
+    sp_restore.add_argument("destination")
+    sp_reindex = subparsers.add_parser(
+        "reindex", help="Build embeddings from current configuration while the service is stopped"
+    )
+    sp_reindex.add_argument(
+        "--activate", action="store_true", help="Back up and activate only a complete generation"
+    )
+    sp_reindex.add_argument("--batch-size", type=int, default=100)
+    sp_reindex.add_argument("--max-batches", type=int)
+    sp_enable.add_argument("--path", default=".")
+    sp_enable.add_argument("--profile", required=True)
+    sp_enable.add_argument("--workspace-id", default=None)
+    sp_correct = subparsers.add_parser("correct", help="Correct a fact using its current version")
+    sp_correct.add_argument("fact_id")
+    sp_correct.add_argument("content")
+    sp_correct.add_argument("--expected-version", type=int, required=True)
+    sp_forget = subparsers.add_parser("forget", help="Forget a fact and suppress automatic replay")
+    sp_forget.add_argument("fact_id")
+    sp_forget.add_argument("--expected-version", type=int, required=True)
+    sp_retrieve.add_argument(
+        "--retrieval-profile", choices=("baseline", "biomimetic"), default="baseline"
+    )
+    sp_retrieve.add_argument("--max-context-tokens", type=int, default=1200)
+
     args = parser.parse_args()
+    if args.command in {"migrate-store", "repair-db"}:
+        import sqlite3
+        from contextlib import closing
+        from .service import _ProcessLock, default_descriptor_path
+
+        lock = _ProcessLock(default_descriptor_path().with_suffix(".lock"))
+        if not lock.acquire():
+            parser.error("Stop the Mnemos service before offline database maintenance")
+        try:
+            source_path = Path(args.source_sqlite_path).resolve()
+            if not source_path.is_file():
+                parser.error("The source database must already exist")
+            with closing(
+                sqlite3.connect(source_path.as_uri() + "?mode=ro", uri=True)
+            ) as connection:
+                managed = connection.execute(
+                    "SELECT 1 FROM sqlite_master WHERE type='table' AND name='memory_jobs'"
+                ).fetchone()
+            if managed:
+                parser.error(
+                    "Use backup/restore for managed stores; legacy copying loses lifecycle evidence"
+                )
+            if Path(args.target_sqlite_path).exists():
+                parser.error("Offline maintenance requires a new target database path")
+            if args.command == "migrate-store":
+                asyncio.run(_cmd_migrate_store(args))
+            else:
+                asyncio.run(_cmd_repair_db(args))
+        finally:
+            lock.release()
+        return
+    if args.command == "reindex":
+        from .reindex import reindex_configured_store
+
+        try:
+            result = asyncio.run(
+                reindex_configured_store(
+                    activate=args.activate, batch_size=args.batch_size, max_batches=args.max_batches
+                )
+            )
+            print(json.dumps(result, indent=2))
+        except (ValueError, KeyError, OSError) as exc:
+            parser.error(str(exc))
+        return
+    if args.command in {"autostore-hook", "retrieve-hook"}:
+        from .adapters.claude_code import ClaudeCodeAdapter, _native_output
+
+        try:
+            if args.command == "autostore-hook" and args.dry_run:
+                print(json.dumps({"status": "dry_run", "stored": False, "committed": False}))
+                return
+            payload = _read_hook_payload(args.payload)
+            adapter = ClaudeCodeAdapter(top_k=getattr(args, "top_k", 5))
+            if args.command == "retrieve-hook":
+                hook_result = asyncio.run(adapter.retrieve_context(args.event, payload))
+                output = _native_output(args.event, hook_result)
+                if output:
+                    print(json.dumps(output))
+            else:
+                asyncio.run(adapter.handle(args.event, payload, include_retrieval=False))
+        except Exception:
+            pass  # Hooks must not expose conversation data or block the host on failure.
+        return
+    if args.command in {
+        "service-stop",
+        "enable-project",
+        "backup",
+        "restore",
+        "store",
+        "retrieve",
+        "correct",
+        "forget",
+        "consolidate",
+        "stats",
+        "inspect",
+        "list",
+        "feedback",
+        "search",
+        "export",
+        "purge",
+        "feedback-list",
+        "feedback-export",
+    }:
+        from .managed_cli import run_command
+
+        try:
+            result = asyncio.run(run_command(args))
+            if result.get("status") in {"degraded", "queued", "error"} or result.get("error"):
+                raise SystemExit(1)
+        except (ValueError, KeyError, OSError) as exc:
+            parser.error(str(exc))
+        return
+
     if args.command == "retrieve":
         args.reconsolidate = not args.no_reconsolidate
 

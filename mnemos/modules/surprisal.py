@@ -25,15 +25,19 @@ Mnemos Implementation:
 
 from __future__ import annotations
 
-from collections import deque
+from collections import OrderedDict, deque
+import hashlib
+import json
 from datetime import datetime, timezone
 from typing import Any
 
 from ..config import SurprisalConfig
+from ..memory_safety import MemoryWriteFirewall
+from ..scopes import interaction_partition
 from ..types import Interaction, MemoryChunk, ProcessResult
 from ..utils.embeddings import EmbeddingProvider, cosine_distance, embed_text_async
 from ..utils.llm import LLMProvider
-from ..utils.storage import MemoryStore, compute_canonical_key, normalize_memory_text
+from ..utils.storage import MemoryStore
 
 
 class SurprisalGate:
@@ -58,19 +62,28 @@ class SurprisalGate:
         embedder: EmbeddingProvider,
         store: MemoryStore,
         config: SurprisalConfig | None = None,
+        write_firewall: MemoryWriteFirewall | None = None,
     ) -> None:
         self._llm = llm
         self._embedder = embedder
         self._store = store
         self._config = config or SurprisalConfig()
+        self._write_firewall = write_firewall or MemoryWriteFirewall()
         # Conversation history buffer — acts as hippocampal working memory
         self._history: deque[Interaction] = deque(maxlen=self._config.history_window)
+        self._histories: OrderedDict[tuple[str, str, str, str], deque[Interaction]] = OrderedDict()
+        self._predictions: dict[tuple[str, str, str, str], tuple[str, str]] = {}
         # Stats tracking
         self._total_processed: int = 0
         self._total_stored: int = 0
 
     def _prediction_history(self, interaction: Interaction) -> list[Interaction]:
-        history = list(self._history)
+        partition = interaction_partition(interaction.metadata)
+        history = [
+            turn
+            for turn in self._histories.get(partition, ())
+            if turn.timestamp < interaction.timestamp
+        ]
         if len(history) >= self._config.history_window:
             return history[-self._config.history_window :]
 
@@ -81,20 +94,29 @@ class SurprisalGate:
             scope=scope,
             scope_id=scope_id,
             limit=self._config.history_window,
+            user_profile_id=interaction.metadata.get("user_profile_id"),
+            session_id=interaction.metadata.get("session_id"),
+            before=interaction.timestamp,
+            newest_first=True,
         )
         for event in persisted_history:
-            if event.occurred_at >= interaction.timestamp and normalize_memory_text(
-                event.content
-            ) == normalize_memory_text(interaction.content):
+            if interaction_partition(event.metadata) != partition:
                 continue
-            history.append(
-                Interaction(
-                    role=event.role,
-                    content=event.content,
-                    timestamp=event.occurred_at,
-                    metadata=event.metadata,
-                )
+            if event.occurred_at >= interaction.timestamp:
+                continue
+            persisted = Interaction(
+                role=event.role,
+                content=event.content,
+                timestamp=event.occurred_at,
+                metadata=event.metadata,
             )
+            if not any(
+                turn.timestamp == persisted.timestamp
+                and turn.role == persisted.role
+                and turn.content == persisted.content
+                for turn in history
+            ):
+                history.append(persisted)
         history.sort(key=lambda turn: turn.timestamp)
         return history[-self._config.history_window :]
 
@@ -130,7 +152,34 @@ class SurprisalGate:
             "Predicted next user input:"
         )
 
-    async def _compute_surprisal(self, interaction: Interaction) -> tuple[float | None, str]:
+    @staticmethod
+    def _history_signature(history: list[Interaction]) -> str:
+        serialized = [(turn.role, turn.timestamp.isoformat(), turn.content) for turn in history]
+        return hashlib.sha256(json.dumps(serialized).encode("utf-8")).hexdigest()
+
+    async def precompute_prediction(self, next_interaction: Interaction) -> bool:
+        """Predict from earlier evidence; the supplied interaction's content is excluded."""
+        history = self._prediction_history(next_interaction)
+        try:
+            prediction = await self._llm.predict(
+                self._build_prediction_prompt(next_interaction, history)
+            )
+        except Exception:
+            return False
+        safety = self._write_firewall.apply(prediction)
+        if not safety.allowed or not safety.content.strip():
+            return False
+        self._predictions[interaction_partition(next_interaction.metadata)] = (
+            self._history_signature(history),
+            safety.content,
+        )
+        if len(self._predictions) > 256:
+            self._predictions.pop(next(iter(self._predictions)))
+        return True
+
+    async def _compute_surprisal(
+        self, interaction: Interaction
+    ) -> tuple[float | None, str, str | None, str]:
         """
         Compute the surprisal score for an interaction.
 
@@ -147,23 +196,31 @@ class SurprisalGate:
             Higher = more surprising = higher salience.
         """
         history = self._prediction_history(interaction)
+        cached = self._predictions.pop(interaction_partition(interaction.metadata), None)
+        mode = "on_demand"
 
         # Step 1: Get prediction from LLM
         prediction_prompt = self._build_prediction_prompt(interaction, history)
         try:
-            prediction = await self._llm.predict(prediction_prompt)
+            if cached is not None and cached[0] == self._history_signature(history):
+                prediction = cached[1]
+                mode = "cached"
+            else:
+                prediction = await self._llm.predict(prediction_prompt)
         except Exception:
-            return None, "provider_unavailable"
+            return None, "provider_unavailable", None, mode
 
-        if not prediction.strip():
-            return None, "provider_unavailable"
+        safe_prediction = self._write_firewall.apply(prediction)
+        if not safe_prediction.allowed or not safe_prediction.content.strip():
+            return None, "prediction_unavailable", None, mode
+        prediction = safe_prediction.content
 
         # Step 2: Embed both prediction and actual input
         prediction_embedding = await embed_text_async(self._embedder, prediction)
         actual_embedding = await embed_text_async(self._embedder, interaction.content)
 
         # Step 3: Cosine distance = semantic divergence = surprisal score
-        return cosine_distance(prediction_embedding, actual_embedding), "measured"
+        return cosine_distance(prediction_embedding, actual_embedding), "measured", prediction, mode
 
     def _salience_from_surprisal(self, surprisal: float) -> float:
         """
@@ -182,7 +239,9 @@ class SurprisalGate:
         # Simple linear normalization: clamp to [0, 1]
         return min(max(surprisal, 0.0), 1.0)
 
-    async def process(self, interaction: Interaction) -> ProcessResult:
+    async def process(
+        self, interaction: Interaction, *, force_encode: bool = False
+    ) -> ProcessResult:
         """
         Process an interaction through the surprisal gate.
 
@@ -201,10 +260,14 @@ class SurprisalGate:
             the resulting chunk (if stored), the surprisal score, and a reason.
         """
         self._total_processed += 1
+        safety = self._write_firewall.apply(interaction.content)
+        if not safety.allowed:
+            return ProcessResult(stored=False, reason=f"Blocked by safety policy: {safety.reason}")
+        interaction = interaction.model_copy(update={"content": safety.content})
 
         # Skip very short content (likely not meaningful)
-        if len(interaction.content.strip()) < self._config.min_content_length:
-            self._history.append(interaction)
+        if not force_encode and len(interaction.content.strip()) < self._config.min_content_length:
+            self.add_to_history(interaction)
             return ProcessResult(
                 stored=False,
                 salience=0.0,
@@ -212,16 +275,29 @@ class SurprisalGate:
             )
 
         # Compute surprisal score
-        surprisal, surprisal_status = await self._compute_surprisal(interaction)
+        surprisal, surprisal_status, prediction, prediction_mode = (
+            (None, "explicit_remember", None, "bypassed")
+            if force_encode
+            else await self._compute_surprisal(interaction)
+        )
+        diagnostics = {
+            "surprisal_score": surprisal,
+            "surprisal_status": surprisal_status,
+            "prediction": prediction,
+            "prediction_mode": prediction_mode,
+            "prediction_model": getattr(self._llm, "model", type(self._llm).__name__),
+            "threshold": self._config.threshold,
+        }
 
         # Always update history buffer (even if not stored)
-        self._history.append(interaction)
+        self.add_to_history(interaction)
 
         if surprisal is None:
-            if self._config.threshold > 0.0:
+            if self._config.threshold > 0.0 and not force_encode:
                 return ProcessResult(
                     stored=False,
                     salience=0.0,
+                    diagnostics=diagnostics,
                     reason=(
                         "Surprisal unavailable "
                         f"({surprisal_status.replace('_', ' ')}); threshold "
@@ -232,7 +308,8 @@ class SurprisalGate:
         elif surprisal <= self._config.threshold:
             return ProcessResult(
                 stored=False,
-                salience=surprisal,
+                salience=self._salience_from_surprisal(surprisal),
+                diagnostics=diagnostics,
                 reason=(
                     f"Low surprisal ({surprisal:.3f} ≤ threshold {self._config.threshold:.3f}). "
                     "Interaction matched prediction — not encoded."
@@ -256,7 +333,6 @@ class SurprisalGate:
                 **interaction.metadata,
             },
             salience=salience,
-            canonical_key=compute_canonical_key(interaction.content, scope, scope_id),
             surprisal_score=surprisal,
             surprisal_status=surprisal_status,
             last_observed_at=interaction.timestamp,
@@ -266,6 +342,8 @@ class SurprisalGate:
         if surprisal is not None:
             chunk.metadata["surprisal_score"] = surprisal
         chunk.metadata["surprisal_status"] = surprisal_status
+        chunk.metadata["surprisal_threshold"] = self._config.threshold
+        chunk.metadata["encoding_diagnostics"] = diagnostics
 
         chunk = self._store.upsert_canonical(chunk)
         self._total_stored += 1
@@ -274,6 +352,7 @@ class SurprisalGate:
             stored=True,
             chunk=chunk,
             salience=salience,
+            diagnostics=diagnostics,
             reason=(
                 (
                     f"High surprisal ({surprisal:.3f} > threshold {self._config.threshold:.3f}). "
@@ -281,8 +360,12 @@ class SurprisalGate:
                 )
                 if surprisal is not None
                 else (
-                    "Stored because threshold 0.000 explicitly disables surprisal gating and "
-                    f"the score was unavailable ({surprisal_status.replace('_', ' ')})."
+                    "Stored by explicit remember; surprisal gate bypassed."
+                    if force_encode
+                    else (
+                        "Stored because threshold 0.000 explicitly disables surprisal gating and "
+                        f"the score was unavailable ({surprisal_status.replace('_', ' ')})."
+                    )
                 )
             ),
         )
@@ -296,11 +379,24 @@ class SurprisalGate:
         Args:
             interaction: The interaction to add to history.
         """
+        safety = self._write_firewall.apply(interaction.content)
+        if not safety.allowed:
+            return
+        interaction = interaction.model_copy(update={"content": safety.content})
         self._history.append(interaction)
+        partition = interaction_partition(interaction.metadata)
+        history = self._histories.setdefault(partition, deque(maxlen=self._config.history_window))
+        history.append(interaction)
+        self._histories.move_to_end(partition)
+        # Durable history restores evicted sessions; bound process-local state.
+        while len(self._histories) > 256:
+            self._histories.popitem(last=False)
 
     def clear_history(self) -> None:
         """Clear the conversation history buffer."""
         self._history.clear()
+        self._histories.clear()
+        self._predictions.clear()
 
     def get_history(self) -> list[Interaction]:
         """Return the current conversation history buffer as a list."""

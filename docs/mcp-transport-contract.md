@@ -1,6 +1,6 @@
 # MCP Stdio Transport Contract
 
-Mnemos is MCP-protocol-first and host-agnostic. The compatibility contract is defined for standard `stdio` transport.
+The host-facing MCP contract uses standard stdio. The MCP process is a client of one authenticated loopback service, which owns SQLite, providers, and durable maintenance.
 
 ## Contract
 
@@ -18,6 +18,10 @@ Mnemos is MCP-protocol-first and host-agnostic. The compatibility contract is de
   - `mnemos_health`
   - `mnemos_inspect`
   - `mnemos_list`
+  - `mnemos_capture`
+  - `mnemos_correct`
+  - `mnemos_job_status`
+  - `mnemos_feedback`
 - Resource contract:
   - `mnemos://stats`
   - `mnemos://architecture`
@@ -25,9 +29,9 @@ Mnemos is MCP-protocol-first and host-agnostic. The compatibility contract is de
 ## Runtime Behavior Expectations
 
 - Startup:
-  - one engine initialization per server process
-  - startup emits a structured JSON log event (`mnemos.startup`)
-  - degraded profiles emit `mnemos.degraded_mode`
+  - resolve an enabled project and registered user profile
+  - connect to or start the shared authenticated service; do not open a competing writer
+  - closing a stdio client leaves the shared service running
 - Reliability:
   - OpenAI/OpenClaw calls use shared retry/backoff policy
   - provider/storage failures are emitted as structured JSON events (`mnemos.provider_failure`)
@@ -39,11 +43,17 @@ Mnemos is MCP-protocol-first and host-agnostic. The compatibility contract is de
 - CLI:
   - `mnemos-cli doctor` returns profile readiness, dependency checks, and recommendations
 - MCP:
-  - `mnemos_health` returns the same readiness report plus runtime store stats
+  - `mnemos_health` returns observed service state, provider probe status, durable job counts, and store stats
+  - a running process or configured provider class is not proof of successful input-specific extraction
+
+## Durable operation responses
+
+Tools return JSON-encoded strings with schema_version. Store and capture acknowledge an event and processing job; processing_status and mnemos_job_status describe fact completion. A queued outbox write is not a committed event. Retrieval returns versioned scoped facts, sources, and measured score traces; baseline is the default.
+
+Correct requires fact_id, content, and expected_version. Forget supports expected_version; its legacy omitted-version path resolves the current fact through the service. Scope IDs must agree with the registered context. Caller metadata cannot override scope or provenance; custom mnemos_store metadata is currently ignored with an explicit metadata_status response.
 
 ## Compatibility Scope
 
-- Tier 1 (contractual): Claude Code, Claude Desktop, generic MCP stdio hosts
-- Tier 2 (best effort): Cursor, Windsurf, Cline
+Protocol coverage, adapter coverage, and a native host conversation are recorded separately. No support tier substitutes for installed-host evidence.
 
 See [client-compatibility-matrix.md](client-compatibility-matrix.md) for current tested versions and caveats.

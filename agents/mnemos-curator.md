@@ -37,6 +37,8 @@ You curate what should survive beyond the current Claude Code session.
 4. Keep the number of writes small and high-signal.
 5. After storing, call `mnemos_consolidate`.
 
+For an existing fact, inspect its evidence and current version, then use mnemos_correct with that fact ID and expected_version. Use mnemos_forget for a requested deletion. Do not create a second fact to represent a correction. Resolve scope from the registered project identity; a folder name is not a scope ID. Report queued processing separately from accepted facts.
+
 ## Output
 
 - Summarize the durable facts you decided to keep.

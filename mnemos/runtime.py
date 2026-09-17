@@ -8,7 +8,10 @@ import json
 import os
 import sqlite3
 from pathlib import Path
-from typing import Literal, Mapping
+from typing import Any, Literal, Mapping, TYPE_CHECKING
+
+if TYPE_CHECKING:
+    from .engine import MnemosEngine
 
 from pydantic import ValidationError
 
@@ -27,7 +30,13 @@ from .utils.embeddings import (
     OpenAIEmbeddingProvider,
     SimpleEmbeddingProvider,
 )
-from .utils.llm import LLMProvider, MockLLMProvider, OllamaProvider, OpenAIProvider
+from .utils.llm import (
+    LLMProvider,
+    MockLLMProvider,
+    OllamaProvider,
+    OpenAIProvider,
+    UnavailableLLMProvider,
+)
 from .utils.storage import InMemoryStore, MemoryStore, SQLiteStore
 
 
@@ -122,6 +131,9 @@ def build_store_from_settings(settings: AppSettings) -> MemoryStore:
         return InMemoryStore()
 
     if store_type == "sqlite":
+        Path(settings.storage.sqlite_path).expanduser().resolve().parent.mkdir(
+            parents=True, exist_ok=True
+        )
         return SQLiteStore(db_path=settings.storage.sqlite_path)
 
     raise ValueError(f"Unknown store type: {store_type!r}. Use 'memory' or 'sqlite'.")
@@ -136,12 +148,7 @@ def build_embedder_from_settings(settings: AppSettings) -> EmbeddingProvider:
         )
 
     if provider == "simple":
-        dim = settings.embedding.dim
-        if settings.storage.type == "sqlite":
-            inferred_dim = _infer_sqlite_embedding_dim(settings.storage.sqlite_path)
-            if inferred_dim is not None:
-                dim = inferred_dim
-        return SimpleEmbeddingProvider(dim=dim)
+        return SimpleEmbeddingProvider(dim=settings.embedding.dim)
 
     if provider == "ollama":
         return OllamaEmbeddingProvider(
@@ -207,6 +214,8 @@ def build_llm_from_settings(settings: AppSettings) -> LLMProvider:
 
 def build_mnemos_config_from_settings(settings: AppSettings) -> MnemosConfig:
     return MnemosConfig(
+        modules=settings.modules.model_copy(deep=True),
+        retrieval=settings.retrieval.model_copy(deep=True),
         surprisal=SurprisalConfig(threshold=settings.runtime.surprisal_threshold),
         sleep=SleepConfig(
             recall_gated_plasticity_enabled=settings.sleep.recall_gated_plasticity_enabled,
@@ -219,6 +228,115 @@ def build_mnemos_config_from_settings(settings: AppSettings) -> MnemosConfig:
         ),
         debug=settings.runtime.debug,
     )
+
+
+def _mock_provider_is_explicit(
+    settings: AppSettings,
+    resolved: ResolvedSettings,
+    env: Mapping[str, str] | None,
+) -> bool:
+    """Return whether a mock provider was selected by user configuration."""
+    requested = resolve_env_value("MNEMOS_LLM_PROVIDER", env=env)
+    if requested is not None:
+        return requested.strip().lower() == "mock"
+    # A config file containing the default mock value is still an explicit
+    # development choice.  The generated in-memory defaults have no config.
+    return settings.llm.provider == "mock" and (
+        resolved.global_config_path.exists() or resolved.project_config_path is not None
+    )
+
+
+def embedding_identity(settings: AppSettings) -> dict[str, Any]:
+    return {
+        "provider": settings.embedding.provider,
+        "model": settings.embedding.model,
+        "revision": settings.embedding.revision,
+        "dimension": settings.embedding.dim if settings.embedding.provider == "simple" else None,
+        "normalization": "provider_default",
+    }
+
+
+def _configured_store(settings: AppSettings) -> MemoryStore:
+    store = build_store_from_settings(settings)
+    if isinstance(store, SQLiteStore):
+        identity = embedding_identity(settings)
+        try:
+            store.bind_embedding_identity(identity)
+        except Exception:
+            store.close()
+            raise
+    return store
+
+
+def build_configured_engine_from_settings(
+    settings: AppSettings,
+    *,
+    allow_mock: bool = False,
+) -> "MnemosEngine":
+    """Build an engine from validated settings without implicit mock cognition.
+
+    ``allow_mock`` is reserved for deterministic tests and explicitly labelled
+    development profiles.  A missing provider receives an unavailable adapter,
+    which preserves capture while making enrichment visibly pending.
+    """
+    from .engine import MnemosEngine
+
+    if settings.llm.provider == "mock":
+        if not allow_mock:
+            raise ValueError(
+                "Mock LLM cognition is disabled for configured runtimes; "
+                "pass allow_mock=True only for tests or development."
+            )
+        llm: LLMProvider = MockLLMProvider()
+    else:
+        llm = build_llm_from_settings(settings)
+
+    return MnemosEngine(
+        config=build_mnemos_config_from_settings(settings),
+        llm=llm,
+        embedder=build_embedder_from_settings(settings),
+        store=_configured_store(settings),
+    )
+
+
+def build_configured_engine(
+    *,
+    env: Mapping[str, str] | None = None,
+    cwd: str | Path | None = None,
+    allow_mock: bool = False,
+    default_store_type: Literal["memory", "sqlite"] = "sqlite",
+) -> "MnemosEngine":
+    """Build the application engine using local-first, validated configuration.
+
+    With no configured LLM, the engine receives :class:`UnavailableLLMProvider`
+    instead of the legacy mock.  This keeps ingestion and persistence usable
+    without allowing fabricated cognitive output.
+    """
+    resolved = load_runtime_settings(
+        default_store_type=default_store_type,
+        env=env,
+        cwd=cwd,
+    )
+    settings = resolved.settings
+    if settings.llm.provider == "mock" and not allow_mock:
+        if _mock_provider_is_explicit(settings, resolved, env):
+            raise ValueError(
+                "Mock LLM cognition is disabled for configured runtimes; "
+                "pass allow_mock=True only for tests or development."
+            )
+        from .engine import MnemosEngine
+
+        return MnemosEngine(
+            config=build_mnemos_config_from_settings(settings),
+            llm=UnavailableLLMProvider(),
+            embedder=build_embedder_from_settings(settings),
+            store=_configured_store(settings),
+        )
+    return build_configured_engine_from_settings(settings, allow_mock=allow_mock)
+
+
+# Name used by application entrypoints during the runtime migration.
+build_engine_from_env = build_configured_engine
 
 
 def build_store_from_env(

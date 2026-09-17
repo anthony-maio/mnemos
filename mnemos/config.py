@@ -12,6 +12,7 @@ from __future__ import annotations
 from typing import Literal
 
 from pydantic import BaseModel, Field, model_validator
+from .retrieval import RetrievalConfig
 
 
 class SurprisalConfig(BaseModel):
@@ -27,11 +28,11 @@ class SurprisalConfig(BaseModel):
     threshold: float = Field(
         default=0.3,
         ge=0.0,
-        le=1.0,
+        le=2.0,
         description=(
             "Cosine distance threshold for encoding. Interactions with surprisal "
-            "score above this are stored. Default 0.3 corresponds to ~72° separation "
-            "in embedding space — a meaningful semantic shift."
+            "score above this are stored. Cosine distance ranges from 0 to 2; "
+            "0.3 corresponds to approximately 45.6 degrees."
         ),
     )
     prediction_model: str = Field(
@@ -272,6 +273,7 @@ class SpreadingConfig(BaseModel):
         gt=0,
         description="Maximum graph traversal depth for energy propagation.",
     )
+    max_visited: int = Field(default=1000, ge=1, le=10000)
     auto_connect_threshold: float = Field(
         default=0.6,
         ge=0.0,
@@ -304,7 +306,7 @@ class SpreadingConfig(BaseModel):
         description=("Maximum number of stored chunks to load into spreading graph on startup."),
     )
     startup_auto_connect: bool = Field(
-        default=True,
+        default=False,
         description=("Whether to run graph auto-connect after startup hydration."),
     )
 
@@ -359,6 +361,16 @@ class MemoryGovernanceConfig(BaseModel):
     )
 
 
+class ModuleConfig(BaseModel):
+    """Independent experimental switches; explicit lifecycle commands stay available."""
+
+    surprisal: bool = True
+    mutable_rag: bool = True
+    affective: bool = True
+    sleep: bool = True
+    spreading: bool = True
+
+
 class MnemosConfig(BaseModel):
     """
     Top-level configuration for the MnemosEngine.
@@ -374,6 +386,8 @@ class MnemosConfig(BaseModel):
         engine = MnemosEngine(config=config, ...)
     """
 
+    modules: ModuleConfig = Field(default_factory=ModuleConfig)
+    retrieval: RetrievalConfig = Field(default_factory=RetrievalConfig)
     surprisal: SurprisalConfig = Field(
         default_factory=SurprisalConfig,
         description="Configuration for the SurprisalGate module.",

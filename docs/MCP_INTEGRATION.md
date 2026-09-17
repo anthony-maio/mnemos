@@ -1,5 +1,7 @@
 # Mnemos MCP Integration Guide
 
+Current unreleased runtime: CLI, UI, hooks, and MCP share one authenticated local service. Start with [functional local memory](functional-local-memory.md) for enabled-project/profile setup, provider configuration, pending-versus-committed semantics, versioned corrections, and retention. Historical installation examples below describe published packages, which may differ from this checkout. Native-host evidence is tracked in the [compatibility matrix](client-compatibility-matrix.md).
+
 ## What is MCP?
 
 The Model Context Protocol (MCP) lets agentic platforms — Claude Code, Codex, Cursor, Windsurf, Cline, and others — discover and call external tools in a standardized way. Mnemos ships an MCP server that exposes its full memory system as tools any agent can use.
@@ -136,8 +138,8 @@ The agent will automatically discover these tools:
 
 | Tool | What it does |
 |------|-------------|
-| `mnemos_store` | Store a memory through the surprisal gate + affective tagging pipeline (supports `scope` + `scope_id`) |
-| `mnemos_retrieve` | Retrieve memories with spreading activation + emotional re-ranking (supports `current_scope`, `scope_id`, `allowed_scopes`) |
+| `mnemos_store` | Commit an explicit remember event and processing job; bypass automatic surprisal while enforcing scope and safety |
+| `mnemos_retrieve` | Retrieve scoped facts with source and score traces; baseline is default, biomimetic ranking is experimental; recall does not rewrite content |
 | `mnemos_consolidate` | Trigger sleep consolidation (episodic → semantic compression) |
 | `mnemos_forget` | Delete a specific memory |
 | `mnemos_stats` | System-wide statistics from all modules |
@@ -373,7 +375,7 @@ The auto-store hook path is deterministic and conservative:
 - skips sensitive content (tokens/secrets/key material patterns)
 - only stores tool outputs when failure/error patterns are present
 
-This Claude hook path has been validated on the canonical SQLite-backed `MNEMOS_CONFIG_PATH` setup as of March 15, 2026. Codex and Cursor can point at the same shared config, but they still rely on explicit Mnemos tool usage or host instruction policies today rather than shipped hook capture.
+The March 15, 2026 validation predates this service migration. Current Claude and Codex command-hook adapters have contract coverage. Their native conversation acceptance must be checked against the current host matrix. Cursor continues to use MCP and instruction policies.
 
 Treat hard auto-capture as host-dependent outside Claude Code. Codex, Cursor, OpenClaw, and generic MCP hosts can use soft-auto instruction packs today, but they should not be marketed as having built-in hook parity unless that host actually exposes verified lifecycle hooks.
 

@@ -19,6 +19,7 @@ import json
 import logging
 import re
 from abc import ABC, abstractmethod
+from collections.abc import Callable
 from typing import Any
 
 import httpx
@@ -47,6 +48,10 @@ class LLMProvider(ABC):
     Both methods are async to support concurrent background processing
     (e.g., SleepDaemon consolidation running while main processing continues).
     """
+
+    # Providers that can enforce a response schema override this capability.
+    # Callers keep prompt-only behavior for providers that do not advertise it.
+    supports_structured_output = False
 
     @abstractmethod
     async def predict(self, prompt: str, **kwargs: Any) -> str:
@@ -167,6 +172,27 @@ class MockLLMProvider(LLMProvider):
         return {label: weight for label in labels}
 
 
+class UnavailableLLMProvider(LLMProvider):
+    """An honest provider for a runtime without a configured local model.
+
+    The engine can still capture an episode and keep existing recall available
+    while cognitive enrichment waits for setup.  This provider deliberately
+    raises instead of returning placeholder text, so a missing model can never
+    manufacture a user preference or durable fact.
+    """
+
+    def __init__(self, reason: str = "No real LLM provider is configured") -> None:
+        self.reason = reason
+
+    async def predict(self, prompt: str, **kwargs: Any) -> str:
+        _ = prompt, kwargs
+        raise MnemosConfigurationError(self.reason)
+
+    async def classify(self, prompt: str, labels: list[str]) -> dict[str, float]:
+        _ = prompt, labels
+        raise MnemosConfigurationError(self.reason)
+
+
 class OllamaProvider(LLMProvider):
     """
     LLM provider using a locally-running Ollama server.
@@ -185,6 +211,8 @@ class OllamaProvider(LLMProvider):
         max_tokens: Maximum tokens to generate per response.
     """
 
+    supports_structured_output = True
+
     def __init__(
         self,
         model: str = "llama3",
@@ -192,12 +220,14 @@ class OllamaProvider(LLMProvider):
         timeout: float = 30.0,
         temperature: float = 0.1,
         max_tokens: int = 512,
+        response_observer: Callable[[dict[str, Any]], None] | None = None,
     ) -> None:
         self.model = model
         self.base_url = base_url.rstrip("/")
         self.timeout = timeout
         self.temperature = temperature
         self.max_tokens = max_tokens
+        self.response_observer = response_observer
 
     async def predict(self, prompt: str, **kwargs: Any) -> str:
         """
@@ -226,6 +256,8 @@ class OllamaProvider(LLMProvider):
                 "num_predict": max_tokens,
             },
         }
+        if "format" in kwargs and kwargs["format"] is not None:
+            payload["format"] = kwargs["format"]
 
         async def _request() -> str:
             async with httpx.AsyncClient(timeout=self.timeout) as client:
@@ -235,6 +267,16 @@ class OllamaProvider(LLMProvider):
                 )
                 response.raise_for_status()
                 data = response.json()
+                if self.response_observer is not None:
+                    try:
+                        self.response_observer(data)
+                    except Exception:
+                        log_event(
+                            "mnemos.provider_observer_failure",
+                            level=logging.WARNING,
+                            provider="ollama",
+                            operation="predict_observer",
+                        )
                 text = data.get("response", "")
                 if not isinstance(text, str):
                     text = str(text)

@@ -6,7 +6,6 @@ from __future__ import annotations
 
 from typing import Any
 
-from .utils import cosine_similarity
 from .types import MemoryChunk
 
 _VALID_SCOPES = {"project", "workspace", "global"}
@@ -14,9 +13,9 @@ _VALID_SCOPES = {"project", "workspace", "global"}
 
 def _chunk_scope(chunk: MemoryChunk) -> tuple[str, str | None]:
     scope_raw = chunk.metadata.get("scope")
-    scope = str(scope_raw).strip().lower() if isinstance(scope_raw, str) else "global"
+    scope = str(scope_raw).strip().lower() if isinstance(scope_raw, str) else "unassigned"
     if scope not in _VALID_SCOPES:
-        scope = "global"
+        scope = "unassigned"
     if scope == "global":
         return scope, None
 
@@ -75,48 +74,22 @@ def _build_retrieval_explanation(
     scope_id: str | None,
     allowed_scopes: tuple[str, ...],
 ) -> dict[str, Any]:
-    query_embedding = engine.embedder.embed(query)
-    semantic_candidates = engine.store.retrieve(query_embedding, top_k=10)
-    semantic_ids = [candidate.id for candidate in semantic_candidates]
-
-    scope, chunk_scope_id = _chunk_scope(chunk)
-    scope_match = scope in allowed_scopes and (
-        scope == "global" or (scope_id is not None and chunk_scope_id == scope_id)
-    )
-
-    semantic_similarity = (
-        cosine_similarity(query_embedding, chunk.embedding) if chunk.embedding is not None else None
-    )
-
-    activated_nodes = engine.spreading_activation.retrieve(query_embedding, top_k=10)
-    activation_by_id = {node.id: round(node.energy, 4) for node in activated_nodes}
-
-    explanation: list[str] = []
-    if scope_match:
-        explanation.append(f"Matched the current {current_scope} retrieval scope.")
-    else:
-        explanation.append("Did not match the current retrieval scope cleanly.")
-    if chunk.id in semantic_ids:
-        explanation.append("Appeared in semantic candidates for this query.")
-    if chunk.id in activation_by_id:
-        explanation.append("Received spreading activation from an associative neighbor.")
-    if semantic_similarity is not None and semantic_similarity >= 0.7:
-        explanation.append("Query embedding is strongly similar to this memory.")
-
+    key = (query.strip(), current_scope, scope_id, allowed_scopes, None, None)
+    trace = getattr(engine, "_retrieval_traces", {}).get(key, {}).get(chunk.id)
+    if trace is None or trace.get("version") != chunk.version:
+        return {
+            "query": query,
+            "status": "not_observed",
+            "semantic_rank": None,
+            "explanation": ["No matching retrieval trace is available for this fact version."],
+        }
     return {
+        **trace,
         "query": query,
-        "scope_match": scope_match,
-        "in_semantic_candidates": chunk.id in semantic_ids,
-        "semantic_rank": (semantic_ids.index(chunk.id) + 1 if chunk.id in semantic_ids else None),
-        "semantic_similarity": (
-            None if semantic_similarity is None else round(float(semantic_similarity), 4)
-        ),
-        "graph_activated": chunk.id in activation_by_id,
-        "graph_energy": activation_by_id.get(chunk.id),
-        "allowed_scopes": list(allowed_scopes),
-        "current_scope": current_scope,
-        "scope_id": scope_id,
-        "explanation": explanation,
+        "in_semantic_candidates": trace.get("semantic_rank") is not None,
+        "semantic_similarity": trace.get("semantic"),
+        "graph_activated": trace.get("graph_energy", 0) > 0,
+        "explanation": ["Scores recorded by the actual retrieval request."],
     }
 
 

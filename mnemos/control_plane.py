@@ -5,31 +5,28 @@ mnemos/control_plane.py — Local onboarding/control-plane service.
 from __future__ import annotations
 
 import asyncio
+import hashlib
+import inspect
+import os
+import threading
 from pathlib import Path
 from typing import Any, Literal, Mapping
 
-from .engine import MnemosEngine
+from .client import MnemosClient
 from .health import run_health_checks
 from .hosts import apply_host_integration, preview_host_integration
-from .inspectability import build_chunk_inspection
-from .runtime import (
-    build_embedder_from_settings,
-    build_llm_from_settings,
-    build_mnemos_config_from_settings,
-    build_store_from_settings,
-)
+from .scopes import ScopeContext, ScopeRegistry, default_registry_path
 from .settings import AppSettings, import_existing_setup, load_settings, save_settings
-from .types import Interaction
 
 HOST_SUPPORT: dict[str, dict[str, Any]] = {
     "claude-code": {
         "name": "claude-code",
         "label": "Claude Code",
-        "tier": "Tier 1",
+        "tier": "Tier 2",
         "status": "Supported",
         "recommended": True,
-        "summary": "Primary Mnemos path with the strongest daily-use validation.",
-        "best_path": "Apply the Claude Code integration, then run the smoke check before daily use.",
+        "summary": "MCP and adapter contracts are tested; installed-host continuity is pending.",
+        "best_path": "Apply project MCP configuration, install the Mnemos Claude plugin for automatic capture, and validate a real host session.",
     },
     "cursor": {
         "name": "cursor",
@@ -46,8 +43,17 @@ HOST_SUPPORT: dict[str, dict[str, Any]] = {
         "tier": "Tier 2",
         "status": "Documented",
         "recommended": False,
-        "summary": "Supported through MCP plus AGENTS.md guidance; still a documented path, not Tier 1.",
-        "best_path": "Apply the Codex MCP config, then keep the AGENTS.md recall/store loop in place.",
+        "summary": "Native hooks and MCP are implemented; CLI and desktop validation remain separate gates.",
+        "best_path": "Preview the native hooks and MCP configuration for your enabled project.",
+    },
+    "hermes": {
+        "name": "hermes",
+        "label": "Hermes",
+        "tier": "Tier 2",
+        "status": "Documented",
+        "recommended": False,
+        "summary": "Native MemoryProvider support is available when the installed Hermes version exposes it.",
+        "best_path": "Configure the Hermes provider descriptor, then use manual MCP fallback when native support is unavailable.",
     },
 }
 
@@ -55,7 +61,7 @@ SETUP_PRESETS: list[dict[str, Any]] = [
     {
         "id": "starter-sqlite",
         "label": "Starter SQLite",
-        "recommended": False,
+        "recommended": True,
         "description": "Default shipped path: one SQLite file, guided setup, and minimal moving parts.",
         "payload": {
             "storage": {"type": "sqlite"},
@@ -68,9 +74,9 @@ SETUP_PRESETS: list[dict[str, Any]] = [
     },
     {
         "id": "stable-memory",
-        "label": "Stable Memory",
-        "recommended": True,
-        "description": "Recommended for noisy or longer-running sessions. Enables recall-gated consolidation.",
+        "label": "Embedded API recall experiment",
+        "recommended": False,
+        "description": "Legacy embedded API setting. Does not change managed-service extraction or establish a quality improvement.",
         "payload": {
             "storage": {"type": "sqlite"},
             "sleep": {
@@ -137,6 +143,7 @@ class ControlPlaneService:
         home: str | Path | None = None,
         env: Mapping[str, str] | None = None,
         global_config_path: str | Path | None = None,
+        client: Any | None = None,
     ) -> None:
         self.cwd = Path.cwd() if cwd is None else Path(cwd)
         self.home = Path.home() if home is None else Path(home)
@@ -144,6 +151,8 @@ class ControlPlaneService:
         self.global_config_path = None if global_config_path is None else Path(global_config_path)
         self._last_smoke_report: dict[str, Any] | None = None
         self._last_consolidation_report: dict[str, Any] | None = None
+        self.client = client or MnemosClient()
+        self._scope_registry: ScopeRegistry | None = None
 
     def _config_env(self) -> dict[str, str]:
         merged = dict(self.env)
@@ -222,7 +231,13 @@ class ControlPlaneService:
         else:
             target = self.cwd / ".mnemos" / "mnemos.toml"
         save_settings(settings, target, scope=scope)
-        return {"saved": True, "scope": scope, "path": str(target)}
+        return {
+            "saved": True,
+            "scope": scope,
+            "path": str(target),
+            "restart_required": True,
+            "runtime_note": "The owning service reads global configuration at startup. Project provider overrides do not change it.",
+        }
 
     def import_existing_setup(self) -> dict[str, Any]:
         imported = import_existing_setup(
@@ -257,7 +272,7 @@ class ControlPlaneService:
         }
 
     def preview_integration(
-        self, host: Literal["claude-code", "cursor", "codex"]
+        self, host: Literal["claude-code", "cursor", "codex", "hermes"]
     ) -> dict[str, Any]:
         resolved = self._resolved_settings()
         preview = preview_host_integration(
@@ -265,6 +280,7 @@ class ControlPlaneService:
             mnemos_config_path=resolved.global_config_path,
             cwd=self.cwd,
             home=self.home,
+            integration_env=self._integration_env(),
         )
         return {
             "host": host,
@@ -273,13 +289,16 @@ class ControlPlaneService:
             "support": _host_entry(host),
         }
 
-    def apply_integration(self, host: Literal["claude-code", "cursor", "codex"]) -> dict[str, Any]:
+    def apply_integration(
+        self, host: Literal["claude-code", "cursor", "codex", "hermes"]
+    ) -> dict[str, Any]:
         resolved = self._resolved_settings()
         result = apply_host_integration(
             host,
             mnemos_config_path=resolved.global_config_path,
             cwd=self.cwd,
             home=self.home,
+            integration_env=self._integration_env(),
         )
         return {
             "host": host,
@@ -290,102 +309,255 @@ class ControlPlaneService:
         }
 
     def health_report(self) -> dict[str, Any]:
-        return run_health_checks(env=self._config_env(), default_store_type="sqlite")
+        report = run_health_checks(env=self._config_env(), default_store_type="sqlite")
+        configured = report.get("provider_state", {})
+        observed = report.get("service", {}).get("provider_state", {})
+        report["provider_readiness"] = {
+            "configured": configured,
+            "observed": observed,
+        }
+        try:
+            service_health = self._service_request("health", {})
+            report["service"] = service_health
+            report["provider_readiness"]["observed"] = service_health.get(
+                "provider_state", {"cognition": {"status": "not_observed"}}
+            )
+            cognition = service_health.get("provider_state", {}).get("cognition", {})
+            report["status"] = (
+                "ready"
+                if service_health.get("status") == "running"
+                and cognition.get("input_specific_extraction") is True
+                else "degraded"
+            )
+        except Exception as exc:
+            report["status"] = "degraded"
+            report["service"] = {
+                "status": "not_observed",
+                "error": str(exc),
+            }
+        return report
 
-    def _build_engine(self, settings: AppSettings) -> MnemosEngine:
-        return MnemosEngine(
-            config=build_mnemos_config_from_settings(settings),
-            llm=build_llm_from_settings(settings),
-            embedder=build_embedder_from_settings(settings),
-            store=build_store_from_settings(settings),
+    def _run_sync(self, awaitable: Any) -> Any:
+        """Run one bounded client call from both sync handlers and async callers."""
+        try:
+            asyncio.get_running_loop()
+        except RuntimeError:
+            return asyncio.run(awaitable)
+        result: list[Any] = []
+        failure: list[BaseException] = []
+
+        def runner() -> None:
+            try:
+                result.append(asyncio.run(awaitable))
+            except BaseException as exc:  # pragma: no cover - exercised by async callers
+                failure.append(exc)
+
+        thread = threading.Thread(target=runner, daemon=True)
+        thread.start()
+        thread.join(timeout=15.0)
+        if thread.is_alive():
+            raise TimeoutError("Mnemos service request exceeded the UI timeout")
+        if failure:
+            raise failure[0]
+        return result[0] if result else None
+
+    def _service_request(self, operation: str, payload: Mapping[str, Any]) -> dict[str, Any]:
+        request = getattr(self.client, "request", None)
+        if not callable(request):
+            raise TypeError("Configured Mnemos client does not expose request()")
+        result = request(operation, dict(payload), queue_on_failure=False)
+        if inspect.isawaitable(result):
+            result = self._run_sync(result)
+        if not isinstance(result, dict):
+            raise TypeError("Mnemos service returned a non-object response")
+        return dict(result)
+
+    def _registry_path(self) -> Path:
+        configured = self.env.get("MNEMOS_SCOPE_REGISTRY") or os.environ.get(
+            "MNEMOS_SCOPE_REGISTRY"
         )
+        return Path(configured).expanduser() if configured else default_registry_path()
+
+    def _configured_profile(self) -> str | None:
+        selected = (
+            self.env.get("MNEMOS_USER_PROFILE_ID")
+            or os.environ.get("MNEMOS_USER_PROFILE_ID")
+            or self._resolved_settings().settings.onboarding.user_profile_id
+        )
+        return selected.strip() if selected and selected.strip() else None
+
+    def _integration_env(self) -> dict[str, str]:
+        values = {"MNEMOS_SCOPE_REGISTRY": str(self._registry_path())}
+        profile = self._configured_profile()
+        if profile:
+            values["MNEMOS_USER_PROFILE_ID"] = profile
+        descriptor = self.env.get("MNEMOS_RUNTIME_DESCRIPTOR") or os.environ.get(
+            "MNEMOS_RUNTIME_DESCRIPTOR"
+        )
+        if descriptor:
+            values["MNEMOS_RUNTIME_DESCRIPTOR"] = descriptor
+        return values
+
+    def _context_payload(self) -> dict[str, Any]:
+        profile = self._configured_profile()
+        if not profile:
+            raise ValueError("MNEMOS_USER_PROFILE_ID is required for the Mnemos UI")
+        if self._scope_registry is None:
+            self._scope_registry = ScopeRegistry.load(self._registry_path())
+        session = self.env.get("MNEMOS_UI_SESSION_ID") or os.environ.get("MNEMOS_UI_SESSION_ID")
+        if not session:
+            digest = hashlib.sha256(str(self.cwd.resolve()).encode("utf-8")).hexdigest()[:16]
+            session = f"ui-{digest}"
+        context = self._scope_registry.resolve(
+            self.cwd, user_profile_id=profile, session_id=session, host="manual"
+        )
+        return context.model_dump(mode="json")
+
+    def get_scope_status(self) -> dict[str, Any]:
+        profile = self._configured_profile()
+        payload: dict[str, Any] = {
+            "configured": bool(profile),
+            "profile": profile,
+            "registry_path": str(self._registry_path()),
+            "project": {"enabled": False, "id": None},
+        }
+        if not profile:
+            payload["status"] = "not_configured"
+            payload["error"] = "MNEMOS_USER_PROFILE_ID is required for the Mnemos UI"
+            return payload
+        try:
+            context = self._context_payload()
+            payload["status"] = "ready"
+            payload["project"] = {"enabled": True, "id": context.get("project_id")}
+            payload["workspace_id"] = context.get("workspace_id")
+        except Exception as exc:
+            payload["status"] = "not_ready"
+            payload["error"] = str(exc)
+        return payload
+
+    def configure_project(self, profile: str, enabled: bool) -> dict[str, Any]:
+        result = self._service_request(
+            "configure_project",
+            {"path": str(self.cwd.resolve()), "user_profile_id": profile, "enabled": enabled},
+        )
+        if result.get("status") == "committed":
+            self.env["MNEMOS_USER_PROFILE_ID"] = profile.strip()
+            self._scope_registry = None
+            resolved = self._resolved_settings()
+            # Persist the user's selection without copying project provider
+            # overrides into the owning service's global configuration.
+            global_settings = load_settings(
+                env=self._config_env(),
+                cwd=resolved.global_config_path.parent,
+                global_config_path=resolved.global_config_path,
+                default_store_type="sqlite",
+            ).settings
+            global_settings.onboarding.user_profile_id = profile.strip()
+            save_settings(global_settings, resolved.global_config_path, scope="global")
+        return result
 
     def get_memory_snapshot(self, *, limit: int = 10) -> dict[str, Any]:
-        resolved = self._resolved_settings()
-        store = build_store_from_settings(resolved.settings)
         try:
-            chunks = sorted(store.get_all(), key=lambda chunk: chunk.updated_at, reverse=True)
-            recent = chunks[:limit]
-            counts_by_scope = {"global": 0, "project": 0, "workspace": 0}
-            consolidated_chunks: list[Any] = []
-            recall_supported_chunks: list[Any] = []
-
-            for chunk in chunks:
-                scope = str(chunk.metadata.get("scope", "global"))
-                if scope in counts_by_scope:
-                    counts_by_scope[scope] += 1
-                if chunk.metadata.get("source") == "sleep_consolidation":
-                    consolidated_chunks.append(chunk)
-                recall_support_value = chunk.metadata.get("recall_supporting_episodes")
-                if isinstance(recall_support_value, int):
-                    recall_supported_chunks.append(chunk)
-
-            latest_consolidation_time = max(
-                (
-                    str(chunk.metadata.get("consolidation_time"))
-                    for chunk in consolidated_chunks
-                    if chunk.metadata.get("consolidation_time")
-                ),
-                default=None,
+            response = self._service_request(
+                "list",
+                {
+                    "context": self._context_payload(),
+                    "allowed_scopes": ["project", "workspace", "global"],
+                    "limit": 500,
+                },
             )
-            latest_batch = [
-                chunk
-                for chunk in consolidated_chunks
-                if chunk.metadata.get("consolidation_time") == latest_consolidation_time
-            ]
-
-            max_supporting_episodes = max(
-                (
-                    int(chunk.metadata.get("recall_supporting_episodes", 0))
-                    for chunk in recall_supported_chunks
-                ),
-                default=0,
-            )
-            max_support_score = max(
-                (
-                    float(chunk.metadata.get("recall_support_score", 0.0))
-                    for chunk in recall_supported_chunks
-                ),
-                default=0.0,
-            )
-
+        except Exception as exc:
             return {
-                "count": len(chunks),
-                "recent_count": len(recent),
-                "counts_by_scope": counts_by_scope,
-                "recent": [
-                    {
-                        "id": chunk.id,
-                        "content": chunk.content,
-                        "scope": chunk.metadata.get("scope", "global"),
-                        "scope_id": chunk.metadata.get("scope_id"),
-                        "updated_at": chunk.updated_at.isoformat(),
-                        "access_count": chunk.access_count,
-                        "stored_by": chunk.metadata.get("source"),
-                    }
-                    for chunk in recent
-                ],
-                "last_consolidation": {
-                    "present": bool(latest_batch),
-                    "at": latest_consolidation_time,
-                    "source": "sleep_consolidation" if latest_batch else None,
-                    "stored_chunk_count": len(latest_batch),
-                    "facts_preview": [chunk.content for chunk in latest_batch[:3]],
-                },
-                "recall_gated": {
-                    "enabled": bool(
-                        resolved.settings.sleep.recall_gated_plasticity_enabled
-                        or recall_supported_chunks
-                    ),
-                    "stored_chunk_count": len(recall_supported_chunks),
-                    "max_supporting_episodes": max_supporting_episodes,
-                    "max_support_score": round(max_support_score, 4),
-                },
+                "status": "not_configured",
+                "error": str(exc),
+                "count": 0,
+                "recent_count": 0,
+                "recent": [],
+                "counts_by_scope": {"global": 0, "project": 0, "workspace": 0},
+                "retrieval_profiles": {"default": "baseline", "experimental": ["biomimetic"]},
+                "jobs": {"status": "not_observed"},
             }
-        finally:
-            close = getattr(store, "close", None)
-            if callable(close):
-                close()
+        facts = response.get("facts", [])
+        if not isinstance(facts, list):
+            facts = []
+        counts = {"global": 0, "project": 0, "workspace": 0}
+        recent: list[dict[str, Any]] = []
+        consolidated: list[dict[str, Any]] = []
+        supported: list[dict[str, Any]] = []
+        for fact in facts:
+            if not isinstance(fact, dict):
+                continue
+            scope = str(fact.get("metadata", {}).get("scope", fact.get("scope", "global")))
+            if scope in counts:
+                counts[scope] += 1
+            metadata = fact.get("metadata", {}) if isinstance(fact.get("metadata"), dict) else {}
+            item = {
+                "id": fact.get("id"),
+                "content": fact.get("content", ""),
+                "scope": scope,
+                "scope_id": metadata.get("scope_id", fact.get("scope_id")),
+                "updated_at": fact.get("updated_at"),
+                "access_count": fact.get("access_count", 0),
+                "stored_by": metadata.get("source"),
+                "version": fact.get("version", 1),
+                "sources": fact.get("sources", []),
+                "metadata": metadata,
+            }
+            recent.append(item)
+            if metadata.get("source") == "sleep_consolidation":
+                consolidated.append(item)
+            if isinstance(metadata.get("recall_supporting_episodes"), int):
+                supported.append(metadata)
+        consolidation_times = [
+            str((item.get("metadata") or {}).get("consolidation_time"))
+            for item in consolidated
+            if (item.get("metadata") or {}).get("consolidation_time")
+        ]
+        latest = max(consolidation_times, default=None)
+        latest_batch = [
+            item
+            for item in consolidated
+            if str((item.get("metadata") or {}).get("consolidation_time")) == latest
+        ]
+        resolved = self._resolved_settings()
+        jobs = response.get("jobs")
+        if not isinstance(jobs, dict):
+            jobs = {"status": "not_observed"}
+        return {
+            "status": response.get("status", "ready"),
+            "count": len(facts),
+            "count_at_least": len(facts) >= 500,
+            "listing_note": "Preview of up to 500 facts by ID. Use mnemos list for the complete scoped listing.",
+            "recent_count": min(len(recent), max(limit, 0)),
+            "counts_by_scope": counts,
+            "recent": recent[: max(limit, 0)],
+            "last_consolidation": {
+                "present": bool(latest_batch),
+                "at": latest,
+                "source": "sleep_consolidation" if latest_batch else None,
+                "stored_chunk_count": len(latest_batch),
+                "facts_preview": [item["content"] for item in latest_batch[:3]],
+            },
+            "recall_gated": {
+                "enabled": bool(
+                    resolved.settings.sleep.recall_gated_plasticity_enabled or supported
+                ),
+                "stored_chunk_count": len(supported),
+                "max_supporting_episodes": max(
+                    (int(item.get("recall_supporting_episodes", 0)) for item in supported),
+                    default=0,
+                ),
+                "max_support_score": round(
+                    max(
+                        (float(item.get("recall_support_score", 0.0)) for item in supported),
+                        default=0.0,
+                    ),
+                    4,
+                ),
+            },
+            "retrieval_profiles": {"default": "baseline", "experimental": ["biomimetic"]},
+            "jobs": jobs,
+        }
 
     def get_memory_detail(
         self,
@@ -396,74 +568,94 @@ class ControlPlaneService:
         scope_id: str | None = None,
         allowed_scopes: tuple[str, ...] | list[str] | None = None,
     ) -> dict[str, Any]:
-        resolved = self._resolved_settings()
-        engine = self._build_engine(resolved.settings)
-        try:
-            payload = build_chunk_inspection(
-                engine,
-                chunk_id,
-                query=query,
-                current_scope=current_scope,
-                scope_id=scope_id,
-                allowed_scopes=allowed_scopes,
-            )
-            if payload is None:
-                raise KeyError(chunk_id)
-            return payload
-        finally:
-            close = getattr(engine.store, "close", None)
-            if callable(close):
-                close()
-
-    def _build_consolidation_activity(
-        self,
-        *,
-        result: Any,
-        before_stats: Mapping[str, Any],
-        after_stats: Mapping[str, Any],
-        triggered_by: str,
-    ) -> dict[str, Any]:
-        recall_supported = int(after_stats.get("total_recall_supported_facts", 0)) - int(
-            before_stats.get("total_recall_supported_facts", 0)
+        context = self._context_payload()
+        inspected = self._service_request(
+            "inspect",
+            {"context": context, "fact_id": chunk_id},
         )
-        recall_filtered = int(after_stats.get("total_recall_filtered_facts", 0)) - int(
-            before_stats.get("total_recall_filtered_facts", 0)
-        )
-        return {
-            "present": True,
-            "status": "pass",
-            "triggered_by": triggered_by,
-            "facts_extracted": len(result.facts_extracted),
-            "facts_preview": list(result.facts_extracted[:3]),
-            "chunks_pruned": result.chunks_pruned,
-            "duration_seconds": round(result.duration_seconds, 3),
-            "recall_supported": max(recall_supported, 0),
-            "recall_filtered": max(recall_filtered, 0),
+        fact = inspected.get("fact")
+        if not isinstance(fact, dict):
+            raise KeyError(chunk_id)
+        metadata = fact.get("metadata", {}) if isinstance(fact.get("metadata"), dict) else {}
+        result: dict[str, Any] = {
+            "id": fact.get("id", chunk_id),
+            "content": fact.get("content", ""),
+            "scope": metadata.get("scope", "unassigned"),
+            "scope_id": metadata.get("scope_id"),
+            "salience": fact.get("salience", 0.5),
+            "version": fact.get("version", 1),
+            "access_count": fact.get("access_count", 0),
+            "created_at": fact.get("created_at"),
+            "updated_at": fact.get("updated_at"),
+            "cognitive_state": fact.get("cognitive_state"),
+            "provenance": {
+                "stored_by": metadata.get("source", "unknown"),
+                "ingest_channel": metadata.get("ingest_channel"),
+                "encoding_reason": metadata.get("encoding_reason"),
+                "original_timestamp": metadata.get("original_timestamp"),
+                "reconsolidated_at": metadata.get("reconsolidated_at"),
+            },
+            "history": inspected.get("revisions", []),
+            "evidence": inspected.get("evidence", []),
+            "graph": {"present": False, "neighbor_count": 0, "neighbors": []},
+            "retrieval": None,
+            "metadata": metadata,
         }
+        if query and query.strip():
+            retrieval = self._service_request(
+                "retrieve",
+                {
+                    "query": query.strip(),
+                    "context": context,
+                    "allowed_scopes": list(allowed_scopes or ("project", "workspace", "global")),
+                    "top_k": 10,
+                    "max_context_tokens": 1200,
+                    "profile": "baseline",
+                },
+            )
+            candidate = next(
+                (item for item in retrieval.get("facts", []) if item.get("id") == chunk_id), None
+            )
+            if candidate is None:
+                result["retrieval"] = {
+                    "query": query.strip(),
+                    "status": "not_observed",
+                    "semantic_rank": None,
+                    "explanation": [
+                        "No matching retrieval trace is available for this fact version."
+                    ],
+                }
+            else:
+                scores = (
+                    candidate.get("scores", {}) if isinstance(candidate.get("scores"), dict) else {}
+                )
+                result["retrieval"] = {
+                    "query": query.strip(),
+                    "status": "observed",
+                    "semantic_rank": scores.get("semantic_rank"),
+                    "semantic_similarity": scores.get("semantic"),
+                    "graph_activated": bool(scores.get("graph_energy", 0)),
+                    "in_semantic_candidates": scores.get("semantic_rank") is not None,
+                    "explanation": ["Scores recorded by the actual retrieval request."],
+                    "scores": scores,
+                }
+        return result
 
     def run_consolidation(self) -> dict[str, Any]:
-        async def _run() -> dict[str, Any]:
-            resolved = self._resolved_settings()
-            engine = self._build_engine(resolved.settings)
-            try:
-                before_stats = engine.sleep_daemon.get_stats()
-                result = await engine.consolidate()
-                after_stats = engine.sleep_daemon.get_stats()
-                report = self._build_consolidation_activity(
-                    result=result,
-                    before_stats=before_stats,
-                    after_stats=after_stats,
-                    triggered_by="manual",
-                )
-                self._last_consolidation_report = report
-                return report
-            finally:
-                close = getattr(engine.store, "close", None)
-                if callable(close):
-                    close()
-
         try:
-            return asyncio.run(_run())
+            result = self._service_request("maintenance", {"context": self._context_payload()})
+            report = {
+                "present": True,
+                "status": (
+                    "pass"
+                    if result.get("status") in {"committed", "ready", None}
+                    else result.get("status", "warn")
+                ),
+                "triggered_by": "manual",
+                **result,
+            }
+            self._last_consolidation_report = report
+            return report
         except Exception as exc:
             report = {
                 "present": True,
@@ -475,53 +667,31 @@ class ControlPlaneService:
             return report
 
     def run_smoke_tests(self) -> dict[str, Any]:
-        async def _run() -> dict[str, Any]:
-            resolved = self._resolved_settings()
-            engine = self._build_engine(resolved.settings)
-            steps: dict[str, str] = {}
-            try:
-                await engine.process(
-                    Interaction(role="user", content="Smoke test preference: use concise replies."),
-                    scope="project",
-                    scope_id="mnemos-control-plane",
-                )
-                steps["store"] = "pass"
-
-                retrieved = await engine.retrieve(
-                    "concise replies",
-                    top_k=3,
-                    reconsolidate=False,
-                    current_scope="project",
-                    scope_id="mnemos-control-plane",
-                    allowed_scopes=("project", "global"),
-                )
-                steps["retrieve"] = "pass" if retrieved else "warn"
-
-                before_stats = engine.sleep_daemon.get_stats()
-                result = await engine.consolidate()
-                after_stats = engine.sleep_daemon.get_stats()
-                steps["consolidate"] = "pass"
-                self._last_consolidation_report = self._build_consolidation_activity(
-                    result=result,
-                    before_stats=before_stats,
-                    after_stats=after_stats,
-                    triggered_by="smoke",
-                )
-
-                health = self.health_report()
-                steps["health"] = "pass" if health["status"] == "ready" else "warn"
-            finally:
-                close = getattr(engine.store, "close", None)
-                if callable(close):
-                    close()
-
-            status = "fail" if any(step == "fail" for step in steps.values()) else "pass"
-            report = {"status": status, "steps": steps}
+        try:
+            context = self._context_payload()
+            probe = self._service_request("probe_cognition", {"context": context})
+            health = self._service_request("health", {})
+            steps = {
+                "input_specific_extraction": (
+                    "pass" if probe.get("input_specific_extraction") is True else "fail"
+                ),
+                "service": "pass" if health.get("status") == "running" else "fail",
+            }
+            status = (
+                "fail"
+                if any(value == "fail" for value in steps.values())
+                else "warn" if any(value == "warn" for value in steps.values()) else "pass"
+            )
+            report = {
+                "status": status,
+                "steps": steps,
+                "probe": probe,
+                "scope": "temporary source extraction; no accepted memories written",
+                "host_capture": "not_observed",
+                "restart_persistence": "not_observed",
+            }
             self._last_smoke_report = {"present": True, **report}
             return report
-
-        try:
-            return asyncio.run(_run())
         except Exception as exc:
             report = {
                 "status": "fail",
@@ -536,20 +706,62 @@ class ControlPlaneService:
             self._last_smoke_report = {"present": True, **report}
             return report
 
+    def remember_memory(self, content: str, *, scope: str = "project") -> dict[str, Any]:
+        return self._service_request(
+            "remember", {"context": self._context_payload(), "content": content, "scope": scope}
+        )
+
+    def retrieve_memory(
+        self, query: str, *, profile: str = "baseline", max_context_tokens: int = 1200
+    ) -> dict[str, Any]:
+        return self._service_request(
+            "retrieve",
+            {
+                "query": query,
+                "context": self._context_payload(),
+                "allowed_scopes": ["project", "workspace", "global"],
+                "top_k": 10,
+                "max_context_tokens": max_context_tokens,
+                "profile": profile,
+            },
+        )
+
+    def correct_memory(self, fact_id: str, content: str, expected_version: int) -> dict[str, Any]:
+        return self._service_request(
+            "correct",
+            {
+                "context": self._context_payload(),
+                "fact_id": fact_id,
+                "content": content,
+                "expected_version": expected_version,
+            },
+        )
+
+    def forget_memory(self, fact_id: str, expected_version: int) -> dict[str, Any]:
+        return self._service_request(
+            "forget",
+            {
+                "context": self._context_payload(),
+                "fact_id": fact_id,
+                "expected_version": expected_version,
+            },
+        )
+
     def get_dashboard_view(self) -> dict[str, Any]:
         resolved = self._resolved_settings()
         health = self.health_report()
         memory = self.get_memory_snapshot(limit=8)
+        scope = self.get_scope_status()
         current_host = resolved.settings.onboarding.preferred_host
         next_actions = list(health.get("next_actions", []))
         current_host_entry = _host_entry(current_host)
         if current_host_entry["tier"] != "Tier 1":
             next_actions.append(
-                f"{current_host_entry['label']} remains a documented path in 0.7.0. Use Claude Code for the strongest validated workflow."
+                f"Validate {current_host_entry['label']} in a real session; adapter tests alone do not establish host continuity."
             )
         if self._last_smoke_report is None:
             next_actions.append(
-                "Run the smoke check once after applying a host integration to verify the setup end to end."
+                "Run the smoke check to verify input-specific extraction. Host capture and restart behavior need separate validation."
             )
 
         deduped_actions: list[str] = []
@@ -562,6 +774,9 @@ class ControlPlaneService:
                 "status": health["status"],
                 "store_type": resolved.settings.storage.type,
                 "sqlite_path": resolved.settings.storage.sqlite_path,
+                "active_sqlite_path": health.get("service", {})
+                .get("runtime", {})
+                .get("database_path"),
                 "global_config": str(resolved.global_config_path),
                 "project_config": (
                     None
@@ -575,6 +790,9 @@ class ControlPlaneService:
                 "hosts": _host_catalog(),
             },
             "memory": memory,
+            "scope": scope,
+            "profile": scope.get("profile"),
+            "jobs": memory.get("jobs", {}),
             "health": health,
             "activity": {
                 "last_smoke_test": self._last_smoke_report or _default_activity(),

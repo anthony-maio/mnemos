@@ -2,6 +2,19 @@
 
 Use this checklist before tagging a release candidate or making category-defining claims.
 
+## Functional local memory acceptance
+
+The September 16, 2026 implementation is unreleased. [Validation progress](validation/2026-09-16/progress.md) records observations, failures, and gates still open. Before release:
+
+- Freeze one source commit and validate its wheel outside the source checkout.
+- Verify scope isolation, durable retry, restart, expected-version correction, forget/replay suppression, backup/restore, and reindex identity on the persistent service.
+- Record native Claude Code, Codex, and Hermes evidence separately from adapter and MCP protocol tests. A configured host is not a successful conversation.
+- Complete the versioned real-model baseline/full/five-ablation evaluation: at least 200 held-out sessions, 100 critical facts, 100 answerable queries, 100 no-answer queries, 50 state pairs, three repetitions, and a separate development set.
+- Report extraction precision and critical retention against 95 percent, recall@5 and no-answer accuracy against 90 percent, and full-pipeline degradation against a two-percentage-point limit. Include Wilson and session-cluster bootstrap intervals plus missing/unjudged coverage. Preserve neutral and negative results.
+- Measure warm recall p95 <= 500 ms at 10,000 facts and durable capture p95 <= 100 ms. Report cold startup separately. Do not weaken gates after measurement.
+- Complete the two-week internal pilot on at least two projects; general-availability claims additionally require external pilot evidence.
+- Website, paper, package, and release publication remain separate authorization steps. Historical synthetic gates below cannot replace these requirements.
+
 ## Quality Gates
 - `black --check .` passes
 - `mypy .` passes

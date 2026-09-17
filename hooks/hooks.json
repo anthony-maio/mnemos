@@ -6,7 +6,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "mnemos-cli retrieve-hook SessionStart 2>/dev/null || true"
+            "command": "python -m mnemos.adapters.claude_code SessionStart"
           }
         ]
       }
@@ -17,33 +17,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "mnemos-cli autostore-hook UserPromptSubmit 2>/dev/null || true"
-          },
-          {
-            "type": "command",
-            "command": "mnemos-cli retrieve-hook UserPromptSubmit 2>/dev/null || true"
-          }
-        ]
-      }
-    ],
-    "PostToolUse": [
-      {
-        "matcher": "",
-        "hooks": [
-          {
-            "type": "command",
-            "command": "mnemos-cli autostore-hook PostToolUse 2>/dev/null || true"
-          }
-        ]
-      }
-    ],
-    "PreCompact": [
-      {
-        "matcher": "",
-        "hooks": [
-          {
-            "type": "command",
-            "command": "mnemos-cli consolidate 2>/dev/null || true"
+            "command": "python -m mnemos.adapters.claude_code UserPromptSubmit"
           }
         ]
       }
@@ -54,7 +28,29 @@
         "hooks": [
           {
             "type": "command",
-            "command": "mnemos-cli consolidate 2>/dev/null || true"
+            "command": "python -m mnemos.adapters.claude_code Stop"
+          }
+        ]
+      }
+    ],
+    "PreCompact": [
+      {
+        "matcher": "",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "python -m mnemos.adapters.claude_code PreCompact"
+          }
+        ]
+      }
+    ],
+    "PostCompact": [
+      {
+        "matcher": "",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "python -m mnemos.adapters.claude_code PostCompact"
           }
         ]
       }

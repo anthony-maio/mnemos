@@ -91,10 +91,9 @@ def test_ui_router_serves_memory_detail_endpoint(tmp_path: Path) -> None:
     router = MnemosUiRouter(service)
     response = router.handle("GET", "/api/memory/chunk-123", None)
 
-    assert response.status == 200
+    assert response.status == 503
     payload = json.loads(response.body.decode("utf-8"))
-    assert payload["id"] == "chunk-123"
-    assert payload["scope"] == "project"
+    assert "MNEMOS_USER_PROFILE_ID" in payload["error"]
 
 
 def test_ui_router_serves_dashboard_and_retrieval_explanation(tmp_path: Path) -> None:
@@ -140,15 +139,44 @@ def test_ui_router_serves_dashboard_and_retrieval_explanation(tmp_path: Path) ->
     assert dashboard_response.status == 200
     dashboard = json.loads(dashboard_response.body.decode("utf-8"))
     assert dashboard["host"]["current"]["name"] == "claude-code"
-    assert dashboard["memory"]["count"] == 1
+    assert dashboard["memory"]["count"] == 0
 
     detail_response = router.handle(
         "GET",
         "/api/memory/chunk-123?query=python%20package%20management&current_scope=project&scope_id=repo-alpha",
         None,
     )
-    assert detail_response.status == 200
+    assert detail_response.status == 503
     detail = json.loads(detail_response.body.decode("utf-8"))
-    assert detail["retrieval"] is not None
-    assert detail["retrieval"]["scope_match"] is True
-    assert detail["retrieval"]["explanation"]
+    assert "MNEMOS_USER_PROFILE_ID" in detail["error"]
+
+
+def test_ui_router_requires_csrf_for_http_mutations(tmp_path: Path) -> None:
+    router = MnemosUiRouter(
+        ControlPlaneService(
+            cwd=tmp_path, env={}, global_config_path=tmp_path / "Mnemos" / "mnemos.toml"
+        )
+    )
+
+    token = json.loads(router.handle("GET", "/api/csrf", None).body)["csrf_token"]
+    denied = router.handle("POST", "/api/settings/global", b"{}", {"Host": "127.0.0.1"})
+    allowed = router.handle(
+        "POST", "/api/settings/global", b"{}", {"Host": "127.0.0.1", "X-Mnemos-CSRF": token}
+    )
+
+    assert denied.status == 403
+    assert allowed.status == 200
+    assert token not in allowed.body.decode("utf-8")
+    assert router.handle("GET", "/api/csrf", None, {"Host": "attacker.example"}).status == 403
+    assert router.handle("GET", "/api/settings", None, {"Host": "attacker.example"}).status == 403
+
+
+def test_ui_router_rejects_non_loopback_binding(tmp_path: Path) -> None:
+    from mnemos.ui_server import run_ui_server
+
+    try:
+        run_ui_server(service=ControlPlaneService(cwd=tmp_path), host="0.0.0.0", open_browser=False)
+    except ValueError as exc:
+        assert "loopback" in str(exc)
+    else:  # pragma: no cover
+        raise AssertionError("non-loopback UI binding was accepted")

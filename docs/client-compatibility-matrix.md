@@ -1,29 +1,19 @@
-# MCP Client Compatibility Matrix
+# Client compatibility and observed evidence
 
-Last updated: **March 12, 2026**
+Updated September 16, 2026 for the unreleased functional-local-memory worktree. Implementation, protocol tests, and native conversation acceptance are separate claims.
 
-## Tier Definitions
+| Client | Implemented integration | Observed evidence | Native conversation acceptance |
+| --- | --- | --- | --- |
+| Claude Code | Command hooks, transcript deltas, context injection, MCP tools | Adapter tests, real MCP/service subprocess lifecycle, and one native seeded-fact recall turn on 2.1.191 | Full lifecycle matrix pending; other installed hooks were present in the native smoke |
+| Codex | Command lifecycle hooks, supported context output, MCP tools | Adapter contracts and shared service continuity pass; two native CLI 0.146.0 turns completed without observed hook callbacks or recall | Native automatic capture and recall unproven |
+| Hermes Agent | Optional MemoryProvider and explicit Windows/WSL bridge | Installed Hermes 0.21.3 API calls and actual WSL -> Windows authenticated transport | Pending |
+| Generic MCP stdio | MCP server as service client | Subprocess capture, job status, inspect, retrieve, correct, forget | Host-specific acceptance pending |
+| Claude Desktop | MCP configuration | Shared protocol coverage; no current desktop conversation evidence | Pending |
+| Cursor | MCP plus project rule | Configuration and policy generation tests | Pending |
+| Windsurf / Cline | MCP examples | Documentation/configuration only | Pending |
 
-- **Tier 1 (release-blocking)**: real end-to-end validation in a supported host workflow.
-- **Tier 2 (documented)**: config/docs validated, but not yet promoted to release-blocking E2E support.
+The cross-host fixture uses Codex, Claude Code, and Hermes scope contexts over a real temporary HTTP service and SQLite store. It checks restart, correction preserving identity, forget/replay suppression, and a foreign-project canary. Its provider fixtures are synthetic. It does not launch three native conversations.
 
-## Matrix
+Exact evidence boundaries are in [local-memory-hosts.md](validation/local-memory-hosts.md) and the [native host smoke record](validation/2026-09-16/native-host-smoke.md). The [Hermes bridge record](validation/2026-09-16/hermes-bridge-smoke.md) documents installed API and transport checks. The two-week pilot is NOT RUN.
 
-| Client | Tier | Status | Tested Config | Notes |
-|---|---|---|---|---|
-| Claude Code | Tier 1 | Supported | plugin + direct `mnemos-mcp` | Primary target; the default local SQLite path is the shipped setup, and hook-based auto-capture is validated there. |
-| Claude Desktop | Tier 1 | Supported | `docs/mcp-configs/claude-desktop.json` | Tested with `python -m mnemos.mcp_server` and local-safe mock/simple defaults. |
-| Generic MCP stdio host | Tier 1 | Supported | `docs/mcp-configs/generic-stdio.json` | Tested with `python -m mnemos.mcp_server`; swap provider env for production. |
-| Codex | Tier 2 | Documented | `docs/mcp-configs/codex.json` + `docs/codex.md` | Supported through MCP + a stronger `AGENTS.md` pack; the shared SQLite-backed `MNEMOS_CONFIG_PATH` path is validated, and optional Codex Automations can run maintenance checks, but daily-use E2E promotion is still pending. |
-| Cursor | Tier 2 | Best effort + Antigravity pack | `docs/mcp-configs/cursor.json` + `docs/cursor-antigravity.md` | Repo-level `.cursor/mcp.json` plus `.cursor/rules/mnemos-memory.mdc` soft-auto setup is now covered in tests; no shipped host-hook auto-capture path yet. |
-| Windsurf | Tier 2 | Best effort | `docs/mcp-configs/windsurf.json` | Smoke config validated in CI (non-blocking). |
-| Cline | Tier 2 | Best effort | `docs/mcp-configs/cline.json` | Smoke config validated in CI (non-blocking). |
-
-## Known Caveats
-
-- Tier 2 hosts may differ in MCP UX and timeout defaults.
-- Tier 1 checked-in config files are intentionally minimal and runnable from source or an installed package; replace `mock`/`simple` providers with `ollama`, `openai`, or `openclaw` for real usage.
-- Claude Code is the only host with shipped deterministic auto-capture hooks today.
-- Codex currently depends on the repo's `AGENTS.md` to consistently trigger `mnemos_retrieve`, `mnemos_store`, and `mnemos_consolidate`; optional Codex Automations are maintenance helpers, not chat hooks.
-- Cursor still depends on project instructions / `.cursor/rules` for automatic Mnemos tool usage.
-- For highest retrieval quality, avoid `MNEMOS_EMBEDDING_PROVIDER=simple` in production profiles.
+All clients need an enabled project, registered profile, and the same runtime descriptor. A repository basename is not a scope identity. Mock cognition is rejected by the normal configured service; use a real provider and input-specific readiness probe. See [functional local memory](functional-local-memory.md), [Codex setup](codex.md), and [Hermes setup](integrations/hermes.md).
