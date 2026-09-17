@@ -141,3 +141,47 @@ after the lifecycle matrix. The provenance regression suite passed 31 tests.
 The rebuilt frozen wheel is byte-identical to the installed wheel already
 tested outside the checkout; source and wheel metadata checks passed. See
 [evaluation-running.md](evaluation-running.md) and [frozen-build.json](frozen-build.json).
+
+## Recovery and diagnostics follow-up
+
+While the frozen model run continued, a completion audit found that manual
+retry existed only in storage. The owning service now exposes scoped job
+listing and exhausted-job retry. CLI `jobs`, `job-status`, and `retry-job`
+and the UI recovery control use that service. Job counts now use the same
+profile, project, and workspace boundary as the listing and retry operations.
+
+Recovery tests first failed on the missing service operation. Focused checks
+then passed across exhausted-write recovery, duplicate retry rejection,
+foreign profile/project/workspace exclusion before the result limit, CLI
+subprocess routing, and CSRF-protected UI retry. A real browser requeued the
+exhausted fixture and maintenance created exactly one additional fact.
+The UI now includes FastEmbed and removes stale managed-service claims for
+the embedded recall preset. See [ui-smoke.md](ui-smoke.md).
+
+Claude and Codex hook entrypoints now report sanitized failure categories to
+stderr while keeping nonblocking exit behavior and the stdout host protocol.
+The legacy CLI hook wrapper uses the same diagnostic. Secret-bearing
+exception tests verify that messages and conversation content are excluded.
+
+These follow-ups are later source changes. The ongoing real-model run remains
+bound to its original frozen `5e852e7` checkout; no experimental source,
+labels, thresholds, or checkpoints were changed. The later changes concern
+recovery entrypoints, scoped operational counts, diagnostics, and UI behavior.
+
+## Recovery verification checkpoint
+
+Commit `ab3026a` passed the full Python 3.13 suite: 521 passed, 2 optional
+checks skipped in 273.10 seconds. Black passed 115 Python files, strict mypy
+passed 61 source files under Python 3.10, and the UI JavaScript syntax check
+passed. A detached checkout built the wheel and source archive; both passed
+Twine, and the source archive excludes generated browser and fixture files.
+The installed wheel passed its lifecycle and exhausted-job recovery smoke
+from `D:/WindowsTemp`, outside the source checkout. Exact package hashes and
+the fixture scope are recorded in [recovery-build.json](recovery-build.json).
+
+The supplemental v1 queue was withdrawn before execution because its direct
+candidate pool already contained the intended graph target and it lacked
+independent affective target labels. The coordinator was stopped intentionally;
+the lifecycle worker continues independently from the unchanged frozen source.
+A replacement mechanism protocol is being implemented. Neither completed unit
+tests nor an evaluation observation's execution status establish model quality.
