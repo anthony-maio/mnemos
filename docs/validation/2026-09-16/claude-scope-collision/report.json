@@ -1,0 +1,61 @@
+{
+  "durable": {
+    "event_count": 1,
+    "event_scopes": [
+      "project-a"
+    ],
+    "job_count": 1,
+    "job_scopes": [
+      "project-a"
+    ]
+  },
+  "finding": {
+    "classification": "rejected_valid_second_capture",
+    "cross_project_leak": false,
+    "duplicate_event": false,
+    "reason": "The service identity key does not include project_id, so the same adapter event_id and session collides.",
+    "reproduced": true
+  },
+  "fixture": {
+    "explicit_prompt_id": true,
+    "profiles": [
+      "profile-a"
+    ],
+    "projects": [
+      "project-a",
+      "project-b"
+    ],
+    "shared_session_id": "shared-session"
+  },
+  "model_calls": 0,
+  "observations": [
+    {
+      "event_id": "claude:edbf0a6beb9bfde3c155d6c1708525c42e5f1d18db1becf893cfa4a3e5bb667f",
+      "project": "project-a",
+      "stored_events": 1,
+      "stored_jobs": 1
+    },
+    {
+      "event_id": "claude:edbf0a6beb9bfde3c155d6c1708525c42e5f1d18db1becf893cfa4a3e5bb667f",
+      "project": "project-b",
+      "stored_events": 1,
+      "stored_jobs": 1
+    }
+  ],
+  "offline": true,
+  "probe": "claude_event_scope_collision",
+  "recommended_fix": "Include resolved profile/project/workspace identity in the Claude adapter event_id, matching the Codex adapter, while retaining native event identifiers when supplied.",
+  "results": [
+    {
+      "captured": 1,
+      "committed": true,
+      "error": null,
+      "status": "ok"
+    },
+    {
+      "exception": "ValueError",
+      "message": "Source event identity already has a different payload"
+    }
+  ],
+  "schema_version": 1
+}

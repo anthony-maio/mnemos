@@ -148,3 +148,63 @@ The fixture used simple embeddings and unavailable cognition. Durable event
 capture is separate from accepted-fact extraction, which this run did not
 measure. Its private database and hook traces remain at
 `D:\WindowsTemp\mnemos-native-claude-capture-o36uj8e0`.
+
+## Codex native command marker follow-up
+
+The installed Codex CLI 0.146.0 reached a native Windows command configured
+through a disposable `hooks.json`. Its event marker was observed. This narrows
+the earlier failures: the installed host can discover a user hook and dispatch
+a command. It does not yet prove native Mnemos capture or recall.
+
+The probe's cancellation controls were inconclusive. Killing the launcher left
+a child running, and the retained stream records turn lifecycle events without
+numeric usage. Actual model execution is NOT VERIFIED. The two marker checks
+occurred at different times, so their differing observations do not establish
+a shell failure. The copied authentication file and disposable project were
+removed; no matching probe process remained. The run did not explicitly protect
+the temporary directory with an ACL before copying authentication, and supplies
+no ACL verification. See the [preserved marker evidence](native-codex-marker-v3/README.md).
+
+## Claude missing-transcript repair checkpoint
+
+Commit `d17dd24` allows Stop to capture `last_assistant_message` when the
+transcript is absent or unreadable. It reports degraded transcript coverage,
+retains fallback deduplication until transcript data arrives, and advances a
+transcript checkpoint only after acknowledged capture. Rejected prompt,
+transcript, and fallback captures report degraded status. Corrupt checkpoints
+remain distinct from unavailable transcript files.
+
+The focused adapter suite passes 27 tests. Full frozen-source verification is
+running. The installed-wheel native repeat passed: Claude 2.1.191 invoked
+SessionStart, UserPromptSubmit, and Stop; its user prompt and assistant reply
+were both captured and survived service restart. UserPromptSubmit supplied the
+SQLite seed and Claude answered with it. Stop emitted a degraded diagnostic for
+the unavailable transcript while preserving the assistant fallback. The actual
+`claude-sonnet-4-6` cost was $0.009036 under the same $0.08 bound.
+
+The [native v3 report](native-claude-capture-v3/report.json) preserves the
+result and exact hook payloads. Its installed package matches all 55 files in
+the frozen `d17dd24` source after normalizing CRLF line endings, with exact
+wheel-to-installed byte matches. The runner, comparison, and artifact hashes
+are retained alongside the report. Its private fixture is
+`D:\WindowsTemp\mnemos-native-claude-capture-xbngd1p9`; the service was stopped.
+As before, simple embeddings and unavailable cognition establish capture and
+seeded recall only. When the host
+provides neither a transcript nor distinct event IDs, identical repeated
+messages remain ambiguous; this repair does not establish complete transcript
+coverage.
+
+An offline real-service probe also reproduced an independent identity defect:
+the same Claude session, native event ID, role, and content in two registered
+projects generated the same adapter ID. Project A committed; project B was
+rejected by the service's payload check. No cross-project read leak or duplicate
+was observed. Checkpoint filenames also omit scope. The [reproduction and repair
+design](claude-scope-collision/repair-design.md) retain this open issue. A repair
+must preserve forgotten-source tombstones when IDs change; canonical fact text
+alone does not suppress every replay of its original conversation.
+
+The [corrected offline Codex shell probe](codex-windows-shell-probe-v2/README.md)
+also used the installed `d17dd24` package. Direct Python and the tagged Windows
+shell command each captured a distinct prompt and returned seeded context;
+both events survived service restart. This supplies isolated adapter and shell
+transport evidence. It does not launch a native Codex conversation.

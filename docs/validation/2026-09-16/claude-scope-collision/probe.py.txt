@@ -1,0 +1,164 @@
+"""Offline reproduction of Claude event identity collisions across projects."""
+
+from __future__ import annotations
+
+import asyncio
+import json
+import tempfile
+from pathlib import Path
+from typing import Any
+
+from mnemos.adapters.claude_code import ClaudeCodeAdapter
+from mnemos.config import MnemosConfig, ModuleConfig
+from mnemos.contracts import CaptureEvent
+from mnemos.engine import MnemosEngine
+from mnemos.memory_service import LocalMemoryService
+from mnemos.scopes import ProjectIdentity, ScopeRegistry, canonical_project_root
+from mnemos.utils.embeddings import SimpleEmbeddingProvider
+from mnemos.utils.llm import MockLLMProvider
+from mnemos.utils.storage import SQLiteStore
+
+
+class ServiceClient:
+    """Minimal async client bridge used to exercise the real adapter."""
+
+    def __init__(self, service: LocalMemoryService) -> None:
+        self.service = service
+
+    async def capture(self, payload: dict[str, Any]) -> dict[str, Any]:
+        return self.service.capture(CaptureEvent.model_validate(payload))
+
+
+async def _run() -> dict[str, Any]:
+    with tempfile.TemporaryDirectory(prefix="mnemos-claude-collision-") as raw_root:
+        root = Path(raw_root)
+        project_a = root / "project-a"
+        project_b = root / "project-b"
+        project_a.mkdir()
+        project_b.mkdir()
+        registry = ScopeRegistry(
+            profiles=["profile-a"],
+            projects={
+                "project-a": ProjectIdentity(
+                    id="project-a",
+                    root=canonical_project_root(project_a),
+                    user_profile_id="profile-a",
+                    enabled=True,
+                ),
+                "project-b": ProjectIdentity(
+                    id="project-b",
+                    root=canonical_project_root(project_b),
+                    user_profile_id="profile-a",
+                    enabled=True,
+                ),
+            },
+        )
+        store = SQLiteStore(str(root / "memory.sqlite"))
+        config = MnemosConfig(
+            modules=ModuleConfig(
+                affective=False,
+                mutable_rag=False,
+                sleep=False,
+                surprisal=False,
+                spreading=False,
+            )
+        )
+        engine = MnemosEngine(
+            config=config,
+            llm=MockLLMProvider(),
+            embedder=SimpleEmbeddingProvider(dim=4),
+            store=store,
+        )
+        service = LocalMemoryService(engine, registry)
+        adapter = ClaudeCodeAdapter(
+            client=ServiceClient(service),
+            registry=registry,
+            user_profile_id="profile-a",
+            checkpoint_directory=root / "checkpoints",
+        )
+        base = {
+            "session_id": "shared-session",
+            "prompt": "Keep this project convention.",
+            "prompt_id": "native-event-1",
+        }
+        observations: list[dict[str, Any]] = []
+        results: list[Any] = []
+        for project_path in (project_a, project_b):
+            payload = {**base, "cwd": str(project_path), "hook_event_name": "UserPromptSubmit"}
+            event_id = adapter._event_id(
+                "shared-session",
+                base["prompt_id"],
+                "user",
+                base["prompt"],
+            )
+            try:
+                result = await adapter.handle("UserPromptSubmit", payload, include_retrieval=False)
+                results.append(
+                    {
+                        "status": result.status,
+                        "committed": result.committed,
+                        "captured": result.captured,
+                        "error": result.error,
+                    }
+                )
+            except Exception as exc:
+                results.append({"exception": type(exc).__name__, "message": str(exc)})
+            observations.append(
+                {
+                    "project": project_path.name,
+                    "event_id": event_id,
+                    "stored_events": len(store.list_episodic_events(limit=100)),
+                    "stored_jobs": len(store.list_jobs(limit=100)),
+                }
+            )
+        events = store.list_episodic_events(limit=100)
+        jobs = store.list_jobs(limit=100)
+        report = {
+            "schema_version": 1,
+            "probe": "claude_event_scope_collision",
+            "offline": True,
+            "model_calls": 0,
+            "fixture": {
+                "profiles": ["profile-a"],
+                "projects": ["project-a", "project-b"],
+                "shared_session_id": "shared-session",
+                "explicit_prompt_id": True,
+            },
+            "observations": observations,
+            "results": results,
+            "durable": {
+                "event_count": len(events),
+                "job_count": len(jobs),
+                "event_scopes": sorted({event.scope_id for event in events}),
+                "job_scopes": sorted(
+                    {
+                        str(job.payload.get("context", {}).get("project_id"))
+                        for job in jobs
+                    }
+                ),
+            },
+            "finding": {
+                "reproduced": len(results) == 2
+                and "exception" in results[1]
+                and results[1].get("exception") == "ValueError",
+                "classification": "rejected_valid_second_capture",
+                "cross_project_leak": False,
+                "duplicate_event": False,
+                "reason": "The service identity key does not include project_id, so the same adapter event_id and session collides.",
+            },
+            "recommended_fix": "Include resolved profile/project/workspace identity in the Claude adapter event_id, matching the Codex adapter, while retaining native event identifiers when supplied.",
+        }
+        store.close()
+        return report
+
+
+def main() -> int:
+    report = asyncio.run(_run())
+    output = Path(__file__).with_name("claude-scope-collision-report.json")
+    output.write_text(json.dumps(report, indent=2, sort_keys=True) + "\n", encoding="utf-8")
+    print(json.dumps(report, indent=2, sort_keys=True))
+    return 0
+
+
+if __name__ == "__main__":
+    raise SystemExit(main())

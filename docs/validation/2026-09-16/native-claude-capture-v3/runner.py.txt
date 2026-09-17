@@ -1,0 +1,122 @@
+"""Bounded native capture proof using the installed wheel and temporary settings."""
+from datetime import datetime, timezone
+import hashlib
+import json
+import os
+from pathlib import Path
+import subprocess
+import sys
+import tempfile
+
+import mnemos
+from mnemos.engine import MnemosEngine
+from mnemos.memory_service import LocalMemoryService
+from mnemos.scopes import ScopeRegistry
+from mnemos.service import MnemosService, _protect_private_path
+from mnemos.utils.embeddings import SimpleEmbeddingProvider
+from mnemos.utils.llm import UnavailableLLMProvider
+from mnemos.utils.storage import SQLiteStore
+
+workspace = Path(__file__).resolve().parent.parent
+output = workspace / 'docs/validation/2026-09-16/native-claude-capture-v3'
+output.mkdir(exist_ok=False)
+fixture = Path(tempfile.mkdtemp(prefix='mnemos-native-claude-capture-'))
+_protect_private_path(fixture)
+project = fixture / 'project'
+project.mkdir()
+trace = fixture / 'hooks'
+trace.mkdir()
+profile = 'native-claude-capture-fixture'
+registry = ScopeRegistry()
+registry.register_project(project, user_profile_id=profile, enabled=True)
+registry.save(fixture / 'scopes.json')
+env = {k:v for k,v in os.environ.items() if not k.startswith('MNEMOS_') and k != 'PYTHONPATH'}
+env.update(MNEMOS_RUNTIME_DESCRIPTOR=str(fixture/'runtime.json'),
+           MNEMOS_SCOPE_REGISTRY=str(fixture/'scopes.json'),
+           MNEMOS_USER_PROFILE_ID=profile, MNEMOS_PROJECT_ROOT=str(project),
+           MNEMOS_RUNTIME_DIR=str(fixture/'runtime'),
+           MNEMOS_CLAUDE_CHECKPOINT_DIR=str(fixture/'checkpoints'),
+           MNEMOS_CONFIG_PATH=str(fixture/'settings.toml'),
+           MNEMOS_ROUTING_REVIEW_DIR=str(fixture/'routing'),
+           MNEMOS_AUTO_START='false', DISABLE_AUTOUPDATER='1')
+wrapper = fixture/'hook.py'
+wrapper.write_text('''import json, os, subprocess, sys
+from pathlib import Path
+from uuid import uuid4
+payload=sys.stdin.read()
+result=subprocess.run([sys.executable, '-m', 'mnemos.adapters.claude_code', sys.argv[1]], input=payload, text=True, capture_output=True, timeout=20)
+record={'event':sys.argv[1], 'payload':json.loads(payload), 'returncode':result.returncode, 'stdout':result.stdout, 'stderr':result.stderr}
+(Path(__file__).parent/'hooks'/f'{sys.argv[1]}-{uuid4().hex}.json').write_text(json.dumps(record,indent=2),encoding='utf-8')
+sys.stdout.write(result.stdout)
+sys.stderr.write(result.stderr)
+raise SystemExit(result.returncode)
+''', encoding='utf-8')
+hooks = {event:[{'hooks':[{'type':'command','command':f'"{Path(sys.executable).as_posix()}" "{wrapper.as_posix()}" {event}','timeout':25}]}]
+         for event in ('SessionStart','UserPromptSubmit','Stop')}
+settings = fixture/'claude-settings.json'
+settings.write_text(json.dumps({'hooks':hooks},indent=2),encoding='utf-8')
+empty_mcp = fixture/'mcp.json'
+empty_mcp.write_text('{"mcpServers":{}}',encoding='utf-8')
+claude = r'C:\Users\Ant\.local\bin\claude.exe'
+prompt = 'Remember that the project release label is bronze finch. In one short sentence, tell me which database this project uses from the supplied project memory.'
+command = [claude,'--print','--verbose','--output-format','stream-json','--include-hook-events',
+           '--setting-sources','project','--settings',str(settings),
+           '--strict-mcp-config','--mcp-config',str(empty_mcp),'--tools','',
+           '--disable-slash-commands','--permission-mode','plan','--no-session-persistence',
+           '--model','claude-sonnet-4-6','--max-budget-usd','0.08',
+           '--system-prompt','Answer the user briefly using the supplied project memory. Do not use tools.',prompt]
+
+def start():
+    store=SQLiteStore(str(fixture/'memory.sqlite'))
+    engine=MnemosEngine(store=store,embedder=SimpleEmbeddingProvider(),llm=UnavailableLLMProvider())
+    service=MnemosService(dispatcher=LocalMemoryService(engine,registry),descriptor_path=fixture/'runtime.json')
+    service.start()
+    return service,store
+
+def cli(*args):
+    completed=subprocess.run([sys.executable,'-m','mnemos.cli',*args],cwd=project,env=env,capture_output=True,text=True,timeout=30)
+    if completed.returncode:
+        raise RuntimeError('Fixture CLI failed: '+completed.stderr)
+    return json.loads(completed.stdout)
+
+report={'source_commit':'d17dd249424f3e2c11b8fefee4a20bba8f50cf9f',
+        'package':str(mnemos.__file__),'fixture':str(fixture),'started_at':datetime.now(timezone.utc).isoformat(),
+        'host_version':subprocess.check_output([claude,'--version'],text=True).strip(),
+        'command':command,'runner_sha256':hashlib.sha256(Path(__file__).read_bytes()).hexdigest(),
+        'scope':'native hook capture and seeded recall; unavailable cognition, simple embeddings; no extraction quality claim'}
+assert 'site-packages' in str(mnemos.__file__)
+service,store=start()
+try:
+    cli('store','The project uses SQLite for durable memory storage.')
+    cli('consolidate')
+    before={event.id for event in store.list_episodic_events()}
+    result=subprocess.run(command,cwd=project,env=env,capture_output=True,text=True,timeout=100)
+    (fixture/'claude.stdout.jsonl').write_text(result.stdout,encoding='utf-8')
+    (fixture/'claude.stderr.log').write_text(result.stderr,encoding='utf-8')
+    report['returncode']=result.returncode
+    records=[]
+    for line in result.stdout.splitlines():
+        try: records.append(json.loads(line))
+        except json.JSONDecodeError: pass
+    report['result_records']=[row for row in records if row.get('type')=='result']
+    report['hook_events']=[row for row in records if str(row.get('subtype','')).startswith('hook_')]
+    hook_records=[json.loads(path.read_text(encoding='utf-8')) for path in sorted(trace.glob('*.json'))]
+    report['adapter_invocations']=hook_records
+    captured=[event.model_dump(mode='json') for event in store.list_episodic_events() if event.id not in before]
+    report['captured_events']=captured
+    report['jobs_before_restart']=[job.model_dump(mode='json') for job in store.list_jobs()]
+    service.stop()
+    service,store=start()
+    report['event_ids_after_restart']=[event.id for event in store.list_episodic_events()]
+    report['events_survive_restart']=all(event['id'] in report['event_ids_after_restart'] for event in captured)
+    report['user_prompt_captured']=any(event['role']=='user' and event['content']==prompt for event in captured)
+    report['assistant_captured']=any(event['role']=='assistant' for event in captured)
+    report['invoked_events']=sorted({record['event'] for record in hook_records})
+    report['status']='observed' if (result.returncode==0 and report['events_survive_restart'] and report['user_prompt_captured'] and report['assistant_captured']) else 'not_observed'
+except Exception as exc:
+    report.update(status='failed',error_type=type(exc).__name__,error=str(exc))
+finally:
+    service.stop()
+    report['finished_at']=datetime.now(timezone.utc).isoformat()
+    (output/'report.json').write_text(json.dumps(report,indent=2)+'\n',encoding='utf-8')
+print(json.dumps({key:report.get(key) for key in ['status','fixture','returncode','user_prompt_captured','assistant_captured','events_survive_restart','invoked_events','error_type']}))
