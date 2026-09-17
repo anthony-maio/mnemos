@@ -1,6 +1,6 @@
 # Functional local memory
 
-This document describes the local runtime as it exists in the functional-local-memory worktree on September 16, 2026. It is an implementation guide and an errata record. A passing deterministic test is evidence for a mechanism. It is not evidence that a real host, real model, or long-running installation has passed.
+This document describes the local runtime in the functional-local-memory worktree, updated September 17, 2026. It is an implementation guide and an errata record. A passing deterministic test is evidence for a mechanism. It is not evidence that a real host, real model, or long-running installation has passed.
 
 ## Start with the local service
 
@@ -96,6 +96,23 @@ mnemos_forget(fact_id, expected_version)
 
 A stale expected version is rejected. Forget records a suppression identity so replay of an old event cannot recreate the fact. Backups can still contain historical content and are handled separately; this is logical deletion from the live store, not a claim of forensic deletion from every copy or transcript.
 
+Single-record forget can leave an independently captured copy of the same
+assertion. The [preserved reproduction](validation/2026-09-16/capture-forget-overlap/v2/README.md)
+demonstrates this when sleep extraction is disabled and captured text is
+promoted verbatim. The unreleased implementation now provides
+`mnemos_forget_preview` and `mnemos_forget_related`, also available through
+**Review captured copies** in the memory UI. Review the target, extra captured
+facts, and their sources; select the extra records to remove, then apply that
+preview. A changed or incomplete preview requires another review. Shared
+unselected dependencies prevent deletion, including references in queued jobs
+after source text expires. Matching uses the full current or historical
+assertion within the same project and profile; it does not identify paraphrases.
+The [verification record](validation/2026-09-16/related-forget-verification/README.md)
+separates passing focused/browser checks from pending full-package and native
+acceptance.
+All five module switches default to enabled; the baseline retrieval profile
+is a separate ranking setting.
+
 ## What the five modules currently mean
 
 These are the implemented mechanism contracts. Their neuroscience analogies are design inspiration, not evidence of human-like memory.
@@ -153,9 +170,9 @@ Current evidence has these boundaries:
 
 | Evidence | Status |
 | --- | --- |
-| Deterministic module and storage tests | Source 554a251: 691 tests passed with two optional WSL skips, plus formatting, typing, JavaScript, build, and package checks. Its installed wheel passed the Claude replay repair check. Native host results remain bound to the earlier source20f package. See [current verification](validation/2026-09-16/claude-replay-verification/README.md) and [earlier verification with its environment caveat](validation/2026-09-16/claude-scope-verification.md) |
+| Deterministic module and storage tests | Source 9e25339: 703 tests passed with two optional WSL skips, plus formatting, typing, JavaScript, build, and package checks. Its wheel passed Claude replay, Hermes entry-point discovery, and offline Codex API preflight. Native host results remain bound to the earlier source20f package. See [package verification](validation/2026-09-16/atomic-schema-verification/README.md). Related-forget source c805cc2 has passing focused/browser checks; its full frozen-source run is in progress |
 | Synthetic local service and SQLite restart flow | Observed for one provider-backed fact |
-| Full real-model ablation and held-out quality evaluation | Failed v2 observations preserved; repaired real-model lifecycle preflight passed four cases. Frozen b7 held-out mechanism evaluation is running; seven-profile lifecycle evaluation follows. Quality and module benefit remain unproved; see [run record](validation/2026-09-16/evaluation-running.md) |
+| Full real-model ablation and held-out quality evaluation | Failed v2 observations preserved; repaired real-model lifecycle preflight passed four cases. Frozen b7 held-out mechanism phase completed: graph correctness passed, graph coverage failed with zero eligible cases, synthetic-state affective top-1 was 0.33 versus 0.00, and classifier fidelity passed 154/300 observations. Seven-profile lifecycle evaluation is running. See [mechanism results and limits](validation/2026-09-16/real-model-v3/mechanism-heldout/REVIEW.md) |
 | Installed Claude Code, Codex, and Hermes host smoke | Installed 20f Claude and Codex returned random canaries and captured both roles across restart using constant fixture vectors. Claude reported degraded transcript/identity coverage; Codex used generated TOML hooks. Actual WSL bridge and installed Hermes API observed; complete native lifecycle matrix and Desktop checks remain open |
 | Two-week pilot with external users or projects | NOT RUN |
 | 10,000-fact latency and growth acceptance | Frozen b7, real query embeddings with synthetic facts: recall 1,314.583 ms p95 fails the 500 ms gate; durable capture 57.410 ms p95 passes the 100 ms gate; database 324,862,864 bytes. Earlier failed and passing timings remain preserved |

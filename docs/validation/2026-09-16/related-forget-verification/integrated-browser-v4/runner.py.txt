@@ -1,0 +1,116 @@
+import asyncio
+import hashlib
+import json
+import subprocess
+import sys
+import threading
+from datetime import datetime, timezone
+from http.server import ThreadingHTTPServer
+from pathlib import Path
+
+root = Path(__file__).resolve().parents[1]
+sys.path.insert(0, str(root))
+from mnemos.config import MnemosConfig, ModuleConfig
+from mnemos.control_plane import ControlPlaneService
+from mnemos.engine import MnemosEngine
+from mnemos.memory_service import LocalMemoryService
+from mnemos.scopes import ScopeRegistry
+from mnemos.ui_server import MnemosUiRouter, _MnemosUiHandler
+from mnemos.utils.embeddings import SimpleEmbeddingProvider
+from mnemos.utils.llm import UnavailableLLMProvider
+from mnemos.utils.storage import SQLiteStore
+
+out = root / '.venv' / sys.argv[1]
+out.mkdir(exist_ok=False)
+project = out / 'project'
+project.mkdir()
+home = out / 'home'
+home.mkdir()
+db = out / 'memory.sqlite'
+registry = ScopeRegistry()
+registry.register_project(project, user_profile_id='browser-profile', enabled=True)
+registry_path = out / 'scopes.json'
+registry.save(registry_path)
+context = registry.resolve(project, user_profile_id='browser-profile', session_id='browser-seed', host='manual')
+ctx = context.model_dump(mode='json')
+config_path = out / 'global.toml'
+config_path.write_text('[storage]\ntype="sqlite"\nsqlite_path="' + db.as_posix() + '"\n', encoding='utf-8')
+
+def create_service():
+    store = SQLiteStore(str(db))
+    engine = MnemosEngine(config=MnemosConfig(modules=ModuleConfig(surprisal=False, mutable_rag=False, affective=False, sleep=False, spreading=False)), store=store, llm=UnavailableLLMProvider(), embedder=SimpleEmbeddingProvider(), scope_registry=registry, require_scope_context=True)
+    return LocalMemoryService(engine, registry)
+
+memory = create_service()
+calls = []
+class Client:
+    async def request(self, operation, payload, **_):
+        calls.append({'operation': operation, 'payload': payload})
+        return await memory.dispatch(operation, payload)
+
+captured = {'context': ctx, 'event_id': 'ui-captured-assertion', 'occurred_at': datetime.now(timezone.utc).isoformat(), 'role': 'user', 'content': 'Please remember: Release is old-browser-canary.', 'source_kind': 'manual', 'source_ref': 'fixture#capture'}
+async def seed():
+    await memory.dispatch('capture', captured)
+    await memory.dispatch('maintenance', {})
+    await memory.dispatch('remember', {'context': ctx, 'event_id': 'ui-explicit', 'content': 'Release is old-browser-canary.'})
+    await memory.dispatch('maintenance', {})
+    target = next(f for f in memory.engine.store.get_all() if f.content == 'Release is old-browser-canary.')
+    copy = next(f for f in memory.engine.store.get_all() if f.content == captured['content'])
+    await memory.dispatch('correct', {'context': ctx, 'fact_id': target.id, 'expected_version': target.version, 'content': 'Release is new-browser-canary.'})
+    await memory.dispatch('maintenance', {})
+    await memory.dispatch('remember', {'context': ctx, 'event_id': 'unrelated', 'content': 'Unrelated record stays intact.'})
+    await memory.dispatch('maintenance', {})
+    return target.id, copy.id
+
+server = None
+thread = None
+report = {'status': 'running', 'kind': 'Real loopback HTTP browser/control-plane/dispatch/SQLite; in-process service client, fixture embeddings, unavailable cognition; no native host or model calls'}
+report['runner_sha256'] = hashlib.sha256(Path(__file__).read_bytes()).hexdigest()
+report['browser_runner_sha256'] = hashlib.sha256((root / '.venv/related_forget_integrated_browser_v4.py').read_bytes()).hexdigest()
+report['files'] = {p: hashlib.sha256((root / p).read_bytes()).hexdigest() for p in ['mnemos/ui/app.js', 'mnemos/ui/index.html', 'mnemos/ui_server.py', 'mnemos/control_plane.py', 'mnemos/contracts.py', 'mnemos/memory_service.py', 'mnemos/utils/storage.py']}
+try:
+    target, copy = asyncio.run(seed())
+    service = ControlPlaneService(cwd=project, home=home, global_config_path=config_path, env={'MNEMOS_CONFIG_PATH': str(config_path), 'MNEMOS_SCOPE_REGISTRY': str(registry_path), 'MNEMOS_USER_PROFILE_ID': 'browser-profile'}, client=Client())
+    class Handler(_MnemosUiHandler):
+        router = MnemosUiRouter(service)
+    server = ThreadingHTTPServer(('127.0.0.1', 0), Handler)
+    thread = threading.Thread(target=server.serve_forever, daemon=True)
+    thread.start()
+    result = subprocess.run([str(root / '.venv/browser-checks/Scripts/python.exe'), str(root / '.venv/related_forget_integrated_browser_v4.py'), f'http://127.0.0.1:{server.server_port}/', target, str(out)], capture_output=True, text=True, timeout=120)
+    (out / 'browser.stdout.log').write_text(result.stdout, encoding='utf-8')
+    (out / 'browser.stderr.log').write_text(result.stderr, encoding='utf-8')
+    report['browser_exit_code'] = result.returncode
+    assert result.returncode == 0, result.stdout + result.stderr
+    assert memory.engine.store.get(target) is None
+    assert memory.engine.store.get(copy) is None
+    assert [f.content for f in memory.engine.store.get_all()] == ['Unrelated record stays intact.']
+    server.shutdown()
+    server.server_close()
+    thread.join(timeout=5)
+    server = None
+    memory.engine.store.close()
+    memory = create_service()
+    replay = asyncio.run(memory.dispatch('capture', captured))
+    asyncio.run(memory.dispatch('maintenance', {}))
+    assert [f.content for f in memory.engine.store.get_all()] == ['Unrelated record stays intact.']
+    report['replay_after_restart'] = replay
+    report['target_and_copy_absent_unrelated_preserved_after_restart_and_replay'] = True
+    report['status'] = 'passed'
+except Exception as exc:
+    report['status'] = 'failed'
+    report['error'] = f'{type(exc).__name__}: {exc}'
+finally:
+    if server is not None:
+        server.shutdown()
+        server.server_close()
+        thread.join(timeout=5)
+    memory.engine.store.close()
+    report['files_after'] = {p: hashlib.sha256((root / p).read_bytes()).hexdigest() for p in report['files']}
+    report['stable_sources'] = report['files'] == report['files_after']
+    if not report['stable_sources']:
+        report['status'] = 'failed'
+        report['error'] = 'Source changed during verification'
+    report['operations'] = calls
+    (out / 'report.json').write_text(json.dumps(report, indent=2), encoding='utf-8')
+print(json.dumps({k:v for k,v in report.items() if k != 'operations'}, indent=2))
+raise SystemExit(0 if report['status'] == 'passed' else 1)

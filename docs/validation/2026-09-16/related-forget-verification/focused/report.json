@@ -1,0 +1,98 @@
+{
+  "started_at": "2026-09-17T11:07:39.833677+00:00",
+  "files": {
+    "mnemos/contracts.py": "db8c9725e582c25d90a4535a70a89da62de5c9dc9483e3448f3e8d04ae0322cb",
+    "mnemos/utils/storage.py": "5bdc0bc82ec410cb83c361ed4defd96c00873dbd326ab723fe270f74acbdce77",
+    "mnemos/memory_service.py": "a6b34277c759b1dd103313b3e0135706d743a41883068cc308ddef946114a1d2",
+    "mnemos/mcp_server.py": "9aa65a5995de08a42b3f8902aebc09e260b4ba3728b3e51377f49eb99b28d6d9",
+    "mnemos/control_plane.py": "b735a0f8109ffa96a1cfdb8247d35bf4c86b7e34707d55e93383a9d9e8ab49c5",
+    "mnemos/ui_server.py": "661a6da8d4bfd20804ba3a3c62fd06b0257bcf32e0d463967fd78c80bf0028a1",
+    "mnemos/ui/app.js": "bb963841f81a32120493a05f667395f8015b3ea6b71fbebf339e56a35482da4f",
+    "mnemos/ui/index.html": "69860d9f4c112e98ead367670e4a8b8b354e85f815d850e36103a22e132ef1d2",
+    "tests/test_related_forget.py": "7f79415cb9f257f29b2d90f3d508427da3a122f50f99e68ccbc7d1a9d65d77b5",
+    "tests/test_related_forget_safety.py": "60bd7bfe28594a4fc7ec1e97294cab7be3f75cb0c5d4eae686ba1e2e80d97453",
+    "tests/test_related_forget_transport.py": "e9f7574ff7b8e6fe314b570b6561fa41fd01cfe65febc7923bc789389b347ca9"
+  },
+  "checks": [
+    {
+      "name": "pytest",
+      "command": [
+        "D:\\Development\\mnemos\\mnemos\\.worktrees\\functional-local-memory\\.venv\\Scripts\\python.exe",
+        "-m",
+        "pytest",
+        "-q",
+        "--tb=short",
+        "tests/test_related_forget.py",
+        "tests/test_related_forget_safety.py",
+        "tests/test_related_forget_transport.py",
+        "tests/test_durable_jobs.py",
+        "tests/test_memory_service.py",
+        "tests/test_backup_restore.py",
+        "tests/test_mcp_server.py",
+        "tests/test_mcp_compatibility.py",
+        "tests/test_control_plane.py",
+        "tests/test_ui_server.py"
+      ],
+      "exit_code": 0
+    },
+    {
+      "name": "black",
+      "command": [
+        "D:\\Development\\mnemos\\mnemos\\.worktrees\\functional-local-memory\\.venv\\Scripts\\python.exe",
+        "-m",
+        "black",
+        "--check",
+        "mnemos/contracts.py",
+        "mnemos/utils/storage.py",
+        "mnemos/memory_service.py",
+        "mnemos/mcp_server.py",
+        "mnemos/control_plane.py",
+        "mnemos/ui_server.py",
+        "tests/test_related_forget.py",
+        "tests/test_related_forget_safety.py",
+        "tests/test_related_forget_transport.py"
+      ],
+      "exit_code": 0
+    },
+    {
+      "name": "mypy",
+      "command": [
+        "D:\\Development\\mnemos\\mnemos\\.worktrees\\functional-local-memory\\.venv\\compat-py310\\Scripts\\python.exe",
+        "-m",
+        "mypy",
+        "mnemos/contracts.py",
+        "mnemos/utils/storage.py",
+        "mnemos/memory_service.py",
+        "mnemos/mcp_server.py",
+        "mnemos/control_plane.py",
+        "mnemos/ui_server.py"
+      ],
+      "exit_code": 0
+    },
+    {
+      "name": "javascript",
+      "command": [
+        "node",
+        "--check",
+        "mnemos/ui/app.js"
+      ],
+      "exit_code": 0
+    }
+  ],
+  "files_after": {
+    "mnemos/contracts.py": "db8c9725e582c25d90a4535a70a89da62de5c9dc9483e3448f3e8d04ae0322cb",
+    "mnemos/utils/storage.py": "5bdc0bc82ec410cb83c361ed4defd96c00873dbd326ab723fe270f74acbdce77",
+    "mnemos/memory_service.py": "a6b34277c759b1dd103313b3e0135706d743a41883068cc308ddef946114a1d2",
+    "mnemos/mcp_server.py": "9aa65a5995de08a42b3f8902aebc09e260b4ba3728b3e51377f49eb99b28d6d9",
+    "mnemos/control_plane.py": "b735a0f8109ffa96a1cfdb8247d35bf4c86b7e34707d55e93383a9d9e8ab49c5",
+    "mnemos/ui_server.py": "661a6da8d4bfd20804ba3a3c62fd06b0257bcf32e0d463967fd78c80bf0028a1",
+    "mnemos/ui/app.js": "bb963841f81a32120493a05f667395f8015b3ea6b71fbebf339e56a35482da4f",
+    "mnemos/ui/index.html": "69860d9f4c112e98ead367670e4a8b8b354e85f815d850e36103a22e132ef1d2",
+    "tests/test_related_forget.py": "7f79415cb9f257f29b2d90f3d508427da3a122f50f99e68ccbc7d1a9d65d77b5",
+    "tests/test_related_forget_safety.py": "60bd7bfe28594a4fc7ec1e97294cab7be3f75cb0c5d4eae686ba1e2e80d97453",
+    "tests/test_related_forget_transport.py": "e9f7574ff7b8e6fe314b570b6561fa41fd01cfe65febc7923bc789389b347ca9"
+  },
+  "stable_sources": true,
+  "finished_at": "2026-09-17T11:10:05.741592+00:00",
+  "status": "passed"
+}

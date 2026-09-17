@@ -1,0 +1,2290 @@
+"""Run a bounded native Codex MCP correction and forget lifecycle check.
+
+This is a real-host experiment, rather than a quality benchmark.  It uses a
+private project, a private SQLite service, constant embeddings, and disabled
+cognition.  The native agent must perform every memory mutation through the
+Mnemos MCP tools.  Direct service calls are limited to lifecycle control and
+independent readback.
+"""
+
+from __future__ import annotations
+
+import argparse
+from datetime import datetime, timezone
+import hashlib
+import json
+import os
+from pathlib import Path
+import secrets
+import shutil
+import subprocess
+import sys
+import tempfile
+import time
+import traceback
+import zipfile
+from types import SimpleNamespace
+from typing import Any, Mapping
+
+WORKTREE = Path(__file__).resolve().parents[1]
+# Bound at runtime from --source-commit.  A lifecycle report must never use a
+# source revision inferred from the current checkout.
+SOURCE_COMMIT = ""
+V8_HELPER_PATH = WORKTREE / ".venv" / "native_codex_generated_v8.py"
+V8_HELPER_SHA256 = "dd9ebe7480fa5a172bb41135a4690baf94d2c585f5357a77f17265e7acb58b12"
+OUTPUT_DIR = WORKTREE / "docs" / "validation" / "2026-09-16" / "native-codex-lifecycle-v2"
+TEMP_PARENT = Path(r"D:\WindowsTemp")
+CODEX_EXE = (
+    Path(r"C:\Users\Ant\AppData\Roaming\npm\node_modules\@openai\codex")
+    / "node_modules"
+    / "@openai"
+    / "codex-win32-x64"
+    / "vendor"
+    / "x86_64-pc-windows-msvc"
+    / "bin"
+    / "codex.exe"
+)
+MAX_NATIVE_SECONDS = 60
+PROFILE = "native-codex-lifecycle-v2"
+V8_SOURCE_NOTE = "Copied provenance and cleanup patterns from native_codex_generated_v8.py"
+
+
+def _sha256(value: bytes | str) -> str:
+    raw = value.encode("utf-8") if isinstance(value, str) else value
+    return hashlib.sha256(raw).hexdigest()
+
+
+def _assert_v8_helper_source() -> str:
+    observed = _sha256(V8_HELPER_PATH.read_bytes())
+    if observed != V8_HELPER_SHA256:
+        raise RuntimeError("The pinned v8 helper source changed")
+    return observed
+
+
+def _pinned_package_provenance(
+    package_path: Path, *, wheel_path: Path, expected_wheel_sha256: str
+) -> dict[str, Any]:
+    """Compare installed package files with the pinned source and wheel."""
+    listing = subprocess.run(
+        [
+            "git",
+            "-C",
+            str(WORKTREE),
+            "ls-tree",
+            "-r",
+            "--name-only",
+            SOURCE_COMMIT,
+            "mnemos",
+        ],
+        capture_output=True,
+        text=True,
+        check=True,
+        timeout=10,
+    )
+    files = [Path(item) for item in listing.stdout.splitlines() if item.strip()]
+    if not files:
+        raise RuntimeError("Pinned source has no package files")
+    mismatches: list[str] = []
+    for relative in files:
+        expected = subprocess.run(
+            ["git", "-C", str(WORKTREE), "show", f"{SOURCE_COMMIT}:{relative.as_posix()}"],
+            capture_output=True,
+            check=True,
+            timeout=10,
+        ).stdout.replace(b"\r\n", b"\n")
+        installed = (
+            (package_path.parent / Path(*relative.parts[1:])).read_bytes().replace(b"\r\n", b"\n")
+        )
+        if installed != expected:
+            mismatches.append(relative.as_posix())
+    wheel_digest = _sha256(wheel_path.read_bytes())
+    if wheel_digest != expected_wheel_sha256:
+        raise RuntimeError("Wheel archive does not match the expected digest")
+    with zipfile.ZipFile(wheel_path) as archive:
+        for item in archive.infolist():
+            if item.is_dir() or not item.filename.startswith("mnemos/"):
+                continue
+            installed = package_path.parent / Path(*Path(item.filename).parts[1:])
+            if installed.read_bytes() != archive.read(item):
+                mismatches.append("wheel:" + item.filename)
+    if mismatches:
+        raise RuntimeError("Installed package differs from pinned source or wheel")
+    return {
+        "source_commit": SOURCE_COMMIT,
+        "package_files_checked": len(files),
+        "mismatches": [],
+        "wheel_sha256_expected": expected_wheel_sha256,
+        "wheel_sha256_observed": wheel_digest,
+        "wheel_path": str(wheel_path),
+    }
+
+
+def _run_local_cli(args: list[str], *, timeout: float = 5.0) -> subprocess.CompletedProcess[str]:
+    return subprocess.run(
+        [str(CODEX_EXE), *args],
+        capture_output=True,
+        text=True,
+        encoding="utf-8",
+        errors="replace",
+        check=False,
+        timeout=timeout,
+        shell=False,
+    )
+
+
+def _verify_cli() -> dict[str, Any]:
+    if os.name != "nt":
+        raise RuntimeError("Native Codex lifecycle runner requires Windows")
+    if not CODEX_EXE.is_file():
+        raise FileNotFoundError(f"Direct Codex executable is missing: {CODEX_EXE}")
+    version = _run_local_cli(["--version"])
+    top_help = _run_local_cli(["--help"])
+    exec_help = _run_local_cli(["exec", "--help"])
+    help_text = (exec_help.stdout or "") + "\n" + (exec_help.stderr or "")
+    required = {
+        "--json",
+        "--dangerously-bypass-hook-trust",
+        "--sandbox",
+        "read-only",
+        "--cd",
+        "--skip-git-repo-check",
+        "--ephemeral",
+    }
+    missing = sorted(flag for flag in required if flag not in help_text)
+    if version.returncode or top_help.returncode or exec_help.returncode or missing:
+        raise RuntimeError("Codex CLI capability probe failed: " + ", ".join(missing))
+    return {
+        "path": str(CODEX_EXE),
+        "version": (version.stdout or version.stderr).strip(),
+        "help_flags_verified": sorted(required),
+        "approval_flag_placement": {
+            "top_level": "--ask-for-approval" in (top_help.stdout or ""),
+            "exec": "--ask-for-approval" in help_text,
+            "command_uses": False,
+        },
+    }
+
+
+def _private_mkdir(path: Path) -> None:
+    from mnemos.service import _protect_private_path
+
+    path.mkdir(parents=True, exist_ok=False)
+    _protect_private_path(path)
+
+
+def _protect_file(path: Path) -> None:
+    from mnemos.service import _protect_private_path
+
+    _protect_private_path(path)
+
+
+def _clean_environment(overrides: Mapping[str, str]) -> dict[str, str]:
+    environment = dict(os.environ)
+    for key in list(environment):
+        if key.startswith("MNEMOS_") or key in {
+            "PYTHONPATH",
+            "VIRTUAL_ENV",
+            "CODEX_HOME",
+        }:
+            environment.pop(key, None)
+    environment.update(overrides)
+    return environment
+
+
+def _terminate_process_tree(process: subprocess.Popen[str]) -> bool:
+    if process.poll() is not None:
+        return False
+    if os.name == "nt":
+        subprocess.run(
+            ["taskkill", "/PID", str(process.pid), "/T", "/F"],
+            capture_output=True,
+            text=True,
+            check=False,
+            timeout=10,
+        )
+    else:  # pragma: no cover - the runner is Windows-only
+        process.kill()
+    try:
+        process.wait(timeout=10)
+    except subprocess.TimeoutExpired:
+        process.kill()
+        process.wait(timeout=10)
+    return True
+
+
+def _numeric_usage(value: Any) -> dict[str, int | float]:
+    if not isinstance(value, Mapping):
+        return {}
+    return {
+        str(key): item
+        for key, item in value.items()
+        if isinstance(item, (int, float)) and not isinstance(item, bool)
+    }
+
+
+def _native_event_summary(
+    stdout: str, *, expected_strings: Mapping[str, str] | None = None
+) -> dict[str, Any]:
+    expected_strings = expected_strings or {}
+    rows: list[dict[str, Any]] = []
+    tool_names: set[str] = set()
+    tool_calls: list[dict[str, Any]] = []
+    non_json = 0
+    unreviewed_errors = 0
+    answer_digests: list[str] = []
+    for line in stdout.splitlines():
+        try:
+            value = json.loads(line)
+        except json.JSONDecodeError:
+            non_json += 1
+            continue
+        if not isinstance(value, Mapping):
+            continue
+        item = value.get("item")
+        item_type = (
+            item.get("type")
+            if isinstance(item, Mapping)
+            else value.get("type") if isinstance(value.get("type"), str) else None
+        )
+        name_values: list[Any] = []
+        tool_record = item if isinstance(item, Mapping) else value
+        if isinstance(tool_record, Mapping):
+            name_values.extend(
+                [tool_record.get("name"), tool_record.get("tool_name"), tool_record.get("tool")]
+            )
+            function = tool_record.get("function")
+            if isinstance(function, Mapping):
+                name_values.append(function.get("name"))
+            text_value = tool_record.get("text")
+            if isinstance(text_value, str) and item_type == "agent_message":
+                answer_digests.append(_sha256(text_value))
+        tool_name = next(
+            (
+                candidate
+                for candidate in name_values
+                if isinstance(candidate, str) and candidate.startswith("mnemos_")
+            ),
+            None,
+        )
+        server = tool_record.get("server") if isinstance(tool_record, Mapping) else None
+        is_mnemos_tool_call = (
+            item_type == "mcp_tool_call" and server == "mnemos" and tool_name is not None
+        )
+        if not is_mnemos_tool_call:
+            tool_name = None
+        else:
+            tool_names.add(tool_name)
+        if tool_name is not None and isinstance(tool_record, Mapping):
+            raw_result = tool_record.get("result")
+            if raw_result is None:
+                raw_result = tool_record.get("output")
+            if raw_result is None:
+                raw_result = value.get("result")
+            if raw_result is None:
+                raw_result = value.get("output")
+            result_text = (
+                raw_result
+                if isinstance(raw_result, str)
+                else (
+                    json.dumps(raw_result, ensure_ascii=True, sort_keys=True, default=str)
+                    if raw_result is not None
+                    else ""
+                )
+            )
+            result_error_marker = bool(
+                tool_record.get("isError") is True
+                or value.get("isError") is True
+                or tool_record.get("error") not in (None, False, "")
+                or value.get("error") not in (None, False, "")
+                or tool_record.get("status") in {"error", "failed"}
+                or value.get("status") in {"error", "failed"}
+                or (
+                    isinstance(raw_result, Mapping)
+                    and (
+                        raw_result.get("isError") is True
+                        or raw_result.get("error") not in (None, False, "")
+                        or raw_result.get("status") in {"error", "failed"}
+                    )
+                )
+            )
+            result_object: Mapping[str, Any] | None = None
+            result_parseable = False
+            if isinstance(raw_result, Mapping):
+                result_object = raw_result
+                result_parseable = True
+            elif result_text:
+                try:
+                    parsed_result = json.loads(result_text)
+                except json.JSONDecodeError:
+                    parsed_result = None
+                if isinstance(parsed_result, Mapping):
+                    result_object = parsed_result
+                    result_parseable = True
+            if result_object is not None and isinstance(result_object.get("content"), list):
+                for content_item in result_object["content"]:
+                    if not isinstance(content_item, Mapping):
+                        continue
+                    content_text = content_item.get("text")
+                    if not isinstance(content_text, str):
+                        continue
+                    try:
+                        parsed_content = json.loads(content_text)
+                    except json.JSONDecodeError:
+                        continue
+                    if isinstance(parsed_content, Mapping):
+                        result_object = parsed_content
+                        result_parseable = True
+                        break
+            item_status = (
+                tool_record.get("status")
+                if isinstance(tool_record.get("status"), str)
+                else (
+                    value.get("status")
+                    if isinstance(value.get("status"), str)
+                    else (
+                        "completed"
+                        if isinstance(value.get("type"), str)
+                        and (
+                            value["type"].lower().endswith((".completed", "_completed"))
+                            or value["type"].lower() in {"mcp_tool_result", "tool_result"}
+                        )
+                        else None
+                    )
+                )
+            )
+            service_status = (
+                result_object.get("status")
+                if result_object is not None and isinstance(result_object.get("status"), str)
+                else None
+            )
+            arguments: Mapping[str, Any] = {}
+            for candidate in (tool_record.get("arguments"), tool_record.get("input")):
+                if isinstance(candidate, Mapping):
+                    arguments = candidate
+                    break
+                if isinstance(candidate, str):
+                    try:
+                        parsed_arguments = json.loads(candidate)
+                    except json.JSONDecodeError:
+                        parsed_arguments = None
+                    if isinstance(parsed_arguments, Mapping):
+                        arguments = parsed_arguments
+                        break
+            tool_calls.append(
+                {
+                    "name": tool_name,
+                    "server": (
+                        tool_record.get("server")
+                        if isinstance(tool_record.get("server"), str)
+                        else None
+                    ),
+                    "item_type": item_type,
+                    "item_status": item_status,
+                    "service_status": service_status,
+                    "result_present": raw_result is not None,
+                    "result_parseable": result_parseable,
+                    "result_sha256": _sha256(result_text) if result_text else None,
+                    "result_bytes": len(result_text.encode("utf-8")),
+                    "result_contains": {
+                        label: bool(value and value in result_text)
+                        for label, value in expected_strings.items()
+                    },
+                    "result_forgotten": (
+                        result_object.get("forgotten") is True
+                        if result_object is not None
+                        else False
+                    ),
+                    "result_error": bool(
+                        result_error_marker
+                        or (
+                            result_object is not None
+                            and (
+                                result_object.get("isError") is True
+                                or result_object.get("error") not in (None, False, "")
+                                or result_object.get("status") in {"error", "failed"}
+                            )
+                        )
+                    ),
+                    # Keep only IDs, versions, digests, and statuses in the
+                    # report.  Full result content remains in the private
+                    # per-turn JSONL artifact.
+                    "result_fact_id": (
+                        result_object.get("fact_id")
+                        if result_object is not None
+                        and isinstance(result_object.get("fact_id"), str)
+                        else None
+                    ),
+                    "result_version": (
+                        result_object.get("version")
+                        if result_object is not None
+                        and isinstance(result_object.get("version"), int)
+                        and not isinstance(result_object.get("version"), bool)
+                        else None
+                    ),
+                    "preview_digest": (
+                        result_object.get("preview_digest")
+                        if result_object is not None
+                        and isinstance(result_object.get("preview_digest"), str)
+                        else None
+                    ),
+                    "preview_limit": (
+                        result_object.get("limit")
+                        if result_object is not None
+                        and isinstance(result_object.get("limit"), int)
+                        and not isinstance(result_object.get("limit"), bool)
+                        else None
+                    ),
+                    "preview_candidate_ids": [
+                        item.get("fact_id")
+                        for item in (
+                            result_object.get("candidates", [])
+                            if result_object is not None
+                            and isinstance(result_object.get("candidates"), list)
+                            else []
+                        )
+                        if isinstance(item, Mapping) and isinstance(item.get("fact_id"), str)
+                    ],
+                    "preview_blocked_candidate_ids": [
+                        item.get("fact_id")
+                        for item in (
+                            result_object.get("candidates", [])
+                            if result_object is not None
+                            and isinstance(result_object.get("candidates"), list)
+                            else []
+                        )
+                        if isinstance(item, Mapping)
+                        and isinstance(item.get("fact_id"), str)
+                        and (
+                            item.get("selection_allowed") is False
+                            or bool(item.get("blocked_source_event_ids"))
+                        )
+                    ],
+                    "preview_source_event_ids": [
+                        item.get("source_event_id")
+                        for item in (
+                            result_object.get("source_events", [])
+                            if result_object is not None
+                            and isinstance(result_object.get("source_events"), list)
+                            else []
+                        )
+                        if isinstance(item, Mapping)
+                        and isinstance(item.get("source_event_id"), str)
+                    ],
+                    "preview_blocked_source_event_ids": [
+                        item.get("source_event_id")
+                        for item in (
+                            result_object.get("source_events", [])
+                            if result_object is not None
+                            and isinstance(result_object.get("source_events"), list)
+                            else []
+                        )
+                        if isinstance(item, Mapping)
+                        and isinstance(item.get("source_event_id"), str)
+                        and (
+                            item.get("selection_allowed") is False
+                            or item.get("source_allowed") is False
+                        )
+                    ],
+                    "preview_historical_assertion_count": len(
+                        [
+                            item
+                            for item in (
+                                result_object.get("target", {}).get("historical_assertions", [])
+                                if result_object is not None
+                                and isinstance(result_object.get("target"), Mapping)
+                                and isinstance(
+                                    result_object.get("target", {}).get("historical_assertions"),
+                                    list,
+                                )
+                                else []
+                            )
+                            if isinstance(item, str) and item
+                        ]
+                    ),
+                    "preview_historical_assertion_sha256": [
+                        _sha256(item)
+                        for item in (
+                            result_object.get("target", {}).get("historical_assertions", [])
+                            if result_object is not None
+                            and isinstance(result_object.get("target"), Mapping)
+                            and isinstance(
+                                result_object.get("target", {}).get("historical_assertions"), list
+                            )
+                            else []
+                        )
+                        if isinstance(item, str) and item
+                    ],
+                    "preview_complete": (
+                        result_object.get("complete") is True
+                        if result_object is not None
+                        else False
+                    ),
+                    "preview_target_fact_id": (
+                        result_object.get("target", {}).get("fact_id")
+                        if result_object is not None
+                        and isinstance(result_object.get("target"), Mapping)
+                        and isinstance(result_object.get("target", {}).get("fact_id"), str)
+                        else None
+                    ),
+                    "preview_target_version": (
+                        result_object.get("target", {}).get("version")
+                        if result_object is not None
+                        and isinstance(result_object.get("target"), Mapping)
+                        and isinstance(result_object.get("target", {}).get("version"), int)
+                        and not isinstance(result_object.get("target", {}).get("version"), bool)
+                        else None
+                    ),
+                    "selected_fact_ids": [
+                        item
+                        for item in (
+                            result_object.get("selected_fact_ids", [])
+                            if result_object is not None
+                            and isinstance(result_object.get("selected_fact_ids"), list)
+                            else []
+                        )
+                        if isinstance(item, str)
+                    ],
+                    "selected_source_event_ids": [
+                        item
+                        for item in (
+                            result_object.get("selected_source_event_ids", [])
+                            if result_object is not None
+                            and isinstance(result_object.get("selected_source_event_ids"), list)
+                            else []
+                        )
+                        if isinstance(item, str)
+                    ],
+                    "request_fact_id": (
+                        arguments.get("fact_id")
+                        if isinstance(arguments.get("fact_id"), str)
+                        else None
+                    ),
+                    "request_arguments_present": bool(arguments),
+                    "request_expected_version": (
+                        arguments.get("expected_version")
+                        if isinstance(arguments.get("expected_version"), int)
+                        and not isinstance(arguments.get("expected_version"), bool)
+                        else None
+                    ),
+                    "request_preview_digest": (
+                        arguments.get("preview_digest")
+                        if isinstance(arguments.get("preview_digest"), str)
+                        else None
+                    ),
+                    "request_preview_limit": (
+                        arguments.get("preview_limit")
+                        if isinstance(arguments.get("preview_limit"), int)
+                        and not isinstance(arguments.get("preview_limit"), bool)
+                        else None
+                    ),
+                    "request_limit": (
+                        arguments.get("limit")
+                        if isinstance(arguments.get("limit"), int)
+                        and not isinstance(arguments.get("limit"), bool)
+                        else None
+                    ),
+                    "request_selected_fact_ids": [
+                        item
+                        for item in (
+                            arguments.get("selected_fact_ids", [])
+                            if isinstance(arguments.get("selected_fact_ids"), list)
+                            else []
+                        )
+                        if isinstance(item, str)
+                    ],
+                    "request_selected_source_event_ids": [
+                        item
+                        for item in (
+                            arguments.get("selected_source_event_ids", [])
+                            if isinstance(arguments.get("selected_source_event_ids"), list)
+                            else []
+                        )
+                        if isinstance(item, str)
+                    ],
+                }
+            )
+        error_present = item_type == "error" or value.get("type") == "error"
+        if error_present:
+            message = ""
+            if isinstance(item, Mapping) and isinstance(item.get("message"), str):
+                message = item["message"]
+            elif isinstance(value.get("message"), str):
+                message = value["message"]
+            known_notice = message in {
+                "`--dangerously-bypass-hook-trust` is enabled. Enabled hooks may run without review for this invocation.",
+                "Skill descriptions were shortened to fit the 2% skills context budget. Codex can still see every skill, but some descriptions are shorter. Disable unused skills or plugins to leave more room for the rest.",
+            }
+            if not known_notice:
+                unreviewed_errors += 1
+        rows.append(
+            {
+                "type": value.get("type"),
+                "item_type": item_type,
+                "model": value.get("model") if isinstance(value.get("model"), str) else None,
+                "error_present": error_present,
+                "usage": _numeric_usage(value.get("usage")),
+            }
+        )
+    return {
+        "record_count": len(rows),
+        "non_json_line_count": non_json,
+        "rows": rows,
+        "tool_names": sorted(tool_names),
+        "tool_calls": tool_calls,
+        "mcp_servers": sorted(
+            {
+                call["server"]
+                for call in tool_calls
+                if isinstance(call.get("server"), str) and call["server"]
+            }
+        ),
+        "stdout_contains": {
+            label: bool(value and value in stdout) for label, value in expected_strings.items()
+        },
+        "tool_call_observed": bool(tool_names),
+        "error_count": sum(1 for row in rows if row["error_present"]),
+        "unreviewed_error_count": unreviewed_errors,
+        "models": sorted({row["model"] for row in rows if row["model"]}),
+        "usage_observed": any(bool(row["usage"]) for row in rows),
+        "answer_text_digests": answer_digests,
+    }
+
+
+def _successful_call(call: Mapping[str, Any]) -> bool:
+    return (
+        call.get("item_type") == "mcp_tool_call"
+        and call.get("server") == "mnemos"
+        and call.get("item_status") in {"completed", "success", "succeeded", "ok"}
+        and call.get("result_present") is True
+        and call.get("result_parseable") is True
+        and call.get("result_error") is False
+    )
+
+
+def _successful_tool(summary: Mapping[str, Any], name: str) -> bool:
+    """Require a completed native call with a returned, non-error result."""
+    calls = summary.get("tool_calls")
+    if not isinstance(calls, list):
+        return False
+    return any(
+        isinstance(call, Mapping) and call.get("name") == name and _successful_call(call)
+        for call in calls
+    )
+
+
+def _result_contains(summary: Mapping[str, Any], name: str, label: str) -> bool:
+    calls = summary.get("tool_calls")
+    if not isinstance(calls, list):
+        return False
+    return any(
+        isinstance(call, Mapping)
+        and call.get("name") == name
+        and _successful_call(call)
+        and isinstance(call.get("result_contains"), Mapping)
+        and call["result_contains"].get(label) is True
+        for call in calls
+    )
+
+
+def _result_contains_any(summary: Mapping[str, Any], name: str, labels: tuple[str, ...]) -> bool:
+    return any(_result_contains(summary, name, label) for label in labels)
+
+
+def _service_status(summary: Mapping[str, Any], name: str) -> list[str]:
+    calls = summary.get("tool_calls")
+    if not isinstance(calls, list):
+        return []
+    return sorted(
+        {
+            str(call["service_status"])
+            for call in calls
+            if isinstance(call, Mapping)
+            and call.get("name") == name
+            and _successful_call(call)
+            and isinstance(call.get("service_status"), str)
+        }
+    )
+
+
+def _successful_service_status(summary: Mapping[str, Any], name: str, status: str) -> bool:
+    calls = summary.get("tool_calls")
+    if not isinstance(calls, list):
+        return False
+    return any(
+        isinstance(call, Mapping)
+        and call.get("name") == name
+        and _successful_call(call)
+        and call.get("service_status") == status
+        for call in calls
+    )
+
+
+def _successful_calls(summary: Mapping[str, Any], name: str) -> list[Mapping[str, Any]]:
+    calls = summary.get("tool_calls")
+    if not isinstance(calls, list):
+        return []
+    return [
+        call
+        for call in calls
+        if isinstance(call, Mapping) and call.get("name") == name and _successful_call(call)
+    ]
+
+
+def _captured_event_summaries(
+    store: Any, *, assertion: str, project_id: str, profile: str
+) -> list[dict[str, Any]]:
+    """Return automatic hook observations without exposing their content."""
+    events = store.list_episodic_events(
+        scope="project",
+        scope_id=project_id,
+        user_profile_id=profile,
+        limit=10_000,
+    )
+    observed: list[dict[str, Any]] = []
+    for event in events:
+        if assertion not in event.content:
+            continue
+        if event.metadata.get("explicit_remember") is not False:
+            continue
+        source_ref = event.metadata.get("source_ref")
+        if (
+            event.source != "codex"
+            or event.metadata.get("source_kind") != "codex_hook"
+            or not isinstance(source_ref, str)
+            or source_ref.partition(":")[0] not in {"UserPromptSubmit", "Stop"}
+        ):
+            continue
+        observed.append(
+            {
+                "event_id": event.id,
+                "event_id_sha256": _sha256(event.id),
+                "source_kind": event.metadata.get("source_kind"),
+                "hook_event": source_ref.partition(":")[0],
+                "role": event.role,
+                "status": event.status,
+                "content_sha256": _sha256(event.content),
+                "content_length": len(event.content),
+            }
+        )
+    return observed
+
+
+def _captured_fact_summaries(
+    store: Any,
+    *,
+    assertion: str,
+    target_fact_id: str,
+    project_id: str,
+    profile: str,
+    observed_event_ids: set[str],
+) -> list[dict[str, Any]]:
+    """Find accepted automatic facts tied to observed hook events."""
+    observed: list[dict[str, Any]] = []
+    for fact in store.list_chunks(limit=10_000):
+        if fact.id == target_fact_id:
+            continue
+        if assertion not in fact.content:
+            continue
+        if (
+            fact.metadata.get("source") != "sleep_consolidation"
+            or fact.metadata.get("scope") != "project"
+            or fact.metadata.get("scope_id") != project_id
+            or fact.metadata.get("user_profile_id") != profile
+            or fact.metadata.get("source_event_ids") is None
+        ):
+            continue
+        evidence_ids = {
+            item.source_event_id
+            for item in store.list_fact_evidence(fact.id)
+            if item.source_event_id
+        }
+        tied_ids = evidence_ids & observed_event_ids
+        if not tied_ids:
+            continue
+        observed.append(
+            {
+                "fact_id": fact.id,
+                "fact_id_sha256": _sha256(fact.id),
+                "version": fact.version,
+                "content_sha256": _sha256(fact.content),
+                "content_length": len(fact.content),
+                "source_event_id_sha256": sorted(_sha256(item) for item in tied_ids),
+                "evidence_count": len(evidence_ids),
+            }
+        )
+    return observed
+
+
+def _validated_related_selection(
+    preview_call: Mapping[str, Any], related_call: Mapping[str, Any], target_id: str
+) -> tuple[set[str], set[str], set[str], set[str]]:
+    """Validate that the native apply selected only IDs from its preview."""
+    preview_candidate_ids = {
+        item for item in preview_call.get("preview_candidate_ids", []) if isinstance(item, str)
+    }
+    preview_source_ids = {
+        item for item in preview_call.get("preview_source_event_ids", []) if isinstance(item, str)
+    }
+    selected_fact_ids = {
+        item for item in related_call.get("selected_fact_ids", []) if isinstance(item, str)
+    }
+    selected_source_ids = {
+        item for item in related_call.get("selected_source_event_ids", []) if isinstance(item, str)
+    }
+    blocked_candidate_ids = {
+        item
+        for item in preview_call.get("preview_blocked_candidate_ids", [])
+        if isinstance(item, str)
+    }
+    blocked_source_ids = {
+        item
+        for item in preview_call.get("preview_blocked_source_event_ids", [])
+        if isinstance(item, str)
+    }
+    if blocked_candidate_ids or blocked_source_ids:
+        raise RuntimeError("Forget preview contains a blocked candidate or source selection")
+    if selected_fact_ids - preview_candidate_ids - {target_id}:
+        raise RuntimeError("Related forget selected a fact absent from the preview")
+    if selected_source_ids - preview_source_ids:
+        raise RuntimeError("Related forget selected a source absent from the preview")
+    return preview_candidate_ids, preview_source_ids, selected_fact_ids, selected_source_ids
+
+
+def _validated_preview_call(
+    call: Mapping[str, Any], *, target_id: str, target_version: int, assertion: str, limit: int
+) -> str:
+    """Require a complete preview bound to the exact target and history."""
+    if (
+        call.get("preview_complete") is not True
+        or call.get("preview_target_fact_id") != target_id
+        or call.get("preview_target_version") != target_version
+        or _sha256(assertion) not in call.get("preview_historical_assertion_sha256", [])
+        or call.get("request_arguments_present") is not True
+        or call.get("request_fact_id") != target_id
+        or call.get("request_expected_version") != target_version
+        or call.get("request_limit") != limit
+    ):
+        raise RuntimeError("Forget preview was incomplete or lost the exact target history")
+    digest = call.get("preview_digest")
+    if not isinstance(digest, str) or len(digest) != 64:
+        raise RuntimeError("Preview did not return a usable digest")
+    return digest
+
+
+def _start_service(fixture: Path, registry: Any, config: Any) -> tuple[Any, Any]:
+    from mnemos.engine import MnemosEngine
+    from mnemos.memory_service import LocalMemoryService
+    from mnemos.service import MnemosService
+    from mnemos.utils.embeddings import SimpleEmbeddingProvider
+    from mnemos.utils.llm import UnavailableLLMProvider
+    from mnemos.utils.storage import SQLiteStore
+
+    class ConstantFixtureEmbeddings(SimpleEmbeddingProvider):
+        """Transport fixture only; no semantic retrieval claim."""
+
+        def embed(self, text: str) -> list[float]:
+            del text
+            return [1.0] + [0.0] * 63
+
+        def embed_batch(self, texts: list[str]) -> list[list[float]]:
+            return [self.embed(text) for text in texts]
+
+    store = SQLiteStore(str(fixture / "memory.sqlite"))
+    service: Any | None = None
+    try:
+        engine = MnemosEngine(
+            config=config,
+            llm=UnavailableLLMProvider("native lifecycle cognition unavailable"),
+            embedder=ConstantFixtureEmbeddings(dim=64),
+            store=store,
+            scope_registry=registry,
+            require_scope_context=True,
+        )
+        service = MnemosService(
+            dispatcher=LocalMemoryService(engine, registry),
+            descriptor_path=fixture / "runtime.json",
+            lock_path=fixture / "service.lock",
+            startup_timeout=5,
+            dispatch_timeout=20,
+        )
+        service.start()
+        return service, store
+    except Exception:
+        cleanup_errors = _close_service(service, store)
+        if cleanup_errors:
+            raise RuntimeError("Service startup cleanup failed")
+        raise
+
+
+def _close_service(service: Any | None, store: Any | None) -> list[str]:
+    errors: list[str] = []
+    service_stopped = True
+    if service is not None:
+        try:
+            service.stop()
+        except Exception as exc:
+            service_stopped = False
+            errors.append("service_stop:" + type(exc).__name__)
+    # A store belongs to the service owner thread. Do not close it after a
+    # failed stop, since that can race an owner still using SQLite.
+    if store is not None and service_stopped:
+        try:
+            store.close()
+        except Exception as exc:
+            errors.append("store_close:" + type(exc).__name__)
+    return errors
+
+
+def _isolated_codex_command(project: Path, prompt: str) -> list[str]:
+    return [
+        str(CODEX_EXE),
+        "exec",
+        "--json",
+        "--dangerously-bypass-hook-trust",
+        "--sandbox",
+        "read-only",
+        "--cd",
+        str(project),
+        "--skip-git-repo-check",
+        "--ephemeral",
+        prompt,
+    ]
+
+
+def _auth_copy(config_dir: Path) -> Path:
+    source = Path(os.environ.get("USERPROFILE", str(Path.home()))) / ".codex" / "auth.json"
+    if not source.is_file():
+        raise FileNotFoundError("Existing Codex auth.json is unavailable")
+    _protect_file(config_dir)
+    target = config_dir / "auth.json"
+    try:
+        shutil.copy2(source, target)
+        _protect_file(target)
+    except Exception:
+        target.unlink(missing_ok=True)
+        raise
+    return target
+
+
+def _cleanup_native_resources(
+    process: subprocess.Popen[str] | None, auth_copy: Path | None
+) -> list[str]:
+    """Attempt process and auth cleanup independently, preserving both errors."""
+    errors: list[str] = []
+    if process is not None and process.poll() is None:
+        try:
+            _terminate_process_tree(process)
+        except Exception as exc:
+            errors.append("process_terminate:" + type(exc).__name__)
+        if process.poll() is None:
+            errors.append("process_still_running")
+    if auth_copy is not None:
+        try:
+            auth_copy.unlink(missing_ok=True)
+        except OSError as exc:
+            errors.append("auth_remove:" + type(exc).__name__)
+        if auth_copy.exists():
+            errors.append("auth_copy_remains")
+    return errors
+
+
+def _run_turn(
+    *,
+    fixture: Path,
+    project: Path,
+    turn_name: str,
+    prompt: str,
+    registry_path: Path,
+    settings_path: Path,
+    runtime_dir: Path,
+    routing_dir: Path,
+    profile: str,
+    target_python: Path,
+    expected_strings: Mapping[str, str] | None = None,
+) -> dict[str, Any]:
+    from mnemos.hosts import apply_host_integration
+
+    turn_dir = fixture / ("turn-" + turn_name)
+    _private_mkdir(turn_dir)
+    home = turn_dir / "codex-home"
+    _private_mkdir(home)
+    session_id = "native-codex-lifecycle-" + turn_name + "-" + secrets.token_hex(8)
+    selector_env = {
+        "MNEMOS_CONFIG_PATH": str(settings_path),
+        "MNEMOS_SCOPE_REGISTRY": str(registry_path),
+        "MNEMOS_USER_PROFILE_ID": profile,
+        "MNEMOS_RUNTIME_DESCRIPTOR": str(fixture / "runtime.json"),
+        "MNEMOS_RUNTIME_DIR": str(runtime_dir),
+        "MNEMOS_ROUTING_REVIEW_DIR": str(routing_dir),
+        "MNEMOS_AUTO_START": "false",
+        "MNEMOS_AUTO_RETRIEVE": "true",
+        "MNEMOS_PROJECT_ROOT": str(project),
+        "MNEMOS_HOST": "codex",
+        "MNEMOS_SESSION_ID": session_id,
+        "PATH": str(target_python.resolve().parent) + os.pathsep + os.environ.get("PATH", ""),
+    }
+    generated = apply_host_integration(
+        "codex",
+        mnemos_config_path=settings_path,
+        cwd=project,
+        home=home,
+        # The host renderer deliberately accepts only selectors safe to write
+        # into a config file. The complete selector environment is still
+        # inherited by the native process and its MCP child.
+        integration_env={
+            key: selector_env[key]
+            for key in (
+                "MNEMOS_CONFIG_PATH",
+                "MNEMOS_SCOPE_REGISTRY",
+                "MNEMOS_USER_PROFILE_ID",
+                "MNEMOS_RUNTIME_DESCRIPTOR",
+            )
+        },
+    )
+    config_path = generated.config_path
+    if not config_path.is_file():
+        raise RuntimeError("Generated Codex config was not written")
+    codex_home = config_path.parent
+    if codex_home != (home / ".codex").resolve():
+        raise RuntimeError("Generated Codex config is outside the requested Codex home")
+    generated_config = config_path.read_text(encoding="utf-8")
+    hook_command_lines = [
+        line for line in generated_config.splitlines() if "mnemos.adapters.codex" in line
+    ]
+    if len(hook_command_lines) < 6:
+        raise RuntimeError("Generated Codex config lacks the complete Mnemos hook set")
+    auth_copy: Path | None = None
+    process: subprocess.Popen[str] | None = None
+    started = time.monotonic()
+    native_stdout = ""
+    native_stderr = ""
+    timed_out = False
+    try:
+        auth_copy = _auth_copy(config_path.parent)
+        environment = _clean_environment({"CODEX_HOME": str(codex_home), **selector_env})
+        command = _isolated_codex_command(project, prompt)
+        process = subprocess.Popen(
+            command,
+            cwd=str(project),
+            env=environment,
+            stdin=subprocess.DEVNULL,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+            text=True,
+            encoding="utf-8",
+            errors="replace",
+            shell=False,
+            creationflags=subprocess.CREATE_NEW_PROCESS_GROUP,
+        )
+        try:
+            native_stdout, native_stderr = process.communicate(timeout=MAX_NATIVE_SECONDS)
+        except subprocess.TimeoutExpired:
+            timed_out = _terminate_process_tree(process)
+            native_stdout, native_stderr = process.communicate(timeout=15)
+        summary = _native_event_summary(native_stdout, expected_strings=expected_strings)
+        stdout_path = turn_dir / "native-stdout.jsonl"
+        stderr_path = turn_dir / "native-stderr.log"
+        stdout_path.write_text(native_stdout, encoding="utf-8")
+        stderr_path.write_text(native_stderr, encoding="utf-8")
+        _protect_file(stdout_path)
+        _protect_file(stderr_path)
+        return {
+            "turn": turn_name,
+            "session_id_digest": _sha256(session_id),
+            "project_root_digest": _sha256(str(project.resolve())),
+            "status": "completed" if process.returncode == 0 and not timed_out else "failed",
+            "returncode": process.returncode,
+            "timed_out": timed_out,
+            "elapsed_ms": round((time.monotonic() - started) * 1000, 1),
+            "codex_home": str(codex_home),
+            "config_path": str(config_path),
+            "config_sha256": _sha256(config_path.read_bytes()),
+            "generated_hook_source": {
+                "generator": "mnemos.hosts.apply_host_integration",
+                "adapter_module": "mnemos.adapters.codex",
+                "command_count": len(hook_command_lines),
+                "command_sha256": _sha256("\n".join(hook_command_lines)),
+            },
+            "agents_path": str(project / "AGENTS.md"),
+            "agents_sha256": _sha256((project / "AGENTS.md").read_bytes()),
+            "command": [
+                item if item != prompt else "<private lifecycle prompt>" for item in command
+            ],
+            "stdout_path": str(stdout_path),
+            "stdout_sha256": _sha256(native_stdout),
+            "stdout_bytes": len(native_stdout.encode("utf-8")),
+            "stderr_path": str(stderr_path),
+            "stderr_sha256": _sha256(native_stderr),
+            "stderr_bytes": len(native_stderr.encode("utf-8")),
+            "native": summary,
+        }
+    finally:
+        cleanup_errors = _cleanup_native_resources(process, auth_copy)
+        if cleanup_errors:
+            raise RuntimeError("Native cleanup failed: " + ",".join(cleanup_errors))
+
+
+def _fact_summary(fact: Any) -> dict[str, Any]:
+    return {
+        "id": fact.id,
+        "version": fact.version,
+        "content_sha256": _sha256(fact.content),
+        "content_length": len(fact.content),
+        "scope": fact.metadata.get("scope"),
+        "scope_id": fact.metadata.get("scope_id"),
+        "user_profile_id": fact.metadata.get("user_profile_id"),
+        "host": fact.metadata.get("host"),
+        "session_id_digest": (
+            _sha256(str(fact.metadata["session_id"])) if fact.metadata.get("session_id") else None
+        ),
+        "source": fact.metadata.get("source"),
+        "source_event_ids": list(fact.metadata.get("source_event_ids", [])),
+    }
+
+
+def _find_facts(store: Any, content: str) -> list[Any]:
+    return [fact for fact in store.list_chunks(limit=10_000) if fact.content == content]
+
+
+def _offline_service_api_preflight() -> dict[str, Any]:
+    """Exercise the installed service API in a disposable, no-model fixture."""
+    from mnemos.config import MnemosConfig
+    from mnemos.scopes import ScopeRegistry
+    from mnemos.service import _protect_private_path
+
+    fixture = Path(tempfile.mkdtemp(prefix="mnemos-native-codex-api-preflight-", dir=TEMP_PARENT))
+    _protect_private_path(fixture)
+    service: Any | None = None
+    store: Any | None = None
+    try:
+        project = fixture / "project"
+        project.mkdir()
+        _protect_private_path(project)
+        runtime_dir = fixture / "runtime"
+        runtime_dir.mkdir()
+        _protect_private_path(runtime_dir)
+        registry = ScopeRegistry()
+        identity = registry.register_project(project, user_profile_id=PROFILE, enabled=True)
+        config = MnemosConfig()
+        for name in ("surprisal", "mutable_rag", "affective", "sleep", "spreading"):
+            setattr(config.modules, name, False)
+        service, store = _start_service(fixture, registry, config)
+        context = registry.resolve(
+            project,
+            user_profile_id=PROFILE,
+            session_id="api-preflight-session",
+            host="codex",
+        )
+        content = "Offline API preflight fact."
+        captured_content = "Please remember: " + content
+        remembered = service.submit(
+            "remember",
+            {
+                "event_id": "api-preflight-remember",
+                "context": context.model_dump(mode="json"),
+                "content": content,
+                "role": "user",
+                "scope": "project",
+            },
+        )
+        if remembered.get("status") != "committed":
+            raise RuntimeError("Offline remember API preflight failed")
+        captured = service.submit(
+            "capture",
+            {
+                "event_id": "api-preflight-codex-capture",
+                "context": context.model_dump(mode="json"),
+                "occurred_at": datetime.now(timezone.utc).isoformat(),
+                "role": "user",
+                "content": captured_content,
+                "source_kind": "codex_hook",
+                "source_ref": "UserPromptSubmit:api-preflight",
+            },
+        )
+        if captured.get("status") not in {"committed", "queued"}:
+            raise RuntimeError("Offline automatic capture API preflight failed")
+        captured_event_id = captured.get("event_id")
+        if not isinstance(captured_event_id, str) or not captured_event_id:
+            captured_job_id = captured.get("job_id")
+            captured_job = (
+                store.get_job(captured_job_id) if isinstance(captured_job_id, str) else None
+            )
+            captured_payload = captured_job.payload if captured_job is not None else None
+            captured_event_id = (
+                captured_payload.get("event_id") if isinstance(captured_payload, Mapping) else None
+            )
+        if not isinstance(captured_event_id, str) or not captured_event_id:
+            raise RuntimeError("Offline capture did not expose a persisted source identity")
+        maintained = service.submit("maintenance", {})
+        if not isinstance(maintained, Mapping) or "maintenance" not in maintained:
+            raise RuntimeError("Offline maintenance API preflight failed")
+        retrieved = service.submit(
+            "retrieve",
+            {
+                "query": content,
+                "context": context.model_dump(mode="json"),
+                "allowed_scopes": ["project", "global"],
+                "top_k": 5,
+                "max_context_tokens": 1200,
+                "profile": "baseline",
+            },
+        )
+        facts = retrieved.get("facts") if isinstance(retrieved, Mapping) else None
+        if not isinstance(facts, list) or not any(
+            isinstance(fact, Mapping) and fact.get("content") == content for fact in facts
+        ):
+            raise RuntimeError("Offline retrieve API preflight did not return the fact")
+        stored_facts = _find_facts(store, content)
+        explicit_facts = [
+            fact for fact in stored_facts if fact.metadata.get("source") == "explicit_remember"
+        ]
+        captured_facts = [
+            fact
+            for fact in _find_facts(store, captured_content)
+            if fact.metadata.get("source") == "sleep_consolidation"
+        ]
+        if len(explicit_facts) != 1 or len(captured_facts) != 1:
+            raise RuntimeError("Offline preflight did not produce target and captured facts")
+        stored_fact = explicit_facts[0]
+        captured_fact = captured_facts[0]
+        if (
+            stored_fact.metadata.get("source") != "explicit_remember"
+            or stored_fact.metadata.get("scope_id") != identity.id
+            or stored_fact.metadata.get("user_profile_id") != PROFILE
+        ):
+            raise RuntimeError("Offline preflight fact provenance is incorrect")
+        captured_evidence = store.list_fact_evidence(captured_fact.id)
+        if not any(item.source_event_id == captured_event_id for item in captured_evidence):
+            raise RuntimeError("Offline captured fact lacks Codex source evidence")
+        preview = service.submit(
+            "forget_preview",
+            {
+                "context": context.model_dump(mode="json"),
+                "fact_id": stored_fact.id,
+                "expected_version": stored_fact.version,
+                "limit": 100,
+            },
+        )
+        if preview.get("status") != "preview" or preview.get("complete") is not True:
+            raise RuntimeError("Offline related-forget preview API preflight failed")
+        candidate = next(
+            (
+                item
+                for item in preview.get("candidates", [])
+                if item.get("fact_id") == captured_fact.id
+            ),
+            None,
+        )
+        if not isinstance(candidate, Mapping):
+            raise RuntimeError("Offline preview omitted the captured fact")
+        selected_source_ids = list(candidate.get("source_event_ids", []))
+        applied = service.submit(
+            "forget_related",
+            {
+                "context": context.model_dump(mode="json"),
+                "fact_id": stored_fact.id,
+                "expected_version": stored_fact.version,
+                "preview_digest": preview["preview_digest"],
+                "preview_limit": preview["limit"],
+                "selected_fact_ids": [captured_fact.id],
+                "selected_source_event_ids": selected_source_ids,
+            },
+        )
+        if (
+            applied.get("status") != "committed"
+            or applied.get("forgotten") is not True
+            or stored_fact.id not in applied.get("selected_fact_ids", [])
+            or captured_fact.id not in applied.get("selected_fact_ids", [])
+        ):
+            raise RuntimeError("Offline related-forget apply API preflight failed")
+        if store.get(stored_fact.id) is not None or store.get(captured_fact.id) is not None:
+            raise RuntimeError("Offline related-forget did not erase selected facts")
+        return {
+            "status": "passed",
+            "project_id": identity.id,
+            "remember_status": remembered.get("status"),
+            "maintenance_response": {
+                "has_maintenance": "maintenance" in maintained,
+                "has_graph": "graph" in maintained,
+            },
+            "retrieve_fact_observed": True,
+            "fact_provenance": _fact_summary(stored_fact),
+            "captured_fact_provenance": _fact_summary(captured_fact),
+            "related_forget": {
+                "preview_complete": True,
+                "captured_candidate_observed": True,
+                "apply_status": applied.get("status"),
+                "forgotten": applied.get("forgotten"),
+                "selected_source_count": len(selected_source_ids),
+            },
+        }
+    finally:
+        cleanup_errors = _close_service(service, store)
+        if cleanup_errors:
+            raise RuntimeError("Offline preflight cleanup failed")
+        # Retain the private preflight fixture for diagnosis and readback.
+
+
+def _verify_preflight_report(
+    path: Path, *, wheel_path: Path, expected_wheel_sha256: str
+) -> dict[str, Any]:
+    """Bind an execution to a successful, matching, immutable preflight."""
+    if not path.is_file():
+        raise FileNotFoundError(f"Verification report is missing: {path}")
+    try:
+        value = json.loads(path.read_text(encoding="utf-8"))
+    except (OSError, UnicodeDecodeError, json.JSONDecodeError) as exc:
+        raise RuntimeError("Verification report is not valid JSON") from exc
+    if not isinstance(value, Mapping):
+        raise RuntimeError("Verification report must be a JSON object")
+    if value.get("status") != "preflight_passed":
+        raise RuntimeError("Verification report is not a passed preflight")
+    if value.get("source_commit") != SOURCE_COMMIT:
+        raise RuntimeError("Verification report source commit does not match")
+    if value.get("expected_wheel_sha256") != expected_wheel_sha256:
+        raise RuntimeError("Verification report wheel digest does not match")
+    provenance = value.get("package_provenance")
+    if not isinstance(provenance, Mapping):
+        raise RuntimeError("Verification report lacks package provenance")
+    if provenance.get("wheel_sha256_observed") != expected_wheel_sha256:
+        raise RuntimeError("Verification report wheel artifact digest does not match")
+    recorded_path = provenance.get("wheel_path")
+    if not isinstance(recorded_path, str) or Path(recorded_path).resolve() != wheel_path.resolve():
+        raise RuntimeError("Verification report wheel artifact path does not match")
+    python_info = value.get("python")
+    package_path = (
+        Path(str(python_info.get("mnemos_package"))) if isinstance(python_info, Mapping) else None
+    )
+    if (
+        not isinstance(python_info, Mapping)
+        or python_info.get("site_packages_asserted") is not True
+        or package_path is None
+        or not package_path.is_file()
+        or "site-packages" not in {part.lower() for part in package_path.parts}
+    ):
+        raise RuntimeError("Verification report lacks a valid installed package path")
+    return {
+        "report_path": str(path.resolve()),
+        "report_sha256": _sha256(path.read_bytes()),
+        "source_commit": SOURCE_COMMIT,
+        "wheel_path": str(wheel_path.resolve()),
+        "wheel_sha256": expected_wheel_sha256,
+        "installed_package": str(package_path),
+    }
+
+
+def _verify_build_report(path: Path, wheel: Path, digest: str) -> dict[str, Any]:
+    value = json.loads(path.read_text(encoding="utf-8"))
+    if value.get("status") != "passed" or value.get("source_commit") != SOURCE_COMMIT:
+        raise RuntimeError("The exact source must pass full verification before native preflight")
+    artifacts = [
+        item
+        for item in value.get("artifacts", [])
+        if Path(item["file"]).resolve() == wheel.resolve() and item.get("sha256") == digest
+    ]
+    if len(artifacts) != 1 or _sha256(wheel.read_bytes()) != digest:
+        raise RuntimeError("Wheel is not the exact artifact of the passed full verification")
+    return {
+        "report_path": str(path.resolve()),
+        "report_sha256": _sha256(path.read_bytes()),
+        "source_commit": SOURCE_COMMIT,
+        "wheel": artifacts[0],
+    }
+
+
+def _offline_parser_checks() -> dict[str, Any]:
+    """Exercise result parsing and selection gates without importing Mnemos."""
+    preview_result = {
+        "status": "preview",
+        "preview_digest": "d" * 64,
+        "limit": 100,
+        "complete": True,
+        "target": {
+            "fact_id": "target",
+            "version": 2,
+            "historical_assertions": ["old assertion"],
+        },
+        "candidates": [{"fact_id": "copy-a"}],
+        "source_events": [{"source_event_id": "source-a"}],
+    }
+    related_result = {
+        "status": "committed",
+        "forgotten": True,
+        "fact_id": "target",
+        "selected_fact_ids": ["target", "copy-a"],
+        "selected_source_event_ids": ["source-a"],
+    }
+    calls = (
+        (
+            "mnemos_forget_preview",
+            {"fact_id": "target", "expected_version": 2, "limit": 100},
+            preview_result,
+        ),
+        (
+            "mnemos_forget_related",
+            {
+                "fact_id": "target",
+                "expected_version": 2,
+                "preview_digest": "d" * 64,
+                "preview_limit": 100,
+                "selected_fact_ids": ["copy-a"],
+                "selected_source_event_ids": ["source-a"],
+            },
+            related_result,
+        ),
+    )
+    stdout = "\n".join(
+        json.dumps(
+            {
+                "item": {
+                    "type": "mcp_tool_call",
+                    "server": "mnemos",
+                    "name": name,
+                    "status": "completed",
+                    "arguments": arguments,
+                    "result": json.dumps(result),
+                }
+            }
+        )
+        for name, arguments, result in calls
+    )
+    summary = _native_event_summary(
+        stdout,
+        expected_strings={"old": "old assertion"},
+    )
+    preview_calls = _successful_calls(summary, "mnemos_forget_preview")
+    related_calls = _successful_calls(summary, "mnemos_forget_related")
+    if len(preview_calls) != 1 or len(related_calls) != 1:
+        raise RuntimeError("Offline parser did not recognize successful MCP calls")
+    preview_call = preview_calls[0]
+    related_call = related_calls[0]
+    if not _result_contains(summary, "mnemos_forget_preview", "old"):
+        raise RuntimeError("Offline parser lost preview assertion evidence")
+    _validated_preview_call(
+        preview_calls[0],
+        target_id="target",
+        target_version=2,
+        assertion="old assertion",
+        limit=100,
+    )
+    incomplete = dict(preview_calls[0])
+    incomplete["preview_complete"] = False
+    try:
+        _validated_preview_call(
+            incomplete,
+            target_id="target",
+            target_version=2,
+            assertion="old assertion",
+            limit=100,
+        )
+    except RuntimeError:
+        incomplete_preview_rejected = True
+    else:
+        raise RuntimeError("Offline preview gate accepted an incomplete response")
+    mismatched_target = dict(preview_calls[0])
+    mismatched_target["preview_target_fact_id"] = "other-target"
+    try:
+        _validated_preview_call(
+            mismatched_target,
+            target_id="target",
+            target_version=2,
+            assertion="old assertion",
+            limit=100,
+        )
+    except RuntimeError:
+        mismatched_target_rejected = True
+    else:
+        raise RuntimeError("Offline preview gate accepted a mismatched target")
+    mismatched_history = dict(preview_calls[0])
+    mismatched_history["preview_historical_assertion_sha256"] = [_sha256("other assertion")]
+    try:
+        _validated_preview_call(
+            mismatched_history,
+            target_id="target",
+            target_version=2,
+            assertion="old assertion",
+            limit=100,
+        )
+    except RuntimeError:
+        mismatched_history_rejected = True
+    else:
+        raise RuntimeError("Offline preview gate accepted mismatched history")
+    _, _, selected_fact_ids, selected_source_ids = _validated_related_selection(
+        preview_call, related_call, "target"
+    )
+    mismatched = dict(related_call)
+    mismatched["selected_fact_ids"] = ["unreviewed-fact"]
+    try:
+        _validated_related_selection(preview_call, mismatched, "target")
+    except RuntimeError:
+        selection_mismatch_rejected = True
+    else:
+        raise RuntimeError("Offline selection gate accepted an unreviewed ID")
+    if related_call.get("result_forgotten") is not True:
+        raise RuntimeError("Offline parser lost the committed forget acknowledgement")
+    failed = json.dumps(
+        {
+            "item": {
+                "type": "mcp_tool_call",
+                "server": "mnemos",
+                "name": "mnemos_forget_related",
+                "status": "completed",
+                "isError": True,
+                "result": json.dumps(related_result),
+            }
+        }
+    )
+    failed_summary = _native_event_summary(failed)
+    failed_call = _successful_calls(failed_summary, "mnemos_forget_related")
+    if failed_call:
+        raise RuntimeError("Offline parser accepted an outer MCP error")
+    legacy_attempt = _native_event_summary(
+        json.dumps(
+            {
+                "item": {
+                    "type": "mcp_tool_call",
+                    "server": "mnemos",
+                    "name": "mnemos_forget",
+                    "status": "failed",
+                    "result": json.dumps({"status": "failed"}),
+                }
+            }
+        )
+    )
+    if "mnemos_forget" not in legacy_attempt["tool_names"]:
+        raise RuntimeError("Offline parser failed to observe a legacy forget attempt")
+    cleanup_probe = Path(tempfile.mkdtemp(prefix="mnemos-lifecycle-v2-cleanup-"))
+    auth_probe = cleanup_probe / "auth.json"
+    auth_probe.write_text("synthetic", encoding="ascii")
+    try:
+        cleanup_errors = _cleanup_native_resources(None, auth_probe)
+        if cleanup_errors or auth_probe.exists():
+            raise RuntimeError("Offline cleanup probe did not remove its owned auth copy")
+    finally:
+        shutil.rmtree(cleanup_probe, ignore_errors=True)
+
+    class _ForeignEventStore:
+        def list_episodic_events(self, **_: Any) -> list[Any]:
+            return [
+                SimpleNamespace(
+                    id="foreign-event",
+                    content="old assertion",
+                    metadata={
+                        "explicit_remember": False,
+                        "source_kind": "other_hook",
+                        "source_ref": "UserPromptSubmit:foreign",
+                    },
+                    source="other-host",
+                    hook_event=None,
+                    role="user",
+                    status="consolidated",
+                )
+            ]
+
+    if _captured_event_summaries(
+        _ForeignEventStore(), assertion="old assertion", project_id="target", profile="profile"
+    ):
+        raise RuntimeError("Offline capture identity gate accepted a non-Codex event")
+    return {
+        "status": "passed",
+        "successful_preview_calls": len(preview_calls),
+        "successful_related_calls": len(related_calls),
+        "outer_error_rejected": True,
+        "selection_subset_checked": True,
+        "selection_mismatch_rejected": selection_mismatch_rejected,
+        "incomplete_preview_rejected": incomplete_preview_rejected,
+        "mismatched_target_rejected": mismatched_target_rejected,
+        "mismatched_history_rejected": mismatched_history_rejected,
+        "cleanup_behavior": "owned auth cleanup exercised without a native process",
+        "non_codex_capture_rejected": True,
+        "legacy_forget_attempt_observed_for_rejection": True,
+    }
+
+
+def _parse_args(argv: list[str] | None) -> argparse.Namespace:
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument("--wheel", type=Path)
+    parser.add_argument("--expected-wheel-sha256")
+    parser.add_argument("--build-verification", type=Path)
+    parser.add_argument(
+        "--source-commit",
+        required=False,
+        help="Exact source revision named by the passed full verification report",
+    )
+    parser.add_argument(
+        "--offline-check",
+        action="store_true",
+        help="Run parser and selection checks without package, host, or model access",
+    )
+    parser.add_argument("--preflight-only", action="store_true")
+    parser.add_argument(
+        "--verification",
+        type=Path,
+        help="Passed preflight report required for a native execution",
+    )
+    parser.add_argument(
+        "--output",
+        type=Path,
+        help="New evidence directory (defaults to the versioned output directory)",
+    )
+    args = parser.parse_args(argv)
+    if args.offline_check:
+        return args
+    if args.wheel is None or args.build_verification is None or args.source_commit is None:
+        parser.error("--wheel, --build-verification, and --source-commit are required")
+    if args.expected_wheel_sha256 is None:
+        parser.error("--expected-wheel-sha256 is required")
+    digest = args.expected_wheel_sha256.lower()
+    if len(digest) != 64 or any(char not in "0123456789abcdef" for char in digest):
+        parser.error("--expected-wheel-sha256 must be a 64-character hexadecimal digest")
+    if len(args.source_commit) != 40 or any(
+        char not in "0123456789abcdefABCDEF" for char in args.source_commit
+    ):
+        parser.error("--source-commit must be a 40-character hexadecimal revision")
+    args.expected_wheel_sha256 = digest
+    args.source_commit = args.source_commit.lower()
+    return args
+
+
+def main(argv: list[str] | None = None) -> int:
+    global SOURCE_COMMIT
+    args = _parse_args(argv)
+    if args.offline_check:
+        print(json.dumps(_offline_parser_checks(), sort_keys=True))
+        return 0
+    assert args.source_commit is not None
+    assert args.expected_wheel_sha256 is not None
+    assert args.wheel is not None
+    assert args.build_verification is not None
+    SOURCE_COMMIT = args.source_commit
+    output_dir = (args.output or OUTPUT_DIR).expanduser().resolve()
+    if output_dir.exists():
+        raise FileExistsError(f"Refusing to overwrite evidence directory: {output_dir}")
+    output_dir.mkdir(parents=True)
+    report: dict[str, Any] = {
+        "schema_version": 2,
+        "runner": "native-codex-lifecycle-v2",
+        "source_commit": SOURCE_COMMIT,
+        "runner_sha256": _sha256(Path(__file__).read_bytes()),
+        "v8_helper_source": V8_SOURCE_NOTE,
+        "v8_helper_sha256_expected": V8_HELPER_SHA256,
+        "started_at": datetime.now(timezone.utc).isoformat(),
+        "status": "not_observed",
+        "claim_scope": "Codex lifecycle only; this does not establish four hosts or three hosts.",
+        "limitations": [
+            "Exact normalized assertion matching is the only related-forget guarantee measured.",
+            "External transcript availability and paraphrase association are outside this check.",
+            "Constant embeddings and unavailable cognition do not support model quality claims.",
+        ],
+        "model_quality_claim": "none",
+        "embedding_fixture": "Constant unit vectors; transport and durability only.",
+        "cognition": "Unavailable; no extraction or semantic-quality claim.",
+        "native_turn_timeout_seconds": MAX_NATIVE_SECONDS,
+        "administrative_mutations": "none in native run; preflight uses disposable fixture writes",
+        "tool_mutation_requirement": [
+            "mnemos_store",
+            "mnemos_correct",
+            "mnemos_forget_preview",
+            "mnemos_forget_related",
+        ],
+        "wheel_argument": str(args.wheel),
+        "expected_wheel_sha256": args.expected_wheel_sha256,
+        "output_directory": str(output_dir),
+    }
+    fixture: Path | None = None
+    service: Any | None = None
+    store: Any | None = None
+    try:
+        if not TEMP_PARENT.is_dir():
+            raise FileNotFoundError(f"Required private fixture parent is missing: {TEMP_PARENT}")
+        report["build_verification"] = _verify_build_report(
+            args.build_verification.resolve(), args.wheel.resolve(), args.expected_wheel_sha256
+        )
+        if not sys.flags.isolated:
+            raise RuntimeError("Use the fresh installed interpreter with python -I")
+        report["python_isolated_mode"] = True
+        helper_hash = _assert_v8_helper_source()
+        report["v8_helper_sha256_observed"] = helper_hash
+        report["cli"] = _verify_cli()
+        import mnemos
+        from mnemos.config import MnemosConfig
+        from mnemos.scopes import ScopeRegistry
+        from mnemos.service import _protect_private_path
+
+        package_path = Path(str(mnemos.__file__)).resolve()
+        if "site-packages" not in {part.lower() for part in package_path.parts}:
+            raise RuntimeError(f"Installed-wheel isolation failed: imported {package_path}")
+        report["python"] = {
+            "executable": str(Path(sys.executable).resolve()),
+            "mnemos_package": str(package_path),
+            "site_packages_asserted": True,
+        }
+        report["package_provenance"] = _pinned_package_provenance(
+            package_path,
+            wheel_path=args.wheel.resolve(),
+            expected_wheel_sha256=args.expected_wheel_sha256,
+        )
+        if args.preflight_only:
+            if args.verification is not None:
+                raise RuntimeError("--verification is only valid for a native execution")
+            report["service_api_preflight"] = _offline_service_api_preflight()
+            report["preflight_only"] = True
+            report["status"] = "preflight_passed"
+            return_code = 0
+            return return_code
+
+        if args.verification is None:
+            raise RuntimeError("Native execution requires --verification from a passed preflight")
+        report["verification"] = _verify_preflight_report(
+            args.verification.resolve(),
+            wheel_path=args.wheel.resolve(),
+            expected_wheel_sha256=args.expected_wheel_sha256,
+        )
+
+        fixture = Path(
+            tempfile.mkdtemp(prefix="mnemos-native-codex-lifecycle-v2-", dir=TEMP_PARENT)
+        )
+        _protect_private_path(fixture)
+        project_a = fixture / "project-a"
+        project_b = fixture / "project-b"
+        runtime_dir = fixture / "runtime"
+        routing_dir = fixture / "routing"
+        for directory in (project_a, project_b, runtime_dir, routing_dir):
+            _private_mkdir(directory)
+        registry = ScopeRegistry()
+        identity_a = registry.register_project(project_a, user_profile_id=PROFILE, enabled=True)
+        identity_b = registry.register_project(project_b, user_profile_id=PROFILE, enabled=True)
+        registry_path = fixture / "scopes.json"
+        registry.save(registry_path)
+        settings_path = fixture / "settings.toml"
+        settings_path.write_text("# private lifecycle fixture settings\n", encoding="utf-8")
+        _protect_private_path(settings_path)
+        config = MnemosConfig()
+        for name in ("surprisal", "mutable_rag", "affective", "sleep", "spreading"):
+            setattr(config.modules, name, False)
+        service, store = _start_service(fixture, registry, config)
+        old_token = "mnemos-old-" + secrets.token_hex(8)
+        new_token = "mnemos-new-" + secrets.token_hex(8)
+        old_content = "The release channel for this project is " + old_token + "."
+        new_content = "The release channel for this project is " + new_token + "."
+        target_python = Path(sys.executable).resolve()
+
+        turns: list[dict[str, Any]] = []
+
+        def record_turn(**kwargs: Any) -> dict[str, Any]:
+            turn = _run_turn(**kwargs)
+            turns.append(turn)
+            report["turns"] = list(turns)
+            if turn["native"]["unreviewed_error_count"]:
+                raise RuntimeError("Native turn emitted an unreviewed error")
+            return turn
+
+        teach_turn = record_turn(
+            fixture=fixture,
+            project=project_a,
+            turn_name="a-teach",
+            prompt=(
+                "Use only Mnemos MCP tools. Call mnemos_store with this exact project fact: "
+                + old_content
+                + " Then call mnemos_consolidate, then mnemos_retrieve for that exact fact. "
+                "Do not use shell or any other tool."
+            ),
+            registry_path=registry_path,
+            settings_path=settings_path,
+            runtime_dir=runtime_dir,
+            routing_dir=routing_dir,
+            profile=PROFILE,
+            target_python=target_python,
+            expected_strings={
+                "old": old_content,
+                "new": new_content,
+                "old_token": old_token,
+                "new_token": new_token,
+            },
+        )
+        if teach_turn["status"] != "completed":
+            raise RuntimeError("Native teach turn failed")
+        if not {"mnemos_store", "mnemos_consolidate", "mnemos_retrieve"}.issubset(
+            teach_turn["native"]["tool_names"]
+        ):
+            raise RuntimeError("Teach turn did not show the required Mnemos tool calls")
+        if not _successful_tool(teach_turn["native"], "mnemos_retrieve") or not _result_contains(
+            teach_turn["native"], "mnemos_retrieve", "old"
+        ):
+            raise RuntimeError("Teach retrieve did not return the stored fact")
+        if not _successful_tool(teach_turn["native"], "mnemos_store"):
+            raise RuntimeError("Teach store did not return a successful result")
+        if not _successful_service_status(teach_turn["native"], "mnemos_store", "committed"):
+            raise RuntimeError("Teach store did not report committed status")
+        if not _successful_tool(teach_turn["native"], "mnemos_consolidate"):
+            raise RuntimeError("Teach consolidate did not return a successful result")
+        facts = _find_facts(store, old_content)
+        if len(facts) != 1:
+            raise RuntimeError("Teach turn did not create exactly one fact")
+        target = facts[0]
+        target_id = target.id
+        target_version = target.version
+        report["fact_after_teach"] = _fact_summary(target)
+        captured_events = _captured_event_summaries(
+            store, assertion=old_content, project_id=identity_a.id, profile=PROFILE
+        )
+        if not captured_events:
+            raise RuntimeError("Teach hook capture was not independently observed in SQLite")
+        report["captured_hook_observations"] = captured_events
+        observed_event_ids = {
+            item["event_id"] for item in captured_events if isinstance(item.get("event_id"), str)
+        }
+        captured_facts = _captured_fact_summaries(
+            store,
+            assertion=old_content,
+            target_fact_id=target_id,
+            project_id=identity_a.id,
+            profile=PROFILE,
+            observed_event_ids=observed_event_ids,
+        )
+        if not captured_facts:
+            raise RuntimeError(
+                "Teach hook capture did not produce an accepted sleep_consolidation fact"
+            )
+        report["captured_fact_observations"] = captured_facts
+
+        cross_project_turn = record_turn(
+            fixture=fixture,
+            project=project_b,
+            turn_name="b-cross-project-read",
+            prompt=(
+                "Use only Mnemos MCP tool mnemos_retrieve for the project release channel. "
+                "Do not write, forget, correct, use shell, or use any other tool. Report whether "
+                "a release channel fact is present in this project."
+            ),
+            registry_path=registry_path,
+            settings_path=settings_path,
+            runtime_dir=runtime_dir,
+            routing_dir=routing_dir,
+            profile=PROFILE,
+            target_python=target_python,
+            expected_strings={
+                "old": old_content,
+                "new": new_content,
+                "old_token": old_token,
+                "new_token": new_token,
+            },
+        )
+        if cross_project_turn["status"] != "completed" or not _successful_tool(
+            cross_project_turn["native"], "mnemos_retrieve"
+        ):
+            raise RuntimeError("Native cross-project retrieve did not complete successfully")
+        if _result_contains_any(
+            cross_project_turn["native"],
+            "mnemos_retrieve",
+            ("old", "new", "old_token", "new_token"),
+        ):
+            raise RuntimeError("Project B native retrieve returned a project A canary")
+        report["cross_project_observer_before_mutation"] = {
+            "project_a_id": identity_a.id,
+            "project_b_id": identity_b.id,
+            "project_a_fact_still_present": store.get(target_id) is not None,
+            "project_b_canary_fact_count": sum(
+                1
+                for fact in store.list_chunks(limit=10_000)
+                if fact.metadata.get("scope_id") == identity_b.id
+                and fact.content in {old_content, new_content}
+            ),
+            "native_retrieve_contains_project_a_canary": _result_contains_any(
+                cross_project_turn["native"],
+                "mnemos_retrieve",
+                ("old", "new", "old_token", "new_token"),
+            ),
+            "native_stdout_contains_project_a_canary": any(
+                cross_project_turn["native"].get("stdout_contains", {}).get(label) is True
+                for label in ("old", "new", "old_token", "new_token")
+            ),
+        }
+        if store.get(target_id) is None:
+            raise RuntimeError("Cross-project read unexpectedly removed the project A fact")
+
+        if cleanup_errors := _close_service(service, store):
+            raise RuntimeError("Service cleanup failed: " + ",".join(cleanup_errors))
+        service = None
+        store = None
+        service, store = _start_service(fixture, registry, config)
+        correct_turn = record_turn(
+            fixture=fixture,
+            project=project_a,
+            turn_name="c-correct",
+            prompt=(
+                "Use only Mnemos MCP tools. First call mnemos_retrieve for the project release "
+                "channel fact. Then call mnemos_correct on that returned fact using its current "
+                "fact ID and expected_version, replacing it with this exact content: "
+                + new_content
+                + " Then call mnemos_consolidate. Do not use shell or any other tool."
+            ),
+            registry_path=registry_path,
+            settings_path=settings_path,
+            runtime_dir=runtime_dir,
+            routing_dir=routing_dir,
+            profile=PROFILE,
+            target_python=target_python,
+            expected_strings={
+                "old": old_content,
+                "new": new_content,
+                "old_token": old_token,
+                "new_token": new_token,
+            },
+        )
+        if correct_turn["status"] != "completed" or not {
+            "mnemos_retrieve",
+            "mnemos_correct",
+            "mnemos_consolidate",
+        }.issubset(correct_turn["native"]["tool_names"]):
+            raise RuntimeError("Correct turn did not show the required Mnemos tool calls")
+        if not _successful_tool(correct_turn["native"], "mnemos_retrieve") or not _result_contains(
+            correct_turn["native"], "mnemos_retrieve", "old"
+        ):
+            raise RuntimeError("Correct retrieve did not return the pre-correction fact")
+        if not _successful_tool(correct_turn["native"], "mnemos_correct"):
+            raise RuntimeError("Correct call did not return a successful result")
+        if not _successful_service_status(correct_turn["native"], "mnemos_correct", "committed"):
+            raise RuntimeError("Correct call did not report committed status")
+        if not _successful_tool(correct_turn["native"], "mnemos_consolidate"):
+            raise RuntimeError("Correct consolidate did not return a successful result")
+        corrected = store.get(target_id)
+        if (
+            corrected is None
+            or corrected.content != new_content
+            or corrected.version != target_version + 1
+            or len(_find_facts(store, new_content)) != 1
+            or _find_facts(store, old_content)
+        ):
+            raise RuntimeError("Correct turn did not produce the expected versioned fact")
+        report["fact_after_correct"] = _fact_summary(corrected)
+
+        if cleanup_errors := _close_service(service, store):
+            raise RuntimeError("Service cleanup failed: " + ",".join(cleanup_errors))
+        service = None
+        store = None
+        service, store = _start_service(fixture, registry, config)
+        related_turn = record_turn(
+            fixture=fixture,
+            project=project_a,
+            turn_name="d-related-forget",
+            prompt=(
+                "Use only Mnemos MCP tools. First call mnemos_retrieve for the current project "
+                "release channel fact. Then call mnemos_forget_preview with that exact returned "
+                "fact ID and current version and limit 100. Inspect its target historical "
+                "assertions, candidates, and source events. Stop if complete is false or any "
+                "candidate/source is selection_allowed=false, source_allowed=false, or has "
+                "blocked_source_event_ids. Then call mnemos_forget_related using the exact "
+                "preview_digest and preview_limit equal to preview.limit from that response. "
+                "Select only allowed candidate fact IDs and source event IDs present in the "
+                "preview, including the target fact ID if the API allows it and every captured "
+                "duplicate that the preview identifies. Do not call mnemos_forget. After the apply, do not repeat "
+                "or restate erased fact text in your final reply. Do not use shell or any other "
+                "tool."
+            ),
+            registry_path=registry_path,
+            settings_path=settings_path,
+            runtime_dir=runtime_dir,
+            routing_dir=routing_dir,
+            profile=PROFILE,
+            target_python=target_python,
+            expected_strings={
+                "old": old_content,
+                "new": new_content,
+                "old_token": old_token,
+                "new_token": new_token,
+            },
+        )
+        if related_turn["status"] != "completed" or not {
+            "mnemos_retrieve",
+            "mnemos_forget_preview",
+            "mnemos_forget_related",
+        }.issubset(related_turn["native"]["tool_names"]):
+            raise RuntimeError("Related forget turn did not show the required Mnemos tool calls")
+        if "mnemos_forget" in related_turn["native"]["tool_names"]:
+            raise RuntimeError("Related forget turn used the legacy forget tool")
+        if not _successful_tool(related_turn["native"], "mnemos_retrieve"):
+            raise RuntimeError("Related forget retrieve did not complete successfully")
+        if not _result_contains(related_turn["native"], "mnemos_retrieve", "new"):
+            raise RuntimeError("Related forget retrieve did not return the corrected fact")
+        if not _successful_tool(related_turn["native"], "mnemos_forget_preview"):
+            raise RuntimeError("Related forget preview did not complete successfully")
+        preview_calls = _successful_calls(related_turn["native"], "mnemos_forget_preview")
+        related_calls = _successful_calls(related_turn["native"], "mnemos_forget_related")
+        if len(preview_calls) != 1 or len(related_calls) != 1:
+            raise RuntimeError("Related forget turn must have one successful preview and apply")
+        preview_call = preview_calls[0]
+        related_call = related_calls[0]
+        preview_digest = _validated_preview_call(
+            preview_call,
+            target_id=target_id,
+            target_version=corrected.version,
+            assertion=old_content,
+            limit=100,
+        )
+        (
+            preview_candidate_ids,
+            preview_source_ids,
+            selected_fact_ids,
+            selected_source_ids,
+        ) = _validated_related_selection(preview_call, related_call, target_id)
+        captured_fact_ids = {
+            item["fact_id"] for item in captured_facts if isinstance(item.get("fact_id"), str)
+        }
+        if not captured_fact_ids <= preview_candidate_ids:
+            raise RuntimeError("Forget preview omitted an accepted captured fact")
+        if not captured_fact_ids <= selected_fact_ids:
+            raise RuntimeError("Related forget did not select the accepted captured fact")
+        if related_call.get("result_fact_id") != target_id:
+            raise RuntimeError("Related forget result targeted the wrong fact")
+        if (
+            related_call.get("request_arguments_present") is not True
+            or related_call.get("request_fact_id") != target_id
+            or related_call.get("request_expected_version") != corrected.version
+            or related_call.get("request_preview_digest") != preview_digest
+            or related_call.get("request_preview_limit") != preview_call.get("preview_limit")
+        ):
+            raise RuntimeError("Related forget did not use the matching preview binding")
+        requested_fact_ids = {
+            item
+            for item in related_call.get("request_selected_fact_ids", [])
+            if isinstance(item, str)
+        }
+        requested_source_ids = {
+            item
+            for item in related_call.get("request_selected_source_event_ids", [])
+            if isinstance(item, str)
+        }
+        if selected_fact_ids != requested_fact_ids | {target_id}:
+            raise RuntimeError("Related forget result selections differ from the request")
+        if selected_source_ids != requested_source_ids:
+            raise RuntimeError("Related forget result source selections differ from the request")
+        if not selected_source_ids.intersection(
+            {item["event_id"] for item in captured_events if isinstance(item.get("event_id"), str)}
+        ):
+            raise RuntimeError("Related forget did not select the independently captured source")
+        if not _successful_service_status(
+            related_turn["native"], "mnemos_forget_related", "committed"
+        ):
+            raise RuntimeError("Related forget did not report committed status")
+        if related_call.get("result_forgotten") is not True:
+            raise RuntimeError("Related forget did not acknowledge forgotten=true")
+        actual_selected_fact_ids = selected_fact_ids - {target_id}
+        missing_facts = [
+            fact_id for fact_id in actual_selected_fact_ids if store.get(fact_id) is not None
+        ]
+        missing_sources = [
+            source_id
+            for source_id in selected_source_ids
+            if store.get_episodic_event(source_id) is not None
+        ]
+        if store.get(target_id) is not None or missing_facts or missing_sources:
+            raise RuntimeError("Related forget left selected live memory or source rows")
+        if not store.is_suppressed(fact_id=target_id):
+            raise RuntimeError("Related forget did not record target suppression")
+        if any(
+            not store.is_suppressed(source_event_id=source_id) for source_id in selected_source_ids
+        ):
+            raise RuntimeError("Related forget did not record source suppression")
+        report["related_forget_observer_before_restart"] = {
+            "target_fact_id": target_id,
+            "preview_digest": preview_digest,
+            "preview_candidate_ids": sorted(preview_candidate_ids),
+            "preview_source_event_ids": sorted(preview_source_ids),
+            "selected_fact_ids": sorted(selected_fact_ids),
+            "selected_source_event_ids": sorted(selected_source_ids),
+            "target_live_after_apply": store.get(target_id) is not None,
+            "selected_fact_live_after_apply": {
+                fact_id: store.get(fact_id) is not None
+                for fact_id in sorted(actual_selected_fact_ids)
+            },
+            "selected_source_live_after_apply": {
+                source_id: store.get_episodic_event(source_id) is not None
+                for source_id in sorted(selected_source_ids)
+            },
+            "target_suppression_recorded": store.is_suppressed(fact_id=target_id),
+            "selected_source_suppression_recorded": {
+                source_id: store.is_suppressed(source_event_id=source_id)
+                for source_id in sorted(selected_source_ids)
+            },
+        }
+
+        if cleanup_errors := _close_service(service, store):
+            raise RuntimeError("Service cleanup failed: " + ",".join(cleanup_errors))
+        service = None
+        store = None
+        service, store = _start_service(fixture, registry, config)
+        post_forget_turn = record_turn(
+            fixture=fixture,
+            project=project_a,
+            turn_name="e-post-forget-read",
+            prompt=(
+                "Use only the Mnemos MCP tool mnemos_retrieve for the current project release "
+                "channel. Do not write, forget, correct, use shell, or use any other tool. "
+                "Report whether the current release channel fact is present. Do not repeat any "
+                "previously erased fact text in your final reply."
+            ),
+            registry_path=registry_path,
+            settings_path=settings_path,
+            runtime_dir=runtime_dir,
+            routing_dir=routing_dir,
+            profile=PROFILE,
+            target_python=target_python,
+            expected_strings={
+                "old": old_content,
+                "new": new_content,
+                "old_token": old_token,
+                "new_token": new_token,
+            },
+        )
+        if post_forget_turn["status"] != "completed" or not _successful_tool(
+            post_forget_turn["native"], "mnemos_retrieve"
+        ):
+            raise RuntimeError("Native post-restart read turn failed")
+        if _result_contains_any(
+            post_forget_turn["native"],
+            "mnemos_retrieve",
+            ("old", "new", "old_token", "new_token"),
+        ):
+            raise RuntimeError("Post-forget native retrieve returned the forgotten canary")
+        if any(
+            post_forget_turn["native"].get("stdout_contains", {}).get(label) is True
+            for label in ("old", "new", "old_token", "new_token")
+        ):
+            raise RuntimeError("Post-forget native output returned the forgotten canary")
+        after_restart = store.get(target_id)
+        report["after_restart"] = {
+            "live_fact_present": after_restart is not None,
+            "suppression_recorded": store.is_suppressed(fact_id=target_id),
+            "selected_facts_live": {
+                fact_id: store.get(fact_id) is not None
+                for fact_id in sorted(actual_selected_fact_ids)
+            },
+            "selected_sources_live": {
+                source_id: store.get_episodic_event(source_id) is not None
+                for source_id in sorted(selected_source_ids)
+            },
+        }
+        if after_restart is not None or not store.is_suppressed(fact_id=target_id):
+            raise RuntimeError("Forgotten target returned after restart")
+        if any(report["after_restart"]["selected_facts_live"].values()) or any(
+            report["after_restart"]["selected_sources_live"].values()
+        ):
+            raise RuntimeError("Selected related memory returned after restart")
+        report["turns"] = turns
+        report["criteria"] = {
+            "native_errors_reviewed": all(
+                isinstance(turn.get("native", {}).get("error_count"), int)
+                and turn.get("native", {}).get("unreviewed_error_count") == 0
+                for turn in turns
+            ),
+            "teach_mcp_write_observed": {"mnemos_store", "mnemos_consolidate"}.issubset(
+                teach_turn["native"]["tool_names"]
+            ),
+            "teach_retrieve_result_observed": _result_contains(
+                teach_turn["native"], "mnemos_retrieve", "old"
+            ),
+            "teach_hook_capture_observed": bool(captured_events),
+            "correct_mcp_write_observed": _successful_tool(
+                correct_turn["native"], "mnemos_correct"
+            ),
+            "forget_preview_mcp_read_observed": _successful_tool(
+                related_turn["native"], "mnemos_forget_preview"
+            ),
+            "forget_related_mcp_write_observed": _successful_tool(
+                related_turn["native"], "mnemos_forget_related"
+            ),
+            "corrected_fact_versioned": report["fact_after_correct"]["version"] > target_version,
+            "teach_scope_and_profile_recorded": report["fact_after_teach"]["scope_id"]
+            == identity_a.id
+            and report["fact_after_teach"]["user_profile_id"] == PROFILE
+            and target.metadata.get("host") == "codex"
+            and target.metadata.get("source") == "explicit_remember",
+            "correct_scope_and_profile_recorded": report["fact_after_correct"]["scope_id"]
+            == identity_a.id
+            and report["fact_after_correct"]["user_profile_id"] == PROFILE
+            and corrected.metadata.get("host") == "codex"
+            and corrected.metadata.get("source") == "explicit_correction",
+            "related_target_and_selected_rows_erased": (
+                not report["related_forget_observer_before_restart"]["target_live_after_apply"]
+                and not any(
+                    report["related_forget_observer_before_restart"][
+                        "selected_fact_live_after_apply"
+                    ].values()
+                )
+                and not any(
+                    report["related_forget_observer_before_restart"][
+                        "selected_source_live_after_apply"
+                    ].values()
+                )
+            ),
+            "related_suppression_recorded": report["related_forget_observer_before_restart"][
+                "target_suppression_recorded"
+            ]
+            and all(
+                report["related_forget_observer_before_restart"][
+                    "selected_source_suppression_recorded"
+                ].values()
+            ),
+            "suppression_recorded_before_restart": report["related_forget_observer_before_restart"][
+                "target_suppression_recorded"
+            ],
+            "target_absent_after_restart_and_suppression_recorded": not report["after_restart"][
+                "live_fact_present"
+            ]
+            and report["after_restart"]["suppression_recorded"],
+            "cross_project_isolated": report["cross_project_observer_before_mutation"][
+                "project_b_canary_fact_count"
+            ]
+            == 0,
+            "cross_project_retrieve_result_observed": _successful_tool(
+                cross_project_turn["native"], "mnemos_retrieve"
+            )
+            and not _result_contains_any(
+                cross_project_turn["native"],
+                "mnemos_retrieve",
+                ("old", "new", "old_token", "new_token"),
+            ),
+            "cross_project_stdout_isolated": not report["cross_project_observer_before_mutation"][
+                "native_stdout_contains_project_a_canary"
+            ],
+            "post_forget_retrieve_result_observed": _successful_tool(
+                post_forget_turn["native"], "mnemos_retrieve"
+            ),
+            "post_forget_stdout_isolated": not any(
+                post_forget_turn["native"].get("stdout_contains", {}).get(label) is True
+                for label in ("old", "new", "old_token", "new_token")
+            ),
+        }
+        if not all(report["criteria"].values()):
+            raise RuntimeError("One or more lifecycle criteria failed")
+        report["status"] = "observed"
+        return_code = 0
+    except Exception as exc:
+        report["status"] = "failed"
+        report["error_type"] = type(exc).__name__
+        report["error_digest"] = _sha256(str(exc))
+        if fixture is not None:
+            (fixture / "runner-error.txt").write_text(traceback.format_exc(), encoding="utf-8")
+            _protect_file(fixture / "runner-error.txt")
+        return_code = 1
+    finally:
+        cleanup_errors = _close_service(service, store)
+        if cleanup_errors:
+            report["cleanup_errors"] = cleanup_errors
+            if report["status"] == "observed":
+                report["status"] = "failed"
+                return_code = 1
+        report["fixture"] = str(fixture) if fixture is not None else None
+        report["private_fixture_preserved"] = fixture is not None
+        report["finished_at"] = datetime.now(timezone.utc).isoformat()
+        (output_dir / "report.json").write_text(
+            json.dumps(report, ensure_ascii=True, indent=2, sort_keys=True) + "\n",
+            encoding="utf-8",
+        )
+        print(json.dumps({"status": report["status"], "report": str(output_dir / "report.json")}))
+    return return_code
+
+
+if __name__ == "__main__":
+    raise SystemExit(main())

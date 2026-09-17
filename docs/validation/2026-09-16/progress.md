@@ -585,3 +585,25 @@ The completed phase's eight original artifact hashes match the queue record.
 Its source is frozen `b7a9d9d4`, not the later startup or related-forget changes.
 The lifecycle phase is running separately; its mutable outputs are not included
 in this checkpoint.
+
+## Reviewed captured-copy removal implemented
+
+Commit `c805cc2` adds scoped related-forget preview and atomic application
+through the service, MCP, and memory UI. Additional captured records require
+selection. The operation validates retained and expired source dependencies
+through both evidence and job references, rejects stale or incomplete plans,
+redacts foreign details, scrubs selected job payloads, and invalidates leases.
+
+The [preserved development checks](related-forget-verification/README.md)
+include 83 affected tests and 15 expanded safety tests. Browser v4 passed the
+actual HTTP/control-plane/service/SQLite path, then reopened the database and
+replayed the capture without resurrecting either selected fact. An initial
+expired-source regression failure and a browser-driver timing failure remain
+preserved. Every product file in those browser and focused reports matches the
+committed implementation after line-ending normalization.
+
+Full tests and package checks are running against a clean frozen `c805cc2`
+checkout. Installed-wheel and native lifecycle acceptance remain pending. The
+native Codex runner has passed offline parser and protocol checks, which do not
+constitute a native conversation. The real-model lifecycle queue remains on
+its original frozen `b7a9d9d4` source.

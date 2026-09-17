@@ -1,0 +1,43 @@
+import json
+import traceback
+import sys
+from pathlib import Path
+from playwright.sync_api import sync_playwright, expect
+
+url, target, output = sys.argv[1:]
+out = Path(output)
+report = {'status': 'running', 'checks': []}
+try:
+    with sync_playwright() as playwright:
+        browser = playwright.chromium.launch(channel='msedge', headless=True)
+        page = browser.new_page(viewport={'width': 1440, 'height': 1100})
+        errors = []
+        page.on('pageerror', lambda error: errors.append(str(error)))
+        page.goto(url)
+        page.wait_for_load_state('networkidle')
+        page.locator(f'[data-memory-id="{target}"]').click()
+        page.locator('#preview-forget-memory').click()
+        page.wait_for_selector('#apply-related-forget')
+        assert page.locator('[data-forget-fact]').count() == 1
+        assert page.locator('[data-forget-source]').count() == 1
+        assert page.locator('[data-forget-fact]:checked').count() == 0
+        assert 'Release is old-browser-canary.' in page.locator('#forget-preview').inner_text()
+        page.locator('[data-forget-fact]').check()
+        page.locator('[data-forget-source]').check()
+        page.locator('#forget-preview').screenshot(path=str(out / 'reviewed-preview.png'))
+        page.locator('#apply-related-forget').click()
+        expect(page.locator('#memory-action-status')).to_have_text('Selected records forgotten.', timeout=15000)
+        page.wait_for_load_state('networkidle')
+        expect(page.locator(f'[data-memory-id="{target}"]')).to_have_count(0, timeout=15000)
+        assert not errors, errors
+        report['checks'] = ['Actual HTTP UI bootstrap and scoped fact selection', 'Historical assertion copy visible and unchecked', 'Explicit fact and source selection applied through HTTP', 'Deleted target disappears from actual refreshed list', 'No browser JavaScript errors']
+        browser.close()
+    report['status'] = 'passed'
+except Exception as exc:
+    report['status'] = 'failed'
+    report['error'] = f'{type(exc).__name__}: {exc}'
+    report['traceback'] = traceback.format_exc()
+finally:
+    (out / 'browser.json').write_text(json.dumps(report, indent=2), encoding='utf-8')
+print(json.dumps(report))
+raise SystemExit(0 if report['status'] == 'passed' else 1)

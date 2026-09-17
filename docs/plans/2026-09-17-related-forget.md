@@ -27,8 +27,9 @@ Preserve unrelated manual facts even when their text overlaps.
 The preview includes content for inspection, reasons, IDs, versions, affected
 source/job IDs, and a digest of the relevant state. It is read-only and carries
 an explicit exact-text matching limitation. Include pending captured events so
-later maintenance cannot recreate a selected copy. Bound candidate enumeration;
-an incomplete preview cannot be applied as if complete.
+later maintenance cannot recreate a selected copy. Bound the returned candidate
+and source lists, including linked sources; an incomplete preview cannot be
+applied as if complete. This output bound is not a database scan-time guarantee.
 
 `forget_related` accepts that digest and an explicit selection from the
 preview. The target is mandatory. Additional deletions must be visible before

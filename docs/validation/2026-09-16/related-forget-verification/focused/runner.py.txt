@@ -1,0 +1,45 @@
+import hashlib
+import json
+import subprocess
+import sys
+from datetime import datetime, timezone
+from pathlib import Path
+
+root = Path(__file__).resolve().parents[1]
+out = root / '.venv' / sys.argv[1]
+out.mkdir(exist_ok=False)
+paths = [
+    'mnemos/contracts.py', 'mnemos/utils/storage.py', 'mnemos/memory_service.py',
+    'mnemos/mcp_server.py', 'mnemos/control_plane.py', 'mnemos/ui_server.py',
+    'mnemos/ui/app.js', 'mnemos/ui/index.html',
+    'tests/test_related_forget.py', 'tests/test_related_forget_safety.py',
+    'tests/test_related_forget_transport.py',
+]
+def hashes():
+    return {path: hashlib.sha256((root / path).read_bytes()).hexdigest() for path in paths}
+report = {'started_at': datetime.now(timezone.utc).isoformat(), 'files': hashes(), 'checks': []}
+checks = [
+    ('pytest', [sys.executable, '-m', 'pytest', '-q', '--tb=short',
+        'tests/test_related_forget.py', 'tests/test_related_forget_safety.py',
+        'tests/test_related_forget_transport.py', 'tests/test_durable_jobs.py',
+        'tests/test_memory_service.py', 'tests/test_backup_restore.py',
+        'tests/test_mcp_server.py', 'tests/test_mcp_compatibility.py',
+        'tests/test_control_plane.py', 'tests/test_ui_server.py']),
+    ('black', [sys.executable, '-m', 'black', '--check', *[p for p in paths if p.endswith('.py')]]),
+    ('mypy', [str(root / '.venv/compat-py310/Scripts/python.exe'), '-m', 'mypy', *[p for p in paths if p.endswith('.py') and p.startswith('mnemos/')]]),
+    ('javascript', ['node', '--check', 'mnemos/ui/app.js']),
+]
+for name, command in checks:
+    with (out / f'{name}.log').open('w', encoding='utf-8') as log:
+        result = subprocess.run(command, cwd=root, stdout=log, stderr=subprocess.STDOUT, creationflags=getattr(subprocess, 'CREATE_NO_WINDOW', 0))
+    report['checks'].append({'name': name, 'command': command, 'exit_code': result.returncode})
+    print(name, result.returncode, flush=True)
+    if result.returncode:
+        break
+report['files_after'] = hashes()
+report['stable_sources'] = report['files'] == report['files_after']
+report['finished_at'] = datetime.now(timezone.utc).isoformat()
+report['status'] = 'passed' if len(report['checks']) == len(checks) and all(c['exit_code'] == 0 for c in report['checks']) and report['stable_sources'] else 'failed'
+(out / 'report.json').write_text(json.dumps(report, indent=2), encoding='utf-8')
+print(report['status'], flush=True)
+raise SystemExit(0 if report['status'] == 'passed' else 1)

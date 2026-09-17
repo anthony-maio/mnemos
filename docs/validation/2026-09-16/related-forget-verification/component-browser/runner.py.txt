@@ -1,0 +1,149 @@
+import hashlib
+import json
+import re
+from pathlib import Path
+from playwright.sync_api import sync_playwright
+
+root = Path(__file__).resolve().parents[1]
+out = root / '.venv/related-forget-browser-v3'
+out.mkdir(exist_ok=False)
+preview = {
+    'status': 'preview', 'complete': True, 'limit': 100,
+    'preview_digest': 'a' * 64,
+    'target': {'fact_id': 'target', 'version': 2, 'content': 'Release is new.'},
+    'candidates': [{'fact_id': 'copy', 'version': 1, 'content': '<img src=x onerror=alert(1)> Release is old.', 'source_event_ids': ['source']}],
+    'source_events': [{'source_event_id': 'source', 'content': 'Please remember Release is old.', 'status': 'pending', 'job_ids': ['job'], 'derived_fact_ids': ['copy']}],
+}
+report = {'kind': 'browser component checks with synthetic API responses; no live service or model', 'checks': [], 'status': 'running'}
+report['runner_sha256'] = hashlib.sha256(Path(__file__).read_bytes()).hexdigest()
+report['files'] = {p: hashlib.sha256((root / p).read_bytes()).hexdigest() for p in ['mnemos/ui/app.js', 'mnemos/ui/index.html']}
+calls = []
+mode = {'apply_error': False, 'incomplete': False}
+
+def route(request):
+    url = request.request.url
+    if url.endswith('/api/csrf'):
+        data = {'csrf_token': 'fixture'}
+    elif url.endswith('/api/settings'):
+        request.fulfill(status=503, json={'error': 'Component fixture skips dashboard bootstrap'})
+        return
+    elif url.endswith('/forget-preview'):
+        data = {**preview, 'complete': not mode['incomplete']}
+    elif url.endswith('/forget-related'):
+        calls.append(request.request.post_data_json)
+        if mode['apply_error']:
+            request.fulfill(status=400, json={'error': 'Forget preview is stale'})
+            return
+        data = {'status': 'committed', 'forgotten': True}
+    elif url.endswith('/'):
+        html = (root / 'mnemos/ui/index.html').read_text(encoding='utf-8')
+        html = re.sub(r'<script[^>]*src=[^>]*></script>', '', html)
+        request.fulfill(status=200, content_type='text/html', body=html)
+        return
+    elif url.endswith('.css'):
+        request.fulfill(status=200, content_type='text/css', body=(root / 'mnemos/ui/styles.css').read_text())
+        return
+    else:
+        request.fulfill(status=404, json={'error': 'Unrecognized fixture request'})
+        return
+    request.fulfill(status=200, json=data)
+
+try:
+    with sync_playwright() as playwright:
+        browser = playwright.chromium.launch(channel='msedge', headless=True)
+        page = browser.new_page(viewport={'width': 1440, 'height': 1100})
+        page.route('**/*', route)
+        page.goto('http://mnemos.test/')
+        page.add_script_tag(content=(root / 'mnemos/ui/app.js').read_text(encoding='utf-8'))
+        page.wait_for_load_state('networkidle')
+        page.evaluate("""() => {
+          refreshDashboard = async () => {};
+          state.selectedMemoryId = 'target';
+          state.selectedMemoryVersion = 2;
+          state.selectedMemoryMeta = {scope: 'project'};
+          setMemoryActionAvailability(true);
+          document.querySelectorAll('[data-page]').forEach(e => e.classList.remove('active'));
+          document.getElementById('forget-preview').closest('section').hidden = false;
+        }""")
+        # Exercise the actual bound button without depending on the dashboard tab.
+        page.locator('#preview-forget-memory').click()
+        page.wait_for_function("state.forgetPreview !== null")
+        assert page.locator('[data-forget-fact]:checked').count() == 0
+        assert page.locator('[data-forget-source]:checked').count() == 0
+        assert page.locator('#forget-preview img').count() == 0
+        assert 'Required by captured fact 1.' in page.locator('#forget-preview').inner_text()
+        report['checks'].append('Additional deletions opt in; captured HTML is escaped')
+        page.locator('[data-forget-fact]').check()
+        page.locator('[data-forget-source]').check()
+        page.locator('#apply-related-forget').click()
+        page.wait_for_function("state.selectedMemoryId === null")
+        assert len(calls) == 1
+        assert calls[0] == {'expected_version': 2, 'preview_digest': 'a' * 64, 'preview_limit': 100, 'selected_fact_ids': ['target', 'copy'], 'selected_source_event_ids': ['source']}
+        report['checks'].append('Apply sends exactly reviewed IDs, version, limit and digest')
+        page.evaluate("state.selectedMemoryId = 'target'; state.selectedMemoryVersion = 2; state.selectedMemoryMeta = {scope: 'project'}")
+        original_preview = json.loads(json.dumps(preview))
+        preview['target']['source_event_ids'] = ['mandatory']
+        preview['target']['affected_sources'] = [
+            {'source_event_id': 'mandatory', 'status': 'processed', 'content': 'Attached source'},
+            {'source_event_id': 'expired', 'status': 'expired'},
+        ]
+        preview['candidates'].append({
+            'fact_id': 'blocked-copy', 'version': 1, 'content': 'Blocked copy',
+            'source_event_ids': ['blocked'], 'blocked_source_event_ids': ['blocked'],
+        })
+        preview['source_events'].extend([
+            {'source_event_id': 'mandatory', 'status': 'processed', 'content': 'Attached source', 'selection_allowed': True},
+            {'source_event_id': 'blocked', 'status': 'blocked', 'content': 'Unavailable source', 'selection_allowed': False},
+        ])
+        page.evaluate('previewForgetMemory()')
+        assert page.locator('[data-forget-source="mandatory"]').is_checked()
+        assert page.locator('[data-forget-source="mandatory"]').is_disabled()
+        assert page.locator('[data-forget-source="blocked"]').is_disabled()
+        assert not page.locator('[data-forget-source="blocked"]').is_checked()
+        assert page.locator('[data-forget-fact="blocked-copy"]').is_disabled()
+        assert 'Original source no longer retained.' in page.locator('#forget-preview').text_content()
+        page.locator('#cancel-related-forget').click()
+        assert len(calls) == 1
+        report['checks'].append('Mandatory sources visibly selected; blocked sources and facts disabled; expired source explained')
+        preview.clear()
+        preview.update(original_preview)
+        mode['apply_error'] = True
+        page.evaluate('previewForgetMemory()')
+        page.locator('#apply-related-forget').click()
+        page.wait_for_function("state.forgetPreview === null")
+        assert len(calls) == 2
+        assert 'fresh preview' in page.locator('#memory-action-status').inner_text()
+        assert page.locator('#apply-related-forget').count() == 0
+        report['checks'].append('Stale response clears preview and never retries deletion')
+        mode['incomplete'] = True
+        page.evaluate('previewForgetMemory()')
+        assert page.locator('#apply-related-forget').is_disabled()
+        page.locator('#cancel-related-forget').click()
+        assert page.evaluate('state.forgetPreview') is None
+        assert len(calls) == 2
+        report['checks'].append('Incomplete preview cannot apply; cancel sends no deletion')
+        page.evaluate("""async () => {
+          const originalApi = api;
+          let release;
+          api = () => new Promise(resolve => { release = resolve; });
+          const pending = previewForgetMemory();
+          clearForgetPreview();
+          state.selectedMemoryId = 'different';
+          release({status:'preview'});
+          await pending;
+          api = originalApi;
+        }""")
+        assert page.evaluate('state.forgetPreview') is None
+        report['checks'].append('Late preview response cannot restore cancelled or switched selection')
+        mode['incomplete'] = False
+        page.evaluate("state.selectedMemoryId='target'; previewForgetMemory()")
+        page.screenshot(path=str(out / 'preview.png'), full_page=True)
+        browser.close()
+    report['status'] = 'passed'
+except Exception as exc:
+    report['status'] = 'failed'
+    report['error'] = f'{type(exc).__name__}: {exc}'
+finally:
+    (out / 'report.json').write_text(json.dumps(report, indent=2), encoding='utf-8')
+print(json.dumps(report, indent=2))
+raise SystemExit(0 if report['status'] == 'passed' else 1)
