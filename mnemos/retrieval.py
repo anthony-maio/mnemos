@@ -60,8 +60,18 @@ def score_candidate(
     )
 
 
+def assertion_status(chunk: MemoryChunk) -> Literal["asserted", "conflict", "unknown"]:
+    status = chunk.metadata.get("assertion_status")
+    if status == "asserted":
+        return "asserted"
+    if status == "conflict":
+        return "conflict"
+    return "unknown"
+
+
 def render_context_chunk(chunk: MemoryChunk) -> str:
-    return f"[{chunk.id} version {chunk.version}] {chunk.content}\n"
+    qualifier = "; unresolved conflict" if assertion_status(chunk) == "conflict" else ""
+    return f"[{chunk.id} version {chunk.version}{qualifier}] {chunk.content}\n"
 
 
 def context_token_upper_bound(chunk: MemoryChunk) -> int:

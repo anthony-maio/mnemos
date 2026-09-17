@@ -20,7 +20,7 @@ from .engine import MnemosEngine
 from .jobs import DurableJob, FactEvidence, FactRevision
 from .maintenance import MaintenanceScheduler
 from .memory_safety import MemoryWriteFirewall
-from .retrieval import render_context_chunk
+from .retrieval import assertion_status, render_context_chunk
 from .scopes import ScopeContext, ScopeRegistry, context_metadata, scope_allows
 from .types import EpisodicEvent, Interaction, MemoryChunk, RetrievalFeedbackEvent
 from .utils.embeddings import embed_text_async
@@ -603,6 +603,7 @@ class LocalMemoryService:
                     "content": chunk.content,
                     "scope": chunk.metadata.get("scope"),
                     "scope_id": chunk.metadata.get("scope_id"),
+                    "assertion_status": assertion_status(chunk),
                     "sources": sources,
                     "support_available": bool(support),
                     "original_source_status": self._source_status_summary(source_statuses),

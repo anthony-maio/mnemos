@@ -99,6 +99,22 @@ async def test_relevance_floor_and_context_budget_are_enforced():
 
 
 @pytest.mark.asyncio
+async def test_unresolved_conflict_label_is_included_in_context_budget():
+    engine = make_engine()
+    engine.store.clear()
+    chunk = MemoryChunk(
+        id="disputed",
+        content="Use Python",
+        embedding=[1.0, 0.0],
+        metadata={"scope": "project", "scope_id": "default", "assertion_status": "conflict"},
+    )
+    engine.store.store(chunk)
+    unlabelled_bytes = len(f"[{chunk.id} version {chunk.version}] {chunk.content}\n".encode())
+    assert not await engine.retrieve("Python", max_context_tokens=unlabelled_bytes)
+    assert await engine.retrieve("Python", max_context_tokens=unlabelled_bytes + 100)
+
+
+@pytest.mark.asyncio
 async def test_missing_state_falls_back_to_semantic_scores():
     from mnemos.utils.llm import UnavailableLLMProvider
 

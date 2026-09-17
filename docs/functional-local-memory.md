@@ -114,6 +114,14 @@ Claude scope identity upgrades preserve old forget suppressions and reject unbou
 
 Retrieval returns versioned facts with their source references, support status, and score breakdown. The default retrieval profile is `baseline`. `biomimetic` enables the experimental state and graph contributions through the same scoped candidate set. The lexical search path contributes additional candidates to the union; it does not invent an FTS score that is combined with semantic similarity.
 
+Retrieved facts also expose `assertion_status`: `asserted`, `conflict`, or
+`unknown` when no recognized status was stored. A conflicting assertion is
+labelled `unresolved conflict` in the context sent to hosts, and that label
+counts toward the context budget. `asserted` describes the stored claim;
+it is not an independent truth judgment. Source IDs establish provenance,
+but a model can still attach a valid source ID to an unsupported statement.
+Inspect the cited source before relying on a disputed or consequential fact.
+
 Corrections use a stable fact ID and an expected version:
 
 ```text

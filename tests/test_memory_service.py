@@ -152,6 +152,31 @@ async def test_automatic_correction_switch_changes_lifecycle_not_retrieval_query
                 c.metadata.get("assertion_status") == "conflict"
                 for c in memory.engine.store.get_all()
             )
+            conflict = next(
+                c
+                for c in memory.engine.store.get_all()
+                if c.metadata.get("assertion_status") == "conflict"
+            )
+            registry = memory.registry
+            memory.engine.store.close()
+            memory = LocalMemoryService(
+                MnemosEngine(
+                    llm=UnavailableLLMProvider(),
+                    embedder=SimpleEmbeddingProvider(),
+                    store=SQLiteStore(str(tmp_path / "memory.sqlite")),
+                ),
+                registry,
+            )
+            retrieved = await memory.dispatch(
+                "retrieve",
+                {"context": context.model_dump(), "query": "Use Svelte", "top_k": 5},
+            )
+            returned = next(f for f in retrieved["facts"] if f["id"] == conflict.id)
+            assert returned["assertion_status"] == "conflict"
+            assert (
+                f"[{conflict.id} version 1; unresolved conflict] Use Svelte" in retrieved["context"]
+            )
+            assert retrieved["context_token_upper_bound"] == len(retrieved["context"].encode())
     finally:
         memory.engine.store.close()
 
