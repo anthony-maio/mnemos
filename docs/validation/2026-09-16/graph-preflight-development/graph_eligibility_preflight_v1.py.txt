@@ -1,0 +1,322 @@
+"""Offline graph eligibility preflight for an existing frozen development cache.
+
+This script reads authored facts, frozen vectors, and persisted measurement JSON.
+It never constructs a provider or opens the Ollama endpoint.  A missing
+measurement is reported as missing rather than inferred from the authored seed.
+"""
+
+from __future__ import annotations
+
+import argparse
+import hashlib
+import json
+import math
+import sys
+from pathlib import Path
+from typing import Any
+
+SEMANTIC_FLOOR = 0.2
+MAX_CANDIDATES = 30
+MAX_HOPS = 3
+TRANSFER = 0.8
+ACTIVATION_FLOOR = 0.3
+
+
+def _sha256(path: Path) -> str:
+    return hashlib.sha256(path.read_bytes()).hexdigest()
+
+
+def _artifact_info(measurement: dict[str, Any]) -> dict[str, Any]:
+    artifacts = measurement.get("artifacts")
+    graph_path_raw = artifacts.get("graph_sqlite") if isinstance(artifacts, dict) else None
+    if not isinstance(graph_path_raw, str):
+        return {"path": None, "exists": False, "sha256": None}
+    graph_path = Path(graph_path_raw)
+    return {
+        "path": str(graph_path),
+        "exists": graph_path.is_file(),
+        "sha256": _sha256(graph_path) if graph_path.is_file() else None,
+    }
+
+
+def _cosine(left: list[float], right: list[float]) -> float:
+    if len(left) != len(right):
+        raise ValueError("embedding dimensions differ")
+    dot = sum(a * b for a, b in zip(left, right))
+    left_norm = math.sqrt(sum(value * value for value in left))
+    right_norm = math.sqrt(sum(value * value for value in right))
+    if left_norm == 0.0 or right_norm == 0.0:
+        return 0.0
+    return dot / (left_norm * right_norm)
+
+
+def _scope_allowed(fact: dict[str, Any], context: dict[str, Any]) -> bool:
+    if fact.get("user_profile_id") != context.get("user_profile_id"):
+        return False
+    scope = fact.get("scope")
+    if scope == "global":
+        return True
+    if scope == "project":
+        return fact.get("project_id") == context.get("project_id")
+    if scope == "workspace":
+        return fact.get("workspace_id") == context.get("workspace_id")
+    return False
+
+
+def _vector_ids(
+    facts: list[dict[str, Any]], query_embedding: list[float], context: dict[str, Any]
+) -> list[str]:
+    scored = [
+        (
+            _cosine(query_embedding, fact["embedding"]),
+            str(fact["id"]),
+        )
+        for fact in facts
+        if _scope_allowed(fact, context)
+    ]
+    scored.sort(key=lambda item: (-item[0], item[1]))
+    return [fact_id for _score, fact_id in scored[:MAX_CANDIDATES]]
+
+
+def _bounded_paths(
+    edges: dict[str, dict[str, float]], seed: str | None, target: str
+) -> list[dict[str, Any]]:
+    if seed is None:
+        return []
+    paths: list[dict[str, Any]] = []
+
+    def visit(node: str, path: list[str], energy: float) -> None:
+        if node == target:
+            paths.append({"nodes": path, "energy": energy, "hops": len(path) - 1})
+            return
+        if len(path) - 1 >= MAX_HOPS:
+            return
+        neighbors = sorted(edges.get(node, {}).items(), key=lambda item: (-float(item[1]), item[0]))
+        for neighbor, weight in neighbors:
+            if neighbor in path:
+                continue
+            transferred = energy * TRANSFER * float(weight)
+            if transferred < ACTIVATION_FLOOR:
+                continue
+            visit(neighbor, [*path, neighbor], transferred)
+
+    visit(seed, [seed], 1.0)
+    paths.sort(key=lambda row: (-float(row["energy"]), row["nodes"]))
+    return paths
+
+
+def _validate_fixture(path: Path) -> tuple[dict[str, Any], list[dict[str, Any]]]:
+    root = json.loads(path.read_text(encoding="utf-8"))
+    cases = root.get("graph_cases")
+    if not isinstance(cases, list) or not cases:
+        raise ValueError("fixture has no graph_cases")
+    for case in cases:
+        facts = case.get("facts")
+        query = case.get("query")
+        if not isinstance(facts, list) or not isinstance(query, dict):
+            raise ValueError(f"malformed case {case.get('id')!r}")
+        query_embedding = query.get("embedding")
+        if not isinstance(query_embedding, list) or not query_embedding:
+            raise ValueError(f"case {case.get('id')!r} has no frozen query embedding")
+        dimensions = len(query_embedding)
+        ids = set()
+        for fact in facts:
+            if not isinstance(fact, dict) or not isinstance(fact.get("embedding"), list):
+                raise ValueError(f"case {case.get('id')!r} has an invalid frozen fact")
+            if len(fact["embedding"]) != dimensions or not all(
+                math.isfinite(float(value)) for value in fact["embedding"]
+            ):
+                raise ValueError(f"case {case.get('id')!r} has an invalid vector")
+            fact_id = str(fact.get("id"))
+            if fact_id in ids:
+                raise ValueError(f"case {case.get('id')!r} has duplicate fact IDs")
+            ids.add(fact_id)
+        if str(case.get("target_id")) not in ids:
+            raise ValueError(f"case {case.get('id')!r} target is absent")
+    return root, cases
+
+
+def _measurements(work_dir: Path) -> dict[tuple[str, int], tuple[Path, dict[str, Any]]]:
+    found: dict[tuple[str, int], tuple[Path, dict[str, Any]]] = {}
+    for path in sorted(work_dir.rglob("measurement.json")):
+        data = json.loads(path.read_text(encoding="utf-8"))
+        key = (str(data.get("case_id")), int(data.get("repetition", -1)))
+        if key in found:
+            raise ValueError(f"duplicate measurement for {key}")
+        found[key] = (path, data)
+    return found
+
+
+def _case_observation(
+    case: dict[str, Any], measurement_path: Path, measurement: dict[str, Any]
+) -> dict[str, Any]:
+    facts = case["facts"]
+    fact_by_id = {str(fact["id"]): fact for fact in facts}
+    query = case["query"]
+    context = case["context"]
+    recomputed_vector_ids = _vector_ids(facts, query["embedding"], context)
+    recorded_query = measurement.get("query", {})
+    recorded_production = measurement.get("production", {})
+    recorded_vector_ids = [str(item) for item in recorded_query.get("vector_ids", [])]
+    recorded_direct_ids = [str(item) for item in recorded_query.get("direct_union_ids", [])]
+    selected_seed = recorded_query.get("actual_selected_seed_id")
+    if selected_seed is not None:
+        selected_seed = str(selected_seed)
+    expected_seed = recomputed_vector_ids[0] if recomputed_vector_ids else None
+    edges_raw = recorded_production.get("persisted_edges", {})
+    edges = {
+        str(source): {str(target): float(weight) for target, weight in neighbors.items()}
+        for source, neighbors in edges_raw.items()
+        if isinstance(neighbors, dict)
+    }
+    graph_artifact = _artifact_info(measurement)
+    target_id = str(case["target_id"])
+    paths = _bounded_paths(edges, selected_seed, target_id)
+    measured_path = bool(recorded_production.get("valid_path"))
+    measured_floor = recorded_production.get("semantic_floor")
+    target_similarity = recorded_production.get("target_similarity")
+    semantic_floor = bool(
+        isinstance(target_similarity, (int, float))
+        and math.isfinite(float(target_similarity))
+        and float(target_similarity) >= SEMANTIC_FLOOR
+    )
+    target_in_direct = target_id in recorded_direct_ids
+    target_scope_valid = _scope_allowed(fact_by_id[target_id], context)
+    scope_fields_valid = all(
+        fact.get("scope") in {"project", "workspace", "global"}
+        and isinstance(fact.get("user_profile_id"), str)
+        for fact in facts
+    )
+    return {
+        "case_id": str(case["id"]),
+        "repetition": int(measurement.get("repetition", -1)),
+        "measurement": str(measurement_path),
+        "measurement_sha256": _sha256(measurement_path),
+        "measurement_status": measurement.get("measurement_status"),
+        "measurement_complete": measurement.get("measurement_status") == "complete",
+        "query_selected_seed_id": selected_seed,
+        "authored_seed_id": case.get("seed_id"),
+        "authored_bridge_id": case.get("bridge_id"),
+        "recomputed_vector_seed_id": expected_seed,
+        "recorded_vector_ids_match_recomputed": recorded_vector_ids == recomputed_vector_ids,
+        "direct_candidate_union_ids": recorded_direct_ids,
+        "target_id": target_id,
+        "conditions": {
+            "target_scope_valid": target_scope_valid,
+            "all_fact_scope_fields_valid": scope_fields_valid,
+            "target_outside_recorded_direct_union": not target_in_direct,
+            "target_outside_recomputed_vector_pool": target_id not in recomputed_vector_ids,
+            "semantic_floor": semantic_floor,
+            "recorded_semantic_floor": measured_floor,
+            "persisted_graph_available": bool(edges) and graph_artifact["exists"],
+            "bounded_path_found_by_preflight": bool(paths),
+            "recorded_valid_path": measured_path,
+            "preflight_path_matches_recorded": bool(paths) == measured_path,
+        },
+        "persisted_graph_artifact": graph_artifact,
+        "path": paths[0] if paths else None,
+        "no_path_reason": (
+            None if paths else "query-selected seed has no bounded persisted path to target"
+        ),
+        "recorded_target_similarity": target_similarity,
+        "recorded_target_energy": recorded_production.get("target_energy"),
+        "recorded_scope_controls": {
+            "direct_union": recorded_production.get("scope_control_ids_in_direct_union", []),
+            "graph_results": recorded_production.get("scope_control_ids_in_graph_results", []),
+            "forbidden": recorded_production.get("scope_control_ids_forbidden_observed", []),
+        },
+        "eligible": bool(
+            target_scope_valid
+            and not target_in_direct
+            and semantic_floor
+            and bool(edges)
+            and graph_artifact["exists"]
+            and bool(paths)
+            and measurement.get("measurement_status") == "complete"
+        ),
+    }
+
+
+def run(*, fixture: Path, work_dir: Path, output: Path) -> dict[str, Any]:
+    root, cases = _validate_fixture(fixture)
+    measurements = _measurements(work_dir)
+    observations: list[dict[str, Any]] = []
+    missing: list[dict[str, Any]] = []
+    for case in sorted(cases, key=lambda item: str(item["id"])):
+        case_id = str(case["id"])
+        reps = sorted((key[1], value) for key, value in measurements.items() if key[0] == case_id)
+        if not reps:
+            missing.append({"case_id": case_id, "reason": "no persisted measurement JSON"})
+            continue
+        for _repetition, (measurement_path, measurement) in reps:
+            observations.append(_case_observation(case, measurement_path, measurement))
+    eligible = [row for row in observations if row["eligible"]]
+    report = {
+        "schema_version": "graph-eligibility-preflight-v1",
+        "status": "offline_development_preflight",
+        "semantic_measurement_run": True,
+        "model_calls": 0,
+        "network_calls": 0,
+        "fixture": {
+            "path": str(fixture),
+            "sha256": _sha256(fixture),
+            "version": root.get("version"),
+            "graph_cases": len(cases),
+            "manifest": root.get("manifest", {}),
+        },
+        "runner": {"path": str(Path(__file__).resolve()), "sha256": _sha256(Path(__file__))},
+        "work_dir": str(work_dir),
+        "thresholds": {
+            "candidate_limit": MAX_CANDIDATES,
+            "semantic_floor": SEMANTIC_FLOOR,
+            "max_hops": MAX_HOPS,
+            "activation_transfer": TRANSFER,
+            "activation_floor": ACTIVATION_FLOOR,
+        },
+        "measurement_count": len(observations),
+        "missing_cases": missing,
+        "eligible_observations": len(eligible),
+        "observations": observations,
+        "limitations": [
+            "This is development cache evidence, not a new held-out result.",
+            "Persisted measurements are reused; no graph rebuild or semantic reranking is performed.",
+            "The authored seed label is reported separately and never substituted for the query-selected vector seed.",
+            "A missing measurement remains missing and is not treated as an eligible case.",
+        ],
+    }
+    output.parent.mkdir(parents=True, exist_ok=True)
+    output.write_text(json.dumps(report, indent=2, sort_keys=True) + "\n", encoding="utf-8")
+    return report
+
+
+def main(argv: list[str] | None = None) -> int:
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument(
+        "--fixture",
+        type=Path,
+        default=Path(".venv/mechanism-development-work-v2/frozen-vectors.json"),
+    )
+    parser.add_argument(
+        "--work-dir", type=Path, default=Path(".venv/mechanism-development-work-v2")
+    )
+    parser.add_argument(
+        "--output",
+        type=Path,
+        default=Path(".venv/graph-eligibility-preflight-v1/report.json"),
+    )
+    args = parser.parse_args(argv)
+    try:
+        report = run(fixture=args.fixture, work_dir=args.work_dir, output=args.output)
+    except (OSError, ValueError, json.JSONDecodeError) as exc:
+        print(f"preflight failed: {exc}", file=sys.stderr)
+        return 2
+    print(
+        f"offline preflight: {report['measurement_count']} observations, "
+        f"{report['eligible_observations']} eligible, "
+        f"{len(report['missing_cases'])} cases missing measurements"
+    )
+    return 0
+
+
+if __name__ == "__main__":
+    raise SystemExit(main())

@@ -1,0 +1,203 @@
+"""Run the production graph measurement helper against frozen development data.
+
+This is an offline preflight.  The graph measurement helper builds a disposable
+SQLite fixture with frozen vectors and the production engine.  It does not
+construct an embedding or language model provider.
+"""
+
+from __future__ import annotations
+
+import argparse
+import hashlib
+import json
+import subprocess
+import sys
+from pathlib import Path
+from typing import Any
+
+EXPECTED_SOURCE_COMMITS = {
+    "b7a9d9d4d9d6947564696457b0e2754f7e95a801",
+    "c805cc2",
+}
+
+
+def _sha256(path: Path) -> str:
+    digest = hashlib.sha256()
+    with path.open("rb") as stream:
+        for block in iter(lambda: stream.read(1024 * 1024), b""):
+            digest.update(block)
+    return digest.hexdigest()
+
+
+def _git_revision() -> str | None:
+    try:
+        return subprocess.check_output(
+            ["git", "rev-parse", "HEAD"], stderr=subprocess.DEVNULL, text=True
+        ).strip()
+    except (OSError, subprocess.CalledProcessError):
+        return None
+
+
+def _source_binding() -> dict[str, Any]:
+    from benchmarks.local_memory.graph_measurement import _source_hashes
+
+    revision = _git_revision()
+    matches_expected = revision == next(
+        (item for item in EXPECTED_SOURCE_COMMITS if len(item) == 40), ""
+    ) or bool(revision and revision.startswith("c805cc2"))
+    return {
+        "current_git_revision": revision,
+        "expected_frozen_revisions": sorted(EXPECTED_SOURCE_COMMITS),
+        "matches_expected_frozen_revision": matches_expected,
+        "source_hashes": _source_hashes(),
+    }
+
+
+def _case_report(case: Any, row: dict[str, Any], source: dict[str, Any]) -> dict[str, Any]:
+    query = row.get("query", {})
+    production = row.get("production", {})
+    artifacts = row.get("artifacts", {})
+    graph_path = Path(str(artifacts.get("graph_sqlite", "")))
+    selected_seed = query.get("actual_selected_seed_id")
+    direct_ids = [str(value) for value in query.get("direct_union_ids", [])]
+    target_id = str(production.get("target_id", case.target_id))
+    conditions = {
+        "source_parity": bool(source["matches_expected_frozen_revision"]),
+        "frozen_query_and_fact_vectors": case.query_embedding is not None
+        and all(fact.embedding is not None for fact in case.facts),
+        "scope_filter_executed": bool(query.get("allowed_scopes"))
+        and bool(production.get("scope_control_ids_forbidden_observed", []) == []),
+        "target_outside_direct_union": bool(production.get("target_in_direct_pool") is False)
+        and target_id not in direct_ids,
+        "semantic_floor": bool(production.get("semantic_floor") is True),
+        "persisted_graph_artifact": graph_path.is_file(),
+        "actual_vector_seed_selected": isinstance(selected_seed, str) and bool(selected_seed),
+        "bounded_active_path": bool(production.get("valid_path") is True),
+        "target_not_in_graph_results": bool(production.get("target_in_graph_results") is False),
+    }
+    eligible = all(conditions.values())
+    return {
+        "case_id": case.id,
+        "repetition": int(row.get("repetition", 0)),
+        "source": source,
+        "conditions": conditions,
+        "eligible": eligible,
+        "query": {
+            "text": query.get("text"),
+            "vector_ids": query.get("vector_ids", []),
+            "lexical_ids": query.get("lexical_ids", []),
+            "direct_union_ids": direct_ids,
+            "query_selected_seed_id": selected_seed,
+            "authored_seed_id": case.seed_id,
+            "authored_bridge_id": case.bridge_id,
+        },
+        "target": {
+            "id": target_id,
+            "similarity": production.get("target_similarity"),
+            "target_energy": production.get("target_energy"),
+            "graph_target_trace": production.get("graph_target_trace"),
+            "path_reason": production.get("path_reason"),
+        },
+        "scope_controls": {
+            "direct_union": production.get("scope_control_ids_in_direct_union", []),
+            "graph_results": production.get("scope_control_ids_in_graph_results", []),
+            "forbidden_observed": production.get("scope_control_ids_forbidden_observed", []),
+        },
+        "persisted_graph": {
+            "path": str(graph_path),
+            "exists": graph_path.is_file(),
+            "sha256": _sha256(graph_path) if graph_path.is_file() else None,
+            "edge_count": production.get("graph_edge_count"),
+            "edge_sha256": production.get("graph_edge_sha256"),
+        },
+        "path_observation": {
+            "active_path": production.get("activation_paths", []),
+            "structural_path": production.get("structural_paths", []),
+            "valid_path": production.get("valid_path"),
+            "structural_valid_path": production.get("structural_valid_path"),
+            "no_path_reason": production.get("path_reason")
+            or (
+                None if production.get("valid_path") else "no bounded path from query-selected seed"
+            ),
+        },
+    }
+
+
+def run(*, fixture: Path, work_dir: Path, output: Path, repetition: int = 0) -> dict[str, Any]:
+    from benchmarks.local_memory.graph_measurement import measure_graph_repetition
+    from benchmarks.local_memory.module_mechanism import load_mechanism_dataset
+
+    dataset = load_mechanism_dataset(fixture)
+    source = _source_binding()
+    source["fixture_manifest_source_commit"] = "b7a9d9d4d9d6947564696457b0e2754f7e95a801"
+    source["fixture_manifest_graph_contract"] = dataset.manifest.get("graph_contract")
+    work_dir.mkdir(parents=True, exist_ok=True)
+    observations: list[dict[str, Any]] = []
+    for case in sorted(dataset.graph_cases, key=lambda item: item.id):
+        row = measure_graph_repetition(case, work_dir=work_dir, repetition=repetition)
+        observations.append(_case_report(case, row, source))
+    report = {
+        "schema_version": "graph-eligibility-preflight-v2",
+        "status": "offline_production_helper_preflight",
+        "fixture": {"path": str(fixture), "sha256": _sha256(fixture)},
+        "work_dir": str(work_dir),
+        "runner": {"path": str(Path(__file__).resolve()), "sha256": _sha256(Path(__file__))},
+        "measurement_helper": "benchmarks.local_memory.graph_measurement.measure_graph_repetition",
+        "provider": {"embedding": "frozen fixture vectors", "language_model": "not constructed"},
+        "model_calls": 0,
+        "network_calls": 0,
+        "repetition": repetition,
+        "cases": len(observations),
+        "eligible_cases": sum(bool(item["eligible"]) for item in observations),
+        "observations": observations,
+        "limitations": [
+            "This is development evidence and is not a held-out result.",
+            "The imported working-tree source is compared with the frozen artifact revision and any mismatch is reported.",
+            "No manual edges, links, threshold changes, or provider calls are used.",
+            "The persisted graph and scope traversal are measured by the production helper; no independent path implementation is substituted.",
+        ],
+    }
+    output.parent.mkdir(parents=True, exist_ok=True)
+    output.write_text(json.dumps(report, indent=2, sort_keys=True) + "\n", encoding="utf-8")
+    return report
+
+
+def main(argv: list[str] | None = None) -> int:
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument(
+        "--fixture",
+        type=Path,
+        default=Path(".venv/mechanism-development-work-v2/frozen-vectors.json"),
+    )
+    parser.add_argument(
+        "--work-dir",
+        type=Path,
+        default=Path(".venv/graph-eligibility-preflight-v2-work"),
+    )
+    parser.add_argument(
+        "--output",
+        type=Path,
+        default=Path(".venv/graph-eligibility-preflight-v2/report.json"),
+    )
+    parser.add_argument("--repetition", type=int, default=0)
+    args = parser.parse_args(argv)
+    try:
+        report = run(
+            fixture=args.fixture,
+            work_dir=args.work_dir,
+            output=args.output,
+            repetition=args.repetition,
+        )
+    except (OSError, ValueError, RuntimeError, json.JSONDecodeError) as exc:
+        print(f"preflight failed: {exc}", file=sys.stderr)
+        return 2
+    print(
+        f"production preflight: {report['cases']} cases, "
+        f"{report['eligible_cases']} eligible, "
+        f"source parity={report['observations'][0]['source']['matches_expected_frozen_revision']}"
+    )
+    return 0
+
+
+if __name__ == "__main__":
+    raise SystemExit(main())

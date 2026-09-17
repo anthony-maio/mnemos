@@ -34,3 +34,14 @@ No additional Ollama workload should overlap the active seven-profile
 lifecycle run. That run stays bound to sourceb7 and its existing hashes.
 Any future mechanism or dataset change needs its own recorded run. Baseline
 retrieval remains the default while module benefit is unproved.
+
+## Development preflight result
+
+The [pinned offline preflight](../validation/2026-09-16/graph-preflight-development/README.md)
+now calls the production measurement helper from the unchanged sourceb7
+snapshot using five cached development cases. None is structurally eligible:
+all have a persisted graph, but none has a valid path from the query-selected
+seed to the target. No new model or network calls were made. The two earlier
+diagnostic attempts are preserved with their protocol limitations. This
+completes the preflight work in step 1; it does not establish graph utility
+or satisfy the held-out coverage gate.
