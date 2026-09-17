@@ -34,6 +34,12 @@ improves continuity but needs retention, privacy controls, and extraction
 evaluation; explicit-only storage is easier to inspect but misses information
 an agent does not select. See the [operating guide](../../functional-local-memory.md).
 
+A subsequent local SQLite check found a [Claude Stop replay defect](claude-stop-replay/README.md)
+in the verified `20f271d` source: replay after transcript consumption and
+restart can capture the assistant again under the fallback identity. A repair
+and focused regressions are in progress. The 669-test pass did not cover that
+sequence and does not close this correctness gap.
+
 The five modules are independently configurable mechanisms. Passing their unit
 contracts does not establish a quality improvement. The frozen v2 lifecycle
 dataset mostly contains single-fact sessions and cannot establish graph or

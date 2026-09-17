@@ -1,0 +1,270 @@
+"""Reproduce Claude Stop replay behavior against a disposable local store."""
+
+from __future__ import annotations
+
+import argparse
+import asyncio
+import hashlib
+import json
+import subprocess
+import sys
+import tempfile
+from datetime import datetime, timezone
+from pathlib import Path
+from typing import Any
+
+EXPECTED_SOURCE_COMMIT = "20f271d93bbf02990a78b51aa74694deaf5a9bf7"
+
+
+class _ConstantEmbeddingProvider:
+    dim = 4
+    should_offload_in_async = False
+
+    def embed(self, text: str) -> list[float]:
+        del text
+        return [1.0, 0.0, 0.0, 0.0]
+
+    def embed_batch(self, texts: list[str]) -> list[list[float]]:
+        return [self.embed(text) for text in texts]
+
+
+class _ServiceClient:
+    def __init__(self, service: Any) -> None:
+        self.service = service
+
+    async def capture(self, payload: dict[str, Any]) -> dict[str, Any]:
+        return await self.service.dispatch("capture", payload)
+
+    async def retrieve(self, payload: dict[str, Any]) -> dict[str, Any]:
+        return await self.service.dispatch("retrieve", payload)
+
+
+def _config() -> Any:
+    from mnemos.config import MnemosConfig, ModuleConfig
+
+    return MnemosConfig(modules=ModuleConfig(**{name: False for name in ModuleConfig.model_fields}))
+
+
+def _make_service(registry: Any, database: Path) -> tuple[Any, Any]:
+    from mnemos.engine import MnemosEngine
+    from mnemos.memory_service import LocalMemoryService
+    from mnemos.utils.llm import UnavailableLLMProvider
+    from mnemos.utils.storage import SQLiteStore
+
+    store = SQLiteStore(str(database))
+    try:
+        engine = MnemosEngine(
+            config=_config(),
+            store=store,
+            embedder=_ConstantEmbeddingProvider(),
+            llm=UnavailableLLMProvider(),
+        )
+        return LocalMemoryService(engine, registry), store
+    except Exception:
+        store.close()
+        raise
+
+
+def _hook_result(result: Any) -> dict[str, Any]:
+    return {
+        "status": result.status,
+        "committed": result.committed,
+        "queued": result.queued,
+        "captured": result.captured,
+        "error": result.error,
+    }
+
+
+def _event_view(event: Any) -> dict[str, Any]:
+    content = str(event.content)
+    return {
+        "id": event.id,
+        "role": event.role,
+        "source_ref": event.metadata.get("source_ref"),
+        "source_event_id": event.metadata.get("source_event_id"),
+        "content_sha256": hashlib.sha256(content.encode("utf-8")).hexdigest(),
+        "content_length": len(content),
+    }
+
+
+def _events(store: Any) -> list[dict[str, Any]]:
+    return [_event_view(event) for event in store.list_episodic_events()]
+
+
+def _git_revision(root: Path) -> str | None:
+    try:
+        completed = subprocess.run(
+            ["git", "-C", str(root), "rev-parse", "HEAD"],
+            capture_output=True,
+            text=True,
+            check=False,
+            timeout=10,
+        )
+    except (OSError, subprocess.TimeoutExpired):
+        return None
+    return completed.stdout.strip() if completed.returncode == 0 else None
+
+
+async def _run_probe(root: Path, fixture: Path) -> dict[str, Any]:
+    from mnemos.adapters.claude_code import ClaudeCodeAdapter
+    from mnemos.scopes import ScopeRegistry
+    from mnemos.service import _protect_private_path
+
+    fixture.mkdir(parents=True, exist_ok=True)
+    _protect_private_path(fixture)
+    project = fixture / "project"
+    project.mkdir()
+    registry = ScopeRegistry()
+    project_identity = registry.register_project(
+        project, user_profile_id="probe-profile", enabled=True
+    )
+    database = fixture / "memory.sqlite"
+    transcript = fixture / "transcript.jsonl"
+    user_content = "Remember the scoped replay probe fact."
+    assistant_content = "The assistant transcript line is captured once."
+    records = [
+        {
+            "type": "user",
+            "uuid": "native-user-uuid",
+            "timestamp": "2026-09-17T12:00:00+00:00",
+            "message": {"role": "user", "content": user_content},
+        },
+        {
+            "type": "assistant",
+            "uuid": "native-assistant-uuid",
+            "timestamp": "2026-09-17T12:00:01+00:00",
+            "message": {"role": "assistant", "content": assistant_content},
+        },
+    ]
+    transcript.write_text(
+        "".join(json.dumps(record, ensure_ascii=True) + "\n" for record in records),
+        encoding="utf-8",
+    )
+    payload = {
+        "cwd": str(project),
+        "session_id": "stop-replay-session",
+        "transcript_path": str(transcript),
+        "last_assistant_message": assistant_content,
+    }
+    service = None
+    store = None
+    try:
+        service, store = _make_service(registry, database)
+        first_adapter = ClaudeCodeAdapter(
+            client=_ServiceClient(service),
+            registry=registry,
+            user_profile_id="probe-profile",
+            checkpoint_directory=fixture / "checkpoints",
+        )
+        first = await first_adapter.handle("Stop", payload, include_retrieval=False)
+        after_first = _events(store)
+        context = registry.resolve(
+            project,
+            user_profile_id="probe-profile",
+            session_id="stop-replay-session",
+            host="claude-code",
+        )
+        checkpoint = first_adapter._checkpoint_path(context)
+        checkpoint_data = json.loads(checkpoint.read_text(encoding="utf-8"))
+        store.close()
+        store = None
+
+        service, store = _make_service(registry, database)
+        second_adapter = ClaudeCodeAdapter(
+            client=_ServiceClient(service),
+            registry=registry,
+            user_profile_id="probe-profile",
+            checkpoint_directory=fixture / "checkpoints",
+        )
+        second = await second_adapter.handle("Stop", payload, include_retrieval=False)
+        after_second = _events(store)
+        assistant_refs = [
+            event["source_ref"] for event in after_second if event["role"] == "assistant"
+        ]
+        duplicate_reproduced = (
+            len(after_first) == 2
+            and len(after_second) == 3
+            and assistant_refs.count("native-assistant-uuid") == 1
+            and assistant_refs.count("last_assistant_message") == 1
+        )
+        return {
+            "status": "reproduced" if duplicate_reproduced else "not_reproduced",
+            "expected_behavior": (
+                "The first Stop consumes transcript deltas; an identical Stop after restart "
+                "must not capture a fallback assistant event."
+            ),
+            "project_id": project_identity.id,
+            "transcript": str(transcript),
+            "checkpoint": str(checkpoint),
+            "checkpoint_offset": checkpoint_data.get("offset"),
+            "first_stop": _hook_result(first),
+            "second_stop_after_restart": _hook_result(second),
+            "events_after_first_stop": after_first,
+            "events_after_second_stop": after_second,
+            "assistant_source_refs_after_restart": assistant_refs,
+            "minimal_fix_principle": (
+                "Persist the last captured assistant source reference, content fingerprint, and "
+                "native turn identity in the v2 checkpoint. Suppress a fallback only when those "
+                "durable fields identify the same turn. If no native turn identity is available, "
+                "return a degraded result and wait for a transcript delta rather than synthesizing "
+                "last_assistant_message as a new event. This avoids duplicate replay while leaving "
+                "same-text responses from later turns eligible when their turn identity differs."
+            ),
+        }
+    finally:
+        if store is not None:
+            try:
+                store.close()
+            except Exception:
+                pass
+
+
+def main(argv: list[str] | None = None) -> int:
+    root = Path(__file__).resolve().parents[1]
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument(
+        "--output",
+        type=Path,
+        default=root / ".venv" / "claude-stop-replay-probe.json",
+    )
+    args = parser.parse_args(argv)
+    output = args.output.expanduser().resolve()
+    fixture_parent = Path(r"D:\WindowsTemp")
+    result: dict[str, Any] = {
+        "schema_version": 1,
+        "probe": "claude_stop_replay",
+        "status": "failed",
+        "source_commit_expected": EXPECTED_SOURCE_COMMIT,
+        "source_commit_actual": _git_revision(root),
+        "import_mode": "source_checkout",
+        "providers": {"embedding": "constant", "cognition": "unavailable"},
+    }
+    try:
+        fixture_parent.mkdir(parents=True, exist_ok=True)
+        fixture = Path(tempfile.mkdtemp(prefix="mnemos-claude-stop-replay-", dir=fixture_parent))
+        result["fixture_directory"] = str(fixture)
+        sys.path.insert(0, str(root))
+        for name in list(sys.modules):
+            if name == "mnemos" or name.startswith("mnemos."):
+                del sys.modules[name]
+        import mnemos
+
+        imported = Path(str(mnemos.__file__)).resolve()
+        result["imported_mnemos"] = str(imported)
+        if not imported.is_relative_to(root.resolve()):
+            raise RuntimeError(f"mnemos imported outside source checkout: {imported}")
+        result["reproduction"] = asyncio.run(_run_probe(root, fixture))
+        result["status"] = "completed"
+        return_code = 0
+    except Exception as exc:
+        result["error"] = type(exc).__name__
+        result["error_detail"] = str(exc)
+        return_code = 1
+    finally:
+        output.parent.mkdir(parents=True, exist_ok=True)
+        output.write_text(json.dumps(result, indent=2, sort_keys=True) + "\n", encoding="utf-8")
+    return return_code
+
+
+if __name__ == "__main__":
+    raise SystemExit(main())

@@ -1,0 +1,85 @@
+{
+  "fixture_directory": "D:\\WindowsTemp\\mnemos-claude-stop-replay-1etm4wxd",
+  "import_mode": "source_checkout",
+  "imported_mnemos": "D:\\Development\\mnemos\\mnemos\\.worktrees\\functional-local-memory\\mnemos\\__init__.py",
+  "probe": "claude_stop_replay",
+  "providers": {
+    "cognition": "unavailable",
+    "embedding": "constant"
+  },
+  "reproduction": {
+    "assistant_source_refs_after_restart": [
+      "last_assistant_message",
+      "native-assistant-uuid"
+    ],
+    "checkpoint": "D:\\WindowsTemp\\mnemos-claude-stop-replay-1etm4wxd\\checkpoints\\3e9098cea92a37d7a7969badb4403dd25f128e9f17a023a0c9d9584a1996c90d.json",
+    "checkpoint_offset": 364,
+    "events_after_first_stop": [
+      {
+        "content_length": 38,
+        "content_sha256": "c66d9436d3da49787effce5ad93c5a02ffa42720c55c629049478b64fb52b942",
+        "id": "c7323ca5dadcda95fb53a1a87ac39c2e0fb949251f99261d6bdae7c9f5256125",
+        "role": "user",
+        "source_event_id": "claude:v2:84afef533e5bd5b375964bcac6ffd144af68f223b1f9a23d3714d50217f3e418",
+        "source_ref": "native-user-uuid"
+      },
+      {
+        "content_length": 47,
+        "content_sha256": "9ab209bcf6e9704f78e6233831c2e6d32f8c9344d904676041e20d742baa7271",
+        "id": "16e99c32e9fe31435a2c7b47fadcef32e54c1d9bc672ebfce982b4ca90592dfc",
+        "role": "assistant",
+        "source_event_id": "claude:v2:411fded57ea1fa22a1231a1c17a3967578017d68ac2bec21b0038428676c89fb",
+        "source_ref": "native-assistant-uuid"
+      }
+    ],
+    "events_after_second_stop": [
+      {
+        "content_length": 47,
+        "content_sha256": "9ab209bcf6e9704f78e6233831c2e6d32f8c9344d904676041e20d742baa7271",
+        "id": "5602fc9420af48fdfe18123744baced0fdef974527d9086944e954507e97d28f",
+        "role": "assistant",
+        "source_event_id": "claude:v2:6eb2b89930cb717454a85585de3beff94dbc14c24d3cd442ce8323a81c8d1aee",
+        "source_ref": "last_assistant_message"
+      },
+      {
+        "content_length": 38,
+        "content_sha256": "c66d9436d3da49787effce5ad93c5a02ffa42720c55c629049478b64fb52b942",
+        "id": "c7323ca5dadcda95fb53a1a87ac39c2e0fb949251f99261d6bdae7c9f5256125",
+        "role": "user",
+        "source_event_id": "claude:v2:84afef533e5bd5b375964bcac6ffd144af68f223b1f9a23d3714d50217f3e418",
+        "source_ref": "native-user-uuid"
+      },
+      {
+        "content_length": 47,
+        "content_sha256": "9ab209bcf6e9704f78e6233831c2e6d32f8c9344d904676041e20d742baa7271",
+        "id": "16e99c32e9fe31435a2c7b47fadcef32e54c1d9bc672ebfce982b4ca90592dfc",
+        "role": "assistant",
+        "source_event_id": "claude:v2:411fded57ea1fa22a1231a1c17a3967578017d68ac2bec21b0038428676c89fb",
+        "source_ref": "native-assistant-uuid"
+      }
+    ],
+    "expected_behavior": "The first Stop consumes transcript deltas; an identical Stop after restart must not capture a fallback assistant event.",
+    "first_stop": {
+      "captured": 2,
+      "committed": true,
+      "error": null,
+      "queued": false,
+      "status": "ok"
+    },
+    "minimal_fix_principle": "Persist the last captured assistant source reference, content fingerprint, and native turn identity in the v2 checkpoint. Suppress a fallback only when those durable fields identify the same turn. If no native turn identity is available, return a degraded result and wait for a transcript delta rather than synthesizing last_assistant_message as a new event. This avoids duplicate replay while leaving same-text responses from later turns eligible when their turn identity differs.",
+    "project_id": "014ad47e-38f8-4fd7-b2a9-6803832ce77d",
+    "second_stop_after_restart": {
+      "captured": 1,
+      "committed": true,
+      "error": "identity_reference_unavailable",
+      "queued": false,
+      "status": "degraded"
+    },
+    "status": "reproduced",
+    "transcript": "D:\\WindowsTemp\\mnemos-claude-stop-replay-1etm4wxd\\transcript.jsonl"
+  },
+  "schema_version": 1,
+  "source_commit_actual": "ac42a68f0bdc761c5cfab11c5c10aba7a44bc6d9",
+  "source_commit_expected": "20f271d93bbf02990a78b51aa74694deaf5a9bf7",
+  "status": "completed"
+}

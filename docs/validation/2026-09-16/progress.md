@@ -455,3 +455,14 @@ constant fixture vectors and unavailable cognition, and cost $0.009372.
 UserPromptSubmit and Stop reported degraded adapter status; the test used no
 session persistence and does not establish complete transcript coverage or
 native correction/forget. See the [native record](native-claude-scope-v4/README.md).
+
+The persistent-transcript v5 attempt timed out before native Stop. It preserved
+a user capture but no checkpoint or assistant capture. Its partial assistant
+stream contained the canary; final cost was unavailable. The negative result
+is retained in [the v5 record](native-claude-persistent-v5/README.md).
+
+A separate local SQLite probe then confirmed [Stop replay duplication](claude-stop-replay/README.md):
+after reading the full transcript and restarting, replaying the same Stop
+created a second assistant event under the fallback source reference. The
+earlier broad test pass did not cover this sequence. A scoped adapter repair
+and new regressions are in progress; native persistent capture remains open.
