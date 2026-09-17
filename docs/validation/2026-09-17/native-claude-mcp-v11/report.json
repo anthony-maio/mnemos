@@ -1,0 +1,1703 @@
+{
+  "runner": "native-claude-mcp-v11",
+  "source_commit": "6600dc262927661d61ce9962c812a022014281c7",
+  "runner_sha256": "c619f4d132be8b66d11fc17cd3d4aa1f308c6fd4f61fbb05116eb329e339e7b5",
+  "started_at": "2026-09-17T18:25:08.541715+00:00",
+  "status": "not_observed",
+  "scope": "native Claude plugin MCP read contract with scoped seed, durable restart, reconstructed replay; no cognition quality claim",
+  "model_quality_claim": "none",
+  "embedding_fixture": "Constant unit vectors for every text; no semantic retrieval claim",
+  "cognition": "UnavailableLLMProvider; all modules disabled",
+  "max_native_seconds": 60,
+  "hook_timeout_seconds": 20,
+  "snapshot_argument": "C:\\Users\\Ant\\AppData\\Local\\Temp\\mnemos-source-6600dc2",
+  "wheel_argument": "C:\\Users\\Ant\\AppData\\Local\\Temp\\mnemos-package-checks-20260917-v2\\dist\\mnemos_memory-0.7.0-py3-none-any.whl",
+  "expected_wheel_sha256": "349737206735f15b59562f3c7d53af51464176473b5de1fa12d2783cf039a25a",
+  "build_verification_argument": "C:\\Users\\Ant\\AppData\\Local\\Temp\\mnemos-package-checks-20260917-v2\\verification.json",
+  "timing_report_argument": "C:\\Users\\Ant\\AppData\\Local\\Temp\\mnemos-claude-adapter-timing-v3\\report.json",
+  "timing_runner_argument": ".venv\\claude_adapter_timing_v3.py",
+  "environment_argument": "C:\\Users\\Ant\\AppData\\Local\\Temp\\mnemos-installed-6600dc2-v1",
+  "claude_executable_argument": "C:\\Users\\Ant\\.local\\bin\\claude.exe",
+  "fixture_parent_argument": "C:\\Users\\Ant\\AppData\\Local\\Temp",
+  "profile": "native-claude-mcp-v11",
+  "config_generation": {
+    "method": "Claude Code --plugin-dir",
+    "host": "claude-code",
+    "status": "plugin_snapshot_bound",
+    "plugin_root": "C:\\Users\\Ant\\AppData\\Local\\Temp\\mnemos-source-6600dc2",
+    "plugin_manifest": "C:\\Users\\Ant\\AppData\\Local\\Temp\\mnemos-source-6600dc2\\.claude-plugin\\plugin.json",
+    "hooks_manifest": "C:\\Users\\Ant\\AppData\\Local\\Temp\\mnemos-source-6600dc2\\hooks\\hooks.json",
+    "config_root": "C:\\Users\\Ant\\AppData\\Local\\Temp\\mnemos-native-claude-mcp-v11-3_5vmj90\\claude-home\\.claude",
+    "private_root_asserted": true,
+    "consumed_by_native_plugin_dir_argument": true,
+    "hook_configuration": "snapshot hooks/hooks.json; no handmade --settings",
+    "mcp_configuration": "snapshot .claude-plugin/plugin.json and run_mnemos_mcp.py",
+    "runtime_python": "C:\\Users\\Ant\\AppData\\Local\\Temp\\mnemos-installed-6600dc2-v1\\Scripts\\python.exe",
+    "account_mcp_servers_disabled_for_process": true,
+    "account_mcp_control_source": "https://code.claude.com/docs/en/mcp",
+    "plugin_runtime_env": {
+      "MNEMOS_PLUGIN_PYTHON": "C:\\Users\\Ant\\AppData\\Local\\Temp\\mnemos-installed-6600dc2-v1\\Scripts\\python.exe",
+      "MNEMOS_RUNTIME_DESCRIPTOR": "C:\\Users\\Ant\\AppData\\Local\\Temp\\mnemos-native-claude-mcp-v11-3_5vmj90\\runtime.json",
+      "MNEMOS_SCOPE_REGISTRY": "C:\\Users\\Ant\\AppData\\Local\\Temp\\mnemos-native-claude-mcp-v11-3_5vmj90\\scopes.json",
+      "MNEMOS_USER_PROFILE_ID": "native-claude-mcp-v11",
+      "MNEMOS_SQLITE_PATH": "C:\\Users\\Ant\\AppData\\Local\\Temp\\mnemos-native-claude-mcp-v11-3_5vmj90\\memory.sqlite"
+    }
+  },
+  "plugin_snapshot": {
+    "snapshot": "C:\\Users\\Ant\\AppData\\Local\\Temp\\mnemos-source-6600dc2",
+    "source_commit": "6600dc262927661d61ce9962c812a022014281c7",
+    "clean": true,
+    "files": {
+      ".claude-plugin/plugin.json": {
+        "bytes": 963,
+        "sha256": "3e7549c3b2c7416f6e0fd620b000b89470d809f822cb29b04d22a7e9ff7b3928"
+      },
+      ".claude-plugin/run_mnemos_hook.py": {
+        "bytes": 1430,
+        "sha256": "9ca11e4a0efa9b61dea647e0675729a523e1b9aed0fb56468af08079d04512c0"
+      },
+      ".claude-plugin/run_mnemos_mcp.py": {
+        "bytes": 7005,
+        "sha256": "35abc7d3209e75bad36bba7dea3a14359d36a2d7f9de30228abfd73e61d20efa"
+      },
+      "hooks/hooks.json": {
+        "bytes": 1350,
+        "sha256": "7ca43bda20e14e4363c84fd2fddd26fd257afaa9ba3146bff2a389c52817d1a7"
+      }
+    },
+    "hook_dispatch": "hooks/hooks.json -> python ${CLAUDE_PLUGIN_ROOT}/.claude-plugin/run_mnemos_hook.py <event>",
+    "mcp_dispatch": "plugin.json -> .claude-plugin/run_mnemos_mcp.py -> explicit MNEMOS_PLUGIN_PYTHON"
+  },
+  "python": {
+    "executable": "C:\\Users\\Ant\\AppData\\Local\\Temp\\mnemos-installed-6600dc2-v1\\Scripts\\python.exe",
+    "mnemos_package": "C:\\Users\\Ant\\AppData\\Local\\Temp\\mnemos-installed-6600dc2-v1\\Lib\\site-packages\\mnemos\\__init__.py",
+    "site_packages_asserted": true
+  },
+  "package_provenance": {
+    "source_commit": "6600dc262927661d61ce9962c812a022014281c7",
+    "package_files_checked": 53,
+    "wheel_package_members_checked": 56,
+    "wheel_path": "C:\\Users\\Ant\\AppData\\Local\\Temp\\mnemos-package-checks-20260917-v2\\dist\\mnemos_memory-0.7.0-py3-none-any.whl",
+    "wheel_sha256_expected": "349737206735f15b59562f3c7d53af51464176473b5de1fa12d2783cf039a25a",
+    "wheel_sha256_observed": "349737206735f15b59562f3c7d53af51464176473b5de1fa12d2783cf039a25a"
+  },
+  "build_verification": {
+    "path": "C:\\Users\\Ant\\AppData\\Local\\Temp\\mnemos-package-checks-20260917-v2\\verification.json",
+    "status": "passed",
+    "source_commit": "6600dc262927661d61ce9962c812a022014281c7",
+    "wheel_path": "C:\\Users\\Ant\\AppData\\Local\\Temp\\mnemos-package-checks-20260917-v2\\dist\\mnemos_memory-0.7.0-py3-none-any.whl",
+    "wheel_sha256": "349737206735f15b59562f3c7d53af51464176473b5de1fa12d2783cf039a25a"
+  },
+  "adapter_timing_gate": {
+    "path": "C:\\Users\\Ant\\AppData\\Local\\Temp\\mnemos-claude-adapter-timing-v3\\report.json",
+    "sha256": "e420c975b4a18f0ace9fb6b04c973d5ad0fd853e9089a33f7bc7b577a44cf743",
+    "runner_path": ".venv\\claude_adapter_timing_v3.py",
+    "runner_sha256": "db80b7a88f5ee7919f71ddc704b044c87cde4ba2f83fb1ba36ceaa7ad71b069a",
+    "source_commit": "6600dc262927661d61ce9962c812a022014281c7",
+    "wheel_sha256": "349737206735f15b59562f3c7d53af51464176473b5de1fa12d2783cf039a25a",
+    "status": "passed"
+  },
+  "claude": {
+    "path": "C:\\Users\\Ant\\.local\\bin\\claude.exe",
+    "version": "2.1.191 (Claude Code)"
+  },
+  "plugin_inventory": {
+    "plugin_list": {
+      "returncode": 0,
+      "stdout_sha256": "63f8da02fe5ba9797fa10b9e9103beac26928554bc5b66600b858fd12384e107",
+      "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "stdout_bytes": 373,
+      "stderr_bytes": 0
+    },
+    "plugin_details": {
+      "returncode": 0,
+      "stdout_sha256": "045600ecab154cb5556b5ac3aded304e94af25503a5a9e6c2dde2fd9869c4f6b",
+      "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "stdout_bytes": 751,
+      "stderr_bytes": 0
+    }
+  },
+  "mcp_telemetry": {
+    "status": "not_observed",
+    "source": "native Claude system/init connected server status and tool names",
+    "servers": [
+      {
+        "name": "plugin:mnemos-memory:mnemos",
+        "status": "pending"
+      }
+    ],
+    "tools": [],
+    "tool_call_executed": false,
+    "read_call_summary": {
+      "allowed_tool_names": [
+        "mcp__plugin_mnemos-memory_mnemos__mnemos_health",
+        "mcp__plugin_mnemos-memory_mnemos__mnemos_retrieve"
+      ],
+      "calls": [],
+      "results": [],
+      "call_names": [],
+      "forbidden_call_names": [],
+      "call_result_ids_match": false,
+      "exactly_one_health_call": false,
+      "exactly_one_retrieve_call": false,
+      "health_result_ok": false,
+      "retrieve_result": null
+    }
+  },
+  "command": [
+    "C:\\Users\\Ant\\.local\\bin\\claude.exe",
+    "--print",
+    "--verbose",
+    "--output-format",
+    "stream-json",
+    "--include-hook-events",
+    "--setting-sources",
+    "project",
+    "--plugin-dir",
+    "C:\\Users\\Ant\\AppData\\Local\\Temp\\mnemos-source-6600dc2",
+    "--tools",
+    "",
+    "--allowed-tools",
+    "mcp__plugin_mnemos-memory_mnemos__mnemos_health,mcp__plugin_mnemos-memory_mnemos__mnemos_retrieve",
+    "--disable-slash-commands",
+    "--permission-mode",
+    "plan",
+    "--session-id",
+    "e45fdcbb-e4e3-4a62-9464-2fe0bfc76bbd",
+    "--model",
+    "claude-sonnet-4-6",
+    "--max-budget-usd",
+    "0.08",
+    "--system-prompt",
+    "Use only the two explicitly allowed Mnemos MCP tools. Call health and retrieve in order.",
+    "<random-codename prompt>"
+  ],
+  "fixture_layout": {
+    "project": "C:\\Users\\Ant\\AppData\\Local\\Temp\\mnemos-native-claude-mcp-v11-3_5vmj90\\project",
+    "claude_config_dir": "C:\\Users\\Ant\\AppData\\Local\\Temp\\mnemos-native-claude-mcp-v11-3_5vmj90\\claude-home\\.claude",
+    "private_native_stdout": "C:\\Users\\Ant\\AppData\\Local\\Temp\\mnemos-native-claude-mcp-v11-3_5vmj90\\native-stdout.jsonl",
+    "private_native_stderr": "C:\\Users\\Ant\\AppData\\Local\\Temp\\mnemos-native-claude-mcp-v11-3_5vmj90\\native-stderr.log",
+    "project_runtime_descriptor_present": false,
+    "auth_copy_performed": true
+  },
+  "native_process": {
+    "returncode": 0,
+    "timed_out": false,
+    "elapsed_ms": 23229.1,
+    "stdout_sha256": "ca24f8f5e3d703244f72811297865675bfaf60ee7cfee685e691a75f36c7cd2f",
+    "stdout_bytes": 34001,
+    "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "stderr_bytes": 0,
+    "private_stdout": "C:\\Users\\Ant\\AppData\\Local\\Temp\\mnemos-native-claude-mcp-v11-3_5vmj90\\native-stdout.jsonl",
+    "private_stderr": "C:\\Users\\Ant\\AppData\\Local\\Temp\\mnemos-native-claude-mcp-v11-3_5vmj90\\native-stderr.log",
+    "stream": {
+      "record_count": 108,
+      "non_json_line_count": 0,
+      "rows": [
+        {
+          "type": "system",
+          "subtype": "hook_started",
+          "item_type": null,
+          "is_error": null,
+          "stop_reason": null,
+          "usage": {},
+          "numeric_cost_fields": {},
+          "answer_digest": null
+        },
+        {
+          "type": "system",
+          "subtype": "hook_response",
+          "item_type": null,
+          "is_error": null,
+          "stop_reason": null,
+          "usage": {},
+          "numeric_cost_fields": {},
+          "answer_digest": null
+        },
+        {
+          "type": "system",
+          "subtype": "hook_started",
+          "item_type": null,
+          "is_error": null,
+          "stop_reason": null,
+          "usage": {},
+          "numeric_cost_fields": {},
+          "answer_digest": null
+        },
+        {
+          "type": "system",
+          "subtype": "hook_response",
+          "item_type": null,
+          "is_error": null,
+          "stop_reason": null,
+          "usage": {},
+          "numeric_cost_fields": {},
+          "answer_digest": null
+        },
+        {
+          "type": "system",
+          "subtype": "init",
+          "item_type": null,
+          "is_error": null,
+          "stop_reason": null,
+          "usage": {},
+          "numeric_cost_fields": {},
+          "answer_digest": null
+        },
+        {
+          "type": "system",
+          "subtype": "thinking_tokens",
+          "item_type": null,
+          "is_error": null,
+          "stop_reason": null,
+          "usage": {},
+          "numeric_cost_fields": {},
+          "answer_digest": null
+        },
+        {
+          "type": "system",
+          "subtype": "thinking_tokens",
+          "item_type": null,
+          "is_error": null,
+          "stop_reason": null,
+          "usage": {},
+          "numeric_cost_fields": {},
+          "answer_digest": null
+        },
+        {
+          "type": "system",
+          "subtype": "thinking_tokens",
+          "item_type": null,
+          "is_error": null,
+          "stop_reason": null,
+          "usage": {},
+          "numeric_cost_fields": {},
+          "answer_digest": null
+        },
+        {
+          "type": "system",
+          "subtype": "thinking_tokens",
+          "item_type": null,
+          "is_error": null,
+          "stop_reason": null,
+          "usage": {},
+          "numeric_cost_fields": {},
+          "answer_digest": null
+        },
+        {
+          "type": "system",
+          "subtype": "thinking_tokens",
+          "item_type": null,
+          "is_error": null,
+          "stop_reason": null,
+          "usage": {},
+          "numeric_cost_fields": {},
+          "answer_digest": null
+        },
+        {
+          "type": "system",
+          "subtype": "thinking_tokens",
+          "item_type": null,
+          "is_error": null,
+          "stop_reason": null,
+          "usage": {},
+          "numeric_cost_fields": {},
+          "answer_digest": null
+        },
+        {
+          "type": "system",
+          "subtype": "thinking_tokens",
+          "item_type": null,
+          "is_error": null,
+          "stop_reason": null,
+          "usage": {},
+          "numeric_cost_fields": {},
+          "answer_digest": null
+        },
+        {
+          "type": "system",
+          "subtype": "thinking_tokens",
+          "item_type": null,
+          "is_error": null,
+          "stop_reason": null,
+          "usage": {},
+          "numeric_cost_fields": {},
+          "answer_digest": null
+        },
+        {
+          "type": "system",
+          "subtype": "thinking_tokens",
+          "item_type": null,
+          "is_error": null,
+          "stop_reason": null,
+          "usage": {},
+          "numeric_cost_fields": {},
+          "answer_digest": null
+        },
+        {
+          "type": "system",
+          "subtype": "thinking_tokens",
+          "item_type": null,
+          "is_error": null,
+          "stop_reason": null,
+          "usage": {},
+          "numeric_cost_fields": {},
+          "answer_digest": null
+        },
+        {
+          "type": "system",
+          "subtype": "thinking_tokens",
+          "item_type": null,
+          "is_error": null,
+          "stop_reason": null,
+          "usage": {},
+          "numeric_cost_fields": {},
+          "answer_digest": null
+        },
+        {
+          "type": "system",
+          "subtype": "thinking_tokens",
+          "item_type": null,
+          "is_error": null,
+          "stop_reason": null,
+          "usage": {},
+          "numeric_cost_fields": {},
+          "answer_digest": null
+        },
+        {
+          "type": "system",
+          "subtype": "thinking_tokens",
+          "item_type": null,
+          "is_error": null,
+          "stop_reason": null,
+          "usage": {},
+          "numeric_cost_fields": {},
+          "answer_digest": null
+        },
+        {
+          "type": "system",
+          "subtype": "thinking_tokens",
+          "item_type": null,
+          "is_error": null,
+          "stop_reason": null,
+          "usage": {},
+          "numeric_cost_fields": {},
+          "answer_digest": null
+        },
+        {
+          "type": "system",
+          "subtype": "thinking_tokens",
+          "item_type": null,
+          "is_error": null,
+          "stop_reason": null,
+          "usage": {},
+          "numeric_cost_fields": {},
+          "answer_digest": null
+        },
+        {
+          "type": "system",
+          "subtype": "thinking_tokens",
+          "item_type": null,
+          "is_error": null,
+          "stop_reason": null,
+          "usage": {},
+          "numeric_cost_fields": {},
+          "answer_digest": null
+        },
+        {
+          "type": "system",
+          "subtype": "thinking_tokens",
+          "item_type": null,
+          "is_error": null,
+          "stop_reason": null,
+          "usage": {},
+          "numeric_cost_fields": {},
+          "answer_digest": null
+        },
+        {
+          "type": "system",
+          "subtype": "thinking_tokens",
+          "item_type": null,
+          "is_error": null,
+          "stop_reason": null,
+          "usage": {},
+          "numeric_cost_fields": {},
+          "answer_digest": null
+        },
+        {
+          "type": "system",
+          "subtype": "thinking_tokens",
+          "item_type": null,
+          "is_error": null,
+          "stop_reason": null,
+          "usage": {},
+          "numeric_cost_fields": {},
+          "answer_digest": null
+        },
+        {
+          "type": "system",
+          "subtype": "thinking_tokens",
+          "item_type": null,
+          "is_error": null,
+          "stop_reason": null,
+          "usage": {},
+          "numeric_cost_fields": {},
+          "answer_digest": null
+        },
+        {
+          "type": "system",
+          "subtype": "thinking_tokens",
+          "item_type": null,
+          "is_error": null,
+          "stop_reason": null,
+          "usage": {},
+          "numeric_cost_fields": {},
+          "answer_digest": null
+        },
+        {
+          "type": "system",
+          "subtype": "thinking_tokens",
+          "item_type": null,
+          "is_error": null,
+          "stop_reason": null,
+          "usage": {},
+          "numeric_cost_fields": {},
+          "answer_digest": null
+        },
+        {
+          "type": "system",
+          "subtype": "thinking_tokens",
+          "item_type": null,
+          "is_error": null,
+          "stop_reason": null,
+          "usage": {},
+          "numeric_cost_fields": {},
+          "answer_digest": null
+        },
+        {
+          "type": "system",
+          "subtype": "thinking_tokens",
+          "item_type": null,
+          "is_error": null,
+          "stop_reason": null,
+          "usage": {},
+          "numeric_cost_fields": {},
+          "answer_digest": null
+        },
+        {
+          "type": "system",
+          "subtype": "thinking_tokens",
+          "item_type": null,
+          "is_error": null,
+          "stop_reason": null,
+          "usage": {},
+          "numeric_cost_fields": {},
+          "answer_digest": null
+        },
+        {
+          "type": "system",
+          "subtype": "thinking_tokens",
+          "item_type": null,
+          "is_error": null,
+          "stop_reason": null,
+          "usage": {},
+          "numeric_cost_fields": {},
+          "answer_digest": null
+        },
+        {
+          "type": "system",
+          "subtype": "thinking_tokens",
+          "item_type": null,
+          "is_error": null,
+          "stop_reason": null,
+          "usage": {},
+          "numeric_cost_fields": {},
+          "answer_digest": null
+        },
+        {
+          "type": "system",
+          "subtype": "thinking_tokens",
+          "item_type": null,
+          "is_error": null,
+          "stop_reason": null,
+          "usage": {},
+          "numeric_cost_fields": {},
+          "answer_digest": null
+        },
+        {
+          "type": "system",
+          "subtype": "thinking_tokens",
+          "item_type": null,
+          "is_error": null,
+          "stop_reason": null,
+          "usage": {},
+          "numeric_cost_fields": {},
+          "answer_digest": null
+        },
+        {
+          "type": "system",
+          "subtype": "thinking_tokens",
+          "item_type": null,
+          "is_error": null,
+          "stop_reason": null,
+          "usage": {},
+          "numeric_cost_fields": {},
+          "answer_digest": null
+        },
+        {
+          "type": "system",
+          "subtype": "thinking_tokens",
+          "item_type": null,
+          "is_error": null,
+          "stop_reason": null,
+          "usage": {},
+          "numeric_cost_fields": {},
+          "answer_digest": null
+        },
+        {
+          "type": "system",
+          "subtype": "thinking_tokens",
+          "item_type": null,
+          "is_error": null,
+          "stop_reason": null,
+          "usage": {},
+          "numeric_cost_fields": {},
+          "answer_digest": null
+        },
+        {
+          "type": "system",
+          "subtype": "thinking_tokens",
+          "item_type": null,
+          "is_error": null,
+          "stop_reason": null,
+          "usage": {},
+          "numeric_cost_fields": {},
+          "answer_digest": null
+        },
+        {
+          "type": "system",
+          "subtype": "thinking_tokens",
+          "item_type": null,
+          "is_error": null,
+          "stop_reason": null,
+          "usage": {},
+          "numeric_cost_fields": {},
+          "answer_digest": null
+        },
+        {
+          "type": "system",
+          "subtype": "thinking_tokens",
+          "item_type": null,
+          "is_error": null,
+          "stop_reason": null,
+          "usage": {},
+          "numeric_cost_fields": {},
+          "answer_digest": null
+        },
+        {
+          "type": "system",
+          "subtype": "thinking_tokens",
+          "item_type": null,
+          "is_error": null,
+          "stop_reason": null,
+          "usage": {},
+          "numeric_cost_fields": {},
+          "answer_digest": null
+        },
+        {
+          "type": "system",
+          "subtype": "thinking_tokens",
+          "item_type": null,
+          "is_error": null,
+          "stop_reason": null,
+          "usage": {},
+          "numeric_cost_fields": {},
+          "answer_digest": null
+        },
+        {
+          "type": "system",
+          "subtype": "thinking_tokens",
+          "item_type": null,
+          "is_error": null,
+          "stop_reason": null,
+          "usage": {},
+          "numeric_cost_fields": {},
+          "answer_digest": null
+        },
+        {
+          "type": "system",
+          "subtype": "thinking_tokens",
+          "item_type": null,
+          "is_error": null,
+          "stop_reason": null,
+          "usage": {},
+          "numeric_cost_fields": {},
+          "answer_digest": null
+        },
+        {
+          "type": "system",
+          "subtype": "thinking_tokens",
+          "item_type": null,
+          "is_error": null,
+          "stop_reason": null,
+          "usage": {},
+          "numeric_cost_fields": {},
+          "answer_digest": null
+        },
+        {
+          "type": "system",
+          "subtype": "thinking_tokens",
+          "item_type": null,
+          "is_error": null,
+          "stop_reason": null,
+          "usage": {},
+          "numeric_cost_fields": {},
+          "answer_digest": null
+        },
+        {
+          "type": "system",
+          "subtype": "thinking_tokens",
+          "item_type": null,
+          "is_error": null,
+          "stop_reason": null,
+          "usage": {},
+          "numeric_cost_fields": {},
+          "answer_digest": null
+        },
+        {
+          "type": "system",
+          "subtype": "thinking_tokens",
+          "item_type": null,
+          "is_error": null,
+          "stop_reason": null,
+          "usage": {},
+          "numeric_cost_fields": {},
+          "answer_digest": null
+        },
+        {
+          "type": "system",
+          "subtype": "thinking_tokens",
+          "item_type": null,
+          "is_error": null,
+          "stop_reason": null,
+          "usage": {},
+          "numeric_cost_fields": {},
+          "answer_digest": null
+        },
+        {
+          "type": "system",
+          "subtype": "thinking_tokens",
+          "item_type": null,
+          "is_error": null,
+          "stop_reason": null,
+          "usage": {},
+          "numeric_cost_fields": {},
+          "answer_digest": null
+        },
+        {
+          "type": "system",
+          "subtype": "thinking_tokens",
+          "item_type": null,
+          "is_error": null,
+          "stop_reason": null,
+          "usage": {},
+          "numeric_cost_fields": {},
+          "answer_digest": null
+        },
+        {
+          "type": "system",
+          "subtype": "thinking_tokens",
+          "item_type": null,
+          "is_error": null,
+          "stop_reason": null,
+          "usage": {},
+          "numeric_cost_fields": {},
+          "answer_digest": null
+        },
+        {
+          "type": "system",
+          "subtype": "thinking_tokens",
+          "item_type": null,
+          "is_error": null,
+          "stop_reason": null,
+          "usage": {},
+          "numeric_cost_fields": {},
+          "answer_digest": null
+        },
+        {
+          "type": "system",
+          "subtype": "thinking_tokens",
+          "item_type": null,
+          "is_error": null,
+          "stop_reason": null,
+          "usage": {},
+          "numeric_cost_fields": {},
+          "answer_digest": null
+        },
+        {
+          "type": "system",
+          "subtype": "thinking_tokens",
+          "item_type": null,
+          "is_error": null,
+          "stop_reason": null,
+          "usage": {},
+          "numeric_cost_fields": {},
+          "answer_digest": null
+        },
+        {
+          "type": "system",
+          "subtype": "thinking_tokens",
+          "item_type": null,
+          "is_error": null,
+          "stop_reason": null,
+          "usage": {},
+          "numeric_cost_fields": {},
+          "answer_digest": null
+        },
+        {
+          "type": "system",
+          "subtype": "thinking_tokens",
+          "item_type": null,
+          "is_error": null,
+          "stop_reason": null,
+          "usage": {},
+          "numeric_cost_fields": {},
+          "answer_digest": null
+        },
+        {
+          "type": "system",
+          "subtype": "thinking_tokens",
+          "item_type": null,
+          "is_error": null,
+          "stop_reason": null,
+          "usage": {},
+          "numeric_cost_fields": {},
+          "answer_digest": null
+        },
+        {
+          "type": "system",
+          "subtype": "thinking_tokens",
+          "item_type": null,
+          "is_error": null,
+          "stop_reason": null,
+          "usage": {},
+          "numeric_cost_fields": {},
+          "answer_digest": null
+        },
+        {
+          "type": "system",
+          "subtype": "thinking_tokens",
+          "item_type": null,
+          "is_error": null,
+          "stop_reason": null,
+          "usage": {},
+          "numeric_cost_fields": {},
+          "answer_digest": null
+        },
+        {
+          "type": "system",
+          "subtype": "thinking_tokens",
+          "item_type": null,
+          "is_error": null,
+          "stop_reason": null,
+          "usage": {},
+          "numeric_cost_fields": {},
+          "answer_digest": null
+        },
+        {
+          "type": "system",
+          "subtype": "thinking_tokens",
+          "item_type": null,
+          "is_error": null,
+          "stop_reason": null,
+          "usage": {},
+          "numeric_cost_fields": {},
+          "answer_digest": null
+        },
+        {
+          "type": "system",
+          "subtype": "thinking_tokens",
+          "item_type": null,
+          "is_error": null,
+          "stop_reason": null,
+          "usage": {},
+          "numeric_cost_fields": {},
+          "answer_digest": null
+        },
+        {
+          "type": "system",
+          "subtype": "thinking_tokens",
+          "item_type": null,
+          "is_error": null,
+          "stop_reason": null,
+          "usage": {},
+          "numeric_cost_fields": {},
+          "answer_digest": null
+        },
+        {
+          "type": "system",
+          "subtype": "thinking_tokens",
+          "item_type": null,
+          "is_error": null,
+          "stop_reason": null,
+          "usage": {},
+          "numeric_cost_fields": {},
+          "answer_digest": null
+        },
+        {
+          "type": "system",
+          "subtype": "thinking_tokens",
+          "item_type": null,
+          "is_error": null,
+          "stop_reason": null,
+          "usage": {},
+          "numeric_cost_fields": {},
+          "answer_digest": null
+        },
+        {
+          "type": "system",
+          "subtype": "thinking_tokens",
+          "item_type": null,
+          "is_error": null,
+          "stop_reason": null,
+          "usage": {},
+          "numeric_cost_fields": {},
+          "answer_digest": null
+        },
+        {
+          "type": "system",
+          "subtype": "thinking_tokens",
+          "item_type": null,
+          "is_error": null,
+          "stop_reason": null,
+          "usage": {},
+          "numeric_cost_fields": {},
+          "answer_digest": null
+        },
+        {
+          "type": "system",
+          "subtype": "thinking_tokens",
+          "item_type": null,
+          "is_error": null,
+          "stop_reason": null,
+          "usage": {},
+          "numeric_cost_fields": {},
+          "answer_digest": null
+        },
+        {
+          "type": "system",
+          "subtype": "thinking_tokens",
+          "item_type": null,
+          "is_error": null,
+          "stop_reason": null,
+          "usage": {},
+          "numeric_cost_fields": {},
+          "answer_digest": null
+        },
+        {
+          "type": "system",
+          "subtype": "thinking_tokens",
+          "item_type": null,
+          "is_error": null,
+          "stop_reason": null,
+          "usage": {},
+          "numeric_cost_fields": {},
+          "answer_digest": null
+        },
+        {
+          "type": "system",
+          "subtype": "thinking_tokens",
+          "item_type": null,
+          "is_error": null,
+          "stop_reason": null,
+          "usage": {},
+          "numeric_cost_fields": {},
+          "answer_digest": null
+        },
+        {
+          "type": "system",
+          "subtype": "thinking_tokens",
+          "item_type": null,
+          "is_error": null,
+          "stop_reason": null,
+          "usage": {},
+          "numeric_cost_fields": {},
+          "answer_digest": null
+        },
+        {
+          "type": "system",
+          "subtype": "thinking_tokens",
+          "item_type": null,
+          "is_error": null,
+          "stop_reason": null,
+          "usage": {},
+          "numeric_cost_fields": {},
+          "answer_digest": null
+        },
+        {
+          "type": "system",
+          "subtype": "thinking_tokens",
+          "item_type": null,
+          "is_error": null,
+          "stop_reason": null,
+          "usage": {},
+          "numeric_cost_fields": {},
+          "answer_digest": null
+        },
+        {
+          "type": "system",
+          "subtype": "thinking_tokens",
+          "item_type": null,
+          "is_error": null,
+          "stop_reason": null,
+          "usage": {},
+          "numeric_cost_fields": {},
+          "answer_digest": null
+        },
+        {
+          "type": "system",
+          "subtype": "thinking_tokens",
+          "item_type": null,
+          "is_error": null,
+          "stop_reason": null,
+          "usage": {},
+          "numeric_cost_fields": {},
+          "answer_digest": null
+        },
+        {
+          "type": "system",
+          "subtype": "thinking_tokens",
+          "item_type": null,
+          "is_error": null,
+          "stop_reason": null,
+          "usage": {},
+          "numeric_cost_fields": {},
+          "answer_digest": null
+        },
+        {
+          "type": "system",
+          "subtype": "thinking_tokens",
+          "item_type": null,
+          "is_error": null,
+          "stop_reason": null,
+          "usage": {},
+          "numeric_cost_fields": {},
+          "answer_digest": null
+        },
+        {
+          "type": "system",
+          "subtype": "thinking_tokens",
+          "item_type": null,
+          "is_error": null,
+          "stop_reason": null,
+          "usage": {},
+          "numeric_cost_fields": {},
+          "answer_digest": null
+        },
+        {
+          "type": "system",
+          "subtype": "thinking_tokens",
+          "item_type": null,
+          "is_error": null,
+          "stop_reason": null,
+          "usage": {},
+          "numeric_cost_fields": {},
+          "answer_digest": null
+        },
+        {
+          "type": "system",
+          "subtype": "thinking_tokens",
+          "item_type": null,
+          "is_error": null,
+          "stop_reason": null,
+          "usage": {},
+          "numeric_cost_fields": {},
+          "answer_digest": null
+        },
+        {
+          "type": "system",
+          "subtype": "thinking_tokens",
+          "item_type": null,
+          "is_error": null,
+          "stop_reason": null,
+          "usage": {},
+          "numeric_cost_fields": {},
+          "answer_digest": null
+        },
+        {
+          "type": "system",
+          "subtype": "thinking_tokens",
+          "item_type": null,
+          "is_error": null,
+          "stop_reason": null,
+          "usage": {},
+          "numeric_cost_fields": {},
+          "answer_digest": null
+        },
+        {
+          "type": "system",
+          "subtype": "thinking_tokens",
+          "item_type": null,
+          "is_error": null,
+          "stop_reason": null,
+          "usage": {},
+          "numeric_cost_fields": {},
+          "answer_digest": null
+        },
+        {
+          "type": "system",
+          "subtype": "thinking_tokens",
+          "item_type": null,
+          "is_error": null,
+          "stop_reason": null,
+          "usage": {},
+          "numeric_cost_fields": {},
+          "answer_digest": null
+        },
+        {
+          "type": "system",
+          "subtype": "thinking_tokens",
+          "item_type": null,
+          "is_error": null,
+          "stop_reason": null,
+          "usage": {},
+          "numeric_cost_fields": {},
+          "answer_digest": null
+        },
+        {
+          "type": "system",
+          "subtype": "thinking_tokens",
+          "item_type": null,
+          "is_error": null,
+          "stop_reason": null,
+          "usage": {},
+          "numeric_cost_fields": {},
+          "answer_digest": null
+        },
+        {
+          "type": "system",
+          "subtype": "thinking_tokens",
+          "item_type": null,
+          "is_error": null,
+          "stop_reason": null,
+          "usage": {},
+          "numeric_cost_fields": {},
+          "answer_digest": null
+        },
+        {
+          "type": "system",
+          "subtype": "thinking_tokens",
+          "item_type": null,
+          "is_error": null,
+          "stop_reason": null,
+          "usage": {},
+          "numeric_cost_fields": {},
+          "answer_digest": null
+        },
+        {
+          "type": "system",
+          "subtype": "thinking_tokens",
+          "item_type": null,
+          "is_error": null,
+          "stop_reason": null,
+          "usage": {},
+          "numeric_cost_fields": {},
+          "answer_digest": null
+        },
+        {
+          "type": "system",
+          "subtype": "thinking_tokens",
+          "item_type": null,
+          "is_error": null,
+          "stop_reason": null,
+          "usage": {},
+          "numeric_cost_fields": {},
+          "answer_digest": null
+        },
+        {
+          "type": "system",
+          "subtype": "thinking_tokens",
+          "item_type": null,
+          "is_error": null,
+          "stop_reason": null,
+          "usage": {},
+          "numeric_cost_fields": {},
+          "answer_digest": null
+        },
+        {
+          "type": "system",
+          "subtype": "thinking_tokens",
+          "item_type": null,
+          "is_error": null,
+          "stop_reason": null,
+          "usage": {},
+          "numeric_cost_fields": {},
+          "answer_digest": null
+        },
+        {
+          "type": "system",
+          "subtype": "thinking_tokens",
+          "item_type": null,
+          "is_error": null,
+          "stop_reason": null,
+          "usage": {},
+          "numeric_cost_fields": {},
+          "answer_digest": null
+        },
+        {
+          "type": "system",
+          "subtype": "thinking_tokens",
+          "item_type": null,
+          "is_error": null,
+          "stop_reason": null,
+          "usage": {},
+          "numeric_cost_fields": {},
+          "answer_digest": null
+        },
+        {
+          "type": "system",
+          "subtype": "thinking_tokens",
+          "item_type": null,
+          "is_error": null,
+          "stop_reason": null,
+          "usage": {},
+          "numeric_cost_fields": {},
+          "answer_digest": null
+        },
+        {
+          "type": "system",
+          "subtype": "thinking_tokens",
+          "item_type": null,
+          "is_error": null,
+          "stop_reason": null,
+          "usage": {},
+          "numeric_cost_fields": {},
+          "answer_digest": null
+        },
+        {
+          "type": "system",
+          "subtype": "thinking_tokens",
+          "item_type": null,
+          "is_error": null,
+          "stop_reason": null,
+          "usage": {},
+          "numeric_cost_fields": {},
+          "answer_digest": null
+        },
+        {
+          "type": "system",
+          "subtype": "thinking_tokens",
+          "item_type": null,
+          "is_error": null,
+          "stop_reason": null,
+          "usage": {},
+          "numeric_cost_fields": {},
+          "answer_digest": null
+        },
+        {
+          "type": "system",
+          "subtype": "thinking_tokens",
+          "item_type": null,
+          "is_error": null,
+          "stop_reason": null,
+          "usage": {},
+          "numeric_cost_fields": {},
+          "answer_digest": null
+        },
+        {
+          "type": "system",
+          "subtype": "thinking_tokens",
+          "item_type": null,
+          "is_error": null,
+          "stop_reason": null,
+          "usage": {},
+          "numeric_cost_fields": {},
+          "answer_digest": null
+        },
+        {
+          "type": "assistant",
+          "subtype": null,
+          "item_type": null,
+          "is_error": null,
+          "stop_reason": null,
+          "usage": {},
+          "numeric_cost_fields": {},
+          "answer_digest": null
+        },
+        {
+          "type": "assistant",
+          "subtype": null,
+          "item_type": null,
+          "is_error": null,
+          "stop_reason": null,
+          "usage": {},
+          "numeric_cost_fields": {},
+          "answer_digest": null
+        },
+        {
+          "type": "rate_limit_event",
+          "subtype": null,
+          "item_type": null,
+          "is_error": null,
+          "stop_reason": null,
+          "usage": {},
+          "numeric_cost_fields": {},
+          "answer_digest": null
+        },
+        {
+          "type": "system",
+          "subtype": "hook_started",
+          "item_type": null,
+          "is_error": null,
+          "stop_reason": null,
+          "usage": {},
+          "numeric_cost_fields": {},
+          "answer_digest": null
+        },
+        {
+          "type": "system",
+          "subtype": "hook_response",
+          "item_type": null,
+          "is_error": null,
+          "stop_reason": null,
+          "usage": {},
+          "numeric_cost_fields": {},
+          "answer_digest": null
+        },
+        {
+          "type": "result",
+          "subtype": "success",
+          "item_type": null,
+          "is_error": false,
+          "stop_reason": "end_turn",
+          "usage": {
+            "input_tokens": 3,
+            "cache_creation_input_tokens": 1917,
+            "cache_read_input_tokens": 0,
+            "output_tokens": 1086
+          },
+          "numeric_cost_fields": {
+            "total_cost_usd": 0.027801
+          },
+          "answer_digest": "02b1a64da4a393d846ae874fad80d794a11471ffa9b712dadf70ce33b97d6b45"
+        }
+      ],
+      "hook_rows": [
+        {
+          "subtype": "hook_started",
+          "hook_event": "SessionStart",
+          "hook_name": "SessionStart:startup",
+          "outcome": null,
+          "exit_code": null,
+          "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+          "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+          "output_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+          "session_id_sha256": "35e1bd5f2663501dbf2f945f2343dd261bfbe8b560a8fcbdb03ea7194ffd8a99"
+        },
+        {
+          "subtype": "hook_response",
+          "hook_event": "SessionStart",
+          "hook_name": "SessionStart:startup",
+          "outcome": "success",
+          "exit_code": 0,
+          "stdout_sha256": "c79debd21d2d6a91bc91334379d7f5f744bb802654a2ca3f4580f96dd9962e44",
+          "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+          "output_sha256": "c79debd21d2d6a91bc91334379d7f5f744bb802654a2ca3f4580f96dd9962e44",
+          "session_id_sha256": "35e1bd5f2663501dbf2f945f2343dd261bfbe8b560a8fcbdb03ea7194ffd8a99"
+        },
+        {
+          "subtype": "hook_started",
+          "hook_event": "UserPromptSubmit",
+          "hook_name": "UserPromptSubmit",
+          "outcome": null,
+          "exit_code": null,
+          "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+          "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+          "output_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+          "session_id_sha256": "35e1bd5f2663501dbf2f945f2343dd261bfbe8b560a8fcbdb03ea7194ffd8a99"
+        },
+        {
+          "subtype": "hook_response",
+          "hook_event": "UserPromptSubmit",
+          "hook_name": "UserPromptSubmit",
+          "outcome": "success",
+          "exit_code": 0,
+          "stdout_sha256": "d0e407e8a9e8943d663e522ce910cb18f0528ab015f0a0a74b12b85e209772d0",
+          "stderr_sha256": "6803835cb43f59b43d40cbe167c694462dea1617b17c94e39b49df37dc1a07c0",
+          "output_sha256": "5a2ddbb4d2099973eb93218f82b1e66cfd52b6ec95c727670655d12c1db909b3",
+          "session_id_sha256": "35e1bd5f2663501dbf2f945f2343dd261bfbe8b560a8fcbdb03ea7194ffd8a99"
+        },
+        {
+          "subtype": "hook_started",
+          "hook_event": "Stop",
+          "hook_name": "Stop",
+          "outcome": null,
+          "exit_code": null,
+          "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+          "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+          "output_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+          "session_id_sha256": "35e1bd5f2663501dbf2f945f2343dd261bfbe8b560a8fcbdb03ea7194ffd8a99"
+        },
+        {
+          "subtype": "hook_response",
+          "hook_event": "Stop",
+          "hook_name": "Stop",
+          "outcome": "success",
+          "exit_code": 0,
+          "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+          "stderr_sha256": "66e753edaccd703ff773b5007c0b9e45b1df3b48b3dd66b997445acb70b437a1",
+          "output_sha256": "66e753edaccd703ff773b5007c0b9e45b1df3b48b3dd66b997445acb70b437a1",
+          "session_id_sha256": "35e1bd5f2663501dbf2f945f2343dd261bfbe8b560a8fcbdb03ea7194ffd8a99"
+        }
+      ],
+      "answer_text_digests": [
+        "02b1a64da4a393d846ae874fad80d794a11471ffa9b712dadf70ce33b97d6b45"
+      ],
+      "answer_mentions_random_canary": true,
+      "tool_call_observed": false,
+      "tool_item_types": [],
+      "mcp_server_names": [],
+      "mcp_servers_from_native_init": [
+        {
+          "name": "plugin:mnemos-memory:mnemos",
+          "status": "pending"
+        }
+      ],
+      "mcp_tools_from_native_init": [],
+      "mnemos_connected_and_tools_observed": false,
+      "mnemos_mcp_telemetry_observed": false,
+      "cost_usd_observed": [
+        0.027801
+      ],
+      "total_cost_usd": 0.027801,
+      "usage_observed": true
+    }
+  },
+  "seed": {
+    "project_id": "619e013f-0850-4bef-a265-63937d271517",
+    "remember_status": "committed",
+    "remember_committed": null,
+    "maintenance_status": null,
+    "codename_sha256": "c37abaa6cd35ec95902bb7cb07474a80a45d8d43d13e968511bd2ee8084aa841",
+    "seed_content_sha256": "91b311f29012c9cc3f4540a5edde42e7c37467677fd0b19fcc9d0fd2f8fc8a79"
+  },
+  "native_hook_trace": {
+    "available": true,
+    "records": [
+      {
+        "subtype": "hook_started",
+        "hook_event": "SessionStart",
+        "hook_name": "SessionStart:startup",
+        "outcome": null,
+        "exit_code": null,
+        "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "output_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "session_id_sha256": "35e1bd5f2663501dbf2f945f2343dd261bfbe8b560a8fcbdb03ea7194ffd8a99"
+      },
+      {
+        "subtype": "hook_response",
+        "hook_event": "SessionStart",
+        "hook_name": "SessionStart:startup",
+        "outcome": "success",
+        "exit_code": 0,
+        "stdout_sha256": "c79debd21d2d6a91bc91334379d7f5f744bb802654a2ca3f4580f96dd9962e44",
+        "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "output_sha256": "c79debd21d2d6a91bc91334379d7f5f744bb802654a2ca3f4580f96dd9962e44",
+        "session_id_sha256": "35e1bd5f2663501dbf2f945f2343dd261bfbe8b560a8fcbdb03ea7194ffd8a99"
+      },
+      {
+        "subtype": "hook_started",
+        "hook_event": "UserPromptSubmit",
+        "hook_name": "UserPromptSubmit",
+        "outcome": null,
+        "exit_code": null,
+        "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "output_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "session_id_sha256": "35e1bd5f2663501dbf2f945f2343dd261bfbe8b560a8fcbdb03ea7194ffd8a99"
+      },
+      {
+        "subtype": "hook_response",
+        "hook_event": "UserPromptSubmit",
+        "hook_name": "UserPromptSubmit",
+        "outcome": "success",
+        "exit_code": 0,
+        "stdout_sha256": "d0e407e8a9e8943d663e522ce910cb18f0528ab015f0a0a74b12b85e209772d0",
+        "stderr_sha256": "6803835cb43f59b43d40cbe167c694462dea1617b17c94e39b49df37dc1a07c0",
+        "output_sha256": "5a2ddbb4d2099973eb93218f82b1e66cfd52b6ec95c727670655d12c1db909b3",
+        "session_id_sha256": "35e1bd5f2663501dbf2f945f2343dd261bfbe8b560a8fcbdb03ea7194ffd8a99"
+      },
+      {
+        "subtype": "hook_started",
+        "hook_event": "Stop",
+        "hook_name": "Stop",
+        "outcome": null,
+        "exit_code": null,
+        "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "output_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "session_id_sha256": "35e1bd5f2663501dbf2f945f2343dd261bfbe8b560a8fcbdb03ea7194ffd8a99"
+      },
+      {
+        "subtype": "hook_response",
+        "hook_event": "Stop",
+        "hook_name": "Stop",
+        "outcome": "success",
+        "exit_code": 0,
+        "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "stderr_sha256": "66e753edaccd703ff773b5007c0b9e45b1df3b48b3dd66b997445acb70b437a1",
+        "output_sha256": "66e753edaccd703ff773b5007c0b9e45b1df3b48b3dd66b997445acb70b437a1",
+        "session_id_sha256": "35e1bd5f2663501dbf2f945f2343dd261bfbe8b560a8fcbdb03ea7194ffd8a99"
+      }
+    ],
+    "payload_retention": "Claude stream hook telemetry is retained as safe fields and digests; native payloads remain in Claude's private config fixture"
+  },
+  "persistent_transcript": {
+    "path": "C:\\Users\\Ant\\AppData\\Local\\Temp\\mnemos-native-claude-mcp-v11-3_5vmj90\\claude-home\\.claude\\projects\\C--Users-Ant-AppData-Local-Temp-mnemos-native-claude-mcp-v11-3-5vmj90-project\\e45fdcbb-e4e3-4a62-9464-2fe0bfc76bbd.jsonl",
+    "sha256": "76586be3589a3f8b70c7424d64ade5f793ae08e6f0f63efe7145c5dfc9901a2d",
+    "bytes": 14992,
+    "line_count": 12,
+    "roles": [
+      "user",
+      "assistant",
+      "assistant"
+    ],
+    "source_ref_sha256": [
+      "aaaaebd6b830cc13d3897343739d0c9fdf6f152f6772f7e15e90beee995e8d69",
+      "e2b4817891b6cb76ef6c414eda90669531e31ae53fdafffd40ad66883d3bf2bb",
+      "b61db62fd1969ecef22fae06fe13ebac847da57d6f7de1cbba3c98e2d2236d53",
+      "a2340b23f9a50e813ae5fb686686defcfba212c9a12498ba5cb2eb52a18eefd0",
+      "0c321549344a6a577ea55ea38018f0801139c64e590ac26f7e7a39a667185cc9",
+      "9fbf6541a76eafd515786faf6dbe4468908cb8ff6ad9d68370f46bb9de7047c3",
+      "79fd80754dcfcb02a9cd2d6f2f7033b32ebeebea58f5095afebe00d2db79805d",
+      "18ad4376147a2cf8405a0ad6d75f2c49a07fefb5b0f91d336d571fc9257d7b59",
+      "b08953e07690dcb232fb32273366c5d43bcf715c2729065aa2bb797da1a011cb"
+    ],
+    "source_ref_role_by_sha256": {
+      "b61db62fd1969ecef22fae06fe13ebac847da57d6f7de1cbba3c98e2d2236d53": "user",
+      "79fd80754dcfcb02a9cd2d6f2f7033b32ebeebea58f5095afebe00d2db79805d": "assistant",
+      "18ad4376147a2cf8405a0ad6d75f2c49a07fefb5b0f91d336d571fc9257d7b59": "assistant"
+    }
+  },
+  "checkpoint": {
+    "path": "C:\\Users\\Ant\\AppData\\Local\\Temp\\mnemos-native-claude-mcp-v11-3_5vmj90\\checkpoints\\ccb9c328692697fa39171f99767d593d722013b177b4639f041f3c5d8d4a0131.json",
+    "sha256": "6b41fac405637d0f82211e917b14540c4345dcb54942132916cc324f8ed84795",
+    "offset": 13851,
+    "transcript_bytes": 14992,
+    "scope": {
+      "host": "claude-code",
+      "project_id": "619e013f-0850-4bef-a265-63937d271517",
+      "session_id": "e45fdcbb-e4e3-4a62-9464-2fe0bfc76bbd",
+      "user_profile_id": "native-claude-mcp-v11",
+      "workspace_id": null
+    },
+    "identity_version": 2,
+    "pending_dedup_count": 1
+  },
+  "captured_roles_before_restart": {
+    "event_count": 3,
+    "role_counts": {
+      "user": 2,
+      "assistant": 1
+    },
+    "single_turn_expected": true,
+    "extra_capture_count": 1,
+    "exactly_one_user": false,
+    "exactly_one_assistant": true,
+    "user_capture": true,
+    "assistant_capture": true,
+    "user_transcript_association": false,
+    "assistant_transcript_association": true,
+    "claude_v2_identity": true,
+    "transcript_source_ref_observed": true
+  },
+  "transcript_coverage": {
+    "status": "private_persistent_jsonl_verified",
+    "hook_events_reported": 6,
+    "limitation": "The transcript remains private to the disposable CLAUDE_CONFIG_DIR; the report stores its path, digest, JSONL role summary, and source reference digests only."
+  },
+  "provisional_diagnostics": {
+    "identity_status_counts": {
+      "normal": 2,
+      "provisional_unassociated": 1,
+      "unknown_or_missing": 0
+    },
+    "normal_transcript_associated_user": true,
+    "normal_transcript_associated_user_count": 1,
+    "normal_transcript_associated_assistant": true,
+    "normal_transcript_associated_assistant_count": 1,
+    "normal_transcript_associated_count": 2,
+    "provisional_fallbacks": [
+      {
+        "event_id": "fab95806655ed6a819066c1f2f6925f33518409091fd9ecc881f9769571b063c",
+        "event_status": "deferred",
+        "job_id": "event:fab95806655ed6a819066c1f2f6925f33518409091fd9ecc881f9769571b063c",
+        "job_kind": "capture_only",
+        "job_status": "pending",
+        "fact_eligible": false
+      }
+    ],
+    "fallback_contract_before_restart": true,
+    "provisional_event_ids": [
+      "fab95806655ed6a819066c1f2f6925f33518409091fd9ecc881f9769571b063c"
+    ],
+    "provisional_capture_contract_status": "required",
+    "provisional_capture_contract_reason": "A missing native identity fallback was observed and must remain capture-only.",
+    "provisional_event_ids_are_extraction_ineligible": true,
+    "fallback_contract_after_one_fixture_maintenance": true,
+    "provisional_fallbacks_after_maintenance": [
+      {
+        "event_id": "fab95806655ed6a819066c1f2f6925f33518409091fd9ecc881f9769571b063c",
+        "event_status": "deferred",
+        "job_id": "event:fab95806655ed6a819066c1f2f6925f33518409091fd9ecc881f9769571b063c",
+        "job_kind": "capture_only",
+        "job_status": "completed",
+        "fact_eligible": false
+      }
+    ],
+    "provisional_fact_metadata_ids_after_maintenance": [],
+    "provisional_evidence_fact_ids_after_maintenance": [],
+    "no_facts_or_evidence_derived_from_provisional_ids": true,
+    "criteria": {
+      "one_normal_transcript_associated_user": true,
+      "one_normal_transcript_associated_assistant": true,
+      "normal_identity_event_count_exactly_two": true,
+      "unknown_or_missing_identity_count_zero": true,
+      "missing_id_fallback_deferred_capture_only": true,
+      "provisional_event_metadata_is_extraction_ineligible": true,
+      "provisional_ids_have_no_derived_facts_or_evidence": true
+    },
+    "read_contract_criteria": {
+      "all_normal_events_transcript_associated": true,
+      "normal_user_and_assistant_present": true,
+      "unknown_or_missing_identity_count_zero": true,
+      "provisional_fallback_deferred_and_extraction_ineligible": true,
+      "provisional_ids_have_no_derived_facts_or_evidence": true
+    }
+  },
+  "raw_duplicate_gate": {
+    "name": "exactly_two_native_captures",
+    "passed": false,
+    "captured_event_count": 3,
+    "independent_of_provisional_diagnostics": true,
+    "note": "This is the original v6 duplicate gate; provisional diagnostics do not turn a duplicate into a pass."
+  },
+  "replay": {
+    "status": "reconstructed_plugin_hook",
+    "reason": "The original native Stop payload is unavailable from plugin telemetry; this replays the real plugin wrapper with only validated checkpoint/transcript fields.",
+    "original_native_payload_replayed": false,
+    "reconstructed_payload_fields": [
+      "cwd",
+      "hook_event_name",
+      "session_id",
+      "source",
+      "stop_hook_active",
+      "transcript_path"
+    ],
+    "returncode": 0,
+    "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "event_count_before": 4,
+    "event_count_after_hook": 4,
+    "event_count_after": 4,
+    "no_extra_events": true,
+    "maintenance_status": null,
+    "checkpoint_offset_after": 14992,
+    "checkpoint_offset_non_decreasing": true
+  },
+  "restart": {
+    "events_survive_restart": true,
+    "event_count_after_restart": 4,
+    "claude_v2_ids_after_restart": true
+  },
+  "reviewed_synthetic_answer": {
+    "answer_text_digests": [
+      "02b1a64da4a393d846ae874fad80d794a11471ffa9b712dadf70ce33b97d6b45"
+    ],
+    "random_canary_exact_match": true,
+    "quality_claim": "none"
+  },
+  "cost": {
+    "total_cost_usd": 0.027801,
+    "observed_cost_values": [
+      0.027801
+    ],
+    "source": "native Claude stream result fields; null means the native output did not expose numeric cost"
+  },
+  "mcp_call_contract": {
+    "allowed_tool_names": [
+      "mcp__plugin_mnemos-memory_mnemos__mnemos_health",
+      "mcp__plugin_mnemos-memory_mnemos__mnemos_retrieve"
+    ],
+    "call_names": [],
+    "forbidden_call_names": [],
+    "calls": [],
+    "results": [],
+    "health_result_ok": false,
+    "retrieve_fact_count": 0,
+    "retrieve_fact_scopes": [],
+    "retrieve_seed_canary_match": false,
+    "retrieve_seed_canary_project_scope": false,
+    "retrieve_result_service_error": false,
+    "result_payloads_retained_as_digests": true
+  },
+  "criteria": {
+    "native_completed": true,
+    "hook_events_reported": true,
+    "session_start_hook_reported": true,
+    "user_prompt_hook_reported": true,
+    "stop_hook_reported": true,
+    "user_capture": true,
+    "assistant_capture": true,
+    "normal_user_transcript_association": true,
+    "assistant_transcript_association": true,
+    "claude_v2_identity": true,
+    "transcript_source_ref_observed": true,
+    "persistent_transcript_valid": true,
+    "checkpoint_valid": true,
+    "events_survive_restart": true,
+    "reconstructed_stop_replay_no_extra_events": true,
+    "mcp_connected_and_tool_inventory_observed": false,
+    "mcp_calls_exactly_health_then_retrieve": false,
+    "mcp_calls_have_correlated_results": false,
+    "mcp_has_no_forbidden_calls": true,
+    "mcp_health_result_success": false,
+    "mcp_retrieve_has_scoped_fact": false,
+    "mcp_retrieve_contains_seed": false,
+    "checkpoint_offset_non_decreasing": true,
+    "exact_canary_answer": true,
+    "native_stream_is_json": true,
+    "provisional_identity_contract": true
+  },
+  "plugin_snapshot_after": {
+    "snapshot": "C:\\Users\\Ant\\AppData\\Local\\Temp\\mnemos-source-6600dc2",
+    "source_commit": "6600dc262927661d61ce9962c812a022014281c7",
+    "clean": true,
+    "files": {
+      ".claude-plugin/plugin.json": {
+        "bytes": 963,
+        "sha256": "3e7549c3b2c7416f6e0fd620b000b89470d809f822cb29b04d22a7e9ff7b3928"
+      },
+      ".claude-plugin/run_mnemos_hook.py": {
+        "bytes": 1430,
+        "sha256": "9ca11e4a0efa9b61dea647e0675729a523e1b9aed0fb56468af08079d04512c0"
+      },
+      ".claude-plugin/run_mnemos_mcp.py": {
+        "bytes": 7005,
+        "sha256": "35abc7d3209e75bad36bba7dea3a14359d36a2d7f9de30228abfd73e61d20efa"
+      },
+      "hooks/hooks.json": {
+        "bytes": 1350,
+        "sha256": "7ca43bda20e14e4363c84fd2fddd26fd257afaa9ba3146bff2a389c52817d1a7"
+      }
+    },
+    "hook_dispatch": "hooks/hooks.json -> python ${CLAUDE_PLUGIN_ROOT}/.claude-plugin/run_mnemos_hook.py <event>",
+    "mcp_dispatch": "plugin.json -> .claude-plugin/run_mnemos_mcp.py -> explicit MNEMOS_PLUGIN_PYTHON"
+  },
+  "fixture": "C:\\Users\\Ant\\AppData\\Local\\Temp\\mnemos-native-claude-mcp-v11-3_5vmj90",
+  "private_fixture_preserved": true,
+  "auth_copy_removed": true,
+  "runtime_descriptor_absent": true,
+  "finished_at": "2026-09-17T18:25:41.406516+00:00"
+}

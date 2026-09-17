@@ -1,13 +1,27 @@
 # Real-model evaluation status
 
-## Current checkpoint: September 17, 2026, 15:56 UTC
+## Current checkpoint: September 17, 2026, 18:29 UTC
 
-The v4 queue is running from frozen `d94ded6`, using `qwen3.5:9b`
+The v4 queue resumed at 18:29 UTC after the local machine's power interruption
+and restart at 18:09 UTC. The original process handle and worker PIDs were
+absent. Recovery first timed out reaching Ollama without changing any files.
+Once the endpoint returned, preflight verified the original model digests,
+clean frozen source, runner hash, and every completed-phase artifact digest.
+The stale lock and queue state were preserved before retiring that lock.
+The unchanged coordinator resumed with `--resume`; PIDs 26488 and 35548 were
+observed live. The earlier phase entry for PID 66348 is historical despite its
+retained `running` label. The new phase entry identifies the resumed worker.
+The [interruption snapshot](../2026-09-17/queue-interruption-v1/README.md) and
+[recovery record](../2026-09-17/queue-recovery-v1/README.md) preserve both states.
+
+The interrupted run uses frozen `d94ded6`, `qwen3.5:9b`
 with thinking disabled and `nomic-embed-text:latest`. Development mechanism,
 lifecycle preflight, and 10,000-fact performance phases completed. The
-held-out mechanism phase is active; the seven-profile lifecycle matrix has
-not started. The worker process was observed alive and its raw-output file
-was still advancing. No held-out quality conclusion is accepted yet.
+held-out mechanism phase is continuing; the seven-profile lifecycle matrix
+has not started. Recovery retained 62 completed case/pair IDs, 112 graph
+observation rows, and 150 affective observation rows, including partial cases.
+Those counts are execution progress, not quality outcomes.
+No held-out quality conclusion is accepted yet.
 
 The corrected performance measurement recorded recall p95 1,088.094 ms
 against a 500 ms gate and capture p95 64.279 ms against 100 ms. See the
@@ -20,8 +34,12 @@ status and outputs are under `real-model-v4/`, with persistent checkpoints
 under `.venv/real-model-work-v4/`. The queue retains its original source,
 dataset, model-digest, and option bindings. Later embedding-role and
 conflict-collision changes are not part of this run. The latest complete
-package checkpoint is separate source `2494e31`, with 824 tests passed and
-four skipped; the combined later source still needs full verification.
+package checkpoint is separate source `6600dc2`, with 865 tests passed and
+four skipped, followed by formatting, typing, JavaScript, build, and Twine
+checks. Its fresh installed wheel passed all 42 selected contract cases and
+the synthetic Stop replay assertions on C: SSD fixtures. These checks do not
+promote the frozen evaluation's quality results or resolve the earlier D:
+storage timeouts. See the [package checkpoint](ssd-package-checkpoint-v1/README.md).
 
 Current model pins:
 

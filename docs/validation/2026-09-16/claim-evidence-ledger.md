@@ -37,6 +37,14 @@ restart persistence, and reconstructed Stop replay. Its original exact-two raw
 capture gate still fails because a separate provisional user event remains;
 that event's exclusion from fact extraction passes. Native MCP tool execution
 and the complete correction/forget conversation remain unproved.
+The [v11 native read attempt](../2026-09-17/native-claude-mcp-v11/README.md)
+subsequently left the MCP server pending and made no tool calls. Its successful
+hook-context recall did not close native MCP retrieval acceptance.
+The [v12 native read check](../2026-09-17/native-claude-mcp-v12/README.md)
+then observed successful health and retrieve calls, matching the intended
+database/profile/project and returning the project-scoped seed. Its bounded
+read, identity, restart, and replay criteria all passed. Native correction,
+forget, extraction, and cross-host continuity remain separate open gates.
 An implemented capability does not close its quality, native-host, or pilot
 acceptance gate.
 
@@ -76,8 +84,9 @@ remain attributed to the source that produced them.
 - [Extraction development index](preference-contract-development-v1/evidence-index.json): development evidence, not held-out precision acceptance.
 - [Native Codex index](native-codex-lifecycle-v4/evidence-index.json): installed-package preflight and the incomplete native attempt. It does not establish why the client cancelled the call.
 
-The active v4 model queue retains its frozen d94 code, model digests, dataset,
-options, and output paths. Completion and results must be checked before
+The v4 model queue retains its frozen d94 code, model digests, dataset,
+options, and output paths. See [evaluation status](evaluation-running.md) for
+the power-interruption recovery. Completion and results must be checked before
 promoting its running phases to accepted evidence. Later embedding-prefix
 comparisons require separate outputs and bindings.
 

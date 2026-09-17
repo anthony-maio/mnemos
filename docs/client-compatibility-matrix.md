@@ -4,7 +4,7 @@ Updated September 17, 2026 for the unreleased functional-local-memory worktree. 
 
 | Client | Implemented integration | Observed evidence | Native conversation acceptance |
 | --- | --- | --- | --- |
-| Claude Code | Command hooks, transcript deltas, context injection, MCP tools; provisional missing-ID capture excluded from extraction | Installed source6600 completed a native 2.1.191 turn through the actual plugin loader: SessionStart, UserPromptSubmit, Stop, seeded recall, MCP connection and 14-tool inventory, restart, and reconstructed Stop replay were observed | Provisional identity contract passed. Original exact-two-raw-events gate remains failed. Native MCP tool execution and complete correction/forget lifecycle remain open |
+| Claude Code | Command hooks, transcript deltas, context injection, MCP tools; provisional missing-ID capture excluded from extraction | Installed source6600 completed native 2.1.191 health and retrieve calls through the actual plugin against the intended project store, plus three lifecycle hooks, seeded recall, restart, and reconstructed Stop replay | Bounded native read and provisional identity contracts passed. Original exact-two-raw-events gate remains failed. Complete extraction/correction/forget lifecycle remains open |
 | Codex CLI | Command lifecycle hooks, supported context output, MCP tools | Native 0.146.0 used source20f's generated TOML commands, returned a random canary absent from its prompt, and captured both roles across restart | Bounded hook transport observed with fixture vectors and unavailable cognition. Full native correction/forget lifecycle remains open |
 | Codex Desktop | Same command hooks and MCP fallback | Shared adapter coverage; no current desktop conversation evidence | Pending |
 | Hermes Agent | Optional MemoryProvider and explicit Windows/WSL bridge | Installed 0.21.3 API calls and actual WSL -> Windows authenticated transport. Sourcec805 passed full verification and discovery through the actual wheel entry point in WSL | Model turn has not completed; cross-host native recall remains open |
@@ -69,6 +69,17 @@ The provisional event remained deferred and ineligible for fact extraction;
 its identity contract passed. The original exact-two-raw-event gate and the
 runner's aggregate association check across all user events remained failed.
 Matching identical text alone is not a safe way to merge repeated prompts.
+The later [native MCP read attempt](validation/2026-09-17/native-claude-mcp-v11/README.md)
+completed its native turn and passed capture identity, restart, and replay
+checks, but initialization left Mnemos pending with no tools or tool calls.
+The seeded answer was available through hook context and does not prove MCP
+retrieval. This negative result leaves native MCP read acceptance open.
+The subsequent [v12 read check](validation/2026-09-17/native-claude-mcp-v12/README.md)
+used default permission mode with the same two-tool allowlist. Actual health
+and retrieve calls and their correlated successful results were observed;
+health matched the fixture database, profile, and project, and retrieve returned
+the project-scoped canary. All new read criteria passed, including identity,
+restart, and replay. This does not prove native extraction or mutation behavior.
 The v9 attempt preserves a budget-limit failure with inherited account-level
 connectors; v10 disabled those connectors only in its disposable process.
 

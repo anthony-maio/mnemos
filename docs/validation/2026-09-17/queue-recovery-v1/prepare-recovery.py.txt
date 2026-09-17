@@ -1,0 +1,58 @@
+"""Preserve interruption evidence and retire only a verified stale queue lock."""
+import hashlib
+import importlib.util
+import json
+from pathlib import Path
+import shutil
+import subprocess
+from datetime import datetime, timezone
+
+ROOT = Path(__file__).resolve().parent.parent
+OUT = ROOT / '.venv' / 'queue-recovery-20260917-v1'
+RUNNER = ROOT / '.venv' / 'run_thinking_evaluations_v1.py'
+EXPECTED = '2e642e3b4bb7e595d9c676ec51780b8cbe4a1e6449b29fee3a57d1307d79f84e'
+
+def digest(path):
+    return hashlib.sha256(path.read_bytes()).hexdigest()
+
+assert digest(RUNNER) == EXPECTED
+spec = importlib.util.spec_from_file_location('queue_runner', RUNNER)
+runner = importlib.util.module_from_spec(spec)
+spec.loader.exec_module(runner)
+status_path = runner.DEFAULT_RESULTS / 'queue-status.json'
+lock = runner.DEFAULT_WORK / 'coordinator.lock'
+status = runner._read(status_path)
+lock_data = runner._read(lock)
+pids = {status['coordinator_pid'], lock_data['pid']}
+pids.update(p['pid'] for p in status['phases'] if p['status'] != 'finished')
+alive = {str(pid): runner._pid_alive(pid) for pid in pids}
+assert not any(alive.values()), alive
+runner._verify_reports(runner.DEFAULT_VERIFICATION, runner.DEFAULT_INSTALLED, status['source_commit'])
+bindings = runner._verify_source_and_models(runner.DEFAULT_SNAPSHOT, status['source_commit'], status['endpoint'], status['model'], status['embedding_model'])
+assert bindings == {'model': status['model_digest'], 'embedding_model': status['embedding_digest']}
+for phase in status['phases']:
+    if phase['status'] == 'finished':
+        runner._assert_saved_artifacts(phase)
+OUT.mkdir(exist_ok=False)
+checkpoint = runner.DEFAULT_WORK / 'mechanism-heldout' / 'module-mechanism.checkpoint.json'
+for path in (status_path, lock, checkpoint):
+    shutil.copy2(path, OUT / path.name)
+counts = json.loads(checkpoint.read_text(encoding='utf-8'))
+report = {
+    'observed_at': datetime.now(timezone.utc).isoformat(),
+    'runner_sha256': digest(RUNNER),
+    'source_commit': status['source_commit'],
+    'prior_pids_alive': alive,
+    'completed_phase_artifacts_unchanged': True,
+    'model_bindings': bindings,
+    'checkpoint_counts_only': {key: len(counts[key]) for key in ('completed', 'graph_rows', 'affective_rows')},
+    'saved_files': {path.name: {'sha256': digest(path), 'bytes': path.stat().st_size} for path in OUT.iterdir()},
+    'recovery_action': 'Retire verified stale coordinator lock; resume unchanged runner with --resume.',
+    'quality_results_inspected': False,
+}
+assert not any(runner._pid_alive(pid) for pid in pids)
+assert lock.resolve().parent == runner.DEFAULT_WORK.resolve()
+assert digest(lock) == digest(OUT / 'coordinator.lock')
+lock.rename(OUT / 'retired-coordinator.lock')
+(OUT / 'recovery.json').write_text(json.dumps(report, indent=2) + '\n', encoding='utf-8')
+print(json.dumps(report, indent=2))

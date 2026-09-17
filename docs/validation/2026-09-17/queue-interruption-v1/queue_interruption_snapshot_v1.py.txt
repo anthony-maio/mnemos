@@ -1,0 +1,239 @@
+"""Snapshot an interrupted evaluation queue without changing queue state."""
+
+from __future__ import annotations
+
+import ctypes
+from datetime import datetime, timezone
+import hashlib
+import json
+import os
+from pathlib import Path
+import shutil
+import subprocess
+import sys
+from typing import Any
+
+
+ROOT = Path(__file__).resolve().parents[1]
+RESULTS = ROOT / "docs/validation/2026-09-16/real-model-v4"
+WORK = ROOT / ".venv/real-model-work-v4"
+STATUS_PATH = RESULTS / "queue-status.json"
+LOCK_PATH = WORK / "coordinator.lock"
+CHECKPOINT_PATH = WORK / "mechanism-heldout/module-mechanism.checkpoint.json"
+SNAPSHOT = ROOT / ".venv/thinking-frozen-v1"
+OUTPUT = ROOT / "docs/validation/2026-09-17/queue-interruption-v1"
+RUNNER = ROOT / ".venv/run_thinking_evaluations_v1.py"
+EXPECTED_RUNNER_SHA256 = "2e642e3b4bb7e595d9c676ec51780b8cbe4a1e6449b29fee3a57d1307d79f84e"
+EXPECTED_SOURCE_COMMIT = "d94ded67a6b3fe6b6f7474a74518d4efb143698e"
+KNOWN_PIDS = (3371, 62920, 66348, 67144)
+
+
+def _sha256(path: Path) -> str:
+    digest = hashlib.sha256()
+    with path.open("rb") as stream:
+        for block in iter(lambda: stream.read(1024 * 1024), b""):
+            digest.update(block)
+    return digest.hexdigest()
+
+
+def _now() -> str:
+    return datetime.now(timezone.utc).isoformat()
+
+
+def _require(condition: bool, message: str) -> None:
+    if not condition:
+        raise RuntimeError(message)
+
+
+def _read_object(path: Path) -> dict[str, Any]:
+    _require(path.is_file(), f"missing JSON file: {path}")
+    try:
+        value = json.loads(path.read_text(encoding="utf-8-sig"))
+    except (OSError, json.JSONDecodeError) as error:
+        raise RuntimeError(f"invalid JSON file: {path}: {error}") from error
+    _require(isinstance(value, dict), f"JSON root is not an object: {path}")
+    return value
+
+
+def _pid_alive(pid: int) -> bool:
+    if pid <= 0:
+        return False
+    if os.name != "nt":
+        try:
+            os.kill(pid, 0)
+        except OSError:
+            return False
+        return True
+    kernel = ctypes.WinDLL("kernel32", use_last_error=True)
+    kernel.OpenProcess.restype = ctypes.c_void_p
+    kernel.OpenProcess.argtypes = [ctypes.c_uint32, ctypes.c_int, ctypes.c_uint32]
+    kernel.GetExitCodeProcess.argtypes = [ctypes.c_void_p, ctypes.POINTER(ctypes.c_uint32)]
+    kernel.CloseHandle.argtypes = [ctypes.c_void_p]
+    handle = kernel.OpenProcess(0x1000, False, pid)
+    if not handle:
+        if ctypes.get_last_error() == 87:
+            return False
+        raise RuntimeError(f"cannot inspect process {pid}")
+    try:
+        code = ctypes.c_uint32()
+        if not kernel.GetExitCodeProcess(handle, ctypes.byref(code)):
+            raise RuntimeError(f"cannot inspect process {pid}")
+        return code.value == 259
+    finally:
+        kernel.CloseHandle(handle)
+
+
+def _git(snapshot: Path, *args: str) -> str:
+    result = subprocess.run(
+        ["git", *args],
+        cwd=snapshot,
+        check=True,
+        capture_output=True,
+        text=True,
+    )
+    return result.stdout.strip()
+
+
+def _snapshot_binding() -> tuple[str, str]:
+    head = _git(SNAPSHOT, "rev-parse", "HEAD")
+    status = _git(SNAPSHOT, "status", "--porcelain", "--untracked-files=all")
+    _require(head == EXPECTED_SOURCE_COMMIT, f"snapshot HEAD mismatch: {head}")
+    _require(not status, f"snapshot is dirty: {status!r}")
+    return head, status
+
+
+def _tracked_phase_artifacts(status: dict[str, Any]) -> dict[str, dict[str, Any]]:
+    phases = status.get("phases")
+    _require(isinstance(phases, list), "queue status has no phase list")
+    result: dict[str, dict[str, Any]] = {}
+    for phase in phases:
+        _require(isinstance(phase, dict), "queue phase is not an object")
+        if phase.get("status") != "finished":
+            continue
+        name = phase.get("name")
+        artifacts = phase.get("artifacts")
+        _require(isinstance(name, str) and isinstance(artifacts, dict), "finished phase lacks artifacts")
+        phase_files: dict[str, Any] = {}
+        for filename, expected in artifacts.items():
+            _require(isinstance(filename, str) and isinstance(expected, str), f"malformed artifact in {name}")
+            path = Path(filename)
+            _require(path.is_file(), f"completed phase artifact missing: {path}")
+            actual = _sha256(path)
+            _require(actual == expected, f"completed phase artifact changed: {path}")
+            phase_files[str(path)] = {"bytes": path.stat().st_size, "sha256": actual}
+        result[name] = phase_files
+    _require(result, "queue has no finished phase artifacts")
+    return result
+
+
+def _raw_output_hashes() -> dict[str, dict[str, Any]]:
+    _require(RESULTS.is_dir(), f"missing queue output directory: {RESULTS}")
+    files: dict[str, dict[str, Any]] = {}
+    for path in sorted(RESULTS.rglob("*")):
+        if path.is_file():
+            relative = path.relative_to(RESULTS).as_posix()
+            files[relative] = {"bytes": path.stat().st_size, "sha256": _sha256(path)}
+    _require(files, "queue output has no files")
+    return files
+
+
+def _checkpoint_manifest() -> dict[str, Any]:
+    _require(CHECKPOINT_PATH.is_file(), f"missing checkpoint: {CHECKPOINT_PATH}")
+    checkpoint = _read_object(CHECKPOINT_PATH)
+    counts: dict[str, int] = {}
+    for key in ("completed", "graph_rows", "affective_rows"):
+        value = checkpoint.get(key)
+        _require(isinstance(value, list), f"checkpoint field is not a list: {key}")
+        counts[key] = len(value)
+    return {
+        "path": str(CHECKPOINT_PATH),
+        "bytes": CHECKPOINT_PATH.stat().st_size,
+        "sha256": _sha256(CHECKPOINT_PATH),
+        "counts_only": counts,
+    }
+
+
+def _pid_snapshot(status: dict[str, Any], lock: dict[str, Any]) -> dict[str, Any]:
+    pids = set(KNOWN_PIDS)
+    for value in (status.get("coordinator_pid"), lock.get("pid")):
+        if isinstance(value, int):
+            pids.add(value)
+    for phase in status.get("phases", []):
+        if isinstance(phase, dict) and isinstance(phase.get("pid"), int):
+            pids.add(phase["pid"])
+    return {str(pid): _pid_alive(pid) for pid in sorted(pids)}
+
+
+def main() -> int:
+    _require(not OUTPUT.exists(), f"refusing existing archive: {OUTPUT}")
+    started_at = _now()
+    _require(RUNNER.is_file(), f"missing queue runner: {RUNNER}")
+    runner_sha = _sha256(RUNNER)
+    _require(runner_sha == EXPECTED_RUNNER_SHA256, "queue runner digest mismatch")
+    head_before, status_before = _snapshot_binding()
+    status = _read_object(STATUS_PATH)
+    lock = _read_object(LOCK_PATH)
+    _require(status.get("source_commit") == EXPECTED_SOURCE_COMMIT, "queue status source pin mismatch")
+    _require(isinstance(lock.get("pid"), int), "lock has no integer pid")
+    queue_status_sha = _sha256(STATUS_PATH)
+    lock_sha = _sha256(LOCK_PATH)
+    completed_artifacts = _tracked_phase_artifacts(status)
+    checkpoint = _checkpoint_manifest()
+    raw_outputs_before = _raw_output_hashes()
+    pids_before = _pid_snapshot(status, lock)
+
+    OUTPUT.mkdir(parents=True, exist_ok=False)
+    shutil.copyfile(STATUS_PATH, OUTPUT / "queue-status.json")
+    shutil.copyfile(LOCK_PATH, OUTPUT / "coordinator.lock")
+    shutil.copyfile(Path(__file__).resolve(), OUTPUT / "queue_interruption_snapshot_v1.py.txt")
+
+    _require(_sha256(STATUS_PATH) == queue_status_sha, "queue status changed during snapshot")
+    _require(_sha256(LOCK_PATH) == lock_sha, "coordinator lock changed during snapshot")
+    _require(_raw_output_hashes() == raw_outputs_before, "queue output changed during snapshot")
+    head_after, status_after = _snapshot_binding()
+    _require(head_after == head_before and status_after == status_before, "snapshot source changed")
+    pids_after = _pid_snapshot(status, lock)
+    finished_at = _now()
+    report: dict[str, Any] = {
+        "diagnostic": "queue-interruption-v1",
+        "status": "complete",
+        "observed_at": finished_at,
+        "started_at": started_at,
+        "finished_at": finished_at,
+        "runner_sha256": runner_sha,
+        "source_commit": head_before,
+        "source_checkout": str(SNAPSHOT),
+        "source_git_status_before": status_before,
+        "source_git_status_after": status_after,
+        "queue_status_sha256": queue_status_sha,
+        "coordinator_lock_sha256": lock_sha,
+        "queue_status": {
+            "path": str(STATUS_PATH),
+            "bytes": STATUS_PATH.stat().st_size,
+            "sha256": queue_status_sha,
+        },
+        "coordinator_lock": {
+            "path": str(LOCK_PATH),
+            "bytes": LOCK_PATH.stat().st_size,
+            "sha256": lock_sha,
+        },
+        "checkpoint": checkpoint,
+        "completed_phase_artifacts": completed_artifacts,
+        "queue_output_file_hashes": raw_outputs_before,
+        "pid_liveness_before": pids_before,
+        "pid_liveness_after": pids_after,
+        "quality_results_inspected": False,
+        "recovery_action": "none; preserve stale coordinator lock for reviewed recovery",
+        "model_or_network_calls": False,
+        "argv": [str(Path(sys.executable).resolve()), *sys.argv],
+    }
+    (OUTPUT / "snapshot.json").write_text(
+        json.dumps(report, indent=2, sort_keys=True, ensure_ascii=True) + "\n",
+        encoding="utf-8",
+    )
+    print(json.dumps({"output": str(OUTPUT), "checkpoint_counts": checkpoint["counts_only"]}))
+    return 0
+
+
+if __name__ == "__main__":
+    raise SystemExit(main())

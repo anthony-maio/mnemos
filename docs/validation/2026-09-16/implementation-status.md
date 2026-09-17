@@ -4,44 +4,34 @@ This record covers the unreleased `wt/functional-local-memory` worktree. It
 separates implemented behavior from acceptance evidence. The original task
 boundaries and thresholds remain in the [implementation plan](../../plans/2026-09-16-functional-local-memory.md).
 
-Latest verified package: source `64471f5` includes provisional Claude capture,
-truthful MCP annotations, explicit host interpreter binding, hook quoting,
-request-bound extraction schemas, and the benchmark trace repair. Full frozen
-verification passed 776 tests with four platform-specific skips, formatting,
-typing, JavaScript, build, and Twine. A fresh wheel passed installation/replay
-and native Codex MCP health through the generated interpreter command without
-a PATH patch or approval override;
-[package evidence](extraction-contract-package-verification/README.md).
-Native Claude's provisional identity contract passed on a38; its original raw
-duplicate gate still fails. Complete host lifecycle and extraction quality
-remain separate acceptance work.
-The old sourceb7 real-model lifecycle run has stopped
-with a checkpoint serialization failure after a completed baseline and 36
-full-profile observations. Its [archived record](lifecycle-serialization-failure/README.md)
-contains six complete and 30 partial full observations. No new model run is
-currently active in that queue, and full-pipeline quality remains unproved.
+The latest package checkpoint is source `6600dc2`. Its frozen verification
+passed 865 tests with four platform-specific skips, formatting, typing,
+JavaScript, build, and Twine checks. A fresh installed wheel passed 42
+contract cases and seven replay assertions. These are package and installed
+runtime checks; they do not close native-host, real-model, latency, pilot, or
+publication gates. See the [SSD package checkpoint](ssd-package-checkpoint-v1/README.md).
 
-| Plan item | Implemented behavior | Evidence and remaining acceptance |
+| Plan item | Current implementation and evidence | Acceptance state |
 | --- | --- | --- |
-| T01 Runtime | Configured providers, SQLite default, explicit mock rejection, observed readiness probe | Runtime and health tests; actual Ollama smoke; installed-wheel lifecycle and assets passed |
-| T02 Scope | Registered profile/project/workspace identities and explicit membership; read-only legacy review | Scope, canonical identity, foreign-project and foreign-profile contract tests; offline repair preserves ambiguous legacy ownership |
-| T03 Durable writes | Atomic source/job creation, leased processing, evidence/revision commits | Retry, lease, CAS, rollback, and persistence tests |
-| T04 Local service | One authenticated loopback owner, private descriptor, outbox, explicit shutdown | Real HTTP and subprocess tests; duplicate launcher regression passes |
-| T05 Maintenance | Service-owned scheduler, bounded batches, visible pending/retry/failure state | Scheduler and durable-job tests; daily-use pilot not run |
-| T06 Evidence and safety | Shared write firewall, source validation, role labels, governed explicit writes, local-original availability | Safety, retention, restart, and lifecycle tests; real extraction precision remains unproved |
-| T07 Surprisal | Automatic gating, explicit-remember bypass, session-safe history and diagnostics | Deterministic mechanism tests; real filtering comparison pending |
-| T08 Correction | Stable identity, expected-version CAS, revisions, canonical and graph refresh | Correction, duplicate, evidence, and graph regression tests |
-| T09 Retrieval | Exact scoped cosine, lexical candidate union, one scoring contract, context budget | Native/fallback scope and top-1 tests pass. Frozen `b7a9d9d` recall p95 1,314.583 ms fails the 500 ms gate; capture p95 57.410 ms passes. Two recall stalls occurred inside durable metadata updates. Earlier 506.111 ms failure and 458.516 ms pass remain preserved; held-out quality pending |
-| T10 Graph | Persisted mutual top-k links, independent of insertion order and traversal hydration; bounded recovery; versioned empty preferences and scope-safe traversal | v3 failure preserved. v4 focused, full-suite, installed-wheel, and browser recovery checks pass. Development and held-out graph correctness controls pass. All 50 held-out cases completed three repetitions, but none supplies an eligible target path; the coverage gate fails and no recall benefit is established. [Results](real-model-v3/mechanism-heldout/REVIEW.md) |
-| T11 Forget | Live deletion and suppression across replay, retry, inflight extraction, restore; separate scoped preview/apply for selected captured copies | The [record-only gap](capture-forget-overlap/v2/README.md) remains documented. Related removal in c805cc2 passed affected tests and the actual HTTP/browser/SQLite restart-replay check; [evidence](related-forget-verification/README.md). Full frozen-source verification passed 738 tests with two optional skips. Native lifecycle acceptance is pending. Historical backups/transcripts can retain content |
-| T12 Claude Code | Native hooks, transcript deltas, capture-before-recall, durable checkpoints | Installed 20f native canary turn captured both roles with scoped v2 identities and retained them across restart. UserPromptSubmit and Stop reported degraded status in the no-session-persistence fixture. Two-project identity, legacy forget/replay, and outbox wheel checks also pass. Subsequent source554 replay repair passed 691 tests with two WSL skips and an installed-wheel replay check; native claims remain bound to source20f. Complete transcript coverage, legacy checkpoint binding, redaction, extraction, and full native lifecycle acceptance remain open |
-| T13 Codex | Hook configuration, native payload/output adapter, explicit MCP fallback | Installed 20f271d native v8 used the actual generated TOML commands, answered a random canary absent from the prompt without tool calls, and captured both roles across restart. Constant fixture vectors and unavailable cognition isolate hook transport from semantic quality. No individual hook trace, Desktop, or full native lifecycle claim. Earlier failed and partial attempts remain preserved |
-| T14 Hermes | Optional installed MemoryProvider integration and explicit Windows/WSL bridge | Installed API and actual bridge observed. The registry repair and subsequent atomic startup repair passed [full source9e verification and actual wheel entry-point discovery](atomic-schema-verification/README.md). Native model turn did not complete |
-| T15 UI | Project enable/pause, observed readiness, facts/history/correction/forget, reviewed captured-copy removal, job state, legacy and routing review | API and browser checks include profile-filtered diagnostic dismissal, source expiry, and related-forget selection/stale/cancel behavior; integrated deletion survives restart/replay. Bounded-list and active-store labels disclosed |
-| T16 Recovery | Consistent backup, new-path restore, suppression merge, staged reindex and activation backup | Backup, integrity, identity, ownership, and reindex tests |
-| T17 Cross-host | One service contract for all three host contexts | Synthetic adapter continuity passes across restart/correct/forget; complete native matrix and two-week pilot remain open |
-| T18 Evaluation | Frozen lifecycle datasets, real provider adapter, seven profiles, checkpoints, raw traces, intervals | Failed v2 lifecycle and original mechanism development runs preserved. V3 names actual lifecycle targets; schema repair passed four real correction/forget/replay/restart development cases. Repaired mechanism development completed with passing graph controls and no graph utility evidence; classifier fidelity passed 15/30 observations. Frozen `b7a9d9d` held-out mechanism phase completed: graph eligibility 0/50 fails coverage; synthetic-state affective top-1 0.33 versus 0.00, classifier fidelity 154/300. Lifecycle stopped on serialization failure after baseline600 and full36 (6 complete, 30 partial); repaired recorder passed 36 focused tests. Fresh full/ablation acceptance is pending |
-| T19 Claims and packaging | Operational docs, host matrix, paper errata, packaged UI and helper agents | Frozen source9e passed 703 tests, two WSL skips, Black, strict mypy, JavaScript, build, and Twine, plus installed-wheel replay, Hermes wheel discovery, and offline Codex API preflight. Earlier source236 startup failure remains preserved. Native claims remain bound to their observed source20f fixtures. Related-forget source c805cc2 passed 738 tests, two optional skips, formatting, typing, JavaScript, build, and Twine, plus installed-wheel replay, Hermes discovery, generated Codex MCP preflight, and instrumented Claude adapter timing. Native Codex calls were cancelled by the client; complete native lifecycle and cross-host acceptance remain open. Real-model lifecycle quality is pending |
+| T01 Runtime | Configured providers, SQLite default, explicit mock rejection, readiness checks, health reporting, and installed entry points are covered by the package and wheel checks. | Core runtime tested. Operational doctor, recurring health, and provider-failure artifacts remain separate readiness work. |
+| T02 Scope | Profile, project, workspace, membership, enabled-project capture, foreign-project filtering, and legacy/routing review are implemented and covered by contract tests. | Local scope contract tested. Native identity coverage across every host remains open. |
+| T03 Durable writes | Atomic source and job creation, leases, retries, CAS, revisions, evidence, rollback, and restart persistence are implemented and tested. | Local durability tested. Long-running operational recovery remains open. |
+| T04 Local service | Authenticated loopback ownership, private descriptors, outbox handling, bounded shutdown, and HTTP/subprocess paths are implemented and tested. | Local service and installed replay checks pass. Native host lifecycle remains open. |
+| T05 Maintenance | Service-owned scheduling, bounded batches, retry/failure state, retention, and visible maintenance status are implemented and tested. | Deterministic maintenance tested. A daily-use pilot has not run. |
+| T06 Evidence and safety | Write firewall, source validation, role labels, governed explicit writes, private paths, retention controls, and local-original availability are implemented and tested. | Safety contracts pass. Real-model extraction precision and human acceptance remain unproved. |
+| T07 Surprisal | Automatic gating, explicit-remember bypass, session-safe history, and diagnostics are implemented and covered by deterministic tests. | Mechanism contract tested. Real filtering benefit remains open. |
+| T08 Correction | Stable identity, expected-version CAS, revisions, canonical updates, evidence links, and graph refresh are implemented and tested. | Local correction contract passes. Native cross-host correction remains open. |
+| T09 Retrieval | Scoped cosine retrieval, lexical candidate union, one scoring contract, and context budgeting are implemented. | Scope and top-1 tests pass. The corrected v4 measurement has recall p95 1,088.094 ms against the 500 ms gate; capture p95 64.279 ms passes the 100 ms gate. Later variable timing comparisons do not establish a speedup. |
+| T10 Graph | Persisted mutual top-k links, scope-safe traversal, bounded recovery, insertion-order controls, and capacity diagnostics are implemented and tested. | Structural controls pass. Graph utility and eligible-target coverage are not established by the available evidence. |
+| T11 Forget | Exact fact deletion, suppression, replay protection, inflight handling, restore behavior, and selected related-removal preview/apply are implemented and tested. | Local and installed related-forget checks pass. Native lifecycle remains open. Logical forgetting does not erase external transcripts or historical backups. |
+| T12 Claude Code | Hook capture, transcript deltas, checkpoints, capture-before-recall, identity diagnostics, and replay repair are implemented. | Native v12 passed health and retrieve calls against the intended project store, plus three hooks, identity, restart, and replay. The v11 pending-server failure is preserved. Native extraction, correction, and forget acceptance remain open. See the [native read archive](../2026-09-17/native-claude-mcp-v12/README.md). |
+| T13 Codex | Generated hook configuration, native payload handling, explicit MCP fallback, and bounded transport checks are implemented. | Generated-config canary and restart/replay evidence pass. Full native MCP mutation and cross-host lifecycle acceptance remain open. |
+| T14 Hermes | Installed provider integration, registry handling, Windows/WSL bridge behavior, and entry-point discovery are implemented and tested. | Installed bridge checks pass. A native model turn has not passed. |
+| T15 UI | Project enable/pause, readiness, facts/history, correction/forget, captured-copy review, job state, and routing review are exposed and covered by API/browser checks. | Local UI and control-plane checks pass. Operational pilot and native-host coverage remain open. |
+| T16 Recovery | Backup, integrity, new-path restore, suppression merge, staged reindex, and activation backup behavior are implemented and tested. | Local recovery contracts pass, including a backup during an active writer transaction. Live data migration remains separately authorization-bound. |
+| T17 Cross-host | A shared service contract covers Claude, Codex, and Hermes contexts. Synthetic continuity covers teach, restart, recall, correction, forget, and foreign-project filtering. | Synthetic cross-host continuity passes. Complete native matrix and two-week pilot remain open. |
+| T18 Evaluation | Frozen lifecycle datasets, request-bound extraction schemas, real-provider adapters, seven profiles, raw traces, checkpoints, Wilson intervals, and paired comparisons are implemented. | Power-interrupted checkpoints were preserved and the unchanged queue resumed after provenance checks. Complete real-model matrix acceptance remains open. Follow the [evaluation status and recovery record](evaluation-running.md). |
+| T19 Claims and packaging | Claim ledger, compatibility matrix, release checklist, package artifacts, UI assets, and negative evidence archives are maintained. | Package verification is complete for the stated checkpoint. Publication, website, paper, and release actions remain separately authorization-bound. |
 
 The current capture recommendation is a hybrid: automatically capture enabled
 project conversations as retained evidence, extract durable facts separately,
@@ -51,55 +41,18 @@ improves continuity but needs retention, privacy controls, and extraction
 evaluation; explicit-only storage is easier to inspect but misses information
 an agent does not select. See the [operating guide](../../functional-local-memory.md).
 
-A subsequent local SQLite check found a [Claude Stop replay defect](claude-stop-replay/README.md)
-in the verified `20f271d` source. The [repair](claude-stop-replay-fixed/README.md)
-now keeps the same two events after restart and replay in the frozen `554a251`
-source. [Full verification and an installed-wheel replay check](claude-replay-verification/README.md)
-passed: 691 tests, two optional WSL skips, formatting, typing, JavaScript,
-build, and package checks. Unknown fallback-to-transcript associations remain
-explicitly degraded and can retain more than one observation. This does not
-close complete native deduplication or persistent-host acceptance.
-The [host identity boundary](claude-host-identity-contract.md) distinguishes
-the tested Claude 2.1.191 payload from newer documented hook fields.
+Historical evidence remains available for review without changing the current
+state above:
 
-A separate Hermes plugin discovery check found that registration ignored
-the configured registry path and rejected the provider before initialization.
-Its repair has passed focused tests and disposable WSL plugin discovery.
-[Full verification](hermes-registry-verification/README.md) of that newer source
-failed during service dispatcher startup. The subsequent [startup repair](service-startup-diagnostic/README.md)
-groups schema creation and migration into one transaction. In a comparison
-using the same runner, frozen source236 timed out and repaired source9e25339
-started in 2,453.355 ms with WAL/FULL read back from SQLite. Three rollback
-regressions fail on the old source and pass on the repair; the focused storage,
-migration, and backup suite passed 33 tests. [Full verification and wheel checks](atomic-schema-verification/README.md)
-then passed, including 703 tests and two optional WSL skips. No native Hermes
-model turn has passed.
+- [Claim and evidence ledger](claim-evidence-ledger.md)
+- [Client compatibility matrix](../../client-compatibility-matrix.md)
+- [Native plugin checkpoint](native-plugin-checkpoint-v1/README.md)
+- [Atomic schema verification](atomic-schema-verification/README.md)
+- [Related forget verification](related-forget-verification/README.md)
+- [Corrected performance report](performance-corrected-v4/README.md)
+- [Progress record, including negative measurements](progress.md)
 
-The [corrected overlap probe](capture-forget-overlap/v2/README.md) demonstrates
-a separate gap with `modules.sleep=false`: an independently captured prompt
-can retain the exact forgotten assertion. The v1 probe used unrelated inputs
-and is retained as an invalid overlap fixture. A [previewed related-removal
-plan](../../plans/2026-09-17-related-forget.md) preserves single-record behavior
-and adds explicitly selected matching copies within the same project/profile.
-Its implementation is committed in `c805cc2`; [focused and browser checks](related-forget-verification/README.md)
-passed, as did full frozen-source/package verification. This does not
-claim paraphrase or universal semantic erasure.
-
-The v2 performance runner removes extra diagnostic writes and reads between
-timed retrievals. Its focused regressions pass, but the corrected latency
-measurement has not run. The preserved 1,314.583 ms failure now carries the
-documented interleaved-workload caveat. The 500 ms gate and WAL/FULL durability
-are unchanged.
-
-The five modules are independently configurable mechanisms. Passing their unit
-contracts does not establish a quality improvement. The frozen v2 lifecycle
-dataset mostly contains single-fact sessions and cannot establish graph or
-affective ranking utility by itself. The supplemental fixture must have
-observed competing candidates; declared seed IDs cannot substitute for actual
-embedding ranks or traversal results.
-
-Negative measurements and failed host attempts are retained in the
-[progress record](progress.md), [performance report](performance-10k.md), and
-[native-host record](native-host-smoke.md). No release, website, paper, live
-host configuration, or live memory database has been published or migrated by
-this work.
+The package and protocol checks do not promote unrun native, real-model,
+latency, pilot, or human-acceptance gates. No live host configuration or live
+memory database was published or migrated by this work. Publication remains a
+separately authorization-bound action.

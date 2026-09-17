@@ -1196,3 +1196,50 @@ vector, and input-report hashes before and after. It made no provider calls.
 The exploratory v1 report is preserved with its weaker provenance and unknown
 prior attempt history. Neither run establishes held-out graph utility or closes
 the coverage gate. Increasing ranking weight cannot repair a missing path.
+
+## Native MCP read attempt and power interruption
+
+The v11 native Claude read probe completed in 23.229 seconds and reported
+$0.027801. All three lifecycle hooks, transcript association, provisional
+extraction exclusion, durable restart, and reconstructed replay passed. The
+MCP server remained pending, exposed no tools, and made no calls. The correct
+seeded answer was available through hook context; it is not MCP retrieval
+evidence. The [unchanged report and executed helper](../2026-09-17/native-claude-mcp-v11/README.md)
+preserve the failed read contract separately from the earlier v10 connection.
+
+The local machine restarted at 18:09 UTC during a user-confirmed power outage.
+The evaluation process handle and worker PIDs disappeared while the saved queue
+status still said running. A recovery preflight initially timed out reaching
+Ollama before changing any files. The endpoint subsequently returned both
+original model digests. The queue must pass its existing provenance checks
+before resuming from preserved checkpoints; [evaluation status](evaluation-running.md)
+tracks that recovery separately from quality acceptance.
+
+Recovery completed at 18:29 UTC with the original runner, source, model digests,
+and options. Every completed-phase artifact digest matched. The archived stale
+lock was retired only after proving the old processes absent; the coordinator
+resumed with `--resume` and skipped completed phases. The resumed coordinator
+and mechanism worker were observed live. The checkpoint retained 62 completed
+case/pair IDs, 112 graph rows, and 150 affective rows, including partial cases.
+No held-out quality fields were inspected for recovery. See the
+[interruption snapshot](../2026-09-17/queue-interruption-v1/README.md) and
+[recovery evidence](../2026-09-17/queue-recovery-v1/README.md).
+
+## Native Claude MCP reads observed
+
+The v12 comparison changed permission mode from plan to default while retaining
+the two exact allowed read tools, empty built-in tool set, plugin/runtime
+bindings, private fixture, and fixed time/cost limits. The native turn completed
+in 18.715 seconds and reported $0.0260907. It called health then retrieve with
+correlated successful results. Health matched the fixture database, profile,
+and project; retrieve returned the project-scoped canary. All bounded read
+criteria passed, including capture identity, restart, and reconstructed replay.
+
+Four normal transcript events and one provisional user event were retained.
+The old exact-two raw gate remains false; every normal event was positively
+associated and the provisional event remained extraction-ineligible. The
+[report and executed helper](../2026-09-17/native-claude-mcp-v12/README.md)
+preserve these separate outcomes. This comparison supports a mode-related
+hypothesis without proving it the sole cause of the prior pending state.
+Providers remain synthetic, so this does not establish semantic quality or
+complete native correction/forget continuity.

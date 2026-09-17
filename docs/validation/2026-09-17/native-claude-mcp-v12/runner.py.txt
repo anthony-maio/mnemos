@@ -1,0 +1,2064 @@
+"""Bounded native Claude plugin and persistent transcript smoke runner.
+
+This runner is an experiment harness for one disposable project.  It checks
+the installed wheel, exercises the native Claude command with a clean plugin
+snapshot and persistent transcripts, and keeps host payloads private to
+the fixture.  The fixture uses constant vectors and unavailable cognition,
+so the result is transport and durability evidence rather than a model
+quality evaluation.
+"""
+
+from __future__ import annotations
+
+import argparse
+from datetime import datetime, timezone
+import hashlib
+import json
+import os
+from pathlib import Path
+import re
+import secrets
+import shutil
+import subprocess
+import sys
+import tempfile
+import time
+import traceback
+from typing import Any, Mapping
+import zipfile
+from uuid import uuid4
+
+WORKTREE = Path(__file__).resolve().parents[1]
+SOURCE_ROOT = WORKTREE
+SOURCE_COMMIT = ""
+CLAUDE_EXE = Path()
+RUNTIME_PYTHON = Path()
+PROFILE = "native-claude-mcp-v12"
+MAX_NATIVE_SECONDS = 60
+HOOK_TIMEOUT_SECONDS = 20
+SEED_PREFIX = "The private release codename for this project is "
+
+
+def _sha256(value: bytes | str) -> str:
+    raw = value.encode("utf-8") if isinstance(value, str) else value
+    return hashlib.sha256(raw).hexdigest()
+
+
+def _verify_plugin_snapshot(snapshot: Path, source_commit: str) -> dict[str, Any]:
+    """Bind the native run to a clean checkout containing the real plugin."""
+
+    def git(*args: str) -> str:
+        completed = subprocess.run(
+            ["git", "-C", str(snapshot), *args],
+            capture_output=True,
+            text=True,
+            encoding="utf-8",
+            errors="replace",
+            check=True,
+            timeout=20,
+        )
+        return completed.stdout.strip()
+
+    if not snapshot.is_dir():
+        raise FileNotFoundError(f"plugin snapshot is missing: {snapshot}")
+    if Path(git("rev-parse", "--show-toplevel")).resolve() != snapshot.resolve():
+        raise RuntimeError("plugin snapshot is not the requested repository root")
+    if git("rev-parse", "HEAD") != source_commit:
+        raise RuntimeError("plugin snapshot HEAD differs from --source-commit")
+    if git("status", "--short"):
+        raise RuntimeError("plugin snapshot is dirty")
+    required = (
+        Path(".claude-plugin/plugin.json"),
+        Path(".claude-plugin/run_mnemos_hook.py"),
+        Path(".claude-plugin/run_mnemos_mcp.py"),
+        Path("hooks/hooks.json"),
+    )
+    files: dict[str, Any] = {}
+    for relative in required:
+        path = snapshot / relative
+        if not path.is_file():
+            raise RuntimeError(f"plugin snapshot file is missing: {relative.as_posix()}")
+        files[relative.as_posix()] = {
+            "bytes": path.stat().st_size,
+            "sha256": _sha256(path.read_bytes()),
+        }
+    hooks = json.loads((snapshot / "hooks/hooks.json").read_text(encoding="utf-8"))
+    events = hooks.get("hooks") if isinstance(hooks, Mapping) else None
+    if not isinstance(events, Mapping) or not {"SessionStart", "UserPromptSubmit", "Stop"}.issubset(
+        events
+    ):
+        raise RuntimeError("plugin hooks do not declare the required lifecycle events")
+    hook_commands = [
+        item.get("command")
+        for groups in events.values()
+        if isinstance(groups, list)
+        for group in groups
+        if isinstance(group, Mapping)
+        for item in group.get("hooks", [])
+        if isinstance(item, Mapping)
+    ]
+    if not hook_commands or not all(
+        "run_mnemos_hook.py" in str(command) for command in hook_commands
+    ):
+        raise RuntimeError("plugin hooks do not dispatch through run_mnemos_hook.py")
+    return {
+        "snapshot": str(snapshot),
+        "source_commit": source_commit,
+        "clean": True,
+        "files": files,
+        "hook_dispatch": "hooks/hooks.json -> python ${CLAUDE_PLUGIN_ROOT}/.claude-plugin/run_mnemos_hook.py <event>",
+        "mcp_dispatch": "plugin.json -> .claude-plugin/run_mnemos_mcp.py -> explicit MNEMOS_PLUGIN_PYTHON",
+    }
+
+
+def _private_mkdir(path: Path) -> None:
+    from mnemos.service import _protect_private_path
+
+    path.mkdir(parents=True, exist_ok=False)
+    _protect_private_path(path)
+
+
+def _clean_environment(overrides: Mapping[str, str]) -> dict[str, str]:
+    environment = dict(os.environ)
+    isolated_auth_keys = {
+        "ANTHROPIC_API_KEY",
+        "ANTHROPIC_AUTH_TOKEN",
+        "CLAUDE_CODE_OAUTH_TOKEN",
+        "AWS_PROFILE",
+        "AWS_ACCESS_KEY_ID",
+        "AWS_SECRET_ACCESS_KEY",
+        "AWS_SESSION_TOKEN",
+        "GOOGLE_APPLICATION_CREDENTIALS",
+    }
+    for key in list(environment):
+        if (
+            key.startswith("MNEMOS_")
+            or key
+            in {
+                "PYTHONPATH",
+                "CLAUDE_CONFIG_DIR",
+                "CLAUDE_SECURESTORAGE_CONFIG_DIR",
+                "ANTHROPIC_CONFIG_DIR",
+            }
+            or key in isolated_auth_keys
+        ):
+            environment.pop(key, None)
+    environment.update(overrides)
+    return environment
+
+
+def _terminate_process_tree(process: subprocess.Popen[str]) -> bool:
+    """Terminate only the native child and descendants, then await it."""
+    if process.poll() is not None:
+        return False
+    if os.name == "nt":
+        subprocess.run(
+            ["taskkill", "/PID", str(process.pid), "/T", "/F"],
+            capture_output=True,
+            text=True,
+            check=False,
+            timeout=10,
+        )
+    else:  # pragma: no cover - native runner is Windows-only
+        process.kill()
+    try:
+        process.wait(timeout=10)
+    except subprocess.TimeoutExpired:
+        process.kill()
+        process.wait(timeout=10)
+    return True
+
+
+def _pinned_package_provenance(
+    package_path: Path, *, wheel_path: Path, expected_wheel_sha256: str
+) -> dict[str, Any]:
+    """Verify every tracked package file and every package member in the wheel."""
+    listing = subprocess.run(
+        [
+            "git",
+            "-C",
+            str(SOURCE_ROOT),
+            "ls-tree",
+            "-r",
+            "--name-only",
+            SOURCE_COMMIT,
+            "mnemos",
+        ],
+        capture_output=True,
+        text=True,
+        check=True,
+        timeout=10,
+    )
+    files = [Path(item) for item in listing.stdout.splitlines() if item.strip()]
+    mismatches: list[str] = []
+    checked = 0
+    for relative in files:
+        expected = subprocess.run(
+            ["git", "-C", str(SOURCE_ROOT), "show", f"{SOURCE_COMMIT}:{relative.as_posix()}"],
+            capture_output=True,
+            check=True,
+            timeout=10,
+        ).stdout.replace(b"\r\n", b"\n")
+        installed_path = package_path.parent / Path(*relative.parts[1:])
+        installed = installed_path.read_bytes().replace(b"\r\n", b"\n")
+        checked += 1
+        if installed != expected:
+            mismatches.append(relative.as_posix())
+    if not files:
+        raise RuntimeError("pinned source has no tracked mnemos package files")
+    if mismatches:
+        raise RuntimeError("installed package differs from pinned source: " + ", ".join(mismatches))
+    wheel_digest = _sha256(wheel_path.read_bytes())
+    if wheel_digest != expected_wheel_sha256.lower():
+        raise RuntimeError("wheel archive does not match the expected digest")
+    wheel_members = 0
+    with zipfile.ZipFile(wheel_path) as archive:
+        for item in archive.infolist():
+            if item.is_dir() or not item.filename.startswith("mnemos/"):
+                continue
+            wheel_members += 1
+            installed_path = package_path.parent / Path(*Path(item.filename).parts[1:])
+            if installed_path.read_bytes() != archive.read(item):
+                raise RuntimeError("installed package bytes differ from wheel")
+    return {
+        "source_commit": SOURCE_COMMIT,
+        "package_files_checked": checked,
+        "wheel_package_members_checked": wheel_members,
+        "wheel_path": str(wheel_path),
+        "wheel_sha256_expected": expected_wheel_sha256.lower(),
+        "wheel_sha256_observed": wheel_digest,
+    }
+
+
+def _verify_build(
+    verification_path: Path, *, source_commit: str, wheel_path: Path, wheel_sha256: str
+) -> dict[str, Any]:
+    value = json.loads(verification_path.read_text(encoding="utf-8"))
+    if not isinstance(value, Mapping) or value.get("status") != "passed":
+        raise RuntimeError("build verification is not passed")
+    if value.get("source_commit") != source_commit:
+        raise RuntimeError("build verification source commit differs from explicit pin")
+    artifacts = value.get("artifacts")
+    if not isinstance(artifacts, list):
+        raise RuntimeError("build verification has no artifact list")
+    matches = [
+        item
+        for item in artifacts
+        if isinstance(item, Mapping)
+        and isinstance(item.get("file"), str)
+        and Path(item["file"]).resolve() == wheel_path.resolve()
+    ]
+    if len(matches) != 1 or matches[0].get("sha256") != wheel_sha256:
+        raise RuntimeError("wheel does not match the passed build verification")
+    return {
+        "path": str(verification_path),
+        "status": "passed",
+        "source_commit": source_commit,
+        "wheel_path": str(wheel_path),
+        "wheel_sha256": wheel_sha256,
+    }
+
+
+def _verify_timing(
+    report_path: Path,
+    runner_path: Path,
+    *,
+    source_commit: str,
+    wheel_sha256: str,
+) -> dict[str, Any]:
+    value = json.loads(report_path.read_text(encoding="utf-8"))
+    if not isinstance(value, Mapping) or value.get("status") != "passed":
+        raise RuntimeError("adapter timing report is not passed")
+    if value.get("source_commit") != source_commit:
+        raise RuntimeError("adapter timing source commit differs from explicit pin")
+    if value.get("runner_sha256") != _sha256(runner_path.read_bytes()):
+        raise RuntimeError("adapter timing runner digest does not match")
+    if value.get("expected_wheel_sha256") != wheel_sha256:
+        raise RuntimeError("adapter timing wheel digest differs from explicit pin")
+    provenance = value.get("package_provenance")
+    if (
+        not isinstance(provenance, Mapping)
+        or provenance.get("wheel_sha256_observed") != wheel_sha256
+    ):
+        raise RuntimeError("adapter timing has no matching wheel provenance")
+    return {
+        "path": str(report_path),
+        "sha256": _sha256(report_path.read_bytes()),
+        "runner_path": str(runner_path),
+        "runner_sha256": value.get("runner_sha256"),
+        "source_commit": source_commit,
+        "wheel_sha256": wheel_sha256,
+        "status": "passed",
+    }
+
+
+def _run_claude(
+    args: list[str],
+    *,
+    timeout: float = 10,
+    cwd: Path | None = None,
+    env: Mapping[str, str] | None = None,
+) -> subprocess.CompletedProcess[str]:
+    return subprocess.run(
+        [str(CLAUDE_EXE), *args],
+        cwd=str(cwd) if cwd is not None else None,
+        env=dict(env) if env is not None else None,
+        capture_output=True,
+        text=True,
+        encoding="utf-8",
+        errors="replace",
+        check=False,
+        timeout=timeout,
+        shell=False,
+    )
+
+
+def _verify_claude() -> dict[str, Any]:
+    if os.name != "nt":
+        raise RuntimeError("native Claude runner requires Windows")
+    if not CLAUDE_EXE.is_file():
+        raise FileNotFoundError(f"direct Claude executable is missing: {CLAUDE_EXE}")
+    result = _run_claude(["--version"])
+    if result.returncode != 0:
+        raise RuntimeError("Claude version probe failed")
+    version = (result.stdout or result.stderr).strip()
+    if "2.1.191" not in version:
+        raise RuntimeError(f"unexpected Claude version: {version}")
+    return {"path": str(CLAUDE_EXE), "version": version}
+
+
+def _numeric_mapping(value: Any) -> dict[str, int | float]:
+    if not isinstance(value, Mapping):
+        return {}
+    return {
+        str(key): item
+        for key, item in value.items()
+        if isinstance(item, (int, float)) and not isinstance(item, bool)
+    }
+
+
+def _native_stream_summary(stdout: str, expected_canary: str) -> dict[str, Any]:
+    rows: list[dict[str, Any]] = []
+    hook_rows: list[dict[str, Any]] = []
+    costs: list[float] = []
+    answer_digests: list[str] = []
+    answer_matches = False
+    tool_types: set[str] = set()
+    mcp_server_names: set[str] = set()
+    mcp_servers: list[dict[str, str]] = []
+    mcp_tools: set[str] = set()
+    non_json = 0
+
+    def inspect_tool_blocks(value: Any) -> None:
+        if isinstance(value, Mapping):
+            kind = value.get("type")
+            if isinstance(kind, str) and (
+                "tool" in kind or kind in {"bash", "computer", "text_editor"}
+            ):
+                tool_types.add(kind)
+            for child in value.values():
+                inspect_tool_blocks(child)
+        elif isinstance(value, list):
+            for child in value:
+                inspect_tool_blocks(child)
+
+    def inspect_mcp_names(value: Any) -> None:
+        if isinstance(value, Mapping):
+            for key in ("server_name", "mcp_server_name", "server"):
+                candidate = value.get(key)
+                if isinstance(candidate, str) and candidate:
+                    mcp_server_names.add(candidate)
+            for child in value.values():
+                inspect_mcp_names(child)
+        elif isinstance(value, list):
+            for child in value:
+                inspect_mcp_names(child)
+
+    for line in stdout.splitlines():
+        try:
+            value = json.loads(line)
+        except json.JSONDecodeError:
+            non_json += 1
+            continue
+        if not isinstance(value, Mapping):
+            non_json += 1
+            continue
+        inspect_tool_blocks(value)
+        inspect_mcp_names(value)
+        if value.get("type") == "system" and value.get("subtype") == "init":
+            for server in value.get("mcp_servers", []):
+                if isinstance(server, Mapping) and isinstance(server.get("name"), str):
+                    mcp_servers.append(
+                        {"name": server["name"], "status": str(server.get("status", ""))}
+                    )
+            for name in value.get("tools", []):
+                if isinstance(name, str) and name.startswith("mcp__"):
+                    mcp_tools.add(name)
+        item = value.get("item")
+        item_type = item.get("type") if isinstance(item, Mapping) else None
+        if isinstance(item_type, str) and item_type in {
+            "tool_use",
+            "tool_result",
+            "mcp_tool_use",
+            "mcp_tool_result",
+            "server_tool_use",
+            "server_tool_result",
+            "web_search_tool_result",
+            "bash",
+            "computer",
+            "text_editor",
+        }:
+            tool_types.add(item_type)
+        answer = item.get("text") if isinstance(item, Mapping) else None
+        if not isinstance(answer, str) and value.get("type") == "result":
+            answer = value.get("result")
+        if isinstance(answer, str) and (
+            item_type == "agent_message" or value.get("type") == "result"
+        ):
+            answer_digests.append(_sha256(answer))
+            answer_matches |= (
+                re.search(
+                    r"(?<![A-Za-z0-9-])" + re.escape(expected_canary) + r"(?![A-Za-z0-9-])",
+                    answer,
+                )
+                is not None
+            )
+        numeric: dict[str, int | float] = {}
+        for key in ("total_cost_usd", "cost_usd"):
+            raw = value.get(key)
+            if isinstance(raw, (int, float)) and not isinstance(raw, bool):
+                numeric[key] = raw
+                if key == "total_cost_usd":
+                    costs.append(float(raw))
+        usage = _numeric_mapping(value.get("usage"))
+        if str(value.get("subtype", "")).startswith("hook_") or value.get("hook_event"):
+            hook_rows.append(
+                {
+                    "subtype": value.get("subtype"),
+                    "hook_event": value.get("hook_event"),
+                    "hook_name": value.get("hook_name"),
+                    "outcome": value.get("outcome"),
+                    "exit_code": value.get("exit_code"),
+                    "stdout_sha256": _sha256(str(value.get("stdout", ""))),
+                    "stderr_sha256": _sha256(str(value.get("stderr", ""))),
+                    "output_sha256": _sha256(str(value.get("output", ""))),
+                    "session_id_sha256": (
+                        _sha256(value["session_id"])
+                        if isinstance(value.get("session_id"), str)
+                        else None
+                    ),
+                }
+            )
+        rows.append(
+            {
+                "type": value.get("type"),
+                "subtype": value.get("subtype"),
+                "item_type": item_type,
+                "is_error": value.get("is_error"),
+                "stop_reason": value.get("stop_reason"),
+                "usage": usage,
+                "numeric_cost_fields": numeric,
+                "answer_digest": _sha256(answer) if isinstance(answer, str) else None,
+            }
+        )
+    return {
+        "record_count": len(rows),
+        "non_json_line_count": non_json,
+        "rows": rows,
+        "hook_rows": hook_rows,
+        "answer_text_digests": answer_digests,
+        "answer_mentions_random_canary": answer_matches,
+        "tool_call_observed": bool(tool_types),
+        "tool_item_types": sorted(tool_types),
+        "mcp_server_names": sorted(mcp_server_names),
+        "mcp_servers_from_native_init": mcp_servers,
+        "mcp_tools_from_native_init": sorted(mcp_tools),
+        "mnemos_connected_and_tools_observed": any(
+            "mnemos" in row["name"].lower() and row["status"] == "connected" for row in mcp_servers
+        )
+        and any("mnemos" in name.lower() for name in mcp_tools),
+        "mnemos_mcp_telemetry_observed": "mnemos" in mcp_server_names,
+        "cost_usd_observed": costs,
+        "total_cost_usd": sum(costs) if costs else None,
+        "usage_observed": any(bool(row["usage"]) for row in rows),
+    }
+
+
+def _native_mcp_call_summary(
+    stdout: str,
+    expected_canary: str,
+    *,
+    expected_database_path: Path | None = None,
+    expected_profile: str | None = None,
+    expected_project_id: str | None = None,
+) -> dict[str, Any]:
+    """Extract tool-call identity and safe result facts from native JSONL."""
+    calls: list[dict[str, Any]] = []
+    results: list[dict[str, Any]] = []
+    allowed = {
+        "mcp__plugin_mnemos-memory_mnemos__mnemos_health",
+        "mcp__plugin_mnemos-memory_mnemos__mnemos_retrieve",
+    }
+
+    def safe_result_details(value: Any) -> dict[str, Any]:
+        scopes: set[str] = set()
+        fact_count = 0
+        canary_match = False
+        status_values: set[str] = set()
+        runtime_present = False
+        database_path_match = False
+        capabilities_valid = False
+        scope_profile_match = False
+        scope_project_match = False
+        service_error = False
+        seed_canary_project_scope = False
+
+        def visit(node: Any) -> None:
+            nonlocal fact_count, canary_match, runtime_present, database_path_match
+            nonlocal capabilities_valid, scope_profile_match, scope_project_match
+            nonlocal service_error, seed_canary_project_scope
+            if isinstance(node, Mapping):
+                raw_status = node.get("status")
+                if isinstance(raw_status, str):
+                    status_values.add(raw_status)
+                    if raw_status.lower() in {"error", "degraded", "failed"}:
+                        service_error = True
+                if node.get("degraded") is True:
+                    service_error = True
+                for error_key in ("error", "error_type", "last_error"):
+                    error_value = node.get(error_key)
+                    if error_value not in (None, "", False):
+                        service_error = True
+                facts = node.get("facts")
+                if isinstance(facts, list):
+                    fact_count += len(facts)
+                    for fact in facts:
+                        if isinstance(fact, Mapping):
+                            scope = fact.get("scope") or fact.get("scope_id")
+                            if isinstance(scope, str):
+                                scopes.add(scope)
+                            content = fact.get("content")
+                            if isinstance(content, str) and expected_canary in content:
+                                canary_match = True
+                                if scope == "project":
+                                    seed_canary_project_scope = True
+                runtime = node.get("runtime")
+                if isinstance(runtime, Mapping):
+                    runtime_present = isinstance(runtime.get("store_type"), str) and isinstance(
+                        runtime.get("database_path"), str
+                    )
+                    if expected_database_path is not None:
+                        candidate = runtime.get("database_path")
+                        if isinstance(candidate, str):
+                            database_path_match = (
+                                Path(candidate).resolve() == expected_database_path.resolve()
+                            )
+                capabilities = node.get("capabilities")
+                if isinstance(capabilities, Mapping):
+                    capabilities_valid = (
+                        capabilities.get("capture") is True and capabilities.get("retrieve") is True
+                    )
+                isolation = node.get("scope_isolation")
+                if isinstance(isolation, Mapping):
+                    if expected_profile is not None:
+                        scope_profile_match = isolation.get("user_profile_id") == expected_profile
+                    if expected_project_id is not None:
+                        scope_project_match = isolation.get("project_id") == expected_project_id
+                for child in node.values():
+                    visit(child)
+            elif isinstance(node, list):
+                for child in node:
+                    visit(child)
+            elif isinstance(node, str) and node.lstrip().startswith(("{", "[")):
+                try:
+                    visit(json.loads(node))
+                except (TypeError, json.JSONDecodeError):
+                    pass
+
+        visit(value)
+        return {
+            "fact_count": fact_count,
+            "fact_scopes": sorted(scopes),
+            "seed_canary_match": canary_match,
+            "status_values": sorted(status_values),
+            "runtime_present": runtime_present,
+            "database_path_match": database_path_match,
+            "capabilities_valid": capabilities_valid,
+            "scope_profile_match": scope_profile_match,
+            "scope_project_match": scope_project_match,
+            "service_error": service_error,
+            "seed_canary_project_scope": seed_canary_project_scope,
+        }
+
+    def visit(node: Any) -> None:
+        if isinstance(node, Mapping):
+            node_type = node.get("type")
+            name = node.get("name")
+            if node_type in {"tool_use", "mcp_tool_use", "server_tool_use"} and isinstance(
+                name, str
+            ):
+                calls.append(
+                    {
+                        "id": node.get("id"),
+                        "name": name,
+                        "allowed_name": name in allowed,
+                        "input_keys": (
+                            sorted(node.get("input", {}).keys())
+                            if isinstance(node.get("input"), Mapping)
+                            else []
+                        ),
+                    }
+                )
+            if node_type in {"tool_result", "mcp_tool_result", "server_tool_result"}:
+                identifier = node.get("tool_use_id") or node.get("id")
+                results.append(
+                    {
+                        "id": identifier,
+                        "is_error": node.get("is_error") is True,
+                        "result_sha256": _sha256(
+                            json.dumps(node, sort_keys=True, separators=(",", ":"))
+                        ),
+                        **safe_result_details(node),
+                    }
+                )
+            for child in node.values():
+                visit(child)
+        elif isinstance(node, list):
+            for child in node:
+                visit(child)
+
+    for line in stdout.splitlines():
+        try:
+            visit(json.loads(line))
+        except json.JSONDecodeError:
+            continue
+    call_ids = {item.get("id") for item in calls if item.get("id")}
+    result_ids = {item.get("id") for item in results if item.get("id")}
+    names = [item["name"] for item in calls]
+    retrieve_name = "mcp__plugin_mnemos-memory_mnemos__mnemos_retrieve"
+    health_name = "mcp__plugin_mnemos-memory_mnemos__mnemos_health"
+    health_calls = [item for item in calls if item["name"] == health_name]
+    retrieve_calls = [item for item in calls if item["name"] == retrieve_name]
+    health_result = next(
+        (
+            item
+            for item in results
+            if item["id"] in {call.get("id") for call in health_calls}
+            and not item["is_error"]
+            and not item["service_error"]
+        ),
+        None,
+    )
+    retrieve_result = next(
+        (
+            item
+            for item in results
+            if item["id"] in {call.get("id") for call in retrieve_calls}
+            and not item["is_error"]
+            and not item["service_error"]
+        ),
+        None,
+    )
+    return {
+        "allowed_tool_names": sorted(allowed),
+        "calls": calls,
+        "results": results,
+        "call_names": names,
+        "forbidden_call_names": sorted(set(names) - allowed),
+        "call_result_ids_match": bool(calls)
+        and all(item.get("id") for item in calls)
+        and call_ids == result_ids
+        and len(call_ids) == len(calls) == len(results),
+        "exactly_one_health_call": len(health_calls) == 1,
+        "exactly_one_retrieve_call": len(retrieve_calls) == 1,
+        "health_result_ok": health_result is not None
+        and "running" in health_result["status_values"]
+        and not health_result["service_error"]
+        and health_result["runtime_present"]
+        and health_result["capabilities_valid"]
+        and (expected_database_path is None or health_result["database_path_match"])
+        and (expected_profile is None or health_result["scope_profile_match"])
+        and (expected_project_id is None or health_result["scope_project_match"]),
+        "retrieve_result": retrieve_result,
+    }
+
+
+def _hook_record_summary(path: Path) -> dict[str, Any]:
+    record = json.loads(path.read_text(encoding="utf-8"))
+    payload = record.get("payload") if isinstance(record, Mapping) else None
+    if not isinstance(payload, Mapping):
+        payload = {}
+    transcript = payload.get("transcript_path")
+    transcript_state = "absent"
+    if isinstance(transcript, str) and transcript.strip():
+        # The native transcript belongs to the host.  Do not inspect or copy
+        # files outside the disposable fixture; adapter status is retained in
+        # the private trace if its own read attempt fails.
+        transcript_state = "path_provided_uninspected"
+    adapter_stdout = record.get("stdout") if isinstance(record, Mapping) else ""
+    adapter_stderr = record.get("stderr") if isinstance(record, Mapping) else ""
+    diagnostic_status = None
+    diagnostic_match = re.search(r"status=([A-Za-z_]+)", str(adapter_stderr))
+    if diagnostic_match:
+        diagnostic_status = diagnostic_match.group(1)
+    output: Any = None
+    try:
+        output = json.loads(adapter_stdout) if str(adapter_stdout).strip() else None
+    except json.JSONDecodeError:
+        output = None
+    hook_output = output.get("hookSpecificOutput") if isinstance(output, Mapping) else None
+    context = hook_output.get("additionalContext") if isinstance(hook_output, Mapping) else None
+    session_id = payload.get("session_id")
+    prompt_id = payload.get("prompt_id")
+    return {
+        "trace_file": str(path),
+        "event": record.get("event"),
+        "payload_sha256": _sha256(json.dumps(payload, sort_keys=True, separators=(",", ":"))),
+        "returncode": record.get("returncode"),
+        "adapter_completed": record.get("adapter_completed"),
+        "adapter_elapsed_ms": record.get("adapter_elapsed_ms"),
+        "timed_out": record.get("timed_out", False),
+        "stdout_sha256": _sha256(str(adapter_stdout)),
+        "stderr_sha256": _sha256(str(adapter_stderr)),
+        "diagnostic_status": diagnostic_status,
+        "native_payload_fields": sorted(str(key) for key in payload),
+        "session_id_sha256": _sha256(session_id) if isinstance(session_id, str) else None,
+        "prompt_id_sha256": _sha256(prompt_id) if isinstance(prompt_id, str) else None,
+        "cwd_present": isinstance(payload.get("cwd"), str),
+        "prompt_present": isinstance(payload.get("prompt"), str),
+        "last_assistant_message_present": isinstance(payload.get("last_assistant_message"), str),
+        "transcript_state": transcript_state,
+        "native_output_context_present": isinstance(context, str) and bool(context),
+        "adapter_output_sha256": _sha256(str(adapter_stdout)),
+    }
+
+
+def _provisional_identity_summary(
+    captured: list[Any],
+    transcript: Mapping[str, Any],
+    store: Any,
+) -> dict[str, Any]:
+    """Report identity metadata without promoting provisional captures.
+
+    This is deliberately separate from the v6 raw duplicate gate.  A content
+    fallback can be retained for capture-only review while the transcript UUID
+    rows remain the only extraction-eligible rows.
+    """
+    status_counts = {
+        "normal": sum(event.metadata.get("identity_status") == "normal" for event in captured),
+        "provisional_unassociated": sum(
+            event.metadata.get("identity_status") == "provisional_unassociated"
+            for event in captured
+        ),
+        "unknown_or_missing": sum(
+            event.metadata.get("identity_status") not in {"normal", "provisional_unassociated"}
+            for event in captured
+        ),
+    }
+    source_roles = transcript.get("source_ref_role_by_sha256", {})
+
+    def normal_transcript_role_count(role: str) -> int:
+        return sum(
+            event.role == role
+            and event.metadata.get("identity_status") == "normal"
+            and isinstance(event.metadata.get("source_ref"), str)
+            and source_roles.get(_sha256(event.metadata["source_ref"])) == role
+            for event in captured
+        )
+
+    normal_user_count = normal_transcript_role_count("user")
+    normal_assistant_count = normal_transcript_role_count("assistant")
+    normal_transcript_associated_count = sum(
+        event.metadata.get("identity_status") == "normal"
+        and isinstance(event.metadata.get("source_ref"), str)
+        and source_roles.get(_sha256(event.metadata["source_ref"])) == event.role
+        for event in captured
+    )
+
+    provisional_events = [
+        event
+        for event in captured
+        if event.metadata.get("identity_status") == "provisional_unassociated"
+    ]
+    fallback_rows: list[dict[str, Any]] = []
+    for event in provisional_events:
+        job = store.get_job("event:" + event.id)
+        fallback_rows.append(
+            {
+                "event_id": event.id,
+                "event_status": event.status,
+                "job_id": job.id if job is not None else None,
+                "job_kind": job.kind if job is not None else None,
+                "job_status": job.status if job is not None else None,
+                "fact_eligible": False,
+            }
+        )
+    return {
+        "identity_status_counts": status_counts,
+        "normal_transcript_associated_user": normal_user_count == 1,
+        "normal_transcript_associated_user_count": normal_user_count,
+        "normal_transcript_associated_assistant": normal_assistant_count == 1,
+        "normal_transcript_associated_assistant_count": normal_assistant_count,
+        "normal_transcript_associated_count": normal_transcript_associated_count,
+        "provisional_fallbacks": fallback_rows,
+        "fallback_contract_before_restart": all(
+            row["event_status"] == "deferred" and row["job_kind"] == "capture_only"
+            for row in fallback_rows
+        ),
+        "provisional_event_ids": [event.id for event in provisional_events],
+        "provisional_capture_contract_status": (
+            "required" if provisional_events else "not_applicable"
+        ),
+        "provisional_capture_contract_reason": (
+            "A missing native identity fallback was observed and must remain capture-only."
+            if provisional_events
+            else "The host supplied normal transcript identities; no missing-ID fallback was observed."
+        ),
+        "provisional_event_ids_are_extraction_ineligible": all(
+            event.metadata.get("identity_status") == "provisional_unassociated"
+            and event.status == "deferred"
+            for event in provisional_events
+        ),
+    }
+
+
+def _provisional_identity_criteria(diagnostics: Mapping[str, Any]) -> dict[str, bool]:
+    status_counts = diagnostics["identity_status_counts"]
+    return {
+        "one_normal_transcript_associated_user": diagnostics["normal_transcript_associated_user"],
+        "one_normal_transcript_associated_assistant": diagnostics[
+            "normal_transcript_associated_assistant"
+        ],
+        "normal_identity_event_count_exactly_two": status_counts["normal"] == 2,
+        "unknown_or_missing_identity_count_zero": status_counts["unknown_or_missing"] == 0,
+        "missing_id_fallback_deferred_capture_only": diagnostics["fallback_contract_before_restart"]
+        and diagnostics["fallback_contract_after_one_fixture_maintenance"],
+        "provisional_event_metadata_is_extraction_ineligible": diagnostics[
+            "provisional_event_ids_are_extraction_ineligible"
+        ],
+        "provisional_ids_have_no_derived_facts_or_evidence": diagnostics[
+            "no_facts_or_evidence_derived_from_provisional_ids"
+        ],
+    }
+
+
+def _native_provisional_identity_criteria(
+    diagnostics: Mapping[str, Any],
+) -> dict[str, bool]:
+    """Acceptance criteria for the new read contract.
+
+    The historical diagnostics retain their exact-two-normal-event gate.  MCP
+    calls can create more than one assistant transcript event, so this gate
+    checks association for every normal event instead of imposing that count.
+    """
+    status_counts = diagnostics["identity_status_counts"]
+    return {
+        "all_normal_events_transcript_associated": diagnostics["normal_transcript_associated_count"]
+        == status_counts["normal"],
+        "normal_user_and_assistant_present": diagnostics["normal_transcript_associated_user_count"]
+        > 0
+        and diagnostics["normal_transcript_associated_assistant_count"] > 0,
+        "unknown_or_missing_identity_count_zero": status_counts["unknown_or_missing"] == 0,
+        "provisional_fallback_deferred_and_extraction_ineligible": diagnostics[
+            "fallback_contract_before_restart"
+        ]
+        and diagnostics["fallback_contract_after_one_fixture_maintenance"]
+        and diagnostics["provisional_event_ids_are_extraction_ineligible"],
+        "provisional_ids_have_no_derived_facts_or_evidence": diagnostics[
+            "no_facts_or_evidence_derived_from_provisional_ids"
+        ],
+    }
+
+
+def _offline_self_test() -> int:
+    """Exercise v8 identity reporting without importing the product or host."""
+    from types import SimpleNamespace
+
+    class FakeStore:
+        def __init__(self, jobs: Mapping[str, Any]) -> None:
+            self.jobs = jobs
+
+        def get_job(self, job_id: str) -> Any:
+            return self.jobs.get(job_id)
+
+    def event(
+        event_id: str,
+        role: str,
+        source_ref: str,
+        identity_status: str,
+        status: str,
+    ) -> Any:
+        return SimpleNamespace(
+            id=event_id,
+            role=role,
+            status=status,
+            metadata={
+                "source_ref": source_ref,
+                "identity_status": identity_status,
+            },
+        )
+
+    transcript = {
+        "source_ref_role_by_sha256": {
+            _sha256("user-uuid"): "user",
+            _sha256("assistant-uuid"): "assistant",
+            _sha256("assistant-uuid-2"): "assistant",
+        }
+    }
+    normal_user = event("normal-user", "user", "user-uuid", "normal", "pending")
+    normal_assistant = event("normal-assistant", "assistant", "assistant-uuid", "normal", "pending")
+    provisional = event(
+        "provisional-user", "user", "prompt:fallback", "provisional_unassociated", "deferred"
+    )
+    jobs = {
+        "event:provisional-user": SimpleNamespace(
+            id="event:provisional-user", kind="capture_only", status="pending"
+        )
+    }
+
+    def complete(diagnostics: dict[str, Any]) -> dict[str, bool]:
+        diagnostics.update(
+            {
+                "fallback_contract_after_one_fixture_maintenance": True,
+                "no_facts_or_evidence_derived_from_provisional_ids": True,
+            }
+        )
+        return _provisional_identity_criteria(diagnostics)
+
+    passing = _provisional_identity_summary(
+        [normal_user, normal_assistant, provisional], transcript, FakeStore(jobs)
+    )
+    assert passing["provisional_capture_contract_status"] == "required"
+    assert all(complete(passing).values())
+
+    assistant_two = event(
+        "normal-assistant-2", "assistant", "assistant-uuid-2", "normal", "pending"
+    )
+    multiple_assistants = _provisional_identity_summary(
+        [normal_user, normal_assistant, assistant_two], transcript, FakeStore({})
+    )
+    multiple_assistants.update(
+        {
+            "fallback_contract_after_one_fixture_maintenance": True,
+            "no_facts_or_evidence_derived_from_provisional_ids": True,
+        }
+    )
+    assert all(_native_provisional_identity_criteria(multiple_assistants).values())
+
+    wrong_assistant = event(
+        "normal-assistant-wrong", "assistant", "wrong-assistant-uuid", "normal", "pending"
+    )
+    wrong_identity = _provisional_identity_summary(
+        [normal_user, wrong_assistant], transcript, FakeStore({})
+    )
+    wrong_identity.update(
+        {
+            "fallback_contract_after_one_fixture_maintenance": True,
+            "no_facts_or_evidence_derived_from_provisional_ids": True,
+        }
+    )
+    assert not all(_native_provisional_identity_criteria(wrong_identity).values())
+
+    no_fallback = _provisional_identity_summary(
+        [normal_user, normal_assistant], transcript, FakeStore({})
+    )
+    assert no_fallback["provisional_capture_contract_status"] == "not_applicable"
+    assert all(complete(no_fallback).values())
+
+    duplicate_user = event("normal-user-duplicate", "user", "user-uuid", "normal", "pending")
+    duplicated = _provisional_identity_summary(
+        [normal_user, duplicate_user, normal_assistant, provisional],
+        transcript,
+        FakeStore(jobs),
+    )
+    assert not all(complete(duplicated).values())
+    assert duplicated["identity_status_counts"]["normal"] == 3
+
+    unknown = event("unknown", "assistant", "unknown-ref", "unknown", "pending")
+    unknown_status = _provisional_identity_summary(
+        [normal_user, normal_assistant, unknown], transcript, FakeStore({})
+    )
+    assert unknown_status["provisional_capture_contract_status"] == "not_applicable"
+    unknown_status.update(
+        {
+            "fallback_contract_after_one_fixture_maintenance": True,
+            "no_facts_or_evidence_derived_from_provisional_ids": True,
+        }
+    )
+    assert not all(_provisional_identity_criteria(unknown_status).values())
+    assert unknown_status["identity_status_counts"]["unknown_or_missing"] == 1
+    print(
+        json.dumps(
+            {
+                "status": "passed",
+                "cases": [
+                    "required",
+                    "multiple_assistants_positive",
+                    "wrong_transcript_id_negative",
+                    "no_fallback",
+                    "duplicate_normal",
+                    "unknown_status",
+                ],
+            }
+        )
+    )
+    return 0
+
+
+def _offline_mcp_self_test() -> int:
+    """Check native MCP call/result parsing without importing Claude or Mnemos."""
+    health = "mcp__plugin_mnemos-memory_mnemos__mnemos_health"
+    retrieve = "mcp__plugin_mnemos-memory_mnemos__mnemos_retrieve"
+    lines = [
+        {
+            "type": "assistant",
+            "message": {
+                "content": [{"type": "tool_use", "id": "health-1", "name": health, "input": {}}]
+            },
+        },
+        {
+            "type": "user",
+            "message": {
+                "content": [
+                    {
+                        "type": "tool_result",
+                        "tool_use_id": "health-1",
+                        "content": json.dumps(
+                            {
+                                "status": "running",
+                                "runtime": {
+                                    "store_type": "SQLiteStore",
+                                    "database_path": "C:/fixture/memory.sqlite",
+                                },
+                                "capabilities": {"capture": True, "retrieve": True},
+                                "scope_isolation": {
+                                    "user_profile_id": "test-profile",
+                                    "project_id": "test-project",
+                                },
+                            }
+                        ),
+                    }
+                ]
+            },
+        },
+        {
+            "type": "assistant",
+            "message": {
+                "content": [
+                    {
+                        "type": "tool_use",
+                        "id": "retrieve-1",
+                        "name": retrieve,
+                        "input": {"query": "codename"},
+                    }
+                ]
+            },
+        },
+        {
+            "type": "user",
+            "message": {
+                "content": [
+                    {
+                        "type": "tool_result",
+                        "tool_use_id": "retrieve-1",
+                        "content": '{"facts":[{"scope":"project","content":"mnemos-test-codename"}]}',
+                    }
+                ]
+            },
+        },
+    ]
+    parsed = _native_mcp_call_summary(
+        "\n".join(json.dumps(line) for line in lines),
+        "mnemos-test-codename",
+        expected_database_path=Path("C:/fixture/memory.sqlite"),
+        expected_profile="test-profile",
+        expected_project_id="test-project",
+    )
+    assert parsed["call_names"] == [health, retrieve]
+    assert parsed["call_result_ids_match"] is True
+    assert parsed["health_result_ok"] is True
+    assert parsed["retrieve_result"]["fact_scopes"] == ["project"]
+    assert parsed["retrieve_result"]["seed_canary_match"] is True
+
+    wrong_id_lines = json.loads(json.dumps(lines))
+    wrong_id_lines[-1]["message"]["content"][0]["tool_use_id"] = "wrong-id"
+    wrong_id = _native_mcp_call_summary(
+        "\n".join(json.dumps(line) for line in wrong_id_lines),
+        "mnemos-test-codename",
+        expected_database_path=Path("C:/fixture/memory.sqlite"),
+        expected_profile="test-profile",
+        expected_project_id="test-project",
+    )
+    assert wrong_id["call_result_ids_match"] is False
+    assert wrong_id["retrieve_result"] is None
+
+    wrong_scope_lines = json.loads(json.dumps(lines))
+    wrong_scope_payload = json.loads(wrong_scope_lines[-1]["message"]["content"][0]["content"])
+    wrong_scope_payload["facts"][0]["scope"] = "workspace"
+    wrong_scope_lines[-1]["message"]["content"][0]["content"] = json.dumps(wrong_scope_payload)
+    wrong_scope = _native_mcp_call_summary(
+        "\n".join(json.dumps(line) for line in wrong_scope_lines),
+        "mnemos-test-codename",
+        expected_database_path=Path("C:/fixture/memory.sqlite"),
+        expected_profile="test-profile",
+        expected_project_id="test-project",
+    )
+    assert wrong_scope["retrieve_result"]["seed_canary_match"] is True
+    assert wrong_scope["retrieve_result"]["seed_canary_project_scope"] is False
+
+    degraded_lines = json.loads(json.dumps(lines))
+    degraded_payload = json.loads(degraded_lines[1]["message"]["content"][0]["content"])
+    degraded_payload["status"] = "running"
+    degraded_payload["error"] = "service unavailable"
+    degraded_lines[1]["message"]["content"][0]["content"] = json.dumps(degraded_payload)
+    degraded = _native_mcp_call_summary(
+        "\n".join(json.dumps(line) for line in degraded_lines),
+        "mnemos-test-codename",
+        expected_database_path=Path("C:/fixture/memory.sqlite"),
+        expected_profile="test-profile",
+        expected_project_id="test-project",
+    )
+    assert degraded["health_result_ok"] is False
+
+    degraded_status_lines = json.loads(json.dumps(lines))
+    degraded_status_payload = json.loads(
+        degraded_status_lines[1]["message"]["content"][0]["content"]
+    )
+    degraded_status_payload["status"] = "degraded"
+    degraded_status_lines[1]["message"]["content"][0]["content"] = json.dumps(
+        degraded_status_payload
+    )
+    degraded_status = _native_mcp_call_summary(
+        "\n".join(json.dumps(line) for line in degraded_status_lines),
+        "mnemos-test-codename",
+        expected_database_path=Path("C:/fixture/memory.sqlite"),
+        expected_profile="test-profile",
+        expected_project_id="test-project",
+    )
+    assert degraded_status["health_result_ok"] is False
+
+    retrieve_error_lines = json.loads(json.dumps(lines))
+    retrieve_error_payload = json.loads(
+        retrieve_error_lines[-1]["message"]["content"][0]["content"]
+    )
+    retrieve_error_payload["status"] = "degraded"
+    retrieve_error_lines[-1]["message"]["content"][0]["content"] = json.dumps(
+        retrieve_error_payload
+    )
+    retrieve_error = _native_mcp_call_summary(
+        "\n".join(json.dumps(line) for line in retrieve_error_lines),
+        "mnemos-test-codename",
+        expected_database_path=Path("C:/fixture/memory.sqlite"),
+        expected_profile="test-profile",
+        expected_project_id="test-project",
+    )
+    assert retrieve_error["retrieve_result"] is None
+
+    forbidden_lines = json.loads(json.dumps(lines))
+    forbidden_lines.append(
+        {
+            "type": "assistant",
+            "message": {"content": [{"type": "tool_use", "id": "bash-1", "name": "Bash"}]},
+        }
+    )
+    forbidden = _native_mcp_call_summary(
+        "\n".join(json.dumps(line) for line in forbidden_lines),
+        "mnemos-test-codename",
+        expected_database_path=Path("C:/fixture/memory.sqlite"),
+        expected_profile="test-profile",
+        expected_project_id="test-project",
+    )
+    assert "Bash" in forbidden["forbidden_call_names"]
+    print(json.dumps({"status": "passed", "calls": parsed["call_names"]}))
+    return 0
+
+
+def _copy_private_auth(config_dir: Path) -> Path | None:
+    """Copy only the native OAuth file, without reading it in the runner."""
+    source = Path.home() / ".claude" / ".credentials.json"
+    if not source.is_file():
+        return None
+    target = config_dir / ".credentials.json"
+    from mnemos.service import _protect_private_path
+
+    _protect_private_path(config_dir)
+    try:
+        shutil.copy2(source, target)
+        _protect_private_path(target)
+    except Exception:
+        target.unlink(missing_ok=True)
+        raise
+    return target
+
+
+def _validate_transcript(path: Path, config_dir: Path) -> dict[str, Any]:
+    """Validate native JSONL only after proving it is inside the private root."""
+    resolved = path.expanduser().resolve(strict=False)
+    root = config_dir.resolve(strict=True)
+    try:
+        resolved.relative_to(root)
+    except ValueError as exc:
+        raise RuntimeError("native transcript path escaped private CLAUDE_CONFIG_DIR") from exc
+    raw = resolved.read_bytes()
+    if not raw:
+        raise RuntimeError("native transcript is empty")
+    roles: list[str] = []
+    source_ref_digests: list[str] = []
+    source_ref_roles: dict[str, str] = {}
+    line_count = 0
+    for line in raw.splitlines():
+        line_count += 1
+        record = json.loads(line.decode("utf-8"))
+        if not isinstance(record, Mapping):
+            continue
+        message = record.get("message")
+        role = message.get("role") if isinstance(message, Mapping) else record.get("role")
+        if not isinstance(role, str) and record.get("type") in {"user", "assistant"}:
+            role = record["type"]
+        if isinstance(role, str):
+            roles.append(role)
+        source_ref = record.get("uuid") or record.get("id")
+        if isinstance(source_ref, str) and source_ref:
+            digest = _sha256(source_ref)
+            source_ref_digests.append(digest)
+            if isinstance(role, str):
+                source_ref_roles[digest] = role
+    if not {"user", "assistant"}.issubset(set(roles)):
+        raise RuntimeError("native transcript lacks both user and assistant JSONL roles")
+    return {
+        "path": str(resolved),
+        "sha256": _sha256(raw),
+        "bytes": len(raw),
+        "line_count": line_count,
+        "roles": roles,
+        "source_ref_sha256": source_ref_digests,
+        "source_ref_role_by_sha256": source_ref_roles,
+    }
+
+
+def _validate_checkpoint(checkpoints: Path, transcript: Mapping[str, Any]) -> dict[str, Any]:
+    files = sorted(checkpoints.glob("*.json"))
+    if not files:
+        raise RuntimeError("Claude transcript checkpoint was not written")
+    target = files[0]
+    checkpoint = json.loads(target.read_text(encoding="utf-8"))
+    if not isinstance(checkpoint, Mapping):
+        raise RuntimeError("Claude checkpoint is not an object")
+    offset = checkpoint.get("offset")
+    if type(offset) is not int or offset < 0 or offset > int(transcript["bytes"]):
+        raise RuntimeError("Claude checkpoint offset is outside the transcript")
+    if checkpoint.get("path") != transcript["path"]:
+        raise RuntimeError("Claude checkpoint path does not match native transcript")
+    if offset and Path(transcript["path"]).read_bytes()[offset - 1 : offset] != b"\n":
+        raise RuntimeError("Claude checkpoint offset is not a complete JSONL boundary")
+    scope = checkpoint.get("scope")
+    if not isinstance(scope, Mapping) or scope.get("host") != "claude-code":
+        raise RuntimeError("Claude checkpoint scope is missing or mismatched")
+    if any(
+        not isinstance(scope.get(key), str) or not scope.get(key)
+        for key in (
+            "user_profile_id",
+            "project_id",
+            "session_id",
+        )
+    ):
+        raise RuntimeError("Claude checkpoint scope is incomplete")
+    if checkpoint.get("identity_version") != 2:
+        raise RuntimeError("Claude checkpoint identity version is not v2")
+    return {
+        "path": str(target),
+        "sha256": _sha256(target.read_bytes()),
+        "offset": offset,
+        "transcript_bytes": transcript["bytes"],
+        "scope": dict(scope),
+        "identity_version": checkpoint.get("identity_version"),
+        "pending_dedup_count": (
+            len(checkpoint.get("pending_dedup", []))
+            if isinstance(checkpoint.get("pending_dedup"), list)
+            else 0
+        ),
+    }
+
+
+def _start_service(fixture: Path, registry: Any, config: Any) -> tuple[Any, Any, Any]:
+    from mnemos.engine import MnemosEngine
+    from mnemos.memory_service import LocalMemoryService
+    from mnemos.service import MnemosService
+    from mnemos.utils.embeddings import SimpleEmbeddingProvider
+    from mnemos.utils.llm import UnavailableLLMProvider
+    from mnemos.utils.storage import SQLiteStore
+
+    class ConstantFixtureEmbeddings(SimpleEmbeddingProvider):
+        """Offline transport fixture: every text maps to the same unit vector."""
+
+        def embed(self, text: str) -> list[float]:
+            del text
+            return [1.0] + [0.0] * 63
+
+        def embed_batch(self, texts: list[str]) -> list[list[float]]:
+            return [self.embed(text) for text in texts]
+
+    store = SQLiteStore(str(fixture / "memory.sqlite"))
+    engine = MnemosEngine(
+        config=config,
+        llm=UnavailableLLMProvider("native Claude scope smoke cognition unavailable"),
+        embedder=ConstantFixtureEmbeddings(dim=64),
+        store=store,
+        scope_registry=registry,
+        require_scope_context=True,
+    )
+    service = MnemosService(
+        dispatcher=LocalMemoryService(engine, registry),
+        descriptor_path=fixture / "runtime.json",
+        lock_path=fixture / "service.lock",
+        startup_timeout=5,
+        dispatch_timeout=20,
+    )
+    service.start()
+    context = registry.resolve(
+        fixture / "project",
+        user_profile_id=PROFILE,
+        session_id="native-claude-persistent-seed-session",
+        host="claude-code",
+    )
+    return service, store, context
+
+
+def _parse_args(argv: list[str] | None) -> argparse.Namespace:
+    parser = argparse.ArgumentParser(
+        description="Run one bounded native Claude persistent-transcript probe."
+    )
+    parser.add_argument("--snapshot", type=Path, required=True, help="clean plugin source checkout")
+    parser.add_argument("--wheel", type=Path, required=True, help="installed wheel archive")
+    parser.add_argument("--expected-wheel-sha256", required=True, help="wheel SHA256 digest")
+    parser.add_argument(
+        "--source-commit", required=True, help="source commit bound to the snapshot and wheel"
+    )
+    parser.add_argument(
+        "--environment", type=Path, required=True, help="installed wheel environment"
+    )
+    parser.add_argument("--claude-exe", type=Path, required=True, help="Claude executable")
+    parser.add_argument(
+        "--fixture-parent", type=Path, required=True, help="private external fixture root"
+    )
+    parser.add_argument(
+        "--profile", default="native-claude-mcp-v12", help="registered test profile"
+    )
+    parser.add_argument(
+        "--build-verification", type=Path, required=True, help="passed build verification JSON"
+    )
+    parser.add_argument(
+        "--timing-report", type=Path, required=True, help="passed adapter timing report JSON"
+    )
+    parser.add_argument(
+        "--timing-runner", type=Path, required=True, help="timing runner used for the report"
+    )
+    parser.add_argument("--output", type=Path, required=True, help="new evidence directory")
+    args = parser.parse_args(argv)
+    digest = args.expected_wheel_sha256.lower()
+    if len(digest) != 64 or any(char not in "0123456789abcdef" for char in digest):
+        parser.error("--expected-wheel-sha256 must be a 64-character hexadecimal digest")
+    args.expected_wheel_sha256 = digest
+    if not re.fullmatch(r"[0-9a-fA-F]{40}", args.source_commit):
+        parser.error("--source-commit must be a 40-character commit hash")
+    if not args.profile.strip() or any(char in args.profile for char in "\\/\0\r\n"):
+        parser.error("--profile must be a non-empty local identifier")
+    return args
+
+
+def main(argv: list[str] | None = None) -> int:
+    global CLAUDE_EXE, RUNTIME_PYTHON, SOURCE_COMMIT, SOURCE_ROOT, PROFILE
+    args = _parse_args(argv)
+    SOURCE_ROOT = args.snapshot.resolve()
+    SOURCE_COMMIT = args.source_commit
+    PROFILE = args.profile
+    CLAUDE_EXE = args.claude_exe.resolve()
+    environment = args.environment.resolve()
+    RUNTIME_PYTHON = (
+        environment / ("Scripts/python.exe" if os.name == "nt" else "bin/python")
+    ).resolve()
+    if not RUNTIME_PYTHON.is_file():
+        raise FileNotFoundError(f"installed environment Python is missing: {RUNTIME_PYTHON}")
+    if Path(sys.executable).resolve() != RUNTIME_PYTHON:
+        raise RuntimeError(
+            "run this helper with the explicit --environment Python so the service and plugin share one wheel"
+        )
+    output_dir = args.output.resolve()
+    if output_dir.exists():
+        raise FileExistsError(f"refusing to overwrite evidence directory: {output_dir}")
+    fixture_parent = args.fixture_parent.resolve()
+    if not fixture_parent.is_dir():
+        raise FileNotFoundError(f"required private fixture parent is missing: {fixture_parent}")
+    if output_dir == WORKTREE or output_dir.is_relative_to(WORKTREE):
+        raise RuntimeError("native evidence output must be outside the source worktree")
+    if fixture_parent == WORKTREE or fixture_parent.is_relative_to(WORKTREE):
+        raise RuntimeError("native fixture parent must be outside the source worktree")
+    output_dir.mkdir(parents=True)
+    report: dict[str, Any] = {
+        "runner": "native-claude-mcp-v12",
+        "source_commit": SOURCE_COMMIT,
+        "runner_sha256": _sha256(Path(__file__).read_bytes()),
+        "started_at": datetime.now(timezone.utc).isoformat(),
+        "status": "not_observed",
+        "scope": "native Claude plugin MCP read contract with scoped seed, durable restart, reconstructed replay; no cognition quality claim",
+        "model_quality_claim": "none",
+        "embedding_fixture": "Constant unit vectors for every text; no semantic retrieval claim",
+        "cognition": "UnavailableLLMProvider; all modules disabled",
+        "max_native_seconds": MAX_NATIVE_SECONDS,
+        "hook_timeout_seconds": HOOK_TIMEOUT_SECONDS,
+        "snapshot_argument": str(args.snapshot.resolve()),
+        "wheel_argument": str(args.wheel.resolve()),
+        "expected_wheel_sha256": args.expected_wheel_sha256,
+        "build_verification_argument": str(args.build_verification),
+        "timing_report_argument": str(args.timing_report),
+        "timing_runner_argument": str(args.timing_runner),
+        "environment_argument": str(environment),
+        "claude_executable_argument": str(CLAUDE_EXE),
+        "fixture_parent_argument": str(fixture_parent),
+        "profile": args.profile,
+        "config_generation": {
+            "method": "Claude Code --plugin-dir with the clean source snapshot",
+            "host": "claude-code",
+            "status": "not_observed",
+            "hooks_note": "Native plugin hooks are loaded from the snapshot hooks/hooks.json; no handmade --settings file is passed.",
+        },
+    }
+    fixture = Path(tempfile.mkdtemp(prefix="mnemos-native-claude-mcp-v12-", dir=fixture_parent))
+    service: Any | None = None
+    restart_service: Any | None = None
+    store: Any | None = None
+    restart_store: Any | None = None
+    process: subprocess.Popen[str] | None = None
+    auth_copy: Path | None = None
+    try:
+        from mnemos import __file__ as mnemos_file
+        from mnemos.config import MnemosConfig
+        from mnemos.scopes import ScopeRegistry
+        from mnemos.service import _protect_private_path
+
+        _protect_private_path(fixture)
+        report["plugin_snapshot"] = _verify_plugin_snapshot(SOURCE_ROOT, SOURCE_COMMIT)
+        package_path = Path(mnemos_file).resolve()
+        if "site-packages" not in {part.lower() for part in package_path.parts}:
+            raise RuntimeError(f"installed-wheel isolation failed: imported {package_path}")
+        if not package_path.is_relative_to(environment):
+            raise RuntimeError("imported Mnemos package is outside --environment")
+        report["python"] = {
+            "executable": str(Path(sys.executable).resolve()),
+            "mnemos_package": str(package_path),
+            "site_packages_asserted": True,
+        }
+        report["package_provenance"] = _pinned_package_provenance(
+            package_path,
+            wheel_path=args.wheel,
+            expected_wheel_sha256=args.expected_wheel_sha256,
+        )
+        report["build_verification"] = _verify_build(
+            args.build_verification,
+            source_commit=SOURCE_COMMIT,
+            wheel_path=args.wheel,
+            wheel_sha256=args.expected_wheel_sha256,
+        )
+        report["adapter_timing_gate"] = _verify_timing(
+            args.timing_report,
+            args.timing_runner,
+            source_commit=SOURCE_COMMIT,
+            wheel_sha256=args.expected_wheel_sha256,
+        )
+        report["claude"] = _verify_claude()
+
+        project = fixture / "project"
+        config_home = fixture / "claude-home"
+        config_dir = config_home / ".claude"
+        runtime = fixture / "runtime"
+        routing = fixture / "routing"
+        checkpoints = fixture / "checkpoints"
+        for directory in (project, config_home, config_dir, runtime, routing, checkpoints):
+            _private_mkdir(directory)
+        registry = ScopeRegistry()
+        project_identity = registry.register_project(
+            project, user_profile_id=args.profile, enabled=True
+        )
+        registry.save(fixture / "scopes.json")
+        config = MnemosConfig()
+        config.modules.surprisal = False
+        config.modules.mutable_rag = False
+        config.modules.affective = False
+        config.modules.sleep = False
+        config.modules.spreading = False
+
+        config_path = fixture / "config.toml"
+        config_path.write_text("# disposable native plugin fixture\n", encoding="utf-8")
+        _protect_private_path(config_path)
+        _protect_private_path(config_dir)
+        report["config_generation"] = {
+            "method": "Claude Code --plugin-dir",
+            "host": "claude-code",
+            "status": "plugin_snapshot_bound",
+            "plugin_root": str(SOURCE_ROOT),
+            "plugin_manifest": str(SOURCE_ROOT / ".claude-plugin/plugin.json"),
+            "hooks_manifest": str(SOURCE_ROOT / "hooks/hooks.json"),
+            "config_root": str(config_dir),
+            "private_root_asserted": config_dir.resolve().is_relative_to(fixture.resolve()),
+            "consumed_by_native_plugin_dir_argument": True,
+            "hook_configuration": "snapshot hooks/hooks.json; no handmade --settings",
+            "mcp_configuration": "snapshot .claude-plugin/plugin.json and run_mnemos_mcp.py",
+        }
+        env = _clean_environment(
+            {
+                "MNEMOS_RUNTIME_DESCRIPTOR": str(fixture / "runtime.json"),
+                "MNEMOS_SCOPE_REGISTRY": str(fixture / "scopes.json"),
+                "MNEMOS_USER_PROFILE_ID": args.profile,
+                "MNEMOS_PROJECT_ROOT": str(project),
+                "MNEMOS_RUNTIME_DIR": str(runtime),
+                "MNEMOS_CLAUDE_CHECKPOINT_DIR": str(checkpoints),
+                "MNEMOS_ROUTING_REVIEW_DIR": str(routing),
+                "MNEMOS_CONFIG_PATH": str(fixture / "config.toml"),
+                "MNEMOS_SQLITE_PATH": str(fixture / "memory.sqlite"),
+                "MNEMOS_AUTO_START": "false",
+                "DISABLE_AUTOUPDATER": "1",
+                "ENABLE_CLAUDEAI_MCP_SERVERS": "false",
+                "CLAUDE_CONFIG_DIR": str(config_dir),
+                "MNEMOS_PLUGIN_PYTHON": str(RUNTIME_PYTHON),
+                "PATH": str(RUNTIME_PYTHON.parent) + os.pathsep + os.environ.get("PATH", ""),
+            }
+        )
+        report["config_generation"]["runtime_python"] = str(RUNTIME_PYTHON)
+        report["config_generation"]["account_mcp_servers_disabled_for_process"] = True
+        report["config_generation"][
+            "account_mcp_control_source"
+        ] = "https://code.claude.com/docs/en/mcp"
+        report["config_generation"]["plugin_runtime_env"] = {
+            "MNEMOS_PLUGIN_PYTHON": str(RUNTIME_PYTHON),
+            "MNEMOS_RUNTIME_DESCRIPTOR": str(fixture / "runtime.json"),
+            "MNEMOS_SCOPE_REGISTRY": str(fixture / "scopes.json"),
+            "MNEMOS_USER_PROFILE_ID": args.profile,
+            "MNEMOS_SQLITE_PATH": str(fixture / "memory.sqlite"),
+        }
+        inventory_results: dict[str, Any] = {}
+        for label, inventory_args in {
+            "plugin_list": ["--plugin-dir", str(SOURCE_ROOT), "plugin", "list", "--json"],
+            "plugin_details": [
+                "--plugin-dir",
+                str(SOURCE_ROOT),
+                "plugin",
+                "details",
+                "mnemos-memory",
+            ],
+        }.items():
+            inventory = _run_claude(inventory_args, cwd=project, env=env, timeout=10)
+            inventory_results[label] = {
+                "returncode": inventory.returncode,
+                "stdout_sha256": _sha256(inventory.stdout),
+                "stderr_sha256": _sha256(inventory.stderr),
+                "stdout_bytes": len(inventory.stdout.encode("utf-8")),
+                "stderr_bytes": len(inventory.stderr.encode("utf-8")),
+            }
+            if inventory.returncode != 0:
+                raise RuntimeError(f"Claude plugin {label} inventory failed")
+            if label == "plugin_list" and "mnemos-memory" not in inventory.stdout:
+                raise RuntimeError("Claude plugin inventory did not list mnemos-memory")
+        report["plugin_inventory"] = inventory_results
+        report["mcp_telemetry"] = {
+            "status": "not_observed",
+            "reason": "Plugin metadata inventory does not prove MCP initialization or tool calls; the native turn must supply that evidence.",
+        }
+        auth_copy = _copy_private_auth(config_dir)
+        service, store, context = _start_service(fixture, registry, config)
+        codename = "mnemos-" + secrets.token_hex(6)
+        seed_content = SEED_PREFIX + codename + "."
+        seed = service.submit(
+            "remember",
+            {
+                "context": context.model_dump(mode="json"),
+                "event_id": "native-claude-mcp-v12-seed-" + codename,
+                "content": seed_content,
+                "scope": "project",
+            },
+        )
+        maintenance = service.submit("maintenance", {"context": context.model_dump(mode="json")})
+        before_ids = {event.id for event in store.list_episodic_events()}
+        prompt = (
+            "Use exactly two Mnemos MCP tools in order: call mnemos_health, then call "
+            "mnemos_retrieve with query 'private release codename for this project' and "
+            "the current project context. Do not use any other tool. After both calls, "
+            "answer in one short sentence with the codename returned by mnemos_retrieve."
+        )
+        command = [
+            str(CLAUDE_EXE),
+            "--print",
+            "--verbose",
+            "--output-format",
+            "stream-json",
+            "--include-hook-events",
+            "--setting-sources",
+            "project",
+            "--plugin-dir",
+            str(SOURCE_ROOT),
+            "--tools",
+            "",
+            "--allowed-tools",
+            "mcp__plugin_mnemos-memory_mnemos__mnemos_health,mcp__plugin_mnemos-memory_mnemos__mnemos_retrieve",
+            "--disable-slash-commands",
+            "--permission-mode",
+            "default",
+            "--session-id",
+            str(uuid4()),
+            "--model",
+            "claude-sonnet-4-6",
+            "--max-budget-usd",
+            "0.08",
+            "--system-prompt",
+            "Use only the two explicitly allowed Mnemos MCP tools. Call health and retrieve in order.",
+            prompt,
+        ]
+        report["command"] = [
+            item if item != prompt else "<random-codename prompt>" for item in command
+        ]
+        report["fixture_layout"] = {
+            "project": str(project),
+            "claude_config_dir": str(config_dir),
+            "private_native_stdout": str(fixture / "native-stdout.jsonl"),
+            "private_native_stderr": str(fixture / "native-stderr.log"),
+            "project_runtime_descriptor_present": (project / "runtime.json").exists(),
+            "auth_copy_performed": auth_copy is not None,
+        }
+        started = time.monotonic()
+        process = subprocess.Popen(
+            command,
+            cwd=str(project),
+            env=env,
+            stdin=subprocess.DEVNULL,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+            text=True,
+            encoding="utf-8",
+            errors="replace",
+            shell=False,
+            creationflags=getattr(subprocess, "CREATE_NEW_PROCESS_GROUP", 0),
+        )
+        timed_out = False
+        try:
+            stdout, stderr = process.communicate(timeout=MAX_NATIVE_SECONDS)
+        except subprocess.TimeoutExpired:
+            timed_out = _terminate_process_tree(process)
+            stdout, stderr = process.communicate(timeout=15)
+        elapsed_ms = round((time.monotonic() - started) * 1000, 1)
+        native_stdout = fixture / "native-stdout.jsonl"
+        native_stderr = fixture / "native-stderr.log"
+        native_stdout.write_text(stdout, encoding="utf-8")
+        native_stderr.write_text(stderr, encoding="utf-8")
+        stream = _native_stream_summary(stdout, codename)
+        mcp_calls = _native_mcp_call_summary(
+            stdout,
+            codename,
+            expected_database_path=fixture / "memory.sqlite",
+            expected_profile=context.user_profile_id,
+            expected_project_id=context.project_id,
+        )
+        report["mcp_telemetry"] = {
+            "status": (
+                "observed" if stream["mnemos_connected_and_tools_observed"] else "not_observed"
+            ),
+            "source": "native Claude system/init connected server status and tool names",
+            "servers": stream["mcp_servers_from_native_init"],
+            "tools": stream["mcp_tools_from_native_init"],
+            "tool_call_executed": bool(mcp_calls["calls"]),
+            "read_call_summary": mcp_calls,
+        }
+        hook_rows = stream["hook_rows"]
+        report["native_process"] = {
+            "returncode": process.returncode,
+            "timed_out": timed_out,
+            "elapsed_ms": elapsed_ms,
+            "stdout_sha256": _sha256(stdout),
+            "stdout_bytes": len(stdout.encode("utf-8")),
+            "stderr_sha256": _sha256(stderr),
+            "stderr_bytes": len(stderr.encode("utf-8")),
+            "private_stdout": str(native_stdout),
+            "private_stderr": str(native_stderr),
+            "stream": stream,
+        }
+        if timed_out or process.returncode != 0:
+            raise RuntimeError("native Claude process did not complete successfully")
+        results = [row for row in stream["rows"] if row.get("type") == "result"]
+        if (
+            len(results) != 1
+            or results[0].get("subtype") != "success"
+            or results[0].get("is_error") is not False
+        ):
+            raise RuntimeError("native Claude stream has no single successful result record")
+        if results[0].get("stop_reason") not in (None, "end_turn"):
+            raise RuntimeError("native Claude stream has an incomplete stop reason")
+        if not hook_rows:
+            raise RuntimeError("native Claude did not report hook events")
+        hook_responses = [row for row in hook_rows if row.get("subtype") == "hook_response"]
+        if any(row.get("outcome") not in {None, "success"} for row in hook_responses):
+            raise RuntimeError("native Claude plugin reported a failed hook response")
+        checkpoint_paths = sorted(checkpoints.glob("*.json"))
+        if not checkpoint_paths:
+            raise RuntimeError("native Claude hook did not write a checkpoint")
+        checkpoint_raw = json.loads(checkpoint_paths[0].read_text(encoding="utf-8"))
+        transcript_path_value = (
+            checkpoint_raw.get("path") if isinstance(checkpoint_raw, Mapping) else None
+        )
+        if not isinstance(transcript_path_value, str) or not transcript_path_value.strip():
+            raise RuntimeError("native checkpoint has no persistent transcript path")
+        transcript = _validate_transcript(Path(transcript_path_value), config_dir)
+        checkpoint = _validate_checkpoint(checkpoints, transcript)
+        session_id = checkpoint["scope"]["session_id"]
+        expected_scope = {
+            "user_profile_id": args.profile,
+            "project_id": project_identity.id,
+            "workspace_id": None,
+            "session_id": session_id,
+            "host": "claude-code",
+        }
+        if checkpoint["scope"] != expected_scope:
+            raise RuntimeError("Native checkpoint scope does not match this fixture")
+        events = list(store.list_episodic_events())
+        captured = [event for event in events if event.id not in before_ids]
+        provisional_diagnostics = _provisional_identity_summary(captured, transcript, store)
+        user_capture = any(
+            event.role == "user"
+            and event.content == prompt
+            and event.metadata.get("source_kind") == "claude_code_transcript"
+            for event in captured
+        )
+        assistant_capture = any(
+            event.role == "assistant"
+            and event.metadata.get("source_kind") == "claude_code_transcript"
+            for event in captured
+        )
+        transcript_sources = transcript["source_ref_role_by_sha256"]
+        user_associated = all(
+            isinstance(event.metadata.get("source_ref"), str)
+            and transcript_sources.get(_sha256(event.metadata["source_ref"])) == "user"
+            for event in captured
+            if event.role == "user"
+        ) and any(event.role == "user" for event in captured)
+        assistant_associated = all(
+            isinstance(event.metadata.get("source_ref"), str)
+            and transcript_sources.get(_sha256(event.metadata["source_ref"])) == "assistant"
+            for event in captured
+            if event.role == "assistant"
+        ) and any(event.role == "assistant" for event in captured)
+        event_identity_ok = bool(captured) and all(
+            str(event.metadata.get("source_event_id", "")).startswith("claude:v2:")
+            for event in captured
+        )
+        report["seed"] = {
+            "project_id": project_identity.id,
+            "remember_status": seed.get("status"),
+            "remember_committed": seed.get("committed"),
+            "maintenance_status": maintenance.get("status"),
+            "codename_sha256": _sha256(codename),
+            "seed_content_sha256": _sha256(seed_content),
+        }
+        report["native_hook_trace"] = {
+            "available": bool(hook_rows),
+            "records": hook_rows,
+            "payload_retention": "Claude stream hook telemetry is retained as safe fields and digests; native payloads remain in Claude's private config fixture",
+        }
+        report["persistent_transcript"] = transcript
+        report["checkpoint"] = checkpoint
+        report["captured_roles_before_restart"] = {
+            "event_count": len(captured),
+            "role_counts": {
+                "user": sum(1 for event in captured if event.role == "user"),
+                "assistant": sum(1 for event in captured if event.role == "assistant"),
+            },
+            "single_turn_expected": True,
+            "extra_capture_count": max(0, len(captured) - 2),
+            "exactly_one_user": sum(1 for event in captured if event.role == "user") == 1,
+            "exactly_one_assistant": sum(1 for event in captured if event.role == "assistant") == 1,
+            "user_capture": user_capture,
+            "assistant_capture": assistant_capture,
+            "user_transcript_association": user_associated,
+            "assistant_transcript_association": assistant_associated,
+            "claude_v2_identity": event_identity_ok,
+            "transcript_source_ref_observed": any(
+                isinstance(event.metadata.get("source_ref"), str)
+                and _sha256(event.metadata["source_ref"]) in transcript["source_ref_sha256"]
+                for event in captured
+            ),
+        }
+        report["transcript_coverage"] = {
+            "status": "private_persistent_jsonl_verified",
+            "hook_events_reported": len(hook_rows),
+            "limitation": "The transcript remains private to the disposable CLAUDE_CONFIG_DIR; the report stores its path, digest, JSONL role summary, and source reference digests only.",
+        }
+        service.stop()
+        service = None
+        store.close()
+        store = None
+        restart_service, restart_store, _ = _start_service(fixture, registry, config)
+        restart_events = list(restart_store.list_episodic_events())
+        restart_ids = {event.id for event in restart_events}
+        reconstructed_stop_payload = {
+            "cwd": str(project),
+            "session_id": session_id,
+            "transcript_path": transcript["path"],
+            "hook_event_name": "Stop",
+            "stop_hook_active": False,
+            "source": "claude-code",
+        }
+        replay = subprocess.run(
+            [
+                str(RUNTIME_PYTHON),
+                str(SOURCE_ROOT / ".claude-plugin" / "run_mnemos_hook.py"),
+                "Stop",
+            ],
+            cwd=str(project),
+            env={**env, "CLAUDE_PLUGIN_ROOT": str(SOURCE_ROOT)},
+            input=json.dumps(reconstructed_stop_payload),
+            capture_output=True,
+            text=True,
+            encoding="utf-8",
+            errors="replace",
+            check=False,
+            timeout=30,
+        )
+        replay_ids_after_hook = {event.id for event in restart_store.list_episodic_events()}
+        if replay.returncode != 0:
+            raise RuntimeError("reconstructed plugin Stop hook replay failed")
+        restart_maintenance = restart_service.submit(
+            "maintenance", {"context": context.model_dump(mode="json")}
+        )
+        replay_events = list(restart_store.list_episodic_events())
+        replay_ids = {event.id for event in replay_events}
+        checkpoint_after_restart = _validate_checkpoint(checkpoints, transcript)
+        provisional_ids = set(provisional_diagnostics["provisional_event_ids"])
+        post_events = {event.id: event for event in replay_events if event.id in provisional_ids}
+        provisional_derived_fact_ids: set[str] = set()
+        provisional_evidence_fact_ids: set[str] = set()
+        for fact in restart_store.get_all():
+            metadata = fact.metadata if isinstance(fact.metadata, Mapping) else {}
+            metadata_source_ids = metadata.get("source_event_ids", [])
+            if isinstance(metadata_source_ids, list) and any(
+                source_id in provisional_ids for source_id in metadata_source_ids
+            ):
+                provisional_derived_fact_ids.add(fact.id)
+            if any(
+                evidence.source_event_id in provisional_ids
+                for evidence in restart_store.list_fact_evidence(fact.id)
+            ):
+                provisional_evidence_fact_ids.add(fact.id)
+        post_fallback_rows = []
+        for event_id in sorted(provisional_ids):
+            event = post_events.get(event_id)
+            job = restart_store.get_job("event:" + event_id)
+            post_fallback_rows.append(
+                {
+                    "event_id": event_id,
+                    "event_status": event.status if event is not None else None,
+                    "job_id": job.id if job is not None else None,
+                    "job_kind": job.kind if job is not None else None,
+                    "job_status": job.status if job is not None else None,
+                    "fact_eligible": False,
+                }
+            )
+        provisional_diagnostics.update(
+            {
+                "fallback_contract_after_one_fixture_maintenance": all(
+                    row["event_status"] == "deferred"
+                    and row["job_kind"] == "capture_only"
+                    and row["job_status"] == "completed"
+                    for row in post_fallback_rows
+                ),
+                "provisional_fallbacks_after_maintenance": post_fallback_rows,
+                "provisional_fact_metadata_ids_after_maintenance": sorted(
+                    provisional_derived_fact_ids
+                ),
+                "provisional_evidence_fact_ids_after_maintenance": sorted(
+                    provisional_evidence_fact_ids
+                ),
+                "no_facts_or_evidence_derived_from_provisional_ids": not (
+                    provisional_derived_fact_ids or provisional_evidence_fact_ids
+                ),
+            }
+        )
+        provisional_diagnostics["criteria"] = _provisional_identity_criteria(
+            provisional_diagnostics
+        )
+        provisional_diagnostics["read_contract_criteria"] = _native_provisional_identity_criteria(
+            provisional_diagnostics
+        )
+        report["provisional_diagnostics"] = provisional_diagnostics
+        report["raw_duplicate_gate"] = {
+            "name": "exactly_two_native_captures",
+            "passed": report["captured_roles_before_restart"]["exactly_one_user"]
+            and report["captured_roles_before_restart"]["exactly_one_assistant"]
+            and len(captured) == 2,
+            "captured_event_count": len(captured),
+            "independent_of_provisional_diagnostics": True,
+            "note": "This is the original v6 duplicate gate; provisional diagnostics do not turn a duplicate into a pass.",
+        }
+        replay_same_events = replay_ids_after_hook == restart_ids
+        report["replay"] = {
+            "status": "reconstructed_plugin_hook",
+            "reason": "The original native Stop payload is unavailable from plugin telemetry; this replays the real plugin wrapper with only validated checkpoint/transcript fields.",
+            "original_native_payload_replayed": False,
+            "reconstructed_payload_fields": sorted(reconstructed_stop_payload),
+            "returncode": replay.returncode,
+            "stdout_sha256": _sha256(replay.stdout),
+            "stderr_sha256": _sha256(replay.stderr),
+            "event_count_before": len(restart_ids),
+            "event_count_after_hook": len(replay_ids_after_hook),
+            "event_count_after": len(replay_ids),
+            "no_extra_events": replay_same_events,
+            "maintenance_status": restart_maintenance.get("status"),
+            "checkpoint_offset_after": checkpoint_after_restart["offset"],
+            "checkpoint_offset_non_decreasing": checkpoint_after_restart["offset"]
+            >= checkpoint["offset"],
+        }
+        report["restart"] = {
+            "events_survive_restart": all(event.id in restart_ids for event in captured),
+            "event_count_after_restart": len(restart_events),
+            "claude_v2_ids_after_restart": all(
+                str(event.metadata.get("source_event_id", "")).startswith("claude:v2:")
+                for event in restart_events
+                if event.metadata.get("source_kind") == "claude_code_transcript"
+            ),
+        }
+        restart_service.stop()
+        restart_service = None
+        restart_store.close()
+        restart_store = None
+        report["reviewed_synthetic_answer"] = {
+            "answer_text_digests": stream["answer_text_digests"],
+            "random_canary_exact_match": stream["answer_mentions_random_canary"],
+            "quality_claim": "none",
+        }
+        report["cost"] = {
+            "total_cost_usd": stream["total_cost_usd"],
+            "observed_cost_values": stream["cost_usd_observed"],
+            "source": "native Claude stream result fields; null means the native output did not expose numeric cost",
+        }
+        normal_user_associated = all(
+            isinstance(event.metadata.get("source_ref"), str)
+            and transcript_sources.get(_sha256(event.metadata["source_ref"])) == "user"
+            for event in captured
+            if event.role == "user" and event.metadata.get("identity_status") == "normal"
+        ) and any(
+            event.role == "user" and event.metadata.get("identity_status") == "normal"
+            for event in captured
+        )
+        retrieve_result = mcp_calls["retrieve_result"] or {}
+        report["mcp_call_contract"] = {
+            "allowed_tool_names": sorted(mcp_calls["allowed_tool_names"]),
+            "call_names": mcp_calls["call_names"],
+            "forbidden_call_names": mcp_calls["forbidden_call_names"],
+            "calls": mcp_calls["calls"],
+            "results": mcp_calls["results"],
+            "health_result_ok": mcp_calls["health_result_ok"],
+            "retrieve_fact_count": retrieve_result.get("fact_count", 0),
+            "retrieve_fact_scopes": retrieve_result.get("fact_scopes", []),
+            "retrieve_seed_canary_match": retrieve_result.get("seed_canary_match", False),
+            "retrieve_seed_canary_project_scope": retrieve_result.get(
+                "seed_canary_project_scope", False
+            ),
+            "retrieve_result_service_error": retrieve_result.get("service_error", False),
+            "result_payloads_retained_as_digests": True,
+        }
+        report["criteria"] = {
+            "native_completed": process.returncode == 0 and not timed_out,
+            "hook_events_reported": bool(hook_rows),
+            "session_start_hook_reported": any(
+                row.get("hook_event") == "SessionStart" for row in hook_rows
+            ),
+            "user_prompt_hook_reported": any(
+                row.get("hook_event") == "UserPromptSubmit" for row in hook_rows
+            ),
+            "stop_hook_reported": any(row.get("hook_event") == "Stop" for row in hook_rows),
+            "user_capture": user_capture,
+            "assistant_capture": assistant_capture,
+            "normal_user_transcript_association": normal_user_associated,
+            "assistant_transcript_association": assistant_associated,
+            "claude_v2_identity": event_identity_ok,
+            "transcript_source_ref_observed": report["captured_roles_before_restart"][
+                "transcript_source_ref_observed"
+            ],
+            "persistent_transcript_valid": transcript["path"].startswith(str(config_dir.resolve())),
+            "checkpoint_valid": checkpoint["offset"] <= transcript["bytes"],
+            "events_survive_restart": report["restart"]["events_survive_restart"],
+            "reconstructed_stop_replay_no_extra_events": replay_same_events
+            and replay.returncode == 0,
+            "mcp_connected_and_tool_inventory_observed": stream[
+                "mnemos_connected_and_tools_observed"
+            ],
+            "mcp_calls_exactly_health_then_retrieve": mcp_calls["call_names"]
+            == [
+                "mcp__plugin_mnemos-memory_mnemos__mnemos_health",
+                "mcp__plugin_mnemos-memory_mnemos__mnemos_retrieve",
+            ],
+            "mcp_calls_have_correlated_results": mcp_calls["call_result_ids_match"],
+            "mcp_has_no_forbidden_calls": not mcp_calls["forbidden_call_names"],
+            "mcp_health_result_success": mcp_calls["health_result_ok"],
+            "mcp_retrieve_has_scoped_fact": retrieve_result.get("fact_count", 0) > 0
+            and retrieve_result.get("seed_canary_project_scope", False)
+            and not retrieve_result.get("service_error", False),
+            "mcp_retrieve_contains_seed": retrieve_result.get("seed_canary_match", False),
+            "checkpoint_offset_non_decreasing": checkpoint_after_restart["offset"]
+            >= checkpoint["offset"],
+            "exact_canary_answer": stream["answer_mentions_random_canary"],
+            "native_stream_is_json": stream["record_count"] > 0
+            and stream["non_json_line_count"] == 0,
+            "provisional_identity_contract": all(
+                provisional_diagnostics["read_contract_criteria"].values()
+            ),
+        }
+        report["plugin_snapshot_after"] = _verify_plugin_snapshot(SOURCE_ROOT, SOURCE_COMMIT)
+        if report["plugin_snapshot_after"] != report["plugin_snapshot"]:
+            raise RuntimeError("Plugin source changed during native validation")
+        report["status"] = "observed" if all(report["criteria"].values()) else "not_observed"
+    except Exception as exc:
+        (fixture / "runner-error.txt").write_text(traceback.format_exc(), encoding="utf-8")
+        report.update(
+            {
+                "status": "failed",
+                "error_type": type(exc).__name__,
+                "error_digest": _sha256(str(exc)),
+            }
+        )
+    finally:
+        if process is not None and process.poll() is None:
+            try:
+                _terminate_process_tree(process)
+            except Exception:
+                process.kill()
+                process.wait(timeout=10)
+        for active in (service, restart_service):
+            if active is not None:
+                try:
+                    active.stop()
+                except Exception:
+                    pass
+        for open_store in (store, restart_store):
+            if open_store is not None:
+                try:
+                    open_store.close()
+                except Exception:
+                    pass
+        if auth_copy is not None:
+            auth_copy.unlink(missing_ok=True)
+        report["fixture"] = str(fixture)
+        report["private_fixture_preserved"] = True
+        report["auth_copy_removed"] = auth_copy is None or not auth_copy.exists()
+        report["runtime_descriptor_absent"] = not (fixture / "runtime.json").exists()
+        if not report["runtime_descriptor_absent"]:
+            report["status"] = "not_observed"
+        report["finished_at"] = datetime.now(timezone.utc).isoformat()
+        (output_dir / "report.json").write_text(
+            json.dumps(report, indent=2) + "\n", encoding="utf-8"
+        )
+    print(json.dumps({key: report.get(key) for key in ("status", "fixture", "error_type")}))
+    return 0 if report["status"] == "observed" else 1
+
+
+if __name__ == "__main__":
+    if "--offline-mcp-self-test" in sys.argv[1:]:
+        raise SystemExit(_offline_mcp_self_test())
+    if "--offline-self-test" in sys.argv[1:]:
+        raise SystemExit(_offline_self_test())
+    raise SystemExit(main())
