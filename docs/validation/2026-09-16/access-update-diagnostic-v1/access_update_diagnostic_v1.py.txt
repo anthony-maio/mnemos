@@ -1,0 +1,257 @@
+"""Measure durable access updates on equal vector and no-vector fixtures."""
+
+from __future__ import annotations
+
+import hashlib
+import json
+import math
+import os
+from datetime import datetime, timedelta, timezone
+from pathlib import Path
+import shutil
+import subprocess
+import sys
+import tempfile
+import time
+from typing import Any
+
+SOURCE_COMMIT = "d94ded67a6b3fe6b6f7474a74518d4efb143698e"
+WORKTREE = Path(__file__).resolve().parents[1]
+OUTPUT_DIR = WORKTREE / ".venv" / "access-update-diagnostic-v1"
+ROWS = 10_000
+UPDATE_COUNT = 100
+UPDATED_IDS = [f"performance-fact-{index:05d}" for index in range(5)]
+EMBEDDING_DIMENSION = 768
+
+
+def _sha256(data: bytes) -> str:
+    return hashlib.sha256(data).hexdigest()
+
+
+def _normalized(data: bytes) -> bytes:
+    return data.replace(b"\r\n", b"\n")
+
+
+def _file_bytes(path: Path) -> int:
+    try:
+        return path.stat().st_size
+    except FileNotFoundError:
+        return 0
+
+
+def _vector_from_base(index: int) -> list[float]:
+    digest = hashlib.sha256(f"mnemos-performance-load:{index}".encode()).digest()
+    values: list[float] = []
+    for offset in range(EMBEDDING_DIMENSION):
+        byte = digest[offset % len(digest)]
+        perturbation = (byte - 127.5) / 127.5
+        values.append((1.0 if offset == 0 else 0.0) + 0.015 * perturbation)
+    norm = math.sqrt(sum(value * value for value in values))
+    return [value / norm for value in values]
+
+
+def _source_provenance() -> dict[str, Any]:
+    storage_path = WORKTREE / "mnemos" / "utils" / "storage.py"
+    performance_path = WORKTREE / "benchmarks" / "local_memory" / "performance.py"
+    package_path = Path(__import__("mnemos").__file__).resolve().parent
+    installed_storage = package_path / "utils" / "storage.py"
+    expected_storage = subprocess.run(
+        ["git", "-C", str(WORKTREE), "show", f"{SOURCE_COMMIT}:mnemos/utils/storage.py"],
+        capture_output=True,
+        check=True,
+        timeout=10,
+    ).stdout
+    actual_storage = installed_storage.read_bytes()
+    if _normalized(expected_storage) != _normalized(actual_storage):
+        raise RuntimeError("installed SQLiteStore does not match the pinned source")
+    return {
+        "source_commit": SOURCE_COMMIT,
+        "helper_sha256": _sha256(Path(__file__).read_bytes()),
+        "storage_source_sha256": _sha256(_normalized(expected_storage)),
+        "storage_checkout_sha256": _sha256(_normalized(storage_path.read_bytes())),
+        "performance_source_sha256": _sha256(_normalized(performance_path.read_bytes())),
+        "installed_mnemos": str(package_path),
+        "installed_storage": str(installed_storage),
+        "installed_storage_sha256": _sha256(_normalized(actual_storage)),
+        "python": str(Path(sys.executable).resolve()),
+    }
+
+
+def _sqlite_settings(store: Any) -> dict[str, Any]:
+    with store._lock:
+        connection = store._conn
+        page_size = int(connection.execute("PRAGMA page_size").fetchone()[0])
+        journal_mode = str(connection.execute("PRAGMA journal_mode").fetchone()[0])
+        synchronous = int(connection.execute("PRAGMA synchronous").fetchone()[0])
+        wal_autocheckpoint = int(connection.execute("PRAGMA wal_autocheckpoint").fetchone()[0])
+    return {
+        "page_size": page_size,
+        "journal_mode": journal_mode,
+        "synchronous": synchronous,
+        "synchronous_label": {0: "OFF", 1: "NORMAL", 2: "FULL", 3: "EXTRA"}.get(
+            synchronous, "unknown"
+        ),
+        "wal_autocheckpoint": wal_autocheckpoint,
+    }
+
+
+def _insert_fixture(store: Any, *, with_embeddings: bool, project_id: str) -> None:
+    from mnemos.types import MemoryChunk
+
+    insert_sql = """
+        INSERT INTO memory_chunks
+        (id, content, embedding, metadata, salience, cognitive_state,
+         created_at, updated_at, access_count, version, canonical_key,
+         user_profile_id, surprisal_score, surprisal_status, cognitive_state_status,
+         last_observed_at, observation_count, last_retrieved_at, reconsolidation_due_at)
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+    """
+    now = datetime.now(timezone.utc)
+    rows: list[tuple[Any, ...]] = []
+    for index in range(ROWS):
+        scope = "project" if index < 8_000 else "workspace" if index < 9_000 else "global"
+        scope_id = (
+            project_id if scope == "project" else "workspace-a" if scope == "workspace" else None
+        )
+        chunk = MemoryChunk(
+            id=f"performance-fact-{index:05d}",
+            content=f"Synthetic benchmark fact {index:05d} in {scope} scope.",
+            embedding=_vector_from_base(index) if with_embeddings else None,
+            metadata={
+                "scope": scope,
+                "scope_id": scope_id,
+                "user_profile_id": "performance-profile",
+                "benchmark_fixture": "synthetic_vector_load",
+                "embedding_provenance": (
+                    "deterministic_unit_base_vector"
+                    if with_embeddings
+                    else "absent_embedding_control"
+                ),
+            },
+            created_at=now,
+            updated_at=now,
+        )
+        rows.append(store._chunk_to_row(chunk))
+        if len(rows) == 500:
+            store._conn.executemany(insert_sql, rows)
+            store._conn.commit()
+            rows.clear()
+    if rows:
+        store._conn.executemany(insert_sql, rows)
+    store._conn.commit()
+    store.rebuild_indexes(rebuild_fts=False, rebuild_vec=True)
+
+
+def _embedding_row_bytes(store: Any) -> int:
+    with store._lock:
+        value = store._conn.execute(
+            "SELECT COALESCE(SUM(length(embedding)), 0) FROM memory_chunks "
+            "WHERE embedding IS NOT NULL"
+        ).fetchone()[0]
+    return int(value)
+
+
+def _measure_fixture(root: Path, *, with_embeddings: bool) -> dict[str, Any]:
+    from mnemos.utils.storage import SQLiteStore
+
+    db_path = root / ("with-embeddings.sqlite" if with_embeddings else "without-embeddings.sqlite")
+    store = SQLiteStore(str(db_path))
+    try:
+        _insert_fixture(store, with_embeddings=with_embeddings, project_id="diagnostic-project")
+        settings = _sqlite_settings(store)
+        before = {
+            "database_bytes": _file_bytes(db_path),
+            "wal_bytes": _file_bytes(Path(str(db_path) + "-wal")),
+            "embedding_row_bytes": _embedding_row_bytes(store),
+        }
+        timestamps = [
+            datetime(2026, 1, 1, tzinfo=timezone.utc) + timedelta(seconds=index)
+            for index in range(UPDATE_COUNT)
+        ]
+        updates: list[dict[str, Any]] = []
+        started = time.perf_counter()
+        for index, timestamp in enumerate(timestamps):
+            call_started = time.perf_counter()
+            rowcount = store.mark_retrieved_many(UPDATED_IDS, retrieved_at=timestamp)
+            updates.append(
+                {
+                    "index": index,
+                    "latency_ms": round((time.perf_counter() - call_started) * 1000, 3),
+                    "rowcount": rowcount,
+                    "database_bytes": _file_bytes(db_path),
+                    "wal_bytes": _file_bytes(Path(str(db_path) + "-wal")),
+                }
+            )
+        elapsed_ms = (time.perf_counter() - started) * 1000
+        with store._lock:
+            checkpoint = store._conn.execute("PRAGMA wal_checkpoint(PASSIVE)").fetchone()
+        after_checkpoint = {
+            "database_bytes": _file_bytes(db_path),
+            "wal_bytes": _file_bytes(Path(str(db_path) + "-wal")),
+            "embedding_row_bytes": _embedding_row_bytes(store),
+        }
+        return {
+            "embedding_mode": "768-dimensional" if with_embeddings else "absent",
+            "rows": ROWS,
+            "updated_ids": UPDATED_IDS,
+            "update_count": UPDATE_COUNT,
+            "settings": settings,
+            "before_timed_updates": before,
+            "updates": updates,
+            "timed_sequence_ms": round(elapsed_ms, 3),
+            "checkpoint_after_timed_sequence": list(checkpoint),
+            "after_checkpoint": after_checkpoint,
+            "database_path": str(db_path),
+        }
+    finally:
+        store.close()
+
+
+def main() -> int:
+    if OUTPUT_DIR.exists():
+        raise FileExistsError(f"refusing existing output: {OUTPUT_DIR}")
+    provenance = _source_provenance()
+    OUTPUT_DIR.mkdir(parents=True)
+    fixture_root = Path(
+        tempfile.mkdtemp(prefix="mnemos-access-update-diagnostic-", dir=r"D:\WindowsTemp")
+    )
+    report: dict[str, Any] = {
+        "schema_version": 1,
+        "status": "running",
+        "command": [str(Path(sys.executable).resolve()), *sys.argv],
+        "started_at": datetime.now(timezone.utc).isoformat(),
+        "provenance": provenance,
+        "fixture": {
+            "rows": ROWS,
+            "updates_per_fixture": UPDATE_COUNT,
+            "updated_ids": UPDATED_IDS,
+            "embedding_dimension": EMBEDDING_DIMENSION,
+            "transaction_policy": "SQLiteStore defaults WAL and synchronous FULL; one commit per mark_retrieved_many call",
+            "checkpoint_policy": "PRAGMA wal_checkpoint(PASSIVE) queried once after the timed sequence",
+        },
+        "fixtures": [],
+    }
+    try:
+        for with_embeddings in (True, False):
+            report["fixtures"].append(
+                _measure_fixture(fixture_root, with_embeddings=with_embeddings)
+            )
+        report["status"] = "completed"
+    except Exception as exc:
+        report["status"] = "failed"
+        report["error_type"] = type(exc).__name__
+        report["error_digest"] = _sha256(str(exc).encode("utf-8"))
+    finally:
+        report["finished_at"] = datetime.now(timezone.utc).isoformat()
+        report["fixture_root"] = str(fixture_root)
+        report["fixture_cleanup"] = "removed"
+        (OUTPUT_DIR / "report.json").write_text(
+            json.dumps(report, ensure_ascii=True, indent=2, sort_keys=True) + "\n",
+            encoding="utf-8",
+        )
+        shutil.rmtree(fixture_root, ignore_errors=True)
+    return 0 if report["status"] == "completed" else 1
+
+
+if __name__ == "__main__":
+    raise SystemExit(main())

@@ -176,3 +176,14 @@ This remains a synthetic 10,000-fact load with real query embeddings, not an
 extraction-quality or complete native-host measurement. The next diagnostic
 compares matched metadata updates with and without large embedding payloads
 while preserving WAL/FULL commits. No storage optimization is accepted yet.
+
+## Storage-width diagnostic
+
+The installed d94 store completed 100 five-ID updates on each of two disposable
+10,000-row fixtures. The vector-bearing fixture measured 2,043.45 ms p95;
+the no-vector control measured 170.84 ms p95. Both retained WAL/FULL.
+The vector arm ran first, and the held-out queue remained active. The run
+supports testing a smaller access-metadata table but does not establish a
+causal effect or a recall improvement. WAL file capacity stayed constant;
+that does not measure the volume of frames overwritten.
+[Raw diagnostic and limitations](access-update-diagnostic-v1/README.md).
