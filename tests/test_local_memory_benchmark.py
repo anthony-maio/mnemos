@@ -492,16 +492,20 @@ def test_performance_components_reject_duplicate_diagnostic_metadata_write() -> 
     store.close()
 
 
+@pytest.mark.parametrize("prefixes", [("", ""), ("query: ", "document: ")])
 def test_measure_retrieval_performs_one_metadata_update_per_engine_query(
-    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch, prefixes: tuple[str, str]
 ) -> None:
+    embedded_texts: list[str] = []
+
     class FakeOllama:
         dim = 768
 
         def __init__(self, **_: object) -> None:
             pass
 
-        def embed(self, _text: str) -> list[float]:
+        def embed(self, text: str) -> list[float]:
+            embedded_texts.append(text)
             return [1.0] + [0.0] * 767
 
     def tiny_load(store: SQLiteStore, base_vector: list[float], project_id: str) -> None:
@@ -540,8 +544,15 @@ def test_measure_retrieval_performs_one_metadata_update_per_engine_query(
         endpoint="http://offline.invalid",
         embedding_model="offline-embedding",
         cognition_model="offline-cognition",
+        query_prefix=prefixes[0],
+        document_prefix=prefixes[1],
     )
 
+    assert embedded_texts == [
+        prefixes[1] + "Observed seed vector for synthetic load construction.",
+        prefixes[0] + "tiny query",
+        prefixes[0] + "tiny query",
+    ]
     # One warmup plus one measured query. The old post-query probe would add a
     # second metadata update for each query.
     assert len(mark_calls) == len(performance_module.QUERY_TEXTS[:3]) + len(

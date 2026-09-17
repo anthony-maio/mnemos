@@ -35,6 +35,7 @@ from mnemos.utils.embeddings import (
     OllamaEmbeddingProvider,
     PrefixEmbeddingProvider,
     SimpleEmbeddingProvider,
+    embed_text_for_role,
 )
 from mnemos.utils.storage import SQLiteStore
 
@@ -476,7 +477,9 @@ def measure_retrieval(
             document_prefix=document_prefix,
             symmetric_prefix=symmetric_prefix,
         )
-    observed = embedder.embed_document("Observed seed vector for synthetic load construction.")
+    observed = embed_text_for_role(
+        embedder, "Observed seed vector for synthetic load construction.", role="document"
+    )
     observed_ms = (time.perf_counter() - observed_started) * 1000
     if len(observed) != 768:
         raise ValueError(f"expected 768-dimensional embedding, received {len(observed)}")
