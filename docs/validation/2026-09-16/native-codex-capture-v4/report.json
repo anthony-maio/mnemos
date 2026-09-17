@@ -1,0 +1,188 @@
+{
+  "runner": "native-codex-capture-v4",
+  "source_commit": "d17dd249424f3e2c11b8fefee4a20bba8f50cf9f",
+  "runner_sha256": "035151085641517ad001066be77660b20620d64050b592842e03de80630407c7",
+  "started_at": "2026-09-17T05:54:02.005540+00:00",
+  "status": "not_observed",
+  "scope": "native Codex hook capture and seeded recall; unavailable cognition; simple embeddings",
+  "model_quality_claim": "none",
+  "worktree_head": "5ab0854a75eebec6d047064ac4e3b9b9a0e159ef",
+  "cli": {
+    "path": "C:\\Users\\Ant\\AppData\\Roaming\\npm\\node_modules\\@openai\\codex\\node_modules\\@openai\\codex-win32-x64\\vendor\\x86_64-pc-windows-msvc\\bin\\codex.exe",
+    "version": "codex-cli 0.146.0",
+    "help_flags_verified": [
+      "--cd",
+      "--dangerously-bypass-hook-trust",
+      "--enable",
+      "--ephemeral",
+      "--json",
+      "--sandbox",
+      "--skip-git-repo-check",
+      "hooks",
+      "read-only"
+    ],
+    "approval_flag_placement": {
+      "top_level": true,
+      "exec": false,
+      "command_uses": false
+    }
+  },
+  "python": {
+    "executable": "D:\\WindowsTemp\\wheel-smoke\\Scripts\\python.exe",
+    "mnemos_package": "D:\\WindowsTemp\\wheel-smoke\\Lib\\site-packages\\mnemos\\__init__.py",
+    "site_packages_asserted": true
+  },
+  "package_provenance": {
+    "source_commit": "d17dd249424f3e2c11b8fefee4a20bba8f50cf9f",
+    "python_files_checked": 48,
+    "mismatches": [],
+    "wheel_sha256_expected": "a078ce7392bd8fc6181148cf270928805b23a191cc710b5da716fb2291b88614",
+    "wheel_sha256_observed": "a078ce7392bd8fc6181148cf270928805b23a191cc710b5da716fb2291b88614",
+    "wheel_path": "D:\\WindowsTemp\\mnemos-shell-wheel-build\\mnemos_memory-0.7.0-py3-none-any.whl"
+  },
+  "command": [
+    "C:\\Users\\Ant\\AppData\\Roaming\\npm\\node_modules\\@openai\\codex\\node_modules\\@openai\\codex-win32-x64\\vendor\\x86_64-pc-windows-msvc\\bin\\codex.exe",
+    "exec",
+    "--json",
+    "--enable",
+    "hooks",
+    "--dangerously-bypass-hook-trust",
+    "--sandbox",
+    "read-only",
+    "--cd",
+    "D:\\WindowsTemp\\mnemos-native-codex-capture-v4-czc0pgog\\project",
+    "--skip-git-repo-check",
+    "--ephemeral",
+    "<seeded-recall prompt>"
+  ],
+  "native_process": {
+    "returncode": 0,
+    "timed_out": false,
+    "elapsed_ms": 30693.3,
+    "stdout_path": "D:\\WindowsTemp\\mnemos-native-codex-capture-v4-czc0pgog\\native-stdout.jsonl",
+    "stderr_path": "D:\\WindowsTemp\\mnemos-native-codex-capture-v4-czc0pgog\\native-stderr.log",
+    "stdout_sha256": "3d2c6ed4eeee924648de9de1fb53b3dabe810eecb01b0b83f0e744d19898a6f5",
+    "stderr_sha256": "f7ae77ce8236d50c33a36ae973b7aa6ac3086e71ff62fb436d51672cb721b34e",
+    "events": {
+      "record_count": 7,
+      "non_json_line_count": 0,
+      "types": [
+        "item.completed",
+        "thread.started",
+        "turn.completed",
+        "turn.started"
+      ],
+      "rows": [
+        {
+          "type": "thread.started",
+          "item_type": null,
+          "event_type": null,
+          "model": null,
+          "error_present": false,
+          "error_digest": null,
+          "usage": {}
+        },
+        {
+          "type": "item.completed",
+          "item_type": "error",
+          "event_type": null,
+          "model": null,
+          "error_present": true,
+          "error_digest": "9ae0be6ab478140d49ffbed0007f7aaf3f1992c17dff23c3cb9fe2d7455cd7d8",
+          "usage": {}
+        },
+        {
+          "type": "item.completed",
+          "item_type": "error",
+          "event_type": null,
+          "model": null,
+          "error_present": true,
+          "error_digest": "9ae0be6ab478140d49ffbed0007f7aaf3f1992c17dff23c3cb9fe2d7455cd7d8",
+          "usage": {}
+        },
+        {
+          "type": "turn.started",
+          "item_type": null,
+          "event_type": null,
+          "model": null,
+          "error_present": false,
+          "error_digest": null,
+          "usage": {}
+        },
+        {
+          "type": "item.completed",
+          "item_type": "error",
+          "event_type": null,
+          "model": null,
+          "error_present": true,
+          "error_digest": "ab4a4e7e16182afebbe24848add270e2d0b577e30d12ef830503e1f5d13c4a7f",
+          "usage": {}
+        },
+        {
+          "type": "item.completed",
+          "item_type": "agent_message",
+          "event_type": null,
+          "model": null,
+          "error_present": false,
+          "error_digest": null,
+          "usage": {}
+        },
+        {
+          "type": "turn.completed",
+          "item_type": null,
+          "event_type": null,
+          "model": null,
+          "error_present": false,
+          "error_digest": null,
+          "usage": {
+            "input_tokens": 18810,
+            "cached_input_tokens": 10624,
+            "cache_write_input_tokens": 0,
+            "output_tokens": 10,
+            "reasoning_output_tokens": 0
+          }
+        }
+      ],
+      "error_count": 3,
+      "models": [],
+      "usage_observed": true,
+      "answer_mentions_sqlite": false
+    }
+  },
+  "seed": {
+    "project_id": "2ab63e9b-2f58-48db-b2e9-1ef37757c510",
+    "remember": {
+      "status": "committed",
+      "processing_status": "pending"
+    },
+    "maintenance": {
+      "completed": 0,
+      "status": null,
+      "seed_completed": 1
+    }
+  },
+  "captured_roles_before_restart": {
+    "event_count": 0,
+    "user_codex_hook": false,
+    "assistant_codex_hook": false
+  },
+  "restart": {
+    "events_survive_restart": true,
+    "event_count_after_restart": 1,
+    "role_counts_after_restart": {
+      "user": 1,
+      "assistant": 0
+    }
+  },
+  "adapter_invocations": {
+    "count": 0,
+    "events": [],
+    "wrapper_proves_actual_calls": false,
+    "seeded_recall_context_observed": false,
+    "trace_directory": "D:\\WindowsTemp\\mnemos-native-codex-capture-v4-czc0pgog\\hooks"
+  },
+  "fixture": "D:\\WindowsTemp\\mnemos-native-codex-capture-v4-czc0pgog",
+  "private_fixture_preserved": true,
+  "auth_copy_removed": true,
+  "finished_at": "2026-09-17T05:54:39.554876+00:00"
+}

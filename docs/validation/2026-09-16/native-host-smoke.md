@@ -210,3 +210,30 @@ also used the installed `d17dd24` package. Direct Python and the tagged Windows
 shell command each captured a distinct prompt and returned seeded context;
 both events survived service restart. This supplies isolated adapter and shell
 transport evidence. It does not launch a native Codex conversation.
+
+## Direct executable native Codex capture follow-up
+
+A fresh native CLI 0.146.0 run used the direct executable, an ACL-protected
+temporary home, `hooks.json`, and the verified installed `d17dd24` wheel. It
+completed in 30.693 seconds, below its 60-second limit, with exit code zero.
+No wrapper trace, prompt event, assistant event, or supplied memory context
+was observed. The model answered "The project uses PostgreSQL" although the
+fixture held the SQLite seed. Native Mnemos capture and recall therefore
+remain unproven.
+
+Unlike the earlier marker run, this result retained numeric usage: 18,810
+input tokens, including 10,624 cached input tokens, and 10 output tokens.
+The stream did not identify the model. Three items labeled `error` contained
+hook-trust and shortened-skill-description notices, rather than a useful hook
+failure explanation. Global skills were still discovered despite the temporary
+home, so this was not an empty host context.
+
+The [v4 report](native-codex-capture-v4/report.json) preserves invocation,
+package provenance, numeric usage, and the negative outcome. Its [reviewed
+observations](native-codex-capture-v4/observations.json) retain the synthetic
+answer and notices. Exact streams remain in the private fixture
+`D:\WindowsTemp\mnemos-native-codex-capture-v4-czc0pgog`. The temporary auth
+copy and service descriptor were removed, and no matching Codex, Python, or
+cmd process remained. The next investigation compares the host's actual shell
+selection with the CMD transport already tested offline; no shell diagnosis
+is claimed from the missing callback alone.

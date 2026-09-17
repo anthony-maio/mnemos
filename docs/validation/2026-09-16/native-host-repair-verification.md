@@ -16,6 +16,13 @@ whether initialization, filesystem behavior, or scheduling caused the delay.
 Other real-model work was running concurrently; that is context, not a proven
 cause.
 
+The failed fixture was retained before pytest cleanup. Its partial SQLite
+schema contained only `memory_chunks` and the canonical-key index, plus the
+table's primary-key index. This places the interrupted startup inside early
+schema initialization. It does not identify which wait caused the delay. The
+file hashes and schema inspection are preserved with attempt v1; a private
+copy remains under `.venv/service-startup-failure-v1`.
+
 The unchanged test passed alone in 4.68 seconds. Both outcomes are preserved
 under [attempt-v1](native-host-repair-verification/attempt-v1/verification.json).
 No timeout, assertion, or durability setting was relaxed. The independent retry
