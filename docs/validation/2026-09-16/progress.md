@@ -131,3 +131,13 @@ The source exclusion now applies only to paths inside the checkout and rejects
 an empty runnable surface. The replacement run uses a new frozen commit and
 fresh output and checkpoint directories; dataset labels and quality gates
 are unchanged.
+
+The replacement queue is running from frozen commit `5e852e7`. Source
+preflight and the live profile manifest agree on 118 source/configuration
+files and hash `dd0631c56f5270679a84eee0d3f33c2c6f9c86f6cd7dcd4e4dcc98fde196d949`.
+Eight baseline observations were durably checkpointed at the first progress
+check; no quality acceptance result is claimed. The supplement is queued
+after the lifecycle matrix. The provenance regression suite passed 31 tests.
+The rebuilt frozen wheel is byte-identical to the installed wheel already
+tested outside the checkout; source and wheel metadata checks passed. See
+[evaluation-running.md](evaluation-running.md) and [frozen-build.json](frozen-build.json).

@@ -23,8 +23,8 @@ boundaries and thresholds remain in the [implementation plan](../../plans/2026-0
 | T15 UI | Project enable/pause, observed readiness, facts/history/correction/forget, job state | API and browser checks; bounded-list and active-store labels disclosed |
 | T16 Recovery | Consistent backup, new-path restore, suppression merge, staged reindex and activation backup | Backup, integrity, identity, ownership, and reindex tests |
 | T17 Cross-host | One service contract for all three host contexts | Synthetic adapter continuity passes across restart/correct/forget; complete native matrix and two-week pilot remain open |
-| T18 Evaluation | Frozen lifecycle dataset, real provider adapter, seven profiles, checkpoints, raw traces, intervals | Development smoke only; full held-out run and competing-candidate module tests remain open |
-| T19 Claims and packaging | Operational docs, host matrix, paper errata, packaged UI and helper agents | Broad suite passed; source/wheel build and metadata checks passed; installed-wheel lifecycle and assets passed; evaluation source freeze follows |
+| T18 Evaluation | Frozen lifecycle dataset, real provider adapter, seven profiles, checkpoints, raw traces, intervals | Real lifecycle run in progress from `5e852e7`; competing-candidate supplement queued; quality acceptance pending |
+| T19 Claims and packaging | Operational docs, host matrix, paper errata, packaged UI and helper agents | Broad suite passed; frozen source/wheel build and metadata checks passed; installed-wheel lifecycle and assets passed |
 
 The current capture recommendation is a hybrid: automatically capture enabled
 project conversations as retained evidence, extract durable facts separately,

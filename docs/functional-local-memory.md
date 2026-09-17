@@ -114,7 +114,7 @@ Current evidence has these boundaries:
 | --- | --- |
 | Deterministic module and storage tests | 508 passed, 2 optional WSL checks skipped in the broad run; both WSL checks passed when explicitly enabled; subsequent benchmark artifact regression suite: 29 passed |
 | Synthetic local service and SQLite restart flow | Observed for one provider-backed fact |
-| Full real-model ablation and held-out quality evaluation | NOT RUN |
+| Full real-model ablation and held-out quality evaluation | RUNNING from frozen commit `5e852e7`; no completed acceptance result yet; see [run record](validation/2026-09-16/evaluation-running.md) |
 | Installed Claude Code, Codex, and Hermes host smoke | Adapter/service contracts pass; actual WSL bridge and installed Hermes API observed; complete native conversation matrix NOT RUN |
 | Two-week pilot with external users or projects | NOT RUN |
 | 10,000-fact latency and growth acceptance | Real query embeddings with synthetic facts: recall 506.111 ms p95 fails the 500 ms gate; durable capture 68.228 ms p95 passes the 100 ms gate; database 324,862,864 bytes |
