@@ -192,6 +192,11 @@ async def test_codex_claude_hermes_share_durable_scoped_lifecycle(
             {"context": contexts["codex"], "allowed_scopes": ["project"], "limit": 20},
             queue_on_failure=False,
         )
+        assert listed.get("degraded") is not True and "error" not in listed, (
+            teaching_host,
+            listed,
+        )
+        assert isinstance(listed.get("facts"), list), (teaching_host, listed)
         facts = listed["facts"]
         assert len(facts) == 1
         target = facts[0]
