@@ -1181,3 +1181,18 @@ aggregate user/transcript association check fail. The separate provisional
 identity contract passes, including no facts or evidence from that event.
 This preserves ambiguity rather than merging repeated identical prompts by
 text. [Reports and executed helpers](native-plugin-checkpoint-v1/README.md).
+
+## Graph ranking sensitivity separated from connectivity
+
+The offline [strict graph-weight diagnostic](graph-weight-diagnostic-v2/README.md)
+held five development cases, capacity-16 stores, candidates, and activation
+fixed across weights 0.0, 0.1, 0.2, and 0.4. The one structurally eligible target
+ranked 34, 33, 16, and 3; four other targets remained unreachable. Every candidate
+was scored with its own energy, and the production top-five list matched the
+recorded ordering for all twenty observations. The default weight remains 0.1.
+
+The strict run verified clean d94 source and unchanged package/benchmark,
+vector, and input-report hashes before and after. It made no provider calls.
+The exploratory v1 report is preserved with its weaker provenance and unknown
+prior attempt history. Neither run establishes held-out graph utility or closes
+the coverage gate. Increasing ranking weight cannot repair a missing path.

@@ -1,0 +1,332 @@
+"""Offline graph-weight sensitivity diagnostic over frozen capacity-16 stores."""
+
+from __future__ import annotations
+
+import argparse
+import hashlib
+import json
+import math
+import os
+from pathlib import Path
+import platform
+import shutil
+import sys
+from typing import Any, Mapping
+
+
+WEIGHTS = (0.0, 0.1, 0.2, 0.4)
+SOURCE_COMMIT = "d94ded67a6b3fe6b6f7474a74518d4efb143698e"
+VECTOR_PATH = Path("docs/validation/2026-09-16/graph-capacity-diagnostic-v2/frozen-vectors.json")
+CAPACITY_REPORT = Path("docs/validation/2026-09-16/graph-capacity-diagnostic-v2/report.json")
+
+
+def _digest(path: Path) -> str:
+    hasher = hashlib.sha256()
+    with path.open("rb") as stream:
+        for block in iter(lambda: stream.read(1024 * 1024), b""):
+            hasher.update(block)
+    return hasher.hexdigest()
+
+
+def _fresh(path: Path) -> None:
+    if path.exists():
+        children = list(path.iterdir()) if path.is_dir() else []
+        if path.is_dir() and not children:
+            return
+        if path.name == "graph-weight-diagnostic-v1" and all(
+            child.is_dir() and child.name.startswith("weight-") for child in children
+        ):
+            # A prior invocation may have stopped after creating an arm
+            # directory. Reusing only this helper's empty/partial layout does
+            # not overwrite an unrelated pre-existing output tree.
+            return
+        if path.name == "graph-weight-diagnostic-v1":
+            report = path / "report.json"
+            if report.is_file():
+                try:
+                    prior = json.loads(report.read_text(encoding="utf-8"))
+                except (OSError, json.JSONDecodeError):
+                    prior = None
+                if isinstance(prior, dict) and prior.get("diagnostic") == "graph-weight-diagnostic-v1":
+                    return
+        raise RuntimeError(f"refusing existing diagnostic path: {path}")
+    path.mkdir(parents=True)
+
+
+def _load_snapshot(snapshot: Path) -> tuple[Any, Any, Any]:
+    sys.path.insert(0, str(snapshot))
+    import benchmarks.local_memory.graph_measurement as measurement
+    import benchmarks.local_memory.module_mechanism as mechanism
+    from mnemos.retrieval import score_candidate
+
+    imported = {
+        "measurement": Path(measurement.__file__).resolve(),
+        "mechanism": Path(mechanism.__file__).resolve(),
+        "retrieval": Path(score_candidate.__code__.co_filename).resolve(),
+    }
+    if any(snapshot not in path.parents for path in imported.values()):
+        raise RuntimeError(f"import escaped frozen snapshot: {imported}")
+    return measurement, mechanism, score_candidate
+
+
+def _case_rows(
+    *,
+    case: Any,
+    store: Any,
+    engine: Any,
+    measurement: Any,
+    mechanism: Any,
+    score_candidate: Any,
+    weight: float,
+) -> dict[str, Any]:
+    context = mechanism._context_model(case.context)
+    predicate = measurement._scope_predicate(context)
+    vector_ids, lexical_ids, direct_ids = measurement._direct_pool(store, case, predicate)
+    nodes = {chunk.id: chunk for chunk in store.get_all()}
+    selected_seed = mechanism._actual_seed(case.query_embedding, vector_ids, nodes)
+    if selected_seed is None:
+        raise RuntimeError(f"no selected seed for {case.id}")
+    graph_results, _ = measurement._query(engine, case, context, "biomimetic")
+    activation, _ = measurement._activation(engine, case, predicate, selected_seed)
+    candidate_ids = sorted(set(direct_ids) | set(activation))
+    candidates = {candidate_id: nodes[candidate_id] for candidate_id in candidate_ids}
+    scored: list[dict[str, Any]] = []
+    for candidate_id in candidate_ids:
+        chunk = candidates[candidate_id]
+        breakdown = score_candidate(
+            chunk,
+            case.query_embedding,
+            current_state=None,
+            affective=False,
+            graph_energy=float(activation.get(candidate_id, 0.0)),
+            graph_weight=weight,
+        )
+        scored.append(
+            {
+                "id": candidate_id,
+                "semantic": float(breakdown.semantic),
+                "graph_energy": float(breakdown.graph_energy),
+                "graph_contribution": float(breakdown.graph_contribution),
+                "total": float(breakdown.total),
+            }
+        )
+    scored.sort(key=lambda row: (-row["total"], row["id"]))
+    target = next((row for row in scored if row["id"] == case.target_id), None)
+    target_chunk = nodes.get(case.target_id)
+    if target_chunk is None:
+        raise RuntimeError(f"target fact is absent from persisted store: {case.target_id}")
+    if target is None:
+        target_breakdown = score_candidate(
+            target_chunk,
+            case.query_embedding,
+            current_state=None,
+            affective=False,
+            graph_energy=float(activation.get(case.target_id, 0.0)),
+            graph_weight=weight,
+        )
+        target = {
+            "id": case.target_id,
+            "semantic": float(target_breakdown.semantic),
+            "graph_energy": float(target_breakdown.graph_energy),
+            "graph_contribution": float(target_breakdown.graph_contribution),
+            "total": float(target_breakdown.total),
+        }
+    target_rank = next(
+        (index + 1 for index, row in enumerate(scored) if row["id"] == case.target_id),
+        None,
+    )
+    production_ids = [chunk.id for chunk in graph_results]
+    if weight == 0.1 and production_ids != [row["id"] for row in scored[: case.top_k]]:
+        raise RuntimeError(
+            f"production scorer mismatch for {case.id}: "
+            f"actual={production_ids!r} calculated={[row['id'] for row in scored[:case.top_k]]!r}"
+        )
+    return {
+        "case_id": case.id,
+        "weight": weight,
+        "selected_seed_id": selected_seed,
+        "vector_ids": vector_ids,
+        "lexical_ids": lexical_ids,
+        "direct_union_ids": direct_ids,
+        "candidate_ids": candidate_ids,
+        "activation": activation,
+        "graph_result_ids": production_ids,
+        "target": {
+            **target,
+            "rank": target_rank,
+            "candidate": case.target_id in candidate_ids,
+            "in_direct_union": case.target_id in direct_ids,
+            "in_graph_results": case.target_id in production_ids,
+        },
+        "top_k": scored[: case.top_k],
+        "all_scores": scored,
+    }
+
+
+def run(output: Path, snapshot: Path, vectors: Path, capacity_report: Path) -> dict[str, Any]:
+    snapshot = snapshot.resolve()
+    vectors = vectors.resolve()
+    capacity_report = capacity_report.resolve()
+    _fresh(output)
+    measurement, mechanism, score_candidate = _load_snapshot(snapshot)
+    vectors_hash = _digest(vectors)
+    capacity_payload = json.loads(capacity_report.read_text(encoding="utf-8"))
+    source_rows = {
+        path: _digest(snapshot / path)
+        for path in (
+            "benchmarks/local_memory/graph_measurement.py",
+            "benchmarks/local_memory/module_mechanism.py",
+            "mnemos/engine.py",
+            "mnemos/retrieval.py",
+            "mnemos/modules/spreading.py",
+            "mnemos/utils/storage.py",
+        )
+    }
+    dataset = mechanism.load_mechanism_dataset(vectors)
+    cases = tuple(dataset.graph_cases)
+    if len(cases) != 5 or any(case.split != "development" for case in cases):
+        raise RuntimeError("expected exactly five frozen development graph cases")
+    observation_rows: list[dict[str, Any]] = []
+    original_spreading_config = mechanism.SpreadingConfig
+
+    def capacity_spreading_config(*args: Any, **kwargs: Any) -> Any:
+        kwargs["max_neighbors_per_node"] = 16
+        return original_spreading_config(*args, **kwargs)
+
+    mechanism.SpreadingConfig = capacity_spreading_config
+    for weight in WEIGHTS:
+        arm_dir = output / f"weight-{weight:.1f}"
+        if arm_dir.exists():
+            if not arm_dir.is_dir():
+                raise RuntimeError(f"refusing non-directory arm path: {arm_dir}")
+        else:
+            arm_dir.mkdir()
+        for case in cases:
+            archived = next(
+                row
+                for row in capacity_payload["observations"]
+                if row["case_id"] == case.id and row["capacity"] == 16
+            )
+            archived_db = Path(archived["artifacts"]["graph_sqlite"])
+            expected_hash = archived["artifacts"]["final_snapshots"]["graph"]["sha256"]
+            if _digest(archived_db) != expected_hash:
+                raise RuntimeError(f"archived capacity-16 store changed: {archived_db}")
+            case_dir = arm_dir / case.id
+            if case_dir.exists():
+                if not case_dir.is_dir():
+                    raise RuntimeError(f"refusing non-directory case path: {case_dir}")
+            else:
+                case_dir.mkdir()
+            database = case_dir / "graph.sqlite"
+            shutil.copy2(archived_db, database)
+            if _digest(database) != expected_hash:
+                raise RuntimeError(f"copied capacity-16 store changed: {database}")
+            engine, store = mechanism._engine_for(
+                (*case.facts, *case.scope_controls),
+                case.query,
+                case.query_embedding,
+                graph=True,
+                affective=False,
+                store_path=database,
+            )
+            engine.config.retrieval.graph_weight = weight
+            try:
+                row = _case_rows(
+                    case=case,
+                    store=store,
+                    engine=engine,
+                    measurement=measurement,
+                    mechanism=mechanism,
+                    score_candidate=score_candidate,
+                    weight=weight,
+                )
+                row["archived_capacity16_eligibility"] = archived["eligible"]
+                row["archived_path_reason"] = archived["path_reason"]
+                row["archived_structural_valid_path"] = archived["structural_valid_path"]
+                row["input_graph_sha256"] = expected_hash
+                observation_rows.append(row)
+            finally:
+                store.close()
+    mechanism.SpreadingConfig = original_spreading_config
+    baseline = {
+        row["case_id"]: row
+        for row in observation_rows
+        if row["weight"] == 0.1
+    }
+    reference_ranks = {
+        row["case_id"]: row["target"]["rank"]
+        for row in observation_rows
+        if row["weight"] == 0.0
+    }
+    for row in observation_rows:
+        reference_rank = reference_ranks[row["case_id"]]
+        row["target"]["rank_lift_vs_weight_0"] = (
+            reference_rank - row["target"]["rank"]
+            if reference_rank is not None and row["target"]["rank"] is not None
+            else None
+        )
+    invariants: list[dict[str, Any]] = []
+    for row in observation_rows:
+        base = baseline[row["case_id"]]
+        invariants.append(
+            {
+                "case_id": row["case_id"],
+                "weight": row["weight"],
+                "candidate_union_equal": row["candidate_ids"] == base["candidate_ids"],
+                "activation_equal": row["activation"] == base["activation"],
+                "seed_equal": row["selected_seed_id"] == base["selected_seed_id"],
+            }
+        )
+    if not all(
+        item["candidate_union_equal"] and item["activation_equal"] and item["seed_equal"]
+        for item in invariants
+    ):
+        raise RuntimeError("graph topology or candidate union changed across weight arms")
+    report: dict[str, Any] = {
+        "diagnostic": "graph-weight-diagnostic-v1",
+        "status": "complete",
+        "development_only": True,
+        "source_commit": SOURCE_COMMIT,
+        "source_checkout": str(snapshot.resolve()),
+        "source_hashes": source_rows,
+        "vectors": str(vectors.resolve()),
+        "vectors_sha256": vectors_hash,
+        "capacity": 16,
+        "weights": list(WEIGHTS),
+        "cases": [case.id for case in cases],
+        "observations": observation_rows,
+        "invariants": invariants,
+        "interpretation": (
+            "fixed-weight score sensitivity only; no production setting or utility gate changed"
+        ),
+    }
+    helper_path = Path(__file__).resolve()
+    report["runner_sha256"] = _digest(helper_path)
+    report["python"] = platform.python_version()
+    report["python_executable"] = str(Path(sys.executable).resolve())
+    report["command"] = [str(Path(sys.executable).resolve()), *sys.argv]
+    (output / "report.json").write_text(
+        json.dumps(report, indent=2, sort_keys=True, ensure_ascii=True) + "\n",
+        encoding="utf-8",
+    )
+    return report
+
+
+def main() -> int:
+    parser = argparse.ArgumentParser()
+    parser.add_argument("--output", type=Path, default=Path(".venv/graph-weight-diagnostic-v1"))
+    parser.add_argument("--snapshot", type=Path, default=Path(".venv/thinking-frozen-v1"))
+    parser.add_argument("--vectors", type=Path, default=VECTOR_PATH)
+    parser.add_argument("--capacity-report", type=Path, default=CAPACITY_REPORT)
+    args = parser.parse_args()
+    try:
+        report = run(args.output, args.snapshot, args.vectors, args.capacity_report)
+    except Exception as exc:
+        print(f"graph weight diagnostic failed: {type(exc).__name__}: {exc}", file=sys.stderr)
+        return 2
+    print(json.dumps({"output": str(args.output), "observations": len(report["observations"])}))
+    return 0
+
+
+if __name__ == "__main__":
+    raise SystemExit(main())
