@@ -1102,3 +1102,36 @@ Claude 2.1.191 separately recognized the plugin and five hooks using its real
 binding remained unchanged. List and details disagreed about MCP inventory;
 neither hook execution nor MCP connection ran.
 [Loader metadata evidence](claude-plugin-loader-v1/README.md).
+
+## Full source pass and installed continuity failures
+
+Frozen `312b8d6` passed 858 tests with four skipped, plus Black, strict mypy,
+JavaScript syntax, build, and Twine checks. The fresh installed wheel then
+passed 40 selected contract cases and failed two continuity cases. The
+downstream replay check did not run. Source and installed results remain
+separate in the [package checkpoint](combined-package-checkpoint-v2/README.md).
+
+A valid isolated diagnostic reproduced a client timeout while the initial
+fact remained persisted. One-fact retrieval metadata writes sometimes took
+more than three seconds. A subsequent instrumented run passed both cases;
+its slowest metadata write was dominated by a 368 ms SQLite commit. No
+product repair occurred between these diagnostic runs, so the later pass
+does not establish that the failures are fixed. See the
+[timeout reproduction](installed-continuity-diagnostics-v1/README.md) and
+[SQL timing record](installed-continuity-sql-profile-v3/README.md).
+
+The continuity test now rejects degraded/error retrieval replies before
+checking scope exclusion, and requires actual successful maintenance results.
+Those three strengthened cases passed. The Claude plugin launcher also now
+shares the managed runtime configuration between hooks and MCP, preserving
+explicit settings instead of selecting plugin-local mock defaults. Its
+focused integration checks passed; actual native plugin execution remains
+an open gate.
+
+A disposable SQLite comparison measured median durable commits of 2.040 ms
+on C: and 70.805 ms on D: with identical WAL/FULL settings. It supports an SSD
+fixture diagnostic, not a product latency claim. The
+[comparison archive](storage-drive-calibration-v1/README.md) preserves all
+samples and the executed helper. Full verification of frozen `82b7116` has
+started with fresh C: source and temporary fixtures; that result and a fresh
+installed-package run are pending. Previous D: failures remain preserved.

@@ -1,0 +1,243 @@
+"""Disposable SQLite commit calibration for the C: SSD and D: HDD.
+
+This helper intentionally does not touch the application storage layer. It
+uses fresh databases and records device behavior only; results do not support
+an application latency or durability claim.
+"""
+
+from __future__ import annotations
+
+import argparse
+import hashlib
+import json
+import os
+from pathlib import Path
+import platform
+import sqlite3
+import subprocess
+import sys
+import time
+from typing import Any
+
+
+VERSION = "storage-drive-calibration-v1"
+WARMUPS = 3
+MEASURED = 20
+DRIVES = ("C", "D")
+
+
+def _fresh_path(path: Path) -> None:
+    if path.exists():
+        raise RuntimeError(f"refusing existing calibration path: {path}")
+    path.mkdir(parents=True)
+
+
+def _hardware() -> dict[str, Any]:
+    details: dict[str, Any] = {
+        "platform": platform.platform(),
+        "python": sys.version,
+        "processor": platform.processor(),
+    }
+    if os.name != "nt":
+        return details
+    command = [
+        "powershell.exe",
+        "-NoProfile",
+        "-NonInteractive",
+        "-Command",
+        "Get-CimInstance Win32_DiskDrive | "
+        "Select-Object Model,MediaType,InterfaceType,Size | ConvertTo-Json -Compress",
+    ]
+    try:
+        completed = subprocess.run(
+            command,
+            capture_output=True,
+            text=True,
+            timeout=10,
+            check=False,
+        )
+        details["disk_drives_exit_code"] = completed.returncode
+        if completed.returncode == 0:
+            details["disk_drives"] = json.loads(completed.stdout or "null")
+        else:
+            details["disk_drives_error"] = "powershell inventory failed"
+    except (OSError, subprocess.SubprocessError, json.JSONDecodeError):
+        details["disk_drives_error"] = "powershell inventory unavailable"
+    return details
+
+
+def _configure(connection: sqlite3.Connection) -> dict[str, Any]:
+    connection.execute("PRAGMA journal_mode=WAL")
+    connection.execute("PRAGMA synchronous=FULL")
+    connection.execute("PRAGMA busy_timeout=5000")
+    connection.execute(
+        "CREATE TABLE calibration (id INTEGER PRIMARY KEY, counter INTEGER NOT NULL, "
+        "updated_at TEXT NOT NULL)"
+    )
+    connection.execute(
+        "INSERT INTO calibration(id, counter, updated_at) VALUES (1, 0, CURRENT_TIMESTAMP)"
+    )
+    connection.commit()
+    return {
+        "journal_mode": connection.execute("PRAGMA journal_mode").fetchone()[0],
+        "synchronous": connection.execute("PRAGMA synchronous").fetchone()[0],
+        "busy_timeout": connection.execute("PRAGMA busy_timeout").fetchone()[0],
+    }
+
+
+def _sample(connection: sqlite3.Connection) -> dict[str, Any]:
+    before = time.perf_counter_ns()
+    connection.execute(
+        "UPDATE calibration SET counter = counter + 1, updated_at = ? WHERE id = 1",
+        (time.time_ns(),),
+    )
+    after_sql = time.perf_counter_ns()
+    connection.commit()
+    after_commit = time.perf_counter_ns()
+    row = connection.execute("SELECT counter, updated_at FROM calibration WHERE id = 1").fetchone()
+    assert row is not None
+    return {
+        "sql_ns": after_sql - before,
+        "commit_ns": after_commit - after_sql,
+        "total_ns": after_commit - before,
+        "counter": int(row[0]),
+        "updated_at_type": type(row[1]).__name__,
+    }
+
+
+def _prepare_drive(drive: str, root: Path) -> tuple[sqlite3.Connection, dict[str, Any]]:
+    database = root / f"{drive.lower()}-calibration.sqlite3"
+    connection = sqlite3.connect(database, timeout=5.0)
+    pragmas = _configure(connection)
+    warmups = [_sample(connection) for _ in range(WARMUPS)]
+    return (
+        connection,
+        {
+            "drive": drive,
+            "database": str(database),
+            "database_bytes": database.stat().st_size,
+            "pragmas": pragmas,
+            "warmups": warmups,
+            "samples": [],
+        },
+    )
+
+
+def _persisted_after_close(database: Path) -> dict[str, Any]:
+    connection = sqlite3.connect(database)
+    try:
+        row = connection.execute(
+            "SELECT counter, updated_at FROM calibration WHERE id = 1"
+        ).fetchone()
+        row_count = int(connection.execute("SELECT COUNT(*) FROM calibration").fetchone()[0])
+    finally:
+        connection.close()
+    assert row is not None
+    return {
+        "row_count": row_count,
+        "counter": int(row[0]),
+        "updated_at_type": type(row[1]).__name__,
+    }
+
+
+def _median(values: list[int]) -> float:
+    ordered = sorted(values)
+    middle = len(ordered) // 2
+    if len(ordered) % 2:
+        return float(ordered[middle])
+    return (ordered[middle - 1] + ordered[middle]) / 2.0
+
+
+def _summary(result: dict[str, Any]) -> dict[str, Any]:
+    samples = result["samples"]
+    return {
+        "sample_count": len(samples),
+        "sql_median_us": _median([int(sample["sql_ns"]) for sample in samples]) / 1000,
+        "commit_median_us": _median([int(sample["commit_ns"]) for sample in samples]) / 1000,
+        "total_median_us": _median([int(sample["total_ns"]) for sample in samples]) / 1000,
+        "counter_sequence": [int(sample["counter"]) for sample in samples],
+    }
+
+
+def run(output_dir: Path, c_root: Path, d_root: Path) -> dict[str, Any]:
+    for root in (c_root, d_root, output_dir):
+        _fresh_path(root)
+    started = time.time()
+    results: dict[str, dict[str, Any]] = {}
+    order_log: list[list[str]] = []
+    roots = {"C": c_root, "D": d_root}
+    connections: dict[str, sqlite3.Connection] = {}
+    try:
+        for drive in DRIVES:
+            connections[drive], results[drive] = _prepare_drive(drive, roots[drive])
+        for round_number in range(MEASURED):
+            order = list(DRIVES if round_number % 2 == 0 else reversed(DRIVES))
+            order_log.append(order)
+            for drive in order:
+                results[drive]["samples"].append(_sample(connections[drive]))
+    finally:
+        for connection in connections.values():
+            connection.close()
+    for drive, result in results.items():
+        database = Path(result["database"])
+        result["persisted_after_close"] = _persisted_after_close(database)
+        result["database_bytes"] = database.stat().st_size
+    report: dict[str, Any] = {
+        "version": VERSION,
+        "started_unix": started,
+        "finished_unix": time.time(),
+        "command": sys.argv,
+        "python_executable": sys.executable,
+        "hardware": _hardware(),
+        "settings": {
+            "journal_mode": "WAL",
+            "synchronous": "FULL",
+            "warmups_per_drive": WARMUPS,
+            "measured_samples_per_drive": MEASURED,
+            "table": "one row with integer counter and timestamp",
+            "drive_order_per_round": order_log,
+        },
+        "drives": {
+            drive: {**result, "summary": _summary(result)} for drive, result in results.items()
+        },
+        "interpretation": "device calibration only; no product latency gate inference",
+    }
+    helper_path = Path(__file__).resolve()
+    report["helper"] = {
+        "path": str(helper_path),
+        "sha256": hashlib.sha256(helper_path.read_bytes()).hexdigest(),
+    }
+    output_path = output_dir / "report.json"
+    output_path.write_text(json.dumps(report, indent=2, sort_keys=True) + "\n", encoding="utf-8")
+    return report
+
+
+def main() -> int:
+    parser = argparse.ArgumentParser()
+    parser.add_argument(
+        "--output-dir",
+        type=Path,
+        default=Path(".venv/storage-drive-calibration-v1"),
+    )
+    parser.add_argument(
+        "--c-root",
+        type=Path,
+        default=Path("C:/Users/Ant/AppData/Local/Temp/mnemos-storage-calibration-20260917-v1"),
+    )
+    parser.add_argument(
+        "--d-root",
+        type=Path,
+        default=Path("D:/WindowsTemp/mnemos-storage-calibration-20260917-v1"),
+    )
+    args = parser.parse_args()
+    try:
+        report = run(args.output_dir, args.c_root, args.d_root)
+    except Exception as exc:
+        print(f"calibration failed: {type(exc).__name__}: {exc}", file=sys.stderr)
+        return 2
+    print(json.dumps({"output": str(args.output_dir), "version": report["version"]}))
+    return 0
+
+
+if __name__ == "__main__":
+    raise SystemExit(main())
