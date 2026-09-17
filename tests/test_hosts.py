@@ -635,6 +635,48 @@ def test_known_mcp_host_overrides_stale_host_value(tmp_path: Path) -> None:
     assert env["OTHER"] == "preserve"
 
 
+@pytest.mark.parametrize("existing_always_load", [None, True, False])
+def test_claude_default_always_load_preserves_explicit_choice(
+    tmp_path: Path, existing_always_load: bool | None
+) -> None:
+    project = tmp_path / "project"
+    config_path = project / ".mcp.json"
+    project.mkdir(parents=True)
+    existing_entry: dict[str, object] = {"command": "old-mnemos"}
+    if existing_always_load is not None:
+        existing_entry["alwaysLoad"] = existing_always_load
+    config_path.write_text(
+        json.dumps({"mcpServers": {"mnemos": existing_entry, "other": {"command": "keep"}}}),
+        encoding="utf-8",
+    )
+
+    preview = preview_host_integration(
+        "claude-code",
+        mnemos_config_path=tmp_path / "settings.toml",
+        cwd=project,
+        home=tmp_path / "home",
+    )
+    payload = json.loads(preview.rendered_config)
+    servers = payload["mcpServers"]
+    assert servers["mnemos"]["alwaysLoad"] is (
+        True if existing_always_load is None else existing_always_load
+    )
+    assert servers["other"] == {"command": "keep"}
+
+
+def test_non_claude_host_does_not_receive_always_load(tmp_path: Path) -> None:
+    project = tmp_path / "project"
+    project.mkdir()
+    preview = preview_host_integration(
+        "cursor",
+        mnemos_config_path=tmp_path / "settings.toml",
+        cwd=project,
+        home=tmp_path / "home",
+    )
+    payload = json.loads(preview.rendered_config)
+    assert "alwaysLoad" not in payload["mcpServers"]["mnemos"]
+
+
 @pytest.mark.parametrize("host", ["codex", "claude-code"])
 def test_generated_mcp_env_resolves_known_scope_host(
     host: str, monkeypatch: pytest.MonkeyPatch, tmp_path: Path

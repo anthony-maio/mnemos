@@ -48,6 +48,11 @@ def test_plugin_manifest_is_valid_json() -> None:
     assert "mnemos" in data["mcpServers"]
 
 
+def test_plugin_manifest_requests_eager_mnemos_startup() -> None:
+    data = json.loads(Path(".claude-plugin/plugin.json").read_text(encoding="utf-8"))
+    assert data["mcpServers"]["mnemos"]["alwaysLoad"] is True
+
+
 def test_marketplace_manifest_matches_plugin_name() -> None:
     marketplace_path = Path(".claude-plugin/marketplace.json")
     assert marketplace_path.exists()

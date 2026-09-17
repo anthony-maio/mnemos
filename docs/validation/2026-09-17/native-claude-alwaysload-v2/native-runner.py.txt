@@ -1,0 +1,905 @@
+"""Prepare an isolated native Claude MCP startup control.
+
+The control overlays only the disposable plugin manifest, setting
+``mcpServers.mnemos.alwaysLoad`` to true.  Native execution is opt-in and is
+not performed by the offline self-test.
+"""
+
+from __future__ import annotations
+
+import argparse
+from datetime import datetime, timezone
+import hashlib
+import json
+import os
+from pathlib import Path
+import shutil
+import subprocess
+import sys
+import tempfile
+import time
+from typing import Any, Mapping
+from uuid import uuid4
+import zipfile
+
+SOURCE_COMMIT = "8d865a5206aa99becdf6171c204161543ab60bb1"
+PROFILE = "native-claude-alwaysload-v1"
+MAX_NATIVE_SECONDS = 45
+DEFAULT_OUTPUT = Path("C:/Users/Ant/AppData/Local/Temp/mnemos-native-claude-alwaysload-v1")
+
+
+def _sha256(value: bytes | str) -> str:
+    raw = value.encode("utf-8") if isinstance(value, str) else value
+    return hashlib.sha256(raw).hexdigest()
+
+
+def _private_mkdir(path: Path) -> None:
+    from mnemos.service import _protect_private_path
+
+    path.mkdir(parents=True, exist_ok=False)
+    _protect_private_path(path)
+
+
+def _verify_snapshot(snapshot: Path, source_commit: str) -> dict[str, Any]:
+    def git(*args: str) -> str:
+        result = subprocess.run(
+            ["git", "-C", str(snapshot), *args],
+            capture_output=True,
+            text=True,
+            encoding="utf-8",
+            errors="replace",
+            check=True,
+            timeout=20,
+        )
+        return result.stdout.strip()
+
+    if Path(git("rev-parse", "--show-toplevel")).resolve() != snapshot.resolve():
+        raise RuntimeError("plugin snapshot root does not match requested path")
+    if git("rev-parse", "HEAD") != source_commit:
+        raise RuntimeError("plugin snapshot HEAD differs from source pin")
+    if git("status", "--short"):
+        raise RuntimeError("plugin snapshot is dirty")
+    required = (".claude-plugin/plugin.json", ".claude-plugin/run_mnemos_mcp.py")
+    hashes: dict[str, str] = {}
+    for relative in required:
+        path = snapshot / relative
+        if not path.is_file():
+            raise RuntimeError(f"plugin file is missing: {relative}")
+        hashes[relative] = _sha256(path.read_bytes())
+    return {"source_commit": source_commit, "required_file_sha256": hashes}
+
+
+def _verify_installed_package(environment: Path, wheel: Path, expected: str) -> dict[str, Any]:
+    executable = Path(sys.executable).resolve()
+    expected_executable = (environment / "Scripts/python.exe").resolve()
+    if executable != expected_executable:
+        raise RuntimeError("helper is not running in the requested installed environment")
+    import mnemos
+
+    package_path = Path(mnemos.__file__).resolve()
+    if not package_path.is_relative_to(environment) or "site-packages" not in {
+        part.lower() for part in package_path.parts
+    }:
+        raise RuntimeError("imported Mnemos package is outside the installed environment")
+    wheel_hash = _sha256(wheel.read_bytes())
+    if wheel_hash != expected.lower():
+        raise RuntimeError("wheel digest differs from explicit pin")
+    checked = 0
+    with zipfile.ZipFile(wheel) as archive:
+        for member in archive.infolist():
+            if member.is_dir() or not member.filename.startswith("mnemos/"):
+                continue
+            installed = package_path.parent / Path(*Path(member.filename).parts[1:])
+            if not installed.is_file() or installed.read_bytes() != archive.read(member):
+                raise RuntimeError(f"installed package differs from wheel: {member.filename}")
+            checked += 1
+    return {
+        "sys_executable": str(executable),
+        "expected_executable": str(expected_executable),
+        "mnemos_origin": str(package_path),
+        "environment": str(environment),
+        "wheel_path": str(wheel.resolve()),
+        "wheel_sha256": wheel_hash,
+        "wheel_members_checked": checked,
+    }
+
+
+def _copy_overlay(snapshot: Path, overlay: Path) -> dict[str, Any]:
+    roots = (".claude-plugin", "agents", "commands", "hooks")
+    overlay.mkdir(parents=True, exist_ok=False)
+    copied: dict[str, str] = {}
+    for root_name in roots:
+        source = snapshot / root_name
+        if not source.is_dir():
+            raise RuntimeError(f"plugin root is missing: {root_name}")
+        destination = overlay / root_name
+        shutil.copytree(source, destination)
+        for path in destination.rglob("*"):
+            if path.is_file():
+                copied[path.relative_to(overlay).as_posix()] = _sha256(path.read_bytes())
+    manifest_path = overlay / ".claude-plugin/plugin.json"
+    original_path = snapshot / ".claude-plugin/plugin.json"
+    original_hash = _sha256(original_path.read_bytes())
+    manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
+    if not isinstance(manifest, dict):
+        raise RuntimeError("plugin manifest is not an object")
+    servers = manifest.get("mcpServers")
+    mnemos = servers.get("mnemos") if isinstance(servers, dict) else None
+    if not isinstance(mnemos, dict):
+        raise RuntimeError("plugin manifest has no mnemos MCP server")
+    prior = mnemos.get("alwaysLoad")
+    if prior is not None:
+        raise RuntimeError("source manifest already declares mcpServers.mnemos.alwaysLoad")
+    mnemos["alwaysLoad"] = True
+    manifest_path.write_text(
+        json.dumps(manifest, indent=2, ensure_ascii=True) + "\n", encoding="utf-8"
+    )
+    copied[manifest_path.relative_to(overlay).as_posix()] = _sha256(manifest_path.read_bytes())
+    return {
+        "overlay": str(overlay),
+        "copied_file_sha256": dict(sorted(copied.items())),
+        "manifest": {
+            "path": ".claude-plugin/plugin.json",
+            "original_sha256": original_hash,
+            "overlay_sha256": copied[".claude-plugin/plugin.json"],
+            "change": {"mcpServers.mnemos.alwaysLoad": {"before": prior, "after": True}},
+        },
+    }
+
+
+def _clean_environment(overrides: Mapping[str, str]) -> dict[str, str]:
+    env = dict(os.environ)
+    blocked = {
+        "ANTHROPIC_API_KEY",
+        "ANTHROPIC_AUTH_TOKEN",
+        "CLAUDE_CODE_OAUTH_TOKEN",
+        "AWS_ACCESS_KEY_ID",
+        "AWS_SECRET_ACCESS_KEY",
+        "AWS_SESSION_TOKEN",
+        "GOOGLE_APPLICATION_CREDENTIALS",
+    }
+    for key in list(env):
+        if (
+            key.startswith("MNEMOS_")
+            or key in blocked
+            or key in {"CLAUDE_CONFIG_DIR", "VIRTUAL_ENV"}
+        ):
+            env.pop(key, None)
+    env.update(overrides)
+    return env
+
+
+def _terminate(process: subprocess.Popen[str]) -> bool:
+    if process.poll() is not None:
+        return False
+    if os.name == "nt":
+        subprocess.run(
+            ["taskkill", "/PID", str(process.pid), "/T", "/F"],
+            capture_output=True,
+            check=False,
+            timeout=10,
+        )
+    else:  # pragma: no cover
+        process.kill()
+    process.wait(timeout=10)
+    return True
+
+
+def _nodes(value: Any):
+    if isinstance(value, Mapping):
+        yield value
+        for child in value.values():
+            yield from _nodes(child)
+    elif isinstance(value, list):
+        for child in value:
+            yield from _nodes(child)
+
+
+def _stream_summary(stdout: str, allowed: str) -> dict[str, Any]:
+    calls: list[dict[str, Any]] = []
+    results: list[dict[str, Any]] = []
+    rows = 0
+    for line in stdout.splitlines():
+        try:
+            value = json.loads(line)
+        except json.JSONDecodeError:
+            continue
+        rows += 1
+        for node in _nodes(value):
+            kind = node.get("type")
+            if kind in {"tool_use", "mcp_tool_use", "server_tool_use"}:
+                name = node.get("name")
+                if isinstance(name, str):
+                    calls.append({"id": node.get("id"), "name": name})
+            elif kind in {"tool_result", "mcp_tool_result", "server_tool_result"}:
+                result_id = node.get("tool_use_id") or node.get("id")
+                results.append(
+                    {
+                        "id": result_id,
+                        "is_error": node.get("is_error") is True,
+                        "sha256": _sha256(json.dumps(node, sort_keys=True, separators=(",", ":"))),
+                    }
+                )
+    call_ids = [item.get("id") for item in calls]
+    result_ids = [item.get("id") for item in results]
+    return {
+        "json_lines": rows,
+        "calls": calls,
+        "results": results,
+        "call_names": [str(item.get("name")) for item in calls],
+        "forbidden_call_names": sorted(
+            name for name in {str(item.get("name")) for item in calls} if name != allowed
+        ),
+        "call_result_ids_match": bool(calls)
+        and call_ids == result_ids
+        and all(item is not None for item in call_ids),
+        "successful_result_ids": [item["id"] for item in results if not item["is_error"]],
+    }
+
+
+SOURCE_COMMIT = "8d865a5206aa99becdf6171c204161543ab60bb1"
+PROFILE = "native-claude-alwaysload-v2"
+MAX_NATIVE_SECONDS = 45
+DEFAULT_OUTPUT = Path("C:/Users/Ant/AppData/Local/Temp/mnemos-native-claude-alwaysload-v2")
+HEALTH_NAME = "mcp__plugin_mnemos-memory_mnemos__mnemos_health"
+
+
+def _copy_overlay(snapshot: Path, overlay: Path) -> dict[str, Any]:
+    """Copy the clean plugin and change exactly the alwaysLoad semantic field."""
+    roots = (".claude-plugin", "agents", "commands", "hooks")
+    overlay.mkdir(parents=True, exist_ok=False)
+    before: dict[str, str] = {}
+    after: dict[str, str] = {}
+    for root_name in roots:
+        source = snapshot / root_name
+        if not source.is_dir():
+            raise RuntimeError(f"plugin root is missing: {root_name}")
+        destination = overlay / root_name
+        shutil.copytree(source, destination)
+        for path in source.rglob("*"):
+            if path.is_file():
+                rel = path.relative_to(snapshot).as_posix()
+                before[rel] = _sha256(path.read_bytes())
+        for path in destination.rglob("*"):
+            if path.is_file():
+                rel = path.relative_to(overlay).as_posix()
+                after[rel] = _sha256(path.read_bytes())
+    manifest_path = overlay / ".claude-plugin/plugin.json"
+    manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
+    if not isinstance(manifest, dict):
+        raise RuntimeError("plugin manifest is not an object")
+    servers = manifest.get("mcpServers")
+    mnemos = servers.get("mnemos") if isinstance(servers, dict) else None
+    if not isinstance(mnemos, dict):
+        raise RuntimeError("plugin manifest has no mnemos MCP server")
+    prior = mnemos.get("alwaysLoad")
+    if prior is not None:
+        raise RuntimeError("source manifest already declares mcpServers.mnemos.alwaysLoad")
+    mnemos["alwaysLoad"] = True
+    manifest_path.write_text(
+        json.dumps(manifest, indent=2, ensure_ascii=True) + "\n", encoding="utf-8"
+    )
+    after[".claude-plugin/plugin.json"] = _sha256(manifest_path.read_bytes())
+    changed = sorted(name for name in before if before[name] != after.get(name))
+    if changed != [".claude-plugin/plugin.json"]:
+        raise RuntimeError(f"overlay changed unexpected plugin files: {changed}")
+    return {
+        "overlay": str(overlay),
+        "source_file_sha256": dict(sorted(before.items())),
+        "overlay_file_sha256": dict(sorted(after.items())),
+        "changed_files": changed,
+        "unchanged_files": sorted(name for name in before if name not in changed),
+        "manifest": {
+            "path": ".claude-plugin/plugin.json",
+            "original_sha256": before[".claude-plugin/plugin.json"],
+            "overlay_sha256": after[".claude-plugin/plugin.json"],
+            "change": {"mcpServers.mnemos.alwaysLoad": {"before": prior, "after": True}},
+        },
+    }
+
+
+def _copy_private_auth(config_dir: Path) -> Path | None:
+    """Copy only the native OAuth file to the protected disposable config."""
+    source = Path.home() / ".claude" / ".credentials.json"
+    if not source.is_file():
+        return None
+    target = config_dir / ".credentials.json"
+    from mnemos.service import _protect_private_path
+
+    try:
+        shutil.copy2(source, target)
+        _protect_private_path(target)
+    except BaseException:
+        target.unlink(missing_ok=True)
+        raise
+    return target
+
+
+def _start_isolated_service(fixture: Path, registry: Any, config: Any) -> tuple[Any, Any, Any]:
+    """Start the actual local dispatcher on the fixture's private SQLite file."""
+    from mnemos.engine import MnemosEngine
+    from mnemos.memory_service import LocalMemoryService
+    from mnemos.service import MnemosService
+    from mnemos.utils.embeddings import SimpleEmbeddingProvider
+    from mnemos.utils.llm import UnavailableLLMProvider
+    from mnemos.utils.storage import SQLiteStore
+
+    class ConstantFixtureEmbeddings(SimpleEmbeddingProvider):
+        def embed(self, text: str) -> list[float]:
+            del text
+            return [1.0] + [0.0] * 63
+
+        def embed_batch(self, texts: list[str]) -> list[list[float]]:
+            return [self.embed(text) for text in texts]
+
+    store = SQLiteStore(str(fixture / "memory.sqlite"))
+    engine = MnemosEngine(
+        config=config,
+        llm=UnavailableLLMProvider("startup control cognition unavailable"),
+        embedder=ConstantFixtureEmbeddings(dim=64),
+        store=store,
+        scope_registry=registry,
+        require_scope_context=True,
+    )
+    service = MnemosService(
+        dispatcher=LocalMemoryService(engine, registry),
+        descriptor_path=fixture / "runtime.json",
+        lock_path=fixture / "service.lock",
+        startup_timeout=5,
+        dispatch_timeout=20,
+    )
+    service.start()
+    context = registry.resolve(
+        fixture / "project",
+        user_profile_id=PROFILE,
+        session_id="native-claude-alwaysload-health-session",
+        host="claude-code",
+    )
+    return service, store, context
+
+
+def _walk_json(value: Any):
+    if isinstance(value, Mapping):
+        yield value
+        for child in value.values():
+            yield from _walk_json(child)
+    elif isinstance(value, list):
+        for child in value:
+            yield from _walk_json(child)
+    elif isinstance(value, str) and value.lstrip().startswith(("{", "[")):
+        try:
+            yield from _walk_json(json.loads(value))
+        except json.JSONDecodeError:
+            return
+
+
+def _initial_inventory(stdout: str) -> dict[str, Any]:
+    servers: list[dict[str, str]] = []
+    tools: set[str] = set()
+    init_count = 0
+    for line in stdout.splitlines():
+        try:
+            value = json.loads(line)
+        except json.JSONDecodeError:
+            continue
+        for node in _walk_json(value):
+            if node.get("type") != "system" or node.get("subtype") != "init":
+                continue
+            init_count += 1
+            for server in node.get("mcp_servers", []):
+                if isinstance(server, Mapping) and isinstance(server.get("name"), str):
+                    servers.append(
+                        {"name": server["name"], "status": str(server.get("status", ""))}
+                    )
+            for key in ("tools", "mcp_tools"):
+                values = node.get(key, [])
+                if isinstance(values, list):
+                    tools.update(name for name in values if isinstance(name, str))
+    connected = any(
+        "mnemos" in row["name"].lower() and row["status"].lower() == "connected" for row in servers
+    )
+    required = HEALTH_NAME in tools or any("mnemos_health" in name for name in tools)
+    return {
+        "status": "ready" if init_count and connected and required else "not_ready",
+        "system_init_observed": bool(init_count),
+        "mnemos_connected": connected,
+        "required_health_tool_present": required,
+        "mcp_servers": servers,
+        "mcp_tools": sorted(tools),
+    }
+
+
+def _health_details(
+    result: Mapping[str, Any], expected_db: Path, profile: str, project_id: str
+) -> dict[str, Any]:
+    status: set[str] = set()
+    runtime: Mapping[str, Any] | None = None
+    capabilities: Mapping[str, Any] | None = None
+    isolation: Mapping[str, Any] | None = None
+    errors: list[str] = []
+    for node in _walk_json(result):
+        raw_status = node.get("status")
+        if isinstance(raw_status, str):
+            status.add(raw_status)
+            if raw_status.lower() in {"error", "degraded", "failed"}:
+                errors.append("status")
+        if node.get("degraded") is True or node.get("is_error") is True:
+            errors.append("degraded_or_error")
+        for key in ("error", "error_type", "last_error"):
+            if node.get(key) not in (None, "", False):
+                errors.append(key)
+        if isinstance(node.get("runtime"), Mapping):
+            runtime = node["runtime"]
+        if isinstance(node.get("capabilities"), Mapping):
+            capabilities = node["capabilities"]
+        if isinstance(node.get("scope_isolation"), Mapping):
+            isolation = node["scope_isolation"]
+    db_match = bool(
+        runtime
+        and isinstance(runtime.get("database_path"), str)
+        and Path(runtime["database_path"]).resolve() == expected_db.resolve()
+    )
+    capability_match = bool(
+        capabilities
+        and capabilities.get("capture") is True
+        and capabilities.get("retrieve") is True
+    )
+    profile_match = bool(isolation and isolation.get("user_profile_id") == profile)
+    project_match = bool(isolation and isolation.get("project_id") == project_id)
+    return {
+        "status_values": sorted(status),
+        "runtime_present": runtime is not None,
+        "database_path_match": db_match,
+        "capabilities_match": capability_match,
+        "profile_match": profile_match,
+        "project_match": project_match,
+        "errors": sorted(set(errors)),
+        "valid": "running" in {item.lower() for item in status}
+        and not errors
+        and runtime is not None
+        and db_match
+        and capability_match
+        and profile_match
+        and project_match,
+    }
+
+
+def _stream_summary(
+    stdout: str, expected_db: Path, profile: str, project_id: str
+) -> dict[str, Any]:
+    calls: list[dict[str, Any]] = []
+    results: list[dict[str, Any]] = []
+    json_lines = 0
+    non_json = 0
+    for line in stdout.splitlines():
+        try:
+            value = json.loads(line)
+        except json.JSONDecodeError:
+            non_json += 1
+            continue
+        json_lines += 1
+        for node in _walk_json(value):
+            kind = node.get("type")
+            if kind in {"tool_use", "mcp_tool_use", "server_tool_use"} and isinstance(
+                node.get("name"), str
+            ):
+                calls.append({"id": node.get("id"), "name": node["name"]})
+            elif kind in {"tool_result", "mcp_tool_result", "server_tool_result"}:
+                result_id = node.get("tool_use_id") or node.get("id")
+                results.append(
+                    {
+                        "id": result_id,
+                        "is_error": node.get("is_error") is True,
+                        "details": _health_details(node, expected_db, profile, project_id),
+                        "sha256": _sha256(json.dumps(node, sort_keys=True, separators=(",", ":"))),
+                    }
+                )
+    health_calls = [row for row in calls if row["name"] == HEALTH_NAME]
+    health_ids = {row.get("id") for row in health_calls}
+    health_results = [row for row in results if row["id"] in health_ids]
+    good_health = [row for row in health_results if not row["is_error"] and row["details"]["valid"]]
+    call_ids = [row.get("id") for row in calls]
+    result_ids = [row.get("id") for row in results]
+    return {
+        "json_lines": json_lines,
+        "non_json_line_count": non_json,
+        "calls": calls,
+        "results": results,
+        "call_names": [row["name"] for row in calls],
+        "forbidden_call_names": sorted(
+            {row["name"] for row in calls if row["name"] != HEALTH_NAME}
+        ),
+        "call_result_ids_match": bool(calls)
+        and call_ids == result_ids
+        and all(item is not None for item in call_ids),
+        "exactly_one_health_call": len(health_calls) == 1,
+        "exactly_one_health_result": len(health_results) == 1,
+        "health_result_valid": len(good_health) == 1,
+        "inventory": _initial_inventory(stdout),
+    }
+
+
+def _verify_health_response(
+    response: Mapping[str, Any],
+    db_path: Path,
+    profile: str,
+    project_id: str,
+    *,
+    require_scope_isolation: bool = True,
+) -> dict[str, Any]:
+    details = _health_details(response, db_path, profile, project_id)
+    scope_valid = details["profile_match"] and details["project_match"]
+    if not require_scope_isolation:
+        scope_valid = True
+    details["scope_isolation_required"] = require_scope_isolation
+    details["valid"] = (
+        not details["errors"]
+        and "running" in {item.lower() for item in details["status_values"]}
+        and details["runtime_present"]
+        and details["database_path_match"]
+        and details["capabilities_match"]
+        and scope_valid
+    )
+    return {"response_keys": sorted(response), **details}
+
+
+def _native_command(exe: Path, overlay: Path, project: Path) -> list[str]:
+    del project
+    return [
+        str(exe.resolve()),
+        "--print",
+        "--verbose",
+        "--output-format",
+        "stream-json",
+        "--setting-sources",
+        "project",
+        "--plugin-dir",
+        str(overlay),
+        "--tools",
+        "",
+        "--allowed-tools",
+        HEALTH_NAME,
+        "--disable-slash-commands",
+        "--permission-mode",
+        "default",
+        "--session-id",
+        str(uuid4()),
+        "--model",
+        "claude-sonnet-4-6",
+        "--max-budget-usd",
+        "0.04",
+        "--system-prompt",
+        "Use only the explicitly allowed Mnemos health tool.",
+        "Call mnemos_health once. Do not call any other tool.",
+    ]
+
+
+def _offline_self_test() -> int:
+    manifest = {"mcpServers": {"mnemos": {"command": "python"}}}
+    with tempfile.TemporaryDirectory() as temporary:
+        root = Path(temporary)
+        snapshot = root / "snapshot"
+        for name in (".claude-plugin", "agents", "commands", "hooks"):
+            (snapshot / name).mkdir(parents=True)
+        (snapshot / ".claude-plugin/plugin.json").write_text(json.dumps(manifest), encoding="utf-8")
+        (snapshot / ".claude-plugin/run_mnemos_mcp.py").write_text("# fixture\n", encoding="utf-8")
+        (snapshot / "hooks/handler.py").write_text("# unchanged\n", encoding="utf-8")
+        overlay = root / "overlay"
+        overlay_info = _copy_overlay(snapshot, overlay)
+        assert overlay_info["changed_files"] == [".claude-plugin/plugin.json"]
+        assert overlay_info["manifest"]["change"]["mcpServers.mnemos.alwaysLoad"]["after"] is True
+        db = root / "memory.sqlite"
+        valid = {
+            "type": "tool_result",
+            "tool_use_id": "h1",
+            "is_error": False,
+            "content": json.dumps(
+                {
+                    "schema_version": 1,
+                    "status": "running",
+                    "runtime": {"store_type": "SQLiteStore", "database_path": str(db)},
+                    "capabilities": {"capture": True, "retrieve": True},
+                    "scope_isolation": {"user_profile_id": PROFILE, "project_id": "p1"},
+                }
+            ),
+        }
+        stream = "\n".join(
+            [
+                json.dumps(
+                    {
+                        "type": "system",
+                        "subtype": "init",
+                        "mcp_servers": [{"name": "mnemos", "status": "connected"}],
+                        "tools": [HEALTH_NAME],
+                    }
+                ),
+                json.dumps({"type": "tool_use", "id": "h1", "name": HEALTH_NAME}),
+                json.dumps(valid),
+            ]
+        )
+        summary = _stream_summary(stream, db, PROFILE, "p1")
+        assert summary["inventory"]["status"] == "ready"
+        assert summary["health_result_valid"]
+        invalid = dict(valid)
+        invalid["is_error"] = True
+        invalid_summary = _stream_summary(
+            "\n".join(
+                [
+                    json.dumps({"type": "tool_use", "id": "h1", "name": HEALTH_NAME}),
+                    json.dumps(invalid),
+                ]
+            ),
+            db,
+            PROFILE,
+            "p1",
+        )
+        assert not invalid_summary["health_result_valid"]
+        pending = _initial_inventory(
+            json.dumps(
+                {
+                    "type": "system",
+                    "subtype": "init",
+                    "mcp_servers": [{"name": "mnemos", "status": "connecting"}],
+                    "tools": [HEALTH_NAME],
+                }
+            )
+        )
+        assert pending["status"] == "not_ready"
+    print(json.dumps({"status": "offline_pass", "controls": 5}))
+    return 0
+
+
+def main(argv: list[str] | None = None) -> int:
+    parser = argparse.ArgumentParser(
+        description="Run one isolated native Claude alwaysLoad startup control."
+    )
+    parser.add_argument("--offline-self-test", action="store_true")
+    parser.add_argument("--snapshot", type=Path)
+    parser.add_argument("--source-commit")
+    parser.add_argument("--claude-exe", type=Path)
+    parser.add_argument("--environment", type=Path)
+    parser.add_argument("--wheel", type=Path)
+    parser.add_argument("--expected-wheel-sha256")
+    parser.add_argument("--fixture-parent", type=Path)
+    parser.add_argument("--output", type=Path, default=DEFAULT_OUTPUT)
+    args = parser.parse_args(argv)
+    if args.offline_self_test:
+        return _offline_self_test()
+    required = {
+        "--snapshot": args.snapshot,
+        "--source-commit": args.source_commit,
+        "--claude-exe": args.claude_exe,
+        "--environment": args.environment,
+        "--wheel": args.wheel,
+        "--expected-wheel-sha256": args.expected_wheel_sha256,
+        "--fixture-parent": args.fixture_parent,
+    }
+    missing = [key for key, value in required.items() if value is None]
+    if missing:
+        parser.error("missing required arguments: " + ", ".join(missing))
+    if args.source_commit != SOURCE_COMMIT:
+        parser.error("source commit does not match pinned 8d865a5 source")
+    digest = str(args.expected_wheel_sha256).lower()
+    if len(digest) != 64 or any(char not in "0123456789abcdef" for char in digest):
+        parser.error("expected wheel digest must be a 64-character hexadecimal digest")
+    snapshot, environment, wheel, exe = (
+        args.snapshot.resolve(),
+        args.environment.resolve(),
+        args.wheel.resolve(),
+        args.claude_exe.resolve(),
+    )
+    output, fixture_parent = args.output.resolve(), args.fixture_parent.resolve()
+    if output.exists() or not fixture_parent.is_dir():
+        raise RuntimeError("output exists or fixture parent is unavailable")
+    output.mkdir(parents=True)
+    report: dict[str, Any] = {
+        "runner": "native-claude-alwaysload-probe-v2",
+        "runner_sha256": _sha256(Path(__file__).read_bytes()),
+        "source_commit": args.source_commit,
+        "started_at": datetime.now(timezone.utc).isoformat(),
+        "status": "not_observed",
+        "startup_only": True,
+        "hook_capture_criteria": "not_run",
+        "mcp_connection_nonblocking": "1",
+        "mcp_connection_nonblocking_scope": "native Claude child environment only",
+        "max_native_seconds": MAX_NATIVE_SECONDS,
+        "model": "claude-sonnet-4-6",
+        "max_budget_usd": 0.04,
+        "permissions": "default",
+        "native_tool_allowlist": [HEALTH_NAME],
+        "fixture_parent_argument": str(fixture_parent),
+    }
+    fixture: Path | None = None
+    service: Any | None = None
+    store: Any | None = None
+    process: subprocess.Popen[str] | None = None
+    auth_copy: Path | None = None
+    cleanup_errors: list[str] = []
+    try:
+        report["snapshot"] = _verify_snapshot(snapshot, args.source_commit)
+        report["package_provenance"] = _verify_installed_package(environment, wheel, digest)
+        fixture = Path(
+            tempfile.mkdtemp(prefix="mnemos-native-claude-alwaysload-v2-", dir=fixture_parent)
+        )
+        from mnemos.config import MnemosConfig
+        from mnemos.scopes import ScopeRegistry
+        from mnemos.service import _protect_private_path
+
+        _protect_private_path(fixture)
+        project = fixture / "project"
+        config_home = fixture / "claude-home"
+        config_dir = config_home / ".claude"
+        runtime = fixture / "runtime"
+        routing = fixture / "routing"
+        checkpoints = fixture / "checkpoints"
+        for directory in (project, config_home, config_dir, runtime, routing, checkpoints):
+            _private_mkdir(directory)
+        registry = ScopeRegistry()
+        identity = registry.register_project(project, user_profile_id=PROFILE, enabled=True)
+        registry_path = fixture / "scopes.json"
+        registry.save(registry_path)
+        context = registry.resolve(
+            project, user_profile_id=PROFILE, session_id=str(uuid4()), host="claude-code"
+        )
+        config = MnemosConfig()
+        for name in ("surprisal", "mutable_rag", "affective", "sleep", "spreading"):
+            setattr(config.modules, name, False)
+        config_path = fixture / "config.toml"
+        config_path.write_text("# isolated alwaysLoad startup control\n", encoding="utf-8")
+        _protect_private_path(config_path)
+        overlay = fixture / "plugin-overlay"
+        report["overlay"] = _copy_overlay(snapshot, overlay)
+        env = _clean_environment(
+            {
+                "CLAUDE_CONFIG_DIR": str(config_dir),
+                "CLAUDE_PLUGIN_ROOT": str(overlay),
+                "MNEMOS_HOST": "claude-code",
+                "MNEMOS_RUNTIME_DESCRIPTOR": str(fixture / "runtime.json"),
+                "MNEMOS_SCOPE_REGISTRY": str(registry_path),
+                "MNEMOS_USER_PROFILE_ID": PROFILE,
+                "MNEMOS_PROJECT_ROOT": str(project),
+                "MNEMOS_RUNTIME_DIR": str(runtime),
+                "MNEMOS_CLAUDE_CHECKPOINT_DIR": str(checkpoints),
+                "MNEMOS_ROUTING_REVIEW_DIR": str(routing),
+                "MNEMOS_CONFIG_PATH": str(config_path),
+                "MNEMOS_SQLITE_PATH": str(fixture / "memory.sqlite"),
+                "MNEMOS_AUTO_START": "false",
+                "DISABLE_AUTOUPDATER": "1",
+                "ENABLE_CLAUDEAI_MCP_SERVERS": "false",
+                "MNEMOS_PLUGIN_PYTHON": str((environment / "Scripts/python.exe").resolve()),
+                "MCP_CONNECTION_NONBLOCKING": "1",
+                "PATH": str((environment / "Scripts").resolve())
+                + os.pathsep
+                + os.environ.get("PATH", ""),
+            }
+        )
+        auth_copy = _copy_private_auth(config_dir)
+        service, store, context = _start_isolated_service(fixture, registry, config)
+        local_health = service.submit("health", {"context": context.model_dump(mode="json")})
+        report["service_fixture"] = {
+            "started": True,
+            "project_id": identity.id,
+            "profile": PROFILE,
+            "database_path": str(fixture / "memory.sqlite"),
+            "context": context.model_dump(mode="json"),
+            "health": _verify_health_response(
+                local_health,
+                fixture / "memory.sqlite",
+                PROFILE,
+                identity.id,
+                require_scope_isolation=False,
+            ),
+        }
+        if not report["service_fixture"]["health"]["valid"]:
+            raise RuntimeError("private service health preflight failed")
+        command = _native_command(exe, overlay, project)
+        report["command"] = command
+        report["environment_binding"] = {
+            key: env[key]
+            for key in (
+                "CLAUDE_CONFIG_DIR",
+                "MNEMOS_RUNTIME_DESCRIPTOR",
+                "MNEMOS_CONFIG_PATH",
+                "MNEMOS_SCOPE_REGISTRY",
+                "MNEMOS_SQLITE_PATH",
+                "MCP_CONNECTION_NONBLOCKING",
+            )
+        }
+        process = subprocess.Popen(
+            command,
+            cwd=str(project),
+            env=env,
+            stdin=subprocess.DEVNULL,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+            text=True,
+            encoding="utf-8",
+            errors="replace",
+            shell=False,
+            creationflags=getattr(subprocess, "CREATE_NEW_PROCESS_GROUP", 0),
+        )
+        started = time.monotonic()
+        timed_out = False
+        try:
+            stdout, stderr = process.communicate(timeout=MAX_NATIVE_SECONDS)
+        except subprocess.TimeoutExpired as exc:
+            timed_out = True
+            _terminate(process)
+            stdout, stderr = process.communicate(timeout=10)
+            report["timeout_output_present"] = bool(exc.stdout or exc.stderr)
+        (fixture / "native-stdout.jsonl").write_text(stdout, encoding="utf-8")
+        (fixture / "native-stderr.log").write_text(stderr, encoding="utf-8")
+        summary = _stream_summary(stdout, fixture / "memory.sqlite", PROFILE, identity.id)
+        report["native"] = {
+            "returncode": process.returncode,
+            "timed_out": timed_out,
+            "elapsed_ms": round((time.monotonic() - started) * 1000, 1),
+            "stdout_sha256": _sha256(stdout),
+            "stdout_bytes": len(stdout.encode("utf-8")),
+            "stderr_sha256": _sha256(stderr),
+            "stderr_bytes": len(stderr.encode("utf-8")),
+            "private_stdout": str(fixture / "native-stdout.jsonl"),
+            "private_stderr": str(fixture / "native-stderr.log"),
+        }
+        report["stream_summary"] = summary
+        inventory = summary["inventory"]
+        report["criteria"] = {
+            "always_load_overlay_bound": report["overlay"]["changed_files"]
+            == [".claude-plugin/plugin.json"],
+            "nonblocking_child_env_bound": env.get("MCP_CONNECTION_NONBLOCKING") == "1",
+            "private_service_health": report["service_fixture"]["health"]["valid"],
+            "initial_tool_inventory_ready": inventory["status"] == "ready",
+            "health_call_observed": summary["exactly_one_health_call"],
+            "health_result_success": summary["health_result_valid"],
+            "call_result_ids_match": summary["call_result_ids_match"],
+            "no_forbidden_calls": not summary["forbidden_call_names"],
+            "native_completed": not timed_out and process.returncode == 0,
+        }
+        report["status"] = "passed" if all(report["criteria"].values()) else "failed"
+    except Exception as exc:
+        report.update(
+            {
+                "status": "failed",
+                "error_type": type(exc).__name__,
+                "error_digest": _sha256(str(exc)),
+            }
+        )
+    finally:
+        if process is not None and process.poll() is None:
+            try:
+                _terminate(process)
+            except Exception as exc:
+                cleanup_errors.append(type(exc).__name__)
+        if service is not None:
+            try:
+                service.stop()
+            except Exception as exc:
+                cleanup_errors.append("service:" + type(exc).__name__)
+        if store is not None:
+            try:
+                store.close()
+            except Exception as exc:
+                cleanup_errors.append("store:" + type(exc).__name__)
+        if auth_copy is not None:
+            try:
+                auth_copy.unlink(missing_ok=True)
+            except Exception as exc:
+                cleanup_errors.append("auth:" + type(exc).__name__)
+        report["cleanup_errors"] = cleanup_errors
+        report["auth_copy_performed"] = auth_copy is not None
+        report["auth_copy_removed"] = auth_copy is None or not auth_copy.exists()
+        if fixture is not None:
+            report["fixture"] = str(fixture)
+            report["runtime_descriptor_absent"] = not (fixture / "runtime.json").exists()
+            if not report["runtime_descriptor_absent"]:
+                report["status"] = "failed"
+        report["finished_at"] = datetime.now(timezone.utc).isoformat()
+        (output / "report.json").write_text(
+            json.dumps(report, indent=2, ensure_ascii=True) + "\n", encoding="utf-8"
+        )
+    print(json.dumps({"status": report["status"], "output": str(output)}))
+    return 0 if report["status"] == "passed" else 1
+
+
+if __name__ == "__main__":
+    raise SystemExit(main())

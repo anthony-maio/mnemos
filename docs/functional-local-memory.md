@@ -119,6 +119,17 @@ An unknown profile, disabled project, invalid workspace membership, or unknown h
 
 The UI saves the selected profile in its global onboarding settings and includes the profile and registry path in generated host configuration. An explicit `MNEMOS_USER_PROFILE_ID` overrides that selection. Claude Code setup writes project `.mcp.json`; automatic conversation capture also requires the Mnemos Claude plugin. Applying MCP configuration alone does not install its capture hooks.
 
+The Claude plugin and newly generated Claude MCP entries request
+`alwaysLoad: true` for Mnemos. Claude then waits for this server's startup and
+loads its tool definitions into the first prompt's context. Existing explicit
+`alwaysLoad: false` choices in generated configuration are preserved. This
+trades initial context space and a bounded startup wait for first-turn tool
+availability. The isolated Claude Code 2.1.191
+[startup control](validation/2026-09-17/native-claude-alwaysload-v2/README.md)
+observed a connected catalog and successful health call with global nonblocking
+startup enabled. It does not establish full capture acceptance. See the
+[Claude server-loading contract](https://code.claude.com/docs/en/mcp#exempt-a-server-from-deferral).
+
 ## Capture, processing, and facts
 
 The default combines automatic evidence capture in enabled projects with explicit remember/correct/forget. Automatic capture preserves context an agent might otherwise miss, but creates more private source data and depends on extraction quality. Explicit saves are easier to review and explain, but the host can forget to make the call and omit useful context. Keeping short-lived evidence separate from durable, source-backed facts gives automatic capture a recovery path while preserving deliberate control over accepted memory.

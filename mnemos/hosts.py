@@ -195,6 +195,10 @@ def _merge_json_host_config(
     mnemos_entry["command"] = command
     mnemos_entry["env"] = env
     mnemos_entry["args"] = args or []
+    if known_host == "claude-code":
+        # Claude defers MCP startup by default.  Keep an existing explicit
+        # false so onboarding does not override a user's host preference.
+        mnemos_entry.setdefault("alwaysLoad", True)
     servers["mnemos"] = mnemos_entry
     return json.dumps(payload, indent=2) + "\n"
 

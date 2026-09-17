@@ -133,4 +133,13 @@ or inheriting another client's identity. Existing installations need the
 updated launcher or regenerated configuration; historical evidence is not
 rewritten by this change.
 
+The Claude plugin and generated Claude entries now default to `alwaysLoad: true`
+for Mnemos; an existing explicit false in generated configuration is retained.
+The [isolated startup control](validation/2026-09-17/native-claude-alwaysload-v2/README.md)
+used the `8d865a5` plugin with only this manifest field overlaid and global
+nonblocking startup enabled. Claude 2.1.191 exposed all 14 tools at initialization
+and completed one health call against the intended database, profile, and
+project. This supports the server-specific startup setting; it is separate from
+the v17 lifecycle result and does not remove capture limitations.
+
 All clients need an enabled project, registered profile, and the same runtime descriptor. A repository basename is not a scope identity. Mock cognition is rejected by the normal configured service; use a real provider and input-specific readiness probe. See [functional local memory](functional-local-memory.md), [Codex setup](codex.md), and [Hermes setup](integrations/hermes.md).
