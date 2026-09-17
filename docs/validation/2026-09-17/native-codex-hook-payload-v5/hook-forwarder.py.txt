@@ -1,0 +1,109 @@
+"""Private native-hook forwarding wrapper for the v5 Codex diagnostic."""
+from __future__ import annotations
+
+import contextlib
+import hashlib
+import io
+import json
+import os
+from pathlib import Path
+import runpy
+import sys
+import time
+from typing import Any
+
+
+def _sha256(value: str) -> str:
+    return hashlib.sha256(value.encode("utf-8")).hexdigest()
+
+
+def _log_path() -> Path:
+    descriptor = os.environ.get("MNEMOS_RUNTIME_DESCRIPTOR")
+    if descriptor:
+        return Path(descriptor).resolve().with_name("hook-diagnostics-v5.jsonl")
+    return Path.cwd().resolve() / "hook-diagnostics-v5.jsonl"
+
+
+def _record(value: dict[str, Any]) -> None:
+    path = _log_path()
+    path.parent.mkdir(parents=True, exist_ok=True)
+    with path.open("a", encoding="utf-8", newline="\n") as stream:
+        stream.write(json.dumps(value, sort_keys=True, separators=(",", ":")) + "\n")
+
+
+def _payload_summary(payload: dict[str, Any]) -> dict[str, Any]:
+    return {
+        "event": payload.get("hook_event_name") if isinstance(payload.get("hook_event_name"), str) else None,
+        "stop_hook_active": payload.get("stop_hook_active")
+        if isinstance(payload.get("stop_hook_active"), bool)
+        else None,
+        "payload_keys": sorted(str(key) for key in payload),
+        "payload_types": {str(key): type(value).__name__ for key, value in sorted(payload.items())},
+        "nonempty_text": {
+            key: isinstance(payload.get(key), str) and bool(payload[key].strip())
+            for key in ("prompt", "last_assistant_message", "cwd", "session_id", "turn_id")
+        },
+        "turn_id_sha256": _sha256(payload["turn_id"])
+        if isinstance(payload.get("turn_id"), str)
+        else None,
+        "session_id_sha256": _sha256(payload["session_id"])
+        if isinstance(payload.get("session_id"), str)
+        else None,
+    }
+
+
+def main() -> int:
+    raw = sys.stdin.read()
+    try:
+        payload = json.loads(raw)
+    except (TypeError, json.JSONDecodeError):
+        payload = {}
+    if not isinstance(payload, dict):
+        payload = {}
+    summary = _payload_summary(payload)
+    started = time.monotonic()
+    _record({"adapter": "mnemos.adapters.codex", "marker": "entry", **summary})
+    stdout = io.StringIO()
+    stderr = io.StringIO()
+    error_type: str | None = None
+    exit_code = 0
+    try:
+        sys.stdin = io.StringIO(raw)
+        with contextlib.redirect_stdout(stdout), contextlib.redirect_stderr(stderr):
+            runpy.run_module("mnemos.adapters.codex", run_name="__main__")
+    except SystemExit as exc:
+        if isinstance(exc.code, int):
+            exit_code = exc.code
+        elif exc.code is not None:
+            exit_code = 1
+    except BaseException as exc:  # pragma: no cover - native diagnostic boundary
+        error_type = type(exc).__name__
+        exit_code = 1
+    finally:
+        original_stdout = sys.__stdout__ or sys.stdout
+        original_stderr = sys.__stderr__ or sys.stderr
+        stdout_text = stdout.getvalue()
+        stderr_text = stderr.getvalue()
+        original_stdout.write(stdout_text)
+        original_stdout.flush()
+        original_stderr.write(stderr_text)
+        original_stderr.flush()
+        _record(
+            {
+                "adapter": "mnemos.adapters.codex",
+                "marker": "exit",
+                **summary,
+                "elapsed_ms": round((time.monotonic() - started) * 1000, 3),
+                "error_type": error_type,
+                "exit_code": exit_code,
+                "stdout_length": len(stdout_text),
+                "stdout_sha256": _sha256(stdout_text),
+                "stderr_length": len(stderr_text),
+                "stderr_sha256": _sha256(stderr_text),
+            }
+        )
+    return exit_code
+
+
+if __name__ == "__main__":
+    raise SystemExit(main())

@@ -1,0 +1,318 @@
+"""Bounded native Codex hook-payload diagnostic based on interactive v2."""
+from __future__ import annotations
+
+import argparse
+import base64
+import hashlib
+import importlib.util
+import json
+import os
+from pathlib import Path
+import shutil
+import subprocess
+import sys
+import tempfile
+from types import ModuleType
+from typing import Any, Callable
+
+
+WORKTREE = Path(__file__).resolve().parents[1]
+INTERACTIVE_V2_PATH = WORKTREE / ".venv" / "native_codex_interactive_v2.py"
+INTERACTIVE_V2_SHA256 = "aeea9fe9dcfdd0ec9a7123e0e065d0bea85d6aa2d6669c4fe3435ef3c4b3b747"
+FORWARDER = WORKTREE / ".venv" / "native_codex_hook_forwarder_v5.py"
+FORWARDER_SHA256 = "045b751c1d403617a041b103adcd6419dc4162717919a64943faefa6dd4396d5"
+PROFILE = "native-codex-interactive-v5"
+
+
+def _sha256(path: Path) -> str:
+    return hashlib.sha256(path.read_bytes()).hexdigest()
+
+
+def _load_interactive_v2() -> ModuleType:
+    if _sha256(INTERACTIVE_V2_PATH) != INTERACTIVE_V2_SHA256:
+        raise RuntimeError("Pinned interactive v2 helper changed")
+    spec = importlib.util.spec_from_file_location(
+        "mnemos_native_codex_interactive_v2", INTERACTIVE_V2_PATH
+    )
+    if spec is None or spec.loader is None:
+        raise RuntimeError("Could not load pinned interactive v2 helper")
+    module = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(module)
+    return module
+
+
+def _patch_private_hook_config(v2: ModuleType) -> Callable[[], None]:
+    del v2
+    import mnemos.hosts as hosts
+
+    original = hosts.apply_host_integration
+    encoded_wrapper = base64.b64encode(str(FORWARDER).encode("utf-8")).decode("ascii")
+    old_fragments = (
+        "runpy.run_module(''mnemos.adapters.codex'',run_name=''__main__'')",
+        "runpy.run_module('mnemos.adapters.codex',run_name='__main__')",
+    )
+
+    def patched(*args: Any, **kwargs: Any) -> Any:
+        result = original(*args, **kwargs)
+        path = result.config_path
+        text = path.read_text(encoding="utf-8")
+        changed = False
+        for old in old_fragments:
+            quote = "''" if "''" in old else "'"
+            replacement = f"({quote}mnemos.adapters.codex{quote},runpy.run_path(base64.b64decode({quote}{encoded_wrapper}{quote}).decode(),run_name={quote}__main__{quote}))[-1]"
+            if old in text:
+                text = text.replace(old, replacement)
+                changed = True
+        if not changed:
+            raise RuntimeError("generated Codex hook command did not contain the adapter bootstrap")
+        path.write_text(text, encoding="utf-8", newline="\n")
+        return result
+
+    hosts.apply_host_integration = patched
+
+    def restore() -> None:
+        hosts.apply_host_integration = original
+
+    return restore
+
+
+def _output_path(args: list[str]) -> Path | None:
+    try:
+        return Path(args[args.index("--output") + 1])
+    except (ValueError, IndexError):
+        return None
+
+
+def _add_instrumentation(report: dict[str, Any], v2: ModuleType) -> None:
+    fixture_value = report.get("fixture_path")
+    if not isinstance(fixture_value, str):
+        return
+    path = Path(fixture_value) / "hook-diagnostics-v5.jsonl"
+    records: list[dict[str, Any]] = []
+    if path.is_file():
+        for line in path.read_text(encoding="utf-8").splitlines():
+            value = json.loads(line)
+            if not isinstance(value, dict):
+                raise RuntimeError("hook instrumentation record is not an object")
+            records.append(value)
+    report["hook_instrumentation"] = {
+        "status": "recorded" if records else "no_records",
+        "record_count": len(records),
+        "relative_path": path.name,
+        "bytes": path.stat().st_size if path.is_file() else 0,
+        "sha256": _sha256(path) if path.is_file() else None,
+        "records": records,
+        "overhead_limitation": "Private forwarding buffers hook stdout and stderr; recorded hook timing includes wrapper overhead.",
+    }
+    report["runner_sha256"] = _sha256(Path(__file__))
+    report["base_runner_sha256"] = _sha256(Path(v2.__file__))
+    report["forwarder_sha256"] = _sha256(FORWARDER)
+
+
+def _load_runtime() -> tuple[ModuleType, ModuleType, ModuleType]:
+    """Load interactive v2, its unchanged retrieve wrapper, and lifecycle."""
+    if _sha256(FORWARDER) != FORWARDER_SHA256:
+        raise RuntimeError("Pinned hook forwarder changed")
+    interactive = _load_interactive_v2()
+    interactive.PROFILE = PROFILE
+    wrapper = interactive._load_v2()
+    wrapper.PROFILE = PROFILE
+    lifecycle = wrapper._load_lifecycle()
+    return interactive, wrapper, lifecycle
+
+
+def _forwarder_self_test() -> dict[str, Any]:
+    with tempfile.TemporaryDirectory(prefix="mnemos-codex-forwarder-v5-") as name:
+        root = Path(name)
+        package = root / "mnemos" / "adapters"
+        package.mkdir(parents=True)
+        (root / "mnemos" / "__init__.py").write_text("\n", encoding="utf-8")
+        (package / "__init__.py").write_text("\n", encoding="utf-8")
+        (package / "codex.py").write_text(
+            "import json,sys\np=json.loads(sys.stdin.read())\n"
+            "print(json.dumps({'stub':'ok','event':p.get('hook_event_name')},separators=(',',':')))\n"
+            "print('stub stderr',file=sys.stderr)\n",
+            encoding="utf-8",
+        )
+        descriptor = root / "runtime.json"
+        environment = {key: value for key, value in os.environ.items() if not key.startswith("MNEMOS_")}
+        environment.update(
+            {
+                "PYTHONPATH": str(root),
+                "PYTHONSAFEPATH": "1",
+                "MNEMOS_RUNTIME_DESCRIPTOR": str(descriptor),
+            }
+        )
+        completed = subprocess.run(
+            [sys.executable, str(FORWARDER)],
+            input='{"hook_event_name":"Stop","last_assistant_message":"private"}',
+            text=True,
+            capture_output=True,
+            cwd=root,
+            env=environment,
+            check=False,
+        )
+        expected_stdout = '{"stub":"ok","event":"Stop"}\n'
+        if completed.returncode != 0 or completed.stdout != expected_stdout or completed.stderr != "stub stderr\n":
+            raise RuntimeError("forwarder did not preserve the stub adapter streams")
+        log = descriptor.with_name("hook-diagnostics-v5.jsonl")
+        records = [json.loads(line) for line in log.read_text(encoding="utf-8").splitlines()]
+        if len(records) != 2 or [item.get("marker") for item in records] != ["entry", "exit"]:
+            raise RuntimeError("forwarder did not write entry and exit records")
+        if "private" in log.read_text(encoding="utf-8"):
+            raise RuntimeError("forwarder log retained synthetic payload text")
+        return {"stdout": completed.stdout, "stderr": completed.stderr, "records": records}
+
+
+def _stop_command(rendered: str) -> str:
+    try:
+        import tomllib
+
+        payload = tomllib.loads(rendered)
+    except (ImportError, tomllib.TOMLDecodeError) as exc:
+        raise RuntimeError("generated Codex config is not valid TOML") from exc
+    hooks = payload.get("hooks")
+    if not isinstance(hooks, dict):
+        raise RuntimeError("generated Codex config has no hooks table")
+    groups = hooks.get("Stop")
+    if not isinstance(groups, list):
+        raise RuntimeError("generated Codex config has no Stop hook")
+    for group in groups:
+        if not isinstance(group, dict):
+            continue
+        handlers = group.get("hooks")
+        if not isinstance(handlers, list):
+            continue
+        for handler in handlers:
+            if isinstance(handler, dict) and isinstance(handler.get("command"), str):
+                return handler["command"]
+    raise RuntimeError("generated Codex Stop hook has no command")
+
+
+def _config_self_test(v2: ModuleType) -> dict[str, Any]:
+    import mnemos.hosts as hosts
+
+    with tempfile.TemporaryDirectory(prefix="mnemos-codex-config-v5-") as name:
+        root = Path(name)
+        project = root / "project"
+        home = root / "home"
+        project.mkdir()
+        restore = _patch_private_hook_config(v2)
+        try:
+            result = hosts.apply_host_integration(
+                "codex",
+                mnemos_config_path=root / "settings.toml",
+                cwd=project,
+                home=home,
+                integration_env={
+                    "MNEMOS_CONFIG_PATH": str(root / "settings.toml"),
+                    "MNEMOS_RUNTIME_DESCRIPTOR": str(root / "runtime.json"),
+                },
+            )
+        finally:
+            restore()
+        rendered = result.config_path.read_text(encoding="utf-8")
+        if rendered.count("mnemos.adapters.codex") < 6 or "runpy.run_path" not in rendered:
+            raise RuntimeError("private hook config patch did not preserve all adapter hooks")
+        command = _stop_command(rendered)
+        stub_root = root / "stub"
+        package = stub_root / "mnemos" / "adapters"
+        package.mkdir(parents=True)
+        (stub_root / "mnemos" / "__init__.py").write_text("\n", encoding="utf-8")
+        (package / "__init__.py").write_text("\n", encoding="utf-8")
+        (package / "codex.py").write_text(
+            "import json,sys\n"
+            "p=json.loads(sys.stdin.read())\n"
+            "print(json.dumps({'stub':'ok','event':p.get('hook_event_name')},separators=(',',':')))\n"
+            "print('stub config stderr',file=sys.stderr)\n",
+            encoding="utf-8",
+        )
+        powershell = shutil.which("pwsh") or shutil.which("powershell")
+        if powershell is None:
+            raise RuntimeError("PowerShell is required for generated command self-test")
+        environment = {
+            key: value for key, value in os.environ.items() if not key.startswith("MNEMOS_")
+        }
+        environment.update({"PYTHONPATH": str(stub_root), "PYTHONSAFEPATH": "1"})
+        input_payload = '{"hook_event_name":"Stop","last_assistant_message":"private"}'
+        completed = subprocess.run(
+            [powershell, "-NoProfile", "-Command", command],
+            input=input_payload,
+            text=True,
+            capture_output=True,
+            cwd=root,
+            env=environment,
+            check=False,
+        )
+        if completed.returncode != 0:
+            raise RuntimeError("PowerShell could not execute the generated Stop hook")
+        if completed.stdout != '{"stub":"ok","event":"Stop"}\n':
+            raise RuntimeError("generated Stop hook did not preserve adapter stdout")
+        if completed.stderr != "stub config stderr\n":
+            raise RuntimeError("generated Stop hook did not preserve adapter stderr")
+        log = root / "hook-diagnostics-v5.jsonl"
+        if not log.is_file():
+            raise RuntimeError("generated Stop hook did not write forwarding diagnostics")
+        records = [json.loads(line) for line in log.read_text(encoding="utf-8").splitlines()]
+        if len(records) != 2 or [item.get("marker") for item in records] != ["entry", "exit"]:
+            raise RuntimeError("generated Stop hook did not write entry and exit diagnostics")
+        if "private" in log.read_text(encoding="utf-8"):
+            raise RuntimeError("generated hook diagnostics retained payload text")
+        return {
+            "config_path": str(result.config_path),
+            "adapter_literal_count": rendered.count("mnemos.adapters.codex"),
+            "powershell": str(Path(powershell).resolve()),
+            "command_executed": True,
+            "forwarder_records": records,
+        }
+
+
+def _self_test() -> int:
+    if not FORWARDER.is_file():
+        raise RuntimeError("forwarder is missing")
+    interactive, wrapper, lifecycle = _load_runtime()
+    if not isinstance(lifecycle, ModuleType) or wrapper.PROFILE != PROFILE:
+        raise RuntimeError("v2 loading chain did not produce the bound lifecycle module")
+    result = {
+        "status": "passed",
+        "interactive_v2_sha256": INTERACTIVE_V2_SHA256,
+        "interactive_v2_path": str(Path(interactive.__file__).resolve()),
+        "retrieve_v2_path": str(Path(wrapper.__file__).resolve()),
+        "retrieve_v2_sha256": _sha256(Path(wrapper.__file__)),
+        "forwarder_sha256": _sha256(FORWARDER),
+        "forwarder": _forwarder_self_test(),
+        "config": _config_self_test(interactive),
+        "scope": "synthetic forwarding/config checks only; no service, auth, host, or model access",
+    }
+    print(json.dumps(result, sort_keys=True))
+    return 0
+
+
+def main(argv: list[str] | None = None) -> int:
+    args = list(sys.argv[1:] if argv is None else argv)
+    if "--self-test" in args:
+        return _self_test()
+    interactive, wrapper, lifecycle = _load_runtime()
+    parsed = interactive._parse_args(args)
+    if Path(sys.executable).resolve() != Path(interactive.INSTALLED_PYTHON).resolve():
+        raise RuntimeError("Run with the pinned installed interpreter")
+    if not sys.stdin.isatty() or not sys.stdout.isatty():
+        raise RuntimeError("Interactive probe requires a terminal")
+    input_verification = wrapper._verify_inputs(parsed, lifecycle)
+    restore = _patch_private_hook_config(interactive)
+    try:
+        report = interactive._interactive_probe(wrapper, lifecycle, parsed)
+    finally:
+        restore()
+    report["input_verification"] = input_verification
+    _add_instrumentation(report, interactive)
+    report["v5_scope"] = "private hook forwarding diagnostics; native adapter behavior unchanged"
+    output = Path(parsed.output)
+    output.parent.mkdir(parents=True, exist_ok=True)
+    output.write_text(json.dumps(report, indent=2, sort_keys=True) + "\n", encoding="utf-8", newline="\n")
+    print(json.dumps({"status": report.get("status"), "report": str(output)}, sort_keys=True), flush=True)
+    return 0 if report.get("status") == "observed_partial" else 1
+
+
+if __name__ == "__main__":
+    raise SystemExit(main())

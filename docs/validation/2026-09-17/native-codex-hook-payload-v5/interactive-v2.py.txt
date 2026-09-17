@@ -1,0 +1,491 @@
+"""Prepare one bounded interactive Codex MCP retrieve diagnostic.
+
+This helper is intentionally unexecuted in this checkout. The parent agent may
+run it from a real terminal after reviewing the command and fixture bindings.
+"""
+from __future__ import annotations
+
+import argparse
+import asyncio
+import hashlib
+import importlib.util
+import inspect
+import json
+import os
+from pathlib import Path
+import subprocess
+import sys
+import time
+from types import ModuleType, SimpleNamespace
+from datetime import datetime, timezone
+from typing import Any, Mapping
+
+WORKTREE = Path(__file__).resolve().parents[1]
+V2_PATH = WORKTREE / ".venv" / "native_codex_retrieve_v2.py"
+V2_SHA256 = "20f909d8c2d28934c8d47763558b7f9bf08eb6d848de9a1e6bce8d2f7f3326bb"
+SOURCE_COMMIT = "30eaf4209bc6921b8a4a30f35ecd86fb68e1aae3"
+WHEEL_SHA256 = "642cded3d32b486b73e781fb28b179a79394580e7b5570107b98db27a280e0af"
+WHEEL_PATH = Path(
+    r"C:\Users\Ant\AppData\Local\Temp\mnemos-package-checks-scope-arguments-v2\dist\mnemos_memory-0.7.0-py3-none-any.whl"
+)
+BUILD_VERIFICATION = WHEEL_PATH.parent.parent / "verification.json"
+INSTALLED_PYTHON = Path(
+    r"C:\Users\Ant\AppData\Local\Temp\mnemos-installed-scope-arguments-v1\Scripts\python.exe"
+)
+TEMP_PARENT = Path(r"D:\WindowsTemp")
+PROFILE = "native-codex-interactive-v2"
+MAX_NATIVE_SECONDS = 180
+
+
+def _sha256(value: bytes | str) -> str:
+    raw = value.encode("utf-8") if isinstance(value, str) else value
+    return hashlib.sha256(raw).hexdigest()
+
+
+def _load_v2() -> ModuleType:
+    if _sha256(V2_PATH.read_bytes()) != V2_SHA256:
+        raise RuntimeError("Pinned retrieve-v2 helper changed")
+    spec = importlib.util.spec_from_file_location("mnemos_native_codex_retrieve_v2", V2_PATH)
+    if spec is None or spec.loader is None:
+        raise RuntimeError("Could not load pinned retrieve-v2 helper")
+    module = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(module)
+    return module
+
+
+def _parse_args(argv: list[str] | None) -> argparse.Namespace:
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument("--wheel", type=Path, default=WHEEL_PATH)
+    parser.add_argument("--expected-wheel-sha256", default=WHEEL_SHA256)
+    parser.add_argument("--build-verification", type=Path, default=BUILD_VERIFICATION)
+    parser.add_argument("--source-commit", default=SOURCE_COMMIT)
+    parser.add_argument("--output", type=Path, required=True)
+    parser.add_argument("--self-test", action="store_true")
+    args = parser.parse_args(argv)
+    if args.self_test:
+        return args
+    if args.source_commit != SOURCE_COMMIT:
+        parser.error("this helper is pinned to source commit 30eaf4209bc6921b8a4a30f35ecd86fb68e1aae3")
+    if str(args.expected_wheel_sha256).lower() != WHEEL_SHA256:
+        parser.error("this helper is pinned to the recorded startup-exit wheel")
+    if args.wheel.resolve() != WHEEL_PATH.resolve():
+        parser.error("this helper is pinned to the recorded startup-exit wheel path")
+    if args.output.exists():
+        parser.error("refusing to overwrite an existing output")
+    return args
+
+
+def _native_command(lifecycle: ModuleType, project: Path, prompt: str) -> list[str]:
+    command = [
+        str(lifecycle.CODEX_EXE),
+        "--sandbox",
+        "read-only",
+        "--ask-for-approval",
+        "on-request",
+        "--cd",
+        str(project),
+        "--no-alt-screen",
+        prompt,
+    ]
+    forbidden = {
+        "exec",
+        "--json",
+        "--ephemeral",
+        "--dangerously-bypass-hook-trust",
+        "--dangerously-bypass-approvals-and-sandbox",
+    }
+    if forbidden.intersection(command):
+        raise RuntimeError("interactive command contains a forbidden noninteractive or bypass flag")
+    if command[command.index("--sandbox") + 1] != "read-only":
+        raise RuntimeError("interactive command is not read-only")
+    return command
+
+
+def _clean_environment(lifecycle: ModuleType, overrides: Mapping[str, str]) -> dict[str, str]:
+    environment = dict(lifecycle._clean_environment(overrides))
+    for key in (
+        "OPENAI_API_KEY",
+        "OPENAI_ORG_ID",
+        "ANTHROPIC_API_KEY",
+        "ANTHROPIC_AUTH_TOKEN",
+        "CLAUDE_CODE_OAUTH_TOKEN",
+        "AWS_ACCESS_KEY_ID",
+        "AWS_SECRET_ACCESS_KEY",
+        "AWS_SESSION_TOKEN",
+        "GOOGLE_APPLICATION_CREDENTIALS",
+    ):
+        environment.pop(key, None)
+    environment["TERM"] = "xterm-256color"
+    return environment
+
+
+def _safe_session_events(codex_home: Path) -> dict[str, Any]:
+    """Summarize tool events without retaining prompts, arguments, or results."""
+    events: list[dict[str, Any]] = []
+    files: list[dict[str, Any]] = []
+
+    def visit(value: Any) -> None:
+        if not isinstance(value, Mapping):
+            if isinstance(value, list):
+                for item in value:
+                    visit(item)
+            return
+        event_type = value.get("type") if isinstance(value.get("type"), str) else None
+        names = [
+            item
+            for item in (value.get("name"), value.get("tool"), value.get("tool_name"))
+            if isinstance(item, str)
+        ]
+        server = value.get("server") if isinstance(value.get("server"), str) else None
+        mcp_event = bool(
+            server == "mnemos"
+            or any(name.startswith(("mnemos_", "mcp__mnemos__")) for name in names)
+            or (event_type is not None and "mcp" in event_type.lower())
+        )
+        if mcp_event and (server == "mnemos" or any(name.startswith(("mnemos_", "mcp__mnemos__")) for name in names)):
+            result = value.get("result", value.get("output"))
+            error = value.get("error")
+            events.append(
+                {
+                    "type": event_type,
+                    "server": server,
+                    "tool_names": sorted(set(names)),
+                    "status": value.get("status") if isinstance(value.get("status"), str) else None,
+                    "result_present": result is not None,
+                    "result_sha256": _sha256(json.dumps(result, sort_keys=True, default=str))
+                    if result is not None
+                    else None,
+                    "error_present": error not in (None, False, ""),
+                    "call_id_sha256": _sha256(str(value.get("call_id")))
+                    if isinstance(value.get("call_id"), str)
+                    else None,
+                }
+            )
+        for child in value.values():
+            visit(child)
+
+    for path in sorted(codex_home.rglob("*.jsonl")):
+        raw = path.read_bytes()
+        file_events_before = len(events)
+        for line in raw.splitlines():
+            try:
+                visit(json.loads(line))
+            except (UnicodeDecodeError, json.JSONDecodeError):
+                continue
+        files.append(
+            {
+                "relative_path": str(path.relative_to(codex_home)),
+                "bytes": len(raw),
+                "sha256": _sha256(raw),
+                "mnemos_event_count": len(events) - file_events_before,
+            }
+        )
+    return {"files": files, "mnemos_events": events, "event_count": len(events)}
+
+
+def _fact_access_snapshot(store: Any, fact_id: str) -> dict[str, Any]:
+    fact = store.get(fact_id)
+    return {
+        "present": fact is not None,
+        "version": fact.version if fact is not None else None,
+        "content_sha256": _sha256(fact.content) if fact is not None else None,
+        "access_count": fact.access_count if fact is not None else None,
+    }
+
+
+def _trace_dispatch(service: Any) -> tuple[list[dict[str, Any]], Any]:
+    dispatcher = getattr(service, "_dispatcher", None)
+    original = getattr(dispatcher, "dispatch", None)
+    if dispatcher is None or not callable(original):
+        raise RuntimeError("service dispatcher cannot be traced")
+    trace: list[dict[str, Any]] = []
+
+    async def traced(operation: str, payload: dict[str, Any]) -> dict[str, Any]:
+        started = time.monotonic()
+        context = payload.get('context') or {}
+        observation = {
+            'operation': operation,
+            'started_at': datetime.now(timezone.utc).isoformat(),
+            'query_sha256': _sha256(str(payload['query'])) if 'query' in payload else None,
+            'session_id': context.get('session_id'),
+            'project_id': context.get('project_id'),
+            'host': context.get('host'),
+        }
+        trace.append(observation)
+        try:
+            result = original(operation, payload)
+            if inspect.isawaitable(result):
+                result = await result
+            if not isinstance(result, dict):
+                raise TypeError("dispatcher returned a non-object")
+            observation.update(
+                {
+                    "operation": operation,
+                    "status": "returned",
+                    "elapsed_ms": round((time.monotonic() - started) * 1000, 1),
+                    "result_keys": sorted(str(key) for key in result),
+                    "result_status": result.get('status'),
+                    "fact_ids": [f.get('fact_id', f.get('id')) for f in result.get('facts', []) if isinstance(f, dict)],
+                }
+            )
+            return result
+        except Exception as exc:
+            observation.update(
+                {
+                    "operation": operation,
+                    "status": "error",
+                    "elapsed_ms": round((time.monotonic() - started) * 1000, 1),
+                    "error_type": type(exc).__name__,
+                }
+            )
+            raise
+
+    setattr(dispatcher, "dispatch", traced)
+    return trace, (dispatcher, original)
+
+
+def _restore_dispatch(binding: tuple[Any, Any] | None) -> None:
+    if binding is not None:
+        dispatcher, original = binding
+        setattr(dispatcher, "dispatch", original)
+
+
+def _interactive_probe(
+    wrapper: ModuleType, lifecycle: ModuleType, args: argparse.Namespace
+) -> dict[str, Any]:
+    from mnemos.hosts import apply_host_integration
+
+    fixture = wrapper._private_fixture(
+        lifecycle, Path('C:/Users/Ant/AppData/Local/Temp'), "mnemos-codex-interactive-"
+    )
+    service: Any | None = None
+    store: Any | None = None
+    process: subprocess.Popen[bytes] | None = None
+    auth_copy: Path | None = None
+    dispatch_trace: list[dict[str, Any]] = []
+    dispatch_binding: tuple[Any, Any] | None = None
+    positive_content = "Native interactive retrieval fixture marker alpha."
+    foreign_content = "Native interactive retrieval fixture marker beta."
+    report: dict[str, Any] = {
+        "status": "failed",
+        "mode": "interactive",
+        "source_commit": SOURCE_COMMIT,
+        "wheel_sha256": WHEEL_SHA256,
+        "fixture_path": str(fixture),
+        "command_policy": {
+            "sandbox": "read-only",
+            "approval_policy": "on-request",
+            "approval_bypass": False,
+            "hook_trust_bypass": False,
+            "stdin_stdout": "inherited_terminal",
+            "ephemeral": False,
+        },
+    }
+    try:
+        registry, registry_path, project, project_b = wrapper._registry_with_foreign_project(
+            lifecycle, fixture
+        )
+        settings_path = fixture / "settings.toml"
+        settings_path.write_text("# private interactive Codex settings\n", encoding="utf-8")
+        lifecycle._protect_file(settings_path)
+        service, store = lifecycle._start_service(fixture, registry, wrapper._disabled_config())
+        context_a = registry.resolve(project, user_profile_id=PROFILE, session_id="interactive-a", host="codex")
+        context_b = registry.resolve(project_b, user_profile_id=PROFILE, session_id="interactive-b", host="codex")
+        for event_id, context, content in (
+            ("native-interactive-seed-a", context_a, positive_content),
+            ("native-interactive-seed-b", context_b, foreign_content),
+        ):
+            seeded = service.submit(
+                "remember",
+                {
+                    "event_id": event_id,
+                    "context": context.model_dump(mode="json"),
+                    "content": content,
+                    "role": "user",
+                    "scope": "project",
+                },
+            )
+            if seeded.get("status") != "committed":
+                raise RuntimeError("interactive fixture seed failed")
+        maintenance = service.submit("maintenance", {})
+        if not isinstance(maintenance, Mapping) or maintenance.get("status") == "error":
+            raise RuntimeError("interactive fixture maintenance failed")
+        positive_id, positive_version = wrapper._fact_row(store, positive_content)
+        foreign_id, foreign_version = wrapper._fact_row(store, foreign_content)
+        before = {
+            "positive": _fact_access_snapshot(store, positive_id),
+            "foreign": _fact_access_snapshot(store, foreign_id),
+        }
+        dispatch_trace, dispatch_binding = _trace_dispatch(service)
+        home = fixture / "codex-home"
+        lifecycle._private_mkdir(home)
+        selectors = {
+            "MNEMOS_CONFIG_PATH": str(settings_path),
+            "MNEMOS_SCOPE_REGISTRY": str(registry_path),
+            "MNEMOS_USER_PROFILE_ID": PROFILE,
+            "MNEMOS_RUNTIME_DESCRIPTOR": str(fixture / "runtime.json"),
+            "MNEMOS_PROJECT_ROOT": str(project),
+            "MNEMOS_HOST": "codex",
+            "MNEMOS_SESSION_ID": "native-codex-interactive-v2",
+            "MNEMOS_AUTO_START": "false",
+        }
+        generated = apply_host_integration(
+            "codex",
+            mnemos_config_path=settings_path,
+            cwd=project,
+            home=home,
+            integration_env={
+                key: selectors[key]
+                for key in (
+                    "MNEMOS_CONFIG_PATH",
+                    "MNEMOS_SCOPE_REGISTRY",
+                    "MNEMOS_USER_PROFILE_ID",
+                    "MNEMOS_RUNTIME_DESCRIPTOR",
+                )
+            },
+        )
+        config_path = generated.config_path
+        generated_config = config_path.read_text(encoding="utf-8")
+        if generated_config.count("mnemos.adapters.codex") < 6:
+            raise RuntimeError("generated Codex config lacks the complete hook set")
+        auth_copy = lifecycle._auth_copy(config_path.parent)
+        environment = _clean_environment(
+            lifecycle, {"CODEX_HOME": str(config_path.parent), **selectors}
+        )
+        entrypoint = wrapper._validate_mcp_entrypoint(lifecycle, config_path, environment)
+        prompt = (
+            "Use only the Mnemos MCP tool mnemos_retrieve. Call it exactly once with query "
+            + json.dumps(positive_content)
+            + ". Set current_scope to project and allowed_scopes to the list [\"project\"]. Report the returned fact. Do not use any other tool."
+        )
+        command = _native_command(lifecycle, project, prompt)
+        report["command"] = [item if item != prompt else "<private retrieve prompt>" for item in command]
+        report["config_sha256"] = _sha256(config_path.read_bytes())
+        report["mcp_entrypoint"] = entrypoint
+        print(json.dumps({"fixture": str(fixture), "native_command": report["command"]}), flush=True)
+        started = time.monotonic()
+        process = subprocess.Popen(
+            command,
+            cwd=str(project),
+            env=environment,
+            stdin=None,
+            stdout=None,
+            stderr=None,
+            shell=False,
+            creationflags=getattr(subprocess, "CREATE_NEW_PROCESS_GROUP", 0),
+        )
+        try:
+            process.wait(timeout=MAX_NATIVE_SECONDS)
+            timed_out = False
+        except subprocess.TimeoutExpired:
+            lifecycle._terminate_process_tree(process)
+            timed_out = True
+        session_events = _safe_session_events(config_path.parent)
+        after = {
+            "positive": _fact_access_snapshot(store, positive_id),
+            "foreign": _fact_access_snapshot(store, foreign_id),
+        }
+        retrieve_calls = [item for item in dispatch_trace if item.get("operation") == "retrieve"]
+        report.update(
+            {
+                "status": "observed_partial" if process.returncode == 0 and not timed_out else "failed",
+                "returncode": process.returncode,
+                "timed_out": timed_out,
+                "elapsed_ms": round((time.monotonic() - started) * 1000, 1),
+                "session_events": session_events,
+                "dispatch_trace": dispatch_trace,
+                "service_arrival": {
+                    "retrieve_dispatch_count": len(retrieve_calls),
+                    "operations": [item.get("operation") for item in dispatch_trace],
+                },
+                "fact_access_delta": {
+                    "positive": (after["positive"]["access_count"] or 0)
+                    - (before["positive"]["access_count"] or 0),
+                    "foreign": (after["foreign"]["access_count"] or 0)
+                    - (before["foreign"]["access_count"] or 0),
+                },
+                "fact_guard": {"before": before, "after": after},
+                "seed": {
+                    "positive_fact_id": positive_id,
+                    "positive_version": positive_version,
+                    "positive_content_sha256": _sha256(positive_content),
+                    "foreign_fact_id": foreign_id,
+                    "foreign_version": foreign_version,
+                    "foreign_content_sha256": _sha256(foreign_content),
+                    "project_id": context_a.project_id,
+                    "foreign_project_id": context_b.project_id,
+                },
+            }
+        )
+        report['native_acceptance'] = 'requires correlated native tool result inspection; counters and process exit do not prove acceptance'
+        return report
+    except Exception as exc:
+        report.update(status='failed', error_type=type(exc).__name__, error_digest=_sha256(str(exc)), dispatch_trace=dispatch_trace)
+        return report
+    finally:
+        _restore_dispatch(dispatch_binding)
+        cleanup_errors: list[str] = []
+        if process is not None or auth_copy is not None:
+            cleanup_errors.extend(lifecycle._cleanup_native_resources(process, auth_copy))
+        cleanup_errors.extend(lifecycle._close_service(service, store))
+        report["cleanup"] = {
+            "errors": cleanup_errors,
+            "auth_copy_removed": auth_copy is None or not auth_copy.exists(),
+            "descriptor_absent": not (fixture / "runtime.json").exists(),
+            "service_kept_running_during_native": True,
+        }
+        if cleanup_errors or not report['cleanup']['auth_copy_removed'] or not report['cleanup']['descriptor_absent']:
+            report['status'] = 'failed'
+
+
+def _self_test() -> dict[str, Any]:
+    command = _native_command(SimpleNamespace(CODEX_EXE=Path("codex.exe")), Path("C:/private/project"), "Call mnemos_retrieve.")
+    if any(flag in command for flag in ("exec", "--json", "--ephemeral", "--dangerously-bypass-hook-trust", "--dangerously-bypass-approvals-and-sandbox")):
+        raise RuntimeError("self-test found forbidden interactive command flag")
+    if command[command.index("--ask-for-approval") + 1] != "on-request":
+        raise RuntimeError("self-test did not retain normal approval policy")
+    return {
+        "status": "passed",
+        "source_commit": SOURCE_COMMIT,
+        "wheel_sha256": WHEEL_SHA256,
+        "v2_sha256": V2_SHA256,
+        "command_policy": "interactive inherited terminal with on-request approval; no bypass",
+        "scope": "synthetic command policy only; no service, auth, host, or model access",
+    }
+
+
+def main(argv: list[str] | None = None) -> int:
+    args = _parse_args(argv)
+    if args.self_test:
+        print(json.dumps(_self_test(), sort_keys=True))
+        return 0
+    wrapper = _load_v2()
+    wrapper.PROFILE = PROFILE
+    lifecycle = wrapper._load_lifecycle()
+    if Path(sys.executable).resolve() != INSTALLED_PYTHON.resolve():
+        raise RuntimeError('Run with the pinned installed interpreter')
+    if not sys.stdin.isatty() or not sys.stdout.isatty():
+        raise RuntimeError('Interactive probe requires a terminal')
+    input_verification = wrapper._verify_inputs(args, lifecycle)
+    report: dict[str, Any]
+    try:
+        report = _interactive_probe(wrapper, lifecycle, args)
+        report["input_verification"] = input_verification
+    except Exception as exc:
+        report = {
+            "status": "failed",
+            "error_type": type(exc).__name__,
+            "error_note": "Exception messages and private payloads are omitted.",
+            "input_verification": input_verification,
+        }
+    args.output.parent.mkdir(parents=True, exist_ok=True)
+    report['runner_sha256'] = _sha256(Path(__file__).read_bytes())
+    report['helper_hashes'] = {'retrieve_v2': V2_SHA256, 'lifecycle_v3': wrapper.V3_SHA256, 'generated_v8': wrapper.V8_SHA256}
+    report['finished_at'] = datetime.now(timezone.utc).isoformat()
+    args.output.write_text(json.dumps(report, indent=2, sort_keys=True) + "\n", encoding="utf-8")
+    print(json.dumps({'status': report.get('status'), 'report': str(args.output)}), flush=True)
+    return 0 if report.get("status") == "observed_partial" else 1
+
+
+if __name__ == "__main__":
+    raise SystemExit(main())
