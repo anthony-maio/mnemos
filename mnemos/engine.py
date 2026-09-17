@@ -772,16 +772,16 @@ class MnemosEngine:
         Retrieve memories through the contextual retrieval pipeline.
 
         Pipeline:
-        1. Embed the query and gather scoped semantic candidates
-        2. Optionally expand with SpreadingActivation when returning multiple results
-        3. Optionally re-rank with AffectiveRouter when returning multiple results
-        4. Flag retrieved chunks as labile and persist access metadata
+        1. Embed the query and classify state when eligible candidates exist
+        2. Gather current scoped candidates after asynchronous provider work
+        3. Optionally expand the graph and apply affective ranking, including top-1
+        4. Enforce the context budget and persist access metadata
 
         Args:
             query: The query string to search for.
             top_k: Number of results to return.
-            reconsolidate: Whether to run reconsolidation on labile chunks
-                           after retrieval (default True, runs in background).
+            reconsolidate: Retained for compatibility. Review requires new evidence
+                           or an explicit correction, never a retrieval query.
 
         Returns:
             Top-k MemoryChunks ranked by the active retrieval pipeline.
@@ -825,19 +825,41 @@ class MnemosEngine:
             raise ValueError("Unknown retrieval profile")
         query_embedding = await embed_text_async(self._embedder, query, role="query")
         candidate_pool_k = min(max(top_k * 6, 20), self.config.retrieval.max_candidates)
-        baseline_chunks = self._store.retrieve(
-            query_embedding, top_k=candidate_pool_k, filter_fn=scope_filter
-        )
-        retrieval_backend = getattr(self._store, "last_retrieval_backend", "embedded_cosine")
         lexical_search = getattr(self._store, "retrieve_lexical", None)
-        lexical_chunks = (
-            lexical_search(query, top_k=candidate_pool_k, filter_fn=scope_filter)
-            if callable(lexical_search)
-            else []
+
+        def collect_candidates() -> tuple[list[MemoryChunk], str, set[str], dict[str, MemoryChunk]]:
+            baseline = self._store.retrieve(
+                query_embedding, top_k=candidate_pool_k, filter_fn=scope_filter
+            )
+            backend = getattr(self._store, "last_retrieval_backend", "embedded_cosine")
+            lexical = (
+                lexical_search(query, top_k=candidate_pool_k, filter_fn=scope_filter)
+                if callable(lexical_search)
+                else []
+            )
+            merged = {chunk.id: chunk for chunk in baseline}
+            merged.update((chunk.id, chunk) for chunk in lexical)
+            return baseline, backend, {chunk.id for chunk in lexical}, merged
+
+        baseline_chunks, retrieval_backend, lexical_ids, candidates = collect_candidates()
+        use_affective = (
+            selected_profile == "biomimetic"
+            and self.config.retrieval.affective_enabled
+            and self.config.modules.affective
         )
-        lexical_ids = {chunk.id for chunk in lexical_chunks}
-        candidates = {chunk.id: chunk for chunk in baseline_chunks}
-        candidates.update((chunk.id, chunk) for chunk in lexical_chunks)
+        current_state = None
+        if use_affective and candidates:
+            query_metadata = identity_metadata or {
+                "scope": normalized_current_scope,
+                "scope_id": normalized_scope_id,
+            }
+            current_state = await self.affective_router.classify_state(
+                Interaction(role="user", content=query, metadata=query_metadata)
+            )
+            # Corrections, forgets, and new facts may commit while the classifier
+            # awaits its provider. Gather a fresh candidate set before graph,
+            # scoring, and budgeting; the owner-loop path has no further awaits.
+            baseline_chunks, retrieval_backend, lexical_ids, candidates = collect_candidates()
         graph_requested = (
             selected_profile == "biomimetic"
             and self.config.retrieval.spreading_enabled
@@ -906,20 +928,6 @@ class MnemosEngine:
                 candidates[candidate.id] = candidate
                 activation[candidate.id] = node.energy
 
-        use_affective = (
-            selected_profile == "biomimetic"
-            and self.config.retrieval.affective_enabled
-            and self.config.modules.affective
-        )
-        current_state = None
-        if use_affective and candidates:
-            query_metadata = identity_metadata or {
-                "scope": normalized_current_scope,
-                "scope_id": normalized_scope_id,
-            }
-            current_state = await self.affective_router.classify_state(
-                Interaction(role="user", content=query, metadata=query_metadata)
-            )
         scored = []
         for chunk in candidates.values():
             score = score_candidate(
