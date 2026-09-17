@@ -1,0 +1,121 @@
+..................................................ss.................... [  8%]
+........................................................................ [ 16%]
+........................................................................ [ 25%]
+........................................................................ [ 33%]
+........................................................................ [ 41%]
+.................................................ss..................... [ 50%]
+..........................................F............................. [ 58%]
+........................................................................ [ 66%]
+........................................................................ [ 75%]
+........................................................................ [ 83%]
+........................................................................ [ 91%]
+.....................................................................    [100%]
+================================== FAILURES ===================================
+____ test_measure_retrieval_performs_one_metadata_update_per_engine_query _____
+
+tmp_path = WindowsPath('D:/WindowsTemp/pytest-of-Ant/pytest-3465/test_measure_retrieval_perform0')
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x0000026D815A8210>
+
+    def test_measure_retrieval_performs_one_metadata_update_per_engine_query(
+        tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
+        class FakeOllama:
+            dim = 768
+    
+            def __init__(self, **_: object) -> None:
+                pass
+    
+            def embed(self, _text: str) -> list[float]:
+                return [1.0] + [0.0] * 767
+    
+        def tiny_load(store: SQLiteStore, base_vector: list[float], project_id: str) -> None:
+            now = datetime.now(timezone.utc)
+            for index in range(2):
+                store.store(
+                    MemoryChunk(
+                        id=f"tiny-fact-{index}",
+                        content=f"Tiny benchmark fact {index}",
+                        embedding=list(base_vector),
+                        metadata={
+                            "scope": "project",
+                            "scope_id": project_id,
+                            "user_profile_id": "performance-profile",
+                        },
+                        created_at=now,
+                        updated_at=now,
+                    )
+                )
+            store.rebuild_indexes(rebuild_fts=True, rebuild_vec=False)
+    
+        mark_calls: list[list[str]] = []
+        original_mark = SQLiteStore.mark_retrieved_many
+    
+        def spy_mark(store: SQLiteStore, chunk_ids: list[str], **kwargs: object) -> int:
+            mark_calls.append(list(chunk_ids))
+            return original_mark(store, chunk_ids, **kwargs)
+    
+        monkeypatch.setattr(performance_module, "OllamaEmbeddingProvider", FakeOllama)
+        monkeypatch.setattr(performance_module, "_load_facts", tiny_load)
+        monkeypatch.setattr(SQLiteStore, "mark_retrieved_many", spy_mark)
+        monkeypatch.setattr(performance_module, "QUERY_TEXTS", ("tiny query",))
+    
+>       artifact = performance_module.measure_retrieval(
+            tmp_path,
+            endpoint="http://offline.invalid",
+            embedding_model="offline-embedding",
+            cognition_model="offline-cognition",
+        )
+
+tests\test_local_memory_benchmark.py:538: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+root = WindowsPath('D:/WindowsTemp/pytest-of-Ant/pytest-3465/test_measure_retrieval_perform0')
+endpoint = 'http://offline.invalid', embedding_model = 'offline-embedding'
+cognition_model = 'offline-cognition', query_prefix = '', document_prefix = ''
+symmetric_prefix = ''
+
+    def measure_retrieval(
+        root: Path,
+        *,
+        endpoint: str,
+        embedding_model: str,
+        cognition_model: str,
+        query_prefix: str = "",
+        document_prefix: str = "",
+        symmetric_prefix: str = "",
+    ) -> dict[str, Any]:
+        repo = root / "project"
+        repo.mkdir()
+        registry = ScopeRegistry()
+        project = registry.register_project(repo, user_profile_id="performance-profile", enabled=True)
+        workspace = registry.register_workspace("workspace-a", user_profile_id="performance-profile")
+        registry.add_membership(project.id, workspace.id)
+        context = ScopeContext(
+            user_profile_id="performance-profile",
+            project_id=project.id,
+            workspace_id=workspace.id,
+            session_id="performance-session",
+            host="manual",
+        )
+        embedder: Any = OllamaEmbeddingProvider(model=embedding_model, base_url=endpoint, timeout=60.0)
+        observed_started = time.perf_counter()
+        task_contract = embedding_task_contract(
+            query_prefix=query_prefix,
+            document_prefix=document_prefix,
+            symmetric_prefix=symmetric_prefix,
+        )
+        if task_contract is not None:
+            embedder = PrefixEmbeddingProvider(
+                embedder,
+                query_prefix=query_prefix,
+                document_prefix=document_prefix,
+                symmetric_prefix=symmetric_prefix,
+            )
+>       observed = embedder.embed_document("Observed seed vector for synthetic load construction.")
+                   ^^^^^^^^^^^^^^^^^^^^^^^
+E       AttributeError: 'FakeOllama' object has no attribute 'embed_document'
+
+benchmarks\local_memory\performance.py:479: AttributeError
+=========================== short test summary info ===========================
+FAILED tests/test_local_memory_benchmark.py::test_measure_retrieval_performs_one_metadata_update_per_engine_query
+1 failed, 856 passed, 4 skipped in 991.85s (0:16:31)

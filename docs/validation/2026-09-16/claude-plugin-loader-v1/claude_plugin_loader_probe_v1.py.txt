@@ -1,0 +1,236 @@
+"""Read-only Claude plugin loader metadata probe.
+
+This probe deliberately stops at Claude Code's plugin-management metadata
+commands. It does not start a conversation, invoke hooks, connect MCP, or
+install anything.
+"""
+
+from __future__ import annotations
+
+from datetime import datetime, timezone
+import hashlib
+import json
+import os
+from pathlib import Path
+import shutil
+import subprocess
+import tempfile
+from typing import Any
+
+WORKTREE = Path(__file__).resolve().parents[1]
+SNAPSHOT = WORKTREE / ".venv" / "roles-conflict-frozen-v1"
+OUTPUT = WORKTREE / ".venv" / "claude-plugin-loader-v1"
+SOURCE_COMMIT = "9aba20959e5a91acd0367c4c3489d22f7b82d4b1"
+CLAUDE_EXE = Path(r"C:\Users\Ant\.local\bin\claude.exe")
+
+
+def _sha256(path: Path) -> str:
+    digest = hashlib.sha256()
+    with path.open("rb") as stream:
+        for block in iter(lambda: stream.read(1024 * 1024), b""):
+            digest.update(block)
+    return digest.hexdigest()
+
+
+def _clean_environment(config_dir: Path) -> dict[str, str]:
+    environment = dict(os.environ)
+    blocked_exact = {
+        "PYTHONPATH",
+        "CLAUDE_CONFIG_DIR",
+        "CLAUDE_PLUGIN_ROOT",
+        "MNEMOS_PLUGIN_PYTHON",
+        "ANTHROPIC_API_KEY",
+        "ANTHROPIC_AUTH_TOKEN",
+        "CLAUDE_CODE_OAUTH_TOKEN",
+        "AWS_PROFILE",
+        "AWS_ACCESS_KEY_ID",
+        "AWS_SECRET_ACCESS_KEY",
+        "AWS_SESSION_TOKEN",
+        "GOOGLE_APPLICATION_CREDENTIALS",
+    }
+    for key in list(environment):
+        if key.startswith("MNEMOS_") or key in blocked_exact:
+            environment.pop(key, None)
+    environment["CLAUDE_CONFIG_DIR"] = str(config_dir)
+    return environment
+
+
+def _git(root: Path, *arguments: str, check: bool = True) -> subprocess.CompletedProcess[str]:
+    return subprocess.run(
+        ["git", "-C", str(root), *arguments],
+        capture_output=True,
+        text=True,
+        encoding="utf-8",
+        errors="replace",
+        check=check,
+        timeout=20,
+    )
+
+
+def _source_binding() -> dict[str, Any]:
+    if not SNAPSHOT.is_dir():
+        raise RuntimeError(f"Frozen source snapshot is missing: {SNAPSHOT}")
+    head = _git(SNAPSHOT, "rev-parse", "HEAD").stdout.strip()
+    if head != SOURCE_COMMIT:
+        raise RuntimeError(f"Frozen snapshot HEAD is {head}, expected {SOURCE_COMMIT}")
+    status = _git(SNAPSHOT, "status", "--short").stdout
+    if status.strip():
+        raise RuntimeError("Frozen source snapshot is dirty")
+    required = (
+        Path(".claude-plugin/plugin.json"),
+        Path(".claude-plugin/run_mnemos_mcp.py"),
+        Path("hooks/hooks.json"),
+    )
+    files: dict[str, Any] = {}
+    for relative in required:
+        path = SNAPSHOT / relative
+        if not path.is_file():
+            raise RuntimeError(f"Frozen plugin file is missing: {relative}")
+        files[relative.as_posix()] = {
+            "bytes": path.stat().st_size,
+            "sha256": _sha256(path),
+        }
+    return {
+        "snapshot": str(SNAPSHOT),
+        "source_commit": head,
+        "clean": True,
+        "files": files,
+    }
+
+
+def _run(
+    args: list[str], *, cwd: Path, environment: dict[str, str], timeout: float = 8
+) -> dict[str, Any]:
+    command = [str(CLAUDE_EXE), *args]
+    try:
+        completed = subprocess.run(
+            command,
+            cwd=str(cwd),
+            env=environment,
+            capture_output=True,
+            text=True,
+            encoding="utf-8",
+            errors="replace",
+            check=False,
+            timeout=timeout,
+            shell=False,
+        )
+    except subprocess.TimeoutExpired as exc:
+        return {
+            "command": command,
+            "exit_code": None,
+            "timed_out": True,
+            "stdout": str(exc.stdout or ""),
+            "stderr": str(exc.stderr or ""),
+        }
+    return {
+        "command": command,
+        "exit_code": completed.returncode,
+        "timed_out": False,
+        "stdout": completed.stdout,
+        "stderr": completed.stderr,
+    }
+
+
+def _write_json(path: Path, value: Any) -> None:
+    path.write_text(json.dumps(value, indent=2, sort_keys=True) + "\n", encoding="utf-8")
+
+
+def main() -> int:
+    OUTPUT.mkdir(parents=True, exist_ok=True)
+    started = datetime.now(timezone.utc)
+    report: dict[str, Any] = {
+        "probe": "claude-plugin-loader-v1",
+        "started_at": started.isoformat(),
+        "status": "failed",
+        "metadata_only": True,
+        "hook_execution": "NOT RUN",
+        "mcp_connection": "NOT RUN",
+        "native_lifecycle": "NOT RUN",
+        "model_turn": "NOT RUN",
+        "installation": "NOT RUN",
+        "source_commit_expected": SOURCE_COMMIT,
+    }
+    try:
+        if os.name != "nt":
+            raise RuntimeError("This probe expects the installed Windows Claude executable")
+        if not CLAUDE_EXE.is_file():
+            raise FileNotFoundError(str(CLAUDE_EXE))
+        before = _source_binding()
+        report["source_before"] = before
+
+        with tempfile.TemporaryDirectory(prefix="mnemos-claude-loader-") as temp_name:
+            temp_root = Path(temp_name)
+            config_dir = temp_root / "claude-config"
+            project_dir = temp_root / "project"
+            config_dir.mkdir()
+            project_dir.mkdir()
+            environment = _clean_environment(config_dir)
+            version = _run(["--version"], cwd=project_dir, environment=environment)
+            listing = _run(
+                ["--plugin-dir", str(SNAPSHOT), "plugin", "list", "--json"],
+                cwd=project_dir,
+                environment=environment,
+            )
+            details = _run(
+                ["--plugin-dir", str(SNAPSHOT), "plugin", "details", "mnemos-memory"],
+                cwd=project_dir,
+                environment=environment,
+                timeout=8,
+            )
+            report["commands"] = {
+                "version": version["command"],
+                "plugin_list": listing["command"],
+                "plugin_details": details["command"],
+            }
+            for name, result in (
+                ("version", version),
+                ("plugin_list", listing),
+                ("plugin_details", details),
+            ):
+                _write_json(OUTPUT / f"{name}.json", result)
+            report["results"] = {
+                name: {
+                    "exit_code": result["exit_code"],
+                    "timed_out": result["timed_out"],
+                    "stdout_sha256": hashlib.sha256(result["stdout"].encode("utf-8")).hexdigest(),
+                    "stderr_sha256": hashlib.sha256(result["stderr"].encode("utf-8")).hexdigest(),
+                }
+                for name, result in (
+                    ("version", version),
+                    ("plugin_list", listing),
+                    ("plugin_details", details),
+                )
+            }
+            if any(
+                result["timed_out"] or result["exit_code"] != 0
+                for result in (version, listing, details)
+            ):
+                raise RuntimeError("One or more Claude metadata commands failed")
+            report["temporary_fixture"] = {
+                "config_dir_created": True,
+                "project_dir_created": True,
+                "auth_copied": False,
+                "deleted_after_probe": True,
+            }
+
+        after = _source_binding()
+        report["source_after"] = after
+        if before != after:
+            raise RuntimeError("Frozen source binding changed during probe")
+        report["claude_executable"] = {
+            "path": str(CLAUDE_EXE),
+            "sha256": _sha256(CLAUDE_EXE),
+        }
+        report["status"] = "passed"
+    except Exception as exc:
+        report["error_type"] = type(exc).__name__
+        report["error"] = str(exc)
+    finally:
+        report["finished_at"] = datetime.now(timezone.utc).isoformat()
+        _write_json(OUTPUT / "report.json", report)
+    return 0 if report["status"] == "passed" else 1
+
+
+if __name__ == "__main__":
+    raise SystemExit(main())

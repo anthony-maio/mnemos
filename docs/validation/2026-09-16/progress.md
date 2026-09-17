@@ -1079,3 +1079,26 @@ retrievable. The parent combined run of cross-host, MCP compatibility, and
 documentation checks passed 18 tests in 57.38 seconds. Black passed for the
 continuity and concurrent-backup tests. Providers remain synthetic, and no
 native-host or real-model gate is promoted by these checks.
+
+## Combined verification found a benchmark compatibility regression
+
+Frozen source `9aba209` finished with 856 passed, four skipped, and one failed
+test in 991.85 seconds. The performance harness directly called
+`embed_document` on a legacy provider exposing only `embed`. An isolated
+reproduction produced the same AttributeError. Commit `17c55ef` routes the
+seed vector through the shared role dispatcher, retaining document-role
+selection and the legacy fallback.
+
+The existing access-write regression now checks both unprefixed and explicitly
+prefixed payloads, retaining one metadata update per engine query and zero
+follow-up measurement writes. The affected benchmark and embedding-role
+tests passed 51 cases in 305.52 seconds. Black and strict mypy passed for the
+changed files. The original full failure and separate passing focused XML are
+[preserved](combined-package-failure-v1/README.md); package acceptance still
+requires a fresh combined full run.
+
+Claude 2.1.191 separately recognized the plugin and five hooks using its real
+`--plugin-dir` metadata commands in a disposable configuration. The source
+binding remained unchanged. List and details disagreed about MCP inventory;
+neither hook execution nor MCP connection ran.
+[Loader metadata evidence](claude-plugin-loader-v1/README.md).

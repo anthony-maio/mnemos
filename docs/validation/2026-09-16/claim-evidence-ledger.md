@@ -7,7 +7,11 @@ The capability IDs come from the original implementation plan.
 The latest complete package verification here is frozen source `2494e31`:
 824 tests passed with four skips, plus Black, strict mypy, JavaScript syntax,
 build, and Twine. Later source `46cc101` adds embedding roles and conflict
-collision protection; its combined package verification is still pending.
+collision protection. The combined `9aba209` run finished with 856 passed,
+four skipped, and one benchmark compatibility failure. Commit `17c55ef`
+repairs that failure and passed 51 focused tests; fresh full verification is
+pending. The [failed checkpoint](combined-package-failure-v1/README.md)
+remains preserved.
 An implemented capability does not close its quality, native-host, or pilot
 acceptance gate.
 

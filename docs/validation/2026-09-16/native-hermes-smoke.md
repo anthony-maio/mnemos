@@ -42,3 +42,22 @@ The remaining gate needs a local Ollama model that both supports Hermes tool
 requests and returns within the host's bounded run budget, or an explicit
 Hermes configuration for a qualifying model. Mnemos should continue to label
 Hermes native CLI integration as unproven and retain the manual or MCP path.
+
+## Changed retry hypothesis: September 17, 2026
+
+Read-only inspection of installed Hermes 0.21.3 at source `36842e63` found
+the per-run `--reasoning none` option. Its custom provider maps disabled
+reasoning to top-level `reasoning_effort="none"` and, for an Ollama endpoint,
+`think=false`. The inspected implementation is
+`plugins/model-providers/custom/__init__.py`, lines 39-51. The top-level
+reasoning field matters for the OpenAI-compatible endpoint; the provider
+source explicitly notes that this endpoint ignores the extra-body think field.
+
+The preserved earlier attempt does not record disabled reasoning or the exact
+temporary configuration. A new isolated attempt can therefore test a concrete
+change: explicit custom provider, `qwen3.5:9b`, reasoning disabled, and both
+`context_length` and `ollama_num_ctx` set to 65536 in a disposable home.
+It must retain normal approvals and record the effective request options,
+provider callbacks, model digest, and a completed turn before claiming success.
+This retry has not run. The active serialized Ollama evaluation takes precedence;
+the live Hermes configuration and gateway have not been changed.

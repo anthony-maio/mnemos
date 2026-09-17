@@ -49,6 +49,13 @@ was used, and cleanup removed the private auth copy and runtime descriptor.
 The [native provisional capture record](validation/2026-09-16/provisional-native-claude-v8/README.md)
 preserves the original duplicate gate alongside the separate identity result.
 
+Claude 2.1.191 also passed a separate
+[plugin metadata check](validation/2026-09-16/claude-plugin-loader-v1/README.md)
+against frozen source9aba. Its native metadata commands recognized the session
+plugin and all five hook names. Hook execution and MCP connection were not
+run; list and details disagreed about MCP inventory. This does not close native
+plugin-session acceptance.
+
 Generated Codex, Cursor, and fallback Claude MCP configuration now binds the
 Python interpreter that generated it, matching the hook installation. This
 prevents a bare `mnemos-mcp` command from selecting an older installation on

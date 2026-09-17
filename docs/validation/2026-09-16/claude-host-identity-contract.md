@@ -27,9 +27,28 @@ when present. Its tests use declared synthetic associations; they do not prove
 that 2.1.191 emits those fields. Without association, it preserves native UUID
 observations and reports ambiguity instead of discarding repeated text.
 
-A stronger design would durably retain an unassociated fallback as pending
-evidence, with separate promotion and expiry behavior. That would require
-service/storage changes, replay and forget tests, and an explicit distinction
-between captured evidence and accepted facts. It is not implemented by the
-current replay repair. A separate newer-version host fixture could establish
-which native associations are available without changing live host settings.
+The later provisional-capture implementation durably retains a missing-ID
+fallback with identity status `provisional_unassociated`, event status
+`deferred`, and a `capture_only` job. Maintenance completes that job without
+creating facts, revisions, or fact-evidence links from it. It does not promote
+an ambiguous fallback into extraction. Completed deferred raw events can
+expire under the processed-evidence retention policy; an unfinished job
+prevents that pruning.
+
+The [native v8 record](provisional-native-claude-v8/README.md), using installed
+source `a38ee70` and Claude Code 2.1.191, observed two normal transcript events
+and one deferred fallback. Restart and Stop replay preserved those identities.
+Its original exact-two-raw-events gate remains failed; the separate provisional
+identity contract passed. This proves bounded capture and identity handling,
+not extraction quality or full native correction/forget continuity. The run
+supplied explicit disposable settings and does not prove plugin auto-discovery.
+
+The later [loader metadata check](claude-plugin-loader-v1/README.md) observed
+the plugin and all five hook names through Claude's `--plugin-dir` metadata
+commands. It did not execute hooks or connect MCP, so native plugin hook
+execution remains open.
+
+A separate newer-version host fixture could establish which native prompt
+associations are available without changing live host settings. No observation
+of the installed 2.1.191 fixture establishes that it emits later documented
+fields.
