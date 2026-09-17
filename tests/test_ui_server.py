@@ -13,6 +13,18 @@ from mnemos.ui_server import MnemosUiRouter
 from mnemos.utils import SQLiteStore
 
 
+class _FacadeClient:
+    def __init__(self) -> None:
+        self.calls: list[str] = []
+
+    async def request(self, operation: str, payload: dict, **_: object) -> dict:
+        del payload
+        self.calls.append(operation)
+        if operation == "health":
+            return {"status": "running", "provider_state": {"cognition": {}}}
+        return {"status": "degraded", "error": "test facade"}
+
+
 def test_ui_router_serves_index_and_settings(tmp_path: Path) -> None:
     service = ControlPlaneService(
         cwd=tmp_path / "repo",
@@ -99,11 +111,13 @@ def test_ui_router_serves_memory_detail_endpoint(tmp_path: Path) -> None:
 def test_ui_router_serves_dashboard_and_retrieval_explanation(tmp_path: Path) -> None:
     db_path = tmp_path / "memory.db"
     global_config = tmp_path / "Mnemos" / "mnemos.toml"
+    client = _FacadeClient()
     service = ControlPlaneService(
         cwd=tmp_path / "repo",
         home=tmp_path / "home",
         env={},
         global_config_path=global_config,
+        client=client,
     )
     service.save_settings(
         {
@@ -149,6 +163,7 @@ def test_ui_router_serves_dashboard_and_retrieval_explanation(tmp_path: Path) ->
     assert detail_response.status == 503
     detail = json.loads(detail_response.body.decode("utf-8"))
     assert "MNEMOS_USER_PROFILE_ID" in detail["error"]
+    assert client.calls == ["health"]
 
 
 def test_ui_router_requires_csrf_for_http_mutations(tmp_path: Path) -> None:

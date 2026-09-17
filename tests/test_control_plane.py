@@ -337,11 +337,13 @@ def test_control_plane_memory_snapshot_includes_rollups_and_consolidation_summar
 def test_control_plane_dashboard_tracks_last_smoke_and_host_support(tmp_path: Path) -> None:
     db_path = tmp_path / "memory.db"
     global_config = tmp_path / "Mnemos" / "mnemos.toml"
+    client = _FacadeClient()
     service = ControlPlaneService(
         cwd=tmp_path / "repo",
         home=tmp_path / "home",
         env={},
         global_config_path=global_config,
+        client=client,
     )
     service.save_settings(
         {
@@ -365,3 +367,4 @@ def test_control_plane_dashboard_tracks_last_smoke_and_host_support(tmp_path: Pa
     assert dashboard["activity"]["last_smoke_test"]["present"] is True
     assert dashboard["activity"]["last_smoke_test"]["status"] == "fail"
     assert dashboard["next_actions"]
+    assert [operation for operation, _ in client.calls] == ["health", "health"]

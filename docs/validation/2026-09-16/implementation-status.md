@@ -22,6 +22,15 @@ passed that exact parameter with its original timeout and durability settings.
 All 40 traced requests completed, including a list response with one fact.
 It did not reproduce or explain the full-suite failure.
 
+The next full run at `33c6dd9` also finished with 897 passed, one failed,
+and four skipped. The continuity case passed; the generated PowerShell hook
+bootstrap exceeded its existing ten-second deadline. The
+[second failed checkpoint](../2026-09-17/powershell-checkpoint-failure-v1/README.md)
+is preserved, and no new wheel was built from it. Two dashboard unit tests
+now inject client facades to avoid contacting the default service; their
+16 focused control-plane/UI cases pass. This independent isolation repair
+does not establish the cause of either earlier timeout or response failure.
+
 The [Claude capture diagnosis](../2026-09-17/claude-capture-association-diagnostic-v1/README.md)
 reproduced the provisional-user association warning when the prompt hook lacks
 a native prompt ID. A completed-transcript control succeeds when supplied that

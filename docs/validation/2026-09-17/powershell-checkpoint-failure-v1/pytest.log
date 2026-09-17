@@ -1,0 +1,121 @@
+..................................................ss.................... [  7%]
+........................................................................ [ 15%]
+........................................................................ [ 23%]
+........................................................................ [ 31%]
+........................................................................ [ 39%]
+.................................................ss.....F............... [ 47%]
+........................................................................ [ 55%]
+........................................................................ [ 63%]
+........................................................................ [ 71%]
+........................................................................ [ 79%]
+........................................................................ [ 87%]
+........................................................................ [ 95%]
+......................................                                   [100%]
+================================== FAILURES ===================================
+_____ test_codex_powershell_bootstrap_executes_allowlisted_env_and_stdin ______
+
+tmp_path = WindowsPath('C:/Users/Ant/AppData/Local/Temp/mnemos-check-fixtures-33c6dd9-v1/pytest/test_codex_powershell_bootstra0')
+
+    def test_codex_powershell_bootstrap_executes_allowlisted_env_and_stdin(
+        tmp_path: Path,
+    ) -> None:
+        powershell = hosts._powershell_executable()
+        if powershell is None:
+            pytest.skip("PowerShell is unavailable on this host")
+    
+        stub_root = tmp_path / "stub package"
+        stub_module = stub_root / "mnemos" / "adapters"
+        stub_module.mkdir(parents=True)
+        (stub_root / "mnemos" / "__init__.py").write_text("", encoding="utf-8")
+        (stub_module / "__init__.py").write_text("", encoding="utf-8")
+        output_path = tmp_path / "path $ O'Brien with spaces" / "hook-output.json"
+        output_path.parent.mkdir()
+        (stub_module / "codex.py").write_text(
+            "import json, os, sys\n"
+            "payload = json.load(sys.stdin)\n"
+            "record = {'profile': os.environ.get('MNEMOS_USER_PROFILE_ID'), "
+            "'scope_registry': os.environ.get('MNEMOS_SCOPE_REGISTRY'), "
+            "'event_id': payload.get('event_id'), 'prompt': payload.get('prompt')}\n"
+            "path = os.environ['MNEMOS_RUNTIME_DESCRIPTOR']\n"
+            "open(path, 'w', encoding='utf-8').write(json.dumps(record))\n"
+            "print(json.dumps({'continue': True, 'record': record}))\n",
+            encoding="utf-8",
+        )
+        env_values = {
+            "MNEMOS_CONFIG_PATH": str(tmp_path / "config $ O'Brien.toml"),
+            "MNEMOS_USER_PROFILE_ID": "Power'Shell $ Profile caf\u00e9",
+            "MNEMOS_SCOPE_REGISTRY": str(tmp_path / "registry $ O'Brien with spaces.json"),
+            "MNEMOS_RUNTIME_DESCRIPTOR": str(output_path),
+        }
+        command = hosts._codex_hook_command(env_values)
+        payload = {
+            "hook_event_name": "UserPromptSubmit",
+            "event_id": "powershell-stub-event",
+            "prompt": "stdin reaches the generated bootstrap caf\u00e9",
+        }
+        env = dict(os.environ)
+        env["PYTHONPATH"] = str(stub_root)
+        for key in env_values:
+            env.pop(key, None)
+        env["PYTHONUTF8"] = "1"
+>       completed = subprocess.run(
+            [powershell, "-NoProfile", "-Command", command],
+            input=json.dumps(payload, ensure_ascii=False),
+            capture_output=True,
+            text=True,
+            encoding="utf-8",
+            errors="replace",
+            env=env,
+            cwd=str(tmp_path),
+            check=False,
+            timeout=10,
+        )
+
+tests\test_hosts.py:490: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+..\..\..\Roaming\uv\python\cpython-3.13.7-windows-x86_64-none\Lib\subprocess.py:556: in run
+    stdout, stderr = process.communicate(input, timeout=timeout)
+                     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+..\..\..\Roaming\uv\python\cpython-3.13.7-windows-x86_64-none\Lib\subprocess.py:1222: in communicate
+    stdout, stderr = self._communicate(input, endtime, timeout)
+                     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+self = <Popen: returncode: 1 args: ['C:\\Program Files\\PowerShell\\7\\pwsh.EXE', '...>
+input = '{"hook_event_name": "UserPromptSubmit", "event_id": "powershell-stub-event", "prompt": "stdin reaches the generated bootstrap café"}'
+endtime = 5387.8152219, orig_timeout = 10
+
+    def _communicate(self, input, endtime, orig_timeout):
+        # Start reader threads feeding into a list hanging off of this
+        # object, unless they've already been started.
+        if self.stdout and not hasattr(self, "_stdout_buff"):
+            self._stdout_buff = []
+            self.stdout_thread = \
+                    threading.Thread(target=self._readerthread,
+                                     args=(self.stdout, self._stdout_buff))
+            self.stdout_thread.daemon = True
+            self.stdout_thread.start()
+        if self.stderr and not hasattr(self, "_stderr_buff"):
+            self._stderr_buff = []
+            self.stderr_thread = \
+                    threading.Thread(target=self._readerthread,
+                                     args=(self.stderr, self._stderr_buff))
+            self.stderr_thread.daemon = True
+            self.stderr_thread.start()
+    
+        if self.stdin:
+            self._stdin_write(input)
+    
+        # Wait for the reader threads, or time out.  If we time out, the
+        # threads remain reading and the fds left open in case the user
+        # calls communicate again.
+        if self.stdout is not None:
+            self.stdout_thread.join(self._remaining_time(endtime))
+            if self.stdout_thread.is_alive():
+>               raise TimeoutExpired(self.args, orig_timeout)
+E               subprocess.TimeoutExpired: Command '['C:\\Program Files\\PowerShell\\7\\pwsh.EXE', '-NoProfile', '-Command', "& 'D:\\Development\\mnemos\\mnemos\\.worktrees\\functional-local-memory\\.venv\\Scripts\\python.exe' -c 'import base64,json,os,runpy;os.environ.update(json.loads(base64.b64decode(''eyJNTkVNT1NfQ09ORklHX1BBVEgiOiJDOlxcVXNlcnNcXEFudFxcQXBwRGF0YVxcTG9jYWxcXFRlbXBcXG1uZW1vcy1jaGVjay1maXh0dXJlcy0zM2M2ZGQ5LXYxXFxweXRlc3RcXHRlc3RfY29kZXhfcG93ZXJzaGVsbF9ib290c3RyYTBcXGNvbmZpZyAkIE8nQnJpZW4udG9tbCIsIk1ORU1PU19VU0VSX1BST0ZJTEVfSUQiOiJQb3dlcidTaGVsbCAkIFByb2ZpbGUgY2FmXHUwMGU5IiwiTU5FTU9TX1NDT1BFX1JFR0lTVFJZIjoiQzpcXFVzZXJzXFxBbnRcXEFwcERhdGFcXExvY2FsXFxUZW1wXFxtbmVtb3MtY2hlY2stZml4dHVyZXMtMzNjNmRkOS12MVxccHl0ZXN0XFx0ZXN0X2NvZGV4X3Bvd2Vyc2hlbGxfYm9vdHN0cmEwXFxyZWdpc3RyeSAkIE8nQnJpZW4gd2l0aCBzcGFjZXMuanNvbiIsIk1ORU1PU19SVU5USU1FX0RFU0NSSVBUT1IiOiJDOlxcVXNlcnNcXEFudFxcQXBwRGF0YVxcTG9jYWxcXFRlbXBcXG1uZW1vcy1jaGVjay1maXh0dXJlcy0zM2M2ZGQ5LXYxXFxweXRlc3RcXHRlc3RfY29kZXhfcG93ZXJzaGVsbF9ib290c3RyYTBcXHBhdGggJCBPJ0JyaWVuIHdpdGggc3BhY2VzXFxob29rLW91dHB1dC5qc29uIn0='')));runpy.run_module(''mnemos.adapters.codex'',run_name=''__main__'')'"]' timed out after 10 seconds
+
+..\..\..\Roaming\uv\python\cpython-3.13.7-windows-x86_64-none\Lib\subprocess.py:1646: TimeoutExpired
+=========================== short test summary info ===========================
+FAILED tests/test_hosts.py::test_codex_powershell_bootstrap_executes_allowlisted_env_and_stdin
+1 failed, 897 passed, 4 skipped in 165.03s (0:02:45)
