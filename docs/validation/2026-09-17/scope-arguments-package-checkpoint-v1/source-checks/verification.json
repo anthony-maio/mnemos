@@ -1,0 +1,127 @@
+{
+  "source_commit": "30eaf4209bc6921b8a4a30f35ecd86fb68e1aae3",
+  "source_checkout": "C:\\Users\\Ant\\AppData\\Local\\Temp\\mnemos-source-scope-arguments-v2",
+  "status": "passed",
+  "started_at": "2026-09-17T23:06:25.902117+00:00",
+  "checks": [
+    {
+      "name": "pytest",
+      "command": [
+        "D:\\Development\\mnemos\\mnemos\\.worktrees\\functional-local-memory\\.venv\\Scripts\\python.exe",
+        "-m",
+        "pytest",
+        "-q",
+        "--basetemp",
+        "C:\\Users\\Ant\\AppData\\Local\\Temp\\mnemos-check-fixtures-scope-arguments-v2\\pytest",
+        "--junitxml",
+        "C:\\Users\\Ant\\AppData\\Local\\Temp\\mnemos-package-checks-scope-arguments-v2\\pytest.xml"
+      ],
+      "status": "passed",
+      "started_at": "2026-09-17T23:06:25.903496+00:00",
+      "exit_code": 0,
+      "finished_at": "2026-09-17T23:08:52.000088+00:00",
+      "counts": {
+        "tests": 933,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 4
+      }
+    },
+    {
+      "name": "black",
+      "command": [
+        "D:\\Development\\mnemos\\mnemos\\.worktrees\\functional-local-memory\\.venv\\Scripts\\python.exe",
+        "-m",
+        "black",
+        "--check",
+        "."
+      ],
+      "status": "passed",
+      "started_at": "2026-09-17T23:08:52.010568+00:00",
+      "exit_code": 0,
+      "finished_at": "2026-09-17T23:08:57.868561+00:00"
+    },
+    {
+      "name": "mypy",
+      "command": [
+        "D:\\Development\\mnemos\\mnemos\\.worktrees\\functional-local-memory\\.venv\\compat-py310\\Scripts\\python.exe",
+        "-m",
+        "mypy",
+        "."
+      ],
+      "status": "passed",
+      "started_at": "2026-09-17T23:08:57.869673+00:00",
+      "exit_code": 0,
+      "finished_at": "2026-09-17T23:09:08.469606+00:00"
+    },
+    {
+      "name": "javascript",
+      "command": [
+        "node",
+        "--check",
+        "mnemos/ui/app.js"
+      ],
+      "status": "passed",
+      "started_at": "2026-09-17T23:09:08.470801+00:00",
+      "exit_code": 0,
+      "finished_at": "2026-09-17T23:09:08.556210+00:00"
+    },
+    {
+      "name": "build",
+      "command": [
+        "D:\\Development\\mnemos\\mnemos\\.worktrees\\functional-local-memory\\.venv\\Scripts\\python.exe",
+        "-m",
+        "build",
+        "--outdir",
+        "C:\\Users\\Ant\\AppData\\Local\\Temp\\mnemos-package-checks-scope-arguments-v2\\dist"
+      ],
+      "status": "passed",
+      "started_at": "2026-09-17T23:09:08.557522+00:00",
+      "exit_code": 0,
+      "finished_at": "2026-09-17T23:09:54.548819+00:00"
+    },
+    {
+      "name": "twine",
+      "command": [
+        "D:\\Development\\mnemos\\mnemos\\.worktrees\\functional-local-memory\\.venv\\Scripts\\python.exe",
+        "-m",
+        "twine",
+        "check",
+        "C:\\Users\\Ant\\AppData\\Local\\Temp\\mnemos-package-checks-scope-arguments-v2\\dist\\mnemos_memory-0.7.0-py3-none-any.whl",
+        "C:\\Users\\Ant\\AppData\\Local\\Temp\\mnemos-package-checks-scope-arguments-v2\\dist\\mnemos_memory-0.7.0.tar.gz"
+      ],
+      "exit_code": 0,
+      "status": "passed"
+    }
+  ],
+  "runner_sha256": "7b241853adab66b8fd1e0c570d00462a216ffe21dca554fb95ae522ecbedc3ef",
+  "temporary_storage": {
+    "path": "C:\\Users\\Ant\\AppData\\Local\\Temp\\mnemos-check-fixtures-scope-arguments-v2",
+    "git_discovery_exit_code": 128,
+    "git_discovery_stderr": "fatal: not a git repository (or any of the parent directories): .git"
+  },
+  "website_input": {
+    "path": "D:\\Development\\mnemos\\web\\index.html",
+    "sha256_before": "f71a4cb5b7004f9ba584f45a03dab61cfc608fed377b1e07b46e2f2bc0b77d4d",
+    "sha256_after": "f71a4cb5b7004f9ba584f45a03dab61cfc608fed377b1e07b46e2f2bc0b77d4d"
+  },
+  "environment_overrides": {
+    "TEMP": "C:\\Users\\Ant\\AppData\\Local\\Temp\\mnemos-check-fixtures-scope-arguments-v2",
+    "TMP": "C:\\Users\\Ant\\AppData\\Local\\Temp\\mnemos-check-fixtures-scope-arguments-v2",
+    "TMPDIR": "C:\\Users\\Ant\\AppData\\Local\\Temp\\mnemos-check-fixtures-scope-arguments-v2",
+    "MNEMOS_WEBSITE_INDEX": "D:\\Development\\mnemos\\web\\index.html"
+  },
+  "updated_at": "2026-09-17T23:09:56.062668+00:00",
+  "artifacts": [
+    {
+      "file": "C:\\Users\\Ant\\AppData\\Local\\Temp\\mnemos-package-checks-scope-arguments-v2\\dist\\mnemos_memory-0.7.0-py3-none-any.whl",
+      "bytes": 282993,
+      "sha256": "642cded3d32b486b73e781fb28b179a79394580e7b5570107b98db27a280e0af"
+    },
+    {
+      "file": "C:\\Users\\Ant\\AppData\\Local\\Temp\\mnemos-package-checks-scope-arguments-v2\\dist\\mnemos_memory-0.7.0.tar.gz",
+      "bytes": 18550304,
+      "sha256": "7585ada3046e8d9ed09b3f8759f9a2c725c07972abbaf6b1b1c5f0f67daba905"
+    }
+  ]
+}

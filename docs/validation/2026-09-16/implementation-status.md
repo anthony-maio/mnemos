@@ -9,15 +9,15 @@ interactive call: MCP retrieval now accepts structured scope lists as well as
 legacy comma-separated strings. Empty or invalid lists are rejected, and the
 stdio regression verifies project isolation. The [native failure](../2026-09-17/native-codex-interactive-v1/README.md)
 and [regression evidence](../2026-09-17/mcp-scope-arguments-v1/README.md) are preserved.
-Its complete package verification is in progress; native retrieval after the
-repair remains open.
+The complete package verification below includes this repair. Native retrieval
+after the repair remains open.
 
-The latest package checkpoint is source `a607a5a`. Its frozen verification
-passed 924 tests with four platform-specific skips, formatting, typing,
-JavaScript, build, and Twine checks. A fresh installed wheel passed 130
+The latest package checkpoint is source `30eaf42`. Its frozen verification
+passed 929 tests with four platform-specific skips, formatting, typing,
+JavaScript, build, and Twine checks. A fresh installed wheel passed 139
 contract cases with two matching platform skips and seven replay assertions. These are package and installed
 runtime checks; they do not close native-host, real-model, latency, pilot, or
-publication gates. See the [startup exit package checkpoint](../2026-09-17/startup-exit-package-checkpoint-v1/README.md).
+publication gates. See the [scope argument package checkpoint](../2026-09-17/scope-arguments-package-checkpoint-v1/README.md).
 
 This checkpoint repairs retrieval across a concurrent correction or forget:
 candidates are refreshed after asynchronous state classification, so scoring,

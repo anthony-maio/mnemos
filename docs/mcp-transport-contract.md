@@ -50,6 +50,11 @@ The host-facing MCP contract uses standard stdio. The MCP process is a client of
 
 Tools return JSON-encoded strings with schema_version. Store and capture acknowledge an event and processing job; processing_status and mnemos_job_status describe fact completion. A queued outbox write is not a committed event. Retrieval returns versioned scoped facts, sources, and measured score traces; baseline is the default.
 
+`mnemos_retrieve.allowed_scopes` accepts a list such as `["project"]` or a
+comma-separated string such as `"project,global"`. An explicit empty list or
+unknown scope is rejected. The service still enforces the registered profile,
+project, and sharing permissions for either format.
+
 Correct requires fact_id, content, and expected_version. Forget supports expected_version; its legacy omitted-version path resolves the current fact through the service. Scope IDs must agree with the registered context. Caller metadata cannot override scope or provenance; custom mnemos_store metadata is currently ignored with an explicit metadata_status response.
 
 ## Compatibility Scope
