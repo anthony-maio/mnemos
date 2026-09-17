@@ -1,0 +1,197 @@
+"""Audit native health command binding without launching a host or model."""
+
+from __future__ import annotations
+
+import hashlib
+import json
+import os
+import shutil
+import sys
+from datetime import datetime, timezone
+from pathlib import Path
+from typing import Any
+
+WORKTREE = Path(__file__).resolve().parents[1]
+FAILED_ROOT = Path("D:/WindowsTemp/mnemos-codex-health-native-2fd8s501")
+EXPECTED_ROOT = Path("D:/WindowsTemp/mnemos-provisional-mcp-wheel-20260917-v2")
+OUTPUT_ROOT = WORKTREE / ".venv" / "codex-health-command-resolution-v1"
+
+
+def _sha256(path: Path) -> str | None:
+    if not path.is_file():
+        return None
+    digest = hashlib.sha256()
+    with path.open("rb") as stream:
+        for block in iter(lambda: stream.read(1024 * 1024), b""):
+            digest.update(block)
+    return digest.hexdigest()
+
+
+def _existing_hashes(root: Path, relative_names: list[str]) -> dict[str, Any]:
+    result: dict[str, Any] = {}
+    for relative_name in relative_names:
+        path = root / relative_name
+        result[relative_name] = {
+            "exists": path.is_file(),
+            "bytes": path.stat().st_size if path.is_file() else None,
+            "sha256": _sha256(path),
+        }
+    return result
+
+
+def _failed_report() -> dict[str, Any]:
+    path = WORKTREE / ".venv" / "native-codex-health-native-v2" / "report.json"
+    if not path.is_file():
+        return {"exists": False}
+    payload = json.loads(path.read_text(encoding="utf-8"))
+    return {
+        "exists": True,
+        "path": str(path),
+        "bytes": path.stat().st_size,
+        "sha256": _sha256(path),
+        "status": payload.get("status"),
+        "runner": payload.get("runner"),
+        "mode": payload.get("mode"),
+        "source_commit": payload.get("source_commit"),
+        "error_type": payload.get("error_type"),
+        "error_digest": payload.get("error_digest"),
+    }
+
+
+def _stdout_summary() -> dict[str, Any]:
+    path = FAILED_ROOT / "native-stdout.jsonl"
+    counts: dict[str, int] = {}
+    completed_tools: list[str] = []
+    parse_errors = 0
+    if path.is_file():
+        for line in path.read_text(encoding="utf-8", errors="replace").splitlines():
+            try:
+                item = json.loads(line)
+            except json.JSONDecodeError:
+                parse_errors += 1
+                continue
+            event_type = item.get("type")
+            if isinstance(event_type, str):
+                counts[event_type] = counts.get(event_type, 0) + 1
+            event_item = item.get("item")
+            if (
+                event_type == "item.completed"
+                and isinstance(event_item, dict)
+                and event_item.get("type") == "mcp_tool_call"
+            ):
+                tool = event_item.get("tool")
+                if isinstance(tool, str):
+                    completed_tools.append(tool)
+    return {
+        "path": str(path),
+        "bytes": path.stat().st_size if path.is_file() else None,
+        "sha256": _sha256(path),
+        "jsonl_event_counts": counts,
+        "completed_mcp_tools": completed_tools,
+        "parse_errors": parse_errors,
+    }
+
+
+def _config_command() -> dict[str, Any]:
+    path = FAILED_ROOT / "codex-home" / ".codex" / "config.toml"
+    text = path.read_text(encoding="utf-8") if path.is_file() else ""
+    command_lines = [line.strip() for line in text.splitlines() if "command" in line]
+    mnemos_lines = [line for line in command_lines if "mnemos-mcp" in line]
+    return {
+        "path": str(path),
+        "exists": path.is_file(),
+        "bytes": path.stat().st_size if path.is_file() else None,
+        "sha256": _sha256(path),
+        "mnemos_command_lines": mnemos_lines,
+        "command_is_bare_mnemos_mcp": any(
+            line == 'command = "mnemos-mcp"' for line in mnemos_lines
+        ),
+    }
+
+
+def _resolve(command: str, path_value: str) -> str | None:
+    resolved = shutil.which(command, path=path_value)
+    return str(Path(resolved).resolve()) if resolved else None
+
+
+def _binding() -> dict[str, Any]:
+    expected_script = EXPECTED_ROOT / "Scripts" / "mnemos-mcp.exe"
+    inherited = _resolve("mnemos-mcp", os.environ.get("PATH", ""))
+    pinned_path = str(EXPECTED_ROOT / "Scripts") + os.pathsep + os.environ.get("PATH", "")
+    pinned = _resolve("mnemos-mcp", pinned_path)
+    package_files = [
+        "__init__.py",
+        "mcp_server.py",
+        "service.py",
+        "client.py",
+        "contracts.py",
+    ]
+    expected_package = EXPECTED_ROOT / "Lib" / "site-packages" / "mnemos"
+    inherited_package = (
+        Path(inherited).parent.parent / "Lib" / "site-packages" / "mnemos"
+        if inherited
+        else Path("__unresolved__")
+    )
+    normal = lambda value: str(Path(value).resolve()).casefold() if value else None
+    return {
+        "command": "mnemos-mcp",
+        "inherited_path_resolution": inherited,
+        "pinned_path_resolution": pinned,
+        "expected_entrypoint": str(expected_script.resolve()),
+        "expected_entrypoint_exists": expected_script.is_file(),
+        "inherited_matches_expected": normal(inherited) == normal(expected_script),
+        "pinned_matches_expected": normal(pinned) == normal(expected_script),
+        "inherited_launcher_sha256": _sha256(Path(inherited)) if inherited else None,
+        "expected_launcher_sha256": _sha256(expected_script),
+        "expected_package_files": _existing_hashes(expected_package, package_files),
+        "inherited_adjacent_package_files": _existing_hashes(inherited_package, package_files),
+        "path_pin_prefix": str(EXPECTED_ROOT / "Scripts"),
+    }
+
+
+def main() -> int:
+    started = datetime.now(timezone.utc).isoformat()
+    config = _config_command()
+    binding = _binding()
+    mismatch_confirmed = bool(
+        config["command_is_bare_mnemos_mcp"]
+        and binding["inherited_path_resolution"]
+        and not binding["inherited_matches_expected"]
+        and binding["pinned_matches_expected"]
+    )
+    result = {
+        "schema_version": 1,
+        "runner": "codex-health-command-resolution-v1",
+        "runner_sha256": _sha256(Path(__file__).resolve()),
+        "started_at": started,
+        "finished_at": datetime.now(timezone.utc).isoformat(),
+        "execution": {
+            "read_only": True,
+            "launched_native_host": False,
+            "called_model": False,
+            "used_auth": False,
+        },
+        "failed_v2_report": _failed_report(),
+        "failed_v2_stdout": _stdout_summary(),
+        "generated_config": config,
+        "command_binding": binding,
+        "mismatch_confirmed": mismatch_confirmed,
+        "interpretation": (
+            "The failed native-v2 fixture configured a bare mnemos-mcp command. "
+            "Inherited PATH resolved a different launcher; the installed wheel "
+            "launcher is selected only when its Scripts directory is prefixed."
+            if mismatch_confirmed
+            else "The supplied fixture did not establish the suspected command mismatch."
+        ),
+    }
+    OUTPUT_ROOT.mkdir(parents=True, exist_ok=False)
+    (OUTPUT_ROOT / "report.json").write_text(
+        json.dumps(result, ensure_ascii=True, indent=2, sort_keys=True) + "\n",
+        encoding="utf-8",
+    )
+    print(json.dumps({"status": "complete", "report": str(OUTPUT_ROOT / "report.json")}))
+    return 0
+
+
+if __name__ == "__main__":
+    raise SystemExit(main())

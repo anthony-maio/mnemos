@@ -27,8 +27,12 @@ records the remaining ambiguity when a fallback has no explicit transcript assoc
 The [latest host evidence](validation/2026-09-16/related-forget-verification/README.md)
 also preserves the cancelled sourcec805 native Codex lifecycle attempt and
 matched annotated/unannotated recorder probes. Sourceb179 now declares
-accurate MCP operation effects; focused tests pass. Native dispatch of that
-new Mnemos source is still pending.
+accurate MCP operation effects. Installed sourcea38 subsequently completed one
+native Codex health call after the probe pinned MCP command resolution to the
+verified wheel. No approval or hook-trust override was used. The response
+reported the seeded SQLite store; no hook callbacks were observed. This proves
+MCP health dispatch, not the complete capture or correction/forget lifecycle.
+[Command binding and native health evidence](validation/2026-09-16/codex-health-installation-binding/README.md).
 
 The [native provisional capture record](validation/2026-09-16/provisional-native-claude-v8/README.md)
 preserves the original duplicate gate alongside the separate identity result.

@@ -768,3 +768,11 @@ Codex, Cursor, and fallback Claude, including paths with spaces, retained
 unrelated settings, and preview-only behavior. The affected host/control/settings
 suite passed 40 tests; Black and compatible production mypy passed. This repair
 is newer than the verified a38 wheel and needs a new package checkpoint.
+
+The a38 installed wheel completed a native Codex health call once the probe
+pinned PATH to that installation and checked the resolved launcher before
+starting Codex. The response reported one seeded SQLite fact. No approval or
+hook-trust override was used; no hook callbacks were observed. The earlier
+cancelled run selected a different launcher on inherited PATH. Two probe-only
+errors were also retained (missing helper and Path.casefold); neither is a
+product failure. [Native MCP record](codex-health-installation-binding/README.md).

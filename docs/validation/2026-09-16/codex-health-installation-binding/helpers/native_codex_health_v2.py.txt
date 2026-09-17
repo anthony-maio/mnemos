@@ -1,0 +1,775 @@
+"""Bounded Codex generated-MCP health probe.
+
+The default mode is reserved for one later native Codex invocation.  The
+offline mode exercises the generated MCP configuration and health response
+against an unavailable-cognition fixture without starting Codex or a model.
+"""
+
+from __future__ import annotations
+
+import argparse
+import asyncio
+from contextlib import suppress
+from datetime import datetime, timezone
+import importlib.util
+import json
+from pathlib import Path
+import subprocess
+import sys
+import tempfile
+import time
+from types import ModuleType, SimpleNamespace
+from typing import Any, Mapping, cast
+
+WORKTREE = Path(__file__).resolve().parents[1]
+V3_PATH = WORKTREE / ".venv" / "native_codex_lifecycle_v3.py"
+V8_PATH = WORKTREE / ".venv" / "native_codex_generated_v8.py"
+V3_SHA256 = "7b87f5817dacae01c0a16918435ff8a4af1c1ecaaba00a9317ba7f16c8be5814"
+V8_SHA256 = "dd9ebe7480fa5a172bb41135a4690baf94d2c585f5357a77f17265e7acb58b12"
+MAX_NATIVE_SECONDS = 60
+PROFILE = "native-codex-health-v2"
+
+
+def _sha256(value: bytes | str) -> str:
+    import hashlib
+
+    raw = value.encode("utf-8") if isinstance(value, str) else value
+    return hashlib.sha256(raw).hexdigest()
+
+
+def _load_lifecycle() -> ModuleType:
+    if _sha256(V3_PATH.read_bytes()) != V3_SHA256:
+        raise RuntimeError("Pinned lifecycle v3 helper changed")
+    if _sha256(V8_PATH.read_bytes()) != V8_SHA256:
+        raise RuntimeError("Pinned generated v8 helper changed")
+    spec = importlib.util.spec_from_file_location("mnemos_native_lifecycle_v3", V3_PATH)
+    if spec is None or spec.loader is None:
+        raise RuntimeError("Could not load the pinned lifecycle helper")
+    module = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(module)
+    return module
+
+
+def _self_test() -> dict[str, Any]:
+    lifecycle = _load_lifecycle()
+    command = _native_command(lifecycle, Path("C:/private/project"), "Call mnemos_health.")
+    if "--dangerously-bypass-hook-trust" in command:
+        raise RuntimeError("Self-test command contains a hook-trust bypass")
+    if "--ask-for-approval" in command:
+        raise RuntimeError("Self-test command contains an approval override")
+    if command[command.index("--sandbox") + 1] != "read-only":
+        raise RuntimeError("Self-test command is not read-only")
+    if "--ephemeral" not in command:
+        raise RuntimeError("Self-test command is not ephemeral")
+    synthetic_health = {
+        "schema_version": 1,
+        "status": "running",
+        "store": {"backend": "SQLiteStore", "total_chunks": 1},
+    }
+    synthetic_stdout = json.dumps(
+        {
+            "item": {
+                "type": "mcp_tool_call",
+                "server": "mnemos",
+                "tool": "mnemos_health",
+                "status": "completed",
+                "result": {
+                    "isError": False,
+                    "content": [{"type": "text", "text": json.dumps(synthetic_health)}],
+                },
+            }
+        }
+    )
+    parsed_health = _health_from_native_stdout(synthetic_stdout)
+    if parsed_health["response"] != {
+        "schema_version": 1,
+        "status": "running",
+        "store_backend": "SQLiteStore",
+        "total_chunks": 1,
+    }:
+        raise RuntimeError("Self-test health parser rejected a successful response")
+
+    legacy_stdout = json.dumps(
+        {
+            "item": {
+                "type": "mcp_tool_call",
+                "server": "mnemos",
+                "tool_name": "mnemos_health",
+                "status": "in_progress",
+            }
+        }
+    )
+    legacy_stdout += "\n" + json.dumps(
+        {
+            "item": {
+                "type": "mcp_tool_call",
+                "server": "mnemos",
+                "name": "mnemos_health",
+                "status": "completed",
+                "output": json.dumps(synthetic_health),
+            }
+        }
+    )
+    if _health_from_native_stdout(legacy_stdout)["call_count"] != 1:
+        raise RuntimeError("Self-test did not ignore an in-progress call or accept name alias")
+    tool_name_stdout = json.dumps(
+        {
+            "item": {
+                "type": "mcp_tool_call",
+                "server": "mnemos",
+                "tool_name": "mnemos_health",
+                "status": "completed",
+                "result": json.dumps(synthetic_health),
+            }
+        }
+    )
+    if _health_from_native_stdout(tool_name_stdout)["call_count"] != 1:
+        raise RuntimeError("Self-test did not accept tool_name alias")
+
+    def expect_rejected(stdout: str, label: str) -> None:
+        try:
+            _health_from_native_stdout(stdout)
+        except RuntimeError:
+            return
+        raise RuntimeError(f"Self-test accepted invalid {label} health output")
+
+    duplicate = "\n".join([synthetic_stdout, synthetic_stdout])
+    expect_rejected(duplicate, "duplicate")
+    other_tool = json.dumps(
+        {
+            "item": {
+                "type": "mcp_tool_call",
+                "server": "mnemos",
+                "tool": "mnemos_retrieve",
+                "status": "completed",
+                "result": json.dumps(synthetic_health),
+            }
+        }
+    )
+    expect_rejected(other_tool, "other-tool")
+    error_result = json.dumps(
+        {
+            "item": {
+                "type": "mcp_tool_call",
+                "server": "mnemos",
+                "tool": "mnemos_health",
+                "status": "completed",
+                "result": {
+                    "isError": True,
+                    "content": [{"type": "text", "text": json.dumps(synthetic_health)}],
+                },
+            }
+        }
+    )
+    expect_rejected(error_result, "error-result")
+    error_later_content = json.dumps(
+        {
+            "item": {
+                "type": "mcp_tool_call",
+                "server": "mnemos",
+                "tool": "mnemos_health",
+                "status": "completed",
+                "result": {
+                    "content": [
+                        {"type": "text", "text": json.dumps(synthetic_health)},
+                        {"isError": True, "type": "text", "text": "failed"},
+                    ]
+                },
+            }
+        }
+    )
+    expect_rejected(error_later_content, "recursive-later-error")
+    invalid_schema = json.dumps(
+        {
+            "item": {
+                "type": "mcp_tool_call",
+                "server": "mnemos",
+                "tool": "mnemos_health",
+                "status": "completed",
+                "result": json.dumps(
+                    {
+                        "schema_version": "1",
+                        "status": "running",
+                        "store": {"backend": "SQLiteStore", "total_chunks": 1},
+                    }
+                ),
+            }
+        }
+    )
+    expect_rejected(invalid_schema, "invalid-schema")
+    invalid_store = json.dumps(
+        {
+            "item": {
+                "type": "mcp_tool_call",
+                "server": "mnemos",
+                "tool_name": "mnemos_health",
+                "status": "completed",
+                "result": json.dumps(
+                    {
+                        "schema_version": 1,
+                        "status": "running",
+                        "store": {"backend": "MemoryStore", "total_chunks": 0},
+                    }
+                ),
+            }
+        }
+    )
+    expect_rejected(invalid_store, "invalid-store")
+    return {
+        "status": "passed",
+        "v3_sha256": V3_SHA256,
+        "v8_sha256": V8_SHA256,
+        "native_command_policy": {
+            "hook_trust_bypass": False,
+            "approval_override": False,
+            "sandbox": "read-only",
+            "ephemeral": True,
+        },
+        "parser_scope": "synthetic command checks only; no host, model, auth, or service access",
+    }
+
+
+def _native_command(lifecycle: ModuleType, project: Path, prompt: str) -> list[str]:
+    command = list(lifecycle._isolated_codex_command(project, prompt))
+    command = [item for item in command if item != "--dangerously-bypass-hook-trust"]
+    if any(item in command for item in ("--dangerously-bypass-hook-trust", "--ask-for-approval")):
+        raise RuntimeError("Native command contains an approval bypass")
+    return command
+
+
+def _clean_child_environment(lifecycle: ModuleType, overrides: Mapping[str, str]) -> dict[str, str]:
+    environment = cast(dict[str, str], lifecycle._clean_environment(overrides))
+    for key in (
+        "OPENAI_API_KEY",
+        "OPENAI_ORG_ID",
+        "ANTHROPIC_API_KEY",
+        "ANTHROPIC_AUTH_TOKEN",
+        "CLAUDE_CODE_OAUTH_TOKEN",
+        "AWS_ACCESS_KEY_ID",
+        "AWS_SECRET_ACCESS_KEY",
+        "AWS_SESSION_TOKEN",
+        "GOOGLE_APPLICATION_CREDENTIALS",
+    ):
+        environment.pop(key, None)
+    return environment
+
+
+def _parse_args(argv: list[str] | None) -> argparse.Namespace:
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument("--wheel", type=Path)
+    parser.add_argument("--expected-wheel-sha256")
+    parser.add_argument("--build-verification", type=Path)
+    parser.add_argument("--source-commit")
+    parser.add_argument("--output", type=Path)
+    parser.add_argument("--offline-check", action="store_true")
+    parser.add_argument("--self-test", action="store_true")
+    args = parser.parse_args(argv)
+    if args.self_test:
+        return args
+    required = (args.wheel, args.expected_wheel_sha256, args.build_verification, args.source_commit)
+    if any(value is None for value in required):
+        parser.error(
+            "--wheel, --expected-wheel-sha256, --build-verification, and --source-commit are required"
+        )
+    digest = str(args.expected_wheel_sha256).lower()
+    if len(digest) != 64 or any(char not in "0123456789abcdef" for char in digest):
+        parser.error("--expected-wheel-sha256 must be a 64-character hexadecimal digest")
+    commit = str(args.source_commit).lower()
+    if len(commit) != 40 or any(char not in "0123456789abcdef" for char in commit):
+        parser.error("--source-commit must be a 40-character hexadecimal revision")
+    args.expected_wheel_sha256 = digest
+    args.source_commit = commit
+    return args
+
+
+def _verify_inputs(args: argparse.Namespace, lifecycle: ModuleType) -> dict[str, Any]:
+    setattr(lifecycle, "SOURCE_COMMIT", args.source_commit)
+    wheel = args.wheel.resolve()
+    build = lifecycle._verify_build_report(
+        args.build_verification.resolve(), wheel, args.expected_wheel_sha256
+    )
+    package = __import__("mnemos")
+    package_path = Path(str(package.__file__)).resolve()
+    if "site-packages" not in {part.lower() for part in package_path.parts}:
+        raise RuntimeError(f"Installed-wheel isolation failed: {package_path}")
+    provenance = lifecycle._pinned_package_provenance(
+        package_path,
+        wheel_path=wheel,
+        expected_wheel_sha256=args.expected_wheel_sha256,
+    )
+    return {
+        "source_commit": args.source_commit,
+        "wheel": build,
+        "package_provenance": provenance,
+        "installed_package": str(package_path),
+        "python": str(Path(sys.executable).resolve()),
+    }
+
+
+def _private_fixture(lifecycle: ModuleType, parent: Path, prefix: str) -> Path:
+    fixture = Path(tempfile.mkdtemp(prefix=prefix, dir=parent))
+    lifecycle._protect_file(fixture)
+    return fixture
+
+
+def _registry_and_project(lifecycle: ModuleType, fixture: Path) -> tuple[Any, Path, Path]:
+    from mnemos.scopes import ScopeRegistry
+
+    project = fixture / "project"
+    lifecycle._private_mkdir(project)
+    registry = ScopeRegistry()
+    registry.register_project(project, user_profile_id=PROFILE, enabled=True)
+    registry_path = fixture / "scopes.json"
+    registry.save(registry_path)
+    return registry, registry_path, project
+
+
+def _disabled_config() -> Any:
+    from mnemos.config import MnemosConfig
+
+    config = MnemosConfig()
+    for name in ("surprisal", "mutable_rag", "affective", "sleep", "spreading"):
+        setattr(config.modules, name, False)
+    return config
+
+
+def _generated_mcp_selectors(
+    fixture: Path, project: Path, registry_path: Path, settings_path: Path
+) -> dict[str, str]:
+    return {
+        "MNEMOS_CONFIG_PATH": str(settings_path),
+        "MNEMOS_SCOPE_REGISTRY": str(registry_path),
+        "MNEMOS_USER_PROFILE_ID": PROFILE,
+        "MNEMOS_RUNTIME_DESCRIPTOR": str(fixture / "runtime.json"),
+        "MNEMOS_PROJECT_ROOT": str(project),
+        "MNEMOS_HOST": "codex",
+        "MNEMOS_SESSION_ID": "native-codex-health-mcp",
+        "MNEMOS_AUTO_START": "false",
+    }
+
+
+def _decode_mcp_text(result: Any) -> dict[str, Any]:
+    values: list[Any] = []
+    for item in getattr(result, "content", []):
+        text = getattr(item, "text", None)
+        if isinstance(text, str):
+            with suppress(json.JSONDecodeError):
+                values.append(json.loads(text))
+    for value in values:
+        if isinstance(value, dict):
+            nested = value.get("result")
+            if isinstance(nested, str):
+                with suppress(json.JSONDecodeError):
+                    decoded = json.loads(nested)
+                    if isinstance(decoded, dict):
+                        return decoded
+            return value
+    raise RuntimeError("MCP health response was not a JSON object")
+
+
+def _offline_generated_health(lifecycle: ModuleType) -> dict[str, Any]:
+    from mcp import ClientSession, StdioServerParameters
+    from mcp.client.stdio import stdio_client
+    from mnemos.hosts import apply_host_integration
+
+    fixture = _private_fixture(lifecycle, lifecycle.TEMP_PARENT, "mnemos-codex-health-offline-")
+    service: Any | None = None
+    store: Any | None = None
+    try:
+        registry, registry_path, project = _registry_and_project(lifecycle, fixture)
+        settings_path = fixture / "settings.toml"
+        settings_path.write_text("# offline health fixture\n", encoding="utf-8")
+        lifecycle._protect_file(settings_path)
+        service, store = lifecycle._start_service(fixture, registry, _disabled_config())
+        home = fixture / "codex-home"
+        lifecycle._private_mkdir(home)
+        selectors = _generated_mcp_selectors(fixture, project, registry_path, settings_path)
+        generated = apply_host_integration(
+            "codex",
+            mnemos_config_path=settings_path,
+            cwd=project,
+            home=home,
+            integration_env={
+                key: selectors[key]
+                for key in (
+                    "MNEMOS_CONFIG_PATH",
+                    "MNEMOS_SCOPE_REGISTRY",
+                    "MNEMOS_USER_PROFILE_ID",
+                    "MNEMOS_RUNTIME_DESCRIPTOR",
+                )
+            },
+        )
+        config_path = generated.config_path
+        if not config_path.is_file():
+            raise RuntimeError("Generated MCP config was not written")
+        config = lifecycle.tomllib.loads(config_path.read_text(encoding="utf-8"))
+        server = config["mcp_servers"]["mnemos"]
+        environment = _clean_child_environment(
+            lifecycle,
+            {
+                **selectors,
+                **server.get("env", {}),
+                "PATH": str(Path(sys.executable).resolve().parent)
+                + lifecycle.os.pathsep
+                + lifecycle.os.environ.get("PATH", ""),
+            },
+        )
+        resolved = lifecycle.shutil.which(server["command"], path=environment["PATH"])
+        if resolved is None:
+            raise RuntimeError("Generated MCP command could not be resolved")
+        parameters = StdioServerParameters(
+            command=resolved,
+            args=server.get("args", []),
+            env=environment,
+            cwd=str(project),
+        )
+
+        async def roundtrip() -> dict[str, Any]:
+            async with stdio_client(parameters) as (reader, writer):
+                async with ClientSession(reader, writer) as session:
+                    initialized = await session.initialize()
+                    listed = await session.list_tools()
+                    health_tool = next(
+                        (tool for tool in listed.tools if tool.name == "mnemos_health"), None
+                    )
+                    if health_tool is None or health_tool.annotations is None:
+                        raise RuntimeError("Generated MCP health tool lacks annotations")
+                    annotations = health_tool.annotations
+                    if not (
+                        annotations.readOnlyHint is True
+                        and annotations.destructiveHint is False
+                        and annotations.idempotentHint is True
+                        and annotations.openWorldHint is False
+                    ):
+                        raise RuntimeError("Generated MCP health annotations are incorrect")
+                    result = await session.call_tool("mnemos_health", {})
+                    if result.isError:
+                        raise RuntimeError("Generated MCP health call returned a tool error")
+                    payload = _decode_mcp_text(result)
+                    if (
+                        payload.get("schema_version") != 1
+                        or payload.get("status") != "running"
+                        or payload.get("store", {}).get("backend") != "SQLiteStore"
+                    ):
+                        raise RuntimeError("Generated MCP health response was not successful")
+                    return {
+                        "server_name": initialized.serverInfo.name,
+                        "tool_names": sorted(tool.name for tool in listed.tools),
+                        "health_response": {
+                            "schema_version": payload["schema_version"],
+                            "status": payload["status"],
+                            "store_backend": payload["store"]["backend"],
+                            "total_chunks": payload["store"].get("total_chunks"),
+                        },
+                        "health_annotations": {
+                            "readOnlyHint": annotations.readOnlyHint,
+                            "destructiveHint": annotations.destructiveHint,
+                            "idempotentHint": annotations.idempotentHint,
+                            "openWorldHint": annotations.openWorldHint,
+                        },
+                    }
+
+        result = asyncio.run(asyncio.wait_for(roundtrip(), timeout=10))
+        result.update(
+            {
+                "status": "passed",
+                "fixture": str(fixture),
+                "config_sha256": _sha256(config_path.read_bytes()),
+                "service_mode": "unavailable cognition, no native host or model",
+            }
+        )
+        return result
+    finally:
+        cleanup = lifecycle._close_service(service, store)
+        if cleanup:
+            raise RuntimeError("Offline health cleanup failed: " + ",".join(cleanup))
+
+
+def _health_from_native_stdout(stdout: str) -> dict[str, Any]:
+    def decode(value: Any) -> tuple[dict[str, Any] | None, bool]:
+        candidate: Any = value
+        if isinstance(candidate, str):
+            with suppress(json.JSONDecodeError):
+                candidate = json.loads(candidate)
+        if not isinstance(candidate, Mapping):
+            return None, False
+        is_error = candidate.get("isError") is True
+        decoded_candidate: dict[str, Any] | None = None
+        for nested_key in ("result", "output"):
+            if nested_key not in candidate:
+                continue
+            nested = candidate[nested_key]
+            if isinstance(nested, (str, Mapping)):
+                decoded, nested_error = decode(nested)
+                is_error = is_error or nested_error
+                if decoded_candidate is None and decoded is not None:
+                    decoded_candidate = decoded
+        content = candidate.get("content")
+        if isinstance(content, list):
+            for item in content:
+                if not isinstance(item, Mapping):
+                    continue
+                is_error = is_error or item.get("isError") is True
+                if isinstance(item.get("text"), str):
+                    decoded, nested_error = decode(item["text"])
+                    is_error = is_error or nested_error
+                    if decoded_candidate is None and decoded is not None:
+                        decoded_candidate = decoded
+        return decoded_candidate if decoded_candidate is not None else dict(candidate), is_error
+
+    calls: list[dict[str, Any]] = []
+    for line in stdout.splitlines():
+        try:
+            value = json.loads(line)
+        except json.JSONDecodeError:
+            continue
+        if not isinstance(value, Mapping):
+            continue
+        item = value.get("item")
+        if not isinstance(item, Mapping):
+            continue
+        if item.get("type") != "mcp_tool_call" or item.get("server") != "mnemos":
+            continue
+        if item.get("status") != "completed":
+            continue
+        tool = next(
+            (
+                item.get(key)
+                for key in ("tool", "name", "tool_name")
+                if isinstance(item.get(key), str)
+            ),
+            None,
+        )
+        raw = item.get("result") if "result" in item else item.get("output")
+        payload, result_error = decode(raw)
+        calls.append(
+            {
+                "tool": tool,
+                "payload": payload,
+                "error": bool(item.get("error")) or item.get("isError") is True or result_error,
+            }
+        )
+    successful = []
+    for item in calls:
+        payload = item.get("payload")
+        store = payload.get("store") if isinstance(payload, dict) else None
+        total_chunks = store.get("total_chunks") if isinstance(store, Mapping) else None
+        if (
+            item.get("tool") == "mnemos_health"
+            and not item.get("error")
+            and isinstance(payload, dict)
+            and type(payload.get("schema_version")) is int
+            and payload.get("schema_version") == 1
+            and payload.get("status") == "running"
+            and isinstance(store, Mapping)
+            and store.get("backend") == "SQLiteStore"
+            and type(total_chunks) is int
+            and total_chunks > 0
+        ):
+            successful.append(item)
+    if len(calls) != 1 or len(successful) != 1:
+        raise RuntimeError(
+            "Native output did not contain exactly one successful mnemos_health call"
+        )
+    payload = successful[0]["payload"]
+    assert isinstance(payload, dict)
+    return {
+        "call_count": len(calls),
+        "response": {
+            "schema_version": payload.get("schema_version"),
+            "status": payload.get("status"),
+            "store_backend": payload.get("store", {}).get("backend"),
+            "total_chunks": payload.get("store", {}).get("total_chunks"),
+        },
+    }
+
+
+def _native_health(lifecycle: ModuleType) -> dict[str, Any]:
+    from mnemos.hosts import apply_host_integration
+
+    fixture = _private_fixture(lifecycle, lifecycle.TEMP_PARENT, "mnemos-codex-health-native-")
+    service: Any | None = None
+    store: Any | None = None
+    process: subprocess.Popen[str] | None = None
+    auth_copy: Path | None = None
+    try:
+        registry, registry_path, project = _registry_and_project(lifecycle, fixture)
+        settings_path = fixture / "settings.toml"
+        settings_path.write_text("# native health fixture\n", encoding="utf-8")
+        lifecycle._protect_file(settings_path)
+        service, store = lifecycle._start_service(fixture, registry, _disabled_config())
+        context = registry.resolve(
+            project, user_profile_id=PROFILE, session_id="native-health-seed", host="codex"
+        )
+        seeded = service.submit(
+            "remember",
+            {
+                "event_id": "native-health-seed",
+                "context": context.model_dump(mode="json"),
+                "content": "Native health fixture fact.",
+                "role": "user",
+                "scope": "project",
+            },
+        )
+        if seeded.get("status") != "committed":
+            raise RuntimeError("Native health fixture seed failed")
+        service.submit("maintenance", {})
+        home = fixture / "codex-home"
+        lifecycle._private_mkdir(home)
+        selectors = _generated_mcp_selectors(fixture, project, registry_path, settings_path)
+        generated = apply_host_integration(
+            "codex",
+            mnemos_config_path=settings_path,
+            cwd=project,
+            home=home,
+            integration_env={
+                key: selectors[key]
+                for key in (
+                    "MNEMOS_CONFIG_PATH",
+                    "MNEMOS_SCOPE_REGISTRY",
+                    "MNEMOS_USER_PROFILE_ID",
+                    "MNEMOS_RUNTIME_DESCRIPTOR",
+                )
+            },
+        )
+        config_path = generated.config_path
+        generated_config = config_path.read_text(encoding="utf-8")
+        if generated_config.count("mnemos.adapters.codex") < 6:
+            raise RuntimeError("Generated Codex config lacks the complete Mnemos hook set")
+        auth_copy = lifecycle._auth_copy(config_path.parent)
+        environment = _clean_child_environment(
+            lifecycle, {"CODEX_HOME": str(config_path.parent), **selectors}
+        )
+        command = _native_command(
+            lifecycle,
+            project,
+            "Use only the Mnemos MCP tool mnemos_health. Call it exactly once and report its status.",
+        )
+        started = time.monotonic()
+        process = subprocess.Popen(
+            command,
+            cwd=str(project),
+            env=environment,
+            stdin=subprocess.DEVNULL,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+            text=True,
+            encoding="utf-8",
+            errors="replace",
+            shell=False,
+            creationflags=getattr(subprocess, "CREATE_NEW_PROCESS_GROUP", 0),
+        )
+        stdout = ""
+        stderr = ""
+        try:
+            stdout, stderr = process.communicate(timeout=MAX_NATIVE_SECONDS)
+        except subprocess.TimeoutExpired:
+            lifecycle._terminate_process_tree(process)
+            stdout, stderr = process.communicate(timeout=15)
+            (fixture / "native-stdout.jsonl").write_text(stdout, encoding="utf-8")
+            (fixture / "native-stderr.log").write_text(stderr, encoding="utf-8")
+            raise RuntimeError("Native health turn exceeded the 60 second deadline")
+        stdout_path = fixture / "native-stdout.jsonl"
+        stderr_path = fixture / "native-stderr.log"
+        stdout_path.write_text(stdout, encoding="utf-8")
+        stderr_path.write_text(stderr, encoding="utf-8")
+        lifecycle._protect_file(stdout_path)
+        lifecycle._protect_file(stderr_path)
+        if process.returncode != 0:
+            raise RuntimeError("Native Codex health turn returned a nonzero exit code")
+        health = _health_from_native_stdout(stdout)
+        summary = lifecycle._native_event_summary(stdout)
+        hook_events = [
+            event
+            for event in store.list_episodic_events(limit=1000)
+            if event.source == "codex" and event.metadata.get("source_kind") == "codex_hook"
+        ]
+        return {
+            "status": "passed",
+            "fixture": str(fixture),
+            "elapsed_ms": round((time.monotonic() - started) * 1000, 1),
+            "returncode": process.returncode,
+            "health": health,
+            "tool_names": summary.get("tool_names", []),
+            "hook_callback_event_count": len(hook_events),
+            "hook_callbacks_observed": bool(hook_events),
+            "hook_callback_claim": "callback presence only; no capture quality claim",
+            "config_path": str(config_path),
+            "config_sha256": _sha256(config_path.read_bytes()),
+            "generated_hook_command_count": generated_config.count("mnemos.adapters.codex"),
+            "native_stdout": {
+                "path": str(stdout_path),
+                "sha256": _sha256(stdout.encode("utf-8")),
+                "bytes": len(stdout.encode("utf-8")),
+            },
+            "native_stderr": {
+                "path": str(stderr_path),
+                "sha256": _sha256(stderr.encode("utf-8")),
+                "bytes": len(stderr.encode("utf-8")),
+            },
+            "command_policy": {
+                "hook_trust_bypass": False,
+                "approval_override": False,
+                "sandbox": "read-only",
+                "ephemeral": True,
+            },
+            "stderr_bytes": len(stderr.encode("utf-8")),
+        }
+    finally:
+        if process is not None or auth_copy is not None:
+            lifecycle._cleanup_native_resources(process, auth_copy)
+        cleanup = lifecycle._close_service(service, store)
+        if cleanup:
+            raise RuntimeError("Native health cleanup failed: " + ",".join(cleanup))
+
+
+def main(argv: list[str] | None = None) -> int:
+    args = _parse_args(argv)
+    if args.self_test:
+        print(json.dumps(_self_test(), sort_keys=True))
+        return 0
+
+    lifecycle = _load_lifecycle()
+    inputs = _verify_inputs(args, lifecycle)
+    result: dict[str, Any] = {
+        "schema_version": 1,
+        "runner": "native-codex-health-v2",
+        "runner_sha256": _sha256(Path(__file__).read_bytes()),
+        "v3_sha256": V3_SHA256,
+        "v8_sha256": V8_SHA256,
+        "source_commit": args.source_commit,
+        "started_at": datetime.now(timezone.utc).isoformat(),
+        "mode": "offline" if args.offline_check else "native",
+        "model_quality_claim": "none",
+        "input_verification": inputs,
+    }
+    try:
+        result["probe"] = (
+            _offline_generated_health(lifecycle)
+            if args.offline_check
+            else _native_health(lifecycle)
+        )
+        result["status"] = "passed"
+    except Exception as exc:
+        result["status"] = "failed"
+        result["error_type"] = type(exc).__name__
+        result["error_digest"] = _sha256(str(exc))
+        result["error_note"] = "Exception details are intentionally omitted from evidence."
+    result["finished_at"] = datetime.now(timezone.utc).isoformat()
+    if args.output is None:
+        print(json.dumps(result, ensure_ascii=True, sort_keys=True))
+        return 0 if result["status"] == "passed" else 1
+    output = args.output.resolve()
+    if output.exists():
+        raise FileExistsError(f"Refusing to overwrite evidence directory: {output}")
+    output.mkdir(parents=True)
+    (output / "report.json").write_text(
+        json.dumps(result, ensure_ascii=True, indent=2, sort_keys=True) + "\n",
+        encoding="utf-8",
+    )
+    print(json.dumps({"status": result["status"], "report": str(output / "report.json")}))
+    return 0 if result["status"] == "passed" else 1
+
+
+if __name__ == "__main__":
+    raise SystemExit(main())
