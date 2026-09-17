@@ -1,0 +1,40 @@
+from datetime import datetime, timezone
+from pathlib import Path
+import hashlib
+import json
+import sqlite3
+
+root = Path(__file__).resolve().parents[1]
+base = Path(r'D:\WindowsTemp\pytest-of-Ant')
+current = (base / 'pytest-current').resolve()
+assert current.parent == base.resolve() and current.name.startswith('pytest-'), current
+source = current / 'test_cli_stops_isolated_servic0'
+assert source.is_dir(), source
+target = root / '.venv/service-startup-failure-v2-candidate'
+target.mkdir(exist_ok=False)
+files = {}
+for name in ('memory.db', 'memory.db-wal', 'memory.db-shm'):
+    path = source / name
+    if not path.is_file():
+        continue
+    data = path.read_bytes()
+    digest = hashlib.sha256(data).hexdigest()
+    (target / name).write_bytes(data)
+    assert hashlib.sha256(path.read_bytes()).hexdigest() == digest, 'source changed during copy'
+    files[name] = {'bytes': len(data), 'sha256': digest}
+database = target / 'memory.db'
+inspection = None
+if database.is_file():
+    with sqlite3.connect(database.as_uri() + '?mode=ro', uri=True) as connection:
+        inspection = {
+            'schema_objects': connection.execute('SELECT type, name FROM sqlite_master ORDER BY type, name').fetchall(),
+            'user_version': connection.execute('PRAGMA user_version').fetchone()[0],
+        }
+record = {
+    'copied_at': datetime.now(timezone.utc).isoformat(),
+    'source': str(source), 'private_copy': str(target), 'files': files,
+    'inspection': inspection,
+    'interpretation': 'Candidate fixture from current pytest root. Bind to full-suite traceback before identifying it as the failing fixture. Read-only inspection is on a copy; no startup retry was run.'
+}
+(target / 'inspection.json').write_text(json.dumps(record, indent=2) + '\n', encoding='utf-8')
+print(json.dumps(record, indent=2))

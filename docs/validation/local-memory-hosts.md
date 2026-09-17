@@ -1,7 +1,7 @@
 # Local memory host validation
 
 This record separates adapter and transport checks from real host acceptance. It
-describes the functional-local-memory worktree on September 16, 2026.
+describes the unreleased functional-local-memory worktree, updated September 17, 2026.
 
 ## Cross-host continuity checkpoint
 
@@ -36,9 +36,10 @@ These version checks were read-only:
 
 | Host | Observed installation | Capability evidence | Acceptance state |
 | --- | --- | --- | --- |
-| Codex CLI | `codex-cli 0.146.0` | Two disposable `exec --json` turns completed, but neither produced observed hook callbacks or seeded recall | Native automatic capture and recall unproven |
-| Claude Code | `2.1.191` | Native SessionStart/Stop and one seeded-fact recall turn observed after an explicit model retry | Partial; extraction and full lifecycle matrix remain open |
-| Hermes Agent in WSL | `v0.21.3`, upstream `97962358` | `agent.memory_provider.MemoryProvider` exposes `initialize`, `prefetch`, `sync_turn`, `on_pre_compress`, and `on_memory_write` | NOT RUN |
+| Codex CLI | `codex-cli 0.146.0` | Installed source20f generated TOML hooks returned a random canary and captured both roles across restart | Bounded native transport observed; full correction/forget lifecycle pending |
+| Codex Desktop | Installed desktop app; no isolated native run | Shared adapter tests only | NOT RUN |
+| Claude Code | `2.1.191` | Installed source20f native canary recall and both-role capture survived restart; prompt and Stop identity coverage was degraded | Partial; persistent-transcript attempt timed out. Extraction and full lifecycle matrix remain open |
+| Hermes Agent in WSL | `v0.21.3`, upstream `97962358` at initial inspection | Installed provider API and authenticated Windows bridge exercised; configured-registry repair passed disposable plugin discovery | Native model conversation did not complete |
 
 The Hermes package is installed under
 `/home/anthony/.hermes/hermes-agent` in WSL. The Windows Mnemos environment
@@ -46,8 +47,10 @@ does not claim that package as an installed native dependency. The Hermes
 adapter reports manual MCP fallback when its provider API is unavailable.
 
 The [native host smoke record](2026-09-16/native-host-smoke.md) preserves the
-Claude model-version failure, successful retry, hook-isolation limitation, and
-Codex negative result. These findings do not replace the complete acceptance
+Claude model-version failure, successful retries, persistent-transcript timeout,
+and earlier Codex failures. The later [Codex generated-hook result](2026-09-16/native-codex-generated-v8/README.md)
+and [Claude scope result](2026-09-16/native-claude-scope-v4/README.md) preserve
+the bounded positive observations. These findings do not replace the complete acceptance
 matrix below.
 
 ## Safe ephemeral adapter checks
@@ -107,6 +110,9 @@ resolution, and lifecycle contracts.
 ## Open gates
 
 The host continuity checkpoint does not establish extraction precision,
-retrieval quality, real-provider readiness, installed-host reliability, a
-two-week pilot, 10,000-fact growth, or published-release acceptance. Those
-remain NOT RUN until their evidence is collected separately.
+retrieval quality, installed-host reliability, a two-week pilot, or
+published-release acceptance. Real-provider preflight and the 10,000-fact
+measurement have separate records: [evaluation status](2026-09-16/evaluation-running.md)
+and [performance](2026-09-16/performance-10k.md). The held-out evaluation is
+still running, and the recorded recall latency fails its gate. The daily-use
+pilot and full native cross-host lifecycle remain NOT RUN.

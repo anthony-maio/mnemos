@@ -18,6 +18,12 @@ MNEMOS_USER_PROFILE_ID=alice
 MNEMOS_SCOPE_REGISTRY=/path/to/scopes.json
 ```
 
+Provider registration reads this registry path before initialization. The
+file must exist and contain a valid scope registry; a missing or malformed
+file leaves the provider unavailable. An explicitly supplied constructor path
+takes precedence over the environment value. Registration performs no network
+request and does not by itself prove the memory service is reachable.
+
 The provider receives the active Hermes `cwd`, `hermes_home`, and
 `agent_identity` during initialization. It resolves project membership from
 that session context. It does not use the process working directory as a
@@ -61,6 +67,9 @@ The preview changes only the `memory.provider` selector. Provider paths and
 profile values remain operator configuration, and the original config is
 backed up when the change is applied.
 
-Hermes integration remains pending until a real Hermes CLI and desktop session
-each demonstrate scoped capture, recall, restart recovery, service outage
-buffering, and cross-host continuity.
+Full Hermes acceptance remains pending until a real Hermes session demonstrates
+scoped capture, recall, restart recovery, service outage buffering, and
+cross-host continuity. Installed API, Windows/WSL bridge, and disposable plugin
+discovery checks are recorded separately in the
+[compatibility matrix](../client-compatibility-matrix.md); the native model
+attempts have not completed a conversation.

@@ -518,3 +518,18 @@ Hermes discovery probe found a registry-path availability defect; its repair
 passed focused tests and real disposable WSL plugin loading. Full verification
 of that newer source is pending. The held-out model queue continues on its
 original frozen source, and the corrected latency benchmark has not run.
+## Hermes registration repaired; dispatcher startup blocks broad verification
+
+Commit `2360891` fixes registration's handling of the configured scope registry.
+Seventeen focused tests passed. The same isolated WSL loader probe rejects the
+old frozen source and accepts the repaired frozen source with exact import
+and adapter-hash checks. The [discovery record](hermes-registry-discovery/README.md)
+preserves both outcomes and the earlier helper failure.
+
+The full frozen-source run completed with 699 passes, two optional WSL skips,
+and one failure. The service child exited when dispatcher initialization
+exceeded its existing five-second deadline. This is not the earlier test-level
+15-second timeout. The [failed run](hermes-registry-verification/README.md)
+and its complete-schema fixture are preserved. No package was built by this
+attempt; installed-wheel and native lifecycle follow-ups remain pending while
+startup is investigated. The original real-model queue remains active.

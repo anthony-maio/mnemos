@@ -1,0 +1,292 @@
+"""Pinned, offline Hermes memory-provider discovery probe.
+
+The probe runs the installed Hermes WSL interpreter against an exact Mnemos
+snapshot. It creates only a temporary Hermes home, project, and registry.
+"""
+
+from __future__ import annotations
+
+import argparse
+from datetime import datetime, timezone
+import hashlib
+import json
+import os
+from pathlib import Path
+import subprocess
+import sys
+
+WSL_PYTHON = "/home/anthony/.hermes/hermes-agent/venv/bin/python"
+WSL_HERMES_SOURCE = "/home/anthony/.hermes/hermes-agent"
+SOURCE_PIN = "554a2517dc85bbdb6190b5e523f8511efa54cccf"
+
+
+PAYLOAD = r"""
+import hashlib
+import importlib.metadata as metadata
+import importlib.util
+import json
+import os
+from pathlib import Path
+import subprocess
+import sys
+import tempfile
+
+snapshot = Path(__SNAPSHOT__)
+expected_raw = __EXPECTED_RAW__
+expected_normalized = __EXPECTED_NORMALIZED__
+expected_available = __EXPECTED_AVAILABLE__
+expected_reason = __EXPECTED_REASON__
+hermes_source = Path("/home/anthony/.hermes/hermes-agent")
+with tempfile.TemporaryDirectory(prefix="mnemos-hermes-pinned-") as raw:
+    root = Path(raw)
+    home = root / "hermes-home"
+    project = root / "project"
+    registry = root / "registry.json"
+    (home / "plugins" / "mnemos").mkdir(parents=True)
+    project.mkdir()
+    registry.write_text(
+        '{"schema_version": 1, "projects": {}, "workspaces": {}, "profiles": ["probe-user"]}',
+        encoding="utf-8",
+    )
+    (home / "config.yaml").write_text("memory:\n  provider: mnemos\n", encoding="utf-8")
+    (home / "plugins" / "mnemos" / "__init__.py").write_text(
+        "# MemoryProvider discovery wrapper for the pinned source.\n"
+        "from mnemos.adapters.hermes import register\n",
+        encoding="utf-8",
+    )
+
+    # env -i below removes inherited variables. Keep only these disposable
+    # values in the Python process that performs discovery.
+    os.environ.clear()
+    os.environ.update({
+        "PATH": "/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin",
+        "HOME": str(root / "home"),
+        "TMPDIR": str(root),
+        "HERMES_HOME": str(home),
+        "HERMES_ENABLE_PROJECT_PLUGINS": "0",
+        "MNEMOS_SCOPE_REGISTRY": str(registry),
+        "MNEMOS_USER_PROFILE_ID": "probe-user",
+    })
+    os.chdir(project)
+    sys.path[:] = [
+        item for item in sys.path
+        if item not in ("", str(snapshot), str(hermes_source))
+        and "mnemos\\mnemos" not in item
+        and "/mnemos/mnemos" not in item
+    ]
+    sys.path.insert(0, str(hermes_source))
+    sys.path.insert(0, str(snapshot))
+
+    from hermes_cli.oneshot import _normalize_toolsets
+    from hermes_cli.tools_config import _get_platform_tools
+    from plugins.memory import (
+        _get_active_memory_provider,
+        find_provider_dir,
+        load_memory_provider,
+        list_memory_provider_names,
+    )
+
+    import mnemos.adapters.hermes as mnemos_hermes
+    import mnemos.client as mnemos_client
+    import socket
+
+    def blocked_network(*args, **kwargs):
+        raise AssertionError("offline probe attempted socket.connect")
+
+    socket.socket.connect = blocked_network
+    service_methods_called = []
+
+    def blocked_service_method(*args, **kwargs):
+        service_methods_called.append("called")
+        raise AssertionError("offline probe attempted MnemosClient service call")
+
+    for method_name in ("request", "replay_outbox", "capture", "retrieve", "close"):
+        setattr(mnemos_client.MnemosClient, method_name, blocked_service_method)
+
+    provider_names = list_memory_provider_names()
+    active = _get_active_memory_provider()
+    provider = load_memory_provider(active, register_skills=False) if active else None
+    source_revision = None
+    try:
+        revision = subprocess.run(
+            ["git", "-C", str(hermes_source), "rev-parse", "HEAD"],
+            capture_output=True, text=True, timeout=5, check=False,
+        )
+        if revision.returncode == 0:
+            source_revision = revision.stdout.strip()
+    except (OSError, subprocess.TimeoutExpired):
+        pass
+    adapter_path = Path(mnemos_hermes.__file__).resolve()
+    adapter_bytes = adapter_path.read_bytes()
+    adapter_normalized = adapter_bytes.decode("utf-8").replace("\r\n", "\n").replace("\r", "\n").encode("utf-8")
+    actual_raw = hashlib.sha256(adapter_bytes).hexdigest()
+    actual_normalized = hashlib.sha256(adapter_normalized).hexdigest()
+    provider_dir = find_provider_dir("mnemos")
+    direct_provider = mnemos_hermes.MnemosHermesProvider()
+    direct_reason = direct_provider.unavailable_reason()
+    if adapter_path != (snapshot / "mnemos" / "adapters" / "hermes.py").resolve():
+        raise AssertionError(f"Mnemos adapter imported from unexpected path: {adapter_path}")
+    if actual_raw != expected_raw or actual_normalized != expected_normalized:
+        raise AssertionError("Mnemos adapter hash does not match the clean snapshot")
+    if active != "mnemos" or "mnemos" not in provider_names:
+        raise AssertionError("mnemos was not the selected discovered provider")
+    if provider_dir is None or provider_dir != (home / "plugins" / "mnemos").resolve():
+        raise AssertionError("provider directory was not the disposable Hermes home")
+    if bool(provider and provider.is_available()) != expected_available:
+        raise AssertionError("provider availability did not match the requested snapshot expectation")
+    if direct_reason != expected_reason:
+        raise AssertionError(f"unexpected direct-provider availability reason: {direct_reason!r}")
+    if "MNEMOS_BRIDGE_COMMAND" in os.environ or "PYTHONPATH" in os.environ:
+        raise AssertionError("probe environment was not scrubbed")
+    if service_methods_called:
+        raise AssertionError("a MnemosClient service method was called")
+    print(json.dumps({
+        "hermes_version": metadata.version("hermes-agent"),
+        "hermes_source_revision": source_revision,
+        "mnemos_import_path": str(adapter_path),
+        "mnemos_import_matches_snapshot": adapter_path == (snapshot / "mnemos" / "adapters" / "hermes.py").resolve(),
+        "adapter_sha256_raw": actual_raw,
+        "adapter_sha256_normalized": actual_normalized,
+        "entry_points": sorted(ep.name for ep in metadata.entry_points(group="hermes_agent.memory_providers")),
+        "active_provider": active,
+        "provider_dir": str(provider_dir) if provider_dir else None,
+        "provider_name_listed": "mnemos" in provider_names,
+        "provider_loaded": provider is not None,
+        "provider_available": bool(provider and provider.is_available()),
+        "no_tool_config_result": sorted(_get_platform_tools({"platform_toolsets": {"cli": []}}, "cli")),
+        "empty_toolsets_flag_normalizes_to": _normalize_toolsets(""),
+        "direct_provider_unavailable_reason": direct_reason,
+        "bridge_env_present": "MNEMOS_BRIDGE_COMMAND" in os.environ,
+        "pythonpath_env_present": "PYTHONPATH" in os.environ,
+        "service_contact_attempted": False,
+    }, sort_keys=True))
+"""
+
+
+def _wsl_path(path: Path) -> str:
+    resolved = path.resolve()
+    drive = resolved.drive.rstrip(":").lower()
+    if not drive:
+        raise ValueError(f"Expected a Windows drive path: {resolved}")
+    tail = str(resolved)[len(resolved.anchor) :].replace("\\", "/").lstrip("/")
+    return "/mnt/" + drive + "/" + tail
+
+
+def _sha256(path: Path, *, normalize: bool = False) -> str:
+    data = path.read_bytes()
+    if normalize:
+        data = data.decode("utf-8").replace("\r\n", "\n").replace("\r", "\n").encode("utf-8")
+    return hashlib.sha256(data).hexdigest()
+
+
+def _clean_snapshot(snapshot: Path, commit: str) -> dict[str, str]:
+    actual = subprocess.run(
+        ["git", "-C", str(snapshot), "rev-parse", "HEAD"],
+        capture_output=True,
+        text=True,
+        check=True,
+    ).stdout.strip()
+    if actual != commit:
+        raise RuntimeError(f"snapshot HEAD {actual} does not match requested {commit}")
+    status = subprocess.run(
+        ["git", "-C", str(snapshot), "status", "--porcelain", "--untracked-files=all"],
+        capture_output=True,
+        text=True,
+        check=True,
+    ).stdout
+    if status.strip():
+        raise RuntimeError(f"snapshot is dirty: {status.strip()}")
+    adapter = snapshot / "mnemos" / "adapters" / "hermes.py"
+    if not adapter.is_file():
+        raise RuntimeError(f"snapshot has no adapter: {adapter}")
+    return {
+        "head": actual,
+        "tracked_source_clean": True,
+        "adapter_sha256_raw": _sha256(adapter),
+        "adapter_sha256_normalized": _sha256(adapter, normalize=True),
+    }
+
+
+def main() -> int:
+    parser = argparse.ArgumentParser()
+    parser.add_argument("--snapshot", required=True, type=Path)
+    parser.add_argument("--commit", required=True)
+    parser.add_argument("--output", required=True, type=Path)
+    parser.add_argument("--expected", choices=("available", "unavailable"), required=True)
+    args = parser.parse_args()
+    snapshot = args.snapshot.resolve()
+    output = args.output.resolve()
+    if output.exists():
+        raise SystemExit(f"refusing to overwrite {output}")
+    source = _clean_snapshot(snapshot, args.commit)
+    output.mkdir(parents=True)
+    expected_available = args.expected == "available"
+    expected_reason = "" if expected_available else "Mnemos scope registry is not configured"
+    payload = (
+        PAYLOAD.replace("__SNAPSHOT__", json.dumps(_wsl_path(snapshot)))
+        .replace("__EXPECTED_RAW__", json.dumps(source["adapter_sha256_raw"]))
+        .replace("__EXPECTED_NORMALIZED__", json.dumps(source["adapter_sha256_normalized"]))
+        .replace("__EXPECTED_AVAILABLE__", repr(expected_available))
+        .replace("__EXPECTED_REASON__", repr(expected_reason))
+    )
+    payload_path = output / "payload.py"
+    payload_path.write_text(payload, encoding="utf-8")
+    started = datetime.now(timezone.utc)
+    command = [
+        "wsl.exe",
+        "-d",
+        "Debian",
+        "--",
+        "env",
+        "-i",
+        "PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin",
+        "HOME=/tmp/mnemos-hermes-pinned-runner",
+        WSL_PYTHON,
+        "-c",
+        payload,
+    ]
+    result = subprocess.run(command, capture_output=True, text=True, timeout=30, check=False)
+    finished = datetime.now(timezone.utc)
+    stdout_lines = [line for line in result.stdout.splitlines() if line.strip()]
+    child = json.loads(stdout_lines[-1]) if stdout_lines and result.returncode == 0 else None
+    observed_available = bool(
+        child and child.get("provider_loaded") and child.get("provider_available")
+    )
+    report = {
+        "status": (
+            "passed"
+            if result.returncode == 0 and observed_available == (args.expected == "available")
+            else "failed"
+        ),
+        "snapshot": str(snapshot),
+        "requested_commit": args.commit,
+        "expected": args.expected,
+        "started_utc": started.isoformat(),
+        "finished_utc": finished.isoformat(),
+        "source_verification": source,
+        "runner": str(Path(__file__).resolve()),
+        "runner_sha256": _sha256(Path(__file__).resolve()),
+        "command": [*command[:-2], "<payload.py contents>"],
+        "payload_file": "payload.py",
+        "payload_sha256": _sha256(payload_path),
+        "returncode": result.returncode,
+        "stdout_log": "stdout.txt",
+        "stderr_log": "stderr.txt",
+        "child": child,
+        "observation": (
+            "provider loaded and available"
+            if observed_available
+            else "provider unavailable or not loaded"
+        ),
+    }
+    (output / "stdout.txt").write_text(result.stdout, encoding="utf-8")
+    (output / "stderr.txt").write_text(result.stderr, encoding="utf-8")
+    (output / "report.json").write_text(
+        json.dumps(report, indent=2, sort_keys=True) + "\n", encoding="utf-8"
+    )
+    print(json.dumps(report, indent=2, sort_keys=True))
+    return 0 if report["status"] == "passed" else 1
+
+
+if __name__ == "__main__":
+    raise SystemExit(main())
