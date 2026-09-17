@@ -1,0 +1,274 @@
+"""Run the frozen Codex PowerShell hook regression in an external fixture.
+
+This diagnostic does not change the test timeout or the generated hook.  It
+records a small PowerShell startup/stdin control before running the exact
+pytest node once, so a startup failure is distinguishable from a bootstrap
+failure.  Output paths are deliberately outside the repository.
+"""
+
+from __future__ import annotations
+
+import argparse
+import datetime as dt
+import hashlib
+import json
+import os
+from pathlib import Path
+import shutil
+import subprocess
+import sys
+import time
+from typing import Any
+
+SOURCE_COMMIT = "33c6dd90128d8762053e0bf58862e4bc52484bab"
+TEST_NODE = (
+    "tests/test_hosts.py::test_codex_powershell_bootstrap_executes_allowlisted_env_and_stdin"
+)
+DEFAULT_SOURCE = Path("C:/Users/Ant/AppData/Local/Temp/mnemos-source-33c6dd9")
+DEFAULT_OUTPUT = Path("C:/Users/Ant/AppData/Local/Temp/mnemos-powershell-33c6dd9-diagnostic-v1")
+DEFAULT_PYTHON = Path(
+    "D:/Development/mnemos/mnemos/.worktrees/functional-local-memory/.venv/Scripts/python.exe"
+)
+
+
+def _sha256(path: Path) -> str:
+    digest = hashlib.sha256()
+    with path.open("rb") as handle:
+        for block in iter(lambda: handle.read(1024 * 1024), b""):
+            digest.update(block)
+    return digest.hexdigest()
+
+
+def _json_write(path: Path, value: Any) -> None:
+    path.write_text(json.dumps(value, indent=2, ensure_ascii=True) + "\n", encoding="utf-8")
+
+
+def _utc_now() -> str:
+    return dt.datetime.now(dt.timezone.utc).isoformat()
+
+
+def _powershell() -> str | None:
+    return shutil.which("pwsh") or shutil.which("powershell")
+
+
+def _run_control(powershell: str, output: Path, env: dict[str, str]) -> dict[str, Any]:
+    command = [
+        powershell,
+        "-NoProfile",
+        "-NonInteractive",
+        "-Command",
+        "$payload = [Console]::In.ReadToEnd(); "
+        "if ($payload -ne 'mnemos-startup-probe') { exit 7 }; "
+        "Write-Output 'mnemos-powershell-stdin-ok'",
+    ]
+    started = time.monotonic()
+    try:
+        completed = subprocess.run(
+            command,
+            input="mnemos-startup-probe",
+            capture_output=True,
+            text=True,
+            encoding="utf-8",
+            errors="replace",
+            env=env,
+            cwd=str(output),
+            check=False,
+            timeout=10,
+        )
+        stdout = completed.stdout
+        stderr = completed.stderr
+        result: dict[str, Any] = {
+            "status": "passed" if completed.returncode == 0 else "failed",
+            "command": command,
+            "returncode": completed.returncode,
+            "duration_ms": round((time.monotonic() - started) * 1000, 3),
+            "stdout_sha256": hashlib.sha256(stdout.encode("utf-8")).hexdigest(),
+            "stderr_sha256": hashlib.sha256(stderr.encode("utf-8")).hexdigest(),
+        }
+    except subprocess.TimeoutExpired as exc:
+        stdout_value = exc.stdout or ""
+        stderr_value = exc.stderr or ""
+        if isinstance(stdout_value, bytes):
+            stdout_value = stdout_value.decode("utf-8", "replace")
+        if isinstance(stderr_value, bytes):
+            stderr_value = stderr_value.decode("utf-8", "replace")
+        result = {
+            "status": "timeout",
+            "command": command,
+            "duration_ms": round((time.monotonic() - started) * 1000, 3),
+            "stdout_sha256": hashlib.sha256(stdout_value.encode("utf-8")).hexdigest(),
+            "stderr_sha256": hashlib.sha256(stderr_value.encode("utf-8")).hexdigest(),
+        }
+    return result
+
+
+def _run_test(
+    python: Path,
+    source: Path,
+    output: Path,
+    env: dict[str, str],
+) -> dict[str, Any]:
+    junit = output / "pytest.xml"
+    command = [
+        str(python),
+        "-m",
+        "pytest",
+        "-q",
+        "--basetemp",
+        str(output / "pytest-fixtures"),
+        "--junitxml",
+        str(junit),
+        TEST_NODE,
+    ]
+    started = time.monotonic()
+    process = subprocess.Popen(
+        command,
+        cwd=str(source),
+        env=env,
+        stdin=subprocess.DEVNULL,
+        stdout=subprocess.PIPE,
+        stderr=subprocess.PIPE,
+        text=True,
+        encoding="utf-8",
+        errors="replace",
+    )
+    timed_out = False
+    try:
+        stdout, stderr = process.communicate(timeout=45)
+    except subprocess.TimeoutExpired as exc:
+        timed_out = True
+        partial_stdout = exc.stdout or ""
+        partial_stderr = exc.stderr or ""
+        if isinstance(partial_stdout, bytes):
+            partial_stdout = partial_stdout.decode("utf-8", "replace")
+        if isinstance(partial_stderr, bytes):
+            partial_stderr = partial_stderr.decode("utf-8", "replace")
+        stdout = partial_stdout
+        stderr = partial_stderr
+        if os.name == "nt":
+            subprocess.run(
+                ["taskkill", "/PID", str(process.pid), "/T", "/F"],
+                capture_output=True,
+                text=True,
+                encoding="utf-8",
+                errors="replace",
+                check=False,
+            )
+        else:
+            process.kill()
+        tail_stdout, tail_stderr = process.communicate(timeout=10)
+        stdout += tail_stdout
+        stderr += tail_stderr
+    result = {
+        "status": "timeout" if timed_out else ("passed" if process.returncode == 0 else "failed"),
+        "command": command,
+        "returncode": process.returncode,
+        "duration_ms": round((time.monotonic() - started) * 1000, 3),
+        "stdout_sha256": hashlib.sha256(stdout.encode("utf-8")).hexdigest(),
+        "stderr_sha256": hashlib.sha256(stderr.encode("utf-8")).hexdigest(),
+        "junit_exists": junit.is_file(),
+    }
+    (output / "pytest.stdout.txt").write_text(stdout, encoding="utf-8")
+    (output / "pytest.stderr.txt").write_text(stderr, encoding="utf-8")
+    return result
+
+
+def main() -> int:
+    parser = argparse.ArgumentParser()
+    parser.add_argument("--source", type=Path, default=DEFAULT_SOURCE)
+    parser.add_argument("--output", type=Path, default=DEFAULT_OUTPUT)
+    parser.add_argument("--python", type=Path, default=DEFAULT_PYTHON)
+    args = parser.parse_args()
+
+    source = args.source.resolve()
+    output = args.output.resolve()
+    python = args.python.resolve()
+    if output.exists():
+        raise SystemExit(f"refusing existing output directory: {output}")
+    if not source.is_dir() or not python.is_file():
+        raise SystemExit("source checkout or Python interpreter is unavailable")
+
+    output.mkdir(parents=True)
+    (output / "runner.py.txt").write_bytes(Path(__file__).read_bytes())
+    source_commit = subprocess.run(
+        ["git", "-C", str(source), "rev-parse", "HEAD"],
+        capture_output=True,
+        text=True,
+        encoding="utf-8",
+        errors="replace",
+        check=False,
+    )
+    source_status = subprocess.run(
+        ["git", "-C", str(source), "status", "--porcelain"],
+        capture_output=True,
+        text=True,
+        encoding="utf-8",
+        errors="replace",
+        check=False,
+    )
+    if source_commit.returncode != 0 or source_commit.stdout.strip() != SOURCE_COMMIT:
+        raise SystemExit("frozen source commit does not match")
+    if source_status.stdout.strip():
+        raise SystemExit("frozen source checkout is not clean")
+
+    powershell = _powershell()
+    if powershell is None:
+        raise SystemExit("PowerShell is unavailable on this host")
+    env = dict(os.environ)
+    env.pop("PYTHONPATH", None)
+    for key in list(env):
+        if key.startswith("MNEMOS_"):
+            env.pop(key)
+    env.update(
+        {
+            "TEMP": str(output / "temp"),
+            "TMP": str(output / "temp"),
+            "TMPDIR": str(output / "temp"),
+            "PYTHONUTF8": "1",
+        }
+    )
+    (output / "temp").mkdir()
+    metadata: dict[str, Any] = {
+        "status": "started",
+        "started_at": _utc_now(),
+        "source_commit": SOURCE_COMMIT,
+        "source_checkout": str(source),
+        "source_git_status": source_status.stdout,
+        "source_files": {
+            "hosts.py": _sha256(source / "mnemos" / "hosts.py"),
+            "test_hosts.py": _sha256(source / "tests" / "test_hosts.py"),
+        },
+        "python": str(python),
+        "python_sha256": _sha256(python),
+        "powershell": powershell,
+        "environment_overrides": {
+            "TEMP": env["TEMP"],
+            "TMP": env["TMP"],
+            "TMPDIR": env["TMPDIR"],
+            "PYTHONUTF8": env["PYTHONUTF8"],
+            "PYTHONPATH": "removed",
+            "MNEMOS_*": "removed",
+        },
+        "test_contract": {
+            "node": TEST_NODE,
+            "inner_subprocess_timeout_seconds": 10,
+            "outer_runner_timeout_seconds": 45,
+            "timeout_unchanged": True,
+        },
+    }
+    metadata["powershell_startup_control"] = _run_control(powershell, output, env)
+    metadata["pytest"] = _run_test(python, source, output, env)
+    metadata["status"] = (
+        "passed"
+        if metadata["powershell_startup_control"]["status"] == "passed"
+        and metadata["pytest"]["status"] == "passed"
+        else "failed"
+    )
+    metadata["finished_at"] = _utc_now()
+    _json_write(output / "report.json", metadata)
+    print(json.dumps(metadata, indent=2, ensure_ascii=True))
+    return 0 if metadata["status"] == "passed" else 1
+
+
+if __name__ == "__main__":
+    raise SystemExit(main())
