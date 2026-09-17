@@ -4,14 +4,17 @@ Assessment date: September 17, 2026. This covers the unreleased
 functional-local-memory worktree, not the installed public package or website.
 The capability IDs come from the original implementation plan.
 
-The latest complete package verification here is frozen source `2494e31`:
-824 tests passed with four skips, plus Black, strict mypy, JavaScript syntax,
-build, and Twine. Later source `46cc101` adds embedding roles and conflict
-collision protection. The combined `9aba209` run finished with 856 passed,
-four skipped, and one benchmark compatibility failure. Commit `17c55ef`
-repairs that failure and passed 51 focused tests; fresh full verification is
-pending. The [failed checkpoint](combined-package-failure-v1/README.md)
-remains preserved.
+The latest complete package verification is frozen source `312b8d6`:
+858 tests passed with four skips, plus Black, strict mypy, JavaScript syntax,
+build, and Twine. This includes embedding roles, conflict collision protection,
+concurrent backup consistency, and the expanded cross-adapter fixture. The
+[fresh installed-wheel check](combined-package-checkpoint-v2/README.md) then
+finished with 40 passing tests and two continuity failures; their cause remains
+under investigation. The separate installed replay probe did not run. The combined `9aba209` run's
+benchmark compatibility failure and its repair remain preserved in the
+[failed checkpoint](combined-package-failure-v1/README.md). Claude plugin runtime
+repair `ec0f95e` passed 50 focused tests with two opt-in skips. It is not covered
+by the `312b8d6` full package result; native plugin-session acceptance remains open.
 An implemented capability does not close its quality, native-host, or pilot
 acceptance gate.
 
@@ -19,7 +22,7 @@ acceptance gate.
 
 | ID | Claim | Evidence and supported scope | Acceptance still open |
 | --- | --- | --- | --- |
-| C01 | Persistent local memory | SQLite/service regression checks cover durable events, jobs, restart, retry, and fact persistence in the [verified package](access-metadata-package-verification/README.md). | Continuous daily operation and the two-week pilot; latest combined source verification. |
+| C01 | Persistent local memory | SQLite/service regression checks cover durable events, jobs, restart, retry, and fact persistence in the [combined source checkpoint](combined-package-checkpoint-v2/README.md). | Installed continuity failures, continuous daily operation, and the two-week pilot. |
 | C02 | Project, workspace, and global isolation | Scope and lifecycle regressions are included in that package. Registry identities and membership replace folder-name identity. | Complete native-host isolation matrix. Passing fixtures do not prove every external client supplies correct identity. |
 | C03 | Surprisal-gated encoding | Mechanism tests cover distance bounds, scoped prediction history, explicit-write bypass, and the later symmetric embedding role. | Real-model retention/noise benefit over baseline and simple filtering. The historical 40 percent claim remains unverified. |
 | C04 | Evidence-based mutable memory | Expected-version corrections, revisions, graph refresh, and canonical handling have regression coverage. Source `46cc101` additionally rejects a conflict proposal that would relabel an existing canonical assertion. | General semantic support of extracted proposals. The collision rule is conservative and does not establish entailment. |
@@ -39,6 +42,7 @@ identify the source revision, configuration, and limitations. Historical results
 remain attributed to the source that produced them.
 
 - [Package verification index](access-metadata-package-verification/evidence-index.json): source `2494e31`, including schema 8. No later embedding-role or conflict-collision code is covered by this full checkpoint.
+- [Combined checkpoint index](combined-package-checkpoint-v2/evidence-index.json): source `312b8d6`, passing source/package checks and the failed installed continuity check. The separate installed replay probe did not run.
 - [Performance index](performance-corrected-v4/evidence-index.json): frozen d94 run with real query embeddings and synthetic load facts. It is not a semantic-quality test.
 - [Metadata-write comparison index](access-metadata-comparison-v1/evidence-index.json): four fixed-order baseline/candidate arms. Baseline timing varied sharply, so the run does not establish a reliable speedup or close the full recall gate.
 - [Graph diagnostic index](graph-capacity-diagnostic-v2/evidence-index.json): frozen d94 source and vectors, three capacities, development cases only, no new model calls.

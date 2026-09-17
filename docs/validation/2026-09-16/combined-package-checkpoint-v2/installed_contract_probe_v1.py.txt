@@ -1,0 +1,211 @@
+"""Run the selected contract tests against one installed wheel only."""
+
+from __future__ import annotations
+
+import argparse
+from datetime import datetime, timezone
+import hashlib
+import importlib.metadata
+import json
+import os
+from pathlib import Path
+import subprocess
+import sys
+import xml.etree.ElementTree as ET
+
+
+def _hash(path: Path) -> str:
+    return hashlib.sha256(path.read_bytes()).hexdigest()
+
+
+def _normalized_hash(path: Path) -> str:
+    return hashlib.sha256(path.read_bytes().replace(b"\r\n", b"\n")).hexdigest()
+
+
+def _git(snapshot: Path, *args: str) -> str:
+    return subprocess.check_output(["git", *args], cwd=snapshot, text=True).strip()
+
+
+def _module_origins(site_packages: Path) -> dict[str, str]:
+    origins: dict[str, str] = {}
+    for name, module in sorted(sys.modules.items()):
+        if name != "mnemos" and not name.startswith("mnemos."):
+            continue
+        origin = getattr(module, "__file__", None)
+        if not origin:
+            raise RuntimeError(f"Loaded {name} has no package origin")
+        resolved = Path(str(origin)).resolve()
+        if not resolved.is_relative_to(site_packages):
+            raise RuntimeError(f"Loaded {name} outside installed package: {resolved}")
+        origins[name] = str(resolved)
+    return origins
+
+
+def _selected_hashes(snapshot: Path, tests: list[str]) -> dict[str, str]:
+    paths = [snapshot / "tests" / "__init__.py", snapshot / "tests" / "conftest.py"]
+    paths.extend(snapshot / item for item in tests)
+    paths.append(snapshot / "benchmarks" / "scenarios" / "local-memory-continuity.jsonl")
+    result: dict[str, str] = {}
+    for path in paths:
+        if not path.is_file():
+            raise RuntimeError(f"Selected frozen input is missing: {path}")
+        relative = path.relative_to(snapshot).as_posix()
+        result[relative] = _normalized_hash(path)
+    return result
+
+
+def _junit_summary(path: Path) -> dict[str, int]:
+    root = ET.parse(path).getroot()
+
+    # pytest normally writes <testsuites><testsuite .../></testsuites>, while
+    # some runners write a single <testsuite>. Sum only leaf suites so nested
+    # layouts are not counted twice.
+    suites = [
+        node
+        for node in root.iter("testsuite")
+        if not any(child.tag == "testsuite" for child in node)
+    ]
+    if not suites and root.tag == "testsuite":
+        suites = [root]
+
+    def integer(name: str) -> int:
+        return sum(int(suite.attrib.get(name, "0")) for suite in suites)
+
+    summary = {
+        "tests": integer("tests"),
+        "failures": integer("failures"),
+        "errors": integer("errors"),
+        "skipped": integer("skipped"),
+    }
+    if summary["tests"] <= 0:
+        raise RuntimeError("JUnit reported no selected tests")
+    if any(summary[key] for key in ("failures", "errors", "skipped")):
+        raise RuntimeError(f"JUnit reported non-passing tests: {summary}")
+    return summary
+
+
+def _assert_expected_cases(path: Path, expected_path: Path) -> dict[str, object]:
+    expected = json.loads(expected_path.read_text(encoding="utf-8"))
+    modules = {str(item["module"]) for item in expected}
+
+    def key(classname: str, name: str) -> tuple[str, str]:
+        parts = classname.split(".")
+        matches = [index for index, part in enumerate(parts) if part in modules]
+        if len(matches) != 1:
+            raise RuntimeError(f"Unexpected test module: {classname}")
+        return (".".join(parts[matches[0]:]), name)
+
+    expected_cases = {key(str(item["classname"]), str(item["name"])) for item in expected}
+    if not expected_cases or len(expected_cases) != len(expected):
+        raise RuntimeError("Expected frozen test cases are empty or duplicated")
+    actual = list(ET.parse(path).getroot().iter("testcase"))
+    actual_keys = [key(node.attrib.get("classname", ""), node.attrib.get("name", "")) for node in actual]
+    if set(actual_keys) != expected_cases or len(actual_keys) != len(expected_cases):
+        raise RuntimeError("Installed contract case set differs from the successful frozen run")
+    if len(set(actual_keys)) != len(actual_keys):
+        raise RuntimeError("Installed contract contains duplicate selected cases")
+    for node in actual:
+        if any(node.findall(tag) for tag in ("failure", "error", "skipped")):
+            raise RuntimeError(
+                "Selected contract case did not pass: "
+                f"{node.attrib.get('classname', '')}::{node.attrib.get('name', '')}"
+            )
+    return {
+        "expected_cases": len(expected_cases),
+        "actual_cases": len(actual_keys),
+        "selected_cases": len(actual_keys),
+        "module_normalization": "discard package prefix before exact module segment; preserve class suffix",
+    }
+
+
+def main() -> int:
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument("--site-packages", required=True, type=Path)
+    parser.add_argument("--wheel", required=True, type=Path)
+    parser.add_argument("--snapshot", required=True, type=Path)
+    parser.add_argument("--commit", required=True)
+    parser.add_argument("--output", required=True, type=Path)
+    parser.add_argument("--expected-cases", required=True, type=Path)
+    parser.add_argument("--tests", required=True, nargs="+")
+    args = parser.parse_args()
+
+    snapshot = args.snapshot.resolve()
+    site_packages = args.site_packages.resolve()
+    wheel = args.wheel.resolve()
+    output = args.output.resolve()
+    if output.exists():
+        raise SystemExit("Refusing to overwrite contract evidence")
+    if not site_packages.is_dir() or site_packages.is_relative_to(snapshot):
+        raise SystemExit("The installed package directory must be outside the source snapshot")
+    if not wheel.is_file():
+        raise SystemExit("The verified wheel does not exist")
+    if _git(snapshot, "rev-parse", "HEAD") != args.commit:
+        raise SystemExit("Frozen source commit differs")
+    if _git(snapshot, "status", "--porcelain"):
+        raise SystemExit("Frozen source snapshot has changes")
+
+    output.parent.mkdir(parents=True, exist_ok=True)
+    record: dict[str, object] = {
+        "schema_version": 1,
+        "probe": "installed_package_contract",
+        "status": "running",
+        "started_at": datetime.now(timezone.utc).isoformat(),
+        "source_commit": args.commit,
+        "source_snapshot": str(snapshot),
+        "site_packages": str(site_packages),
+        "wheel": {"path": str(wheel), "sha256": _hash(wheel)},
+        "selected_tests": list(args.tests),
+        "selected_input_hashes": _selected_hashes(snapshot, args.tests),
+        "python": sys.version,
+    }
+    try:
+        os.environ["PYTEST_DISABLE_PLUGIN_AUTOLOAD"] = "1"
+        sys.path.insert(0, str(site_packages))
+        import mnemos  # noqa: PLC0415
+
+        imported = Path(str(mnemos.__file__)).resolve()
+        if not imported.is_relative_to(site_packages):
+            raise RuntimeError(f"mnemos imported outside installed package: {imported}")
+        record["imported_mnemos"] = str(imported)
+        record["distribution"] = {
+            "name": "mnemos-memory",
+            "version": importlib.metadata.version("mnemos-memory"),
+            "origin": str(importlib.metadata.distribution("mnemos-memory").locate_file("")),
+        }
+        record["module_origins_before"] = _module_origins(site_packages)
+
+        junit = output.with_name("contract.junit.xml")
+        pytest_args = [
+            "--import-mode=importlib",
+            "-p",
+            "pytest_asyncio.plugin",
+            f"--junitxml={junit}",
+            *(str(snapshot / item) for item in args.tests),
+        ]
+        import pytest  # noqa: PLC0415
+
+        exit_code = pytest.main(pytest_args)
+        record["pytest_exit_code"] = int(exit_code)
+        record["junit"] = str(junit)
+        if exit_code != 0:
+            raise RuntimeError(f"Selected contract tests exited with {exit_code}")
+        record["junit_summary"] = _junit_summary(junit)
+        record["case_summary"] = _assert_expected_cases(junit, args.expected_cases)
+        record["module_origins_after"] = _module_origins(site_packages)
+        current_hashes = _selected_hashes(snapshot, args.tests)
+        if current_hashes != record["selected_input_hashes"]:
+            raise RuntimeError("Frozen selected test or fixture bytes changed during probe")
+        if _git(snapshot, "rev-parse", "HEAD") != args.commit or _git(snapshot, "status", "--porcelain"):
+            raise RuntimeError("Frozen source snapshot changed during probe")
+        record["status"] = "passed"
+    except Exception as exc:
+        record.update({"status": "failed", "error_type": type(exc).__name__, "error": str(exc)})
+    finally:
+        record["finished_at"] = datetime.now(timezone.utc).isoformat()
+        output.write_text(json.dumps(record, indent=2, sort_keys=True) + "\n", encoding="utf-8")
+    print(json.dumps({"status": record["status"], "output": str(output)}))
+    return 0 if record["status"] == "passed" else 1
+
+
+if __name__ == "__main__":
+    raise SystemExit(main())
