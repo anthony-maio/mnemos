@@ -300,3 +300,18 @@ fixture remains preserved at
 `D:\WindowsTemp\mnemos-native-codex-capture-v6-ftt13i5g`; its copied auth file
 and runtime descriptor were removed, and no matching probe process remained at
 cleanup. No live Codex configuration, host memory, or Ollama service changed.
+
+## Codex generated configuration on source 20f271d
+
+Native v8 exercised the actual installed package's generated TOML hook
+commands, with no wrapper or hooks.json. Codex returned a random canary that
+was absent from the prompt, made no tool call, and captured both conversation
+roles across service restart. The fixture used constant unit vectors and
+unavailable cognition, so it establishes hook delivery and persistence only.
+Individual native hook traces were unavailable. See the [v8 record](native-codex-generated-v8/README.md)
+for exact package provenance, observed usage, limitations, and cleanup.
+
+The preceding [v7 preflight failure](native-codex-generated-v7/README.md) remains
+preserved: its fallback embedding scored the generic query below the unchanged
+relevance floor, and no native model turn started. This motivated separating
+the transport fixture from semantic-quality evaluation.

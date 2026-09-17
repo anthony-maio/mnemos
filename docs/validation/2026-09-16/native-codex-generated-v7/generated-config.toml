@@ -1,0 +1,55 @@
+[mcp_servers]
+
+[mcp_servers.mnemos]
+command = "mnemos-mcp"
+
+[mcp_servers.mnemos.env]
+MNEMOS_CONFIG_PATH = "D:\\WindowsTemp\\mnemos-native-codex-generated-v7-4v2nipj9\\settings.toml"
+MNEMOS_SCOPE_REGISTRY = "D:\\WindowsTemp\\mnemos-native-codex-generated-v7-4v2nipj9\\scopes.json"
+MNEMOS_USER_PROFILE_ID = "native-codex-generated-v7"
+MNEMOS_RUNTIME_DESCRIPTOR = "D:\\WindowsTemp\\mnemos-native-codex-generated-v7-4v2nipj9\\runtime.json"
+
+[[hooks.SessionStart]]
+matcher = "startup|resume|clear|compact"
+
+[[hooks.SessionStart.hooks]]
+type = "command"
+command = "& 'D:\\WindowsTemp\\mnemos-scope-wheel-20260917-0659\\Scripts\\python.exe' -c 'import base64,json,os,runpy;os.environ.update(json.loads(base64.b64decode(''eyJNTkVNT1NfQ09ORklHX1BBVEgiOiJEOlxcV2luZG93c1RlbXBcXG1uZW1vcy1uYXRpdmUtY29kZXgtZ2VuZXJhdGVkLXY3LTR2Mm5pcGo5XFxzZXR0aW5ncy50b21sIiwiTU5FTU9TX1NDT1BFX1JFR0lTVFJZIjoiRDpcXFdpbmRvd3NUZW1wXFxtbmVtb3MtbmF0aXZlLWNvZGV4LWdlbmVyYXRlZC12Ny00djJuaXBqOVxcc2NvcGVzLmpzb24iLCJNTkVNT1NfVVNFUl9QUk9GSUxFX0lEIjoibmF0aXZlLWNvZGV4LWdlbmVyYXRlZC12NyIsIk1ORU1PU19SVU5USU1FX0RFU0NSSVBUT1IiOiJEOlxcV2luZG93c1RlbXBcXG1uZW1vcy1uYXRpdmUtY29kZXgtZ2VuZXJhdGVkLXY3LTR2Mm5pcGo5XFxydW50aW1lLmpzb24ifQ=='')));runpy.run_module(''mnemos.adapters.codex'',run_name=''__main__'')'"
+additionalContextLimit = 1200
+
+[[hooks.UserPromptSubmit]]
+
+[[hooks.UserPromptSubmit.hooks]]
+type = "command"
+command = "& 'D:\\WindowsTemp\\mnemos-scope-wheel-20260917-0659\\Scripts\\python.exe' -c 'import base64,json,os,runpy;os.environ.update(json.loads(base64.b64decode(''eyJNTkVNT1NfQ09ORklHX1BBVEgiOiJEOlxcV2luZG93c1RlbXBcXG1uZW1vcy1uYXRpdmUtY29kZXgtZ2VuZXJhdGVkLXY3LTR2Mm5pcGo5XFxzZXR0aW5ncy50b21sIiwiTU5FTU9TX1NDT1BFX1JFR0lTVFJZIjoiRDpcXFdpbmRvd3NUZW1wXFxtbmVtb3MtbmF0aXZlLWNvZGV4LWdlbmVyYXRlZC12Ny00djJuaXBqOVxcc2NvcGVzLmpzb24iLCJNTkVNT1NfVVNFUl9QUk9GSUxFX0lEIjoibmF0aXZlLWNvZGV4LWdlbmVyYXRlZC12NyIsIk1ORU1PU19SVU5USU1FX0RFU0NSSVBUT1IiOiJEOlxcV2luZG93c1RlbXBcXG1uZW1vcy1uYXRpdmUtY29kZXgtZ2VuZXJhdGVkLXY3LTR2Mm5pcGo5XFxydW50aW1lLmpzb24ifQ=='')));runpy.run_module(''mnemos.adapters.codex'',run_name=''__main__'')'"
+additionalContextLimit = 1200
+
+[[hooks.PreCompact]]
+matcher = "manual|auto"
+
+[[hooks.PreCompact.hooks]]
+type = "command"
+command = "& 'D:\\WindowsTemp\\mnemos-scope-wheel-20260917-0659\\Scripts\\python.exe' -c 'import base64,json,os,runpy;os.environ.update(json.loads(base64.b64decode(''eyJNTkVNT1NfQ09ORklHX1BBVEgiOiJEOlxcV2luZG93c1RlbXBcXG1uZW1vcy1uYXRpdmUtY29kZXgtZ2VuZXJhdGVkLXY3LTR2Mm5pcGo5XFxzZXR0aW5ncy50b21sIiwiTU5FTU9TX1NDT1BFX1JFR0lTVFJZIjoiRDpcXFdpbmRvd3NUZW1wXFxtbmVtb3MtbmF0aXZlLWNvZGV4LWdlbmVyYXRlZC12Ny00djJuaXBqOVxcc2NvcGVzLmpzb24iLCJNTkVNT1NfVVNFUl9QUk9GSUxFX0lEIjoibmF0aXZlLWNvZGV4LWdlbmVyYXRlZC12NyIsIk1ORU1PU19SVU5USU1FX0RFU0NSSVBUT1IiOiJEOlxcV2luZG93c1RlbXBcXG1uZW1vcy1uYXRpdmUtY29kZXgtZ2VuZXJhdGVkLXY3LTR2Mm5pcGo5XFxydW50aW1lLmpzb24ifQ=='')));runpy.run_module(''mnemos.adapters.codex'',run_name=''__main__'')'"
+timeout = 10
+
+[[hooks.PostCompact]]
+matcher = "manual|auto"
+
+[[hooks.PostCompact.hooks]]
+type = "command"
+command = "& 'D:\\WindowsTemp\\mnemos-scope-wheel-20260917-0659\\Scripts\\python.exe' -c 'import base64,json,os,runpy;os.environ.update(json.loads(base64.b64decode(''eyJNTkVNT1NfQ09ORklHX1BBVEgiOiJEOlxcV2luZG93c1RlbXBcXG1uZW1vcy1uYXRpdmUtY29kZXgtZ2VuZXJhdGVkLXY3LTR2Mm5pcGo5XFxzZXR0aW5ncy50b21sIiwiTU5FTU9TX1NDT1BFX1JFR0lTVFJZIjoiRDpcXFdpbmRvd3NUZW1wXFxtbmVtb3MtbmF0aXZlLWNvZGV4LWdlbmVyYXRlZC12Ny00djJuaXBqOVxcc2NvcGVzLmpzb24iLCJNTkVNT1NfVVNFUl9QUk9GSUxFX0lEIjoibmF0aXZlLWNvZGV4LWdlbmVyYXRlZC12NyIsIk1ORU1PU19SVU5USU1FX0RFU0NSSVBUT1IiOiJEOlxcV2luZG93c1RlbXBcXG1uZW1vcy1uYXRpdmUtY29kZXgtZ2VuZXJhdGVkLXY3LTR2Mm5pcGo5XFxydW50aW1lLmpzb24ifQ=='')));runpy.run_module(''mnemos.adapters.codex'',run_name=''__main__'')'"
+
+[[hooks.Stop]]
+
+[[hooks.Stop.hooks]]
+type = "command"
+command = "& 'D:\\WindowsTemp\\mnemos-scope-wheel-20260917-0659\\Scripts\\python.exe' -c 'import base64,json,os,runpy;os.environ.update(json.loads(base64.b64decode(''eyJNTkVNT1NfQ09ORklHX1BBVEgiOiJEOlxcV2luZG93c1RlbXBcXG1uZW1vcy1uYXRpdmUtY29kZXgtZ2VuZXJhdGVkLXY3LTR2Mm5pcGo5XFxzZXR0aW5ncy50b21sIiwiTU5FTU9TX1NDT1BFX1JFR0lTVFJZIjoiRDpcXFdpbmRvd3NUZW1wXFxtbmVtb3MtbmF0aXZlLWNvZGV4LWdlbmVyYXRlZC12Ny00djJuaXBqOVxcc2NvcGVzLmpzb24iLCJNTkVNT1NfVVNFUl9QUk9GSUxFX0lEIjoibmF0aXZlLWNvZGV4LWdlbmVyYXRlZC12NyIsIk1ORU1PU19SVU5USU1FX0RFU0NSSVBUT1IiOiJEOlxcV2luZG93c1RlbXBcXG1uZW1vcy1uYXRpdmUtY29kZXgtZ2VuZXJhdGVkLXY3LTR2Mm5pcGo5XFxydW50aW1lLmpzb24ifQ=='')));runpy.run_module(''mnemos.adapters.codex'',run_name=''__main__'')'"
+timeout = 3
+
+[[hooks.SessionEnd]]
+matcher = "other"
+
+[[hooks.SessionEnd.hooks]]
+type = "command"
+command = "& 'D:\\WindowsTemp\\mnemos-scope-wheel-20260917-0659\\Scripts\\python.exe' -c 'import base64,json,os,runpy;os.environ.update(json.loads(base64.b64decode(''eyJNTkVNT1NfQ09ORklHX1BBVEgiOiJEOlxcV2luZG93c1RlbXBcXG1uZW1vcy1uYXRpdmUtY29kZXgtZ2VuZXJhdGVkLXY3LTR2Mm5pcGo5XFxzZXR0aW5ncy50b21sIiwiTU5FTU9TX1NDT1BFX1JFR0lTVFJZIjoiRDpcXFdpbmRvd3NUZW1wXFxtbmVtb3MtbmF0aXZlLWNvZGV4LWdlbmVyYXRlZC12Ny00djJuaXBqOVxcc2NvcGVzLmpzb24iLCJNTkVNT1NfVVNFUl9QUk9GSUxFX0lEIjoibmF0aXZlLWNvZGV4LWdlbmVyYXRlZC12NyIsIk1ORU1PU19SVU5USU1FX0RFU0NSSVBUT1IiOiJEOlxcV2luZG93c1RlbXBcXG1uZW1vcy1uYXRpdmUtY29kZXgtZ2VuZXJhdGVkLXY3LTR2Mm5pcGo5XFxydW50aW1lLmpzb24ifQ=='')));runpy.run_module(''mnemos.adapters.codex'',run_name=''__main__'')'"
+timeout = 3

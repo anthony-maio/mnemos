@@ -430,3 +430,13 @@ same frozen source with no further shared-environment synchronization. See
 the [verification record](claude-scope-verification.md) for package hashes and
 the first attempt's evidence. The real-model queue continues with the incident
 disclosed; its recorded source and runtime binding still match.
+
+## Generated native Codex configuration
+
+The installed `20f271d` wheel's generated TOML hooks passed a native CLI turn:
+the host returned a random memory canary absent from the prompt, made no tool
+calls, and retained both captured roles after service restart. This fixture
+used constant unit vectors and unavailable cognition. It verifies native
+delivery and persistence without claiming semantic quality or full lifecycle
+coverage. The [v8 record](native-codex-generated-v8/README.md) preserves exact
+provenance and the preceding SimpleEmbeddingProvider preflight failure.

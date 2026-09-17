@@ -1,0 +1,30 @@
+import asyncio
+import hashlib
+import json
+import sqlite3
+from pathlib import Path
+from mnemos.utils.embeddings import SimpleEmbeddingProvider, cosine_similarity
+
+fixture = Path(r'D:\WindowsTemp\mnemos-native-codex-generated-v7-4v2nipj9')
+connection = sqlite3.connect((fixture / 'memory.sqlite').as_uri() + '?mode=ro', uri=True)
+content, vector = connection.execute('SELECT content, embedding FROM memory_chunks').fetchone()
+connection.close()
+
+async def main():
+    provider = SimpleEmbeddingProvider(dim=64)
+    reproduced = provider.embed(content)
+    query = provider.embed('recent project context and decisions')
+    output = {
+        'method': 'Fresh provider reproduces first seed embed and next generic SessionStart query in the recorded order',
+        'stored_vector_matches_reproduced': json.loads(vector) == reproduced,
+        'cosine': cosine_similarity(json.loads(vector), query),
+        'default_relevance_floor': 0.2,
+        'seed_content_sha256': hashlib.sha256(content.encode()).hexdigest(),
+        'native_model_started': False,
+        'descriptor_absent': not (fixture / 'runtime.json').exists(),
+        'auth_copy_absent': not (fixture / 'codex-home/.codex/auth.json').exists(),
+    }
+    print(json.dumps(output, indent=2))
+    (Path(__file__).resolve().parents[1] / 'docs/validation/2026-09-16/native-codex-generated-v7/preflight-diagnosis.json').write_text(json.dumps(output, indent=2) + '\n')
+
+asyncio.run(main())
