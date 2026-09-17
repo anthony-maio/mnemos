@@ -1,0 +1,88 @@
+{
+  "schema_version": 1,
+  "status": "derived_not_promoted",
+  "source": {
+    "report_path": "C:\\Users\\Ant\\AppData\\Local\\Temp\\mnemos-native-claude-lifecycle-v13\\report.json",
+    "report_sha256": "0d72b25f557d10072e8934ff2f765f11b9acd6d7742d0cdfc3e24572967b9ca3",
+    "raw_stdout_path": "C:\\Users\\Ant\\AppData\\Local\\Temp\\mnemos-native-claude-lifecycle-v13-h1m6shyk\\native-correct-stdout.jsonl",
+    "raw_stdout_sha256": "da6a2ab20889c8576f3331f62ef1d2efe58849e155d3e40236cd14e0c508a11e",
+    "v13_helper_path": "D:\\Development\\mnemos\\mnemos\\.worktrees\\functional-local-memory\\.venv\\native_claude_lifecycle_v13.py",
+    "v13_helper_sha256": "005907254ad29b54fc7ebdff0113576c878e1e18d3e834145be959328ad39756",
+    "v14_parser_path": "D:\\Development\\mnemos\\mnemos\\.worktrees\\functional-local-memory\\.venv\\native_claude_lifecycle_v14.py",
+    "v14_parser_sha256": "4d1f295124846357de68819420194991fad8b827b1e587cb5ea0a00affdaa0be",
+    "source_commit": "6600dc262927661d61ce9962c812a022014281c7",
+    "report_status": "failed"
+  },
+  "seed_binding": {
+    "target_fact_id": "dd22cc21-2108-48ad-a7fa-6e793eb2386b",
+    "target_version": 1,
+    "replacement_content_sha256_from_report": "3c72eb450a434a7e016c139de06e2b6a7cd8746592c05c0991b139e30cb4c3eb",
+    "replacement_v2_candidate_count": 1,
+    "replacement_v2_content_sha256": [
+      "3c72eb450a434a7e016c139de06e2b6a7cd8746592c05c0991b139e30cb4c3eb"
+    ],
+    "replacement_hash_matches_report": true
+  },
+  "parsed_phase1": {
+    "call_names": [
+      "mcp__plugin_mnemos-memory_mnemos__mnemos_correct",
+      "mcp__plugin_mnemos-memory_mnemos__mnemos_consolidate",
+      "mcp__plugin_mnemos-memory_mnemos__mnemos_retrieve"
+    ],
+    "call_result_ids_match": true,
+    "result_count": 3,
+    "payload_count_by_result": [
+      3,
+      3,
+      3
+    ],
+    "target_fact_candidates": [
+      {
+        "version": 2,
+        "content_sha256": "3c72eb450a434a7e016c139de06e2b6a7cd8746592c05c0991b139e30cb4c3eb",
+        "scope": "project"
+      }
+    ],
+    "contract": {
+      "call_order": true,
+      "correct_queued_only": true,
+      "consolidation_completed": true,
+      "native_retrieved_corrected_fact": true,
+      "native_retrieve_has_no_old_target_version": true,
+      "all_results_successful": true
+    }
+  },
+  "hook_diagnostics": {
+    "statuses": [
+      {
+        "event": "UserPromptSubmit",
+        "status": "degraded"
+      },
+      {
+        "event": "UserPromptSubmit",
+        "status": "degraded"
+      },
+      {
+        "event": "Stop",
+        "status": "degraded"
+      },
+      {
+        "event": "Stop",
+        "status": "degraded"
+      }
+    ],
+    "contract": {
+      "required_events": true,
+      "responses_successful": true,
+      "no_degraded_diagnostic": false
+    },
+    "process_outcome_success_does_not_override_degraded_status": true
+  },
+  "conclusion": {
+    "parser_recovered_phase_payload": true,
+    "phase1_contract_all_true": true,
+    "native_hook_contract_all_true": false,
+    "overall_lifecycle_promoted": false,
+    "reason": "Derived payload facts explain the v13 parser failure; embedded degraded hook diagnostics remain an independent failed condition."
+  }
+}

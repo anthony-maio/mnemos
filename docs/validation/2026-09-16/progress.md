@@ -1310,3 +1310,23 @@ also reported degraded capture despite the host labeling the hook successful.
 Parser and hook diagnostics are being investigated; this attempt does not
 close native lifecycle acceptance. Its report and executed helper remain
 unchanged, and cleanup removed the copied auth file and runtime descriptor.
+
+An [offline payload diagnosis](../2026-09-17/native-claude-v13-payload-diagnosis/README.md)
+subsequently recovered the actual native tool responses: Claude wrapped JSON
+inside a string-valued `result` field. The corrected parser establishes all
+phase-one operation assertions, including the seeded fact ID, version 2,
+replacement-content hash, and project scope. The stored stream also matches
+the original run's text digest after Windows newline normalization. This is
+derived evidence from the same attempt, not a new native run. UserPromptSubmit
+and Stop still contain degraded diagnostics, and the restart/forget phases
+remain unrun; the overall lifecycle result stays failed.
+
+## Service/runtime full checkpoint: failed continuity request
+
+The clean `e1fd56e` full suite finished with 897 passed, one failed, and four
+skipped in 460.15 seconds. The synthetic Codex continuity case reached its list
+step after successful remember and maintenance, then failed because the
+response lacked `facts`. The failure output does not include the returned
+response, so a timeout or other degraded response is a hypothesis pending a
+focused diagnostic. The [original full run](../2026-09-17/service-runtime-checkpoint-failure-v1/README.md)
+is preserved, and the build/install pipeline stopped at this failed gate.

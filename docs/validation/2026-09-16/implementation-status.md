@@ -11,6 +11,12 @@ contract cases and seven replay assertions. These are package and installed
 runtime checks; they do not close native-host, real-model, latency, pilot, or
 publication gates. See the [SSD package checkpoint](ssd-package-checkpoint-v1/README.md).
 
+A newer full-suite attempt at `e1fd56e` finished with 897 passed, one failed,
+and four skipped. A list response in the synthetic Codex continuity fixture
+lacked `facts`; its cause is under investigation. The runner stopped before
+building a new wheel. The [failed checkpoint](../2026-09-17/service-runtime-checkpoint-failure-v1/README.md)
+remains separate from the earlier passing package checkpoint.
+
 | Plan item | Current implementation and evidence | Acceptance state |
 | --- | --- | --- |
 | T01 Runtime | Configured providers, SQLite default, explicit mock rejection, readiness checks, health reporting, and installed entry points are covered by the package and wheel checks. | Installed doctor v5 passed empty-store, legacy-row, and mock-rejection cases against source 6600dc2. These are configuration checks; provider reachability was not probed. Later managed service logging and omitted-provider startup repairs pass focused tests, including actual subprocess recall, and await a new full/package checkpoint. |

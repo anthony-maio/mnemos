@@ -1,0 +1,196 @@
+"""Derive a safe phase summary from the preserved v13 native stream.
+
+This reads the private v13 JSONL stream and report, then writes hashes,
+payload shape, contract booleans, and hook diagnostic statuses. It never
+copies native payload text into the derived report.
+"""
+
+from __future__ import annotations
+
+import argparse
+import hashlib
+import importlib.util
+import json
+from pathlib import Path
+from typing import Any, Mapping
+
+
+EXPECTED_V13_RUNNER_SHA256 = (
+    "005907254ad29b54fc7ebdff0113576c878e1e18d3e834145be959328ad39756"
+)
+
+
+def _sha256(data: bytes) -> str:
+    return hashlib.sha256(data).hexdigest()
+
+
+def _load_v14(path: Path) -> Any:
+    spec = importlib.util.spec_from_file_location("native_claude_lifecycle_v14", path)
+    if spec is None or spec.loader is None:
+        raise RuntimeError("could not load the v14 parser helper")
+    module = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(module)
+    return module
+
+
+def _json(path: Path) -> Mapping[str, Any]:
+    value = json.loads(path.read_text(encoding="utf-8"))
+    if not isinstance(value, Mapping):
+        raise RuntimeError("evidence report is not a JSON object")
+    return value
+
+
+def _fact_candidates(summary: Mapping[str, Any], target_id: str, parser: Any) -> list[dict[str, Any]]:
+    candidates: list[dict[str, Any]] = []
+    for result in summary.get("results", []):
+        if not isinstance(result, Mapping):
+            continue
+        for payload in result.get("payload", []):
+            for node in parser._json_nodes(payload):
+                if (
+                    isinstance(node, Mapping)
+                    and node.get("id") == target_id
+                    and isinstance(node.get("content"), str)
+                ):
+                    candidates.append(
+                        {
+                            "version": node.get("version"),
+                            "content_sha256": parser._sha256(node["content"]),
+                            "scope": node.get("scope"),
+                        }
+                    )
+    return candidates
+
+
+def _parse_args() -> argparse.Namespace:
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument("--report", type=Path, required=True)
+    parser.add_argument("--raw-stdout", type=Path, required=True)
+    parser.add_argument("--v13-helper", type=Path, required=True)
+    parser.add_argument("--v14-parser", type=Path, required=True)
+    parser.add_argument("--output", type=Path, required=True)
+    return parser.parse_args()
+
+
+def main() -> int:
+    args = _parse_args()
+    report_path = args.report.resolve()
+    raw_path = args.raw_stdout.resolve()
+    v13_path = args.v13_helper.resolve()
+    v14_path = args.v14_parser.resolve()
+    output_path = args.output.resolve()
+    report = _json(report_path)
+    raw = raw_path.read_text(encoding="utf-8")
+    parser = _load_v14(v14_path)
+
+    runner_sha = _sha256(v13_path.read_bytes())
+    if runner_sha != EXPECTED_V13_RUNNER_SHA256:
+        raise RuntimeError("v13 helper is not the preserved executed runner")
+    report_runner_sha = str(report.get("runner_sha256", "")).lower()
+    if report_runner_sha != runner_sha:
+        raise RuntimeError("v13 report runner hash does not match its helper")
+    seed = report.get("seed")
+    if not isinstance(seed, Mapping):
+        raise RuntimeError("v13 report has no seed metadata")
+    target_id = seed.get("target_fact_id")
+    expected_replacement_sha = seed.get("replacement_content_sha256")
+    if not isinstance(target_id, str) or not target_id:
+        raise RuntimeError("v13 report has no target fact ID")
+    if not isinstance(expected_replacement_sha, str):
+        raise RuntimeError("v13 report has no replacement content hash")
+
+    phase_summary = report.get("phase1", {})
+    recorded_calls = phase_summary.get("summary", {}).get("call_names", [])
+    if not isinstance(recorded_calls, list) or not all(isinstance(item, str) for item in recorded_calls):
+        raise RuntimeError("v13 report phase call names are missing")
+    allowed = set(recorded_calls)
+    summary = parser._native_operation_summary(raw, allowed)
+    candidates = _fact_candidates(summary, target_id, parser)
+    replacement_candidates = [item for item in candidates if item.get("version") == 2]
+    replacement_hashes = sorted(
+        {str(item["content_sha256"]) for item in replacement_candidates}
+    )
+    replacement_hash_match = expected_replacement_sha.lower() in replacement_hashes
+    replacement_content = None
+    if replacement_hash_match:
+        for result in summary.get("results", []):
+            if not isinstance(result, Mapping):
+                continue
+            for payload in result.get("payload", []):
+                for node in parser._json_nodes(payload):
+                    if (
+                        isinstance(node, Mapping)
+                        and node.get("id") == target_id
+                        and node.get("version") == 2
+                        and isinstance(node.get("content"), str)
+                        and parser._sha256(node["content"]) == expected_replacement_sha.lower()
+                    ):
+                        replacement_content = node["content"]
+                        break
+                if replacement_content is not None:
+                    break
+            if replacement_content is not None:
+                break
+    contract_content = replacement_content or "__replacement_hash_did_not_match__"
+    phase_contract = parser._phase1_contract(summary, target_id, contract_content)
+    stream = parser._native_stream_summary(raw, "__diagnostic_only__")
+    diagnostics = parser._hook_diagnostic_statuses(raw)
+    hook_contract = parser._hook_contract(stream, raw)
+    output = {
+        "schema_version": 1,
+        "status": "derived_not_promoted",
+        "source": {
+            "report_path": str(report_path),
+            "report_sha256": _sha256(report_path.read_bytes()),
+            "raw_stdout_path": str(raw_path),
+            "raw_stdout_sha256": _sha256(raw_path.read_bytes()),
+            "v13_helper_path": str(v13_path),
+            "v13_helper_sha256": runner_sha,
+            "v14_parser_path": str(v14_path),
+            "v14_parser_sha256": _sha256(v14_path.read_bytes()),
+            "source_commit": report.get("source_commit"),
+            "report_status": report.get("status"),
+        },
+        "seed_binding": {
+            "target_fact_id": target_id,
+            "target_version": seed.get("target_version"),
+            "replacement_content_sha256_from_report": expected_replacement_sha,
+            "replacement_v2_candidate_count": len(replacement_candidates),
+            "replacement_v2_content_sha256": replacement_hashes,
+            "replacement_hash_matches_report": replacement_hash_match,
+        },
+        "parsed_phase1": {
+            "call_names": summary.get("call_names", []),
+            "call_result_ids_match": summary.get("call_result_ids_match"),
+            "result_count": len(summary.get("results", [])),
+            "payload_count_by_result": [
+                len(item.get("payload", []))
+                for item in summary.get("results", [])
+                if isinstance(item, Mapping)
+            ],
+            "target_fact_candidates": candidates,
+            "contract": phase_contract,
+        },
+        "hook_diagnostics": {
+            "statuses": diagnostics,
+            "contract": hook_contract,
+            "process_outcome_success_does_not_override_degraded_status": not hook_contract[
+                "no_degraded_diagnostic"
+            ],
+        },
+        "conclusion": {
+            "parser_recovered_phase_payload": replacement_hash_match,
+            "phase1_contract_all_true": all(phase_contract.values()),
+            "native_hook_contract_all_true": all(hook_contract.values()),
+            "overall_lifecycle_promoted": False,
+            "reason": "Derived payload facts explain the v13 parser failure; embedded degraded hook diagnostics remain an independent failed condition.",
+        },
+    }
+    output_path.parent.mkdir(parents=True, exist_ok=True)
+    output_path.write_text(json.dumps(output, indent=2) + "\n", encoding="utf-8")
+    print(json.dumps({"status": output["status"], "output": str(output_path)}))
+    return 0
+
+
+if __name__ == "__main__":
+    raise SystemExit(main())

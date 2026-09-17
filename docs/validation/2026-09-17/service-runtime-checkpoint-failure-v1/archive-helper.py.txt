@@ -1,0 +1,45 @@
+"""Preserve the failed frozen service/runtime checkpoint without changing its result."""
+from pathlib import Path
+import hashlib
+import json
+import subprocess
+
+root = Path(__file__).resolve().parent.parent
+source = Path('C:/Users/Ant/AppData/Local/Temp/mnemos-package-checks-e1fd56e-v1')
+destination = root / 'docs/validation/2026-09-17/service-runtime-checkpoint-failure-v1'
+report = json.loads((source / 'verification.json').read_text(encoding='utf-8'))
+assert report['source_commit'] == 'e1fd56e36c17f1b1b05ead6c579619cb5ad372dd'
+assert report['status'] == 'failed'
+assert report['checks'][0]['counts'] == {'tests': 902, 'failures': 1, 'errors': 0, 'skipped': 4}
+snapshot = Path(report['source_checkout'])
+assert subprocess.check_output(['git', 'rev-parse', 'HEAD'], cwd=snapshot, text=True).strip() == report['source_commit']
+assert not subprocess.check_output(['git', 'status', '--porcelain'], cwd=snapshot, text=True).strip()
+runner = root / '.venv/final_checkpoint_checks_v3.py'
+assert hashlib.sha256(runner.read_bytes()).hexdigest() == report['runner_sha256']
+destination.mkdir(parents=True, exist_ok=False)
+for name in ('verification.json', 'pytest.log', 'pytest.xml'):
+    (destination / name).write_bytes((source / name).read_bytes())
+(destination / 'runner.py.txt').write_bytes(runner.read_bytes())
+(destination / 'archive-helper.py.txt').write_bytes(Path(__file__).read_bytes())
+(destination / 'README.md').write_text('''# Frozen service/runtime checkpoint failure
+
+Source `e1fd56e36c17f1b1b05ead6c579619cb5ad372dd` was checked from a clean
+checkout on C: with fresh C: test fixtures outside Git. The full suite finished
+with 897 passed, one failed, and four skipped in 460.15 seconds.
+
+The Codex parameter of the cross-host continuity test failed when a list
+response lacked the `facts` field after explicit remember and maintenance.
+The original output does not print that response, so its precise cause is
+not established by the KeyError. The test uses synthetic providers; this is
+not a native Codex session or a real-model quality failure.
+
+The checkpoint runner stopped at pytest. Its later formatting, typing,
+JavaScript, build, Twine, and installed-wheel steps did not run. Earlier focused
+passes remain separate evidence and do not supersede this failure. The
+original report, log, JUnit XML, and executed runner are preserved unchanged.
+No timeout, durability, or acceptance threshold was changed for this attempt.
+''', encoding='utf-8')
+files = {p.name: {'bytes': p.stat().st_size, 'sha256': hashlib.sha256(p.read_bytes()).hexdigest()}
+         for p in sorted(destination.iterdir()) if p.is_file()}
+(destination / 'evidence-index.json').write_text(json.dumps({'files': files}, indent=2) + '\n', encoding='utf-8')
+print(json.dumps({'archive': str(destination), 'indexed_files': len(files)}))
