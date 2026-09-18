@@ -12,9 +12,13 @@ automatic assertion identity, and an explicit correction's forgotten target.
 Suppressed captures acknowledge suppression without inserting an event or job.
 A fresh explicit remember can still intentionally restore an assertion.
 Six new cases cover these boundaries and database reopen. The focused suite
-passes 62 tests and strict mypy passes for 72 source files. Full source and
-installed-package verification of this repair are pending; earlier package
-and native observations keep their original source bindings.
+passes 62 tests. The [983920a package checkpoint](../2026-09-18/capture-forget-package-checkpoint-v1/README.md)
+passes 1,060 source tests with four skips, all six source/package checks,
+390 installed cases with two matching skips, and seven replay assertions.
+The first full run had a degraded bridge result; three isolated diagnostics
+and the unchanged full rerun passed. The original failure is retained and
+its cause remains unresolved. Earlier native observations and the frozen
+real-model evaluation keep their original source bindings.
 
 The newer [competing service recovery source check](../2026-09-18/competing-service-recovery-v1/README.md)
 fixes a startup race: a second launcher could return a dead descriptor while
@@ -25,7 +29,7 @@ The full source suite passes 1,054 tests with four skips; 47 focused checks
 also pass. Simultaneous native host acceptance remains open; the package
 checks below validate the installed service protocol.
 
-The current [competing recovery package checkpoint](../2026-09-18/competing-recovery-package-checkpoint-v1/README.md)
+The preceding [competing recovery package checkpoint](../2026-09-18/competing-recovery-package-checkpoint-v1/README.md)
 at `a5a9101` passes 1,054 source tests with four skips, all six source/package
 checks, 384 selected installed cases with two matching skips, and seven
 synthetic replay assertions. The installed selection includes the five
@@ -452,7 +456,7 @@ capture diagnostics and complete lifecycle acceptance remain open.
 | T16 Recovery | Backup, integrity, new-path restore, suppression merge, staged reindex, and activation backup behavior are implemented and tested. | Local recovery contracts pass, including a backup during an active writer transaction. Live data migration remains separately authorization-bound. |
 | T17 Cross-host | Native v9 on installed `5af3d15` passes 15 bounded lifecycle checks for Codex teaching, Claude correction and reviewed deletion, restart, direct service replay suppression, foreign-project exclusion, final recall, and retained unrelated facts. | Lexical fixture vectors and disabled modules limit the claim. All three Codex processes exited zero, but reverse and final Stop hooks timed out. A later Codex-only fixture verifies automatic native-hook replay after startup failure. Cross-host outage recovery, complete capture, Desktop, Hermes, real-model quality, and the two-week pilot remain open. Earlier v6-v8 failures remain preserved. |
 | T18 Evaluation | Frozen lifecycle datasets, request-bound extraction schemas, real-provider adapters, seven profiles, raw traces, checkpoints, Wilson intervals, and paired comparisons are implemented. | Power-interrupted checkpoints were preserved and the unchanged queue resumed after provenance checks. Complete real-model matrix acceptance remains open. Follow the [evaluation status and recovery record](evaluation-running.md). |
-| T19 Claims and packaging | Claim ledger, compatibility matrix, release checklist, package artifacts, UI assets, and negative evidence archives are maintained. | The current `a5a9101` source and installed package checkpoint is complete. Publication, website, paper, and release actions remain separately authorization-bound. |
+| T19 Claims and packaging | Claim ledger, compatibility matrix, release checklist, package artifacts, UI assets, and negative evidence archives are maintained. | The current `983920a` source and installed package checkpoint is complete; the preserved intermittent bridge failure remains unexplained. Publication, website, paper, and release actions remain separately authorization-bound. |
 
 The current capture recommendation is a hybrid: automatically capture enabled
 project conversations as retained evidence, extract durable facts separately,

@@ -38,6 +38,18 @@ empty/nonempty selection, restart replay, and PII blocking. This checkpoint
 adds package evidence; earlier native observations retain their original
 source bindings.
 
+The [capture/forget transaction checkpoint](validation/2026-09-18/capture-forget-package-checkpoint-v1/README.md)
+at `983920a` prevents late capture, replay, and correction from restoring
+erased raw sources after a forget commits. SQLite rechecks source IDs,
+verified Claude aliases, automatic assertion suppression, and forgotten
+correction targets inside its write transaction. Fresh explicit reteaching
+remains supported. Six added cases pass in both source and installed runs.
+The full source suite passes 1,060 tests with four skips; the installed
+wheel passes 390 selected cases with two matching skips and seven replay
+assertions. An earlier full run had one degraded bridge result. Its failure
+and subsequent passing diagnostics are preserved; the cause remains open.
+This checkpoint does not rerun native hosts or change the frozen model evaluation.
+
 A [concurrent native Codex recovery probe](validation/2026-09-18/native-codex-concurrent-recovery-v2/README.md)
 on the installed `a5a9101` wheel used two separate Codex homes and one shared
 outbox. Two outage turns queued four messages. After explicit fixture-service

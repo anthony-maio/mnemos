@@ -1,0 +1,81 @@
+"""Observe the existing bridge deadlines without changing production files."""
+import asyncio
+import hashlib
+import json
+import os
+from pathlib import Path
+import subprocess
+import sys
+import tempfile
+import time
+
+SNAPSHOT = Path('C:/Users/Ant/AppData/Local/Temp/mnemos-source-capture-forget-v1')
+OUTPUT = Path('C:/Users/Ant/AppData/Local/Temp/mnemos-capture-forget-bridge-diagnostic-v1')
+COMMIT = '983920afce2f70f9785f555069ecdbc8bb7c5e99'
+assert subprocess.check_output(['git', 'rev-parse', 'HEAD'], cwd=SNAPSHOT, text=True).strip() == COMMIT
+assert not subprocess.check_output(['git', 'status', '--porcelain'], cwd=SNAPSHOT, text=True).strip()
+OUTPUT.mkdir(exist_ok=False)
+os.chdir(SNAPSHOT)
+sys.path.insert(0, str(SNAPSHOT))
+from mnemos.bridge import BridgeClient
+from mnemos.scopes import ScopeRegistry
+from tests.test_cross_host_contract import _start_service
+import mnemos.bridge
+
+report = {'source_commit': COMMIT, 'runner_sha256': hashlib.sha256(Path(__file__).read_bytes()).hexdigest(),
+          'bridge_file': mnemos.bridge.__file__, 'trials': [], 'import_only': []}
+original_spawn = asyncio.create_subprocess_exec
+
+
+async def trial(index):
+    folder = Path(tempfile.mkdtemp(prefix=f'trial-{index}-', dir=OUTPUT))
+    service = _start_service(folder, ScopeRegistry())
+    timings = []
+
+    async def spawn(*args, **kwargs):
+        started = time.perf_counter()
+        process = await original_spawn(*args, **kwargs)
+        timings.append({'stage': 'spawn', 'seconds': time.perf_counter() - started, 'pid': process.pid})
+        original_read, original_wait = process.stdout.read, process.wait
+
+        async def read(*args, **kwargs):
+            started = time.perf_counter()
+            try:
+                return await original_read(*args, **kwargs)
+            finally:
+                timings.append({'stage': 'stdout_read', 'seconds': time.perf_counter() - started})
+
+        async def wait():
+            started = time.perf_counter()
+            result = await original_wait()
+            timings.append({'stage': 'wait', 'seconds': time.perf_counter() - started, 'exit_code': result})
+            return result
+
+        process.stdout.read, process.wait = read, wait
+        return process
+
+    asyncio.create_subprocess_exec = spawn
+    client = BridgeClient([sys.executable, '-m', 'mnemos.bridge', '--descriptor',
+                           str(service.descriptor_path), '--deadline', '3'], deadline=5)
+    try:
+        started = time.perf_counter()
+        result = await client.request('health', {})
+        report['trials'].append({'index': index, 'seconds': time.perf_counter() - started,
+                                 'result': result, 'stages': timings})
+    finally:
+        asyncio.create_subprocess_exec = original_spawn
+        service.stop()
+    assert not service.descriptor_path.exists()
+
+
+for index in range(3):
+    asyncio.run(trial(index))
+for index in range(3):
+    started = time.perf_counter()
+    result = subprocess.run([sys.executable, '-c', 'import mnemos.bridge'], cwd=SNAPSHOT,
+                            capture_output=True, text=True, timeout=30)
+    report['import_only'].append({'index': index, 'seconds': time.perf_counter() - started,
+                                 'exit_code': result.returncode, 'stderr': result.stderr})
+report['note'] = 'Stage instrumentation is diagnostic; the original failing run recorded only degraded status. Deadlines remain 3 seconds in the child and 5 seconds in the parent.'
+(OUTPUT / 'report.json').write_text(json.dumps(report, indent=2) + '\n', encoding='utf-8')
+print(json.dumps(report))

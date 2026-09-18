@@ -1,0 +1,52 @@
+F.                                                                       [100%]
+================================== FAILURES ===================================
+_____ test_late_correction_cannot_reintroduce_source_for_forgotten_target _____
+
+tmp_path = WindowsPath('D:/WindowsTemp/pytest-of-Ant/pytest-3635/test_late_correction_cannot_re0')
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x0000023712155350>
+
+    @pytest.mark.asyncio
+    async def test_late_correction_cannot_reintroduce_source_for_forgotten_target(
+        tmp_path, monkeypatch
+    ):
+        memory, context = service(tmp_path)
+        entered, proceed = threading.Event(), threading.Event()
+        store = memory.engine.store
+        try:
+            await memory.dispatch(
+                "remember", {"context": context.model_dump(), "content": "Use cedar-otter labels."}
+            )
+            await memory.maintenance.run_once(force=True)
+            target = store.get_all()[0]
+            capture = store.capture_event_and_job
+    
+            def delayed_capture(event, job, **kwargs):
+                entered.set()
+                assert proceed.wait(5)
+                return capture(event, job, **kwargs)
+    
+            monkeypatch.setattr(store, "capture_event_and_job", delayed_capture)
+            payload = {
+                "context": context.model_dump(),
+                "fact_id": target.id,
+                "expected_version": target.version,
+                "content": "Use maple-heron labels instead of cedar-otter.",
+            }
+            with ThreadPoolExecutor(max_workers=1) as pool:
+                pending = pool.submit(asyncio.run, memory.dispatch("correct", payload))
+                try:
+                    assert entered.wait(5)
+                    await memory.dispatch("forget", payload)
+                finally:
+                    proceed.set()
+                response = pending.result(timeout=5)
+>           assert store.list_episodic_events() == []
+E           AssertionError: assert [EpisodicEven...imezone.utc))] == []
+E             
+E             Left contains one more item: EpisodicEvent(id='bdde07c41af97d81d89e1dba8e410bdb0a70bcbab18f5a5d51e73c078400df95', event_fingerprint='bdde07c41af97d...info=datetime.timezone.utc), occurred_at=datetime.datetime(2026, 9, 18, 8, 33, 2, 35128, tzinfo=datetime.timezone.utc))
+E             Use -v to get more diff
+
+tests\test_capture_forget_race.py:110: AssertionError
+=========================== short test summary info ===========================
+FAILED tests/test_capture_forget_race.py::test_late_correction_cannot_reintroduce_source_for_forgotten_target
+1 failed, 1 passed, 4 deselected in 3.87s

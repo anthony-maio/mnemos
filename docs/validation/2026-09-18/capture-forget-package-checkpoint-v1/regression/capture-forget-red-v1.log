@@ -1,0 +1,246 @@
+FFFF                                                                     [100%]
+================================== FAILURES ===================================
+____ test_forget_committed_before_capture_cannot_restore_raw_source[user] _____
+
+tmp_path = WindowsPath('D:/WindowsTemp/pytest-of-Ant/pytest-3633/test_forget_committed_before_c0')
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x00000240294E90F0>
+role = 'user'
+
+    @pytest.mark.asyncio
+    @pytest.mark.parametrize("role", ["user", "assistant"])
+    async def test_forget_committed_before_capture_cannot_restore_raw_source(
+        tmp_path, monkeypatch, role
+    ):
+        memory, context = service(tmp_path)
+        entered, proceed = threading.Event(), threading.Event()
+        store = memory.engine.store
+        try:
+            for flag in type(memory.engine.config.modules).model_fields:
+                setattr(memory.engine.config.modules, flag, False)
+            await memory.dispatch(
+                "remember",
+                {"context": context.model_dump(), "content": "Use cedar-otter release labels."},
+            )
+            await memory.maintenance.run_once(force=True)
+            target = store.get_all()[0]
+            capture = store.capture_event_and_job
+    
+            def delayed_capture(event, job):
+                entered.set()
+                assert proceed.wait(5), "Forget did not release the capture barrier"
+                return capture(event, job)
+    
+            monkeypatch.setattr(store, "capture_event_and_job", delayed_capture)
+            event = CaptureEvent(
+                event_id="late-automatic-capture",
+                context=context,
+                occurred_at=datetime.now(timezone.utc),
+                role=role,
+                content=target.content,
+                source_kind="codex_hook",
+            )
+            with ThreadPoolExecutor(max_workers=1) as pool:
+                pending = pool.submit(memory.capture, event)
+                try:
+                    assert entered.wait(5), "Capture did not reach its persistence boundary"
+                    # A separate SQLite connection commits the actual forget while
+                    # capture has already passed its service-level suppression check.
+                    other = SQLiteStore(str(tmp_path / "memory.sqlite"))
+                    try:
+                        assert other.forget_fact(target.id, expected_version=target.version)
+                    finally:
+                        other.close()
+                finally:
+                    proceed.set()
+                response = pending.result(timeout=5)
+    
+>           assert store.list_episodic_events() == []
+E           AssertionError: assert [EpisodicEven...imezone.utc))] == []
+E             
+E             Left contains one more item: EpisodicEvent(id='e9a816ec85a9558d1299ba4c328da209d234db4ba6805f46d8d72c16a75f45a6', event_fingerprint='e9a816ec85a955...fo=datetime.timezone.utc), occurred_at=datetime.datetime(2026, 9, 18, 8, 30, 52, 618101, tzinfo=datetime.timezone.utc))
+E             Use -v to get more diff
+
+tests\test_capture_forget_race.py:60: AssertionError
+__ test_forget_committed_before_capture_cannot_restore_raw_source[assistant] __
+
+tmp_path = WindowsPath('D:/WindowsTemp/pytest-of-Ant/pytest-3633/test_forget_committed_before_c1')
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x0000024029516D50>
+role = 'assistant'
+
+    @pytest.mark.asyncio
+    @pytest.mark.parametrize("role", ["user", "assistant"])
+    async def test_forget_committed_before_capture_cannot_restore_raw_source(
+        tmp_path, monkeypatch, role
+    ):
+        memory, context = service(tmp_path)
+        entered, proceed = threading.Event(), threading.Event()
+        store = memory.engine.store
+        try:
+            for flag in type(memory.engine.config.modules).model_fields:
+                setattr(memory.engine.config.modules, flag, False)
+            await memory.dispatch(
+                "remember",
+                {"context": context.model_dump(), "content": "Use cedar-otter release labels."},
+            )
+            await memory.maintenance.run_once(force=True)
+            target = store.get_all()[0]
+            capture = store.capture_event_and_job
+    
+            def delayed_capture(event, job):
+                entered.set()
+                assert proceed.wait(5), "Forget did not release the capture barrier"
+                return capture(event, job)
+    
+            monkeypatch.setattr(store, "capture_event_and_job", delayed_capture)
+            event = CaptureEvent(
+                event_id="late-automatic-capture",
+                context=context,
+                occurred_at=datetime.now(timezone.utc),
+                role=role,
+                content=target.content,
+                source_kind="codex_hook",
+            )
+            with ThreadPoolExecutor(max_workers=1) as pool:
+                pending = pool.submit(memory.capture, event)
+                try:
+                    assert entered.wait(5), "Capture did not reach its persistence boundary"
+                    # A separate SQLite connection commits the actual forget while
+                    # capture has already passed its service-level suppression check.
+                    other = SQLiteStore(str(tmp_path / "memory.sqlite"))
+                    try:
+                        assert other.forget_fact(target.id, expected_version=target.version)
+                    finally:
+                        other.close()
+                finally:
+                    proceed.set()
+                response = pending.result(timeout=5)
+    
+>           assert store.list_episodic_events() == []
+E           AssertionError: assert [EpisodicEven...imezone.utc))] == []
+E             
+E             Left contains one more item: EpisodicEvent(id='e9a816ec85a9558d1299ba4c328da209d234db4ba6805f46d8d72c16a75f45a6', event_fingerprint='e9a816ec85a955...nfo=datetime.timezone.utc), occurred_at=datetime.datetime(2026, 9, 18, 8, 30, 54, 12241, tzinfo=datetime.timezone.utc))
+E             Use -v to get more diff
+
+tests\test_capture_forget_race.py:60: AssertionError
+__ test_pending_replay_cannot_restore_source_forgotten_during_capture[False] __
+
+tmp_path = WindowsPath('D:/WindowsTemp/pytest-of-Ant/pytest-3633/test_pending_replay_cannot_res0')
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x00000240294BE7A0>
+explicit = False
+
+    @pytest.mark.asyncio
+    @pytest.mark.parametrize("explicit", [False, True])
+    async def test_pending_replay_cannot_restore_source_forgotten_during_capture(
+        tmp_path, monkeypatch, explicit
+    ):
+        memory, context = service(tmp_path)
+        entered, proceed = threading.Event(), threading.Event()
+        store = memory.engine.store
+        try:
+            for flag in type(memory.engine.config.modules).model_fields:
+                setattr(memory.engine.config.modules, flag, False)
+            event = CaptureEvent(
+                event_id="original-source",
+                context=context,
+                occurred_at=datetime.now(timezone.utc),
+                role="user",
+                content="Use silver-birch deployment labels.",
+                source_kind="explicit_remember" if explicit else "codex_hook",
+            )
+            original = memory.capture(event, explicit=explicit)
+            capture = store.capture_event_and_job
+    
+            def delayed_capture(event, job):
+                entered.set()
+                assert proceed.wait(5), "Forget did not release the replay barrier"
+                return capture(event, job)
+    
+            monkeypatch.setattr(store, "capture_event_and_job", delayed_capture)
+            with ThreadPoolExecutor(max_workers=1) as pool:
+                pending = pool.submit(memory.capture, event, explicit=explicit)
+                try:
+                    assert entered.wait(5), "Replay did not reach its persistence boundary"
+                    assert await memory.maintenance.run_once(force=True) == 1
+                    target = store.get_all()[0]
+                    await memory.dispatch(
+                        "forget",
+                        {
+                            "context": context.model_dump(),
+                            "fact_id": target.id,
+                            "expected_version": target.version,
+                        },
+                    )
+                finally:
+                    proceed.set()
+                response = pending.result(timeout=5)
+>           assert store.list_episodic_events() == []
+E           AssertionError: assert [EpisodicEven...imezone.utc))] == []
+E             
+E             Left contains one more item: EpisodicEvent(id='ba6d19f39840bf5f8f53e4e1b96d010b8da2e2e4d1b70e428f0a7d8317ac123b', event_fingerprint='ba6d19f39840bf...fo=datetime.timezone.utc), occurred_at=datetime.datetime(2026, 9, 18, 8, 30, 54, 883521, tzinfo=datetime.timezone.utc))
+E             Use -v to get more diff
+
+tests\test_capture_forget_race.py:124: AssertionError
+__ test_pending_replay_cannot_restore_source_forgotten_during_capture[True] ___
+
+tmp_path = WindowsPath('D:/WindowsTemp/pytest-of-Ant/pytest-3633/test_pending_replay_cannot_res1')
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x0000024029546450>
+explicit = True
+
+    @pytest.mark.asyncio
+    @pytest.mark.parametrize("explicit", [False, True])
+    async def test_pending_replay_cannot_restore_source_forgotten_during_capture(
+        tmp_path, monkeypatch, explicit
+    ):
+        memory, context = service(tmp_path)
+        entered, proceed = threading.Event(), threading.Event()
+        store = memory.engine.store
+        try:
+            for flag in type(memory.engine.config.modules).model_fields:
+                setattr(memory.engine.config.modules, flag, False)
+            event = CaptureEvent(
+                event_id="original-source",
+                context=context,
+                occurred_at=datetime.now(timezone.utc),
+                role="user",
+                content="Use silver-birch deployment labels.",
+                source_kind="explicit_remember" if explicit else "codex_hook",
+            )
+            original = memory.capture(event, explicit=explicit)
+            capture = store.capture_event_and_job
+    
+            def delayed_capture(event, job):
+                entered.set()
+                assert proceed.wait(5), "Forget did not release the replay barrier"
+                return capture(event, job)
+    
+            monkeypatch.setattr(store, "capture_event_and_job", delayed_capture)
+            with ThreadPoolExecutor(max_workers=1) as pool:
+                pending = pool.submit(memory.capture, event, explicit=explicit)
+                try:
+                    assert entered.wait(5), "Replay did not reach its persistence boundary"
+                    assert await memory.maintenance.run_once(force=True) == 1
+                    target = store.get_all()[0]
+                    await memory.dispatch(
+                        "forget",
+                        {
+                            "context": context.model_dump(),
+                            "fact_id": target.id,
+                            "expected_version": target.version,
+                        },
+                    )
+                finally:
+                    proceed.set()
+                response = pending.result(timeout=5)
+>           assert store.list_episodic_events() == []
+E           AssertionError: assert [EpisodicEven...imezone.utc))] == []
+E             
+E             Left contains one more item: EpisodicEvent(id='ba6d19f39840bf5f8f53e4e1b96d010b8da2e2e4d1b70e428f0a7d8317ac123b', event_fingerprint='ba6d19f39840bf...fo=datetime.timezone.utc), occurred_at=datetime.datetime(2026, 9, 18, 8, 30, 59, 663300, tzinfo=datetime.timezone.utc))
+E             Use -v to get more diff
+
+tests\test_capture_forget_race.py:124: AssertionError
+=========================== short test summary info ===========================
+FAILED tests/test_capture_forget_race.py::test_forget_committed_before_capture_cannot_restore_raw_source[user]
+FAILED tests/test_capture_forget_race.py::test_forget_committed_before_capture_cannot_restore_raw_source[assistant]
+FAILED tests/test_capture_forget_race.py::test_pending_replay_cannot_restore_source_forgotten_during_capture[False]
+FAILED tests/test_capture_forget_race.py::test_pending_replay_cannot_restore_source_forgotten_during_capture[True]
+4 failed in 9.97s

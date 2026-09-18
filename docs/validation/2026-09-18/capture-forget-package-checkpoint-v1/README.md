@@ -1,0 +1,13 @@
+# Capture and forget transaction checkpoint
+
+Source `983920afce2f70f9785f555069ecdbc8bb7c5e99` prevents an in-flight capture from restoring an erased raw source after forget commits. SQLite now checks source suppression, verified Claude legacy aliases, automatic assertion suppression, and forgotten correction targets inside the same write transaction as capture. The service acknowledges suppression without creating an event or job. A fresh explicit remember can still restore an assertion intentionally.
+
+The initial four regression cases failed for late user and assistant capture and pending automatic/explicit replay. A later correction-target case also failed; its accompanying legacy-alias case passed with the first repair. Both failure logs are retained. The final six cases include checks after database reopen. The focused suite passed 62 cases, including the existing fresh explicit restoration and scope checks.
+
+The clean source snapshot passed 1,060 tests with four skips, Black, strict mypy, JavaScript syntax, build, and Twine. The installed wheel passed 390 selected cases with two matching skips and seven synthetic replay assertions outside the source checkout. All six added regression cases are included in both runs. The verifier checked individual case identities, outcomes, skip reasons, module origins, and wheel/source bytes.
+
+The first full source run had one degraded bridge health result, 1,059 passing tests, and four skips. Its exact error category was not retained by that assertion. Three subsequent instrumented bridge requests all completed with running status in 0.68 to 0.76 seconds using unchanged child/parent deadlines of 3/5 seconds. Import-only child runs took 0.43 to 0.49 seconds. The unchanged full suite was then rerun in a fresh temporary directory. The original full-suite failure and diagnostics are retained; the cause of the intermittent degraded result is unresolved, and a later passing run does not establish a bridge reliability or tail-latency fix.
+
+This atomic guarantee is implemented by SQLite, the supported durable backend. Custom storage backends must implement the updated capture contract; the legacy base fallback does not provide atomic suppression. These deterministic and package checks do not replace native host acceptance, the frozen real-model matrix, the recall-latency gate, or the operational pilot. Earlier native observations retain their original wheel bindings. No live configuration, live data migration, evaluation criteria, or publication changed.
+
+Wheel SHA256: `ca9eba9d24fbebf2f02036b2be2301ba51af06d9f1b69d0f0f1cb14ad3f45ae1`.

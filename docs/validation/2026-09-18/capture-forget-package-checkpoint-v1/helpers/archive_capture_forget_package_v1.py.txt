@@ -1,0 +1,142 @@
+"""Archive the source-bound capture/forget repair and installed validation."""
+from pathlib import Path
+import hashlib
+import json
+import shutil
+import xml.etree.ElementTree as ET
+
+ROOT = Path(__file__).resolve().parents[1]
+TEMP = Path('C:/Users/Ant/AppData/Local/Temp')
+CHECKS = TEMP / 'mnemos-package-checks-capture-forget-v2'
+FAILED_CHECKS = TEMP / 'mnemos-package-checks-capture-forget-v1'
+DIAGNOSTIC = TEMP / 'mnemos-capture-forget-bridge-diagnostic-v1/report.json'
+INSTALLED = TEMP / 'mnemos-installed-checks-capture-forget-v1'
+OUT = ROOT / 'docs/validation/2026-09-18/capture-forget-package-checkpoint-v1'
+COMMIT = '983920afce2f70f9785f555069ecdbc8bb7c5e99'
+
+
+def read(path):
+    return json.loads(path.read_text(encoding='utf-8'))
+
+
+def sha(path):
+    return hashlib.sha256(path.read_bytes()).hexdigest()
+
+
+def counts(path):
+    cases = ET.parse(path).getroot().findall('.//testcase')
+    result = {
+        'tests': len(cases),
+        'failures': sum(c.find('failure') is not None for c in cases),
+        'errors': sum(c.find('error') is not None for c in cases),
+        'skipped': sum(c.find('skipped') is not None for c in cases),
+    }
+    result['passed'] = result['tests'] - result['failures'] - result['errors'] - result['skipped']
+    return result
+
+
+source, installed = read(CHECKS / 'verification.json'), read(INSTALLED / 'installation.json')
+assert source['status'] == installed['status'] == 'passed'
+assert source['source_commit'] == installed['commit'] == COMMIT
+assert {c['name'] for c in source['checks']} == {'pytest', 'black', 'mypy', 'javascript', 'build', 'twine'}
+assert all(c['exit_code'] == 0 for c in source['checks'])
+source_counts = counts(CHECKS / 'pytest.xml')
+installed_counts = counts(INSTALLED / 'contract.junit.xml')
+assert source_counts == {'tests': 1064, 'failures': 0, 'errors': 0, 'skipped': 4, 'passed': 1060}
+assert installed_counts == {'tests': 392, 'failures': 0, 'errors': 0, 'skipped': 2, 'passed': 390}
+assert installed_counts['tests'] == installed['expected_cases']['count']
+regression_cases = []
+for path in (CHECKS / 'pytest.xml', INSTALLED / 'contract.junit.xml'):
+    selected = {
+        (case.attrib['classname'], case.attrib['name'])
+        for case in ET.parse(path).getroot().iter('testcase')
+        if case.attrib.get('classname', '').endswith('test_capture_forget_race')
+    }
+    assert len(selected) == 6
+    regression_cases.append(selected)
+assert regression_cases[0] == regression_cases[1]
+assert installed['bindings_before'] == installed['bindings_after']
+assert installed['bindings_after']['snapshot_head'] == COMMIT
+assert installed['contract_input_hashes_before'] == installed['contract_input_hashes_after']
+assert len(installed['probe']['assertions']) == 7 and all(installed['probe']['assertions'].values())
+for artifact in source['artifacts']:
+    path = Path(artifact['file'])
+    assert sha(path) == artifact['sha256'] and path.stat().st_size == artifact['bytes']
+helpers = ['final_checkpoint_checks_v3.py', 'run_combined_installed_check_v24.py',
+           'installed_contract_probe_v4.py', 'verify_claude_stop_replay_v2.py']
+assert sha(ROOT / '.venv' / helpers[0]) == source['runner_sha256']
+for name, key in zip(helpers[1:], ('runner_sha256', 'contract_probe_sha256', 'replay_helper_sha256')):
+    assert sha(ROOT / '.venv' / name) == installed['bindings_after'][key]
+assert sha(CHECKS / 'verification.json') == installed['bindings_after']['checks_sha256']
+wheel = next((CHECKS / 'dist').glob('*.whl'))
+assert sha(wheel) == installed['bindings_after']['wheel_sha256']
+assert source['website_input']['sha256_before'] == source['website_input']['sha256_after']
+red_one = ROOT / '.venv/capture-forget-red-v1.log'
+red_two = ROOT / '.venv/capture-forget-red-v2.log'
+focused = ROOT / '.venv/capture-forget-focused-v1.log'
+assert '4 failed' in red_one.read_text(encoding='utf-8')
+assert '1 failed, 1 passed' in red_two.read_text(encoding='utf-8')
+assert '62 passed' in focused.read_text(encoding='utf-8')
+assert counts(FAILED_CHECKS / 'pytest.xml') == {
+    'tests': 1064, 'failures': 1, 'errors': 0, 'skipped': 4, 'passed': 1059}
+assert read(FAILED_CHECKS / 'verification.json')['source_commit'] == COMMIT
+diagnostic = read(DIAGNOSTIC)
+assert diagnostic['source_commit'] == COMMIT
+assert diagnostic['runner_sha256'] == sha(ROOT / '.venv/diagnose_capture_forget_bridge_v1.py')
+assert len(diagnostic['trials']) == 3
+assert all(t['result']['status'] == 'running' for t in diagnostic['trials'])
+
+OUT.mkdir(parents=True, exist_ok=False)
+for origin, label in ((CHECKS, 'source-checks'), (INSTALLED, 'installed-checks')):
+    folder = OUT / label
+    folder.mkdir()
+    for path in origin.iterdir():
+        if path.is_file() and path.suffix in ('.log', '.json', '.xml'):
+            shutil.copyfile(path, folder / path.name)
+(OUT / 'source-checks/dist').mkdir()
+shutil.copyfile(wheel, OUT / 'source-checks/dist' / wheel.name)
+(OUT / 'helpers').mkdir()
+for name in helpers:
+    shutil.copyfile(ROOT / '.venv' / name, OUT / 'helpers' / (name + '.txt'))
+shutil.copyfile(__file__, OUT / 'helpers/archive_capture_forget_package_v1.py.txt')
+shutil.copyfile(ROOT / '.venv/diagnose_capture_forget_bridge_v1.py',
+                OUT / 'helpers/diagnose_capture_forget_bridge_v1.py.txt')
+(OUT / 'failed-source-checks-v1').mkdir()
+for name in ('verification.json', 'pytest.xml', 'pytest.log'):
+    shutil.copyfile(FAILED_CHECKS / name, OUT / 'failed-source-checks-v1' / name)
+shutil.copyfile(DIAGNOSTIC, OUT / 'bridge-diagnostic.json')
+(OUT / 'regression').mkdir()
+for path in (red_one, red_two, focused):
+    shutil.copyfile(path, OUT / 'regression' / path.name)
+(OUT / '.gitattributes').write_text('* -text\n*.log -whitespace\n*.xml -whitespace\n*.py.txt -whitespace\n', encoding='utf-8')
+(OUT / 'README.md').write_text(
+    '# Capture and forget transaction checkpoint\n\n'
+    f'Source `{COMMIT}` prevents an in-flight capture from restoring an erased raw source after forget commits. '
+    'SQLite now checks source suppression, verified Claude legacy aliases, automatic assertion suppression, '
+    'and forgotten correction targets inside the same write transaction as capture. '
+    'The service acknowledges suppression without creating an event or job. '
+    'A fresh explicit remember can still restore an assertion intentionally.\n\n'
+    'The initial four regression cases failed for late user and assistant capture and pending automatic/explicit replay. '
+    'A later correction-target case also failed; its accompanying legacy-alias case passed with the first repair. '
+    'Both failure logs are retained. The final six cases include checks after database reopen. '
+    'The focused suite passed 62 cases, including the existing fresh explicit restoration and scope checks.\n\n'
+    'The clean source snapshot passed 1,060 tests with four skips, Black, strict mypy, JavaScript syntax, build, '
+    'and Twine. The installed wheel passed 390 selected cases with two matching skips and seven synthetic '
+    'replay assertions outside the source checkout. All six added regression cases are included in both runs. '
+    'The verifier checked individual case identities, outcomes, skip reasons, module origins, and wheel/source bytes.\n\n'
+    'The first full source run had one degraded bridge health result, 1,059 passing tests, and four skips. '
+    'Its exact error category was not retained by that assertion. Three subsequent instrumented bridge requests '
+    'all completed with running status in 0.68 to 0.76 seconds using unchanged child/parent deadlines of 3/5 seconds. '
+    'Import-only child runs took 0.43 to 0.49 seconds. The unchanged full suite was then rerun in a fresh temporary '
+    'directory. The original full-suite failure and diagnostics are retained; the cause of the intermittent degraded '
+    'result is unresolved, and a later passing run does not establish a bridge reliability or tail-latency fix.\n\n'
+    'This atomic guarantee is implemented by SQLite, the supported durable backend. Custom storage backends '
+    'must implement the updated capture contract; the legacy base fallback does not provide atomic suppression. '
+    'These deterministic and package checks do not replace native host acceptance, the frozen real-model matrix, '
+    'the recall-latency gate, or the operational pilot. Earlier native observations retain their original wheel bindings. '
+    'No live configuration, live data migration, evaluation criteria, or publication changed.\n\n'
+    f'Wheel SHA256: `{sha(wheel)}`.\n', encoding='utf-8')
+index = {'files': {p.relative_to(OUT).as_posix(): {'bytes': p.stat().st_size, 'sha256': sha(p)}
+                   for p in sorted(OUT.rglob('*')) if p.is_file()}}
+(OUT / 'evidence-index.json').write_text(json.dumps(index, indent=2) + '\n', encoding='utf-8')
+print(json.dumps({'source': source_counts, 'installed': installed_counts, 'indexed_files': len(index['files'])}))
