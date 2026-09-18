@@ -1,0 +1,86 @@
+import ctypes
+from ctypes import wintypes
+from datetime import datetime, timezone
+import hashlib
+import json
+from pathlib import Path
+import shutil
+import sqlite3
+
+root=Path('D:/Development/mnemos/mnemos/.worktrees/functional-local-memory')
+output=Path(__file__).parent
+r=json.loads((output/'report.json').read_text())
+fixture=Path(r['fixture'])
+assert r['status']=='failed' and r['error_type']=='TimeoutExpired' and r['finished_at']
+assert r['source_commit']=='6442044750d45ce49c3d846de9a5dd24ad607d74'
+assert r['cleanup']['codex_auth_absent'] and r['cleanup']['claude_auth_absent'] and r['cleanup']['descriptor_absent']
+for name in ('runtime.json','codex-home/.codex/auth.json','claude-home/.claude/.credentials.json'):
+    assert not (fixture/name).exists()
+sha=lambda raw:hashlib.sha256(raw).hexdigest()
+runner=root/'.venv/native_codex_claude_continuity_v3.py'
+assert sha(runner.read_bytes())==r['runner_sha256']
+error=(fixture/'runner-error.txt').read_text()
+assert 'timed out after 180 seconds' in error and "'37440'" in error
+k=ctypes.WinDLL('kernel32',use_last_error=True)
+k.OpenProcess.argtypes=[wintypes.DWORD,wintypes.BOOL,wintypes.DWORD]
+k.OpenProcess.restype=wintypes.HANDLE
+k.CloseHandle.argtypes=[wintypes.HANDLE]
+h=k.OpenProcess(0x1000,False,37440)
+if h:
+    k.CloseHandle(h)
+    raise RuntimeError('Original native PID still exists; investigate before archiving')
+assert ctypes.get_last_error()==87
+later={'observed_at':datetime.now(timezone.utc).isoformat(),'pid':37440,'handle_opened':False,'winerror':87,'interpretation':'Original native PID absent at this later check; historical cleanup errors remain unchanged.'}
+selected=[]
+for path in (fixture/'codex-home/.codex').rglob('*.jsonl'):
+    for line in path.read_bytes().splitlines(keepends=True):
+        value=json.loads(line); p=value.get('payload',{})
+        if p.get('type')=='mcp_tool_call_end' and p.get('invocation',{}).get('server')=='mnemos':
+            selected.append(line)
+assert [json.loads(x)['payload']['invocation']['tool'] for x in selected]==['mnemos_store','mnemos_consolidate']
+for line in selected:
+    result=json.loads(line)['payload']['result']
+    assert set(result)=={'Ok'} and result['Ok']['isError'] is False
+with sqlite3.connect((fixture/'memory.sqlite').as_uri()+'?mode=ro',uri=True) as db:
+    db.row_factory=sqlite3.Row
+    rows=[dict(row) for row in db.execute('select id,content,version,metadata from memory_chunks where content=?',('The project continuity convention is use cedar-otter for release labels.',))]
+    assert len(rows)==1 and rows[0]['version']==1
+archive=root/'docs/validation/2026-09-17/native-codex-claude-continuity-v3'
+assert not archive.exists()
+archive.mkdir(parents=True)
+for name,path in {'report.json':output/'report.json','runner-error.txt':fixture/'runner-error.txt','native_codex_claude_continuity_v3.py.txt':runner,'archive_failure_v1.py.txt':Path(__file__)}.items():
+    shutil.copyfile(path,archive/name)
+for name,digest in r['helper_pins'].items():
+    path=root/'.venv'/name
+    assert sha(path.read_bytes())==digest
+    shutil.copyfile(path,archive/(name+'.txt'))
+(archive/'selected-codex-events.jsonl').write_bytes(b''.join(selected))
+(archive/'later-process-check.json').write_text(json.dumps(later,indent=2)+'\n')
+(archive/'stored-target-after-close.json').write_text(json.dumps(rows,indent=2)+'\n')
+(archive/'.gitattributes').write_text('* -text\n*.jsonl -whitespace\n')
+(archive/'README.md').write_text('''# Native rerun interrupted by host shutdown
+
+The v3 runner remains failed. Native Codex completed store and consolidate, but
+did not exit within 180 seconds. The bounded taskkill call also timed out after
+ten seconds, so the runner aborted before Claude recall or correction. The
+cleanup report retained process_terminate:TimeoutExpired and process_still_running.
+Authentication copies and runtime descriptor were removed. A later Win32 check
+found the original native PID absent; that does not rewrite the earlier errors
+or establish a clean exit. The interactive Stop hook also reported a three-second
+timeout. Other local process/read commands stalled during this interval; their
+relationship to this failure is unproven.
+
+Selected native MCP completion records show two successful calls. Independent
+SQLite reopen found the stored target at version 1. This is narrower than
+cross-host acceptance: Claude phases and the second service restart were not run.
+
+V3 changed only the v2 harness cardinality check: it requires at least one old
+value record and qualification of every returned captured record, without
+requiring exactly two old-value mentions. It never reached that revised check.
+The v2 archive separately preserves observed qualification in actual Claude
+context and its failed fixed-count assertion. No product code or retrieval
+settings changed for this attempt. No live configuration or data was modified.
+''',encoding='utf-8')
+index={'files':{p.name:{'bytes':p.stat().st_size,'sha256':sha(p.read_bytes())} for p in archive.iterdir()}}
+(archive/'evidence-index.json').write_text(json.dumps(index,indent=2)+'\n')
+print(json.dumps({'status':'archived_failed_run','archive':str(archive),'files':len(index['files'])}))

@@ -1,0 +1,173 @@
+"""Preserve failed native runner and independently check observed qualification."""
+import hashlib
+import json
+from pathlib import Path
+import shutil
+import sqlite3
+
+def sha(raw):
+    return hashlib.sha256(raw).hexdigest()
+
+root = Path(__file__).resolve().parents[1]
+output = Path('C:/Users/Ant/AppData/Local/Temp/mnemos-native-crosshost-v2')
+report_path = output/'report.json'
+report = json.loads(report_path.read_text(encoding='utf-8'))
+fixture = Path(report['fixture'])
+target = report['target']
+assert report['status'] == 'failed' and report['error_type'] == 'AssertionError'
+assert report.get('finished_at')
+assert report['source_commit'] == '6442044750d45ce49c3d846de9a5dd24ad607d74'
+runner_error = (fixture/'runner-error.txt').read_text(encoding='utf-8')
+assert 'assert len(old_mentions) == 2' in runner_error
+assert all(report['correction_contract'].values())
+assert not report['cleanup']['errors']
+assert all(v for k,v in report['cleanup'].items() if k != 'errors')
+for path in (fixture/'runtime.json',fixture/'codex-home/.codex/auth.json',fixture/'claude-home/.claude/.credentials.json'):
+    assert not path.exists()
+archive = root/'docs/validation/2026-09-17/native-codex-claude-continuity-v2'
+assert not archive.exists()
+selected_codex = json.loads((output/'codex-mcp-completions.json').read_text(encoding='utf-8'))
+assert len(selected_codex) == 2
+codex_raw = []
+codex_payloads = []
+for selected, expected in zip(selected_codex, ('mnemos_store','mnemos_consolidate')):
+    source = fixture/'codex-home/.codex'/selected['source']
+    raw = source.read_bytes().splitlines(keepends=True)[selected['line']-1]
+    assert json.loads(raw) == selected['record']
+    p = selected['record']['payload']
+    assert p['invocation']['server'] == 'mnemos' and p['invocation']['tool'] == expected
+    assert set(p['result']) == {'Ok'} and p['result']['Ok']['isError'] is False
+    result = p['result']['Ok']
+    decoded = json.loads(result['structuredContent']['result'])
+    assert decoded == json.loads(result['content'][0]['text'])
+    codex_payloads.append(decoded)
+    codex_raw.append(raw)
+assert selected_codex[0]['record']['payload']['invocation']['arguments'] == {
+    'content':target['content'],'role':'user','scope':'project'}
+stored, consolidated = codex_payloads
+assert stored['status'] == 'committed' and stored['event_committed'] is True
+assert stored['scope_id'] == target['project_id'] and stored['scope'] == 'project'
+assert consolidated['maintenance']['failed_count'] == 0 and consolidated['completed'] > 0
+
+selected_claude = []
+decoded_phases = {}
+for phase, key, names in (
+    ('crosshost-read','claude_read',['mnemos_retrieve']),
+    ('crosshost-correct','claude_correction',['mnemos_correct','mnemos_consolidate','mnemos_retrieve'])):
+    raw = (fixture/f'native-{phase}-stdout.jsonl').read_bytes()
+    # Runner writes UTF-8 text with Windows newline translation.
+    text = raw.decode('utf-8').replace('\r\n','\n')
+    assert sha(text.encode()) == report[key]['stdout_sha256']
+    assert report[key]['returncode'] == 0 and report[key]['timed_out'] is False
+    calls, results = [], []
+    for number, line in enumerate(raw.splitlines(keepends=True),1):
+        record = json.loads(line)
+        for node in record.get('message',{}).get('content',[]):
+            if not isinstance(node,dict) or node.get('type') not in ('tool_use','tool_result'):
+                continue
+            selected_claude.append({'phase':phase,'line':number,'line_sha256':sha(line),'node':node})
+            (calls if node['type']=='tool_use' else results).append(node)
+    assert [c['name'].split('__')[-1] for c in calls] == names
+    assert [c['id'] for c in calls] == [r['tool_use_id'] for r in results]
+    assert len(set(c['id'] for c in calls)) == len(calls)
+    payloads = []
+    for result, observation in zip(results, report[key]['results']):
+        assert not result.get('is_error',False)
+        assert sha(json.dumps(result,sort_keys=True,separators=(',',':')).encode()) == observation['sha256']
+        decoded = json.loads(result['content'])
+        if 'result' in decoded:
+            decoded = json.loads(decoded['result'])
+        assert decoded.get('status') != 'error' and 'error' not in decoded
+        payloads.append(decoded)
+    decoded_phases[phase] = {'calls':calls,'payloads':payloads}
+
+def target_fact(payload, version, content):
+    assert target['foreign_fact_id'] not in [f['id'] for f in payload['facts']]
+    matches = [f for f in payload['facts'] if f['id']==target['fact_id']]
+    assert len(matches)==1
+    fact=matches[0]
+    assert fact['version']==version and fact['content']==content
+    assert fact['scope']=='project' and fact['scope_id']==target['project_id']
+    return fact
+
+read = decoded_phases['crosshost-read']['payloads'][0]
+before = target_fact(read,1,target['content'])
+assert any(s['source_event_id']==stored['event_id'] for s in before['sources'])
+correction = decoded_phases['crosshost-correct']
+args = correction['calls'][0]['input']
+assert args['fact_id']==target['fact_id'] and args['expected_version']==1 and args['content']==target['replacement']
+assert correction['payloads'][0]['status']=='committed' and correction['payloads'][0]['processing_status']=='pending'
+assert correction['payloads'][1]['maintenance']['failed_count']==0
+after = target_fact(correction['payloads'][2],2,target['replacement'])
+stale = [f for f in correction['payloads'][2]['facts'] if f['id']!=target['fact_id'] and 'cedar-otter' in f['content']]
+assert len(stale)==1  # Observed run, not a general retrieval cardinality contract.
+assert after['assertion_status']=='asserted'
+captured = [f for f in correction['payloads'][2]['facts'] if f['id']!=target['fact_id']]
+assert len(captured)==2
+for fact in captured:
+    assert fact['assertion_status']=='unknown'
+    assert any(fact['id'] in line and 'captured conversation; unverified, may be outdated' in line
+               for line in correction['payloads'][2]['context'].splitlines())
+with sqlite3.connect((fixture/'memory.sqlite').as_uri()+'?mode=ro',uri=True) as db:
+    db.row_factory=sqlite3.Row
+    row=dict(db.execute('select id,content,version,metadata from memory_chunks where id=?',(target['fact_id'],)).fetchone())
+    assert row['version']==2 and row['content']==target['replacement']
+    evidence=[dict(r) for r in db.execute('select * from fact_evidence where fact_id=?',(target['fact_id'],))]
+    assert any(e['source_event_id']==stored['event_id'] and e['excerpt']==target['content'] for e in evidence)
+    event=dict(db.execute('select id,content,source,source_event_id,scope,scope_id,metadata from episodic_events where id=?',(stored['event_id'],)).fetchone())
+    assert event['content']==target['content'] and event['scope_id']==target['project_id']
+    assert event['source_event_id'].startswith('mcp:')
+    assert 'codex' in event['metadata']
+    assert db.execute('select count(*) from memory_chunks where content=?',(target['replacement'],)).fetchone()[0]==1
+    revisions=[dict(r) for r in db.execute('select fact_id,version,content from fact_revisions where fact_id=? order by version',(target['fact_id'],))]
+    captured_rows = [dict(db.execute('select id,content,version,metadata from memory_chunks where id=?',(f['id'],)).fetchone()) for f in captured]
+    assert all(json.loads(r['metadata'])['assertion_status']=='unknown' and json.loads(r['metadata'])['source']=='captured_passthrough' for r in captured_rows)
+
+helpers={**report['helper_pins'],'native_codex_claude_continuity_v2.py':report['runner_sha256'],
+         'native_codex_retrieve_v2.py':'20f909d8c2d28934c8d47763558b7f9bf08eb6d848de9a1e6bce8d2f7f3326bb',
+         'native_codex_lifecycle_v3.py':'7b87f5817dacae01c0a16918435ff8a4af1c1ecaaba00a9317ba7f16c8be5814',
+         'native_codex_generated_v8.py':'dd9ebe7480fa5a172bb41135a4690baf94d2c585f5357a77f17265e7acb58b12'}
+for name,digest in helpers.items():
+    assert sha((root/'.venv'/name).read_bytes())==digest
+archive.mkdir(parents=True)
+for name in helpers:
+    shutil.copyfile(root/'.venv'/name,archive/(name+'.txt'))
+shutil.copyfile(__file__,archive/'archive_native_crosshost_v5.py.txt')
+shutil.copyfile(fixture/'runner-error.txt',archive/'runner-error.txt')
+shutil.copyfile(report_path,archive/'report.json')
+(archive/'selected-codex-events.jsonl').write_bytes(b''.join(codex_raw))
+(archive/'selected-claude-tool-blocks.json').write_text(json.dumps(selected_claude,indent=2)+'\n',encoding='utf-8')
+acceptance={
+    'source_commit':report['source_commit'],'bounded_native_codex_teach':'passed',
+    'native_claude_recall_after_service_restart':'passed',
+    'native_claude_correct_same_id_and_recall_version_2':'passed',
+    'corrected_target_present_after_independent_sqlite_reopen':'passed',
+    'correction_survives_second_service_restart':'not_run',
+    'foreign_canary_excluded_from_both_native_claude_queries':'passed',
+    'retrieved_context_free_of_old_value':'failed',
+    'native_runner_status':'failed',
+    'native_runner_failure':'Expected two old-value mentions; actual corrected retrieval contained one.',
+    'captured_history_explicitly_qualified_in_native_context':'observed',
+    'captured_rows_remain_unknown_after_independent_reopen':'passed',
+    'captured_rows_after_close':captured_rows,
+    'stale_context':[{'id':f['id'],'version':f['version'],'content':f['content'],
+                     'assertion_status':f['assertion_status'],'sources':f['sources']} for f in stale],
+    'codex_process':report['codex_process'],'codex_exit_hex':hex(report['codex_process']['returncode']),
+    'claude_capture_status':'degraded','target_row_after_close':row,'target_evidence':evidence,
+    'native_store_source_event':event,'target_revisions':revisions,
+    'helpers':helpers,'limits':[
+        'All modules disabled; deterministic fixture vectors and unavailable cognition. No extraction or module-quality claim.',
+        'Old conversation values remain in retrieved context. Version-2 target correctness is narrower than stale-context consistency.',
+        'Codex reads corrected value, native cross-host forget/replay, Hermes, and full capture are not yet verified.',
+        'Codex exited nonzero after /exit; not a clean shutdown. Earlier timeout evidence remains valid.',
+        'Codex Stop hook timed out after three seconds in the interactive UI; complete capture remains open.',
+        'The runner failed its fixed two-old-mentions assertion. It did not reach the second service restart; report remains failed.'
+    ]}
+(archive/'acceptance.json').write_text(json.dumps(acceptance,indent=2)+'\n',encoding='utf-8')
+(archive/'.gitattributes').write_text('* -text\n*.jsonl -whitespace\n',encoding='utf-8')
+(archive/'README.md').write_text('# Native captured-context qualification\n\nThe runner failed and its original report and traceback are preserved. It\nexpected exactly two returned records mentioning the old value; native Claude\nreturned one. That assertion stopped the runner before its second service restart.\n\nIndependent inspection of the actual tool results confirms that installed\nsource6442044 completed Codex store/consolidate, Claude recall after service\nrestart, then Claude correct/consolidate/retrieve. The corrected target kept\nits ID, reached version 2, and remained asserted. Both Claude queries excluded\nthe foreign-project canary. Independent SQLite reopen after cleanup retained\nthe corrected target and the original Codex event as supporting evidence.\n\nClaude\'s corrected retrieval contained two captured records: its earlier\nquery and its earlier answer. Both are unknown and carry the native context\nqualifier "captured conversation; unverified, may be outdated". Only the\nanswer contains the old value. Their captured_passthrough metadata and unknown\nstatus survived database reopen. This is observed qualification, not a passing\nend-to-end runner, suppression of old values, or proof of general answer quality.\nThe original v1 stale-context failure remains preserved separately.\n\nAll modules were disabled with deterministic fixture vectors and unavailable\ncognition. Codex exited 3221225477 (0xc0000005) after /exit; its Stop hook also\nreported a three-second timeout. Claude\'s two processes exited zero, with\ndegraded hook capture. Neither shutdown nor complete capture is accepted.\n\nSelected native tool records and fixture rows are archived; authentication\ncopies and the runtime descriptor were absent before archiving. The second\nservice restart was not run. Reverse recall, cross-host forget/replay, Hermes,\nmodel quality, and complete capture remain open. Live configuration and data\nwere untouched.\n',encoding='utf-8')
+index={'files':{}}
+for path in sorted(archive.iterdir()):
+    raw=path.read_bytes();index['files'][path.name]={'bytes':len(raw),'sha256':sha(raw)}
+(archive/'evidence-index.json').write_text(json.dumps(index,indent=2)+'\n',encoding='utf-8')
+print(json.dumps({'archive':str(archive),'files':len(index['files']),'stale_context_count':len(stale),'status':'verified_partial'}))

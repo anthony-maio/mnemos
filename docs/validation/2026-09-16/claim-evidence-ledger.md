@@ -13,6 +13,14 @@ environment were on C:, outside the development checkout. The
 binds the wheel, source, helpers, dependencies, exact test cases, and installed
 package origins. It does not establish native plugin-session acceptance.
 
+The [native captured-context observation](../2026-09-17/native-codex-claude-continuity-v2/README.md)
+shows a corrected asserted target at version 2 alongside unknown captured
+history, visibly qualified in Claude's actual retrieval context. The runner
+failed a fixed-cardinality assertion and did not run its second service restart.
+The [next attempt](../2026-09-17/native-codex-claude-continuity-v3/README.md)
+failed at Codex shutdown before Claude started. These are preserved partial
+observations, not passing end-to-end native acceptance.
+
 The client now distinguishes an exited service from a live process reaching
 its startup deadline, while preserving capture buffering and an existing
 owner. Six startup cases pass in source and the installed wheel. A separate

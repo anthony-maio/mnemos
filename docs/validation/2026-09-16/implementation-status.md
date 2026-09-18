@@ -11,6 +11,13 @@ outdated. Canonical dedupe preserves explicit authority and source identities,
 and related-forget review still includes captured copies. All 68 focused
 regressions pass. This repairs evidence labeling; it does not suppress old
 mentions, migrate existing records, or prove native answer selection.
+The [native qualification observation](../2026-09-17/native-codex-claude-continuity-v2/README.md)
+returned the corrected target asserted at version 2 and captured history marked
+unknown with the qualifier visible in Claude's actual context. That runner
+failed a fixed two-old-mentions assertion after receiving one, before its second
+service restart. A [revised rerun](../2026-09-17/native-codex-claude-continuity-v3/README.md)
+then failed during Codex shutdown before reaching Claude. Both reports remain
+failed; the earlier observation is narrower than end-to-end acceptance.
 
 The [native Codex-to-Claude continuity check](../2026-09-17/native-codex-claude-continuity-v1/README.md)
 now proves an actual Codex store/consolidate call, Claude retrieval after service

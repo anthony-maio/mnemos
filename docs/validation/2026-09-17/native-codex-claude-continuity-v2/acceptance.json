@@ -1,0 +1,110 @@
+{
+  "source_commit": "6442044750d45ce49c3d846de9a5dd24ad607d74",
+  "bounded_native_codex_teach": "passed",
+  "native_claude_recall_after_service_restart": "passed",
+  "native_claude_correct_same_id_and_recall_version_2": "passed",
+  "corrected_target_present_after_independent_sqlite_reopen": "passed",
+  "correction_survives_second_service_restart": "not_run",
+  "foreign_canary_excluded_from_both_native_claude_queries": "passed",
+  "retrieved_context_free_of_old_value": "failed",
+  "native_runner_status": "failed",
+  "native_runner_failure": "Expected two old-value mentions; actual corrected retrieval contained one.",
+  "captured_history_explicitly_qualified_in_native_context": "observed",
+  "captured_rows_remain_unknown_after_independent_reopen": "passed",
+  "captured_rows_after_close": [
+    {
+      "id": "c00acc7d-bd27-4792-86eb-63a27b8eb408",
+      "content": "Use only mnemos_retrieve. Query the project continuity convention for release labels, current_scope project and allowed_scopes project. Report the retrieved fact. Do not call any other tool.",
+      "version": 1,
+      "metadata": "{\"user_profile_id\": \"native-codex-claude-continuity-v2\", \"project_id\": \"120e6725-38bf-4f9f-8235-65baacf50dd1\", \"workspace_id\": null, \"session_id\": \"f45d027b-74c2-49db-83b7-474e0c8ff502\", \"host\": \"claude-code\", \"scope\": \"project\", \"scope_id\": \"120e6725-38bf-4f9f-8235-65baacf50dd1\", \"source\": \"captured_passthrough\", \"source_roles\": [\"user\"], \"source_event_ids\": [\"7a231c6329a73a36eb9b96481c4dda404244e6703733cce2d12c27c4b48ca2ee\"], \"encoding_diagnostics\": {\"surprisal_score\": null, \"surprisal_status\": \"disabled\", \"prediction\": null, \"prediction_mode\": \"disabled\", \"threshold\": 0.3}, \"assertion_status\": \"unknown\", \"cognitive_state_status\": \"provider_unavailable\"}"
+    },
+    {
+      "id": "52206279-8d43-4f5e-8744-6876e86de819",
+      "content": "Assistant reported: Here is the retrieved fact:\n\n---\n\n**Fact ID:** `83a60b79-194a-40fa-bde5-c013ff35a5f8` (version 1)\n**Scope:** project\n**Status:** asserted\n**Content:**\n\n> **The project continuity convention is use cedar-otter for release labels.**\n\n---\n\nThis fact was stored at the project scope and is the top-scoring, asserted result for this query. The release label convention for this project is **cedar-otter**.",
+      "version": 1,
+      "metadata": "{\"user_profile_id\": \"native-codex-claude-continuity-v2\", \"project_id\": \"120e6725-38bf-4f9f-8235-65baacf50dd1\", \"workspace_id\": null, \"session_id\": \"f45d027b-74c2-49db-83b7-474e0c8ff502\", \"host\": \"claude-code\", \"scope\": \"project\", \"scope_id\": \"120e6725-38bf-4f9f-8235-65baacf50dd1\", \"source\": \"captured_passthrough\", \"source_roles\": [\"assistant\"], \"source_event_ids\": [\"b39a235e8e2cbb3a029b6b861138e5c623fde9d82bff9279f55af9da2b86149c\"], \"encoding_diagnostics\": {\"surprisal_score\": null, \"surprisal_status\": \"disabled\", \"prediction\": null, \"prediction_mode\": \"disabled\", \"threshold\": 0.3}, \"assertion_status\": \"unknown\", \"cognitive_state_status\": \"provider_unavailable\"}"
+    }
+  ],
+  "stale_context": [
+    {
+      "id": "52206279-8d43-4f5e-8744-6876e86de819",
+      "version": 1,
+      "content": "Assistant reported: Here is the retrieved fact:\n\n---\n\n**Fact ID:** `83a60b79-194a-40fa-bde5-c013ff35a5f8` (version 1)\n**Scope:** project\n**Status:** asserted\n**Content:**\n\n> **The project continuity convention is use cedar-otter for release labels.**\n\n---\n\nThis fact was stored at the project scope and is the top-scoring, asserted result for this query. The release label convention for this project is **cedar-otter**.",
+      "assertion_status": "unknown",
+      "sources": [
+        {
+          "created_at": "2026-09-18T00:49:50.209134Z",
+          "evidence_id": "707f1512-c338-4019-aafc-53f4ce260c5a",
+          "excerpt": "Here is the retrieved fact:\n\n---\n\n**Fact ID:** `83a60b79-194a-40fa-bde5-c013ff35a5f8` (version 1)\n**Scope:** project\n**Status:** asserted\n**Content:**\n\n> **The project continuity convention is use cedar-otter for release labels.**\n\n---\n\nThis fact was stored at the project scope and is the top-scoring, asserted result for this query. The release label convention for this project is **cedar-otter**.",
+          "fact_id": "52206279-8d43-4f5e-8744-6876e86de819",
+          "original_source_status": "retained_locally",
+          "source_event_id": "b39a235e8e2cbb3a029b6b861138e5c623fde9d82bff9279f55af9da2b86149c",
+          "source_ref": "64f70002-346b-43ae-ad0a-1100f03a639a"
+        }
+      ]
+    }
+  ],
+  "codex_process": {
+    "returncode": 3221225477,
+    "timed_out": false,
+    "elapsed_ms": 133313.6
+  },
+  "codex_exit_hex": "0xc0000005",
+  "claude_capture_status": "degraded",
+  "target_row_after_close": {
+    "id": "83a60b79-194a-40fa-bde5-c013ff35a5f8",
+    "content": "The project continuity convention is use maple-heron for release labels.",
+    "version": 2,
+    "metadata": "{\"user_profile_id\": \"native-codex-claude-continuity-v2\", \"project_id\": \"120e6725-38bf-4f9f-8235-65baacf50dd1\", \"workspace_id\": null, \"session_id\": \"native-crosshost-claude\", \"host\": \"claude-code\", \"scope\": \"project\", \"scope_id\": \"120e6725-38bf-4f9f-8235-65baacf50dd1\", \"source\": \"explicit_correction\", \"source_roles\": [\"user\"], \"source_event_ids\": [\"b15f30496789781f75d319385c364e4de087d0da1a2a7d0359de3fc9138e2e81\"], \"encoding_diagnostics\": {}, \"assertion_status\": \"asserted\", \"cognitive_state_status\": \"provider_unavailable\", \"previous_content\": \"The project continuity convention is use cedar-otter for release labels.\"}"
+  },
+  "target_evidence": [
+    {
+      "evidence_id": "9da12d84-e889-4b8f-a47a-81e42b7b8fab",
+      "fact_id": "83a60b79-194a-40fa-bde5-c013ff35a5f8",
+      "source_event_id": "2a8a2b1ad60f8ff54148be482ffb9390b3f52e27fc22da1cab770ce8990507de",
+      "excerpt": "The project continuity convention is use cedar-otter for release labels.",
+      "source_ref": null,
+      "created_at": "2026-09-18T00:48:55.481269+00:00"
+    },
+    {
+      "evidence_id": "8b4c42c2-5e94-4b63-bc98-726e98a53e33",
+      "fact_id": "83a60b79-194a-40fa-bde5-c013ff35a5f8",
+      "source_event_id": "b15f30496789781f75d319385c364e4de087d0da1a2a7d0359de3fc9138e2e81",
+      "excerpt": "The project continuity convention is use maple-heron for release labels.",
+      "source_ref": "native-crosshost-correction",
+      "created_at": "2026-09-18T00:49:50.220441+00:00"
+    }
+  ],
+  "native_store_source_event": {
+    "id": "2a8a2b1ad60f8ff54148be482ffb9390b3f52e27fc22da1cab770ce8990507de",
+    "content": "The project continuity convention is use cedar-otter for release labels.",
+    "source": "codex",
+    "source_event_id": "mcp:357307135daa40be956503e45deb13a5",
+    "scope": "project",
+    "scope_id": "120e6725-38bf-4f9f-8235-65baacf50dd1",
+    "metadata": "{\"user_profile_id\": \"native-codex-claude-continuity-v2\", \"project_id\": \"120e6725-38bf-4f9f-8235-65baacf50dd1\", \"workspace_id\": null, \"session_id\": \"7db463cf-d59c-48d9-ba8f-76e5f8638b56\", \"host\": \"codex\", \"scope\": \"project\", \"scope_id\": \"120e6725-38bf-4f9f-8235-65baacf50dd1\", \"source_event_id\": \"mcp:357307135daa40be956503e45deb13a5\", \"source_ref\": null, \"source_kind\": \"explicit_remember\", \"explicit_remember\": true, \"identity_status\": \"normal\"}"
+  },
+  "target_revisions": [
+    {
+      "fact_id": "83a60b79-194a-40fa-bde5-c013ff35a5f8",
+      "version": 1,
+      "content": "The project continuity convention is use cedar-otter for release labels."
+    }
+  ],
+  "helpers": {
+    "native_codex_interactive_utf8_v1.py": "6f91aaef76ff619d38e5229f93697796b5fbfbcf86bcc87a78e72062f4b7dd0b",
+    "native_claude_lifecycle_v17.py": "85940cccb99d46f7b56a6184d912495831f66c3933f0b0fc03cdf36217691342",
+    "native_codex_claude_continuity_v2.py": "183b774d31f31d47c4208750a5a71ce1847e56ccfa4943bcfb28c7c8139ddb65",
+    "native_codex_retrieve_v2.py": "20f909d8c2d28934c8d47763558b7f9bf08eb6d848de9a1e6bce8d2f7f3326bb",
+    "native_codex_lifecycle_v3.py": "7b87f5817dacae01c0a16918435ff8a4af1c1ecaaba00a9317ba7f16c8be5814",
+    "native_codex_generated_v8.py": "dd9ebe7480fa5a172bb41135a4690baf94d2c585f5357a77f17265e7acb58b12"
+  },
+  "limits": [
+    "All modules disabled; deterministic fixture vectors and unavailable cognition. No extraction or module-quality claim.",
+    "Old conversation values remain in retrieved context. Version-2 target correctness is narrower than stale-context consistency.",
+    "Codex reads corrected value, native cross-host forget/replay, Hermes, and full capture are not yet verified.",
+    "Codex exited nonzero after /exit; not a clean shutdown. Earlier timeout evidence remains valid.",
+    "Codex Stop hook timed out after three seconds in the interactive UI; complete capture remains open.",
+    "The runner failed its fixed two-old-mentions assertion. It did not reach the second service restart; report remains failed."
+  ]
+}
