@@ -2626,6 +2626,7 @@ class SQLiteStore(MemoryStore):
             if not processed_event_ids or decision not in {
                 "no_durable_facts",
                 "surprisal_filtered",
+                "length_noise_filtered",
                 "suppressed",
                 "identity_pending",
             }:

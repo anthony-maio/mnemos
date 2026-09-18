@@ -144,8 +144,8 @@ T18 still requires evidence beyond these mechanism checks:
 - Complete and review the real-model lifecycle matrix, including failures and
   paired uncertainty. Preserve its singleton-candidate limitations when
   interpreting graph and affective results.
-- Compare surprise filtering with an actually applied length/noise filter.
-  The existing shadow decisions do not measure downstream retention,
+- Execute and review the separate applied encoding comparison described below.
+  The existing lifecycle shadow decisions do not measure downstream retention,
   retrieval, storage, or token effects of applying that filter.
 - Supply the planned lexical/hybrid comparison on identical scoped data and
   budgets. The seven named profiles do not include a separate lexical/hybrid
@@ -157,3 +157,24 @@ T18 still requires evidence beyond these mechanism checks:
 Additional comparators or utility studies need their own frozen protocol and
 artifacts. Do not add them to, tune, or reinterpret the existing frozen run to
 obtain a desired lift.
+
+## Applied encoding comparison
+
+The separate [encoding comparison protocol](../../docs/plans/2026-09-18-encoding-comparison-protocol-v1.md)
+compares the full pipeline, the same pipeline with surprisal disabled, and a
+length/noise replacement with the other four modules unchanged. The replacement
+applies the existing 50-character rule inside the durable extraction job.
+Raw capture remains intact, explicit lifecycle actions bypass the filter, and
+completed jobs record the actual policy decision. Missing decisions stay null.
+
+Prepare the three-arm experiment offline from a frozen source checkout:
+
+```text
+python -m benchmarks.local_memory.encoding_comparator_run --model qwen3.5:9b --think false --prepare-only --output-dir artifacts/encoding-preparation --work-dir artifacts/encoding-preparation-work
+```
+
+Preparation writes `NOT RUN` artifacts with dataset, policy, protocol, and code
+bindings. It makes no model calls. Real execution needs separate fresh output
+and work directories, live model identity checks, and the existing evaluation
+queue to finish. This comparison reuses the v3 labels; it is not a newly unseen
+dataset. Passing offline tests or preparing artifacts does not close T18.

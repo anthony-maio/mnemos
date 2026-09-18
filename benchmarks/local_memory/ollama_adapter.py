@@ -24,6 +24,7 @@ from pydantic import ValidationError
 from .contracts import FactRecord, QueryRecord, SessionScenario, SourceEvent, StatePair
 from .harness import ExperimentProfile, RunObservation
 from mnemos.retrieval import score_candidate
+from mnemos.memory_service import LocalMemoryService
 from mnemos.scopes import ScopeContext, scope_allows
 from mnemos.types import Interaction, MemoryChunk
 from mnemos.runtime import embedding_task_contract
@@ -1546,8 +1547,7 @@ class OllamaEvaluatorAdapter:
                     return fact.scope
         return "project"
 
-    @staticmethod
-    def _close_service(service: Any) -> None:
+    def _close_service(self, service: Any) -> None:
         store = getattr(getattr(service, "engine", None), "store", None)
         close = getattr(store, "close", None)
         if callable(close):
@@ -1619,6 +1619,7 @@ def make_ollama_service_factory(
     query_prefix: str = "",
     document_prefix: str = "",
     symmetric_prefix: str = "",
+    service_type: type[LocalMemoryService] = LocalMemoryService,
 ) -> ServiceFactory:
     """Build a profile-aware Ollama service factory over one SQLite file.
 
@@ -1638,7 +1639,6 @@ def make_ollama_service_factory(
     def factory(profile: ExperimentProfile, run_key: str | None = None) -> Any:
         from mnemos.config import MnemosConfig
         from mnemos.engine import MnemosEngine
-        from mnemos.memory_service import LocalMemoryService
         from mnemos.utils.embeddings import OllamaEmbeddingProvider
         from mnemos.utils.llm import OllamaProvider
         from mnemos.utils.storage import SQLiteStore
@@ -1768,7 +1768,7 @@ def make_ollama_service_factory(
             scope_registry=registry,
             require_scope_context=True,
         )
-        service = LocalMemoryService(engine, registry)
+        service = service_type(engine, registry)
         processor = service.maintenance.processor
 
         async def traced_processor(job: Any) -> None:

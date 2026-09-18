@@ -340,6 +340,36 @@ class LocalMemoryService:
             "fact_eligible": event.identity_status == "normal",
         }
 
+    async def _automatic_encoding_gate(
+        self, interaction: Interaction
+    ) -> tuple[str | None, dict[str, Any]]:
+        """Return an automatic encoding rejection and its durable diagnostics.
+
+        Capture, scope validation, and explicit writes remain outside this
+        decision. Benchmark services can substitute a comparison policy here
+        while retaining the same extraction and transactional commit path.
+        """
+        surprise, status, prediction, mode = (
+            await self.engine.surprisal_gate._compute_surprisal(interaction)
+            if self.engine.config.modules.surprisal
+            else (None, "disabled", None, "disabled")
+        )
+        diagnostics = {
+            "surprisal_score": surprise,
+            "surprisal_status": status,
+            "prediction": prediction,
+            "prediction_mode": mode,
+            "threshold": self.engine.config.surprisal.threshold,
+        }
+        if (
+            self.engine.config.modules.surprisal
+            and surprise is None
+            and self.engine.config.surprisal.threshold > 0
+        ):
+            raise ConnectionError("Surprisal prediction is unavailable")
+        rejected = surprise is not None and surprise <= self.engine.config.surprisal.threshold
+        return "surprisal_filtered" if rejected else None, diagnostics
+
     async def process_job(self, job: DurableJob) -> None:
         """Model work happens outside the transaction that accepts its results."""
         if job.kind == "reconsolidate_review":
@@ -393,7 +423,7 @@ class LocalMemoryService:
             timestamp=event.occurred_at,
             metadata=event.metadata,
         )
-        diagnostics = {}
+        diagnostics: dict[str, Any] = {}
         decision = "facts"
         captured_passthrough = job.kind == "extract" and not self.engine.config.modules.sleep
         if job.kind in {"remember", "correct"}:
@@ -407,27 +437,10 @@ class LocalMemoryService:
                 )
             ]
         elif job.kind == "extract":
-            surprise, status, prediction, mode = (
-                await self.engine.surprisal_gate._compute_surprisal(interaction)
-                if self.engine.config.modules.surprisal
-                else (None, "disabled", None, "disabled")
-            )
-            diagnostics = {
-                "surprisal_score": surprise,
-                "surprisal_status": status,
-                "prediction": prediction,
-                "prediction_mode": mode,
-                "threshold": self.engine.config.surprisal.threshold,
-            }
-            if (
-                self.engine.config.modules.surprisal
-                and surprise is None
-                and self.engine.config.surprisal.threshold > 0
-            ):
-                raise ConnectionError("Surprisal prediction is unavailable")
-            if surprise is not None and surprise <= self.engine.config.surprisal.threshold:
+            rejected, diagnostics = await self._automatic_encoding_gate(interaction)
+            if rejected is not None:
                 proposals = []
-                decision = "surprisal_filtered"
+                decision = rejected
             else:
 
                 def same_partition(chunk: MemoryChunk) -> bool:
@@ -595,7 +608,7 @@ class LocalMemoryService:
             processed_event_ids=[event.id],
             expected_version=job.payload.get("expected_version"),
             expected_versions=expected_versions,
-            result={"decision": decision},
+            result={"decision": decision, "encoding_diagnostics": diagnostics},
         )
         if not committed:
             raise RuntimeError("Job lease expired before results could be committed")
