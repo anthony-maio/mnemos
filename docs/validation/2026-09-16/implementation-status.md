@@ -16,8 +16,8 @@ mutation, cross-host, and complete conversation coverage remain open.
 The current adapter also reports degraded capture when a Codex capture hook
 has no usable text. Nine regression cases failed before this change; all ten
 new cases and related adapter/configuration checks now pass (50 passed, two
-platform skips). This repairs a reporting defect. Whether missing Stop text
-caused the latest native capture gap remains unproven. See the
+platform skips). This repairs a separate reporting defect; the later Unicode
+failure and native rerun are recorded above. See the
 [coverage regression](../2026-09-17/codex-capture-coverage-v1/README.md).
 
 Source `d58e082` repairs an argument mismatch observed in a native Codex
