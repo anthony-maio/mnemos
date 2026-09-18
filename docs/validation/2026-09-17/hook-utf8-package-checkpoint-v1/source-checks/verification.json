@@ -1,0 +1,127 @@
+{
+  "source_commit": "1068a629887ef9a5d267a19ead6eb64b2f125757",
+  "source_checkout": "C:\\Users\\Ant\\AppData\\Local\\Temp\\mnemos-source-hook-utf8-v1",
+  "status": "passed",
+  "started_at": "2026-09-17T23:55:24.852916+00:00",
+  "checks": [
+    {
+      "name": "pytest",
+      "command": [
+        "D:\\Development\\mnemos\\mnemos\\.worktrees\\functional-local-memory\\.venv\\Scripts\\python.exe",
+        "-m",
+        "pytest",
+        "-q",
+        "--basetemp",
+        "C:\\Users\\Ant\\AppData\\Local\\Temp\\mnemos-check-fixtures-hook-utf8-v1\\pytest",
+        "--junitxml",
+        "C:\\Users\\Ant\\AppData\\Local\\Temp\\mnemos-package-checks-hook-utf8-v1\\pytest.xml"
+      ],
+      "status": "passed",
+      "started_at": "2026-09-17T23:55:24.854628+00:00",
+      "exit_code": 0,
+      "finished_at": "2026-09-17T23:57:48.828509+00:00",
+      "counts": {
+        "tests": 948,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 4
+      }
+    },
+    {
+      "name": "black",
+      "command": [
+        "D:\\Development\\mnemos\\mnemos\\.worktrees\\functional-local-memory\\.venv\\Scripts\\python.exe",
+        "-m",
+        "black",
+        "--check",
+        "."
+      ],
+      "status": "passed",
+      "started_at": "2026-09-17T23:57:48.837907+00:00",
+      "exit_code": 0,
+      "finished_at": "2026-09-17T23:57:54.801069+00:00"
+    },
+    {
+      "name": "mypy",
+      "command": [
+        "D:\\Development\\mnemos\\mnemos\\.worktrees\\functional-local-memory\\.venv\\compat-py310\\Scripts\\python.exe",
+        "-m",
+        "mypy",
+        "."
+      ],
+      "status": "passed",
+      "started_at": "2026-09-17T23:57:54.802148+00:00",
+      "exit_code": 0,
+      "finished_at": "2026-09-17T23:58:05.494701+00:00"
+    },
+    {
+      "name": "javascript",
+      "command": [
+        "node",
+        "--check",
+        "mnemos/ui/app.js"
+      ],
+      "status": "passed",
+      "started_at": "2026-09-17T23:58:05.495998+00:00",
+      "exit_code": 0,
+      "finished_at": "2026-09-17T23:58:05.575635+00:00"
+    },
+    {
+      "name": "build",
+      "command": [
+        "D:\\Development\\mnemos\\mnemos\\.worktrees\\functional-local-memory\\.venv\\Scripts\\python.exe",
+        "-m",
+        "build",
+        "--outdir",
+        "C:\\Users\\Ant\\AppData\\Local\\Temp\\mnemos-package-checks-hook-utf8-v1\\dist"
+      ],
+      "status": "passed",
+      "started_at": "2026-09-17T23:58:05.577259+00:00",
+      "exit_code": 0,
+      "finished_at": "2026-09-17T23:58:52.334562+00:00"
+    },
+    {
+      "name": "twine",
+      "command": [
+        "D:\\Development\\mnemos\\mnemos\\.worktrees\\functional-local-memory\\.venv\\Scripts\\python.exe",
+        "-m",
+        "twine",
+        "check",
+        "C:\\Users\\Ant\\AppData\\Local\\Temp\\mnemos-package-checks-hook-utf8-v1\\dist\\mnemos_memory-0.7.0-py3-none-any.whl",
+        "C:\\Users\\Ant\\AppData\\Local\\Temp\\mnemos-package-checks-hook-utf8-v1\\dist\\mnemos_memory-0.7.0.tar.gz"
+      ],
+      "exit_code": 0,
+      "status": "passed"
+    }
+  ],
+  "runner_sha256": "7b241853adab66b8fd1e0c570d00462a216ffe21dca554fb95ae522ecbedc3ef",
+  "temporary_storage": {
+    "path": "C:\\Users\\Ant\\AppData\\Local\\Temp\\mnemos-check-fixtures-hook-utf8-v1",
+    "git_discovery_exit_code": 128,
+    "git_discovery_stderr": "fatal: not a git repository (or any of the parent directories): .git"
+  },
+  "website_input": {
+    "path": "D:\\Development\\mnemos\\web\\index.html",
+    "sha256_before": "f71a4cb5b7004f9ba584f45a03dab61cfc608fed377b1e07b46e2f2bc0b77d4d",
+    "sha256_after": "f71a4cb5b7004f9ba584f45a03dab61cfc608fed377b1e07b46e2f2bc0b77d4d"
+  },
+  "environment_overrides": {
+    "TEMP": "C:\\Users\\Ant\\AppData\\Local\\Temp\\mnemos-check-fixtures-hook-utf8-v1",
+    "TMP": "C:\\Users\\Ant\\AppData\\Local\\Temp\\mnemos-check-fixtures-hook-utf8-v1",
+    "TMPDIR": "C:\\Users\\Ant\\AppData\\Local\\Temp\\mnemos-check-fixtures-hook-utf8-v1",
+    "MNEMOS_WEBSITE_INDEX": "D:\\Development\\mnemos\\web\\index.html"
+  },
+  "updated_at": "2026-09-17T23:58:53.414764+00:00",
+  "artifacts": [
+    {
+      "file": "C:\\Users\\Ant\\AppData\\Local\\Temp\\mnemos-package-checks-hook-utf8-v1\\dist\\mnemos_memory-0.7.0-py3-none-any.whl",
+      "bytes": 283539,
+      "sha256": "db22872b13a54e2ba70690f32dab5a010db894116a1584a338816a0acd83162a"
+    },
+    {
+      "file": "C:\\Users\\Ant\\AppData\\Local\\Temp\\mnemos-package-checks-hook-utf8-v1\\dist\\mnemos_memory-0.7.0.tar.gz",
+      "bytes": 18755585,
+      "sha256": "8039585968a7e13fb2d5fda74e8546c0c6242430be4efb8c50df55d66a598480"
+    }
+  ]
+}
