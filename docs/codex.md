@@ -66,4 +66,11 @@ returned the scoped seed through an approved MCP call using installed source
 records the MCP child exiting before the parent watchdog and a separate clean
 stdio EOF control. Neither result closes complete conversation capture.
 
+The [UTF-8 native checkpoint](validation/2026-09-17/native-codex-utf8-v1/README.md)
+uses installed source `1068a62`. Generated hooks captured both the user prompt
+and the exact assistant response with Unicode quotes, retained after service
+closure and database reopen. Its actual scoped MCP read also passed. The
+parent shutdown still timed out; native mutation and cross-host acceptance
+remain open.
+
 Optional Codex Automations can schedule maintenance. They do not prove lifecycle capture and are unnecessary for the built-in maintenance scheduler.

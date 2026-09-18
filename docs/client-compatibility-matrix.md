@@ -5,7 +5,7 @@ Updated September 17, 2026 for the unreleased functional-local-memory worktree. 
 | Client | Implemented integration | Observed evidence | Native conversation acceptance |
 | --- | --- | --- | --- |
 | Claude Code | Command hooks, transcript deltas, context injection, MCP tools; provisional missing-ID capture excluded from extraction | Installed source dedfcfd completed native correction, consolidation, retrieval, and forgetting through the actual 2.1.191 plugin, with restart and reconstructed Stop replay checks | All 15 bounded fact-lifecycle criteria passed in v18 with the new startup default. Degraded capture keeps the overall result partial. Extraction quality and complete capture acceptance remain open |
-| Codex CLI | Command lifecycle hooks, supported context output, MCP tools | Native 0.146.0 retrieved the seeded project fact through an approved MCP call against installed source30eaf42, excluding the foreign project fact. Earlier source20f separately demonstrated hook recall and both-role capture across restart | Bounded MCP retrieval passes with fixture vectors. The latest process timed out during shutdown and retained only user capture. Complete capture, correction/forget, and cross-host lifecycle acceptance remain open |
+| Codex CLI | Command lifecycle hooks, supported context output, MCP tools | Native 0.146.0 with installed source1068a62 retrieved the project seed through actual MCP and durably captured the user prompt and Unicode assistant response through generated hooks. Earlier source20f separately demonstrated restart capture | Bounded scoped retrieval and Unicode final-response capture pass with fixture vectors. Shutdown still times out. Native correction/forget and cross-host lifecycle acceptance remain open |
 | Codex Desktop | Same command hooks and MCP fallback | Shared adapter coverage; no current desktop conversation evidence | Pending |
 | Hermes Agent | Optional MemoryProvider and explicit Windows/WSL bridge | Installed 0.21.3 API calls and actual WSL -> Windows authenticated transport. Sourcec805 passed full verification and discovery through the actual wheel entry point in WSL | Model turn has not completed; cross-host native recall remains open |
 | Generic MCP stdio | MCP server as service client | Subprocess capture, job status, inspect, retrieve, correct, forget | Host-specific acceptance pending |
@@ -71,6 +71,17 @@ later timed out during shutdown; its original failed report is preserved.
 User capture was committed, but assistant capture was absent. This closes
 bounded native MCP retrieval only, with deterministic fixture vectors and no
 model-quality claim. It does not isolate the cause of earlier cancellations.
+
+The subsequent [hook-payload diagnostic](validation/2026-09-17/native-codex-hook-payload-v5/README.md)
+observed nonempty Stop text and a valid turn ID, followed by UnicodeEncodeError
+and no assistant capture. A Windows-style decoder regression reproduced the
+failure in both host adapters. Source `1068a62` explicitly decodes hook JSON
+as UTF-8. Its [native rerun](validation/2026-09-17/native-codex-utf8-v1/README.md)
+used generated hooks without a forwarding wrapper and captured the exact
+Unicode assistant response, alongside the user prompt. Both events survived
+service closure and database reopen. Actual MCP retrieval also passed; the
+parent shutdown watchdog still expired. This is bounded final-response
+capture evidence, not a full native mutation or cross-host workflow.
 
 The [native provisional capture record](validation/2026-09-16/provisional-native-claude-v8/README.md)
 preserves the original duplicate gate alongside the separate identity result.

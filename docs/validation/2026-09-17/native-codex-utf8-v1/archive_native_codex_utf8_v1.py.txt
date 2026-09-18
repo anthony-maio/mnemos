@@ -1,0 +1,124 @@
+"""Verify and preserve native scoped retrieval and Unicode capture evidence."""
+import hashlib
+import json
+from pathlib import Path
+import shutil
+import sqlite3
+
+def sha(raw):
+    return hashlib.sha256(raw).hexdigest()
+
+report_path = Path('C:/Users/Ant/AppData/Local/Temp/mnemos-codex-interactive-utf8-v1/report.json')
+report = json.loads(report_path.read_text(encoding='utf-8'))
+fixture = Path(report['fixture_path'])
+archive = Path('docs/validation/2026-09-17/native-codex-utf8-v1')
+assert not archive.exists()
+assert report['source_commit'] == '1068a629887ef9a5d267a19ead6eb64b2f125757'
+assert report['wheel_sha256'] == 'db22872b13a54e2ba70690f32dab5a010db894116a1584a338816a0acd83162a'
+assert report['cleanup']['auth_copy_removed'] and report['cleanup']['descriptor_absent']
+assert not report['cleanup']['errors']
+assert not (fixture/'runtime.json').exists()
+assert not (fixture/'codex-home/.codex/auth.json').exists()
+sessions = list((fixture/'codex-home/.codex/sessions').rglob('*.jsonl'))
+assert len(sessions) == 1
+source = sessions[0].read_bytes()
+rows = [(n, line, json.loads(line)) for n, line in enumerate(source.splitlines(keepends=True), 1)]
+mcp = [row for row in rows if row[2].get('payload', {}).get('type') == 'mcp_tool_call_end'
+       and row[2]['payload'].get('invocation', {}).get('server') == 'mnemos']
+assert len(mcp) == 1
+event = mcp[0][2]['payload']
+assert event['invocation']['tool'] == 'mnemos_retrieve'
+assert event['invocation']['arguments']['allowed_scopes'] == ['project']
+assert event['invocation']['arguments']['current_scope'] == 'project'
+assert set(event['result']) == {'Ok'}
+result = event['result']['Ok']
+assert result['isError'] is False
+payload = json.loads(result['content'][0]['text'])
+assert payload == json.loads(result['structuredContent']['result'])
+assert len(payload['facts']) == 1
+seed = report['seed']
+fact = payload['facts'][0]
+assert fact['id'] == seed['positive_fact_id'] and fact['version'] == seed['positive_version']
+assert fact['scope'] == 'project' and fact['scope_id'] == seed['project_id']
+assert sha(fact['content'].encode()) == seed['positive_content_sha256']
+assert seed['foreign_fact_id'] not in json.dumps(payload)
+assert report['fact_access_delta']['foreign'] == 0
+captures = [r for r in report['dispatch_trace'] if r['operation'] == 'capture']
+assert len(captures) == 2 and all(r['result_status'] == 'committed' for r in captures)
+db = fixture/'memory.sqlite'
+with sqlite3.connect(db.as_uri()+'?mode=ro', uri=True) as connection:
+    connection.row_factory = sqlite3.Row
+    episodes = [dict(r) for r in connection.execute(
+        "select id,role,content,scope,scope_id,source,source_event_id,session_id,status from episodic_events where source_event_id like 'codex:%'")]
+assert len(episodes) == 2 and {r['role'] for r in episodes} == {'user', 'assistant'}
+assert all(r['scope_id'] == seed['project_id'] for r in episodes)
+assistant = next(r for r in episodes if r['role'] == 'assistant')
+expected = '\u201cNative interactive retrieval fixture marker alpha.\u201d'
+assert assistant['content'] == expected
+def message_text(row):
+    p = row[2].get('payload', {})
+    if row[2].get('type') != 'response_item' or p.get('type') != 'message' or p.get('role') != 'assistant':
+        return None
+    return ''.join(c.get('text', '') for c in p.get('content', []) if c.get('type') == 'output_text')
+messages = [r for r in rows if message_text(r) == expected]
+assert len(messages) == 1
+helpers = {
+    'native_codex_interactive_utf8_v1.py': report['runner_sha256'],
+    'native_codex_retrieve_v2.py': report['helper_hashes']['retrieve_v2'],
+    'native_codex_lifecycle_v3.py': report['helper_hashes']['lifecycle_v3'],
+    'native_codex_generated_v8.py': report['helper_hashes']['generated_v8'],
+}
+for name, digest in helpers.items():
+    assert sha((Path('.venv')/name).read_bytes()) == digest
+archive.mkdir(parents=True)
+shutil.copyfile(report_path, archive/'report.json')
+for name in helpers:
+    shutil.copyfile(Path('.venv')/name, archive/(name+'.txt'))
+shutil.copyfile(__file__, archive/'archive_native_codex_utf8_v1.py.txt')
+selected = sorted(mcp+messages, key=lambda r:r[0])
+(archive/'selected-native-events.jsonl').write_bytes(b''.join(r[1] for r in selected))
+for episode in episodes:
+    episode['content_sha256'] = sha(episode.pop('content').encode())
+acceptance = {
+    'bounded_native_mcp_retrieval':'passed', 'native_unicode_capture':'passed',
+    'source_commit':report['source_commit'], 'wheel_sha256':report['wheel_sha256'],
+    'process_status':report['status'], 'shutdown_timed_out':report['timed_out'],
+    'episodes_after_service_close_and_database_reopen':episodes,
+    'assistant_text_matches_native_response':True,
+    'assistant_contains_exact_curly_quote_codepoints':True,
+    'selected_native_line_numbers':[r[0] for r in selected],
+    'full_session_sha256':sha(source), 'helpers':helpers,
+    'limits':['synthetic fixture, disabled modules, unavailable cognition',
+              'no native correction/forget or cross-host acceptance',
+              'database reopen is not a second native host session',
+              'original process failure remains separate from capture and retrieval'],
+}
+(archive/'acceptance.json').write_text(json.dumps(acceptance,indent=2)+'\n',encoding='utf-8')
+(archive/'.gitattributes').write_text('* -text\n*.jsonl -whitespace\n',encoding='utf-8')
+(archive/'README.md').write_text('''# Native Codex UTF-8 capture checkpoint
+
+Installed source1068a62 returned the project seed through an approved native
+MCP call and captured both the user prompt and assistant answer through its
+generated hooks. No forwarding wrapper or encoding environment override was
+used. The assistant answer contains exact U+201C and U+201D quotes and matches
+the retained native response byte-for-byte when encoded as UTF-8. Both events
+were present after the service closed and a separate SQLite connection reopened
+the database. The foreign seed had no access-count change.
+
+The parent process again reached the 180-second shutdown watchdog. Its original
+failed report is preserved. This verifies bounded Unicode capture and scoped
+MCP retrieval; it does not close shutdown, native correction/forget, cross-host,
+or model-quality acceptance. The fixture disabled modules and used deterministic
+vectors with unavailable cognition. Database reopen is not a second native
+host session.
+
+Only the actual MCP completion and matching assistant response records are
+retained from the native session. Captured content is represented by hashes in
+the acceptance record. The private database, full session, authentication,
+and unrelated host logs are excluded. Cleanup was checked before archiving.
+''',encoding='utf-8')
+index={'files':{}}
+for p in sorted(archive.iterdir()):
+    raw=p.read_bytes();index['files'][p.name]={'bytes':len(raw),'sha256':sha(raw)}
+(archive/'evidence-index.json').write_text(json.dumps(index,indent=2)+'\n',encoding='utf-8')
+print(json.dumps(acceptance))

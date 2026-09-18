@@ -4,6 +4,15 @@ This record covers the unreleased `wt/functional-local-memory` worktree. It
 separates implemented behavior from acceptance evidence. The original task
 boundaries and thresholds remain in the [implementation plan](../../plans/2026-09-16-functional-local-memory.md).
 
+Source `1068a62` repairs non-ASCII capture in both host adapters by decoding
+hook JSON as UTF-8 rather than the Windows stdin locale. Five regressions
+failed before the repair, and 75 related cases pass afterward. The
+[native Codex rerun](../2026-09-17/native-codex-utf8-v1/README.md) captured the
+exact Unicode assistant response and user prompt through generated hooks;
+both were present after service closure and database reopen. Actual scoped
+MCP retrieval passed too. Shutdown still reached its watchdog, and native
+mutation, cross-host, and complete conversation coverage remain open.
+
 The current adapter also reports degraded capture when a Codex capture hook
 has no usable text. Nine regression cases failed before this change; all ten
 new cases and related adapter/configuration checks now pass (50 passed, two
@@ -122,7 +131,7 @@ capture diagnostics and complete lifecycle acceptance remain open.
 | T10 Graph | Persisted mutual top-k links, scope-safe traversal, bounded recovery, insertion-order controls, and capacity diagnostics are implemented and tested. | Structural controls pass. Graph utility and eligible-target coverage are not established by the available evidence. |
 | T11 Forget | Exact fact deletion, suppression, replay protection, inflight handling, restore behavior, and selected related-removal preview/apply are implemented and tested. | Local and installed related-forget checks pass. Native lifecycle remains open. Logical forgetting does not erase external transcripts or historical backups. |
 | T12 Claude Code | Hook capture, transcript deltas, checkpoints, capture-before-recall, identity diagnostics, and replay repair are implemented. | Native v18 on dedfcfd passed all 15 fact-lifecycle criteria with the new startup default, including correction, forgetting, restart, and reconstructed replay. Degraded hook capture keeps the overall result partial. Native extraction and complete capture acceptance remain open. See the [native lifecycle archive](../2026-09-17/native-claude-lifecycle-v18/README.md). |
-| T13 Codex | Generated hook configuration, native payload handling, explicit MCP fallback, and bounded transport checks are implemented. | Generated-config canary and restart/replay evidence pass. Interactive v2 against installed 30eaf42 returned the seeded project fact through actual MCP, excluding the foreign fact. Its shutdown timed out and assistant capture was absent. Complete capture, mutation, and cross-host lifecycle acceptance remain open. See the [interactive read checkpoint](../2026-09-17/native-codex-interactive-v2/README.md). |
+| T13 Codex | Generated hook configuration, UTF-8 payload handling, explicit MCP fallback, and bounded transport checks are implemented. | Installed1068a62 returned the scoped seed through actual MCP and captured both user and Unicode assistant text, retained after service closure and database reopen. Shutdown still timed out. Complete capture, mutation, and cross-host lifecycle acceptance remain open. See the [native UTF-8 checkpoint](../2026-09-17/native-codex-utf8-v1/README.md). |
 | T14 Hermes | Installed provider integration, registry handling, Windows/WSL bridge behavior, and entry-point discovery are implemented and tested. | Installed bridge checks pass. A native model turn has not passed. |
 | T15 UI | Project enable/pause, readiness, facts/history, correction/forget, captured-copy review, job state, and routing review are exposed and covered by API/browser checks. | Local UI and control-plane checks pass. Operational pilot and native-host coverage remain open. |
 | T16 Recovery | Backup, integrity, new-path restore, suppression merge, staged reindex, and activation backup behavior are implemented and tested. | Local recovery contracts pass, including a backup during an active writer transaction. Live data migration remains separately authorization-bound. |
