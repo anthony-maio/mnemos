@@ -4,6 +4,17 @@ This record covers the unreleased `wt/functional-local-memory` worktree. It
 separates implemented behavior from acceptance evidence. The original task
 boundaries and thresholds remain in the [implementation plan](../../plans/2026-09-16-functional-local-memory.md).
 
+The [retrieval strategy checkpoint](../2026-09-18/retrieval-comparison-checkpoint-v1/README.md)
+at `fc72cc2` separates vector, lexical, current hybrid, and full retrieval after
+one full-pipeline ingestion. Each query and strategy gets an identical accepted
+SQLite snapshot with isolated access writes. The 20 new cases cover selection,
+scope, budgets, snapshot integrity, missing evidence, and report validation.
+The frozen source passes 1,105 tests with four skips and all six repository
+checks. Nine adapter cases also pass against the previously verified installed
+wheel, whose package bytes and build hash are unchanged. The separate offline
+preparation remains `NOT RUN`; this does not close real-model comparison,
+module utility, native-host, latency, or pilot gates.
+
 The [applied encoding comparison checkpoint](../2026-09-18/encoding-comparison-checkpoint-v1/README.md)
 at `aefc338` adds the missing length/noise replacement arm alongside full and
 surprisal-disabled controls. The filter runs inside durable extraction jobs,

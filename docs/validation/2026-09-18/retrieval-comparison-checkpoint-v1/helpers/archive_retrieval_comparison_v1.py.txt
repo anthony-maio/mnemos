@@ -1,0 +1,98 @@
+"""Archive the frozen retrieval comparator checks without rewriting evidence."""
+import argparse
+import hashlib
+import json
+from pathlib import Path
+import shutil
+import xml.etree.ElementTree as ET
+
+parser = argparse.ArgumentParser()
+for name in ('source-checks', 'installed-checks', 'preparation', 'preparation-work', 'archive'):
+    parser.add_argument('--' + name, type=Path, required=True)
+args = parser.parse_args()
+root = Path(__file__).resolve().parents[1]
+out = args.archive.resolve()
+
+
+def read(path):
+    return json.loads(path.read_text(encoding='utf-8'))
+
+
+def sha(path):
+    return hashlib.sha256(path.read_bytes()).hexdigest()
+
+
+source = read(args.source_checks / 'verification.json')
+installed = read(args.installed_checks / 'verification.json')
+preparation = read(args.preparation / 'retrieval-comparison.json')
+manifest = read(args.preparation_work / 'manifest.json')
+assert source['status'] == installed['status'] == 'passed'
+assert source['source_commit'] == installed['source_commit']
+assert {c['name'] for c in source['checks']} == {'pytest', 'black', 'mypy', 'javascript', 'build', 'twine'}
+assert all(c['exit_code'] == 0 for c in source['checks'])
+assert installed['installed_files_before'] == installed['installed_files_after']
+assert len(installed['matched_cases']) == 9
+assert installed['source_checks_sha256'] == sha(args.source_checks / 'verification.json')
+assert source['website_input']['sha256_before'] == source['website_input']['sha256_after']
+assert preparation['status'] == manifest['status'] == 'not_run'
+assert preparation['raw_outputs'] == [] and preparation['gates']['real_model'] == 'NOT RUN'
+assert preparation['binding'] == manifest['binding']
+assert set(preparation['strategies']) == {'vector', 'lexical', 'hybrid', 'full'}
+assert preparation['config']['think'] is False
+assert sha(Path(source['source_checkout']) / 'docs/plans/2026-09-18-retrieval-comparison-protocol-v1.md') == manifest['binding']['protocol']['sha256']
+for artifact in source['artifacts']:
+    path = Path(artifact['file'])
+    assert sha(path) == artifact['sha256'] and path.stat().st_size == artifact['bytes']
+cases = list(ET.parse(args.source_checks / 'pytest.xml').getroot().iter('testcase'))
+assert not any(case.find('failure') is not None or case.find('error') is not None for case in cases)
+skips = sum(case.find('skipped') is not None for case in cases)
+passed = len(cases) - skips
+assert passed > 1085
+runner_cases = [case for case in cases if case.attrib.get('classname', '').endswith('test_retrieval_comparison_run')]
+assert runner_cases and all(case.find('skipped') is None for case in runner_cases)
+helpers = ['final_checkpoint_checks_v3.py', 'verify_installed_retrieval_comparison_v1.py']
+assert sha(root / '.venv' / helpers[0]) == source['runner_sha256']
+assert sha(root / '.venv' / helpers[1]) == installed['runner_sha256']
+out.mkdir(parents=True, exist_ok=False)
+for origin, label in ((args.source_checks, 'source-checks'), (args.installed_checks, 'installed-cases'),
+                      (args.preparation, 'preparation'), (args.preparation_work, 'preparation-work')):
+    folder = out / label
+    folder.mkdir()
+    for path in origin.iterdir():
+        if path.is_file() and path.suffix in ('.log', '.json', '.xml'):
+            shutil.copyfile(path, folder / path.name)
+(out / 'helpers').mkdir()
+for name in helpers:
+    shutil.copyfile(root / '.venv' / name, out / 'helpers' / (name + '.txt'))
+shutil.copyfile(__file__, out / 'helpers/archive_retrieval_comparison_v1.py.txt')
+(out / '.gitattributes').write_text('* -text\n*.log -whitespace\n*.xml -whitespace\n*.py.txt -whitespace\n', encoding='utf-8')
+(out / 'README.md').write_text(
+    '# Retrieval strategy comparison checkpoint\n\n'
+    f'Source `{source["source_commit"]}` adds a separate T18 comparison of scoped vector, '
+    'SQLite FTS5 BM25, current hybrid, and full production retrieval. Ingestion runs once with '
+    'the full pipeline; each query uses byte-identical accepted SQLite snapshots with isolated '
+    'access writes. Production memory code and defaults are unchanged.\n\n'
+    f'The frozen source passes {passed:,} tests with {skips} skips, Black, strict mypy, JavaScript '
+    f'syntax, build, and Twine. Nine adapter cases and {len(runner_cases)} runner cases cover '
+    'scope-before-limit behavior, lexical search without embeddings, vector search without FTS, '
+    'budget skipping, production delegation, clone corruption, query isolation, missing results, '
+    'coverage, statistics, offline preparation, and artifact validation. The nine adapter cases '
+    'also pass outside the source checkout against the previously verified installed wheel. '
+    'Case identities match the frozen suite, imports resolve to site-packages, and every '
+    'wheel-owned package file retains its exact bytes before and after testing. Benchmark code '
+    'is copied as a frozen fixture; it is not part of the installed package.\n\n'
+    f'The runtime, packaged resources, and build configuration match `{installed["runtime_commit"]}` '
+    'by Git object identity. The prior wheel and installation evidence remain in the '
+    '[encoding checkpoint](../encoding-comparison-checkpoint-v1/README.md). '
+    f'Installed wheel SHA256: `{installed["wheel_sha256"]}`.\n\n'
+    'The offline preparation requests qwen3.5:9b with think=false and records zero observations. '
+    'It contacts no provider and remains NOT RUN. No real-model comparison, relative-quality '
+    'benefit, GPU acceleration, warm-latency improvement, native-host acceptance, or pilot '
+    'completion is claimed. Lexical ranking has no cosine rejection floor; no-answer tradeoffs '
+    'remain measured outcomes. The original frozen evaluation keeps its original source and '
+    'process. Live configuration, live data, website publication, and releases are untouched.\n',
+    encoding='utf-8')
+index = {'files': {path.relative_to(out).as_posix(): {'bytes': path.stat().st_size, 'sha256': sha(path)}
+                   for path in sorted(out.rglob('*')) if path.is_file()}}
+(out / 'evidence-index.json').write_text(json.dumps(index, indent=2) + '\n', encoding='utf-8')
+print(json.dumps({'passed': passed, 'skipped': skips, 'installed_cases': 9, 'indexed_files': len(index['files'])}))

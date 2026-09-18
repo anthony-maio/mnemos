@@ -4,7 +4,17 @@ Assessment date: September 18, 2026. This covers the unreleased
 functional-local-memory worktree, not the installed public package or website.
 The capability IDs come from the original implementation plan.
 
-The latest [applied encoding comparison checkpoint](../2026-09-18/encoding-comparison-checkpoint-v1/README.md)
+The latest [retrieval strategy checkpoint](../2026-09-18/retrieval-comparison-checkpoint-v1/README.md)
+is bound to `fc72cc2`: 1,105 source passes, four skips, all six repository
+checks, and nine installed adapter passes. It isolates vector, lexical, hybrid,
+and full retrieval against identical accepted snapshots. Complete reports
+require all expected comparison rows and verified provider provenance; quality
+kinds have separate intervals. The wheel is byte-identical to the preceding
+package. The prepared artifact is `NOT RUN`, with zero observations. These
+checks establish implementation behavior, not comparative model quality or
+GPU, native-host, latency, or pilot acceptance.
+
+The preceding [applied encoding comparison checkpoint](../2026-09-18/encoding-comparison-checkpoint-v1/README.md)
 is bound to `aefc338`. Its 1,085 passing source tests, four skips, complete
 source/package checks, 390 installed contract passes, two matching skips,
 seven replay assertions, and ten installed comparator service passes support

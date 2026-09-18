@@ -1,0 +1,148 @@
+{
+  "binding": {
+    "code_sha256": "72ffde69d89b4f9fa024fea2f85d3036dde84861de51d8677a50b7dd41412d90",
+    "dataset": {
+      "bytes": 407891,
+      "path": "C:\\Users\\Ant\\AppData\\Local\\Temp\\mnemos-source-retrieval-comparison-v1\\benchmarks\\local_memory\\datasets\\local-memory-heldout-v3.jsonl",
+      "sha256": "036fa51ee13271a85a14a62a2fe4ef65d13eaeb290331fe325aa5bf32ce893fc",
+      "version": "local-memory-heldout-v3"
+    },
+    "namespace": "t18-retrieval-comparison-v1",
+    "options": {
+      "embedding_model": "nomic-embed-text:latest",
+      "endpoint": "http://192.168.86.35:11434",
+      "environment": {
+        "httpx": "0.28.1",
+        "machine": "AMD64",
+        "numpy": "2.5.3",
+        "platform": "Windows-11-10.0.26200-SP0",
+        "processor": "Intel64 Family 6 Model 151 Stepping 2, GenuineIntel",
+        "pydantic": "2.13.5",
+        "python": "3.13.7",
+        "sqlite": "3.50.4",
+        "sqlite-vec": "0.1.9"
+      },
+      "max_context_tokens": 1200,
+      "max_tokens": 512,
+      "model": "qwen3.5:9b",
+      "protocol_sha256": "3220dda551ddaf2774296107f2c8872ee7a7db99c71d05f8096ca46aaf3aa1ec",
+      "protocol_version": "retrieval-comparison-protocol-v1",
+      "repetitions": 3,
+      "strategies": {
+        "full": {
+          "profile": "production"
+        },
+        "hybrid": {
+          "ranking": "current_union_cosine"
+        },
+        "lexical": {
+          "embeddings": false,
+          "ranking": "bm25",
+          "semantic_floor": null
+        },
+        "vector": {
+          "candidate_pool": "min(max(k*6,20),max_candidates)",
+          "semantic_floor": 0.2
+        }
+      },
+      "temperature": 0.0,
+      "think": false,
+      "timeout_seconds": 120.0,
+      "top_k": 5
+    },
+    "options_sha256": "5641bb3015bb3e72f1dc165387742b7bc99a6fd597726902a6a126128e7b8e7a",
+    "protocol": {
+      "path": "C:\\Users\\Ant\\AppData\\Local\\Temp\\mnemos-source-retrieval-comparison-v1\\docs\\plans\\2026-09-18-retrieval-comparison-protocol-v1.md",
+      "sha256": "3220dda551ddaf2774296107f2c8872ee7a7db99c71d05f8096ca46aaf3aa1ec",
+      "version": "retrieval-comparison-protocol-v1"
+    },
+    "strategies": {
+      "full": {
+        "profile": "production"
+      },
+      "hybrid": {
+        "ranking": "current_union_cosine"
+      },
+      "lexical": {
+        "embeddings": false,
+        "ranking": "bm25",
+        "semantic_floor": null
+      },
+      "vector": {
+        "candidate_pool": "min(max(k*6,20),max_candidates)",
+        "semantic_floor": 0.2
+      }
+    },
+    "strategy_config_sha256": "8ecbc07457e32937cbc23674151c5fbb1aa3242739ef2c6558914a4d109e4998"
+  },
+  "config": {
+    "embedding_model": "nomic-embed-text:latest",
+    "endpoint": "http://192.168.86.35:11434",
+    "environment": {
+      "httpx": "0.28.1",
+      "machine": "AMD64",
+      "numpy": "2.5.3",
+      "platform": "Windows-11-10.0.26200-SP0",
+      "processor": "Intel64 Family 6 Model 151 Stepping 2, GenuineIntel",
+      "pydantic": "2.13.5",
+      "python": "3.13.7",
+      "sqlite": "3.50.4",
+      "sqlite-vec": "0.1.9"
+    },
+    "max_context_tokens": 1200,
+    "max_tokens": 512,
+    "model": "qwen3.5:9b",
+    "protocol_sha256": "3220dda551ddaf2774296107f2c8872ee7a7db99c71d05f8096ca46aaf3aa1ec",
+    "protocol_version": "retrieval-comparison-protocol-v1",
+    "repetitions": 3,
+    "strategies": {
+      "full": {
+        "profile": "production"
+      },
+      "hybrid": {
+        "ranking": "current_union_cosine"
+      },
+      "lexical": {
+        "embeddings": false,
+        "ranking": "bm25",
+        "semantic_floor": null
+      },
+      "vector": {
+        "candidate_pool": "min(max(k*6,20),max_candidates)",
+        "semantic_floor": 0.2
+      }
+    },
+    "temperature": 0.0,
+    "think": false,
+    "timeout_seconds": 120.0,
+    "top_k": 5
+  },
+  "dataset": {
+    "bytes": 407891,
+    "path": "C:\\Users\\Ant\\AppData\\Local\\Temp\\mnemos-source-retrieval-comparison-v1\\benchmarks\\local_memory\\datasets\\local-memory-heldout-v3.jsonl",
+    "sha256": "036fa51ee13271a85a14a62a2fe4ef65d13eaeb290331fe325aa5bf32ce893fc",
+    "version": "local-memory-heldout-v3"
+  },
+  "gates": {
+    "human_acceptance": "NOT RUN",
+    "real_model": "NOT RUN",
+    "retrieval_comparison": "NOT RUN"
+  },
+  "protocol": {
+    "path": "C:\\Users\\Ant\\AppData\\Local\\Temp\\mnemos-source-retrieval-comparison-v1\\docs\\plans\\2026-09-18-retrieval-comparison-protocol-v1.md",
+    "sha256": "3220dda551ddaf2774296107f2c8872ee7a7db99c71d05f8096ca46aaf3aa1ec",
+    "version": "retrieval-comparison-protocol-v1"
+  },
+  "raw_outputs": [],
+  "reason": "Prepare-only artifact; no model, provider, or worker call was made.",
+  "run_namespace": "t18-retrieval-comparison-v1",
+  "schema_version": "local-memory-retrieval-comparator-v1",
+  "status": "not_run",
+  "strategies": [
+    "vector",
+    "lexical",
+    "hybrid",
+    "full"
+  ],
+  "written_at": "2026-09-18T10:18:39.968984+00:00"
+}

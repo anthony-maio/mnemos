@@ -202,3 +202,6 @@ the existing frozen evaluation queue permits another run. The v3 labels are
 reused; this does not create a new unseen dataset. Query timings exclude
 snapshot creation and engine startup and do not establish the T09 warm recall
 latency gate. Production retrieval defaults and host configuration are unchanged.
+
+The [retrieval checkpoint](../../docs/validation/2026-09-18/retrieval-comparison-checkpoint-v1/README.md)
+records the frozen source checks, installed adapter cases, and offline preparation.

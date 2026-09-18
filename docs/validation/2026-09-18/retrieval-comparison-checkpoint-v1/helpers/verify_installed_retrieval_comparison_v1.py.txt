@@ -1,0 +1,115 @@
+"""Verify frozen benchmark cases against the unchanged installed runtime."""
+import argparse
+import hashlib
+import json
+import os
+from pathlib import Path
+import shutil
+import subprocess
+import xml.etree.ElementTree as ET
+import zipfile
+
+parser = argparse.ArgumentParser()
+for name in ('snapshot', 'checks', 'output', 'installation', 'environment', 'wheel'):
+    parser.add_argument('--' + name, type=Path, required=True)
+args = parser.parse_args()
+snapshot = args.snapshot.resolve()
+out = args.output.resolve()
+site = args.environment.resolve() / 'Lib/site-packages'
+python = args.environment.resolve() / 'Scripts/python.exe'
+test = Path('tests/test_retrieval_comparison.py')
+
+
+def sha(path):
+    return hashlib.sha256(path.read_bytes()).hexdigest()
+
+
+def git(*command):
+    return subprocess.check_output(['git', *command], cwd=snapshot, text=True).strip()
+
+
+def installed_hashes():
+    result = {}
+    with zipfile.ZipFile(args.wheel) as wheel:
+        for name in wheel.namelist():
+            if name.startswith('mnemos/') and not name.endswith('/'):
+                digest = hashlib.sha256(wheel.read(name)).hexdigest()
+                assert sha(site / name) == digest, name
+                result[name] = digest
+    assert result
+    return result
+
+
+prior = json.loads(args.installation.read_text(encoding='utf-8'))
+source = json.loads((args.checks / 'verification.json').read_text(encoding='utf-8'))
+commit = git('rev-parse', 'HEAD')
+assert not git('status', '--porcelain')
+assert prior['status'] == source['status'] == 'passed'
+assert source['source_commit'] == commit
+assert prior['bindings_after']['wheel_sha256'] == sha(args.wheel)
+runtime_objects = {}
+for path in ('mnemos', 'agents', 'pyproject.toml'):
+    current = git('rev-parse', f'{commit}:{path}')
+    previous = git('rev-parse', f'{prior["commit"]}:{path}')
+    assert current == previous, path
+    runtime_objects[path] = current
+out.mkdir(parents=True, exist_ok=False)
+fixture = out / 'fixture'
+(fixture / 'tests').mkdir(parents=True)
+(fixture / 'tests/__init__.py').write_text('', encoding='utf-8')
+(fixture / 'benchmarks').mkdir()
+(fixture / 'benchmarks/__init__.py').write_text('', encoding='utf-8')
+shutil.copyfile(snapshot / test, fixture / test)
+shutil.copytree(snapshot / 'benchmarks/local_memory', fixture / 'benchmarks/local_memory',
+                ignore=shutil.ignore_patterns('__pycache__'))
+inputs = {p.relative_to(fixture).as_posix(): sha(p) for p in fixture.rglob('*') if p.is_file()}
+for name, digest in inputs.items():
+    if name not in {'tests/__init__.py', 'benchmarks/__init__.py'}:
+        assert sha(snapshot / name) == digest
+env = {key: value for key, value in os.environ.items()
+       if not key.startswith('MNEMOS_') and key not in {'PYTHONPATH', 'VIRTUAL_ENV'}}
+env['TEMP'] = env['TMP'] = env['TMPDIR'] = str(out)
+record = {'source_commit': commit, 'runtime_commit': prior['commit'], 'status': 'running',
+          'runner_sha256': sha(Path(__file__)), 'wheel_sha256': sha(args.wheel),
+          'runtime_git_objects': runtime_objects, 'prior_installation_sha256': sha(args.installation),
+          'source_checks_sha256': sha(args.checks / 'verification.json'),
+          'installed_files_before': installed_hashes(), 'fixture_inputs': inputs}
+
+
+def save():
+    (out / 'verification.json').write_text(json.dumps(record, indent=2) + '\n', encoding='utf-8')
+
+
+save()
+try:
+    origin = subprocess.check_output([str(python), '-c',
+        'import mnemos.memory_service as m; print(m.__file__)'], cwd=fixture, env=env, text=True).strip()
+    assert Path(origin).resolve() == (site / 'mnemos/memory_service.py').resolve()
+    record['installed_module_origin'] = origin
+    command = [str(python), '-m', 'pytest', '-q', str(test), '--basetemp', str(out / 'pytest-temp'),
+               '--junitxml', str(out / 'installed.xml')]
+    record['command'] = command
+    with (out / 'pytest.log').open('w', encoding='utf-8') as log:
+        result = subprocess.run(command, cwd=fixture, env=env, stdout=log, stderr=subprocess.STDOUT,
+                                creationflags=getattr(subprocess, 'CREATE_NO_WINDOW', 0))
+    record['exit_code'] = result.returncode
+    assert result.returncode == 0
+    selected = []
+    for path in (args.checks / 'pytest.xml', out / 'installed.xml'):
+        cases = [c for c in ET.parse(path).getroot().iter('testcase')
+                 if c.attrib.get('classname', '').endswith('test_retrieval_comparison')]
+        assert len(cases) == 9
+        assert all(all(c.find(tag) is None for tag in ('failure', 'error', 'skipped')) for c in cases)
+        selected.append(sorted((c.attrib['classname'], c.attrib['name']) for c in cases))
+    assert selected[0] == selected[1]
+    record['matched_cases'] = selected[0]
+    record['installed_files_after'] = installed_hashes()
+    assert record['installed_files_after'] == record['installed_files_before']
+    assert all(sha(fixture / name) == digest for name, digest in inputs.items())
+    record['status'] = 'passed'
+except BaseException as error:
+    record.update(status='failed', error=repr(error))
+    raise
+finally:
+    save()
+print(json.dumps({'status': record['status'], 'matched_cases': len(record['matched_cases'])}))
