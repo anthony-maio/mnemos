@@ -1,0 +1,1155 @@
+<?xml version="1.0" encoding="utf-8"?><testsuites name="pytest tests"><testsuite name="pytest" errors="0" failures="14" skipped="0" tests="68" time="41.995" timestamp="2026-09-17T20:30:19.581412-04:00" hostname="Aurora"><testcase classname="tests.test_captured_assertion_status" name="test_corrected_fact_and_captured_history_keep_distinct_authority_after_restart" time="0.230" /><testcase classname="tests.test_captured_assertion_status" name="test_identical_capture_and_explicit_fact_retain_explicit_authority[True-memory]" time="0.002" /><testcase classname="tests.test_captured_assertion_status" name="test_identical_capture_and_explicit_fact_retain_explicit_authority[True-sqlite]" time="0.039" /><testcase classname="tests.test_captured_assertion_status" name="test_identical_capture_and_explicit_fact_retain_explicit_authority[False-memory]" time="0.002" /><testcase classname="tests.test_captured_assertion_status" name="test_identical_capture_and_explicit_fact_retain_explicit_authority[False-sqlite]" time="0.038" /><testcase classname="tests.test_captured_assertion_status" name="test_unknown_context_qualification_counts_toward_retrieval_budget[captured_passthrough]" time="0.008" /><testcase classname="tests.test_captured_assertion_status" name="test_unknown_context_qualification_counts_toward_retrieval_budget[legacy]" time="0.006" /><testcase classname="tests.test_memory_service" name="test_project_enable_pause_persists_through_single_owner" time="0.294" /><testcase classname="tests.test_memory_service" name="test_cognition_probe_requires_input_specific_extraction_without_writes" time="0.118" /><testcase classname="tests.test_memory_service" name="test_automatic_correction_switch_changes_lifecycle_not_retrieval_query[True]" time="0.172" /><testcase classname="tests.test_memory_service" name="test_automatic_correction_switch_changes_lifecycle_not_retrieval_query[False]" time="0.179" /><testcase classname="tests.test_memory_service" name="test_all_modules_disabled_retains_role_tagged_events_without_cognition" time="0.141" /><testcase classname="tests.test_memory_service" name="test_capture_is_idempotent_durable_and_does_not_require_a_model" time="0.141" /><testcase classname="tests.test_memory_service" name="test_capture_rejects_secrets_and_disabled_projects_before_disk" time="0.110" /><testcase classname="tests.test_memory_service" name="test_legacy_review_is_read_only_and_scoped_retrieval_excludes_legacy_rows" time="0.118" /><testcase classname="tests.test_memory_service" name="test_fact_proposal_cannot_be_an_unversioned_correction" time="0.003" /><testcase classname="tests.test_memory_service" name="test_explicit_remember_and_versioned_correction_keep_identity" time="0.184" /><testcase classname="tests.test_memory_service" name="test_bad_extraction_keeps_source_pending[]" time="0.134" /><testcase classname="tests.test_memory_service" name="test_bad_extraction_keeps_source_pending[{}]" time="0.127" /><testcase classname="tests.test_memory_service" name="test_bad_extraction_keeps_source_pending[{&quot;decision&quot;:&quot;facts&quot;,&quot;facts&quot;:[]}]" time="0.125" /><testcase classname="tests.test_memory_service" name="test_bad_extraction_keeps_source_pending[{&quot;decision&quot;:&quot;facts&quot;,&quot;facts&quot;:[{&quot;content&quot;:&quot;Invented fact&quot;,&quot;evidence_ids&quot;:[&quot;missing&quot;],&quot;operation&quot;:&quot;add&quot;}]}]" time="0.133" /><testcase classname="tests.test_memory_lifecycle" name="test_forget_wins_over_an_already_running_extraction" time="0.129" /><testcase classname="tests.test_memory_lifecycle" name="test_forget_survives_restart_replay_and_pending_correction" time="0.174" /><testcase classname="tests.test_memory_lifecycle" name="test_retention_only_prunes_processed_raw_evidence" time="0.143" /><testcase classname="tests.test_memory_lifecycle" name="test_inspection_reports_source_liveness_after_retention_and_restart" time="0.170" /><testcase classname="tests.test_memory_lifecycle" name="test_inspection_distinguishes_fact_without_linked_source" time="0.115" /><testcase classname="tests.test_retrieval_contract" name="test_biomimetic_top_one_uses_actual_state_score" time="0.007" /><testcase classname="tests.test_retrieval_contract" name="test_question_cannot_become_reconsolidation_evidence" time="0.007" /><testcase classname="tests.test_retrieval_contract" name="test_relevance_floor_and_context_budget_are_enforced" time="0.006" /><testcase classname="tests.test_retrieval_contract" name="test_unresolved_conflict_label_is_included_in_context_budget" time="0.006" /><testcase classname="tests.test_retrieval_contract" name="test_missing_state_falls_back_to_semantic_scores" time="0.013" /><testcase classname="tests.test_conflict_canonical_collision" name="test_inmemory_rejects_conflict_collision_without_mutating_asserted_row" time="0.002" /><testcase classname="tests.test_conflict_canonical_collision" name="test_inmemory_allows_new_and_repeat_conflict_rows" time="0.004" /><testcase classname="tests.test_conflict_canonical_collision" name="test_sqlite_collision_rolls_back_batch_and_marks_retryable_job" time="0.069" /><testcase classname="tests.test_conflict_canonical_collision" name="test_sqlite_missing_assertion_status_rejects_conflict_after_reopen" time="0.047" /><testcase classname="tests.test_conflict_canonical_collision" name="test_sqlite_collision_after_reopen_preserves_existing_evidence" time="0.068" /><testcase classname="tests.test_conflict_canonical_collision" name="test_sqlite_allows_targetless_and_repeated_conflicts" time="0.046" /><testcase classname="tests.test_related_forget" name="test_related_forget_request_rejects_coerced_scalars" time="0.002" /><testcase classname="tests.test_related_forget" name="test_historical_assertion_is_previewed_after_correction" time="0.153"><failure message="RuntimeError: coroutine raised StopIteration">tmp_path = WindowsPath('C:/Users/Ant/AppData/Local/Temp/mnemos-captured-status-green-fixtures-v1/test_historical_assertion_is_p0')
+
+    @pytest.mark.asyncio
+    async def test_historical_assertion_is_previewed_after_correction(tmp_path: Path) -&gt; None:
+        memory, context, _registry, _root = _service(tmp_path)
+        try:
+            old_assertion, target, captured = await _seed_overlap(memory, context)
+            corrected = "The project release channel is related-forget-new."
+            await memory.dispatch(
+                "correct",
+                {
+                    "context": context.model_dump(mode="json"),
+                    "fact_id": target.id,
+                    "expected_version": target.version,
+                    "content": corrected,
+                    "event_id": "related-forget-correction",
+                },
+            )
+            await memory.dispatch("maintenance", {})
+            current = memory.engine.store.get(target.id)
+            assert current is not None and current.content == corrected
+            preview = await memory.dispatch("forget_preview", _preview_payload(context, current))
+&gt;           candidate = next(item for item in preview["candidates"] if item["fact_id"] == captured.id)
+                        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E           StopIteration
+
+tests\test_related_forget.py:135: StopIteration
+
+The above exception was the direct cause of the following exception:
+
+self = &lt;Coroutine test_historical_assertion_is_previewed_after_correction&gt;
+
+    def runtest(self) -&gt; None:
+        runner_fixture_id = f"_{self._loop_scope}_scoped_runner"
+        runner = self._request.getfixturevalue(runner_fixture_id)
+        context = contextvars.copy_context()
+        synchronized_obj = _synchronize_coroutine(
+            getattr(*self._synchronization_target_attr), runner, context
+        )
+        with MonkeyPatch.context() as c:
+            c.setattr(*self._synchronization_target_attr, synchronized_obj)
+&gt;           super().runtest()
+
+.venv\Lib\site-packages\pytest_asyncio\plugin.py:569: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+.venv\Lib\site-packages\pytest_asyncio\plugin.py:905: in inner
+    runner.run(coro, context=context)
+C:\Users\Ant\AppData\Roaming\uv\python\cpython-3.13.7-windows-x86_64-none\Lib\asyncio\runners.py:118: in run
+    return self._loop.run_until_complete(task)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+self = &lt;ProactorEventLoop running=False closed=False debug=False&gt;
+future = &lt;Task finished name='Task-80' coro=&lt;test_historical_assertion_is_previewed_after_correction() done, defined at D:\Deve...ees\functional-local-memory\tests\test_related_forget.py:115&gt; exception=RuntimeError('coroutine raised StopIteration')&gt;
+
+    def run_until_complete(self, future):
+        """Run until the Future is done.
+    
+        If the argument is a coroutine, it is wrapped in a Task.
+    
+        WARNING: It would be disastrous to call run_until_complete()
+        with the same coroutine twice -- it would wrap it in two
+        different Tasks and that can't be good.
+    
+        Return the Future's result, or raise its exception.
+        """
+        self._check_closed()
+        self._check_running()
+    
+        new_task = not futures.isfuture(future)
+        future = tasks.ensure_future(future, loop=self)
+        if new_task:
+            # An exception is raised if the future didn't complete, so there
+            # is no need to log the "destroy pending task" message
+            future._log_destroy_pending = False
+    
+        future.add_done_callback(_run_until_complete_cb)
+        try:
+            self.run_forever()
+        except:
+            if new_task and future.done() and not future.cancelled():
+                # The coroutine raised a BaseException. Consume the exception
+                # to not log a warning, the caller doesn't have access to the
+                # local task.
+                future.exception()
+            raise
+        finally:
+            future.remove_done_callback(_run_until_complete_cb)
+        if not future.done():
+            raise RuntimeError('Event loop stopped before Future completed.')
+    
+&gt;       return future.result()
+               ^^^^^^^^^^^^^^^
+E       RuntimeError: coroutine raised StopIteration
+
+C:\Users\Ant\AppData\Roaming\uv\python\cpython-3.13.7-windows-x86_64-none\Lib\asyncio\base_events.py:725: RuntimeError</failure></testcase><testcase classname="tests.test_related_forget" name="test_source_event_overflow_is_incomplete" time="0.156" /><testcase classname="tests.test_related_forget" name="test_shared_source_requires_reviewing_unselected_fact" time="0.153"><failure message="RuntimeError: coroutine raised StopIteration">tmp_path = WindowsPath('C:/Users/Ant/AppData/Local/Temp/mnemos-captured-status-green-fixtures-v1/test_shared_source_requires_re0')
+
+    @pytest.mark.asyncio
+    async def test_shared_source_requires_reviewing_unselected_fact(tmp_path: Path) -&gt; None:
+        memory, context, _registry, _root = _service(tmp_path)
+        try:
+            _assertion, target, captured = await _seed_overlap(memory, context)
+            match_preview = await memory.dispatch("forget_preview", _preview_payload(context, target))
+&gt;           candidate = next(
+                item for item in match_preview["candidates"] if item["fact_id"] == captured.id
+            )
+E           StopIteration
+
+tests\test_related_forget.py:186: StopIteration
+
+The above exception was the direct cause of the following exception:
+
+self = &lt;Coroutine test_shared_source_requires_reviewing_unselected_fact&gt;
+
+    def runtest(self) -&gt; None:
+        runner_fixture_id = f"_{self._loop_scope}_scoped_runner"
+        runner = self._request.getfixturevalue(runner_fixture_id)
+        context = contextvars.copy_context()
+        synchronized_obj = _synchronize_coroutine(
+            getattr(*self._synchronization_target_attr), runner, context
+        )
+        with MonkeyPatch.context() as c:
+            c.setattr(*self._synchronization_target_attr, synchronized_obj)
+&gt;           super().runtest()
+
+.venv\Lib\site-packages\pytest_asyncio\plugin.py:569: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+.venv\Lib\site-packages\pytest_asyncio\plugin.py:905: in inner
+    runner.run(coro, context=context)
+C:\Users\Ant\AppData\Roaming\uv\python\cpython-3.13.7-windows-x86_64-none\Lib\asyncio\runners.py:118: in run
+    return self._loop.run_until_complete(task)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+self = &lt;ProactorEventLoop running=False closed=False debug=False&gt;
+future = &lt;Task finished name='Task-86' coro=&lt;test_shared_source_requires_reviewing_unselected_fact() done, defined at D:\Develo...ees\functional-local-memory\tests\test_related_forget.py:180&gt; exception=RuntimeError('coroutine raised StopIteration')&gt;
+
+    def run_until_complete(self, future):
+        """Run until the Future is done.
+    
+        If the argument is a coroutine, it is wrapped in a Task.
+    
+        WARNING: It would be disastrous to call run_until_complete()
+        with the same coroutine twice -- it would wrap it in two
+        different Tasks and that can't be good.
+    
+        Return the Future's result, or raise its exception.
+        """
+        self._check_closed()
+        self._check_running()
+    
+        new_task = not futures.isfuture(future)
+        future = tasks.ensure_future(future, loop=self)
+        if new_task:
+            # An exception is raised if the future didn't complete, so there
+            # is no need to log the "destroy pending task" message
+            future._log_destroy_pending = False
+    
+        future.add_done_callback(_run_until_complete_cb)
+        try:
+            self.run_forever()
+        except:
+            if new_task and future.done() and not future.cancelled():
+                # The coroutine raised a BaseException. Consume the exception
+                # to not log a warning, the caller doesn't have access to the
+                # local task.
+                future.exception()
+            raise
+        finally:
+            future.remove_done_callback(_run_until_complete_cb)
+        if not future.done():
+            raise RuntimeError('Event loop stopped before Future completed.')
+    
+&gt;       return future.result()
+               ^^^^^^^^^^^^^^^
+E       RuntimeError: coroutine raised StopIteration
+
+C:\Users\Ant\AppData\Roaming\uv\python\cpython-3.13.7-windows-x86_64-none\Lib\asyncio\base_events.py:725: RuntimeError</failure></testcase><testcase classname="tests.test_related_forget" name="test_shared_source_only_referenced_by_jobs_is_rejected" time="0.340"><failure message="RuntimeError: coroutine raised StopIteration">tmp_path = WindowsPath('C:/Users/Ant/AppData/Local/Temp/mnemos-captured-status-green-fixtures-v1/test_shared_source_only_refere0')
+
+    @pytest.mark.asyncio
+    async def test_shared_source_only_referenced_by_jobs_is_rejected(tmp_path: Path) -&gt; None:
+        memory, context, _registry, _root = _service(tmp_path)
+        store = memory.engine.store
+        try:
+            assertion, target, captured = await _seed_overlap(memory, context)
+            payload_context = context.model_dump(mode="json")
+            first_capture = await memory.dispatch(
+                "capture",
+                {
+                    "event_id": "job-only-shared-source",
+                    "context": payload_context,
+                    "scope": "project",
+                    "occurred_at": datetime.now(timezone.utc).isoformat(),
+                    "role": "user",
+                    "content": f"A captured copy contains: {assertion}",
+                    "source_kind": "claude_code_transcript",
+                    "source_ref": "job-only-shared#1",
+                },
+            )
+            manual = MemoryChunk(
+                id="job-only-independent-fact",
+                content="Manual fact sharing a pending source.",
+                metadata={
+                    "user_profile_id": context.user_profile_id,
+                    "scope": "project",
+                    "scope_id": context.project_id,
+                    "source": "manual",
+                },
+            )
+            store.store(manual)
+            second_capture = await memory.dispatch(
+                "capture",
+                {
+                    "event_id": "job-only-second-job",
+                    "context": payload_context,
+                    "scope": "project",
+                    "occurred_at": datetime.now(timezone.utc).isoformat(),
+                    "role": "user",
+                    "content": "A second pending job has no durable fact.",
+                    "source_kind": "claude_code_transcript",
+                    "source_ref": "job-only-shared#2",
+                },
+            )
+            first_job = store.get_job(first_capture["job_id"])
+            second_job = store.get_job(second_capture["job_id"])
+            assert first_job is not None and second_job is not None
+            source_id = first_job.payload["event_id"]
+            assert source_id != second_job.payload["event_id"]
+            store._conn.execute(  # noqa: SLF001
+                "UPDATE memory_jobs SET payload=json_set(payload, '$.target_fact_id', ?) WHERE id=?",
+                (captured.id, first_job.id),
+            )
+            store._conn.execute(  # noqa: SLF001
+                "UPDATE memory_jobs SET payload=json_set(payload, '$.target_fact_id', ?, '$.event_id', ?) WHERE id=?",
+                (manual.id, source_id, second_job.id),
+            )
+            store._conn.commit()  # noqa: SLF001
+            preview = await memory.dispatch("forget_preview", _preview_payload(context, target))
+            source = next(
+                item for item in preview["source_events"] if item["source_event_id"] == source_id
+            )
+            assert captured.id in source["derived_fact_ids"]
+            assert manual.id in source["derived_fact_ids"]
+&gt;           candidate = next(item for item in preview["candidates"] if item["fact_id"] == captured.id)
+                        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E           StopIteration
+
+tests\test_related_forget.py:301: StopIteration
+
+The above exception was the direct cause of the following exception:
+
+self = &lt;Coroutine test_shared_source_only_referenced_by_jobs_is_rejected&gt;
+
+    def runtest(self) -&gt; None:
+        runner_fixture_id = f"_{self._loop_scope}_scoped_runner"
+        runner = self._request.getfixturevalue(runner_fixture_id)
+        context = contextvars.copy_context()
+        synchronized_obj = _synchronize_coroutine(
+            getattr(*self._synchronization_target_attr), runner, context
+        )
+        with MonkeyPatch.context() as c:
+            c.setattr(*self._synchronization_target_attr, synchronized_obj)
+&gt;           super().runtest()
+
+.venv\Lib\site-packages\pytest_asyncio\plugin.py:569: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+.venv\Lib\site-packages\pytest_asyncio\plugin.py:905: in inner
+    runner.run(coro, context=context)
+C:\Users\Ant\AppData\Roaming\uv\python\cpython-3.13.7-windows-x86_64-none\Lib\asyncio\runners.py:118: in run
+    return self._loop.run_until_complete(task)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+self = &lt;ProactorEventLoop running=False closed=False debug=False&gt;
+future = &lt;Task finished name='Task-89' coro=&lt;test_shared_source_only_referenced_by_jobs_is_rejected() done, defined at D:\Devel...ees\functional-local-memory\tests\test_related_forget.py:237&gt; exception=RuntimeError('coroutine raised StopIteration')&gt;
+
+    def run_until_complete(self, future):
+        """Run until the Future is done.
+    
+        If the argument is a coroutine, it is wrapped in a Task.
+    
+        WARNING: It would be disastrous to call run_until_complete()
+        with the same coroutine twice -- it would wrap it in two
+        different Tasks and that can't be good.
+    
+        Return the Future's result, or raise its exception.
+        """
+        self._check_closed()
+        self._check_running()
+    
+        new_task = not futures.isfuture(future)
+        future = tasks.ensure_future(future, loop=self)
+        if new_task:
+            # An exception is raised if the future didn't complete, so there
+            # is no need to log the "destroy pending task" message
+            future._log_destroy_pending = False
+    
+        future.add_done_callback(_run_until_complete_cb)
+        try:
+            self.run_forever()
+        except:
+            if new_task and future.done() and not future.cancelled():
+                # The coroutine raised a BaseException. Consume the exception
+                # to not log a warning, the caller doesn't have access to the
+                # local task.
+                future.exception()
+            raise
+        finally:
+            future.remove_done_callback(_run_until_complete_cb)
+        if not future.done():
+            raise RuntimeError('Event loop stopped before Future completed.')
+    
+&gt;       return future.result()
+               ^^^^^^^^^^^^^^^
+E       RuntimeError: coroutine raised StopIteration
+
+C:\Users\Ant\AppData\Roaming\uv\python\cpython-3.13.7-windows-x86_64-none\Lib\asyncio\base_events.py:725: RuntimeError</failure></testcase><testcase classname="tests.test_related_forget" name="test_target_shared_source_is_rejected_before_any_deletion" time="0.143" /><testcase classname="tests.test_related_forget" name="test_expired_source_is_suppressed_without_selection" time="0.135"><failure message="RuntimeError: coroutine raised StopIteration">tmp_path = WindowsPath('C:/Users/Ant/AppData/Local/Temp/mnemos-captured-status-green-fixtures-v1/test_expired_source_is_suppres0')
+
+    @pytest.mark.asyncio
+    async def test_expired_source_is_suppressed_without_selection(tmp_path: Path) -&gt; None:
+        memory, context, _registry, _root = _service(tmp_path)
+        store = memory.engine.store
+        try:
+            _assertion, target, captured = await _seed_overlap(memory, context)
+            candidate_preview = await memory.dispatch(
+                "forget_preview", _preview_payload(context, target)
+            )
+&gt;           candidate = next(
+                item for item in candidate_preview["candidates"] if item["fact_id"] == captured.id
+            )
+E           StopIteration
+
+tests\test_related_forget.py:377: StopIteration
+
+The above exception was the direct cause of the following exception:
+
+self = &lt;Coroutine test_expired_source_is_suppressed_without_selection&gt;
+
+    def runtest(self) -&gt; None:
+        runner_fixture_id = f"_{self._loop_scope}_scoped_runner"
+        runner = self._request.getfixturevalue(runner_fixture_id)
+        context = contextvars.copy_context()
+        synchronized_obj = _synchronize_coroutine(
+            getattr(*self._synchronization_target_attr), runner, context
+        )
+        with MonkeyPatch.context() as c:
+            c.setattr(*self._synchronization_target_attr, synchronized_obj)
+&gt;           super().runtest()
+
+.venv\Lib\site-packages\pytest_asyncio\plugin.py:569: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+.venv\Lib\site-packages\pytest_asyncio\plugin.py:905: in inner
+    runner.run(coro, context=context)
+C:\Users\Ant\AppData\Roaming\uv\python\cpython-3.13.7-windows-x86_64-none\Lib\asyncio\runners.py:118: in run
+    return self._loop.run_until_complete(task)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+self = &lt;ProactorEventLoop running=False closed=False debug=False&gt;
+future = &lt;Task finished name='Task-95' coro=&lt;test_expired_source_is_suppressed_without_selection() done, defined at D:\Developm...ees\functional-local-memory\tests\test_related_forget.py:368&gt; exception=RuntimeError('coroutine raised StopIteration')&gt;
+
+    def run_until_complete(self, future):
+        """Run until the Future is done.
+    
+        If the argument is a coroutine, it is wrapped in a Task.
+    
+        WARNING: It would be disastrous to call run_until_complete()
+        with the same coroutine twice -- it would wrap it in two
+        different Tasks and that can't be good.
+    
+        Return the Future's result, or raise its exception.
+        """
+        self._check_closed()
+        self._check_running()
+    
+        new_task = not futures.isfuture(future)
+        future = tasks.ensure_future(future, loop=self)
+        if new_task:
+            # An exception is raised if the future didn't complete, so there
+            # is no need to log the "destroy pending task" message
+            future._log_destroy_pending = False
+    
+        future.add_done_callback(_run_until_complete_cb)
+        try:
+            self.run_forever()
+        except:
+            if new_task and future.done() and not future.cancelled():
+                # The coroutine raised a BaseException. Consume the exception
+                # to not log a warning, the caller doesn't have access to the
+                # local task.
+                future.exception()
+            raise
+        finally:
+            future.remove_done_callback(_run_until_complete_cb)
+        if not future.done():
+            raise RuntimeError('Event loop stopped before Future completed.')
+    
+&gt;       return future.result()
+               ^^^^^^^^^^^^^^^
+E       RuntimeError: coroutine raised StopIteration
+
+C:\Users\Ant\AppData\Roaming\uv\python\cpython-3.13.7-windows-x86_64-none\Lib\asyncio\base_events.py:725: RuntimeError</failure></testcase><testcase classname="tests.test_related_forget" name="test_linked_nonmatching_capture_source_is_visible_and_selectable" time="0.144" /><testcase classname="tests.test_related_forget" name="test_linked_source_overflow_is_incomplete_and_disclosed" time="0.145" /><testcase classname="tests.test_related_forget" name="test_existing_forget_control_leaves_independent_copy" time="0.138" /><testcase classname="tests.test_related_forget" name="test_preview_and_related_apply_remove_exact_copy_and_replay" time="0.150"><failure message="RuntimeError: coroutine raised StopIteration">tmp_path = WindowsPath('C:/Users/Ant/AppData/Local/Temp/mnemos-captured-status-green-fixtures-v1/test_preview_and_related_apply0')
+
+    @pytest.mark.asyncio
+    async def test_preview_and_related_apply_remove_exact_copy_and_replay(tmp_path: Path) -&gt; None:
+        memory, context, registry, root = _service(tmp_path)
+        try:
+            assertion, target, captured = await _seed_overlap(memory, context)
+            preview = await memory.dispatch("forget_preview", _preview_payload(context, target))
+            assert preview["status"] == "preview"
+            assert preview["complete"] is True
+&gt;           match = next(item for item in preview["candidates"] if item["fact_id"] == captured.id)
+                    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E           StopIteration
+
+tests\test_related_forget.py:562: StopIteration
+
+The above exception was the direct cause of the following exception:
+
+self = &lt;Coroutine test_preview_and_related_apply_remove_exact_copy_and_replay&gt;
+
+    def runtest(self) -&gt; None:
+        runner_fixture_id = f"_{self._loop_scope}_scoped_runner"
+        runner = self._request.getfixturevalue(runner_fixture_id)
+        context = contextvars.copy_context()
+        synchronized_obj = _synchronize_coroutine(
+            getattr(*self._synchronization_target_attr), runner, context
+        )
+        with MonkeyPatch.context() as c:
+            c.setattr(*self._synchronization_target_attr, synchronized_obj)
+&gt;           super().runtest()
+
+.venv\Lib\site-packages\pytest_asyncio\plugin.py:569: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+.venv\Lib\site-packages\pytest_asyncio\plugin.py:905: in inner
+    runner.run(coro, context=context)
+C:\Users\Ant\AppData\Roaming\uv\python\cpython-3.13.7-windows-x86_64-none\Lib\asyncio\runners.py:118: in run
+    return self._loop.run_until_complete(task)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+self = &lt;ProactorEventLoop running=False closed=False debug=False&gt;
+future = &lt;Task finished name='Task-107' coro=&lt;test_preview_and_related_apply_remove_exact_copy_and_replay() done, defined at D:...ees\functional-local-memory\tests\test_related_forget.py:554&gt; exception=RuntimeError('coroutine raised StopIteration')&gt;
+
+    def run_until_complete(self, future):
+        """Run until the Future is done.
+    
+        If the argument is a coroutine, it is wrapped in a Task.
+    
+        WARNING: It would be disastrous to call run_until_complete()
+        with the same coroutine twice -- it would wrap it in two
+        different Tasks and that can't be good.
+    
+        Return the Future's result, or raise its exception.
+        """
+        self._check_closed()
+        self._check_running()
+    
+        new_task = not futures.isfuture(future)
+        future = tasks.ensure_future(future, loop=self)
+        if new_task:
+            # An exception is raised if the future didn't complete, so there
+            # is no need to log the "destroy pending task" message
+            future._log_destroy_pending = False
+    
+        future.add_done_callback(_run_until_complete_cb)
+        try:
+            self.run_forever()
+        except:
+            if new_task and future.done() and not future.cancelled():
+                # The coroutine raised a BaseException. Consume the exception
+                # to not log a warning, the caller doesn't have access to the
+                # local task.
+                future.exception()
+            raise
+        finally:
+            future.remove_done_callback(_run_until_complete_cb)
+        if not future.done():
+            raise RuntimeError('Event loop stopped before Future completed.')
+    
+&gt;       return future.result()
+               ^^^^^^^^^^^^^^^
+E       RuntimeError: coroutine raised StopIteration
+
+C:\Users\Ant\AppData\Roaming\uv\python\cpython-3.13.7-windows-x86_64-none\Lib\asyncio\base_events.py:725: RuntimeError</failure></testcase><testcase classname="tests.test_related_forget" name="test_unrelated_and_foreign_scope_records_are_excluded" time="0.213"><failure message="assert False&#10; +  where False = any(&lt;generator object test_unrelated_and_foreign_scope_records_are_excluded.&lt;locals&gt;.&lt;genexpr&gt; at 0x000002227FF37780&gt;)">tmp_path = WindowsPath('C:/Users/Ant/AppData/Local/Temp/mnemos-captured-status-green-fixtures-v1/test_unrelated_and_foreign_sco0')
+
+    @pytest.mark.asyncio
+    async def test_unrelated_and_foreign_scope_records_are_excluded(tmp_path: Path) -&gt; None:
+        memory, context, registry, root = _service(tmp_path)
+        try:
+            assertion, target, _captured = await _seed_overlap(memory, context)
+            other_root = root / "other-project"
+            other_root.mkdir()
+            foreign_project = registry.register_project(
+                other_root, user_profile_id="profile-a", enabled=True
+            )
+            registry.register_profile("profile-b")
+            store = memory.engine.store
+            store.store(
+                MemoryChunk(
+                    id="foreign-project-copy",
+                    content=f"Foreign copy: {assertion}",
+                    metadata={
+                        "user_profile_id": "profile-a",
+                        "scope": "project",
+                        "scope_id": foreign_project.id,
+                        "source": "sleep_consolidation",
+                    },
+                )
+            )
+            store.store(
+                MemoryChunk(
+                    id="foreign-profile-copy",
+                    content=f"Other profile copy: {assertion}",
+                    metadata={
+                        "user_profile_id": "profile-b",
+                        "scope": "project",
+                        "scope_id": context.project_id,
+                        "source": "sleep_consolidation",
+                    },
+                )
+            )
+            store.store(
+                MemoryChunk(
+                    id="manual-overlap",
+                    content=f"Manual note: {assertion}",
+                    metadata={
+                        "user_profile_id": context.user_profile_id,
+                        "scope": "project",
+                        "scope_id": context.project_id,
+                        "source": "manual",
+                    },
+                )
+            )
+            preview = await memory.dispatch("forget_preview", _preview_payload(context, target))
+            candidate_ids = {item["fact_id"] for item in preview["candidates"]}
+            assert "foreign-project-copy" not in candidate_ids
+            assert "foreign-profile-copy" not in candidate_ids
+            assert "manual-overlap" not in candidate_ids
+&gt;           assert any(item["fact_id"] == _captured.id for item in preview["candidates"])
+E           assert False
+E            +  where False = any(&lt;generator object test_unrelated_and_foreign_scope_records_are_excluded.&lt;locals&gt;.&lt;genexpr&gt; at 0x000002227FF37780&gt;)
+
+tests\test_related_forget.py:676: AssertionError</failure></testcase><testcase classname="tests.test_related_forget" name="test_pending_capture_is_previewed_and_suppressed_without_maintenance" time="0.214" /><testcase classname="tests.test_related_forget" name="test_stale_or_tampered_selection_fails_without_deletion" time="0.141"><failure message="RuntimeError: coroutine raised StopIteration">tmp_path = WindowsPath('C:/Users/Ant/AppData/Local/Temp/mnemos-captured-status-green-fixtures-v1/test_stale_or_tampered_selecti0')
+
+    @pytest.mark.asyncio
+    async def test_stale_or_tampered_selection_fails_without_deletion(tmp_path: Path) -&gt; None:
+        memory, context, _registry, _root = _service(tmp_path)
+        try:
+            _assertion, target, captured = await _seed_overlap(memory, context)
+            preview = await memory.dispatch("forget_preview", _preview_payload(context, target))
+&gt;           match = next(item for item in preview["candidates"] if item["fact_id"] == captured.id)
+                    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E           StopIteration
+
+tests\test_related_forget.py:752: StopIteration
+
+The above exception was the direct cause of the following exception:
+
+self = &lt;Coroutine test_stale_or_tampered_selection_fails_without_deletion&gt;
+
+    def runtest(self) -&gt; None:
+        runner_fixture_id = f"_{self._loop_scope}_scoped_runner"
+        runner = self._request.getfixturevalue(runner_fixture_id)
+        context = contextvars.copy_context()
+        synchronized_obj = _synchronize_coroutine(
+            getattr(*self._synchronization_target_attr), runner, context
+        )
+        with MonkeyPatch.context() as c:
+            c.setattr(*self._synchronization_target_attr, synchronized_obj)
+&gt;           super().runtest()
+
+.venv\Lib\site-packages\pytest_asyncio\plugin.py:569: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+.venv\Lib\site-packages\pytest_asyncio\plugin.py:905: in inner
+    runner.run(coro, context=context)
+C:\Users\Ant\AppData\Roaming\uv\python\cpython-3.13.7-windows-x86_64-none\Lib\asyncio\runners.py:118: in run
+    return self._loop.run_until_complete(task)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+self = &lt;ProactorEventLoop running=False closed=False debug=False&gt;
+future = &lt;Task finished name='Task-116' coro=&lt;test_stale_or_tampered_selection_fails_without_deletion() done, defined at D:\Dev...ees\functional-local-memory\tests\test_related_forget.py:746&gt; exception=RuntimeError('coroutine raised StopIteration')&gt;
+
+    def run_until_complete(self, future):
+        """Run until the Future is done.
+    
+        If the argument is a coroutine, it is wrapped in a Task.
+    
+        WARNING: It would be disastrous to call run_until_complete()
+        with the same coroutine twice -- it would wrap it in two
+        different Tasks and that can't be good.
+    
+        Return the Future's result, or raise its exception.
+        """
+        self._check_closed()
+        self._check_running()
+    
+        new_task = not futures.isfuture(future)
+        future = tasks.ensure_future(future, loop=self)
+        if new_task:
+            # An exception is raised if the future didn't complete, so there
+            # is no need to log the "destroy pending task" message
+            future._log_destroy_pending = False
+    
+        future.add_done_callback(_run_until_complete_cb)
+        try:
+            self.run_forever()
+        except:
+            if new_task and future.done() and not future.cancelled():
+                # The coroutine raised a BaseException. Consume the exception
+                # to not log a warning, the caller doesn't have access to the
+                # local task.
+                future.exception()
+            raise
+        finally:
+            future.remove_done_callback(_run_until_complete_cb)
+        if not future.done():
+            raise RuntimeError('Event loop stopped before Future completed.')
+    
+&gt;       return future.result()
+               ^^^^^^^^^^^^^^^
+E       RuntimeError: coroutine raised StopIteration
+
+C:\Users\Ant\AppData\Roaming\uv\python\cpython-3.13.7-windows-x86_64-none\Lib\asyncio\base_events.py:725: RuntimeError</failure></testcase><testcase classname="tests.test_related_forget" name="test_related_apply_rolls_back_target_and_copy_together" time="0.140"><failure message="RuntimeError: coroutine raised StopIteration">tmp_path = WindowsPath('C:/Users/Ant/AppData/Local/Temp/mnemos-captured-status-green-fixtures-v1/test_related_apply_rolls_back_0')
+monkeypatch = &lt;_pytest.monkeypatch.MonkeyPatch object at 0x000002220C12D160&gt;
+
+    @pytest.mark.asyncio
+    async def test_related_apply_rolls_back_target_and_copy_together(
+        tmp_path: Path, monkeypatch
+    ) -&gt; None:
+        memory, context, _registry, _root = _service(tmp_path)
+        try:
+            _assertion, target, captured = await _seed_overlap(memory, context)
+            preview = await memory.dispatch("forget_preview", _preview_payload(context, target))
+&gt;           match = next(item for item in preview["candidates"] if item["fact_id"] == captured.id)
+                    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E           StopIteration
+
+tests\test_related_forget.py:790: StopIteration
+
+The above exception was the direct cause of the following exception:
+
+self = &lt;Coroutine test_related_apply_rolls_back_target_and_copy_together&gt;
+
+    def runtest(self) -&gt; None:
+        runner_fixture_id = f"_{self._loop_scope}_scoped_runner"
+        runner = self._request.getfixturevalue(runner_fixture_id)
+        context = contextvars.copy_context()
+        synchronized_obj = _synchronize_coroutine(
+            getattr(*self._synchronization_target_attr), runner, context
+        )
+        with MonkeyPatch.context() as c:
+            c.setattr(*self._synchronization_target_attr, synchronized_obj)
+&gt;           super().runtest()
+
+.venv\Lib\site-packages\pytest_asyncio\plugin.py:569: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+.venv\Lib\site-packages\pytest_asyncio\plugin.py:905: in inner
+    runner.run(coro, context=context)
+C:\Users\Ant\AppData\Roaming\uv\python\cpython-3.13.7-windows-x86_64-none\Lib\asyncio\runners.py:118: in run
+    return self._loop.run_until_complete(task)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+self = &lt;ProactorEventLoop running=False closed=False debug=False&gt;
+future = &lt;Task finished name='Task-119' coro=&lt;test_related_apply_rolls_back_target_and_copy_together() done, defined at D:\Deve...ees\functional-local-memory\tests\test_related_forget.py:782&gt; exception=RuntimeError('coroutine raised StopIteration')&gt;
+
+    def run_until_complete(self, future):
+        """Run until the Future is done.
+    
+        If the argument is a coroutine, it is wrapped in a Task.
+    
+        WARNING: It would be disastrous to call run_until_complete()
+        with the same coroutine twice -- it would wrap it in two
+        different Tasks and that can't be good.
+    
+        Return the Future's result, or raise its exception.
+        """
+        self._check_closed()
+        self._check_running()
+    
+        new_task = not futures.isfuture(future)
+        future = tasks.ensure_future(future, loop=self)
+        if new_task:
+            # An exception is raised if the future didn't complete, so there
+            # is no need to log the "destroy pending task" message
+            future._log_destroy_pending = False
+    
+        future.add_done_callback(_run_until_complete_cb)
+        try:
+            self.run_forever()
+        except:
+            if new_task and future.done() and not future.cancelled():
+                # The coroutine raised a BaseException. Consume the exception
+                # to not log a warning, the caller doesn't have access to the
+                # local task.
+                future.exception()
+            raise
+        finally:
+            future.remove_done_callback(_run_until_complete_cb)
+        if not future.done():
+            raise RuntimeError('Event loop stopped before Future completed.')
+    
+&gt;       return future.result()
+               ^^^^^^^^^^^^^^^
+E       RuntimeError: coroutine raised StopIteration
+
+C:\Users\Ant\AppData\Roaming\uv\python\cpython-3.13.7-windows-x86_64-none\Lib\asyncio\base_events.py:725: RuntimeError</failure></testcase><testcase classname="tests.test_related_forget" name="test_preview_is_incomplete_when_match_count_exceeds_bound" time="0.143"><failure message="assert True is False">tmp_path = WindowsPath('C:/Users/Ant/AppData/Local/Temp/mnemos-captured-status-green-fixtures-v1/test_preview_is_incomplete_whe0')
+
+    @pytest.mark.asyncio
+    async def test_preview_is_incomplete_when_match_count_exceeds_bound(tmp_path: Path) -&gt; None:
+        memory, context, _registry, _root = _service(tmp_path)
+        try:
+            assertion, target, _captured = await _seed_overlap(memory, context)
+            memory.engine.store.store(
+                MemoryChunk(
+                    id="second-auto-copy",
+                    content=f"Another capture: {assertion}",
+                    metadata={
+                        "user_profile_id": context.user_profile_id,
+                        "scope": "project",
+                        "scope_id": context.project_id,
+                        "source": "sleep_consolidation",
+                    },
+                )
+            )
+            preview = await memory.dispatch(
+                "forget_preview", _preview_payload(context, target, limit=1)
+            )
+&gt;           assert preview["complete"] is False
+E           assert True is False
+
+tests\test_related_forget.py:840: AssertionError</failure></testcase><testcase classname="tests.test_related_forget_safety" name="test_new_matching_capture_invalidates_complete_preview" time="0.147" /><testcase classname="tests.test_related_forget_safety" name="test_selected_pending_source_cannot_commit_from_an_existing_lease" time="0.147"><failure message="ValueError: Source selection would remove an unselected derived fact">tmp_path = WindowsPath('C:/Users/Ant/AppData/Local/Temp/mnemos-captured-status-green-fixtures-v1/test_selected_pending_source_c0')
+
+    @pytest.mark.asyncio
+    async def test_selected_pending_source_cannot_commit_from_an_existing_lease(tmp_path: Path) -&gt; None:
+        memory, context, _, _ = _service(tmp_path)
+        store = cast(SQLiteStore, memory.engine.store)
+        try:
+            assertion, target, _ = await _seed_overlap(memory, context)
+            captured = await _capture(memory, context, assertion, "leased-capture")
+            lease = store.claim_jobs(owner="slow-worker", job_id=captured["job_id"])[0]
+            preview = await memory.dispatch("forget_preview", _preview_payload(context, target))
+            source = next(item for item in preview["source_events"] if lease.id in item["job_ids"])
+&gt;           await memory.dispatch("forget_related", _selection(context, target, preview))
+
+tests\test_related_forget_safety.py:67: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+mnemos\memory_service.py:989: in dispatch
+    result = self.engine.store.forget_related(
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+self = &lt;mnemos.utils.storage.SQLiteStore object at 0x000002220C11CAF0&gt;
+fact_id = '7f9eeaf9-3abf-4108-9b28-41c8f4a39d52', expected_version = 1
+user_profile_id = 'profile-a'
+project_id = 'd0c08c46-c677-414c-9e9d-96a364ea2724'
+preview_digest = 'e54014315590a3ee9609869b2d24e552a5790d1b22d67e50f1d33f134a44a099'
+selected_fact_ids = ['7f9eeaf9-3abf-4108-9b28-41c8f4a39d52']
+selected_source_event_ids = ['e28c12b0e559e9f0baa45da08fc545334975a631d77c10f6e560568c695f34df', 'd448a0e138bd10bab92e967dc374465ef7ef4fd387e5264b8a56c823d4fe0e9e']
+limit = 100
+
+    def forget_related(
+        self,
+        *,
+        fact_id: str,
+        expected_version: int,
+        user_profile_id: str,
+        project_id: str,
+        preview_digest: str,
+        selected_fact_ids: list[str],
+        selected_source_event_ids: list[str],
+        limit: int = 100,
+    ) -&gt; dict[str, Any]:
+        if len(set(selected_fact_ids)) != len(selected_fact_ids):
+            raise ValueError("Duplicate selected fact IDs")
+        if len(set(selected_source_event_ids)) != len(selected_source_event_ids):
+            raise ValueError("Duplicate selected source event IDs")
+        with self._lock:
+            self._conn.execute("BEGIN IMMEDIATE")
+            self._transaction_active = True
+            try:
+                preview = self._related_forget_preview_locked(
+                    fact_id=fact_id,
+                    expected_version=expected_version,
+                    user_profile_id=user_profile_id,
+                    project_id=project_id,
+                    limit=max(1, min(limit, 500)),
+                )
+                if not preview["complete"]:
+                    raise ValueError("Forget preview is incomplete")
+                if preview["preview_digest"] != preview_digest:
+                    raise ValueError("Forget preview is stale")
+                candidates = {item["fact_id"]: item for item in preview["candidates"]}
+                sources = {item["source_event_id"]: item for item in preview["source_events"]}
+                selected_facts = [item for item in selected_fact_ids if item != fact_id]
+                unknown_facts = set(selected_facts) - set(candidates)
+                if unknown_facts:
+                    raise ValueError("Selection is not present in the forget preview")
+                unknown_sources = set(selected_source_event_ids) - set(sources)
+                if unknown_sources:
+                    raise ValueError("Source selection is not present in the forget preview")
+                selected_sources = set(selected_source_event_ids)
+                for selected_id in selected_facts:
+                    candidate = candidates[selected_id]
+                    if candidate["blocked_source_event_ids"]:
+                        raise ValueError("Selected fact has an unavailable linked source")
+                    for source_id in candidate["expired_source_event_ids"]:
+                        source = sources.get(source_id)
+                        if source is None:
+                            raise ValueError("Forget preview is stale")
+                        dependencies = set(source["derived_fact_ids"])
+                        unselected_dependencies = dependencies - set(selected_facts) - {fact_id}
+                        if unselected_dependencies:
+                            raise ValueError(
+                                "Source selection would remove an unselected derived fact"
+                            )
+                    missing = set(candidate["required_source_event_ids"]) - selected_sources
+                    if missing:
+                        raise ValueError("Selected fact requires explicit source selection")
+                for selected_id in selected_sources:
+                    if not sources[selected_id].get("selection_allowed", False):
+                        raise ValueError("Selected source is not an eligible capture")
+                    dependencies = set(sources[selected_id]["derived_fact_ids"])
+                    unselected_dependencies = dependencies - set(selected_facts) - {fact_id}
+                    if unselected_dependencies:
+&gt;                       raise ValueError("Source selection would remove an unselected derived fact")
+E                       ValueError: Source selection would remove an unselected derived fact
+
+mnemos\utils\storage.py:3635: ValueError</failure></testcase><testcase classname="tests.test_related_forget_safety" name="test_unknown_and_explicit_source_provenance_is_preserved" time="0.148"><failure message="ValueError: Source selection would remove an unselected derived fact">tmp_path = WindowsPath('C:/Users/Ant/AppData/Local/Temp/mnemos-captured-status-green-fixtures-v1/test_unknown_and_explicit_sour0')
+
+    @pytest.mark.asyncio
+    async def test_unknown_and_explicit_source_provenance_is_preserved(tmp_path: Path) -&gt; None:
+        memory, context, _, _ = _service(tmp_path)
+        try:
+            assertion, target, _ = await _seed_overlap(memory, context)
+            for event_id, extra in (
+                ("unknown-origin", {}),
+                ("manual-origin", {"explicit_remember": True}),
+            ):
+                memory.engine.store.append_episodic_event(
+                    EpisodicEvent(
+                        id=event_id,
+                        event_fingerprint=event_id,
+                        role="user",
+                        content=assertion,
+                        normalized_content=assertion.lower(),
+                        scope="project",
+                        scope_id=context.project_id,
+                        metadata={"user_profile_id": context.user_profile_id, **extra},
+                    )
+                )
+            preview = await memory.dispatch("forget_preview", _preview_payload(context, target))
+            source_ids = {item["source_event_id"] for item in preview["source_events"]}
+            assert not source_ids.intersection({"unknown-origin", "manual-origin"})
+&gt;           await memory.dispatch("forget_related", _selection(context, target, preview))
+
+tests\test_related_forget_safety.py:124: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+mnemos\memory_service.py:989: in dispatch
+    result = self.engine.store.forget_related(
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+self = &lt;mnemos.utils.storage.SQLiteStore object at 0x000002220C11C370&gt;
+fact_id = 'b42160fc-b945-4547-9656-99a0b85526f4', expected_version = 1
+user_profile_id = 'profile-a'
+project_id = '34ebe187-02fc-4ad0-8164-1fe40ebdf7be'
+preview_digest = 'd72fa55c702f52262c082b3a00190c430d51c3afb520900e32000aecdb8a8a64'
+selected_fact_ids = ['b42160fc-b945-4547-9656-99a0b85526f4']
+selected_source_event_ids = ['e28c12b0e559e9f0baa45da08fc545334975a631d77c10f6e560568c695f34df']
+limit = 100
+
+    def forget_related(
+        self,
+        *,
+        fact_id: str,
+        expected_version: int,
+        user_profile_id: str,
+        project_id: str,
+        preview_digest: str,
+        selected_fact_ids: list[str],
+        selected_source_event_ids: list[str],
+        limit: int = 100,
+    ) -&gt; dict[str, Any]:
+        if len(set(selected_fact_ids)) != len(selected_fact_ids):
+            raise ValueError("Duplicate selected fact IDs")
+        if len(set(selected_source_event_ids)) != len(selected_source_event_ids):
+            raise ValueError("Duplicate selected source event IDs")
+        with self._lock:
+            self._conn.execute("BEGIN IMMEDIATE")
+            self._transaction_active = True
+            try:
+                preview = self._related_forget_preview_locked(
+                    fact_id=fact_id,
+                    expected_version=expected_version,
+                    user_profile_id=user_profile_id,
+                    project_id=project_id,
+                    limit=max(1, min(limit, 500)),
+                )
+                if not preview["complete"]:
+                    raise ValueError("Forget preview is incomplete")
+                if preview["preview_digest"] != preview_digest:
+                    raise ValueError("Forget preview is stale")
+                candidates = {item["fact_id"]: item for item in preview["candidates"]}
+                sources = {item["source_event_id"]: item for item in preview["source_events"]}
+                selected_facts = [item for item in selected_fact_ids if item != fact_id]
+                unknown_facts = set(selected_facts) - set(candidates)
+                if unknown_facts:
+                    raise ValueError("Selection is not present in the forget preview")
+                unknown_sources = set(selected_source_event_ids) - set(sources)
+                if unknown_sources:
+                    raise ValueError("Source selection is not present in the forget preview")
+                selected_sources = set(selected_source_event_ids)
+                for selected_id in selected_facts:
+                    candidate = candidates[selected_id]
+                    if candidate["blocked_source_event_ids"]:
+                        raise ValueError("Selected fact has an unavailable linked source")
+                    for source_id in candidate["expired_source_event_ids"]:
+                        source = sources.get(source_id)
+                        if source is None:
+                            raise ValueError("Forget preview is stale")
+                        dependencies = set(source["derived_fact_ids"])
+                        unselected_dependencies = dependencies - set(selected_facts) - {fact_id}
+                        if unselected_dependencies:
+                            raise ValueError(
+                                "Source selection would remove an unselected derived fact"
+                            )
+                    missing = set(candidate["required_source_event_ids"]) - selected_sources
+                    if missing:
+                        raise ValueError("Selected fact requires explicit source selection")
+                for selected_id in selected_sources:
+                    if not sources[selected_id].get("selection_allowed", False):
+                        raise ValueError("Selected source is not an eligible capture")
+                    dependencies = set(sources[selected_id]["derived_fact_ids"])
+                    unselected_dependencies = dependencies - set(selected_facts) - {fact_id}
+                    if unselected_dependencies:
+&gt;                       raise ValueError("Source selection would remove an unselected derived fact")
+E                       ValueError: Source selection would remove an unselected derived fact
+
+mnemos\utils\storage.py:3635: ValueError</failure></testcase><testcase classname="tests.test_related_forget_safety" name="test_conflicting_profile_metadata_is_not_a_deletion_candidate" time="0.145" /><testcase classname="tests.test_related_forget_safety" name="test_conflicting_source_profile_metadata_is_not_previewed" time="0.142" /><testcase classname="tests.test_related_forget_safety" name="test_expired_source_keeps_unselected_job_dependencies[True-event_id-target]" time="0.184" /><testcase classname="tests.test_related_forget_safety" name="test_expired_source_keeps_unselected_job_dependencies[True-event_id-copy]" time="0.172"><failure message="Failed: DID NOT RAISE ValueError">tmp_path = WindowsPath('C:/Users/Ant/AppData/Local/Temp/mnemos-captured-status-green-fixtures-v1/test_expired_source_keeps_unse1')
+source_owner = 'copy', dependency_field = 'event_id', expire_source = True
+
+    @pytest.mark.asyncio
+    @pytest.mark.parametrize("source_owner", ["target", "copy"])
+    @pytest.mark.parametrize("dependency_field", ["event_id", "evidence_ids"])
+    @pytest.mark.parametrize("expire_source", [True, False])
+    async def test_expired_source_keeps_unselected_job_dependencies(
+        tmp_path: Path, source_owner: str, dependency_field: str, expire_source: bool
+    ) -&gt; None:
+        memory, context, _, _ = _service(tmp_path)
+        store = cast(SQLiteStore, memory.engine.store)
+        try:
+            _, target, copy = await _seed_overlap(memory, context)
+            owner = target if source_owner == "target" else copy
+            source_id = next(
+                item.source_event_id
+                for item in store.list_fact_evidence(owner.id)
+                if item.source_event_id
+            )
+            unrelated = MemoryChunk(
+                id="unselected-expired-source-user",
+                content="Another record must survive this rejected operation.",
+                metadata={
+                    "scope": "project",
+                    "scope_id": context.project_id,
+                    "user_profile_id": context.user_profile_id,
+                    "source": "manual",
+                },
+            )
+            store.store(unrelated)
+            job = store.enqueue_job(
+                DurableJob(
+                    kind="correct",
+                    payload={
+                        "target_fact_id": unrelated.id,
+                        dependency_field: source_id if dependency_field == "event_id" else [source_id],
+                        "content": "Unselected job payload must survive.",
+                    },
+                )
+            )
+            if expire_source:
+                store._conn.execute("DELETE FROM episodic_events WHERE id=?", (source_id,))
+                store._conn.commit()
+&gt;           with pytest.raises(ValueError):
+                 ^^^^^^^^^^^^^^^^^^^^^^^^^
+E           Failed: DID NOT RAISE ValueError
+
+tests\test_related_forget_safety.py:225: Failed</failure></testcase><testcase classname="tests.test_related_forget_safety" name="test_expired_source_keeps_unselected_job_dependencies[True-evidence_ids-target]" time="0.175" /><testcase classname="tests.test_related_forget_safety" name="test_expired_source_keeps_unselected_job_dependencies[True-evidence_ids-copy]" time="0.148"><failure message="Failed: DID NOT RAISE ValueError">tmp_path = WindowsPath('C:/Users/Ant/AppData/Local/Temp/mnemos-captured-status-green-fixtures-v1/test_expired_source_keeps_unse3')
+source_owner = 'copy', dependency_field = 'evidence_ids', expire_source = True
+
+    @pytest.mark.asyncio
+    @pytest.mark.parametrize("source_owner", ["target", "copy"])
+    @pytest.mark.parametrize("dependency_field", ["event_id", "evidence_ids"])
+    @pytest.mark.parametrize("expire_source", [True, False])
+    async def test_expired_source_keeps_unselected_job_dependencies(
+        tmp_path: Path, source_owner: str, dependency_field: str, expire_source: bool
+    ) -&gt; None:
+        memory, context, _, _ = _service(tmp_path)
+        store = cast(SQLiteStore, memory.engine.store)
+        try:
+            _, target, copy = await _seed_overlap(memory, context)
+            owner = target if source_owner == "target" else copy
+            source_id = next(
+                item.source_event_id
+                for item in store.list_fact_evidence(owner.id)
+                if item.source_event_id
+            )
+            unrelated = MemoryChunk(
+                id="unselected-expired-source-user",
+                content="Another record must survive this rejected operation.",
+                metadata={
+                    "scope": "project",
+                    "scope_id": context.project_id,
+                    "user_profile_id": context.user_profile_id,
+                    "source": "manual",
+                },
+            )
+            store.store(unrelated)
+            job = store.enqueue_job(
+                DurableJob(
+                    kind="correct",
+                    payload={
+                        "target_fact_id": unrelated.id,
+                        dependency_field: source_id if dependency_field == "event_id" else [source_id],
+                        "content": "Unselected job payload must survive.",
+                    },
+                )
+            )
+            if expire_source:
+                store._conn.execute("DELETE FROM episodic_events WHERE id=?", (source_id,))
+                store._conn.commit()
+&gt;           with pytest.raises(ValueError):
+                 ^^^^^^^^^^^^^^^^^^^^^^^^^
+E           Failed: DID NOT RAISE ValueError
+
+tests\test_related_forget_safety.py:225: Failed</failure></testcase><testcase classname="tests.test_related_forget_safety" name="test_expired_source_keeps_unselected_job_dependencies[False-event_id-target]" time="0.167" /><testcase classname="tests.test_related_forget_safety" name="test_expired_source_keeps_unselected_job_dependencies[False-event_id-copy]" time="0.161" /><testcase classname="tests.test_related_forget_safety" name="test_expired_source_keeps_unselected_job_dependencies[False-evidence_ids-target]" time="0.163" /><testcase classname="tests.test_related_forget_safety" name="test_expired_source_keeps_unselected_job_dependencies[False-evidence_ids-copy]" time="0.167" /><testcase classname="tests.test_related_forget_safety" name="test_required_foreign_source_detail_is_redacted" time="0.141" /><testcase classname="tests.test_related_forget_safety" name="test_related_rollback_preserves_all_tables_after_reopen" time="0.168"><failure message="ValueError: Source selection would remove an unselected derived fact">tmp_path = WindowsPath('C:/Users/Ant/AppData/Local/Temp/mnemos-captured-status-green-fixtures-v1/test_related_rollback_preserve0')
+monkeypatch = &lt;_pytest.monkeypatch.MonkeyPatch object at 0x000002220C4AB0E0&gt;
+
+    @pytest.mark.asyncio
+    async def test_related_rollback_preserves_all_tables_after_reopen(
+        tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+    ) -&gt; None:
+        memory, context, _, _ = _service(tmp_path)
+        store = cast(SQLiteStore, memory.engine.store)
+        try:
+            _, target, copy = await _seed_overlap(memory, context)
+            await memory.dispatch(
+                "correct",
+                {
+                    **_preview_payload(context, target),
+                    "content": "The project release channel is revised.",
+                },
+            )
+            await memory.dispatch("maintenance", {})
+            target = store.get(target.id)
+            assert target is not None
+            assert store.list_fact_revisions(target.id)
+            store.replace_graph_neighbors(target.id, {copy.id: 0.75})
+            store.replace_graph_neighbors(copy.id, {target.id: 0.75})
+            assert store.get_graph_edges()
+            preview = await memory.dispatch("forget_preview", _preview_payload(context, target))
+            before = _database_rows(store)
+            original = store._forget_fact_locked
+    
+            def fail_after_cleanup(*args: Any, **kwargs: Any) -&gt; bool:
+                original(*args, **kwargs)
+                raise RuntimeError("injected after auxiliary cleanup")
+    
+            monkeypatch.setattr(store, "_forget_fact_locked", fail_after_cleanup)
+            with pytest.raises(RuntimeError, match="injected"):
+&gt;               await memory.dispatch("forget_related", _selection(context, target, preview))
+
+tests\test_related_forget_safety.py:345: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+mnemos\memory_service.py:989: in dispatch
+    result = self.engine.store.forget_related(
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+self = &lt;mnemos.utils.storage.SQLiteStore object at 0x000002220C1D3430&gt;
+fact_id = 'b02d098a-611b-4f33-91b8-b555a8da1650', expected_version = 2
+user_profile_id = 'profile-a'
+project_id = '49223043-6271-4a79-aed2-fd952f2f7fc5'
+preview_digest = '1a98776a9d8ce85789378a597a511cef004f82c2184657131163192d65b74596'
+selected_fact_ids = ['b02d098a-611b-4f33-91b8-b555a8da1650']
+selected_source_event_ids = ['e28c12b0e559e9f0baa45da08fc545334975a631d77c10f6e560568c695f34df']
+limit = 100
+
+    def forget_related(
+        self,
+        *,
+        fact_id: str,
+        expected_version: int,
+        user_profile_id: str,
+        project_id: str,
+        preview_digest: str,
+        selected_fact_ids: list[str],
+        selected_source_event_ids: list[str],
+        limit: int = 100,
+    ) -&gt; dict[str, Any]:
+        if len(set(selected_fact_ids)) != len(selected_fact_ids):
+            raise ValueError("Duplicate selected fact IDs")
+        if len(set(selected_source_event_ids)) != len(selected_source_event_ids):
+            raise ValueError("Duplicate selected source event IDs")
+        with self._lock:
+            self._conn.execute("BEGIN IMMEDIATE")
+            self._transaction_active = True
+            try:
+                preview = self._related_forget_preview_locked(
+                    fact_id=fact_id,
+                    expected_version=expected_version,
+                    user_profile_id=user_profile_id,
+                    project_id=project_id,
+                    limit=max(1, min(limit, 500)),
+                )
+                if not preview["complete"]:
+                    raise ValueError("Forget preview is incomplete")
+                if preview["preview_digest"] != preview_digest:
+                    raise ValueError("Forget preview is stale")
+                candidates = {item["fact_id"]: item for item in preview["candidates"]}
+                sources = {item["source_event_id"]: item for item in preview["source_events"]}
+                selected_facts = [item for item in selected_fact_ids if item != fact_id]
+                unknown_facts = set(selected_facts) - set(candidates)
+                if unknown_facts:
+                    raise ValueError("Selection is not present in the forget preview")
+                unknown_sources = set(selected_source_event_ids) - set(sources)
+                if unknown_sources:
+                    raise ValueError("Source selection is not present in the forget preview")
+                selected_sources = set(selected_source_event_ids)
+                for selected_id in selected_facts:
+                    candidate = candidates[selected_id]
+                    if candidate["blocked_source_event_ids"]:
+                        raise ValueError("Selected fact has an unavailable linked source")
+                    for source_id in candidate["expired_source_event_ids"]:
+                        source = sources.get(source_id)
+                        if source is None:
+                            raise ValueError("Forget preview is stale")
+                        dependencies = set(source["derived_fact_ids"])
+                        unselected_dependencies = dependencies - set(selected_facts) - {fact_id}
+                        if unselected_dependencies:
+                            raise ValueError(
+                                "Source selection would remove an unselected derived fact"
+                            )
+                    missing = set(candidate["required_source_event_ids"]) - selected_sources
+                    if missing:
+                        raise ValueError("Selected fact requires explicit source selection")
+                for selected_id in selected_sources:
+                    if not sources[selected_id].get("selection_allowed", False):
+                        raise ValueError("Selected source is not an eligible capture")
+                    dependencies = set(sources[selected_id]["derived_fact_ids"])
+                    unselected_dependencies = dependencies - set(selected_facts) - {fact_id}
+                    if unselected_dependencies:
+&gt;                       raise ValueError("Source selection would remove an unselected derived fact")
+E                       ValueError: Source selection would remove an unselected derived fact
+
+mnemos\utils\storage.py:3635: ValueError</failure></testcase></testsuite></testsuites>

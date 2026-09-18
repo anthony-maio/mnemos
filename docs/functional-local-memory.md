@@ -178,6 +178,17 @@ it is not an independent truth judgment. Source IDs establish provenance,
 but a model can still attach a valid source ID to an unsupported statement.
 Inspect the cited source before relying on a disputed or consequential fact.
 
+When sleep consolidation is disabled, automatic capture remains searchable
+as verbatim conversation evidence. Newly indexed copies use source
+`captured_passthrough` and assertion status `unknown`. Host context labels them
+`captured conversation; unverified, may be outdated`; other unknown records
+are labeled `unverified`. These labels count toward the context budget. A
+correction changes the selected fact, not every independent historical mention.
+Explicit remember and correct retain their assertion status even when an
+identical automatic capture is merged later. Captured copies remain available
+for inspection and deliberate related-forget review. This does not relabel
+previously indexed records or establish the truth of extracted assertions.
+
 Corrections use a stable fact ID and an expected version:
 
 ```text

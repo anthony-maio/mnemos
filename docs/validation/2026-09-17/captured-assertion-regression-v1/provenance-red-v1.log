@@ -1,0 +1,232 @@
+.FFFF..                                                                  [100%]
+================================== FAILURES ===================================
+_ test_identical_capture_and_explicit_fact_retain_explicit_authority[True-memory] _
+
+tmp_path = WindowsPath('C:/Users/Ant/AppData/Local/Temp/mnemos-captured-status-provenance-red-fixtures-v1/test_identical_capture_and_exp0')
+backend = 'memory', explicit_first = True
+
+    @pytest.mark.parametrize("backend", ["memory", "sqlite"])
+    @pytest.mark.parametrize("explicit_first", [True, False])
+    def test_identical_capture_and_explicit_fact_retain_explicit_authority(
+        tmp_path, backend, explicit_first
+    ):
+        store = InMemoryStore() if backend == "memory" else SQLiteStore(str(tmp_path / "merge.sqlite"))
+        scope = {"scope": "project", "scope_id": "a", "user_profile_id": "p"}
+        explicit = MemoryChunk(
+            content="Use SQLite",
+            embedding=[1.0, 0.0],
+            version=2,
+            metadata={
+                **scope,
+                "source": "explicit_correction",
+                "assertion_status": "asserted",
+                "source_event_ids": ["explicit-event"],
+                "source_roles": ["user"],
+                "encoding_diagnostics": {},
+                "host": "claude-code",
+                "session_id": "correction-session",
+            },
+        )
+        captured = MemoryChunk(
+            content="Use SQLite",
+            embedding=[1.0, 0.0],
+            metadata={
+                **scope,
+                "source": "captured_passthrough",
+                "assertion_status": "unknown",
+                "source_event_ids": ["captured-event"],
+                "source_roles": ["user"],
+                "encoding_diagnostics": {"surprisal_status": "disabled"},
+                "host": "codex",
+                "session_id": "captured-session",
+            },
+        )
+        first, second = (explicit, captured) if explicit_first else (captured, explicit)
+        try:
+            stored = store.upsert_canonical(first)
+            merged = store.upsert_canonical(second)
+            assert merged.id == stored.id
+            assert len(store.get_all()) == 1
+            assert assertion_status(merged) == "asserted"
+            assert merged.metadata["source"] == "explicit_correction"
+            assert merged.version == 2
+>           assert set(merged.metadata["source_event_ids"]) == {"explicit-event", "captured-event"}
+E           AssertionError: assert {'captured-event'} == {'captured-ev...plicit-event'}
+E             
+E             Extra items in the right set:
+E             'explicit-event'
+E             Use -v to get more diff
+
+tests\test_captured_assertion_status.py:156: AssertionError
+_ test_identical_capture_and_explicit_fact_retain_explicit_authority[True-sqlite] _
+
+tmp_path = WindowsPath('C:/Users/Ant/AppData/Local/Temp/mnemos-captured-status-provenance-red-fixtures-v1/test_identical_capture_and_exp1')
+backend = 'sqlite', explicit_first = True
+
+    @pytest.mark.parametrize("backend", ["memory", "sqlite"])
+    @pytest.mark.parametrize("explicit_first", [True, False])
+    def test_identical_capture_and_explicit_fact_retain_explicit_authority(
+        tmp_path, backend, explicit_first
+    ):
+        store = InMemoryStore() if backend == "memory" else SQLiteStore(str(tmp_path / "merge.sqlite"))
+        scope = {"scope": "project", "scope_id": "a", "user_profile_id": "p"}
+        explicit = MemoryChunk(
+            content="Use SQLite",
+            embedding=[1.0, 0.0],
+            version=2,
+            metadata={
+                **scope,
+                "source": "explicit_correction",
+                "assertion_status": "asserted",
+                "source_event_ids": ["explicit-event"],
+                "source_roles": ["user"],
+                "encoding_diagnostics": {},
+                "host": "claude-code",
+                "session_id": "correction-session",
+            },
+        )
+        captured = MemoryChunk(
+            content="Use SQLite",
+            embedding=[1.0, 0.0],
+            metadata={
+                **scope,
+                "source": "captured_passthrough",
+                "assertion_status": "unknown",
+                "source_event_ids": ["captured-event"],
+                "source_roles": ["user"],
+                "encoding_diagnostics": {"surprisal_status": "disabled"},
+                "host": "codex",
+                "session_id": "captured-session",
+            },
+        )
+        first, second = (explicit, captured) if explicit_first else (captured, explicit)
+        try:
+            stored = store.upsert_canonical(first)
+            merged = store.upsert_canonical(second)
+            assert merged.id == stored.id
+            assert len(store.get_all()) == 1
+            assert assertion_status(merged) == "asserted"
+            assert merged.metadata["source"] == "explicit_correction"
+            assert merged.version == 2
+>           assert set(merged.metadata["source_event_ids"]) == {"explicit-event", "captured-event"}
+E           AssertionError: assert {'captured-event'} == {'captured-ev...plicit-event'}
+E             
+E             Extra items in the right set:
+E             'explicit-event'
+E             Use -v to get more diff
+
+tests\test_captured_assertion_status.py:156: AssertionError
+_ test_identical_capture_and_explicit_fact_retain_explicit_authority[False-memory] _
+
+tmp_path = WindowsPath('C:/Users/Ant/AppData/Local/Temp/mnemos-captured-status-provenance-red-fixtures-v1/test_identical_capture_and_exp2')
+backend = 'memory', explicit_first = False
+
+    @pytest.mark.parametrize("backend", ["memory", "sqlite"])
+    @pytest.mark.parametrize("explicit_first", [True, False])
+    def test_identical_capture_and_explicit_fact_retain_explicit_authority(
+        tmp_path, backend, explicit_first
+    ):
+        store = InMemoryStore() if backend == "memory" else SQLiteStore(str(tmp_path / "merge.sqlite"))
+        scope = {"scope": "project", "scope_id": "a", "user_profile_id": "p"}
+        explicit = MemoryChunk(
+            content="Use SQLite",
+            embedding=[1.0, 0.0],
+            version=2,
+            metadata={
+                **scope,
+                "source": "explicit_correction",
+                "assertion_status": "asserted",
+                "source_event_ids": ["explicit-event"],
+                "source_roles": ["user"],
+                "encoding_diagnostics": {},
+                "host": "claude-code",
+                "session_id": "correction-session",
+            },
+        )
+        captured = MemoryChunk(
+            content="Use SQLite",
+            embedding=[1.0, 0.0],
+            metadata={
+                **scope,
+                "source": "captured_passthrough",
+                "assertion_status": "unknown",
+                "source_event_ids": ["captured-event"],
+                "source_roles": ["user"],
+                "encoding_diagnostics": {"surprisal_status": "disabled"},
+                "host": "codex",
+                "session_id": "captured-session",
+            },
+        )
+        first, second = (explicit, captured) if explicit_first else (captured, explicit)
+        try:
+            stored = store.upsert_canonical(first)
+            merged = store.upsert_canonical(second)
+            assert merged.id == stored.id
+            assert len(store.get_all()) == 1
+            assert assertion_status(merged) == "asserted"
+            assert merged.metadata["source"] == "explicit_correction"
+>           assert merged.version == 2
+E           AssertionError: assert 1 == 2
+E            +  where 1 = MemoryChunk(id='8ff61689-218b-4fb3-9534-fbc5f4726030', content='Use SQLite', embedding=[1.0, 0.0], metadata={'scope': ...32, 54, 34868, tzinfo=datetime.timezone.utc), observation_count=2, last_retrieved_at=None, reconsolidation_due_at=None).version
+
+tests\test_captured_assertion_status.py:155: AssertionError
+_ test_identical_capture_and_explicit_fact_retain_explicit_authority[False-sqlite] _
+
+tmp_path = WindowsPath('C:/Users/Ant/AppData/Local/Temp/mnemos-captured-status-provenance-red-fixtures-v1/test_identical_capture_and_exp3')
+backend = 'sqlite', explicit_first = False
+
+    @pytest.mark.parametrize("backend", ["memory", "sqlite"])
+    @pytest.mark.parametrize("explicit_first", [True, False])
+    def test_identical_capture_and_explicit_fact_retain_explicit_authority(
+        tmp_path, backend, explicit_first
+    ):
+        store = InMemoryStore() if backend == "memory" else SQLiteStore(str(tmp_path / "merge.sqlite"))
+        scope = {"scope": "project", "scope_id": "a", "user_profile_id": "p"}
+        explicit = MemoryChunk(
+            content="Use SQLite",
+            embedding=[1.0, 0.0],
+            version=2,
+            metadata={
+                **scope,
+                "source": "explicit_correction",
+                "assertion_status": "asserted",
+                "source_event_ids": ["explicit-event"],
+                "source_roles": ["user"],
+                "encoding_diagnostics": {},
+                "host": "claude-code",
+                "session_id": "correction-session",
+            },
+        )
+        captured = MemoryChunk(
+            content="Use SQLite",
+            embedding=[1.0, 0.0],
+            metadata={
+                **scope,
+                "source": "captured_passthrough",
+                "assertion_status": "unknown",
+                "source_event_ids": ["captured-event"],
+                "source_roles": ["user"],
+                "encoding_diagnostics": {"surprisal_status": "disabled"},
+                "host": "codex",
+                "session_id": "captured-session",
+            },
+        )
+        first, second = (explicit, captured) if explicit_first else (captured, explicit)
+        try:
+            stored = store.upsert_canonical(first)
+            merged = store.upsert_canonical(second)
+            assert merged.id == stored.id
+            assert len(store.get_all()) == 1
+            assert assertion_status(merged) == "asserted"
+            assert merged.metadata["source"] == "explicit_correction"
+>           assert merged.version == 2
+E           AssertionError: assert 1 == 2
+E            +  where 1 = MemoryChunk(id='26fbebd1-7201-4eee-b645-30dbff88fcb4', content='Use SQLite', embedding=[1.0, 0.0], metadata={'scope': ...32, 54, 64505, tzinfo=datetime.timezone.utc), observation_count=2, last_retrieved_at=None, reconsolidation_due_at=None).version
+
+tests\test_captured_assertion_status.py:155: AssertionError
+=========================== short test summary info ===========================
+FAILED tests/test_captured_assertion_status.py::test_identical_capture_and_explicit_fact_retain_explicit_authority[True-memory]
+FAILED tests/test_captured_assertion_status.py::test_identical_capture_and_explicit_fact_retain_explicit_authority[True-sqlite]
+FAILED tests/test_captured_assertion_status.py::test_identical_capture_and_explicit_fact_retain_explicit_authority[False-memory]
+FAILED tests/test_captured_assertion_status.py::test_identical_capture_and_explicit_fact_retain_explicit_authority[False-sqlite]
+4 failed, 3 passed in 1.86s

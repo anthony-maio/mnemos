@@ -131,6 +131,25 @@ def _reject_conflict_canonical_collision(existing: MemoryChunk, incoming: Memory
         )
 
 
+def _merge_canonical_metadata(existing: MemoryChunk, incoming: MemoryChunk) -> dict[str, Any]:
+    metadata = {**existing.metadata, **incoming.metadata}
+    if (
+        incoming.metadata.get("source") == "captured_passthrough"
+        and existing.metadata.get("source") != "captured_passthrough"
+    ):
+        # Raw repetition cannot replace an accepted assertion's provenance.
+        metadata = dict(existing.metadata)
+    if "captured_passthrough" in (existing.metadata.get("source"), incoming.metadata.get("source")):
+        for key in ("source_event_ids", "source_roles"):
+            prior = existing.metadata.get(key, [])
+            current = incoming.metadata.get(key, [])
+            if isinstance(prior, list) and isinstance(current, list):
+                values = prior + current
+                if all(isinstance(value, str) for value in values):
+                    metadata[key] = list(dict.fromkeys(values))
+    return metadata
+
+
 def _source_identity_key(event: EpisodicEvent) -> str | None:
     """Build a case-sensitive identity for an externally supplied event ID."""
     metadata = event.metadata
@@ -819,8 +838,8 @@ class InMemoryStore(MemoryStore):
             if chunk.id != existing.id and chunk.id not in merged_duplicate_ids:
                 merged_duplicate_ids.append(chunk.id)
 
+            existing.metadata = _merge_canonical_metadata(existing, chunk)
             existing.metadata["merged_duplicate_ids"] = merged_duplicate_ids
-            existing.metadata.update(chunk.metadata)
             existing.content = chunk.content
             existing.embedding = chunk.embedding or existing.embedding
             existing.salience = max(existing.salience, chunk.salience)
@@ -2151,8 +2170,7 @@ class SQLiteStore(MemoryStore):
             if chunk.id != existing.id and chunk.id not in merged_duplicate_ids:
                 merged_duplicate_ids.append(chunk.id)
 
-            merged_metadata = dict(existing.metadata)
-            merged_metadata.update(chunk.metadata)
+            merged_metadata = _merge_canonical_metadata(existing, chunk)
             merged_metadata["merged_duplicate_ids"] = merged_duplicate_ids
 
             merged = existing.model_copy(
@@ -3171,7 +3189,7 @@ class SQLiteStore(MemoryStore):
                 or chunk.metadata.get("scope_id") != project_id
             ):
                 continue
-            if chunk.metadata.get("source") != "sleep_consolidation":
+            if chunk.metadata.get("source") not in {"sleep_consolidation", "captured_passthrough"}:
                 continue
             normalized = normalize_memory_text(chunk.content)
             matches = [assertion for assertion in assertions if assertion in normalized]

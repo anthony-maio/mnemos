@@ -383,6 +383,7 @@ class LocalMemoryService:
         )
         diagnostics = {}
         decision = "facts"
+        captured_passthrough = job.kind == "extract" and not self.engine.config.modules.sleep
         if job.kind in {"remember", "correct"}:
             proposals = [
                 FactProposal(
@@ -501,12 +502,24 @@ class LocalMemoryService:
                 "source": (
                     "explicit_remember"
                     if job.kind == "remember"
-                    else "explicit_correction" if job.kind == "correct" else "sleep_consolidation"
+                    else (
+                        "explicit_correction"
+                        if job.kind == "correct"
+                        else (
+                            "captured_passthrough"
+                            if captured_passthrough
+                            else "sleep_consolidation"
+                        )
+                    )
                 ),
                 "source_roles": [event.role],
                 "source_event_ids": [event.id],
                 "encoding_diagnostics": diagnostics,
-                "assertion_status": "conflict" if proposal.operation == "conflict" else "asserted",
+                "assertion_status": (
+                    "conflict"
+                    if proposal.operation == "conflict"
+                    else "unknown" if captured_passthrough else "asserted"
+                ),
             }
             embedding = await embed_text_async(self.engine.embedder, safe.content, role="document")
             if proposal.operation == "correct":

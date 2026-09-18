@@ -4,6 +4,14 @@ This record covers the unreleased `wt/functional-local-memory` worktree. It
 separates implemented behavior from acceptance evidence. The original task
 boundaries and thresholds remain in the [implementation plan](../../plans/2026-09-16-functional-local-memory.md).
 
+The [captured-assertion repair](../2026-09-17/captured-assertion-regression-v1/README.md)
+preserves automatic passthrough history while labeling newly indexed copies
+as unknown captured evidence. Host context now marks it unverified and possibly
+outdated. Canonical dedupe preserves explicit authority and source identities,
+and related-forget review still includes captured copies. All 68 focused
+regressions pass. This repairs evidence labeling; it does not suppress old
+mentions, migrate existing records, or prove native answer selection.
+
 The [native Codex-to-Claude continuity check](../2026-09-17/native-codex-claude-continuity-v1/README.md)
 now proves an actual Codex store/consolidate call, Claude retrieval after service
 restart, and Claude correction preserving the fact ID at version 2 through

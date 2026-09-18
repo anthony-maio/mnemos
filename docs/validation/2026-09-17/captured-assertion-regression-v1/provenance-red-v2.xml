@@ -1,0 +1,229 @@
+<?xml version="1.0" encoding="utf-8"?><testsuites name="pytest tests"><testsuite name="pytest" errors="0" failures="4" skipped="0" tests="7" time="1.226" timestamp="2026-09-17T20:33:20.804600-04:00" hostname="Aurora"><testcase classname="tests.test_captured_assertion_status" name="test_corrected_fact_and_captured_history_keep_distinct_authority_after_restart" time="0.248" /><testcase classname="tests.test_captured_assertion_status" name="test_identical_capture_and_explicit_fact_retain_explicit_authority[True-memory]" time="0.004"><failure message="AssertionError: assert {'captured-event'} == {'captured-ev...plicit-event'}&#10;  &#10;  Extra items in the right set:&#10;  'explicit-event'&#10;  Use -v to get more diff">tmp_path = WindowsPath('C:/Users/Ant/AppData/Local/Temp/mnemos-captured-status-provenance-red-fixtures-v2/test_identical_capture_and_exp0')
+backend = 'memory', explicit_first = True
+
+    @pytest.mark.parametrize("backend", ["memory", "sqlite"])
+    @pytest.mark.parametrize("explicit_first", [True, False])
+    def test_identical_capture_and_explicit_fact_retain_explicit_authority(
+        tmp_path, backend, explicit_first
+    ):
+        store = InMemoryStore() if backend == "memory" else SQLiteStore(str(tmp_path / "merge.sqlite"))
+        scope = {"scope": "project", "scope_id": "a", "user_profile_id": "p"}
+        explicit = MemoryChunk(
+            content="Use SQLite",
+            embedding=[1.0, 0.0],
+            version=2 if explicit_first else 1,
+            metadata={
+                **scope,
+                "source": "explicit_correction" if explicit_first else "explicit_remember",
+                "assertion_status": "asserted",
+                "source_event_ids": ["explicit-event"],
+                "source_roles": ["user"],
+                "encoding_diagnostics": {},
+                "host": "claude-code",
+                "session_id": "correction-session",
+            },
+        )
+        captured = MemoryChunk(
+            content="Use SQLite",
+            embedding=[1.0, 0.0],
+            metadata={
+                **scope,
+                "source": "captured_passthrough",
+                "assertion_status": "unknown",
+                "source_event_ids": ["captured-event"],
+                "source_roles": ["user"],
+                "encoding_diagnostics": {"surprisal_status": "disabled"},
+                "host": "codex",
+                "session_id": "captured-session",
+            },
+        )
+        first, second = (explicit, captured) if explicit_first else (captured, explicit)
+        try:
+            stored = store.upsert_canonical(first)
+            merged = store.upsert_canonical(second)
+            assert merged.id == stored.id
+            assert len(store.get_all()) == 1
+            assert assertion_status(merged) == "asserted"
+            assert merged.metadata["source"] == (
+                "explicit_correction" if explicit_first else "explicit_remember"
+            )
+            assert merged.version == (2 if explicit_first else 1)
+&gt;           assert set(merged.metadata["source_event_ids"]) == {"explicit-event", "captured-event"}
+E           AssertionError: assert {'captured-event'} == {'captured-ev...plicit-event'}
+E             
+E             Extra items in the right set:
+E             'explicit-event'
+E             Use -v to get more diff
+
+tests\test_captured_assertion_status.py:158: AssertionError</failure></testcase><testcase classname="tests.test_captured_assertion_status" name="test_identical_capture_and_explicit_fact_retain_explicit_authority[True-sqlite]" time="0.038"><failure message="AssertionError: assert {'captured-event'} == {'captured-ev...plicit-event'}&#10;  &#10;  Extra items in the right set:&#10;  'explicit-event'&#10;  Use -v to get more diff">tmp_path = WindowsPath('C:/Users/Ant/AppData/Local/Temp/mnemos-captured-status-provenance-red-fixtures-v2/test_identical_capture_and_exp1')
+backend = 'sqlite', explicit_first = True
+
+    @pytest.mark.parametrize("backend", ["memory", "sqlite"])
+    @pytest.mark.parametrize("explicit_first", [True, False])
+    def test_identical_capture_and_explicit_fact_retain_explicit_authority(
+        tmp_path, backend, explicit_first
+    ):
+        store = InMemoryStore() if backend == "memory" else SQLiteStore(str(tmp_path / "merge.sqlite"))
+        scope = {"scope": "project", "scope_id": "a", "user_profile_id": "p"}
+        explicit = MemoryChunk(
+            content="Use SQLite",
+            embedding=[1.0, 0.0],
+            version=2 if explicit_first else 1,
+            metadata={
+                **scope,
+                "source": "explicit_correction" if explicit_first else "explicit_remember",
+                "assertion_status": "asserted",
+                "source_event_ids": ["explicit-event"],
+                "source_roles": ["user"],
+                "encoding_diagnostics": {},
+                "host": "claude-code",
+                "session_id": "correction-session",
+            },
+        )
+        captured = MemoryChunk(
+            content="Use SQLite",
+            embedding=[1.0, 0.0],
+            metadata={
+                **scope,
+                "source": "captured_passthrough",
+                "assertion_status": "unknown",
+                "source_event_ids": ["captured-event"],
+                "source_roles": ["user"],
+                "encoding_diagnostics": {"surprisal_status": "disabled"},
+                "host": "codex",
+                "session_id": "captured-session",
+            },
+        )
+        first, second = (explicit, captured) if explicit_first else (captured, explicit)
+        try:
+            stored = store.upsert_canonical(first)
+            merged = store.upsert_canonical(second)
+            assert merged.id == stored.id
+            assert len(store.get_all()) == 1
+            assert assertion_status(merged) == "asserted"
+            assert merged.metadata["source"] == (
+                "explicit_correction" if explicit_first else "explicit_remember"
+            )
+            assert merged.version == (2 if explicit_first else 1)
+&gt;           assert set(merged.metadata["source_event_ids"]) == {"explicit-event", "captured-event"}
+E           AssertionError: assert {'captured-event'} == {'captured-ev...plicit-event'}
+E             
+E             Extra items in the right set:
+E             'explicit-event'
+E             Use -v to get more diff
+
+tests\test_captured_assertion_status.py:158: AssertionError</failure></testcase><testcase classname="tests.test_captured_assertion_status" name="test_identical_capture_and_explicit_fact_retain_explicit_authority[False-memory]" time="0.003"><failure message="AssertionError: assert {'explicit-event'} == {'captured-ev...plicit-event'}&#10;  &#10;  Extra items in the right set:&#10;  'captured-event'&#10;  Use -v to get more diff">tmp_path = WindowsPath('C:/Users/Ant/AppData/Local/Temp/mnemos-captured-status-provenance-red-fixtures-v2/test_identical_capture_and_exp2')
+backend = 'memory', explicit_first = False
+
+    @pytest.mark.parametrize("backend", ["memory", "sqlite"])
+    @pytest.mark.parametrize("explicit_first", [True, False])
+    def test_identical_capture_and_explicit_fact_retain_explicit_authority(
+        tmp_path, backend, explicit_first
+    ):
+        store = InMemoryStore() if backend == "memory" else SQLiteStore(str(tmp_path / "merge.sqlite"))
+        scope = {"scope": "project", "scope_id": "a", "user_profile_id": "p"}
+        explicit = MemoryChunk(
+            content="Use SQLite",
+            embedding=[1.0, 0.0],
+            version=2 if explicit_first else 1,
+            metadata={
+                **scope,
+                "source": "explicit_correction" if explicit_first else "explicit_remember",
+                "assertion_status": "asserted",
+                "source_event_ids": ["explicit-event"],
+                "source_roles": ["user"],
+                "encoding_diagnostics": {},
+                "host": "claude-code",
+                "session_id": "correction-session",
+            },
+        )
+        captured = MemoryChunk(
+            content="Use SQLite",
+            embedding=[1.0, 0.0],
+            metadata={
+                **scope,
+                "source": "captured_passthrough",
+                "assertion_status": "unknown",
+                "source_event_ids": ["captured-event"],
+                "source_roles": ["user"],
+                "encoding_diagnostics": {"surprisal_status": "disabled"},
+                "host": "codex",
+                "session_id": "captured-session",
+            },
+        )
+        first, second = (explicit, captured) if explicit_first else (captured, explicit)
+        try:
+            stored = store.upsert_canonical(first)
+            merged = store.upsert_canonical(second)
+            assert merged.id == stored.id
+            assert len(store.get_all()) == 1
+            assert assertion_status(merged) == "asserted"
+            assert merged.metadata["source"] == (
+                "explicit_correction" if explicit_first else "explicit_remember"
+            )
+            assert merged.version == (2 if explicit_first else 1)
+&gt;           assert set(merged.metadata["source_event_ids"]) == {"explicit-event", "captured-event"}
+E           AssertionError: assert {'explicit-event'} == {'captured-ev...plicit-event'}
+E             
+E             Extra items in the right set:
+E             'captured-event'
+E             Use -v to get more diff
+
+tests\test_captured_assertion_status.py:158: AssertionError</failure></testcase><testcase classname="tests.test_captured_assertion_status" name="test_identical_capture_and_explicit_fact_retain_explicit_authority[False-sqlite]" time="0.042"><failure message="AssertionError: assert {'explicit-event'} == {'captured-ev...plicit-event'}&#10;  &#10;  Extra items in the right set:&#10;  'captured-event'&#10;  Use -v to get more diff">tmp_path = WindowsPath('C:/Users/Ant/AppData/Local/Temp/mnemos-captured-status-provenance-red-fixtures-v2/test_identical_capture_and_exp3')
+backend = 'sqlite', explicit_first = False
+
+    @pytest.mark.parametrize("backend", ["memory", "sqlite"])
+    @pytest.mark.parametrize("explicit_first", [True, False])
+    def test_identical_capture_and_explicit_fact_retain_explicit_authority(
+        tmp_path, backend, explicit_first
+    ):
+        store = InMemoryStore() if backend == "memory" else SQLiteStore(str(tmp_path / "merge.sqlite"))
+        scope = {"scope": "project", "scope_id": "a", "user_profile_id": "p"}
+        explicit = MemoryChunk(
+            content="Use SQLite",
+            embedding=[1.0, 0.0],
+            version=2 if explicit_first else 1,
+            metadata={
+                **scope,
+                "source": "explicit_correction" if explicit_first else "explicit_remember",
+                "assertion_status": "asserted",
+                "source_event_ids": ["explicit-event"],
+                "source_roles": ["user"],
+                "encoding_diagnostics": {},
+                "host": "claude-code",
+                "session_id": "correction-session",
+            },
+        )
+        captured = MemoryChunk(
+            content="Use SQLite",
+            embedding=[1.0, 0.0],
+            metadata={
+                **scope,
+                "source": "captured_passthrough",
+                "assertion_status": "unknown",
+                "source_event_ids": ["captured-event"],
+                "source_roles": ["user"],
+                "encoding_diagnostics": {"surprisal_status": "disabled"},
+                "host": "codex",
+                "session_id": "captured-session",
+            },
+        )
+        first, second = (explicit, captured) if explicit_first else (captured, explicit)
+        try:
+            stored = store.upsert_canonical(first)
+            merged = store.upsert_canonical(second)
+            assert merged.id == stored.id
+            assert len(store.get_all()) == 1
+            assert assertion_status(merged) == "asserted"
+            assert merged.metadata["source"] == (
+                "explicit_correction" if explicit_first else "explicit_remember"
+            )
+            assert merged.version == (2 if explicit_first else 1)
+&gt;           assert set(merged.metadata["source_event_ids"]) == {"explicit-event", "captured-event"}
+E           AssertionError: assert {'explicit-event'} == {'captured-ev...plicit-event'}
+E             
+E             Extra items in the right set:
+E             'captured-event'
+E             Use -v to get more diff
+
+tests\test_captured_assertion_status.py:158: AssertionError</failure></testcase><testcase classname="tests.test_captured_assertion_status" name="test_unknown_context_qualification_counts_toward_retrieval_budget[captured_passthrough]" time="0.007" /><testcase classname="tests.test_captured_assertion_status" name="test_unknown_context_qualification_counts_toward_retrieval_budget[legacy]" time="0.006" /></testsuite></testsuites>

@@ -70,7 +70,16 @@ def assertion_status(chunk: MemoryChunk) -> Literal["asserted", "conflict", "unk
 
 
 def render_context_chunk(chunk: MemoryChunk) -> str:
-    qualifier = "; unresolved conflict" if assertion_status(chunk) == "conflict" else ""
+    status = assertion_status(chunk)
+    qualifier = ""
+    if status == "conflict":
+        qualifier = "; unresolved conflict"
+    elif status == "unknown":
+        qualifier = (
+            "; captured conversation; unverified, may be outdated"
+            if chunk.metadata.get("source") == "captured_passthrough"
+            else "; unverified"
+        )
     return f"[{chunk.id} version {chunk.version}{qualifier}] {chunk.content}\n"
 
 
