@@ -12,6 +12,7 @@ import sys
 
 import pytest
 
+import mnemos.client as client_module
 from mnemos.client import MnemosClient, Outbox
 from mnemos.config import MnemosConfig, ModuleConfig
 from mnemos.engine import MnemosEngine
@@ -26,7 +27,8 @@ CHILD = """
 import asyncio,json,sys
 from pathlib import Path
 from mnemos.client import MnemosClient
-descriptor,outbox,payload_file,marker,phase=sys.argv[1:]
+descriptor,outbox,payload_file,marker,phase,expected_client=sys.argv[1:]
+assert Path(sys.modules['mnemos.client'].__file__).resolve()==Path(expected_client).resolve()
 original=MnemosClient._dispatch_http
 async def held(self,*args,**kwargs):
     if phase!='before_send':
@@ -95,7 +97,8 @@ async def test_capture_process_killed_at_http_boundary_replays_once_after_restar
     replay_client = None
     try:
         environment = dict(os.environ)
-        environment["PYTHONPATH"] = str(Path(__file__).resolve().parents[1])
+        client_path = Path(client_module.__file__).resolve()
+        environment["PYTHONPATH"] = str(client_path.parent.parent)
         child = subprocess.Popen(
             [
                 sys.executable,
@@ -106,6 +109,7 @@ async def test_capture_process_killed_at_http_boundary_replays_once_after_restar
                 str(payload_file),
                 str(marker),
                 phase,
+                str(client_path),
             ],
             cwd=tmp_path,
             env=environment,

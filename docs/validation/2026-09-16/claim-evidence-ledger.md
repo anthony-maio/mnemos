@@ -4,14 +4,19 @@ Assessment date: September 17, 2026. This covers the unreleased
 functional-local-memory worktree, not the installed public package or website.
 The capability IDs come from the original implementation plan.
 
-The latest complete package verification is frozen source `6442044`:
-951 tests passed with four skips, plus Black, strict mypy, JavaScript syntax,
-build, and Twine. A fresh installed wheel passed 257 selected contract cases
+The latest complete package verification is frozen source `b7b4d6b`:
+958 tests passed with four skips, plus Black, strict mypy, JavaScript syntax,
+build, and Twine. A fresh installed wheel passed 264 selected contract cases
 with two matching platform skips and seven synthetic Stop replay assertions. Source, fixtures, and the installed
 environment were on C:, outside the development checkout. The
-[captured assertion package checkpoint](../2026-09-17/captured-status-package-checkpoint-v1/README.md)
+[capture interruption package checkpoint](../2026-09-17/capture-durable-package-checkpoint-v1/README.md)
 binds the wheel, source, helpers, dependencies, exact test cases, and installed
 package origins. It does not establish native plugin-session acceptance.
+An additional seven-case source and installed run fixes the interruption
+test's child import path and verifies both processes use the installed package.
+The loaded client matches the wheel and unchanged product source byte for byte
+after newline normalization. The initial reports and this stronger supplement
+are preserved together.
 
 The [native captured-context observation](../2026-09-17/native-codex-claude-continuity-v2/README.md)
 shows a corrected asserted target at version 2 alongside unknown captured

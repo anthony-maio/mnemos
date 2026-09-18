@@ -1,0 +1,20 @@
+import hashlib,json,subprocess,sys,shutil,zipfile
+from pathlib import Path
+import mnemos.client
+out=Path(__file__).parent
+root=Path('D:/Development/mnemos/mnemos/.worktrees/functional-local-memory')
+wheel=Path('C:/Users/Ant/AppData/Local/Temp/mnemos-package-checks-capture-durable-v1/dist/mnemos_memory-0.7.0-py3-none-any.whl')
+origin=Path(mnemos.client.__file__).resolve()
+assert 'mnemos-installed-capture-durable-v1' in str(origin)
+sha=lambda b:hashlib.sha256(b).hexdigest()
+with zipfile.ZipFile(wheel) as z:
+ assert z.read('mnemos/client.py')==origin.read_bytes()
+assert origin.read_bytes().replace(b'\r\n',b'\n')==(root/'mnemos/client.py').read_bytes().replace(b'\r\n',b'\n')
+test=out/'test_capture_interruption.py'
+shutil.copyfile(root/'tests/test_capture_interruption.py',test)
+cmd=[sys.executable,'-m','pytest',str(test),'-q','--import-mode=importlib','--basetemp='+str(out/'fixtures'),'--junitxml='+str(out/'pytest.xml')]
+result=subprocess.run(cmd,cwd=out,capture_output=True,text=True,timeout=90)
+(out/'pytest.log').write_text(result.stdout+result.stderr,encoding='utf-8')
+record={'status':'passed' if result.returncode==0 else 'failed','exit_code':result.returncode,'wheel_sha256':sha(wheel.read_bytes()),'client_origin':str(origin),'client_sha256':sha(origin.read_bytes()),'client_matches_wheel':True,'client_matches_worktree':True,'test_sha256':sha(test.read_bytes()),'runner_sha256':sha(Path(__file__).read_bytes())}
+(out/'report.json').write_text(json.dumps(record,indent=2)+'\n')
+print(json.dumps(record)); print(result.stdout[-1800:]);sys.exit(result.returncode)
