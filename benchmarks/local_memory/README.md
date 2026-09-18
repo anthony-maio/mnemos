@@ -147,9 +147,9 @@ T18 still requires evidence beyond these mechanism checks:
 - Execute and review the separate applied encoding comparison described below.
   The existing lifecycle shadow decisions do not measure downstream retention,
   retrieval, storage, or token effects of applying that filter.
-- Supply the planned lexical/hybrid comparison on identical scoped data and
-  budgets. The seven named profiles do not include a separate lexical/hybrid
-  comparator.
+- Execute the separate retrieval strategy comparison on identical scoped data
+  and budgets, described below. The seven named lifecycle profiles do not
+  isolate lexical retrieval from vector retrieval.
 - Establish graph and affective retrieval utility separately from mechanism
   correctness, with appropriate competing candidates and independent labels.
   Human scenario acceptance and native-host workflows remain separate gates.
@@ -181,3 +181,24 @@ dataset. Passing offline tests or preparing artifacts does not close T18.
 
 The [source and installed-package checkpoint](../../docs/validation/2026-09-18/encoding-comparison-checkpoint-v1/README.md)
 records the verified implementation and the three offline preparation artifacts.
+
+## Retrieval strategy comparison
+
+The [retrieval comparison protocol](../../docs/plans/2026-09-18-retrieval-comparison-protocol-v1.md)
+separates scoped vector retrieval, SQLite FTS5 BM25 retrieval, the current
+hybrid path, and the full production path. The existing baseline combines
+vector and lexical candidates before cosine ranking; it is not vector-only.
+The new comparison runs full-pipeline ingestion once, then copies the accepted
+SQLite state for each query and strategy. Each strategy keeps its own access
+writes. Later queries start from the same post-lifecycle state.
+
+```text
+python -m benchmarks.local_memory.retrieval_comparison_run --model qwen3.5:9b --think false --prepare-only --output-dir artifacts/retrieval-preparation --work-dir artifacts/retrieval-preparation-work
+```
+
+Preparation is offline and produces a `NOT RUN` artifact. Actual execution
+requires separate fresh directories and live model identity verification after
+the existing frozen evaluation queue permits another run. The v3 labels are
+reused; this does not create a new unseen dataset. Query timings exclude
+snapshot creation and engine startup and do not establish the T09 warm recall
+latency gate. Production retrieval defaults and host configuration are unchanged.

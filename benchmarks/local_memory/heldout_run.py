@@ -13,7 +13,7 @@ import json
 import re
 from uuid import uuid4
 from pathlib import Path
-from typing import Any
+from typing import Any, Mapping
 from urllib.request import Request, urlopen
 
 from mnemos.scopes import ProjectIdentity, ScopeRegistry, WorkspaceIdentity
@@ -122,6 +122,9 @@ def run_heldout(
     query_prefix: str = "",
     document_prefix: str = "",
     symmetric_prefix: str = "",
+    adapter_type: type[OllamaEvaluatorAdapter] = OllamaEvaluatorAdapter,
+    run_namespace: str = "t18-heldout",
+    experiment_binding: Mapping[str, Any] | None = None,
 ) -> dict[str, dict[str, Any]]:
     dataset = load_dataset(dataset_path)
     if len(dataset.heldout_sessions) < 200:
@@ -151,6 +154,8 @@ def run_heldout(
     )
     if task_contract is not None:
         options["embedding_task_contract"] = task_contract
+    if experiment_binding is not None:
+        options["experiment"] = dict(experiment_binding)
     options_sha256 = ollama_options_sha256(options)
     code_sha256, code_files = _code_provenance(
         (root or Path(__file__).resolve().parents[2]).resolve()
@@ -183,7 +188,7 @@ def run_heldout(
             options_sha256=options_sha256,
             code_sha256=code_sha256,
         )
-        run_id = f"t18-heldout-{dataset.version}-{profile.name}"
+        run_id = f"{run_namespace}-{dataset.version}-{profile.name}"
         checkpoint = work_dir / f"{profile.name}.checkpoint.json"
         output = output_dir / f"{profile.name}.json"
         # A resumed checkpoint may skip completed observations. Remaining
@@ -208,6 +213,8 @@ def run_heldout(
                 "options": options,
             },
             "options_sha256": options_sha256,
+            "run_namespace": run_namespace,
+            "experiment_binding": dict(experiment_binding or {}),
             "code_sha256": code_sha256,
             "code_files": code_files,
             "checkpoint": str(checkpoint),
@@ -245,7 +252,7 @@ def run_heldout(
             document_prefix=document_prefix,
             symmetric_prefix=symmetric_prefix,
         )
-        adapter = OllamaEvaluatorAdapter(
+        adapter = adapter_type(
             factory,
             base_url=endpoint,
             model=model,
