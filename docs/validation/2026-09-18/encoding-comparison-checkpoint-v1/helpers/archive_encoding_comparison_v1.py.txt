@@ -1,0 +1,135 @@
+"""Archive the source/package checks and offline comparator preparation."""
+from pathlib import Path
+import hashlib
+import json
+import shutil
+import xml.etree.ElementTree as ET
+
+ROOT = Path(__file__).resolve().parents[1]
+TEMP = Path('C:/Users/Ant/AppData/Local/Temp')
+CHECKS = TEMP / 'mnemos-package-checks-encoding-comparison-v1'
+INSTALLED = TEMP / 'mnemos-installed-checks-encoding-comparison-v2'
+INSTALLED_CASES = TEMP / 'mnemos-installed-encoding-cases-v1'
+FAILED_PREFLIGHT = TEMP / 'mnemos-installed-checks-encoding-comparison-v1'
+PREP = TEMP / 'mnemos-encoding-preparation-v1'
+PREP_WORK = TEMP / 'mnemos-encoding-preparation-work-v1'
+OUT = ROOT / 'docs/validation/2026-09-18/encoding-comparison-checkpoint-v1'
+COMMIT = 'aefc338c159c1e00d76d40c1947e7a3f11a6c538'
+
+
+def read(path):
+    return json.loads(path.read_text(encoding='utf-8'))
+
+
+def sha(path):
+    return hashlib.sha256(path.read_bytes()).hexdigest()
+
+
+def counts(path):
+    cases = list(ET.parse(path).getroot().iter('testcase'))
+    result = {'tests': len(cases), 'failures': sum(c.find('failure') is not None for c in cases),
+              'errors': sum(c.find('error') is not None for c in cases),
+              'skipped': sum(c.find('skipped') is not None for c in cases)}
+    result['passed'] = result['tests'] - result['failures'] - result['errors'] - result['skipped']
+    return result
+
+
+source = read(CHECKS / 'verification.json')
+installed = read(INSTALLED / 'installation.json')
+assert source['status'] == installed['status'] == 'passed'
+assert source['source_commit'] == installed['commit'] == COMMIT
+assert {c['name'] for c in source['checks']} == {'pytest', 'black', 'mypy', 'javascript', 'build', 'twine'}
+assert all(c['exit_code'] == 0 for c in source['checks'])
+source_counts = counts(CHECKS / 'pytest.xml')
+installed_counts = counts(INSTALLED / 'contract.junit.xml')
+assert source_counts == {'tests': 1089, 'passed': 1085, 'failures': 0, 'errors': 0, 'skipped': 4}
+assert installed_counts == {'tests': 392, 'passed': 390, 'failures': 0, 'errors': 0, 'skipped': 2}
+assert installed_counts['tests'] == installed['expected_cases']['count']
+assert installed['bindings_before'] == installed['bindings_after']
+assert installed['contract_input_hashes_before'] == installed['contract_input_hashes_after']
+assert len(installed['probe']['assertions']) == 7 and all(installed['probe']['assertions'].values())
+for artifact in source['artifacts']:
+    path = Path(artifact['file'])
+    assert sha(path) == artifact['sha256'] and path.stat().st_size == artifact['bytes']
+helpers = ['final_checkpoint_checks_v3.py', 'run_combined_installed_check_v24.py',
+           'installed_contract_probe_v4.py', 'verify_claude_stop_replay_v2.py']
+assert sha(ROOT / '.venv' / helpers[0]) == source['runner_sha256']
+for name, key in zip(helpers[1:], ('runner_sha256', 'contract_probe_sha256', 'replay_helper_sha256')):
+    assert sha(ROOT / '.venv' / name) == installed['bindings_after'][key]
+assert sha(CHECKS / 'verification.json') == installed['bindings_after']['checks_sha256']
+wheel = next((CHECKS / 'dist').glob('*.whl'))
+assert sha(wheel) == installed['bindings_after']['wheel_sha256']
+assert source['website_input']['sha256_before'] == source['website_input']['sha256_after']
+extra = read(INSTALLED_CASES / 'verification.json')
+assert extra['status'] == 'passed' and extra['source_commit'] == COMMIT
+assert extra['wheel_sha256'] == sha(wheel)
+assert extra['installed_files_before'] == extra['installed_files_after']
+assert len(extra['matched_cases']) == 10
+assert sha(ROOT / '.venv/run_installed_encoding_comparator_v1.py') == extra['runner_sha256']
+failed_preflight = read(FAILED_PREFLIGHT / 'installation.json')
+assert failed_preflight['status'] == 'failed' and failed_preflight['commands'] == []
+assert failed_preflight['error'] == 'Verification report does not exist'
+preparation = read(PREP_WORK / 'manifest.json')
+assert preparation['status'] == 'not_run'
+assert preparation['binding']['model'] is None and preparation['binding']['embedding_model'] is None
+assert preparation['binding']['protocol']['sha256'] == sha(
+    Path(source['source_checkout']) / 'docs/plans/2026-09-18-encoding-comparison-protocol-v1.md')
+for name in ('full', 'ablate-surprisal_gating', 'length-noise'):
+    report = read(PREP / f'{name}.json')
+    assert report['status'] == 'not_run' and report['raw_outputs'] == []
+    assert report['gates']['real_model'] == 'NOT RUN'
+    assert report['binding'] == preparation['binding']
+
+OUT.mkdir(parents=True, exist_ok=False)
+for origin, label in ((CHECKS, 'source-checks'), (INSTALLED, 'installed-checks'),
+                      (INSTALLED_CASES, 'installed-comparator-cases'),
+                      (FAILED_PREFLIGHT, 'failed-installed-preflight'),
+                      (PREP, 'preparation'), (PREP_WORK, 'preparation-work')):
+    folder = OUT / label
+    folder.mkdir()
+    for path in origin.iterdir():
+        if path.is_file() and path.suffix in ('.log', '.json', '.xml'):
+            shutil.copyfile(path, folder / path.name)
+(OUT / 'source-checks/dist').mkdir()
+shutil.copyfile(wheel, OUT / 'source-checks/dist' / wheel.name)
+(OUT / 'helpers').mkdir()
+for name in helpers:
+    shutil.copyfile(ROOT / '.venv' / name, OUT / 'helpers' / (name + '.txt'))
+shutil.copyfile(__file__, OUT / 'helpers/archive_encoding_comparison_v1.py.txt')
+shutil.copyfile(ROOT / '.venv/run_installed_encoding_comparator_v1.py',
+                OUT / 'helpers/run_installed_encoding_comparator_v1.py.txt')
+(OUT / '.gitattributes').write_text('* -text\n*.log -whitespace\n*.xml -whitespace\n*.py.txt -whitespace\n', encoding='utf-8')
+(OUT / 'README.md').write_text(
+    '# Applied encoding comparison checkpoint\n\n'
+    f'Source `{COMMIT}` adds a separate three-arm T18 comparison: full pipeline, '
+    'surprisal disabled with the other four modules unchanged, and an applied length/noise replacement. '
+    'The replacement runs inside the durable extraction job after capture and scope validation. '
+    'Raw events remain retained, explicit lifecycle actions bypass the rule, and job results persist '
+    'the actual gate diagnostics. The production surprisal calculation and threshold remain unchanged.\n\n'
+    'The clean source snapshot passed 1,085 tests with four skips, Black, strict mypy, JavaScript syntax, '
+    'build, and Twine. The 18 new source tests cover threshold boundaries, explicit remember/correct, '
+    'pending-job restart, source retention, missing correction targets, unobserved decisions, arm wiring, '
+    'offline preparation, failure preservation, comparison direction, and report binding rejection. '
+    'The installed wheel passed 390 existing contract cases with two matching skips and seven synthetic '
+    'replay assertions outside the source checkout. A separate fixture ran the ten new comparator '
+    'service cases against that wheel with matching source case identities, package origin, and '
+    'unchanged installed bytes. Benchmark modules were copied from the frozen source as test inputs; '
+    'they are source tools and are not in the wheel. The eight runner cases remain source evidence. '
+    'The first installation preflight received a directory where a verification JSON file was required '
+    'and failed before issuing any commands. That failure record is retained.\n\n'
+    'The archived preparation was executed from this frozen checkout with qwen3.5:9b requested and '
+    'think=false. Its three artifacts say NOT RUN, contain no observations, and record no verified '
+    'model or embedding identity. Preparation does not contact Ollama. Real comparator execution '
+    'has not run. It must use separate directories after the existing frozen queue and endpoint '
+    'availability permit it. The v3 labels are reused, not newly unseen.\n\n'
+    'Paired retrieval/retention intervals and filter disagreements are implemented. Row counts, '
+    'byte growth, latency, and provider response counters remain available in the run artifacts; '
+    'this checkpoint does not claim paired cost or latency effects, model-quality lift, or pilot '
+    'acceptance. The seven-profile matrix, lexical/hybrid comparison, graph/affective utility, '
+    'native-host gates, recall-latency failure, and operational pilot remain separate. '
+    'No live configuration, live-data migration, frozen evaluation, website, or release changed.\n\n'
+    f'Wheel SHA256: `{sha(wheel)}`.\n', encoding='utf-8')
+index = {'files': {p.relative_to(OUT).as_posix(): {'bytes': p.stat().st_size, 'sha256': sha(p)}
+                   for p in sorted(OUT.rglob('*')) if p.is_file()}}
+(OUT / 'evidence-index.json').write_text(json.dumps(index, indent=2) + '\n', encoding='utf-8')
+print(json.dumps({'source': source_counts, 'installed': installed_counts, 'indexed_files': len(index['files'])}))

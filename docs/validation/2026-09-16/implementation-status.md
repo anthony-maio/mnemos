@@ -4,6 +4,17 @@ This record covers the unreleased `wt/functional-local-memory` worktree. It
 separates implemented behavior from acceptance evidence. The original task
 boundaries and thresholds remain in the [implementation plan](../../plans/2026-09-16-functional-local-memory.md).
 
+The [applied encoding comparison checkpoint](../2026-09-18/encoding-comparison-checkpoint-v1/README.md)
+at `aefc338` adds the missing length/noise replacement arm alongside full and
+surprisal-disabled controls. The filter runs inside durable extraction jobs,
+preserves raw capture, bypasses explicit lifecycle actions, and records actual
+decisions. The frozen source passes 1,085 tests with four skips and all six
+source/package checks. The wheel passes 390 existing cases with two matching
+skips, seven replay assertions, and ten additional comparator service cases.
+All three prepared experiment artifacts remain `NOT RUN`. This supplies the
+implementation and offline evidence; real-model comparison, paired cost and
+latency interpretation, and T18 acceptance remain open.
+
 The [storage-worker termination checkpoint](../2026-09-18/storage-process-kill-v1/README.md)
 adds seven cases at `76940d2`: capture after event insertion, before commit,
 and after commit; forget after suppression insertion, after source deletion,
@@ -467,7 +478,7 @@ capture diagnostics and complete lifecycle acceptance remain open.
 | T15 UI | Project enable/pause, readiness, facts/history, correction/forget, captured-copy review, job state, and routing review are exposed and covered by API/browser checks. | Local UI and control-plane checks pass. Operational pilot and native-host coverage remain open. |
 | T16 Recovery | Backup, integrity, new-path restore, suppression merge, staged reindex, and activation backup behavior are implemented and tested. | Local recovery contracts pass, including a backup during an active writer transaction. Live data migration remains separately authorization-bound. |
 | T17 Cross-host | Native v9 on installed `5af3d15` passes 15 bounded lifecycle checks for Codex teaching, Claude correction and reviewed deletion, restart, direct service replay suppression, foreign-project exclusion, final recall, and retained unrelated facts. | Lexical fixture vectors and disabled modules limit the claim. All three Codex processes exited zero, but reverse and final Stop hooks timed out. A later Codex-only fixture verifies automatic native-hook replay after startup failure. Cross-host outage recovery, complete capture, Desktop, Hermes, real-model quality, and the two-week pilot remain open. Earlier v6-v8 failures remain preserved. |
-| T18 Evaluation | Frozen lifecycle datasets, request-bound extraction schemas, real-provider adapters, seven profiles, raw traces, checkpoints, Wilson intervals, and paired comparisons are implemented. | Power-interrupted checkpoints were preserved and the unchanged queue resumed after provenance checks. Complete real-model matrix acceptance remains open. Follow the [evaluation status and recovery record](evaluation-running.md). |
+| T18 Evaluation | Frozen lifecycle datasets, request-bound extraction schemas, real-provider adapters, seven profiles, raw traces, checkpoints, Wilson intervals, and paired comparisons are implemented. A separate applied length/noise replacement comparison is implemented and prepared offline. | The frozen real-model matrix and applied comparison acceptance remain open. The latter has no real-model observations yet. Lexical/hybrid comparisons and graph/affective utility evidence also remain separate requirements. Follow the [evaluation status and recovery record](evaluation-running.md) and [applied comparison checkpoint](../2026-09-18/encoding-comparison-checkpoint-v1/README.md). |
 | T19 Claims and packaging | Claim ledger, compatibility matrix, release checklist, package artifacts, UI assets, and negative evidence archives are maintained. | The current `983920a` source and installed package checkpoint is complete; the preserved intermittent bridge failure remains unexplained. Publication, website, paper, and release actions remain separately authorization-bound. |
 
 The current capture recommendation is a hybrid: automatically capture enabled

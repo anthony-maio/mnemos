@@ -178,3 +178,6 @@ bindings. It makes no model calls. Real execution needs separate fresh output
 and work directories, live model identity checks, and the existing evaluation
 queue to finish. This comparison reuses the v3 labels; it is not a newly unseen
 dataset. Passing offline tests or preparing artifacts does not close T18.
+
+The [source and installed-package checkpoint](../../docs/validation/2026-09-18/encoding-comparison-checkpoint-v1/README.md)
+records the verified implementation and the three offline preparation artifacts.

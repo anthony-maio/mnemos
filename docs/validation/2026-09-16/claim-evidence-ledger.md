@@ -4,6 +4,15 @@ Assessment date: September 18, 2026. This covers the unreleased
 functional-local-memory worktree, not the installed public package or website.
 The capability IDs come from the original implementation plan.
 
+The latest [applied encoding comparison checkpoint](../2026-09-18/encoding-comparison-checkpoint-v1/README.md)
+is bound to `aefc338`. Its 1,085 passing source tests, four skips, complete
+source/package checks, 390 installed contract passes, two matching skips,
+seven replay assertions, and ten installed comparator service passes support
+implementation and package claims. They do not establish that surprisal
+outperforms a length/noise rule. The three comparison artifacts are offline
+preparations labeled `NOT RUN`; real-model observations and utility claims
+remain open. Earlier observations below retain their original source bindings.
+
 The newer [competing service recovery source check](../2026-09-18/competing-service-recovery-v1/README.md)
 fixes a startup race: a second launcher could return a dead descriptor while
 the new lock owner was still initializing. Competing launchers now verify
@@ -13,7 +22,7 @@ The full source suite passes 1,054 tests with four skips; 47 focused checks
 also pass. Simultaneous native host acceptance remains open; the package
 checks below validate the installed service protocol.
 
-The current [competing recovery package checkpoint](../2026-09-18/competing-recovery-package-checkpoint-v1/README.md)
+The earlier [competing recovery package checkpoint](../2026-09-18/competing-recovery-package-checkpoint-v1/README.md)
 at `a5a9101` passes 1,054 source tests with four skips, all six source/package
 checks, 384 selected installed cases with two matching skips, and seven
 synthetic replay assertions. The installed selection includes the five
