@@ -288,6 +288,12 @@ completed with protected fixture permissions and persisted both conversation rol
 The instrumented shell duration was 876 ms. This single observation does not
 establish repeated deadline acceptance or close the broader lifecycle gates.
 
+The current [outbox selection checkpoint](validation/2026-09-18/outbox-selection-package-checkpoint-v1/README.md)
+at `c25ed98` passes 1,042 source tests with four skips, all six source/package
+checks, 372 installed cases with two matching skips, and seven replay assertions.
+A supplied empty outbox now keeps its selected recovery file and write policy.
+Native observations above retain their original package bindings.
+
 ## What the five modules currently mean
 
 These are the implemented mechanism contracts. Their neuroscience analogies are design inspiration, not evidence of human-like memory.

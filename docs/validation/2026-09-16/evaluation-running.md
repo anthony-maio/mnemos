@@ -1,6 +1,21 @@
 # Real-model evaluation status
 
-## Current checkpoint: September 18, 2026, 05:32 UTC observation
+## Current checkpoint: September 18, 2026, 06:02 UTC observation
+
+The existing execution session and coordinator/worker processes `26488`,
+`47588`, and `46036` remain alive. At 06:02 UTC, the full-profile checkpoint
+mtime was 05:41:27 UTC, with 39 completed observations, 39 completed IDs,
+next session index 12, and status `running`. A read-only `/api/ps` request
+to `.35` again exceeded five seconds. These are execution observations,
+not accepted quality results. The queue, model, and server were unchanged.
+
+The current package checkpoint is source `c25ed98`: 1,042 source tests with
+four skips, all six source/package checks, 372 installed cases with two
+matching skips, and seven replay assertions passed. See the
+[outbox checkpoint](../2026-09-18/outbox-selection-package-checkpoint-v1/README.md).
+This repair is outside the frozen real-model evaluation.
+
+## Historical checkpoint: September 18, 2026, 05:32 UTC observation
 
 The unchanged coordinator is still live: process 26488 and its lifecycle
 worker chain were verified through the operating system, and the existing
@@ -18,7 +33,7 @@ A read-only `/api/ps` request during this turn to
 `192.168.86.35:11434` timed out after five seconds. No process was restarted,
 and no model, server, queue, or configuration state was changed.
 
-The current package checkpoint is source `5d8cacf`: 1,039 tests passed with
+The package checkpoint at this observation was source `5d8cacf`: 1,039 tests passed with
 four skips, all six source/package checks passed, and the installed wheel passed
 369 selected cases with two matching skips and seven replay assertions. See the
 [package checkpoint](../2026-09-18/windows-private-acl-package-checkpoint-v1/README.md).

@@ -2,7 +2,16 @@
 
 Updated September 18, 2026 for the unreleased functional-local-memory worktree. Implementation, protocol tests, and native conversation acceptance are separate claims.
 
-The newer [Windows permission repair](validation/2026-09-18/windows-private-acl-v1/README.md)
+The current [outbox selection checkpoint](validation/2026-09-18/outbox-selection-package-checkpoint-v1/README.md)
+at `c25ed98` passes 1,042 source tests with four skips, all six source/package
+checks, 372 selected installed cases with two matching skips, and seven
+synthetic replay assertions. An explicitly supplied empty outbox now retains
+its selected recovery file and stricter write policy. Three new cases cover
+empty/nonempty selection, restart replay, and PII blocking. This checkpoint
+adds package evidence; earlier native observations retain their original
+source bindings.
+
+The preceding [Windows permission repair](validation/2026-09-18/windows-private-acl-v1/README.md)
 passes 1,039 source tests with four skips and all static checks. It protects
 runtime DACLs from inheritance and checks existing permissions before skipping
 redundant writes. The fresh [installed checkpoint](validation/2026-09-18/windows-private-acl-package-checkpoint-v1/README.md)
