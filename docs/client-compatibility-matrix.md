@@ -2,6 +2,16 @@
 
 Updated September 17, 2026 for the unreleased functional-local-memory worktree. Implementation, protocol tests, and native conversation acceptance are separate claims.
 
+The current adapter repair preserves service-rendered recall across Claude Code,
+Codex, and Hermes. Claude previously rebuilt bare fact text and lost assertion
+status, version, and captured-history labels. All three fact-only compatibility
+fallbacks now label authority and quote content; an intentionally empty service
+context stays empty, and oversized service context is omitted rather than cut
+mid-record. The legacy CLI hook now retains the shared qualifications too.
+Focused adapter and SQLite-backed service checks pass. Native acceptance has
+not been rerun on this repair, and it does not resolve the v6 stale-answer failure
+below: that Codex result already contained the unverified-history label.
+
 The latest [native forget/replay attempt](validation/2026-09-17/native-codex-claude-continuity-v6/README.md)
 remains FAILED. Claude deleted a Codex-taught, Claude-corrected fact and retrieved
 an unrelated retained preference using the required query. After restart, direct

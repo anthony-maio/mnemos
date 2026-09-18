@@ -45,6 +45,7 @@ from .hook_autostore import (
 SUPPORTED_RETRIEVE_EVENTS: tuple[str, ...] = ("UserPromptSubmit", "SessionStart")
 from .inspectability import build_chunk_inspection
 from .observability import configure_logging, log_event
+from .retrieval import render_context_chunk
 from .runtime import (
     build_embedder_from_env,
     build_llm_from_env,
@@ -1054,10 +1055,10 @@ def _format_retrieved_context(chunks: list[Any], event: str) -> str:
         scope = chunk.metadata.get("scope", "global") if chunk.metadata else "global"
         scope_id = chunk.metadata.get("scope_id") if chunk.metadata else None
         scope_tag = f"{scope}:{scope_id}" if scope_id else scope
-        content = chunk.content.strip().replace("\n", " ")
-        if len(content) > 400:
-            content = content[:397] + "..."
-        lines.append(f"  {idx}. [{scope_tag}] {content}")
+        rendered = render_context_chunk(chunk).strip().replace("\n", " ")
+        if len(rendered) > 400:
+            rendered = rendered[:397] + "..."
+        lines.append(f"  {idx}. [{scope_tag}] {rendered}")
     return "\n".join(lines)
 
 

@@ -23,6 +23,7 @@ from typing import Any, Callable, Dict, List, Mapping, Optional, cast
 from ..bridge import BridgeClient
 from ..client import MnemosClient
 from ..scopes import ScopeContext, ScopeRegistry, default_registry_path as shared_registry_path
+from .context import format_retrieved_context
 
 try:  # Hermes is an optional host dependency and is not installed in Mnemos' venv.
     from agent.memory_provider import MemoryProvider as _HermesMemoryProvider
@@ -320,21 +321,7 @@ class MnemosHermesProvider(_HermesMemoryProvider):  # type: ignore[misc]  # Opti
             return not self._threads
 
     def _format_context(self, result: Any) -> str:
-        if not isinstance(result, Mapping):
-            return ""
-        context = result.get("context")
-        if isinstance(context, str) and context:
-            return context[:MAX_CONTEXT_CHARS]
-        facts = result.get("facts")
-        if not isinstance(facts, list):
-            return ""
-        lines: list[str] = []
-        for index, fact in enumerate(facts, 1):
-            if isinstance(fact, Mapping):
-                content = _text(fact.get("content"))
-                if content:
-                    lines.append(f"{index}. {' '.join(content.split())[:800]}")
-        return "\n".join(lines)[:MAX_CONTEXT_CHARS]
+        return format_retrieved_context(result, max_chars=MAX_CONTEXT_CHARS)
 
     def system_prompt_block(self) -> str:
         return "Mnemos memory is available through the configured local Hermes provider."

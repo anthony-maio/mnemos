@@ -1,0 +1,41 @@
+"""Preserve the completed generated-identifier rejection probe."""
+import hashlib
+import json
+from pathlib import Path
+import shutil
+import subprocess
+
+ROOT = Path(__file__).resolve().parents[1]
+OUTPUT = Path('C:/Users/Ant/AppData/Local/Temp/mnemos-uuid-metadata-v1')
+ARCHIVE = ROOT / 'docs/validation/2026-09-17/uuid-metadata-rejection-v1'
+report = json.loads((OUTPUT / 'report.json').read_text())
+digest = lambda path: hashlib.sha256(path.read_bytes()).hexdigest()
+assert report['status'] == 'reproduced'
+assert digest(ROOT / '.venv/probe_uuid_metadata_v1.py') == report['runner_sha256']
+assert digest(ROOT / 'mnemos/memory_service.py') == report['memory_service_sha256']
+for relative in ('mnemos/memory_service.py', 'mnemos/memory_safety.py'):
+    original = subprocess.check_output(['git', 'show', '7443582:' + relative], cwd=ROOT)
+    assert (ROOT / relative).read_bytes().replace(b'\r\n', b'\n') == original.replace(b'\r\n', b'\n')
+if ARCHIVE.exists():
+    raise FileExistsError(ARCHIVE)
+ARCHIVE.mkdir()
+shutil.copyfile(OUTPUT / 'report.json', ARCHIVE / 'report.json')
+shutil.copyfile(ROOT / '.venv/probe_uuid_metadata_v1.py', ARCHIVE / 'probe_uuid_metadata_v1.py.txt')
+shutil.copyfile(__file__, ARCHIVE / 'archive_uuid_metadata_v1.py.txt')
+(ARCHIVE / '.gitattributes').write_text('* -text\n', encoding='utf-8')
+(ARCHIVE / 'README.md').write_text(
+    '# Generated UUID metadata rejection\n\n'
+    'A deterministic probe reproduced a rejected explicit remember operation with '
+    'generated UUID `abcdefab-1234-4567-8123-123456789012`. The write firewall '
+    'redacted its numeric tail as a credit-card number, so source metadata validation '
+    'rejected the operation before storing any event, job, or fact. A UUID with '
+    'alphabetic groups passed and produced one durable fact after maintenance.\n\n'
+    'The probe temporarily substituted the UUID generator in its own process; it '
+    'did not change production source or live data. The service and firewall '
+    'source match commit `7443582`.\n\n'
+    'The full context-authority validation had an empty-fact failure at the initial '
+    'remember step, but its generated ID was not retained. This probe confirms '
+    'a reachable write defect without establishing that specific failure\'s cause. '
+    'The defect remains open at this checkpoint.\n', encoding='utf-8')
+index = {'files': {p.name: {'bytes': p.stat().st_size, 'sha256': digest(p)} for p in sorted(ARCHIVE.iterdir())}}
+(ARCHIVE / 'evidence-index.json').write_text(json.dumps(index, indent=2) + '\n', encoding='utf-8')

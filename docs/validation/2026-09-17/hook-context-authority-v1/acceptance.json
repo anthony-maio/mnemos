@@ -1,0 +1,63 @@
+{
+  "status": "failed",
+  "finished_at": "2026-09-18T03:21:31.416535+00:00",
+  "base_commit": "7443582b23466cfabd9253448020350d727f85f2",
+  "source_unchanged": true,
+  "checks": [
+    {
+      "name": "black",
+      "command": [
+        "D:\\Development\\mnemos\\mnemos\\.worktrees\\functional-local-memory\\.venv\\Scripts\\python.exe",
+        "-m",
+        "black",
+        "--check",
+        "mnemos",
+        "tests/test_adapter_context_authority.py",
+        "tests/test_cli_context_authority.py"
+      ],
+      "returncode": 0
+    },
+    {
+      "name": "mypy",
+      "command": [
+        "D:\\Development\\mnemos\\mnemos\\.worktrees\\functional-local-memory\\.venv\\compat-py310\\Scripts\\python.exe",
+        "-m",
+        "mypy",
+        "mnemos"
+      ],
+      "returncode": 0
+    },
+    {
+      "name": "pytest",
+      "command": [
+        "D:\\Development\\mnemos\\mnemos\\.worktrees\\functional-local-memory\\.venv\\Scripts\\python.exe",
+        "-m",
+        "pytest",
+        "-q",
+        "tests",
+        "--junitxml=C:\\Users\\Ant\\AppData\\Local\\Temp\\mnemos-context-authority-v2\\pytest.xml"
+      ],
+      "returncode": 1
+    }
+  ],
+  "pytest_totals": {
+    "tests": 986,
+    "failures": 1,
+    "errors": 0,
+    "skipped": 4,
+    "passed": 981
+  },
+  "checks_completed": 3,
+  "checks_expected": [
+    "black",
+    "mypy",
+    "pytest"
+  ],
+  "native_acceptance": "NOT RUN",
+  "native_v6": "Original native Codex/Claude continuity v6 FAILED; this archive does not alter that result.",
+  "limits": [
+    "This archive records source checks and does not establish native-host acceptance.",
+    "A failed full-suite check remains failed even if an isolated rerun passed.",
+    "Missing later-phase logs or JUnit output are preserved as absent when validation stopped early."
+  ]
+}

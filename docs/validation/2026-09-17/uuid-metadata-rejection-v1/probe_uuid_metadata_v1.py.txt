@@ -1,0 +1,71 @@
+"""Reproduce generated UUID rejection without changing production code."""
+import asyncio
+import hashlib
+import json
+from pathlib import Path
+import subprocess
+import sys
+import tempfile
+from uuid import UUID
+
+ROOT = Path(__file__).resolve().parents[1]
+sys.path.insert(0, str(ROOT))
+from tests.test_memory_service import service
+import mnemos.memory_service as service_module
+from mnemos.memory_safety import MemoryWriteFirewall
+
+OUTPUT = Path('C:/Users/Ant/AppData/Local/Temp/mnemos-uuid-metadata-v1')
+if OUTPUT.exists():
+    raise FileExistsError(OUTPUT)
+OUTPUT.mkdir()
+source = Path(service_module.__file__).resolve()
+assert source == ROOT / 'mnemos/memory_service.py'
+baseline = subprocess.check_output(['git', 'show', '7443582:mnemos/memory_service.py'], cwd=ROOT)
+assert source.read_bytes().replace(b'\r\n', b'\n') == baseline.replace(b'\r\n', b'\n')
+rows = []
+
+async def main():
+    for identifier in (
+        'abcdefab-1234-4567-8123-123456789012',
+        'abcdefab-abcd-4abc-8abc-abcdefabcdef',
+    ):
+        directory = Path(tempfile.mkdtemp(prefix='mnemos-uuid-probe-', dir=OUTPUT))
+        memory, context = service(directory)
+        for name in type(memory.engine.config.modules).model_fields:
+            setattr(memory.engine.config.modules, name, False)
+        original = service_module.uuid4
+        try:
+            service_module.uuid4 = lambda: UUID(identifier)
+            result = await memory.dispatch('remember', {
+                'context': context.model_dump(), 'content': 'The release label is cedar-otter.'
+            })
+            completed = await memory.maintenance.run_once(force=True)
+            decision = MemoryWriteFirewall().apply(identifier)
+            rows.append({
+                'generated_uuid': identifier,
+                'result': result,
+                'completed_jobs': completed,
+                'facts': len(memory.engine.store.get_all()),
+                'events': len(memory.engine.store.list_episodic_events()),
+                'jobs': len(memory.engine.store.list_jobs()),
+                'firewall_reason': decision.reason,
+                'firewall_output_changed': decision.content != identifier,
+            })
+        finally:
+            service_module.uuid4 = original
+            memory.engine.store.close()
+
+asyncio.run(main())
+assert rows[0]['result']['status'] == 'rejected'
+assert rows[0]['facts'] == rows[0]['events'] == rows[0]['jobs'] == 0
+assert rows[1]['result']['status'] == 'committed' and rows[1]['facts'] == 1
+report = {
+    'status': 'reproduced',
+    'source_reference': '7443582',
+    'memory_service_sha256': hashlib.sha256(source.read_bytes()).hexdigest(),
+    'runner_sha256': hashlib.sha256(Path(__file__).read_bytes()).hexdigest(),
+    'observations': rows,
+    'limit': 'The failed full-suite invocation did not retain its generated ID; this does not prove its specific cause.',
+}
+(OUTPUT / 'report.json').write_text(json.dumps(report, indent=2) + '\n', encoding='utf-8')
+print(json.dumps(report, indent=2))

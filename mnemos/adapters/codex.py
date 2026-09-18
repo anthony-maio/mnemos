@@ -27,6 +27,7 @@ from ..scopes import ScopeContext, ScopeRegistry, default_registry_path as share
 from ..routing_review import reason_for_context_error, record_unresolved_routing_failure
 from .diagnostics import emit_hook_diagnostic
 from .hook_input import read_hook_input
+from .context import format_retrieved_context
 
 SUPPORTED_EVENTS = (
     "SessionStart",
@@ -227,19 +228,7 @@ class CodexAdapter:
         if not isinstance(result, Mapping):
             return "", True
         degraded = result.get("degraded") is True or result.get("status") == "degraded"
-        rendered = result.get("context")
-        if isinstance(rendered, str) and rendered:
-            return rendered[:MAX_CONTEXT_CHARS], degraded
-        facts = result.get("facts")
-        if not isinstance(facts, list):
-            return "", degraded
-        lines: list[str] = []
-        for index, fact in enumerate(facts, 1):
-            if isinstance(fact, Mapping):
-                content = _text(fact.get("content"))
-                if content:
-                    lines.append(f"{index}. {' '.join(content.split())[:800]}")
-        return "\n".join(lines)[:MAX_CONTEXT_CHARS], degraded
+        return format_retrieved_context(result, max_chars=MAX_CONTEXT_CHARS), degraded
 
     async def _maintenance(self, context: ScopeContext) -> bool:
         request = getattr(self.client, "request", None)

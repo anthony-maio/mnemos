@@ -1,0 +1,124 @@
+diff --git a/mnemos/adapters/claude_code.py b/mnemos/adapters/claude_code.py
+index 9b92735..b1d740b 100644
+--- a/mnemos/adapters/claude_code.py
++++ b/mnemos/adapters/claude_code.py
+@@ -23,6 +23,7 @@ from ..client import MnemosClient
+ from ..claude_identity import claude_v2_event_id
+ from .diagnostics import emit_hook_diagnostic
+ from .hook_input import read_hook_input
++from .context import format_retrieved_context
+ from ..scopes import ScopeContext, ScopeRegistry, default_registry_path as shared_registry_path
+ from ..routing_review import reason_for_context_error, record_unresolved_routing_failure
+ from ..service import _protect_private_path, default_runtime_directory
+@@ -623,15 +624,7 @@ class ClaudeCodeAdapter:
+                 "profile": "baseline",
+             }
+         )
+-        facts = result.get("facts", []) if isinstance(result, Mapping) else []
+-        lines: list[str] = []
+-        for index, fact in enumerate(facts, 1):
+-            if not isinstance(fact, Mapping) or not isinstance(fact.get("content"), str):
+-                continue
+-            content = " ".join(fact["content"].split())
+-            if content:
+-                lines.append(f"{index}. {content[:800]}")
+-        context_text = "\n".join(lines)[:MAX_CONTEXT_CHARS]
++        context_text = format_retrieved_context(result, max_chars=MAX_CONTEXT_CHARS)
+         return HookResult(status="ok", committed=False, context=context_text)
+ 
+     async def handle(
+diff --git a/mnemos/adapters/codex.py b/mnemos/adapters/codex.py
+index e718bef..c5dc7fe 100644
+--- a/mnemos/adapters/codex.py
++++ b/mnemos/adapters/codex.py
+@@ -27,6 +27,7 @@ from ..scopes import ScopeContext, ScopeRegistry, default_registry_path as share
+ from ..routing_review import reason_for_context_error, record_unresolved_routing_failure
+ from .diagnostics import emit_hook_diagnostic
+ from .hook_input import read_hook_input
++from .context import format_retrieved_context
+ 
+ SUPPORTED_EVENTS = (
+     "SessionStart",
+@@ -227,19 +228,7 @@ class CodexAdapter:
+         if not isinstance(result, Mapping):
+             return "", True
+         degraded = result.get("degraded") is True or result.get("status") == "degraded"
+-        rendered = result.get("context")
+-        if isinstance(rendered, str) and rendered:
+-            return rendered[:MAX_CONTEXT_CHARS], degraded
+-        facts = result.get("facts")
+-        if not isinstance(facts, list):
+-            return "", degraded
+-        lines: list[str] = []
+-        for index, fact in enumerate(facts, 1):
+-            if isinstance(fact, Mapping):
+-                content = _text(fact.get("content"))
+-                if content:
+-                    lines.append(f"{index}. {' '.join(content.split())[:800]}")
+-        return "\n".join(lines)[:MAX_CONTEXT_CHARS], degraded
++        return format_retrieved_context(result, max_chars=MAX_CONTEXT_CHARS), degraded
+ 
+     async def _maintenance(self, context: ScopeContext) -> bool:
+         request = getattr(self.client, "request", None)
+diff --git a/mnemos/adapters/hermes.py b/mnemos/adapters/hermes.py
+index aa60bb7..3f6d289 100644
+--- a/mnemos/adapters/hermes.py
++++ b/mnemos/adapters/hermes.py
+@@ -23,6 +23,7 @@ from typing import Any, Callable, Dict, List, Mapping, Optional, cast
+ from ..bridge import BridgeClient
+ from ..client import MnemosClient
+ from ..scopes import ScopeContext, ScopeRegistry, default_registry_path as shared_registry_path
++from .context import format_retrieved_context
+ 
+ try:  # Hermes is an optional host dependency and is not installed in Mnemos' venv.
+     from agent.memory_provider import MemoryProvider as _HermesMemoryProvider
+@@ -320,21 +321,7 @@ class MnemosHermesProvider(_HermesMemoryProvider):  # type: ignore[misc]  # Opti
+             return not self._threads
+ 
+     def _format_context(self, result: Any) -> str:
+-        if not isinstance(result, Mapping):
+-            return ""
+-        context = result.get("context")
+-        if isinstance(context, str) and context:
+-            return context[:MAX_CONTEXT_CHARS]
+-        facts = result.get("facts")
+-        if not isinstance(facts, list):
+-            return ""
+-        lines: list[str] = []
+-        for index, fact in enumerate(facts, 1):
+-            if isinstance(fact, Mapping):
+-                content = _text(fact.get("content"))
+-                if content:
+-                    lines.append(f"{index}. {' '.join(content.split())[:800]}")
+-        return "\n".join(lines)[:MAX_CONTEXT_CHARS]
++        return format_retrieved_context(result, max_chars=MAX_CONTEXT_CHARS)
+ 
+     def system_prompt_block(self) -> str:
+         return "Mnemos memory is available through the configured local Hermes provider."
+diff --git a/mnemos/cli.py b/mnemos/cli.py
+index a84b5e3..652acb8 100644
+--- a/mnemos/cli.py
++++ b/mnemos/cli.py
+@@ -45,6 +45,7 @@ from .hook_autostore import (
+ SUPPORTED_RETRIEVE_EVENTS: tuple[str, ...] = ("UserPromptSubmit", "SessionStart")
+ from .inspectability import build_chunk_inspection
+ from .observability import configure_logging, log_event
++from .retrieval import render_context_chunk
+ from .runtime import (
+     build_embedder_from_env,
+     build_llm_from_env,
+@@ -1054,10 +1055,10 @@ def _format_retrieved_context(chunks: list[Any], event: str) -> str:
+         scope = chunk.metadata.get("scope", "global") if chunk.metadata else "global"
+         scope_id = chunk.metadata.get("scope_id") if chunk.metadata else None
+         scope_tag = f"{scope}:{scope_id}" if scope_id else scope
+-        content = chunk.content.strip().replace("\n", " ")
+-        if len(content) > 400:
+-            content = content[:397] + "..."
+-        lines.append(f"  {idx}. [{scope_tag}] {content}")
++        rendered = render_context_chunk(chunk).strip().replace("\n", " ")
++        if len(rendered) > 400:
++            rendered = rendered[:397] + "..."
++        lines.append(f"  {idx}. [{scope_tag}] {rendered}")
+     return "\n".join(lines)
+ 
+ 

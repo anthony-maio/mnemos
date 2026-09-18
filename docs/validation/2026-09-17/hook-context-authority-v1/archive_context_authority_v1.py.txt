@@ -1,0 +1,146 @@
+"""Archive the terminal context-authority validation run without rerunning it."""
+from __future__ import annotations
+
+import hashlib
+import json
+from pathlib import Path
+import shutil
+import xml.etree.ElementTree as ET
+
+
+ROOT = Path(__file__).resolve().parents[1]
+OUTPUT = Path("C:/Users/Ant/AppData/Local/Temp/mnemos-context-authority-v2")
+REPORT_PATH = OUTPUT / "report.json"
+ARCHIVE = ROOT / "docs/validation/2026-09-17/hook-context-authority-v1"
+BASE_COMMIT = "7443582b23466cfabd9253448020350d727f85f2"
+
+MODIFIED = (
+    "mnemos/adapters/claude_code.py",
+    "mnemos/adapters/codex.py",
+    "mnemos/adapters/context.py",
+    "mnemos/adapters/hermes.py",
+    "mnemos/cli.py",
+    "tests/test_adapter_context_authority.py",
+    "tests/test_cli_context_authority.py",
+)
+
+
+def sha(raw: bytes) -> str:
+    return hashlib.sha256(raw).hexdigest()
+
+
+def load(path: Path):
+    return json.loads(path.read_text(encoding="utf-8"))
+
+
+if not REPORT_PATH.exists():
+    raise FileNotFoundError(REPORT_PATH)
+report = load(REPORT_PATH)
+if not report.get("finished_at"):
+    raise RuntimeError("validation report is not terminal")
+if report.get("status") not in {"passed", "failed"}:
+    raise AssertionError("validation report has an unknown terminal status")
+if report.get("base_commit") != BASE_COMMIT:
+    raise AssertionError("validation base commit differs")
+if Path(report.get("package_origin", "")).resolve() != (ROOT / "mnemos/__init__.py").resolve():
+    raise AssertionError("validation imported a different package")
+
+source_hashes = report.get("source_files_sha256", {})
+for relative in MODIFIED:
+    path = ROOT / relative
+    expected = source_hashes.get(relative)
+    if not path.exists() or not expected:
+        raise AssertionError(f"missing source hash or file: {relative}")
+    if sha(path.read_bytes()) != expected:
+        raise AssertionError(f"source changed since validation: {relative}")
+
+if report.get("runner_sha256") and sha((ROOT / ".venv/validate_context_authority_v2.py").read_bytes()) != report["runner_sha256"]:
+    raise AssertionError("validation runner changed")
+
+if ARCHIVE.exists():
+    raise FileExistsError(ARCHIVE)
+ARCHIVE.mkdir(parents=True)
+shutil.copyfile(REPORT_PATH, ARCHIVE / "report.json")
+
+files_to_copy = {
+    "archive_context_authority_v1.py.txt": Path(__file__),
+    "validate_context_authority_v2.py.txt": ROOT / ".venv/validate_context_authority_v2.py",
+    "tracked-source.patch": OUTPUT / "tracked-source.patch",
+    "black.stdout.log": OUTPUT / "black.stdout.log",
+    "black.stderr.log": OUTPUT / "black.stderr.log",
+    "mypy.stdout.log": OUTPUT / "mypy.stdout.log",
+    "mypy.stderr.log": OUTPUT / "mypy.stderr.log",
+    "pytest.stdout.log": OUTPUT / "pytest.stdout.log",
+    "pytest.stderr.log": OUTPUT / "pytest.stderr.log",
+    "pytest.xml": OUTPUT / "pytest.xml",
+}
+first_output = OUTPUT.parent / "mnemos-context-authority-v1"
+for name in ('report.json', 'black.stdout.log', 'black.stderr.log'):
+    files_to_copy['format-attempt-' + name] = first_output / name
+files_to_copy['validate_context_authority_v1.py.txt'] = ROOT / '.venv/validate_context_authority_v1.py'
+for relative in MODIFIED:
+    files_to_copy[Path(relative).name + ".txt"] = ROOT / relative
+for name, source in files_to_copy.items():
+    if source.exists():
+        shutil.copyfile(source, ARCHIVE / name)
+
+checks = report.get("checks", [])
+totals = None
+if (OUTPUT / 'pytest.xml').exists():
+    cases = ET.parse(OUTPUT / 'pytest.xml').getroot().findall('.//testcase')
+    totals = {
+        'tests': len(cases),
+        'failures': sum(case.find('failure') is not None for case in cases),
+        'errors': sum(case.find('error') is not None for case in cases),
+        'skipped': sum(case.find('skipped') is not None for case in cases),
+    }
+    totals['passed'] = totals['tests'] - totals['failures'] - totals['errors'] - totals['skipped']
+check_summary = {
+    "status": report["status"],
+    "finished_at": report["finished_at"],
+    "base_commit": report["base_commit"],
+    "source_unchanged": report.get("source_unchanged"),
+    "checks": checks,
+    "pytest_totals": totals,
+    "checks_completed": len(checks),
+    "checks_expected": ["black", "mypy", "pytest"],
+    "native_acceptance": "NOT RUN",
+    "native_v6": "Original native Codex/Claude continuity v6 FAILED; this archive does not alter that result.",
+    "limits": [
+        "This archive records source checks and does not establish native-host acceptance.",
+        "A failed full-suite check remains failed even if an isolated rerun passed.",
+        "Missing later-phase logs or JUnit output are preserved as absent when validation stopped early.",
+    ],
+}
+(ARCHIVE / "acceptance.json").write_text(json.dumps(check_summary, indent=2) + "\n", encoding="utf-8")
+(ARCHIVE / ".gitattributes").write_text(
+    "* -text\n*.log -whitespace\n*.xml -whitespace\n*.patch -whitespace\n",
+    encoding="utf-8",
+)
+black = next((item for item in checks if item.get("name") == "black"), None)
+mypy = next((item for item in checks if item.get("name") == "mypy"), None)
+pytest = next((item for item in checks if item.get("name") == "pytest"), None)
+lines = [
+    "# Hook context authority validation archive",
+    "",
+    f"Terminal validation status: {report['status']}.",
+    f"Base commit: {report['base_commit']}.",
+    "The archive preserves the exact runner report, selected modified source and test files, tracked patch, and check outputs that existed at terminal time.",
+    "",
+    f"Black: {black['returncode'] if black else 'NOT RUN'}.",
+    f"Mypy: {mypy['returncode'] if mypy else 'NOT RUN'}.",
+    f"Pytest: {pytest['returncode'] if pytest else 'NOT RUN'}.",
+    f"JUnit totals: {json.dumps(totals) if totals is not None else 'NOT AVAILABLE'}.",
+    "",
+    "Native Codex and Claude acceptance was NOT RUN by this validation. The original native continuity v6 failure remains a separate result.",
+    "A terminal failed status is preserved and is not converted into a pass.",
+    "The format-attempt files preserve the earlier run that stopped at Black before mypy or pytest. The CLI test was formatted before the v2 run.",
+    "",
+]
+(ARCHIVE / "README.md").write_text("\n".join(lines), encoding="utf-8")
+
+index = {"files": {}}
+for path in sorted(ARCHIVE.iterdir()):
+    raw = path.read_bytes()
+    index["files"][path.name] = {"bytes": len(raw), "sha256": sha(raw)}
+(ARCHIVE / "evidence-index.json").write_text(json.dumps(index, indent=2) + "\n", encoding="utf-8")

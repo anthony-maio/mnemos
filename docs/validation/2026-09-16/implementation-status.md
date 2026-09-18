@@ -4,6 +4,26 @@ This record covers the unreleased `wt/functional-local-memory` worktree. It
 separates implemented behavior from acceptance evidence. The original task
 boundaries and thresholds remain in the [implementation plan](../../plans/2026-09-16-functional-local-memory.md).
 
+A subsequent source repair preserves recall authority at the host boundary.
+Claude's adapter had discarded the service's assertion-status and history labels;
+Codex and Hermes discarded them in fact-only compatibility responses. The shared
+formatter now preserves service context, labels and quotes fallback records,
+respects an empty context, and omits oversized context rather than emitting a
+partial record. The legacy CLI formatter also retains the shared qualifications.
+Nine adapter regressions failed before the repair; 97 focused adapter/import
+checks passed afterward, followed by 15 authority tests including three actual
+SQLite-backed service-to-adapter checks. Black and strict mypy pass. The
+[full-suite run](../2026-09-17/hook-context-authority-v1/README.md) FAILED with
+981 passed, four skipped, and one failure: the captured-history restart test
+found no fact after its initial remember/maintenance step. The retained fixture
+also had no events or jobs. The same test passed in isolation. A separate
+[UUID metadata probe](../2026-09-17/uuid-metadata-rejection-v1/README.md)
+reproduced rejection of a generated UUID whose numeric tail matched the
+credit-card filter. This is a confirmed write defect, but the failed full run
+did not retain its generated ID, so its specific cause remains unproven.
+Installed/native acceptance has not been rerun. This does not close the native
+v6 failure below.
+
 The [latest native forget/replay attempt](../2026-09-17/native-codex-claude-continuity-v6/README.md)
 is FAILED overall. Codex taught the fact, Claude corrected it, and fresh Codex
 retrieved version 2 across restarts. Claude then deleted it and retrieved an

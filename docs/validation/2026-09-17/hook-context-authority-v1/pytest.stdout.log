@@ -1,0 +1,37 @@
+.................................................................ss..... [  7%]
+....F................................................................... [ 14%]
+........................................................................ [ 21%]
+........................................................................ [ 29%]
+........................................................................ [ 36%]
+........................................................................ [ 43%]
+....................................ss.................................. [ 51%]
+........................................................................ [ 58%]
+........................................................................ [ 65%]
+........................................................................ [ 73%]
+........................................................................ [ 80%]
+........................................................................ [ 87%]
+........................................................................ [ 94%]
+..................................................                       [100%]
+================================== FAILURES ===================================
+_ test_corrected_fact_and_captured_history_keep_distinct_authority_after_restart _
+
+tmp_path = WindowsPath('D:/WindowsTemp/pytest-of-Ant/pytest-3569/test_corrected_fact_and_captur0')
+
+    @pytest.mark.asyncio
+    async def test_corrected_fact_and_captured_history_keep_distinct_authority_after_restart(tmp_path):
+        memory, context = service(tmp_path)
+        for name in type(memory.engine.config.modules).model_fields:
+            setattr(memory.engine.config.modules, name, False)
+        old = "The release label is cedar-otter."
+        new = "The release label is maple-heron."
+        try:
+            await memory.dispatch("remember", {"context": context.model_dump(), "content": old})
+            await memory.maintenance.run_once(force=True)
+>           target = memory.engine.store.get_all()[0]
+                     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E           IndexError: list index out of range
+
+tests\test_captured_assertion_status.py:27: IndexError
+=========================== short test summary info ===========================
+FAILED tests/test_captured_assertion_status.py::test_corrected_fact_and_captured_history_keep_distinct_authority_after_restart
+1 failed, 981 passed, 4 skipped in 506.25s (0:08:26)

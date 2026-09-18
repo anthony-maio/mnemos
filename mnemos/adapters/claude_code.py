@@ -23,6 +23,7 @@ from ..client import MnemosClient
 from ..claude_identity import claude_v2_event_id
 from .diagnostics import emit_hook_diagnostic
 from .hook_input import read_hook_input
+from .context import format_retrieved_context
 from ..scopes import ScopeContext, ScopeRegistry, default_registry_path as shared_registry_path
 from ..routing_review import reason_for_context_error, record_unresolved_routing_failure
 from ..service import _protect_private_path, default_runtime_directory
@@ -623,15 +624,7 @@ class ClaudeCodeAdapter:
                 "profile": "baseline",
             }
         )
-        facts = result.get("facts", []) if isinstance(result, Mapping) else []
-        lines: list[str] = []
-        for index, fact in enumerate(facts, 1):
-            if not isinstance(fact, Mapping) or not isinstance(fact.get("content"), str):
-                continue
-            content = " ".join(fact["content"].split())
-            if content:
-                lines.append(f"{index}. {content[:800]}")
-        context_text = "\n".join(lines)[:MAX_CONTEXT_CHARS]
+        context_text = format_retrieved_context(result, max_chars=MAX_CONTEXT_CHARS)
         return HookResult(status="ok", committed=False, context=context_text)
 
     async def handle(

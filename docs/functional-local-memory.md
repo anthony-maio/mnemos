@@ -234,6 +234,14 @@ The result remains failed. The current historical/unverified labels did not
 prevent that answer; native related-copy deletion and context handling still
 need acceptance evidence.
 
+The surviving v6 assistant paraphrase does not contain either the target's full
+current assertion or its historical assertion after the existing normalization.
+The exact-text related-forget matcher would therefore miss that copy. This was
+checked against the archived native result; it is not a new native preview run.
+Related-content discovery still needs to cover paraphrases while preserving
+reviewed selection and project boundaries. Selected-fact deletion must not
+silently become deletion of every semantically similar record.
+
 ## What the five modules currently mean
 
 These are the implemented mechanism contracts. Their neuroscience analogies are design inspiration, not evidence of human-like memory.
