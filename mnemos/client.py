@@ -206,10 +206,16 @@ class MnemosClient:
         self.descriptor_path = (
             Path(descriptor_path).expanduser() if descriptor_path else default_descriptor_path()
         )
-        self.outbox = outbox or (
-            Outbox(outbox_path)
-            if outbox_path is not None
-            else Outbox(self.descriptor_path.with_name("outbox.json"))
+        # An empty Outbox is false-valued because it defines __len__. Its
+        # selected path and firewall must not depend on pending event count.
+        self.outbox = (
+            outbox
+            if outbox is not None
+            else (
+                Outbox(outbox_path)
+                if outbox_path is not None
+                else Outbox(self.descriptor_path.with_name("outbox.json"))
+            )
         )
         if startup_timeout <= 0 or request_timeout <= 0:
             raise ValueError("client timeouts must be positive")

@@ -1,0 +1,59 @@
+"""Archive the reproduced outbox-selection failures and focused recovery checks."""
+from pathlib import Path
+import hashlib
+import json
+import shutil
+import subprocess
+import xml.etree.ElementTree as ET
+
+ROOT = Path(__file__).resolve().parents[1]
+OUT = ROOT/'docs/validation/2026-09-18/client-outbox-selection-v1'
+sha = lambda p: hashlib.sha256(p.read_bytes()).hexdigest()
+def counts(path):
+    cases=ET.parse(path).getroot().findall('.//testcase')
+    return {'tests':len(cases),'failed':sum(c.find('failure') is not None for c in cases),
+            'errors':sum(c.find('error') is not None for c in cases),
+            'skipped':sum(c.find('skipped') is not None for c in cases)}
+red=counts(ROOT/'.venv/client-outbox-selection-red-v1.xml')
+green=counts(ROOT/'.venv/client-outbox-selection-green-v1.xml')
+assert red == {'tests':3,'failed':2,'errors':0,'skipped':0}
+assert green == {'tests':34,'failed':0,'errors':0,'skipped':0}
+OUT.mkdir(parents=True,exist_ok=False)
+for stem in ('client-outbox-selection-red-v1','client-outbox-selection-green-v1'):
+    for suffix in ('.xml','.log'):
+        shutil.copyfile(ROOT/'.venv'/(stem+suffix),OUT/(stem+suffix))
+for path in [ROOT/'mnemos/client.py',ROOT/'tests/test_client_outbox_selection.py',Path(__file__)]:
+    shutil.copyfile(path,OUT/(path.name+'.txt'))
+(OUT/'source.patch').write_bytes(subprocess.check_output(['git','diff','--binary','HEAD','--','mnemos/client.py'],cwd=ROOT))
+(OUT/'provenance.json').write_text(json.dumps({
+    'base_commit':subprocess.check_output(['git','rev-parse','HEAD'],cwd=ROOT,text=True).strip(),
+    'client_sha256':sha(ROOT/'mnemos/client.py'),
+    'test_sha256':sha(ROOT/'tests/test_client_outbox_selection.py'),
+    'red':red,'focused_green':green,
+    'boundary':'Client transport and outbox policy; replay uses a real HTTP service with a recording dispatcher, not SQLite extraction.'
+},indent=2)+'\n',encoding='utf-8')
+(OUT/'.gitattributes').write_text('* -text\n*.log -whitespace\n*.xml -whitespace\n*.patch -whitespace\n',encoding='utf-8')
+(OUT/'README.md').write_text('''# Supplied outbox selection
+
+An explicitly supplied empty Outbox was discarded because the constructor used
+truthiness to select its default. Outbox defines length as its pending event
+count. This sent a capture to the default file instead of the caller's selected
+recovery file, and replaced a supplied PII-blocking firewall with the default
+redacting policy. The first regression run produced two failures and one passing
+nonempty-outbox control.
+
+The client now selects a supplied object with an explicit None check. Its path
+and policy no longer depend on whether it contains pending events. All 34
+focused client, service, lost-acknowledgement, and interrupted-capture tests pass.
+The three new cases cover empty/nonempty selection, a new client's replay of the
+chosen file without duplicate dispatch, and preservation of stricter PII blocking.
+Replay in the new selection tests uses real HTTP with a recording dispatcher;
+it is not new SQLite extraction or native-host evidence.
+
+Source snapshots, the patch, JUnit results, and the negative run are preserved.
+Full frozen-source and installed-package validation follow separately. The frozen
+Ollama evaluation, live host settings, and live memory data were not changed.
+''',encoding='utf-8')
+index={'files':{p.name:{'bytes':p.stat().st_size,'sha256':sha(p)} for p in sorted(OUT.iterdir()) if p.is_file()}}
+(OUT/'evidence-index.json').write_text(json.dumps(index,indent=2)+'\n',encoding='utf-8')
+print(json.dumps({'red':red,'focused_green':green,'indexed_files':len(index['files'])}))

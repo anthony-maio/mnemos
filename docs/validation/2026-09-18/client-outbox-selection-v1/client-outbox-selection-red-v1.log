@@ -1,0 +1,61 @@
+F.F                                                                      [100%]
+================================== FAILURES ===================================
+_ test_supplied_outbox_keeps_capture_available_at_selected_path_after_restart[False] _
+
+tmp_path = WindowsPath('D:/WindowsTemp/pytest-of-Ant/pytest-3613/test_supplied_outbox_keeps_cap0')
+seed_pending = False
+
+    @pytest.mark.asyncio
+    @pytest.mark.parametrize("seed_pending", [False, True])
+    async def test_supplied_outbox_keeps_capture_available_at_selected_path_after_restart(
+        tmp_path: Path, seed_pending: bool
+    ) -> None:
+        descriptor = tmp_path / "runtime.json"
+        selected_path = tmp_path / "selected" / "capture.json"
+        outbox = Outbox(selected_path)
+        expected_ids = []
+        if seed_pending:
+            outbox.append({"event_id": "earlier", "content": "Keep the earlier event."})
+            expected_ids.append("earlier")
+        client = MnemosClient(descriptor_path=descriptor, outbox=outbox, auto_start=False)
+        try:
+            queued = await client.capture(
+                {"event_id": "selected-capture", "content": "Keep the selected recovery path."}
+            )
+            assert queued["status"] == "queued"
+            expected_ids.append("selected-capture")
+>           assert [entry["payload"]["event_id"] for entry in Outbox(selected_path).pending()] == expected_ids
+E           AssertionError: assert [] == ['selected-capture']
+E             
+E             Right contains one more item: 'selected-capture'
+E             Use -v to get more diff
+
+tests\test_client_outbox_selection.py:32: AssertionError
+_________ test_empty_supplied_outbox_keeps_its_stricter_write_policy __________
+
+tmp_path = WindowsPath('D:/WindowsTemp/pytest-of-Ant/pytest-3613/test_empty_supplied_outbox_kee0')
+
+    @pytest.mark.asyncio
+    async def test_empty_supplied_outbox_keeps_its_stricter_write_policy(tmp_path: Path) -> None:
+        selected = Outbox(
+            tmp_path / "strict" / "capture.json",
+            firewall=MemoryWriteFirewall(MemorySafetyConfig(pii_action="block")),
+        )
+        client = MnemosClient(
+            descriptor_path=tmp_path / "runtime.json", outbox=selected, auto_start=False
+        )
+        try:
+            result = await client.capture(
+                {"event_id": "blocked-address", "content": "Contact person@example.com."}
+            )
+>           assert result["status"] == "blocked"
+E           AssertionError: assert 'queued' == 'blocked'
+E             
+E             - blocked
+E             + queued
+
+tests\test_client_outbox_selection.py:80: AssertionError
+=========================== short test summary info ===========================
+FAILED tests/test_client_outbox_selection.py::test_supplied_outbox_keeps_capture_available_at_selected_path_after_restart[False]
+FAILED tests/test_client_outbox_selection.py::test_empty_supplied_outbox_keeps_its_stricter_write_policy
+2 failed, 1 passed in 1.66s
