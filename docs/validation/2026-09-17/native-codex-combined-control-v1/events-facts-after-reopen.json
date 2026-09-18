@@ -1,0 +1,126 @@
+{
+  "events": [
+    {
+      "id": "1f4aa0bc1e0f4015f945d7e7b955a2e37ed251e5f355e35e7fe0a067fb76179f",
+      "role": "assistant",
+      "content": "The project shutdown probe uses **river-cedar** release labels.",
+      "source": "codex",
+      "source_event_id": "codex:11548ad85d69cad577ecf53dc0284aab602f2e8af5cf0beb10566529429d6681",
+      "scope": "project",
+      "scope_id": "b8b9c05b-bce9-465b-b3e2-28c00f16d86f",
+      "metadata": "{\"user_profile_id\": \"native-codex-combined-control-v1\", \"project_id\": \"b8b9c05b-bce9-465b-b3e2-28c00f16d86f\", \"workspace_id\": null, \"session_id\": \"01a0b24e-b84e-7840-a138-f04ba956bc4b\", \"host\": \"codex\", \"scope\": \"project\", \"scope_id\": \"b8b9c05b-bce9-465b-b3e2-28c00f16d86f\", \"source_event_id\": \"codex:11548ad85d69cad577ecf53dc0284aab602f2e8af5cf0beb10566529429d6681\", \"source_ref\": \"Stop:01a0b24e-c17b-7d11-9e4a-a760987d34f3\", \"source_kind\": \"codex_hook\", \"explicit_remember\": false, \"identity_status\": \"normal\"}",
+      "status": "consolidated"
+    },
+    {
+      "id": "2c071439b543bf45e303b23f3596a634f34c282275315742fd5435739d89e05c",
+      "role": "user",
+      "content": "The project shutdown probe uses foreign-canary-849 release labels.",
+      "source": "manual",
+      "source_event_id": "control-foreign",
+      "scope": "project",
+      "scope_id": "2e508234-02cc-427f-a108-8a9b9e1d48f8",
+      "metadata": "{\"user_profile_id\": \"native-codex-combined-control-v1\", \"project_id\": \"2e508234-02cc-427f-a108-8a9b9e1d48f8\", \"workspace_id\": null, \"session_id\": \"foreign-seed\", \"host\": \"manual\", \"scope\": \"project\", \"scope_id\": \"2e508234-02cc-427f-a108-8a9b9e1d48f8\", \"source_event_id\": \"control-foreign\", \"source_ref\": null, \"source_kind\": \"explicit_remember\", \"explicit_remember\": true, \"identity_status\": \"normal\"}",
+      "status": "consolidated"
+    },
+    {
+      "id": "67cc6d7c32361bacd0569cf919417e5e49bdca8ebe1c136247de93c751b7eb1e",
+      "role": "user",
+      "content": "Call mnemos_retrieve exactly once for the project shutdown probe release labels, current_scope project and allowed_scopes project. Report the returned convention. Do not use any other tool.",
+      "source": "codex",
+      "source_event_id": "codex:ef9005739b8769d71549d3a5b5b543d3c1b9d9dc2397b10c9ed09fd0e4bfbb24",
+      "scope": "project",
+      "scope_id": "b8b9c05b-bce9-465b-b3e2-28c00f16d86f",
+      "metadata": "{\"user_profile_id\": \"native-codex-combined-control-v1\", \"project_id\": \"b8b9c05b-bce9-465b-b3e2-28c00f16d86f\", \"workspace_id\": null, \"session_id\": \"01a0b24e-b84e-7840-a138-f04ba956bc4b\", \"host\": \"codex\", \"scope\": \"project\", \"scope_id\": \"b8b9c05b-bce9-465b-b3e2-28c00f16d86f\", \"source_event_id\": \"codex:ef9005739b8769d71549d3a5b5b543d3c1b9d9dc2397b10c9ed09fd0e4bfbb24\", \"source_ref\": \"UserPromptSubmit:01a0b24e-c17b-7d11-9e4a-a760987d34f3\", \"source_kind\": \"codex_hook\", \"explicit_remember\": false, \"identity_status\": \"normal\"}",
+      "status": "consolidated"
+    },
+    {
+      "id": "b333b721de3fab85b78ba7eb2ec2ab0b608450dfd1f82984a2bc27ac62d5ef0f",
+      "role": "user",
+      "content": "The project shutdown probe uses river-cedar release labels.",
+      "source": "manual",
+      "source_event_id": "control-target",
+      "scope": "project",
+      "scope_id": "b8b9c05b-bce9-465b-b3e2-28c00f16d86f",
+      "metadata": "{\"user_profile_id\": \"native-codex-combined-control-v1\", \"project_id\": \"b8b9c05b-bce9-465b-b3e2-28c00f16d86f\", \"workspace_id\": null, \"session_id\": \"fixture-seed\", \"host\": \"manual\", \"scope\": \"project\", \"scope_id\": \"b8b9c05b-bce9-465b-b3e2-28c00f16d86f\", \"source_event_id\": \"control-target\", \"source_ref\": null, \"source_kind\": \"explicit_remember\", \"explicit_remember\": true, \"identity_status\": \"normal\"}",
+      "status": "consolidated"
+    }
+  ],
+  "jobs": [
+    {
+      "id": "event:1f4aa0bc1e0f4015f945d7e7b955a2e37ed251e5f355e35e7fe0a067fb76179f",
+      "kind": "extract",
+      "status": "completed"
+    },
+    {
+      "id": "event:2c071439b543bf45e303b23f3596a634f34c282275315742fd5435739d89e05c",
+      "kind": "remember",
+      "status": "completed"
+    },
+    {
+      "id": "event:67cc6d7c32361bacd0569cf919417e5e49bdca8ebe1c136247de93c751b7eb1e",
+      "kind": "extract",
+      "status": "completed"
+    },
+    {
+      "id": "event:b333b721de3fab85b78ba7eb2ec2ab0b608450dfd1f82984a2bc27ac62d5ef0f",
+      "kind": "remember",
+      "status": "completed"
+    }
+  ],
+  "facts": [
+    {
+      "id": "5f3329da-0979-4727-bf7f-0e4aa25ab4d6",
+      "content": "The project shutdown probe uses river-cedar release labels.",
+      "version": 1,
+      "metadata": "{\"user_profile_id\": \"native-codex-combined-control-v1\", \"project_id\": \"b8b9c05b-bce9-465b-b3e2-28c00f16d86f\", \"workspace_id\": null, \"session_id\": \"fixture-seed\", \"host\": \"manual\", \"scope\": \"project\", \"scope_id\": \"b8b9c05b-bce9-465b-b3e2-28c00f16d86f\", \"source\": \"explicit_remember\", \"source_roles\": [\"user\"], \"source_event_ids\": [\"b333b721de3fab85b78ba7eb2ec2ab0b608450dfd1f82984a2bc27ac62d5ef0f\"], \"encoding_diagnostics\": {}, \"assertion_status\": \"asserted\", \"cognitive_state_status\": \"provider_unavailable\"}"
+    },
+    {
+      "id": "73ece6ce-5460-4936-96d9-0dc043dc6b27",
+      "content": "Assistant reported: The project shutdown probe uses **river-cedar** release labels.",
+      "version": 1,
+      "metadata": "{\"user_profile_id\": \"native-codex-combined-control-v1\", \"project_id\": \"b8b9c05b-bce9-465b-b3e2-28c00f16d86f\", \"workspace_id\": null, \"session_id\": \"01a0b24e-b84e-7840-a138-f04ba956bc4b\", \"host\": \"codex\", \"scope\": \"project\", \"scope_id\": \"b8b9c05b-bce9-465b-b3e2-28c00f16d86f\", \"source\": \"captured_passthrough\", \"source_roles\": [\"assistant\"], \"source_event_ids\": [\"1f4aa0bc1e0f4015f945d7e7b955a2e37ed251e5f355e35e7fe0a067fb76179f\"], \"encoding_diagnostics\": {\"surprisal_score\": null, \"surprisal_status\": \"disabled\", \"prediction\": null, \"prediction_mode\": \"disabled\", \"threshold\": 0.3}, \"assertion_status\": \"unknown\", \"cognitive_state_status\": \"provider_unavailable\"}"
+    },
+    {
+      "id": "9f020dcd-8798-4bae-8ee5-dee7b6a7a86d",
+      "content": "The project shutdown probe uses foreign-canary-849 release labels.",
+      "version": 1,
+      "metadata": "{\"user_profile_id\": \"native-codex-combined-control-v1\", \"project_id\": \"2e508234-02cc-427f-a108-8a9b9e1d48f8\", \"workspace_id\": null, \"session_id\": \"foreign-seed\", \"host\": \"manual\", \"scope\": \"project\", \"scope_id\": \"2e508234-02cc-427f-a108-8a9b9e1d48f8\", \"source\": \"explicit_remember\", \"source_roles\": [\"user\"], \"source_event_ids\": [\"2c071439b543bf45e303b23f3596a634f34c282275315742fd5435739d89e05c\"], \"encoding_diagnostics\": {}, \"assertion_status\": \"asserted\", \"cognitive_state_status\": \"provider_unavailable\"}"
+    },
+    {
+      "id": "f8ee278e-42ca-4a00-a448-ad7145e3acc3",
+      "content": "Call mnemos_retrieve exactly once for the project shutdown probe release labels, current_scope project and allowed_scopes project. Report the returned convention. Do not use any other tool.",
+      "version": 1,
+      "metadata": "{\"user_profile_id\": \"native-codex-combined-control-v1\", \"project_id\": \"b8b9c05b-bce9-465b-b3e2-28c00f16d86f\", \"workspace_id\": null, \"session_id\": \"01a0b24e-b84e-7840-a138-f04ba956bc4b\", \"host\": \"codex\", \"scope\": \"project\", \"scope_id\": \"b8b9c05b-bce9-465b-b3e2-28c00f16d86f\", \"source\": \"captured_passthrough\", \"source_roles\": [\"user\"], \"source_event_ids\": [\"67cc6d7c32361bacd0569cf919417e5e49bdca8ebe1c136247de93c751b7eb1e\"], \"encoding_diagnostics\": {\"surprisal_score\": null, \"surprisal_status\": \"disabled\", \"prediction\": null, \"prediction_mode\": \"disabled\", \"threshold\": 0.3}, \"assertion_status\": \"unknown\", \"cognitive_state_status\": \"provider_unavailable\"}"
+    }
+  ],
+  "evidence": [
+    {
+      "evidence_id": "2c567408-4ac5-4a3b-bd9a-e2ed4c461e90",
+      "fact_id": "9f020dcd-8798-4bae-8ee5-dee7b6a7a86d",
+      "source_event_id": "2c071439b543bf45e303b23f3596a634f34c282275315742fd5435739d89e05c",
+      "excerpt": "The project shutdown probe uses foreign-canary-849 release labels.",
+      "source_ref": null
+    },
+    {
+      "evidence_id": "78627847-a9ed-4f70-b64e-ff11a8fbd723",
+      "fact_id": "5f3329da-0979-4727-bf7f-0e4aa25ab4d6",
+      "source_event_id": "b333b721de3fab85b78ba7eb2ec2ab0b608450dfd1f82984a2bc27ac62d5ef0f",
+      "excerpt": "The project shutdown probe uses river-cedar release labels.",
+      "source_ref": null
+    },
+    {
+      "evidence_id": "86bf765b-e26f-4dc5-b8f3-319861e9a969",
+      "fact_id": "73ece6ce-5460-4936-96d9-0dc043dc6b27",
+      "source_event_id": "1f4aa0bc1e0f4015f945d7e7b955a2e37ed251e5f355e35e7fe0a067fb76179f",
+      "excerpt": "The project shutdown probe uses **river-cedar** release labels.",
+      "source_ref": "Stop:01a0b24e-c17b-7d11-9e4a-a760987d34f3"
+    },
+    {
+      "evidence_id": "a7732bb8-e3d2-44c2-9efb-1192480ef083",
+      "fact_id": "f8ee278e-42ca-4a00-a448-ad7145e3acc3",
+      "source_event_id": "67cc6d7c32361bacd0569cf919417e5e49bdca8ebe1c136247de93c751b7eb1e",
+      "excerpt": "Call mnemos_retrieve exactly once for the project shutdown probe release labels, current_scope project and allowed_scopes project. Report the returned convention. Do not use any other tool.",
+      "source_ref": "UserPromptSubmit:01a0b24e-c17b-7d11-9e4a-a760987d34f3"
+    }
+  ]
+}

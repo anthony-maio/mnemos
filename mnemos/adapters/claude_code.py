@@ -874,7 +874,9 @@ def main(argv: list[str] | None = None) -> int:
             return 0
         result = asyncio.run(run_hook(event, payload))
         if result.status == "degraded":
-            emit_hook_diagnostic(host="claude-code", event=event, status=result.status)
+            emit_hook_diagnostic(
+                host="claude-code", event=event, status=result.status, reason=result.error
+            )
         if event in {"SessionStart", "UserPromptSubmit"}:
             output = _native_output(event, result)
             if output:

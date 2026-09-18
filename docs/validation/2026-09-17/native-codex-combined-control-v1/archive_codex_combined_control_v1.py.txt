@@ -1,0 +1,128 @@
+"""Archive the completed disposable combined Codex control."""
+from __future__ import annotations
+
+import hashlib
+import json
+from pathlib import Path
+import shutil
+import sqlite3
+import tomllib
+
+ROOT = Path(__file__).resolve().parents[1]
+TEMP = Path("C:/Users/Ant/AppData/Local/Temp")
+ORIGIN = TEMP / "mnemos-native-codex-combined-control-v1"
+REPORT_PATH = ORIGIN / "report.json"
+ARCHIVE = ROOT / "docs/validation/2026-09-17/native-codex-combined-control-v1"
+
+
+def sha(path: Path) -> str:
+    return hashlib.sha256(path.read_bytes()).hexdigest()
+
+
+report = json.loads(REPORT_PATH.read_text(encoding="utf-8"))
+assert report["status"] == "observed_transport" and report.get("finished_at")
+assert report["source_commit"] == "ebe1b0ddf973ebb1dc959afd5bc334209aa1b672"
+assert report["wheel_sha256"] == "b4f22b26f23f24496dc24c65fa2a6486395f1fe0f549e9c1feac762c77040699"
+assert report["provenance"]["package_provenance"]["mismatches"] == []
+assert report["provenance"]["package_provenance"]["source_commit"] == report["source_commit"]
+assert report["process"]["returncode"] == 0 and report["process"]["timed_out"] is False
+assert not report["cleanup"]["errors"]
+assert report["cleanup"]["auth_absent"] and report["cleanup"]["descriptor_absent"]
+
+fixture = Path(report["fixture"])
+config_path = Path(report["config"]["path"])
+assert config_path.exists() and config_path.is_relative_to(fixture)
+config = tomllib.loads(config_path.read_text(encoding="utf-8"))
+assert config["windows"]["sandbox"] == "unelevated"
+assert set(config["mcp_servers"]) == {"mnemos"}
+assert {"PostCompact", "PreCompact", "SessionEnd", "SessionStart", "Stop", "UserPromptSubmit"} <= set(config["hooks"])
+assert not (fixture / "runtime.json").exists()
+assert not (fixture / "codex-home/.codex/auth.json").exists()
+config_after_sha256 = sha(config_path)
+assert report["combined_config_after_process"] is True
+assert sha(Path(report["executable"]["path"])) == report["executable"]["sha256"]
+
+runner = ROOT / ".venv/native_codex_combined_shutdown_control_v1.py"
+assert sha(runner) == report["runner_sha256"]
+for name, digest in report["helper_pins"].items():
+    assert sha(ROOT / ".venv" / name) == digest
+transitive = {
+    "native_codex_lifecycle_v3.py": "7b87f5817dacae01c0a16918435ff8a4af1c1ecaaba00a9317ba7f16c8be5814",
+    "native_codex_generated_v8.py": "dd9ebe7480fa5a172bb41135a4690baf94d2c585f5357a77f17265e7acb58b12",
+}
+for name, digest in transitive.items():
+    assert sha(ROOT / ".venv" / name) == digest
+
+target = report["target"]
+selected = json.loads((ORIGIN / "selected-mcp-completion.json").read_text(encoding="utf-8"))
+assert len(selected) == 1
+item = selected[0]
+home = fixture / "codex-home/.codex"
+source_path = home / item["source"]
+assert source_path.is_relative_to(home)
+raw_lines = source_path.read_bytes().splitlines(keepends=True)
+raw = raw_lines[item["line"] - 1]
+assert json.loads(raw) == item["record"]
+payload = item["record"]["payload"]
+assert payload["type"] == "mcp_tool_call_end"
+assert payload["invocation"]["server"] == "mnemos" and payload["invocation"]["tool"] == "mnemos_retrieve"
+result = payload["result"]["Ok"]
+assert result["isError"] is False
+decoded = json.loads(result["structuredContent"]["result"])
+assert decoded == json.loads(result["content"][0]["text"])
+facts = decoded["facts"]
+match = [fact for fact in facts if fact["id"] == target["fact_id"]]
+assert len(match) == 1
+assert match[0]["version"] == target["version"] and match[0]["content"] == target["content"]
+assert match[0]["scope"] == "project" and match[0]["scope_id"] == target["scope_id"]
+assert target["foreign_id"] not in {fact["id"] for fact in facts}
+assert report["selected_completion"]["target_verified"] is True
+
+with sqlite3.connect((fixture / "memory.sqlite").as_uri() + "?mode=ro", uri=True) as db:
+    db.row_factory = sqlite3.Row
+    events = [dict(row) for row in db.execute("select id,role,content,source,source_event_id,scope,scope_id,metadata,status from episodic_events order by id")]
+    jobs = [dict(row) for row in db.execute("select id,kind,status from memory_jobs order by id")]
+    facts_rows = [dict(row) for row in db.execute("select id,content,version,metadata from memory_chunks order by id")]
+    evidence = [dict(row) for row in db.execute("select evidence_id,fact_id,source_event_id,excerpt,source_ref from fact_evidence order by evidence_id")]
+assert len(events) == 4 and len(jobs) == 4 and all(row["status"] == "completed" for row in jobs)
+assert len(facts_rows) == 4 and len(evidence) == 4
+target_row = next(row for row in facts_rows if row["id"] == target["fact_id"])
+foreign_row = next(row for row in facts_rows if row["id"] == target["foreign_id"])
+codex_events = [row for row in events if row["source"] == "codex"]
+assert len(codex_events) == 2 and {row["role"] for row in codex_events} == {"user", "assistant"}
+assert all(json.loads(row["metadata"])["source_kind"] == "codex_hook" for row in codex_events)
+assert target_row["content"] == target["content"] and foreign_row["id"] == target["foreign_id"]
+
+assert not ARCHIVE.exists()
+ARCHIVE.mkdir(parents=True)
+shutil.copyfile(REPORT_PATH, ARCHIVE / "report.json")
+shutil.copyfile(ORIGIN / "selected-mcp-completion.json", ARCHIVE / "selected-mcp-completion.json")
+shutil.copyfile(config_path, ARCHIVE / "config-after.toml")
+shutil.copyfile(runner, ARCHIVE / "native_codex_combined_shutdown_control_v1.py.txt")
+shutil.copyfile(Path(__file__), ARCHIVE / "archive_codex_combined_control_v1.py.txt")
+for name in {**report["helper_pins"], **transitive}:
+    shutil.copyfile(ROOT / ".venv" / name, ARCHIVE / (name + ".txt"))
+(ARCHIVE / "events-facts-after-reopen.json").write_text(json.dumps({"events": events, "jobs": jobs, "facts": facts_rows, "evidence": evidence}, indent=2) + "\n", encoding="utf-8")
+(ARCHIVE / "observations.json").write_text(json.dumps({
+    "native_process": report["process"],
+    "durable_counts": {"episodic_events": len(events), "jobs": len(jobs), "facts": len(facts_rows), "evidence": len(evidence), "codex_hook_events": len(codex_events)},
+    "operator_observed": {"stop_timeout_seconds": 3, "explicit_exit_returncode": 0, "raw_terminal_artifact": False},
+    "limits": [
+        "The 179218.3 ms process duration includes roughly two minutes awaiting manual tool approval and is not a hook or service latency measurement.",
+        "This is one combined observation and does not establish the cause of the earlier 0xc0000005 failure.",
+        "The native MCP retrieval and two Codex hook captures are observed; complete shutdown and general capture quality remain open.",
+    ],
+}, indent=2) + "\n", encoding="utf-8")
+(ARCHIVE / ".gitattributes").write_text("* -text\n", encoding="utf-8")
+(ARCHIVE / "README.md").write_text(
+    "# Native Codex combined MCP and hooks control\n\n"
+    "Codex 0.146.0 completed one scoped mnemos_retrieve call with the target fact at version 1 and the foreign project excluded. The disposable SQLite reopen retained four events, four completed jobs, four facts, and four evidence rows; two Codex hook events were captured as user and assistant captured_passthrough facts.\n\n"
+    "The process exited zero without timeout. The operator observed a three-second Stop timeout and explicitly entered /exit with native return code zero, but no raw terminal artifact is preserved, so those observations are not reconstructed acceptance proof. The 179218.3 ms duration included manual tool approval. This single run does not resolve the earlier access-violation result, establish shutdown acceptance, or prove complete capture.\n",
+    encoding="utf-8",
+)
+files = {}
+for path in sorted(ARCHIVE.rglob("*")):
+    if path.is_file():
+        files[path.relative_to(ARCHIVE).as_posix()] = {"bytes": path.stat().st_size, "sha256": sha(path)}
+(ARCHIVE / "evidence-index.json").write_text(json.dumps({"files": files}, indent=2) + "\n", encoding="utf-8")
+print(json.dumps({"archive": str(ARCHIVE), "indexed_blobs": len(files), "codex_hook_events": len(codex_events)}))

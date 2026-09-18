@@ -36,8 +36,18 @@ Separate [MCP-only and hooks-only controls](validation/2026-09-17/native-codex-i
 also exited zero. The hooks-only control retained both user and assistant events
 after SQLite reopen despite its Stop timeout. These controls do not isolate the
 full-run crash trigger: they pin unelevated Windows sandbox mode, and the MCP
-health call needs no interactive tool approval. A matched combined comparison
-remains necessary.
+health call needs no interactive tool approval. A subsequent
+[combined control](validation/2026-09-17/native-codex-combined-control-v1/README.md)
+retained all six hooks and MCP with explicit unelevated mode. Native retrieval
+returned the scoped target and excluded the foreign canary; both conversation
+roles survived database reopen, and the process exited zero. Stop still timed
+out. This one successful observation does not isolate the earlier crash cause.
+The elapsed time includes manual tool approval and is not a performance result.
+
+Claude's missing prompt ID and unresolved transcript association now have
+allowlisted stderr reason codes. The [diagnostic regression](validation/2026-09-17/hook-diagnostic-reasons-v1/README.md)
+preserves degraded status and separate capture identities; it does not establish
+native identity association or complete capture acceptance.
 
 Exact evidence boundaries are in [local-memory-hosts.md](validation/local-memory-hosts.md) and the [native host smoke record](validation/2026-09-16/native-host-smoke.md). The [Hermes bridge record](validation/2026-09-16/hermes-bridge-smoke.md) documents installed API and transport checks. The two-week pilot is NOT RUN.
 

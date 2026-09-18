@@ -1,0 +1,54 @@
+"""Preserve focused diagnostic regression evidence without rerunning models."""
+import hashlib
+import json
+from pathlib import Path
+import shutil
+import subprocess
+import xml.etree.ElementTree as ET
+
+ROOT = Path(__file__).resolve().parent.parent
+OUT = ROOT / 'docs/validation/2026-09-17/hook-diagnostic-reasons-v1'
+XML = Path('C:/Users/Ant/AppData/Local/Temp/mnemos-hook-reason-tests-v1.xml')
+SOURCES = ['mnemos/adapters/diagnostics.py', 'mnemos/adapters/claude_code.py', 'tests/test_claude_adapter.py']
+
+def sha(path):
+    return hashlib.sha256(path.read_bytes()).hexdigest()
+
+suites = list(ET.parse(XML).getroot().iter('testsuite'))
+counts = {key: sum(int(s.attrib.get(key, '0')) for s in suites) for key in ('tests', 'failures', 'errors', 'skipped')}
+assert counts == {'tests': 68, 'failures': 0, 'errors': 0, 'skipped': 0}
+base = subprocess.check_output(['git', 'rev-parse', 'HEAD'], cwd=ROOT, text=True).strip()
+assert base.startswith('09ce0b3')
+patch = subprocess.check_output(['git', 'diff', '--', *SOURCES], cwd=ROOT)
+assert patch
+OUT.mkdir(parents=True, exist_ok=False)
+shutil.copyfile(XML, OUT / 'pytest.xml')
+(OUT / 'source.patch').write_bytes(patch)
+shutil.copyfile(__file__, OUT / 'archive_hook_diagnostic_reasons_v1.py.txt')
+record = {
+    'base_commit': base,
+    'source_definition': 'Base commit plus source.patch; final test formatting differs only in line wrapping from the passing pytest run.',
+    'worktree_file_sha256': {name: sha(ROOT / name) for name in SOURCES},
+    'pytest': {'command': '.venv/Scripts/python.exe -m pytest tests/test_claude_adapter.py tests/test_codex_adapter.py tests/test_hook_import_boundary.py -q --junitxml=C:/Users/Ant/AppData/Local/Temp/mnemos-hook-reason-tests-v1.xml', 'exit_code': 0, 'counts': counts},
+    'observed_terminal_checks': [
+        {'command': '.venv/compat-py310/Scripts/python.exe -m mypy mnemos', 'exit_code': 0, 'source_files': 50},
+        {'command': '.venv/Scripts/python.exe -m black --check ' + ' '.join(SOURCES), 'exit_code': 0},
+    ],
+    'regression_sequence': 'Before implementation, two real adapter cases and one arbitrary-error privacy case failed on absent reason codes. After implementation those three passed. Expanded privacy cases and both host adapter suites then passed 68 tests. Black initially requested test formatting; formatting was applied and the check passed.',
+    'limits': ['Focused source validation only.', 'No new installed-package or native-host acceptance run.', 'No change to capture identity, association, acknowledgment, or degraded status.', 'Frozen real-model evaluation and installed native controls use older pinned source.'],
+}
+(OUT / 'verification.json').write_text(json.dumps(record, indent=2) + '\n', encoding='utf-8')
+(OUT / 'README.md').write_text('''# Claude degraded diagnostic reasons
+
+Claude hooks previously reported only `status=degraded`, even when the adapter knew that a native occurrence ID was missing or a transcript association was ambiguous. The hook now passes its error through an exact allowlist. Recognized identity, transcript, capture, and routing codes appear as `reason`; other strings become `unknown`. Exception messages and captured text remain excluded from stderr.
+
+Two regression cases run the real adapter through its command entry point with a fixture client. Missing-ID prompt capture remains provisional; the later native user and assistant entries remain separate, and the unresolved pending association stays in the checkpoint. Degraded status and the host stdout protocol are unchanged. Privacy cases reject arbitrary errors, recognized-code prefixes with secret suffixes, and multiline errors.
+
+All 68 focused Claude, Codex, and import-boundary tests passed. Strict mypy passed for 50 product files, and the final formatting check passed. `pytest.xml` is the original machine report; `verification.json` records the commands and observed terminal results. `source.patch` binds this repair to the recorded base commit. Final test formatting changed only line wrapping after pytest.
+
+This repairs observability. It does not resolve missing native IDs or establish complete capture, native hook deadlines, or clean shutdown acceptance. The installed ebe1b0d wheel and frozen real-model run do not include this change.
+''', encoding='utf-8')
+(OUT / '.gitattributes').write_text('* -text\n*.xml -whitespace\n*.patch -whitespace\n', encoding='utf-8')
+files = {p.relative_to(OUT).as_posix(): {'bytes': p.stat().st_size, 'sha256': sha(p)} for p in sorted(OUT.rglob('*')) if p.is_file()}
+(OUT / 'evidence-index.json').write_text(json.dumps({'files': files}, indent=2) + '\n', encoding='utf-8')
+print(json.dumps({'archive': str(OUT), 'indexed_blobs': len(files), 'counts': counts}))

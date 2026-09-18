@@ -15,6 +15,18 @@ also exited zero. The hooks-only control retained both capture roles after
 database reopen despite a Stop timeout. Sandbox mode and tool-approval
 differences prevent assigning the combined-run crash to one component yet.
 
+A [combined control](../2026-09-17/native-codex-combined-control-v1/README.md)
+with all generated hooks, MCP, and explicit unelevated sandbox mode completed
+native scoped retrieval and exited zero. Two hook events survived SQLite reopen.
+Stop still timed out, and operator/tool-approval time prevents using the elapsed
+time as a performance result. The earlier crashes remain unresolved.
+
+The current source adds allowlisted Claude diagnostic reasons for missing
+identity and ambiguous transcript association. Its [focused regression](../2026-09-17/hook-diagnostic-reasons-v1/README.md)
+passed 68 tests and strict typing. It preserves separate captures and degraded
+status. This change is newer than the installed ebe1b0d native controls and has
+not received a new installed-package or native-host acceptance run.
+
 The [capture import boundary](../2026-09-17/hook-import-boundary-v1/README.md)
 now keeps engine, embedding, and storage imports out of client startup. All 92
 focused cases passed with two platform skips, and strict product typing passed.

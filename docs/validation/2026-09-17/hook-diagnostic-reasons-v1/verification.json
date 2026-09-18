@@ -1,0 +1,37 @@
+{
+  "base_commit": "09ce0b3f0458285b2e29f83494f796491cc0c85d",
+  "source_definition": "Base commit plus source.patch; final test formatting differs only in line wrapping from the passing pytest run.",
+  "worktree_file_sha256": {
+    "mnemos/adapters/diagnostics.py": "746d24fe900c2b16b9a8ad2b050752083aec51e288536949e5a106c76ac83aec",
+    "mnemos/adapters/claude_code.py": "47662dad9363f44a9e6d11e7ebddc4dfb09700becd9e52dc06d6094199d67c7a",
+    "tests/test_claude_adapter.py": "7530d9c40420a8bf55bc601c0b01e75b4b983e426cb08a88b3552e8bd0a37631"
+  },
+  "pytest": {
+    "command": ".venv/Scripts/python.exe -m pytest tests/test_claude_adapter.py tests/test_codex_adapter.py tests/test_hook_import_boundary.py -q --junitxml=C:/Users/Ant/AppData/Local/Temp/mnemos-hook-reason-tests-v1.xml",
+    "exit_code": 0,
+    "counts": {
+      "tests": 68,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    }
+  },
+  "observed_terminal_checks": [
+    {
+      "command": ".venv/compat-py310/Scripts/python.exe -m mypy mnemos",
+      "exit_code": 0,
+      "source_files": 50
+    },
+    {
+      "command": ".venv/Scripts/python.exe -m black --check mnemos/adapters/diagnostics.py mnemos/adapters/claude_code.py tests/test_claude_adapter.py",
+      "exit_code": 0
+    }
+  ],
+  "regression_sequence": "Before implementation, two real adapter cases and one arbitrary-error privacy case failed on absent reason codes. After implementation those three passed. Expanded privacy cases and both host adapter suites then passed 68 tests. Black initially requested test formatting; formatting was applied and the check passed.",
+  "limits": [
+    "Focused source validation only.",
+    "No new installed-package or native-host acceptance run.",
+    "No change to capture identity, association, acknowledgment, or degraded status.",
+    "Frozen real-model evaluation and installed native controls use older pinned source."
+  ]
+}

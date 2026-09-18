@@ -29,6 +29,14 @@ retained both conversation roles across database close/reopen despite its
 Stop timeout. These are bounded observations with fixture providers; see
 [isolation controls](../2026-09-17/native-codex-isolation-controls-v1/README.md).
 
+A later [combined control](../2026-09-17/native-codex-combined-control-v1/README.md)
+retained hooks and MCP under explicit unelevated mode, retrieved the scoped
+target, retained both capture roles across reopen, and exited zero. Stop still
+timed out. One success does not explain or invalidate the earlier crashes.
+The [Claude diagnostic repair](../2026-09-17/hook-diagnostic-reasons-v1/README.md)
+adds fixed reason codes with 68 passing focused tests; it leaves identity
+ambiguity degraded and is not new installed or native acceptance evidence.
+
 The earlier [native captured-context observation](../2026-09-17/native-codex-claude-continuity-v2/README.md)
 shows a corrected asserted target at version 2 alongside unknown captured
 history, visibly qualified in Claude's actual retrieval context. The runner

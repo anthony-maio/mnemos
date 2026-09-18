@@ -1388,15 +1388,23 @@ def test_hook_exception_reports_sanitized_diagnostic_without_blocking(
     assert "private/transcript" not in captured.err
 
 
+@pytest.mark.parametrize(
+    "error",
+    [
+        "token=secret",
+        "identity_reference_unavailable token=secret",
+        "transcript_unavailable\nsecret",
+    ],
+)
 def test_degraded_hook_reports_status_without_payload(
-    monkeypatch: pytest.MonkeyPatch, capsys: pytest.CaptureFixture[str]
+    monkeypatch: pytest.MonkeyPatch, capsys: pytest.CaptureFixture[str], error: str
 ) -> None:
     from mnemos.adapters import claude_code
 
     async def degraded(*args, **kwargs):
         from mnemos.adapters.claude_code import HookResult
 
-        return HookResult(status="degraded", committed=False, error="token=secret")
+        return HookResult(status="degraded", committed=False, error=error)
 
     monkeypatch.setattr(claude_code, "run_hook", degraded)
     monkeypatch.setattr(
@@ -1411,4 +1419,65 @@ def test_degraded_hook_reports_status_without_payload(
     assert "host=claude-code" in captured.err
     assert "event=SessionStart" in captured.err
     assert "status=degraded" in captured.err
+    assert "reason=unknown" in captured.err
     assert "secret" not in captured.err
+
+
+@pytest.mark.parametrize("event", ["UserPromptSubmit", "Stop"])
+def test_native_identity_diagnostic_preserves_capture_and_ambiguous_association(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+    capsys: pytest.CaptureFixture[str],
+    event: str,
+) -> None:
+    import asyncio
+    import io
+
+    from mnemos.adapters import claude_code
+
+    monkeypatch.setenv("MNEMOS_AUTO_RETRIEVE", "false")
+    client = FakeClient()
+    adapter = ClaudeCodeAdapter(
+        client=client,
+        registry=registry_for(tmp_path),
+        user_profile_id="profile-a",
+        checkpoint_directory=tmp_path / "checkpoints",
+    )
+    prompt = "Private project prompt without a native identifier."
+    payload = {"session_id": "session-a", "cwd": str(tmp_path), "prompt": prompt}
+    reason = "identity_reference_unavailable"
+    if event == "Stop":
+        first = asyncio.run(adapter.handle("UserPromptSubmit", payload))
+        assert first.captured == 1
+        transcript = tmp_path / "private-session.jsonl"
+        transcript.write_text(
+            "\n".join(
+                json.dumps({"type": role, "uuid": ref, "message": {"role": role, "content": body}})
+                for role, ref, body in (
+                    ("user", "user-1", prompt),
+                    ("assistant", "assistant-1", "Private assistant reply."),
+                )
+            )
+            + "\n",
+            encoding="utf-8",
+        )
+        payload["transcript_path"] = str(transcript)
+        reason = "ambiguous_transcript_association"
+    payload["hook_event_name"] = event
+    monkeypatch.setattr(claude_code, "run_hook", adapter.handle)
+    monkeypatch.setattr(claude_code.sys, "stdin", io.StringIO(json.dumps(payload)))
+
+    assert claude_code.main([]) == 0
+    captured = capsys.readouterr()
+    assert captured.out == ""
+    assert captured.err.strip() == (
+        f"mnemos hook diagnostic host=claude-code event={event} status=degraded reason={reason}"
+    )
+    assert client.captures[0]["identity_status"] == "provisional_unassociated"
+    if event == "Stop":
+        assert [item["source_ref"] for item in client.captures[1:]] == ["user-1", "assistant-1"]
+        checkpoint = json.loads(scoped_checkpoint_path(adapter).read_text(encoding="utf-8"))
+        assert len(checkpoint["pending_dedup"]) == 1
+        assert checkpoint["pending_dedup"][0]["turn_ref"] is None
+    else:
+        assert len(client.captures) == 1
