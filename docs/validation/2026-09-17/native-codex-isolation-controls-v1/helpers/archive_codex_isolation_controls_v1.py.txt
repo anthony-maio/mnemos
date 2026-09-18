@@ -1,0 +1,95 @@
+"""Bind separate MCP-only and hooks-only native controls to actual evidence."""
+from pathlib import Path
+import hashlib
+import json
+import shutil
+import sqlite3
+import tomllib
+
+ROOT=Path(__file__).resolve().parent.parent
+TEMP=Path('C:/Users/Ant/AppData/Local/Temp')
+OUT=ROOT/'docs/validation/2026-09-17/native-codex-isolation-controls-v1'
+def sha(path):
+    return hashlib.sha256(path.read_bytes()).hexdigest()
+prepared=[]
+for mode,status,selected_name in (('mcp','observed_transport','selected-mcp-completion.json'),('hooks','observed_hooks','selected-response.json')):
+    origin=TEMP/f'mnemos-native-codex-{mode}-control-v1'
+    report=json.loads((origin/'report.json').read_text(encoding='utf-8'))
+    assert report['status']==status and report['finished_at']
+    assert report['process']['returncode']==0 and report['process']['timed_out'] is False
+    assert not report['cleanup']['errors']
+    assert report['cleanup']['auth_absent'] and report['cleanup']['descriptor_absent']
+    fixture=Path(report['fixture'])
+    home=fixture/'codex-home/.codex'
+    assert not (home/'auth.json').exists() and not (fixture/'runtime.json').exists()
+    config=tomllib.loads((home/'config.toml').read_text(encoding='utf-8'))
+    assert config['windows']['sandbox']=='unelevated'
+    assert sha(ROOT/f'.venv/native_codex_{mode}_shutdown_control_v1.py')==report['runner_sha256']
+    assert sha(Path(report['executable']['path']))==report['executable']['sha256']
+    assert report['source_commit']=='ebe1b0ddf973ebb1dc959afd5bc334209aa1b672'
+    assert report['provenance']['package_provenance']['mismatches']==[]
+    assert report['wheel_sha256']=='b4f22b26f23f24496dc24c65fa2a6486395f1fe0f549e9c1feac762c77040699'
+    for name,digest in report['helper_pins'].items():
+        assert sha(ROOT/'.venv'/name)==digest
+    selected=json.loads((origin/selected_name).read_text(encoding='utf-8'))
+    assert selected
+    for item in selected:
+        path=(home/item['source']).resolve()
+        assert path.is_relative_to(home.resolve())
+        assert json.loads(path.read_bytes().splitlines()[item['line']-1])==item['record']
+    if mode=='mcp':
+        assert not config.get('hooks') and set(config['mcp_servers'])=={'mnemos'}
+        assert len(selected)==1
+        payload=selected[0]['record']['payload']
+        assert payload['invocation']['server']=='mnemos' and payload['invocation']['tool']=='mnemos_health'
+        result=payload['result']['Ok']
+        assert result['isError'] is False
+        decoded=json.loads(result['structuredContent']['result'])
+        assert decoded==json.loads(result['content'][0]['text'])
+        assert decoded['status']=='running' and decoded['graph']['enabled'] is False
+        assert Path(decoded['runtime']['database_path']).resolve()==(fixture/'memory.sqlite').resolve()
+    else:
+        assert not config.get('mcp_servers')
+        assert {'SessionStart','UserPromptSubmit','PreCompact','PostCompact','Stop','SessionEnd'}<=set(config['hooks'])
+    with sqlite3.connect((fixture/'memory.sqlite').as_uri()+'?mode=ro',uri=True) as db:
+        db.row_factory=sqlite3.Row
+        events=[dict(r) for r in db.execute('select id,role,content,source,source_event_id,scope,scope_id,metadata from episodic_events order by id')]
+    prepared.append((mode,origin,report,home,selected_name,events))
+assert prepared[0][2]['executable']==prepared[1][2]['executable']
+OUT.mkdir(parents=True,exist_ok=False)
+summary={}
+helpers={}
+for mode,origin,report,home,selected_name,events in prepared:
+    folder=OUT/mode
+    folder.mkdir()
+    shutil.copyfile(origin/'report.json',folder/'report.json')
+    shutil.copyfile(origin/selected_name,folder/selected_name)
+    shutil.copyfile(home/'config.toml',folder/'config-after.toml')
+    shutil.copyfile(ROOT/f'.venv/native_codex_{mode}_shutdown_control_v1.py',folder/'runner.py.txt')
+    (folder/'events-after-reopen.json').write_text(json.dumps(events,indent=2)+'\n',encoding='utf-8')
+    summary[mode]={'returncode':report['process']['returncode'],'native_tool_or_response_verified':True,
+                   'captured_event_count_after_reopen':len(events),'roles_after_reopen':sorted(set(e['role'] for e in events)),
+                   'config_after_sha256':sha(home/'config.toml')}
+    helpers.update(report['helper_pins'])
+helpers.update({'native_codex_lifecycle_v3.py':'7b87f5817dacae01c0a16918435ff8a4af1c1ecaaba00a9317ba7f16c8be5814',
+                'native_codex_generated_v8.py':'dd9ebe7480fa5a172bb41135a4690baf94d2c585f5357a77f17265e7acb58b12'})
+(OUT/'helpers').mkdir()
+for name,digest in helpers.items():
+    assert sha(ROOT/'.venv'/name)==digest
+    shutil.copyfile(ROOT/'.venv'/name,OUT/'helpers'/(name+'.txt'))
+shutil.copyfile(Path(__file__),OUT/'helpers/archive_codex_isolation_controls_v1.py.txt')
+(OUT/'observations.json').write_text(json.dumps({'controls':summary,'terminal_observation':{'hooks_only_stop_timeout_seconds':3},
+    'limits':['One observation per condition.','Native combined continuity used generated configuration without an explicit Windows sandbox mode; these controls pin unelevated mode.',
+              'Health needs no interactive tool approval; prior store/retrieve calls did.','The controls do not establish which interaction triggers the combined-run crash.']},indent=2)+'\n',encoding='utf-8')
+(OUT/'.gitattributes').write_text('* -text\n',encoding='utf-8')
+(OUT/'README.md').write_text('''# Separate MCP and hook shutdown controls
+
+Both controls used the same installed ebe1b0d wheel, Codex 0.146.0 executable, disabled Mnemos modules, deterministic fixture vectors, a disposable SQLite service, and an explicitly unelevated read-only sandbox. MCP-only completed exactly one native health call and exited zero. Hooks-only completed a native model response without MCP tools and exited zero, despite a three-second Stop-hook timeout in the terminal. Authentication copies and service descriptors were absent before archiving.
+
+Selected native records are checked against the original session lines. Independent SQLite reopen records the captured events and roles without treating their presence as proof of hook deadline acceptance.
+
+Together with the two no-integration controls, these observations show that neither isolated configuration reproduced the full continuity run's crash. The hook timeout can occur without a crash. They do not prove that the combination is the cause: full continuity used store/retrieve operations with interactive tool approval, and did not explicitly pin Windows sandbox mode. A matched combined configuration is the next control. No live host configuration or database was changed, and no release was published.
+''',encoding='utf-8')
+files={p.relative_to(OUT).as_posix():{'bytes':p.stat().st_size,'sha256':sha(p)} for p in sorted(OUT.rglob('*')) if p.is_file()}
+(OUT/'evidence-index.json').write_text(json.dumps({'files':files},indent=2)+'\n',encoding='utf-8')
+print(json.dumps({'indexed_blobs':len(files),'observations':summary}))

@@ -1,0 +1,194 @@
+"""Disposable Codex MCP-only control with Mnemos hooks removed.
+
+This helper is intentionally unexecuted. It isolates MCP startup and one
+health call from generated Mnemos hooks while preserving native process and
+cleanup evidence.
+"""
+from __future__ import annotations
+
+from datetime import datetime, timezone
+import hashlib
+import importlib.util
+import json
+from pathlib import Path
+import subprocess
+import sys
+import time
+import uuid
+from types import SimpleNamespace
+
+ROOT = Path(__file__).resolve().parents[1]
+TEMP = Path("C:/Users/Ant/AppData/Local/Temp")
+OUTPUT = TEMP / "mnemos-native-codex-mcp-control-v1"
+SOURCE = "ebe1b0ddf973ebb1dc959afd5bc334209aa1b672"
+SNAPSHOT = TEMP / "mnemos-source-lazy-import-v1"
+WHEEL = TEMP / "mnemos-package-checks-lazy-import-v1/dist/mnemos_memory-0.7.0-py3-none-any.whl"
+WHEEL_SHA256 = "b4f22b26f23f24496dc24c65fa2a6486395f1fe0f549e9c1feac762c77040699"
+INSTALLED_PYTHON = TEMP / "mnemos-installed-lazy-import-v1/Scripts/python.exe"
+PINS = {
+    "native_codex_interactive_utf8_v1.py": "6f91aaef76ff619d38e5229f93697796b5fbfbcf86bcc87a78e72062f4b7dd0b",
+    "native_codex_retrieve_v2.py": "20f909d8c2d28934c8d47763558b7f9bf08eb6d848de9a1e6bce8d2f7f3326bb",
+    "native_claude_lifecycle_v17.py": "85940cccb99d46f7b56a6184d912495831f66c3933f0b0fc03cdf36217691342",
+}
+
+
+def sha(raw: bytes) -> str:
+    return hashlib.sha256(raw).hexdigest()
+
+
+def load(path: Path, name: str):
+    spec = importlib.util.spec_from_file_location(name, path)
+    module = importlib.util.module_from_spec(spec)
+    assert spec.loader is not None
+    spec.loader.exec_module(module)
+    return module
+
+
+assert not OUTPUT.exists()
+assert sys.stdin.isatty() and sys.stdout.isatty()
+for name, expected in PINS.items():
+    assert sha((ROOT / ".venv" / name).read_bytes()) == expected
+assert sha(WHEEL.read_bytes()) == WHEEL_SHA256
+assert INSTALLED_PYTHON.exists()
+assert Path(sys.executable).resolve() == INSTALLED_PYTHON.resolve()
+
+native = load(ROOT / ".venv/native_codex_interactive_utf8_v1.py", "native_mcp_control")
+wrapper = native._load_v2()
+lifecycle = wrapper._load_lifecycle()
+claude = load(ROOT / ".venv/native_claude_lifecycle_v17.py", "mcp_control_lifecycle")
+wrapper.PROFILE = claude.PROFILE = 'native-codex-mcp-control-v1'
+native.INSTALLED_PYTHON = INSTALLED_PYTHON
+native.WHEEL_PATH = WHEEL
+native.WHEEL_SHA256 = WHEEL_SHA256
+native.BUILD_VERIFICATION = WHEEL.parent.parent / "verification.json"
+build = json.loads(native.BUILD_VERIFICATION.read_text(encoding="utf-8"))
+assert build["status"] == "passed" and build["source_commit"] == SOURCE
+provenance = wrapper._verify_inputs(SimpleNamespace(source_commit=SOURCE, wheel=WHEEL,
+    expected_wheel_sha256=WHEEL_SHA256, build_verification=native.BUILD_VERIFICATION), lifecycle)
+
+fixture = wrapper._private_fixture(lifecycle, TEMP, "mnemos-native-codex-mcp-control-")
+service = store = process = auth = None
+report = {
+    "status": "running",
+    "source_commit": SOURCE,
+    "fixture": str(fixture),
+    "started_at": datetime.now(timezone.utc).isoformat(),
+    "runner_sha256": sha(Path(__file__).read_bytes()),
+    "helper_pins": PINS,
+    "wheel_sha256": WHEEL_SHA256,
+    "provenance": provenance,
+    "boundary": "Native Codex MCP health transport with generated Mnemos hooks removed; disabled modules, deterministic vectors, unavailable cognition.",
+}
+OUTPUT.mkdir(parents=True)
+
+try:
+    from mnemos.hosts import apply_host_integration
+
+    registry, registry_path, project, _ = wrapper._registry_with_foreign_project(lifecycle, fixture)
+    config = wrapper._disabled_config()
+    service, store, _ = claude._start_service(fixture, registry, config)
+    settings = fixture / "settings.toml"
+    settings.write_text("# disposable MCP-only control\n", encoding="utf-8")
+    lifecycle._protect_file(settings)
+    home = fixture / "codex-home"
+    lifecycle._private_mkdir(home)
+    selectors = {
+        "MNEMOS_CONFIG_PATH": str(settings),
+        "MNEMOS_SCOPE_REGISTRY": str(registry_path),
+        "MNEMOS_USER_PROFILE_ID": "native-codex-mcp-control-v1",
+        "MNEMOS_RUNTIME_DESCRIPTOR": str(fixture / "runtime.json"),
+        "MNEMOS_PROJECT_ROOT": str(project),
+        "MNEMOS_HOST": "codex",
+        "MNEMOS_SESSION_ID": "native-codex-mcp-control-v1",
+        "MNEMOS_AUTO_START": "false",
+    }
+    generated = apply_host_integration(
+        "codex",
+        mnemos_config_path=settings,
+        cwd=project,
+        home=home,
+        integration_env={k: selectors[k] for k in ("MNEMOS_CONFIG_PATH", "MNEMOS_SCOPE_REGISTRY", "MNEMOS_USER_PROFILE_ID", "MNEMOS_RUNTIME_DESCRIPTOR")},
+    )
+    config_path = generated.config_path
+    original = config_path.read_text(encoding="utf-8")
+    marker = original.find("[[hooks")
+    assert marker > 0
+    mcp_only = original[:marker].rstrip() + "\n\n[windows]\nsandbox = \"unelevated\"\n"
+    config_path.write_text(mcp_only, encoding="utf-8")
+    lifecycle._protect_file(config_path)
+    import tomllib
+    parsed = tomllib.loads(mcp_only)
+    assert not parsed.get("hooks") and parsed.get("mcp_servers")
+    assert "mnemos" in parsed["mcp_servers"]
+    report["config"] = {
+        "path": str(config_path),
+        "sha256": sha(config_path.read_bytes()),
+        "hook_marker_offset": marker,
+        "no_hooks": True,
+        "mcp_server_names": sorted(parsed["mcp_servers"]),
+        "windows_sandbox": parsed.get("windows", {}).get("sandbox"),
+    }
+    report["executable"] = {"path": str(lifecycle.CODEX_EXE), "sha256": sha(lifecycle.CODEX_EXE.read_bytes())}
+    report["version"] = subprocess.check_output([str(lifecycle.CODEX_EXE), "--version"], text=True, timeout=20).strip()
+    report["mcp_entrypoint"] = wrapper._validate_mcp_entrypoint(lifecycle, config_path, native._clean_environment(lifecycle, {"CODEX_HOME": str(config_path.parent), **selectors}))
+    auth = lifecycle._auth_copy(config_path.parent)
+    env = native._clean_environment(lifecycle, {"CODEX_HOME": str(config_path.parent), **selectors, "TERM": "xterm-256color"})
+    for key in ("OPENAI_API_KEY", "ANTHROPIC_API_KEY", "ANTHROPIC_AUTH_TOKEN", "CLAUDE_CODE_OAUTH_TOKEN"):
+        env.pop(key, None)
+    prompt = "Use only the Mnemos MCP tool mnemos_health. Call it exactly once and report its status. Do not use any other tool."
+    command = native._native_command(lifecycle, project, prompt)
+    report["command"] = command[:-1] + ["<private MCP health prompt>"]
+    print(json.dumps({"stage": "native_codex_mcp_health_control", "fixture": str(fixture)}), flush=True)
+    started = time.monotonic()
+    process = subprocess.Popen(command, cwd=project, env=env, shell=False, creationflags=getattr(subprocess, "CREATE_NEW_PROCESS_GROUP", 0))
+    report['process_id'] = process.pid
+    try:
+        process.wait(timeout=180)
+        timed_out = False
+    except subprocess.TimeoutExpired:
+        timed_out = True
+        lifecycle._terminate_process_tree(process)
+    report["process"] = {"returncode": process.returncode, "timed_out": timed_out, "elapsed_ms": round((time.monotonic() - started) * 1000, 1)}
+    selected = []
+    for path in config_path.parent.rglob("*.jsonl"):
+        for number, line in enumerate(path.read_text(encoding="utf-8").splitlines(), 1):
+            value = json.loads(line)
+            payload = value.get("payload", {})
+            if payload.get("type") == "mcp_tool_call_end" and payload.get("invocation", {}).get("server") == "mnemos":
+                selected.append({"source": path.relative_to(config_path.parent).as_posix(), "line": number, "record": value})
+    (OUTPUT / "selected-mcp-completion.json").write_text(json.dumps(selected, indent=2) + "\n", encoding="utf-8")
+    assert len(selected) == 1
+    payload = selected[0]["record"]["payload"]
+    assert payload["invocation"]["tool"] == "mnemos_health"
+    result = payload["result"]["Ok"]
+    assert result["isError"] is False
+    decoded = json.loads(result["structuredContent"]["result"])
+    assert decoded == json.loads(result["content"][0]["text"])
+    assert decoded["status"] == "running"
+    assert decoded["runtime"]["cognition_provider"] == "UnavailableLLMProvider"
+    assert decoded["runtime"]["embedding_provider"] == "LexicalFixtureEmbeddings"
+    assert Path(decoded['runtime']['database_path']).resolve() == (fixture/'memory.sqlite').resolve()
+    assert decoded["capabilities"]["capture"] is True and decoded["capabilities"]["retrieve"] is True
+    assert decoded["graph"]["enabled"] is False
+    (OUTPUT / "selected-mcp-completion.json").write_text(json.dumps(selected, indent=2) + "\n", encoding="utf-8")
+    report["selected_completion"] = {"tool": "mnemos_health", "result_sha256": sha(json.dumps(decoded, sort_keys=True).encode()), "status": decoded["status"]}
+    report["no_hooks_after_process"] = not tomllib.loads(config_path.read_text(encoding="utf-8")).get("hooks")
+    assert report["no_hooks_after_process"]
+    report["status"] = "observed_transport"
+except Exception as exc:
+    report.update(status="failed", error_type=type(exc).__name__, error=str(exc))
+finally:
+    errors = lifecycle._cleanup_native_resources(process, auth)
+    errors += lifecycle._close_service(service, store)
+    report["cleanup"] = {
+        "errors": errors,
+        "auth_absent": auth is None or not auth.exists(),
+        "descriptor_absent": not (fixture / "runtime.json").exists(),
+    }
+    if errors or not report["cleanup"]["auth_absent"] or not report["cleanup"]["descriptor_absent"]:
+        report["status"] = "failed"
+    report["finished_at"] = datetime.now(timezone.utc).isoformat()
+    (OUTPUT / "report.json").write_text(json.dumps(report, indent=2) + "\n", encoding="utf-8")
+    print(json.dumps({"status": report["status"], "report": str(OUTPUT / "report.json")}), flush=True)
+
+raise SystemExit(0 if report["status"] == "observed_transport" else 1)

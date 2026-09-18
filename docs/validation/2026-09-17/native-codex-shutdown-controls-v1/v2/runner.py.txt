@@ -1,0 +1,87 @@
+"""Disposable interactive Codex shutdown control with no Mnemos integration."""
+from datetime import datetime, timezone
+import hashlib
+import importlib.util
+import json
+from pathlib import Path
+import subprocess
+import sys
+import time
+import uuid
+
+ROOT = Path(__file__).resolve().parent.parent
+TEMP = Path('C:/Users/Ant/AppData/Local/Temp')
+OUTPUT = TEMP / 'mnemos-native-codex-shutdown-control-v2'
+HELPER = ROOT / '.venv/native_codex_lifecycle_v3.py'
+PIN = '7b87f5817dacae01c0a16918435ff8a4af1c1ecaaba00a9317ba7f16c8be5814'
+assert hashlib.sha256(HELPER.read_bytes()).hexdigest() == PIN
+assert sys.stdin.isatty() and sys.stdout.isatty()
+assert not OUTPUT.exists()
+spec = importlib.util.spec_from_file_location('native_control_lifecycle', HELPER)
+lifecycle = importlib.util.module_from_spec(spec)
+spec.loader.exec_module(lifecycle)
+fixture = TEMP / ('mnemos-codex-shutdown-control-' + uuid.uuid4().hex)
+lifecycle._private_mkdir(fixture)
+home, project = fixture/'codex-home', fixture/'project'
+lifecycle._private_mkdir(home)
+lifecycle._private_mkdir(project)
+config = home/'config.toml'
+config.write_text('# Disposable shutdown control: no hooks or MCP integrations.\n[mcp_servers]\n[windows]\nsandbox = "unelevated"\n',encoding='utf-8')
+lifecycle._protect_file(config)
+auth = process = None
+report = {'status':'running','fixture':str(fixture),'started_at':datetime.now(timezone.utc).isoformat(),
+          'runner_sha256':hashlib.sha256(Path(__file__).read_bytes()).hexdigest(),
+          'helper_sha256':PIN,'boundary':'One native model turn, no Mnemos hooks, MCP server, or service; unelevated read-only sandbox.'}
+OUTPUT.mkdir()
+try:
+    report['executable'] = {'path':str(lifecycle.CODEX_EXE), 'sha256':hashlib.sha256(lifecycle.CODEX_EXE.read_bytes()).hexdigest()}
+    report['version'] = subprocess.check_output([str(lifecycle.CODEX_EXE),'--version'],text=True,timeout=20).strip()
+    report['config_before_sha256'] = hashlib.sha256(config.read_bytes()).hexdigest()
+    auth = lifecycle._auth_copy(home)
+    env = lifecycle._clean_environment({'CODEX_HOME':str(home),'TERM':'xterm-256color'})
+    for key in ('OPENAI_API_KEY','ANTHROPIC_API_KEY','ANTHROPIC_AUTH_TOKEN','CLAUDE_CODE_OAUTH_TOKEN'):
+        env.pop(key,None)
+    command = [str(lifecycle.CODEX_EXE),'--sandbox','read-only','--ask-for-approval','on-request','--cd',str(project),'--no-alt-screen',
+               'Reply exactly: Shutdown control complete. Do not use any tools.']
+    report['command'] = command
+    print(json.dumps({'stage':'one_turn_codex_shutdown_control','fixture':str(fixture)}),flush=True)
+    started = time.monotonic()
+    process = subprocess.Popen(command,cwd=project,env=env,shell=False,creationflags=getattr(subprocess,'CREATE_NEW_PROCESS_GROUP',0))
+    report['process_id'] = process.pid
+    try:
+        process.wait(timeout=180)
+        timed_out = False
+    except subprocess.TimeoutExpired:
+        timed_out = True
+        lifecycle._terminate_process_tree(process)
+    report['process'] = {'returncode':process.returncode,'timed_out':timed_out,'elapsed_ms':round((time.monotonic()-started)*1000,1)}
+    import tomllib
+    parsed = tomllib.loads(config.read_text(encoding='utf-8'))
+    assert not parsed.get('hooks') and not parsed.get('mcp_servers')
+    report['no_hooks_or_mcp_in_fixture_config'] = True
+    selected=[]
+    for path in home.rglob('*.jsonl'):
+        for number,line in enumerate(path.read_text(encoding='utf-8').splitlines(),1):
+            value=json.loads(line)
+            payload=value.get('payload',{})
+            if payload.get('type') in ('mcp_tool_call_end','function_call'):
+                raise AssertionError('Control unexpectedly called a tool')
+            if payload.get('type') == 'message' and payload.get('role') == 'assistant':
+                texts=[item.get('text','') for item in payload.get('content',[]) if isinstance(item,dict)]
+                if any('Shutdown control complete.' in text for text in texts):
+                    selected.append({'source':path.relative_to(home).as_posix(),'line':number,'record':value})
+    assert selected, 'Native response was not recorded'
+    (OUTPUT/'selected-response.json').write_text(json.dumps(selected,indent=2)+'\n',encoding='utf-8')
+    report['native_model_response_observed'] = True
+    report['status'] = 'observed'
+except Exception as exc:
+    report.update(status='failed',error_type=type(exc).__name__,error=str(exc))
+finally:
+    errors = lifecycle._cleanup_native_resources(process,auth)
+    report['cleanup'] = {'errors':errors,'auth_absent':auth is None or not auth.exists()}
+    if errors or not report['cleanup']['auth_absent']:
+        report['status']='failed'
+    report['finished_at']=datetime.now(timezone.utc).isoformat()
+    (OUTPUT/'report.json').write_text(json.dumps(report,indent=2)+'\n',encoding='utf-8')
+    print(json.dumps({'status':report['status'],'report':str(OUTPUT/'report.json')}),flush=True)
+raise SystemExit(0 if report['status']=='observed' else 1)

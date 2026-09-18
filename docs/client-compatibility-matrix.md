@@ -5,7 +5,7 @@ Updated September 17, 2026 for the unreleased functional-local-memory worktree. 
 | Client | Implemented integration | Observed evidence | Native conversation acceptance |
 | --- | --- | --- | --- |
 | Claude Code | Command hooks, transcript deltas, context injection, MCP tools; provisional missing-ID capture excluded from extraction | Installed source dedfcfd completed native correction, consolidation, retrieval, and forgetting through the actual 2.1.191 plugin, with restart and reconstructed Stop replay checks | All 15 bounded fact-lifecycle criteria passed in v18 with the new startup default. Degraded capture keeps the overall result partial. Extraction quality and complete capture acceptance remain open |
-| Codex CLI | Command lifecycle hooks, supported context output, MCP tools | Native 0.146.0 with installed source1068a62 retrieved the project seed through actual MCP and durably captured the user prompt and Unicode assistant response through generated hooks. Earlier source20f separately demonstrated restart capture | Bounded scoped retrieval and Unicode final-response capture pass with fixture vectors. Shutdown still times out. Native correction/forget and cross-host lifecycle acceptance remain open |
+| Codex CLI | Command lifecycle hooks, supported context output, MCP tools | Native 0.146.0 with installed ebe1b0d stored a fact that Claude retrieved and corrected, then a fresh Codex session retrieved version 2 after another service restart. Earlier source1068a62 separately demonstrated scoped retrieval and durable Unicode capture | Bidirectional scoped fact continuity observed with fixture vectors. Both v4 Codex processes exited 0xc0000005; reverse Stop timed out. Complete capture, native cross-host forgetting, and Hermes continuity remain open |
 | Codex Desktop | Same command hooks and MCP fallback | Shared adapter coverage; no current desktop conversation evidence | Pending |
 | Hermes Agent | Optional MemoryProvider and explicit Windows/WSL bridge | Installed 0.21.3 API calls and actual WSL -> Windows authenticated transport. Sourcec805 passed full verification and discovery through the actual wheel entry point in WSL | Model turn has not completed; cross-host native recall remains open |
 | Generic MCP stdio | MCP server as service client | Subprocess capture, job status, inspect, retrieve, correct, forget | Host-specific acceptance pending |
@@ -15,16 +15,29 @@ Updated September 17, 2026 for the unreleased functional-local-memory worktree. 
 
 The synthetic cross-host fixture uses Codex, Claude Code, and Hermes scope contexts over a real temporary HTTP service and SQLite store. It checks restart, correction preserving identity, forget/replay suppression, and a foreign-project canary. Its provider fixtures are synthetic. It does not launch three native conversations.
 
-A separate [native Codex-to-Claude check](validation/2026-09-17/native-codex-claude-continuity-v1/README.md)
-used installed source1068a62. Actual Codex store/consolidate calls produced a
+A [bidirectional native check](validation/2026-09-17/native-codex-claude-continuity-v4/README.md)
+used installed ebe1b0d. Actual Codex store/consolidate calls produced a
 source-linked fact; after service restart, native Claude retrieved and corrected
-it under the same ID, with version 2 surviving another restart. Both Claude
-queries excluded the foreign canary. The corrected query also returned two raw
-conversation records repeating the old value, so correction consistency is
-incomplete. Claude capture remained degraded and Codex exited nonzero after
-/exit. Reverse recall, cross-host forget/replay, and Hermes remain open. This
-fixture used deterministic vectors and disabled modules; it makes no extraction
-or module-benefit claim.
+it under the same ID. Version 2 survived another restart and was retrieved by a
+fresh Codex home and session. All three native retrievals excluded the foreign
+project canary. Captured old mentions remained marked unknown and visibly
+qualified as possibly outdated in Claude's corrected context. This qualification
+does not prove general answer consistency or suppression of historical mentions.
+Claude capture remained degraded; both Codex processes exited 0xc0000005 and
+the reverse Stop hook timed out. Cross-host forget/replay and Hermes remain open.
+The fixture used deterministic vectors and disabled modules; it makes no
+extraction or module-benefit claim. The earlier
+[v1 failure](validation/2026-09-17/native-codex-claude-continuity-v1/README.md)
+and subsequent attempts remain preserved.
+
+Two [no-integration shutdown controls](validation/2026-09-17/native-codex-shutdown-controls-v1/README.md)
+exited zero, both after idle startup and after one model response without tools.
+Separate [MCP-only and hooks-only controls](validation/2026-09-17/native-codex-isolation-controls-v1/README.md)
+also exited zero. The hooks-only control retained both user and assistant events
+after SQLite reopen despite its Stop timeout. These controls do not isolate the
+full-run crash trigger: they pin unelevated Windows sandbox mode, and the MCP
+health call needs no interactive tool approval. A matched combined comparison
+remains necessary.
 
 Exact evidence boundaries are in [local-memory-hosts.md](validation/local-memory-hosts.md) and the [native host smoke record](validation/2026-09-16/native-host-smoke.md). The [Hermes bridge record](validation/2026-09-16/hermes-bridge-smoke.md) documents installed API and transport checks. The two-week pilot is NOT RUN.
 

@@ -1,0 +1,30 @@
+{
+  "controls": {
+    "mcp": {
+      "returncode": 0,
+      "native_tool_or_response_verified": true,
+      "captured_event_count_after_reopen": 0,
+      "roles_after_reopen": [],
+      "config_after_sha256": "17f429ef78108fbcf7303120998f4f99c3572d3ba8c8f3c573075ee2829db0f5"
+    },
+    "hooks": {
+      "returncode": 0,
+      "native_tool_or_response_verified": true,
+      "captured_event_count_after_reopen": 2,
+      "roles_after_reopen": [
+        "assistant",
+        "user"
+      ],
+      "config_after_sha256": "ffdb01712312d0ac54232b7266355897c051222f78305ac5ccfcbdd8d8e63a69"
+    }
+  },
+  "terminal_observation": {
+    "hooks_only_stop_timeout_seconds": 3
+  },
+  "limits": [
+    "One observation per condition.",
+    "Native combined continuity used generated configuration without an explicit Windows sandbox mode; these controls pin unelevated mode.",
+    "Health needs no interactive tool approval; prior store/retrieve calls did.",
+    "The controls do not establish which interaction triggers the combined-run crash."
+  ]
+}

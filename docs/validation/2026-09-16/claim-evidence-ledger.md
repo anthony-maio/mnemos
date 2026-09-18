@@ -17,7 +17,19 @@ new import guards likewise use fresh subprocesses and the installed package.
 The earlier [capture interruption checkpoint](../2026-09-17/capture-durable-package-checkpoint-v1/README.md)
 preserves its initial test-origin gap and the supplementary run that repaired it.
 
-The [native captured-context observation](../2026-09-17/native-codex-claude-continuity-v2/README.md)
+The [bidirectional native observation](../2026-09-17/native-codex-claude-continuity-v4/README.md)
+on installed ebe1b0d verifies Codex store, Claude read/correct, and a fresh Codex
+read of version 2 across two service restarts. Actual native completion records
+and independent SQLite reopen support the claim. Foreign-project facts were
+excluded. Both Codex processes still exited 0xc0000005, reverse Stop timed out,
+and Claude capture remained degraded. No-integration controls exited zero;
+the crash trigger remains unproven.
+MCP-only and hooks-only controls likewise exited zero. The hooks-only control
+retained both conversation roles across database close/reopen despite its
+Stop timeout. These are bounded observations with fixture providers; see
+[isolation controls](../2026-09-17/native-codex-isolation-controls-v1/README.md).
+
+The earlier [native captured-context observation](../2026-09-17/native-codex-claude-continuity-v2/README.md)
 shows a corrected asserted target at version 2 alongside unknown captured
 history, visibly qualified in Claude's actual retrieval context. The runner
 failed a fixed-cardinality assertion and did not run its second service restart.
@@ -135,7 +147,7 @@ acceptance gate.
 | C08 | Independently usable, composable modules | Standalone and integrated module regression checks exercise write filtering, scope, graph state, and lifecycle behavior. | Completed real-model baseline, full-pipeline, and five module-disabled comparisons. Mechanical correctness does not establish usefulness. |
 | C09 | Inspectable, correctable, forgettable memory | Facts expose status, version, evidence, and ranking traces. Correction and forget/replay suppression have persistent-service checks. | Complete native correction/forget continuity. Logical forgetting does not erase historical backups or external host transcripts. |
 | C10 | Truthful local setup and readiness | Configured runtime, explicit providers, generated interpreter-bound host commands, and input-specific readiness checks are implemented. | Full native installation acceptance. Embedding revision is an operator-managed identity label; the runtime does not automatically verify a mutable Ollama tag's digest. |
-| C11 | Shared memory across Codex, Claude Code, and Hermes | [Host records](../../client-compatibility-matrix.md) distinguish authenticated synthetic continuity, installed provider/bridge calls, bounded native capture, and native lifecycle attempts. Claude v12 observed scoped health and retrieve calls; later v13 and v15 attempts retain failed lifecycle evidence. | Complete native lifecycle and Codex Desktop acceptance. The latest [Codex retrieve v2 attempt](../2026-09-17/native-codex-retrieve-v2/README.md) was cancelled by the host before returning a result. A prior native Codex health call proves health transport only; it does not prove mutation or retrieval. |
+| C11 | Shared memory across Codex, Claude Code, and Hermes | [Native v4](../2026-09-17/native-codex-claude-continuity-v4/README.md) verifies Codex store, Claude retrieval/correction, and fresh Codex retrieval of version 2 across service restarts with foreign-scope exclusion. [Host records](../../client-compatibility-matrix.md) preserve earlier successes and failures and distinguish fixture vectors from real-model quality. | Cross-host forget/replay, complete capture/shutdown, native Hermes continuity, Codex Desktop, and pilot acceptance remain open. Both v4 Codex processes crashed on exit, and Claude capture remained degraded. |
 | C12 | Proven retrieval, compression, or replacement advantage | The [corrected performance run](performance-corrected-v4/README.md) measured recall p95 1,088.094 ms against a 500 ms gate and durable capture p95 64.279 ms against 100 ms. The database after loading was 324,862,864 bytes. | Recall latency passes, completed real-model ablations, retained-information accuracy, and external pilot evidence. No general superiority or replacement claim is accepted. |
 
 ## Evidence bindings

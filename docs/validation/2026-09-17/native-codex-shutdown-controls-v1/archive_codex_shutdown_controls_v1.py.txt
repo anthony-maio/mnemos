@@ -1,0 +1,68 @@
+"""Preserve the two no-integration native shutdown controls."""
+from pathlib import Path
+import hashlib
+import json
+import shutil
+import tomllib
+
+ROOT=Path(__file__).resolve().parent.parent
+TEMP=Path('C:/Users/Ant/AppData/Local/Temp')
+OUT=ROOT/'docs/validation/2026-09-17/native-codex-shutdown-controls-v1'
+def sha(path):
+    return hashlib.sha256(path.read_bytes()).hexdigest()
+reports=[]
+for version in (1,2):
+    origin=TEMP/f'mnemos-native-codex-shutdown-control-v{version}'
+    report=json.loads((origin/'report.json').read_text(encoding='utf-8'))
+    assert report['status']=='observed' and report['process']['returncode']==0
+    assert report['process']['timed_out'] is False
+    assert not report['cleanup']['errors'] and report['cleanup']['auth_absent']
+    fixture=Path(report['fixture'])
+    home=fixture/'codex-home'
+    assert not (home/'auth.json').exists()
+    parsed=tomllib.loads((home/'config.toml').read_text(encoding='utf-8'))
+    assert not parsed.get('hooks') and not parsed.get('mcp_servers')
+    assert report['executable']['sha256']==sha(Path(report['executable']['path']))
+    assert report['runner_sha256']==sha(ROOT/f'.venv/native_codex_shutdown_control_v{version}.py')
+    assert report['helper_sha256']==sha(ROOT/'.venv/native_codex_lifecycle_v3.py')
+    if version==2:
+        selected=json.loads((origin/'selected-response.json').read_text(encoding='utf-8'))
+        assert selected and report['native_model_response_observed']
+        for item in selected:
+            path=(home/item['source']).resolve()
+            assert path.is_relative_to(home.resolve())
+            assert json.loads(path.read_bytes().splitlines()[item['line']-1])==item['record']
+        for path in home.rglob('*.jsonl'):
+            for line in path.read_text(encoding='utf-8').splitlines():
+                payload=json.loads(line).get('payload',{})
+                assert payload.get('type') not in ('function_call','mcp_tool_call_begin','mcp_tool_call_end')
+    reports.append((version,origin,report,home))
+assert reports[0][2]['executable']==reports[1][2]['executable']
+events=TEMP/'mnemos-native-codex-shutdown-control-v2/windows-crash-events.json'
+rows=json.loads(events.read_text(encoding='utf-8-sig'))
+assert len(rows)==2
+assert all('0xc0000005' in r['Message'] and '0x000000000cba0dde' in r['Message'] for r in rows)
+OUT.mkdir(parents=True,exist_ok=False)
+for version,origin,report,home in reports:
+    folder=OUT/f'v{version}'
+    folder.mkdir()
+    shutil.copyfile(origin/'report.json',folder/'report.json')
+    shutil.copyfile(home/'config.toml',folder/'config-after.toml')
+    shutil.copyfile(ROOT/f'.venv/native_codex_shutdown_control_v{version}.py',folder/'runner.py.txt')
+    if version==2:
+        shutil.copyfile(origin/'selected-response.json',folder/'selected-response.json')
+shutil.copyfile(events,OUT/'windows-crash-events.json')
+shutil.copyfile(ROOT/'.venv/native_codex_lifecycle_v3.py',OUT/'native_codex_lifecycle_v3.py.txt')
+shutil.copyfile(Path(__file__),OUT/'archive_codex_shutdown_controls_v1.py.txt')
+(OUT/'.gitattributes').write_text('* -text\n',encoding='utf-8')
+(OUT/'README.md').write_text('''# Native Codex shutdown controls
+
+Codex 0.146.0 exited zero in two disposable controls with no configured Mnemos hooks, MCP server, or service. The first exited after idle startup; the second completed one native model response without tools before exit. Both used read-only unelevated sandboxes. The first required interactive sandbox setup; the second configured that same mode before launch. Neither process exceeded the unchanged 180-second limit, which includes setup and terminal interaction. These are one observation per condition, not latency measurements.
+
+In contrast, both native continuity v4 sessions exited 0xc0000005 after successful MCP operations. Two Windows Application Error records in their shutdown time window identify codex.exe and fault offset 0x000000000cba0dde. The continuity runner did not retain child PIDs, so the event timing is corroborating evidence rather than an exact PID binding.
+
+The controls rule out an unconditional idle or simple-response shutdown crash in this executable. They do not isolate MCP transport, hooks, tool approval, or their interaction as the cause. The integration failure remains open; no host upgrade or live configuration change was made. Authentication copies were absent before archiving.
+''',encoding='utf-8')
+files={p.relative_to(OUT).as_posix():{'bytes':p.stat().st_size,'sha256':sha(p)} for p in sorted(OUT.rglob('*')) if p.is_file()}
+(OUT/'evidence-index.json').write_text(json.dumps({'files':files},indent=2)+'\n',encoding='utf-8')
+print(f'Archived {len(files)} blobs')
