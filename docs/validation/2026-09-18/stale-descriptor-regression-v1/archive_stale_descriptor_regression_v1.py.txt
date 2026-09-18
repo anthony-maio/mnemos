@@ -1,0 +1,58 @@
+"""Preserve stale-descriptor regression inputs and observed test outcomes."""
+from pathlib import Path
+import hashlib
+import json
+import shutil
+import subprocess
+import xml.etree.ElementTree as ET
+
+ROOT=Path(__file__).resolve().parents[1]
+OUT=ROOT/'docs/validation/2026-09-18/stale-descriptor-regression-v1'
+assert not OUT.exists()
+
+def sha(path):
+    return hashlib.sha256(path.read_bytes()).hexdigest()
+
+def counts(path):
+    cases=ET.parse(path).getroot().findall('.//testcase')
+    return {'tests':len(cases),'failed':sum(c.find('failure') is not None for c in cases),
+            'errors':sum(c.find('error') is not None for c in cases),
+            'skipped':sum(c.find('skipped') is not None for c in cases)}
+
+red=ROOT/'.venv/stale-descriptor-red-v1.xml'
+green=ROOT/'.venv/stale-descriptor-green-v1.xml'
+focused=ROOT/'.venv/stale-descriptor-focused-v2.xml'
+assert counts(red)=={'tests':5,'failed':5,'errors':0,'skipped':0}
+assert counts(green)=={'tests':29,'failed':0,'errors':0,'skipped':0}
+assert counts(focused)=={'tests':41,'failed':0,'errors':0,'skipped':0}
+parent=subprocess.check_output(['git','rev-parse','HEAD'],cwd=ROOT,text=True).strip()
+assert parent.startswith('fb2271a')
+OUT.mkdir()
+for path in (red,green,focused):
+    shutil.copyfile(path,OUT/path.name)
+for source,name in [('mnemos/client.py','client-after.py.txt'),
+                    ('tests/test_client_stale_descriptor.py','test_client_stale_descriptor.py.txt'),
+                    ('.venv/stale-descriptor-red-tests-v1.py.txt','red-tests-v1.py.txt')]:
+    shutil.copyfile(ROOT/source,OUT/name)
+(OUT/'client-before.py.txt').write_bytes(subprocess.check_output(['git','show','HEAD:mnemos/client.py'],cwd=ROOT))
+shutil.copyfile(__file__,OUT/(Path(__file__).name+'.txt'))
+report={'source_parent':parent,'candidate_client_sha256':sha(ROOT/'mnemos/client.py'),
+        'candidate_test_sha256':sha(ROOT/'tests/test_client_stale_descriptor.py'),
+        'runs':{p.name:counts(p) for p in (red,green,focused)},
+        'archiver_sha256':sha(Path(__file__)),
+        'limits':'Real loopback HTTP service with recording dispatcher and controlled launcher publication. No native host or configured real-provider autostart claim.'}
+(OUT/'verification.json').write_text(json.dumps(report,indent=2)+'\n',encoding='utf-8')
+(OUT/'.gitattributes').write_text('* -text\n*.xml -whitespace\n*.py.txt -whitespace\n',encoding='utf-8')
+(OUT/'README.md').write_text('''# Stale service descriptor recovery
+
+After a transport failure, the previous client spawned a replacement and immediately accepted the dead owner's unchanged descriptor. Its second request reached the dead endpoint before the replacement could publish. Capture stayed queued and retrieval degraded even when the replacement then became available. Five new regressions failed against that behavior.
+
+The client now makes a bounded authenticated GET to the existing owner's health endpoint. A reachable owner receives one retry without another launch. An unavailable owner permits the existing one-launch startup path, which waits past the failed descriptor identity. A competing launcher exit can still yield to the original owner if a fresh health probe succeeds. Authorization or invalid health responses are errors, and no stale descriptor is deleted. The health request never dispatches a memory operation or drains the outbox.
+
+The final focused run passes 41 cases, including seven new cases: delayed replacement for capture and retrieval, a lost reply from a live owner, exited or stalled startup with a stale descriptor, rejected health authentication, and an owner recovering while a competing launcher exits. Existing startup races, interrupted capture, supplied-outbox selection, and lost-acknowledgment replay remain covered. The first green run had 29 cases; the expanded final run follows the optional retry-variable annotation correction found by strict mypy.
+
+The tests use actual authenticated loopback HTTP and the production service, with a recording dispatcher and controlled launcher timing. They do not prove configured real-provider startup, native host deadlines, or model quality. The prior native crash result remains bound to the earlier c25ed98 wheel. The source parent, candidate file hashes, original red tests, and JUnit results are preserved.
+''',encoding='utf-8')
+files={p.relative_to(OUT).as_posix():{'bytes':p.stat().st_size,'sha256':sha(p)} for p in sorted(OUT.rglob('*')) if p.is_file()}
+(OUT/'evidence-index.json').write_text(json.dumps({'files':files},indent=2)+'\n',encoding='utf-8')
+print(json.dumps({'red':counts(red),'focused':counts(focused),'indexed_files':len(files)}))

@@ -1,0 +1,237 @@
+<?xml version="1.0" encoding="utf-8"?><testsuites name="pytest tests"><testsuite name="pytest" errors="0" failures="5" skipped="0" tests="5" time="4.457" timestamp="2026-09-18T03:14:42.427951-04:00" hostname="Aurora"><testcase classname="tests.test_client_stale_descriptor" name="test_waits_for_replacement_instead_of_retrying_dead_descriptor[capture]" time="1.058"><failure message="AssertionError: {'schema_version': 1, 'status': 'queued', 'committed': False, 'degraded': True, ...}&#10;assert False is True&#10; +  where False = &lt;built-in method get of dict object at 0x0000021070BF4980&gt;('committed')&#10; +    where &lt;built-in method get of dict object at 0x0000021070BF4980&gt; = {'schema_version': 1, 'status': 'queued', 'committed': False, 'degraded': True, ...}.get">tmp_path = WindowsPath('D:/WindowsTemp/pytest-of-Ant/pytest-3621/test_waits_for_replacement_ins0')
+monkeypatch = &lt;_pytest.monkeypatch.MonkeyPatch object at 0x0000021070B79810&gt;
+operation = 'capture'
+
+    @pytest.mark.asyncio
+    @pytest.mark.parametrize("operation", ["capture", "retrieve"])
+    async def test_waits_for_replacement_instead_of_retrying_dead_descriptor(
+        tmp_path: Path, monkeypatch: pytest.MonkeyPatch, operation: str
+    ) -&gt; None:
+        path = tmp_path / "runtime.json"
+        dispatcher = RecordingDispatcher()
+        replacement = MnemosService(dispatcher=dispatcher, descriptor_path=path)
+        client = MnemosClient(descriptor_path=path, startup_timeout=2, request_timeout=0.2)
+        starts = 0
+        scheduled = None
+        with socket.socket() as reserved:
+            stale = stale_descriptor(path, reserved)
+            original_bytes = path.read_bytes()
+    
+            def spawn(*args: Any, **kwargs: Any) -&gt; Launcher:
+                nonlocal starts, scheduled
+                starts += 1
+                assert path.read_bytes() == original_bytes
+                # Publication happens on the next loop turn, after Popen returns.
+                scheduled = asyncio.get_running_loop().call_soon(replacement.start)
+                return Launcher()
+    
+            monkeypatch.setattr(client_module.subprocess, "Popen", spawn)
+            payload = {"event_id": "stale-owner-event", "content": "Durable recovery convention"}
+            if operation == "retrieve":
+                payload = {"query": "recovery convention"}
+            try:
+                result = await client.request(operation, payload)
+&gt;               assert result.get("committed") is True, result
+E               AssertionError: {'schema_version': 1, 'status': 'queued', 'committed': False, 'degraded': True, ...}
+E               assert False is True
+E                +  where False = &lt;built-in method get of dict object at 0x0000021070BF4980&gt;('committed')
+E                +    where &lt;built-in method get of dict object at 0x0000021070BF4980&gt; = {'schema_version': 1, 'status': 'queued', 'committed': False, 'degraded': True, ...}.get
+
+tests\test_client_stale_descriptor.py:77: AssertionError</failure></testcase><testcase classname="tests.test_client_stale_descriptor" name="test_waits_for_replacement_instead_of_retrying_dead_descriptor[retrieve]" time="0.914"><failure message="AssertionError: {'schema_version': 1, 'status': 'degraded', 'committed': False, 'degraded': True, ...}&#10;assert False is True&#10; +  where False = &lt;built-in method get of dict object at 0x00000210710BA380&gt;('committed')&#10; +    where &lt;built-in method get of dict object at 0x00000210710BA380&gt; = {'schema_version': 1, 'status': 'degraded', 'committed': False, 'degraded': True, ...}.get">tmp_path = WindowsPath('D:/WindowsTemp/pytest-of-Ant/pytest-3621/test_waits_for_replacement_ins1')
+monkeypatch = &lt;_pytest.monkeypatch.MonkeyPatch object at 0x0000021070BF2F90&gt;
+operation = 'retrieve'
+
+    @pytest.mark.asyncio
+    @pytest.mark.parametrize("operation", ["capture", "retrieve"])
+    async def test_waits_for_replacement_instead_of_retrying_dead_descriptor(
+        tmp_path: Path, monkeypatch: pytest.MonkeyPatch, operation: str
+    ) -&gt; None:
+        path = tmp_path / "runtime.json"
+        dispatcher = RecordingDispatcher()
+        replacement = MnemosService(dispatcher=dispatcher, descriptor_path=path)
+        client = MnemosClient(descriptor_path=path, startup_timeout=2, request_timeout=0.2)
+        starts = 0
+        scheduled = None
+        with socket.socket() as reserved:
+            stale = stale_descriptor(path, reserved)
+            original_bytes = path.read_bytes()
+    
+            def spawn(*args: Any, **kwargs: Any) -&gt; Launcher:
+                nonlocal starts, scheduled
+                starts += 1
+                assert path.read_bytes() == original_bytes
+                # Publication happens on the next loop turn, after Popen returns.
+                scheduled = asyncio.get_running_loop().call_soon(replacement.start)
+                return Launcher()
+    
+            monkeypatch.setattr(client_module.subprocess, "Popen", spawn)
+            payload = {"event_id": "stale-owner-event", "content": "Durable recovery convention"}
+            if operation == "retrieve":
+                payload = {"query": "recovery convention"}
+            try:
+                result = await client.request(operation, payload)
+&gt;               assert result.get("committed") is True, result
+E               AssertionError: {'schema_version': 1, 'status': 'degraded', 'committed': False, 'degraded': True, ...}
+E               assert False is True
+E                +  where False = &lt;built-in method get of dict object at 0x00000210710BA380&gt;('committed')
+E                +    where &lt;built-in method get of dict object at 0x00000210710BA380&gt; = {'schema_version': 1, 'status': 'degraded', 'committed': False, 'degraded': True, ...}.get
+
+tests\test_client_stale_descriptor.py:77: AssertionError</failure></testcase><testcase classname="tests.test_client_stale_descriptor" name="test_transient_lost_reply_reuses_live_owner_without_spawning" time="0.900"><failure message="AssertionError: A reachable existing owner must not launch another service">operation = 'capture'
+payload = {'event_id': 'live-owner-event', 'content': 'Keep the current owner'}
+owner = {'host': '127.0.0.1', 'pid': 33600, 'port': 53078, 'schema_version': 1, ...}
+
+    async def lose_first_reply(
+        operation: str, payload: dict[str, Any], owner: dict[str, Any]
+    ) -&gt; dict[str, Any]:
+        nonlocal attempts
+        result = await original_dispatch(operation, payload, owner)
+        attempts += 1
+        if attempts == 1:
+&gt;           raise ServiceClientError("lost committed reply", unavailable=True)
+E           mnemos.client.ServiceClientError: lost committed reply
+
+tests\test_client_stale_descriptor.py:110: ServiceClientError
+
+During handling of the above exception, another exception occurred:
+
+tmp_path = WindowsPath('D:/WindowsTemp/pytest-of-Ant/pytest-3621/test_transient_lost_reply_reus0')
+monkeypatch = &lt;_pytest.monkeypatch.MonkeyPatch object at 0x0000021070CCDD00&gt;
+
+    @pytest.mark.asyncio
+    async def test_transient_lost_reply_reuses_live_owner_without_spawning(
+        tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+    ) -&gt; None:
+        path = tmp_path / "runtime.json"
+        dispatcher = RecordingDispatcher()
+        service = MnemosService(dispatcher=dispatcher, descriptor_path=path)
+        service.start()
+        descriptor_bytes = path.read_bytes()
+        client = MnemosClient(descriptor_path=path, startup_timeout=1, request_timeout=1)
+        original_dispatch = client._dispatch_http
+        attempts = 0
+    
+        async def lose_first_reply(
+            operation: str, payload: dict[str, Any], owner: dict[str, Any]
+        ) -&gt; dict[str, Any]:
+            nonlocal attempts
+            result = await original_dispatch(operation, payload, owner)
+            attempts += 1
+            if attempts == 1:
+                raise ServiceClientError("lost committed reply", unavailable=True)
+            return result
+    
+        def unexpected_spawn(*args: Any, **kwargs: Any) -&gt; None:
+            raise AssertionError("A reachable existing owner must not launch another service")
+    
+        monkeypatch.setattr(client, "_dispatch_http", lose_first_reply)
+        monkeypatch.setattr(client_module.subprocess, "Popen", unexpected_spawn)
+        payload = {"event_id": "live-owner-event", "content": "Keep the current owner"}
+        try:
+&gt;           result = await client.capture(payload)
+                     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+tests\test_client_stale_descriptor.py:120: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+mnemos\client.py:465: in capture
+    return await self.request("capture", payload)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+mnemos\client.py:389: in request
+    self._spawn_once()
+mnemos\client.py:257: in _spawn_once
+    self._child = subprocess.Popen(command, **kwargs)
+                  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+args = (['D:\\Development\\mnemos\\mnemos\\.worktrees\\functional-local-memory\\.venv\\Scripts\\python.exe', '-m', 'mnemos.service', '--descriptor', 'D:\\WindowsTemp\\pytest-of-Ant\\pytest-3621\\test_transient_lost_reply_reus0\\runtime.json'],)
+kwargs = {'stdin': -3, 'stdout': -3, 'stderr': -3, 'close_fds': True, ...}
+
+    def unexpected_spawn(*args: Any, **kwargs: Any) -&gt; None:
+&gt;       raise AssertionError("A reachable existing owner must not launch another service")
+E       AssertionError: A reachable existing owner must not launch another service
+
+tests\test_client_stale_descriptor.py:114: AssertionError</failure></testcase><testcase classname="tests.test_client_stale_descriptor" name="test_stale_descriptor_does_not_hide_exited_replacement" time="0.474"><failure message="AssertionError: assert ('exited before startup' in 'Mnemos service is unavailable')">tmp_path = WindowsPath('D:/WindowsTemp/pytest-of-Ant/pytest-3621/test_stale_descriptor_does_not0')
+monkeypatch = &lt;_pytest.monkeypatch.MonkeyPatch object at 0x0000021070CE4C50&gt;
+
+    @pytest.mark.asyncio
+    async def test_stale_descriptor_does_not_hide_exited_replacement(
+        tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+    ) -&gt; None:
+        path = tmp_path / "runtime.json"
+        client = MnemosClient(descriptor_path=path, startup_timeout=0.15, request_timeout=0.1)
+        starts = 0
+    
+        def spawn(*args: Any, **kwargs: Any) -&gt; Launcher:
+            nonlocal starts
+            starts += 1
+            return Launcher(exit_code=37)
+    
+        monkeypatch.setattr(client_module.subprocess, "Popen", spawn)
+        with socket.socket() as reserved:
+            stale_descriptor(path, reserved)
+            original_bytes = path.read_bytes()
+            try:
+                result = await client.capture({"event_id": "still-queued", "content": "Retain me"})
+                assert result["status"] == "queued" and result["committed"] is False
+&gt;               assert "exited before startup" in result["error"] and "37" in result["error"]
+E               AssertionError: assert ('exited before startup' in 'Mnemos service is unavailable')
+
+tests\test_client_stale_descriptor.py:152: AssertionError</failure></testcase><testcase classname="tests.test_client_stale_descriptor" name="test_health_authorization_failure_does_not_spawn" time="0.512"><failure message="AssertionError: Authorization rejection must not launch a replacement">operation = 'retrieve', payload = {'query': 'owner readiness'}
+descriptor = {'host': '127.0.0.1', 'pid': 33600, 'port': 53091, 'schema_version': 1, ...}
+
+    async def first_connection_fails(
+        operation: str, payload: dict[str, Any], descriptor: dict[str, Any]
+    ) -&gt; dict[str, Any]:
+&gt;       raise ServiceClientError("initial connection failed", unavailable=True)
+E       mnemos.client.ServiceClientError: initial connection failed
+
+tests\test_client_stale_descriptor.py:172: ServiceClientError
+
+During handling of the above exception, another exception occurred:
+
+tmp_path = WindowsPath('D:/WindowsTemp/pytest-of-Ant/pytest-3621/test_health_authorization_fail0')
+monkeypatch = &lt;_pytest.monkeypatch.MonkeyPatch object at 0x0000021070D39D60&gt;
+
+    @pytest.mark.asyncio
+    async def test_health_authorization_failure_does_not_spawn(
+        tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+    ) -&gt; None:
+        path = tmp_path / "runtime.json"
+        service = MnemosService(dispatcher=RecordingDispatcher(), descriptor_path=path)
+        owner = service.start()
+        _write_private_json(path, {**owner, "token": "invalid-fixture-token"})
+        client = MnemosClient(descriptor_path=path, startup_timeout=1, request_timeout=1)
+    
+        async def first_connection_fails(
+            operation: str, payload: dict[str, Any], descriptor: dict[str, Any]
+        ) -&gt; dict[str, Any]:
+            raise ServiceClientError("initial connection failed", unavailable=True)
+    
+        def unexpected_spawn(*args: Any, **kwargs: Any) -&gt; None:
+            raise AssertionError("Authorization rejection must not launch a replacement")
+    
+        monkeypatch.setattr(client, "_dispatch_http", first_connection_fails)
+        monkeypatch.setattr(client_module.subprocess, "Popen", unexpected_spawn)
+        try:
+&gt;           result = await client.retrieve({"query": "owner readiness"})
+                     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+tests\test_client_stale_descriptor.py:180: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+mnemos\client.py:468: in retrieve
+    return await self.request("retrieve", payload, queue_on_failure=False)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+mnemos\client.py:389: in request
+    self._spawn_once()
+mnemos\client.py:257: in _spawn_once
+    self._child = subprocess.Popen(command, **kwargs)
+                  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+args = (['D:\\Development\\mnemos\\mnemos\\.worktrees\\functional-local-memory\\.venv\\Scripts\\python.exe', '-m', 'mnemos.service', '--descriptor', 'D:\\WindowsTemp\\pytest-of-Ant\\pytest-3621\\test_health_authorization_fail0\\runtime.json'],)
+kwargs = {'stdin': -3, 'stdout': -3, 'stderr': -3, 'close_fds': True, ...}
+
+    def unexpected_spawn(*args: Any, **kwargs: Any) -&gt; None:
+&gt;       raise AssertionError("Authorization rejection must not launch a replacement")
+E       AssertionError: Authorization rejection must not launch a replacement
+
+tests\test_client_stale_descriptor.py:175: AssertionError</failure></testcase></testsuite></testsuites>

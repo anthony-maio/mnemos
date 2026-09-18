@@ -1,0 +1,9 @@
+# Stale service descriptor recovery
+
+After a transport failure, the previous client spawned a replacement and immediately accepted the dead owner's unchanged descriptor. Its second request reached the dead endpoint before the replacement could publish. Capture stayed queued and retrieval degraded even when the replacement then became available. Five new regressions failed against that behavior.
+
+The client now makes a bounded authenticated GET to the existing owner's health endpoint. A reachable owner receives one retry without another launch. An unavailable owner permits the existing one-launch startup path, which waits past the failed descriptor identity. A competing launcher exit can still yield to the original owner if a fresh health probe succeeds. Authorization or invalid health responses are errors, and no stale descriptor is deleted. The health request never dispatches a memory operation or drains the outbox.
+
+The final focused run passes 41 cases, including seven new cases: delayed replacement for capture and retrieval, a lost reply from a live owner, exited or stalled startup with a stale descriptor, rejected health authentication, and an owner recovering while a competing launcher exits. Existing startup races, interrupted capture, supplied-outbox selection, and lost-acknowledgment replay remain covered. The first green run had 29 cases; the expanded final run follows the optional retry-variable annotation correction found by strict mypy.
+
+The tests use actual authenticated loopback HTTP and the production service, with a recording dispatcher and controlled launcher timing. They do not prove configured real-provider startup, native host deadlines, or model quality. The prior native crash result remains bound to the earlier c25ed98 wheel. The source parent, candidate file hashes, original red tests, and JUnit results are preserved.

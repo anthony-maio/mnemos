@@ -258,12 +258,67 @@ class MnemosClient:
         except OSError as exc:
             raise ServiceClientError("Mnemos service could not be started") from exc
 
-    async def _wait_for_descriptor(self) -> dict[str, Any] | None:
+    @staticmethod
+    def _same_owner(left: dict[str, Any], right: dict[str, Any]) -> bool:
+        return all(
+            left.get(key) == right.get(key)
+            for key in ("schema_version", "host", "port", "pid", "token")
+        )
+
+    async def _owner_reachable(
+        self, descriptor: dict[str, Any], *, timeout: float | None = None
+    ) -> bool:
+        """Probe the authenticated transport without dispatching or replaying writes."""
+        host = str(descriptor["host"])
+        if host not in {"127.0.0.1", "localhost", "::1"}:
+            raise ServiceClientError("runtime descriptor is not loopback")
+        authority = f"[{host}]" if host == "::1" else host
+        url = f"http://{authority}:{int(descriptor['port'])}/v1/health"
+        budget = min(0.25, self.startup_timeout, self.request_timeout)
+        if timeout is not None:
+            budget = min(budget, timeout)
+        if budget <= 0:
+            return False
+
+        async def probe() -> httpx.Response:
+            async with httpx.AsyncClient(timeout=budget, trust_env=False) as client:
+                return await client.get(
+                    url, headers={"Authorization": f"Bearer {descriptor['token']}"}
+                )
+
+        try:
+            response = await asyncio.wait_for(probe(), timeout=budget)
+        except (httpx.TransportError, OSError, asyncio.TimeoutError):
+            return False
+        if response.status_code in {401, 403}:
+            raise ServiceClientError(
+                f"Mnemos service rejected the readiness check ({response.status_code})"
+            )
+        if response.status_code != 200:
+            raise ServiceClientError("Mnemos service returned an invalid readiness response")
+        try:
+            value = response.json()
+        except ValueError as exc:
+            raise ServiceClientError("Mnemos service returned invalid readiness JSON") from exc
+        if (
+            not isinstance(value, dict)
+            or type(value.get("schema_version")) is not int
+            or value["schema_version"] != SCHEMA_VERSION
+            or value.get("status") != "ok"
+        ):
+            raise ServiceClientError("Mnemos service returned an invalid readiness response")
+        return True
+
+    async def _wait_for_descriptor(
+        self, *, failed_descriptor: dict[str, Any] | None = None
+    ) -> dict[str, Any] | None:
         loop = asyncio.get_running_loop()
         deadline = loop.time() + self.startup_timeout
         while True:
             descriptor = self._descriptor()
-            if descriptor is not None:
+            if descriptor is not None and (
+                failed_descriptor is None or not self._same_owner(descriptor, failed_descriptor)
+            ):
                 return descriptor
             exit_code = self._child.poll() if self._child is not None else None
             if exit_code is not None:
@@ -271,7 +326,15 @@ class MnemosClient:
                 # launcher exits. Prefer that owner before reporting failure.
                 descriptor = self._descriptor()
                 if descriptor is not None:
-                    return descriptor
+                    if failed_descriptor is None or not self._same_owner(
+                        descriptor, failed_descriptor
+                    ):
+                        return descriptor
+                    # A live owner may recover after the first failed probe
+                    # while the competing launcher exits. Do not mistake its
+                    # unchanged descriptor for proof of readiness or failure.
+                    if await self._owner_reachable(descriptor, timeout=deadline - loop.time()):
+                        return descriptor
                 raise ServiceClientError(
                     f"Mnemos service exited before startup (exit code {exit_code})",
                     unavailable=True,
@@ -386,8 +449,12 @@ class MnemosClient:
             except ServiceClientError as exc:
                 if not exc.unavailable or self._autostart_attempted or not self.auto_start:
                     raise
-                self._spawn_once()
-                retry_descriptor = await self._wait_for_descriptor()
+                retry_descriptor: dict[str, Any] | None
+                if await self._owner_reachable(descriptor):
+                    retry_descriptor = descriptor
+                else:
+                    self._spawn_once()
+                    retry_descriptor = await self._wait_for_descriptor(failed_descriptor=descriptor)
                 if retry_descriptor is None:
                     raise
                 result = await self._dispatch_http(operation.strip(), data, retry_descriptor)
