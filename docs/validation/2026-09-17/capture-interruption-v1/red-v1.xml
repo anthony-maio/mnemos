@@ -1,0 +1,157 @@
+<?xml version="1.0" encoding="utf-8"?><testsuites name="pytest tests"><testsuite name="pytest" errors="0" failures="2" skipped="0" tests="2" time="3.405" timestamp="2026-09-17T21:04:37.128670-04:00" hostname="Aurora"><testcase classname="tests.test_capture_interruption" name="test_capture_process_killed_at_http_boundary_replays_once_after_restart[before_send]" time="1.176"><failure message="AssertionError: Host termination lost the capture before durable acknowledgement&#10;assert 0 == 1&#10; +  where 0 = len([])">tmp_path = WindowsPath('C:/Users/Ant/AppData/Local/Temp/mnemos-interruption-red-v1/test_capture_process_killed_at0')
+phase = 'before_send'
+
+    @pytest.mark.asyncio
+    @pytest.mark.parametrize("phase", ["before_send", "after_response"])
+    async def test_capture_process_killed_at_http_boundary_replays_once_after_restart(
+        tmp_path: Path, phase: str
+    ) -&gt; None:
+        project = tmp_path / "project"
+        project.mkdir()
+        registry = ScopeRegistry()
+        registry.register_project(project, user_profile_id="interrupt-profile", enabled=True)
+        context = registry.resolve(
+            project, user_profile_id="interrupt-profile", session_id="interrupt-session", host="codex"
+        )
+        descriptor = tmp_path / "runtime.json"
+        outbox = tmp_path / "outbox.json"
+        database = tmp_path / "memory.sqlite"
+        payload = {
+            "event_id": "interrupt-capture",
+            "context": context.model_dump(mode="json"),
+            "occurred_at": datetime.now(timezone.utc).isoformat(),
+            "role": "assistant",
+            "content": "The interruption recovery convention is willow-birch.",
+            "source_kind": "codex_hook",
+            "source_ref": "Stop:interrupted-turn",
+        }
+        payload_file = tmp_path / "payload.json"
+        payload_file.write_text(json.dumps(payload), encoding="utf-8")
+        marker = tmp_path / "entered-request.txt"
+    
+        def start() -&gt; tuple[MnemosService, SQLiteStore]:
+            store = SQLiteStore(str(database))
+            engine = MnemosEngine(
+                config=MnemosConfig(
+                    modules=ModuleConfig(**{name: False for name in ModuleConfig.model_fields})
+                ),
+                llm=UnavailableLLMProvider(),
+                embedder=SimpleEmbeddingProvider(),
+                store=store,
+                scope_registry=registry,
+                require_scope_context=True,
+            )
+            service = MnemosService(
+                dispatcher=LocalMemoryService(engine, registry),
+                descriptor_path=descriptor,
+                lock_path=tmp_path / "runtime.lock",
+            )
+            service.start()
+            return service, store
+    
+        service, store = start()
+        child = None
+        replay_client = None
+        try:
+            environment = dict(os.environ)
+            environment["PYTHONPATH"] = str(Path(__file__).resolve().parents[1])
+            child = subprocess.Popen(
+                [sys.executable, "-c", CHILD, str(descriptor), str(outbox),
+                 str(payload_file), str(marker), phase],
+                cwd=tmp_path, env=environment, stdin=subprocess.DEVNULL,
+                stdout=subprocess.PIPE, stderr=subprocess.PIPE,
+            )
+            async with asyncio.timeout(15):
+                while not marker.exists():
+                    if child.poll() is not None:
+                        _, error = child.communicate()
+                        pytest.fail("capture child exited before boundary: " + error.decode())
+                    await asyncio.sleep(0.01)
+            child.kill()
+            child.wait(timeout=5)
+            assert child.returncode != 0
+            pending = Outbox(outbox).pending()
+&gt;           assert len(pending) == 1, "Host termination lost the capture before durable acknowledgement"
+E           AssertionError: Host termination lost the capture before durable acknowledgement
+E           assert 0 == 1
+E            +  where 0 = len([])
+
+tests\test_capture_interruption.py:114: AssertionError</failure></testcase><testcase classname="tests.test_capture_interruption" name="test_capture_process_killed_at_http_boundary_replays_once_after_restart[after_response]" time="1.595"><failure message="AssertionError: Host termination lost the capture before durable acknowledgement&#10;assert 0 == 1&#10; +  where 0 = len([])">tmp_path = WindowsPath('C:/Users/Ant/AppData/Local/Temp/mnemos-interruption-red-v1/test_capture_process_killed_at1')
+phase = 'after_response'
+
+    @pytest.mark.asyncio
+    @pytest.mark.parametrize("phase", ["before_send", "after_response"])
+    async def test_capture_process_killed_at_http_boundary_replays_once_after_restart(
+        tmp_path: Path, phase: str
+    ) -&gt; None:
+        project = tmp_path / "project"
+        project.mkdir()
+        registry = ScopeRegistry()
+        registry.register_project(project, user_profile_id="interrupt-profile", enabled=True)
+        context = registry.resolve(
+            project, user_profile_id="interrupt-profile", session_id="interrupt-session", host="codex"
+        )
+        descriptor = tmp_path / "runtime.json"
+        outbox = tmp_path / "outbox.json"
+        database = tmp_path / "memory.sqlite"
+        payload = {
+            "event_id": "interrupt-capture",
+            "context": context.model_dump(mode="json"),
+            "occurred_at": datetime.now(timezone.utc).isoformat(),
+            "role": "assistant",
+            "content": "The interruption recovery convention is willow-birch.",
+            "source_kind": "codex_hook",
+            "source_ref": "Stop:interrupted-turn",
+        }
+        payload_file = tmp_path / "payload.json"
+        payload_file.write_text(json.dumps(payload), encoding="utf-8")
+        marker = tmp_path / "entered-request.txt"
+    
+        def start() -&gt; tuple[MnemosService, SQLiteStore]:
+            store = SQLiteStore(str(database))
+            engine = MnemosEngine(
+                config=MnemosConfig(
+                    modules=ModuleConfig(**{name: False for name in ModuleConfig.model_fields})
+                ),
+                llm=UnavailableLLMProvider(),
+                embedder=SimpleEmbeddingProvider(),
+                store=store,
+                scope_registry=registry,
+                require_scope_context=True,
+            )
+            service = MnemosService(
+                dispatcher=LocalMemoryService(engine, registry),
+                descriptor_path=descriptor,
+                lock_path=tmp_path / "runtime.lock",
+            )
+            service.start()
+            return service, store
+    
+        service, store = start()
+        child = None
+        replay_client = None
+        try:
+            environment = dict(os.environ)
+            environment["PYTHONPATH"] = str(Path(__file__).resolve().parents[1])
+            child = subprocess.Popen(
+                [sys.executable, "-c", CHILD, str(descriptor), str(outbox),
+                 str(payload_file), str(marker), phase],
+                cwd=tmp_path, env=environment, stdin=subprocess.DEVNULL,
+                stdout=subprocess.PIPE, stderr=subprocess.PIPE,
+            )
+            async with asyncio.timeout(15):
+                while not marker.exists():
+                    if child.poll() is not None:
+                        _, error = child.communicate()
+                        pytest.fail("capture child exited before boundary: " + error.decode())
+                    await asyncio.sleep(0.01)
+            child.kill()
+            child.wait(timeout=5)
+            assert child.returncode != 0
+            pending = Outbox(outbox).pending()
+&gt;           assert len(pending) == 1, "Host termination lost the capture before durable acknowledgement"
+E           AssertionError: Host termination lost the capture before durable acknowledgement
+E           assert 0 == 1
+E            +  where 0 = len([])
+
+tests\test_capture_interruption.py:114: AssertionError</failure></testcase></testsuite></testsuites>

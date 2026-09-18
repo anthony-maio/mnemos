@@ -4,6 +4,13 @@ This record covers the unreleased `wt/functional-local-memory` worktree. It
 separates implemented behavior from acceptance evidence. The original task
 boundaries and thresholds remain in the [implementation plan](../../plans/2026-09-16-functional-local-memory.md).
 
+The [capture interruption regression](../2026-09-17/capture-interruption-v1/README.md)
+forces a host client process to exit before sending or after service commit.
+Capture now persists sanitized evidence before startup and HTTP waits, then
+removes it only on a terminal reply. Both interrupted paths replay once after
+SQLite/service restart. Six new cases and 84 related cases pass. Native Stop
+timeout and host shutdown acceptance remain open.
+
 The [captured-assertion repair](../2026-09-17/captured-assertion-regression-v1/README.md)
 preserves automatic passthrough history while labeling newly indexed copies
 as unknown captured evidence. Host context now marks it unverified and possibly

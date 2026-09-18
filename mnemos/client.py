@@ -348,9 +348,17 @@ class MnemosClient:
         is_capture = operation.strip() in {"capture", "mnemos_capture"}
         if queue_on_failure is None:
             queue_on_failure = is_capture
+        pending_event_id: str | None = None
         if is_capture:
             try:
                 data = self.outbox.sanitize(data)
+                if queue_on_failure:
+                    # A host can terminate this process during startup or HTTP
+                    # dispatch. Persist the sanitized event before either wait,
+                    # keeping its identity unchanged when replayed after restart.
+                    data["event_id"] = data.get("event_id") or str(uuid4())
+                    pending_event_id = self.outbox.append(data, operation=operation.strip())
+                    self._outbox_drained = False
             except (TypeError, ValueError) as safety_error:
                 return {
                     "schema_version": SCHEMA_VERSION,
@@ -380,7 +388,9 @@ class MnemosClient:
         except ServiceClientError as exc:
             if queue_on_failure and is_capture:
                 try:
-                    event_id = self.outbox.append(data, operation=operation.strip())
+                    event_id = pending_event_id or self.outbox.append(
+                        data, operation=operation.strip()
+                    )
                     self._outbox_drained = False
                 except (TypeError, ValueError) as safety_error:
                     return {
@@ -404,6 +414,13 @@ class MnemosClient:
                 "degraded": True,
                 "error": str(exc),
             }
+        if pending_event_id is not None:
+            if self._committed(result) or result.get("status") in {"rejected", "blocked"}:
+                self.outbox.acknowledge(pending_event_id)
+            else:
+                # An ambiguous reply is not an acknowledgement. Retain the
+                # durable event without immediately resending the same request.
+                return result
         if operation.strip() != "shutdown" and not _draining and not self._outbox_drained:
             replay = await self.replay_outbox()
             self._outbox_drained = replay["pending"] == 0

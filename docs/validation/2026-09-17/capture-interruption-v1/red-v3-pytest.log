@@ -1,0 +1,344 @@
+FFFFFF                                                                   [100%]
+================================== FAILURES ===================================
+_ test_capture_process_killed_at_http_boundary_replays_once_after_restart[before_send] _
+
+tmp_path = WindowsPath('C:/Users/Ant/AppData/Local/Temp/mnemos-interruption-red-v3/fixtures/test_capture_process_killed_at0')
+phase = 'before_send'
+
+    @pytest.mark.asyncio
+    @pytest.mark.parametrize("phase", ["before_send", "after_response"])
+    async def test_capture_process_killed_at_http_boundary_replays_once_after_restart(
+        tmp_path: Path, phase: str
+    ) -> None:
+        project = tmp_path / "project"
+        project.mkdir()
+        registry = ScopeRegistry()
+        registry.register_project(project, user_profile_id="interrupt-profile", enabled=True)
+        context = registry.resolve(
+            project, user_profile_id="interrupt-profile", session_id="interrupt-session", host="codex"
+        )
+        descriptor = tmp_path / "runtime.json"
+        outbox = tmp_path / "outbox.json"
+        database = tmp_path / "memory.sqlite"
+        payload = {
+            "event_id": "interrupt-capture",
+            "context": context.model_dump(mode="json"),
+            "occurred_at": datetime.now(timezone.utc).isoformat(),
+            "role": "assistant",
+            "content": "The interruption recovery convention is willow-birch.",
+            "source_kind": "codex_hook",
+            "source_ref": "Stop:interrupted-turn",
+        }
+        payload_file = tmp_path / "payload.json"
+        payload_file.write_text(json.dumps(payload), encoding="utf-8")
+        marker = tmp_path / "entered-request.txt"
+    
+        def start() -> tuple[MnemosService, SQLiteStore]:
+            store = SQLiteStore(str(database))
+            engine = MnemosEngine(
+                config=MnemosConfig(
+                    modules=ModuleConfig(**{name: False for name in ModuleConfig.model_fields})
+                ),
+                llm=UnavailableLLMProvider(),
+                embedder=SimpleEmbeddingProvider(),
+                store=store,
+                scope_registry=registry,
+                require_scope_context=True,
+            )
+            service = MnemosService(
+                dispatcher=LocalMemoryService(engine, registry),
+                descriptor_path=descriptor,
+                lock_path=tmp_path / "runtime.lock",
+            )
+            service.start()
+            return service, store
+    
+        service, store = start()
+        child = None
+        replay_client = None
+        try:
+            environment = dict(os.environ)
+            environment["PYTHONPATH"] = str(Path(__file__).resolve().parents[1])
+            child = subprocess.Popen(
+                [
+                    sys.executable,
+                    "-c",
+                    CHILD,
+                    str(descriptor),
+                    str(outbox),
+                    str(payload_file),
+                    str(marker),
+                    phase,
+                ],
+                cwd=tmp_path,
+                env=environment,
+                stdin=subprocess.DEVNULL,
+                stdout=subprocess.PIPE,
+                stderr=subprocess.PIPE,
+            )
+    
+            async def wait_for_boundary() -> None:
+                while not marker.exists():
+                    if child.poll() is not None:
+                        _, error = child.communicate()
+                        pytest.fail("capture child exited before boundary: " + error.decode())
+                    await asyncio.sleep(0.01)
+    
+            await asyncio.wait_for(wait_for_boundary(), timeout=15)
+            child.kill()
+            child.wait(timeout=5)
+            assert child.returncode != 0
+            pending = Outbox(outbox).pending()
+>           assert len(pending) == 1, "Host termination lost the capture before durable acknowledgement"
+E           AssertionError: Host termination lost the capture before durable acknowledgement
+E           assert 0 == 1
+E            +  where 0 = len([])
+
+test_capture_interruption.py:129: AssertionError
+_ test_capture_process_killed_at_http_boundary_replays_once_after_restart[after_response] _
+
+tmp_path = WindowsPath('C:/Users/Ant/AppData/Local/Temp/mnemos-interruption-red-v3/fixtures/test_capture_process_killed_at1')
+phase = 'after_response'
+
+    @pytest.mark.asyncio
+    @pytest.mark.parametrize("phase", ["before_send", "after_response"])
+    async def test_capture_process_killed_at_http_boundary_replays_once_after_restart(
+        tmp_path: Path, phase: str
+    ) -> None:
+        project = tmp_path / "project"
+        project.mkdir()
+        registry = ScopeRegistry()
+        registry.register_project(project, user_profile_id="interrupt-profile", enabled=True)
+        context = registry.resolve(
+            project, user_profile_id="interrupt-profile", session_id="interrupt-session", host="codex"
+        )
+        descriptor = tmp_path / "runtime.json"
+        outbox = tmp_path / "outbox.json"
+        database = tmp_path / "memory.sqlite"
+        payload = {
+            "event_id": "interrupt-capture",
+            "context": context.model_dump(mode="json"),
+            "occurred_at": datetime.now(timezone.utc).isoformat(),
+            "role": "assistant",
+            "content": "The interruption recovery convention is willow-birch.",
+            "source_kind": "codex_hook",
+            "source_ref": "Stop:interrupted-turn",
+        }
+        payload_file = tmp_path / "payload.json"
+        payload_file.write_text(json.dumps(payload), encoding="utf-8")
+        marker = tmp_path / "entered-request.txt"
+    
+        def start() -> tuple[MnemosService, SQLiteStore]:
+            store = SQLiteStore(str(database))
+            engine = MnemosEngine(
+                config=MnemosConfig(
+                    modules=ModuleConfig(**{name: False for name in ModuleConfig.model_fields})
+                ),
+                llm=UnavailableLLMProvider(),
+                embedder=SimpleEmbeddingProvider(),
+                store=store,
+                scope_registry=registry,
+                require_scope_context=True,
+            )
+            service = MnemosService(
+                dispatcher=LocalMemoryService(engine, registry),
+                descriptor_path=descriptor,
+                lock_path=tmp_path / "runtime.lock",
+            )
+            service.start()
+            return service, store
+    
+        service, store = start()
+        child = None
+        replay_client = None
+        try:
+            environment = dict(os.environ)
+            environment["PYTHONPATH"] = str(Path(__file__).resolve().parents[1])
+            child = subprocess.Popen(
+                [
+                    sys.executable,
+                    "-c",
+                    CHILD,
+                    str(descriptor),
+                    str(outbox),
+                    str(payload_file),
+                    str(marker),
+                    phase,
+                ],
+                cwd=tmp_path,
+                env=environment,
+                stdin=subprocess.DEVNULL,
+                stdout=subprocess.PIPE,
+                stderr=subprocess.PIPE,
+            )
+    
+            async def wait_for_boundary() -> None:
+                while not marker.exists():
+                    if child.poll() is not None:
+                        _, error = child.communicate()
+                        pytest.fail("capture child exited before boundary: " + error.decode())
+                    await asyncio.sleep(0.01)
+    
+            await asyncio.wait_for(wait_for_boundary(), timeout=15)
+            child.kill()
+            child.wait(timeout=5)
+            assert child.returncode != 0
+            pending = Outbox(outbox).pending()
+>           assert len(pending) == 1, "Host termination lost the capture before durable acknowledgement"
+E           AssertionError: Host termination lost the capture before durable acknowledgement
+E           assert 0 == 1
+E            +  where 0 = len([])
+
+test_capture_interruption.py:129: AssertionError
+_ test_capture_is_sanitized_and_durable_before_dispatch_until_terminal_reply[committed] _
+
+tmp_path = WindowsPath('C:/Users/Ant/AppData/Local/Temp/mnemos-interruption-red-v3/fixtures/test_capture_is_sanitized_and_0')
+status = 'committed'
+
+    @pytest.mark.asyncio
+    @pytest.mark.parametrize("status", ["committed", "rejected", "blocked", "pending"])
+    async def test_capture_is_sanitized_and_durable_before_dispatch_until_terminal_reply(
+        tmp_path: Path, status: str
+    ) -> None:
+        outbox_path = tmp_path / "outbox.json"
+        seen = []
+    
+        class Dispatcher:
+            async def dispatch(self, operation: str, payload: dict) -> dict:
+                seen.append(Outbox(outbox_path).pending())
+                if outbox_path.exists():
+                    assert "person@example.com" not in outbox_path.read_text(encoding="utf-8")
+                assert operation == "capture"
+                assert "person@example.com" not in payload["content"]
+                return {"status": status}
+    
+        service = MnemosService(dispatcher=Dispatcher(), descriptor_path=tmp_path / "runtime.json")
+        client = MnemosClient(
+            descriptor_path=tmp_path / "runtime.json", outbox_path=outbox_path, auto_start=False
+        )
+        service.start()
+        try:
+            result = await client.capture({"content": "Contact person@example.com"})
+            assert result["status"] == status
+            assert len(seen) == 1
+>           assert len(seen[0]) == 1
+E           assert 0 == 1
+E            +  where 0 = len([])
+
+test_capture_interruption.py:190: AssertionError
+_ test_capture_is_sanitized_and_durable_before_dispatch_until_terminal_reply[rejected] _
+
+tmp_path = WindowsPath('C:/Users/Ant/AppData/Local/Temp/mnemos-interruption-red-v3/fixtures/test_capture_is_sanitized_and_1')
+status = 'rejected'
+
+    @pytest.mark.asyncio
+    @pytest.mark.parametrize("status", ["committed", "rejected", "blocked", "pending"])
+    async def test_capture_is_sanitized_and_durable_before_dispatch_until_terminal_reply(
+        tmp_path: Path, status: str
+    ) -> None:
+        outbox_path = tmp_path / "outbox.json"
+        seen = []
+    
+        class Dispatcher:
+            async def dispatch(self, operation: str, payload: dict) -> dict:
+                seen.append(Outbox(outbox_path).pending())
+                if outbox_path.exists():
+                    assert "person@example.com" not in outbox_path.read_text(encoding="utf-8")
+                assert operation == "capture"
+                assert "person@example.com" not in payload["content"]
+                return {"status": status}
+    
+        service = MnemosService(dispatcher=Dispatcher(), descriptor_path=tmp_path / "runtime.json")
+        client = MnemosClient(
+            descriptor_path=tmp_path / "runtime.json", outbox_path=outbox_path, auto_start=False
+        )
+        service.start()
+        try:
+            result = await client.capture({"content": "Contact person@example.com"})
+            assert result["status"] == status
+            assert len(seen) == 1
+>           assert len(seen[0]) == 1
+E           assert 0 == 1
+E            +  where 0 = len([])
+
+test_capture_interruption.py:190: AssertionError
+_ test_capture_is_sanitized_and_durable_before_dispatch_until_terminal_reply[blocked] _
+
+tmp_path = WindowsPath('C:/Users/Ant/AppData/Local/Temp/mnemos-interruption-red-v3/fixtures/test_capture_is_sanitized_and_2')
+status = 'blocked'
+
+    @pytest.mark.asyncio
+    @pytest.mark.parametrize("status", ["committed", "rejected", "blocked", "pending"])
+    async def test_capture_is_sanitized_and_durable_before_dispatch_until_terminal_reply(
+        tmp_path: Path, status: str
+    ) -> None:
+        outbox_path = tmp_path / "outbox.json"
+        seen = []
+    
+        class Dispatcher:
+            async def dispatch(self, operation: str, payload: dict) -> dict:
+                seen.append(Outbox(outbox_path).pending())
+                if outbox_path.exists():
+                    assert "person@example.com" not in outbox_path.read_text(encoding="utf-8")
+                assert operation == "capture"
+                assert "person@example.com" not in payload["content"]
+                return {"status": status}
+    
+        service = MnemosService(dispatcher=Dispatcher(), descriptor_path=tmp_path / "runtime.json")
+        client = MnemosClient(
+            descriptor_path=tmp_path / "runtime.json", outbox_path=outbox_path, auto_start=False
+        )
+        service.start()
+        try:
+            result = await client.capture({"content": "Contact person@example.com"})
+            assert result["status"] == status
+            assert len(seen) == 1
+>           assert len(seen[0]) == 1
+E           assert 0 == 1
+E            +  where 0 = len([])
+
+test_capture_interruption.py:190: AssertionError
+_ test_capture_is_sanitized_and_durable_before_dispatch_until_terminal_reply[pending] _
+
+tmp_path = WindowsPath('C:/Users/Ant/AppData/Local/Temp/mnemos-interruption-red-v3/fixtures/test_capture_is_sanitized_and_3')
+status = 'pending'
+
+    @pytest.mark.asyncio
+    @pytest.mark.parametrize("status", ["committed", "rejected", "blocked", "pending"])
+    async def test_capture_is_sanitized_and_durable_before_dispatch_until_terminal_reply(
+        tmp_path: Path, status: str
+    ) -> None:
+        outbox_path = tmp_path / "outbox.json"
+        seen = []
+    
+        class Dispatcher:
+            async def dispatch(self, operation: str, payload: dict) -> dict:
+                seen.append(Outbox(outbox_path).pending())
+                if outbox_path.exists():
+                    assert "person@example.com" not in outbox_path.read_text(encoding="utf-8")
+                assert operation == "capture"
+                assert "person@example.com" not in payload["content"]
+                return {"status": status}
+    
+        service = MnemosService(dispatcher=Dispatcher(), descriptor_path=tmp_path / "runtime.json")
+        client = MnemosClient(
+            descriptor_path=tmp_path / "runtime.json", outbox_path=outbox_path, auto_start=False
+        )
+        service.start()
+        try:
+            result = await client.capture({"content": "Contact person@example.com"})
+            assert result["status"] == status
+            assert len(seen) == 1
+>           assert len(seen[0]) == 1
+E           assert 0 == 1
+E            +  where 0 = len([])
+
+test_capture_interruption.py:190: AssertionError
+=========================== short test summary info ===========================
+FAILED test_capture_interruption.py::test_capture_process_killed_at_http_boundary_replays_once_after_restart[before_send]
+FAILED test_capture_interruption.py::test_capture_process_killed_at_http_boundary_replays_once_after_restart[after_response]
+FAILED test_capture_interruption.py::test_capture_is_sanitized_and_durable_before_dispatch_until_terminal_reply[committed]
+FAILED test_capture_interruption.py::test_capture_is_sanitized_and_durable_before_dispatch_until_terminal_reply[rejected]
+FAILED test_capture_interruption.py::test_capture_is_sanitized_and_durable_before_dispatch_until_terminal_reply[blocked]
+FAILED test_capture_interruption.py::test_capture_is_sanitized_and_durable_before_dispatch_until_terminal_reply[pending]
+6 failed in 6.61s

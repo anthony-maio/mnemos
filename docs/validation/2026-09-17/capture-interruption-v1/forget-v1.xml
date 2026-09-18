@@ -1,0 +1,496 @@
+<?xml version="1.0" encoding="utf-8"?><testsuites name="pytest tests"><testsuite name="pytest" errors="0" failures="1" skipped="0" tests="7" time="20.638" timestamp="2026-09-17T21:11:21.980053-04:00" hostname="Aurora"><testcase classname="tests.test_capture_interruption" name="test_capture_process_killed_at_http_boundary_replays_once_after_restart[before_send]" time="1.972" /><testcase classname="tests.test_capture_interruption" name="test_capture_process_killed_at_http_boundary_replays_once_after_restart[after_response]" time="2.312" /><testcase classname="tests.test_capture_interruption" name="test_capture_process_killed_at_http_boundary_replays_once_after_restart[after_forget]" time="1.605"><failure message="KeyError: 'expected_version'">tmp_path = WindowsPath('C:/Users/Ant/AppData/Local/Temp/mnemos-interruption-forget-v1/test_capture_process_killed_at2')
+phase = 'after_forget'
+
+    @pytest.mark.asyncio
+    @pytest.mark.parametrize("phase", ["before_send", "after_response", "after_forget"])
+    async def test_capture_process_killed_at_http_boundary_replays_once_after_restart(
+        tmp_path: Path, phase: str
+    ) -&gt; None:
+        project = tmp_path / "project"
+        project.mkdir()
+        registry = ScopeRegistry()
+        registry.register_project(project, user_profile_id="interrupt-profile", enabled=True)
+        context = registry.resolve(
+            project, user_profile_id="interrupt-profile", session_id="interrupt-session", host="codex"
+        )
+        descriptor = tmp_path / "runtime.json"
+        outbox = tmp_path / "outbox.json"
+        database = tmp_path / "memory.sqlite"
+        payload = {
+            "event_id": "interrupt-capture",
+            "context": context.model_dump(mode="json"),
+            "occurred_at": datetime.now(timezone.utc).isoformat(),
+            "role": "assistant",
+            "content": "The interruption recovery convention is willow-birch.",
+            "source_kind": "codex_hook",
+            "source_ref": "Stop:interrupted-turn",
+        }
+        payload_file = tmp_path / "payload.json"
+        payload_file.write_text(json.dumps(payload), encoding="utf-8")
+        marker = tmp_path / "entered-request.txt"
+    
+        def start() -&gt; tuple[MnemosService, SQLiteStore]:
+            store = SQLiteStore(str(database))
+            engine = MnemosEngine(
+                config=MnemosConfig(
+                    modules=ModuleConfig(**{name: False for name in ModuleConfig.model_fields})
+                ),
+                llm=UnavailableLLMProvider(),
+                embedder=SimpleEmbeddingProvider(),
+                store=store,
+                scope_registry=registry,
+                require_scope_context=True,
+            )
+            service = MnemosService(
+                dispatcher=LocalMemoryService(engine, registry),
+                descriptor_path=descriptor,
+                lock_path=tmp_path / "runtime.lock",
+            )
+            service.start()
+            return service, store
+    
+        service, store = start()
+        child = None
+        replay_client = None
+        try:
+            environment = dict(os.environ)
+            environment["PYTHONPATH"] = str(Path(__file__).resolve().parents[1])
+            child = subprocess.Popen(
+                [
+                    sys.executable,
+                    "-c",
+                    CHILD,
+                    str(descriptor),
+                    str(outbox),
+                    str(payload_file),
+                    str(marker),
+                    phase,
+                ],
+                cwd=tmp_path,
+                env=environment,
+                stdin=subprocess.DEVNULL,
+                stdout=subprocess.PIPE,
+                stderr=subprocess.PIPE,
+            )
+    
+            async def wait_for_boundary() -&gt; None:
+                while not marker.exists():
+                    if child.poll() is not None:
+                        _, error = child.communicate()
+                        pytest.fail("capture child exited before boundary: " + error.decode())
+                    await asyncio.sleep(0.01)
+    
+            await asyncio.wait_for(wait_for_boundary(), timeout=15)
+            if phase == "after_forget":
+                service.submit("maintenance", {})
+                facts = store.get_all()
+                assert len(facts) == 1
+&gt;               service.submit(
+                    "forget",
+                    {"context": context.model_dump(mode="json"), "fact_id": facts[0].id},
+                )
+
+tests\test_capture_interruption.py:129: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+mnemos\service.py:698: in submit
+    return future.result(self.dispatch_timeout)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+C:\Users\Ant\AppData\Roaming\uv\python\cpython-3.13.7-windows-x86_64-none\Lib\concurrent\futures\_base.py:456: in result
+    return self.__get_result()
+           ^^^^^^^^^^^^^^^^^^^
+C:\Users\Ant\AppData\Roaming\uv\python\cpython-3.13.7-windows-x86_64-none\Lib\concurrent\futures\_base.py:401: in __get_result
+    raise self._exception
+mnemos\service.py:685: in _call_dispatcher
+    result = await result
+             ^^^^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+self = &lt;mnemos.memory_service.LocalMemoryService object at 0x000001F90A073A80&gt;
+operation = 'forget'
+payload = {'context': {'user_profile_id': 'interrupt-profile', 'project_id': 'bbb9e057-cf60-4ffe-9be9-f2f36fca05b8', 'workspace_id': None, 'session_id': 'interrupt-session', ...}, 'fact_id': '73358a79-aa8f-4265-8e42-b8413e13221b'}
+
+    async def dispatch(self, operation: str, payload: dict[str, Any]) -&gt; dict[str, Any]:
+        if operation == "configure_project":
+            from pathlib import Path
+            from .scopes import default_registry_path
+    
+            path = Path(payload["path"]).expanduser()
+            if not path.is_dir() or not isinstance(payload.get("enabled"), bool):
+                raise ValueError("Project path must be a directory and enabled must be a boolean")
+            profile = payload["user_profile_id"]
+            if not isinstance(profile, str) or not profile.strip():
+                raise ValueError("A nonempty user profile is required")
+            updated = self.registry.model_copy(deep=True)
+            project = updated.register_project(
+                path, user_profile_id=profile, enabled=payload["enabled"]
+            )
+            project.enabled = payload["enabled"]
+            if payload.get("workspace_id"):
+                updated.add_membership(project.id, payload["workspace_id"])
+            updated.save(default_registry_path())
+            self.registry = updated
+            self.engine._scope_registry = updated
+            return {
+                "schema_version": 1,
+                "status": "committed",
+                "project": project.model_dump(mode="json"),
+            }
+        if operation == "probe_cognition":
+            from .utils.llm import MockLLMProvider, UnavailableLLMProvider
+    
+            context = self.registry.validate_context(
+                ScopeContext.model_validate(payload["context"])
+            )
+            self._cognition_probe = {"status": "failed", "input_specific_extraction": False}
+            if isinstance(self.engine.llm, (MockLLMProvider, UnavailableLLMProvider)):
+                return {
+                    "schema_version": 1,
+                    **self._cognition_probe,
+                    "reason": "A configured real cognition provider is required",
+                }
+            label = "mnemos-probe-" + uuid4().hex
+            content = f"The validation project uses deployment label {label}."
+            probe_event = EpisodicEvent(
+                id=str(uuid4()),
+                role="user",
+                content=content,
+                normalized_content=normalize_memory_text(content),
+                event_fingerprint=label,
+                scope="project",
+                scope_id=context.project_id,
+                metadata=context_metadata(context, "project"),
+            )
+            try:
+                proposals = await self.engine.sleep_daemon.propose_facts(
+                    [probe_event], self.engine.llm
+                )
+                passed = any(
+                    label in fact.content and probe_event.id in fact.evidence_ids
+                    for fact in proposals
+                )
+                self._cognition_probe = {
+                    "status": "observed" if passed else "failed",
+                    "input_specific_extraction": passed,
+                    "observed_at": datetime.now(timezone.utc).isoformat(),
+                    "provider": type(self.engine.llm).__name__,
+                }
+            except Exception as exc:
+                self._cognition_probe["error"] = type(exc).__name__
+            return {"schema_version": 1, **self._cognition_probe}
+        if operation == "backup":
+            from .backup import create_backup
+    
+            if not isinstance(self.engine.store, SQLiteStore):
+                raise ValueError("Backup requires SQLite storage")
+            manifest = create_backup(self.engine.store, payload["destination"], self.registry)
+            return {
+                "schema_version": 1,
+                "status": "committed",
+                "manifest": manifest,
+                "destination": payload["destination"],
+            }
+        if operation == "restore":
+            from .backup import restore_backup
+    
+            if not isinstance(self.engine.store, SQLiteStore):
+                raise ValueError("Restore requires SQLite storage")
+            manifest, registry = restore_backup(
+                payload["archive"],
+                payload["destination"],
+                current_store=self.engine.store,
+                current_registry=self.registry,
+            )
+            return {
+                "schema_version": 1,
+                "status": "committed",
+                "manifest": manifest,
+                "destination": payload["destination"],
+                "registry": registry.model_dump(mode="json"),
+                "activated": False,
+            }
+        if operation == "reload_registry":
+            from .scopes import default_registry_path
+    
+            self.registry = ScopeRegistry.load(default_registry_path())
+            self.engine._scope_registry = self.registry
+            return {
+                "schema_version": 1,
+                "status": "committed",
+                "projects": len(self.registry.projects),
+            }
+        if operation in {
+            "list",
+            "legacy_review",
+            "feedback",
+            "feedback_list",
+            "job",
+            "jobs",
+            "retry_job",
+        }:
+            context = self.registry.validate_context(
+                ScopeContext.model_validate(payload["context"])
+            )
+            allowed = payload.get("allowed_scopes", ["project", "global"])
+            if any(scope not in {"project", "workspace", "global"} for scope in allowed):
+                raise ValueError("Invalid allowed scopes")
+    
+            def permitted(chunk: MemoryChunk) -&gt; bool:
+                return scope_allows(chunk.metadata, context, allowed)
+    
+            setattr(
+                permitted,
+                "_mnemos_scope_filter",
+                {
+                    "user_profile_id": context.user_profile_id,
+                    "project_id": context.project_id,
+                    "workspace_id": context.workspace_id,
+                    "allowed_scopes": allowed,
+                },
+            )
+            if operation == "list":
+                chunks = self.engine.store.list_chunks(
+                    limit=min(max(int(payload.get("limit", 50)), 0), 500),
+                    after_id=payload.get("after_id", ""),
+                    filter_fn=permitted,
+                )
+                return {
+                    "schema_version": 1,
+                    "facts": [
+                        chunk.model_dump(mode="json", exclude={"embedding"}) for chunk in chunks
+                    ],
+                    "jobs": self.engine.store.job_summary(
+                        now=datetime.now(timezone.utc),
+                        user_profile_id=context.user_profile_id,
+                        project_id=context.project_id,
+                        workspace_id=context.workspace_id,
+                    ),
+                    "next_cursor": chunks[-1].id if chunks else None,
+                }
+            if operation == "legacy_review":
+                limit = min(max(int(payload.get("limit", 50)), 1), 500)
+                chunks = self.engine.store.list_legacy_chunks(
+                    limit=limit + 1,
+                    after_id=str(payload.get("after_id") or ""),
+                )
+                page = chunks[:limit]
+                return {
+                    "schema_version": 1,
+                    "status": "committed",
+                    "read_only": True,
+                    "migration_required": True,
+                    "facts": [
+                        {
+                            "id": chunk.id,
+                            "content": chunk.content,
+                            "version": chunk.version,
+                            "created_at": chunk.created_at.isoformat(),
+                            "updated_at": chunk.updated_at.isoformat(),
+                        }
+                        for chunk in page
+                    ],
+                    "truncated": len(chunks) &gt; limit,
+                    "next_cursor": page[-1].id if len(chunks) &gt; limit and page else None,
+                    "limit": limit,
+                }
+            if operation == "jobs":
+                status = payload.get("status")
+                if status not in {None, "pending", "leased", "completed", "failed", "exhausted"}:
+                    raise ValueError("Invalid job status")
+                limit = min(max(int(payload.get("limit", 50)), 1), 500)
+                jobs = self.engine.store.list_jobs(
+                    status=status,
+                    limit=limit + 1,
+                    user_profile_id=context.user_profile_id,
+                    project_id=context.project_id,
+                    workspace_id=context.workspace_id,
+                )
+                return {
+                    "schema_version": 1,
+                    "jobs": [
+                        job.model_dump(mode="json", exclude={"payload", "lease_token"})
+                        for job in jobs[:limit]
+                    ],
+                    "truncated": len(jobs) &gt; limit,
+                    "limit": limit,
+                }
+            if operation in {"job", "retry_job"}:
+                job = self.engine.store.get_job(payload["job_id"])
+                if (
+                    job is None
+                    or job.payload.get("context", {}).get("user_profile_id")
+                    != context.user_profile_id
+                ):
+                    raise KeyError("Job not found in the requested profile")
+                job_context = ScopeContext.model_validate(job.payload["context"])
+                if (
+                    job_context.project_id != context.project_id
+                    or job_context.workspace_id != context.workspace_id
+                ):
+                    raise KeyError("Job not found in the requested scope")
+                if operation == "retry_job":
+                    if not self.engine.store.retry_job(job.id):
+                        raise ValueError("Only exhausted jobs can be manually retried")
+                    retried_job = self.engine.store.get_job(job.id)
+                    assert retried_job is not None
+                    return {
+                        "schema_version": 1,
+                        "status": "committed",
+                        "retried": True,
+                        "job": retried_job.model_dump(
+                            mode="json", exclude={"payload", "lease_token"}
+                        ),
+                    }
+                return {
+                    "schema_version": 1,
+                    "job": job.model_dump(mode="json", exclude={"payload", "lease_token"}),
+                }
+            if operation == "feedback_list":
+                events = self.engine.store.list_feedback_events(
+                    user_profile_id=context.user_profile_id, event_type=payload.get("event_type")
+                )
+                events = [
+                    event
+                    for event in events
+                    if scope_allows(
+                        {
+                            "user_profile_id": event.user_profile_id,
+                            "scope": event.scope,
+                            "scope_id": event.scope_id,
+                        },
+                        context,
+                        allowed,
+                    )
+                ]
+                return {
+                    "schema_version": 1,
+                    "events": [event.model_dump(mode="json") for event in events],
+                }
+            chunk_ids = payload.get("chunk_ids", [])
+            for fact_id in chunk_ids:
+                fact = self.engine.store.get(fact_id)
+                if fact is None or not permitted(fact):
+                    raise ValueError("Feedback references a fact outside the permitted scope")
+            query, notes = self.firewall.apply(payload["query"]), self.firewall.apply(
+                payload.get("notes", "")
+            )
+            if not query.allowed or not notes.allowed:
+                return {"schema_version": 1, "status": "rejected", "stored": False}
+            metadata = context_metadata(context, payload.get("scope", "project"))
+            feedback = RetrievalFeedbackEvent(
+                event_type=payload["event_type"],
+                query=query.content,
+                notes=notes.content,
+                chunk_ids=chunk_ids,
+                scope=metadata["scope"],
+                scope_id=metadata["scope_id"],
+                user_profile_id=context.user_profile_id,
+            )
+            self.engine.store.store_feedback_event(feedback)
+            return {
+                "schema_version": 1,
+                "status": "committed",
+                "stored": True,
+                "event_type": feedback.event_type,
+                "chunk_ids": chunk_ids,
+                "id": feedback.id,
+            }
+        if operation == "capture":
+            return self.capture(CaptureEvent.model_validate(payload))
+        if operation == "remember":
+            context = ScopeContext.model_validate(payload["context"])
+            event = CaptureEvent(
+                event_id=payload.get("event_id") or str(uuid4()),
+                context=context,
+                occurred_at=datetime.now(timezone.utc),
+                role=payload.get("role", "user"),
+                content=payload["content"],
+                source_kind="explicit_remember",
+                source_ref=payload.get("source_ref"),
+            )
+            return self.capture(event, scope=payload.get("scope", "project"), explicit=True)
+        if operation == "retrieve":
+            return await self.retrieve(RetrievalRequest.model_validate(payload))
+        if operation == "correct":
+            context = self.registry.validate_context(
+                ScopeContext.model_validate(payload["context"])
+            )
+            previous = self.engine.store.get(payload["fact_id"])
+            if previous is None or not scope_allows(
+                previous.metadata, context, ("project", "workspace", "global")
+            ):
+                raise KeyError("Correction target not found in the requested scope")
+            if previous.version != payload["expected_version"]:
+                raise ValueError("Correction version conflict")
+            event = CaptureEvent(
+                event_id=payload.get("event_id") or str(uuid4()),
+                context=context,
+                occurred_at=datetime.now(timezone.utc),
+                role="user",
+                content=payload["content"],
+                source_kind="explicit_correction",
+                source_ref=payload.get("source_ref"),
+            )
+            return self.capture(
+                event,
+                scope=previous.metadata["scope"],
+                explicit=True,
+                correction={"target_fact_id": previous.id, "expected_version": previous.version},
+            )
+        if operation == "maintenance":
+            return {
+                "schema_version": 1,
+                "completed": await self.maintenance.run_once(force=True),
+                "maintenance": self.maintenance.health(),
+                "graph": self._graph_status(),
+            }
+        if operation == "forget_preview":
+            preview_request = ForgetPreviewRequest.model_validate(payload)
+            context = self.registry.validate_context(preview_request.context)
+            if context.project_id is None:
+                raise ValueError("Related forget requires a project context")
+            preview = self.engine.store.preview_related_forget(
+                fact_id=preview_request.fact_id,
+                expected_version=preview_request.expected_version,
+                user_profile_id=context.user_profile_id,
+                project_id=context.project_id,
+                limit=preview_request.limit,
+            )
+            return {"schema_version": 1, "status": "preview", **preview}
+        if operation == "forget_related":
+            related_request = ForgetRelatedRequest.model_validate(payload)
+            context = self.registry.validate_context(related_request.context)
+            if context.project_id is None:
+                raise ValueError("Related forget requires a project context")
+            result = self.engine.store.forget_related(
+                fact_id=related_request.fact_id,
+                expected_version=related_request.expected_version,
+                user_profile_id=context.user_profile_id,
+                project_id=context.project_id,
+                preview_digest=related_request.preview_digest,
+                limit=related_request.preview_limit,
+                selected_fact_ids=related_request.selected_fact_ids,
+                selected_source_event_ids=related_request.selected_source_event_ids,
+            )
+            for selected_id in result["selected_fact_ids"]:
+                self.engine.spreading_activation.remove_node(selected_id)
+            self.engine.surprisal_gate.clear_history()
+            self.engine.sleep_daemon._episodic_buffer.clear()
+            self.engine.mutable_rag.clear_labile_queue()
+            self.engine._retrieval_traces.clear()
+            return {"schema_version": 1, **result}
+        if operation == "forget":
+            context = self.registry.validate_context(
+                ScopeContext.model_validate(payload["context"])
+            )
+            chunk = self.engine.store.get(payload["fact_id"])
+            if chunk is None or not scope_allows(
+                chunk.metadata, context, ("project", "workspace", "global")
+            ):
+                raise KeyError("Memory not found in the requested scope")
+            forgotten = self.engine.store.forget_fact(
+&gt;               chunk.id, expected_version=payload["expected_version"]
+                                           ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+            )
+E           KeyError: 'expected_version'
+
+mnemos\memory_service.py:1016: KeyError</failure></testcase><testcase classname="tests.test_capture_interruption" name="test_capture_is_sanitized_and_durable_before_dispatch_until_terminal_reply[committed]" time="0.710" /><testcase classname="tests.test_capture_interruption" name="test_capture_is_sanitized_and_durable_before_dispatch_until_terminal_reply[rejected]" time="0.724" /><testcase classname="tests.test_capture_interruption" name="test_capture_is_sanitized_and_durable_before_dispatch_until_terminal_reply[blocked]" time="0.726" /><testcase classname="tests.test_capture_interruption" name="test_capture_is_sanitized_and_durable_before_dispatch_until_terminal_reply[pending]" time="0.727" /></testsuite></testsuites>

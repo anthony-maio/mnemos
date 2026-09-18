@@ -26,7 +26,11 @@ The CLI, MCP server, and host adapters use the authenticated loopback service. T
 python -m mnemos.service
 ```
 
-Most clients auto-start one bounded service process when the descriptor is absent. Set `MNEMOS_RUNTIME_DESCRIPTOR` consistently in every process when isolating a separate runtime. If startup fails, automatic capture can enter a sanitized local outbox; explicit writes report failure. An outbox entry is not a committed service event. `mnemos service-stop` requests authenticated shutdown and waits for confirmation. Stop host clients before offline maintenance so a new request does not restart the service.
+Most clients auto-start one bounded service process when the descriptor is absent. Set `MNEMOS_RUNTIME_DESCRIPTOR` consistently in every process when isolating a separate runtime. Automatic capture persists a sanitized event in the local outbox before waiting for startup or an HTTP response. A committed or explicitly rejected response removes it; interrupted requests retain the same event identity for replay. An outbox entry is not a committed service event. Explicit writes report failure. `mnemos service-stop` requests authenticated shutdown and waits for confirmation. Stop host clients before offline maintenance so a new request does not restart the service.
+
+This protects capture after the outbox write completes. It cannot recover text
+if the host terminates the hook before that write, and it does not establish
+that native hook deadlines or clean host shutdown are satisfied.
 
 The client reports a service process that exits before startup with its exit
 code. A process that remains alive without publishing a descriptor reports a

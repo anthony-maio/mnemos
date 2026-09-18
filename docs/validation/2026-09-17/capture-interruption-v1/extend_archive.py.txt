@@ -1,0 +1,14 @@
+import hashlib,json,shutil
+from pathlib import Path
+root=Path('D:/Development/mnemos/mnemos/.worktrees/functional-local-memory')
+temp=Path('C:/Users/Ant/AppData/Local/Temp')
+out=root/'docs/validation/2026-09-17/capture-interruption-v1'
+for version in (1,2,3):
+ shutil.copyfile(temp/f'mnemos-interruption-forget-v{version}.xml',out/f'forget-v{version}.xml')
+shutil.copyfile(root/'tests/test_capture_interruption.py',out/'test_capture_interruption_with_forget.py.txt')
+shutil.copyfile(__file__,out/'extend_archive.py.txt')
+with (out/'README.md').open('a',encoding='utf-8') as f:
+ f.write('\nA seventh case commits, forgets, kills the client before acknowledgement,\nthen restarts and replays. The outbox clears without restoring the fact or\nsource event. The job remains completed with a forgotten marker and no\ncaptured text; forced maintenance does not recreate the fact. All seven\ncases pass in forget-v3. Earlier forget-v1 omitted expected_version;\nforget-v2 incorrectly expected deletion of the completed job marker. Those\nfixture failures are preserved. Product code did not change between them.\n')
+index={'files':{p.name:{'bytes':p.stat().st_size,'sha256':hashlib.sha256(p.read_bytes()).hexdigest()} for p in out.iterdir() if p.name!='evidence-index.json'}}
+(out/'evidence-index.json').write_text(json.dumps(index,indent=2)+'\n')
+print(len(index['files']))

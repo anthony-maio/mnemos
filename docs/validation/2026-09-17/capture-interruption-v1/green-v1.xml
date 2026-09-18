@@ -1,0 +1,172 @@
+<?xml version="1.0" encoding="utf-8"?><testsuites name="pytest tests"><testsuite name="pytest" errors="0" failures="3" skipped="0" tests="90" time="33.388" timestamp="2026-09-17T21:06:05.537185-04:00" hostname="Aurora"><testcase classname="tests.test_capture_interruption" name="test_capture_process_killed_at_http_boundary_replays_once_after_restart[before_send]" time="1.969" /><testcase classname="tests.test_capture_interruption" name="test_capture_process_killed_at_http_boundary_replays_once_after_restart[after_response]" time="2.296" /><testcase classname="tests.test_capture_interruption" name="test_capture_is_sanitized_and_durable_before_dispatch_until_terminal_reply[committed]" time="0.714"><failure message="FileNotFoundError: [Errno 2] No such file or directory: 'C:\\Users\\Ant\\AppData\\Local\\Temp\\mnemos-interruption-green-v1\\test_capture_is_sanitized_and_0\\outbox.json'">tmp_path = WindowsPath('C:/Users/Ant/AppData/Local/Temp/mnemos-interruption-green-v1/test_capture_is_sanitized_and_0')
+status = 'committed'
+
+    @pytest.mark.asyncio
+    @pytest.mark.parametrize("status", ["committed", "rejected", "blocked", "pending"])
+    async def test_capture_is_sanitized_and_durable_before_dispatch_until_terminal_reply(
+        tmp_path: Path, status: str
+    ) -&gt; None:
+        outbox_path = tmp_path / "outbox.json"
+        seen = []
+    
+        class Dispatcher:
+            async def dispatch(self, operation: str, payload: dict) -&gt; dict:
+                seen.append(Outbox(outbox_path).pending())
+                assert operation == "capture"
+                assert "person@example.com" not in payload["content"]
+                return {"status": status}
+    
+        service = MnemosService(dispatcher=Dispatcher(), descriptor_path=tmp_path / "runtime.json")
+        client = MnemosClient(
+            descriptor_path=tmp_path / "runtime.json", outbox_path=outbox_path, auto_start=False
+        )
+        service.start()
+        try:
+            result = await client.capture({"content": "Contact person@example.com"})
+            assert result["status"] == status
+            assert len(seen) == 1
+            assert len(seen[0]) == 1
+            assert seen[0][0]["payload"]["event_id"]
+&gt;           assert "person@example.com" not in outbox_path.read_text(encoding="utf-8")
+                                               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+tests\test_capture_interruption.py:173: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+C:\Users\Ant\AppData\Roaming\uv\python\cpython-3.13.7-windows-x86_64-none\Lib\pathlib\_local.py:546: in read_text
+    return PathBase.read_text(self, encoding, errors, newline)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+C:\Users\Ant\AppData\Roaming\uv\python\cpython-3.13.7-windows-x86_64-none\Lib\pathlib\_abc.py:632: in read_text
+    with self.open(mode='r', encoding=encoding, errors=errors, newline=newline) as f:
+         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+self = WindowsPath('C:/Users/Ant/AppData/Local/Temp/mnemos-interruption-green-v1/test_capture_is_sanitized_and_0/outbox.json')
+mode = 'r', buffering = -1, encoding = 'utf-8', errors = None, newline = None
+
+    def open(self, mode='r', buffering=-1, encoding=None,
+             errors=None, newline=None):
+        """
+        Open the file pointed to by this path and return a file object, as
+        the built-in open() function does.
+        """
+        if "b" not in mode:
+            encoding = io.text_encoding(encoding)
+&gt;       return io.open(self, mode, buffering, encoding, errors, newline)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       FileNotFoundError: [Errno 2] No such file or directory: 'C:\\Users\\Ant\\AppData\\Local\\Temp\\mnemos-interruption-green-v1\\test_capture_is_sanitized_and_0\\outbox.json'
+
+C:\Users\Ant\AppData\Roaming\uv\python\cpython-3.13.7-windows-x86_64-none\Lib\pathlib\_local.py:537: FileNotFoundError</failure></testcase><testcase classname="tests.test_capture_interruption" name="test_capture_is_sanitized_and_durable_before_dispatch_until_terminal_reply[rejected]" time="0.724"><failure message="FileNotFoundError: [Errno 2] No such file or directory: 'C:\\Users\\Ant\\AppData\\Local\\Temp\\mnemos-interruption-green-v1\\test_capture_is_sanitized_and_1\\outbox.json'">tmp_path = WindowsPath('C:/Users/Ant/AppData/Local/Temp/mnemos-interruption-green-v1/test_capture_is_sanitized_and_1')
+status = 'rejected'
+
+    @pytest.mark.asyncio
+    @pytest.mark.parametrize("status", ["committed", "rejected", "blocked", "pending"])
+    async def test_capture_is_sanitized_and_durable_before_dispatch_until_terminal_reply(
+        tmp_path: Path, status: str
+    ) -&gt; None:
+        outbox_path = tmp_path / "outbox.json"
+        seen = []
+    
+        class Dispatcher:
+            async def dispatch(self, operation: str, payload: dict) -&gt; dict:
+                seen.append(Outbox(outbox_path).pending())
+                assert operation == "capture"
+                assert "person@example.com" not in payload["content"]
+                return {"status": status}
+    
+        service = MnemosService(dispatcher=Dispatcher(), descriptor_path=tmp_path / "runtime.json")
+        client = MnemosClient(
+            descriptor_path=tmp_path / "runtime.json", outbox_path=outbox_path, auto_start=False
+        )
+        service.start()
+        try:
+            result = await client.capture({"content": "Contact person@example.com"})
+            assert result["status"] == status
+            assert len(seen) == 1
+            assert len(seen[0]) == 1
+            assert seen[0][0]["payload"]["event_id"]
+&gt;           assert "person@example.com" not in outbox_path.read_text(encoding="utf-8")
+                                               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+tests\test_capture_interruption.py:173: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+C:\Users\Ant\AppData\Roaming\uv\python\cpython-3.13.7-windows-x86_64-none\Lib\pathlib\_local.py:546: in read_text
+    return PathBase.read_text(self, encoding, errors, newline)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+C:\Users\Ant\AppData\Roaming\uv\python\cpython-3.13.7-windows-x86_64-none\Lib\pathlib\_abc.py:632: in read_text
+    with self.open(mode='r', encoding=encoding, errors=errors, newline=newline) as f:
+         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+self = WindowsPath('C:/Users/Ant/AppData/Local/Temp/mnemos-interruption-green-v1/test_capture_is_sanitized_and_1/outbox.json')
+mode = 'r', buffering = -1, encoding = 'utf-8', errors = None, newline = None
+
+    def open(self, mode='r', buffering=-1, encoding=None,
+             errors=None, newline=None):
+        """
+        Open the file pointed to by this path and return a file object, as
+        the built-in open() function does.
+        """
+        if "b" not in mode:
+            encoding = io.text_encoding(encoding)
+&gt;       return io.open(self, mode, buffering, encoding, errors, newline)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       FileNotFoundError: [Errno 2] No such file or directory: 'C:\\Users\\Ant\\AppData\\Local\\Temp\\mnemos-interruption-green-v1\\test_capture_is_sanitized_and_1\\outbox.json'
+
+C:\Users\Ant\AppData\Roaming\uv\python\cpython-3.13.7-windows-x86_64-none\Lib\pathlib\_local.py:537: FileNotFoundError</failure></testcase><testcase classname="tests.test_capture_interruption" name="test_capture_is_sanitized_and_durable_before_dispatch_until_terminal_reply[blocked]" time="0.721"><failure message="FileNotFoundError: [Errno 2] No such file or directory: 'C:\\Users\\Ant\\AppData\\Local\\Temp\\mnemos-interruption-green-v1\\test_capture_is_sanitized_and_2\\outbox.json'">tmp_path = WindowsPath('C:/Users/Ant/AppData/Local/Temp/mnemos-interruption-green-v1/test_capture_is_sanitized_and_2')
+status = 'blocked'
+
+    @pytest.mark.asyncio
+    @pytest.mark.parametrize("status", ["committed", "rejected", "blocked", "pending"])
+    async def test_capture_is_sanitized_and_durable_before_dispatch_until_terminal_reply(
+        tmp_path: Path, status: str
+    ) -&gt; None:
+        outbox_path = tmp_path / "outbox.json"
+        seen = []
+    
+        class Dispatcher:
+            async def dispatch(self, operation: str, payload: dict) -&gt; dict:
+                seen.append(Outbox(outbox_path).pending())
+                assert operation == "capture"
+                assert "person@example.com" not in payload["content"]
+                return {"status": status}
+    
+        service = MnemosService(dispatcher=Dispatcher(), descriptor_path=tmp_path / "runtime.json")
+        client = MnemosClient(
+            descriptor_path=tmp_path / "runtime.json", outbox_path=outbox_path, auto_start=False
+        )
+        service.start()
+        try:
+            result = await client.capture({"content": "Contact person@example.com"})
+            assert result["status"] == status
+            assert len(seen) == 1
+            assert len(seen[0]) == 1
+            assert seen[0][0]["payload"]["event_id"]
+&gt;           assert "person@example.com" not in outbox_path.read_text(encoding="utf-8")
+                                               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+tests\test_capture_interruption.py:173: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+C:\Users\Ant\AppData\Roaming\uv\python\cpython-3.13.7-windows-x86_64-none\Lib\pathlib\_local.py:546: in read_text
+    return PathBase.read_text(self, encoding, errors, newline)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+C:\Users\Ant\AppData\Roaming\uv\python\cpython-3.13.7-windows-x86_64-none\Lib\pathlib\_abc.py:632: in read_text
+    with self.open(mode='r', encoding=encoding, errors=errors, newline=newline) as f:
+         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+self = WindowsPath('C:/Users/Ant/AppData/Local/Temp/mnemos-interruption-green-v1/test_capture_is_sanitized_and_2/outbox.json')
+mode = 'r', buffering = -1, encoding = 'utf-8', errors = None, newline = None
+
+    def open(self, mode='r', buffering=-1, encoding=None,
+             errors=None, newline=None):
+        """
+        Open the file pointed to by this path and return a file object, as
+        the built-in open() function does.
+        """
+        if "b" not in mode:
+            encoding = io.text_encoding(encoding)
+&gt;       return io.open(self, mode, buffering, encoding, errors, newline)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       FileNotFoundError: [Errno 2] No such file or directory: 'C:\\Users\\Ant\\AppData\\Local\\Temp\\mnemos-interruption-green-v1\\test_capture_is_sanitized_and_2\\outbox.json'
+
+C:\Users\Ant\AppData\Roaming\uv\python\cpython-3.13.7-windows-x86_64-none\Lib\pathlib\_local.py:537: FileNotFoundError</failure></testcase><testcase classname="tests.test_capture_interruption" name="test_capture_is_sanitized_and_durable_before_dispatch_until_terminal_reply[pending]" time="0.708" /><testcase classname="tests.test_service_lost_ack" name="test_committed_capture_lost_ack_replays_once_after_restart[extract-one_lost_ack]" time="2.675" /><testcase classname="tests.test_service_lost_ack" name="test_committed_capture_lost_ack_replays_once_after_restart[extract-two_lost_acks]" time="1.709" /><testcase classname="tests.test_service_lost_ack" name="test_committed_capture_lost_ack_replays_once_after_restart[capture_only-one_lost_ack]" time="1.631" /><testcase classname="tests.test_service_lost_ack" name="test_committed_capture_lost_ack_replays_once_after_restart[capture_only-two_lost_acks]" time="1.598" /><testcase classname="tests.test_service" name="test_closing_host_client_does_not_terminate_shared_runtime" time="0.004" /><testcase classname="tests.test_service" name="test_duplicate_launcher_exits_without_stopping_owner" time="1.024" /><testcase classname="tests.test_service" name="test_loopback_dispatch_auth_and_origin" time="0.718" /><testcase classname="tests.test_service" name="test_client_autostarts_once_and_waits_for_descriptor" time="0.701" /><testcase classname="tests.test_service" name="test_invalid_json_and_max_body_are_rejected" time="0.725" /><testcase classname="tests.test_service" name="test_dispatcher_runs_on_single_owner_loop_thread" time="0.839" /><testcase classname="tests.test_service" name="test_simultaneous_startup_returns_one_owned_descriptor" time="0.512" /><testcase classname="tests.test_service" name="test_concurrent_startup_waits_for_the_single_owner" time="0.513" /><testcase classname="tests.test_service" name="test_service_restart_publishes_fresh_descriptor" time="1.240" /><testcase classname="tests.test_service" name="test_client_queues_sanitized_capture_and_replays_once" time="0.731" /><testcase classname="tests.test_service" name="test_uncommitted_replay_retains_outbox_entry" time="0.740" /><testcase classname="tests.test_service" name="test_outbox_concurrent_writers_keep_every_profile_event" time="0.154" /><testcase classname="tests.test_service" name="test_outbox_rejects_secret_source_metadata_before_persistence" time="0.003" /><testcase classname="tests.test_service" name="test_slow_dispatcher_close_keeps_ownership_until_stop_completes" time="0.654" /><testcase classname="tests.test_client_startup_failure" name="test_exited_autostart_child_reports_exit_code_without_waiting" time="0.004" /><testcase classname="tests.test_client_startup_failure" name="test_exited_autostart_child_capture_still_queues_with_diagnostic" time="0.016" /><testcase classname="tests.test_client_startup_failure" name="test_live_child_without_descriptor_reports_startup_timeout" time="0.004" /><testcase classname="tests.test_client_startup_failure" name="test_existing_owner_descriptor_wins_over_exited_launcher" time="0.004" /><testcase classname="tests.test_client_startup_failure" name="test_live_child_becoming_ready_is_accepted" time="0.003" /><testcase classname="tests.test_client_startup_failure" name="test_descriptor_appearing_during_terminal_poll_wins" time="0.004" /><testcase classname="tests.test_codex_adapter" name="test_user_prompt_retrieves_and_captures_stable_event" time="0.118" /><testcase classname="tests.test_codex_adapter" name="test_distinct_native_turns_preserve_identical_prompt_events" time="0.135" /><testcase classname="tests.test_codex_adapter" name="test_capture_events_require_native_turn_identity" time="0.043" /><testcase classname="tests.test_codex_adapter" name="test_stop_captures_assistant_without_continuation" time="0.086" /><testcase classname="tests.test_codex_adapter" name="test_stop_hook_reentry_does_not_capture_again" time="0.079" /><testcase classname="tests.test_codex_adapter" name="test_missing_profile_or_unregistered_project_degrades_without_transport" time="0.004" /><testcase classname="tests.test_codex_adapter" name="test_service_retrieval_degradation_is_reported_without_blocking" time="0.083" /><testcase classname="tests.test_codex_adapter" name="test_post_compact_recall_and_session_end_maintenance" time="0.170" /><testcase classname="tests.test_codex_adapter" name="test_supported_event_contract_and_capability_probe_are_local" time="0.138" /><testcase classname="tests.test_codex_adapter" name="test_hook_output_does_not_emit_context_for_capture_only" time="0.003" /><testcase classname="tests.test_codex_adapter" name="test_post_compact_output_uses_only_published_fields" time="0.002" /><testcase classname="tests.test_codex_adapter" name="test_hook_exception_reports_sanitized_diagnostic_and_stop_stays_nonblocking" time="0.004" /><testcase classname="tests.test_codex_adapter" name="test_degraded_hook_reports_allowlisted_status_without_payload" time="0.003" /><testcase classname="tests.test_claude_adapter" name="test_prompt_is_captured_before_failing_recall" time="0.142" /><testcase classname="tests.test_claude_adapter" name="test_disabled_recall_keeps_prompt_capture" time="0.136" /><testcase classname="tests.test_claude_adapter" name="test_rejected_prompt_capture_is_degraded_but_keeps_recall_context" time="0.129" /><testcase classname="tests.test_claude_adapter" name="test_transcript_deltas_are_role_tagged_checkpointed_and_idempotent" time="0.199" /><testcase classname="tests.test_claude_adapter" name="test_stop_replay_after_restart_uses_assistant_checkpoint_marker" time="0.208" /><testcase classname="tests.test_claude_adapter" name="test_precompact_then_stop_does_not_recapture_assistant" time="0.155" /><testcase classname="tests.test_claude_adapter" name="test_identical_assistant_text_with_new_transcript_uuid_is_captured" time="0.175" /><testcase classname="tests.test_claude_adapter" name="test_delayed_distinct_assistant_transcript_is_not_lost" time="0.184" /><testcase classname="tests.test_claude_adapter" name="test_new_turn_same_text_uses_prompt_id_before_transcript_flush" time="0.161" /><testcase classname="tests.test_claude_adapter" name="test_user_only_checkpoint_keeps_unflushed_assistant_fallback_available" time="0.144" /><testcase classname="tests.test_claude_adapter" name="test_eof_checkpoint_without_assistant_marker_degrades_without_capture" time="0.094" /><testcase classname="tests.test_claude_adapter" name="test_malformed_assistant_marker_fails_closed" time="0.096" /><testcase classname="tests.test_claude_adapter" name="test_checkpoint_waits_for_durable_or_outbox_ack" time="0.142" /><testcase classname="tests.test_claude_adapter" name="test_partial_transcript_capture_retries_acknowledged_rows_safely[PreCompact]" time="0.150" /><testcase classname="tests.test_claude_adapter" name="test_partial_transcript_capture_retries_acknowledged_rows_safely[Stop]" time="0.140" /><testcase classname="tests.test_claude_adapter" name="test_rotation_restarts_offset_and_stop_deduplicates_final_message" time="0.167" /><testcase classname="tests.test_claude_adapter" name="test_stop_falls_back_to_last_assistant_message_when_transcript_is_missing" time="0.087" /><testcase classname="tests.test_claude_adapter" name="test_stop_transcript_read_failure_keeps_fallback_and_does_not_advance_checkpoint" time="0.103" /><testcase classname="tests.test_claude_adapter" name="test_missing_transcript_fallback_keeps_later_native_observation" time="0.208" /><testcase classname="tests.test_claude_adapter" name="test_missing_transcript_prompt_association_keeps_distinct_native_observation" time="0.248" /><testcase classname="tests.test_claude_adapter" name="test_fallback_prompt_turn_can_deduplicate_its_later_transcript_flush[prompt_id]" time="0.177" /><testcase classname="tests.test_claude_adapter" name="test_fallback_prompt_turn_can_deduplicate_its_later_transcript_flush[promptId]" time="0.162" /><testcase classname="tests.test_claude_adapter" name="test_fallback_prompt_turn_can_deduplicate_its_later_transcript_flush[turn_id]" time="0.150" /><testcase classname="tests.test_claude_adapter" name="test_transcript_without_native_id_fails_closed_degraded[PreCompact]" time="0.089" /><testcase classname="tests.test_claude_adapter" name="test_transcript_without_native_id_fails_closed_degraded[Stop]" time="0.097" /><testcase classname="tests.test_claude_adapter" name="test_native_prompt_reference_associates_user_capture_with_transcript" time="0.144" /><testcase classname="tests.test_claude_adapter" name="test_stop_invalid_prompt_id_uses_degraded_fallback[17]" time="0.425" /><testcase classname="tests.test_claude_adapter" name="test_stop_invalid_prompt_id_uses_degraded_fallback[   ]" time="0.166" /><testcase classname="tests.test_claude_adapter" name="test_stop_invalid_prompt_id_uses_degraded_fallback[invalid_prompt_id2]" time="0.190" /><testcase classname="tests.test_claude_adapter" name="test_missing_id_rotation_with_same_offset_restarts_safely" time="0.148" /><testcase classname="tests.test_claude_adapter" name="test_missing_transcript_without_fallback_is_degraded_and_uncommitted" time="0.110" /><testcase classname="tests.test_claude_adapter" name="test_corrupt_checkpoint_is_distinct_from_unavailable_transcript" time="0.116" /><testcase classname="tests.test_claude_adapter" name="test_checkpoint_write_failure_is_not_reported_as_transcript_failure" time="0.098" /><testcase classname="tests.test_claude_adapter" name="test_readable_transcript_capture_rejection_is_degraded_and_uncommitted" time="0.099" /><testcase classname="tests.test_claude_adapter" name="test_fallback_capture_rejection_is_degraded_and_uncommitted" time="0.094" /><testcase classname="tests.test_claude_adapter" name="test_non_object_checkpoint_is_corrupt" time="0.124" /><testcase classname="tests.test_claude_adapter" name="test_malformed_checkpoint_offsets_are_corrupt[True]" time="0.091" /><testcase classname="tests.test_claude_adapter" name="test_malformed_checkpoint_offsets_are_corrupt[1]" time="0.103" /><testcase classname="tests.test_claude_adapter" name="test_malformed_checkpoint_offsets_are_corrupt[-1]" time="0.085" /><testcase classname="tests.test_claude_adapter" name="test_malformed_offset_is_rejected_before_missing_transcript_fallback" time="0.084" /><testcase classname="tests.test_claude_adapter" name="test_session_start_and_prompt_return_native_context_and_scope" time="0.267" /><testcase classname="tests.test_claude_adapter" name="test_distinct_native_prompt_ids_preserve_identical_prompt_events" time="0.247" /><testcase classname="tests.test_claude_adapter" name="test_missing_profile_fails_closed_without_shared_default" time="0.056" /><testcase classname="tests.test_claude_adapter" name="test_unknown_or_disabled_project_fails_closed" time="0.097" /><testcase classname="tests.test_claude_adapter" name="test_malformed_hook_process_is_silent" time="0.006" /><testcase classname="tests.test_claude_adapter" name="test_hook_exception_reports_sanitized_diagnostic_without_blocking" time="0.005" /><testcase classname="tests.test_claude_adapter" name="test_degraded_hook_reports_status_without_payload" time="0.005" /></testsuite></testsuites>

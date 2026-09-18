@@ -1,0 +1,14 @@
+import hashlib,json,os,subprocess,sys,shutil
+from pathlib import Path
+out=Path(__file__).parent
+root=Path('D:/Development/mnemos/mnemos/.worktrees/functional-local-memory')
+test=out/'test_capture_interruption.py'
+shutil.copyfile(root/'tests/test_capture_interruption.py',test)
+import mnemos.client
+assert 'mnemos-installed-captured-status-v1' in str(mnemos.client.__file__)
+cmd=[sys.executable,'-m','pytest',str(test),'-q','--import-mode=importlib','--basetemp='+str(out/'fixtures'),'--junitxml='+str(out/'pytest.xml')]
+result=subprocess.run(cmd,cwd=out,capture_output=True,text=True,timeout=90)
+(out/'pytest.log').write_text(result.stdout+result.stderr,encoding='utf-8')
+report={'returncode':result.returncode,'source_commit':'6442044750d45ce49c3d846de9a5dd24ad607d74','client_origin':str(mnemos.client.__file__),'test_sha256':hashlib.sha256(test.read_bytes()).hexdigest()}
+(out/'report.json').write_text(json.dumps(report,indent=2)+'\n')
+print(json.dumps(report));print(result.stdout[-1800:])
