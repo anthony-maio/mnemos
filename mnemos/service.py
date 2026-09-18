@@ -32,6 +32,7 @@ from ctypes import (
     string_at,
 )
 from datetime import datetime, timezone
+from http.client import HTTPConnection, HTTPException
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
 from typing import Any, Callable, Mapping
@@ -669,19 +670,59 @@ class MnemosService:
             loop.close()
             self._loop = None
 
+    @staticmethod
+    def _existing_owner_ready(descriptor: dict[str, Any], timeout: float) -> bool:
+        """Verify the lock owner's transport without submitting memory work."""
+        connection = HTTPConnection(
+            str(descriptor["host"]), int(descriptor["port"]), timeout=timeout
+        )
+        try:
+            connection.request(
+                "GET", "/v1/health", headers={"Authorization": f"Bearer {descriptor['token']}"}
+            )
+            response = connection.getresponse()
+            if response.status in {401, 403}:
+                raise RuntimeError("existing Mnemos service rejected the readiness check")
+            if response.status != 200:
+                raise RuntimeError("existing Mnemos service returned invalid readiness")
+            # Read only a small health object, never an unbounded response body.
+            body = response.read(4097)
+            if len(body) > 4096:
+                raise RuntimeError("existing Mnemos service returned oversized readiness")
+            try:
+                value = json.loads(body)
+            except (ValueError, UnicodeError) as exc:
+                raise RuntimeError("existing Mnemos service returned invalid readiness") from exc
+            if (
+                not isinstance(value, dict)
+                or type(value.get("schema_version")) is not int
+                or value["schema_version"] != SCHEMA_VERSION
+                or value.get("status") != "ok"
+            ):
+                raise RuntimeError("existing Mnemos service returned invalid readiness")
+            return True
+        except (OSError, HTTPException):
+            return False
+        finally:
+            connection.close()
+
     def start(self) -> dict[str, Any]:
         if self._descriptor is not None:
             return dict(self._descriptor)
         if not self._owner_lock.acquire():
-            existing = read_runtime_descriptor(self.descriptor_path)
             deadline = time.monotonic() + self.startup_timeout
-            while existing is None and time.monotonic() < deadline:
-                time.sleep(0.02)
+            while True:
                 existing = read_runtime_descriptor(self.descriptor_path)
-            if existing is None:
-                raise RuntimeError(
-                    "another Mnemos service owns the lock but has no valid descriptor"
-                )
+                remaining = deadline - time.monotonic()
+                if remaining <= 0:
+                    raise RuntimeError(
+                        "another Mnemos service owns the lock but is not ready before startup timeout"
+                    )
+                if existing is not None and self._existing_owner_ready(
+                    existing, min(0.25, remaining)
+                ):
+                    break
+                time.sleep(min(0.02, max(0, deadline - time.monotonic())))
             self._descriptor = existing
             self.token = str(existing["token"])
             self._external = True
