@@ -3172,8 +3172,20 @@ class SQLiteStore(MemoryStore):
                     "explicit_remember": None,
                 }
             target_source_details.append(detail)
-        candidates: list[dict[str, Any]] = []
-        candidate_overflow = False
+        # Both vectors were stored with the document embedding role. This is
+        # advisory discovery, not evidence that two assertions mean the same thing.
+        # Avoid provider calls and retrieval side effects in this read-only path.
+        similarity_limit = 20
+        target_vector = target.embedding
+        similarity_available = bool(
+            target_vector
+            and all(math.isfinite(value) for value in target_vector)
+            and any(value != 0 for value in target_vector)
+        )
+        exact: list[tuple[MemoryChunk, list[str], float | None]] = []
+        similar: list[tuple[MemoryChunk, list[str], float | None]] = []
+        similar_count = 0
+        unsearchable_count = 0
         rows = self._conn.execute(
             f"SELECT {self._CHUNK_SELECT_COLUMNS} FROM memory_chunks "
             "WHERE (user_profile_id=? OR json_extract(metadata, '$.user_profile_id')=?) "
@@ -3193,11 +3205,52 @@ class SQLiteStore(MemoryStore):
                 continue
             normalized = normalize_memory_text(chunk.content)
             matches = [assertion for assertion in assertions if assertion in normalized]
-            if not matches:
+            if matches:
+                # One extra exact result is sufficient to detect overflow.
+                if len(exact) <= limit:
+                    exact.append((chunk, matches, None))
                 continue
-            if len(candidates) >= limit:
-                candidate_overflow = True
-                break
+            if not similarity_available:
+                continue
+            vector = chunk.embedding
+            if (
+                not vector
+                or target_vector is None
+                or len(vector) != len(target_vector)
+                or not all(math.isfinite(value) for value in vector)
+                or not any(value != 0 for value in vector)
+            ):
+                unsearchable_count += 1
+                continue
+            score = cosine_similarity(target_vector, vector)
+            if not math.isfinite(score) or score <= 0:
+                continue
+            similar_count += 1
+            similar.append((chunk, [], round(score, 8)))
+            similar.sort(key=lambda item: (-cast(float, item[2]), item[0].id))
+            del similar[similarity_limit:]
+
+        def vector_digest(vector: list[float] | None) -> str:
+            return hashlib.sha256(
+                json.dumps(vector, separators=(",", ":")).encode("utf-8")
+            ).hexdigest()
+
+        similarity_search = {
+            "status": "available" if similarity_available else "unavailable",
+            "method": "stored_current_document_cosine",
+            "limit": similarity_limit,
+            "truncated": similar_count > similarity_limit,
+            "unsearchable_fact_count": unsearchable_count,
+            "exhaustive": False,
+            "limitations": [
+                "Similarity is advisory and does not establish a copied assertion.",
+                "Historical-only meanings and unindexed episodic paraphrases may be missed.",
+            ],
+        }
+        ranked = exact + similar
+        candidate_overflow = len(ranked) > limit
+        candidates: list[dict[str, Any]] = []
+        for chunk, matches, candidate_score in ranked[:limit]:
             source_event_id_set, candidate_job_id_set = (
                 self._related_forget_fact_dependencies_locked(chunk.id)
             )
@@ -3207,8 +3260,10 @@ class SQLiteStore(MemoryStore):
                     "fact_id": chunk.id,
                     "version": chunk.version,
                     "content": chunk.content,
-                    "match_type": "exact_assertion",
+                    "match_type": "exact_assertion" if matches else "similarity_candidate",
                     "matched_assertions": matches,
+                    "similarity": candidate_score,
+                    "embedding_digest": vector_digest(chunk.embedding),
                     "source_event_ids": source_event_ids,
                     "job_ids": sorted(candidate_job_id_set),
                 }
@@ -3360,6 +3415,7 @@ class SQLiteStore(MemoryStore):
                 "fact_id": target.id,
                 "version": target.version,
                 "content": normalize_memory_text(target.content),
+                "embedding_digest": vector_digest(target.embedding),
                 "source_event_ids": target_source_event_ids,
                 "job_ids": target_job_ids,
                 "affected_sources": target_source_details,
@@ -3368,11 +3424,16 @@ class SQLiteStore(MemoryStore):
             "scope": {"user_profile_id": user_profile_id, "project_id": project_id},
             "limit": limit,
             "assertions": assertions,
+            "similarity_search": similarity_search,
+            "embedding_identity": self._meta_value("embedding_identity"),
             "candidates": [
                 {
                     "fact_id": item["fact_id"],
                     "version": item["version"],
                     "content": normalize_memory_text(item["content"]),
+                    "match_type": item["match_type"],
+                    "similarity": item["similarity"],
+                    "embedding_digest": item["embedding_digest"],
                     "source_event_ids": item["source_event_ids"],
                     "job_ids": item["job_ids"],
                     "required_source_event_ids": item["required_source_event_ids"],
@@ -3401,7 +3462,8 @@ class SQLiteStore(MemoryStore):
             json.dumps(digest_state, sort_keys=True, separators=(",", ":")).encode("utf-8")
         ).hexdigest()
         return {
-            "matching_policy": "exact_normalized_assertion",
+            "matching_policy": "exact_assertion_and_advisory_similarity",
+            "similarity_search": similarity_search,
             "scope": {
                 "user_profile_id": user_profile_id,
                 "project_id": project_id,

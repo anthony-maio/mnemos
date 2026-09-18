@@ -1,0 +1,599 @@
+diff --git a/docs/functional-local-memory.md b/docs/functional-local-memory.md
+index ecb062f..3426fc3 100644
+--- a/docs/functional-local-memory.md
++++ b/docs/functional-local-memory.md
+@@ -219,7 +219,12 @@ facts, and their sources; select the extra records to remove, then apply that
+ preview. A changed or incomplete preview requires another review. Shared
+ unselected dependencies prevent deletion, including references in queued jobs
+ after source text expires. Matching uses the full current or historical
+-assertion within the same project and profile; it does not identify paraphrases.
++assertion within the same project and profile, then adds up to twenty bounded
++same-scope similarity candidates from captured or sleep-consolidated facts when
++the current target has a stored document vector. These candidates are advisory,
++are never selected automatically, and are not an exhaustive semantic erasure
++plan. Missing vectors, raw episodic paraphrases, historical-only meanings, and
++external transcripts may still be missed.
+ The [verification record](validation/2026-09-16/related-forget-verification/README.md)
+ separates passing focused/browser/package checks from pending native
+ acceptance.
+diff --git a/mnemos/mcp_server.py b/mnemos/mcp_server.py
+index b1f7dbd..41079e7 100644
+--- a/mnemos/mcp_server.py
++++ b/mnemos/mcp_server.py
+@@ -647,13 +647,16 @@ def _register_service_tools(mcp: Any) -> None:
+         limit: StrictInt = 100,
+         ctx: Context[Any, Any, Any] | None = None,
+     ) -> str:
+-        """Preview exact related facts and source events before a reviewed forget.
+-
+-        The preview is bounded and scoped to the current project. Applying it
+-        always removes the target fact and its linked evidence cleanup. Only
+-        additional related facts or source events require explicit reviewed
+-        selections; stale previews must be regenerated. No other facts are
+-        deleted automatically.
++        """Preview related facts and source events before a reviewed forget.
++
++        The bounded preview includes exact current or historical assertion
++        matches and, when indexed vectors are available, advisory similarity
++        candidates from the same project and profile. Similarity results are
++        not exhaustive and are never selected automatically. Applying the
++        preview always removes the target fact and its linked evidence
++        cleanup. Only additional related facts or source events require
++        explicit reviewed selections; stale previews must be regenerated. No
++        other facts are deleted automatically.
+         """
+         service_context = _service_context_from_ctx(ctx, "mnemos_forget_preview")
+         if service_context.scope.project_id is None:
+@@ -682,14 +685,14 @@ def _register_service_tools(mcp: Any) -> None:
+         selected_source_event_ids: list[str] | None = None,
+         ctx: Context[Any, Any, Any] | None = None,
+     ) -> str:
+-        """Apply reviewed exact related forget selections with stale checks.
++        """Apply reviewed related-forget selections with stale checks.
+ 
+         The target fact is always removed, along with its linked evidence
+-        cleanup. Only additional facts or source events are removed when their
+-        IDs were explicitly selected from a matching preview. The current
+-        project context is injected by the service, and stale previews must be
+-        re-previewed. No unselected or automatically inferred memories are
+-        deleted.
++        cleanup. Additional exact or advisory similarity candidates and source
++        events are removed only when their IDs were explicitly selected from a
++        matching preview. The current project context is injected by the
++        service, and stale previews must be re-previewed. No unselected or
++        automatically inferred memories are deleted.
+         """
+         service_context = _service_context_from_ctx(ctx, "mnemos_forget_related")
+         if service_context.scope.project_id is None:
+diff --git a/mnemos/ui/app.js b/mnemos/ui/app.js
+index 679d595..1d1e822 100644
+--- a/mnemos/ui/app.js
++++ b/mnemos/ui/app.js
+@@ -644,21 +644,37 @@ async function previewForgetMemory() {
+       throw new Error("The service did not return a valid deletion preview.");
+     }
+     state.forgetPreview = preview;
++    const similaritySearch = preview.similarity_search || {};
++    const similarityStatus = similaritySearch.status === "unavailable"
++      ? "Similarity suggestions are unavailable for this record."
++      : similaritySearch.truncated === true
++        ? "The similarity suggestions are bounded and truncated. Other paraphrases may remain."
++        : "Similarity suggestions are bounded and advisory. Other paraphrases may remain.";
+     const retainedSourceIds = new Set(preview.source_events
+       .filter((item) => item.selection_allowed !== false).map((item) => item.source_event_id));
+     const targetSourceIds = new Set(preview.target.source_event_ids || []);
+     const targetSources = (preview.target.affected_sources || []).map((item) =>
+       `<li>${escapeHtml(item.status === "expired" ? "Original source no longer retained." : item.content)}</li>`
+     ).join("");
+-    const facts = preview.candidates.map((item, index) => `
++    const facts = preview.candidates.map((item, index) => {
++      const similarity = item.match_type === "similarity_candidate";
++      const similarityScore = Number.isFinite(item.similarity)
++        ? `Similarity score ${item.similarity.toFixed(3)}; review the content before selecting.`
++        : "Review this possible copy before selecting it.";
++      const blocked = (item.blocked_source_event_ids || []).length > 0;
++      const unavailable = item.selection_allowed === false || blocked;
++      const label = similarity ? "Possible captured copy" : "Captured fact";
++      return `
+       <label class="checkbox-field">
+-        <input type="checkbox" data-forget-fact="${escapeHtml(item.fact_id)}" ${(item.blocked_source_event_ids || []).length ? "disabled" : ""} />
+-        <span><strong>Captured fact ${index + 1}:</strong> ${escapeHtml(item.content)}<br />
+-          ${(item.blocked_source_event_ids || []).length ? "This copy has a source outside this removal plan and cannot be selected." : ""}
++        <input type="checkbox" data-forget-fact="${escapeHtml(item.fact_id)}" ${unavailable ? "disabled" : ""} />
++        <span><strong>${label} ${index + 1}:</strong> ${escapeHtml(item.content)}<br />
++          ${similarity ? escapeHtml(similarityScore) : ""}
++          ${blocked ? "This copy has a source outside this removal plan and cannot be selected." : item.selection_allowed === false ? "This copy is not available for selection." : ""}
+           ${item.source_event_ids.some((id) => retainedSourceIds.has(id))
+             ? `Also select its ${item.source_event_ids.filter((id) => retainedSourceIds.has(id)).length} retained sources below.`
+             : "No additional source listed in this preview."}</span>
+-      </label>`).join("");
++      </label>`;
++    }).join("");
+     const sources = preview.source_events.map((item) => `
+       <label class="checkbox-field">
+         <input type="checkbox" data-forget-source="${escapeHtml(item.source_event_id)}"
+@@ -672,14 +688,17 @@ async function previewForgetMemory() {
+     const panel = document.getElementById("forget-preview");
+     panel.innerHTML = `
+       <h3>Review records to forget</h3>
+-      <p>Matching facts contain the full current or historical assertion text within this project and profile.
+-        Their retained sources are listed too.
+-        Paraphrases, external transcripts, and historical backups may still contain it.</p>
++      <p>Exact matches contain the full current or historical assertion text within this project and profile.
++        Their retained sources are listed too. ${escapeHtml(similarityStatus)}
++        ${similaritySearch.unsearchable_fact_count > 0 ? "Some captured facts could not be checked for similarity." : ""}
++        Paraphrases in unprocessed conversations, copies of older meanings, external transcripts,
++        and historical backups may still remain.</p>
+       <p><strong>Selected record (required):</strong> ${escapeHtml(preview.target.content)}</p>
+       ${targetSources ? `<details><summary>Sources attached to the required record</summary><ul>${targetSources}</ul></details>` : ""}
+       <p>Deleting a fact also removes its linked evidence and replayable sources.
+-        Select any additional captured facts and their sources below. Shared sources may prevent
+-        deletion when another retained fact still uses them.</p>
++        Similarity results are possible copies, not proof of semantic identity, and nothing is
++        selected automatically. Select any additional captured facts and their sources below.
++        Shared sources may prevent deletion when another retained fact still uses them.</p>
+       <h4>Additional captured facts</h4>${facts || "<p>No matching facts.</p>"}
+       <h4>Captured sources</h4>${sources || "<p>No matching sources.</p>"}
+       ${preview.complete === true ? "" : "<p>This preview is incomplete. Nothing can be deleted from it.</p>"}
+diff --git a/mnemos/utils/storage.py b/mnemos/utils/storage.py
+index e76e0f2..a27bbec 100644
+--- a/mnemos/utils/storage.py
++++ b/mnemos/utils/storage.py
+@@ -3172,8 +3172,20 @@ class SQLiteStore(MemoryStore):
+                     "explicit_remember": None,
+                 }
+             target_source_details.append(detail)
+-        candidates: list[dict[str, Any]] = []
+-        candidate_overflow = False
++        # Both vectors were stored with the document embedding role. This is
++        # advisory discovery, not evidence that two assertions mean the same thing.
++        # Avoid provider calls and retrieval side effects in this read-only path.
++        similarity_limit = 20
++        target_vector = target.embedding
++        similarity_available = bool(
++            target_vector
++            and all(math.isfinite(value) for value in target_vector)
++            and any(value != 0 for value in target_vector)
++        )
++        exact: list[tuple[MemoryChunk, list[str], float | None]] = []
++        similar: list[tuple[MemoryChunk, list[str], float | None]] = []
++        similar_count = 0
++        unsearchable_count = 0
+         rows = self._conn.execute(
+             f"SELECT {self._CHUNK_SELECT_COLUMNS} FROM memory_chunks "
+             "WHERE (user_profile_id=? OR json_extract(metadata, '$.user_profile_id')=?) "
+@@ -3193,11 +3205,52 @@ class SQLiteStore(MemoryStore):
+                 continue
+             normalized = normalize_memory_text(chunk.content)
+             matches = [assertion for assertion in assertions if assertion in normalized]
+-            if not matches:
++            if matches:
++                # One extra exact result is sufficient to detect overflow.
++                if len(exact) <= limit:
++                    exact.append((chunk, matches, None))
+                 continue
+-            if len(candidates) >= limit:
+-                candidate_overflow = True
+-                break
++            if not similarity_available:
++                continue
++            vector = chunk.embedding
++            if (
++                not vector
++                or target_vector is None
++                or len(vector) != len(target_vector)
++                or not all(math.isfinite(value) for value in vector)
++                or not any(value != 0 for value in vector)
++            ):
++                unsearchable_count += 1
++                continue
++            score = cosine_similarity(target_vector, vector)
++            if not math.isfinite(score) or score <= 0:
++                continue
++            similar_count += 1
++            similar.append((chunk, [], round(score, 8)))
++            similar.sort(key=lambda item: (-cast(float, item[2]), item[0].id))
++            del similar[similarity_limit:]
++
++        def vector_digest(vector: list[float] | None) -> str:
++            return hashlib.sha256(
++                json.dumps(vector, separators=(",", ":")).encode("utf-8")
++            ).hexdigest()
++
++        similarity_search = {
++            "status": "available" if similarity_available else "unavailable",
++            "method": "stored_current_document_cosine",
++            "limit": similarity_limit,
++            "truncated": similar_count > similarity_limit,
++            "unsearchable_fact_count": unsearchable_count,
++            "exhaustive": False,
++            "limitations": [
++                "Similarity is advisory and does not establish a copied assertion.",
++                "Historical-only meanings and unindexed episodic paraphrases may be missed.",
++            ],
++        }
++        ranked = exact + similar
++        candidate_overflow = len(ranked) > limit
++        candidates: list[dict[str, Any]] = []
++        for chunk, matches, candidate_score in ranked[:limit]:
+             source_event_id_set, candidate_job_id_set = (
+                 self._related_forget_fact_dependencies_locked(chunk.id)
+             )
+@@ -3207,8 +3260,10 @@ class SQLiteStore(MemoryStore):
+                     "fact_id": chunk.id,
+                     "version": chunk.version,
+                     "content": chunk.content,
+-                    "match_type": "exact_assertion",
++                    "match_type": "exact_assertion" if matches else "similarity_candidate",
+                     "matched_assertions": matches,
++                    "similarity": candidate_score,
++                    "embedding_digest": vector_digest(chunk.embedding),
+                     "source_event_ids": source_event_ids,
+                     "job_ids": sorted(candidate_job_id_set),
+                 }
+@@ -3360,6 +3415,7 @@ class SQLiteStore(MemoryStore):
+                 "fact_id": target.id,
+                 "version": target.version,
+                 "content": normalize_memory_text(target.content),
++                "embedding_digest": vector_digest(target.embedding),
+                 "source_event_ids": target_source_event_ids,
+                 "job_ids": target_job_ids,
+                 "affected_sources": target_source_details,
+@@ -3368,11 +3424,16 @@ class SQLiteStore(MemoryStore):
+             "scope": {"user_profile_id": user_profile_id, "project_id": project_id},
+             "limit": limit,
+             "assertions": assertions,
++            "similarity_search": similarity_search,
++            "embedding_identity": self._meta_value("embedding_identity"),
+             "candidates": [
+                 {
+                     "fact_id": item["fact_id"],
+                     "version": item["version"],
+                     "content": normalize_memory_text(item["content"]),
++                    "match_type": item["match_type"],
++                    "similarity": item["similarity"],
++                    "embedding_digest": item["embedding_digest"],
+                     "source_event_ids": item["source_event_ids"],
+                     "job_ids": item["job_ids"],
+                     "required_source_event_ids": item["required_source_event_ids"],
+@@ -3401,7 +3462,8 @@ class SQLiteStore(MemoryStore):
+             json.dumps(digest_state, sort_keys=True, separators=(",", ":")).encode("utf-8")
+         ).hexdigest()
+         return {
+-            "matching_policy": "exact_normalized_assertion",
++            "matching_policy": "exact_assertion_and_advisory_similarity",
++            "similarity_search": similarity_search,
+             "scope": {
+                 "user_profile_id": user_profile_id,
+                 "project_id": project_id,
+diff --git a/tests/test_related_forget_similarity.py b/tests/test_related_forget_similarity.py
+new file mode 100644
+index 0000000..248fa70
+--- /dev/null
++++ b/tests/test_related_forget_similarity.py
+@@ -0,0 +1,325 @@
++"""Reviewed deletion of paraphrased captures, using controlled stored vectors."""
++
++from datetime import datetime, timezone
++from pathlib import Path
++from typing import Any
++
++import pytest
++
++from mnemos.types import MemoryChunk
++from mnemos.utils.storage import SQLiteStore, normalize_memory_text
++from tests.test_related_forget import _preview_payload, _service
++
++
++async def _seed(tmp_path: Path) -> tuple[Any, Any, Any, Any, dict[str, Any]]:
++    memory, context, _, _ = _service(tmp_path)
++    await memory.dispatch(
++        "remember",
++        {
++            "context": context.model_dump(mode="json"),
++            "event_id": "similarity-target",
++            "content": "Use maple-heron as the release label convention for this project.",
++        },
++    )
++    await memory.dispatch("maintenance", {})
++    target = memory.engine.store.get_all()[0]
++    payload = {
++        "context": context.model_dump(mode="json"),
++        "event_id": "similarity-captured-reply",
++        "occurred_at": datetime.now(timezone.utc).isoformat(),
++        "role": "assistant",
++        "content": "The current project continuity convention is to use maple-heron for release labels.",
++        "source_kind": "codex_hook",
++    }
++    await memory.dispatch("capture", payload)
++    await memory.dispatch("maintenance", {})
++    copy = next(item for item in memory.engine.store.get_all() if item.id != target.id)
++    assert normalize_memory_text(target.content) not in normalize_memory_text(copy.content)
++    size = len(target.embedding)
++    target.embedding = [1.0] + [0.0] * (size - 1)
++    copy.embedding = [0.9, 0.1] + [0.0] * (size - 2)
++    memory.engine.store.update(target.id, target)
++    memory.engine.store.update(copy.id, copy)
++    return memory, context, target, copy, payload
++
++
++def _apply(context: Any, target: Any, preview: Any, copy: Any = None) -> dict[str, Any]:
++    candidate = next(
++        (item for item in preview["candidates"] if copy and item["fact_id"] == copy.id), None
++    )
++    return {
++        **_preview_payload(context, target),
++        "preview_digest": preview["preview_digest"],
++        "preview_limit": preview["limit"],
++        "selected_fact_ids": [copy.id] if copy else [],
++        "selected_source_event_ids": candidate["required_source_event_ids"] if candidate else [],
++    }
++
++
++@pytest.mark.asyncio
++async def test_paraphrase_can_be_reviewed_deleted_and_replay_suppressed(tmp_path: Path) -> None:
++    memory, context, target, copy, payload = await _seed(tmp_path)
++    store = memory.engine.store
++    try:
++        before = store._conn.total_changes
++        facts_before = [item.model_dump() for item in store.get_all()]
++        preview = await memory.dispatch("forget_preview", _preview_payload(context, target))
++        assert store._conn.total_changes == before
++        assert [item.model_dump() for item in store.get_all()] == facts_before
++        candidate = next(item for item in preview["candidates"] if item["fact_id"] == copy.id)
++        assert candidate["match_type"] == "similarity_candidate"
++        assert candidate["matched_assertions"] == []
++        assert candidate["similarity"] > 0.9
++        assert candidate["required_source_event_ids"]
++        assert preview["similarity_search"]["exhaustive"] is False
++        await memory.dispatch("forget_related", _apply(context, target, preview, copy))
++        assert store.get(copy.id) is None
++        result = await memory.dispatch("capture", payload)
++        assert result["processing_status"] == "suppressed"
++        await memory.dispatch("maintenance", {})
++    finally:
++        store.close()
++    reopened = SQLiteStore(str(tmp_path / "memory.sqlite"))
++    try:
++        assert reopened.get(target.id) is None
++        assert reopened.get(copy.id) is None
++        assert reopened.is_suppressed(fact_id=copy.id)
++    finally:
++        reopened.close()
++
++
++@pytest.mark.asyncio
++async def test_similarity_suggestion_is_never_automatically_selected(tmp_path: Path) -> None:
++    memory, context, target, copy, _ = await _seed(tmp_path)
++    try:
++        preview = await memory.dispatch("forget_preview", _preview_payload(context, target))
++        assert copy.id in {item["fact_id"] for item in preview["candidates"]}
++        await memory.dispatch("forget_related", _apply(context, target, preview))
++        assert memory.engine.store.get(copy.id) is not None
++        assert not memory.engine.store.is_suppressed(fact_id=copy.id)
++    finally:
++        memory.engine.store.close()
++
++
++@pytest.mark.asyncio
++@pytest.mark.parametrize("changed", ["target_vector", "copy_vector", "content", "version"])
++async def test_similarity_preview_rejects_changed_review_state(
++    tmp_path: Path, changed: str
++) -> None:
++    memory, context, target, copy, _ = await _seed(tmp_path)
++    store = memory.engine.store
++    try:
++        preview = await memory.dispatch("forget_preview", _preview_payload(context, target))
++        assert copy.id in {item["fact_id"] for item in preview["candidates"]}
++        updated = (
++            target.model_copy(deep=True)
++            if changed == "target_vector"
++            else copy.model_copy(deep=True)
++        )
++        if changed.endswith("vector"):
++            # Scaling preserves cosine rank/score but must invalidate the reviewed input.
++            updated.embedding = [value * 2 for value in updated.embedding]
++        elif changed == "content":
++            updated.content += " This is a different assertion."
++        else:
++            updated.version += 1
++        store.update(updated.id, updated)
++        with pytest.raises(ValueError, match="stale"):
++            await memory.dispatch("forget_related", _apply(context, target, preview, copy))
++        assert store.get(target.id) is not None and store.get(copy.id) is not None
++        assert not store.is_suppressed(fact_id=target.id)
++    finally:
++        store.close()
++
++
++@pytest.mark.asyncio
++async def test_similarity_filters_scope_and_manual_facts_before_ranking(tmp_path: Path) -> None:
++    memory, context, target, copy, _ = await _seed(tmp_path)
++    try:
++        for index, override in enumerate(
++            [
++                {"scope_id": "foreign-project"},
++                {"user_profile_id": "foreign-profile"},
++                {"scope": "global"},
++                {"source": "manual"},
++            ]
++        ):
++            for number in range(22):
++                memory.engine.store.store(
++                    MemoryChunk(
++                        id=f"foreign-{index}-{number}",
++                        content="A closer but ineligible memory.",
++                        embedding=target.embedding,
++                        metadata={**copy.metadata, **override},
++                    )
++                )
++        preview = await memory.dispatch("forget_preview", _preview_payload(context, target))
++        assert [item["fact_id"] for item in preview["candidates"]] == [copy.id]
++    finally:
++        memory.engine.store.close()
++
++
++@pytest.mark.asyncio
++async def test_similarity_bound_is_disclosed_and_exact_matches_keep_priority(
++    tmp_path: Path,
++) -> None:
++    memory, context, target, copy, _ = await _seed(tmp_path)
++    store = memory.engine.store
++    try:
++        for number in range(25):
++            store.store(
++                MemoryChunk(
++                    id=f"similar-{number:02d}",
++                    content=f"Possible paraphrase {number}.",
++                    embedding=copy.embedding,
++                    metadata=copy.metadata,
++                )
++            )
++        store.store(
++            MemoryChunk(
++                id="z-exact",
++                content="Captured: " + target.content,
++                metadata=copy.metadata,
++            )
++        )
++        preview = await memory.dispatch("forget_preview", _preview_payload(context, target))
++        assert preview["candidates"][0]["fact_id"] == "z-exact"
++        assert len(preview["candidates"]) == 21
++        assert [item["fact_id"] for item in preview["candidates"][1:]] == sorted(
++            [copy.id] + [f"similar-{number:02d}" for number in range(25)]
++        )[:20]
++        assert preview["similarity_search"]["truncated"] is True
++        assert preview["similarity_search"]["limit"] == 20
++        assert preview["similarity_search"]["exhaustive"] is False
++        assert preview["complete"] is True  # The returned selections and dependencies fit.
++        small = await memory.dispatch("forget_preview", _preview_payload(context, target, limit=1))
++        assert small["complete"] is False
++        with pytest.raises(ValueError, match="incomplete"):
++            await memory.dispatch("forget_related", _apply(context, target, small))
++        assert store.get(target.id) is not None
++    finally:
++        store.close()
++
++
++@pytest.mark.asyncio
++@pytest.mark.parametrize("embedding", [None, [0.0] * 384])
++async def test_missing_target_vector_keeps_exact_path_and_discloses_gap(
++    tmp_path: Path, embedding: Any
++) -> None:
++    memory, context, target, copy, _ = await _seed(tmp_path)
++    store = memory.engine.store
++    try:
++        target.embedding = embedding
++        store.update(target.id, target)
++        store.store(
++            MemoryChunk(
++                id="exact-no-vector",
++                content="Captured: " + target.content,
++                metadata=copy.metadata,
++            )
++        )
++        preview = await memory.dispatch("forget_preview", _preview_payload(context, target))
++        assert [item["fact_id"] for item in preview["candidates"]] == ["exact-no-vector"]
++        assert preview["similarity_search"]["status"] == "unavailable"
++    finally:
++        store.close()
++
++
++@pytest.mark.asyncio
++async def test_similarity_requires_reviewed_sources_and_rejects_changed_dependencies(
++    tmp_path: Path,
++) -> None:
++    memory, context, target, copy, _ = await _seed(tmp_path)
++    store = memory.engine.store
++    try:
++        preview = await memory.dispatch("forget_preview", _preview_payload(context, target))
++        request = _apply(context, target, preview, copy)
++        with pytest.raises(ValueError, match="explicit source selection"):
++            await memory.dispatch("forget_related", {**request, "selected_source_event_ids": []})
++        assert store.get(target.id) is not None and store.get(copy.id) is not None
++        source_id = request["selected_source_event_ids"][0]
++        store.store(
++            MemoryChunk(
++                id="shared-manual",
++                content="A separate retained preference.",
++                metadata={**copy.metadata, "source": "manual"},
++            )
++        )
++        store._conn.execute(
++            "INSERT INTO fact_evidence "
++            "(evidence_id, fact_id, source_event_id, excerpt, source_ref, created_at) "
++            "VALUES (?, ?, ?, ?, ?, ?)",
++            (
++                "shared-similarity-evidence",
++                "shared-manual",
++                source_id,
++                "",
++                "fixture",
++                datetime.now(timezone.utc).isoformat(),
++            ),
++        )
++        store._conn.commit()
++        with pytest.raises(ValueError, match="stale"):
++            await memory.dispatch("forget_related", request)
++        fresh = await memory.dispatch("forget_preview", _preview_payload(context, target))
++        with pytest.raises(ValueError, match="unselected derived fact"):
++            await memory.dispatch("forget_related", _apply(context, target, fresh, copy))
++        assert store.get(target.id) is not None and store.get(copy.id) is not None
++        assert store.get("shared-manual") is not None
++        assert store.get_episodic_event(source_id) is not None
++    finally:
++        store.close()
++
++
++@pytest.mark.asyncio
++async def test_similarity_excludes_unusable_vectors_and_reports_skips(tmp_path: Path) -> None:
++    memory, context, target, copy, _ = await _seed(tmp_path)
++    store = memory.engine.store
++    try:
++        for name, embedding in [
++            ("missing", None),
++            ("zero", [0.0] * len(target.embedding)),
++            ("opposite", [-value for value in target.embedding]),
++        ]:
++            store.store(
++                MemoryChunk(
++                    id=name,
++                    content=f"Capture with {name} vector.",
++                    embedding=embedding,
++                    metadata=copy.metadata,
++                )
++            )
++        preview = await memory.dispatch("forget_preview", _preview_payload(context, target))
++        assert [item["fact_id"] for item in preview["candidates"]] == [copy.id]
++        assert preview["similarity_search"]["unsearchable_fact_count"] == 2
++    finally:
++        store.close()
++
++
++@pytest.mark.asyncio
++async def test_similarity_foreign_linked_source_is_redacted_and_blocks_deletion(
++    tmp_path: Path,
++) -> None:
++    memory, context, target, copy, _ = await _seed(tmp_path)
++    store = memory.engine.store
++    try:
++        original = await memory.dispatch("forget_preview", _preview_payload(context, target))
++        source_id = _apply(context, target, original, copy)["selected_source_event_ids"][0]
++        store._conn.execute(
++            "UPDATE episodic_events SET scope_id=?, content=? WHERE id=?",
++            ("foreign-project", "Private foreign-source canary.", source_id),
++        )
++        store._conn.commit()
++        preview = await memory.dispatch("forget_preview", _preview_payload(context, target))
++        candidate = next(item for item in preview["candidates"] if item["fact_id"] == copy.id)
++        assert candidate["blocked_source_event_ids"] == [source_id]
++        source = next(
++            item for item in preview["source_events"] if item["source_event_id"] == source_id
++        )
++        assert source["content"] == ""
++        assert "Private foreign-source canary" not in str(preview)
++        with pytest.raises(ValueError, match="unavailable linked source"):
++            await memory.dispatch("forget_related", _apply(context, target, preview, copy))
++        assert store.get(target.id) is not None and store.get(copy.id) is not None
++    finally:
++        store.close()

@@ -1,0 +1,79 @@
+FFFFFFFFFF                                                               [100%]
+================================== FAILURES ===================================
+________ test_paraphrase_can_be_reviewed_deleted_and_replay_suppressed ________
+tests\test_related_forget_similarity.py:67: in test_paraphrase_can_be_reviewed_deleted_and_replay_suppressed
+    candidate = next(item for item in preview["candidates"] if item["fact_id"] == copy.id)
+                ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E   StopIteration
+
+The above exception was the direct cause of the following exception:
+.venv\Lib\site-packages\pytest_asyncio\plugin.py:569: in runtest
+    super().runtest()
+.venv\Lib\site-packages\pytest_asyncio\plugin.py:905: in inner
+    runner.run(coro, context=context)
+C:\Users\Ant\AppData\Roaming\uv\python\cpython-3.13.7-windows-x86_64-none\Lib\asyncio\runners.py:118: in run
+    return self._loop.run_until_complete(task)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+C:\Users\Ant\AppData\Roaming\uv\python\cpython-3.13.7-windows-x86_64-none\Lib\asyncio\base_events.py:725: in run_until_complete
+    return future.result()
+           ^^^^^^^^^^^^^^^
+E   RuntimeError: coroutine raised StopIteration
+_________ test_similarity_suggestion_is_never_automatically_selected __________
+tests\test_related_forget_similarity.py:94: in test_similarity_suggestion_is_never_automatically_selected
+    assert copy.id in {item["fact_id"] for item in preview["candidates"]}
+E   AssertionError: assert 'cfa65f5f-1160-4189-a024-6722c1700189' in set()
+E    +  where 'cfa65f5f-1160-4189-a024-6722c1700189' = MemoryChunk(id='cfa65f5f-1160-4189-a024-6722c1700189', content='Assistant reported: The current project continuity con...6, 18, 284911, tzinfo=datetime.timezone.utc), observation_count=1, last_retrieved_at=None, reconsolidation_due_at=None).id
+_____ test_similarity_preview_rejects_changed_review_state[target_vector] _____
+tests\test_related_forget_similarity.py:109: in test_similarity_preview_rejects_changed_review_state
+    assert copy.id in {item["fact_id"] for item in preview["candidates"]}
+E   AssertionError: assert 'fd655633-9c85-4182-8157-1425c07c6c81' in set()
+E    +  where 'fd655633-9c85-4182-8157-1425c07c6c81' = MemoryChunk(id='fd655633-9c85-4182-8157-1425c07c6c81', content='Assistant reported: The current project continuity con...56, 19, 99825, tzinfo=datetime.timezone.utc), observation_count=1, last_retrieved_at=None, reconsolidation_due_at=None).id
+______ test_similarity_preview_rejects_changed_review_state[copy_vector] ______
+tests\test_related_forget_similarity.py:109: in test_similarity_preview_rejects_changed_review_state
+    assert copy.id in {item["fact_id"] for item in preview["candidates"]}
+E   AssertionError: assert 'c5b55507-8b01-420a-82a1-36ea8c974b31' in set()
+E    +  where 'c5b55507-8b01-420a-82a1-36ea8c974b31' = MemoryChunk(id='c5b55507-8b01-420a-82a1-36ea8c974b31', content='Assistant reported: The current project continuity con...6, 19, 859439, tzinfo=datetime.timezone.utc), observation_count=1, last_retrieved_at=None, reconsolidation_due_at=None).id
+________ test_similarity_preview_rejects_changed_review_state[content] ________
+tests\test_related_forget_similarity.py:109: in test_similarity_preview_rejects_changed_review_state
+    assert copy.id in {item["fact_id"] for item in preview["candidates"]}
+E   AssertionError: assert 'ac5fc956-b4c4-40bc-8b33-064225db0c5f' in set()
+E    +  where 'ac5fc956-b4c4-40bc-8b33-064225db0c5f' = MemoryChunk(id='ac5fc956-b4c4-40bc-8b33-064225db0c5f', content='Assistant reported: The current project continuity con...6, 20, 619029, tzinfo=datetime.timezone.utc), observation_count=1, last_retrieved_at=None, reconsolidation_due_at=None).id
+________ test_similarity_preview_rejects_changed_review_state[version] ________
+tests\test_related_forget_similarity.py:109: in test_similarity_preview_rejects_changed_review_state
+    assert copy.id in {item["fact_id"] for item in preview["candidates"]}
+E   AssertionError: assert '47951c41-e80e-468d-b437-52e636262255' in set()
+E    +  where '47951c41-e80e-468d-b437-52e636262255' = MemoryChunk(id='47951c41-e80e-468d-b437-52e636262255', content='Assistant reported: The current project continuity con...6, 21, 400839, tzinfo=datetime.timezone.utc), observation_count=1, last_retrieved_at=None, reconsolidation_due_at=None).id
+________ test_similarity_filters_scope_and_manual_facts_before_ranking ________
+tests\test_related_forget_similarity.py:142: in test_similarity_filters_scope_and_manual_facts_before_ranking
+    assert [item["fact_id"] for item in preview["candidates"]] == [copy.id]
+E   AssertionError: assert [] == ['7b9df733-97...69958f1c4a1f']
+E     
+E     Right contains one more item: '7b9df733-97e1-4197-9e4d-69958f1c4a1f'
+E     Use -v to get more diff
+_____ test_similarity_bound_is_disclosed_and_exact_matches_keep_priority ______
+tests\test_related_forget_similarity.py:162: in test_similarity_bound_is_disclosed_and_exact_matches_keep_priority
+    assert len(preview["candidates"]) == 21
+E   AssertionError: assert 1 == 21
+E    +  where 1 = len([{'fact_id': 'z-exact', 'version': 1, 'content': 'Captured: Use maple-heron as the release label convention for this project.', 'match_type': 'exact_assertion', ...}])
+_____ test_missing_target_vector_keeps_exact_path_and_discloses_gap[None] _____
+tests\test_related_forget_similarity.py:189: in test_missing_target_vector_keeps_exact_path_and_discloses_gap
+    assert preview["similarity_search"]["status"] == "unavailable"
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E   KeyError: 'similarity_search'
+__ test_missing_target_vector_keeps_exact_path_and_discloses_gap[embedding1] __
+tests\test_related_forget_similarity.py:189: in test_missing_target_vector_keeps_exact_path_and_discloses_gap
+    assert preview["similarity_search"]["status"] == "unavailable"
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E   KeyError: 'similarity_search'
+=========================== short test summary info ===========================
+FAILED tests/test_related_forget_similarity.py::test_paraphrase_can_be_reviewed_deleted_and_replay_suppressed
+FAILED tests/test_related_forget_similarity.py::test_similarity_suggestion_is_never_automatically_selected
+FAILED tests/test_related_forget_similarity.py::test_similarity_preview_rejects_changed_review_state[target_vector]
+FAILED tests/test_related_forget_similarity.py::test_similarity_preview_rejects_changed_review_state[copy_vector]
+FAILED tests/test_related_forget_similarity.py::test_similarity_preview_rejects_changed_review_state[content]
+FAILED tests/test_related_forget_similarity.py::test_similarity_preview_rejects_changed_review_state[version]
+FAILED tests/test_related_forget_similarity.py::test_similarity_filters_scope_and_manual_facts_before_ranking
+FAILED tests/test_related_forget_similarity.py::test_similarity_bound_is_disclosed_and_exact_matches_keep_priority
+FAILED tests/test_related_forget_similarity.py::test_missing_target_vector_keeps_exact_path_and_discloses_gap[None]
+FAILED tests/test_related_forget_similarity.py::test_missing_target_vector_keeps_exact_path_and_discloses_gap[embedding1]
+10 failed in 15.07s

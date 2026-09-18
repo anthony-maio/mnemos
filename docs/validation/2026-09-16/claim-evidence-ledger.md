@@ -4,7 +4,14 @@ Assessment date: September 17, 2026. This covers the unreleased
 functional-local-memory worktree, not the installed public package or website.
 The capability IDs come from the original implementation plan.
 
-The latest [source validation](../2026-09-17/uuid-write-safety-v1/README.md)
+The latest [source validation](../2026-09-18/related-forget-similarity-v1/README.md)
+passes 1,022 tests with four skips and static checks. It adds bounded advisory
+similarity discovery to the explicit related-forget review, with 13 regressions
+covering selection, replay suppression, stale state, scope, and dependencies.
+The vectors are controlled fixtures. Native acceptance and real embedding
+quality are not established, and discovery is explicitly non-exhaustive.
+
+The preceding [UUID source validation](../2026-09-17/uuid-write-safety-v1/README.md)
 passes 1,009 tests with four skips, Black, and strict mypy after the shared UUID
 write-safety repair. It includes the host-context authority changes. This is a
 source checkpoint, now supplemented by the installed verification below.

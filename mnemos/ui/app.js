@@ -644,21 +644,37 @@ async function previewForgetMemory() {
       throw new Error("The service did not return a valid deletion preview.");
     }
     state.forgetPreview = preview;
+    const similaritySearch = preview.similarity_search || {};
+    const similarityStatus = similaritySearch.status === "unavailable"
+      ? "Similarity suggestions are unavailable for this record."
+      : similaritySearch.truncated === true
+        ? "The similarity suggestions are bounded and truncated. Other paraphrases may remain."
+        : "Similarity suggestions are bounded and advisory. Other paraphrases may remain.";
     const retainedSourceIds = new Set(preview.source_events
       .filter((item) => item.selection_allowed !== false).map((item) => item.source_event_id));
     const targetSourceIds = new Set(preview.target.source_event_ids || []);
     const targetSources = (preview.target.affected_sources || []).map((item) =>
       `<li>${escapeHtml(item.status === "expired" ? "Original source no longer retained." : item.content)}</li>`
     ).join("");
-    const facts = preview.candidates.map((item, index) => `
+    const facts = preview.candidates.map((item, index) => {
+      const similarity = item.match_type === "similarity_candidate";
+      const similarityScore = Number.isFinite(item.similarity)
+        ? `Similarity score ${item.similarity.toFixed(3)}; review the content before selecting.`
+        : "Review this possible copy before selecting it.";
+      const blocked = (item.blocked_source_event_ids || []).length > 0;
+      const unavailable = item.selection_allowed === false || blocked;
+      const label = similarity ? "Possible captured copy" : "Captured fact";
+      return `
       <label class="checkbox-field">
-        <input type="checkbox" data-forget-fact="${escapeHtml(item.fact_id)}" ${(item.blocked_source_event_ids || []).length ? "disabled" : ""} />
-        <span><strong>Captured fact ${index + 1}:</strong> ${escapeHtml(item.content)}<br />
-          ${(item.blocked_source_event_ids || []).length ? "This copy has a source outside this removal plan and cannot be selected." : ""}
+        <input type="checkbox" data-forget-fact="${escapeHtml(item.fact_id)}" ${unavailable ? "disabled" : ""} />
+        <span><strong>${label} ${index + 1}:</strong> ${escapeHtml(item.content)}<br />
+          ${similarity ? escapeHtml(similarityScore) : ""}
+          ${blocked ? "This copy has a source outside this removal plan and cannot be selected." : item.selection_allowed === false ? "This copy is not available for selection." : ""}
           ${item.source_event_ids.some((id) => retainedSourceIds.has(id))
             ? `Also select its ${item.source_event_ids.filter((id) => retainedSourceIds.has(id)).length} retained sources below.`
             : "No additional source listed in this preview."}</span>
-      </label>`).join("");
+      </label>`;
+    }).join("");
     const sources = preview.source_events.map((item) => `
       <label class="checkbox-field">
         <input type="checkbox" data-forget-source="${escapeHtml(item.source_event_id)}"
@@ -672,14 +688,17 @@ async function previewForgetMemory() {
     const panel = document.getElementById("forget-preview");
     panel.innerHTML = `
       <h3>Review records to forget</h3>
-      <p>Matching facts contain the full current or historical assertion text within this project and profile.
-        Their retained sources are listed too.
-        Paraphrases, external transcripts, and historical backups may still contain it.</p>
+      <p>Exact matches contain the full current or historical assertion text within this project and profile.
+        Their retained sources are listed too. ${escapeHtml(similarityStatus)}
+        ${similaritySearch.unsearchable_fact_count > 0 ? "Some captured facts could not be checked for similarity." : ""}
+        Paraphrases in unprocessed conversations, copies of older meanings, external transcripts,
+        and historical backups may still remain.</p>
       <p><strong>Selected record (required):</strong> ${escapeHtml(preview.target.content)}</p>
       ${targetSources ? `<details><summary>Sources attached to the required record</summary><ul>${targetSources}</ul></details>` : ""}
       <p>Deleting a fact also removes its linked evidence and replayable sources.
-        Select any additional captured facts and their sources below. Shared sources may prevent
-        deletion when another retained fact still uses them.</p>
+        Similarity results are possible copies, not proof of semantic identity, and nothing is
+        selected automatically. Select any additional captured facts and their sources below.
+        Shared sources may prevent deletion when another retained fact still uses them.</p>
       <h4>Additional captured facts</h4>${facts || "<p>No matching facts.</p>"}
       <h4>Captured sources</h4>${sources || "<p>No matching sources.</p>"}
       ${preview.complete === true ? "" : "<p>This preview is incomplete. Nothing can be deleted from it.</p>"}

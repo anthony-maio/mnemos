@@ -647,13 +647,16 @@ def _register_service_tools(mcp: Any) -> None:
         limit: StrictInt = 100,
         ctx: Context[Any, Any, Any] | None = None,
     ) -> str:
-        """Preview exact related facts and source events before a reviewed forget.
+        """Preview related facts and source events before a reviewed forget.
 
-        The preview is bounded and scoped to the current project. Applying it
-        always removes the target fact and its linked evidence cleanup. Only
-        additional related facts or source events require explicit reviewed
-        selections; stale previews must be regenerated. No other facts are
-        deleted automatically.
+        The bounded preview includes exact current or historical assertion
+        matches and, when indexed vectors are available, advisory similarity
+        candidates from the same project and profile. Similarity results are
+        not exhaustive and are never selected automatically. Applying the
+        preview always removes the target fact and its linked evidence
+        cleanup. Only additional related facts or source events require
+        explicit reviewed selections; stale previews must be regenerated. No
+        other facts are deleted automatically.
         """
         service_context = _service_context_from_ctx(ctx, "mnemos_forget_preview")
         if service_context.scope.project_id is None:
@@ -682,14 +685,14 @@ def _register_service_tools(mcp: Any) -> None:
         selected_source_event_ids: list[str] | None = None,
         ctx: Context[Any, Any, Any] | None = None,
     ) -> str:
-        """Apply reviewed exact related forget selections with stale checks.
+        """Apply reviewed related-forget selections with stale checks.
 
         The target fact is always removed, along with its linked evidence
-        cleanup. Only additional facts or source events are removed when their
-        IDs were explicitly selected from a matching preview. The current
-        project context is injected by the service, and stale previews must be
-        re-previewed. No unselected or automatically inferred memories are
-        deleted.
+        cleanup. Additional exact or advisory similarity candidates and source
+        events are removed only when their IDs were explicitly selected from a
+        matching preview. The current project context is injected by the
+        service, and stale previews must be re-previewed. No unselected or
+        automatically inferred memories are deleted.
         """
         service_context = _service_context_from_ctx(ctx, "mnemos_forget_related")
         if service_context.scope.project_id is None:

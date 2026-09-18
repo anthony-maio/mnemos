@@ -219,7 +219,15 @@ facts, and their sources; select the extra records to remove, then apply that
 preview. A changed or incomplete preview requires another review. Shared
 unselected dependencies prevent deletion, including references in queued jobs
 after source text expires. Matching uses the full current or historical
-assertion within the same project and profile; it does not identify paraphrases.
+assertion within the same project and profile, then adds up to twenty bounded
+same-scope similarity candidates from captured or sleep-consolidated facts when
+the current target has a stored document vector. These candidates are advisory,
+are never selected automatically, and are not an exhaustive semantic erasure
+plan. Missing vectors, raw episodic paraphrases, historical-only meanings, and
+external transcripts may still be missed.
+The [similarity source checks](validation/2026-09-18/related-forget-similarity-v1/README.md)
+cover explicit selection, source dependencies, stale previews, and replay
+suppression with controlled vectors. Native acceptance remains open.
 The [verification record](validation/2026-09-16/related-forget-verification/README.md)
 separates passing focused/browser/package checks from pending native
 acceptance.

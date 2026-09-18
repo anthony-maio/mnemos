@@ -1,0 +1,63 @@
+"""Preserve source-bound validation of advisory captured-copy discovery."""
+from pathlib import Path
+import hashlib
+import json
+import shutil
+import xml.etree.ElementTree as ET
+
+ROOT = Path(__file__).resolve().parents[1]
+SOURCE = Path('C:/Users/Ant/AppData/Local/Temp/mnemos-related-similarity-v1')
+OUT = ROOT / 'docs/validation/2026-09-18/related-forget-similarity-v1'
+sha = lambda p: hashlib.sha256(p.read_bytes()).hexdigest()
+report = json.loads((SOURCE / 'report.json').read_text(encoding='utf-8'))
+assert report['status'] == 'passed'
+assert report['source_inputs_before'] == report['source_inputs_after']
+assert all(sha(ROOT / name) == digest for name, digest in report['source_inputs_after'].items())
+assert sha(ROOT / '.venv/validate_related_similarity_v1.py') == report['runner_sha256']
+assert len(report['checks']) == 4 and all(c['exit_code'] == 0 for c in report['checks'])
+cases = ET.parse(SOURCE / 'pytest.xml').getroot().findall('.//testcase')
+assert not any(c.find('failure') is not None or c.find('error') is not None for c in cases)
+skips = sum(c.find('skipped') is not None for c in cases)
+regressions = [c for c in cases if c.get('classname', '').endswith('test_related_forget_similarity')]
+assert len(regressions) == 13 and not any(c.find('skipped') is not None for c in regressions)
+red = ET.parse(ROOT / '.venv/related-similarity-red.xml').getroot().findall('.//testcase')
+assert len(red) == 10 and all(c.find('failure') is not None for c in red)
+OUT.mkdir(parents=True, exist_ok=False)
+for path in SOURCE.iterdir():
+    if path.is_file():
+        shutil.copyfile(path, OUT / path.name)
+for name in ['related-similarity-red.log', 'related-similarity-red.xml',
+             'related-similarity-green.log', 'related-similarity-green.xml']:
+    shutil.copyfile(ROOT / '.venv' / name, OUT / name)
+for name in ['validate_related_similarity_v1.py', 'archive_related_similarity_v1.py']:
+    shutil.copyfile(ROOT / '.venv' / name, OUT / (name + '.txt'))
+shutil.copyfile(ROOT / 'tests/test_related_forget_similarity.py', OUT / 'test_related_forget_similarity.py.txt')
+(OUT / '.gitattributes').write_text('* -text\n*.log -whitespace\n*.xml -whitespace\n*.patch -whitespace\n', encoding='utf-8')
+(OUT / 'README.md').write_text(
+    '# Reviewed similarity candidates for forgetting\n\n'
+    f"Source based on `{report['base_commit']}` plus `source.patch` passed {len(cases)-skips:,} "
+    f'tests with {skips} skips, Black, strict mypy, and JavaScript syntax. '
+    'The report binds all Python source/test inputs, UI JavaScript, and project configuration '
+    'before and after validation. Temporary fixtures were outside Git on C:.\n\n'
+    'Ten initial regressions failed against the previous exact-only preview. The first focused '
+    'run then passed 45 tests. The final full suite includes 13 similarity regressions covering '
+    'explicit selection, read-only discovery, replay suppression and reopen, scope filtering, '
+    'deterministic bounds, stale embeddings/content/version/dependencies, missing vectors, '
+    'shared sources, and redacted foreign sources. Vectors are controlled fixtures; these '
+    'tests do not measure embedding quality.\n\n'
+    'Exact current/historical assertion matches are supplemented by at most 20 positive-cosine '
+    'nearest captured facts using the current target and candidate stored document vectors. '
+    'Scope and source kind are filtered before ranking. Suggestions are advisory and require '
+    'explicit selection. Apply regenerates the plan inside the existing transaction and binds '
+    'embedding hashes, scores, versions, content, and source/job dependencies to its digest.\n\n'
+    '`complete` describes the returned selection and dependency plan, not exhaustive discovery. '
+    'Raw episodic paraphrases without indexed facts, missing vectors, historical-only meanings, '
+    'and candidates outside the similarity bound may be missed. Exact-match overflow or '
+    'dependency overflow still prevents applying an incomplete plan.\n\n'
+    'Native v6 remains a recorded failure. No native host, installed wheel, or real-model '
+    'quality acceptance was established by this source run. The frozen Ollama evaluation '
+    'uses an earlier source and was not changed.\n', encoding='utf-8')
+index = {'files': {p.relative_to(OUT).as_posix(): {'bytes': p.stat().st_size, 'sha256': sha(p)}
+                   for p in sorted(OUT.rglob('*')) if p.is_file()}}
+(OUT / 'evidence-index.json').write_text(json.dumps(index, indent=2) + '\n', encoding='utf-8')
+print(json.dumps({'passed': len(cases)-skips, 'skipped': skips, 'regressions':len(regressions), 'indexed_files':len(index['files'])}))

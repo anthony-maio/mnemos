@@ -4,6 +4,15 @@ This record covers the unreleased `wt/functional-local-memory` worktree. It
 separates implemented behavior from acceptance evidence. The original task
 boundaries and thresholds remain in the [implementation plan](../../plans/2026-09-16-functional-local-memory.md).
 
+The latest [source checkpoint](../2026-09-18/related-forget-similarity-v1/README.md)
+passes 1,022 tests with four skips, Black, strict mypy, and JavaScript syntax.
+Related-forget previews now supplement exact matches with bounded, advisory
+similarity suggestions from stored captured-fact vectors. Explicit selections,
+scope checks, source dependencies, and stale-preview rejection remain required.
+The controlled-vector tests establish the deletion contract, not embedding
+quality or native-host acceptance. Unindexed episodic paraphrases and
+historical-only meanings may still be missed.
+
 The latest [frozen package checkpoint](../2026-09-17/uuid-context-package-checkpoint-v1/README.md)
 validates source `8616901`: 1,009 tests passed with four skips, followed by Black,
 strict mypy, JavaScript syntax, build, and Twine. A fresh installed wheel passed
