@@ -1,0 +1,83 @@
+"""Disposable installed service with a post-commit, pre-response crash barrier."""
+from pathlib import Path
+import argparse
+import hashlib
+import importlib.util
+import json
+import os
+import sqlite3
+import sys
+import threading
+
+ROOT = Path(__file__).resolve().parents[1]
+TEMP = Path('C:/Users/Ant/AppData/Local/Temp')
+PYTHON = TEMP / 'mnemos-installed-outbox-selection-v1/Scripts/python.exe'
+HELPER = ROOT / '.venv/native_claude_lifecycle_v17.py'
+HELPER_SHA = '85940cccb99d46f7b56a6184d912495831f66c3933f0b0fc03cdf36217691342'
+PROFILE = 'native-codex-service-kill-v2'
+
+def sha(raw):
+    return hashlib.sha256(raw).hexdigest()
+
+parser = argparse.ArgumentParser()
+parser.add_argument('--fixture', type=Path, required=True)
+args = parser.parse_args()
+fixture = args.fixture.resolve()
+assert fixture.parent == TEMP.resolve() and fixture.name.startswith('mnemos-native-codex-service-kill-v2-')
+assert Path(sys.executable).resolve() == PYTHON.resolve()
+assert sha(HELPER.read_bytes()) == HELPER_SHA
+assert not (fixture / 'crash-service-ready.json').exists()
+assert not (fixture / 'crash-barrier.json').exists()
+spec = importlib.util.spec_from_file_location('crash_fixture_service', HELPER)
+helper = importlib.util.module_from_spec(spec)
+spec.loader.exec_module(helper)
+helper.PROFILE = PROFILE
+
+from mnemos.config import MnemosConfig, ModuleConfig
+from mnemos.scopes import ScopeRegistry
+import mnemos.service as service_module
+
+original = service_module._RequestHandler._write_json
+barrier_once = threading.Lock()
+barrier_used = False
+
+def hold_committed_response(handler, status, body):
+    global barrier_used
+    selected = False
+    with barrier_once:
+        if not barrier_used and status == 200 and (body.get('committed') is True or body.get('status') == 'committed'):
+            barrier_used = selected = True
+    if selected:
+        with sqlite3.connect((fixture / 'memory.sqlite').as_uri() + '?mode=ro', uri=True) as db:
+            db.row_factory = sqlite3.Row
+            events = [dict(row) for row in db.execute("select * from episodic_events where source='codex'")]
+            jobs = [dict(row) for row in db.execute('select * from memory_jobs')]
+        assert len(events) == 1 and events[0]['role'] == 'user'
+        service_module._write_private_json(fixture / 'crash-barrier.json', {
+            'pid': os.getpid(), 'runner_sha256': sha(Path(__file__).read_bytes()),
+            'boundary': 'SQLite capture committed; HTTP response has not been written.',
+            'response': dict(body), 'events': events, 'jobs': jobs,
+        })
+        # Parent terminates this process after observing the durable barrier.
+        # Expiry is a failed probe, never a synthetic successful acknowledgment.
+        if not threading.Event().wait(60):
+            service_module._write_private_json(fixture / 'crash-barrier-expired.json', {'pid': os.getpid()})
+            raise TimeoutError('Crash barrier expired before parent termination')
+    return original(handler, status, body)
+
+service_module._RequestHandler._write_json = hold_committed_response
+service = store = None
+try:
+    registry = ScopeRegistry.load(fixture / 'scopes.json')
+    config = MnemosConfig(modules=ModuleConfig(**{name: False for name in ModuleConfig.model_fields}))
+    service, store, _ = helper._start_service(fixture, registry, config)
+    service_module._write_private_json(fixture / 'crash-service-ready.json', {
+        'pid': os.getpid(), 'runner_sha256': sha(Path(__file__).read_bytes()),
+        'descriptor_sha256': sha((fixture / 'runtime.json').read_bytes()),
+        'helper_sha256': HELPER_SHA,
+    })
+    while True:
+        threading.Event().wait(1)
+finally:
+    errors = helper._close_service(service, store)
+    service_module._write_private_json(fixture / 'crash-service-graceful-cleanup.json', {'errors': errors})

@@ -1,0 +1,456 @@
+"""Native Codex capture across a forced service-process kill before acknowledgment.
+
+Generated hooks are unchanged. A disposable child service is killed after SQLite
+commit and before its HTTP reply. No live settings or data are modified.
+"""
+from __future__ import annotations
+
+from datetime import datetime, timezone
+import asyncio
+import sqlite3
+import threading
+import hashlib
+import importlib.util
+import json
+from pathlib import Path
+import subprocess
+import sys
+import time
+import uuid
+from types import SimpleNamespace
+
+ROOT = Path(__file__).resolve().parents[1]
+TEMP = Path("C:/Users/Ant/AppData/Local/Temp")
+PROFILE = 'native-codex-service-kill-v1'
+OUTPUT = TEMP / 'mnemos-native-codex-service-kill-v1'
+SOURCE = "c25ed98d9dae5afc9103a4f6807a62429d30ac9d"
+SNAPSHOT = TEMP / "mnemos-source-outbox-selection-v1"
+WHEEL = TEMP / "mnemos-package-checks-outbox-selection-v1/dist/mnemos_memory-0.7.0-py3-none-any.whl"
+WHEEL_SHA256 = "d697b0796db57db1790b59f1874ea1fda7a77b32d41dbd15be6e13e1f34dada8"
+INSTALLED_PYTHON = TEMP / "mnemos-installed-outbox-selection-v1/Scripts/python.exe"
+PINS = {
+    "native_codex_interactive_utf8_v1.py": "6f91aaef76ff619d38e5229f93697796b5fbfbcf86bcc87a78e72062f4b7dd0b",
+    "native_codex_retrieve_v2.py": "20f909d8c2d28934c8d47763558b7f9bf08eb6d848de9a1e6bce8d2f7f3326bb",
+    "native_claude_lifecycle_v17.py": "85940cccb99d46f7b56a6184d912495831f66c3933f0b0fc03cdf36217691342",
+}
+
+
+def sha(raw: bytes) -> str:
+    return hashlib.sha256(raw).hexdigest()
+
+
+def load(path: Path, name: str):
+    spec = importlib.util.spec_from_file_location(name, path)
+    module = importlib.util.module_from_spec(spec)
+    assert spec.loader is not None
+    spec.loader.exec_module(module)
+    return module
+
+
+assert not OUTPUT.exists()
+assert sys.stdin.isatty() and sys.stdout.isatty()
+for name, expected in PINS.items():
+    assert sha((ROOT / ".venv" / name).read_bytes()) == expected
+assert sha(WHEEL.read_bytes()) == WHEEL_SHA256
+assert INSTALLED_PYTHON.exists()
+assert Path(sys.executable).resolve() == INSTALLED_PYTHON.resolve()
+
+native = load(ROOT / ".venv/native_codex_interactive_utf8_v1.py", "native_mcp_control")
+wrapper = native._load_v2()
+lifecycle = wrapper._load_lifecycle()
+claude = load(ROOT / ".venv/native_claude_lifecycle_v17.py", "mcp_control_lifecycle")
+wrapper.PROFILE = claude.PROFILE = PROFILE
+native.INSTALLED_PYTHON = INSTALLED_PYTHON
+native.WHEEL_PATH = WHEEL
+native.WHEEL_SHA256 = WHEEL_SHA256
+native.BUILD_VERIFICATION = WHEEL.parent.parent / "verification.json"
+build = json.loads(native.BUILD_VERIFICATION.read_text(encoding="utf-8"))
+assert build["status"] == "passed" and build["source_commit"] == SOURCE
+provenance = wrapper._verify_inputs(SimpleNamespace(source_commit=SOURCE, wheel=WHEEL,
+    expected_wheel_sha256=WHEEL_SHA256, build_verification=native.BUILD_VERIFICATION), lifecycle)
+
+fixture = wrapper._private_fixture(lifecycle, TEMP, "mnemos-native-codex-service-kill-v1-")
+service = store = process = auth = binding = None
+crash_child = kill_thread = None
+crash_logs = []
+kill_stop = threading.Event()
+kill_observation = {}
+trace = []
+descriptor_stop = descriptor_thread = None
+descriptor_observations = []
+report = {
+    "status": "running",
+    "source_commit": SOURCE,
+    "fixture": str(fixture),
+    "started_at": datetime.now(timezone.utc).isoformat(),
+    "runner_sha256": sha(Path(__file__).read_bytes()),
+    "helper_pins": PINS,
+    "wheel_sha256": WHEEL_SHA256,
+    "provenance": provenance,
+    "boundary": "Real native capture committed by disposable service before forced process termination and HTTP reply; automatic replay in a fresh native session after explicit service restoration. Fixture providers, disabled modules, injected response barrier.",
+}
+OUTPUT.mkdir(parents=True)
+
+def database_state(fixture):
+    result={}
+    path=fixture/'memory.sqlite'
+    if not path.exists(): return {'exists':False}
+    with sqlite3.connect(path.as_uri()+'?mode=ro',uri=True) as db:
+        db.row_factory=sqlite3.Row
+        for table in ('memory_chunks','episodic_events','fact_evidence','memory_jobs'):
+            values=[]
+            for row in db.execute('select * from '+table):
+                item={key:({'bytes_sha256':sha(value)} if isinstance(value,bytes) else value) for key,value in dict(row).items()}
+                values.append(json.dumps(item,sort_keys=True))
+            result[table]={'rows':len(values),'sha256':sha(json.dumps(sorted(values)).encode())}
+        result['capture_count']=db.execute("select count(*) from episodic_events where source='codex'").fetchone()[0]
+    return result
+
+def read_native(home):
+    selected=[]
+    for path in sorted((home/'sessions').rglob('*.jsonl')):
+        raw=path.read_bytes()
+        for number,line in enumerate(raw.splitlines(keepends=True),1):
+            record=json.loads(line); payload=record.get('payload')
+            if isinstance(payload,dict) and (record.get('type')=='session_meta' or payload.get('type') in ('user_message','agent_message','mcp_tool_call_end','task_complete','custom_tool_call','function_call')):
+                selected.append({'source':path.relative_to(home).as_posix(),'source_file_sha256':sha(raw),'line':number,'line_sha256':sha(line),'record':record})
+    return selected
+
+try:
+    from mnemos.hosts import apply_host_integration
+
+    registry, registry_path, project, project_b = wrapper._registry_with_foreign_project(lifecycle, fixture)
+    config = wrapper._disabled_config()
+    service, store, _ = claude._start_service(fixture, registry, config)
+    content='The project shutdown probe uses river-cedar release labels.'
+    foreign='The project shutdown probe uses foreign-canary-849 release labels.'
+    context=registry.resolve(project,user_profile_id=wrapper.PROFILE,session_id='fixture-seed',host='manual')
+    foreign_context=registry.resolve(project_b,user_profile_id=wrapper.PROFILE,session_id='foreign-seed',host='manual')
+    service.submit('remember',{'event_id':'control-target','context':context.model_dump(mode='json'),'content':content,'scope':'project'})
+    service.submit('remember',{'event_id':'control-foreign','context':foreign_context.model_dump(mode='json'),'content':foreign,'scope':'project'})
+    service.submit('maintenance',{})
+    target_id,version=wrapper._fact_row(store,content)
+    foreign_id,_=wrapper._fact_row(store,foreign)
+    assert version==1
+    report['target']={'fact_id':target_id,'version':version,'content':content,'scope_id':context.project_id,'foreign_id':foreign_id}
+    settings = fixture / "settings.toml"
+    settings.write_text("# disposable MCP-only control\n", encoding="utf-8")
+    lifecycle._protect_file(settings)
+    home = fixture / "codex-home"
+    lifecycle._private_mkdir(home)
+    selectors = {
+        "MNEMOS_CONFIG_PATH": str(settings),
+        "MNEMOS_SCOPE_REGISTRY": str(registry_path),
+        "MNEMOS_USER_PROFILE_ID": PROFILE,
+        "MNEMOS_RUNTIME_DESCRIPTOR": str(fixture / "runtime.json"),
+        "MNEMOS_PROJECT_ROOT": str(project),
+        "MNEMOS_HOST": "codex",
+        "MNEMOS_SESSION_ID": PROFILE,
+    }
+    generated = apply_host_integration(
+        "codex",
+        mnemos_config_path=settings,
+        cwd=project,
+        home=home,
+        integration_env={k: selectors[k] for k in ("MNEMOS_CONFIG_PATH", "MNEMOS_SCOPE_REGISTRY", "MNEMOS_USER_PROFILE_ID", "MNEMOS_RUNTIME_DESCRIPTOR")},
+    )
+    config_path = generated.config_path
+    original = config_path.read_text(encoding="utf-8")
+    marker = original.find("[[hooks")
+    assert marker > 0
+    combined = original.rstrip() + "\n\n[windows]\nsandbox = \"unelevated\"\n"
+    config_path.write_text(combined, encoding="utf-8")
+    lifecycle._protect_file(config_path)
+    import tomllib
+    parsed = tomllib.loads(combined)
+    assert set(parsed['hooks']) == {'SessionStart','UserPromptSubmit','PreCompact','PostCompact','Stop','SessionEnd'}
+    assert "mnemos" in parsed["mcp_servers"]
+
+    # Preserve the generated hook commands and their native deadlines verbatim.
+    generated_hooks = tomllib.loads(original)['hooks']
+    assert parsed['hooks'] == generated_hooks
+    assert generated_hooks['Stop'][0]['hooks'][0]['timeout'] == 3
+    report['generated_hooks'] = generated_hooks
+    report['hook_instrumentation'] = False
+
+    report["config"] = {
+        "path": str(config_path),
+        "sha256": sha(config_path.read_bytes()),
+        "hook_marker_offset": marker,
+        "hook_names": sorted(parsed['hooks']),
+        "mcp_server_names": sorted(parsed["mcp_servers"]),
+        "windows_sandbox": parsed.get("windows", {}).get("sandbox"),
+    }
+    report["executable"] = {"path": str(lifecycle.CODEX_EXE), "sha256": sha(lifecycle.CODEX_EXE.read_bytes())}
+    report["version"] = subprocess.check_output([str(lifecycle.CODEX_EXE), "--version"], text=True, timeout=20).strip()
+    report["mcp_entrypoint"] = wrapper._validate_mcp_entrypoint(lifecycle, config_path, native._clean_environment(lifecycle, {"CODEX_HOME": str(config_path.parent), **selectors}))
+    auth = lifecycle._auth_copy(config_path.parent)
+    env = native._clean_environment(lifecycle, {"CODEX_HOME": str(config_path.parent), **selectors, "TERM": "xterm-256color"})
+    for key in ("OPENAI_API_KEY", "ANTHROPIC_API_KEY", "ANTHROPIC_AUTH_TOKEN", "CLAUDE_CODE_OAUTH_TOKEN"):
+        env.pop(key, None)
+    prompt = "Do not use tools. Reply with exactly these words, without punctuation: crash amber-wren"
+    command = native._native_command(lifecycle, project, prompt)
+    report['command'] = command[:-1] + ['<synthetic outage prompt>']
+    report['prompt'] = prompt
+    report['expected_final_answer'] = 'crash amber-wren'
+    errors = lifecycle._close_service(service, store)
+    service = store = None
+    assert errors == [] and not (fixture / 'runtime.json').exists()
+    good_settings = settings.read_bytes()
+    settings.write_text('invalid_fixture_config = [\n', encoding='utf-8')
+    report['invalid_settings_sha256'] = sha(settings.read_bytes())
+    env.pop('MNEMOS_AUTO_START', None)
+    startup_command = [str(INSTALLED_PYTHON), '-m', 'mnemos.service', '--descriptor', str(fixture / 'runtime.json')]
+    startup = subprocess.run(startup_command, cwd=project, env=env, capture_output=True, timeout=20,
+                             creationflags=getattr(subprocess, 'CREATE_NO_WINDOW', 0))
+    (OUTPUT / 'startup-failure.stdout.log').write_bytes(startup.stdout)
+    (OUTPUT / 'startup-failure.stderr.log').write_bytes(startup.stderr)
+    report['startup_failure'] = {'command':startup_command, 'returncode':startup.returncode,
+        'stdout_sha256':sha(startup.stdout), 'stderr_sha256':sha(startup.stderr)}
+    assert startup.returncode != 0 and not (fixture / 'runtime.json').exists()
+    assert 'TOMLDecodeError' in startup.stderr.decode('utf-8', errors='replace')
+    report['before_native'] = database_state(fixture)
+    assert report['before_native']['capture_count'] == 0
+    crash_helper = ROOT / '.venv/native_codex_crash_service_v1.py'
+    report['crash_helper_sha256'] = sha(crash_helper.read_bytes())
+    for stream in ('stdout','stderr'):
+        crash_logs.append((OUTPUT / ('crash-service.'+stream+'.log')).open('wb'))
+    crash_child = subprocess.Popen([str(INSTALLED_PYTHON),str(crash_helper),'--fixture',str(fixture)],
+        cwd=project,env=env,stdin=subprocess.DEVNULL,stdout=crash_logs[0],stderr=crash_logs[1],
+        creationflags=getattr(subprocess,'CREATE_NO_WINDOW',0))
+    ready_path=fixture/'crash-service-ready.json'
+    deadline=time.monotonic()+20
+    while not ready_path.exists() and time.monotonic()<deadline:
+        assert crash_child.poll() is None
+        time.sleep(0.025)
+    assert ready_path.exists()
+    ready=json.loads(ready_path.read_text(encoding='utf-8'))
+    assert ready['pid']==crash_child.pid and ready['runner_sha256']==report['crash_helper_sha256']
+    assert ready['descriptor_sha256']==sha((fixture/'runtime.json').read_bytes())
+    report['crash_service_ready']=ready
+    def kill_after_commit():
+        signal=fixture/'crash-barrier.json'
+        try:
+            while not kill_stop.is_set():
+                if signal.exists():
+                    barrier=json.loads(signal.read_text(encoding='utf-8'))
+                    assert barrier['pid']==crash_child.pid
+                    assert barrier['runner_sha256']==report['crash_helper_sha256']
+                    assert crash_child.poll() is None
+                    kill_observation.update(barrier=barrier,barrier_sha256=sha(signal.read_bytes()),
+                        pid=crash_child.pid,observed_alive=True,kill_started_ns=time.perf_counter_ns())
+                    crash_child.kill()
+                    kill_observation['returncode']=crash_child.wait(timeout=10)
+                    kill_observation['kill_finished_ns']=time.perf_counter_ns()
+                    kill_observation['stale_descriptor_present']=(fixture/'runtime.json').exists()
+                    return
+                if crash_child.poll() is not None:
+                    raise AssertionError('Crash service exited before its commit barrier')
+                kill_stop.wait(0.02)
+        except Exception as exc:
+            kill_observation.update(error_type=type(exc).__name__,error=str(exc))
+    kill_thread=threading.Thread(target=kill_after_commit,daemon=True)
+    kill_thread.start()
+    print(json.dumps({"stage": "native_codex_service_kill", "fixture": str(fixture)}), flush=True)
+    started = time.monotonic()
+    process = subprocess.Popen(command, cwd=project, env=env, shell=False, creationflags=getattr(subprocess, "CREATE_NEW_PROCESS_GROUP", 0))
+    report['process_id'] = process.pid
+    try:
+        process.wait(timeout=180)
+        timed_out = False
+    except subprocess.TimeoutExpired:
+        timed_out = True
+        lifecycle._terminate_process_tree(process)
+    report["process"] = {"returncode": process.returncode, "timed_out": timed_out, "elapsed_ms": round((time.monotonic() - started) * 1000, 1)}
+    kill_stop.set()
+    kill_thread.join(timeout=12)
+    assert not kill_thread.is_alive()
+    report['service_kill']=kill_observation
+    assert 'error' not in kill_observation
+    assert kill_observation['observed_alive'] and kill_observation['returncode']!=0
+    assert kill_observation['stale_descriptor_present']
+    assert not (fixture/'crash-barrier-expired.json').exists()
+    assert not (fixture/'crash-service-graceful-cleanup.json').exists()
+    assert process.returncode == 0 and not timed_out
+    native_rows = read_native(config_path.parent)
+    (OUTPUT / 'outage-selected-native-events.json').write_text(json.dumps(native_rows, indent=2)+'\n', encoding='utf-8')
+    report['outage_selected_native_events_sha256'] = sha((OUTPUT / 'outage-selected-native-events.json').read_bytes())
+    users = [row for row in native_rows if row['record']['payload'].get('type')=='user_message']
+    answers = [row for row in native_rows if row['record']['payload'].get('type')=='agent_message' and row['record']['payload'].get('phase')=='final_answer']
+    calls = [row for row in native_rows if row['record']['payload'].get('type') in ('mcp_tool_call_end','custom_tool_call','function_call')]
+    assert len(users)==len(answers)==1 and not calls
+    assert users[0]['record']['payload']['message'] == prompt
+    assert answers[0]['record']['payload']['message'] == report['expected_final_answer']
+    after=tomllib.loads(config_path.read_text(encoding='utf-8'))
+    assert set(after['hooks']) - set(generated_hooks) <= {'state'}
+    assert all(after['hooks'][key] == value for key,value in generated_hooks.items())
+    report['generated_hooks_unchanged'] = True
+    stale=json.loads((fixture/'runtime.json').read_text(encoding='utf-8'))
+    assert stale['pid']==crash_child.pid and crash_child.poll() is not None
+    report['stale_descriptor_sha256']=sha((fixture/'runtime.json').read_bytes())
+    report['before_recovery'] = database_state(fixture)
+    assert report['before_recovery']['capture_count']==1
+    from mnemos.client import Outbox
+    queued_raw=(fixture/'outbox.json').read_bytes()
+    (OUTPUT/'native-outbox-before-recovery.json').write_bytes(queued_raw)
+    pending=Outbox(fixture/'outbox.json').pending()
+    report['outbox_before_recovery']={'sha256':sha(queued_raw),'pending':len(pending)}
+    assert len(pending)==2 and {entry['payload']['role'] for entry in pending}=={'user','assistant'}
+    sessions=[row['record']['payload']['id'] for row in native_rows if row['record'].get('type')=='session_meta']
+    turns=[row['record']['payload']['turn_id'] for row in native_rows if row['record']['payload'].get('type')=='task_complete']
+    assert len(sessions)==len(turns)==1 and sessions[0] and turns[0]
+    assert len({entry['payload']['event_id'] for entry in pending})==2
+    native_by_role={'user':users[0]['record']['payload']['message'],'assistant':answers[0]['record']['payload']['message']}
+    for entry in pending:
+        assert entry['operation']=='capture'
+        payload=entry['payload']
+        assert payload['content']==native_by_role[payload['role']]
+        assert payload['source_kind']=='codex_hook'
+        assert payload['context']['project_id']==context.project_id
+        assert payload['context']['user_profile_id']==PROFILE
+        assert payload['context']['session_id']==sessions[0]
+        assert payload['context']['host']=='codex'
+        assert payload['context']['project_id']!=foreign_context.project_id
+        event='UserPromptSubmit' if payload['role']=='user' else 'Stop'
+        assert payload['source_ref']==event+':'+turns[0]
+        from mnemos.adapters.codex import CodexAdapter
+        from mnemos.scopes import ScopeContext
+        assert payload['event_id']==CodexAdapter._event_id(ScopeContext.model_validate(payload['context']),event=event,turn_id=turns[0],role=payload['role'],content=payload['content'])
+    report['outage_native_messages'] = {'user': users[0], 'assistant': answers[0]}
+    report['outage_session_id'] = sessions[0]
+    report['outage_turn_id'] = turns[0]
+    report['capture_payloads'] = pending
+    first_files = {row['source'] for row in native_rows}
+    committed=kill_observation['barrier']['events']
+    assert len(committed)==1 and committed[0]['role']=='user'
+    queued_user=next(entry for entry in pending if entry['payload']['role']=='user')
+    assert committed[0]['id']==queued_user['event_id']
+    assert committed[0]['content']==queued_user['payload']['content']
+    with sqlite3.connect((fixture/'memory.sqlite').as_uri()+'?mode=ro',uri=True) as db:
+        db.row_factory=sqlite3.Row
+        observed=[dict(row) for row in db.execute("select * from episodic_events where source='codex'")]
+        assert observed==committed
+        jobs=[dict(row) for row in db.execute('select * from memory_jobs')]
+        assert jobs==kill_observation['barrier']['jobs']
+        assert len([job for job in jobs if json.loads(job['payload']).get('event_id')==committed[0]['id']])==1
+    report['committed_event_before_recovery']=committed[0]['id']
+    settings.write_bytes(good_settings)
+    report['restored_settings_sha256'] = sha(settings.read_bytes())
+    service,store,_=claude._start_service(fixture,registry,config)
+    assert database_state(fixture) == report['before_recovery']
+    restored=json.loads((fixture/'runtime.json').read_text(encoding='utf-8'))
+    assert restored['pid']!=crash_child.pid
+    report['restored_descriptor']={key:restored[key] for key in ('pid','host','port','started_at')}
+    report['restored_descriptor_sha256']=sha((fixture/'runtime.json').read_bytes())
+    assert Outbox(fixture/'outbox.json').pending() == pending
+    recovery_prompt = 'Do not use tools. Reply with exactly these words, without punctuation: recovered copper-finch'
+    recovery_command = native._native_command(lifecycle,project,recovery_prompt)
+    report['recovery_prompt'] = recovery_prompt
+    report['recovery_command'] = recovery_command[:-1] + ['<synthetic recovery prompt>']
+    print(json.dumps({'stage':'native_codex_recovery','fixture':str(fixture)}),flush=True)
+    started=time.monotonic()
+    process=subprocess.Popen(recovery_command,cwd=project,env=env,shell=False,creationflags=getattr(subprocess,'CREATE_NEW_PROCESS_GROUP',0))
+    report['recovery_process_id']=process.pid
+    try:
+        process.wait(timeout=180)
+        timed_out=False
+    except subprocess.TimeoutExpired:
+        timed_out=True
+        lifecycle._terminate_process_tree(process)
+    report['recovery_process']={'returncode':process.returncode,'timed_out':timed_out,'elapsed_ms':round((time.monotonic()-started)*1000,1)}
+    assert process.returncode==0 and not timed_out
+    recovered_rows=[row for row in read_native(config_path.parent) if row['source'] not in first_files]
+    rusers=[row for row in recovered_rows if row['record']['payload'].get('type')=='user_message']
+    ranswers=[row for row in recovered_rows if row['record']['payload'].get('type')=='agent_message' and row['record']['payload'].get('phase')=='final_answer']
+    rsessions=[row['record']['payload']['id'] for row in recovered_rows if row['record'].get('type')=='session_meta']
+    rturns=[row['record']['payload']['turn_id'] for row in recovered_rows if row['record']['payload'].get('type')=='task_complete']
+    assert len(rusers)==len(ranswers)==len(rsessions)==len(rturns)==1
+    assert not [row for row in recovered_rows if row['record']['payload'].get('type') in ('mcp_tool_call_end','custom_tool_call','function_call')]
+    assert rusers[0]['record']['payload']['message']==recovery_prompt
+    assert ranswers[0]['record']['payload']['message']=='recovered copper-finch'
+    assert rsessions[0]!=sessions[0] and rturns[0]!=turns[0]
+    report['recovery_native_messages']={'user':rusers[0],'assistant':ranswers[0]}
+    report['recovery_session_id']=rsessions[0];report['recovery_turn_id']=rturns[0]
+    report['pending_after_native_recovery']=Outbox(fixture/'outbox.json').pending()
+    assert report['pending_after_native_recovery']==[]
+    report['after_native_recovery']=database_state(fixture)
+    assert report['after_native_recovery']['capture_count']==4
+    # No direct replay call occurs in this harness. Maintenance only follows
+    # the empty-outbox and four-native-event assertions above.
+    service.submit('maintenance',{})
+    report['after_maintenance']=database_state(fixture)
+    assert lifecycle._close_service(service,store)==[]
+    service=store=None
+    report['after_restart_closed']=database_state(fixture)
+    assert report['after_restart_closed']==report['after_maintenance']
+    service,store,_=claude._start_service(fixture,registry,config)
+    report['after_restart_open']=database_state(fixture)
+    assert report['after_restart_open']==report['after_restart_closed']
+    after=tomllib.loads(config_path.read_text(encoding='utf-8'))
+    assert set(after['hooks'])-set(generated_hooks)<={'state'}
+    assert all(after['hooks'][key]==value for key,value in generated_hooks.items())
+    report['generated_hooks_unchanged_after_recovery']=True
+    report['status']='observed_native_service_kill_recovery'
+except Exception as exc:
+    import traceback
+    report.update(status="failed", error_type=type(exc).__name__, error=str(exc), traceback=traceback.format_exc())
+finally:
+
+    try:
+        report['dispatch_trace'] = trace
+        if descriptor_stop is not None:
+            descriptor_stop.set()
+        if descriptor_thread is not None:
+            descriptor_thread.join(timeout=2)
+        if descriptor_observations:
+            report['descriptor_monitor']={'samples':len(descriptor_observations),
+                'descriptor_seen':any(row['present'] for row in descriptor_observations),
+                'max_sample_gap_ms':max((b['monotonic_ns']-a['monotonic_ns'])/1e6 for a,b in zip(descriptor_observations,descriptor_observations[1:])) if len(descriptor_observations)>1 else None}
+        if 'config_path' in locals():
+            (OUTPUT/'selected-native-events.json').write_text(json.dumps(read_native(config_path.parent),indent=2)+'\n',encoding='utf-8')
+            report['selected_native_events_sha256'] = sha((OUTPUT/'selected-native-events.json').read_bytes())
+        if (fixture/'outbox.json').exists():
+            report['outbox_final_sha256']=sha((fixture/'outbox.json').read_bytes())
+        if store is not None:
+            report['capture_events'] = [
+                {'id': e.id, 'role': e.role, 'session_id': e.metadata.get('session_id'),
+                 'status': e.status, 'content_sha256':sha(e.content.encode())}
+                for e in store.list_episodic_events() if e.source == 'codex']
+    except Exception as exc:
+        report.update(status='failed', observation_error_type=type(exc).__name__, observation_error=str(exc))
+    finally:
+        native._restore_dispatch(binding)
+
+    kill_stop.set()
+    if kill_thread is not None:
+        kill_thread.join(timeout=12)
+    if crash_child is not None and crash_child.poll() is None:
+        crash_child.kill()
+        crash_child.wait(timeout=10)
+    for handle in crash_logs:
+        handle.close()
+    report['service_kill']=kill_observation
+    if crash_child is not None:
+        report['crash_service_final_returncode']=crash_child.poll()
+    # Clean only this dead child's stale descriptor if recovery did not start.
+    descriptor=fixture/'runtime.json'
+    if service is None and crash_child is not None and crash_child.poll() is not None and descriptor.exists():
+        value=json.loads(descriptor.read_text(encoding='utf-8'))
+        if value.get('pid')==crash_child.pid:
+            report['cleanup_stale_descriptor_sha256']=sha(descriptor.read_bytes())
+            descriptor.unlink()
+    errors = lifecycle._cleanup_native_resources(process, auth)
+    errors += lifecycle._close_service(service, store)
+    report["cleanup"] = {
+        "errors": errors,
+        "auth_absent": auth is None or not auth.exists(),
+        "descriptor_absent": not (fixture / "runtime.json").exists(),
+    }
+    if errors or not report["cleanup"]["auth_absent"] or not report["cleanup"]["descriptor_absent"]:
+        report["status"] = "failed"
+    report['final_database']=database_state(fixture)
+    report["finished_at"] = datetime.now(timezone.utc).isoformat()
+    (OUTPUT / "report.json").write_text(json.dumps(report, indent=2) + "\n", encoding="utf-8")
+    print(json.dumps({"status": report["status"], "report": str(OUTPUT / "report.json")}), flush=True)
+
+raise SystemExit(0 if report["status"] == "observed_native_service_kill_recovery" else 1)

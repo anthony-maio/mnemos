@@ -34,8 +34,19 @@ Both processes exited zero. All four messages retained their correct session,
 turn, role, project, and profile, with one evidence link each. The outbox emptied,
 and complete-row hashes stayed unchanged across maintenance and service restart.
 This verifies one native automatic replay observation. The exact triggering hook
-was not traced. Process-kill and concurrent-host behavior, real-provider recovery,
-and complete host acceptance remain open.
+was not traced; the separate process-kill observation follows below.
+
+A [forced service-termination probe](../2026-09-18/native-codex-service-kill-v2/README.md)
+then killed the actual disposable service after SQLite committed a native prompt
+and before its HTTP response. The event and job survived under their original IDs.
+After explicit fixture-service restoration replaced the dead owner's descriptor,
+a fresh native Codex session automatically drained the queue. All four native
+messages had one job and one evidence link each, with unchanged table hashes
+across maintenance and restart. Both native processes exited zero. The first
+session's Stop timeout and the second session's MCP startup warning remain
+recorded as terminal observations; this is not an all-hooks acceptance result.
+Arbitrary crash timing, concurrent hosts, real-provider recovery, and complete
+host acceptance remain open. The failed v1 PID preflight is preserved separately.
 
 Three fresh [native Codex sessions](../2026-09-18/native-codex-stop-repeat-v1/README.md)
 on the `c25ed98` wheel used the generated hooks unchanged. The late native

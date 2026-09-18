@@ -34,8 +34,19 @@ Both processes exited zero. All four messages retained their correct session,
 turn, role, project, and profile, with one evidence link each. The outbox emptied,
 and complete-row hashes stayed unchanged across maintenance and service restart.
 This verifies one native automatic replay observation. The exact triggering hook
-was not traced. Process-kill and concurrent-host behavior, real-provider recovery,
-and complete host acceptance remain open.
+was not traced; the separate process-kill observation follows below.
+
+A [forced service-termination probe](../2026-09-18/native-codex-service-kill-v2/README.md)
+then killed the actual disposable service after SQLite committed a native prompt
+and before its HTTP response. The event and job survived under their original IDs.
+After explicit fixture-service restoration replaced the dead owner's descriptor,
+a fresh native Codex session automatically drained the queue. All four native
+messages had one job and one evidence link each, with unchanged table hashes
+across maintenance and restart. Both native processes exited zero. The first
+session's Stop timeout and the second session's MCP startup warning remain
+recorded as terminal observations; this is not an all-hooks acceptance result.
+Arbitrary crash timing, concurrent hosts, real-provider recovery, and complete
+host acceptance remain open. The failed v1 PID preflight is preserved separately.
 
 Three fresh [native Codex sessions](../2026-09-18/native-codex-stop-repeat-v1/README.md)
 on the `c25ed98` wheel used the generated hooks unchanged. The late native
@@ -372,7 +383,7 @@ capture diagnostics and complete lifecycle acceptance remain open.
 | T01 Runtime | Configured providers, SQLite default, explicit mock rejection, readiness checks, health reporting, and installed entry points are covered by the `c25ed98` package and wheel checks. Windows private-path inheritance and permission drift are now explicitly tested. | Installed doctor cases cover configuration states but do not substitute for a live provider reachability probe. Managed service logging, omitted-provider startup, and generated host provenance are also covered. |
 | T02 Scope | Profile, project, workspace, membership, enabled-project capture, foreign-project filtering, and legacy/routing review are implemented and covered by contract tests. | Local scope contract tested. Native identity coverage across every host remains open. |
 | T03 Durable writes | Atomic source and job creation, leases, retries, CAS, revisions, evidence, rollback, and restart persistence are implemented and tested. | Local durability tested. Long-running operational recovery remains open. |
-| T04 Local service | Authenticated loopback ownership, private descriptors, outbox handling, bounded shutdown, and HTTP/subprocess paths are implemented and tested. | Local service and installed replay checks pass, including empty supplied-outbox path and policy preservation. Native startup-outage capture survives explicit client replay without duplicates. A separate fresh Codex session automatically replayed the queued events after fixture-service restoration, preserving both sessions across restart. Process-kill, concurrent-host, and real-provider recovery remain open. |
+| T04 Local service | Authenticated loopback ownership, private descriptors, outbox handling, bounded shutdown, and HTTP/subprocess paths are implemented and tested. | Local service and installed replay checks pass, including empty supplied-outbox path and policy preservation. Native startup-outage capture survives explicit client replay without duplicates. A separate fresh Codex session automatically replayed the queued events after fixture-service restoration, preserving both sessions across restart. A later forced service kill after native capture commit preserved the original event/job IDs and recovered automatically through fresh native hooks after explicit service restoration. Arbitrary crash timing, concurrent-host behavior, and real-provider recovery remain open. |
 | T05 Maintenance | Service-owned scheduling, bounded batches, retry/failure state, retention, and visible maintenance status are implemented and tested. | Deterministic maintenance tested. A daily-use pilot has not run. |
 | T06 Evidence and safety | Write firewall, source validation, role labels, governed explicit writes, private paths, retention controls, and local-original availability are implemented and tested. | Safety contracts pass. Real-model extraction precision and human acceptance remain unproved. |
 | T07 Surprisal | Automatic gating, explicit-remember bypass, session-safe history, and diagnostics are implemented and covered by deterministic tests. | Mechanism contract tested. Real filtering benefit remains open. |
