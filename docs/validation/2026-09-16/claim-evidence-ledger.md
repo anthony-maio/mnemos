@@ -10,10 +10,15 @@ tests exposed an incorrect inheritance-protection flag. The repair applies the
 protected current-user policy and checks exact existing permissions before
 skipping a write. Nine regressions ran, including later drift and failed-query
 repair. Earlier package checks did not establish this protection property.
-Installed-package, native-host, and latency acceptance for the new source remain
-open. The two successful instrumented native diagnostics used the older wheel.
+The [fresh installed package](../2026-09-18/windows-private-acl-package-checkpoint-v1/README.md)
+at `5d8cacf` passes 369 selected cases with two skips and seven replay checks.
+Its [native v3 probe](../2026-09-18/native-codex-private-acl-profile-v3/README.md)
+completed and persisted both roles with protected fixture permissions. Shell
+entry-to-exit was 876 ms with instrumentation, versus 2,052 ms in the preceding
+old-wheel profile. These are individual observations, not a controlled speedup
+estimate or repeated uninstrumented deadline acceptance.
 
-The latest [installed package validation](../2026-09-18/assistant-suppression-package-checkpoint-v1/README.md)
+The preceding [installed package validation](../2026-09-18/assistant-suppression-package-checkpoint-v1/README.md)
 at `5af3d15` passes 1,030 tests with four skips, all six source/package checks,
 360 selected installed cases with two matching skips, and seven synthetic replay
 assertions. Exact normalized forget

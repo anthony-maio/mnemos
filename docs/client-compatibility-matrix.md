@@ -5,11 +5,14 @@ Updated September 18, 2026 for the unreleased functional-local-memory worktree. 
 The newer [Windows permission repair](validation/2026-09-18/windows-private-acl-v1/README.md)
 passes 1,039 source tests with four skips and all static checks. It protects
 runtime DACLs from inheritance and checks existing permissions before skipping
-redundant writes. This source has not yet received a fresh installed-package or
-native-host run. Two instrumented native Stop probes on the older wheel completed
-and located repeated permission-update cost; they do not close the deadline gate.
+redundant writes. The fresh [installed checkpoint](validation/2026-09-18/windows-private-acl-package-checkpoint-v1/README.md)
+at `5d8cacf` passes 369 selected cases with two skips and seven replay assertions.
+Its [native v3 probe](validation/2026-09-18/native-codex-private-acl-profile-v3/README.md)
+completed with protected permissions, persisted user/assistant captures, and an
+876 ms instrumented shell duration. Earlier instrumented probes on the old wheel
+located repeated permission-update cost. Repeated deadline acceptance remains open.
 
-The September 18 [installed checkpoint](validation/2026-09-18/assistant-suppression-package-checkpoint-v1/README.md)
+The earlier September 18 [installed checkpoint](validation/2026-09-18/assistant-suppression-package-checkpoint-v1/README.md)
 at `5af3d15` passes 360 selected contract cases with two skips and seven synthetic
 replay assertions, after 1,030 source tests with four skips and all six source/package
 checks. It includes bounded similarity suggestions to reviewed forgetting, exact

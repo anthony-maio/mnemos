@@ -1,0 +1,35 @@
+import os,time,json,sys
+trace_path='C:\\Users\\Ant\\AppData\\Local\\Temp\\mnemos-native-codex-acl-stop-profile-l50c869p\\stop-python.jsonl'
+def mark(stage, **fields):
+    row={'stage':stage,'epoch_ns':time.time_ns(),'monotonic_ns':time.perf_counter_ns(),'pid':os.getpid(),**fields}
+    with open(trace_path,'a',encoding='utf-8') as stream: stream.write(json.dumps(row)+'\n'); stream.flush()
+mark('python_entry')
+import base64,json,os,runpy;os.environ.update(json.loads(base64.b64decode('eyJNTkVNT1NfQ09ORklHX1BBVEgiOiJDOlxcVXNlcnNcXEFudFxcQXBwRGF0YVxcTG9jYWxcXFRlbXBcXG1uZW1vcy1uYXRpdmUtY29kZXgtYWNsLXN0b3AtcHJvZmlsZS1sNTBjODY5cFxcc2V0dGluZ3MudG9tbCIsIk1ORU1PU19TQ09QRV9SRUdJU1RSWSI6IkM6XFxVc2Vyc1xcQW50XFxBcHBEYXRhXFxMb2NhbFxcVGVtcFxcbW5lbW9zLW5hdGl2ZS1jb2RleC1hY2wtc3RvcC1wcm9maWxlLWw1MGM4NjlwXFxzY29wZXMuanNvbiIsIk1ORU1PU19VU0VSX1BST0ZJTEVfSUQiOiJuYXRpdmUtY29kZXgtc3RvcC1wcm9maWxlLXYzIiwiTU5FTU9TX1JVTlRJTUVfREVTQ1JJUFRPUiI6IkM6XFxVc2Vyc1xcQW50XFxBcHBEYXRhXFxMb2NhbFxcVGVtcFxcbW5lbW9zLW5hdGl2ZS1jb2RleC1hY2wtc3RvcC1wcm9maWxlLWw1MGM4NjlwXFxydW50aW1lLmpzb24ifQ==')));
+mark('before_adapter_import')
+import mnemos.adapters.codex as adapter
+mark('after_adapter_import',origin=adapter.__file__)
+original_run=adapter.run_hook
+async def traced_run(event,payload,**kwargs):
+    mark('run_hook_start',event=event,keys=sorted(payload))
+    import cProfile
+    profiler=cProfile.Profile(); profiler.enable()
+    try:
+        result=await original_run(event,payload,**kwargs)
+        mark('run_hook_result',status=result.status,captured=result.captured,event_ids=result.event_ids)
+        return result
+    finally:
+        profiler.disable()
+        mark('run_hook_end')
+        import pstats
+        entries=pstats.Stats(profiler).stats
+        rows=[{'file':key[0],'line':key[1],'function':key[2],'primitive_calls':v[0],'calls':v[1],'self_seconds':v[2],'cumulative_seconds':v[3]} for key,v in entries.items()]
+        mark('handler_profile',functions=sorted(rows,key=lambda row:row['cumulative_seconds'],reverse=True)[:60])
+adapter.run_hook=traced_run
+try:
+    mark('adapter_main_start')
+    status=adapter.main()
+    mark('adapter_main_end',status=status)
+    sys.stdout.flush()
+    mark('stdout_flushed')
+    raise SystemExit(status)
+finally: mark('python_exit')

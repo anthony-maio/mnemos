@@ -9,10 +9,17 @@ passes 1,039 source tests with four skips, Black, strict mypy, and JavaScript
 syntax. It corrects the Windows DACL protection flag and avoids repeated
 permission writes only when a fresh descriptor check exactly matches the
 protected current-user policy. Nine real Windows regressions cover inheritance,
-legacy locks, later permission changes, and query failures. A new installed
-package and native-host run for this source are still required.
+legacy locks, later permission changes, and query failures. The fresh
+[installed package](../2026-09-18/windows-private-acl-package-checkpoint-v1/README.md)
+at `5d8cacf` passes 369 selected cases with two matching skips and seven replay
+assertions; all six frozen-source/package checks pass.
+The [native profile v3](../2026-09-18/native-codex-private-acl-profile-v3/README.md)
+on that wheel completed with protected fixture permissions and both conversation
+roles persisted. Its instrumented shell duration was 876 ms, adapter import
+370 ms, and handler 373 ms. This is one observation; repeated uninstrumented
+deadline acceptance and the broader host lifecycle remain open.
 
-The latest [installed package checkpoint](../2026-09-18/assistant-suppression-package-checkpoint-v1/README.md)
+The preceding [installed package checkpoint](../2026-09-18/assistant-suppression-package-checkpoint-v1/README.md)
 at `5af3d15` passes 1,030 tests with four skips, Black, strict mypy,
 JavaScript syntax, build, and Twine. Its fresh installed wheel passes 360
 selected contract cases with two matching skips and all seven synthetic replay
@@ -36,7 +43,7 @@ historical-only meanings may still be missed.
 The preceding [similarity package checkpoint](../2026-09-18/related-similarity-package-checkpoint-v1/README.md)
 validated source `ac139dd` with 1,022 tests and 352 selected installed cases.
 It remains useful historical evidence for similarity review, UUID write safety,
-and host-context authority, but the `5af3d15` checkpoint is the current package
+and host-context authority, but the `5d8cacf` checkpoint is the current package
 binding. Native acceptance and the frozen real-model evaluation remain separate,
 open gates.
 
@@ -149,7 +156,9 @@ durations were 2,123 and 2,052 ms; the profile attributed about 1.175 seconds to
 permission updates, while service capture took 2.6 ms. The old wheel's lock
 still inherited permissions, leading to the source repair above. These runs
 do not measure host dispatch to shell entry or establish uninstrumented latency
-acceptance. Earlier Stop timeouts remain open pending the new package run.
+acceptance. The newer installed v3 probe above also completed, with a lower
+observed duration and protected permissions. Earlier Stop timeouts remain
+preserved; one newer observation does not establish consistent deadline behavior.
 The [complete package checkpoint](../2026-09-17/lazy-import-package-checkpoint-v1/README.md)
 at `ebe1b0d` passed 962 tests with four platform skips and all static/build
 checks. Its fresh installed wheel passed 268 selected cases with two matching
@@ -313,7 +322,7 @@ capture diagnostics and complete lifecycle acceptance remain open.
 
 | Plan item | Current implementation and evidence | Acceptance state |
 | --- | --- | --- |
-| T01 Runtime | Configured providers, SQLite default, explicit mock rejection, readiness checks, health reporting, and installed entry points are covered by the `5af3d15` package and wheel checks. | Installed doctor cases cover configuration states but do not substitute for a live provider reachability probe. Managed service logging, omitted-provider startup, and generated host provenance are also covered. |
+| T01 Runtime | Configured providers, SQLite default, explicit mock rejection, readiness checks, health reporting, and installed entry points are covered by the `5d8cacf` package and wheel checks. Windows private-path inheritance and permission drift are now explicitly tested. | Installed doctor cases cover configuration states but do not substitute for a live provider reachability probe. Managed service logging, omitted-provider startup, and generated host provenance are also covered. |
 | T02 Scope | Profile, project, workspace, membership, enabled-project capture, foreign-project filtering, and legacy/routing review are implemented and covered by contract tests. | Local scope contract tested. Native identity coverage across every host remains open. |
 | T03 Durable writes | Atomic source and job creation, leases, retries, CAS, revisions, evidence, rollback, and restart persistence are implemented and tested. | Local durability tested. Long-running operational recovery remains open. |
 | T04 Local service | Authenticated loopback ownership, private descriptors, outbox handling, bounded shutdown, and HTTP/subprocess paths are implemented and tested. | Local service and installed replay checks pass. Native host lifecycle remains open. |
@@ -325,13 +334,13 @@ capture diagnostics and complete lifecycle acceptance remain open.
 | T10 Graph | Persisted mutual top-k links, scope-safe traversal, bounded recovery, insertion-order controls, and capacity diagnostics are implemented and tested. | Structural controls pass. Graph utility and eligible-target coverage are not established by the available evidence. |
 | T11 Forget | Exact fact deletion, suppression, replay protection, inflight handling, restore behavior, and selected related-removal preview/apply are implemented and tested. | Native v9 passes reviewed deletion of the target plus five selected copies, direct replay suppression, and final Codex recall without the removed values. Unindexed paraphrases and external transcripts remain outside that bounded result. Earlier v6's surviving-copy failure is preserved. |
 | T12 Claude Code | Hook capture, transcript deltas, checkpoints, capture-before-recall, identity diagnostics, and replay repair are implemented. | Native v18 on dedfcfd passed all 15 fact-lifecycle criteria with the new startup default, including correction, forgetting, restart, and reconstructed replay. Degraded hook capture keeps the overall result partial. Native extraction and complete capture acceptance remain open. See the [native lifecycle archive](../2026-09-17/native-claude-lifecycle-v18/README.md). |
-| T13 Codex | Generated hooks, UTF-8 payload handling, explicit MCP fallback, and bounded native continuity are implemented. | Native v9 passes teaching, corrected recall, and final post-forget recall; all three processes exited zero, but two Stop hooks timed out. Two later instrumented Stop probes completed and persisted both conversation roles. The resulting Windows ACL source repair passes nine regressions; installed and native validation for that repair remains open. Complete capture, Desktop, and deadline acceptance remain open. |
+| T13 Codex | Generated hooks, UTF-8 payload handling, explicit MCP fallback, and bounded native continuity are implemented. | Native v9 passes teaching, corrected recall, and final post-forget recall; all three processes exited zero, but two Stop hooks timed out. The Windows ACL repair passes nine installed regressions and the installed v3 native probe persisted both roles with protected permissions and an 876 ms instrumented shell duration. Complete capture, Desktop, and repeated deadline acceptance remain open. |
 | T14 Hermes | Installed provider integration, registry handling, Windows/WSL bridge behavior, and entry-point discovery are implemented and tested. | Installed bridge checks pass. A native model turn has not passed. |
 | T15 UI | Project enable/pause, readiness, facts/history, correction/forget, captured-copy review, job state, and routing review are exposed and covered by API/browser checks. | Local UI and control-plane checks pass. Operational pilot and native-host coverage remain open. |
 | T16 Recovery | Backup, integrity, new-path restore, suppression merge, staged reindex, and activation backup behavior are implemented and tested. | Local recovery contracts pass, including a backup during an active writer transaction. Live data migration remains separately authorization-bound. |
 | T17 Cross-host | Native v9 on installed `5af3d15` passes 15 bounded lifecycle checks for Codex teaching, Claude correction and reviewed deletion, restart, direct service replay suppression, foreign-project exclusion, final recall, and retained unrelated facts. | Lexical fixture vectors and disabled modules limit the claim. All three Codex processes exited zero, but reverse and final Stop hooks timed out. Complete capture, native hook replay, Desktop, Hermes, real-model quality, and the two-week pilot remain open. Earlier v6-v8 failures remain preserved. |
 | T18 Evaluation | Frozen lifecycle datasets, request-bound extraction schemas, real-provider adapters, seven profiles, raw traces, checkpoints, Wilson intervals, and paired comparisons are implemented. | Power-interrupted checkpoints were preserved and the unchanged queue resumed after provenance checks. Complete real-model matrix acceptance remains open. Follow the [evaluation status and recovery record](evaluation-running.md). |
-| T19 Claims and packaging | Claim ledger, compatibility matrix, release checklist, package artifacts, UI assets, and negative evidence archives are maintained. | The current `5af3d15` source and installed package checkpoint is complete. Publication, website, paper, and release actions remain separately authorization-bound. |
+| T19 Claims and packaging | Claim ledger, compatibility matrix, release checklist, package artifacts, UI assets, and negative evidence archives are maintained. | The current `5d8cacf` source and installed package checkpoint is complete. Publication, website, paper, and release actions remain separately authorization-bound. |
 
 The current capture recommendation is a hybrid: automatically capture enabled
 project conversations as retained evidence, extract durable facts separately,

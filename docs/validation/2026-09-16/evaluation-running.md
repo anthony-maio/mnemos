@@ -18,11 +18,11 @@ A read-only `/api/ps` request during this turn to
 `192.168.86.35:11434` timed out after five seconds. No process was restarted,
 and no model, server, queue, or configuration state was changed.
 
-The current package checkpoint is source `5af3d15`: 1,030 tests passed with
+The current package checkpoint is source `5d8cacf`: 1,039 tests passed with
 four skips, all six source/package checks passed, and the installed wheel passed
-360 selected cases with two matching skips and seven replay assertions. See the
-[package checkpoint](../2026-09-18/assistant-suppression-package-checkpoint-v1/README.md).
-The assistant-suppression repair, similarity-review, host-context, and UUID
+369 selected cases with two matching skips and seven replay assertions. See the
+[package checkpoint](../2026-09-18/windows-private-acl-package-checkpoint-v1/README.md).
+The Windows permission, assistant-suppression, similarity-review, host-context, and UUID
 write-safety work is outside this frozen real-model evaluation. Its validation
 must not be treated as evaluation quality evidence.
 

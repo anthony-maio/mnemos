@@ -1,0 +1,7 @@
+# Native Codex private ACL profile v3
+
+This archive preserves one successful instrumented Codex Stop observation against the installed `5d8cacf` package. The native MCP retrieve used the project scope and returned the seeded river-cedar fact while excluding the foreign project. A read-only SQLite reopen matched the user and assistant capture rows by content hash, role, source, host, session, project, scope, profile, and native evidence.
+
+The marker and timing files preserve shell elapsed time, shell-to-Python, adapter import, handler, and service capture dispatch observations. The bounded profile contains the 60 emitted records. The fixture used a fixed three-second hook deadline. File tracing and the installed adapter bootstrap add overhead, and host dispatch to shell entry is not measured. These values are not an uninstrumented latency, speedup, or general deadline acceptance result.
+
+The fresh installed package observation also verifies protected owner-only ACLs on the fixture root and `outbox.json.lock`: each has one Allow FullControl rule for the current owner SID, no inherited rules, and protected access rules. Raw account names and SIDs are omitted. This is one instrumented Windows fixture observation and does not establish complete conversation capture, model quality, or broader host reliability. Credentials, full native sessions, and the SQLite database are not archived.

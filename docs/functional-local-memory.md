@@ -278,6 +278,16 @@ zero, but reverse and final Stop hooks timed out after three seconds. The fixtur
 used lexical vectors and disabled modules. Complete capture, native hook replay,
 Hermes, Desktop, and real-model quality remain open.
 
+The newer [Windows permission checkpoint](validation/2026-09-18/windows-private-acl-package-checkpoint-v1/README.md)
+at `5d8cacf` passes 1,039 source tests with four skips, all package checks, 369
+installed cases with two matching skips, and seven replay assertions. It repairs
+permission inheritance on private runtime files and avoids rewriting an unchanged
+protected permission list. Nine Windows tests verify the policy and later drift.
+Its [native Stop probe](validation/2026-09-18/native-codex-private-acl-profile-v3/README.md)
+completed with protected fixture permissions and persisted both conversation roles.
+The instrumented shell duration was 876 ms. This single observation does not
+establish repeated deadline acceptance or close the broader lifecycle gates.
+
 ## What the five modules currently mean
 
 These are the implemented mechanism contracts. Their neuroscience analogies are design inspiration, not evidence of human-like memory.
