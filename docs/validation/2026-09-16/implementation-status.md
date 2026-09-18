@@ -4,7 +4,16 @@ This record covers the unreleased `wt/functional-local-memory` worktree. It
 separates implemented behavior from acceptance evidence. The original task
 boundaries and thresholds remain in the [implementation plan](../../plans/2026-09-16-functional-local-memory.md).
 
-The latest [source checkpoint](../2026-09-18/related-forget-similarity-v1/README.md)
+The latest [source checkpoint](../2026-09-18/assistant-assertion-suppression-v1/README.md)
+passes 1,030 tests with four skips, Black, strict mypy, and JavaScript syntax.
+Automatic extraction now checks forgotten assertions before adding source-role
+attribution. Atomic commit repeats the check using the persisted event role;
+candidate metadata cannot bypass it. Eight regressions cover scope and profile
+isolation, mixed extraction batches, explicit reteaching, support preservation,
+and the non-exact paraphrase boundary. This repair has source validation only;
+the installed package and native attempts below predate it.
+
+The preceding [similarity checkpoint](../2026-09-18/related-forget-similarity-v1/README.md)
 passes 1,022 tests with four skips, Black, strict mypy, and JavaScript syntax.
 Related-forget previews now supplement exact matches with bounded, advisory
 similarity suggestions from stored captured-fact vectors. Explicit selections,

@@ -2714,7 +2714,25 @@ class SQLiteStore(MemoryStore):
                             candidate.metadata.get("user_profile_id"),
                         )
                         source_id = json.loads(lease_row[1]).get("event_id")
-                        if self.is_suppressed(canonical_key=canonical, source_event_id=source_id):
+                        suppression_keys = [canonical]
+                        source_role_row = self._conn.execute(
+                            "SELECT role FROM episodic_events WHERE id=?", (source_id,)
+                        ).fetchone()
+                        source_role = str(source_role_row[0]) if source_role_row else ""
+                        prefix = f"{source_role.capitalize()} reported: "
+                        if source_role != "user" and candidate.content.startswith(prefix):
+                            suppression_keys.append(
+                                compute_canonical_key(
+                                    candidate.content[len(prefix) :],
+                                    candidate.metadata.get("scope", "unassigned"),
+                                    candidate.metadata.get("scope_id"),
+                                    candidate.metadata.get("user_profile_id"),
+                                )
+                            )
+                        if any(
+                            self.is_suppressed(canonical_key=key, source_event_id=source_id)
+                            for key in suppression_keys
+                        ):
                             suppressed_ids.add(candidate.id)
                             continue
                     prior = self.get(candidate.id)

@@ -1,0 +1,53 @@
+"""Archive source validation of exact assistant-assertion suppression."""
+from pathlib import Path
+import hashlib
+import json
+import shutil
+import xml.etree.ElementTree as ET
+
+ROOT = Path(__file__).resolve().parents[1]
+SOURCE = Path('C:/Users/Ant/AppData/Local/Temp/mnemos-assistant-suppression-v1')
+OUT = ROOT / 'docs/validation/2026-09-18/assistant-assertion-suppression-v1'
+sha = lambda p: hashlib.sha256(p.read_bytes()).hexdigest()
+report = json.loads((SOURCE / 'report.json').read_text(encoding='utf-8'))
+assert report['status'] == 'passed'
+assert report['source_inputs_before'] == report['source_inputs_after']
+assert all(sha(ROOT / name) == digest for name, digest in report['source_inputs_after'].items())
+assert sha(ROOT / '.venv/validate_assistant_suppression_v1.py') == report['runner_sha256']
+assert len(report['checks']) == 4 and all(c['exit_code'] == 0 for c in report['checks'])
+cases = ET.parse(SOURCE / 'pytest.xml').getroot().findall('.//testcase')
+assert not any(c.find('failure') is not None or c.find('error') is not None for c in cases)
+skips = sum(c.find('skipped') is not None for c in cases)
+regressions = [c for c in cases if c.get('classname', '').endswith('test_assistant_forget_suppression')]
+assert len(regressions) >= 8 and not any(c.find('skipped') is not None for c in regressions)
+OUT.mkdir(parents=True, exist_ok=False)
+for path in SOURCE.iterdir():
+    if path.is_file():
+        shutil.copyfile(path, OUT / path.name)
+for name in ['validate_assistant_suppression_v1.py', 'archive_assistant_suppression_v1.py']:
+    shutil.copyfile(ROOT / '.venv' / name, OUT / (name + '.txt'))
+shutil.copyfile(ROOT / 'tests/test_assistant_forget_suppression.py', OUT / 'test_assistant_forget_suppression.py.txt')
+(OUT / '.gitattributes').write_text('* -text\n*.log -whitespace\n*.xml -whitespace\n*.patch -whitespace\n', encoding='utf-8')
+(OUT / 'README.md').write_text(
+    '# Assistant assertion suppression\n\n'
+    f"Source based on `{report['base_commit']}` plus `source.patch` and the archived new test file "
+    f'passed {len(cases)-skips:,} tests with {skips} skips, Black, strict mypy, and JavaScript syntax. '
+    'The report hashes all Python source and test inputs, UI JavaScript, and project configuration '
+    'before and after validation. Temporary test fixtures were outside Git on C:.\n\n'
+    'Automatic extraction previously checked a generated role-prefixed assertion against '
+    'forget suppressions for the unprefixed fact. It now checks the sanitized assertion before '
+    'adding the role prefix. Atomic commit repeats that check using the persisted source-event '
+    'role, so candidate metadata cannot bypass it. Scope and profile stay part of the canonical key. '
+    'Support proposals retain the existing target content.\n\n'
+    f'The {len(regressions)} regression cases cover queued assistant extraction after forgetting, '
+    'atomic commit with forged role metadata, independent project and profile isolation, '
+    'an unrelated proposal in the same batch, explicit reteaching, support preservation, '
+    'and the non-exact paraphrase boundary. Provider responses are deterministic fixtures. '
+    'This establishes exact normalized suppression, not semantic topic erasure.\n\n'
+    'No installed package, native host acceptance, or real-model quality claim is made for '
+    'this source checkpoint. Native v7/v8 used the earlier ac139dd package. The frozen Ollama '
+    'evaluation was not changed.\n', encoding='utf-8')
+index = {'files': {p.relative_to(OUT).as_posix(): {'bytes': p.stat().st_size, 'sha256': sha(p)}
+                   for p in sorted(OUT.rglob('*')) if p.is_file()}}
+(OUT / 'evidence-index.json').write_text(json.dumps(index, indent=2) + '\n', encoding='utf-8')
+print(json.dumps({'passed': len(cases)-skips, 'skipped': skips, 'regressions': len(regressions), 'indexed_files': len(index['files'])}))

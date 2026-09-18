@@ -481,6 +481,18 @@ class LocalMemoryService:
                 and not self.engine.config.modules.mutable_rag
             ):
                 proposal.operation = "conflict"
+            raw_safe = self.firewall.apply(proposed_content)
+            if not raw_safe.allowed:
+                raise ValueError("Fact proposal violates write policy")
+            raw_canonical_key = compute_canonical_key(
+                raw_safe.content, scope, event.scope_id, context.user_profile_id
+            )
+            if job.kind == "extract" and self.engine.store.is_suppressed(
+                canonical_key=raw_canonical_key, source_event_id=event.id
+            ):
+                decision = "suppressed"
+                continue
+            proposed_content = raw_safe.content
             if event.role != "user":
                 proposed_content = f"{event.role.capitalize()} reported: {proposed_content}"
             safe = self.firewall.apply(proposed_content)

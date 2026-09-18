@@ -4,7 +4,15 @@ Assessment date: September 17, 2026. This covers the unreleased
 functional-local-memory worktree, not the installed public package or website.
 The capability IDs come from the original implementation plan.
 
-The latest [source validation](../2026-09-18/related-forget-similarity-v1/README.md)
+The latest [source validation](../2026-09-18/assistant-assertion-suppression-v1/README.md)
+passes 1,030 tests with four skips and static checks. Exact normalized forget
+suppressions now apply before source-role attribution and again at atomic
+extraction commit using the persisted event role. Eight regression cases include
+independent scope/profile isolation, unrelated proposals, explicit reteaching,
+support preservation, and retained unknown paraphrases. This is source evidence;
+the installed checkpoint and native attempts below do not include this repair.
+
+The preceding [similarity validation](../2026-09-18/related-forget-similarity-v1/README.md)
 passes 1,022 tests with four skips and static checks. It adds bounded advisory
 similarity discovery to the explicit related-forget review, with 13 regressions
 covering selection, replay suppression, stale state, scope, and dependencies.

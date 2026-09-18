@@ -257,6 +257,15 @@ phase budget before replay and final recall. The
 timed out during reverse Codex tool approval before the forget phase. These
 incomplete attempts do not establish reliable post-forget answers.
 
+The current source also checks exact forgotten assertions before automatic
+extraction adds role attribution, and repeats that check at atomic commit using
+the stored event role. This prevents an `Assistant reported:` prefix from
+bypassing the original fact's suppression. Explicit reteaching remains allowed;
+non-identical paraphrases are outside this exact-match guarantee. The
+[source checkpoint](validation/2026-09-18/assistant-assertion-suppression-v1/README.md)
+passes 1,030 tests with four skips and static checks. The installed checkpoint
+and native attempts above predate this repair.
+
 ## What the five modules currently mean
 
 These are the implemented mechanism contracts. Their neuroscience analogies are design inspiration, not evidence of human-like memory.
