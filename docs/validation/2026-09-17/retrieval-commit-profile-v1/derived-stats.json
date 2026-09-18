@@ -1,0 +1,58 @@
+{
+  "call_count": 33,
+  "event_counts": {
+    "commit": 33,
+    "execute:insert_access": 33,
+    "execute:update_access": 33
+  },
+  "interpretation": {
+    "commit": "The measured commit p95 is 86.213 ms and dominates this isolated fixture's 86.372 ms total p95.",
+    "limits": "This is not an end-to-end retrieval measurement, a 500 ms gate, or proof of a product speedup. It does not identify filesystem, WAL, scheduler, or cross-process causes.",
+    "result": "The isolated 33-call write profile completed without reproducing the original approximately 796 ms metadata tail."
+  },
+  "profile_helper_sha256": "b24e5033d94672ff3f5145b2c889a90b831472fcd68b30d2be96aa494c0d2d78",
+  "schema_version": 1,
+  "source_commit": "b752ffbe07e2e32f5ddbf54cc689b8dbbad8c9e0",
+  "stage_timings_ms": {
+    "commit": {
+      "count": 33,
+      "max_ms": 131.734,
+      "mean_ms": 39.524,
+      "min_ms": 25.874,
+      "p50_ms": 37.003,
+      "p95_ms": 86.213
+    },
+    "insert_access": {
+      "count": 33,
+      "max_ms": 0.362,
+      "mean_ms": 0.111,
+      "min_ms": 0.091,
+      "p50_ms": 0.1,
+      "p95_ms": 0.134
+    },
+    "lock_wait": {
+      "count": 33,
+      "max_ms": 0.002,
+      "mean_ms": 0.001,
+      "min_ms": 0.001,
+      "p50_ms": 0.001,
+      "p95_ms": 0.001
+    },
+    "total": {
+      "count": 33,
+      "max_ms": 131.915,
+      "mean_ms": 39.707,
+      "min_ms": 26.031,
+      "p50_ms": 37.159,
+      "p95_ms": 86.372
+    },
+    "update_access": {
+      "count": 33,
+      "max_ms": 0.157,
+      "mean_ms": 0.026,
+      "min_ms": 0.019,
+      "p50_ms": 0.02,
+      "p95_ms": 0.042
+    }
+  }
+}

@@ -1,0 +1,971 @@
+{
+  "after_files": {
+    "database_bytes": 256901120,
+    "wal_bytes": 73270112
+  },
+  "before_files": {
+    "database_bytes": 256901120,
+    "wal_bytes": 73270112
+  },
+  "command": [
+    "D:\\Development\\mnemos\\mnemos\\.worktrees\\functional-local-memory\\.venv\\Scripts\\python.exe",
+    ".venv/profile_retrieval_commit_v1.py",
+    "--output",
+    "C:/Users/Ant/AppData/Local/Temp/mnemos-profile-retrieval-commit-v1",
+    "--fixture-root",
+    "D:/WindowsTemp/mnemos-profile-retrieval-commit-v1"
+  ],
+  "command_shell": "'D:\\Development\\mnemos\\mnemos\\.worktrees\\functional-local-memory\\.venv\\Scripts\\python.exe' .venv/profile_retrieval_commit_v1.py --output C:/Users/Ant/AppData/Local/Temp/mnemos-profile-retrieval-commit-v1 --fixture-root D:/WindowsTemp/mnemos-profile-retrieval-commit-v1",
+  "counts_after": {
+    "access_rows": 10000,
+    "memory_chunks": 10000,
+    "updated_access_counts": [
+      33,
+      33,
+      33,
+      33,
+      33
+    ]
+  },
+  "counts_after_reopen": {
+    "access_rows": 10000,
+    "memory_chunks": 10000,
+    "updated_access_counts": [
+      33,
+      33,
+      33,
+      33,
+      33
+    ]
+  },
+  "counts_before": {
+    "access_rows": 10000,
+    "global_chunks": 1000,
+    "memory_chunks": 10000,
+    "project_chunks": 8000,
+    "updated_access_counts": [
+      0,
+      0,
+      0,
+      0,
+      0
+    ],
+    "workspace_chunks": 1000
+  },
+  "finished_at": "2026-09-18T02:45:29.175871+00:00",
+  "fixture": {
+    "batch_size": 5,
+    "calls": 33,
+    "checkpoint_policy": "no explicit checkpoints issued; production SQLite automatic checkpoint behavior remains enabled",
+    "durability_policy": "production SQLiteStore WAL and synchronous FULL; unchanged",
+    "embedding_dimension": 768,
+    "root": "D:\\WindowsTemp\\mnemos-profile-retrieval-commit-v1",
+    "rows": 10000,
+    "scope_counts_expected": {
+      "global": 1000,
+      "project": 8000,
+      "workspace": 1000
+    },
+    "seed_method": "production_schema_direct_insert",
+    "updated_ids": [
+      "performance-fact-00000",
+      "performance-fact-00001",
+      "performance-fact-00002",
+      "performance-fact-00003",
+      "performance-fact-00004"
+    ]
+  },
+  "fixture_cleanup": "preserved_synthetic_fixture",
+  "limits": [
+    "SQLite write-stage diagnostic only; no Ollama or end-to-end retrieval timing.",
+    "Connection timings do not separately prove filesystem, WAL, lock, or scheduler cause.",
+    "No 500 ms acceptance or performance pass claim is made."
+  ],
+  "loaded_modules": {
+    "mnemos/types.py": "D:\\Development\\mnemos\\mnemos\\.worktrees\\functional-local-memory\\mnemos\\types.py",
+    "mnemos/utils/storage.py": "D:\\Development\\mnemos\\mnemos\\.worktrees\\functional-local-memory\\mnemos\\utils\\storage.py"
+  },
+  "measurement": {
+    "rows": [
+      {
+        "database_bytes": 256901120,
+        "elapsed_ms": 131.915,
+        "events": [
+          {
+            "elapsed_ms": 0.091,
+            "kind": "execute",
+            "statement_class": "insert_access"
+          },
+          {
+            "elapsed_ms": 0.042,
+            "kind": "execute",
+            "statement_class": "update_access"
+          },
+          {
+            "elapsed_ms": 131.734,
+            "kind": "commit"
+          }
+        ],
+        "index": 0,
+        "lock_wait_ms": 0.002,
+        "rowcount": 5,
+        "wal_bytes": 73270112
+      },
+      {
+        "database_bytes": 256901120,
+        "elapsed_ms": 34.801,
+        "events": [
+          {
+            "elapsed_ms": 0.098,
+            "kind": "execute",
+            "statement_class": "insert_access"
+          },
+          {
+            "elapsed_ms": 0.021,
+            "kind": "execute",
+            "statement_class": "update_access"
+          },
+          {
+            "elapsed_ms": 34.642,
+            "kind": "commit"
+          }
+        ],
+        "index": 1,
+        "lock_wait_ms": 0.001,
+        "rowcount": 5,
+        "wal_bytes": 73270112
+      },
+      {
+        "database_bytes": 256901120,
+        "elapsed_ms": 38.064,
+        "events": [
+          {
+            "elapsed_ms": 0.098,
+            "kind": "execute",
+            "statement_class": "insert_access"
+          },
+          {
+            "elapsed_ms": 0.02,
+            "kind": "execute",
+            "statement_class": "update_access"
+          },
+          {
+            "elapsed_ms": 37.894,
+            "kind": "commit"
+          }
+        ],
+        "index": 2,
+        "lock_wait_ms": 0.001,
+        "rowcount": 5,
+        "wal_bytes": 73270112
+      },
+      {
+        "database_bytes": 256901120,
+        "elapsed_ms": 37.075,
+        "events": [
+          {
+            "elapsed_ms": 0.362,
+            "kind": "execute",
+            "statement_class": "insert_access"
+          },
+          {
+            "elapsed_ms": 0.024,
+            "kind": "execute",
+            "statement_class": "update_access"
+          },
+          {
+            "elapsed_ms": 36.632,
+            "kind": "commit"
+          }
+        ],
+        "index": 3,
+        "lock_wait_ms": 0.001,
+        "rowcount": 5,
+        "wal_bytes": 73270112
+      },
+      {
+        "database_bytes": 256901120,
+        "elapsed_ms": 37.088,
+        "events": [
+          {
+            "elapsed_ms": 0.096,
+            "kind": "execute",
+            "statement_class": "insert_access"
+          },
+          {
+            "elapsed_ms": 0.021,
+            "kind": "execute",
+            "statement_class": "update_access"
+          },
+          {
+            "elapsed_ms": 36.928,
+            "kind": "commit"
+          }
+        ],
+        "index": 4,
+        "lock_wait_ms": 0.001,
+        "rowcount": 5,
+        "wal_bytes": 73270112
+      },
+      {
+        "database_bytes": 256901120,
+        "elapsed_ms": 37.905,
+        "events": [
+          {
+            "elapsed_ms": 0.134,
+            "kind": "execute",
+            "statement_class": "insert_access"
+          },
+          {
+            "elapsed_ms": 0.034,
+            "kind": "execute",
+            "statement_class": "update_access"
+          },
+          {
+            "elapsed_ms": 37.686,
+            "kind": "commit"
+          }
+        ],
+        "index": 5,
+        "lock_wait_ms": 0.001,
+        "rowcount": 5,
+        "wal_bytes": 73270112
+      },
+      {
+        "database_bytes": 256901120,
+        "elapsed_ms": 37.287,
+        "events": [
+          {
+            "elapsed_ms": 0.102,
+            "kind": "execute",
+            "statement_class": "insert_access"
+          },
+          {
+            "elapsed_ms": 0.02,
+            "kind": "execute",
+            "statement_class": "update_access"
+          },
+          {
+            "elapsed_ms": 37.13,
+            "kind": "commit"
+          }
+        ],
+        "index": 6,
+        "lock_wait_ms": 0.001,
+        "rowcount": 5,
+        "wal_bytes": 73270112
+      },
+      {
+        "database_bytes": 256901120,
+        "elapsed_ms": 37.939,
+        "events": [
+          {
+            "elapsed_ms": 0.1,
+            "kind": "execute",
+            "statement_class": "insert_access"
+          },
+          {
+            "elapsed_ms": 0.021,
+            "kind": "execute",
+            "statement_class": "update_access"
+          },
+          {
+            "elapsed_ms": 37.777,
+            "kind": "commit"
+          }
+        ],
+        "index": 7,
+        "lock_wait_ms": 0.001,
+        "rowcount": 5,
+        "wal_bytes": 73270112
+      },
+      {
+        "database_bytes": 256901120,
+        "elapsed_ms": 37.188,
+        "events": [
+          {
+            "elapsed_ms": 0.097,
+            "kind": "execute",
+            "statement_class": "insert_access"
+          },
+          {
+            "elapsed_ms": 0.02,
+            "kind": "execute",
+            "statement_class": "update_access"
+          },
+          {
+            "elapsed_ms": 37.036,
+            "kind": "commit"
+          }
+        ],
+        "index": 8,
+        "lock_wait_ms": 0.001,
+        "rowcount": 5,
+        "wal_bytes": 73270112
+      },
+      {
+        "database_bytes": 256901120,
+        "elapsed_ms": 26.031,
+        "events": [
+          {
+            "elapsed_ms": 0.1,
+            "kind": "execute",
+            "statement_class": "insert_access"
+          },
+          {
+            "elapsed_ms": 0.02,
+            "kind": "execute",
+            "statement_class": "update_access"
+          },
+          {
+            "elapsed_ms": 25.874,
+            "kind": "commit"
+          }
+        ],
+        "index": 9,
+        "lock_wait_ms": 0.001,
+        "rowcount": 5,
+        "wal_bytes": 73270112
+      },
+      {
+        "database_bytes": 256901120,
+        "elapsed_ms": 38.066,
+        "events": [
+          {
+            "elapsed_ms": 0.099,
+            "kind": "execute",
+            "statement_class": "insert_access"
+          },
+          {
+            "elapsed_ms": 0.02,
+            "kind": "execute",
+            "statement_class": "update_access"
+          },
+          {
+            "elapsed_ms": 37.909,
+            "kind": "commit"
+          }
+        ],
+        "index": 10,
+        "lock_wait_ms": 0.001,
+        "rowcount": 5,
+        "wal_bytes": 73270112
+      },
+      {
+        "database_bytes": 256901120,
+        "elapsed_ms": 37.133,
+        "events": [
+          {
+            "elapsed_ms": 0.113,
+            "kind": "execute",
+            "statement_class": "insert_access"
+          },
+          {
+            "elapsed_ms": 0.031,
+            "kind": "execute",
+            "statement_class": "update_access"
+          },
+          {
+            "elapsed_ms": 36.948,
+            "kind": "commit"
+          }
+        ],
+        "index": 11,
+        "lock_wait_ms": 0.001,
+        "rowcount": 5,
+        "wal_bytes": 73270112
+      },
+      {
+        "database_bytes": 256901120,
+        "elapsed_ms": 37.105,
+        "events": [
+          {
+            "elapsed_ms": 0.099,
+            "kind": "execute",
+            "statement_class": "insert_access"
+          },
+          {
+            "elapsed_ms": 0.021,
+            "kind": "execute",
+            "statement_class": "update_access"
+          },
+          {
+            "elapsed_ms": 36.947,
+            "kind": "commit"
+          }
+        ],
+        "index": 12,
+        "lock_wait_ms": 0.001,
+        "rowcount": 5,
+        "wal_bytes": 73270112
+      },
+      {
+        "database_bytes": 256901120,
+        "elapsed_ms": 38.01,
+        "events": [
+          {
+            "elapsed_ms": 0.1,
+            "kind": "execute",
+            "statement_class": "insert_access"
+          },
+          {
+            "elapsed_ms": 0.02,
+            "kind": "execute",
+            "statement_class": "update_access"
+          },
+          {
+            "elapsed_ms": 37.853,
+            "kind": "commit"
+          }
+        ],
+        "index": 13,
+        "lock_wait_ms": 0.001,
+        "rowcount": 5,
+        "wal_bytes": 73270112
+      },
+      {
+        "database_bytes": 256901120,
+        "elapsed_ms": 26.121,
+        "events": [
+          {
+            "elapsed_ms": 0.098,
+            "kind": "execute",
+            "statement_class": "insert_access"
+          },
+          {
+            "elapsed_ms": 0.02,
+            "kind": "execute",
+            "statement_class": "update_access"
+          },
+          {
+            "elapsed_ms": 25.966,
+            "kind": "commit"
+          }
+        ],
+        "index": 14,
+        "lock_wait_ms": 0.001,
+        "rowcount": 5,
+        "wal_bytes": 73270112
+      },
+      {
+        "database_bytes": 256901120,
+        "elapsed_ms": 37.126,
+        "events": [
+          {
+            "elapsed_ms": 0.1,
+            "kind": "execute",
+            "statement_class": "insert_access"
+          },
+          {
+            "elapsed_ms": 0.02,
+            "kind": "execute",
+            "statement_class": "update_access"
+          },
+          {
+            "elapsed_ms": 36.972,
+            "kind": "commit"
+          }
+        ],
+        "index": 15,
+        "lock_wait_ms": 0.001,
+        "rowcount": 5,
+        "wal_bytes": 73270112
+      },
+      {
+        "database_bytes": 256901120,
+        "elapsed_ms": 60.136,
+        "events": [
+          {
+            "elapsed_ms": 0.1,
+            "kind": "execute",
+            "statement_class": "insert_access"
+          },
+          {
+            "elapsed_ms": 0.02,
+            "kind": "execute",
+            "statement_class": "update_access"
+          },
+          {
+            "elapsed_ms": 59.98,
+            "kind": "commit"
+          }
+        ],
+        "index": 16,
+        "lock_wait_ms": 0.001,
+        "rowcount": 5,
+        "wal_bytes": 73270112
+      },
+      {
+        "database_bytes": 256901120,
+        "elapsed_ms": 37.241,
+        "events": [
+          {
+            "elapsed_ms": 0.105,
+            "kind": "execute",
+            "statement_class": "insert_access"
+          },
+          {
+            "elapsed_ms": 0.02,
+            "kind": "execute",
+            "statement_class": "update_access"
+          },
+          {
+            "elapsed_ms": 37.078,
+            "kind": "commit"
+          }
+        ],
+        "index": 17,
+        "lock_wait_ms": 0.001,
+        "rowcount": 5,
+        "wal_bytes": 73270112
+      },
+      {
+        "database_bytes": 256901120,
+        "elapsed_ms": 26.849,
+        "events": [
+          {
+            "elapsed_ms": 0.102,
+            "kind": "execute",
+            "statement_class": "insert_access"
+          },
+          {
+            "elapsed_ms": 0.021,
+            "kind": "execute",
+            "statement_class": "update_access"
+          },
+          {
+            "elapsed_ms": 26.689,
+            "kind": "commit"
+          }
+        ],
+        "index": 18,
+        "lock_wait_ms": 0.001,
+        "rowcount": 5,
+        "wal_bytes": 73270112
+      },
+      {
+        "database_bytes": 256901120,
+        "elapsed_ms": 26.271,
+        "events": [
+          {
+            "elapsed_ms": 0.099,
+            "kind": "execute",
+            "statement_class": "insert_access"
+          },
+          {
+            "elapsed_ms": 0.02,
+            "kind": "execute",
+            "statement_class": "update_access"
+          },
+          {
+            "elapsed_ms": 26.114,
+            "kind": "commit"
+          }
+        ],
+        "index": 19,
+        "lock_wait_ms": 0.001,
+        "rowcount": 5,
+        "wal_bytes": 73270112
+      },
+      {
+        "database_bytes": 256901120,
+        "elapsed_ms": 37.049,
+        "events": [
+          {
+            "elapsed_ms": 0.099,
+            "kind": "execute",
+            "statement_class": "insert_access"
+          },
+          {
+            "elapsed_ms": 0.023,
+            "kind": "execute",
+            "statement_class": "update_access"
+          },
+          {
+            "elapsed_ms": 36.89,
+            "kind": "commit"
+          }
+        ],
+        "index": 20,
+        "lock_wait_ms": 0.001,
+        "rowcount": 5,
+        "wal_bytes": 73270112
+      },
+      {
+        "database_bytes": 256901120,
+        "elapsed_ms": 37.981,
+        "events": [
+          {
+            "elapsed_ms": 0.098,
+            "kind": "execute",
+            "statement_class": "insert_access"
+          },
+          {
+            "elapsed_ms": 0.019,
+            "kind": "execute",
+            "statement_class": "update_access"
+          },
+          {
+            "elapsed_ms": 37.826,
+            "kind": "commit"
+          }
+        ],
+        "index": 21,
+        "lock_wait_ms": 0.001,
+        "rowcount": 5,
+        "wal_bytes": 73270112
+      },
+      {
+        "database_bytes": 256901120,
+        "elapsed_ms": 37.19,
+        "events": [
+          {
+            "elapsed_ms": 0.102,
+            "kind": "execute",
+            "statement_class": "insert_access"
+          },
+          {
+            "elapsed_ms": 0.021,
+            "kind": "execute",
+            "statement_class": "update_access"
+          },
+          {
+            "elapsed_ms": 37.03,
+            "kind": "commit"
+          }
+        ],
+        "index": 22,
+        "lock_wait_ms": 0.001,
+        "rowcount": 5,
+        "wal_bytes": 73270112
+      },
+      {
+        "database_bytes": 256901120,
+        "elapsed_ms": 86.372,
+        "events": [
+          {
+            "elapsed_ms": 0.102,
+            "kind": "execute",
+            "statement_class": "insert_access"
+          },
+          {
+            "elapsed_ms": 0.019,
+            "kind": "execute",
+            "statement_class": "update_access"
+          },
+          {
+            "elapsed_ms": 86.213,
+            "kind": "commit"
+          }
+        ],
+        "index": 23,
+        "lock_wait_ms": 0.001,
+        "rowcount": 5,
+        "wal_bytes": 73270112
+      },
+      {
+        "database_bytes": 256901120,
+        "elapsed_ms": 37.125,
+        "events": [
+          {
+            "elapsed_ms": 0.099,
+            "kind": "execute",
+            "statement_class": "insert_access"
+          },
+          {
+            "elapsed_ms": 0.02,
+            "kind": "execute",
+            "statement_class": "update_access"
+          },
+          {
+            "elapsed_ms": 36.968,
+            "kind": "commit"
+          }
+        ],
+        "index": 24,
+        "lock_wait_ms": 0.001,
+        "rowcount": 5,
+        "wal_bytes": 73270112
+      },
+      {
+        "database_bytes": 256901120,
+        "elapsed_ms": 37.159,
+        "events": [
+          {
+            "elapsed_ms": 0.098,
+            "kind": "execute",
+            "statement_class": "insert_access"
+          },
+          {
+            "elapsed_ms": 0.02,
+            "kind": "execute",
+            "statement_class": "update_access"
+          },
+          {
+            "elapsed_ms": 37.003,
+            "kind": "commit"
+          }
+        ],
+        "index": 25,
+        "lock_wait_ms": 0.001,
+        "rowcount": 5,
+        "wal_bytes": 73270112
+      },
+      {
+        "database_bytes": 256901120,
+        "elapsed_ms": 37.984,
+        "events": [
+          {
+            "elapsed_ms": 0.101,
+            "kind": "execute",
+            "statement_class": "insert_access"
+          },
+          {
+            "elapsed_ms": 0.019,
+            "kind": "execute",
+            "statement_class": "update_access"
+          },
+          {
+            "elapsed_ms": 37.826,
+            "kind": "commit"
+          }
+        ],
+        "index": 26,
+        "lock_wait_ms": 0.001,
+        "rowcount": 5,
+        "wal_bytes": 73270112
+      },
+      {
+        "database_bytes": 256901120,
+        "elapsed_ms": 26.082,
+        "events": [
+          {
+            "elapsed_ms": 0.098,
+            "kind": "execute",
+            "statement_class": "insert_access"
+          },
+          {
+            "elapsed_ms": 0.019,
+            "kind": "execute",
+            "statement_class": "update_access"
+          },
+          {
+            "elapsed_ms": 25.928,
+            "kind": "commit"
+          }
+        ],
+        "index": 27,
+        "lock_wait_ms": 0.001,
+        "rowcount": 5,
+        "wal_bytes": 73270112
+      },
+      {
+        "database_bytes": 256901120,
+        "elapsed_ms": 26.134,
+        "events": [
+          {
+            "elapsed_ms": 0.1,
+            "kind": "execute",
+            "statement_class": "insert_access"
+          },
+          {
+            "elapsed_ms": 0.02,
+            "kind": "execute",
+            "statement_class": "update_access"
+          },
+          {
+            "elapsed_ms": 25.976,
+            "kind": "commit"
+          }
+        ],
+        "index": 28,
+        "lock_wait_ms": 0.001,
+        "rowcount": 5,
+        "wal_bytes": 73270112
+      },
+      {
+        "database_bytes": 256901120,
+        "elapsed_ms": 37.648,
+        "events": [
+          {
+            "elapsed_ms": 0.124,
+            "kind": "execute",
+            "statement_class": "insert_access"
+          },
+          {
+            "elapsed_ms": 0.157,
+            "kind": "execute",
+            "statement_class": "update_access"
+          },
+          {
+            "elapsed_ms": 37.121,
+            "kind": "commit"
+          }
+        ],
+        "index": 29,
+        "lock_wait_ms": 0.001,
+        "rowcount": 5,
+        "wal_bytes": 73270112
+      },
+      {
+        "database_bytes": 256901120,
+        "elapsed_ms": 26.088,
+        "events": [
+          {
+            "elapsed_ms": 0.1,
+            "kind": "execute",
+            "statement_class": "insert_access"
+          },
+          {
+            "elapsed_ms": 0.02,
+            "kind": "execute",
+            "statement_class": "update_access"
+          },
+          {
+            "elapsed_ms": 25.929,
+            "kind": "commit"
+          }
+        ],
+        "index": 30,
+        "lock_wait_ms": 0.001,
+        "rowcount": 5,
+        "wal_bytes": 73270112
+      },
+      {
+        "database_bytes": 256901120,
+        "elapsed_ms": 38.013,
+        "events": [
+          {
+            "elapsed_ms": 0.134,
+            "kind": "execute",
+            "statement_class": "insert_access"
+          },
+          {
+            "elapsed_ms": 0.025,
+            "kind": "execute",
+            "statement_class": "update_access"
+          },
+          {
+            "elapsed_ms": 37.812,
+            "kind": "commit"
+          }
+        ],
+        "index": 31,
+        "lock_wait_ms": 0.001,
+        "rowcount": 5,
+        "wal_bytes": 73270112
+      },
+      {
+        "database_bytes": 256901120,
+        "elapsed_ms": 26.153,
+        "events": [
+          {
+            "elapsed_ms": 0.101,
+            "kind": "execute",
+            "statement_class": "insert_access"
+          },
+          {
+            "elapsed_ms": 0.02,
+            "kind": "execute",
+            "statement_class": "update_access"
+          },
+          {
+            "elapsed_ms": 25.994,
+            "kind": "commit"
+          }
+        ],
+        "index": 32,
+        "lock_wait_ms": 0.001,
+        "rowcount": 5,
+        "wal_bytes": 73270112
+      }
+    ],
+    "summary": {
+      "all_calls_have_one_insert_one_update_one_commit": true,
+      "all_rowcounts_are_five": true,
+      "event_counts": {
+        "commit": 33,
+        "execute:insert_access": 33,
+        "execute:update_access": 33
+      },
+      "stage_timings_ms": {
+        "commit": {
+          "count": 33,
+          "max_ms": 131.734,
+          "mean_ms": 39.524,
+          "min_ms": 25.874,
+          "p50_ms": 37.003,
+          "p95_ms": 86.213
+        },
+        "insert_access": {
+          "count": 33,
+          "max_ms": 0.362,
+          "mean_ms": 0.111,
+          "min_ms": 0.091,
+          "p50_ms": 0.1,
+          "p95_ms": 0.134
+        },
+        "lock_wait": {
+          "count": 33,
+          "max_ms": 0.002,
+          "mean_ms": 0.001,
+          "min_ms": 0.001,
+          "p50_ms": 0.001,
+          "p95_ms": 0.001
+        },
+        "total": {
+          "count": 33,
+          "max_ms": 131.915,
+          "mean_ms": 39.707,
+          "min_ms": 26.031,
+          "p50_ms": 37.159,
+          "p95_ms": 86.372
+        },
+        "update_access": {
+          "count": 33,
+          "max_ms": 0.157,
+          "mean_ms": 0.026,
+          "min_ms": 0.019,
+          "p50_ms": 0.02,
+          "p95_ms": 0.042
+        }
+      }
+    }
+  },
+  "provenance": {
+    "checkout_status": "clean",
+    "checkout_status_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "helper_sha256": "b24e5033d94672ff3f5145b2c889a90b831472fcd68b30d2be96aa494c0d2d78",
+    "python": "D:\\Development\\mnemos\\mnemos\\.worktrees\\functional-local-memory\\.venv\\Scripts\\python.exe",
+    "source_commit": "b752ffbe07e2e32f5ddbf54cc689b8dbbad8c9e0",
+    "source_files": {
+      "mnemos/types.py": {
+        "checkout_matches_commit": true,
+        "checkout_sha256": "56c54698412d4e2072b736235b2fc629282bd3adb142053a0691cd887d7a9293",
+        "commit_sha256": "56c54698412d4e2072b736235b2fc629282bd3adb142053a0691cd887d7a9293"
+      },
+      "mnemos/utils/storage.py": {
+        "checkout_matches_commit": true,
+        "checkout_sha256": "d0ee4f8d74a78510e15d412c58a9913c67b6ee20b0f6b033cad433ebe543aea0",
+        "commit_sha256": "d0ee4f8d74a78510e15d412c58a9913c67b6ee20b0f6b033cad433ebe543aea0"
+      }
+    }
+  },
+  "schema_version": "profile-retrieval-commit-v1",
+  "sqlite_after": {
+    "journal_mode": "wal",
+    "page_size": 4096,
+    "synchronous": 2,
+    "synchronous_label": "FULL",
+    "wal_autocheckpoint": 1000
+  },
+  "sqlite_before": {
+    "journal_mode": "wal",
+    "page_size": 4096,
+    "synchronous": 2,
+    "synchronous_label": "FULL",
+    "wal_autocheckpoint": 1000
+  },
+  "started_at": "2026-09-18T02:44:57.448489+00:00",
+  "status": "completed"
+}

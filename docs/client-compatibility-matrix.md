@@ -2,6 +2,26 @@
 
 Updated September 17, 2026 for the unreleased functional-local-memory worktree. Implementation, protocol tests, and native conversation acceptance are separate claims.
 
+The latest [native forget/replay attempt](validation/2026-09-17/native-codex-claude-continuity-v6/README.md)
+remains FAILED. Claude deleted a Codex-taught, Claude-corrected fact and retrieved
+an unrelated retained preference using the required query. After restart, direct
+replay of the original teaching event was suppressed and correction replay was
+rejected. After maintenance and another restart, fresh Codex retrieval excluded
+the deleted fact, but returned a separate unknown captured statement containing
+its value. Codex repeated that value as current and omitted the second requested
+control query. All three Codex processes exited zero under explicit unelevated
+sandbox mode; reverse and final Stop hooks still timed out. Selected-fact deletion
+and service replay suppression are observed. Native answer behavior after deletion,
+broader related-content deletion, complete capture, and Hermes remain open.
+
+The [preceding v5 failure](validation/2026-09-17/native-codex-claude-continuity-v5/README.md)
+stopped earlier: Claude issued a release-label query instead of the requested
+retained-preference query. SQLite preserved the unrelated fact. V6 required the
+exact control-query argument and passed that check before the later failure.
+Neither run proves that recalled historical instructions caused the host's
+instruction-following failure; their presence and the incorrect behavior are
+recorded together for the next context-boundary investigation.
+
 | Client | Implemented integration | Observed evidence | Native conversation acceptance |
 | --- | --- | --- | --- |
 | Claude Code | Command hooks, transcript deltas, context injection, MCP tools; provisional missing-ID capture excluded from extraction | Installed source dedfcfd completed native correction, consolidation, retrieval, and forgetting through the actual 2.1.191 plugin, with restart and reconstructed Stop replay checks | All 15 bounded fact-lifecycle criteria passed in v18 with the new startup default. Degraded capture keeps the overall result partial. Extraction quality and complete capture acceptance remain open |

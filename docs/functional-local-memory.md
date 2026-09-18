@@ -226,6 +226,14 @@ acceptance.
 All five module switches default to enabled; the baseline retrieval profile
 is a separate ranking setting.
 
+The [native v6 attempt](validation/2026-09-17/native-codex-claude-continuity-v6/README.md)
+demonstrates the practical limit: selected-fact deletion and replay suppression
+worked, but fresh Codex retrieval returned a separate captured assistant statement
+and the host presented its value as current. It also skipped a requested query.
+The result remains failed. The current historical/unverified labels did not
+prevent that answer; native related-copy deletion and context handling still
+need acceptance evidence.
+
 ## What the five modules currently mean
 
 These are the implemented mechanism contracts. Their neuroscience analogies are design inspiration, not evidence of human-like memory.

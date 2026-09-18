@@ -6,6 +6,12 @@ The unreleased managed-service evaluation lives in [benchmarks/local_memory](../
 
 See [validation progress](validation/2026-09-16/progress.md) and [10,000-fact performance](validation/2026-09-16/performance-10k.md). The older harness below is a reproduction/development tool. Its mock/simple-provider results and production_replacement field do not establish production readiness. Its default unscoped baseline is unsuitable for a fair quality comparison with scoped retrieval.
 
+The corrected real-model run measured warm recall p95 at 1,088.094 ms against
+the unchanged 500 ms gate. A later [SQLite write-stage follow-up](validation/2026-09-17/retrieval-commit-profile-v1/README.md)
+measured 33 five-fact updates on a separate 10,000-fact fixture: total p95
+86.372 ms, almost entirely commit, with WAL/FULL preserved. It did not reproduce
+the earlier metadata tail and does not replace the failed end-to-end result.
+
 The `heldout_run`, `module_mechanism_run`, and `lifecycle_target_smoke`
 modules accept `--think false`, `--think true`, or a model-supported level
 (`low`, `medium`, `high`, `max`). Omit the option to preserve the Ollama model's

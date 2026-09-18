@@ -1,0 +1,564 @@
+"""Disposable native Codex/Claude teach, correct, forget and replay probe.
+
+Transport and durability only: fixture embeddings, all modules disabled, no
+Ollama calls. Each native host's raw outcome remains separate from fact checks.
+"""
+from __future__ import annotations
+
+import argparse
+from datetime import datetime, timezone
+import hashlib
+import importlib.util
+import json
+import os
+from pathlib import Path
+import subprocess
+import sys
+import time
+import tomllib
+from types import SimpleNamespace
+
+ROOT = Path(__file__).resolve().parents[1]
+TEMP = Path('C:/Users/Ant/AppData/Local/Temp')
+PROFILE = 'native-codex-claude-continuity-v6'
+SOURCE = 'ebe1b0ddf973ebb1dc959afd5bc334209aa1b672'
+SNAPSHOT = TEMP / 'mnemos-source-lazy-import-v1'
+CONTENT = 'The project continuity convention is use cedar-otter for release labels.'
+REPLACEMENT = 'The project continuity convention is use maple-heron for release labels.'
+FOREIGN = 'The project continuity convention is use foreign-canary-913 for release labels.'
+UNRELATED = 'The retained project preference is keep river-slate in release notes.'
+CONTROL_QUERY = 'retained project preference'
+TARGET_QUERY = 'project continuity convention for release labels'
+PINS = {
+    'native_codex_interactive_utf8_v1.py': '6f91aaef76ff619d38e5229f93697796b5fbfbcf86bcc87a78e72062f4b7dd0b',
+    'native_claude_lifecycle_v17.py': '85940cccb99d46f7b56a6184d912495831f66c3933f0b0fc03cdf36217691342',
+}
+
+
+def digest(raw):
+    return hashlib.sha256(raw).hexdigest()
+
+
+def load(name):
+    path = ROOT / '.venv' / name
+    if digest(path.read_bytes()) != PINS[name]:
+        raise RuntimeError('helper pin mismatch: ' + name)
+    spec = importlib.util.spec_from_file_location(name.replace('.', '_'), path)
+    module = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(module)
+    return module
+
+
+def codex_completions(home):
+    """Only actual Mnemos completion records; no auth, logs, or full session copy."""
+    selected = []
+    for path in home.rglob('*.jsonl'):
+        for number, line in enumerate(path.read_text(encoding='utf-8').splitlines(), 1):
+            value = json.loads(line)
+            payload = value.get('payload', {})
+            if payload.get('type') == 'mcp_tool_call_end' and payload.get('invocation', {}).get('server') == 'mnemos':
+                selected.append({'source': path.relative_to(home).as_posix(), 'line': number, 'record': value})
+    return selected
+
+
+def decode_codex(selected, expected):
+    assert len(selected) == len(expected)
+    decoded = []
+    for item, tool in zip(selected, expected):
+        payload = item['record']['payload']
+        assert payload['invocation']['server'] == 'mnemos'
+        assert payload['invocation']['tool'] == tool
+        assert set(payload['result']) == {'Ok'}
+        result = payload['result']['Ok']
+        assert result['isError'] is False
+        value = json.loads(result['structuredContent']['result'])
+        assert value == json.loads(result['content'][0]['text'])
+        assert value.get('status') != 'error' and 'error' not in value
+        decoded.append(value)
+    return decoded
+
+
+def force_unelevated(path, lifecycle_module):
+    text = path.read_text(encoding='utf-8')
+    if '[windows]' not in text:
+        text = text.rstrip() + '\n\n[windows]\nsandbox = "unelevated"\n'
+        path.write_text(text, encoding='utf-8')
+    else:
+        text = text.replace('sandbox = "workspace-write"', 'sandbox = "unelevated"')
+        path.write_text(text, encoding='utf-8')
+    lifecycle_module._protect_file(path)
+    assert tomllib.loads(path.read_text(encoding='utf-8'))['windows']['sandbox'] == 'unelevated'
+
+
+def main():
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument('--output', type=Path, required=True)
+    args = parser.parse_args()
+    if args.output.exists():
+        raise RuntimeError('refusing to overwrite output')
+    if not sys.stdin.isatty() or not sys.stdout.isatty():
+        raise RuntimeError('native Codex requires a terminal')
+    native = load('native_codex_interactive_utf8_v1.py')
+    claude = load('native_claude_lifecycle_v17.py')
+    native.INSTALLED_PYTHON = TEMP / 'mnemos-installed-lazy-import-v1/Scripts/python.exe'
+    native.WHEEL_PATH = TEMP / 'mnemos-package-checks-lazy-import-v1/dist/mnemos_memory-0.7.0-py3-none-any.whl'
+    native.BUILD_VERIFICATION = native.WHEEL_PATH.parent.parent / 'verification.json'
+    build = json.loads(native.BUILD_VERIFICATION.read_text(encoding='utf-8'))
+    assert build['status'] == 'passed' and build['source_commit'] == SOURCE
+    matches = [a for a in build['artifacts'] if Path(a['file']).resolve() == native.WHEEL_PATH.resolve()]
+    assert len(matches) == 1
+    native.WHEEL_SHA256 = 'b4f22b26f23f24496dc24c65fa2a6486395f1fe0f549e9c1feac762c77040699'
+    assert matches[0]['sha256'] == native.WHEEL_SHA256
+
+    if Path(sys.executable).resolve() != native.INSTALLED_PYTHON.resolve():
+        raise RuntimeError('not the pinned installed interpreter')
+    wrapper = native._load_v2()
+    wrapper.PROFILE = PROFILE
+    lifecycle = wrapper._load_lifecycle()
+    claude.PROFILE = PROFILE
+    claude.SOURCE_ROOT = SNAPSHOT
+    claude.SOURCE_COMMIT = SOURCE
+    claude.CLAUDE_EXE = Path('C:/Users/Ant/.local/bin/claude.exe')
+    claude.RUNTIME_PYTHON = Path(sys.executable)
+    provenance = wrapper._verify_inputs(SimpleNamespace(
+        source_commit=SOURCE, wheel=native.WHEEL_PATH,
+        expected_wheel_sha256=native.WHEEL_SHA256,
+        build_verification=native.BUILD_VERIFICATION), lifecycle)
+    plugin = claude._verify_plugin_snapshot(SNAPSHOT, SOURCE)
+    claude_version = claude._verify_claude()
+    fixture = wrapper._private_fixture(lifecycle, TEMP, 'mnemos-native-crosshost-')
+    report = {'status': 'failed', 'source_commit': SOURCE, 'fixture': str(fixture),
+              'provenance': provenance, 'plugin': plugin, 'claude_version': claude_version,
+              'helper_pins': PINS, 'runner_sha256': digest(Path(__file__).read_bytes()),
+              'boundary': 'Native host transport and durable scoped facts; deterministic lexical vectors and unavailable cognition; all five modules disabled.',
+              'criteria': {}}
+    service = store = process = auth = claude_auth = reverse_auth = forget_auth = final_auth = None
+    binding = None
+    traces = []
+    args.output.parent.mkdir(parents=True, exist_ok=True)
+    def checkpoint():
+        args.output.write_text(json.dumps(report, indent=2) + '\n', encoding='utf-8')
+    def close():
+        nonlocal service, store, binding
+        native._restore_dispatch(binding)
+        binding = None
+        errors = lifecycle._close_service(service, store)
+        if errors:
+            raise RuntimeError('service close failed: ' + ','.join(errors))
+        service = store = None
+    def start(registry, config):
+        nonlocal service, store, binding
+        service, store, _ = claude._start_service(fixture, registry, config)
+        trace, binding = native._trace_dispatch(service)
+        traces.append(trace)
+    try:
+        from mnemos.hosts import apply_host_integration
+        registry, registry_path, project, project_b = wrapper._registry_with_foreign_project(lifecycle, fixture)
+        config = wrapper._disabled_config()
+        start(registry, config)
+        context_a = registry.resolve(project, user_profile_id=PROFILE, session_id='fixture-control', host='manual')
+        context_b = registry.resolve(project_b, user_profile_id=PROFILE, session_id='foreign-control', host='manual')
+        service.submit('remember', {'event_id': 'foreign-seed', 'context': context_b.model_dump(mode='json'), 'content': FOREIGN, 'scope': 'project'})
+        service.submit('remember', {'event_id': 'unrelated-seed', 'context': context_a.model_dump(mode='json'), 'content': UNRELATED, 'scope': 'project'})
+        service.submit('maintenance', {})
+        assert all(f.content != CONTENT for f in store.get_all())
+        report['criteria']['target_absent_before_native_teach'] = True
+        foreign_id, _ = wrapper._fact_row(store, FOREIGN)
+        unrelated_id, _ = wrapper._fact_row(store, UNRELATED)
+        settings = fixture / 'settings.toml'
+        settings.write_text('# disposable cross-host fixture\n', encoding='utf-8')
+        lifecycle._protect_file(settings)
+        home = fixture / 'codex-home'
+        lifecycle._private_mkdir(home)
+        selectors = {
+            'MNEMOS_CONFIG_PATH': str(settings), 'MNEMOS_SCOPE_REGISTRY': str(registry_path),
+            'MNEMOS_USER_PROFILE_ID': PROFILE, 'MNEMOS_RUNTIME_DESCRIPTOR': str(fixture / 'runtime.json'),
+            'MNEMOS_PROJECT_ROOT': str(project), 'MNEMOS_HOST': 'codex',
+            'MNEMOS_SESSION_ID': 'native-crosshost-codex-teach', 'MNEMOS_AUTO_START': 'false',
+        }
+        generated = apply_host_integration('codex', mnemos_config_path=settings, cwd=project, home=home,
+            integration_env={key: selectors[key] for key in ('MNEMOS_CONFIG_PATH','MNEMOS_SCOPE_REGISTRY','MNEMOS_USER_PROFILE_ID','MNEMOS_RUNTIME_DESCRIPTOR')})
+        config_path = generated.config_path
+        force_unelevated(config_path, lifecycle)
+        assert config_path.read_text(encoding='utf-8').count('mnemos.adapters.codex') >= 6
+        auth = lifecycle._auth_copy(config_path.parent)
+        env = native._clean_environment(lifecycle, {'CODEX_HOME': str(config_path.parent), **selectors})
+        report['codex_entrypoint'] = wrapper._validate_mcp_entrypoint(lifecycle, config_path, env)
+        report['codex_config_sha256'] = digest(config_path.read_bytes())
+        prompt = ('Use only Mnemos MCP tools. First call mnemos_store exactly once with content ' + json.dumps(CONTENT)
+                  + ', role user, scope project. Then call mnemos_consolidate exactly once. Report the result. Do not use other tools.')
+        command = native._native_command(lifecycle, project, prompt)
+        report['codex_command'] = command[:-1] + ['<fixture teaching prompt>']
+        checkpoint()
+        print(json.dumps({'fixture': str(fixture), 'stage': 'native_codex_teach'}), flush=True)
+        started = time.monotonic()
+        process = subprocess.Popen(command, cwd=project, env=env, shell=False,
+            creationflags=getattr(subprocess, 'CREATE_NEW_PROCESS_GROUP', 0))
+        try:
+            process.wait(timeout=180)
+            timed_out = False
+        except subprocess.TimeoutExpired:
+            lifecycle._terminate_process_tree(process)
+            timed_out = True
+        report['codex_process'] = {'returncode': process.returncode, 'timed_out': timed_out,
+                                   'elapsed_ms': round((time.monotonic()-started)*1000, 1)}
+        selected = codex_completions(config_path.parent)
+        (args.output.parent / 'codex-mcp-completions.json').write_text(json.dumps(selected, indent=2)+'\n', encoding='utf-8')
+        report['codex_completion_count'] = len(selected)
+        stored, consolidated = decode_codex(selected, ('mnemos_store', 'mnemos_consolidate'))
+        assert selected[0]['record']['payload']['invocation']['arguments'] == {
+            'content': CONTENT, 'role': 'user', 'scope': 'project'}
+        assert stored['status'] == 'committed' and stored['event_committed'] is True
+        assert stored['scope_id'] == context_a.project_id and stored['scope'] == 'project'
+        assert consolidated['maintenance']['failed_count'] == 0 and consolidated['completed'] > 0
+        report['criteria']['native_codex_store_and_consolidate_verified'] = True
+        target_id, version = wrapper._fact_row(store, CONTENT)
+        assert version == 1
+        report['target'] = {'fact_id': target_id, 'version': version, 'content': CONTENT,
+                            'replacement': REPLACEMENT, 'project_id': context_a.project_id,
+                            'foreign_fact_id': foreign_id, 'foreign_project_id': context_b.project_id}
+        report['criteria']['target_durable_after_native_teach'] = True
+        # No harness remember call for the target. Native completion verification
+        # remains separately required; a durable row alone is not native proof.
+        close()
+        assert not (fixture / 'runtime.json').exists()
+        start(registry, config)
+        current = store.get(target_id)
+        assert current is not None and current.content == CONTENT and current.version == 1
+        report['criteria']['target_survives_service_restart'] = True
+        config_dir = fixture / 'claude-home' / '.claude'
+        lifecycle._private_mkdir(config_dir.parent)
+        lifecycle._private_mkdir(config_dir)
+        for name in ('runtime', 'routing', 'checkpoints'):
+            lifecycle._private_mkdir(fixture / name)
+        claude_auth = claude._copy_private_auth(config_dir)
+        cenv = claude._clean_environment({
+            **selectors, 'MNEMOS_HOST': 'claude-code', 'MNEMOS_SESSION_ID': 'native-crosshost-claude',
+            'MNEMOS_RUNTIME_DIR': str(fixture/'runtime'), 'MNEMOS_CLAUDE_CHECKPOINT_DIR': str(fixture/'checkpoints'),
+            'MNEMOS_ROUTING_REVIEW_DIR': str(fixture/'routing'), 'MNEMOS_SQLITE_PATH': str(fixture/'memory.sqlite'),
+            'DISABLE_AUTOUPDATER': '1', 'ENABLE_CLAUDEAI_MCP_SERVERS': 'false',
+            'CLAUDE_CONFIG_DIR': str(config_dir), 'MNEMOS_PLUGIN_PYTHON': sys.executable,
+            'PATH': str(Path(sys.executable).parent) + os.pathsep + os.environ.get('PATH','')})
+        cenv.pop('MCP_CONNECTION_NONBLOCKING', None)
+        prefix = 'mcp__plugin_mnemos-memory_mnemos__'
+        print(json.dumps({'stage': 'native_claude_recall_after_restart'}), flush=True)
+        checkpoint()
+        read, raw, _ = claude._run_phase(claude=claude.CLAUDE_EXE, source_root=SNAPSHOT,
+            runtime_python=Path(sys.executable), project=project, env=cenv, phase='crosshost-read',
+            prompt='Use only mnemos_retrieve. Query the project continuity convention for release labels, current_scope project and allowed_scopes project. Report the retrieved fact. Do not call any other tool.',
+            allowed=[prefix+'mnemos_retrieve'])
+        results = claude._operation_result(read, 'mnemos_retrieve')
+        report['claude_read'] = claude._safe_phase_summary(read)
+        report['claude_read_hooks'] = claude._hook_diagnostic_statuses(raw)
+        read_ok = (len(read['call_names']) == 1 and claude._result_has_fact(results, target_id, CONTENT, 1)
+                   and not claude._result_has_fact_id(results, foreign_id))
+        report['criteria']['native_claude_retrieves_codex_fact_after_restart'] = read_ok
+        if not read_ok:
+            raise RuntimeError('native crosshost read contract failed')
+        checkpoint()
+        print(json.dumps({'stage': 'native_claude_correct'}), flush=True)
+        correction, raw, _ = claude._run_phase(claude=claude.CLAUDE_EXE, source_root=SNAPSHOT,
+            runtime_python=Path(sys.executable), project=project, env=cenv, phase='crosshost-correct',
+            prompt=('Use only Mnemos MCP tools. First mnemos_correct fact_id '+target_id
+                    +' expected_version 1 content '+json.dumps(REPLACEMENT)+" source_ref native-crosshost-correction. Then mnemos_consolidate. Then mnemos_retrieve the corrected project continuity convention. No other tools."),
+            allowed=[prefix+n for n in ('mnemos_correct','mnemos_consolidate','mnemos_retrieve')])
+        report['claude_correction'] = claude._safe_phase_summary(correction)
+        report['claude_correction_hooks'] = claude._hook_diagnostic_statuses(raw)
+        contract = claude._phase1_contract(correction, target_id, REPLACEMENT)
+        report['correction_contract'] = contract
+        if not all(contract.values()):
+            raise RuntimeError('native correction contract failed')
+        retrieved_results = claude._operation_result(correction, 'mnemos_retrieve')
+        payloads = [p for r in retrieved_results for p in r['payload'] if isinstance(p, dict) and 'facts' in p]
+        assert len(payloads) == 1
+        retrieved = payloads[0]
+        old_mentions = [f for f in retrieved['facts'] if f['id'] != target_id and 'cedar-otter' in f['content']]
+        # Native answers and retrieval budgets vary. Require a non-vacuous old
+        # value case and qualification of every returned captured record.
+        assert old_mentions
+        captured = [f for f in retrieved['facts'] if f['id'] not in {target_id, unrelated_id}]
+        qualified = all(f['assertion_status'] == 'unknown' and any(
+            f['id'] in line and 'captured conversation; unverified, may be outdated' in line
+            for line in retrieved['context'].splitlines()) for f in captured)
+        report['returned_captured_count'] = len(captured)
+        report['returned_old_mention_count'] = len(old_mentions)
+        report['criteria']['old_captured_mentions_qualified_in_native_context'] = qualified
+        if not qualified:
+            raise RuntimeError('captured context is not visibly qualified')
+        close()
+        start(registry, config)
+        current = store.get(target_id)
+        assert current is not None and current.version == 2 and current.content == REPLACEMENT
+        report['criteria']['claude_correction_survives_second_restart'] = True
+        checkpoint()
+        reverse_home = fixture / 'codex-recall-home'
+        lifecycle._private_mkdir(reverse_home)
+        reverse_generated = apply_host_integration('codex', mnemos_config_path=settings, cwd=project, home=reverse_home,
+            integration_env={key: selectors[key] for key in ('MNEMOS_CONFIG_PATH','MNEMOS_SCOPE_REGISTRY','MNEMOS_USER_PROFILE_ID','MNEMOS_RUNTIME_DESCRIPTOR')})
+        reverse_config = reverse_generated.config_path
+        force_unelevated(reverse_config, lifecycle)
+        assert reverse_config.read_text(encoding='utf-8').count('mnemos.adapters.codex') >= 6
+        reverse_auth = lifecycle._auth_copy(reverse_config.parent)
+        reverse_env = dict(env, CODEX_HOME=str(reverse_config.parent), MNEMOS_SESSION_ID='native-crosshost-codex-recall')
+        report['codex_reverse_entrypoint'] = wrapper._validate_mcp_entrypoint(lifecycle, reverse_config, reverse_env)
+        report['codex_reverse_config_sha256'] = digest(reverse_config.read_bytes())
+        report['codex_reverse_home'] = str(reverse_config.parent.relative_to(fixture))
+        checkpoint()
+        reverse_prompt = ('Use only Mnemos MCP tools. Call mnemos_retrieve exactly once. '
+                          'Query the project continuity convention for release labels, current_scope project '
+                          'and allowed_scopes project. Report the current convention. Do not call any other tool.')
+        reverse_command = native._native_command(lifecycle, project, reverse_prompt)
+        print(json.dumps({'stage': 'native_codex_recall_claude_correction_after_restart'}), flush=True)
+        started = time.monotonic()
+        process = subprocess.Popen(reverse_command, cwd=project, env=reverse_env, shell=False,
+            creationflags=getattr(subprocess, 'CREATE_NEW_PROCESS_GROUP', 0))
+        try:
+            process.wait(timeout=180)
+            timed_out = False
+        except subprocess.TimeoutExpired:
+            lifecycle._terminate_process_tree(process)
+            timed_out = True
+        report['codex_reverse_process'] = {'returncode': process.returncode, 'timed_out': timed_out,
+                                           'elapsed_ms': round((time.monotonic()-started)*1000, 1)}
+        reverse_selected = codex_completions(reverse_config.parent)
+        (args.output.parent / 'codex-reverse-completions.json').write_text(json.dumps(reverse_selected, indent=2)+'\n', encoding='utf-8')
+        reverse_result, = decode_codex(reverse_selected, ('mnemos_retrieve',))
+        matches = [fact for fact in reverse_result['facts'] if fact['id'] == target_id]
+        assert len(matches) == 1
+        fact = matches[0]
+        assert fact['version'] == 2 and fact['content'] == REPLACEMENT
+        assert fact['scope'] == 'project' and fact['scope_id'] == context_a.project_id
+        assert fact['assertion_status'] == 'asserted'
+        assert foreign_id not in {f['id'] for f in reverse_result['facts']}
+        report['criteria']['native_codex_retrieves_claude_correction_after_restart'] = True
+
+        # Preserve the exact original source identities before native forget.
+        target_evidence = store.list_fact_evidence(target_id)
+        report['before_forget'] = {
+            'target': store.get(target_id).model_dump(mode='json'),
+            'evidence': [item.model_dump(mode='json') for item in target_evidence],
+            'unrelated_fact_id': unrelated_id,
+            'unrelated_content': UNRELATED,
+        }
+        original_sources = []
+        for evidence in target_evidence:
+            source_event = store.get_episodic_event(evidence.source_event_id)
+            if source_event is not None:
+                event_metadata = source_event.metadata
+                original_sources.append({
+                    'event_id': event_metadata.get('source_event_id'),
+                    'storage_event_id': source_event.id,
+                    'content': source_event.content,
+                    'role': source_event.role,
+                    'scope': source_event.scope,
+                    'context': {
+                        'user_profile_id': event_metadata.get('user_profile_id'),
+                        'project_id': event_metadata.get('project_id'),
+                        'workspace_id': event_metadata.get('workspace_id'),
+                        'session_id': event_metadata.get('session_id'),
+                        'host': event_metadata.get('host'),
+                    },
+                    'source_ref': event_metadata.get('source_ref'),
+                    'source_kind': event_metadata.get('source_kind'),
+                })
+        report['original_sources'] = original_sources
+        assert original_sources
+        assert all(item['source_kind'] in {'explicit_remember', 'explicit_correction'} for item in original_sources)
+        assert {'explicit_remember', 'explicit_correction'} <= {item['source_kind'] for item in original_sources}
+        for item in original_sources:
+            identity = [item['context']['user_profile_id'], item['context']['host'], item['context']['session_id'], item['event_id']]
+            expected_storage_id = hashlib.sha256(json.dumps(identity).encode('utf-8')).hexdigest()
+            assert item['storage_event_id'] == expected_storage_id
+
+        # Run native Claude forget in a fresh home/session. The tool contract
+        # uses chunk_id and expected_version; captured conversation copies may
+        # remain and are recorded separately below.
+        forget_config_dir = fixture / 'claude-forget-home' / '.claude'
+        lifecycle._private_mkdir(forget_config_dir.parent)
+        lifecycle._private_mkdir(forget_config_dir)
+        forget_auth = claude._copy_private_auth(forget_config_dir)
+        forget_env = claude._clean_environment({
+            **selectors, 'MNEMOS_HOST': 'claude-code', 'MNEMOS_SESSION_ID': 'native-crosshost-claude-forget',
+            'MNEMOS_RUNTIME_DIR': str(fixture/'runtime-forget'),
+            'MNEMOS_CLAUDE_CHECKPOINT_DIR': str(fixture/'checkpoints-forget'),
+            'MNEMOS_ROUTING_REVIEW_DIR': str(fixture/'routing-forget'),
+            'MNEMOS_SQLITE_PATH': str(fixture/'memory.sqlite'),
+            'DISABLE_AUTOUPDATER': '1', 'ENABLE_CLAUDEAI_MCP_SERVERS': 'false',
+            'CLAUDE_CONFIG_DIR': str(forget_config_dir), 'MNEMOS_PLUGIN_PYTHON': sys.executable,
+            'PATH': str(Path(sys.executable).parent) + os.pathsep + os.environ.get('PATH','')
+        })
+        forget_env.pop('MCP_CONNECTION_NONBLOCKING', None)
+        for name in ('runtime-forget', 'checkpoints-forget', 'routing-forget'):
+            lifecycle._private_mkdir(fixture / name)
+        forget_prompt = (
+            "Use only Mnemos MCP tools. Call mnemos_forget for chunk_id '" + target_id +
+            "' with expected_version 2. Then call mnemos_retrieve exactly once with these arguments: "
+            + json.dumps({'query': CONTROL_QUERY, 'current_scope': 'project', 'allowed_scopes': ['project']})
+            + ". Use this exact query string to check the unrelated retained preference. Do not substitute the release-label query. Do not call any other tool."
+        )
+        print(json.dumps({'stage': 'native_claude_forget'}), flush=True)
+        checkpoint()
+        forget, raw, _ = claude._run_phase(
+            claude=claude.CLAUDE_EXE, source_root=SNAPSHOT, runtime_python=Path(sys.executable),
+            project=project, env=forget_env, phase='crosshost-forget', prompt=forget_prompt,
+            allowed=['mcp__plugin_mnemos-memory_mnemos__mnemos_forget', 'mcp__plugin_mnemos-memory_mnemos__mnemos_retrieve'])
+        (fixture / 'native-crosshost-forget-stdout.jsonl').write_text(raw, encoding='utf-8')
+        forget_results = claude._operation_result(forget, 'mnemos_forget')
+        forget_retrieve = claude._operation_result(forget, 'mnemos_retrieve')
+        forget_payloads = [p for item in forget_results for p in item.get('payload', []) if isinstance(p, dict)]
+        forget_retrieve_payloads = [p for item in forget_retrieve for p in item.get('payload', []) if isinstance(p, dict)]
+        report['claude_forget'] = claude._safe_phase_summary(forget)
+        report['claude_forget_hooks'] = claude._hook_diagnostic_statuses(raw)
+        report['forget_contract'] = claude._phase2_contract(forget, target_id, unrelated_id, UNRELATED)
+        # Bind the actual native tool arguments through the parsed stdout rather
+        # than accepting a model's final prose as proof of the requested query.
+        native_forget_calls = [node for line in raw.splitlines()
+            for node in json.loads(line).get('message', {}).get('content', [])
+            if isinstance(node, dict) and node.get('type') == 'tool_use']
+        report['native_forget_calls'] = native_forget_calls
+        report['forget_contract']['exact_control_query'] = (
+            len(native_forget_calls) == 2
+            and native_forget_calls[1]['input'].get('query') == CONTROL_QUERY)
+        checkpoint()
+        assert all(report['forget_contract'].values())
+        assert forget.get('returncode') == 0 and forget.get('timed_out') is False
+        assert forget_payloads and any(item.get('forgotten') is True for item in forget_payloads)
+        forget_facts = [fact for item in forget_retrieve_payloads for fact in item.get('facts', [])]
+        assert target_id not in {fact.get('id') for fact in forget_facts}
+        assert unrelated_id in {fact.get('id') for fact in forget_facts}
+        report['claude_forget'] = claude._safe_phase_summary(forget)
+        report['claude_forget_result'] = forget_results
+        checkpoint()
+
+        close()
+        start(registry, config)
+        assert store.get(target_id) is None
+        assert store.get(unrelated_id) is not None
+
+        # Replay exact source identifiers through the service boundary. The
+        # teaching event should be suppressed by its forget tombstone. The
+        # original correction request cannot target an erased chunk and must
+        # not recreate it.
+        replay_results = []
+        for source in original_sources:
+            replay_payload = {
+                'event_id': source['event_id'], 'context': source['context'],
+                'content': source['content'], 'role': source['role'],
+                'scope': source['scope'], 'source_ref': source['source_ref'],
+            }
+            if source['source_kind'] == 'explicit_correction':
+                replay_payload.update({'fact_id': target_id, 'expected_version': 1})
+                try:
+                    replay_results.append(service.submit('correct', replay_payload))
+                except Exception as exc:
+                    assert type(exc).__name__ == 'KeyError'
+                    replay_results.append({'status': 'rejected', 'error_type': 'KeyError'})
+                else:
+                    raise RuntimeError('correction replay did not reject the erased target')
+            else:
+                replay_result = service.submit('remember', replay_payload)
+                assert replay_result.get('processing_status') == 'suppressed'
+                replay_results.append(replay_result)
+        report['direct_replay'] = replay_results
+        replay_maintenance = service.submit('maintenance', {})
+        assert replay_maintenance['maintenance']['failed_count'] == 0
+        assert store.get(target_id) is None
+        assert not any(f.content in {CONTENT, REPLACEMENT} and f.metadata.get('assertion_status') == 'asserted' for f in store.get_all())
+        report['direct_replay_maintenance'] = {'target_present': store.get(target_id) is not None,
+                                               'unrelated_present': store.get(unrelated_id) is not None}
+        checkpoint()
+        close()
+        start(registry, config)
+        assert store.get(target_id) is None and store.get(unrelated_id) is not None
+
+        # A fresh native Codex session must retain the unrelated project fact,
+        # exclude the foreign canary, and omit the forgotten target assertion.
+        final_home = fixture / 'codex-final-home'
+        lifecycle._private_mkdir(final_home)
+        final_generated = apply_host_integration('codex', mnemos_config_path=settings, cwd=project, home=final_home,
+            integration_env={key: selectors[key] for key in ('MNEMOS_CONFIG_PATH','MNEMOS_SCOPE_REGISTRY','MNEMOS_USER_PROFILE_ID','MNEMOS_RUNTIME_DESCRIPTOR')})
+        final_config = final_generated.config_path
+        force_unelevated(final_config, lifecycle)
+        final_auth = lifecycle._auth_copy(final_config.parent)
+        final_env = dict(env, CODEX_HOME=str(final_config.parent), MNEMOS_SESSION_ID='native-crosshost-codex-final')
+        report['codex_final_home'] = str(final_config.parent.relative_to(fixture))
+        report['codex_final_entrypoint'] = wrapper._validate_mcp_entrypoint(lifecycle, final_config, final_env)
+        report['codex_final_config_sha256'] = digest(final_config.read_bytes())
+        final_prompt = ('Use only Mnemos MCP tools. Call mnemos_retrieve exactly twice in this order. '
+                        'First arguments: ' + json.dumps({'query': TARGET_QUERY, 'current_scope': 'project', 'allowed_scopes': ['project']})
+                        + '. Second arguments: ' + json.dumps({'query': CONTROL_QUERY, 'current_scope': 'project', 'allowed_scopes': ['project']})
+                        + '. Use those exact query strings. Report each result separately. Do not call any other tool.')
+        final_command = native._native_command(lifecycle, project, final_prompt)
+        print(json.dumps({'stage': 'native_codex_recall_after_forget_restart_and_replay'}), flush=True)
+        checkpoint()
+        started = time.monotonic()
+        process = subprocess.Popen(final_command, cwd=project, env=final_env, shell=False,
+            creationflags=getattr(subprocess, 'CREATE_NEW_PROCESS_GROUP', 0))
+        try:
+            process.wait(timeout=180)
+            final_timed_out = False
+        except subprocess.TimeoutExpired:
+            lifecycle._terminate_process_tree(process)
+            final_timed_out = True
+        report['codex_final_process'] = {'returncode': process.returncode, 'timed_out': final_timed_out,
+                                         'elapsed_ms': round((time.monotonic()-started)*1000, 1)}
+        final_selected = codex_completions(final_config.parent)
+        (args.output.parent / 'codex-final-completions.json').write_text(json.dumps(final_selected, indent=2)+'\n', encoding='utf-8')
+        final_result, control_result = decode_codex(final_selected, ('mnemos_retrieve', 'mnemos_retrieve'))
+        assert [item['record']['payload']['invocation']['arguments']['query'] for item in final_selected] == [TARGET_QUERY, CONTROL_QUERY]
+        final_facts = final_result.get('facts', [])
+        control_facts = control_result.get('facts', [])
+        assert target_id not in {fact.get('id') for fact in final_facts}
+        assert foreign_id not in {fact.get('id') for fact in final_facts}
+        assert unrelated_id in {fact.get('id') for fact in control_facts}
+        assert target_id not in {fact.get('id') for fact in control_facts}
+        assert foreign_id not in {fact.get('id') for fact in control_facts}
+        assert not any(fact.get('content') in {CONTENT, REPLACEMENT} and fact.get('assertion_status') == 'asserted' for fact in final_facts)
+        mentions = [fact for fact in final_facts if any(term in fact.get('content', '') for term in ('cedar-otter', 'maple-heron'))]
+        report['final_mentions'] = [
+            {'id': fact.get('id'), 'version': fact.get('version'), 'content': fact.get('content'),
+             'assertion_status': fact.get('assertion_status'), 'scope': fact.get('scope'),
+             'scope_id': fact.get('scope_id'),
+             'qualified_in_context': any(fact['id'] in line and 'captured conversation; unverified, may be outdated' in line for line in final_result['context'].splitlines())}
+            for fact in mentions
+        ]
+        report['criteria']['native_claude_forget_target_absent'] = target_id not in {fact.get('id') for fact in forget_facts}
+        report['criteria']['direct_replay_does_not_resurrect_target'] = store.get(target_id) is None
+        report['criteria']['native_codex_final_excludes_target_and_foreign'] = target_id not in {fact.get('id') for fact in final_facts} and foreign_id not in {fact.get('id') for fact in final_facts}
+        report['criteria']['native_codex_final_retains_unrelated'] = unrelated_id in {fact.get('id') for fact in control_facts}
+        report['status'] = 'observed_partial'
+        report['remaining'] = ['independent artifact verification', 'broader reviewed related-content forgetting', 'native hook payload replay', 'Hermes native continuity', 'Codex shutdown acceptance', 'complete capture and model quality']
+    except Exception as exc:
+        report['error_type'] = type(exc).__name__
+        report['error_digest'] = digest(str(exc).encode('utf-8'))
+        # Fixture-only traceback is not copied into the public artifact.
+        import traceback
+        (fixture/'runner-error.txt').write_text(traceback.format_exc(), encoding='utf-8')
+    finally:
+        report['dispatch_traces'] = traces
+        native._restore_dispatch(binding)
+        errors = lifecycle._cleanup_native_resources(process, auth)
+        errors += lifecycle._cleanup_native_resources(None, final_auth)
+        errors += lifecycle._close_service(service, store)
+        if claude_auth is not None:
+            claude_auth.unlink(missing_ok=True)
+        if reverse_auth is not None:
+            reverse_auth.unlink(missing_ok=True)
+        if forget_auth is not None:
+            forget_auth.unlink(missing_ok=True)
+        report['cleanup'] = {'errors': errors, 'codex_auth_absent': auth is None or not auth.exists(),
+                             'claude_auth_absent': claude_auth is None or not claude_auth.exists(),
+                             'codex_reverse_auth_absent': reverse_auth is None or not reverse_auth.exists(),
+                             'claude_forget_auth_absent': forget_auth is None or not forget_auth.exists(),
+                             'codex_final_auth_absent': final_auth is None or not final_auth.exists(),
+                             'descriptor_absent': not (fixture/'runtime.json').exists()}
+        if errors or not all(v for k,v in report['cleanup'].items() if k != 'errors'):
+            report['status'] = 'failed'
+        report['finished_at'] = datetime.now(timezone.utc).isoformat()
+        checkpoint()
+    print(json.dumps({'status': report['status'], 'report': str(args.output)}), flush=True)
+    return 0 if report['status'] == 'observed_partial' else 1
+
+
+if __name__ == '__main__':
+    raise SystemExit(main())

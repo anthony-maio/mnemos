@@ -1,0 +1,81 @@
+[
+  {
+    "source": "sessions/2026/09/17/rollout-2026-09-17T22-49-37-01a0b26b-653c-7a70-afe8-b0be1732a512.jsonl",
+    "line": 16,
+    "record": {
+      "timestamp": "2026-09-18T02:50:13.041Z",
+      "type": "event_msg",
+      "payload": {
+        "type": "mcp_tool_call_end",
+        "call_id": "exec-f1dbe323-279d-410b-a34f-a9d335858387",
+        "invocation": {
+          "server": "mnemos",
+          "tool": "mnemos_store",
+          "arguments": {
+            "content": "The project continuity convention is use cedar-otter for release labels.",
+            "role": "user",
+            "scope": "project"
+          }
+        },
+        "duration": {
+          "secs": 0,
+          "nanos": 932887400
+        },
+        "result": {
+          "Ok": {
+            "content": [
+              {
+                "type": "text",
+                "text": "{\n  \"event_id\": \"6328063d6fb18e3f5dc982b3e03a61a65fa5bf13a9662f1788c83d1ac7934265\",\n  \"fact_eligible\": true,\n  \"identity_status\": \"normal\",\n  \"job_id\": \"event:6328063d6fb18e3f5dc982b3e03a61a65fa5bf13a9662f1788c83d1ac7934265\",\n  \"processing_status\": \"pending\",\n  \"schema_version\": 1,\n  \"status\": \"committed\",\n  \"event_committed\": true,\n  \"scope\": \"project\",\n  \"scope_id\": \"f5278849-8770-4c49-99f8-2cf3e598f51c\"\n}"
+              }
+            ],
+            "structuredContent": {
+              "result": "{\n  \"event_id\": \"6328063d6fb18e3f5dc982b3e03a61a65fa5bf13a9662f1788c83d1ac7934265\",\n  \"fact_eligible\": true,\n  \"identity_status\": \"normal\",\n  \"job_id\": \"event:6328063d6fb18e3f5dc982b3e03a61a65fa5bf13a9662f1788c83d1ac7934265\",\n  \"processing_status\": \"pending\",\n  \"schema_version\": 1,\n  \"status\": \"committed\",\n  \"event_committed\": true,\n  \"scope\": \"project\",\n  \"scope_id\": \"f5278849-8770-4c49-99f8-2cf3e598f51c\"\n}"
+            },
+            "isError": false
+          }
+        }
+      }
+    }
+  },
+  {
+    "source": "sessions/2026/09/17/rollout-2026-09-17T22-49-37-01a0b26b-653c-7a70-afe8-b0be1732a512.jsonl",
+    "line": 19,
+    "record": {
+      "timestamp": "2026-09-18T02:50:20.377Z",
+      "type": "event_msg",
+      "payload": {
+        "type": "mcp_tool_call_end",
+        "call_id": "exec-17f9ceb4-94e0-4515-b598-2b1d7b8287f6",
+        "invocation": {
+          "server": "mnemos",
+          "tool": "mnemos_consolidate",
+          "arguments": {
+            "current_scope": "project",
+            "allowed_scopes": [
+              "project"
+            ]
+          }
+        },
+        "duration": {
+          "secs": 0,
+          "nanos": 23479200
+        },
+        "result": {
+          "Ok": {
+            "content": [
+              {
+                "type": "text",
+                "text": "{\n  \"completed\": 2,\n  \"graph\": {\n    \"cursor\": \"\",\n    \"enabled\": false,\n    \"legacy_graph\": false,\n    \"managed_preferences\": true,\n    \"marked_sources\": 0,\n    \"pending_count\": 4,\n    \"ready\": false,\n    \"total_sources\": 4\n  },\n  \"maintenance\": {\n    \"completed\": 4,\n    \"exhausted\": 0,\n    \"failed_count\": 0,\n    \"last_error\": null,\n    \"last_success\": \"2026-09-18T02:50:20.371540+00:00\",\n    \"leased\": 0,\n    \"oldest_pending_seconds\": 0,\n    \"oldest_unfinished_seconds\": 0,\n    \"pending\": 0,\n    \"processed_count\": 4,\n    \"retry_count\": 0,\n    \"running\": false,\n    \"scheduler_running\": false\n  },\n  \"schema_version\": 1\n}"
+              }
+            ],
+            "structuredContent": {
+              "result": "{\n  \"completed\": 2,\n  \"graph\": {\n    \"cursor\": \"\",\n    \"enabled\": false,\n    \"legacy_graph\": false,\n    \"managed_preferences\": true,\n    \"marked_sources\": 0,\n    \"pending_count\": 4,\n    \"ready\": false,\n    \"total_sources\": 4\n  },\n  \"maintenance\": {\n    \"completed\": 4,\n    \"exhausted\": 0,\n    \"failed_count\": 0,\n    \"last_error\": null,\n    \"last_success\": \"2026-09-18T02:50:20.371540+00:00\",\n    \"leased\": 0,\n    \"oldest_pending_seconds\": 0,\n    \"oldest_unfinished_seconds\": 0,\n    \"pending\": 0,\n    \"processed_count\": 4,\n    \"retry_count\": 0,\n    \"running\": false,\n    \"scheduler_running\": false\n  },\n  \"schema_version\": 1\n}"
+            },
+            "isError": false
+          }
+        }
+      }
+    }
+  }
+]

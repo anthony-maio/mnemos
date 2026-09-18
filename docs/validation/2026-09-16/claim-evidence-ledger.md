@@ -4,6 +4,15 @@ Assessment date: September 17, 2026. This covers the unreleased
 functional-local-memory worktree, not the installed public package or website.
 The capability IDs come from the original implementation plan.
 
+The latest [native v6 attempt](../2026-09-17/native-codex-claude-continuity-v6/README.md)
+verified selected-fact deletion by Claude and direct service replay suppression
+after Codex teaching and cross-host correction. Its final Codex answer still
+repeated the deleted value from a surviving unknown captured statement, and the
+host skipped the second required query. The overall result is FAILED. This is
+not evidence of whole-topic erasure or accepted post-forget host behavior.
+The [v5 wrong-query failure](../2026-09-17/native-codex-claude-continuity-v5/README.md)
+remains preserved alongside it. The native fixtures do not use real cognition.
+
 The latest complete package verification is frozen source `ebe1b0d`:
 962 tests passed with four skips, plus Black, strict mypy, JavaScript syntax,
 build, and Twine. A fresh installed wheel passed 268 selected contract cases
@@ -155,7 +164,7 @@ acceptance gate.
 | C08 | Independently usable, composable modules | Standalone and integrated module regression checks exercise write filtering, scope, graph state, and lifecycle behavior. | Completed real-model baseline, full-pipeline, and five module-disabled comparisons. Mechanical correctness does not establish usefulness. |
 | C09 | Inspectable, correctable, forgettable memory | Facts expose status, version, evidence, and ranking traces. Correction and forget/replay suppression have persistent-service checks. | Complete native correction/forget continuity. Logical forgetting does not erase historical backups or external host transcripts. |
 | C10 | Truthful local setup and readiness | Configured runtime, explicit providers, generated interpreter-bound host commands, and input-specific readiness checks are implemented. | Full native installation acceptance. Embedding revision is an operator-managed identity label; the runtime does not automatically verify a mutable Ollama tag's digest. |
-| C11 | Shared memory across Codex, Claude Code, and Hermes | [Native v4](../2026-09-17/native-codex-claude-continuity-v4/README.md) verifies Codex store, Claude retrieval/correction, and fresh Codex retrieval of version 2 across service restarts with foreign-scope exclusion. [Host records](../../client-compatibility-matrix.md) preserve earlier successes and failures and distinguish fixture vectors from real-model quality. | Cross-host forget/replay, complete capture/shutdown, native Hermes continuity, Codex Desktop, and pilot acceptance remain open. Both v4 Codex processes crashed on exit, and Claude capture remained degraded. |
+| C11 | Shared memory across Codex, Claude Code, and Hermes | [Native v6](../2026-09-17/native-codex-claude-continuity-v6/README.md) observes Codex store, Claude retrieval/correction/deletion, reverse Codex retrieval before deletion, and direct service replay suppression across restarts. [Host records](../../client-compatibility-matrix.md) preserve preceding failures and separate fixture transport from real-model quality. | V6 FAILED: final Codex reused a surviving unknown captured copy and skipped its second query. Broader related-forget, native answer behavior, complete capture, Hermes, Desktop, and pilot acceptance remain open. |
 | C12 | Proven retrieval, compression, or replacement advantage | The [corrected performance run](performance-corrected-v4/README.md) measured recall p95 1,088.094 ms against a 500 ms gate and durable capture p95 64.279 ms against 100 ms. The database after loading was 324,862,864 bytes. | Recall latency passes, completed real-model ablations, retained-information accuracy, and external pilot evidence. No general superiority or replacement claim is accepted. |
 
 ## Evidence bindings

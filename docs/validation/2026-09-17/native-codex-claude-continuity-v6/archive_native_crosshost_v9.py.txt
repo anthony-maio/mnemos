@@ -1,0 +1,367 @@
+"""Archive the terminal native Codex/Claude continuity v6 fixture.
+
+This is an unexecuted, read-only archive helper.  It preserves terminal
+failure or partial outcomes and never converts them into acceptance.
+"""
+from __future__ import annotations
+
+import hashlib
+import json
+from pathlib import Path
+import shutil
+import sqlite3
+
+
+ROOT = Path(__file__).resolve().parents[1]
+OUTPUT = Path("C:/Users/Ant/AppData/Local/Temp/mnemos-native-crosshost-v6")
+REPORT_PATH = OUTPUT / "report.json"
+ARCHIVE = ROOT / "docs/validation/2026-09-17/native-codex-claude-continuity-v6"
+SOURCE = "ebe1b0ddf973ebb1dc959afd5bc334209aa1b672"
+WHEEL = "b4f22b26f23f24496dc24c65fa2a6486395f1fe0f549e9c1feac762c77040699"
+V5 = ".venv/native_codex_claude_continuity_v6.py"
+TRANSITIVE_PINS = {
+    "native_codex_retrieve_v2.py": "20f909d8c2d28934c8d47763558b7f9bf08eb6d848de9a1e6bce8d2f7f3326bb",
+    "native_codex_lifecycle_v3.py": "7b87f5817dacae01c0a16918435ff8a4af1c1ecaaba00a9317ba7f16c8be5814",
+    "native_codex_generated_v8.py": "dd9ebe7480fa5a172bb41135a4690baf94d2c585f5357a77f17265e7acb58b12",
+}
+
+
+def sha(raw: bytes) -> str:
+    return hashlib.sha256(raw).hexdigest()
+
+
+def read_json(path: Path):
+    return json.loads(path.read_text(encoding="utf-8"))
+
+
+def selected_codex(home: Path, selected_path: Path, tools: tuple[str, ...]):
+    selected = read_json(selected_path)
+    if len(selected) != len(tools):
+        raise AssertionError(f"{selected_path.name}: completion count differs")
+    values = []
+    for item, expected_tool in zip(selected, tools):
+        source = (home / item["source"]).resolve()
+        if not source.is_relative_to(home.resolve()):
+            raise AssertionError("selected Codex source escaped its home")
+        lines = source.read_bytes().splitlines(keepends=True)
+        raw = lines[item["line"] - 1]
+        if json.loads(raw) != item["record"]:
+            raise AssertionError("selected Codex line changed")
+        payload = item["record"]["payload"]
+        invocation = payload["invocation"]
+        if invocation.get("server") != "mnemos" or invocation.get("tool") != expected_tool:
+            raise AssertionError("unexpected selected Codex tool")
+        result = payload["result"].get("Ok")
+        if not result or result.get("isError") is not False:
+            raise AssertionError("selected Codex result was not successful")
+        structured = json.loads(result["structuredContent"]["result"])
+        content = json.loads(result["content"][0]["text"])
+        if structured != content or structured.get("status") == "error" or "error" in structured:
+            raise AssertionError("selected Codex payload is inconsistent")
+        values.append(structured)
+    return selected, values
+
+
+def selected_claude(phase: str, report: dict):
+    fixture = Path(report["fixture"])
+    raw_path = fixture / f"native-{phase}-stdout.jsonl"
+    if not raw_path.exists():
+        return [], [], [], {"present": False}
+    raw = raw_path.read_bytes()
+    summary = report.get({
+        "crosshost-read": "claude_read",
+        "crosshost-correct": "claude_correction",
+        "crosshost-forget": "claude_forget",
+    }[phase], {})
+    normalized_hash = sha(raw.replace(b"\r\n", b"\n"))
+    summary_hash = summary.get("stdout_sha256")
+    if summary_hash and normalized_hash != summary_hash:
+        raise AssertionError(f"Claude {phase} stdout hash mismatch")
+    selected, calls, results = [], [], []
+    for number, line in enumerate(raw.splitlines(keepends=True), 1):
+        record = json.loads(line)
+        for node in record.get("message", {}).get("content", []):
+            if not isinstance(node, dict) or node.get("type") not in ("tool_use", "tool_result"):
+                continue
+            selected.append({"phase": phase, "line": number, "line_sha256": sha(line), "node": node})
+            (calls if node["type"] == "tool_use" else results).append(node)
+    if [c.get("id") for c in calls] != [r.get("tool_use_id") for r in results]:
+        raise AssertionError(f"Claude {phase} call/result IDs do not align")
+    observations = summary.get("results", [])
+    if observations and len(observations) != len(results):
+        raise AssertionError(f"Claude {phase} result count differs")
+    for result, observation in zip(results, observations):
+        if result.get("is_error", False):
+            raise AssertionError(f"Claude {phase} tool returned error")
+        if observation.get("sha256") != sha(json.dumps(result, sort_keys=True, separators=(",", ":")).encode()):
+            raise AssertionError(f"Claude {phase} selected result hash differs")
+    decoded = []
+    for result in results:
+        value = json.loads(result['content'])
+        if 'result' in value:
+            value = json.loads(value['result'])
+        assert value.get('status') != 'error' and 'error' not in value
+        decoded.append(value)
+    assert summary['returncode'] == 0 and summary['timed_out'] is False
+    return selected, calls, decoded, {"present": True, "stdout_sha256": normalized_hash}
+
+
+def table_rows(db, query, params=()):
+    return [dict(row) for row in db.execute(query, params)]
+
+
+report = read_json(REPORT_PATH)
+if not report.get("finished_at"):
+    raise RuntimeError("v6 report is not terminal; archive helper remains unexecuted")
+if report.get("status") not in {"observed_partial", "failed"}:
+    raise AssertionError("unexpected terminal v6 status")
+if report.get("source_commit") != SOURCE:
+    raise AssertionError("source commit is not the frozen v6 source")
+if report.get("provenance", {}).get("wheel", {}).get("wheel", {}).get("sha256") != WHEEL:
+    raise AssertionError("installed wheel provenance differs")
+assert report['provenance']['package_provenance']['mismatches'] == []
+assert report['status'] == 'failed' and report['error_type'] == 'AssertionError'
+assert all(report['forget_contract'].values())
+assert report['direct_replay'][0]['processing_status'] == 'suppressed'
+assert report['direct_replay'][0]['job_id'] is None
+assert report['direct_replay'][1] == {'status': 'rejected', 'error_type': 'KeyError'}
+assert report['direct_replay_maintenance'] == {'target_present': False, 'unrelated_present': True}
+for name in ('codex_process', 'codex_reverse_process', 'codex_final_process'):
+    assert report[name]['returncode'] == 0 and report[name]['timed_out'] is False
+
+fixture = Path(report["fixture"])
+if not fixture.exists():
+    raise FileNotFoundError(fixture)
+
+# Validate the runner and every helper pin recorded by the native runner.
+runner_path = ROOT / V5
+if report.get("runner_sha256") and sha(runner_path.read_bytes()) != report["runner_sha256"]:
+    raise AssertionError("immutable v6 runner hash differs")
+helper_sources = {V5: runner_path}
+for name, expected in report.get("helper_pins", {}).items():
+    path = ROOT / ".venv" / name
+    assert path.exists()
+    if path.exists():
+        if sha(path.read_bytes()) != expected:
+            raise AssertionError(f"helper pin mismatch: {name}")
+        helper_sources[name] = path
+for name, expected in TRANSITIVE_PINS.items():
+    path = ROOT / ".venv" / name
+    assert path.exists()
+    if path.exists():
+        if sha(path.read_bytes()) != expected:
+            raise AssertionError(f"transitive helper pin mismatch: {name}")
+        helper_sources[name] = path
+
+target = report.get("target", {})
+before = report.get("before_forget", {})
+if target and before.get("target"):
+    if before["target"].get("id") != target.get("fact_id"):
+        raise AssertionError("before-forget target identity differs")
+    if before["target"].get("content") != target.get("replacement") or before["target"].get("version") != 2:
+        raise AssertionError("before-forget target content differs")
+original_sources = report.get("original_sources", [])
+if original_sources:
+    kinds = {item.get("source_kind") for item in original_sources}
+    if not {"explicit_remember", "explicit_correction"} <= kinds:
+        raise AssertionError("original source lineage lacks remember or correction")
+    for item in original_sources:
+        context = item.get("context", {})
+        identity = [context.get("user_profile_id"), context.get("host"), context.get("session_id"), item.get("event_id")]
+        expected_storage_id = hashlib.sha256(json.dumps(identity).encode("utf-8")).hexdigest()
+        if item.get("storage_event_id") != expected_storage_id:
+            raise AssertionError("original source storage identity mismatch")
+
+selected_files = []
+codex_values = {}
+codex_home_names = {
+    "codex-mcp-completions.json": ('codex-home/.codex', ("mnemos_store", "mnemos_consolidate")),
+    "codex-reverse-completions.json": (report.get("codex_reverse_home"), ("mnemos_retrieve",)),
+    "codex-final-completions.json": (report.get("codex_final_home"), ("mnemos_retrieve",)),
+}
+for filename, (home_rel, tools) in codex_home_names.items():
+    path = OUTPUT / filename
+    if not path.exists() or not home_rel:
+        continue
+    home = fixture / home_rel
+    selected, values = selected_codex(home, path, tools)
+    selected_files.append((filename, selected))
+    codex_values[filename] = values
+
+final_turn_nodes = []
+final_selected_path = OUTPUT / "codex-final-completions.json"
+if final_selected_path.exists() and report.get("codex_final_home"):
+    final_selected = read_json(final_selected_path)
+    if len(final_selected) != 1:
+        raise AssertionError("v6 final native session did not produce exactly one observed MCP completion")
+    source = (fixture / report["codex_final_home"] / final_selected[0]["source"]).resolve()
+    home = (fixture / report["codex_final_home"]).resolve()
+    if not source.is_relative_to(home):
+        raise AssertionError("final Codex session source escaped its home")
+    lines = source.read_bytes().splitlines(keepends=True)
+    mcp_line = final_selected[0]["line"]
+    for number, raw in enumerate(lines, 1):
+        try:
+            record = json.loads(raw)
+        except json.JSONDecodeError:
+            continue
+        payload = record.get("payload", {})
+        if record.get("type") != "event_msg":
+            continue
+        if payload.get('type') == 'user_message' and payload.get('message', '').startswith('Use only Mnemos MCP tools. Call mnemos_retrieve exactly twice in this order.'):
+            assert number < mcp_line
+            final_turn_nodes.append({'role': 'user', 'source': final_selected[0]['source'], 'line': number, 'line_sha256': sha(raw), 'record': record})
+        elif payload.get('type') == 'agent_message' and number > mcp_line:
+            final_turn_nodes.append({'role': 'assistant', 'source': final_selected[0]['source'], 'line': number, 'line_sha256': sha(raw), 'record': record})
+    assert [item['role'] for item in final_turn_nodes] == ['user', 'assistant']
+    assert 'retained project preference' in final_turn_nodes[0]['record']['payload']['message']
+    assert final_turn_nodes[1]['record']['payload']['message'] == 'The current project continuity convention is to use **maple-heron** for release labels.'
+    final_invocation = final_selected[0]["record"]["payload"]["invocation"]
+    assert final_invocation["arguments"]["query"] == "project continuity convention for release labels"
+
+claude_selected = []
+claude_meta = {}
+claude_decoded = {}
+for phase in ("crosshost-read", "crosshost-correct", "crosshost-forget"):
+    selected, calls, results, meta = selected_claude(phase, report)
+    claude_selected.extend(selected)
+    claude_meta[phase] = {"calls": calls, "result_count": len(results), **meta}
+    claude_decoded[phase] = results
+assert set(codex_values) == {'codex-mcp-completions.json', 'codex-reverse-completions.json', 'codex-final-completions.json'}
+teach = codex_values['codex-mcp-completions.json']
+assert teach[0]['event_committed'] is True and teach[0]['scope_id'] == target['project_id']
+assert any(item['storage_event_id'] == teach[0]['event_id'] and item['content'] == target['content'] for item in original_sources)
+for result, version, content in (
+    (claude_decoded['crosshost-read'][0], 1, target['content']),
+    (claude_decoded['crosshost-correct'][2], 2, target['replacement']),
+    (codex_values['codex-reverse-completions.json'][0], 2, target['replacement']),
+):
+    matches = [f for f in result['facts'] if f['id'] == target['fact_id']]
+    assert len(matches) == 1 and matches[0]['version'] == version and matches[0]['content'] == content
+    assert matches[0]['scope_id'] == target['project_id'] and matches[0]['scope'] == 'project'
+    assert target['foreign_fact_id'] not in {f['id'] for f in result['facts']}
+forget = claude_decoded['crosshost-forget']
+forget_calls = claude_meta['crosshost-forget']['calls']
+assert [c['name'].split('__')[-1] for c in forget_calls] == ['mnemos_forget', 'mnemos_retrieve']
+assert forget_calls[0]['input'] == {'chunk_id': target['fact_id'], 'expected_version': 2}
+assert forget[0]['forgotten'] is True and forget[0]['fact_id'] == target['fact_id']
+assert target['fact_id'] not in {f['id'] for f in forget[1]['facts']}
+assert before['unrelated_fact_id'] in {f['id'] for f in forget[1]['facts']}
+assert forget_calls[1]['input']['query'] == 'retained project preference'
+final_result = codex_values['codex-final-completions.json'][0]
+assert target['fact_id'] not in {f['id'] for f in final_result['facts']}
+assert target['foreign_fact_id'] not in {f['id'] for f in final_result['facts']}
+final_mentions = [f for f in final_result['facts'] if 'maple-heron' in f['content']]
+assert final_mentions and all(f['assertion_status'] == 'unknown' for f in final_mentions)
+assert 'captured conversation; unverified, may be outdated' in final_result['context']
+
+# Reopen independently in read-only mode.  The target is expected to be gone
+# after forget; before-forget rows/evidence are preserved separately above.
+sqlite_summary = {"opened": False, "memory_chunks": [], "evidence": [], "events": [], "revisions": [], "suppressions": []}
+db_path = fixture / "memory.sqlite"
+if db_path.exists():
+    with sqlite3.connect(db_path.as_uri() + "?mode=ro", uri=True) as db:
+        db.row_factory = sqlite3.Row
+        sqlite_summary["opened"] = True
+        fact_id = target.get("fact_id")
+        if fact_id:
+            sqlite_summary["memory_chunks"] = table_rows(db, "select * from memory_chunks where id=?", (fact_id,))
+            sqlite_summary["evidence"] = table_rows(db, "select * from fact_evidence where fact_id=?", (fact_id,))
+            sqlite_summary["revisions"] = table_rows(db, "select * from fact_revisions where fact_id=? order by version", (fact_id,))
+        sqlite_summary["events"] = table_rows(db, "select id,content,source,source_event_id,scope,scope_id,metadata from episodic_events")
+        sqlite_summary["suppressions"] = table_rows(db, "select * from memory_suppressions")
+        sqlite_summary['remaining_facts'] = table_rows(db, 'select id,content,version,metadata from memory_chunks order by id')
+
+assert sqlite_summary['opened'] and not sqlite_summary['memory_chunks']
+assert not sqlite_summary['evidence'] and not sqlite_summary['revisions']
+remaining_ids = {f['id'] for f in sqlite_summary['remaining_facts']}
+assert before['unrelated_fact_id'] in remaining_ids and target['foreign_fact_id'] in remaining_ids
+assert all(any(s['source_event_id'] == source['storage_event_id'] for s in sqlite_summary['suppressions']) for source in original_sources)
+
+if report.get("criteria", {}).get("native_claude_forget_target_absent"):
+    if sqlite_summary["memory_chunks"]:
+        raise AssertionError("final SQLite still contains forgotten target")
+if report.get("criteria", {}).get("direct_replay_does_not_resurrect_target"):
+    if sqlite_summary["memory_chunks"]:
+        raise AssertionError("direct replay resurrected target")
+
+cleanup = report.get("cleanup", {})
+auth_paths = [
+    fixture / "codex-home/.codex/auth.json",
+    fixture / "codex-recall-home/.codex/auth.json",
+    fixture / "codex-final-home/.codex/auth.json",
+    fixture / "claude-home/.claude/.credentials.json",
+    fixture / "claude-forget-home/.claude/.credentials.json",
+]
+auth_absent = all(not path.exists() for path in auth_paths)
+descriptor_absent = not (fixture / "runtime.json").exists()
+assert auth_absent and descriptor_absent and not cleanup['errors']
+assert all(value for key, value in cleanup.items() if key != 'errors')
+
+if ARCHIVE.exists():
+    raise FileExistsError(ARCHIVE)
+ARCHIVE.mkdir(parents=True)
+shutil.copyfile(REPORT_PATH, ARCHIVE / "report.json")
+for name, path in helper_sources.items():
+    output_name = Path(name).name + ".txt"
+    shutil.copyfile(path, ARCHIVE / output_name)
+shutil.copyfile(__file__, ARCHIVE / "archive_native_crosshost_v9.py.txt")
+for filename, selected in selected_files:
+    (ARCHIVE / (Path(filename).stem + ".json")).write_text(json.dumps(selected, indent=2) + "\n", encoding="utf-8")
+(ARCHIVE / "selected-claude-tool-blocks.json").write_text(json.dumps(claude_selected, indent=2) + "\n", encoding="utf-8")
+(ARCHIVE / "selected-codex-final-turn-nodes.json").write_text(json.dumps(final_turn_nodes, indent=2) + "\n", encoding="utf-8")
+(ARCHIVE / "before-forget.json").write_text(json.dumps(before, indent=2) + "\n", encoding="utf-8")
+(ARCHIVE / "sqlite-readonly-summary.json").write_text(json.dumps(sqlite_summary, indent=2, default=str) + "\n", encoding="utf-8")
+
+acceptance = {
+    "status": report.get("status"),
+    "forget_contract": report['forget_contract'],
+    "passed_claude_control_query": forget_calls[1]['input'],
+    "passed_claude_control_result": forget[1],
+    "final_native_query_count_expected": 2,
+    "final_native_query_count_observed": 1,
+    "final_native_target_result": final_result,
+    "final_native_control_query_status": "NOT RUN",
+    "final_native_answer": final_turn_nodes[1]['record']['payload']['message'],
+    "unrelated_fact_still_present": True,
+    "replay_and_final_native_retrieval": "Final native control incomplete: one target query observed; separate control query not run",
+    "finished_at": report.get("finished_at"),
+    "criteria": report.get("criteria", {}),
+    "codex_processes": {k: report.get(k) for k in ("codex_process", "codex_reverse_process", "codex_final_process") if k in report},
+    "claude_phases": claude_meta,
+    "original_sources": report.get("original_sources", []),
+    "direct_replay": report.get("direct_replay", []),
+    "direct_replay_maintenance": report.get("direct_replay_maintenance", {}),
+    "final_mentions": final_mentions,
+    "cleanup_report": cleanup,
+    "auth_files_absent": auth_absent,
+    "runtime_descriptor_absent": descriptor_absent,
+    "independent_sqlite_reopen": sqlite_summary["opened"],
+    "limits": [
+        "All three Codex processes exited zero; reverse and final Stop hook timeouts were separately observed by the operator.",
+        "Unknown captured conversation mentions may remain after selected fact deletion.",
+        "Deterministic fixture vectors, disabled modules, and unavailable cognition limit scope.",
+        "This does not establish model quality, broad forgetting, complete hook capture, or Hermes continuity.",
+    ],
+}
+(ARCHIVE / "acceptance.json").write_text(json.dumps(acceptance, indent=2, default=str) + "\n", encoding="utf-8")
+(ARCHIVE / ".gitattributes").write_text("* -text\n*.jsonl -whitespace\n", encoding="utf-8")
+(ARCHIVE / "README.md").write_text(
+    "# Native Codex and Claude continuity v6\n\n"
+    "The native v6 run FAILED its final two-query control after Claude successfully deleted the selected target. "
+    "Codex teaching, Claude retrieval/correction, and fresh Codex retrieval of version 2 completed across two service restarts. "
+    "All three Codex processes exited zero under explicit unelevated sandbox mode. Reverse and final Stop hooks timed out after three seconds in the operator's terminal observation. "
+    "Claude committed the target deletion and retrieved the unrelated retained preference with the exact requested control query. Independent SQLite reopen confirms that the unrelated fact and foreign canary remain, while the selected target, its evidence, and revisions are gone and source suppressions exist. "
+    "Replay of the original teaching source was suppressed; replay of the correction was rejected with KeyError. The target stayed absent after restart. "
+    "The final Codex session performed one target retrieval and answered maple-heron as the current convention from a surviving unknown captured statement. It did not perform the separately requested control retrieval. The original final user prompt, actual tool completion, and final assistant answer are preserved with source provenance. This is a failed native acceptance run.\n\n"
+    "The selected fact and its evidence are preserved in the before-forget snapshot. Captured conversation mentions can remain "
+    "as unknown, possibly outdated records after the selected fact is forgotten. The fixture used deterministic lexical vectors, "
+    "disabled modules, and unavailable cognition. This archive makes no model quality, complete capture, clean shutdown, or "
+    "general forgetting claim.\n",
+    encoding="utf-8",
+)
+index = {"files": {}}
+for path in sorted(ARCHIVE.iterdir()):
+    raw = path.read_bytes()
+    index["files"][path.name] = {"bytes": len(raw), "sha256": sha(raw)}
+(ARCHIVE / "evidence-index.json").write_text(json.dumps(index, indent=2) + "\n", encoding="utf-8")

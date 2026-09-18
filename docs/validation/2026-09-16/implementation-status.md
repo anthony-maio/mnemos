@@ -4,7 +4,25 @@ This record covers the unreleased `wt/functional-local-memory` worktree. It
 separates implemented behavior from acceptance evidence. The original task
 boundaries and thresholds remain in the [implementation plan](../../plans/2026-09-16-functional-local-memory.md).
 
-The [latest native continuity check](../2026-09-17/native-codex-claude-continuity-v4/README.md)
+The [latest native forget/replay attempt](../2026-09-17/native-codex-claude-continuity-v6/README.md)
+is FAILED overall. Codex taught the fact, Claude corrected it, and fresh Codex
+retrieved version 2 across restarts. Claude then deleted it and retrieved an
+unrelated retained preference. Direct service replay after restart suppressed
+the original teaching event and rejected correction of the deleted target;
+maintenance and another restart preserved deletion. The final Codex session
+retrieved a surviving unknown captured mention, repeated its value as current,
+and skipped the second requested control query. Its native post-forget control
+and answer behavior therefore failed acceptance. All three Codex processes exited
+zero under explicit unelevated mode; reverse and final Stop timeouts remain.
+
+The [v5 failure](../2026-09-17/native-codex-claude-continuity-v5/README.md)
+is also preserved. Claude used the wrong query for the unrelated-fact control;
+the fact remained in SQLite. V6 checked the exact query rather than accepting
+the model's final prose. These observations require investigation of historical
+capture presentation and instruction boundaries. Current labels alone did not
+prevent the observed stale answer.
+
+The [earlier native continuity check](../2026-09-17/native-codex-claude-continuity-v4/README.md)
 observed both directions on installed `ebe1b0d`: Codex stored, Claude retrieved
 and corrected after restart, then a fresh Codex session retrieved version 2
 after another restart. All three native queries excluded the foreign canary.
@@ -157,6 +175,13 @@ WAL/FULL and all counters after reopen. The D-then-C order and concurrent
 work prevent a controlled speedup claim. This localizes the observed cost to
 the durability boundary and does not close the end-to-end recall gate.
 
+A [33-call follow-up on current source](../2026-09-17/retrieval-commit-profile-v1/README.md)
+again found commit dominated the write cost: total p95 86.372 ms and commit
+p95 86.213 ms on D:, with WAL/FULL retained and all counters verified after
+reopen. This smaller follow-up did not reproduce the original roughly 796 ms
+metadata tail. It adds an observation of timing variability; it is not an
+end-to-end recall pass or a measured product speedup.
+
 An earlier full-suite attempt at `e1fd56e` finished with 897 passed, one failed,
 and four skipped. A list response in the synthetic Codex continuity fixture
 lacked `facts`; its cause is under investigation. The runner stopped before
@@ -198,13 +223,13 @@ capture diagnostics and complete lifecycle acceptance remain open.
 | T08 Correction | Stable identity, expected-version CAS, revisions, canonical updates, evidence links, and graph refresh are implemented and tested. | Native Claude corrected a Codex-stored fact after restart, preserving its ID at version 2; a fresh Codex session retrieved it after another restart. Captured old mentions remain unknown and visibly qualified as possibly outdated. General stale-context answer consistency remains open. |
 | T09 Retrieval | Scoped cosine retrieval, lexical candidate union, one scoring contract, and context budgeting are implemented. | Scope and top-1 tests pass. The corrected v4 measurement has recall p95 1,088.094 ms against the 500 ms gate; capture p95 64.279 ms passes the 100 ms gate. Later variable timing comparisons do not establish a speedup. |
 | T10 Graph | Persisted mutual top-k links, scope-safe traversal, bounded recovery, insertion-order controls, and capacity diagnostics are implemented and tested. | Structural controls pass. Graph utility and eligible-target coverage are not established by the available evidence. |
-| T11 Forget | Exact fact deletion, suppression, replay protection, inflight handling, restore behavior, and selected related-removal preview/apply are implemented and tested. | Local and installed related-forget checks pass. Native lifecycle remains open. Logical forgetting does not erase external transcripts or historical backups. |
+| T11 Forget | Exact fact deletion, suppression, replay protection, inflight handling, restore behavior, and selected related-removal preview/apply are implemented and tested. | Local and installed related-forget checks pass. Native v6 observed Claude deletion and direct service replay suppression after restart. A fresh Codex answer reused an independent captured copy, so broader native related-forget and answer acceptance remain open. Logical forgetting does not erase external transcripts or historical backups. |
 | T12 Claude Code | Hook capture, transcript deltas, checkpoints, capture-before-recall, identity diagnostics, and replay repair are implemented. | Native v18 on dedfcfd passed all 15 fact-lifecycle criteria with the new startup default, including correction, forgetting, restart, and reconstructed replay. Degraded hook capture keeps the overall result partial. Native extraction and complete capture acceptance remain open. See the [native lifecycle archive](../2026-09-17/native-claude-lifecycle-v18/README.md). |
-| T13 Codex | Generated hook configuration, UTF-8 payload handling, explicit MCP fallback, and bounded transport checks are implemented. | Installed ebe1b0d completed native store/consolidate and retrieved a Claude-corrected version 2 after restart. Both Codex processes crashed on exit; reverse Stop timed out. Earlier [Unicode capture evidence](../2026-09-17/native-codex-utf8-v1/README.md) remains preserved. Complete capture, native forgetting, and lifecycle acceptance remain open. |
+| T13 Codex | Generated hook configuration, UTF-8 payload handling, explicit MCP fallback, and bounded transport checks are implemented. | Installed ebe1b0d completed native store/consolidate and retrieved a Claude-corrected version 2 after restart. All three v6 Codex processes exited zero with explicit unelevated mode; reverse/final Stop timed out. V4 crashes remain preserved. V6's final session repeated a deleted value from an unknown captured copy and skipped a requested query. Complete capture and native answer/lifecycle acceptance remain open. |
 | T14 Hermes | Installed provider integration, registry handling, Windows/WSL bridge behavior, and entry-point discovery are implemented and tested. | Installed bridge checks pass. A native model turn has not passed. |
 | T15 UI | Project enable/pause, readiness, facts/history, correction/forget, captured-copy review, job state, and routing review are exposed and covered by API/browser checks. | Local UI and control-plane checks pass. Operational pilot and native-host coverage remain open. |
 | T16 Recovery | Backup, integrity, new-path restore, suppression merge, staged reindex, and activation backup behavior are implemented and tested. | Local recovery contracts pass, including a backup during an active writer transaction. Live data migration remains separately authorization-bound. |
-| T17 Cross-host | A shared service contract covers Claude, Codex, and Hermes contexts. Native Codex taught a fact that Claude retrieved and corrected across service restarts; a fresh Codex session retrieved the same fact at version 2. Foreign-project facts were excluded. | Bidirectional native Codex/Claude fact continuity observed on ebe1b0d. Cross-host forget/replay, general stale-context consistency, complete capture/shutdown, Hermes, and the two-week pilot remain open. |
+| T17 Cross-host | A shared service contract covers Claude, Codex, and Hermes contexts. Native Codex taught a fact that Claude retrieved, corrected, and deleted across service restarts. Direct service replay suppression and foreign-project exclusion were observed. | V6 is FAILED overall: fresh Codex reused an unknown captured copy after selected-fact deletion and omitted its second query. Broader native related-forget, stale-context consistency, complete capture/shutdown, Hermes, and the two-week pilot remain open. |
 | T18 Evaluation | Frozen lifecycle datasets, request-bound extraction schemas, real-provider adapters, seven profiles, raw traces, checkpoints, Wilson intervals, and paired comparisons are implemented. | Power-interrupted checkpoints were preserved and the unchanged queue resumed after provenance checks. Complete real-model matrix acceptance remains open. Follow the [evaluation status and recovery record](evaluation-running.md). |
 | T19 Claims and packaging | Claim ledger, compatibility matrix, release checklist, package artifacts, UI assets, and negative evidence archives are maintained. | Package verification is complete for the stated checkpoint. Publication, website, paper, and release actions remain separately authorization-bound. |
 
