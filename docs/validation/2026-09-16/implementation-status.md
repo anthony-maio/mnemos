@@ -4,6 +4,18 @@ This record covers the unreleased `wt/functional-local-memory` worktree. It
 separates implemented behavior from acceptance evidence. The original task
 boundaries and thresholds remain in the [implementation plan](../../plans/2026-09-16-functional-local-memory.md).
 
+The [storage-worker termination checkpoint](../2026-09-18/storage-process-kill-v1/README.md)
+adds seven cases at `76940d2`: capture after event insertion, before commit,
+and after commit; forget after suppression insertion, after source deletion,
+before commit, and after commit. The actual SQLite worker is terminated.
+Fresh reopen, 12-table hashes, integrity checks, repeated outbox replay,
+derived-state cleanup, and retained local/foreign controls pass. The clean
+source suite passes 1,067 tests with four skips, and all seven new cases
+pass against the existing `983920a` wheel. Runtime/build Git objects and
+installed wheel bytes are verified unchanged. These fixed-provider tests
+cover selected storage boundaries; native host, provider, commit-instruction
+interruption, and operational-pilot acceptance remain separate.
+
 The capture/forget race repair checks suppression inside SQLite's capture
 transaction. Previously, a capture or pending replay could pass the service
 check, wait while a forget committed, then restore the erased raw source.

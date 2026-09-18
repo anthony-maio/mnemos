@@ -1,0 +1,133 @@
+"""Validate new crash tests against clean source and the unchanged installed wheel."""
+from datetime import datetime, timezone
+import hashlib
+import json
+import os
+from pathlib import Path
+import shutil
+import subprocess
+import sys
+import xml.etree.ElementTree as ET
+import zipfile
+
+ROOT = Path(__file__).resolve().parents[1]
+TEMP = Path('C:/Users/Ant/AppData/Local/Temp')
+SNAPSHOT = TEMP / 'mnemos-source-storage-kill-v1'
+OUT = TEMP / 'mnemos-storage-kill-checkpoint-v1'
+COMMIT = '76940d206903319d113c6f312715732774c0f07d'
+PACKAGE_COMMIT = '983920afce2f70f9785f555069ecdbc8bb7c5e99'
+PRIOR = TEMP / 'mnemos-installed-checks-capture-forget-v1/installation.json'
+SITE = TEMP / 'mnemos-installed-capture-forget-v1/Lib/site-packages'
+INSTALLED_PYTHON = TEMP / 'mnemos-installed-capture-forget-v1/Scripts/python.exe'
+WHEEL = TEMP / 'mnemos-package-checks-capture-forget-v2/dist/mnemos_memory-0.7.0-py3-none-any.whl'
+TEST = Path('tests/test_storage_process_kill.py')
+
+
+def sha(path):
+    return hashlib.sha256(path.read_bytes()).hexdigest()
+
+
+def git(*args):
+    return subprocess.check_output(['git', *args], cwd=SNAPSHOT, text=True).strip()
+
+
+def installed_hashes():
+    hashes = {}
+    with zipfile.ZipFile(WHEEL) as archive:
+        for name in archive.namelist():
+            if not name.startswith('mnemos/') or name.endswith('/'):
+                continue
+            expected = hashlib.sha256(archive.read(name)).hexdigest()
+            assert sha(SITE / name) == expected, name
+            hashes[name] = expected
+    assert hashes
+    return hashes
+
+
+assert git('rev-parse', 'HEAD') == COMMIT
+assert not git('status', '--porcelain')
+trees = {}
+for path in ('mnemos', 'agents', 'pyproject.toml'):
+    first = git('rev-parse', PACKAGE_COMMIT + ':' + path)
+    second = git('rev-parse', COMMIT + ':' + path)
+    assert first == second, path
+    trees[path] = first
+previous = json.loads(PRIOR.read_text(encoding='utf-8'))
+assert previous['status'] == 'passed' and previous['commit'] == PACKAGE_COMMIT
+assert previous['bindings_after']['wheel_sha256'] == sha(WHEEL)
+OUT.mkdir(exist_ok=False)
+env = {k: v for k, v in os.environ.items() if not k.startswith('MNEMOS_') and k not in {'PYTHONPATH', 'VIRTUAL_ENV'}}
+env['MNEMOS_WEBSITE_INDEX'] = 'D:/Development/mnemos/web/index.html'
+env['TEMP'] = env['TMP'] = env['TMPDIR'] = str(OUT)
+website = Path(env['MNEMOS_WEBSITE_INDEX'])
+record = {
+    'source_commit': COMMIT, 'package_commit': PACKAGE_COMMIT, 'runtime_tree_ids': trees,
+    'runner_sha256': sha(Path(__file__)), 'test_sha256': sha(SNAPSHOT / TEST),
+    'prior_installation_sha256': sha(PRIOR), 'wheel_sha256': sha(WHEEL),
+    'website_sha256_before': sha(website), 'installed_files_before': installed_hashes(),
+    'status': 'running', 'checks': [], 'started_at': datetime.now(timezone.utc).isoformat(),
+}
+
+
+def save():
+    record['updated_at'] = datetime.now(timezone.utc).isoformat()
+    (OUT / 'verification.json').write_text(json.dumps(record, indent=2) + '\n', encoding='utf-8')
+
+
+def run(name, command, cwd):
+    row = {'name': name, 'command': list(map(str, command)), 'cwd': str(cwd), 'status': 'running'}
+    record['checks'].append(row)
+    save()
+    with (OUT / (name + '.log')).open('w', encoding='utf-8') as log:
+        result = subprocess.run(command, cwd=cwd, env=env, stdout=log, stderr=subprocess.STDOUT,
+                                creationflags=getattr(subprocess, 'CREATE_NO_WINDOW', 0))
+    row.update(exit_code=result.returncode, status='passed' if result.returncode == 0 else 'failed')
+    save()
+    assert result.returncode == 0, name
+
+
+try:
+    run('source-pytest', [sys.executable, '-m', 'pytest', '-q', '--basetemp', OUT / 'source-temp',
+                         '--junitxml', OUT / 'source.xml'], SNAPSHOT)
+    run('black', [sys.executable, '-m', 'black', '--check', str(TEST)], SNAPSHOT)
+    fixture = OUT / 'installed-fixture'
+    (fixture / 'tests').mkdir(parents=True)
+    (fixture / 'tests/__init__.py').write_text('', encoding='utf-8')
+    shutil.copyfile(SNAPSHOT / TEST, fixture / TEST)
+    origin = subprocess.check_output(
+        [str(INSTALLED_PYTHON), '-c', 'import mnemos.utils.storage as s; print(s.__file__)'],
+        cwd=fixture, env=env, text=True).strip()
+    assert Path(origin).resolve() == (SITE / 'mnemos/utils/storage.py').resolve()
+    record['installed_storage_origin'] = origin
+    run('installed-pytest', [INSTALLED_PYTHON, '-m', 'pytest', '-q', str(TEST),
+                            '--basetemp', OUT / 'installed-temp', '--junitxml', OUT / 'installed.xml'], fixture)
+    selected = []
+    for name in ('source', 'installed'):
+        cases = list(ET.parse(OUT / (name + '.xml')).getroot().iter('testcase'))
+        record[name + '_counts'] = {
+            'tests': len(cases), 'failures': sum(c.find('failure') is not None for c in cases),
+            'errors': sum(c.find('error') is not None for c in cases),
+            'skipped': sum(c.find('skipped') is not None for c in cases),
+        }
+        outcomes = {(c.attrib['classname'], c.attrib['name']): 'passed'
+                    for c in cases if c.attrib.get('classname', '').endswith('test_storage_process_kill')
+                    and all(c.find(tag) is None for tag in ('failure', 'error', 'skipped'))}
+        assert len(outcomes) == 7
+        selected.append(outcomes)
+    assert selected[0] == selected[1]
+    assert record['source_counts'] == {'tests': 1071, 'failures': 0, 'errors': 0, 'skipped': 4}
+    assert record['installed_counts'] == {'tests': 7, 'failures': 0, 'errors': 0, 'skipped': 0}
+    record['installed_files_after'] = installed_hashes()
+    assert record['installed_files_before'] == record['installed_files_after']
+    assert record['test_sha256'] == sha(SNAPSHOT / TEST) == sha(fixture / TEST)
+    record['website_sha256_after'] = sha(website)
+    assert record['website_sha256_before'] == record['website_sha256_after']
+    assert not git('status', '--porcelain')
+    record['status'] = 'passed'
+except BaseException as error:
+    record.update(status='failed', error=repr(error))
+    raise
+finally:
+    save()
+print(json.dumps({'status': record['status'], 'source': record['source_counts'],
+                  'installed': record['installed_counts']}))

@@ -1,0 +1,86 @@
+"""Preserve completed crash-boundary validation and unchanged-wheel bindings."""
+from pathlib import Path
+import hashlib
+import json
+import shutil
+
+ROOT = Path(__file__).resolve().parents[1]
+TEMP = Path('C:/Users/Ant/AppData/Local/Temp')
+CHECKS = TEMP / 'mnemos-storage-kill-checkpoint-v1'
+OUT = ROOT / 'docs/validation/2026-09-18/storage-process-kill-v1'
+
+
+def sha(path):
+    return hashlib.sha256(path.read_bytes()).hexdigest()
+
+
+record = json.loads((CHECKS / 'verification.json').read_text(encoding='utf-8'))
+assert record['status'] == 'passed'
+assert record['source_counts'] == {'tests': 1071, 'failures': 0, 'errors': 0, 'skipped': 4}
+assert record['installed_counts'] == {'tests': 7, 'failures': 0, 'errors': 0, 'skipped': 0}
+runner = ROOT / '.venv/run_storage_kill_checkpoint_v1.py'
+assert sha(runner) == record['runner_sha256']
+test = TEMP / 'mnemos-source-storage-kill-v1/tests/test_storage_process_kill.py'
+assert sha(test) == record['test_sha256']
+assert record['installed_files_before'] == record['installed_files_after']
+site = TEMP / 'mnemos-installed-capture-forget-v1/Lib/site-packages'
+assert all(sha(site / name) == value for name, value in record['installed_files_after'].items())
+prior = ROOT / 'docs/validation/2026-09-18/capture-forget-package-checkpoint-v1'
+wheel = prior / 'source-checks/dist/mnemos_memory-0.7.0-py3-none-any.whl'
+assert sha(wheel) == record['wheel_sha256']
+assert sha(prior / 'installed-checks/installation.json') == record['prior_installation_sha256']
+expected = {('capture', p) for p in ('after_event_insert', 'before_commit', 'after_commit')}
+expected |= {('forget', p) for p in ('after_suppression_insert', 'after_source_delete', 'before_commit', 'after_commit')}
+markers = {}
+for label in ('source', 'installed'):
+    items = []
+    for path in sorted((CHECKS / (label + '-temp')).rglob('boundary.json')):
+        marker = json.loads(path.read_text(encoding='utf-8'))
+        request = json.loads(path.with_name('request.json').read_text(encoding='utf-8'))
+        assert marker['nonce'] == request['nonce']
+        assert marker['database'] == request['database']
+        assert marker['operation'] == request['operation']
+        assert marker['boundary'] == request['boundary']
+        assert marker['in_transaction'] is (marker['boundary'] != 'after_commit')
+        items.append({'marker': marker, 'marker_sha256': sha(path), 'request_sha256': sha(path.with_name('request.json'))})
+    assert len(items) == 7
+    assert {(x['marker']['operation'], x['marker']['boundary']) for x in items} == expected
+    markers[label] = items
+
+OUT.mkdir(parents=True, exist_ok=False)
+for name in ('verification.json', 'source-pytest.log', 'source.xml', 'black.log', 'installed-pytest.log', 'installed.xml'):
+    shutil.copyfile(CHECKS / name, OUT / name)
+shutil.copyfile(runner, OUT / (runner.name + '.txt'))
+shutil.copyfile(__file__, OUT / (Path(__file__).name + '.txt'))
+shutil.copyfile(test, OUT / 'test_storage_process_kill.py.txt')
+shutil.copyfile(ROOT / '.venv/storage-process-kill-focused-v2.log', OUT / 'focused.log')
+shutil.copyfile(ROOT / '.venv/storage-process-kill-focused-v2.xml', OUT / 'focused.xml')
+(OUT / 'boundary-markers.json').write_text(json.dumps(markers, indent=2) + '\n', encoding='utf-8')
+(OUT / '.gitattributes').write_text('* -text\n*.log -whitespace\n*.xml -whitespace\n*.py.txt -whitespace\n', encoding='utf-8')
+(OUT / 'README.md').write_text(
+    '# Storage worker termination checkpoint\n\n'
+    'Seven new cases terminate the actual SQLite worker at selected capture and forget boundaries. '
+    'Capture is interrupted after event insertion, immediately before commit, and immediately after commit. '
+    'Forget is interrupted after suppression insertion, after source deletion, before commit, and after commit. '
+    'A wrapper calls the real SQLite execute/commit methods before or after publishing a boundary marker; '
+    'the parent validates the marker and worker lineage, terminates that interpreter, and waits for its launcher.\n\n'
+    'Each case reopens the database and checks integrity and foreign keys. Pre-commit termination preserves '
+    'the previous hashes of 12 application tables. Post-commit capture retains its event/job pair; post-commit '
+    'forget retains suppression and erases the target source. Recovery replays the durable outbox, completes '
+    'maintenance, preserves an unrelated same-project fact and a foreign-project fact, then repeats replay '
+    'and restarts without changing the final table hashes. Forget cases also check revision, evidence, graph, '
+    'and vector cleanup. The outbox ends empty. The expanded focused run passed 24 cases.\n\n'
+    'Test source `76940d2` passes 1,067 tests with four skips in a clean snapshot. All seven new cases also pass '
+    'against the previously verified `983920a` wheel outside the source tree. The runtime, agents, and build '
+    'configuration Git objects are identical between those commits; installed package files match the wheel '
+    'byte for byte before and after validation. The copied test hash and seven JUnit case identities match. '
+    'The [existing package checkpoint](../capture-forget-package-checkpoint-v1/README.md) retains build, type, '
+    '390-case installed, and replay evidence, plus its unresolved intermittent bridge failure.\n\n'
+    'These are deterministic storage-worker and HTTP replay tests with fixed embeddings and optional modules '
+    'disabled. They do not establish native host concurrency, GPU/provider recovery, all possible crash timings, '
+    'real-model quality, or pilot acceptance. A kill during the commit instruction itself was not attempted. '
+    'Production code, the frozen evaluation, live configuration, and live data were unchanged.\n', encoding='utf-8')
+index = {'files': {p.relative_to(OUT).as_posix(): {'bytes': p.stat().st_size, 'sha256': sha(p)}
+                   for p in sorted(OUT.iterdir()) if p.is_file()}}
+(OUT / 'evidence-index.json').write_text(json.dumps(index, indent=2) + '\n', encoding='utf-8')
+print(json.dumps({'indexed_files': len(index['files']), 'source': record['source_counts'], 'installed': record['installed_counts']}))

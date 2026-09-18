@@ -40,6 +40,18 @@ empty/nonempty selection, restart replay, and PII blocking. This checkpoint
 adds package evidence; earlier native observations retain their original
 source bindings.
 
+The [storage-worker termination checkpoint](../2026-09-18/storage-process-kill-v1/README.md)
+adds seven cases at `76940d2`: capture after event insertion, before commit,
+and after commit; forget after suppression insertion, after source deletion,
+before commit, and after commit. The actual SQLite worker is terminated.
+Fresh reopen, 12-table hashes, integrity checks, repeated outbox replay,
+derived-state cleanup, and retained local/foreign controls pass. The clean
+source suite passes 1,067 tests with four skips, and all seven new cases
+pass against the existing `983920a` wheel. Runtime/build Git objects and
+installed wheel bytes are verified unchanged. These fixed-provider tests
+cover selected storage boundaries; native host, provider, commit-instruction
+interruption, and operational-pilot acceptance remain separate.
+
 The [capture/forget transaction checkpoint](../2026-09-18/capture-forget-package-checkpoint-v1/README.md)
 at `983920a` prevents late capture, replay, and correction from restoring
 erased raw sources after a forget commits. SQLite rechecks source IDs,
