@@ -26,12 +26,12 @@ not evidence of whole-topic erasure or accepted post-forget host behavior.
 The [v5 wrong-query failure](../2026-09-17/native-codex-claude-continuity-v5/README.md)
 remains preserved alongside it. The native fixtures do not use real cognition.
 
-The latest complete package verification is frozen source `8616901`:
-1,009 tests passed with four skips, plus Black, strict mypy, JavaScript syntax,
-build, and Twine. A fresh installed wheel passed 335 selected contract cases
+The latest complete package verification is frozen source `ac139dd`:
+1,022 tests passed with four skips, plus Black, strict mypy, JavaScript syntax,
+build, and Twine. A fresh installed wheel passed 352 selected contract cases
 with two matching platform skips and seven synthetic Stop replay assertions. Source, fixtures, and the installed
 environment were on C:, outside the development checkout. The
-[UUID and host-context package checkpoint](../2026-09-17/uuid-context-package-checkpoint-v1/README.md)
+[similarity review package checkpoint](../2026-09-18/related-similarity-package-checkpoint-v1/README.md)
 binds the wheel, source, helpers, dependencies, exact test cases, and installed
 package origins. It does not establish native plugin-session acceptance.
 The interruption tests bind child imports to the parent package origin. The

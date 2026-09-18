@@ -12,11 +12,11 @@ The endpoint's model placement and current model digests could not be refreshed.
 No process was restarted and no model or server configuration was changed.
 Colab remains tabled.
 
-The latest complete package checkpoint is separate source `8616901`: 1,009
+The latest complete package checkpoint is separate source `ac139dd`: 1,022
 tests passed with four skips, followed by static, build, and Twine checks;
-the installed wheel passed 335 selected cases with two skips and seven replay assertions.
-See the [package checkpoint](../2026-09-17/uuid-context-package-checkpoint-v1/README.md).
-The host-context and UUID write-safety work is outside this frozen
+the installed wheel passed 352 selected cases with two skips and seven replay assertions.
+See the [package checkpoint](../2026-09-18/related-similarity-package-checkpoint-v1/README.md).
+The similarity-review, host-context, and UUID write-safety work is outside this frozen
 real-model evaluation. Its validation must not be treated as evaluation quality
 evidence.
 

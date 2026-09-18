@@ -13,11 +13,11 @@ The controlled-vector tests establish the deletion contract, not embedding
 quality or native-host acceptance. Unindexed episodic paraphrases and
 historical-only meanings may still be missed.
 
-The latest [frozen package checkpoint](../2026-09-17/uuid-context-package-checkpoint-v1/README.md)
-validates source `8616901`: 1,009 tests passed with four skips, followed by Black,
+The latest [frozen package checkpoint](../2026-09-18/related-similarity-package-checkpoint-v1/README.md)
+validates source `ac139dd`: 1,022 tests passed with four skips, followed by Black,
 strict mypy, JavaScript syntax, build, and Twine. A fresh installed wheel passed
-335 selected contract cases with two matching skips and all seven synthetic
-replay assertions. This includes UUID write safety and host-context authority.
+352 selected contract cases with two matching skips and all seven synthetic
+replay assertions. This includes similarity review, UUID write safety, and host-context authority.
 Native acceptance and the frozen real-model evaluation remain separate, open gates.
 
 The preceding [UUID write-safety checkpoint](../2026-09-17/uuid-write-safety-v1/README.md)

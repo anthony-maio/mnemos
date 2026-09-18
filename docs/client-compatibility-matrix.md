@@ -2,6 +2,12 @@
 
 Updated September 17, 2026 for the unreleased functional-local-memory worktree. Implementation, protocol tests, and native conversation acceptance are separate claims.
 
+The September 18 [installed checkpoint](validation/2026-09-18/related-similarity-package-checkpoint-v1/README.md)
+at `ac139dd` passes 352 selected contract cases with two skips and seven synthetic
+replay assertions. It adds bounded similarity suggestions to reviewed forgetting,
+with scope filtering, explicit selection, source dependencies, and stale-preview
+checks. Native forgetting has not yet been rerun against this package.
+
 The current adapter repair preserves service-rendered recall across Claude Code,
 Codex, and Hermes. Claude previously rebuilt bare fact text and lost assertion
 status, version, and captured-history labels. All three fact-only compatibility

@@ -244,11 +244,11 @@ need acceptance evidence.
 
 The surviving v6 assistant paraphrase does not contain either the target's full
 current assertion or its historical assertion after the existing normalization.
-The exact-text related-forget matcher would therefore miss that copy. This was
+The exact-text matcher used at that revision would therefore miss that copy. This was
 checked against the archived native result; it is not a new native preview run.
-Related-content discovery still needs to cover paraphrases while preserving
-reviewed selection and project boundaries. Selected-fact deletion must not
-silently become deletion of every semantically similar record.
+The new similarity suggestions address indexed paraphrase discovery, while native
+review-and-delete acceptance remains open. Selected-fact deletion does not
+automatically delete other semantically similar records.
 
 ## What the five modules currently mean
 

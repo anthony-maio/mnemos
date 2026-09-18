@@ -1,0 +1,89 @@
+"""Preserve completed frozen-source and installed similarity-review validation."""
+from pathlib import Path
+import hashlib
+import json
+import shutil
+import xml.etree.ElementTree as ET
+
+ROOT = Path(__file__).resolve().parents[1]
+TEMP = Path('C:/Users/Ant/AppData/Local/Temp')
+CHECKS = TEMP / 'mnemos-package-checks-related-similarity-v1'
+INSTALLED = TEMP / 'mnemos-installed-checks-related-similarity-v1'
+OUT = ROOT / 'docs/validation/2026-09-18/related-similarity-package-checkpoint-v1'
+COMMIT = 'ac139dd5f4e398d54894f687288bf07aa226dfac'
+
+def read(path):
+    return json.loads(path.read_text(encoding='utf-8'))
+
+def sha(path):
+    return hashlib.sha256(path.read_bytes()).hexdigest()
+
+def counts(path):
+    cases = ET.parse(path).getroot().findall('.//testcase')
+    result = {'tests': len(cases), 'failures': sum(c.find('failure') is not None for c in cases),
+              'errors': sum(c.find('error') is not None for c in cases),
+              'skipped': sum(c.find('skipped') is not None for c in cases)}
+    result['passed'] = result['tests'] - result['failures'] - result['errors'] - result['skipped']
+    return result
+
+source, installed = read(CHECKS / 'verification.json'), read(INSTALLED / 'installation.json')
+assert source['status'] == installed['status'] == 'passed'
+assert source['source_commit'] == installed['commit'] == COMMIT
+assert {c['name'] for c in source['checks']} == {'pytest','black','mypy','javascript','build','twine'}
+assert all(c['exit_code'] == 0 for c in source['checks'])
+source_counts = counts(CHECKS / 'pytest.xml')
+installed_counts = counts(INSTALLED / 'contract.junit.xml')
+assert source_counts == {'tests':1026,'failures':0,'errors':0,'skipped':4,'passed':1022}
+assert installed_counts['tests'] == installed['expected_cases']['count']
+assert installed_counts['failures'] == installed_counts['errors'] == 0
+assert installed['bindings_before'] == installed['bindings_after']
+assert installed['bindings_after']['snapshot_head'] == COMMIT
+assert installed['contract_input_hashes_before'] == installed['contract_input_hashes_after']
+assert len(installed['probe']['assertions']) == 7 and all(installed['probe']['assertions'].values())
+for artifact in source['artifacts']:
+    path = Path(artifact['file'])
+    assert sha(path) == artifact['sha256'] and path.stat().st_size == artifact['bytes']
+helpers = ['final_checkpoint_checks_v3.py','run_combined_installed_check_v18.py',
+           'installed_contract_probe_v4.py','verify_claude_stop_replay_v2.py']
+assert sha(ROOT / '.venv' / helpers[0]) == source['runner_sha256']
+for name, key in zip(helpers[1:], ('runner_sha256','contract_probe_sha256','replay_helper_sha256')):
+    assert sha(ROOT / '.venv' / name) == installed['bindings_after'][key]
+assert sha(CHECKS / 'verification.json') == installed['bindings_after']['checks_sha256']
+wheel = next((CHECKS / 'dist').glob('*.whl'))
+assert sha(wheel) == installed['bindings_after']['wheel_sha256']
+assert source['website_input']['sha256_before'] == source['website_input']['sha256_after']
+OUT.mkdir(parents=True, exist_ok=False)
+for origin, label in ((CHECKS, 'source-checks'), (INSTALLED, 'installed-checks')):
+    folder = OUT / label
+    folder.mkdir()
+    for path in origin.iterdir():
+        if path.is_file() and path.suffix in ('.log','.json','.xml'):
+            shutil.copyfile(path, folder / path.name)
+(OUT / 'source-checks/dist').mkdir()
+shutil.copyfile(wheel, OUT / 'source-checks/dist' / wheel.name)
+(OUT / 'helpers').mkdir()
+for name in helpers:
+    shutil.copyfile(ROOT / '.venv' / name, OUT / 'helpers' / (name + '.txt'))
+shutil.copyfile(__file__, OUT / 'helpers/archive_related_similarity_package_v1.py.txt')
+(OUT / '.gitattributes').write_text('* -text\n*.log -whitespace\n*.xml -whitespace\n',encoding='utf-8')
+(OUT / 'README.md').write_text(
+    '# Reviewed similarity package checkpoint\n\n'
+    f'Frozen source `{COMMIT}` passed 1,022 tests with four skips, Black, strict mypy, '
+    'JavaScript syntax, build, and Twine. Source and fixtures were isolated on C:. '
+    f"The fresh installed wheel passed {installed_counts['passed']} selected cases with "
+    f"{installed_counts['skipped']} matching skips and all seven synthetic replay assertions. "
+    'The verifier compared individual case identities, outcomes, and skip reasons, '
+    'and checked installed module origins before and after the run.\n\n'
+    'The installed selection includes advisory similarity discovery, explicit related '
+    'forgetting, source dependencies, stale-vector rejection, scope isolation, and '
+    'replay suppression, alongside UUID and host-context repairs. Dependencies, helper hashes, wheel/source parity, '
+    'and selected fixture hashes are recorded.\n\n'
+    'These are package and protocol checks. Native host turns were not rerun by '
+    'this checkpoint. The native v6 stale-answer failure, real-model evaluation, '
+    'recall-latency gate, and operational pilot remain open. No live configuration, '
+    'live data migration, or publication occurred.\n\n'
+    f'Wheel SHA256: `{sha(wheel)}`.\n',encoding='utf-8')
+index = {'files': {p.relative_to(OUT).as_posix(): {'bytes':p.stat().st_size, 'sha256':sha(p)}
+                   for p in sorted(OUT.rglob('*')) if p.is_file()}}
+(OUT / 'evidence-index.json').write_text(json.dumps(index,indent=2)+'\n',encoding='utf-8')
+print(json.dumps({'source':source_counts,'installed':installed_counts,'indexed_files':len(index['files'])}))
