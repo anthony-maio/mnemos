@@ -1,0 +1,36 @@
+"""Keep v1 untouched and fix the generated Codex home binding in v2."""
+from pathlib import Path
+import hashlib
+import json
+
+ROOT = Path(__file__).resolve().parent
+failed = json.loads(Path('C:/Users/Ant/AppData/Local/Temp/mnemos-native-codex-concurrent-v1/report.json').read_text(encoding='utf-8'))
+assert failed['status'] == 'failed' and failed['cleanup'] == {'auth_absent': True, 'descriptor_absent': True, 'errors': []}
+for kind in ('common', 'worker', 'supervisor'):
+    source = ROOT / ('native_codex_concurrent_' + kind + '_v1.py')
+    assert hashlib.sha256(source.read_bytes()).hexdigest() == failed['helpers'][source.name]
+    target = ROOT / ('native_codex_concurrent_' + kind + '_v2.py')
+    assert not target.exists()
+    text = source.read_text(encoding='utf-8')
+    text = text.replace('native-codex-concurrent-v1', 'native-codex-concurrent-v2')
+    for name in ('common', 'worker', 'supervisor'):
+        text = text.replace('native_codex_concurrent_' + name + '_v1.py', 'native_codex_concurrent_' + name + '_v2.py')
+    if kind == 'worker':
+        old = "home = fixture / ('codex-home-' + args.worker)"
+        assert old in text
+        text = text.replace(old, "home = Path(manifest['homes'][args.worker])\nassert (home / 'config.toml').is_file()\nassert tomllib.loads((home / 'config.toml').read_text(encoding='utf-8'))['hooks'] == manifest['generated_hooks'][args.worker]", 1)
+        # On recovery, native Codex has added normal hook trust state.
+        text = text.replace("assert tomllib.loads((home / 'config.toml').read_text(encoding='utf-8'))['hooks'] == manifest['generated_hooks'][args.worker]",
+            "preflight_hooks = tomllib.loads((home / 'config.toml').read_text(encoding='utf-8'))['hooks']\nassert all(preflight_hooks[name] == value for name, value in manifest['generated_hooks'][args.worker].items())")
+    if kind == 'supervisor':
+        text = text.replace('original_post = None', 'original_post = None\nhomes = {}', 1)
+        text = text.replace("original = generated.config_path.read_text(encoding='utf-8')", "homes[worker] = str(generated.config_path.parent)\n        original = generated.config_path.read_text(encoding='utf-8')", 1)
+        text = text.replace("{'CODEX_HOME': str(home), **selectors}", "{'CODEX_HOME': homes[worker], **selectors}", 1)
+        text = text.replace("'generated_hooks': hooks, 'helpers': report['helpers']", "'generated_hooks': hooks, 'homes': homes, 'helpers': report['helpers']", 1)
+        text = text.replace("all(not (fixture / ('codex-home-' + w) / 'auth.json').exists() for w in ('a', 'b'))", "all(not (Path(home) / 'auth.json').exists() for home in homes.values())", 1)
+    target.write_text(text, encoding='utf-8', newline='\n')
+    print(target)
+source = ROOT / 'test_concurrent_origin_v1.py'
+target = ROOT / 'test_concurrent_origin_v2.py'
+assert not target.exists()
+target.write_text(source.read_text(encoding='utf-8').replace('native_codex_concurrent_common_v1.py', 'native_codex_concurrent_common_v2.py'), encoding='utf-8', newline='\n')

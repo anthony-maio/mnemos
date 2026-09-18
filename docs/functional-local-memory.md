@@ -328,6 +328,21 @@ checks, 372 installed cases with two matching skips, and seven replay assertions
 A supplied empty outbox now keeps its selected recovery file and write policy.
 Native observations above retain their original package bindings.
 
+A [concurrent native Codex recovery probe](validation/2026-09-18/native-codex-concurrent-recovery-v2/README.md)
+on the installed `a5a9101` wheel used two separate Codex homes and one shared
+outbox. Two outage turns queued four messages. After explicit fixture-service
+restoration, two fresh native processes automatically replayed that queue.
+A test barrier overlapped delivery of the same event, and Windows TCP ownership
+plus process ancestry tied the requests to both native processes. All eight
+messages across four sessions had one event, completed job, and evidence link
+each. The outbox emptied, both controls survived, and restart preserved the
+database. Generated hooks were unchanged and all four native processes exited
+zero. The failed v1 home-path fixture is retained. Recovery-a displayed an MCP
+startup interruption, and PowerShell emitted Import-Clixml diagnostics; those
+PTY observations remain explicit limitations. This closes one bounded Codex
+concurrency observation, while cross-host concurrency, real-provider recovery,
+complete native acceptance, and the operational pilot remain open.
+
 A [native startup-outage probe](validation/2026-09-18/native-codex-startup-outage-v1/README.md)
 on the installed `c25ed98` wheel retained the real user prompt and final answer
 in its outbox while malformed fixture configuration prevented service startup.

@@ -1,0 +1,25 @@
+"""Verify the Windows TCP attribution helper against this known process."""
+from pathlib import Path
+import importlib.util
+import json
+import os
+import socket
+
+path = Path(__file__).with_name('native_codex_concurrent_common_v2.py')
+spec = importlib.util.spec_from_file_location('concurrent_common', path)
+c = importlib.util.module_from_spec(spec)
+spec.loader.exec_module(c)
+with socket.socket() as server:
+    server.bind(('127.0.0.1', 0))
+    server.listen(1)
+    with socket.create_connection(server.getsockname(), timeout=1) as client:
+        peer, address = server.accept()
+        with peer:
+            result = c.transport_origin(client.getsockname()[1], server.getsockname()[1])
+            assert result['tcp_client_pid'] == os.getpid()
+            assert result['process_ancestry'][0] == os.getpid()
+            assert os.getppid() in result['process_ancestry']
+            output = {'status': 'passed', 'common_sha256': c.sha(path.read_bytes()),
+                      'test_sha256': c.sha(Path(__file__).read_bytes()), 'origin': result}
+            Path(__file__).with_suffix('.json').write_text(json.dumps(output, indent=2) + '\n', encoding='utf-8')
+            print(json.dumps(output))

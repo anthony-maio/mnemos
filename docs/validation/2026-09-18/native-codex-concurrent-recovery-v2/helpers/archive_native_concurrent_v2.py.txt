@@ -1,0 +1,162 @@
+"""Independently bind native concurrent recovery to source, sockets, and SQLite."""
+from pathlib import Path
+from collections import Counter
+import copy
+import importlib.util
+import json
+import shutil
+import sqlite3
+
+ROOT = Path(__file__).resolve().parents[1]
+spec = importlib.util.spec_from_file_location('concurrent_common', ROOT / '.venv/native_codex_concurrent_common_v2.py')
+c = importlib.util.module_from_spec(spec)
+spec.loader.exec_module(c)
+OUT = ROOT / 'docs/validation/2026-09-18/native-codex-concurrent-recovery-v2'
+r = c.read(c.OUTPUT / 'report.json')
+assert r['status'] == 'observed_native_concurrent_recovery'
+assert r['source_commit'] == c.SOURCE and r['wheel_sha256'] == c.WHEEL_SHA
+native, wrapper, lifecycle, claude, provenance = c.helpers()
+assert provenance == r['provenance']
+assert c.sha(Path(r['native_executable']['path']).read_bytes()) == r['native_executable']['sha256']
+fixture = Path(r['fixture'])
+manifest = c.read(c.OUTPUT / 'manifest.json')
+assert manifest['fixture'] == str(fixture)
+assert manifest['helpers'] == r['helpers']
+for name, digest in r['helpers'].items():
+    assert c.sha((ROOT / '.venv' / name).read_bytes()) == digest
+sessions = {}
+for key, worker in r['workers'].items():
+    assert worker == c.read(c.OUTPUT / (key + '.json'))
+    assert worker['status'] == 'observed_native_turn' and worker['process']['returncode'] == 0
+    assert worker['cleanup'] == {'errors': [], 'auth_absent': True}
+    assert worker['generated_hooks_unchanged']
+    home = Path(worker['home'])
+    assert home == Path(manifest['homes'][key[-1]])
+    assert not (home / 'auth.json').exists()
+    import tomllib
+    hooks = tomllib.loads((home / 'config.toml').read_text(encoding='utf-8'))['hooks']
+    assert set(hooks) - set(manifest['generated_hooks'][key[-1]]) <= {'state'}
+    assert all(hooks[name] == value for name, value in manifest['generated_hooks'][key[-1]].items())
+    for row in worker['native_rows']:
+        path = (home / row['source']).resolve()
+        assert path.is_relative_to(home.resolve())
+        raw = path.read_bytes()
+        line = raw.splitlines(keepends=True)[row['line'] - 1]
+        assert c.sha(raw) == row['source_file_sha256'] and c.sha(line) == row['line_sha256']
+        assert json.loads(line) == row['record']
+    summary = c.session_summary(worker['native_rows'], key)
+    assert summary == worker['session']
+    sessions[summary['session']] = summary
+assert len(sessions) == 4
+assert r['before_native'] == r['after_outage'] and r['before_native']['capture_count'] == 0
+assert len(r['queued_native_events']) == 4
+from mnemos.client import Outbox
+assert Outbox(fixture / 'outbox.json').pending() == []
+state = c.database_state(fixture)
+assert state == r['final_database'] == r['after_close'] == r['after_restart'] == r['after_maintenance']
+assert state['capture_count'] == 8
+assert all(state[table]['rows'] == 10 for table in ('memory_chunks', 'episodic_events', 'fact_evidence', 'memory_jobs'))
+captures = c.verify_captures(fixture, sessions, r['target']['project_id'], r['target']['foreign_fact_id'], r['target']['foreign_content'])
+assert captures == r['captures']
+with sqlite3.connect((fixture / 'memory.sqlite').as_uri() + '?mode=ro', uri=True) as db:
+    control = db.execute('select content from memory_chunks where id=?', (r['target']['fact_id'],)).fetchone()
+    assert control is not None and control[0] == r['target']['content']
+outage_sessions = {r['workers'][key]['session']['session'] for key in ('outage-a', 'outage-b')}
+outage_ids = {item['event']['id'] for item in captures if item['event']['session_id'] in outage_sessions}
+assert outage_ids == {item['event_id'] for item in r['queued_native_events']}
+arrivals = r['barrier_arrivals']
+processes = [r['workers'][key]['process'] for key in ('recovery-a', 'recovery-b')]
+assert len(arrivals) == 2 and {a['native_pid'] for a in arrivals} == {p['pid'] for p in processes}
+assert len({a['origin']['tcp_client_pid'] for a in arrivals}) == 2
+for arrival in arrivals:
+    assert arrival['origin']['process_ancestry'][0] == arrival['origin']['tcp_client_pid']
+    assert arrival['native_pid'] in arrival['origin']['process_ancestry']
+    assert arrival['barrier_released'] is True
+    assert arrival in r['dispatch_trace']
+assert min(a['release_ns'] for a in arrivals) - max(a['start_ns'] for a in arrivals) == r['replay_overlap_ns'] > 0
+assert min(p['end_ns'] for p in processes) - max(p['start_ns'] for p in processes) == r['process_overlap_ns'] > 0
+assert r['cleanup'] == {'errors': [], 'auth_absent': True, 'descriptor_absent': True}
+assert not (fixture / 'runtime.json').exists()
+old = c.TEMP / 'mnemos-native-codex-concurrent-v1'
+failed = c.read(old / 'report.json')
+assert failed['status'] == 'failed' and failed['before_native'] == failed['final_database']
+assert failed['cleanup'] == {'errors': [], 'auth_absent': True, 'descriptor_absent': True}
+for name, digest in failed['helpers'].items():
+    assert c.sha((ROOT / '.venv' / name).read_bytes()) == digest
+assert not Path(failed['fixture'], 'runtime.json').exists()
+for worker in ('a', 'b'):
+    assert c.read(old / ('outage-' + worker + '.json'))['cleanup'] == {'errors': [], 'auth_absent': True}
+    assert not Path(failed['fixture'], 'codex-home-' + worker, 'auth.json').exists()
+
+def dump(path, value):
+    path.write_text(json.dumps(value, indent=2) + '\n', encoding='utf-8')
+
+def safe_report(value):
+    """Retain synthetic messages and selected session identity, not base instructions."""
+    value = copy.deepcopy(value)
+    for worker in value.get('workers', {}).values():
+        selected = []
+        for row in worker['native_rows']:
+            record = row['record']
+            payload = record['payload']
+            if record['type'] == 'session_meta':
+                record['payload'] = {k: payload[k] for k in ('id', 'timestamp', 'cwd', 'originator', 'cli_version', 'model_provider') if k in payload}
+                row['source_record_reduced'] = True
+            elif payload.get('type') == 'agent_message' and payload.get('phase') != 'final_answer':
+                continue
+            selected.append(row)
+        worker['native_rows'] = selected
+    value['archive_selection'] = 'Session metadata reduced to identity/version fields; original line and file hashes retained. Synthetic user/final records unchanged. Original local report is preserved separately and hashed by verification.json.'
+    return value
+
+OUT.mkdir(parents=True, exist_ok=False)
+dump(OUT / 'report.selected.json', safe_report(r))
+dump(OUT / 'manifest.json', manifest)
+for name in ('startup-failure.stdout.log', 'startup-failure.stderr.log'):
+    shutil.copyfile(c.OUTPUT / name, OUT / name)
+(OUT / 'failed-fixture-v1').mkdir()
+for name in ('report.json', 'manifest.json', 'outage-a.json', 'outage-b.json', 'startup-failure.stderr.log', 'abort.json'):
+    shutil.copyfile(old / name, OUT / 'failed-fixture-v1' / name)
+(OUT / 'helpers').mkdir()
+names = list(r['helpers']) + list(failed['helpers']) + ['prepare_native_concurrent_v2.py',
+    'test_concurrent_origin_v1.py', 'test_concurrent_origin_v2.py']
+for name in names:
+    shutil.copyfile(ROOT / '.venv' / name, OUT / 'helpers' / (name + '.txt'))
+shutil.copyfile(__file__, OUT / 'helpers' / (Path(__file__).name + '.txt'))
+for version in ('v1', 'v2'):
+    shutil.copyfile(ROOT / '.venv' / ('test_concurrent_origin_' + version + '.json'), OUT / ('tcp-origin-self-test-' + version + '.json'))
+deliveries = Counter(t['event_id'] for t in r['dispatch_trace'] if t['event_id'] is not None)
+dump(OUT / 'verification.json', {'status': 'passed', 'source_commit': c.SOURCE, 'wheel_sha256': c.WHEEL_SHA,
+    'original_report_sha256': c.sha((c.OUTPUT / 'report.json').read_bytes()),
+    'archiver_sha256': c.sha(Path(__file__).read_bytes()), 'installed_files_verified': provenance['installed_files_verified'],
+    'database_sha256': c.sha((fixture / 'memory.sqlite').read_bytes()), 'database_state': state,
+    'captures': len(captures), 'native_sessions': len(sessions), 'http_deliveries_by_source_event': dict(deliveries),
+    'same_event_in_barrier': len({a['event_id'] for a in arrivals}) == 1,
+    'replay_overlap_ns': r['replay_overlap_ns'], 'process_overlap_ns': r['process_overlap_ns'],
+    'scope': 'Bounded concurrent native generated-hook replay with fixture providers and explicit service restoration. No complete-host or configured-provider acceptance.'})
+dump(OUT / 'terminal-observations.json', {'evidence_kind': 'Operator observations from PTY tool chunks, not durable native-log proof',
+    'observations': [
+        {'chunks': ['491672', 'f48ee3'], 'stage': 'outage worker PowerShell startup', 'diagnostic': "Import-Clixml: Name cannot begin with the '4' character, hexadecimal value 0x34. Line 124, position 41."},
+        {'chunks': ['c79953'], 'stage': 'recovery-a PowerShell startup', 'diagnostic': "Import-Clixml: 'Text' is an invalid XmlNodeType. Line 244, position 44."},
+        {'chunks': ['c79953'], 'stage': 'recovery-a native startup', 'diagnostic': 'MCP startup interrupted. The following servers were not initialized: codex_apps, mnemos'},
+        {'chunks': ['f6a0b9', 'b723da'], 'stage': 'recovery native turns', 'diagnostic': 'Skill descriptions were shortened to fit the 2% skills context budget.'}],
+    'limit': 'Output was truncated. This is not an exhaustive diagnostic inventory or proof that other sessions lacked warnings.'})
+dump(OUT / 'helper-dependencies.json', {name: {'repository_path': 'docs/validation/2026-09-18/native-codex-stop-repeat-v1/' + name + '.txt', 'sha256': digest} for name, digest in c.PINS.items()})
+(OUT / 'README.md').write_text('''# Concurrent native Codex recovery
+
+Four native Codex CLI 0.146.0 turns used installed source a5a9101 and unchanged generated hooks. Two separate Codex homes first ran during malformed disposable service configuration. Their four messages remained in one shared outbox; the database retained only its two seeded controls. After explicit fixture-service restoration, two fresh processes started together and their native hooks replayed the queue automatically. The harness never called replay_outbox.
+
+A test-only barrier in the service submit path overlapped two queued capture requests. Windows TCP ownership and process ancestry tied the requests to both recovery Codex processes, rather than counting two threads or one client's retry as two hosts. The provenance helper was tested against a known local socket before use. All four native processes exited zero. Eight distinct user/assistant messages from four sessions had exactly one event, job, and evidence link each. The outbox emptied and both seeded controls remained intact. After maintenance, complete-row hashes for facts, events, jobs, and evidence remained unchanged through close/restart and final cleanup.
+
+This is one bounded concurrent hook-recovery observation. It uses lexical fixture vectors, disabled optional modules, unavailable cognition, explicit service restoration, and an instrumented overlap barrier. It does not establish natural scheduling frequency, default daemon recovery, real-provider readiness, complete capture, Desktop, Hermes, or operational-pilot acceptance. Recovery-a displayed an MCP startup interruption; PowerShell also displayed Import-Clixml diagnostics. The separate terminal-observations record labels these as PTY observations, not durable log verification. MCP startup acceptance remains open.
+
+The failed v1 fixture is retained. Its workers used the parent of the generated .codex directory as CODEX_HOME, so the generated integration was not loaded. The attempt was aborted, both temporary auth files were removed, the processes exited, and the seeded database was unchanged. V2 binds CODEX_HOME, config validation, native-session reads, and auth cleanup to generated.config_path.parent.
+
+Original executed helpers and failure reports are preserved. The selected successful report retains synthetic messages and source line/file hashes, while reducing session metadata to identity and version fields. Full sessions, base instructions, credentials, runtime tokens, and databases are not archived. The original local report hash is recorded separately.
+''', encoding='utf-8')
+(OUT / '.gitattributes').write_text('* -text\n*.log -whitespace\n*.py.txt -whitespace\n', encoding='utf-8')
+files = {p.relative_to(OUT).as_posix(): {'bytes': p.stat().st_size, 'sha256': c.sha(p.read_bytes())}
+         for p in sorted(OUT.rglob('*')) if p.is_file()}
+dump(OUT / 'evidence-index.json', {'files': files})
+print(json.dumps({'status': 'passed', 'indexed_files': len(files), 'captures': len(captures),
+                  'same_event_in_barrier': len({a['event_id'] for a in arrivals}) == 1}))

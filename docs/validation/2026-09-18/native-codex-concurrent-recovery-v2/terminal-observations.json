@@ -1,0 +1,36 @@
+{
+  "evidence_kind": "Operator observations from PTY tool chunks, not durable native-log proof",
+  "observations": [
+    {
+      "chunks": [
+        "491672",
+        "f48ee3"
+      ],
+      "stage": "outage worker PowerShell startup",
+      "diagnostic": "Import-Clixml: Name cannot begin with the '4' character, hexadecimal value 0x34. Line 124, position 41."
+    },
+    {
+      "chunks": [
+        "c79953"
+      ],
+      "stage": "recovery-a PowerShell startup",
+      "diagnostic": "Import-Clixml: 'Text' is an invalid XmlNodeType. Line 244, position 44."
+    },
+    {
+      "chunks": [
+        "c79953"
+      ],
+      "stage": "recovery-a native startup",
+      "diagnostic": "MCP startup interrupted. The following servers were not initialized: codex_apps, mnemos"
+    },
+    {
+      "chunks": [
+        "f6a0b9",
+        "b723da"
+      ],
+      "stage": "recovery native turns",
+      "diagnostic": "Skill descriptions were shortened to fit the 2% skills context budget."
+    }
+  ],
+  "limit": "Output was truncated. This is not an exhaustive diagnostic inventory or proof that other sessions lacked warnings."
+}
