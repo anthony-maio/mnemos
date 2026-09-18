@@ -1,0 +1,671 @@
+"""Install one verified wheel and run an isolated installed-package contract check.
+
+The installed run must preserve the frozen JUnit outcome for every selected
+case. A matching aggregate count is insufficient: platform skips and their
+reasons are part of the frozen contract.
+"""
+
+from __future__ import annotations
+
+import argparse
+from datetime import datetime, timezone
+import hashlib
+import json
+import os
+from pathlib import Path
+import shutil
+import subprocess
+import sys
+import zipfile
+from typing import Any
+import xml.etree.ElementTree as ET
+
+EXPECTED_CHECKS = ("pytest", "black", "mypy", "javascript", "build", "twine")
+CONTRACT_TESTS = (
+    "tests/test_uuid_write_safety.py",
+    "tests/test_memory_safety.py",
+    "tests/test_adapter_context_authority.py",
+    "tests/test_cli_context_authority.py",
+    "tests/test_hermes_adapter.py",
+    "tests/test_cross_host_contract.py",
+    "tests/test_hosts.py",
+    "tests/test_embedding_task_roles.py",
+    "tests/test_embedding_task_runtime.py",
+    "tests/test_conflict_canonical_collision.py",
+    "tests/test_backup_concurrent.py",
+    "tests/test_memory_service.py",
+    "tests/test_backup_restore.py",
+    "tests/test_service_observability.py",
+    "tests/test_runtime.py",
+    "tests/test_provider_failure_logging.py",
+    "tests/test_retrieval_concurrent_revision.py",
+    "tests/test_service_lost_ack.py",
+    "tests/test_capture_interruption.py",
+    "tests/test_hook_import_boundary.py",
+    "tests/test_client_startup_failure.py",
+    "tests/test_mcp_compatibility.py",
+    "tests/test_mcp_scope_arguments.py",
+    "tests/test_codex_adapter.py",
+    "tests/test_codex_capture_coverage.py",
+    "tests/test_hook_utf8.py",
+    "tests/test_captured_assertion_status.py",
+    "tests/test_retrieval_contract.py",
+    "tests/test_related_forget.py",
+    "tests/test_related_forget_safety.py",
+    "tests/test_claude_adapter.py",
+)
+
+
+def _hash(path: Path) -> str:
+    return hashlib.sha256(path.read_bytes()).hexdigest()
+
+
+def _normalized(path: Path) -> bytes:
+    return path.read_bytes().replace(b"\r\n", b"\n")
+
+
+def _command_record(
+    record: dict[str, Any],
+    name: str,
+    command: list[str],
+    *,
+    cwd: Path,
+    env: dict[str, str],
+    log_dir: Path,
+    timeout: int = 600,
+) -> int:
+    entry: dict[str, Any] = {
+        "name": name,
+        "command": command,
+        "cwd": str(cwd),
+        "started_at": datetime.now(timezone.utc).isoformat(),
+    }
+    record.setdefault("commands", []).append(entry)
+    stdout_path = log_dir / f"{name}.stdout.log"
+    stderr_path = log_dir / f"{name}.stderr.log"
+    try:
+        with (
+            stdout_path.open("w", encoding="utf-8") as stdout,
+            stderr_path.open("w", encoding="utf-8") as stderr,
+        ):
+            result = subprocess.run(
+                command,
+                cwd=cwd,
+                env=env,
+                stdout=stdout,
+                stderr=stderr,
+                timeout=timeout,
+                check=False,
+                creationflags=getattr(subprocess, "CREATE_NO_WINDOW", 0),
+            )
+        entry.update(
+            {
+                "exit_code": result.returncode,
+                "finished_at": datetime.now(timezone.utc).isoformat(),
+                "stdout_sha256": _hash(stdout_path),
+                "stderr_sha256": _hash(stderr_path),
+            }
+        )
+        return result.returncode
+    except subprocess.TimeoutExpired:
+        entry.update(
+            {
+                "status": "timeout",
+                "finished_at": datetime.now(timezone.utc).isoformat(),
+                "stdout_sha256": _hash(stdout_path),
+                "stderr_sha256": _hash(stderr_path),
+            }
+        )
+        raise
+
+
+def _clean_child_environment() -> dict[str, str]:
+    blocked_exact = {
+        "PYTHONPATH",
+        "VIRTUAL_ENV",
+        "UV_PROJECT_ENVIRONMENT",
+        "CODEX_HOME",
+        "CLAUDE_CONFIG_DIR",
+        "HERMES_HOME",
+        "MNEMOS_CONFIG_PATH",
+        "MNEMOS_RUNTIME_DESCRIPTOR",
+        "MNEMOS_SCOPE_REGISTRY",
+        "MNEMOS_USER_PROFILE_ID",
+        "TEMP",
+        "TMP",
+        "TMPDIR",
+    }
+    blocked_suffixes = ("_API_KEY", "_API_TOKEN")
+    child = {
+        key: value
+        for key, value in os.environ.items()
+        if not key.startswith("MNEMOS_")
+        and key.upper() not in blocked_exact
+        and not key.endswith(blocked_suffixes)
+    }
+    child["PYTEST_DISABLE_PLUGIN_AUTOLOAD"] = "1"
+    child["PYTHONSAFEPATH"] = "1"
+    return child
+
+
+def _selected_input_hashes(snapshot: Path) -> dict[str, str]:
+    paths = [snapshot / "tests" / "__init__.py", snapshot / "tests" / "conftest.py"]
+    paths.extend(snapshot / item for item in CONTRACT_TESTS)
+    paths.append(snapshot / "benchmarks" / "scenarios" / "local-memory-continuity.jsonl")
+    names: list[str] = []
+    for path in paths:
+        if not path.is_file():
+            raise ValueError(f"Selected frozen contract input is missing: {path}")
+        names.append(path.relative_to(snapshot).as_posix())
+    return {
+        name: hashlib.sha256((snapshot / name).read_bytes().replace(b"\r\n", b"\n")).hexdigest()
+        for name in names
+    }
+
+
+def _validation_dependencies(parent_python: Path) -> list[str]:
+    if not parent_python.is_file():
+        raise ValueError(f"Parent validation Python does not exist: {parent_python}")
+    code = (
+        "import importlib.metadata as m; "
+        "print('pytest==' + m.version('pytest')); "
+        "print('pytest-asyncio==' + m.version('pytest-asyncio'))"
+    )
+    lines = subprocess.check_output([str(parent_python), "-c", code], text=True).splitlines()
+    if len(lines) != 2 or not all("==" in line for line in lines):
+        raise ValueError("Parent validation environment lacks pinned pytest dependencies")
+    return lines
+
+
+def _skip_reason(node: ET.Element) -> str | None:
+    skipped = node.find("skipped")
+    if skipped is None:
+        return None
+    return json.dumps(
+        {
+            "message": skipped.attrib.get("message"),
+            "text": (skipped.text or "").strip(),
+            "type": skipped.attrib.get("type"),
+        },
+        sort_keys=True,
+        separators=(",", ":"),
+    )
+
+
+def _case_outcome(node: ET.Element) -> tuple[str, str | None]:
+    if node.find("failure") is not None or node.find("error") is not None:
+        return "failed", None
+    if node.find("skipped") is not None:
+        return "skipped", _skip_reason(node)
+    return "passed", None
+
+
+def _expected_contract_cases(
+    verification: dict[str, Any], snapshot: Path
+) -> tuple[Path, list[dict[str, str | None]]]:
+    pytest_row = next(
+        (
+            item
+            for item in verification.get("checks", [])
+            if isinstance(item, dict) and item.get("name") == "pytest"
+        ),
+        None,
+    )
+    command = pytest_row.get("command") if isinstance(pytest_row, dict) else None
+    if not isinstance(command, list):
+        raise ValueError("Successful verification has no pytest command")
+    xml_arg: str | None = None
+    for index, item in enumerate(command):
+        text = str(item)
+        if text.startswith("--junitxml="):
+            xml_arg = text.split("=", 1)[1]
+            break
+        if text in {"--junitxml", "--junit-xml"} and index + 1 < len(command):
+            xml_arg = str(command[index + 1])
+            break
+    if not xml_arg:
+        raise ValueError("Successful verification has no pytest JUnit path")
+    pytest_xml = Path(xml_arg).expanduser().resolve()
+    if not pytest_xml.is_file():
+        raise ValueError(f"Successful verification JUnit file is unavailable: {pytest_xml}")
+    stems = {Path(item).stem for item in CONTRACT_TESTS}
+    cases: list[dict[str, str | None]] = []
+    for node in ET.parse(pytest_xml).getroot().iter("testcase"):
+        classname = str(node.attrib.get("classname", ""))
+        name = str(node.attrib.get("name", ""))
+        module = next((stem for stem in stems if stem in classname.split(".")), None)
+        if module is not None:
+            outcome, skip_reason = _case_outcome(node)
+            if outcome == "failed":
+                raise ValueError(
+                    "Successful frozen verification contains a selected failure/error: "
+                    f"{classname}::{name}"
+                )
+            cases.append(
+                {
+                    "module": module,
+                    "classname": classname,
+                    "name": name,
+                    "outcome": outcome,
+                    "skip_reason": skip_reason,
+                }
+            )
+    if not cases or len({(item["classname"], item["name"]) for item in cases}) != len(cases):
+        raise ValueError(
+            "Successful verification has no unique cases for the selected contract modules"
+        )
+    if {item["module"] for item in cases} != stems:
+        raise ValueError("Successful verification omits selected test modules")
+    return pytest_xml, cases
+
+
+def _git(snapshot: Path, *args: str) -> str:
+    return subprocess.check_output(["git", *args], cwd=snapshot, text=True).strip()
+
+
+def _verify_inputs(
+    checks: Path,
+    snapshot: Path,
+    commit: str,
+    replay_helper: Path,
+    checkpoint_runner: Path,
+) -> tuple[dict[str, Any], Path, dict[str, Any]]:
+    if not checks.is_file():
+        raise ValueError("Verification report does not exist")
+    verification = json.loads(checks.read_text(encoding="utf-8"))
+    if verification.get("status") != "passed":
+        raise ValueError("The requested full verification did not pass")
+    if verification.get("source_commit") != commit:
+        raise ValueError("Verification report is bound to another source commit")
+    check_rows = verification.get("checks")
+    if not isinstance(check_rows, list):
+        raise ValueError("Verification report has no complete check list")
+    if len(check_rows) != len(EXPECTED_CHECKS):
+        raise ValueError("Verification report does not contain exactly six required checks")
+    by_name = {str(item.get("name")): item for item in check_rows if isinstance(item, dict)}
+    if len(by_name) != len(check_rows) or set(by_name) != set(EXPECTED_CHECKS):
+        raise ValueError("Verification report has duplicate or unexpected checks")
+    missing_checks = [name for name in EXPECTED_CHECKS if name not in by_name]
+    if missing_checks:
+        raise ValueError(f"Verification report omits required checks: {missing_checks}")
+    failed_checks = [
+        name
+        for name in EXPECTED_CHECKS
+        if by_name[name].get("status") != "passed" or by_name[name].get("exit_code") != 0
+    ]
+    if failed_checks:
+        raise ValueError(f"Verification checks did not all pass: {failed_checks}")
+    if not checkpoint_runner.is_file():
+        raise ValueError("The recorded full-check runner does not exist")
+    recorded_runner_hash = verification.get("runner_sha256")
+    if _hash(checkpoint_runner) != recorded_runner_hash:
+        raise ValueError("Full-check runner bytes differ from the verification record")
+    if not snapshot.is_dir():
+        raise ValueError("Pinned source snapshot does not exist")
+    if _git(snapshot, "rev-parse", "HEAD") != commit:
+        raise ValueError("Pinned source snapshot commit differs")
+    if _git(snapshot, "status", "--porcelain"):
+        raise ValueError("Pinned source snapshot has tracked changes")
+    recorded_checkout = verification.get("source_checkout")
+    if recorded_checkout and Path(str(recorded_checkout)).resolve() != snapshot.resolve():
+        raise ValueError("Verification report points to a different source snapshot")
+    artifacts = verification.get("artifacts", [])
+    wheel_record = next(
+        (item for item in artifacts if str(item.get("file", "")).endswith(".whl")), None
+    )
+    if not isinstance(wheel_record, dict):
+        raise ValueError("Verification report has no wheel artifact")
+    wheel = Path(str(wheel_record["file"])).resolve()
+    if not wheel.is_file() or _hash(wheel) != wheel_record.get("sha256"):
+        raise ValueError("Verified wheel bytes changed or are unavailable")
+    if not replay_helper.is_file():
+        raise ValueError("Replay helper does not exist")
+    tracked = [item for item in _git(snapshot, "ls-files", "mnemos").splitlines() if item]
+    wheel_members: dict[str, bytes] = {}
+    with zipfile.ZipFile(wheel) as archive:
+        for name in archive.namelist():
+            if name.startswith("mnemos/") and not name.endswith("/"):
+                wheel_members[name] = archive.read(name)
+    missing = [item for item in tracked if item.replace("\\", "/") not in wheel_members]
+    if missing:
+        raise ValueError(f"Wheel omits pinned source files: {missing[:3]}")
+    mismatched = [
+        item
+        for item in tracked
+        if _normalized(snapshot / item)
+        != wheel_members[item.replace("\\", "/")].replace(b"\r\n", b"\n")
+    ]
+    if mismatched:
+        raise ValueError(f"Wheel differs from pinned source: {mismatched[:3]}")
+    parity = {
+        "tracked_mnemos_files": len(tracked),
+        "wheel_mnemos_members": len(wheel_members),
+        "source_subset_matches": True,
+    }
+    return (
+        verification,
+        wheel,
+        {
+            "replay_helper": str(replay_helper),
+            "replay_helper_sha256": _hash(replay_helper),
+            "verification_runner": str(checkpoint_runner),
+            "verification_runner_sha256": str(recorded_runner_hash),
+            "source_parity": parity,
+        },
+    )
+
+
+def _bindings(
+    checks: Path,
+    snapshot: Path,
+    commit: str,
+    wheel: Path,
+    replay_helper: Path,
+    checkpoint_runner: Path,
+    runner: Path,
+    contract_probe: Path,
+) -> dict[str, str]:
+    return {
+        "checks_sha256": _hash(checks),
+        "snapshot_head": _git(snapshot, "rev-parse", "HEAD"),
+        "snapshot_status": _git(snapshot, "status", "--porcelain"),
+        "commit": commit,
+        "wheel_sha256": _hash(wheel),
+        "replay_helper_sha256": _hash(replay_helper),
+        "verification_runner_sha256": _hash(checkpoint_runner),
+        "runner_sha256": _hash(runner),
+        "contract_probe_sha256": _hash(contract_probe),
+    }
+
+
+def main() -> int:
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument("--checks", required=True, type=Path)
+    parser.add_argument("--snapshot", required=True, type=Path)
+    parser.add_argument("--commit", required=True)
+    parser.add_argument("--output", required=True, type=Path)
+    parser.add_argument("--environment", required=True, type=Path)
+    parser.add_argument("--replay-fixture", required=True, type=Path)
+    args = parser.parse_args()
+
+    root = Path(__file__).resolve().parents[1]
+    checks = args.checks.resolve()
+    snapshot = args.snapshot.resolve()
+    output = args.output.resolve()
+    environment = args.environment.resolve()
+    replay_fixture = args.replay_fixture.resolve()
+    replay_helper = (root / ".venv" / "verify_claude_stop_replay_v2.py").resolve()
+    contract_probe = (root / ".venv" / "installed_contract_probe_v4.py").resolve()
+    checkpoint_runner = (root / ".venv" / "final_checkpoint_checks_v3.py").resolve()
+    runner = Path(__file__).resolve()
+    if output.exists() or environment.exists():
+        raise SystemExit("Refusing to overwrite existing output or environment")
+    if environment.is_relative_to(root):
+        raise SystemExit("The installed environment must be outside the source tree")
+    if not environment.parent.is_dir():
+        raise SystemExit("The environment parent directory must already exist")
+    if output == environment or output.is_relative_to(environment):
+        raise SystemExit("Output must be separate from the installed environment")
+    if replay_fixture.exists():
+        raise SystemExit("Refusing to overwrite existing replay fixture")
+    if replay_fixture.is_relative_to(root) or replay_fixture.is_relative_to(environment):
+        raise SystemExit("Replay fixture must be outside the source and installed environment")
+    if output.is_relative_to(replay_fixture) or replay_fixture.is_relative_to(output):
+        raise SystemExit("Replay fixture must be separate from output")
+    if not replay_fixture.parent.is_dir():
+        raise SystemExit("Replay fixture parent directory must already exist")
+    try:
+        _git(replay_fixture.parent, "rev-parse", "--show-toplevel")
+    except subprocess.CalledProcessError:
+        pass
+    else:
+        raise SystemExit("Replay fixture parent is inside a Git repository")
+    if not contract_probe.is_file():
+        raise SystemExit("Installed contract probe does not exist")
+
+    output.mkdir(parents=True)
+    record: dict[str, Any] = {
+        "schema_version": 1,
+        "status": "running",
+        "started_at": datetime.now(timezone.utc).isoformat(),
+        "checks": str(checks),
+        "snapshot": str(snapshot),
+        "commit": args.commit,
+        "output": str(output),
+        "environment": str(environment),
+        "replay_fixture": str(replay_fixture),
+        "runner_sha256": _hash(runner),
+        "contract_probe_sha256": _hash(contract_probe),
+        "commands": [],
+    }
+    try:
+        verification, wheel, helper_info = _verify_inputs(
+            checks, snapshot, args.commit, replay_helper, checkpoint_runner
+        )
+        successful_pytest_xml, expected_cases = _expected_contract_cases(verification, snapshot)
+        expected_cases_path = output / "expected-contract-cases.json"
+        expected_cases_path.write_text(
+            json.dumps(expected_cases, indent=2, sort_keys=True) + "\n", encoding="utf-8"
+        )
+        record["verification"] = {
+            "status": verification["status"],
+            "runner_sha256": verification.get("runner_sha256"),
+            "checks": {
+                str(item["name"]): {
+                    "status": item["status"],
+                    "exit_code": item["exit_code"],
+                }
+                for item in verification["checks"]
+            },
+        }
+        record["wheel"] = {
+            "path": str(wheel),
+            "sha256": _hash(wheel),
+            "bytes": wheel.stat().st_size,
+        }
+        record["helper_binding"] = helper_info
+        record["contract_tests"] = list(CONTRACT_TESTS)
+        record["successful_pytest_xml"] = str(successful_pytest_xml)
+        record["successful_pytest_xml_sha256"] = _hash(successful_pytest_xml)
+        record["expected_cases"] = {
+            "path": str(expected_cases_path),
+            "sha256": _hash(expected_cases_path),
+            "count": len(expected_cases),
+        }
+        record["contract_input_hashes_before"] = _selected_input_hashes(snapshot)
+        record["bindings_before"] = _bindings(
+            checks,
+            snapshot,
+            args.commit,
+            wheel,
+            replay_helper,
+            checkpoint_runner,
+            runner,
+            contract_probe,
+        )
+        child_env = _clean_child_environment()
+        record["child_environment_keys"] = sorted(child_env)
+        child_temp = environment / "process-temp"
+        record["child_environment_temp_overrides"] = {
+            "TEMP": str(child_temp),
+            "TMP": str(child_temp),
+            "TMPDIR": str(child_temp),
+            "applied_from_command": "install_wheel",
+            "create_environment_note": "The target environment does not exist until this command completes.",
+        }
+        parent_python = (root / ".venv" / "Scripts" / "python.exe").resolve()
+        validation_dependencies = _validation_dependencies(parent_python)
+        record["validation_dependencies"] = validation_dependencies
+        uv = shutil.which("uv") or r"C:\Users\Ant\.local\bin\uv.exe"
+        if not Path(uv).is_file() and shutil.which(uv) is None:
+            raise ValueError("uv executable was not found")
+        python = environment / "Scripts" / "python.exe"
+        commands = [
+            (
+                "create_environment",
+                [uv, "venv", str(environment), "--python", sys.executable],
+                environment.parent,
+            ),
+            (
+                "install_wheel",
+                [
+                    uv,
+                    "pip",
+                    "install",
+                    "--python",
+                    str(python),
+                    "mnemos-memory[mcp] @ " + wheel.as_uri(),
+                ],
+                environment.parent,
+            ),
+            (
+                "freeze_before_validation_dependencies",
+                [uv, "pip", "freeze", "--python", str(python)],
+                environment.parent,
+            ),
+            (
+                "install_validation_dependencies",
+                [uv, "pip", "install", "--python", str(python), *validation_dependencies],
+                environment.parent,
+            ),
+            (
+                "freeze_after_validation_dependencies",
+                [uv, "pip", "freeze", "--python", str(python)],
+                environment.parent,
+            ),
+            (
+                "installed_contract_probe",
+                [
+                    str(python),
+                    "-I",
+                    str(contract_probe),
+                    "--site-packages",
+                    str(environment / "Lib" / "site-packages"),
+                    "--wheel",
+                    str(wheel),
+                    "--snapshot",
+                    str(snapshot),
+                    "--commit",
+                    args.commit,
+                    "--output",
+                    str(output / "contract.json"),
+                    "--expected-cases",
+                    str(expected_cases_path),
+                    "--tests",
+                    *CONTRACT_TESTS,
+                ],
+                environment,
+            ),
+            (
+                "replay_probe",
+                [
+                    str(python),
+                    "-I",
+                    str(replay_helper),
+                    "--snapshot",
+                    str(snapshot),
+                    "--commit",
+                    args.commit,
+                    "--output",
+                    str(output / "probe.json"),
+                    "--installed-package",
+                    str(environment / "Lib" / "site-packages"),
+                    "--wheel",
+                    str(wheel),
+                    "--fixture-root",
+                    str(replay_fixture),
+                ],
+                environment,
+            ),
+        ]
+        record["dependency_freezes"] = {
+            "before_validation": str(output / "freeze_before_validation_dependencies.stdout.log"),
+            "after_validation": str(output / "freeze_after_validation_dependencies.stdout.log"),
+            "validation_requirements": validation_dependencies,
+        }
+        for name, command, cwd in commands:
+            command_env = child_env
+            if name != "create_environment":
+                if not child_temp.exists():
+                    child_temp.mkdir(parents=True)
+                command_env = dict(child_env)
+                command_env.update(
+                    {
+                        "TEMP": str(child_temp),
+                        "TMP": str(child_temp),
+                        "TMPDIR": str(child_temp),
+                    }
+                )
+            if _command_record(
+                record,
+                name,
+                command,
+                cwd=cwd,
+                env=command_env,
+                log_dir=output,
+            ):
+                raise RuntimeError(f"{name} failed")
+            _verify_inputs(checks, snapshot, args.commit, replay_helper, checkpoint_runner)
+            if (
+                _hash(successful_pytest_xml) != record["successful_pytest_xml_sha256"]
+                or _hash(expected_cases_path) != record["expected_cases"]["sha256"]
+            ):
+                raise RuntimeError("Expected test case evidence changed during installation")
+            if _selected_input_hashes(snapshot) != record["contract_input_hashes_before"]:
+                raise RuntimeError(
+                    "Frozen selected test or fixture bytes changed during installation"
+                )
+        record["bindings_after"] = _bindings(
+            checks,
+            snapshot,
+            args.commit,
+            wheel,
+            replay_helper,
+            checkpoint_runner,
+            runner,
+            contract_probe,
+        )
+        if record["bindings_after"] != record["bindings_before"]:
+            raise RuntimeError(
+                "Verified source, wheel, or helper bytes changed during installation"
+            )
+        record["contract_input_hashes_after"] = _selected_input_hashes(snapshot)
+        if record["contract_input_hashes_after"] != record["contract_input_hashes_before"]:
+            raise RuntimeError("Frozen selected test or fixture bytes changed during validation")
+        contract = json.loads((output / "contract.json").read_text(encoding="utf-8"))
+        if contract.get("status") != "passed":
+            raise RuntimeError("Installed contract probe did not pass")
+        record["contract"] = {
+            "status": contract.get("status"),
+            "junit_summary": contract.get("junit_summary"),
+            "imported_mnemos": contract.get("imported_mnemos"),
+            "module_origins_before": contract.get("module_origins_before"),
+            "module_origins_after": contract.get("module_origins_after"),
+        }
+        probe = json.loads((output / "probe.json").read_text(encoding="utf-8"))
+        assertions = probe.get("assertions")
+        if (
+            probe.get("status") != "passed"
+            or not isinstance(assertions, dict)
+            or not assertions
+            or not all(assertions.values())
+        ):
+            raise RuntimeError("Installed replay probe did not pass")
+        record["probe"] = {
+            "status": probe.get("status"),
+            "assertions": probe.get("assertions"),
+        }
+        record["status"] = "passed"
+    except Exception as exc:
+        record.update({"status": "failed", "error_type": type(exc).__name__, "error": str(exc)})
+    finally:
+        record["finished_at"] = datetime.now(timezone.utc).isoformat()
+        (output / "installation.json").write_text(
+            json.dumps(record, indent=2, sort_keys=True) + "\n", encoding="utf-8"
+        )
+    print(json.dumps({"status": record["status"], "record": str(output / "installation.json")}))
+    return 0 if record["status"] == "passed" else 1
+
+
+if __name__ == "__main__":
+    raise SystemExit(main())

@@ -8,7 +8,9 @@ status, version, and captured-history labels. All three fact-only compatibility
 fallbacks now label authority and quote content; an intentionally empty service
 context stays empty, and oversized service context is omitted rather than cut
 mid-record. The legacy CLI hook now retains the shared qualifications too.
-Focused adapter and SQLite-backed service checks pass. Native acceptance has
+The [frozen installed checkpoint](validation/2026-09-17/uuid-context-package-checkpoint-v1/README.md)
+at `8616901` passes 335 selected contract cases with two skips, including adapter
+and SQLite-backed service checks, plus seven synthetic replay assertions. Native acceptance has
 not been rerun on this repair, and it does not resolve the v6 stale-answer failure
 below: that Codex result already contained the unverified-history label.
 

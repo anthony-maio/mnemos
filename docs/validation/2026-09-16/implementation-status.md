@@ -4,7 +4,14 @@ This record covers the unreleased `wt/functional-local-memory` worktree. It
 separates implemented behavior from acceptance evidence. The original task
 boundaries and thresholds remain in the [implementation plan](../../plans/2026-09-16-functional-local-memory.md).
 
-The latest [UUID write-safety checkpoint](../2026-09-17/uuid-write-safety-v1/README.md)
+The latest [frozen package checkpoint](../2026-09-17/uuid-context-package-checkpoint-v1/README.md)
+validates source `8616901`: 1,009 tests passed with four skips, followed by Black,
+strict mypy, JavaScript syntax, build, and Twine. A fresh installed wheel passed
+335 selected contract cases with two matching skips and all seven synthetic
+replay assertions. This includes UUID write safety and host-context authority.
+Native acceptance and the frozen real-model evaluation remain separate, open gates.
+
+The preceding [UUID write-safety checkpoint](../2026-09-17/uuid-write-safety-v1/README.md)
 passes the full suite: 1,009 passed and four skipped, with Black and strict mypy
 also passing. The shared privacy filter no longer treats numeric matches wholly
 inside a canonical UUID as personal data. Other numbers, matches crossing the
@@ -12,10 +19,10 @@ UUID boundary, email, and credential assignments retain their existing checks.
 The regression exercises outbox identity and durable remember/correct/replay.
 This repairs the deterministically reproduced generated-ID rejection below;
 the specific cause of the earlier full-suite failure remains unproven because
-that run did not retain its generated ID. Installed-package and native acceptance
-have not been rerun on this source.
+that run did not retain its generated ID. Installed-package validation now passes
+as recorded above; native acceptance has not been rerun on this source.
 
-A subsequent source repair preserves recall authority at the host boundary.
+The earlier host-context repair preserves recall authority at the host boundary.
 Claude's adapter had discarded the service's assertion-status and history labels;
 Codex and Hermes discarded them in fact-only compatibility responses. The shared
 formatter now preserves service context, labels and quotes fallback records,
@@ -32,8 +39,8 @@ also had no events or jobs. The same test passed in isolation. A separate
 reproduced rejection of a generated UUID whose numeric tail matched the
 credit-card filter. This is a confirmed write defect, but the failed full run
 did not retain its generated ID, so its specific cause remains unproven.
-Installed/native acceptance has not been rerun. This does not close the native
-v6 failure below.
+The latest installed checkpoint includes this repair. Native acceptance has not
+been rerun, and this does not close the native v6 failure below.
 
 The [latest native forget/replay attempt](../2026-09-17/native-codex-claude-continuity-v6/README.md)
 is FAILED overall. Codex taught the fact, Claude corrected it, and fresh Codex

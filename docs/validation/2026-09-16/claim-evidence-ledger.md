@@ -7,8 +7,8 @@ The capability IDs come from the original implementation plan.
 The latest [source validation](../2026-09-17/uuid-write-safety-v1/README.md)
 passes 1,009 tests with four skips, Black, and strict mypy after the shared UUID
 write-safety repair. It includes the host-context authority changes. This is a
-source checkpoint; the installed package and native-host evidence below remain
-bound to their earlier source revisions.
+source checkpoint, now supplemented by the installed verification below.
+Native-host evidence remains bound to its earlier source revisions.
 
 The latest [native v6 attempt](../2026-09-17/native-codex-claude-continuity-v6/README.md)
 verified selected-fact deletion by Claude and direct service replay suppression
@@ -19,12 +19,12 @@ not evidence of whole-topic erasure or accepted post-forget host behavior.
 The [v5 wrong-query failure](../2026-09-17/native-codex-claude-continuity-v5/README.md)
 remains preserved alongside it. The native fixtures do not use real cognition.
 
-The latest complete package verification is frozen source `ebe1b0d`:
-962 tests passed with four skips, plus Black, strict mypy, JavaScript syntax,
-build, and Twine. A fresh installed wheel passed 268 selected contract cases
+The latest complete package verification is frozen source `8616901`:
+1,009 tests passed with four skips, plus Black, strict mypy, JavaScript syntax,
+build, and Twine. A fresh installed wheel passed 335 selected contract cases
 with two matching platform skips and seven synthetic Stop replay assertions. Source, fixtures, and the installed
 environment were on C:, outside the development checkout. The
-[lazy import package checkpoint](../2026-09-17/lazy-import-package-checkpoint-v1/README.md)
+[UUID and host-context package checkpoint](../2026-09-17/uuid-context-package-checkpoint-v1/README.md)
 binds the wheel, source, helpers, dependencies, exact test cases, and installed
 package origins. It does not establish native plugin-session acceptance.
 The interruption tests bind child imports to the parent package origin. The
