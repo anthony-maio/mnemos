@@ -23,8 +23,19 @@ and replayed both events. An immediate second replay had no pending events.
 After service restart, replaying the same events left all four core table counts
 and complete-row hashes unchanged. Each message had exactly one stored event
 and one evidence row. This establishes native outage capture followed by explicit
-client recovery with fixture providers. Automatic native-hook recovery,
-process-kill and concurrent-host behavior, and real-provider recovery remain open.
+client recovery with fixture providers. That run did not exercise automatic
+native-hook replay; the later two-session observation below does.
+
+In a [fresh two-session probe](../2026-09-18/native-codex-native-recovery-v1/README.md),
+the first native Codex session queued both messages during startup failure.
+After explicit fixture-service restoration, the second session's unchanged
+generated hooks drained that queue automatically, without a direct replay call.
+Both processes exited zero. All four messages retained their correct session,
+turn, role, project, and profile, with one evidence link each. The outbox emptied,
+and complete-row hashes stayed unchanged across maintenance and service restart.
+This verifies one native automatic replay observation. The exact triggering hook
+was not traced. Process-kill and concurrent-host behavior, real-provider recovery,
+and complete host acceptance remain open.
 
 Three fresh [native Codex sessions](../2026-09-18/native-codex-stop-repeat-v1/README.md)
 on the `c25ed98` wheel used the generated hooks unchanged. The late native

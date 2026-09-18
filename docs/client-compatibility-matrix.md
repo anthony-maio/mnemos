@@ -21,8 +21,19 @@ and replayed both events. An immediate second replay had no pending events.
 After service restart, replaying the same events left all four core table counts
 and complete-row hashes unchanged. Each message had exactly one stored event
 and one evidence row. This establishes native outage capture followed by explicit
-client recovery with fixture providers. Automatic native-hook recovery,
-process-kill and concurrent-host behavior, and real-provider recovery remain open.
+client recovery with fixture providers. That run did not exercise automatic
+native-hook replay; the later two-session observation below does.
+
+In a [fresh two-session probe](validation/2026-09-18/native-codex-native-recovery-v1/README.md),
+the first native Codex session queued both messages during startup failure.
+After explicit fixture-service restoration, the second session's unchanged
+generated hooks drained that queue automatically, without a direct replay call.
+Both processes exited zero. All four messages retained their correct session,
+turn, role, project, and profile, with one evidence link each. The outbox emptied,
+and complete-row hashes stayed unchanged across maintenance and service restart.
+This verifies one native automatic replay observation. The exact triggering hook
+was not traced. Process-kill and concurrent-host behavior, real-provider recovery,
+and complete host acceptance remain open.
 
 Three fresh [native Codex sessions](validation/2026-09-18/native-codex-stop-repeat-v1/README.md)
 on the `c25ed98` wheel used the generated hooks unchanged. The late native
@@ -112,7 +123,7 @@ recorded together for the next context-boundary investigation.
 | Client | Implemented integration | Observed evidence | Native conversation acceptance |
 | --- | --- | --- | --- |
 | Claude Code | Command hooks, transcript deltas, context injection, MCP tools; provisional missing-ID capture excluded from extraction | Native 2.1.191 with installed `5af3d15` retrieved and corrected a Codex-taught fact, then reviewed and deleted the target and five captured copies, including similarity suggestions | V9 passes 15 bounded shared lifecycle checks. Degraded capture, native hook replay, and real-model extraction quality remain open |
-| Codex CLI | Command lifecycle hooks, supported context output, MCP tools | Native 0.146.0 with installed `5af3d15` taught a fact, retrieved Claude's version 2 after restart, and completed both post-forget recall queries without returning or repeating the deleted values; unrelated and foreign-scope controls held | V9 passes 15 bounded shared lifecycle checks with lexical fixture vectors and disabled modules. All Codex processes exited zero. Reverse and final Stop hooks timed out; complete capture, native hook replay, and real-model quality remain open |
+| Codex CLI | Command lifecycle hooks, supported context output, MCP tools | Native 0.146.0 with installed `5af3d15` taught a fact, retrieved Claude's version 2 after restart, and completed both post-forget recall queries without returning or repeating the deleted values; unrelated and foreign-scope controls held | V9 passes 15 bounded shared lifecycle checks with lexical fixture vectors and disabled modules. All Codex processes exited zero. Reverse and final Stop hooks timed out. Later c25ed98 sessions verify both-role capture and automatic native-hook replay after startup failure, as detailed above. Complete capture across lifecycle failures and real-model quality remain open |
 | Codex Desktop | Same command hooks and MCP fallback | Shared adapter coverage; no current desktop conversation evidence | Pending |
 | Hermes Agent | Optional MemoryProvider and explicit Windows/WSL bridge | Installed 0.21.3 API calls and actual WSL -> Windows authenticated transport. Sourcec805 passed full verification and discovery through the actual wheel entry point in WSL | Model turn has not completed; cross-host native recall remains open |
 | Generic MCP stdio | MCP server as service client | Subprocess capture, job status, inspect, retrieve, correct, forget | Host-specific acceptance pending |

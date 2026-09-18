@@ -1,0 +1,198 @@
+"""Verify and archive native automatic recovery; never rerun the native probe."""
+from pathlib import Path
+import ast
+import hashlib
+import json
+import shutil
+import sqlite3
+import subprocess
+import tomllib
+import zipfile
+
+ROOT = Path(__file__).resolve().parents[1]
+TEMP = Path('C:/Users/Ant/AppData/Local/Temp')
+BASE = TEMP / 'mnemos-native-codex-native-recovery-v1'
+OUT = ROOT / 'docs/validation/2026-09-18/native-codex-native-recovery-v1'
+RUNNER = ROOT / '.venv/native_codex_native_recovery_v1.py'
+SOURCE = 'c25ed98d9dae5afc9103a4f6807a62429d30ac9d'
+WHEEL_SHA = 'd697b0796db57db1790b59f1874ea1fda7a77b32d41dbd15be6e13e1f34dada8'
+PROFILE = 'native-codex-native-recovery-v1'
+
+def digest(raw):
+    return hashlib.sha256(raw).hexdigest()
+
+def sha(path):
+    return digest(path.read_bytes())
+
+def load(path):
+    return json.loads(path.read_text(encoding='utf-8'))
+
+def dump(path, value):
+    path.write_text(json.dumps(value, indent=2) + '\n', encoding='utf-8')
+
+assert not OUT.exists()
+r = load(BASE / 'report.json')
+assert r['status'] == 'observed_native_automatic_recovery'
+assert r['source_commit'] == SOURCE and r['wheel_sha256'] == WHEEL_SHA
+assert r['runner_sha256'] == sha(RUNNER)
+tree = ast.parse(RUNNER.read_text(encoding='utf-8'))
+assert not any(isinstance(n, ast.Call) and
+               ((isinstance(n.func, ast.Name) and n.func.id == 'replay') or
+                (isinstance(n.func, ast.Attribute) and n.func.attr == 'replay_outbox'))
+               for n in ast.walk(tree))
+for key in ('process', 'recovery_process'):
+    assert r[key]['returncode'] == 0 and r[key]['timed_out'] is False
+assert r['before_native'] == r['before_recovery']
+assert r['before_native']['capture_count'] == 0
+assert r['after_native_recovery'] == r['after_maintenance'] == r['after_restart_closed'] == r['after_restart_open'] == r['final_database']
+assert r['final_database']['capture_count'] == 4
+assert r['pending_after_native_recovery'] == []
+assert r['generated_hooks_unchanged'] and r['generated_hooks_unchanged_after_recovery']
+monitor = r['descriptor_monitor']
+assert monitor['samples'] == len(r['descriptor_observations']) > 1
+assert monitor['descriptor_seen'] is False and not any(x['present'] for x in r['descriptor_observations'])
+gap = max((b['monotonic_ns'] - a['monotonic_ns']) / 1e6 for a, b in zip(r['descriptor_observations'], r['descriptor_observations'][1:]))
+assert gap == monitor['max_sample_gap_ms']
+assert r['startup_failure']['returncode'] != 0
+for stream in ('stdout', 'stderr'):
+    assert r['startup_failure'][stream + '_sha256'] == sha(BASE / ('startup-failure.' + stream + '.log'))
+assert 'TOMLDecodeError' in (BASE / 'startup-failure.stderr.log').read_text(encoding='utf-8')
+assert r['outbox_before_recovery'] == {'pending': 2, 'sha256': sha(BASE / 'native-outbox-before-recovery.json')}
+pending = load(BASE / 'native-outbox-before-recovery.json')
+assert pending == r['capture_payloads'] and len(pending) == 2
+for name, key in [('outage-selected-native-events.json', 'outage_selected_native_events_sha256'), ('selected-native-events.json', 'selected_native_events_sha256')]:
+    assert sha(BASE / name) == r[key]
+
+fixture = Path(r['fixture'])
+home = fixture / 'codex-home/.codex'
+assert r['cleanup'] == {'errors': [], 'auth_absent': True, 'descriptor_absent': True}
+assert not (home / 'auth.json').exists() and not (fixture / 'runtime.json').exists()
+assert not (fixture / 'outbox.json').exists() or load(fixture / 'outbox.json') == []
+config = tomllib.loads(Path(r['config']['path']).read_text(encoding='utf-8'))
+assert set(config['hooks']) - set(r['generated_hooks']) <= {'state'}
+assert all(config['hooks'][k] == v for k, v in r['generated_hooks'].items())
+assert config['hooks']['Stop'][0]['hooks'][0]['timeout'] == 3
+assert config['windows']['sandbox'] == 'unelevated'
+
+wheel = Path(r['provenance']['wheel']['wheel']['file'])
+origin = Path(r['provenance']['installed_package']).resolve()
+assert sha(wheel) == WHEEL_SHA
+assert origin == (TEMP / 'mnemos-installed-outbox-selection-v1/Lib/site-packages/mnemos/__init__.py').resolve()
+assert subprocess.check_output(['git', 'rev-parse', 'HEAD'], cwd=TEMP / 'mnemos-source-outbox-selection-v1', text=True).strip() == SOURCE
+with zipfile.ZipFile(wheel) as archive:
+    checked = 0
+    for name in archive.namelist():
+        if name.startswith('mnemos/') and not name.endswith('/'):
+            assert (origin.parent.parent / name).read_bytes() == archive.read(name)
+            checked += 1
+assert sha(Path(r['executable']['path'])) == r['executable']['sha256']
+
+sessions = {}
+for path in (home / 'sessions').rglob('*.jsonl'):
+    raw = path.read_bytes()
+    records = [json.loads(line) for line in raw.splitlines()]
+    meta = [x['payload'] for x in records if x.get('type') == 'session_meta']
+    assert len(meta) == 1
+    events = [x['payload'] for x in records if isinstance(x.get('payload'), dict)]
+    assert not [x for x in events if x.get('type') in ('function_call', 'custom_tool_call', 'mcp_tool_call_end')]
+    users = [x for x in events if x.get('type') == 'user_message']
+    finals = [x for x in events if x.get('type') == 'agent_message' and x.get('phase') == 'final_answer']
+    turns = [x['turn_id'] for x in events if x.get('type') == 'task_complete']
+    assert len(users) == len(finals) == len(turns) == 1
+    sessions[meta[0]['id']] = {'turn': turns[0], 'user': users[0]['message'], 'assistant': finals[0]['message']}
+assert set(sessions) == {r['outage_session_id'], r['recovery_session_id']} and len(sessions) == 2
+assert r['outage_turn_id'] != r['recovery_turn_id']
+for prefix, prompt, answer in [('outage', r['prompt'], 'outage willow-raven'), ('recovery', r['recovery_prompt'], 'recovery silver-birch')]:
+    session = sessions[r[prefix + '_session_id']]
+    assert session == {'turn': r[prefix + '_turn_id'], 'user': prompt, 'assistant': answer}
+    for role, item in r[prefix + '_native_messages'].items():
+        raw = (home / item['source']).read_bytes()
+        line = raw.splitlines(keepends=True)[item['line'] - 1]
+        assert digest(raw) == item['source_file_sha256'] and digest(line) == item['line_sha256']
+        assert json.loads(line) == item['record']
+        assert item['record']['payload']['message'] == session[role]
+
+registry = load(fixture / 'scopes.json')
+foreign_id = next(p['id'] for p in registry['projects'].values() if Path(p['root']).name == 'project-b')
+db_path = fixture / 'memory.sqlite'
+before_sha = sha(db_path)
+captures = []
+snapshot = {}
+with sqlite3.connect(db_path.as_uri() + '?mode=ro', uri=True) as db:
+    db.row_factory = sqlite3.Row
+    rows = db.execute("select * from episodic_events where source='codex'").fetchall()
+    assert len(rows) == 4
+    assert {(row['session_id'], row['role']) for row in rows} == {(s, role) for s in sessions for role in ('user', 'assistant')}
+    for row in rows:
+        meta = json.loads(row['metadata'])
+        session = sessions[row['session_id']]
+        assert row['content'] == session[row['role']]
+        assert meta['session_id'] == row['session_id']
+        assert row['scope_id'] == meta['scope_id'] == meta['project_id'] == r['target']['scope_id']
+        assert meta['user_profile_id'] == PROFILE and meta['scope'] == 'project'
+        assert meta['host'] == 'codex' and meta['source_kind'] == 'codex_hook'
+        event = 'UserPromptSubmit' if row['role'] == 'user' else 'Stop'
+        assert meta['source_ref'] == event + ':' + session['turn']
+        identity = [PROFILE, meta['project_id'], meta.get('workspace_id'), row['session_id'], event, session['turn'], row['role'], row['content']]
+        expected = 'codex:' + digest(json.dumps(identity, ensure_ascii=False, separators=(',', ':')).encode())
+        assert meta['source_event_id'] == expected
+        if row['session_id'] == r['outage_session_id']:
+            entry = next(x for x in pending if x['payload']['role'] == row['role'])
+            payload = entry['payload']
+            assert row['id'] == entry['event_id'] and entry['operation'] == 'capture'
+            assert payload['event_id'] == expected and payload['content'] == row['content']
+            assert payload['context']['session_id'] == row['session_id']
+            assert payload['context']['project_id'] == meta['project_id']
+            assert payload['context']['user_profile_id'] == PROFILE
+            assert payload['context']['host'] == 'codex' and payload['source_ref'] == meta['source_ref']
+        evidence = [dict(e) for e in db.execute('select * from fact_evidence where source_event_id=?', (row['id'],))]
+        assert len(evidence) == 1 and evidence[0]['source_ref'] == meta['source_ref']
+        fact = db.execute('select metadata from memory_chunks where id=?', (evidence[0]['fact_id'],)).fetchone()
+        fm = json.loads(fact['metadata'])
+        assert fm['user_profile_id'] == PROFILE and fm['scope_id'] == r['target']['scope_id']
+        captures.append({'id': row['id'], 'role': row['role'], 'content_sha256': digest(row['content'].encode()), 'metadata': meta, 'evidence': evidence})
+    foreign = db.execute('select content,metadata from memory_chunks where id=?', (r['target']['foreign_id'],)).fetchone()
+    fm = json.loads(foreign['metadata'])
+    assert fm['project_id'] == fm['scope_id'] == foreign_id
+    assert foreign['content'] == 'The project shutdown probe uses foreign-canary-849 release labels.'
+    for table in ('memory_chunks', 'episodic_events', 'fact_evidence', 'memory_jobs'):
+        values = []
+        for row in db.execute('select * from ' + table):
+            item = {k: ({'bytes_sha256': digest(v)} if isinstance(v, bytes) else v) for k, v in dict(row).items()}
+            values.append(json.dumps(item, sort_keys=True))
+        snapshot[table] = {'rows': len(values), 'sha256': digest(json.dumps(sorted(values)).encode())}
+    snapshot['capture_count'] = len(rows)
+assert snapshot == r['final_database'] and sha(db_path) == before_sha
+
+dependencies = []
+for name, expected in r['helper_pins'].items():
+    archived = ROOT / 'docs/validation/2026-09-18/native-codex-stop-repeat-v1' / (name + '.txt')
+    assert sha(ROOT / '.venv' / name) == expected == sha(archived)
+    dependencies.append({'repository_path': archived.relative_to(ROOT).as_posix(), 'sha256': expected})
+verification = {'status': 'passed', 'source_commit': SOURCE, 'wheel_sha256': WHEEL_SHA,
+                'report_sha256': sha(BASE / 'report.json'), 'runner_sha256': sha(RUNNER),
+                'archiver_sha256': sha(Path(__file__)), 'installed_files_verified': checked,
+                'captures': captures, 'snapshot': snapshot, 'database_sha256': before_sha,
+                'foreign_project_id': foreign_id, 'cleanup_verified': True,
+                'scope': 'Native generated-hook automatic replay after explicit fixture service recovery; no direct replay invocation or full-host acceptance.'}
+OUT.mkdir()
+for name in ('report.json', 'native-outbox-before-recovery.json', 'startup-failure.stdout.log', 'startup-failure.stderr.log'):
+    shutil.copyfile(BASE / name, OUT / name)
+shutil.copyfile(RUNNER, OUT / (RUNNER.name + '.txt'))
+shutil.copyfile(__file__, OUT / (Path(__file__).name + '.txt'))
+dump(OUT / 'verification.json', verification)
+dump(OUT / 'helper-dependencies.json', dependencies)
+(OUT / '.gitattributes').write_text('* -text\n*.log -whitespace\n*.py.txt -whitespace\n', encoding='utf-8')
+(OUT / 'README.md').write_text('''# Automatic recovery in a fresh native Codex session
+
+Two separate Codex CLI 0.146.0 sessions used the installed c25ed98 wheel and unchanged generated hooks. The first session ran while malformed disposable TOML prevented service startup. Its prompt and final answer remained in the outbox, and SQLite retained zero Codex events. The startup stderr records TOMLDecodeError. The descriptor monitor observed no descriptor in 859 samples, with a maximum gap of 65.1319 ms; sampling cannot rule out a shorter transient.
+
+After the harness explicitly restored the fixture service, a fresh Codex session automatically drained the old queue through its generated hooks. The harness never called replay_outbox. Both native processes exited zero, neither made a model-directed tool call, and the outbox was empty before any subsequent direct maintenance request. The database contained exactly four captured messages: the original two under their original session and turn, plus the new session's prompt and final answer. Each had one evidence link and the expected project, profile, role, and deterministic source identity. The foreign-project control remained intact. Complete-row hashes for facts, events, evidence, and jobs were unchanged after maintenance, service close, restart, and final cleanup.
+
+This closes one native automatic queue-replay observation after startup failure. The service used deterministic lexical embeddings and disabled optional modules. Service restoration was explicit; configured real-provider daemon recovery was not tested. The exact hook that first drained the queue was not traced: SessionStart retrieval or a later capture hook can trigger replay. This does not establish process-kill recovery, concurrent-host behavior, latency percentiles, Desktop or Hermes acceptance, complete host capture, or real-model extraction quality. The earlier punctuation assertion failure and separate direct replay result remain preserved in the preceding startup-outage archive.
+
+The immutable runner, original report, pre-recovery queue, startup logs, and independent verification are retained. The report contains selected synthetic native messages with line and file hashes. Full sessions, credentials, and databases are not archived. Pinned helper dependencies are linked to their existing byte-preserved copies.
+''', encoding='utf-8')
+files = {p.relative_to(OUT).as_posix(): {'bytes': p.stat().st_size, 'sha256': sha(p)} for p in sorted(OUT.rglob('*')) if p.is_file()}
+dump(OUT / 'evidence-index.json', {'files': files})
+print(json.dumps({'status': 'passed', 'indexed_files': len(files), 'native_events': len(captures), 'evidence_rows': sum(len(c['evidence']) for c in captures)}))
