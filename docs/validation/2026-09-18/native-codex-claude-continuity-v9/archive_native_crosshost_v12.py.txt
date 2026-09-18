@@ -1,0 +1,453 @@
+"""Archive the terminal native Codex and Claude continuity v9 evidence.
+
+This helper validates selected native records and a read-only SQLite reopen,
+then writes a bounded evidence archive. It does not copy private sessions,
+credentials, raw transcripts, or the database.
+"""
+from __future__ import annotations
+
+import hashlib
+import json
+from pathlib import Path
+import shutil
+import sqlite3
+from typing import Any
+
+
+ROOT = Path(__file__).resolve().parents[1]
+REPORT_PATH = Path(
+    "C:/Users/Ant/AppData/Local/Temp/mnemos-native-crosshost-v9/report.json"
+)
+ARCHIVE = ROOT / "docs/validation/2026-09-18/native-codex-claude-continuity-v9"
+RUNNER = ROOT / ".venv/native_codex_claude_continuity_v8.py"
+SOURCE = "5af3d15b889858f60c7d27507dc4366f0a45f40a"
+WHEEL = "f3135720f53591df6ae5b2eed09a7c0c59105998bfd7379190e1eee439ba0954"
+
+
+def sha(raw: bytes) -> str:
+    return hashlib.sha256(raw).hexdigest()
+
+
+def read_json(path: Path) -> Any:
+    return json.loads(path.read_text(encoding="utf-8"))
+
+
+def json_value(value: Any) -> Any:
+    if isinstance(value, str):
+        try:
+            return json.loads(value)
+        except json.JSONDecodeError:
+            return value
+    return value
+
+
+def codex_sessions(home: Path) -> list[Path]:
+    return sorted((home / "sessions").rglob("*.jsonl"))
+
+
+def selected_codex(home_rel: str, expected_tools: tuple[str, ...], fixture: Path):
+    home = (fixture / home_rel).resolve()
+    if not home.is_relative_to(fixture.resolve()):
+        raise AssertionError("Codex home escaped fixture")
+    selected = []
+    for source in codex_sessions(home):
+        source_bytes = source.read_bytes()
+        source_hash = sha(source_bytes)
+        for line_number, raw_line in enumerate(
+            source_bytes.splitlines(keepends=True), 1
+        ):
+            try:
+                record = json.loads(raw_line)
+            except json.JSONDecodeError:
+                continue
+            payload = record.get("payload", {})
+            if payload.get("type") != "mcp_tool_call_end":
+                continue
+            invocation = payload.get("invocation", {})
+            if invocation.get("server") != "mnemos":
+                continue
+            tool = invocation.get("tool")
+            if tool not in expected_tools:
+                continue
+            result = payload.get("result")
+            ok = result.get("Ok") if isinstance(result, dict) else None
+            if not isinstance(ok, dict) or ok.get("isError") is not False:
+                raise AssertionError(f"Codex {tool} result was not successful")
+            structured = json_value(ok.get("structuredContent", {}).get("result"))
+            content = json_value(
+                (ok.get("content") or [{}])[0].get("text")
+            )
+            if structured != content or not isinstance(structured, dict):
+                raise AssertionError(f"Codex {tool} result payload differs")
+            selected.append(
+                {
+                    "source": str(source.relative_to(home)).replace("\\", "/"),
+                    "line": line_number,
+                    "line_sha256": sha(raw_line),
+                    "source_file_sha256": source_hash,
+                    "tool": tool,
+                    "call_id": payload.get("call_id"),
+                    "arguments": invocation.get("arguments", {}),
+                    "result": structured,
+                }
+            )
+    if [item["tool"] for item in selected] != list(expected_tools):
+        raise AssertionError(
+            f"Codex tools differ: {[item['tool'] for item in selected]} != {expected_tools}"
+        )
+    return selected
+
+
+def claude_blocks(phase: str, report: dict[str, Any], fixture: Path):
+    path = fixture / f"native-{phase}-stdout.jsonl"
+    raw = path.read_bytes()
+    summary = report[
+        {
+            "crosshost-read": "claude_read",
+            "crosshost-correct": "claude_correction",
+            "crosshost-forget": "claude_forget",
+        }[phase]
+    ]
+    if sha(raw.replace(b"\r\n", b"\n")) != summary["stdout_sha256"]:
+        raise AssertionError(f"Claude {phase} stdout hash differs")
+    selected = []
+    calls = []
+    results = []
+    for line_number, raw_line in enumerate(raw.splitlines(keepends=True), 1):
+        record = json.loads(raw_line)
+        nodes = record.get("message", {}).get("content", [])
+        if not isinstance(nodes, list):
+            continue
+        for node in nodes:
+            if not isinstance(node, dict) or node.get("type") not in {
+                "tool_use",
+                "tool_result",
+            }:
+                continue
+            selected.append(
+                {
+                    "phase": phase,
+                    "line": line_number,
+                    "line_sha256": sha(raw_line),
+                    "source_file_sha256": sha(raw),
+                    "node": node,
+                }
+            )
+            if node["type"] == "tool_use":
+                calls.append(node)
+            else:
+                results.append(node)
+    if [item.get("id") for item in calls] != [
+        item.get("tool_use_id") for item in results
+    ]:
+        raise AssertionError(f"Claude {phase} call/result IDs differ")
+    if [item["name"] for item in calls] != summary["call_names"]:
+        raise AssertionError(f"Claude {phase} tool names differ")
+    if any(item.get("is_error") for item in results):
+        raise AssertionError(f"Claude {phase} returned a tool error")
+    decoded = []
+    for result in results:
+        value = json_value(result.get("content"))
+        if isinstance(value, dict) and "result" in value:
+            value = json_value(value["result"])
+        decoded.append(value)
+    return selected, calls, decoded
+
+
+def fact_slim(row: sqlite3.Row | None, expected_id: str) -> dict[str, Any]:
+    if row is None:
+        return {"id": expected_id, "present": False}
+    metadata = json.loads(row[3]) if row[3] else {}
+    return {
+        "id": row[0],
+        "present": True,
+        "version": row[1],
+        "content_sha256": sha((row[2] or "").encode("utf-8")),
+        "scope": metadata.get("scope"),
+        "scope_id": metadata.get("scope_id"),
+        "assertion_status": metadata.get("assertion_status"),
+    }
+
+
+def sqlite_reopen(fixture: Path, report: dict[str, Any]) -> dict[str, Any]:
+    target = report["target"]
+    unrelated = report["before_forget"]["unrelated_fact_id"]
+    foreign = target["foreign_fact_id"]
+    path = fixture / "memory.sqlite"
+    with sqlite3.connect(path.as_uri() + "?mode=ro", uri=True) as db:
+        db.row_factory = sqlite3.Row
+        rows = db.execute(
+            "select id, version, content, metadata from memory_chunks where id in (?, ?, ?)",
+            (target["fact_id"], unrelated, foreign),
+        ).fetchall()
+        by_id = {row[0]: row for row in rows}
+        counts = {}
+        for table in (
+            "memory_chunks",
+            "fact_evidence",
+            "episodic_events",
+            "fact_revisions",
+            "memory_suppressions",
+        ):
+            counts[table] = db.execute(f"select count(*) from {table}").fetchone()[0]
+        summary = {
+            "opened_read_only": True,
+            "target": fact_slim(by_id.get(target["fact_id"]), target["fact_id"]),
+            "unrelated": fact_slim(by_id.get(unrelated), unrelated),
+            "foreign": fact_slim(by_id.get(foreign), foreign),
+            "table_counts": counts,
+            "target_evidence_count": db.execute(
+                "select count(*) from fact_evidence where fact_id=?", (target["fact_id"],)
+            ).fetchone()[0],
+            "target_revision_count": db.execute(
+                "select count(*) from fact_revisions where fact_id=?", (target["fact_id"],)
+            ).fetchone()[0],
+        }
+    if summary["target"]["present"]:
+        raise AssertionError("forgotten target remains in reopened SQLite")
+    if not summary["unrelated"]["present"] or not summary["foreign"]["present"]:
+        raise AssertionError("unrelated or foreign control disappeared")
+    if summary["target_evidence_count"] or summary["target_revision_count"]:
+        raise AssertionError("forgotten target evidence or revisions remain")
+    return summary
+
+
+def selected_final_answer(fixture: Path, report: dict[str, Any]):
+    entry = report["codex_final_answers"][0]
+    source = (fixture / "codex-final-home/.codex" / entry["source"]).resolve()
+    home = (fixture / "codex-final-home/.codex").resolve()
+    if not source.is_relative_to(home):
+        raise AssertionError("final answer source escaped Codex home")
+    raw_lines = source.read_bytes().splitlines(keepends=True)
+    raw_line = raw_lines[entry["line"] - 1]
+    if sha(raw_line) != entry["line_sha256"]:
+        raise AssertionError("final answer line changed")
+    record = json.loads(raw_line)
+    payload = record.get("payload", {})
+    if payload.get("type") != "agent_message" or payload.get("message") != entry["text"]:
+        raise AssertionError("final answer payload differs")
+    return {
+        "source": entry["source"],
+        "line": entry["line"],
+        "line_sha256": sha(raw_line),
+        "source_file_sha256": sha(source.read_bytes()),
+        "text_sha256": sha(entry["text"].encode("utf-8")),
+        "text": entry["text"],
+    }
+
+
+def main() -> None:
+    if ARCHIVE.exists():
+        raise FileExistsError(ARCHIVE)
+    report = read_json(REPORT_PATH)
+    if report.get("status") != "observed_partial" or not report.get("finished_at"):
+        raise AssertionError("v9 report is not terminal observed-partial evidence")
+    if report.get("source_commit") != SOURCE:
+        raise AssertionError("unexpected v9 source commit")
+    package = report["provenance"]["package_provenance"]
+    if package.get("wheel_sha256_observed") != WHEEL or package.get("mismatches"):
+        raise AssertionError("unexpected v9 wheel provenance")
+    if sha(RUNNER.read_bytes()) != report["runner_sha256"]:
+        raise AssertionError("executed v8 runner changed")
+    fixture = Path(report["fixture"])
+    if not fixture.is_dir():
+        raise FileNotFoundError(fixture)
+    criteria = report.get("criteria", {})
+    if set(criteria) != {
+        "target_absent_before_native_teach",
+        "native_codex_store_and_consolidate_verified",
+        "target_durable_after_native_teach",
+        "target_survives_service_restart",
+        "native_claude_retrieves_codex_fact_after_restart",
+        "old_captured_mentions_qualified_in_native_context",
+        "claude_correction_survives_second_restart",
+        "native_codex_retrieves_claude_correction_after_restart",
+        "native_claude_related_forget_reviewed_selection",
+        "native_claude_similarity_candidate_observed",
+        "native_claude_forget_target_absent",
+        "direct_replay_does_not_resurrect_target",
+        "native_codex_final_excludes_target_and_foreign",
+        "native_codex_final_retains_unrelated",
+        "native_codex_final_answers_do_not_echo_target",
+    } or not all(criteria.values()):
+        raise AssertionError("v9 report criteria are incomplete")
+
+    codex_teach = selected_codex("codex-home/.codex", ("mnemos_store", "mnemos_consolidate"), fixture)
+    codex_reverse = selected_codex("codex-recall-home/.codex", ("mnemos_retrieve",), fixture)
+    codex_final = selected_codex(
+        "codex-final-home/.codex", ("mnemos_retrieve", "mnemos_retrieve"), fixture
+    )
+    claude_selected = []
+    claude_values = {}
+    for phase in ("crosshost-read", "crosshost-correct", "crosshost-forget"):
+        selected, calls, values = claude_blocks(phase, report, fixture)
+        claude_selected.extend(selected)
+        claude_values[phase] = {"calls": calls, "results": values}
+
+    target = report["target"]
+    target_id = target["fact_id"]
+    foreign_id = target["foreign_fact_id"]
+    unrelated_id = report["before_forget"]["unrelated_fact_id"]
+    read_facts = claude_values["crosshost-read"]["results"][0]["facts"]
+    correction_facts = claude_values["crosshost-correct"]["results"][2]["facts"]
+    reverse_facts = codex_reverse[0]["result"]["facts"]
+    forget_facts = claude_values["crosshost-forget"]["results"][2]["facts"]
+    final_first = codex_final[0]["result"]
+    final_second = codex_final[1]["result"]
+    target_read = next(item for item in read_facts if item["id"] == target_id)
+    target_correct = next(item for item in correction_facts if item["id"] == target_id)
+    target_reverse = next(item for item in reverse_facts if item["id"] == target_id)
+    if target_read["version"] != 1 or target_correct["version"] != 2 or target_reverse["version"] != 2:
+        raise AssertionError("native version progression was not observed")
+    if target_read["scope_id"] != target["project_id"] or target_correct["scope_id"] != target["project_id"]:
+        raise AssertionError("native target scope differs")
+    if foreign_id in {item["id"] for item in read_facts + correction_facts + reverse_facts}:
+        raise AssertionError("foreign fact leaked into native retrieval")
+    unknown_mentions = [
+        item
+        for item in read_facts
+        if "cedar-otter" in item.get("content", "")
+        and item.get("assertion_status") == "unknown"
+    ]
+    if not unknown_mentions:
+        raise AssertionError("old captured mention was not qualified")
+    if target_id in {item["id"] for item in forget_facts} or target_id in {
+        item["id"] for item in final_first["facts"]
+    }:
+        raise AssertionError("target remained in post-forget retrieval")
+    if unrelated_id not in {item["id"] for item in forget_facts + final_second["facts"]}:
+        raise AssertionError("unrelated control was not retained")
+    if foreign_id in {item["id"] for item in final_first["facts"]}:
+        raise AssertionError("foreign fact remained in final Codex retrieval")
+    selected = report["forget_selection"]
+    preview = report["forget_preview"]
+    candidate_ids = {item["fact_id"] for item in preview["candidates"]}
+    if preview["status"] != "preview" or not preview["complete"]:
+        raise AssertionError("forget preview was not complete")
+    if not set(selected["selected_fact_ids"]).issubset(candidate_ids):
+        raise AssertionError("selected forget IDs were not preview candidates")
+    if not any(item.get("match_type") == "similarity_candidate" for item in preview["candidates"]):
+        raise AssertionError("similarity candidate was not observed")
+    if report["direct_replay"][0].get("processing_status") != "suppressed" or not report[
+        "direct_replay_maintenance"
+    ]["target_present"] is False:
+        raise AssertionError("direct replay suppression was not observed")
+    final_answer = selected_final_answer(fixture, report)
+    if any(marker in final_answer["text"].lower() for marker in ("cedar-otter", "maple-heron")):
+        raise AssertionError("final answer echoed a target marker")
+    sqlite_summary = sqlite_reopen(fixture, report)
+    cleanup = report["cleanup"]
+    if cleanup.get("errors") or not all(
+        value for key, value in cleanup.items() if key != "errors"
+    ):
+        raise AssertionError("native cleanup was not verified")
+
+    ARCHIVE.mkdir(parents=True)
+    shutil.copyfile(REPORT_PATH, ARCHIVE / "report.json")
+    helper_paths = {RUNNER.name: RUNNER}
+    for name, expected in report.get("helper_pins", {}).items():
+        path = ROOT / ".venv" / name
+        if not path.exists() or sha(path.read_bytes()) != expected:
+            raise AssertionError(f"helper pin mismatch: {name}")
+        helper_paths[Path(name).name] = path
+    for name, path in helper_paths.items():
+        shutil.copyfile(path, ARCHIVE / f"{name}.txt")
+    shutil.copyfile(__file__, ARCHIVE / "archive_native_crosshost_v12.py.txt")
+    (ARCHIVE / "selected-codex-records.json").write_text(
+        json.dumps(
+            {"teach": codex_teach, "reverse": codex_reverse, "final": codex_final},
+            indent=2,
+        )
+        + "\n",
+        encoding="utf-8",
+    )
+    (ARCHIVE / "selected-claude-tool-records.json").write_text(
+        json.dumps(claude_selected, indent=2) + "\n", encoding="utf-8"
+    )
+    (ARCHIVE / "final-answer-source.json").write_text(
+        json.dumps(final_answer, indent=2) + "\n", encoding="utf-8"
+    )
+    (ARCHIVE / "forget-review.json").write_text(
+        json.dumps(
+            {
+                "preview": preview,
+                "selection": selected,
+                "native_forget_calls": report["native_forget_calls"],
+                "result": report["claude_forget_result"],
+                "direct_replay": report["direct_replay"],
+                "direct_replay_maintenance": report["direct_replay_maintenance"],
+            },
+            indent=2,
+        )
+        + "\n",
+        encoding="utf-8",
+    )
+    (ARCHIVE / "sqlite-readonly-summary.json").write_text(
+        json.dumps(sqlite_summary, indent=2) + "\n", encoding="utf-8"
+    )
+    acceptance = {
+        "status": "observed_partial",
+        "report_criteria": criteria,
+        "selected_record_checks": {
+            "codex_store_and_consolidate": True,
+            "claude_read_target_version_1": target_read["version"] == 1,
+            "claude_correction_target_version_2": target_correct["version"] == 2,
+            "codex_reverse_target_version_2": target_reverse["version"] == 2,
+            "old_mention_unknown": True,
+            "preview_complete_and_digest_bound": True,
+            "similarity_candidate_selected": True,
+            "post_forget_target_absent": target_id not in {item["id"] for item in forget_facts},
+            "direct_replay_suppressed": report["direct_replay"][0]["processing_status"] == "suppressed",
+            "final_two_queries": len(codex_final) == 2,
+            "final_target_and_foreign_absent": target_id not in {item["id"] for item in final_first["facts"]}
+            and foreign_id not in {item["id"] for item in final_first["facts"]},
+            "final_unrelated_present": unrelated_id in {item["id"] for item in final_second["facts"]},
+            "final_answer_no_target_markers": True,
+            "sqlite_reopen_target_absent": not sqlite_summary["target"]["present"],
+        },
+        "processes": {
+            "codex": report["codex_process"],
+            "reverse": report["codex_reverse_process"],
+            "final": report["codex_final_process"],
+            "claude_read": report["claude_read"],
+            "claude_correction": report["claude_correction"],
+            "claude_forget": report["claude_forget"],
+        },
+        "final_answer": final_answer,
+        "sqlite": sqlite_summary,
+        "cleanup": cleanup,
+        "limits": [
+            "Observed partial native evidence; this is not broad native acceptance.",
+            "The fixture uses deterministic lexical vectors, all modules disabled, and unavailable cognition.",
+            "The native hook records are degraded and this archive does not claim complete capture or hook replay.",
+            "Clean process exits do not prove shutdown acceptance or whole-topic erasure.",
+            "The final assistant answer is preserved as evidence and is not a model-quality result.",
+        ],
+    }
+    (ARCHIVE / "acceptance.json").write_text(
+        json.dumps(acceptance, indent=2) + "\n", encoding="utf-8"
+    )
+    (ARCHIVE / ".gitattributes").write_text(
+        "* -text\n*.jsonl -whitespace\n", encoding="utf-8"
+    )
+    readme = (
+        "# Native Codex and Claude continuity v9\n\n"
+        "This terminal run is preserved as observed partial evidence. Codex taught and later retrieved the corrected project fact; Claude retrieved the Codex fact, corrected it, reviewed exact and similarity candidates, and committed the selected related forget. The direct replay was suppressed, the target was absent after the forget, the unrelated project preference remained, and the final Codex phase completed the two requested retrievals. The final assistant answer did not echo either target label.\n\n"
+        "The archive validates those claims against selected native MCP completion records, tool-use/result pairs, the final answer source line, and an independent read-only SQLite reopen. The complete runner report remains the authority for the 15 recorded criteria; this archive does not promote them to broad native acceptance. Native Stop hook completion remained degraded/timeout-limited, and the run does not establish complete capture, hook replay, model quality, Hermes continuity, or whole-topic erasure.\n\n"
+        "The fixture uses deterministic lexical hash vectors, all five cognition modules are disabled, and cognition is unavailable. Similarity is an advisory review path, not paraphrase-quality evidence. Raw native sessions, credentials, and the SQLite database are not archived.\n"
+    )
+    (ARCHIVE / "README.md").write_text(readme, encoding="utf-8")
+    files = {}
+    for path in sorted(ARCHIVE.iterdir()):
+        if path.name == "evidence-index.json" or not path.is_file():
+            continue
+        files[path.name] = {"bytes": path.stat().st_size, "sha256": sha(path.read_bytes())}
+    (ARCHIVE / "evidence-index.json").write_text(
+        json.dumps({"archive": str(ARCHIVE), "files": files}, indent=2) + "\n",
+        encoding="utf-8",
+    )
+    print(json.dumps({"status": "passed", "archive": str(ARCHIVE), "files": len(files)}))
+
+
+if __name__ == "__main__":
+    main()

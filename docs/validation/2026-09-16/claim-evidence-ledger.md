@@ -11,9 +11,8 @@ assertions. Exact normalized forget
 suppressions now apply before source-role attribution and again at atomic
 extraction commit using the persisted event role. Eight regression cases include
 independent scope/profile isolation, unrelated proposals, explicit reteaching,
-support preservation, and retained unknown paraphrases. This is source evidence;
-native attempts below do not include this repair, and the frozen Ollama evaluation
-remains separately bound.
+support preservation, and retained unknown paraphrases. Native v9 also includes
+this repair; the frozen Ollama evaluation remains separately bound.
 
 The preceding [similarity validation](../2026-09-18/related-forget-similarity-v1/README.md)
 passes 1,022 tests with four skips and static checks. It adds bounded advisory
@@ -28,7 +27,17 @@ write-safety repair. It includes the host-context authority changes. This is a
 source checkpoint, now supplemented by the installed verification below.
 Native-host evidence remains bound to its earlier source revisions.
 
-The later [native v7 attempt](../2026-09-18/native-codex-claude-continuity-v7/README.md)
+The [native v9 run](../2026-09-18/native-codex-claude-continuity-v9/README.md)
+on installed `5af3d15` passes 15 bounded lifecycle checks: cross-host correction
+survives restart, reviewed deletion removes the target and five captured copies,
+direct replay does not restore the target, and final Codex recall and answers
+exclude both convention values while preserving the unrelated preference.
+The run exercised similarity suggestions with fixture lexical vectors. All
+Codex processes exited zero, but reverse and final Stop hooks timed out after
+three seconds. Complete capture, native hook replay, Hermes, Desktop, and
+real-model quality remain unverified.
+
+The earlier [native v7 attempt](../2026-09-18/native-codex-claude-continuity-v7/README.md)
 on installed `ac139dd` committed related deletion before Claude exceeded its
 phase budget. SQLite reopen confirms the target and five selected copies absent,
 with unrelated and foreign facts retained. Replay and final recall did not run.

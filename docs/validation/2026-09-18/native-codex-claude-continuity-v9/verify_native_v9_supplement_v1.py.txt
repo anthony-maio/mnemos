@@ -1,0 +1,305 @@
+"""Add independent, bounded predicates to the archived native v9 evidence."""
+from __future__ import annotations
+
+import hashlib
+import json
+from pathlib import Path
+import sqlite3
+from typing import Any
+
+
+ROOT = Path(__file__).resolve().parents[1]
+ARCHIVE = ROOT / "docs/validation/2026-09-18/native-codex-claude-continuity-v9"
+REPORT = Path("C:/Users/Ant/AppData/Local/Temp/mnemos-native-crosshost-v9/report.json")
+FIXTURE = Path("C:/Users/Ant/AppData/Local/Temp/mnemos-native-crosshost-5prkvw_u")
+
+
+def sha(raw: bytes) -> str:
+    return hashlib.sha256(raw).hexdigest()
+
+
+def decode(value: Any) -> Any:
+    if isinstance(value, str):
+        try:
+            return json.loads(value)
+        except json.JSONDecodeError:
+            return value
+    return value
+
+
+def tool_result(node: dict[str, Any]) -> Any:
+    value = decode(node.get("content"))
+    if isinstance(value, dict) and "result" in value:
+        value = decode(value["result"])
+    return value
+
+
+def grouped_claude() -> dict[str, list[dict[str, Any]]]:
+    grouped: dict[str, list[dict[str, Any]]] = {}
+    for item in json.loads(
+        (ARCHIVE / "selected-claude-tool-records.json").read_text(encoding="utf-8")
+    ):
+        grouped.setdefault(item["phase"], []).append(item["node"])
+    return grouped
+
+
+def selected_codex() -> dict[str, list[dict[str, Any]]]:
+    return json.loads(
+        (ARCHIVE / "selected-codex-records.json").read_text(encoding="utf-8")
+    )
+
+
+def main() -> None:
+    if not ARCHIVE.is_dir() or not FIXTURE.is_dir():
+        raise FileNotFoundError("v9 archive or fixture is missing")
+    report = json.loads(REPORT.read_text(encoding="utf-8"))
+    if report.get("status") != "observed_partial":
+        raise AssertionError("v9 is not observed-partial evidence")
+    grouped = grouped_claude()
+    codex = selected_codex()
+    target = report["target"]
+    target_id = target["fact_id"]
+    foreign_id = target["foreign_fact_id"]
+    unrelated_id = report["before_forget"]["unrelated_fact_id"]
+    preview = report["forget_preview"]
+    selection = report["forget_selection"]
+
+    preview_use = next(
+        node
+        for node in grouped["crosshost-forget"]
+        if node.get("type") == "tool_use"
+        and node.get("name", "").endswith("mnemos_forget_preview")
+    )
+    preview_result_node = next(
+        node
+        for node in grouped["crosshost-forget"]
+        if node.get("type") == "tool_result"
+        and node.get("tool_use_id") == preview_use.get("id")
+    )
+    preview_result = tool_result(preview_result_node)
+    if not isinstance(preview_result, dict):
+        raise AssertionError("native preview result is not an object")
+    related_use = next(
+        node
+        for node in grouped["crosshost-forget"]
+        if node.get("type") == "tool_use"
+        and node.get("name", "").endswith("mnemos_forget_related")
+    )
+    related_result_node = next(
+        node
+        for node in grouped["crosshost-forget"]
+        if node.get("type") == "tool_result"
+        and node.get("tool_use_id") == related_use.get("id")
+    )
+    related_result = tool_result(related_result_node)
+    candidates = preview_result.get("candidates", [])
+    candidate_by_id = {item["fact_id"]: item for item in candidates}
+    selected_ids = selection["selected_fact_ids"]
+    selected_candidates = [candidate_by_id[item] for item in selected_ids]
+    required_sources = {
+        source_id
+        for candidate in selected_candidates
+        for source_id in candidate.get("required_source_event_ids", [])
+    }
+    related_input = related_use["input"]
+    preview_digest_ok = (
+        preview_use["input"]
+        == {
+            "fact_id": target_id,
+            "expected_version": 2,
+            "limit": 100,
+        }
+        and preview_result.get("status") == "preview"
+        and preview_result.get("complete") is True
+        and preview_result.get("preview_digest") == selection["preview_digest"]
+        and related_input["preview_digest"] == preview_result["preview_digest"]
+        and related_input["preview_limit"] == preview_result["limit"]
+    )
+    selected_similarity_ok = any(
+        candidate["match_type"] == "similarity_candidate"
+        for candidate in selected_candidates
+    )
+    dependency_binding_ok = (
+        set(related_input["selected_fact_ids"]) == set(selected_ids)
+        and set(related_input["selected_source_event_ids"]) == required_sources
+        and set(selected_ids).issubset(candidate_by_id)
+    )
+    related_payload = related_result
+    related_commit_ok = (
+        isinstance(related_payload, dict)
+        and related_payload.get("status") == "committed"
+        and related_payload.get("forgotten") is True
+        and related_payload.get("fact_id") == target_id
+        and set(related_payload.get("selected_fact_ids", []))
+        == {target_id, *selected_ids}
+        and set(related_payload.get("selected_source_event_ids", []))
+        == required_sources
+    )
+
+    teach = codex["teach"]
+    teach_result = teach[0]["result"]
+    consolidate_result = teach[1]["result"]
+    teaching_ok = (
+        teach[0]["tool"] == "mnemos_store"
+        and teach_result.get("status") == "committed"
+        and teach_result.get("event_committed") is True
+        and teach_result.get("scope_id") == target["project_id"]
+        and teach[1]["tool"] == "mnemos_consolidate"
+        and consolidate_result.get("maintenance", {}).get("failed_count") == 0
+    )
+    before = report["before_forget"]["target"]
+    before_forget_ok = (
+        before.get("id") == target_id
+        and before.get("version") == 2
+        and before.get("content") == target["replacement"]
+    )
+
+    final_first, final_second = codex["final"]
+    final_args_ok = (
+        final_first["tool"] == final_second["tool"] == "mnemos_retrieve"
+        and final_first["arguments"]
+        == {
+            "query": "project continuity convention for release labels",
+            "current_scope": "project",
+            "allowed_scopes": ["project"],
+        }
+        and final_second["arguments"]
+        == {
+            "query": "retained project preference",
+            "current_scope": "project",
+            "allowed_scopes": ["project"],
+        }
+    )
+    first_ids = {item["id"] for item in final_first["result"].get("facts", [])}
+    second_ids = {item["id"] for item in final_second["result"].get("facts", [])}
+    final_results_ok = (
+        target_id not in first_ids
+        and foreign_id not in first_ids
+        and target_id not in second_ids
+        and foreign_id not in second_ids
+        and unrelated_id in second_ids
+    )
+    final_source = json.loads(
+        (ARCHIVE / "final-answer-source.json").read_text(encoding="utf-8")
+    )
+    final_report_entry = report["codex_final_answers"][0]
+    final_path = (FIXTURE / "codex-final-home/.codex" / final_source["source"]).resolve()
+    final_home = (FIXTURE / "codex-final-home/.codex").resolve()
+    if not final_path.is_relative_to(final_home):
+        raise AssertionError("final answer path escaped Codex home")
+    final_lines = final_path.read_bytes().splitlines(keepends=True)
+    final_raw = final_lines[final_source["line"] - 1]
+    final_answer_ok = (
+        final_report_entry.get("phase") == "final_answer"
+        and final_source["line_sha256"] == sha(final_raw)
+        and final_source["source_file_sha256"] == sha(final_path.read_bytes())
+        and final_source["text_sha256"] == sha(final_source["text"].encode("utf-8"))
+        and json.loads(final_raw).get("payload", {}).get("type") == "agent_message"
+        and json.loads(final_raw).get("payload", {}).get("message")
+        == final_source["text"]
+        and not any(
+            marker in final_source["text"].lower()
+            for marker in ("cedar-otter", "maple-heron")
+        )
+    )
+
+    sqlite_path = FIXTURE / "memory.sqlite"
+    with sqlite3.connect(sqlite_path.as_uri() + "?mode=ro", uri=True) as db:
+        selected_all = [target_id, *selected_ids]
+        placeholders = ",".join("?" for _ in selected_all)
+        source_placeholders = ",".join("?" for _ in related_input["selected_source_event_ids"])
+        missing_counts = {}
+        for table, column in (
+            ("memory_chunks", "id"),
+            ("fact_evidence", "fact_id"),
+            ("fact_revisions", "fact_id"),
+        ):
+            missing_counts[table] = db.execute(
+                f"select count(*) from {table} where {column} in ({placeholders})",
+                selected_all,
+            ).fetchone()[0]
+        source_rows = db.execute(
+            f"select count(*) from episodic_events where id in ({source_placeholders})",
+            related_input["selected_source_event_ids"],
+        ).fetchone()[0]
+        suppression_rows = db.execute(
+            f"select count(*) from memory_suppressions where source_event_id in ({source_placeholders})",
+            related_input["selected_source_event_ids"],
+        ).fetchone()[0]
+        control_rows = db.execute(
+            "select id from memory_chunks where id in (?, ?)",
+            (foreign_id, unrelated_id),
+        ).fetchall()
+    sqlite_cleanup_ok = (
+        all(value == 0 for value in missing_counts.values())
+        and source_rows == 0
+        and suppression_rows == len(related_input["selected_source_event_ids"])
+        and {row[0] for row in control_rows} == {foreign_id, unrelated_id}
+    )
+
+    assertions = {
+        "before_forget_corrected_target_version_2": before_forget_ok,
+        "teaching_store_and_consolidate_results": teaching_ok,
+        "native_preview_status_digest_and_limit_bound": preview_digest_ok,
+        "selected_similarity_candidate_is_reviewed": selected_similarity_ok,
+        "selected_sources_equal_reviewed_dependencies": dependency_binding_ok,
+        "native_forget_result_committed_selected_ids": related_commit_ok,
+        "all_selected_copies_evidence_and_revisions_absent": sqlite_cleanup_ok,
+        "all_selected_source_events_absent_and_suppressions_present": sqlite_cleanup_ok,
+        "both_final_queries_exact_and_ordered": final_args_ok,
+        "both_final_results_exclude_target_and_foreign": final_results_ok,
+        "final_control_retains_unrelated": unrelated_id in second_ids,
+        "final_answer_phase_and_file_hashes": final_answer_ok,
+    }
+    if not all(assertions.values()):
+        raise AssertionError(
+            "supplementary predicate failed: "
+            + json.dumps({key: value for key, value in assertions.items() if not value})
+        )
+    result = {
+        "status": "supplementary_assertions_passed",
+        "scope": "Independent predicates for archived native v9 observed-partial evidence",
+        "source_commit": report["source_commit"],
+        "wheel_sha256": report["provenance"]["package_provenance"]["wheel_sha256_observed"],
+        "fixture": str(FIXTURE),
+        "assertions": assertions,
+        "selected_fact_ids": selected_ids,
+        "selected_source_event_ids": related_input["selected_source_event_ids"],
+        "selected_similarity_fact_ids": [
+            item["fact_id"]
+            for item in selected_candidates
+            if item["match_type"] == "similarity_candidate"
+        ],
+        "sqlite": {
+            "missing_counts": missing_counts,
+            "selected_source_event_rows": source_rows,
+            "suppression_rows": suppression_rows,
+            "retained_control_ids": sorted(row[0] for row in control_rows),
+        },
+        "limits": [
+            "These predicates validate bounded evidence and do not promote the run beyond observed_partial.",
+            "The fixture uses deterministic lexical vectors, disabled cognition modules, and unavailable cognition.",
+            "Native hook timeout/degraded capture and broader model-quality limits remain open.",
+        ],
+    }
+    output = ARCHIVE / "supplemental-assertions-v1.json"
+    if output.exists():
+        raise FileExistsError(output)
+    output.write_text(json.dumps(result, indent=2) + "\n", encoding="utf-8")
+    verifier_copy = ARCHIVE / "verify_native_v9_supplement_v1.py.txt"
+    if verifier_copy.exists():
+        raise FileExistsError(verifier_copy)
+    verifier_copy.write_bytes(Path(__file__).read_bytes())
+    index_path = ARCHIVE / "evidence-index.json"
+    index = json.loads(index_path.read_text(encoding="utf-8"))
+    for path in (output, verifier_copy):
+        index["files"][path.name] = {
+            "bytes": path.stat().st_size,
+            "sha256": sha(path.read_bytes()),
+        }
+    index_path.write_text(json.dumps(index, indent=2) + "\n", encoding="utf-8")
+    print(json.dumps({"status": result["status"], "archive": str(ARCHIVE)}))
+
+
+if __name__ == "__main__":
+    main()

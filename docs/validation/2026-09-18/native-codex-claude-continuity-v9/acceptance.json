@@ -1,0 +1,267 @@
+{
+  "status": "observed_partial",
+  "report_criteria": {
+    "target_absent_before_native_teach": true,
+    "native_codex_store_and_consolidate_verified": true,
+    "target_durable_after_native_teach": true,
+    "target_survives_service_restart": true,
+    "native_claude_retrieves_codex_fact_after_restart": true,
+    "old_captured_mentions_qualified_in_native_context": true,
+    "claude_correction_survives_second_restart": true,
+    "native_codex_retrieves_claude_correction_after_restart": true,
+    "native_claude_related_forget_reviewed_selection": true,
+    "native_claude_similarity_candidate_observed": true,
+    "native_claude_forget_target_absent": true,
+    "direct_replay_does_not_resurrect_target": true,
+    "native_codex_final_excludes_target_and_foreign": true,
+    "native_codex_final_retains_unrelated": true,
+    "native_codex_final_answers_do_not_echo_target": true
+  },
+  "selected_record_checks": {
+    "codex_store_and_consolidate": true,
+    "claude_read_target_version_1": true,
+    "claude_correction_target_version_2": true,
+    "codex_reverse_target_version_2": true,
+    "old_mention_unknown": true,
+    "preview_complete_and_digest_bound": true,
+    "similarity_candidate_selected": true,
+    "post_forget_target_absent": true,
+    "direct_replay_suppressed": true,
+    "final_two_queries": true,
+    "final_target_and_foreign_absent": true,
+    "final_unrelated_present": true,
+    "final_answer_no_target_markers": true,
+    "sqlite_reopen_target_absent": true
+  },
+  "processes": {
+    "codex": {
+      "returncode": 0,
+      "timed_out": false,
+      "elapsed_ms": 106538.7
+    },
+    "reverse": {
+      "returncode": 0,
+      "timed_out": false,
+      "elapsed_ms": 83577.5
+    },
+    "final": {
+      "returncode": 0,
+      "timed_out": false,
+      "elapsed_ms": 118325.9
+    },
+    "claude_read": {
+      "calls": [
+        {
+          "id": "toolu_018sNrFHB9PngCMXFoN1cgdB",
+          "name": "mcp__plugin_mnemos-memory_mnemos__mnemos_retrieve"
+        }
+      ],
+      "results": [
+        {
+          "id": "toolu_018sNrFHB9PngCMXFoN1cgdB",
+          "is_error": false,
+          "sha256": "e2a7c5c50d08c95f40b377a1ffa9352c52b88dbbc9a8ef2358851e3c214a6433"
+        }
+      ],
+      "call_names": [
+        "mcp__plugin_mnemos-memory_mnemos__mnemos_retrieve"
+      ],
+      "forbidden_call_names": [],
+      "call_result_ids_match": true,
+      "successful_results": [
+        "toolu_018sNrFHB9PngCMXFoN1cgdB"
+      ],
+      "rows": 24,
+      "json_lines": 24,
+      "phase": "crosshost-read",
+      "returncode": 0,
+      "timed_out": false,
+      "elapsed_ms": 18408.2,
+      "stdout_sha256": "cebf509c1f6f95954a695b56d93ac11885879a2f91e5665d488279400e2c5506",
+      "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "allowed_tool_names": [
+        "mcp__plugin_mnemos-memory_mnemos__mnemos_retrieve"
+      ],
+      "max_budget_usd": 0.08,
+      "max_seconds": 60
+    },
+    "claude_correction": {
+      "calls": [
+        {
+          "id": "toolu_019Dz7GqLguafja7Hff6QyNJ",
+          "name": "mcp__plugin_mnemos-memory_mnemos__mnemos_correct"
+        },
+        {
+          "id": "toolu_011qsbJvRxiPHHxrNLqAYxkG",
+          "name": "mcp__plugin_mnemos-memory_mnemos__mnemos_consolidate"
+        },
+        {
+          "id": "toolu_016FxspWZ3iEGq5ZEUqb9FNp",
+          "name": "mcp__plugin_mnemos-memory_mnemos__mnemos_retrieve"
+        }
+      ],
+      "results": [
+        {
+          "id": "toolu_019Dz7GqLguafja7Hff6QyNJ",
+          "is_error": false,
+          "sha256": "2d6cd24ecdc078b9f76dc13a435438765f09c842743d8ccc4555b07bfd3b72d5"
+        },
+        {
+          "id": "toolu_011qsbJvRxiPHHxrNLqAYxkG",
+          "is_error": false,
+          "sha256": "03765476567a4ffb278c55c2aa101d2371bb3978ab3143b9437fe172c701e733"
+        },
+        {
+          "id": "toolu_016FxspWZ3iEGq5ZEUqb9FNp",
+          "is_error": false,
+          "sha256": "8fd455f7cd6a92de68b7bacc262b5580ed234d7f140f50acb6e27f1ba4a48781"
+        }
+      ],
+      "call_names": [
+        "mcp__plugin_mnemos-memory_mnemos__mnemos_correct",
+        "mcp__plugin_mnemos-memory_mnemos__mnemos_consolidate",
+        "mcp__plugin_mnemos-memory_mnemos__mnemos_retrieve"
+      ],
+      "forbidden_call_names": [],
+      "call_result_ids_match": true,
+      "successful_results": [
+        "toolu_019Dz7GqLguafja7Hff6QyNJ",
+        "toolu_011qsbJvRxiPHHxrNLqAYxkG",
+        "toolu_016FxspWZ3iEGq5ZEUqb9FNp"
+      ],
+      "rows": 36,
+      "json_lines": 36,
+      "phase": "crosshost-correct",
+      "returncode": 0,
+      "timed_out": false,
+      "elapsed_ms": 29157.9,
+      "stdout_sha256": "24a60f2b4f694159ef2f238ecd66a2e3aff7f3b53921d0b6617c9d2213bc06aa",
+      "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "allowed_tool_names": [
+        "mcp__plugin_mnemos-memory_mnemos__mnemos_correct",
+        "mcp__plugin_mnemos-memory_mnemos__mnemos_consolidate",
+        "mcp__plugin_mnemos-memory_mnemos__mnemos_retrieve"
+      ],
+      "max_budget_usd": 0.08,
+      "max_seconds": 60
+    },
+    "claude_forget": {
+      "calls": [
+        {
+          "id": "toolu_015SGfAUshg5PMnQapYUKDhA",
+          "name": "mcp__plugin_mnemos-memory_mnemos__mnemos_forget_preview"
+        },
+        {
+          "id": "toolu_01BUfW77ACnKe72v1vM7DsCs",
+          "name": "mcp__plugin_mnemos-memory_mnemos__mnemos_forget_related"
+        },
+        {
+          "id": "toolu_01QDvETJxMGf1Nuh3qam6bFU",
+          "name": "mcp__plugin_mnemos-memory_mnemos__mnemos_retrieve"
+        }
+      ],
+      "results": [
+        {
+          "id": "toolu_015SGfAUshg5PMnQapYUKDhA",
+          "is_error": false,
+          "sha256": "f93a03875493488b4784754eac13bd0d7744484dfddea218e7d90d6d29adcf7a"
+        },
+        {
+          "id": "toolu_01BUfW77ACnKe72v1vM7DsCs",
+          "is_error": false,
+          "sha256": "e4c1323b72af8bcef69b07a7e844935472c66391750b52e02cc144f1bf364049"
+        },
+        {
+          "id": "toolu_01QDvETJxMGf1Nuh3qam6bFU",
+          "is_error": false,
+          "sha256": "329c19ee318b728a72fd8b4715e995b66ef19f7ed686ec1d7386c1e6a7105647"
+        }
+      ],
+      "call_names": [
+        "mcp__plugin_mnemos-memory_mnemos__mnemos_forget_preview",
+        "mcp__plugin_mnemos-memory_mnemos__mnemos_forget_related",
+        "mcp__plugin_mnemos-memory_mnemos__mnemos_retrieve"
+      ],
+      "forbidden_call_names": [],
+      "call_result_ids_match": true,
+      "successful_results": [
+        "toolu_015SGfAUshg5PMnQapYUKDhA",
+        "toolu_01BUfW77ACnKe72v1vM7DsCs",
+        "toolu_01QDvETJxMGf1Nuh3qam6bFU"
+      ],
+      "rows": 229,
+      "json_lines": 229,
+      "phase": "crosshost-forget",
+      "returncode": 0,
+      "timed_out": false,
+      "elapsed_ms": 106161.3,
+      "stdout_sha256": "cf44f4fd3c05f8f4e0d267fb0d3781e8936bf3dc670b26e283d9d055cd94ee84",
+      "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "allowed_tool_names": [
+        "mcp__plugin_mnemos-memory_mnemos__mnemos_forget_preview",
+        "mcp__plugin_mnemos-memory_mnemos__mnemos_forget_related",
+        "mcp__plugin_mnemos-memory_mnemos__mnemos_retrieve"
+      ],
+      "max_budget_usd": 0.5,
+      "max_seconds": 180
+    }
+  },
+  "final_answer": {
+    "source": "sessions/2026/09/18/rollout-2026-09-18T00-54-35-01a0b2dd-cbf7-7331-b988-9eaae5a9d78f.jsonl",
+    "line": 26,
+    "line_sha256": "e0f83b275f027113d36fc79c0d8473d94326e145a42a7ec6133ef6997db227a6",
+    "source_file_sha256": "6bf88c1befe18ead3767931758d4c594b873d31ed21eb92b1f61093599bbe550",
+    "text_sha256": "578df10d30b10f9be6856e3089f5b1c343b529016c25ad4e2099cf1b4dbb56d7",
+    "text": "1. `project continuity convention for release labels`: No asserted release-label convention was retrieved. The relevant asserted fact returned was: \u201cThe retained project preference is keep river-slate in release notes.\u201d\n\n2. `retained project preference`: \u201cThe retained project preference is keep river-slate in release notes.\u201d"
+  },
+  "sqlite": {
+    "opened_read_only": true,
+    "target": {
+      "id": "c3b569b2-1220-4029-a9d1-f6775050d36f",
+      "present": false
+    },
+    "unrelated": {
+      "id": "a221cd07-9d23-4191-9790-d4cbca53bb2b",
+      "present": true,
+      "version": 1,
+      "content_sha256": "be217c3a9a8faa31ddacb30f41e41dfed10ac9bc019f5bea5859db9a29bdc310",
+      "scope": "project",
+      "scope_id": "6742172b-50e8-489f-bada-d25808bdae70",
+      "assertion_status": "asserted"
+    },
+    "foreign": {
+      "id": "6b556cb4-15dd-45ab-8aa3-7bad39738d4e",
+      "present": true,
+      "version": 1,
+      "content_sha256": "4af34215ca0ffc8dcaa83f00cfa805bd21fde3271aaec0f94f356a933efe2914",
+      "scope": "project",
+      "scope_id": "477a7201-bdb5-4917-a341-6e398c3c201f",
+      "assertion_status": "asserted"
+    },
+    "table_counts": {
+      "memory_chunks": 16,
+      "fact_evidence": 16,
+      "episodic_events": 19,
+      "fact_revisions": 0,
+      "memory_suppressions": 14
+    },
+    "target_evidence_count": 0,
+    "target_revision_count": 0
+  },
+  "cleanup": {
+    "errors": [],
+    "codex_auth_absent": true,
+    "claude_auth_absent": true,
+    "codex_reverse_auth_absent": true,
+    "claude_forget_auth_absent": true,
+    "codex_final_auth_absent": true,
+    "descriptor_absent": true
+  },
+  "limits": [
+    "Observed partial native evidence; this is not broad native acceptance.",
+    "The fixture uses deterministic lexical vectors, all modules disabled, and unavailable cognition.",
+    "The native hook records are degraded and this archive does not claim complete capture or hook replay.",
+    "Clean process exits do not prove shutdown acceptance or whole-topic erasure.",
+    "The final assistant answer is preserved as evidence and is not a model-quality result."
+  ]
+}

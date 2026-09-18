@@ -13,8 +13,8 @@ Automatic extraction now checks forgotten assertions before adding source-role
 attribution. Atomic commit repeats the check using the persisted event role;
 candidate metadata cannot bypass it. Eight regressions cover scope and profile
 isolation, mixed extraction batches, explicit reteaching, support preservation,
-and the non-exact paraphrase boundary. Native attempts below still predate this
-repair, and the frozen Ollama evaluation remains separately bound.
+and the non-exact paraphrase boundary. Native v9 uses this installed package;
+the frozen Ollama evaluation remains separately bound.
 
 The preceding [similarity checkpoint](../2026-09-18/related-forget-similarity-v1/README.md)
 passes 1,022 tests with four skips, Black, strict mypy, and JavaScript syntax.
@@ -63,7 +63,19 @@ did not retain its generated ID, so its specific cause remains unproven.
 The latest installed checkpoint includes this repair. The incomplete later
 native attempts do not close the native v6 failure below.
 
-Two later native attempts used installed `ac139dd`.
+The [native v9 run](../2026-09-18/native-codex-claude-continuity-v9/README.md)
+uses installed `5af3d15` and passes 15 bounded lifecycle criteria. Codex teaching,
+Claude correction, and fresh Codex retrieval of version 2 survived service
+restarts. Claude reviewed and deleted the target and five captured copies,
+including similarity suggestions. Direct replay after restart did not restore
+the target. Final Codex made both required queries, excluded the deleted values
+and foreign fact, and retrieved the unrelated retained preference. All Codex
+processes exited zero. Reverse and final Stop hooks still timed out after three
+seconds; complete capture, native hook replay, Hermes, Desktop, real-model
+quality, and the operational pilot remain open. The fixture uses lexical vectors
+and disabled modules, so this is a bounded host-lifecycle observation.
+
+Two preceding native attempts used installed `ac139dd`.
 [V7](../2026-09-18/native-codex-claude-continuity-v7/README.md) committed
 related deletion: SQLite reopen confirms the target and five selected copies
 absent, with unrelated and foreign facts retained. Claude exceeded its phase
@@ -119,6 +131,11 @@ now keeps engine, embedding, and storage imports out of client startup. All 92
 focused cases passed with two platform skips, and strict product typing passed.
 Public exports resolve on first access. Diagnostic shell timings remain variable;
 the native Stop deadline is not yet accepted.
+The archived generated-command probe already used PowerShell with `-NoLogo`,
+`-NoProfile`, and `-NonInteractive`. Its slow timings therefore do not support
+adding those flags as a new fix. The remaining diagnostic needs timing at the
+actual native shell-entry, Python-entry, and exit boundaries; durable capture
+after a run does not prove a response within the host's deadline.
 The [complete package checkpoint](../2026-09-17/lazy-import-package-checkpoint-v1/README.md)
 at `ebe1b0d` passed 962 tests with four platform skips and all static/build
 checks. Its fresh installed wheel passed 268 selected cases with two matching
@@ -298,7 +315,7 @@ capture diagnostics and complete lifecycle acceptance remain open.
 | T14 Hermes | Installed provider integration, registry handling, Windows/WSL bridge behavior, and entry-point discovery are implemented and tested. | Installed bridge checks pass. A native model turn has not passed. |
 | T15 UI | Project enable/pause, readiness, facts/history, correction/forget, captured-copy review, job state, and routing review are exposed and covered by API/browser checks. | Local UI and control-plane checks pass. Operational pilot and native-host coverage remain open. |
 | T16 Recovery | Backup, integrity, new-path restore, suppression merge, staged reindex, and activation backup behavior are implemented and tested. | Local recovery contracts pass, including a backup during an active writer transaction. Live data migration remains separately authorization-bound. |
-| T17 Cross-host | A shared service contract covers Claude, Codex, and Hermes contexts. Native Codex taught a fact that Claude retrieved, corrected, and deleted across service restarts. Direct service replay suppression and foreign-project exclusion were observed. | V6 is FAILED overall: fresh Codex reused an unknown captured copy after selected-fact deletion and omitted its second query. Broader native related-forget, stale-context consistency, complete capture/shutdown, Hermes, and the two-week pilot remain open. |
+| T17 Cross-host | Native v9 on installed `5af3d15` passes 15 bounded lifecycle checks for Codex teaching, Claude correction and reviewed deletion, restart, direct service replay suppression, foreign-project exclusion, final recall, and retained unrelated facts. | Lexical fixture vectors and disabled modules limit the claim. All three Codex processes exited zero, but reverse and final Stop hooks timed out. Complete capture, native hook replay, Desktop, Hermes, real-model quality, and the two-week pilot remain open. Earlier v6-v8 failures remain preserved. |
 | T18 Evaluation | Frozen lifecycle datasets, request-bound extraction schemas, real-provider adapters, seven profiles, raw traces, checkpoints, Wilson intervals, and paired comparisons are implemented. | Power-interrupted checkpoints were preserved and the unchanged queue resumed after provenance checks. Complete real-model matrix acceptance remains open. Follow the [evaluation status and recovery record](evaluation-running.md). |
 | T19 Claims and packaging | Claim ledger, compatibility matrix, release checklist, package artifacts, UI assets, and negative evidence archives are maintained. | The current `5af3d15` source and installed package checkpoint is complete. Publication, website, paper, and release actions remain separately authorization-bound. |
 

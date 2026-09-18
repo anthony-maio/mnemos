@@ -265,8 +265,18 @@ non-identical paraphrases are outside this exact-match guarantee. The
 [source checkpoint](validation/2026-09-18/assistant-assertion-suppression-v1/README.md)
 passes 1,030 tests with four skips and static checks. The installed package
 checkpoint at `5af3d15` also passes build, Twine, 360 selected contract cases
-with two matching skips, and seven synthetic replay assertions. Native attempts
-above predate this repair.
+with two matching skips, and seven synthetic replay assertions.
+
+The [native v9 run](validation/2026-09-18/native-codex-claude-continuity-v9/README.md)
+uses that installed package and passes 15 bounded lifecycle checks. Codex taught
+a fact, Claude corrected it, and fresh Codex retrieved the current version after
+restart. Claude reviewed and deleted the target plus five captured copies,
+including similarity suggestions. Direct replay after restart did not restore
+the target. Final Codex did not retrieve or repeat either convention value and
+retrieved the unrelated retained preference. All three Codex processes exited
+zero, but reverse and final Stop hooks timed out after three seconds. The fixture
+used lexical vectors and disabled modules. Complete capture, native hook replay,
+Hermes, Desktop, and real-model quality remain open.
 
 ## What the five modules currently mean
 
@@ -342,7 +352,7 @@ Current evidence has these boundaries:
 | Deterministic module and storage tests | Current source `5af3d15`: 1,030 tests passed with four skips, plus Black, strict mypy, JavaScript, build, and Twine checks. The fresh installed wheel passed 360 selected contract cases with two matching platform skips and seven synthetic replay assertions. Native deadline acceptance remains open. See the [current package checkpoint](validation/2026-09-18/assistant-suppression-package-checkpoint-v1/README.md) |
 | Synthetic local service and SQLite restart flow | Observed for one provider-backed fact |
 | Full real-model ablation and held-out quality evaluation | The older b7 queue stopped on a validation-trace serialization error; its negative results remain preserved. The repaired d94 queue completed development mechanisms and lifecycle preflight; the held-out mechanism phase completed, and the seven-profile lifecycle matrix remains running. No held-out quality conclusion is accepted. All 15 development graph observations lacked a structural seed-to-target path. The queue uses its frozen unprefixed embedding contract. See [current progress](validation/2026-09-16/progress.md) and [evaluation status](validation/2026-09-16/evaluation-running.md) |
-| Installed Claude Code, Codex, and Hermes host smoke | Installed ebe1b0d completed Codex store, Claude read/correct, and fresh Codex retrieval of version 2 across two service restarts with foreign-scope exclusion. Both Codex processes crashed on exit; reverse Stop timed out and Claude capture remained degraded. Isolated MCP-only, hooks-only, and one combined control with explicit unelevated sandbox mode exited zero; the crash cause and Stop deadline remain open. Earlier Claude v18 passed 15 bounded fact-lifecycle criteria, including forgetting and reconstructed replay. Hermes provider loading and the WSL bridge were observed, but no native model turn passed. Full cross-host forget/replay, complete capture, Desktop, and native extraction acceptance remain open. See [bidirectional continuity](validation/2026-09-17/native-codex-claude-continuity-v4/README.md), [combined control](validation/2026-09-17/native-codex-combined-control-v1/README.md), and the [host matrix](client-compatibility-matrix.md). |
+| Installed Claude Code, Codex, and Hermes host smoke | Native v9 on installed `5af3d15` passes 15 bounded Codex/Claude lifecycle checks, including reviewed deletion, restart, direct service replay, and final recall retaining the unrelated control. Lexical fixture vectors and disabled modules do not establish model quality. All Codex processes exited zero; reverse and final Stop hooks timed out, and capture remains partial. Hermes provider loading and the WSL bridge were observed, but no native Hermes model turn passed. Desktop, complete capture, native hook replay, and operational readiness remain open. See the [v9 record](validation/2026-09-18/native-codex-claude-continuity-v9/README.md) and [host matrix](client-compatibility-matrix.md). |
 | Two-week pilot with external users or projects | NOT RUN |
 | 10,000-fact latency and growth acceptance | Frozen d94 with corrected instrumentation, real query embeddings and synthetic facts: recall 1,088.094 ms p95 fails the 500 ms gate; durable capture 64.279 ms p95 passes the 100 ms gate; database 324,862,864 bytes. Schema 8 still needs a separately bound performance comparison. Earlier timings remain preserved. See [performance evidence](validation/2026-09-16/performance-corrected-v4/README.md) |
 | Published release acceptance | NOT RUN |

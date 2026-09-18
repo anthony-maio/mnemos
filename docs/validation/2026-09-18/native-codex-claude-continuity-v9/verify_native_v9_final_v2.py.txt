@@ -1,0 +1,56 @@
+"""Close the remaining final-record predicates without changing earlier evidence."""
+from pathlib import Path
+import hashlib
+import json
+
+ROOT = Path(__file__).resolve().parents[1]
+ARCHIVE = ROOT / 'docs/validation/2026-09-18/native-codex-claude-continuity-v9'
+read = lambda p: json.loads(p.read_text(encoding='utf-8'))
+sha = lambda p: hashlib.sha256(p.read_bytes()).hexdigest()
+index = read(ARCHIVE / 'evidence-index.json')
+for name, expected in index['files'].items():
+    assert sha(ARCHIVE / name) == expected['sha256']
+    assert (ARCHIVE / name).stat().st_size == expected['bytes']
+report = read(ARCHIVE / 'report.json')
+assert read(ARCHIVE / 'supplemental-assertions-v1.json')['status'] == 'supplementary_assertions_passed'
+codex = read(ARCHIVE / 'selected-codex-records.json')
+claude = read(ARCHIVE / 'selected-claude-tool-records.json')
+target = report['target']
+assert codex['teach'][0]['arguments']['content'] == target['content']
+assert codex['teach'][0]['arguments']['scope'] == 'project'
+reverse = next(f for f in codex['reverse'][0]['result']['facts'] if f['id'] == target['fact_id'])
+assert reverse['content'] == target['replacement'] and reverse['version'] == 2
+apply = next(x['node']['input'] for x in claude if x['node'].get('type') == 'tool_use' and x['node']['name'].endswith('mnemos_forget_related'))
+assert apply['fact_id'] == target['fact_id'] and apply['expected_version'] == 2
+answer = read(ARCHIVE / 'final-answer-source.json')
+home = Path(report['fixture']) / report['codex_final_home']
+source = (home / answer['source']).resolve()
+assert source.is_relative_to(home.resolve())
+assert sha(source) == answer['source_file_sha256']
+raw_line = source.read_bytes().splitlines(keepends=True)[answer['line'] - 1]
+assert hashlib.sha256(raw_line).hexdigest() == answer['line_sha256']
+payload = json.loads(raw_line)['payload']
+assert payload['type'] == 'agent_message' and payload['phase'] == 'final_answer'
+assert payload['message'] == answer['text']
+for call in codex['final']:
+    text = call['result'].get('context', '') + '\n' + '\n'.join(f['content'] for f in call['result']['facts'])
+    assert not any(marker in text.lower() for marker in ('cedar-otter', 'maple-heron'))
+for key in ('codex_process', 'codex_reverse_process', 'codex_final_process'):
+    assert report[key]['returncode'] == 0 and report[key]['timed_out'] is False
+result = {
+    'status': 'passed',
+    'checks': ['teaching_content_and_scope', 'reverse_corrected_content_and_version',
+               'native_apply_target_and_expected_version', 'raw_final_answer_phase',
+               'both_final_contexts_and_fact_contents_exclude_markers', 'three_codex_clean_exits'],
+    'boundary': 'Supplementary bounded fixture checks; hook deadlines, capture completeness, and model quality remain open.',
+    'runner_sha256': sha(Path(__file__)),
+}
+output = ARCHIVE / 'supplemental-final-records-v2.json'
+copy = ARCHIVE / 'verify_native_v9_final_v2.py.txt'
+assert not output.exists() and not copy.exists()
+output.write_text(json.dumps(result, indent=2) + '\n', encoding='utf-8')
+copy.write_bytes(Path(__file__).read_bytes())
+for p in (output, copy):
+    index['files'][p.name] = {'bytes': p.stat().st_size, 'sha256': sha(p)}
+(ARCHIVE / 'evidence-index.json').write_text(json.dumps(index, indent=2) + '\n', encoding='utf-8')
+print(json.dumps(result))

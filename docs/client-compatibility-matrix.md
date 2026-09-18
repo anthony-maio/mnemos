@@ -7,16 +7,29 @@ at `5af3d15` passes 360 selected contract cases with two skips and seven synthet
 replay assertions, after 1,030 source tests with four skips and all six source/package
 checks. It includes bounded similarity suggestions to reviewed forgetting, exact
 forgotten-assertion suppression, scope filtering, explicit selection, source
-dependencies, and stale-preview checks. The native attempts below use earlier
-installed checkpoints and remain separate. In
+dependencies, and stale-preview checks.
+
+The [native v9 run](validation/2026-09-18/native-codex-claude-continuity-v9/README.md)
+uses that installed wheel. Codex taught a fact, Claude retrieved and corrected
+it, and fresh Codex retrieved version 2 across service restarts. Claude then
+reviewed the preview and deleted the target plus five selected captured copies,
+including similarity suggestions. Direct replay after restart did not restore
+the target. Final Codex issued both required queries, did not retrieve or repeat
+either convention value, and retrieved the unrelated retained preference.
+The 15 bounded lifecycle criteria pass. All three Codex processes exited zero;
+reverse and final Stop hooks still timed out after three seconds. Lexical fixture
+vectors and disabled modules do not establish extraction or embedding quality.
+Complete capture, native hook replay, Desktop, Hermes, and operational readiness
+remain open.
+
+Earlier attempts remain preserved. In
 [v7](validation/2026-09-18/native-codex-claude-continuity-v7/README.md),
 related deletion committed and SQLite reopen confirmed the selected records
 absent, but Claude exceeded its phase budget before replay and final recall.
 [V8](validation/2026-09-18/native-codex-claude-continuity-v8/README.md)
 stopped at the reverse Codex phase while its tool approval was pending; the
 180-second host deadline includes operator time. Forgetting, replay, and final
-recall did not run in v8. Neither attempt closes native acceptance. A newer
-native v9 run completed its runner checks; independent artifact review is pending.
+recall did not run in v8. Neither attempt closes native acceptance.
 
 The current adapter repair preserves service-rendered recall across Claude Code,
 Codex, and Hermes. Claude previously rebuilt bare fact text and lost assertion
@@ -52,8 +65,8 @@ recorded together for the next context-boundary investigation.
 
 | Client | Implemented integration | Observed evidence | Native conversation acceptance |
 | --- | --- | --- | --- |
-| Claude Code | Command hooks, transcript deltas, context injection, MCP tools; provisional missing-ID capture excluded from extraction | Installed source dedfcfd completed native correction, consolidation, retrieval, and forgetting through the actual 2.1.191 plugin, with restart and reconstructed Stop replay checks | All 15 bounded fact-lifecycle criteria passed in v18 with the new startup default. Degraded capture keeps the overall result partial. Extraction quality and complete capture acceptance remain open |
-| Codex CLI | Command lifecycle hooks, supported context output, MCP tools | Native 0.146.0 with installed ebe1b0d stored a fact that Claude retrieved and corrected, then a fresh Codex session retrieved version 2 after another service restart. Earlier source1068a62 separately demonstrated scoped retrieval and durable Unicode capture | Bidirectional scoped fact continuity observed with fixture vectors. Both v4 Codex processes exited 0xc0000005; reverse Stop timed out. Complete capture, native cross-host forgetting, and Hermes continuity remain open |
+| Claude Code | Command hooks, transcript deltas, context injection, MCP tools; provisional missing-ID capture excluded from extraction | Native 2.1.191 with installed `5af3d15` retrieved and corrected a Codex-taught fact, then reviewed and deleted the target and five captured copies, including similarity suggestions | V9 passes 15 bounded shared lifecycle checks. Degraded capture, native hook replay, and real-model extraction quality remain open |
+| Codex CLI | Command lifecycle hooks, supported context output, MCP tools | Native 0.146.0 with installed `5af3d15` taught a fact, retrieved Claude's version 2 after restart, and completed both post-forget recall queries without returning or repeating the deleted values; unrelated and foreign-scope controls held | V9 passes 15 bounded shared lifecycle checks with lexical fixture vectors and disabled modules. All Codex processes exited zero. Reverse and final Stop hooks timed out; complete capture, native hook replay, and real-model quality remain open |
 | Codex Desktop | Same command hooks and MCP fallback | Shared adapter coverage; no current desktop conversation evidence | Pending |
 | Hermes Agent | Optional MemoryProvider and explicit Windows/WSL bridge | Installed 0.21.3 API calls and actual WSL -> Windows authenticated transport. Sourcec805 passed full verification and discovery through the actual wheel entry point in WSL | Model turn has not completed; cross-host native recall remains open |
 | Generic MCP stdio | MCP server as service client | Subprocess capture, job status, inspect, retrieve, correct, forget | Host-specific acceptance pending |
