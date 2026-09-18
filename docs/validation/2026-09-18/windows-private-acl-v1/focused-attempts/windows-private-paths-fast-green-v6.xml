@@ -1,0 +1,40 @@
+<?xml version="1.0" encoding="utf-8"?><testsuites name="pytest tests"><testsuite name="pytest" errors="0" failures="1" skipped="0" tests="9" time="11.943" timestamp="2026-09-18T01:27:03.316290-04:00" hostname="Aurora"><testcase classname="tests.test_windows_private_paths" name="test_protection_removes_inherited_access_and_blocks_parent_changes[False]" time="2.349" /><testcase classname="tests.test_windows_private_paths" name="test_protection_removes_inherited_access_and_blocks_parent_changes[True]" time="2.322" /><testcase classname="tests.test_windows_private_paths" name="test_acl_query_failure_falls_back_to_permission_repair[GetNamedSecurityInfoW-5]" time="0.876" /><testcase classname="tests.test_windows_private_paths" name="test_acl_query_failure_falls_back_to_permission_repair[GetNamedSecurityInfoW-0]" time="0.855" /><testcase classname="tests.test_windows_private_paths" name="test_acl_query_failure_falls_back_to_permission_repair[GetSecurityDescriptorControl-0]" time="0.876" /><testcase classname="tests.test_windows_private_paths" name="test_acl_query_failure_falls_back_to_permission_repair[GetAclInformation-0]" time="0.470"><failure message="AssertionError: assert [] == ['GetAclInformation']&#10;  &#10;  Right contains one more item: 'GetAclInformation'&#10;  Use -v to get more diff">tmp_path = WindowsPath('D:/WindowsTemp/pytest-of-Ant/pytest-3611/test_acl_query_failure_falls_b3')
+monkeypatch = &lt;_pytest.monkeypatch.MonkeyPatch object at 0x000001DB89C59850&gt;
+api = 'GetAclInformation', result = 0
+
+    @pytest.mark.parametrize(
+        ("api", "result"),
+        [
+            ("GetNamedSecurityInfoW", 5),
+            ("GetNamedSecurityInfoW", 0),
+            ("GetSecurityDescriptorControl", 0),
+            ("GetAclInformation", 0),
+        ],
+    )
+    def test_acl_query_failure_falls_back_to_permission_repair(tmp_path, monkeypatch, api, result):
+        target = tmp_path / "private"
+        target.touch()
+        acl(target, grant_everyone=True)
+        load_dll = ctypes.WinDLL
+        queries = []
+    
+        def tracked_dll(name, **kwargs):
+            dll = load_dll(name, **kwargs)
+            if name == "advapi32":
+    
+                def denied(*args):
+                    queries.append(api)
+                    return result  # A failed query or missing descriptor cannot prove privacy.
+    
+                setattr(dll, api, denied)
+            return dll
+    
+        monkeypatch.setattr(ctypes, "WinDLL", tracked_dll)
+        _protect_private_path(target)
+&gt;       assert queries == [api]
+E       AssertionError: assert [] == ['GetAclInformation']
+E         
+E         Right contains one more item: 'GetAclInformation'
+E         Use -v to get more diff
+
+tests\test_windows_private_paths.py:118: AssertionError</failure></testcase><testcase classname="tests.test_windows_private_paths" name="test_process_lock_repairs_legacy_inherited_permissions" time="1.316" /><testcase classname="tests.test_windows_private_paths" name="test_private_acl_is_checked_without_rewriting_and_drift_is_repaired[False]" time="1.319" /><testcase classname="tests.test_windows_private_paths" name="test_private_acl_is_checked_without_rewriting_and_drift_is_repaired[True]" time="1.408" /></testsuite></testsuites>

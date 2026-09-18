@@ -1,0 +1,36 @@
+"""Diagnostic comparison of the old installed ACL helper and corrected source."""
+import hashlib
+import json
+from pathlib import Path
+import subprocess
+import time
+
+ROOT = Path(__file__).resolve().parents[1]
+TEMP = Path('C:/Users/Ant/AppData/Local/Temp')
+PYTHON = TEMP / 'mnemos-installed-assistant-suppression-v1/Scripts/python.exe'
+OUTPUT = TEMP / 'mnemos-private-acl-flag-profile-v1'
+OUTPUT.mkdir(exist_ok=False)
+code = r'''
+import sys,json,time,tempfile
+from pathlib import Path
+if sys.argv[1] != 'installed': sys.path.insert(0, sys.argv[1])
+import mnemos.service as s
+p=Path(tempfile.mkdtemp(prefix='mnemos-private-acl-flag-',dir=sys.argv[2]))
+file=p/'outbox.lock';file.touch()
+rows=[]
+for i in range(6):
+    for path in (p,file):
+        start=time.perf_counter_ns();s._protect_private_path(path)
+        rows.append({'iteration':i,'kind':'directory' if path==p else 'file','elapsed_ms':(time.perf_counter_ns()-start)/1e6})
+print(json.dumps({'origin':s.__file__,'fixture':str(p),'rows':rows}))
+'''
+results = {}
+for label, origin in [('old_installed','installed'), ('corrected_source',str(ROOT))]:
+    r = subprocess.run([str(PYTHON), '-c', code, origin, str(TEMP)], cwd=TEMP,
+                       capture_output=True, text=True, timeout=45, check=True)
+    results[label] = json.loads(r.stdout)
+results['source_sha256'] = hashlib.sha256((ROOT/'mnemos/service.py').read_bytes()).hexdigest()
+results['runner_sha256'] = hashlib.sha256(Path(__file__).read_bytes()).hexdigest()
+results['limits'] = 'Sequential warm filesystem microprobe, six iterations; not native-hook latency acceptance or a controlled speedup estimate.'
+(OUTPUT/'report.json').write_text(json.dumps(results,indent=2)+'\n',encoding='utf-8')
+print(json.dumps(results,indent=2))

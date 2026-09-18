@@ -1,0 +1,238 @@
+"""Supplement the two archived Codex Stop observations with stricter checks."""
+from __future__ import annotations
+
+import hashlib
+import json
+from pathlib import Path
+import sqlite3
+from typing import Any
+
+
+ROOT = Path(__file__).resolve().parents[1]
+ARCHIVES = (
+    ROOT / "docs/validation/2026-09-18/native-codex-stop-boundary-v1",
+    ROOT / "docs/validation/2026-09-18/native-codex-stop-profile-v2",
+)
+
+
+def sha(raw: bytes) -> str:
+    return hashlib.sha256(raw).hexdigest()
+
+
+def read_json(path: Path) -> Any:
+    return json.loads(path.read_text(encoding="utf-8"))
+
+
+def check_one(archive: Path) -> dict[str, Any]:
+    report_path = archive / "report.json"
+    report = read_json(report_path)
+    target = report["target"]
+    selected_path = archive / "selected-mcp-completion.json"
+    selected = read_json(selected_path)
+    result = selected["result"]
+    assertions: list[str] = []
+
+    if sha(json.dumps(result, sort_keys=True).encode("utf-8")) != report[
+        "selected_completion"
+    ]["result_sha256"]:
+        raise AssertionError("selected completion hash differs from report")
+
+    args = selected["arguments"]
+    if args.get("current_scope") != "project":
+        raise AssertionError("native query current_scope was not project")
+    if args.get("allowed_scopes") != ["project"]:
+        raise AssertionError("native query allowed_scopes was not exactly project")
+    if not isinstance(args.get("query"), str) or not args["query"].strip():
+        raise AssertionError("native query text was empty")
+    assertions.append("native query scope arguments are exact")
+
+    facts = result.get("facts", [])
+    target_fact = next((fact for fact in facts if fact.get("id") == target["fact_id"]), None)
+    if not target_fact:
+        raise AssertionError("target fact was absent from native result")
+    if target_fact.get("version") != target["version"]:
+        raise AssertionError("target fact version differs")
+    if target_fact.get("content") != target["content"]:
+        raise AssertionError("target fact content differs")
+    if target_fact.get("scope_id") != target["scope_id"]:
+        raise AssertionError("target fact scope differs")
+    context = result.get("context")
+    if not isinstance(context, str) or target["content"] not in context:
+        raise AssertionError("target content was absent from native context")
+    serialized_result = json.dumps(result, sort_keys=True)
+    if target["foreign_id"] in serialized_result:
+        raise AssertionError("foreign fact identifier leaked into native result")
+    if target["foreign_id"] in context:
+        raise AssertionError("foreign fact identifier leaked into native context")
+    assertions.append("target content and project scope verified; foreign canary absent")
+
+    query_hash = sha(args["query"].encode("utf-8"))
+    matching_retrievals = [
+        operation
+        for operation in report["dispatch_trace"]
+        if operation.get("operation") == "retrieve"
+        and operation.get("query_sha256") == query_hash
+        and operation.get("project_id") == target["scope_id"]
+        and operation.get("host") == "codex"
+        and operation.get("status") == "returned"
+    ]
+    if not matching_retrievals or target["fact_id"] not in matching_retrievals[-1].get("fact_ids", []):
+        raise AssertionError("dispatch trace did not bind the native query to the target")
+    if target["foreign_id"] in matching_retrievals[-1].get("fact_ids", []):
+        raise AssertionError("dispatch trace returned the foreign fact")
+    assertions.append("dispatch trace query hash and target binding verified")
+
+    shell_lines = [line for line in report["stop-shell.txt"]["text"].splitlines() if line]
+    if len(shell_lines) != 2:
+        raise AssertionError("shell marker count differs")
+    shell_parts = [line.split("|") for line in shell_lines]
+    if [parts[0] for parts in shell_parts] != ["shell_entry", "shell_exit"]:
+        raise AssertionError("shell marker labels differ")
+    if shell_parts[0][2] != shell_parts[1][2]:
+        raise AssertionError("shell marker PIDs differ")
+    python_rows = [
+        json.loads(line)
+        for line in report["stop-python.jsonl"]["text"].splitlines()
+        if line
+    ]
+    python_pids = {row.get("pid") for row in python_rows}
+    if len(python_pids) != 1 or None in python_pids:
+        raise AssertionError("Python marker PID was not stable")
+    if python_rows[0].get("stage") != "python_entry":
+        raise AssertionError("Python marker sequence did not start at entry")
+    if next(row for row in python_rows if row.get("stage") == "run_hook_start").get("event") != "Stop":
+        raise AssertionError("Stop hook event was not recorded")
+    hook_result = next(row for row in python_rows if row.get("stage") == "run_hook_result")
+    if hook_result.get("status") != "ok" or hook_result.get("captured") != 1:
+        raise AssertionError("Stop hook did not report one successful capture")
+    if len(hook_result.get("event_ids", [])) != 1:
+        raise AssertionError("Stop hook event ID count differs")
+    main_end = next(row for row in python_rows if row.get("stage") == "adapter_main_end")
+    if main_end.get("status") != 0:
+        raise AssertionError("adapter main status was not zero")
+    origin_row = next(row for row in python_rows if row.get("stage") == "after_adapter_import")
+    origin = str(origin_row.get("origin", ""))
+    installed_package = str(report["provenance"]["installed_package"])
+    install_root = str(Path(installed_package).parent)
+    if not origin.lower().startswith(install_root.lower()) or not origin.lower().endswith(
+        "mnemos\\adapters\\codex.py"
+    ):
+        raise AssertionError("adapter module origin was not the installed wheel")
+    if report["process"].get("returncode") != 0 or report["process"].get("timed_out"):
+        raise AssertionError("native process status was not successful")
+    assertions.append("literal shell labels, Stop result, PID stability, exit status, and wheel origin verified")
+
+    fixture = Path(report["fixture"])
+    if not fixture.is_dir():
+        raise AssertionError("fixture path is unavailable")
+    runtime_path = fixture / "runtime.json"
+    if runtime_path.exists():
+        raise AssertionError("runtime descriptor remains after cleanup")
+    root_auth_files = [
+        path.name
+        for path in fixture.iterdir()
+        if path.is_file() and path.name.lower().startswith("auth")
+    ]
+    if root_auth_files:
+        raise AssertionError(f"auth files remain at fixture root: {root_auth_files}")
+    if not report["cleanup"].get("auth_absent") or not report["cleanup"].get("descriptor_absent"):
+        raise AssertionError("report cleanup flags were not both true")
+    assertions.append("runtime descriptor, fixture-root auth files, and reported cleanup state verified")
+
+    capture_ids = [item["id"] for item in report["capture_events"]]
+    if len(capture_ids) != 2 or {item["role"] for item in report["capture_events"]} != {"user", "assistant"}:
+        raise AssertionError("capture report does not contain one user and one assistant")
+    db_path = fixture / "memory.sqlite"
+    captured_rows: list[dict[str, Any]] = []
+    with sqlite3.connect(db_path.as_uri() + "?mode=ro", uri=True) as db:
+        db.row_factory = sqlite3.Row
+        rows = db.execute(
+            "select id, content, role, source, scope, scope_id, session_id, metadata "
+            "from episodic_events where id in (?, ?)",
+            tuple(capture_ids),
+        ).fetchall()
+        if len(rows) != 2:
+            raise AssertionError("read-only SQLite reopen did not find both captures")
+        for row in rows:
+            metadata = json.loads(row["metadata"])
+            captured_rows.append(
+                {
+                    "id": row["id"],
+                    "role": row["role"],
+                    "source": row["source"],
+                    "source_kind": metadata.get("source_kind"),
+                    "host": metadata.get("host"),
+                    "scope": row["scope"],
+                    "scope_id": row["scope_id"],
+                    "project_id": metadata.get("project_id"),
+                    "session_id": row["session_id"],
+                    "profile": metadata.get("user_profile_id"),
+                    "content_sha256": sha(row["content"].encode("utf-8")),
+                }
+            )
+    expected_by_id = {item["id"]: item for item in report["capture_events"]}
+    for row in captured_rows:
+        expected = expected_by_id[row["id"]]
+        if row["content_sha256"] != expected["content_sha256"] or row["role"] != expected["role"]:
+            raise AssertionError("SQLite capture content or role differs from report")
+        if row["source"] != "codex":
+            raise AssertionError("SQLite source was not codex")
+        if row["source_kind"] != "codex_hook" or row["host"] != "codex":
+            raise AssertionError("SQLite source metadata was not codex_hook/codex")
+        if row["scope"] != "project" or row["scope_id"] != target["scope_id"]:
+            raise AssertionError("SQLite scope was not the target project")
+        if row["project_id"] != target["scope_id"] or row["session_id"] != expected["session_id"]:
+            raise AssertionError("SQLite project or session differs from report")
+    assertions.append("read-only SQLite source, host, role, scope, session, and content hashes verified")
+
+    report_hash = sha(report_path.read_bytes())
+    selected_hash = sha(selected_path.read_bytes())
+    supplement = {
+        "status": "supplementary_assertions_passed",
+        "archive": archive.name,
+        "report_input": {
+            "archive_file": "report.json",
+            "sha256": report_hash,
+            "source_commit": report["source_commit"],
+            "wheel_sha256": report["wheel_sha256"],
+            "runner_sha256": report["runner_sha256"],
+        },
+        "selected_input": {"archive_file": "selected-mcp-completion.json", "sha256": selected_hash},
+        "sqlite_database": {"path": str(db_path), "reopened_read_only": True},
+        "captured_rows": captured_rows,
+        "shell_pids": {"shell": shell_parts[0][2], "python": next(iter(python_pids))},
+        "adapter_origin": origin,
+        "assertions": assertions,
+        "limits": [
+            "This supplements one instrumented fixture observation.",
+            "It does not establish complete conversation capture, uninstrumented latency, or model quality.",
+        ],
+    }
+    return supplement
+
+
+def main() -> None:
+    verifier_hash = sha(Path(__file__).read_bytes())
+    for archive in ARCHIVES:
+        if not archive.is_dir():
+            raise FileNotFoundError(archive)
+        supplement = check_one(archive)
+        supplement["verifier"] = {
+            "archive_file": "supplemental-verifier-v1.py.txt",
+            "sha256": verifier_hash,
+        }
+        result_path = archive / "supplemental-verification.json"
+        result_path.write_text(json.dumps(supplement, indent=2) + "\n", encoding="utf-8")
+        shutil_path = archive / "supplemental-verifier-v1.py.txt"
+        shutil_path.write_bytes(Path(__file__).read_bytes())
+        index_path = archive / "evidence-index.json"
+        index = read_json(index_path)
+        files = index["files"]
+        for path in (result_path, shutil_path):
+            files[path.name] = {"bytes": path.stat().st_size, "sha256": sha(path.read_bytes())}
+        index_path.write_text(json.dumps(index, indent=2) + "\n", encoding="utf-8")
+        print(json.dumps({"status": "passed", "archive": str(archive), "files": len(files)}))
+
+
+if __name__ == "__main__":
+    main()

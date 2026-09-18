@@ -1,0 +1,25 @@
+{
+  "sequence": [
+    "shell_entry",
+    "python_entry",
+    "before_adapter_import",
+    "after_adapter_import",
+    "adapter_main_start",
+    "run_hook_start",
+    "run_hook_result",
+    "run_hook_end",
+    "adapter_main_end",
+    "stdout_flushed",
+    "python_exit",
+    "shell_exit"
+  ],
+  "shell_elapsed_ms": 2123,
+  "shell_to_python_ms": 79.3062,
+  "adapter_import_ms": 348.9656,
+  "handler_ms": 1640.5061,
+  "service_capture_dispatch_ms": 2.5,
+  "python_trace_sha256": "66fac756fd71766de1070a0bcdd71ad7a935eb75186269d910627fe6f544fbd3",
+  "shell_trace_sha256": "82f393043ca95ec348f20de49a17bb861d1a904da8e296b235c67ae0c6c31362",
+  "report_process_elapsed_ms": 58651.5,
+  "limits": "Fixture-only tracing adds file IO and imports the installed adapter before calling main; markers isolate boundaries, not an uninstrumented latency pass. Host dispatch to shell entry is not directly measured."
+}

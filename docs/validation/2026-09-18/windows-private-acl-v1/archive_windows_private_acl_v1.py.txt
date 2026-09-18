@@ -1,0 +1,88 @@
+"""Preserve source validation, negative attempts, and native diagnostic references."""
+from pathlib import Path
+import hashlib
+import json
+import shutil
+import xml.etree.ElementTree as ET
+
+ROOT = Path(__file__).resolve().parents[1]
+TEMP = Path('C:/Users/Ant/AppData/Local/Temp')
+SOURCE = TEMP / 'mnemos-windows-private-acl-v2'
+OLD = TEMP / 'mnemos-windows-private-acl-v1'
+OUT = ROOT / 'docs/validation/2026-09-18/windows-private-acl-v1'
+sha = lambda p: hashlib.sha256(p.read_bytes()).hexdigest()
+report = json.loads((SOURCE/'report.json').read_text(encoding='utf-8'))
+assert report['status'] == 'passed'
+assert report['source_inputs_before'] == report['source_inputs_after']
+assert all(sha(ROOT/name) == digest for name,digest in report['source_inputs_after'].items())
+assert sha(ROOT/'.venv/validate_windows_private_acl_v2.py') == report['runner_sha256']
+assert len(report['checks']) == 4 and all(c['exit_code'] == 0 for c in report['checks'])
+cases = ET.parse(SOURCE/'pytest.xml').getroot().findall('.//testcase')
+assert not any(c.find('failure') is not None or c.find('error') is not None for c in cases)
+skips = sum(c.find('skipped') is not None for c in cases)
+regressions = [c for c in cases if c.get('classname','').endswith('test_windows_private_paths')]
+assert len(regressions) == 9 and all(c.find('skipped') is None for c in regressions)
+old = json.loads((OLD/'report.json').read_text(encoding='utf-8'))
+assert old['status'] == 'failed'
+OUT.mkdir(parents=True, exist_ok=False)
+for directory, destination in [(SOURCE,OUT), (OLD,OUT/'initial-full-run'),
+                               (TEMP/'mnemos-private-acl-flag-profile-v1',OUT/'microprobe')]:
+    destination.mkdir(exist_ok=True)
+    for file in directory.iterdir():
+        if file.is_file(): shutil.copyfile(file,destination/file.name)
+negative = OUT/'focused-attempts'
+negative.mkdir()
+for file in sorted((ROOT/'.venv').glob('windows-private-paths-*')):
+    if file.suffix in {'.xml','.log'}: shutil.copyfile(file,negative/file.name)
+for name in ['validate_windows_private_acl_v1.py','validate_windows_private_acl_v2.py',
+             'archive_windows_private_acl_v1.py','probe_private_acl_flag_v1.py']:
+    shutil.copyfile(ROOT/'.venv'/name,OUT/(name+'.txt'))
+shutil.copyfile(ROOT/'tests/test_windows_private_paths.py',OUT/'test_windows_private_paths.py.txt')
+(OUT/'.gitattributes').write_text('* -text\n*.log -whitespace\n*.xml -whitespace\n*.patch -whitespace\n',encoding='utf-8')
+(OUT/'README.md').write_text(f'''# Windows private ACL repair
+
+Source based on `{report['base_commit']}` plus `source.patch` and the archived
+new test file passed {len(cases)-skips:,} tests with {skips} skips, Black, strict
+mypy, and JavaScript syntax. All nine real Windows permission regressions ran.
+Input hashes were stable across validation; fixtures were outside Git.
+
+The permission helper previously passed `0x10000004`, which did not protect the
+DACL against inheritance. It now passes `0x80000004`. Files receive one explicit
+current-user full-control rule; directories receive the same rule with child
+inheritance enabled while their own DACL is protected. The tests inspect actual
+Windows permissions and verify that changes to the parent do not widen access.
+Microsoft documents [protected DACL behavior](https://learn.microsoft.com/en-us/windows/win32/secauthz/security-information)
+and publishes the [numeric flags](https://github.com/microsoft/GuardedFabricTools/blob/master/CertificateManagement/CertificateManagement.psm1).
+
+Before writing permissions, the helper now reads the current security descriptor.
+It skips the write only for a present, protected DACL whose bytes exactly match
+the required current-user policy. There is no path cache. Inherited permissions,
+extra rules, a missing descriptor, or failed descriptor/control/ACL queries take
+the repair path. Native descriptor allocations are freed even when comparison
+fails. Tests verify that a later extra Everyone rule is removed and that an
+unchanged private ACL avoids another permission write.
+
+The [native boundary observation](../native-codex-stop-boundary-v1/README.md)
+and [native profile](../native-codex-stop-profile-v2/README.md) used the older
+installed `5af3d15` wheel. Both completed; the profile attributed about 1.175
+seconds to permission updates. Its lock file still had an inherited rule.
+Those runs located the issue but do not validate this newer source in a native
+host. The small sequential filesystem microprobe did not reproduce the native
+cost and is not a controlled speedup estimate. No latency gate is promoted.
+
+Negative attempts are retained. The initial three regressions failed on actual
+unprotected ACLs; two later regressions failed on redundant native permission
+writes. Early PowerShell fixture problems and a fault-injection setup that
+short-circuited before its target API are preserved separately. The initial full
+run failed that last test setup. The final fixture first establishes a protected
+ACL and then adds an extra rule so the ACL query failure is exercised directly.
+Neither permission requirements nor performance deadlines were relaxed.
+
+This is source validation. A fresh installed package and native run for this
+repair remain required. The frozen Ollama evaluation and live host configuration
+were not changed.
+''',encoding='utf-8')
+index={'files':{p.relative_to(OUT).as_posix():{'bytes':p.stat().st_size,'sha256':sha(p)}
+                for p in sorted(OUT.rglob('*')) if p.is_file()}}
+(OUT/'evidence-index.json').write_text(json.dumps(index,indent=2)+'\n',encoding='utf-8')
+print(json.dumps({'passed':len(cases)-skips,'skipped':skips,'regressions':len(regressions),'indexed':len(index['files'])}))

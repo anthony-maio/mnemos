@@ -4,7 +4,15 @@ This record covers the unreleased `wt/functional-local-memory` worktree. It
 separates implemented behavior from acceptance evidence. The original task
 boundaries and thresholds remain in the [implementation plan](../../plans/2026-09-16-functional-local-memory.md).
 
-The latest [source and installed package checkpoint](../2026-09-18/assistant-suppression-package-checkpoint-v1/README.md)
+The newer [Windows private-permission repair](../2026-09-18/windows-private-acl-v1/README.md)
+passes 1,039 source tests with four skips, Black, strict mypy, and JavaScript
+syntax. It corrects the Windows DACL protection flag and avoids repeated
+permission writes only when a fresh descriptor check exactly matches the
+protected current-user policy. Nine real Windows regressions cover inheritance,
+legacy locks, later permission changes, and query failures. A new installed
+package and native-host run for this source are still required.
+
+The latest [installed package checkpoint](../2026-09-18/assistant-suppression-package-checkpoint-v1/README.md)
 at `5af3d15` passes 1,030 tests with four skips, Black, strict mypy,
 JavaScript syntax, build, and Twine. Its fresh installed wheel passes 360
 selected contract cases with two matching skips and all seven synthetic replay
@@ -133,9 +141,15 @@ Public exports resolve on first access. Diagnostic shell timings remain variable
 the native Stop deadline is not yet accepted.
 The archived generated-command probe already used PowerShell with `-NoLogo`,
 `-NoProfile`, and `-NonInteractive`. Its slow timings therefore do not support
-adding those flags as a new fix. The remaining diagnostic needs timing at the
-actual native shell-entry, Python-entry, and exit boundaries; durable capture
-after a run does not prove a response within the host's deadline.
+adding those flags as a new fix. Two actual native diagnostic runs now record
+those boundaries: [boundary v1](../2026-09-18/native-codex-stop-boundary-v1/README.md)
+and [profile v2](../2026-09-18/native-codex-stop-profile-v2/README.md). Both exited
+cleanly and persisted their user and assistant captures. Instrumented shell
+durations were 2,123 and 2,052 ms; the profile attributed about 1.175 seconds to
+permission updates, while service capture took 2.6 ms. The old wheel's lock
+still inherited permissions, leading to the source repair above. These runs
+do not measure host dispatch to shell entry or establish uninstrumented latency
+acceptance. Earlier Stop timeouts remain open pending the new package run.
 The [complete package checkpoint](../2026-09-17/lazy-import-package-checkpoint-v1/README.md)
 at `ebe1b0d` passed 962 tests with four platform skips and all static/build
 checks. Its fresh installed wheel passed 268 selected cases with two matching
@@ -309,9 +323,9 @@ capture diagnostics and complete lifecycle acceptance remain open.
 | T08 Correction | Stable identity, expected-version CAS, revisions, canonical updates, evidence links, and graph refresh are implemented and tested. | Native Claude corrected a Codex-stored fact after restart, preserving its ID at version 2; a fresh Codex session retrieved it after another restart. Captured old mentions remain unknown and visibly qualified as possibly outdated. General stale-context answer consistency remains open. |
 | T09 Retrieval | Scoped cosine retrieval, lexical candidate union, one scoring contract, and context budgeting are implemented. | Scope and top-1 tests pass. The corrected v4 measurement has recall p95 1,088.094 ms against the 500 ms gate; capture p95 64.279 ms passes the 100 ms gate. Later variable timing comparisons do not establish a speedup. |
 | T10 Graph | Persisted mutual top-k links, scope-safe traversal, bounded recovery, insertion-order controls, and capacity diagnostics are implemented and tested. | Structural controls pass. Graph utility and eligible-target coverage are not established by the available evidence. |
-| T11 Forget | Exact fact deletion, suppression, replay protection, inflight handling, restore behavior, and selected related-removal preview/apply are implemented and tested. | Local and installed related-forget checks pass. Native v6 observed Claude deletion and direct service replay suppression after restart. A fresh Codex answer reused an independent captured copy, so broader native related-forget and answer acceptance remain open. Logical forgetting does not erase external transcripts or historical backups. |
+| T11 Forget | Exact fact deletion, suppression, replay protection, inflight handling, restore behavior, and selected related-removal preview/apply are implemented and tested. | Native v9 passes reviewed deletion of the target plus five selected copies, direct replay suppression, and final Codex recall without the removed values. Unindexed paraphrases and external transcripts remain outside that bounded result. Earlier v6's surviving-copy failure is preserved. |
 | T12 Claude Code | Hook capture, transcript deltas, checkpoints, capture-before-recall, identity diagnostics, and replay repair are implemented. | Native v18 on dedfcfd passed all 15 fact-lifecycle criteria with the new startup default, including correction, forgetting, restart, and reconstructed replay. Degraded hook capture keeps the overall result partial. Native extraction and complete capture acceptance remain open. See the [native lifecycle archive](../2026-09-17/native-claude-lifecycle-v18/README.md). |
-| T13 Codex | Generated hook configuration, UTF-8 payload handling, explicit MCP fallback, and bounded transport checks are implemented. | Installed ebe1b0d completed native store/consolidate and retrieved a Claude-corrected version 2 after restart. All three v6 Codex processes exited zero with explicit unelevated mode; reverse/final Stop timed out. V4 crashes remain preserved. V6's final session repeated a deleted value from an unknown captured copy and skipped a requested query. Complete capture and native answer/lifecycle acceptance remain open. |
+| T13 Codex | Generated hooks, UTF-8 payload handling, explicit MCP fallback, and bounded native continuity are implemented. | Native v9 passes teaching, corrected recall, and final post-forget recall; all three processes exited zero, but two Stop hooks timed out. Two later instrumented Stop probes completed and persisted both conversation roles. The resulting Windows ACL source repair passes nine regressions; installed and native validation for that repair remains open. Complete capture, Desktop, and deadline acceptance remain open. |
 | T14 Hermes | Installed provider integration, registry handling, Windows/WSL bridge behavior, and entry-point discovery are implemented and tested. | Installed bridge checks pass. A native model turn has not passed. |
 | T15 UI | Project enable/pause, readiness, facts/history, correction/forget, captured-copy review, job state, and routing review are exposed and covered by API/browser checks. | Local UI and control-plane checks pass. Operational pilot and native-host coverage remain open. |
 | T16 Recovery | Backup, integrity, new-path restore, suppression merge, staged reindex, and activation backup behavior are implemented and tested. | Local recovery contracts pass, including a backup during an active writer transaction. Live data migration remains separately authorization-bound. |

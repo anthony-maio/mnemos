@@ -1,0 +1,102 @@
+diff --git a/mnemos/service.py b/mnemos/service.py
+index dfc6103..08ac317 100644
+--- a/mnemos/service.py
++++ b/mnemos/service.py
+@@ -23,10 +23,13 @@ from ctypes import (
+     c_char,
+     c_long,
+     c_ulong,
++    c_ushort,
+     c_void_p,
+     c_wchar_p,
+     cast,
+     create_string_buffer,
++    sizeof,
++    string_at,
+ )
+ from datetime import datetime, timezone
+ from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
+@@ -66,6 +69,57 @@ def default_descriptor_path() -> Path:
+     )
+ 
+ 
++def _windows_dacl_matches(path: Path, desired: Any, advapi32: Any, kernel32: Any) -> bool:
++    """Inspect the current ACL each time; never cache a private-path decision."""
++    descriptor = c_void_p()
++    actual = c_void_p()
++    get_security = advapi32.GetNamedSecurityInfoW
++    get_security.argtypes = [
++        c_wchar_p,
++        c_long,
++        c_ulong,
++        c_void_p,
++        c_void_p,
++        POINTER(c_void_p),
++        c_void_p,
++        POINTER(c_void_p),
++    ]
++    get_security.restype = c_ulong
++    try:
++        result = get_security(str(path), 1, 4, None, None, byref(actual), None, byref(descriptor))
++        if result != 0 or not actual or not descriptor:
++            return False
++        control = c_ushort()
++        revision = c_ulong()
++        get_control = advapi32.GetSecurityDescriptorControl
++        get_control.argtypes = [c_void_p, POINTER(c_ushort), POINTER(c_ulong)]
++        get_control.restype = c_int
++        if not get_control(descriptor, byref(control), byref(revision)):
++            return False
++        # Both SE_DACL_PRESENT and SE_DACL_PROTECTED are required. An identical
++        # but inheritable DACL is not private against later parent ACL changes.
++        if control.value & 0x1004 != 0x1004:
++            return False
++        get_acl_info = advapi32.GetAclInformation
++        get_acl_info.argtypes = [c_void_p, c_void_p, c_ulong, c_int]
++        get_acl_info.restype = c_int
++        snapshots = []
++        for acl in (actual, desired):
++            # ACL_SIZE_INFORMATION: AceCount, AclBytesInUse, AclBytesFree.
++            info = (c_ulong * 3)()
++            if not get_acl_info(acl, info, sizeof(info), 2):
++                return False
++            if not 8 <= info[1] <= 65535:
++                return False
++            snapshots.append(string_at(acl, info[1]))
++        # Exact bytes include ACE types, SID, permissions, and inheritance.
++        # Any representation difference conservatively takes the repair path.
++        return snapshots[0] == snapshots[1]
++    finally:
++        if descriptor:
++            kernel32.LocalFree(descriptor)
++
++
+ def _protect_private_path(path: Path) -> None:
+     """Apply owner-only ACLs where POSIX mode bits are not sufficient."""
+     if os.name != "nt":
+@@ -132,11 +186,13 @@ def _protect_private_path(path: Path) -> None:
+             get_dacl.restype = c_int
+             if not get_dacl(security_descriptor, byref(present), byref(dacl), byref(defaulted)):
+                 raise ctypes.WinError(ctypes.get_last_error())
++            if _windows_dacl_matches(path, dacl, advapi32, kernel32):
++                return
+             set_security = advapi32.SetNamedSecurityInfoW
+             set_security.argtypes = [
+                 c_wchar_p,
+                 c_long,
+-                c_long,
++                c_ulong,
+                 c_void_p,
+                 c_void_p,
+                 c_void_p,
+@@ -144,8 +200,8 @@ def _protect_private_path(path: Path) -> None:
+             ]
+             set_security.restype = c_long
+             # SE_FILE_OBJECT=1, DACL_SECURITY_INFORMATION=4,
+-            # PROTECTED_DACL_SECURITY_INFORMATION=0x10000000.
+-            result = set_security(str(path), 1, 0x10000004, None, None, dacl, None)
++            # PROTECTED_DACL_SECURITY_INFORMATION=0x80000000.
++            result = set_security(str(path), 1, 0x80000004, None, None, dacl, None)
+             if result != 0:
+                 raise ctypes.WinError(result)
+         finally:

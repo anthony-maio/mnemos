@@ -1,0 +1,206 @@
+...FF                                                                    [100%]
+================================== FAILURES ===================================
+_ test_private_acl_is_checked_without_rewriting_and_drift_is_repaired[False] __
+
+tmp_path = WindowsPath('D:/WindowsTemp/pytest-of-Ant/pytest-3608/test_private_acl_is_checked_wi0')
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x000001DD04B5FDF0>
+directory = False
+
+    @pytest.mark.parametrize("directory", [False, True])
+    def test_private_acl_is_checked_without_rewriting_and_drift_is_repaired(
+        tmp_path, monkeypatch, directory
+    ):
+        target = tmp_path / "private"
+        target.mkdir() if directory else target.touch()
+        writes = []
+        load_dll = ctypes.WinDLL
+    
+        def tracked_dll(name, **kwargs):
+            dll = load_dll(name, **kwargs)
+            if name == "advapi32":
+                original = dll.SetNamedSecurityInfoW
+    
+                def tracked_set(*args):
+                    original.argtypes = tracked_set.argtypes
+                    original.restype = tracked_set.restype
+                    writes.append(args[0])
+                    return original(*args)
+    
+                dll.SetNamedSecurityInfoW = tracked_set
+            return dll
+    
+        monkeypatch.setattr(ctypes, "WinDLL", tracked_dll)
+        _protect_private_path(target)
+        assert len(writes) == 1
+        assert_private(target, directory=directory)
+    
+        _protect_private_path(target)
+        assert len(writes) == 1, "an unchanged private ACL must not trigger recursive propagation"
+    
+>       acl(target, grant_everyone=True)
+
+tests\test_windows_private_paths.py:138: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+path = WindowsPath('D:/WindowsTemp/pytest-of-Ant/pytest-3608/test_private_acl_is_checked_wi0/private')
+grant_everyone = True
+
+    def acl(path: Path, *, grant_everyone: bool = False) -> dict:
+        command = """
+    $ErrorActionPreference = 'Stop'
+    $target = $env:MNEMOS_TEST_ACL_PATH
+    $acl = Get-Acl -LiteralPath $target
+    if ($env:MNEMOS_TEST_GRANT_EVERYONE -eq '1') {
+        $sid = [Security.Principal.SecurityIdentifier]::new('S-1-1-0')
+        $isDirectory = Test-Path -LiteralPath $target -PathType Container
+        $flags = if ($isDirectory) { 'ContainerInherit,ObjectInherit' } else { 'None' }
+        $edit = if ($isDirectory) { [Security.AccessControl.DirectorySecurity]::new() } else { [Security.AccessControl.FileSecurity]::new() }
+        $edit.SetSecurityDescriptorSddlForm($acl.Sddl, [Security.AccessControl.AccessControlSections]::Access)
+        $rule = [Security.AccessControl.FileSystemAccessRule]::new(
+            $sid, 'ReadAndExecute', $flags, 'None', 'Allow')
+        $edit.AddAccessRule($rule)
+        Set-Acl -LiteralPath $target -AclObject $edit
+        $acl = Get-Acl -LiteralPath $target
+    }
+    [ordered]@{
+        protected = $acl.AreAccessRulesProtected
+        current_sid = [Security.Principal.WindowsIdentity]::GetCurrent().User.Value
+        rules = @($acl.GetAccessRules($true, $true, [Security.Principal.SecurityIdentifier]) | ForEach-Object {
+            [ordered]@{sid=$_.IdentityReference.Value; inherited=$_.IsInherited;
+                rights=[int]$_.FileSystemRights; flags=[int]$_.InheritanceFlags;
+                allow=($_.AccessControlType -eq 'Allow')}
+        })
+    } | ConvertTo-Json -Depth 4 -Compress
+    """
+        result = subprocess.run(
+            ["powershell.exe", "-NoLogo", "-NoProfile", "-NonInteractive", "-Command", command],
+            env={
+                **{k: v for k, v in os.environ.items() if k.upper() != "PSMODULEPATH"},
+                "MNEMOS_TEST_ACL_PATH": str(path),
+                "MNEMOS_TEST_GRANT_EVERYONE": "1" if grant_everyone else "0",
+            },
+            capture_output=True,
+            text=True,
+            check=False,
+            timeout=20,
+            creationflags=getattr(subprocess, "CREATE_NO_WINDOW", 0),
+        )
+>       assert result.returncode == 0, result.stderr
+E       AssertionError: Set-Acl : The process does not possess the 'SeSecurityPrivilege' privilege which is required for this operation.
+E         At line:14 char:5
+E         +     Set-Acl -LiteralPath $target -AclObject $edit
+E         +     ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+E             + CategoryInfo          : PermissionDenied: (D:\WindowsTemp\...ked_wi0\private:String) [Set-Acl], PrivilegeNotHeld 
+E            Exception
+E             + FullyQualifiedErrorId : System.Security.AccessControl.PrivilegeNotHeldException,Microsoft.PowerShell.Commands.Se 
+E            tAclCommand
+E          
+E         
+E       assert 1 == 0
+E        +  where 1 = CompletedProcess(args=['powershell.exe', '-NoLogo', '-NoProfile', '-NonInteractive', '-Command', "\n$ErrorActionPrefer...orId : System.Security.AccessControl.PrivilegeNotHeldException,Microsoft.PowerShell.Commands.Se \n   tAclCommand\n \n").returncode
+
+tests\test_windows_private_paths.py:58: AssertionError
+__ test_private_acl_is_checked_without_rewriting_and_drift_is_repaired[True] __
+
+tmp_path = WindowsPath('D:/WindowsTemp/pytest-of-Ant/pytest-3608/test_private_acl_is_checked_wi1')
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x000001DD04B5F130>
+directory = True
+
+    @pytest.mark.parametrize("directory", [False, True])
+    def test_private_acl_is_checked_without_rewriting_and_drift_is_repaired(
+        tmp_path, monkeypatch, directory
+    ):
+        target = tmp_path / "private"
+        target.mkdir() if directory else target.touch()
+        writes = []
+        load_dll = ctypes.WinDLL
+    
+        def tracked_dll(name, **kwargs):
+            dll = load_dll(name, **kwargs)
+            if name == "advapi32":
+                original = dll.SetNamedSecurityInfoW
+    
+                def tracked_set(*args):
+                    original.argtypes = tracked_set.argtypes
+                    original.restype = tracked_set.restype
+                    writes.append(args[0])
+                    return original(*args)
+    
+                dll.SetNamedSecurityInfoW = tracked_set
+            return dll
+    
+        monkeypatch.setattr(ctypes, "WinDLL", tracked_dll)
+        _protect_private_path(target)
+        assert len(writes) == 1
+        assert_private(target, directory=directory)
+    
+        _protect_private_path(target)
+        assert len(writes) == 1, "an unchanged private ACL must not trigger recursive propagation"
+    
+>       acl(target, grant_everyone=True)
+
+tests\test_windows_private_paths.py:138: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+path = WindowsPath('D:/WindowsTemp/pytest-of-Ant/pytest-3608/test_private_acl_is_checked_wi1/private')
+grant_everyone = True
+
+    def acl(path: Path, *, grant_everyone: bool = False) -> dict:
+        command = """
+    $ErrorActionPreference = 'Stop'
+    $target = $env:MNEMOS_TEST_ACL_PATH
+    $acl = Get-Acl -LiteralPath $target
+    if ($env:MNEMOS_TEST_GRANT_EVERYONE -eq '1') {
+        $sid = [Security.Principal.SecurityIdentifier]::new('S-1-1-0')
+        $isDirectory = Test-Path -LiteralPath $target -PathType Container
+        $flags = if ($isDirectory) { 'ContainerInherit,ObjectInherit' } else { 'None' }
+        $edit = if ($isDirectory) { [Security.AccessControl.DirectorySecurity]::new() } else { [Security.AccessControl.FileSecurity]::new() }
+        $edit.SetSecurityDescriptorSddlForm($acl.Sddl, [Security.AccessControl.AccessControlSections]::Access)
+        $rule = [Security.AccessControl.FileSystemAccessRule]::new(
+            $sid, 'ReadAndExecute', $flags, 'None', 'Allow')
+        $edit.AddAccessRule($rule)
+        Set-Acl -LiteralPath $target -AclObject $edit
+        $acl = Get-Acl -LiteralPath $target
+    }
+    [ordered]@{
+        protected = $acl.AreAccessRulesProtected
+        current_sid = [Security.Principal.WindowsIdentity]::GetCurrent().User.Value
+        rules = @($acl.GetAccessRules($true, $true, [Security.Principal.SecurityIdentifier]) | ForEach-Object {
+            [ordered]@{sid=$_.IdentityReference.Value; inherited=$_.IsInherited;
+                rights=[int]$_.FileSystemRights; flags=[int]$_.InheritanceFlags;
+                allow=($_.AccessControlType -eq 'Allow')}
+        })
+    } | ConvertTo-Json -Depth 4 -Compress
+    """
+        result = subprocess.run(
+            ["powershell.exe", "-NoLogo", "-NoProfile", "-NonInteractive", "-Command", command],
+            env={
+                **{k: v for k, v in os.environ.items() if k.upper() != "PSMODULEPATH"},
+                "MNEMOS_TEST_ACL_PATH": str(path),
+                "MNEMOS_TEST_GRANT_EVERYONE": "1" if grant_everyone else "0",
+            },
+            capture_output=True,
+            text=True,
+            check=False,
+            timeout=20,
+            creationflags=getattr(subprocess, "CREATE_NO_WINDOW", 0),
+        )
+>       assert result.returncode == 0, result.stderr
+E       AssertionError: Set-Acl : The process does not possess the 'SeSecurityPrivilege' privilege which is required for this operation.
+E         At line:14 char:5
+E         +     Set-Acl -LiteralPath $target -AclObject $edit
+E         +     ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+E             + CategoryInfo          : PermissionDenied: (D:\WindowsTemp\...ked_wi1\private:String) [Set-Acl], PrivilegeNotHeld 
+E            Exception
+E             + FullyQualifiedErrorId : System.Security.AccessControl.PrivilegeNotHeldException,Microsoft.PowerShell.Commands.Se 
+E            tAclCommand
+E          
+E         
+E       assert 1 == 0
+E        +  where 1 = CompletedProcess(args=['powershell.exe', '-NoLogo', '-NoProfile', '-NonInteractive', '-Command', "\n$ErrorActionPrefer...orId : System.Security.AccessControl.PrivilegeNotHeldException,Microsoft.PowerShell.Commands.Se \n   tAclCommand\n \n").returncode
+
+tests\test_windows_private_paths.py:58: AssertionError
+=========================== short test summary info ===========================
+FAILED tests/test_windows_private_paths.py::test_private_acl_is_checked_without_rewriting_and_drift_is_repaired[False]
+FAILED tests/test_windows_private_paths.py::test_private_acl_is_checked_without_rewriting_and_drift_is_repaired[True]
+2 failed, 3 passed in 7.89s

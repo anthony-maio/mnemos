@@ -1,0 +1,47 @@
+.....F...                                                                [100%]
+================================== FAILURES ===================================
+_ test_acl_query_failure_falls_back_to_permission_repair[GetAclInformation-0] _
+
+tmp_path = WindowsPath('D:/WindowsTemp/pytest-of-Ant/pytest-3611/test_acl_query_failure_falls_b3')
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x000001DB89C59850>
+api = 'GetAclInformation', result = 0
+
+    @pytest.mark.parametrize(
+        ("api", "result"),
+        [
+            ("GetNamedSecurityInfoW", 5),
+            ("GetNamedSecurityInfoW", 0),
+            ("GetSecurityDescriptorControl", 0),
+            ("GetAclInformation", 0),
+        ],
+    )
+    def test_acl_query_failure_falls_back_to_permission_repair(tmp_path, monkeypatch, api, result):
+        target = tmp_path / "private"
+        target.touch()
+        acl(target, grant_everyone=True)
+        load_dll = ctypes.WinDLL
+        queries = []
+    
+        def tracked_dll(name, **kwargs):
+            dll = load_dll(name, **kwargs)
+            if name == "advapi32":
+    
+                def denied(*args):
+                    queries.append(api)
+                    return result  # A failed query or missing descriptor cannot prove privacy.
+    
+                setattr(dll, api, denied)
+            return dll
+    
+        monkeypatch.setattr(ctypes, "WinDLL", tracked_dll)
+        _protect_private_path(target)
+>       assert queries == [api]
+E       AssertionError: assert [] == ['GetAclInformation']
+E         
+E         Right contains one more item: 'GetAclInformation'
+E         Use -v to get more diff
+
+tests\test_windows_private_paths.py:118: AssertionError
+=========================== short test summary info ===========================
+FAILED tests/test_windows_private_paths.py::test_acl_query_failure_falls_back_to_permission_repair[GetAclInformation-0]
+1 failed, 8 passed in 12.01s

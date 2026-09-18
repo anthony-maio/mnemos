@@ -1,0 +1,344 @@
+"""Archive the bounded native Codex Stop boundary observation."""
+from __future__ import annotations
+
+import hashlib
+import json
+from pathlib import Path
+import shutil
+import sqlite3
+from typing import Any
+
+
+ROOT = Path(__file__).resolve().parents[1]
+REPORT = Path(
+    "C:/Users/Ant/AppData/Local/Temp/mnemos-native-codex-stop-boundary-v1/report.json"
+)
+FIXTURE = Path(
+    "C:/Users/Ant/AppData/Local/Temp/mnemos-native-codex-stop-boundary-22kmbssb"
+)
+ARCHIVE = ROOT / "docs/validation/2026-09-18/native-codex-stop-boundary-v1"
+RUNNER = ROOT / ".venv/native_codex_stop_boundary_v1.py"
+SOURCE = "5af3d15b889858f60c7d27507dc4366f0a45f40a"
+WHEEL = "f3135720f53591df6ae5b2eed09a7c0c59105998bfd7379190e1eee439ba0954"
+
+
+def sha(raw: bytes) -> str:
+    return hashlib.sha256(raw).hexdigest()
+
+
+def read_json(path: Path) -> Any:
+    return json.loads(path.read_text(encoding="utf-8"))
+
+
+def selected_completion(report: dict[str, Any]):
+    home = FIXTURE / "codex-home/.codex"
+    found = []
+    for source in sorted((home / "sessions").rglob("*.jsonl")):
+        raw = source.read_bytes()
+        source_hash = sha(raw)
+        for line_number, raw_line in enumerate(raw.splitlines(keepends=True), 1):
+            try:
+                record = json.loads(raw_line)
+            except json.JSONDecodeError:
+                continue
+            payload = record.get("payload", {})
+            invocation = payload.get("invocation")
+            if not isinstance(invocation, dict) or invocation.get("server") != "mnemos":
+                continue
+            if invocation.get("tool") != report["selected_completion"]["tool"]:
+                continue
+            result = payload.get("result", {})
+            ok = result.get("Ok") if isinstance(result, dict) else None
+            if not isinstance(ok, dict) or ok.get("isError") is not False:
+                raise AssertionError("selected MCP completion was not successful")
+            structured = json.loads(ok["structuredContent"]["result"])
+            content = json.loads(ok["content"][0]["text"])
+            if structured != content:
+                raise AssertionError("selected MCP result representations differ")
+            found.append(
+                {
+                    "source": str(source.relative_to(home)).replace("\\", "/"),
+                    "line": line_number,
+                    "line_sha256": sha(raw_line),
+                    "source_file_sha256": source_hash,
+                    "call_id": payload.get("call_id"),
+                    "tool": invocation["tool"],
+                    "arguments": invocation.get("arguments", {}),
+                    "result": structured,
+                }
+            )
+    if len(found) != 1:
+        raise AssertionError(f"expected one selected completion, found {len(found)}")
+    item = found[0]
+    if sha(json.dumps(item["result"], sort_keys=True).encode("utf-8")) == "":
+        raise AssertionError("unreachable result hash guard")
+    if sha(json.dumps(item["result"], sort_keys=True).encode("utf-8")) != report[
+        "selected_completion"
+    ]["result_sha256"]:
+        raise AssertionError("selected completion result hash differs")
+    target = report["target"]
+    facts = item["result"].get("facts", [])
+    target_fact = next((fact for fact in facts if fact.get("id") == target["fact_id"]), None)
+    if not target_fact or target_fact.get("version") != target["version"]:
+        raise AssertionError("selected completion did not return target")
+    if target_fact.get("scope_id") != target["scope_id"]:
+        raise AssertionError("selected completion scope differs")
+    if target["foreign_id"] in {fact.get("id") for fact in facts}:
+        raise AssertionError("foreign fact leaked into selected completion")
+    return item
+
+
+def sqlite_capture_summary(report: dict[str, Any], selected: dict[str, Any]):
+    target = report["target"]
+    expected_events = {item["id"]: item for item in report["capture_events"]}
+    prompt = selected["arguments"]["query"]
+    db_path = FIXTURE / "memory.sqlite"
+    with sqlite3.connect(db_path.as_uri() + "?mode=ro", uri=True) as db:
+        db.row_factory = sqlite3.Row
+        rows = db.execute(
+            "select id, content, role, session_id, scope_id, metadata from episodic_events "
+            "where id in (?, ?)",
+            tuple(expected_events),
+        ).fetchall()
+        if len(rows) != 2:
+            raise AssertionError("user/assistant capture rows are incomplete")
+        captured = []
+        for row in rows:
+            metadata = json.loads(row["metadata"])
+            item = {
+                "id": row["id"],
+                "role": row["role"],
+                "session_id": row["session_id"],
+                "project_id": metadata.get("project_id"),
+                "scope": metadata.get("scope"),
+                "scope_id": row["scope_id"],
+                "profile": metadata.get("user_profile_id"),
+                "content_sha256": sha(row["content"].encode("utf-8")),
+                "source_kind": metadata.get("source_kind"),
+                "host": metadata.get("host"),
+            }
+            expected = expected_events[row["id"]]
+            if item["role"] != expected["role"] or item["session_id"] != expected["session_id"]:
+                raise AssertionError("capture identity differs from report")
+            if item["content_sha256"] != expected["content_sha256"]:
+                raise AssertionError("capture content hash differs from report")
+            if item["project_id"] != target["scope_id"] or item["scope_id"] != target["scope_id"]:
+                raise AssertionError("capture scope differs from target")
+            if item["profile"] != "native-codex-stop-boundary-v1":
+                raise AssertionError("capture profile differs")
+            captured.append(item)
+        roles = {item["role"] for item in captured}
+        if roles != {"user", "assistant"}:
+            raise AssertionError("capture roles are incomplete")
+        counts = {
+            table: db.execute(f"select count(*) from {table}").fetchone()[0]
+            for table in ("memory_chunks", "episodic_events", "fact_evidence")
+        }
+    return {
+        "database_reopened_read_only": True,
+        "target": {
+            "fact_id": target["fact_id"],
+            "content_sha256": sha(target["content"].encode("utf-8")),
+            "version": target["version"],
+            "project_id": target["scope_id"],
+        },
+        "captured_events": captured,
+        "query_sha256": sha(selected["arguments"]["query"].encode("utf-8")),
+        "table_counts": counts,
+    }
+
+
+def selected_messages(selected: dict[str, Any]):
+    home = FIXTURE / "codex-home/.codex"
+    selected_rows = []
+    for source in sorted((home / "sessions").rglob("*.jsonl")):
+        raw = source.read_bytes()
+        source_hash = sha(raw)
+        for line_number, raw_line in enumerate(raw.splitlines(keepends=True), 1):
+            try:
+                record = json.loads(raw_line)
+            except json.JSONDecodeError:
+                continue
+            payload = record.get("payload", {})
+            role = payload.get("type")
+            message = payload.get("message")
+            if role == "user_message" and isinstance(message, str) and message.startswith(
+                "Call mnemos_retrieve exactly once for the project shutdown probe"
+            ):
+                selected_rows.append(
+                    {
+                        "role": "user",
+                        "source": str(source.relative_to(home)).replace("\\", "/"),
+                        "line": line_number,
+                        "line_sha256": sha(raw_line),
+                        "source_file_sha256": source_hash,
+                        "text_sha256": sha(message.encode("utf-8")),
+                        "text": message,
+                    }
+                )
+            elif role == "agent_message" and isinstance(message, str) and "river-cedar" in message:
+                selected_rows.append(
+                    {
+                        "role": "assistant",
+                        "source": str(source.relative_to(home)).replace("\\", "/"),
+                        "line": line_number,
+                        "line_sha256": sha(raw_line),
+                        "source_file_sha256": source_hash,
+                        "text_sha256": sha(message.encode("utf-8")),
+                        "text": message,
+                    }
+                )
+    if [item["role"] for item in selected_rows] != ["user", "assistant"]:
+        raise AssertionError("native prompt/final answer records were not selected")
+    return selected_rows
+
+
+def marker_summary(report: dict[str, Any]):
+    shell = [line for line in report["stop-shell.txt"]["text"].splitlines() if line]
+    python_rows = [
+        json.loads(line) for line in report["stop-python.jsonl"]["text"].splitlines() if line
+    ]
+    sequence = ["shell_entry", "python_entry", "before_adapter_import", "after_adapter_import",
+                "adapter_main_start", "run_hook_start", "run_hook_result", "run_hook_end",
+                "adapter_main_end", "stdout_flushed", "python_exit", "shell_exit"]
+    actual = ["shell_entry"] + [row["stage"] for row in python_rows] + ["shell_exit"]
+    if actual != sequence:
+        raise AssertionError(f"marker order differs: {actual}")
+    shell_start = int(shell[0].split("|")[1])
+    shell_end = int(shell[1].split("|")[1])
+    python_entry = next(row for row in python_rows if row["stage"] == "python_entry")
+    import_done = next(row for row in python_rows if row["stage"] == "after_adapter_import")
+    hook_start = next(row for row in python_rows if row["stage"] == "run_hook_start")
+    hook_result = next(row for row in python_rows if row["stage"] == "run_hook_result")
+    return {
+        "sequence": actual,
+        "shell_elapsed_ms": shell_end - shell_start,
+        "shell_to_python_ms": round(python_entry["epoch_ns"] / 1_000_000 - shell_start, 4),
+        "adapter_import_ms": round(
+            (import_done["epoch_ns"] - next(row for row in python_rows if row["stage"] == "before_adapter_import")["epoch_ns"])
+            / 1_000_000,
+            4,
+        ),
+        "handler_ms": round((hook_result["epoch_ns"] - hook_start["epoch_ns"]) / 1_000_000, 4),
+        "service_capture_dispatch_ms": [
+            operation["elapsed_ms"]
+            for operation in report["dispatch_trace"]
+            if operation.get("operation") == "capture"
+            and operation.get("host") == "codex"
+            and operation.get("result_status") == "committed"
+        ][-1],
+        "python_trace_sha256": sha(report["stop-python.jsonl"]["text"].encode("utf-8")),
+        "shell_trace_sha256": sha(report["stop-shell.txt"]["text"].encode("utf-8")),
+    }
+
+
+def main() -> None:
+    if ARCHIVE.exists():
+        raise FileExistsError(ARCHIVE)
+    report = read_json(REPORT)
+    if report.get("status") != "observed_transport" or report.get("source_commit") != SOURCE:
+        raise AssertionError("unexpected stop-boundary status or source")
+    if report.get("runner_sha256") != sha(RUNNER.read_bytes()):
+        raise AssertionError("immutable executed runner hash differs")
+    if report.get("wheel_sha256") != WHEEL:
+        raise AssertionError("unexpected wheel hash")
+    if report["process"]["returncode"] != 0 or report["process"]["timed_out"]:
+        raise AssertionError("native process did not complete successfully")
+    if report["selected_completion"]["target_verified"] is not True:
+        raise AssertionError("selected completion was not target verified")
+    selected = selected_completion(report)
+    capture = sqlite_capture_summary(report, selected)
+    messages = selected_messages(selected)
+    by_role = {item["role"]: item for item in messages}
+    expected_capture = {item["role"]: item for item in report["capture_events"]}
+    if by_role["user"]["text_sha256"] != expected_capture["user"]["content_sha256"]:
+        raise AssertionError("native prompt hash differs from persisted user capture")
+    if by_role["assistant"]["text_sha256"] != expected_capture["assistant"]["content_sha256"]:
+        raise AssertionError("native final answer hash differs from persisted assistant capture")
+    capture["prompt_source"] = by_role["user"]
+    capture["final_answer_source"] = by_role["assistant"]
+    capture["prompt_sha256"] = by_role["user"]["text_sha256"]
+    capture["final_answer_sha256"] = by_role["assistant"]["text_sha256"]
+    markers = marker_summary(report)
+    target = report["target"]
+    actual_capture = {
+        item["id"]: {
+            key: item[key]
+            for key in ("id", "role", "session_id", "content_sha256")
+        }
+        for item in capture["captured_events"]
+    }
+    expected_capture = {
+        item["id"]: {
+            key: item[key]
+            for key in ("id", "role", "session_id", "content_sha256")
+        }
+        for item in report["capture_events"]
+    }
+    if actual_capture != expected_capture:
+        raise AssertionError("capture report differs from SQLite readback")
+    if not report["cleanup"]["auth_absent"] or not report["cleanup"]["descriptor_absent"]:
+        raise AssertionError("cleanup was not verified")
+    if report["cleanup"]["errors"]:
+        raise AssertionError("cleanup reported errors")
+
+    ARCHIVE.mkdir(parents=True)
+    shutil.copyfile(REPORT, ARCHIVE / "report.json")
+    shutil.copyfile(__file__, ARCHIVE / "archive_codex_stop_boundary_v1.py.txt")
+    shutil.copyfile(RUNNER, ARCHIVE / "native_codex_stop_boundary_v1.py.txt")
+    helper_paths = {}
+    for name, expected in report["helper_pins"].items():
+        path = ROOT / ".venv" / name
+        if not path.exists() or sha(path.read_bytes()) != expected:
+            raise AssertionError(f"helper pin mismatch: {name}")
+        helper_paths[name] = path
+        shutil.copyfile(path, ARCHIVE / f"{Path(name).name}.txt")
+    bootstrap = FIXTURE / "stop-boundary-bootstrap.py"
+    shutil.copyfile(bootstrap, ARCHIVE / "stop-boundary-bootstrap.py.txt")
+    (ARCHIVE / "stop-python.jsonl").write_text(
+        report["stop-python.jsonl"]["text"], encoding="utf-8"
+    )
+    (ARCHIVE / "stop-shell.txt").write_text(report["stop-shell.txt"]["text"], encoding="utf-8")
+    (ARCHIVE / "selected-mcp-completion.json").write_text(
+        json.dumps(selected, indent=2) + "\n", encoding="utf-8"
+    )
+    (ARCHIVE / "selected-prompt-answer.json").write_text(
+        json.dumps(messages, indent=2) + "\n", encoding="utf-8"
+    )
+    (ARCHIVE / "sqlite-capture-summary.json").write_text(
+        json.dumps(capture, indent=2) + "\n", encoding="utf-8"
+    )
+    (ARCHIVE / "timing-summary.json").write_text(
+        json.dumps(
+            {
+                **markers,
+                "report_process_elapsed_ms": report["process"]["elapsed_ms"],
+                "limits": report["stop_instrumentation"]["limits"],
+            },
+            indent=2,
+        )
+        + "\n",
+        encoding="utf-8",
+    )
+    (ARCHIVE / ".gitattributes").write_text("* -text\n*.jsonl -whitespace\n", encoding="utf-8")
+    readme = (
+        "# Native Codex Stop boundary v1\n\n"
+        "This archive records one successful instrumented Codex Stop hook observation against the installed `5af3d15` package. The selected native MCP retrieve completed successfully, returned the seeded project fact, and excluded the foreign project. A read-only SQLite reopen matched the report's user and assistant capture rows by content hash, role, session, project, scope, and profile.\n\n"
+        "The marker sequence measures shell entry, Python bootstrap, adapter import, hook execution, and exit. The measured values are preserved in `timing-summary.json`: shell elapsed, shell-to-Python, adapter import, handler, and the service capture dispatch observation. The bootstrap adds file tracing and imports the installed adapter before calling it. Host dispatch to shell start is not measured, so these values are not an uninstrumented latency acceptance result.\n\n"
+        "This is transport and capture evidence for one fixture observation. It does not establish complete conversation capture, full native lifecycle acceptance, model quality, or a latency gate. Earlier native timeout evidence remains open. The fixture used disabled cognition modules and deterministic vectors. Credentials, full native sessions, and the SQLite database are not archived.\n"
+    )
+    (ARCHIVE / "README.md").write_text(readme, encoding="utf-8")
+    files = {}
+    for path in sorted(ARCHIVE.iterdir()):
+        if path.name == "evidence-index.json" or not path.is_file():
+            continue
+        files[path.name] = {"bytes": path.stat().st_size, "sha256": sha(path.read_bytes())}
+    (ARCHIVE / "evidence-index.json").write_text(
+        json.dumps({"archive": str(ARCHIVE), "files": files}, indent=2) + "\n",
+        encoding="utf-8",
+    )
+    print(json.dumps({"status": "passed", "archive": str(ARCHIVE), "files": len(files)}))
+
+
+if __name__ == "__main__":
+    main()

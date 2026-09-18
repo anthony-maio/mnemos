@@ -1,19 +1,20 @@
 # Real-model evaluation status
 
-## Current checkpoint: September 18, 2026, 04:46 UTC observation
+## Current checkpoint: September 18, 2026, 05:32 UTC observation
 
 The unchanged coordinator is still live: process 26488 and its lifecycle
 worker chain were verified through the operating system, and the existing
 execution session remains active. The observed chain was coordinator `26488`,
 lifecycle worker `47588`, and worker child `46036`. The latest durable
 full-profile checkpoint
-was written at `00:41:08 -04:00`; it records 37 completed observation records,
-37 completed IDs, and next session index 12. These are execution counts, not
+was written at `05:11:18 UTC`; it records 38 completed observation records,
+38 completed IDs, and next session index 12. These are execution counts, not
 accepted quality results.
 
 Recent lifecycle logs contain repeated Ollama failures. The latest recorded
 categories are prediction `All connection attempts failed` and embedding
-`WinError 10060` connection timeouts. A fresh read-only `/api/tags` request to
+`WinError 10060` connection timeouts, most recently observed at `05:31:46 UTC`.
+A read-only `/api/ps` request during this turn to
 `192.168.86.35:11434` timed out after five seconds. No process was restarted,
 and no model, server, queue, or configuration state was changed.
 

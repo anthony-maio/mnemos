@@ -1,0 +1,68 @@
+FFF                                                                      [100%]
+================================== FAILURES ===================================
+__ test_protection_removes_inherited_access_and_blocks_parent_changes[False] __
+
+tmp_path = WindowsPath('D:/WindowsTemp/pytest-of-Ant/pytest-3601/test_protection_removes_inheri0')
+directory = False
+
+    @pytest.mark.parametrize("directory", [False, True])
+    def test_protection_removes_inherited_access_and_blocks_parent_changes(tmp_path, directory):
+        parent = tmp_path / "parent"
+        parent.mkdir()
+        acl(parent, grant_everyone=True)
+        target = parent / "private"
+        target.mkdir() if directory else target.write_text("synthetic", encoding="utf-8")
+>       assert any(rule["sid"] == "S-1-1-0" for rule in acl(target)["rules"])
+E       assert False
+E        +  where False = any(<generator object test_protection_removes_inherited_access_and_blocks_parent_changes.<locals>.<genexpr> at 0x00000231014B82B0>)
+
+tests\test_windows_private_paths.py:65: AssertionError
+__ test_protection_removes_inherited_access_and_blocks_parent_changes[True] ___
+
+tmp_path = WindowsPath('D:/WindowsTemp/pytest-of-Ant/pytest-3601/test_protection_removes_inheri1')
+directory = True
+
+    @pytest.mark.parametrize("directory", [False, True])
+    def test_protection_removes_inherited_access_and_blocks_parent_changes(tmp_path, directory):
+        parent = tmp_path / "parent"
+        parent.mkdir()
+        acl(parent, grant_everyone=True)
+        target = parent / "private"
+        target.mkdir() if directory else target.write_text("synthetic", encoding="utf-8")
+>       assert any(rule["sid"] == "S-1-1-0" for rule in acl(target)["rules"])
+E       assert False
+E        +  where False = any(<generator object test_protection_removes_inherited_access_and_blocks_parent_changes.<locals>.<genexpr> at 0x00000231014B8BA0>)
+
+tests\test_windows_private_paths.py:65: AssertionError
+___________ test_process_lock_repairs_legacy_inherited_permissions ____________
+
+tmp_path = WindowsPath('D:/WindowsTemp/pytest-of-Ant/pytest-3601/test_process_lock_repairs_lega0')
+
+    def test_process_lock_repairs_legacy_inherited_permissions(tmp_path):
+        parent = tmp_path / "runtime"
+        parent.mkdir()
+        acl(parent, grant_everyone=True)
+        path = parent / "outbox.lock"
+        path.touch()
+        lock = _ProcessLock(path)
+        assert lock.acquire()
+        try:
+>           assert_private(parent, directory=True)
+
+tests\test_windows_private_paths.py:83: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+path = WindowsPath('D:/WindowsTemp/pytest-of-Ant/pytest-3601/test_process_lock_repairs_lega0/runtime')
+directory = True
+
+    def assert_private(path: Path, *, directory: bool) -> None:
+        observed = acl(path)
+>       assert observed["protected"] is True
+E       assert None is True
+
+tests\test_windows_private_paths.py:51: AssertionError
+=========================== short test summary info ===========================
+FAILED tests/test_windows_private_paths.py::test_protection_removes_inherited_access_and_blocks_parent_changes[False]
+FAILED tests/test_windows_private_paths.py::test_protection_removes_inherited_access_and_blocks_parent_changes[True]
+FAILED tests/test_windows_private_paths.py::test_process_lock_repairs_legacy_inherited_permissions
+3 failed in 2.49s

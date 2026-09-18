@@ -1,0 +1,278 @@
+FFF                                                                      [100%]
+================================== FAILURES ===================================
+__ test_protection_removes_inherited_access_and_blocks_parent_changes[False] __
+
+tmp_path = WindowsPath('D:/WindowsTemp/pytest-of-Ant/pytest-3602/test_protection_removes_inheri0')
+directory = False
+
+    @pytest.mark.parametrize("directory", [False, True])
+    def test_protection_removes_inherited_access_and_blocks_parent_changes(tmp_path, directory):
+        parent = tmp_path / "parent"
+        parent.mkdir()
+>       acl(parent, grant_everyone=True)
+
+tests\test_windows_private_paths.py:63: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+tests\test_windows_private_paths.py:40: in acl
+    result = subprocess.run(
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+input = None, capture_output = True, timeout = 20, check = True
+popenargs = (['powershell.exe', '-NoLogo', '-NoProfile', '-NonInteractive', '-Command', "\n$ErrorActionPreference = 'Stop'\n$targe...tanceFlags;\n            allow=($_.AccessControlType -eq 'Allow')}\n    })\n} | ConvertTo-Json -Depth 4 -Compress\n"],)
+kwargs = {'env': {'ALLUSERSPROFILE': 'C:\\ProgramData', 'APPDATA': 'C:\\Users\\Ant\\AppData\\Roaming', 'CHOCOLATEYINSTALL': 'C:...', 'CHOCOLATEYLASTPATHUPDATE': '134220579444806768', ...}, 'text': True, 'creationflags': 134217728, 'stdout': -1, ...}
+
+    def run(*popenargs,
+            input=None, capture_output=False, timeout=None, check=False, **kwargs):
+        """Run command with arguments and return a CompletedProcess instance.
+    
+        The returned instance will have attributes args, returncode, stdout and
+        stderr. By default, stdout and stderr are not captured, and those attributes
+        will be None. Pass stdout=PIPE and/or stderr=PIPE in order to capture them,
+        or pass capture_output=True to capture both.
+    
+        If check is True and the exit code was non-zero, it raises a
+        CalledProcessError. The CalledProcessError object will have the return code
+        in the returncode attribute, and output & stderr attributes if those streams
+        were captured.
+    
+        If timeout (seconds) is given and the process takes too long,
+         a TimeoutExpired exception will be raised.
+    
+        There is an optional argument "input", allowing you to
+        pass bytes or a string to the subprocess's stdin.  If you use this argument
+        you may not also use the Popen constructor's "stdin" argument, as
+        it will be used internally.
+    
+        By default, all communication is in bytes, and therefore any "input" should
+        be bytes, and the stdout and stderr will be bytes. If in text mode, any
+        "input" should be a string, and stdout and stderr will be strings decoded
+        according to locale encoding, or by "encoding" if set. Text mode is
+        triggered by setting any of text, encoding, errors or universal_newlines.
+    
+        The other arguments are the same as for the Popen constructor.
+        """
+        if input is not None:
+            if kwargs.get('stdin') is not None:
+                raise ValueError('stdin and input arguments may not both be used.')
+            kwargs['stdin'] = PIPE
+    
+        if capture_output:
+            if kwargs.get('stdout') is not None or kwargs.get('stderr') is not None:
+                raise ValueError('stdout and stderr arguments may not be used '
+                                 'with capture_output.')
+            kwargs['stdout'] = PIPE
+            kwargs['stderr'] = PIPE
+    
+        with Popen(*popenargs, **kwargs) as process:
+            try:
+                stdout, stderr = process.communicate(input, timeout=timeout)
+            except TimeoutExpired as exc:
+                process.kill()
+                if _mswindows:
+                    # Windows accumulates the output in a single blocking
+                    # read() call run on child threads, with the timeout
+                    # being done in a join() on those threads.  communicate()
+                    # _after_ kill() is required to collect that and add it
+                    # to the exception.
+                    exc.stdout, exc.stderr = process.communicate()
+                else:
+                    # POSIX _communicate already populated the output so
+                    # far into the TimeoutExpired exception.
+                    process.wait()
+                raise
+            except:  # Including KeyboardInterrupt, communicate handled that.
+                process.kill()
+                # We don't call process.wait() as .__exit__ does that for us.
+                raise
+            retcode = process.poll()
+            if check and retcode:
+>               raise CalledProcessError(retcode, process.args,
+                                         output=stdout, stderr=stderr)
+E               subprocess.CalledProcessError: Command '['powershell.exe', '-NoLogo', '-NoProfile', '-NonInteractive', '-Command', "\n$ErrorActionPreference = 'Stop'\n$target = $env:MNEMOS_TEST_ACL_PATH\n$acl = Get-Acl -LiteralPath $target\nif ($env:MNEMOS_TEST_GRANT_EVERYONE -eq '1') {\n    $sid = [Security.Principal.SecurityIdentifier]::new('S-1-1-0')\n    $rule = [Security.AccessControl.FileSystemAccessRule]::new(\n        $sid, 'ReadAndExecute', 'ContainerInherit,ObjectInherit', 'None', 'Allow')\n    $acl.AddAccessRule($rule)\n    Set-Acl -LiteralPath $target -AclObject $acl\n    $acl = Get-Acl -LiteralPath $target\n}\n[ordered]@{\n    protected = $acl.AreAccessRulesProtected\n    current_sid = [Security.Principal.WindowsIdentity]::GetCurrent().User.Value\n    rules = @($acl.GetAccessRules($true, $true, [Security.Principal.SecurityIdentifier]) | ForEach-Object {\n        [ordered]@{sid=$_.IdentityReference.Value; inherited=$_.IsInherited;\n            rights=[int]$_.FileSystemRights; flags=[int]$_.InheritanceFlags;\n            allow=($_.AccessControlType -eq 'Allow')}\n    })\n} | ConvertTo-Json -Depth 4 -Compress\n"]' returned non-zero exit status 1.
+
+C:\Users\Ant\AppData\Roaming\uv\python\cpython-3.13.7-windows-x86_64-none\Lib\subprocess.py:577: CalledProcessError
+__ test_protection_removes_inherited_access_and_blocks_parent_changes[True] ___
+
+tmp_path = WindowsPath('D:/WindowsTemp/pytest-of-Ant/pytest-3602/test_protection_removes_inheri1')
+directory = True
+
+    @pytest.mark.parametrize("directory", [False, True])
+    def test_protection_removes_inherited_access_and_blocks_parent_changes(tmp_path, directory):
+        parent = tmp_path / "parent"
+        parent.mkdir()
+>       acl(parent, grant_everyone=True)
+
+tests\test_windows_private_paths.py:63: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+tests\test_windows_private_paths.py:40: in acl
+    result = subprocess.run(
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+input = None, capture_output = True, timeout = 20, check = True
+popenargs = (['powershell.exe', '-NoLogo', '-NoProfile', '-NonInteractive', '-Command', "\n$ErrorActionPreference = 'Stop'\n$targe...tanceFlags;\n            allow=($_.AccessControlType -eq 'Allow')}\n    })\n} | ConvertTo-Json -Depth 4 -Compress\n"],)
+kwargs = {'env': {'ALLUSERSPROFILE': 'C:\\ProgramData', 'APPDATA': 'C:\\Users\\Ant\\AppData\\Roaming', 'CHOCOLATEYINSTALL': 'C:...', 'CHOCOLATEYLASTPATHUPDATE': '134220579444806768', ...}, 'text': True, 'creationflags': 134217728, 'stdout': -1, ...}
+
+    def run(*popenargs,
+            input=None, capture_output=False, timeout=None, check=False, **kwargs):
+        """Run command with arguments and return a CompletedProcess instance.
+    
+        The returned instance will have attributes args, returncode, stdout and
+        stderr. By default, stdout and stderr are not captured, and those attributes
+        will be None. Pass stdout=PIPE and/or stderr=PIPE in order to capture them,
+        or pass capture_output=True to capture both.
+    
+        If check is True and the exit code was non-zero, it raises a
+        CalledProcessError. The CalledProcessError object will have the return code
+        in the returncode attribute, and output & stderr attributes if those streams
+        were captured.
+    
+        If timeout (seconds) is given and the process takes too long,
+         a TimeoutExpired exception will be raised.
+    
+        There is an optional argument "input", allowing you to
+        pass bytes or a string to the subprocess's stdin.  If you use this argument
+        you may not also use the Popen constructor's "stdin" argument, as
+        it will be used internally.
+    
+        By default, all communication is in bytes, and therefore any "input" should
+        be bytes, and the stdout and stderr will be bytes. If in text mode, any
+        "input" should be a string, and stdout and stderr will be strings decoded
+        according to locale encoding, or by "encoding" if set. Text mode is
+        triggered by setting any of text, encoding, errors or universal_newlines.
+    
+        The other arguments are the same as for the Popen constructor.
+        """
+        if input is not None:
+            if kwargs.get('stdin') is not None:
+                raise ValueError('stdin and input arguments may not both be used.')
+            kwargs['stdin'] = PIPE
+    
+        if capture_output:
+            if kwargs.get('stdout') is not None or kwargs.get('stderr') is not None:
+                raise ValueError('stdout and stderr arguments may not be used '
+                                 'with capture_output.')
+            kwargs['stdout'] = PIPE
+            kwargs['stderr'] = PIPE
+    
+        with Popen(*popenargs, **kwargs) as process:
+            try:
+                stdout, stderr = process.communicate(input, timeout=timeout)
+            except TimeoutExpired as exc:
+                process.kill()
+                if _mswindows:
+                    # Windows accumulates the output in a single blocking
+                    # read() call run on child threads, with the timeout
+                    # being done in a join() on those threads.  communicate()
+                    # _after_ kill() is required to collect that and add it
+                    # to the exception.
+                    exc.stdout, exc.stderr = process.communicate()
+                else:
+                    # POSIX _communicate already populated the output so
+                    # far into the TimeoutExpired exception.
+                    process.wait()
+                raise
+            except:  # Including KeyboardInterrupt, communicate handled that.
+                process.kill()
+                # We don't call process.wait() as .__exit__ does that for us.
+                raise
+            retcode = process.poll()
+            if check and retcode:
+>               raise CalledProcessError(retcode, process.args,
+                                         output=stdout, stderr=stderr)
+E               subprocess.CalledProcessError: Command '['powershell.exe', '-NoLogo', '-NoProfile', '-NonInteractive', '-Command', "\n$ErrorActionPreference = 'Stop'\n$target = $env:MNEMOS_TEST_ACL_PATH\n$acl = Get-Acl -LiteralPath $target\nif ($env:MNEMOS_TEST_GRANT_EVERYONE -eq '1') {\n    $sid = [Security.Principal.SecurityIdentifier]::new('S-1-1-0')\n    $rule = [Security.AccessControl.FileSystemAccessRule]::new(\n        $sid, 'ReadAndExecute', 'ContainerInherit,ObjectInherit', 'None', 'Allow')\n    $acl.AddAccessRule($rule)\n    Set-Acl -LiteralPath $target -AclObject $acl\n    $acl = Get-Acl -LiteralPath $target\n}\n[ordered]@{\n    protected = $acl.AreAccessRulesProtected\n    current_sid = [Security.Principal.WindowsIdentity]::GetCurrent().User.Value\n    rules = @($acl.GetAccessRules($true, $true, [Security.Principal.SecurityIdentifier]) | ForEach-Object {\n        [ordered]@{sid=$_.IdentityReference.Value; inherited=$_.IsInherited;\n            rights=[int]$_.FileSystemRights; flags=[int]$_.InheritanceFlags;\n            allow=($_.AccessControlType -eq 'Allow')}\n    })\n} | ConvertTo-Json -Depth 4 -Compress\n"]' returned non-zero exit status 1.
+
+C:\Users\Ant\AppData\Roaming\uv\python\cpython-3.13.7-windows-x86_64-none\Lib\subprocess.py:577: CalledProcessError
+___________ test_process_lock_repairs_legacy_inherited_permissions ____________
+
+tmp_path = WindowsPath('D:/WindowsTemp/pytest-of-Ant/pytest-3602/test_process_lock_repairs_lega0')
+
+    def test_process_lock_repairs_legacy_inherited_permissions(tmp_path):
+        parent = tmp_path / "runtime"
+        parent.mkdir()
+>       acl(parent, grant_everyone=True)
+
+tests\test_windows_private_paths.py:78: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+tests\test_windows_private_paths.py:40: in acl
+    result = subprocess.run(
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+input = None, capture_output = True, timeout = 20, check = True
+popenargs = (['powershell.exe', '-NoLogo', '-NoProfile', '-NonInteractive', '-Command', "\n$ErrorActionPreference = 'Stop'\n$targe...tanceFlags;\n            allow=($_.AccessControlType -eq 'Allow')}\n    })\n} | ConvertTo-Json -Depth 4 -Compress\n"],)
+kwargs = {'env': {'ALLUSERSPROFILE': 'C:\\ProgramData', 'APPDATA': 'C:\\Users\\Ant\\AppData\\Roaming', 'CHOCOLATEYINSTALL': 'C:...', 'CHOCOLATEYLASTPATHUPDATE': '134220579444806768', ...}, 'text': True, 'creationflags': 134217728, 'stdout': -1, ...}
+
+    def run(*popenargs,
+            input=None, capture_output=False, timeout=None, check=False, **kwargs):
+        """Run command with arguments and return a CompletedProcess instance.
+    
+        The returned instance will have attributes args, returncode, stdout and
+        stderr. By default, stdout and stderr are not captured, and those attributes
+        will be None. Pass stdout=PIPE and/or stderr=PIPE in order to capture them,
+        or pass capture_output=True to capture both.
+    
+        If check is True and the exit code was non-zero, it raises a
+        CalledProcessError. The CalledProcessError object will have the return code
+        in the returncode attribute, and output & stderr attributes if those streams
+        were captured.
+    
+        If timeout (seconds) is given and the process takes too long,
+         a TimeoutExpired exception will be raised.
+    
+        There is an optional argument "input", allowing you to
+        pass bytes or a string to the subprocess's stdin.  If you use this argument
+        you may not also use the Popen constructor's "stdin" argument, as
+        it will be used internally.
+    
+        By default, all communication is in bytes, and therefore any "input" should
+        be bytes, and the stdout and stderr will be bytes. If in text mode, any
+        "input" should be a string, and stdout and stderr will be strings decoded
+        according to locale encoding, or by "encoding" if set. Text mode is
+        triggered by setting any of text, encoding, errors or universal_newlines.
+    
+        The other arguments are the same as for the Popen constructor.
+        """
+        if input is not None:
+            if kwargs.get('stdin') is not None:
+                raise ValueError('stdin and input arguments may not both be used.')
+            kwargs['stdin'] = PIPE
+    
+        if capture_output:
+            if kwargs.get('stdout') is not None or kwargs.get('stderr') is not None:
+                raise ValueError('stdout and stderr arguments may not be used '
+                                 'with capture_output.')
+            kwargs['stdout'] = PIPE
+            kwargs['stderr'] = PIPE
+    
+        with Popen(*popenargs, **kwargs) as process:
+            try:
+                stdout, stderr = process.communicate(input, timeout=timeout)
+            except TimeoutExpired as exc:
+                process.kill()
+                if _mswindows:
+                    # Windows accumulates the output in a single blocking
+                    # read() call run on child threads, with the timeout
+                    # being done in a join() on those threads.  communicate()
+                    # _after_ kill() is required to collect that and add it
+                    # to the exception.
+                    exc.stdout, exc.stderr = process.communicate()
+                else:
+                    # POSIX _communicate already populated the output so
+                    # far into the TimeoutExpired exception.
+                    process.wait()
+                raise
+            except:  # Including KeyboardInterrupt, communicate handled that.
+                process.kill()
+                # We don't call process.wait() as .__exit__ does that for us.
+                raise
+            retcode = process.poll()
+            if check and retcode:
+>               raise CalledProcessError(retcode, process.args,
+                                         output=stdout, stderr=stderr)
+E               subprocess.CalledProcessError: Command '['powershell.exe', '-NoLogo', '-NoProfile', '-NonInteractive', '-Command', "\n$ErrorActionPreference = 'Stop'\n$target = $env:MNEMOS_TEST_ACL_PATH\n$acl = Get-Acl -LiteralPath $target\nif ($env:MNEMOS_TEST_GRANT_EVERYONE -eq '1') {\n    $sid = [Security.Principal.SecurityIdentifier]::new('S-1-1-0')\n    $rule = [Security.AccessControl.FileSystemAccessRule]::new(\n        $sid, 'ReadAndExecute', 'ContainerInherit,ObjectInherit', 'None', 'Allow')\n    $acl.AddAccessRule($rule)\n    Set-Acl -LiteralPath $target -AclObject $acl\n    $acl = Get-Acl -LiteralPath $target\n}\n[ordered]@{\n    protected = $acl.AreAccessRulesProtected\n    current_sid = [Security.Principal.WindowsIdentity]::GetCurrent().User.Value\n    rules = @($acl.GetAccessRules($true, $true, [Security.Principal.SecurityIdentifier]) | ForEach-Object {\n        [ordered]@{sid=$_.IdentityReference.Value; inherited=$_.IsInherited;\n            rights=[int]$_.FileSystemRights; flags=[int]$_.InheritanceFlags;\n            allow=($_.AccessControlType -eq 'Allow')}\n    })\n} | ConvertTo-Json -Depth 4 -Compress\n"]' returned non-zero exit status 1.
+
+C:\Users\Ant\AppData\Roaming\uv\python\cpython-3.13.7-windows-x86_64-none\Lib\subprocess.py:577: CalledProcessError
+=========================== short test summary info ===========================
+FAILED tests/test_windows_private_paths.py::test_protection_removes_inherited_access_and_blocks_parent_changes[False]
+FAILED tests/test_windows_private_paths.py::test_protection_removes_inherited_access_and_blocks_parent_changes[True]
+FAILED tests/test_windows_private_paths.py::test_process_lock_repairs_legacy_inherited_permissions
+3 failed in 0.94s

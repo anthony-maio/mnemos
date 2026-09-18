@@ -1,0 +1,111 @@
+"""Add exact target-scope, foreign-canary, and auth-cleanup checks."""
+from __future__ import annotations
+
+import hashlib
+import json
+from pathlib import Path
+import sqlite3
+from typing import Any
+
+
+ROOT = Path(__file__).resolve().parents[1]
+ARCHIVES = (
+    ROOT / "docs/validation/2026-09-18/native-codex-stop-boundary-v1",
+    ROOT / "docs/validation/2026-09-18/native-codex-stop-profile-v2",
+)
+FOREIGN_CANARY = "foreign-canary-849"
+
+
+def sha(raw: bytes) -> str:
+    return hashlib.sha256(raw).hexdigest()
+
+
+def read_json(path: Path) -> Any:
+    return json.loads(path.read_text(encoding="utf-8"))
+
+
+def verify(archive: Path) -> dict[str, Any]:
+    report_path = archive / "report.json"
+    selected_path = archive / "selected-mcp-completion.json"
+    report = read_json(report_path)
+    selected = read_json(selected_path)
+    target = report["target"]
+    result = selected["result"]
+    facts = result.get("facts", [])
+    target_fact = next((fact for fact in facts if fact.get("id") == target["fact_id"]), None)
+    if target_fact is None:
+        raise AssertionError("target fact missing")
+    if target_fact.get("scope") != "project":
+        raise AssertionError("target fact scope was not project")
+    if target_fact.get("scope_id") != target["scope_id"]:
+        raise AssertionError("target fact scope ID differs")
+    if FOREIGN_CANARY in result.get("context", "") or FOREIGN_CANARY in json.dumps(result, sort_keys=True):
+        raise AssertionError("foreign seeded canary leaked into native result")
+
+    fixture = Path(report["fixture"])
+    auth_path = fixture / "codex-home/.codex/auth.json"
+    if auth_path.exists():
+        raise AssertionError("private Codex auth copy remains")
+    db_path = fixture / "memory.sqlite"
+    with sqlite3.connect(db_path.as_uri() + "?mode=ro", uri=True) as db:
+        seeded = db.execute(
+            "select count(*) from episodic_events where content like ?",
+            (f"%{FOREIGN_CANARY}%",),
+        ).fetchone()[0]
+    if seeded < 1:
+        raise AssertionError("fixture did not contain the seeded foreign canary")
+    return {
+        "status": "supplementary_assertions_passed",
+        "archive": archive.name,
+        "report_input": {
+            "archive_file": "report.json",
+            "sha256": sha(report_path.read_bytes()),
+            "source_commit": report["source_commit"],
+            "runner_sha256": report["runner_sha256"],
+            "wheel_sha256": report["wheel_sha256"],
+        },
+        "selected_input": {
+            "archive_file": "selected-mcp-completion.json",
+            "sha256": sha(selected_path.read_bytes()),
+        },
+        "target_scope": {
+            "scope": target_fact["scope"],
+            "scope_id": target_fact["scope_id"],
+        },
+        "foreign_control": {
+            "seeded_string": FOREIGN_CANARY,
+            "fixture_sqlite_rows": seeded,
+            "absent_from_native_context_and_result": True,
+        },
+        "cleanup": {
+            "checked_path": "codex-home/.codex/auth.json",
+            "absent_now": True,
+        },
+    }
+
+
+def main() -> None:
+    verifier_hash = sha(Path(__file__).read_bytes())
+    for archive in ARCHIVES:
+        result = verify(archive)
+        result["verifier"] = {
+            "archive_file": "supplemental-verifier-v2.py.txt",
+            "sha256": verifier_hash,
+        }
+        result_path = archive / "supplemental-verification-v2.json"
+        result_path.write_text(json.dumps(result, indent=2) + "\n", encoding="utf-8")
+        verifier_path = archive / "supplemental-verifier-v2.py.txt"
+        verifier_path.write_bytes(Path(__file__).read_bytes())
+        index_path = archive / "evidence-index.json"
+        index = read_json(index_path)
+        for path in (result_path, verifier_path):
+            index["files"][path.name] = {
+                "bytes": path.stat().st_size,
+                "sha256": sha(path.read_bytes()),
+            }
+        index_path.write_text(json.dumps(index, indent=2) + "\n", encoding="utf-8")
+        print(json.dumps({"status": "passed", "archive": str(archive), "files": len(index["files"])}))
+
+
+if __name__ == "__main__":
+    main()

@@ -1,0 +1,27 @@
+import os,time,json,sys
+trace_path='C:\\Users\\Ant\\AppData\\Local\\Temp\\mnemos-native-codex-stop-boundary-22kmbssb\\stop-python.jsonl'
+def mark(stage, **fields):
+    row={'stage':stage,'epoch_ns':time.time_ns(),'monotonic_ns':time.perf_counter_ns(),'pid':os.getpid(),**fields}
+    with open(trace_path,'a',encoding='utf-8') as stream: stream.write(json.dumps(row)+'\n'); stream.flush()
+mark('python_entry')
+import base64,json,os,runpy;os.environ.update(json.loads(base64.b64decode('eyJNTkVNT1NfQ09ORklHX1BBVEgiOiJDOlxcVXNlcnNcXEFudFxcQXBwRGF0YVxcTG9jYWxcXFRlbXBcXG1uZW1vcy1uYXRpdmUtY29kZXgtc3RvcC1ib3VuZGFyeS0yMmttYnNzYlxcc2V0dGluZ3MudG9tbCIsIk1ORU1PU19TQ09QRV9SRUdJU1RSWSI6IkM6XFxVc2Vyc1xcQW50XFxBcHBEYXRhXFxMb2NhbFxcVGVtcFxcbW5lbW9zLW5hdGl2ZS1jb2RleC1zdG9wLWJvdW5kYXJ5LTIya21ic3NiXFxzY29wZXMuanNvbiIsIk1ORU1PU19VU0VSX1BST0ZJTEVfSUQiOiJuYXRpdmUtY29kZXgtc3RvcC1ib3VuZGFyeS12MSIsIk1ORU1PU19SVU5USU1FX0RFU0NSSVBUT1IiOiJDOlxcVXNlcnNcXEFudFxcQXBwRGF0YVxcTG9jYWxcXFRlbXBcXG1uZW1vcy1uYXRpdmUtY29kZXgtc3RvcC1ib3VuZGFyeS0yMmttYnNzYlxccnVudGltZS5qc29uIn0=')));
+mark('before_adapter_import')
+import mnemos.adapters.codex as adapter
+mark('after_adapter_import',origin=adapter.__file__)
+original_run=adapter.run_hook
+async def traced_run(event,payload,**kwargs):
+    mark('run_hook_start',event=event,keys=sorted(payload))
+    try:
+        result=await original_run(event,payload,**kwargs)
+        mark('run_hook_result',status=result.status,captured=result.captured,event_ids=result.event_ids)
+        return result
+    finally: mark('run_hook_end')
+adapter.run_hook=traced_run
+try:
+    mark('adapter_main_start')
+    status=adapter.main()
+    mark('adapter_main_end',status=status)
+    sys.stdout.flush()
+    mark('stdout_flushed')
+    raise SystemExit(status)
+finally: mark('python_exit')

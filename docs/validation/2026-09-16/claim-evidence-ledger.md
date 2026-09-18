@@ -4,7 +4,16 @@ Assessment date: September 18, 2026. This covers the unreleased
 functional-local-memory worktree, not the installed public package or website.
 The capability IDs come from the original implementation plan.
 
-The latest [source and installed package validation](../2026-09-18/assistant-suppression-package-checkpoint-v1/README.md)
+The newer [Windows permission source validation](../2026-09-18/windows-private-acl-v1/README.md)
+passes 1,039 tests with four skips and all static checks. Actual Windows ACL
+tests exposed an incorrect inheritance-protection flag. The repair applies the
+protected current-user policy and checks exact existing permissions before
+skipping a write. Nine regressions ran, including later drift and failed-query
+repair. Earlier package checks did not establish this protection property.
+Installed-package, native-host, and latency acceptance for the new source remain
+open. The two successful instrumented native diagnostics used the older wheel.
+
+The latest [installed package validation](../2026-09-18/assistant-suppression-package-checkpoint-v1/README.md)
 at `5af3d15` passes 1,030 tests with four skips, all six source/package checks,
 360 selected installed cases with two matching skips, and seven synthetic replay
 assertions. Exact normalized forget

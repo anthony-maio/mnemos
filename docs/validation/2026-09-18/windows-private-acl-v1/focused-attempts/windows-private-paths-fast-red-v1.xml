@@ -1,0 +1,77 @@
+<?xml version="1.0" encoding="utf-8"?><testsuites name="pytest tests"><testsuite name="pytest" errors="0" failures="2" skipped="0" tests="5" time="7.858" timestamp="2026-09-18T01:23:26.703545-04:00" hostname="Aurora"><testcase classname="tests.test_windows_private_paths" name="test_protection_removes_inherited_access_and_blocks_parent_changes[False]" time="2.246" /><testcase classname="tests.test_windows_private_paths" name="test_protection_removes_inherited_access_and_blocks_parent_changes[True]" time="3.258" /><testcase classname="tests.test_windows_private_paths" name="test_process_lock_repairs_legacy_inherited_permissions" time="1.342" /><testcase classname="tests.test_windows_private_paths" name="test_private_acl_is_checked_without_rewriting_and_drift_is_repaired[False]" time="0.424"><failure message="AssertionError: an unchanged private ACL must not trigger recursive propagation&#10;assert 2 == 1&#10; +  where 2 = len(['D:\\WindowsTemp\\pytest-of-Ant\\pytest-3605\\test_private_acl_is_checked_wi0\\private', 'D:\\WindowsTemp\\pytest-of-Ant\\pytest-3605\\test_private_acl_is_checked_wi0\\private'])">tmp_path = WindowsPath('D:/WindowsTemp/pytest-of-Ant/pytest-3605/test_private_acl_is_checked_wi0')
+monkeypatch = &lt;_pytest.monkeypatch.MonkeyPatch object at 0x000001212C100050&gt;
+directory = False
+
+    @pytest.mark.parametrize("directory", [False, True])
+    def test_private_acl_is_checked_without_rewriting_and_drift_is_repaired(
+        tmp_path, monkeypatch, directory
+    ):
+        target = tmp_path / "private"
+        target.mkdir() if directory else target.touch()
+        writes = []
+        load_dll = ctypes.WinDLL
+    
+        def tracked_dll(name, **kwargs):
+            dll = load_dll(name, **kwargs)
+            if name == "advapi32":
+                original = dll.SetNamedSecurityInfoW
+    
+                def tracked_set(*args):
+                    original.argtypes = tracked_set.argtypes
+                    original.restype = tracked_set.restype
+                    writes.append(args[0])
+                    return original(*args)
+    
+                dll.SetNamedSecurityInfoW = tracked_set
+            return dll
+    
+        monkeypatch.setattr(ctypes, "WinDLL", tracked_dll)
+        _protect_private_path(target)
+        assert len(writes) == 1
+        assert_private(target, directory=directory)
+    
+        _protect_private_path(target)
+&gt;       assert len(writes) == 1, "an unchanged private ACL must not trigger recursive propagation"
+E       AssertionError: an unchanged private ACL must not trigger recursive propagation
+E       assert 2 == 1
+E        +  where 2 = len(['D:\\WindowsTemp\\pytest-of-Ant\\pytest-3605\\test_private_acl_is_checked_wi0\\private', 'D:\\WindowsTemp\\pytest-of-Ant\\pytest-3605\\test_private_acl_is_checked_wi0\\private'])
+
+tests\test_windows_private_paths.py:121: AssertionError</failure></testcase><testcase classname="tests.test_windows_private_paths" name="test_private_acl_is_checked_without_rewriting_and_drift_is_repaired[True]" time="0.446"><failure message="AssertionError: an unchanged private ACL must not trigger recursive propagation&#10;assert 2 == 1&#10; +  where 2 = len(['D:\\WindowsTemp\\pytest-of-Ant\\pytest-3605\\test_private_acl_is_checked_wi1\\private', 'D:\\WindowsTemp\\pytest-of-Ant\\pytest-3605\\test_private_acl_is_checked_wi1\\private'])">tmp_path = WindowsPath('D:/WindowsTemp/pytest-of-Ant/pytest-3605/test_private_acl_is_checked_wi1')
+monkeypatch = &lt;_pytest.monkeypatch.MonkeyPatch object at 0x000001212C1007C0&gt;
+directory = True
+
+    @pytest.mark.parametrize("directory", [False, True])
+    def test_private_acl_is_checked_without_rewriting_and_drift_is_repaired(
+        tmp_path, monkeypatch, directory
+    ):
+        target = tmp_path / "private"
+        target.mkdir() if directory else target.touch()
+        writes = []
+        load_dll = ctypes.WinDLL
+    
+        def tracked_dll(name, **kwargs):
+            dll = load_dll(name, **kwargs)
+            if name == "advapi32":
+                original = dll.SetNamedSecurityInfoW
+    
+                def tracked_set(*args):
+                    original.argtypes = tracked_set.argtypes
+                    original.restype = tracked_set.restype
+                    writes.append(args[0])
+                    return original(*args)
+    
+                dll.SetNamedSecurityInfoW = tracked_set
+            return dll
+    
+        monkeypatch.setattr(ctypes, "WinDLL", tracked_dll)
+        _protect_private_path(target)
+        assert len(writes) == 1
+        assert_private(target, directory=directory)
+    
+        _protect_private_path(target)
+&gt;       assert len(writes) == 1, "an unchanged private ACL must not trigger recursive propagation"
+E       AssertionError: an unchanged private ACL must not trigger recursive propagation
+E       assert 2 == 1
+E        +  where 2 = len(['D:\\WindowsTemp\\pytest-of-Ant\\pytest-3605\\test_private_acl_is_checked_wi1\\private', 'D:\\WindowsTemp\\pytest-of-Ant\\pytest-3605\\test_private_acl_is_checked_wi1\\private'])
+
+tests\test_windows_private_paths.py:121: AssertionError</failure></testcase></testsuite></testsuites>
