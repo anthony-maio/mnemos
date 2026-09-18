@@ -4,12 +4,12 @@ Assessment date: September 17, 2026. This covers the unreleased
 functional-local-memory worktree, not the installed public package or website.
 The capability IDs come from the original implementation plan.
 
-The latest complete package verification is frozen source `1068a62`:
-944 tests passed with four skips, plus Black, strict mypy, JavaScript syntax,
-build, and Twine. A fresh installed wheel passed 214 selected contract cases
+The latest complete package verification is frozen source `6442044`:
+951 tests passed with four skips, plus Black, strict mypy, JavaScript syntax,
+build, and Twine. A fresh installed wheel passed 257 selected contract cases
 with two matching platform skips and seven synthetic Stop replay assertions. Source, fixtures, and the installed
 environment were on C:, outside the development checkout. The
-[UTF-8 hook package checkpoint](../2026-09-17/hook-utf8-package-checkpoint-v1/README.md)
+[captured assertion package checkpoint](../2026-09-17/captured-status-package-checkpoint-v1/README.md)
 binds the wheel, source, helpers, dependencies, exact test cases, and installed
 package origins. It does not establish native plugin-session acceptance.
 

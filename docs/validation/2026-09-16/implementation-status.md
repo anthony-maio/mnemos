@@ -50,12 +50,12 @@ returned the scoped seed through an approved MCP call against installed
 `30eaf42`. Bounded native retrieval passes. Shutdown timed out and assistant
 capture was absent, so complete conversation and lifecycle acceptance remain open.
 
-The latest package checkpoint is source `1068a62`. Its frozen verification
-passed 944 tests with four platform-specific skips, formatting, typing,
-JavaScript, build, and Twine checks. A fresh installed wheel passed 214
+The latest package checkpoint is source `6442044`. Its frozen verification
+passed 951 tests with four platform-specific skips, formatting, typing,
+JavaScript, build, and Twine checks. A fresh installed wheel passed 257
 contract cases with two matching platform skips and seven replay assertions. These are package and installed
 runtime checks; they do not close native-host, real-model, latency, pilot, or
-publication gates. See the [UTF-8 hook package checkpoint](../2026-09-17/hook-utf8-package-checkpoint-v1/README.md).
+publication gates. See the [captured assertion package checkpoint](../2026-09-17/captured-status-package-checkpoint-v1/README.md).
 
 This checkpoint repairs retrieval across a concurrent correction or forget:
 candidates are refreshed after asynchronous state classification, so scoring,
