@@ -4,6 +4,18 @@ This record covers the unreleased `wt/functional-local-memory` worktree. It
 separates implemented behavior from acceptance evidence. The original task
 boundaries and thresholds remain in the [implementation plan](../../plans/2026-09-16-functional-local-memory.md).
 
+The capture/forget race repair checks suppression inside SQLite's capture
+transaction. Previously, a capture or pending replay could pass the service
+check, wait while a forget committed, then restore the erased raw source.
+The final gate now checks source identity, verified Claude legacy aliases,
+automatic assertion identity, and an explicit correction's forgotten target.
+Suppressed captures acknowledge suppression without inserting an event or job.
+A fresh explicit remember can still intentionally restore an assertion.
+Six new cases cover these boundaries and database reopen. The focused suite
+passes 62 tests and strict mypy passes for 72 source files. Full source and
+installed-package verification of this repair are pending; earlier package
+and native observations keep their original source bindings.
+
 The newer [competing service recovery source check](../2026-09-18/competing-service-recovery-v1/README.md)
 fixes a startup race: a second launcher could return a dead descriptor while
 the new lock owner was still initializing. Competing launchers now verify

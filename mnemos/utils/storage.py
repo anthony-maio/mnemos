@@ -396,7 +396,19 @@ class MemoryStore(ABC):
                 return event
         return None
 
-    def capture_event_and_job(self, event: EpisodicEvent, job: DurableJob) -> EpisodicEvent:
+    def capture_event_and_job(
+        self,
+        event: EpisodicEvent,
+        job: DurableJob,
+        *,
+        suppression_source_ids: tuple[str, ...] = (),
+    ) -> EpisodicEvent | None:
+        """Return None when durable suppression prevents accepting a capture.
+
+        SQLite overrides this non-atomic fallback to enforce suppression in the
+        write transaction. Backends implementing durable capture must accept
+        verified source aliases and provide the same transactional guarantee.
+        """
         stored = self.append_episodic_event(event)
         self.enqueue_job(job)
         return stored
@@ -2832,13 +2844,46 @@ class SQLiteStore(MemoryStore):
                 self._transaction_active = False
             return True
 
-    def capture_event_and_job(self, event: EpisodicEvent, job: DurableJob) -> EpisodicEvent:
-        """Persist an ingest event and its processing job in one transaction."""
+    def capture_event_and_job(
+        self,
+        event: EpisodicEvent,
+        job: DurableJob,
+        *,
+        suppression_source_ids: tuple[str, ...] = (),
+    ) -> EpisodicEvent | None:
+        """Atomically check suppression and persist the event and its job.
+
+        Source aliases must come from the caller's verified host identity.
+        A fresh explicit write may override canonical suppression, but neither
+        an explicit write nor automatic capture may replay a forgotten source.
+        """
         source_identity_key = _source_identity_key(event)
         with self._lock:
             self._conn.execute("BEGIN IMMEDIATE")
             self._transaction_active = True
             try:
+                canonical = compute_canonical_key(
+                    event.content,
+                    event.scope,
+                    event.scope_id,
+                    event.metadata.get("user_profile_id"),
+                )
+                if (
+                    any(
+                        self.is_suppressed(source_event_id=source_id)
+                        for source_id in (event.id, *suppression_source_ids)
+                    )
+                    or (
+                        job.kind not in {"remember", "correct"}
+                        and self.is_suppressed(canonical_key=canonical)
+                    )
+                    or (
+                        job.kind == "correct"
+                        and self.is_suppressed(fact_id=job.payload.get("target_fact_id"))
+                    )
+                ):
+                    self._conn.commit()
+                    return None
                 existing_row = self._conn.execute(
                     """SELECT id, event_fingerprint, role, content, normalized_content, scope, scope_id,
                               source, hook_event, source_event_id, source_identity_key,

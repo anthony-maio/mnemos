@@ -177,6 +177,7 @@ class LocalMemoryService:
                 "processing_status": "suppressed",
                 "job_id": None,
             }
+        suppression_source_ids: tuple[str, ...] = ()
         if event.event_id.startswith("claude:v2:") and event.identity_status == "normal":
             assert source_ref is not None
             old_adapter_id = legacy_event_id(
@@ -185,6 +186,7 @@ class LocalMemoryService:
             old_key = hashlib.sha256(
                 json.dumps([*identity[:3], old_adapter_id]).encode("utf-8")
             ).hexdigest()
+            suppression_source_ids = (old_key,)
             if self.engine.store.is_suppressed(source_event_id=old_key):
                 # Old tombstones lack project ownership after source erasure.
                 # Keep the suppression even if this causes a conservative block.
@@ -316,7 +318,17 @@ class LocalMemoryService:
                     "identity_status": event.identity_status,
                     "fact_eligible": event.identity_status == "normal",
                 }
-        stored = self.engine.store.capture_event_and_job(record, job)
+        stored = self.engine.store.capture_event_and_job(
+            record, job, suppression_source_ids=suppression_source_ids
+        )
+        if stored is None:
+            return {
+                "schema_version": 1,
+                "status": "committed",
+                "event_id": key,
+                "processing_status": "suppressed",
+                "job_id": None,
+            }
         self.maintenance.note_activity()
         return {
             "schema_version": 1,
