@@ -4,14 +4,17 @@ This record covers the unreleased `wt/functional-local-memory` worktree. It
 separates implemented behavior from acceptance evidence. The original task
 boundaries and thresholds remain in the [implementation plan](../../plans/2026-09-16-functional-local-memory.md).
 
-The latest [source checkpoint](../2026-09-18/assistant-assertion-suppression-v1/README.md)
-passes 1,030 tests with four skips, Black, strict mypy, and JavaScript syntax.
+The latest [source and installed package checkpoint](../2026-09-18/assistant-suppression-package-checkpoint-v1/README.md)
+at `5af3d15` passes 1,030 tests with four skips, Black, strict mypy,
+JavaScript syntax, build, and Twine. Its fresh installed wheel passes 360
+selected contract cases with two matching skips and all seven synthetic replay
+assertions.
 Automatic extraction now checks forgotten assertions before adding source-role
 attribution. Atomic commit repeats the check using the persisted event role;
 candidate metadata cannot bypass it. Eight regressions cover scope and profile
 isolation, mixed extraction batches, explicit reteaching, support preservation,
-and the non-exact paraphrase boundary. This repair has source validation only;
-the installed package and native attempts below predate it.
+and the non-exact paraphrase boundary. Native attempts below still predate this
+repair, and the frozen Ollama evaluation remains separately bound.
 
 The preceding [similarity checkpoint](../2026-09-18/related-forget-similarity-v1/README.md)
 passes 1,022 tests with four skips, Black, strict mypy, and JavaScript syntax.
@@ -22,12 +25,12 @@ The controlled-vector tests establish the deletion contract, not embedding
 quality or native-host acceptance. Unindexed episodic paraphrases and
 historical-only meanings may still be missed.
 
-The latest [frozen package checkpoint](../2026-09-18/related-similarity-package-checkpoint-v1/README.md)
-validates source `ac139dd`: 1,022 tests passed with four skips, followed by Black,
-strict mypy, JavaScript syntax, build, and Twine. A fresh installed wheel passed
-352 selected contract cases with two matching skips and all seven synthetic
-replay assertions. This includes similarity review, UUID write safety, and host-context authority.
-Native acceptance and the frozen real-model evaluation remain separate, open gates.
+The preceding [similarity package checkpoint](../2026-09-18/related-similarity-package-checkpoint-v1/README.md)
+validated source `ac139dd` with 1,022 tests and 352 selected installed cases.
+It remains useful historical evidence for similarity review, UUID write safety,
+and host-context authority, but the `5af3d15` checkpoint is the current package
+binding. Native acceptance and the frozen real-model evaluation remain separate,
+open gates.
 
 The preceding [UUID write-safety checkpoint](../2026-09-17/uuid-write-safety-v1/README.md)
 passes the full suite: 1,009 passed and four skipped, with Black and strict mypy
@@ -182,7 +185,7 @@ returned the scoped seed through an approved MCP call against installed
 `30eaf42`. Bounded native retrieval passes. Shutdown timed out and assistant
 capture was absent, so complete conversation and lifecycle acceptance remain open.
 
-The latest package checkpoint is source `b7b4d6b`. Its frozen verification
+An earlier capture-durability package checkpoint used source `b7b4d6b`. Its frozen verification
 passed 958 tests with four platform-specific skips, formatting, typing,
 JavaScript, build, and Twine checks. A fresh installed wheel passed 264
 contract cases with two matching platform skips and seven replay assertions. These are package and installed
@@ -279,7 +282,7 @@ capture diagnostics and complete lifecycle acceptance remain open.
 
 | Plan item | Current implementation and evidence | Acceptance state |
 | --- | --- | --- |
-| T01 Runtime | Configured providers, SQLite default, explicit mock rejection, readiness checks, health reporting, and installed entry points are covered by the package and wheel checks. | Installed doctor v5 passed configuration cases at 6600dc2 without a provider reachability probe. Managed service logging, omitted-provider startup, and generated host provenance are covered by the full 8d865a5 checkpoint and its 110 passing installed contract cases with two matching skips, including actual subprocess recall. |
+| T01 Runtime | Configured providers, SQLite default, explicit mock rejection, readiness checks, health reporting, and installed entry points are covered by the `5af3d15` package and wheel checks. | Installed doctor cases cover configuration states but do not substitute for a live provider reachability probe. Managed service logging, omitted-provider startup, and generated host provenance are also covered. |
 | T02 Scope | Profile, project, workspace, membership, enabled-project capture, foreign-project filtering, and legacy/routing review are implemented and covered by contract tests. | Local scope contract tested. Native identity coverage across every host remains open. |
 | T03 Durable writes | Atomic source and job creation, leases, retries, CAS, revisions, evidence, rollback, and restart persistence are implemented and tested. | Local durability tested. Long-running operational recovery remains open. |
 | T04 Local service | Authenticated loopback ownership, private descriptors, outbox handling, bounded shutdown, and HTTP/subprocess paths are implemented and tested. | Local service and installed replay checks pass. Native host lifecycle remains open. |
@@ -297,7 +300,7 @@ capture diagnostics and complete lifecycle acceptance remain open.
 | T16 Recovery | Backup, integrity, new-path restore, suppression merge, staged reindex, and activation backup behavior are implemented and tested. | Local recovery contracts pass, including a backup during an active writer transaction. Live data migration remains separately authorization-bound. |
 | T17 Cross-host | A shared service contract covers Claude, Codex, and Hermes contexts. Native Codex taught a fact that Claude retrieved, corrected, and deleted across service restarts. Direct service replay suppression and foreign-project exclusion were observed. | V6 is FAILED overall: fresh Codex reused an unknown captured copy after selected-fact deletion and omitted its second query. Broader native related-forget, stale-context consistency, complete capture/shutdown, Hermes, and the two-week pilot remain open. |
 | T18 Evaluation | Frozen lifecycle datasets, request-bound extraction schemas, real-provider adapters, seven profiles, raw traces, checkpoints, Wilson intervals, and paired comparisons are implemented. | Power-interrupted checkpoints were preserved and the unchanged queue resumed after provenance checks. Complete real-model matrix acceptance remains open. Follow the [evaluation status and recovery record](evaluation-running.md). |
-| T19 Claims and packaging | Claim ledger, compatibility matrix, release checklist, package artifacts, UI assets, and negative evidence archives are maintained. | Package verification is complete for the stated checkpoint. Publication, website, paper, and release actions remain separately authorization-bound. |
+| T19 Claims and packaging | Claim ledger, compatibility matrix, release checklist, package artifacts, UI assets, and negative evidence archives are maintained. | The current `5af3d15` source and installed package checkpoint is complete. Publication, website, paper, and release actions remain separately authorization-bound. |
 
 The current capture recommendation is a hybrid: automatically capture enabled
 project conversations as retained evidence, extract durable facts separately,

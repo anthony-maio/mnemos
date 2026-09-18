@@ -1,16 +1,19 @@
 # Mnemos claim and evidence ledger
 
-Assessment date: September 17, 2026. This covers the unreleased
+Assessment date: September 18, 2026. This covers the unreleased
 functional-local-memory worktree, not the installed public package or website.
 The capability IDs come from the original implementation plan.
 
-The latest [source validation](../2026-09-18/assistant-assertion-suppression-v1/README.md)
-passes 1,030 tests with four skips and static checks. Exact normalized forget
+The latest [source and installed package validation](../2026-09-18/assistant-suppression-package-checkpoint-v1/README.md)
+at `5af3d15` passes 1,030 tests with four skips, all six source/package checks,
+360 selected installed cases with two matching skips, and seven synthetic replay
+assertions. Exact normalized forget
 suppressions now apply before source-role attribution and again at atomic
 extraction commit using the persisted event role. Eight regression cases include
 independent scope/profile isolation, unrelated proposals, explicit reteaching,
 support preservation, and retained unknown paraphrases. This is source evidence;
-the installed checkpoint and native attempts below do not include this repair.
+native attempts below do not include this repair, and the frozen Ollama evaluation
+remains separately bound.
 
 The preceding [similarity validation](../2026-09-18/related-forget-similarity-v1/README.md)
 passes 1,022 tests with four skips and static checks. It adds bounded advisory
@@ -43,14 +46,12 @@ not evidence of whole-topic erasure or accepted post-forget host behavior.
 The [v5 wrong-query failure](../2026-09-17/native-codex-claude-continuity-v5/README.md)
 remains preserved alongside it. The native fixtures do not use real cognition.
 
-The latest complete package verification is frozen source `ac139dd`:
-1,022 tests passed with four skips, plus Black, strict mypy, JavaScript syntax,
-build, and Twine. A fresh installed wheel passed 352 selected contract cases
-with two matching platform skips and seven synthetic Stop replay assertions. Source, fixtures, and the installed
-environment were on C:, outside the development checkout. The
-[similarity review package checkpoint](../2026-09-18/related-similarity-package-checkpoint-v1/README.md)
-binds the wheel, source, helpers, dependencies, exact test cases, and installed
-package origins. It does not establish native plugin-session acceptance.
+The preceding complete package verification was frozen at source `ac139dd`:
+1,022 tests passed with four skips and its fresh installed wheel passed 352
+selected contract cases. The current `5af3d15` package checkpoint supersedes it
+for release binding. Source, fixtures, and installed environments were on C:,
+outside the development checkout. Neither package checkpoint establishes native
+plugin-session acceptance.
 The interruption tests bind child imports to the parent package origin. The
 new import guards likewise use fresh subprocesses and the installed package.
 The earlier [capture interruption checkpoint](../2026-09-17/capture-durable-package-checkpoint-v1/README.md)
@@ -204,6 +205,7 @@ identify the source revision, configuration, and limitations. Historical results
 remain attributed to the source that produced them.
 
 - [Package verification index](access-metadata-package-verification/evidence-index.json): source `2494e31`, including schema 8. No later embedding-role or conflict-collision code is covered by this full checkpoint.
+- [Current assistant-suppression package index](../2026-09-18/assistant-suppression-package-checkpoint-v1/evidence-index.json): source `5af3d15`, 1,030 tests with four skips, six source/package checks, 360 selected installed cases with two matching skips, and seven synthetic replay assertions.
 - [Combined checkpoint index](combined-package-checkpoint-v2/evidence-index.json): source `312b8d6`, passing source/package checks and the failed installed continuity check. The separate installed replay probe did not run.
 - [Service/runtime package checkpoint index](../2026-09-17/service-runtime-package-checkpoint-v1/evidence-index.json): source `56182d9`, all six source/package checks, 87 installed contract cases, and seven synthetic Stop replay assertions. This is separate from native host and real-model evidence.
 - [Host provenance package checkpoint index](../2026-09-17/host-provenance-package-checkpoint-v1/evidence-index.json): source `8d865a5`, 903 passing source tests with four skips, 110 passing installed contract cases with two matching skips, and seven synthetic Stop replay assertions.

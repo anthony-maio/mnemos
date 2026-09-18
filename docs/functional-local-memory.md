@@ -1,6 +1,6 @@
 # Functional local memory
 
-This document describes the local runtime in the functional-local-memory worktree, updated September 17, 2026. It is an implementation guide and an errata record. A passing deterministic test is evidence for a mechanism. It is not evidence that a real host, real model, or long-running installation has passed.
+This document describes the local runtime in the functional-local-memory worktree, updated September 18, 2026. It is an implementation guide and an errata record. A passing deterministic test is evidence for a mechanism. It is not evidence that a real host, real model, or long-running installation has passed.
 
 ## Start with the local service
 
@@ -263,8 +263,10 @@ the stored event role. This prevents an `Assistant reported:` prefix from
 bypassing the original fact's suppression. Explicit reteaching remains allowed;
 non-identical paraphrases are outside this exact-match guarantee. The
 [source checkpoint](validation/2026-09-18/assistant-assertion-suppression-v1/README.md)
-passes 1,030 tests with four skips and static checks. The installed checkpoint
-and native attempts above predate this repair.
+passes 1,030 tests with four skips and static checks. The installed package
+checkpoint at `5af3d15` also passes build, Twine, 360 selected contract cases
+with two matching skips, and seven synthetic replay assertions. Native attempts
+above predate this repair.
 
 ## What the five modules currently mean
 
@@ -337,7 +339,7 @@ Current evidence has these boundaries:
 
 | Evidence | Status |
 | --- | --- |
-| Deterministic module and storage tests | Frozen source ebe1b0d: 962 tests passed with four skips, plus formatting, typing, JavaScript, build, and Twine checks. The fresh installed wheel passed 268 selected contract cases with two matching platform skips and seven synthetic Stop replay assertions. Capture persists before service waits, and client startup defers inference imports. Native deadline acceptance remains open. See the [package checkpoint](validation/2026-09-17/lazy-import-package-checkpoint-v1/README.md) and [timing diagnosis](validation/2026-09-17/hook-import-boundary-v1/README.md) |
+| Deterministic module and storage tests | Current source `5af3d15`: 1,030 tests passed with four skips, plus Black, strict mypy, JavaScript, build, and Twine checks. The fresh installed wheel passed 360 selected contract cases with two matching platform skips and seven synthetic replay assertions. Native deadline acceptance remains open. See the [current package checkpoint](validation/2026-09-18/assistant-suppression-package-checkpoint-v1/README.md) |
 | Synthetic local service and SQLite restart flow | Observed for one provider-backed fact |
 | Full real-model ablation and held-out quality evaluation | The older b7 queue stopped on a validation-trace serialization error; its negative results remain preserved. The repaired d94 queue completed development mechanisms and lifecycle preflight; the held-out mechanism phase completed, and the seven-profile lifecycle matrix remains running. No held-out quality conclusion is accepted. All 15 development graph observations lacked a structural seed-to-target path. The queue uses its frozen unprefixed embedding contract. See [current progress](validation/2026-09-16/progress.md) and [evaluation status](validation/2026-09-16/evaluation-running.md) |
 | Installed Claude Code, Codex, and Hermes host smoke | Installed ebe1b0d completed Codex store, Claude read/correct, and fresh Codex retrieval of version 2 across two service restarts with foreign-scope exclusion. Both Codex processes crashed on exit; reverse Stop timed out and Claude capture remained degraded. Isolated MCP-only, hooks-only, and one combined control with explicit unelevated sandbox mode exited zero; the crash cause and Stop deadline remain open. Earlier Claude v18 passed 15 bounded fact-lifecycle criteria, including forgetting and reconstructed replay. Hermes provider loading and the WSL bridge were observed, but no native model turn passed. Full cross-host forget/replay, complete capture, Desktop, and native extraction acceptance remain open. See [bidirectional continuity](validation/2026-09-17/native-codex-claude-continuity-v4/README.md), [combined control](validation/2026-09-17/native-codex-combined-control-v1/README.md), and the [host matrix](client-compatibility-matrix.md). |

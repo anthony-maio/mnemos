@@ -1,19 +1,22 @@
 # Client compatibility and observed evidence
 
-Updated September 17, 2026 for the unreleased functional-local-memory worktree. Implementation, protocol tests, and native conversation acceptance are separate claims.
+Updated September 18, 2026 for the unreleased functional-local-memory worktree. Implementation, protocol tests, and native conversation acceptance are separate claims.
 
-The September 18 [installed checkpoint](validation/2026-09-18/related-similarity-package-checkpoint-v1/README.md)
-at `ac139dd` passes 352 selected contract cases with two skips and seven synthetic
-replay assertions. It adds bounded similarity suggestions to reviewed forgetting,
-with scope filtering, explicit selection, source dependencies, and stale-preview
-checks. Two native attempts against this package remain incomplete. In
+The September 18 [installed checkpoint](validation/2026-09-18/assistant-suppression-package-checkpoint-v1/README.md)
+at `5af3d15` passes 360 selected contract cases with two skips and seven synthetic
+replay assertions, after 1,030 source tests with four skips and all six source/package
+checks. It includes bounded similarity suggestions to reviewed forgetting, exact
+forgotten-assertion suppression, scope filtering, explicit selection, source
+dependencies, and stale-preview checks. The native attempts below use earlier
+installed checkpoints and remain separate. In
 [v7](validation/2026-09-18/native-codex-claude-continuity-v7/README.md),
 related deletion committed and SQLite reopen confirmed the selected records
 absent, but Claude exceeded its phase budget before replay and final recall.
 [V8](validation/2026-09-18/native-codex-claude-continuity-v8/README.md)
 stopped at the reverse Codex phase while its tool approval was pending; the
 180-second host deadline includes operator time. Forgetting, replay, and final
-recall did not run in v8. Neither attempt closes native acceptance.
+recall did not run in v8. Neither attempt closes native acceptance. A newer
+native v9 run completed its runner checks; independent artifact review is pending.
 
 The current adapter repair preserves service-rendered recall across Claude Code,
 Codex, and Hermes. Claude previously rebuilt bare fact text and lost assertion
@@ -116,7 +119,7 @@ MCP health dispatch, not the complete capture or correction/forget lifecycle.
 Source644's fresh wheel then passed native health with the generated exact
 interpreter command and inherited PATH, verifying the product launcher repair
 without the earlier probe's PATH patch.
-[Current package check](validation/2026-09-16/extraction-contract-package-verification/README.md).
+[Historical package check](validation/2026-09-16/extraction-contract-package-verification/README.md).
 
 The later d94 installed wheel passed another isolated MCP/API lifecycle
 preflight. Its native Codex run reached `mnemos_store`, then received

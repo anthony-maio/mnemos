@@ -1,24 +1,29 @@
 # Real-model evaluation status
 
-## Current checkpoint: September 18, 2026, 03:32 UTC
+## Current checkpoint: September 18, 2026, 04:46 UTC observation
 
-The unchanged coordinator is still live: process 26488 was verified through
-the operating system, and its existing execution session remains active.
-The full-profile checkpoint records 34 observations and next session index 11.
-These are execution counts, not accepted quality results. Recent lifecycle
-logs contain repeated Ollama connection failures, and a fresh read-only
-`/api/tags` request to `192.168.86.35:11434` timed out after five seconds.
-The endpoint's model placement and current model digests could not be refreshed.
-No process was restarted and no model or server configuration was changed.
-Colab remains tabled.
+The unchanged coordinator is still live: process 26488 and its lifecycle
+worker chain were verified through the operating system, and the existing
+execution session remains active. The observed chain was coordinator `26488`,
+lifecycle worker `47588`, and worker child `46036`. The latest durable
+full-profile checkpoint
+was written at `00:41:08 -04:00`; it records 37 completed observation records,
+37 completed IDs, and next session index 12. These are execution counts, not
+accepted quality results.
 
-The latest complete package checkpoint is separate source `ac139dd`: 1,022
-tests passed with four skips, followed by static, build, and Twine checks;
-the installed wheel passed 352 selected cases with two skips and seven replay assertions.
-See the [package checkpoint](../2026-09-18/related-similarity-package-checkpoint-v1/README.md).
-The similarity-review, host-context, and UUID write-safety work is outside this frozen
-real-model evaluation. Its validation must not be treated as evaluation quality
-evidence.
+Recent lifecycle logs contain repeated Ollama failures. The latest recorded
+categories are prediction `All connection attempts failed` and embedding
+`WinError 10060` connection timeouts. A fresh read-only `/api/tags` request to
+`192.168.86.35:11434` timed out after five seconds. No process was restarted,
+and no model, server, queue, or configuration state was changed.
+
+The current package checkpoint is source `5af3d15`: 1,030 tests passed with
+four skips, all six source/package checks passed, and the installed wheel passed
+360 selected cases with two matching skips and seven replay assertions. See the
+[package checkpoint](../2026-09-18/assistant-suppression-package-checkpoint-v1/README.md).
+The assistant-suppression repair, similarity-review, host-context, and UUID
+write-safety work is outside this frozen real-model evaluation. Its validation
+must not be treated as evaluation quality evidence.
 
 ## Historical checkpoint: September 17, 2026, 22:27 UTC
 
@@ -35,6 +40,7 @@ The [placement snapshot](../2026-09-17/ollama-placement-v1/README.md) reports
 Ollama 0.34.1 and `size_vram: 0` for both loaded models, indicating CPU placement.
 The user expects GPU execution and reports two RTX 3090 cards with 24 GB each.
 Remote GPU availability and Ollama startup logs have not been inspected.
+The Colab path remains tabled.
 Historical placement is unknown; this snapshot does not establish that the
 power interruption changed it. The active run remains unchanged while the
 placement discrepancy is investigated. Any recovery must preserve the
