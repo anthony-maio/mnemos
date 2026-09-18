@@ -1,0 +1,68 @@
+"""Isolated generated-hook replay timings; no native model session or Ollama."""
+import asyncio,hashlib,json,os,subprocess,sys,time,tomllib
+from datetime import datetime,timezone
+from pathlib import Path
+from mnemos.client import Outbox
+from mnemos.config import MnemosConfig,ModuleConfig
+from mnemos.engine import MnemosEngine
+from mnemos.hosts import apply_host_integration
+from mnemos.memory_service import LocalMemoryService
+from mnemos.scopes import ScopeRegistry
+from mnemos.service import MnemosService
+from mnemos.utils.embeddings import SimpleEmbeddingProvider
+from mnemos.utils.llm import UnavailableLLMProvider
+from mnemos.utils.storage import SQLiteStore
+import mnemos.client
+
+out=Path(__file__).parent
+fixture=out/'fixture'
+assert not fixture.exists()
+fixture.mkdir()
+project=fixture/'project'; project.mkdir()
+home=fixture/'home'; home.mkdir()
+profile='hook-stop-timing-v2'
+registry=ScopeRegistry(); registry.register_project(project,user_profile_id=profile,enabled=True)
+registry_path=fixture/'registry.json';registry.save(registry_path)
+settings=fixture/'settings.toml';settings.write_text('# isolated probe\n')
+descriptor=fixture/'runtime.json'
+selectors={'MNEMOS_CONFIG_PATH':str(settings),'MNEMOS_SCOPE_REGISTRY':str(registry_path),'MNEMOS_USER_PROFILE_ID':profile,'MNEMOS_RUNTIME_DESCRIPTOR':str(descriptor)}
+generated=apply_host_integration('codex',mnemos_config_path=settings,cwd=project,home=home,integration_env=selectors)
+config=tomllib.loads(generated.config_path.read_text())
+hook=config['hooks']['Stop'][0]['hooks'][0]
+store=SQLiteStore(str(fixture/'memory.sqlite'))
+engine=MnemosEngine(config=MnemosConfig(modules=ModuleConfig(**{k:False for k in ModuleConfig.model_fields})),llm=UnavailableLLMProvider(),embedder=SimpleEmbeddingProvider(),store=store,scope_registry=registry,require_scope_context=True)
+dispatcher=LocalMemoryService(engine,registry)
+trace=[]
+class Traced:
+ async def dispatch(self,operation,payload):
+  start=time.perf_counter()
+  try:return await dispatcher.dispatch(operation,payload)
+  finally:trace.append({'operation':operation,'ms':round((time.perf_counter()-start)*1000,3)})
+service=MnemosService(dispatcher=Traced(),descriptor_path=descriptor,lock_path=fixture/'runtime.lock')
+env={k:v for k,v in os.environ.items() if not k.startswith('MNEMOS_') and k!='PYTHONPATH'}
+env.update(selectors);env['MNEMOS_AUTO_START']='false';env['PYTHONSAFEPATH']='1'
+rows=[]
+report={'source_commit':'b7b4d6bdca19994ee4b3336d3dd166d30da6910c','client_origin':mnemos.client.__file__,'runner_sha256':hashlib.sha256(Path(__file__).read_bytes()).hexdigest(),'boundary':'Generated command replay, not native Codex acceptance; all modules disabled, no inference.','configured_deadline_seconds':hook['timeout'],'rows':rows,'trace':trace}
+service.start()
+try:
+ for repeat in range(3):
+  for mode in ('direct','generated_powershell'):
+   index=len(rows)
+   payload={'hook_event_name':'Stop','session_id':'timing-session','turn_id':str(index),'cwd':str(project),'last_assistant_message':f'The fixture stop observation is alder-{index}.','timestamp':datetime.now(timezone.utc).isoformat(),'stop_hook_active':False}
+   cmd=[sys.executable,'-m','mnemos.adapters.codex'] if mode=='direct' else ['C:/Program Files/PowerShell/7/pwsh.exe','-NoLogo','-NoProfile','-NonInteractive','-Command',hook['command']]
+   before=len(trace); start=time.perf_counter()
+   result=subprocess.run(cmd,input=json.dumps(payload).encode(),capture_output=True,cwd=project,env=env,timeout=15)
+   elapsed=round((time.perf_counter()-start)*1000,3)
+   row={'mode':mode,'repeat':repeat,'elapsed_ms':elapsed,'within_generated_deadline':elapsed<1000*hook['timeout'],'returncode':result.returncode,'stdout':result.stdout.decode('utf-8'),'stderr':result.stderr.decode('utf-8'),'trace':trace[before:],'event_count':len(store.list_episodic_events()),'outbox_pending':len(Outbox(fixture/'outbox.json'))}
+   rows.append(row);print(json.dumps(row),flush=True)
+ service.stop();store.close()
+ with SQLiteStore(str(fixture/'memory.sqlite')) as reopened:
+  report['durable_event_count']=len(reopened.list_episodic_events())
+except Exception as exc:
+ report['error_type']=type(exc).__name__;report['error']=str(exc)
+finally:
+ service.stop()
+ try:store.close()
+ except Exception:pass
+ report['runtime_descriptor_absent']=not descriptor.exists()
+ (out/'report.json').write_text(json.dumps(report,indent=2)+'\n')

@@ -1,0 +1,22 @@
+import json, os, subprocess, time
+from pathlib import Path
+out=Path(__file__).parent
+python=Path('C:/Users/Ant/AppData/Local/Temp/mnemos-installed-captured-status-v1/Scripts/python.exe')
+commands=[
+ ('python_minimal',[str(python),'-c','pass'],None),
+ ('adapter_import',[str(python),'-X','importtime','-c','import mnemos.adapters.codex'],None),
+ ('stop_empty_direct',[str(python),'-m','mnemos.adapters.codex'],json.dumps({'hook_event_name':'Stop','stop_hook_active':True})),
+ ('powershell_minimal',['C:/Program Files/PowerShell/7/pwsh.exe','-NoLogo','-NoProfile','-NonInteractive','-Command','exit 0'],None),
+]
+rows=[]
+for name,cmd,stdin in commands:
+ for repeat in range(3):
+  start=time.monotonic()
+  try:
+   result=subprocess.run(cmd,input=stdin,text=True,capture_output=True,timeout=15,cwd=out)
+   row={'case':name,'repeat':repeat,'ms':round((time.monotonic()-start)*1000,3),'returncode':result.returncode}
+   (out/f'{name}-{repeat}.stderr.log').write_text(result.stderr,encoding='utf-8')
+  except subprocess.TimeoutExpired:
+   row={'case':name,'repeat':repeat,'ms':round((time.monotonic()-start)*1000,3),'timeout':True}
+  rows.append(row); print(json.dumps(row),flush=True)
+(out/'results.json').write_text(json.dumps(rows,indent=2)+'\n')

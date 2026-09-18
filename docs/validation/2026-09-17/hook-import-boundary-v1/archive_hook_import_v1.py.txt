@@ -1,0 +1,38 @@
+from pathlib import Path
+import hashlib
+import json
+import shutil
+import xml.etree.ElementTree as ET
+
+root = Path(__file__).resolve().parent.parent
+temp = Path('C:/Users/Ant/AppData/Local/Temp')
+out = root / 'docs/validation/2026-09-17/hook-import-boundary-v1'
+out.mkdir(parents=True, exist_ok=False)
+for name in ('red', 'green'):
+    path = temp / f'mnemos-hook-import-{name}-v1.xml'
+    suite = next(ET.parse(path).getroot().iter('testsuite'))
+    expected = ('4', '3', '0', '0') if name == 'red' else ('94', '0', '0', '2')
+    assert tuple(suite.get(k) for k in ('tests','failures','errors','skipped')) == expected
+    shutil.copyfile(path, out / f'{name}.xml')
+for name in ('mnemos-hook-timing-v1', 'mnemos-hook-stop-timing-v2', 'mnemos-hook-stop-timing-v3'):
+    target = out / name
+    target.mkdir()
+    for path in (temp / name).iterdir():
+        if path.is_file() and path.suffix in ('.py', '.json', '.log', '.txt'):
+            shutil.copyfile(path, target / (path.name + '.txt' if path.suffix == '.py' else path.name))
+shutil.copyfile(root / 'tests/test_hook_import_boundary.py', out / 'test_hook_import_boundary.py.txt')
+shutil.copyfile(Path(__file__), out / 'archive_hook_import_v1.py.txt')
+(out / '.gitattributes').write_text('* -text\n*.log -whitespace\n*.xml -whitespace\n', encoding='utf-8')
+(out / 'README.md').write_text('''# Capture import boundary
+
+The previous f201653 source failed all three subprocess import guards: importing the package, client, or Codex adapter initialized embedding providers. The compatibility case passed. After deferring public exports and the scoring-only cosine import, 92 focused tests passed with two platform skips. This includes the four import/API cases, engine, retrieval, host rendering, and interrupted capture. Strict mypy passed for all 50 product source files.
+
+The change preserves public names, class identity, star imports, and dir(). Public objects resolve on first access; callers inspecting only the package __dict__ before any access will no longer see every export. Service execution still loads its providers normally. No hook timeout changed.
+
+Earlier installed-package timing probes are preserved, including negative evidence. The first measured adapter imports at about 730-757 ms. Stop v2 completed six captures, but its final reopen assertion failed because SQLiteStore is not a context manager. Its first generated PowerShell command took 9.7 seconds. Stop v3 fixed that assertion and reopened six durable events; generated commands took 4.7-8.6 seconds. A broad read-only file search overlapped v3, so those timings are load-confounded. These are diagnostic fixture observations, not native host acceptance or before/after performance proof. Shell startup and child execution both showed delays. The native three-second deadline remains unresolved.
+
+The XML preserves the pre-repair failure and focused post-repair results. Probe copies are immutable, with .py.txt suffixes to exclude archived programs from static checking. No live host configuration, evaluation snapshot, or memory data changed.
+''', encoding='utf-8')
+files = {p.relative_to(out).as_posix(): {'bytes':p.stat().st_size,'sha256':hashlib.sha256(p.read_bytes()).hexdigest()} for p in sorted(out.rglob('*')) if p.is_file()}
+(out / 'artifact-index.json').write_text(json.dumps({'files':files},indent=2)+'\n', encoding='utf-8')
+print(f'Archived {len(files)} files to {out}')

@@ -1,0 +1,181 @@
+<?xml version="1.0" encoding="utf-8"?><testsuites name="pytest tests"><testsuite name="pytest" errors="0" failures="3" skipped="0" tests="4" time="406.521" timestamp="2026-09-17T21:29:28.618679-04:00" hostname="Aurora"><testcase classname="tests.test_hook_import_boundary" name="test_capture_import_does_not_load_inference_runtime[mnemos]" time="0.570"><failure message="AssertionError: Traceback (most recent call last):&#10;    File &quot;&lt;string&gt;&quot;, line 8, in &lt;module&gt;&#10;      importlib.import_module(sys.argv[1])&#10;      ~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^&#10;    File &quot;C:\Users\Ant\AppData\Roaming\uv\python\cpython-3.13.7-windows-x86_64-none\Lib\importlib\__init__.py&quot;, line 88, in import_module&#10;      return _bootstrap._gcd_import(name[level:], package, level)&#10;             ~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^&#10;    File &quot;&lt;frozen importlib._bootstrap&gt;&quot;, line 1387, in _gcd_import&#10;    File &quot;&lt;frozen importlib._bootstrap&gt;&quot;, line 1360, in _find_and_load&#10;    File &quot;&lt;frozen importlib._bootstrap&gt;&quot;, line 1331, in _find_and_load_unlocked&#10;    File &quot;&lt;frozen importlib._bootstrap&gt;&quot;, line 935, in _load_unlocked&#10;    File &quot;&lt;frozen importlib._bootstrap_external&gt;&quot;, line 1026, in exec_module&#10;    File &quot;&lt;frozen importlib._bootstrap&gt;&quot;, line 488, in _call_with_frames_removed&#10;    File &quot;D:\Development\mnemos\mnemos\.worktrees\functional-local-memory\mnemos\__init__.py&quot;, line 28, in &lt;module&gt;&#10;      from .config import (&#10;      ...&lt;8 lines&gt;...&#10;      )&#10;    File &quot;D:\Development\mnemos\mnemos\.worktrees\functional-local-memory\mnemos\config.py&quot;, line 15, in &lt;module&gt;&#10;      from .retrieval import RetrievalConfig&#10;    File &quot;D:\Development\mnemos\mnemos\.worktrees\functional-local-memory\mnemos\retrieval.py&quot;, line 10, in &lt;module&gt;&#10;      from .utils.embeddings import cosine_similarity&#10;    File &quot;D:\Development\mnemos\mnemos\.worktrees\functional-local-memory\mnemos\utils\__init__.py&quot;, line 5, in &lt;module&gt;&#10;      from .embeddings import (&#10;      ...&lt;7 lines&gt;...&#10;      )&#10;    File &quot;&lt;frozen importlib._bootstrap&gt;&quot;, line 1360, in _find_and_load&#10;    File &quot;&lt;frozen importlib._bootstrap&gt;&quot;, line 1322, in _find_and_load_unlocked&#10;    File &quot;&lt;frozen importlib._bootstrap&gt;&quot;, line 1262, in _find_spec&#10;    File &quot;&lt;string&gt;&quot;, line 6, in find_spec&#10;      raise AssertionError('Capture imported inference runtime: '+fullname)&#10;  AssertionError: Capture imported inference runtime: mnemos.utils.embeddings&#10;  &#10;assert 1 == 0&#10; +  where 1 = CompletedProcess(args=['D:\\Development\\mnemos\\mnemos\\.worktrees\\functional-local-memory\\.venv\\Scripts\\python.e...ported inference runtime: \'+fullname)\nAssertionError: Capture imported inference runtime: mnemos.utils.embeddings\n').returncode">module = 'mnemos'
+tmp_path = WindowsPath('C:/Users/Ant/AppData/Local/Temp/mnemos-hook-import-red-v1/test_capture_import_does_not_l0')
+
+    @pytest.mark.parametrize("module", ["mnemos", "mnemos.client", "mnemos.adapters.codex"])
+    def test_capture_import_does_not_load_inference_runtime(module: str, tmp_path: Path) -&gt; None:
+        code = """
+    import importlib,importlib.abc,sys
+    class BlockRuntime(importlib.abc.MetaPathFinder):
+        def find_spec(self,fullname,path=None,target=None):
+            if fullname in {'numpy','mnemos.engine','mnemos.utils.embeddings','mnemos.utils.storage'}:
+                raise AssertionError('Capture imported inference runtime: '+fullname)
+    sys.meta_path.insert(0,BlockRuntime())
+    importlib.import_module(sys.argv[1])
+    """
+        env = dict(os.environ)
+        env["PYTHONPATH"] = str(Path(mnemos.__file__).resolve().parent.parent)
+        completed = subprocess.run(
+            [sys.executable, "-c", code, module], cwd=tmp_path, env=env,
+            capture_output=True, text=True, timeout=15,
+        )
+&gt;       assert completed.returncode == 0, completed.stderr
+E       AssertionError: Traceback (most recent call last):
+E           File "&lt;string&gt;", line 8, in &lt;module&gt;
+E             importlib.import_module(sys.argv[1])
+E             ~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^
+E           File "C:\Users\Ant\AppData\Roaming\uv\python\cpython-3.13.7-windows-x86_64-none\Lib\importlib\__init__.py", line 88, in import_module
+E             return _bootstrap._gcd_import(name[level:], package, level)
+E                    ~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E           File "&lt;frozen importlib._bootstrap&gt;", line 1387, in _gcd_import
+E           File "&lt;frozen importlib._bootstrap&gt;", line 1360, in _find_and_load
+E           File "&lt;frozen importlib._bootstrap&gt;", line 1331, in _find_and_load_unlocked
+E           File "&lt;frozen importlib._bootstrap&gt;", line 935, in _load_unlocked
+E           File "&lt;frozen importlib._bootstrap_external&gt;", line 1026, in exec_module
+E           File "&lt;frozen importlib._bootstrap&gt;", line 488, in _call_with_frames_removed
+E           File "D:\Development\mnemos\mnemos\.worktrees\functional-local-memory\mnemos\__init__.py", line 28, in &lt;module&gt;
+E             from .config import (
+E             ...&lt;8 lines&gt;...
+E             )
+E           File "D:\Development\mnemos\mnemos\.worktrees\functional-local-memory\mnemos\config.py", line 15, in &lt;module&gt;
+E             from .retrieval import RetrievalConfig
+E           File "D:\Development\mnemos\mnemos\.worktrees\functional-local-memory\mnemos\retrieval.py", line 10, in &lt;module&gt;
+E             from .utils.embeddings import cosine_similarity
+E           File "D:\Development\mnemos\mnemos\.worktrees\functional-local-memory\mnemos\utils\__init__.py", line 5, in &lt;module&gt;
+E             from .embeddings import (
+E             ...&lt;7 lines&gt;...
+E             )
+E           File "&lt;frozen importlib._bootstrap&gt;", line 1360, in _find_and_load
+E           File "&lt;frozen importlib._bootstrap&gt;", line 1322, in _find_and_load_unlocked
+E           File "&lt;frozen importlib._bootstrap&gt;", line 1262, in _find_spec
+E           File "&lt;string&gt;", line 6, in find_spec
+E             raise AssertionError('Capture imported inference runtime: '+fullname)
+E         AssertionError: Capture imported inference runtime: mnemos.utils.embeddings
+E         
+E       assert 1 == 0
+E        +  where 1 = CompletedProcess(args=['D:\\Development\\mnemos\\mnemos\\.worktrees\\functional-local-memory\\.venv\\Scripts\\python.e...ported inference runtime: \'+fullname)\nAssertionError: Capture imported inference runtime: mnemos.utils.embeddings\n').returncode
+
+tests\test_hook_import_boundary.py:31: AssertionError</failure></testcase><testcase classname="tests.test_hook_import_boundary" name="test_capture_import_does_not_load_inference_runtime[mnemos.client]" time="0.261"><failure message="AssertionError: Traceback (most recent call last):&#10;    File &quot;&lt;string&gt;&quot;, line 8, in &lt;module&gt;&#10;      importlib.import_module(sys.argv[1])&#10;      ~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^&#10;    File &quot;C:\Users\Ant\AppData\Roaming\uv\python\cpython-3.13.7-windows-x86_64-none\Lib\importlib\__init__.py&quot;, line 88, in import_module&#10;      return _bootstrap._gcd_import(name[level:], package, level)&#10;             ~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^&#10;    File &quot;&lt;frozen importlib._bootstrap&gt;&quot;, line 1387, in _gcd_import&#10;    File &quot;&lt;frozen importlib._bootstrap&gt;&quot;, line 1360, in _find_and_load&#10;    File &quot;&lt;frozen importlib._bootstrap&gt;&quot;, line 1310, in _find_and_load_unlocked&#10;    File &quot;&lt;frozen importlib._bootstrap&gt;&quot;, line 488, in _call_with_frames_removed&#10;    File &quot;&lt;frozen importlib._bootstrap&gt;&quot;, line 1387, in _gcd_import&#10;    File &quot;&lt;frozen importlib._bootstrap&gt;&quot;, line 1360, in _find_and_load&#10;    File &quot;&lt;frozen importlib._bootstrap&gt;&quot;, line 1331, in _find_and_load_unlocked&#10;    File &quot;&lt;frozen importlib._bootstrap&gt;&quot;, line 935, in _load_unlocked&#10;    File &quot;&lt;frozen importlib._bootstrap_external&gt;&quot;, line 1026, in exec_module&#10;    File &quot;&lt;frozen importlib._bootstrap&gt;&quot;, line 488, in _call_with_frames_removed&#10;    File &quot;D:\Development\mnemos\mnemos\.worktrees\functional-local-memory\mnemos\__init__.py&quot;, line 28, in &lt;module&gt;&#10;      from .config import (&#10;      ...&lt;8 lines&gt;...&#10;      )&#10;    File &quot;D:\Development\mnemos\mnemos\.worktrees\functional-local-memory\mnemos\config.py&quot;, line 15, in &lt;module&gt;&#10;      from .retrieval import RetrievalConfig&#10;    File &quot;D:\Development\mnemos\mnemos\.worktrees\functional-local-memory\mnemos\retrieval.py&quot;, line 10, in &lt;module&gt;&#10;      from .utils.embeddings import cosine_similarity&#10;    File &quot;D:\Development\mnemos\mnemos\.worktrees\functional-local-memory\mnemos\utils\__init__.py&quot;, line 5, in &lt;module&gt;&#10;      from .embeddings import (&#10;      ...&lt;7 lines&gt;...&#10;      )&#10;    File &quot;&lt;frozen importlib._bootstrap&gt;&quot;, line 1360, in _find_and_load&#10;    File &quot;&lt;frozen importlib._bootstrap&gt;&quot;, line 1322, in _find_and_load_unlocked&#10;    File &quot;&lt;frozen importlib._bootstrap&gt;&quot;, line 1262, in _find_spec&#10;    File &quot;&lt;string&gt;&quot;, line 6, in find_spec&#10;      raise AssertionError('Capture imported inference runtime: '+fullname)&#10;  AssertionError: Capture imported inference runtime: mnemos.utils.embeddings&#10;  &#10;assert 1 == 0&#10; +  where 1 = CompletedProcess(args=['D:\\Development\\mnemos\\mnemos\\.worktrees\\functional-local-memory\\.venv\\Scripts\\python.e...ported inference runtime: \'+fullname)\nAssertionError: Capture imported inference runtime: mnemos.utils.embeddings\n').returncode">module = 'mnemos.client'
+tmp_path = WindowsPath('C:/Users/Ant/AppData/Local/Temp/mnemos-hook-import-red-v1/test_capture_import_does_not_l1')
+
+    @pytest.mark.parametrize("module", ["mnemos", "mnemos.client", "mnemos.adapters.codex"])
+    def test_capture_import_does_not_load_inference_runtime(module: str, tmp_path: Path) -&gt; None:
+        code = """
+    import importlib,importlib.abc,sys
+    class BlockRuntime(importlib.abc.MetaPathFinder):
+        def find_spec(self,fullname,path=None,target=None):
+            if fullname in {'numpy','mnemos.engine','mnemos.utils.embeddings','mnemos.utils.storage'}:
+                raise AssertionError('Capture imported inference runtime: '+fullname)
+    sys.meta_path.insert(0,BlockRuntime())
+    importlib.import_module(sys.argv[1])
+    """
+        env = dict(os.environ)
+        env["PYTHONPATH"] = str(Path(mnemos.__file__).resolve().parent.parent)
+        completed = subprocess.run(
+            [sys.executable, "-c", code, module], cwd=tmp_path, env=env,
+            capture_output=True, text=True, timeout=15,
+        )
+&gt;       assert completed.returncode == 0, completed.stderr
+E       AssertionError: Traceback (most recent call last):
+E           File "&lt;string&gt;", line 8, in &lt;module&gt;
+E             importlib.import_module(sys.argv[1])
+E             ~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^
+E           File "C:\Users\Ant\AppData\Roaming\uv\python\cpython-3.13.7-windows-x86_64-none\Lib\importlib\__init__.py", line 88, in import_module
+E             return _bootstrap._gcd_import(name[level:], package, level)
+E                    ~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E           File "&lt;frozen importlib._bootstrap&gt;", line 1387, in _gcd_import
+E           File "&lt;frozen importlib._bootstrap&gt;", line 1360, in _find_and_load
+E           File "&lt;frozen importlib._bootstrap&gt;", line 1310, in _find_and_load_unlocked
+E           File "&lt;frozen importlib._bootstrap&gt;", line 488, in _call_with_frames_removed
+E           File "&lt;frozen importlib._bootstrap&gt;", line 1387, in _gcd_import
+E           File "&lt;frozen importlib._bootstrap&gt;", line 1360, in _find_and_load
+E           File "&lt;frozen importlib._bootstrap&gt;", line 1331, in _find_and_load_unlocked
+E           File "&lt;frozen importlib._bootstrap&gt;", line 935, in _load_unlocked
+E           File "&lt;frozen importlib._bootstrap_external&gt;", line 1026, in exec_module
+E           File "&lt;frozen importlib._bootstrap&gt;", line 488, in _call_with_frames_removed
+E           File "D:\Development\mnemos\mnemos\.worktrees\functional-local-memory\mnemos\__init__.py", line 28, in &lt;module&gt;
+E             from .config import (
+E             ...&lt;8 lines&gt;...
+E             )
+E           File "D:\Development\mnemos\mnemos\.worktrees\functional-local-memory\mnemos\config.py", line 15, in &lt;module&gt;
+E             from .retrieval import RetrievalConfig
+E           File "D:\Development\mnemos\mnemos\.worktrees\functional-local-memory\mnemos\retrieval.py", line 10, in &lt;module&gt;
+E             from .utils.embeddings import cosine_similarity
+E           File "D:\Development\mnemos\mnemos\.worktrees\functional-local-memory\mnemos\utils\__init__.py", line 5, in &lt;module&gt;
+E             from .embeddings import (
+E             ...&lt;7 lines&gt;...
+E             )
+E           File "&lt;frozen importlib._bootstrap&gt;", line 1360, in _find_and_load
+E           File "&lt;frozen importlib._bootstrap&gt;", line 1322, in _find_and_load_unlocked
+E           File "&lt;frozen importlib._bootstrap&gt;", line 1262, in _find_spec
+E           File "&lt;string&gt;", line 6, in find_spec
+E             raise AssertionError('Capture imported inference runtime: '+fullname)
+E         AssertionError: Capture imported inference runtime: mnemos.utils.embeddings
+E         
+E       assert 1 == 0
+E        +  where 1 = CompletedProcess(args=['D:\\Development\\mnemos\\mnemos\\.worktrees\\functional-local-memory\\.venv\\Scripts\\python.e...ported inference runtime: \'+fullname)\nAssertionError: Capture imported inference runtime: mnemos.utils.embeddings\n').returncode
+
+tests\test_hook_import_boundary.py:31: AssertionError</failure></testcase><testcase classname="tests.test_hook_import_boundary" name="test_capture_import_does_not_load_inference_runtime[mnemos.adapters.codex]" time="0.272"><failure message="AssertionError: Traceback (most recent call last):&#10;    File &quot;&lt;string&gt;&quot;, line 8, in &lt;module&gt;&#10;      importlib.import_module(sys.argv[1])&#10;      ~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^&#10;    File &quot;C:\Users\Ant\AppData\Roaming\uv\python\cpython-3.13.7-windows-x86_64-none\Lib\importlib\__init__.py&quot;, line 88, in import_module&#10;      return _bootstrap._gcd_import(name[level:], package, level)&#10;             ~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^&#10;    File &quot;&lt;frozen importlib._bootstrap&gt;&quot;, line 1387, in _gcd_import&#10;    File &quot;&lt;frozen importlib._bootstrap&gt;&quot;, line 1360, in _find_and_load&#10;    File &quot;&lt;frozen importlib._bootstrap&gt;&quot;, line 1310, in _find_and_load_unlocked&#10;    File &quot;&lt;frozen importlib._bootstrap&gt;&quot;, line 488, in _call_with_frames_removed&#10;    File &quot;&lt;frozen importlib._bootstrap&gt;&quot;, line 1387, in _gcd_import&#10;    File &quot;&lt;frozen importlib._bootstrap&gt;&quot;, line 1360, in _find_and_load&#10;    File &quot;&lt;frozen importlib._bootstrap&gt;&quot;, line 1310, in _find_and_load_unlocked&#10;    File &quot;&lt;frozen importlib._bootstrap&gt;&quot;, line 488, in _call_with_frames_removed&#10;    File &quot;&lt;frozen importlib._bootstrap&gt;&quot;, line 1387, in _gcd_import&#10;    File &quot;&lt;frozen importlib._bootstrap&gt;&quot;, line 1360, in _find_and_load&#10;    File &quot;&lt;frozen importlib._bootstrap&gt;&quot;, line 1331, in _find_and_load_unlocked&#10;    File &quot;&lt;frozen importlib._bootstrap&gt;&quot;, line 935, in _load_unlocked&#10;    File &quot;&lt;frozen importlib._bootstrap_external&gt;&quot;, line 1026, in exec_module&#10;    File &quot;&lt;frozen importlib._bootstrap&gt;&quot;, line 488, in _call_with_frames_removed&#10;    File &quot;D:\Development\mnemos\mnemos\.worktrees\functional-local-memory\mnemos\__init__.py&quot;, line 28, in &lt;module&gt;&#10;      from .config import (&#10;      ...&lt;8 lines&gt;...&#10;      )&#10;    File &quot;D:\Development\mnemos\mnemos\.worktrees\functional-local-memory\mnemos\config.py&quot;, line 15, in &lt;module&gt;&#10;      from .retrieval import RetrievalConfig&#10;    File &quot;D:\Development\mnemos\mnemos\.worktrees\functional-local-memory\mnemos\retrieval.py&quot;, line 10, in &lt;module&gt;&#10;      from .utils.embeddings import cosine_similarity&#10;    File &quot;D:\Development\mnemos\mnemos\.worktrees\functional-local-memory\mnemos\utils\__init__.py&quot;, line 5, in &lt;module&gt;&#10;      from .embeddings import (&#10;      ...&lt;7 lines&gt;...&#10;      )&#10;    File &quot;&lt;frozen importlib._bootstrap&gt;&quot;, line 1360, in _find_and_load&#10;    File &quot;&lt;frozen importlib._bootstrap&gt;&quot;, line 1322, in _find_and_load_unlocked&#10;    File &quot;&lt;frozen importlib._bootstrap&gt;&quot;, line 1262, in _find_spec&#10;    File &quot;&lt;string&gt;&quot;, line 6, in find_spec&#10;      raise AssertionError('Capture imported inference runtime: '+fullname)&#10;  AssertionError: Capture imported inference runtime: mnemos.utils.embeddings&#10;  &#10;assert 1 == 0&#10; +  where 1 = CompletedProcess(args=['D:\\Development\\mnemos\\mnemos\\.worktrees\\functional-local-memory\\.venv\\Scripts\\python.e...ported inference runtime: \'+fullname)\nAssertionError: Capture imported inference runtime: mnemos.utils.embeddings\n').returncode">module = 'mnemos.adapters.codex'
+tmp_path = WindowsPath('C:/Users/Ant/AppData/Local/Temp/mnemos-hook-import-red-v1/test_capture_import_does_not_l2')
+
+    @pytest.mark.parametrize("module", ["mnemos", "mnemos.client", "mnemos.adapters.codex"])
+    def test_capture_import_does_not_load_inference_runtime(module: str, tmp_path: Path) -&gt; None:
+        code = """
+    import importlib,importlib.abc,sys
+    class BlockRuntime(importlib.abc.MetaPathFinder):
+        def find_spec(self,fullname,path=None,target=None):
+            if fullname in {'numpy','mnemos.engine','mnemos.utils.embeddings','mnemos.utils.storage'}:
+                raise AssertionError('Capture imported inference runtime: '+fullname)
+    sys.meta_path.insert(0,BlockRuntime())
+    importlib.import_module(sys.argv[1])
+    """
+        env = dict(os.environ)
+        env["PYTHONPATH"] = str(Path(mnemos.__file__).resolve().parent.parent)
+        completed = subprocess.run(
+            [sys.executable, "-c", code, module], cwd=tmp_path, env=env,
+            capture_output=True, text=True, timeout=15,
+        )
+&gt;       assert completed.returncode == 0, completed.stderr
+E       AssertionError: Traceback (most recent call last):
+E           File "&lt;string&gt;", line 8, in &lt;module&gt;
+E             importlib.import_module(sys.argv[1])
+E             ~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^
+E           File "C:\Users\Ant\AppData\Roaming\uv\python\cpython-3.13.7-windows-x86_64-none\Lib\importlib\__init__.py", line 88, in import_module
+E             return _bootstrap._gcd_import(name[level:], package, level)
+E                    ~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E           File "&lt;frozen importlib._bootstrap&gt;", line 1387, in _gcd_import
+E           File "&lt;frozen importlib._bootstrap&gt;", line 1360, in _find_and_load
+E           File "&lt;frozen importlib._bootstrap&gt;", line 1310, in _find_and_load_unlocked
+E           File "&lt;frozen importlib._bootstrap&gt;", line 488, in _call_with_frames_removed
+E           File "&lt;frozen importlib._bootstrap&gt;", line 1387, in _gcd_import
+E           File "&lt;frozen importlib._bootstrap&gt;", line 1360, in _find_and_load
+E           File "&lt;frozen importlib._bootstrap&gt;", line 1310, in _find_and_load_unlocked
+E           File "&lt;frozen importlib._bootstrap&gt;", line 488, in _call_with_frames_removed
+E           File "&lt;frozen importlib._bootstrap&gt;", line 1387, in _gcd_import
+E           File "&lt;frozen importlib._bootstrap&gt;", line 1360, in _find_and_load
+E           File "&lt;frozen importlib._bootstrap&gt;", line 1331, in _find_and_load_unlocked
+E           File "&lt;frozen importlib._bootstrap&gt;", line 935, in _load_unlocked
+E           File "&lt;frozen importlib._bootstrap_external&gt;", line 1026, in exec_module
+E           File "&lt;frozen importlib._bootstrap&gt;", line 488, in _call_with_frames_removed
+E           File "D:\Development\mnemos\mnemos\.worktrees\functional-local-memory\mnemos\__init__.py", line 28, in &lt;module&gt;
+E             from .config import (
+E             ...&lt;8 lines&gt;...
+E             )
+E           File "D:\Development\mnemos\mnemos\.worktrees\functional-local-memory\mnemos\config.py", line 15, in &lt;module&gt;
+E             from .retrieval import RetrievalConfig
+E           File "D:\Development\mnemos\mnemos\.worktrees\functional-local-memory\mnemos\retrieval.py", line 10, in &lt;module&gt;
+E             from .utils.embeddings import cosine_similarity
+E           File "D:\Development\mnemos\mnemos\.worktrees\functional-local-memory\mnemos\utils\__init__.py", line 5, in &lt;module&gt;
+E             from .embeddings import (
+E             ...&lt;7 lines&gt;...
+E             )
+E           File "&lt;frozen importlib._bootstrap&gt;", line 1360, in _find_and_load
+E           File "&lt;frozen importlib._bootstrap&gt;", line 1322, in _find_and_load_unlocked
+E           File "&lt;frozen importlib._bootstrap&gt;", line 1262, in _find_spec
+E           File "&lt;string&gt;", line 6, in find_spec
+E             raise AssertionError('Capture imported inference runtime: '+fullname)
+E         AssertionError: Capture imported inference runtime: mnemos.utils.embeddings
+E         
+E       assert 1 == 0
+E        +  where 1 = CompletedProcess(args=['D:\\Development\\mnemos\\mnemos\\.worktrees\\functional-local-memory\\.venv\\Scripts\\python.e...ported inference runtime: \'+fullname)\nAssertionError: Capture imported inference runtime: mnemos.utils.embeddings\n').returncode
+
+tests\test_hook_import_boundary.py:31: AssertionError</failure></testcase><testcase classname="tests.test_hook_import_boundary" name="test_public_exports_keep_class_identity_and_star_import_contract" time="0.002" /></testsuite></testsuites>

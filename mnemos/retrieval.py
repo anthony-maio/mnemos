@@ -7,7 +7,6 @@ from typing import Literal
 from pydantic import BaseModel, Field
 
 from .types import CognitiveState, MemoryChunk
-from .utils.embeddings import cosine_similarity
 
 
 class RetrievalConfig(BaseModel):
@@ -41,6 +40,8 @@ def score_candidate(
 ) -> ScoreBreakdown:
     similarity = 0.0
     if chunk.embedding and len(chunk.embedding) == len(query_embedding):
+        from .utils.embeddings import cosine_similarity
+
         similarity = max(0.0, cosine_similarity(query_embedding, chunk.embedding))
     match = None
     status = "disabled" if not affective else "unavailable"

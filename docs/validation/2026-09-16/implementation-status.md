@@ -4,6 +4,12 @@ This record covers the unreleased `wt/functional-local-memory` worktree. It
 separates implemented behavior from acceptance evidence. The original task
 boundaries and thresholds remain in the [implementation plan](../../plans/2026-09-16-functional-local-memory.md).
 
+The [capture import boundary](../2026-09-17/hook-import-boundary-v1/README.md)
+now keeps engine, embedding, and storage imports out of client startup. All 92
+focused cases passed with two platform skips, and strict product typing passed.
+Public exports resolve on first access. Diagnostic shell timings remain variable;
+the native Stop deadline is not yet accepted.
+
 The [capture interruption regression](../2026-09-17/capture-interruption-v1/README.md)
 forces a host client process to exit before sending or after service commit.
 Capture now persists sanitized evidence before startup and HTTP waits, then
