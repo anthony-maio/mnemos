@@ -1,0 +1,70 @@
+"""Test-only same-event rendezvous; expired requests never satisfy a pair."""
+import threading
+import time
+
+
+class ReplayBarrier:
+    hosts = frozenset(('codex', 'claude-code'))
+
+    def __init__(self):
+        self.condition = threading.Condition()
+        self.active = []
+        self.requests = []
+        self.pairs = []
+        self.consumed = set()
+        self.cancelled = False
+
+    def _expire(self, now):
+        for stamp in list(self.active):
+            if stamp['deadline_ns'] <= now:
+                stamp['barrier_state'] = 'expired'
+                self.active.remove(stamp)
+        self.condition.notify_all()
+
+    def arrive(self, stamp, timeout=2.0):
+        assert stamp['native_host'] in self.hosts
+        assert timeout > 0
+        stamp['deadline_ns'] = stamp['start_ns'] + int(timeout * 1_000_000_000)
+        with self.condition:
+            self.requests.append(stamp)
+            now = time.monotonic_ns()
+            self._expire(now)
+            if self.cancelled:
+                stamp['barrier_state'] = 'cancelled'
+            elif stamp['deadline_ns'] <= now:
+                stamp['barrier_state'] = 'expired'
+            elif stamp['event_id'] in self.consumed:
+                stamp['barrier_state'] = 'already_paired'
+            else:
+                partner = next((other for other in self.active
+                    if other['event_id'] == stamp['event_id']
+                    and other['native_host'] != stamp['native_host']
+                    and other['native_pid'] != stamp['native_pid']), None)
+                if partner is not None:
+                    self.active.remove(partner)
+                    pair_id = len(self.pairs)
+                    for member in (partner, stamp):
+                        member.update(barrier_state='paired', pair_id=pair_id, paired_at_ns=now)
+                    self.pairs.append((partner, stamp))
+                    self.consumed.add(stamp['event_id'])
+                    self.condition.notify_all()
+                else:
+                    stamp['barrier_state'] = 'waiting'
+                    self.active.append(stamp)
+                    while stamp['barrier_state'] == 'waiting':
+                        now = time.monotonic_ns()
+                        self._expire(now)
+                        if stamp['barrier_state'] != 'waiting':
+                            break
+                        self.condition.wait((stamp['deadline_ns'] - now) / 1_000_000_000)
+            stamp['release_ns'] = time.monotonic_ns()
+            stamp['barrier_released'] = stamp['barrier_state'] == 'paired'
+            return stamp['barrier_released']
+
+    def cancel(self):
+        with self.condition:
+            self.cancelled = True
+            for stamp in self.active:
+                stamp['barrier_state'] = 'cancelled'
+            self.active.clear()
+            self.condition.notify_all()

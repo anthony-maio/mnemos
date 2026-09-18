@@ -1,0 +1,111 @@
+{
+  "phases": {
+    "outage": {
+      "source_sha256": "f28a75f0385f1136d3f692f2ad18ebcb0ac9d6ba16461e1157029cddd9a2ed21",
+      "responses": [
+        {
+          "hook_event": "SessionStart",
+          "outcome": "success",
+          "exit_code": 0,
+          "diagnostics": []
+        },
+        {
+          "hook_event": "UserPromptSubmit",
+          "outcome": "success",
+          "exit_code": 0,
+          "diagnostics": [
+            {
+              "host": "claude-code",
+              "event": "UserPromptSubmit",
+              "status": "degraded",
+              "reason": "identity_reference_unavailable",
+              "stream_field": "stderr"
+            },
+            {
+              "host": "claude-code",
+              "event": "UserPromptSubmit",
+              "status": "degraded",
+              "reason": "identity_reference_unavailable",
+              "stream_field": "output"
+            }
+          ]
+        },
+        {
+          "hook_event": "Stop",
+          "outcome": "success",
+          "exit_code": 0,
+          "diagnostics": [
+            {
+              "host": "claude-code",
+              "event": "Stop",
+              "status": "degraded",
+              "reason": "ambiguous_transcript_association",
+              "stream_field": "stderr"
+            },
+            {
+              "host": "claude-code",
+              "event": "Stop",
+              "status": "degraded",
+              "reason": "ambiguous_transcript_association",
+              "stream_field": "output"
+            }
+          ]
+        }
+      ]
+    },
+    "recovery": {
+      "source_sha256": "c8797b4a048f2973cc0593d3081ebc6da386c4594d0a6407959d37a71157e603",
+      "responses": [
+        {
+          "hook_event": "SessionStart",
+          "outcome": "success",
+          "exit_code": 0,
+          "diagnostics": []
+        },
+        {
+          "hook_event": "UserPromptSubmit",
+          "outcome": "success",
+          "exit_code": 0,
+          "diagnostics": [
+            {
+              "host": "claude-code",
+              "event": "UserPromptSubmit",
+              "status": "degraded",
+              "reason": "identity_reference_unavailable",
+              "stream_field": "stderr"
+            },
+            {
+              "host": "claude-code",
+              "event": "UserPromptSubmit",
+              "status": "degraded",
+              "reason": "identity_reference_unavailable",
+              "stream_field": "output"
+            }
+          ]
+        },
+        {
+          "hook_event": "Stop",
+          "outcome": "success",
+          "exit_code": 0,
+          "diagnostics": [
+            {
+              "host": "claude-code",
+              "event": "Stop",
+              "status": "degraded",
+              "reason": "ambiguous_transcript_association",
+              "stream_field": "stderr"
+            },
+            {
+              "host": "claude-code",
+              "event": "Stop",
+              "status": "degraded",
+              "reason": "ambiguous_transcript_association",
+              "stream_field": "output"
+            }
+          ]
+        }
+      ]
+    }
+  },
+  "selection": "Fixed status/reason fields only. A hook diagnostic repeated in separate stream fields is preserved with its field name."
+}

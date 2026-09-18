@@ -1,0 +1,292 @@
+"""Shared, versioned helpers for disposable native concurrent recovery."""
+from pathlib import Path
+from types import SimpleNamespace
+import hashlib
+import importlib.util
+import json
+import sqlite3
+import sys
+import time
+import zipfile
+
+def transport_origin(client_port, server_port):
+    """Read Windows TCP ownership and process ancestry; never read command lines."""
+    import ctypes as ct
+    from ctypes import wintypes as wt
+    import socket
+    iphlp = ct.WinDLL('iphlpapi', use_last_error=True)
+    get_table = iphlp.GetExtendedTcpTable
+    get_table.argtypes = [ct.c_void_p, ct.POINTER(wt.DWORD), wt.BOOL, wt.ULONG, ct.c_int, wt.ULONG]
+    get_table.restype = wt.DWORD
+    class TcpRow(ct.Structure):
+        _fields_ = [(name, wt.DWORD) for name in ('state', 'local_addr', 'local_port', 'remote_addr', 'remote_port', 'pid')]
+    size = wt.DWORD(0)
+    assert get_table(None, ct.byref(size), False, socket.AF_INET, 5, 0) == 122
+    for _ in range(3):
+        buffer = ct.create_string_buffer(size.value)
+        code = get_table(buffer, ct.byref(size), False, socket.AF_INET, 5, 0)
+        if code != 122:
+            break
+    assert code == 0, code
+    count = wt.DWORD.from_buffer(buffer).value
+    rows = (TcpRow * count).from_buffer(buffer, ct.sizeof(wt.DWORD))
+    matches = [int(row.pid) for row in rows if socket.ntohs(row.local_port & 65535) == client_port
+               and socket.ntohs(row.remote_port & 65535) == server_port and row.state == 5]
+    assert len(set(matches)) == 1, 'Could not identify exactly one TCP client process'
+    client_pid = matches[0]
+    class ProcessEntry(ct.Structure):
+        _fields_ = [('size', wt.DWORD), ('usage', wt.DWORD), ('pid', wt.DWORD),
+                    ('heap', ct.c_size_t), ('module', wt.DWORD), ('threads', wt.DWORD),
+                    ('parent', wt.DWORD), ('priority', wt.LONG), ('flags', wt.DWORD),
+                    ('exe', wt.WCHAR * 260)]
+    kernel = ct.WinDLL('kernel32', use_last_error=True)
+    snapshot = kernel.CreateToolhelp32Snapshot
+    snapshot.argtypes = [wt.DWORD, wt.DWORD]
+    snapshot.restype = wt.HANDLE
+    first, following = kernel.Process32FirstW, kernel.Process32NextW
+    for method in (first, following):
+        method.argtypes = [wt.HANDLE, ct.POINTER(ProcessEntry)]
+        method.restype = wt.BOOL
+    kernel.CloseHandle.argtypes = [wt.HANDLE]
+    kernel.CloseHandle.restype = wt.BOOL
+    handle = snapshot(2, 0)
+    assert handle not in (None, ct.c_void_p(-1).value)
+    parents = {}
+    try:
+        entry = ProcessEntry()
+        entry.size = ct.sizeof(entry)
+        more = first(handle, ct.byref(entry))
+        assert more
+        while more:
+            parents[int(entry.pid)] = int(entry.parent)
+            more = following(handle, ct.byref(entry))
+    finally:
+        kernel.CloseHandle(handle)
+    ancestry = [client_pid]
+    while ancestry[-1] in parents and len(ancestry) < 32:
+        parent = parents[ancestry[-1]]
+        if parent == 0 or parent in ancestry:
+            break
+        ancestry.append(parent)
+    return {'tcp_client_pid': client_pid, 'process_ancestry': ancestry,
+            'client_port': client_port, 'server_port': server_port}
+
+ROOT = Path(__file__).resolve().parents[1]
+TEMP = Path('C:/Users/Ant/AppData/Local/Temp')
+PROFILE = 'native-crosshost-concurrent-v4'
+OUTPUT = TEMP / 'mnemos-native-crosshost-concurrent-v4'
+SOURCE = 'fc72cc251aeafa161a1a390269b8dfa34d83cf2b'
+SNAPSHOT = TEMP / 'mnemos-source-retrieval-comparison-v1'
+WHEEL = TEMP / 'mnemos-package-checks-retrieval-comparison-v1/dist/mnemos_memory-0.7.0-py3-none-any.whl'
+WHEEL_SHA = '938f6f423334ccc8d4b3409bbf3b8b49c25a42ff60b734490eb716d78cb2b54b'
+PYTHON = TEMP / 'mnemos-installed-encoding-comparison-v1/Scripts/python.exe'
+PINS = {
+    'native_codex_interactive_utf8_v1.py': '6f91aaef76ff619d38e5229f93697796b5fbfbcf86bcc87a78e72062f4b7dd0b',
+    'native_codex_retrieve_v2.py': '20f909d8c2d28934c8d47763558b7f9bf08eb6d848de9a1e6bce8d2f7f3326bb',
+    'native_claude_lifecycle_v17.py': '85940cccb99d46f7b56a6184d912495831f66c3933f0b0fc03cdf36217691342',
+}
+WORDS = {'outage-a': 'outage amber wren', 'outage-b': 'outage cobalt fox',
+         'recovery-a': 'recovery silver birch', 'recovery-b': 'recovery copper finch'}
+
+def sha(raw):
+    return hashlib.sha256(raw).hexdigest()
+
+def load(path, name):
+    spec = importlib.util.spec_from_file_location(name, path)
+    module = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(module)
+    return module
+
+def read(path):
+    return json.loads(Path(path).read_text(encoding='utf-8'))
+
+def write(path, value):
+    from mnemos.service import _write_private_json
+    _write_private_json(Path(path), value)
+
+def helpers():
+    assert Path(sys.executable).resolve() == PYTHON.resolve()
+    assert sha(WHEEL.read_bytes()) == WHEEL_SHA
+    for name, digest in PINS.items():
+        assert sha((ROOT / '.venv' / name).read_bytes()) == digest
+    native = load(ROOT / '.venv/native_codex_interactive_utf8_v1.py', 'concurrent_native')
+    wrapper = native._load_v2()
+    lifecycle = wrapper._load_lifecycle()
+    claude = load(ROOT / '.venv/native_claude_lifecycle_v17.py', 'concurrent_fixture')
+    wrapper.PROFILE = claude.PROFILE = PROFILE
+    claude.SOURCE_ROOT = SNAPSHOT
+    claude.SOURCE_COMMIT = SOURCE
+    claude.CLAUDE_EXE = Path('C:/Users/Ant/.local/bin/claude.exe')
+    claude.RUNTIME_PYTHON = PYTHON
+    claude._verify_plugin_snapshot(SNAPSHOT, SOURCE)
+    provenance = wrapper._verify_inputs(SimpleNamespace(source_commit=SOURCE, wheel=WHEEL,
+        expected_wheel_sha256=WHEEL_SHA, build_verification=WHEEL.parent.parent / 'verification.json'), lifecycle)
+    import mnemos
+    package_root = Path(mnemos.__file__).resolve().parent.parent
+    checked = 0
+    with zipfile.ZipFile(WHEEL) as wheel:
+        for name in wheel.namelist():
+            if name.startswith('mnemos/') and not name.endswith('/'):
+                assert (package_root / name).read_bytes() == wheel.read(name), name
+                checked += 1
+    provenance['installed_files_verified'] = checked
+    return native, wrapper, lifecycle, claude, provenance
+
+def wait_files(paths, timeout=360):
+    deadline = time.monotonic() + timeout
+    while not all(path.exists() for path in paths):
+        if time.monotonic() >= deadline:
+            raise TimeoutError('Native coordination deadline exceeded: ' + ','.join(p.name for p in paths if not p.exists()))
+        time.sleep(0.1)
+
+def native_rows(home, excluded=()):
+    selected = []
+    for path in sorted((home / 'sessions').rglob('*.jsonl')):
+        relative = path.relative_to(home).as_posix()
+        if relative in excluded:
+            continue
+        raw = path.read_bytes()
+        for number, line in enumerate(raw.splitlines(keepends=True), 1):
+            record = json.loads(line)
+            payload = record.get('payload')
+            if isinstance(payload, dict) and (record.get('type') == 'session_meta' or payload.get('type') in (
+                'user_message', 'agent_message', 'task_complete', 'mcp_tool_call_end', 'custom_tool_call', 'function_call')):
+                selected.append({'source': relative, 'source_file_sha256': sha(raw), 'line': number,
+                                 'line_sha256': sha(line), 'record': record})
+    return selected
+
+def session_summary(rows, key):
+    payloads = [r['record']['payload'] for r in rows]
+    metas = [r['record']['payload'] for r in rows if r['record']['type'] == 'session_meta']
+    users = [p for p in payloads if p.get('type') == 'user_message']
+    finals = [p for p in payloads if p.get('type') == 'agent_message' and p.get('phase') == 'final_answer']
+    turns = [p for p in payloads if p.get('type') == 'task_complete']
+    assert len(metas) == len(users) == len(finals) == len(turns) == 1
+    assert not [p for p in payloads if p.get('type') in ('mcp_tool_call_end', 'custom_tool_call', 'function_call')]
+    prompt = 'Do not use tools. Reply with exactly these words, without punctuation: ' + WORDS[key]
+    assert users[0]['message'] == prompt
+    assert finals[0]['message'] == WORDS[key]
+    return {'session': metas[0]['id'], 'turn': turns[0]['turn_id'], 'user': prompt, 'assistant': WORDS[key]}
+
+def database_state(fixture):
+    result = {}
+    if not (fixture / 'memory.sqlite').exists():
+        return {'exists': False}
+    with sqlite3.connect((fixture / 'memory.sqlite').as_uri() + '?mode=ro', uri=True) as db:
+        db.row_factory = sqlite3.Row
+        for table in ('memory_chunks', 'episodic_events', 'fact_evidence', 'memory_jobs'):
+            rows = [{k: {'bytes_sha256': sha(v)} if isinstance(v, bytes) else v for k, v in dict(row).items()}
+                    for row in db.execute('select * from ' + table)]
+            result[table] = {'rows': len(rows), 'sha256': sha(json.dumps(sorted(json.dumps(row, sort_keys=True) for row in rows)).encode())}
+        result['capture_count'] = db.execute("select count(*) from episodic_events where source in ('codex', 'claude-code')").fetchone()[0]
+    return result
+
+
+def native_contents(session, role):
+    if session['host'] == 'codex':
+        return {session[role]}
+    return {message['content'] for message in session['messages'] if message['role'] == role}
+
+
+def verify_captures(fixture, sessions, project_id, foreign_id, foreign_content):
+    from mnemos.adapters.codex import CodexAdapter
+    from mnemos.adapters.claude_code import ClaudeCodeAdapter
+    from mnemos.scopes import ScopeContext
+    captures = []
+    with sqlite3.connect((fixture / 'memory.sqlite').as_uri() + '?mode=ro', uri=True) as db:
+        db.row_factory = sqlite3.Row
+        rows = db.execute("select * from episodic_events where source in ('codex','claude-code')").fetchall()
+        assert {row['session_id'] for row in rows} == set(sessions)
+        assert {(row['session_id'], row['role']) for row in rows} == {(identity, role) for identity in sessions for role in ('user', 'assistant')}
+        jobs = [dict(row) for row in db.execute('select * from memory_jobs')]
+        observed = set()
+        provisional_sessions = set()
+        for row in rows:
+            metadata = json.loads(row['metadata'])
+            session = sessions[row['session_id']]
+            role = row['role']
+            host = session['host']
+            assert row['content'] in native_contents(session, role)
+            assert row['scope_id'] == metadata['scope_id'] == metadata['project_id'] == project_id
+            assert metadata['user_profile_id'] == PROFILE and metadata['host'] == host
+            assert metadata['session_id'] == row['session_id']
+            context = ScopeContext(user_profile_id=PROFILE, project_id=project_id,
+                workspace_id=metadata.get('workspace_id'), session_id=row['session_id'], host=host)
+            assert row['source'] == host
+            if metadata['identity_status'] == 'provisional_unassociated':
+                assert host == 'claude-code' and role == 'user'
+                assert row['session_id'] not in provisional_sessions
+                provisional_sessions.add(row['session_id'])
+                assert metadata['source_ref'] == 'prompt:' + sha(row['content'].encode())
+                source_id = ClaudeCodeAdapter._event_id(context, metadata['source_ref'], role, row['content'])
+                assert metadata['source_event_id'] == source_id
+                evidence = db.execute('select * from fact_evidence where source_event_id=?', (row['id'],)).fetchall()
+                matching_jobs = [job for job in jobs if json.loads(job['payload']).get('event_id') == row['id']]
+                assert row['status'] == 'deferred' and evidence == [] and len(matching_jobs) == 1
+                job = matching_jobs[0]
+                assert job['kind'] == 'capture_only' and job['status'] == 'completed'
+                assert json.loads(job['result']) == {'decision':'identity_pending','fact_eligible':False,'fact_ids':[]}
+                captures.append({'event':dict(row),'evidence':None,'job_id':job['id'],'source_event_id':source_id})
+                continue
+            assert metadata['identity_status'] == 'normal' and row['status'] == 'consolidated'
+            if host == 'codex':
+                event = 'UserPromptSubmit' if role == 'user' else 'Stop'
+                source_ref = event + ':' + session['turn']
+                source_id = CodexAdapter._event_id(context, event=event, turn_id=session['turn'], role=role, content=row['content'])
+                assert metadata['source_kind'] == 'codex_hook'
+            else:
+                matching_native = [message for message in session['messages']
+                    if message['role'] == role and message['content'] == row['content']
+                    and message['source_ref'] == metadata['source_ref']]
+                assert len(matching_native) == 1, 'Claude capture lacks a unique native transcript UUID'
+                assert metadata['source_kind'] == 'claude_code_transcript'
+                assert metadata['identity_status'] == 'normal', 'Provisional Claude capture is not complete native capture'
+                source_ref = matching_native[0]['source_ref']
+                source_id = ClaudeCodeAdapter._event_id(context, source_ref, role, row['content'])
+            assert metadata['source_ref'] == source_ref
+            assert metadata['source_event_id'] == source_id
+            native_key = (row['session_id'], role, source_ref)
+            assert native_key not in observed, 'Duplicate native source identity'
+            observed.add(native_key)
+            evidence = [dict(item) for item in db.execute('select * from fact_evidence where source_event_id=?', (row['id'],))]
+            matching_jobs = [job for job in jobs if json.loads(job['payload']).get('event_id') == row['id']]
+            assert len(evidence) == len(matching_jobs) == 1
+            assert matching_jobs[0]['status'] == 'completed' and matching_jobs[0]['kind'] == 'extract'
+            fact = db.execute('select content,metadata from memory_chunks where id=?', (evidence[0]['fact_id'],)).fetchone()
+            assert fact is not None
+            assert fact['content'] == ('Assistant reported: ' if role == 'assistant' else '') + row['content']
+            fact_metadata = json.loads(fact['metadata'])
+            assert fact_metadata['user_profile_id'] == PROFILE and fact_metadata['scope_id'] == project_id
+            captures.append({'event': dict(row), 'evidence': evidence[0], 'job_id': matching_jobs[0]['id'], 'source_event_id': source_id})
+        expected = set()
+        for identity, session in sessions.items():
+            if session['host'] == 'codex':
+                expected.update((identity, role, event + ':' + session['turn']) for role, event in (('user','UserPromptSubmit'), ('assistant','Stop')))
+            else:
+                expected.update((identity, message['role'], message['source_ref']) for message in session['messages'])
+        assert observed == expected, 'Some native messages were not durably captured'
+        assert provisional_sessions == {sid for sid, session in sessions.items() if session['host'] == 'claude-code'}
+        assert db.execute('select count(*) from memory_chunks').fetchone()[0] == len(expected) + 2
+        foreign = db.execute('select content,metadata from memory_chunks where id=?', (foreign_id,)).fetchone()
+        assert foreign['content'] == foreign_content
+        assert json.loads(foreign['metadata'])['scope_id'] != project_id
+    return captures
+
+
+def verify_queued_recovery(pending, captures, trace):
+    result = []
+    for item in pending:
+        payload = item['payload']
+        matches = [capture for capture in captures if capture['event']['id'] == item['event_id']]
+        assert len(matches) == 1, 'Queued event did not become exactly one durable event'
+        capture = matches[0]
+        assert capture['source_event_id'] == payload['event_id']
+        assert capture['event']['content'] == payload['content']
+        calls = [call for call in trace if call['event_id'] == payload['event_id']]
+        assert calls and all(call['committed'] is True or call['status'] == 'committed' for call in calls)
+        assert {call['durable_event_id'] for call in calls} == {item['event_id']}
+        assert {call['job_id'] for call in calls} == {capture['job_id']}
+        result.append({'event_id': item['event_id'], 'source_event_id': payload['event_id'],
+                       'host': payload['context']['host'], 'attempts': len(calls),
+                       'job_id': capture['job_id']})
+    return result

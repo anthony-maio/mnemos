@@ -1,0 +1,255 @@
+"""One bounded native Claude worker for the mixed-host recovery probe.
+
+This helper is intentionally unexecuted until its sibling coordinator freezes
+the manifest. It records only selected user/assistant transcript records and
+does not retain raw Claude output in the report.
+"""
+
+from __future__ import annotations
+
+import argparse
+from datetime import datetime, timezone
+import hashlib
+import importlib.util
+import json
+import os
+from pathlib import Path
+import subprocess
+import sys
+import time
+import traceback
+from uuid import uuid4
+
+
+COMMON = Path(__file__).with_name("native_crosshost_concurrent_common_v4.py")
+spec = importlib.util.spec_from_file_location("native_crosshost_common_v4", COMMON)
+if spec is None or spec.loader is None:
+    raise RuntimeError("cannot load concurrent common helper")
+c = importlib.util.module_from_spec(spec)
+spec.loader.exec_module(c)
+
+parser = argparse.ArgumentParser()
+parser.add_argument("--phase", choices=("outage", "recovery"), required=True)
+args = parser.parse_args()
+key = args.phase + "-b"
+
+assert sys.stdin.isatty() and sys.stdout.isatty()
+manifest = c.read(c.OUTPUT / "manifest.json")
+assert c.sha(COMMON.read_bytes()) == manifest["helpers"][COMMON.name]
+assert c.sha(Path(__file__).read_bytes()) == manifest["helpers"][Path(__file__).name]
+native, wrapper, lifecycle, claude, provenance = c.helpers()
+fixture = Path(manifest["fixture"])
+project = Path(manifest["project"])
+config_dir = Path(manifest["homes"]["b"])
+assert fixture.parent == c.TEMP
+assert fixture.name.startswith("mnemos-native-crosshost-concurrent-v4-")
+assert not (c.OUTPUT / (key + ".json")).exists()
+
+report_path = c.OUTPUT / (key + ".json")
+report = {
+    "status": "running",
+    "key": key,
+    "runner_sha256": c.sha(Path(__file__).read_bytes()),
+    "common_sha256": c.sha(COMMON.read_bytes()),
+    "started_at": datetime.now(timezone.utc).isoformat(),
+    "home": str(config_dir),
+    "provenance": provenance,
+}
+process = auth = None
+
+
+def _line_sha(raw: bytes) -> str:
+    return hashlib.sha256(raw).hexdigest()
+
+
+def _jsonl_records() -> list[tuple]:
+    records = []
+    if not config_dir.exists():
+        return records
+    for path in sorted(config_dir.rglob("*.jsonl")):
+        file_hash = _line_sha(path.read_bytes())
+        for number, raw in enumerate(path.read_bytes().splitlines(keepends=True), 1):
+            try:
+                value = json.loads(raw.decode("utf-8", errors="replace"))
+            except json.JSONDecodeError:
+                continue
+            if isinstance(value, dict):
+                records.append((path, number, raw, file_hash, value))
+    return records
+
+
+def _text(value):
+    if isinstance(value, str):
+        return value
+    if isinstance(value, list):
+        parts = []
+        for item in value:
+            if isinstance(item, dict) and item.get("type") == "text" and isinstance(item.get("text"), str):
+                parts.append(item["text"])
+        return "".join(parts) if parts else None
+    if isinstance(value, dict) and isinstance(value.get("text"), str):
+        return value["text"]
+    return None
+
+
+def _selected_transcript(session_id: str, expected_prompt: str, expected_answer: str):
+    selected = []
+    for path, number, raw, file_hash, value in _jsonl_records():
+        record_type = value.get("type")
+        message = value.get("message") if isinstance(value.get("message"), dict) else value.get("payload")
+        if not isinstance(message, dict):
+            continue
+        if (value.get("sessionId") or value.get("session_id")) != session_id:
+            continue
+        role = message.get("role") or value.get("role")
+        content = _text(message.get("content", message.get("text")))
+        if role not in {"user", "assistant"} or not content:
+            continue
+        source_ref = value.get("uuid") or value.get("id")
+        assert isinstance(source_ref, str) and source_ref
+        assert path.resolve().is_relative_to(config_dir.resolve())
+        selected.append({
+            "role": role,
+            "content": content.strip(),
+            "source_ref": source_ref,
+            "source_path": path.relative_to(config_dir).as_posix(),
+            "line": number,
+            "line_sha256": _line_sha(raw),
+            "source_file_sha256": file_hash,
+            "record_type": record_type,
+        })
+    assert any(item["role"] == "user" and item["content"] == expected_prompt for item in selected)
+    assert any(item["role"] == "assistant" and item["content"].strip() == expected_answer for item in selected)
+    assert all(item["content"].strip() for item in selected)
+    return selected
+
+
+def _assert_no_tool_use(stdout: str) -> None:
+    forbidden = {"tool_use", "tool_result", "tool_call", "tool_response"}
+
+    def walk(value):
+        if isinstance(value, dict):
+            if value.get("type") in forbidden:
+                raise AssertionError("Claude emitted a tool-use/result record")
+            for child in value.values():
+                walk(child)
+        elif isinstance(value, list):
+            for child in value:
+                walk(child)
+
+    for line in stdout.splitlines():
+        try:
+            walk(json.loads(line))
+        except json.JSONDecodeError:
+            continue
+
+
+try:
+    selectors = dict(manifest["selectors"])
+    session_id = str(uuid4())
+    prompt = "Do not use tools. Reply with exactly these words, without punctuation: " + c.WORDS[key]
+    env = claude._clean_environment({
+        **selectors,
+        "MNEMOS_HOST": "claude-code",
+        "MNEMOS_SESSION_ID": session_id,
+        "MNEMOS_RUNTIME_DIR": str(fixture / (args.phase + "-claude-runtime")),
+        "MNEMOS_CLAUDE_CHECKPOINT_DIR": str(fixture / (args.phase + "-claude-checkpoints")),
+        "MNEMOS_ROUTING_REVIEW_DIR": str(fixture / (args.phase + "-claude-routing")),
+        "CLAUDE_CONFIG_DIR": str(config_dir),
+        "MNEMOS_PLUGIN_PYTHON": str(c.PYTHON),
+        "PATH": str(Path(c.PYTHON).parent) + os.pathsep + os.environ.get("PATH", ""),
+    })
+    env.pop("MCP_CONNECTION_NONBLOCKING", None)
+    env.pop("MNEMOS_AUTO_START", None)
+    for name in ("MNEMOS_RUNTIME_DIR", "MNEMOS_CLAUDE_CHECKPOINT_DIR", "MNEMOS_ROUTING_REVIEW_DIR"):
+        lifecycle._private_mkdir(Path(env[name]))
+    # The coordinator intentionally controls whether the malformed settings file
+    # makes normal startup fail; this worker does not bypass that path.
+    assert not (config_dir / ".credentials.json").exists()
+    auth = claude._copy_private_auth(config_dir)
+    if hasattr(claude, "_verify_plugin_snapshot"):
+        report["plugin_snapshot_before"] = claude._verify_plugin_snapshot(c.SNAPSHOT, c.SOURCE)
+    c.write(c.OUTPUT / (key + ".ready.json"), {"ready_at": datetime.now(timezone.utc).isoformat()})
+    deadline = time.monotonic() + 360
+    while not (c.OUTPUT / (args.phase + ".go.json")).exists():
+        if (c.OUTPUT / "abort.json").exists() or time.monotonic() >= deadline:
+            raise TimeoutError("Native launch coordination aborted or timed out")
+        time.sleep(0.1)
+    command = [
+        str(claude.CLAUDE_EXE), "--print", "--verbose", "--output-format", "stream-json",
+        "--include-hook-events", "--setting-sources", "project", "--plugin-dir", str(c.SNAPSHOT),
+        "--tools", "", "--disable-slash-commands", "--permission-mode", "default",
+        "--session-id", session_id, "--model", "claude-sonnet-4-6", "--max-budget-usd", "1.00",
+        "--system-prompt", "Do not use tools. Follow the exact reply instruction.", prompt,
+    ]
+    report["command"] = command[:-1] + ["<fixture prompt>"]
+    started = time.monotonic_ns()
+    process = subprocess.Popen(
+        command, cwd=str(project), env=env, stdin=subprocess.DEVNULL,
+        stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True, encoding="utf-8",
+        errors="replace", shell=False,
+        creationflags=getattr(subprocess, "CREATE_NEW_PROCESS_GROUP", 0),
+    )
+    c.write(c.OUTPUT / (key + ".started.json"), {"pid": process.pid, "monotonic_ns": started})
+    deadline = time.monotonic() + 180
+    while True:
+        if (c.OUTPUT / "abort.json").exists() or time.monotonic() >= deadline:
+            raise TimeoutError("Native Claude process exceeded its deadline")
+        try:
+            stdout, stderr = process.communicate(timeout=1)
+            break
+        except subprocess.TimeoutExpired:
+            continue
+    (fixture / (key + "-stdout.jsonl")).write_text(stdout, encoding="utf-8")
+    (fixture / (key + "-stderr.log")).write_text(stderr, encoding="utf-8")
+    report["process"] = {"pid": process.pid, "returncode": process.returncode,
+                          "start_ns": started, "end_ns": time.monotonic_ns(),
+                          "stdout_sha256": _line_sha(stdout.encode()),
+                          "stderr_sha256": _line_sha(stderr.encode())}
+    results = [json.loads(line) for line in stdout.splitlines() if line.strip().startswith('{')]
+    results = [row for row in results if row.get('type') == 'result']
+    report['result_summary'] = [{key: row[key] for key in ('type', 'subtype', 'is_error', 'total_cost_usd', 'num_turns', 'duration_ms') if key in row} for row in results]
+    assert process.returncode == 0
+    _assert_no_tool_use(stdout)
+    assert len(results) == 1 and results[0].get('subtype') == 'success'
+    assert not results[0].get('is_error') and results[0].get('result', '').strip() == c.WORDS[key]
+    assert results[0].get('session_id') == session_id
+    report['hook_diagnostics'] = claude._hook_diagnostic_statuses(stdout)
+    selected = _selected_transcript(session_id, prompt, c.WORDS[key])
+    report["session"] = {"session": session_id, "user": prompt, "assistant": c.WORDS[key],
+                         "host": "claude-code", "messages": selected}
+    report["native_rows"] = selected
+    if hasattr(claude, "_verify_plugin_snapshot"):
+        report["plugin_snapshot_after"] = claude._verify_plugin_snapshot(c.SNAPSHOT, c.SOURCE)
+    report["status"] = "observed_native_turn"
+except Exception as exc:
+    report.update(status="failed", error_type=type(exc).__name__, error=str(exc), traceback=traceback.format_exc())
+finally:
+    if process is not None and process.poll() is None:
+        try:
+            claude._terminate_process_tree(process)
+        except Exception as exc:
+            report.setdefault("cleanup_errors", []).append(repr(exc))
+    if process is not None and process.poll() is None:
+        process.kill()
+    if process is not None:
+        try:
+            remaining_stdout, remaining_stderr = process.communicate(timeout=15)
+            for suffix, text in (('stdout.jsonl', remaining_stdout), ('stderr.log', remaining_stderr)):
+                (fixture / (key + '-' + suffix)).write_text(text or '', encoding='utf-8')
+        except Exception as exc:
+            report.setdefault("cleanup_errors", []).append(repr(exc))
+    if auth is not None:
+        try:
+            auth.unlink(missing_ok=True)
+        except Exception as exc:
+            report.setdefault("cleanup_errors", []).append(repr(exc))
+    report["cleanup"] = {"auth_absent": auth is None or not auth.exists(),
+                          "errors": report.pop("cleanup_errors", [])}
+    if report['cleanup']['errors'] or not report['cleanup']['auth_absent']:
+        report['status'] = 'failed'
+    report["finished_at"] = datetime.now(timezone.utc).isoformat()
+    c.write(report_path, report)
+    print(json.dumps({"status": report["status"], "report": str(report_path)}), flush=True)
+
+raise SystemExit(0 if report["status"] == "observed_native_turn" else 1)

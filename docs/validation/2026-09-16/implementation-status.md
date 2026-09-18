@@ -4,7 +4,18 @@ This record covers the unreleased `wt/functional-local-memory` worktree. It
 separates implemented behavior from acceptance evidence. The original task
 boundaries and thresholds remain in the [implementation plan](../../plans/2026-09-16-functional-local-memory.md).
 
-The [mixed Codex/Claude outage probe](../2026-09-18/native-crosshost-recovery-v3/README.md)
+The [mixed-host replay and restart probe](../2026-09-18/native-crosshost-recovery-v4/README.md)
+on installed `fc72cc2` passes the bounded native concurrency observation.
+Three queued events had overlapping deliveries from Codex and Claude, each
+resolving to one durable event and job. All four native turns exited zero;
+eight normal messages and two non-extractable provisional records survived
+owner restart unchanged. The outbox emptied and both scope controls survived.
+The active-waiter shim retains the two-second deadline and records one expired
+request. Claude's degraded identity diagnostics remain visible. This closes
+that fixture replay/restart observation, while complete host acceptance,
+configured-provider recovery, Desktop, Hermes, and pilot gates remain open.
+
+The preceding [mixed Codex/Claude outage probe](../2026-09-18/native-crosshost-recovery-v3/README.md)
 on the installed `fc72cc2` package remains a failed concurrency gate: both
 recovery processes overlapped, but their selected replay requests missed the
 two-second barrier. All four native turns exited zero. Independent read-only
@@ -499,7 +510,7 @@ capture diagnostics and complete lifecycle acceptance remain open.
 | T14 Hermes | Installed provider integration, registry handling, Windows/WSL bridge behavior, and entry-point discovery are implemented and tested. | Installed bridge checks pass. A native model turn has not passed. |
 | T15 UI | Project enable/pause, readiness, facts/history, correction/forget, captured-copy review, job state, and routing review are exposed and covered by API/browser checks. | Local UI and control-plane checks pass. Operational pilot and native-host coverage remain open. |
 | T16 Recovery | Backup, integrity, new-path restore, suppression merge, staged reindex, and activation backup behavior are implemented and tested. | Local recovery contracts pass, including a backup during an active writer transaction. Live data migration remains separately authorization-bound. |
-| T17 Cross-host | Native v9 on installed `5af3d15` passes 15 bounded lifecycle checks for Codex teaching, Claude correction and reviewed deletion, restart, direct service replay suppression, foreign-project exclusion, final recall, and retained unrelated facts. The newer mixed-host outage probe on `fc72cc2` retains eight normal messages and two non-extractable provisional records after native replay. | Lexical fixture vectors and disabled modules limit the claim. The mixed-host concurrency gate failed because replay requests missed the barrier; its restart gate was not reached. Earlier Codex Stop timeouts remain recorded. Complete capture, Desktop, Hermes, real-provider recovery, real-model quality, and the two-week pilot remain open. Earlier failures remain preserved. |
+| T17 Cross-host | Native v9 on installed `5af3d15` passes 15 bounded lifecycle checks for Codex teaching, Claude correction and reviewed deletion, restart, direct service replay suppression, foreign-project exclusion, final recall, and retained unrelated facts. The newer mixed-host v4 probe on `fc72cc2` verifies three paired same-event native deliveries, durable queue recovery, and unchanged records through owner restart. | Lexical fixture vectors, disabled modules, explicit restoration, and a test rendezvous limit the claim. V4 retains one pairing timeout and degraded Claude identity diagnostics; the earlier v3 gate remains failed. Earlier Codex Stop timeouts remain recorded. Complete capture, Desktop, Hermes, real-provider recovery, real-model quality, and the two-week pilot remain open. |
 | T18 Evaluation | Frozen lifecycle datasets, request-bound extraction schemas, real-provider adapters, seven profiles, raw traces, checkpoints, Wilson intervals, and paired comparisons are implemented. Separate applied length/noise and vector/lexical/hybrid/full comparisons are implemented and prepared offline. | The frozen real-model matrix and both additional comparison executions remain open. Prepared artifacts have no real-model observations yet. Graph/affective utility evidence also remains a separate requirement. Follow the [evaluation status and recovery record](evaluation-running.md), [applied encoding checkpoint](../2026-09-18/encoding-comparison-checkpoint-v1/README.md), and [retrieval checkpoint](../2026-09-18/retrieval-comparison-checkpoint-v1/README.md). |
 | T19 Claims and packaging | Claim ledger, compatibility matrix, release checklist, package artifacts, UI assets, and negative evidence archives are maintained. | The latest source/package checkpoint is `fc72cc2`, with the runtime wheel unchanged from `aefc338`. The preserved intermittent bridge failure remains unexplained. Publication, website, paper, and release actions remain separately authorization-bound. |
 

@@ -1,0 +1,42 @@
+"""Select fixed hook diagnostics and complete the new archive index."""
+import hashlib
+import json
+from pathlib import Path
+import re
+import shutil
+
+ROOT=Path(__file__).resolve().parents[1]
+OUT=ROOT/'docs/validation/2026-09-18/native-crosshost-recovery-v4'
+report=json.loads((OUT/'report.json').read_text(encoding='utf-8'))
+fixture=Path(report['fixture'])
+def sha(raw):
+    return hashlib.sha256(raw).hexdigest()
+def dump(path,value):
+    path.write_text(json.dumps(value,indent=2)+'\n',encoding='utf-8')
+pattern=re.compile(r'mnemos hook diagnostic host=(claude-code) event=([A-Za-z]+) status=([A-Za-z_]+)(?: reason=([A-Za-z_]+))?')
+diagnostics={}
+for phase in ('outage','recovery'):
+    path=fixture/(phase+'-b-stdout.jsonl')
+    raw=path.read_bytes()
+    responses=[]
+    for line in raw.decode('utf-8').splitlines():
+        try:
+            value=json.loads(line)
+        except json.JSONDecodeError:
+            continue
+        if value.get('subtype')!='hook_response':
+            continue
+        selected={key:value[key] for key in ('hook_event','outcome','exit_code') if key in value}
+        selected['diagnostics']=[]
+        for field in ('stderr','output','stdout'):
+            for match in pattern.finditer(value.get(field,'')):
+                selected['diagnostics'].append(dict(zip(('host','event','status','reason'),match.groups()),stream_field=field))
+        responses.append(selected)
+    diagnostics[phase]={'source_sha256':sha(raw),'responses':responses}
+destination=OUT/'claude-hook-diagnostics.selected.json'
+assert not destination.exists()
+dump(destination,{'phases':diagnostics,'selection':'Fixed status/reason fields only. A hook diagnostic repeated in separate stream fields is preserved with its field name.'})
+shutil.copyfile(__file__,OUT/'helpers'/(Path(__file__).name+'.txt'))
+files={p.relative_to(OUT).as_posix():{'bytes':p.stat().st_size,'sha256':sha(p.read_bytes())} for p in sorted(OUT.rglob('*')) if p.is_file() and p.name!='evidence-index.json'}
+dump(OUT/'evidence-index.json',{'files':files})
+print(json.dumps({'indexed_files':len(files)}))

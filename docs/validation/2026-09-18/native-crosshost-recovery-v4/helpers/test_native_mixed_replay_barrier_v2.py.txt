@@ -1,0 +1,72 @@
+"""Bounded concurrent checks for the native probe's scheduling shim."""
+import hashlib
+import importlib.util
+import json
+from pathlib import Path
+import threading
+import time
+
+path = Path(__file__).with_name('native_mixed_replay_barrier_v1.py')
+spec = importlib.util.spec_from_file_location('mixed_barrier', path)
+module = importlib.util.module_from_spec(spec)
+spec.loader.exec_module(module)
+checks = []
+
+def stamp(event, host, pid, *, age=0):
+    return {'event_id':event,'native_host':host,'native_pid':pid,'start_ns':time.monotonic_ns()-int(age*1e9)}
+
+def launch(barrier, value, timeout=.2):
+    thread = threading.Thread(target=barrier.arrive,args=(value,timeout))
+    thread.start()
+    return thread
+
+def join(*threads):
+    for thread in threads:
+        thread.join(1)
+        assert not thread.is_alive()
+
+b = module.ReplayBarrier()
+a, z = stamp('same','codex',1), stamp('same','claude-code',2)
+join(launch(b,a),launch(b,z))
+assert len(b.pairs)==1 and all(s['barrier_state']=='paired' for s in (a,z))
+assert a['paired_at_ns']==z['paired_at_ns']<min(a['deadline_ns'],z['deadline_ns'])
+checks.append('same_event_distinct_hosts_pair')
+duplicate = stamp('same','codex',1)
+assert b.arrive(duplicate) is False and duplicate['barrier_state']=='already_paired'
+assert len(b.pairs)==1
+checks.append('paired_event_consumed_once')
+for label, first_args, second_args in (
+    ('same_host_rejected',('x','codex',1),('x','codex',2)),
+    ('same_pid_rejected',('x','codex',1),('x','claude-code',1)),
+    ('different_event_rejected',('x','codex',1),('y','claude-code',2)),
+):
+    first, second = stamp(*first_args), stamp(*second_args)
+    b=module.ReplayBarrier()
+    join(launch(b,first,.02),launch(b,second,.02))
+    assert not b.pairs and first['barrier_state']==second['barrier_state']=='expired'
+    checks.append(label)
+b=module.ReplayBarrier()
+old=stamp('x','codex',1,age=3)
+assert not b.arrive(old)
+new=stamp('x','claude-code',2)
+assert not b.arrive(new,.02)
+assert not b.pairs and old['barrier_state']==new['barrier_state']=='expired'
+checks.append('expired_first_arrival_never_pairs')
+# A later active pair is independently valid; the original timeout stays expired.
+first,second=stamp('x','codex',1),stamp('x','claude-code',2)
+join(launch(b,first),launch(b,second))
+assert len(b.pairs)==1 and old['barrier_state']==new['barrier_state']=='expired'
+checks.append('later_pair_does_not_reclassify_timeouts')
+b=module.ReplayBarrier()
+pending=stamp('x','codex',1)
+thread=launch(b,pending)
+b.cancel()
+join(thread)
+assert pending['barrier_state']=='cancelled' and not b.active and not b.pairs
+checks.append('cancel_releases_waiter')
+output=Path(__file__).with_suffix('.json')
+assert not output.exists()
+report={'status':'passed','checks':checks,'barrier_sha256':hashlib.sha256(path.read_bytes()).hexdigest(),
+        'test_sha256':hashlib.sha256(Path(__file__).read_bytes()).hexdigest()}
+output.write_text(json.dumps(report,indent=2)+'\n',encoding='utf-8')
+print(json.dumps(report))

@@ -1,0 +1,91 @@
+"""Prepare an immutable next mixed-host probe without changing prior artifacts."""
+from pathlib import Path
+
+root = Path(__file__).parent
+for label in ('common','worker','claude','supervisor'):
+    target = root / ('native_crosshost_concurrent_' + label + '_v4.py')
+    assert not target.exists()
+    source = (root / ('native_crosshost_concurrent_' + label + '_v3.py')).read_text(encoding='utf-8')
+    for name in ('common','worker','claude'):
+        source = source.replace('native_crosshost_concurrent_' + name + '_v3','native_crosshost_concurrent_' + name + '_v4')
+    source = source.replace('native_crosshost_common_v3','native_crosshost_common_v4')
+    source = source.replace('native-crosshost-concurrent-v3','native-crosshost-concurrent-v4')
+    if label == 'common':
+        source = source.replace('        observed = set()', '        observed = set()\n        provisional_sessions = set()')
+        needle = "            if host == 'codex':\n                event ="
+        added = '''            assert row['source'] == host
+            if metadata['identity_status'] == 'provisional_unassociated':
+                assert host == 'claude-code' and role == 'user'
+                assert row['session_id'] not in provisional_sessions
+                provisional_sessions.add(row['session_id'])
+                assert metadata['source_ref'] == 'prompt:' + sha(row['content'].encode())
+                source_id = ClaudeCodeAdapter._event_id(context, metadata['source_ref'], role, row['content'])
+                assert metadata['source_event_id'] == source_id
+                evidence = db.execute('select * from fact_evidence where source_event_id=?', (row['id'],)).fetchall()
+                matching_jobs = [job for job in jobs if json.loads(job['payload']).get('event_id') == row['id']]
+                assert row['status'] == 'deferred' and evidence == [] and len(matching_jobs) == 1
+                job = matching_jobs[0]
+                assert job['kind'] == 'capture_only' and job['status'] == 'completed'
+                assert json.loads(job['result']) == {'decision':'identity_pending','fact_eligible':False,'fact_ids':[]}
+                captures.append({'event':dict(row),'evidence':None,'job_id':job['id'],'source_event_id':source_id})
+                continue
+            assert metadata['identity_status'] == 'normal' and row['status'] == 'consolidated'
+            if host == 'codex':
+                event ='''
+        assert source.count(needle) == 1
+        source = source.replace(needle, added)
+        source = source.replace("            assert matching_jobs[0]['status'] == 'completed'", "            assert matching_jobs[0]['status'] == 'completed' and matching_jobs[0]['kind'] == 'extract'")
+        source = source.replace("            assert fact is not None", "            assert fact is not None\n            assert fact['content'] == ('Assistant reported: ' if role == 'assistant' else '') + row['content']")
+        source = source.replace("        assert observed == expected, 'Some native messages were not durably captured'", "        assert observed == expected, 'Some native messages were not durably captured'\n        assert provisional_sessions == {sid for sid, session in sessions.items() if session['host'] == 'claude-code'}\n        assert db.execute('select count(*) from memory_chunks').fetchone()[0] == len(expected) + 2")
+        source = source.replace("all(call['committed'] is True for call in calls)", "all(call['committed'] is True or call['status'] == 'committed' for call in calls)")
+    if label == 'supervisor':
+        source = source.replace('barrier = threading.Event()', "barrier_path = Path(__file__).with_name('native_mixed_replay_barrier_v1.py')\nbarrier = c.load(barrier_path, 'mixed_replay_barrier').ReplayBarrier()\nprotocol = c.ROOT / 'docs/plans/2026-09-18-native-mixed-replay-protocol-v1.md'")
+        source = source.replace("          'started_at': datetime.now(timezone.utc).isoformat(),", "          'started_at': datetime.now(timezone.utc).isoformat(),\n          'protocol_sha256': c.sha(protocol.read_bytes()),")
+        source = source.replace('(common_path, Path(__file__),', '(barrier_path, common_path, Path(__file__),')
+        source = source.replace("    queued_source_ids = {e['payload']['event_id'] for e in pending}\n    arrivals = []", "    queued_source_ids = {e['payload']['event_id'] for e in pending if e['payload'].get('identity_status', 'normal') == 'normal'}")
+        start = source.index('            with trace_lock:\n                if len(arrivals)')
+        stop = source.index('        result = original_submit', start)
+        source = source[:start] + '''            native_hosts = {c.read(c.OUTPUT / ('recovery-' + w + '.started.json'))['pid']: host
+                            for w, host in (('a','codex'), ('b','claude-code'))}
+            stamp['native_host'] = native_hosts[stamp['native_pid']]
+            barrier.arrive(stamp, timeout=2.0)
+''' + source[stop:]
+        start = source.index("    report['barrier_arrivals'] = arrivals")
+        stop = source.index("    assert Outbox(fixture / 'outbox.json').pending() == []",start)
+        source = source[:start] + '''    report['barrier_requests'] = barrier.requests
+    report['barrier_pairs'] = barrier.pairs
+    assert barrier.pairs, 'No active same-event cross-host replay pair within two-second deadlines'
+    overlaps = []
+    for pair in barrier.pairs:
+        assert {a['native_host'] for a in pair} == {'codex','claude-code'}
+        assert {a['native_pid'] for a in pair} == {r['pid'] for r in recoveries}
+        assert len({a['thread'] for a in pair}) == 2 and len({a['event_id'] for a in pair}) == 1
+        assert all(a['barrier_released'] and a['paired_at_ns'] < a['deadline_ns'] for a in pair)
+        assert all(a['status'] == 'committed' or a['committed'] is True for a in pair)
+        assert len({a['durable_event_id'] for a in pair}) == len({a['job_id'] for a in pair}) == 1
+        overlap = min(a['release_ns'] for a in pair) - max(a['start_ns'] for a in pair)
+        assert overlap > 0
+        overlaps.append(overlap)
+    report['replay_overlap_ns'] = overlaps
+''' + source[stop:]
+        source = source.replace('    barrier.set()', "    report['barrier_requests'] = barrier.requests\n    report['barrier_pairs'] = barrier.pairs\n    barrier.cancel()")
+    target.write_text(source,encoding='utf-8')
+test = (root / 'test_crosshost_preflight_v3.py').read_text(encoding='utf-8')
+for name in ('common','claude'):
+    test = test.replace('native_crosshost_concurrent_' + name + '_v3','native_crosshost_concurrent_' + name + '_v4')
+target = root / 'test_crosshost_preflight_v4.py'
+assert not target.exists()
+target.write_text(test,encoding='utf-8')
+test = (root / 'test_native_mixed_replay_barrier_v1.py').read_text(encoding='utf-8')
+start = test.index('for label, first, second in (')
+end = test.index('    b=module.ReplayBarrier()',start)
+test = test[:start] + '''for label, first_args, second_args in (
+    ('same_host_rejected',('x','codex',1),('x','codex',2)),
+    ('same_pid_rejected',('x','codex',1),('x','claude-code',1)),
+    ('different_event_rejected',('x','codex',1),('y','claude-code',2)),
+):
+    first, second = stamp(*first_args), stamp(*second_args)
+''' + test[end:]
+target = root / 'test_native_mixed_replay_barrier_v2.py'
+assert not target.exists()
+target.write_text(test,encoding='utf-8')

@@ -1,0 +1,43 @@
+"""Check revised capture assertions against the preserved v3 database read-only."""
+import copy
+import importlib.util
+import json
+from pathlib import Path
+
+path=Path(__file__).with_name('native_crosshost_concurrent_common_v4.py')
+spec=importlib.util.spec_from_file_location('mixed_capture_common',path)
+c=importlib.util.module_from_spec(spec)
+spec.loader.exec_module(c)
+_,_,_,_,provenance=c.helpers()
+source=c.TEMP/'mnemos-native-crosshost-concurrent-v3/report.json'
+r=c.read(source)
+assert r['status']=='failed'
+fixture=Path(r['fixture'])
+before=c.database_state(fixture)
+sessions={w['session']['session']:w['session'] for w in r['workers'].values()}
+old_profile=c.PROFILE
+c.PROFILE='native-crosshost-concurrent-v3'
+try:
+    captures=c.verify_captures(fixture,sessions,r['target']['project_id'],r['target']['foreign_fact_id'],r['target']['foreign_content'])
+    assert len(captures)==10 and sum(item['evidence'] is None for item in captures)==2
+    recovered=c.verify_queued_recovery(r['queued_native_events'],captures,r['dispatch_trace'])
+    assert len(recovered)==5
+    bad=copy.deepcopy(sessions)
+    chosen=next(s for s in bad.values() if s['host']=='claude-code')
+    chosen['messages'][0]['source_ref']='wrong-native-id'
+    try:
+        c.verify_captures(fixture,bad,r['target']['project_id'],r['target']['foreign_fact_id'],r['target']['foreign_content'])
+    except AssertionError:
+        pass
+    else:
+        raise AssertionError('Unbound native UUID accepted')
+    assert c.database_state(fixture)==before
+finally:
+    c.PROFILE=old_profile
+output=Path(__file__).with_suffix('.json')
+assert not output.exists()
+result={'status':'passed','checks':['eight_normal_and_two_provisional','five_queued_identities_preserved','invalid_native_uuid_rejected','database_unchanged'],
+        'provenance':provenance,'common_sha256':c.sha(path.read_bytes()),'source_report_sha256':c.sha(source.read_bytes()),
+        'helper_sha256':c.sha(Path(__file__).read_bytes()),'original_gate_status':r['status']}
+output.write_text(json.dumps(result,indent=2)+'\n',encoding='utf-8')
+print(json.dumps({'status':'passed','checks':result['checks']}))

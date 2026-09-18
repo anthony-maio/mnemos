@@ -1,0 +1,199 @@
+{
+  "cleanup": {
+    "auth_absent": true,
+    "errors": []
+  },
+  "command": [
+    "C:\\Users\\Ant\\.local\\bin\\claude.exe",
+    "--print",
+    "--verbose",
+    "--output-format",
+    "stream-json",
+    "--include-hook-events",
+    "--setting-sources",
+    "project",
+    "--plugin-dir",
+    "C:\\Users\\Ant\\AppData\\Local\\Temp\\mnemos-source-retrieval-comparison-v1",
+    "--tools",
+    "",
+    "--disable-slash-commands",
+    "--permission-mode",
+    "default",
+    "--session-id",
+    "16ff172b-4572-4fba-9a8b-3441795f8256",
+    "--model",
+    "claude-sonnet-4-6",
+    "--max-budget-usd",
+    "1.00",
+    "--system-prompt",
+    "Do not use tools. Follow the exact reply instruction.",
+    "<fixture prompt>"
+  ],
+  "common_sha256": "9ce4e12347a48ec5fe49aa4f7016f45beac17918f88e2b795d0e0bf11c89eb7a",
+  "finished_at": "2026-09-18T11:02:01.560291+00:00",
+  "home": "C:\\Users\\Ant\\AppData\\Local\\Temp\\mnemos-native-crosshost-concurrent-v4-4fcptnlk\\claude-home\\.claude",
+  "hook_diagnostics": [
+    {
+      "event": "UserPromptSubmit",
+      "status": "degraded"
+    },
+    {
+      "event": "UserPromptSubmit",
+      "status": "degraded"
+    },
+    {
+      "event": "Stop",
+      "status": "degraded"
+    },
+    {
+      "event": "Stop",
+      "status": "degraded"
+    }
+  ],
+  "key": "outage-b",
+  "native_rows": [
+    {
+      "content": "Do not use tools. Reply with exactly these words, without punctuation: outage cobalt fox",
+      "line": 3,
+      "line_sha256": "14d46da907af67caadb8d688d67b6f4eb4e3fbd1d5977cde8ef06f01b9dfd0a2",
+      "record_type": "user",
+      "role": "user",
+      "source_file_sha256": "e8af337735a3596f66e5d97a0902df0e6ec61fb763425f5f91ed686511987534",
+      "source_path": "projects/C--Users-Ant-AppData-Local-Temp-mnemos-native-crosshost-concurrent-v4-4fcptnlk-project/16ff172b-4572-4fba-9a8b-3441795f8256.jsonl",
+      "source_ref": "e935f091-ee4a-4bb7-9e76-c09b6366ea06"
+    },
+    {
+      "content": "outage cobalt fox",
+      "line": 6,
+      "line_sha256": "531399a6231c2a564b23cd71784c01af1e6716cb6fd0d1c6171839a58089d665",
+      "record_type": "assistant",
+      "role": "assistant",
+      "source_file_sha256": "e8af337735a3596f66e5d97a0902df0e6ec61fb763425f5f91ed686511987534",
+      "source_path": "projects/C--Users-Ant-AppData-Local-Temp-mnemos-native-crosshost-concurrent-v4-4fcptnlk-project/16ff172b-4572-4fba-9a8b-3441795f8256.jsonl",
+      "source_ref": "c91a89d6-669f-4e5b-8c97-1416c680ebbd"
+    }
+  ],
+  "plugin_snapshot_after": {
+    "clean": true,
+    "files": {
+      ".claude-plugin/plugin.json": {
+        "bytes": 990,
+        "sha256": "400288ccee02bf854ba4ce7b10357507c6d6fb6728bbeef8de10ae245e052a48"
+      },
+      ".claude-plugin/run_mnemos_hook.py": {
+        "bytes": 1430,
+        "sha256": "9ca11e4a0efa9b61dea647e0675729a523e1b9aed0fb56468af08079d04512c0"
+      },
+      ".claude-plugin/run_mnemos_mcp.py": {
+        "bytes": 7222,
+        "sha256": "81bf0d833d132bb3136cf624933177a7a9b35ccb830db66234b2a78e19bcfde8"
+      },
+      "hooks/hooks.json": {
+        "bytes": 1350,
+        "sha256": "7ca43bda20e14e4363c84fd2fddd26fd257afaa9ba3146bff2a389c52817d1a7"
+      }
+    },
+    "hook_dispatch": "hooks/hooks.json -> python ${CLAUDE_PLUGIN_ROOT}/.claude-plugin/run_mnemos_hook.py <event>",
+    "mcp_dispatch": "plugin.json -> .claude-plugin/run_mnemos_mcp.py -> explicit MNEMOS_PLUGIN_PYTHON",
+    "snapshot": "C:\\Users\\Ant\\AppData\\Local\\Temp\\mnemos-source-retrieval-comparison-v1",
+    "source_commit": "fc72cc251aeafa161a1a390269b8dfa34d83cf2b"
+  },
+  "plugin_snapshot_before": {
+    "clean": true,
+    "files": {
+      ".claude-plugin/plugin.json": {
+        "bytes": 990,
+        "sha256": "400288ccee02bf854ba4ce7b10357507c6d6fb6728bbeef8de10ae245e052a48"
+      },
+      ".claude-plugin/run_mnemos_hook.py": {
+        "bytes": 1430,
+        "sha256": "9ca11e4a0efa9b61dea647e0675729a523e1b9aed0fb56468af08079d04512c0"
+      },
+      ".claude-plugin/run_mnemos_mcp.py": {
+        "bytes": 7222,
+        "sha256": "81bf0d833d132bb3136cf624933177a7a9b35ccb830db66234b2a78e19bcfde8"
+      },
+      "hooks/hooks.json": {
+        "bytes": 1350,
+        "sha256": "7ca43bda20e14e4363c84fd2fddd26fd257afaa9ba3146bff2a389c52817d1a7"
+      }
+    },
+    "hook_dispatch": "hooks/hooks.json -> python ${CLAUDE_PLUGIN_ROOT}/.claude-plugin/run_mnemos_hook.py <event>",
+    "mcp_dispatch": "plugin.json -> .claude-plugin/run_mnemos_mcp.py -> explicit MNEMOS_PLUGIN_PYTHON",
+    "snapshot": "C:\\Users\\Ant\\AppData\\Local\\Temp\\mnemos-source-retrieval-comparison-v1",
+    "source_commit": "fc72cc251aeafa161a1a390269b8dfa34d83cf2b"
+  },
+  "process": {
+    "end_ns": 60768129219700,
+    "pid": 51624,
+    "returncode": 0,
+    "start_ns": 60754489522600,
+    "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "stdout_sha256": "f0a202333f0d3077fdcddbb7604c111790f111c6939383da171ddbc617d1165a"
+  },
+  "provenance": {
+    "installed_files_verified": 58,
+    "installed_package": "C:\\Users\\Ant\\AppData\\Local\\Temp\\mnemos-installed-encoding-comparison-v1\\Lib\\site-packages\\mnemos\\__init__.py",
+    "package_provenance": {
+      "mismatches": [],
+      "package_files_checked": 55,
+      "source_commit": "fc72cc251aeafa161a1a390269b8dfa34d83cf2b",
+      "wheel_path": "C:\\Users\\Ant\\AppData\\Local\\Temp\\mnemos-package-checks-retrieval-comparison-v1\\dist\\mnemos_memory-0.7.0-py3-none-any.whl",
+      "wheel_sha256_expected": "938f6f423334ccc8d4b3409bbf3b8b49c25a42ff60b734490eb716d78cb2b54b",
+      "wheel_sha256_observed": "938f6f423334ccc8d4b3409bbf3b8b49c25a42ff60b734490eb716d78cb2b54b"
+    },
+    "python": "C:\\Users\\Ant\\AppData\\Local\\Temp\\mnemos-installed-encoding-comparison-v1\\Scripts\\python.exe",
+    "source_commit": "fc72cc251aeafa161a1a390269b8dfa34d83cf2b",
+    "wheel": {
+      "report_path": "C:\\Users\\Ant\\AppData\\Local\\Temp\\mnemos-package-checks-retrieval-comparison-v1\\verification.json",
+      "report_sha256": "ab696634de22e9c5083cecd16fcce27250f23ec99bda90fb947ebf96cea7cc97",
+      "source_commit": "fc72cc251aeafa161a1a390269b8dfa34d83cf2b",
+      "wheel": {
+        "bytes": 290126,
+        "file": "C:\\Users\\Ant\\AppData\\Local\\Temp\\mnemos-package-checks-retrieval-comparison-v1\\dist\\mnemos_memory-0.7.0-py3-none-any.whl",
+        "sha256": "938f6f423334ccc8d4b3409bbf3b8b49c25a42ff60b734490eb716d78cb2b54b"
+      }
+    }
+  },
+  "result_summary": [
+    {
+      "duration_ms": 10493,
+      "is_error": false,
+      "num_turns": 1,
+      "subtype": "success",
+      "total_cost_usd": 0.018648,
+      "type": "result"
+    }
+  ],
+  "runner_sha256": "0ad90c4b52f408d049b06f149317e251d5c58581f4252a37b1e319c5c445b9be",
+  "session": {
+    "assistant": "outage cobalt fox",
+    "host": "claude-code",
+    "messages": [
+      {
+        "content": "Do not use tools. Reply with exactly these words, without punctuation: outage cobalt fox",
+        "line": 3,
+        "line_sha256": "14d46da907af67caadb8d688d67b6f4eb4e3fbd1d5977cde8ef06f01b9dfd0a2",
+        "record_type": "user",
+        "role": "user",
+        "source_file_sha256": "e8af337735a3596f66e5d97a0902df0e6ec61fb763425f5f91ed686511987534",
+        "source_path": "projects/C--Users-Ant-AppData-Local-Temp-mnemos-native-crosshost-concurrent-v4-4fcptnlk-project/16ff172b-4572-4fba-9a8b-3441795f8256.jsonl",
+        "source_ref": "e935f091-ee4a-4bb7-9e76-c09b6366ea06"
+      },
+      {
+        "content": "outage cobalt fox",
+        "line": 6,
+        "line_sha256": "531399a6231c2a564b23cd71784c01af1e6716cb6fd0d1c6171839a58089d665",
+        "record_type": "assistant",
+        "role": "assistant",
+        "source_file_sha256": "e8af337735a3596f66e5d97a0902df0e6ec61fb763425f5f91ed686511987534",
+        "source_path": "projects/C--Users-Ant-AppData-Local-Temp-mnemos-native-crosshost-concurrent-v4-4fcptnlk-project/16ff172b-4572-4fba-9a8b-3441795f8256.jsonl",
+        "source_ref": "c91a89d6-669f-4e5b-8c97-1416c680ebbd"
+      }
+    ],
+    "session": "16ff172b-4572-4fba-9a8b-3441795f8256",
+    "user": "Do not use tools. Reply with exactly these words, without punctuation: outage cobalt fox"
+  },
+  "started_at": "2026-09-18T11:01:47.549954+00:00",
+  "status": "observed_native_turn"
+}

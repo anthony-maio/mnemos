@@ -1,0 +1,150 @@
+"""Verify completed native replay/restart evidence and select safe archive records."""
+import copy
+import importlib.util
+import json
+from pathlib import Path
+import shutil
+import sqlite3
+import tomllib
+
+ROOT=Path(__file__).resolve().parents[1]
+common=ROOT/'.venv/native_crosshost_concurrent_common_v4.py'
+spec=importlib.util.spec_from_file_location('native_mixed_archive',common)
+c=importlib.util.module_from_spec(spec)
+spec.loader.exec_module(c)
+_,_,_,_,provenance=c.helpers()
+r=c.read(c.OUTPUT/'report.json')
+assert r['status']=='observed_native_crosshost_concurrent_recovery'
+assert r['source_commit']==c.SOURCE and r['wheel_sha256']==c.WHEEL_SHA
+assert r['provenance']==provenance
+fixture=Path(r['fixture'])
+assert fixture.parent==c.TEMP and fixture.name.startswith('mnemos-native-crosshost-concurrent-v4-')
+manifest=c.read(c.OUTPUT/'manifest.json')
+assert manifest['helpers']==r['helpers']
+for name,digest in r['helpers'].items():
+    assert c.sha((ROOT/'.venv'/name).read_bytes())==digest
+protocol=ROOT/'docs/plans/2026-09-18-native-mixed-replay-protocol-v1.md'
+assert c.sha(protocol.read_bytes())==r['protocol_sha256']
+assert c.sha(Path(r['native_executable']['path']).read_bytes())==r['native_executable']['sha256']
+assert r['cleanup']=={'auth_absent':True,'descriptor_absent':True,'errors':[]}
+assert not (fixture/'runtime.json').exists()
+sessions={}
+for key,worker in r['workers'].items():
+    assert worker==c.read(c.OUTPUT/(key+'.json'))
+    assert worker['status']=='observed_native_turn' and worker['process']['returncode']==0
+    assert worker['cleanup']=={'auth_absent':True,'errors':[]}
+    home=Path(worker['home'])
+    assert not (home/'auth.json').exists() and not (home/'.credentials.json').exists()
+    s=worker['session']
+    sessions[s['session']]=s
+    if s['host']=='codex':
+        assert worker['generated_hooks_unchanged']
+        hooks=tomllib.loads((home/'config.toml').read_text(encoding='utf-8'))['hooks']
+        assert set(hooks)-set(manifest['generated_hooks']['a']) <= {'state'}
+        assert all(hooks[name]==value for name,value in manifest['generated_hooks']['a'].items())
+        assert {**c.session_summary(worker['native_rows'],key),'host':'codex'}==s
+    for row in worker['native_rows']:
+        path=(home/row.get('source',row.get('source_path'))).resolve()
+        assert path.is_relative_to(home.resolve())
+        raw=path.read_bytes()
+        line=raw.splitlines(keepends=True)[row['line']-1]
+        assert c.sha(raw)==row['source_file_sha256'] and c.sha(line)==row['line_sha256']
+        original=json.loads(line)
+        if s['host']=='codex':
+            assert original==row['record']
+        else:
+            assert original['sessionId']==s['session'] and (original.get('uuid') or original.get('id'))==row['source_ref']
+            message=original['message']
+            text=message['content']
+            if isinstance(text,list):
+                text=''.join(block['text'] for block in text if block.get('type')=='text')
+            assert text.strip()==row['content'] and message['role']==row['role']
+assert len(sessions)==4
+assert r['before_native']==r['after_outage'] and r['before_native']['capture_count']==0
+from mnemos.client import Outbox
+assert Outbox(fixture/'outbox.json').pending()==[]
+state=c.database_state(fixture)
+assert state==r['final_database']==r['after_restart']==r['after_close']==r['after_maintenance']
+captures=c.verify_captures(fixture,sessions,r['target']['project_id'],r['target']['foreign_fact_id'],r['target']['foreign_content'])
+assert captures==r['captures'] and len(captures)==10
+assert sum(item['evidence'] is not None for item in captures)==8
+assert c.verify_queued_recovery(r['queued_native_events'],captures,r['dispatch_trace'])==r['queued_recovery']
+assert len(r['queued_native_events'])==5
+with sqlite3.connect((fixture/'memory.sqlite').as_uri()+'?mode=ro',uri=True) as db:
+    assert db.execute('pragma integrity_check').fetchone()[0]=='ok'
+    assert db.execute('select content from memory_chunks where id=?',(r['target']['fact_id'],)).fetchone()[0]==r['target']['content']
+recoveries=[r['workers'][key]['process'] for key in ('recovery-a','recovery-b')]
+assert min(p['end_ns'] for p in recoveries)-max(p['start_ns'] for p in recoveries)==r['process_overlap_ns']>0
+pairs=r['barrier_pairs']
+assert pairs and len({pair[0]['event_id'] for pair in pairs})==len(pairs)
+overlaps=[]
+for pair in pairs:
+    assert len(pair)==2 and {a['native_host'] for a in pair}=={'codex','claude-code'}
+    assert {a['native_pid'] for a in pair}=={p['pid'] for p in recoveries}
+    assert len({a['event_id'] for a in pair})==len({a['durable_event_id'] for a in pair})==len({a['job_id'] for a in pair})==1
+    assert len({a['thread'] for a in pair})==2
+    for a in pair:
+        assert a in r['dispatch_trace'] and a in r['barrier_requests']
+        assert a['origin']['process_ancestry'][0]==a['origin']['tcp_client_pid']
+        assert a['native_pid'] in a['origin']['process_ancestry']
+        assert a['barrier_state']=='paired' and a['barrier_released']
+        assert a['deadline_ns']-a['start_ns']==2_000_000_000
+        assert a['start_ns']<=a['paired_at_ns']<a['deadline_ns']
+        assert a['status']=='committed' or a['committed'] is True
+    assert len({a['paired_at_ns'] for a in pair})==1
+    overlap=min(a['release_ns'] for a in pair)-max(a['start_ns'] for a in pair)
+    assert overlap>0
+    overlaps.append(overlap)
+assert overlaps==r['replay_overlap_ns']
+timeouts=[a for a in r['barrier_requests'] if a['barrier_state']=='expired']
+assert all(not a['barrier_released'] and a['release_ns']>=a['deadline_ns'] for a in timeouts)
+assert all(a['barrier_state'] in {'paired','expired','already_paired'} for a in r['barrier_requests'])
+
+def dump(path,value):
+    path.write_text(json.dumps(value,indent=2)+'\n',encoding='utf-8')
+
+def safe_worker(value):
+    value=copy.deepcopy(value)
+    for row in value.get('native_rows',[]):
+        record=row.get('record',{})
+        if record.get('type')=='session_meta':
+            p=record['payload']
+            record['payload']={key:p[key] for key in ('id','timestamp','cwd','originator','cli_version','model_provider') if key in p}
+            row['source_record_reduced']=True
+    return value
+
+OUT=ROOT/'docs/validation/2026-09-18/native-crosshost-recovery-v4'
+OUT.mkdir(parents=True,exist_ok=False)
+original_hashes={}
+for path in sorted(c.OUTPUT.glob('*.json')):
+    original_hashes[path.name]=c.sha(path.read_bytes())
+    data=c.read(path)
+    if path.name=='report.json':
+        data['workers']={key:safe_worker(value) for key,value in data.get('workers',{}).items()}
+    elif path.name.startswith(('outage-','recovery-')) and 'status' in data:
+        data=safe_worker(data)
+    dump(OUT/path.name,data)
+for name in ('startup-failure.stdout.log','startup-failure.stderr.log'):
+    shutil.copyfile(c.OUTPUT/name,OUT/name)
+(OUT/'helpers').mkdir()
+names=set(r['helpers'])|{Path(__file__).name,'prepare_native_mixed_v4.py','test_crosshost_preflight_v4.py',
+    'test_native_mixed_replay_barrier_v1.py','test_native_mixed_replay_barrier_v2.py','test_native_mixed_capture_checks_v1.py'}
+for name in sorted(names):
+    shutil.copyfile(ROOT/'.venv'/name,OUT/'helpers'/(name+'.txt'))
+for name in ('test_crosshost_preflight_v4','test_native_mixed_replay_barrier_v1','test_native_mixed_replay_barrier_v2','test_native_mixed_capture_checks_v1'):
+    shutil.copyfile(ROOT/'.venv'/(name+'.json'),OUT/(name+'.json'))
+shutil.copyfile(protocol,OUT/'protocol.md')
+dump(OUT/'helper-dependencies.json',{name:{'sha256':digest,'repository_path':'docs/validation/2026-09-18/native-codex-stop-repeat-v1/'+name+'.txt'} for name,digest in c.PINS.items()})
+dump(OUT/'verification.json',{'status':'verified_native_same_event_replay_and_restart','source_commit':c.SOURCE,
+    'wheel_sha256':c.WHEEL_SHA,'protocol_sha256':r['protocol_sha256'],'installed_files_verified':provenance['installed_files_verified'],
+    'original_report_hashes':original_hashes,'archiver_sha256':c.sha(Path(__file__).read_bytes()),
+    'database_sha256':c.sha((fixture/'memory.sqlite').read_bytes()),'database_state':state,
+    'native_sessions':4,'normal_captures':8,'provisional_captures':2,'paired_events':len(pairs),'expired_requests':len(timeouts),
+    'replay_overlap_ns':overlaps,'process_overlap_ns':r['process_overlap_ns'],'outbox_empty':True,'restart_hashes_equal':True,
+    'limitations':['Instrumented two-second replay rendezvous, fixture vectors, disabled modules, unavailable cognition, explicit restoration.',
+                   'Prior v3 failure remains unchanged; expired requests remain recorded.',
+                   'No real-model utility, full native-host, automatic daemon recovery, Desktop, Hermes, or pilot acceptance.']})
+(OUT/'.gitattributes').write_text('* -text\n*.log -whitespace\n*.py.txt -whitespace\n',encoding='utf-8')
+files={p.relative_to(OUT).as_posix():{'bytes':p.stat().st_size,'sha256':c.sha(p.read_bytes())} for p in sorted(OUT.rglob('*')) if p.is_file()}
+dump(OUT/'evidence-index.json',{'files':files})
+print(json.dumps({'status':'verified_native_same_event_replay_and_restart','paired_events':len(pairs),'expired_requests':len(timeouts),'indexed_files':len(files)}))
