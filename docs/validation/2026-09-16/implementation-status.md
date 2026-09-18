@@ -9,6 +9,10 @@ now keeps engine, embedding, and storage imports out of client startup. All 92
 focused cases passed with two platform skips, and strict product typing passed.
 Public exports resolve on first access. Diagnostic shell timings remain variable;
 the native Stop deadline is not yet accepted.
+The [complete package checkpoint](../2026-09-17/lazy-import-package-checkpoint-v1/README.md)
+at `ebe1b0d` passed 962 tests with four platform skips and all static/build
+checks. Its fresh installed wheel passed 268 selected cases with two matching
+skips and seven replay assertions, including subprocess import provenance.
 
 The [capture interruption regression](../2026-09-17/capture-interruption-v1/README.md)
 forces a host client process to exit before sending or after service commit.

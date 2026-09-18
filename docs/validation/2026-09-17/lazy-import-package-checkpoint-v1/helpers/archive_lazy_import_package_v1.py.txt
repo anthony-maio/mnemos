@@ -1,0 +1,73 @@
+"""Archive the terminal lazy-import source and installed verification."""
+from pathlib import Path
+import hashlib
+import json
+import shutil
+import xml.etree.ElementTree as ET
+
+ROOT = Path(__file__).resolve().parent.parent
+TEMP = Path('C:/Users/Ant/AppData/Local/Temp')
+CHECKS = TEMP / 'mnemos-package-checks-lazy-import-v1'
+INSTALLED = TEMP / 'mnemos-installed-checks-lazy-import-v1'
+OUT = ROOT / 'docs/validation/2026-09-17/lazy-import-package-checkpoint-v1'
+COMMIT = 'ebe1b0ddf973ebb1dc959afd5bc334209aa1b672'
+
+def read(path):
+    return json.loads(path.read_text(encoding='utf-8'))
+
+def sha(path):
+    return hashlib.sha256(path.read_bytes()).hexdigest()
+
+source = read(CHECKS / 'verification.json')
+installed = read(INSTALLED / 'installation.json')
+assert source['status'] == installed['status'] == 'passed'
+assert source['source_commit'] == COMMIT
+assert {row['name'] for row in source['checks']} == {'pytest','black','mypy','javascript','build','twine'}
+assert all(row['exit_code'] == 0 for row in source['checks'])
+for path, expected in ((CHECKS/'pytest.xml', ('966','0','0','4')), (INSTALLED/'contract.junit.xml', ('270','0','0','2'))):
+    suite = next(ET.parse(path).getroot().iter('testsuite'))
+    assert tuple(suite.get(k) for k in ('tests','failures','errors','skipped')) == expected
+assert installed['bindings_before'] == installed['bindings_after']
+assert installed['bindings_after']['commit'] == COMMIT
+assert installed['bindings_after']['snapshot_head'] == COMMIT
+assert installed['contract_input_hashes_before'] == installed['contract_input_hashes_after']
+assert len(installed['probe']['assertions']) == 7
+assert all(installed['probe']['assertions'].values())
+for artifact in source['artifacts']:
+    path = Path(artifact['file'])
+    assert sha(path) == artifact['sha256'] and path.stat().st_size == artifact['bytes']
+helpers = ['final_checkpoint_checks_v3.py','run_combined_installed_check_v16.py','installed_contract_probe_v4.py','verify_claude_stop_replay_v2.py']
+assert sha(ROOT/'.venv'/helpers[0]) == source['runner_sha256']
+assert sha(ROOT/'.venv'/helpers[1]) == installed['bindings_after']['runner_sha256']
+assert sha(ROOT/'.venv'/helpers[2]) == installed['bindings_after']['contract_probe_sha256']
+assert sha(ROOT/'.venv'/helpers[3]) == installed['bindings_after']['replay_helper_sha256']
+assert sha(CHECKS/'verification.json') == installed['bindings_after']['checks_sha256']
+assert sha(next((CHECKS/'dist').glob('*.whl'))) == installed['bindings_after']['wheel_sha256']
+OUT.mkdir(parents=True, exist_ok=False)
+for origin, label in ((CHECKS,'source-checks'), (INSTALLED,'installed-checks')):
+    folder = OUT / label
+    folder.mkdir()
+    for path in origin.iterdir():
+        if path.is_file() and path.suffix in ('.log','.json','.xml'):
+            shutil.copyfile(path, folder/path.name)
+wheel = next((CHECKS/'dist').glob('*.whl'))
+(OUT/'source-checks/dist').mkdir()
+shutil.copyfile(wheel, OUT/'source-checks/dist'/wheel.name)
+(OUT/'helpers').mkdir()
+for name in helpers:
+    shutil.copyfile(ROOT/'.venv'/name, OUT/'helpers'/(name+'.txt'))
+shutil.copyfile(Path(__file__), OUT/'helpers/archive_lazy_import_package_v1.py.txt')
+(OUT/'.gitattributes').write_text('* -text\n*.log -whitespace\n*.xml -whitespace\n',encoding='utf-8')
+(OUT/'README.md').write_text(f'''# Lazy import package checkpoint
+
+Frozen source `{COMMIT}` passed 962 tests with four platform skips, Black, strict mypy, JavaScript syntax, package build, and Twine. A fresh installed wheel passed 268 selected cases with two matching platform skips and all seven replay assertions. Selected case identities and skip reasons match the source suite.
+
+The new import guards run in fresh processes, using the parent package origin. Package, client, and Codex adapter imports do not load engine, embeddings, storage, or NumPy. Public export identity, dir(), star imports, and unknown-attribute behavior remain covered. The installed interruption cases include the corrected child-origin assertion.
+
+This verifies the lazy import repair, not native timing acceptance. Earlier timing failures and their limits are preserved in [the import diagnosis](../hook-import-boundary-v1/README.md). Full real-model quality, recall latency, native lifecycle, and pilot gates remain open. No live configuration, live memory migration, or publication occurred.
+
+Wheel SHA256: `{sha(wheel)}`.
+''',encoding='utf-8')
+files = {p.relative_to(OUT).as_posix(): {'bytes':p.stat().st_size,'sha256':sha(p)} for p in sorted(OUT.rglob('*')) if p.is_file()}
+(OUT/'evidence-index.json').write_text(json.dumps({'files':files},indent=2)+'\n',encoding='utf-8')
+print(f'Archived {len(files)} blobs to {OUT}')
