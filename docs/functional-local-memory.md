@@ -250,6 +250,13 @@ The new similarity suggestions address indexed paraphrase discovery, while nativ
 review-and-delete acceptance remains open. Selected-fact deletion does not
 automatically delete other semantically similar records.
 
+The later [native v7 attempt](validation/2026-09-18/native-codex-claude-continuity-v7/README.md)
+committed related deletion and retained unrelated facts, but exceeded Claude's
+phase budget before replay and final recall. The
+[v8 attempt](validation/2026-09-18/native-codex-claude-continuity-v8/README.md)
+timed out during reverse Codex tool approval before the forget phase. These
+incomplete attempts do not establish reliable post-forget answers.
+
 ## What the five modules currently mean
 
 These are the implemented mechanism contracts. Their neuroscience analogies are design inspiration, not evidence of human-like memory.

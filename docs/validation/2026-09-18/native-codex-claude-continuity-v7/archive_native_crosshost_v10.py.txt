@@ -1,0 +1,245 @@
+"""Archive the failed native Codex and Claude continuity v7 run.
+
+This helper keeps only selected Claude preview/apply records and a read-only
+SQLite summary. It does not copy native streams, credentials, or fixture
+databases, and it preserves the budget failure as a failure.
+"""
+from __future__ import annotations
+
+import hashlib
+import json
+from pathlib import Path
+import shutil
+import sqlite3
+
+
+ROOT = Path(__file__).resolve().parents[1]
+REPORT_PATH = Path("C:/Users/Ant/AppData/Local/Temp/mnemos-native-crosshost-v7/report.json")
+ARCHIVE = ROOT / "docs/validation/2026-09-18/native-codex-claude-continuity-v7"
+RUNNER = ROOT / ".venv/native_codex_claude_continuity_v7.py"
+SOURCE = "ac139dd5f4e398d54894f687288bf07aa226dfac"
+WHEEL = "b71efc3d8dd329835d0881b837a7a1b4d1f6c40f2d3c9c265caa88f28e020b3e"
+TRANSITIVE = {
+    "native_codex_interactive_utf8_v1.py": "6f91aaef76ff619d38e5229f93697796b5fbfbcf86bcc87a78e72062f4b7dd0b",
+    "native_claude_lifecycle_v17.py": "85940cccb99d46f7b56a6184d912495831f66c3933f0b0fc03cdf36217691342",
+}
+
+
+def sha(raw: bytes) -> str:
+    return hashlib.sha256(raw).hexdigest()
+
+
+def read_json(path: Path):
+    return json.loads(path.read_text(encoding="utf-8"))
+
+
+def selected_records(raw_path: Path):
+    raw = raw_path.read_bytes()
+    source_hash = sha(raw)
+    rows = []
+    preview_call_id = None
+    related_call_id = None
+    preview_result = None
+    result_record = None
+    for number, raw_line in enumerate(raw.splitlines(keepends=True), 1):
+        value = json.loads(raw_line)
+        content = value.get("message", {}).get("content", [])
+        if isinstance(content, list):
+            for node in content:
+                if not isinstance(node, dict):
+                    continue
+                name = node.get("name", "")
+                if node.get("type") == "tool_use" and name.endswith("__mnemos_forget_preview"):
+                    preview_call_id = node.get("id")
+                    rows.append({
+                        "role": "tool_use",
+                        "line": number,
+                        "line_sha256": sha(raw_line),
+                        "source_file_sha256": source_hash,
+                        "node": node,
+                    })
+                elif node.get("type") == "tool_use" and name.endswith("__mnemos_forget_related"):
+                    related_call_id = node.get("id")
+                    rows.append({
+                        "role": "tool_use",
+                        "line": number,
+                        "line_sha256": sha(raw_line),
+                        "source_file_sha256": source_hash,
+                        "node": node,
+                    })
+                elif node.get("type") == "tool_result" and node.get("tool_use_id") in {
+                    preview_call_id,
+                    related_call_id,
+                }:
+                    if node.get("tool_use_id") == preview_call_id:
+                        preview_result = node
+                    rows.append({
+                        "role": "tool_result",
+                        "line": number,
+                        "line_sha256": sha(raw_line),
+                        "source_file_sha256": source_hash,
+                        "node": node,
+                    })
+        if value.get("type") == "result":
+            result_record = {
+                key: value.get(key)
+                for key in (
+                    "type", "subtype", "is_error", "num_turns", "stop_reason",
+                    "session_id", "total_cost_usd", "usage", "modelUsage", "errors",
+                )
+                if key in value
+            }
+            result_record.update({
+                "line": number,
+                "line_sha256": sha(raw_line),
+                "source_file_sha256": source_hash,
+            })
+    if preview_call_id is None or related_call_id is None:
+        raise AssertionError("preview and related tool calls were not both observed")
+    if result_record is None:
+        raise AssertionError("terminal budget result was not observed")
+    return rows, result_record, source_hash
+
+
+def fact_state(db: sqlite3.Connection, fact_id: str | None):
+    if not fact_id:
+        return {"id": fact_id, "present": False}
+    row = db.execute(
+        "SELECT id, content, version, metadata FROM memory_chunks WHERE id=?",
+        (fact_id,),
+    ).fetchone()
+    if row is None:
+        return {"id": fact_id, "present": False}
+    content = row[1] or ""
+    metadata = json.loads(row[3]) if row[3] else {}
+    evidence_count = db.execute(
+        "SELECT COUNT(*) FROM fact_evidence WHERE fact_id=?", (fact_id,)
+    ).fetchone()[0]
+    return {
+        "id": row[0],
+        "present": True,
+        "version": row[2],
+        "content_sha256": sha(content.encode("utf-8")),
+        "assertion_status": metadata.get("assertion_status"),
+        "scope": metadata.get("scope"),
+        "scope_id": metadata.get("scope_id"),
+        "evidence_count": evidence_count,
+    }
+
+
+def sqlite_summary(db_path: Path, report: dict, selected_ids: list[str]):
+    target = report.get("target", {})
+    ids = [
+        target.get("fact_id"),
+        target.get("foreign_fact_id"),
+        report.get("before_forget", {}).get("unrelated_fact_id"),
+        *selected_ids,
+    ]
+    ids = list(dict.fromkeys(item for item in ids if item))
+    with sqlite3.connect(f"file:{db_path.as_posix()}?mode=ro", uri=True) as db:
+        rows = {
+            "target": fact_state(db, target.get("fact_id")),
+            "foreign": fact_state(db, target.get("foreign_fact_id")),
+            "unrelated": fact_state(db, report.get("before_forget", {}).get("unrelated_fact_id")),
+            "selected_candidates": [fact_state(db, item) for item in selected_ids],
+        }
+        counts = {}
+        for table in (
+            "memory_chunks", "fact_evidence", "episodic_events", "fact_revisions",
+            "memory_suppressions", "memory_jobs",
+        ):
+            counts[table] = db.execute(f"SELECT COUNT(*) FROM {table}").fetchone()[0]
+        rows["table_counts"] = counts
+        rows["database_path"] = str(db_path)
+        rows["target_and_selected_absent"] = all(
+            not item["present"] for item in [rows["target"], *rows["selected_candidates"]]
+        )
+        rows["foreign_and_unrelated_present"] = (
+            rows["foreign"]["present"] and rows["unrelated"]["present"]
+        )
+        return rows
+
+
+def main():
+    if ARCHIVE.exists():
+        raise FileExistsError(ARCHIVE)
+    report = read_json(REPORT_PATH)
+    if not report.get("finished_at") or report.get("status") != "failed":
+        raise AssertionError("v7 report is not the expected terminal failure")
+    if report.get("source_commit") != SOURCE:
+        raise AssertionError("unexpected source commit")
+    if report.get("provenance", {}).get("package_provenance", {}).get("wheel_sha256_observed") != WHEEL:
+        raise AssertionError("unexpected wheel provenance")
+    if report.get("runner_sha256") != sha(RUNNER.read_bytes()):
+        raise AssertionError("executed v7 runner changed")
+    fixture = Path(report["fixture"])
+    raw_path = fixture / "native-crosshost-forget-stdout.jsonl"
+    rows, budget, raw_hash = selected_records(raw_path)
+    preview_calls = [item for item in rows if item["role"] == "tool_use" and item["node"]["name"].endswith("__mnemos_forget_preview")]
+    related_calls = [item for item in rows if item["role"] == "tool_use" and item["node"]["name"].endswith("__mnemos_forget_related")]
+    if len(preview_calls) != 1 or len(related_calls) != 1:
+        raise AssertionError("unexpected native forget call count")
+    selected_ids = related_calls[0]["node"].get("input", {}).get("selected_fact_ids", [])
+    if not isinstance(selected_ids, list) or not all(isinstance(item, str) for item in selected_ids):
+        raise AssertionError("selected fact IDs are malformed")
+    traces = [item for trace in report.get("dispatch_traces", []) for item in trace]
+    related_dispatch = [item for item in traces if item.get("operation") == "forget_related"]
+    preview_dispatch = [item for item in traces if item.get("operation") == "forget_preview"]
+    if not preview_dispatch or not related_dispatch or related_dispatch[-1].get("result_status") != "committed":
+        raise AssertionError("dispatch trace does not prove related commit")
+    db_summary = sqlite_summary(fixture / "memory.sqlite", report, selected_ids)
+    if not db_summary["target_and_selected_absent"] or not db_summary["foreign_and_unrelated_present"]:
+        raise AssertionError("SQLite state does not match the committed related forget")
+    helpers = {"native_codex_claude_continuity_v7.py": RUNNER}
+    for name, expected in {**report.get("helper_pins", {}), **TRANSITIVE}.items():
+        path = ROOT / ".venv" / name
+        if not path.exists() or sha(path.read_bytes()) != expected:
+            raise AssertionError(f"helper pin mismatch: {name}")
+        helpers[name] = path
+    ARCHIVE.mkdir(parents=True)
+    shutil.copyfile(REPORT_PATH, ARCHIVE / "report.json")
+    for name, path in helpers.items():
+        shutil.copyfile(path, ARCHIVE / (Path(name).name + ".txt"))
+    shutil.copyfile(__file__, ARCHIVE / "archive_native_crosshost_v10.py.txt")
+    (ARCHIVE / "selected-claude-forget-records.json").write_text(
+        json.dumps(rows, indent=2) + "\n", encoding="utf-8"
+    )
+    (ARCHIVE / "budget-result.json").write_text(
+        json.dumps(budget, indent=2) + "\n", encoding="utf-8"
+    )
+    (ARCHIVE / "sqlite-readonly-summary.json").write_text(
+        json.dumps(db_summary, indent=2) + "\n", encoding="utf-8"
+    )
+    (ARCHIVE / ".gitattributes").write_text("* -text\n*.jsonl -whitespace\n", encoding="utf-8")
+    readme = (
+        "# Native Codex and Claude continuity v7\n\n"
+        "This native run FAILED at the Claude related-forget phase because Claude reported "
+        "error_max_budget_usd after the configured $0.08 budget was exceeded: the terminal "
+        "record reports $0.1185852. The preview call and related-forget request were both "
+        "observed. The service dispatch trace returned related-forget as committed, and an "
+        "independent read-only SQLite summary confirms the target and selected copies are absent "
+        "while the unrelated and foreign facts remain. Replay and final Codex checks did not run.\n\n"
+        "The archive keeps selected preview/apply tool records with line and file hashes, the "
+        "terminal budget result, the executed runner and helper pins, and the SQLite summary. "
+        "It does not copy native streams, credentials, or the fixture database. The Codex phases "
+        "completed before the failure; the reverse Stop timeout is retained as a separate native "
+        "observation. Deterministic lexical vectors, disabled modules, and unavailable cognition "
+        "mean this is not model-quality, paraphrase-quality, complete-capture, replay, or final "
+        "answer evidence. The preview included similarity candidates, but the budget failure "
+        "means no native final acceptance claim is made.\n"
+    )
+    (ARCHIVE / "README.md").write_text(readme, encoding="utf-8")
+    files = {}
+    for path in sorted(ARCHIVE.iterdir()):
+        if path.name == "evidence-index.json" or not path.is_file():
+            continue
+        files[path.name] = {"bytes": path.stat().st_size, "sha256": sha(path.read_bytes())}
+    (ARCHIVE / "evidence-index.json").write_text(
+        json.dumps({"archive": str(ARCHIVE), "files": files}, indent=2) + "\n",
+        encoding="utf-8",
+    )
+    print(json.dumps({"status": "passed", "archive": str(ARCHIVE), "raw_sha256": raw_hash}))
+
+
+if __name__ == "__main__":
+    main()

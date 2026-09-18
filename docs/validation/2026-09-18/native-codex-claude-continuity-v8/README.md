@@ -1,0 +1,5 @@
+# Native Codex and Claude continuity v8
+
+This run FAILED before the reviewed forget phase. The Codex teaching phase and Claude read/correction phases returned successfully. The reverse Codex phase reached its 180 second deadline with return code 1, so the runner stopped before forget, replay, and final checks. The archived Claude hook records include degraded Stop diagnostics; this archive does not assign their cause to the product or to operator approval timing.
+
+A read-only SQLite summary confirms the corrected target remains version 2 and the foreign fact remains. This is transport and durability evidence only: the fixture uses deterministic lexical vectors, all modules are disabled, cognition is unavailable, and no acceptance, model-quality, similarity-quality, forgetting, replay, or final-answer claim is made. Raw native streams, credentials, and the database are not archived.

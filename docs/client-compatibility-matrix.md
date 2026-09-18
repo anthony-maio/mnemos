@@ -6,7 +6,14 @@ The September 18 [installed checkpoint](validation/2026-09-18/related-similarity
 at `ac139dd` passes 352 selected contract cases with two skips and seven synthetic
 replay assertions. It adds bounded similarity suggestions to reviewed forgetting,
 with scope filtering, explicit selection, source dependencies, and stale-preview
-checks. Native forgetting has not yet been rerun against this package.
+checks. Two native attempts against this package remain incomplete. In
+[v7](validation/2026-09-18/native-codex-claude-continuity-v7/README.md),
+related deletion committed and SQLite reopen confirmed the selected records
+absent, but Claude exceeded its phase budget before replay and final recall.
+[V8](validation/2026-09-18/native-codex-claude-continuity-v8/README.md)
+stopped at the reverse Codex phase while its tool approval was pending; the
+180-second host deadline includes operator time. Forgetting, replay, and final
+recall did not run in v8. Neither attempt closes native acceptance.
 
 The current adapter repair preserves service-rendered recall across Claude Code,
 Codex, and Hermes. Claude previously rebuilt bare fact text and lost assertion
@@ -17,10 +24,10 @@ mid-record. The legacy CLI hook now retains the shared qualifications too.
 The [frozen installed checkpoint](validation/2026-09-17/uuid-context-package-checkpoint-v1/README.md)
 at `8616901` passes 335 selected contract cases with two skips, including adapter
 and SQLite-backed service checks, plus seven synthetic replay assertions. Native acceptance has
-not been rerun on this repair, and it does not resolve the v6 stale-answer failure
+not passed on this repair, and it does not resolve the v6 stale-answer failure
 below: that Codex result already contained the unverified-history label.
 
-The latest [native forget/replay attempt](validation/2026-09-17/native-codex-claude-continuity-v6/README.md)
+The earlier [native forget/replay attempt](validation/2026-09-17/native-codex-claude-continuity-v6/README.md)
 remains FAILED. Claude deleted a Codex-taught, Claude-corrected fact and retrieved
 an unrelated retained preference using the required query. After restart, direct
 replay of the original teaching event was suppressed and correction replay was

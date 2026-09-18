@@ -1,0 +1,194 @@
+"""Archive the terminal native Codex and Claude continuity v8 failure."""
+from __future__ import annotations
+
+import hashlib
+import json
+from pathlib import Path
+import shutil
+import sqlite3
+
+
+ROOT = Path(__file__).resolve().parents[1]
+REPORT_PATH = Path("C:/Users/Ant/AppData/Local/Temp/mnemos-native-crosshost-v8/report.json")
+ARCHIVE = ROOT / "docs/validation/2026-09-18/native-codex-claude-continuity-v8"
+RUNNER = ROOT / ".venv/native_codex_claude_continuity_v8.py"
+SOURCE = "ac139dd5f4e398d54894f687288bf07aa226dfac"
+WHEEL = "b71efc3d8dd329835d0881b837a7a1b4d1f6c40f2d3c9c265caa88f28e020b3e"
+
+
+def sha(raw: bytes) -> str:
+    return hashlib.sha256(raw).hexdigest()
+
+
+def read_json(path: Path):
+    return json.loads(path.read_text(encoding="utf-8"))
+
+
+def selected_claude_records(fixture: Path):
+    selected = []
+    phase_files = {
+        "crosshost-read": fixture / "native-crosshost-read-stdout.jsonl",
+        "crosshost-correct": fixture / "native-crosshost-correct-stdout.jsonl",
+    }
+    for phase, path in phase_files.items():
+        raw = path.read_bytes()
+        source_hash = sha(raw)
+        for number, raw_line in enumerate(raw.splitlines(keepends=True), 1):
+            value = json.loads(raw_line)
+            content = value.get("message", {}).get("content", [])
+            if isinstance(content, list):
+                for node in content:
+                    if not isinstance(node, dict) or node.get("type") not in {
+                        "tool_use", "tool_result"
+                    }:
+                        continue
+                    selected.append({
+                        "phase": phase,
+                        "line": number,
+                        "line_sha256": sha(raw_line),
+                        "source_file_sha256": source_hash,
+                        "node": node,
+                    })
+            if value.get("type") == "system" and value.get("subtype") == "hook_response":
+                selected.append({
+                    "phase": phase,
+                    "line": number,
+                    "line_sha256": sha(raw_line),
+                    "source_file_sha256": source_hash,
+                    "node": {
+                        key: value.get(key)
+                        for key in (
+                            "type", "subtype", "hook_name", "hook_event", "output",
+                            "stderr", "exit_code", "outcome", "session_id",
+                        )
+                        if key in value
+                    },
+                })
+            if value.get("type") == "result":
+                selected.append({
+                    "phase": phase,
+                    "line": number,
+                    "line_sha256": sha(raw_line),
+                    "source_file_sha256": source_hash,
+                    "node": {
+                        key: value.get(key)
+                        for key in (
+                            "type", "subtype", "is_error", "duration_ms", "num_turns",
+                            "result", "stop_reason", "total_cost_usd", "session_id",
+                        )
+                        if key in value
+                    },
+                })
+    if not any(item["node"].get("type") == "tool_use" for item in selected):
+        raise AssertionError("no Claude tool records were selected")
+    return selected
+
+
+def fact_state(db: sqlite3.Connection, fact_id: str | None):
+    if not fact_id:
+        return {"id": fact_id, "present": False}
+    row = db.execute(
+        "SELECT id, content, version, metadata FROM memory_chunks WHERE id=?", (fact_id,)
+    ).fetchone()
+    if row is None:
+        return {"id": fact_id, "present": False}
+    metadata = json.loads(row[3]) if row[3] else {}
+    return {
+        "id": row[0],
+        "present": True,
+        "version": row[2],
+        "content_sha256": sha((row[1] or "").encode("utf-8")),
+        "scope": metadata.get("scope"),
+        "scope_id": metadata.get("scope_id"),
+        "assertion_status": metadata.get("assertion_status"),
+    }
+
+
+def sqlite_summary(path: Path, report: dict):
+    target = report.get("target", {})
+    ids = {
+        target.get("fact_id"),
+        target.get("foreign_fact_id"),
+    }
+    with sqlite3.connect(f"file:{path.as_posix()}?mode=ro", uri=True) as db:
+        counts = {
+            table: db.execute(f"SELECT COUNT(*) FROM {table}").fetchone()[0]
+            for table in (
+                "memory_chunks", "fact_evidence", "episodic_events", "fact_revisions",
+                "memory_suppressions", "memory_jobs",
+            )
+        }
+        return {
+            "database_path": str(path),
+            "target": fact_state(db, target.get("fact_id")),
+            "foreign": fact_state(db, target.get("foreign_fact_id")),
+            "table_counts": counts,
+            "target_version_two": fact_state(db, target.get("fact_id")).get("version") == 2,
+            "foreign_present": fact_state(db, target.get("foreign_fact_id"))["present"],
+            "ids_checked": sorted(item for item in ids if item),
+        }
+
+
+def main():
+    if ARCHIVE.exists():
+        raise FileExistsError(ARCHIVE)
+    report = read_json(REPORT_PATH)
+    if report.get("status") != "failed" or not report.get("finished_at"):
+        raise AssertionError("v8 report is not terminal failed evidence")
+    if report.get("source_commit") != SOURCE:
+        raise AssertionError("unexpected source commit")
+    if report.get("provenance", {}).get("package_provenance", {}).get("wheel_sha256_observed") != WHEEL:
+        raise AssertionError("unexpected wheel provenance")
+    if report.get("runner_sha256") != sha(RUNNER.read_bytes()):
+        raise AssertionError("executed v8 runner changed")
+    fixture = Path(report["fixture"])
+    records = selected_claude_records(fixture)
+    summary = sqlite_summary(fixture / "memory.sqlite", report)
+    if not summary["target_version_two"] or not summary["foreign_present"]:
+        raise AssertionError("read-only state does not match completed correction")
+    helper_paths = {"native_codex_claude_continuity_v8.py": RUNNER}
+    for name, expected in report.get("helper_pins", {}).items():
+        path = ROOT / ".venv" / name
+        if not path.exists() or sha(path.read_bytes()) != expected:
+            raise AssertionError(f"helper pin mismatch: {name}")
+        helper_paths[name] = path
+    ARCHIVE.mkdir(parents=True)
+    shutil.copyfile(REPORT_PATH, ARCHIVE / "report.json")
+    for name, path in helper_paths.items():
+        shutil.copyfile(path, ARCHIVE / (Path(name).name + ".txt"))
+    shutil.copyfile(__file__, ARCHIVE / "archive_native_crosshost_v11.py.txt")
+    (ARCHIVE / "selected-native-records.json").write_text(
+        json.dumps(records, indent=2) + "\n", encoding="utf-8"
+    )
+    (ARCHIVE / "sqlite-readonly-summary.json").write_text(
+        json.dumps(summary, indent=2) + "\n", encoding="utf-8"
+    )
+    (ARCHIVE / ".gitattributes").write_text("* -text\n*.jsonl -whitespace\n", encoding="utf-8")
+    readme = (
+        "# Native Codex and Claude continuity v8\n\n"
+        "This run FAILED before the reviewed forget phase. The Codex teaching phase and Claude "
+        "read/correction phases returned successfully. The reverse Codex phase reached its 180 "
+        "second deadline with return code 1, so the runner stopped before forget, replay, and final "
+        "checks. The archived Claude hook records include degraded Stop diagnostics; this archive "
+        "does not assign their cause to the product or to operator approval timing.\n\n"
+        "A read-only SQLite summary confirms the corrected target remains version 2 and the foreign "
+        "fact remains. This is transport and durability evidence only: the fixture uses deterministic "
+        "lexical vectors, all modules are disabled, cognition is unavailable, and no acceptance, "
+        "model-quality, similarity-quality, forgetting, replay, or final-answer claim is made. "
+        "Raw native streams, credentials, and the database are not archived.\n"
+    )
+    (ARCHIVE / "README.md").write_text(readme, encoding="utf-8")
+    files = {}
+    for path in sorted(ARCHIVE.iterdir()):
+        if path.name == "evidence-index.json" or not path.is_file():
+            continue
+        files[path.name] = {"bytes": path.stat().st_size, "sha256": sha(path.read_bytes())}
+    (ARCHIVE / "evidence-index.json").write_text(
+        json.dumps({"archive": str(ARCHIVE), "files": files}, indent=2) + "\n",
+        encoding="utf-8",
+    )
+    print(json.dumps({"status": "passed", "archive": str(ARCHIVE)}))
+
+
+if __name__ == "__main__":
+    main()

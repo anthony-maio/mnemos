@@ -17,7 +17,16 @@ write-safety repair. It includes the host-context authority changes. This is a
 source checkpoint, now supplemented by the installed verification below.
 Native-host evidence remains bound to its earlier source revisions.
 
-The latest [native v6 attempt](../2026-09-17/native-codex-claude-continuity-v6/README.md)
+The later [native v7 attempt](../2026-09-18/native-codex-claude-continuity-v7/README.md)
+on installed `ac139dd` committed related deletion before Claude exceeded its
+phase budget. SQLite reopen confirms the target and five selected copies absent,
+with unrelated and foreign facts retained. Replay and final recall did not run.
+[V8](../2026-09-18/native-codex-claude-continuity-v8/README.md) reached
+the reverse Codex phase but timed out with tool approval pending. Its deadline
+includes operator time; forgetting, replay, and final recall were not run.
+Neither attempt establishes native post-forget acceptance.
+
+The earlier [native v6 attempt](../2026-09-17/native-codex-claude-continuity-v6/README.md)
 verified selected-fact deletion by Claude and direct service replay suppression
 after Codex teaching and cross-host correction. Its final Codex answer still
 repeated the deleted value from a surviving unknown captured statement, and the

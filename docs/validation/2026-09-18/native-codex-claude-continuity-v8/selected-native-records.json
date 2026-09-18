@@ -1,0 +1,253 @@
+[
+  {
+    "phase": "crosshost-read",
+    "line": 2,
+    "line_sha256": "866b66eb4e6093ce218892c317e06327801336552a8052944c58ce18d532e56c",
+    "source_file_sha256": "7452e0fd2e268446f0044d7897aacb4827f83676bad05bdf2e45419eeb7e4980",
+    "node": {
+      "type": "system",
+      "subtype": "hook_response",
+      "hook_name": "SessionStart:startup",
+      "hook_event": "SessionStart",
+      "output": "",
+      "stderr": "",
+      "exit_code": 0,
+      "outcome": "success",
+      "session_id": "e9c90f2c-8daa-4db9-afca-a8df55cdfafc"
+    }
+  },
+  {
+    "phase": "crosshost-read",
+    "line": 4,
+    "line_sha256": "fe007bfcee3a7fa9be5cf382f3a0956fbca578883ead5369f1a2ad01170e4b5c",
+    "source_file_sha256": "7452e0fd2e268446f0044d7897aacb4827f83676bad05bdf2e45419eeb7e4980",
+    "node": {
+      "type": "system",
+      "subtype": "hook_response",
+      "hook_name": "UserPromptSubmit",
+      "hook_event": "UserPromptSubmit",
+      "output": "mnemos hook diagnostic host=claude-code event=UserPromptSubmit status=degraded reason=identity_reference_unavailable\r\n{\"hookSpecificOutput\":{\"hookEventName\":\"UserPromptSubmit\",\"additionalContext\":\"[3b3b549a-df25-4753-ae1e-2c6215bd1cb8 version 1] The project continuity convention is use cedar-otter for release labels.\\n[f1f33e48-40b8-4e1a-b7b0-e2a0803cff23 version 1; captured conversation; unverified, may be outdated] Use only Mnemos MCP tools. First call mnemos_store exactly once with content \\\"The project continuity convention is use cedar-otter for release labels.\\\", role user, scope project. Then call mnemos_consolidate exactly once. Report the result. Do not use other tools.\\n[af51ebaa-f595-486d-b333-1bdd34624d3f version 1; captured conversation; unverified, may be outdated] Assistant reported: Stored the project convention successfully and consolidated Mnemos.\\n\\n- Store status: `committed`\\n- Fact eligible: `true`\\n- Consolidation completed: `2`\\n- Maintenance failures: `0`\\n[d1d7fdbc-bf1e-43f0-9789-38396cb813c0 version 1] The retained project preference is keep river-slate in release notes.\\n\"}}\r\n",
+      "stderr": "mnemos hook diagnostic host=claude-code event=UserPromptSubmit status=degraded reason=identity_reference_unavailable\r\n",
+      "exit_code": 0,
+      "outcome": "success",
+      "session_id": "e9c90f2c-8daa-4db9-afca-a8df55cdfafc"
+    }
+  },
+  {
+    "phase": "crosshost-read",
+    "line": 14,
+    "line_sha256": "41174e89c1b3864d4f6d97245b5ecc6e9352285dacbfaabeb3ada6f9198a4eea",
+    "source_file_sha256": "7452e0fd2e268446f0044d7897aacb4827f83676bad05bdf2e45419eeb7e4980",
+    "node": {
+      "type": "tool_use",
+      "id": "toolu_01TkSbY3QTf5CUuD6TxQbcPZ",
+      "name": "mcp__plugin_mnemos-memory_mnemos__mnemos_retrieve",
+      "input": {
+        "query": "project continuity convention for release labels",
+        "current_scope": "project",
+        "allowed_scopes": "project"
+      },
+      "caller": {
+        "type": "direct"
+      }
+    }
+  },
+  {
+    "phase": "crosshost-read",
+    "line": 16,
+    "line_sha256": "4fc4c0ebf769bd594baeb7591bee8c89be5290bd12798682cceaef28e9076f71",
+    "source_file_sha256": "7452e0fd2e268446f0044d7897aacb4827f83676bad05bdf2e45419eeb7e4980",
+    "node": {
+      "tool_use_id": "toolu_01TkSbY3QTf5CUuD6TxQbcPZ",
+      "type": "tool_result",
+      "content": "{\"result\":\"{\\n  \\\"context\\\": \\\"[3b3b549a-df25-4753-ae1e-2c6215bd1cb8 version 1] The project continuity convention is use cedar-otter for release labels.\\\\n[f1f33e48-40b8-4e1a-b7b0-e2a0803cff23 version 1; captured conversation; unverified, may be outdated] Use only Mnemos MCP tools. First call mnemos_store exactly once with content \\\\\\\"The project continuity convention is use cedar-otter for release labels.\\\\\\\", role user, scope project. Then call mnemos_consolidate exactly once. Report the result. Do not use other tools.\\\\n[d1d7fdbc-bf1e-43f0-9789-38396cb813c0 version 1] The retained project preference is keep river-slate in release notes.\\\\n[af51ebaa-f595-486d-b333-1bdd34624d3f version 1; captured conversation; unverified, may be outdated] Assistant reported: Stored the project convention successfully and consolidated Mnemos.\\\\n\\\\n- Store status: `committed`\\\\n- Fact eligible: `true`\\\\n- Consolidation completed: `2`\\\\n- Maintenance failures: `0`\\\\n\\\",\\n  \\\"context_token_upper_bound\\\": 908,\\n  \\\"facts\\\": [\\n    {\\n      \\\"assertion_status\\\": \\\"asserted\\\",\\n      \\\"content\\\": \\\"The project continuity convention is use cedar-otter for release labels.\\\",\\n      \\\"id\\\": \\\"3b3b549a-df25-4753-ae1e-2c6215bd1cb8\\\",\\n      \\\"original_source_status\\\": \\\"retained_locally\\\",\\n      \\\"scope\\\": \\\"project\\\",\\n      \\\"scope_id\\\": \\\"8b2943d3-c3e4-4fc1-b0d5-06d1296d2c7c\\\",\\n      \\\"scores\\\": {\\n        \\\"candidate_backend\\\": \\\"sqlite_vec_scoped_exact_cosine\\\",\\n        \\\"context_token_upper_bound\\\": 122,\\n        \\\"graph_contribution\\\": 0.0,\\n        \\\"graph_energy\\\": 0.0,\\n        \\\"graph_status\\\": \\\"disabled\\\",\\n        \\\"lexical_candidate\\\": true,\\n        \\\"lexical_status\\\": \\\"candidate_union\\\",\\n        \\\"profile\\\": \\\"baseline\\\",\\n        \\\"scope_match\\\": true,\\n        \\\"semantic\\\": 0.7745966911315918,\\n        \\\"state_match\\\": null,\\n        \\\"state_status\\\": \\\"disabled\\\",\\n        \\\"token_count_method\\\": \\\"utf8_bytes_upper_bound\\\",\\n        \\\"total\\\": 0.7745966911315918\\n      },\\n      \\\"sources\\\": [\\n        {\\n          \\\"created_at\\\": \\\"2026-09-18T04:25:43.410753Z\\\",\\n          \\\"evidence_id\\\": \\\"0fa87bdd-87bf-4b6e-9037-29d329d002b4\\\",\\n          \\\"excerpt\\\": \\\"The project continuity convention is use cedar-otter for release labels.\\\",\\n          \\\"fact_id\\\": \\\"3b3b549a-df25-4753-ae1e-2c6215bd1cb8\\\",\\n          \\\"original_source_status\\\": \\\"retained_locally\\\",\\n          \\\"source_event_id\\\": \\\"d22ae478154fa3237ef4ccc9b5b9475ea1cfaa9fe70a4aa32de3d485269d183b\\\",\\n          \\\"source_ref\\\": null\\n        }\\n      ],\\n      \\\"support_available\\\": true,\\n      \\\"version\\\": 1,\\n      \\\"schema_version\\\": 1\\n    },\\n    {\\n      \\\"assertion_status\\\": \\\"unknown\\\",\\n      \\\"content\\\": \\\"Use only Mnemos MCP tools. First call mnemos_store exactly once with content \\\\\\\"The project continuity convention is use cedar-otter for release labels.\\\\\\\", role user, scope project. Then call mnemos_consolidate exactly once. Report the result. Do not use other tools.\\\",\\n      \\\"id\\\": \\\"f1f33e48-40b8-4e1a-b7b0-e2a0803cff23\\\",\\n      \\\"original_source_status\\\": \\\"retained_locally\\\",\\n      \\\"scope\\\": \\\"project\\\",\\n      \\\"scope_id\\\": \\\"8b2943d3-c3e4-4fc1-b0d5-06d1296d2c7c\\\",\\n      \\\"scores\\\": {\\n        \\\"candidate_backend\\\": \\\"sqlite_vec_scoped_exact_cosine\\\",\\n        \\\"context_token_upper_bound\\\": 366,\\n        \\\"graph_contribution\\\": 0.0,\\n        \\\"graph_energy\\\": 0.0,\\n        \\\"graph_status\\\": \\\"disabled\\\",\\n        \\\"lexical_candidate\\\": true,\\n        \\\"lexical_status\\\": \\\"candidate_union\\\",\\n        \\\"profile\\\": \\\"baseline\\\",\\n        \\\"scope_match\\\": true,\\n        \\\"semantic\\\": 0.35445883870124817,\\n        \\\"state_match\\\": null,\\n        \\\"state_status\\\": \\\"disabled\\\",\\n        \\\"token_count_method\\\": \\\"utf8_bytes_upper_bound\\\",\\n        \\\"total\\\": 0.35445883870124817\\n      },\\n      \\\"sources\\\": [\\n        {\\n          \\\"created_at\\\": \\\"2026-09-18T04:25:43.405219Z\\\",\\n          \\\"evidence_id\\\": \\\"432e0f27-b602-4337-a0fe-05e045efdee0\\\",\\n          \\\"excerpt\\\": \\\"Use only Mnemos MCP tools. First call mnemos_store exactly once with content \\\\\\\"The project continuity convention is use cedar-otter for release labels.\\\\\\\", role user, scope project. Then call mnemos_consolidate exactly once. Report the result. Do not use other tools.\\\",\\n          \\\"fact_id\\\": \\\"f1f33e48-40b8-4e1a-b7b0-e2a0803cff23\\\",\\n          \\\"original_source_status\\\": \\\"retained_locally\\\",\\n          \\\"source_event_id\\\": \\\"5750e9e38cdabf14dbe5a2ba8096bed955c128fa2032ad8e49710534f66a9edb\\\",\\n          \\\"source_ref\\\": \\\"UserPromptSubmit:01a0b2c2-93ed-7112-9574-2713ad7d8ef9\\\"\\n        }\\n      ],\\n      \\\"support_available\\\": true,\\n      \\\"version\\\": 1,\\n      \\\"schema_version\\\": 1\\n    },\\n    {\\n      \\\"assertion_status\\\": \\\"asserted\\\",\\n      \\\"content\\\": \\\"The retained project preference is keep river-slate in release notes.\\\",\\n      \\\"id\\\": \\\"d1d7fdbc-bf1e-43f0-9789-38396cb813c0\\\",\\n      \\\"original_source_status\\\": \\\"retained_locally\\\",\\n      \\\"scope\\\": \\\"project\\\",\\n      \\\"scope_id\\\": \\\"8b2943d3-c3e4-4fc1-b0d5-06d1296d2c7c\\\",\\n      \\\"scores\\\": {\\n        \\\"candidate_backend\\\": \\\"sqlite_vec_scoped_exact_cosine\\\",\\n        \\\"context_token_upper_bound\\\": 119,\\n        \\\"graph_contribution\\\": 0.0,\\n        \\\"graph_energy\\\": 0.0,\\n        \\\"graph_status\\\": \\\"disabled\\\",\\n        \\\"lexical_candidate\\\": true,\\n        \\\"lexical_status\\\": \\\"candidate_union\\\",\\n        \\\"profile\\\": \\\"baseline\\\",\\n        \\\"scope_match\\\": true,\\n        \\\"semantic\\\": 0.25819888710975647,\\n        \\\"state_match\\\": null,\\n        \\\"state_status\\\": \\\"disabled\\\",\\n        \\\"token_count_method\\\": \\\"utf8_bytes_upper_bound\\\",\\n        \\\"total\\\": 0.25819888710975647\\n      },\\n      \\\"sources\\\": [\\n        {\\n          \\\"created_at\\\": \\\"2026-09-18T04:24:30.510739Z\\\",\\n          \\\"evidence_id\\\": \\\"b533fafe-f6dc-4679-ac3c-b054a096a9dd\\\",\\n          \\\"excerpt\\\": \\\"The retained project preference is keep river-slate in release notes.\\\",\\n          \\\"fact_id\\\": \\\"d1d7fdbc-bf1e-43f0-9789-38396cb813c0\\\",\\n          \\\"original_source_status\\\": \\\"retained_locally\\\",\\n          \\\"source_event_id\\\": \\\"2f032882ae53973bce7c3c883e0ee391fc13d7c898fca554f0829693ed45d566\\\",\\n          \\\"source_ref\\\": null\\n        }\\n      ],\\n      \\\"support_available\\\": true,\\n      \\\"version\\\": 1,\\n      \\\"schema_version\\\": 1\\n    },\\n    {\\n      \\\"assertion_status\\\": \\\"unknown\\\",\\n      \\\"content\\\": \\\"Assistant reported: Stored the project convention successfully and consolidated Mnemos.\\\\n\\\\n- Store status: `committed`\\\\n- Fact eligible: `true`\\\\n- Consolidation completed: `2`\\\\n- Maintenance failures: `0`\\\",\\n      \\\"id\\\": \\\"af51ebaa-f595-486d-b333-1bdd34624d3f\\\",\\n      \\\"original_source_status\\\": \\\"retained_locally\\\",\\n      \\\"scope\\\": \\\"project\\\",\\n      \\\"scope_id\\\": \\\"8b2943d3-c3e4-4fc1-b0d5-06d1296d2c7c\\\",\\n      \\\"scores\\\": {\\n        \\\"candidate_backend\\\": \\\"sqlite_vec_scoped_exact_cosine\\\",\\n        \\\"context_token_upper_bound\\\": 301,\\n        \\\"graph_contribution\\\": 0.0,\\n        \\\"graph_energy\\\": 0.0,\\n        \\\"graph_status\\\": \\\"disabled\\\",\\n        \\\"lexical_candidate\\\": true,\\n        \\\"lexical_status\\\": \\\"candidate_union\\\",\\n        \\\"profile\\\": \\\"baseline\\\",\\n        \\\"scope_match\\\": true,\\n        \\\"semantic\\\": 0.25,\\n        \\\"state_match\\\": null,\\n        \\\"state_status\\\": \\\"disabled\\\",\\n        \\\"token_count_method\\\": \\\"utf8_bytes_upper_bound\\\",\\n        \\\"total\\\": 0.25\\n      },\\n      \\\"sources\\\": [\\n        {\\n          \\\"created_at\\\": \\\"2026-09-18T04:26:25.261976Z\\\",\\n          \\\"evidence_id\\\": \\\"d30adf55-1d67-4398-9cf3-0aec2be0d73e\\\",\\n          \\\"excerpt\\\": \\\"Stored the project convention successfully and consolidated Mnemos.\\\\n\\\\n- Store status: `committed`\\\\n- Fact eligible: `true`\\\\n- Consolidation completed: `2`\\\\n- Maintenance failures: `0`\\\",\\n          \\\"fact_id\\\": \\\"af51ebaa-f595-486d-b333-1bdd34624d3f\\\",\\n          \\\"original_source_status\\\": \\\"retained_locally\\\",\\n          \\\"source_event_id\\\": \\\"c2cd71b642f06c85027c8176fe4755760803bdb7131a10379a86292a9314006e\\\",\\n          \\\"source_ref\\\": \\\"Stop:01a0b2c2-93ed-7112-9574-2713ad7d8ef9\\\"\\n        }\\n      ],\\n      \\\"support_available\\\": true,\\n      \\\"version\\\": 1,\\n      \\\"schema_version\\\": 1\\n    }\\n  ],\\n  \\\"profile\\\": \\\"baseline\\\",\\n  \\\"schema_version\\\": 1,\\n  \\\"token_count_method\\\": \\\"utf8_bytes_upper_bound\\\"\\n}\"}"
+    }
+  },
+  {
+    "phase": "crosshost-read",
+    "line": 19,
+    "line_sha256": "8bc5afb91856b0596cc9ad2c8089fd81615b478dd9a1b89620eccd99b1524228",
+    "source_file_sha256": "7452e0fd2e268446f0044d7897aacb4827f83676bad05bdf2e45419eeb7e4980",
+    "node": {
+      "type": "system",
+      "subtype": "hook_response",
+      "hook_name": "Stop",
+      "hook_event": "Stop",
+      "output": "mnemos hook diagnostic host=claude-code event=Stop status=degraded reason=ambiguous_transcript_association\r\n",
+      "stderr": "mnemos hook diagnostic host=claude-code event=Stop status=degraded reason=ambiguous_transcript_association\r\n",
+      "exit_code": 0,
+      "outcome": "success",
+      "session_id": "e9c90f2c-8daa-4db9-afca-a8df55cdfafc"
+    }
+  },
+  {
+    "phase": "crosshost-read",
+    "line": 20,
+    "line_sha256": "02dc9184f1f177d63ab7b775b7e880aaf30cdd851b58a48090d4fff1238d5ee6",
+    "source_file_sha256": "7452e0fd2e268446f0044d7897aacb4827f83676bad05bdf2e45419eeb7e4980",
+    "node": {
+      "type": "result",
+      "subtype": "success",
+      "is_error": false,
+      "duration_ms": 12687,
+      "num_turns": 2,
+      "result": "Here is the top retrieved fact for the query \"project continuity convention for release labels\":\n\n- **Fact ID:** `3b3b549a-df25-4753-ae1e-2c6215bd1cb8` (version 1)\n- **Content:** \"The project continuity convention is use cedar-otter for release labels.\"\n- **Scope:** project\n- **Assertion status:** asserted\n- **Semantic score:** 0.775 (highest match)\n- **Created:** 2026-09-18\n\nThat is the primary retrieved fact -- the project continuity convention specifies **cedar-otter** as the release label.",
+      "stop_reason": "end_turn",
+      "total_cost_usd": 0.0331503,
+      "session_id": "e9c90f2c-8daa-4db9-afca-a8df55cdfafc"
+    }
+  },
+  {
+    "phase": "crosshost-correct",
+    "line": 2,
+    "line_sha256": "fcdbd26d97d0174175eecb76fc15947c8ff5abc8f8f552a1261226d015fb616e",
+    "source_file_sha256": "cf897796df5915177005d0f8afa7499541152b429d04f4cd20a8e71880b74bb9",
+    "node": {
+      "type": "system",
+      "subtype": "hook_response",
+      "hook_name": "SessionStart:startup",
+      "hook_event": "SessionStart",
+      "output": "",
+      "stderr": "",
+      "exit_code": 0,
+      "outcome": "success",
+      "session_id": "ddeb3e7f-3f7e-43f4-abe4-6768aa728921"
+    }
+  },
+  {
+    "phase": "crosshost-correct",
+    "line": 4,
+    "line_sha256": "a58328b296196fad390a17e547377138773bccd0650cb8ad6dd06073b4923c61",
+    "source_file_sha256": "cf897796df5915177005d0f8afa7499541152b429d04f4cd20a8e71880b74bb9",
+    "node": {
+      "type": "system",
+      "subtype": "hook_response",
+      "hook_name": "UserPromptSubmit",
+      "hook_event": "UserPromptSubmit",
+      "output": "mnemos hook diagnostic host=claude-code event=UserPromptSubmit status=degraded reason=identity_reference_unavailable\r\n{\"hookSpecificOutput\":{\"hookEventName\":\"UserPromptSubmit\",\"additionalContext\":\"[f1f33e48-40b8-4e1a-b7b0-e2a0803cff23 version 1; captured conversation; unverified, may be outdated] Use only Mnemos MCP tools. First call mnemos_store exactly once with content \\\"The project continuity convention is use cedar-otter for release labels.\\\", role user, scope project. Then call mnemos_consolidate exactly once. Report the result. Do not use other tools.\\n[3b3b549a-df25-4753-ae1e-2c6215bd1cb8 version 1] The project continuity convention is use cedar-otter for release labels.\\n[af51ebaa-f595-486d-b333-1bdd34624d3f version 1; captured conversation; unverified, may be outdated] Assistant reported: Stored the project convention successfully and consolidated Mnemos.\\n\\n- Store status: `committed`\\n- Fact eligible: `true`\\n- Consolidation completed: `2`\\n- Maintenance failures: `0`\\n[d1d7fdbc-bf1e-43f0-9789-38396cb813c0 version 1] The retained project preference is keep river-slate in release notes.\\n\"}}\r\n",
+      "stderr": "mnemos hook diagnostic host=claude-code event=UserPromptSubmit status=degraded reason=identity_reference_unavailable\r\n",
+      "exit_code": 0,
+      "outcome": "success",
+      "session_id": "ddeb3e7f-3f7e-43f4-abe4-6768aa728921"
+    }
+  },
+  {
+    "phase": "crosshost-correct",
+    "line": 24,
+    "line_sha256": "b345175bfe1cd5f79cceffb6ce0becf0e58079a09516a6a89b3db5ffff9e52f8",
+    "source_file_sha256": "cf897796df5915177005d0f8afa7499541152b429d04f4cd20a8e71880b74bb9",
+    "node": {
+      "type": "tool_use",
+      "id": "toolu_017VTpbzMzXVuiiDq7ThUNvE",
+      "name": "mcp__plugin_mnemos-memory_mnemos__mnemos_correct",
+      "input": {
+        "fact_id": "3b3b549a-df25-4753-ae1e-2c6215bd1cb8",
+        "expected_version": 1,
+        "content": "The project continuity convention is use maple-heron for release labels.",
+        "source_ref": "native-crosshost-correction"
+      },
+      "caller": {
+        "type": "direct"
+      }
+    }
+  },
+  {
+    "phase": "crosshost-correct",
+    "line": 26,
+    "line_sha256": "1d0b86058f04a5f3da29fd0fe75e98b81081bd52df5e015c9251eabe01ac353a",
+    "source_file_sha256": "cf897796df5915177005d0f8afa7499541152b429d04f4cd20a8e71880b74bb9",
+    "node": {
+      "tool_use_id": "toolu_017VTpbzMzXVuiiDq7ThUNvE",
+      "type": "tool_result",
+      "content": "{\"result\":\"{\\n  \\\"event_id\\\": \\\"66f2bded2cbe956745a06a5894f329c700eb3ab65bde6c21d2640b04108fed57\\\",\\n  \\\"fact_eligible\\\": true,\\n  \\\"identity_status\\\": \\\"normal\\\",\\n  \\\"job_id\\\": \\\"event:66f2bded2cbe956745a06a5894f329c700eb3ab65bde6c21d2640b04108fed57\\\",\\n  \\\"processing_status\\\": \\\"pending\\\",\\n  \\\"schema_version\\\": 1,\\n  \\\"status\\\": \\\"committed\\\"\\n}\"}"
+    }
+  },
+  {
+    "phase": "crosshost-correct",
+    "line": 28,
+    "line_sha256": "f6a79d3f336aed21723a02ab5105e8b4fc3ae45afacc95d78a207c09c4e81c0a",
+    "source_file_sha256": "cf897796df5915177005d0f8afa7499541152b429d04f4cd20a8e71880b74bb9",
+    "node": {
+      "type": "tool_use",
+      "id": "toolu_01SgBJx1z2ZA7feSCVMqsm5p",
+      "name": "mcp__plugin_mnemos-memory_mnemos__mnemos_consolidate",
+      "input": {},
+      "caller": {
+        "type": "direct"
+      }
+    }
+  },
+  {
+    "phase": "crosshost-correct",
+    "line": 29,
+    "line_sha256": "8b77fc7c7e43ccf8f1e1690f35c70ed252bc9984bb1ff4abed9e81f61d413696",
+    "source_file_sha256": "cf897796df5915177005d0f8afa7499541152b429d04f4cd20a8e71880b74bb9",
+    "node": {
+      "tool_use_id": "toolu_01SgBJx1z2ZA7feSCVMqsm5p",
+      "type": "tool_result",
+      "content": "{\"result\":\"{\\n  \\\"completed\\\": 5,\\n  \\\"graph\\\": {\\n    \\\"cursor\\\": \\\"\\\",\\n    \\\"enabled\\\": false,\\n    \\\"legacy_graph\\\": false,\\n    \\\"managed_preferences\\\": true,\\n    \\\"marked_sources\\\": 0,\\n    \\\"pending_count\\\": 7,\\n    \\\"ready\\\": false,\\n    \\\"total_sources\\\": 7\\n  },\\n  \\\"maintenance\\\": {\\n    \\\"completed\\\": 10,\\n    \\\"exhausted\\\": 0,\\n    \\\"failed_count\\\": 0,\\n    \\\"last_error\\\": null,\\n    \\\"last_success\\\": \\\"2026-09-18T04:26:53.651512+00:00\\\",\\n    \\\"leased\\\": 0,\\n    \\\"oldest_pending_seconds\\\": 0,\\n    \\\"oldest_unfinished_seconds\\\": 0,\\n    \\\"pending\\\": 0,\\n    \\\"processed_count\\\": 5,\\n    \\\"retry_count\\\": 0,\\n    \\\"running\\\": false,\\n    \\\"scheduler_running\\\": false\\n  },\\n  \\\"schema_version\\\": 1\\n}\"}"
+    }
+  },
+  {
+    "phase": "crosshost-correct",
+    "line": 31,
+    "line_sha256": "ed90ea58afc5cc1ca97a302b7d95e67cdae3be1e982f79be25bb4d88d27e6c08",
+    "source_file_sha256": "cf897796df5915177005d0f8afa7499541152b429d04f4cd20a8e71880b74bb9",
+    "node": {
+      "type": "tool_use",
+      "id": "toolu_01F1E49JifYgnV1ZAintEVVR",
+      "name": "mcp__plugin_mnemos-memory_mnemos__mnemos_retrieve",
+      "input": {
+        "query": "project continuity convention release labels"
+      },
+      "caller": {
+        "type": "direct"
+      }
+    }
+  },
+  {
+    "phase": "crosshost-correct",
+    "line": 32,
+    "line_sha256": "f3038adeec70aedd0d0a976e79038152d83dc64c067dcd26d1f0fa8dc16936ad",
+    "source_file_sha256": "cf897796df5915177005d0f8afa7499541152b429d04f4cd20a8e71880b74bb9",
+    "node": {
+      "tool_use_id": "toolu_01F1E49JifYgnV1ZAintEVVR",
+      "type": "tool_result",
+      "content": "{\"result\":\"{\\n  \\\"context\\\": \\\"[3b3b549a-df25-4753-ae1e-2c6215bd1cb8 version 2] The project continuity convention is use maple-heron for release labels.\\\\n[8d834d85-4382-4613-8386-df4d8963bb85 version 1; captured conversation; unverified, may be outdated] Assistant reported: Here is the top retrieved fact for the query \\\\\\\"project continuity convention for release labels\\\\\\\":\\\\n\\\\n- **Fact ID:** `3b3b549a-df25-4753-ae1e-2c6215bd1cb8` (version 1)\\\\n- **Content:** \\\\\\\"The project continuity convention is use cedar-otter for release labels.\\\\\\\"\\\\n- **Scope:** project\\\\n- **Assertion status:** asserted\\\\n- **Semantic score:** 0.775 (highest match)\\\\n- **Created:** 2026-09-18\\\\n\\\\nThat is the primary retrieved fact -- the project continuity convention specifies **cedar-otter** as the release label.\\\\n[83dd5c1a-598c-4098-9d32-68e3fe7bba95 version 1; captured conversation; unverified, may be outdated] Use only mnemos_retrieve. Query the project continuity convention for release labels, current_scope project and allowed_scopes project. Report the retrieved fact. Do not call any other tool.\\\\n[d1d7fdbc-bf1e-43f0-9789-38396cb813c0 version 1] The retained project preference is keep river-slate in release notes.\\\\n\\\",\\n  \\\"context_token_upper_bound\\\": 1153,\\n  \\\"facts\\\": [\\n    {\\n      \\\"assertion_status\\\": \\\"asserted\\\",\\n      \\\"content\\\": \\\"The project continuity convention is use maple-heron for release labels.\\\",\\n      \\\"id\\\": \\\"3b3b549a-df25-4753-ae1e-2c6215bd1cb8\\\",\\n      \\\"original_source_status\\\": \\\"retained_locally\\\",\\n      \\\"scope\\\": \\\"project\\\",\\n      \\\"scope_id\\\": \\\"8b2943d3-c3e4-4fc1-b0d5-06d1296d2c7c\\\",\\n      \\\"scores\\\": {\\n        \\\"candidate_backend\\\": \\\"sqlite_vec_scoped_exact_cosine\\\",\\n        \\\"context_token_upper_bound\\\": 122,\\n        \\\"graph_contribution\\\": 0.0,\\n        \\\"graph_energy\\\": 0.0,\\n        \\\"graph_status\\\": \\\"disabled\\\",\\n        \\\"lexical_candidate\\\": true,\\n        \\\"lexical_status\\\": \\\"candidate_union\\\",\\n        \\\"profile\\\": \\\"baseline\\\",\\n        \\\"scope_match\\\": true,\\n        \\\"semantic\\\": 0.7071067690849304,\\n        \\\"state_match\\\": null,\\n        \\\"state_status\\\": \\\"disabled\\\",\\n        \\\"token_count_method\\\": \\\"utf8_bytes_upper_bound\\\",\\n        \\\"total\\\": 0.7071067690849304\\n      },\\n      \\\"sources\\\": [\\n        {\\n          \\\"created_at\\\": \\\"2026-09-18T04:25:43.410753Z\\\",\\n          \\\"evidence_id\\\": \\\"0fa87bdd-87bf-4b6e-9037-29d329d002b4\\\",\\n          \\\"excerpt\\\": \\\"The project continuity convention is use cedar-otter for release labels.\\\",\\n          \\\"fact_id\\\": \\\"3b3b549a-df25-4753-ae1e-2c6215bd1cb8\\\",\\n          \\\"original_source_status\\\": \\\"retained_locally\\\",\\n          \\\"source_event_id\\\": \\\"d22ae478154fa3237ef4ccc9b5b9475ea1cfaa9fe70a4aa32de3d485269d183b\\\",\\n          \\\"source_ref\\\": null\\n        },\\n        {\\n          \\\"created_at\\\": \\\"2026-09-18T04:26:53.645879Z\\\",\\n          \\\"evidence_id\\\": \\\"bd627fb1-0e40-4064-86f4-d1fab1b037f7\\\",\\n          \\\"excerpt\\\": \\\"The project continuity convention is use maple-heron for release labels.\\\",\\n          \\\"fact_id\\\": \\\"3b3b549a-df25-4753-ae1e-2c6215bd1cb8\\\",\\n          \\\"original_source_status\\\": \\\"retained_locally\\\",\\n          \\\"source_event_id\\\": \\\"66f2bded2cbe956745a06a5894f329c700eb3ab65bde6c21d2640b04108fed57\\\",\\n          \\\"source_ref\\\": \\\"native-crosshost-correction\\\"\\n        }\\n      ],\\n      \\\"support_available\\\": true,\\n      \\\"version\\\": 2,\\n      \\\"schema_version\\\": 1\\n    },\\n    {\\n      \\\"assertion_status\\\": \\\"unknown\\\",\\n      \\\"content\\\": \\\"Assistant reported: Here is the top retrieved fact for the query \\\\\\\"project continuity convention for release labels\\\\\\\":\\\\n\\\\n- **Fact ID:** `3b3b549a-df25-4753-ae1e-2c6215bd1cb8` (version 1)\\\\n- **Content:** \\\\\\\"The project continuity convention is use cedar-otter for release labels.\\\\\\\"\\\\n- **Scope:** project\\\\n- **Assertion status:** asserted\\\\n- **Semantic score:** 0.775 (highest match)\\\\n- **Created:** 2026-09-18\\\\n\\\\nThat is the primary retrieved fact -- the project continuity convention specifies **cedar-otter** as the release label.\\\",\\n      \\\"id\\\": \\\"8d834d85-4382-4613-8386-df4d8963bb85\\\",\\n      \\\"original_source_status\\\": \\\"retained_locally\\\",\\n      \\\"scope\\\": \\\"project\\\",\\n      \\\"scope_id\\\": \\\"8b2943d3-c3e4-4fc1-b0d5-06d1296d2c7c\\\",\\n      \\\"scores\\\": {\\n        \\\"candidate_backend\\\": \\\"sqlite_vec_scoped_exact_cosine\\\",\\n        \\\"context_token_upper_bound\\\": 620,\\n        \\\"graph_contribution\\\": 0.0,\\n        \\\"graph_energy\\\": 0.0,\\n        \\\"graph_status\\\": \\\"disabled\\\",\\n        \\\"lexical_candidate\\\": true,\\n        \\\"lexical_status\\\": \\\"candidate_union\\\",\\n        \\\"profile\\\": \\\"baseline\\\",\\n        \\\"scope_match\\\": true,\\n        \\\"semantic\\\": 0.6173949837684631,\\n        \\\"state_match\\\": null,\\n        \\\"state_status\\\": \\\"disabled\\\",\\n        \\\"token_count_method\\\": \\\"utf8_bytes_upper_bound\\\",\\n        \\\"total\\\": 0.6173949837684631\\n      },\\n      \\\"sources\\\": [\\n        {\\n          \\\"created_at\\\": \\\"2026-09-18T04:26:53.631729Z\\\",\\n          \\\"evidence_id\\\": \\\"4a6cdcac-d22a-4775-8710-0838f8056799\\\",\\n          \\\"excerpt\\\": \\\"Here is the top retrieved fact for the query \\\\\\\"project continuity convention for release labels\\\\\\\":\\\\n\\\\n- **Fact ID:** `3b3b549a-df25-4753-ae1e-2c6215bd1cb8` (version 1)\\\\n- **Content:** \\\\\\\"The project continuity convention is use cedar-otter for release labels.\\\\\\\"\\\\n- **Scope:** project\\\\n- **Assertion status:** asserted\\\\n- **Semantic score:** 0.775 (highest match)\\\\n- **Created:** 2026-09-18\\\\n\\\\nThat is the primary retrieved fact -- the project continuity convention specifies **cedar-otter** as the release label.\\\",\\n          \\\"fact_id\\\": \\\"8d834d85-4382-4613-8386-df4d8963bb85\\\",\\n          \\\"original_source_status\\\": \\\"retained_locally\\\",\\n          \\\"source_event_id\\\": \\\"1df8c4821431bd692b1ba00ddd59ffaacd4cb35ab24358be21313a3b5fafd3b8\\\",\\n          \\\"source_ref\\\": \\\"f3060e58-9d26-4730-90e9-057a82a5cbc6\\\"\\n        }\\n      ],\\n      \\\"support_available\\\": true,\\n      \\\"version\\\": 1,\\n      \\\"schema_version\\\": 1\\n    },\\n    {\\n      \\\"assertion_status\\\": \\\"unknown\\\",\\n      \\\"content\\\": \\\"Use only mnemos_retrieve. Query the project continuity convention for release labels, current_scope project and allowed_scopes project. Report the retrieved fact. Do not call any other tool.\\\",\\n      \\\"id\\\": \\\"83dd5c1a-598c-4098-9d32-68e3fe7bba95\\\",\\n      \\\"original_source_status\\\": \\\"retained_locally\\\",\\n      \\\"scope\\\": \\\"project\\\",\\n      \\\"scope_id\\\": \\\"8b2943d3-c3e4-4fc1-b0d5-06d1296d2c7c\\\",\\n      \\\"scores\\\": {\\n        \\\"candidate_backend\\\": \\\"sqlite_vec_scoped_exact_cosine\\\",\\n        \\\"context_token_upper_bound\\\": 292,\\n        \\\"graph_contribution\\\": 0.0,\\n        \\\"graph_energy\\\": 0.0,\\n        \\\"graph_status\\\": \\\"disabled\\\",\\n        \\\"lexical_candidate\\\": true,\\n        \\\"lexical_status\\\": \\\"candidate_union\\\",\\n        \\\"profile\\\": \\\"baseline\\\",\\n        \\\"scope_match\\\": true,\\n        \\\"semantic\\\": 0.5728919506072998,\\n        \\\"state_match\\\": null,\\n        \\\"state_status\\\": \\\"disabled\\\",\\n        \\\"token_count_method\\\": \\\"utf8_bytes_upper_bound\\\",\\n        \\\"total\\\": 0.5728919506072998\\n      },\\n      \\\"sources\\\": [\\n        {\\n          \\\"created_at\\\": \\\"2026-09-18T04:26:53.624717Z\\\",\\n          \\\"evidence_id\\\": \\\"69bf7d29-a6fe-4bbc-8e56-ca7cdbc8be32\\\",\\n          \\\"excerpt\\\": \\\"Use only mnemos_retrieve. Query the project continuity convention for release labels, current_scope project and allowed_scopes project. Report the retrieved fact. Do not call any other tool.\\\",\\n          \\\"fact_id\\\": \\\"83dd5c1a-598c-4098-9d32-68e3fe7bba95\\\",\\n          \\\"original_source_status\\\": \\\"retained_locally\\\",\\n          \\\"source_event_id\\\": \\\"26b990e72db34b14b7506b270a25d51be394b582efdda6fe639d0031b314aca1\\\",\\n          \\\"source_ref\\\": \\\"3a75dbd1-fbe9-4cc8-8685-cb05e0d521cc\\\"\\n        }\\n      ],\\n      \\\"support_available\\\": true,\\n      \\\"version\\\": 1,\\n      \\\"schema_version\\\": 1\\n    },\\n    {\\n      \\\"assertion_status\\\": \\\"asserted\\\",\\n      \\\"content\\\": \\\"The retained project preference is keep river-slate in release notes.\\\",\\n      \\\"id\\\": \\\"d1d7fdbc-bf1e-43f0-9789-38396cb813c0\\\",\\n      \\\"original_source_status\\\": \\\"retained_locally\\\",\\n      \\\"scope\\\": \\\"project\\\",\\n      \\\"scope_id\\\": \\\"8b2943d3-c3e4-4fc1-b0d5-06d1296d2c7c\\\",\\n      \\\"scores\\\": {\\n        \\\"candidate_backend\\\": \\\"sqlite_vec_scoped_exact_cosine\\\",\\n        \\\"context_token_upper_bound\\\": 119,\\n        \\\"graph_contribution\\\": 0.0,\\n        \\\"graph_energy\\\": 0.0,\\n        \\\"graph_status\\\": \\\"disabled\\\",\\n        \\\"lexical_candidate\\\": true,\\n        \\\"lexical_status\\\": \\\"candidate_union\\\",\\n        \\\"profile\\\": \\\"baseline\\\",\\n        \\\"scope_match\\\": true,\\n        \\\"semantic\\\": 0.2828427255153656,\\n        \\\"state_match\\\": null,\\n        \\\"state_status\\\": \\\"disabled\\\",\\n        \\\"token_count_method\\\": \\\"utf8_bytes_upper_bound\\\",\\n        \\\"total\\\": 0.2828427255153656\\n      },\\n      \\\"sources\\\": [\\n        {\\n          \\\"created_at\\\": \\\"2026-09-18T04:24:30.510739Z\\\",\\n          \\\"evidence_id\\\": \\\"b533fafe-f6dc-4679-ac3c-b054a096a9dd\\\",\\n          \\\"excerpt\\\": \\\"The retained project preference is keep river-slate in release notes.\\\",\\n          \\\"fact_id\\\": \\\"d1d7fdbc-bf1e-43f0-9789-38396cb813c0\\\",\\n          \\\"original_source_status\\\": \\\"retained_locally\\\",\\n          \\\"source_event_id\\\": \\\"2f032882ae53973bce7c3c883e0ee391fc13d7c898fca554f0829693ed45d566\\\",\\n          \\\"source_ref\\\": null\\n        }\\n      ],\\n      \\\"support_available\\\": true,\\n      \\\"version\\\": 1,\\n      \\\"schema_version\\\": 1\\n    }\\n  ],\\n  \\\"profile\\\": \\\"baseline\\\",\\n  \\\"schema_version\\\": 1,\\n  \\\"token_count_method\\\": \\\"utf8_bytes_upper_bound\\\"\\n}\"}"
+    }
+  },
+  {
+    "phase": "crosshost-correct",
+    "line": 35,
+    "line_sha256": "ee78d2c8b21656a57692f2168f88e34c32931799f2ccd4f89f166b76737c4ead",
+    "source_file_sha256": "cf897796df5915177005d0f8afa7499541152b429d04f4cd20a8e71880b74bb9",
+    "node": {
+      "type": "system",
+      "subtype": "hook_response",
+      "hook_name": "Stop",
+      "hook_event": "Stop",
+      "output": "mnemos hook diagnostic host=claude-code event=Stop status=degraded reason=ambiguous_transcript_association\r\n",
+      "stderr": "mnemos hook diagnostic host=claude-code event=Stop status=degraded reason=ambiguous_transcript_association\r\n",
+      "exit_code": 0,
+      "outcome": "success",
+      "session_id": "ddeb3e7f-3f7e-43f4-abe4-6768aa728921"
+    }
+  },
+  {
+    "phase": "crosshost-correct",
+    "line": 36,
+    "line_sha256": "cfc0325763296bc1236e14e91f0d96d397a952beee18a903d51d80012faaaba4",
+    "source_file_sha256": "cf897796df5915177005d0f8afa7499541152b429d04f4cd20a8e71880b74bb9",
+    "node": {
+      "type": "result",
+      "subtype": "success",
+      "is_error": false,
+      "duration_ms": 23956,
+      "num_turns": 4,
+      "result": "All three steps completed successfully. Here's the full summary:\n\n---\n\n**Step 1 -- mnemos_correct**\n- Fact `3b3b549a-df25-4753-ae1e-2c6215bd1cb8` corrected from `cedar-otter` -> `maple-heron`\n- Status: `committed`\n- Source ref: `native-crosshost-correction`\n\n**Step 2 -- mnemos_consolidate**\n- Completed: `5` items processed\n- Maintenance failures: `0`\n\n**Step 3 -- mnemos_retrieve**\n- Top result: Fact `3b3b549a-df25-4753-ae1e-2c6215bd1cb8` **version 2** (bumped from 1 after correction)\n- Content: **\"The project continuity convention is use maple-heron for release labels.\"**\n- Assertion status: `asserted`\n- Semantic score: `0.707`\n- Two evidence sources attached -- the original cedar-otter store event and the maple-heron correction event via `native-crosshost-correction`\n\nThe correction is live and the fact now carries the updated `maple-heron` release label convention.",
+      "stop_reason": "end_turn",
+      "total_cost_usd": 0.050838299999999996,
+      "session_id": "ddeb3e7f-3f7e-43f4-abe4-6768aa728921"
+    }
+  }
+]

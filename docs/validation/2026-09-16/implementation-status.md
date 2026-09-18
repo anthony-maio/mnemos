@@ -29,7 +29,7 @@ The regression exercises outbox identity and durable remember/correct/replay.
 This repairs the deterministically reproduced generated-ID rejection below;
 the specific cause of the earlier full-suite failure remains unproven because
 that run did not retain its generated ID. Installed-package validation now passes
-as recorded above; native acceptance has not been rerun on this source.
+as recorded above; the later native attempts remain incomplete.
 
 The earlier host-context repair preserves recall authority at the host boundary.
 Claude's adapter had discarded the service's assertion-status and history labels;
@@ -48,10 +48,20 @@ also had no events or jobs. The same test passed in isolation. A separate
 reproduced rejection of a generated UUID whose numeric tail matched the
 credit-card filter. This is a confirmed write defect, but the failed full run
 did not retain its generated ID, so its specific cause remains unproven.
-The latest installed checkpoint includes this repair. Native acceptance has not
-been rerun, and this does not close the native v6 failure below.
+The latest installed checkpoint includes this repair. The incomplete later
+native attempts do not close the native v6 failure below.
 
-The [latest native forget/replay attempt](../2026-09-17/native-codex-claude-continuity-v6/README.md)
+Two later native attempts used installed `ac139dd`.
+[V7](../2026-09-18/native-codex-claude-continuity-v7/README.md) committed
+related deletion: SQLite reopen confirms the target and five selected copies
+absent, with unrelated and foreign facts retained. Claude exceeded its phase
+budget; replay and final Codex recall did not run.
+[V8](../2026-09-18/native-codex-claude-continuity-v8/README.md) stopped
+at the reverse Codex phase with tool approval pending. Its 180-second deadline
+includes operator time, so this is not a product-latency result. Forgetting,
+replay, and final recall did not run. Native acceptance remains open.
+
+The [earlier native forget/replay attempt](../2026-09-17/native-codex-claude-continuity-v6/README.md)
 is FAILED overall. Codex taught the fact, Claude corrected it, and fresh Codex
 retrieved version 2 across restarts. Claude then deleted it and retrieved an
 unrelated retained preference. Direct service replay after restart suppressed
