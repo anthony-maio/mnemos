@@ -2,7 +2,17 @@
 
 Updated September 18, 2026 for the unreleased functional-local-memory worktree. Implementation, protocol tests, and native conversation acceptance are separate claims.
 
-The current [outbox selection checkpoint](validation/2026-09-18/outbox-selection-package-checkpoint-v1/README.md)
+The current [stale descriptor checkpoint](validation/2026-09-18/stale-descriptor-package-checkpoint-v1/README.md)
+at `37e446f` passes 1,049 source tests with four skips, all six source/package
+checks, 379 selected installed cases with two matching skips, and seven
+synthetic replay assertions. Seven new cases cover delayed replacement,
+live-owner reuse, failed or stalled startup, authentication rejection, and
+an owner recovering while its competing launcher exits. The client probes
+authenticated health before launching a replacement and waits past a known
+stale descriptor without deleting it. Earlier native evidence remains bound
+to its original wheel; configured real-provider recovery remains open.
+
+The preceding [outbox selection checkpoint](validation/2026-09-18/outbox-selection-package-checkpoint-v1/README.md)
 at `c25ed98` passes 1,042 source tests with four skips, all six source/package
 checks, 372 selected installed cases with two matching skips, and seven
 synthetic replay assertions. An explicitly supplied empty outbox now retains

@@ -32,6 +32,13 @@ This protects capture after the outbox write completes. It cannot recover text
 if the host terminates the hook before that write, and it does not establish
 that native hook deadlines or clean host shutdown are satisfied.
 
+After a transport failure, the client checks the existing owner through a
+bounded authenticated health request. A reachable owner receives one retry
+without another launch. Otherwise, the client waits for a replacement
+descriptor while preserving the stale file. A competing launcher exit can
+still yield to a recovered owner after another bounded health check.
+Authorization and invalid health responses do not trigger replacement.
+
 The client reports a service process that exits before startup with its exit
 code. A process that remains alive without publishing a descriptor reports a
 startup timeout. A valid existing owner takes precedence over an exited
@@ -288,7 +295,17 @@ completed with protected fixture permissions and persisted both conversation rol
 The instrumented shell duration was 876 ms. This single observation does not
 establish repeated deadline acceptance or close the broader lifecycle gates.
 
-The current [outbox selection checkpoint](validation/2026-09-18/outbox-selection-package-checkpoint-v1/README.md)
+The current [stale descriptor checkpoint](validation/2026-09-18/stale-descriptor-package-checkpoint-v1/README.md)
+at `37e446f` passes 1,049 source tests with four skips, all six source/package
+checks, 379 selected installed cases with two matching skips, and seven
+synthetic replay assertions. Seven new cases cover delayed replacement,
+live-owner reuse, failed or stalled startup, authentication rejection, and
+an owner recovering while its competing launcher exits. The client probes
+authenticated health before launching a replacement and waits past a known
+stale descriptor without deleting it. Earlier native evidence remains bound
+to its original wheel; configured real-provider recovery remains open.
+
+The preceding [outbox selection checkpoint](validation/2026-09-18/outbox-selection-package-checkpoint-v1/README.md)
 at `c25ed98` passes 1,042 source tests with four skips, all six source/package
 checks, 372 installed cases with two matching skips, and seven replay assertions.
 A supplied empty outbox now keeps its selected recovery file and write policy.
@@ -330,7 +347,7 @@ Arbitrary crash timing, concurrent hosts, real-provider recovery, and complete
 host acceptance remain open. The failed v1 PID preflight is preserved separately.
 
 Three fresh [native Codex sessions](validation/2026-09-18/native-codex-stop-repeat-v1/README.md)
-on this wheel used unchanged generated hooks. Late native hook pairs measured
+on the `c25ed98` wheel used unchanged generated hooks. Late native hook pairs measured
 1,015 ms, 1,031 ms, and 964 ms within the three-second deadline, and both
 conversation roles persisted after shutdown. The pairs are identified as Stop
 by their placement between final answer and turn completion; native logs omit

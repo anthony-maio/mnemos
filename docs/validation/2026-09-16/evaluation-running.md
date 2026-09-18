@@ -1,6 +1,23 @@
 # Real-model evaluation status
 
-## Current checkpoint: September 18, 2026, 06:02 UTC observation
+## Current checkpoint: September 18, 2026, 07:26 UTC observation
+
+The existing execution session remained live. At 07:26:45 UTC, coordinator
+`26488` and workers `47588` and `46036` were alive with their original
+September 17 start times. The full-profile checkpoint had 42 completed
+observations and 42 unique IDs, next session index 13, status `running`, and
+mtime 07:11:53 UTC. Cases heldout-001 through heldout-014 each had three
+recorded repetitions. The read-only `/api/tags` probe to `.35` exceeded five
+seconds. These are liveness and checkpoint observations, not accepted
+quality results. No frozen source, evaluation settings, models, or server
+configuration were changed.
+
+The separate [stale descriptor package checkpoint](../2026-09-18/stale-descriptor-package-checkpoint-v1/README.md)
+at `37e446f` passed 1,049 source tests with four skips, all six source/package
+checks, 379 installed cases with two matching skips, and seven replay
+assertions. That client repair is outside the frozen real-model evaluation.
+
+## Historical checkpoint: September 18, 2026, 06:02 UTC observation
 
 The existing execution session and coordinator/worker processes `26488`,
 `47588`, and `46036` remain alive. At 06:02 UTC, the full-profile checkpoint
@@ -9,7 +26,7 @@ next session index 12, and status `running`. A read-only `/api/ps` request
 to `.35` again exceeded five seconds. These are execution observations,
 not accepted quality results. The queue, model, and server were unchanged.
 
-The current package checkpoint is source `c25ed98`: 1,042 source tests with
+The package checkpoint at that observation was source `c25ed98`: 1,042 source tests with
 four skips, all six source/package checks, 372 installed cases with two
 matching skips, and seven replay assertions passed. See the
 [outbox checkpoint](../2026-09-18/outbox-selection-package-checkpoint-v1/README.md).

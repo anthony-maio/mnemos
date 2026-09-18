@@ -4,7 +4,17 @@ This record covers the unreleased `wt/functional-local-memory` worktree. It
 separates implemented behavior from acceptance evidence. The original task
 boundaries and thresholds remain in the [implementation plan](../../plans/2026-09-16-functional-local-memory.md).
 
-The current [outbox selection checkpoint](../2026-09-18/outbox-selection-package-checkpoint-v1/README.md)
+The current [stale descriptor checkpoint](../2026-09-18/stale-descriptor-package-checkpoint-v1/README.md)
+at `37e446f` passes 1,049 source tests with four skips, all six source/package
+checks, 379 selected installed cases with two matching skips, and seven
+synthetic replay assertions. Seven new cases cover delayed replacement,
+live-owner reuse, failed or stalled startup, authentication rejection, and
+an owner recovering while its competing launcher exits. The client probes
+authenticated health before launching a replacement and waits past a known
+stale descriptor without deleting it. Earlier native evidence remains bound
+to its original wheel; configured real-provider recovery remains open.
+
+The preceding [outbox selection checkpoint](../2026-09-18/outbox-selection-package-checkpoint-v1/README.md)
 at `c25ed98` passes 1,042 source tests with four skips, all six source/package
 checks, 372 selected installed cases with two matching skips, and seven
 synthetic replay assertions. An explicitly supplied empty outbox now retains
@@ -101,7 +111,7 @@ historical-only meanings may still be missed.
 The preceding [similarity package checkpoint](../2026-09-18/related-similarity-package-checkpoint-v1/README.md)
 validated source `ac139dd` with 1,022 tests and 352 selected installed cases.
 It remains useful historical evidence for similarity review, UUID write safety,
-and host-context authority, but the `c25ed98` checkpoint is the current package
+and host-context authority, but the `37e446f` checkpoint is the current package
 binding. Native acceptance and the frozen real-model evaluation remain separate,
 open gates.
 
@@ -380,10 +390,10 @@ capture diagnostics and complete lifecycle acceptance remain open.
 
 | Plan item | Current implementation and evidence | Acceptance state |
 | --- | --- | --- |
-| T01 Runtime | Configured providers, SQLite default, explicit mock rejection, readiness checks, health reporting, and installed entry points are covered by the `c25ed98` package and wheel checks. Windows private-path inheritance and permission drift are now explicitly tested. | Installed doctor cases cover configuration states but do not substitute for a live provider reachability probe. Managed service logging, omitted-provider startup, and generated host provenance are also covered. |
+| T01 Runtime | Configured providers, SQLite default, explicit mock rejection, readiness checks, health reporting, and installed entry points are covered by the `37e446f` package and wheel checks. Windows private-path inheritance and permission drift are now explicitly tested. | Installed doctor cases cover configuration states but do not substitute for a live provider reachability probe. Managed service logging, omitted-provider startup, and generated host provenance are also covered. |
 | T02 Scope | Profile, project, workspace, membership, enabled-project capture, foreign-project filtering, and legacy/routing review are implemented and covered by contract tests. | Local scope contract tested. Native identity coverage across every host remains open. |
 | T03 Durable writes | Atomic source and job creation, leases, retries, CAS, revisions, evidence, rollback, and restart persistence are implemented and tested. | Local durability tested. Long-running operational recovery remains open. |
-| T04 Local service | Authenticated loopback ownership, private descriptors, outbox handling, bounded shutdown, and HTTP/subprocess paths are implemented and tested. | Local service and installed replay checks pass, including empty supplied-outbox path and policy preservation. Native startup-outage capture survives explicit client replay without duplicates. A separate fresh Codex session automatically replayed the queued events after fixture-service restoration, preserving both sessions across restart. A later forced service kill after native capture commit preserved the original event/job IDs and recovered automatically through fresh native hooks after explicit service restoration. Arbitrary crash timing, concurrent-host behavior, and real-provider recovery remain open. |
+| T04 Local service | Authenticated loopback ownership, private descriptors, outbox handling, bounded shutdown, and HTTP/subprocess paths are implemented and tested. | Local service and installed replay checks pass, including supplied-outbox policy preservation and stale-descriptor replacement with authenticated live-owner checks. Native startup-outage capture survives explicit client replay without duplicates. A separate fresh Codex session automatically replayed the queued events after fixture-service restoration, preserving both sessions across restart. A later forced service kill after native capture commit preserved the original event/job IDs and recovered automatically through fresh native hooks after explicit service restoration. Arbitrary crash timing, concurrent-host behavior, and real-provider recovery remain open. |
 | T05 Maintenance | Service-owned scheduling, bounded batches, retry/failure state, retention, and visible maintenance status are implemented and tested. | Deterministic maintenance tested. A daily-use pilot has not run. |
 | T06 Evidence and safety | Write firewall, source validation, role labels, governed explicit writes, private paths, retention controls, and local-original availability are implemented and tested. | Safety contracts pass. Real-model extraction precision and human acceptance remain unproved. |
 | T07 Surprisal | Automatic gating, explicit-remember bypass, session-safe history, and diagnostics are implemented and covered by deterministic tests. | Mechanism contract tested. Real filtering benefit remains open. |
@@ -398,7 +408,7 @@ capture diagnostics and complete lifecycle acceptance remain open.
 | T16 Recovery | Backup, integrity, new-path restore, suppression merge, staged reindex, and activation backup behavior are implemented and tested. | Local recovery contracts pass, including a backup during an active writer transaction. Live data migration remains separately authorization-bound. |
 | T17 Cross-host | Native v9 on installed `5af3d15` passes 15 bounded lifecycle checks for Codex teaching, Claude correction and reviewed deletion, restart, direct service replay suppression, foreign-project exclusion, final recall, and retained unrelated facts. | Lexical fixture vectors and disabled modules limit the claim. All three Codex processes exited zero, but reverse and final Stop hooks timed out. A later Codex-only fixture verifies automatic native-hook replay after startup failure. Cross-host outage recovery, complete capture, Desktop, Hermes, real-model quality, and the two-week pilot remain open. Earlier v6-v8 failures remain preserved. |
 | T18 Evaluation | Frozen lifecycle datasets, request-bound extraction schemas, real-provider adapters, seven profiles, raw traces, checkpoints, Wilson intervals, and paired comparisons are implemented. | Power-interrupted checkpoints were preserved and the unchanged queue resumed after provenance checks. Complete real-model matrix acceptance remains open. Follow the [evaluation status and recovery record](evaluation-running.md). |
-| T19 Claims and packaging | Claim ledger, compatibility matrix, release checklist, package artifacts, UI assets, and negative evidence archives are maintained. | The current `c25ed98` source and installed package checkpoint is complete. Publication, website, paper, and release actions remain separately authorization-bound. |
+| T19 Claims and packaging | Claim ledger, compatibility matrix, release checklist, package artifacts, UI assets, and negative evidence archives are maintained. | The current `37e446f` source and installed package checkpoint is complete. Publication, website, paper, and release actions remain separately authorization-bound. |
 
 The current capture recommendation is a hybrid: automatically capture enabled
 project conversations as retained evidence, extract durable facts separately,
