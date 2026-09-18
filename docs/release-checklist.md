@@ -4,7 +4,7 @@ Use this checklist before tagging a release candidate or making category-definin
 
 ## Functional local memory acceptance
 
-The September 16, 2026 implementation is unreleased. [Validation progress](validation/2026-09-16/progress.md) records observations, failures, and gates still open. Before release:
+The functional-local-memory implementation remains unreleased as of September 18, 2026. The [implementation status](validation/2026-09-16/implementation-status.md) records current observations, preserved failures, and gates still open. Before release:
 
 - Freeze one source commit and validate its wheel outside the source checkout.
 - Verify scope isolation, durable retry, restart, expected-version correction, forget/replay suppression, backup/restore, and reindex identity on the persistent service.

@@ -1,124 +1,49 @@
 # Local memory host validation
 
-This record separates adapter and transport checks from real host acceptance. It
-describes the unreleased functional-local-memory worktree, updated September 17, 2026.
+Updated September 18, 2026 for the unreleased functional-local-memory worktree. This record separates adapter and transport checks from native host acceptance. The [compatibility matrix](../client-compatibility-matrix.md) records observed versions and source bindings.
 
-## Cross-host continuity checkpoint
+## Current native evidence
 
-`tests/test_cross_host_contract.py` starts one authenticated loopback
-`MnemosService` with a temporary SQLite database and an in-memory scope
-registry. It uses the real `MnemosClient` HTTP transport and three adapter
-context types: Codex, Claude Code, and Hermes. Cognition is deliberately
-synthetic and disabled for this transport fixture. That makes this a durable
-identity and scope test, not a model quality result.
+| Host or workflow | Observed result | Boundary |
+| --- | --- | --- |
+| Codex CLI 0.146.0 and Claude Code 2.1.191 | [Shared lifecycle v9](2026-09-18/native-codex-claude-continuity-v9/README.md), installed `5af3d15`: 15 bounded criteria pass for teaching, corrected recall, reviewed deletion, replay suppression, retained facts, and foreign-project exclusion across restarts. | All three Codex processes exited zero, but two Stop hooks timed out. Fixture vectors and disabled cognition modules do not prove model quality or complete capture. |
+| Concurrent Codex/Claude recovery | [Mixed-host v4](2026-09-18/native-crosshost-recovery-v4/README.md), installed `fc72cc2`: three same-event replay pairs committed to stable event/job identities; eight normal messages and two non-extractable provisional records survived owner restart. | One pairing timeout and degraded Claude identity diagnostics remain. The test instruments overlap and explicitly restores a fixture owner. |
+| Claude Code lifecycle | [Native v18](2026-09-17/native-claude-lifecycle-v18/README.md), installed `dedfcfd`: 15 fact-lifecycle criteria pass, including correction, forgetting, restarts, and reconstructed replay. | Overall partial because capture diagnostics were degraded. An observed connection abort remains unexplained. |
+| Codex Desktop | No isolated native conversation run. | NOT RUN; shared adapter tests are insufficient. |
+| Hermes Agent 0.21.3 in WSL | Installed provider API, wheel discovery, and authenticated Windows bridge exercised. | A native model conversation has not passed; native continuity remains open. |
 
-The source events and expected outcomes are recorded in
-[`local-memory-continuity.jsonl`](../../benchmarks/scenarios/local-memory-continuity.jsonl).
-The test rotates the teaching context through all three adapters. It verifies
-source evidence, retrieves the taught fact after restart, corrects it through
-the Claude Code context, and checks that its ID survives while its version
-advances. A further restart preserves the corrected content.
+The Hermes installation used by the recorded checks is `/home/anthony/.hermes/hermes-agent` in WSL. Initial API evidence used revision `97962358`; later wheel-discovery evidence used `36842e639a178741b70c821e0f4cdd129cd0dfe3`. Those are observation bindings, not a live installation inventory. The Windows Mnemos environment does not claim Hermes as a native dependency. See the [bridge record](2026-09-16/hermes-bridge-smoke.md) and [host smoke history](2026-09-16/native-host-smoke.md).
 
-Both enabled projects have positive retrieval controls before the test checks
-that each project's fact is absent from the other project's results. The
-Hermes context forgets the original fact, and replaying the source event is
-suppressed. Maintenance and another restart must preserve that suppression
-and the absence of both the original and corrected content.
+Claude's observed prompt payload lacks an occurrence ID and its transcript appears later. Mnemos preserves the prompt as provisional evidence, then captures native UUID-backed messages separately. Provisional evidence remains excluded from extraction. The resulting identity warnings are recorded limitations, not grounds to merge identical text or suppress diagnostics.
 
-Run it with:
+## Synthetic cross-host contract
+
+`tests/test_cross_host_contract.py` starts an authenticated loopback `MnemosService` with a temporary SQLite database and registry. It uses real `MnemosClient` HTTP transport with Codex, Claude Code, and Hermes scope contexts. The [scenario fixture](../../benchmarks/scenarios/local-memory-continuity.jsonl) rotates the teaching context across all three adapters.
+
+The test checks source evidence, recall after restart, correction preserving the fact ID while advancing its version, positive local/foreign retrieval controls, and cross-project exclusion. Forgetting through the Hermes context must survive source replay, maintenance, and another restart. Cognition is synthetic and disabled; the test does not launch three native conversations or prove extraction quality.
 
 ```text
-.venv\Scripts\python.exe -m pytest -q tests/test_cross_host_contract.py
+.venv\Scripts\python.exe -m pytest -q tests/test_cross_host_contract.py tests/test_mcp_compatibility.py
 ```
 
-This checkpoint passed on the recorded run. It proves authenticated local
-service continuity for synthetic explicit-provider fixtures. It does not prove
-that any host actually started a session or that a real model generated a
-durable fact.
+Other service tests cover authentication, origin rejection, body limits, ownership, startup, retry, and sanitized outbox replay. Adapter tests cover transcript deltas, partial lines, rotation, checkpoints, scope, stable identity, and native context output. These contract checks do not replace the native observations above.
 
-## Installed host evidence
+## Disposable adapter checks
 
-These version checks were read-only:
+Use the adapter regression suite for repeatable payload checks in temporary fixtures:
 
-| Host | Observed installation | Capability evidence | Acceptance state |
-| --- | --- | --- | --- |
-| Codex CLI | `codex-cli 0.146.0` | Installed source20f generated TOML hooks returned a random canary and captured both roles across restart | Bounded native transport observed; full correction/forget lifecycle pending |
-| Codex Desktop | Installed desktop app; no isolated native run | Shared adapter tests only | NOT RUN |
-| Claude Code | `2.1.191` | Installed source20f native canary recall and both-role capture survived restart; prompt and Stop identity coverage was degraded | Partial; persistent-transcript attempt timed out. Extraction and full lifecycle matrix remain open |
-| Hermes Agent in WSL | `v0.21.3`; initial inspection `97962358`, later wheel discovery `36842e639a178741b70c821e0f4cdd129cd0dfe3` | Installed provider API and authenticated Windows bridge exercised; verified source9e wheel entry point loaded and reported available without service/network calls | Native model conversation did not complete |
-
-The Hermes package is installed under
-`/home/anthony/.hermes/hermes-agent` in WSL. The Windows Mnemos environment
-does not claim that package as an installed native dependency. The Hermes
-adapter reports manual MCP fallback when its provider API is unavailable.
-
-The [native host smoke record](2026-09-16/native-host-smoke.md) preserves the
-Claude model-version failure, successful retries, persistent-transcript timeout,
-and earlier Codex failures. The later [Codex generated-hook result](2026-09-16/native-codex-generated-v8/README.md)
-and [Claude scope result](2026-09-16/native-claude-scope-v4/README.md) preserve
-the bounded positive observations. These findings do not replace the complete acceptance
-matrix below.
-
-## Safe ephemeral adapter checks
-
-The following commands exercise adapter stdin contracts without changing a
-host configuration. They require a temporary running Mnemos descriptor and a
-temporary registry whose project is enabled for the selected profile. Set the
-environment variables only in the current shell, and clear them afterward.
-
-```powershell
-$oldProfile = $env:MNEMOS_USER_PROFILE_ID
-$oldRegistry = $env:MNEMOS_SCOPE_REGISTRY
-$oldDescriptor = $env:MNEMOS_RUNTIME_DESCRIPTOR
-$env:MNEMOS_USER_PROFILE_ID = "host-validation"
-$env:MNEMOS_SCOPE_REGISTRY = "C:\Temp\mnemos-host-validation\scopes.json"
-$env:MNEMOS_RUNTIME_DESCRIPTOR = "C:\Temp\mnemos-host-validation\runtime.json"
-$payload = '{"hook_event_name":"UserPromptSubmit","cwd":"C:\Temp\mnemos-host-validation\project","session_id":"codex-validation","turn_id":"turn-1","prompt":"Use the local test convention."}'
-$payload | .venv\Scripts\python.exe -m mnemos.adapters.codex UserPromptSubmit
-$env:MNEMOS_USER_PROFILE_ID = $oldProfile
-$env:MNEMOS_SCOPE_REGISTRY = $oldRegistry
-$env:MNEMOS_RUNTIME_DESCRIPTOR = $oldDescriptor
+```text
+.venv\Scripts\python.exe -m pytest -q tests/test_codex_adapter.py tests/test_claude_adapter.py tests/test_claude_provisional_capture.py
 ```
 
-The Claude adapter accepts the same temporary descriptor and registry shape:
+For a manual check, prepare a disposable service, enabled project registry, profile, database, runtime descriptor, outbox, and Claude checkpoint directory. Bind both adapters to that fixture and restore temporary environment settings after both checks. To prevent service autostart, construct `MnemosClient(auto_start=False)` and inject it through the adapter's `client` argument; the command-hook entry points do not read an `MNEMOS_AUTO_START` switch. The automated tests supply these dependencies directly.
 
-```powershell
-$payload = '{"hook_event_name":"UserPromptSubmit","cwd":"C:\Temp\mnemos-host-validation\project","session_id":"claude-validation","prompt":"Use the local test convention."}'
-$payload | .venv\Scripts\python.exe -m mnemos.adapters.claude_code UserPromptSubmit
-```
+Hook exit code zero is not a capture acknowledgment. Inspect the fixture's source events or outbox and its diagnostics. Without a native Claude occurrence ID a synthetic prompt is provisional; a payload-only check does not establish native transcript capture or a complete conversation record.
 
-For Hermes, run the provider contract in its WSL environment with an explicit
-descriptor path and profile. The Windows to WSL transport must use an approved
-explicit bridge or descriptor. Do not guess a WSL address, expose the service
-on a LAN interface, or open SQLite directly across the boundary. Hermes native
-activation also requires installing the Mnemos provider into that Hermes
-environment; until then, manual MCP is the honest path.
+For Hermes, use its WSL environment and the explicit bridge configuration described in the [integration guide](../integrations/hermes.md). Do not guess a WSL address or share SQLite as a competing writer across the boundary. Installing the provider into an isolated Hermes environment is distinct from enabling it in a live profile.
 
-These are adapter checks. A real host gate must record the host version, exact
-temporary or operator-selected config, MCP transport, Mnemos descriptor,
-profile, project identity, provider configuration, provider observation, and
-the capture, retrieval, restart, correction, forget, and outage results.
+## Remaining gates
 
-## Existing validation boundaries
+A native acceptance run must bind the host version, disposable or approved configuration, package/plugin source, transport, profile, canonical project identity, provider configuration, and observed operations. Capture, retrieval, restart, correction, forgetting, outage, and concurrency results must be identified individually. Preserve failed attempts and remove secrets from selected records.
 
-The focused MCP compatibility tests cover capture, maintenance, job status,
-inspect, retrieve, feedback, versioned correction, and versioned forget over a
-temporary local service. Other transport tests cover bearer authentication,
-origin rejection, body limits, one owning asyncio thread, process-lock
-startup, restart behavior, and sanitized outbox replay.
-
-The Claude adapter tests cover transcript deltas, role tagging, checkpoints,
-stable event IDs, malformed records, partial lines, transcript rotation, scope
-resolution, and native context output. Codex and Hermes tests cover optional
-imports, injected clients, failure behavior, stable identities, scope
-resolution, and lifecycle contracts.
-
-## Open gates
-
-The host continuity checkpoint does not establish extraction precision,
-retrieval quality, installed-host reliability, a two-week pilot, or
-published-release acceptance. Real-provider preflight and the 10,000-fact
-measurement have separate records: [evaluation status](2026-09-16/evaluation-running.md)
-and [performance](2026-09-16/performance-10k.md). The held-out evaluation is
-still running, and the recorded recall latency fails its gate. The daily-use
-pilot and full native cross-host lifecycle remain NOT RUN.
+The bounded Codex/Claude lifecycle and replay observations are complete as described above. Complete capture, native Hermes continuity, Codex Desktop, configured-provider recovery, extraction quality, and the daily-use pilot remain open. The latest accepted 10,000-fact recall measurement fails the latency target; see the [corrected performance record](2026-09-16/performance-corrected-v4/README.md). The [evaluation status](2026-09-16/evaluation-running.md) tracks the separate frozen real-model run. Its process being live does not establish accepted quality results. The two-week internal pilot and external readiness evidence remain NOT RUN.

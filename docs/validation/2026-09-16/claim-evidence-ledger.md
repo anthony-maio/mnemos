@@ -4,6 +4,17 @@ Assessment date: September 18, 2026. This covers the unreleased
 functional-local-memory worktree, not the installed public package or website.
 The capability IDs come from the original implementation plan.
 
+The latest [mixed-host replay and restart observation](../2026-09-18/native-crosshost-recovery-v4/README.md)
+uses the installed `fc72cc2` package. Three same-event pairs delivered by native
+Codex and Claude processes resolved to stable event/job identities. Eight normal
+messages and two extraction-ineligible provisional records survived restart;
+the outbox emptied and both scope controls survived. All four native turns
+exited zero. One pairing timeout and degraded Claude identity diagnostics remain
+recorded. Overlap was instrumented and fixture-service restoration was explicit.
+This closes the bounded mixed-host replay observation, not automatic daemon
+recovery, complete capture, real-provider quality, or daily-use acceptance.
+Earlier records below retain their original source bindings and limitations.
+
 The latest [retrieval strategy checkpoint](../2026-09-18/retrieval-comparison-checkpoint-v1/README.md)
 is bound to `fc72cc2`: 1,105 source passes, four skips, all six repository
 checks, and nine installed adapter passes. It isolates vector, lexical, hybrid,
@@ -95,8 +106,9 @@ database. Generated hooks were unchanged and all four native processes exited
 zero. The failed v1 home-path fixture is retained. Recovery-a displayed an MCP
 startup interruption, and PowerShell emitted Import-Clixml diagnostics; those
 PTY observations remain explicit limitations. This closes one bounded Codex
-concurrency observation, while cross-host concurrency, real-provider recovery,
-complete native acceptance, and the operational pilot remain open.
+concurrency observation. The later mixed-host v4 observation above adds bounded
+Codex/Claude evidence; real-provider recovery, complete native acceptance, and
+the operational pilot remain open.
 
 A [native startup-outage probe](../2026-09-18/native-codex-startup-outage-v1/README.md)
 on the installed `c25ed98` wheel retained the real user prompt and final answer
@@ -350,7 +362,7 @@ acceptance gate.
 
 | ID | Claim | Evidence and supported scope | Acceptance still open |
 | --- | --- | --- | --- |
-| C01 | Persistent local memory | SQLite/service regression checks cover durable events, jobs, restart, retry, and fact persistence. The [SSD source and installed checkpoint](ssd-package-checkpoint-v1/README.md) passes the selected lifecycle contracts. | Behavior under recurring slow-storage stalls, continuous daily operation, and the two-week pilot. |
+| C01 | Persistent local memory | SQLite/service regression checks cover durable events, jobs, restart, retry, and fact persistence. The [SSD checkpoint](ssd-package-checkpoint-v1/README.md) passes selected lifecycle contracts. [Mixed-host v4](../2026-09-18/native-crosshost-recovery-v4/README.md) adds bounded native replay and unchanged records across restart. | Behavior under recurring slow-storage stalls, continuous daily operation, and the two-week pilot. |
 | C02 | Project, workspace, and global isolation | Scope and lifecycle regressions are included in that package. Registry identities and membership replace folder-name identity. | Complete native-host isolation matrix. Passing fixtures do not prove every external client supplies correct identity. |
 | C03 | Surprisal-gated encoding | Mechanism tests cover distance bounds, scoped prediction history, explicit-write bypass, and the later symmetric embedding role. | Real-model retention/noise benefit over baseline and simple filtering. The historical 40 percent claim remains unverified. |
 | C04 | Evidence-based mutable memory | Expected-version corrections, revisions, graph refresh, and canonical handling have regression coverage. Source `46cc101` additionally rejects a conflict proposal that would relabel an existing canonical assertion. | General semantic support of extracted proposals. The collision rule is conservative and does not establish entailment. |
@@ -358,10 +370,10 @@ acceptance gate.
 | C06 | Sleep consolidation and compression | Durable maintenance, evidence-linked processing, retention, and failure/retry machinery are implemented. [Development extraction evidence](preference-contract-development-v1/README.md) preserves omissions and unsupported proposals. | Held-out supported precision, critical retention, and information-preserving compression. A valid JSON response is not a supported fact. |
 | C07 | Associative graph retrieval | Traversal, scope, persistence, and insertion-order controls are tested. The [capacity diagnostic](graph-capacity-diagnostic-v2/README.md) completed 15 development observations; successful recall was 0/5 at capacities 4, 8, and 16. | Associative retrieval benefit. Increasing capacity is not an accepted remedy; defaults and evaluation gates remain unchanged. |
 | C08 | Independently usable, composable modules | Standalone and integrated module regression checks exercise write filtering, scope, graph state, and lifecycle behavior. | Completed real-model baseline, full-pipeline, and five module-disabled comparisons. Mechanical correctness does not establish usefulness. |
-| C09 | Inspectable, correctable, forgettable memory | Facts expose status, version, evidence, and ranking traces. Correction and forget/replay suppression have persistent-service checks. | Complete native correction/forget continuity. Logical forgetting does not erase historical backups or external host transcripts. |
+| C09 | Inspectable, correctable, forgettable memory | Facts expose status, version, evidence, and ranking traces. Persistent-service checks and [native v9](../2026-09-18/native-codex-claude-continuity-v9/README.md) cover bounded correction, reviewed deletion of selected copies, and replay suppression. | Complete host/capture acceptance and arbitrary paraphrase erasure are not established. Logical forgetting does not erase historical backups or external host transcripts. |
 | C10 | Truthful local setup and readiness | Configured runtime, explicit providers, generated interpreter-bound host commands, and input-specific readiness checks are implemented. | Full native installation acceptance. Embedding revision is an operator-managed identity label; the runtime does not automatically verify a mutable Ollama tag's digest. |
-| C11 | Shared memory across Codex, Claude Code, and Hermes | [Native v6](../2026-09-17/native-codex-claude-continuity-v6/README.md) observes Codex store, Claude retrieval/correction/deletion, reverse Codex retrieval before deletion, and direct service replay suppression across restarts. [Host records](../../client-compatibility-matrix.md) preserve preceding failures and separate fixture transport from real-model quality. | V6 FAILED: final Codex reused a surviving unknown captured copy and skipped its second query. Broader related-forget, native answer behavior, complete capture, Hermes, Desktop, and pilot acceptance remain open. |
-| C12 | Proven retrieval, compression, or replacement advantage | The [corrected performance run](performance-corrected-v4/README.md) measured recall p95 1,088.094 ms against a 500 ms gate and durable capture p95 64.279 ms against 100 ms. The database after loading was 324,862,864 bytes. | Recall latency passes, completed real-model ablations, retained-information accuracy, and external pilot evidence. No general superiority or replacement claim is accepted. |
+| C11 | Shared memory across Codex, Claude Code, and Hermes | [Native v9](../2026-09-18/native-codex-claude-continuity-v9/README.md) passes 15 bounded criteria for Codex teaching, Claude correction and reviewed forgetting, corrected and post-forget Codex recall, scoped controls, and replay suppression across restarts. [Mixed-host v4](../2026-09-18/native-crosshost-recovery-v4/README.md) adds bounded concurrent replay. [Host records](../../client-compatibility-matrix.md) retain the v6 failure and distinguish fixture providers from model quality. | Two v9 Stop timeouts and degraded Claude identity diagnostics remain. Complete capture, real-provider quality, native Hermes continuity, Desktop, and pilot acceptance remain open. |
+| C12 | Proven retrieval, compression, or replacement advantage | The [corrected performance run](performance-corrected-v4/README.md) measured recall p95 1,088.094 ms against a 500 ms gate and durable capture p95 64.279 ms against 100 ms. The database after loading was 324,862,864 bytes. | Passing recall latency, completed real-model ablations, retained-information accuracy, and external pilot evidence remain unestablished. No general superiority or replacement claim is accepted. |
 
 ## Evidence bindings
 
