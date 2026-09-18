@@ -1,6 +1,26 @@
 # Real-model evaluation status
 
-## Current checkpoint: September 17, 2026, 22:27 UTC
+## Current checkpoint: September 18, 2026, 03:32 UTC
+
+The unchanged coordinator is still live: process 26488 was verified through
+the operating system, and its existing execution session remains active.
+The full-profile checkpoint records 34 observations and next session index 11.
+These are execution counts, not accepted quality results. Recent lifecycle
+logs contain repeated Ollama connection failures, and a fresh read-only
+`/api/tags` request to `192.168.86.35:11434` timed out after five seconds.
+The endpoint's model placement and current model digests could not be refreshed.
+No process was restarted and no model or server configuration was changed.
+Colab remains tabled.
+
+The latest complete package checkpoint is separate source `ebe1b0d`: 962
+tests passed with four skips, followed by static, build, and Twine checks;
+the installed wheel passed 268 selected cases and seven replay assertions.
+See the [package checkpoint](../2026-09-17/lazy-import-package-checkpoint-v1/README.md).
+Subsequent host-context and UUID write-safety work is outside this frozen
+real-model evaluation. Its validation must not be treated as evaluation quality
+evidence.
+
+## Historical checkpoint: September 17, 2026, 22:27 UTC
 
 The resumed held-out mechanism worker completed with exit code zero at
 19:48 UTC. The coordinator then started lifecycle worker PID 47588, observed
@@ -53,8 +73,8 @@ under `.venv/real-model-work-v4/`. The queue retains its original source,
 dataset, model-digest, and option bindings. Later product changes, including
 embedding roles, conflict collisions, concurrent retrieval, Claude startup,
 lost capture acknowledgments, and service exit diagnostics, are not part of
-this run. The latest complete
-package checkpoint is separate source `a607a5a`, with 924 tests passed and
+this run. The complete
+package checkpoint at that earlier observation was separate source `a607a5a`, with 924 tests passed and
 four skipped, followed by formatting, typing, JavaScript, build, and Twine
 checks. Its fresh installed wheel passed 130 selected contract cases with two
 matching platform skips and

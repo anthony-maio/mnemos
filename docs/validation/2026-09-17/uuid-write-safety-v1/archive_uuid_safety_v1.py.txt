@@ -1,0 +1,65 @@
+"""Archive the source-bound UUID safety validation without changing its result."""
+import hashlib
+import json
+from pathlib import Path
+import shutil
+import xml.etree.ElementTree as ET
+
+ROOT = Path(__file__).resolve().parents[1]
+OUTPUT = Path('C:/Users/Ant/AppData/Local/Temp/mnemos-uuid-safety-v1')
+ARCHIVE = ROOT / 'docs/validation/2026-09-17/uuid-write-safety-v1'
+digest = lambda p: hashlib.sha256(p.read_bytes()).hexdigest()
+report = json.loads((OUTPUT / 'report.json').read_text())
+assert report['status'] in ('passed', 'failed') and report['finished_at']
+assert report['base_commit'] == '3a59624544826d3567aea859f5708cd9c642ea8e'
+assert report['source_unchanged'] is True
+assert Path(report['package_origin']).resolve() == ROOT / 'mnemos/__init__.py'
+assert digest(ROOT / '.venv/validate_uuid_safety_v1.py') == report['runner_sha256']
+for name, expected in report['source_files_sha256'].items():
+    assert digest(ROOT / name) == expected, name
+cases = ET.parse(OUTPUT / 'pytest.xml').getroot().findall('.//testcase')
+totals = {
+    'tests': len(cases),
+    'failures': sum(c.find('failure') is not None for c in cases),
+    'errors': sum(c.find('error') is not None for c in cases),
+    'skipped': sum(c.find('skipped') is not None for c in cases),
+}
+totals['passed'] = totals['tests'] - totals['failures'] - totals['errors'] - totals['skipped']
+if report['status'] == 'passed':
+    assert not totals['failures'] and not totals['errors']
+    assert [c['name'] for c in report['checks']] == ['black', 'mypy', 'pytest']
+    assert all(c['returncode'] == 0 for c in report['checks'])
+assert not ARCHIVE.exists()
+ARCHIVE.mkdir()
+for name in ('report.json', 'tracked-source.patch', 'black.stdout.log', 'black.stderr.log',
+             'mypy.stdout.log', 'mypy.stderr.log', 'pytest.stdout.log', 'pytest.stderr.log', 'pytest.xml'):
+    shutil.copyfile(OUTPUT / name, ARCHIVE / name)
+for relative in ('mnemos/memory_safety.py', 'tests/test_uuid_write_safety.py',
+                 '.venv/validate_uuid_safety_v1.py', '.venv/archive_uuid_safety_v1.py'):
+    shutil.copyfile(ROOT / relative, ARCHIVE / (Path(relative).name + '.txt'))
+(ARCHIVE / 'acceptance.json').write_text(json.dumps({
+    'status': report['status'], 'pytest_totals': totals,
+    'source_unchanged': True, 'native_acceptance': 'NOT RUN',
+    'previous_full_suite_cause': 'Unproven: its rejected generated ID was not retained.',
+}, indent=2) + '\n', encoding='utf-8')
+(ARCHIVE / 'README.md').write_text(
+    '# UUID write safety validation\n\n'
+    f"Terminal result: {report['status']}. Full-suite totals: {json.dumps(totals)}.\n\n"
+    'The shared firewall recognizes complete canonical UUID identifiers when '
+    'classifying numeric phone, SSN, and card matches. It ignores only matches '
+    'wholly inside those UUIDs. Personal data outside or crossing their boundaries, '
+    'email, and credential assignments still use the configured policy.\n\n'
+    'The regressions cover UUID variants and boundaries, block/redact/allow '
+    'policies, adjacent sensitive data, client outbox identity, and durable '
+    'remember/correct/replay. The initial focused run before implementation '
+    'had 13 failures and nine passes; a later expanded safety/module/capture '
+    'run passed 116 tests. Those tool-observed counts are distinct from the '
+    'source-bound full-suite logs archived here.\n\n'
+    'The earlier full-suite empty-fact failure remains preserved. Its generated '
+    'ID was not retained, so the deterministic UUID reproduction does not prove '
+    'that failure\'s particular cause. Native host acceptance and real-model '
+    'evaluation were not rerun by this check.\n', encoding='utf-8')
+(ARCHIVE / '.gitattributes').write_text('* -text\n*.log -whitespace\n*.xml -whitespace\n*.patch -whitespace\n', encoding='utf-8')
+index = {'files': {p.name: {'bytes': p.stat().st_size, 'sha256': digest(p)} for p in sorted(ARCHIVE.iterdir())}}
+(ARCHIVE / 'evidence-index.json').write_text(json.dumps(index, indent=2) + '\n', encoding='utf-8')
+print(json.dumps(totals))

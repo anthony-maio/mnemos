@@ -4,6 +4,12 @@ Assessment date: September 17, 2026. This covers the unreleased
 functional-local-memory worktree, not the installed public package or website.
 The capability IDs come from the original implementation plan.
 
+The latest [source validation](../2026-09-17/uuid-write-safety-v1/README.md)
+passes 1,009 tests with four skips, Black, and strict mypy after the shared UUID
+write-safety repair. It includes the host-context authority changes. This is a
+source checkpoint; the installed package and native-host evidence below remain
+bound to their earlier source revisions.
+
 The latest [native v6 attempt](../2026-09-17/native-codex-claude-continuity-v6/README.md)
 verified selected-fact deletion by Claude and direct service replay suppression
 after Codex teaching and cross-host correction. Its final Codex answer still

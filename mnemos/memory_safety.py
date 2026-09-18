@@ -8,6 +8,7 @@ memory write paths.
 from __future__ import annotations
 
 import re
+from bisect import bisect_right
 from dataclasses import dataclass
 from typing import Literal
 
@@ -37,6 +38,14 @@ class MemorySafetyDecision:
 
 class MemoryWriteFirewall:
     """Policy-driven safety checks for memory write content."""
+
+    # UUID identity fields can contain a run of digits resembling a card number.
+    # Recognize the complete identifier, never an arbitrary surrounding string.
+    _UUID = re.compile(
+        r"(?<![A-Za-z0-9_-])[0-9A-Fa-f]{8}-[0-9A-Fa-f]{4}-"
+        r"[1-8][0-9A-Fa-f]{3}-[89ABab][0-9A-Fa-f]{3}-[0-9A-Fa-f]{12}"
+        r"(?![A-Za-z0-9_-])"
+    )
 
     _PATTERNS: tuple[tuple[PatternCategory, str, re.Pattern[str]], ...] = (
         ("secret", "private_key", re.compile(r"-----BEGIN [A-Z ]+PRIVATE KEY-----")),
@@ -97,7 +106,17 @@ class MemoryWriteFirewall:
         matches: list[MemorySafetyMatch] = []
 
         for category, label, pattern in self._PATTERNS:
-            found = pattern.findall(working)
+            found = list(pattern.finditer(working))
+            if found and category == "pii" and label in {"phone", "ssn", "credit_card"}:
+                # Recompute spans after earlier redactions have changed offsets.
+                identifiers = [match.span() for match in self._UUID.finditer(working)]
+                starts = [start for start, _ in identifiers]
+                numeric_matches = []
+                for match in found:
+                    position = bisect_right(starts, match.start()) - 1
+                    if position < 0 or match.end() > identifiers[position][1]:
+                        numeric_matches.append(match)
+                found = numeric_matches
             if not found:
                 continue
 
@@ -119,7 +138,11 @@ class MemoryWriteFirewall:
                 )
             if action == "redact":
                 token = f"[REDACTED_{label.upper()}]"
-                working = pattern.sub(token, working)
+                selected_starts = {match.start() for match in found}
+                working = pattern.sub(
+                    lambda match: token if match.start() in selected_starts else match.group(),
+                    working,
+                )
 
         if matches:
             return MemorySafetyDecision(
