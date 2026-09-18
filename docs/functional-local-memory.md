@@ -295,7 +295,24 @@ completed with protected fixture permissions and persisted both conversation rol
 The instrumented shell duration was 876 ms. This single observation does not
 establish repeated deadline acceptance or close the broader lifecycle gates.
 
-The current [stale descriptor checkpoint](validation/2026-09-18/stale-descriptor-package-checkpoint-v1/README.md)
+The newer [competing service recovery source check](validation/2026-09-18/competing-service-recovery-v1/README.md)
+fixes a startup race: a second launcher could return a dead descriptor while
+the new lock owner was still initializing. Competing launchers now verify
+authenticated health before adopting an owner. Five added cases cover the
+race, startup timeout, authentication rejection, and invalid health data.
+The full source suite passes 1,054 tests with four skips; 47 focused checks
+also pass. Simultaneous native host acceptance remains open; the package
+checks below validate the installed service protocol.
+
+The current [competing recovery package checkpoint](validation/2026-09-18/competing-recovery-package-checkpoint-v1/README.md)
+at `a5a9101` passes 1,054 source tests with four skips, all six source/package
+checks, 384 selected installed cases with two matching skips, and seven
+synthetic replay assertions. The installed selection includes the five
+competing-launcher regressions. Prior native observations retain their
+original wheel bindings; this package does not establish native concurrency
+or real-provider recovery.
+
+The preceding [stale descriptor checkpoint](validation/2026-09-18/stale-descriptor-package-checkpoint-v1/README.md)
 at `37e446f` passes 1,049 source tests with four skips, all six source/package
 checks, 379 selected installed cases with two matching skips, and seven
 synthetic replay assertions. Seven new cases cover delayed replacement,

@@ -1,0 +1,78 @@
+"""Archive completed source checks for competing service recovery."""
+from pathlib import Path
+import hashlib
+import json
+import shutil
+import subprocess
+import xml.etree.ElementTree as ET
+
+ROOT = Path(__file__).resolve().parents[1]
+OUT = ROOT / 'docs/validation/2026-09-18/competing-service-recovery-v1'
+BASE = '8407fbc'
+CANDIDATE = 'a5a9101'
+
+def sha(path):
+    return hashlib.sha256(path.read_bytes()).hexdigest()
+
+def counts(path):
+    cases = ET.parse(path).getroot().findall('.//testcase')
+    result = {'tests': len(cases), 'failures': sum(c.find('failure') is not None for c in cases),
+              'errors': sum(c.find('error') is not None for c in cases),
+              'skipped': sum(c.find('skipped') is not None for c in cases)}
+    result['passed'] = result['tests'] - result['failures'] - result['errors'] - result['skipped']
+    return result
+
+parent = subprocess.check_output(['git', 'rev-parse', 'HEAD'], cwd=ROOT, text=True).strip()
+assert parent.startswith(CANDIDATE)
+reports = {name: ROOT / '.venv' / filename for name, filename in {
+    'red': 'competing-recovery-red-v1.xml',
+    'focused': 'competing-recovery-focused-v1.xml',
+    'full': 'competing-recovery-full-v1.xml',
+}.items()}
+results = {name: counts(path) for name, path in reports.items()}
+assert results['red'] == {'tests': 1, 'failures': 1, 'errors': 0, 'skipped': 0, 'passed': 0}
+assert results['focused']['failures'] == results['focused']['errors'] == 0
+assert results['full'] == {'tests': 1058, 'failures': 0, 'errors': 0, 'skipped': 4, 'passed': 1054}
+OUT.mkdir(parents=True, exist_ok=False)
+for name, path in reports.items():
+    shutil.copyfile(path, OUT / (name + '.xml'))
+for source, target in (
+    ('mnemos/service.py', 'service-after.py.txt'),
+    ('tests/test_service_competing_recovery.py', 'regressions.py.txt'),
+    ('.venv/competing-recovery-red-tests-v1.py.txt', 'red-regression.py.txt'),
+):
+    shutil.copyfile(ROOT / source, OUT / target)
+(OUT / 'service-before.py.txt').write_bytes(subprocess.check_output(['git', 'show', BASE + ':mnemos/service.py'], cwd=ROOT))
+shutil.copyfile(__file__, OUT / 'archive_competing_recovery_v1.py.txt')
+(OUT / 'verification.json').write_text(json.dumps({
+    'source_commit': parent, 'baseline_commit': BASE, 'checks': results,
+    'candidate': {name: sha(ROOT / name) for name in ('mnemos/service.py', 'tests/test_service_competing_recovery.py')},
+    'scope': 'Source and synthetic loopback service checks; no new installed or native-host acceptance.',
+}, indent=2) + '\n', encoding='utf-8')
+(OUT / '.gitattributes').write_text('* -text\n*.xml -whitespace\n*.py.txt -whitespace\n', encoding='utf-8')
+(OUT / 'README.md').write_text(
+    '# Competing service recovery\n\n'
+    'A dead owner can leave its descriptor behind. While one replacement holds the process '
+    'lock and initializes its dispatcher, a second launcher previously accepted that old '
+    'descriptor and exited successfully. The waiting client then failed before the actual '
+    'owner was ready. The original regression failed because the second launcher returned '
+    'during the controlled initialization barrier.\n\n'
+    'A competing launcher now uses authenticated GET /v1/health before adopting an owner. '
+    'It polls absent or unreachable descriptors within the startup wait, with a per-operation '
+    'HTTP timeout capped at 250 ms and a 4 KiB health-response limit. Authentication rejection '
+    'or invalid health responses fail explicitly. It never dispatches memory operations, '
+    'rewrites the descriptor, or initializes a second dispatcher.\n\n'
+    'Five added cases cover delayed replacement, dead-owner timeout, rejected authentication, '
+    'a boolean schema version, and an unready status. The timeout and refusal cases verify '
+    'that the descriptor stays unchanged. The complete source suite passes 1,054 tests '
+    'with four skips. XML reports and before/after source are indexed here. The initial '
+    '22-case intermediate check is not used as final evidence because the regression file '
+    'was expanded while that process was running; the focused and full runs began afterward.\n\n'
+    'This archive does not close simultaneous native-host recovery or configured-provider '
+    'acceptance. It uses real process locks and authenticated loopback HTTP with a fixture '
+    'dispatcher. The installed package checkpoint remains 37e446f until the changed source '
+    'is rebuilt and checked separately. Real-model evaluation remains on its frozen source.\n', encoding='utf-8')
+index = {'files': {p.relative_to(OUT).as_posix(): {'bytes': p.stat().st_size, 'sha256': sha(p)}
+                   for p in sorted(OUT.rglob('*')) if p.is_file()}}
+(OUT / 'evidence-index.json').write_text(json.dumps(index, indent=2) + '\n', encoding='utf-8')
+print(json.dumps({'checks': results, 'indexed_files': len(index['files'])}))

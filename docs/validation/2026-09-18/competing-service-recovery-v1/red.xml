@@ -1,0 +1,36 @@
+<?xml version="1.0" encoding="utf-8"?><testsuites name="pytest tests"><testsuite name="pytest" errors="0" failures="1" skipped="0" tests="1" time="1.286" timestamp="2026-09-18T03:34:36.797300-04:00" hostname="Aurora"><testcase classname="tests.test_service_competing_recovery" name="test_competing_launcher_waits_past_dead_descriptor" time="0.527"><failure message="Failed: DID NOT RAISE TimeoutError">tmp_path = WindowsPath('D:/WindowsTemp/pytest-of-Ant/pytest-3626/test_competing_launcher_waits_0')
+
+    def test_competing_launcher_waits_past_dead_descriptor(tmp_path: Path) -&gt; None:
+        path = tmp_path / "runtime.json"
+        initializing = threading.Event()
+        release = threading.Event()
+    
+        def delayed_dispatcher() -&gt; Dispatcher:
+            initializing.set()
+            assert release.wait(5), "Test did not release owner initialization"
+            return Dispatcher()
+    
+        winner = MnemosService(
+            dispatcher_factory=delayed_dispatcher, descriptor_path=path, startup_timeout=3
+        )
+        loser = MnemosService(dispatcher=Dispatcher(), descriptor_path=path, startup_timeout=2)
+        with socket.socket() as dead_port, ThreadPoolExecutor(max_workers=2) as pool:
+            dead_port.bind(("127.0.0.1", 0))
+            stale = {
+                "schema_version": 1,
+                "host": "127.0.0.1",
+                "port": dead_port.getsockname()[1],
+                "pid": 123456,
+                "token": "dead-test-owner",
+            }
+            _write_private_json(path, stale)
+            first = pool.submit(winner.start)
+            second = None
+            try:
+                assert initializing.wait(2)
+                second = pool.submit(loser.start)
+&gt;               with pytest.raises(FutureTimeout):
+                     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E               Failed: DID NOT RAISE TimeoutError
+
+tests\test_service_competing_recovery.py:47: Failed</failure></testcase></testsuite></testsuites>

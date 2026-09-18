@@ -1,0 +1,61 @@
+"""Competing launchers must wait for an authenticated, ready owner."""
+
+from concurrent.futures import ThreadPoolExecutor, TimeoutError as FutureTimeout
+from pathlib import Path
+import socket
+import threading
+
+import pytest
+
+from mnemos.service import MnemosService, _write_private_json
+
+
+class Dispatcher:
+    async def dispatch(self, operation: str, payload: dict) -> dict:
+        raise AssertionError("Startup readiness must not dispatch memory operations")
+
+
+def test_competing_launcher_waits_past_dead_descriptor(tmp_path: Path) -> None:
+    path = tmp_path / "runtime.json"
+    initializing = threading.Event()
+    release = threading.Event()
+
+    def delayed_dispatcher() -> Dispatcher:
+        initializing.set()
+        assert release.wait(5), "Test did not release owner initialization"
+        return Dispatcher()
+
+    winner = MnemosService(
+        dispatcher_factory=delayed_dispatcher, descriptor_path=path, startup_timeout=3
+    )
+    loser = MnemosService(dispatcher=Dispatcher(), descriptor_path=path, startup_timeout=2)
+    with socket.socket() as dead_port, ThreadPoolExecutor(max_workers=2) as pool:
+        dead_port.bind(("127.0.0.1", 0))
+        stale = {
+            "schema_version": 1,
+            "host": "127.0.0.1",
+            "port": dead_port.getsockname()[1],
+            "pid": 123456,
+            "token": "dead-test-owner",
+        }
+        _write_private_json(path, stale)
+        first = pool.submit(winner.start)
+        second = None
+        try:
+            assert initializing.wait(2)
+            second = pool.submit(loser.start)
+            with pytest.raises(FutureTimeout):
+                second.result(timeout=0.2)
+            release.set()
+            owner = first.result(timeout=3)
+            assert second.result(timeout=3) == owner
+            assert owner != stale
+            assert winner.owner_thread_id is not None
+            assert loser.owner_thread_id is None
+        finally:
+            release.set()
+            first.result(timeout=4)
+            if second is not None:
+                second.result(timeout=4)
+            loser.stop()
+            winner.stop()
