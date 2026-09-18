@@ -4,6 +4,17 @@ This record covers the unreleased `wt/functional-local-memory` worktree. It
 separates implemented behavior from acceptance evidence. The original task
 boundaries and thresholds remain in the [implementation plan](../../plans/2026-09-16-functional-local-memory.md).
 
+The [native Codex-to-Claude continuity check](../2026-09-17/native-codex-claude-continuity-v1/README.md)
+now proves an actual Codex store/consolidate call, Claude retrieval after service
+restart, and Claude correction preserving the fact ID at version 2 through
+another restart. Both native Claude queries excluded the foreign canary.
+The corrected query also returned two independently captured records repeating
+the old value. Stable-target correction passes; stale conversation context is
+an open correctness gap. The fixture disabled all modules, so investigate the
+verbatim automatic-capture fallback without treating this as an extraction
+quality result. Codex exited nonzero after /exit, and Claude capture remained
+degraded. Reverse recall, cross-host forget/replay, and Hermes remain open.
+
 Source `1068a62` repairs non-ASCII capture in both host adapters by decoding
 hook JSON as UTF-8 rather than the Windows stdin locale. Five regressions
 failed before the repair, and 75 related cases pass afterward. The
@@ -126,7 +137,7 @@ capture diagnostics and complete lifecycle acceptance remain open.
 | T05 Maintenance | Service-owned scheduling, bounded batches, retry/failure state, retention, and visible maintenance status are implemented and tested. | Deterministic maintenance tested. A daily-use pilot has not run. |
 | T06 Evidence and safety | Write firewall, source validation, role labels, governed explicit writes, private paths, retention controls, and local-original availability are implemented and tested. | Safety contracts pass. Real-model extraction precision and human acceptance remain unproved. |
 | T07 Surprisal | Automatic gating, explicit-remember bypass, session-safe history, and diagnostics are implemented and covered by deterministic tests. | Mechanism contract tested. Real filtering benefit remains open. |
-| T08 Correction | Stable identity, expected-version CAS, revisions, canonical updates, evidence links, and graph refresh are implemented and tested. | Local correction contract passes. Native cross-host correction remains open. |
+| T08 Correction | Stable identity, expected-version CAS, revisions, canonical updates, evidence links, and graph refresh are implemented and tested. | Native Claude corrected a Codex-stored fact after restart, preserving its ID at version 2. Two independently captured records still repeat the old value in recall. Stale-context consistency remains open. |
 | T09 Retrieval | Scoped cosine retrieval, lexical candidate union, one scoring contract, and context budgeting are implemented. | Scope and top-1 tests pass. The corrected v4 measurement has recall p95 1,088.094 ms against the 500 ms gate; capture p95 64.279 ms passes the 100 ms gate. Later variable timing comparisons do not establish a speedup. |
 | T10 Graph | Persisted mutual top-k links, scope-safe traversal, bounded recovery, insertion-order controls, and capacity diagnostics are implemented and tested. | Structural controls pass. Graph utility and eligible-target coverage are not established by the available evidence. |
 | T11 Forget | Exact fact deletion, suppression, replay protection, inflight handling, restore behavior, and selected related-removal preview/apply are implemented and tested. | Local and installed related-forget checks pass. Native lifecycle remains open. Logical forgetting does not erase external transcripts or historical backups. |
@@ -135,7 +146,7 @@ capture diagnostics and complete lifecycle acceptance remain open.
 | T14 Hermes | Installed provider integration, registry handling, Windows/WSL bridge behavior, and entry-point discovery are implemented and tested. | Installed bridge checks pass. A native model turn has not passed. |
 | T15 UI | Project enable/pause, readiness, facts/history, correction/forget, captured-copy review, job state, and routing review are exposed and covered by API/browser checks. | Local UI and control-plane checks pass. Operational pilot and native-host coverage remain open. |
 | T16 Recovery | Backup, integrity, new-path restore, suppression merge, staged reindex, and activation backup behavior are implemented and tested. | Local recovery contracts pass, including a backup during an active writer transaction. Live data migration remains separately authorization-bound. |
-| T17 Cross-host | A shared service contract covers Claude, Codex, and Hermes contexts. Synthetic continuity covers teach, restart, recall, correction, forget, and foreign-project filtering. | Synthetic cross-host continuity passes. Complete native matrix and two-week pilot remain open. |
+| T17 Cross-host | A shared service contract covers Claude, Codex, and Hermes contexts. Native Codex taught a fact that Claude retrieved and corrected across service restarts; foreign-project facts were excluded. | Bounded native Codex-to-Claude continuity passes. Reverse recall, cross-host forget/replay, stale-context consistency, Hermes, and the two-week pilot remain open. |
 | T18 Evaluation | Frozen lifecycle datasets, request-bound extraction schemas, real-provider adapters, seven profiles, raw traces, checkpoints, Wilson intervals, and paired comparisons are implemented. | Power-interrupted checkpoints were preserved and the unchanged queue resumed after provenance checks. Complete real-model matrix acceptance remains open. Follow the [evaluation status and recovery record](evaluation-running.md). |
 | T19 Claims and packaging | Claim ledger, compatibility matrix, release checklist, package artifacts, UI assets, and negative evidence archives are maintained. | Package verification is complete for the stated checkpoint. Publication, website, paper, and release actions remain separately authorization-bound. |
 

@@ -1,0 +1,107 @@
+{
+  "source_commit": "1068a629887ef9a5d267a19ead6eb64b2f125757",
+  "bounded_native_codex_teach": "passed",
+  "native_claude_recall_after_service_restart": "passed",
+  "native_claude_correct_same_id_and_recall_version_2": "passed",
+  "corrected_target_present_after_second_restart_and_independent_reopen": "passed",
+  "foreign_canary_excluded_from_both_native_claude_queries": "passed",
+  "retrieved_context_free_of_old_value": "failed",
+  "stale_context": [
+    {
+      "id": "9a7fb949-1973-4f3b-83f3-3a060ea36a50",
+      "version": 1,
+      "content": "Assistant reported: Here is the retrieved fact:\n\n**Fact ID:** `d504e962-708c-495e-9e17-0356c71cfb7c` (version 1)\n**Scope:** project\n**Content:** \"The project continuity convention is use **cedar-otter** for release labels.\"\n\nThat fact was stored at the project scope and scored as the top semantic match (0.707) for your query. The convention is confirmed: **cedar-otter** is the release label to use for this project.",
+      "assertion_status": "asserted",
+      "sources": [
+        {
+          "created_at": "2026-09-18T00:19:46.535797Z",
+          "evidence_id": "88b3aef8-1965-4d20-a491-3e8246d4ff9a",
+          "excerpt": "Here is the retrieved fact:\n\n**Fact ID:** `d504e962-708c-495e-9e17-0356c71cfb7c` (version 1)\n**Scope:** project\n**Content:** \"The project continuity convention is use **cedar-otter** for release labels.\"\n\nThat fact was stored at the project scope and scored as the top semantic match (0.707) for your query. The convention is confirmed: **cedar-otter** is the release label to use for this project.",
+          "fact_id": "9a7fb949-1973-4f3b-83f3-3a060ea36a50",
+          "original_source_status": "retained_locally",
+          "source_event_id": "a6ff79fb18cf4ecf889a08ac3912583c52001b14fb262e0b1fbc26b8444d47d9",
+          "source_ref": "f2c1f9b1-0b7b-4f19-a368-2fb49a96c3c5"
+        }
+      ]
+    },
+    {
+      "id": "f2e0a60b-0edc-4291-841a-a39cf76a7a2c",
+      "version": 1,
+      "content": "Use only Mnemos MCP tools. First call mnemos_store exactly once with content \"The project continuity convention is use cedar-otter for release labels.\", role user, scope project. Then call mnemos_consolidate exactly once. Report the result. Do not use other tools.",
+      "assertion_status": "asserted",
+      "sources": [
+        {
+          "created_at": "2026-09-18T00:18:30.414242Z",
+          "evidence_id": "0e2d81f4-ad3e-4450-ac9c-e2749704e824",
+          "excerpt": "Use only Mnemos MCP tools. First call mnemos_store exactly once with content \"The project continuity convention is use cedar-otter for release labels.\", role user, scope project. Then call mnemos_consolidate exactly once. Report the result. Do not use other tools.",
+          "fact_id": "f2e0a60b-0edc-4291-841a-a39cf76a7a2c",
+          "original_source_status": "retained_locally",
+          "source_event_id": "d12368bc4a5ec93f1fb288bde73adade05f1bf8ab4cf893153e9a96e7db978a3",
+          "source_ref": "UserPromptSubmit:01a0b1e0-4611-7cb3-a791-9b31af512194"
+        }
+      ]
+    }
+  ],
+  "codex_process": {
+    "returncode": 3221225477,
+    "timed_out": false,
+    "elapsed_ms": 108433.6
+  },
+  "codex_exit_hex": "0xc0000005",
+  "claude_capture_status": "degraded",
+  "target_row_after_close": {
+    "id": "d504e962-708c-495e-9e17-0356c71cfb7c",
+    "content": "The project continuity convention is use maple-heron for release labels.",
+    "version": 2,
+    "metadata": "{\"user_profile_id\": \"native-codex-claude-continuity-v1\", \"project_id\": \"1d93853c-169c-427e-b992-70454bee355b\", \"workspace_id\": null, \"session_id\": \"native-crosshost-claude\", \"host\": \"claude-code\", \"scope\": \"project\", \"scope_id\": \"1d93853c-169c-427e-b992-70454bee355b\", \"source\": \"explicit_correction\", \"source_roles\": [\"user\"], \"source_event_ids\": [\"bd8496ed90cc1f458edd49047903e71fbca8750ae6d70ec38d61a569ae0f7a1d\"], \"encoding_diagnostics\": {}, \"assertion_status\": \"asserted\", \"cognitive_state_status\": \"provider_unavailable\", \"previous_content\": \"The project continuity convention is use cedar-otter for release labels.\"}"
+  },
+  "target_evidence": [
+    {
+      "evidence_id": "a3aa7b49-9d1a-479e-9782-29aa8df17e93",
+      "fact_id": "d504e962-708c-495e-9e17-0356c71cfb7c",
+      "source_event_id": "3d90a42059bbd916c3c827358614a6adcea40a3b3cc394f87c3dbbeef84db3f9",
+      "excerpt": "The project continuity convention is use cedar-otter for release labels.",
+      "source_ref": null,
+      "created_at": "2026-09-18T00:18:30.421193+00:00"
+    },
+    {
+      "evidence_id": "6be6fb45-0534-4c6d-aa42-76a64630d4f4",
+      "fact_id": "d504e962-708c-495e-9e17-0356c71cfb7c",
+      "source_event_id": "bd8496ed90cc1f458edd49047903e71fbca8750ae6d70ec38d61a569ae0f7a1d",
+      "excerpt": "The project continuity convention is use maple-heron for release labels.",
+      "source_ref": "native-crosshost-correction",
+      "created_at": "2026-09-18T00:19:46.544051+00:00"
+    }
+  ],
+  "native_store_source_event": {
+    "id": "3d90a42059bbd916c3c827358614a6adcea40a3b3cc394f87c3dbbeef84db3f9",
+    "content": "The project continuity convention is use cedar-otter for release labels.",
+    "source": "codex",
+    "source_event_id": "mcp:468341ef7e85442590a59785091224ef",
+    "scope": "project",
+    "scope_id": "1d93853c-169c-427e-b992-70454bee355b",
+    "metadata": "{\"user_profile_id\": \"native-codex-claude-continuity-v1\", \"project_id\": \"1d93853c-169c-427e-b992-70454bee355b\", \"workspace_id\": null, \"session_id\": \"79c88b15-8c26-4519-b823-780536f636a5\", \"host\": \"codex\", \"scope\": \"project\", \"scope_id\": \"1d93853c-169c-427e-b992-70454bee355b\", \"source_event_id\": \"mcp:468341ef7e85442590a59785091224ef\", \"source_ref\": null, \"source_kind\": \"explicit_remember\", \"explicit_remember\": true, \"identity_status\": \"normal\"}"
+  },
+  "target_revisions": [
+    {
+      "fact_id": "d504e962-708c-495e-9e17-0356c71cfb7c",
+      "version": 1,
+      "content": "The project continuity convention is use cedar-otter for release labels."
+    }
+  ],
+  "helpers": {
+    "native_codex_interactive_utf8_v1.py": "6f91aaef76ff619d38e5229f93697796b5fbfbcf86bcc87a78e72062f4b7dd0b",
+    "native_claude_lifecycle_v17.py": "85940cccb99d46f7b56a6184d912495831f66c3933f0b0fc03cdf36217691342",
+    "native_codex_claude_continuity_v1.py": "01a480274e51b53dd6a99e00354064a1151d0f3df29f0538b99ea856596c258d",
+    "native_codex_retrieve_v2.py": "20f909d8c2d28934c8d47763558b7f9bf08eb6d848de9a1e6bce8d2f7f3326bb",
+    "native_codex_lifecycle_v3.py": "7b87f5817dacae01c0a16918435ff8a4af1c1ecaaba00a9317ba7f16c8be5814",
+    "native_codex_generated_v8.py": "dd9ebe7480fa5a172bb41135a4690baf94d2c585f5357a77f17265e7acb58b12"
+  },
+  "limits": [
+    "All modules disabled; deterministic fixture vectors and unavailable cognition. No extraction or module-quality claim.",
+    "Old conversation values remain in retrieved context. Version-2 target correctness is narrower than stale-context consistency.",
+    "Codex reads corrected value, native cross-host forget/replay, Hermes, and full capture are not yet verified.",
+    "Codex exited nonzero after /exit; not a clean shutdown. Earlier timeout evidence remains valid.",
+    "One pre-fixture attempt timed out in the 10-second Claude version probe; unchanged retry proceeded after a separate successful version check."
+  ]
+}

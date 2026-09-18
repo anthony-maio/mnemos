@@ -13,7 +13,18 @@ Updated September 17, 2026 for the unreleased functional-local-memory worktree. 
 | Cursor | MCP plus project rule | Configuration and policy generation tests | Pending |
 | Windsurf / Cline | MCP examples | Documentation/configuration only | Pending |
 
-The cross-host fixture uses Codex, Claude Code, and Hermes scope contexts over a real temporary HTTP service and SQLite store. It checks restart, correction preserving identity, forget/replay suppression, and a foreign-project canary. Its provider fixtures are synthetic. It does not launch three native conversations.
+The synthetic cross-host fixture uses Codex, Claude Code, and Hermes scope contexts over a real temporary HTTP service and SQLite store. It checks restart, correction preserving identity, forget/replay suppression, and a foreign-project canary. Its provider fixtures are synthetic. It does not launch three native conversations.
+
+A separate [native Codex-to-Claude check](validation/2026-09-17/native-codex-claude-continuity-v1/README.md)
+used installed source1068a62. Actual Codex store/consolidate calls produced a
+source-linked fact; after service restart, native Claude retrieved and corrected
+it under the same ID, with version 2 surviving another restart. Both Claude
+queries excluded the foreign canary. The corrected query also returned two raw
+conversation records repeating the old value, so correction consistency is
+incomplete. Claude capture remained degraded and Codex exited nonzero after
+/exit. Reverse recall, cross-host forget/replay, and Hermes remain open. This
+fixture used deterministic vectors and disabled modules; it makes no extraction
+or module-benefit claim.
 
 Exact evidence boundaries are in [local-memory-hosts.md](validation/local-memory-hosts.md) and the [native host smoke record](validation/2026-09-16/native-host-smoke.md). The [Hermes bridge record](validation/2026-09-16/hermes-bridge-smoke.md) documents installed API and transport checks. The two-week pilot is NOT RUN.
 
