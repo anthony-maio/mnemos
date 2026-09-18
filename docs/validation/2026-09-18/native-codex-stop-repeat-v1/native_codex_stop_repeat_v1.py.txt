@@ -1,0 +1,249 @@
+"""Three predeclared fresh native Codex sessions with unmodified generated hooks.
+
+Each trial uses a fresh disposable profile and installed wheel. Host hook records,
+not profiling wrappers, determine whether Stop completes within its 3-second
+deadline. Three observations do not establish tail-latency or full host acceptance.
+"""
+from __future__ import annotations
+
+from datetime import datetime, timezone
+import argparse
+import hashlib
+import importlib.util
+import json
+from pathlib import Path
+import subprocess
+import sys
+import time
+import uuid
+from types import SimpleNamespace
+
+ROOT = Path(__file__).resolve().parents[1]
+TEMP = Path("C:/Users/Ant/AppData/Local/Temp")
+parser = argparse.ArgumentParser()
+parser.add_argument('--trial', type=int, choices=(1,2,3), required=True)
+args = parser.parse_args()
+PROFILE = f'native-codex-stop-repeat-v1-trial-{args.trial}'
+OUTPUT = TEMP / f'mnemos-native-codex-stop-repeat-v1-trial-{args.trial}' 
+SOURCE = "c25ed98d9dae5afc9103a4f6807a62429d30ac9d"
+SNAPSHOT = TEMP / "mnemos-source-outbox-selection-v1"
+WHEEL = TEMP / "mnemos-package-checks-outbox-selection-v1/dist/mnemos_memory-0.7.0-py3-none-any.whl"
+WHEEL_SHA256 = "d697b0796db57db1790b59f1874ea1fda7a77b32d41dbd15be6e13e1f34dada8"
+INSTALLED_PYTHON = TEMP / "mnemos-installed-outbox-selection-v1/Scripts/python.exe"
+PINS = {
+    "native_codex_interactive_utf8_v1.py": "6f91aaef76ff619d38e5229f93697796b5fbfbcf86bcc87a78e72062f4b7dd0b",
+    "native_codex_retrieve_v2.py": "20f909d8c2d28934c8d47763558b7f9bf08eb6d848de9a1e6bce8d2f7f3326bb",
+    "native_claude_lifecycle_v17.py": "85940cccb99d46f7b56a6184d912495831f66c3933f0b0fc03cdf36217691342",
+}
+
+
+def sha(raw: bytes) -> str:
+    return hashlib.sha256(raw).hexdigest()
+
+
+def load(path: Path, name: str):
+    spec = importlib.util.spec_from_file_location(name, path)
+    module = importlib.util.module_from_spec(spec)
+    assert spec.loader is not None
+    spec.loader.exec_module(module)
+    return module
+
+
+assert not OUTPUT.exists()
+assert sys.stdin.isatty() and sys.stdout.isatty()
+for name, expected in PINS.items():
+    assert sha((ROOT / ".venv" / name).read_bytes()) == expected
+assert sha(WHEEL.read_bytes()) == WHEEL_SHA256
+assert INSTALLED_PYTHON.exists()
+assert Path(sys.executable).resolve() == INSTALLED_PYTHON.resolve()
+
+native = load(ROOT / ".venv/native_codex_interactive_utf8_v1.py", "native_mcp_control")
+wrapper = native._load_v2()
+lifecycle = wrapper._load_lifecycle()
+claude = load(ROOT / ".venv/native_claude_lifecycle_v17.py", "mcp_control_lifecycle")
+wrapper.PROFILE = claude.PROFILE = PROFILE
+native.INSTALLED_PYTHON = INSTALLED_PYTHON
+native.WHEEL_PATH = WHEEL
+native.WHEEL_SHA256 = WHEEL_SHA256
+native.BUILD_VERIFICATION = WHEEL.parent.parent / "verification.json"
+build = json.loads(native.BUILD_VERIFICATION.read_text(encoding="utf-8"))
+assert build["status"] == "passed" and build["source_commit"] == SOURCE
+provenance = wrapper._verify_inputs(SimpleNamespace(source_commit=SOURCE, wheel=WHEEL,
+    expected_wheel_sha256=WHEEL_SHA256, build_verification=native.BUILD_VERIFICATION), lifecycle)
+
+fixture = wrapper._private_fixture(lifecycle, TEMP, f"mnemos-native-codex-stop-repeat-v1-trial-{args.trial}-")
+service = store = process = auth = binding = None
+trace = []
+report = {
+    "status": "running",
+    "source_commit": SOURCE,
+    "fixture": str(fixture),
+    "started_at": datetime.now(timezone.utc).isoformat(),
+    "runner_sha256": sha(Path(__file__).read_bytes()),
+    "helper_pins": PINS,
+    "wheel_sha256": WHEEL_SHA256,
+    "provenance": provenance,
+    "boundary": "Native scoped retrieval with generated MCP and hooks, explicit unelevated read-only Windows sandbox; disabled modules and fixture vectors.",
+}
+OUTPUT.mkdir(parents=True)
+
+try:
+    from mnemos.hosts import apply_host_integration
+
+    registry, registry_path, project, project_b = wrapper._registry_with_foreign_project(lifecycle, fixture)
+    config = wrapper._disabled_config()
+    service, store, _ = claude._start_service(fixture, registry, config)
+    content='The project shutdown probe uses river-cedar release labels.'
+    foreign='The project shutdown probe uses foreign-canary-849 release labels.'
+    context=registry.resolve(project,user_profile_id=wrapper.PROFILE,session_id='fixture-seed',host='manual')
+    foreign_context=registry.resolve(project_b,user_profile_id=wrapper.PROFILE,session_id='foreign-seed',host='manual')
+    service.submit('remember',{'event_id':'control-target','context':context.model_dump(mode='json'),'content':content,'scope':'project'})
+    service.submit('remember',{'event_id':'control-foreign','context':foreign_context.model_dump(mode='json'),'content':foreign,'scope':'project'})
+    service.submit('maintenance',{})
+    target_id,version=wrapper._fact_row(store,content)
+    foreign_id,_=wrapper._fact_row(store,foreign)
+    assert version==1
+    report['target']={'fact_id':target_id,'version':version,'content':content,'scope_id':context.project_id,'foreign_id':foreign_id}
+    settings = fixture / "settings.toml"
+    settings.write_text("# disposable MCP-only control\n", encoding="utf-8")
+    lifecycle._protect_file(settings)
+    home = fixture / "codex-home"
+    lifecycle._private_mkdir(home)
+    selectors = {
+        "MNEMOS_CONFIG_PATH": str(settings),
+        "MNEMOS_SCOPE_REGISTRY": str(registry_path),
+        "MNEMOS_USER_PROFILE_ID": PROFILE,
+        "MNEMOS_RUNTIME_DESCRIPTOR": str(fixture / "runtime.json"),
+        "MNEMOS_PROJECT_ROOT": str(project),
+        "MNEMOS_HOST": "codex",
+        "MNEMOS_SESSION_ID": PROFILE,
+        "MNEMOS_AUTO_START": "false",
+    }
+    generated = apply_host_integration(
+        "codex",
+        mnemos_config_path=settings,
+        cwd=project,
+        home=home,
+        integration_env={k: selectors[k] for k in ("MNEMOS_CONFIG_PATH", "MNEMOS_SCOPE_REGISTRY", "MNEMOS_USER_PROFILE_ID", "MNEMOS_RUNTIME_DESCRIPTOR")},
+    )
+    config_path = generated.config_path
+    original = config_path.read_text(encoding="utf-8")
+    marker = original.find("[[hooks")
+    assert marker > 0
+    combined = original.rstrip() + "\n\n[windows]\nsandbox = \"unelevated\"\n"
+    config_path.write_text(combined, encoding="utf-8")
+    lifecycle._protect_file(config_path)
+    import tomllib
+    parsed = tomllib.loads(combined)
+    assert set(parsed['hooks']) == {'SessionStart','UserPromptSubmit','PreCompact','PostCompact','Stop','SessionEnd'}
+    assert "mnemos" in parsed["mcp_servers"]
+
+    # Preserve the generated hook commands and their native deadlines verbatim.
+    generated_hooks = tomllib.loads(original)['hooks']
+    assert parsed['hooks'] == generated_hooks
+    assert generated_hooks['Stop'][0]['hooks'][0]['timeout'] == 3
+    report['generated_hooks'] = generated_hooks
+    report['trial'] = args.trial
+    report['predeclared_trials'] = 3
+    report['hook_instrumentation'] = False
+
+    report["config"] = {
+        "path": str(config_path),
+        "sha256": sha(config_path.read_bytes()),
+        "hook_marker_offset": marker,
+        "hook_names": sorted(parsed['hooks']),
+        "mcp_server_names": sorted(parsed["mcp_servers"]),
+        "windows_sandbox": parsed.get("windows", {}).get("sandbox"),
+    }
+    report["executable"] = {"path": str(lifecycle.CODEX_EXE), "sha256": sha(lifecycle.CODEX_EXE.read_bytes())}
+    report["version"] = subprocess.check_output([str(lifecycle.CODEX_EXE), "--version"], text=True, timeout=20).strip()
+    report["mcp_entrypoint"] = wrapper._validate_mcp_entrypoint(lifecycle, config_path, native._clean_environment(lifecycle, {"CODEX_HOME": str(config_path.parent), **selectors}))
+    auth = lifecycle._auth_copy(config_path.parent)
+    env = native._clean_environment(lifecycle, {"CODEX_HOME": str(config_path.parent), **selectors, "TERM": "xterm-256color"})
+    for key in ("OPENAI_API_KEY", "ANTHROPIC_API_KEY", "ANTHROPIC_AUTH_TOKEN", "CLAUDE_CODE_OAUTH_TOKEN"):
+        env.pop(key, None)
+    prompt = "Call mnemos_retrieve exactly once for the project shutdown probe release labels, current_scope project and allowed_scopes project. Report the returned convention. Do not use any other tool."
+    command = native._native_command(lifecycle, project, prompt)
+    report["command"] = command[:-1] + ["<fixture retrieval prompt>"]
+    print(json.dumps({"stage": "native_codex_combined_retrieve_control", "fixture": str(fixture)}), flush=True)
+    started = time.monotonic()
+    process = subprocess.Popen(command, cwd=project, env=env, shell=False, creationflags=getattr(subprocess, "CREATE_NEW_PROCESS_GROUP", 0))
+    report['process_id'] = process.pid
+    try:
+        process.wait(timeout=180)
+        timed_out = False
+    except subprocess.TimeoutExpired:
+        timed_out = True
+        lifecycle._terminate_process_tree(process)
+    report["process"] = {"returncode": process.returncode, "timed_out": timed_out, "elapsed_ms": round((time.monotonic() - started) * 1000, 1)}
+    selected = []
+    for path in config_path.parent.rglob("*.jsonl"):
+        for number, line in enumerate(path.read_text(encoding="utf-8").splitlines(), 1):
+            value = json.loads(line)
+            payload = value.get("payload", {})
+            if isinstance(payload, dict) and payload.get("type") == "mcp_tool_call_end" and payload.get("invocation", {}).get("server") == "mnemos":
+                selected.append({"source": path.relative_to(config_path.parent).as_posix(), "line": number, "record": value})
+    (OUTPUT / "selected-mcp-completion.json").write_text(json.dumps(selected, indent=2) + "\n", encoding="utf-8")
+    assert len(selected) == 1
+    payload = selected[0]["record"]["payload"]
+    assert payload["invocation"]["tool"] == "mnemos_retrieve"
+    result = payload["result"]["Ok"]
+    assert result["isError"] is False
+    decoded = json.loads(result["structuredContent"]["result"])
+    assert decoded == json.loads(result["content"][0]["text"])
+    matches=[f for f in decoded['facts'] if f['id']==target_id]
+    assert len(matches)==1 and matches[0]['version']==1 and matches[0]['content']==content
+    assert matches[0]['scope']=='project' and matches[0]['scope_id']==context.project_id
+    assert foreign_id not in {f['id'] for f in decoded['facts']}
+    (OUTPUT / "selected-mcp-completion.json").write_text(json.dumps(selected, indent=2) + "\n", encoding="utf-8")
+    report["selected_completion"] = {"tool": "mnemos_retrieve", "result_sha256": sha(json.dumps(decoded, sort_keys=True).encode()), "target_verified": True}
+    after=tomllib.loads(config_path.read_text(encoding='utf-8'))
+    assert after['hooks'] == generated_hooks
+    assert set(after['mcp_servers'])=={'mnemos'} and after['windows']['sandbox']=='unelevated'
+    report['combined_config_after_process']=True
+    assert process.returncode == 0 and not timed_out
+    report['status'] = 'observed_transport' 
+except Exception as exc:
+    report.update(status="failed", error_type=type(exc).__name__, error=str(exc))
+finally:
+
+    try:
+        report['dispatch_trace'] = trace
+        native_events = []
+        for path in sorted((config_path.parent / 'sessions').rglob('*.jsonl')):
+            raw = path.read_bytes()
+            for number, line in enumerate(raw.splitlines(keepends=True), 1):
+                value = json.loads(line)
+                payload = value.get('payload')
+                if not isinstance(payload, dict):
+                    continue
+                kind = payload.get('type', '')
+                if (kind.startswith('hook_') or kind in ('user_message','agent_message','mcp_tool_call_end','turn_complete','task_complete')):
+                    native_events.append({'source': path.relative_to(config_path.parent).as_posix(),
+                        'source_file_sha256': sha(raw), 'line': number, 'line_sha256': sha(line), 'record': value})
+        (OUTPUT / 'selected-native-events.json').write_text(json.dumps(native_events, indent=2)+'\n', encoding='utf-8')
+        report['selected_native_events_sha256'] = sha((OUTPUT / 'selected-native-events.json').read_bytes())
+        if store is not None:
+            report['capture_events'] = [
+                {'id': e.id, 'role': e.role, 'session_id': e.metadata.get('session_id'),
+                 'status': e.status, 'content_sha256':sha(e.content.encode())}
+                for e in store.list_episodic_events() if e.source == 'codex']
+    except Exception as exc:
+        report.update(status='failed', observation_error_type=type(exc).__name__, observation_error=str(exc))
+    finally:
+        native._restore_dispatch(binding)
+
+    errors = lifecycle._cleanup_native_resources(process, auth)
+    errors += lifecycle._close_service(service, store)
+    report["cleanup"] = {
+        "errors": errors,
+        "auth_absent": auth is None or not auth.exists(),
+        "descriptor_absent": not (fixture / "runtime.json").exists(),
+    }
+    if errors or not report["cleanup"]["auth_absent"] or not report["cleanup"]["descriptor_absent"]:
+        report["status"] = "failed"
+    report["finished_at"] = datetime.now(timezone.utc).isoformat()
+    (OUTPUT / "report.json").write_text(json.dumps(report, indent=2) + "\n", encoding="utf-8")
+    print(json.dumps({"status": report["status"], "report": str(OUTPUT / "report.json")}), flush=True)
+
+raise SystemExit(0 if report["status"] == "observed_transport" else 1)

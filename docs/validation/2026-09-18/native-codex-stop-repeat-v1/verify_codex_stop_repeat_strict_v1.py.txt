@@ -1,0 +1,134 @@
+"""Supplement native repeat evidence without altering executed runners or reports."""
+from pathlib import Path
+from datetime import datetime
+import hashlib
+import importlib.util
+import json
+import shutil
+import sqlite3
+import tomllib
+import zipfile
+
+ROOT = Path(__file__).resolve().parents[1]
+OUT = ROOT / 'docs/validation/2026-09-18/native-codex-stop-repeat-v1'
+TEMP = Path('C:/Users/Ant/AppData/Local/Temp')
+SOURCE = 'c25ed98d9dae5afc9103a4f6807a62429d30ac9d'
+WHEEL_SHA = 'd697b0796db57db1790b59f1874ea1fda7a77b32d41dbd15be6e13e1f34dada8'
+RUNNER_SHA = '412bda2dff8eb013506a55f956749164ccea7c14bcdb3d9a42dd6b4e9c73fb1e'
+ARCHIVER_SHA = 'eea130f014d44218892c831812147376533f959d58aaf184eaa6c178f4c633f2'
+
+def sha(p): return hashlib.sha256(p.read_bytes()).hexdigest()
+def load(p): return json.loads(p.read_text(encoding='utf-8'))
+def dump(p, value): p.write_text(json.dumps(value, indent=2)+'\n', encoding='utf-8')
+def native_ns(t):
+    value = datetime.fromisoformat(t.replace('Z','+00:00'))
+    return int(value.timestamp()) * 1_000_000_000 + value.microsecond * 1000
+
+def physical_files(db_path):
+    result=[]
+    for p in (db_path, Path(str(db_path)+'-wal')):
+        result.append({'path':str(p), 'exists':p.exists(), 'bytes':p.stat().st_size if p.exists() else None, 'sha256':sha(p) if p.exists() else None})
+    return result
+
+assert sha(ROOT/'.venv/native_codex_stop_repeat_v1.py') == RUNNER_SHA
+archiver=ROOT/'.venv/archive_codex_stop_repeat_v1.py'
+assert sha(archiver) == ARCHIVER_SHA == sha(OUT/'archive_codex_stop_repeat_v1.py.txt')
+assert not (OUT/'strict-verification.json').exists()
+spec=importlib.util.spec_from_file_location('repeat_archive',archiver)
+prior=importlib.util.module_from_spec(spec)
+spec.loader.exec_module(prior)
+wheel=TEMP/'mnemos-package-checks-outbox-selection-v1/dist/mnemos_memory-0.7.0-py3-none-any.whl'
+assert sha(wheel)==WHEEL_SHA
+build_path=wheel.parent.parent/'verification.json'
+build=load(build_path)
+assert build['status']=='passed' and build['source_commit']==SOURCE
+trials=[]
+for i in (1,2,3):
+    folder=OUT/f'trial-{i}'
+    report_path=TEMP/f'mnemos-native-codex-stop-repeat-v1-trial-{i}/report.json'
+    r=load(report_path)
+    assert sha(report_path)==sha(folder/'report.json')
+    assert r['runner_sha256']==RUNNER_SHA and r['trial']==i and r['predeclared_trials']==3
+    assert r['source_commit']==SOURCE and r['wheel_sha256']==WHEEL_SHA
+    assert r['status']=='failed' and r['error_type']=='AssertionError' and r['error']==''
+    assert r['process']['returncode']==0 and r['process']['timed_out'] is False
+    assert r['hook_instrumentation'] is False and r['cleanup']['errors']==[]
+    assert r['provenance']['wheel']['report_sha256']==sha(build_path)
+    origin=Path(r['provenance']['installed_package']).resolve()
+    expected_origin=TEMP/'mnemos-installed-outbox-selection-v1/Lib/site-packages/mnemos/__init__.py'
+    assert origin==expected_origin.resolve()
+    with zipfile.ZipFile(wheel) as z:
+        checked=0
+        for name in z.namelist():
+            if name.startswith('mnemos/') and not name.endswith('/'):
+                assert (origin.parent.parent/name).read_bytes()==z.read(name), name
+                checked+=1
+    fixture=Path(r['fixture']); home=fixture/'codex-home/.codex'
+    assert not (home/'auth.json').exists() and not (fixture/'runtime.json').exists()
+    config=tomllib.loads(Path(r['config']['path']).read_text(encoding='utf-8'))
+    assert set(config['hooks'])-set(r['generated_hooks'])=={'state'}
+    assert all(config['hooks'][key]==value for key,value in r['generated_hooks'].items())
+    assert config['hooks']['Stop'][0]['hooks'][0]['timeout']==3
+    assert config['hooks']!=r['generated_hooks']
+    assert 'combined_config_after_process' not in r
+    prior.verify_config(r)
+    mcp=prior.selected_mcp(r,fixture)
+    assert mcp==load(folder/'selected-mcp-completion.json')
+    assert 'foreign-canary-849' not in json.dumps(mcp['result'])
+    user,answer,task=prior.native_messages(r,fixture)
+    for selected in (user,answer,task,mcp):
+        path=home/selected['source']; raw=path.read_bytes()
+        assert hashlib.sha256(raw).hexdigest()==selected['source_file_sha256']
+        raw_line=raw.splitlines(keepends=True)[selected['line']-1]
+        assert hashlib.sha256(raw_line).hexdigest()==selected['line_sha256']
+    source=home/answer['source']
+    records=[json.loads(line) for line in source.read_text(encoding='utf-8').splitlines()]
+    session_meta=[v['payload'] for v in records if v.get('type')=='session_meta']
+    assert len(session_meta)==1
+    session_id=session_meta[0]['id']
+    raw_final=json.loads(source.read_bytes().splitlines()[answer['line']-1])
+    assert raw_final['payload']['phase']=='final_answer'
+    registry=load(fixture/'scopes.json')
+    foreign_projects=[p for p in registry['projects'].values() if Path(p['root']).name=='project-b']
+    assert len(foreign_projects)==1
+    foreign_project=foreign_projects[0]['id']
+    with sqlite3.connect((fixture/'memory.sqlite').as_uri()+'?mode=ro',uri=True) as db:
+        db.row_factory=sqlite3.Row
+        rows=[dict(x) for x in db.execute("select * from episodic_events where source='codex'")]
+        assert len(rows)==2 and {row['role'] for row in rows}=={'user','assistant'}
+        for row in rows:
+            meta=json.loads(row['metadata'])
+            native=user if row['role']=='user' else answer
+            assert row['content']==native['text']
+            assert row['session_id']==session_id==meta['session_id']
+            assert meta['user_profile_id']==f'native-codex-stop-repeat-v1-trial-{i}'
+            assert row['scope_id']==r['target']['scope_id']==meta['project_id']==meta['scope_id']
+            assert meta['scope']=='project' and meta['host']=='codex' and meta['source_kind']=='codex_hook'
+            hook='UserPromptSubmit' if row['role']=='user' else 'Stop'
+            assert meta['source_ref']==hook+':'+task['turn_id']
+        foreign=db.execute('select * from memory_chunks where id=?',(r['target']['foreign_id'],)).fetchone()
+        meta=json.loads(foreign['metadata'])
+        assert meta['scope_id']==foreign_project==meta['project_id']
+        assert meta['user_profile_id']==f'native-codex-stop-repeat-v1-trial-{i}'
+        assert foreign['content']=='The project shutdown probe uses foreign-canary-849 release labels.'
+    logs=home/'logs_2.sqlite'
+    files_before=physical_files(logs)
+    with sqlite3.connect(logs.as_uri()+'?mode=ro',uri=True) as db:
+        db.row_factory=sqlite3.Row
+        rows=[dict(row) for row in db.execute("select id,ts,ts_nanos,level,target,module_path,line,thread_id,process_uuid,feedback_log_body from logs where target='codex_app_server::outgoing_message' and feedback_log_body in (?,?) order by id", ('app-server event: hook/started targeted_connections=1','app-server event: hook/completed targeted_connections=1'))]
+    assert physical_files(logs)==files_before
+    late=[v for v in rows if native_ns(answer['timestamp']) <= v['ts']*1_000_000_000+v['ts_nanos'] <= native_ns(task['timestamp'])]
+    assert len(late)==2
+    start,end=late
+    assert start['feedback_log_body']=='app-server event: hook/started targeted_connections=1'
+    assert end['feedback_log_body']=='app-server event: hook/completed targeted_connections=1'
+    assert start['process_uuid'] and start['process_uuid']==end['process_uuid']
+    delta_ns=(end['ts']-start['ts'])*1_000_000_000+end['ts_nanos']-start['ts_nanos']
+    assert 0<=delta_ns<=3_000_000_000
+    archived_pair=load(folder/'hook-log-selected.json')['selected_pair']
+    assert start==archived_pair['start'] and end==archived_pair['end']
+    trials.append({'trial':i,'report_sha256':sha(report_path),'native_session_id':session_id,'native_turn_id':task['turn_id'],'native_user':user,'native_final':answer,'late_hook_rows':late,'late_hook_duration_ns':delta_ns,'late_hook_duration_ms':delta_ns/1e6,'log_database_files':files_before,'installed_wheel_files_verified':checked,'actual_auth_and_descriptor_absent':True,'generated_hook_arrays_unchanged':True,'trust_state_causes_original_strict_comparison_failure':True,'scope_and_capture_verified':True})
+verification={'status':'passed','source_commit':SOURCE,'wheel_sha256':WHEEL_SHA,'runner_sha256':RUNNER_SHA,'original_archiver_sha256':ARCHIVER_SHA,'strict_verifier_sha256':sha(Path(__file__)),'trials':trials,'limits':'Stop identity is inferred from temporal placement and corroborated by capture source_ref. Native log events omit hook name and status. Three observations do not prove tail latency or complete lifecycle acceptance.'}
+dump(OUT/'strict-verification.json',verification)
+shutil.copyfile(__file__,OUT/(Path(__file__).name+'.txt'))
+print(json.dumps({'status':'passed','durations_ms':[t['late_hook_duration_ms'] for t in trials]}))

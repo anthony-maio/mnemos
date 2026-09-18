@@ -11,6 +11,19 @@ empty/nonempty selection, restart replay, and PII blocking. This checkpoint
 adds package evidence; earlier native observations retain their original
 source bindings.
 
+Three fresh [native Codex sessions](validation/2026-09-18/native-codex-stop-repeat-v1/README.md)
+on the `c25ed98` wheel used the generated hooks unchanged. The late native
+hook start/completion pairs measured 1,015.009 ms, 1,031.318 ms, and
+963.769 ms, each below the unchanged three-second deadline. Their placement
+after the final answer and before turn completion identifies them as Stop by
+temporal inference; the native log omits hook names and exit status. All three
+sessions retrieved the scoped fact, excluded the foreign fact, and persisted
+the user prompt and final answer across shutdown. A separate verifier checks
+the evidence; the original harness failure reports remain preserved because
+Codex added hook-trust metadata after approval. Three fixture observations
+do not establish tail latency, the 100 ms durable-capture p95 gate, or complete
+native lifecycle acceptance.
+
 The preceding [Windows permission repair](validation/2026-09-18/windows-private-acl-v1/README.md)
 passes 1,039 source tests with four skips and all static checks. It protects
 runtime DACLs from inheritance and checks existing permissions before skipping
@@ -19,7 +32,8 @@ at `5d8cacf` passes 369 selected cases with two skips and seven replay assertion
 Its [native v3 probe](validation/2026-09-18/native-codex-private-acl-profile-v3/README.md)
 completed with protected permissions, persisted user/assistant captures, and an
 876 ms instrumented shell duration. Earlier instrumented probes on the old wheel
-located repeated permission-update cost. Repeated deadline acceptance remains open.
+located repeated permission-update cost. That single probe did not establish
+repeated deadline acceptance. The later three-session observation is recorded above.
 
 The earlier September 18 [installed checkpoint](validation/2026-09-18/assistant-suppression-package-checkpoint-v1/README.md)
 at `5af3d15` passes 360 selected contract cases with two skips and seven synthetic

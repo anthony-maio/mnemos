@@ -1,0 +1,411 @@
+"""Archive three bounded, uninstrumented Codex Stop observations."""
+from __future__ import annotations
+
+from datetime import datetime
+import hashlib
+import json
+from pathlib import Path
+import shutil
+import sqlite3
+import tomllib
+from typing import Any
+
+
+ROOT = Path(__file__).resolve().parents[1]
+TEMP = Path("C:/Users/Ant/AppData/Local/Temp")
+ARCHIVE = ROOT / "docs/validation/2026-09-18/native-codex-stop-repeat-v1"
+RUNNER = ROOT / ".venv/native_codex_stop_repeat_v1.py"
+SOURCE = "c25ed98d9dae5afc9103a4f6807a62429d30ac9d"
+WHEEL = "d697b0796db57db1790b59f1874ea1fda7a77b32d41dbd15be6e13e1f34dada8"
+PROFILE_PREFIX = "native-codex-stop-repeat-v1-trial-"
+
+
+def sha(raw: bytes) -> str:
+    return hashlib.sha256(raw).hexdigest()
+
+
+def load_json(path: Path) -> Any:
+    return json.loads(path.read_text(encoding="utf-8"))
+
+
+def iso_ms(value: str) -> float:
+    return datetime.fromisoformat(value.replace("Z", "+00:00")).timestamp() * 1000
+
+
+def fixture_path(report: dict[str, Any]) -> Path:
+    path = Path(report["fixture"])
+    if not path.is_dir():
+        raise AssertionError(f"fixture is absent: {path}")
+    return path
+
+
+def selected_mcp(report: dict[str, Any], fixture: Path) -> dict[str, Any]:
+    home = fixture / "codex-home/.codex"
+    found: list[dict[str, Any]] = []
+    for source in sorted((home / "sessions").rglob("*.jsonl")):
+        raw = source.read_bytes()
+        source_hash = sha(raw)
+        for number, raw_line in enumerate(raw.splitlines(keepends=True), 1):
+            try:
+                record = json.loads(raw_line)
+            except json.JSONDecodeError:
+                continue
+            payload = record.get("payload", {})
+            invocation = payload.get("invocation") if isinstance(payload, dict) else None
+            if not isinstance(invocation, dict) or invocation.get("server") != "mnemos":
+                continue
+            if invocation.get("tool") != "mnemos_retrieve":
+                continue
+            result = payload.get("result", {})
+            ok = result.get("Ok") if isinstance(result, dict) else None
+            if not isinstance(ok, dict) or ok.get("isError") is not False:
+                raise AssertionError("selected native MCP retrieve was not successful")
+            structured = json.loads(ok["structuredContent"]["result"])
+            content = json.loads(ok["content"][0]["text"])
+            if structured != content:
+                raise AssertionError("native MCP result representations differ")
+            found.append(
+                {
+                    "source": str(source.relative_to(home)).replace("\\", "/"),
+                    "line": number,
+                    "line_sha256": sha(raw_line),
+                    "source_file_sha256": source_hash,
+                    "call_id": payload.get("call_id"),
+                    "duration": payload.get("duration"),
+                    "tool": invocation["tool"],
+                    "arguments": invocation.get("arguments", {}),
+                    "result": structured,
+                }
+            )
+    if len(found) != 1:
+        raise AssertionError(f"expected one native mnemos retrieve, found {len(found)}")
+    selected = found[0]
+    expected = report["selected_completion"]
+    if sha(json.dumps(selected["result"], sort_keys=True).encode()) != expected["result_sha256"]:
+        raise AssertionError("native result hash differs from report")
+    target = report["target"]
+    facts = selected["result"].get("facts", [])
+    target_fact = next((item for item in facts if item.get("id") == target["fact_id"]), None)
+    if not target_fact:
+        raise AssertionError("native result omitted target fact")
+    if target_fact.get("version") != target["version"]:
+        raise AssertionError("native target version differs")
+    if target_fact.get("scope_id") != target["scope_id"]:
+        raise AssertionError("native target scope differs")
+    if target_fact.get("scope") != "project" or target_fact.get("content") != target["content"]:
+        raise AssertionError("native target content or scope differs")
+    if target["foreign_id"] in {item.get("id") for item in facts}:
+        raise AssertionError("foreign fact leaked into native result")
+    args = selected["arguments"]
+    if args.get("current_scope") != "project" or args.get("allowed_scopes") != ["project"]:
+        raise AssertionError("native retrieve scope arguments are not project-only")
+    return selected
+
+
+def native_messages(report: dict[str, Any], fixture: Path) -> tuple[dict[str, Any], dict[str, Any], dict[str, Any]]:
+    home = fixture / "codex-home/.codex"
+    users: list[dict[str, Any]] = []
+    final: list[dict[str, Any]] = []
+    task: list[dict[str, Any]] = []
+    for source in sorted((home / "sessions").rglob("*.jsonl")):
+        raw = source.read_bytes()
+        source_hash = sha(raw)
+        for number, raw_line in enumerate(raw.splitlines(keepends=True), 1):
+            try:
+                record = json.loads(raw_line)
+            except json.JSONDecodeError:
+                continue
+            payload = record.get("payload", {})
+            if not isinstance(payload, dict):
+                continue
+            item = payload.get("message")
+            base = {
+                "source": str(source.relative_to(home)).replace("\\", "/"),
+                "line": number,
+                "line_sha256": sha(raw_line),
+                "source_file_sha256": source_hash,
+                "timestamp": record.get("timestamp"),
+                "type": payload.get("type"),
+                "text_sha256": sha(item.encode()) if isinstance(item, str) else None,
+            }
+            if payload.get("type") == "user_message" and isinstance(item, str):
+                users.append({**base, "text": item})
+            if payload.get("type") == "agent_message" and payload.get("phase") == "final_answer" and isinstance(item, str):
+                final.append({**base, "text": item})
+            if payload.get("type") == "task_complete":
+                task.append({**base, "turn_id": payload.get("turn_id"), "duration_ms": payload.get("duration_ms")})
+    if len(users) != 1 or len(final) != 1 or len(task) != 1:
+        raise AssertionError("native final assistant or task completion record is missing")
+    user = users[0]
+    answer = final[-1]
+    if not user["text"].startswith("Call mnemos_retrieve exactly once"):
+        raise AssertionError("native user prompt is not the predeclared retrieval prompt")
+    if not answer["text"].strip():
+        raise AssertionError("native final assistant content is empty")
+    if "river-cedar" not in answer["text"] or "foreign-canary-849" in answer["text"]:
+        raise AssertionError("native final assistant does not report the scoped target")
+    if answer.get("timestamp") is None or task[-1].get("timestamp") is None:
+        raise AssertionError("native final/task timestamps are missing")
+    answer_ms = iso_ms(answer["timestamp"])
+    task_ms = iso_ms(task[-1]["timestamp"])
+    if answer_ms > task_ms:
+        raise AssertionError("final assistant record follows task completion")
+    return user, answer, task[-1]
+
+
+def hook_rows(report: dict[str, Any], fixture: Path, answer: dict[str, Any], task: dict[str, Any]) -> dict[str, Any]:
+    db_path = fixture / "codex-home/.codex/logs_2.sqlite"
+    if not db_path.is_file():
+        raise AssertionError("Codex hook log database is missing")
+    with sqlite3.connect(db_path.as_uri() + "?mode=ro", uri=True) as db:
+        db.row_factory = sqlite3.Row
+        rows = db.execute(
+            "select id,ts,ts_nanos,level,target,module_path,line,thread_id,process_uuid,feedback_log_body "
+            "from logs where feedback_log_body in (?, ?) order by id",
+            (
+                "app-server event: hook/started targeted_connections=1",
+                "app-server event: hook/completed targeted_connections=1",
+            ),
+        ).fetchall()
+    selected = [dict(row) for row in rows]
+    if any(row["target"] != "codex_app_server::outgoing_message" for row in selected):
+        raise AssertionError("hook rows came from an unexpected Codex target")
+    pairs: list[dict[str, Any]] = []
+    for index in range(len(selected) - 1):
+        start, end = selected[index], selected[index + 1]
+        if not start["feedback_log_body"].endswith("hook/started targeted_connections=1"):
+            continue
+        if not end["feedback_log_body"].endswith("hook/completed targeted_connections=1"):
+            continue
+        if start["process_uuid"] != end["process_uuid"]:
+            continue
+        start_ms = float(start["ts"]) * 1000 + float(start["ts_nanos"] or 0) / 1_000_000
+        end_ms = float(end["ts"]) * 1000 + float(end["ts_nanos"] or 0) / 1_000_000
+        pairs.append({"start": start, "end": end, "duration_ms": round(end_ms - start_ms, 4), "start_ms": start_ms, "end_ms": end_ms})
+    answer_ms = iso_ms(answer["timestamp"])
+    task_ms = iso_ms(task["timestamp"])
+    late = [pair for pair in pairs if pair["start_ms"] >= answer_ms and pair["end_ms"] <= task_ms]
+    if len(late) != 1:
+        raise AssertionError(f"expected one final assistant-to-task hook pair, found {len(late)}")
+    candidate = late[0]
+    if candidate["duration_ms"] > 3000:
+        raise AssertionError("inferred Stop hook exceeded the generated 3 second deadline")
+    for pair in pairs:
+        pair.pop("start_ms")
+        pair.pop("end_ms")
+    return {
+        "hook_name": "Stop (temporal inference)",
+        "hook_name_explicit": False,
+        "rows": selected,
+        "pairs": pairs,
+        "selected_pair": candidate,
+        "limits": "Codex logs expose generic hook started/completed events, not hook name or status; Stop is inferred from timing only.",
+    }
+
+
+def sqlite_summary(
+    report: dict[str, Any],
+    fixture: Path,
+    selected: dict[str, Any],
+    profile: str,
+    native_user: dict[str, Any],
+    native_answer: dict[str, Any],
+    task: dict[str, Any],
+) -> dict[str, Any]:
+    target = report["target"]
+    expected = {item["id"]: item for item in report["capture_events"]}
+    db_path = fixture / "memory.sqlite"
+    with sqlite3.connect(db_path.as_uri() + "?mode=ro", uri=True) as db:
+        db.row_factory = sqlite3.Row
+        rows = db.execute(
+            "select id,content,role,session_id,scope_id,source,metadata from episodic_events where id in (?,?)",
+            tuple(expected),
+        ).fetchall()
+        if len(rows) != 2:
+            raise AssertionError("persisted user and assistant capture rows are incomplete")
+        captured = []
+        for row in rows:
+            metadata = json.loads(row["metadata"])
+            item = {
+                "id": row["id"], "role": row["role"], "session_id": row["session_id"],
+                "scope_id": row["scope_id"], "source": row["source"],
+                "content_sha256": sha(row["content"].encode()),
+                "project_id": metadata.get("project_id"), "scope": metadata.get("scope"),
+                "source_kind": metadata.get("source_kind"), "host": metadata.get("host"),
+                "profile": metadata.get("user_profile_id"), "source_ref": metadata.get("source_ref"),
+                "source_event_id": metadata.get("source_event_id"),
+            }
+            for key in ("role", "session_id", "content_sha256"):
+                if item[key] != expected[row["id"]][key]:
+                    raise AssertionError(f"capture {key} differs from report")
+            if item["source"] != "codex" or item["source_kind"] != "codex_hook" or item["host"] != "codex":
+                raise AssertionError("capture provenance is not Codex hook provenance")
+            if item["project_id"] != target["scope_id"] or item["scope_id"] != target["scope_id"] or item["scope"] != "project":
+                raise AssertionError("capture scope differs from target")
+            if item["profile"] != profile:
+                raise AssertionError("capture profile is inconsistent")
+            native = native_user if item["role"] == "user" else native_answer
+            if item["content_sha256"] != native["text_sha256"]:
+                raise AssertionError("persisted capture does not match native message content")
+            turn_id = task["turn_id"]
+            if not isinstance(item["source_ref"], str) or not item["source_ref"].endswith(turn_id):
+                raise AssertionError("capture source_ref is not bound to the native turn")
+            captured.append(item)
+        if {row["role"] for row in captured} != {"user", "assistant"}:
+            raise AssertionError("capture roles are incomplete")
+        foreign = db.execute("select id,content,metadata from memory_chunks where id=?", (target["foreign_id"],)).fetchone()
+        if foreign is None or "foreign-canary-849" not in foreign["content"]:
+            raise AssertionError("foreign fact was not preserved")
+        foreign_meta = json.loads(foreign["metadata"])
+        if foreign_meta.get("user_profile_id") != profile or foreign_meta.get("scope") != "project" or foreign_meta.get("host") != "manual":
+            raise AssertionError("foreign fact provenance changed")
+        if foreign_meta.get("project_id") == target["scope_id"] or foreign_meta.get("scope_id") == target["scope_id"]:
+            raise AssertionError("foreign fact scope was not preserved")
+        counts = {table: db.execute(f"select count(*) from {table}").fetchone()[0] for table in ("memory_chunks", "episodic_events", "fact_evidence")}
+    if (fixture / "runtime.json").exists():
+        raise AssertionError("runtime descriptor remains")
+    if (fixture / "codex-home/.codex/auth.json").exists():
+        raise AssertionError("Codex auth copy remains")
+    return {
+        "database_reopened_read_only": True,
+        "captured_events": captured,
+        "foreign_fact": {"id": foreign["id"], "content_sha256": sha(foreign["content"].encode()), "project_id": foreign_meta.get("project_id")},
+        "table_counts": counts,
+        "query_sha256": sha(selected["arguments"]["query"].encode()),
+    }
+
+
+def verify_config(report: dict[str, Any]) -> dict[str, Any]:
+    path = Path(report["config"]["path"])
+    actual = tomllib.loads(path.read_text(encoding="utf-8"))
+    expected = report["generated_hooks"]
+    hooks = actual.get("hooks")
+    if not isinstance(hooks, dict) or set(hooks) - set(expected) - {"state"}:
+        raise AssertionError("current hook config contains unexpected hook names")
+    for name, value in expected.items():
+        if hooks.get(name) != value:
+            raise AssertionError(f"generated hook array changed for {name}")
+    if set(hooks) - set(expected) != {"state"} and set(hooks) != set(expected):
+        raise AssertionError("current config has an unapproved hooks table addition")
+    if sorted(expected) != ["PostCompact", "PreCompact", "SessionEnd", "SessionStart", "Stop", "UserPromptSubmit"]:
+        raise AssertionError("generated hook set differs")
+    if expected["Stop"][0]["hooks"][0]["timeout"] != 3:
+        raise AssertionError("generated Stop timeout is not 3 seconds")
+    if sorted(actual.get("mcp_servers", {})) != ["mnemos"] or actual.get("windows", {}).get("sandbox") != "unelevated":
+        raise AssertionError("MCP server or sandbox configuration differs")
+    return {"path": str(path), "sha256": sha(path.read_bytes()), "hook_names": sorted(hooks), "allowed_extra": ["state"] if "state" in hooks and "state" not in expected else []}
+
+
+def verify_trial(trial: int, archive_trial: Path) -> dict[str, Any]:
+    report_path = TEMP / f"mnemos-native-codex-stop-repeat-v1-trial-{trial}/report.json"
+    if not report_path.is_file():
+        raise FileNotFoundError(report_path)
+    report = load_json(report_path)
+    if report.get("status") not in {"failed", "observed_transport"}:
+        raise AssertionError(f"trial {trial} is not terminal: {report.get('status')}")
+    if report.get("source_commit") != SOURCE or report.get("wheel_sha256") != WHEEL:
+        raise AssertionError("source or wheel binding differs")
+    if report.get("trial") != trial or report.get("predeclared_trials") != 3:
+        raise AssertionError("trial is not bound to the three predeclared runs")
+    if report.get("provenance", {}).get("source_commit") != SOURCE:
+        raise AssertionError("package provenance source differs")
+    package = report.get("provenance", {}).get("package_provenance", {})
+    if package.get("mismatches") or package.get("wheel_sha256_observed") != WHEEL:
+        raise AssertionError("installed package provenance is not clean")
+    origin = Path(report.get("provenance", {}).get("installed_package", ""))
+    if not origin.is_file() or "site-packages" not in str(origin).lower():
+        raise AssertionError("installed package origin is not recorded")
+    pins = report.get("helper_pins")
+    if not isinstance(pins, dict) or set(pins) != {
+        "native_codex_interactive_utf8_v1.py", "native_codex_retrieve_v2.py", "native_claude_lifecycle_v17.py"
+    }:
+        raise AssertionError("helper provenance pins are incomplete")
+    for name, expected_hash in pins.items():
+        path = ROOT / ".venv" / name
+        if not path.is_file() or sha(path.read_bytes()) != expected_hash:
+            raise AssertionError(f"helper pin mismatch: {name}")
+    if report.get("runner_sha256") != sha(RUNNER.read_bytes()):
+        raise AssertionError("executed runner hash differs")
+    if report.get("hook_instrumentation") is not False:
+        raise AssertionError("trial used hook instrumentation")
+    process = report.get("process", {})
+    if process.get("returncode") != 0 or process.get("timed_out") is not False:
+        raise AssertionError("native process did not exit cleanly")
+    if report.get("selected_completion", {}).get("target_verified") is not True:
+        raise AssertionError("native target was not verified")
+    if report.get("cleanup", {}).get("errors"):
+        raise AssertionError("trial cleanup reported errors")
+    if not report.get("cleanup", {}).get("auth_absent") or not report.get("cleanup", {}).get("descriptor_absent"):
+        raise AssertionError("trial cleanup did not remove private resources")
+    if report.get("status") == "failed" and report.get("error_type") != "AssertionError":
+        raise AssertionError("failed trial has an unexpected failure type")
+    fixture = fixture_path(report)
+    config = verify_config(report)
+    selected = selected_mcp(report, fixture)
+    native_user, answer, task = native_messages(report, fixture)
+    hooks = hook_rows(report, fixture, answer, task)
+    sqlite = sqlite_summary(report, fixture, selected, f"{PROFILE_PREFIX}{trial}", native_user, answer, task)
+    archive_trial.mkdir(parents=True)
+    shutil.copyfile(report_path, archive_trial / "report.json")
+    (archive_trial / "selected-mcp-completion.json").write_text(json.dumps(selected, indent=2) + "\n", encoding="utf-8")
+    (archive_trial / "native-final-answer.json").write_text(json.dumps({"answer": answer, "task_complete": task}, indent=2) + "\n", encoding="utf-8")
+    (archive_trial / "hook-log-selected.json").write_text(json.dumps(hooks, indent=2) + "\n", encoding="utf-8")
+    (archive_trial / "sqlite-capture-summary.json").write_text(json.dumps(sqlite, indent=2) + "\n", encoding="utf-8")
+    (archive_trial / "config-verification.json").write_text(json.dumps(config, indent=2) + "\n", encoding="utf-8")
+    return {
+        "trial": trial,
+        "status": report["status"],
+        "expected_harness_failure": report.get("status") == "failed" and report.get("error_type") == "AssertionError",
+        "report_sha256": sha(report_path.read_bytes()),
+        "fixture": str(fixture),
+        "native_result": selected["result"],
+        "hook_pair": hooks["selected_pair"],
+        "capture": sqlite,
+        "native_user": native_user,
+        "native_answer": answer,
+        "process": process,
+        "config": config,
+    }
+
+
+def main() -> None:
+    if ARCHIVE.exists():
+        raise FileExistsError(ARCHIVE)
+    if sha(RUNNER.read_bytes()) != "412bda2dff8eb013506a55f956749164ccea7c14bcdb3d9a42dd6b4e9c73fb1e":
+        raise AssertionError("runner is not the reviewed immutable repeat runner")
+    ARCHIVE.mkdir(parents=True)
+    summary = [verify_trial(trial, ARCHIVE / f"trial-{trial}") for trial in (1, 2, 3)]
+    try:
+        shutil.copyfile(__file__, ARCHIVE / "archive_codex_stop_repeat_v1.py.txt")
+        shutil.copyfile(RUNNER, ARCHIVE / "native_codex_stop_repeat_v1.py.txt")
+        first = load_json(TEMP / "mnemos-native-codex-stop-repeat-v1-trial-1/report.json")
+        for name, expected in first["helper_pins"].items():
+            path = ROOT / ".venv" / name
+            if sha(path.read_bytes()) != expected:
+                raise AssertionError(f"helper pin mismatch: {name}")
+            shutil.copyfile(path, ARCHIVE / f"{Path(name).name}.txt")
+        (ARCHIVE / "provenance-summary.json").write_text(json.dumps({"source_commit": SOURCE, "wheel_sha256": WHEEL, "runner_sha256": sha(RUNNER.read_bytes()), "helper_pins": first["helper_pins"]}, indent=2) + "\n", encoding="utf-8")
+        (ARCHIVE / ".gitattributes").write_text("* -text\n*.jsonl -whitespace\n*.log -whitespace\n*.xml -whitespace\n*.patch -whitespace\n", encoding="utf-8")
+        readme = """# Native Codex Stop repeat v1
+
+This archive preserves three predeclared, uninstrumented native Codex runs against source c25ed98 and the installed wheel bound by the reports. Each run used the generated six-hook configuration, an unelevated Windows sandbox, deterministic fixture vectors, and disabled optional modules. The selected native MCP retrieve returned the current project fact and excluded the foreign project; the read-only SQLite summary reopens the fixture and checks user and assistant captures plus the retained foreign fact.
+
+All three processes exited 0 without a deadline timeout. The runner itself reports an AssertionError after Codex added its normal approval state to the current hooks configuration. That is preserved as an expected harness assertion. The archive verifies that every generated event hook array remains byte-equivalent and that the only current-config addition is the top-level hooks.state value. It does not turn those runner failures into successful product runs.
+
+Codex logs expose generic hook started/completed events without a hook name or status. The selected Stop observation is therefore a temporal inference: one generic pair falls after the final assistant record and before task completion, within the generated three-second deadline. This is not explicit host proof of the Stop name or status.
+
+These three samples are bounded evidence only. They do not establish a 100 ms capture percentile, a tail-latency gate, complete conversation capture, model quality, or full lifecycle acceptance. The native answer, selected MCP record, hook rows, and SQLite summaries are preserved selectively; full sessions, credentials, and databases are not archived.
+"""
+        (ARCHIVE / "README.md").write_text(readme, encoding="utf-8")
+        files = {}
+        for path in sorted(ARCHIVE.rglob("*")):
+            if path.is_file() and path.name != "evidence-index.json":
+                files[str(path.relative_to(ARCHIVE)).replace("\\", "/")] = {"bytes": path.stat().st_size, "sha256": sha(path.read_bytes())}
+        (ARCHIVE / "evidence-index.json").write_text(json.dumps({"archive": str(ARCHIVE), "files": files}, indent=2) + "\n", encoding="utf-8")
+        print(json.dumps({"status": "passed", "archive": str(ARCHIVE), "files": len(files), "trials": summary}))
+    except Exception:
+        raise
+
+
+if __name__ == "__main__":
+    main()

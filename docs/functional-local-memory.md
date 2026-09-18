@@ -294,6 +294,15 @@ checks, 372 installed cases with two matching skips, and seven replay assertions
 A supplied empty outbox now keeps its selected recovery file and write policy.
 Native observations above retain their original package bindings.
 
+Three fresh [native Codex sessions](validation/2026-09-18/native-codex-stop-repeat-v1/README.md)
+on this wheel used unchanged generated hooks. Late native hook pairs measured
+1,015 ms, 1,031 ms, and 964 ms within the three-second deadline, and both
+conversation roles persisted after shutdown. The pairs are identified as Stop
+by their placement between final answer and turn completion; native logs omit
+the hook name and exit status. These three fixture observations do not establish
+tail latency or complete native lifecycle acceptance. Original harness failures
+from Codex adding hook-trust metadata are retained with the separate verifier.
+
 ## What the five modules currently mean
 
 These are the implemented mechanism contracts. Their neuroscience analogies are design inspiration, not evidence of human-like memory.

@@ -13,6 +13,19 @@ empty/nonempty selection, restart replay, and PII blocking. This checkpoint
 adds package evidence; earlier native observations retain their original
 source bindings.
 
+Three fresh [native Codex sessions](../2026-09-18/native-codex-stop-repeat-v1/README.md)
+on the `c25ed98` wheel used the generated hooks unchanged. The late native
+hook start/completion pairs measured 1,015.009 ms, 1,031.318 ms, and
+963.769 ms, each below the unchanged three-second deadline. Their placement
+after the final answer and before turn completion identifies them as Stop by
+temporal inference; the native log omits hook names and exit status. All three
+sessions retrieved the scoped fact, excluded the foreign fact, and persisted
+the user prompt and final answer across shutdown. A separate verifier checks
+the evidence; the original harness failure reports remain preserved because
+Codex added hook-trust metadata after approval. Three fixture observations
+do not establish tail latency, the 100 ms durable-capture p95 gate, or complete
+native lifecycle acceptance.
+
 The preceding [Windows permission source validation](../2026-09-18/windows-private-acl-v1/README.md)
 passes 1,039 tests with four skips and all static checks. Actual Windows ACL
 tests exposed an incorrect inheritance-protection flag. The repair applies the

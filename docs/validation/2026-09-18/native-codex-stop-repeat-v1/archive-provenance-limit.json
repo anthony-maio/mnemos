@@ -1,0 +1,15 @@
+{
+  "record_kind": "retrospective provenance disclosure, not a preserved first-attempt transcript",
+  "first_attempt_command": "python .venv/archive_codex_stop_repeat_v1.py",
+  "reported_error": "AssertionError: expected one final assistant-to-task hook pair, found 0",
+  "reported_cause": "Timestamp conversion used ts_nanos alone rather than seconds plus nanoseconds.",
+  "reported_cleanup": "The first helper used shutil.rmtree(ARCHIVE, ignore_errors=True) after failure and deleted its partial archive.",
+  "executed_helper_was_modified": true,
+  "first_failed_helper_bytes_and_output_preserved": false,
+  "final_archiver_sha256": "eea130f014d44218892c831812147376533f959d58aaf184eaa6c178f4c633f2",
+  "limits": "The archived original archiver binds only its final successful execution. It cannot reproduce the discarded first attempt byte-for-byte. Native runner bytes and all three native reports remain unchanged. A separate strict verifier rechecks the native fixtures and installed wheel.",
+  "readme_sha256_before": "b2fb7414e21ee35f3deaae28d5106d931a657d1bd6897367a3ab3713a68c3974",
+  "evidence_index_sha256_before": "034591e646c9a93ad71fa7663c7764a6a8323e83068bad541fedf9a533ff11bd",
+  "strict_verification_sha256": "aadc1b8321b70618c4202e0392dd8ab0b0c18cef946af38e9f3b568341b2390b",
+  "finalizer_sha256": "72ec19dc8c048e17b098d0adfdd444a924d64121833334df7c62f88fb42e15eb"
+}

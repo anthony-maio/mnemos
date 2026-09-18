@@ -13,6 +13,19 @@ empty/nonempty selection, restart replay, and PII blocking. This checkpoint
 adds package evidence; earlier native observations retain their original
 source bindings.
 
+Three fresh [native Codex sessions](../2026-09-18/native-codex-stop-repeat-v1/README.md)
+on the `c25ed98` wheel used the generated hooks unchanged. The late native
+hook start/completion pairs measured 1,015.009 ms, 1,031.318 ms, and
+963.769 ms, each below the unchanged three-second deadline. Their placement
+after the final answer and before turn completion identifies them as Stop by
+temporal inference; the native log omits hook names and exit status. All three
+sessions retrieved the scoped fact, excluded the foreign fact, and persisted
+the user prompt and final answer across shutdown. A separate verifier checks
+the evidence; the original harness failure reports remain preserved because
+Codex added hook-trust metadata after approval. Three fixture observations
+do not establish tail latency, the 100 ms durable-capture p95 gate, or complete
+native lifecycle acceptance.
+
 The preceding [Windows private-permission repair](../2026-09-18/windows-private-acl-v1/README.md)
 passes 1,039 source tests with four skips, Black, strict mypy, and JavaScript
 syntax. It corrects the Windows DACL protection flag and avoids repeated
@@ -25,8 +38,9 @@ assertions; all six frozen-source/package checks pass.
 The [native profile v3](../2026-09-18/native-codex-private-acl-profile-v3/README.md)
 on that wheel completed with protected fixture permissions and both conversation
 roles persisted. Its instrumented shell duration was 876 ms, adapter import
-370 ms, and handler 373 ms. This is one observation; repeated uninstrumented
-deadline acceptance and the broader host lifecycle remain open.
+370 ms, and handler 373 ms. That single observation did not establish repeated
+completion. The later three-session observation is recorded above; tail latency
+and the broader host lifecycle remain open.
 
 The preceding [installed package checkpoint](../2026-09-18/assistant-suppression-package-checkpoint-v1/README.md)
 at `5af3d15` passes 1,030 tests with four skips, Black, strict mypy,
@@ -343,7 +357,7 @@ capture diagnostics and complete lifecycle acceptance remain open.
 | T10 Graph | Persisted mutual top-k links, scope-safe traversal, bounded recovery, insertion-order controls, and capacity diagnostics are implemented and tested. | Structural controls pass. Graph utility and eligible-target coverage are not established by the available evidence. |
 | T11 Forget | Exact fact deletion, suppression, replay protection, inflight handling, restore behavior, and selected related-removal preview/apply are implemented and tested. | Native v9 passes reviewed deletion of the target plus five selected copies, direct replay suppression, and final Codex recall without the removed values. Unindexed paraphrases and external transcripts remain outside that bounded result. Earlier v6's surviving-copy failure is preserved. |
 | T12 Claude Code | Hook capture, transcript deltas, checkpoints, capture-before-recall, identity diagnostics, and replay repair are implemented. | Native v18 on dedfcfd passed all 15 fact-lifecycle criteria with the new startup default, including correction, forgetting, restart, and reconstructed replay. Degraded hook capture keeps the overall result partial. Native extraction and complete capture acceptance remain open. See the [native lifecycle archive](../2026-09-17/native-claude-lifecycle-v18/README.md). |
-| T13 Codex | Generated hooks, UTF-8 payload handling, explicit MCP fallback, and bounded native continuity are implemented. | Native v9 passes teaching, corrected recall, and final post-forget recall; all three processes exited zero, but two Stop hooks timed out. The Windows ACL repair passes nine installed regressions and the installed v3 native probe persisted both roles with protected permissions and an 876 ms instrumented shell duration. Complete capture, Desktop, and repeated deadline acceptance remain open. |
+| T13 Codex | Generated hooks, UTF-8 payload handling, explicit MCP fallback, and bounded native continuity are implemented. | Native v9 passes teaching, corrected recall, and final post-forget recall; all three processes exited zero, but two Stop hooks timed out. The Windows ACL repair passes nine installed regressions and the installed v3 native probe persisted both roles with protected permissions and an 876 ms instrumented shell duration. Three uninstrumented sessions on c25ed98 also persisted both roles, with late native hook pairs below three seconds; Stop identity is inferred from turn timing. Tail latency, complete capture, and Desktop remain open. |
 | T14 Hermes | Installed provider integration, registry handling, Windows/WSL bridge behavior, and entry-point discovery are implemented and tested. | Installed bridge checks pass. A native model turn has not passed. |
 | T15 UI | Project enable/pause, readiness, facts/history, correction/forget, captured-copy review, job state, and routing review are exposed and covered by API/browser checks. | Local UI and control-plane checks pass. Operational pilot and native-host coverage remain open. |
 | T16 Recovery | Backup, integrity, new-path restore, suppression merge, staged reindex, and activation backup behavior are implemented and tested. | Local recovery contracts pass, including a backup during an active writer transaction. Live data migration remains separately authorization-bound. |
