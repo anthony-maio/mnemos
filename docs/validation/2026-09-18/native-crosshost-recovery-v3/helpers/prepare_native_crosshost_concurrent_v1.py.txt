@@ -1,0 +1,43 @@
+"""Create unexecuted mixed-host helpers from the preserved Codex fixture."""
+from pathlib import Path
+import hashlib
+import json
+
+root = Path(__file__).resolve().parent
+prior = json.loads(Path('C:/Users/Ant/AppData/Local/Temp/mnemos-native-codex-concurrent-v2/report.json').read_text(encoding='utf-8'))
+assert prior['status'] == 'observed_native_concurrent_recovery'
+for kind in ('common', 'worker', 'supervisor'):
+    old = root / ('native_codex_concurrent_' + kind + '_v2.py')
+    assert hashlib.sha256(old.read_bytes()).hexdigest() == prior['helpers'][old.name]
+    new = root / ('native_crosshost_concurrent_' + kind + '_v1.py')
+    assert not new.exists()
+    source = old.read_text(encoding='utf-8')
+    source = source.replace('native-codex-concurrent-v2', 'native-crosshost-concurrent-v1')
+    for part in ('common', 'worker', 'supervisor'):
+        source = source.replace('native_codex_concurrent_' + part + '_v2.py', 'native_crosshost_concurrent_' + part + '_v1.py')
+    if kind == 'common':
+        source = source.replace("SOURCE = 'a5a91013f7b5fc021a64783af7c010ae3b3b3d52'", "SOURCE = 'fc72cc251aeafa161a1a390269b8dfa34d83cf2b'\nSNAPSHOT = TEMP / 'mnemos-source-retrieval-comparison-v1'")
+        source = source.replace('mnemos-package-checks-competing-recovery-v1', 'mnemos-package-checks-retrieval-comparison-v1')
+        source = source.replace('be602c9e75df7086823d0f6451f7f96b043f745faadd1dce902ccc732c422237', '938f6f423334ccc8d4b3409bbf3b8b49c25a42ff60b734490eb716d78cb2b54b')
+        source = source.replace('mnemos-installed-competing-recovery-v1', 'mnemos-installed-encoding-comparison-v1')
+        source = source.replace("wrapper.PROFILE = claude.PROFILE = PROFILE", "wrapper.PROFILE = claude.PROFILE = PROFILE\n    claude.SOURCE_ROOT = SNAPSHOT\n    claude.SOURCE_COMMIT = SOURCE\n    claude.CLAUDE_EXE = Path('C:/Users/Ant/.local/bin/claude.exe')\n    claude.RUNTIME_PYTHON = PYTHON\n    claude._verify_plugin_snapshot(SNAPSHOT, SOURCE)")
+        source = source.replace("where source='codex'", "where source in ('codex', 'claude-code')")
+        source = source[:source.index('def verify_captures(')]
+    if kind == 'worker':
+        source = source.replace("choices=['a', 'b']", "choices=['a']")
+        source = source.replace("report['session'] = c.session_summary(rows, key)", "report['session'] = {**c.session_summary(rows, key), 'host': 'codex'}")
+    if kind == 'supervisor':
+        source = source.replace("for worker in ('a', 'b'):\n        home", "for worker in ('a',):\n        home", 1)
+        source = source.replace("Path(__file__).with_name('native_crosshost_concurrent_worker_v1.py'))", "Path(__file__).with_name('native_crosshost_concurrent_worker_v1.py'), Path(__file__).with_name('native_crosshost_concurrent_claude_v1.py'))")
+        source = source.replace("'Two native Codex homes share an outbox", "'Native Codex and Claude Code homes share an outbox")
+        marker = "    report['native_version'] ="
+        source = source.replace(marker, "    claude_home = fixture / 'claude-home' / '.claude'\n    lifecycle._private_mkdir(claude_home.parent)\n    lifecycle._private_mkdir(claude_home)\n    homes['b'] = str(claude_home)\n    for label in ('runtime', 'checkpoints', 'routing'):\n        lifecycle._private_mkdir(fixture / label)\n    report['plugin'] = claude._verify_plugin_snapshot(c.SNAPSHOT, c.SOURCE)\n    report['claude_version'] = claude._verify_claude()\n" + marker, 1)
+        source = source.replace("assert len(pending) == 4 and len({e['event_id'] for e in pending}) == 4", "assert len(pending) >= 4 and len({e['event_id'] for e in pending}) == len(pending)\n    assert {e['payload']['context']['host'] for e in pending} == {'codex', 'claude-code'}")
+        source = source.replace("assert payload['content'] == sessions[payload['context']['session_id']][payload['role']]", "assert payload['content'] in c.native_contents(sessions[payload['context']['session_id']], payload['role'])")
+        source = source.replace("status=result.get('status'), committed=result.get('committed'))", "status=result.get('status'), committed=result.get('committed'), durable_event_id=result.get('event_id'), job_id=result.get('job_id'))")
+        source = source.replace("assert report['after_native_recovery']['capture_count'] == 8", "assert report['after_native_recovery']['capture_count'] >= 8")
+        source = source.replace("assert outage_events == {e['event_id'] for e in pending}", "report['queued_recovery'] = c.verify_queued_recovery(pending, report['captures'], trace)\n    assert outage_events == {e['event_id'] for e in pending}")
+        source = source.replace("all(not (Path(home) / 'auth.json').exists() for home in homes.values())", "all(not (Path(home) / name).exists() for home in homes.values() for name in ('auth.json', '.credentials.json'))")
+        source = source.replace("observed_native_concurrent_recovery", "observed_native_crosshost_concurrent_recovery")
+    new.write_text(source, encoding='utf-8', newline='\n')
+    print(new.name)

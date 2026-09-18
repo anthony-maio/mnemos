@@ -1,0 +1,192 @@
+"""Preserve failed gates and verify narrower observations without rerunning hosts."""
+import copy
+import importlib.util
+import json
+from pathlib import Path
+import shutil
+import sqlite3
+import tomllib
+
+ROOT = Path(__file__).resolve().parents[1]
+spec = importlib.util.spec_from_file_location('mixed_common', ROOT / '.venv/native_crosshost_concurrent_common_v3.py')
+c = importlib.util.module_from_spec(spec)
+spec.loader.exec_module(c)
+_, _, _, _, provenance = c.helpers()
+r = c.read(c.OUTPUT / 'report.json')
+assert r['status'] == 'failed'
+assert r['error'] == 'Paired replay did not overlap within the barrier'
+assert provenance == r['provenance']
+fixture = Path(r['fixture'])
+assert fixture.parent == c.TEMP and fixture.name.startswith('mnemos-native-crosshost-concurrent-v3-')
+manifest = c.read(c.OUTPUT / 'manifest.json')
+assert manifest['helpers'] == r['helpers']
+assert r['before_native'] == r['after_outage']
+assert r['cleanup'] == {'errors': [], 'auth_absent': True, 'descriptor_absent': True}
+assert not (fixture / 'runtime.json').exists()
+sessions = {}
+for key, worker in r['workers'].items():
+    assert worker == c.read(c.OUTPUT / (key + '.json'))
+    assert worker['status'] == 'observed_native_turn' and worker['process']['returncode'] == 0
+    assert worker['cleanup'] == {'errors': [], 'auth_absent': True}
+    home = Path(worker['home'])
+    assert not (home / 'auth.json').exists() and not (home / '.credentials.json').exists()
+    session = worker['session']
+    sessions[session['session']] = session
+    if session['host'] == 'codex':
+        assert worker['generated_hooks_unchanged']
+        hooks = tomllib.loads((home / 'config.toml').read_text(encoding='utf-8'))['hooks']
+        assert set(hooks) - set(manifest['generated_hooks']['a']) <= {'state'}
+        assert all(hooks[name] == value for name, value in manifest['generated_hooks']['a'].items())
+        assert {**c.session_summary(worker['native_rows'], key), 'host':'codex'} == session
+    for row in worker['native_rows']:
+        path = (home / row.get('source', row.get('source_path'))).resolve()
+        assert path.is_relative_to(home.resolve())
+        raw = path.read_bytes()
+        line = raw.splitlines(keepends=True)[row['line'] - 1]
+        assert c.sha(raw) == row['source_file_sha256'] and c.sha(line) == row['line_sha256']
+        original = json.loads(line)
+        if session['host'] == 'codex':
+            assert original == row['record']
+        else:
+            assert original['sessionId'] == session['session']
+            assert (original.get('uuid') or original.get('id')) == row['source_ref']
+assert len(sessions) == 4
+from mnemos.client import Outbox
+from mnemos.adapters.codex import CodexAdapter
+from mnemos.adapters.claude_code import ClaudeCodeAdapter
+from mnemos.scopes import ScopeContext
+assert Outbox(fixture / 'outbox.json').pending() == []
+state = c.database_state(fixture)
+assert state == r['final_database'] and state['capture_count'] == 10
+normal, provisional = [], []
+observed = set()
+with sqlite3.connect((fixture / 'memory.sqlite').as_uri() + '?mode=ro', uri=True) as db:
+    db.row_factory = sqlite3.Row
+    assert db.execute('pragma integrity_check').fetchone()[0] == 'ok'
+    events = [dict(row) for row in db.execute("select * from episodic_events where source in ('codex','claude-code')")]
+    assert {row['session_id'] for row in events} == set(sessions)
+    for row in events:
+        m = json.loads(row['metadata'])
+        session = sessions[row['session_id']]
+        assert row['content'] in c.native_contents(session, row['role'])
+        assert row['scope_id'] == m['scope_id'] == m['project_id'] == r['target']['project_id']
+        assert m['user_profile_id'] == c.PROFILE and m['host'] == session['host']
+        assert m['session_id'] == row['session_id']
+        context = ScopeContext(user_profile_id=c.PROFILE, project_id=m['project_id'], workspace_id=m.get('workspace_id'), session_id=row['session_id'], host=session['host'])
+        evidence = [dict(item) for item in db.execute('select * from fact_evidence where source_event_id=?', (row['id'],))]
+        jobs = [dict(item) for item in db.execute('select * from memory_jobs') if json.loads(item['payload']).get('event_id') == row['id']]
+        assert len(jobs) == 1 and jobs[0]['status'] == 'completed'
+        job = jobs[0]
+        if m['identity_status'] == 'provisional_unassociated':
+            assert session['host'] == 'claude-code' and row['role'] == 'user'
+            assert m['source_ref'] == 'prompt:' + c.sha(row['content'].encode())
+            assert m['source_event_id'] == ClaudeCodeAdapter._event_id(context, m['source_ref'], 'user', row['content'])
+            assert row['status'] == 'deferred' and job['kind'] == 'capture_only' and evidence == []
+            assert json.loads(job['result']) == {'decision':'identity_pending','fact_eligible':False,'fact_ids':[]}
+            provisional.append({'event':row,'job':job})
+            continue
+        assert m['identity_status'] == 'normal' and row['status'] == 'consolidated'
+        if session['host'] == 'codex':
+            event = 'UserPromptSubmit' if row['role'] == 'user' else 'Stop'
+            assert m['source_ref'] == event + ':' + session['turn']
+            assert m['source_event_id'] == CodexAdapter._event_id(context,event=event,turn_id=session['turn'],role=row['role'],content=row['content'])
+        else:
+            matching = [message for message in session['messages'] if message['role'] == row['role'] and message['content'] == row['content'] and message['source_ref'] == m['source_ref']]
+            assert len(matching) == 1
+            assert m['source_event_id'] == ClaudeCodeAdapter._event_id(context,m['source_ref'],row['role'],row['content'])
+        identity = (row['session_id'],row['role'])
+        assert identity not in observed
+        observed.add(identity)
+        assert job['kind'] == 'extract' and len(evidence) == 1
+        fact = db.execute('select content,metadata from memory_chunks where id=?', (evidence[0]['fact_id'],)).fetchone()
+        assert fact['content'] == row['content']
+        fm = json.loads(fact['metadata'])
+        assert fm['scope_id'] == m['scope_id'] and fm['user_profile_id'] == c.PROFILE
+        normal.append({'event':row,'job_id':job['id'],'evidence':evidence[0]})
+    assert observed == {(sid, role) for sid in sessions for role in ('user','assistant')}
+    assert len(normal) == 8 and len(provisional) == 2
+    assert {p['event']['session_id'] for p in provisional} == {sid for sid,s in sessions.items() if s['host'] == 'claude-code'}
+    for label, expected, project in [('fact_id','content','project_id'),('foreign_fact_id','foreign_content','foreign_project_id')]:
+        fact = db.execute('select content,metadata from memory_chunks where id=?',(r['target'][label],)).fetchone()
+        assert fact['content'] == r['target'][expected]
+        assert json.loads(fact['metadata'])['scope_id'] == r['target'][project]
+    assert db.execute('select count(*) from memory_chunks').fetchone()[0] == 10
+queued = r['queued_native_events']
+assert len(queued) == 5
+replay = []
+for item in queued:
+    matches = [row for row in events if row['id'] == item['event_id']]
+    assert len(matches) == 1 and matches[0]['content'] == item['payload']['content']
+    calls = [call for call in r['dispatch_trace'] if call['event_id'] == item['payload']['event_id']]
+    assert calls and all(call['status'] == 'committed' for call in calls)
+    assert {call['durable_event_id'] for call in calls} == {item['event_id']}
+    assert {call['job_id'] for call in calls} == {'event:' + item['event_id']}
+    replay.append({'event_id':item['event_id'],'source_event_id':item['payload']['event_id'],'deliveries':len(calls)})
+arrivals = r['barrier_arrivals']
+assert len(arrivals) == 2 and not arrivals[0]['barrier_released'] and arrivals[1]['barrier_released']
+assert {a['native_pid'] for a in arrivals} == {r['workers'][key]['process']['pid'] for key in ('recovery-a','recovery-b')}
+for a in arrivals:
+    assert a['native_pid'] in a['origin']['process_ancestry'] and a in r['dispatch_trace']
+gap = arrivals[1]['start_ns'] - arrivals[0]['release_ns']
+assert gap > 0
+
+def dump(path, value):
+    path.write_text(json.dumps(value, indent=2) + '\n', encoding='utf-8')
+
+def safe_worker(value):
+    value = copy.deepcopy(value)
+    for row in value.get('native_rows', []):
+        record = row.get('record', {})
+        if record.get('type') == 'session_meta':
+            payload = record['payload']
+            record['payload'] = {key:payload[key] for key in ('id','timestamp','cwd','originator','cli_version','model_provider') if key in payload}
+            row['source_record_reduced'] = True
+    return value
+
+OUT = ROOT / 'docs/validation/2026-09-18/native-crosshost-recovery-v3'
+OUT.mkdir(parents=True, exist_ok=False)
+original_hashes = {}
+helper_names = set()
+for version in ('v1','v2','v3'):
+    source = c.TEMP / ('mnemos-native-crosshost-concurrent-' + version)
+    dest = OUT / version
+    dest.mkdir()
+    report = c.read(source / 'report.json')
+    assert report['status'] == 'failed'
+    assert report['cleanup'] == {'errors': [], 'auth_absent': True, 'descriptor_absent': True}
+    for name,digest in report['helpers'].items():
+        assert c.sha((ROOT / '.venv' / name).read_bytes()) == digest
+        helper_names.add(name)
+    for path in sorted(source.glob('*.json')):
+        original_hashes[version + '/' + path.name] = c.sha(path.read_bytes())
+        data = c.read(path)
+        if path.name == 'report.json':
+            data['workers'] = {key:safe_worker(value) for key,value in data.get('workers',{}).items()}
+        elif path.name.startswith(('outage-','recovery-')) and 'status' in data:
+            data = safe_worker(data)
+            assert data['cleanup'] == {'errors': [], 'auth_absent': True}
+        dump(dest / path.name, data)
+    for name in ('startup-failure.stdout.log','startup-failure.stderr.log'):
+        shutil.copyfile(source / name, dest / name)
+    helper_names.add('prepare_native_crosshost_concurrent_' + version + '.py')
+    helper_names.add('test_crosshost_preflight_' + version + '.py')
+    shutil.copyfile(ROOT / '.venv' / ('test_crosshost_preflight_' + version + '.json'), dest / 'preflight.json')
+(OUT / 'helpers').mkdir()
+helper_names.add(Path(__file__).name)
+for name in sorted(helper_names):
+    shutil.copyfile(ROOT / '.venv' / name, OUT / 'helpers' / (name + '.txt'))
+dump(OUT / 'helper-dependencies.json', {name:{'sha256':digest,'repository_path':'docs/validation/2026-09-18/native-codex-stop-repeat-v1/' + name + '.txt'} for name,digest in c.PINS.items()})
+dump(OUT / 'verification.json', {
+    'status':'verified_partial_observation_original_gate_failed',
+    'source_commit':c.SOURCE,'wheel_sha256':c.WHEEL_SHA,'installed_files_verified':provenance['installed_files_verified'],
+    'original_report_hashes':original_hashes,'archiver_sha256':c.sha(Path(__file__).read_bytes()),
+    'database_state':state,'database_sha256':c.sha((fixture / 'memory.sqlite').read_bytes()),
+    'normal_captures':normal,'deferred_provisional_captures':provisional,'queued_replay':replay,
+    'outbox_empty':True,'control_facts_retained':True,'integrity_check':'ok',
+    'process_overlap_ns':r['process_overlap_ns'],'gap_after_first_barrier_release_ns':gap,
+    'original_concurrency_gate':'FAIL','supervisor_restart_gate':'NOT RUN',
+    'limitations':['Post-failure read-only verification; original failed result retained.','Optional modules disabled, fixture vectors, unavailable cognition, explicit owner restoration.','Provisional records are retained source observations, not extracted facts.','No complete-host, real-provider, natural concurrency frequency, or pilot acceptance.']})
+(OUT / '.gitattributes').write_text('* -text\n*.log -whitespace\n*.py.txt -whitespace\n',encoding='utf-8')
+files = {p.relative_to(OUT).as_posix():{'bytes':p.stat().st_size,'sha256':c.sha(p.read_bytes())} for p in sorted(OUT.rglob('*')) if p.is_file()}
+dump(OUT / 'evidence-index.json',{'files':files})
+print(json.dumps({'status':'verified_partial_observation_original_gate_failed','indexed_files':len(files),'normal_captures':len(normal),'provisional_captures':len(provisional),'barrier_gap_ns':gap}))

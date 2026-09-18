@@ -1,0 +1,84 @@
+"""One interactive native process in a disposable concurrent recovery fixture."""
+from pathlib import Path
+from datetime import datetime, timezone
+import argparse
+import importlib.util
+import json
+import subprocess
+import sys
+import time
+import tomllib
+import traceback
+
+common_path = Path(__file__).with_name('native_crosshost_concurrent_common_v3.py')
+spec = importlib.util.spec_from_file_location('concurrent_common', common_path)
+c = importlib.util.module_from_spec(spec)
+spec.loader.exec_module(c)
+parser = argparse.ArgumentParser()
+parser.add_argument('--phase', choices=['outage', 'recovery'], required=True)
+parser.add_argument('--worker', choices=['a'], required=True)
+args = parser.parse_args()
+key = args.phase + '-' + args.worker
+assert sys.stdin.isatty() and sys.stdout.isatty()
+manifest = c.read(c.OUTPUT / 'manifest.json')
+assert c.sha(common_path.read_bytes()) == manifest['helpers'][common_path.name]
+assert c.sha(Path(__file__).read_bytes()) == manifest['helpers'][Path(__file__).name]
+native, wrapper, lifecycle, claude, provenance = c.helpers()
+fixture = Path(manifest['fixture'])
+home = Path(manifest['homes'][args.worker])
+assert (home / 'config.toml').is_file()
+preflight_hooks = tomllib.loads((home / 'config.toml').read_text(encoding='utf-8'))['hooks']
+assert all(preflight_hooks[name] == value for name, value in manifest['generated_hooks'][args.worker].items())
+assert fixture.parent == c.TEMP and fixture.name.startswith('mnemos-native-crosshost-concurrent-v3-')
+report_path = c.OUTPUT / (key + '.json')
+assert not report_path.exists()
+report = {'status': 'running', 'key': key, 'runner_sha256': c.sha(Path(__file__).read_bytes()),
+          'common_sha256': c.sha(common_path.read_bytes()), 'started_at': datetime.now(timezone.utc).isoformat(),
+          'home': str(home), 'provenance': provenance}
+process = auth = None
+try:
+    before = {p.relative_to(home).as_posix() for p in (home / 'sessions').rglob('*.jsonl')}
+    env = native._clean_environment(lifecycle, {'CODEX_HOME': str(home), **manifest['selectors'], 'TERM': 'xterm-256color'})
+    env.pop('MNEMOS_AUTO_START', None)
+    c.write(c.OUTPUT / (key + '.ready.json'), {'ready_at': datetime.now(timezone.utc).isoformat()})
+    deadline = time.monotonic() + 360
+    while not (c.OUTPUT / (args.phase + '.go.json')).exists():
+        if (c.OUTPUT / 'abort.json').exists() or time.monotonic() >= deadline:
+            raise TimeoutError('Native launch coordination aborted or timed out')
+        time.sleep(0.1)
+    auth = lifecycle._auth_copy(home)
+    prompt = 'Do not use tools. Reply with exactly these words, without punctuation: ' + c.WORDS[key]
+    command = native._native_command(lifecycle, Path(manifest['project']), prompt)
+    report['command'] = command
+    started = time.monotonic_ns()
+    process = subprocess.Popen(command, cwd=manifest['project'], env=env, shell=False,
+        creationflags=getattr(subprocess, 'CREATE_NEW_PROCESS_GROUP', 0))
+    c.write(c.OUTPUT / (key + '.started.json'), {'pid': process.pid, 'monotonic_ns': started})
+    deadline = time.monotonic() + 180
+    while process.poll() is None:
+        if (c.OUTPUT / 'abort.json').exists() or time.monotonic() >= deadline:
+            raise TimeoutError('Native process exceeded its coordination/run deadline')
+        time.sleep(0.1)
+    report['process'] = {'pid': process.pid, 'returncode': process.returncode,
+                         'start_ns': started, 'end_ns': time.monotonic_ns()}
+    assert process.returncode == 0
+    rows = c.native_rows(home, before)
+    report['native_rows'] = rows
+    report['session'] = {**c.session_summary(rows, key), 'host': 'codex'}
+    parsed = tomllib.loads((home / 'config.toml').read_text(encoding='utf-8'))
+    generated = manifest['generated_hooks'][args.worker]
+    assert set(parsed['hooks']) - set(generated) <= {'state'}
+    assert all(parsed['hooks'][name] == value for name, value in generated.items())
+    report['generated_hooks_unchanged'] = True
+    report['status'] = 'observed_native_turn'
+except Exception as exc:
+    report.update(status='failed', error_type=type(exc).__name__, error=str(exc), traceback=traceback.format_exc())
+finally:
+    errors = lifecycle._cleanup_native_resources(process, auth)
+    report['cleanup'] = {'errors': errors, 'auth_absent': auth is None or not auth.exists()}
+    if errors or not report['cleanup']['auth_absent']:
+        report['status'] = 'failed'
+    report['finished_at'] = datetime.now(timezone.utc).isoformat()
+    c.write(report_path, report)
+    print(json.dumps({'status': report['status'], 'report': str(report_path)}), flush=True)
+raise SystemExit(0 if report['status'] == 'observed_native_turn' else 1)

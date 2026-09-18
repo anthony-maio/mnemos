@@ -1,0 +1,11 @@
+from pathlib import Path
+root = Path(__file__).parent
+source = (root / 'archive_native_crosshost_v1.py').read_text(encoding='utf-8')
+old = "        assert fact['content'] == row['content']"
+new = "        expected_fact = ('Assistant reported: ' if row['role'] == 'assistant' else '') + row['content']\n        assert fact['content'] == expected_fact"
+assert source.count(old) == 1
+source = source.replace(old, new)
+source = source.replace("helper_names.add(Path(__file__).name)", "helper_names.update((Path(__file__).name, 'archive_native_crosshost_v1.py', 'prepare_archive_crosshost_v2.py', 'prepare_mixedhosts_archive_v1.py'))")
+target = root / 'archive_native_mixedhosts_v1.py'
+assert not target.exists()
+target.write_text(source, encoding='utf-8')

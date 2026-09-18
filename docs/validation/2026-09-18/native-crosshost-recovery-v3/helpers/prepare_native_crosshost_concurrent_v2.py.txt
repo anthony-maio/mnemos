@@ -1,0 +1,32 @@
+"""Preserve v1 and prepare a new fixture with a realistic native budget."""
+from pathlib import Path
+
+root = Path(__file__).parent
+for name in ('common', 'supervisor', 'worker', 'claude'):
+    original = root / ('native_crosshost_concurrent_' + name + '_v1.py')
+    target = original.with_name(original.name.replace('_v1.py', '_v2.py'))
+    assert not target.exists()
+    source = original.read_text(encoding='utf-8')
+    source = source.replace('native_crosshost_concurrent_common_v1', 'native_crosshost_concurrent_common_v2')
+    source = source.replace('native_crosshost_common_v1', 'native_crosshost_common_v2')
+    source = source.replace('native_crosshost_concurrent_worker_v1', 'native_crosshost_concurrent_worker_v2')
+    source = source.replace('native_crosshost_concurrent_claude_v1', 'native_crosshost_concurrent_claude_v2')
+    source = source.replace('native-crosshost-concurrent-v1', 'native-crosshost-concurrent-v2')
+    if name == 'claude':
+        assert '"--max-budget-usd", "0.08"' in source
+        source = source.replace('"--max-budget-usd", "0.08"', '"--max-budget-usd", "1.00"')
+        old = "    assert process.returncode == 0\n    _assert_no_tool_use(stdout)\n    results = [json.loads(line) for line in stdout.splitlines() if line.strip().startswith('{')]\n    results = [row for row in results if row.get('type') == 'result']"
+        new = "    results = [json.loads(line) for line in stdout.splitlines() if line.strip().startswith('{')]\n    results = [row for row in results if row.get('type') == 'result']\n    report['result_summary'] = [{key: row[key] for key in ('type', 'subtype', 'is_error', 'total_cost_usd', 'num_turns', 'duration_ms') if key in row} for row in results]\n    assert process.returncode == 0\n    _assert_no_tool_use(stdout)"
+        assert old in source
+        source = source.replace(old, new)
+    if name == 'supervisor':
+        needle = "    assert all(r['status'] == 'observed_native_turn' for r in workers.values()), 'Native outage worker failed'"
+        assert needle in source
+        source = source.replace(needle, "    report['workers'] = workers\n" + needle)
+    target.write_text(source, encoding='utf-8')
+test = (root / 'test_crosshost_preflight_v1.py').read_text(encoding='utf-8')
+test = test.replace('native_crosshost_concurrent_common_v1', 'native_crosshost_concurrent_common_v2')
+test = test.replace('native_crosshost_concurrent_claude_v1', 'native_crosshost_concurrent_claude_v2')
+target = root / 'test_crosshost_preflight_v2.py'
+assert not target.exists()
+target.write_text(test, encoding='utf-8')

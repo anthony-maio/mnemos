@@ -1,0 +1,209 @@
+"""Coordinate real native turns and paired replay against one fixture owner."""
+from pathlib import Path
+from datetime import datetime, timezone
+import importlib.util
+import json
+import subprocess
+import threading
+import time
+import tomllib
+import traceback
+
+common_path = Path(__file__).with_name('native_crosshost_concurrent_common_v2.py')
+spec = importlib.util.spec_from_file_location('concurrent_common', common_path)
+c = importlib.util.module_from_spec(spec)
+spec.loader.exec_module(c)
+native, wrapper, lifecycle, claude, provenance = c.helpers()
+assert not c.OUTPUT.exists()
+lifecycle._private_mkdir(c.OUTPUT)
+fixture = wrapper._private_fixture(lifecycle, c.TEMP, 'mnemos-native-crosshost-concurrent-v2-')
+service = store = None
+barrier = threading.Event()
+trace = []
+trace_lock = threading.Lock()
+original_post = None
+homes = {}
+report = {'status': 'running', 'source_commit': c.SOURCE, 'wheel_sha256': c.WHEEL_SHA,
+          'fixture': str(fixture), 'provenance': provenance, 'helper_pins': c.PINS,
+          'started_at': datetime.now(timezone.utc).isoformat(),
+          'helpers': {p.name: c.sha(p.read_bytes()) for p in (common_path, Path(__file__), Path(__file__).with_name('native_crosshost_concurrent_worker_v2.py'), Path(__file__).with_name('native_crosshost_concurrent_claude_v2.py'))},
+          'boundary': 'Native Codex and Claude Code homes share an outbox and one explicitly restored fixture owner. Optional modules disabled; lexical fixture vectors; unavailable cognition. A test-only service-submit barrier overlaps queued capture requests; generated hooks are unchanged.'}
+try:
+    from mnemos.hosts import apply_host_integration
+    from mnemos.client import Outbox
+    registry, registry_path, project, foreign_project = wrapper._registry_with_foreign_project(lifecycle, fixture)
+    config = wrapper._disabled_config()
+    service, store, _ = claude._start_service(fixture, registry, config)
+    context = registry.resolve(project, user_profile_id=c.PROFILE, session_id='seed', host='manual')
+    other = registry.resolve(foreign_project, user_profile_id=c.PROFILE, session_id='foreign-seed', host='manual')
+    target = 'The concurrency control uses river-cedar labels.'
+    foreign = 'The foreign concurrency control uses midnight-juniper labels.'
+    for identity, content, scope in [('target', target, context), ('foreign', foreign, other)]:
+        service.submit('remember', {'event_id': identity, 'content': content, 'scope': 'project', 'context': scope.model_dump(mode='json')})
+    service.submit('maintenance', {})
+    target_id, _ = wrapper._fact_row(store, target)
+    foreign_id, _ = wrapper._fact_row(store, foreign)
+    report['target'] = {'fact_id': target_id, 'project_id': context.project_id, 'content': target,
+                        'foreign_fact_id': foreign_id, 'foreign_project_id': other.project_id, 'foreign_content': foreign}
+    settings = fixture / 'settings.toml'
+    settings.write_text('# disposable native concurrent fixture\n', encoding='utf-8')
+    lifecycle._protect_file(settings)
+    good_settings = settings.read_bytes()
+    selectors = {'MNEMOS_CONFIG_PATH': str(settings), 'MNEMOS_SCOPE_REGISTRY': str(registry_path),
+        'MNEMOS_USER_PROFILE_ID': c.PROFILE, 'MNEMOS_RUNTIME_DESCRIPTOR': str(fixture / 'runtime.json'),
+        'MNEMOS_PROJECT_ROOT': str(project), 'MNEMOS_HOST': 'codex', 'MNEMOS_SESSION_ID': c.PROFILE}
+    hooks = {}
+    for worker in ('a',):
+        home = fixture / ('codex-home-' + worker)
+        lifecycle._private_mkdir(home)
+        generated = apply_host_integration('codex', mnemos_config_path=settings, cwd=project, home=home,
+            integration_env={k: selectors[k] for k in ('MNEMOS_CONFIG_PATH', 'MNEMOS_SCOPE_REGISTRY', 'MNEMOS_USER_PROFILE_ID', 'MNEMOS_RUNTIME_DESCRIPTOR')})
+        homes[worker] = str(generated.config_path.parent)
+        original = generated.config_path.read_text(encoding='utf-8')
+        hooks[worker] = tomllib.loads(original)['hooks']
+        assert set(hooks[worker]) == {'SessionStart', 'UserPromptSubmit', 'PreCompact', 'PostCompact', 'Stop', 'SessionEnd'}
+        generated.config_path.write_text(original.rstrip() + '\n\n[windows]\nsandbox = "unelevated"\n', encoding='utf-8')
+        lifecycle._protect_file(generated.config_path)
+        wrapper._validate_mcp_entrypoint(lifecycle, generated.config_path,
+            native._clean_environment(lifecycle, {'CODEX_HOME': homes[worker], **selectors}))
+    claude_home = fixture / 'claude-home' / '.claude'
+    lifecycle._private_mkdir(claude_home.parent)
+    lifecycle._private_mkdir(claude_home)
+    homes['b'] = str(claude_home)
+    for label in ('runtime', 'checkpoints', 'routing'):
+        lifecycle._private_mkdir(fixture / label)
+    report['plugin'] = claude._verify_plugin_snapshot(c.SNAPSHOT, c.SOURCE)
+    report['claude_version'] = claude._verify_claude()
+    report['native_version'] = subprocess.check_output([str(lifecycle.CODEX_EXE), '--version'], text=True, timeout=20).strip()
+    report['native_executable'] = {'path': str(lifecycle.CODEX_EXE), 'sha256': c.sha(lifecycle.CODEX_EXE.read_bytes())}
+    assert lifecycle._close_service(service, store) == []
+    service = store = None
+    report['before_native'] = c.database_state(fixture)
+    settings.write_text('invalid_fixture_config = [\n', encoding='utf-8')
+    env = native._clean_environment(lifecycle, selectors)
+    env.pop('MNEMOS_AUTO_START', None)
+    failed = subprocess.run([str(c.PYTHON), '-m', 'mnemos.service', '--descriptor', str(fixture / 'runtime.json')],
+        cwd=project, env=env, capture_output=True, timeout=20, creationflags=getattr(subprocess, 'CREATE_NO_WINDOW', 0))
+    assert failed.returncode != 0 and b'TOMLDecodeError' in failed.stderr
+    (c.OUTPUT / 'startup-failure.stdout.log').write_bytes(failed.stdout)
+    (c.OUTPUT / 'startup-failure.stderr.log').write_bytes(failed.stderr)
+    report['startup_failure'] = {'returncode': failed.returncode, 'stderr_sha256': c.sha(failed.stderr), 'settings_sha256': c.sha(settings.read_bytes())}
+    manifest = {'fixture': str(fixture), 'project': str(project), 'selectors': selectors,
+                'generated_hooks': hooks, 'homes': homes, 'helpers': report['helpers']}
+    c.write(c.OUTPUT / 'manifest.json', manifest)
+    print(json.dumps({'stage': 'waiting_outage_workers', 'fixture': str(fixture)}), flush=True)
+    c.wait_files([c.OUTPUT / ('outage-' + w + '.ready.json') for w in ('a', 'b')])
+    c.write(c.OUTPUT / 'outage.go.json', {'monotonic_ns': time.monotonic_ns()})
+    c.wait_files([c.OUTPUT / ('outage-' + w + '.json') for w in ('a', 'b')])
+    workers = {key: c.read(c.OUTPUT / (key + '.json')) for key in ('outage-a', 'outage-b')}
+    report['workers'] = workers
+    assert all(r['status'] == 'observed_native_turn' for r in workers.values()), 'Native outage worker failed'
+    assert not (fixture / 'runtime.json').exists()
+    report['after_outage'] = c.database_state(fixture)
+    assert report['after_outage'] == report['before_native']
+    pending = Outbox(fixture / 'outbox.json').pending()
+    report['queued_native_events'] = pending
+    assert len(pending) >= 4 and len({e['event_id'] for e in pending}) == len(pending)
+    assert {e['payload']['context']['host'] for e in pending} == {'codex', 'claude-code'}
+    sessions = {r['session']['session']: r['session'] for r in workers.values()}
+    assert len(sessions) == 2
+    assert {(e['payload']['context']['session_id'], e['payload']['role']) for e in pending} == {(s, role) for s in sessions for role in ('user', 'assistant')}
+    for entry in pending:
+        payload = entry['payload']
+        assert payload['content'] in c.native_contents(sessions[payload['context']['session_id']], payload['role'])
+        assert payload['context']['project_id'] == context.project_id
+        assert payload['context']['user_profile_id'] == c.PROFILE
+    settings.write_bytes(good_settings)
+    service, store, _ = claude._start_service(fixture, registry, config)
+    original_submit = service.submit
+    queued_source_ids = {e['payload']['event_id'] for e in pending}
+    arrivals = []
+    import mnemos.service as service_module
+    request_context = threading.local()
+    original_post = service_module._RequestHandler.do_POST
+    def traced_post(handler):
+        request_context.peer = handler.client_address
+        try:
+            return original_post(handler)
+        finally:
+            del request_context.peer
+    service_module._RequestHandler.do_POST = traced_post
+    def overlapping_submit(operation, payload):
+        selected = operation in {'capture', 'mnemos_capture'} and payload.get('event_id') in queued_source_ids
+        stamp = {'operation': operation, 'event_id': payload.get('event_id'),
+                 'thread': threading.get_ident(), 'start_ns': time.monotonic_ns()}
+        if selected:
+            stamp['origin'] = c.transport_origin(request_context.peer[1], service.descriptor['port'])
+            native_pids = [c.read(c.OUTPUT / ('recovery-' + w + '.started.json'))['pid'] for w in ('a', 'b')
+                           if (c.OUTPUT / ('recovery-' + w + '.started.json')).exists()]
+            roots = [pid for pid in native_pids if pid in stamp['origin']['process_ancestry']]
+            assert len(roots) == 1, 'Replay request lacks a unique native process ancestor'
+            stamp['native_pid'] = roots[0]
+            with trace_lock:
+                if len(arrivals) < 2 and stamp['native_pid'] not in {a['native_pid'] for a in arrivals}:
+                    arrivals.append(stamp)
+                    if len(arrivals) == 2:
+                        barrier.set()
+            released = barrier.wait(2)
+            stamp['barrier_released'] = released
+            stamp['release_ns'] = time.monotonic_ns()
+        result = original_submit(operation, payload)
+        stamp.update(end_ns=time.monotonic_ns(), status=result.get('status'), committed=result.get('committed'), durable_event_id=result.get('event_id'), job_id=result.get('job_id'))
+        with trace_lock:
+            trace.append(stamp)
+        return result
+    service.submit = overlapping_submit
+    print(json.dumps({'stage': 'waiting_recovery_workers', 'fixture': str(fixture)}), flush=True)
+    c.wait_files([c.OUTPUT / ('recovery-' + w + '.ready.json') for w in ('a', 'b')])
+    c.write(c.OUTPUT / 'recovery.go.json', {'monotonic_ns': time.monotonic_ns()})
+    c.wait_files([c.OUTPUT / ('recovery-' + w + '.json') for w in ('a', 'b')])
+    workers.update({key: c.read(c.OUTPUT / (key + '.json')) for key in ('recovery-a', 'recovery-b')})
+    report['workers'] = workers
+    assert all(r['status'] == 'observed_native_turn' for r in workers.values()), 'Native recovery worker failed'
+    recoveries = [workers[k]['process'] for k in ('recovery-a', 'recovery-b')]
+    report['process_overlap_ns'] = min(r['end_ns'] for r in recoveries) - max(r['start_ns'] for r in recoveries)
+    assert report['process_overlap_ns'] > 0
+    report['barrier_arrivals'] = arrivals
+    assert len(arrivals) == 2 and len({a['thread'] for a in arrivals}) == 2
+    assert {a['native_pid'] for a in arrivals} == {r['pid'] for r in recoveries}
+    assert all(a['barrier_released'] for a in arrivals), 'Paired replay did not overlap within the barrier'
+    report['replay_overlap_ns'] = min(a['release_ns'] for a in arrivals) - max(a['start_ns'] for a in arrivals)
+    assert report['replay_overlap_ns'] > 0
+    assert Outbox(fixture / 'outbox.json').pending() == []
+    sessions = {r['session']['session']: r['session'] for r in workers.values()}
+    assert len(sessions) == 4
+    report['after_native_recovery'] = c.database_state(fixture)
+    assert report['after_native_recovery']['capture_count'] >= 8
+    service.submit('maintenance', {})
+    report['captures'] = c.verify_captures(fixture, sessions, context.project_id, foreign_id, foreign)
+    outage_events = {e['event']['id'] for e in report['captures'] if e['event']['session_id'] in {workers[k]['session']['session'] for k in ('outage-a', 'outage-b')}}
+    report['queued_recovery'] = c.verify_queued_recovery(pending, report['captures'], trace)
+    assert outage_events == {e['event_id'] for e in pending}
+    report['after_maintenance'] = c.database_state(fixture)
+    assert lifecycle._close_service(service, store) == []
+    service = store = None
+    report['after_close'] = c.database_state(fixture)
+    service, store, _ = claude._start_service(fixture, registry, config)
+    report['after_restart'] = c.database_state(fixture)
+    assert report['after_restart'] == report['after_close'] == report['after_maintenance']
+    report['status'] = 'observed_native_crosshost_concurrent_recovery'
+except Exception as exc:
+    report.update(status='failed', error_type=type(exc).__name__, error=str(exc), traceback=traceback.format_exc())
+finally:
+    barrier.set()
+    if report['status'] == 'failed':
+        c.write(c.OUTPUT / 'abort.json', {'reason': 'Supervisor failed; workers must clean up.'})
+        time.sleep(2)
+    report['dispatch_trace'] = trace
+    errors = lifecycle._close_service(service, store)
+    if original_post is not None:
+        service_module._RequestHandler.do_POST = original_post
+    report['cleanup'] = {'errors': errors, 'descriptor_absent': not (fixture / 'runtime.json').exists(),
+        'auth_absent': all(not (Path(home) / name).exists() for home in homes.values() for name in ('auth.json', '.credentials.json'))}
+    if errors or not report['cleanup']['descriptor_absent'] or not report['cleanup']['auth_absent']:
+        report['status'] = 'failed'
+    report['final_database'] = c.database_state(fixture)
+    report['finished_at'] = datetime.now(timezone.utc).isoformat()
+    c.write(c.OUTPUT / 'report.json', report)
+    print(json.dumps({'status': report['status'], 'report': str(c.OUTPUT / 'report.json')}), flush=True)
+raise SystemExit(0 if report['status'] == 'observed_native_crosshost_concurrent_recovery' else 1)

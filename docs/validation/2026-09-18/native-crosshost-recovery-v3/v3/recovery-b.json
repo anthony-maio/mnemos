@@ -1,0 +1,199 @@
+{
+  "cleanup": {
+    "auth_absent": true,
+    "errors": []
+  },
+  "command": [
+    "C:\\Users\\Ant\\.local\\bin\\claude.exe",
+    "--print",
+    "--verbose",
+    "--output-format",
+    "stream-json",
+    "--include-hook-events",
+    "--setting-sources",
+    "project",
+    "--plugin-dir",
+    "C:\\Users\\Ant\\AppData\\Local\\Temp\\mnemos-source-retrieval-comparison-v1",
+    "--tools",
+    "",
+    "--disable-slash-commands",
+    "--permission-mode",
+    "default",
+    "--session-id",
+    "cd9c9ad9-0106-4fad-80aa-d0a331de39ae",
+    "--model",
+    "claude-sonnet-4-6",
+    "--max-budget-usd",
+    "1.00",
+    "--system-prompt",
+    "Do not use tools. Follow the exact reply instruction.",
+    "<fixture prompt>"
+  ],
+  "common_sha256": "9dd96a16027b3f10a96615142d757798020e04441c8b4685a83df38f956635be",
+  "finished_at": "2026-09-18T10:44:36.106487+00:00",
+  "home": "C:\\Users\\Ant\\AppData\\Local\\Temp\\mnemos-native-crosshost-concurrent-v3-ynfbjbac\\claude-home\\.claude",
+  "hook_diagnostics": [
+    {
+      "event": "UserPromptSubmit",
+      "status": "degraded"
+    },
+    {
+      "event": "UserPromptSubmit",
+      "status": "degraded"
+    },
+    {
+      "event": "Stop",
+      "status": "degraded"
+    },
+    {
+      "event": "Stop",
+      "status": "degraded"
+    }
+  ],
+  "key": "recovery-b",
+  "native_rows": [
+    {
+      "content": "Do not use tools. Reply with exactly these words, without punctuation: recovery copper finch",
+      "line": 3,
+      "line_sha256": "5844daec62afd8905d81e0785f03b738821fd5c4a51dd2a8bb4cf9d2fbccdda7",
+      "record_type": "user",
+      "role": "user",
+      "source_file_sha256": "26883df003bec3bc1bf8f99e870737f2c81a4a021f586be488d6ef10726d512d",
+      "source_path": "projects/C--Users-Ant-AppData-Local-Temp-mnemos-native-crosshost-concurrent-v3-ynfbjbac-project/cd9c9ad9-0106-4fad-80aa-d0a331de39ae.jsonl",
+      "source_ref": "ec99ebab-3e1b-40b9-8415-c9827783648b"
+    },
+    {
+      "content": "recovery copper finch",
+      "line": 6,
+      "line_sha256": "d48d206a171e977c7d1b59a5ee95dd756382f183f3a8893642c43a3c2f22f409",
+      "record_type": "assistant",
+      "role": "assistant",
+      "source_file_sha256": "26883df003bec3bc1bf8f99e870737f2c81a4a021f586be488d6ef10726d512d",
+      "source_path": "projects/C--Users-Ant-AppData-Local-Temp-mnemos-native-crosshost-concurrent-v3-ynfbjbac-project/cd9c9ad9-0106-4fad-80aa-d0a331de39ae.jsonl",
+      "source_ref": "f33b41fd-9de4-46f0-86ad-7e17d5431a05"
+    }
+  ],
+  "plugin_snapshot_after": {
+    "clean": true,
+    "files": {
+      ".claude-plugin/plugin.json": {
+        "bytes": 990,
+        "sha256": "400288ccee02bf854ba4ce7b10357507c6d6fb6728bbeef8de10ae245e052a48"
+      },
+      ".claude-plugin/run_mnemos_hook.py": {
+        "bytes": 1430,
+        "sha256": "9ca11e4a0efa9b61dea647e0675729a523e1b9aed0fb56468af08079d04512c0"
+      },
+      ".claude-plugin/run_mnemos_mcp.py": {
+        "bytes": 7222,
+        "sha256": "81bf0d833d132bb3136cf624933177a7a9b35ccb830db66234b2a78e19bcfde8"
+      },
+      "hooks/hooks.json": {
+        "bytes": 1350,
+        "sha256": "7ca43bda20e14e4363c84fd2fddd26fd257afaa9ba3146bff2a389c52817d1a7"
+      }
+    },
+    "hook_dispatch": "hooks/hooks.json -> python ${CLAUDE_PLUGIN_ROOT}/.claude-plugin/run_mnemos_hook.py <event>",
+    "mcp_dispatch": "plugin.json -> .claude-plugin/run_mnemos_mcp.py -> explicit MNEMOS_PLUGIN_PYTHON",
+    "snapshot": "C:\\Users\\Ant\\AppData\\Local\\Temp\\mnemos-source-retrieval-comparison-v1",
+    "source_commit": "fc72cc251aeafa161a1a390269b8dfa34d83cf2b"
+  },
+  "plugin_snapshot_before": {
+    "clean": true,
+    "files": {
+      ".claude-plugin/plugin.json": {
+        "bytes": 990,
+        "sha256": "400288ccee02bf854ba4ce7b10357507c6d6fb6728bbeef8de10ae245e052a48"
+      },
+      ".claude-plugin/run_mnemos_hook.py": {
+        "bytes": 1430,
+        "sha256": "9ca11e4a0efa9b61dea647e0675729a523e1b9aed0fb56468af08079d04512c0"
+      },
+      ".claude-plugin/run_mnemos_mcp.py": {
+        "bytes": 7222,
+        "sha256": "81bf0d833d132bb3136cf624933177a7a9b35ccb830db66234b2a78e19bcfde8"
+      },
+      "hooks/hooks.json": {
+        "bytes": 1350,
+        "sha256": "7ca43bda20e14e4363c84fd2fddd26fd257afaa9ba3146bff2a389c52817d1a7"
+      }
+    },
+    "hook_dispatch": "hooks/hooks.json -> python ${CLAUDE_PLUGIN_ROOT}/.claude-plugin/run_mnemos_hook.py <event>",
+    "mcp_dispatch": "plugin.json -> .claude-plugin/run_mnemos_mcp.py -> explicit MNEMOS_PLUGIN_PYTHON",
+    "snapshot": "C:\\Users\\Ant\\AppData\\Local\\Temp\\mnemos-source-retrieval-comparison-v1",
+    "source_commit": "fc72cc251aeafa161a1a390269b8dfa34d83cf2b"
+  },
+  "process": {
+    "end_ns": 59722666601300,
+    "pid": 50280,
+    "returncode": 0,
+    "start_ns": 59712006295400,
+    "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "stdout_sha256": "c8dd1b95a31c51fc5aef62abaa7f5e222f67daddda0ad1aa1bf839290d48b5b1"
+  },
+  "provenance": {
+    "installed_files_verified": 58,
+    "installed_package": "C:\\Users\\Ant\\AppData\\Local\\Temp\\mnemos-installed-encoding-comparison-v1\\Lib\\site-packages\\mnemos\\__init__.py",
+    "package_provenance": {
+      "mismatches": [],
+      "package_files_checked": 55,
+      "source_commit": "fc72cc251aeafa161a1a390269b8dfa34d83cf2b",
+      "wheel_path": "C:\\Users\\Ant\\AppData\\Local\\Temp\\mnemos-package-checks-retrieval-comparison-v1\\dist\\mnemos_memory-0.7.0-py3-none-any.whl",
+      "wheel_sha256_expected": "938f6f423334ccc8d4b3409bbf3b8b49c25a42ff60b734490eb716d78cb2b54b",
+      "wheel_sha256_observed": "938f6f423334ccc8d4b3409bbf3b8b49c25a42ff60b734490eb716d78cb2b54b"
+    },
+    "python": "C:\\Users\\Ant\\AppData\\Local\\Temp\\mnemos-installed-encoding-comparison-v1\\Scripts\\python.exe",
+    "source_commit": "fc72cc251aeafa161a1a390269b8dfa34d83cf2b",
+    "wheel": {
+      "report_path": "C:\\Users\\Ant\\AppData\\Local\\Temp\\mnemos-package-checks-retrieval-comparison-v1\\verification.json",
+      "report_sha256": "ab696634de22e9c5083cecd16fcce27250f23ec99bda90fb947ebf96cea7cc97",
+      "source_commit": "fc72cc251aeafa161a1a390269b8dfa34d83cf2b",
+      "wheel": {
+        "bytes": 290126,
+        "file": "C:\\Users\\Ant\\AppData\\Local\\Temp\\mnemos-package-checks-retrieval-comparison-v1\\dist\\mnemos_memory-0.7.0-py3-none-any.whl",
+        "sha256": "938f6f423334ccc8d4b3409bbf3b8b49c25a42ff60b734490eb716d78cb2b54b"
+      }
+    }
+  },
+  "result_summary": [
+    {
+      "duration_ms": 4616,
+      "is_error": false,
+      "num_turns": 1,
+      "subtype": "success",
+      "total_cost_usd": 0.0287556,
+      "type": "result"
+    }
+  ],
+  "runner_sha256": "22b7624c18164bb6765453ca6ea98a51edd67925e17cd7d9364b3e32a16f1537",
+  "session": {
+    "assistant": "recovery copper finch",
+    "host": "claude-code",
+    "messages": [
+      {
+        "content": "Do not use tools. Reply with exactly these words, without punctuation: recovery copper finch",
+        "line": 3,
+        "line_sha256": "5844daec62afd8905d81e0785f03b738821fd5c4a51dd2a8bb4cf9d2fbccdda7",
+        "record_type": "user",
+        "role": "user",
+        "source_file_sha256": "26883df003bec3bc1bf8f99e870737f2c81a4a021f586be488d6ef10726d512d",
+        "source_path": "projects/C--Users-Ant-AppData-Local-Temp-mnemos-native-crosshost-concurrent-v3-ynfbjbac-project/cd9c9ad9-0106-4fad-80aa-d0a331de39ae.jsonl",
+        "source_ref": "ec99ebab-3e1b-40b9-8415-c9827783648b"
+      },
+      {
+        "content": "recovery copper finch",
+        "line": 6,
+        "line_sha256": "d48d206a171e977c7d1b59a5ee95dd756382f183f3a8893642c43a3c2f22f409",
+        "record_type": "assistant",
+        "role": "assistant",
+        "source_file_sha256": "26883df003bec3bc1bf8f99e870737f2c81a4a021f586be488d6ef10726d512d",
+        "source_path": "projects/C--Users-Ant-AppData-Local-Temp-mnemos-native-crosshost-concurrent-v3-ynfbjbac-project/cd9c9ad9-0106-4fad-80aa-d0a331de39ae.jsonl",
+        "source_ref": "f33b41fd-9de4-46f0-86ad-7e17d5431a05"
+      }
+    ],
+    "session": "cd9c9ad9-0106-4fad-80aa-d0a331de39ae",
+    "user": "Do not use tools. Reply with exactly these words, without punctuation: recovery copper finch"
+  },
+  "started_at": "2026-09-18T10:44:25.061774+00:00",
+  "status": "observed_native_turn"
+}

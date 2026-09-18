@@ -1,0 +1,72 @@
+"""Offline selection and ownership checks before any native host launch."""
+import ast
+import hashlib
+import importlib.util
+import json
+import os
+from pathlib import Path
+import socket
+import tempfile
+
+root = Path(__file__).parent
+common_path = root / 'native_crosshost_concurrent_common_v1.py'
+spec = importlib.util.spec_from_file_location('crosshost_common', common_path)
+c = importlib.util.module_from_spec(spec)
+spec.loader.exec_module(c)
+_, _, _, _, provenance = c.helpers()
+worker = root / 'native_crosshost_concurrent_claude_v1.py'
+tree = ast.parse(worker.read_text(encoding='utf-8'))
+functions = ast.Module(body=[node for node in tree.body if isinstance(node, ast.FunctionDef)], type_ignores=[])
+namespace = {'hashlib': hashlib, 'json': json}
+exec(compile(functions, str(worker), 'exec'), namespace)
+checks = []
+with tempfile.TemporaryDirectory(prefix='mnemos-crosshost-parser-') as temp:
+    home = Path(temp)
+    namespace['config_dir'] = home
+    path = home / 'fixture.jsonl'
+    rows = [
+        {'type': 'user', 'sessionId': 'old', 'uuid': 'old-user', 'message': {'role': 'user', 'content': 'stale'}},
+        {'type': 'user', 'sessionId': 'current', 'uuid': 'current-user', 'message': {'role': 'user', 'content': 'prompt'}},
+        {'type': 'assistant', 'sessionId': 'current', 'uuid': 'current-assistant', 'message': {'role': 'assistant', 'content': [{'type':'text','text':'answer'},{'type':'text','text':'\ncontinued'}]}},
+    ]
+    def write_rows():
+        path.write_text(''.join(json.dumps(row) + '\n' for row in rows), encoding='utf-8')
+    write_rows()
+    selected = namespace['_selected_transcript']('current', 'prompt', 'answer\ncontinued')
+    assert len(selected) == 2
+    assert [row['source_ref'] for row in selected] == ['current-user', 'current-assistant']
+    assert all(row['source_file_sha256'] == c.sha(path.read_bytes()) for row in selected)
+    checks.extend(['prior_session_excluded', 'native_uuid_preserved', 'block_text_preserved', 'source_hash_verified'])
+    rows[1].pop('uuid')
+    write_rows()
+    try:
+        namespace['_selected_transcript']('current', 'prompt', 'answer\ncontinued')
+    except AssertionError:
+        checks.append('missing_native_identity_rejected')
+    else:
+        raise AssertionError('Missing UUID was accepted')
+    namespace['_assert_no_tool_use'](json.dumps({'type':'result','result':'answer'}))
+    try:
+        namespace['_assert_no_tool_use'](json.dumps({'type':'assistant','message':{'content':[{'type':'tool_use'}]}}))
+    except AssertionError:
+        checks.append('nested_tool_use_rejected')
+    else:
+        raise AssertionError('Tool use accepted')
+with socket.socket() as server:
+    server.bind(('127.0.0.1', 0))
+    server.listen(1)
+    with socket.create_connection(server.getsockname(), timeout=1) as client:
+        peer, _ = server.accept()
+        with peer:
+            origin = c.transport_origin(client.getsockname()[1], server.getsockname()[1])
+            assert origin['tcp_client_pid'] == os.getpid()
+            assert origin['process_ancestry'][0] == os.getpid()
+            assert os.getppid() in origin['process_ancestry']
+            checks.append('tcp_owner_and_ancestry_verified')
+result = {'status':'passed', 'checks':checks, 'provenance':provenance,
+          'common_sha256':c.sha(common_path.read_bytes()), 'claude_worker_sha256':c.sha(worker.read_bytes()),
+          'helper_sha256':c.sha(Path(__file__).read_bytes()), 'origin':origin}
+output = Path(__file__).with_suffix('.json')
+assert not output.exists()
+output.write_text(json.dumps(result, indent=2) + '\n', encoding='utf-8')
+print(json.dumps({'status':'passed','checks':checks,'report':str(output)}))

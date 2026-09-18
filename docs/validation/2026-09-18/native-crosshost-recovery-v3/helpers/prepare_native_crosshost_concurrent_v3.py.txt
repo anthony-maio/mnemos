@@ -1,0 +1,23 @@
+"""Remove contradictory punctuation from exact-reply fixture words."""
+from pathlib import Path
+root = Path(__file__).parent
+for name in ('common', 'supervisor', 'worker', 'claude'):
+    original = root / ('native_crosshost_concurrent_' + name + '_v2.py')
+    target = original.with_name(original.name.replace('_v2.py', '_v3.py'))
+    assert not target.exists()
+    source = original.read_text(encoding='utf-8')
+    for label in ('common', 'worker', 'claude'):
+        source = source.replace('native_crosshost_concurrent_' + label + '_v2', 'native_crosshost_concurrent_' + label + '_v3')
+    source = source.replace('native_crosshost_common_v2', 'native_crosshost_common_v3')
+    source = source.replace('native-crosshost-concurrent-v2', 'native-crosshost-concurrent-v3')
+    if name == 'common':
+        for before, after in (('amber-wren','amber wren'),('cobalt-fox','cobalt fox'),('silver-birch','silver birch'),('copper-finch','copper finch')):
+            assert before in source
+            source = source.replace(before, after)
+    target.write_text(source, encoding='utf-8')
+test = (root / 'test_crosshost_preflight_v2.py').read_text(encoding='utf-8')
+for label in ('common', 'claude'):
+    test = test.replace('native_crosshost_concurrent_' + label + '_v2', 'native_crosshost_concurrent_' + label + '_v3')
+target = root / 'test_crosshost_preflight_v3.py'
+assert not target.exists()
+target.write_text(test, encoding='utf-8')

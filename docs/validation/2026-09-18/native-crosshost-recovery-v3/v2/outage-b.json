@@ -1,0 +1,109 @@
+{
+  "cleanup": {
+    "auth_absent": true,
+    "errors": []
+  },
+  "command": [
+    "C:\\Users\\Ant\\.local\\bin\\claude.exe",
+    "--print",
+    "--verbose",
+    "--output-format",
+    "stream-json",
+    "--include-hook-events",
+    "--setting-sources",
+    "project",
+    "--plugin-dir",
+    "C:\\Users\\Ant\\AppData\\Local\\Temp\\mnemos-source-retrieval-comparison-v1",
+    "--tools",
+    "",
+    "--disable-slash-commands",
+    "--permission-mode",
+    "default",
+    "--session-id",
+    "07a81934-95cd-4bce-bc94-e821a2e69c97",
+    "--model",
+    "claude-sonnet-4-6",
+    "--max-budget-usd",
+    "1.00",
+    "--system-prompt",
+    "Do not use tools. Follow the exact reply instruction.",
+    "<fixture prompt>"
+  ],
+  "common_sha256": "d8c0ffa53aa82bda089a8b589049fb4cfb288bfee32aa7e9daf6af6014e8da46",
+  "error": "",
+  "error_type": "AssertionError",
+  "finished_at": "2026-09-18T10:40:45.155998+00:00",
+  "home": "C:\\Users\\Ant\\AppData\\Local\\Temp\\mnemos-native-crosshost-concurrent-v2-7nfahmdg\\claude-home\\.claude",
+  "key": "outage-b",
+  "plugin_snapshot_before": {
+    "clean": true,
+    "files": {
+      ".claude-plugin/plugin.json": {
+        "bytes": 990,
+        "sha256": "400288ccee02bf854ba4ce7b10357507c6d6fb6728bbeef8de10ae245e052a48"
+      },
+      ".claude-plugin/run_mnemos_hook.py": {
+        "bytes": 1430,
+        "sha256": "9ca11e4a0efa9b61dea647e0675729a523e1b9aed0fb56468af08079d04512c0"
+      },
+      ".claude-plugin/run_mnemos_mcp.py": {
+        "bytes": 7222,
+        "sha256": "81bf0d833d132bb3136cf624933177a7a9b35ccb830db66234b2a78e19bcfde8"
+      },
+      "hooks/hooks.json": {
+        "bytes": 1350,
+        "sha256": "7ca43bda20e14e4363c84fd2fddd26fd257afaa9ba3146bff2a389c52817d1a7"
+      }
+    },
+    "hook_dispatch": "hooks/hooks.json -> python ${CLAUDE_PLUGIN_ROOT}/.claude-plugin/run_mnemos_hook.py <event>",
+    "mcp_dispatch": "plugin.json -> .claude-plugin/run_mnemos_mcp.py -> explicit MNEMOS_PLUGIN_PYTHON",
+    "snapshot": "C:\\Users\\Ant\\AppData\\Local\\Temp\\mnemos-source-retrieval-comparison-v1",
+    "source_commit": "fc72cc251aeafa161a1a390269b8dfa34d83cf2b"
+  },
+  "process": {
+    "end_ns": 59491837073800,
+    "pid": 50848,
+    "returncode": 0,
+    "start_ns": 59483021766700,
+    "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "stdout_sha256": "497165d068c64f9438b9a5d682cb538d4034ce068880ca04ceadc3ce25206edc"
+  },
+  "provenance": {
+    "installed_files_verified": 58,
+    "installed_package": "C:\\Users\\Ant\\AppData\\Local\\Temp\\mnemos-installed-encoding-comparison-v1\\Lib\\site-packages\\mnemos\\__init__.py",
+    "package_provenance": {
+      "mismatches": [],
+      "package_files_checked": 55,
+      "source_commit": "fc72cc251aeafa161a1a390269b8dfa34d83cf2b",
+      "wheel_path": "C:\\Users\\Ant\\AppData\\Local\\Temp\\mnemos-package-checks-retrieval-comparison-v1\\dist\\mnemos_memory-0.7.0-py3-none-any.whl",
+      "wheel_sha256_expected": "938f6f423334ccc8d4b3409bbf3b8b49c25a42ff60b734490eb716d78cb2b54b",
+      "wheel_sha256_observed": "938f6f423334ccc8d4b3409bbf3b8b49c25a42ff60b734490eb716d78cb2b54b"
+    },
+    "python": "C:\\Users\\Ant\\AppData\\Local\\Temp\\mnemos-installed-encoding-comparison-v1\\Scripts\\python.exe",
+    "source_commit": "fc72cc251aeafa161a1a390269b8dfa34d83cf2b",
+    "wheel": {
+      "report_path": "C:\\Users\\Ant\\AppData\\Local\\Temp\\mnemos-package-checks-retrieval-comparison-v1\\verification.json",
+      "report_sha256": "ab696634de22e9c5083cecd16fcce27250f23ec99bda90fb947ebf96cea7cc97",
+      "source_commit": "fc72cc251aeafa161a1a390269b8dfa34d83cf2b",
+      "wheel": {
+        "bytes": 290126,
+        "file": "C:\\Users\\Ant\\AppData\\Local\\Temp\\mnemos-package-checks-retrieval-comparison-v1\\dist\\mnemos_memory-0.7.0-py3-none-any.whl",
+        "sha256": "938f6f423334ccc8d4b3409bbf3b8b49c25a42ff60b734490eb716d78cb2b54b"
+      }
+    }
+  },
+  "result_summary": [
+    {
+      "duration_ms": 4876,
+      "is_error": false,
+      "num_turns": 1,
+      "subtype": "success",
+      "total_cost_usd": 0.028689599999999996,
+      "type": "result"
+    }
+  ],
+  "runner_sha256": "8ebff2f0a0263c529ce318c85e18b25cc17090203b197595c6c8aab380efddcf",
+  "started_at": "2026-09-18T10:40:36.086519+00:00",
+  "status": "failed",
+  "traceback": "Traceback (most recent call last):\n  File \"D:\\Development\\mnemos\\mnemos\\.worktrees\\functional-local-memory\\.venv\\native_crosshost_concurrent_claude_v2.py\", line 215, in <module>\n    assert not results[0].get('is_error') and results[0].get('result', '').strip() == c.WORDS[key]\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\nAssertionError\n"
+}
