@@ -13,6 +13,19 @@ empty/nonempty selection, restart replay, and PII blocking. This checkpoint
 adds package evidence; earlier native observations retain their original
 source bindings.
 
+A [native startup-outage probe](../2026-09-18/native-codex-startup-outage-v1/README.md)
+on the installed `c25ed98` wheel retained the real user prompt and final answer
+in its outbox while malformed fixture configuration prevented service startup.
+The native process exited zero; the original runner failed because the answer
+omitted a requested period. That failure is preserved. A separate recovery
+helper verified the actual messages, then explicitly started the fixture service
+and replayed both events. An immediate second replay had no pending events.
+After service restart, replaying the same events left all four core table counts
+and complete-row hashes unchanged. Each message had exactly one stored event
+and one evidence row. This establishes native outage capture followed by explicit
+client recovery with fixture providers. Automatic native-hook recovery,
+process-kill and concurrent-host behavior, and real-provider recovery remain open.
+
 Three fresh [native Codex sessions](../2026-09-18/native-codex-stop-repeat-v1/README.md)
 on the `c25ed98` wheel used the generated hooks unchanged. The late native
 hook start/completion pairs measured 1,015.009 ms, 1,031.318 ms, and

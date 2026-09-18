@@ -1,0 +1,94 @@
+{
+  "status": "passed",
+  "source_commit": "c25ed98d9dae5afc9103a4f6807a62429d30ac9d",
+  "wheel_sha256": "d697b0796db57db1790b59f1874ea1fda7a77b32d41dbd15be6e13e1f34dada8",
+  "native_report_sha256": "5ef01881fd0612269a5ad2c7fbff0e5c4c161f4797a1ad244d32af4b2fcc676b",
+  "recovery_report_sha256": "8a24f2b243d4d14cdd1f123c691df9d081cc9d91e740c112dbfd9aaff98d7fab",
+  "archiver_sha256": "4961ad07e72e046a2c149103d6c554dc84511a52d4c1f05697aeaebe5c1db072",
+  "installed_files_verified": 58,
+  "native_session_id": "01a0b33a-32ea-7933-8fc2-a7cc9b05f262",
+  "native_turn_id": "01a0b33a-3ac5-74f1-bb49-f7168cb8ea70",
+  "captures": [
+    {
+      "id": "08e03f2e6ff36ba47b9065ca3ca339b745a4c7aa1639ec434012ed9148af3b84",
+      "role": "user",
+      "content_sha256": "b15ff748eacc5f8c9f607a6f8ff01857cdbeb7c29b27fdfd77c800f89adbe92c",
+      "metadata": {
+        "user_profile_id": "native-codex-startup-outage-v1",
+        "project_id": "6e9b07e7-6266-49bd-8227-6907802bcc6c",
+        "workspace_id": null,
+        "session_id": "01a0b33a-32ea-7933-8fc2-a7cc9b05f262",
+        "host": "codex",
+        "scope": "project",
+        "scope_id": "6e9b07e7-6266-49bd-8227-6907802bcc6c",
+        "source_event_id": "codex:9db40c3984f3d91c685dd2b9c35f6157b6f3e3c5ccffa1ac793d040c5f57409e",
+        "source_ref": "UserPromptSubmit:01a0b33a-3ac5-74f1-bb49-f7168cb8ea70",
+        "source_kind": "codex_hook",
+        "explicit_remember": false,
+        "identity_status": "normal"
+      },
+      "evidence": [
+        {
+          "evidence_id": "0b04af52-f17f-4f3a-adcc-f4fa6ba95536",
+          "fact_id": "8f4611cc-d85e-42d5-817a-a3dd401f0f98",
+          "source_event_id": "08e03f2e6ff36ba47b9065ca3ca339b745a4c7aa1639ec434012ed9148af3b84",
+          "excerpt": "Reply with exactly: outage willow-raven. Do not use tools.",
+          "source_ref": "UserPromptSubmit:01a0b33a-3ac5-74f1-bb49-f7168cb8ea70",
+          "created_at": "2026-09-18T06:38:11.114546+00:00"
+        }
+      ]
+    },
+    {
+      "id": "d6422ab6249b37b1eb8039cb84375fb407f7024061ae844ff90ff8117242235d",
+      "role": "assistant",
+      "content_sha256": "62ed4b45d13c03ed094bacbe91ea8d37aa308dc47ac39e091fd47d7231f5ff17",
+      "metadata": {
+        "user_profile_id": "native-codex-startup-outage-v1",
+        "project_id": "6e9b07e7-6266-49bd-8227-6907802bcc6c",
+        "workspace_id": null,
+        "session_id": "01a0b33a-32ea-7933-8fc2-a7cc9b05f262",
+        "host": "codex",
+        "scope": "project",
+        "scope_id": "6e9b07e7-6266-49bd-8227-6907802bcc6c",
+        "source_event_id": "codex:d57357b93b2ce3557c040513b1efd969607281b9702295bef08f025ff5cf868b",
+        "source_ref": "Stop:01a0b33a-3ac5-74f1-bb49-f7168cb8ea70",
+        "source_kind": "codex_hook",
+        "explicit_remember": false,
+        "identity_status": "normal"
+      },
+      "evidence": [
+        {
+          "evidence_id": "fc269fb3-5fb7-4892-b56c-8a214c091c03",
+          "fact_id": "fe2ac21d-5e26-40f0-b8da-fa25ae866751",
+          "source_event_id": "d6422ab6249b37b1eb8039cb84375fb407f7024061ae844ff90ff8117242235d",
+          "excerpt": "outage willow-raven",
+          "source_ref": "Stop:01a0b33a-3ac5-74f1-bb49-f7168cb8ea70",
+          "created_at": "2026-09-18T06:38:11.121135+00:00"
+        }
+      ]
+    }
+  ],
+  "snapshot_after_duplicate_replay": {
+    "memory_chunks": {
+      "rows": 4,
+      "sha256": "02e80bf38051ddc591ed858bbb14470b5dfbc78da2392f6cb2620ea3182e5964"
+    },
+    "episodic_events": {
+      "rows": 4,
+      "sha256": "33d47960258663050004ea284670f1da9677e7314b5345da2717249b11f21f36"
+    },
+    "fact_evidence": {
+      "rows": 4,
+      "sha256": "a982ea9a40bff4660483c3e2b1e1037e6cf9e5a7c9e5495e6fa1998adf75aba4"
+    },
+    "memory_jobs": {
+      "rows": 4,
+      "sha256": "45d17092051be5f82eb2d91ee27992760cb335d426bd69d94530dc06f5efe0f6"
+    },
+    "capture_count": 2
+  },
+  "database_sha256": "579ec0e7a3ed3ff43cae4295e9db15a9d4288119e977585d4b8bab4c28ca2afc",
+  "foreign_project_id": "2b562113-8825-4a96-8ef3-f0bc8c99fe40",
+  "cleanup_verified": true,
+  "scope": "Native startup-failure capture followed by explicit installed-service replay; no native model rerun or whole-host lifecycle pass."
+}

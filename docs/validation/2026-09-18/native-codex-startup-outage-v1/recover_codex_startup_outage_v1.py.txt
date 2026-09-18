@@ -1,0 +1,114 @@
+"""Recover the preserved native outage queue without rerunning the model."""
+from pathlib import Path
+from datetime import datetime,timezone
+from types import SimpleNamespace
+import ast,asyncio,hashlib,importlib.util,json,sqlite3,sys,traceback
+ROOT=Path(__file__).resolve().parents[1]
+TEMP=Path('C:/Users/Ant/AppData/Local/Temp')
+BASE=TEMP/'mnemos-native-codex-startup-outage-v1'
+OUT=TEMP/'mnemos-native-codex-startup-outage-recovery-v1'
+RUNNER=ROOT/'.venv/native_codex_startup_outage_v1.py'
+SOURCE='c25ed98d9dae5afc9103a4f6807a62429d30ac9d'
+PROFILE='native-codex-startup-outage-v1'
+WHEEL=TEMP/'mnemos-package-checks-outbox-selection-v1/dist/mnemos_memory-0.7.0-py3-none-any.whl'
+WHEEL_SHA='d697b0796db57db1790b59f1874ea1fda7a77b32d41dbd15be6e13e1f34dada8'
+PYTHON=TEMP/'mnemos-installed-outbox-selection-v1/Scripts/python.exe'
+def sha(raw): return hashlib.sha256(raw).hexdigest()
+def load(p): return json.loads(p.read_text(encoding='utf-8'))
+def module(p,name):
+ spec=importlib.util.spec_from_file_location(name,p); m=importlib.util.module_from_spec(spec);spec.loader.exec_module(m);return m
+assert not OUT.exists()
+assert Path(sys.executable).resolve()==PYTHON.resolve()
+base_raw=(BASE/'report.json').read_bytes();base=load(BASE/'report.json')
+assert sha(RUNNER.read_bytes())==base['runner_sha256']
+assert base['status']=='failed' and base['error_type']=='AssertionError'
+assert "assert answers[0]['record']['payload']['message'] == report['expected_final_answer']" in base['traceback']
+assert base['process']['returncode']==0 and base['process']['timed_out'] is False
+assert sha(WHEEL.read_bytes())==WHEEL_SHA
+for name,h in base['helper_pins'].items(): assert sha((ROOT/'.venv'/name).read_bytes())==h
+native=module(ROOT/'.venv/native_codex_interactive_utf8_v1.py','outage_native')
+wrapper=native._load_v2();lifecycle=wrapper._load_lifecycle()
+claude=module(ROOT/'.venv/native_claude_lifecycle_v17.py','outage_claude')
+wrapper.PROFILE=claude.PROFILE=PROFILE
+provenance=wrapper._verify_inputs(SimpleNamespace(source_commit=SOURCE,wheel=WHEEL,expected_wheel_sha256=WHEEL_SHA,build_verification=WHEEL.parent.parent/'verification.json'),lifecycle)
+# Reuse only these reviewed pure/read-only helper definitions; never execute the native runner again.
+tree=ast.parse(RUNNER.read_text(encoding='utf-8'))
+functions=[node for node in tree.body if isinstance(node,(ast.FunctionDef,ast.AsyncFunctionDef)) and node.name in {'database_state','replay','read_native'}]
+assert len(functions)==3
+exec(compile(ast.Module(body=functions,type_ignores=[]),str(RUNNER),'exec'),globals())
+fixture=Path(base['fixture']);service=store=None
+OUT.mkdir()
+report={'status':'running','source_commit':SOURCE,'wheel_sha256':WHEEL_SHA,'fixture':str(fixture),'native_report_sha256':sha(base_raw),'native_runner_sha256':base['runner_sha256'],'runner_sha256':sha(Path(__file__).read_bytes()),'provenance':provenance,'started_at':datetime.now(timezone.utc).isoformat(),'limits':'Original native runner failed its requested reply punctuation assertion. This run independently verifies capture and recovery using the actual native messages. No native model rerun; supplied fixture providers and disabled modules, not live provider startup acceptance.'}
+try:
+ from mnemos.client import Outbox
+ from mnemos.scopes import ScopeRegistry,ScopeContext
+ from mnemos.adapters.codex import CodexAdapter
+ assert not (fixture/'runtime.json').exists()
+ assert not (fixture/'codex-home/.codex/auth.json').exists()
+ assert sha((fixture/'settings.toml').read_bytes())==base['invalid_settings_sha256']
+ report['before_recovery']=database_state(fixture)
+ assert report['before_recovery']==base['before_native']==base['final_database']
+ assert report['before_recovery']['capture_count']==0
+ rows=read_native(fixture/'codex-home/.codex')
+ users=[r for r in rows if r['record']['payload'].get('type')=='user_message']
+ finals=[r for r in rows if r['record']['payload'].get('type')=='agent_message' and r['record']['payload'].get('phase')=='final_answer']
+ sessions=[r['record']['payload']['id'] for r in rows if r['record'].get('type')=='session_meta']
+ turns=[r['record']['payload']['turn_id'] for r in rows if r['record']['payload'].get('type')=='task_complete']
+ assert len(users)==len(finals)==len(sessions)==len(turns)==1
+ assert not [r for r in rows if r['record']['payload'].get('type') in ('mcp_tool_call_end','custom_tool_call','function_call')]
+ actual={'user':users[0]['record']['payload']['message'],'assistant':finals[0]['record']['payload']['message']}
+ assert actual['user']==base['prompt'] and actual['assistant']=='outage willow-raven'
+ report['native_messages']={'user':users[0],'assistant':finals[0]}
+ report['native_session_id']=sessions[0];report['native_turn_id']=turns[0]
+ raw=(fixture/'outbox.json').read_bytes()
+ assert sha(raw)==base['outbox_final_sha256']
+ (OUT/'native-outbox-before-recovery.json').write_bytes(raw)
+ pending=Outbox(fixture/'outbox.json').pending()
+ assert len(pending)==2 and {e['payload']['role'] for e in pending}=={'user','assistant'}
+ assert len({e['event_id'] for e in pending})==len({e['payload']['event_id'] for e in pending})==2
+ for entry in pending:
+  payload=entry['payload'];context=ScopeContext.model_validate(payload['context'])
+  assert entry['operation']=='capture' and payload['source_kind']=='codex_hook'
+  assert context.host=='codex' and context.user_profile_id==PROFILE
+  assert context.session_id==sessions[0] and context.project_id==base['target']['scope_id']
+  assert payload['content']==actual[payload['role']]
+  event='UserPromptSubmit' if payload['role']=='user' else 'Stop'
+  assert payload['source_ref']==event+':'+turns[0]
+  assert payload['event_id']==CodexAdapter._event_id(context,event=event,turn_id=turns[0],role=payload['role'],content=payload['content'])
+ report['pending_native_events']=pending
+ registry=ScopeRegistry.load(fixture/'scopes.json');config=wrapper._disabled_config()
+ (fixture/'settings.toml').write_text('# disposable MCP-only control\n',encoding='utf-8')
+ report['recovery_mode']='Explicit installed MnemosService with supplied fixture providers and disabled modules.'
+ service,store,_=claude._start_service(fixture,registry,config)
+ report['replay_first']=asyncio.run(replay(fixture/'outbox.json',fixture/'runtime.json'))
+ assert report['replay_first']=={'schema_version':1,'acknowledged':2,'failed':0,'pending':0}
+ report['replay_empty']=asyncio.run(replay(fixture/'outbox.json',fixture/'runtime.json'))
+ assert report['replay_empty']=={'schema_version':1,'acknowledged':0,'failed':0,'pending':0}
+ service.submit('maintenance',{})
+ report['after_recovery']=database_state(fixture)
+ assert report['after_recovery']['capture_count']==2
+ assert lifecycle._close_service(service,store)==[]
+ service=store=None
+ report['after_restart_closed']=database_state(fixture)
+ assert report['after_restart_closed']==report['after_recovery']
+ service,store,_=claude._start_service(fixture,registry,config)
+ duplicate=Outbox(fixture/'duplicate-replay.json')
+ for entry in pending: duplicate.append(entry['payload'],operation=entry['operation'])
+ report['replay_original_events']=asyncio.run(replay(duplicate.path,fixture/'runtime.json'))
+ assert report['replay_original_events']=={'schema_version':1,'acknowledged':2,'failed':0,'pending':0}
+ service.submit('maintenance',{})
+ report['after_duplicate_replay']=database_state(fixture)
+ assert report['after_duplicate_replay']==report['after_recovery']
+ report['status']='verified_outage_recovery'
+except Exception as exc:
+ report.update(status='failed',error_type=type(exc).__name__,error=str(exc),traceback=traceback.format_exc())
+finally:
+ errors=lifecycle._close_service(service,store)
+ report['cleanup']={'errors':errors,'descriptor_absent':not (fixture/'runtime.json').exists(),'auth_absent':not (fixture/'codex-home/.codex/auth.json').exists()}
+ if errors or not all(report['cleanup'][k] for k in ('descriptor_absent','auth_absent')): report['status']='failed'
+ report['final_database']=database_state(fixture)
+ report['finished_at']=datetime.now(timezone.utc).isoformat()
+ assert (BASE/'report.json').read_bytes()==base_raw
+ (OUT/'report.json').write_text(json.dumps(report,indent=2)+'\n',encoding='utf-8')
+ print(json.dumps({'status':report['status'],'report':str(OUT/'report.json')}))
+raise SystemExit(0 if report['status']=='verified_outage_recovery' else 1)

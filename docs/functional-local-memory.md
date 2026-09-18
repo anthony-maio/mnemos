@@ -294,6 +294,19 @@ checks, 372 installed cases with two matching skips, and seven replay assertions
 A supplied empty outbox now keeps its selected recovery file and write policy.
 Native observations above retain their original package bindings.
 
+A [native startup-outage probe](validation/2026-09-18/native-codex-startup-outage-v1/README.md)
+on the installed `c25ed98` wheel retained the real user prompt and final answer
+in its outbox while malformed fixture configuration prevented service startup.
+The native process exited zero; the original runner failed because the answer
+omitted a requested period. That failure is preserved. A separate recovery
+helper verified the actual messages, then explicitly started the fixture service
+and replayed both events. An immediate second replay had no pending events.
+After service restart, replaying the same events left all four core table counts
+and complete-row hashes unchanged. Each message had exactly one stored event
+and one evidence row. This establishes native outage capture followed by explicit
+client recovery with fixture providers. Automatic native-hook recovery,
+process-kill and concurrent-host behavior, and real-provider recovery remain open.
+
 Three fresh [native Codex sessions](validation/2026-09-18/native-codex-stop-repeat-v1/README.md)
 on this wheel used unchanged generated hooks. Late native hook pairs measured
 1,015 ms, 1,031 ms, and 964 ms within the three-second deadline, and both

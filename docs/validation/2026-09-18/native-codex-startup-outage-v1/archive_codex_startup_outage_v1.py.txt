@@ -1,0 +1,145 @@
+"""Archive the native startup outage and separate installed replay recovery."""
+from pathlib import Path
+import hashlib,json,shutil,sqlite3,tomllib,zipfile
+ROOT=Path(__file__).resolve().parents[1]
+TEMP=Path('C:/Users/Ant/AppData/Local/Temp')
+BASE=TEMP/'mnemos-native-codex-startup-outage-v1'
+REC=TEMP/'mnemos-native-codex-startup-outage-recovery-v1'
+OUT=ROOT/'docs/validation/2026-09-18/native-codex-startup-outage-v1'
+SOURCE='c25ed98d9dae5afc9103a4f6807a62429d30ac9d'
+WHEEL_SHA='d697b0796db57db1790b59f1874ea1fda7a77b32d41dbd15be6e13e1f34dada8'
+def sha(p): return hashlib.sha256(p.read_bytes()).hexdigest()
+def rawsha(b): return hashlib.sha256(b).hexdigest()
+def load(p): return json.loads(p.read_text(encoding='utf-8'))
+def dump(p,v): p.write_text(json.dumps(v,indent=2)+'\n',encoding='utf-8')
+assert not OUT.exists()
+b=load(BASE/'report.json');r=load(REC/'report.json');fixture=Path(b['fixture']);home=fixture/'codex-home/.codex'
+assert b['source_commit']==r['source_commit']==SOURCE
+assert b['wheel_sha256']==r['wheel_sha256']==WHEEL_SHA
+assert b['status']=='failed' and b['error_type']=='AssertionError'
+assert 'assert answers[0]' in b['traceback'] and "report['expected_final_answer']" in b['traceback']
+assert b['process']['returncode']==0 and b['process']['timed_out'] is False
+assert r['status']=='verified_outage_recovery' and r['native_report_sha256']==sha(BASE/'report.json')
+assert b['runner_sha256']==r['native_runner_sha256']==sha(ROOT/'.venv/native_codex_startup_outage_v1.py')
+assert r['runner_sha256']==sha(ROOT/'.venv/recover_codex_startup_outage_v1.py')
+assert b['startup_failure']['returncode']!=0
+assert b['startup_failure']['stderr_sha256']==sha(BASE/'startup-failure.stderr.log')
+assert 'TOMLDecodeError' in (BASE/'startup-failure.stderr.log').read_text(encoding='utf-8')
+assert b['descriptor_monitor']['descriptor_seen'] is False
+assert b['descriptor_monitor']['samples']==len(b['descriptor_observations'])>0
+assert not any(row['present'] for row in b['descriptor_observations'])
+assert b['before_native']==b['final_database']==r['before_recovery']
+assert r['before_recovery']['capture_count']==0
+assert b['outbox_final_sha256']==sha(REC/'native-outbox-before-recovery.json')
+assert r['pending_native_events']==load(REC/'native-outbox-before-recovery.json')
+assert len(r['pending_native_events'])==2
+assert r['replay_first']==r['replay_original_events']=={'schema_version':1,'acknowledged':2,'failed':0,'pending':0}
+assert r['replay_empty']=={'schema_version':1,'acknowledged':0,'failed':0,'pending':0}
+assert r['after_recovery']==r['after_restart_closed']==r['after_duplicate_replay']==r['final_database']
+assert r['final_database']['capture_count']==2
+assert not (home/'auth.json').exists() and not (fixture/'runtime.json').exists()
+for value in (b,r):
+ assert value['cleanup']=={'errors':[],'auth_absent':True,'descriptor_absent':True}
+wheel=Path(r['provenance']['wheel']['wheel']['file'])
+assert sha(wheel)==WHEEL_SHA
+origin=Path(r['provenance']['installed_package']).resolve()
+assert origin==(TEMP/'mnemos-installed-outbox-selection-v1/Lib/site-packages/mnemos/__init__.py').resolve()
+with zipfile.ZipFile(wheel) as z:
+ checked=0
+ for name in z.namelist():
+  if name.startswith('mnemos/') and not name.endswith('/'):
+   assert (origin.parent.parent/name).read_bytes()==z.read(name);checked+=1
+config=tomllib.loads(Path(b['config']['path']).read_text(encoding='utf-8'))
+assert set(config['hooks'])-set(b['generated_hooks'])=={'state'}
+assert all(config['hooks'][k]==v for k,v in b['generated_hooks'].items())
+assert config['hooks']['Stop'][0]['hooks'][0]['timeout']==3
+native_records=[]
+for role,item in r['native_messages'].items():
+ p=home/item['source'];raw=p.read_bytes();line=raw.splitlines(keepends=True)[item['line']-1]
+ assert rawsha(raw)==item['source_file_sha256'] and rawsha(line)==item['line_sha256']
+ assert json.loads(line)==item['record']
+ if role=='assistant': assert item['record']['payload']['phase']=='final_answer'
+ native_records.append(item)
+sessions=[];turns=[];calls=[]
+for p in (home/'sessions').rglob('*.jsonl'):
+ for line in p.read_text(encoding='utf-8').splitlines():
+  item=json.loads(line);payload=item.get('payload')
+  if not isinstance(payload,dict): continue
+  if item.get('type')=='session_meta': sessions.append(payload['id'])
+  if payload.get('type')=='task_complete': turns.append(payload['turn_id'])
+  if payload.get('type') in ('function_call','custom_tool_call','mcp_tool_call_end'): calls.append(payload['type'])
+assert sessions==[r['native_session_id']] and turns==[r['native_turn_id']] and not calls
+payloads={entry['payload']['role']:entry for entry in r['pending_native_events']}
+assert set(payloads)=={'user','assistant'}
+assert len({p['event_id'] for p in payloads.values()})==2
+registry=load(fixture/'scopes.json')
+foreign_project=next(p['id'] for p in registry['projects'].values() if Path(p['root']).name=='project-b')
+db_path=fixture/'memory.sqlite';db_before=sha(db_path)
+captures=[];snapshot={}
+with sqlite3.connect(db_path.as_uri()+'?mode=ro',uri=True) as db:
+ db.row_factory=sqlite3.Row
+ rows=db.execute("select * from episodic_events where source='codex'").fetchall()
+ assert len(rows)==2 and {row['role'] for row in rows}=={'user','assistant'}
+ for row in rows:
+  role=row['role'];entry=payloads[role];payload=entry['payload'];meta=json.loads(row['metadata'])
+  text=r['native_messages'][role]['record']['payload']['message']
+  assert row['content']==payload['content']==text
+  assert row['id']==entry['event_id']
+  assert row['session_id']==r['native_session_id']==meta['session_id']==payload['context']['session_id']
+  assert row['scope_id']==b['target']['scope_id']==meta['project_id']==meta['scope_id']==payload['context']['project_id']
+  assert meta['user_profile_id']==payload['context']['user_profile_id']=='native-codex-startup-outage-v1'
+  assert meta['host']==payload['context']['host']=='codex' and meta['scope']=='project'
+  assert meta['source_kind']==payload['source_kind']=='codex_hook'
+  assert meta['source_event_id']==payload['event_id']
+  expected=('UserPromptSubmit' if role=='user' else 'Stop')+':'+r['native_turn_id']
+  assert meta['source_ref']==payload['source_ref']==expected
+  evidence=[dict(x) for x in db.execute('select * from fact_evidence where source_event_id=?',(row['id'],))]
+  assert len(evidence)==1 and evidence[0]['source_ref']==expected
+  fact=db.execute('select metadata from memory_chunks where id=?',(evidence[0]['fact_id'],)).fetchone()
+  fm=json.loads(fact['metadata']);assert fm['scope_id']==b['target']['scope_id'] and fm['user_profile_id']==meta['user_profile_id']
+  captures.append({'id':row['id'],'role':role,'content_sha256':rawsha(row['content'].encode()),'metadata':meta,'evidence':evidence})
+ foreign=db.execute('select content,metadata from memory_chunks where id=?',(b['target']['foreign_id'],)).fetchone()
+ fm=json.loads(foreign['metadata'])
+ assert fm['project_id']==fm['scope_id']==foreign_project and foreign['content']=='The project shutdown probe uses foreign-canary-849 release labels.'
+ for table in ('memory_chunks','episodic_events','fact_evidence','memory_jobs'):
+  values=[]
+  for row in db.execute('select * from '+table):
+   data={k:({'bytes_sha256':rawsha(v)} if isinstance(v,bytes) else v) for k,v in dict(row).items()}
+   values.append(json.dumps(data,sort_keys=True))
+  snapshot[table]={'rows':len(values),'sha256':rawsha(json.dumps(sorted(values)).encode())}
+ snapshot['capture_count']=len(rows)
+# 'rows' above remains the two captured event rows, not the inner singular row.
+assert snapshot==r['final_database'] and sha(db_path)==db_before
+assert not (fixture/'outbox.json').exists() or load(fixture/'outbox.json')==[]
+assert not (fixture/'duplicate-replay.json').exists() or load(fixture/'duplicate-replay.json')==[]
+dependencies=[]
+for name,h in b['helper_pins'].items():
+ p=ROOT/'.venv'/name;archived=ROOT/'docs/validation/2026-09-18/native-codex-stop-repeat-v1'/(name+'.txt')
+ assert sha(p)==h==sha(archived)
+ dependencies.append({'repository_path':archived.relative_to(ROOT).as_posix(),'sha256':h})
+verification={'status':'passed','source_commit':SOURCE,'wheel_sha256':WHEEL_SHA,'native_report_sha256':sha(BASE/'report.json'),'recovery_report_sha256':sha(REC/'report.json'),'archiver_sha256':sha(Path(__file__)),'installed_files_verified':checked,'native_session_id':sessions[0],'native_turn_id':turns[0],'captures':captures,'snapshot_after_duplicate_replay':snapshot,'database_sha256':db_before,'foreign_project_id':foreign_project,'cleanup_verified':True,'scope':'Native startup-failure capture followed by explicit installed-service replay; no native model rerun or whole-host lifecycle pass.'}
+OUT.mkdir()
+shutil.copyfile(BASE/'report.json',OUT/'native-report.json')
+shutil.copyfile(REC/'report.json',OUT/'recovery-report.json')
+for name in ('startup-failure.stdout.log','startup-failure.stderr.log'): shutil.copyfile(BASE/name,OUT/name)
+shutil.copyfile(REC/'native-outbox-before-recovery.json',OUT/'native-outbox-before-recovery.json')
+for name in ('native_codex_startup_outage_v1.py','recover_codex_startup_outage_v1.py'):
+ shutil.copyfile(ROOT/'.venv'/name,OUT/(name+'.txt'))
+shutil.copyfile(__file__,OUT/(Path(__file__).name+'.txt'))
+dump(OUT/'verification.json',verification);dump(OUT/'helper-dependencies.json',dependencies)
+(OUT/'.gitattributes').write_text('* -text\n*.log -whitespace\n*.py.txt -whitespace\n',encoding='utf-8')
+(OUT/'README.md').write_text('''# Native Codex startup outage and replay recovery
+
+The installed c25ed98 wheel captured a real Codex prompt and final answer while a disposable service could not start. Its malformed TOML configuration produced a recorded startup failure. Generated hooks and normal client autostart were unchanged. Across 882 descriptor samples (maximum gap 64.7473 ms), no descriptor appeared; the core SQLite tables matched their seeded state with zero Codex captures. The native outbox retained exactly the two messages, with their actual session, turn, profile, project, role, and stable event identities.
+
+The original native runner failed its exact reply assertion: the model returned `outage willow-raven` without the requested period. That failure report and traceback are unchanged. A separate recovery helper verified the actual native messages and continued from the existing queue without rerunning the model. It did not turn the failed text assertion into a pass.
+
+An explicitly started installed fixture service acknowledged both events, and a second replay acknowledged zero. After service restart, a duplicate outbox replayed the same two original events. Facts, episodic events, evidence, and jobs had identical row counts and complete-row hashes before and after duplicate replay. Independent read-only verification found exactly one stored event and one evidence row for each captured message, with the expected scope and source identity. The foreign-project control remained intact. Temporary credentials and the runtime descriptor were absent after cleanup.
+
+This is native capture during startup failure plus explicit service-client recovery with deterministic fixture embeddings and disabled optional modules. It is not automatic recovery by a second native host, real-model extraction quality, a process-kill or concurrent-host test, or a complete host acceptance result. Descriptor sampling cannot rule out a sub-sample transient. The recovery service used supplied fixture providers; restoring valid TOML syntax is not proof that a configured real-provider daemon starts. Prior native hook deadline and real-model gates remain separately bound.
+
+The original native run, queue snapshot, startup stderr, recovery report, and verification are retained. Full native sessions, credentials, and databases are not archived. Exact pinned helper dependencies already preserved in the adjacent repeat archive are listed in `helper-dependencies.json`.
+''',encoding='utf-8')
+files={p.relative_to(OUT).as_posix():{'bytes':p.stat().st_size,'sha256':sha(p)} for p in sorted(OUT.rglob('*')) if p.is_file()}
+dump(OUT/'evidence-index.json',{'files':files})
+print(json.dumps({'status':'passed','indexed_files':len(files),'captured_events':len(captures),'evidence_rows':sum(len(c['evidence']) for c in captures)}))

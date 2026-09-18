@@ -13,6 +13,19 @@ empty/nonempty selection, restart replay, and PII blocking. This checkpoint
 adds package evidence; earlier native observations retain their original
 source bindings.
 
+A [native startup-outage probe](../2026-09-18/native-codex-startup-outage-v1/README.md)
+on the installed `c25ed98` wheel retained the real user prompt and final answer
+in its outbox while malformed fixture configuration prevented service startup.
+The native process exited zero; the original runner failed because the answer
+omitted a requested period. That failure is preserved. A separate recovery
+helper verified the actual messages, then explicitly started the fixture service
+and replayed both events. An immediate second replay had no pending events.
+After service restart, replaying the same events left all four core table counts
+and complete-row hashes unchanged. Each message had exactly one stored event
+and one evidence row. This establishes native outage capture followed by explicit
+client recovery with fixture providers. Automatic native-hook recovery,
+process-kill and concurrent-host behavior, and real-provider recovery remain open.
+
 Three fresh [native Codex sessions](../2026-09-18/native-codex-stop-repeat-v1/README.md)
 on the `c25ed98` wheel used the generated hooks unchanged. The late native
 hook start/completion pairs measured 1,015.009 ms, 1,031.318 ms, and
@@ -348,7 +361,7 @@ capture diagnostics and complete lifecycle acceptance remain open.
 | T01 Runtime | Configured providers, SQLite default, explicit mock rejection, readiness checks, health reporting, and installed entry points are covered by the `c25ed98` package and wheel checks. Windows private-path inheritance and permission drift are now explicitly tested. | Installed doctor cases cover configuration states but do not substitute for a live provider reachability probe. Managed service logging, omitted-provider startup, and generated host provenance are also covered. |
 | T02 Scope | Profile, project, workspace, membership, enabled-project capture, foreign-project filtering, and legacy/routing review are implemented and covered by contract tests. | Local scope contract tested. Native identity coverage across every host remains open. |
 | T03 Durable writes | Atomic source and job creation, leases, retries, CAS, revisions, evidence, rollback, and restart persistence are implemented and tested. | Local durability tested. Long-running operational recovery remains open. |
-| T04 Local service | Authenticated loopback ownership, private descriptors, outbox handling, bounded shutdown, and HTTP/subprocess paths are implemented and tested. | Local service and installed replay checks pass, including empty supplied-outbox path and policy preservation. Native host lifecycle remains open. |
+| T04 Local service | Authenticated loopback ownership, private descriptors, outbox handling, bounded shutdown, and HTTP/subprocess paths are implemented and tested. | Local service and installed replay checks pass, including empty supplied-outbox path and policy preservation. Native startup-outage capture followed by explicit client replay survives restart without duplicates. Automatic native-hook recovery and broader host lifecycle acceptance remain open. |
 | T05 Maintenance | Service-owned scheduling, bounded batches, retry/failure state, retention, and visible maintenance status are implemented and tested. | Deterministic maintenance tested. A daily-use pilot has not run. |
 | T06 Evidence and safety | Write firewall, source validation, role labels, governed explicit writes, private paths, retention controls, and local-original availability are implemented and tested. | Safety contracts pass. Real-model extraction precision and human acceptance remain unproved. |
 | T07 Surprisal | Automatic gating, explicit-remember bypass, session-safe history, and diagnostics are implemented and covered by deterministic tests. | Mechanism contract tested. Real filtering benefit remains open. |

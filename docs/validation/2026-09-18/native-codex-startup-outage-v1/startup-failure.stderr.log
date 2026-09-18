@@ -1,0 +1,59 @@
+Traceback (most recent call last):
+  File "C:\Users\Ant\AppData\Local\Temp\mnemos-installed-outbox-selection-v1\Lib\site-packages\mnemos\service.py", line 631, in _owner_main
+    self._dispatcher = factory()
+                       ~~~~~~~^^
+  File "C:\Users\Ant\AppData\Local\Temp\mnemos-installed-outbox-selection-v1\Lib\site-packages\mnemos\service.py", line 612, in _make_default_dispatcher
+    engine = build_configured_engine(
+        default_store_type="sqlite", cwd=default_runtime_directory()
+    )
+  File "C:\Users\Ant\AppData\Local\Temp\mnemos-installed-outbox-selection-v1\Lib\site-packages\mnemos\runtime.py", line 347, in build_configured_engine
+    resolved = load_runtime_settings(
+        default_store_type=default_store_type,
+        env=env,
+        cwd=cwd,
+    )
+  File "C:\Users\Ant\AppData\Local\Temp\mnemos-installed-outbox-selection-v1\Lib\site-packages\mnemos\runtime.py", line 109, in load_runtime_settings
+    return load_settings(
+        env=env,
+        cwd=cwd,
+        default_store_type=default_store_type,
+    )
+  File "C:\Users\Ant\AppData\Local\Temp\mnemos-installed-outbox-selection-v1\Lib\site-packages\mnemos\settings.py", line 540, in load_settings
+    global_raw = _read_toml_file(resolved_global_path)
+  File "C:\Users\Ant\AppData\Local\Temp\mnemos-installed-outbox-selection-v1\Lib\site-packages\mnemos\settings.py", line 64, in _read_toml_file
+    data = tomllib.load(handle)
+  File "C:\Users\Ant\AppData\Roaming\uv\python\cpython-3.13.7-windows-x86_64-none\Lib\tomllib\_parser.py", line 66, in load
+    return loads(s, parse_float=parse_float)
+  File "C:\Users\Ant\AppData\Roaming\uv\python\cpython-3.13.7-windows-x86_64-none\Lib\tomllib\_parser.py", line 102, in loads
+    pos = key_value_rule(src, pos, out, header, parse_float)
+  File "C:\Users\Ant\AppData\Roaming\uv\python\cpython-3.13.7-windows-x86_64-none\Lib\tomllib\_parser.py", line 326, in key_value_rule
+    pos, key, value = parse_key_value_pair(src, pos, parse_float)
+                      ~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\Ant\AppData\Roaming\uv\python\cpython-3.13.7-windows-x86_64-none\Lib\tomllib\_parser.py", line 369, in parse_key_value_pair
+    pos, value = parse_value(src, pos, parse_float)
+                 ~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\Ant\AppData\Roaming\uv\python\cpython-3.13.7-windows-x86_64-none\Lib\tomllib\_parser.py", line 616, in parse_value
+    return parse_array(src, pos, parse_float)
+  File "C:\Users\Ant\AppData\Roaming\uv\python\cpython-3.13.7-windows-x86_64-none\Lib\tomllib\_parser.py", line 420, in parse_array
+    pos, val = parse_value(src, pos, parse_float)
+               ~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\Ant\AppData\Roaming\uv\python\cpython-3.13.7-windows-x86_64-none\Lib\tomllib\_parser.py", line 649, in parse_value
+    raise suffixed_err(src, pos, "Invalid value")
+tomllib.TOMLDecodeError: Invalid value (at end of document)
+
+The above exception was the direct cause of the following exception:
+
+Traceback (most recent call last):
+  File "<frozen runpy>", line 198, in _run_module_as_main
+  File "<frozen runpy>", line 88, in _run_code
+  File "C:\Users\Ant\AppData\Local\Temp\mnemos-installed-outbox-selection-v1\Lib\site-packages\mnemos\service.py", line 840, in <module>
+    _main()
+    ~~~~~^^
+  File "C:\Users\Ant\AppData\Local\Temp\mnemos-installed-outbox-selection-v1\Lib\site-packages\mnemos\service.py", line 819, in _main
+    service.start()
+    ~~~~~~~~~~~~~^^
+  File "C:\Users\Ant\AppData\Local\Temp\mnemos-installed-outbox-selection-v1\Lib\site-packages\mnemos\service.py", line 702, in start
+    raise RuntimeError(
+        "Mnemos service dispatcher failed to initialize"
+    ) from self._owner_error
+RuntimeError: Mnemos service dispatcher failed to initialize

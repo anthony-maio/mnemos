@@ -1,0 +1,3767 @@
+{
+  "status": "failed",
+  "source_commit": "c25ed98d9dae5afc9103a4f6807a62429d30ac9d",
+  "fixture": "C:\\Users\\Ant\\AppData\\Local\\Temp\\mnemos-native-codex-startup-outage-v1-sqr4q_8h",
+  "started_at": "2026-09-18T06:35:12.848172+00:00",
+  "runner_sha256": "3ffc1d473e12d800a79ecd125c93a4913814958e17014359c963ed09c2132a15",
+  "helper_pins": {
+    "native_codex_interactive_utf8_v1.py": "6f91aaef76ff619d38e5229f93697796b5fbfbcf86bcc87a78e72062f4b7dd0b",
+    "native_codex_retrieve_v2.py": "20f909d8c2d28934c8d47763558b7f9bf08eb6d848de9a1e6bce8d2f7f3326bb",
+    "native_claude_lifecycle_v17.py": "85940cccb99d46f7b56a6184d912495831f66c3933f0b0fc03cdf36217691342"
+  },
+  "wheel_sha256": "d697b0796db57db1790b59f1874ea1fda7a77b32d41dbd15be6e13e1f34dada8",
+  "provenance": {
+    "source_commit": "c25ed98d9dae5afc9103a4f6807a62429d30ac9d",
+    "wheel": {
+      "report_path": "C:\\Users\\Ant\\AppData\\Local\\Temp\\mnemos-package-checks-outbox-selection-v1\\verification.json",
+      "report_sha256": "ea7504e66f28fe1d80597a14d155d6794085282f49ccd2ff5e66722965272cfe",
+      "source_commit": "c25ed98d9dae5afc9103a4f6807a62429d30ac9d",
+      "wheel": {
+        "file": "C:\\Users\\Ant\\AppData\\Local\\Temp\\mnemos-package-checks-outbox-selection-v1\\dist\\mnemos_memory-0.7.0-py3-none-any.whl",
+        "bytes": 288357,
+        "sha256": "d697b0796db57db1790b59f1874ea1fda7a77b32d41dbd15be6e13e1f34dada8"
+      }
+    },
+    "package_provenance": {
+      "source_commit": "c25ed98d9dae5afc9103a4f6807a62429d30ac9d",
+      "package_files_checked": 55,
+      "mismatches": [],
+      "wheel_sha256_expected": "d697b0796db57db1790b59f1874ea1fda7a77b32d41dbd15be6e13e1f34dada8",
+      "wheel_sha256_observed": "d697b0796db57db1790b59f1874ea1fda7a77b32d41dbd15be6e13e1f34dada8",
+      "wheel_path": "C:\\Users\\Ant\\AppData\\Local\\Temp\\mnemos-package-checks-outbox-selection-v1\\dist\\mnemos_memory-0.7.0-py3-none-any.whl"
+    },
+    "installed_package": "C:\\Users\\Ant\\AppData\\Local\\Temp\\mnemos-installed-outbox-selection-v1\\Lib\\site-packages\\mnemos\\__init__.py",
+    "python": "C:\\Users\\Ant\\AppData\\Local\\Temp\\mnemos-installed-outbox-selection-v1\\Scripts\\python.exe"
+  },
+  "boundary": "Native scoped retrieval with generated MCP and hooks, explicit unelevated read-only Windows sandbox; disabled modules and fixture vectors.",
+  "target": {
+    "fact_id": "814df54e-73f8-42ce-8da6-d518cf4a07ab",
+    "version": 1,
+    "content": "The project shutdown probe uses river-cedar release labels.",
+    "scope_id": "6e9b07e7-6266-49bd-8227-6907802bcc6c",
+    "foreign_id": "92be193c-fd86-458c-8a86-9222c9f6966c"
+  },
+  "generated_hooks": {
+    "SessionStart": [
+      {
+        "matcher": "startup|resume|clear|compact",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "& 'C:\\Users\\Ant\\AppData\\Local\\Temp\\mnemos-installed-outbox-selection-v1\\Scripts\\python.exe' -c 'import base64,json,os,runpy;os.environ.update(json.loads(base64.b64decode(''eyJNTkVNT1NfQ09ORklHX1BBVEgiOiJDOlxcVXNlcnNcXEFudFxcQXBwRGF0YVxcTG9jYWxcXFRlbXBcXG1uZW1vcy1uYXRpdmUtY29kZXgtc3RhcnR1cC1vdXRhZ2UtdjEtc3FyNHFfOGhcXHNldHRpbmdzLnRvbWwiLCJNTkVNT1NfU0NPUEVfUkVHSVNUUlkiOiJDOlxcVXNlcnNcXEFudFxcQXBwRGF0YVxcTG9jYWxcXFRlbXBcXG1uZW1vcy1uYXRpdmUtY29kZXgtc3RhcnR1cC1vdXRhZ2UtdjEtc3FyNHFfOGhcXHNjb3Blcy5qc29uIiwiTU5FTU9TX1VTRVJfUFJPRklMRV9JRCI6Im5hdGl2ZS1jb2RleC1zdGFydHVwLW91dGFnZS12MSIsIk1ORU1PU19SVU5USU1FX0RFU0NSSVBUT1IiOiJDOlxcVXNlcnNcXEFudFxcQXBwRGF0YVxcTG9jYWxcXFRlbXBcXG1uZW1vcy1uYXRpdmUtY29kZXgtc3RhcnR1cC1vdXRhZ2UtdjEtc3FyNHFfOGhcXHJ1bnRpbWUuanNvbiJ9'')));runpy.run_module(''mnemos.adapters.codex'',run_name=''__main__'')'",
+            "additionalContextLimit": 1200
+          }
+        ]
+      }
+    ],
+    "UserPromptSubmit": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "& 'C:\\Users\\Ant\\AppData\\Local\\Temp\\mnemos-installed-outbox-selection-v1\\Scripts\\python.exe' -c 'import base64,json,os,runpy;os.environ.update(json.loads(base64.b64decode(''eyJNTkVNT1NfQ09ORklHX1BBVEgiOiJDOlxcVXNlcnNcXEFudFxcQXBwRGF0YVxcTG9jYWxcXFRlbXBcXG1uZW1vcy1uYXRpdmUtY29kZXgtc3RhcnR1cC1vdXRhZ2UtdjEtc3FyNHFfOGhcXHNldHRpbmdzLnRvbWwiLCJNTkVNT1NfU0NPUEVfUkVHSVNUUlkiOiJDOlxcVXNlcnNcXEFudFxcQXBwRGF0YVxcTG9jYWxcXFRlbXBcXG1uZW1vcy1uYXRpdmUtY29kZXgtc3RhcnR1cC1vdXRhZ2UtdjEtc3FyNHFfOGhcXHNjb3Blcy5qc29uIiwiTU5FTU9TX1VTRVJfUFJPRklMRV9JRCI6Im5hdGl2ZS1jb2RleC1zdGFydHVwLW91dGFnZS12MSIsIk1ORU1PU19SVU5USU1FX0RFU0NSSVBUT1IiOiJDOlxcVXNlcnNcXEFudFxcQXBwRGF0YVxcTG9jYWxcXFRlbXBcXG1uZW1vcy1uYXRpdmUtY29kZXgtc3RhcnR1cC1vdXRhZ2UtdjEtc3FyNHFfOGhcXHJ1bnRpbWUuanNvbiJ9'')));runpy.run_module(''mnemos.adapters.codex'',run_name=''__main__'')'",
+            "additionalContextLimit": 1200
+          }
+        ]
+      }
+    ],
+    "PreCompact": [
+      {
+        "matcher": "manual|auto",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "& 'C:\\Users\\Ant\\AppData\\Local\\Temp\\mnemos-installed-outbox-selection-v1\\Scripts\\python.exe' -c 'import base64,json,os,runpy;os.environ.update(json.loads(base64.b64decode(''eyJNTkVNT1NfQ09ORklHX1BBVEgiOiJDOlxcVXNlcnNcXEFudFxcQXBwRGF0YVxcTG9jYWxcXFRlbXBcXG1uZW1vcy1uYXRpdmUtY29kZXgtc3RhcnR1cC1vdXRhZ2UtdjEtc3FyNHFfOGhcXHNldHRpbmdzLnRvbWwiLCJNTkVNT1NfU0NPUEVfUkVHSVNUUlkiOiJDOlxcVXNlcnNcXEFudFxcQXBwRGF0YVxcTG9jYWxcXFRlbXBcXG1uZW1vcy1uYXRpdmUtY29kZXgtc3RhcnR1cC1vdXRhZ2UtdjEtc3FyNHFfOGhcXHNjb3Blcy5qc29uIiwiTU5FTU9TX1VTRVJfUFJPRklMRV9JRCI6Im5hdGl2ZS1jb2RleC1zdGFydHVwLW91dGFnZS12MSIsIk1ORU1PU19SVU5USU1FX0RFU0NSSVBUT1IiOiJDOlxcVXNlcnNcXEFudFxcQXBwRGF0YVxcTG9jYWxcXFRlbXBcXG1uZW1vcy1uYXRpdmUtY29kZXgtc3RhcnR1cC1vdXRhZ2UtdjEtc3FyNHFfOGhcXHJ1bnRpbWUuanNvbiJ9'')));runpy.run_module(''mnemos.adapters.codex'',run_name=''__main__'')'",
+            "timeout": 10
+          }
+        ]
+      }
+    ],
+    "PostCompact": [
+      {
+        "matcher": "manual|auto",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "& 'C:\\Users\\Ant\\AppData\\Local\\Temp\\mnemos-installed-outbox-selection-v1\\Scripts\\python.exe' -c 'import base64,json,os,runpy;os.environ.update(json.loads(base64.b64decode(''eyJNTkVNT1NfQ09ORklHX1BBVEgiOiJDOlxcVXNlcnNcXEFudFxcQXBwRGF0YVxcTG9jYWxcXFRlbXBcXG1uZW1vcy1uYXRpdmUtY29kZXgtc3RhcnR1cC1vdXRhZ2UtdjEtc3FyNHFfOGhcXHNldHRpbmdzLnRvbWwiLCJNTkVNT1NfU0NPUEVfUkVHSVNUUlkiOiJDOlxcVXNlcnNcXEFudFxcQXBwRGF0YVxcTG9jYWxcXFRlbXBcXG1uZW1vcy1uYXRpdmUtY29kZXgtc3RhcnR1cC1vdXRhZ2UtdjEtc3FyNHFfOGhcXHNjb3Blcy5qc29uIiwiTU5FTU9TX1VTRVJfUFJPRklMRV9JRCI6Im5hdGl2ZS1jb2RleC1zdGFydHVwLW91dGFnZS12MSIsIk1ORU1PU19SVU5USU1FX0RFU0NSSVBUT1IiOiJDOlxcVXNlcnNcXEFudFxcQXBwRGF0YVxcTG9jYWxcXFRlbXBcXG1uZW1vcy1uYXRpdmUtY29kZXgtc3RhcnR1cC1vdXRhZ2UtdjEtc3FyNHFfOGhcXHJ1bnRpbWUuanNvbiJ9'')));runpy.run_module(''mnemos.adapters.codex'',run_name=''__main__'')'"
+          }
+        ]
+      }
+    ],
+    "Stop": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "& 'C:\\Users\\Ant\\AppData\\Local\\Temp\\mnemos-installed-outbox-selection-v1\\Scripts\\python.exe' -c 'import base64,json,os,runpy;os.environ.update(json.loads(base64.b64decode(''eyJNTkVNT1NfQ09ORklHX1BBVEgiOiJDOlxcVXNlcnNcXEFudFxcQXBwRGF0YVxcTG9jYWxcXFRlbXBcXG1uZW1vcy1uYXRpdmUtY29kZXgtc3RhcnR1cC1vdXRhZ2UtdjEtc3FyNHFfOGhcXHNldHRpbmdzLnRvbWwiLCJNTkVNT1NfU0NPUEVfUkVHSVNUUlkiOiJDOlxcVXNlcnNcXEFudFxcQXBwRGF0YVxcTG9jYWxcXFRlbXBcXG1uZW1vcy1uYXRpdmUtY29kZXgtc3RhcnR1cC1vdXRhZ2UtdjEtc3FyNHFfOGhcXHNjb3Blcy5qc29uIiwiTU5FTU9TX1VTRVJfUFJPRklMRV9JRCI6Im5hdGl2ZS1jb2RleC1zdGFydHVwLW91dGFnZS12MSIsIk1ORU1PU19SVU5USU1FX0RFU0NSSVBUT1IiOiJDOlxcVXNlcnNcXEFudFxcQXBwRGF0YVxcTG9jYWxcXFRlbXBcXG1uZW1vcy1uYXRpdmUtY29kZXgtc3RhcnR1cC1vdXRhZ2UtdjEtc3FyNHFfOGhcXHJ1bnRpbWUuanNvbiJ9'')));runpy.run_module(''mnemos.adapters.codex'',run_name=''__main__'')'",
+            "timeout": 3
+          }
+        ]
+      }
+    ],
+    "SessionEnd": [
+      {
+        "matcher": "other",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "& 'C:\\Users\\Ant\\AppData\\Local\\Temp\\mnemos-installed-outbox-selection-v1\\Scripts\\python.exe' -c 'import base64,json,os,runpy;os.environ.update(json.loads(base64.b64decode(''eyJNTkVNT1NfQ09ORklHX1BBVEgiOiJDOlxcVXNlcnNcXEFudFxcQXBwRGF0YVxcTG9jYWxcXFRlbXBcXG1uZW1vcy1uYXRpdmUtY29kZXgtc3RhcnR1cC1vdXRhZ2UtdjEtc3FyNHFfOGhcXHNldHRpbmdzLnRvbWwiLCJNTkVNT1NfU0NPUEVfUkVHSVNUUlkiOiJDOlxcVXNlcnNcXEFudFxcQXBwRGF0YVxcTG9jYWxcXFRlbXBcXG1uZW1vcy1uYXRpdmUtY29kZXgtc3RhcnR1cC1vdXRhZ2UtdjEtc3FyNHFfOGhcXHNjb3Blcy5qc29uIiwiTU5FTU9TX1VTRVJfUFJPRklMRV9JRCI6Im5hdGl2ZS1jb2RleC1zdGFydHVwLW91dGFnZS12MSIsIk1ORU1PU19SVU5USU1FX0RFU0NSSVBUT1IiOiJDOlxcVXNlcnNcXEFudFxcQXBwRGF0YVxcTG9jYWxcXFRlbXBcXG1uZW1vcy1uYXRpdmUtY29kZXgtc3RhcnR1cC1vdXRhZ2UtdjEtc3FyNHFfOGhcXHJ1bnRpbWUuanNvbiJ9'')));runpy.run_module(''mnemos.adapters.codex'',run_name=''__main__'')'",
+            "timeout": 3
+          }
+        ]
+      }
+    ]
+  },
+  "hook_instrumentation": false,
+  "config": {
+    "path": "C:\\Users\\Ant\\AppData\\Local\\Temp\\mnemos-native-codex-startup-outage-v1-sqr4q_8h\\codex-home\\.codex\\config.toml",
+    "sha256": "fbeebe643ecd437f4b167ec465538e5667b1f14687c324b3b98764c0b4584435",
+    "hook_marker_offset": 662,
+    "hook_names": [
+      "PostCompact",
+      "PreCompact",
+      "SessionEnd",
+      "SessionStart",
+      "Stop",
+      "UserPromptSubmit"
+    ],
+    "mcp_server_names": [
+      "mnemos"
+    ],
+    "windows_sandbox": "unelevated"
+  },
+  "executable": {
+    "path": "C:\\Users\\Ant\\AppData\\Roaming\\npm\\node_modules\\@openai\\codex\\node_modules\\@openai\\codex-win32-x64\\vendor\\x86_64-pc-windows-msvc\\bin\\codex.exe",
+    "sha256": "bc343ba420dc2e2e9f59e6fc5e5bf0aae1cd8c771fc319665241fc9c0271fddb"
+  },
+  "version": "codex-cli 0.146.0",
+  "mcp_entrypoint": {
+    "command": "C:\\Users\\Ant\\AppData\\Local\\Temp\\mnemos-installed-outbox-selection-v1\\Scripts\\python.exe",
+    "args": [
+      "-m",
+      "mnemos.mcp_server"
+    ],
+    "expected": "C:\\Users\\Ant\\AppData\\Local\\Temp\\mnemos-installed-outbox-selection-v1\\Scripts\\python.exe",
+    "expected_args": [
+      "-m",
+      "mnemos.mcp_server"
+    ]
+  },
+  "command": [
+    "C:\\Users\\Ant\\AppData\\Roaming\\npm\\node_modules\\@openai\\codex\\node_modules\\@openai\\codex-win32-x64\\vendor\\x86_64-pc-windows-msvc\\bin\\codex.exe",
+    "--sandbox",
+    "read-only",
+    "--ask-for-approval",
+    "on-request",
+    "--cd",
+    "C:\\Users\\Ant\\AppData\\Local\\Temp\\mnemos-native-codex-startup-outage-v1-sqr4q_8h\\project",
+    "--no-alt-screen",
+    "<synthetic outage prompt>"
+  ],
+  "prompt": "Reply with exactly: outage willow-raven. Do not use tools.",
+  "expected_final_answer": "outage willow-raven.",
+  "invalid_settings_sha256": "c0ef076bf1bccba3082b279b34cbf67e002ecd1a92aece5d2ecf8ee613d12fd6",
+  "startup_failure": {
+    "command": [
+      "C:\\Users\\Ant\\AppData\\Local\\Temp\\mnemos-installed-outbox-selection-v1\\Scripts\\python.exe",
+      "-m",
+      "mnemos.service",
+      "--descriptor",
+      "C:\\Users\\Ant\\AppData\\Local\\Temp\\mnemos-native-codex-startup-outage-v1-sqr4q_8h\\runtime.json"
+    ],
+    "returncode": 1,
+    "stdout_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "stderr_sha256": "a036607c60633d3bd4fe85bd47ddb6407c482830ef585564a14e1c21fc3ac21d"
+  },
+  "before_native": {
+    "memory_chunks": {
+      "rows": 2,
+      "sha256": "a21dad9d06b38a21c15bcd96053392db21340ac1e332d5237d1666cdf447d78c"
+    },
+    "episodic_events": {
+      "rows": 2,
+      "sha256": "f441e148308b00117299bed0d883db9e426564b330ccd8b36ea71ad92d172a46"
+    },
+    "fact_evidence": {
+      "rows": 2,
+      "sha256": "2694524e12d3f511dbbaa7288158110da753527b58ac8994f96ba26cd2fcf0a3"
+    },
+    "memory_jobs": {
+      "rows": 2,
+      "sha256": "0a64f190d7e294bcbcb9f3a66f6322215d2783b3cece4a75a23b85fb83ad56ca"
+    },
+    "capture_count": 0
+  },
+  "process_id": 57028,
+  "process": {
+    "returncode": 0,
+    "timed_out": false,
+    "elapsed_ms": 55134.5
+  },
+  "descriptor_observations": [
+    {
+      "monotonic_ns": 44761590281200,
+      "present": false
+    },
+    {
+      "monotonic_ns": 44761643293000,
+      "present": false
+    },
+    {
+      "monotonic_ns": 44761705800600,
+      "present": false
+    },
+    {
+      "monotonic_ns": 44761767949900,
+      "present": false
+    },
+    {
+      "monotonic_ns": 44761830122700,
+      "present": false
+    },
+    {
+      "monotonic_ns": 44761891999000,
+      "present": false
+    },
+    {
+      "monotonic_ns": 44761955239600,
+      "present": false
+    },
+    {
+      "monotonic_ns": 44762016009400,
+      "present": false
+    },
+    {
+      "monotonic_ns": 44762077913400,
+      "present": false
+    },
+    {
+      "monotonic_ns": 44762140516800,
+      "present": false
+    },
+    {
+      "monotonic_ns": 44762202580900,
+      "present": false
+    },
+    {
+      "monotonic_ns": 44762264977300,
+      "present": false
+    },
+    {
+      "monotonic_ns": 44762328146500,
+      "present": false
+    },
+    {
+      "monotonic_ns": 44762390231700,
+      "present": false
+    },
+    {
+      "monotonic_ns": 44762453663900,
+      "present": false
+    },
+    {
+      "monotonic_ns": 44762516158500,
+      "present": false
+    },
+    {
+      "monotonic_ns": 44762577111000,
+      "present": false
+    },
+    {
+      "monotonic_ns": 44762639242900,
+      "present": false
+    },
+    {
+      "monotonic_ns": 44762701774300,
+      "present": false
+    },
+    {
+      "monotonic_ns": 44762765902300,
+      "present": false
+    },
+    {
+      "monotonic_ns": 44762827637500,
+      "present": false
+    },
+    {
+      "monotonic_ns": 44762889265400,
+      "present": false
+    },
+    {
+      "monotonic_ns": 44762953399800,
+      "present": false
+    },
+    {
+      "monotonic_ns": 44763015726300,
+      "present": false
+    },
+    {
+      "monotonic_ns": 44763079167700,
+      "present": false
+    },
+    {
+      "monotonic_ns": 44763142462500,
+      "present": false
+    },
+    {
+      "monotonic_ns": 44763204471200,
+      "present": false
+    },
+    {
+      "monotonic_ns": 44763267315500,
+      "present": false
+    },
+    {
+      "monotonic_ns": 44763328843500,
+      "present": false
+    },
+    {
+      "monotonic_ns": 44763391372500,
+      "present": false
+    },
+    {
+      "monotonic_ns": 44763453772600,
+      "present": false
+    },
+    {
+      "monotonic_ns": 44763515790500,
+      "present": false
+    },
+    {
+      "monotonic_ns": 44763577643900,
+      "present": false
+    },
+    {
+      "monotonic_ns": 44763641485200,
+      "present": false
+    },
+    {
+      "monotonic_ns": 44763704239000,
+      "present": false
+    },
+    {
+      "monotonic_ns": 44763767580900,
+      "present": false
+    },
+    {
+      "monotonic_ns": 44763831509200,
+      "present": false
+    },
+    {
+      "monotonic_ns": 44763894857600,
+      "present": false
+    },
+    {
+      "monotonic_ns": 44763958616500,
+      "present": false
+    },
+    {
+      "monotonic_ns": 44764021154200,
+      "present": false
+    },
+    {
+      "monotonic_ns": 44764084391700,
+      "present": false
+    },
+    {
+      "monotonic_ns": 44764147665800,
+      "present": false
+    },
+    {
+      "monotonic_ns": 44764210606300,
+      "present": false
+    },
+    {
+      "monotonic_ns": 44764273573100,
+      "present": false
+    },
+    {
+      "monotonic_ns": 44764336137300,
+      "present": false
+    },
+    {
+      "monotonic_ns": 44764398878000,
+      "present": false
+    },
+    {
+      "monotonic_ns": 44764460895000,
+      "present": false
+    },
+    {
+      "monotonic_ns": 44764524566200,
+      "present": false
+    },
+    {
+      "monotonic_ns": 44764586790200,
+      "present": false
+    },
+    {
+      "monotonic_ns": 44764649254000,
+      "present": false
+    },
+    {
+      "monotonic_ns": 44764710571800,
+      "present": false
+    },
+    {
+      "monotonic_ns": 44764771933900,
+      "present": false
+    },
+    {
+      "monotonic_ns": 44764833400400,
+      "present": false
+    },
+    {
+      "monotonic_ns": 44764894810400,
+      "present": false
+    },
+    {
+      "monotonic_ns": 44764956789200,
+      "present": false
+    },
+    {
+      "monotonic_ns": 44765019466900,
+      "present": false
+    },
+    {
+      "monotonic_ns": 44765083774100,
+      "present": false
+    },
+    {
+      "monotonic_ns": 44765145572900,
+      "present": false
+    },
+    {
+      "monotonic_ns": 44765208425000,
+      "present": false
+    },
+    {
+      "monotonic_ns": 44765272043800,
+      "present": false
+    },
+    {
+      "monotonic_ns": 44765334950400,
+      "present": false
+    },
+    {
+      "monotonic_ns": 44765397296300,
+      "present": false
+    },
+    {
+      "monotonic_ns": 44765459507900,
+      "present": false
+    },
+    {
+      "monotonic_ns": 44765522429400,
+      "present": false
+    },
+    {
+      "monotonic_ns": 44765584668900,
+      "present": false
+    },
+    {
+      "monotonic_ns": 44765645964600,
+      "present": false
+    },
+    {
+      "monotonic_ns": 44765707837900,
+      "present": false
+    },
+    {
+      "monotonic_ns": 44765770713700,
+      "present": false
+    },
+    {
+      "monotonic_ns": 44765833517100,
+      "present": false
+    },
+    {
+      "monotonic_ns": 44765896306200,
+      "present": false
+    },
+    {
+      "monotonic_ns": 44765958989100,
+      "present": false
+    },
+    {
+      "monotonic_ns": 44766021421200,
+      "present": false
+    },
+    {
+      "monotonic_ns": 44766085091500,
+      "present": false
+    },
+    {
+      "monotonic_ns": 44766148638000,
+      "present": false
+    },
+    {
+      "monotonic_ns": 44766211313800,
+      "present": false
+    },
+    {
+      "monotonic_ns": 44766274553000,
+      "present": false
+    },
+    {
+      "monotonic_ns": 44766337191400,
+      "present": false
+    },
+    {
+      "monotonic_ns": 44766399928400,
+      "present": false
+    },
+    {
+      "monotonic_ns": 44766462448000,
+      "present": false
+    },
+    {
+      "monotonic_ns": 44766525987700,
+      "present": false
+    },
+    {
+      "monotonic_ns": 44766588244700,
+      "present": false
+    },
+    {
+      "monotonic_ns": 44766652213700,
+      "present": false
+    },
+    {
+      "monotonic_ns": 44766715244000,
+      "present": false
+    },
+    {
+      "monotonic_ns": 44766779081400,
+      "present": false
+    },
+    {
+      "monotonic_ns": 44766842190900,
+      "present": false
+    },
+    {
+      "monotonic_ns": 44766905379500,
+      "present": false
+    },
+    {
+      "monotonic_ns": 44766968008200,
+      "present": false
+    },
+    {
+      "monotonic_ns": 44767030532700,
+      "present": false
+    },
+    {
+      "monotonic_ns": 44767091666900,
+      "present": false
+    },
+    {
+      "monotonic_ns": 44767154495800,
+      "present": false
+    },
+    {
+      "monotonic_ns": 44767218055000,
+      "present": false
+    },
+    {
+      "monotonic_ns": 44767281273000,
+      "present": false
+    },
+    {
+      "monotonic_ns": 44767344927200,
+      "present": false
+    },
+    {
+      "monotonic_ns": 44767408034000,
+      "present": false
+    },
+    {
+      "monotonic_ns": 44767470618200,
+      "present": false
+    },
+    {
+      "monotonic_ns": 44767534944600,
+      "present": false
+    },
+    {
+      "monotonic_ns": 44767595917700,
+      "present": false
+    },
+    {
+      "monotonic_ns": 44767658339700,
+      "present": false
+    },
+    {
+      "monotonic_ns": 44767720933600,
+      "present": false
+    },
+    {
+      "monotonic_ns": 44767783414600,
+      "present": false
+    },
+    {
+      "monotonic_ns": 44767846488700,
+      "present": false
+    },
+    {
+      "monotonic_ns": 44767910766800,
+      "present": false
+    },
+    {
+      "monotonic_ns": 44767973808000,
+      "present": false
+    },
+    {
+      "monotonic_ns": 44768037415200,
+      "present": false
+    },
+    {
+      "monotonic_ns": 44768100263500,
+      "present": false
+    },
+    {
+      "monotonic_ns": 44768163499900,
+      "present": false
+    },
+    {
+      "monotonic_ns": 44768226150400,
+      "present": false
+    },
+    {
+      "monotonic_ns": 44768288818000,
+      "present": false
+    },
+    {
+      "monotonic_ns": 44768352409800,
+      "present": false
+    },
+    {
+      "monotonic_ns": 44768414430000,
+      "present": false
+    },
+    {
+      "monotonic_ns": 44768477205400,
+      "present": false
+    },
+    {
+      "monotonic_ns": 44768540479800,
+      "present": false
+    },
+    {
+      "monotonic_ns": 44768603164400,
+      "present": false
+    },
+    {
+      "monotonic_ns": 44768665863100,
+      "present": false
+    },
+    {
+      "monotonic_ns": 44768729229500,
+      "present": false
+    },
+    {
+      "monotonic_ns": 44768792146900,
+      "present": false
+    },
+    {
+      "monotonic_ns": 44768855247700,
+      "present": false
+    },
+    {
+      "monotonic_ns": 44768917807600,
+      "present": false
+    },
+    {
+      "monotonic_ns": 44768981030600,
+      "present": false
+    },
+    {
+      "monotonic_ns": 44769043048400,
+      "present": false
+    },
+    {
+      "monotonic_ns": 44769107081400,
+      "present": false
+    },
+    {
+      "monotonic_ns": 44769170931200,
+      "present": false
+    },
+    {
+      "monotonic_ns": 44769232250300,
+      "present": false
+    },
+    {
+      "monotonic_ns": 44769295121600,
+      "present": false
+    },
+    {
+      "monotonic_ns": 44769357639000,
+      "present": false
+    },
+    {
+      "monotonic_ns": 44769419438800,
+      "present": false
+    },
+    {
+      "monotonic_ns": 44769480628000,
+      "present": false
+    },
+    {
+      "monotonic_ns": 44769542893500,
+      "present": false
+    },
+    {
+      "monotonic_ns": 44769604804400,
+      "present": false
+    },
+    {
+      "monotonic_ns": 44769667325100,
+      "present": false
+    },
+    {
+      "monotonic_ns": 44769730503400,
+      "present": false
+    },
+    {
+      "monotonic_ns": 44769792208700,
+      "present": false
+    },
+    {
+      "monotonic_ns": 44769853926200,
+      "present": false
+    },
+    {
+      "monotonic_ns": 44769916913700,
+      "present": false
+    },
+    {
+      "monotonic_ns": 44769979071600,
+      "present": false
+    },
+    {
+      "monotonic_ns": 44770042021600,
+      "present": false
+    },
+    {
+      "monotonic_ns": 44770104004700,
+      "present": false
+    },
+    {
+      "monotonic_ns": 44770166661200,
+      "present": false
+    },
+    {
+      "monotonic_ns": 44770230327100,
+      "present": false
+    },
+    {
+      "monotonic_ns": 44770292070600,
+      "present": false
+    },
+    {
+      "monotonic_ns": 44770355146000,
+      "present": false
+    },
+    {
+      "monotonic_ns": 44770418295800,
+      "present": false
+    },
+    {
+      "monotonic_ns": 44770481625100,
+      "present": false
+    },
+    {
+      "monotonic_ns": 44770543960300,
+      "present": false
+    },
+    {
+      "monotonic_ns": 44770607232000,
+      "present": false
+    },
+    {
+      "monotonic_ns": 44770670749900,
+      "present": false
+    },
+    {
+      "monotonic_ns": 44770734344700,
+      "present": false
+    },
+    {
+      "monotonic_ns": 44770795923900,
+      "present": false
+    },
+    {
+      "monotonic_ns": 44770858494600,
+      "present": false
+    },
+    {
+      "monotonic_ns": 44770921829600,
+      "present": false
+    },
+    {
+      "monotonic_ns": 44770984504800,
+      "present": false
+    },
+    {
+      "monotonic_ns": 44771047021400,
+      "present": false
+    },
+    {
+      "monotonic_ns": 44771110147300,
+      "present": false
+    },
+    {
+      "monotonic_ns": 44771171549400,
+      "present": false
+    },
+    {
+      "monotonic_ns": 44771233175200,
+      "present": false
+    },
+    {
+      "monotonic_ns": 44771295539500,
+      "present": false
+    },
+    {
+      "monotonic_ns": 44771359210100,
+      "present": false
+    },
+    {
+      "monotonic_ns": 44771420727400,
+      "present": false
+    },
+    {
+      "monotonic_ns": 44771482799900,
+      "present": false
+    },
+    {
+      "monotonic_ns": 44771544763300,
+      "present": false
+    },
+    {
+      "monotonic_ns": 44771607208600,
+      "present": false
+    },
+    {
+      "monotonic_ns": 44771669080200,
+      "present": false
+    },
+    {
+      "monotonic_ns": 44771732515500,
+      "present": false
+    },
+    {
+      "monotonic_ns": 44771795174200,
+      "present": false
+    },
+    {
+      "monotonic_ns": 44771858633600,
+      "present": false
+    },
+    {
+      "monotonic_ns": 44771919660700,
+      "present": false
+    },
+    {
+      "monotonic_ns": 44771982249900,
+      "present": false
+    },
+    {
+      "monotonic_ns": 44772045046600,
+      "present": false
+    },
+    {
+      "monotonic_ns": 44772107994700,
+      "present": false
+    },
+    {
+      "monotonic_ns": 44772170896600,
+      "present": false
+    },
+    {
+      "monotonic_ns": 44772234483500,
+      "present": false
+    },
+    {
+      "monotonic_ns": 44772298180400,
+      "present": false
+    },
+    {
+      "monotonic_ns": 44772361165500,
+      "present": false
+    },
+    {
+      "monotonic_ns": 44772424243800,
+      "present": false
+    },
+    {
+      "monotonic_ns": 44772488951600,
+      "present": false
+    },
+    {
+      "monotonic_ns": 44772552315600,
+      "present": false
+    },
+    {
+      "monotonic_ns": 44772616106600,
+      "present": false
+    },
+    {
+      "monotonic_ns": 44772678916400,
+      "present": false
+    },
+    {
+      "monotonic_ns": 44772741857700,
+      "present": false
+    },
+    {
+      "monotonic_ns": 44772804173200,
+      "present": false
+    },
+    {
+      "monotonic_ns": 44772866734800,
+      "present": false
+    },
+    {
+      "monotonic_ns": 44772930050000,
+      "present": false
+    },
+    {
+      "monotonic_ns": 44772993153700,
+      "present": false
+    },
+    {
+      "monotonic_ns": 44773055918700,
+      "present": false
+    },
+    {
+      "monotonic_ns": 44773118018500,
+      "present": false
+    },
+    {
+      "monotonic_ns": 44773180973400,
+      "present": false
+    },
+    {
+      "monotonic_ns": 44773242778700,
+      "present": false
+    },
+    {
+      "monotonic_ns": 44773305121100,
+      "present": false
+    },
+    {
+      "monotonic_ns": 44773367861200,
+      "present": false
+    },
+    {
+      "monotonic_ns": 44773430546200,
+      "present": false
+    },
+    {
+      "monotonic_ns": 44773493069200,
+      "present": false
+    },
+    {
+      "monotonic_ns": 44773555205200,
+      "present": false
+    },
+    {
+      "monotonic_ns": 44773618047000,
+      "present": false
+    },
+    {
+      "monotonic_ns": 44773680406300,
+      "present": false
+    },
+    {
+      "monotonic_ns": 44773743203300,
+      "present": false
+    },
+    {
+      "monotonic_ns": 44773807726500,
+      "present": false
+    },
+    {
+      "monotonic_ns": 44773871697300,
+      "present": false
+    },
+    {
+      "monotonic_ns": 44773935922800,
+      "present": false
+    },
+    {
+      "monotonic_ns": 44773997151100,
+      "present": false
+    },
+    {
+      "monotonic_ns": 44774059062800,
+      "present": false
+    },
+    {
+      "monotonic_ns": 44774120996900,
+      "present": false
+    },
+    {
+      "monotonic_ns": 44774182603900,
+      "present": false
+    },
+    {
+      "monotonic_ns": 44774245323000,
+      "present": false
+    },
+    {
+      "monotonic_ns": 44774308445800,
+      "present": false
+    },
+    {
+      "monotonic_ns": 44774371175600,
+      "present": false
+    },
+    {
+      "monotonic_ns": 44774434454500,
+      "present": false
+    },
+    {
+      "monotonic_ns": 44774496936900,
+      "present": false
+    },
+    {
+      "monotonic_ns": 44774559515400,
+      "present": false
+    },
+    {
+      "monotonic_ns": 44774622477900,
+      "present": false
+    },
+    {
+      "monotonic_ns": 44774685177300,
+      "present": false
+    },
+    {
+      "monotonic_ns": 44774748478100,
+      "present": false
+    },
+    {
+      "monotonic_ns": 44774811406100,
+      "present": false
+    },
+    {
+      "monotonic_ns": 44774874299000,
+      "present": false
+    },
+    {
+      "monotonic_ns": 44774935620800,
+      "present": false
+    },
+    {
+      "monotonic_ns": 44774997281300,
+      "present": false
+    },
+    {
+      "monotonic_ns": 44775058607700,
+      "present": false
+    },
+    {
+      "monotonic_ns": 44775119343100,
+      "present": false
+    },
+    {
+      "monotonic_ns": 44775181318500,
+      "present": false
+    },
+    {
+      "monotonic_ns": 44775243413600,
+      "present": false
+    },
+    {
+      "monotonic_ns": 44775304840900,
+      "present": false
+    },
+    {
+      "monotonic_ns": 44775367174400,
+      "present": false
+    },
+    {
+      "monotonic_ns": 44775429347200,
+      "present": false
+    },
+    {
+      "monotonic_ns": 44775490538800,
+      "present": false
+    },
+    {
+      "monotonic_ns": 44775554190000,
+      "present": false
+    },
+    {
+      "monotonic_ns": 44775617155700,
+      "present": false
+    },
+    {
+      "monotonic_ns": 44775679265200,
+      "present": false
+    },
+    {
+      "monotonic_ns": 44775740109900,
+      "present": false
+    },
+    {
+      "monotonic_ns": 44775803259300,
+      "present": false
+    },
+    {
+      "monotonic_ns": 44775865941200,
+      "present": false
+    },
+    {
+      "monotonic_ns": 44775927832200,
+      "present": false
+    },
+    {
+      "monotonic_ns": 44775989817900,
+      "present": false
+    },
+    {
+      "monotonic_ns": 44776052424900,
+      "present": false
+    },
+    {
+      "monotonic_ns": 44776115303700,
+      "present": false
+    },
+    {
+      "monotonic_ns": 44776177113300,
+      "present": false
+    },
+    {
+      "monotonic_ns": 44776239477000,
+      "present": false
+    },
+    {
+      "monotonic_ns": 44776302494700,
+      "present": false
+    },
+    {
+      "monotonic_ns": 44776364463500,
+      "present": false
+    },
+    {
+      "monotonic_ns": 44776427234500,
+      "present": false
+    },
+    {
+      "monotonic_ns": 44776489719300,
+      "present": false
+    },
+    {
+      "monotonic_ns": 44776552486000,
+      "present": false
+    },
+    {
+      "monotonic_ns": 44776614747500,
+      "present": false
+    },
+    {
+      "monotonic_ns": 44776677132600,
+      "present": false
+    },
+    {
+      "monotonic_ns": 44776738520300,
+      "present": false
+    },
+    {
+      "monotonic_ns": 44776801243000,
+      "present": false
+    },
+    {
+      "monotonic_ns": 44776864710400,
+      "present": false
+    },
+    {
+      "monotonic_ns": 44776926809900,
+      "present": false
+    },
+    {
+      "monotonic_ns": 44776988054700,
+      "present": false
+    },
+    {
+      "monotonic_ns": 44777050558800,
+      "present": false
+    },
+    {
+      "monotonic_ns": 44777113767600,
+      "present": false
+    },
+    {
+      "monotonic_ns": 44777174370400,
+      "present": false
+    },
+    {
+      "monotonic_ns": 44777237700100,
+      "present": false
+    },
+    {
+      "monotonic_ns": 44777300788800,
+      "present": false
+    },
+    {
+      "monotonic_ns": 44777361466300,
+      "present": false
+    },
+    {
+      "monotonic_ns": 44777424508800,
+      "present": false
+    },
+    {
+      "monotonic_ns": 44777487009700,
+      "present": false
+    },
+    {
+      "monotonic_ns": 44777550036800,
+      "present": false
+    },
+    {
+      "monotonic_ns": 44777612038200,
+      "present": false
+    },
+    {
+      "monotonic_ns": 44777674735500,
+      "present": false
+    },
+    {
+      "monotonic_ns": 44777736993100,
+      "present": false
+    },
+    {
+      "monotonic_ns": 44777799538600,
+      "present": false
+    },
+    {
+      "monotonic_ns": 44777861965000,
+      "present": false
+    },
+    {
+      "monotonic_ns": 44777924126000,
+      "present": false
+    },
+    {
+      "monotonic_ns": 44777986159000,
+      "present": false
+    },
+    {
+      "monotonic_ns": 44778049549700,
+      "present": false
+    },
+    {
+      "monotonic_ns": 44778112298100,
+      "present": false
+    },
+    {
+      "monotonic_ns": 44778175596500,
+      "present": false
+    },
+    {
+      "monotonic_ns": 44778238073100,
+      "present": false
+    },
+    {
+      "monotonic_ns": 44778298741500,
+      "present": false
+    },
+    {
+      "monotonic_ns": 44778362188000,
+      "present": false
+    },
+    {
+      "monotonic_ns": 44778424231900,
+      "present": false
+    },
+    {
+      "monotonic_ns": 44778487398800,
+      "present": false
+    },
+    {
+      "monotonic_ns": 44778549708700,
+      "present": false
+    },
+    {
+      "monotonic_ns": 44778612412700,
+      "present": false
+    },
+    {
+      "monotonic_ns": 44778675469200,
+      "present": false
+    },
+    {
+      "monotonic_ns": 44778737636600,
+      "present": false
+    },
+    {
+      "monotonic_ns": 44778801819800,
+      "present": false
+    },
+    {
+      "monotonic_ns": 44778863700700,
+      "present": false
+    },
+    {
+      "monotonic_ns": 44778925150200,
+      "present": false
+    },
+    {
+      "monotonic_ns": 44778987080400,
+      "present": false
+    },
+    {
+      "monotonic_ns": 44779048580500,
+      "present": false
+    },
+    {
+      "monotonic_ns": 44779109660000,
+      "present": false
+    },
+    {
+      "monotonic_ns": 44779171382600,
+      "present": false
+    },
+    {
+      "monotonic_ns": 44779232618200,
+      "present": false
+    },
+    {
+      "monotonic_ns": 44779293598900,
+      "present": false
+    },
+    {
+      "monotonic_ns": 44779357052300,
+      "present": false
+    },
+    {
+      "monotonic_ns": 44779421217900,
+      "present": false
+    },
+    {
+      "monotonic_ns": 44779483584200,
+      "present": false
+    },
+    {
+      "monotonic_ns": 44779545630500,
+      "present": false
+    },
+    {
+      "monotonic_ns": 44779608107600,
+      "present": false
+    },
+    {
+      "monotonic_ns": 44779671147800,
+      "present": false
+    },
+    {
+      "monotonic_ns": 44779732667800,
+      "present": false
+    },
+    {
+      "monotonic_ns": 44779794929300,
+      "present": false
+    },
+    {
+      "monotonic_ns": 44779858244700,
+      "present": false
+    },
+    {
+      "monotonic_ns": 44779921581800,
+      "present": false
+    },
+    {
+      "monotonic_ns": 44779983772400,
+      "present": false
+    },
+    {
+      "monotonic_ns": 44780046555100,
+      "present": false
+    },
+    {
+      "monotonic_ns": 44780108739000,
+      "present": false
+    },
+    {
+      "monotonic_ns": 44780170025500,
+      "present": false
+    },
+    {
+      "monotonic_ns": 44780232036500,
+      "present": false
+    },
+    {
+      "monotonic_ns": 44780293681600,
+      "present": false
+    },
+    {
+      "monotonic_ns": 44780357162100,
+      "present": false
+    },
+    {
+      "monotonic_ns": 44780418951500,
+      "present": false
+    },
+    {
+      "monotonic_ns": 44780481630500,
+      "present": false
+    },
+    {
+      "monotonic_ns": 44780543726900,
+      "present": false
+    },
+    {
+      "monotonic_ns": 44780606056500,
+      "present": false
+    },
+    {
+      "monotonic_ns": 44780666990600,
+      "present": false
+    },
+    {
+      "monotonic_ns": 44780730268100,
+      "present": false
+    },
+    {
+      "monotonic_ns": 44780792209200,
+      "present": false
+    },
+    {
+      "monotonic_ns": 44780854310300,
+      "present": false
+    },
+    {
+      "monotonic_ns": 44780916456200,
+      "present": false
+    },
+    {
+      "monotonic_ns": 44780979784900,
+      "present": false
+    },
+    {
+      "monotonic_ns": 44781044316900,
+      "present": false
+    },
+    {
+      "monotonic_ns": 44781107512300,
+      "present": false
+    },
+    {
+      "monotonic_ns": 44781171514000,
+      "present": false
+    },
+    {
+      "monotonic_ns": 44781233777800,
+      "present": false
+    },
+    {
+      "monotonic_ns": 44781295805200,
+      "present": false
+    },
+    {
+      "monotonic_ns": 44781359207500,
+      "present": false
+    },
+    {
+      "monotonic_ns": 44781422454500,
+      "present": false
+    },
+    {
+      "monotonic_ns": 44781484610200,
+      "present": false
+    },
+    {
+      "monotonic_ns": 44781546888600,
+      "present": false
+    },
+    {
+      "monotonic_ns": 44781608123000,
+      "present": false
+    },
+    {
+      "monotonic_ns": 44781669856800,
+      "present": false
+    },
+    {
+      "monotonic_ns": 44781731731000,
+      "present": false
+    },
+    {
+      "monotonic_ns": 44781794358700,
+      "present": false
+    },
+    {
+      "monotonic_ns": 44781856612400,
+      "present": false
+    },
+    {
+      "monotonic_ns": 44781920639100,
+      "present": false
+    },
+    {
+      "monotonic_ns": 44781983387600,
+      "present": false
+    },
+    {
+      "monotonic_ns": 44782045100400,
+      "present": false
+    },
+    {
+      "monotonic_ns": 44782107470200,
+      "present": false
+    },
+    {
+      "monotonic_ns": 44782170025900,
+      "present": false
+    },
+    {
+      "monotonic_ns": 44782232565800,
+      "present": false
+    },
+    {
+      "monotonic_ns": 44782296846100,
+      "present": false
+    },
+    {
+      "monotonic_ns": 44782358503700,
+      "present": false
+    },
+    {
+      "monotonic_ns": 44782421661200,
+      "present": false
+    },
+    {
+      "monotonic_ns": 44782484454400,
+      "present": false
+    },
+    {
+      "monotonic_ns": 44782547468400,
+      "present": false
+    },
+    {
+      "monotonic_ns": 44782611285100,
+      "present": false
+    },
+    {
+      "monotonic_ns": 44782673126100,
+      "present": false
+    },
+    {
+      "monotonic_ns": 44782734744100,
+      "present": false
+    },
+    {
+      "monotonic_ns": 44782799391500,
+      "present": false
+    },
+    {
+      "monotonic_ns": 44782862493100,
+      "present": false
+    },
+    {
+      "monotonic_ns": 44782924285800,
+      "present": false
+    },
+    {
+      "monotonic_ns": 44782986832700,
+      "present": false
+    },
+    {
+      "monotonic_ns": 44783048999600,
+      "present": false
+    },
+    {
+      "monotonic_ns": 44783112179600,
+      "present": false
+    },
+    {
+      "monotonic_ns": 44783173673300,
+      "present": false
+    },
+    {
+      "monotonic_ns": 44783236793300,
+      "present": false
+    },
+    {
+      "monotonic_ns": 44783298647300,
+      "present": false
+    },
+    {
+      "monotonic_ns": 44783360587500,
+      "present": false
+    },
+    {
+      "monotonic_ns": 44783420722200,
+      "present": false
+    },
+    {
+      "monotonic_ns": 44783482941000,
+      "present": false
+    },
+    {
+      "monotonic_ns": 44783545819900,
+      "present": false
+    },
+    {
+      "monotonic_ns": 44783608290300,
+      "present": false
+    },
+    {
+      "monotonic_ns": 44783672581400,
+      "present": false
+    },
+    {
+      "monotonic_ns": 44783733860900,
+      "present": false
+    },
+    {
+      "monotonic_ns": 44783796413500,
+      "present": false
+    },
+    {
+      "monotonic_ns": 44783858944700,
+      "present": false
+    },
+    {
+      "monotonic_ns": 44783922117700,
+      "present": false
+    },
+    {
+      "monotonic_ns": 44783983831400,
+      "present": false
+    },
+    {
+      "monotonic_ns": 44784046444900,
+      "present": false
+    },
+    {
+      "monotonic_ns": 44784109546500,
+      "present": false
+    },
+    {
+      "monotonic_ns": 44784173149900,
+      "present": false
+    },
+    {
+      "monotonic_ns": 44784235860400,
+      "present": false
+    },
+    {
+      "monotonic_ns": 44784298471600,
+      "present": false
+    },
+    {
+      "monotonic_ns": 44784360773000,
+      "present": false
+    },
+    {
+      "monotonic_ns": 44784425110500,
+      "present": false
+    },
+    {
+      "monotonic_ns": 44784486444000,
+      "present": false
+    },
+    {
+      "monotonic_ns": 44784548888800,
+      "present": false
+    },
+    {
+      "monotonic_ns": 44784612562500,
+      "present": false
+    },
+    {
+      "monotonic_ns": 44784674297600,
+      "present": false
+    },
+    {
+      "monotonic_ns": 44784736953100,
+      "present": false
+    },
+    {
+      "monotonic_ns": 44784799511200,
+      "present": false
+    },
+    {
+      "monotonic_ns": 44784862953800,
+      "present": false
+    },
+    {
+      "monotonic_ns": 44784925128500,
+      "present": false
+    },
+    {
+      "monotonic_ns": 44784987486500,
+      "present": false
+    },
+    {
+      "monotonic_ns": 44785050048100,
+      "present": false
+    },
+    {
+      "monotonic_ns": 44785113441200,
+      "present": false
+    },
+    {
+      "monotonic_ns": 44785175399700,
+      "present": false
+    },
+    {
+      "monotonic_ns": 44785238291900,
+      "present": false
+    },
+    {
+      "monotonic_ns": 44785302120800,
+      "present": false
+    },
+    {
+      "monotonic_ns": 44785365506400,
+      "present": false
+    },
+    {
+      "monotonic_ns": 44785428635400,
+      "present": false
+    },
+    {
+      "monotonic_ns": 44785490079700,
+      "present": false
+    },
+    {
+      "monotonic_ns": 44785553876300,
+      "present": false
+    },
+    {
+      "monotonic_ns": 44785616595800,
+      "present": false
+    },
+    {
+      "monotonic_ns": 44785678902900,
+      "present": false
+    },
+    {
+      "monotonic_ns": 44785741744200,
+      "present": false
+    },
+    {
+      "monotonic_ns": 44785804142100,
+      "present": false
+    },
+    {
+      "monotonic_ns": 44785867818700,
+      "present": false
+    },
+    {
+      "monotonic_ns": 44785930026300,
+      "present": false
+    },
+    {
+      "monotonic_ns": 44785992288000,
+      "present": false
+    },
+    {
+      "monotonic_ns": 44786055164000,
+      "present": false
+    },
+    {
+      "monotonic_ns": 44786118459300,
+      "present": false
+    },
+    {
+      "monotonic_ns": 44786181086300,
+      "present": false
+    },
+    {
+      "monotonic_ns": 44786245833600,
+      "present": false
+    },
+    {
+      "monotonic_ns": 44786308232900,
+      "present": false
+    },
+    {
+      "monotonic_ns": 44786371204700,
+      "present": false
+    },
+    {
+      "monotonic_ns": 44786434802200,
+      "present": false
+    },
+    {
+      "monotonic_ns": 44786497727000,
+      "present": false
+    },
+    {
+      "monotonic_ns": 44786560447800,
+      "present": false
+    },
+    {
+      "monotonic_ns": 44786622871700,
+      "present": false
+    },
+    {
+      "monotonic_ns": 44786685012000,
+      "present": false
+    },
+    {
+      "monotonic_ns": 44786747464500,
+      "present": false
+    },
+    {
+      "monotonic_ns": 44786810713800,
+      "present": false
+    },
+    {
+      "monotonic_ns": 44786872788000,
+      "present": false
+    },
+    {
+      "monotonic_ns": 44786933576100,
+      "present": false
+    },
+    {
+      "monotonic_ns": 44786996185100,
+      "present": false
+    },
+    {
+      "monotonic_ns": 44787059437800,
+      "present": false
+    },
+    {
+      "monotonic_ns": 44787122517900,
+      "present": false
+    },
+    {
+      "monotonic_ns": 44787183977000,
+      "present": false
+    },
+    {
+      "monotonic_ns": 44787246143900,
+      "present": false
+    },
+    {
+      "monotonic_ns": 44787307808900,
+      "present": false
+    },
+    {
+      "monotonic_ns": 44787371976300,
+      "present": false
+    },
+    {
+      "monotonic_ns": 44787434714000,
+      "present": false
+    },
+    {
+      "monotonic_ns": 44787497256700,
+      "present": false
+    },
+    {
+      "monotonic_ns": 44787558592100,
+      "present": false
+    },
+    {
+      "monotonic_ns": 44787621264000,
+      "present": false
+    },
+    {
+      "monotonic_ns": 44787685615300,
+      "present": false
+    },
+    {
+      "monotonic_ns": 44787749585600,
+      "present": false
+    },
+    {
+      "monotonic_ns": 44787810951100,
+      "present": false
+    },
+    {
+      "monotonic_ns": 44787872360200,
+      "present": false
+    },
+    {
+      "monotonic_ns": 44787934942200,
+      "present": false
+    },
+    {
+      "monotonic_ns": 44787997761500,
+      "present": false
+    },
+    {
+      "monotonic_ns": 44788058877300,
+      "present": false
+    },
+    {
+      "monotonic_ns": 44788121022900,
+      "present": false
+    },
+    {
+      "monotonic_ns": 44788182898700,
+      "present": false
+    },
+    {
+      "monotonic_ns": 44788245266400,
+      "present": false
+    },
+    {
+      "monotonic_ns": 44788309079600,
+      "present": false
+    },
+    {
+      "monotonic_ns": 44788371008900,
+      "present": false
+    },
+    {
+      "monotonic_ns": 44788432915700,
+      "present": false
+    },
+    {
+      "monotonic_ns": 44788495083500,
+      "present": false
+    },
+    {
+      "monotonic_ns": 44788557357200,
+      "present": false
+    },
+    {
+      "monotonic_ns": 44788619904700,
+      "present": false
+    },
+    {
+      "monotonic_ns": 44788682040200,
+      "present": false
+    },
+    {
+      "monotonic_ns": 44788743514500,
+      "present": false
+    },
+    {
+      "monotonic_ns": 44788806088200,
+      "present": false
+    },
+    {
+      "monotonic_ns": 44788869819600,
+      "present": false
+    },
+    {
+      "monotonic_ns": 44788932727600,
+      "present": false
+    },
+    {
+      "monotonic_ns": 44788996370200,
+      "present": false
+    },
+    {
+      "monotonic_ns": 44789058706400,
+      "present": false
+    },
+    {
+      "monotonic_ns": 44789120843000,
+      "present": false
+    },
+    {
+      "monotonic_ns": 44789183182800,
+      "present": false
+    },
+    {
+      "monotonic_ns": 44789244996200,
+      "present": false
+    },
+    {
+      "monotonic_ns": 44789307688500,
+      "present": false
+    },
+    {
+      "monotonic_ns": 44789368906000,
+      "present": false
+    },
+    {
+      "monotonic_ns": 44789431898300,
+      "present": false
+    },
+    {
+      "monotonic_ns": 44789494661000,
+      "present": false
+    },
+    {
+      "monotonic_ns": 44789557130000,
+      "present": false
+    },
+    {
+      "monotonic_ns": 44789619705100,
+      "present": false
+    },
+    {
+      "monotonic_ns": 44789681040000,
+      "present": false
+    },
+    {
+      "monotonic_ns": 44789742776200,
+      "present": false
+    },
+    {
+      "monotonic_ns": 44789805237200,
+      "present": false
+    },
+    {
+      "monotonic_ns": 44789868444800,
+      "present": false
+    },
+    {
+      "monotonic_ns": 44789931053900,
+      "present": false
+    },
+    {
+      "monotonic_ns": 44789993572900,
+      "present": false
+    },
+    {
+      "monotonic_ns": 44790055394900,
+      "present": false
+    },
+    {
+      "monotonic_ns": 44790117544200,
+      "present": false
+    },
+    {
+      "monotonic_ns": 44790181252600,
+      "present": false
+    },
+    {
+      "monotonic_ns": 44790243978100,
+      "present": false
+    },
+    {
+      "monotonic_ns": 44790307487000,
+      "present": false
+    },
+    {
+      "monotonic_ns": 44790369517100,
+      "present": false
+    },
+    {
+      "monotonic_ns": 44790431839900,
+      "present": false
+    },
+    {
+      "monotonic_ns": 44790493880700,
+      "present": false
+    },
+    {
+      "monotonic_ns": 44790556523700,
+      "present": false
+    },
+    {
+      "monotonic_ns": 44790618804700,
+      "present": false
+    },
+    {
+      "monotonic_ns": 44790680638600,
+      "present": false
+    },
+    {
+      "monotonic_ns": 44790743292700,
+      "present": false
+    },
+    {
+      "monotonic_ns": 44790805503000,
+      "present": false
+    },
+    {
+      "monotonic_ns": 44790867791300,
+      "present": false
+    },
+    {
+      "monotonic_ns": 44790930388900,
+      "present": false
+    },
+    {
+      "monotonic_ns": 44790993228400,
+      "present": false
+    },
+    {
+      "monotonic_ns": 44791055672300,
+      "present": false
+    },
+    {
+      "monotonic_ns": 44791118517300,
+      "present": false
+    },
+    {
+      "monotonic_ns": 44791181398600,
+      "present": false
+    },
+    {
+      "monotonic_ns": 44791245431300,
+      "present": false
+    },
+    {
+      "monotonic_ns": 44791307835800,
+      "present": false
+    },
+    {
+      "monotonic_ns": 44791368947100,
+      "present": false
+    },
+    {
+      "monotonic_ns": 44791431340600,
+      "present": false
+    },
+    {
+      "monotonic_ns": 44791492297600,
+      "present": false
+    },
+    {
+      "monotonic_ns": 44791554744600,
+      "present": false
+    },
+    {
+      "monotonic_ns": 44791617605600,
+      "present": false
+    },
+    {
+      "monotonic_ns": 44791680404600,
+      "present": false
+    },
+    {
+      "monotonic_ns": 44791743313900,
+      "present": false
+    },
+    {
+      "monotonic_ns": 44791806463000,
+      "present": false
+    },
+    {
+      "monotonic_ns": 44791870732500,
+      "present": false
+    },
+    {
+      "monotonic_ns": 44791933623200,
+      "present": false
+    },
+    {
+      "monotonic_ns": 44791995951000,
+      "present": false
+    },
+    {
+      "monotonic_ns": 44792058925800,
+      "present": false
+    },
+    {
+      "monotonic_ns": 44792121966800,
+      "present": false
+    },
+    {
+      "monotonic_ns": 44792184367500,
+      "present": false
+    },
+    {
+      "monotonic_ns": 44792247040000,
+      "present": false
+    },
+    {
+      "monotonic_ns": 44792309850800,
+      "present": false
+    },
+    {
+      "monotonic_ns": 44792372895000,
+      "present": false
+    },
+    {
+      "monotonic_ns": 44792435780400,
+      "present": false
+    },
+    {
+      "monotonic_ns": 44792498434500,
+      "present": false
+    },
+    {
+      "monotonic_ns": 44792561281000,
+      "present": false
+    },
+    {
+      "monotonic_ns": 44792622531500,
+      "present": false
+    },
+    {
+      "monotonic_ns": 44792683544500,
+      "present": false
+    },
+    {
+      "monotonic_ns": 44792743929400,
+      "present": false
+    },
+    {
+      "monotonic_ns": 44792805918100,
+      "present": false
+    },
+    {
+      "monotonic_ns": 44792866084700,
+      "present": false
+    },
+    {
+      "monotonic_ns": 44792926218900,
+      "present": false
+    },
+    {
+      "monotonic_ns": 44792987661000,
+      "present": false
+    },
+    {
+      "monotonic_ns": 44793047986600,
+      "present": false
+    },
+    {
+      "monotonic_ns": 44793109451600,
+      "present": false
+    },
+    {
+      "monotonic_ns": 44793170526100,
+      "present": false
+    },
+    {
+      "monotonic_ns": 44793231775800,
+      "present": false
+    },
+    {
+      "monotonic_ns": 44793292289100,
+      "present": false
+    },
+    {
+      "monotonic_ns": 44793353083400,
+      "present": false
+    },
+    {
+      "monotonic_ns": 44793413425000,
+      "present": false
+    },
+    {
+      "monotonic_ns": 44793474071200,
+      "present": false
+    },
+    {
+      "monotonic_ns": 44793534874700,
+      "present": false
+    },
+    {
+      "monotonic_ns": 44793596840500,
+      "present": false
+    },
+    {
+      "monotonic_ns": 44793657847200,
+      "present": false
+    },
+    {
+      "monotonic_ns": 44793719418300,
+      "present": false
+    },
+    {
+      "monotonic_ns": 44793781270600,
+      "present": false
+    },
+    {
+      "monotonic_ns": 44793842608300,
+      "present": false
+    },
+    {
+      "monotonic_ns": 44793905693800,
+      "present": false
+    },
+    {
+      "monotonic_ns": 44793968162000,
+      "present": false
+    },
+    {
+      "monotonic_ns": 44794030644300,
+      "present": false
+    },
+    {
+      "monotonic_ns": 44794093291900,
+      "present": false
+    },
+    {
+      "monotonic_ns": 44794155421600,
+      "present": false
+    },
+    {
+      "monotonic_ns": 44794218699700,
+      "present": false
+    },
+    {
+      "monotonic_ns": 44794282747300,
+      "present": false
+    },
+    {
+      "monotonic_ns": 44794345123500,
+      "present": false
+    },
+    {
+      "monotonic_ns": 44794407442200,
+      "present": false
+    },
+    {
+      "monotonic_ns": 44794469269700,
+      "present": false
+    },
+    {
+      "monotonic_ns": 44794530730900,
+      "present": false
+    },
+    {
+      "monotonic_ns": 44794593811800,
+      "present": false
+    },
+    {
+      "monotonic_ns": 44794657043400,
+      "present": false
+    },
+    {
+      "monotonic_ns": 44794719520600,
+      "present": false
+    },
+    {
+      "monotonic_ns": 44794780474400,
+      "present": false
+    },
+    {
+      "monotonic_ns": 44794843089300,
+      "present": false
+    },
+    {
+      "monotonic_ns": 44794905537400,
+      "present": false
+    },
+    {
+      "monotonic_ns": 44794968342100,
+      "present": false
+    },
+    {
+      "monotonic_ns": 44795031038900,
+      "present": false
+    },
+    {
+      "monotonic_ns": 44795092815700,
+      "present": false
+    },
+    {
+      "monotonic_ns": 44795154398100,
+      "present": false
+    },
+    {
+      "monotonic_ns": 44795218764700,
+      "present": false
+    },
+    {
+      "monotonic_ns": 44795281646600,
+      "present": false
+    },
+    {
+      "monotonic_ns": 44795344279500,
+      "present": false
+    },
+    {
+      "monotonic_ns": 44795405898600,
+      "present": false
+    },
+    {
+      "monotonic_ns": 44795469063200,
+      "present": false
+    },
+    {
+      "monotonic_ns": 44795529305600,
+      "present": false
+    },
+    {
+      "monotonic_ns": 44795591300100,
+      "present": false
+    },
+    {
+      "monotonic_ns": 44795654050000,
+      "present": false
+    },
+    {
+      "monotonic_ns": 44795716505900,
+      "present": false
+    },
+    {
+      "monotonic_ns": 44795778404300,
+      "present": false
+    },
+    {
+      "monotonic_ns": 44795840530400,
+      "present": false
+    },
+    {
+      "monotonic_ns": 44795902115800,
+      "present": false
+    },
+    {
+      "monotonic_ns": 44795965011400,
+      "present": false
+    },
+    {
+      "monotonic_ns": 44796028833600,
+      "present": false
+    },
+    {
+      "monotonic_ns": 44796091082000,
+      "present": false
+    },
+    {
+      "monotonic_ns": 44796154111400,
+      "present": false
+    },
+    {
+      "monotonic_ns": 44796217120800,
+      "present": false
+    },
+    {
+      "monotonic_ns": 44796279611700,
+      "present": false
+    },
+    {
+      "monotonic_ns": 44796341498200,
+      "present": false
+    },
+    {
+      "monotonic_ns": 44796403591900,
+      "present": false
+    },
+    {
+      "monotonic_ns": 44796466436200,
+      "present": false
+    },
+    {
+      "monotonic_ns": 44796529871300,
+      "present": false
+    },
+    {
+      "monotonic_ns": 44796591339600,
+      "present": false
+    },
+    {
+      "monotonic_ns": 44796653100100,
+      "present": false
+    },
+    {
+      "monotonic_ns": 44796716750500,
+      "present": false
+    },
+    {
+      "monotonic_ns": 44796778117500,
+      "present": false
+    },
+    {
+      "monotonic_ns": 44796840177200,
+      "present": false
+    },
+    {
+      "monotonic_ns": 44796901717900,
+      "present": false
+    },
+    {
+      "monotonic_ns": 44796963452900,
+      "present": false
+    },
+    {
+      "monotonic_ns": 44797025971000,
+      "present": false
+    },
+    {
+      "monotonic_ns": 44797088581700,
+      "present": false
+    },
+    {
+      "monotonic_ns": 44797152221500,
+      "present": false
+    },
+    {
+      "monotonic_ns": 44797214659300,
+      "present": false
+    },
+    {
+      "monotonic_ns": 44797276800500,
+      "present": false
+    },
+    {
+      "monotonic_ns": 44797338871200,
+      "present": false
+    },
+    {
+      "monotonic_ns": 44797401437900,
+      "present": false
+    },
+    {
+      "monotonic_ns": 44797464401100,
+      "present": false
+    },
+    {
+      "monotonic_ns": 44797527395200,
+      "present": false
+    },
+    {
+      "monotonic_ns": 44797589400200,
+      "present": false
+    },
+    {
+      "monotonic_ns": 44797651199100,
+      "present": false
+    },
+    {
+      "monotonic_ns": 44797713411800,
+      "present": false
+    },
+    {
+      "monotonic_ns": 44797775563600,
+      "present": false
+    },
+    {
+      "monotonic_ns": 44797837678800,
+      "present": false
+    },
+    {
+      "monotonic_ns": 44797900314100,
+      "present": false
+    },
+    {
+      "monotonic_ns": 44797964231200,
+      "present": false
+    },
+    {
+      "monotonic_ns": 44798026001500,
+      "present": false
+    },
+    {
+      "monotonic_ns": 44798087108800,
+      "present": false
+    },
+    {
+      "monotonic_ns": 44798150277400,
+      "present": false
+    },
+    {
+      "monotonic_ns": 44798213858200,
+      "present": false
+    },
+    {
+      "monotonic_ns": 44798276185300,
+      "present": false
+    },
+    {
+      "monotonic_ns": 44798338874100,
+      "present": false
+    },
+    {
+      "monotonic_ns": 44798401806900,
+      "present": false
+    },
+    {
+      "monotonic_ns": 44798464593200,
+      "present": false
+    },
+    {
+      "monotonic_ns": 44798527581400,
+      "present": false
+    },
+    {
+      "monotonic_ns": 44798590904900,
+      "present": false
+    },
+    {
+      "monotonic_ns": 44798654430900,
+      "present": false
+    },
+    {
+      "monotonic_ns": 44798717196200,
+      "present": false
+    },
+    {
+      "monotonic_ns": 44798778197300,
+      "present": false
+    },
+    {
+      "monotonic_ns": 44798841384100,
+      "present": false
+    },
+    {
+      "monotonic_ns": 44798904058600,
+      "present": false
+    },
+    {
+      "monotonic_ns": 44798967352800,
+      "present": false
+    },
+    {
+      "monotonic_ns": 44799030148700,
+      "present": false
+    },
+    {
+      "monotonic_ns": 44799092416100,
+      "present": false
+    },
+    {
+      "monotonic_ns": 44799154998700,
+      "present": false
+    },
+    {
+      "monotonic_ns": 44799216244900,
+      "present": false
+    },
+    {
+      "monotonic_ns": 44799279468800,
+      "present": false
+    },
+    {
+      "monotonic_ns": 44799342015700,
+      "present": false
+    },
+    {
+      "monotonic_ns": 44799405678000,
+      "present": false
+    },
+    {
+      "monotonic_ns": 44799468369100,
+      "present": false
+    },
+    {
+      "monotonic_ns": 44799530668900,
+      "present": false
+    },
+    {
+      "monotonic_ns": 44799592635000,
+      "present": false
+    },
+    {
+      "monotonic_ns": 44799654935300,
+      "present": false
+    },
+    {
+      "monotonic_ns": 44799716921300,
+      "present": false
+    },
+    {
+      "monotonic_ns": 44799779502700,
+      "present": false
+    },
+    {
+      "monotonic_ns": 44799842697300,
+      "present": false
+    },
+    {
+      "monotonic_ns": 44799905011800,
+      "present": false
+    },
+    {
+      "monotonic_ns": 44799967032900,
+      "present": false
+    },
+    {
+      "monotonic_ns": 44800029093600,
+      "present": false
+    },
+    {
+      "monotonic_ns": 44800091637100,
+      "present": false
+    },
+    {
+      "monotonic_ns": 44800154297700,
+      "present": false
+    },
+    {
+      "monotonic_ns": 44800215852300,
+      "present": false
+    },
+    {
+      "monotonic_ns": 44800277469000,
+      "present": false
+    },
+    {
+      "monotonic_ns": 44800340544700,
+      "present": false
+    },
+    {
+      "monotonic_ns": 44800401520300,
+      "present": false
+    },
+    {
+      "monotonic_ns": 44800464810200,
+      "present": false
+    },
+    {
+      "monotonic_ns": 44800527374100,
+      "present": false
+    },
+    {
+      "monotonic_ns": 44800591358900,
+      "present": false
+    },
+    {
+      "monotonic_ns": 44800654427900,
+      "present": false
+    },
+    {
+      "monotonic_ns": 44800716372300,
+      "present": false
+    },
+    {
+      "monotonic_ns": 44800779095400,
+      "present": false
+    },
+    {
+      "monotonic_ns": 44800841709300,
+      "present": false
+    },
+    {
+      "monotonic_ns": 44800904649500,
+      "present": false
+    },
+    {
+      "monotonic_ns": 44800967553300,
+      "present": false
+    },
+    {
+      "monotonic_ns": 44801029632400,
+      "present": false
+    },
+    {
+      "monotonic_ns": 44801092328400,
+      "present": false
+    },
+    {
+      "monotonic_ns": 44801155414100,
+      "present": false
+    },
+    {
+      "monotonic_ns": 44801219059800,
+      "present": false
+    },
+    {
+      "monotonic_ns": 44801281948000,
+      "present": false
+    },
+    {
+      "monotonic_ns": 44801345566900,
+      "present": false
+    },
+    {
+      "monotonic_ns": 44801408746800,
+      "present": false
+    },
+    {
+      "monotonic_ns": 44801472080900,
+      "present": false
+    },
+    {
+      "monotonic_ns": 44801535657200,
+      "present": false
+    },
+    {
+      "monotonic_ns": 44801598657400,
+      "present": false
+    },
+    {
+      "monotonic_ns": 44801661852400,
+      "present": false
+    },
+    {
+      "monotonic_ns": 44801725681800,
+      "present": false
+    },
+    {
+      "monotonic_ns": 44801788840500,
+      "present": false
+    },
+    {
+      "monotonic_ns": 44801852316100,
+      "present": false
+    },
+    {
+      "monotonic_ns": 44801915006900,
+      "present": false
+    },
+    {
+      "monotonic_ns": 44801979050700,
+      "present": false
+    },
+    {
+      "monotonic_ns": 44802041197500,
+      "present": false
+    },
+    {
+      "monotonic_ns": 44802104177100,
+      "present": false
+    },
+    {
+      "monotonic_ns": 44802167284300,
+      "present": false
+    },
+    {
+      "monotonic_ns": 44802228616600,
+      "present": false
+    },
+    {
+      "monotonic_ns": 44802291701400,
+      "present": false
+    },
+    {
+      "monotonic_ns": 44802355600900,
+      "present": false
+    },
+    {
+      "monotonic_ns": 44802416906000,
+      "present": false
+    },
+    {
+      "monotonic_ns": 44802478756900,
+      "present": false
+    },
+    {
+      "monotonic_ns": 44802542099200,
+      "present": false
+    },
+    {
+      "monotonic_ns": 44802605655400,
+      "present": false
+    },
+    {
+      "monotonic_ns": 44802668123300,
+      "present": false
+    },
+    {
+      "monotonic_ns": 44802728488400,
+      "present": false
+    },
+    {
+      "monotonic_ns": 44802790277100,
+      "present": false
+    },
+    {
+      "monotonic_ns": 44802853496100,
+      "present": false
+    },
+    {
+      "monotonic_ns": 44802916878100,
+      "present": false
+    },
+    {
+      "monotonic_ns": 44802979623600,
+      "present": false
+    },
+    {
+      "monotonic_ns": 44803043056700,
+      "present": false
+    },
+    {
+      "monotonic_ns": 44803106772000,
+      "present": false
+    },
+    {
+      "monotonic_ns": 44803169795000,
+      "present": false
+    },
+    {
+      "monotonic_ns": 44803233357700,
+      "present": false
+    },
+    {
+      "monotonic_ns": 44803296342900,
+      "present": false
+    },
+    {
+      "monotonic_ns": 44803357300700,
+      "present": false
+    },
+    {
+      "monotonic_ns": 44803420291100,
+      "present": false
+    },
+    {
+      "monotonic_ns": 44803483534000,
+      "present": false
+    },
+    {
+      "monotonic_ns": 44803547522300,
+      "present": false
+    },
+    {
+      "monotonic_ns": 44803611736400,
+      "present": false
+    },
+    {
+      "monotonic_ns": 44803674492600,
+      "present": false
+    },
+    {
+      "monotonic_ns": 44803737957700,
+      "present": false
+    },
+    {
+      "monotonic_ns": 44803800521000,
+      "present": false
+    },
+    {
+      "monotonic_ns": 44803863044300,
+      "present": false
+    },
+    {
+      "monotonic_ns": 44803926560000,
+      "present": false
+    },
+    {
+      "monotonic_ns": 44803989811800,
+      "present": false
+    },
+    {
+      "monotonic_ns": 44804052321100,
+      "present": false
+    },
+    {
+      "monotonic_ns": 44804115591300,
+      "present": false
+    },
+    {
+      "monotonic_ns": 44804177775900,
+      "present": false
+    },
+    {
+      "monotonic_ns": 44804242201900,
+      "present": false
+    },
+    {
+      "monotonic_ns": 44804302906200,
+      "present": false
+    },
+    {
+      "monotonic_ns": 44804366840300,
+      "present": false
+    },
+    {
+      "monotonic_ns": 44804430120700,
+      "present": false
+    },
+    {
+      "monotonic_ns": 44804492916000,
+      "present": false
+    },
+    {
+      "monotonic_ns": 44804555624600,
+      "present": false
+    },
+    {
+      "monotonic_ns": 44804618734500,
+      "present": false
+    },
+    {
+      "monotonic_ns": 44804682049400,
+      "present": false
+    },
+    {
+      "monotonic_ns": 44804744756700,
+      "present": false
+    },
+    {
+      "monotonic_ns": 44804807016600,
+      "present": false
+    },
+    {
+      "monotonic_ns": 44804870058100,
+      "present": false
+    },
+    {
+      "monotonic_ns": 44804933066300,
+      "present": false
+    },
+    {
+      "monotonic_ns": 44804995385300,
+      "present": false
+    },
+    {
+      "monotonic_ns": 44805058602300,
+      "present": false
+    },
+    {
+      "monotonic_ns": 44805122839400,
+      "present": false
+    },
+    {
+      "monotonic_ns": 44805184716500,
+      "present": false
+    },
+    {
+      "monotonic_ns": 44805247717300,
+      "present": false
+    },
+    {
+      "monotonic_ns": 44805309948100,
+      "present": false
+    },
+    {
+      "monotonic_ns": 44805372523200,
+      "present": false
+    },
+    {
+      "monotonic_ns": 44805435849900,
+      "present": false
+    },
+    {
+      "monotonic_ns": 44805498294600,
+      "present": false
+    },
+    {
+      "monotonic_ns": 44805561836500,
+      "present": false
+    },
+    {
+      "monotonic_ns": 44805625010700,
+      "present": false
+    },
+    {
+      "monotonic_ns": 44805686808700,
+      "present": false
+    },
+    {
+      "monotonic_ns": 44805749616500,
+      "present": false
+    },
+    {
+      "monotonic_ns": 44805811050600,
+      "present": false
+    },
+    {
+      "monotonic_ns": 44805873610500,
+      "present": false
+    },
+    {
+      "monotonic_ns": 44805935382400,
+      "present": false
+    },
+    {
+      "monotonic_ns": 44805998293200,
+      "present": false
+    },
+    {
+      "monotonic_ns": 44806061077000,
+      "present": false
+    },
+    {
+      "monotonic_ns": 44806123058000,
+      "present": false
+    },
+    {
+      "monotonic_ns": 44806186687300,
+      "present": false
+    },
+    {
+      "monotonic_ns": 44806250749700,
+      "present": false
+    },
+    {
+      "monotonic_ns": 44806313443300,
+      "present": false
+    },
+    {
+      "monotonic_ns": 44806376192800,
+      "present": false
+    },
+    {
+      "monotonic_ns": 44806438924700,
+      "present": false
+    },
+    {
+      "monotonic_ns": 44806501575200,
+      "present": false
+    },
+    {
+      "monotonic_ns": 44806563119300,
+      "present": false
+    },
+    {
+      "monotonic_ns": 44806625617600,
+      "present": false
+    },
+    {
+      "monotonic_ns": 44806687067700,
+      "present": false
+    },
+    {
+      "monotonic_ns": 44806749016700,
+      "present": false
+    },
+    {
+      "monotonic_ns": 44806811595800,
+      "present": false
+    },
+    {
+      "monotonic_ns": 44806873199700,
+      "present": false
+    },
+    {
+      "monotonic_ns": 44806935239000,
+      "present": false
+    },
+    {
+      "monotonic_ns": 44806997986300,
+      "present": false
+    },
+    {
+      "monotonic_ns": 44807061461500,
+      "present": false
+    },
+    {
+      "monotonic_ns": 44807124425600,
+      "present": false
+    },
+    {
+      "monotonic_ns": 44807186343400,
+      "present": false
+    },
+    {
+      "monotonic_ns": 44807249392900,
+      "present": false
+    },
+    {
+      "monotonic_ns": 44807312213600,
+      "present": false
+    },
+    {
+      "monotonic_ns": 44807373727700,
+      "present": false
+    },
+    {
+      "monotonic_ns": 44807436730400,
+      "present": false
+    },
+    {
+      "monotonic_ns": 44807498752800,
+      "present": false
+    },
+    {
+      "monotonic_ns": 44807561503800,
+      "present": false
+    },
+    {
+      "monotonic_ns": 44807624392400,
+      "present": false
+    },
+    {
+      "monotonic_ns": 44807686507800,
+      "present": false
+    },
+    {
+      "monotonic_ns": 44807748755000,
+      "present": false
+    },
+    {
+      "monotonic_ns": 44807812277500,
+      "present": false
+    },
+    {
+      "monotonic_ns": 44807875360900,
+      "present": false
+    },
+    {
+      "monotonic_ns": 44807938006100,
+      "present": false
+    },
+    {
+      "monotonic_ns": 44808000164900,
+      "present": false
+    },
+    {
+      "monotonic_ns": 44808061823200,
+      "present": false
+    },
+    {
+      "monotonic_ns": 44808124267200,
+      "present": false
+    },
+    {
+      "monotonic_ns": 44808185805600,
+      "present": false
+    },
+    {
+      "monotonic_ns": 44808247143500,
+      "present": false
+    },
+    {
+      "monotonic_ns": 44808310836700,
+      "present": false
+    },
+    {
+      "monotonic_ns": 44808374445900,
+      "present": false
+    },
+    {
+      "monotonic_ns": 44808436398600,
+      "present": false
+    },
+    {
+      "monotonic_ns": 44808498205400,
+      "present": false
+    },
+    {
+      "monotonic_ns": 44808559899800,
+      "present": false
+    },
+    {
+      "monotonic_ns": 44808622670900,
+      "present": false
+    },
+    {
+      "monotonic_ns": 44808685373000,
+      "present": false
+    },
+    {
+      "monotonic_ns": 44808747417500,
+      "present": false
+    },
+    {
+      "monotonic_ns": 44808810546100,
+      "present": false
+    },
+    {
+      "monotonic_ns": 44808872651500,
+      "present": false
+    },
+    {
+      "monotonic_ns": 44808933812100,
+      "present": false
+    },
+    {
+      "monotonic_ns": 44808996828800,
+      "present": false
+    },
+    {
+      "monotonic_ns": 44809059368500,
+      "present": false
+    },
+    {
+      "monotonic_ns": 44809122076200,
+      "present": false
+    },
+    {
+      "monotonic_ns": 44809185058900,
+      "present": false
+    },
+    {
+      "monotonic_ns": 44809248647700,
+      "present": false
+    },
+    {
+      "monotonic_ns": 44809311483300,
+      "present": false
+    },
+    {
+      "monotonic_ns": 44809372610100,
+      "present": false
+    },
+    {
+      "monotonic_ns": 44809435044300,
+      "present": false
+    },
+    {
+      "monotonic_ns": 44809497495000,
+      "present": false
+    },
+    {
+      "monotonic_ns": 44809560317900,
+      "present": false
+    },
+    {
+      "monotonic_ns": 44809623992100,
+      "present": false
+    },
+    {
+      "monotonic_ns": 44809685728500,
+      "present": false
+    },
+    {
+      "monotonic_ns": 44809749190400,
+      "present": false
+    },
+    {
+      "monotonic_ns": 44809812336200,
+      "present": false
+    },
+    {
+      "monotonic_ns": 44809875902300,
+      "present": false
+    },
+    {
+      "monotonic_ns": 44809939547800,
+      "present": false
+    },
+    {
+      "monotonic_ns": 44810001817200,
+      "present": false
+    },
+    {
+      "monotonic_ns": 44810063917800,
+      "present": false
+    },
+    {
+      "monotonic_ns": 44810126949700,
+      "present": false
+    },
+    {
+      "monotonic_ns": 44810189292000,
+      "present": false
+    },
+    {
+      "monotonic_ns": 44810252377900,
+      "present": false
+    },
+    {
+      "monotonic_ns": 44810313988500,
+      "present": false
+    },
+    {
+      "monotonic_ns": 44810377670300,
+      "present": false
+    },
+    {
+      "monotonic_ns": 44810439840000,
+      "present": false
+    },
+    {
+      "monotonic_ns": 44810501260000,
+      "present": false
+    },
+    {
+      "monotonic_ns": 44810564754100,
+      "present": false
+    },
+    {
+      "monotonic_ns": 44810627717300,
+      "present": false
+    },
+    {
+      "monotonic_ns": 44810691454000,
+      "present": false
+    },
+    {
+      "monotonic_ns": 44810754389200,
+      "present": false
+    },
+    {
+      "monotonic_ns": 44810816287400,
+      "present": false
+    },
+    {
+      "monotonic_ns": 44810878313900,
+      "present": false
+    },
+    {
+      "monotonic_ns": 44810939959700,
+      "present": false
+    },
+    {
+      "monotonic_ns": 44811002101300,
+      "present": false
+    },
+    {
+      "monotonic_ns": 44811065469500,
+      "present": false
+    },
+    {
+      "monotonic_ns": 44811127687200,
+      "present": false
+    },
+    {
+      "monotonic_ns": 44811188516300,
+      "present": false
+    },
+    {
+      "monotonic_ns": 44811250898900,
+      "present": false
+    },
+    {
+      "monotonic_ns": 44811313026900,
+      "present": false
+    },
+    {
+      "monotonic_ns": 44811374343100,
+      "present": false
+    },
+    {
+      "monotonic_ns": 44811436476000,
+      "present": false
+    },
+    {
+      "monotonic_ns": 44811499269500,
+      "present": false
+    },
+    {
+      "monotonic_ns": 44811562820100,
+      "present": false
+    },
+    {
+      "monotonic_ns": 44811626540300,
+      "present": false
+    },
+    {
+      "monotonic_ns": 44811689471400,
+      "present": false
+    },
+    {
+      "monotonic_ns": 44811751435800,
+      "present": false
+    },
+    {
+      "monotonic_ns": 44811814344700,
+      "present": false
+    },
+    {
+      "monotonic_ns": 44811877094500,
+      "present": false
+    },
+    {
+      "monotonic_ns": 44811941092000,
+      "present": false
+    },
+    {
+      "monotonic_ns": 44812004852100,
+      "present": false
+    },
+    {
+      "monotonic_ns": 44812067582400,
+      "present": false
+    },
+    {
+      "monotonic_ns": 44812129972800,
+      "present": false
+    },
+    {
+      "monotonic_ns": 44812194045000,
+      "present": false
+    },
+    {
+      "monotonic_ns": 44812257108800,
+      "present": false
+    },
+    {
+      "monotonic_ns": 44812320129900,
+      "present": false
+    },
+    {
+      "monotonic_ns": 44812383036400,
+      "present": false
+    },
+    {
+      "monotonic_ns": 44812447047000,
+      "present": false
+    },
+    {
+      "monotonic_ns": 44812509000600,
+      "present": false
+    },
+    {
+      "monotonic_ns": 44812571890700,
+      "present": false
+    },
+    {
+      "monotonic_ns": 44812633714300,
+      "present": false
+    },
+    {
+      "monotonic_ns": 44812697130000,
+      "present": false
+    },
+    {
+      "monotonic_ns": 44812759598300,
+      "present": false
+    },
+    {
+      "monotonic_ns": 44812821727500,
+      "present": false
+    },
+    {
+      "monotonic_ns": 44812884384800,
+      "present": false
+    },
+    {
+      "monotonic_ns": 44812947551700,
+      "present": false
+    },
+    {
+      "monotonic_ns": 44813011242300,
+      "present": false
+    },
+    {
+      "monotonic_ns": 44813073288900,
+      "present": false
+    },
+    {
+      "monotonic_ns": 44813135590900,
+      "present": false
+    },
+    {
+      "monotonic_ns": 44813198281100,
+      "present": false
+    },
+    {
+      "monotonic_ns": 44813260505100,
+      "present": false
+    },
+    {
+      "monotonic_ns": 44813323105700,
+      "present": false
+    },
+    {
+      "monotonic_ns": 44813385089000,
+      "present": false
+    },
+    {
+      "monotonic_ns": 44813448064700,
+      "present": false
+    },
+    {
+      "monotonic_ns": 44813510157000,
+      "present": false
+    },
+    {
+      "monotonic_ns": 44813572553500,
+      "present": false
+    },
+    {
+      "monotonic_ns": 44813635413600,
+      "present": false
+    },
+    {
+      "monotonic_ns": 44813698243200,
+      "present": false
+    },
+    {
+      "monotonic_ns": 44813761345400,
+      "present": false
+    },
+    {
+      "monotonic_ns": 44813824558700,
+      "present": false
+    },
+    {
+      "monotonic_ns": 44813888185300,
+      "present": false
+    },
+    {
+      "monotonic_ns": 44813950427000,
+      "present": false
+    },
+    {
+      "monotonic_ns": 44814013616900,
+      "present": false
+    },
+    {
+      "monotonic_ns": 44814076212900,
+      "present": false
+    },
+    {
+      "monotonic_ns": 44814139799700,
+      "present": false
+    },
+    {
+      "monotonic_ns": 44814202304600,
+      "present": false
+    },
+    {
+      "monotonic_ns": 44814264774400,
+      "present": false
+    },
+    {
+      "monotonic_ns": 44814327704800,
+      "present": false
+    },
+    {
+      "monotonic_ns": 44814390842200,
+      "present": false
+    },
+    {
+      "monotonic_ns": 44814453527100,
+      "present": false
+    },
+    {
+      "monotonic_ns": 44814515526900,
+      "present": false
+    },
+    {
+      "monotonic_ns": 44814578917700,
+      "present": false
+    },
+    {
+      "monotonic_ns": 44814640642800,
+      "present": false
+    },
+    {
+      "monotonic_ns": 44814702381100,
+      "present": false
+    },
+    {
+      "monotonic_ns": 44814765584200,
+      "present": false
+    },
+    {
+      "monotonic_ns": 44814827119000,
+      "present": false
+    },
+    {
+      "monotonic_ns": 44814889894000,
+      "present": false
+    },
+    {
+      "monotonic_ns": 44814951535300,
+      "present": false
+    },
+    {
+      "monotonic_ns": 44815013732100,
+      "present": false
+    },
+    {
+      "monotonic_ns": 44815075954300,
+      "present": false
+    },
+    {
+      "monotonic_ns": 44815138281100,
+      "present": false
+    },
+    {
+      "monotonic_ns": 44815200448400,
+      "present": false
+    },
+    {
+      "monotonic_ns": 44815264383900,
+      "present": false
+    },
+    {
+      "monotonic_ns": 44815326713800,
+      "present": false
+    },
+    {
+      "monotonic_ns": 44815390125200,
+      "present": false
+    },
+    {
+      "monotonic_ns": 44815452722600,
+      "present": false
+    },
+    {
+      "monotonic_ns": 44815515893600,
+      "present": false
+    },
+    {
+      "monotonic_ns": 44815578152300,
+      "present": false
+    },
+    {
+      "monotonic_ns": 44815640063900,
+      "present": false
+    },
+    {
+      "monotonic_ns": 44815703310900,
+      "present": false
+    },
+    {
+      "monotonic_ns": 44815765238200,
+      "present": false
+    },
+    {
+      "monotonic_ns": 44815827349300,
+      "present": false
+    },
+    {
+      "monotonic_ns": 44815889143800,
+      "present": false
+    },
+    {
+      "monotonic_ns": 44815950565700,
+      "present": false
+    },
+    {
+      "monotonic_ns": 44816013891200,
+      "present": false
+    },
+    {
+      "monotonic_ns": 44816076136200,
+      "present": false
+    },
+    {
+      "monotonic_ns": 44816139265000,
+      "present": false
+    },
+    {
+      "monotonic_ns": 44816202276400,
+      "present": false
+    },
+    {
+      "monotonic_ns": 44816264579500,
+      "present": false
+    },
+    {
+      "monotonic_ns": 44816325792000,
+      "present": false
+    },
+    {
+      "monotonic_ns": 44816388124400,
+      "present": false
+    },
+    {
+      "monotonic_ns": 44816450439400,
+      "present": false
+    },
+    {
+      "monotonic_ns": 44816514026700,
+      "present": false
+    },
+    {
+      "monotonic_ns": 44816575489900,
+      "present": false
+    },
+    {
+      "monotonic_ns": 44816638282200,
+      "present": false
+    },
+    {
+      "monotonic_ns": 44816699764800,
+      "present": false
+    }
+  ],
+  "selected_native_events_sha256": "1f30d75ecc942da00c1dcfc6dc9c0d663d52e1e7d8df4d550e2d2f66c9434c84",
+  "error_type": "AssertionError",
+  "error": "",
+  "traceback": "Traceback (most recent call last):\n  File \"D:\\Development\\mnemos\\mnemos\\.worktrees\\functional-local-memory\\.venv\\native_codex_startup_outage_v1.py\", line 249, in <module>\n    assert answers[0]['record']['payload']['message'] == report['expected_final_answer']\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\nAssertionError\n",
+  "dispatch_trace": [],
+  "descriptor_monitor": {
+    "samples": 882,
+    "descriptor_seen": false,
+    "max_sample_gap_ms": 64.7473
+  },
+  "outbox_final_sha256": "cc5fb2552bcfc7386c997b6538159aa12eb2c1911ea39781f0f67c56c18c328e",
+  "cleanup": {
+    "errors": [],
+    "auth_absent": true,
+    "descriptor_absent": true
+  },
+  "final_database": {
+    "memory_chunks": {
+      "rows": 2,
+      "sha256": "a21dad9d06b38a21c15bcd96053392db21340ac1e332d5237d1666cdf447d78c"
+    },
+    "episodic_events": {
+      "rows": 2,
+      "sha256": "f441e148308b00117299bed0d883db9e426564b330ccd8b36ea71ad92d172a46"
+    },
+    "fact_evidence": {
+      "rows": 2,
+      "sha256": "2694524e12d3f511dbbaa7288158110da753527b58ac8994f96ba26cd2fcf0a3"
+    },
+    "memory_jobs": {
+      "rows": 2,
+      "sha256": "0a64f190d7e294bcbcb9f3a66f6322215d2783b3cece4a75a23b85fb83ad56ca"
+    },
+    "capture_count": 0
+  },
+  "finished_at": "2026-09-18T06:36:10.049262+00:00"
+}
