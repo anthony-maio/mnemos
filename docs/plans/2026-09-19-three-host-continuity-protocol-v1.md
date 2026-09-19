@@ -6,10 +6,23 @@ probe remain distinct evidence. A Hermes-only pass cannot close this protocol.
 
 Preparation update: disposable process helpers and trace normalization have
 [offline verification](../validation/2026-09-19/three-host-runner-offline-v1/README.md).
-The orchestrator remains to be assembled. Historical Codex code-mode sessions
+The [prospective driver](../../benchmarks/native_hosts/three_host_run.py) is now
+assembled with package/prior-run guards, exact native lifecycle checks, service
+request capture for replay, and retained controls. Its focused offline checks
+pass 68 cases; strict Python 3.10 mypy passes 88 production/benchmark files.
+This is preparation, not a native result. Historical Codex code-mode sessions
 use different model-cell and MCP call IDs; completion events alone must not
 satisfy the model-call correlation rule below. Resolve that instrumentation
 gap before claiming acceptance, and record any invocation-mode change.
+
+The prospective Codex invocation adds `--disable code_mode_host`. Installed
+Codex 0.146.0 accepts the feature override offline; actual direct-tool behavior
+remains unverified until a fresh native phase produces correlated records.
+The driver stops if that correlation is absent. Its temporary native streams
+must be selected and sanitized before archival; they are not automatically
+part of the public evidence or writer packet. A successful run is labeled
+`bounded_lifecycle_observed`, with callback coverage and unavailable Codex/Claude
+provider-wire input inspection stated separately.
 
 ## Bindings and isolation
 

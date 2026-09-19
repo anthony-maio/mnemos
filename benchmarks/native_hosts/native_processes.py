@@ -282,6 +282,7 @@ def run_codex_phase(
     executable: Path,
     auth_source: Path,
     max_seconds: int = 180,
+    disable_code_mode_host: bool = False,
 ) -> dict[str, Any]:
     """Run an interactive Codex phase in the caller's terminal and return provenance.
 
@@ -295,6 +296,7 @@ def run_codex_phase(
     directory = _phase_root(config, phase)
     command = [
         str(executable),
+        *(["--disable", "code_mode_host"] if disable_code_mode_host else []),
         "--sandbox",
         "read-only",
         "--ask-for-approval",
@@ -312,6 +314,7 @@ def run_codex_phase(
         "command": command[:-1] + ["<synthetic phase prompt>"],
         "prompt_sha256": hashlib.sha256(prompt.encode()).hexdigest(),
         "max_seconds": max_seconds,
+        "code_mode_host_disabled": disable_code_mode_host,
     }
     auth = None
     process = None
