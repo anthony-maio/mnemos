@@ -347,6 +347,13 @@ class LocalMemoryService:
                     "identity_status": event.identity_status,
                     "fact_eligible": event.identity_status == "normal",
                 }
+        elif correction is not None:
+            # Only a new correction needs to match the current fact version.
+            # An exact retry above acknowledges its existing durable job even
+            # after that job (or a later correction) has advanced the fact.
+            previous = self.engine.store.get(correction["target_fact_id"])
+            if previous is None or previous.version != correction["expected_version"]:
+                raise ValueError("Correction version conflict")
         stored = self.engine.store.capture_event_and_job(
             record, job, suppression_source_ids=suppression_source_ids
         )
@@ -1010,8 +1017,6 @@ class LocalMemoryService:
                 previous.metadata, context, ("project", "workspace", "global")
             ):
                 raise KeyError("Correction target not found in the requested scope")
-            if previous.version != payload["expected_version"]:
-                raise ValueError("Correction version conflict")
             event = CaptureEvent(
                 event_id=payload.get("event_id") or str(uuid4()),
                 context=context,
@@ -1025,7 +1030,10 @@ class LocalMemoryService:
                 event,
                 scope=previous.metadata["scope"],
                 explicit=True,
-                correction={"target_fact_id": previous.id, "expected_version": previous.version},
+                correction={
+                    "target_fact_id": previous.id,
+                    "expected_version": payload["expected_version"],
+                },
             )
         if operation == "maintenance":
             return {

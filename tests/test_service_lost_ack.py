@@ -197,3 +197,101 @@ async def test_committed_capture_lost_ack_replays_once_after_restart(
             restarted_service.stop()
         if restarted_store is not None:
             restarted_store.close()
+
+
+@pytest.mark.asyncio
+async def test_processed_correction_lost_ack_retries_after_service_restart(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    registry = ScopeRegistry()
+    registry.register_project(tmp_path, user_profile_id="local", enabled=True)
+    context = registry.resolve(tmp_path, user_profile_id="local", session_id="s", host="hermes")
+    descriptor = tmp_path / "runtime.json"
+    database = tmp_path / "memory.sqlite"
+
+    def start() -> tuple[MnemosService, SQLiteStore]:
+        store = SQLiteStore(str(database))
+        engine = MnemosEngine(
+            config=MnemosConfig(
+                modules=ModuleConfig(**{name: False for name in ModuleConfig.model_fields})
+            ),
+            llm=UnavailableLLMProvider(),
+            embedder=SimpleEmbeddingProvider(),
+            store=store,
+        )
+        current_service = MnemosService(
+            dispatcher=LocalMemoryService(engine, registry),
+            descriptor_path=descriptor,
+            lock_path=tmp_path / "runtime.lock",
+        )
+        current_service.start()
+        return current_service, store
+
+    service, store = start()
+    client = MnemosClient(
+        descriptor_path=descriptor,
+        outbox_path=tmp_path / "outbox.json",
+        auto_start=False,
+        request_timeout=5,
+    )
+    import mnemos.service as service_module
+
+    original_write_json = service_module._RequestHandler._write_json
+    lost_reply: dict[str, Any] = {}
+
+    def drop_processed_correction(handler: Any, status: int, body: Mapping[str, Any]) -> None:
+        job_id = body.get("job_id")
+        job = store.get_job(job_id) if job_id else None
+        if status == 200 and job is not None and job.kind == "correct" and not lost_reply:
+            lost_reply.update(body)
+            # The first correction has taken effect before the client knows
+            # whether the service accepted it.
+            service.submit("maintenance", {})
+            assert store.get_job(job_id).status == "completed"
+            raise ConnectionAbortedError("lost processed correction acknowledgement")
+        original_write_json(handler, status, body)
+
+    monkeypatch.setattr(service_module._RequestHandler, "_write_json", drop_processed_correction)
+    try:
+        service.submit("remember", {"context": context.model_dump(), "content": "Use React"})
+        service.submit("maintenance", {})
+        fact = store.get_all()[0]
+        payload = {
+            "context": context.model_dump(),
+            "fact_id": fact.id,
+            "expected_version": 1,
+            "content": "Use Svelte",
+            "event_id": "correction-lost-ack",
+        }
+        first = await client.request("correct", payload, queue_on_failure=False)
+        assert first["status"] == "degraded"
+        assert first["committed"] is False
+        assert lost_reply["status"] == "committed"
+        assert store.get(fact.id).version == 2
+        assert client.outbox.pending() == []
+        jobs = store.list_jobs()
+        events = store.list_episodic_events()
+        revisions = store.list_fact_revisions(fact.id)
+        await client.close()
+        service.stop()
+        store.close()
+        service, store = start()
+        client = MnemosClient(
+            descriptor_path=descriptor,
+            outbox_path=tmp_path / "outbox.json",
+            auto_start=False,
+        )
+        retried = await client.request("correct", payload, queue_on_failure=False)
+        assert retried["status"] == "committed"
+        assert retried["job_id"] == lost_reply["job_id"]
+        assert retried["event_id"] == lost_reply["event_id"]
+        assert retried["processing_status"] == "consolidated"
+        assert store.list_jobs() == jobs
+        assert store.list_episodic_events() == events
+        assert store.list_fact_revisions(fact.id) == revisions
+        assert store.get(fact.id).version == 2
+        assert store.get(fact.id).content == "Use Svelte"
+    finally:
+        await client.close()
+        service.stop()
+        store.close()

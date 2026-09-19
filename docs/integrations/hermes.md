@@ -91,10 +91,15 @@ current version. Inspect the fact before changing it.
 
 Remember and correct also require a `request_id`. Use a fresh value for each
 logical write and reuse it when retrying that same write after an uncertain
-response. Remember retries resolve to the original event/job. A correction
-retry after processing may return a version conflict; inspect the target and
-the previously returned job before deciding on another write. A committed
-response acknowledges durable evidence; job completion establishes processing.
+response. Remember and correction retries resolve to the original event/job.
+A correction retry keeps its original expected version, even if processing
+or a later correction has advanced the fact. Changing the content, target,
+or expected version under the same request identity is rejected. A new edit
+still requires the current version, and forgotten or inaccessible targets
+cannot be retried. A committed response acknowledges durable evidence; job
+completion establishes processing. Inspect the fact and job status after an
+uncertain response, especially when multiple corrections were queued against
+the same version.
 These explicit tools do not perform fuzzy matching or bulk deletion.
 
 The provider advertises the Hermes version 2 pre-compress checkpoint contract.

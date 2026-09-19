@@ -349,6 +349,167 @@ async def test_explicit_remember_and_versioned_correction_keep_identity(tmp_path
 
 
 @pytest.mark.asyncio
+@pytest.mark.parametrize("newer_correction", [False, True])
+@pytest.mark.parametrize("prune_source", [False, True])
+async def test_completed_correction_retry_after_restart_is_read_only(
+    tmp_path, newer_correction, prune_source
+):
+    from datetime import timedelta
+
+    memory, context = service(tmp_path)
+    try:
+        await memory.dispatch(
+            "remember",
+            {
+                "content": "Use React",
+                "context": context.model_dump(),
+                "event_id": "remember-target",
+            },
+        )
+        assert await memory.maintenance.run_once(force=True) == 1
+        fact = memory.engine.store.get_all()[0]
+        payload = {
+            "fact_id": fact.id,
+            "expected_version": 1,
+            "content": "Use Svelte",
+            "context": context.model_dump(),
+            "event_id": "correction-with-lost-reply",
+        }
+        accepted = await memory.dispatch("correct", payload)
+        pending_retry = await memory.dispatch("correct", payload)
+        assert pending_retry["event_id"] == accepted["event_id"]
+        assert pending_retry["job_id"] == accepted["job_id"]
+        assert await memory.maintenance.run_once(force=True) == 1
+        if newer_correction:
+            await memory.dispatch(
+                "correct",
+                {**payload, "expected_version": 2, "content": "Use Vue", "event_id": "newer"},
+            )
+            assert await memory.maintenance.run_once(force=True) == 1
+        if prune_source:
+            memory.engine.store.prune_processed_evidence(
+                before=datetime.now(timezone.utc) + timedelta(days=1)
+            )
+            assert memory.engine.store.get_episodic_event(accepted["event_id"]) is None
+        registry = memory.registry
+        memory.engine.store.close()
+        memory = LocalMemoryService(
+            MnemosEngine(
+                llm=UnavailableLLMProvider(),
+                embedder=SimpleEmbeddingProvider(),
+                store=SQLiteStore(str(tmp_path / "memory.sqlite")),
+            ),
+            registry,
+        )
+
+        other_fact = MemoryChunk(
+            content="Unrelated local fact", metadata=context_metadata(context, "project")
+        )
+        memory.engine.store.store(other_fact)
+
+        def snapshot():
+            store = memory.engine.store
+            return {
+                "facts": store.get_all(),
+                "jobs": store.list_jobs(),
+                "events": store.list_episodic_events(),
+                "evidence": store.list_fact_evidence(fact.id),
+                "revisions": store.list_fact_revisions(fact.id),
+            }
+
+        before = snapshot()
+        retry = await memory.dispatch("correct", payload)
+        assert retry["status"] == "committed"
+        assert retry["processing_status"] == "consolidated"
+        assert retry["event_id"] == accepted["event_id"]
+        assert retry["job_id"] == accepted["job_id"]
+        assert snapshot() == before
+        assert await memory.maintenance.run_once(force=True) == 0
+        current = memory.engine.store.get(fact.id)
+        assert current.version == (3 if newer_correction else 2)
+        assert current.content == ("Use Vue" if newer_correction else "Use Svelte")
+
+        for change in (
+            {"content": "Changed retry"},
+            {"expected_version": current.version},
+            {"fact_id": other_fact.id},
+            {"event_id": "remember-target"},
+        ):
+            with pytest.raises(ValueError, match="different payload"):
+                await memory.dispatch("correct", {**payload, **change})
+        with pytest.raises(ValueError, match="version conflict"):
+            await memory.dispatch("correct", {**payload, "event_id": "fresh-stale-edit"})
+        rejected = await memory.dispatch("correct", {**payload, "content": "api_key=secret"})
+        assert rejected["status"] == "rejected"
+        foreign = tmp_path / "other-project"
+        foreign.mkdir()
+        registry.register_project(foreign, user_profile_id="local", enabled=True)
+        other_context = registry.resolve(
+            foreign, user_profile_id="local", session_id=context.session_id, host=context.host
+        )
+        with pytest.raises(KeyError, match="requested scope"):
+            await memory.dispatch("correct", {**payload, "context": other_context.model_dump()})
+        assert snapshot() == before
+
+        await memory.dispatch(
+            "forget",
+            {
+                "fact_id": fact.id,
+                "expected_version": current.version,
+                "context": context.model_dump(),
+            },
+        )
+        forgotten = snapshot()
+        with pytest.raises(KeyError, match="requested scope"):
+            await memory.dispatch("correct", payload)
+        assert snapshot() == forgotten
+        assert memory.engine.store.get(fact.id) is None
+        assert memory.engine.store.is_suppressed(source_event_id=accepted["event_id"])
+    finally:
+        memory.engine.store.close()
+
+
+@pytest.mark.asyncio
+async def test_retry_of_conflicting_pending_correction_does_not_report_completion(tmp_path):
+    memory, context = service(tmp_path)
+    try:
+        await memory.dispatch("remember", {"content": "Use React", "context": context.model_dump()})
+        assert await memory.maintenance.run_once(force=True) == 1
+        fact = memory.engine.store.get_all()[0]
+        first_payload = {
+            "context": context.model_dump(),
+            "fact_id": fact.id,
+            "expected_version": 1,
+            "content": "Use Svelte",
+            "event_id": "first-correction",
+        }
+        second_payload = {**first_payload, "content": "Use Vue", "event_id": "second-correction"}
+        await memory.dispatch("correct", first_payload)
+        accepted = await memory.dispatch("correct", second_payload)
+        assert await memory.maintenance.run_once(force=True) == 1
+        assert memory.engine.store.get(fact.id).content == "Use Svelte"
+        assert memory.engine.store.get(fact.id).version == 2
+        conflicted_job = memory.engine.store.get_job(accepted["job_id"])
+        assert conflicted_job.status == "pending"
+        assert conflicted_job.last_error == "ValueError"
+        assert conflicted_job.attempt_count == 1
+        retry = await memory.dispatch("correct", second_payload)
+        assert retry["status"] == "committed"
+        assert retry["processing_status"] == "pending"
+        assert retry["job_id"] == accepted["job_id"]
+        assert memory.engine.store.get_job(accepted["job_id"]) == conflicted_job
+        assert len(memory.engine.store.list_jobs()) == 3
+        assert len(memory.engine.store.list_fact_revisions(fact.id)) == 1
+        status = await memory.dispatch(
+            "job", {"context": context.model_dump(), "job_id": accepted["job_id"]}
+        )
+        assert status["job"]["status"] == "pending"
+        assert status["job"]["last_error"] == "ValueError"
+    finally:
+        memory.engine.store.close()
+
+
+@pytest.mark.asyncio
 @pytest.mark.parametrize(
     "response",
     [
