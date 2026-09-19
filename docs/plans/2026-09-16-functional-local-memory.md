@@ -361,11 +361,13 @@ Run: `py -3.13 -m pytest -q tests/test_ablation_contract.py tests/test_benchmark
 
 Depends on: T17, T18.
 
-Files: `README.md`, `ARCHITECTURE.md`, `CHANGELOG.md`, `docs/client-compatibility-matrix.md`, `docs/release-checklist.md`, `docs/retrieval-benchmarks.md`, `tests/test_docs_consistency.py`; website changes in a separately reviewed checkout.
+Files: `README.md`, `ARCHITECTURE.md`, `CHANGELOG.md`, `docs/client-compatibility-matrix.md`, `docs/release-checklist.md`, `docs/retrieval-benchmarks.md`, `docs/handoffs/substack-local-memory.md`, `tests/test_docs_consistency.py`; website changes in a separately reviewed checkout.
 
 Steps: build and test the actual wheel from one commit; update runnable examples, support tiers, optional dependencies, and measured limitations. Produce a dated claim/evidence ledger and a paper errata/revision draft. Locate the actual paper publishing source before editing it; do not recreate it in an unrelated repo. Verify competitor comparisons with pinned primary evidence or remove absolute statements. Preserve historical paper versions and attach dated corrections.
 
 Acceptance: install instructions match the release artifact; no synthetic result is presented as host or production proof; only completed pilot results close readiness gates; all published numbers have reproducible artifacts. Website/PyPI/paper publication is a distinct, explicitly authorized step.
+
+Additional deliverable requested September 19: finalize a research and writing handoff for a roughly 2,500-word Substack article in Anthony's voice. The [handoff](../handoffs/substack-local-memory.md) must identify the final verified checkpoint, original promises, concrete repairs, measured results and failures, source locations, unresolved claims, and a suggested narrative. Apply Anthony's requested `writing-in-anthonys-voice` skill. The handoff is complete only after its evidence and open items are reconciled with the final validation state; the article itself and publication are separate work.
 
 Run final repository checks in an isolated environment: `python -m pytest -q`, `python -m black --check .`, `python -m mypy .`, `python -m build`, `python -m twine check dist/*`. Run the built wheel outside the source tree so imports cannot accidentally validate the checkout.
 
