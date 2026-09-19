@@ -130,3 +130,9 @@ Passing closes only this bounded three-host native lifecycle observation.
 Codex Desktop, automatic extraction quality, complete capture under arbitrary
 interruptions, unindexed paraphrase erasure, automatic daemon restoration,
 and the two-week daily-use pilot remain separate gates.
+
+The prospective driver now uses the v2 Hermes bootstrap and disables the
+optional background title model in each disposable Hermes home. The bootstrap
+checks the actual host setting before invoking the CLI. This follows the
+retained first Hermes lifecycle failure; every observed model request still
+must carry the pinned model and context settings. The driver has not run.

@@ -154,6 +154,7 @@ def run_hermes(
                 "ollama_num_ctx": 65536,
             },
             "memory": {"provider": "mnemos"},
+            "auxiliary": {"title_generation": {"model_upgrade_enabled": False}},
         },
     )
     bridge_entry = root / "bridge_entry.py"
@@ -210,7 +211,7 @@ def run_hermes(
                     "--kill-after=5s",
                     "240s",
                     HERMES_LIVE + "/venv/bin/python",
-                    wsl(Path(__file__).with_name("hermes_native_bootstrap.py")),
+                    wsl(Path(__file__).with_name("hermes_native_bootstrap_v2.py")),
                     wsl(root / "config.json"),
                 ],
                 stdout=stdout,
