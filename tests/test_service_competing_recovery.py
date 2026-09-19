@@ -3,10 +3,12 @@
 from concurrent.futures import ThreadPoolExecutor, TimeoutError as FutureTimeout
 from pathlib import Path
 import socket
+import sys
 import threading
 import time
 
 import pytest
+import mnemos.service as service_module
 
 from mnemos.service import MnemosService, _ProcessLock, _write_private_json
 
@@ -14,6 +16,75 @@ from mnemos.service import MnemosService, _ProcessLock, _write_private_json
 class Dispatcher:
     async def dispatch(self, operation: str, payload: dict) -> dict:
         raise AssertionError("Startup readiness must not dispatch memory operations")
+
+
+@pytest.mark.skipif(sys.platform != "win32", reason="Windows file sharing semantics")
+def test_private_descriptor_replace_recovers_after_reader_closes(tmp_path, monkeypatch):
+    path = tmp_path / "runtime.json"
+    _write_private_json(path, {"generation": "old"})
+    reader = path.open("rb")
+    replace = service_module.os.replace
+    failures = []
+
+    def observed_replace(source, destination):
+        try:
+            return replace(source, destination)
+        except PermissionError as exc:
+            failures.append(exc.winerror)
+            reader.close()
+            raise
+
+    monkeypatch.setattr(service_module.os, "replace", observed_replace)
+    try:
+        _write_private_json(path, {"generation": "new"})
+        assert failures and failures[0] in {5, 32, 33}
+        assert path.read_text() == '{"generation": "new"}'
+        assert not list(tmp_path.glob(".runtime.json.*.tmp"))
+    finally:
+        reader.close()
+
+
+@pytest.mark.skipif(sys.platform != "win32", reason="Windows file sharing semantics")
+@pytest.mark.parametrize("budget", [0.0, 0.04, 0.25, 1.0])
+def test_private_descriptor_replace_has_bounded_retry_and_preserves_old_file(
+    tmp_path, monkeypatch, budget
+):
+    path = tmp_path / "runtime.json"
+    _write_private_json(path, {"generation": "old"})
+    original = path.read_bytes()
+    now = [0.0]
+    sleeps = []
+    monkeypatch.setattr(service_module.time, "monotonic", lambda: now[0])
+
+    def sleep(seconds):
+        sleeps.append(seconds)
+        now[0] += seconds
+
+    monkeypatch.setattr(service_module.time, "sleep", sleep)
+    with path.open("rb"):
+        with pytest.raises(PermissionError):
+            _write_private_json(path, {"generation": "new"}, replace_timeout=budget)
+    assert sum(sleeps) == pytest.approx(min(budget, 0.25))
+    assert path.read_bytes() == original
+    assert not list(tmp_path.glob(".runtime.json.*.tmp"))
+
+
+def test_private_descriptor_replace_does_not_retry_unrelated_errors(tmp_path, monkeypatch):
+    path = tmp_path / "runtime.json"
+    _write_private_json(path, {"generation": "old"})
+    original = path.read_bytes()
+    calls = []
+
+    def fail(source, destination):
+        calls.append(destination)
+        raise OSError("unrelated replacement failure")
+
+    monkeypatch.setattr(service_module.os, "replace", fail)
+    with pytest.raises(OSError, match="unrelated replacement failure"):
+        _write_private_json(path, {"generation": "new"})
+    assert calls == [path]
+    assert path.read_bytes() == original
+    assert not list(tmp_path.glob(".runtime.json.*.tmp"))
 
 
 def test_competing_launcher_waits_past_dead_descriptor(tmp_path: Path) -> None:

@@ -273,7 +273,9 @@ class _ProcessLock:
             handle.close()
 
 
-def _write_private_json(path: Path, value: Mapping[str, Any]) -> None:
+def _write_private_json(
+    path: Path, value: Mapping[str, Any], *, replace_timeout: float = 0.25
+) -> None:
     path.parent.mkdir(parents=True, exist_ok=True)
     _protect_private_path(path.parent)
     temporary = path.with_name(f".{path.name}.{secrets.token_hex(8)}.tmp")
@@ -286,7 +288,23 @@ def _write_private_json(path: Path, value: Mapping[str, Any]) -> None:
         os.close(descriptor_fd)
         _protect_private_path(temporary)
         temporary.write_text(json.dumps(value, sort_keys=True), encoding="utf-8")
-        os.replace(temporary, path)
+        deadline = time.monotonic() + min(0.25, max(0.0, replace_timeout))
+        while True:
+            try:
+                os.replace(temporary, path)
+                break
+            except OSError as exc:
+                # Windows readers can briefly deny replacement even when the
+                # destination ACL is correct. Retry only the atomic operation;
+                # never remove the old descriptor or relax its permissions.
+                remaining = deadline - time.monotonic()
+                if (
+                    sys.platform != "win32"
+                    or getattr(exc, "winerror", None) not in {5, 32, 33}
+                    or remaining <= 0
+                ):
+                    raise
+                time.sleep(min(0.01, remaining))
         _protect_private_path(path)
     except Exception:
         try:
@@ -728,6 +746,7 @@ class MnemosService:
             self._external = True
             return dict(existing)
         self._owns_process = True
+        startup_deadline = time.monotonic() + self.startup_timeout
         self.token = secrets.token_urlsafe(32)
         self._owner_error = None
         self._owner_ready.clear()
@@ -759,7 +778,11 @@ class MnemosService:
                 "token": self.token,
                 "started_at": now,
             }
-            _write_private_json(self.descriptor_path, self._descriptor)
+            _write_private_json(
+                self.descriptor_path,
+                self._descriptor,
+                replace_timeout=max(0.0, startup_deadline - time.monotonic()),
+            )
             self._log_started()
             return dict(self._descriptor)
         except BaseException as exc:
