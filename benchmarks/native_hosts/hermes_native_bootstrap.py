@@ -92,6 +92,7 @@ def main(config_path: Path) -> None:
                 elapsed_ms=(time.monotonic() - started) * 1000,
                 session_id=self.session_id,
                 cwd=self.cwd,
+                hermes_home=self.hermes_home,
                 result=result if isinstance(result, (str, bool, type(None))) else None,
             )
             return result
@@ -176,18 +177,28 @@ def main(config_path: Path) -> None:
     mode = cfg["mode"]
     if mode in {"preflight", "replay"}:
         manager = manager_type()
-        provider = provider_type()
+        discovery = importlib.import_module("plugins.memory")
+        provider = discovery.load_memory_provider("mnemos")
+        if not isinstance(provider, provider_type) or not provider.is_available():
+            raise ValueError("Hermes could not discover the verified Mnemos provider")
         manager.add_provider(provider)
-        manager.initialize_all(cfg["session_id"], cwd=cfg["project"])
-        if provider._context is None:
-            raise ValueError("Provider failed to resolve the disposable project")
+        manager.initialize_all(
+            cfg["session_id"], cwd=cfg["project"], hermes_home=cfg["env"]["HERMES_HOME"]
+        )
+        if provider._context is None or provider.hermes_home != cfg["env"]["HERMES_HOME"]:
+            raise ValueError("Provider failed to resolve the disposable project and identity home")
         try:
             if mode == "replay":
                 manager.handle_tool_call("mnemos_remember", cfg["remember_args"])
                 manager.on_session_end(cfg["messages"])
                 if not manager.flush_pending(timeout=15) or not provider._flush(timeout=15):
                     raise ValueError("Native source replay did not flush")
-            record(mode + "_complete", tool_names=sorted(manager.get_all_tool_names()))
+            record(
+                mode + "_complete",
+                tool_names=sorted(manager.get_all_tool_names()),
+                discovery="plugins.memory.load_memory_provider",
+                hermes_home=provider.hermes_home,
+            )
         finally:
             manager.shutdown_all()
         return

@@ -82,8 +82,11 @@ remain distinguishable from asserted facts.
 
 First run `--preflight-only` using the installed wheel Python from outside the
 checkout. It imports the actual patched Hermes CLI, verifies module origins,
-initializes the actual MemoryManager/provider with the disposable scope, and
-checks tool discovery. It must make no model request, service request, or
+discovers the verified wheel's provider through Hermes's actual plugin loader,
+initializes its MemoryManager/provider with the disposable scope and shared
+Hermes identity home, and checks tool discovery. The API replay must initialize
+with that same home so original occurrence timestamps remain stable. Preflight
+must make no model request, service request, or
 memory mutation. Its status is `preflight_passed`, never lifecycle `passed`.
 
 Commit the tested runner and protocol before model execution. Each native
