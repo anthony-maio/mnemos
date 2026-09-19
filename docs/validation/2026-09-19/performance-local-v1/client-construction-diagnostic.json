@@ -1,0 +1,53 @@
+{
+  "scope": "HTTP client construction only; no requests or inference",
+  "httpx_version": "0.28.1",
+  "observed_at": "2026-09-19T05:59:01.910900+00:00",
+  "helper_sha256": "b21793518e9042585263bddde24da8990f24f1d663bcb9342b5914b6133342cc",
+  "samples_per_arm": 12,
+  "arms": [
+    {
+      "name": "default",
+      "options": {},
+      "milliseconds": [
+        252.65149999177083,
+        180.41570000059437,
+        202.68440000654664,
+        198.4457999933511,
+        171.69769998872653,
+        219.13700000732206,
+        175.83389999344945,
+        201.12630000221543,
+        201.2416000070516,
+        173.83960000006482,
+        234.89649999828544,
+        189.0760000096634
+      ],
+      "median_ms": 199.78604999778327,
+      "max_ms": 252.65149999177083,
+      "profile": "         42948 function calls (41978 primitive calls) in 2.394 seconds\n\n   Ordered by: cumulative time\n   List reduced from 763 to 12 due to restriction <12>\n\n   ncalls  tottime  percall  cumtime  percall filename:lineno(function)\n       12    0.000    0.000    2.393    0.199 D:\\Development\\mnemos\\mnemos\\.worktrees\\functional-local-memory\\.venv\\Lib\\site-packages\\httpx\\_client.py:639(__init__)\n       12    0.000    0.000    2.390    0.199 D:\\Development\\mnemos\\mnemos\\.worktrees\\functional-local-memory\\.venv\\Lib\\site-packages\\httpx\\_client.py:718(_init_transport)\n       12    0.000    0.000    2.390    0.199 D:\\Development\\mnemos\\mnemos\\.worktrees\\functional-local-memory\\.venv\\Lib\\site-packages\\httpx\\_transports\\default.py:136(__init__)\n       12    0.000    0.000    2.325    0.194 D:\\Development\\mnemos\\mnemos\\.worktrees\\functional-local-memory\\.venv\\Lib\\site-packages\\httpx\\_config.py:23(create_ssl_context)\n       12    0.000    0.000    2.314    0.193 C:\\Users\\Ant\\AppData\\Roaming\\uv\\python\\cpython-3.13.7-windows-x86_64-none\\Lib\\ssl.py:682(create_default_context)\n       12    2.309    0.192    2.309    0.192 {method 'load_verify_locations' of '_ssl._SSLContext' objects}\n     69/4    0.000    0.000    0.076    0.019 <frozen importlib._bootstrap>:1349(_find_and_load)\n     68/3    0.000    0.000    0.076    0.025 <frozen importlib._bootstrap>:1304(_find_and_load_unlocked)\n     59/3    0.000    0.000    0.074    0.025 <frozen importlib._bootstrap>:911(_load_unlocked)\n     58/3    0.000    0.000    0.074    0.025 <frozen importlib._bootstrap_external>:1020(exec_module)\n    128/6    0.000    0.000    0.073    0.012 <frozen importlib._bootstrap>:480(_call_with_frames_removed)\n     66/3    0.002    0.000    0.073    0.024 {built-in method builtins.exec}\n\n\n"
+    },
+    {
+      "name": "no_env",
+      "options": {
+        "trust_env": false
+      },
+      "milliseconds": [
+        188.14779999956954,
+        212.08959999785293,
+        172.4701999919489,
+        188.1654000026174,
+        185.10149999929126,
+        182.7112000028137,
+        183.12729999888688,
+        173.27559999830555,
+        171.3160999934189,
+        176.09639999864157,
+        176.99079999874812,
+        182.1635999949649
+      ],
+      "median_ms": 182.4373999988893,
+      "max_ms": 212.08959999785293,
+      "profile": "         2221 function calls in 2.185 seconds\n\n   Ordered by: cumulative time\n   List reduced from 99 to 12 due to restriction <12>\n\n   ncalls  tottime  percall  cumtime  percall filename:lineno(function)\n       12    0.000    0.000    2.184    0.182 D:\\Development\\mnemos\\mnemos\\.worktrees\\functional-local-memory\\.venv\\Lib\\site-packages\\httpx\\_client.py:639(__init__)\n       12    0.000    0.000    2.183    0.182 D:\\Development\\mnemos\\mnemos\\.worktrees\\functional-local-memory\\.venv\\Lib\\site-packages\\httpx\\_client.py:718(_init_transport)\n       12    0.000    0.000    2.183    0.182 D:\\Development\\mnemos\\mnemos\\.worktrees\\functional-local-memory\\.venv\\Lib\\site-packages\\httpx\\_transports\\default.py:136(__init__)\n       12    0.000    0.000    2.183    0.182 D:\\Development\\mnemos\\mnemos\\.worktrees\\functional-local-memory\\.venv\\Lib\\site-packages\\httpx\\_config.py:23(create_ssl_context)\n       12    0.000    0.000    2.183    0.182 C:\\Users\\Ant\\AppData\\Roaming\\uv\\python\\cpython-3.13.7-windows-x86_64-none\\Lib\\ssl.py:682(create_default_context)\n       12    2.179    0.182    2.179    0.182 {method 'load_verify_locations' of '_ssl._SSLContext' objects}\n       12    0.000    0.000    0.004    0.000 C:\\Users\\Ant\\AppData\\Roaming\\uv\\python\\cpython-3.13.7-windows-x86_64-none\\Lib\\ssl.py:430(__new__)\n       24    0.004    0.000    0.004    0.000 {built-in method __new__ of type object at 0x00007FF8DF93F8A0}\n       12    0.000    0.000    0.001    0.000 D:\\Development\\mnemos\\mnemos\\.worktrees\\functional-local-memory\\.venv\\Lib\\site-packages\\httpx\\_client.py:189(__init__)\n       12    0.000    0.000    0.001    0.000 D:\\Development\\mnemos\\mnemos\\.worktrees\\functional-local-memory\\.venv\\Lib\\site-packages\\httpx\\_urls.py:77(__init__)\n       12    0.000    0.000    0.001    0.000 D:\\Development\\mnemos\\mnemos\\.worktrees\\functional-local-memory\\.venv\\Lib\\site-packages\\httpx\\_urlparse.py:213(urlparse)\n       12    0.000    0.000    0.000    0.000 D:\\Development\\mnemos\\mnemos\\.worktrees\\functional-local-memory\\.venv\\Lib\\site-packages\\httpx\\_client.py:1293(__exit__)\n\n\n"
+    }
+  ]
+}

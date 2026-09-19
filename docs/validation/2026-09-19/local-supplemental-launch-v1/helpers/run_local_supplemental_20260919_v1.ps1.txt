@@ -1,0 +1,117 @@
+$ErrorActionPreference = 'Stop'
+$mnemosRoot = 'D:\Development\mnemos\mnemos\.worktrees\functional-local-memory'
+$mnemosSnapshot = 'C:\Users\Ant\AppData\Local\Temp\mnemos-source-retrieval-comparison-v1'
+$mnemosSource = 'fc72cc251aeafa161a1a390269b8dfa34d83cf2b'
+$mnemosPython = Join-Path $mnemosRoot '.venv\Scripts\python.exe'
+$mnemosRuntime = 'C:\Users\Ant\AppData\Local\Temp\mnemos-local-supplemental-v1'
+$mnemosQueueFile = Join-Path $mnemosRoot 'docs\validation\2026-09-19\real-model-local-v1\queue-status.json'
+$mnemosDataset = Join-Path $mnemosSnapshot 'benchmarks\local_memory\datasets\local-memory-heldout-v3.jsonl'
+$mnemosDatasetSha = '036fa51ee13271a85a14a62a2fe4ef65d13eaeb290331fe325aa5bf32ce893fc'
+$mnemosPins = @{'qwen3.5:9b'='6488c96fa5faab64bb65cbd30d4289e20e6130ef535a93ef9a49f42eda893ea7'; 'nomic-embed-text:latest'='0a109f422b47e3a30ba2b10eca18548e944e8a23073ee3f3e947efcf3c45e59f'}
+$mnemosStages = @(
+    @{name='encoding';module='encoding_comparator_run';protocol='2026-09-18-encoding-comparison-protocol-v1.md';protocol_sha='f403c5d49352a649a59a8aad38953a8f94699e0aa00596b35e32f617ff7520bf';output='encoding-comparison-local-v1';work='mnemos-encoding-comparison-local-v1'},
+    @{name='retrieval';module='retrieval_comparison_run';protocol='2026-09-18-retrieval-comparison-protocol-v1.md';protocol_sha='3220dda551ddaf2774296107f2c8872ee7a7db99c71d05f8096ca46aaf3aa1ec';output='retrieval-comparison-local-v1';work='mnemos-retrieval-comparison-local-v1'}
+)
+function Confirm-MnemosBinding {
+    $mnemosHead = & git -C $mnemosSnapshot rev-parse HEAD
+    if ($LASTEXITCODE -ne 0 -or $mnemosHead -ne $mnemosSource) { throw 'Source commit mismatch.' }
+    $mnemosDirty = & git -C $mnemosSnapshot status --porcelain
+    if ($LASTEXITCODE -ne 0 -or $mnemosDirty) { throw 'Frozen source is dirty.' }
+    if ((Get-FileHash -LiteralPath $mnemosDataset -Algorithm SHA256).Hash.ToLowerInvariant() -ne $mnemosDatasetSha) { throw 'Dataset changed.' }
+    foreach ($mnemosStage in $mnemosStages) {
+        $mnemosProtocol = Join-Path $mnemosSnapshot ('docs\plans\' + $mnemosStage.protocol)
+        if ((Get-FileHash -LiteralPath $mnemosProtocol -Algorithm SHA256).Hash.ToLowerInvariant() -ne $mnemosStage.protocol_sha) { throw 'Protocol changed.' }
+    }
+    $mnemosModels = (Invoke-RestMethod -Uri 'http://127.0.0.1:11434/api/tags' -TimeoutSec 30).models
+    foreach ($mnemosName in $mnemosPins.Keys) {
+        if (($mnemosModels | Where-Object name -eq $mnemosName).digest -ne $mnemosPins[$mnemosName]) { throw 'Model digest mismatch.' }
+    }
+}
+function Save-MnemosState {
+    $mnemosState.updated_at = [DateTime]::UtcNow.ToString('o')
+    $mnemosTemp = Join-Path $mnemosRuntime 'state.tmp'
+    [IO.File]::WriteAllText($mnemosTemp, ($mnemosState | ConvertTo-Json -Depth 12))
+    Move-Item -LiteralPath $mnemosTemp -Destination (Join-Path $mnemosRuntime 'state.json') -Force
+}
+if (Test-Path -LiteralPath $mnemosRuntime) { throw 'Supplemental runtime exists; inspect instead of overwriting.' }
+$mnemosMain = Get-Process -Id 19032
+$null = $mnemosMain.Handle
+$mnemosIdentity = Get-CimInstance Win32_Process -Filter 'ProcessId = 19032'
+if (-not $mnemosIdentity.CommandLine.Contains('run_thinking_evaluations_v1.py') -or
+    -not $mnemosIdentity.CommandLine.Contains($mnemosSource) -or
+    -not $mnemosIdentity.CommandLine.Contains('http://127.0.0.1:11434')) { throw 'Main process binding mismatch.' }
+Confirm-MnemosBinding
+foreach ($mnemosStage in $mnemosStages) {
+    $mnemosStage.output_path = Join-Path $mnemosRoot ('docs\validation\2026-09-19\' + $mnemosStage.output)
+    $mnemosStage.work_path = Join-Path 'C:\Users\Ant\AppData\Local\Temp' $mnemosStage.work
+    if ((Test-Path -LiteralPath $mnemosStage.output_path) -or (Test-Path -LiteralPath $mnemosStage.work_path)) { throw 'Comparison directory already exists.' }
+}
+New-Item -ItemType Directory -Path $mnemosRuntime | Out-Null
+$mnemosState = @{status='waiting_for_main';pid=$PID;started_at=[DateTime]::UtcNow.ToString('o');
+    source_commit=$mnemosSource;endpoint='http://127.0.0.1:11434';snapshot=$mnemosSnapshot;
+    main_pid=19032;main_creation_date=$mnemosIdentity.CreationDate.ToUniversalTime().ToString('o');
+    main_command=$mnemosIdentity.CommandLine;dataset_sha256=$mnemosDatasetSha;
+    model_digests=$mnemosPins;helper_sha256=(Get-FileHash -LiteralPath $PSCommandPath -Algorithm SHA256).Hash.ToLowerInvariant();stages=$mnemosStages}
+Save-MnemosState
+Write-Output 'Supplemental comparisons are waiting on the bound main coordinator process.'
+try {
+    $mnemosMain.WaitForExit()
+    $mnemosState.main_exit_code = $mnemosMain.ExitCode
+    if ($mnemosMain.ExitCode -ne 0) { throw 'Main coordinator exited unsuccessfully.' }
+    $mnemosQueue = Get-Content -LiteralPath $mnemosQueueFile -Raw | ConvertFrom-Json
+    if ($mnemosQueue.status -ne 'finished' -or $mnemosQueue.source_commit -ne $mnemosSource -or
+        $mnemosQueue.endpoint -ne 'http://127.0.0.1:11434' -or $mnemosQueue.coordinator_pid -ne 19032) { throw 'Main queue is incomplete or changed.' }
+    $mnemosExpectedPhases = @('development-mechanism','lifecycle-preflight','performance','mechanism-heldout','lifecycle')
+    if ($mnemosQueue.phases.Count -ne 5) { throw 'Main phase count mismatch.' }
+    foreach ($mnemosName in $mnemosExpectedPhases) {
+        if (@($mnemosQueue.phases | Where-Object name -eq $mnemosName).Count -ne 1) { throw 'Main phases are missing or duplicated.' }
+    }
+    foreach ($mnemosPhase in $mnemosQueue.phases) {
+        if ($mnemosPhase.name -notin $mnemosExpectedPhases -or $mnemosPhase.status -ne 'finished' -or $mnemosPhase.exit_code -ne 0) { throw 'Main phase incomplete.' }
+        $mnemosEntries = @($mnemosPhase.artifacts.PSObject.Properties)
+        if (-not $mnemosEntries.Count) { throw 'Main phase lacks artifact hashes.' }
+        foreach ($mnemosEntry in $mnemosEntries) {
+            if ((Get-FileHash -LiteralPath $mnemosEntry.Name -Algorithm SHA256).Hash.ToLowerInvariant() -ne $mnemosEntry.Value) { throw 'Main phase artifact changed.' }
+        }
+    }
+    foreach ($mnemosStage in $mnemosStages) {
+        Confirm-MnemosBinding
+        if ((Test-Path -LiteralPath $mnemosStage.output_path) -or (Test-Path -LiteralPath $mnemosStage.work_path)) { throw 'Comparison output appeared while waiting.' }
+        $mnemosArguments = @('-u','-m',('benchmarks.local_memory.' + $mnemosStage.module),
+            '--dataset',$mnemosDataset,'--protocol',(Join-Path $mnemosSnapshot ('docs\plans\' + $mnemosStage.protocol)),
+            '--output-dir',$mnemosStage.output_path,'--work-dir',$mnemosStage.work_path,
+            '--endpoint','http://127.0.0.1:11434','--model','qwen3.5:9b','--embedding-model','nomic-embed-text:latest','--repetitions','3','--think','false')
+        $mnemosStage.command = @($mnemosPython) + $mnemosArguments
+        $mnemosStage.status = 'running'
+        $mnemosStage.started_at = [DateTime]::UtcNow.ToString('o')
+        $mnemosState.status = 'running'
+        Save-MnemosState
+        foreach ($mnemosVariable in @([Environment]::GetEnvironmentVariables('Process').Keys)) {
+            if ($mnemosVariable -eq 'PYTHONPATH' -or $mnemosVariable.StartsWith('MNEMOS_')) {
+                [Environment]::SetEnvironmentVariable($mnemosVariable, $null, 'Process')
+            }
+        }
+        Push-Location $mnemosSnapshot
+        try {
+            & $mnemosPython @mnemosArguments 1> (Join-Path $mnemosRuntime ($mnemosStage.name + '.stdout.log')) 2> (Join-Path $mnemosRuntime ($mnemosStage.name + '.stderr.log'))
+            $mnemosStage.exit_code = $LASTEXITCODE
+        } finally { Pop-Location }
+        if ($mnemosStage.exit_code -ne 0) { throw 'Comparison process failed.' }
+        Confirm-MnemosBinding
+        $mnemosManifest = Get-Content -LiteralPath (Join-Path $mnemosStage.work_path 'manifest.json') -Raw | ConvertFrom-Json
+        $mnemosStage.manifest_status = $mnemosManifest.status
+        if ($mnemosManifest.status -ne 'completed') { throw 'Comparison coverage is incomplete.' }
+        $mnemosStage.status = 'finished'
+        $mnemosStage.finished_at = [DateTime]::UtcNow.ToString('o')
+        Save-MnemosState
+    }
+    $mnemosState.status = 'finished'
+    Save-MnemosState
+} catch {
+    $mnemosState.status = 'failed'
+    $mnemosState.error = $_.Exception.Message
+    Save-MnemosState
+    throw
+} finally {
+    $mnemosMain.Dispose()
+}

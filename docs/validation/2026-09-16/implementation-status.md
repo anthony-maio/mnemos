@@ -12,6 +12,13 @@ cold load. Evaluation, latency, and host/pilot acceptance remain open; see the
 [current execution record](evaluation-running.md). Earlier measurements below
 retain their original source and hardware bindings.
 
+The subsequent [local performance phase](../2026-09-19/performance-local-v1/README.md)
+failed both gates: recall p95 4,063.309 ms and capture p95 135.186 ms. All 50
+captures committed. The timing trace identifies embedding latency as a major
+component of the recall tail. A separate client-construction profile identifies
+certificate-loading overhead, without establishing a fix or changing the run.
+The supplemental comparisons are queued behind successful main completion.
+
 The [mixed-host replay and restart probe](../2026-09-18/native-crosshost-recovery-v4/README.md)
 on installed `fc72cc2` passes the bounded native concurrency observation.
 Three queued events had overlapping deliveries from Codex and Claude, each
@@ -511,7 +518,7 @@ capture diagnostics and complete lifecycle acceptance remain open.
 | T06 Evidence and safety | Write firewall, source validation, role labels, governed explicit writes, private paths, retention controls, and local-original availability are implemented and tested. | Safety contracts pass. Real-model extraction precision and human acceptance remain unproved. |
 | T07 Surprisal | Automatic gating, explicit-remember bypass, session-safe history, and diagnostics are implemented and covered by deterministic tests. | Mechanism contract tested. Real filtering benefit remains open. |
 | T08 Correction | Stable identity, expected-version CAS, revisions, canonical updates, evidence links, and graph refresh are implemented and tested. | Native Claude corrected a Codex-stored fact after restart, preserving its ID at version 2; a fresh Codex session retrieved it after another restart. Captured old mentions remain unknown and visibly qualified as possibly outdated. General stale-context answer consistency remains open. |
-| T09 Retrieval | Scoped cosine retrieval, lexical candidate union, one scoring contract, and context budgeting are implemented. | Scope and top-1 tests pass. The corrected v4 measurement has recall p95 1,088.094 ms against the 500 ms gate; capture p95 64.279 ms passes the 100 ms gate. Later variable timing comparisons do not establish a speedup. |
+| T09 Retrieval | Scoped cosine retrieval, lexical candidate union, one scoring contract, and context budgeting are implemented. | Scope and top-1 tests pass. The September 19 local measurement fails both gates: recall p95 4,063.309 ms against 500 ms and capture p95 135.186 ms against 100 ms. The prior lab measurement (1,088.094 ms recall, 64.279 ms capture) remains preserved. Changed source/hardware conditions do not establish a code speedup or regression cause. |
 | T10 Graph | Persisted mutual top-k links, scope-safe traversal, bounded recovery, insertion-order controls, and capacity diagnostics are implemented and tested. | Structural controls pass. Graph utility and eligible-target coverage are not established by the available evidence. |
 | T11 Forget | Exact fact deletion, suppression, replay protection, inflight handling, restore behavior, and selected related-removal preview/apply are implemented and tested. | Native v9 passes reviewed deletion of the target plus five selected copies, direct replay suppression, and final Codex recall without the removed values. Unindexed paraphrases and external transcripts remain outside that bounded result. Earlier v6's surviving-copy failure is preserved. |
 | T12 Claude Code | Hook capture, transcript deltas, checkpoints, capture-before-recall, identity diagnostics, and replay repair are implemented. | Native v18 on dedfcfd passed all 15 fact-lifecycle criteria with the new startup default, including correction, forgetting, restart, and reconstructed replay. Degraded hook capture keeps the overall result partial. Mixed-host v4 adds bounded native queue replay and restart on `fc72cc2`, with identity warnings preserved. Native extraction and complete capture acceptance remain open. See the [native lifecycle archive](../2026-09-17/native-claude-lifecycle-v18/README.md). |

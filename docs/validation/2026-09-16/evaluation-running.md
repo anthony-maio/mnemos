@@ -27,6 +27,16 @@ establish model quality, latency success, host acceptance, or pilot readiness.
 The applied encoding and retrieval-strategy comparisons remain separate,
 pending serial runs. Colab remains tabled.
 
+The local development-mechanism and lifecycle-preflight phases subsequently
+finished, followed by the [performance phase](../2026-09-19/performance-local-v1/README.md)
+at 05:51:09 UTC. Both latency gates failed: recall p95 4,063.309 ms and
+durable capture p95 135.186 ms. The main queue advanced to held-out mechanisms.
+A [supplemental supervisor](../2026-09-19/local-supplemental-launch-v1/README.md)
+waits on the main coordinator and will verify completion/artifact hashes
+before running encoding and retrieval comparisons serially. Their execution
+and quality gates remain open. Performance findings do not change the frozen
+quality run or its parameters.
+
 ## Historical checkpoint: September 18, 2026, 07:26 UTC observation
 
 The existing execution session remained live. At 07:26:45 UTC, coordinator

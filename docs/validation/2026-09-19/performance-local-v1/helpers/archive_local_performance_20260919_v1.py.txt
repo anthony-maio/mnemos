@@ -1,0 +1,66 @@
+"""Preserve a completed phase and profile client setup without network calls."""
+from datetime import datetime, timezone
+import cProfile
+import hashlib
+import io
+import json
+from pathlib import Path
+import pstats
+import shutil
+import statistics
+import time
+
+import httpx
+
+ROOT = Path(__file__).resolve().parent.parent
+QUEUE = ROOT / 'docs/validation/2026-09-19/real-model-local-v1/queue-status.json'
+OUT = ROOT / 'docs/validation/2026-09-19/performance-local-v1'
+assert not OUT.exists()
+
+def sha(path):
+    return hashlib.sha256(path.read_bytes()).hexdigest()
+
+state = json.loads(QUEUE.read_text())
+phase = [p for p in state['phases'] if p['name'] == 'performance']
+assert len(phase) == 1
+phase = phase[0]
+assert phase['status'] == 'finished' and phase['exit_code'] == 0
+for name, expected in phase['artifacts'].items():
+    assert sha(Path(name)) == expected, name
+OUT.mkdir(parents=True)
+for name in phase['artifacts']:
+    shutil.copyfile(name, OUT / Path(name).name)
+(OUT / 'phase-binding.json').write_text(json.dumps({
+    'source_commit': state['source_commit'], 'endpoint': state['endpoint'],
+    'runner_sha256': state['runner_sha256'], 'phase': phase,
+    'copied_at': datetime.now(timezone.utc).isoformat()}, indent=2) + '\n', encoding='utf-8')
+report = json.loads((OUT / 'performance-10k.json').read_text())
+assert report['status'] == 'completed' and report['code_provenance']['consistent'] is True
+assert len(report['retrieval']['raw_queries']) == report['retrieval']['query_count'] == 33
+assert len(report['capture']['ack_statuses']) == 50
+assert set(report['capture']['ack_statuses']) == {'committed'}
+diagnostic = {'scope': 'HTTP client construction only; no requests or inference',
+              'httpx_version': httpx.__version__, 'observed_at': datetime.now(timezone.utc).isoformat(),
+              'helper_sha256': sha(Path(__file__)), 'samples_per_arm': 12, 'arms': []}
+for label, options in [('default', {}), ('no_env', {'trust_env': False})]:
+    values = []
+    profile = cProfile.Profile()
+    profile.enable()
+    for _ in range(12):
+        start = time.perf_counter()
+        with httpx.Client(**options):
+            pass
+        values.append((time.perf_counter() - start) * 1000)
+    profile.disable()
+    text = io.StringIO()
+    pstats.Stats(profile, stream=text).sort_stats('cumulative').print_stats(12)
+    diagnostic['arms'].append({'name': label, 'options': options, 'milliseconds': values,
+                               'median_ms': statistics.median(values), 'max_ms': max(values),
+                               'profile': text.getvalue()})
+(OUT / 'client-construction-diagnostic.json').write_text(json.dumps(diagnostic, indent=2) + '\n', encoding='utf-8')
+(OUT / 'helpers').mkdir()
+shutil.copyfile(Path(__file__), OUT / 'helpers' / (Path(__file__).name + '.txt'))
+print(json.dumps({'copied_phase_artifacts': len(phase['artifacts']),
+                  'recall': report['retrieval']['warm_recall'],
+                  'capture': report['capture']['warm_http_capture'],
+                  'client_setup_medians': {a['name']: a['median_ms'] for a in diagnostic['arms']}}))
