@@ -2,6 +2,32 @@
 
 ## Current checkpoint: September 19, 2026, local GPU replacement
 
+The separate [combined recovery checkpoint](../2026-09-19/loopback-recovery-checkpoint-v1/README.md)
+at `de6cdcf` has passed source/package and isolated installed checks: 1,160
+source passes, four skips, 474 installed contract passes, two matching skips,
+and seven replay assertions. Three fresh [SSD performance repetitions](../2026-09-19/performance-recovery-v1/README.md)
+on that source pass the unchanged baseline gates: recall p95 245.214-252.222 ms,
+capture p95 28.804-36.062 ms, with all 150 captures committed. These runs use
+real query embeddings, synthetic stored vectors/capture provider, and no
+cognition calls. They do not change the older model matrix's source or
+reinterpret its failed completeness gate, and do not establish full-module
+latency or native-host acceptance.
+
+The local main and supplemental queues are now terminal failures; the earlier
+live-process observations below are historical. The main lifecycle worker
+returned reports for all seven profiles, but five were incomplete. Baseline
+and `ablate-sleep_consolidation` completed 600 observations each. Across the
+other five profiles, 50 of 3,000 observations had a missing correction target
+after automatic extraction returned `no_durable_facts`. These are observed
+memory-pipeline outcomes, not provider timeouts. The strict completeness check
+failed the coordinator; the supplemental encoding and retrieval comparisons
+never started. Original reports and raw outputs are preserved in the
+[terminal lifecycle archive](../2026-09-19/lifecycle-incomplete-local-v2/README.md).
+Completed execution is separate from quality acceptance. Resuming the original
+checkpoints skips already-recorded partial rows; retrying only those rows until
+extraction succeeds would bias the experiment. Diagnose the extraction and
+failure-accounting contract on development cases before any fresh bound run.
+
 The [retrieval parity checkpoint](../2026-09-19/retrieval-parity-checkpoint-v1/README.md)
 at `8fc79f0` has completed source/package and isolated installed checks: 1,143
 source passes and 440 installed contract passes. Its offline fixed-vector

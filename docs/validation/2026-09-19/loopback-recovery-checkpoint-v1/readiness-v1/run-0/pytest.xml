@@ -1,0 +1,51 @@
+<?xml version="1.0" encoding="utf-8"?><testsuites name="pytest tests"><testsuite name="pytest" errors="0" failures="1" skipped="0" tests="1" time="1.053" timestamp="2026-09-19T03:25:54.376235-04:00" hostname="Aurora"><testcase classname="tests.test_client_stale_descriptor" name="test_owner_recovers_while_competing_launcher_exits" time="0.805"><failure message="AssertionError: assert False is True&#10; +  where False = &lt;built-in method get of dict object at 0x0000020626F2A800&gt;('committed')&#10; +    where &lt;built-in method get of dict object at 0x0000020626F2A800&gt; = {'schema_version': 1, 'status': 'degraded', 'committed': False, 'degraded': True, ...}.get">tmp_path = WindowsPath('C:/Users/Ant/AppData/Local/Temp/mnemos-recovery-readiness-v1/run-0/fixtures/test_owner_recovers_while_comp0')
+monkeypatch = &lt;_pytest.monkeypatch.MonkeyPatch object at 0x0000020626A3D810&gt;
+
+    @pytest.mark.asyncio
+    async def test_owner_recovers_while_competing_launcher_exits(
+        tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+    ) -&gt; None:
+        path = tmp_path / "runtime.json"
+        dispatcher = RecordingDispatcher()
+        service = MnemosService(dispatcher=dispatcher, descriptor_path=path)
+        service.start()
+        original_bytes = path.read_bytes()
+        client = MnemosClient(descriptor_path=path, startup_timeout=1, request_timeout=1)
+        original_dispatch = client._dispatch_http
+        original_probe = client._owner_reachable
+        dispatches = probes = starts = 0
+    
+        async def first_connection_fails(
+            operation: str, payload: dict[str, Any], descriptor: dict[str, Any]
+        ) -&gt; dict[str, Any]:
+            nonlocal dispatches
+            dispatches += 1
+            if dispatches == 1:
+                raise ServiceClientError("transient connection failure", unavailable=True)
+            return await original_dispatch(operation, payload, descriptor)
+    
+        async def first_probe_fails(
+            descriptor: dict[str, Any], *, timeout: float | None = None
+        ) -&gt; bool:
+            nonlocal probes
+            probes += 1
+            if probes == 1:
+                return False
+            return await original_probe(descriptor, timeout=timeout)
+    
+        def spawn(*args: Any, **kwargs: Any) -&gt; Launcher:
+            nonlocal starts
+            starts += 1
+            return Launcher(exit_code=0)
+    
+        monkeypatch.setattr(client, "_dispatch_http", first_connection_fails)
+        monkeypatch.setattr(client, "_owner_reachable", first_probe_fails)
+        monkeypatch.setattr(client_module.subprocess, "Popen", spawn)
+        try:
+            result = await client.retrieve({"query": "existing owner recovered"})
+&gt;           assert result.get("committed") is True
+E           AssertionError: assert False is True
+E            +  where False = &lt;built-in method get of dict object at 0x0000020626F2A800&gt;('committed')
+E            +    where &lt;built-in method get of dict object at 0x0000020626F2A800&gt; = {'schema_version': 1, 'status': 'degraded', 'committed': False, 'degraded': True, ...}.get
+
+tests\test_client_stale_descriptor.py:234: AssertionError</failure></testcase></testsuite></testsuites>

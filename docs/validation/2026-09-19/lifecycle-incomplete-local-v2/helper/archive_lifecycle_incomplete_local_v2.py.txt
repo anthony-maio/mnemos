@@ -1,0 +1,246 @@
+from __future__ import annotations
+
+import hashlib
+import json
+import shutil
+import zipfile
+from pathlib import Path
+from typing import Any
+
+
+REPO = Path(r"D:\Development\mnemos\mnemos\.worktrees\functional-local-memory")
+SOURCE_OUTPUT = REPO / "docs" / "validation" / "2026-09-19" / "real-model-local-v1"
+SOURCE_SUPPLEMENTAL = (
+    REPO / "docs" / "validation" / "2026-09-19" / "local-supplemental-launch-v1"
+)
+TEMP_STATE = Path(r"C:\Users\Ant\AppData\Local\Temp\mnemos-local-supplemental-v1\state.json")
+ARCHIVE = REPO / "docs" / "validation" / "2026-09-19" / "lifecycle-incomplete-local-v2"
+HELPER = REPO / ".venv" / "archive_lifecycle_incomplete_local_v2.py"
+
+
+def sha256_bytes(data: bytes) -> str:
+    return hashlib.sha256(data).hexdigest()
+
+
+def sha256_file(path: Path) -> str:
+    return sha256_bytes(path.read_bytes())
+
+
+def write_bytes(path: Path, data: bytes) -> None:
+    path.parent.mkdir(parents=True, exist_ok=True)
+    path.write_bytes(data)
+
+
+def copy_exact(source: Path, destination: Path) -> None:
+    if not source.is_file():
+        raise FileNotFoundError(source)
+    destination.parent.mkdir(parents=True, exist_ok=True)
+    shutil.copyfile(source, destination)
+    if source.read_bytes() != destination.read_bytes():
+        raise RuntimeError(f"copy mismatch: {source}")
+
+
+def main() -> int:
+    if ARCHIVE.exists():
+        raise RuntimeError(f"refusing to overwrite existing archive: {ARCHIVE}")
+    if not SOURCE_OUTPUT.is_dir() or not SOURCE_SUPPLEMENTAL.is_dir():
+        raise FileNotFoundError("terminal evaluation or supplemental archive is missing")
+    queue_path = SOURCE_OUTPUT / "queue-status.json"
+    supplemental_paths = {
+        "supplemental-state.json": TEMP_STATE,
+        "supplemental-state-at-observation.json": SOURCE_SUPPLEMENTAL
+        / "state-at-observation.json",
+        "supplemental-preflight.json": SOURCE_SUPPLEMENTAL / "preflight.json",
+        "supplemental-README.md": SOURCE_SUPPLEMENTAL / "README.md",
+        "supplemental-helper.ps1.txt": SOURCE_SUPPLEMENTAL
+        / "helpers"
+        / "run_local_supplemental_20260919_v1.ps1.txt",
+    }
+    phase_logs = sorted(SOURCE_OUTPUT.glob("*.stdout.log")) + sorted(
+        SOURCE_OUTPUT.glob("*.stderr.log")
+    )
+    report_names = [
+        "baseline",
+        "full",
+        "ablate-affective_routing",
+        "ablate-mutable_rag",
+        "ablate-sleep_consolidation",
+        "ablate-spreading_activation",
+        "ablate-surprisal_gating",
+    ]
+    report_sources: list[tuple[str, Path]] = []
+    for name in report_names:
+        for suffix in (".json", ".raw-outputs.jsonl"):
+            source = SOURCE_OUTPUT / "lifecycle" / f"{name}{suffix}"
+            report_sources.append((f"lifecycle/{source.name}", source))
+    required = [queue_path, *supplemental_paths.values(), *[p for _, p in report_sources]]
+    required.extend(phase_logs)
+    missing = [str(path) for path in required if not path.is_file()]
+    if missing:
+        raise FileNotFoundError("missing evidence: " + ", ".join(missing))
+
+    queue = json.loads(queue_path.read_text(encoding="utf-8"))
+    summaries: list[dict[str, Any]] = []
+    for name in report_names:
+        path = SOURCE_OUTPUT / "lifecycle" / f"{name}.json"
+        report = json.loads(path.read_text(encoding="utf-8"))
+        rows = [row for row in report.get("raw_outputs", []) if isinstance(row, dict)]
+        status_counts: dict[str, int] = {}
+        error_counts: dict[str, int] = {}
+        no_fact_capture_count = 0
+        for row in rows:
+            status = str(row.get("execution_status", "missing"))
+            status_counts[status] = status_counts.get(status, 0) + 1
+            raw = row.get("raw_output")
+            raw = raw if isinstance(raw, dict) else {}
+            for error in raw.get("errors", []):
+                if isinstance(error, dict):
+                    key = str(error.get("error", "unknown"))
+                    error_counts[key] = error_counts.get(key, 0) + 1
+            if status == "partial" and any(
+                isinstance(item, dict) and item.get("decision") == "no_durable_facts"
+                for item in raw.get("surprisal_filter_decisions", [])
+            ):
+                no_fact_capture_count += 1
+        summaries.append(
+            {
+                "profile": name,
+                "report_status": report.get("status"),
+                "row_count": len(rows),
+                "execution_status_counts": status_counts,
+                "error_counts": error_counts,
+                "no_durable_facts_capture_count": no_fact_capture_count,
+                "no_durable_facts_capture_count_note": (
+                    "count of partial rows whose preceding capture decision was "
+                    "no_durable_facts; other event decisions are not counted"
+                ),
+                "lifecycle_operations": report.get("lifecycle_operations", {}),
+                "complete_observation_diagnostics": report.get(
+                    "complete_observation_diagnostics", {}
+                ),
+            }
+        )
+
+    ARCHIVE.mkdir(parents=True)
+    copy_exact(queue_path, ARCHIVE / "queue-status.json")
+    for destination_name, source in supplemental_paths.items():
+        copy_exact(source, ARCHIVE / "supplemental" / destination_name)
+    for source in phase_logs:
+        copy_exact(source, ARCHIVE / "logs" / source.name)
+
+    zip_path = ARCHIVE / "lifecycle" / "lifecycle-reports.zip"
+    zip_path.parent.mkdir(parents=True, exist_ok=True)
+    members: dict[str, dict[str, Any]] = {}
+    with zipfile.ZipFile(zip_path, "w", compression=zipfile.ZIP_DEFLATED, compresslevel=6) as archive:
+        for member_name, source in report_sources:
+            data = source.read_bytes()
+            archive.writestr(member_name, data)
+            members[member_name] = {"bytes": len(data), "sha256": sha256_bytes(data)}
+    with zipfile.ZipFile(zip_path, "r") as archive:
+        if sorted(archive.namelist()) != sorted(members):
+            raise RuntimeError("lifecycle ZIP member set changed during write")
+        for member_name, expected in members.items():
+            data = archive.read(member_name)
+            observed = {"bytes": len(data), "sha256": sha256_bytes(data)}
+            if observed != expected:
+                raise RuntimeError(f"lifecycle ZIP member mismatch: {member_name}")
+    write_bytes(
+        ARCHIVE / "lifecycle" / "zip-members.json",
+        (json.dumps(members, indent=2, sort_keys=True) + "\n").encode("utf-8"),
+    )
+
+    queue_bindings = {
+        key: queue.get(key)
+        for key in (
+            "source_commit",
+            "model",
+            "model_digest",
+            "embedding_model",
+            "embedding_digest",
+            "endpoint",
+            "runner_sha256",
+            "snapshot",
+            "output_dir",
+            "work_dir",
+            "status",
+            "error",
+            "error_type",
+        )
+    }
+    first_report = json.loads(
+        (SOURCE_OUTPUT / "lifecycle" / "baseline.json").read_text(encoding="utf-8")
+    )
+    config = first_report.get("config", {})
+    bindings = {
+        **queue_bindings,
+        "dataset_sha256": first_report.get("dataset", {}).get("sha256"),
+        "options_sha256": config.get("options_sha256"),
+        "repetitions": first_report.get("repetitions"),
+        "profile_count": len(report_names),
+        "report_profiles": summaries,
+        "zip_members": members,
+        "original_report_directory": str(SOURCE_OUTPUT / "lifecycle"),
+        "original_checkpoint_directory": str(
+            Path(r"C:\Users\Ant\AppData\Local\Temp\mnemos-real-model-local-v1")
+            / "lifecycle"
+        ),
+    }
+    write_bytes(
+        ARCHIVE / "summary.json",
+        (json.dumps(bindings, indent=2, sort_keys=True) + "\n").encode("utf-8"),
+    )
+    readme = """# Local lifecycle incomplete evidence
+
+This archive preserves the failed seven-profile lifecycle matrix from the local
+real-model run. The terminal queue status, phase logs, supplemental supervisor
+state, and the seven lifecycle report/raw-output pairs are copied from their
+original paths. The lifecycle pairs are stored byte-for-byte in
+`lifecycle/lifecycle-reports.zip`; `lifecycle/zip-members.json` records each
+member's byte count and SHA-256.
+
+The run executed against the pinned source, Qwen, and Nomic bindings recorded
+in `summary.json`. Baseline and `ablate-sleep_consolidation` completed 600 of
+600 observations. The other five profiles each contain partial observations:
+affective routing 10, mutable RAG 12, spreading activation 9, surprisal
+gating 8, and full 11. Every partial row has one `missing_accepted_target`
+correction error after the preceding automatic capture produced
+`no_durable_facts`; there were no provider timeout or mapping-invalid errors.
+
+Completed execution is not a quality or lifecycle acceptance claim. The
+reports retain their original incomplete status and all quality gates remain
+open. The failed observations are concentrated in a shared correction path;
+retrying only those rows would change the profile/session distribution and
+would bias comparisons. A future run must use a fresh output/work binding,
+preserve the failed evidence, and establish a deliberate retry policy before
+any model execution.
+
+The supplemental comparisons did not run: their supervisor stopped after the
+main coordinator exited unsuccessfully. No checkpoint databases or private
+transcripts are copied here.
+"""
+    write_bytes(ARCHIVE / "README.md", readme.encode("utf-8"))
+    write_bytes(ARCHIVE / ".gitattributes", b"* -text\n")
+    copy_exact(HELPER, ARCHIVE / "helper" / f"{HELPER.stem}.py.txt")
+
+    index: dict[str, dict[str, Any]] = {}
+    for path in sorted(ARCHIVE.rglob("*")):
+        if not path.is_file() or path.name == "evidence-index.json":
+            continue
+        relative = path.relative_to(ARCHIVE).as_posix()
+        data = path.read_bytes()
+        index[relative] = {"bytes": len(data), "sha256": sha256_bytes(data)}
+    write_bytes(
+        ARCHIVE / "evidence-index.json",
+        (json.dumps({"files": index}, indent=2, sort_keys=True) + "\n").encode("utf-8"),
+    )
+    indexed = json.loads((ARCHIVE / "evidence-index.json").read_text(encoding="utf-8"))
+    for relative, expected in indexed["files"].items():
+        path = ARCHIVE / Path(relative)
+        data = path.read_bytes()
+        if {"bytes": len(data), "sha256": sha256_bytes(data)} != expected:
+            raise RuntimeError(f"evidence index mismatch: {relative}")
+    return 0
+
+
+if __name__ == "__main__":
+    raise SystemExit(main())

@@ -40,19 +40,36 @@ The hardware interruption is available as context: Anthony reported that the rem
 
 ## Evidence boundaries already established
 
+- Current verified package checkpoint: `de6cdcf1c05fdad1bb19ed8f52638eff5ed67ae4`, with 1,160 source passes and four skips, all six source/package checks, 474 isolated installed contract passes and two matching skips, plus seven replay assertions. The wheel SHA-256 is `4c8f7d4c83c5dd784b33cec846c8f10edd420e1c1e87a9fe9207275a132fd427`. The [recovery checkpoint](../validation/2026-09-19/loopback-recovery-checkpoint-v1/README.md) preserves both preceding full-suite failures and the final passing package evidence. It is the latest checkpoint for this working handoff, not completion of the overall project.
+
 - The last fully verified checkpoint before the latest repair work was `8fc79f01ab68d9c211f9be4818f9e566e271cefd`: 1,143 source tests passed, four skipped; the isolated installed wheel passed 440 selected cases, two skipped, plus seven replay assertions. See the [checkpoint](../validation/2026-09-19/retrieval-parity-checkpoint-v1/README.md). These are historical counts, not a claim about the eventual final build.
 - The later `d0a344056dc9f93e10098ed405fa226095457066` run had 1,150 passes, one recovery-test failure, and four skips. A reproduced client-construction delay consumed the readiness budget. The repair and its complete verification must be incorporated before finalizing this handoff.
 - Local real-model evaluation uses Qwen3.5:9b and nomic-embed-text through Ollama. Cite exact digests, settings, hardware and source commit from the relevant run manifest; do not combine different checkpoints into one result.
 - The September 19 lifecycle queue ended incomplete in five of seven configurations. Baseline and the configuration without sleep consolidation completed. Encoding/retrieval follow-on comparisons did not start. Completion alone does not establish that a configuration passed its quality gates.
+- The [terminal lifecycle archive](../validation/2026-09-19/lifecycle-incomplete-local-v2/README.md) preserves all seven reports and their raw outputs. Fifty of 4,200 observations were partial because extraction returned no durable facts and a later correction could not resolve its target. No provider timeout caused those partial rows. Do not describe this as merely a failed benchmark runner, or retry only the failed observations until they succeed.
 - Graph utility and end-to-end affective benefit remain unproved. Structural tests, rankings produced from supplied reference states, and classifier fidelity measure different things. Report their denominators and limitations separately.
 - Storage-placement and HTTP client experiments isolate particular costs. Their gains cannot be presented as the same gains in complete real-model retrieval. Preserve failed latency measurements alongside successors.
+- Three [baseline SSD performance repetitions](../validation/2026-09-19/performance-recovery-v1/README.md) on `de6cdcf` passed both unchanged latency gates: warm recall p95 245.214-252.222 ms, durable capture p95 28.804-36.062 ms, all 150 captures committed. Each run used 33 timed queries with real Nomic embeddings, 10,000 synthetic stored vectors, and fixture capture embeddings, with all cognition modules disabled. The first seed embedding took 6,691.178 ms, recorded separately from warm recall. This is a useful result with a specific scope, not evidence of semantic accuracy, full-module latency, or a native-host conversation.
 - Native adapter tests, observed native host conversations, Codex Desktop, complete automatic capture, and a two-week pilot are separate evidence categories. Do not promote one into another.
 
 ## Finalization checklist
 
+Candidate examples for the article, with bounded evidence:
+
+| Problem | Resulting behavior | Evidence and limit |
+| --- | --- | --- |
+| A committed capture loses its HTTP acknowledgement | The outbox retains a stable event identity for durable replay | [Lost acknowledgement tests](../../tests/test_service_lost_ack.py); synthetic service/SQLite evidence |
+| Two storage backends break exact-score ties differently | Both order tied candidates by memory ID and return no candidates for empty/nonpositive requests | [Storage contract tests](../../tests/test_storage_retrieval_contract.py) and the retrieval-parity checkpoint; consistency does not establish better semantic recall |
+| Client setup consumes a short health-check budget | Plaintext loopback calls skip unused certificate loading while preserving auth and transport restrictions | [Recovery tests](../../tests/test_client_stale_descriptor.py); repeated local transport measurements, not model inference |
+| A competing launcher exits before the original owner recovers | Polling can use the remaining original startup deadline without another launch | Same recovery tests; this does not prove every native host can tolerate the entire startup interval |
+| A Windows reader blocks atomic publication of a new runtime descriptor | Bounded sharing-error retries preserve the old descriptor until replacement succeeds | [Publication tests](../../tests/test_service_competing_recovery.py); actual Windows held-reader reproduction and persistent-failure checks |
+
+Choose the examples that support the narrative. This table is an evidence map,
+not a requirement to recount every implementation detail in the article.
+
 - [ ] Replace provisional status with the final verified source commit, wheel identity, source/installed checks, and artifact links.
 - [ ] Reconcile every evaluation configuration, including failures and incomplete runs, with the final reports.
-- [ ] Add a concise before/after repair table with a source or regression test for each selected article example.
+- [x] Add a concise before/after repair table with a source or regression test for each selected article example.
 - [ ] Record final host continuity, latency, capture coverage, and pilot status without collapsing the separate gates.
 - [ ] Identify which quantitative claims can be used, with units, sample sizes, settings, uncertainty where available, and limitations.
 - [ ] Verify original website/paper claims against primary sources and link the dated corrections.

@@ -1,0 +1,213 @@
+{
+  "source_commit": "d0a344056dc9f93e10098ed405fa226095457066",
+  "started_at": "2026-09-19T07:25:53.645218+00:00",
+  "helper_sha256": "df1353082646ec2298c5f2b70f7e5b122123062c1fff8fea9f5993b66048df02",
+  "scope": "Five instrumented unchanged-test repetitions and one separate 100ms client-construction delay control. Original deadlines unchanged. No models or external network.",
+  "runs": [
+    {
+      "index": 0,
+      "command": [
+        "D:\\Development\\mnemos\\mnemos\\.worktrees\\functional-local-memory\\.venv\\Scripts\\python.exe",
+        "D:\\Development\\mnemos\\mnemos\\.worktrees\\functional-local-memory\\.venv\\profile_recovery_readiness_v1.py",
+        "--child",
+        "0"
+      ],
+      "exit_code": 1,
+      "trace": [
+        {
+          "stage": "AsyncClient.__init__",
+          "ms": 265.4105999972671,
+          "injected_delay_ms": 0.0,
+          "timeout": 0.25
+        },
+        {
+          "stage": "owner_reachable",
+          "ms": 270.93389999936335,
+          "result": false,
+          "remaining_timeout": 0.9996424999844749
+        },
+        {
+          "stage": "request",
+          "ms": 271.77379999193363,
+          "status": "degraded",
+          "committed": false,
+          "error": "Mnemos service exited before startup (exit code 0)"
+        }
+      ]
+    },
+    {
+      "index": 1,
+      "command": [
+        "D:\\Development\\mnemos\\mnemos\\.worktrees\\functional-local-memory\\.venv\\Scripts\\python.exe",
+        "D:\\Development\\mnemos\\mnemos\\.worktrees\\functional-local-memory\\.venv\\profile_recovery_readiness_v1.py",
+        "--child",
+        "1"
+      ],
+      "exit_code": 1,
+      "trace": [
+        {
+          "stage": "AsyncClient.__init__",
+          "ms": 267.61869998881593,
+          "injected_delay_ms": 0.0,
+          "timeout": 0.25
+        },
+        {
+          "stage": "owner_reachable",
+          "ms": 273.11290000216104,
+          "result": false,
+          "remaining_timeout": 0.9996319999918342
+        },
+        {
+          "stage": "request",
+          "ms": 274.01110000209883,
+          "status": "degraded",
+          "committed": false,
+          "error": "Mnemos service exited before startup (exit code 0)"
+        }
+      ]
+    },
+    {
+      "index": 2,
+      "command": [
+        "D:\\Development\\mnemos\\mnemos\\.worktrees\\functional-local-memory\\.venv\\Scripts\\python.exe",
+        "D:\\Development\\mnemos\\mnemos\\.worktrees\\functional-local-memory\\.venv\\profile_recovery_readiness_v1.py",
+        "--child",
+        "2"
+      ],
+      "exit_code": 0,
+      "trace": [
+        {
+          "stage": "AsyncClient.__init__",
+          "ms": 207.9754000005778,
+          "injected_delay_ms": 0.0,
+          "timeout": 0.25
+        },
+        {
+          "stage": "owner_reachable",
+          "ms": 215.58550000190735,
+          "result": true,
+          "remaining_timeout": 0.9995525999984238
+        },
+        {
+          "stage": "AsyncClient.__init__",
+          "ms": 194.30100001045503,
+          "injected_delay_ms": 0.0,
+          "timeout": 1
+        },
+        {
+          "stage": "request",
+          "ms": 422.3250999930315,
+          "status": "committed",
+          "committed": true,
+          "error": null
+        }
+      ]
+    },
+    {
+      "index": 3,
+      "command": [
+        "D:\\Development\\mnemos\\mnemos\\.worktrees\\functional-local-memory\\.venv\\Scripts\\python.exe",
+        "D:\\Development\\mnemos\\mnemos\\.worktrees\\functional-local-memory\\.venv\\profile_recovery_readiness_v1.py",
+        "--child",
+        "3"
+      ],
+      "exit_code": 0,
+      "trace": [
+        {
+          "stage": "AsyncClient.__init__",
+          "ms": 219.4920999754686,
+          "injected_delay_ms": 0.0,
+          "timeout": 0.25
+        },
+        {
+          "stage": "owner_reachable",
+          "ms": 227.88170000421815,
+          "result": true,
+          "remaining_timeout": 0.9996919000113849
+        },
+        {
+          "stage": "AsyncClient.__init__",
+          "ms": 179.42470000707544,
+          "injected_delay_ms": 0.0,
+          "timeout": 1
+        },
+        {
+          "stage": "request",
+          "ms": 421.25929999747314,
+          "status": "committed",
+          "committed": true,
+          "error": null
+        }
+      ]
+    },
+    {
+      "index": 4,
+      "command": [
+        "D:\\Development\\mnemos\\mnemos\\.worktrees\\functional-local-memory\\.venv\\Scripts\\python.exe",
+        "D:\\Development\\mnemos\\mnemos\\.worktrees\\functional-local-memory\\.venv\\profile_recovery_readiness_v1.py",
+        "--child",
+        "4"
+      ],
+      "exit_code": 0,
+      "trace": [
+        {
+          "stage": "AsyncClient.__init__",
+          "ms": 218.1028999912087,
+          "injected_delay_ms": 0.0,
+          "timeout": 0.25
+        },
+        {
+          "stage": "owner_reachable",
+          "ms": 225.8140999765601,
+          "result": true,
+          "remaining_timeout": 0.9996717000030912
+        },
+        {
+          "stage": "AsyncClient.__init__",
+          "ms": 172.9027999972459,
+          "injected_delay_ms": 0.0,
+          "timeout": 1
+        },
+        {
+          "stage": "request",
+          "ms": 413.36529998807237,
+          "status": "committed",
+          "committed": true,
+          "error": null
+        }
+      ]
+    },
+    {
+      "index": 5,
+      "command": [
+        "D:\\Development\\mnemos\\mnemos\\.worktrees\\functional-local-memory\\.venv\\Scripts\\python.exe",
+        "D:\\Development\\mnemos\\mnemos\\.worktrees\\functional-local-memory\\.venv\\profile_recovery_readiness_v1.py",
+        "--child",
+        "5"
+      ],
+      "exit_code": 1,
+      "trace": [
+        {
+          "stage": "AsyncClient.__init__",
+          "ms": 382.3702000081539,
+          "injected_delay_ms": 100.0,
+          "timeout": 0.25
+        },
+        {
+          "stage": "owner_reachable",
+          "ms": 387.56269999430515,
+          "result": false,
+          "remaining_timeout": 0.9996787999989465
+        },
+        {
+          "stage": "request",
+          "ms": 388.4315000032075,
+          "status": "degraded",
+          "committed": false,
+          "error": "Mnemos service exited before startup (exit code 0)"
+        }
+      ]
+    }
+  ],
+  "finished_at": "2026-09-19T07:26:05.686336+00:00"
+}

@@ -1,0 +1,74 @@
+........................................................................ [  6%]
+.ss..................................................................... [ 12%]
+........................................................................ [ 18%]
+....................F................................................... [ 24%]
+........................................................................ [ 31%]
+........................................................................ [ 37%]
+........................................................................ [ 43%]
+...............ss....................................................... [ 49%]
+........................................................................ [ 56%]
+........................................................................ [ 62%]
+........................................................................ [ 68%]
+........................................................................ [ 74%]
+........................................................................ [ 81%]
+........................................................................ [ 87%]
+........................................................................ [ 93%]
+........................................................................ [ 99%]
+...                                                                      [100%]
+================================== FAILURES ===================================
+_____________ test_owner_recovers_while_competing_launcher_exits ______________
+
+tmp_path = WindowsPath('C:/Users/Ant/AppData/Local/Temp/mnemos-check-temp-cognition-context-v1/pytest/test_owner_recovers_while_comp0')
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x0000018977C60D70>
+
+    @pytest.mark.asyncio
+    async def test_owner_recovers_while_competing_launcher_exits(
+        tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
+        path = tmp_path / "runtime.json"
+        dispatcher = RecordingDispatcher()
+        service = MnemosService(dispatcher=dispatcher, descriptor_path=path)
+        service.start()
+        original_bytes = path.read_bytes()
+        client = MnemosClient(descriptor_path=path, startup_timeout=1, request_timeout=1)
+        original_dispatch = client._dispatch_http
+        original_probe = client._owner_reachable
+        dispatches = probes = starts = 0
+    
+        async def first_connection_fails(
+            operation: str, payload: dict[str, Any], descriptor: dict[str, Any]
+        ) -> dict[str, Any]:
+            nonlocal dispatches
+            dispatches += 1
+            if dispatches == 1:
+                raise ServiceClientError("transient connection failure", unavailable=True)
+            return await original_dispatch(operation, payload, descriptor)
+    
+        async def first_probe_fails(
+            descriptor: dict[str, Any], *, timeout: float | None = None
+        ) -> bool:
+            nonlocal probes
+            probes += 1
+            if probes == 1:
+                return False
+            return await original_probe(descriptor, timeout=timeout)
+    
+        def spawn(*args: Any, **kwargs: Any) -> Launcher:
+            nonlocal starts
+            starts += 1
+            return Launcher(exit_code=0)
+    
+        monkeypatch.setattr(client, "_dispatch_http", first_connection_fails)
+        monkeypatch.setattr(client, "_owner_reachable", first_probe_fails)
+        monkeypatch.setattr(client_module.subprocess, "Popen", spawn)
+        try:
+            result = await client.retrieve({"query": "existing owner recovered"})
+>           assert result.get("committed") is True
+E           AssertionError: assert False is True
+E            +  where False = <built-in method get of dict object at 0x00000189766A32C0>('committed')
+E            +    where <built-in method get of dict object at 0x00000189766A32C0> = {'schema_version': 1, 'status': 'degraded', 'committed': False, 'degraded': True, ...}.get
+
+tests\test_client_stale_descriptor.py:234: AssertionError
+=========================== short test summary info ===========================
+FAILED tests/test_client_stale_descriptor.py::test_owner_recovers_while_competing_launcher_exits
+1 failed, 1150 passed, 4 skipped in 216.04s (0:03:36)

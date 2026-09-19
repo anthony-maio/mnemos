@@ -1,0 +1,92 @@
+"""Trace the unchanged recovery test and one prospective setup-delay control."""
+import argparse
+from datetime import datetime, timezone
+import functools
+import hashlib
+import json
+import os
+from pathlib import Path
+import subprocess
+import sys
+import time
+
+SOURCE = Path("C:/Users/Ant/AppData/Local/Temp/mnemos-source-cognition-context-v1")
+OUTPUT = Path("C:/Users/Ant/AppData/Local/Temp/mnemos-recovery-readiness-v1")
+COMMIT = "d0a344056dc9f93e10098ed405fa226095457066"
+parser = argparse.ArgumentParser()
+parser.add_argument("--child", type=int)
+args = parser.parse_args()
+
+if args.child is not None:
+    import pytest
+    sys.path.insert(0, str(SOURCE))
+    import httpx
+    import mnemos.client as client
+    trace = []
+    original_client = httpx.AsyncClient
+    delay = 0.1 if args.child == 5 else 0.0
+
+    def traced_client(*a, **kw):
+        start = time.perf_counter()
+        if delay:
+            time.sleep(delay)
+        instance = original_client(*a, **kw)
+        trace.append({"stage": "AsyncClient.__init__", "ms": (time.perf_counter() - start) * 1000,
+                      "injected_delay_ms": delay * 1000, "timeout": kw.get("timeout")})
+        return instance
+
+    original_probe = client.MnemosClient._owner_reachable
+    original_request = client.MnemosClient.request
+
+    @functools.wraps(original_probe)
+    async def probe(self, *a, **kw):
+        start = time.perf_counter()
+        result = await original_probe(self, *a, **kw)
+        trace.append({"stage": "owner_reachable", "ms": (time.perf_counter() - start) * 1000,
+                      "result": result, "remaining_timeout": kw.get("timeout")})
+        return result
+
+    @functools.wraps(original_request)
+    async def request(self, *a, **kw):
+        start = time.perf_counter()
+        result = await original_request(self, *a, **kw)
+        trace.append({"stage": "request", "ms": (time.perf_counter() - start) * 1000,
+                      "status": result.get("status"), "committed": result.get("committed"),
+                      "error": result.get("error")})
+        return result
+
+    httpx.AsyncClient = traced_client
+    client.MnemosClient._owner_reachable = probe
+    client.MnemosClient.request = request
+    run = OUTPUT / f"run-{args.child}"
+    run.mkdir()
+    try:
+        code = pytest.main([str(SOURCE / "tests/test_client_stale_descriptor.py") +
+                            "::test_owner_recovers_while_competing_launcher_exits",
+                            "-q", "--basetemp", str(run / "fixtures"), "--junitxml", str(run / "pytest.xml")])
+    finally:
+        httpx.AsyncClient = original_client
+        client.MnemosClient._owner_reachable = original_probe
+        client.MnemosClient.request = original_request
+        (run / "trace.json").write_text(json.dumps(trace, indent=2) + "\n", encoding="utf-8")
+    raise SystemExit(code)
+
+assert subprocess.check_output(["git", "rev-parse", "HEAD"], cwd=SOURCE, text=True).strip() == COMMIT
+assert not subprocess.check_output(["git", "status", "--porcelain"], cwd=SOURCE, text=True).strip()
+OUTPUT.mkdir(exist_ok=False)
+env = {k: v for k, v in os.environ.items() if not k.startswith("MNEMOS_") and k != "PYTHONPATH"}
+record = {"source_commit": COMMIT, "started_at": datetime.now(timezone.utc).isoformat(),
+          "helper_sha256": hashlib.sha256(Path(__file__).read_bytes()).hexdigest(),
+          "scope": "Five instrumented unchanged-test repetitions and one separate 100ms client-construction delay control. Original deadlines unchanged. No models or external network.", "runs": []}
+for index in range(6):
+    command = [sys.executable, str(Path(__file__).resolve()), "--child", str(index)]
+    with (OUTPUT / f"run-{index}.log").open("w", encoding="utf-8") as log:
+        completed = subprocess.run(command, cwd=SOURCE, env=env, stdout=log, stderr=subprocess.STDOUT,
+                                   creationflags=getattr(subprocess, "CREATE_NO_WINDOW", 0))
+    row = {"index": index, "command": command, "exit_code": completed.returncode,
+           "trace": json.loads((OUTPUT / f"run-{index}/trace.json").read_text())}
+    record["runs"].append(row)
+    print(json.dumps(row), flush=True)
+record["finished_at"] = datetime.now(timezone.utc).isoformat()
+assert not subprocess.check_output(["git", "status", "--porcelain"], cwd=SOURCE, text=True).strip()
+(OUTPUT / "report.json").write_text(json.dumps(record, indent=2) + "\n", encoding="utf-8")

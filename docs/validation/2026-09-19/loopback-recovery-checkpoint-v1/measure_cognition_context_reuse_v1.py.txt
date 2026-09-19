@@ -1,0 +1,312 @@
+"""Measure unchanged OllamaProvider transport setup on two source snapshots."""
+
+from __future__ import annotations
+
+import argparse
+import asyncio
+import hashlib
+import json
+import os
+from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
+from pathlib import Path
+import statistics
+import subprocess
+import sys
+import threading
+import time
+from typing import Any
+
+BASELINE_COMMIT = "8fc79f01ab68d9c211f9be4818f9e566e271cefd"
+CANDIDATE_COMMIT = "d0a344056dc9f93e10098ed405fa226095457066"
+ARM_COMMITS = {"baseline": BASELINE_COMMIT, "candidate": CANDIDATE_COMMIT}
+CALLS = 13
+FIXED_RESPONSE = "fixture response"
+CUSTOM_CA_ENV = (
+    "SSL_CERT_FILE",
+    "SSL_CERT_DIR",
+    "REQUESTS_CA_BUNDLE",
+    "CURL_CA_BUNDLE",
+)
+PROXY_ENV = (
+    "HTTP_PROXY",
+    "HTTPS_PROXY",
+    "ALL_PROXY",
+    "NO_PROXY",
+    "http_proxy",
+    "https_proxy",
+    "all_proxy",
+    "no_proxy",
+)
+
+
+def sha256_bytes(value: bytes) -> str:
+    return hashlib.sha256(value).hexdigest()
+
+
+def sha256_file(path: Path) -> str:
+    return sha256_bytes(path.read_bytes())
+
+
+def source_tree_hash(root: Path) -> str:
+    digest = hashlib.sha256()
+    files = [
+        path
+        for path in root.rglob("*.py")
+        if ".git" not in path.relative_to(root).parts
+        and ".venv" not in path.relative_to(root).parts
+        and "__pycache__" not in path.relative_to(root).parts
+    ]
+    for path in sorted(files):
+        digest.update(path.relative_to(root).as_posix().encode("utf-8"))
+        digest.update(b"\0")
+        digest.update(path.read_bytes())
+        digest.update(b"\0")
+    return digest.hexdigest()
+
+
+def git_value(root: Path, *args: str) -> str:
+    return subprocess.check_output(
+        ["git", "-C", str(root), *args], text=True, stderr=subprocess.STDOUT
+    ).strip()
+
+
+class FixtureServer(ThreadingHTTPServer):
+    daemon_threads = True
+    allow_reuse_address = False
+
+    def __init__(self) -> None:
+        super().__init__(("127.0.0.1", 0), FixtureHandler)
+        self._lock = threading.Lock()
+        self.accepted_connections = 0
+        self.finished_connections = 0
+        self.request_count = 0
+        self.invalid_requests: list[str] = []
+
+    def get_request(self) -> Any:
+        connection, address = super().get_request()
+        with self._lock:
+            self.accepted_connections += 1
+        return connection, address
+
+
+class FixtureHandler(BaseHTTPRequestHandler):
+    protocol_version = "HTTP/1.0"
+
+    def do_POST(self) -> None:
+        server = self.server
+        assert isinstance(server, FixtureServer)
+        raw_length = self.headers.get("Content-Length")
+        try:
+            payload = json.loads(self.rfile.read(int(raw_length or "0")))
+            valid = (
+                self.path == "/api/generate"
+                and isinstance(payload, dict)
+                and payload.get("model") == "fixture"
+                and payload.get("stream") is False
+                and isinstance(payload.get("options"), dict)
+            )
+        except Exception as exc:  # pragma: no cover - child failure evidence
+            valid = False
+            payload = None
+            server.invalid_requests.append(type(exc).__name__)
+        with server._lock:
+            server.request_count += 1
+            if not valid:
+                server.invalid_requests.append(repr(payload)[:200])
+        body = json.dumps({"response": FIXED_RESPONSE, "done": True, "done_reason": "stop"}).encode(
+            "utf-8"
+        )
+        self.send_response(200)
+        self.send_header("Content-Type", "application/json")
+        self.send_header("Content-Length", str(len(body)))
+        self.send_header("Connection", "close")
+        self.end_headers()
+        self.wfile.write(body)
+
+    def finish(self) -> None:
+        try:
+            super().finish()
+        finally:
+            server = self.server
+            if isinstance(server, FixtureServer):
+                with server._lock:
+                    server.finished_connections += 1
+
+    def log_message(self, format: str, *args: Any) -> None:
+        _ = format, args
+
+
+def env_summary() -> dict[str, bool]:
+    return {name: bool(os.environ.get(name)) for name in (*PROXY_ENV, *CUSTOM_CA_ENV)}
+
+
+def run_child(source_text: str, arm: str, helper_path: Path) -> int:
+    source = Path(source_text).resolve()
+    expected_commit = ARM_COMMITS[arm]
+    if git_value(source, "rev-parse", "HEAD") != expected_commit:
+        raise RuntimeError("source commit mismatch")
+    if git_value(source, "status", "--porcelain"):
+        raise RuntimeError("source snapshot is dirty")
+    custom_ca = {name: bool(os.environ.get(name)) for name in CUSTOM_CA_ENV}
+    if any(custom_ca.values()):
+        raise RuntimeError("custom CA environment is set")
+    tree_before = source_tree_hash(source)
+    sys.path.insert(0, str(source))
+    from mnemos.utils.llm import OllamaProvider
+
+    import httpx
+    import mnemos.utils.llm as llm_module
+
+    imported_path = Path(llm_module.__file__).resolve()
+    if source not in imported_path.parents:
+        raise RuntimeError(f"unexpected llm import origin: {imported_path}")
+    server = FixtureServer()
+    thread = threading.Thread(target=server.serve_forever, daemon=True)
+    thread.start()
+    timings_ms: list[float] = []
+    responses: list[str] = []
+    try:
+        provider = OllamaProvider(
+            model="fixture",
+            base_url=f"http://127.0.0.1:{server.server_port}",
+            timeout=5.0,
+            temperature=0.0,
+            max_tokens=8,
+        )
+        for _ in range(CALLS):
+            started = time.perf_counter_ns()
+            response = asyncio.run(provider.predict("fixed transport probe"))
+            timings_ms.append((time.perf_counter_ns() - started) / 1_000_000.0)
+            responses.append(response)
+    finally:
+        server.shutdown()
+        server.server_close()
+        thread.join(timeout=5.0)
+    tree_after = source_tree_hash(source)
+    if tree_before != tree_after:
+        raise RuntimeError("source snapshot changed during measurement")
+    if responses != [FIXED_RESPONSE] * CALLS:
+        raise RuntimeError("fixture response mismatch")
+    result = {
+        "arm": arm,
+        "source": str(source),
+        "source_commit": expected_commit,
+        "source_tree_sha256_before": tree_before,
+        "source_tree_sha256_after": tree_after,
+        "imported_llm": str(imported_path),
+        "imported_llm_sha256": sha256_file(imported_path),
+        "helper_sha256": sha256_file(helper_path),
+        "httpx_version": httpx.__version__,
+        "env_presence": env_summary(),
+        "calls": CALLS,
+        "separate_asyncio_run_per_call": True,
+        "timings_ms": timings_ms,
+        "cold_ms": timings_ms[0],
+        "warm_ms": timings_ms[1:],
+        "warm_median_ms": statistics.median(timings_ms[1:]),
+        "warm_max_ms": max(timings_ms[1:]),
+        "response_sha256": sha256_bytes(FIXED_RESPONSE.encode("utf-8")),
+        "server": {
+            "endpoint": f"http://127.0.0.1:{server.server_port}",
+            "protocol": "HTTP/1.0",
+            "accepted_connections": server.accepted_connections,
+            "finished_connections": server.finished_connections,
+            "request_count": server.request_count,
+            "invalid_requests": server.invalid_requests,
+            "tcp_close_expected": True,
+        },
+    }
+    print(json.dumps(result, sort_keys=True))
+    return 0
+
+
+def main() -> int:
+    parser = argparse.ArgumentParser()
+    parser.add_argument("--baseline-snapshot", type=Path)
+    parser.add_argument("--candidate-snapshot", type=Path)
+    parser.add_argument("--output-dir", type=Path)
+    parser.add_argument("--child", action="store_true")
+    parser.add_argument("--source")
+    parser.add_argument("--arm", choices=tuple(ARM_COMMITS))
+    args = parser.parse_args()
+    helper_path = Path(__file__).resolve()
+    if args.child:
+        if args.source is None or args.arm is None:
+            raise SystemExit("child requires --source and --arm")
+        return run_child(args.source, args.arm, helper_path)
+    if args.baseline_snapshot is None or args.candidate_snapshot is None:
+        raise SystemExit("both source snapshots are required")
+    if args.output_dir is None:
+        raise SystemExit("--output-dir is required")
+    output = args.output_dir.resolve()
+    if output.exists():
+        raise FileExistsError(f"output directory must be fresh: {output}")
+    if any(os.environ.get(name) for name in CUSTOM_CA_ENV):
+        raise RuntimeError("custom CA environment is set")
+    snapshots = {
+        "baseline": args.baseline_snapshot.resolve(),
+        "candidate": args.candidate_snapshot.resolve(),
+    }
+    for arm, source in snapshots.items():
+        if git_value(source, "rev-parse", "HEAD") != ARM_COMMITS[arm]:
+            raise RuntimeError(f"{arm} snapshot commit mismatch")
+        if git_value(source, "status", "--porcelain"):
+            raise RuntimeError(f"{arm} snapshot is dirty")
+    output.mkdir(parents=True)
+    commands = []
+    arms = []
+    for arm in ("baseline", "candidate"):
+        command = [
+            sys.executable,
+            str(helper_path),
+            "--child",
+            "--source",
+            str(snapshots[arm]),
+            "--arm",
+            arm,
+        ]
+        commands.append(command)
+        completed = subprocess.run(
+            command,
+            cwd=str(snapshots[arm]),
+            capture_output=True,
+            text=True,
+            env=os.environ.copy(),
+            check=False,
+        )
+        (output / f"{arm}.stdout").write_text(completed.stdout, encoding="utf-8")
+        (output / f"{arm}.stderr").write_text(completed.stderr, encoding="utf-8")
+        if completed.returncode != 0:
+            report = {
+                "status": "failed",
+                "failed_arm": arm,
+                "returncode": completed.returncode,
+                "commands": commands,
+                "output_dir": str(output),
+                "helper_sha256": sha256_file(helper_path),
+            }
+            (output / "report.json").write_text(json.dumps(report, indent=2), encoding="utf-8")
+            return completed.returncode
+        arms.append(json.loads(completed.stdout.strip()))
+    report = {
+        "status": "completed",
+        "scope": "unchanged OllamaProvider local HTTP/1.0 transport measurement",
+        "source_bindings": {arm: str(snapshots[arm]) for arm in snapshots},
+        "expected_commits": ARM_COMMITS,
+        "helper_sha256": sha256_file(helper_path),
+        "python": sys.executable,
+        "commands": commands,
+        "env_presence": env_summary(),
+        "arms": arms,
+        "limitations": [
+            "The loopback fixture measures provider transport setup only, not Ollama or model inference.",
+            "Each call creates the provider's normal per-request AsyncClient; no production behavior is patched.",
+            "Timings are local diagnostic observations, not an end-to-end latency claim.",
+        ],
+    }
+    (output / "report.json").write_text(json.dumps(report, indent=2) + "\n", encoding="utf-8")
+    return 0
+
+
+if __name__ == "__main__":
+    raise SystemExit(main())

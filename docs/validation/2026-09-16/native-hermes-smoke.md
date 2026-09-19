@@ -61,3 +61,22 @@ It must retain normal approvals and record the effective request options,
 provider callbacks, model digest, and a completed turn before claiming success.
 This retry has not run. The active serialized Ollama evaluation takes precedence;
 the live Hermes configuration and gateway have not been changed.
+
+## Read-only refresh: September 19, 2026
+
+The WSL installation now reports source
+`14a346345486418aa85ed6526549412ee2665ade`, Hermes Agent 0.21.3
+(2026.9.14), Python 3.11.15, and OpenAI SDK 2.24.0. The tracked checkout is
+clean. Its launcher resolves to `hermes-agent/venv/bin/hermes`; the previously
+assumed `.venv` path does not exist. No update or configuration change was made.
+
+The installed custom provider still maps disabled reasoning to top-level
+`reasoning_effort="none"` and Ollama `think=false`, and accepts
+`ollama_num_ctx` as `options.num_ctx`. The installed metadata defines a
+64,000-token minimum. `agent/conversation_loop.py` also rejects a loaded
+Ollama runtime below that minimum when tools are present. The evaluation's
+16,384-token Qwen runtime is therefore not sufficient evidence of Hermes
+readiness. A future isolated native check needs its own explicit context and
+reasoning settings and must measure actual GPU placement on the 16 GB machine.
+This refresh ran version/source inspection only, with no model turn or provider
+callback observation. Native Hermes acceptance remains open.

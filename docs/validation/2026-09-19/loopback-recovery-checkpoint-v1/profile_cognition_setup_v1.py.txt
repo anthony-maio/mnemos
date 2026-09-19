@@ -1,0 +1,84 @@
+"""Isolate local cognition transport setup without changing production code."""
+import asyncio
+from datetime import datetime, timezone
+import hashlib
+from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
+import json
+import os
+from pathlib import Path
+import statistics
+import subprocess
+import sys
+import threading
+import time
+
+SOURCE = Path("C:/Users/Ant/AppData/Local/Temp/mnemos-source-retrieval-parity-v1")
+OUTPUT = Path("C:/Users/Ant/AppData/Local/Temp/mnemos-cognition-setup-v1")
+COMMIT = "8fc79f01ab68d9c211f9be4818f9e566e271cefd"
+assert subprocess.check_output(["git", "rev-parse", "HEAD"], cwd=SOURCE, text=True).strip() == COMMIT
+assert not subprocess.check_output(["git", "status", "--porcelain"], cwd=SOURCE, text=True).strip()
+OUTPUT.mkdir(exist_ok=False)
+for key in list(os.environ):
+    if key.startswith("MNEMOS_") or key == "PYTHONPATH":
+        del os.environ[key]
+sys.path.insert(0, str(SOURCE))
+import httpx
+from mnemos.utils import llm
+
+class Handler(BaseHTTPRequestHandler):
+    protocol_version = "HTTP/1.0"
+
+    def do_POST(self):
+        payload = json.loads(self.rfile.read(int(self.headers["Content-Length"])))
+        assert self.path == "/api/generate" and payload["model"] == "fixture"
+        response = json.dumps({"response": "fixture response", "done": True, "done_reason": "stop"}).encode()
+        self.send_response(200)
+        self.send_header("Content-Type", "application/json")
+        self.send_header("Content-Length", str(len(response)))
+        self.send_header("Connection", "close")
+        self.end_headers()
+        self.wfile.write(response)
+
+    def log_message(self, *args):
+        pass
+
+server = ThreadingHTTPServer(("127.0.0.1", 0), Handler)
+thread = threading.Thread(target=server.serve_forever, daemon=True)
+thread.start()
+original = httpx.AsyncClient
+record = {"source_commit": COMMIT, "source": str(SOURCE), "started_at": datetime.now(timezone.utc).isoformat(),
+          "helper_sha256": hashlib.sha256(Path(__file__).read_bytes()).hexdigest(),
+          "httpx_version": httpx.__version__, "arms": [],
+          "scope": "Fixed-response loopback HTTP/1.0 fixture. No Ollama/model calls. Each request closes its client and TCP connection. Experimental context cache is in this helper only. First request includes lazy context creation. No production patch or latency acceptance claim."}
+try:
+    for label, cache in (("baseline", False), ("cached-trust-context", True)):
+        context = None
+        builds = []
+        def factory(**kwargs):
+            global context
+            if cache:
+                if context is None:
+                    start = time.perf_counter()
+                    context = httpx.create_ssl_context()
+                    builds.append((time.perf_counter() - start) * 1000)
+                kwargs["verify"] = context
+            return original(**kwargs)
+        llm.httpx.AsyncClient = factory
+        provider = llm.OllamaProvider(model="fixture", base_url=f"http://127.0.0.1:{server.server_port}")
+        values = []
+        for _ in range(13):
+            start = time.perf_counter()
+            assert asyncio.run(provider.predict("constant fixture")) == "fixture response"
+            values.append((time.perf_counter() - start) * 1000)
+        record["arms"].append({"name": label, "cold_ms": values[0], "warm_ms": values[1:],
+                               "warm_median_ms": statistics.median(values[1:]), "warm_max_ms": max(values[1:]),
+                               "context_build_ms": builds, "separate_event_loops": 13})
+finally:
+    llm.httpx.AsyncClient = original
+    server.shutdown()
+    server.server_close()
+    thread.join()
+record["finished_at"] = datetime.now(timezone.utc).isoformat()
+assert not subprocess.check_output(["git", "status", "--porcelain"], cwd=SOURCE, text=True).strip()
+(OUTPUT / "report.json").write_text(json.dumps(record, indent=2) + "\n", encoding="utf-8")
+print(json.dumps(record))

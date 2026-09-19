@@ -1,0 +1,193 @@
+{
+  "status": "completed",
+  "scope": "unchanged OllamaProvider local HTTP/1.0 transport measurement",
+  "source_bindings": {
+    "baseline": "C:\\Users\\Ant\\AppData\\Local\\Temp\\mnemos-source-retrieval-parity-v1",
+    "candidate": "C:\\Users\\Ant\\AppData\\Local\\Temp\\mnemos-source-cognition-context-v1"
+  },
+  "expected_commits": {
+    "baseline": "8fc79f01ab68d9c211f9be4818f9e566e271cefd",
+    "candidate": "d0a344056dc9f93e10098ed405fa226095457066"
+  },
+  "helper_sha256": "6e3534b65db20682515649bb1fdef6bccc3e9bf13bd118b127a9995d935c39ab",
+  "python": "D:\\Development\\mnemos\\mnemos\\.worktrees\\functional-local-memory\\.venv\\Scripts\\python.exe",
+  "commands": [
+    [
+      "D:\\Development\\mnemos\\mnemos\\.worktrees\\functional-local-memory\\.venv\\Scripts\\python.exe",
+      "D:\\Development\\mnemos\\mnemos\\.worktrees\\functional-local-memory\\.venv\\measure_cognition_context_reuse_v1.py",
+      "--child",
+      "--source",
+      "C:\\Users\\Ant\\AppData\\Local\\Temp\\mnemos-source-retrieval-parity-v1",
+      "--arm",
+      "baseline"
+    ],
+    [
+      "D:\\Development\\mnemos\\mnemos\\.worktrees\\functional-local-memory\\.venv\\Scripts\\python.exe",
+      "D:\\Development\\mnemos\\mnemos\\.worktrees\\functional-local-memory\\.venv\\measure_cognition_context_reuse_v1.py",
+      "--child",
+      "--source",
+      "C:\\Users\\Ant\\AppData\\Local\\Temp\\mnemos-source-cognition-context-v1",
+      "--arm",
+      "candidate"
+    ]
+  ],
+  "env_presence": {
+    "HTTP_PROXY": false,
+    "HTTPS_PROXY": false,
+    "ALL_PROXY": false,
+    "NO_PROXY": false,
+    "http_proxy": false,
+    "https_proxy": false,
+    "all_proxy": false,
+    "no_proxy": false,
+    "SSL_CERT_FILE": false,
+    "SSL_CERT_DIR": false,
+    "REQUESTS_CA_BUNDLE": false,
+    "CURL_CA_BUNDLE": false
+  },
+  "arms": [
+    {
+      "arm": "baseline",
+      "calls": 13,
+      "cold_ms": 303.9057,
+      "env_presence": {
+        "ALL_PROXY": false,
+        "CURL_CA_BUNDLE": false,
+        "HTTPS_PROXY": false,
+        "HTTP_PROXY": false,
+        "NO_PROXY": false,
+        "REQUESTS_CA_BUNDLE": false,
+        "SSL_CERT_DIR": false,
+        "SSL_CERT_FILE": false,
+        "all_proxy": false,
+        "http_proxy": false,
+        "https_proxy": false,
+        "no_proxy": false
+      },
+      "helper_sha256": "6e3534b65db20682515649bb1fdef6bccc3e9bf13bd118b127a9995d935c39ab",
+      "httpx_version": "0.28.1",
+      "imported_llm": "C:\\Users\\Ant\\AppData\\Local\\Temp\\mnemos-source-retrieval-parity-v1\\mnemos\\utils\\llm.py",
+      "imported_llm_sha256": "253549bc9fbbf4ca61d31a0f10e3d4b6d04399d0baea6d337f629f46e8b8d43b",
+      "response_sha256": "367cc2ec72f0b8063e8587c97fc4a5bf15b37997994c4e690488f236cae0dc16",
+      "separate_asyncio_run_per_call": true,
+      "server": {
+        "accepted_connections": 13,
+        "endpoint": "http://127.0.0.1:51759",
+        "finished_connections": 13,
+        "invalid_requests": [],
+        "protocol": "HTTP/1.0",
+        "request_count": 13,
+        "tcp_close_expected": true
+      },
+      "source": "C:\\Users\\Ant\\AppData\\Local\\Temp\\mnemos-source-retrieval-parity-v1",
+      "source_commit": "8fc79f01ab68d9c211f9be4818f9e566e271cefd",
+      "source_tree_sha256_after": "ccce010e4acbab671d26695391476195ac46ef7f74c7e4e8575a1e94c78a44f5",
+      "source_tree_sha256_before": "ccce010e4acbab671d26695391476195ac46ef7f74c7e4e8575a1e94c78a44f5",
+      "timings_ms": [
+        303.9057,
+        187.6364,
+        227.4844,
+        253.0385,
+        266.6119,
+        241.3476,
+        205.5752,
+        206.1202,
+        242.2429,
+        225.5502,
+        246.1257,
+        242.594,
+        211.874
+      ],
+      "warm_max_ms": 266.6119,
+      "warm_median_ms": 234.416,
+      "warm_ms": [
+        187.6364,
+        227.4844,
+        253.0385,
+        266.6119,
+        241.3476,
+        205.5752,
+        206.1202,
+        242.2429,
+        225.5502,
+        246.1257,
+        242.594,
+        211.874
+      ]
+    },
+    {
+      "arm": "candidate",
+      "calls": 13,
+      "cold_ms": 244.903,
+      "env_presence": {
+        "ALL_PROXY": false,
+        "CURL_CA_BUNDLE": false,
+        "HTTPS_PROXY": false,
+        "HTTP_PROXY": false,
+        "NO_PROXY": false,
+        "REQUESTS_CA_BUNDLE": false,
+        "SSL_CERT_DIR": false,
+        "SSL_CERT_FILE": false,
+        "all_proxy": false,
+        "http_proxy": false,
+        "https_proxy": false,
+        "no_proxy": false
+      },
+      "helper_sha256": "6e3534b65db20682515649bb1fdef6bccc3e9bf13bd118b127a9995d935c39ab",
+      "httpx_version": "0.28.1",
+      "imported_llm": "C:\\Users\\Ant\\AppData\\Local\\Temp\\mnemos-source-cognition-context-v1\\mnemos\\utils\\llm.py",
+      "imported_llm_sha256": "2edfd8121fbe07ad269c4850a6ab1d0f8713ed9b15e292d7bff099f3f1f4ebbc",
+      "response_sha256": "367cc2ec72f0b8063e8587c97fc4a5bf15b37997994c4e690488f236cae0dc16",
+      "separate_asyncio_run_per_call": true,
+      "server": {
+        "accepted_connections": 13,
+        "endpoint": "http://127.0.0.1:52015",
+        "finished_connections": 13,
+        "invalid_requests": [],
+        "protocol": "HTTP/1.0",
+        "request_count": 13,
+        "tcp_close_expected": true
+      },
+      "source": "C:\\Users\\Ant\\AppData\\Local\\Temp\\mnemos-source-cognition-context-v1",
+      "source_commit": "d0a344056dc9f93e10098ed405fa226095457066",
+      "source_tree_sha256_after": "640aa8f0bad1c33be18b53d48a4a447e9883c58a636fa0cc6c22939e6009b2c4",
+      "source_tree_sha256_before": "640aa8f0bad1c33be18b53d48a4a447e9883c58a636fa0cc6c22939e6009b2c4",
+      "timings_ms": [
+        244.903,
+        7.4068,
+        8.1365,
+        6.7996,
+        7.1914,
+        7.4,
+        6.8484,
+        6.5819,
+        6.7742,
+        6.5814,
+        6.9372,
+        7.0088,
+        6.6852
+      ],
+      "warm_max_ms": 8.1365,
+      "warm_median_ms": 6.892799999999999,
+      "warm_ms": [
+        7.4068,
+        8.1365,
+        6.7996,
+        7.1914,
+        7.4,
+        6.8484,
+        6.5819,
+        6.7742,
+        6.5814,
+        6.9372,
+        7.0088,
+        6.6852
+      ]
+    }
+  ],
+  "limitations": [
+    "The loopback fixture measures provider transport setup only, not Ollama or model inference.",
+    "Each call creates the provider's normal per-request AsyncClient; no production behavior is patched.",
+    "Timings are local diagnostic observations, not an end-to-end latency claim."
+  ]
+}

@@ -1,0 +1,57 @@
+{
+  "source_commit": "8fc79f01ab68d9c211f9be4818f9e566e271cefd",
+  "source": "C:\\Users\\Ant\\AppData\\Local\\Temp\\mnemos-source-retrieval-parity-v1",
+  "started_at": "2026-09-19T07:13:29.046298+00:00",
+  "helper_sha256": "4c352bb0112e87b90fab64a553faff62b010f620025b56acbaf5c75e747b17f1",
+  "httpx_version": "0.28.1",
+  "arms": [
+    {
+      "name": "baseline",
+      "cold_ms": 272.2518000227865,
+      "warm_ms": [
+        188.60320001840591,
+        231.87440002220683,
+        227.6360000250861,
+        207.45460002217442,
+        182.10900001577102,
+        181.95499997818843,
+        180.46750000212342,
+        214.178099995479,
+        199.52230001217686,
+        198.06080000125803,
+        232.12709999643266,
+        242.51800001366064
+      ],
+      "warm_median_ms": 203.48845001717564,
+      "warm_max_ms": 242.51800001366064,
+      "context_build_ms": [],
+      "separate_event_loops": 13
+    },
+    {
+      "name": "cached-trust-context",
+      "cold_ms": 189.1287999751512,
+      "warm_ms": [
+        6.667600013315678,
+        14.933300000848249,
+        6.608599971514195,
+        7.875300012528896,
+        7.168199983425438,
+        7.339000003412366,
+        6.819400005042553,
+        7.66129998373799,
+        6.728600012138486,
+        6.967000022996217,
+        6.758500006981194,
+        6.697200005874038
+      ],
+      "warm_median_ms": 6.893200014019385,
+      "warm_max_ms": 14.933300000848249,
+      "context_build_ms": [
+        180.8842999744229
+      ],
+      "separate_event_loops": 13
+    }
+  ],
+  "scope": "Fixed-response loopback HTTP/1.0 fixture. No Ollama/model calls. Each request closes its client and TCP connection. Experimental context cache is in this helper only. First request includes lazy context creation. No production patch or latency acceptance claim.",
+  "finished_at": "2026-09-19T07:13:32.592432+00:00"
+}

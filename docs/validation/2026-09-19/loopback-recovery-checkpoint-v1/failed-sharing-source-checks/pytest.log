@@ -1,0 +1,108 @@
+........................................................................ [  6%]
+.ss..................................................................... [ 12%]
+........................................................................ [ 18%]
+........................................................................ [ 24%]
+........................................................................ [ 31%]
+........................................................................ [ 37%]
+........................................................................ [ 43%]
+..................ss.................................................... [ 49%]
+........................................................................ [ 55%]
+........................................................................ [ 62%]
+........................................................................ [ 68%]
+........................................................................ [ 74%]
+........................................................................ [ 80%]
+..........................F............................................. [ 87%]
+........................................................................ [ 93%]
+........................................................................ [ 99%]
+......                                                                   [100%]
+================================== FAILURES ===================================
+_____________ test_competing_launcher_waits_past_dead_descriptor ______________
+
+tmp_path = WindowsPath('C:/Users/Ant/AppData/Local/Temp/mnemos-check-temp-loopback-recovery-v1/pytest/test_competing_launcher_waits_0')
+
+    def test_competing_launcher_waits_past_dead_descriptor(tmp_path: Path) -> None:
+        path = tmp_path / "runtime.json"
+        initializing = threading.Event()
+        release = threading.Event()
+    
+        def delayed_dispatcher() -> Dispatcher:
+            initializing.set()
+            assert release.wait(5), "Test did not release owner initialization"
+            return Dispatcher()
+    
+        winner = MnemosService(
+            dispatcher_factory=delayed_dispatcher, descriptor_path=path, startup_timeout=3
+        )
+        loser = MnemosService(dispatcher=Dispatcher(), descriptor_path=path, startup_timeout=2)
+        with socket.socket() as dead_port, ThreadPoolExecutor(max_workers=2) as pool:
+            dead_port.bind(("127.0.0.1", 0))
+            stale = {
+                "schema_version": 1,
+                "host": "127.0.0.1",
+                "port": dead_port.getsockname()[1],
+                "pid": 123456,
+                "token": "dead-test-owner",
+            }
+            _write_private_json(path, stale)
+            first = pool.submit(winner.start)
+            second = None
+            try:
+                assert initializing.wait(2)
+                second = pool.submit(loser.start)
+                with pytest.raises(FutureTimeout):
+                    second.result(timeout=0.2)
+                release.set()
+                owner = first.result(timeout=3)
+                assert second.result(timeout=3) == owner
+                assert owner != stale
+                assert winner.owner_thread_id is not None
+                assert loser.owner_thread_id is None
+            finally:
+                release.set()
+>               first.result(timeout=4)
+
+tests\test_service_competing_recovery.py:58: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+..\..\..\Roaming\uv\python\cpython-3.13.7-windows-x86_64-none\Lib\concurrent\futures\_base.py:449: in result
+    return self.__get_result()
+           ^^^^^^^^^^^^^^^^^^^
+..\..\..\Roaming\uv\python\cpython-3.13.7-windows-x86_64-none\Lib\concurrent\futures\_base.py:401: in __get_result
+    raise self._exception
+tests\test_service_competing_recovery.py:51: in test_competing_launcher_waits_past_dead_descriptor
+    owner = first.result(timeout=3)
+            ^^^^^^^^^^^^^^^^^^^^^^^
+..\..\..\Roaming\uv\python\cpython-3.13.7-windows-x86_64-none\Lib\concurrent\futures\_base.py:456: in result
+    return self.__get_result()
+           ^^^^^^^^^^^^^^^^^^^
+..\..\..\Roaming\uv\python\cpython-3.13.7-windows-x86_64-none\Lib\concurrent\futures\_base.py:401: in __get_result
+    raise self._exception
+..\..\..\Roaming\uv\python\cpython-3.13.7-windows-x86_64-none\Lib\concurrent\futures\thread.py:59: in run
+    result = self.fn(*self.args, **self.kwargs)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+mnemos\service.py:762: in start
+    _write_private_json(self.descriptor_path, self._descriptor)
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+path = WindowsPath('C:/Users/Ant/AppData/Local/Temp/mnemos-check-temp-loopback-recovery-v1/pytest/test_competing_launcher_waits_0/runtime.json')
+value = {'schema_version': 1, 'host': '127.0.0.1', 'port': 51803, 'pid': 22200, ...}
+
+    def _write_private_json(path: Path, value: Mapping[str, Any]) -> None:
+        path.parent.mkdir(parents=True, exist_ok=True)
+        _protect_private_path(path.parent)
+        temporary = path.with_name(f".{path.name}.{secrets.token_hex(8)}.tmp")
+        try:
+            descriptor_fd = os.open(
+                temporary,
+                os.O_WRONLY | os.O_CREAT | os.O_EXCL,
+                0o600,
+            )
+            os.close(descriptor_fd)
+            _protect_private_path(temporary)
+            temporary.write_text(json.dumps(value, sort_keys=True), encoding="utf-8")
+>           os.replace(temporary, path)
+E           PermissionError: [WinError 5] Access is denied: 'C:\\Users\\Ant\\AppData\\Local\\Temp\\mnemos-check-temp-loopback-recovery-v1\\pytest\\test_competing_launcher_waits_0\\.runtime.json.5bbeb96dfc71ec54.tmp' -> 'C:\\Users\\Ant\\AppData\\Local\\Temp\\mnemos-check-temp-loopback-recovery-v1\\pytest\\test_competing_launcher_waits_0\\runtime.json'
+
+mnemos\service.py:289: PermissionError
+=========================== short test summary info ===========================
+FAILED tests/test_service_competing_recovery.py::test_competing_launcher_waits_past_dead_descriptor
+1 failed, 1153 passed, 4 skipped in 203.97s (0:03:23)

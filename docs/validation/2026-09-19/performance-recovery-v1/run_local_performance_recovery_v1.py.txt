@@ -1,0 +1,93 @@
+"""Three fresh SSD performance repetitions after the combined recovery repair."""
+from datetime import datetime, timezone
+import hashlib
+import json
+import os
+from pathlib import Path
+import subprocess
+import sys
+import urllib.request
+
+ROOT = Path(__file__).resolve().parent.parent
+TEMP = Path('C:/Users/Ant/AppData/Local/Temp')
+SOURCE = TEMP / 'mnemos-source-loopback-recovery-v2'
+OUTPUT = TEMP / 'mnemos-performance-recovery-v1'
+COMMIT = 'de6cdcf1c05fdad1bb19ed8f52638eff5ed67ae4'
+ENDPOINT = 'http://127.0.0.1:11434'
+PINS = {'qwen3.5:9b': '6488c96fa5faab64bb65cbd30d4289e20e6130ef535a93ef9a49f42eda893ea7',
+        'nomic-embed-text:latest': '0a109f422b47e3a30ba2b10eca18548e944e8a23073ee3f3e947efcf3c45e59f'}
+
+def sha(path):
+    return hashlib.sha256(path.read_bytes()).hexdigest()
+
+def read(path):
+    return json.loads(path.read_text(encoding='utf-8'))
+
+def get(route):
+    with urllib.request.build_opener(urllib.request.ProxyHandler({})).open(ENDPOINT + route, timeout=10) as response:
+        return json.load(response)
+
+def verify():
+    assert subprocess.check_output(['git', 'rev-parse', 'HEAD'], cwd=SOURCE, text=True).strip() == COMMIT
+    assert not subprocess.check_output(['git', 'status', '--porcelain'], cwd=SOURCE, text=True).strip()
+    tags = {x['name']: x['digest'] for x in get('/api/tags')['models']}
+    assert all(tags.get(name) == digest for name, digest in PINS.items())
+
+checks_path = TEMP / 'mnemos-package-checks-loopback-recovery-v2/verification.json'
+installed_path = TEMP / 'mnemos-installed-checks-loopback-recovery-v2/installation.json'
+checks, installed = read(checks_path), read(installed_path)
+assert checks['status'] == installed['status'] == 'passed'
+assert checks['source_commit'] == installed['commit'] == COMMIT
+assert len(checks['checks']) == 6 and all(c['status'] == 'passed' for c in checks['checks'])
+verify()
+OUTPUT.mkdir(exist_ok=False)
+record = {'status': 'running', 'source_commit': COMMIT, 'source': str(SOURCE),
+          'started_at': datetime.now(timezone.utc).isoformat(), 'endpoint': ENDPOINT,
+          'model_digests': PINS, 'ollama_version': get('/api/version'), 'loaded_before': get('/api/ps'),
+          'helper_sha256': sha(Path(__file__)),
+          'source_checks_sha256': sha(checks_path), 'installed_checks_sha256': sha(installed_path),
+          'scope': 'Three full performance-harness repetitions on explicit C SSD paths. Original gates unchanged. Real query embeddings, synthetic 10000-fact vectors and capture provider; no cognition calls or semantic-quality claims. Shared workstation, not an idle-lab speedup attribution.',
+          'runs': []}
+env = {k: v for k, v in os.environ.items() if not k.startswith('MNEMOS_') and k != 'PYTHONPATH'}
+env['PYTHONUNBUFFERED'] = '1'
+
+def save():
+    (OUTPUT / 'report.json').write_text(json.dumps(record, indent=2) + '\n', encoding='utf-8')
+
+save()
+try:
+    for index in range(1, 4):
+        verify()
+        output = OUTPUT / f'performance-{index}.json'
+        work = TEMP / f'mnemos-performance-recovery-v1-run-{index}'
+        assert not output.exists() and not work.exists()
+        command = [sys.executable, '-u', '-m', 'benchmarks.local_memory.performance',
+                   '--output', str(output), '--work-dir', str(work), '--endpoint', ENDPOINT,
+                   '--embedding-model', 'nomic-embed-text:latest', '--cognition-model', 'qwen3.5:9b']
+        row = {'index': index, 'command': command, 'started_at': datetime.now(timezone.utc).isoformat()}
+        record['runs'].append(row)
+        with (OUTPUT / f'run-{index}.log').open('w', encoding='utf-8') as log:
+            process = subprocess.Popen(command, cwd=SOURCE, env=env, stdout=log, stderr=subprocess.STDOUT,
+                                       creationflags=getattr(subprocess, 'CREATE_NO_WINDOW', 0))
+            row['pid'] = process.pid
+            save()
+            row['exit_code'] = process.wait()
+        row['finished_at'] = datetime.now(timezone.utc).isoformat()
+        row['artifact_sha256'] = sha(output)
+        result = read(output)
+        row['status'] = result['status']
+        row['retrieval'] = result.get('retrieval')
+        row['capture'] = result.get('capture')
+        save()
+        assert row['exit_code'] == 0 and result['status'] == 'completed'
+        assert result['code_provenance']['consistent']
+        verify()
+        print(json.dumps({'index': index, 'status': row['status'], 'artifact': str(output)}), flush=True)
+    record['status'] = 'completed'
+except BaseException as exc:
+    record.update(status='failed', error_type=type(exc).__name__, error=str(exc))
+    raise
+finally:
+    record['finished_at'] = datetime.now(timezone.utc).isoformat()
+    record['loaded_after'] = get('/api/ps')
+    save()

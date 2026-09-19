@@ -1,0 +1,127 @@
+{
+  "source_commit": "de6cdcf1c05fdad1bb19ed8f52638eff5ed67ae4",
+  "source_checkout": "C:\\Users\\Ant\\AppData\\Local\\Temp\\mnemos-source-loopback-recovery-v2",
+  "status": "passed",
+  "started_at": "2026-09-19T18:41:31.822292+00:00",
+  "checks": [
+    {
+      "name": "pytest",
+      "command": [
+        "D:\\Development\\mnemos\\mnemos\\.worktrees\\functional-local-memory\\.venv\\Scripts\\python.exe",
+        "-m",
+        "pytest",
+        "-q",
+        "--basetemp",
+        "C:\\Users\\Ant\\AppData\\Local\\Temp\\mnemos-check-temp-loopback-recovery-v2\\pytest",
+        "--junitxml",
+        "C:\\Users\\Ant\\AppData\\Local\\Temp\\mnemos-package-checks-loopback-recovery-v2\\pytest.xml"
+      ],
+      "status": "passed",
+      "started_at": "2026-09-19T18:41:31.823648+00:00",
+      "exit_code": 0,
+      "finished_at": "2026-09-19T18:44:45.125856+00:00",
+      "counts": {
+        "tests": 1164,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 4
+      }
+    },
+    {
+      "name": "black",
+      "command": [
+        "D:\\Development\\mnemos\\mnemos\\.worktrees\\functional-local-memory\\.venv\\Scripts\\python.exe",
+        "-m",
+        "black",
+        "--check",
+        "."
+      ],
+      "status": "passed",
+      "started_at": "2026-09-19T18:44:45.136289+00:00",
+      "exit_code": 0,
+      "finished_at": "2026-09-19T18:44:52.325504+00:00"
+    },
+    {
+      "name": "mypy",
+      "command": [
+        "D:\\Development\\mnemos\\mnemos\\.worktrees\\functional-local-memory\\.venv\\compat-py310\\Scripts\\python.exe",
+        "-m",
+        "mypy",
+        "."
+      ],
+      "status": "passed",
+      "started_at": "2026-09-19T18:44:52.326640+00:00",
+      "exit_code": 0,
+      "finished_at": "2026-09-19T18:45:02.830961+00:00"
+    },
+    {
+      "name": "javascript",
+      "command": [
+        "node",
+        "--check",
+        "mnemos/ui/app.js"
+      ],
+      "status": "passed",
+      "started_at": "2026-09-19T18:45:02.832075+00:00",
+      "exit_code": 0,
+      "finished_at": "2026-09-19T18:45:03.113784+00:00"
+    },
+    {
+      "name": "build",
+      "command": [
+        "D:\\Development\\mnemos\\mnemos\\.worktrees\\functional-local-memory\\.venv\\Scripts\\python.exe",
+        "-m",
+        "build",
+        "--outdir",
+        "C:\\Users\\Ant\\AppData\\Local\\Temp\\mnemos-package-checks-loopback-recovery-v2\\dist"
+      ],
+      "status": "passed",
+      "started_at": "2026-09-19T18:45:03.114939+00:00",
+      "exit_code": 0,
+      "finished_at": "2026-09-19T18:45:54.931241+00:00"
+    },
+    {
+      "name": "twine",
+      "command": [
+        "D:\\Development\\mnemos\\mnemos\\.worktrees\\functional-local-memory\\.venv\\Scripts\\python.exe",
+        "-m",
+        "twine",
+        "check",
+        "C:\\Users\\Ant\\AppData\\Local\\Temp\\mnemos-package-checks-loopback-recovery-v2\\dist\\mnemos_memory-0.7.0-py3-none-any.whl",
+        "C:\\Users\\Ant\\AppData\\Local\\Temp\\mnemos-package-checks-loopback-recovery-v2\\dist\\mnemos_memory-0.7.0.tar.gz"
+      ],
+      "exit_code": 0,
+      "status": "passed"
+    }
+  ],
+  "runner_sha256": "7b241853adab66b8fd1e0c570d00462a216ffe21dca554fb95ae522ecbedc3ef",
+  "temporary_storage": {
+    "path": "C:\\Users\\Ant\\AppData\\Local\\Temp\\mnemos-check-temp-loopback-recovery-v2",
+    "git_discovery_exit_code": 128,
+    "git_discovery_stderr": "fatal: not a git repository (or any of the parent directories): .git"
+  },
+  "website_input": {
+    "path": "D:\\Development\\mnemos\\web\\index.html",
+    "sha256_before": "f71a4cb5b7004f9ba584f45a03dab61cfc608fed377b1e07b46e2f2bc0b77d4d",
+    "sha256_after": "f71a4cb5b7004f9ba584f45a03dab61cfc608fed377b1e07b46e2f2bc0b77d4d"
+  },
+  "environment_overrides": {
+    "TEMP": "C:\\Users\\Ant\\AppData\\Local\\Temp\\mnemos-check-temp-loopback-recovery-v2",
+    "TMP": "C:\\Users\\Ant\\AppData\\Local\\Temp\\mnemos-check-temp-loopback-recovery-v2",
+    "TMPDIR": "C:\\Users\\Ant\\AppData\\Local\\Temp\\mnemos-check-temp-loopback-recovery-v2",
+    "MNEMOS_WEBSITE_INDEX": "D:\\Development\\mnemos\\web\\index.html"
+  },
+  "updated_at": "2026-09-19T18:45:59.267282+00:00",
+  "artifacts": [
+    {
+      "file": "C:\\Users\\Ant\\AppData\\Local\\Temp\\mnemos-package-checks-loopback-recovery-v2\\dist\\mnemos_memory-0.7.0-py3-none-any.whl",
+      "bytes": 292492,
+      "sha256": "4c8f7d4c83c5dd784b33cec846c8f10edd420e1c1e87a9fe9207275a132fd427"
+    },
+    {
+      "file": "C:\\Users\\Ant\\AppData\\Local\\Temp\\mnemos-package-checks-loopback-recovery-v2\\dist\\mnemos_memory-0.7.0.tar.gz",
+      "bytes": 32017191,
+      "sha256": "62bd23920f6af3fcb3d3762f8b620795f4767449c63e66f196d872a6ad17b14d"
+    }
+  ]
+}

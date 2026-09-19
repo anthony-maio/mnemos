@@ -1,0 +1,85 @@
+"""Archive three completed, source-bound SSD performance repetitions."""
+import hashlib
+import json
+from pathlib import Path
+import shutil
+
+ROOT = Path(__file__).resolve().parent.parent
+TEMP = Path('C:/Users/Ant/AppData/Local/Temp')
+SOURCE = TEMP / 'mnemos-performance-recovery-v1'
+DEST = ROOT / 'docs/validation/2026-09-19/performance-recovery-v1'
+
+def sha(path):
+    return hashlib.sha256(path.read_bytes()).hexdigest()
+
+record = json.loads((SOURCE / 'report.json').read_text())
+assert record['status'] == 'completed' and len(record['runs']) == 3
+assert record['source_commit'] == 'de6cdcf1c05fdad1bb19ed8f52638eff5ed67ae4'
+assert record['helper_sha256'] == sha(ROOT / '.venv/run_local_performance_recovery_v1.py')
+rows = []
+for run in record['runs']:
+    path = SOURCE / f"performance-{run['index']}.json"
+    assert sha(path) == run['artifact_sha256']
+    result = json.loads(path.read_text())
+    recall, capture = result['retrieval'], result['capture']
+    assert result['status'] == 'completed' and result['code_provenance']['consistent']
+    assert recall['query_count'] == 33 and recall['facts'] == 10000
+    assert recall['recall_gate_ms'] == 500 and capture['capture_gate_ms'] == 100
+    assert capture['event_count'] == len(capture['ack_statuses']) == 50
+    assert all(status == 'committed' for status in capture['ack_statuses'])
+    assert recall['sqlite'] == {'journal_mode': 'wal', 'synchronous': '2', 'synchronous_label': 'FULL'}
+    assert result['environment']['storage_location']['volume_anchor'] == 'C:\\'
+    rows.append({'run': run['index'], 'recall_p95_ms': recall['warm_recall']['p95_ms'],
+                 'recall_gate': recall['recall_gate'], 'capture_p95_ms': capture['warm_http_capture']['p95_ms'],
+                 'capture_gate': capture['capture_gate'], 'seed_embedding_ms': recall['observed_seed_embedding_ms'],
+                 'cold_hook_ms': result['cold_cli_hook']['latency_ms']})
+DEST.mkdir(exist_ok=False)
+for path in SOURCE.iterdir():
+    if path.is_file():
+        shutil.copyfile(path, DEST / path.name)
+        assert sha(path) == sha(DEST / path.name)
+for name in ['run_local_performance_recovery_v1.py', Path(__file__).name]:
+    shutil.copyfile(ROOT / '.venv' / name, DEST / (name + '.txt'))
+(DEST / 'summary.json').write_text(json.dumps({'source_commit': record['source_commit'], 'runs': rows}, indent=2) + '\n')
+table = '\n'.join(f"| {r['run']} | {r['recall_p95_ms']:.3f} | {r['recall_gate']} | {r['capture_p95_ms']:.3f} | {r['capture_gate']} |" for r in rows)
+(DEST / 'README.md').write_text(f'''# SSD baseline performance after recovery repairs
+
+Three fresh repetitions on verified source `{record['source_commit']}` pass
+both unchanged baseline latency gates. Each uses 10,000 synthetic stored
+vectors, 33 timed real Ollama query embeddings after three warmup queries,
+and 50 timed durable captures after one warmup event. All 150 captures
+committed. Capture uses the simple 768-dimensional fixture provider;
+cognition calls are zero and all five modules are disabled.
+
+| Run | Recall p95 ms | <= 500 ms | Capture p95 ms | <= 100 ms |
+| --- | --- | --- | --- | --- |
+{table}
+
+All databases and outboxes use explicit C: paths on the workstation SSD;
+SQLite retains WAL/FULL durability. Work directories are retained. The
+[storage diagnostic](../capture-placement-v1/README.md) records the physical
+SSD/HDD distinction. The [package checkpoint](../loopback-recovery-checkpoint-v1/README.md)
+binds the source and installed checks used before these runs.
+
+The first seed embedding took 6,691.178 ms with no models reported loaded
+before execution. Later seeds took 250.613 and 205.151 ms. These are recorded
+separately from warm recall, not discarded observations. The synthetic cold
+Codex adapter subprocess took 722.871, 647.449 and 1,210.466 ms; this is not a
+native Codex conversation or a native hook deadline acceptance result.
+
+The earlier [local performance failure](../performance-local-v1/README.md)
+remains preserved. These new runs change the source and select explicit SSD
+storage on a shared workstation; they do not isolate a causal code-speedup
+factor against that earlier run. They establish baseline latency under these
+recorded conditions, not semantic quality, extraction accuracy, full-module
+latency, native-host reliability, or pilot acceptance. No threshold, durability
+setting, model digest, or scoring dataset was adjusted to obtain this result.
+
+The full raw queries, component timings, commands, model bindings, source
+hashes and helper bytes are archived here. Nested stage timings must not be
+added to full retrieval latency. Evidence indexes preserve exact file bytes.
+''', encoding='ascii')
+(DEST / '.gitattributes').write_text('* -text\n*.log -whitespace\n*.txt -whitespace\n', encoding='ascii')
+files = {p.relative_to(DEST).as_posix(): {'bytes': p.stat().st_size, 'sha256': sha(p)} for p in sorted(DEST.rglob('*')) if p.is_file()}
+(DEST / 'evidence-index.json').write_text(json.dumps({'files': files}, indent=2) + '\n')
+print(json.dumps({'archive': str(DEST), 'files': len(files), 'runs': rows}))

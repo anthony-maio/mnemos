@@ -4,6 +4,30 @@ This record covers the unreleased `wt/functional-local-memory` worktree. It
 separates implemented behavior from acceptance evidence. The original task
 boundaries and thresholds remain in the [implementation plan](../../plans/2026-09-16-functional-local-memory.md).
 
+The latest [recovery checkpoint](../2026-09-19/loopback-recovery-checkpoint-v1/README.md)
+at `de6cdcf` passes 1,160 source tests with four skips, all six source/package
+checks, 474 isolated installed contract cases with two matching skips, and
+seven replay assertions. It removes unused CA-loading overhead from local
+HTTP readiness checks, preserves the existing startup polling deadline, and
+retries atomic descriptor publication when a Windows reader briefly blocks
+replacement. The two preceding full-suite failures remain archived. These
+repairs establish package/recovery evidence, not native-host or quality
+acceptance. T19 now also includes a working [Substack research handoff](../../handoffs/substack-local-memory.md).
+
+Three fresh [SSD baseline performance runs](../2026-09-19/performance-recovery-v1/README.md)
+on `de6cdcf` pass the unchanged gates: warm recall p95 245.214-252.222 ms and
+durable capture p95 28.804-36.062 ms, all 150 captures committed. The fixture
+uses real query embeddings, synthetic stored vectors and capture provider,
+and no cognition calls. Cold timings and earlier failures remain preserved;
+full-module latency, semantic quality and native-host gates remain open.
+
+The local model matrix has stopped: five profiles were incomplete because 50
+observations lacked an accepted correction target after extraction returned
+no durable facts. Baseline and the no-sleep profile completed; completion does
+not establish quality success. The [terminal archive](../2026-09-19/lifecycle-incomplete-local-v2/README.md)
+preserves all seven reports and raw outputs. Supplemental comparisons did not
+start. Earlier references below to running/queued processes are historical.
+
 The [retrieval parity checkpoint](../2026-09-19/retrieval-parity-checkpoint-v1/README.md)
 at `8fc79f0` aligns in-memory exact-tie ordering and empty/nonpositive retrieval
 requests with SQLite. It passes 1,143 source tests with four skips, all six

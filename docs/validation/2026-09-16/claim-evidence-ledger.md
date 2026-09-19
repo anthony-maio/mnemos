@@ -4,6 +4,25 @@ Assessment date: September 19, 2026. This covers the unreleased
 functional-local-memory worktree, not the installed public package or website.
 The capability IDs come from the original implementation plan.
 
+Current package evidence is the [recovery checkpoint](../2026-09-19/loopback-recovery-checkpoint-v1/README.md)
+at `de6cdcf`: 1,160 source passes, four skips, six source/package checks,
+474 installed contract passes, two matching skips, and seven replay assertions.
+The previous readiness-budget and Windows descriptor-publication failures
+are preserved alongside the repaired result. The local model matrix is now
+terminal and incomplete in five profiles; 50 observations had missing
+correction targets following `no_durable_facts` extraction. The
+[terminal lifecycle archive](../2026-09-19/lifecycle-incomplete-local-v2/README.md)
+does not establish T18 success. The encoding/retrieval follow-on comparisons
+never started. Historical running-state descriptions below are superseded.
+
+The [new baseline SSD performance evidence](../2026-09-19/performance-recovery-v1/README.md)
+passes both unchanged latency gates in three repetitions: recall p95
+245.214-252.222 ms and capture p95 28.804-36.062 ms, all 150 acknowledgements
+committed. This uses real query embeddings, 10,000 synthetic stored vectors,
+fixture capture embeddings, WAL/FULL durability and no cognition calls. It
+does not establish semantic quality, full-module latency, native-host deadline
+acceptance, or a causal speedup ratio against runs on different storage.
+
 The [retrieval parity checkpoint](../2026-09-19/retrieval-parity-checkpoint-v1/README.md)
 at `8fc79f0` passes 1,143 source tests, four skips, all six source/package checks,
 440 newly observed installed contract cases, two matching skips, and seven

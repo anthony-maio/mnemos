@@ -1,0 +1,148 @@
+"""Preserve failed and repaired recovery evidence with cognition setup measurements."""
+from datetime import datetime, timezone
+import hashlib
+import json
+from pathlib import Path
+import shutil
+
+ROOT = Path(__file__).resolve().parent.parent
+TEMP = Path('C:/Users/Ant/AppData/Local/Temp')
+DEST = ROOT / 'docs/validation/2026-09-19/loopback-recovery-checkpoint-v1'
+COMMIT = 'de6cdcf1c05fdad1bb19ed8f52638eff5ed67ae4'
+CHECKS = TEMP / 'mnemos-package-checks-loopback-recovery-v2'
+INSTALLED = TEMP / 'mnemos-installed-checks-loopback-recovery-v2'
+
+def read(path):
+    return json.loads(path.read_text(encoding='utf-8'))
+
+def sha(path):
+    return hashlib.sha256(path.read_bytes()).hexdigest()
+
+checks = read(CHECKS / 'verification.json')
+installed = read(INSTALLED / 'installation.json')
+failed = read(TEMP / 'mnemos-package-checks-cognition-context-v1/verification.json')
+before = read(TEMP / 'mnemos-recovery-readiness-v1/report.json')
+after = read(TEMP / 'mnemos-recovery-readiness-v2/report.json')
+cognition = read(TEMP / 'mnemos-cognition-context-comparison-v1/report.json')
+assert checks['status'] == installed['status'] == 'passed'
+assert checks['source_commit'] == installed['commit'] == COMMIT
+assert after['source_commit'] == 'a6c275bc052a83eefa088452d54090c2f0e80675'
+assert sha(TEMP / 'mnemos-source-loopback-recovery-v1/mnemos/client.py') == sha(TEMP / 'mnemos-source-loopback-recovery-v2/mnemos/client.py')
+assert len(checks['checks']) == 6 and all(c['status'] == 'passed' for c in checks['checks'])
+assert failed['status'] == 'failed' and failed['checks'][0]['counts']['failures'] == 1
+assert failed['source_commit'] == before['source_commit'] == cognition['expected_commits']['candidate']
+assert [r['exit_code'] for r in before['runs']] == [1, 1, 0, 0, 0, 1]
+assert [r['exit_code'] for r in after['runs']] == [0] * 6
+assert cognition['status'] == 'completed'
+for arm in cognition['arms']:
+    assert arm['source_tree_sha256_before'] == arm['source_tree_sha256_after']
+    assert arm['server']['accepted_connections'] == arm['server']['finished_connections'] == 13
+    assert not arm['server']['invalid_requests']
+helpers = ['final_checkpoint_checks_v3.py', 'run_combined_installed_check_v27.py',
+           'installed_contract_probe_v4.py', 'verify_claude_stop_replay_v2.py',
+           'profile_recovery_readiness_v1.py', 'profile_recovery_readiness_v2.py',
+           'measure_cognition_context_reuse_v1.py', 'profile_cognition_setup_v1.py', Path(__file__).name]
+for name, recorded in [('run_combined_installed_check_v27.py', installed['runner_sha256']),
+                       ('profile_recovery_readiness_v1.py', before['helper_sha256']),
+                       ('profile_recovery_readiness_v2.py', after['helper_sha256']),
+                       ('measure_cognition_context_reuse_v1.py', cognition['helper_sha256'])]:
+    assert sha(ROOT / '.venv' / name) == recorded
+DEST.mkdir(exist_ok=False)
+
+def copy(source, target):
+    target.parent.mkdir(parents=True, exist_ok=True)
+    shutil.copyfile(source, target)
+    assert sha(source) == sha(target)
+
+for label, source in [('source-checks', CHECKS), ('installed-checks', INSTALLED),
+                      ('failed-source-checks', TEMP / 'mnemos-package-checks-cognition-context-v1'),
+                      ('failed-sharing-source-checks', TEMP / 'mnemos-package-checks-loopback-recovery-v1'),
+                      ('cognition-comparison', TEMP / 'mnemos-cognition-context-comparison-v1'),
+                      ('cognition-prototype', TEMP / 'mnemos-cognition-setup-v1')]:
+    for file in source.iterdir():
+        if file.is_file():
+            copy(file, DEST / label / file.name)
+for version in (1, 2):
+    source = TEMP / f'mnemos-recovery-readiness-v{version}'
+    for file in source.rglob('*'):
+        if file.is_file() and ('fixtures' not in file.relative_to(source).parts):
+            copy(file, DEST / f'readiness-v{version}' / file.relative_to(source))
+for name in helpers:
+    copy(ROOT / '.venv' / name, DEST / (name + '.txt'))
+counts = checks['checks'][0]['counts']
+outcomes = read(INSTALLED / 'contract.json')['case_summary']['actual_outcomes']
+assert len(installed['probe']['assertions']) == 7 and all(installed['probe']['assertions'].values())
+binding = {'source_commit': COMMIT, 'runtime_repair_commits': ['93a109a', 'de6cdcf'],
+           'archived_at': datetime.now(timezone.utc).isoformat(),
+           'focused_tests': {'loopback': {'passed': 51, 'skipped': 2}, 'windows_sharing': {'passed': 44, 'skipped': 0}},
+           'regression_red': 'Three failures: certificate loading in both routes and premature failure after competing launcher exit.',
+           'extra_check_note': 'Explicitly checking the normally excluded test file with mypy produced private-import export errors, including existing subprocess references. The configured full-project mypy check is recorded separately.',
+           'source_verification': str(CHECKS / 'verification.json'),
+           'installed_verification': str(INSTALLED / 'installation.json'),
+           'limitations': 'Synthetic transport and recovery evidence, not end-to-end model latency, host capture, or lifecycle quality acceptance.'}
+(DEST / 'checkpoint-binding.json').write_text(json.dumps(binding, indent=2) + '\n', encoding='utf-8')
+(DEST / 'README.md').write_text(f'''# Loopback recovery and cognition setup checkpoint
+
+Verified source `{COMMIT}` includes runtime repair `93a109a` and the requested
+Substack research/writing handoff. It passes {counts['tests'] - counts['skipped']}
+source tests with {counts['skipped']} skips, Black, configured strict mypy,
+JavaScript syntax, build and Twine. The isolated wheel passes
+{outcomes['passed']} contract cases with {outcomes['skipped']} matching skips
+and seven synthetic replay assertions. Package origins and per-case outcomes
+are bound in the archived installed reports.
+
+The previous `d0a3440` full suite failed one owner-recovery test: 1,150 passed,
+one failed, four skipped. Five fresh-process repetitions reproduced two
+failures with AsyncClient construction consuming 265-268 ms before the
+250 ms health probe could contact the healthy owner. A separate 100 ms
+construction-delay control also failed. Those raw results remain here.
+
+Local HTTP routes now use a verifying SSLContext without loading certificate
+bundles. They still restrict hosts to loopback, ignore environment proxies,
+disable redirects, and send authenticated requests. Certificate verification
+is not disabled. An exited competing launcher no longer ends readiness polling
+for the unchanged owner before the original startup deadline. Missing
+descriptors and authorization/schema errors retain their failure behavior.
+Three regression cases failed before the repair and passed afterward. The
+focused service/host run passed 51 tests with two platform skips. Review found
+no blockers.
+
+The next full run at `a6c275b` passed 1,153 tests but failed descriptor
+publication when a competing Windows reader held the old file open. The
+held-reader regression reproduced the exact WinError 5. Source `de6cdcf`
+retries only atomic replacement for Windows errors 5, 32 or 33, for at most
+250 ms and no longer than the remaining service startup budget. It never
+deletes the old destination or changes permissions. A persistent lock keeps
+the original bytes and removes the temporary file; unrelated errors are
+immediate. Two new cases failed before the repair. Focused recovery, service
+and Windows-permission tests passed all 44 cases afterward. Both failed full
+runs are archived alongside the successful successor.
+
+The unchanged recovery test at `a6c275b` passed all five new repetitions, plus the separate
+100 ms delay control. Uninjected health probes took 37.630-49.759 ms and full
+requests took 48.461-63.012 ms. This is a bounded diagnostic, not a guarantee
+that cold imports or arbitrary system contention fit a 250 ms wall-clock bound.
+The final checkpoint has byte-identical client code; its additional service
+publication repair is covered by the new full and installed checks.
+
+This checkpoint also verifies the earlier cognition-provider change from
+`d0a3440`: reuse the default verifying trust context per provider while keeping
+request clients bound to their own event loops. Custom SSL_CERT_FILE or
+SSL_CERT_DIR settings bypass the default cache. The unchanged-source HTTP/1.0
+fixture measured warm median 234.416 ms at `8fc79f0` versus 6.893 ms at
+`d0a3440`, with 12 warm calls per arm and separate asyncio.run per call.
+Cold calls were 303.906 and 244.903 ms. Both arms opened and finished all 13
+connections. The earlier injection-based prototype is separately retained.
+These measurements do not include Ollama inference or TLS handshakes and do
+not establish full recall latency acceptance.
+
+The failed full source run, diagnostics, raw logs, JUnit reports and helper
+bytes are preserved. Build distributions and disposable databases remain at
+their recorded external locations. Real-model lifecycle completion, native
+host gaps, latency gates, the pilot and final claims remain separate work.
+''', encoding='ascii')
+(DEST / '.gitattributes').write_text('* -text\n*.log -whitespace\n*.txt -whitespace\n', encoding='ascii')
+files = {p.relative_to(DEST).as_posix(): {'bytes': p.stat().st_size, 'sha256': sha(p)}
+         for p in sorted(DEST.rglob('*')) if p.is_file()}
+(DEST / 'evidence-index.json').write_text(json.dumps({'files': files}, indent=2) + '\n', encoding='ascii')
+print(json.dumps({'archive': str(DEST), 'files': len(files)}))
