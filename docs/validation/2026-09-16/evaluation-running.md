@@ -8,13 +8,26 @@ reports marked `incomplete`. Each records 600 observations: full has 589
 complete and 11 partial, no-surprisal has 592 complete and eight partial,
 and length-noise has 585 complete and 15 partial. That is 34 partial rows
 out of 1,800; complete-only metrics cannot establish overall acceptance.
-Retrieval started at 22:24:30 UTC and remains running. Final retrieval
-results remain pending. The [terminal encoding archive](../2026-09-19/encoding-terminal-local-v1/README.md)
+Retrieval started at 22:24:30 UTC and finished at 23:38:37 UTC with an
+incomplete manifest. It recorded 589 complete and 11 partial session
+observations, 900 query rows, and 3,600 strategy results. The [terminal
+retrieval archive](../2026-09-19/retrieval-terminal-local-v1/README.md)
+preserves the reports, denominators, and conditional paired differences. All
+three alternative strategies have zero paired quality delta against full on
+the eligible rows; this does not establish complete-run quality acceptance.
+The [terminal encoding archive](../2026-09-19/encoding-terminal-local-v1/README.md)
 preserves all six report/raw-output files, denominators, and conditional
 paired differences. It does not establish complete-run quality acceptance;
 the original queue's unstarted follow-ons below
 remain historical failures. The source, dataset, models, and protocols remain
 frozen. Concurrent CPU-only development work qualifies timing comparisons.
+
+The first [native Hermes lifecycle attempt](../2026-09-19/hermes-native-lifecycle-local-v1/README.md)
+failed in teach because the asserted target omitted its final period and an
+auxiliary title-generation request had null options. The [successor Hermes
+discovery preflight](../2026-09-19/hermes-native-discovery-preflight-v3/README.md)
+passes import and six-tool discovery without inference or service requests;
+the successor lifecycle remains a separate pending run.
 
 The newer [Hermes continuity package](../2026-09-19/hermes-continuity-checkpoint-v1/README.md)
 at `78c63ed` passes 1,172 source tests (four skips), all six package checks,

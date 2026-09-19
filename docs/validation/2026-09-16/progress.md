@@ -24,6 +24,14 @@ terminal encoding results. A prospective three-host protocol specifies the
 missing Codex/Claude-to-Hermes recall and shared correction/forget phases.
 It is NOT RUN and does not replace the earlier bounded host records.
 
+The [Hermes successor discovery preflight](../2026-09-19/hermes-native-discovery-preflight-v3/README.md)
+passes the actual pinned host import and six-tool discovery in 2.493 seconds,
+without inference, service requests, or memory mutation. The v2 trace/queue
+and driver checks total 33 focused tests, with configured mypy covering 90
+files. This is configuration evidence only. The successor lifecycle run is
+not yet complete, and the failed v1 teach archive remains authoritative for
+the earlier native model attempt.
+
 ## September 19: persisted Hermes occurrence identity
 
 The latest [Hermes native identity checkpoint](../2026-09-19/hermes-native-identity-checkpoint-v1/README.md)

@@ -1,0 +1,9 @@
+# Native Hermes lifecycle failure archive
+
+This archive preserves the first native Hermes model lifecycle attempt on September 19, 2026. The terminal status is `failed`; the runner stopped at the teach phase and did not run correction, forget, restart, or final recall.
+
+The teach conversation did call `mnemos_remember` and `mnemos_job_status`. The remember response had `status: committed`, while the returned job had `processing_status: pending`. The phase still failed its acceptance gate. The requested asserted content was `The project release label is cedar-ridge-731.` with a final period, while the native request used `The project release label is cedar-ridge-731` without that period. The captured native conversation also included an auxiliary title-generation model request whose `options` were null. The report records `single_asserted_target: false` and `real_pinned_model_request: false`; the runner therefore raises `ValueError: Native lifecycle gate failed in teach`.
+
+The archive binds source commit `3730fd96c3c50c7ef6179b2b9f70414ab5a8fb17`, runner commit `bc91bb03c5031cb67b6d5a4e7cd67c86fb5a7c0e`, Hermes commit `14a346345486418aa85ed6526549412ee2665ade`, and wheel SHA-256 `3772398a8e11b92d2cffd285b0571a733a9fd63cbdf932c30519d933cf0a6dd2`. The teach phase took 24.4208504 seconds; cold load took 88.1294197 seconds. These timings are observations of this failed attempt, not host latency gates.
+
+This failure remains evidence about the native request and gate contract. It does not establish successful native teaching, safe model pinning, extraction quality, correction, forgetting, restart recovery, or daily-use readiness. The later successor remains a separate observation. See [report.json](report.json), [failure.txt](failure.txt), [teach/trace.jsonl](teach/trace.jsonl), and [evidence-index.json](evidence-index.json).

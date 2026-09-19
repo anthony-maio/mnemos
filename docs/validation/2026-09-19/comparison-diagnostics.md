@@ -22,6 +22,24 @@ quality or complete-run acceptance. The ungated comparison is also conditional
 and does not establish a clear benefit from surprisal. No defaults or frozen
 criteria change on the basis of these results.
 
+## Terminal retrieval comparison
+
+The [retrieval terminal archive](retrieval-terminal-local-v1/README.md)
+preserves an incomplete four-strategy comparison. It contains 900 query rows
+and 3,600 strategy results: 300 answerable, 300 no-answer, and 150 each for
+the semantic and state state-pair kinds. The run has 589 complete and 11
+partial session observations. The 11 partial rows all report a missing
+accepted correction target; the 19 unverified quality rows remain excluded.
+
+Hybrid, lexical, and vector are each compared with full as treatment minus
+full. Every paired quality estimate is 0.0 with a 95% interval of [0.0, 0.0].
+Eligible counts are 289/300 answerable, 300/300 no-answer, and 146/150 for
+each state-pair kind. The underlying hit rates are 106/289, 278/300, and
+83/146 respectively. These are conditional quality diagnostics. Coverage is
+incomplete, the quality gate is NOT RUN, and human acceptance remains not run.
+Latency is descriptive only under the protocol; no latency gate or confidence
+interval is claimed.
+
 ## Legacy synthetic replacement benchmark
 
 The [checkpoint archive](embedding-client-checkpoint-v1/README.md) retains

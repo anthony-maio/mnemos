@@ -1,0 +1,70 @@
+"""Preserve terminal retrieval comparison bytes and conditional results."""
+from pathlib import Path
+from collections import Counter
+import hashlib
+import json
+import shutil
+import subprocess
+import sys
+import zipfile
+
+repo = Path(__file__).resolve().parents[1]
+temp = Path('C:/Users/Ant/AppData/Local/Temp')
+source = repo/'docs/validation/2026-09-19/retrieval-comparison-local-v2'
+work = temp/'mnemos-retrieval-comparison-local-v2'
+queue = temp/'mnemos-local-supplemental-v2'
+snapshot = temp/'mnemos-source-retrieval-comparison-v1'
+output = repo/'docs/validation/2026-09-19/retrieval-terminal-local-v1'
+assert not output.exists()
+def digest(raw): return hashlib.sha256(raw).hexdigest()
+def read(path): return json.loads(path.read_bytes())
+state = read(queue/'state.json')
+stage = next(row for row in state['stages'] if row['name']=='retrieval')
+assert state['status']=='finished_with_incomplete' and stage['exit_code']==0
+manifest = read(work/'manifest.json')
+report = read(source/'full.json')
+summary = read(source/'retrieval-comparison-summary.json')
+binding = manifest['binding']
+assert report['status']==manifest['status']=='incomplete'
+assert summary['binding']==binding
+assert subprocess.check_output(['git','rev-parse','HEAD'],cwd=snapshot,text=True).strip()==state['source_commit']
+assert not subprocess.check_output(['git','status','--porcelain','--untracked-files=no'],cwd=snapshot,text=True).strip()
+sys.path.insert(0,str(snapshot))
+from benchmarks.local_memory.dev_smoke import _code_provenance
+code_hash, files = _code_provenance(snapshot)
+assert code_hash==binding['code_sha256'] and files==manifest['code_files']
+for key in ('dataset','protocol'):
+    assert digest(Path(binding[key]['path']).read_bytes())==binding[key]['sha256']
+assert report['model_revisions']==[state['model_digests']['qwen3.5:9b']]
+assert report['embedding_revisions']==[state['model_digests']['nomic-embed-text:latest']]
+members = {name:(source/name).read_bytes() for name in ('full.json','full.raw-outputs.jsonl','retrieval-comparison-summary.json')}
+for key,name in [('full_report','full.json'),('full_raw_outputs','full.raw-outputs.jsonl')]:
+    assert summary['artifact_binding'][key]['sha256']==digest(members[name])
+assert manifest['full_report_sha256']==digest(members['full.json'])
+assert manifest['full_raw_outputs_sha256']==digest(members['full.raw-outputs.jsonl'])
+assert manifest['summary_sha256']==digest(members['retrieval-comparison-summary.json'])
+rows=report['raw_outputs']
+assert rows==[json.loads(line) for line in members['full.raw-outputs.jsonl'].splitlines()]
+assert len(rows)==600
+counts=Counter(row['execution_status'] for row in rows)
+errors=Counter(e['error'] for row in rows for e in row['raw_output'].get('errors',[]))
+queries=[q for row in rows for q in row['raw_output']['retrieval_comparisons']]
+assert len(queries)==900
+assert all(set(q['strategies'])=={'full','hybrid','lexical','vector'} for q in queries)
+output.mkdir()
+(output/'.gitattributes').write_bytes(b'** -text -whitespace\n')
+with zipfile.ZipFile(output/'retrieval-reports.zip','x',zipfile.ZIP_DEFLATED,compresslevel=6) as archive:
+    for name,data in members.items(): archive.writestr(name,data)
+with zipfile.ZipFile(output/'retrieval-reports.zip') as archive:
+    assert archive.testzip() is None
+    for name,data in members.items(): assert archive.read(name)==data==(source/name).read_bytes()
+(output/'zip-members.json').write_text(json.dumps({n:{'bytes':len(d),'sha256':digest(d)} for n,d in members.items()},indent=2)+'\n',encoding='utf-8')
+for name,path in [('manifest.json',work/'manifest.json'),('full.manifest.json',work/'full.manifest.json'),('queue-state-at-archive.json',queue/'state.json'),('retrieval-comparison-summary.json',source/'retrieval-comparison-summary.json')]:
+    shutil.copyfile(path,output/name)
+for stream in ('stdout','stderr'): shutil.copyfile(queue/f'retrieval.{stream}.log',output/f'retrieval.{stream}.log')
+shutil.copyfile(Path(__file__),output/(Path(__file__).name+'.txt'))
+derived={'source_commit':state['source_commit'],'status':'incomplete','stage':stage,'execution_counts':dict(counts),'errors':dict(errors),'query_rows':len(queries),'strategy_results':sum(len(q['strategies']) for q in queries),'summary':summary['summary'],'original_gates':report['gates'],'timing_note':summary['raw_timing_note'],'interpretation':'Conditional paired quality diagnostics; incomplete coverage and original unverified/not-run gates remain. No quality improvement or isolated latency claim.'}
+(output/'summary.json').write_text(json.dumps(derived,indent=2)+'\n',encoding='utf-8')
+index={p.name:{'bytes':p.stat().st_size,'sha256':digest(p.read_bytes())} for p in sorted(output.iterdir()) if p.is_file()}
+(output/'evidence-index.json').write_text(json.dumps({'files':index},indent=2)+'\n',encoding='utf-8')
+print(json.dumps({'archive':str(output),'zip_bytes':(output/'retrieval-reports.zip').stat().st_size,'counts':dict(counts),'errors':dict(errors),'files':len(index)}))

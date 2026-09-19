@@ -4,6 +4,13 @@ Updated September 19, 2026 for the unreleased functional-local-memory worktree. 
 
 The latest [source/package checkpoint](validation/2026-09-19/hermes-native-identity-checkpoint-v1/README.md) is `3730fd9`, with 1,247 source passes, 530 installed passes, four/two respective skips, and seven replay assertions. It preserves native Hermes message identity through rewind and rejects changed-payload retries under the same native ID. It includes the earlier correction acknowledgement repair. The earlier [Hermes API checkpoint](validation/2026-09-19/hermes-lifecycle-checkpoints-v1/README.md) at `5e4b057` exercises all six scoped tools through the actual Windows/WSL bridge, growing transcript replay, provider recreation, and extraction-ineligible fallback receipts. That check uses fixture providers, with no model conversation or service outage. The [mixed-host replay probe](validation/2026-09-18/native-crosshost-recovery-v4/README.md) verifies the `fc72cc2` installed wheel and clean plugin snapshot. Earlier lifecycle results retain their original source bindings; a newer package does not silently rerun those observations.
 
+The first native model-driven Hermes lifecycle attempt is preserved as a
+[failed terminal archive](validation/2026-09-19/hermes-native-lifecycle-local-v1/README.md).
+Its teach phase stopped because the requested asserted content omitted the
+final period and an auxiliary title-generation request had null options. The
+later patched-host checks are separate evidence and do not convert this
+installed native failure into full lifecycle acceptance.
+
 | Client | Implemented integration | Observed native evidence | Remaining acceptance |
 | --- | --- | --- | --- |
 | Claude Code 2.1.191 | Command hooks, transcript deltas, context injection, MCP tools, and extraction-ineligible provisional capture when native identity is missing | [Shared lifecycle v9](validation/2026-09-18/native-codex-claude-continuity-v9/README.md) on `5af3d15` retrieved and corrected a Codex-taught fact, then reviewed and deleted the target plus five selected copies. [Claude lifecycle v18](validation/2026-09-17/native-claude-lifecycle-v18/README.md) on `dedfcfd` passed 15 bounded fact-lifecycle criteria. Mixed-host v4 on `fc72cc2` verified native queue replay and restart. | Degraded identity diagnostics, complete capture, native real-model extraction, and general startup reliability remain open. |

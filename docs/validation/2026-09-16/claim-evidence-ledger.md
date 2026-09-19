@@ -36,7 +36,13 @@ never started in that queue. The [independent v2 queue](../2026-09-19/supplement
 has since started under unchanged bindings. Its [encoding comparison](../2026-09-19/encoding-terminal-local-v1/README.md)
 is terminal with 34 partial observations out of 1,800. All automatic-policy
 decisions were observed, but complete-only quality differences remain
-conditional diagnostics. Retrieval results are pending.
+conditional diagnostics. Retrieval is now terminal and incomplete; its
+conditional paired diagnostics are preserved separately.
+The [retrieval terminal archive](../2026-09-19/retrieval-terminal-local-v1/README.md)
+is also incomplete: 589 of 600 session observations are complete, with 900
+query rows and 3,600 strategy results. Hybrid, lexical, and vector have zero
+paired quality delta against full on eligible rows. Neither comparison closes
+quality acceptance.
 Historical running-state descriptions below are superseded.
 
 The [new baseline SSD performance evidence](../2026-09-19/performance-recovery-v1/README.md)

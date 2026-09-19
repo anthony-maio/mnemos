@@ -1,0 +1,30 @@
+"""Archive the terminal native Hermes v1 failure without runtime credentials."""
+from pathlib import Path
+import hashlib
+import json
+import shutil
+
+repo=Path(__file__).resolve().parents[1]
+source=Path('C:/Users/Ant/AppData/Local/Temp/mnemos-hermes-native-lifecycle-local-v1')
+output=repo/'docs/validation/2026-09-19/hermes-native-lifecycle-local-v1'
+assert not output.exists()
+report=json.loads((source/'report.json').read_bytes())
+assert report['status']=='failed' and report['phases'][0]['exit_code']==0
+assert not (source/'runtime.json').exists()
+names=['report.json','failure.txt','controls.json','teach-state.json','cold-load.json','models-loaded.json',
+       'host-compatibility.patch','hermes_lifecycle_run.py.txt','hermes_native_bootstrap.py.txt','hermes_trace.py.txt',
+       '2026-09-19-hermes-native-lifecycle-protocol-v1.md','teach/trace.jsonl','teach/stdout.log','teach/stderr.log','teach/query.txt','teach/config.json']
+for relative,digest in report['input_hashes'].items():
+    name=Path(relative).name
+    if name.endswith('.py'): name += '.txt'
+    assert hashlib.sha256((source/name).read_bytes()).hexdigest()==digest
+output.mkdir()
+(output/'.gitattributes').write_bytes(b'** -text -whitespace\n')
+for name in names:
+    target=output/name
+    target.parent.mkdir(parents=True,exist_ok=True)
+    shutil.copyfile(source/name,target)
+shutil.copyfile(Path(__file__),output/(Path(__file__).name+'.txt'))
+index={p.relative_to(output).as_posix():{'bytes':p.stat().st_size,'sha256':hashlib.sha256(p.read_bytes()).hexdigest()} for p in sorted(output.rglob('*')) if p.is_file()}
+(output/'evidence-index.json').write_text(json.dumps({'files':index},indent=2)+'\n',encoding='utf-8')
+print(json.dumps({'archive':str(output),'files':len(index),'phases':report['phases']}))

@@ -1,0 +1,512 @@
+{
+  "artifact_binding": {
+    "full_raw_outputs": {
+      "bytes": 22741630,
+      "path": "D:\\Development\\mnemos\\mnemos\\.worktrees\\functional-local-memory\\docs\\validation\\2026-09-19\\retrieval-comparison-local-v2\\full.raw-outputs.jsonl",
+      "sha256": "680305479d6d072a954649181dfc83a2ace19ba81d6c6a921bb0cd5885ead9f0"
+    },
+    "full_report": {
+      "bytes": 40260954,
+      "path": "D:\\Development\\mnemos\\mnemos\\.worktrees\\functional-local-memory\\docs\\validation\\2026-09-19\\retrieval-comparison-local-v2\\full.json",
+      "sha256": "9553827a7c5f8b14079607c7fb5b38a4c40457d8987ad41efac1b825a028b8de"
+    }
+  },
+  "binding": {
+    "code_sha256": "72ffde69d89b4f9fa024fea2f85d3036dde84861de51d8677a50b7dd41412d90",
+    "dataset": {
+      "bytes": 407891,
+      "path": "C:\\Users\\Ant\\AppData\\Local\\Temp\\mnemos-source-retrieval-comparison-v1\\benchmarks\\local_memory\\datasets\\local-memory-heldout-v3.jsonl",
+      "sha256": "036fa51ee13271a85a14a62a2fe4ef65d13eaeb290331fe325aa5bf32ce893fc",
+      "version": "local-memory-heldout-v3"
+    },
+    "namespace": "t18-retrieval-comparison-v1",
+    "options": {
+      "embedding_model": "nomic-embed-text:latest",
+      "endpoint": "http://127.0.0.1:11434",
+      "environment": {
+        "httpx": "0.28.1",
+        "machine": "AMD64",
+        "numpy": "2.5.3",
+        "platform": "Windows-11-10.0.26200-SP0",
+        "processor": "Intel64 Family 6 Model 151 Stepping 2, GenuineIntel",
+        "pydantic": "2.13.5",
+        "python": "3.13.7",
+        "sqlite": "3.50.4",
+        "sqlite-vec": "0.1.9"
+      },
+      "max_context_tokens": 1200,
+      "max_tokens": 512,
+      "model": "qwen3.5:9b",
+      "protocol_sha256": "3220dda551ddaf2774296107f2c8872ee7a7db99c71d05f8096ca46aaf3aa1ec",
+      "protocol_version": "retrieval-comparison-protocol-v1",
+      "repetitions": 3,
+      "strategies": {
+        "full": {
+          "profile": "production"
+        },
+        "hybrid": {
+          "ranking": "current_union_cosine"
+        },
+        "lexical": {
+          "embeddings": false,
+          "ranking": "bm25",
+          "semantic_floor": null
+        },
+        "vector": {
+          "candidate_pool": "min(max(k*6,20),max_candidates)",
+          "semantic_floor": 0.2
+        }
+      },
+      "temperature": 0.0,
+      "think": false,
+      "timeout_seconds": 120.0,
+      "top_k": 5
+    },
+    "options_sha256": "5fc18572d7f506759841c36bbce5c3c49b8f3aa64de7f0d9e5ba8f8771df32b6",
+    "protocol": {
+      "path": "C:\\Users\\Ant\\AppData\\Local\\Temp\\mnemos-source-retrieval-comparison-v1\\docs\\plans\\2026-09-18-retrieval-comparison-protocol-v1.md",
+      "sha256": "3220dda551ddaf2774296107f2c8872ee7a7db99c71d05f8096ca46aaf3aa1ec",
+      "version": "retrieval-comparison-protocol-v1"
+    },
+    "strategies": {
+      "full": {
+        "profile": "production"
+      },
+      "hybrid": {
+        "ranking": "current_union_cosine"
+      },
+      "lexical": {
+        "embeddings": false,
+        "ranking": "bm25",
+        "semantic_floor": null
+      },
+      "vector": {
+        "candidate_pool": "min(max(k*6,20),max_candidates)",
+        "semantic_floor": 0.2
+      }
+    },
+    "strategy_config_sha256": "8ecbc07457e32937cbc23674151c5fbb1aa3242739ef2c6558914a4d109e4998"
+  },
+  "raw_timing_note": "Latency is descriptive only; no latency confidence interval or gate is claimed.",
+  "schema_version": "local-memory-retrieval-comparison-summary-v1",
+  "summary": {
+    "comparison_rows": 900,
+    "coverage_status": "incomplete",
+    "expected_rows": 900,
+    "missing_rows": 0,
+    "provenance": {
+      "eligible_observations": 881,
+      "human_acceptance": "not_run",
+      "quality_gate": "NOT RUN",
+      "source_label": "synthetic_heldout_fixture",
+      "unverified_observations": 19
+    },
+    "quality_kinds": {
+      "answerable": {
+        "expected_count": 300,
+        "missing_row_count": 0,
+        "observed_rows": 300,
+        "paired_to_full": {
+          "hybrid": {
+            "cluster_count": 99,
+            "confidence": 0.95,
+            "eligible_count": 289,
+            "estimate": 0.0,
+            "lower": 0.0,
+            "method": "paired_bootstrap",
+            "missing_count": 11,
+            "sample_count": 289,
+            "status": "MEASURED",
+            "upper": 0.0
+          },
+          "lexical": {
+            "cluster_count": 99,
+            "confidence": 0.95,
+            "eligible_count": 289,
+            "estimate": 0.0,
+            "lower": 0.0,
+            "method": "paired_bootstrap",
+            "missing_count": 11,
+            "sample_count": 289,
+            "status": "MEASURED",
+            "upper": 0.0
+          },
+          "vector": {
+            "cluster_count": 99,
+            "confidence": 0.95,
+            "eligible_count": 289,
+            "estimate": 0.0,
+            "lower": 0.0,
+            "method": "paired_bootstrap",
+            "missing_count": 11,
+            "sample_count": 289,
+            "status": "MEASURED",
+            "upper": 0.0
+          }
+        },
+        "strategies": {
+          "full": {
+            "hit_interval": {
+              "cluster_count": null,
+              "confidence": 0.95,
+              "estimate": 0.36678200692041524,
+              "lower": 0.3133052725986527,
+              "method": "wilson",
+              "sample_count": 289,
+              "upper": 0.42375381627332487
+            },
+            "measured_count": 289,
+            "missing_count": 11,
+            "status": "MEASURED"
+          },
+          "hybrid": {
+            "hit_interval": {
+              "cluster_count": null,
+              "confidence": 0.95,
+              "estimate": 0.36678200692041524,
+              "lower": 0.3133052725986527,
+              "method": "wilson",
+              "sample_count": 289,
+              "upper": 0.42375381627332487
+            },
+            "measured_count": 289,
+            "missing_count": 11,
+            "status": "MEASURED"
+          },
+          "lexical": {
+            "hit_interval": {
+              "cluster_count": null,
+              "confidence": 0.95,
+              "estimate": 0.36678200692041524,
+              "lower": 0.3133052725986527,
+              "method": "wilson",
+              "sample_count": 289,
+              "upper": 0.42375381627332487
+            },
+            "measured_count": 289,
+            "missing_count": 11,
+            "status": "MEASURED"
+          },
+          "vector": {
+            "hit_interval": {
+              "cluster_count": null,
+              "confidence": 0.95,
+              "estimate": 0.36678200692041524,
+              "lower": 0.3133052725986527,
+              "method": "wilson",
+              "sample_count": 289,
+              "upper": 0.42375381627332487
+            },
+            "measured_count": 289,
+            "missing_count": 11,
+            "status": "MEASURED"
+          }
+        }
+      },
+      "no_answer": {
+        "expected_count": 300,
+        "missing_row_count": 0,
+        "observed_rows": 300,
+        "paired_to_full": {
+          "hybrid": {
+            "cluster_count": 100,
+            "confidence": 0.95,
+            "eligible_count": 300,
+            "estimate": 0.0,
+            "lower": 0.0,
+            "method": "paired_bootstrap",
+            "missing_count": 0,
+            "sample_count": 300,
+            "status": "MEASURED",
+            "upper": 0.0
+          },
+          "lexical": {
+            "cluster_count": 100,
+            "confidence": 0.95,
+            "eligible_count": 300,
+            "estimate": 0.0,
+            "lower": 0.0,
+            "method": "paired_bootstrap",
+            "missing_count": 0,
+            "sample_count": 300,
+            "status": "MEASURED",
+            "upper": 0.0
+          },
+          "vector": {
+            "cluster_count": 100,
+            "confidence": 0.95,
+            "eligible_count": 300,
+            "estimate": 0.0,
+            "lower": 0.0,
+            "method": "paired_bootstrap",
+            "missing_count": 0,
+            "sample_count": 300,
+            "status": "MEASURED",
+            "upper": 0.0
+          }
+        },
+        "strategies": {
+          "full": {
+            "hit_interval": {
+              "cluster_count": null,
+              "confidence": 0.95,
+              "estimate": 0.9266666666666666,
+              "lower": 0.8914686583612187,
+              "method": "wilson",
+              "sample_count": 300,
+              "upper": 0.9510760061766727
+            },
+            "measured_count": 300,
+            "missing_count": 0,
+            "status": "MEASURED"
+          },
+          "hybrid": {
+            "hit_interval": {
+              "cluster_count": null,
+              "confidence": 0.95,
+              "estimate": 0.9266666666666666,
+              "lower": 0.8914686583612187,
+              "method": "wilson",
+              "sample_count": 300,
+              "upper": 0.9510760061766727
+            },
+            "measured_count": 300,
+            "missing_count": 0,
+            "status": "MEASURED"
+          },
+          "lexical": {
+            "hit_interval": {
+              "cluster_count": null,
+              "confidence": 0.95,
+              "estimate": 0.9266666666666666,
+              "lower": 0.8914686583612187,
+              "method": "wilson",
+              "sample_count": 300,
+              "upper": 0.9510760061766727
+            },
+            "measured_count": 300,
+            "missing_count": 0,
+            "status": "MEASURED"
+          },
+          "vector": {
+            "hit_interval": {
+              "cluster_count": null,
+              "confidence": 0.95,
+              "estimate": 0.9266666666666666,
+              "lower": 0.8914686583612187,
+              "method": "wilson",
+              "sample_count": 300,
+              "upper": 0.9510760061766727
+            },
+            "measured_count": 300,
+            "missing_count": 0,
+            "status": "MEASURED"
+          }
+        }
+      },
+      "state_pair_semantic": {
+        "expected_count": 150,
+        "missing_row_count": 0,
+        "observed_rows": 150,
+        "paired_to_full": {
+          "hybrid": {
+            "cluster_count": 50,
+            "confidence": 0.95,
+            "eligible_count": 146,
+            "estimate": 0.0,
+            "lower": 0.0,
+            "method": "paired_bootstrap",
+            "missing_count": 4,
+            "sample_count": 146,
+            "status": "MEASURED",
+            "upper": 0.0
+          },
+          "lexical": {
+            "cluster_count": 50,
+            "confidence": 0.95,
+            "eligible_count": 146,
+            "estimate": 0.0,
+            "lower": 0.0,
+            "method": "paired_bootstrap",
+            "missing_count": 4,
+            "sample_count": 146,
+            "status": "MEASURED",
+            "upper": 0.0
+          },
+          "vector": {
+            "cluster_count": 50,
+            "confidence": 0.95,
+            "eligible_count": 146,
+            "estimate": 0.0,
+            "lower": 0.0,
+            "method": "paired_bootstrap",
+            "missing_count": 4,
+            "sample_count": 146,
+            "status": "MEASURED",
+            "upper": 0.0
+          }
+        },
+        "strategies": {
+          "full": {
+            "hit_interval": {
+              "cluster_count": null,
+              "confidence": 0.95,
+              "estimate": 0.5684931506849316,
+              "lower": 0.4874149589329809,
+              "method": "wilson",
+              "sample_count": 146,
+              "upper": 0.6460594489951123
+            },
+            "measured_count": 146,
+            "missing_count": 4,
+            "status": "MEASURED"
+          },
+          "hybrid": {
+            "hit_interval": {
+              "cluster_count": null,
+              "confidence": 0.95,
+              "estimate": 0.5684931506849316,
+              "lower": 0.4874149589329809,
+              "method": "wilson",
+              "sample_count": 146,
+              "upper": 0.6460594489951123
+            },
+            "measured_count": 146,
+            "missing_count": 4,
+            "status": "MEASURED"
+          },
+          "lexical": {
+            "hit_interval": {
+              "cluster_count": null,
+              "confidence": 0.95,
+              "estimate": 0.5684931506849316,
+              "lower": 0.4874149589329809,
+              "method": "wilson",
+              "sample_count": 146,
+              "upper": 0.6460594489951123
+            },
+            "measured_count": 146,
+            "missing_count": 4,
+            "status": "MEASURED"
+          },
+          "vector": {
+            "hit_interval": {
+              "cluster_count": null,
+              "confidence": 0.95,
+              "estimate": 0.5684931506849316,
+              "lower": 0.4874149589329809,
+              "method": "wilson",
+              "sample_count": 146,
+              "upper": 0.6460594489951123
+            },
+            "measured_count": 146,
+            "missing_count": 4,
+            "status": "MEASURED"
+          }
+        }
+      },
+      "state_pair_state": {
+        "expected_count": 150,
+        "missing_row_count": 0,
+        "observed_rows": 150,
+        "paired_to_full": {
+          "hybrid": {
+            "cluster_count": 50,
+            "confidence": 0.95,
+            "eligible_count": 146,
+            "estimate": 0.0,
+            "lower": 0.0,
+            "method": "paired_bootstrap",
+            "missing_count": 4,
+            "sample_count": 146,
+            "status": "MEASURED",
+            "upper": 0.0
+          },
+          "lexical": {
+            "cluster_count": 50,
+            "confidence": 0.95,
+            "eligible_count": 146,
+            "estimate": 0.0,
+            "lower": 0.0,
+            "method": "paired_bootstrap",
+            "missing_count": 4,
+            "sample_count": 146,
+            "status": "MEASURED",
+            "upper": 0.0
+          },
+          "vector": {
+            "cluster_count": 50,
+            "confidence": 0.95,
+            "eligible_count": 146,
+            "estimate": 0.0,
+            "lower": 0.0,
+            "method": "paired_bootstrap",
+            "missing_count": 4,
+            "sample_count": 146,
+            "status": "MEASURED",
+            "upper": 0.0
+          }
+        },
+        "strategies": {
+          "full": {
+            "hit_interval": {
+              "cluster_count": null,
+              "confidence": 0.95,
+              "estimate": 0.5684931506849316,
+              "lower": 0.4874149589329809,
+              "method": "wilson",
+              "sample_count": 146,
+              "upper": 0.6460594489951123
+            },
+            "measured_count": 146,
+            "missing_count": 4,
+            "status": "MEASURED"
+          },
+          "hybrid": {
+            "hit_interval": {
+              "cluster_count": null,
+              "confidence": 0.95,
+              "estimate": 0.5684931506849316,
+              "lower": 0.4874149589329809,
+              "method": "wilson",
+              "sample_count": 146,
+              "upper": 0.6460594489951123
+            },
+            "measured_count": 146,
+            "missing_count": 4,
+            "status": "MEASURED"
+          },
+          "lexical": {
+            "hit_interval": {
+              "cluster_count": null,
+              "confidence": 0.95,
+              "estimate": 0.5684931506849316,
+              "lower": 0.4874149589329809,
+              "method": "wilson",
+              "sample_count": 146,
+              "upper": 0.6460594489951123
+            },
+            "measured_count": 146,
+            "missing_count": 4,
+            "status": "MEASURED"
+          },
+          "vector": {
+            "hit_interval": {
+              "cluster_count": null,
+              "confidence": 0.95,
+              "estimate": 0.5684931506849316,
+              "lower": 0.4874149589329809,
+              "method": "wilson",
+              "sample_count": 146,
+              "upper": 0.6460594489951123
+            },
+            "measured_count": 146,
+            "missing_count": 4,
+            "status": "MEASURED"
+          }
+        }
+      }
+    }
+  },
+  "written_at": "2026-09-19T23:38:36.966079+00:00"
+}
