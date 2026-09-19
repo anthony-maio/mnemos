@@ -8,6 +8,17 @@ This is a chronological checkpoint log. Later entries supersede earlier test
 counts and open implementation items. An implementation or focused check does
 not close a native-host, quality, performance, or pilot gate.
 
+## September 19: native discovery and replay identity
+
+The [successor Hermes preflight](../2026-09-19/hermes-native-discovery-preflight-v1/README.md)
+passes actual plugin entry-point discovery and six-tool initialization under
+runner `f10bf6c`. It also verifies the shared disposable Hermes home, which the
+API replay helper must supply to preserve original occurrence timestamps.
+The preceding helper omitted that initialization argument; no model run had
+begun. The real host phase completes in 2.434 seconds without model or service
+requests. Forty focused tests and configured type checks pass. The verified
+runtime wheel and live host configuration are unchanged.
+
 ## September 19: native Hermes lifecycle setup
 
 The [native lifecycle preflight](../2026-09-19/hermes-native-lifecycle-preflight-v1/README.md)
