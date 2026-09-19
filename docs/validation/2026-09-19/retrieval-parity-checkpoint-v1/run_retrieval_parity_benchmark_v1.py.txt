@@ -1,0 +1,39 @@
+"""Run the unchanged legacy replacement gate against the retrieval parity fix."""
+from datetime import datetime, timezone
+import hashlib
+import json
+import os
+from pathlib import Path
+import subprocess
+import sys
+
+root = Path(__file__).resolve().parent.parent
+snapshot = Path("C:/Users/Ant/AppData/Local/Temp/mnemos-source-retrieval-parity-v1")
+output = Path("C:/Users/Ant/AppData/Local/Temp/mnemos-retrieval-parity-benchmark-v1")
+commit = "8fc79f01ab68d9c211f9be4818f9e566e271cefd"
+assert subprocess.check_output(["git", "rev-parse", "HEAD"], cwd=snapshot, text=True).strip() == commit
+assert not subprocess.check_output(["git", "status", "--porcelain"], cwd=snapshot, text=True).strip()
+output.mkdir(exist_ok=False)
+env = {k: v for k, v in os.environ.items() if not k.startswith("MNEMOS_") and k != "PYTHONPATH"}
+env["MNEMOS_CONFIG_PATH"] = str(output / "missing.toml")
+env["MNEMOS_EMBEDDING_PROVIDER"] = "simple"
+env["TEMP"] = env["TMP"] = str(output)
+command = [sys.executable, "-m", "mnemos.benchmark", "--stores", "memory,sqlite",
+           "--retrievers", "baseline,engine", "--dataset-pack", "claim-driving",
+           "--top-k", "1", "--repetitions", "2", "--enforce-production-gate",
+           "--output", str(output / "report.json")]
+record = {"source_commit": commit, "snapshot": str(snapshot), "command": command,
+          "started_at": datetime.now(timezone.utc).isoformat(),
+          "helper_sha256": hashlib.sha256(Path(__file__).read_bytes()).hexdigest(),
+          "environment_overrides": {k: env[k] for k in ("MNEMOS_CONFIG_PATH", "MNEMOS_EMBEDDING_PROVIDER", "TEMP", "TMP")}}
+with (output / "stdout.log").open("w", encoding="utf-8") as stdout, (output / "stderr.log").open("w", encoding="utf-8") as stderr:
+    result = subprocess.run(command, cwd=snapshot, env=env, stdout=stdout, stderr=stderr,
+                            creationflags=getattr(subprocess, "CREATE_NO_WINDOW", 0))
+record["exit_code"] = result.returncode
+record["finished_at"] = datetime.now(timezone.utc).isoformat()
+record["snapshot_status_after"] = subprocess.check_output(["git", "status", "--porcelain"], cwd=snapshot, text=True).strip()
+record["artifacts"] = {p.name: hashlib.sha256(p.read_bytes()).hexdigest() for p in output.iterdir() if p.is_file()}
+(output / "execution.json").write_text(json.dumps(record, indent=2) + "\n", encoding="utf-8")
+assert not record["snapshot_status_after"]
+print(json.dumps({"report": str(output / "report.json"), "benchmark_exit_code": result.returncode}))
+raise SystemExit(result.returncode)

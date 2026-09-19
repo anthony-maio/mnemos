@@ -4,6 +4,15 @@ This record covers the unreleased `wt/functional-local-memory` worktree. It
 separates implemented behavior from acceptance evidence. The original task
 boundaries and thresholds remain in the [implementation plan](../../plans/2026-09-16-functional-local-memory.md).
 
+The [retrieval parity checkpoint](../2026-09-19/retrieval-parity-checkpoint-v1/README.md)
+at `8fc79f0` aligns in-memory exact-tie ordering and empty/nonpositive retrieval
+requests with SQLite. It passes 1,143 source tests with four skips, all six
+source/package checks, and 440 isolated installed contract cases with two skips
+and seven replay assertions. The repeated fixed-vector control now returns
+identical baseline memory IDs from both stores on all 46 query/repetition
+pairs. Both controlled and legacy replacement gates remain failed. This repairs
+storage parity without establishing module utility or production superiority.
+
 The [storage-location checkpoint](../2026-09-19/storage-location-checkpoint-v1/README.md)
 at `7bcabde` passes 1,131 source tests with four skips and all six source/package
 checks. It records benchmark storage paths and protects existing evidence.
@@ -563,7 +572,7 @@ capture diagnostics and complete lifecycle acceptance remain open.
 | T16 Recovery | Backup, integrity, new-path restore, suppression merge, staged reindex, and activation backup behavior are implemented and tested. | Local recovery contracts pass, including a backup during an active writer transaction. Live data migration remains separately authorization-bound. |
 | T17 Cross-host | Native v9 on installed `5af3d15` passes 15 bounded lifecycle checks for Codex teaching, Claude correction and reviewed deletion, restart, direct service replay suppression, foreign-project exclusion, final recall, and retained unrelated facts. The newer mixed-host v4 probe on `fc72cc2` verifies three paired same-event native deliveries, durable queue recovery, and unchanged records through owner restart. | Lexical fixture vectors, disabled modules, explicit restoration, and a test rendezvous limit the claim. V4 retains one pairing timeout and degraded Claude identity diagnostics; the earlier v3 gate remains failed. Earlier Codex Stop timeouts remain recorded. Complete capture, Desktop, Hermes, real-provider recovery, real-model quality, and the two-week pilot remain open. |
 | T18 Evaluation | Frozen lifecycle datasets, request-bound extraction schemas, real-provider adapters, seven profiles, raw traces, checkpoints, Wilson intervals, and paired comparisons are implemented. Separate applied length/noise and vector/lexical/hybrid/full comparisons are implemented and prepared offline. | The frozen real-model matrix and both additional comparison executions remain open. Prepared artifacts have no real-model observations yet. Graph/affective utility evidence also remains a separate requirement. Follow the [evaluation status and recovery record](evaluation-running.md), [applied encoding checkpoint](../2026-09-18/encoding-comparison-checkpoint-v1/README.md), and [retrieval checkpoint](../2026-09-18/retrieval-comparison-checkpoint-v1/README.md). |
-| T19 Claims and packaging | Claim ledger, compatibility matrix, release checklist, package artifacts, UI assets, and negative evidence archives are maintained. | The latest source/package checkpoint is `7bcabde`, with 1,131 source passes and the byte-identical wheel reusing 428 installed contract passes. The synthetic replacement gate remains failed; the fair offline control does not establish superiority. Real-model and native acceptance remain separate. The preserved intermittent bridge failure remains unexplained. Publication, website, paper, and release actions remain separately authorization-bound. |
+| T19 Claims and packaging | Claim ledger, compatibility matrix, release checklist, package artifacts, UI assets, and negative evidence archives are maintained. | The latest source/package checkpoint is `8fc79f0`, with 1,143 source passes and 440 newly observed installed contract passes. Both synthetic replacement comparisons remain failed despite repaired baseline storage parity. Real-model and native acceptance remain separate. The preserved intermittent bridge failure remains unexplained. Publication, website, paper, and release actions remain separately authorization-bound. |
 
 The current capture recommendation is a hybrid: automatically capture enabled
 project conversations as retained evidence, extract durable facts separately,

@@ -4,6 +4,15 @@ Assessment date: September 19, 2026. This covers the unreleased
 functional-local-memory worktree, not the installed public package or website.
 The capability IDs come from the original implementation plan.
 
+The [retrieval parity checkpoint](../2026-09-19/retrieval-parity-checkpoint-v1/README.md)
+at `8fc79f0` passes 1,143 source tests, four skips, all six source/package checks,
+440 newly observed installed contract cases, two matching skips, and seven
+replay assertions. In-memory retrieval now matches SQLite on exact-score ties
+and empty/nonpositive requests. All 46 baseline query/repetition pairs match
+between backends in the repeated fixed-vector control. Both the controlled and
+legacy replacement gates still fail. Backend parity is established for those
+cases; semantic quality, real-model benefit, and host acceptance are not.
+
 The [storage-location checkpoint](../2026-09-19/storage-location-checkpoint-v1/README.md)
 at `7bcabde` passes 1,131 source tests, four skips, and all six source/package
 checks. The wheel is byte-identical to the previously installed `39b9c79`

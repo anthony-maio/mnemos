@@ -2,6 +2,15 @@
 
 ## Current checkpoint: September 19, 2026, local GPU replacement
 
+The [retrieval parity checkpoint](../2026-09-19/retrieval-parity-checkpoint-v1/README.md)
+at `8fc79f0` has completed source/package and isolated installed checks: 1,143
+source passes and 440 installed contract passes. Its offline fixed-vector
+baseline now has identical retrieved IDs between stores for all 46 paired
+queries/repetitions. The legacy and controlled replacement gates both remain
+failed. This source change does not alter the running `fc72cc2` model queue or
+its supplemental comparisons. Main and supplemental processes were verified
+live, and the full-profile checkpoint continued advancing during verification.
+
 The separate [storage-location checkpoint](../2026-09-19/storage-location-checkpoint-v1/README.md)
 has completed all source/package checks at `7bcabde`: 1,131 tests pass with four
 skips. It binds the same installed wheel as `39b9c79`. The

@@ -1,0 +1,4055 @@
+{
+  "configuration": {
+    "baseline_scope_aware": true,
+    "network_or_model_calls": false,
+    "repetitions": 2,
+    "required_mrr_lift_ratio": 0.15,
+    "retrievers": [
+      "baseline",
+      "engine"
+    ],
+    "stores": [
+      "memory",
+      "sqlite"
+    ],
+    "top_k": 1
+  },
+  "dataset": {
+    "documents_and_queries": {
+      "contradiction-update-v1": {
+        "documents": 8,
+        "queries": 8
+      },
+      "cross-project-scope-v1": {
+        "documents": 6,
+        "queries": 7
+      },
+      "preference-drift-v1": {
+        "documents": 8,
+        "queries": 8
+      }
+    },
+    "files": {
+      "contradiction-update-v1.jsonl": "dba2139b64d058a97b26f2c5e99db0302904b2ed564f94c98054c97de2207277",
+      "cross-project-scope-v1.jsonl": "3be1487c161f7f66ccc708294df3db7b9ad9381921de4a155a66e44cac3dc02c",
+      "preference-drift-v1.jsonl": "ea7083f9594be2dbf9944c07c77afd4e6f0539fc701be96499f250b414272153"
+    },
+    "pack": "claim-driving"
+  },
+  "diagnostic": "fair-offline-embedding-and-scope-control",
+  "embedding": {
+    "algorithm": "sha256-token-bucket-signed-counts",
+    "dimension": 384,
+    "entry_count": 42,
+    "injected_into_baseline_and_engine": true,
+    "internal_symmetric_fallbacks": {
+      "571d75838c756f486058adc5e466ed5079187f59280408f3233f26bc0f930966": [
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        -0.30151134457776363,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        -0.30151134457776363,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.30151134457776363,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        -0.30151134457776363,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.30151134457776363,
+        0.0,
+        0.0,
+        -0.30151134457776363,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.30151134457776363,
+        0.0,
+        0.0,
+        0.30151134457776363,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        -0.30151134457776363,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.30151134457776363,
+        0.0,
+        0.30151134457776363,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0
+      ]
+    },
+    "provider": "LookupEmbeddingProvider",
+    "same_document_query_lookup": true,
+    "vectors_sha256": "63bd470a6fba2b3baf30ec621c8e24f962191afd18244673c01e538a1690aa28"
+  },
+  "limitations": [
+    "Synthetic deterministic vectors are a control, not model quality evidence.",
+    "Existing engine ingestion side effects remain part of the engine path.",
+    "Latency is descriptive and not a production gate claim."
+  ],
+  "per_query": [
+    {
+      "dataset": "contradiction-update-v1",
+      "query_index": 0,
+      "query_text_sha256": "6f80c37e00839b90169785c26a4ec6fdcbee28f38afe5fd47d92672f86e28185",
+      "relevant_chunk_ids": [
+        "b4c712f2-d5f6-59df-9ecc-c7ea72335ec4"
+      ],
+      "repetition": 1,
+      "retrieved_chunk_ids": [
+        "95565f9c-dea2-5e82-831d-7fd05455bd01"
+      ],
+      "retriever": "baseline",
+      "store_type": "memory"
+    },
+    {
+      "dataset": "contradiction-update-v1",
+      "query_index": 1,
+      "query_text_sha256": "b270c4c4dc82d25ec23a6e611872ead3818daf90a6461fb6aea8882dedad93bc",
+      "relevant_chunk_ids": [
+        "b4c712f2-d5f6-59df-9ecc-c7ea72335ec4"
+      ],
+      "repetition": 1,
+      "retrieved_chunk_ids": [
+        "95565f9c-dea2-5e82-831d-7fd05455bd01"
+      ],
+      "retriever": "baseline",
+      "store_type": "memory"
+    },
+    {
+      "dataset": "contradiction-update-v1",
+      "query_index": 2,
+      "query_text_sha256": "587407f165005056a57c914178b47014585b3e5cab45d0c4563f72f4bdf5f52e",
+      "relevant_chunk_ids": [
+        "ef4c0828-a79e-53b7-88a4-9435895340f8"
+      ],
+      "repetition": 1,
+      "retrieved_chunk_ids": [
+        "ef4c0828-a79e-53b7-88a4-9435895340f8"
+      ],
+      "retriever": "baseline",
+      "store_type": "memory"
+    },
+    {
+      "dataset": "contradiction-update-v1",
+      "query_index": 3,
+      "query_text_sha256": "fc89da46072163e2e11a5d7c4ce583450469e9193786615bd6f7bedd486d3bb7",
+      "relevant_chunk_ids": [
+        "ef4c0828-a79e-53b7-88a4-9435895340f8"
+      ],
+      "repetition": 1,
+      "retrieved_chunk_ids": [
+        "ef4c0828-a79e-53b7-88a4-9435895340f8"
+      ],
+      "retriever": "baseline",
+      "store_type": "memory"
+    },
+    {
+      "dataset": "contradiction-update-v1",
+      "query_index": 4,
+      "query_text_sha256": "57a56c2fb3a6bd25d0bcd5cfad8849f8e14e94aa6d0302f1651bcc187035bcd6",
+      "relevant_chunk_ids": [
+        "6fedc1ca-adce-5e02-94c4-365b62a19da5"
+      ],
+      "repetition": 1,
+      "retrieved_chunk_ids": [
+        "6fedc1ca-adce-5e02-94c4-365b62a19da5"
+      ],
+      "retriever": "baseline",
+      "store_type": "memory"
+    },
+    {
+      "dataset": "contradiction-update-v1",
+      "query_index": 5,
+      "query_text_sha256": "3d4c9b57e565b9c51188101a84ebc9cab846befed30e00b03c652f5cc6536445",
+      "relevant_chunk_ids": [
+        "6fedc1ca-adce-5e02-94c4-365b62a19da5"
+      ],
+      "repetition": 1,
+      "retrieved_chunk_ids": [
+        "6fedc1ca-adce-5e02-94c4-365b62a19da5"
+      ],
+      "retriever": "baseline",
+      "store_type": "memory"
+    },
+    {
+      "dataset": "contradiction-update-v1",
+      "query_index": 6,
+      "query_text_sha256": "2bc32213a8736e5ef8175dcc4e4ccb14b2b6ce30d40470796d2fbea466e65a72",
+      "relevant_chunk_ids": [
+        "5b59a0ce-e151-5a42-981d-4b0f01364451"
+      ],
+      "repetition": 1,
+      "retrieved_chunk_ids": [
+        "39282a4b-0f38-5083-b489-55f93755e1e5"
+      ],
+      "retriever": "baseline",
+      "store_type": "memory"
+    },
+    {
+      "dataset": "contradiction-update-v1",
+      "query_index": 7,
+      "query_text_sha256": "fc6bb1d5d9eddedf288acc2d61466b2f619e7f5cdaf69142b88dd62ce2aa4818",
+      "relevant_chunk_ids": [
+        "5b59a0ce-e151-5a42-981d-4b0f01364451"
+      ],
+      "repetition": 1,
+      "retrieved_chunk_ids": [
+        "6fedc1ca-adce-5e02-94c4-365b62a19da5"
+      ],
+      "retriever": "baseline",
+      "store_type": "memory"
+    },
+    {
+      "dataset": "contradiction-update-v1",
+      "query_index": 0,
+      "query_text_sha256": "6f80c37e00839b90169785c26a4ec6fdcbee28f38afe5fd47d92672f86e28185",
+      "relevant_chunk_ids": [
+        "a385af15-2a35-4997-9b42-d500f11d0d39"
+      ],
+      "repetition": 1,
+      "retrieved_chunk_ids": [],
+      "retriever": "engine",
+      "store_type": "memory"
+    },
+    {
+      "dataset": "contradiction-update-v1",
+      "query_index": 1,
+      "query_text_sha256": "b270c4c4dc82d25ec23a6e611872ead3818daf90a6461fb6aea8882dedad93bc",
+      "relevant_chunk_ids": [
+        "a385af15-2a35-4997-9b42-d500f11d0d39"
+      ],
+      "repetition": 1,
+      "retrieved_chunk_ids": [
+        "a385af15-2a35-4997-9b42-d500f11d0d39"
+      ],
+      "retriever": "engine",
+      "store_type": "memory"
+    },
+    {
+      "dataset": "contradiction-update-v1",
+      "query_index": 2,
+      "query_text_sha256": "587407f165005056a57c914178b47014585b3e5cab45d0c4563f72f4bdf5f52e",
+      "relevant_chunk_ids": [
+        "920e76e6-a036-4a19-b153-e579b3f33811"
+      ],
+      "repetition": 1,
+      "retrieved_chunk_ids": [
+        "920e76e6-a036-4a19-b153-e579b3f33811"
+      ],
+      "retriever": "engine",
+      "store_type": "memory"
+    },
+    {
+      "dataset": "contradiction-update-v1",
+      "query_index": 3,
+      "query_text_sha256": "fc89da46072163e2e11a5d7c4ce583450469e9193786615bd6f7bedd486d3bb7",
+      "relevant_chunk_ids": [
+        "920e76e6-a036-4a19-b153-e579b3f33811"
+      ],
+      "repetition": 1,
+      "retrieved_chunk_ids": [
+        "920e76e6-a036-4a19-b153-e579b3f33811"
+      ],
+      "retriever": "engine",
+      "store_type": "memory"
+    },
+    {
+      "dataset": "contradiction-update-v1",
+      "query_index": 4,
+      "query_text_sha256": "57a56c2fb3a6bd25d0bcd5cfad8849f8e14e94aa6d0302f1651bcc187035bcd6",
+      "relevant_chunk_ids": [
+        "226b958d-f2ab-4f5b-8d21-3cfbca662720"
+      ],
+      "repetition": 1,
+      "retrieved_chunk_ids": [],
+      "retriever": "engine",
+      "store_type": "memory"
+    },
+    {
+      "dataset": "contradiction-update-v1",
+      "query_index": 5,
+      "query_text_sha256": "3d4c9b57e565b9c51188101a84ebc9cab846befed30e00b03c652f5cc6536445",
+      "relevant_chunk_ids": [
+        "226b958d-f2ab-4f5b-8d21-3cfbca662720"
+      ],
+      "repetition": 1,
+      "retrieved_chunk_ids": [
+        "089be740-f314-4cec-b507-d92985cca508"
+      ],
+      "retriever": "engine",
+      "store_type": "memory"
+    },
+    {
+      "dataset": "contradiction-update-v1",
+      "query_index": 6,
+      "query_text_sha256": "2bc32213a8736e5ef8175dcc4e4ccb14b2b6ce30d40470796d2fbea466e65a72",
+      "relevant_chunk_ids": [
+        "1f1a99f8-1722-4b4f-8399-e7f61cc28a11"
+      ],
+      "repetition": 1,
+      "retrieved_chunk_ids": [
+        "1f1a99f8-1722-4b4f-8399-e7f61cc28a11"
+      ],
+      "retriever": "engine",
+      "store_type": "memory"
+    },
+    {
+      "dataset": "contradiction-update-v1",
+      "query_index": 7,
+      "query_text_sha256": "fc6bb1d5d9eddedf288acc2d61466b2f619e7f5cdaf69142b88dd62ce2aa4818",
+      "relevant_chunk_ids": [
+        "1f1a99f8-1722-4b4f-8399-e7f61cc28a11"
+      ],
+      "repetition": 1,
+      "retrieved_chunk_ids": [
+        "089be740-f314-4cec-b507-d92985cca508"
+      ],
+      "retriever": "engine",
+      "store_type": "memory"
+    },
+    {
+      "dataset": "contradiction-update-v1",
+      "query_index": 0,
+      "query_text_sha256": "6f80c37e00839b90169785c26a4ec6fdcbee28f38afe5fd47d92672f86e28185",
+      "relevant_chunk_ids": [
+        "b4c712f2-d5f6-59df-9ecc-c7ea72335ec4"
+      ],
+      "repetition": 1,
+      "retrieved_chunk_ids": [
+        "95565f9c-dea2-5e82-831d-7fd05455bd01"
+      ],
+      "retriever": "baseline",
+      "store_type": "sqlite"
+    },
+    {
+      "dataset": "contradiction-update-v1",
+      "query_index": 1,
+      "query_text_sha256": "b270c4c4dc82d25ec23a6e611872ead3818daf90a6461fb6aea8882dedad93bc",
+      "relevant_chunk_ids": [
+        "b4c712f2-d5f6-59df-9ecc-c7ea72335ec4"
+      ],
+      "repetition": 1,
+      "retrieved_chunk_ids": [
+        "95565f9c-dea2-5e82-831d-7fd05455bd01"
+      ],
+      "retriever": "baseline",
+      "store_type": "sqlite"
+    },
+    {
+      "dataset": "contradiction-update-v1",
+      "query_index": 2,
+      "query_text_sha256": "587407f165005056a57c914178b47014585b3e5cab45d0c4563f72f4bdf5f52e",
+      "relevant_chunk_ids": [
+        "ef4c0828-a79e-53b7-88a4-9435895340f8"
+      ],
+      "repetition": 1,
+      "retrieved_chunk_ids": [
+        "ef4c0828-a79e-53b7-88a4-9435895340f8"
+      ],
+      "retriever": "baseline",
+      "store_type": "sqlite"
+    },
+    {
+      "dataset": "contradiction-update-v1",
+      "query_index": 3,
+      "query_text_sha256": "fc89da46072163e2e11a5d7c4ce583450469e9193786615bd6f7bedd486d3bb7",
+      "relevant_chunk_ids": [
+        "ef4c0828-a79e-53b7-88a4-9435895340f8"
+      ],
+      "repetition": 1,
+      "retrieved_chunk_ids": [
+        "ef4c0828-a79e-53b7-88a4-9435895340f8"
+      ],
+      "retriever": "baseline",
+      "store_type": "sqlite"
+    },
+    {
+      "dataset": "contradiction-update-v1",
+      "query_index": 4,
+      "query_text_sha256": "57a56c2fb3a6bd25d0bcd5cfad8849f8e14e94aa6d0302f1651bcc187035bcd6",
+      "relevant_chunk_ids": [
+        "6fedc1ca-adce-5e02-94c4-365b62a19da5"
+      ],
+      "repetition": 1,
+      "retrieved_chunk_ids": [
+        "6fedc1ca-adce-5e02-94c4-365b62a19da5"
+      ],
+      "retriever": "baseline",
+      "store_type": "sqlite"
+    },
+    {
+      "dataset": "contradiction-update-v1",
+      "query_index": 5,
+      "query_text_sha256": "3d4c9b57e565b9c51188101a84ebc9cab846befed30e00b03c652f5cc6536445",
+      "relevant_chunk_ids": [
+        "6fedc1ca-adce-5e02-94c4-365b62a19da5"
+      ],
+      "repetition": 1,
+      "retrieved_chunk_ids": [
+        "6fedc1ca-adce-5e02-94c4-365b62a19da5"
+      ],
+      "retriever": "baseline",
+      "store_type": "sqlite"
+    },
+    {
+      "dataset": "contradiction-update-v1",
+      "query_index": 6,
+      "query_text_sha256": "2bc32213a8736e5ef8175dcc4e4ccb14b2b6ce30d40470796d2fbea466e65a72",
+      "relevant_chunk_ids": [
+        "5b59a0ce-e151-5a42-981d-4b0f01364451"
+      ],
+      "repetition": 1,
+      "retrieved_chunk_ids": [
+        "39282a4b-0f38-5083-b489-55f93755e1e5"
+      ],
+      "retriever": "baseline",
+      "store_type": "sqlite"
+    },
+    {
+      "dataset": "contradiction-update-v1",
+      "query_index": 7,
+      "query_text_sha256": "fc6bb1d5d9eddedf288acc2d61466b2f619e7f5cdaf69142b88dd62ce2aa4818",
+      "relevant_chunk_ids": [
+        "5b59a0ce-e151-5a42-981d-4b0f01364451"
+      ],
+      "repetition": 1,
+      "retrieved_chunk_ids": [
+        "6fedc1ca-adce-5e02-94c4-365b62a19da5"
+      ],
+      "retriever": "baseline",
+      "store_type": "sqlite"
+    },
+    {
+      "dataset": "contradiction-update-v1",
+      "query_index": 0,
+      "query_text_sha256": "6f80c37e00839b90169785c26a4ec6fdcbee28f38afe5fd47d92672f86e28185",
+      "relevant_chunk_ids": [
+        "2e13240a-dba8-436d-8007-5510eb5cc64c"
+      ],
+      "repetition": 1,
+      "retrieved_chunk_ids": [],
+      "retriever": "engine",
+      "store_type": "sqlite"
+    },
+    {
+      "dataset": "contradiction-update-v1",
+      "query_index": 1,
+      "query_text_sha256": "b270c4c4dc82d25ec23a6e611872ead3818daf90a6461fb6aea8882dedad93bc",
+      "relevant_chunk_ids": [
+        "2e13240a-dba8-436d-8007-5510eb5cc64c"
+      ],
+      "repetition": 1,
+      "retrieved_chunk_ids": [
+        "2e13240a-dba8-436d-8007-5510eb5cc64c"
+      ],
+      "retriever": "engine",
+      "store_type": "sqlite"
+    },
+    {
+      "dataset": "contradiction-update-v1",
+      "query_index": 2,
+      "query_text_sha256": "587407f165005056a57c914178b47014585b3e5cab45d0c4563f72f4bdf5f52e",
+      "relevant_chunk_ids": [
+        "0d4774a4-99ec-47c8-9376-5606d4548586"
+      ],
+      "repetition": 1,
+      "retrieved_chunk_ids": [
+        "0d4774a4-99ec-47c8-9376-5606d4548586"
+      ],
+      "retriever": "engine",
+      "store_type": "sqlite"
+    },
+    {
+      "dataset": "contradiction-update-v1",
+      "query_index": 3,
+      "query_text_sha256": "fc89da46072163e2e11a5d7c4ce583450469e9193786615bd6f7bedd486d3bb7",
+      "relevant_chunk_ids": [
+        "0d4774a4-99ec-47c8-9376-5606d4548586"
+      ],
+      "repetition": 1,
+      "retrieved_chunk_ids": [
+        "0d4774a4-99ec-47c8-9376-5606d4548586"
+      ],
+      "retriever": "engine",
+      "store_type": "sqlite"
+    },
+    {
+      "dataset": "contradiction-update-v1",
+      "query_index": 4,
+      "query_text_sha256": "57a56c2fb3a6bd25d0bcd5cfad8849f8e14e94aa6d0302f1651bcc187035bcd6",
+      "relevant_chunk_ids": [
+        "be0f5b4d-dcb2-4d5a-a3c7-9437cffd7216"
+      ],
+      "repetition": 1,
+      "retrieved_chunk_ids": [],
+      "retriever": "engine",
+      "store_type": "sqlite"
+    },
+    {
+      "dataset": "contradiction-update-v1",
+      "query_index": 5,
+      "query_text_sha256": "3d4c9b57e565b9c51188101a84ebc9cab846befed30e00b03c652f5cc6536445",
+      "relevant_chunk_ids": [
+        "be0f5b4d-dcb2-4d5a-a3c7-9437cffd7216"
+      ],
+      "repetition": 1,
+      "retrieved_chunk_ids": [
+        "a9612692-65b8-4379-9707-b95bcaa31c0c"
+      ],
+      "retriever": "engine",
+      "store_type": "sqlite"
+    },
+    {
+      "dataset": "contradiction-update-v1",
+      "query_index": 6,
+      "query_text_sha256": "2bc32213a8736e5ef8175dcc4e4ccb14b2b6ce30d40470796d2fbea466e65a72",
+      "relevant_chunk_ids": [
+        "c12d45c3-b5cd-46fd-9221-8040fdfc041d"
+      ],
+      "repetition": 1,
+      "retrieved_chunk_ids": [
+        "762043e9-1749-4996-bf90-80b2860f07db"
+      ],
+      "retriever": "engine",
+      "store_type": "sqlite"
+    },
+    {
+      "dataset": "contradiction-update-v1",
+      "query_index": 7,
+      "query_text_sha256": "fc6bb1d5d9eddedf288acc2d61466b2f619e7f5cdaf69142b88dd62ce2aa4818",
+      "relevant_chunk_ids": [
+        "c12d45c3-b5cd-46fd-9221-8040fdfc041d"
+      ],
+      "repetition": 1,
+      "retrieved_chunk_ids": [
+        "a9612692-65b8-4379-9707-b95bcaa31c0c"
+      ],
+      "retriever": "engine",
+      "store_type": "sqlite"
+    },
+    {
+      "dataset": "preference-drift-v1",
+      "query_index": 0,
+      "query_text_sha256": "0afe29a137bc3fea53176fa4f849457dceec6be2c794f5e44d327d172679ab8b",
+      "relevant_chunk_ids": [
+        "421425c7-9daf-5360-94db-5635cfa4ec83"
+      ],
+      "repetition": 1,
+      "retrieved_chunk_ids": [
+        "421425c7-9daf-5360-94db-5635cfa4ec83"
+      ],
+      "retriever": "baseline",
+      "store_type": "memory"
+    },
+    {
+      "dataset": "preference-drift-v1",
+      "query_index": 1,
+      "query_text_sha256": "b64ef41121c144a1d7c5558ff42d71cc5a83836e7f1aec8c485b220a37788516",
+      "relevant_chunk_ids": [
+        "421425c7-9daf-5360-94db-5635cfa4ec83"
+      ],
+      "repetition": 1,
+      "retrieved_chunk_ids": [
+        "421425c7-9daf-5360-94db-5635cfa4ec83"
+      ],
+      "retriever": "baseline",
+      "store_type": "memory"
+    },
+    {
+      "dataset": "preference-drift-v1",
+      "query_index": 2,
+      "query_text_sha256": "d8805976d20cc20e53342f0956aa49b6644aca9228c0a03b0a488e097f6ad5c0",
+      "relevant_chunk_ids": [
+        "bfd592f4-3182-51de-b6a2-92e15745e99c"
+      ],
+      "repetition": 1,
+      "retrieved_chunk_ids": [
+        "bfd592f4-3182-51de-b6a2-92e15745e99c"
+      ],
+      "retriever": "baseline",
+      "store_type": "memory"
+    },
+    {
+      "dataset": "preference-drift-v1",
+      "query_index": 3,
+      "query_text_sha256": "227a5e6ac7ace76767d524ecee084453a9bbba7cc0ffcd92e84f3d6a355a061a",
+      "relevant_chunk_ids": [
+        "bfd592f4-3182-51de-b6a2-92e15745e99c"
+      ],
+      "repetition": 1,
+      "retrieved_chunk_ids": [
+        "bfd592f4-3182-51de-b6a2-92e15745e99c"
+      ],
+      "retriever": "baseline",
+      "store_type": "memory"
+    },
+    {
+      "dataset": "preference-drift-v1",
+      "query_index": 4,
+      "query_text_sha256": "61a606c7ccb98ddcdb7ca241a6c22f2b052c5dbb4aa5907576139543f55d432a",
+      "relevant_chunk_ids": [
+        "d3c61ca2-3a39-5580-a700-b3eb1c888cc0"
+      ],
+      "repetition": 1,
+      "retrieved_chunk_ids": [
+        "1bbcb339-7317-5bd8-a0b1-fb7d2a3c49c8"
+      ],
+      "retriever": "baseline",
+      "store_type": "memory"
+    },
+    {
+      "dataset": "preference-drift-v1",
+      "query_index": 5,
+      "query_text_sha256": "83a27ee80824d37bbf99670a9476935df0402ab9efcb9c12cc8a5881d167f7a6",
+      "relevant_chunk_ids": [
+        "d3c61ca2-3a39-5580-a700-b3eb1c888cc0"
+      ],
+      "repetition": 1,
+      "retrieved_chunk_ids": [
+        "1bbcb339-7317-5bd8-a0b1-fb7d2a3c49c8"
+      ],
+      "retriever": "baseline",
+      "store_type": "memory"
+    },
+    {
+      "dataset": "preference-drift-v1",
+      "query_index": 6,
+      "query_text_sha256": "eeb333968364526dad0f0c8f9cac45e7b57a54b1c14a61ea975a48ea138861fb",
+      "relevant_chunk_ids": [
+        "041ceecd-3d21-5e7c-a0f0-1bff6414c64c"
+      ],
+      "repetition": 1,
+      "retrieved_chunk_ids": [
+        "041ceecd-3d21-5e7c-a0f0-1bff6414c64c"
+      ],
+      "retriever": "baseline",
+      "store_type": "memory"
+    },
+    {
+      "dataset": "preference-drift-v1",
+      "query_index": 7,
+      "query_text_sha256": "484c2393b84dc71027f66cb307d649e760c84d14036bc0e79e2141859425725c",
+      "relevant_chunk_ids": [
+        "041ceecd-3d21-5e7c-a0f0-1bff6414c64c"
+      ],
+      "repetition": 1,
+      "retrieved_chunk_ids": [
+        "041ceecd-3d21-5e7c-a0f0-1bff6414c64c"
+      ],
+      "retriever": "baseline",
+      "store_type": "memory"
+    },
+    {
+      "dataset": "preference-drift-v1",
+      "query_index": 0,
+      "query_text_sha256": "0afe29a137bc3fea53176fa4f849457dceec6be2c794f5e44d327d172679ab8b",
+      "relevant_chunk_ids": [
+        "d5568ec5-3853-4bcb-8223-aeb02cac6af1"
+      ],
+      "repetition": 1,
+      "retrieved_chunk_ids": [
+        "d5568ec5-3853-4bcb-8223-aeb02cac6af1"
+      ],
+      "retriever": "engine",
+      "store_type": "memory"
+    },
+    {
+      "dataset": "preference-drift-v1",
+      "query_index": 1,
+      "query_text_sha256": "b64ef41121c144a1d7c5558ff42d71cc5a83836e7f1aec8c485b220a37788516",
+      "relevant_chunk_ids": [
+        "d5568ec5-3853-4bcb-8223-aeb02cac6af1"
+      ],
+      "repetition": 1,
+      "retrieved_chunk_ids": [
+        "d5568ec5-3853-4bcb-8223-aeb02cac6af1"
+      ],
+      "retriever": "engine",
+      "store_type": "memory"
+    },
+    {
+      "dataset": "preference-drift-v1",
+      "query_index": 2,
+      "query_text_sha256": "d8805976d20cc20e53342f0956aa49b6644aca9228c0a03b0a488e097f6ad5c0",
+      "relevant_chunk_ids": [
+        "6b9dbc96-6000-4032-994e-135b469df161"
+      ],
+      "repetition": 1,
+      "retrieved_chunk_ids": [],
+      "retriever": "engine",
+      "store_type": "memory"
+    },
+    {
+      "dataset": "preference-drift-v1",
+      "query_index": 3,
+      "query_text_sha256": "227a5e6ac7ace76767d524ecee084453a9bbba7cc0ffcd92e84f3d6a355a061a",
+      "relevant_chunk_ids": [
+        "6b9dbc96-6000-4032-994e-135b469df161"
+      ],
+      "repetition": 1,
+      "retrieved_chunk_ids": [
+        "6b9dbc96-6000-4032-994e-135b469df161"
+      ],
+      "retriever": "engine",
+      "store_type": "memory"
+    },
+    {
+      "dataset": "preference-drift-v1",
+      "query_index": 4,
+      "query_text_sha256": "61a606c7ccb98ddcdb7ca241a6c22f2b052c5dbb4aa5907576139543f55d432a",
+      "relevant_chunk_ids": [
+        "32c7d1c1-dfb8-40ae-828c-b75e4722712d"
+      ],
+      "repetition": 1,
+      "retrieved_chunk_ids": [
+        "32c7d1c1-dfb8-40ae-828c-b75e4722712d"
+      ],
+      "retriever": "engine",
+      "store_type": "memory"
+    },
+    {
+      "dataset": "preference-drift-v1",
+      "query_index": 5,
+      "query_text_sha256": "83a27ee80824d37bbf99670a9476935df0402ab9efcb9c12cc8a5881d167f7a6",
+      "relevant_chunk_ids": [
+        "32c7d1c1-dfb8-40ae-828c-b75e4722712d"
+      ],
+      "repetition": 1,
+      "retrieved_chunk_ids": [
+        "32c7d1c1-dfb8-40ae-828c-b75e4722712d"
+      ],
+      "retriever": "engine",
+      "store_type": "memory"
+    },
+    {
+      "dataset": "preference-drift-v1",
+      "query_index": 6,
+      "query_text_sha256": "eeb333968364526dad0f0c8f9cac45e7b57a54b1c14a61ea975a48ea138861fb",
+      "relevant_chunk_ids": [
+        "efa65b73-d19b-416a-9c56-1f44e6aab187"
+      ],
+      "repetition": 1,
+      "retrieved_chunk_ids": [
+        "e68f364e-378b-4e4f-ac69-1590db7c8a54"
+      ],
+      "retriever": "engine",
+      "store_type": "memory"
+    },
+    {
+      "dataset": "preference-drift-v1",
+      "query_index": 7,
+      "query_text_sha256": "484c2393b84dc71027f66cb307d649e760c84d14036bc0e79e2141859425725c",
+      "relevant_chunk_ids": [
+        "efa65b73-d19b-416a-9c56-1f44e6aab187"
+      ],
+      "repetition": 1,
+      "retrieved_chunk_ids": [
+        "e68f364e-378b-4e4f-ac69-1590db7c8a54"
+      ],
+      "retriever": "engine",
+      "store_type": "memory"
+    },
+    {
+      "dataset": "preference-drift-v1",
+      "query_index": 0,
+      "query_text_sha256": "0afe29a137bc3fea53176fa4f849457dceec6be2c794f5e44d327d172679ab8b",
+      "relevant_chunk_ids": [
+        "421425c7-9daf-5360-94db-5635cfa4ec83"
+      ],
+      "repetition": 1,
+      "retrieved_chunk_ids": [
+        "421425c7-9daf-5360-94db-5635cfa4ec83"
+      ],
+      "retriever": "baseline",
+      "store_type": "sqlite"
+    },
+    {
+      "dataset": "preference-drift-v1",
+      "query_index": 1,
+      "query_text_sha256": "b64ef41121c144a1d7c5558ff42d71cc5a83836e7f1aec8c485b220a37788516",
+      "relevant_chunk_ids": [
+        "421425c7-9daf-5360-94db-5635cfa4ec83"
+      ],
+      "repetition": 1,
+      "retrieved_chunk_ids": [
+        "421425c7-9daf-5360-94db-5635cfa4ec83"
+      ],
+      "retriever": "baseline",
+      "store_type": "sqlite"
+    },
+    {
+      "dataset": "preference-drift-v1",
+      "query_index": 2,
+      "query_text_sha256": "d8805976d20cc20e53342f0956aa49b6644aca9228c0a03b0a488e097f6ad5c0",
+      "relevant_chunk_ids": [
+        "bfd592f4-3182-51de-b6a2-92e15745e99c"
+      ],
+      "repetition": 1,
+      "retrieved_chunk_ids": [
+        "bfd592f4-3182-51de-b6a2-92e15745e99c"
+      ],
+      "retriever": "baseline",
+      "store_type": "sqlite"
+    },
+    {
+      "dataset": "preference-drift-v1",
+      "query_index": 3,
+      "query_text_sha256": "227a5e6ac7ace76767d524ecee084453a9bbba7cc0ffcd92e84f3d6a355a061a",
+      "relevant_chunk_ids": [
+        "bfd592f4-3182-51de-b6a2-92e15745e99c"
+      ],
+      "repetition": 1,
+      "retrieved_chunk_ids": [
+        "bfd592f4-3182-51de-b6a2-92e15745e99c"
+      ],
+      "retriever": "baseline",
+      "store_type": "sqlite"
+    },
+    {
+      "dataset": "preference-drift-v1",
+      "query_index": 4,
+      "query_text_sha256": "61a606c7ccb98ddcdb7ca241a6c22f2b052c5dbb4aa5907576139543f55d432a",
+      "relevant_chunk_ids": [
+        "d3c61ca2-3a39-5580-a700-b3eb1c888cc0"
+      ],
+      "repetition": 1,
+      "retrieved_chunk_ids": [
+        "1bbcb339-7317-5bd8-a0b1-fb7d2a3c49c8"
+      ],
+      "retriever": "baseline",
+      "store_type": "sqlite"
+    },
+    {
+      "dataset": "preference-drift-v1",
+      "query_index": 5,
+      "query_text_sha256": "83a27ee80824d37bbf99670a9476935df0402ab9efcb9c12cc8a5881d167f7a6",
+      "relevant_chunk_ids": [
+        "d3c61ca2-3a39-5580-a700-b3eb1c888cc0"
+      ],
+      "repetition": 1,
+      "retrieved_chunk_ids": [
+        "1bbcb339-7317-5bd8-a0b1-fb7d2a3c49c8"
+      ],
+      "retriever": "baseline",
+      "store_type": "sqlite"
+    },
+    {
+      "dataset": "preference-drift-v1",
+      "query_index": 6,
+      "query_text_sha256": "eeb333968364526dad0f0c8f9cac45e7b57a54b1c14a61ea975a48ea138861fb",
+      "relevant_chunk_ids": [
+        "041ceecd-3d21-5e7c-a0f0-1bff6414c64c"
+      ],
+      "repetition": 1,
+      "retrieved_chunk_ids": [
+        "041ceecd-3d21-5e7c-a0f0-1bff6414c64c"
+      ],
+      "retriever": "baseline",
+      "store_type": "sqlite"
+    },
+    {
+      "dataset": "preference-drift-v1",
+      "query_index": 7,
+      "query_text_sha256": "484c2393b84dc71027f66cb307d649e760c84d14036bc0e79e2141859425725c",
+      "relevant_chunk_ids": [
+        "041ceecd-3d21-5e7c-a0f0-1bff6414c64c"
+      ],
+      "repetition": 1,
+      "retrieved_chunk_ids": [
+        "041ceecd-3d21-5e7c-a0f0-1bff6414c64c"
+      ],
+      "retriever": "baseline",
+      "store_type": "sqlite"
+    },
+    {
+      "dataset": "preference-drift-v1",
+      "query_index": 0,
+      "query_text_sha256": "0afe29a137bc3fea53176fa4f849457dceec6be2c794f5e44d327d172679ab8b",
+      "relevant_chunk_ids": [
+        "a23d17e5-0a82-4342-ba05-e896381f787b"
+      ],
+      "repetition": 1,
+      "retrieved_chunk_ids": [
+        "a23d17e5-0a82-4342-ba05-e896381f787b"
+      ],
+      "retriever": "engine",
+      "store_type": "sqlite"
+    },
+    {
+      "dataset": "preference-drift-v1",
+      "query_index": 1,
+      "query_text_sha256": "b64ef41121c144a1d7c5558ff42d71cc5a83836e7f1aec8c485b220a37788516",
+      "relevant_chunk_ids": [
+        "a23d17e5-0a82-4342-ba05-e896381f787b"
+      ],
+      "repetition": 1,
+      "retrieved_chunk_ids": [
+        "a23d17e5-0a82-4342-ba05-e896381f787b"
+      ],
+      "retriever": "engine",
+      "store_type": "sqlite"
+    },
+    {
+      "dataset": "preference-drift-v1",
+      "query_index": 2,
+      "query_text_sha256": "d8805976d20cc20e53342f0956aa49b6644aca9228c0a03b0a488e097f6ad5c0",
+      "relevant_chunk_ids": [
+        "54a852cf-6d84-402e-a510-0e21ef6042c1"
+      ],
+      "repetition": 1,
+      "retrieved_chunk_ids": [],
+      "retriever": "engine",
+      "store_type": "sqlite"
+    },
+    {
+      "dataset": "preference-drift-v1",
+      "query_index": 3,
+      "query_text_sha256": "227a5e6ac7ace76767d524ecee084453a9bbba7cc0ffcd92e84f3d6a355a061a",
+      "relevant_chunk_ids": [
+        "54a852cf-6d84-402e-a510-0e21ef6042c1"
+      ],
+      "repetition": 1,
+      "retrieved_chunk_ids": [
+        "1ea1ea49-73dc-41a0-b3b6-cfeae4e40657"
+      ],
+      "retriever": "engine",
+      "store_type": "sqlite"
+    },
+    {
+      "dataset": "preference-drift-v1",
+      "query_index": 4,
+      "query_text_sha256": "61a606c7ccb98ddcdb7ca241a6c22f2b052c5dbb4aa5907576139543f55d432a",
+      "relevant_chunk_ids": [
+        "d677cda9-5e72-4407-a8e2-eab361ce144d"
+      ],
+      "repetition": 1,
+      "retrieved_chunk_ids": [
+        "4b343815-4e0d-4df1-92c6-4e968fcfd9c7"
+      ],
+      "retriever": "engine",
+      "store_type": "sqlite"
+    },
+    {
+      "dataset": "preference-drift-v1",
+      "query_index": 5,
+      "query_text_sha256": "83a27ee80824d37bbf99670a9476935df0402ab9efcb9c12cc8a5881d167f7a6",
+      "relevant_chunk_ids": [
+        "d677cda9-5e72-4407-a8e2-eab361ce144d"
+      ],
+      "repetition": 1,
+      "retrieved_chunk_ids": [
+        "4b343815-4e0d-4df1-92c6-4e968fcfd9c7"
+      ],
+      "retriever": "engine",
+      "store_type": "sqlite"
+    },
+    {
+      "dataset": "preference-drift-v1",
+      "query_index": 6,
+      "query_text_sha256": "eeb333968364526dad0f0c8f9cac45e7b57a54b1c14a61ea975a48ea138861fb",
+      "relevant_chunk_ids": [
+        "ec7706a3-cec9-4389-8e02-2bee0eba5440"
+      ],
+      "repetition": 1,
+      "retrieved_chunk_ids": [
+        "5f6a01ef-ef66-4a64-bb79-09f8ac6aa784"
+      ],
+      "retriever": "engine",
+      "store_type": "sqlite"
+    },
+    {
+      "dataset": "preference-drift-v1",
+      "query_index": 7,
+      "query_text_sha256": "484c2393b84dc71027f66cb307d649e760c84d14036bc0e79e2141859425725c",
+      "relevant_chunk_ids": [
+        "ec7706a3-cec9-4389-8e02-2bee0eba5440"
+      ],
+      "repetition": 1,
+      "retrieved_chunk_ids": [
+        "5f6a01ef-ef66-4a64-bb79-09f8ac6aa784"
+      ],
+      "retriever": "engine",
+      "store_type": "sqlite"
+    },
+    {
+      "dataset": "cross-project-scope-v1",
+      "query_index": 0,
+      "query_text_sha256": "7f5c8b5c83124215b16cf79d642e23e2bdc78de7bc1470a40f27f872d0930a58",
+      "relevant_chunk_ids": [
+        "aa5b128f-bf9e-57ef-b576-7d0f152511cc"
+      ],
+      "repetition": 1,
+      "retrieved_chunk_ids": [
+        "aa5b128f-bf9e-57ef-b576-7d0f152511cc"
+      ],
+      "retriever": "baseline",
+      "store_type": "memory"
+    },
+    {
+      "dataset": "cross-project-scope-v1",
+      "query_index": 1,
+      "query_text_sha256": "7f5c8b5c83124215b16cf79d642e23e2bdc78de7bc1470a40f27f872d0930a58",
+      "relevant_chunk_ids": [
+        "b2a7067e-3792-5c17-968c-000d341b8740"
+      ],
+      "repetition": 1,
+      "retrieved_chunk_ids": [
+        "b2a7067e-3792-5c17-968c-000d341b8740"
+      ],
+      "retriever": "baseline",
+      "store_type": "memory"
+    },
+    {
+      "dataset": "cross-project-scope-v1",
+      "query_index": 2,
+      "query_text_sha256": "7e1905001a38d923fffe5da360327f912a715c71fce3e805730dbecfdbc73d3f",
+      "relevant_chunk_ids": [
+        "0795e1ac-2463-51eb-b800-1e93fead7be0"
+      ],
+      "repetition": 1,
+      "retrieved_chunk_ids": [
+        "0795e1ac-2463-51eb-b800-1e93fead7be0"
+      ],
+      "retriever": "baseline",
+      "store_type": "memory"
+    },
+    {
+      "dataset": "cross-project-scope-v1",
+      "query_index": 3,
+      "query_text_sha256": "7e1905001a38d923fffe5da360327f912a715c71fce3e805730dbecfdbc73d3f",
+      "relevant_chunk_ids": [
+        "524d49d2-3f29-5f82-b880-d1c2635b5b43"
+      ],
+      "repetition": 1,
+      "retrieved_chunk_ids": [
+        "524d49d2-3f29-5f82-b880-d1c2635b5b43"
+      ],
+      "retriever": "baseline",
+      "store_type": "memory"
+    },
+    {
+      "dataset": "cross-project-scope-v1",
+      "query_index": 4,
+      "query_text_sha256": "b2afcd62eb9d565628368b62e75d598c58f282c1ea555904139c0dc3b38d4121",
+      "relevant_chunk_ids": [
+        "abedd3f4-ea25-5383-8ad5-5959bc3e1fe1"
+      ],
+      "repetition": 1,
+      "retrieved_chunk_ids": [
+        "abedd3f4-ea25-5383-8ad5-5959bc3e1fe1"
+      ],
+      "retriever": "baseline",
+      "store_type": "memory"
+    },
+    {
+      "dataset": "cross-project-scope-v1",
+      "query_index": 5,
+      "query_text_sha256": "b2afcd62eb9d565628368b62e75d598c58f282c1ea555904139c0dc3b38d4121",
+      "relevant_chunk_ids": [
+        "abedd3f4-ea25-5383-8ad5-5959bc3e1fe1"
+      ],
+      "repetition": 1,
+      "retrieved_chunk_ids": [
+        "abedd3f4-ea25-5383-8ad5-5959bc3e1fe1"
+      ],
+      "retriever": "baseline",
+      "store_type": "memory"
+    },
+    {
+      "dataset": "cross-project-scope-v1",
+      "query_index": 6,
+      "query_text_sha256": "8c2cd81c14e77cc609725cf4ab916c670ecb8430354369e6d66523db684fb7d5",
+      "relevant_chunk_ids": [
+        "049fa406-130b-5d1b-8ca5-ac7dcde67025"
+      ],
+      "repetition": 1,
+      "retrieved_chunk_ids": [
+        "049fa406-130b-5d1b-8ca5-ac7dcde67025"
+      ],
+      "retriever": "baseline",
+      "store_type": "memory"
+    },
+    {
+      "dataset": "cross-project-scope-v1",
+      "query_index": 0,
+      "query_text_sha256": "7f5c8b5c83124215b16cf79d642e23e2bdc78de7bc1470a40f27f872d0930a58",
+      "relevant_chunk_ids": [
+        "6ab09ef9-449e-4c29-bbf1-0a453978c449"
+      ],
+      "repetition": 1,
+      "retrieved_chunk_ids": [
+        "6ab09ef9-449e-4c29-bbf1-0a453978c449"
+      ],
+      "retriever": "engine",
+      "store_type": "memory"
+    },
+    {
+      "dataset": "cross-project-scope-v1",
+      "query_index": 1,
+      "query_text_sha256": "7f5c8b5c83124215b16cf79d642e23e2bdc78de7bc1470a40f27f872d0930a58",
+      "relevant_chunk_ids": [
+        "9886f40c-8502-451d-9766-daa48875b9a7"
+      ],
+      "repetition": 1,
+      "retrieved_chunk_ids": [
+        "9886f40c-8502-451d-9766-daa48875b9a7"
+      ],
+      "retriever": "engine",
+      "store_type": "memory"
+    },
+    {
+      "dataset": "cross-project-scope-v1",
+      "query_index": 2,
+      "query_text_sha256": "7e1905001a38d923fffe5da360327f912a715c71fce3e805730dbecfdbc73d3f",
+      "relevant_chunk_ids": [
+        "86bc2b10-ad3f-4fcd-b3e4-9c0b4f8d1805"
+      ],
+      "repetition": 1,
+      "retrieved_chunk_ids": [
+        "86bc2b10-ad3f-4fcd-b3e4-9c0b4f8d1805"
+      ],
+      "retriever": "engine",
+      "store_type": "memory"
+    },
+    {
+      "dataset": "cross-project-scope-v1",
+      "query_index": 3,
+      "query_text_sha256": "7e1905001a38d923fffe5da360327f912a715c71fce3e805730dbecfdbc73d3f",
+      "relevant_chunk_ids": [
+        "3020bed5-8b77-4265-a9bb-076b390082d2"
+      ],
+      "repetition": 1,
+      "retrieved_chunk_ids": [
+        "3020bed5-8b77-4265-a9bb-076b390082d2"
+      ],
+      "retriever": "engine",
+      "store_type": "memory"
+    },
+    {
+      "dataset": "cross-project-scope-v1",
+      "query_index": 4,
+      "query_text_sha256": "b2afcd62eb9d565628368b62e75d598c58f282c1ea555904139c0dc3b38d4121",
+      "relevant_chunk_ids": [
+        "9b05b653-bd38-47d1-b675-64d298e30755"
+      ],
+      "repetition": 1,
+      "retrieved_chunk_ids": [
+        "9b05b653-bd38-47d1-b675-64d298e30755"
+      ],
+      "retriever": "engine",
+      "store_type": "memory"
+    },
+    {
+      "dataset": "cross-project-scope-v1",
+      "query_index": 5,
+      "query_text_sha256": "b2afcd62eb9d565628368b62e75d598c58f282c1ea555904139c0dc3b38d4121",
+      "relevant_chunk_ids": [
+        "9b05b653-bd38-47d1-b675-64d298e30755"
+      ],
+      "repetition": 1,
+      "retrieved_chunk_ids": [
+        "9b05b653-bd38-47d1-b675-64d298e30755"
+      ],
+      "retriever": "engine",
+      "store_type": "memory"
+    },
+    {
+      "dataset": "cross-project-scope-v1",
+      "query_index": 6,
+      "query_text_sha256": "8c2cd81c14e77cc609725cf4ab916c670ecb8430354369e6d66523db684fb7d5",
+      "relevant_chunk_ids": [
+        "51905779-1cdd-44ae-ad35-a3a73fd91b30"
+      ],
+      "repetition": 1,
+      "retrieved_chunk_ids": [
+        "51905779-1cdd-44ae-ad35-a3a73fd91b30"
+      ],
+      "retriever": "engine",
+      "store_type": "memory"
+    },
+    {
+      "dataset": "cross-project-scope-v1",
+      "query_index": 0,
+      "query_text_sha256": "7f5c8b5c83124215b16cf79d642e23e2bdc78de7bc1470a40f27f872d0930a58",
+      "relevant_chunk_ids": [
+        "aa5b128f-bf9e-57ef-b576-7d0f152511cc"
+      ],
+      "repetition": 1,
+      "retrieved_chunk_ids": [
+        "aa5b128f-bf9e-57ef-b576-7d0f152511cc"
+      ],
+      "retriever": "baseline",
+      "store_type": "sqlite"
+    },
+    {
+      "dataset": "cross-project-scope-v1",
+      "query_index": 1,
+      "query_text_sha256": "7f5c8b5c83124215b16cf79d642e23e2bdc78de7bc1470a40f27f872d0930a58",
+      "relevant_chunk_ids": [
+        "b2a7067e-3792-5c17-968c-000d341b8740"
+      ],
+      "repetition": 1,
+      "retrieved_chunk_ids": [
+        "b2a7067e-3792-5c17-968c-000d341b8740"
+      ],
+      "retriever": "baseline",
+      "store_type": "sqlite"
+    },
+    {
+      "dataset": "cross-project-scope-v1",
+      "query_index": 2,
+      "query_text_sha256": "7e1905001a38d923fffe5da360327f912a715c71fce3e805730dbecfdbc73d3f",
+      "relevant_chunk_ids": [
+        "0795e1ac-2463-51eb-b800-1e93fead7be0"
+      ],
+      "repetition": 1,
+      "retrieved_chunk_ids": [
+        "0795e1ac-2463-51eb-b800-1e93fead7be0"
+      ],
+      "retriever": "baseline",
+      "store_type": "sqlite"
+    },
+    {
+      "dataset": "cross-project-scope-v1",
+      "query_index": 3,
+      "query_text_sha256": "7e1905001a38d923fffe5da360327f912a715c71fce3e805730dbecfdbc73d3f",
+      "relevant_chunk_ids": [
+        "524d49d2-3f29-5f82-b880-d1c2635b5b43"
+      ],
+      "repetition": 1,
+      "retrieved_chunk_ids": [
+        "524d49d2-3f29-5f82-b880-d1c2635b5b43"
+      ],
+      "retriever": "baseline",
+      "store_type": "sqlite"
+    },
+    {
+      "dataset": "cross-project-scope-v1",
+      "query_index": 4,
+      "query_text_sha256": "b2afcd62eb9d565628368b62e75d598c58f282c1ea555904139c0dc3b38d4121",
+      "relevant_chunk_ids": [
+        "abedd3f4-ea25-5383-8ad5-5959bc3e1fe1"
+      ],
+      "repetition": 1,
+      "retrieved_chunk_ids": [
+        "abedd3f4-ea25-5383-8ad5-5959bc3e1fe1"
+      ],
+      "retriever": "baseline",
+      "store_type": "sqlite"
+    },
+    {
+      "dataset": "cross-project-scope-v1",
+      "query_index": 5,
+      "query_text_sha256": "b2afcd62eb9d565628368b62e75d598c58f282c1ea555904139c0dc3b38d4121",
+      "relevant_chunk_ids": [
+        "abedd3f4-ea25-5383-8ad5-5959bc3e1fe1"
+      ],
+      "repetition": 1,
+      "retrieved_chunk_ids": [
+        "abedd3f4-ea25-5383-8ad5-5959bc3e1fe1"
+      ],
+      "retriever": "baseline",
+      "store_type": "sqlite"
+    },
+    {
+      "dataset": "cross-project-scope-v1",
+      "query_index": 6,
+      "query_text_sha256": "8c2cd81c14e77cc609725cf4ab916c670ecb8430354369e6d66523db684fb7d5",
+      "relevant_chunk_ids": [
+        "049fa406-130b-5d1b-8ca5-ac7dcde67025"
+      ],
+      "repetition": 1,
+      "retrieved_chunk_ids": [
+        "049fa406-130b-5d1b-8ca5-ac7dcde67025"
+      ],
+      "retriever": "baseline",
+      "store_type": "sqlite"
+    },
+    {
+      "dataset": "cross-project-scope-v1",
+      "query_index": 0,
+      "query_text_sha256": "7f5c8b5c83124215b16cf79d642e23e2bdc78de7bc1470a40f27f872d0930a58",
+      "relevant_chunk_ids": [
+        "d3b0bf21-6e57-4225-884a-36d785744ed6"
+      ],
+      "repetition": 1,
+      "retrieved_chunk_ids": [
+        "d3b0bf21-6e57-4225-884a-36d785744ed6"
+      ],
+      "retriever": "engine",
+      "store_type": "sqlite"
+    },
+    {
+      "dataset": "cross-project-scope-v1",
+      "query_index": 1,
+      "query_text_sha256": "7f5c8b5c83124215b16cf79d642e23e2bdc78de7bc1470a40f27f872d0930a58",
+      "relevant_chunk_ids": [
+        "bc8597d6-305e-46c8-aaf6-a2f854ed3b0c"
+      ],
+      "repetition": 1,
+      "retrieved_chunk_ids": [
+        "bc8597d6-305e-46c8-aaf6-a2f854ed3b0c"
+      ],
+      "retriever": "engine",
+      "store_type": "sqlite"
+    },
+    {
+      "dataset": "cross-project-scope-v1",
+      "query_index": 2,
+      "query_text_sha256": "7e1905001a38d923fffe5da360327f912a715c71fce3e805730dbecfdbc73d3f",
+      "relevant_chunk_ids": [
+        "cd6b8856-9079-425f-9f04-55894d5883c5"
+      ],
+      "repetition": 1,
+      "retrieved_chunk_ids": [
+        "cd6b8856-9079-425f-9f04-55894d5883c5"
+      ],
+      "retriever": "engine",
+      "store_type": "sqlite"
+    },
+    {
+      "dataset": "cross-project-scope-v1",
+      "query_index": 3,
+      "query_text_sha256": "7e1905001a38d923fffe5da360327f912a715c71fce3e805730dbecfdbc73d3f",
+      "relevant_chunk_ids": [
+        "98d03a5e-2d5b-4e24-8104-56c835af30a0"
+      ],
+      "repetition": 1,
+      "retrieved_chunk_ids": [
+        "98d03a5e-2d5b-4e24-8104-56c835af30a0"
+      ],
+      "retriever": "engine",
+      "store_type": "sqlite"
+    },
+    {
+      "dataset": "cross-project-scope-v1",
+      "query_index": 4,
+      "query_text_sha256": "b2afcd62eb9d565628368b62e75d598c58f282c1ea555904139c0dc3b38d4121",
+      "relevant_chunk_ids": [
+        "8813cc7b-d075-4c6b-b78e-297374a6a9ec"
+      ],
+      "repetition": 1,
+      "retrieved_chunk_ids": [
+        "8813cc7b-d075-4c6b-b78e-297374a6a9ec"
+      ],
+      "retriever": "engine",
+      "store_type": "sqlite"
+    },
+    {
+      "dataset": "cross-project-scope-v1",
+      "query_index": 5,
+      "query_text_sha256": "b2afcd62eb9d565628368b62e75d598c58f282c1ea555904139c0dc3b38d4121",
+      "relevant_chunk_ids": [
+        "8813cc7b-d075-4c6b-b78e-297374a6a9ec"
+      ],
+      "repetition": 1,
+      "retrieved_chunk_ids": [
+        "8813cc7b-d075-4c6b-b78e-297374a6a9ec"
+      ],
+      "retriever": "engine",
+      "store_type": "sqlite"
+    },
+    {
+      "dataset": "cross-project-scope-v1",
+      "query_index": 6,
+      "query_text_sha256": "8c2cd81c14e77cc609725cf4ab916c670ecb8430354369e6d66523db684fb7d5",
+      "relevant_chunk_ids": [
+        "8a7164ae-152b-43c4-ab05-07a4bdbf358e"
+      ],
+      "repetition": 1,
+      "retrieved_chunk_ids": [
+        "8a7164ae-152b-43c4-ab05-07a4bdbf358e"
+      ],
+      "retriever": "engine",
+      "store_type": "sqlite"
+    },
+    {
+      "dataset": "contradiction-update-v1",
+      "query_index": 0,
+      "query_text_sha256": "6f80c37e00839b90169785c26a4ec6fdcbee28f38afe5fd47d92672f86e28185",
+      "relevant_chunk_ids": [
+        "b4c712f2-d5f6-59df-9ecc-c7ea72335ec4"
+      ],
+      "repetition": 2,
+      "retrieved_chunk_ids": [
+        "95565f9c-dea2-5e82-831d-7fd05455bd01"
+      ],
+      "retriever": "baseline",
+      "store_type": "memory"
+    },
+    {
+      "dataset": "contradiction-update-v1",
+      "query_index": 1,
+      "query_text_sha256": "b270c4c4dc82d25ec23a6e611872ead3818daf90a6461fb6aea8882dedad93bc",
+      "relevant_chunk_ids": [
+        "b4c712f2-d5f6-59df-9ecc-c7ea72335ec4"
+      ],
+      "repetition": 2,
+      "retrieved_chunk_ids": [
+        "95565f9c-dea2-5e82-831d-7fd05455bd01"
+      ],
+      "retriever": "baseline",
+      "store_type": "memory"
+    },
+    {
+      "dataset": "contradiction-update-v1",
+      "query_index": 2,
+      "query_text_sha256": "587407f165005056a57c914178b47014585b3e5cab45d0c4563f72f4bdf5f52e",
+      "relevant_chunk_ids": [
+        "ef4c0828-a79e-53b7-88a4-9435895340f8"
+      ],
+      "repetition": 2,
+      "retrieved_chunk_ids": [
+        "ef4c0828-a79e-53b7-88a4-9435895340f8"
+      ],
+      "retriever": "baseline",
+      "store_type": "memory"
+    },
+    {
+      "dataset": "contradiction-update-v1",
+      "query_index": 3,
+      "query_text_sha256": "fc89da46072163e2e11a5d7c4ce583450469e9193786615bd6f7bedd486d3bb7",
+      "relevant_chunk_ids": [
+        "ef4c0828-a79e-53b7-88a4-9435895340f8"
+      ],
+      "repetition": 2,
+      "retrieved_chunk_ids": [
+        "ef4c0828-a79e-53b7-88a4-9435895340f8"
+      ],
+      "retriever": "baseline",
+      "store_type": "memory"
+    },
+    {
+      "dataset": "contradiction-update-v1",
+      "query_index": 4,
+      "query_text_sha256": "57a56c2fb3a6bd25d0bcd5cfad8849f8e14e94aa6d0302f1651bcc187035bcd6",
+      "relevant_chunk_ids": [
+        "6fedc1ca-adce-5e02-94c4-365b62a19da5"
+      ],
+      "repetition": 2,
+      "retrieved_chunk_ids": [
+        "6fedc1ca-adce-5e02-94c4-365b62a19da5"
+      ],
+      "retriever": "baseline",
+      "store_type": "memory"
+    },
+    {
+      "dataset": "contradiction-update-v1",
+      "query_index": 5,
+      "query_text_sha256": "3d4c9b57e565b9c51188101a84ebc9cab846befed30e00b03c652f5cc6536445",
+      "relevant_chunk_ids": [
+        "6fedc1ca-adce-5e02-94c4-365b62a19da5"
+      ],
+      "repetition": 2,
+      "retrieved_chunk_ids": [
+        "6fedc1ca-adce-5e02-94c4-365b62a19da5"
+      ],
+      "retriever": "baseline",
+      "store_type": "memory"
+    },
+    {
+      "dataset": "contradiction-update-v1",
+      "query_index": 6,
+      "query_text_sha256": "2bc32213a8736e5ef8175dcc4e4ccb14b2b6ce30d40470796d2fbea466e65a72",
+      "relevant_chunk_ids": [
+        "5b59a0ce-e151-5a42-981d-4b0f01364451"
+      ],
+      "repetition": 2,
+      "retrieved_chunk_ids": [
+        "39282a4b-0f38-5083-b489-55f93755e1e5"
+      ],
+      "retriever": "baseline",
+      "store_type": "memory"
+    },
+    {
+      "dataset": "contradiction-update-v1",
+      "query_index": 7,
+      "query_text_sha256": "fc6bb1d5d9eddedf288acc2d61466b2f619e7f5cdaf69142b88dd62ce2aa4818",
+      "relevant_chunk_ids": [
+        "5b59a0ce-e151-5a42-981d-4b0f01364451"
+      ],
+      "repetition": 2,
+      "retrieved_chunk_ids": [
+        "6fedc1ca-adce-5e02-94c4-365b62a19da5"
+      ],
+      "retriever": "baseline",
+      "store_type": "memory"
+    },
+    {
+      "dataset": "contradiction-update-v1",
+      "query_index": 0,
+      "query_text_sha256": "6f80c37e00839b90169785c26a4ec6fdcbee28f38afe5fd47d92672f86e28185",
+      "relevant_chunk_ids": [
+        "960efd0e-ef07-4b5f-8532-2340200796be"
+      ],
+      "repetition": 2,
+      "retrieved_chunk_ids": [],
+      "retriever": "engine",
+      "store_type": "memory"
+    },
+    {
+      "dataset": "contradiction-update-v1",
+      "query_index": 1,
+      "query_text_sha256": "b270c4c4dc82d25ec23a6e611872ead3818daf90a6461fb6aea8882dedad93bc",
+      "relevant_chunk_ids": [
+        "960efd0e-ef07-4b5f-8532-2340200796be"
+      ],
+      "repetition": 2,
+      "retrieved_chunk_ids": [
+        "33bf0cb0-a26e-48ea-bad1-7f368d95e0f4"
+      ],
+      "retriever": "engine",
+      "store_type": "memory"
+    },
+    {
+      "dataset": "contradiction-update-v1",
+      "query_index": 2,
+      "query_text_sha256": "587407f165005056a57c914178b47014585b3e5cab45d0c4563f72f4bdf5f52e",
+      "relevant_chunk_ids": [
+        "e323a5c8-3ec0-4a76-87fa-adeda14514a4"
+      ],
+      "repetition": 2,
+      "retrieved_chunk_ids": [
+        "d8340053-c885-4f54-bf0f-332988296b28"
+      ],
+      "retriever": "engine",
+      "store_type": "memory"
+    },
+    {
+      "dataset": "contradiction-update-v1",
+      "query_index": 3,
+      "query_text_sha256": "fc89da46072163e2e11a5d7c4ce583450469e9193786615bd6f7bedd486d3bb7",
+      "relevant_chunk_ids": [
+        "e323a5c8-3ec0-4a76-87fa-adeda14514a4"
+      ],
+      "repetition": 2,
+      "retrieved_chunk_ids": [
+        "d8340053-c885-4f54-bf0f-332988296b28"
+      ],
+      "retriever": "engine",
+      "store_type": "memory"
+    },
+    {
+      "dataset": "contradiction-update-v1",
+      "query_index": 4,
+      "query_text_sha256": "57a56c2fb3a6bd25d0bcd5cfad8849f8e14e94aa6d0302f1651bcc187035bcd6",
+      "relevant_chunk_ids": [
+        "3fe5bbc8-09e1-4553-83fa-40672859987c"
+      ],
+      "repetition": 2,
+      "retrieved_chunk_ids": [],
+      "retriever": "engine",
+      "store_type": "memory"
+    },
+    {
+      "dataset": "contradiction-update-v1",
+      "query_index": 5,
+      "query_text_sha256": "3d4c9b57e565b9c51188101a84ebc9cab846befed30e00b03c652f5cc6536445",
+      "relevant_chunk_ids": [
+        "3fe5bbc8-09e1-4553-83fa-40672859987c"
+      ],
+      "repetition": 2,
+      "retrieved_chunk_ids": [
+        "3fe5bbc8-09e1-4553-83fa-40672859987c"
+      ],
+      "retriever": "engine",
+      "store_type": "memory"
+    },
+    {
+      "dataset": "contradiction-update-v1",
+      "query_index": 6,
+      "query_text_sha256": "2bc32213a8736e5ef8175dcc4e4ccb14b2b6ce30d40470796d2fbea466e65a72",
+      "relevant_chunk_ids": [
+        "164bd6a7-4bb4-4ac9-b815-156c27b9f237"
+      ],
+      "repetition": 2,
+      "retrieved_chunk_ids": [
+        "164bd6a7-4bb4-4ac9-b815-156c27b9f237"
+      ],
+      "retriever": "engine",
+      "store_type": "memory"
+    },
+    {
+      "dataset": "contradiction-update-v1",
+      "query_index": 7,
+      "query_text_sha256": "fc6bb1d5d9eddedf288acc2d61466b2f619e7f5cdaf69142b88dd62ce2aa4818",
+      "relevant_chunk_ids": [
+        "164bd6a7-4bb4-4ac9-b815-156c27b9f237"
+      ],
+      "repetition": 2,
+      "retrieved_chunk_ids": [
+        "3fe5bbc8-09e1-4553-83fa-40672859987c"
+      ],
+      "retriever": "engine",
+      "store_type": "memory"
+    },
+    {
+      "dataset": "contradiction-update-v1",
+      "query_index": 0,
+      "query_text_sha256": "6f80c37e00839b90169785c26a4ec6fdcbee28f38afe5fd47d92672f86e28185",
+      "relevant_chunk_ids": [
+        "b4c712f2-d5f6-59df-9ecc-c7ea72335ec4"
+      ],
+      "repetition": 2,
+      "retrieved_chunk_ids": [
+        "95565f9c-dea2-5e82-831d-7fd05455bd01"
+      ],
+      "retriever": "baseline",
+      "store_type": "sqlite"
+    },
+    {
+      "dataset": "contradiction-update-v1",
+      "query_index": 1,
+      "query_text_sha256": "b270c4c4dc82d25ec23a6e611872ead3818daf90a6461fb6aea8882dedad93bc",
+      "relevant_chunk_ids": [
+        "b4c712f2-d5f6-59df-9ecc-c7ea72335ec4"
+      ],
+      "repetition": 2,
+      "retrieved_chunk_ids": [
+        "95565f9c-dea2-5e82-831d-7fd05455bd01"
+      ],
+      "retriever": "baseline",
+      "store_type": "sqlite"
+    },
+    {
+      "dataset": "contradiction-update-v1",
+      "query_index": 2,
+      "query_text_sha256": "587407f165005056a57c914178b47014585b3e5cab45d0c4563f72f4bdf5f52e",
+      "relevant_chunk_ids": [
+        "ef4c0828-a79e-53b7-88a4-9435895340f8"
+      ],
+      "repetition": 2,
+      "retrieved_chunk_ids": [
+        "ef4c0828-a79e-53b7-88a4-9435895340f8"
+      ],
+      "retriever": "baseline",
+      "store_type": "sqlite"
+    },
+    {
+      "dataset": "contradiction-update-v1",
+      "query_index": 3,
+      "query_text_sha256": "fc89da46072163e2e11a5d7c4ce583450469e9193786615bd6f7bedd486d3bb7",
+      "relevant_chunk_ids": [
+        "ef4c0828-a79e-53b7-88a4-9435895340f8"
+      ],
+      "repetition": 2,
+      "retrieved_chunk_ids": [
+        "ef4c0828-a79e-53b7-88a4-9435895340f8"
+      ],
+      "retriever": "baseline",
+      "store_type": "sqlite"
+    },
+    {
+      "dataset": "contradiction-update-v1",
+      "query_index": 4,
+      "query_text_sha256": "57a56c2fb3a6bd25d0bcd5cfad8849f8e14e94aa6d0302f1651bcc187035bcd6",
+      "relevant_chunk_ids": [
+        "6fedc1ca-adce-5e02-94c4-365b62a19da5"
+      ],
+      "repetition": 2,
+      "retrieved_chunk_ids": [
+        "6fedc1ca-adce-5e02-94c4-365b62a19da5"
+      ],
+      "retriever": "baseline",
+      "store_type": "sqlite"
+    },
+    {
+      "dataset": "contradiction-update-v1",
+      "query_index": 5,
+      "query_text_sha256": "3d4c9b57e565b9c51188101a84ebc9cab846befed30e00b03c652f5cc6536445",
+      "relevant_chunk_ids": [
+        "6fedc1ca-adce-5e02-94c4-365b62a19da5"
+      ],
+      "repetition": 2,
+      "retrieved_chunk_ids": [
+        "6fedc1ca-adce-5e02-94c4-365b62a19da5"
+      ],
+      "retriever": "baseline",
+      "store_type": "sqlite"
+    },
+    {
+      "dataset": "contradiction-update-v1",
+      "query_index": 6,
+      "query_text_sha256": "2bc32213a8736e5ef8175dcc4e4ccb14b2b6ce30d40470796d2fbea466e65a72",
+      "relevant_chunk_ids": [
+        "5b59a0ce-e151-5a42-981d-4b0f01364451"
+      ],
+      "repetition": 2,
+      "retrieved_chunk_ids": [
+        "39282a4b-0f38-5083-b489-55f93755e1e5"
+      ],
+      "retriever": "baseline",
+      "store_type": "sqlite"
+    },
+    {
+      "dataset": "contradiction-update-v1",
+      "query_index": 7,
+      "query_text_sha256": "fc6bb1d5d9eddedf288acc2d61466b2f619e7f5cdaf69142b88dd62ce2aa4818",
+      "relevant_chunk_ids": [
+        "5b59a0ce-e151-5a42-981d-4b0f01364451"
+      ],
+      "repetition": 2,
+      "retrieved_chunk_ids": [
+        "6fedc1ca-adce-5e02-94c4-365b62a19da5"
+      ],
+      "retriever": "baseline",
+      "store_type": "sqlite"
+    },
+    {
+      "dataset": "contradiction-update-v1",
+      "query_index": 0,
+      "query_text_sha256": "6f80c37e00839b90169785c26a4ec6fdcbee28f38afe5fd47d92672f86e28185",
+      "relevant_chunk_ids": [
+        "ae64a0e4-a222-49b9-a230-dd3437429a5d"
+      ],
+      "repetition": 2,
+      "retrieved_chunk_ids": [],
+      "retriever": "engine",
+      "store_type": "sqlite"
+    },
+    {
+      "dataset": "contradiction-update-v1",
+      "query_index": 1,
+      "query_text_sha256": "b270c4c4dc82d25ec23a6e611872ead3818daf90a6461fb6aea8882dedad93bc",
+      "relevant_chunk_ids": [
+        "ae64a0e4-a222-49b9-a230-dd3437429a5d"
+      ],
+      "repetition": 2,
+      "retrieved_chunk_ids": [
+        "4da6f1b9-2f5a-4a06-b130-a8586c83d0b5"
+      ],
+      "retriever": "engine",
+      "store_type": "sqlite"
+    },
+    {
+      "dataset": "contradiction-update-v1",
+      "query_index": 2,
+      "query_text_sha256": "587407f165005056a57c914178b47014585b3e5cab45d0c4563f72f4bdf5f52e",
+      "relevant_chunk_ids": [
+        "401b3f7c-ea94-4a73-ae71-75dcc87c0c39"
+      ],
+      "repetition": 2,
+      "retrieved_chunk_ids": [
+        "0a5c4ccb-d8de-47d7-82df-1e26e3fc1871"
+      ],
+      "retriever": "engine",
+      "store_type": "sqlite"
+    },
+    {
+      "dataset": "contradiction-update-v1",
+      "query_index": 3,
+      "query_text_sha256": "fc89da46072163e2e11a5d7c4ce583450469e9193786615bd6f7bedd486d3bb7",
+      "relevant_chunk_ids": [
+        "401b3f7c-ea94-4a73-ae71-75dcc87c0c39"
+      ],
+      "repetition": 2,
+      "retrieved_chunk_ids": [
+        "0a5c4ccb-d8de-47d7-82df-1e26e3fc1871"
+      ],
+      "retriever": "engine",
+      "store_type": "sqlite"
+    },
+    {
+      "dataset": "contradiction-update-v1",
+      "query_index": 4,
+      "query_text_sha256": "57a56c2fb3a6bd25d0bcd5cfad8849f8e14e94aa6d0302f1651bcc187035bcd6",
+      "relevant_chunk_ids": [
+        "cd5996fc-207c-4e92-b97f-5cd28930a256"
+      ],
+      "repetition": 2,
+      "retrieved_chunk_ids": [],
+      "retriever": "engine",
+      "store_type": "sqlite"
+    },
+    {
+      "dataset": "contradiction-update-v1",
+      "query_index": 5,
+      "query_text_sha256": "3d4c9b57e565b9c51188101a84ebc9cab846befed30e00b03c652f5cc6536445",
+      "relevant_chunk_ids": [
+        "cd5996fc-207c-4e92-b97f-5cd28930a256"
+      ],
+      "repetition": 2,
+      "retrieved_chunk_ids": [
+        "2de0d7b5-6e7f-4e84-bb6b-0d7718cacbd5"
+      ],
+      "retriever": "engine",
+      "store_type": "sqlite"
+    },
+    {
+      "dataset": "contradiction-update-v1",
+      "query_index": 6,
+      "query_text_sha256": "2bc32213a8736e5ef8175dcc4e4ccb14b2b6ce30d40470796d2fbea466e65a72",
+      "relevant_chunk_ids": [
+        "ad729503-07b2-4358-80c7-08f6a82a9926"
+      ],
+      "repetition": 2,
+      "retrieved_chunk_ids": [
+        "4c42afc9-4f0b-486f-ae32-18102013ae0c"
+      ],
+      "retriever": "engine",
+      "store_type": "sqlite"
+    },
+    {
+      "dataset": "contradiction-update-v1",
+      "query_index": 7,
+      "query_text_sha256": "fc6bb1d5d9eddedf288acc2d61466b2f619e7f5cdaf69142b88dd62ce2aa4818",
+      "relevant_chunk_ids": [
+        "ad729503-07b2-4358-80c7-08f6a82a9926"
+      ],
+      "repetition": 2,
+      "retrieved_chunk_ids": [
+        "2de0d7b5-6e7f-4e84-bb6b-0d7718cacbd5"
+      ],
+      "retriever": "engine",
+      "store_type": "sqlite"
+    },
+    {
+      "dataset": "preference-drift-v1",
+      "query_index": 0,
+      "query_text_sha256": "0afe29a137bc3fea53176fa4f849457dceec6be2c794f5e44d327d172679ab8b",
+      "relevant_chunk_ids": [
+        "421425c7-9daf-5360-94db-5635cfa4ec83"
+      ],
+      "repetition": 2,
+      "retrieved_chunk_ids": [
+        "421425c7-9daf-5360-94db-5635cfa4ec83"
+      ],
+      "retriever": "baseline",
+      "store_type": "memory"
+    },
+    {
+      "dataset": "preference-drift-v1",
+      "query_index": 1,
+      "query_text_sha256": "b64ef41121c144a1d7c5558ff42d71cc5a83836e7f1aec8c485b220a37788516",
+      "relevant_chunk_ids": [
+        "421425c7-9daf-5360-94db-5635cfa4ec83"
+      ],
+      "repetition": 2,
+      "retrieved_chunk_ids": [
+        "421425c7-9daf-5360-94db-5635cfa4ec83"
+      ],
+      "retriever": "baseline",
+      "store_type": "memory"
+    },
+    {
+      "dataset": "preference-drift-v1",
+      "query_index": 2,
+      "query_text_sha256": "d8805976d20cc20e53342f0956aa49b6644aca9228c0a03b0a488e097f6ad5c0",
+      "relevant_chunk_ids": [
+        "bfd592f4-3182-51de-b6a2-92e15745e99c"
+      ],
+      "repetition": 2,
+      "retrieved_chunk_ids": [
+        "bfd592f4-3182-51de-b6a2-92e15745e99c"
+      ],
+      "retriever": "baseline",
+      "store_type": "memory"
+    },
+    {
+      "dataset": "preference-drift-v1",
+      "query_index": 3,
+      "query_text_sha256": "227a5e6ac7ace76767d524ecee084453a9bbba7cc0ffcd92e84f3d6a355a061a",
+      "relevant_chunk_ids": [
+        "bfd592f4-3182-51de-b6a2-92e15745e99c"
+      ],
+      "repetition": 2,
+      "retrieved_chunk_ids": [
+        "bfd592f4-3182-51de-b6a2-92e15745e99c"
+      ],
+      "retriever": "baseline",
+      "store_type": "memory"
+    },
+    {
+      "dataset": "preference-drift-v1",
+      "query_index": 4,
+      "query_text_sha256": "61a606c7ccb98ddcdb7ca241a6c22f2b052c5dbb4aa5907576139543f55d432a",
+      "relevant_chunk_ids": [
+        "d3c61ca2-3a39-5580-a700-b3eb1c888cc0"
+      ],
+      "repetition": 2,
+      "retrieved_chunk_ids": [
+        "1bbcb339-7317-5bd8-a0b1-fb7d2a3c49c8"
+      ],
+      "retriever": "baseline",
+      "store_type": "memory"
+    },
+    {
+      "dataset": "preference-drift-v1",
+      "query_index": 5,
+      "query_text_sha256": "83a27ee80824d37bbf99670a9476935df0402ab9efcb9c12cc8a5881d167f7a6",
+      "relevant_chunk_ids": [
+        "d3c61ca2-3a39-5580-a700-b3eb1c888cc0"
+      ],
+      "repetition": 2,
+      "retrieved_chunk_ids": [
+        "1bbcb339-7317-5bd8-a0b1-fb7d2a3c49c8"
+      ],
+      "retriever": "baseline",
+      "store_type": "memory"
+    },
+    {
+      "dataset": "preference-drift-v1",
+      "query_index": 6,
+      "query_text_sha256": "eeb333968364526dad0f0c8f9cac45e7b57a54b1c14a61ea975a48ea138861fb",
+      "relevant_chunk_ids": [
+        "041ceecd-3d21-5e7c-a0f0-1bff6414c64c"
+      ],
+      "repetition": 2,
+      "retrieved_chunk_ids": [
+        "041ceecd-3d21-5e7c-a0f0-1bff6414c64c"
+      ],
+      "retriever": "baseline",
+      "store_type": "memory"
+    },
+    {
+      "dataset": "preference-drift-v1",
+      "query_index": 7,
+      "query_text_sha256": "484c2393b84dc71027f66cb307d649e760c84d14036bc0e79e2141859425725c",
+      "relevant_chunk_ids": [
+        "041ceecd-3d21-5e7c-a0f0-1bff6414c64c"
+      ],
+      "repetition": 2,
+      "retrieved_chunk_ids": [
+        "041ceecd-3d21-5e7c-a0f0-1bff6414c64c"
+      ],
+      "retriever": "baseline",
+      "store_type": "memory"
+    },
+    {
+      "dataset": "preference-drift-v1",
+      "query_index": 0,
+      "query_text_sha256": "0afe29a137bc3fea53176fa4f849457dceec6be2c794f5e44d327d172679ab8b",
+      "relevant_chunk_ids": [
+        "aeaa4032-6ddb-410e-a7cf-594832dd70f6"
+      ],
+      "repetition": 2,
+      "retrieved_chunk_ids": [
+        "aeaa4032-6ddb-410e-a7cf-594832dd70f6"
+      ],
+      "retriever": "engine",
+      "store_type": "memory"
+    },
+    {
+      "dataset": "preference-drift-v1",
+      "query_index": 1,
+      "query_text_sha256": "b64ef41121c144a1d7c5558ff42d71cc5a83836e7f1aec8c485b220a37788516",
+      "relevant_chunk_ids": [
+        "aeaa4032-6ddb-410e-a7cf-594832dd70f6"
+      ],
+      "repetition": 2,
+      "retrieved_chunk_ids": [
+        "aeaa4032-6ddb-410e-a7cf-594832dd70f6"
+      ],
+      "retriever": "engine",
+      "store_type": "memory"
+    },
+    {
+      "dataset": "preference-drift-v1",
+      "query_index": 2,
+      "query_text_sha256": "d8805976d20cc20e53342f0956aa49b6644aca9228c0a03b0a488e097f6ad5c0",
+      "relevant_chunk_ids": [
+        "a7710a56-b26a-4df3-a61a-b6d56ec06bfe"
+      ],
+      "repetition": 2,
+      "retrieved_chunk_ids": [],
+      "retriever": "engine",
+      "store_type": "memory"
+    },
+    {
+      "dataset": "preference-drift-v1",
+      "query_index": 3,
+      "query_text_sha256": "227a5e6ac7ace76767d524ecee084453a9bbba7cc0ffcd92e84f3d6a355a061a",
+      "relevant_chunk_ids": [
+        "a7710a56-b26a-4df3-a61a-b6d56ec06bfe"
+      ],
+      "repetition": 2,
+      "retrieved_chunk_ids": [
+        "7790bc18-8607-4ce1-95fd-22c68e107015"
+      ],
+      "retriever": "engine",
+      "store_type": "memory"
+    },
+    {
+      "dataset": "preference-drift-v1",
+      "query_index": 4,
+      "query_text_sha256": "61a606c7ccb98ddcdb7ca241a6c22f2b052c5dbb4aa5907576139543f55d432a",
+      "relevant_chunk_ids": [
+        "e17c5afb-06fb-4bb1-9859-eef41bffd2ba"
+      ],
+      "repetition": 2,
+      "retrieved_chunk_ids": [
+        "7bfeb15c-0405-4d14-8b37-04e8464a135b"
+      ],
+      "retriever": "engine",
+      "store_type": "memory"
+    },
+    {
+      "dataset": "preference-drift-v1",
+      "query_index": 5,
+      "query_text_sha256": "83a27ee80824d37bbf99670a9476935df0402ab9efcb9c12cc8a5881d167f7a6",
+      "relevant_chunk_ids": [
+        "e17c5afb-06fb-4bb1-9859-eef41bffd2ba"
+      ],
+      "repetition": 2,
+      "retrieved_chunk_ids": [
+        "7bfeb15c-0405-4d14-8b37-04e8464a135b"
+      ],
+      "retriever": "engine",
+      "store_type": "memory"
+    },
+    {
+      "dataset": "preference-drift-v1",
+      "query_index": 6,
+      "query_text_sha256": "eeb333968364526dad0f0c8f9cac45e7b57a54b1c14a61ea975a48ea138861fb",
+      "relevant_chunk_ids": [
+        "7637abda-4c2a-4659-a2af-cf41ffb7b96d"
+      ],
+      "repetition": 2,
+      "retrieved_chunk_ids": [
+        "554832d3-5588-45c3-86a2-6b17903719dd"
+      ],
+      "retriever": "engine",
+      "store_type": "memory"
+    },
+    {
+      "dataset": "preference-drift-v1",
+      "query_index": 7,
+      "query_text_sha256": "484c2393b84dc71027f66cb307d649e760c84d14036bc0e79e2141859425725c",
+      "relevant_chunk_ids": [
+        "7637abda-4c2a-4659-a2af-cf41ffb7b96d"
+      ],
+      "repetition": 2,
+      "retrieved_chunk_ids": [
+        "554832d3-5588-45c3-86a2-6b17903719dd"
+      ],
+      "retriever": "engine",
+      "store_type": "memory"
+    },
+    {
+      "dataset": "preference-drift-v1",
+      "query_index": 0,
+      "query_text_sha256": "0afe29a137bc3fea53176fa4f849457dceec6be2c794f5e44d327d172679ab8b",
+      "relevant_chunk_ids": [
+        "421425c7-9daf-5360-94db-5635cfa4ec83"
+      ],
+      "repetition": 2,
+      "retrieved_chunk_ids": [
+        "421425c7-9daf-5360-94db-5635cfa4ec83"
+      ],
+      "retriever": "baseline",
+      "store_type": "sqlite"
+    },
+    {
+      "dataset": "preference-drift-v1",
+      "query_index": 1,
+      "query_text_sha256": "b64ef41121c144a1d7c5558ff42d71cc5a83836e7f1aec8c485b220a37788516",
+      "relevant_chunk_ids": [
+        "421425c7-9daf-5360-94db-5635cfa4ec83"
+      ],
+      "repetition": 2,
+      "retrieved_chunk_ids": [
+        "421425c7-9daf-5360-94db-5635cfa4ec83"
+      ],
+      "retriever": "baseline",
+      "store_type": "sqlite"
+    },
+    {
+      "dataset": "preference-drift-v1",
+      "query_index": 2,
+      "query_text_sha256": "d8805976d20cc20e53342f0956aa49b6644aca9228c0a03b0a488e097f6ad5c0",
+      "relevant_chunk_ids": [
+        "bfd592f4-3182-51de-b6a2-92e15745e99c"
+      ],
+      "repetition": 2,
+      "retrieved_chunk_ids": [
+        "bfd592f4-3182-51de-b6a2-92e15745e99c"
+      ],
+      "retriever": "baseline",
+      "store_type": "sqlite"
+    },
+    {
+      "dataset": "preference-drift-v1",
+      "query_index": 3,
+      "query_text_sha256": "227a5e6ac7ace76767d524ecee084453a9bbba7cc0ffcd92e84f3d6a355a061a",
+      "relevant_chunk_ids": [
+        "bfd592f4-3182-51de-b6a2-92e15745e99c"
+      ],
+      "repetition": 2,
+      "retrieved_chunk_ids": [
+        "bfd592f4-3182-51de-b6a2-92e15745e99c"
+      ],
+      "retriever": "baseline",
+      "store_type": "sqlite"
+    },
+    {
+      "dataset": "preference-drift-v1",
+      "query_index": 4,
+      "query_text_sha256": "61a606c7ccb98ddcdb7ca241a6c22f2b052c5dbb4aa5907576139543f55d432a",
+      "relevant_chunk_ids": [
+        "d3c61ca2-3a39-5580-a700-b3eb1c888cc0"
+      ],
+      "repetition": 2,
+      "retrieved_chunk_ids": [
+        "1bbcb339-7317-5bd8-a0b1-fb7d2a3c49c8"
+      ],
+      "retriever": "baseline",
+      "store_type": "sqlite"
+    },
+    {
+      "dataset": "preference-drift-v1",
+      "query_index": 5,
+      "query_text_sha256": "83a27ee80824d37bbf99670a9476935df0402ab9efcb9c12cc8a5881d167f7a6",
+      "relevant_chunk_ids": [
+        "d3c61ca2-3a39-5580-a700-b3eb1c888cc0"
+      ],
+      "repetition": 2,
+      "retrieved_chunk_ids": [
+        "1bbcb339-7317-5bd8-a0b1-fb7d2a3c49c8"
+      ],
+      "retriever": "baseline",
+      "store_type": "sqlite"
+    },
+    {
+      "dataset": "preference-drift-v1",
+      "query_index": 6,
+      "query_text_sha256": "eeb333968364526dad0f0c8f9cac45e7b57a54b1c14a61ea975a48ea138861fb",
+      "relevant_chunk_ids": [
+        "041ceecd-3d21-5e7c-a0f0-1bff6414c64c"
+      ],
+      "repetition": 2,
+      "retrieved_chunk_ids": [
+        "041ceecd-3d21-5e7c-a0f0-1bff6414c64c"
+      ],
+      "retriever": "baseline",
+      "store_type": "sqlite"
+    },
+    {
+      "dataset": "preference-drift-v1",
+      "query_index": 7,
+      "query_text_sha256": "484c2393b84dc71027f66cb307d649e760c84d14036bc0e79e2141859425725c",
+      "relevant_chunk_ids": [
+        "041ceecd-3d21-5e7c-a0f0-1bff6414c64c"
+      ],
+      "repetition": 2,
+      "retrieved_chunk_ids": [
+        "041ceecd-3d21-5e7c-a0f0-1bff6414c64c"
+      ],
+      "retriever": "baseline",
+      "store_type": "sqlite"
+    },
+    {
+      "dataset": "preference-drift-v1",
+      "query_index": 0,
+      "query_text_sha256": "0afe29a137bc3fea53176fa4f849457dceec6be2c794f5e44d327d172679ab8b",
+      "relevant_chunk_ids": [
+        "fb0541aa-5a54-48c3-989b-eb719463cae2"
+      ],
+      "repetition": 2,
+      "retrieved_chunk_ids": [
+        "ae8fea15-4698-42e5-9bea-90dc137a5401"
+      ],
+      "retriever": "engine",
+      "store_type": "sqlite"
+    },
+    {
+      "dataset": "preference-drift-v1",
+      "query_index": 1,
+      "query_text_sha256": "b64ef41121c144a1d7c5558ff42d71cc5a83836e7f1aec8c485b220a37788516",
+      "relevant_chunk_ids": [
+        "fb0541aa-5a54-48c3-989b-eb719463cae2"
+      ],
+      "repetition": 2,
+      "retrieved_chunk_ids": [
+        "ae8fea15-4698-42e5-9bea-90dc137a5401"
+      ],
+      "retriever": "engine",
+      "store_type": "sqlite"
+    },
+    {
+      "dataset": "preference-drift-v1",
+      "query_index": 2,
+      "query_text_sha256": "d8805976d20cc20e53342f0956aa49b6644aca9228c0a03b0a488e097f6ad5c0",
+      "relevant_chunk_ids": [
+        "e58aadac-3099-44ee-9469-ad43881253e2"
+      ],
+      "repetition": 2,
+      "retrieved_chunk_ids": [],
+      "retriever": "engine",
+      "store_type": "sqlite"
+    },
+    {
+      "dataset": "preference-drift-v1",
+      "query_index": 3,
+      "query_text_sha256": "227a5e6ac7ace76767d524ecee084453a9bbba7cc0ffcd92e84f3d6a355a061a",
+      "relevant_chunk_ids": [
+        "e58aadac-3099-44ee-9469-ad43881253e2"
+      ],
+      "repetition": 2,
+      "retrieved_chunk_ids": [
+        "8c0494f9-9bd1-4965-b3b5-11a23af61624"
+      ],
+      "retriever": "engine",
+      "store_type": "sqlite"
+    },
+    {
+      "dataset": "preference-drift-v1",
+      "query_index": 4,
+      "query_text_sha256": "61a606c7ccb98ddcdb7ca241a6c22f2b052c5dbb4aa5907576139543f55d432a",
+      "relevant_chunk_ids": [
+        "b70c00b8-ac70-4c4b-a703-1835129d5e61"
+      ],
+      "repetition": 2,
+      "retrieved_chunk_ids": [
+        "9dc2afff-fb74-405b-9098-ae23a577aa18"
+      ],
+      "retriever": "engine",
+      "store_type": "sqlite"
+    },
+    {
+      "dataset": "preference-drift-v1",
+      "query_index": 5,
+      "query_text_sha256": "83a27ee80824d37bbf99670a9476935df0402ab9efcb9c12cc8a5881d167f7a6",
+      "relevant_chunk_ids": [
+        "b70c00b8-ac70-4c4b-a703-1835129d5e61"
+      ],
+      "repetition": 2,
+      "retrieved_chunk_ids": [
+        "9dc2afff-fb74-405b-9098-ae23a577aa18"
+      ],
+      "retriever": "engine",
+      "store_type": "sqlite"
+    },
+    {
+      "dataset": "preference-drift-v1",
+      "query_index": 6,
+      "query_text_sha256": "eeb333968364526dad0f0c8f9cac45e7b57a54b1c14a61ea975a48ea138861fb",
+      "relevant_chunk_ids": [
+        "bdaaea11-eba9-441c-b674-a36661717e46"
+      ],
+      "repetition": 2,
+      "retrieved_chunk_ids": [
+        "bdaaea11-eba9-441c-b674-a36661717e46"
+      ],
+      "retriever": "engine",
+      "store_type": "sqlite"
+    },
+    {
+      "dataset": "preference-drift-v1",
+      "query_index": 7,
+      "query_text_sha256": "484c2393b84dc71027f66cb307d649e760c84d14036bc0e79e2141859425725c",
+      "relevant_chunk_ids": [
+        "bdaaea11-eba9-441c-b674-a36661717e46"
+      ],
+      "repetition": 2,
+      "retrieved_chunk_ids": [
+        "bdaaea11-eba9-441c-b674-a36661717e46"
+      ],
+      "retriever": "engine",
+      "store_type": "sqlite"
+    },
+    {
+      "dataset": "cross-project-scope-v1",
+      "query_index": 0,
+      "query_text_sha256": "7f5c8b5c83124215b16cf79d642e23e2bdc78de7bc1470a40f27f872d0930a58",
+      "relevant_chunk_ids": [
+        "aa5b128f-bf9e-57ef-b576-7d0f152511cc"
+      ],
+      "repetition": 2,
+      "retrieved_chunk_ids": [
+        "aa5b128f-bf9e-57ef-b576-7d0f152511cc"
+      ],
+      "retriever": "baseline",
+      "store_type": "memory"
+    },
+    {
+      "dataset": "cross-project-scope-v1",
+      "query_index": 1,
+      "query_text_sha256": "7f5c8b5c83124215b16cf79d642e23e2bdc78de7bc1470a40f27f872d0930a58",
+      "relevant_chunk_ids": [
+        "b2a7067e-3792-5c17-968c-000d341b8740"
+      ],
+      "repetition": 2,
+      "retrieved_chunk_ids": [
+        "b2a7067e-3792-5c17-968c-000d341b8740"
+      ],
+      "retriever": "baseline",
+      "store_type": "memory"
+    },
+    {
+      "dataset": "cross-project-scope-v1",
+      "query_index": 2,
+      "query_text_sha256": "7e1905001a38d923fffe5da360327f912a715c71fce3e805730dbecfdbc73d3f",
+      "relevant_chunk_ids": [
+        "0795e1ac-2463-51eb-b800-1e93fead7be0"
+      ],
+      "repetition": 2,
+      "retrieved_chunk_ids": [
+        "0795e1ac-2463-51eb-b800-1e93fead7be0"
+      ],
+      "retriever": "baseline",
+      "store_type": "memory"
+    },
+    {
+      "dataset": "cross-project-scope-v1",
+      "query_index": 3,
+      "query_text_sha256": "7e1905001a38d923fffe5da360327f912a715c71fce3e805730dbecfdbc73d3f",
+      "relevant_chunk_ids": [
+        "524d49d2-3f29-5f82-b880-d1c2635b5b43"
+      ],
+      "repetition": 2,
+      "retrieved_chunk_ids": [
+        "524d49d2-3f29-5f82-b880-d1c2635b5b43"
+      ],
+      "retriever": "baseline",
+      "store_type": "memory"
+    },
+    {
+      "dataset": "cross-project-scope-v1",
+      "query_index": 4,
+      "query_text_sha256": "b2afcd62eb9d565628368b62e75d598c58f282c1ea555904139c0dc3b38d4121",
+      "relevant_chunk_ids": [
+        "abedd3f4-ea25-5383-8ad5-5959bc3e1fe1"
+      ],
+      "repetition": 2,
+      "retrieved_chunk_ids": [
+        "abedd3f4-ea25-5383-8ad5-5959bc3e1fe1"
+      ],
+      "retriever": "baseline",
+      "store_type": "memory"
+    },
+    {
+      "dataset": "cross-project-scope-v1",
+      "query_index": 5,
+      "query_text_sha256": "b2afcd62eb9d565628368b62e75d598c58f282c1ea555904139c0dc3b38d4121",
+      "relevant_chunk_ids": [
+        "abedd3f4-ea25-5383-8ad5-5959bc3e1fe1"
+      ],
+      "repetition": 2,
+      "retrieved_chunk_ids": [
+        "abedd3f4-ea25-5383-8ad5-5959bc3e1fe1"
+      ],
+      "retriever": "baseline",
+      "store_type": "memory"
+    },
+    {
+      "dataset": "cross-project-scope-v1",
+      "query_index": 6,
+      "query_text_sha256": "8c2cd81c14e77cc609725cf4ab916c670ecb8430354369e6d66523db684fb7d5",
+      "relevant_chunk_ids": [
+        "049fa406-130b-5d1b-8ca5-ac7dcde67025"
+      ],
+      "repetition": 2,
+      "retrieved_chunk_ids": [
+        "049fa406-130b-5d1b-8ca5-ac7dcde67025"
+      ],
+      "retriever": "baseline",
+      "store_type": "memory"
+    },
+    {
+      "dataset": "cross-project-scope-v1",
+      "query_index": 0,
+      "query_text_sha256": "7f5c8b5c83124215b16cf79d642e23e2bdc78de7bc1470a40f27f872d0930a58",
+      "relevant_chunk_ids": [
+        "03bd7ad4-f9f3-47a8-9b1f-9aa1d7576b5c"
+      ],
+      "repetition": 2,
+      "retrieved_chunk_ids": [
+        "03bd7ad4-f9f3-47a8-9b1f-9aa1d7576b5c"
+      ],
+      "retriever": "engine",
+      "store_type": "memory"
+    },
+    {
+      "dataset": "cross-project-scope-v1",
+      "query_index": 1,
+      "query_text_sha256": "7f5c8b5c83124215b16cf79d642e23e2bdc78de7bc1470a40f27f872d0930a58",
+      "relevant_chunk_ids": [
+        "cda81f2e-e767-4589-87b6-61a2356fd144"
+      ],
+      "repetition": 2,
+      "retrieved_chunk_ids": [
+        "cda81f2e-e767-4589-87b6-61a2356fd144"
+      ],
+      "retriever": "engine",
+      "store_type": "memory"
+    },
+    {
+      "dataset": "cross-project-scope-v1",
+      "query_index": 2,
+      "query_text_sha256": "7e1905001a38d923fffe5da360327f912a715c71fce3e805730dbecfdbc73d3f",
+      "relevant_chunk_ids": [
+        "753cd378-647a-4290-8339-edb2307fdbe6"
+      ],
+      "repetition": 2,
+      "retrieved_chunk_ids": [
+        "753cd378-647a-4290-8339-edb2307fdbe6"
+      ],
+      "retriever": "engine",
+      "store_type": "memory"
+    },
+    {
+      "dataset": "cross-project-scope-v1",
+      "query_index": 3,
+      "query_text_sha256": "7e1905001a38d923fffe5da360327f912a715c71fce3e805730dbecfdbc73d3f",
+      "relevant_chunk_ids": [
+        "d930d360-feb4-49d4-af60-ae148e1d0213"
+      ],
+      "repetition": 2,
+      "retrieved_chunk_ids": [
+        "d930d360-feb4-49d4-af60-ae148e1d0213"
+      ],
+      "retriever": "engine",
+      "store_type": "memory"
+    },
+    {
+      "dataset": "cross-project-scope-v1",
+      "query_index": 4,
+      "query_text_sha256": "b2afcd62eb9d565628368b62e75d598c58f282c1ea555904139c0dc3b38d4121",
+      "relevant_chunk_ids": [
+        "09dad3fb-32b6-45c9-9b24-ed5e2b64a672"
+      ],
+      "repetition": 2,
+      "retrieved_chunk_ids": [
+        "09dad3fb-32b6-45c9-9b24-ed5e2b64a672"
+      ],
+      "retriever": "engine",
+      "store_type": "memory"
+    },
+    {
+      "dataset": "cross-project-scope-v1",
+      "query_index": 5,
+      "query_text_sha256": "b2afcd62eb9d565628368b62e75d598c58f282c1ea555904139c0dc3b38d4121",
+      "relevant_chunk_ids": [
+        "09dad3fb-32b6-45c9-9b24-ed5e2b64a672"
+      ],
+      "repetition": 2,
+      "retrieved_chunk_ids": [
+        "09dad3fb-32b6-45c9-9b24-ed5e2b64a672"
+      ],
+      "retriever": "engine",
+      "store_type": "memory"
+    },
+    {
+      "dataset": "cross-project-scope-v1",
+      "query_index": 6,
+      "query_text_sha256": "8c2cd81c14e77cc609725cf4ab916c670ecb8430354369e6d66523db684fb7d5",
+      "relevant_chunk_ids": [
+        "3e1afb41-df3d-4e3a-8491-134642d47604"
+      ],
+      "repetition": 2,
+      "retrieved_chunk_ids": [
+        "3e1afb41-df3d-4e3a-8491-134642d47604"
+      ],
+      "retriever": "engine",
+      "store_type": "memory"
+    },
+    {
+      "dataset": "cross-project-scope-v1",
+      "query_index": 0,
+      "query_text_sha256": "7f5c8b5c83124215b16cf79d642e23e2bdc78de7bc1470a40f27f872d0930a58",
+      "relevant_chunk_ids": [
+        "aa5b128f-bf9e-57ef-b576-7d0f152511cc"
+      ],
+      "repetition": 2,
+      "retrieved_chunk_ids": [
+        "aa5b128f-bf9e-57ef-b576-7d0f152511cc"
+      ],
+      "retriever": "baseline",
+      "store_type": "sqlite"
+    },
+    {
+      "dataset": "cross-project-scope-v1",
+      "query_index": 1,
+      "query_text_sha256": "7f5c8b5c83124215b16cf79d642e23e2bdc78de7bc1470a40f27f872d0930a58",
+      "relevant_chunk_ids": [
+        "b2a7067e-3792-5c17-968c-000d341b8740"
+      ],
+      "repetition": 2,
+      "retrieved_chunk_ids": [
+        "b2a7067e-3792-5c17-968c-000d341b8740"
+      ],
+      "retriever": "baseline",
+      "store_type": "sqlite"
+    },
+    {
+      "dataset": "cross-project-scope-v1",
+      "query_index": 2,
+      "query_text_sha256": "7e1905001a38d923fffe5da360327f912a715c71fce3e805730dbecfdbc73d3f",
+      "relevant_chunk_ids": [
+        "0795e1ac-2463-51eb-b800-1e93fead7be0"
+      ],
+      "repetition": 2,
+      "retrieved_chunk_ids": [
+        "0795e1ac-2463-51eb-b800-1e93fead7be0"
+      ],
+      "retriever": "baseline",
+      "store_type": "sqlite"
+    },
+    {
+      "dataset": "cross-project-scope-v1",
+      "query_index": 3,
+      "query_text_sha256": "7e1905001a38d923fffe5da360327f912a715c71fce3e805730dbecfdbc73d3f",
+      "relevant_chunk_ids": [
+        "524d49d2-3f29-5f82-b880-d1c2635b5b43"
+      ],
+      "repetition": 2,
+      "retrieved_chunk_ids": [
+        "524d49d2-3f29-5f82-b880-d1c2635b5b43"
+      ],
+      "retriever": "baseline",
+      "store_type": "sqlite"
+    },
+    {
+      "dataset": "cross-project-scope-v1",
+      "query_index": 4,
+      "query_text_sha256": "b2afcd62eb9d565628368b62e75d598c58f282c1ea555904139c0dc3b38d4121",
+      "relevant_chunk_ids": [
+        "abedd3f4-ea25-5383-8ad5-5959bc3e1fe1"
+      ],
+      "repetition": 2,
+      "retrieved_chunk_ids": [
+        "abedd3f4-ea25-5383-8ad5-5959bc3e1fe1"
+      ],
+      "retriever": "baseline",
+      "store_type": "sqlite"
+    },
+    {
+      "dataset": "cross-project-scope-v1",
+      "query_index": 5,
+      "query_text_sha256": "b2afcd62eb9d565628368b62e75d598c58f282c1ea555904139c0dc3b38d4121",
+      "relevant_chunk_ids": [
+        "abedd3f4-ea25-5383-8ad5-5959bc3e1fe1"
+      ],
+      "repetition": 2,
+      "retrieved_chunk_ids": [
+        "abedd3f4-ea25-5383-8ad5-5959bc3e1fe1"
+      ],
+      "retriever": "baseline",
+      "store_type": "sqlite"
+    },
+    {
+      "dataset": "cross-project-scope-v1",
+      "query_index": 6,
+      "query_text_sha256": "8c2cd81c14e77cc609725cf4ab916c670ecb8430354369e6d66523db684fb7d5",
+      "relevant_chunk_ids": [
+        "049fa406-130b-5d1b-8ca5-ac7dcde67025"
+      ],
+      "repetition": 2,
+      "retrieved_chunk_ids": [
+        "049fa406-130b-5d1b-8ca5-ac7dcde67025"
+      ],
+      "retriever": "baseline",
+      "store_type": "sqlite"
+    },
+    {
+      "dataset": "cross-project-scope-v1",
+      "query_index": 0,
+      "query_text_sha256": "7f5c8b5c83124215b16cf79d642e23e2bdc78de7bc1470a40f27f872d0930a58",
+      "relevant_chunk_ids": [
+        "4d676eb0-6387-4bd9-bea7-183db7d6d5ea"
+      ],
+      "repetition": 2,
+      "retrieved_chunk_ids": [
+        "4d676eb0-6387-4bd9-bea7-183db7d6d5ea"
+      ],
+      "retriever": "engine",
+      "store_type": "sqlite"
+    },
+    {
+      "dataset": "cross-project-scope-v1",
+      "query_index": 1,
+      "query_text_sha256": "7f5c8b5c83124215b16cf79d642e23e2bdc78de7bc1470a40f27f872d0930a58",
+      "relevant_chunk_ids": [
+        "14197f38-832c-43a9-b597-fb34e5d5404b"
+      ],
+      "repetition": 2,
+      "retrieved_chunk_ids": [
+        "14197f38-832c-43a9-b597-fb34e5d5404b"
+      ],
+      "retriever": "engine",
+      "store_type": "sqlite"
+    },
+    {
+      "dataset": "cross-project-scope-v1",
+      "query_index": 2,
+      "query_text_sha256": "7e1905001a38d923fffe5da360327f912a715c71fce3e805730dbecfdbc73d3f",
+      "relevant_chunk_ids": [
+        "84ee44a8-9225-4213-b8bd-f3172f5ef5b0"
+      ],
+      "repetition": 2,
+      "retrieved_chunk_ids": [
+        "84ee44a8-9225-4213-b8bd-f3172f5ef5b0"
+      ],
+      "retriever": "engine",
+      "store_type": "sqlite"
+    },
+    {
+      "dataset": "cross-project-scope-v1",
+      "query_index": 3,
+      "query_text_sha256": "7e1905001a38d923fffe5da360327f912a715c71fce3e805730dbecfdbc73d3f",
+      "relevant_chunk_ids": [
+        "1a66e0c7-4ed1-4d6f-b2b7-f9d2b0f60b47"
+      ],
+      "repetition": 2,
+      "retrieved_chunk_ids": [
+        "1a66e0c7-4ed1-4d6f-b2b7-f9d2b0f60b47"
+      ],
+      "retriever": "engine",
+      "store_type": "sqlite"
+    },
+    {
+      "dataset": "cross-project-scope-v1",
+      "query_index": 4,
+      "query_text_sha256": "b2afcd62eb9d565628368b62e75d598c58f282c1ea555904139c0dc3b38d4121",
+      "relevant_chunk_ids": [
+        "7632efff-84d8-4e41-adfd-500a1f3626f0"
+      ],
+      "repetition": 2,
+      "retrieved_chunk_ids": [
+        "7632efff-84d8-4e41-adfd-500a1f3626f0"
+      ],
+      "retriever": "engine",
+      "store_type": "sqlite"
+    },
+    {
+      "dataset": "cross-project-scope-v1",
+      "query_index": 5,
+      "query_text_sha256": "b2afcd62eb9d565628368b62e75d598c58f282c1ea555904139c0dc3b38d4121",
+      "relevant_chunk_ids": [
+        "7632efff-84d8-4e41-adfd-500a1f3626f0"
+      ],
+      "repetition": 2,
+      "retrieved_chunk_ids": [
+        "7632efff-84d8-4e41-adfd-500a1f3626f0"
+      ],
+      "retriever": "engine",
+      "store_type": "sqlite"
+    },
+    {
+      "dataset": "cross-project-scope-v1",
+      "query_index": 6,
+      "query_text_sha256": "8c2cd81c14e77cc609725cf4ab916c670ecb8430354369e6d66523db684fb7d5",
+      "relevant_chunk_ids": [
+        "07af57c0-ada1-459f-8f4b-4a83171589dc"
+      ],
+      "repetition": 2,
+      "retrieved_chunk_ids": [
+        "07af57c0-ada1-459f-8f4b-4a83171589dc"
+      ],
+      "retriever": "engine",
+      "store_type": "sqlite"
+    }
+  ],
+  "results": [
+    {
+      "dataset": "contradiction-update-v1",
+      "document_count": 8,
+      "ingest_seconds": 0.0001750999945215881,
+      "latency_mean_ms": 0.19818750661215745,
+      "latency_p95_ms": 0.27525501500349486,
+      "mrr": 0.5,
+      "query_count": 8,
+      "recall_at_k": 0.5,
+      "repetition": 1,
+      "retriever": "baseline",
+      "store_stats": {
+        "average_access_count": 0.0,
+        "average_salience": 0.5,
+        "backend": "InMemoryStore",
+        "chunks_with_embeddings": 8,
+        "name": "benchmark-memory",
+        "total_chunks": 8
+      },
+      "store_type": "memory",
+      "top_k": 1
+    },
+    {
+      "dataset": "contradiction-update-v1",
+      "document_count": 8,
+      "ingest_seconds": 0.013872000010451302,
+      "latency_mean_ms": 0.6376249948516488,
+      "latency_p95_ms": 0.7723849979811347,
+      "mrr": 0.5,
+      "query_count": 8,
+      "recall_at_k": 0.5,
+      "repetition": 1,
+      "retriever": "engine",
+      "store_stats": {
+        "average_access_count": 0.75,
+        "average_salience": 0.9288,
+        "backend": "InMemoryStore",
+        "chunks_with_embeddings": 8,
+        "name": "benchmark-memory",
+        "total_chunks": 8
+      },
+      "store_type": "memory",
+      "top_k": 1
+    },
+    {
+      "dataset": "contradiction-update-v1",
+      "document_count": 8,
+      "ingest_seconds": 0.026106800010893494,
+      "latency_mean_ms": 0.6403749939636327,
+      "latency_p95_ms": 0.8143050014041364,
+      "mrr": 0.5,
+      "query_count": 8,
+      "recall_at_k": 0.5,
+      "repetition": 1,
+      "retriever": "baseline",
+      "store_stats": {
+        "average_access_count": 0.0,
+        "average_salience": 0.5,
+        "backend": "SQLiteStore",
+        "chunks_with_embeddings": 8,
+        "db_path": "C:\\Users\\Ant\\AppData\\Local\\Temp\\mnemos-fair-benchmark-fixtures-v4\\r1-contradiction-update-v1-sqlite-baseline.sqlite",
+        "fts_enabled": true,
+        "migration_backup": null,
+        "name": "benchmark-sqlite",
+        "pending_episodic_events": 0,
+        "pending_reconsolidation_jobs": 0,
+        "related_edges": 0,
+        "schema_version": 8,
+        "semantic_similar_edges": 0,
+        "sqlite_vec_dim": 384,
+        "sqlite_vec_enabled": true,
+        "sqlite_vec_indexed": true,
+        "total_chunks": 8
+      },
+      "store_type": "sqlite",
+      "top_k": 1
+    },
+    {
+      "dataset": "contradiction-update-v1",
+      "document_count": 8,
+      "ingest_seconds": 0.16183389999787323,
+      "latency_mean_ms": 3.30343750101747,
+      "latency_p95_ms": 4.13711498840712,
+      "mrr": 0.375,
+      "query_count": 8,
+      "recall_at_k": 0.375,
+      "repetition": 1,
+      "retriever": "engine",
+      "store_stats": {
+        "average_access_count": 0.75,
+        "average_salience": 0.9288,
+        "backend": "SQLiteStore",
+        "chunks_with_embeddings": 8,
+        "db_path": "C:\\Users\\Ant\\AppData\\Local\\Temp\\mnemos-fair-benchmark-fixtures-v4\\r1-contradiction-update-v1-sqlite-engine.sqlite",
+        "fts_enabled": true,
+        "migration_backup": null,
+        "name": "benchmark-sqlite",
+        "pending_episodic_events": 8,
+        "pending_reconsolidation_jobs": 0,
+        "related_edges": 4,
+        "schema_version": 8,
+        "semantic_similar_edges": 4,
+        "sqlite_vec_dim": 384,
+        "sqlite_vec_enabled": true,
+        "sqlite_vec_indexed": true,
+        "total_chunks": 8
+      },
+      "store_type": "sqlite",
+      "top_k": 1
+    },
+    {
+      "dataset": "preference-drift-v1",
+      "document_count": 8,
+      "ingest_seconds": 0.00011850000009872019,
+      "latency_mean_ms": 0.21610000112559646,
+      "latency_p95_ms": 0.2886749876779504,
+      "mrr": 0.75,
+      "query_count": 8,
+      "recall_at_k": 0.75,
+      "repetition": 1,
+      "retriever": "baseline",
+      "store_stats": {
+        "average_access_count": 0.0,
+        "average_salience": 0.5,
+        "backend": "InMemoryStore",
+        "chunks_with_embeddings": 8,
+        "name": "benchmark-memory",
+        "total_chunks": 8
+      },
+      "store_type": "memory",
+      "top_k": 1
+    },
+    {
+      "dataset": "preference-drift-v1",
+      "document_count": 8,
+      "ingest_seconds": 0.012131399998907,
+      "latency_mean_ms": 0.6674624964944087,
+      "latency_p95_ms": 0.806874995760154,
+      "mrr": 0.625,
+      "query_count": 8,
+      "recall_at_k": 0.625,
+      "repetition": 1,
+      "retriever": "engine",
+      "store_stats": {
+        "average_access_count": 0.875,
+        "average_salience": 1.0,
+        "backend": "InMemoryStore",
+        "chunks_with_embeddings": 8,
+        "name": "benchmark-memory",
+        "total_chunks": 8
+      },
+      "store_type": "memory",
+      "top_k": 1
+    },
+    {
+      "dataset": "preference-drift-v1",
+      "document_count": 8,
+      "ingest_seconds": 0.024934599990956485,
+      "latency_mean_ms": 0.568600014958065,
+      "latency_p95_ms": 0.6750150088919326,
+      "mrr": 0.75,
+      "query_count": 8,
+      "recall_at_k": 0.75,
+      "repetition": 1,
+      "retriever": "baseline",
+      "store_stats": {
+        "average_access_count": 0.0,
+        "average_salience": 0.5,
+        "backend": "SQLiteStore",
+        "chunks_with_embeddings": 8,
+        "db_path": "C:\\Users\\Ant\\AppData\\Local\\Temp\\mnemos-fair-benchmark-fixtures-v4\\r1-preference-drift-v1-sqlite-baseline.sqlite",
+        "fts_enabled": true,
+        "migration_backup": null,
+        "name": "benchmark-sqlite",
+        "pending_episodic_events": 0,
+        "pending_reconsolidation_jobs": 0,
+        "related_edges": 0,
+        "schema_version": 8,
+        "semantic_similar_edges": 0,
+        "sqlite_vec_dim": 384,
+        "sqlite_vec_enabled": true,
+        "sqlite_vec_indexed": true,
+        "total_chunks": 8
+      },
+      "store_type": "sqlite",
+      "top_k": 1
+    },
+    {
+      "dataset": "preference-drift-v1",
+      "document_count": 8,
+      "ingest_seconds": 0.1677911999868229,
+      "latency_mean_ms": 3.651812505268026,
+      "latency_p95_ms": 4.132765000395011,
+      "mrr": 0.25,
+      "query_count": 8,
+      "recall_at_k": 0.25,
+      "repetition": 1,
+      "retriever": "engine",
+      "store_stats": {
+        "average_access_count": 0.875,
+        "average_salience": 1.0,
+        "backend": "SQLiteStore",
+        "chunks_with_embeddings": 8,
+        "db_path": "C:\\Users\\Ant\\AppData\\Local\\Temp\\mnemos-fair-benchmark-fixtures-v4\\r1-preference-drift-v1-sqlite-engine.sqlite",
+        "fts_enabled": true,
+        "migration_backup": null,
+        "name": "benchmark-sqlite",
+        "pending_episodic_events": 8,
+        "pending_reconsolidation_jobs": 0,
+        "related_edges": 3,
+        "schema_version": 8,
+        "semantic_similar_edges": 3,
+        "sqlite_vec_dim": 384,
+        "sqlite_vec_enabled": true,
+        "sqlite_vec_indexed": true,
+        "total_chunks": 8
+      },
+      "store_type": "sqlite",
+      "top_k": 1
+    },
+    {
+      "dataset": "cross-project-scope-v1",
+      "document_count": 6,
+      "ingest_seconds": 0.00011720001930370927,
+      "latency_mean_ms": 0.08831428879472826,
+      "latency_p95_ms": 0.14094000216573474,
+      "mrr": 1.0,
+      "query_count": 7,
+      "recall_at_k": 1.0,
+      "repetition": 1,
+      "retriever": "baseline",
+      "store_stats": {
+        "average_access_count": 0.0,
+        "average_salience": 0.5,
+        "backend": "InMemoryStore",
+        "chunks_with_embeddings": 6,
+        "name": "benchmark-memory",
+        "total_chunks": 6
+      },
+      "store_type": "memory",
+      "top_k": 1
+    },
+    {
+      "dataset": "cross-project-scope-v1",
+      "document_count": 6,
+      "ingest_seconds": 0.007198200008133426,
+      "latency_mean_ms": 0.3894428622775844,
+      "latency_p95_ms": 0.4329200077336281,
+      "mrr": 1.0,
+      "query_count": 7,
+      "recall_at_k": 1.0,
+      "repetition": 1,
+      "retriever": "engine",
+      "store_stats": {
+        "average_access_count": 1.1667,
+        "average_salience": 0.8523,
+        "backend": "InMemoryStore",
+        "chunks_with_embeddings": 6,
+        "name": "benchmark-memory",
+        "total_chunks": 6
+      },
+      "store_type": "memory",
+      "top_k": 1
+    },
+    {
+      "dataset": "cross-project-scope-v1",
+      "document_count": 6,
+      "ingest_seconds": 0.022023400000762194,
+      "latency_mean_ms": 0.4104000067205301,
+      "latency_p95_ms": 0.5370900064008309,
+      "mrr": 1.0,
+      "query_count": 7,
+      "recall_at_k": 1.0,
+      "repetition": 1,
+      "retriever": "baseline",
+      "store_stats": {
+        "average_access_count": 0.0,
+        "average_salience": 0.5,
+        "backend": "SQLiteStore",
+        "chunks_with_embeddings": 6,
+        "db_path": "C:\\Users\\Ant\\AppData\\Local\\Temp\\mnemos-fair-benchmark-fixtures-v4\\r1-cross-project-scope-v1-sqlite-baseline.sqlite",
+        "fts_enabled": true,
+        "migration_backup": null,
+        "name": "benchmark-sqlite",
+        "pending_episodic_events": 0,
+        "pending_reconsolidation_jobs": 0,
+        "related_edges": 0,
+        "schema_version": 8,
+        "semantic_similar_edges": 0,
+        "sqlite_vec_dim": 384,
+        "sqlite_vec_enabled": true,
+        "sqlite_vec_indexed": true,
+        "total_chunks": 6
+      },
+      "store_type": "sqlite",
+      "top_k": 1
+    },
+    {
+      "dataset": "cross-project-scope-v1",
+      "document_count": 6,
+      "ingest_seconds": 0.11988799998653121,
+      "latency_mean_ms": 4.043285714163046,
+      "latency_p95_ms": 4.351440005120821,
+      "mrr": 1.0,
+      "query_count": 7,
+      "recall_at_k": 1.0,
+      "repetition": 1,
+      "retriever": "engine",
+      "store_stats": {
+        "average_access_count": 1.1667,
+        "average_salience": 0.8523,
+        "backend": "SQLiteStore",
+        "chunks_with_embeddings": 6,
+        "db_path": "C:\\Users\\Ant\\AppData\\Local\\Temp\\mnemos-fair-benchmark-fixtures-v4\\r1-cross-project-scope-v1-sqlite-engine.sqlite",
+        "fts_enabled": true,
+        "migration_backup": null,
+        "name": "benchmark-sqlite",
+        "pending_episodic_events": 6,
+        "pending_reconsolidation_jobs": 0,
+        "related_edges": 0,
+        "schema_version": 8,
+        "semantic_similar_edges": 0,
+        "sqlite_vec_dim": 384,
+        "sqlite_vec_enabled": true,
+        "sqlite_vec_indexed": true,
+        "total_chunks": 6
+      },
+      "store_type": "sqlite",
+      "top_k": 1
+    },
+    {
+      "dataset": "contradiction-update-v1",
+      "document_count": 8,
+      "ingest_seconds": 0.00012579999747686088,
+      "latency_mean_ms": 0.19967500702477992,
+      "latency_p95_ms": 0.2646600099978968,
+      "mrr": 0.5,
+      "query_count": 8,
+      "recall_at_k": 0.5,
+      "repetition": 2,
+      "retriever": "baseline",
+      "store_stats": {
+        "average_access_count": 0.0,
+        "average_salience": 0.5,
+        "backend": "InMemoryStore",
+        "chunks_with_embeddings": 8,
+        "name": "benchmark-memory",
+        "total_chunks": 8
+      },
+      "store_type": "memory",
+      "top_k": 1
+    },
+    {
+      "dataset": "contradiction-update-v1",
+      "document_count": 8,
+      "ingest_seconds": 0.01198749998002313,
+      "latency_mean_ms": 0.602037507633213,
+      "latency_p95_ms": 0.685415010957513,
+      "mrr": 0.25,
+      "query_count": 8,
+      "recall_at_k": 0.25,
+      "repetition": 2,
+      "retriever": "engine",
+      "store_stats": {
+        "average_access_count": 0.75,
+        "average_salience": 0.9288,
+        "backend": "InMemoryStore",
+        "chunks_with_embeddings": 8,
+        "name": "benchmark-memory",
+        "total_chunks": 8
+      },
+      "store_type": "memory",
+      "top_k": 1
+    },
+    {
+      "dataset": "contradiction-update-v1",
+      "document_count": 8,
+      "ingest_seconds": 0.027979599981335923,
+      "latency_mean_ms": 0.6366499947034754,
+      "latency_p95_ms": 0.8488600098644382,
+      "mrr": 0.5,
+      "query_count": 8,
+      "recall_at_k": 0.5,
+      "repetition": 2,
+      "retriever": "baseline",
+      "store_stats": {
+        "average_access_count": 0.0,
+        "average_salience": 0.5,
+        "backend": "SQLiteStore",
+        "chunks_with_embeddings": 8,
+        "db_path": "C:\\Users\\Ant\\AppData\\Local\\Temp\\mnemos-fair-benchmark-fixtures-v4\\r2-contradiction-update-v1-sqlite-baseline.sqlite",
+        "fts_enabled": true,
+        "migration_backup": null,
+        "name": "benchmark-sqlite",
+        "pending_episodic_events": 0,
+        "pending_reconsolidation_jobs": 0,
+        "related_edges": 0,
+        "schema_version": 8,
+        "semantic_similar_edges": 0,
+        "sqlite_vec_dim": 384,
+        "sqlite_vec_enabled": true,
+        "sqlite_vec_indexed": true,
+        "total_chunks": 8
+      },
+      "store_type": "sqlite",
+      "top_k": 1
+    },
+    {
+      "dataset": "contradiction-update-v1",
+      "document_count": 8,
+      "ingest_seconds": 0.15974220001953654,
+      "latency_mean_ms": 3.4049874993797857,
+      "latency_p95_ms": 4.355215003306512,
+      "mrr": 0.0,
+      "query_count": 8,
+      "recall_at_k": 0.0,
+      "repetition": 2,
+      "retriever": "engine",
+      "store_stats": {
+        "average_access_count": 0.75,
+        "average_salience": 0.9288,
+        "backend": "SQLiteStore",
+        "chunks_with_embeddings": 8,
+        "db_path": "C:\\Users\\Ant\\AppData\\Local\\Temp\\mnemos-fair-benchmark-fixtures-v4\\r2-contradiction-update-v1-sqlite-engine.sqlite",
+        "fts_enabled": true,
+        "migration_backup": null,
+        "name": "benchmark-sqlite",
+        "pending_episodic_events": 8,
+        "pending_reconsolidation_jobs": 0,
+        "related_edges": 4,
+        "schema_version": 8,
+        "semantic_similar_edges": 4,
+        "sqlite_vec_dim": 384,
+        "sqlite_vec_enabled": true,
+        "sqlite_vec_indexed": true,
+        "total_chunks": 8
+      },
+      "store_type": "sqlite",
+      "top_k": 1
+    },
+    {
+      "dataset": "preference-drift-v1",
+      "document_count": 8,
+      "ingest_seconds": 0.00011560000712051988,
+      "latency_mean_ms": 0.23355000303126872,
+      "latency_p95_ms": 0.29175001982366666,
+      "mrr": 0.75,
+      "query_count": 8,
+      "recall_at_k": 0.75,
+      "repetition": 2,
+      "retriever": "baseline",
+      "store_stats": {
+        "average_access_count": 0.0,
+        "average_salience": 0.5,
+        "backend": "InMemoryStore",
+        "chunks_with_embeddings": 8,
+        "name": "benchmark-memory",
+        "total_chunks": 8
+      },
+      "store_type": "memory",
+      "top_k": 1
+    },
+    {
+      "dataset": "preference-drift-v1",
+      "document_count": 8,
+      "ingest_seconds": 0.01175510001485236,
+      "latency_mean_ms": 0.6063250002625864,
+      "latency_p95_ms": 0.6584800008567981,
+      "mrr": 0.25,
+      "query_count": 8,
+      "recall_at_k": 0.25,
+      "repetition": 2,
+      "retriever": "engine",
+      "store_stats": {
+        "average_access_count": 0.875,
+        "average_salience": 1.0,
+        "backend": "InMemoryStore",
+        "chunks_with_embeddings": 8,
+        "name": "benchmark-memory",
+        "total_chunks": 8
+      },
+      "store_type": "memory",
+      "top_k": 1
+    },
+    {
+      "dataset": "preference-drift-v1",
+      "document_count": 8,
+      "ingest_seconds": 0.025135000003501773,
+      "latency_mean_ms": 0.5844500010425691,
+      "latency_p95_ms": 0.6887049981742165,
+      "mrr": 0.75,
+      "query_count": 8,
+      "recall_at_k": 0.75,
+      "repetition": 2,
+      "retriever": "baseline",
+      "store_stats": {
+        "average_access_count": 0.0,
+        "average_salience": 0.5,
+        "backend": "SQLiteStore",
+        "chunks_with_embeddings": 8,
+        "db_path": "C:\\Users\\Ant\\AppData\\Local\\Temp\\mnemos-fair-benchmark-fixtures-v4\\r2-preference-drift-v1-sqlite-baseline.sqlite",
+        "fts_enabled": true,
+        "migration_backup": null,
+        "name": "benchmark-sqlite",
+        "pending_episodic_events": 0,
+        "pending_reconsolidation_jobs": 0,
+        "related_edges": 0,
+        "schema_version": 8,
+        "semantic_similar_edges": 0,
+        "sqlite_vec_dim": 384,
+        "sqlite_vec_enabled": true,
+        "sqlite_vec_indexed": true,
+        "total_chunks": 8
+      },
+      "store_type": "sqlite",
+      "top_k": 1
+    },
+    {
+      "dataset": "preference-drift-v1",
+      "document_count": 8,
+      "ingest_seconds": 0.11031000001821667,
+      "latency_mean_ms": 2.7965624976786785,
+      "latency_p95_ms": 4.118129999551456,
+      "mrr": 0.25,
+      "query_count": 8,
+      "recall_at_k": 0.25,
+      "repetition": 2,
+      "retriever": "engine",
+      "store_stats": {
+        "average_access_count": 0.875,
+        "average_salience": 1.0,
+        "backend": "SQLiteStore",
+        "chunks_with_embeddings": 8,
+        "db_path": "C:\\Users\\Ant\\AppData\\Local\\Temp\\mnemos-fair-benchmark-fixtures-v4\\r2-preference-drift-v1-sqlite-engine.sqlite",
+        "fts_enabled": true,
+        "migration_backup": null,
+        "name": "benchmark-sqlite",
+        "pending_episodic_events": 8,
+        "pending_reconsolidation_jobs": 0,
+        "related_edges": 3,
+        "schema_version": 8,
+        "semantic_similar_edges": 3,
+        "sqlite_vec_dim": 384,
+        "sqlite_vec_enabled": true,
+        "sqlite_vec_indexed": true,
+        "total_chunks": 8
+      },
+      "store_type": "sqlite",
+      "top_k": 1
+    },
+    {
+      "dataset": "cross-project-scope-v1",
+      "document_count": 6,
+      "ingest_seconds": 9.779998799785972e-05,
+      "latency_mean_ms": 0.08858572774832803,
+      "latency_p95_ms": 0.14780001656617964,
+      "mrr": 1.0,
+      "query_count": 7,
+      "recall_at_k": 1.0,
+      "repetition": 2,
+      "retriever": "baseline",
+      "store_stats": {
+        "average_access_count": 0.0,
+        "average_salience": 0.5,
+        "backend": "InMemoryStore",
+        "chunks_with_embeddings": 6,
+        "name": "benchmark-memory",
+        "total_chunks": 6
+      },
+      "store_type": "memory",
+      "top_k": 1
+    },
+    {
+      "dataset": "cross-project-scope-v1",
+      "document_count": 6,
+      "ingest_seconds": 0.007786000001942739,
+      "latency_mean_ms": 0.41405714000575244,
+      "latency_p95_ms": 0.47343999322038144,
+      "mrr": 1.0,
+      "query_count": 7,
+      "recall_at_k": 1.0,
+      "repetition": 2,
+      "retriever": "engine",
+      "store_stats": {
+        "average_access_count": 1.1667,
+        "average_salience": 0.8523,
+        "backend": "InMemoryStore",
+        "chunks_with_embeddings": 6,
+        "name": "benchmark-memory",
+        "total_chunks": 6
+      },
+      "store_type": "memory",
+      "top_k": 1
+    },
+    {
+      "dataset": "cross-project-scope-v1",
+      "document_count": 6,
+      "ingest_seconds": 0.011659800016786903,
+      "latency_mean_ms": 0.402928566992549,
+      "latency_p95_ms": 0.5254199844785034,
+      "mrr": 1.0,
+      "query_count": 7,
+      "recall_at_k": 1.0,
+      "repetition": 2,
+      "retriever": "baseline",
+      "store_stats": {
+        "average_access_count": 0.0,
+        "average_salience": 0.5,
+        "backend": "SQLiteStore",
+        "chunks_with_embeddings": 6,
+        "db_path": "C:\\Users\\Ant\\AppData\\Local\\Temp\\mnemos-fair-benchmark-fixtures-v4\\r2-cross-project-scope-v1-sqlite-baseline.sqlite",
+        "fts_enabled": true,
+        "migration_backup": null,
+        "name": "benchmark-sqlite",
+        "pending_episodic_events": 0,
+        "pending_reconsolidation_jobs": 0,
+        "related_edges": 0,
+        "schema_version": 8,
+        "semantic_similar_edges": 0,
+        "sqlite_vec_dim": 384,
+        "sqlite_vec_enabled": true,
+        "sqlite_vec_indexed": true,
+        "total_chunks": 6
+      },
+      "store_type": "sqlite",
+      "top_k": 1
+    },
+    {
+      "dataset": "cross-project-scope-v1",
+      "document_count": 6,
+      "ingest_seconds": 0.1187424999952782,
+      "latency_mean_ms": 4.019042847046096,
+      "latency_p95_ms": 4.197529991506599,
+      "mrr": 1.0,
+      "query_count": 7,
+      "recall_at_k": 1.0,
+      "repetition": 2,
+      "retriever": "engine",
+      "store_stats": {
+        "average_access_count": 1.1667,
+        "average_salience": 0.8523,
+        "backend": "SQLiteStore",
+        "chunks_with_embeddings": 6,
+        "db_path": "C:\\Users\\Ant\\AppData\\Local\\Temp\\mnemos-fair-benchmark-fixtures-v4\\r2-cross-project-scope-v1-sqlite-engine.sqlite",
+        "fts_enabled": true,
+        "migration_backup": null,
+        "name": "benchmark-sqlite",
+        "pending_episodic_events": 6,
+        "pending_reconsolidation_jobs": 0,
+        "related_edges": 0,
+        "schema_version": 8,
+        "semantic_similar_edges": 0,
+        "sqlite_vec_dim": 384,
+        "sqlite_vec_enabled": true,
+        "sqlite_vec_indexed": true,
+        "total_chunks": 6
+      },
+      "store_type": "sqlite",
+      "top_k": 1
+    }
+  ],
+  "runs": [
+    {
+      "comparisons": [
+        {
+          "baseline": {
+            "latency_p95_ms": 0.27525501500349486,
+            "mrr": 0.5,
+            "recall_at_k": 0.5
+          },
+          "dataset": "contradiction-update-v1",
+          "delta_engine_minus_baseline": {
+            "latency_p95_ms": 0.49712998297763983,
+            "mrr": 0.0,
+            "recall_at_k": 0.0
+          },
+          "engine": {
+            "latency_p95_ms": 0.7723849979811347,
+            "mrr": 0.5,
+            "recall_at_k": 0.5
+          },
+          "store_type": "memory"
+        },
+        {
+          "baseline": {
+            "latency_p95_ms": 0.8143050014041364,
+            "mrr": 0.5,
+            "recall_at_k": 0.5
+          },
+          "dataset": "contradiction-update-v1",
+          "delta_engine_minus_baseline": {
+            "latency_p95_ms": 3.3228099870029837,
+            "mrr": -0.125,
+            "recall_at_k": -0.125
+          },
+          "engine": {
+            "latency_p95_ms": 4.13711498840712,
+            "mrr": 0.375,
+            "recall_at_k": 0.375
+          },
+          "store_type": "sqlite"
+        },
+        {
+          "baseline": {
+            "latency_p95_ms": 0.2886749876779504,
+            "mrr": 0.75,
+            "recall_at_k": 0.75
+          },
+          "dataset": "preference-drift-v1",
+          "delta_engine_minus_baseline": {
+            "latency_p95_ms": 0.5182000080822036,
+            "mrr": -0.125,
+            "recall_at_k": -0.125
+          },
+          "engine": {
+            "latency_p95_ms": 0.806874995760154,
+            "mrr": 0.625,
+            "recall_at_k": 0.625
+          },
+          "store_type": "memory"
+        },
+        {
+          "baseline": {
+            "latency_p95_ms": 0.6750150088919326,
+            "mrr": 0.75,
+            "recall_at_k": 0.75
+          },
+          "dataset": "preference-drift-v1",
+          "delta_engine_minus_baseline": {
+            "latency_p95_ms": 3.4577499915030785,
+            "mrr": -0.5,
+            "recall_at_k": -0.5
+          },
+          "engine": {
+            "latency_p95_ms": 4.132765000395011,
+            "mrr": 0.25,
+            "recall_at_k": 0.25
+          },
+          "store_type": "sqlite"
+        },
+        {
+          "baseline": {
+            "latency_p95_ms": 0.14094000216573474,
+            "mrr": 1.0,
+            "recall_at_k": 1.0
+          },
+          "dataset": "cross-project-scope-v1",
+          "delta_engine_minus_baseline": {
+            "latency_p95_ms": 0.2919800055678934,
+            "mrr": 0.0,
+            "recall_at_k": 0.0
+          },
+          "engine": {
+            "latency_p95_ms": 0.4329200077336281,
+            "mrr": 1.0,
+            "recall_at_k": 1.0
+          },
+          "store_type": "memory"
+        },
+        {
+          "baseline": {
+            "latency_p95_ms": 0.5370900064008309,
+            "mrr": 1.0,
+            "recall_at_k": 1.0
+          },
+          "dataset": "cross-project-scope-v1",
+          "delta_engine_minus_baseline": {
+            "latency_p95_ms": 3.8143499987199903,
+            "mrr": 0.0,
+            "recall_at_k": 0.0
+          },
+          "engine": {
+            "latency_p95_ms": 4.351440005120821,
+            "mrr": 1.0,
+            "recall_at_k": 1.0
+          },
+          "store_type": "sqlite"
+        }
+      ],
+      "gate": {
+        "details": [
+          {
+            "dataset": "contradiction-update-v1",
+            "latency_p95_ratio": 0.7723849979811347,
+            "latency_ratio_floor_ms": 1.0,
+            "max_latency_p95_ratio": 2.0,
+            "mrr_lift_ratio": 0.0,
+            "passed": false,
+            "store_type": "memory"
+          },
+          {
+            "dataset": "contradiction-update-v1",
+            "latency_p95_ratio": 2.06855749420356,
+            "latency_ratio_floor_ms": 2.0,
+            "max_latency_p95_ratio": 4.0,
+            "mrr_lift_ratio": -0.25,
+            "passed": false,
+            "store_type": "sqlite"
+          },
+          {
+            "dataset": "preference-drift-v1",
+            "latency_p95_ratio": 0.806874995760154,
+            "latency_ratio_floor_ms": 1.0,
+            "max_latency_p95_ratio": 2.0,
+            "mrr_lift_ratio": -0.16666666666666666,
+            "passed": false,
+            "store_type": "memory"
+          },
+          {
+            "dataset": "preference-drift-v1",
+            "latency_p95_ratio": 2.0663825001975056,
+            "latency_ratio_floor_ms": 2.0,
+            "max_latency_p95_ratio": 4.0,
+            "mrr_lift_ratio": -0.6666666666666666,
+            "passed": false,
+            "store_type": "sqlite"
+          },
+          {
+            "dataset": "cross-project-scope-v1",
+            "latency_p95_ratio": 0.4329200077336281,
+            "latency_ratio_floor_ms": 1.0,
+            "max_latency_p95_ratio": 2.0,
+            "mrr_lift_ratio": 0.0,
+            "passed": false,
+            "store_type": "memory"
+          },
+          {
+            "dataset": "cross-project-scope-v1",
+            "latency_p95_ratio": 2.1757200025604106,
+            "latency_ratio_floor_ms": 2.0,
+            "max_latency_p95_ratio": 4.0,
+            "mrr_lift_ratio": 0.0,
+            "passed": false,
+            "store_type": "sqlite"
+          }
+        ],
+        "evaluated_pairs": 6,
+        "failed_pairs": 6,
+        "latency_ratio_floor_ms": 1.0,
+        "latency_ratio_floor_ms_by_store": {
+          "memory": 1.0,
+          "sqlite": 2.0
+        },
+        "max_latency_p95_ratio": null,
+        "max_latency_p95_ratio_by_store": {
+          "memory": 2.0,
+          "sqlite": 4.0
+        },
+        "passed": false,
+        "passed_pairs": 0,
+        "required_mrr_lift_ratio": 0.15
+      },
+      "repetition": 1
+    },
+    {
+      "comparisons": [
+        {
+          "baseline": {
+            "latency_p95_ms": 0.2646600099978968,
+            "mrr": 0.5,
+            "recall_at_k": 0.5
+          },
+          "dataset": "contradiction-update-v1",
+          "delta_engine_minus_baseline": {
+            "latency_p95_ms": 0.4207550009596162,
+            "mrr": -0.25,
+            "recall_at_k": -0.25
+          },
+          "engine": {
+            "latency_p95_ms": 0.685415010957513,
+            "mrr": 0.25,
+            "recall_at_k": 0.25
+          },
+          "store_type": "memory"
+        },
+        {
+          "baseline": {
+            "latency_p95_ms": 0.8488600098644382,
+            "mrr": 0.5,
+            "recall_at_k": 0.5
+          },
+          "dataset": "contradiction-update-v1",
+          "delta_engine_minus_baseline": {
+            "latency_p95_ms": 3.5063549934420735,
+            "mrr": -0.5,
+            "recall_at_k": -0.5
+          },
+          "engine": {
+            "latency_p95_ms": 4.355215003306512,
+            "mrr": 0.0,
+            "recall_at_k": 0.0
+          },
+          "store_type": "sqlite"
+        },
+        {
+          "baseline": {
+            "latency_p95_ms": 0.29175001982366666,
+            "mrr": 0.75,
+            "recall_at_k": 0.75
+          },
+          "dataset": "preference-drift-v1",
+          "delta_engine_minus_baseline": {
+            "latency_p95_ms": 0.3667299810331315,
+            "mrr": -0.5,
+            "recall_at_k": -0.5
+          },
+          "engine": {
+            "latency_p95_ms": 0.6584800008567981,
+            "mrr": 0.25,
+            "recall_at_k": 0.25
+          },
+          "store_type": "memory"
+        },
+        {
+          "baseline": {
+            "latency_p95_ms": 0.6887049981742165,
+            "mrr": 0.75,
+            "recall_at_k": 0.75
+          },
+          "dataset": "preference-drift-v1",
+          "delta_engine_minus_baseline": {
+            "latency_p95_ms": 3.42942500137724,
+            "mrr": -0.5,
+            "recall_at_k": -0.5
+          },
+          "engine": {
+            "latency_p95_ms": 4.118129999551456,
+            "mrr": 0.25,
+            "recall_at_k": 0.25
+          },
+          "store_type": "sqlite"
+        },
+        {
+          "baseline": {
+            "latency_p95_ms": 0.14780001656617964,
+            "mrr": 1.0,
+            "recall_at_k": 1.0
+          },
+          "dataset": "cross-project-scope-v1",
+          "delta_engine_minus_baseline": {
+            "latency_p95_ms": 0.3256399766542018,
+            "mrr": 0.0,
+            "recall_at_k": 0.0
+          },
+          "engine": {
+            "latency_p95_ms": 0.47343999322038144,
+            "mrr": 1.0,
+            "recall_at_k": 1.0
+          },
+          "store_type": "memory"
+        },
+        {
+          "baseline": {
+            "latency_p95_ms": 0.5254199844785034,
+            "mrr": 1.0,
+            "recall_at_k": 1.0
+          },
+          "dataset": "cross-project-scope-v1",
+          "delta_engine_minus_baseline": {
+            "latency_p95_ms": 3.6721100070280954,
+            "mrr": 0.0,
+            "recall_at_k": 0.0
+          },
+          "engine": {
+            "latency_p95_ms": 4.197529991506599,
+            "mrr": 1.0,
+            "recall_at_k": 1.0
+          },
+          "store_type": "sqlite"
+        }
+      ],
+      "gate": {
+        "details": [
+          {
+            "dataset": "contradiction-update-v1",
+            "latency_p95_ratio": 0.685415010957513,
+            "latency_ratio_floor_ms": 1.0,
+            "max_latency_p95_ratio": 2.0,
+            "mrr_lift_ratio": -0.5,
+            "passed": false,
+            "store_type": "memory"
+          },
+          {
+            "dataset": "contradiction-update-v1",
+            "latency_p95_ratio": 2.177607501653256,
+            "latency_ratio_floor_ms": 2.0,
+            "max_latency_p95_ratio": 4.0,
+            "mrr_lift_ratio": -1.0,
+            "passed": false,
+            "store_type": "sqlite"
+          },
+          {
+            "dataset": "preference-drift-v1",
+            "latency_p95_ratio": 0.6584800008567981,
+            "latency_ratio_floor_ms": 1.0,
+            "max_latency_p95_ratio": 2.0,
+            "mrr_lift_ratio": -0.6666666666666666,
+            "passed": false,
+            "store_type": "memory"
+          },
+          {
+            "dataset": "preference-drift-v1",
+            "latency_p95_ratio": 2.059064999775728,
+            "latency_ratio_floor_ms": 2.0,
+            "max_latency_p95_ratio": 4.0,
+            "mrr_lift_ratio": -0.6666666666666666,
+            "passed": false,
+            "store_type": "sqlite"
+          },
+          {
+            "dataset": "cross-project-scope-v1",
+            "latency_p95_ratio": 0.47343999322038144,
+            "latency_ratio_floor_ms": 1.0,
+            "max_latency_p95_ratio": 2.0,
+            "mrr_lift_ratio": 0.0,
+            "passed": false,
+            "store_type": "memory"
+          },
+          {
+            "dataset": "cross-project-scope-v1",
+            "latency_p95_ratio": 2.0987649957532994,
+            "latency_ratio_floor_ms": 2.0,
+            "max_latency_p95_ratio": 4.0,
+            "mrr_lift_ratio": 0.0,
+            "passed": false,
+            "store_type": "sqlite"
+          }
+        ],
+        "evaluated_pairs": 6,
+        "failed_pairs": 6,
+        "latency_ratio_floor_ms": 1.0,
+        "latency_ratio_floor_ms_by_store": {
+          "memory": 1.0,
+          "sqlite": 2.0
+        },
+        "max_latency_p95_ratio": null,
+        "max_latency_p95_ratio_by_store": {
+          "memory": 2.0,
+          "sqlite": 4.0
+        },
+        "passed": false,
+        "passed_pairs": 0,
+        "required_mrr_lift_ratio": 0.15
+      },
+      "repetition": 2
+    }
+  ],
+  "source": {
+    "benchmark_module": "C:\\Users\\Ant\\AppData\\Local\\Temp\\mnemos-source-retrieval-parity-v1\\mnemos\\benchmark.py",
+    "commit": "8fc79f01ab68d9c211f9be4818f9e566e271cefd",
+    "helper": "D:\\Development\\mnemos\\mnemos\\.worktrees\\functional-local-memory\\.venv\\fair_benchmark_diagnostic_v4.py",
+    "helper_sha256": "44cc1b5e45d05e9adb6e114f1ab311c8fe2ae843ee82c94713752dff62739d24",
+    "python": "D:\\Development\\mnemos\\mnemos\\.worktrees\\functional-local-memory\\.venv\\Scripts\\python.exe",
+    "snapshot": "C:\\Users\\Ant\\AppData\\Local\\Temp\\mnemos-source-retrieval-parity-v1",
+    "tree_sha256_after": "ccce010e4acbab671d26695391476195ac46ef7f74c7e4e8575a1e94c78a44f5",
+    "tree_sha256_before": "ccce010e4acbab671d26695391476195ac46ef7f74c7e4e8575a1e94c78a44f5"
+  },
+  "status": "completed"
+}

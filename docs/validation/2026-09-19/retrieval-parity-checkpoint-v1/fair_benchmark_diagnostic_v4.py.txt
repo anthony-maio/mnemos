@@ -1,0 +1,385 @@
+"""Run one bounded fair offline retrieval benchmark diagnostic.
+
+This helper targets an immutable source snapshot and writes only to fresh
+external paths. It uses a stateless, token-hash embedding lookup shared by
+the baseline and engine paths, and enables the same scope filter for both.
+It is a diagnostic control, not production benchmark evidence.
+"""
+
+from __future__ import annotations
+
+import argparse
+import hashlib
+import json
+import os
+import re
+import sys
+import time
+from pathlib import Path
+from typing import Any
+
+EXPECTED_COMMIT = "8fc79f01ab68d9c211f9be4818f9e566e271cefd"
+EXPECTED_DATASET_FILES = (
+    "contradiction-update-v1.jsonl",
+    "preference-drift-v1.jsonl",
+    "cross-project-scope-v1.jsonl",
+)
+EMBEDDING_DIM = 384
+TOKEN_RE = re.compile(r"[^a-z0-9\s]")
+
+
+def sha256_bytes(value: bytes) -> str:
+    return hashlib.sha256(value).hexdigest()
+
+
+def sha256_file(path: Path) -> str:
+    return sha256_bytes(path.read_bytes())
+
+
+def source_tree_hash(root: Path) -> str:
+    digest = hashlib.sha256()
+    files = [
+        path
+        for path in root.rglob("*.py")
+        if ".git" not in path.relative_to(root).parts
+        and ".venv" not in path.relative_to(root).parts
+        and "__pycache__" not in path.relative_to(root).parts
+    ]
+    for path in sorted(files):
+        relative = path.relative_to(root).as_posix().encode("utf-8")
+        digest.update(relative)
+        digest.update(b"\0")
+        digest.update(path.read_bytes())
+        digest.update(b"\0")
+    return digest.hexdigest()
+
+
+def git_value(root: Path, *args: str) -> str:
+    import subprocess
+
+    completed = subprocess.run(
+        ["git", "-C", str(root), *args],
+        check=True,
+        capture_output=True,
+        text=True,
+    )
+    return completed.stdout.strip()
+
+
+def tokens(text: str) -> list[str]:
+    return [item for item in TOKEN_RE.sub(" ", text.lower()).split() if len(item) > 1]
+
+
+def vector_for(text: str) -> list[float]:
+    values = [0.0] * EMBEDDING_DIM
+    token_list = tokens(text)
+    if not token_list:
+        return values
+    for token in token_list:
+        digest = hashlib.sha256(token.encode("utf-8")).digest()
+        bucket = int.from_bytes(digest[:4], "big") % EMBEDDING_DIM
+        sign = 1.0 if digest[4] & 1 else -1.0
+        values[bucket] += sign
+    norm = sum(value * value for value in values) ** 0.5
+    if norm:
+        values = [value / norm for value in values]
+    return values
+
+
+class LookupEmbeddingProvider:
+    """Stateless role-symmetric lookup over precomputed hash vectors."""
+
+    should_offload_in_async = False
+
+    def __init__(self, vectors: dict[str, list[float]]) -> None:
+        self._vectors = vectors
+        self._internal_fallbacks: dict[str, list[float]] = {}
+
+    @property
+    def dim(self) -> int:
+        return EMBEDDING_DIM
+
+    def _lookup(self, text: str) -> list[float]:
+        vector = self._vectors.get(text)
+        if vector is None:
+            vector = vector_for(text)
+            self._internal_fallbacks[text] = vector
+        return list(vector)
+
+    @property
+    def internal_fallbacks(self) -> dict[str, list[float]]:
+        return dict(self._internal_fallbacks)
+
+    def embed(self, text: str) -> list[float]:
+        return self._lookup(text)
+
+    def embed_batch(self, texts: list[str]) -> list[list[float]]:
+        return [self._lookup(text) for text in texts]
+
+    def embed_query(self, text: str) -> list[float]:
+        return self._lookup(text)
+
+    def embed_document(self, text: str) -> list[float]:
+        return self._lookup(text)
+
+    def embed_batch_queries(self, texts: list[str]) -> list[list[float]]:
+        return self.embed_batch(texts)
+
+    def embed_batch_documents(self, texts: list[str]) -> list[list[float]]:
+        return self.embed_batch(texts)
+
+
+def vector_manifest(vectors: dict[str, list[float]], kinds: dict[str, str]) -> dict[str, Any]:
+    entries = [
+        {
+            "text_sha256": sha256_bytes(text.encode("utf-8")),
+            "kind": kinds[text],
+            "vector": vector,
+        }
+        for text, vector in sorted(vectors.items())
+    ]
+    encoded = json.dumps(entries, sort_keys=True, separators=(",", ":")).encode("utf-8")
+    return {
+        "algorithm": "sha256-token-bucket-signed-counts",
+        "dimension": EMBEDDING_DIM,
+        "role_policy": "same vector lookup for document, query, and symmetric roles",
+        "entry_count": len(entries),
+        "entries": entries,
+        "sha256": sha256_bytes(encoded),
+    }
+
+
+def main() -> int:
+    parser = argparse.ArgumentParser()
+    parser.add_argument("--snapshot", type=Path, required=True)
+    parser.add_argument("--output-dir", type=Path, required=True)
+    parser.add_argument("--sqlite-dir", type=Path, required=True)
+    args = parser.parse_args()
+
+    snapshot = args.snapshot.resolve()
+    output_dir = args.output_dir.resolve()
+    sqlite_dir = args.sqlite_dir.resolve()
+    helper_path = Path(__file__).resolve()
+    helper_sha256 = sha256_file(helper_path)
+    if output_dir.exists() or sqlite_dir.exists():
+        raise FileExistsError("diagnostic output and SQLite directories must be fresh")
+    if not snapshot.is_dir():
+        raise FileNotFoundError(snapshot)
+
+    commit = git_value(snapshot, "rev-parse", "HEAD")
+    if commit != EXPECTED_COMMIT:
+        raise RuntimeError(f"snapshot commit mismatch: {commit}")
+    if git_value(snapshot, "status", "--porcelain"):
+        raise RuntimeError("snapshot is dirty")
+    source_before = source_tree_hash(snapshot)
+
+    # Import only after binding sys.path to the frozen snapshot.
+    sys.path.insert(0, str(snapshot))
+    import mnemos.benchmark as benchmark
+
+    dataset_paths = [snapshot / "benchmarks" / "datasets" / name for name in EXPECTED_DATASET_FILES]
+    datasets = []
+    all_texts: dict[str, str] = {}
+    kinds: dict[str, str] = {}
+    dataset_hashes: dict[str, str] = {}
+    for path in dataset_paths:
+        dataset_hashes[path.name] = sha256_file(path)
+        documents = benchmark.load_documents(path)
+        queries = benchmark._load_queries(path, documents)
+        datasets.append((path.stem, documents, queries))
+        for document in documents:
+            all_texts.setdefault(document.content, document.content)
+            kinds[document.content] = "document"
+        for query in queries:
+            all_texts.setdefault(query.text, query.text)
+            kinds.setdefault(query.text, "query")
+    vectors = {text: vector_for(text) for text in all_texts}
+    vector_info = vector_manifest(vectors, kinds)
+
+    captures: list[dict[str, Any]] = []
+    current: dict[str, Any] = {}
+    lookup_provider = LookupEmbeddingProvider(vectors)
+    original_build_embedder = benchmark.build_embedder_from_env
+    original_build_store = benchmark._build_store
+    original_roundtrip = benchmark._run_engine_roundtrip
+
+    def wrapped_build_store(*, store_type: str, sqlite_path: Path | None) -> Any:
+        store = original_build_store(store_type=store_type, sqlite_path=sqlite_path)
+        if current.get("retriever") == "baseline":
+            original_retrieve = store.retrieve
+
+            def capture_retrieve(
+                query_embedding: list[float],
+                *,
+                top_k: int = 5,
+                filter_fn: Any = None,
+            ) -> Any:
+                result = original_retrieve(query_embedding, top_k=top_k, filter_fn=filter_fn)
+                captures.append(
+                    {
+                        "dataset": current["dataset"],
+                        "repetition": current["repetition"],
+                        "store_type": current["store_type"],
+                        "retriever": "baseline",
+                        "query_index": current["baseline_query_index"],
+                        "query_text_sha256": sha256_bytes(
+                            current["queries"][current["baseline_query_index"]].text.encode("utf-8")
+                        ),
+                        "retrieved_chunk_ids": [chunk.id for chunk in result],
+                        "relevant_chunk_ids": sorted(
+                            current["query_relevant"][current["baseline_query_index"]]
+                        ),
+                    }
+                )
+                current["baseline_query_index"] += 1
+                return result
+
+            store.retrieve = capture_retrieve
+        return store
+
+    async def wrapped_roundtrip(**kwargs: Any) -> Any:
+        result = await original_roundtrip(**kwargs)
+        _, retrieved_ids, relevant_ids, _ = result
+        for index, (retrieved, relevant) in enumerate(zip(retrieved_ids, relevant_ids)):
+            captures.append(
+                {
+                    "dataset": current["dataset"],
+                    "repetition": current["repetition"],
+                    "store_type": current["store_type"],
+                    "retriever": "engine",
+                    "query_index": index,
+                    "query_text_sha256": sha256_bytes(
+                        kwargs["queries"][index].text.encode("utf-8")
+                    ),
+                    "retrieved_chunk_ids": list(retrieved),
+                    "relevant_chunk_ids": sorted(relevant),
+                }
+            )
+        return result
+
+    def wrapped_build_embedder(*args: Any, **kwargs: Any) -> LookupEmbeddingProvider:
+        _ = args, kwargs
+        return lookup_provider
+
+    benchmark._build_store = wrapped_build_store
+    benchmark._run_engine_roundtrip = wrapped_roundtrip
+    benchmark.build_embedder_from_env = wrapped_build_embedder
+
+    output_dir.mkdir(parents=True)
+    sqlite_dir.mkdir(parents=True)
+    os.environ["MNEMOS_EMBEDDING_PROVIDER"] = "simple"
+    results: list[dict[str, Any]] = []
+    run_summaries: list[dict[str, Any]] = []
+    try:
+        for repetition in range(1, 3):
+            for dataset_name, documents, queries in datasets:
+                for store_type in ("memory", "sqlite"):
+                    for retriever in ("baseline", "engine"):
+                        current.clear()
+                        current.update(
+                            {
+                                "dataset": dataset_name,
+                                "repetition": repetition,
+                                "store_type": store_type,
+                                "retriever": retriever,
+                                "baseline_query_index": 0,
+                                "queries": queries,
+                                "query_relevant": [
+                                    {
+                                        benchmark._benchmark_store_id(doc_id)
+                                        for doc_id in query.relevant_ids
+                                    }
+                                    for query in queries
+                                ],
+                            }
+                        )
+                        sqlite_path = (
+                            sqlite_dir
+                            / f"r{repetition}-{dataset_name}-{store_type}-{retriever}.sqlite"
+                            if store_type == "sqlite"
+                            else None
+                        )
+                        result = benchmark.run_retrieval_benchmark(
+                            store_type=store_type,
+                            retriever=retriever,
+                            top_k=1,
+                            documents=documents,
+                            queries=queries,
+                            sqlite_path=sqlite_path,
+                            baseline_scope_aware=True,
+                        )
+                        result["dataset"] = dataset_name
+                        result["repetition"] = repetition
+                        results.append(result)
+            comparisons = benchmark._build_comparisons(results[-12:])
+            gate = benchmark.evaluate_production_replacement_gate(comparisons, min_mrr_lift=0.15)
+            run_summaries.append(
+                {"repetition": repetition, "comparisons": comparisons, "gate": gate}
+            )
+        report = {
+            "status": "completed",
+            "diagnostic": "fair-offline-embedding-and-scope-control",
+            "source": {
+                "helper": str(helper_path),
+                "helper_sha256": helper_sha256,
+                "snapshot": str(snapshot),
+                "commit": commit,
+                "tree_sha256_before": source_before,
+                "tree_sha256_after": source_tree_hash(snapshot),
+                "benchmark_module": str(Path(benchmark.__file__).resolve()),
+                "python": sys.executable,
+            },
+            "dataset": {
+                "pack": "claim-driving",
+                "files": dataset_hashes,
+                "documents_and_queries": {
+                    name: {"documents": len(documents), "queries": len(queries)}
+                    for name, documents, queries in datasets
+                },
+            },
+            "embedding": {
+                "provider": "LookupEmbeddingProvider",
+                "algorithm": vector_info["algorithm"],
+                "dimension": EMBEDDING_DIM,
+                "vectors_sha256": vector_info["sha256"],
+                "entry_count": vector_info["entry_count"],
+                "same_document_query_lookup": True,
+                "injected_into_baseline_and_engine": True,
+                "internal_symmetric_fallbacks": {
+                    sha256_bytes(text.encode("utf-8")): vector
+                    for text, vector in sorted(lookup_provider.internal_fallbacks.items())
+                },
+            },
+            "configuration": {
+                "stores": ["memory", "sqlite"],
+                "retrievers": ["baseline", "engine"],
+                "top_k": 1,
+                "repetitions": 2,
+                "baseline_scope_aware": True,
+                "required_mrr_lift_ratio": 0.15,
+                "network_or_model_calls": False,
+            },
+            "runs": run_summaries,
+            "results": results,
+            "per_query": captures,
+            "limitations": [
+                "Synthetic deterministic vectors are a control, not model quality evidence.",
+                "Existing engine ingestion side effects remain part of the engine path.",
+                "Latency is descriptive and not a production gate claim.",
+            ],
+        }
+        (output_dir / "vectors.json").write_text(
+            json.dumps(vector_info, sort_keys=True, indent=2), encoding="utf-8"
+        )
+        (output_dir / "report.json").write_text(
+            json.dumps(report, sort_keys=True, indent=2), encoding="utf-8"
+        )
+        return 0
+    finally:
+        benchmark._build_store = original_build_store
+        benchmark._run_engine_roundtrip = original_roundtrip
+        benchmark.build_embedder_from_env = original_build_embedder
+
+
+if __name__ == "__main__":
+    raise SystemExit(main())

@@ -40,8 +40,26 @@ preference outcomes still differ by store and path; identical vectors alone
 do not establish equivalent candidate selection or a production quality claim.
 The replacement gate remains failed overall in both repetitions. The initial
 non-injected attempt and a subsequent rejected internal prediction string are
-preserved separately from the valid run. Store-path differences require further
-source diagnosis before attributing a ranking failure to a specific module.
+preserved separately from the valid run. Subsequent diagnosis found that the
+26 differing baseline pairs were exact cosine ties. The in-memory store used
+insertion order, whereas both SQLite paths used ascending memory ID. The
+[retrieval parity repair](retrieval-parity-checkpoint-v1/README.md) aligns these
+contracts and rejects empty/nonpositive in-memory requests consistently. Its
+repeated control now has zero baseline identity mismatches across 46 pairs.
+Engine results and both replacement gates remain negative; this storage fix
+does not establish semantic quality or resolve every engine-path difference.
+
+The remaining engine/store differences in that control have another limitation:
+baseline chunks use stable benchmark IDs, while engine ingestion creates UUID4
+identities independently for each run. Exact semantic ties therefore resolve
+to different facts when the final ID tie-break runs. Default baseline retrieval
+does not use graph or affective contributions. All fixture documents fit in
+the vector candidate pool, so the lexical union adds no new candidates. Raw
+engine UUID differences are not evidence of a storage mismatch, and tied old/new
+vectors cannot establish which assertion is semantically current. A subsequent
+development diagnostic should record score tie groups and stable content IDs,
+or use prospectively fixed non-tied vectors. Production identity generation and
+held-out fixtures must not be changed to improve this synthetic metric.
 
 ## Held-out graph eligibility
 

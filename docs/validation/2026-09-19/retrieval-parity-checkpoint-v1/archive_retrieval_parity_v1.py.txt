@@ -1,0 +1,111 @@
+"""Archive completed parity checks, including unchanged negative quality gates."""
+from datetime import datetime, timezone
+import hashlib
+import json
+from pathlib import Path
+import shutil
+
+ROOT = Path(__file__).resolve().parent.parent
+TEMP = Path("C:/Users/Ant/AppData/Local/Temp")
+DEST = ROOT / "docs/validation/2026-09-19/retrieval-parity-checkpoint-v1"
+CHECKS = TEMP / "mnemos-package-checks-retrieval-parity-v1"
+INSTALLED = TEMP / "mnemos-installed-checks-retrieval-parity-v1"
+FAIR = TEMP / "mnemos-fair-benchmark-v4"
+LEGACY = TEMP / "mnemos-retrieval-parity-benchmark-v1"
+COMMIT = "8fc79f01ab68d9c211f9be4818f9e566e271cefd"
+
+def read(path):
+    return json.loads(path.read_text(encoding="utf-8"))
+
+def sha(path):
+    return hashlib.sha256(path.read_bytes()).hexdigest()
+
+checks = read(CHECKS / "verification.json")
+installed = read(INSTALLED / "installation.json")
+fair = read(FAIR / "report.json")
+legacy = read(LEGACY / "report.json")
+assert checks["status"] == installed["status"] == "passed"
+assert checks["source_commit"] == installed["commit"] == fair["source"]["commit"] == COMMIT
+assert len(checks["checks"]) == 6 and all(c["status"] == "passed" for c in checks["checks"])
+assert fair["status"] == "completed" and len(fair["per_query"]) == 184
+assert fair["source"]["tree_sha256_before"] == fair["source"]["tree_sha256_after"]
+baseline = {}
+for row in fair["per_query"]:
+    if row["retriever"] == "baseline":
+        key = (row["dataset"], row["repetition"], row["query_index"])
+        baseline.setdefault(key, {})[row["store_type"]] = row["retrieved_chunk_ids"]
+assert len(baseline) == 46
+assert all(r["memory"] == r["sqlite"] for r in baseline.values())
+assert legacy["summary"]["failed_runs"] == 2
+helpers = ["final_checkpoint_checks_v3.py", "run_combined_installed_check_v26.py",
+           "installed_contract_probe_v4.py", "verify_claude_stop_replay_v2.py",
+           "fair_benchmark_diagnostic_v4.py", "run_retrieval_parity_benchmark_v1.py", Path(__file__).name]
+assert sha(ROOT / ".venv/fair_benchmark_diagnostic_v4.py") == fair["source"]["helper_sha256"]
+assert sha(ROOT / ".venv/run_combined_installed_check_v26.py") == installed["runner_sha256"]
+DEST.mkdir(exist_ok=False)
+for label, source in (("source-checks", CHECKS), ("installed-checks", INSTALLED),
+                      ("fair-comparison", FAIR), ("legacy-benchmark", LEGACY)):
+    target = DEST / label
+    target.mkdir()
+    for file in source.iterdir():
+        if file.is_file():
+            shutil.copyfile(file, target / file.name)
+            assert sha(file) == sha(target / file.name)
+for name in helpers:
+    shutil.copyfile(ROOT / ".venv" / name, DEST / (name + ".txt"))
+binding = {"source_commit": COMMIT, "archived_at": datetime.now(timezone.utc).isoformat(),
+           "baseline_identity_pairs": len(baseline), "baseline_identity_mismatches": 0,
+           "source_verification": str(CHECKS / "verification.json"),
+           "installed_verification": str(INSTALLED / "installation.json"),
+           "fair_comparison": str(FAIR / "report.json"), "legacy_benchmark": str(LEGACY / "report.json"),
+           "pre_fix_observation": "After correcting test fixture teardown and scope metadata, 4 in-memory failures and 8 SQLite passes were observed. Initial fixture errors were not production failures.",
+           "focused_post_fix": "49 storage and benchmark tests passed.",
+           "limitations": "Synthetic comparator gates remain failed. No real-model or native-host acceptance is added."}
+(DEST / "checkpoint-binding.json").write_text(json.dumps(binding, indent=2) + "\n", encoding="utf-8")
+counts = checks["checks"][0]["counts"]
+outcomes = read(INSTALLED / "contract.json")["case_summary"]["actual_outcomes"]
+assert len(installed["probe"]["assertions"]) == 7 and all(installed["probe"]["assertions"].values())
+(DEST / "README.md").write_text(f"""# Retrieval backend parity checkpoint
+
+Source `{COMMIT}` makes the in-memory store follow SQLite's existing exact-tie
+ordering by ascending memory ID. Empty query vectors and nonpositive limits
+return no candidates before evaluating predicates. The shared storage contract
+now states these boundaries. SQLite behavior and similarity formulas are unchanged.
+
+The initial regression fixture had teardown and incomplete scope-specification
+errors; those were corrected before evaluating production failures. The valid
+pre-fix run had four in-memory failures and eight SQLite passes. All 12 cases
+pass after the fix, covering native SQLite, its Python fallback, memory storage,
+scope filtering, reinsertion, empty queries, and nonpositive limits. The focused
+storage/benchmark run passed 49 tests. Read-only review found no blockers.
+
+The clean snapshot passes {counts['tests'] - counts['skipped']} source tests with
+{counts['skipped']} skips, Black, strict mypy, JavaScript syntax, build, and Twine.
+The new isolated installed wheel passes {outcomes['passed']} contract cases with
+{outcomes['skipped']} matching skips and seven replay assertions. Exact per-case
+outcomes, package origins, hashes, and commands are archived. This is package
+verification, not native-host or model-quality acceptance.
+
+The repeated offline control retains the same vectors, datasets, scope policy,
+top-k, repetitions, and quality thresholds. All 46 baseline query/repetition
+pairs now return identical IDs from memory and SQLite. Before this repair,
+26 pairs differed on exact cosine ties. The valid new report records 24 runs
+and 184 per-query outcomes. Engine quality still does not pass the replacement
+gate in either repetition. Synthetic vectors and ingestion differences limit
+interpretation; this fixes backend parity, not semantic quality.
+
+The original legacy benchmark was also rerun with explicit simple embeddings
+and a missing child configuration path. Both repetitions fail unchanged gates
+(MRR lift ranges from -0.4 to 0.0). Exit code 2 and raw reports are preserved.
+No cloud credentials or live configuration were used or changed. The active
+local model matrix and queued comparisons remain on frozen `fc72cc2`.
+
+The previous [fair control](../fair-comparison-diagnostic-v1/README.md), including
+invalid attempts, remains intact. Build artifacts and disposable SQLite fixtures
+remain at their bound external paths. Archived helper bytes are stored as text.
+""", encoding="ascii")
+(DEST / ".gitattributes").write_text("* -text\n*.log -whitespace\n*.txt -whitespace\n", encoding="ascii")
+files = {p.relative_to(DEST).as_posix(): {"bytes": p.stat().st_size, "sha256": sha(p)}
+         for p in sorted(DEST.rglob("*")) if p.is_file()}
+(DEST / "evidence-index.json").write_text(json.dumps({"files": files}, indent=2) + "\n", encoding="ascii")
+print(json.dumps({"archive": str(DEST), "files": len(files)}))
