@@ -1,0 +1,162 @@
+{
+  "status": "passed",
+  "started_at": "2026-09-19T05:45:45.601318+00:00",
+  "source_commit": "fc72cc251aeafa161a1a390269b8dfa34d83cf2b",
+  "endpoint": "http://127.0.0.1:11434",
+  "python": "3.13.7 (main, Sep  2 2025, 14:16:00) [MSC v.1944 64 bit (AMD64)]",
+  "platform": "Windows-11-10.0.26200-SP0",
+  "helper_sha256": "9ff08b722312f3485efe589b1972f27c19740b563f8dbecccdbd9d1ee2ed990f",
+  "snapshot": "C:\\Users\\Ant\\AppData\\Local\\Temp\\mnemos-source-retrieval-comparison-v1",
+  "results": "D:\\Development\\mnemos\\mnemos\\.worktrees\\functional-local-memory\\docs\\validation\\2026-09-19\\real-model-local-v1",
+  "work": "C:\\Users\\Ant\\AppData\\Local\\Temp\\mnemos-real-model-local-v1",
+  "checkpoint_files_verified": 18,
+  "source_report_sha256": "ab696634de22e9c5083cecd16fcce27250f23ec99bda90fb947ebf96cea7cc97",
+  "installed_report_sha256": "b253fba0bd80bd828ea089674801d8f53d29ef93053f1c4b2a0e674875fbfb1a",
+  "installed_package_files_verified": 58,
+  "runner_sha256": "2e642e3b4bb7e595d9c676ec51780b8cbe4a1e6449b29fee3a57d1307d79f84e",
+  "ollama_version": {
+    "version": "0.34.1"
+  },
+  "models": {
+    "qwen3.5:9b": {
+      "name": "qwen3.5:9b",
+      "model": "qwen3.5:9b",
+      "modified_at": "2026-09-18T15:38:31.3310652-04:00",
+      "size": 6594474711,
+      "digest": "6488c96fa5faab64bb65cbd30d4289e20e6130ef535a93ef9a49f42eda893ea7",
+      "details": {
+        "parent_model": "",
+        "format": "gguf",
+        "family": "qwen35",
+        "families": [
+          "qwen35"
+        ],
+        "parameter_size": "9.7B",
+        "quantization_level": "Q4_K_M",
+        "context_length": 262144,
+        "embedding_length": 4096
+      },
+      "capabilities": [
+        "completion",
+        "vision",
+        "tools",
+        "thinking"
+      ]
+    },
+    "nomic-embed-text:latest": {
+      "name": "nomic-embed-text:latest",
+      "model": "nomic-embed-text:latest",
+      "modified_at": "2026-09-18T15:38:50.3313315-04:00",
+      "size": 274302450,
+      "digest": "0a109f422b47e3a30ba2b10eca18548e944e8a23073ee3f3e947efcf3c45e59f",
+      "details": {
+        "parent_model": "",
+        "format": "gguf",
+        "family": "nomic-bert",
+        "families": [
+          "nomic-bert"
+        ],
+        "parameter_size": "137M",
+        "quantization_level": "F16",
+        "context_length": 2048,
+        "embedding_length": 768
+      },
+      "capabilities": [
+        "embedding"
+      ]
+    }
+  },
+  "gpu_before": "NVIDIA GeForce RTX 4080, 16376 MiB, 10606 MiB, 610.60",
+  "generation_request": {
+    "model": "qwen3.5:9b",
+    "prompt": "Reply with only the word READY.",
+    "stream": false,
+    "think": false,
+    "options": {
+      "temperature": 0.0,
+      "num_predict": 512
+    }
+  },
+  "generation_wall_seconds": 0.4294303999922704,
+  "generation_response": {
+    "model": "qwen3.5:9b",
+    "created_at": "2026-09-19T05:45:47.4509339Z",
+    "response": "READY",
+    "done": true,
+    "done_reason": "stop",
+    "total_duration": 426535600,
+    "load_duration": 4677800,
+    "prompt_eval_count": 19,
+    "prompt_eval_cached_count": 0,
+    "prompt_eval_duration": 386225000,
+    "eval_count": 2,
+    "eval_duration": 29808000
+  },
+  "embedding_dimensions": [
+    768,
+    768
+  ],
+  "placement": [
+    {
+      "name": "qwen3.5:9b",
+      "model": "qwen3.5:9b",
+      "size": 6014380276,
+      "digest": "6488c96fa5faab64bb65cbd30d4289e20e6130ef535a93ef9a49f42eda893ea7",
+      "details": {
+        "parent_model": "",
+        "format": "gguf",
+        "family": "qwen35",
+        "families": [
+          "qwen35"
+        ],
+        "parameter_size": "9.7B",
+        "quantization_level": "Q4_K_M"
+      },
+      "expires_at": "2026-09-19T02:15:47.4533976-04:00",
+      "size_vram": 6014380276,
+      "context_length": 16384
+    },
+    {
+      "name": "nomic-embed-text:latest",
+      "model": "nomic-embed-text:latest",
+      "size": 323150151,
+      "digest": "0a109f422b47e3a30ba2b10eca18548e944e8a23073ee3f3e947efcf3c45e59f",
+      "details": {
+        "parent_model": "",
+        "format": "gguf",
+        "family": "nomic-bert",
+        "families": [
+          "nomic-bert"
+        ],
+        "parameter_size": "137M",
+        "quantization_level": "F16"
+      },
+      "expires_at": "2026-09-19T01:51:01.2880994-04:00",
+      "size_vram": 323150151,
+      "context_length": 2048
+    }
+  ],
+  "gpu_after": "NVIDIA GeForce RTX 4080, 16376 MiB, 11222 MiB, 610.60",
+  "context_policy": "No num_ctx override, matching evaluation requests; actual loaded context recorded in placement.",
+  "command": [
+    "D:\\Development\\mnemos\\mnemos\\.worktrees\\functional-local-memory\\.venv\\Scripts\\python.exe",
+    "-u",
+    "D:\\Development\\mnemos\\mnemos\\.worktrees\\functional-local-memory\\.venv\\run_thinking_evaluations_v1.py",
+    "--source-commit",
+    "fc72cc251aeafa161a1a390269b8dfa34d83cf2b",
+    "--snapshot",
+    "C:\\Users\\Ant\\AppData\\Local\\Temp\\mnemos-source-retrieval-comparison-v1",
+    "--output-dir",
+    "D:\\Development\\mnemos\\mnemos\\.worktrees\\functional-local-memory\\docs\\validation\\2026-09-19\\real-model-local-v1",
+    "--work-dir",
+    "C:\\Users\\Ant\\AppData\\Local\\Temp\\mnemos-real-model-local-v1",
+    "--verification-report",
+    "D:\\Development\\mnemos\\mnemos\\.worktrees\\functional-local-memory\\docs\\validation\\2026-09-18\\retrieval-comparison-checkpoint-v1\\source-checks\\verification.json",
+    "--installed-report",
+    "D:\\Development\\mnemos\\mnemos\\.worktrees\\functional-local-memory\\docs\\validation\\2026-09-18\\retrieval-comparison-checkpoint-v1\\installed-cases\\verification.json",
+    "--endpoint",
+    "http://127.0.0.1:11434",
+    "--run-performance"
+  ],
+  "finished_at": "2026-09-19T05:46:01.398563+00:00"
+}

@@ -4,6 +4,14 @@ This record covers the unreleased `wt/functional-local-memory` worktree. It
 separates implemented behavior from acceptance evidence. The original task
 boundaries and thresholds remain in the [implementation plan](../../plans/2026-09-16-functional-local-memory.md).
 
+On September 19, the failed lab machine's evaluation was retired with verified
+result/checkpoint backups. A [fresh local GPU queue](../2026-09-19/local-evaluation-launch-v2/README.md)
+started on clean `fc72cc2` with the same model digests. Default-context warm
+readiness passed on the RTX 4080 after a separately recorded 149.623-second
+cold load. Evaluation, latency, and host/pilot acceptance remain open; see the
+[current execution record](evaluation-running.md). Earlier measurements below
+retain their original source and hardware bindings.
+
 The [mixed-host replay and restart probe](../2026-09-18/native-crosshost-recovery-v4/README.md)
 on installed `fc72cc2` passes the bounded native concurrency observation.
 Three queued events had overlapping deliveries from Codex and Claude, each

@@ -1,0 +1,43 @@
+"""Measure model cold loading separately from unchanged evaluation timeouts."""
+from datetime import datetime, timezone
+import hashlib
+import json
+from pathlib import Path
+import time
+from urllib.request import Request, urlopen
+
+ROOT = Path(__file__).resolve().parent.parent
+OUT = ROOT / 'docs/validation/2026-09-19/local-evaluation-launch-v1/cold-load.json'
+assert not OUT.exists()
+record = {'status': 'running', 'started_at': datetime.now(timezone.utc).isoformat(),
+          'endpoint': 'http://127.0.0.1:11434', 'http_timeout_seconds': 600,
+          'purpose': 'Separate cold-load measurement; evaluation request timeout remains 120 seconds',
+          'helper_sha256': hashlib.sha256(Path(__file__).read_bytes()).hexdigest(), 'loads': []}
+
+def save():
+    OUT.write_text(json.dumps(record, indent=2) + '\n', encoding='utf-8')
+
+save()
+try:
+    for name in ('qwen3.5:9b', 'nomic-embed-text:latest'):
+        payload = {'model': name, 'stream': False, 'keep_alive': '30m'}
+        request = Request(record['endpoint'] + '/api/generate', data=json.dumps(payload).encode(),
+                          headers={'Content-Type': 'application/json'})
+        entry = {'model': name, 'request': payload, 'status': 'running'}
+        record['loads'].append(entry)
+        save()
+        start = time.monotonic()
+        with urlopen(request, timeout=600) as response:
+            entry['response'] = json.load(response)
+        entry.update(status='completed', wall_seconds=time.monotonic() - start)
+        save()
+    with urlopen(record['endpoint'] + '/api/ps', timeout=10) as response:
+        record['placement'] = json.load(response)
+    record['status'] = 'completed'
+except BaseException as error:
+    record.update(status='failed', error_type=type(error).__name__, error=str(error))
+    raise
+finally:
+    record['finished_at'] = datetime.now(timezone.utc).isoformat()
+    save()
+print(json.dumps({'status': record['status'], 'loads': record['loads']}))

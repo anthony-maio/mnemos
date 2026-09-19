@@ -1,0 +1,112 @@
+"""Bind a fresh local evaluation to verified source, model bytes, and hardware."""
+from datetime import datetime, timezone
+import hashlib
+import json
+from pathlib import Path
+import platform
+import subprocess
+import sys
+import time
+from urllib.request import Request, urlopen
+
+ROOT = Path(__file__).resolve().parent.parent
+OUT = ROOT / 'docs/validation/2026-09-19/local-evaluation-launch-v2'
+SNAPSHOT = Path('C:/Users/Ant/AppData/Local/Temp/mnemos-source-retrieval-comparison-v1')
+CHECKPOINT = ROOT / 'docs/validation/2026-09-18/retrieval-comparison-checkpoint-v1'
+RESULTS = ROOT / 'docs/validation/2026-09-19/real-model-local-v1'
+WORK = Path('C:/Users/Ant/AppData/Local/Temp/mnemos-real-model-local-v1')
+SOURCE = 'fc72cc251aeafa161a1a390269b8dfa34d83cf2b'
+ENDPOINT = 'http://127.0.0.1:11434'
+PINS = {'qwen3.5:9b': '6488c96fa5faab64bb65cbd30d4289e20e6130ef535a93ef9a49f42eda893ea7',
+        'nomic-embed-text:latest': '0a109f422b47e3a30ba2b10eca18548e944e8a23073ee3f3e947efcf3c45e59f'}
+RUNNER = ROOT / '.venv/run_thinking_evaluations_v1.py'
+
+def sha(path):
+    return hashlib.sha256(path.read_bytes()).hexdigest()
+
+def git(*args):
+    return subprocess.check_output(['git', *args], cwd=SNAPSHOT, text=True).strip()
+
+def api(route, payload=None):
+    body = None if payload is None else json.dumps(payload).encode()
+    request = Request(ENDPOINT + route, data=body, headers={'Content-Type': 'application/json'})
+    with urlopen(request, timeout=120) as response:
+        return json.load(response)
+
+assert not OUT.exists() and not RESULTS.exists() and not WORK.exists(), 'Outputs already exist'
+OUT.mkdir(parents=True)
+record = {'status': 'running', 'started_at': datetime.now(timezone.utc).isoformat(),
+          'source_commit': SOURCE, 'endpoint': ENDPOINT, 'python': sys.version,
+          'platform': platform.platform(), 'helper_sha256': sha(Path(__file__)),
+          'snapshot': str(SNAPSHOT), 'results': str(RESULTS), 'work': str(WORK)}
+
+def save():
+    (OUT / 'preflight.json').write_text(json.dumps(record, indent=2) + '\n', encoding='utf-8')
+
+save()
+try:
+    assert git('rev-parse', 'HEAD') == SOURCE
+    assert not git('status', '--porcelain'), 'Frozen source is dirty'
+    index = json.loads((CHECKPOINT / 'evidence-index.json').read_text())['files']
+    for name, expected in index.items():
+        assert sha(CHECKPOINT / name) == expected['sha256'], name
+    record['checkpoint_files_verified'] = len(index)
+    source_report = CHECKPOINT / 'source-checks/verification.json'
+    installed_report = CHECKPOINT / 'installed-cases/verification.json'
+    for path in (source_report, installed_report):
+        report = json.loads(path.read_text())
+        assert report['status'] == 'passed' and report['source_commit'] == SOURCE
+    record['source_report_sha256'] = sha(source_report)
+    record['installed_report_sha256'] = sha(installed_report)
+    installed = json.loads(installed_report.read_text())
+    site = Path(installed['installed_module_origin']).parents[1]
+    for name, expected in installed['installed_files_after'].items():
+        assert sha(site / name) == expected, name
+    record['installed_package_files_verified'] = len(installed['installed_files_after'])
+    record['runner_sha256'] = sha(RUNNER)
+    assert record['runner_sha256'] == '2e642e3b4bb7e595d9c676ec51780b8cbe4a1e6449b29fee3a57d1307d79f84e'
+    record['ollama_version'] = api('/api/version')
+    tags = {row['name']: row for row in api('/api/tags')['models']}
+    for name, digest in PINS.items():
+        assert tags[name]['digest'] == digest, name
+    record['models'] = {name: tags[name] for name in PINS}
+    record['gpu_before'] = subprocess.check_output(
+        ['nvidia-smi', '--query-gpu=name,memory.total,memory.used,driver_version', '--format=csv,noheader'], text=True).strip()
+    payload = {'model': 'qwen3.5:9b', 'prompt': 'Reply with only the word READY.',
+               'stream': False, 'think': False, 'options': {'temperature': 0.0, 'num_predict': 512}}
+    record['generation_request'] = payload
+    save()
+    began = time.monotonic()
+    generated = api('/api/generate', payload)
+    record['generation_wall_seconds'] = time.monotonic() - began
+    record['generation_response'] = {key: value for key, value in generated.items() if key != 'context'}
+    assert generated.get('done') is True and generated.get('response', '').strip() == 'READY'
+    embedded = api('/api/embed', {'model': 'nomic-embed-text:latest',
+                                 'input': ['search_document: Local memory validation.', 'search_query: memory validation']})
+    vectors = embedded.get('embeddings', [])
+    assert len(vectors) == 2 and all(len(vector) == 768 for vector in vectors)
+    record['embedding_dimensions'] = [len(vector) for vector in vectors]
+    record['placement'] = api('/api/ps')['models']
+    placement = {row['name']: row for row in record['placement']}
+    for name in PINS:
+        assert placement[name]['size_vram'] > 0, f'{name} has no GPU allocation'
+        assert placement[name]['size_vram'] == placement[name]['size'], f'{name} is not fully GPU resident'
+    record['gpu_after'] = subprocess.check_output(
+        ['nvidia-smi', '--query-gpu=name,memory.total,memory.used,driver_version', '--format=csv,noheader'], text=True).strip()
+    record['context_policy'] = 'No num_ctx override, matching evaluation requests; actual loaded context recorded in placement.'
+    record['command'] = [sys.executable, '-u', str(RUNNER), '--source-commit', SOURCE,
+                         '--snapshot', str(SNAPSHOT), '--output-dir', str(RESULTS),
+                         '--work-dir', str(WORK), '--verification-report', str(source_report),
+                         '--installed-report', str(installed_report), '--endpoint', ENDPOINT,
+                         '--run-performance']
+    assert not git('status', '--porcelain') and sha(RUNNER) == record['runner_sha256']
+    record['status'] = 'passed'
+except BaseException as error:
+    record.update(status='failed', error_type=type(error).__name__, error=str(error))
+    raise
+finally:
+    record['finished_at'] = datetime.now(timezone.utc).isoformat()
+    save()
+print(json.dumps({'status': record['status'], 'source_commit': SOURCE,
+                  'context_lengths': {name: placement[name].get('context_length') for name in PINS},
+                  'gpu': record['gpu_after']}))

@@ -1,0 +1,39 @@
+{
+  "status": "failed",
+  "started_at": "2026-09-19T05:43:00.229275+00:00",
+  "endpoint": "http://127.0.0.1:11434",
+  "http_timeout_seconds": 600,
+  "purpose": "Separate cold-load measurement; evaluation request timeout remains 120 seconds",
+  "helper_sha256": "32e5b37229a19e05b710e517724c576caaf1e0fb516e0254605d4afe680cdd13",
+  "loads": [
+    {
+      "model": "qwen3.5:9b",
+      "request": {
+        "model": "qwen3.5:9b",
+        "stream": false,
+        "keep_alive": "30m"
+      },
+      "status": "completed",
+      "response": {
+        "model": "qwen3.5:9b",
+        "created_at": "2026-09-19T05:45:29.8522439Z",
+        "response": "",
+        "done": true,
+        "done_reason": "load"
+      },
+      "wall_seconds": 149.62254719999328
+    },
+    {
+      "model": "nomic-embed-text:latest",
+      "request": {
+        "model": "nomic-embed-text:latest",
+        "stream": false,
+        "keep_alive": "30m"
+      },
+      "status": "running"
+    }
+  ],
+  "error_type": "HTTPError",
+  "error": "HTTP Error 400: Bad Request",
+  "finished_at": "2026-09-19T05:45:29.870724+00:00"
+}

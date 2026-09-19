@@ -1,6 +1,33 @@
 # Real-model evaluation status
 
-## Current checkpoint: September 18, 2026, 07:26 UTC observation
+## Current checkpoint: September 19, 2026, local GPU replacement
+
+The user reported that the lab machine no longer boots. The original `.35`
+coordinator and worker chain were stopped after identity and ancestry checks;
+execution handle `78705` returned terminal exit code 1. Thirty-seven result
+and checkpoint files have verified backup copies. Original outputs and the
+historical lock remain in place. The [retirement record](../2026-09-19/remote-evaluation-retirement-v1/README.md)
+preserves the incomplete run without rewriting its quality or queue state.
+
+A fresh local queue started at 05:46:55 UTC on clean source `fc72cc2`, with
+coordinator PID 19032 and development-mechanism launcher PID 47992. It uses
+`http://127.0.0.1:11434`, Ollama 0.34.1, and the exact original Qwen/Nomic
+digests. The [launch preflight](../2026-09-19/local-evaluation-launch-v2/README.md)
+verified source/package evidence and fully GPU-resident allocations at the
+observed default contexts: Qwen 16,384 and Nomic 2,048 tokens. The new mutable
+queue is `docs/validation/2026-09-19/real-model-local-v1/queue-status.json`;
+work files are under `C:\Users\Ant\AppData\Local\Temp\mnemos-real-model-local-v1`.
+
+Cold Qwen loading exceeded the unchanged 120-second inference timeout.
+A separate loading-only probe completed in 149.623 seconds; the subsequent
+warm preflight passed. The failed cold preflight and a helper's incorrect
+Nomic endpoint request remain preserved. The local queue keeps the benchmark
+settings and gates unchanged. It does not import remote observations or
+establish model quality, latency success, host acceptance, or pilot readiness.
+The applied encoding and retrieval-strategy comparisons remain separate,
+pending serial runs. Colab remains tabled.
+
+## Historical checkpoint: September 18, 2026, 07:26 UTC observation
 
 The existing execution session remained live. At 07:26:45 UTC, coordinator
 `26488` and workers `47588` and `46036` were alive with their original

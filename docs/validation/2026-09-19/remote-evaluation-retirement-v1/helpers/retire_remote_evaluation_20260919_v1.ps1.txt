@@ -1,0 +1,79 @@
+$ErrorActionPreference = 'Stop'
+$mnemosRoot = 'D:\Development\mnemos\mnemos\.worktrees\functional-local-memory'
+$mnemosOutput = Join-Path $mnemosRoot 'docs\validation\2026-09-16\real-model-v4'
+$mnemosWork = Join-Path $mnemosRoot '.venv\real-model-work-v4'
+$mnemosArchive = Join-Path $mnemosRoot 'docs\validation\2026-09-19\remote-evaluation-retirement-v1'
+$mnemosBackup = Join-Path ([IO.Path]::GetTempPath()) 'mnemos-remote-retirement-20260919-v1'
+if ((Test-Path -LiteralPath $mnemosArchive) -or (Test-Path -LiteralPath $mnemosBackup)) {
+    throw 'Retirement output already exists; do not overwrite it.'
+}
+$mnemosQueuePath = Join-Path $mnemosOutput 'queue-status.json'
+$mnemosQueue = Get-Content -LiteralPath $mnemosQueuePath -Raw | ConvertFrom-Json
+if ($mnemosQueue.endpoint -ne 'http://192.168.86.35:11434' -or $mnemosQueue.coordinator_pid -ne 26488) {
+    throw 'Unexpected evaluation endpoint or coordinator.'
+}
+$mnemosAll = @(Get-CimInstance Win32_Process)
+$mnemosTargets = @($mnemosAll | Where-Object { $_.ProcessId -in @(38228,26488,47588,46036) })
+if ($mnemosTargets.Count -ne 4) { throw 'Expected process chain is incomplete; inspect before stopping.' }
+foreach ($mnemosProcess in $mnemosTargets) {
+    if (-not $mnemosProcess.CommandLine.Contains($mnemosRoot) -or
+        -not $mnemosProcess.CommandLine.Contains('python.exe')) { throw 'Process binding mismatch.' }
+    if ($mnemosProcess.ProcessId -in @(38228,26488)) {
+        if (-not $mnemosProcess.CommandLine.Contains('run_thinking_evaluations_v1.py') -or
+            -not $mnemosProcess.CommandLine.Contains('d94ded67a6b3fe6b6f7474a74518d4efb143698e')) { throw 'Coordinator binding mismatch.' }
+    } elseif (-not $mnemosProcess.CommandLine.Contains('benchmarks.local_memory.heldout_run') -or
+        -not $mnemosProcess.CommandLine.Contains('http://192.168.86.35:11434')) { throw 'Worker binding mismatch.' }
+}
+if (($mnemosTargets | Where-Object ProcessId -eq 26488).ParentProcessId -ne 38228 -or
+    ($mnemosTargets | Where-Object ProcessId -eq 47588).ParentProcessId -ne 26488 -or
+    ($mnemosTargets | Where-Object ProcessId -eq 46036).ParentProcessId -ne 47588) { throw 'Unexpected process ancestry.' }
+$mnemosUnexpectedChildren = @($mnemosAll | Where-Object {
+    $_.ParentProcessId -in @(38228,26488,47588,46036) -and $_.ProcessId -notin @(38228,26488,47588,46036)
+})
+if ($mnemosUnexpectedChildren.Count) { throw 'Unreviewed descendants exist.' }
+New-Item -ItemType Directory -Path $mnemosArchive | Out-Null
+New-Item -ItemType Directory -Path $mnemosBackup | Out-Null
+$mnemosTargets | Select-Object ProcessId,ParentProcessId,CreationDate,ExecutablePath,CommandLine |
+    ConvertTo-Json -Depth 4 | Set-Content -LiteralPath (Join-Path $mnemosArchive 'processes-before.json') -Encoding utf8
+Copy-Item -LiteralPath $mnemosQueuePath -Destination (Join-Path $mnemosArchive 'queue-status-before.json')
+Copy-Item -LiteralPath (Join-Path $mnemosWork 'coordinator.lock') -Destination (Join-Path $mnemosArchive 'coordinator-before.lock.txt')
+$mnemosStopped = @()
+foreach ($mnemosProcessId in @(26488,46036,47588,38228)) {
+    $mnemosExpected = $mnemosTargets | Where-Object ProcessId -eq $mnemosProcessId
+    $mnemosCurrent = Get-CimInstance Win32_Process -Filter "ProcessId = $mnemosProcessId"
+    if ($null -eq $mnemosCurrent) { $mnemosStopped += @{pid=$mnemosProcessId; outcome='already_exited'}; continue }
+    if ($mnemosCurrent.CreationDate -ne $mnemosExpected.CreationDate -or
+        $mnemosCurrent.CommandLine -cne $mnemosExpected.CommandLine) { throw 'Process identity changed; stopping aborted.' }
+    Stop-Process -Id $mnemosProcessId -Force
+    $mnemosStopped += @{pid=$mnemosProcessId; outcome='terminated_after_identity_verification'}
+}
+if (@(Get-CimInstance Win32_Process | Where-Object { $_.ProcessId -in @(38228,26488,47588,46036) }).Count) {
+    throw 'A target remains live.'
+}
+Copy-Item -LiteralPath $mnemosOutput -Destination (Join-Path $mnemosBackup 'results') -Recurse
+New-Item -ItemType Directory -Path (Join-Path $mnemosBackup 'checkpoints') | Out-Null
+$mnemosOriginals = @(Get-ChildItem -LiteralPath $mnemosOutput -File -Recurse)
+$mnemosHashes = @()
+foreach ($mnemosFile in $mnemosOriginals) {
+    $mnemosRelative = [IO.Path]::GetRelativePath($mnemosOutput, $mnemosFile.FullName)
+    $mnemosCopy = Join-Path (Join-Path $mnemosBackup 'results') $mnemosRelative
+    $mnemosHash = (Get-FileHash -LiteralPath $mnemosFile.FullName -Algorithm SHA256).Hash.ToLowerInvariant()
+    if ((Get-FileHash -LiteralPath $mnemosCopy -Algorithm SHA256).Hash.ToLowerInvariant() -ne $mnemosHash) { throw 'Backup hash mismatch.' }
+    $mnemosHashes += @{kind='result';path=$mnemosFile.FullName;backup=$mnemosCopy;sha256=$mnemosHash;bytes=$mnemosFile.Length}
+}
+foreach ($mnemosFile in @(Get-ChildItem -LiteralPath (Join-Path $mnemosWork 'lifecycle') -File -Filter '*.json')) {
+    $mnemosCopy = Join-Path (Join-Path $mnemosBackup 'checkpoints') $mnemosFile.Name
+    Copy-Item -LiteralPath $mnemosFile.FullName -Destination $mnemosCopy
+    $mnemosHash = (Get-FileHash -LiteralPath $mnemosFile.FullName -Algorithm SHA256).Hash.ToLowerInvariant()
+    if ((Get-FileHash -LiteralPath $mnemosCopy -Algorithm SHA256).Hash.ToLowerInvariant() -ne $mnemosHash) { throw 'Checkpoint backup mismatch.' }
+    $mnemosHashes += @{kind='checkpoint';path=$mnemosFile.FullName;backup=$mnemosCopy;sha256=$mnemosHash;bytes=$mnemosFile.Length}
+}
+$mnemosHashes | ConvertTo-Json -Depth 4 | Set-Content -LiteralPath (Join-Path $mnemosArchive 'preserved-files.json') -Encoding utf8
+Copy-Item -LiteralPath $mnemosQueuePath -Destination (Join-Path $mnemosArchive 'queue-status-after.json')
+@{status='retired_incomplete';reason='User reported lab motherboard no longer posts; local replacement is available';
+    recorded_at=[DateTime]::UtcNow.ToString('o');source_commit=$mnemosQueue.source_commit;
+    endpoint=$mnemosQueue.endpoint;stopped=$mnemosStopped;backup=$mnemosBackup;
+    original_files_retained=$true;original_lock_retained=$true;queue_status_not_rewritten=$true;
+    preserved_files=$mnemosHashes.Count;helper_sha256=(Get-FileHash -LiteralPath $PSCommandPath -Algorithm SHA256).Hash.ToLowerInvariant()} |
+    ConvertTo-Json -Depth 5 | Set-Content -LiteralPath (Join-Path $mnemosArchive 'retirement.json') -Encoding utf8
+Get-Content -LiteralPath (Join-Path $mnemosArchive 'retirement.json')
