@@ -77,6 +77,26 @@ def test_native_rows_survive_truncated_views_and_provider_restart(tmp_path: Path
     assert client.outbox.pending() == initial
 
 
+@pytest.mark.parametrize("change", [{"content": "A conflicting payload."}, {"role": "assistant"}])
+@pytest.mark.parametrize("restart", [False, True])
+def test_native_row_payload_collision_is_not_a_new_occurrence(tmp_path: Path, change, restart):
+    provider, client = setup_provider(tmp_path)
+    original = transcript()[:1]
+    provider.sync_turn("Use cedar.", "", messages=original)
+    assert provider._flush()
+    before = client.outbox.pending()
+    if restart:
+        provider.shutdown()
+        provider = MnemosHermesProvider(
+            client=client, registry=provider.registry, user_profile_id="alice"
+        )
+        provider.initialize("native-session", cwd=str(tmp_path), hermes_home=str(tmp_path / "home"))
+    provider.sync_turn("", "", messages=[{**original[0], **change}])
+    assert provider._flush() is False
+    assert client.outbox.pending() == before
+    assert any(row["status"] == "capture_failed" for row in provider.get_lifecycle_diagnostics())
+
+
 @pytest.mark.parametrize("row_id", [True, 0, -1, "1", 1.5, None])
 def test_malformed_native_identity_is_not_silently_replaced(tmp_path: Path, row_id):
     provider, client = setup_provider(tmp_path)
@@ -166,3 +186,56 @@ async def test_partial_native_snapshot_stays_nonextractable_in_real_service(tmp_
         assert store.get_all() == []
     finally:
         store.close()
+
+
+@pytest.mark.asyncio
+async def test_committed_native_row_rejects_changed_payload_after_service_restart(tmp_path: Path):
+    from mnemos.config import MnemosConfig, ModuleConfig
+    from mnemos.contracts import CaptureEvent
+    from mnemos.engine import MnemosEngine
+    from mnemos.memory_service import LocalMemoryService
+    from mnemos.utils.embeddings import SimpleEmbeddingProvider
+    from mnemos.utils.llm import UnavailableLLMProvider
+    from mnemos.utils.storage import SQLiteStore
+
+    provider, client = setup_provider(tmp_path)
+    provider.sync_turn("Use cedar.", "", messages=transcript()[:1])
+    assert provider._flush()
+    original = client.outbox.pending()[0]["payload"]
+    expected_job = None
+    for restart in (False, True):
+        store = SQLiteStore(str(tmp_path / "service.sqlite"))
+        service = LocalMemoryService(
+            MnemosEngine(
+                config=MnemosConfig(
+                    modules=ModuleConfig(**{key: False for key in ModuleConfig.model_fields})
+                ),
+                store=store,
+                embedder=SimpleEmbeddingProvider(),
+                llm=UnavailableLLMProvider(),
+            ),
+            provider.registry,
+        )
+        try:
+            accepted = service.capture(CaptureEvent.model_validate(original))
+            assert accepted["status"] == "committed"
+            if restart:
+                assert accepted["job_id"] == expected_job
+            expected_job = accepted["job_id"]
+            if not restart:
+                assert await service.maintenance.run_once(force=True) == 1
+            before = [row.model_dump(mode="json") for row in store.list_episodic_events()]
+            for change in ({"content": "Conflicting native content."}, {"role": "assistant"}):
+                changed = provider._capture_payload(
+                    provider._current_context(),
+                    role=change.get("role", original["role"]),
+                    content=change.get("content", original["content"]),
+                    source=original["source_ref"],
+                )
+                assert changed["event_id"] == original["event_id"]
+                with pytest.raises(ValueError, match="different payload"):
+                    service.capture(CaptureEvent.model_validate(changed))
+            assert [row.model_dump(mode="json") for row in store.list_episodic_events()] == before
+            assert len(store.list_jobs()) == 1
+        finally:
+            store.close()

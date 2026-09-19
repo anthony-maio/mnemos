@@ -255,6 +255,11 @@ class MnemosHermesProvider(_HermesMemoryProvider):  # type: ignore[misc]  # Opti
 
     @staticmethod
     def _event_id(context: ScopeContext, *, role: str, content: str, source: str) -> str:
+        if source.startswith("transcript:v2:"):
+            # A durable row identifies one occurrence. Payload changes must
+            # conflict with that occurrence in the outbox/service, not mint a
+            # new event merely because its role or text changed.
+            return scoped_event_id(context, source, "", "")
         return scoped_event_id(context, source, role, content)
 
     def _capture_payload(
