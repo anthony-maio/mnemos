@@ -35,8 +35,8 @@ class _Client:
     payloads: list[dict[str, object]] = []
     response_payload: object = {"response": "ok"}
 
-    def __init__(self, *, timeout: float) -> None:
-        _ = timeout
+    def __init__(self, *, timeout: float, verify: object = True) -> None:
+        _ = timeout, verify
 
     async def __aenter__(self) -> "_Client":
         return self

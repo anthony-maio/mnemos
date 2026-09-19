@@ -17,7 +17,10 @@ from __future__ import annotations
 
 import json
 import logging
+import os
 import re
+import ssl
+import threading
 from abc import ABC, abstractmethod
 from collections.abc import Callable
 from typing import Any, Literal, cast
@@ -251,6 +254,24 @@ class OllamaProvider(LLMProvider):
         self.max_tokens = max_tokens
         self.think = _validate_ollama_think(think)
         self.response_observer = response_observer
+        self._default_trust_context: ssl.SSLContext | None = None
+        self._trust_context_lock = threading.Lock()
+
+    def _tls_verification(self) -> ssl.SSLContext | bool:
+        """Reuse default CA loading without retaining an event-loop-bound client.
+
+        Custom trust overrides still use HTTPX's per-request loading, including
+        changes to a certificate file at the same path. The default CA context
+        lasts for this provider's lifetime, as it would with a persistent client.
+        """
+        if os.environ.get("SSL_CERT_FILE") or os.environ.get("SSL_CERT_DIR"):
+            return True
+        with self._trust_context_lock:
+            if self._default_trust_context is None:
+                # Cache only the default bundle, never a transient environment
+                # override. AsyncClient itself keeps trust_env's default True.
+                self._default_trust_context = httpx.create_ssl_context(verify=True, trust_env=False)
+            return self._default_trust_context
 
     async def predict(self, prompt: str, **kwargs: Any) -> str:
         """
@@ -287,7 +308,9 @@ class OllamaProvider(LLMProvider):
             payload["think"] = think
 
         async def _request() -> str:
-            async with httpx.AsyncClient(timeout=self.timeout) as client:
+            async with httpx.AsyncClient(
+                timeout=self.timeout, verify=self._tls_verification()
+            ) as client:
                 response = await client.post(
                     f"{self.base_url}/api/generate",
                     json=payload,

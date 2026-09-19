@@ -88,6 +88,17 @@ is passed. A directly constructed embedding provider should be closed with
 an explicitly closed provider cannot start another request. Client reuse
 does not establish that the recall or capture latency targets have passed.
 
+Ollama cognition caches its default certificate trust context after the first
+request. Each request still owns and closes its HTTP client, so a provider can
+be used across separate event loops without retaining an old loop's transport.
+Certificate and hostname verification remain enabled. Nonempty `SSL_CERT_FILE`
+or `SSL_CERT_DIR` overrides bypass this cache and retain HTTPX's per-request
+loading. Recreate the provider or restart the service after changing its default
+CA bundle. Proxy environment settings, request timeouts, retries, and payloads
+remain unchanged. This reduces local setup work; it does not measure model
+inference or establish the recall latency target. HTTPX documents these
+[trust-context and environment controls](https://www.python-httpx.org/advanced/ssl/).
+
 For a thinking-capable Ollama model, the canonical TOML configuration can also
 select a thinking mode explicitly:
 

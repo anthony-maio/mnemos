@@ -914,8 +914,8 @@ async def test_ollama_maps_extraction_schema_to_actual_format_payload(
             return {"response": '{"decision":"no_durable_facts","facts":[],"reason":"none"}'}
 
     class Client:
-        def __init__(self, *, timeout: float) -> None:
-            _ = timeout
+        def __init__(self, *, timeout: float, verify: object = True) -> None:
+            _ = timeout, verify
 
         async def __aenter__(self) -> "Client":
             return self
