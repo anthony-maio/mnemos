@@ -59,8 +59,10 @@ Corrupt or unavailable state fails capture rather than inventing a new time.
 
 Callbacks without a transcript have ambiguous occurrence identity. Their
 content is retained as provisional evidence, ineligible for fact extraction,
-with a `transcript_identity_unavailable` diagnostic. Identical fallback calls
-may refer to the same provisional record; that does not prove complete capture.
+with a `transcript_identity_unavailable` diagnostic. Each fallback callback
+gets a distinct receipt; only replay of its retained payload is idempotent.
+Several receipts may describe the same actual host turn, so receipt counts
+do not prove transcript coverage or independent evidence.
 Hosts omitting Hermes home also report `nonpersistent_timestamp`; timestamp
 recovery is then limited to the provider lifetime. Transcript truncation,
 branching, and upgrades from earlier experimental identity formats still need

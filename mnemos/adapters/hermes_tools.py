@@ -42,9 +42,14 @@ _SCHEMAS = (
             "properties": {
                 "content": {"type": "string", "minLength": 1, "maxLength": 10000},
                 "source_ref": {"type": "string", "minLength": 1, "maxLength": 4096},
-                "request_id": {"type": "string", "minLength": 1, "maxLength": 256},
+                "request_id": {
+                    "type": "string",
+                    "minLength": 1,
+                    "maxLength": 256,
+                    "description": "Fresh ID for this logical write. Reuse exactly for a retry.",
+                },
             },
-            "required": ["content"],
+            "required": ["content", "request_id"],
         },
     },
     {
@@ -58,9 +63,14 @@ _SCHEMAS = (
                 "content": {"type": "string", "minLength": 1, "maxLength": 10000},
                 "expected_version": {"type": "integer", "minimum": 1},
                 "source_ref": {"type": "string", "minLength": 1, "maxLength": 4096},
-                "request_id": {"type": "string", "minLength": 1, "maxLength": 256},
+                "request_id": {
+                    "type": "string",
+                    "minLength": 1,
+                    "maxLength": 256,
+                    "description": "Fresh ID for this logical write. Reuse exactly for a retry.",
+                },
             },
-            "required": ["fact_id", "content", "expected_version"],
+            "required": ["fact_id", "content", "expected_version", "request_id"],
         },
     },
     {

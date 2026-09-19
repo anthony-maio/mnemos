@@ -396,12 +396,16 @@ def test_async_turn_capture_failure_is_reported_by_flush(tmp_path: Path) -> None
     client = FakeClient(status="rejected")
     instance = make_provider(tmp_path, client)
 
-    instance.sync_turn("Remember this", "Acknowledged")
+    messages = [
+        {"role": "user", "content": "Remember this"},
+        {"role": "assistant", "content": "Acknowledged"},
+    ]
+    instance.sync_turn("Remember this", "Acknowledged", messages=messages)
     assert instance._flush() is False
     assert any(row["action"] == "capture" for row in instance.get_lifecycle_diagnostics())
 
     client.status = "committed"
-    instance.sync_turn("Remember this", "Acknowledged")
+    instance.sync_turn("Remember this", "Acknowledged", messages=messages)
     assert instance._flush() is True
 
 

@@ -51,6 +51,8 @@ def test_schemas_are_narrow_and_scope_is_provider_owned():
         assert "context" not in schema["parameters"]["properties"]
         assert "project_id" not in schema["parameters"]["properties"]
         assert "user_profile_id" not in schema["parameters"]["properties"]
+        if schema["name"] in {"mnemos_remember", "mnemos_correct"}:
+            assert "request_id" in schema["parameters"]["required"]
 
 
 def test_retrieve_injects_initialized_context_and_rejects_scope_override():

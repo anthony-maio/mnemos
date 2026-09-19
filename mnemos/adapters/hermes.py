@@ -19,9 +19,11 @@ from datetime import datetime, timezone
 from pathlib import Path
 import threading
 from typing import Any, Callable, Dict, List, Mapping, Optional, cast
+from uuid import uuid4
 
 from ..bridge import BridgeClient
 from ..client import MnemosClient
+from ..hermes_identity import scoped_event_id
 from ..scopes import ScopeContext, ScopeRegistry, default_registry_path as shared_registry_path
 from .context import format_retrieved_context
 from .hermes_occurrences import occurrence_time
@@ -253,20 +255,7 @@ class MnemosHermesProvider(_HermesMemoryProvider):  # type: ignore[misc]  # Opti
 
     @staticmethod
     def _event_id(context: ScopeContext, *, role: str, content: str, source: str) -> str:
-        material = json.dumps(
-            [
-                context.user_profile_id,
-                context.project_id,
-                context.workspace_id,
-                context.session_id,
-                role,
-                source,
-                content,
-            ],
-            ensure_ascii=False,
-            separators=(",", ":"),
-        )
-        return "hermes:" + hashlib.sha256(material.encode("utf-8")).hexdigest()
+        return scoped_event_id(context, source, role, content)
 
     def _capture_payload(
         self, context: ScopeContext, *, role: str, content: str, source: str
@@ -349,7 +338,9 @@ class MnemosHermesProvider(_HermesMemoryProvider):  # type: ignore[misc]  # Opti
         # Position also distinguishes repeated identical text in one session.
         prefix = hashlib.sha256()
         payloads = []
-        namespace = "provisional" if provisional else "transcript"
+        # Without a transcript, only the callback receipt is identifiable.
+        # Preserve each receipt separately without counting it as fact evidence.
+        namespace = f"provisional:v1:{uuid4()}" if provisional else "transcript:v1"
         for index, (role, content) in enumerate(messages):
             prefix.update(
                 json.dumps([role, content], ensure_ascii=False, separators=(",", ":")).encode(
@@ -362,7 +353,7 @@ class MnemosHermesProvider(_HermesMemoryProvider):  # type: ignore[misc]  # Opti
                     context,
                     role=role,
                     content=content,
-                    source=f"{namespace}:v1:{index}:{prefix.hexdigest()}",
+                    source=f"{namespace}:{index}:{prefix.hexdigest()}",
                 )
             )
             if provisional:

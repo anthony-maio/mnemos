@@ -16,6 +16,7 @@ from .contracts import (
     RetrievalRequest,
 )
 from .claude_identity import legacy_event_id, scoped_event_id
+from .hermes_identity import scoped_event_id as hermes_scoped_event_id
 from .engine import MnemosEngine
 from .jobs import DurableJob, FactEvidence, FactRevision
 from .maintenance import MaintenanceScheduler
@@ -110,10 +111,22 @@ class LocalMemoryService:
         safety = self.firewall.apply(event.content)
         if not safety.allowed:
             return {"schema_version": 1, "status": "rejected", "reason": safety.reason}
+        claude_provisional = (
+            event.identity_version == 2
+            and event.context.host == "claude-code"
+            and event.source_kind == "claude_code_transcript"
+        )
+        hermes_provisional = (
+            event.identity_version == 1
+            and event.context.host == "hermes"
+            and event.source_kind == "hermes_memory_provider"
+            and event.source_ref is not None
+            and event.source_ref.startswith("provisional:v1:")
+            and event.event_id
+            == hermes_scoped_event_id(event.context, event.source_ref, event.role, event.content)
+        )
         if event.identity_status == "provisional_unassociated" and (
-            event.identity_version != 2
-            or event.context.host != "claude-code"
-            or event.source_kind != "claude_code_transcript"
+            not (claude_provisional or hermes_provisional)
             or explicit
             or correction is not None
             or event.role not in {"user", "assistant"}
@@ -124,7 +137,18 @@ class LocalMemoryService:
             return {
                 "schema_version": 1,
                 "status": "rejected",
-                "reason": "Provisional identity is only valid for non-explicit Claude captures",
+                "reason": "Provisional identity requires a verified non-explicit host capture",
+            }
+        if (
+            event.context.host == "hermes"
+            and event.source_kind == "hermes_memory_provider"
+            and (event.source_ref or "").startswith("provisional:v1:")
+            and event.identity_status != "provisional_unassociated"
+        ):
+            return {
+                "schema_version": 1,
+                "status": "rejected",
+                "reason": "A provisional Hermes receipt cannot become extraction evidence",
             }
         source_ref = event.source_ref
         if source_ref is not None:
