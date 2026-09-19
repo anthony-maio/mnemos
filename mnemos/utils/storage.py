@@ -201,7 +201,9 @@ class MemoryStore(ABC):
                        are considered.
 
         Returns:
-            List of MemoryChunks sorted by descending similarity, up to top_k.
+            List of MemoryChunks sorted by descending similarity, then ascending
+            ID for exact ties, up to top_k. Empty query vectors and nonpositive
+            limits return no results.
         """
         ...
 
@@ -701,6 +703,8 @@ class InMemoryStore(MemoryStore):
         Chunks without embeddings are scored as 0.0 (unembedded content
         is not searchable but won't cause errors).
         """
+        if top_k <= 0 or not query_embedding:
+            return []
         with self._lock:
             candidates = list(self._store.values())
 
@@ -715,7 +719,7 @@ class InMemoryStore(MemoryStore):
                 sim = 0.0
             scored.append((sim, chunk))
 
-        scored.sort(key=lambda x: x[0], reverse=True)
+        scored.sort(key=lambda item: (-item[0], item[1].id))
         return [chunk for _, chunk in scored[:top_k]]
 
     def update(self, chunk_id: str, chunk: MemoryChunk) -> bool:
