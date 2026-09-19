@@ -39,6 +39,50 @@ class FakeClient:
         return {"context": "1. remembered local convention"}
 
 
+def test_native_tools_route_through_initialized_provider_scope(tmp_path: Path) -> None:
+    import json
+
+    class ToolClient(FakeClient):
+        def __init__(self) -> None:
+            super().__init__()
+            self.calls: list[tuple[str, dict[str, Any]]] = []
+
+        async def request(
+            self, operation: str, payload: dict[str, Any], *, queue_on_failure: bool
+        ) -> dict[str, Any]:
+            assert queue_on_failure is False
+            self.calls.append((operation, payload))
+            return {"status": "committed", "processing_status": "pending", "job_id": "job-1"}
+
+    client = ToolClient()
+    instance = make_provider(tmp_path, client)
+    assert "mnemos_correct" in {item["name"] for item in instance.get_tool_schemas()}
+    result = json.loads(
+        instance.handle_tool_call(
+            "mnemos_remember", {"content": "Use SQLite.", "request_id": "remember-sqlite"}
+        )
+    )
+    assert result["processing_status"] == "pending"
+    assert client.calls[0][0] == "remember"
+    assert client.calls[0][1]["context"] == instance._current_context().model_dump(mode="json")
+    rejected = json.loads(
+        instance.handle_tool_call(
+            "mnemos_remember",
+            {"content": "Use SQLite.", "request_id": "remember-sqlite", "context": {}},
+        )
+    )
+    assert rejected["status"] == "rejected"
+    assert len(client.calls) == 1
+
+
+def test_native_tool_before_initialization_fails_closed(tmp_path: Path) -> None:
+    import json
+
+    instance = MnemosHermesProvider(client=FakeClient(), registry=ScopeRegistry())
+    result = json.loads(instance.handle_tool_call("mnemos_inspect", {"fact_id": "any"}))
+    assert result["status"] == "rejected"
+
+
 def make_provider(tmp_path: Path, client: FakeClient | None = None) -> MnemosHermesProvider:
     registry = ScopeRegistry()
     registry.register_project(tmp_path, user_profile_id="alice", enabled=True)
@@ -354,7 +398,7 @@ def test_async_turn_capture_failure_is_reported_by_flush(tmp_path: Path) -> None
 
     instance.sync_turn("Remember this", "Acknowledged")
     assert instance._flush() is False
-    assert instance.get_lifecycle_diagnostics()[0]["action"] == "capture"
+    assert any(row["action"] == "capture" for row in instance.get_lifecycle_diagnostics())
 
     client.status = "committed"
     instance.sync_turn("Remember this", "Acknowledged")

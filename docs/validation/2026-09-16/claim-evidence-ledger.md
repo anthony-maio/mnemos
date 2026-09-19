@@ -16,7 +16,9 @@ terminal and incomplete in five profiles; 50 observations had missing
 correction targets following `no_durable_facts` extraction. The
 [terminal lifecycle archive](../2026-09-19/lifecycle-incomplete-local-v2/README.md)
 does not establish T18 success. The encoding/retrieval follow-on comparisons
-never started. Historical running-state descriptions below are superseded.
+never started in that queue. The [independent v2 queue](../2026-09-19/supplemental-launch-v2/README.md)
+has since started under unchanged bindings; final results are pending.
+Historical running-state descriptions below are superseded.
 
 The [new baseline SSD performance evidence](../2026-09-19/performance-recovery-v1/README.md)
 passes both unchanged latency gates in three repetitions: recall p95

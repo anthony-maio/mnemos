@@ -1,0 +1,139 @@
+FFFFFF                                                                   [100%]
+================================== FAILURES ===================================
+_________ test_native_tools_route_through_initialized_provider_scope __________
+
+tmp_path = WindowsPath('D:/WindowsTemp/pytest-of-Ant/pytest-3802/test_native_tools_route_throug0')
+
+    def test_native_tools_route_through_initialized_provider_scope(tmp_path: Path) -> None:
+        import json
+    
+        class ToolClient(FakeClient):
+            def __init__(self) -> None:
+                super().__init__()
+                self.calls: list[tuple[str, dict[str, Any]]] = []
+    
+            async def request(
+                self, operation: str, payload: dict[str, Any], *, queue_on_failure: bool
+            ) -> dict[str, Any]:
+                assert queue_on_failure is False
+                self.calls.append((operation, payload))
+                return {"status": "committed", "processing_status": "pending", "job_id": "job-1"}
+    
+        client = ToolClient()
+        instance = make_provider(tmp_path, client)
+>       assert "mnemos_correct" in {item["name"] for item in instance.get_tool_schemas()}
+E       AssertionError: assert 'mnemos_correct' in set()
+
+test_hermes_adapter.py:59: AssertionError
+_____________ test_native_tool_before_initialization_fails_closed _____________
+
+tmp_path = WindowsPath('D:/WindowsTemp/pytest-of-Ant/pytest-3802/test_native_tool_before_initia0')
+
+    def test_native_tool_before_initialization_fails_closed(tmp_path: Path) -> None:
+        import json
+    
+        instance = MnemosHermesProvider(client=FakeClient(), registry=ScopeRegistry())
+>       result = json.loads(instance.handle_tool_call("mnemos_inspect", {"fact_id": "any"}))
+                            ^^^^^^^^^^^^^^^^^^^^^^^^^
+E       AttributeError: 'MnemosHermesProvider' object has no attribute 'handle_tool_call'
+
+test_hermes_adapter.py:75: AttributeError
+_____ test_appending_a_turn_does_not_recapture_earlier_transcript_entries _____
+
+tmp_path = WindowsPath('D:/WindowsTemp/pytest-of-Ant/pytest-3802/test_appending_a_turn_does_not0')
+
+    def test_appending_a_turn_does_not_recapture_earlier_transcript_entries(tmp_path: Path) -> None:
+        instance, client = provider(tmp_path)
+        first = [
+            {"role": "user", "content": "Use cedar for the release label."},
+            {"role": "assistant", "content": "I will use cedar."},
+        ]
+        instance.sync_turn("", "", messages=first)
+        assert instance._flush()
+        initial = {item["event_id"] for item in client.outbox.pending()}
+    
+        entire = first + [
+            {"role": "user", "content": "Correct the release label to maple."},
+            {"role": "assistant", "content": "I will use maple."},
+        ]
+        instance.sync_turn("", "", messages=entire)
+        instance.on_session_end(entire)
+        assert instance._flush()
+        pending = client.outbox.pending()
+>       assert len(pending) == 4
+E       AssertionError: assert 6 == 4
+E        +  where 6 = len([{'event_id': 'f1f4f7655d96d2ffe84aa1c777f5cf4c2bc943ff25343ad443b937d14059d97c', 'operation': 'capture', 'payload': {...3ea26d62a90b8a8d01dc02c1ccbeca3db88a1cc834d11f90625baac0c9d', 'occurred_at': '2026-09-19T20:01:15.425093+00:00', ...}}])
+
+test_hermes_transcript_identity.py:49: AssertionError
+___ test_identical_messages_at_different_transcript_positions_are_distinct ____
+
+tmp_path = WindowsPath('D:/WindowsTemp/pytest-of-Ant/pytest-3802/test_identical_messages_at_dif0')
+
+    def test_identical_messages_at_different_transcript_positions_are_distinct(tmp_path: Path) -> None:
+        instance, client = provider(tmp_path)
+        turn = [
+            {"role": "user", "content": "Please continue."},
+            {"role": "assistant", "content": "Continuing."},
+        ]
+        instance.sync_turn("", "", messages=turn + turn)
+        assert instance._flush()
+>       assert len(client.outbox.pending()) == 4
+E       AssertionError: assert 2 == 4
+E        +  where 2 = len([{'event_id': '048450af05e3da24a256428ca05db4f2024ffa8d0f8a44be510d10fb85b72519', 'operation': 'capture', 'payload': {...69eb767ce6e2a6068a0c53125205c44ef60315feacfe0fdf52fafc581c3', 'occurred_at': '2026-09-19T20:01:15.722115+00:00', ...}}])
+E        +    where [{'event_id': '048450af05e3da24a256428ca05db4f2024ffa8d0f8a44be510d10fb85b72519', 'operation': 'capture', 'payload': {...69eb767ce6e2a6068a0c53125205c44ef60315feacfe0fdf52fafc581c3', 'occurred_at': '2026-09-19T20:01:15.722115+00:00', ...}}] = pending()
+E        +      where pending = <mnemos.client.Outbox object at 0x00000282F110F750>.pending
+E        +        where <mnemos.client.Outbox object at 0x00000282F110F750> = <test_hermes_transcript_identity.QueuedClient object at 0x00000282F110EFD0>.outbox
+
+test_hermes_transcript_identity.py:61: AssertionError
+______ test_compression_checkpoint_reuses_the_completed_turn_occurrences ______
+
+tmp_path = WindowsPath('D:/WindowsTemp/pytest-of-Ant/pytest-3802/test_compression_checkpoint_re0')
+
+    def test_compression_checkpoint_reuses_the_completed_turn_occurrences(tmp_path: Path) -> None:
+        instance, client = provider(tmp_path)
+        messages = [
+            {"role": "user", "content": "Use the project convention."},
+            {"role": "assistant", "content": "Understood."},
+        ]
+        instance.sync_turn("", "", messages=messages)
+        assert instance._flush()
+        before = client.outbox.pending()
+        assert "captured 2" in instance.on_pre_compress(messages, require_checkpoint=True)
+>       assert client.outbox.pending() == before
+E       AssertionError: assert [{'event_id':...00:00', ...}}] == [{'event_id':...00:00', ...}}]
+E         
+E         Left contains 2 more items, first extra item: {'event_id': '3d15f9f09f6332f328336491112e1e5918e9fb2b5f0c2da544b4aa705b3036fc', 'operation': 'capture', 'payload': {'...1e7c96f0b4379517e04efd48119cd22b0e1d82e8525829120bdd59011124', 'occurred_at': '2026-09-19T20:01:16.125492+00:00', ...}}
+E         Use -v to get more diff
+
+test_hermes_transcript_identity.py:74: AssertionError
+________ test_recreated_provider_replays_the_identical_durable_payload ________
+
+tmp_path = WindowsPath('D:/WindowsTemp/pytest-of-Ant/pytest-3802/test_recreated_provider_replay0')
+
+    def test_recreated_provider_replays_the_identical_durable_payload(tmp_path: Path) -> None:
+        instance, client = provider(tmp_path)
+        messages = [{"role": "user", "content": "Keep the release label stable."}]
+        instance.sync_turn("", "", messages=messages)
+        assert instance._flush()
+        before = client.outbox.pending()
+        instance.shutdown()
+    
+        restarted = MnemosHermesProvider(
+            client=client, registry=instance.registry, user_profile_id="alice"
+        )
+        restarted.initialize("native-session", cwd=str(tmp_path), hermes_home=str(tmp_path / "hermes"))
+        restarted.sync_turn("", "", messages=messages)
+>       assert restarted._flush()
+E       assert False
+E        +  where False = _flush()
+E        +    where _flush = <mnemos.adapters.hermes.MnemosHermesProvider object at 0x00000282F110F750>._flush
+
+test_hermes_transcript_identity.py:90: AssertionError
+=========================== short test summary info ===========================
+FAILED test_hermes_adapter.py::test_native_tools_route_through_initialized_provider_scope
+FAILED test_hermes_adapter.py::test_native_tool_before_initialization_fails_closed
+FAILED test_hermes_transcript_identity.py::test_appending_a_turn_does_not_recapture_earlier_transcript_entries
+FAILED test_hermes_transcript_identity.py::test_identical_messages_at_different_transcript_positions_are_distinct
+FAILED test_hermes_transcript_identity.py::test_compression_checkpoint_reuses_the_completed_turn_occurrences
+FAILED test_hermes_transcript_identity.py::test_recreated_provider_replays_the_identical_durable_payload
+6 failed, 30 deselected in 1.92s

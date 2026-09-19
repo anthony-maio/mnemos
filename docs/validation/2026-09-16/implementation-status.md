@@ -36,7 +36,10 @@ observations lacked an accepted correction target after extraction returned
 no durable facts. Baseline and the no-sleep profile completed; completion does
 not establish quality success. The [terminal archive](../2026-09-19/lifecycle-incomplete-local-v2/README.md)
 preserves all seven reports and raw outputs. Supplemental comparisons did not
-start. Earlier references below to running/queued processes are historical.
+start in that queue. An independent [supplemental v2 launch](../2026-09-19/supplemental-launch-v2/README.md)
+is now recorded with the same frozen source/data/model/protocol bindings;
+its final results remain pending. Earlier running/queued descriptions below
+refer to the historical queue unless explicitly labeled v2.
 
 The [retrieval parity checkpoint](../2026-09-19/retrieval-parity-checkpoint-v1/README.md)
 at `8fc79f0` aligns in-memory exact-tie ordering and empty/nonpositive retrieval

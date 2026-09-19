@@ -2,6 +2,13 @@
 
 ## Current checkpoint: September 19, 2026, local GPU replacement
 
+An independent [supplemental v2 queue](../2026-09-19/supplemental-launch-v2/README.md)
+started at 19:50:51 UTC. The 20:06:49 UTC process observation confirmed encoding
+was live with 97 full-arm observations recorded. Retrieval follows encoding.
+Final results are pending; the original queue's unstarted follow-ons below
+remain historical failures. The source, dataset, models, and protocols remain
+frozen. Concurrent CPU-only development work qualifies timing comparisons.
+
 The newer [Hermes continuity package](../2026-09-19/hermes-continuity-checkpoint-v1/README.md)
 at `78c63ed` passes 1,172 source tests (four skips), all six package checks,
 484 isolated installed cases (two skips), and seven replay assertions. Its

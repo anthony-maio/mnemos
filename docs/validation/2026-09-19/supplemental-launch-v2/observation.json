@@ -1,0 +1,23 @@
+{
+  "observed_at": "2026-09-19T20:06:49.015488+00:00",
+  "processes": [
+    {
+      "ProcessId": 46060,
+      "ParentProcessId": 10616,
+      "Name": "pwsh.exe",
+      "CreationDate": "2026-09-19T15:50:51.268692-04:00",
+      "CommandLine": "\"C:\\Program Files\\PowerShell\\7\\pwsh.exe\" -NoProfile -Command \"try { [Console]::OutputEncoding=[System.Text.Encoding]::UTF8 } catch {}\n& .venv/run_local_supplemental_20260919_v2.ps1\""
+    },
+    {
+      "ProcessId": 44916,
+      "ParentProcessId": 46060,
+      "Name": "python.exe",
+      "CreationDate": "2026-09-19T15:50:51.931739-04:00",
+      "CommandLine": "\"D:\\Development\\mnemos\\mnemos\\.worktrees\\functional-local-memory\\.venv\\Scripts\\python.exe\" -u -m benchmarks.local_memory.encoding_comparator_run --dataset C:\\Users\\Ant\\AppData\\Local\\Temp\\mnemos-source-retrieval-comparison-v1\\benchmarks\\local_memory\\datasets\\local-memory-heldout-v3.jsonl --protocol C:\\Users\\Ant\\AppData\\Local\\Temp\\mnemos-source-retrieval-comparison-v1\\docs\\plans\\2026-09-18-encoding-comparison-protocol-v1.md --output-dir D:\\Development\\mnemos\\mnemos\\.worktrees\\functional-local-memory\\docs\\validation\\2026-09-19\\encoding-comparison-local-v2 --work-dir C:\\Users\\Ant\\AppData\\Local\\Temp\\mnemos-encoding-comparison-local-v2 --endpoint http://127.0.0.1:11434 --model qwen3.5:9b --embedding-model nomic-embed-text:latest --repetitions 3 --think false"
+    }
+  ],
+  "full_arm_completed_observations": 97,
+  "concurrent_activity": "CPU-only development regression tests and package checks; no other model jobs intentionally launched",
+  "latency_limitation": "These supplemental runs are not an isolated latency benchmark. Preserve timings with this load qualification.",
+  "result_status": "not_final"
+}

@@ -48,11 +48,23 @@ assistant evidence without blocking the Hermes turn. The local service or its
 durable outbox acknowledges each accepted event. Repeated callbacks use stable
 event identities and do not create another observation.
 
-Repeated callbacks within one provider instance reuse the event's original
-capture timestamp, keeping concurrent outbox payloads identical. The timestamp
-map is provider-lifetime state; recovery of that timestamp in a newly created
-provider is not established by the native single-turn fixture. Durable replay
-continues to use the payload retained in the outbox.
+Each user/assistant occurrence is bound to its cumulative transcript prefix.
+Appending later messages leaves prior identities unchanged; repeated identical
+messages at different positions remain distinct. Session-end and compression
+callbacks reuse these occurrences. A private `mnemos/occurrences.sqlite` ledger
+under the supplied Hermes home retains first-observation timestamps across
+provider restarts. It stores event hashes and timestamps, without message text.
+Preserve this ledger with the Hermes home and pending outbox during recovery.
+Corrupt or unavailable state fails capture rather than inventing a new time.
+
+Callbacks without a transcript have ambiguous occurrence identity. Their
+content is retained as provisional evidence, ineligible for fact extraction,
+with a `transcript_identity_unavailable` diagnostic. Identical fallback calls
+may refer to the same provisional record; that does not prove complete capture.
+Hosts omitting Hermes home also report `nonpersistent_timestamp`; timestamp
+recovery is then limited to the provider lifetime. Transcript truncation,
+branching, and upgrades from earlier experimental identity formats still need
+separate native coverage. No live history migration has been performed.
 
 Built-in memory `add` notifications can be mirrored. `remove` and `replace`
 notifications do not contain verified Mnemos fact IDs and versions, so the
@@ -62,6 +74,21 @@ unresolved actions and capture failures. These diagnostics are in-memory only.
 `_flush()` reports pending capture failures; a repeated failed add can retry.
 Automatic correction and forgetting across the two memory stores still need
 an exact identity mapping and native validation.
+
+The provider exposes `mnemos_remember`, `mnemos_retrieve`, `mnemos_inspect`,
+`mnemos_correct`, `mnemos_forget`, and `mnemos_job_status` through Hermes'
+native memory tool dispatcher. The initialized session supplies scope; tool
+arguments cannot override project, profile, host, or session. Retrieval defaults
+to the project. Correction and forgetting require an exact fact ID and its
+current version. Inspect the fact before changing it.
+
+Remember and correct also require a `request_id`. Use a fresh value for each
+logical write and reuse it when retrying that same write after an uncertain
+response. Remember retries resolve to the original event/job. A correction
+retry after processing may return a version conflict; inspect the target and
+the previously returned job before deciding on another write. A committed
+response acknowledges durable evidence; job completion establishes processing.
+These explicit tools do not perform fuzzy matching or bulk deletion.
 
 The provider advertises the Hermes version 2 pre-compress checkpoint contract.
 With checkpoint enforcement enabled by an operator, a failed or unavailable
@@ -101,5 +128,5 @@ scoped capture, recall, restart recovery, service outage buffering, and
 cross-host continuity. Installed API, Windows/WSL bridge, and disposable plugin
 discovery checks are recorded separately in the
 [compatibility matrix](../client-compatibility-matrix.md); the native model
-attempts now complete conversations, but have not passed session authority and
-the complete lifecycle contract.
+v4 run passes bounded session authority, recall, and raw capture with an
+isolated CLI patch. The complete native lifecycle contract remains open.

@@ -24,6 +24,8 @@ from ..bridge import BridgeClient
 from ..client import MnemosClient
 from ..scopes import ScopeContext, ScopeRegistry, default_registry_path as shared_registry_path
 from .context import format_retrieved_context
+from .hermes_occurrences import occurrence_time
+from .hermes_tools import dispatch_tool, get_tool_schemas
 
 try:  # Hermes is an optional host dependency and is not installed in Mnemos' venv.
     from agent.memory_provider import MemoryProvider as _HermesMemoryProvider
@@ -192,8 +194,12 @@ class MnemosHermesProvider(_HermesMemoryProvider):  # type: ignore[misc]  # Opti
 
     def initialize(self, session_id: str, **kwargs: Any) -> None:
         self._context = None
+        next_home = str(kwargs.get("hermes_home") or "").strip()
+        if next_home != self.hermes_home:
+            with self._threads_lock:
+                self._occurrence_times.clear()
         self.session_id = str(session_id or "").strip()
-        self.hermes_home = str(kwargs.get("hermes_home") or "").strip()
+        self.hermes_home = next_home
         self.cwd = str(kwargs.get("cwd") or "").strip()
         self.user_profile_id = (
             self.user_profile_id
@@ -270,6 +276,12 @@ class MnemosHermesProvider(_HermesMemoryProvider):  # type: ignore[misc]  # Opti
             occurred_at = self._occurrence_times.get(event_id)
             if occurred_at is None:
                 occurred_at = datetime.now(timezone.utc).isoformat()
+                if self.hermes_home:
+                    occurred_at = occurrence_time(self.hermes_home, event_id, occurred_at)
+                else:
+                    self._record_lifecycle_diagnostic(
+                        action="capture_identity", target="", status="nonpersistent_timestamp"
+                    )
                 self._occurrence_times[event_id] = occurred_at
         return {
             "event_id": event_id,
@@ -318,6 +330,53 @@ class MnemosHermesProvider(_HermesMemoryProvider):  # type: ignore[misc]  # Opti
             for role, content in messages
             if role in {"user", "assistant"} and content
         ]
+        self._enqueue_payloads(
+            payloads,
+            on_failure=on_failure,
+            diagnostic_action=diagnostic_action,
+            diagnostic_target=diagnostic_target or source,
+        )
+
+    def _transcript_payloads(
+        self,
+        context: ScopeContext,
+        messages: list[tuple[str, str]],
+        *,
+        provisional: bool = False,
+    ) -> list[dict[str, Any]]:
+        # Hermes supplies the cumulative transcript. Bind each occurrence to
+        # its own prefix so appending a later turn cannot rename earlier ones.
+        # Position also distinguishes repeated identical text in one session.
+        prefix = hashlib.sha256()
+        payloads = []
+        namespace = "provisional" if provisional else "transcript"
+        for index, (role, content) in enumerate(messages):
+            prefix.update(
+                json.dumps([role, content], ensure_ascii=False, separators=(",", ":")).encode(
+                    "utf-8"
+                )
+                + b"\0"
+            )
+            payloads.append(
+                self._capture_payload(
+                    context,
+                    role=role,
+                    content=content,
+                    source=f"{namespace}:v1:{index}:{prefix.hexdigest()}",
+                )
+            )
+            if provisional:
+                payloads[-1]["identity_status"] = "provisional_unassociated"
+        return payloads
+
+    def _enqueue_payloads(
+        self,
+        payloads: list[dict[str, Any]],
+        *,
+        on_failure: Callable[[dict[str, Any]], None] | None = None,
+        diagnostic_action: str = "capture",
+        diagnostic_target: str = "transcript",
+    ) -> None:
 
         def write() -> None:
             for payload in payloads:
@@ -329,7 +388,7 @@ class MnemosHermesProvider(_HermesMemoryProvider):  # type: ignore[misc]  # Opti
                         self._failed_capture_ids.add(payload["event_id"])
                     self._record_lifecycle_diagnostic(
                         action=diagnostic_action,
-                        target=diagnostic_target or source,
+                        target=diagnostic_target,
                         status="capture_failed",
                     )
                     if on_failure is not None:
@@ -368,7 +427,13 @@ class MnemosHermesProvider(_HermesMemoryProvider):  # type: ignore[misc]  # Opti
         return format_retrieved_context(result, max_chars=MAX_CONTEXT_CHARS)
 
     def system_prompt_block(self) -> str:
-        return "Mnemos memory is available through the configured local Hermes provider."
+        return (
+            "Mnemos provides shared local memory through the mnemos_* tools. "
+            "Retrieve or inspect a fact before correcting or forgetting its exact ID and version. "
+            "Remember and correct return a durable job; check mnemos_job_status for completion. "
+            "Built-in Hermes memory removals affect its own store; use mnemos_forget to remove "
+            "a shared Mnemos fact."
+        )
 
     def prefetch(self, query: str, *, session_id: str = "") -> str:
         query = _text(query)
@@ -425,15 +490,17 @@ class MnemosHermesProvider(_HermesMemoryProvider):  # type: ignore[misc]  # Opti
                 content = _text(message.get("content"))
                 if role in {"user", "assistant"} and content:
                     selected.append((role, content))
-        if not selected:
+        provisional = not selected
+        if provisional:
             selected = [("user", _text(user_content)), ("assistant", _text(assistant_content))]
-        source = (
-            "turn:"
-            + hashlib.sha256(
-                json.dumps(selected, ensure_ascii=False, separators=(",", ":")).encode("utf-8")
-            ).hexdigest()
+        selected = [(role, content) for role, content in selected if content]
+        if provisional and selected:
+            self._record_lifecycle_diagnostic(
+                action="capture_identity", target="", status="transcript_identity_unavailable"
+            )
+        self._enqueue_payloads(
+            self._transcript_payloads(context, selected, provisional=provisional)
         )
-        self._enqueue_messages(context, selected, source)
 
     def on_session_end(self, messages: List[Dict[str, Any]]) -> None:
         self.sync_turn(
@@ -484,14 +551,8 @@ class MnemosHermesProvider(_HermesMemoryProvider):  # type: ignore[misc]  # Opti
             if role in {"user", "assistant"} and content:
                 evidence.append((role, content))
         accepted = True
-        for index, (role, content) in enumerate(evidence):
-            source = f"checkpoint:{self.session_id}:{index}"
-            accepted = (
-                self._capture_now(
-                    self._capture_payload(context, role=role, content=content, source=source)
-                )
-                and accepted
-            )
+        for payload in self._transcript_payloads(context, evidence):
+            accepted = self._capture_now(payload) and accepted
         self._failed_checkpoint = not accepted
         if require_checkpoint and not accepted:
             raise RuntimeError("Mnemos Hermes checkpoint was not durably accepted")
@@ -546,7 +607,17 @@ class MnemosHermesProvider(_HermesMemoryProvider):  # type: ignore[misc]  # Opti
         )
 
     def get_tool_schemas(self) -> List[Dict[str, Any]]:
-        return []
+        return get_tool_schemas()
+
+    def handle_tool_call(self, tool_name: str, args: Dict[str, Any], **kwargs: Any) -> str:
+        del kwargs
+        try:
+            context = self._current_context()
+        except Exception:
+            return json.dumps(
+                {"status": "rejected", "error": "Mnemos provider has no validated session scope"}
+            )
+        return cast(str, _run_sync(dispatch_tool(self.client, context, tool_name, args)))
 
     def save_config(self, values: Dict[str, Any], hermes_home: str) -> None:
         target_dir = Path(hermes_home).expanduser()
