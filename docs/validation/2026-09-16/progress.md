@@ -8,6 +8,30 @@ This is a chronological checkpoint log. Later entries supersede earlier test
 counts and open implementation items. An implementation or focused check does
 not close a native-host, quality, performance, or pilot gate.
 
+## September 19: persisted Hermes occurrence identity
+
+The latest [Hermes native identity checkpoint](../2026-09-19/hermes-native-identity-checkpoint-v1/README.md)
+at `3730fd9` passes 1,247 source tests with four skips, all six source/package
+checks, 530 isolated installed cases with two matching skips, and seven replay
+assertions. Native persisted message IDs now distinguish a regenerated turn
+from a duplicate delivery. Reusing a native ID with changed content or role
+fails as an identity conflict, including after service restart. This package
+retains the earlier correction retry repair.
+
+The [actual Hermes database fixture](../2026-09-19/hermes-native-rows-contract-v3/README.md)
+preserves the first turn's IDs during rewind and creates new IDs for an
+identical regenerated last turn. Checkpoints, normal resume, and provider
+recreation leave exactly six queued occurrences. This uses actual host
+persistence and callbacks, without a model, service, or interactive CLI.
+ID-less transcripts, loaders that omit IDs, compaction that clones rows, and
+migration from existing prefix identities remain separate limitations.
+
+The preceding `30113a6` candidate passed 1,242 source tests, but review found
+that its native event IDs still included the payload. The final candidate
+removes payload fields from native identity and rejects changed-payload retries.
+Both source check archives remain available. Two failed native-row fixture
+attempts are also preserved; only the v3 fixture establishes the host behavior.
+
 ## September 19: same-session rewind identity collision
 
 The [installed Hermes callback diagnostic](../2026-09-19/hermes-rewind-diagnostic-v2/README.md)

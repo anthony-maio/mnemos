@@ -3,12 +3,14 @@
 ## Current checkpoint: September 19, 2026, local GPU replacement
 
 An independent [supplemental v2 queue](../2026-09-19/supplemental-launch-v2/README.md)
-started at 19:50:51 UTC. At 21:16:29 UTC, the full encoding arm had a terminal
-`incomplete` report for 600 recorded observations: 589 complete and 11 partial.
-Eleven of 60 attempted corrections had no target; the other 49 corrections
-and all 60 forgetting operations committed. The no-surprisal arm had recorded
-151 observations and was still running. Retrieval follows encoding.
-Final comparison results are pending; the original queue's unstarted follow-ons below
+started at 19:50:51 UTC. Encoding ended at 22:24:29 UTC with all three
+reports marked `incomplete`. Each records 600 observations: full has 589
+complete and 11 partial, no-surprisal has 592 complete and eight partial,
+and length-noise has 585 complete and 15 partial. That is 34 partial rows
+out of 1,800; complete-only metrics cannot establish overall acceptance.
+Retrieval started at 22:24:30 UTC and remains running. Final retrieval
+results and reconciliation of the encoding comparison remain pending;
+the original queue's unstarted follow-ons below
 remain historical failures. The source, dataset, models, and protocols remain
 frozen. Concurrent CPU-only development work qualifies timing comparisons.
 

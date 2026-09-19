@@ -38,6 +38,40 @@ Status prose can lag newer artifacts. Resolve disagreements against the commit-b
 
 The hardware interruption is available as context: Anthony reported that the remote dual-3090 machine failed and moved the work to a local RTX 4080 with 16 GB. Treat the failure history as user-reported; do not infer an electrical cause. Colab was considered and tabled. Include this only if it helps explain the experimental constraints.
 
+## Current evaluation update
+
+The independent encoding comparison ended on September 19 at 22:24:29 UTC
+with all three reports marked incomplete. Of 600 observations per arm, the
+full pipeline has 11 partial rows, no-surprisal has eight, and length-noise
+has 15. Preserve these 34 partial rows out of 1,800 when discussing results;
+metrics that exclude them are conditional diagnostics. Retrieval began next
+and remains running. Final interpretation and evidence archiving are pending.
+
+## Latest verified repair
+
+The latest [Hermes native identity checkpoint](../validation/2026-09-19/hermes-native-identity-checkpoint-v1/README.md)
+at `3730fd9` passes 1,247 source tests with four skips, all six source/package
+checks, 530 isolated installed cases with two matching skips, and seven replay
+assertions. Native persisted message IDs now distinguish a regenerated turn
+from a duplicate delivery. Reusing a native ID with changed content or role
+fails as an identity conflict, including after service restart. This package
+retains the earlier correction retry repair.
+
+The [actual Hermes database fixture](../validation/2026-09-19/hermes-native-rows-contract-v3/README.md)
+preserves the first turn's IDs during rewind and creates new IDs for an
+identical regenerated last turn. Checkpoints, normal resume, and provider
+recreation leave exactly six queued occurrences. This uses actual host
+persistence and callbacks, without a model, service, or interactive CLI.
+ID-less transcripts, loaders that omit IDs, compaction that clones rows, and
+migration from existing prefix identities remain separate limitations.
+
+The verified wheel has SHA-256
+`3772398a8e11b92d2cffd285b0571a733a9fd63cbdf932c30519d933cf0a6dd2`.
+This is a tested package checkpoint, not final project acceptance. A useful
+article example is that identical words can be a replay of an old observation
+or a genuinely new turn. The host already had durable IDs that distinguish
+them; the adapter needed to preserve those IDs and reject conflicting payloads.
+
 ## Evidence boundaries already established
 
 - Earlier verified package checkpoint: `5e4b057b16906c2ec7dd302ae80748ef1ac5eddc`, with 1,195 source passes and four skips, all six source/package checks, 507 isolated installed contract passes and two matching skips, plus seven replay assertions. Wheel SHA-256: `7eaba268fb91ffae7d59b222cf8addb49d8b4b4857a37552e5404422e4009625`. The [Hermes lifecycle checkpoint](../validation/2026-09-19/hermes-lifecycle-checkpoints-v1/README.md) verifies scoped explicit tools, transcript identities across provider recreation, and extraction-ineligible provisional capture. Its installed Hermes API v2 run uses fixture providers and the actual Windows/WSL bridge, with no model conversation or outage. The archive also preserves two gaps found after the earlier candidate's suite passed. Overall acceptance remains open.
@@ -64,9 +98,9 @@ provides another bounded negative result. The installed provider treats an
 identical regenerated turn after a same-session rewind as the original
 observation. Its outbox retains four records where six logical observations
 are expected. This is a callback fixture, not an interactive `/undo` run or a
-service crash test. Explain it as a remaining occurrence-identity problem;
-do not call it repaired or imply that normal duplicate replay should stop
-deduplicating. The first diagnostic's false-positive zero-capture report is
+service crash test. The native-ID repair above addresses the supported
+persisted-message path; the ID-less fallback still has this limitation.
+Normal duplicate replay must continue deduplicating. The first diagnostic's false-positive zero-capture report is
 preserved and explicitly rejected.
 
 ## Finalization checklist
@@ -98,6 +132,7 @@ Candidate examples for the article, with bounded evidence:
 
 | Problem | Resulting behavior | Evidence and limit |
 | --- | --- | --- |
+| An identical last turn is regenerated after Hermes rewind | Native row IDs preserve the surviving prefix and identify two new occurrences | [Native identity tests](../../tests/test_hermes_native_identity.py) and actual host database fixture; ID-less fallback and compaction remain limited |
 | A committed capture loses its HTTP acknowledgement | The outbox retains a stable event identity for durable replay | [Lost acknowledgement tests](../../tests/test_service_lost_ack.py); synthetic service/SQLite evidence |
 | A correction finishes before its acknowledgement reaches the client | An unchanged retry recovers the original job without rewriting a newer fact; a fresh edit still needs the current version | [Correction retry tests](../../tests/test_memory_service.py) and the real HTTP lost-ack test; fixture providers, with restart, raw-source expiry, scope rejection, and forget suppression covered |
 | Two storage backends break exact-score ties differently | Both order tied candidates by memory ID and return no candidates for empty/nonpositive requests | [Storage contract tests](../../tests/test_storage_retrieval_contract.py) and the retrieval-parity checkpoint; consistency does not establish better semantic recall |

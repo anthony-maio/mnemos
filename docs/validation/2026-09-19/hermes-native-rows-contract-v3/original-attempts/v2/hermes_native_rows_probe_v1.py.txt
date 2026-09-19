@@ -1,0 +1,201 @@
+"""Bounded native Hermes durable-row callback diagnostic.
+
+This helper records host row identities before the Mnemos adapter is involved.
+It uses an isolated SessionDB, the installed wheel's MemoryManager, and the
+wheel's Outbox. It does not start Hermes CLI, a service, or a model.
+"""
+
+from __future__ import annotations
+
+import hashlib
+import json
+from pathlib import Path
+import shutil
+import subprocess
+import tempfile
+
+
+WORKTREE = Path(__file__).resolve().parents[1]
+ARCHIVE = WORKTREE / "docs" / "validation" / "2026-09-19" / "hermes-native-rows-contract-v2"
+CHECKS = Path(r"C:\Users\Ant\AppData\Local\Temp\mnemos-package-checks-correction-retry-v1\verification.json")
+HERMES_SOURCE = Path(r"C:\Users\Ant\AppData\Local\Temp\mnemos-source-hermes-native-identity-v2")
+HERMES_WSL_SOURCE = "/tmp/mnemos-hermes-cwd-compat-v1"
+ADAPTER_CANDIDATE = "3730fd96c3c50c7ef6179b2b9f70414ab5a8fb17"
+HERMES_COMMIT = "14a346345486418aa85ed6526549412ee2665ade"
+
+
+def wsl(path: Path) -> str:
+    value = str(path).replace("\\", "/")
+    return "/mnt/" + value[0].lower() + value[2:]
+
+
+BOOTSTRAP = r'''
+import hashlib, json, os, sys, zipfile
+from pathlib import Path
+
+cfg = json.loads(Path(sys.argv[1]).read_text(encoding="utf-8"))
+root = Path(cfg["root"])
+saved = {k: v for k, v in os.environ.items() if k in {"HOME", "USER", "LOGNAME", "PATH", "LANG", "WSL_INTEROP", "WSL_DISTRO_NAME"}}
+os.environ.clear(); os.environ.update(saved); os.environ.update(cfg["env"])
+sys.dont_write_bytecode = True
+wheel = Path(cfg["wheel"])
+if hashlib.sha256(wheel.read_bytes()).hexdigest() != cfg["wheel_sha"]:
+    raise RuntimeError("wheel hash changed")
+extracted = root / "wheel"
+extracted.mkdir()
+with zipfile.ZipFile(wheel) as archive:
+    archive.extractall(extracted)
+sys.path[:0] = [str(extracted), cfg["hermes_source"]]
+
+from agent.memory_manager import MemoryManager
+from agent.memory_provider import MemoryProvider
+from hermes_state import SessionDB
+from mnemos.client import Outbox
+from mnemos.adapters.hermes import MnemosHermesProvider
+from mnemos.scopes import ScopeRegistry
+
+
+class LocalOutboxClient:
+    def __init__(self, path):
+        self.outbox = Outbox(path)
+        self.calls = []
+    async def capture(self, payload):
+        event_id = payload.get("event_id")
+        transport_id = self.outbox.append(payload, event_id=event_id)
+        self.calls.append({"event_id": transport_id, "payload": payload})
+        return {"schema_version": 1, "status": "queued", "committed": False, "degraded": True, "event_id": transport_id}
+
+
+def flush(manager):
+    if not manager.flush_pending(timeout=10):
+        raise RuntimeError("MemoryManager flush_pending returned false")
+
+
+session_id = "native-row-session"
+db = SessionDB(Path(cfg["root"]) / "state.db")
+db.create_session(session_id, "cli", cwd=cfg["project"], model="fixture")
+initial = [
+    {"role": "user", "content": "native row turn one"},
+    {"role": "assistant", "content": "turn one answer"},
+    {"role": "user", "content": "native row turn two"},
+    {"role": "assistant", "content": "turn two answer"},
+]
+if db.append_messages_batch(session_id, initial) != 4:
+    raise RuntimeError("initial durable append did not insert four rows")
+durable_initial = db.get_messages_as_conversation(session_id, include_row_ids=True)
+initial_ids = [m.get("_row_id") for m in durable_initial]
+if not all(isinstance(value, int) and value > 0 for value in initial_ids):
+    raise RuntimeError("initial SessionDB rows do not expose positive _row_id values")
+
+outbox_path = Path(cfg["root"]) / "outbox.json"
+registry = ScopeRegistry()
+registry.register_project(Path(cfg["project"]), user_profile_id="native-row-probe", enabled=True)
+client = LocalOutboxClient(outbox_path)
+provider = MnemosHermesProvider(client=client, registry=registry, user_profile_id="native-row-probe")
+manager = MemoryManager(); manager.add_provider(provider)
+manager.initialize_all(session_id, cwd=cfg["project"], hermes_home=cfg["home"])
+manager.sync_all(initial[2]["content"], initial[3]["content"], session_id=session_id, messages=durable_initial)
+flush(manager)
+manager.on_pre_compress(durable_initial, require_checkpoint=True)
+
+outcome = db.rewind_user_turn(session_id, 1, warm_history=durable_initial)
+prefix_ids = [m.get("_row_id") for m in outcome.prefix]
+if prefix_ids != initial_ids[:2]:
+    raise RuntimeError(f"rewind changed retained prefix IDs: {prefix_ids} != {initial_ids[:2]}")
+regenerated = [
+    {"role": "user", "content": "native row turn two"},
+    {"role": "assistant", "content": "turn two answer"},
+]
+if db.append_messages_batch(session_id, regenerated) != 2:
+    raise RuntimeError("regenerated durable append did not insert two rows")
+resumed = db.get_messages_as_conversation(session_id, include_row_ids=True)
+resumed_ids = [m.get("_row_id") for m in resumed]
+regenerated_ids = resumed_ids[2:]
+if resumed_ids[:2] != initial_ids[:2] or set(regenerated_ids) & set(initial_ids):
+    raise RuntimeError("rewind/regeneration row identity contract failed")
+
+manager.on_session_switch(session_id, rewound=True)
+manager.sync_all(regenerated[0]["content"], regenerated[1]["content"], session_id=session_id, messages=resumed)
+flush(manager)
+manager.on_pre_compress(resumed, require_checkpoint=True)
+manager.shutdown_all()
+
+restart_client = LocalOutboxClient(outbox_path)
+restart_provider = MnemosHermesProvider(client=restart_client, registry=registry, user_profile_id="native-row-probe")
+restart_manager = MemoryManager(); restart_manager.add_provider(restart_provider)
+restart_manager.initialize_all(session_id, cwd=cfg["project"], hermes_home=cfg["home"])
+restart_manager.on_pre_compress(resumed, require_checkpoint=True)
+restart_manager.shutdown_all()
+pending = restart_client.outbox.pending()
+pending_ids = sorted(item["event_id"] for item in pending)
+if len(pending) != 6 or len(set(pending_ids)) != 6:
+    raise RuntimeError(f"expected six idempotent pending events, got {len(pending)}")
+all_ids = initial_ids[:2] + regenerated_ids
+pending_sources = sorted(item.get("payload", {}).get("source_ref") for item in pending)
+if len(pending_sources) != 6 or len(set(pending_sources)) != 6:
+    raise RuntimeError("outbox source references are not six unique durable row identities")
+module_origins = {
+    "memory_manager": __import__("agent.memory_manager", fromlist=["x"]).__file__,
+    "hermes_state": __import__("hermes_state", fromlist=["x"]).__file__,
+    "mnemos_client": __import__("mnemos.client", fromlist=["x"]).__file__,
+}
+result = {
+    "status": "passed",
+    "initial_row_ids": initial_ids,
+    "prefix_row_ids_after_rewind": prefix_ids,
+    "regenerated_row_ids": regenerated_ids,
+    "resumed_row_ids": resumed_ids,
+    "pending_count_after_restart": len(pending),
+    "pending_event_ids": pending_ids,
+    "pending_source_refs": pending_sources,
+    "callback_record_count": len(client.calls) + len(restart_client.calls),
+    "callback_records": client.calls + restart_client.calls,
+    "module_origins": module_origins,
+}
+(Path(cfg["root"]) / "result.json").write_text(json.dumps(result, indent=2, sort_keys=True) + "\n", encoding="utf-8")
+db.close()
+'''
+
+
+def main() -> int:
+    if ARCHIVE.exists():
+        raise SystemExit(f"archive already exists: {ARCHIVE}")
+    checks = json.loads(CHECKS.read_text(encoding="utf-8"))
+    if checks.get("status") != "passed":
+        raise SystemExit("frozen wheel verification is not passed")
+    wheel = Path(next(item["file"] for item in checks["artifacts"] if item["file"].endswith(".whl")))
+    wheel_sha = hashlib.sha256(wheel.read_bytes()).hexdigest()
+    if wheel_sha != next(item["sha256"] for item in checks["artifacts"] if item["file"].endswith(".whl")):
+        raise SystemExit("frozen wheel hash mismatch")
+    if not (HERMES_SOURCE / "mnemos" / "adapters" / "hermes.py").exists():
+        raise SystemExit(f"frozen Mnemos candidate source is missing: {HERMES_SOURCE}")
+    hermes_head = subprocess.check_output(["wsl.exe", "-d", "Debian", "--", "git", "-C", HERMES_WSL_SOURCE, "rev-parse", "HEAD"], text=True).strip()
+    if hermes_head != HERMES_COMMIT:
+        raise SystemExit(f"unexpected Hermes source revision: {hermes_head}")
+    runtime = Path(tempfile.mkdtemp(prefix="mnemos-hermes-native-rows-v1-"))
+    try:
+        project = runtime / "project"; project.mkdir()
+        home = runtime / "hermes-home"; home.mkdir()
+        cfg = {"root": wsl(runtime), "wheel": wsl(wheel), "wheel_sha": wheel_sha, "hermes_source": HERMES_WSL_SOURCE, "project": wsl(project), "home": wsl(home), "env": {"HERMES_HOME": wsl(home), "HERMES_ENABLE_PROJECT_PLUGINS": "0"}}
+        bootstrap = runtime / "bootstrap.py"; bootstrap.write_text(BOOTSTRAP, encoding="utf-8")
+        config = runtime / "bootstrap-config.json"; config.write_text(json.dumps(cfg, indent=2) + "\n", encoding="utf-8")
+        run = subprocess.run(["wsl.exe", "-d", "Debian", "--", "/home/anthony/.hermes/hermes-agent/venv/bin/python", wsl(bootstrap), wsl(config)], capture_output=True, text=True, timeout=120)
+        result_path = runtime / "result.json"
+        ARCHIVE.mkdir(parents=True)
+        if result_path.exists(): shutil.copy2(result_path, ARCHIVE / "result.json")
+        shutil.copy2(Path(__file__), ARCHIVE / "hermes_native_rows_probe_v1.py.txt")
+        shutil.copy2(bootstrap, ARCHIVE / "bootstrap.py.txt")
+        report = {"status": "diagnostic_completed" if run.returncode == 0 else "runtime_failed", "exit_code": run.returncode, "wheel_sha256": wheel_sha, "hermes_commit": hermes_head, "adapter_candidate_commit": ADAPTER_CANDIDATE, "helper_sha256": hashlib.sha256(Path(__file__).read_bytes()).hexdigest(), "scope": "actual Hermes SessionDB and MemoryManager callback fixture; no adapter, service, model, or native CLI"}
+        if result_path.exists(): report["result"] = json.loads(result_path.read_text(encoding="utf-8"))
+        (ARCHIVE / "report.json").write_text(json.dumps(report, indent=2, sort_keys=True) + "\n", encoding="utf-8")
+        (ARCHIVE / "README.md").write_text("# Hermes native row contract v1\n\nThis bounded diagnostic uses isolated Hermes SessionDB persistence and MemoryManager callbacks. It verifies durable `_row_id` values survive a two-turn rewind and identical regeneration, then remain idempotent across callback restart with six pending outbox events. The Mnemos adapter, service, native CLI, model, and live configuration are outside this evidence. Runtime files and the extracted wheel were deleted after capture.\n", encoding="utf-8")
+        (ARCHIVE / ".gitattributes").write_text("*.py.txt -text\n*.json text eol=lf\n", encoding="utf-8")
+        (ARCHIVE / "artifact-index.json").write_text(json.dumps({"status": report["status"], "included": ["README.md", ".gitattributes", "report.json", "result.json", "hermes_native_rows_probe_v1.py.txt", "bootstrap.py.txt", "artifact-index.json"], "excluded": ["wheel/", "hermes-home/", "project/", "state.db", "outbox.json", "bootstrap-config.json", "host stdout and stderr"]}, indent=2, sort_keys=True) + "\n", encoding="utf-8")
+        print(json.dumps(report, indent=2, sort_keys=True))
+        return 0 if run.returncode == 0 else 1
+    finally:
+        shutil.rmtree(runtime, ignore_errors=True)
+
+
+if __name__ == "__main__":
+    raise SystemExit(main())

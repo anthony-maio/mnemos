@@ -1,0 +1,125 @@
+
+import hashlib, json, os, sys, zipfile
+from pathlib import Path
+
+cfg = json.loads(Path(sys.argv[1]).read_text(encoding="utf-8"))
+root = Path(cfg["root"])
+saved = {k: v for k, v in os.environ.items() if k in {"HOME", "USER", "LOGNAME", "PATH", "LANG", "WSL_INTEROP", "WSL_DISTRO_NAME"}}
+os.environ.clear(); os.environ.update(saved); os.environ.update(cfg["env"])
+sys.dont_write_bytecode = True
+wheel = Path(cfg["wheel"])
+if hashlib.sha256(wheel.read_bytes()).hexdigest() != cfg["wheel_sha"]:
+    raise RuntimeError("wheel hash changed")
+extracted = root / "wheel"
+extracted.mkdir()
+with zipfile.ZipFile(wheel) as archive:
+    archive.extractall(extracted)
+sys.path[:0] = [str(extracted), cfg["hermes_source"]]
+
+from agent.memory_manager import MemoryManager
+from agent.memory_provider import MemoryProvider
+from hermes_state import SessionDB
+from mnemos.client import Outbox
+from mnemos.adapters.hermes import MnemosHermesProvider
+from mnemos.scopes import ScopeRegistry
+
+
+class LocalOutboxClient:
+    def __init__(self, path):
+        self.outbox = Outbox(path)
+        self.calls = []
+    async def capture(self, payload):
+        event_id = payload.get("event_id")
+        transport_id = self.outbox.append(payload, event_id=event_id)
+        self.calls.append({"event_id": transport_id, "payload": payload})
+        return {"schema_version": 1, "status": "queued", "committed": False, "degraded": True, "event_id": transport_id}
+
+
+def flush(manager):
+    if not manager.flush_pending(timeout=10):
+        raise RuntimeError("MemoryManager flush_pending returned false")
+
+
+session_id = "native-row-session"
+db = SessionDB(Path(cfg["root"]) / "state.db")
+db.create_session(session_id, "cli", cwd=cfg["project"], model="fixture")
+initial = [
+    {"role": "user", "content": "native row turn one"},
+    {"role": "assistant", "content": "turn one answer"},
+    {"role": "user", "content": "native row turn two"},
+    {"role": "assistant", "content": "turn two answer"},
+]
+if db.append_messages_batch(session_id, initial) != 4:
+    raise RuntimeError("initial durable append did not insert four rows")
+durable_initial = db.get_messages_as_conversation(session_id, include_row_ids=True)
+initial_ids = [m.get("_row_id") for m in durable_initial]
+if not all(isinstance(value, int) and value > 0 for value in initial_ids):
+    raise RuntimeError("initial SessionDB rows do not expose positive _row_id values")
+
+outbox_path = Path(cfg["root"]) / "outbox.json"
+registry = ScopeRegistry()
+registry.register_project(Path(cfg["project"]), user_profile_id="native-row-probe", enabled=True)
+client = LocalOutboxClient(outbox_path)
+provider = MnemosHermesProvider(client=client, registry=registry, user_profile_id="native-row-probe")
+manager = MemoryManager(); manager.add_provider(provider)
+manager.initialize_all(session_id, cwd=cfg["project"], hermes_home=cfg["home"])
+manager.sync_all(initial[2]["content"], initial[3]["content"], session_id=session_id, messages=durable_initial)
+flush(manager)
+manager.on_pre_compress(durable_initial, require_checkpoint=True)
+
+outcome = db.rewind_user_turn(session_id, 1, warm_history=durable_initial)
+prefix_ids = [m.get("_row_id") for m in outcome.prefix]
+if prefix_ids != initial_ids[:2]:
+    raise RuntimeError(f"rewind changed retained prefix IDs: {prefix_ids} != {initial_ids[:2]}")
+regenerated = [
+    {"role": "user", "content": "native row turn two"},
+    {"role": "assistant", "content": "turn two answer"},
+]
+if db.append_messages_batch(session_id, regenerated) != 2:
+    raise RuntimeError("regenerated durable append did not insert two rows")
+resumed = db.get_messages_as_conversation(session_id, include_row_ids=True)
+resumed_ids = [m.get("_row_id") for m in resumed]
+regenerated_ids = resumed_ids[2:]
+if resumed_ids[:2] != initial_ids[:2] or set(regenerated_ids) & set(initial_ids):
+    raise RuntimeError("rewind/regeneration row identity contract failed")
+
+manager.on_session_switch(session_id, rewound=True)
+manager.sync_all(regenerated[0]["content"], regenerated[1]["content"], session_id=session_id, messages=resumed)
+flush(manager)
+manager.on_pre_compress(resumed, require_checkpoint=True)
+manager.shutdown_all()
+
+restart_client = LocalOutboxClient(outbox_path)
+restart_provider = MnemosHermesProvider(client=restart_client, registry=registry, user_profile_id="native-row-probe")
+restart_manager = MemoryManager(); restart_manager.add_provider(restart_provider)
+restart_manager.initialize_all(session_id, cwd=cfg["project"], hermes_home=cfg["home"])
+restart_manager.on_pre_compress(resumed, require_checkpoint=True)
+restart_manager.shutdown_all()
+pending = restart_client.outbox.pending()
+pending_ids = sorted(item["event_id"] for item in pending)
+if len(pending) != 6 or len(set(pending_ids)) != 6:
+    raise RuntimeError(f"expected six idempotent pending events, got {len(pending)}")
+all_ids = initial_ids[:2] + regenerated_ids
+pending_sources = sorted(item.get("payload", {}).get("source_ref") for item in pending)
+if len(pending_sources) != 6 or len(set(pending_sources)) != 6:
+    raise RuntimeError("outbox source references are not six unique durable row identities")
+module_origins = {
+    "memory_manager": __import__("agent.memory_manager", fromlist=["x"]).__file__,
+    "hermes_state": __import__("hermes_state", fromlist=["x"]).__file__,
+    "mnemos_client": __import__("mnemos.client", fromlist=["x"]).__file__,
+}
+result = {
+    "status": "passed",
+    "initial_row_ids": initial_ids,
+    "prefix_row_ids_after_rewind": prefix_ids,
+    "regenerated_row_ids": regenerated_ids,
+    "resumed_row_ids": resumed_ids,
+    "pending_count_after_restart": len(pending),
+    "pending_event_ids": pending_ids,
+    "pending_source_refs": pending_sources,
+    "callback_record_count": len(client.calls) + len(restart_client.calls),
+    "callback_records": client.calls + restart_client.calls,
+    "module_origins": module_origins,
+}
+(Path(cfg["root"]) / "result.json").write_text(json.dumps(result, indent=2, sort_keys=True) + "\n", encoding="utf-8")
+db.close()

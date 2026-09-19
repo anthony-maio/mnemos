@@ -48,10 +48,19 @@ assistant evidence without blocking the Hermes turn. The local service or its
 durable outbox acknowledges each accepted event. Repeated callbacks use stable
 event identities and do not create another observation.
 
-Each user/assistant occurrence is bound to its cumulative transcript prefix.
-Appending later messages leaves prior identities unchanged; repeated identical
-messages at different positions remain distinct. Session-end and compression
-callbacks reuse these occurrences. A private `mnemos/occurrences.sqlite` ledger
+When Hermes supplies a complete set of durable message `_row_id` values,
+Mnemos binds each occurrence to its scoped native row rather than its text or
+position. A regenerated turn gets new IDs; retained rows keep their IDs across
+shortened views, checkpoints, and provider restart. Reusing a native row ID
+with changed role or content is a payload conflict, not a new observation.
+Malformed or duplicate row IDs reject the snapshot. Partially identified
+snapshots are retained as provisional evidence, ineligible for fact extraction,
+with a `partial_native_identity` diagnostic.
+
+Callbacks with no native row IDs retain the older cumulative-prefix identity.
+Appending later messages leaves those prior identities unchanged; repeated
+identical messages at different positions remain distinct. That fallback has
+the rewind limitation below. A private `mnemos/occurrences.sqlite` ledger
 under the supplied Hermes home retains first-observation timestamps across
 provider restarts. It stores event hashes and timestamps, without message text.
 Preserve this ledger with the Hermes home and pending outbox during recovery.
@@ -71,15 +80,19 @@ accurate host evidence.
 Hosts omitting Hermes home also report `nonpersistent_timestamp`; timestamp
 recovery is then limited to the provider lifetime. A
 [same-session rewind diagnostic](../validation/2026-09-19/hermes-rewind-diagnostic-v2/README.md)
-reproduces an identity collision: after `/undo`, an identical regenerated turn
-reuses the removed turn's IDs and timestamps. Four queued observations remain
+reproduces an identity collision in the older prefix-only path: after `/undo`,
+an identical regenerated turn reuses the removed turn's IDs and timestamps.
+Four queued observations remain
 four where six logical observations are expected. A new session ID avoids
 that collision. This is installed MemoryManager API evidence; the interactive
-command and service persistence were not exercised. A correct repair must
-identify the regenerated suffix while preserving the surviving prefix.
-Compression, branching, and upgrades from earlier experimental identity
-formats still need separate native coverage. No live history migration has
-been performed.
+command and service persistence were not exercised. Native-row support in
+`3730fd9` addresses this boundary when the host supplies those IDs; hosts that
+omit them retain the limitation. Some late-resume and compression-adoption
+loaders in the inspected host omit row IDs and need separate compatibility
+work. Compaction can also clone rows, so native row identity alone does not
+prove that retained copies count as one original observation across every
+compression path. No live history or identity-format migration has been
+performed.
 
 Built-in memory `add` notifications can be mirrored. `remove` and `replace`
 notifications do not contain verified Mnemos fact IDs and versions, so the

@@ -4,7 +4,23 @@ This record covers the unreleased `wt/functional-local-memory` worktree. It
 separates implemented behavior from acceptance evidence. The original task
 boundaries and thresholds remain in the [implementation plan](../../plans/2026-09-16-functional-local-memory.md).
 
-The latest [correction retry checkpoint](../2026-09-19/correction-retry-checkpoint-v1/README.md)
+The latest [Hermes native identity checkpoint](../2026-09-19/hermes-native-identity-checkpoint-v1/README.md)
+at `3730fd9` passes 1,247 source tests with four skips, all six source/package
+checks, 530 isolated installed cases with two matching skips, and seven replay
+assertions. Native persisted message IDs now distinguish a regenerated turn
+from a duplicate delivery. Reusing a native ID with changed content or role
+fails as an identity conflict, including after service restart. This package
+retains the earlier correction retry repair.
+
+The [actual Hermes database fixture](../2026-09-19/hermes-native-rows-contract-v3/README.md)
+preserves the first turn's IDs during rewind and creates new IDs for an
+identical regenerated last turn. Checkpoints, normal resume, and provider
+recreation leave exactly six queued occurrences. This uses actual host
+persistence and callbacks, without a model, service, or interactive CLI.
+ID-less transcripts, loaders that omit IDs, compaction that clones rows, and
+migration from existing prefix identities remain separate limitations.
+
+The earlier [correction retry checkpoint](../2026-09-19/correction-retry-checkpoint-v1/README.md)
 at `ea88dd4` passes 1,201 source tests with four skips, all six source/package
 checks, 513 installed cases with two matching skips, and seven replay
 assertions. An unchanged correction retry now recovers its durable job after
@@ -19,7 +35,8 @@ identical regenerated last turn after `rewound=True` reuses the original IDs
 and timestamps; the durable outbox has four records rather than six logical
 observations. Exact duplicate replay and new-session controls behave as
 expected. This is callback-fixture evidence, with no service or model call.
-Identity acceptance remains false; a correct suffix-only repair is outstanding.
+The native-ID successor above repairs the supported persisted-message path.
+The original ID-less negative remains valid; it is not general rewind acceptance.
 
 The [native discovery preflight](../2026-09-19/hermes-native-discovery-preflight-v1/README.md)
 passes real host imports, actual plugin entry-point discovery, disposable scope

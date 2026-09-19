@@ -1,0 +1,127 @@
+{
+  "source_commit": "30113a6bceb3e49cb2d35130eb3474ccc772e240",
+  "source_checkout": "C:\\Users\\Ant\\AppData\\Local\\Temp\\mnemos-source-hermes-native-identity-v1",
+  "status": "passed",
+  "started_at": "2026-09-19T22:15:39.836762+00:00",
+  "checks": [
+    {
+      "name": "pytest",
+      "command": [
+        "D:\\Development\\mnemos\\mnemos\\.worktrees\\functional-local-memory\\.venv\\Scripts\\python.exe",
+        "-m",
+        "pytest",
+        "-q",
+        "--basetemp",
+        "C:\\Users\\Ant\\AppData\\Local\\Temp\\mnemos-tests-hermes-native-identity-v1\\pytest",
+        "--junitxml",
+        "C:\\Users\\Ant\\AppData\\Local\\Temp\\mnemos-package-checks-hermes-native-identity-v1\\pytest.xml"
+      ],
+      "status": "passed",
+      "started_at": "2026-09-19T22:15:39.838083+00:00",
+      "exit_code": 0,
+      "finished_at": "2026-09-19T22:19:17.468169+00:00",
+      "counts": {
+        "tests": 1246,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 4
+      }
+    },
+    {
+      "name": "black",
+      "command": [
+        "D:\\Development\\mnemos\\mnemos\\.worktrees\\functional-local-memory\\.venv\\Scripts\\python.exe",
+        "-m",
+        "black",
+        "--check",
+        "."
+      ],
+      "status": "passed",
+      "started_at": "2026-09-19T22:19:17.477749+00:00",
+      "exit_code": 0,
+      "finished_at": "2026-09-19T22:19:25.991937+00:00"
+    },
+    {
+      "name": "mypy",
+      "command": [
+        "D:\\Development\\mnemos\\mnemos\\.worktrees\\functional-local-memory\\.venv\\compat-py310\\Scripts\\python.exe",
+        "-m",
+        "mypy",
+        "."
+      ],
+      "status": "passed",
+      "started_at": "2026-09-19T22:19:25.993025+00:00",
+      "exit_code": 0,
+      "finished_at": "2026-09-19T22:19:36.215844+00:00"
+    },
+    {
+      "name": "javascript",
+      "command": [
+        "node",
+        "--check",
+        "mnemos/ui/app.js"
+      ],
+      "status": "passed",
+      "started_at": "2026-09-19T22:19:36.217683+00:00",
+      "exit_code": 0,
+      "finished_at": "2026-09-19T22:19:36.298668+00:00"
+    },
+    {
+      "name": "build",
+      "command": [
+        "D:\\Development\\mnemos\\mnemos\\.worktrees\\functional-local-memory\\.venv\\Scripts\\python.exe",
+        "-m",
+        "build",
+        "--outdir",
+        "C:\\Users\\Ant\\AppData\\Local\\Temp\\mnemos-package-checks-hermes-native-identity-v1\\dist"
+      ],
+      "status": "passed",
+      "started_at": "2026-09-19T22:19:36.299758+00:00",
+      "exit_code": 0,
+      "finished_at": "2026-09-19T22:20:42.708101+00:00"
+    },
+    {
+      "name": "twine",
+      "command": [
+        "D:\\Development\\mnemos\\mnemos\\.worktrees\\functional-local-memory\\.venv\\Scripts\\python.exe",
+        "-m",
+        "twine",
+        "check",
+        "C:\\Users\\Ant\\AppData\\Local\\Temp\\mnemos-package-checks-hermes-native-identity-v1\\dist\\mnemos_memory-0.7.0-py3-none-any.whl",
+        "C:\\Users\\Ant\\AppData\\Local\\Temp\\mnemos-package-checks-hermes-native-identity-v1\\dist\\mnemos_memory-0.7.0.tar.gz"
+      ],
+      "exit_code": 0,
+      "status": "passed"
+    }
+  ],
+  "runner_sha256": "7b241853adab66b8fd1e0c570d00462a216ffe21dca554fb95ae522ecbedc3ef",
+  "temporary_storage": {
+    "path": "C:\\Users\\Ant\\AppData\\Local\\Temp\\mnemos-tests-hermes-native-identity-v1",
+    "git_discovery_exit_code": 128,
+    "git_discovery_stderr": "fatal: not a git repository (or any of the parent directories): .git"
+  },
+  "website_input": {
+    "path": "D:\\Development\\mnemos\\web\\index.html",
+    "sha256_before": "f71a4cb5b7004f9ba584f45a03dab61cfc608fed377b1e07b46e2f2bc0b77d4d",
+    "sha256_after": "f71a4cb5b7004f9ba584f45a03dab61cfc608fed377b1e07b46e2f2bc0b77d4d"
+  },
+  "environment_overrides": {
+    "TEMP": "C:\\Users\\Ant\\AppData\\Local\\Temp\\mnemos-tests-hermes-native-identity-v1",
+    "TMP": "C:\\Users\\Ant\\AppData\\Local\\Temp\\mnemos-tests-hermes-native-identity-v1",
+    "TMPDIR": "C:\\Users\\Ant\\AppData\\Local\\Temp\\mnemos-tests-hermes-native-identity-v1",
+    "MNEMOS_WEBSITE_INDEX": "D:\\Development\\mnemos\\web\\index.html"
+  },
+  "updated_at": "2026-09-19T22:20:44.296236+00:00",
+  "artifacts": [
+    {
+      "file": "C:\\Users\\Ant\\AppData\\Local\\Temp\\mnemos-package-checks-hermes-native-identity-v1\\dist\\mnemos_memory-0.7.0-py3-none-any.whl",
+      "bytes": 298178,
+      "sha256": "e845227635f4d28200a786917ea81df2b604d3050a0c534fd6e12b7e9d109e69"
+    },
+    {
+      "file": "C:\\Users\\Ant\\AppData\\Local\\Temp\\mnemos-package-checks-hermes-native-identity-v1\\dist\\mnemos_memory-0.7.0.tar.gz",
+      "bytes": 47523821,
+      "sha256": "6e1df875ad5fc7fa940bc16092cd521f1d165be155d18a462ae7f2d073af09a7"
+    }
+  ]
+}

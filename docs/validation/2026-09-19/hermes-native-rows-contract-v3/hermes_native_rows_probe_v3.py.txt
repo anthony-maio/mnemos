@@ -1,0 +1,73 @@
+"""Inspect real Hermes persistence and callbacks against one frozen Mnemos source."""
+import ast
+import hashlib
+import json
+from pathlib import Path
+import shutil
+import subprocess
+import tempfile
+
+REPO = Path(__file__).resolve().parents[1]
+SOURCE = Path('C:/Users/Ant/AppData/Local/Temp/mnemos-source-hermes-native-identity-v2')
+COMMIT = '3730fd96c3c50c7ef6179b2b9f70414ab5a8fb17'
+HOST = '/tmp/mnemos-hermes-cwd-compat-v1'
+HOST_COMMIT = '14a346345486418aa85ed6526549412ee2665ade'
+OUTPUT = REPO / 'docs/validation/2026-09-19/hermes-native-rows-contract-v3'
+
+def sha(path):
+    return hashlib.sha256(path.read_bytes()).hexdigest()
+
+def wsl(path):
+    text = str(path.resolve()).replace('\\', '/')
+    return '/mnt/' + text[0].lower() + text[2:]
+
+assert subprocess.check_output(['git','-C',str(SOURCE),'rev-parse','HEAD'],text=True).strip() == COMMIT
+assert not subprocess.check_output(['git','-C',str(SOURCE),'status','--porcelain'],text=True).strip()
+assert subprocess.check_output(['wsl.exe','-d','Debian','--','git','-C',HOST,'rev-parse','HEAD'],text=True).strip() == HOST_COMMIT
+old = ast.parse((REPO/'.venv/hermes_native_rows_probe_v2.py').read_text())
+bootstrap = next(ast.literal_eval(n.value) for n in old.body if isinstance(n,ast.Assign) and any(isinstance(t,ast.Name) and t.id=='BOOTSTRAP' for t in n.targets))
+bootstrap = bootstrap.replace('sys.path[:0] = [str(extracted), cfg["hermes_source"]]', 'sys.path[:0] = [cfg["mnemos_source"], str(extracted), cfg["hermes_source"]]')
+bootstrap = bootstrap.replace('from agent.memory_provider import MemoryProvider', 'from agent.session_persistence import _db_flush_write\nfrom types import SimpleNamespace')
+bootstrap = bootstrap.replace('        raise RuntimeError("MemoryManager flush_pending returned false")', '        raise RuntimeError("MemoryManager flush_pending returned false")\n    for active in manager.providers:\n        assert active._flush(timeout=10), "Provider flush failed"')
+bootstrap = bootstrap.replace('if db.append_messages_batch(session_id, initial) != 4:\n    raise RuntimeError("initial durable append did not insert four rows")', 'host_agent = SimpleNamespace(_session_db=db, session_id=session_id)\n_db_flush_write(host_agent, [dict(m) for m in initial], initial)\nassert all(type(m.get("_row_id")) is int for m in initial), "Live message IDs missing after flush"')
+bootstrap = bootstrap.replace('durable_initial = db.get_messages_as_conversation(session_id, include_row_ids=True)', 'durable_initial = initial\nassert [m["_row_id"] for m in db.get_messages_as_conversation(session_id, include_row_ids=True)] == [m["_row_id"] for m in initial]')
+bootstrap = bootstrap.replace('if db.append_messages_batch(session_id, regenerated) != 2:\n    raise RuntimeError("regenerated durable append did not insert two rows")', '_db_flush_write(host_agent, [dict(m) for m in regenerated], regenerated)')
+bootstrap = bootstrap.replace('resumed = db.get_messages_as_conversation(session_id, include_row_ids=True)', 'resumed, _display = db.get_resume_conversations(session_id)\nassert [m["_row_id"] for m in resumed] == [m["_row_id"] for m in outcome.prefix + regenerated]')
+bootstrap = bootstrap.replace('    "mnemos_client":', '    "adapter": __import__("mnemos.adapters.hermes", fromlist=["x"]).__file__,\n    "persistence": __import__("agent.session_persistence", fromlist=["x"]).__file__,\n    "mnemos_client":')
+bootstrap = bootstrap.replace('result = {\n    "status":', 'assert module_origins["adapter"].startswith(cfg["mnemos_source"] + "/")\nassert module_origins["memory_manager"].startswith(cfg["hermes_source"] + "/")\nresult = {\n    "status":')
+OUTPUT.mkdir(exist_ok=False)
+runtime = Path(tempfile.mkdtemp(prefix='mnemos-hermes-native-rows-v3-'))
+for child in ('home','project'):
+    (runtime/child).mkdir()
+verification = json.loads(Path('C:/Users/Ant/AppData/Local/Temp/mnemos-package-checks-correction-retry-v1/verification.json').read_text())
+wheel_row = next(r for r in verification['artifacts'] if r['file'].endswith('.whl'))
+wheel = Path(wheel_row['file'])
+assert sha(wheel) == wheel_row['sha256']
+cfg = {'root':wsl(runtime),'wheel':wsl(wheel),'wheel_sha':sha(wheel),'hermes_source':HOST,'mnemos_source':wsl(SOURCE),'project':wsl(runtime/'project'),'home':wsl(runtime/'home'),'env':{'HERMES_HOME':wsl(runtime/'home'),'HERMES_ENABLE_PROJECT_PLUGINS':'0'}}
+(runtime/'bootstrap.py').write_text(bootstrap,encoding='utf-8')
+(runtime/'config.json').write_text(json.dumps(cfg),encoding='utf-8')
+shutil.copyfile(runtime/'bootstrap.py',OUTPUT/'bootstrap.py.txt')
+shutil.copyfile(Path(__file__),OUTPUT/'hermes_native_rows_probe_v3.py.txt')
+report = {'status':'running','source_commit':COMMIT,'host_commit':HOST_COMMIT,'source_adapter_sha256':sha(SOURCE/'mnemos/adapters/hermes.py'),'helper_sha256':sha(Path(__file__)),'bootstrap_sha256':sha(runtime/'bootstrap.py'),'runtime':str(runtime),'scope':'actual host persistence, resume, rewind and MemoryManager with source adapter and local outbox; no model/service/native CLI; no installed-wheel acceptance'}
+try:
+    with (OUTPUT/'stdout.log').open('wb') as out, (OUTPUT/'stderr.log').open('wb') as err:
+        run = subprocess.run(['wsl.exe','-d','Debian','--','timeout','--kill-after=5s','90s','/home/anthony/.hermes/hermes-agent/venv/bin/python',wsl(runtime/'bootstrap.py'),wsl(runtime/'config.json')],stdout=out,stderr=err,timeout=110)
+    report['exit_code'] = run.returncode
+    if (runtime/'result.json').exists():
+        shutil.copyfile(runtime/'result.json',OUTPUT/'result.json')
+    if run.returncode != 0:
+        raise RuntimeError('Native fixture failed; see preserved stderr and runtime')
+    result = json.loads((OUTPUT/'result.json').read_text())
+    assert result['pending_count_after_restart'] == 6
+    assert result['prefix_row_ids_after_rewind'] == result['initial_row_ids'][:2]
+    assert not set(result['regenerated_row_ids']) & set(result['initial_row_ids'])
+    report.update(status='passed', assertions={'six_distinct_queued_occurrences':True,'retained_prefix_ids_unchanged':True,'regenerated_suffix_ids_new':True,'actual_postcommit_live_ids':True,'actual_normal_resume_ids':True})
+except Exception as exc:
+    report.update(status='failed',error=repr(exc))
+finally:
+    (OUTPUT/'report.json').write_text(json.dumps(report,indent=2)+'\n',encoding='utf-8')
+    (OUTPUT/'.gitattributes').write_bytes(b'** -text whitespace=cr-at-eol\n')
+    files={p.name:sha(p) for p in OUTPUT.iterdir() if p.is_file()}
+    (OUTPUT/'artifact-index.json').write_text(json.dumps({'sha256':files},indent=2)+'\n',encoding='utf-8')
+print(json.dumps(report))
+raise SystemExit(0 if report['status']=='passed' else 1)
