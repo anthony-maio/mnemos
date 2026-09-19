@@ -4,6 +4,13 @@ Status: prospective; NOT RUN. This extends T14/T17 to the missing three-host
 workflow. The earlier Codex/Claude result and the separate Hermes lifecycle
 probe remain distinct evidence. A Hermes-only pass cannot close this protocol.
 
+Preparation update: disposable process helpers and trace normalization have
+[offline verification](../validation/2026-09-19/three-host-runner-offline-v1/README.md).
+The orchestrator remains to be assembled. Historical Codex code-mode sessions
+use different model-cell and MCP call IDs; completion events alone must not
+satisfy the model-call correlation rule below. Resolve that instrumentation
+gap before claiming acceptance, and record any invocation-mode change.
+
 ## Bindings and isolation
 
 Run after the supplemental GPU queue is terminal and its coordinator and

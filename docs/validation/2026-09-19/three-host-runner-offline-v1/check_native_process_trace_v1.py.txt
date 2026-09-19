@@ -1,0 +1,33 @@
+"""Record offline checks for native phase execution and trace normalization."""
+import hashlib
+import json
+from pathlib import Path
+import subprocess
+from datetime import datetime, timezone
+
+repo = Path(__file__).resolve().parents[1]
+output = repo / "docs/validation/2026-09-19/three-host-runner-offline-v1"
+sources = ["benchmarks/native_hosts/native_processes.py", "benchmarks/native_hosts/shared_trace.py",
+           "tests/test_native_phase_processes.py", "tests/test_three_host_trace.py"]
+python = str(repo / ".venv/Scripts/python.exe")
+mypy_python = str(repo / ".venv/compat-py310/Scripts/python.exe")
+commands = [
+    ("pytest", [python, "-m", "pytest", "-q", "tests/test_native_phase_processes.py", "tests/test_three_host_trace.py", "tests/test_hermes_native_queue_guard.py"]),
+    ("black", [python, "-m", "black", "--check", *sources]),
+    ("mypy", [mypy_python, "-m", "mypy", "--explicit-package-bases", "mnemos", "benchmarks"]),
+]
+report = {"status": "running", "started_at": datetime.now(timezone.utc).isoformat(),
+          "scope": "offline native process and trace checks; no model or host execution",
+          "source_hashes": {name: hashlib.sha256((repo / name).read_bytes()).hexdigest() for name in sources},
+          "checks": []}
+for name, command in commands:
+    result = subprocess.run(command, cwd=repo, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, timeout=180)
+    with (output / (name + ".log")).open("xb") as stream:
+        stream.write(result.stdout)
+    report["checks"].append({"name": name, "command": command, "exit_code": result.returncode})
+report["status"] = "passed" if all(row["exit_code"] == 0 for row in report["checks"]) else "failed"
+report["finished_at"] = datetime.now(timezone.utc).isoformat()
+with (output / "checks.json").open("x", encoding="utf-8") as stream:
+    json.dump(report, stream, indent=2)
+print(json.dumps(report, indent=2))
+raise SystemExit(0 if report["status"] == "passed" else 1)

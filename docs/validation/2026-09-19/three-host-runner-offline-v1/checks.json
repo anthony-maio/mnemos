@@ -1,0 +1,53 @@
+{
+  "status": "passed",
+  "started_at": "2026-09-19T23:17:24.977898+00:00",
+  "scope": "offline native process and trace checks; no model or host execution",
+  "source_hashes": {
+    "benchmarks/native_hosts/native_processes.py": "2ee58a65d8b48ad650996d748392bfa10f2972a9b3c79dd2cec4978c1038f8bd",
+    "benchmarks/native_hosts/shared_trace.py": "e4675cd1dbce44b4ebb22dd05c665e0690ae6a41ba2b79d0ce6947aeddf6a1de",
+    "tests/test_native_phase_processes.py": "892000a13cc94bde15457725942fa74c7b44932948604efe537faac191b3b463",
+    "tests/test_three_host_trace.py": "b6c621930ec7e944b5485bb20031e3e6a5424d89fb9dee94fdc7c770cb19ed45"
+  },
+  "checks": [
+    {
+      "name": "pytest",
+      "command": [
+        "D:\\Development\\mnemos\\mnemos\\.worktrees\\functional-local-memory\\.venv\\Scripts\\python.exe",
+        "-m",
+        "pytest",
+        "-q",
+        "tests/test_native_phase_processes.py",
+        "tests/test_three_host_trace.py",
+        "tests/test_hermes_native_queue_guard.py"
+      ],
+      "exit_code": 0
+    },
+    {
+      "name": "black",
+      "command": [
+        "D:\\Development\\mnemos\\mnemos\\.worktrees\\functional-local-memory\\.venv\\Scripts\\python.exe",
+        "-m",
+        "black",
+        "--check",
+        "benchmarks/native_hosts/native_processes.py",
+        "benchmarks/native_hosts/shared_trace.py",
+        "tests/test_native_phase_processes.py",
+        "tests/test_three_host_trace.py"
+      ],
+      "exit_code": 0
+    },
+    {
+      "name": "mypy",
+      "command": [
+        "D:\\Development\\mnemos\\mnemos\\.worktrees\\functional-local-memory\\.venv\\compat-py310\\Scripts\\python.exe",
+        "-m",
+        "mypy",
+        "--explicit-package-bases",
+        "mnemos",
+        "benchmarks"
+      ],
+      "exit_code": 0
+    }
+  ],
+  "finished_at": "2026-09-19T23:17:36.134972+00:00"
+}

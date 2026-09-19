@@ -40,6 +40,14 @@ The hardware interruption is available as context: Anthony reported that the rem
 
 ## Current evaluation update
 
+Native evidence has a further qualification: the new [offline trace checks](../validation/2026-09-19/three-host-runner-offline-v1/README.md)
+read six historical Codex/Claude sessions. Claude exposes directly correlated
+tool-use/results. Codex's code-mode cells and MCP completions use different
+identities, so the parser retains operation observations without claiming a
+direct model-call match. The prospective three-host test still needs this
+correlation gap resolved. Passing the parser's offline tests is not a new
+native lifecycle result.
+
 The independent encoding comparison ended on September 19 at 22:24:29 UTC
 with all three reports marked incomplete. Of 600 observations per arm, the
 full pipeline has 11 partial rows, no-surprisal has eight, and length-noise

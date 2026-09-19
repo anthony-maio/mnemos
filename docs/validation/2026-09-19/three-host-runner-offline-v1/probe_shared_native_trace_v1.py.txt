@@ -1,0 +1,38 @@
+"""Read-only parser check against retained native v9 synthetic sessions."""
+import hashlib
+import json
+from pathlib import Path
+import sys
+
+repo = Path(__file__).resolve().parents[1]
+sys.path.insert(0, str(repo))
+from benchmarks.native_hosts.shared_trace import (
+    TraceProvenance, load_source_records, parse_codex_mcp_records, parse_claude_tool_records,
+)
+
+report_path = repo / "docs/validation/2026-09-18/native-codex-claude-continuity-v9/report.json"
+old = json.loads(report_path.read_text(encoding="utf-8"))
+root = Path(old["fixture"])
+results = []
+for host, paths, parser in [
+    ("codex", list(root.glob("codex*/.codex/sessions/**/rollout*.jsonl")), parse_codex_mcp_records),
+    ("claude-code", list(root.glob("native-crosshost-*-stdout.jsonl")), parse_claude_tool_records),
+]:
+    for path in paths:
+        digest = hashlib.sha256(path.read_bytes()).hexdigest()
+        provenance = TraceProvenance(host, "historical-process-not-revalidated", path.stem, str(path), digest)
+        records = load_source_records(path, provenance=provenance)
+        calls = parser(records, provenance=provenance)
+        results.append({"host": host, "file": str(path.relative_to(root)), "sha256": digest,
+                        "tool_names": [call.name for call in calls],
+                        "model_call_correlated": [call.model_call_correlated for call in calls]})
+if len(results) != 6:
+    raise ValueError("Expected exactly three Codex and three Claude retained native sessions")
+result = {"status": "passed", "scope": "read-only normalization of six historical synthetic traces; no host or model execution",
+          "old_report_sha256": hashlib.sha256(report_path.read_bytes()).hexdigest(),
+          "parser_sha256": hashlib.sha256((repo / "benchmarks/native_hosts/shared_trace.py").read_bytes()).hexdigest(),
+          "helper_sha256": hashlib.sha256(Path(__file__).read_bytes()).hexdigest(), "traces": results}
+output = repo / ".venv/shared-native-trace-probe-v1.json"
+with output.open("x", encoding="utf-8") as stream:
+    json.dump(result, stream, indent=2)
+print(json.dumps(result, indent=2))

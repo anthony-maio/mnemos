@@ -1,0 +1,87 @@
+{
+  "status": "passed",
+  "scope": "read-only normalization of six historical synthetic traces; no host or model execution",
+  "old_report_sha256": "ab25a60f61c6199cf40d5f21e3982a292add25c95131f7428a2f5f6f7c559108",
+  "parser_sha256": "6195bf6fe6277fd87b69b16e532c1ca1c13c87b253d659e77e1eb8f432e7dc1e",
+  "helper_sha256": "f2b09cfc9d2ef0a0b31a0ad772997e827a922bf747f3a04c085174386546ecb9",
+  "traces": [
+    {
+      "host": "codex",
+      "file": "codex-final-home\\.codex\\sessions\\2026\\09\\18\\rollout-2026-09-18T00-54-35-01a0b2dd-cbf7-7331-b988-9eaae5a9d78f.jsonl",
+      "sha256": "6bf88c1befe18ead3767931758d4c594b873d31ed21eb92b1f61093599bbe550",
+      "tool_names": [
+        "mnemos_retrieve",
+        "mnemos_retrieve"
+      ],
+      "model_call_correlated": [
+        false,
+        false
+      ]
+    },
+    {
+      "host": "codex",
+      "file": "codex-home\\.codex\\sessions\\2026\\09\\18\\rollout-2026-09-18T00-48-28-01a0b2d8-320f-7653-9648-d20c7a78c3da.jsonl",
+      "sha256": "3f5b7f62319ce7c4f2bfa98ff294a423ba3ff1991059d36164b0da4aad6ba931",
+      "tool_names": [
+        "mnemos_store",
+        "mnemos_consolidate"
+      ],
+      "model_call_correlated": [
+        false,
+        false
+      ]
+    },
+    {
+      "host": "codex",
+      "file": "codex-recall-home\\.codex\\sessions\\2026\\09\\18\\rollout-2026-09-18T00-51-04-01a0b2da-93f6-7263-9987-7a3d63fa68b1.jsonl",
+      "sha256": "681906a577692e86a0122a91753a4a69bd773435b953fcdad15e1bc38caa4a38",
+      "tool_names": [
+        "mnemos_retrieve"
+      ],
+      "model_call_correlated": [
+        false
+      ]
+    },
+    {
+      "host": "claude-code",
+      "file": "native-crosshost-correct-stdout.jsonl",
+      "sha256": "700b7c16ae92d07a69408483e5ff86dd5ea7cc69634e0f1c4e2e71d8a327d879",
+      "tool_names": [
+        "mnemos_correct",
+        "mnemos_consolidate",
+        "mnemos_retrieve"
+      ],
+      "model_call_correlated": [
+        true,
+        true,
+        true
+      ]
+    },
+    {
+      "host": "claude-code",
+      "file": "native-crosshost-forget-stdout.jsonl",
+      "sha256": "74271955b87d986157515ffb7ed8d0bedb1fbe8ec285cd0421a9139a74adb6b3",
+      "tool_names": [
+        "mnemos_forget_preview",
+        "mnemos_forget_related",
+        "mnemos_retrieve"
+      ],
+      "model_call_correlated": [
+        true,
+        true,
+        true
+      ]
+    },
+    {
+      "host": "claude-code",
+      "file": "native-crosshost-read-stdout.jsonl",
+      "sha256": "6a3e8504f55e19d08dd5c3c9137a78a7be5dde20d1c9b76207ef5df6bfc4708e",
+      "tool_names": [
+        "mnemos_retrieve"
+      ],
+      "model_call_correlated": [
+        true
+      ]
+    }
+  ]
+}
