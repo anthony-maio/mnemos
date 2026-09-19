@@ -204,6 +204,8 @@ class MnemosEngine:
         store: MemoryStore | None = None,
         scope_registry: ScopeRegistry | None = None,
         require_scope_context: bool = False,
+        *,
+        owns_providers: bool = False,
     ) -> None:
         from .utils.llm import UnavailableLLMProvider
         from .utils.embeddings import SimpleEmbeddingProvider
@@ -215,11 +217,18 @@ class MnemosEngine:
         self._retrieval_traces: dict[tuple[Any, ...], dict[str, Any]] = {}
 
         # Wire up providers with defaults for zero-config startup
-        self._llm = llm or UnavailableLLMProvider()
-        self._embedder = embedder or SimpleEmbeddingProvider(
-            dim=self.config.surprisal.embedding_dim
+        self._llm = llm if llm is not None else UnavailableLLMProvider()
+        self._embedder = (
+            embedder
+            if embedder is not None
+            else SimpleEmbeddingProvider(dim=self.config.surprisal.embedding_dim)
         )
         self._store = store or InMemoryStore()
+        self._owns_llm = owns_providers or llm is None
+        self._owns_embedder = owns_providers or embedder is None
+        self._close_lock = asyncio.Lock()
+        self._close_task: asyncio.Task[None] | None = None
+        self._closed_resources: set[str] = set()
         self._write_firewall = MemoryWriteFirewall(self.config.safety)
 
         # Initialize all five modules
@@ -268,6 +277,67 @@ class MnemosEngine:
                 }
             )
         self._hydrate_spreading_graph_from_store()
+
+    async def aclose(self) -> None:
+        """Release owned providers and storage after engine operations have stopped.
+
+        Configured runtimes own their providers. Library-injected providers
+        remain caller-owned unless ``owns_providers=True`` was supplied.
+        The local service cancels and drains its operations before calling this.
+        """
+        if self._close_task is None or self._close_task.done():
+            self._close_task = asyncio.create_task(self._close_resources())
+        task = self._close_task
+        cancelled = False
+        while not task.done():
+            try:
+                await asyncio.shield(task)
+            except asyncio.CancelledError:
+                # Cancelling an await cannot stop a synchronous provider close
+                # in a worker thread. Drain the shared cleanup before returning
+                # cancellation or letting another caller retry failed resources.
+                cancelled = True
+            except Exception:
+                break
+        if cancelled:
+            if not task.cancelled() and task.exception() is not None:
+                logger.error("Provider cleanup failed while its caller was cancelled")
+            raise asyncio.CancelledError
+        task.result()
+
+    async def _close_resources(self) -> None:
+        async with self._close_lock:
+            error: Exception | None = None
+            for name, provider, owned in (
+                ("embedding", self._embedder, self._owns_embedder),
+                ("llm", self._llm, self._owns_llm),
+            ):
+                if not owned or name in self._closed_resources:
+                    continue
+                try:
+                    aclose = getattr(provider, "aclose", None)
+                    close = getattr(provider, "close", None)
+                    if callable(aclose):
+                        await aclose()
+                    elif callable(close):
+                        # Embedding requests may still be finishing in worker
+                        # threads after their awaiting task was cancelled.
+                        await asyncio.to_thread(close)
+                    self._closed_resources.add(name)
+                except Exception as exc:
+                    if error is None:
+                        error = exc
+            if "store" not in self._closed_resources:
+                try:
+                    close_store = getattr(self._store, "close", None)
+                    if callable(close_store):
+                        close_store()
+                    self._closed_resources.add("store")
+                except Exception as exc:
+                    if error is None:
+                        error = exc
+            if error is not None:
+                raise error
 
     def rebuild_graph_batch(self, limit: int = 10) -> int:
         cursor_reader = getattr(self._store, "graph_rebuild_cursor", None)

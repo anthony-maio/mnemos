@@ -12,6 +12,42 @@ import pytest
 from mnemos.utils import embeddings as embeddings_module
 
 
+class _OllamaResponse:
+    def raise_for_status(self) -> None:
+        return None
+
+    def json(self) -> dict[str, object]:
+        return {"embedding": [0.1, 0.2, 0.3]}
+
+
+def _install_ollama_client(
+    monkeypatch: pytest.MonkeyPatch,
+    captured: dict[str, object],
+) -> None:
+    class _Client:
+        is_closed = False
+
+        def __init__(self, *, timeout: float) -> None:
+            captured["client_timeout"] = timeout
+
+        def post(
+            self,
+            url: str,
+            *,
+            json: dict[str, object],
+            timeout: float,
+        ) -> _OllamaResponse:
+            captured["url"] = url
+            captured["json"] = json
+            captured["timeout"] = timeout
+            return _OllamaResponse()
+
+        def close(self) -> None:
+            self.is_closed = True
+
+    monkeypatch.setattr(embeddings_module.httpx, "Client", _Client)
+
+
 @pytest.mark.asyncio
 async def test_embed_text_async_runs_simple_provider_inline(
     monkeypatch: pytest.MonkeyPatch,
@@ -34,24 +70,11 @@ async def test_embed_text_async_offloads_network_provider(
 ) -> None:
     captured: dict[str, object] = {}
 
-    class _DummyResponse:
-        def raise_for_status(self) -> None:
-            return None
-
-        def json(self) -> dict[str, object]:
-            return {"embedding": [0.1, 0.2, 0.3]}
-
-    def _fake_post(url: str, *, json: dict[str, object], timeout: float) -> _DummyResponse:
-        captured["url"] = url
-        captured["json"] = json
-        captured["timeout"] = timeout
-        return _DummyResponse()
-
     async def _fake_to_thread(fn, *args, **kwargs):
         captured["fn_name"] = getattr(fn, "__name__", "<unknown>")
         return fn(*args, **kwargs)
 
-    monkeypatch.setattr(embeddings_module.httpx, "post", _fake_post)
+    _install_ollama_client(monkeypatch, captured)
     monkeypatch.setattr(embeddings_module.asyncio, "to_thread", _fake_to_thread)
 
     provider = embeddings_module.OllamaEmbeddingProvider(
@@ -84,21 +107,7 @@ async def test_embed_batch_async_runs_simple_provider_inline(
 
 def test_ollama_embedding_provider_embed(monkeypatch: pytest.MonkeyPatch) -> None:
     captured: dict[str, object] = {}
-
-    class _DummyResponse:
-        def raise_for_status(self) -> None:
-            return None
-
-        def json(self) -> dict[str, object]:
-            return {"embedding": [0.1, 0.2, 0.3]}
-
-    def _fake_post(url: str, *, json: dict[str, object], timeout: float) -> _DummyResponse:
-        captured["url"] = url
-        captured["json"] = json
-        captured["timeout"] = timeout
-        return _DummyResponse()
-
-    monkeypatch.setattr(embeddings_module.httpx, "post", _fake_post)
+    _install_ollama_client(monkeypatch, captured)
 
     provider = embeddings_module.OllamaEmbeddingProvider(
         model="nomic-embed-text",

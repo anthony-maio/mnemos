@@ -133,14 +133,17 @@ async def test_saved_prefix_settings_reach_the_actual_ollama_payload(tmp_path, m
     loaded = load_settings(env={}, cwd=tmp_path, global_config_path=path).settings
     payloads = []
 
-    def post(url, *, payload, timeout):
+    def post(url, *, payload, timeout, client=None):
         payloads.append(payload)
         return {"embeddings": [[1.0, 0.0, 0.0]]}
 
     monkeypatch.setattr("mnemos.utils.embeddings._http_post_json", post)
     embedder = build_embedder_from_settings(loaded)
-    for role in ("query", "document", "symmetric"):
-        await embed_text_async(embedder, "same text", role=role)
+    try:
+        for role in ("query", "document", "symmetric"):
+            await embed_text_async(embedder, "same text", role=role)
+    finally:
+        embedder.close()
     assert [payload["input"] for payload in payloads] == [
         "search_query: same text",
         "search_document: same text",

@@ -110,6 +110,14 @@ class EmbeddingProvider(ABC):
         """Batch same-space embedding with a legacy-provider fallback."""
         return self.embed_batch(texts)
 
+    def close(self) -> None:
+        """Release provider resources.
+
+        Providers without external resources intentionally make this a no-op,
+        so callers can close an arbitrary embedding provider uniformly.
+        """
+        return None
+
     @property
     @abstractmethod
     def dim(self) -> int:
@@ -194,6 +202,10 @@ class PrefixEmbeddingProvider(EmbeddingProvider):
 
     def embed_batch_symmetric(self, texts: list[str]) -> list[list[float]]:
         return self.inner.embed_batch(self._batch_with_prefix("symmetric", texts))
+
+    def close(self) -> None:
+        """Release resources held by the wrapped provider."""
+        self.inner.close()
 
 
 def _tokenize(text: str) -> list[str]:
@@ -453,6 +465,11 @@ class OllamaEmbeddingProvider(EmbeddingProvider):
         self.timeout = timeout
         self._dim: int | None = None
         self.response_observer = response_observer
+        self._client: httpx.Client | None = None
+        self._client_condition = threading.Condition()
+        self._inflight_requests = 0
+        self._closed = False
+        self._close_error: Exception | None = None
 
     @property
     def dim(self) -> int:
@@ -476,7 +493,11 @@ class OllamaEmbeddingProvider(EmbeddingProvider):
         return vec
 
     def _observed_post(self, url: str, *, payload: dict[str, Any]) -> dict[str, Any]:
-        response = _http_post_json(url, payload=payload, timeout=self.timeout)
+        client = self._acquire_client()
+        try:
+            response = _http_post_json(url, payload=payload, timeout=self.timeout, client=client)
+        finally:
+            self._release_client()
         if self.response_observer is not None:
             try:
                 self.response_observer(response)
@@ -488,6 +509,45 @@ class OllamaEmbeddingProvider(EmbeddingProvider):
                     operation="embed_observer",
                 )
         return response
+
+    def _acquire_client(self) -> httpx.Client:
+        with self._client_condition:
+            if self._closed:
+                raise RuntimeError("Ollama embedding provider is closed")
+            if self._client is None or self._client.is_closed:
+                self._client = httpx.Client(timeout=self.timeout)
+            self._inflight_requests += 1
+            return self._client
+
+    def _release_client(self) -> None:
+        with self._client_condition:
+            self._inflight_requests -= 1
+            if self._inflight_requests == 0:
+                self._client_condition.notify_all()
+
+    def close(self) -> None:
+        """Stop new requests and close the client after active work finishes."""
+        with self._client_condition:
+            if not self._closed:
+                self._closed = True
+            while self._inflight_requests:
+                self._client_condition.wait()
+            if self._close_error is not None:
+                raise self._close_error
+            client = self._client
+            if client is None:
+                return
+            if client.is_closed:
+                self._client = None
+                return
+            try:
+                client.close()
+            except Exception as exc:
+                # Retain the reference and failure so later close calls do not
+                # report success after HTTPX has marked the client closed.
+                self._close_error = exc
+                raise
+            self._client = None
 
     def embed(self, text: str) -> list[float]:
         # Prefer modern /api/embed endpoint.
@@ -747,8 +807,13 @@ def _http_post_json(
     payload: dict[str, Any],
     timeout: float,
     headers: dict[str, str] | None = None,
+    client: httpx.Client | None = None,
 ) -> dict[str, Any]:
-    if headers is None:
+    if client is not None and headers is None:
+        response = client.post(url, json=payload, timeout=timeout)
+    elif client is not None:
+        response = client.post(url, json=payload, headers=headers, timeout=timeout)
+    elif headers is None:
         response = httpx.post(
             url,
             json=payload,

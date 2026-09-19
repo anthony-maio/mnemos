@@ -78,6 +78,16 @@ MNEMOS_SQLITE_PATH=.mnemos/memory.db
 
 These are environment entries; use your shell's environment syntax or save equivalent values in the canonical configuration. Prefer absolute database paths. Use the endpoint reachable from the service process. Mnemos has no cloud fallback when a local model fails. Durable capture can continue while enrichment waits. Semantic recall still requires the configured embedding provider. Saving configuration requires a service restart before the new providers apply.
 
+Ollama embeddings reuse one HTTP client per provider. The managed service
+drains pending operations before closing its engine, provider clients, and
+storage. Library callers should stop their engine operations and then call
+`await engine.aclose()`. Engines close providers they create themselves;
+caller-supplied providers remain caller-owned unless `owns_providers=True`
+is passed. A directly constructed embedding provider should be closed with
+`provider.close()` after use. Closing waits for active embedding requests;
+an explicitly closed provider cannot start another request. Client reuse
+does not establish that the recall or capture latency targets have passed.
+
 For a thinking-capable Ollama model, the canonical TOML configuration can also
 select a thinking mode explicitly:
 

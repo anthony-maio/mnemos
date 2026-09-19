@@ -328,6 +328,7 @@ def build_configured_engine_from_settings(
         llm=llm,
         embedder=build_embedder_from_settings(settings),
         store=_configured_store(settings),
+        owns_providers=True,
     )
 
 
@@ -363,6 +364,7 @@ def build_configured_engine(
             llm=UnavailableLLMProvider(),
             embedder=build_embedder_from_settings(settings),
             store=_configured_store(settings),
+            owns_providers=True,
         )
     return build_configured_engine_from_settings(settings, allow_mock=allow_mock)
 

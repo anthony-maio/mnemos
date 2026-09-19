@@ -41,6 +41,11 @@ class LocalMemoryService:
         )
         self._cognition_probe: dict[str, Any] = {"status": "not_observed"}
 
+    async def close(self) -> None:
+        """Release engine resources after the owner has drained pending tasks."""
+        self.maintenance.stop()
+        await self.engine.aclose()
+
     def _original_source_status(
         self,
         fact: MemoryChunk,
