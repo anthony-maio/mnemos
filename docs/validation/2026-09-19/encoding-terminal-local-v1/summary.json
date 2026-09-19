@@ -1,0 +1,594 @@
+{
+  "source_commit": "fc72cc251aeafa161a1a390269b8dfa34d83cf2b",
+  "binding": {
+    "code_sha256": "72ffde69d89b4f9fa024fea2f85d3036dde84861de51d8677a50b7dd41412d90",
+    "dataset": {
+      "bytes": 407891,
+      "path": "C:\\Users\\Ant\\AppData\\Local\\Temp\\mnemos-source-retrieval-comparison-v1\\benchmarks\\local_memory\\datasets\\local-memory-heldout-v3.jsonl",
+      "sha256": "036fa51ee13271a85a14a62a2fe4ef65d13eaeb290331fe325aa5bf32ce893fc",
+      "version": "local-memory-heldout-v3"
+    },
+    "embedding_model": {
+      "capabilities": [
+        "embedding"
+      ],
+      "details": {
+        "context_length": 2048,
+        "embedding_length": 768,
+        "families": [
+          "nomic-bert"
+        ],
+        "family": "nomic-bert",
+        "format": "gguf",
+        "parameter_size": "137M",
+        "parent_model": "",
+        "quantization_level": "F16"
+      },
+      "digest": "0a109f422b47e3a30ba2b10eca18548e944e8a23073ee3f3e947efcf3c45e59f",
+      "model": "nomic-embed-text:latest",
+      "modified_at": "2026-09-18T15:38:50.3313315-04:00",
+      "name": "nomic-embed-text:latest",
+      "size": 274302450
+    },
+    "model": {
+      "capabilities": [
+        "completion",
+        "vision",
+        "tools",
+        "thinking"
+      ],
+      "details": {
+        "context_length": 262144,
+        "embedding_length": 4096,
+        "families": [
+          "qwen35"
+        ],
+        "family": "qwen35",
+        "format": "gguf",
+        "parameter_size": "9.7B",
+        "parent_model": "",
+        "quantization_level": "Q4_K_M"
+      },
+      "digest": "6488c96fa5faab64bb65cbd30d4289e20e6130ef535a93ef9a49f42eda893ea7",
+      "model": "qwen3.5:9b",
+      "modified_at": "2026-09-18T15:38:31.3310652-04:00",
+      "name": "qwen3.5:9b",
+      "size": 6594474711
+    },
+    "namespace": "t18-encoding-comparator-v1",
+    "options": {
+      "embedding_model": "nomic-embed-text:latest",
+      "endpoint": "http://127.0.0.1:11434",
+      "environment": {
+        "httpx": "0.28.1",
+        "machine": "AMD64",
+        "numpy": "2.5.3",
+        "platform": "Windows-11-10.0.26200-SP0",
+        "processor": "Intel64 Family 6 Model 151 Stepping 2, GenuineIntel",
+        "pydantic": "2.13.5",
+        "python": "3.13.7",
+        "sqlite": "3.50.4",
+        "sqlite-vec": "0.1.9"
+      },
+      "max_context_tokens": 1200,
+      "max_tokens": 512,
+      "model": "qwen3.5:9b",
+      "policy": {
+        "boilerplate_exact_casefold": [
+          "got it",
+          "ok",
+          "okay",
+          "thanks",
+          "thanks!"
+        ],
+        "boundary": "automatic_extraction_job",
+        "input": "persisted_source_after_write_firewall",
+        "minimum_chars": 50,
+        "version": "applied-length-noise-v1"
+      },
+      "protocol_sha256": "f403c5d49352a649a59a8aad38953a8f94699e0aa00596b35e32f617ff7520bf",
+      "protocol_version": "encoding-comparison-protocol-v1",
+      "repetitions": 3,
+      "temperature": 0.0,
+      "think": false,
+      "timeout_seconds": 120.0,
+      "top_k": 5
+    },
+    "options_sha256": "eac3b0fe93171e11e12f4979cc29695c5c914348f1895869a5ed92d9db627d3e",
+    "policy": {
+      "boilerplate_exact_casefold": [
+        "got it",
+        "ok",
+        "okay",
+        "thanks",
+        "thanks!"
+      ],
+      "boundary": "automatic_extraction_job",
+      "input": "persisted_source_after_write_firewall",
+      "minimum_chars": 50,
+      "version": "applied-length-noise-v1"
+    },
+    "policy_sha256": "f50c028dbc935a01440554f6a73b76ecfae7879edf4b3dffec73ef46b50a2b3a",
+    "protocol": {
+      "path": "C:\\Users\\Ant\\AppData\\Local\\Temp\\mnemos-source-retrieval-comparison-v1\\docs\\plans\\2026-09-18-encoding-comparison-protocol-v1.md",
+      "sha256": "f403c5d49352a649a59a8aad38953a8f94699e0aa00596b35e32f617ff7520bf",
+      "version": "encoding-comparison-protocol-v1"
+    }
+  },
+  "stage": {
+    "finished_at": "2026-09-19T22:24:29.9377978Z",
+    "exit_code": 0,
+    "output": "encoding-comparison-local-v2",
+    "manifest_status": "incomplete",
+    "output_path": "D:\\Development\\mnemos\\mnemos\\.worktrees\\functional-local-memory\\docs\\validation\\2026-09-19\\encoding-comparison-local-v2",
+    "work": "mnemos-encoding-comparison-local-v2",
+    "status": "finished_incomplete",
+    "work_path": "C:\\Users\\Ant\\AppData\\Local\\Temp\\mnemos-encoding-comparison-local-v2",
+    "started_at": "2026-09-19T19:50:51.9017369Z",
+    "name": "encoding",
+    "protocol_sha": "f403c5d49352a649a59a8aad38953a8f94699e0aa00596b35e32f617ff7520bf",
+    "protocol": "2026-09-18-encoding-comparison-protocol-v1.md",
+    "terminal": "incomplete",
+    "module": "encoding_comparator_run",
+    "command": [
+      "D:\\Development\\mnemos\\mnemos\\.worktrees\\functional-local-memory\\.venv\\Scripts\\python.exe",
+      "-u",
+      "-m",
+      "benchmarks.local_memory.encoding_comparator_run",
+      "--dataset",
+      "C:\\Users\\Ant\\AppData\\Local\\Temp\\mnemos-source-retrieval-comparison-v1\\benchmarks\\local_memory\\datasets\\local-memory-heldout-v3.jsonl",
+      "--protocol",
+      "C:\\Users\\Ant\\AppData\\Local\\Temp\\mnemos-source-retrieval-comparison-v1\\docs\\plans\\2026-09-18-encoding-comparison-protocol-v1.md",
+      "--output-dir",
+      "D:\\Development\\mnemos\\mnemos\\.worktrees\\functional-local-memory\\docs\\validation\\2026-09-19\\encoding-comparison-local-v2",
+      "--work-dir",
+      "C:\\Users\\Ant\\AppData\\Local\\Temp\\mnemos-encoding-comparison-local-v2",
+      "--endpoint",
+      "http://127.0.0.1:11434",
+      "--model",
+      "qwen3.5:9b",
+      "--embedding-model",
+      "nomic-embed-text:latest",
+      "--repetitions",
+      "3",
+      "--think",
+      "false"
+    ]
+  },
+  "queue_status_at_archive": "running",
+  "status": "incomplete",
+  "arms": {
+    "full": {
+      "status": "incomplete",
+      "observations": 600,
+      "execution_counts": {
+        "complete": 589,
+        "partial": 11
+      },
+      "errors": {
+        "missing_accepted_target": 11
+      },
+      "operation_counts": {
+        "automatic_capture_operations": 1320,
+        "completed_job_decisions": 1320,
+        "source_events": 2220,
+        "unobserved_decisions": 0
+      },
+      "decision_counts": {
+        "no_durable_facts": 1005,
+        "facts": 195,
+        "surprisal_filtered": 120
+      },
+      "kept_counts": {
+        "True": 1200,
+        "False": 120
+      },
+      "lifecycle_operations": {
+        "correct": {
+          "attempted": 60,
+          "committed": 49,
+          "mapping_invalid": 0,
+          "missing_target": 11,
+          "rejected": 0
+        },
+        "forget": {
+          "attempted": 60,
+          "committed": 60,
+          "mapping_invalid": 0,
+          "missing_target": 0,
+          "rejected": 0
+        }
+      },
+      "gates": {
+        "controlled_state_ablation": "NOT MEASURED",
+        "human_acceptance": "NOT RUN",
+        "length_filter_decision": "NOT MEASURED",
+        "real_embedding": "NOT VERIFIED",
+        "real_model": "NOT VERIFIED"
+      },
+      "applied_length_coverage": null
+    },
+    "ablate-surprisal_gating": {
+      "status": "incomplete",
+      "observations": 600,
+      "execution_counts": {
+        "complete": 592,
+        "partial": 8
+      },
+      "errors": {
+        "missing_accepted_target": 8
+      },
+      "operation_counts": {
+        "automatic_capture_operations": 1320,
+        "completed_job_decisions": 1320,
+        "source_events": 2220,
+        "unobserved_decisions": 0
+      },
+      "decision_counts": {
+        "no_durable_facts": 1120,
+        "facts": 200
+      },
+      "kept_counts": {
+        "True": 1320
+      },
+      "lifecycle_operations": {
+        "correct": {
+          "attempted": 60,
+          "committed": 52,
+          "mapping_invalid": 0,
+          "missing_target": 8,
+          "rejected": 0
+        },
+        "forget": {
+          "attempted": 60,
+          "committed": 60,
+          "mapping_invalid": 0,
+          "missing_target": 0,
+          "rejected": 0
+        }
+      },
+      "gates": {
+        "controlled_state_ablation": "NOT MEASURED",
+        "human_acceptance": "NOT RUN",
+        "length_filter_decision": "NOT MEASURED",
+        "real_embedding": "NOT VERIFIED",
+        "real_model": "NOT VERIFIED"
+      },
+      "applied_length_coverage": null
+    },
+    "length-noise": {
+      "status": "incomplete",
+      "observations": 600,
+      "execution_counts": {
+        "complete": 585,
+        "partial": 15
+      },
+      "errors": {
+        "missing_accepted_target": 15
+      },
+      "operation_counts": {
+        "automatic_capture_operations": 1320,
+        "completed_job_decisions": 1320,
+        "source_events": 2220,
+        "unobserved_decisions": 0
+      },
+      "decision_counts": {
+        "no_durable_facts": 1072,
+        "facts": 152,
+        "length_noise_filtered": 96
+      },
+      "kept_counts": {
+        "True": 1224,
+        "False": 96
+      },
+      "lifecycle_operations": {
+        "correct": {
+          "attempted": 60,
+          "committed": 45,
+          "mapping_invalid": 0,
+          "missing_target": 15,
+          "rejected": 0
+        },
+        "forget": {
+          "attempted": 60,
+          "committed": 60,
+          "mapping_invalid": 0,
+          "missing_target": 0,
+          "rejected": 0
+        }
+      },
+      "gates": {
+        "controlled_state_ablation": "NOT MEASURED",
+        "human_acceptance": "NOT RUN",
+        "length_filter_decision": "OBSERVED",
+        "real_embedding": "NOT VERIFIED",
+        "real_model": "NOT VERIFIED"
+      },
+      "applied_length_coverage": {
+        "expected": 1320,
+        "missing": 0,
+        "observed": 1320,
+        "unexpected": 0
+      }
+    }
+  },
+  "comparator": {
+    "filter_decision_comparisons": {
+      "ablate-surprisal_gating": {
+        "comparable_event_count": 1320,
+        "decision_pairs": {
+          "surprisal_kept_false__ungated_kept_true": 120,
+          "surprisal_kept_true__ungated_kept_true": 1200
+        },
+        "direction": "baseline_to_treatment; no quality inference",
+        "paired_event_count": 1320,
+        "unobserved_event_count": 0
+      },
+      "length-noise": {
+        "comparable_event_count": 1320,
+        "decision_pairs": {
+          "surprisal_kept_false__length_noise_kept_true": 120,
+          "surprisal_kept_true__length_noise_kept_false": 96,
+          "surprisal_kept_true__length_noise_kept_true": 1104
+        },
+        "direction": "baseline_to_treatment; no quality inference",
+        "paired_event_count": 1320,
+        "unobserved_event_count": 0
+      }
+    },
+    "paired_comparisons": {
+      "ablate-surprisal_gating": {
+        "metrics": {
+          "answerable_hits": {
+            "cluster_count": 98,
+            "confidence": 0.95,
+            "eligible_count": 285,
+            "estimate": -0.0035087719298245615,
+            "excluded_count": 315,
+            "excluded_reasons": {
+              "incomplete_execution": 15,
+              "missing_components": 0,
+              "no_applicable_observations": 300
+            },
+            "lower": -0.010714285714285714,
+            "method": "paired_bootstrap",
+            "sample_count": 285,
+            "total_count": 600,
+            "upper": 0.0
+          },
+          "critical_retention": {
+            "cluster_count": 98,
+            "confidence": 0.95,
+            "eligible_count": 285,
+            "estimate": -0.0035087719298245615,
+            "excluded_count": 315,
+            "excluded_reasons": {
+              "incomplete_execution": 15,
+              "missing_components": 0,
+              "no_applicable_observations": 300
+            },
+            "lower": -0.010714285714285714,
+            "method": "paired_bootstrap",
+            "sample_count": 285,
+            "total_count": 600,
+            "upper": 0.0
+          },
+          "critical_retrieval": {
+            "cluster_count": 98,
+            "confidence": 0.95,
+            "eligible_count": 285,
+            "estimate": -0.0035087719298245615,
+            "excluded_count": 315,
+            "excluded_reasons": {
+              "incomplete_execution": 15,
+              "missing_components": 0,
+              "no_applicable_observations": 300
+            },
+            "lower": -0.010714285714285714,
+            "method": "paired_bootstrap",
+            "sample_count": 285,
+            "total_count": 600,
+            "upper": 0.0
+          },
+          "no_answer_correct": {
+            "cluster_count": 100,
+            "confidence": 0.95,
+            "eligible_count": 300,
+            "estimate": -0.01,
+            "excluded_count": 300,
+            "excluded_reasons": {
+              "incomplete_execution": 15,
+              "missing_components": 0,
+              "no_applicable_observations": 285
+            },
+            "lower": -0.043333333333333335,
+            "method": "paired_bootstrap",
+            "sample_count": 300,
+            "total_count": 600,
+            "upper": 0.02
+          }
+        },
+        "pair_counts": {
+          "answerable_hits": {
+            "eligible_count": 285,
+            "excluded_count": 315,
+            "excluded_reasons": {
+              "incomplete_execution": 15,
+              "missing_components": 0,
+              "no_applicable_observations": 300
+            },
+            "total_count": 600
+          },
+          "critical_retention": {
+            "eligible_count": 285,
+            "excluded_count": 315,
+            "excluded_reasons": {
+              "incomplete_execution": 15,
+              "missing_components": 0,
+              "no_applicable_observations": 300
+            },
+            "total_count": 600
+          },
+          "critical_retrieval": {
+            "eligible_count": 285,
+            "excluded_count": 315,
+            "excluded_reasons": {
+              "incomplete_execution": 15,
+              "missing_components": 0,
+              "no_applicable_observations": 300
+            },
+            "total_count": 600
+          },
+          "no_answer_correct": {
+            "eligible_count": 300,
+            "excluded_count": 300,
+            "excluded_reasons": {
+              "incomplete_execution": 15,
+              "missing_components": 0,
+              "no_applicable_observations": 285
+            },
+            "total_count": 600
+          }
+        },
+        "paired_observations": 600
+      },
+      "length-noise": {
+        "metrics": {
+          "answerable_hits": {
+            "cluster_count": 96,
+            "confidence": 0.95,
+            "eligible_count": 282,
+            "estimate": -0.12411347517730496,
+            "excluded_count": 318,
+            "excluded_reasons": {
+              "incomplete_execution": 18,
+              "missing_components": 0,
+              "no_applicable_observations": 300
+            },
+            "lower": -0.1935483870967742,
+            "method": "paired_bootstrap",
+            "sample_count": 282,
+            "total_count": 600,
+            "upper": -0.0638241485602587
+          },
+          "critical_retention": {
+            "cluster_count": 96,
+            "confidence": 0.95,
+            "eligible_count": 282,
+            "estimate": -0.12411347517730496,
+            "excluded_count": 318,
+            "excluded_reasons": {
+              "incomplete_execution": 18,
+              "missing_components": 0,
+              "no_applicable_observations": 300
+            },
+            "lower": -0.1935483870967742,
+            "method": "paired_bootstrap",
+            "sample_count": 282,
+            "total_count": 600,
+            "upper": -0.0638241485602587
+          },
+          "critical_retrieval": {
+            "cluster_count": 96,
+            "confidence": 0.95,
+            "eligible_count": 282,
+            "estimate": -0.12411347517730496,
+            "excluded_count": 318,
+            "excluded_reasons": {
+              "incomplete_execution": 18,
+              "missing_components": 0,
+              "no_applicable_observations": 300
+            },
+            "lower": -0.1935483870967742,
+            "method": "paired_bootstrap",
+            "sample_count": 282,
+            "total_count": 600,
+            "upper": -0.0638241485602587
+          },
+          "no_answer_correct": {
+            "cluster_count": 100,
+            "confidence": 0.95,
+            "eligible_count": 300,
+            "estimate": 0.0,
+            "excluded_count": 300,
+            "excluded_reasons": {
+              "incomplete_execution": 18,
+              "missing_components": 0,
+              "no_applicable_observations": 282
+            },
+            "lower": -0.02,
+            "method": "paired_bootstrap",
+            "sample_count": 300,
+            "total_count": 600,
+            "upper": 0.02
+          }
+        },
+        "pair_counts": {
+          "answerable_hits": {
+            "eligible_count": 282,
+            "excluded_count": 318,
+            "excluded_reasons": {
+              "incomplete_execution": 18,
+              "missing_components": 0,
+              "no_applicable_observations": 300
+            },
+            "total_count": 600
+          },
+          "critical_retention": {
+            "eligible_count": 282,
+            "excluded_count": 318,
+            "excluded_reasons": {
+              "incomplete_execution": 18,
+              "missing_components": 0,
+              "no_applicable_observations": 300
+            },
+            "total_count": 600
+          },
+          "critical_retrieval": {
+            "eligible_count": 282,
+            "excluded_count": 318,
+            "excluded_reasons": {
+              "incomplete_execution": 18,
+              "missing_components": 0,
+              "no_applicable_observations": 300
+            },
+            "total_count": 600
+          },
+          "no_answer_correct": {
+            "eligible_count": 300,
+            "excluded_count": 300,
+            "excluded_reasons": {
+              "incomplete_execution": 18,
+              "missing_components": 0,
+              "no_applicable_observations": 282
+            },
+            "total_count": 600
+          }
+        },
+        "paired_observations": 600
+      }
+    },
+    "policy": {
+      "boilerplate_exact_casefold": [
+        "got it",
+        "ok",
+        "okay",
+        "thanks",
+        "thanks!"
+      ],
+      "boundary": "automatic_extraction_job",
+      "input": "persisted_source_after_write_firewall",
+      "minimum_chars": 50,
+      "version": "applied-length-noise-v1"
+    },
+    "primary_question": "full surprisal gate versus applied length/noise replacement",
+    "ungated_control": "ablate-surprisal_gating"
+  },
+  "interpretation": {
+    "acceptance": "not_established; all arms incomplete",
+    "paired_metrics": "conditional on applicable complete pairs; exclusions retained",
+    "provider_gates": "original NOT VERIFIED gates preserved; no promotion from provenance alone",
+    "timing": "CPU-only development ran concurrently; no isolated latency claim",
+    "retrieval": "separate running stage at archive time"
+  }
+}

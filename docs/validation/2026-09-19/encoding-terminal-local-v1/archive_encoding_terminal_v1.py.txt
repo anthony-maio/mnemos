@@ -1,0 +1,101 @@
+"""Archive terminal encoding reports without modifying their evidence or gates."""
+from pathlib import Path
+from collections import Counter
+import hashlib
+import json
+import shutil
+import subprocess
+import sys
+import zipfile
+
+root = Path(__file__).resolve().parents[1]
+temp = Path('C:/Users/Ant/AppData/Local/Temp')
+source = root/'docs/validation/2026-09-19/encoding-comparison-local-v2'
+work = temp/'mnemos-encoding-comparison-local-v2'
+queue = temp/'mnemos-local-supplemental-v2'
+snapshot = temp/'mnemos-source-retrieval-comparison-v1'
+output = root/'docs/validation/2026-09-19/encoding-terminal-local-v1'
+assert not output.exists()
+def digest(data):
+    return hashlib.sha256(data).hexdigest()
+def read(path):
+    return json.loads(path.read_bytes())
+state_bytes = (queue/'state.json').read_bytes()
+state = json.loads(state_bytes)
+stage = next(s for s in state['stages'] if s['name'] == 'encoding')
+assert stage['status'] == 'finished_incomplete' and stage['exit_code'] == 0
+manifest_bytes = (work/'manifest.json').read_bytes()
+manifest = json.loads(manifest_bytes)
+assert manifest['status'] == 'incomplete'
+binding = manifest['binding']
+assert subprocess.check_output(['git', 'rev-parse', 'HEAD'], cwd=snapshot, text=True).strip() == state['source_commit']
+assert not subprocess.check_output(['git', 'status', '--porcelain', '--untracked-files=no'], cwd=snapshot, text=True).strip()
+sys.path.insert(0, str(snapshot))
+from benchmarks.local_memory.dev_smoke import _code_provenance
+code_hash, code_files = _code_provenance(snapshot)
+assert code_hash == binding['code_sha256'] and code_files == manifest['code_files']
+for key in ('dataset', 'protocol'):
+    assert digest(Path(binding[key]['path']).read_bytes()) == binding[key]['sha256']
+assert binding['model']['digest'] == state['model_digests']['qwen3.5:9b']
+assert binding['embedding_model']['digest'] == state['model_digests']['nomic-embed-text:latest']
+
+members = {}
+summary = {'source_commit': state['source_commit'], 'binding': binding,
+           'stage': stage, 'queue_status_at_archive': state['status'],
+           'status': 'incomplete', 'arms': {}}
+for name in ('full', 'ablate-surprisal_gating', 'length-noise'):
+    report_bytes = (source/(name+'.json')).read_bytes()
+    raw_bytes = (source/(name+'.raw-outputs.jsonl')).read_bytes()
+    report = json.loads(report_bytes)
+    rows = report['raw_outputs']
+    assert report['status'] == 'incomplete' and len(rows) == 600
+    assert report['run_manifest']['binding'] == binding
+    assert report['raw_outputs_file']['sha256'] == digest(raw_bytes)
+    assert [json.loads(line) for line in raw_bytes.splitlines() if line] == rows
+    counts = Counter(r['execution_status'] for r in rows)
+    errors = Counter(e['error'] for r in rows for e in r['raw_output'].get('errors', []))
+    decisions = [d for r in rows for d in r['raw_output']['encoding_policy_decisions']]
+    decision_counts = Counter(d['decision'] for d in decisions)
+    kept = Counter(str(d.get('kept')) for d in decisions)
+    operations = Counter()
+    for row in rows:
+        operations.update(row['raw_output']['encoding_comparison']['counts'])
+    summary['arms'][name] = {
+        'status': report['status'], 'observations': len(rows), 'execution_counts': dict(counts),
+        'errors': dict(errors), 'operation_counts': dict(operations),
+        'decision_counts': dict(decision_counts), 'kept_counts': dict(kept),
+        'lifecycle_operations': report['lifecycle_operations'], 'gates': report['gates'],
+        'applied_length_coverage': report.get('applied_length_coverage'),
+    }
+    if name == 'full':
+        summary['comparator'] = report['comparator']
+    members[name+'.json'] = report_bytes
+    members[name+'.raw-outputs.jsonl'] = raw_bytes
+
+output.mkdir()
+(output/'.gitattributes').write_bytes(b'** -text -whitespace\n')
+with zipfile.ZipFile(output/'encoding-reports.zip', 'x', zipfile.ZIP_DEFLATED, compresslevel=6) as archive:
+    for name, data in members.items():
+        archive.writestr(name, data)
+with zipfile.ZipFile(output/'encoding-reports.zip') as archive:
+    assert archive.testzip() is None
+    for name, data in members.items():
+        assert archive.read(name) == data == (source/name).read_bytes()
+(output/'zip-members.json').write_text(json.dumps({name: {'bytes': len(data), 'sha256': digest(data)} for name, data in members.items()}, indent=2)+'\n', encoding='utf-8')
+(output/'manifest.json').write_bytes(manifest_bytes)
+(output/'queue-state-at-archive.json').write_bytes(state_bytes)
+for stream in ('stdout', 'stderr'):
+    shutil.copyfile(queue/f'encoding.{stream}.log', output/f'encoding.{stream}.log')
+shutil.copyfile(Path(__file__), output/(Path(__file__).name+'.txt'))
+summary['interpretation'] = {
+    'acceptance': 'not_established; all arms incomplete',
+    'paired_metrics': 'conditional on applicable complete pairs; exclusions retained',
+    'provider_gates': 'original NOT VERIFIED gates preserved; no promotion from provenance alone',
+    'timing': 'CPU-only development ran concurrently; no isolated latency claim',
+    'retrieval': 'separate running stage at archive time',
+}
+(output/'summary.json').write_text(json.dumps(summary, indent=2)+'\n', encoding='utf-8')
+index = {p.name: {'bytes': p.stat().st_size, 'sha256': digest(p.read_bytes())} for p in sorted(output.iterdir()) if p.is_file()}
+(output/'evidence-index.json').write_text(json.dumps({'files': index}, indent=2)+'\n', encoding='utf-8')
+print(json.dumps({'archive': str(output), 'zip_bytes': (output/'encoding-reports.zip').stat().st_size,
+                  'arms': {k: v['execution_counts'] for k, v in summary['arms'].items()}, 'files': len(index)}))

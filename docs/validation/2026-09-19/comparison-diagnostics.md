@@ -3,6 +3,25 @@
 These are read-only interpretations of preserved results. No production
 threshold, evaluation case, or frozen model setting was changed.
 
+## Terminal encoding comparison
+
+The [independent three-arm comparison](encoding-terminal-local-v1/README.md)
+completed execution with all three arms still marked incomplete. It covers
+600 observations, 2,220 source events, and 1,320 completed automatic policy
+decisions per arm. Partial observations total 34 across the arms, all with a
+missing correction target. Surprisal filters 120 events; length/noise filters
+96 different events. Decision coverage establishes that both gates actually
+ran, without establishing a quality benefit.
+
+Among applicable complete paired observations, length/noise minus full has
+an answerable hit-rate difference of -12.41 percentage points, with a
+session-clustered 95% interval of [-19.35, -6.38], over 282 pairs. Eighteen
+incomplete pairs remain excluded. The result is conditional on that subset
+and uses exact-text fixture judgments; it cannot establish general semantic
+quality or complete-run acceptance. The ungated comparison is also conditional
+and does not establish a clear benefit from surprisal. No defaults or frozen
+criteria change on the basis of these results.
+
 ## Legacy synthetic replacement benchmark
 
 The [checkpoint archive](embedding-client-checkpoint-v1/README.md) retains

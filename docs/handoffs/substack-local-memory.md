@@ -45,7 +45,9 @@ with all three reports marked incomplete. Of 600 observations per arm, the
 full pipeline has 11 partial rows, no-surprisal has eight, and length-noise
 has 15. Preserve these 34 partial rows out of 1,800 when discussing results;
 metrics that exclude them are conditional diagnostics. Retrieval began next
-and remains running. Final interpretation and evidence archiving are pending.
+and remains running. The [terminal encoding archive](../validation/2026-09-19/encoding-terminal-local-v1/README.md)
+preserves the original reports and explains denominators and conditional
+paired differences. It does not close complete-run quality acceptance.
 
 ## Latest verified repair
 

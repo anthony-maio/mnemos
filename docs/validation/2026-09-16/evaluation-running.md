@@ -9,7 +9,9 @@ complete and 11 partial, no-surprisal has 592 complete and eight partial,
 and length-noise has 585 complete and 15 partial. That is 34 partial rows
 out of 1,800; complete-only metrics cannot establish overall acceptance.
 Retrieval started at 22:24:30 UTC and remains running. Final retrieval
-results and reconciliation of the encoding comparison remain pending;
+results remain pending. The [terminal encoding archive](../2026-09-19/encoding-terminal-local-v1/README.md)
+preserves all six report/raw-output files, denominators, and conditional
+paired differences. It does not establish complete-run quality acceptance;
 the original queue's unstarted follow-ons below
 remain historical failures. The source, dataset, models, and protocols remain
 frozen. Concurrent CPU-only development work qualifies timing comparisons.

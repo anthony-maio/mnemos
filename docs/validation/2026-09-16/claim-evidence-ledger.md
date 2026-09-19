@@ -4,7 +4,18 @@ Assessment date: September 19, 2026. This covers the unreleased
 functional-local-memory worktree, not the installed public package or website.
 The capability IDs come from the original implementation plan.
 
-Current package evidence is the [Hermes lifecycle checkpoint](../2026-09-19/hermes-lifecycle-checkpoints-v1/README.md)
+Current package evidence is the [Hermes native identity checkpoint](../2026-09-19/hermes-native-identity-checkpoint-v1/README.md)
+at `3730fd9`: 1,247 source passes with four skips, six source/package checks,
+530 installed passes with two matching skips, and seven replay assertions.
+The [actual host persistence fixture](../2026-09-19/hermes-native-rows-contract-v3/README.md)
+establishes stable prefix identity and distinct regenerated suffix identity
+when Hermes supplies native row IDs. ID-less fallback, some resume loaders,
+compaction clones, and existing identity migration remain limited. The
+[new wheel discovery preflight](../2026-09-19/hermes-native-discovery-preflight-v2/README.md)
+also passes without model or service calls. None of these closes native model
+lifecycle or pilot acceptance.
+
+Earlier package evidence is the [Hermes lifecycle checkpoint](../2026-09-19/hermes-lifecycle-checkpoints-v1/README.md)
 at `5e4b057`: 1,195 source passes, four skips, six source/package checks,
 507 installed contract passes, two matching skips, and seven replay assertions.
 Its installed Hermes API v2 run passes scoped lifecycle tools and persistent
@@ -22,7 +33,10 @@ correction targets following `no_durable_facts` extraction. The
 [terminal lifecycle archive](../2026-09-19/lifecycle-incomplete-local-v2/README.md)
 does not establish T18 success. The encoding/retrieval follow-on comparisons
 never started in that queue. The [independent v2 queue](../2026-09-19/supplemental-launch-v2/README.md)
-has since started under unchanged bindings; final results are pending.
+has since started under unchanged bindings. Its [encoding comparison](../2026-09-19/encoding-terminal-local-v1/README.md)
+is terminal with 34 partial observations out of 1,800. All automatic-policy
+decisions were observed, but complete-only quality differences remain
+conditional diagnostics. Retrieval results are pending.
 Historical running-state descriptions below are superseded.
 
 The [new baseline SSD performance evidence](../2026-09-19/performance-recovery-v1/README.md)
