@@ -326,22 +326,52 @@ class MnemosHermesProvider(_HermesMemoryProvider):  # type: ignore[misc]  # Opti
             diagnostic_target=diagnostic_target or source,
         )
 
+    @staticmethod
+    def _transcript_entries(
+        messages: List[Dict[str, Any]],
+    ) -> list[tuple[str, str, int | None]]:
+        selected: list[tuple[str, str, int | None]] = []
+        native_ids: set[int] = set()
+        for message in messages:
+            if not isinstance(message, Mapping):
+                continue
+            role = str(message.get("role") or "").strip().lower()
+            content = _text(message.get("content"))
+            if role not in {"user", "assistant"} or not content:
+                continue
+            row_id = message.get("_row_id")
+            if "_row_id" in message:
+                if type(row_id) is not int or row_id <= 0 or row_id in native_ids:
+                    raise ValueError(
+                        "Hermes transcript row identity must be a unique positive integer"
+                    )
+                native_ids.add(row_id)
+            selected.append((role, content, row_id))
+        return selected
+
     def _transcript_payloads(
         self,
         context: ScopeContext,
-        messages: list[tuple[str, str]],
+        messages: list[tuple[str, str, int | None]],
         *,
         provisional: bool = False,
     ) -> list[dict[str, Any]]:
-        # Hermes supplies the cumulative transcript. Bind each occurrence to
-        # its own prefix so appending a later turn cannot rename earlier ones.
-        # Position also distinguishes repeated identical text in one session.
+        # Durable host rows retain identity across shortened views and resume.
+        # Undo creates new rows only for the regenerated suffix. Older hosts
+        # without native IDs retain the legacy cumulative-prefix contract.
+        if any(row_id is not None for _, _, row_id in messages) and any(
+            row_id is None for _, _, row_id in messages
+        ):
+            provisional = True
+            self._record_lifecycle_diagnostic(
+                action="capture_identity", target="", status="partial_native_identity"
+            )
         prefix = hashlib.sha256()
         payloads = []
         # Without a transcript, only the callback receipt is identifiable.
         # Preserve each receipt separately without counting it as fact evidence.
         namespace = f"provisional:v1:{uuid4()}" if provisional else "transcript:v1"
-        for index, (role, content) in enumerate(messages):
+        for index, (role, content, row_id) in enumerate(messages):
             prefix.update(
                 json.dumps([role, content], ensure_ascii=False, separators=(",", ":")).encode(
                     "utf-8"
@@ -353,7 +383,11 @@ class MnemosHermesProvider(_HermesMemoryProvider):  # type: ignore[misc]  # Opti
                     context,
                     role=role,
                     content=content,
-                    source=f"{namespace}:{index}:{prefix.hexdigest()}",
+                    source=(
+                        f"transcript:v2:{row_id}"
+                        if row_id is not None and not provisional
+                        else f"{namespace}:{index}:{prefix.hexdigest()}"
+                    ),
                 )
             )
             if provisional:
@@ -472,19 +506,14 @@ class MnemosHermesProvider(_HermesMemoryProvider):  # type: ignore[misc]  # Opti
             context = self._current_context(session_id)
         except Exception:
             return
-        selected: list[tuple[str, str]] = []
-        if messages:
-            for message in messages:
-                if not isinstance(message, Mapping):
-                    continue
-                role = str(message.get("role") or "").strip().lower()
-                content = _text(message.get("content"))
-                if role in {"user", "assistant"} and content:
-                    selected.append((role, content))
+        selected = self._transcript_entries(messages or [])
         provisional = not selected
         if provisional:
-            selected = [("user", _text(user_content)), ("assistant", _text(assistant_content))]
-        selected = [(role, content) for role, content in selected if content]
+            selected = [
+                ("user", _text(user_content), None),
+                ("assistant", _text(assistant_content), None),
+            ]
+        selected = [(role, content, row_id) for role, content, row_id in selected if content]
         if provisional and selected:
             self._record_lifecycle_diagnostic(
                 action="capture_identity", target="", status="transcript_identity_unavailable"
@@ -533,14 +562,7 @@ class MnemosHermesProvider(_HermesMemoryProvider):  # type: ignore[misc]  # Opti
             if require_checkpoint:
                 raise RuntimeError("Mnemos Hermes checkpoint has no validated scope")
             return ""
-        evidence: list[tuple[str, str]] = []
-        for message in messages or []:
-            if not isinstance(message, Mapping):
-                continue
-            role = str(message.get("role") or "").strip().lower()
-            content = _text(message.get("content"))
-            if role in {"user", "assistant"} and content:
-                evidence.append((role, content))
+        evidence = self._transcript_entries(messages or [])
         accepted = True
         for payload in self._transcript_payloads(context, evidence):
             accepted = self._capture_now(payload) and accepted
