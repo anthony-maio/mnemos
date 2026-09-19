@@ -69,6 +69,13 @@ finds every recorded target disconnected from the selected seed; changing a
 traversal threshold cannot repair those missing paths. Both records belong in
 the final packet refresh, with their limitations intact.
 
+The follow-up [development degree comparison](../validation/2026-09-19/graph-degree-development-v2/README.md)
+tests four, eight, and sixteen neighbors on saved development vectors. All 15
+combinations finish; sixteen neighbors restore a usable path in one case,
+but no target reaches the top five. This is a concrete example of a mechanism
+working without delivering the intended answer. These are five variants of
+one development template, not five independent real-world workflows.
+
 Candidate examples for the article, with bounded evidence:
 
 | Problem | Resulting behavior | Evidence and limit |

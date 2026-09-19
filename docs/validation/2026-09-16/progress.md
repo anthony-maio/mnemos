@@ -8,6 +8,17 @@ This is a chronological checkpoint log. Later entries supersede earlier test
 counts and open implementation items. An implementation or focused check does
 not close a native-host, quality, performance, or pilot gate.
 
+## September 19: development graph budget comparison
+
+The [degree diagnostic](../2026-09-19/graph-degree-development-v2/README.md)
+uses frozen development vectors on source `5e4b057`, testing every combination
+of five cases and degrees 4, 8, and 16. All 15 measurements complete and pass
+structural controls. Degrees 4/8 yield zero eligible cases; degree 16 yields
+one path above the unchanged activation threshold, but no target reaches the
+top five at any degree. No production setting changed. The first attempt's
+report-parser error remains preserved, and the successor reran all planned
+combinations in fresh storage. Exact inputs and raw observations are archived.
+
 ## September 19: installed Hermes API recovery and graph diagnosis
 
 The [API recovery observation](../2026-09-19/hermes-api-recovery-v1/README.md)

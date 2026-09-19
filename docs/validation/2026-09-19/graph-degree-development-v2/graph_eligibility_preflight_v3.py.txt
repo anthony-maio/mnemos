@@ -1,0 +1,278 @@
+"""Run the production graph measurement from an explicitly pinned snapshot.
+
+The caller must provide a clean source snapshot and its full commit.  The
+working checkout is removed from import resolution before production modules
+are imported, so this preflight cannot silently measure a different tree.
+"""
+
+from __future__ import annotations
+
+import argparse
+import hashlib
+import json
+import subprocess
+import sys
+from pathlib import Path
+from typing import Any
+
+SOURCE_FILES = (
+    Path("benchmarks/local_memory/graph_measurement.py"),
+    Path("benchmarks/local_memory/module_mechanism.py"),
+    Path("mnemos/engine.py"),
+    Path("mnemos/utils/storage.py"),
+)
+
+
+def _sha256(path: Path) -> str:
+    digest = hashlib.sha256()
+    with path.open("rb") as stream:
+        for block in iter(lambda: stream.read(1024 * 1024), b""):
+            digest.update(block)
+    return digest.hexdigest()
+
+
+def _git(snapshot: Path, *arguments: str) -> str:
+    return subprocess.check_output(
+        ["git", "-C", str(snapshot), *arguments],
+        stderr=subprocess.DEVNULL,
+        text=True,
+    ).strip()
+
+
+def _verify_snapshot(snapshot: Path, expected_commit: str) -> dict[str, Any]:
+    snapshot = snapshot.resolve()
+    if not (snapshot / ".git").exists():
+        raise ValueError("snapshot is not a git checkout")
+    actual_commit = _git(snapshot, "rev-parse", "HEAD")
+    if actual_commit != expected_commit:
+        raise ValueError(
+            f"snapshot commit mismatch: expected {expected_commit}, got {actual_commit}"
+        )
+    if _git(snapshot, "status", "--porcelain"):
+        raise ValueError("snapshot has uncommitted changes")
+    paths = {name: snapshot / name for name in SOURCE_FILES}
+    missing = [name.as_posix() for name, path in paths.items() if not path.is_file()]
+    if missing:
+        raise ValueError(f"snapshot is missing source files: {missing}")
+    return {
+        "path": str(snapshot),
+        "commit": actual_commit,
+        "clean": True,
+        "source_hashes_before_import": {
+            name.as_posix(): _sha256(path) for name, path in paths.items()
+        },
+    }
+
+
+def _import_snapshot(snapshot: Path) -> tuple[Any, Any, dict[str, Any]]:
+    current_root = Path(__file__).resolve().parents[1]
+    retained: list[str] = []
+    for entry in sys.path:
+        candidate = Path.cwd() if not entry else Path(entry)
+        try:
+            resolved = candidate.resolve()
+        except OSError:
+            retained.append(entry)
+            continue
+        # Remove the checkout itself while retaining its virtualenv
+        # site-packages, which are dependencies rather than source code.
+        if resolved == current_root:
+            continue
+        retained.append(entry)
+    sys.path[:] = [str(snapshot), *retained]
+    from benchmarks.local_memory import graph_measurement, module_mechanism
+    from mnemos import engine, utils
+    from mnemos.utils import storage
+
+    modules = {
+        "graph_measurement": graph_measurement,
+        "module_mechanism": module_mechanism,
+        "engine": engine,
+        "storage": storage,
+    }
+    paths = {
+        name: str(Path(module.__file__).resolve())
+        for name, module in modules.items()
+        if module.__file__
+    }
+    for name, path in paths.items():
+        if not Path(path).is_relative_to(snapshot):
+            raise RuntimeError(f"imported {name} outside pinned snapshot: {path}")
+    source_hashes = {
+        name: _sha256(snapshot / relative)
+        for name, relative in (
+            ("graph_measurement", SOURCE_FILES[0]),
+            ("module_mechanism", SOURCE_FILES[1]),
+            ("engine", SOURCE_FILES[2]),
+            ("storage", SOURCE_FILES[3]),
+        )
+    }
+    return graph_measurement, module_mechanism, {"paths": paths, "hashes": source_hashes}
+
+
+def _observation(case: Any, row: dict[str, Any], source: dict[str, Any]) -> dict[str, Any]:
+    query = row.get("query", {})
+    production = row.get("production", {})
+    artifacts = row.get("artifacts", {})
+    graph_path = Path(str(artifacts.get("graph_sqlite", "")))
+    target_id = str(production.get("target_id", case.target_id))
+    direct_ids = [str(value) for value in query.get("direct_union_ids", [])]
+    conditions = {
+        "source_parity": source["snapshot"]["commit"] == source["expected_source_commit"],
+        "frozen_vectors": case.query_embedding is not None
+        and all(fact.embedding is not None for fact in case.facts),
+        "scoped_candidate_union": bool(query.get("allowed_scopes")) and target_id not in direct_ids,
+        "semantic_floor": bool(production.get("semantic_floor") is True),
+        "persisted_graph": graph_path.is_file(),
+        "selected_vector_seed": bool(query.get("actual_selected_seed_id")),
+    }
+    return {
+        "case_id": case.id,
+        "repetition": int(row.get("repetition", 0)),
+        "structural_eligible": bool(row.get("eligible") is True),
+        "eligibility_conditions": conditions,
+        "actual_utility_outcomes": {
+            "activation_valid_path": production.get("valid_path"),
+            "activation_target_path_energy": production.get("activation_target_path_energy"),
+            "target_in_graph_results": production.get("target_in_graph_results"),
+            "baseline_result_ids": production.get("baseline_result_ids", []),
+            "graph_result_ids": production.get("graph_result_ids", []),
+            "path_reason": production.get("path_reason"),
+        },
+        "query": {
+            "vector_ids": query.get("vector_ids", []),
+            "lexical_ids": query.get("lexical_ids", []),
+            "direct_union_ids": direct_ids,
+            "query_selected_seed_id": query.get("actual_selected_seed_id"),
+            "authored_seed_id": case.seed_id,
+            "authored_bridge_id": case.bridge_id,
+        },
+        "target": {
+            "id": target_id,
+            "similarity": production.get("target_similarity"),
+            "in_direct_pool": production.get("target_in_direct_pool"),
+            "in_graph_results": production.get("target_in_graph_results"),
+        },
+        "scope_controls": {
+            "direct_union": production.get("scope_control_ids_in_direct_union", []),
+            "graph_results": production.get("scope_control_ids_in_graph_results", []),
+            "forbidden": production.get("scope_control_ids_forbidden_observed", []),
+        },
+        "persisted_graph": {
+            "path": str(graph_path),
+            "exists": graph_path.is_file(),
+            "sha256": _sha256(graph_path) if graph_path.is_file() else None,
+            "edge_count": production.get("graph_edge_count"),
+            "edge_sha256": production.get("graph_edge_sha256"),
+        },
+    }
+
+
+def run(
+    *, snapshot: Path, source_commit: str, fixture: Path, work_dir: Path, output: Path
+) -> dict[str, Any]:
+    snapshot_info = _verify_snapshot(snapshot, source_commit)
+    fixture = fixture.resolve()
+    if not fixture.is_file():
+        raise ValueError(f"frozen fixture does not exist: {fixture}")
+    graph_measurement, module_mechanism, imported = _import_snapshot(snapshot.resolve())
+    dataset = module_mechanism.load_mechanism_dataset(fixture)
+    source = {
+        "snapshot": snapshot_info,
+        "expected_source_commit": source_commit,
+        "imported": imported,
+        "fixture_manifest_source_commit": dataset.manifest.get("source_commit"),
+        "fixture_manifest_graph_contract": dataset.manifest.get("graph_contract"),
+    }
+    work_dir.mkdir(parents=True, exist_ok=True)
+    observations: list[dict[str, Any]] = []
+    for case in sorted(dataset.graph_cases, key=lambda item: item.id):
+        row = graph_measurement.measure_graph_repetition(case, work_dir=work_dir, repetition=0)
+        observations.append(_observation(case, row, source))
+    source_hashes_after_run = {
+        relative.as_posix(): _sha256(snapshot.resolve() / relative) for relative in SOURCE_FILES
+    }
+    source["source_hashes_after_run"] = source_hashes_after_run
+    source["source_unchanged"] = (
+        source["snapshot"]["source_hashes_before_import"]
+        == {
+            relative.as_posix(): imported["hashes"][name]
+            for name, relative in (
+                ("graph_measurement", SOURCE_FILES[0]),
+                ("module_mechanism", SOURCE_FILES[1]),
+                ("engine", SOURCE_FILES[2]),
+                ("storage", SOURCE_FILES[3]),
+            )
+        }
+        == source_hashes_after_run
+    )
+    report = {
+        "schema_version": "graph-eligibility-preflight-v3",
+        "status": "offline_pinned_production_helper_preflight",
+        "fixture": {"path": str(fixture), "sha256": _sha256(fixture)},
+        "work_dir": str(work_dir),
+        "runner": {"path": str(Path(__file__).resolve()), "sha256": _sha256(Path(__file__))},
+        "measurement_helper": "pinned snapshot benchmarks.local_memory.graph_measurement.measure_graph_repetition",
+        "provider": {"embedding": "frozen fixture vectors", "language_model": "not constructed"},
+        "model_calls": 0,
+        "network_calls": 0,
+        "source": source,
+        "cases": len(observations),
+        "structural_eligible_cases": sum(
+            bool(item["structural_eligible"]) for item in observations
+        ),
+        "observations": observations,
+        "limitations": [
+            "This is development evidence and is not a held-out result.",
+            "Structural eligibility uses the production helper's row eligible field; graph retrieval outcomes are reported separately.",
+            "The authored seed label is never substituted for the query-selected vector seed.",
+        ],
+    }
+    output.parent.mkdir(parents=True, exist_ok=True)
+    output.write_text(json.dumps(report, indent=2, sort_keys=True) + "\n", encoding="utf-8")
+    return report
+
+
+def main(argv: list[str] | None = None) -> int:
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument("--snapshot", type=Path, required=True)
+    parser.add_argument("--source-commit", required=True)
+    parser.add_argument(
+        "--fixture",
+        type=Path,
+        default=Path(".venv/mechanism-development-work-v2/frozen-vectors.json"),
+    )
+    parser.add_argument(
+        "--work-dir", type=Path, default=Path(".venv/graph-eligibility-preflight-v3-work")
+    )
+    parser.add_argument(
+        "--output", type=Path, default=Path(".venv/graph-eligibility-preflight-v3/report.json")
+    )
+    args = parser.parse_args(argv)
+    try:
+        report = run(
+            snapshot=args.snapshot,
+            source_commit=args.source_commit,
+            fixture=args.fixture,
+            work_dir=args.work_dir,
+            output=args.output,
+        )
+    except (
+        OSError,
+        ValueError,
+        RuntimeError,
+        subprocess.CalledProcessError,
+        json.JSONDecodeError,
+    ) as exc:
+        print(f"preflight failed: {exc}", file=sys.stderr)
+        return 2
+    print(
+        f"pinned production preflight: {report['cases']} cases, "
+        f"{report['structural_eligible_cases']} structurally eligible, "
+        f"source={report['source']['snapshot']['commit']}"
+    )
+    return 0
+
+
+if __name__ == "__main__":
+    raise SystemExit(main())

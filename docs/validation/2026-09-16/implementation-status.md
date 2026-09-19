@@ -12,6 +12,14 @@ and replay. Two captured occurrences produce two completed jobs; project and
 foreign controls survive. This uses fixture providers and the actual bridge,
 not a native model conversation or automatic daemon restoration.
 
+The [development graph degree diagnostic](../2026-09-19/graph-degree-development-v2/README.md)
+completed all 15 planned combinations using saved vectors and unchanged
+criteria. Degrees four and eight produce no eligible cases; degree sixteen
+produces one eligible case, but none of the five targets enters the top five
+at any setting. All structural controls pass. These five variants of one
+development template do not justify a new default or establish generalization.
+The original held-out graph failure remains unchanged.
+
 The latest [Hermes lifecycle checkpoint](../2026-09-19/hermes-lifecycle-checkpoints-v1/README.md)
 at `5e4b057` passes 1,195 source tests with four skips, all six source/package
 checks, 507 isolated installed cases with two matching skips, and seven replay

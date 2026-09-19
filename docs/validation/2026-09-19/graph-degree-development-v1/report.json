@@ -1,0 +1,117 @@
+{
+  "status": "failed",
+  "source": {
+    "path": "C:\\Users\\Ant\\AppData\\Local\\Temp\\mnemos-source-hermes-provisional-v1",
+    "commit": "5e4b057b16906c2ec7dd302ae80748ef1ac5eddc",
+    "clean": true,
+    "source_hashes_before_import": {
+      "benchmarks/local_memory/graph_measurement.py": "aec4fd5f642ebb65c9e693e8166a1016d2a8068d86bdd69f37246e6ae97f43b2",
+      "benchmarks/local_memory/module_mechanism.py": "f758741a71420d8b39b85f4d215f11a0c918b2f5ff07569d0499b6ce26ad7e15",
+      "mnemos/engine.py": "203201d7eba7b655ab93f91f9f18ad31948a777e21cefc88668451aff1a5618d",
+      "mnemos/utils/storage.py": "ab8e91f0d6ff691db79ac697941e2a74a84bd78d6133303171768aaa47727c1a"
+    }
+  },
+  "imported": {
+    "paths": {
+      "graph_measurement": "C:\\Users\\Ant\\AppData\\Local\\Temp\\mnemos-source-hermes-provisional-v1\\benchmarks\\local_memory\\graph_measurement.py",
+      "module_mechanism": "C:\\Users\\Ant\\AppData\\Local\\Temp\\mnemos-source-hermes-provisional-v1\\benchmarks\\local_memory\\module_mechanism.py",
+      "engine": "C:\\Users\\Ant\\AppData\\Local\\Temp\\mnemos-source-hermes-provisional-v1\\mnemos\\engine.py",
+      "storage": "C:\\Users\\Ant\\AppData\\Local\\Temp\\mnemos-source-hermes-provisional-v1\\mnemos\\utils\\storage.py"
+    },
+    "hashes": {
+      "graph_measurement": "aec4fd5f642ebb65c9e693e8166a1016d2a8068d86bdd69f37246e6ae97f43b2",
+      "module_mechanism": "f758741a71420d8b39b85f4d215f11a0c918b2f5ff07569d0499b6ce26ad7e15",
+      "engine": "203201d7eba7b655ab93f91f9f18ad31948a777e21cefc88668451aff1a5618d",
+      "storage": "ab8e91f0d6ff691db79ac697941e2a74a84bd78d6133303171768aaa47727c1a"
+    }
+  },
+  "source_commit": "5e4b057b16906c2ec7dd302ae80748ef1ac5eddc",
+  "fixture_sha256": "938537dc4b615358a36c748a31667d477a6aa556f7e62137ed281a08caaa7698",
+  "manifest_sha256": "d072d7caa3f1a003ebf10e46dfcfc593cacfc193e16d9de37f19a355deb5cfd7",
+  "helper_sha256": "aefbd61e02912769151e0768b237a066feff7ef01cd7390b420875589cbf925f",
+  "protocol_sha256": "f04f0e8526a6f05b3d8ba41f78d88b59fd00ce18508ff1d21a112fe071e448dc",
+  "preflight_helper_sha256": "991ca665d1f38fb16a3c165e5f7b2749aaece66b5bf25766d2a98e15913e586f",
+  "model_calls": 0,
+  "network_calls": 0,
+  "budgets": [
+    4,
+    8,
+    16
+  ],
+  "observations": [],
+  "effective_configurations": {
+    "4": {
+      "modules": {
+        "surprisal": true,
+        "mutable_rag": true,
+        "affective": false,
+        "sleep": true,
+        "spreading": true
+      },
+      "retrieval": {
+        "profile": "biomimetic",
+        "affective_enabled": false,
+        "spreading_enabled": true,
+        "relevance_floor": 0.2,
+        "graph_weight": 0.1,
+        "max_candidates": 100
+      },
+      "surprisal": {
+        "threshold": 0.3,
+        "prediction_model": "llama3",
+        "embedding_dim": 384,
+        "history_window": 10,
+        "min_content_length": 10
+      },
+      "mutable_rag": {
+        "enabled": true,
+        "staleness_check_prompt": "You are a memory maintenance agent. A user's stored memory says:\n\"{content}\"\n\nNew context from the conversation:\n\"{context}\"\n\nHas this stored memory become outdated, contradicted, or significantly changed based on the new context? Reply with exactly one of:\n- UNCHANGED: if the memory is still accurate\n- CHANGED: <updated version of the memory>\n\nBe conservative: only mark CHANGED if there is a clear contradiction or significant update.",
+        "max_labile_chunks": 20,
+        "reconsolidation_cooldown_seconds": 60
+      },
+      "affective": {
+        "weight_similarity": 0.7,
+        "weight_state": 0.3,
+        "classifier_model": "llama3",
+        "classifier_prompt": "Analyze the emotional/cognitive state expressed in this text and score it on three dimensions. Reply ONLY with three floats separated by commas:\nvalence (-1.0 to 1.0, negative to positive), arousal (0.0 to 1.0, calm to urgent), complexity (0.0 to 1.0, simple to complex)\n\nText: \"{content}\"\n\nExample reply: 0.3, 0.7, 0.5"
+      },
+      "sleep": {
+        "consolidation_interval_seconds": 3600,
+        "min_episodes_before_consolidation": 10,
+        "enable_proceduralization": false,
+        "consolidation_prompt": "You are a memory consolidation agent. Below is a sequence of conversation episodes from a user session:\n\n{episodes}\n\nExtract permanent facts, user preferences, behavioral patterns, and important information that should be retained long-term. Format your response as a numbered list of distinct facts, one per line. Be concise and specific. Omit transient information.",
+        "proceduralization_prompt": "You are analyzing conversation logs to identify repeated reasoning patterns that could be automated. Review these episodes:\n\n{episodes}\n\nIf you identify a clearly repeated task pattern (appearing 3+ times), write a complete, executable Python function that automates it. If no clear pattern exists, reply with 'NO_PATTERN'. Return ONLY valid Python code or 'NO_PATTERN'.",
+        "max_episodes_per_consolidation": 100,
+        "recall_gated_plasticity_enabled": false,
+        "recall_min_supporting_episodes": 2,
+        "recall_similarity_threshold": 0.82
+      },
+      "spreading": {
+        "initial_energy": 1.0,
+        "decay_rate": 0.2,
+        "activation_threshold": 0.3,
+        "max_hops": 3,
+        "max_visited": 1000,
+        "auto_connect_threshold": 0.6,
+        "max_neighbors_per_node": 4,
+        "natural_decay_rate": 0.05,
+        "hydrate_on_startup": true,
+        "startup_hydration_limit": 5000,
+        "startup_auto_connect": false
+      },
+      "safety": {
+        "enabled": true,
+        "secret_action": "block",
+        "pii_action": "redact"
+      },
+      "governance": {
+        "capture_mode": "all",
+        "retention_ttl_days": 0,
+        "max_chunks_per_scope": 0
+      },
+      "debug": false
+    }
+  },
+  "scope": "development only; one template; no production selection",
+  "error": "'actual_selected_seed_id'"
+}

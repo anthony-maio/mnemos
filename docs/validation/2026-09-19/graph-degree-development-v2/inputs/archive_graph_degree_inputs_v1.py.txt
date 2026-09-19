@@ -1,0 +1,27 @@
+"""Retain exact development inputs needed to reproduce the offline diagnostic."""
+from pathlib import Path
+import hashlib
+import json
+import zipfile
+
+repo=Path(__file__).resolve().parent.parent
+base=repo/'docs/validation/2026-09-19/graph-degree-development-v2'
+output=base/'inputs'
+assert not output.exists()
+report=json.loads((base/'report.json').read_text())
+assert report['status']=='diagnostic_complete'
+source=Path('C:/Users/Ant/AppData/Local/Temp/mnemos-real-model-local-v1/mechanism-development')
+assert hashlib.sha256((source/'frozen-vectors.json').read_bytes()).hexdigest()==report['fixture_sha256']
+output.mkdir()
+paths=[source/'frozen-vectors.json',source/'authored-selected.json']
+with zipfile.ZipFile(output/'development-inputs.zip','x',zipfile.ZIP_DEFLATED) as archive:
+    for path in paths: archive.write(path,path.name)
+with zipfile.ZipFile(output/'development-inputs.zip') as archive:
+    assert archive.testzip() is None
+    for path in paths: assert archive.read(path.name)==path.read_bytes()
+members={p.name:{'bytes':p.stat().st_size,'sha256':hashlib.sha256(p.read_bytes()).hexdigest()} for p in paths}
+(output/'members.json').write_text(json.dumps(members,indent=2)+'\n',encoding='utf-8')
+(output/'archive_graph_degree_inputs_v1.py.txt').write_bytes(Path(__file__).read_bytes())
+files={p.name:{'bytes':p.stat().st_size,'sha256':hashlib.sha256(p.read_bytes()).hexdigest()} for p in output.iterdir()}
+(output/'evidence-index.json').write_text(json.dumps({'files':files},indent=2)+'\n',encoding='utf-8')
+print(json.dumps({'files':len(files),'zip_bytes':(output/'development-inputs.zip').stat().st_size}))
