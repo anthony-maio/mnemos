@@ -1,0 +1,251 @@
+"""Bounded native Hermes conversation using a verified wheel and disposable state."""
+from __future__ import annotations
+
+import asyncio
+from datetime import datetime, timezone
+import hashlib
+import json
+import os
+from pathlib import Path
+import sqlite3
+import subprocess
+import sys
+import time
+import traceback
+import urllib.request
+
+ROOT = Path(r"C:\Users\Ant\AppData\Local\Temp\mnemos-native-hermes-local-v3")
+WHEEL = Path(r"C:\Users\Ant\AppData\Local\Temp\mnemos-package-checks-hermes-safety-v1\dist\mnemos_memory-0.7.0-py3-none-any.whl")
+WHEEL_SHA = hashlib.sha256(WHEEL.read_bytes()).hexdigest()
+SOURCE = "51904d3abdf523e0afb086e956046ca1d5839e92"
+HERMES_SOURCE = "14a346345486418aa85ed6526549412ee2665ade"
+MODEL = "qwen3.5:9b"
+DIGESTS = {MODEL: "6488c96fa5faab64bb65cbd30d4289e20e6130ef535a93ef9a49f42eda893ea7", "nomic-embed-text:latest": "0a109f422b47e3a30ba2b10eca18548e944e8a23073ee3f3e947efcf3c45e59f"}
+
+def save(name, value):
+    (ROOT / name).write_text(json.dumps(value, indent=2, default=str) + "\n", encoding="utf-8")
+
+def wsl(path):
+    value = str(path).replace("\\", "/")
+    return "/mnt/" + value[0].lower() + value[2:]
+
+def api(route, payload=None, timeout=15):
+    data = None if payload is None else json.dumps(payload).encode()
+    request = urllib.request.Request("http://127.0.0.1:11434/api/" + route, data=data, headers={"Content-Type": "application/json"})
+    with urllib.request.urlopen(request, timeout=timeout) as response:
+        return json.load(response)
+
+BOOTSTRAP = r'''
+import functools, hashlib, json, os, sys, threading, time, zipfile
+from pathlib import Path
+
+cfg = json.loads(Path(sys.argv[1]).read_text())
+root = Path(cfg["root"])
+wheel = Path(cfg["wheel"])
+assert hashlib.sha256(wheel.read_bytes()).hexdigest() == cfg["wheel_sha"]
+extracted = root / "extracted-wheel"
+extracted.mkdir()
+with zipfile.ZipFile(wheel) as archive:
+    archive.extractall(extracted)
+preserved = {k: v for k, v in os.environ.items() if k in {"HOME", "USER", "LOGNAME", "PATH", "LANG", "WSL_INTEROP", "WSL_DISTRO_NAME", "SYSTEMROOT", "SystemRoot"}}
+os.environ.clear()
+os.environ.update(preserved)
+os.environ.update(cfg["env"])
+sys.dont_write_bytecode = True
+sys.path[:0] = [str(extracted), "/tmp/mnemos-hermes-cwd-compat-v1"]
+os.chdir(cfg["project"])
+trace_lock = threading.Lock()
+def record(data):
+    with trace_lock:
+        with (root / "callbacks.jsonl").open("a") as out:
+            out.write(json.dumps({"time": time.time(), **data}, default=str) + "\n")
+
+from mnemos.bridge import BridgeClient
+original_bridge_request = BridgeClient.request
+async def bridge_request(self, operation, payload=None, **kwargs):
+    result = await original_bridge_request(self, operation, payload, **kwargs)
+    record({"operation": "bridge_response", "request_operation": operation,
+        "event_id": (payload or {}).get("event_id"),
+        "response": {k: v for k, v in result.items() if k in {"status", "committed", "reason", "error", "event_id", "job_id", "processing_status"}}})
+    return result
+BridgeClient.request = bridge_request
+from mnemos.adapters.hermes import MnemosHermesProvider
+record({"operation": "bootstrap", "adapter_file": __import__("mnemos.adapters.hermes", fromlist=["x"]).__file__})
+def observe(name):
+    original = getattr(MnemosHermesProvider, name)
+    @functools.wraps(original)
+    def wrapped(self, *args, **kwargs):
+        started = time.monotonic()
+        try:
+            value = original(self, *args, **kwargs)
+        except BaseException as exc:
+            record({"operation": name, "error_type": type(exc).__name__, "error": str(exc)})
+            raise
+        record({"operation": name, "elapsed_ms": (time.monotonic()-started)*1000,
+                "result": value if isinstance(value, (str, bool, type(None))) else str(type(value)),
+                "session_id": self.session_id, "cwd": self.cwd})
+        return value
+    setattr(MnemosHermesProvider, name, wrapped)
+for method in ("initialize", "prefetch", "sync_turn", "on_session_end", "shutdown", "on_memory_write", "_capture_now", "_flush"):
+    observe(method)
+
+# Observe effective requests without recording credentials or unrelated messages.
+import openai.resources.chat.completions as completion_api
+original_create = completion_api.Completions.create
+@functools.wraps(original_create)
+def create(self, *args, **kwargs):
+    record({"operation": "model_request", "model": kwargs.get("model"),
+            "reasoning_effort": kwargs.get("reasoning_effort"), "extra_body": {k: v for k, v in (kwargs.get("extra_body") or {}).items() if k not in {"messages", "tools"}},
+            "message_count": len((kwargs.get("messages") or (kwargs.get("extra_body") or {}).get("messages", []))), "tool_count": len((kwargs.get("tools") or (kwargs.get("extra_body") or {}).get("tools", [])))})
+    return original_create(self, *args, **kwargs)
+completion_api.Completions.create = create
+sys.argv = ["hermes", "chat", "--query-file", str(root / "query.txt"), "--oneshot", "--quiet",
+            "--in", cfg["project"], "--model", cfg["model"], "--provider", "custom", "--reasoning", "none",
+            "--toolsets", "memory", "--max-turns", "2", "--run-budget", "120"]
+from hermes_cli.main import main
+try:
+    main()
+finally:
+    record({"operation": "hermes_source", "module_origins": {name: getattr(sys.modules.get(name), "__file__", None) for name in ("hermes_cli.main", "hermes_cli.cli_agent_setup_mixin", "agent.agent_init", "agent.memory_provider")}})
+'''
+
+def main():
+    ROOT.mkdir(exist_ok=False)
+    report = {"started_at": datetime.now(timezone.utc).isoformat(), "status": "running", "source_commit": SOURCE, "wheel_sha256": WHEEL_SHA, "hermes_commit": HERMES_SOURCE, "live_configuration_changed": False, "host_compatibility_patch": "docs/integrations/hermes-cli-session-cwd.patch", "scope": "native single-turn baseline recall and raw capture, not full lifecycle acceptance"}
+    save("report.json", report)
+    service = None
+    try:
+        checks = json.loads((WHEEL.parent.parent / "verification.json").read_text())
+        assert checks["status"] == "passed" and checks["source_commit"] == SOURCE
+        installed = json.loads(Path("C:/Users/Ant/AppData/Local/Temp/mnemos-installed-checks-hermes-safety-v2/installation.json").read_text())
+        assert installed["status"] == "passed"
+        assert installed["bindings_after"]["commit"] == SOURCE
+        assert installed["bindings_after"]["wheel_sha256"] == WHEEL_SHA
+        report["package_checks"] = str(WHEEL.parent.parent / "verification.json")
+        patch = subprocess.check_output(["wsl.exe", "-d", "Debian", "--", "git", "-C", "/tmp/mnemos-hermes-cwd-compat-v1", "diff"], text=True)
+        assert "cwd=os.path.abspath(os.getcwd())" in patch
+        (ROOT / "host-compatibility.patch").write_text(patch, encoding="utf-8")
+        report["host_patch_sha256"] = hashlib.sha256(patch.encode()).hexdigest()
+        assert hashlib.sha256(WHEEL.read_bytes()).hexdigest() == WHEEL_SHA
+        import mnemos
+        report["installed_package"] = mnemos.__file__
+        assert "mnemos-installed-hermes-safety-v2" in str(mnemos.__file__)
+        revision = subprocess.check_output(["wsl.exe", "-d", "Debian", "--", "git", "-C", "/home/anthony/.hermes/hermes-agent", "rev-parse", "HEAD"], text=True).strip()
+        assert revision == HERMES_SOURCE, revision
+        tags = api("tags")
+        current = {item["name"]: item["digest"] for item in tags["models"]}
+        assert all(current.get(name) == digest for name, digest in DIGESTS.items())
+        report["models"] = DIGESTS
+        report["ollama_version"] = api("version")
+        save("ps-before.json", api("ps"))
+        from mnemos.client import MnemosClient
+        from mnemos.config import MnemosConfig, ModuleConfig
+        from mnemos.engine import MnemosEngine
+        from mnemos.memory_service import LocalMemoryService
+        from mnemos.scopes import ScopeRegistry
+        from mnemos.service import MnemosService
+        from mnemos.utils.embeddings import OllamaEmbeddingProvider
+        from mnemos.utils.llm import UnavailableLLMProvider
+        from mnemos.utils.storage import SQLiteStore
+
+        registry = ScopeRegistry()
+        contexts = {}
+        for label in ("project", "foreign-project"):
+            directory = ROOT / label
+            directory.mkdir()
+            project = registry.register_project(directory, user_profile_id="native-fixture", enabled=True)
+            project.aliases.append(wsl(directory))
+            contexts[label] = registry.resolve(directory, user_profile_id="native-fixture", session_id="native-seed", host="manual").model_dump(mode="json")
+        registry.save(ROOT / "scopes.json")
+        config = MnemosConfig(modules=ModuleConfig(**{name: False for name in ModuleConfig.model_fields}))
+        config.surprisal.embedding_dim = 768
+        def factory():
+            embedder = OllamaEmbeddingProvider(base_url="http://127.0.0.1:11434", timeout=30)
+            engine = MnemosEngine(config=config, llm=UnavailableLLMProvider(), embedder=embedder,
+                                  store=SQLiteStore(str(ROOT / "memory.sqlite")), scope_registry=registry,
+                                  require_scope_context=True, owns_providers=True)
+            return LocalMemoryService(engine, registry)
+        service = MnemosService(dispatcher_factory=factory, descriptor_path=ROOT / "runtime.json", startup_timeout=10, dispatch_timeout=40)
+        service.start()
+        client = MnemosClient(descriptor_path=ROOT / "runtime.json", outbox_path=ROOT / "outbox.json", auto_start=False, request_timeout=40)
+        for label, content in (("project", "The project's release label is granite-lark-731."), ("foreign-project", "The project's release label is forbidden-foreign-canary-992.")):
+            result = asyncio.run(client.request("remember", {"context": contexts[label], "event_id": "seed-" + label, "role": "user", "content": content, "scope": "project", "source_ref": "synthetic-native-fixture"}, queue_on_failure=False))
+            assert result.get("status") == "committed", result
+            save("seed-" + label + ".json", result)
+            processed = asyncio.run(client.request("maintenance", {"context": contexts[label]}, queue_on_failure=False))
+            save("maintenance-" + label + ".json", processed)
+            retrieved = asyncio.run(client.request("retrieve", {"context": contexts[label], "query": "What is the project release label?", "allowed_scopes": ["project"], "profile": "baseline", "top_k": 5}, queue_on_failure=False))
+            save("seed-retrieve-" + label + ".json", retrieved)
+            assert content in retrieved.get("context", ""), retrieved
+
+        # A separate cold preflight, excluded from native conversation timing.
+        started = time.monotonic()
+        loaded = api("generate", {"model": MODEL, "prompt": "", "stream": False, "think": False, "options": {"num_ctx": 65536}, "keep_alive": "10m"}, timeout=180)
+        report["cold_load_seconds"] = time.monotonic() - started
+        save("model-load.json", loaded)
+        save("ps-loaded.json", api("ps"))
+        gpu = subprocess.run(["nvidia-smi", "--query-gpu=name,memory.total,memory.used,driver_version", "--format=csv"], capture_output=True, text=True, timeout=10)
+        (ROOT / "gpu.txt").write_text(gpu.stdout + gpu.stderr, encoding="utf-8")
+        home = ROOT / "hermes-home"
+        home.mkdir()
+        model_config = {"model": {"default": MODEL, "provider": "custom", "base_url": "http://127.0.0.1:11434/v1", "api_key": "ollama", "context_length": 65536, "ollama_num_ctx": 65536}, "memory": {"provider": "mnemos"}}
+        (home / "config.yaml").write_text(json.dumps(model_config, indent=2), encoding="utf-8")
+        (ROOT / "query.txt").write_text("What is this project's release label? Use the memory supplied to this conversation. Reply with the label only; if unknown, say unknown. Do not write or change any memory.", encoding="utf-8")
+        bridge = [wsl(sys.executable), "-m", "mnemos.bridge", "--descriptor", str(ROOT / "runtime.json")]
+        bootstrap_config = {"root": wsl(ROOT), "wheel": wsl(WHEEL), "wheel_sha": WHEEL_SHA,
+            "project": wsl(ROOT / "project"), "model": MODEL,
+            "env": {"HERMES_HOME": wsl(home), "HERMES_ENABLE_PROJECT_PLUGINS": "0", "MNEMOS_SCOPE_REGISTRY": wsl(ROOT / "scopes.json"),
+                "MNEMOS_ROUTING_REVIEW_DIR": wsl(ROOT / "routing-review"), "MNEMOS_USER_PROFILE_ID": "native-fixture", "MNEMOS_BRIDGE_COMMAND": json.dumps(bridge),
+                "OPENAI_BASE_URL": "http://127.0.0.1:11434/v1", "OPENAI_API_KEY": "ollama", "PYTHONIOENCODING": "utf-8"}}
+        save("bootstrap-config.json", bootstrap_config)
+        (ROOT / "bootstrap.py").write_text(BOOTSTRAP, encoding="utf-8")
+        started = time.monotonic()
+        with (ROOT / "native.stdout.log").open("wb") as stdout, (ROOT / "native.stderr.log").open("wb") as stderr:
+            result = subprocess.run(["wsl.exe", "-d", "Debian", "--", "timeout", "--signal=TERM", "--kill-after=5s", "180s", "/home/anthony/.hermes/hermes-agent/venv/bin/python", wsl(ROOT / "bootstrap.py"), wsl(ROOT / "bootstrap-config.json")], stdout=stdout, stderr=stderr, timeout=200)
+        report["native_seconds"] = time.monotonic() - started
+        report["native_exit_code"] = result.returncode
+        save("ps-after.json", api("ps"))
+        service.stop()
+        service = None
+        with sqlite3.connect(ROOT / "memory.sqlite") as db:
+            db.row_factory = sqlite3.Row
+            captured = [dict(row) for row in db.execute("select id,role,content,scope,scope_id,user_profile_id,session_id,source,metadata from episodic_events where source='hermes'")]
+            save("persisted-native-events.json", captured)
+        callbacks = [json.loads(line) for line in (ROOT / "callbacks.jsonl").read_text().splitlines()]
+        prefetch = [row for row in callbacks if row["operation"] == "prefetch"]
+        answer = (ROOT / "native.stdout.log").read_text(encoding="utf-8")
+        report["checks"] = {
+            "native_exit_zero": result.returncode == 0,
+            "initialized": any(row["operation"] == "initialize" and "error" not in row for row in callbacks),
+            "prefetch_seed": any("granite-lark-731" in str(row.get("result")) for row in prefetch),
+            "no_foreign_prefetch": bool(prefetch) and all("forbidden-foreign-canary-992" not in str(row.get("result")) for row in prefetch),
+            "answer_seed": "granite-lark-731" in answer,
+            "native_sync_turn": any(row["operation"] == "sync_turn" for row in callbacks),
+            "accepted_capture": any(row["operation"] == "_capture_now" and row.get("result") is True for row in callbacks),
+            "persisted_user_and_assistant": {row["role"] for row in captured} == {"user", "assistant"},
+            "persisted_user_prompt": any(row["role"] == "user" and row["content"] == (ROOT / "query.txt").read_text() for row in captured),
+            "persisted_assistant_answer": any(row["role"] == "assistant" and "granite-lark-731" in row["content"] for row in captured),
+            "persisted_scope": bool(captured) and all(row["scope_id"] == contexts["project"]["project_id"] and row["user_profile_id"] == "native-fixture" for row in captured),
+            "no_foreign_answer": "forbidden-foreign-canary-992" not in answer,
+            "no_provider_errors": all("error" not in row for row in callbacks),
+            "effective_context_and_reasoning": any(row["operation"] == "model_request" and row.get("tool_count",0) > 0 and row.get("reasoning_effort") == "none" and row.get("extra_body",{}).get("options",{}).get("num_ctx") == 65536 for row in callbacks),
+        }
+        bridges = [row for row in callbacks if row["operation"] == "bridge_response" and row["request_operation"] == "capture"]
+        report["checks"]["all_bridge_captures_accepted"] = bool(bridges) and all(row["response"].get("status") in {"committed", "queued"} or row["response"].get("committed") is True for row in bridges)
+        origins = [row["module_origins"] for row in callbacks if row["operation"] == "hermes_source"]
+        report["checks"]["isolated_patched_host_modules"] = bool(origins) and all(str(value).startswith("/tmp/mnemos-hermes-cwd-compat-v1/") for value in origins[-1].values())
+        report["status"] = "passed" if all(report["checks"].values()) else "failed"
+    except BaseException as exc:
+        report["status"] = "failed"
+        report["error"] = str(exc)
+        (ROOT / "failure.txt").write_text(traceback.format_exc(), encoding="utf-8")
+    finally:
+        if service is not None:
+            service.stop()
+        report["finished_at"] = datetime.now(timezone.utc).isoformat()
+        save("report.json", report)
+        print(json.dumps(report, indent=2))
+    return 0 if report["status"] == "passed" else 1
+
+if __name__ == "__main__":
+    raise SystemExit(main())

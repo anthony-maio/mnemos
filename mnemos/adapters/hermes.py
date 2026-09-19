@@ -161,10 +161,10 @@ class MnemosHermesProvider(_HermesMemoryProvider):  # type: ignore[misc]  # Opti
         self.hermes_home = ""
         self.cwd = ""
         self._context: ScopeContext | None = None
-        self._prefetch_cache: dict[tuple[str, str], str] = {}
         self._threads: list[threading.Thread] = []
         self._threads_lock = threading.RLock()
         self._mirror_ids: set[str] = set()
+        self._occurrence_times: dict[str, str] = {}
         self._lifecycle_diagnostics: list[dict[str, str]] = []
         self._failed_capture_ids: set[str] = set()
         self._failed_checkpoint = False
@@ -192,7 +192,6 @@ class MnemosHermesProvider(_HermesMemoryProvider):  # type: ignore[misc]  # Opti
 
     def initialize(self, session_id: str, **kwargs: Any) -> None:
         self._context = None
-        self._prefetch_cache.clear()
         self.session_id = str(session_id or "").strip()
         self.hermes_home = str(kwargs.get("hermes_home") or "").strip()
         self.cwd = str(kwargs.get("cwd") or "").strip()
@@ -267,10 +266,15 @@ class MnemosHermesProvider(_HermesMemoryProvider):  # type: ignore[misc]  # Opti
         self, context: ScopeContext, *, role: str, content: str, source: str
     ) -> dict[str, Any]:
         event_id = self._event_id(context, role=role, content=content, source=source)
+        with self._threads_lock:
+            occurred_at = self._occurrence_times.get(event_id)
+            if occurred_at is None:
+                occurred_at = datetime.now(timezone.utc).isoformat()
+                self._occurrence_times[event_id] = occurred_at
         return {
             "event_id": event_id,
             "context": context.model_dump(mode="json"),
-            "occurred_at": datetime.now(timezone.utc).isoformat(),
+            "occurred_at": occurred_at,
             "role": role,
             "content": content,
             "source_kind": "hermes_memory_provider",
@@ -372,9 +376,6 @@ class MnemosHermesProvider(_HermesMemoryProvider):  # type: ignore[misc]  # Opti
             return ""
         try:
             context = self._current_context(session_id)
-            key = (context.session_id, query)
-            if key in self._prefetch_cache:
-                return self._prefetch_cache[key]
             result = self.client.retrieve(
                 {
                     "query": query,
@@ -386,16 +387,13 @@ class MnemosHermesProvider(_HermesMemoryProvider):  # type: ignore[misc]  # Opti
                 }
             )
             rendered = self._format_context(_run_sync(result))
-            self._prefetch_cache[key] = rendered
-            while len(self._prefetch_cache) > 32:
-                self._prefetch_cache.pop(next(iter(self._prefetch_cache)))
             return rendered
         except Exception:
             return ""
 
     def queue_prefetch(self, query: str, *, session_id: str = "") -> None:
-        # Hermes calls this after a completed turn.  Prefetch stays bounded and
-        # cached; a failed warm-up is retried by the next ordinary prefetch.
+        # Hermes calls this after a completed turn. Keep this best-effort warmup
+        # asynchronous; ordinary prefetch always reads the current service.
         if not _text(query):
             return
 
@@ -462,7 +460,6 @@ class MnemosHermesProvider(_HermesMemoryProvider):  # type: ignore[misc]  # Opti
         self._flush(timeout=3.0)
         self.session_id = chosen
         self._context = self._resolve_context(chosen)
-        self._prefetch_cache.clear()
         if reset:
             self._mirror_ids.clear()
 

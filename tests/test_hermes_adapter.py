@@ -12,6 +12,7 @@ from mnemos.adapters.hermes import (
     MnemosHermesProvider,
     capabilities,
 )
+from mnemos.client import Outbox
 from mnemos.scopes import ScopeRegistry
 
 
@@ -182,22 +183,33 @@ def test_initialize_uses_session_cwd_and_profile_scope(tmp_path: Path) -> None:
     assert provider._context.session_id == "s1"
 
 
-def test_session_switch_rebinds_context_and_cache(tmp_path: Path) -> None:
-    instance = make_provider(tmp_path)
+def test_session_switch_rebinds_context_and_reads_current_service(tmp_path: Path) -> None:
+    client = FakeClient()
+    instance = make_provider(tmp_path, client)
     instance.prefetch("a useful project query")
     instance.on_session_switch("hermes-session-2", reset=True)
     assert instance.session_id == "hermes-session-2"
     assert instance._context is not None
     assert instance._context.session_id == "hermes-session-2"
-    assert instance._prefetch_cache == {}
+    instance.prefetch("a useful project query")
+    assert len(client.retrieves) == 2
+    assert client.retrieves[-1]["context"]["session_id"] == "hermes-session-2"
 
 
-def test_prefetch_is_bounded_cached_and_scoped(tmp_path: Path) -> None:
-    client = FakeClient()
+def test_prefetch_reads_current_service_each_time(tmp_path: Path) -> None:
+    class ChangingClient(FakeClient):
+        result = "1. remembered local convention"
+
+        async def retrieve(self, payload: dict[str, Any]) -> dict[str, Any]:
+            self.retrieves.append(payload)
+            return {"context": self.result}
+
+    client = ChangingClient()
     instance = make_provider(tmp_path, client)
     assert instance.prefetch("What local convention applies?") == "1. remembered local convention"
-    assert instance.prefetch("What local convention applies?") == "1. remembered local convention"
-    assert len(client.retrieves) == 1
+    client.result = "2. corrected current convention"
+    assert instance.prefetch("What local convention applies?") == "2. corrected current convention"
+    assert len(client.retrieves) == 2
     assert client.retrieves[0]["context"]["user_profile_id"] == "alice"
     assert client.retrieves[0]["max_context_tokens"] == 1200
 
@@ -268,6 +280,36 @@ def test_memory_write_mirroring_deduplicates_repeated_callbacks(tmp_path: Path) 
     instance.shutdown()
     assert len(client.captures) == 1
     assert client.captures[0]["source_kind"] == "hermes_memory_provider"
+
+
+def test_repeated_same_event_reuses_occurrence_and_changed_content_gets_new_identity(
+    tmp_path: Path,
+) -> None:
+    outbox = Outbox(tmp_path / "outbox.json")
+
+    class OutboxClient:
+        def __init__(self) -> None:
+            self.payloads: list[dict[str, Any]] = []
+
+        async def capture(self, payload: dict[str, Any]) -> dict[str, Any]:
+            self.payloads.append(payload)
+            outbox.append(payload)
+            return {"status": "queued", "committed": False}
+
+    client = OutboxClient()
+    instance = make_provider(tmp_path, client)  # type: ignore[arg-type]
+    messages = [{"role": "user", "content": "Use the stable release label."}]
+    instance.sync_turn("", "", messages=messages)
+    instance.on_session_end(messages)
+    instance.sync_turn("", "", messages=[{"role": "user", "content": "Use a new label."}])
+
+    instance.shutdown()
+    pending = outbox.pending()
+    assert len(client.payloads) == 3
+    assert client.payloads[0]["event_id"] == client.payloads[1]["event_id"]
+    assert client.payloads[0]["occurred_at"] == client.payloads[1]["occurred_at"]
+    assert client.payloads[0]["event_id"] != client.payloads[2]["event_id"]
+    assert len(pending) == 2
 
 
 def test_memory_write_lifecycle_actions_do_not_reingest_content(tmp_path: Path) -> None:
@@ -388,3 +430,80 @@ def test_async_capture_exception_remains_a_reported_failure(tmp_path: Path) -> N
     instance.on_memory_write("add", "memory", "Keep this")
     assert instance._flush() is False
     assert instance.get_lifecycle_diagnostics()[-1]["status"] == "capture_failed"
+
+
+def test_prefetch_observes_external_correction_and_forget(tmp_path: Path) -> None:
+    import asyncio
+
+    from mnemos.client import MnemosClient
+    from mnemos.config import MnemosConfig, ModuleConfig
+    from mnemos.engine import MnemosEngine
+    from mnemos.memory_service import LocalMemoryService
+    from mnemos.service import MnemosService
+    from mnemos.utils.embeddings import SimpleEmbeddingProvider
+    from mnemos.utils.llm import UnavailableLLMProvider
+    from mnemos.utils.storage import SQLiteStore
+
+    registry = ScopeRegistry()
+    registry.register_project(tmp_path, user_profile_id="alice", enabled=True)
+    context = registry.resolve(
+        tmp_path, user_profile_id="alice", session_id="external-session", host="codex"
+    ).model_dump(mode="json")
+
+    def factory() -> LocalMemoryService:
+        engine = MnemosEngine(
+            config=MnemosConfig(
+                modules=ModuleConfig(**{name: False for name in ModuleConfig.model_fields})
+            ),
+            llm=UnavailableLLMProvider(),
+            embedder=SimpleEmbeddingProvider(),
+            store=SQLiteStore(str(tmp_path / "memory.sqlite")),
+        )
+        return LocalMemoryService(engine, registry)
+
+    service = MnemosService(dispatcher_factory=factory, descriptor_path=tmp_path / "runtime.json")
+    service.start()
+    client = MnemosClient(descriptor_path=service.descriptor_path, auto_start=False)
+    provider = MnemosHermesProvider(client=client, registry=registry, user_profile_id="alice")
+    provider.initialize("hermes-session", cwd=str(tmp_path))
+
+    def request(operation: str, **payload: Any) -> dict[str, Any]:
+        return asyncio.run(
+            client.request(operation, {"context": context, **payload}, queue_on_failure=False)
+        )
+
+    try:
+        assert (
+            request(
+                "remember",
+                event_id="seed",
+                role="user",
+                content="The project release label is cedar.",
+                scope="project",
+            )["status"]
+            == "committed"
+        )
+        request("maintenance")
+        fact = request("list", allowed_scopes=["project"])["facts"][0]
+        query = "What is the project release label?"
+        assert "cedar" in provider.prefetch(query)
+        assert (
+            request(
+                "correct",
+                fact_id=fact["id"],
+                expected_version=1,
+                event_id="correction",
+                content="The project release label is maple.",
+            )["status"]
+            == "committed"
+        )
+        request("maintenance")
+        corrected = provider.prefetch(query)
+        assert "maple" in corrected
+        assert "cedar" not in corrected
+        assert request("forget", fact_id=fact["id"], expected_version=2)["forgotten"] is True
+        assert provider.prefetch(query) == ""
+    finally:
+        provider.shutdown()
+        asyncio.run(client.close())
+        service.stop()

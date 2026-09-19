@@ -1,5 +1,12 @@
 # Native Hermes WSL smoke
 
+Current update: the [September 19 local attempts](../2026-09-19/native-hermes-local-v1/README.md)
+completed native model turns but exposed missing session cwd. The subsequent
+[isolated patched-host run](../2026-09-19/native-hermes-local-v3/README.md)
+passed explicit scope and recall, then failed duplicate callback admission.
+These records supersede the historical no-completed-turn observation below;
+full native acceptance remains open.
+
 Date: 2026-09-16
 
 This bounded check used the installed Hermes Agent WSL environment at

@@ -29,7 +29,9 @@ The provider receives the active Hermes `cwd`, `hermes_home`, and
 that session context. It does not use the process working directory as a
 conversation identity and it does not silently join a different profile.
 
-Initialization clears previously resolved scope and cached recall. If the host
+Initialization clears previously resolved scope. Every ordinary prefetch reads
+the current service result so another client's correction or deletion is visible.
+If the host
 omits `cwd`, later callbacks remain unable to retrieve or capture. The installed
 September 19 Hermes CLI does omit it, including when `--in` is supplied. The
 [native attempts](../validation/2026-09-19/native-hermes-local-v1/README.md)
@@ -45,6 +47,12 @@ patched-host evidence separate from support in an unmodified installation.
 assistant evidence without blocking the Hermes turn. The local service or its
 durable outbox acknowledges each accepted event. Repeated callbacks use stable
 event identities and do not create another observation.
+
+Repeated callbacks within one provider instance reuse the event's original
+capture timestamp, keeping concurrent outbox payloads identical. The timestamp
+map is provider-lifetime state; recovery of that timestamp in a newly created
+provider is not established by the native single-turn fixture. Durable replay
+continues to use the payload retained in the outbox.
 
 Built-in memory `add` notifications can be mirrored. `remove` and `replace`
 notifications do not contain verified Mnemos fact IDs and versions, so the

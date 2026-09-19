@@ -4,6 +4,14 @@ This record covers the unreleased `wt/functional-local-memory` worktree. It
 separates implemented behavior from acceptance evidence. The original task
 boundaries and thresholds remain in the [implementation plan](../../plans/2026-09-16-functional-local-memory.md).
 
+The newer [Hermes safety checkpoint](../2026-09-19/hermes-safety-checkpoint-v1/README.md)
+at `51904d3` passes 1,170 source tests with four skips, all six source/package
+checks, 482 isolated installed cases with two matching skips, and seven replay
+assertions. It supersedes the package counts below. The
+[patched native CLI attempt](../2026-09-19/native-hermes-local-v3/README.md)
+passed explicit scope and recall, but failed duplicate capture admission.
+Native Hermes acceptance remains open; live host configuration is unchanged.
+
 The latest [recovery checkpoint](../2026-09-19/loopback-recovery-checkpoint-v1/README.md)
 at `de6cdcf` passes 1,160 source tests with four skips, all six source/package
 checks, 474 isolated installed contract cases with two matching skips, and
