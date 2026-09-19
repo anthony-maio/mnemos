@@ -8,6 +8,25 @@ This is a chronological checkpoint log. Later entries supersede earlier test
 counts and open implementation items. An implementation or focused check does
 not close a native-host, quality, performance, or pilot gate.
 
+## September 19: installed Hermes API recovery and graph diagnosis
+
+The [API recovery observation](../2026-09-19/hermes-api-recovery-v1/README.md)
+passes on the verified `5e4b057` wheel. Three fresh WSL MemoryManager processes
+use the real Windows bridge and outbox. Two outage captures survive process
+exit, the required checkpoint is durably backed, and an ordinary request
+drains the queue after explicit service restoration. Two event/job identities
+and their original timestamps persist without duplication. Exact forgetting
+survives another restart and transcript replay, with both controls unchanged.
+This is fixture-provider API evidence, not native model or automatic daemon
+recovery acceptance. Live settings and source remain unchanged.
+
+The [graph diagnosis](../2026-09-19/graph-coverage-diagnosis-v1/README.md)
+reconciles all 150 original held-out observations without rerunning inference:
+every target is disconnected from the actual selected seed even when traversal
+limits are ignored. Threshold or depth changes alone cannot repair those
+graphs. The failed coverage result remains intact; association formation needs
+separate development work before another prospective utility experiment.
+
 ## September 19: Hermes lifecycle checkpoint and writing handoff refresh
 
 The [successor checkpoint](../2026-09-19/hermes-lifecycle-checkpoints-v1/README.md)

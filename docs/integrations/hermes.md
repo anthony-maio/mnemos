@@ -137,3 +137,12 @@ discovery checks are recorded separately in the
 [compatibility matrix](../client-compatibility-matrix.md); the native model
 v4 run passes bounded session authority, recall, and raw capture with an
 isolated CLI patch. The complete native lifecycle contract remains open.
+
+The [installed API recovery probe](../validation/2026-09-19/hermes-api-recovery-v1/README.md)
+separately verifies buffering during an outage, ordinary-request outbox drain
+after explicit restoration, timestamp identity across fresh host processes,
+and forget suppression across restart and replay. Its required checkpoint
+success means evidence is durable in the outbox. The first retrieval that
+drains that queue can still return no facts; maintenance and a later retrieval
+are needed to observe extracted memory. This fixture-provider check does not
+establish full native model lifecycle or automatic daemon restoration.

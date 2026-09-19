@@ -1,0 +1,350 @@
+"""Bounded installed-Hermes outage and restart recovery probe.
+
+This helper is intentionally unexecuted until the protocol owner collects a
+fresh result.  It uses fixture embeddings and an unavailable cognition
+provider.  The coordinator restores only its disposable fixture service; the
+host bridge's automatic start attempt is isolated behind a malformed config.
+"""
+
+from __future__ import annotations
+
+import argparse
+import asyncio
+from datetime import datetime, timezone
+import hashlib
+import json
+import os
+from pathlib import Path
+import sqlite3
+import subprocess
+import sys
+import time
+import traceback
+
+
+parser = argparse.ArgumentParser()
+parser.add_argument("--checks", type=Path, required=True)
+parser.add_argument("--installed-checks", type=Path, required=True)
+parser.add_argument("--output", type=Path, required=True)
+args = parser.parse_args()
+root = args.output.resolve()
+root.mkdir(exist_ok=False)
+
+
+def save(name: str, value: object) -> None:
+    (root / name).write_text(json.dumps(value, indent=2, sort_keys=True) + "\n", encoding="utf-8")
+
+
+def wsl(path: Path) -> str:
+    value = str(path).replace("\\", "/")
+    return "/mnt/" + value[0].lower() + value[2:]
+
+
+HOST_BOOTSTRAP = r'''
+import asyncio, hashlib, json, os, sys, time, zipfile
+from pathlib import Path
+cfg = json.loads(Path(sys.argv[1]).read_text())
+root = Path(cfg["root"])
+preserved = {k: v for k, v in os.environ.items() if k in {"HOME", "USER", "LOGNAME", "PATH", "LANG", "WSL_INTEROP", "WSL_DISTRO_NAME"}}
+os.environ.clear()
+os.environ.update(preserved)
+os.environ.update(cfg["env"])
+sys.dont_write_bytecode = True
+wheel = Path(cfg["wheel"])
+assert hashlib.sha256(wheel.read_bytes()).hexdigest() == cfg["wheel_sha"]
+extracted = root / cfg.get("extract_dir", "wheel")
+extracted.mkdir()
+with zipfile.ZipFile(wheel) as archive:
+    archive.extractall(extracted)
+sys.path[:0] = [str(extracted), "/home/anthony/.hermes/hermes-agent"]
+from agent.memory_manager import MemoryManager
+from mnemos.adapters.hermes import MnemosHermesProvider, HERMES_API_AVAILABLE
+assert HERMES_API_AVAILABLE
+manager = MemoryManager()
+provider = MnemosHermesProvider()
+manager.add_provider(provider)
+manager.initialize_all(cfg["session_id"], cwd=cfg["project"])
+messages = [{"role": "user", "content": "Outage occurrence one."}, {"role": "assistant", "content": "Outage response one."}]
+report = {"callback": {}, "shutdown": {}, "diagnostics": [], "pid":os.getpid(),
+          "host_module":__import__('agent.memory_manager',fromlist=['x']).__file__,
+          "adapter_module":__import__('mnemos.adapters.hermes',fromlist=['x']).__file__}
+started = time.monotonic()
+try:
+    if cfg["mode"] == "outage":
+        manager.sync_all(messages[0]["content"], messages[1]["content"], session_id=cfg["session_id"], messages=messages)
+        report["callback"]["sync_submitted"] = True
+        report["callback"]["flush"] = bool(manager.flush_pending(timeout=15)) and bool(provider._flush(timeout=15))
+        report["callback"]["result"] = provider.on_pre_compress(messages, require_checkpoint=True)
+        report["callback"]["checkpoint"] = "accepted"
+    else:
+        report["callback"]["retrieve"] = manager.handle_tool_call("mnemos_retrieve", {"query": "outage occurrence"})
+        assert 'facts' in json.loads(report["callback"]["retrieve"])
+        pending = root / "outbox.json"
+        report["callback"]["outbox_pending_after_drain"] = len(json.loads(pending.read_text()) if pending.exists() else [])
+        assert report["callback"]["outbox_pending_after_drain"] == 0
+        manager.sync_all(messages[0]["content"], messages[1]["content"], session_id=cfg["session_id"], messages=messages)
+        report["callback"]["flush"] = bool(manager.flush_pending(timeout=15)) and bool(provider._flush(timeout=15))
+        report["callback"]["checkpoint"] = "replayed"
+except Exception as exc:
+    report["callback"]["checkpoint"] = "failed"
+    report["callback"]["error"] = str(exc)
+finally:
+    outbox = root / "outbox.json"
+    report["callback"]["pending_outbox_entries"] = len(json.loads(outbox.read_text()) if outbox.exists() else [])
+    try:
+        manager.shutdown_all()
+        report["shutdown"]["status"] = "completed"
+    except Exception as exc:
+        report["shutdown"]["status"] = "failed"
+        report["shutdown"]["error"] = str(exc)
+    report["diagnostics"] = provider.get_lifecycle_diagnostics()
+    report["elapsed_seconds"] = time.monotonic()-started
+(root / cfg["report"]).write_text(json.dumps(report, indent=2, sort_keys=True) + "\n")
+'''
+
+BRIDGE_WRAPPER = r'''
+import os, runpy, sys
+from pathlib import Path
+config, descriptor, deadline = sys.argv[1:4]
+os.chdir(Path(config).parent)
+for key in list(os.environ):
+    if key.startswith("MNEMOS_"):
+        os.environ.pop(key, None)
+os.environ["MNEMOS_CONFIG_PATH"] = config
+os.environ["MNEMOS_RUNTIME_DESCRIPTOR"] = descriptor
+os.environ["PYTHONNOUSERSITE"] = "1"
+sys.argv = ["mnemos.bridge", "--descriptor", descriptor, "--deadline", deadline]
+runpy.run_module("mnemos.bridge", run_name="__main__")
+'''
+
+
+def fixture_factory(root: Path, registry: object, config: object):
+    from mnemos.engine import MnemosEngine
+    from mnemos.memory_service import LocalMemoryService
+    from mnemos.utils.embeddings import SimpleEmbeddingProvider
+    from mnemos.utils.llm import UnavailableLLMProvider
+    from mnemos.utils.storage import SQLiteStore
+
+    def factory():
+        return LocalMemoryService(
+            MnemosEngine(
+                config=config,
+                llm=UnavailableLLMProvider(),
+                embedder=SimpleEmbeddingProvider(),
+                store=SQLiteStore(str(root / "memory.sqlite")),
+                scope_registry=registry,
+                require_scope_context=True,
+            ),
+            registry,
+        )
+
+    return factory
+
+
+record: dict[str, object] = {
+    "status": "running",
+    "started_at": datetime.now(timezone.utc).isoformat(),
+    "scope": "installed Hermes API outage/restart recovery with fixture providers; no model conversation",
+    "live_configuration_changed": False,
+    "automatic_daemon_recovery": False,
+}
+service = None
+phase_started = time.monotonic()
+try:
+    checks = json.loads(args.checks.read_text(encoding="utf-8"))
+    installed = json.loads(args.installed_checks.read_text(encoding="utf-8"))
+    assert checks["status"] == installed["status"] == "passed"
+    wheel = next(Path(item["file"]) for item in checks["artifacts"] if item["file"].endswith(".whl"))
+    wheel_sha = hashlib.sha256(wheel.read_bytes()).hexdigest()
+    assert installed["bindings_after"]["wheel_sha256"] == wheel_sha
+    assert installed["bindings_after"]["commit"] == checks["source_commit"]
+    assert checks['source_commit']=='5e4b057b16906c2ec7dd302ae80748ef1ac5eddc'
+    import mnemos
+    assert Path(mnemos.__file__).resolve().is_relative_to(Path(sys.executable).resolve().parent.parent)
+    record['installed_module'] = mnemos.__file__
+    record['bridge_deadline_seconds'] = 2
+    record['host_deadline_seconds'] = 180
+    protocol = Path(__file__).resolve().parents[1] / "docs" / "plans" / "2026-09-19-hermes-api-recovery-protocol-v1.md"
+    record.update(source_commit=checks["source_commit"], wheel_sha256=wheel_sha,
+                  protocol_sha256=hashlib.sha256(protocol.read_bytes()).hexdigest(),
+                  helper_sha256=hashlib.sha256(Path(__file__).read_bytes()).hexdigest())
+    hermes_commit = subprocess.check_output(["wsl.exe", "-d", "Debian", "--", "git", "-C", "/home/anthony/.hermes/hermes-agent", "rev-parse", "HEAD"], text=True).strip()
+    assert hermes_commit == "14a346345486418aa85ed6526549412ee2665ade"
+    assert not subprocess.check_output(["wsl.exe", "-d", "Debian", "--", "git", "-C", "/home/anthony/.hermes/hermes-agent", "status", "--porcelain", "--untracked-files=no"], text=True).strip()
+    record["hermes_commit"] = hermes_commit
+
+    from mnemos.config import MnemosConfig, ModuleConfig
+    from mnemos.client import MnemosClient
+    from mnemos.memory_service import LocalMemoryService
+    from mnemos.scopes import ScopeRegistry
+    from mnemos.service import MnemosService
+
+    registry = ScopeRegistry()
+    contexts: dict[str, dict] = {}
+    for name in ("project", "foreign"):
+        directory = root / name
+        directory.mkdir()
+        project = registry.register_project(directory, user_profile_id="recovery-fixture", enabled=True)
+        project.aliases.append(wsl(directory))
+        contexts[name] = registry.resolve(directory, user_profile_id="recovery-fixture", session_id="seed", host="manual").model_dump(mode="json")
+    registry.save(root / "scopes.json")
+    config = MnemosConfig(modules=ModuleConfig(**{name: False for name in ModuleConfig.model_fields}))
+    service = MnemosService(dispatcher_factory=fixture_factory(root, registry, config), descriptor_path=root / "runtime.json", startup_timeout=10)
+    service.start()
+
+    async def request(operation: str, payload: dict) -> dict:
+        client = MnemosClient(descriptor_path=root / "runtime.json", auto_start=False)
+        try:
+            return await client.request(operation, payload, queue_on_failure=False)
+        finally:
+            await client.close()
+
+    project_seed = asyncio.run(request("remember", {"context": contexts["project"], "content": "Project recovery control.", "event_id": "project-control"}))
+    seed = asyncio.run(request("remember", {"context": contexts["foreign"], "content": "Foreign recovery control.", "event_id": "foreign-control"}))
+    assert project_seed["status"] == seed["status"] == "committed", (project_seed, seed)
+    asyncio.run(request("maintenance", {}))
+    project_seed_facts = asyncio.run(request("retrieve", {"context": contexts["project"], "query": "project recovery control", "allowed_scopes": ["project"], "profile": "baseline"}))
+    assert project_seed_facts.get("status") not in {"degraded", "rejected"} and "facts" in project_seed_facts
+    project_control_fact = next(fact for fact in project_seed_facts["facts"] if fact["content"] == "Project recovery control.")
+    project_control_id = project_control_fact["id"]
+    project_control_version = project_control_fact["version"]
+    foreign = asyncio.run(request("retrieve", {"context": contexts["foreign"], "query": "foreign recovery control", "allowed_scopes": ["project"], "profile": "baseline"}))
+    foreign_id = foreign["facts"][0]["id"]
+    control_before = {}
+    for name, identity in [('project',project_control_id),('foreign',foreign_id)]:
+        inspected = asyncio.run(request('inspect',{'context':contexts[name],'fact_id':identity}))['fact']
+        control_before[name] = {key:inspected[key] for key in ('id','content','version')}
+    service.stop()
+    service = None
+    assert not (root / "runtime.json").exists()
+
+    malformed = root / "malformed.toml"
+    malformed.write_text('[intentionally unclosed table', encoding="utf-8")
+    wrapper = root / "bridge_wrapper.py"
+    wrapper.write_text(BRIDGE_WRAPPER, encoding="utf-8")
+    bridge = [wsl(sys.executable), str(wrapper), str(malformed), str(root / "runtime.json"), "2"]
+    home = root / "hermes-home"
+    home.mkdir()
+    env = {"HERMES_HOME": wsl(home), "HERMES_ENABLE_PROJECT_PLUGINS": "0", "MNEMOS_SCOPE_REGISTRY": wsl(root / "scopes.json"),
+           "MNEMOS_USER_PROFILE_ID": "recovery-fixture", "MNEMOS_BRIDGE_COMMAND": json.dumps(bridge), "MNEMOS_CONFIG_PATH": str(malformed), "MNEMOS_ROUTING_REVIEW_DIR": wsl(root / "routing-review"),
+           "MNEMOS_RUNTIME_DESCRIPTOR": wsl(root / "runtime.json")}
+    cfg = {"root": wsl(root), "wheel": wsl(wheel), "wheel_sha": wheel_sha, "project": wsl(root / "project"), "session_id": "hermes-recovery", "mode": "outage", "report": "host-one.json", "extract_dir": "wheel-one", "env": env}
+    (root / "host-one-bootstrap.py").write_text(HOST_BOOTSTRAP, encoding="utf-8")
+    save("bootstrap.json", cfg)
+    with (root / "host-one.stdout.log").open("wb") as stdout, (root / "host-one.stderr.log").open("wb") as stderr:
+        result = subprocess.run(["wsl.exe", "-d", "Debian", "--", "timeout", "--signal=TERM", "--kill-after=5s", "180s", "/home/anthony/.hermes/hermes-agent/venv/bin/python", wsl(root / "host-one-bootstrap.py"), wsl(root / "bootstrap.json")], stdout=stdout, stderr=stderr, timeout=200)
+    record["host_one_exit_code"] = result.returncode
+    record["host_one"] = json.loads((root / "host-one.json").read_text(encoding="utf-8"))
+    assert result.returncode == 0, "Inspect preserved host-one logs"
+    with sqlite3.connect(root / "memory.sqlite") as db:
+        db.row_factory = sqlite3.Row
+        rows = [dict(row) for row in db.execute("SELECT id, role, session_id, source, occurred_at, metadata FROM episodic_events WHERE source='hermes'")]
+    record["outage_storage_rows"] = rows
+    assert not rows, rows
+    outbox_path = root / "outbox.json"
+    outbox = json.loads(outbox_path.read_text(encoding="utf-8"))
+    record["outbox_after_outage"] = [{"event_id": item["event_id"], "operation": item["operation"], "payload": {"event_id": item["payload"].get("event_id"), "occurred_at": item["payload"].get("occurred_at")}} for item in outbox]
+    assert len(outbox) == 2 and len({item["event_id"] for item in outbox}) == 2
+    outbox_event_ids = {item["payload"]["event_id"] for item in outbox}
+    outbox_times = {item['payload']['event_id']:datetime.fromisoformat(item['payload']['occurred_at']) for item in outbox}
+    assert all(item['payload']['context']['host']=='hermes' for item in outbox)
+    assert {item['payload']['role'] for item in outbox}=={'user','assistant'}
+    checkpoint = record["host_one"]["callback"]["checkpoint"]
+    assert checkpoint in {"accepted", "failed"}
+    if checkpoint == "accepted":
+        assert record["host_one"]["callback"]["pending_outbox_entries"] == 2
+
+    service = MnemosService(dispatcher_factory=fixture_factory(root, registry, config), descriptor_path=root / "runtime.json", startup_timeout=10)
+    service.start()
+    cfg["mode"] = "replay"
+    cfg["report"] = "host-two.json"
+    cfg["extract_dir"] = "wheel-two"
+    save("bootstrap.json", cfg)
+    with (root / "host-two.stdout.log").open("wb") as stdout, (root / "host-two.stderr.log").open("wb") as stderr:
+        result = subprocess.run(["wsl.exe", "-d", "Debian", "--", "timeout", "--signal=TERM", "--kill-after=5s", "180s", "/home/anthony/.hermes/hermes-agent/venv/bin/python", wsl(root / "host-one-bootstrap.py"), wsl(root / "bootstrap.json")], stdout=stdout, stderr=stderr, timeout=200)
+    record["host_two_exit_code"] = result.returncode
+    record["host_two"] = json.loads((root / "host-two.json").read_text(encoding="utf-8"))
+    assert result.returncode == 0, "Inspect preserved host-two logs"
+    assert record['host_two']['callback']['checkpoint']=='replayed'
+    assert record['host_two']['callback']['outbox_pending_after_drain']==0
+    assert record['host_two']['callback']['flush'] is True
+    asyncio.run(request("maintenance", {}))
+    with sqlite3.connect(root / "memory.sqlite") as db:
+        db.row_factory = sqlite3.Row
+        event_rows = [dict(row) for row in db.execute("SELECT id, role, session_id, source, occurred_at, metadata FROM episodic_events WHERE source='hermes'")]
+        jobs = [dict(row) for row in db.execute("SELECT id, kind, status, payload FROM memory_jobs WHERE kind='extract'")]
+        evidence = [dict(row) for row in db.execute('SELECT * FROM fact_evidence')]
+    record["replayed_events"] = event_rows
+    record["replayed_jobs"] = [{"id": row["id"], "kind": row["kind"], "status": row["status"]} for row in jobs]
+    assert len(event_rows) == 2 and len({row["id"] for row in event_rows}) == 2
+    stored_event_ids = {json.loads(row["metadata"]).get("source_event_id") for row in event_rows}
+    stored_times = {json.loads(row['metadata'])['source_event_id']:datetime.fromisoformat(row['occurred_at']) for row in event_rows}
+    assert outbox_event_ids == stored_event_ids
+    assert outbox_times == stored_times
+    assert len(jobs) == 2 and all(row["status"] == "completed" for row in jobs)
+    assert {json.loads(row['payload'])['event_id'] for row in jobs}=={row['id'] for row in event_rows}
+    by_event = {row['id']:[e for e in evidence if e['source_event_id']==row['id']] for row in event_rows}
+    assert all(len(items)==1 for items in by_event.values())
+    user_event = next(row for row in event_rows if row['role']=='user')
+    target_fact_id = by_event[user_event['id']][0]['fact_id']
+    record['replayed_evidence'] = [e for items in by_event.values() for e in items]
+    record['timestamp_identity_preserved'] = True
+    assert not json.loads(outbox_path.read_text(encoding="utf-8")) if outbox_path.exists() else True
+    captured_facts = asyncio.run(request("retrieve", {"context": contexts["project"], "query": "outage occurrence", "allowed_scopes": ["project"], "profile": "baseline"}))
+    assert captured_facts.get("status") not in {"degraded", "rejected"} and "facts" in captured_facts
+    first_fact = asyncio.run(request('inspect',{'context':contexts['project'],'fact_id':target_fact_id}))['fact']
+    assert first_fact['id'] != project_control_id
+    forgotten = asyncio.run(request("forget", {"context": contexts["project"], "fact_id": first_fact["id"], "expected_version": first_fact["version"]}))
+    assert forgotten.get("forgotten") is True, forgotten
+    service.stop()
+    service = MnemosService(dispatcher_factory=fixture_factory(root, registry, config), descriptor_path=root / "runtime.json", startup_timeout=10)
+    service.start()
+    cfg["mode"] = "replay"
+    cfg["report"] = "host-three.json"
+    cfg["extract_dir"] = "wheel-three"
+    save("bootstrap.json", cfg)
+    with (root / "host-three.stdout.log").open("wb") as stdout, (root / "host-three.stderr.log").open("wb") as stderr:
+        result = subprocess.run(["wsl.exe", "-d", "Debian", "--", "timeout", "--signal=TERM", "--kill-after=5s", "180s", "/home/anthony/.hermes/hermes-agent/venv/bin/python", wsl(root / "host-one-bootstrap.py"), wsl(root / "bootstrap.json")], stdout=stdout, stderr=stderr, timeout=200)
+    assert result.returncode == 0, "Inspect preserved host-three logs"
+    record['host_three'] = json.loads((root/'host-three.json').read_text())
+    assert record['host_three']['callback']['checkpoint']=='replayed'
+    asyncio.run(request("maintenance", {}))
+    remaining = asyncio.run(request("retrieve", {"context": contexts["project"], "query": "outage occurrence", "allowed_scopes": ["project"], "profile": "baseline"}))
+    foreign_check = asyncio.run(request("retrieve", {"context": contexts["project"], "query": "foreign recovery control", "allowed_scopes": ["project"], "profile": "baseline"}))
+    assert remaining.get("status") not in {"degraded", "rejected"} and "facts" in remaining
+    assert foreign_check.get("status") not in {"degraded", "rejected"} and "facts" in foreign_check
+    assert all(fact["id"] != first_fact["id"] for fact in remaining["facts"])
+    assert all(fact["id"] != foreign_id for fact in foreign_check["facts"])
+    project_control = asyncio.run(request("retrieve", {"context": contexts["project"], "query": "project recovery control", "allowed_scopes": ["project"], "profile": "baseline"}))
+    assert project_control.get("status") not in {"degraded", "rejected"} and "facts" in project_control
+    preserved_project = next(fact for fact in project_control["facts"] if fact["id"] == project_control_id)
+    assert preserved_project["version"] == project_control_version and preserved_project["content"] == "Project recovery control."
+    with sqlite3.connect(root / "memory.sqlite") as db:
+        assert db.execute("SELECT 1 FROM memory_chunks WHERE id=?", (first_fact["id"],)).fetchone() is None
+        suppression = db.execute("SELECT 1 FROM memory_suppressions WHERE source_event_id=?", (user_event['id'],)).fetchone()
+        assert suppression is not None
+        live_evidence = db.execute('SELECT fact_id FROM fact_evidence WHERE source_event_id=?',(user_event['id'],)).fetchall()
+        assert live_evidence==[]
+        remaining_jobs = db.execute("SELECT id FROM memory_jobs WHERE kind='extract'").fetchall()
+        assert {row[0] for row in remaining_jobs}=={row['id'] for row in jobs}
+    control_after = {}
+    for name, identity in [('project',project_control_id),('foreign',foreign_id)]:
+        inspected = asyncio.run(request('inspect',{'context':contexts[name],'fact_id':identity}))['fact']
+        control_after[name] = {key:inspected[key] for key in ('id','content','version')}
+    assert control_before==control_after
+    record['controls_preserved'] = control_after
+    assert hermes_commit == subprocess.check_output(["wsl.exe", "-d", "Debian", "--", "git", "-C", "/home/anthony/.hermes/hermes-agent", "rev-parse", "HEAD"], text=True).strip()
+    assert not subprocess.check_output(["wsl.exe", "-d", "Debian", "--", "git", "-C", "/home/anthony/.hermes/hermes-agent", "status", "--porcelain", "--untracked-files=no"], text=True).strip()
+    record.update(status="passed", foreign_control_id=foreign_id, forgotten_fact_id=first_fact["id"], host_three_exit_code=result.returncode)
+except BaseException as exc:
+    record["status"] = "failed"
+    record["error"] = str(exc)
+    (root / "failure.txt").write_text(traceback.format_exc(), encoding="utf-8")
+finally:
+    if service is not None:
+        service.stop()
+    record["phase_elapsed_seconds"] = round(time.monotonic() - phase_started, 3)
+    record["finished_at"] = datetime.now(timezone.utc).isoformat()
+    save("report.json", record)
+    print(json.dumps(record, indent=2, sort_keys=True))
+raise SystemExit(0 if record["status"] == "passed" else 1)

@@ -1,0 +1,153 @@
+{
+  "automatic_daemon_recovery": false,
+  "bridge_deadline_seconds": 2,
+  "controls_preserved": {
+    "foreign": {
+      "content": "Foreign recovery control.",
+      "id": "7376fcd1-125c-451d-8205-848929293337",
+      "version": 1
+    },
+    "project": {
+      "content": "Project recovery control.",
+      "id": "be73b50c-6349-4b32-9fcf-c3e318eab70b",
+      "version": 1
+    }
+  },
+  "finished_at": "2026-09-19T20:47:44.125590+00:00",
+  "foreign_control_id": "7376fcd1-125c-451d-8205-848929293337",
+  "forgotten_fact_id": "25626b6c-930f-43e5-99ca-2ff24927152f",
+  "helper_sha256": "3f89f19e1fb99ca9ab9c2f4ef99c251d977e1f44d067e507182a395ad4f8e020",
+  "hermes_commit": "14a346345486418aa85ed6526549412ee2665ade",
+  "host_deadline_seconds": 180,
+  "host_one": {
+    "adapter_module": "/mnt/c/Users/Ant/AppData/Local/Temp/mnemos-hermes-native-api-recovery-v1/wheel-one/mnemos/adapters/hermes.py",
+    "callback": {
+      "checkpoint": "accepted",
+      "flush": true,
+      "pending_outbox_entries": 2,
+      "result": "Mnemos checkpoint captured 2 user/assistant messages.",
+      "sync_submitted": true
+    },
+    "diagnostics": [],
+    "elapsed_seconds": 5.210200473986333,
+    "host_module": "/home/anthony/.hermes/hermes-agent/agent/memory_manager.py",
+    "pid": 318339,
+    "shutdown": {
+      "status": "completed"
+    }
+  },
+  "host_one_exit_code": 0,
+  "host_three": {
+    "adapter_module": "/mnt/c/Users/Ant/AppData/Local/Temp/mnemos-hermes-native-api-recovery-v1/wheel-three/mnemos/adapters/hermes.py",
+    "callback": {
+      "checkpoint": "replayed",
+      "flush": true,
+      "outbox_pending_after_drain": 0,
+      "pending_outbox_entries": 0,
+      "retrieve": "{\"context\": \"[2034d6c4-d5b3-44a7-8fba-458072994cae version 1; captured conversation; unverified, may be outdated] Assistant reported: Outage response one.\\n\", \"context_token_upper_bound\": 142, \"facts\": [{\"assertion_status\": \"unknown\", \"content\": \"Assistant reported: Outage response one.\", \"id\": \"2034d6c4-d5b3-44a7-8fba-458072994cae\", \"original_source_status\": \"retained_locally\", \"scope\": \"project\", \"scope_id\": \"add016da-6e62-4ccf-b0b2-73e3e1a3eabe\", \"scores\": {\"candidate_backend\": \"sqlite_vec_scoped_exact_cosine\", \"context_token_upper_bound\": 142, \"graph_contribution\": 0.0, \"graph_energy\": 0.0, \"graph_status\": \"disabled\", \"lexical_candidate\": true, \"lexical_status\": \"candidate_union\", \"profile\": \"baseline\", \"scope_match\": true, \"semantic\": 0.2413555383682251, \"state_match\": null, \"state_status\": \"disabled\", \"token_count_method\": \"utf8_bytes_upper_bound\", \"total\": 0.2413555383682251}, \"sources\": [{\"created_at\": \"2026-09-19T20:47:39.648568Z\", \"evidence_id\": \"31c00ed1-2e1e-4103-8ab0-c48893d5596a\", \"excerpt\": \"Outage response one.\", \"fact_id\": \"2034d6c4-d5b3-44a7-8fba-458072994cae\", \"original_source_status\": \"retained_locally\", \"source_event_id\": \"96e3884392be07b54a1704114352b4efe10e870627a56a9f2e3afc0ce96f24d1\", \"source_ref\": \"transcript:v1:1:2d7cd33e324a5a3cf9dfa56f85fcbd767808c1a9a62efd8c74f1cdda6abe5747\"}], \"support_available\": true, \"version\": 1}], \"profile\": \"baseline\", \"schema_version\": 1, \"token_count_method\": \"utf8_bytes_upper_bound\"}"
+    },
+    "diagnostics": [],
+    "elapsed_seconds": 1.9886702109943144,
+    "host_module": "/home/anthony/.hermes/hermes-agent/agent/memory_manager.py",
+    "pid": 318375,
+    "shutdown": {
+      "status": "completed"
+    }
+  },
+  "host_three_exit_code": 0,
+  "host_two": {
+    "adapter_module": "/mnt/c/Users/Ant/AppData/Local/Temp/mnemos-hermes-native-api-recovery-v1/wheel-two/mnemos/adapters/hermes.py",
+    "callback": {
+      "checkpoint": "replayed",
+      "flush": true,
+      "outbox_pending_after_drain": 0,
+      "pending_outbox_entries": 0,
+      "retrieve": "{\"context\": \"\", \"context_token_upper_bound\": 0, \"facts\": [], \"profile\": \"baseline\", \"schema_version\": 1, \"token_count_method\": \"utf8_bytes_upper_bound\"}"
+    },
+    "diagnostics": [],
+    "elapsed_seconds": 2.045767830015393,
+    "host_module": "/home/anthony/.hermes/hermes-agent/agent/memory_manager.py",
+    "pid": 318359,
+    "shutdown": {
+      "status": "completed"
+    }
+  },
+  "host_two_exit_code": 0,
+  "installed_module": "C:\\Users\\Ant\\AppData\\Local\\Temp\\mnemos-installed-hermes-provisional-v1\\Lib\\site-packages\\mnemos\\__init__.py",
+  "live_configuration_changed": false,
+  "outage_storage_rows": [],
+  "outbox_after_outage": [
+    {
+      "event_id": "321152573ee94e5e77e7d014cf18d9506d1803604f2743af2f4cfd1ff3969b2c",
+      "operation": "capture",
+      "payload": {
+        "event_id": "hermes:99c5d7c9d33a265f4c29d1f397535620b0c0dd50cc18b2d54dcdc90232c3e6bb",
+        "occurred_at": "2026-09-19T20:47:30.275153+00:00"
+      }
+    },
+    {
+      "event_id": "96e3884392be07b54a1704114352b4efe10e870627a56a9f2e3afc0ce96f24d1",
+      "operation": "capture",
+      "payload": {
+        "event_id": "hermes:4500875fd6fb2ad2be27c245d31aad5fa15fe9511bdcbacf04a0c31fac053539",
+        "occurred_at": "2026-09-19T20:47:30.300429+00:00"
+      }
+    }
+  ],
+  "phase_elapsed_seconds": 16.778,
+  "protocol_sha256": "04c04a8ef4b74cbcbced89d24227f39502ea700f93b03664a773417bab8d9460",
+  "replayed_events": [
+    {
+      "id": "321152573ee94e5e77e7d014cf18d9506d1803604f2743af2f4cfd1ff3969b2c",
+      "metadata": "{\"user_profile_id\": \"recovery-fixture\", \"project_id\": \"add016da-6e62-4ccf-b0b2-73e3e1a3eabe\", \"workspace_id\": null, \"session_id\": \"hermes-recovery\", \"host\": \"hermes\", \"scope\": \"project\", \"scope_id\": \"add016da-6e62-4ccf-b0b2-73e3e1a3eabe\", \"source_event_id\": \"hermes:99c5d7c9d33a265f4c29d1f397535620b0c0dd50cc18b2d54dcdc90232c3e6bb\", \"source_ref\": \"transcript:v1:0:774e3c802f2b0499235291593e2eeddafd02ed29097e1ad48ccc8b66bfb80d1e\", \"source_kind\": \"hermes_memory_provider\", \"explicit_remember\": false, \"identity_status\": \"normal\"}",
+      "occurred_at": "2026-09-19T20:47:30.275153+00:00",
+      "role": "user",
+      "session_id": "hermes-recovery",
+      "source": "hermes"
+    },
+    {
+      "id": "96e3884392be07b54a1704114352b4efe10e870627a56a9f2e3afc0ce96f24d1",
+      "metadata": "{\"user_profile_id\": \"recovery-fixture\", \"project_id\": \"add016da-6e62-4ccf-b0b2-73e3e1a3eabe\", \"workspace_id\": null, \"session_id\": \"hermes-recovery\", \"host\": \"hermes\", \"scope\": \"project\", \"scope_id\": \"add016da-6e62-4ccf-b0b2-73e3e1a3eabe\", \"source_event_id\": \"hermes:4500875fd6fb2ad2be27c245d31aad5fa15fe9511bdcbacf04a0c31fac053539\", \"source_ref\": \"transcript:v1:1:2d7cd33e324a5a3cf9dfa56f85fcbd767808c1a9a62efd8c74f1cdda6abe5747\", \"source_kind\": \"hermes_memory_provider\", \"explicit_remember\": false, \"identity_status\": \"normal\"}",
+      "occurred_at": "2026-09-19T20:47:30.300429+00:00",
+      "role": "assistant",
+      "session_id": "hermes-recovery",
+      "source": "hermes"
+    }
+  ],
+  "replayed_evidence": [
+    {
+      "created_at": "2026-09-19T20:47:39.641587+00:00",
+      "evidence_id": "84a32607-f333-4c36-a60e-ba213de473fc",
+      "excerpt": "Outage occurrence one.",
+      "fact_id": "25626b6c-930f-43e5-99ca-2ff24927152f",
+      "source_event_id": "321152573ee94e5e77e7d014cf18d9506d1803604f2743af2f4cfd1ff3969b2c",
+      "source_ref": "transcript:v1:0:774e3c802f2b0499235291593e2eeddafd02ed29097e1ad48ccc8b66bfb80d1e"
+    },
+    {
+      "created_at": "2026-09-19T20:47:39.648568+00:00",
+      "evidence_id": "31c00ed1-2e1e-4103-8ab0-c48893d5596a",
+      "excerpt": "Outage response one.",
+      "fact_id": "2034d6c4-d5b3-44a7-8fba-458072994cae",
+      "source_event_id": "96e3884392be07b54a1704114352b4efe10e870627a56a9f2e3afc0ce96f24d1",
+      "source_ref": "transcript:v1:1:2d7cd33e324a5a3cf9dfa56f85fcbd767808c1a9a62efd8c74f1cdda6abe5747"
+    }
+  ],
+  "replayed_jobs": [
+    {
+      "id": "event:321152573ee94e5e77e7d014cf18d9506d1803604f2743af2f4cfd1ff3969b2c",
+      "kind": "extract",
+      "status": "completed"
+    },
+    {
+      "id": "event:96e3884392be07b54a1704114352b4efe10e870627a56a9f2e3afc0ce96f24d1",
+      "kind": "extract",
+      "status": "completed"
+    }
+  ],
+  "scope": "installed Hermes API outage/restart recovery with fixture providers; no model conversation",
+  "source_commit": "5e4b057b16906c2ec7dd302ae80748ef1ac5eddc",
+  "started_at": "2026-09-19T20:47:27.347227+00:00",
+  "status": "passed",
+  "timestamp_identity_preserved": true,
+  "wheel_sha256": "7eaba268fb91ffae7d59b222cf8addb49d8b4b4857a37552e5404422e4009625"
+}

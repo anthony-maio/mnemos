@@ -4,6 +4,14 @@ This record covers the unreleased `wt/functional-local-memory` worktree. It
 separates implemented behavior from acceptance evidence. The original task
 boundaries and thresholds remain in the [implementation plan](../../plans/2026-09-16-functional-local-memory.md).
 
+The [installed Hermes API recovery probe](../2026-09-19/hermes-api-recovery-v1/README.md)
+on verified `5e4b057` passes outage buffering, required checkpoint durability,
+automatic outbox drain after explicit service restoration, exact event/time
+identity across fresh host processes, and forget suppression after restart
+and replay. Two captured occurrences produce two completed jobs; project and
+foreign controls survive. This uses fixture providers and the actual bridge,
+not a native model conversation or automatic daemon restoration.
+
 The latest [Hermes lifecycle checkpoint](../2026-09-19/hermes-lifecycle-checkpoints-v1/README.md)
 at `5e4b057` passes 1,195 source tests with four skips, all six source/package
 checks, 507 isolated installed cases with two matching skips, and seven replay

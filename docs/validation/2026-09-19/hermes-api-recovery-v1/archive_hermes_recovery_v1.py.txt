@@ -1,0 +1,35 @@
+"""Preserve bounded installed API recovery evidence without runtime secrets."""
+import hashlib
+import json
+from pathlib import Path
+import shutil
+import sqlite3
+
+repo=Path(__file__).resolve().parent.parent
+source=Path('C:/Users/Ant/AppData/Local/Temp/mnemos-hermes-native-api-recovery-v1')
+output=repo/'docs/validation/2026-09-19/hermes-api-recovery-v1'
+assert not output.exists()
+record=json.loads((source/'report.json').read_text())
+helper=repo/'.venv/hermes_native_api_recovery_v1.py'
+protocol=repo/'docs/plans/2026-09-19-hermes-api-recovery-protocol-v1.md'
+assert record['status']=='passed'
+assert hashlib.sha256(helper.read_bytes()).hexdigest()==record['helper_sha256']
+assert hashlib.sha256(protocol.read_bytes()).hexdigest()==record['protocol_sha256']
+output.mkdir()
+(output/'.gitattributes').write_bytes(b'* -text -whitespace\n')
+for name in ('report.json','host-one.json','host-two.json','host-three.json',
+             'host-one.stdout.log','host-one.stderr.log','host-two.stdout.log',
+             'host-two.stderr.log','host-three.stdout.log','host-three.stderr.log','service.log'):
+    shutil.copyfile(source/name,output/name)
+for path in (helper,Path(__file__)):
+    shutil.copyfile(path,output/(path.name+'.txt'))
+shutil.copyfile(protocol,output/'protocol.md.txt')
+with sqlite3.connect('file:'+str(source/'memory.sqlite').replace('\\','/')+'?mode=ro',uri=True) as db:
+    db.row_factory=sqlite3.Row
+    selected={table:[dict(row) for row in db.execute('SELECT * FROM '+table)]
+              for table in ('episodic_events','memory_jobs','fact_evidence','memory_suppressions')}
+(output/'final-synthetic-records.json').write_text(json.dumps(selected,indent=2)+'\n',encoding='utf-8')
+files={p.name:{'bytes':p.stat().st_size,'sha256':hashlib.sha256(p.read_bytes()).hexdigest()}
+       for p in output.iterdir() if p.is_file()}
+(output/'evidence-index.json').write_text(json.dumps({'files':files},indent=2)+'\n',encoding='utf-8')
+print(json.dumps({'archive':str(output),'indexed_files':len(files)}))

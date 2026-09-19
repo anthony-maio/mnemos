@@ -17,6 +17,14 @@ The latest [source/package checkpoint](validation/2026-09-19/hermes-lifecycle-ch
 
 The shared v9 lifecycle result passes 15 bounded criteria, including scoped controls, correction retaining fact identity, reviewed deletion, direct replay suppression, and final recall. All three Codex processes exited zero, but reverse and final Stop hooks timed out. The fixture used lexical vectors, unavailable cognition, and disabled modules. It establishes those observed operations, not semantic quality, arbitrary paraphrase erasure, or complete host acceptance.
 
+The [Hermes API recovery probe](validation/2026-09-19/hermes-api-recovery-v1/README.md)
+on `5e4b057` passes a separate outage/restart contract. Three fresh WSL host
+processes demonstrate durable buffering, a required checkpoint backed by the
+real outbox, ordinary-request replay after explicit service restoration, and
+forget suppression after another restart. Exact IDs/timestamps and both scope
+controls survive. Providers are fixtures; complete native model lifecycle,
+automatic daemon restoration, and hard-kill acceptance remain open.
+
 The newer mixed-host v4 result passes a different, bounded recovery protocol. Four native turns exited zero. Three queued events received overlapping deliveries from Codex and Claude, each resolving to one durable event and job. Eight normal messages and two non-extractable provisional records survived restart; the outbox emptied and both scope controls survived. One request expired at the unchanged two-second pairing deadline. Overlap was instrumented, service restoration was explicit, and the providers were fixtures. This does not establish automatic daemon recovery or real-provider readiness.
 
 Claude's prompt hook did not supply a native occurrence ID in the observed host version, and the transcript was not yet available during the [hook-time identity probe](validation/2026-09-17/native-claude-hook-identity-v3/README.md). Mnemos retains that prompt provisionally, then captures UUID-backed transcript records separately. Provisional records cannot produce facts. Matching text alone does not establish identity, so `identity_reference_unavailable` and `ambiguous_transcript_association` remain visible rather than being hidden by a passing fact-lifecycle result.

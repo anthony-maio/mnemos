@@ -61,6 +61,14 @@ The hardware interruption is available as context: Anthony reported that the rem
 
 ## Finalization checklist
 
+New evidence for reconciliation: the [Hermes API recovery probe](../validation/2026-09-19/hermes-api-recovery-v1/README.md)
+passes outage buffering, required checkpoint durability, native-request replay
+after explicit restoration, and forget suppression across fresh host processes
+on `5e4b057`. It uses fixture providers. The [graph coverage diagnosis](../validation/2026-09-19/graph-coverage-diagnosis-v1/README.md)
+finds every recorded target disconnected from the selected seed; changing a
+traversal threshold cannot repair those missing paths. Both records belong in
+the final packet refresh, with their limitations intact.
+
 Candidate examples for the article, with bounded evidence:
 
 | Problem | Resulting behavior | Evidence and limit |
