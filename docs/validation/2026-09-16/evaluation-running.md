@@ -27,6 +27,10 @@ Completed execution is separate from quality acceptance. Resuming the original
 checkpoints skips already-recorded partial rows; retrying only those rows until
 extraction succeeds would bias the experiment. Diagnose the extraction and
 failure-accounting contract on development cases before any fresh bound run.
+The [subsequent read-only diagnosis](../2026-09-19/lifecycle-extraction-diagnosis.md)
+finds explicit model rejection of historical-note wording, with valid,
+non-truncated structured responses. Temporal/assertion ambiguity remains to
+be resolved on development cases; the held-out labels and results stay intact.
 
 The [retrieval parity checkpoint](../2026-09-19/retrieval-parity-checkpoint-v1/README.md)
 at `8fc79f0` has completed source/package and isolated installed checks: 1,143
