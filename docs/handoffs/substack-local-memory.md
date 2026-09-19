@@ -40,7 +40,7 @@ The hardware interruption is available as context: Anthony reported that the rem
 
 ## Evidence boundaries already established
 
-- Current verified package checkpoint: `5e4b057b16906c2ec7dd302ae80748ef1ac5eddc`, with 1,195 source passes and four skips, all six source/package checks, 507 isolated installed contract passes and two matching skips, plus seven replay assertions. Wheel SHA-256: `7eaba268fb91ffae7d59b222cf8addb49d8b4b4857a37552e5404422e4009625`. The [Hermes lifecycle checkpoint](../validation/2026-09-19/hermes-lifecycle-checkpoints-v1/README.md) verifies scoped explicit tools, transcript identities across provider recreation, and extraction-ineligible provisional capture. Its installed Hermes API v2 run uses fixture providers and the actual Windows/WSL bridge, with no model conversation or outage. The archive also preserves two gaps found after the earlier candidate's suite passed. Overall acceptance remains open.
+- Earlier verified package checkpoint: `5e4b057b16906c2ec7dd302ae80748ef1ac5eddc`, with 1,195 source passes and four skips, all six source/package checks, 507 isolated installed contract passes and two matching skips, plus seven replay assertions. Wheel SHA-256: `7eaba268fb91ffae7d59b222cf8addb49d8b4b4857a37552e5404422e4009625`. The [Hermes lifecycle checkpoint](../validation/2026-09-19/hermes-lifecycle-checkpoints-v1/README.md) verifies scoped explicit tools, transcript identities across provider recreation, and extraction-ineligible provisional capture. Its installed Hermes API v2 run uses fixture providers and the actual Windows/WSL bridge, with no model conversation or outage. The archive also preserves two gaps found after the earlier candidate's suite passed. Overall acceptance remains open.
 
 - The preceding `de6cdcf1c05fdad1bb19ed8f52638eff5ed67ae4` [recovery checkpoint](../validation/2026-09-19/loopback-recovery-checkpoint-v1/README.md) had 1,160 source passes and four skips, 474 isolated installed contract passes and two matching skips, plus seven replay assertions. It preserves both preceding full-suite failures and the later passing package evidence.
 
@@ -58,6 +58,16 @@ The hardware interruption is available as context: Anthony reported that the rem
 - An [isolated patched-host run](../validation/2026-09-19/native-hermes-local-v3/README.md) then passed explicit scope, recall, foreign-project exclusion and raw user/assistant persistence. It failed the all-captures gate because duplicate callbacks generated different timestamps for the same event ID. The outbox rejected that conflict correctly. Preserve the failure and any successor separately; a patched host is also a distinct compatibility claim from the installed version.
 
 - The [native Hermes v4 successor](../validation/2026-09-19/native-hermes-local-v4/README.md) passes all 16 bounded checks. Four capture calls returned committed while exactly two raw conversation events persisted. The native turn took 24.592 seconds, with a separate 3.569-second cold/load preflight. It uses the proposed CLI patch in an isolated host checkout; the installed host is unchanged. Full native correction, forgetting, outage recovery, extraction quality, and daily-use readiness remain open.
+
+The [Hermes rewind diagnostic](../validation/2026-09-19/hermes-rewind-diagnostic-v2/README.md)
+provides another bounded negative result. The installed provider treats an
+identical regenerated turn after a same-session rewind as the original
+observation. Its outbox retains four records where six logical observations
+are expected. This is a callback fixture, not an interactive `/undo` run or a
+service crash test. Explain it as a remaining occurrence-identity problem;
+do not call it repaired or imply that normal duplicate replay should stop
+deduplicating. The first diagnostic's false-positive zero-capture report is
+preserved and explicitly rejected.
 
 ## Finalization checklist
 

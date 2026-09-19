@@ -13,6 +13,14 @@ still fail; scope, payload identity, write policy, and forgetting remain
 enforced. This does not rerun the frozen model comparison or establish native
 model lifecycle acceptance.
 
+The [Hermes rewind diagnostic](../2026-09-19/hermes-rewind-diagnostic-v2/README.md)
+reproduces a same-session occurrence-identity collision on `ea88dd4`. An
+identical regenerated last turn after `rewound=True` reuses the original IDs
+and timestamps; the durable outbox has four records rather than six logical
+observations. Exact duplicate replay and new-session controls behave as
+expected. This is callback-fixture evidence, with no service or model call.
+Identity acceptance remains false; a correct suffix-only repair is outstanding.
+
 The [native discovery preflight](../2026-09-19/hermes-native-discovery-preflight-v1/README.md)
 passes real host imports, actual plugin entry-point discovery, disposable scope
 and identity-home initialization, and six-tool discovery using the committed

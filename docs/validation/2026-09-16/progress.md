@@ -8,6 +8,23 @@ This is a chronological checkpoint log. Later entries supersede earlier test
 counts and open implementation items. An implementation or focused check does
 not close a native-host, quality, performance, or pilot gate.
 
+## September 19: same-session rewind identity collision
+
+The [installed Hermes callback diagnostic](../2026-09-19/hermes-rewind-diagnostic-v2/README.md)
+reproduces a remaining identity failure on `ea88dd4`: four initial messages
+remain four queued records after a same-session rewind and identical replacement
+of the last turn, where six logical occurrences are expected. Exact duplicate
+replay remains idempotent, changed assistant content adds one ID, and a new
+session adds four IDs. No service or model ran. The first zero-capture fixture
+incorrectly reported passed; its failure and limited first rerun are preserved.
+The reviewed successor records identity acceptance as false. A repair needs
+the regenerated suffix boundary or native occurrence identity; rekeying all
+surviving messages would create false observations.
+
+T19 documentation now distinguishes the latest `ea88dd4` package from earlier
+host results and records this negative result in the writing handoff. The plan's
+Run commands point to existing test filenames; acceptance criteria are unchanged.
+
 ## September 19: native discovery and replay identity
 
 The [successor Hermes preflight](../2026-09-19/hermes-native-discovery-preflight-v1/README.md)

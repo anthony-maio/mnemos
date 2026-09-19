@@ -2,7 +2,7 @@
 
 Updated September 19, 2026 for the unreleased functional-local-memory worktree. The versions below identify observed runs, not a promise about every installed or future host version. Adapter tests, native conversations, model quality, and daily-use readiness are separate claims.
 
-The latest [source/package checkpoint](validation/2026-09-19/hermes-lifecycle-checkpoints-v1/README.md) is `5e4b057`, with 1,195 source passes, 507 installed passes, and four/two respective skips. Its installed Hermes MemoryManager API check exercises all six scoped tools through the actual Windows/WSL bridge, growing transcript replay, provider recreation, and extraction-ineligible fallback receipts. This uses fixture providers, with no model conversation or service outage. The earlier [mixed-host replay probe](validation/2026-09-18/native-crosshost-recovery-v4/README.md) verifies the `fc72cc2` installed wheel and clean plugin snapshot. Earlier lifecycle results retain their original source bindings; a newer package does not silently rerun those observations.
+The latest [source/package checkpoint](validation/2026-09-19/correction-retry-checkpoint-v1/README.md) is `ea88dd4`, with 1,201 source passes, 513 installed passes, four/two respective skips, and seven replay assertions. It repairs recovery of a completed correction's durable acknowledgement without overwriting a later edit. The earlier [Hermes API checkpoint](validation/2026-09-19/hermes-lifecycle-checkpoints-v1/README.md) at `5e4b057` exercises all six scoped tools through the actual Windows/WSL bridge, growing transcript replay, provider recreation, and extraction-ineligible fallback receipts. That check uses fixture providers, with no model conversation or service outage. The [mixed-host replay probe](validation/2026-09-18/native-crosshost-recovery-v4/README.md) verifies the `fc72cc2` installed wheel and clean plugin snapshot. Earlier lifecycle results retain their original source bindings; a newer package does not silently rerun those observations.
 
 | Client | Implemented integration | Observed native evidence | Remaining acceptance |
 | --- | --- | --- | --- |
@@ -14,6 +14,13 @@ The latest [source/package checkpoint](validation/2026-09-19/hermes-lifecycle-ch
 | Claude Desktop | MCP configuration | Shared protocol coverage. | Native conversation NOT RUN. |
 | Cursor | MCP plus project rules | Configuration and policy-generation tests. | Native conversation NOT RUN. |
 | Windsurf / Cline | MCP examples | Documentation/configuration only. | Native conversation NOT RUN. |
+
+The [Hermes rewind diagnostic](validation/2026-09-19/hermes-rewind-diagnostic-v2/README.md)
+also reproduces a same-session identity collision: an identical regenerated
+turn after `rewound=True` reuses the removed turn's capture IDs and timestamps.
+The outbox remains at four records rather than six logical observations. This
+is an installed MemoryManager callback fixture, not interactive CLI or service
+recovery acceptance. Identifying only the regenerated suffix remains open.
 
 The shared v9 lifecycle result passes 15 bounded criteria, including scoped controls, correction retaining fact identity, reviewed deletion, direct replay suppression, and final recall. All three Codex processes exited zero, but reverse and final Stop hooks timed out. The fixture used lexical vectors, unavailable cognition, and disabled modules. It establishes those observed operations, not semantic quality, arbitrary paraphrase erasure, or complete host acceptance.
 

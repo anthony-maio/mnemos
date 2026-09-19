@@ -175,7 +175,7 @@ Steps: add additive schema migration and event identity; implement leased jobs, 
 
 Acceptance: crash before/after model completion produces no lost event or duplicate fact; expired leases recover; provider outage followed by restart retries; separate repeated observations count separately; duplicate hook delivery counts once.
 
-Run: `py -3.13 -m pytest -q tests/test_durable_memory_repair.py tests/test_job_recovery.py tests/test_storage_sqlite.py`.
+Run: `py -3.13 -m pytest -q tests/test_durable_memory_repair.py tests/test_durable_jobs.py tests/test_job_recovery_api.py tests/test_storage_sqlite.py`.
 
 ### T04 - Introduce the persistent local service and client
 
@@ -199,7 +199,7 @@ Steps: start a scheduler owned by the service; use a 30-second check, a default 
 
 Acceptance: consolidation happens without an agent calling a tool; active capture does not corrupt an in-flight snapshot; continuous activity cannot indefinitely starve queued old work; shutdown/restart retains pending work.
 
-Run: `py -3.13 -m pytest -q tests/test_maintenance.py tests/test_job_recovery.py` with a controlled clock, not real sleeps.
+Run: `py -3.13 -m pytest -q tests/test_maintenance.py tests/test_durable_jobs.py tests/test_job_recovery_api.py` with a controlled clock, not real sleeps.
 
 ### T06 - Enforce evidence and safety at supported write boundaries
 
@@ -211,7 +211,7 @@ Steps: centralize sanitized writes and structured fact proposals; require source
 
 Acceptance: safety runs before disk, outbox, logs, or cloud requests; extraction cannot cite absent sources; assistant speculation is labeled; prompt-injection content remains data and cannot authorize global writes or change runtime settings.
 
-Run: `py -3.13 -m pytest -q tests/test_memory_safety.py tests/test_fact_evidence.py tests/test_modules.py`.
+Run: `py -3.13 -m pytest -q tests/test_memory_safety.py tests/test_memory_service.py tests/test_durable_jobs.py tests/test_modules.py`.
 
 ### T07 - Complete surprisal gating as a measurable feature
 
@@ -259,7 +259,7 @@ Steps: select seeds and traverse the permitted subgraph: current project, explic
 
 Acceptance: hand-computed chains/branches/cycles pass; four-node default chain does not falsely return a subthreshold node; insertion order and concurrent requests do not change outcomes; deleted/corrected facts cannot survive in cached graph results; scoped high-similarity foreign nodes cannot steal the seed; maintenance avoids all-pairs rebuilds.
 
-Run: `py -3.13 -m pytest -q tests/test_spreading_contract.py tests/test_storage_sqlite.py tests/test_engine.py`.
+Run: `py -3.13 -m pytest -q tests/test_spreading_activation.py tests/test_spreading_isolation.py tests/test_spreading_mutual_builder.py tests/test_storage_sqlite.py tests/test_engine.py`.
 
 ### T11 - Finish consolidation, retention, and forgetting
 
@@ -271,7 +271,7 @@ Steps: extract source-backed semantic facts, merge exact repeats and proven equi
 
 Acceptance: retry cannot increase observation counts without a new source event; empty/malformed model output is not success; diverse sessions cannot collapse into the same canned facts; retention reduces live rows while preserving supported facts; forget survives replay, restart, and reconsolidation; failed evidence stays visible.
 
-Run: `py -3.13 -m pytest -q tests/test_memory_lifecycle.py tests/test_fact_evidence.py tests/test_maintenance.py`.
+Run: `py -3.13 -m pytest -q tests/test_memory_lifecycle.py tests/test_memory_service.py tests/test_durable_jobs.py tests/test_maintenance.py`.
 
 ### T12 - Repair Claude Code capture and retrieval
 
@@ -295,7 +295,7 @@ Steps: implement SessionStart/UserPromptSubmit recall, UserPromptSubmit/Stop cap
 
 Acceptance: CLI and desktop are tested separately; stop hooks do not create continuation loops; manual MCP use and hook capture do not double-count; Windows command paths work; partial capture reports its limitation rather than claiming a full transcript.
 
-Run: `py -3.13 -m pytest -q tests/test_codex_hooks.py tests/test_hosts.py tests/test_mcp_tier2_smoke.py`, then T17. Contract source: https://learn.chatgpt.com/docs/hooks.
+Run: `py -3.13 -m pytest -q tests/test_codex_adapter.py tests/test_codex_capture_coverage.py tests/test_hosts.py tests/test_mcp_tier2_smoke.py`, then T17. Contract source: https://learn.chatgpt.com/docs/hooks.
 
 ### T14 - Add the Hermes memory provider
 
@@ -307,7 +307,7 @@ Steps: publish the optional `hermes_agent.memory_providers` entry point; impleme
 
 Acceptance: exact supported-version ABC/config contracts pass; profile/session scope does not follow unrelated process cwd; built-in memory remains intact; mirrored writes do not echo into repeated captures; service outage uses bounded local buffering; required checkpoint failure is truthful and replay-safe; real Hermes can recall a fact captured by each other host.
 
-Run: `py -3.13 -m pytest -q tests/test_hermes_provider.py tests/test_service.py`, then T17. Contract source: https://hermes-agent.nousresearch.com/docs/developer-guide/memory-provider-plugin.
+Run: `py -3.13 -m pytest -q tests/test_hermes_adapter.py tests/test_hermes_tools.py tests/test_hermes_transcript_identity.py tests/test_hermes_provisional_capture.py tests/test_service.py`, then T17. Contract source: https://hermes-agent.nousresearch.com/docs/developer-guide/memory-provider-plugin.
 
 ### T15 - Make onboarding and controls reflect actual operation
 
@@ -355,7 +355,7 @@ Steps: preserve deterministic mechanism fixtures, add real local-model runs, and
 
 Acceptance: each module can be activated independently, including at top-1; the full path is actually executed; compression is reported with retained-information accuracy; surprise filtering is compared with simple length/noise filtering; affective tests hold semantic content constant; graph tests require relevant associative recall, not merely more nodes. Report neutral/negative results without rewriting the dataset to obtain a desired lift.
 
-Run: `py -3.13 -m pytest -q tests/test_ablation_contract.py tests/test_benchmark.py`, followed by versioned baseline/full/ablation runs that generate JSON artifacts. Add `--dataset`, `--profile`, `--disable-module`, `--provider`, `--repetitions`, and `--output` to the new runner.
+Run: `py -3.13 -m pytest -q tests/test_local_memory_benchmark.py tests/test_retrieval_comparison.py tests/test_retrieval_comparison_run.py tests/test_benchmark.py`, followed by versioned baseline/full/ablation runs that generate JSON artifacts. Add `--dataset`, `--profile`, `--disable-module`, `--provider`, `--repetitions`, and `--output` to the new runner.
 
 ### T19 - Reconcile release, documentation, and research claims
 

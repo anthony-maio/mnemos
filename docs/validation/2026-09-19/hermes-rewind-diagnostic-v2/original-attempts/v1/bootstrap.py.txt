@@ -1,0 +1,64 @@
+
+import hashlib, json, os, sys, zipfile
+from pathlib import Path
+cfg = json.loads(Path(sys.argv[1]).read_text())
+root = Path(cfg["root"])
+preserved = {k: v for k, v in os.environ.items() if k in {"HOME", "USER", "LOGNAME", "PATH", "LANG", "WSL_INTEROP", "WSL_DISTRO_NAME"}}
+os.environ.clear(); os.environ.update(preserved); os.environ.update(cfg["env"])
+sys.dont_write_bytecode = True
+wheel = Path(cfg["wheel"])
+assert hashlib.sha256(wheel.read_bytes()).hexdigest() == cfg["wheel_sha"]
+extracted = root / "wheel"
+extracted.mkdir()
+with zipfile.ZipFile(wheel) as archive:
+    archive.extractall(extracted)
+sys.path[:0] = [str(extracted), "/tmp/mnemos-hermes-cwd-compat-v1"]
+from agent.memory_manager import MemoryManager
+from mnemos.adapters.hermes import MnemosHermesProvider
+from mnemos.client import Outbox
+
+class LocalOutboxClient:
+    def __init__(self, path):
+        self.outbox = Outbox(path)
+        self.calls = []
+    async def capture(self, payload):
+        payload = self.outbox.sanitize(payload)
+        event_id = self.outbox.append(payload, event_id=payload.get("event_id"))
+        self.calls.append({"entry_event_id": event_id, "payload": payload})
+        self.outbox.acknowledge(event_id)
+        return {"schema_version": 1, "status": "committed", "committed": True, "event_id": event_id}
+
+client = LocalOutboxClient(root / "outbox.json")
+provider = MnemosHermesProvider(client=client)
+manager = MemoryManager(); manager.add_provider(provider)
+manager.initialize_all("rewind-diagnostic", cwd=cfg["project"], hermes_home=cfg["home"])
+
+def flush():
+    assert manager.flush_pending(timeout=10)
+    assert provider._flush(timeout=10)
+
+def snapshot(label):
+    rows = client.calls[:]
+    return {"label": label, "calls": len(rows), "events": [
+        {"event_id": r["payload"].get("event_id"), "occurred_at": r["payload"].get("occurred_at"),
+         "role": r["payload"].get("role"), "source_ref": r["payload"].get("source_ref")}
+        for r in rows
+    ]}
+
+messages = [{"role": "user", "content": "Teach the rewind diagnostic fact."}, {"role": "assistant", "content": "The rewind diagnostic fact is cedar."}]
+manager.sync_all(messages[0]["content"], messages[1]["content"], session_id="rewind-diagnostic", messages=messages); flush()
+initial = snapshot("initial")
+manager.sync_all(messages[0]["content"], messages[1]["content"], session_id="rewind-diagnostic", messages=messages); flush()
+duplicate = snapshot("exact_duplicate")
+manager.on_session_switch("rewind-diagnostic", reset=False, rewound=True)
+manager.sync_all(messages[0]["content"], messages[1]["content"], session_id="rewind-diagnostic", messages=messages); flush()
+rewound = snapshot("same_session_rewound_identical_turn")
+changed = [{"role": "user", "content": messages[0]["content"]}, {"role": "assistant", "content": "The rewind diagnostic fact is birch."}]
+manager.sync_all(changed[0]["content"], changed[1]["content"], session_id="rewind-diagnostic", messages=changed); flush()
+changed_snapshot = snapshot("same_session_rewound_changed_content")
+manager.on_session_switch("rewind-diagnostic-branch", parent_session_id="rewind-diagnostic", reset=True)
+manager.sync_all(messages[0]["content"], messages[1]["content"], session_id="rewind-diagnostic-branch", messages=messages); flush()
+branch = snapshot("new_session_same_transcript")
+manager.shutdown_all()
+result = {"status": "passed", "scope": "Hermes MemoryManager API callback fixture; no service, model, or native CLI", "initial": initial, "exact_duplicate": duplicate, "rewound": rewound, "changed": changed_snapshot, "branch": branch, "outbox_final_entries": len(client.outbox.pending()), "host_module": __import__("agent.memory_manager", fromlist=["x"]).__file__, "adapter_module": __import__("mnemos.adapters.hermes", fromlist=["x"]).__file__}
+(root / "callback-result.json").write_text(json.dumps(result, indent=2, sort_keys=True) + "\n")

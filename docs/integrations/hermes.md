@@ -69,9 +69,17 @@ the same text. Identity hashes bind the supplied fields; they are not signatures
 proving host authorship. The authenticated adapter remains trusted to submit
 accurate host evidence.
 Hosts omitting Hermes home also report `nonpersistent_timestamp`; timestamp
-recovery is then limited to the provider lifetime. Transcript truncation,
-branching, and upgrades from earlier experimental identity formats still need
-separate native coverage. No live history migration has been performed.
+recovery is then limited to the provider lifetime. A
+[same-session rewind diagnostic](../validation/2026-09-19/hermes-rewind-diagnostic-v2/README.md)
+reproduces an identity collision: after `/undo`, an identical regenerated turn
+reuses the removed turn's IDs and timestamps. Four queued observations remain
+four where six logical observations are expected. A new session ID avoids
+that collision. This is installed MemoryManager API evidence; the interactive
+command and service persistence were not exercised. A correct repair must
+identify the regenerated suffix while preserving the surviving prefix.
+Compression, branching, and upgrades from earlier experimental identity
+formats still need separate native coverage. No live history migration has
+been performed.
 
 Built-in memory `add` notifications can be mirrored. `remove` and `replace`
 notifications do not contain verified Mnemos fact IDs and versions, so the

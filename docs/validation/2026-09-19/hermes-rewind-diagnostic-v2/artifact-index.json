@@ -1,0 +1,65 @@
+{
+  "status": "diagnostic_completed",
+  "identity_acceptance": false,
+  "assertions": {
+    "initial_request_delta": 4,
+    "initial_pending_entries": 4,
+    "exact_duplicate_request_delta": 4,
+    "exact_duplicate_pending_entries": 4,
+    "rewound_identical_request_delta": 4,
+    "rewound_identical_pending_entries": 4,
+    "rewind_expected_logical_count": 6,
+    "changed_suffix_new_ids": 1,
+    "new_session_new_ids": 4,
+    "final_pending_entries": 9,
+    "total_request_count": 20
+  },
+  "sha256": {
+    ".gitattributes": "32966c8f89acc0110f6a39bf66f2c0cfe327afcaf642ca8546e36bdad19f1e18",
+    "bootstrap.py.txt": "c746b6f0c6600a5c20d367fc53831a992699005d015bf5ca5720587e668cc03d",
+    "callback-result.json": "c51287c1b6d25b19ac95b96d1143470ec1c466aec4a73d224b28e6707f157e7e",
+    "hermes_rewind_diagnostic_v2.py.txt": "42bfdc12f0cc54f7f4831e628e8de3f94fbebd91560293068f36edc00de026d4",
+    "original-attempts/v1/bootstrap.py.txt": "65f4003cd4d71b6246332da008fdf683e8c23eca3e0060978356b03f8c44bfdf",
+    "original-attempts/v1/callback-result.json.txt": "b0a15ad6d43c0a805ad22c53556ee9295cb28f132db96679aca0b91394f9cf7e",
+    "original-attempts/v1/host.stderr.log": "1fedc2cab89e0fc4516eeafc1bddfaeec3444aa66b0beb23ad74ed0dfdbbc1bc",
+    "original-attempts/v1/host.stdout.log": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "original-attempts/v1/report.json.txt": "01e486d2623fb10217889725a901b5fd08f2602ee9f8f80184911b40f8e86d06",
+    "original-attempts/v1-rerun/bootstrap.py.txt": "2bc64f8f67f9a3a5d378ebace00c35c3c696a8853494a1ddf468e69afe93354e",
+    "original-attempts/v1-rerun/callback-result.json.txt": "89ac9434f6b260df6aa4380ff3b14e689ea754a790ebdd83a0d7412e7b4d5073",
+    "original-attempts/v1-rerun/host.stderr.log": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "original-attempts/v1-rerun/host.stdout.log": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "original-attempts/v1-rerun/report.json.txt": "92518a3fbe5f7109a08f24bebce0b7eb8bb9bb7792a76934d21d0bb8e2deada2",
+    "README.md": "bbbb1cddf783ac061509cbec7a33094543354b1942caa8cf75a71e2b24b86866",
+    "report.json": "d32fded77e9f81751f6428d6988daa097926396bd4e15f947be458a708790708"
+  },
+  "included": [
+    "report.json",
+    "callback-result.json",
+    "hermes_rewind_diagnostic_v2.py.txt",
+    "bootstrap.py.txt",
+    "README.md",
+    "artifact-index.json",
+    ".gitattributes",
+    "original-attempts/"
+  ],
+  "excluded": [
+    "wheel/",
+    "hermes-home/",
+    "project/",
+    "outbox.json",
+    "bootstrap-config.json",
+    "successor runtime logs (not archived by diagnostic)"
+  ],
+  "original_attempts": {
+    "v1": {
+      "path": "original-attempts/v1",
+      "status": "failed_fixture_zero_capture",
+      "reason": "Provider was initialized without a scope registry."
+    },
+    "v1_rerun": {
+      "path": "original-attempts/v1-rerun",
+      "status": "passed_limited_identity_observation",
+      "reason": "Local client acknowledged and removed every outbox entry."
+    }
+  }
+}

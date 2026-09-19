@@ -1,0 +1,134 @@
+"""Disposable two-turn Hermes rewind identity diagnostic."""
+
+from __future__ import annotations
+
+import hashlib
+import json
+from pathlib import Path
+import shutil
+import subprocess
+import tempfile
+
+
+WORKTREE = Path(__file__).resolve().parents[1]
+ARCHIVE = WORKTREE / "docs" / "validation" / "2026-09-19" / "hermes-rewind-diagnostic-v2"
+WHEEL_CHECKS = Path(r"C:\Users\Ant\AppData\Local\Temp\mnemos-package-checks-correction-retry-v1\verification.json")
+SOURCE = "ea88dd48e503adee811a524bf76923e153c17384"
+HERMES = "14a346345486418aa85ed6526549412ee2665ade"
+
+
+def wsl(path: Path) -> str:
+    value = str(path).replace("\\", "/")
+    return "/mnt/" + value[0].lower() + value[2:]
+
+
+BOOTSTRAP = r'''
+import hashlib, json, os, sys, zipfile
+from pathlib import Path
+cfg = json.loads(Path(sys.argv[1]).read_text())
+root = Path(cfg["root"])
+preserved = {k: v for k, v in os.environ.items() if k in {"HOME", "USER", "LOGNAME", "PATH", "LANG", "WSL_INTEROP", "WSL_DISTRO_NAME"}}
+os.environ.clear(); os.environ.update(preserved); os.environ.update(cfg["env"])
+sys.dont_write_bytecode = True
+wheel = Path(cfg["wheel"])
+assert hashlib.sha256(wheel.read_bytes()).hexdigest() == cfg["wheel_sha"]
+extracted = root / "wheel"
+extracted.mkdir()
+with zipfile.ZipFile(wheel) as archive:
+    archive.extractall(extracted)
+sys.path[:0] = [str(extracted), "/tmp/mnemos-hermes-cwd-compat-v1"]
+from agent.memory_manager import MemoryManager
+from mnemos.adapters.hermes import MnemosHermesProvider
+from mnemos.client import Outbox
+from mnemos.scopes import ScopeRegistry
+
+class LocalOutboxClient:
+    def __init__(self, path):
+        self.outbox = Outbox(path)
+        self.calls = []
+        self.phase = "startup"
+    async def capture(self, payload):
+        payload = self.outbox.sanitize(payload)
+        transport_id = self.outbox.append(payload, event_id=payload.get("event_id"))
+        self.calls.append({"phase": self.phase, "transport_event_id": transport_id, "payload": payload})
+        return {"schema_version": 1, "status": "queued", "committed": False, "degraded": True, "event_id": transport_id}
+
+registry = ScopeRegistry()
+registry.register_project(root / "project", user_profile_id="rewind-fixture", enabled=True)
+client = LocalOutboxClient(root / "outbox.json")
+provider = MnemosHermesProvider(client=client, registry=registry, user_profile_id="rewind-fixture")
+manager = MemoryManager(); manager.add_provider(provider)
+manager.initialize_all("rewind-diagnostic", cwd=cfg["project"], hermes_home=cfg["home"])
+
+def flush():
+    assert manager.flush_pending(timeout=10)
+    assert provider._flush(timeout=10)
+
+def snapshot(label, before_calls):
+    pending = client.outbox.pending()
+    return {"label": label, "request_count_delta": len(client.calls) - before_calls,
+            "pending_entry_count": len(pending),
+            "pending_payload_event_ids": sorted(item["payload"].get("event_id") for item in pending),
+            "calls": [{"phase": item["phase"], "payload_event_id": item["payload"].get("event_id"),
+                       "occurred_at": item["payload"].get("occurred_at"), "role": item["payload"].get("role"),
+                       "source_ref": item["payload"].get("source_ref")} for item in client.calls[before_calls:]]}
+
+initial_messages = [
+    {"role": "user", "content": "Teach turn one for rewind identity."},
+    {"role": "assistant", "content": "Turn one is cedar."},
+    {"role": "user", "content": "Teach turn two for rewind identity."},
+    {"role": "assistant", "content": "Turn two is birch."},
+]
+changed_messages = initial_messages[:-1] + [{"role": "assistant", "content": "Turn two is maple."}]
+phases = []
+before = len(client.calls); client.phase = "initial"; manager.sync_all(initial_messages[2]["content"], initial_messages[3]["content"], session_id="rewind-diagnostic", messages=initial_messages); flush(); phases.append(snapshot("initial_four_messages", before))
+before = len(client.calls); client.phase = "exact_duplicate"; manager.sync_all(initial_messages[2]["content"], initial_messages[3]["content"], session_id="rewind-diagnostic", messages=initial_messages); flush(); phases.append(snapshot("exact_duplicate_four_messages", before))
+manager.on_session_switch("rewind-diagnostic", reset=False, rewound=True)
+before = len(client.calls); client.phase = "rewound_identical_regenerated_last_turn"; manager.sync_all(initial_messages[2]["content"], initial_messages[3]["content"], session_id="rewind-diagnostic", messages=initial_messages); flush(); phases.append(snapshot("rewound_identical_four_messages", before))
+before = len(client.calls); client.phase = "rewound_changed_last_turn"; manager.sync_all(changed_messages[2]["content"], changed_messages[3]["content"], session_id="rewind-diagnostic", messages=changed_messages); flush(); phases.append(snapshot("rewound_changed_suffix", before))
+manager.on_session_switch("rewind-diagnostic-branch", parent_session_id="rewind-diagnostic", reset=True)
+before = len(client.calls); client.phase = "new_session"; manager.sync_all(initial_messages[2]["content"], initial_messages[3]["content"], session_id="rewind-diagnostic-branch", messages=initial_messages); flush(); phases.append(snapshot("new_session_four_messages", before))
+module_origins = {"memory_manager": __import__("agent.memory_manager", fromlist=["x"]).__file__, "adapter": __import__("mnemos.adapters.hermes", fromlist=["x"]).__file__}
+manager.shutdown_all()
+result = {"status": "diagnostic_completed", "identity_acceptance": False, "scope": "Hermes MemoryManager callback fixture with durable queued outbox; no service, model, or native CLI", "phases": phases, "total_request_count": len(client.calls), "final_pending_entry_count": len(client.outbox.pending()), "module_origins": module_origins}
+(root / "callback-result.json").write_text(json.dumps(result, indent=2, sort_keys=True) + "\n")
+'''
+
+
+def main() -> int:
+    if ARCHIVE.exists():
+        raise SystemExit(f"archive already exists: {ARCHIVE}")
+    ARCHIVE.mkdir(parents=True)
+    runtime = Path(tempfile.mkdtemp(prefix="mnemos-hermes-rewind-v2-"))
+    try:
+        checks = json.loads(WHEEL_CHECKS.read_text(encoding="utf-8"))
+        assert checks["status"] == "passed" and checks["source_commit"] == SOURCE
+        wheel = next(Path(item["file"]) for item in checks["artifacts"] if item["file"].endswith(".whl"))
+        wheel_sha = hashlib.sha256(wheel.read_bytes()).hexdigest()
+        assert wheel_sha == checks["artifacts"][0]["sha256"]
+        hermes_head = subprocess.check_output(["wsl.exe", "-d", "Debian", "--", "git", "-C", "/tmp/mnemos-hermes-cwd-compat-v1", "rev-parse", "HEAD"], text=True).strip()
+        assert hermes_head == HERMES
+        project = runtime / "project"; project.mkdir()
+        home = runtime / "hermes-home"; home.mkdir()
+        cfg = {"root": wsl(runtime), "wheel": wsl(wheel), "wheel_sha": wheel_sha, "project": wsl(project), "home": wsl(home), "env": {"HERMES_HOME": wsl(home), "HERMES_ENABLE_PROJECT_PLUGINS": "0"}}
+        bootstrap = runtime / "bootstrap.py"
+        bootstrap.write_text(BOOTSTRAP, encoding="utf-8")
+        (runtime / "bootstrap-config.json").write_text(json.dumps(cfg, indent=2) + "\n", encoding="utf-8")
+        result = subprocess.run(["wsl.exe", "-d", "Debian", "--", "/home/anthony/.hermes/hermes-agent/venv/bin/python", wsl(bootstrap), wsl(runtime / "bootstrap-config.json")], capture_output=True, text=True, timeout=120)
+        callback = runtime / "callback-result.json"
+        if callback.exists():
+            shutil.copy2(callback, ARCHIVE / "callback-result.json")
+        shutil.copy2(Path(__file__), ARCHIVE / "hermes_rewind_diagnostic_v2.py.txt")
+        shutil.copy2(bootstrap, ARCHIVE / "bootstrap.py.txt")
+        report = {"status": "diagnostic_completed" if result.returncode == 0 else "diagnostic_failed", "identity_acceptance": False, "exit_code": result.returncode, "source_commit": SOURCE, "wheel_sha256": wheel_sha, "hermes_commit": hermes_head, "helper_sha256": hashlib.sha256(Path(__file__).read_bytes()).hexdigest(), "scope": "API callback fixture only; no native CLI, model, service, or live state", "runtime_root": str(runtime)}
+        if callback.exists(): report["callback_result"] = json.loads(callback.read_text(encoding="utf-8"))
+        (ARCHIVE / "report.json").write_text(json.dumps(report, indent=2, sort_keys=True) + "\n", encoding="utf-8")
+        (ARCHIVE / "artifact-index.json").write_text(json.dumps({"status": report["status"], "included": ["report.json", "callback-result.json", "hermes_rewind_diagnostic_v2.py.txt", "bootstrap.py.txt"], "excluded": ["wheel/", "hermes-home/", "project/", "outbox.json", "bootstrap-config.json", "host runtime logs"]}, indent=2, sort_keys=True) + "\n", encoding="utf-8")
+        print(json.dumps(report, indent=2, sort_keys=True))
+        return 0 if result.returncode == 0 else 1
+    finally:
+        shutil.rmtree(runtime, ignore_errors=True)
+
+
+if __name__ == "__main__":
+    raise SystemExit(main())

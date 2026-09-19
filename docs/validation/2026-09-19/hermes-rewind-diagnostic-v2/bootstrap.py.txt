@@ -1,0 +1,70 @@
+
+import hashlib, json, os, sys, zipfile
+from pathlib import Path
+cfg = json.loads(Path(sys.argv[1]).read_text())
+root = Path(cfg["root"])
+preserved = {k: v for k, v in os.environ.items() if k in {"HOME", "USER", "LOGNAME", "PATH", "LANG", "WSL_INTEROP", "WSL_DISTRO_NAME"}}
+os.environ.clear(); os.environ.update(preserved); os.environ.update(cfg["env"])
+sys.dont_write_bytecode = True
+wheel = Path(cfg["wheel"])
+assert hashlib.sha256(wheel.read_bytes()).hexdigest() == cfg["wheel_sha"]
+extracted = root / "wheel"
+extracted.mkdir()
+with zipfile.ZipFile(wheel) as archive:
+    archive.extractall(extracted)
+sys.path[:0] = [str(extracted), "/tmp/mnemos-hermes-cwd-compat-v1"]
+from agent.memory_manager import MemoryManager
+from mnemos.adapters.hermes import MnemosHermesProvider
+from mnemos.client import Outbox
+from mnemos.scopes import ScopeRegistry
+
+class LocalOutboxClient:
+    def __init__(self, path):
+        self.outbox = Outbox(path)
+        self.calls = []
+        self.phase = "startup"
+    async def capture(self, payload):
+        payload = self.outbox.sanitize(payload)
+        transport_id = self.outbox.append(payload, event_id=payload.get("event_id"))
+        self.calls.append({"phase": self.phase, "transport_event_id": transport_id, "payload": payload})
+        return {"schema_version": 1, "status": "queued", "committed": False, "degraded": True, "event_id": transport_id}
+
+registry = ScopeRegistry()
+registry.register_project(root / "project", user_profile_id="rewind-fixture", enabled=True)
+client = LocalOutboxClient(root / "outbox.json")
+provider = MnemosHermesProvider(client=client, registry=registry, user_profile_id="rewind-fixture")
+manager = MemoryManager(); manager.add_provider(provider)
+manager.initialize_all("rewind-diagnostic", cwd=cfg["project"], hermes_home=cfg["home"])
+
+def flush():
+    assert manager.flush_pending(timeout=10)
+    assert provider._flush(timeout=10)
+
+def snapshot(label, before_calls):
+    pending = client.outbox.pending()
+    return {"label": label, "request_count_delta": len(client.calls) - before_calls,
+            "pending_entry_count": len(pending),
+            "pending_payload_event_ids": sorted(item["payload"].get("event_id") for item in pending),
+            "calls": [{"phase": item["phase"], "payload_event_id": item["payload"].get("event_id"),
+                       "occurred_at": item["payload"].get("occurred_at"), "role": item["payload"].get("role"),
+                       "source_ref": item["payload"].get("source_ref")} for item in client.calls[before_calls:]]}
+
+initial_messages = [
+    {"role": "user", "content": "Teach turn one for rewind identity."},
+    {"role": "assistant", "content": "Turn one is cedar."},
+    {"role": "user", "content": "Teach turn two for rewind identity."},
+    {"role": "assistant", "content": "Turn two is birch."},
+]
+changed_messages = initial_messages[:-1] + [{"role": "assistant", "content": "Turn two is maple."}]
+phases = []
+before = len(client.calls); client.phase = "initial"; manager.sync_all(initial_messages[2]["content"], initial_messages[3]["content"], session_id="rewind-diagnostic", messages=initial_messages); flush(); phases.append(snapshot("initial_four_messages", before))
+before = len(client.calls); client.phase = "exact_duplicate"; manager.sync_all(initial_messages[2]["content"], initial_messages[3]["content"], session_id="rewind-diagnostic", messages=initial_messages); flush(); phases.append(snapshot("exact_duplicate_four_messages", before))
+manager.on_session_switch("rewind-diagnostic", reset=False, rewound=True)
+before = len(client.calls); client.phase = "rewound_identical_regenerated_last_turn"; manager.sync_all(initial_messages[2]["content"], initial_messages[3]["content"], session_id="rewind-diagnostic", messages=initial_messages); flush(); phases.append(snapshot("rewound_identical_four_messages", before))
+before = len(client.calls); client.phase = "rewound_changed_last_turn"; manager.sync_all(changed_messages[2]["content"], changed_messages[3]["content"], session_id="rewind-diagnostic", messages=changed_messages); flush(); phases.append(snapshot("rewound_changed_suffix", before))
+manager.on_session_switch("rewind-diagnostic-branch", parent_session_id="rewind-diagnostic", reset=True)
+before = len(client.calls); client.phase = "new_session"; manager.sync_all(initial_messages[2]["content"], initial_messages[3]["content"], session_id="rewind-diagnostic-branch", messages=initial_messages); flush(); phases.append(snapshot("new_session_four_messages", before))
+module_origins = {"memory_manager": __import__("agent.memory_manager", fromlist=["x"]).__file__, "adapter": __import__("mnemos.adapters.hermes", fromlist=["x"]).__file__}
+manager.shutdown_all()
+result = {"status": "diagnostic_completed", "identity_acceptance": False, "scope": "Hermes MemoryManager callback fixture with durable queued outbox; no service, model, or native CLI", "phases": phases, "total_request_count": len(client.calls), "final_pending_entry_count": len(client.outbox.pending()), "module_origins": module_origins}
+(root / "callback-result.json").write_text(json.dumps(result, indent=2, sort_keys=True) + "\n")
