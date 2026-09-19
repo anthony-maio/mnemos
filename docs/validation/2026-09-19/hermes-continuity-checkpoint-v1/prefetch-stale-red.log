@@ -1,0 +1,80 @@
+F                                                                        [100%]
+================================== FAILURES ===================================
+____________ test_prefetch_observes_external_correction_and_forget ____________
+
+tmp_path = WindowsPath('C:/Users/Ant/AppData/Local/Temp/mnemos-prefetch-stale-red-v1/fixtures/test_prefetch_observes_externa0')
+
+    def test_prefetch_observes_external_correction_and_forget(tmp_path: Path) -> None:
+        import asyncio
+    
+        from mnemos.client import MnemosClient
+        from mnemos.config import MnemosConfig, ModuleConfig
+        from mnemos.engine import MnemosEngine
+        from mnemos.memory_service import LocalMemoryService
+        from mnemos.service import MnemosService
+        from mnemos.utils.embeddings import SimpleEmbeddingProvider
+        from mnemos.utils.llm import UnavailableLLMProvider
+        from mnemos.utils.storage import SQLiteStore
+    
+        registry = ScopeRegistry()
+        registry.register_project(tmp_path, user_profile_id="alice", enabled=True)
+        context = registry.resolve(
+            tmp_path, user_profile_id="alice", session_id="external-session", host="codex"
+        ).model_dump(mode="json")
+    
+        def factory() -> LocalMemoryService:
+            engine = MnemosEngine(
+                config=MnemosConfig(
+                    modules=ModuleConfig(**{name: False for name in ModuleConfig.model_fields})
+                ),
+                llm=UnavailableLLMProvider(),
+                embedder=SimpleEmbeddingProvider(),
+                store=SQLiteStore(str(tmp_path / "memory.sqlite")),
+            )
+            return LocalMemoryService(engine, registry)
+    
+        service = MnemosService(dispatcher_factory=factory, descriptor_path=tmp_path / "runtime.json")
+        service.start()
+        client = MnemosClient(descriptor_path=service.descriptor_path, auto_start=False)
+        provider = MnemosHermesProvider(client=client, registry=registry, user_profile_id="alice")
+        provider.initialize("hermes-session", cwd=str(tmp_path))
+    
+        def request(operation: str, **payload: Any) -> dict[str, Any]:
+            return asyncio.run(
+                client.request(operation, {"context": context, **payload}, queue_on_failure=False)
+            )
+    
+        try:
+            assert (
+                request(
+                    "remember",
+                    event_id="seed",
+                    role="user",
+                    content="The project release label is cedar.",
+                    scope="project",
+                )["status"]
+                == "committed"
+            )
+            request("maintenance")
+            fact = request("list", allowed_scopes=["project"])["facts"][0]
+            query = "What is the project release label?"
+            assert "cedar" in provider.prefetch(query)
+            assert (
+                request(
+                    "correct",
+                    fact_id=fact["id"],
+                    expected_version=1,
+                    event_id="correction",
+                    content="The project release label is maple.",
+                )["status"]
+                == "committed"
+            )
+            request("maintenance")
+            corrected = provider.prefetch(query)
+>           assert "maple" in corrected
+E           AssertionError: assert 'maple' in '[b9389e15-f770-47d0-98b4-c662a1bbe0f5 version 1] The project release label is cedar.\n'
+
+C:\Users\Ant\AppData\Local\Temp\mnemos-prefetch-stale-red-v1\test_hermes_adapter.py:502: AssertionError
+=========================== short test summary info ===========================
+FAILED ::test_prefetch_observes_external_correction_and_forget - AssertionErr...
+1 failed, 26 deselected in 2.41s

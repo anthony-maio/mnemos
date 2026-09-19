@@ -2,6 +2,13 @@
 
 ## Current checkpoint: September 19, 2026, local GPU replacement
 
+The newer [Hermes continuity package](../2026-09-19/hermes-continuity-checkpoint-v1/README.md)
+at `78c63ed` passes 1,172 source tests (four skips), all six package checks,
+484 isolated installed cases (two skips), and seven replay assertions. Its
+[patched native Hermes run](../2026-09-19/native-hermes-local-v4/README.md) passes
+16 single-turn scope/recall/raw-capture checks. These results do not rerun or
+replace the earlier real-model matrix or establish full host acceptance.
+
 The separate [combined recovery checkpoint](../2026-09-19/loopback-recovery-checkpoint-v1/README.md)
 at `de6cdcf` has passed source/package and isolated installed checks: 1,160
 source passes, four skips, 474 installed contract passes, two matching skips,

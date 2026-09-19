@@ -5,7 +5,10 @@ completed native model turns but exposed missing session cwd. The subsequent
 [isolated patched-host run](../2026-09-19/native-hermes-local-v3/README.md)
 passed explicit scope and recall, then failed duplicate callback admission.
 These records supersede the historical no-completed-turn observation below;
-full native acceptance remains open.
+the [v4 successor](../2026-09-19/native-hermes-local-v4/README.md) now passes
+all 16 single-turn scope, recall, and raw-capture checks with the isolated
+host patch. Four committed calls persist exactly two conversation events.
+The installed CLI is unchanged; full native lifecycle acceptance remains open.
 
 Date: 2026-09-16
 

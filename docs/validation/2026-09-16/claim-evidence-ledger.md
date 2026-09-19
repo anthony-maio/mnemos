@@ -4,11 +4,14 @@ Assessment date: September 19, 2026. This covers the unreleased
 functional-local-memory worktree, not the installed public package or website.
 The capability IDs come from the original implementation plan.
 
-Current package evidence is the [recovery checkpoint](../2026-09-19/loopback-recovery-checkpoint-v1/README.md)
-at `de6cdcf`: 1,160 source passes, four skips, six source/package checks,
-474 installed contract passes, two matching skips, and seven replay assertions.
-The previous readiness-budget and Windows descriptor-publication failures
-are preserved alongside the repaired result. The local model matrix is now
+Current package evidence is the [Hermes continuity checkpoint](../2026-09-19/hermes-continuity-checkpoint-v1/README.md)
+at `78c63ed`: 1,172 source passes, four skips, six source/package checks,
+484 installed contract passes, two matching skips, and seven replay assertions.
+The [isolated patched Hermes v4](../2026-09-19/native-hermes-local-v4/README.md)
+passes 16 single-turn scope, recall, and raw-capture checks. The installed CLI
+is unchanged, and full native lifecycle acceptance remains open. Earlier
+package and native failures retain their original artifacts and bindings.
+The local model matrix is now
 terminal and incomplete in five profiles; 50 observations had missing
 correction targets following `no_durable_facts` extraction. The
 [terminal lifecycle archive](../2026-09-19/lifecycle-incomplete-local-v2/README.md)
