@@ -8,6 +8,22 @@ This is a chronological checkpoint log. Later entries supersede earlier test
 counts and open implementation items. An implementation or focused check does
 not close a native-host, quality, performance, or pilot gate.
 
+## September 19: host resume and rewind compatibility candidate
+
+The [isolated host patch](../2026-09-19/hermes-host-identity-candidate-v1/README.md)
+preserves Hermes row IDs through late resume and compression recovery, and
+adopts IDs onto the retained warm history during undo/retry. The stronger
+undo/retry tests fail on unpatched source and pass on the candidate while
+preserving rich warm fields. The final affected suite passes 28 cases, also
+reproduced independently with imported source origins verified. Compression
+tests remain loader-contract evidence. Live Hermes and the cwd-only native
+test checkout are unchanged; compaction clone identity remains unresolved.
+
+The current T14/T18/T19 tables now reflect the verified `3730fd9` wheel and
+terminal encoding results. A prospective three-host protocol specifies the
+missing Codex/Claude-to-Hermes recall and shared correction/forget phases.
+It is NOT RUN and does not replace the earlier bounded host records.
+
 ## September 19: persisted Hermes occurrence identity
 
 The latest [Hermes native identity checkpoint](../2026-09-19/hermes-native-identity-checkpoint-v1/README.md)

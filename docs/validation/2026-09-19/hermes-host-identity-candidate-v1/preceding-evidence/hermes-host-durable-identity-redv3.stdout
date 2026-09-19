@@ -1,0 +1,61 @@
+FF                                                                       [100%]
+=================================== FAILURES ===================================
+_______ test_undo_warm_without_ids_publishes_durable_ids_and_rich_fields _______
+
+tmp_path = PosixPath('/tmp/pytest-of-anthony/pytest-7/test_undo_warm_without_ids_pub0')
+
+    def test_undo_warm_without_ids_publishes_durable_ids_and_rich_fields(tmp_path):
+        db, sid = seed(tmp_path)
+        durable = db.get_messages_as_conversation(sid, include_row_ids=True)
+        warm = [{**{k:v for k,v in m.items() if k != "_row_id"}, "rich_marker": i} for i,m in enumerate(durable)]
+        published = []
+        host = host_for(db, sid, warm, published)
+        host.undo_last(1, prefill=False)
+        assert len(published) == 1
+>       assert [m["_row_id"] for m in published[0]] == [1, 2]
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+tests/test_durable_identity_candidate_v3.py:34: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+.0 = <list_iterator object at 0x7ba36ea2d420>
+
+>   assert [m["_row_id"] for m in published[0]] == [1, 2]
+            ^^^^^^^^^^^^
+E   KeyError: '_row_id'
+
+tests/test_durable_identity_candidate_v3.py:34: KeyError
+----------------------------- Captured stdout call -----------------------------
+(^_^)b Undid 1 turn (2 message(s)). Backed up to: "two"
+  4 message(s) remaining in history.
+______ test_retry_warm_without_ids_publishes_durable_ids_and_rich_fields _______
+
+tmp_path = PosixPath('/tmp/pytest-of-anthony/pytest-7/test_retry_warm_without_ids_pu0')
+
+    def test_retry_warm_without_ids_publishes_durable_ids_and_rich_fields(tmp_path):
+        db, sid = seed(tmp_path)
+        durable = db.get_messages_as_conversation(sid, include_row_ids=True)
+        warm = [{**{k:v for k,v in m.items() if k != "_row_id"}, "rich_marker": i} for i,m in enumerate(durable)]
+        published = []
+        host = host_for(db, sid, warm, published)
+        assert host.retry_last() == "two"
+        assert len(published) == 1
+>       assert [m["_row_id"] for m in published[0]] == [1, 2]
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+tests/test_durable_identity_candidate_v3.py:47: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+.0 = <list_iterator object at 0x7ba36f01c2b0>
+
+>   assert [m["_row_id"] for m in published[0]] == [1, 2]
+            ^^^^^^^^^^^^
+E   KeyError: '_row_id'
+
+tests/test_durable_identity_candidate_v3.py:47: KeyError
+----------------------------- Captured stdout call -----------------------------
+(^_^)b Retrying: "two"
+=========================== short test summary info ============================
+FAILED tests/test_durable_identity_candidate_v3.py::test_undo_warm_without_ids_publishes_durable_ids_and_rich_fields
+FAILED tests/test_durable_identity_candidate_v3.py::test_retry_warm_without_ids_publishes_durable_ids_and_rich_fields
+2 failed in 0.93s

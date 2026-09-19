@@ -1,0 +1,33 @@
+{
+  "status": "candidate_verified",
+  "worktree": "/tmp/mnemos-hermes-durable-identity-v1",
+  "base_revision": "14a346345486418aa85ed6526549412ee2665ade",
+  "patch_sha256": "0c90cd88abe97f37fbcc973b4abc811b59cdf19c39698ce131ac54908470d12f",
+  "changes": [
+    "late CLI resume loads include_row_ids=True",
+    "compression child and durable-parent adoption loads include_row_ids=True",
+    "CLI retry and undo request adopt_row_ids=True"
+  ],
+  "baseline": {
+    "command": "cd /tmp/mnemos-hermes-durable-identity-v1 && /home/anthony/.hermes/hermes-agent/venv/bin/python -m pytest -q tests/hermes_state/test_rewind_surfaces_invariant.py tests/hermes_cli/test_cli_retry.py",
+    "exit_code": 0,
+    "stderr": "/home/anthony/.hermes/hermes-agent/venv/bin/python: No module named pytest",
+    "stdout": ""
+  },
+  "fixture": {
+    "command": "cd /tmp/mnemos-hermes-durable-identity-v1 && PYTHONPATH=/tmp/mnemos-hermes-durable-identity-v1 /home/anthony/.hermes/hermes-agent/venv/bin/python /tmp/mnemos-hermes-durable-identity-v1-evidence/row_fixture.py",
+    "exit_code": 0,
+    "stdout": "{'initial_ids': [1, 2, 3, 4], 'retained_ids': [1, 2], 'rewound_count': 2}",
+    "stderr": "",
+    "assertions": [
+      "SessionDB assigned positive durable row IDs",
+      "warm history without IDs gained retained durable IDs through adopt_row_ids=True",
+      "rewind retained the original prefix IDs and rewound two rows"
+    ]
+  },
+  "limitations": [
+    "The pinned Hermes venv has no pytest, so the repository test suite was not run.",
+    "Compaction child cloning and parent adoption were verified by source diff only; no model or CLI launch was used.",
+    "The patch is exported for independent review and is not installed in the live host."
+  ]
+}

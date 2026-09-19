@@ -1,0 +1,49 @@
+from hermes_state import SessionDB
+from hermes_cli.cli_session_mixin import CLISessionMixin
+
+
+def seed(tmp_path):
+    db = SessionDB(tmp_path / "state.db")
+    sid = "v3-session"
+    db.create_session(sid, "cli", cwd=str(tmp_path), model="fixture")
+    rows = [
+        {"role":"user", "content":"one"}, {"role":"assistant", "content":"a"},
+        {"role":"user", "content":"two"}, {"role":"assistant", "content":"b"},
+    ]
+    assert db.append_messages_batch(sid, rows) == 4
+    return db, sid
+
+
+def host_for(db, sid, warm, published):
+    host = CLISessionMixin.__new__(CLISessionMixin)
+    host._session_db, host.session_id, host.conversation_history, host.agent = db, sid, warm, None
+    host._prefill_input_buffer = lambda *a, **k: None
+    host._publish_truncated_history = lambda value, **kwargs: published.append(value)
+    host._undo_content_to_text = lambda content: str(content)
+    return host
+
+
+def test_undo_warm_without_ids_publishes_durable_ids_and_rich_fields(tmp_path):
+    db, sid = seed(tmp_path)
+    durable = db.get_messages_as_conversation(sid, include_row_ids=True)
+    warm = [{**{k:v for k,v in m.items() if k != "_row_id"}, "rich_marker": i} for i,m in enumerate(durable)]
+    published = []
+    host = host_for(db, sid, warm, published)
+    host.undo_last(1, prefill=False)
+    assert len(published) == 1
+    assert [m["_row_id"] for m in published[0]] == [1, 2]
+    assert [m["rich_marker"] for m in published[0]] == [0, 1]
+    db.close()
+
+
+def test_retry_warm_without_ids_publishes_durable_ids_and_rich_fields(tmp_path):
+    db, sid = seed(tmp_path)
+    durable = db.get_messages_as_conversation(sid, include_row_ids=True)
+    warm = [{**{k:v for k,v in m.items() if k != "_row_id"}, "rich_marker": i} for i,m in enumerate(durable)]
+    published = []
+    host = host_for(db, sid, warm, published)
+    assert host.retry_last() == "two"
+    assert len(published) == 1
+    assert [m["_row_id"] for m in published[0]] == [1, 2]
+    assert [m["rich_marker"] for m in published[0]] == [0, 1]
+    db.close()

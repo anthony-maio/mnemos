@@ -43,6 +43,15 @@ directory selected by the CLI into its agent constructor. It applies to Hermes
 installation. It does not repair gateway or other construction paths. Keep
 patched-host evidence separate from support in an unmodified installation.
 
+A separate proposed [durable message identity patch](hermes-durable-message-identity.patch)
+preserves row IDs through late CLI resume, compression-recovery loads, and
+undo/retry of an ID-less warm transcript. It targets the same pinned host
+revision and has not been applied to the live installation or the cwd-only
+native-test checkout. Its [28-case verification](../validation/2026-09-19/hermes-host-identity-candidate-v1/README.md)
+includes real resume/rewind persistence and bounded loader contract checks.
+Compaction that clones original rows still needs an occurrence-provenance
+contract; carrying IDs through a reload does not solve that separate problem.
+
 `prefetch()` injects bounded baseline recall. `sync_turn()` queues user and
 assistant evidence without blocking the Hermes turn. The local service or its
 durable outbox acknowledges each accepted event. Repeated callbacks use stable

@@ -1,0 +1,31 @@
+........F.................                                               [100%]
+=================================== FAILURES ===================================
+_ test_cli_undo_leaves_the_warm_history_shape_alone_while_the_tui_adopts_row_ids _
+
+db = <hermes_state.SessionDB object at 0x772132b41190>
+
+    def test_cli_undo_leaves_the_warm_history_shape_alone_while_the_tui_adopts_row_ids(db):
+        """``_row_id`` adoption is the TUI's contract (clients address follow-ups by durable row); a CLI history
+        that had no ids before /undo must not grow them."""
+        from hermes_cli.cli_session_mixin import CLISessionMixin
+        for sid in ("shape-cli", "shape-tui"):
+            _seed(db, sid)
+        warm = db.get_messages_as_conversation("shape-cli")
+        assert not any("_row_id" in m for m in warm)
+        cli = CLISessionMixin.__new__(CLISessionMixin)
+        cli._session_db, cli.session_id, cli.conversation_history, cli.agent = db, "shape-cli", warm, None
+        cli._prefill_input_buffer = MagicMock()
+        cli.undo_last(1)
+>       assert len(cli.conversation_history) == 4 and not any("_row_id" in m for m in cli.conversation_history)
+E       AssertionError: assert (4 == 4 and not True)
+E        +  where 4 = len([{'role': 'user', 'content': 'q1', '_db_persisted': True, 'timestamp': 1789858104.6601467, ...}, {'role': 'assistant',...104.6605752, ...}, {'role': 'assistant', 'content': 'a2', '_db_persisted': True, 'timestamp': 1789858104.6608016, ...}])
+E        +    where [{'role': 'user', 'content': 'q1', '_db_persisted': True, 'timestamp': 1789858104.6601467, ...}, {'role': 'assistant',...104.6605752, ...}, {'role': 'assistant', 'content': 'a2', '_db_persisted': True, 'timestamp': 1789858104.6608016, ...}] = <hermes_cli.cli_session_mixin.CLISessionMixin object at 0x772132b257d0>.conversation_history
+E        +  and   True = any(<generator object test_cli_undo_leaves_the_warm_history_shape_alone_while_the_tui_adopts_row_ids.<locals>.<genexpr> at 0x772132b21ff0>)
+
+tests/hermes_state/test_rewind_surfaces_invariant.py:112: AssertionError
+----------------------------- Captured stdout call -----------------------------
+(^_^)b Undid 1 turn (2 message(s)). Backed up to: "q3"
+  4 message(s) remaining in history.
+=========================== short test summary info ============================
+FAILED tests/hermes_state/test_rewind_surfaces_invariant.py::test_cli_undo_leaves_the_warm_history_shape_alone_while_the_tui_adopts_row_ids
+1 failed, 25 passed in 8.97s

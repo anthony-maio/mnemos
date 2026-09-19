@@ -1,0 +1,36 @@
+{
+  "status": "candidate_scope_verified",
+  "worktree": "/tmp/mnemos-hermes-durable-identity-v1",
+  "baseline_worktree": "/tmp/mnemos-hermes-durable-identity-baseline-v1",
+  "base_revision": "14a346345486418aa85ed6526549412ee2665ade",
+  "patch": "hermes-host-durable-identity-candidate-v1.patch",
+  "patch_sha256": "0c90cd88abe97f37fbcc973b4abc811b59cdf19c39698ce131ac54908470d12f",
+  "test_sha256": "a0dc9d96b958eee4e84c3b0d4cb363fd2065293f165ea1fd83b10245299cfaec",
+  "disposable_python": "/tmp/mnemos-hermes-durable-identity-pytest311-v1",
+  "new_tests": {
+    "command": "PYTHONPATH=/tmp/mnemos-hermes-durable-identity-v1:/home/anthony/.hermes/hermes-agent/venv/lib/python3.11/site-packages /tmp/mnemos-hermes-durable-identity-pytest311-v1/bin/python -m pytest -q tests/test_durable_identity_candidate.py",
+    "baseline_exit_code": 1,
+    "baseline_result": "3 failed, 1 passed",
+    "candidate_exit_code": 0,
+    "candidate_result": "4 passed"
+  },
+  "affected_upstream": {
+    "command": "pytest -q tests/test_durable_identity_candidate.py tests/hermes_state/test_rewind_surfaces_invariant.py tests/hermes_cli/test_cli_retry.py",
+    "candidate_result": "25 passed, 1 failed",
+    "failure": "Existing test_cli_undo_leaves_the_warm_history_shape_alone_while_the_tui_adopts_row_ids expects CLI undo to omit IDs; this candidate intentionally changes CLI undo to adopt durable IDs."
+  },
+  "evidence_files": [
+    "hermes-host-durable-identity-candidate-v1.tests.py.txt",
+    "hermes-host-durable-identity-candidate-v1.patch",
+    "hermes-host-durable-identity-candidate-v1.json",
+    "red311.stdout",
+    "red311.stderr",
+    "green-all.stdout",
+    "green-all.stderr"
+  ],
+  "limitations": [
+    "The existing CLI undo expectation requires an upstream test update to reflect adopt_row_ids=True.",
+    "No model, service, native CLI launch, or live host installation was used.",
+    "Compaction behavior is covered by loader-kwarg doubles and source-level candidate tests; no compaction model run was performed."
+  ]
+}

@@ -1,0 +1,87 @@
+from pathlib import Path
+from hermes_state import SessionDB
+from hermes_cli.cli_agent_setup_mixin import CLIAgentSetupMixin
+from hermes_cli.cli_session_mixin import CLISessionMixin
+from agent.conversation_compression import _adopt_live_compression_child, _adopt_grown_durable_parent
+
+
+def make_db(tmp_path):
+    db = SessionDB(tmp_path / "state.db")
+    sid = "candidate-session"
+    db.create_session(sid, "cli", cwd=str(tmp_path), model="fixture")
+    messages = [
+        {"role": "user", "content": "one"}, {"role": "assistant", "content": "a"},
+        {"role": "user", "content": "two"}, {"role": "assistant", "content": "b"},
+    ]
+    assert db.append_messages_batch(sid, messages) == 4
+    return db, sid, messages
+
+
+def test_late_resume_requests_durable_row_ids(tmp_path):
+    db, sid, _ = make_db(tmp_path)
+    calls = []
+    original = db.get_messages_as_conversation
+    def load(*args, **kwargs):
+        calls.append(kwargs)
+        return original(*args, **kwargs)
+    db.get_messages_as_conversation = load
+    class Host(CLIAgentSetupMixin):
+        pass
+    host = Host(); host._session_db = db; host.session_id = sid; host.tool_progress_mode = "off"
+    host._resume_history_error = None
+    host._follow_compression_chain = lambda meta, notice: meta
+    host._resume_history_limit_error = lambda tip_only: None
+    host._restore_session_state = lambda meta, quiet: None
+    assert host._load_resumed_history_late() is True
+    assert calls and calls[-1]["include_row_ids"] is True
+    assert all(isinstance(m.get("_row_id"), int) for m in host.conversation_history)
+    db.close()
+
+
+def test_compression_parent_adoption_requires_row_ids(tmp_path):
+    class DB:
+        def __init__(self): self.calls = []
+        def get_messages_as_conversation(self, *args, **kwargs):
+            self.calls.append(kwargs)
+            return [{"role": "user", "content": "one", "_row_id": 1}, {"role": "assistant", "content": "a", "_row_id": 2}]
+    class Lease: pass
+    class Agent: _persist_user_message_idx = None
+    db = DB(); lease = Lease(); lease.db = db; lease.sid = "s"
+    adopted = _adopt_grown_durable_parent(Agent(), lease, [{"role": "user", "content": "one"}])
+    assert adopted and len(db.calls) == 2
+    assert all(call["include_row_ids"] is True for call in db.calls)
+
+
+def test_compression_child_adoption_requires_row_ids():
+    class DB:
+        def __init__(self): self.calls = []
+        def get_compression_tip(self, sid): return "child"
+        def get_session(self, sid): return {"ended_at": None}
+        def get_messages_as_conversation(self, *args, **kwargs):
+            self.calls.append(kwargs)
+            return [{"role": "user", "content": "one", "_row_id": 1}]
+    class Engine: 
+        def on_session_start(self, **kwargs): pass
+    class MM:
+        def on_session_switch(self, *args, **kwargs): pass
+    class Agent:
+        session_id = "parent"; _session_db_created = False; _cached_system_prompt = None
+        context_compressor = Engine(); _memory_manager = MM(); _gateway_session_key = None; platform = "cli"
+    db = DB(); recovered = _adopt_live_compression_child(Agent(), db, "parent")
+    assert recovered and db.calls[-1]["include_row_ids"] is True
+
+
+def test_undo_requests_adopted_durable_ids(tmp_path):
+    db, sid, _ = make_db(tmp_path)
+    class Agent: _memory_manager = None
+    class Host(CLISessionMixin):
+        pass
+    host = Host(); host._session_db = db; host.session_id = sid; host.agent = Agent()
+    host.conversation_history = db.get_messages_as_conversation(sid, include_row_ids=True)
+    host._publish_truncated_history = lambda *args, **kwargs: None
+    host._undo_content_to_text = lambda content: str(content)
+    host._session_db.rewind_user_turn_original = db.rewind_user_turn
+    host.undo_last(n=1, prefill=False)
+    retained = db.get_messages_as_conversation(sid, include_row_ids=True)
+    assert [m["_row_id"] for m in retained] == [1, 2]
+    db.close()

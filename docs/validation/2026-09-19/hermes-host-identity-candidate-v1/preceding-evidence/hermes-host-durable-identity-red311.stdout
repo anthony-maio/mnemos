@@ -1,0 +1,87 @@
+FFF.                                                                     [100%]
+=================================== FAILURES ===================================
+__________________ test_late_resume_requests_durable_row_ids ___________________
+
+tmp_path = PosixPath('/tmp/pytest-of-anthony/pytest-6/test_late_resume_requests_dura0')
+
+    def test_late_resume_requests_durable_row_ids(tmp_path):
+        db, sid, _ = make_db(tmp_path)
+        calls = []
+        original = db.get_messages_as_conversation
+        def load(*args, **kwargs):
+            calls.append(kwargs)
+            return original(*args, **kwargs)
+        db.get_messages_as_conversation = load
+        class Host(CLIAgentSetupMixin):
+            pass
+        host = Host(); host._session_db = db; host.session_id = sid; host.tool_progress_mode = "off"
+        host._resume_history_error = None
+        host._follow_compression_chain = lambda meta, notice: meta
+        host._resume_history_limit_error = lambda tip_only: None
+        host._restore_session_state = lambda meta, quiet: None
+        assert host._load_resumed_history_late() is True
+>       assert calls and calls[-1]["include_row_ids"] is True
+                         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       KeyError: 'include_row_ids'
+
+tests/test_durable_identity_candidate.py:36: KeyError
+----------------------------- Captured stderr call -----------------------------
+↻ Resumed session candidate-session (2 user messages, 4 total messages)
+______________ test_compression_parent_adoption_requires_row_ids _______________
+
+tmp_path = PosixPath('/tmp/pytest-of-anthony/pytest-6/test_compression_parent_adopti0')
+
+    def test_compression_parent_adoption_requires_row_ids(tmp_path):
+        class DB:
+            def __init__(self): self.calls = []
+            def get_messages_as_conversation(self, *args, **kwargs):
+                self.calls.append(kwargs)
+                return [{"role": "user", "content": "one", "_row_id": 1}, {"role": "assistant", "content": "a", "_row_id": 2}]
+        class Lease: pass
+        class Agent: _persist_user_message_idx = None
+        db = DB(); lease = Lease(); lease.db = db; lease.sid = "s"
+        adopted = _adopt_grown_durable_parent(Agent(), lease, [{"role": "user", "content": "one"}])
+        assert adopted and len(db.calls) == 2
+>       assert all(call["include_row_ids"] is True for call in db.calls)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+tests/test_durable_identity_candidate.py:52: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+.0 = <list_iterator object at 0x7d8c60f5c3d0>
+
+>   assert all(call["include_row_ids"] is True for call in db.calls)
+               ^^^^^^^^^^^^^^^^^^^^^^^
+E   KeyError: 'include_row_ids'
+
+tests/test_durable_identity_candidate.py:52: KeyError
+------------------------------ Captured log call -------------------------------
+INFO     agent.conversation_compression:conversation_compression.py:2838 compression: session=s grew before lease (1 → 2 msgs); adopting durable snapshot
+_______________ test_compression_child_adoption_requires_row_ids _______________
+
+    def test_compression_child_adoption_requires_row_ids():
+        class DB:
+            def __init__(self): self.calls = []
+            def get_compression_tip(self, sid): return "child"
+            def get_session(self, sid): return {"ended_at": None}
+            def get_messages_as_conversation(self, *args, **kwargs):
+                self.calls.append(kwargs)
+                return [{"role": "user", "content": "one", "_row_id": 1}]
+        class Engine:
+            def on_session_start(self, **kwargs): pass
+        class MM:
+            def on_session_switch(self, *args, **kwargs): pass
+        class Agent:
+            session_id = "parent"; _session_db_created = False; _cached_system_prompt = None
+            context_compressor = Engine(); _memory_manager = MM(); _gateway_session_key = None; platform = "cli"
+        db = DB(); recovered = _adopt_live_compression_child(Agent(), db, "parent")
+>       assert recovered and db.calls[-1]["include_row_ids"] is True
+                             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       KeyError: 'include_row_ids'
+
+tests/test_durable_identity_candidate.py:71: KeyError
+=========================== short test summary info ============================
+FAILED tests/test_durable_identity_candidate.py::test_late_resume_requests_durable_row_ids
+FAILED tests/test_durable_identity_candidate.py::test_compression_parent_adoption_requires_row_ids
+FAILED tests/test_durable_identity_candidate.py::test_compression_child_adoption_requires_row_ids
+3 failed, 1 passed in 0.94s

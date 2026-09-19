@@ -1,0 +1,32 @@
+from pathlib import Path
+import hashlib
+import json
+import subprocess
+import shutil
+
+root = Path(__file__).resolve().parents[1]
+archive = root/'docs/validation/2026-09-19/hermes-host-identity-candidate-v1'
+output = archive/'executed-tests'
+output.mkdir(exist_ok=False)
+host = '/tmp/mnemos-hermes-durable-identity-v1'
+rows = []
+for name in ['tests/test_durable_identity_candidate.py', 'tests/test_durable_identity_candidate_v3.py',
+             'tests/hermes_state/test_rewind_surfaces_invariant.py', 'tests/hermes_cli/test_cli_retry.py']:
+    data = subprocess.check_output(['wsl', '-e', 'cat', host+'/'+name])
+    target = output/(name.replace('/', '__')+'.txt')
+    target.write_bytes(data)
+    rows.append({'host_path': host+'/'+name, 'archive_file': target.name,
+                 'bytes': len(data), 'sha256': hashlib.sha256(data).hexdigest()})
+patch = subprocess.check_output(['wsl', '-e', 'git', '-C', host, 'diff', '--',
+                                'tests/hermes_state/test_rewind_surfaces_invariant.py'])
+expected = (root/'.venv/hermes-host-durable-identity-candidate-v3-tests.patch').read_bytes()
+assert patch.replace(b'\r\n', b'\n') == expected.replace(b'\r\n', b'\n')
+for name, source in [('tests__test_durable_identity_candidate.py.txt', 'hermes-host-durable-identity-candidate-v1.tests.py.txt'),
+                     ('tests__test_durable_identity_candidate_v3.py.txt', 'hermes-host-durable-identity-candidate-v3.tests.py.txt')]:
+    assert (output/name).read_bytes().replace(b'\r\n', b'\n') == (root/'.venv'/source).read_bytes().replace(b'\r\n', b'\n')
+(output/'index.json').write_text(json.dumps({'files': rows, 'binding': 'Test bytes read after independent 28-case run; candidate unchanged.'}, indent=2)+'\n', encoding='utf-8')
+shutil.copyfile(Path(__file__), output/(Path(__file__).name+'.txt'))
+destination = root/'docs/integrations/hermes-durable-message-identity.patch'
+assert not destination.exists()
+shutil.copyfile(root/'.venv/hermes-host-durable-identity-candidate-v1.patch', destination)
+print('Bound four executed test files and exported proposed host patch.')

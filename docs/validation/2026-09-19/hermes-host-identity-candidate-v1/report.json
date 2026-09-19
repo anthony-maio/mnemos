@@ -1,0 +1,83 @@
+{
+  "status": "passed",
+  "scope": "isolated host candidate, no model or Mnemos service",
+  "source_revision": "14a346345486418aa85ed6526549412ee2665ade",
+  "commands": [
+    {
+      "name": "host_head",
+      "argv": [
+        "wsl",
+        "-e",
+        "git",
+        "-C",
+        "/tmp/mnemos-hermes-durable-identity-v1",
+        "rev-parse",
+        "HEAD"
+      ],
+      "exit_code": 0,
+      "stdout_sha256": "deef5990a81dbfae63f3a4b73391146b33948f3d24413d843e3bb263e9444cbc",
+      "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "name": "implementation_diff",
+      "argv": [
+        "wsl",
+        "-e",
+        "git",
+        "-C",
+        "/tmp/mnemos-hermes-durable-identity-v1",
+        "diff",
+        "--",
+        "agent/conversation_compression.py",
+        "hermes_cli/cli_agent_setup_mixin.py",
+        "hermes_cli/cli_session_mixin.py"
+      ],
+      "exit_code": 0,
+      "stdout_sha256": "0c90cd88abe97f37fbcc973b4abc811b59cdf19c39698ce131ac54908470d12f",
+      "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "name": "import_origins",
+      "argv": [
+        "wsl",
+        "-e",
+        "env",
+        "PYTHONPATH=/tmp/mnemos-hermes-durable-identity-v1:/home/anthony/.hermes/hermes-agent/venv/lib/python3.11/site-packages",
+        "PYTEST_DISABLE_PLUGIN_AUTOLOAD=1",
+        "/tmp/mnemos-hermes-durable-identity-pytest311-v1/bin/python",
+        "-c",
+        "import importlib,json,pathlib\nnames=['hermes_state','hermes_cli.cli_agent_setup_mixin','hermes_cli.cli_session_mixin','agent.conversation_compression']\norigins={n:importlib.import_module(n).__file__ for n in names}\nassert all(pathlib.Path(p).resolve().is_relative_to(pathlib.Path('/tmp/mnemos-hermes-durable-identity-v1')) for p in origins.values()), origins\nprint(json.dumps(origins,sort_keys=True))\n"
+      ],
+      "exit_code": 0,
+      "stdout_sha256": "066bac9fbeb44fee002943930969b7d2458fa1bd692001737ec4bdd2622e35e2",
+      "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "name": "affected_tests",
+      "argv": [
+        "wsl",
+        "-e",
+        "env",
+        "PYTHONPATH=/tmp/mnemos-hermes-durable-identity-v1:/home/anthony/.hermes/hermes-agent/venv/lib/python3.11/site-packages",
+        "PYTEST_DISABLE_PLUGIN_AUTOLOAD=1",
+        "/tmp/mnemos-hermes-durable-identity-pytest311-v1/bin/python",
+        "-m",
+        "pytest",
+        "-q",
+        "/tmp/mnemos-hermes-durable-identity-v1/tests/test_durable_identity_candidate.py",
+        "/tmp/mnemos-hermes-durable-identity-v1/tests/test_durable_identity_candidate_v3.py",
+        "/tmp/mnemos-hermes-durable-identity-v1/tests/hermes_state/test_rewind_surfaces_invariant.py",
+        "/tmp/mnemos-hermes-durable-identity-v1/tests/hermes_cli/test_cli_retry.py"
+      ],
+      "exit_code": 0,
+      "stdout_sha256": "4f66f464e107999deabb162494d5f67c120c46b44281e503c0194257ff7c7275",
+      "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    }
+  ],
+  "implementation_patch_sha256": "0c90cd88abe97f37fbcc973b4abc811b59cdf19c39698ce131ac54908470d12f",
+  "limitations": [
+    "Compression adoption tests use loader doubles, not a model compression run.",
+    "No live installation or host configuration changed.",
+    "Compaction clones and end-to-end native model lifecycle remain open."
+  ]
+}

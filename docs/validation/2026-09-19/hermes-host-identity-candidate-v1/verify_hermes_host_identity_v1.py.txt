@@ -1,0 +1,75 @@
+"""Independently verify the isolated upstream Hermes identity candidate."""
+from pathlib import Path
+import hashlib
+import json
+import subprocess
+import shutil
+
+root = Path(__file__).resolve().parents[1]
+output = root/'docs/validation/2026-09-19/hermes-host-identity-candidate-v1'
+assert not output.exists()
+output.mkdir()
+host = '/tmp/mnemos-hermes-durable-identity-v1'
+python = '/tmp/mnemos-hermes-durable-identity-pytest311-v1/bin/python'
+site = '/home/anthony/.hermes/hermes-agent/venv/lib/python3.11/site-packages'
+prefix = ['wsl', '-e', 'env', 'PYTHONPATH='+host+':'+site, 'PYTEST_DISABLE_PLUGIN_AUTOLOAD=1', python]
+record = {'status': 'running', 'scope': 'isolated host candidate, no model or Mnemos service',
+          'source_revision': '14a346345486418aa85ed6526549412ee2665ade', 'commands': []}
+def sha(data):
+    return hashlib.sha256(data).hexdigest()
+def run(name, command, timeout=90):
+    result = subprocess.run(command, cwd=root, capture_output=True, timeout=timeout)
+    for stream in ('stdout', 'stderr'):
+        (output/(name+'.'+stream+'.log')).write_bytes(getattr(result, stream))
+    record['commands'].append({'name': name, 'argv': command, 'exit_code': result.returncode,
+                               'stdout_sha256': sha(result.stdout), 'stderr_sha256': sha(result.stderr)})
+    if result.returncode:
+        record['status'] = 'failed'
+        (output/'report.json').write_text(json.dumps(record, indent=2)+'\n')
+        raise RuntimeError(name+' failed; raw outputs preserved')
+    return result.stdout
+
+head = run('host_head', ['wsl', '-e', 'git', '-C', host, 'rev-parse', 'HEAD']).decode().strip()
+assert head == record['source_revision']
+names = ['agent/conversation_compression.py', 'hermes_cli/cli_agent_setup_mixin.py', 'hermes_cli/cli_session_mixin.py']
+patch = run('implementation_diff', ['wsl', '-e', 'git', '-C', host, 'diff', '--', *names])
+expected = (root/'.venv/hermes-host-durable-identity-candidate-v1.patch').read_bytes()
+assert patch.replace(b'\r\n', b'\n') == expected.replace(b'\r\n', b'\n')
+record['implementation_patch_sha256'] = sha(expected)
+probe = '''import importlib,json,pathlib
+names=['hermes_state','hermes_cli.cli_agent_setup_mixin','hermes_cli.cli_session_mixin','agent.conversation_compression']
+origins={n:importlib.import_module(n).__file__ for n in names}
+assert all(pathlib.Path(p).resolve().is_relative_to(pathlib.Path('/tmp/mnemos-hermes-durable-identity-v1')) for p in origins.values()), origins
+print(json.dumps(origins,sort_keys=True))
+'''
+run('import_origins', prefix+['-c', probe])
+tests = ['tests/test_durable_identity_candidate.py', 'tests/test_durable_identity_candidate_v3.py',
+         'tests/hermes_state/test_rewind_surfaces_invariant.py', 'tests/hermes_cli/test_cli_retry.py']
+run('affected_tests', prefix+['-m', 'pytest', '-q', *[host+'/'+name for name in tests]])
+
+patterns = ['hermes-host-durable-identity-candidate-v1.patch',
+            'hermes-host-durable-identity-candidate-v1.json',
+            'hermes-host-durable-identity-candidate-v1.tests.py.txt',
+            'hermes-host-durable-identity-candidate-v2.json',
+            'hermes-host-durable-identity-candidate-v3.json',
+            'hermes-host-durable-identity-candidate-v3-tests.patch',
+            'hermes-host-durable-identity-candidate-v3.tests.py.txt',
+            'hermes-host-durable-identity-red311.stdout', 'hermes-host-durable-identity-red311.stderr',
+            'hermes-host-durable-identity-green-all.stdout', 'hermes-host-durable-identity-green-all.stderr',
+            'hermes-host-durable-identity-redv3.stdout', 'hermes-host-durable-identity-redv3.stderr',
+            'hermes-host-durable-identity-greenv3.stdout', 'hermes-host-durable-identity-greenv3.stderr',
+            'hermes-host-durable-identity-green-final.stdout', 'hermes-host-durable-identity-green-final.stderr']
+(output/'preceding-evidence').mkdir()
+for name in patterns:
+    shutil.copyfile(root/'.venv'/name, output/'preceding-evidence'/name)
+shutil.copyfile(Path(__file__), output/(Path(__file__).name+'.txt'))
+record['status'] = 'passed'
+record['limitations'] = ['Compression adoption tests use loader doubles, not a model compression run.',
+                        'No live installation or host configuration changed.',
+                        'Compaction clones and end-to-end native model lifecycle remain open.']
+(output/'report.json').write_text(json.dumps(record, indent=2)+'\n', encoding='utf-8')
+(output/'.gitattributes').write_bytes(b'** -text -whitespace\n')
+index = {p.relative_to(output).as_posix(): {'bytes': p.stat().st_size, 'sha256': sha(p.read_bytes())}
+         for p in sorted(output.rglob('*')) if p.is_file()}
+(output/'evidence-index.json').write_text(json.dumps({'files': index}, indent=2)+'\n', encoding='utf-8')
+print(json.dumps({'status': record['status'], 'archive': str(output), 'files': len(index)}))

@@ -343,6 +343,8 @@ Steps: automate host-independent capture/recall/correct/forget fixtures, then ex
 
 Acceptance: host A teaches a source-backed project convention; after restart hosts B/C retrieve it; B corrects it and all retrieve the current version; forgetting survives maintenance and replay. Project B never sees project A's canary. Record actual host versions and transcripts with secrets removed.
 
+The missing three-host native observation has a [prospective protocol](2026-09-19-three-host-continuity-protocol-v1.md). It remains NOT RUN; neither the earlier two-host result nor a Hermes-only lifecycle pass closes that requirement.
+
 Run: `py -3.13 -m pytest -q tests/test_cross_host_contract.py tests/test_mcp_compatibility.py`. Real-host results remain NOT RUN until observed; protocol tests do not promote host tiers.
 
 ### T18 - Prove the contribution of all five modules

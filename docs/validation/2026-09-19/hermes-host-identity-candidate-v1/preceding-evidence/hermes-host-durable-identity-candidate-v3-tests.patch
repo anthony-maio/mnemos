@@ -1,0 +1,13 @@
+diff --git a/tests/hermes_state/test_rewind_surfaces_invariant.py b/tests/hermes_state/test_rewind_surfaces_invariant.py
+index 44cbac499f..ef4106ba95 100644
+--- a/tests/hermes_state/test_rewind_surfaces_invariant.py
++++ b/tests/hermes_state/test_rewind_surfaces_invariant.py
+@@ -109,7 +109,7 @@ def test_cli_undo_leaves_the_warm_history_shape_alone_while_the_tui_adopts_row_i
+     cli._session_db, cli.session_id, cli.conversation_history, cli.agent = db, "shape-cli", warm, None
+     cli._prefill_input_buffer = MagicMock()
+     cli.undo_last(1)
+-    assert len(cli.conversation_history) == 4 and not any("_row_id" in m for m in cli.conversation_history)
++    assert len(cli.conversation_history) == 4 and [m["_row_id"] for m in cli.conversation_history] == [1, 2, 3, 4]
+ 
+     installed, _view, _count = _rewind_via("tui", db, "shape-tui", 1)
+     assert [m["_row_id"] for m in installed] == [row[0] for row in _active_rows(db, "shape-tui") if row[3]]
