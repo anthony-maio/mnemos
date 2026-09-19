@@ -2,6 +2,18 @@
 
 ## Current checkpoint: September 19, 2026, local GPU replacement
 
+The separate [storage-location checkpoint](../2026-09-19/storage-location-checkpoint-v1/README.md)
+has completed all source/package checks at `7bcabde`: 1,131 tests pass with four
+skips. It binds the same installed wheel as `39b9c79`. The
+[capture-only placement diagnostic](../2026-09-19/capture-placement-v1/README.md)
+passes three SSD repetitions and fails three HDD repetitions under the original
+100 ms p95 gate. These synthetic-provider runs do not replace the failed full
+performance phase. A full recall remeasurement remains pending until the
+serialized model evaluations finish. Main coordinator 19032, lifecycle worker
+46876, and supplemental supervisor 61188 were verified live during this update;
+the full-profile checkpoint was advancing. No incomplete quality results are
+interpreted here. Their source remains frozen at `fc72cc2`.
+
 The user reported that the lab machine no longer boots. The original `.35`
 coordinator and worker chain were stopped after identity and ancestry checks;
 execution handle `78705` returned terminal exit code 1. Thirty-seven result

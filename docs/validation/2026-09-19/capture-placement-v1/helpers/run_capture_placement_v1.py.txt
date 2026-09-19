@@ -1,0 +1,87 @@
+"""Repeat the unchanged capture gate on both local volumes, without model calls."""
+from datetime import datetime, timezone
+import hashlib
+import json
+import os
+from pathlib import Path
+import subprocess
+import sys
+
+SNAPSHOT = Path("C:/Users/Ant/AppData/Local/Temp/mnemos-source-embedding-client-v1")
+COMMIT = "39b9c799020a58ea2ac3d798189474ed10389bd0"
+ROOTS = {"C": Path("C:/Users/Ant/AppData/Local/Temp/mnemos-capture-placement-v1"),
+         "D": Path("D:/WindowsTemp/mnemos-capture-placement-v1")}
+assert all(not root.exists() for root in ROOTS.values())
+assert subprocess.check_output(["git", "rev-parse", "HEAD"], cwd=SNAPSHOT, text=True).strip() == COMMIT
+assert not subprocess.check_output(["git", "status", "--porcelain"], cwd=SNAPSHOT, text=True).strip()
+for root in ROOTS.values():
+    root.mkdir()
+for key in list(os.environ):
+    if key.startswith("MNEMOS_") or key == "PYTHONPATH":
+        del os.environ[key]
+os.environ["MNEMOS_CONFIG_PATH"] = str(ROOTS["C"] / "missing.toml")
+os.environ["MNEMOS_EMBEDDING_PROVIDER"] = "simple"
+sys.path.insert(0, str(SNAPSHOT))
+from benchmarks.local_memory import performance
+
+hardware_command = "Get-Partition -DriveLetter C,D | ForEach-Object { $disk = $_ | Get-Disk; [PSCustomObject]@{Drive=$_.DriveLetter;DiskNumber=$disk.Number;Model=$disk.FriendlyName;Bus=[string]$disk.BusType} } | ConvertTo-Json"
+hardware = subprocess.run(["powershell", "-NoProfile", "-Command", hardware_command],
+                          capture_output=True, text=True, check=True,
+                          creationflags=getattr(subprocess, "CREATE_NO_WINDOW", 0))
+media = subprocess.run(["powershell", "-NoProfile", "-Command", "Get-PhysicalDisk | Select-Object FriendlyName,MediaType,BusType | ConvertTo-Json"],
+                       capture_output=True, text=True, check=True,
+                       creationflags=getattr(subprocess, "CREATE_NO_WINDOW", 0))
+record = {"source_commit": COMMIT, "source": str(SNAPSHOT),
+          "helper_sha256": hashlib.sha256(Path(__file__).read_bytes()).hexdigest(),
+          "started_at": datetime.now(timezone.utc).isoformat(), "status": "running",
+          "order": ["C", "D", "D", "C", "C", "D"], "capture_events_per_run": 50,
+          "gate_ms": 100.0, "hardware": json.loads(hardware.stdout),
+          "physical_media": json.loads(media.stdout),
+          "scope": "Original capture gate only, 50 events after one warmup per run. Simple embeddings, unavailable cognition, no model calls. Real-model evaluation runs separately. No per-request timing instrumentation.",
+          "runs": []}
+output = ROOTS["C"] / "capture-placement.json"
+
+
+def save():
+    temporary = output.with_suffix(".tmp")
+    temporary.write_text(json.dumps(record, indent=2) + "\n", encoding="utf-8")
+    temporary.replace(output)
+
+
+save()
+original_make = performance._make_engine
+observed_sqlite = []
+
+
+def make_engine(*args, **kwargs):
+    engine, store = original_make(*args, **kwargs)
+    observed_sqlite.append(performance._sqlite_provenance(store))
+    return engine, store
+
+
+performance._make_engine = make_engine
+try:
+    for index, drive in enumerate(record["order"]):
+        root = ROOTS[drive] / f"run-{index + 1}"
+        root.mkdir()
+        start = datetime.now(timezone.utc).isoformat()
+        result = performance.measure_capture(root)
+        assert len(result["ack_statuses"]) == 50
+        assert set(result["ack_statuses"]) == {"committed"}
+        settings = observed_sqlite[-1]
+        assert settings["synchronous_label"] == "FULL" and settings["journal_mode"] == "wal"
+        record["runs"].append({"drive": drive, "work_dir": str(root), "device_id": root.stat().st_dev,
+                               "started_at": start, "finished_at": datetime.now(timezone.utc).isoformat(),
+                               "sqlite": settings, "result": result})
+        save()
+        print(json.dumps({"run": index + 1, "drive": drive, "gate": result["capture_gate"], "p95_ms": result["warm_http_capture"]["p95_ms"]}), flush=True)
+    record["status"] = "completed"
+    assert not subprocess.check_output(["git", "status", "--porcelain"], cwd=SNAPSHOT, text=True).strip()
+except Exception as exc:
+    record.update(status="failed", error_type=type(exc).__name__)
+    raise
+finally:
+    performance._make_engine = original_make
+    record["finished_at"] = datetime.now(timezone.utc).isoformat()
+    save()
+print(json.dumps({"report": str(output), "status": record["status"]}))

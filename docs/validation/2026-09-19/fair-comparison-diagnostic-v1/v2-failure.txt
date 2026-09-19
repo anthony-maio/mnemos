@@ -1,0 +1,3 @@
+The v2 helper injected LookupEmbeddingProvider into the benchmark and engine, then failed closed with exit code 1 before writing a report. The provider received an engine-internal surprisal prediction string absent from the corpus vector map:
+The user will likely ask about their current project or task.
+This failure showed that injection was active. The v2 output directory had no report.json. No model or network call was made.

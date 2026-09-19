@@ -4,6 +4,19 @@ Assessment date: September 19, 2026. This covers the unreleased
 functional-local-memory worktree, not the installed public package or website.
 The capability IDs come from the original implementation plan.
 
+The [storage-location checkpoint](../2026-09-19/storage-location-checkpoint-v1/README.md)
+at `7bcabde` passes 1,131 source tests, four skips, and all six source/package
+checks. The wheel is byte-identical to the previously installed `39b9c79`
+artifact; its 428 installed contract passes and seven replay assertions are
+reused, not newly observed. Explicit benchmark storage paths now distinguish
+SSD and HDD measurements. Three capture-only SSD repetitions pass the original
+100 ms p95 gate; all three HDD repetitions fail. All 300 events committed.
+Shared-machine I/O limits causal attribution; this is not native capture or
+recall acceptance. The [raw placement evidence](../2026-09-19/capture-placement-v1/README.md)
+preserves every repetition. The [fair offline retrieval control](../2026-09-19/fair-comparison-diagnostic-v1/README.md)
+removes the earlier cross-project regression, but overall replacement gates
+remain failed and synthetic vectors support no production superiority claim.
+
 The [embedding-client checkpoint](../2026-09-19/embedding-client-checkpoint-v1/README.md)
 at `39b9c79` passes 1,123 source tests, four skips, six source/package checks,
 428 installed contract cases, two matching skips, and replay checks. Client

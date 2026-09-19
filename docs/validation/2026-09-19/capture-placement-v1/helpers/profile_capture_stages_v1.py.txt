@@ -1,0 +1,119 @@
+"""Time capture boundaries using disposable state and the unchanged benchmark."""
+from datetime import datetime, timezone
+import functools
+import hashlib
+import json
+import os
+from pathlib import Path
+import subprocess
+import sys
+import threading
+import time
+
+SNAPSHOT = Path("C:/Users/Ant/AppData/Local/Temp/mnemos-source-embedding-client-v1")
+OUTPUT = Path("C:/Users/Ant/AppData/Local/Temp/mnemos-capture-stages-v1")
+COMMIT = "39b9c799020a58ea2ac3d798189474ed10389bd0"
+assert subprocess.check_output(["git", "rev-parse", "HEAD"], cwd=SNAPSHOT, text=True).strip() == COMMIT
+assert not subprocess.check_output(["git", "status", "--porcelain"], cwd=SNAPSHOT, text=True).strip()
+OUTPUT.mkdir(exist_ok=False)
+for key in list(os.environ):
+    if key.startswith("MNEMOS_") or key == "PYTHONPATH":
+        del os.environ[key]
+os.environ["MNEMOS_CONFIG_PATH"] = str(OUTPUT / "missing.toml")
+os.environ["MNEMOS_EMBEDDING_PROVIDER"] = "simple"
+sys.path.insert(0, str(SNAPSHOT))
+from benchmarks.local_memory import performance
+from mnemos import client, memory_service, service
+from mnemos.utils.storage import SQLiteStore
+
+events = []
+guard = threading.Lock()
+local = threading.local()
+originals = []
+
+
+def record(name, started, error):
+    item = {"stage": name, "capture_id": getattr(local, "capture_id", None),
+            "thread_id": threading.get_ident(), "milliseconds": (time.perf_counter() - started) * 1000,
+            "error_type": error}
+    with guard:
+        events.append(item)
+
+
+def wrap_sync(owner, method, *, label=False):
+    original = getattr(owner, method)
+    name = owner.__name__ + "." + method
+    @functools.wraps(original)
+    def wrapped(*args, **kwargs):
+        previous = getattr(local, "capture_id", None)
+        if label:
+            local.capture_id = args[1].event_id
+        started = time.perf_counter()
+        error = None
+        try:
+            return original(*args, **kwargs)
+        except BaseException as exc:
+            error = type(exc).__name__
+            raise
+        finally:
+            record(name, started, error)
+            local.capture_id = previous
+    originals.append((owner, method, original))
+    setattr(owner, method, wrapped)
+
+
+def wrap_async(owner, method, *, label=False):
+    original = getattr(owner, method)
+    name = owner.__name__ + "." + method
+    @functools.wraps(original)
+    async def wrapped(*args, **kwargs):
+        previous = getattr(local, "capture_id", None)
+        if label:
+            local.capture_id = args[1].get("event_id")
+        started = time.perf_counter()
+        error = None
+        try:
+            return await original(*args, **kwargs)
+        except BaseException as exc:
+            error = type(exc).__name__
+            raise
+        finally:
+            record(name, started, error)
+            local.capture_id = previous
+    originals.append((owner, method, original))
+    setattr(owner, method, wrapped)
+
+
+for owner, method in (
+    (client.Outbox, "append"), (client.Outbox, "acknowledge"),
+    (client.Outbox, "_read"), (client.Outbox, "_write"), (client.Outbox, "pending"),
+    (client.MnemosClient, "_descriptor"),
+    (SQLiteStore, "capture_event_and_job"),
+    (client, "_protect_private_path"), (service, "_protect_private_path"),
+    (os, "fsync"), (os, "replace"),
+):
+    wrap_sync(owner, method)
+wrap_sync(memory_service.LocalMemoryService, "capture", label=True)
+wrap_async(client.MnemosClient, "_dispatch_http")
+wrap_async(client.MnemosClient, "capture", label=True)
+started = datetime.now(timezone.utc).isoformat()
+try:
+    result = performance.measure_capture(OUTPUT)
+finally:
+    for owner, method, original in reversed(originals):
+        setattr(owner, method, original)
+timed = [item for item in events if item["capture_id"] is not None
+         and item["capture_id"].startswith("performance-capture-")
+         and item["capture_id"] != "performance-capture-warmup"]
+summary = {stage: performance._summary([item["milliseconds"] for item in timed if item["stage"] == stage])
+           for stage in sorted({item["stage"] for item in timed})}
+assert len([item for item in timed if item["stage"] == "MnemosClient.capture"]) == 50
+assert len(result["ack_statuses"]) == 50 and set(result["ack_statuses"]) == {"committed"}
+recorded = {"source_commit": COMMIT, "snapshot": str(SNAPSHOT), "started_at": started,
+            "finished_at": datetime.now(timezone.utc).isoformat(),
+            "scope": "Instrumented original capture fixture, simple embeddings and unavailable cognition; no model calls; nested stage times are not additive; diagnostic only",
+            "helper_sha256": hashlib.sha256(Path(__file__).read_bytes()).hexdigest(),
+            "result": result, "timed_stage_summary": summary, "stage_events": events}
+(OUTPUT / "capture-stages.json").write_text(json.dumps(recorded, indent=2) + "\n", encoding="utf-8")
+assert not subprocess.check_output(["git", "status", "--porcelain"], cwd=SNAPSHOT, text=True).strip()
+print(json.dumps({"report": str(OUTPUT / "capture-stages.json"), "capture": result["warm_http_capture"], "stages": summary}))

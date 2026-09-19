@@ -1,0 +1,95 @@
+"""Archive completed capture diagnostics without changing their measurements."""
+import hashlib
+import json
+from pathlib import Path
+import shutil
+
+ROOT = Path(__file__).resolve().parent.parent
+DEST = ROOT / "docs/validation/2026-09-19/capture-placement-v1"
+TEMP = Path("C:/Users/Ant/AppData/Local/Temp")
+sources = {
+    "capture-placement.json": TEMP / "mnemos-capture-placement-v1/capture-placement.json",
+    "stages-ssd.json": TEMP / "mnemos-capture-stages-v1/capture-stages.json",
+    "stages-hdd.json": Path("D:/WindowsTemp/mnemos-capture-stages-v2/capture-stages.json"),
+    "helpers/run_capture_placement_v1.py": ROOT / ".venv/run_capture_placement_v1.py",
+    "helpers/profile_capture_stages_v1.py": ROOT / ".venv/profile_capture_stages_v1.py",
+    "helpers/profile_capture_stages_v2.py": ROOT / ".venv/profile_capture_stages_v2.py",
+    "helpers/archive_capture_placement_v1.py": Path(__file__),
+}
+
+def digest(path):
+    return hashlib.sha256(path.read_bytes()).hexdigest()
+
+records = [json.loads(sources[name].read_text()) for name in
+           ("capture-placement.json", "stages-ssd.json", "stages-hdd.json")]
+for record, helper in zip(records, ("run_capture_placement_v1.py", "profile_capture_stages_v1.py", "profile_capture_stages_v2.py")):
+    assert record["source_commit"] == "39b9c799020a58ea2ac3d798189474ed10389bd0"
+    assert record["helper_sha256"] == digest(sources["helpers/" + helper])
+assert records[0]["status"] == "completed"
+assert len(records[0]["runs"]) == 6
+for run in records[0]["runs"]:
+    assert run["result"]["ack_statuses"] == ["committed"] * 50
+    assert run["sqlite"]["synchronous_label"] == "FULL"
+    assert run["sqlite"]["journal_mode"] == "wal"
+DEST.mkdir(parents=True, exist_ok=False)
+bindings = {}
+for name, source in sources.items():
+    target = DEST / name
+    target.parent.mkdir(parents=True, exist_ok=True)
+    shutil.copyfile(source, target)
+    assert digest(source) == digest(target)
+    bindings[name] = {"original": str(source), "sha256": digest(source)}
+(DEST / "source-binding.json").write_text(json.dumps(bindings, indent=2) + "\n", encoding="utf-8")
+(DEST / ".gitattributes").write_text("* -text\n*.py -whitespace\n", encoding="ascii")
+rows = "\n".join(
+    f"| {i + 1} | {r['drive']}: | {r['result']['warm_http_capture']['p95_ms']:.3f} | {'PASS' if r['result']['warm_http_capture']['p95_ms'] <= 100 else 'FAIL'} |"
+    for i, r in enumerate(records[0]["runs"]))
+readme = """# Capture storage placement diagnostic
+
+The unchanged capture fixture on source `39b9c79` passed its 100 ms p95 gate
+in all three C: SSD repetitions and failed in all three D: HDD repetitions.
+All 300 measured events committed. Each repetition used 50 captures after
+one warmup, simple embeddings, unavailable cognition, WAL, and FULL SQLite
+synchronization. This is capture-only synthetic-provider evidence.
+
+| Run | Volume | Capture p95 ms | 100 ms gate |
+| --- | --- | ---: | --- |
+""" + rows + """
+
+The prospective order was C, D, D, C, C, D. Recorded hardware maps C: to an
+ORICO NVMe SSD and D: to a ST4000DM004 SATA HDD. This shared-machine diagnostic
+ran alongside real-model evaluation and development I/O, including D: Git
+activity during the later repetitions. It is not an idle-device comparison;
+the full tail variation cannot be attributed solely to physical media.
+
+Separate instrumented runs measured capture p95 at 33.081 ms on C: and
+131.099 ms on D:. On D:, fsync p95 was 70.928 ms and SQLite capture p95 was
+50.994 ms, versus 4.536 ms and 2.826 ms on C:. Nested stage durations overlap
+and must not be added. These profiles identify durable I/O as a substantial
+component of this observed difference; they do not justify weakening durability.
+
+The original local performance failure is preserved: capture p95 135.186 ms
+and recall p95 4,063.309 ms. Its report did not record the actual temporary
+storage path. D: placement for that original run is inferred from the launch
+environment, not established by its report. These new runs have explicit paths.
+Recall performance, native-host capture, and daily-use acceptance remain open.
+
+The subsequent benchmark change at `7bcabde` adds `--work-dir`, records actual
+storage paths and filesystem device IDs, retains explicit fixtures, and refuses
+existing work directories or report paths. It changes no timing threshold or
+durability setting. Filesystem device IDs do not themselves identify hardware.
+
+The original commands were `.venv/Scripts/python.exe` followed by each of
+`.venv/profile_capture_stages_v1.py`, `.venv/profile_capture_stages_v2.py`, and
+`.venv/run_capture_placement_v1.py`, from the implementation worktree. The
+archived helpers retain their original absolute paths and reject reused output
+directories. Source binding and helper hashes are checked before copying.
+Raw stage events, every per-capture latency, hardware observations, and all
+failed repetitions remain in the JSON reports. No live data or configuration
+was changed. Existing diagnostic SQLite fixtures remain at their original paths.
+"""
+(DEST / "README.md").write_text(readme, encoding="ascii")
+files = {str(p.relative_to(DEST)).replace("\\", "/"): {"bytes": p.stat().st_size, "sha256": digest(p)}
+         for p in sorted(DEST.rglob("*")) if p.is_file()}
+(DEST / "evidence-index.json").write_text(json.dumps({"files": files}, indent=2) + "\n", encoding="ascii")
+print(json.dumps({"archive": str(DEST), "files": len(files)}))

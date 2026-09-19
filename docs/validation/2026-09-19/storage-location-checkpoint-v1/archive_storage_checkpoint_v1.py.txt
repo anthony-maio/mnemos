@@ -1,0 +1,114 @@
+"""Bind storage harness validation to the unchanged installed package."""
+import hashlib
+import json
+from pathlib import Path
+import shutil
+import subprocess
+
+ROOT = Path(__file__).resolve().parent.parent
+TEMP = Path("C:/Users/Ant/AppData/Local/Temp")
+DEST = ROOT / "docs/validation/2026-09-19/storage-location-checkpoint-v1"
+CHECKS = TEMP / "mnemos-package-checks-storage-location-v1"
+OLD_CHECKS = TEMP / "mnemos-package-checks-embedding-client-v2"
+OLD_ARCHIVE = ROOT / "docs/validation/2026-09-19/embedding-client-checkpoint-v1"
+COMMIT = "7bcabde63ba02947ad8f240a1adec9278c275b01"
+OLD_COMMIT = "39b9c799020a58ea2ac3d798189474ed10389bd0"
+
+def sha(path):
+    return hashlib.sha256(path.read_bytes()).hexdigest()
+
+def read(path):
+    return json.loads(path.read_text(encoding="utf-8"))
+
+def git(*args):
+    return subprocess.check_output(["git", *args], cwd=ROOT, text=True).strip()
+
+report = read(CHECKS / "verification.json")
+assert report["source_commit"] == COMMIT and report["status"] == "passed"
+assert len(report["checks"]) == 6 and all(c["status"] == "passed" for c in report["checks"])
+assert report["checks"][0]["counts"] == {"tests": 1135, "failures": 0, "errors": 0, "skipped": 4}
+assert report["website_input"]["sha256_before"] == report["website_input"]["sha256_after"]
+runner = ROOT / ".venv/final_checkpoint_checks_v3.py"
+assert sha(runner) == report["runner_sha256"]
+wheel = CHECKS / "dist/mnemos_memory-0.7.0-py3-none-any.whl"
+old_wheel = OLD_CHECKS / "dist" / wheel.name
+installation_path = OLD_ARCHIVE / "installed-checks/installation.json"
+installation = read(installation_path)
+assert sha(wheel) == sha(old_wheel) == installation["bindings_after"]["wheel_sha256"]
+trees = {}
+for name in ("mnemos", "agents", "pyproject.toml"):
+    old = git("rev-parse", OLD_COMMIT + ":" + name)
+    new = git("rev-parse", COMMIT + ":" + name)
+    assert old == new
+    trees[name] = {"old": old, "new": new}
+contract = read(OLD_ARCHIVE / "installed-checks/contract.json")
+probe = read(OLD_ARCHIVE / "installed-checks/probe.json")
+assert contract["case_summary"]["actual_outcomes"] == {"passed": 428, "skipped": 2}
+assert len(probe["assertions"]) == 7 and all(probe["assertions"].values())
+DEST.mkdir(exist_ok=False)
+(DEST / "source-checks").mkdir()
+for source in CHECKS.iterdir():
+    if source.is_file():
+        shutil.copyfile(source, DEST / "source-checks" / source.name)
+for source in (runner, Path(__file__)):
+    shutil.copyfile(source, DEST / (source.name + ".txt"))
+binding = {
+    "source_commit": COMMIT, "previous_runtime_commit": OLD_COMMIT,
+    "runtime_and_build_git_objects": trees,
+    "new_wheel": {"original": str(wheel), "sha256": sha(wheel), "bytes": wheel.stat().st_size},
+    "previous_wheel": {"original": str(old_wheel), "sha256": sha(old_wheel)},
+    "reused_installed_evidence": {"archive": "../embedding-client-checkpoint-v1/installed-checks",
+        "installation_sha256": sha(installation_path),
+        "contract_sha256": sha(OLD_ARCHIVE / "installed-checks/contract.json"),
+        "probe_sha256": sha(OLD_ARCHIVE / "installed-checks/probe.json"),
+        "contract_outcomes": contract["case_summary"]["actual_outcomes"],
+        "replay_assertions": probe["assertions"], "rerun": False},
+    "scope": "New source checks; unchanged wheel reuses previously observed installed checks. No new native-host or model-quality acceptance."
+}
+(DEST / "checkpoint-binding.json").write_text(json.dumps(binding, indent=2) + "\n", encoding="utf-8")
+(DEST / ".gitattributes").write_text("* -text\n*.log -whitespace\n*.txt -whitespace\n", encoding="ascii")
+(DEST / "README.md").write_text("""# Explicit storage location checkpoint
+
+Source `7bcabde63ba02947ad8f240a1adec9278c275b01` adds a fresh explicit work
+directory to the performance harness, records database/outbox locations and
+filesystem device IDs, retains explicit fixtures, and refuses to overwrite an
+existing work directory or report. Defaults and acceptance thresholds remain
+unchanged. Eight new cases cover path selection, cleanup, failure retention,
+CLI forwarding, and evidence protection.
+
+The clean snapshot passes 1,131 source tests with four skips, Black, strict
+mypy, JavaScript syntax, package build, and Twine. All six checks and their
+commands are retained under `source-checks`. The website hash is unchanged.
+
+Runtime/build Git objects for `mnemos`, `agents`, and `pyproject.toml` match
+`39b9c79`. The newly built wheel is byte-identical to that checkpoint's wheel
+(SHA256 `00428a439b2e29d756da54b2d092e59c99c589653bd872bf3d5476c1fe80ba59`).
+The previous 428 installed contract passes, two skips, and seven replay
+assertions are reused through that exact-byte binding; they were not rerun.
+The binding references their archived reports and verifies their hashes.
+The source distribution includes changed benchmark/documentation content and
+is not claimed byte-identical. Build artifacts remain at their recorded paths.
+
+The [capture placement diagnostic](../capture-placement-v1/README.md) records
+three passing SSD repetitions and three failing HDD repetitions with the
+unchanged 100 ms gate. Recall latency, native-host capture, real-model quality,
+and operational acceptance remain open. The original failures are preserved.
+The active model evaluation and queued comparisons remain on frozen `fc72cc2`.
+""", encoding="ascii")
+
+# Preserve executed helper bytes as text artifacts, outside Python discovery.
+capture = ROOT / "docs/validation/2026-09-19/capture-placement-v1"
+capture_bindings = read(capture / "source-binding.json")
+for source in list((capture / "helpers").glob("*.py")):
+    old_name = source.relative_to(capture).as_posix()
+    target = source.with_name(source.name + ".txt")
+    assert not target.exists()
+    source.rename(target)
+    capture_bindings[old_name + ".txt"] = capture_bindings.pop(old_name)
+(capture / "source-binding.json").write_text(json.dumps(capture_bindings, indent=2) + "\n", encoding="utf-8")
+(capture / ".gitattributes").write_text("* -text\n*.txt -whitespace\n", encoding="ascii")
+for directory in (DEST, capture):
+    files = {p.relative_to(directory).as_posix(): {"bytes": p.stat().st_size, "sha256": sha(p)}
+             for p in sorted(directory.rglob("*")) if p.is_file() and p.name != "evidence-index.json"}
+    (directory / "evidence-index.json").write_text(json.dumps({"files": files}, indent=2) + "\n", encoding="ascii")
+print(json.dumps({"archive": str(DEST), "source_passed": 1131, "wheel_identical": True}))

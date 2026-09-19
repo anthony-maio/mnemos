@@ -32,6 +32,17 @@ benchmark failures; a controlled diagnostic must not replace them silently.
 The separately queued real-model retrieval comparison already uses identical
 accepted snapshots and remains a distinct experiment.
 
+That [offline control has now completed](fair-comparison-diagnostic-v1/README.md)
+with a stateless token-hash embedder injected into both paths and scope-aware
+baseline retrieval. It records 24 runs and 184 per-query outcomes. Cross-project
+MRR is 1.0 for both paths on both stores in both repetitions. Contradiction and
+preference outcomes still differ by store and path; identical vectors alone
+do not establish equivalent candidate selection or a production quality claim.
+The replacement gate remains failed overall in both repetitions. The initial
+non-injected attempt and a subsequent rejected internal prediction string are
+preserved separately from the valid run. Store-path differences require further
+source diagnosis before attributing a ranking failure to a specific module.
+
 ## Held-out graph eligibility
 
 The [completed mechanism archive](mechanism-local-v1/README.md) has 150 complete
