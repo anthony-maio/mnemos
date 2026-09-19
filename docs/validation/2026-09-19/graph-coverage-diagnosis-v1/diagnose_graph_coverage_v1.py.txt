@@ -1,0 +1,69 @@
+"""Describe frozen graph coverage failures without rerunning or tuning anything."""
+from collections import Counter
+import hashlib
+import json
+from pathlib import Path
+import zipfile
+
+repo = Path(__file__).resolve().parent.parent
+source = repo / 'docs/validation/2026-09-19/mechanism-local-v1'
+output = repo / 'docs/validation/2026-09-19/graph-coverage-diagnosis-v1'
+assert not output.exists()
+index = json.loads((source/'evidence-index.json').read_text())['files']
+archive_path = source/'phase-artifacts.zip'
+expected = index['phase-artifacts.zip']
+assert hashlib.sha256(archive_path.read_bytes()).hexdigest() == (expected if isinstance(expected,str) else expected['sha256'])
+with zipfile.ZipFile(archive_path) as archive:
+    names = [n for n in archive.namelist() if n.endswith('/graph.observations.jsonl') or n=='graph.observations.jsonl']
+    assert len(names)==1
+    raw = archive.read(names[0])
+rows = [json.loads(line) for line in raw.splitlines() if line]
+assert len(rows)==150 and len({r['case_id'] for r in rows})==50
+assert all(r['measurement_status']=='complete' and r['split']=='heldout' for r in rows)
+counts = Counter()
+cases = []
+for row in rows:
+    p = row['production']
+    reasons = []
+    if row['target_in_direct_pool']:
+        reasons.append('target_already_in_direct_union')
+    if not p['semantic_floor']:
+        reasons.append('target_below_semantic_floor')
+    if not p['structural_valid_path']:
+        reasons.append('no_structural_path_from_actual_seed')
+    assert row['eligible'] == (not reasons)
+    counts.update(reasons)
+    edges = p['persisted_edges']
+    target = row['target_id']
+    seed = row['actual_selected_seed_id']
+    reached = {seed}
+    frontier = [seed]
+    while frontier:
+        node = frontier.pop()
+        for adjacent in edges.get(node, {}):
+            if adjacent not in reached:
+                reached.add(adjacent)
+                frontier.append(adjacent)
+    disconnected = target not in reached
+    counts['target_disconnected_even_ignoring_scope_depth_and_energy'] += disconnected
+    counts['actual_seed_matches_fixture_seed_id'] += seed == row['case_id']+'-seed'
+    counts['target_returned_by_graph'] += row['target_in_graph_results']
+    counts['target_returned_by_baseline'] += target in row['baseline_result_ids']
+    cases.append({'case_id':row['case_id'],'repetition':row['repetition'],
+                  'actual_seed_id':seed,'target_id':target,'eligibility_failures':reasons,
+                  'target_disconnected_even_without_traversal_limits':disconnected,
+                  'semantic_similarity':p['target_similarity']})
+report = {'status':'diagnostic_complete','source_commit':'fc72cc251aeafa161a1a390269b8dfa34d83cf2b',
+          'archive_sha256':hashlib.sha256(archive_path.read_bytes()).hexdigest(),
+          'observations_sha256':hashlib.sha256(raw).hexdigest(),
+          'observations':len(rows),'cases':50,'eligible_observations':sum(r['eligible'] for r in rows),
+          'counts_are_observations_and_reasons_can_overlap':True,'counts':dict(counts),
+          'interpretation':'Descriptive frozen-output diagnosis, not a new experiment or a utility estimate.',
+          'case_observations':cases}
+output.mkdir()
+(output/'.gitattributes').write_bytes(b'* -text -whitespace\n')
+(output/'report.json').write_text(json.dumps(report,indent=2)+'\n',encoding='utf-8')
+(output/'diagnose_graph_coverage_v1.py.txt').write_bytes(Path(__file__).read_bytes())
+files={p.name:{'sha256':hashlib.sha256(p.read_bytes()).hexdigest(),'bytes':p.stat().st_size} for p in output.iterdir()}
+(output/'evidence-index.json').write_text(json.dumps({'files':files},indent=2)+'\n',encoding='utf-8')
+print(json.dumps({k:v for k,v in report.items() if k!='case_observations'},indent=2))

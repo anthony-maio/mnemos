@@ -12,6 +12,11 @@ against the unchanged minimum of 40. Structural correctness passed, including
 144 cycle observations. Graph benefit remains unmeasured. Overall mechanism
 gates failed coverage; execution success is not acceptance success.
 
+A later [read-only diagnosis](../graph-coverage-diagnosis-v1/README.md) finds
+the target disconnected from the actual selected seed in all 150 persisted
+graphs, even without traversal limits. Semantic floor and direct-pool
+exclusion passed. This identifies the coverage failure without changing it.
+
 Affective: 50 pairs, 100 conditions, and 300 observations completed. Ranking
 with synthetic gold states raised target top-1 from 0% to 34%; the clustered
 paired difference was 0.34, with 95% interval [0.18, 0.50]. This is a scorer
