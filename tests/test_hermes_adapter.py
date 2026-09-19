@@ -268,3 +268,123 @@ def test_memory_write_mirroring_deduplicates_repeated_callbacks(tmp_path: Path) 
     instance.shutdown()
     assert len(client.captures) == 1
     assert client.captures[0]["source_kind"] == "hermes_memory_provider"
+
+
+def test_memory_write_lifecycle_actions_do_not_reingest_content(tmp_path: Path) -> None:
+    client = FakeClient()
+    instance = make_provider(tmp_path, client)
+
+    for action in ("remove", "replace"):
+        instance.on_memory_write(
+            action,
+            "hermes-memory-42",
+            "The removed project convention",
+            {"session_id": "hermes-session"},
+        )
+
+    instance.shutdown()
+    assert client.captures == []
+    diagnostics = instance.get_lifecycle_diagnostics()
+    assert [item["action"] for item in diagnostics] == ["remove", "replace"]
+    assert all(item["status"] == "unresolved" for item in diagnostics)
+    assert all(item["target_digest"] != "hermes-memory-42" for item in diagnostics)
+    assert all("content" not in item for item in diagnostics)
+
+
+def test_failed_add_capture_is_reported_and_can_retry(tmp_path: Path) -> None:
+    client = FakeClient(status="rejected")
+    instance = make_provider(tmp_path, client)
+    payload = {"session_id": "hermes-session"}
+
+    instance.on_memory_write("add", "hermes-memory-42", "Keep this", payload)
+    assert instance._flush() is False
+    assert instance.get_lifecycle_diagnostics()[0]["status"] == "capture_failed"
+
+    client.status = "committed"
+    instance.on_memory_write("add", "hermes-memory-42", "Keep this", payload)
+    assert instance._flush() is True
+    assert len(client.captures) == 2
+
+
+def test_async_turn_capture_failure_is_reported_by_flush(tmp_path: Path) -> None:
+    client = FakeClient(status="rejected")
+    instance = make_provider(tmp_path, client)
+
+    instance.sync_turn("Remember this", "Acknowledged")
+    assert instance._flush() is False
+    assert instance.get_lifecycle_diagnostics()[0]["action"] == "capture"
+
+    client.status = "committed"
+    instance.sync_turn("Remember this", "Acknowledged")
+    assert instance._flush() is True
+
+
+def test_empty_remove_reports_unresolved_lifecycle_action(tmp_path: Path) -> None:
+    instance = make_provider(tmp_path, FakeClient())
+
+    instance.on_memory_write("remove", "memory", "", {"session_id": "hermes-session"})
+
+    instance.shutdown()
+    diagnostics = instance.get_lifecycle_diagnostics()
+    assert diagnostics[0]["status"] == "unresolved"
+    assert diagnostics[0]["action"] == "remove"
+
+
+def test_failed_initialize_clears_scope_and_blocks_later_callbacks(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    client = FakeClient()
+    instance = make_provider(tmp_path, client)
+    monkeypatch.chdir(tmp_path)
+    monkeypatch.setenv("MNEMOS_ROUTING_REVIEW_DIR", str(tmp_path / "routing-review"))
+    assert instance.prefetch("same query")
+    client.retrieves.clear()
+
+    with pytest.raises(ValueError, match="session cwd"):
+        instance.initialize("hermes-session", cwd="")
+
+    instance.sync_turn("must not capture", "must not capture")
+    instance.on_memory_write("add", "user", "must not capture")
+    assert instance.prefetch("same query") == ""
+    instance.shutdown()
+    assert client.captures == []
+    assert client.retrieves == []
+
+
+def test_reinitialize_does_not_reuse_other_projects_prefetch(tmp_path: Path) -> None:
+    client = FakeClient()
+    instance = make_provider(tmp_path, client)
+    assert instance.prefetch("same query")
+    first = client.retrieves[-1]["context"]["project_id"]
+    other = tmp_path / "other"
+    other.mkdir()
+    assert instance.registry is not None
+    second = instance.registry.register_project(other, user_profile_id="alice", enabled=True)
+    instance.initialize("hermes-session", cwd=str(other))
+
+    assert instance.prefetch("same query")
+    assert len(client.retrieves) == 2
+    assert client.retrieves[-1]["context"]["project_id"] == second.id
+    assert second.id != first
+
+
+def test_lifecycle_diagnostics_are_bounded_and_return_detached_values(tmp_path: Path) -> None:
+    instance = make_provider(tmp_path)
+    for index in range(40):
+        instance.on_memory_write("remove", f"category-{index}", "private content")
+    diagnostics = instance.get_lifecycle_diagnostics()
+    assert len(diagnostics) == 32
+    assert all(set(item) == {"action", "target_digest", "status"} for item in diagnostics)
+    diagnostics[0]["status"] = "changed"
+    assert instance.get_lifecycle_diagnostics()[0]["status"] == "unresolved"
+
+
+def test_async_capture_exception_remains_a_reported_failure(tmp_path: Path) -> None:
+    class RaisingClient(FakeClient):
+        async def capture(self, payload: dict[str, Any]) -> dict[str, Any]:
+            raise RuntimeError("Unavailable")
+
+    instance = make_provider(tmp_path, RaisingClient())
+    instance.on_memory_write("add", "memory", "Keep this")
+    assert instance._flush() is False
+    assert instance.get_lifecycle_diagnostics()[-1]["status"] == "capture_failed"

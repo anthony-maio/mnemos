@@ -62,3 +62,13 @@ failed quality outcomes, and missing measurements distinct. Any subsequent
 experiment needs a prospective protocol and fresh output binding. Preserve
 the original held-out labels and failures; do not tune the extractor against
 these observed case IDs or reclassify missing targets as successful correction.
+
+Two deterministic development regressions now cover the accepted-fact and
+no-fact paths in
+[test_lifecycle_extraction_outcomes.py](../../../tests/test_lifecycle_extraction_outcomes.py).
+They run the real service, SQLite, maintenance, and evaluation adapter with an
+injected response. The no-fact path retains the raw event and completed job,
+creates no fact, and leaves correction partial with `missing_accepted_target`.
+The accepted direct assertion retains evidence and corrects the same fact to
+version 2. These tests pass without changing the held-out dataset or quality
+gates; they establish lifecycle accounting, not real-model extraction quality.

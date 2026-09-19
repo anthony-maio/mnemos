@@ -29,10 +29,31 @@ The provider receives the active Hermes `cwd`, `hermes_home`, and
 that session context. It does not use the process working directory as a
 conversation identity and it does not silently join a different profile.
 
+Initialization clears previously resolved scope and cached recall. If the host
+omits `cwd`, later callbacks remain unable to retrieve or capture. The installed
+September 19 Hermes CLI does omit it, including when `--in` is supplied. The
+[native attempts](../validation/2026-09-19/native-hermes-local-v1/README.md)
+record this host propagation gap; native acceptance remains open.
+
+The proposed [CLI compatibility patch](hermes-cli-session-cwd.patch) passes the
+directory selected by the CLI into its agent constructor. It applies to Hermes
+`14a346345486418aa85ed6526549412ee2665ade` and has not been applied to the live
+installation. It does not repair gateway or other construction paths. Keep
+patched-host evidence separate from support in an unmodified installation.
+
 `prefetch()` injects bounded baseline recall. `sync_turn()` queues user and
 assistant evidence without blocking the Hermes turn. The local service or its
 durable outbox acknowledges each accepted event. Repeated callbacks use stable
 event identities and do not create another observation.
+
+Built-in memory `add` notifications can be mirrored. `remove` and `replace`
+notifications do not contain verified Mnemos fact IDs and versions, so the
+provider does not turn them into new captures or guess a mutation target.
+`get_lifecycle_diagnostics()` exposes up to 32 content-free notifications for
+unresolved actions and capture failures. These diagnostics are in-memory only.
+`_flush()` reports pending capture failures; a repeated failed add can retry.
+Automatic correction and forgetting across the two memory stores still need
+an exact identity mapping and native validation.
 
 The provider advertises the Hermes version 2 pre-compress checkpoint contract.
 With checkpoint enforcement enabled by an operator, a failed or unavailable
@@ -72,4 +93,5 @@ scoped capture, recall, restart recovery, service outage buffering, and
 cross-host continuity. Installed API, Windows/WSL bridge, and disposable plugin
 discovery checks are recorded separately in the
 [compatibility matrix](../client-compatibility-matrix.md); the native model
-attempts have not completed a conversation.
+attempts now complete conversations, but have not passed session authority and
+the complete lifecycle contract.

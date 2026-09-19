@@ -165,6 +165,8 @@ class MnemosHermesProvider(_HermesMemoryProvider):  # type: ignore[misc]  # Opti
         self._threads: list[threading.Thread] = []
         self._threads_lock = threading.RLock()
         self._mirror_ids: set[str] = set()
+        self._lifecycle_diagnostics: list[dict[str, str]] = []
+        self._failed_capture_ids: set[str] = set()
         self._failed_checkpoint = False
 
     @property
@@ -189,6 +191,8 @@ class MnemosHermesProvider(_HermesMemoryProvider):  # type: ignore[misc]  # Opti
         return not self.unavailable_reason()
 
     def initialize(self, session_id: str, **kwargs: Any) -> None:
+        self._context = None
+        self._prefetch_cache.clear()
         self.session_id = str(session_id or "").strip()
         self.hermes_home = str(kwargs.get("hermes_home") or "").strip()
         self.cwd = str(kwargs.get("cwd") or "").strip()
@@ -215,6 +219,8 @@ class MnemosHermesProvider(_HermesMemoryProvider):  # type: ignore[misc]  # Opti
                 raise ValueError("Mnemos scope registry is not configured")
             if not self.user_profile_id:
                 raise ValueError("Hermes profile identity is not configured")
+            if not self.cwd:
+                raise ValueError("Hermes session cwd is required")
             return self.registry.resolve(
                 self.cwd,
                 user_profile_id=self.user_profile_id,
@@ -294,7 +300,14 @@ class MnemosHermesProvider(_HermesMemoryProvider):  # type: ignore[misc]  # Opti
         return thread
 
     def _enqueue_messages(
-        self, context: ScopeContext, messages: list[tuple[str, str]], source: str
+        self,
+        context: ScopeContext,
+        messages: list[tuple[str, str]],
+        source: str,
+        *,
+        on_failure: Callable[[dict[str, Any]], None] | None = None,
+        diagnostic_action: str = "capture",
+        diagnostic_target: str = "",
     ) -> None:
         payloads = [
             self._capture_payload(context, role=role, content=content, source=source)
@@ -304,7 +317,19 @@ class MnemosHermesProvider(_HermesMemoryProvider):  # type: ignore[misc]  # Opti
 
         def write() -> None:
             for payload in payloads:
-                self._capture_now(payload)
+                if self._capture_now(payload):
+                    with self._threads_lock:
+                        self._failed_capture_ids.discard(payload["event_id"])
+                else:
+                    with self._threads_lock:
+                        self._failed_capture_ids.add(payload["event_id"])
+                    self._record_lifecycle_diagnostic(
+                        action=diagnostic_action,
+                        target=diagnostic_target or source,
+                        status="capture_failed",
+                    )
+                    if on_failure is not None:
+                        on_failure(payload)
 
         if payloads:
             self._spawn(write, "mnemos-hermes-sync")
@@ -318,7 +343,22 @@ class MnemosHermesProvider(_HermesMemoryProvider):  # type: ignore[misc]  # Opti
             thread.join(remaining)
         with self._threads_lock:
             self._threads = [thread for thread in self._threads if thread.is_alive()]
-            return not self._threads
+            return not self._threads and not self._failed_capture_ids
+
+    def _record_lifecycle_diagnostic(self, *, action: str, target: str, status: str) -> None:
+        diagnostic = {
+            "action": action,
+            "target_digest": hashlib.sha256(target.encode("utf-8")).hexdigest(),
+            "status": status,
+        }
+        with self._threads_lock:
+            self._lifecycle_diagnostics.append(diagnostic)
+            del self._lifecycle_diagnostics[:-32]
+
+    def get_lifecycle_diagnostics(self) -> list[dict[str, str]]:
+        """Return bounded, content-free Hermes lifecycle diagnostics."""
+        with self._threads_lock:
+            return [dict(item) for item in self._lifecycle_diagnostics]
 
     def _format_context(self, result: Any) -> str:
         return format_retrieved_context(result, max_chars=MAX_CONTEXT_CHARS)
@@ -471,8 +511,16 @@ class MnemosHermesProvider(_HermesMemoryProvider):  # type: ignore[misc]  # Opti
         content: str,
         metadata: Optional[Dict[str, Any]] = None,
     ) -> None:
+        if action not in {"add", "replace", "remove"}:
+            return
+        if action != "add":
+            # Hermes target categories are not Mnemos fact IDs. Without a verified
+            # mapping and expected version, mirroring would re-ingest removed
+            # content or leave replaced assertions stale.
+            self._record_lifecycle_diagnostic(action=action, target=target, status="unresolved")
+            return
         content = _text(content)
-        if not content or action not in {"add", "replace", "remove"}:
+        if not content:
             return
         metadata = metadata or {}
         try:
@@ -482,10 +530,23 @@ class MnemosHermesProvider(_HermesMemoryProvider):  # type: ignore[misc]  # Opti
             return
         source = f"memory-write:{action}:{target}:{hashlib.sha256(content.encode()).hexdigest()}"
         event_id = self._event_id(context, role="user", content=content, source=source)
-        if event_id in self._mirror_ids:
-            return
-        self._mirror_ids.add(event_id)
-        self._enqueue_messages(context, [("user", content)], source)
+        with self._threads_lock:
+            if event_id in self._mirror_ids:
+                return
+            self._mirror_ids.add(event_id)
+
+        def failed(_: dict[str, Any]) -> None:
+            with self._threads_lock:
+                self._mirror_ids.discard(event_id)
+
+        self._enqueue_messages(
+            context,
+            [("user", content)],
+            source,
+            on_failure=failed,
+            diagnostic_action="add",
+            diagnostic_target=target,
+        )
 
     def get_tool_schemas(self) -> List[Dict[str, Any]]:
         return []
