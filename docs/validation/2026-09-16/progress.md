@@ -8,6 +8,20 @@ This is a chronological checkpoint log. Later entries supersede earlier test
 counts and open implementation items. An implementation or focused check does
 not close a native-host, quality, performance, or pilot gate.
 
+## September 19: native Hermes lifecycle setup
+
+The [native lifecycle preflight](../2026-09-19/hermes-native-lifecycle-preflight-v1/README.md)
+passes against the verified `ea88dd4` wheel and isolated patched Hermes host.
+Runner `773738f` and its prospective protocol are committed. Forty focused
+tests pass, including actual service response schemas; formatting and configured
+type checks pass. The native preflight resolves its disposable project and all
+six tools in 2.502 seconds without model or service calls. Full model-driven
+lifecycle acceptance remains open. The live supplemental queue still owns the
+GPU; its length-noise arm had 97 recorded observations at this checkpoint.
+The prior two arms finished with 589/600 and 592/600 complete observations,
+respectively. Partial observations remain failures, and retrieval follows in
+the same queue. No model run was restarted or overlapped.
+
 ## September 19: correction retry and writing packet refresh
 
 The [correction retry checkpoint](../2026-09-19/correction-retry-checkpoint-v1/README.md)

@@ -13,6 +13,13 @@ still fail; scope, payload identity, write policy, and forgetting remain
 enforced. This does not rerun the frozen model comparison or establish native
 model lifecycle acceptance.
 
+The [native lifecycle preflight](../2026-09-19/hermes-native-lifecycle-preflight-v1/README.md)
+passes real host imports, disposable scope initialization, and six-tool
+discovery using the committed `773738f` runner and verified `ea88dd4` wheel.
+Forty focused tests pass. No model inference or service call occurs in this
+preflight; the model-driven lifecycle gate remains open while the supplemental
+queue runs.
+
 The [installed Hermes API recovery probe](../2026-09-19/hermes-api-recovery-v1/README.md)
 on verified `5e4b057` passes outage buffering, required checkpoint durability,
 automatic outbox drain after explicit service restoration, exact event/time
