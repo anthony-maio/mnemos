@@ -4,10 +4,17 @@ This record covers the unreleased `wt/functional-local-memory` worktree. It
 separates implemented behavior from acceptance evidence. The original task
 boundaries and thresholds remain in the [implementation plan](../../plans/2026-09-16-functional-local-memory.md).
 
-The latest [Hermes continuity checkpoint](../2026-09-19/hermes-continuity-checkpoint-v1/README.md)
-at `78c63ed` passes 1,172 source tests with four skips, all six source/package
-checks, 484 isolated installed cases with two matching skips, and seven replay
-assertions. It supersedes the package counts below. The
+The latest [Hermes lifecycle checkpoint](../2026-09-19/hermes-lifecycle-checkpoints-v1/README.md)
+at `5e4b057` passes 1,195 source tests with four skips, all six source/package
+checks, 507 isolated installed cases with two matching skips, and seven replay
+assertions. The installed Hermes API v2 check passes scoped remember, retrieve,
+inspect, correct, forget, and job status through the Windows/WSL bridge.
+Growing transcripts and provider recreation preserve four normal events;
+four provisional receipts remain ineligible for extraction. These are fixture
+provider results, not a native model conversation or outage recovery result.
+Two gaps found after the preceding candidate's passing suite are preserved
+with their regressions and successor repairs. This supersedes package counts
+below. The
 [patched native CLI v4](../2026-09-19/native-hermes-local-v4/README.md) passes
 all 16 single-turn scope, recall, and raw-capture checks: four committed calls
 produce exactly two persisted events. The installed host is unchanged.

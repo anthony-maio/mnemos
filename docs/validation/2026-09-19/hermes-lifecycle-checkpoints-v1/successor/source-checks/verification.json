@@ -1,0 +1,127 @@
+{
+  "source_commit": "5e4b057b16906c2ec7dd302ae80748ef1ac5eddc",
+  "source_checkout": "C:\\Users\\Ant\\AppData\\Local\\Temp\\mnemos-source-hermes-provisional-v1",
+  "status": "passed",
+  "started_at": "2026-09-19T20:24:37.875283+00:00",
+  "checks": [
+    {
+      "name": "pytest",
+      "command": [
+        "D:\\Development\\mnemos\\mnemos\\.worktrees\\functional-local-memory\\.venv\\Scripts\\python.exe",
+        "-m",
+        "pytest",
+        "-q",
+        "--basetemp",
+        "C:\\Users\\Ant\\AppData\\Local\\Temp\\mnemos-check-temp-hermes-provisional-v1\\pytest",
+        "--junitxml",
+        "C:\\Users\\Ant\\AppData\\Local\\Temp\\mnemos-package-checks-hermes-provisional-v1\\pytest.xml"
+      ],
+      "status": "passed",
+      "started_at": "2026-09-19T20:24:37.877230+00:00",
+      "exit_code": 0,
+      "finished_at": "2026-09-19T20:28:11.797717+00:00",
+      "counts": {
+        "tests": 1199,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 4
+      }
+    },
+    {
+      "name": "black",
+      "command": [
+        "D:\\Development\\mnemos\\mnemos\\.worktrees\\functional-local-memory\\.venv\\Scripts\\python.exe",
+        "-m",
+        "black",
+        "--check",
+        "."
+      ],
+      "status": "passed",
+      "started_at": "2026-09-19T20:28:11.812446+00:00",
+      "exit_code": 0,
+      "finished_at": "2026-09-19T20:28:20.279423+00:00"
+    },
+    {
+      "name": "mypy",
+      "command": [
+        "D:\\Development\\mnemos\\mnemos\\.worktrees\\functional-local-memory\\.venv\\compat-py310\\Scripts\\python.exe",
+        "-m",
+        "mypy",
+        "."
+      ],
+      "status": "passed",
+      "started_at": "2026-09-19T20:28:20.280572+00:00",
+      "exit_code": 0,
+      "finished_at": "2026-09-19T20:28:32.158022+00:00"
+    },
+    {
+      "name": "javascript",
+      "command": [
+        "node",
+        "--check",
+        "mnemos/ui/app.js"
+      ],
+      "status": "passed",
+      "started_at": "2026-09-19T20:28:32.159080+00:00",
+      "exit_code": 0,
+      "finished_at": "2026-09-19T20:28:32.245910+00:00"
+    },
+    {
+      "name": "build",
+      "command": [
+        "D:\\Development\\mnemos\\mnemos\\.worktrees\\functional-local-memory\\.venv\\Scripts\\python.exe",
+        "-m",
+        "build",
+        "--outdir",
+        "C:\\Users\\Ant\\AppData\\Local\\Temp\\mnemos-package-checks-hermes-provisional-v1\\dist"
+      ],
+      "status": "passed",
+      "started_at": "2026-09-19T20:28:32.247128+00:00",
+      "exit_code": 0,
+      "finished_at": "2026-09-19T20:29:33.857961+00:00"
+    },
+    {
+      "name": "twine",
+      "command": [
+        "D:\\Development\\mnemos\\mnemos\\.worktrees\\functional-local-memory\\.venv\\Scripts\\python.exe",
+        "-m",
+        "twine",
+        "check",
+        "C:\\Users\\Ant\\AppData\\Local\\Temp\\mnemos-package-checks-hermes-provisional-v1\\dist\\mnemos_memory-0.7.0-py3-none-any.whl",
+        "C:\\Users\\Ant\\AppData\\Local\\Temp\\mnemos-package-checks-hermes-provisional-v1\\dist\\mnemos_memory-0.7.0.tar.gz"
+      ],
+      "exit_code": 0,
+      "status": "passed"
+    }
+  ],
+  "runner_sha256": "7b241853adab66b8fd1e0c570d00462a216ffe21dca554fb95ae522ecbedc3ef",
+  "temporary_storage": {
+    "path": "C:\\Users\\Ant\\AppData\\Local\\Temp\\mnemos-check-temp-hermes-provisional-v1",
+    "git_discovery_exit_code": 128,
+    "git_discovery_stderr": "fatal: not a git repository (or any of the parent directories): .git"
+  },
+  "website_input": {
+    "path": "D:\\Development\\mnemos\\web\\index.html",
+    "sha256_before": "f71a4cb5b7004f9ba584f45a03dab61cfc608fed377b1e07b46e2f2bc0b77d4d",
+    "sha256_after": "f71a4cb5b7004f9ba584f45a03dab61cfc608fed377b1e07b46e2f2bc0b77d4d"
+  },
+  "environment_overrides": {
+    "TEMP": "C:\\Users\\Ant\\AppData\\Local\\Temp\\mnemos-check-temp-hermes-provisional-v1",
+    "TMP": "C:\\Users\\Ant\\AppData\\Local\\Temp\\mnemos-check-temp-hermes-provisional-v1",
+    "TMPDIR": "C:\\Users\\Ant\\AppData\\Local\\Temp\\mnemos-check-temp-hermes-provisional-v1",
+    "MNEMOS_WEBSITE_INDEX": "D:\\Development\\mnemos\\web\\index.html"
+  },
+  "updated_at": "2026-09-19T20:29:35.407588+00:00",
+  "artifacts": [
+    {
+      "file": "C:\\Users\\Ant\\AppData\\Local\\Temp\\mnemos-package-checks-hermes-provisional-v1\\dist\\mnemos_memory-0.7.0-py3-none-any.whl",
+      "bytes": 297814,
+      "sha256": "7eaba268fb91ffae7d59b222cf8addb49d8b4b4857a37552e5404422e4009625"
+    },
+    {
+      "file": "C:\\Users\\Ant\\AppData\\Local\\Temp\\mnemos-package-checks-hermes-provisional-v1\\dist\\mnemos_memory-0.7.0.tar.gz",
+      "bytes": 45334209,
+      "sha256": "c1f242a63984ff95b61f8b67824df378baa202dc3c946b182e837918c74d0ef9"
+    }
+  ]
+}

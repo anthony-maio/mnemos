@@ -1,0 +1,58 @@
+<?xml version="1.0" encoding="utf-8"?><testsuites name="pytest tests"><testsuite name="pytest" errors="0" failures="2" skipped="0" tests="2" time="1.571" timestamp="2026-09-19T16:23:48.406608-04:00" hostname="Aurora"><testcase classname="test_hermes_provisional_capture" name="test_fallback_callbacks_persist_separately_without_creating_facts" time="0.930"><failure message="assert False&#10; +  where False = _flush()&#10; +    where _flush = &lt;mnemos.adapters.hermes.MnemosHermesProvider object at 0x0000012B7EA26E40&gt;._flush">tmp_path = WindowsPath('D:/WindowsTemp/pytest-of-Ant/pytest-3817/test_fallback_callbacks_persis0')
+
+    @pytest.mark.asyncio
+    async def test_fallback_callbacks_persist_separately_without_creating_facts(tmp_path: Path) -&gt; None:
+        registry = ScopeRegistry()
+        registry.register_project(tmp_path, user_profile_id="alice", enabled=True)
+        store = SQLiteStore(str(tmp_path / "memory.sqlite"))
+        memory = LocalMemoryService(
+            MnemosEngine(
+                config=MnemosConfig(
+                    modules=ModuleConfig(**{k: False for k in ModuleConfig.model_fields})
+                ),
+                store=store,
+                embedder=SimpleEmbeddingProvider(),
+                llm=UnavailableLLMProvider(),
+            ),
+            registry,
+        )
+        responses: list[dict[str, Any]] = []
+        payloads: list[dict[str, Any]] = []
+    
+        class Client:
+            async def capture(self, payload: dict[str, Any]) -&gt; dict[str, Any]:
+                payloads.append(payload)
+                result = memory.capture(CaptureEvent.model_validate(payload))
+                responses.append(result)
+                return result
+    
+        provider = MnemosHermesProvider(client=Client(), registry=registry, user_profile_id="alice")
+        provider.initialize("s1", cwd=str(tmp_path), hermes_home=str(tmp_path / "hermes"))
+        try:
+            for _ in range(2):
+                provider.sync_turn("The label is uncertain.", "I understand.")
+&gt;               assert provider._flush()
+E               assert False
+E                +  where False = _flush()
+E                +    where _flush = &lt;mnemos.adapters.hermes.MnemosHermesProvider object at 0x0000012B7EA26E40&gt;._flush
+
+test_hermes_provisional_capture.py:50: AssertionError</failure></testcase><testcase classname="test_hermes_tools" name="test_schemas_are_narrow_and_scope_is_provider_owned" time="0.001"><failure message="AssertionError: assert 'request_id' in ['content']">def test_schemas_are_narrow_and_scope_is_provider_owned():
+        schemas = get_tool_schemas()
+        assert {item["name"] for item in schemas} == {
+            "mnemos_retrieve",
+            "mnemos_inspect",
+            "mnemos_remember",
+            "mnemos_correct",
+            "mnemos_forget",
+            "mnemos_job_status",
+        }
+        for schema in schemas:
+            assert schema["parameters"]["additionalProperties"] is False
+            assert "context" not in schema["parameters"]["properties"]
+            assert "project_id" not in schema["parameters"]["properties"]
+            assert "user_profile_id" not in schema["parameters"]["properties"]
+            if schema["name"] in {"mnemos_remember", "mnemos_correct"}:
+&gt;               assert "request_id" in schema["parameters"]["required"]
+E               AssertionError: assert 'request_id' in ['content']
+
+test_hermes_tools.py:55: AssertionError</failure></testcase></testsuite></testsuites>

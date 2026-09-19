@@ -1,0 +1,56 @@
+"""Archive successive Hermes checkpoints without hiding the reviewed gaps."""
+from pathlib import Path
+import hashlib
+import json
+import shutil
+
+repo = Path(__file__).resolve().parent.parent
+temp = Path('C:/Users/Ant/AppData/Local/Temp')
+output = repo/'docs/validation/2026-09-19/hermes-lifecycle-checkpoints-v1'
+assert not output.exists()
+records = [
+    ('candidate', 'hermes-lifecycle-v1', 'mnemos-hermes-native-api-lifecycle-v1',
+     'run_combined_installed_check_v29.py', 'hermes_native_api_lifecycle_v1.py'),
+    ('successor', 'hermes-provisional-v1', 'mnemos-hermes-native-api-lifecycle-v2',
+     'run_combined_installed_check_v30.py', 'hermes_native_api_lifecycle_v2.py'),
+]
+for label, suffix, native, installed_helper, native_helper in records:
+    checks = json.loads((temp/f'mnemos-package-checks-{suffix}'/'verification.json').read_text())
+    installed = json.loads((temp/f'mnemos-installed-checks-{suffix}'/'installation.json').read_text())
+    native_report = json.loads((temp/native/'report.json').read_text())
+    assert checks['status'] == installed['status'] == native_report['status'] == 'passed'
+    assert checks['source_commit'] == installed['bindings_after']['commit'] == native_report['source_commit']
+    assert installed['bindings_after']['wheel_sha256'] == native_report['wheel_sha256']
+
+output.mkdir()
+(output/'.gitattributes').write_bytes(b'* -text -whitespace\n')
+def copy(source, relative):
+    destination = output/relative
+    destination.parent.mkdir(parents=True,exist_ok=True)
+    shutil.copyfile(source,destination)
+
+for label, suffix, native, installed_helper, native_helper in records:
+    for kind, folder in (
+        ('source-checks',temp/f'mnemos-package-checks-{suffix}'),
+        ('installed-checks',temp/f'mnemos-installed-checks-{suffix}'),
+    ):
+        for path in folder.iterdir():
+            if path.is_file() and path.suffix in {'.json','.xml','.log'}:
+                copy(path,Path(label)/kind/path.name)
+    for name in ('report.json','host-report.json','calls.json','hermes-events.json','host.stdout.log','host.stderr.log'):
+        copy(temp/native/name,Path(label)/'native-api'/name)
+    for name in (installed_helper,native_helper):
+        copy(repo/'.venv'/name,Path(label)/'helpers'/(name+'.txt'))
+
+red = temp/'mnemos-hermes-provisional-red-v1'
+for path in red.iterdir():
+    if path.is_file() and path.suffix in {'.py','.json','.xml','.log'}:
+        name = path.name+'.txt' if path.suffix=='.py' else path.name
+        copy(path,Path('candidate-regressions')/name)
+for name in ('hermes_provisional_red_v1.py','final_checkpoint_checks_v3.py','installed_contract_probe_v4.py','verify_claude_stop_replay_v2.py'):
+    copy(repo/'.venv'/name,Path('helpers')/(name+'.txt'))
+copy(Path(__file__),Path('helpers')/(Path(__file__).name+'.txt'))
+files = {str(p.relative_to(output)).replace('\\','/'):{'bytes':p.stat().st_size,'sha256':hashlib.sha256(p.read_bytes()).hexdigest()}
+         for p in output.rglob('*') if p.is_file()}
+(output/'evidence-index.json').write_text(json.dumps({'files':files},indent=2)+'\n',encoding='utf-8')
+print(json.dumps({'archive':str(output),'indexed_files':len(files)}))

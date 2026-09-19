@@ -1,0 +1,440 @@
+[
+  {
+    "tool": "mnemos_remember",
+    "args": {
+      "content": "The lifecycle project uses cedar labels.",
+      "request_id": "remember-label"
+    },
+    "result": {
+      "event_id": "1822b9e9dd49ac467b6d35108d94f38b0ac3a7cd37b6b1dc4b27ca34ae3f46da",
+      "fact_eligible": true,
+      "identity_status": "normal",
+      "job_id": "event:1822b9e9dd49ac467b6d35108d94f38b0ac3a7cd37b6b1dc4b27ca34ae3f46da",
+      "processing_status": "pending",
+      "schema_version": 1,
+      "status": "committed"
+    }
+  },
+  {
+    "tool": "mnemos_job_status",
+    "args": {
+      "job_id": "event:1822b9e9dd49ac467b6d35108d94f38b0ac3a7cd37b6b1dc4b27ca34ae3f46da"
+    },
+    "result": {
+      "job": {
+        "attempt_count": 0,
+        "available_at": "2026-09-19T20:31:54.290429Z",
+        "created_at": "2026-09-19T20:31:54.290431Z",
+        "id": "event:1822b9e9dd49ac467b6d35108d94f38b0ac3a7cd37b6b1dc4b27ca34ae3f46da",
+        "kind": "remember",
+        "last_error": null,
+        "lease_owner": null,
+        "lease_until": null,
+        "max_attempts": 5,
+        "result": null,
+        "status": "pending",
+        "updated_at": "2026-09-19T20:31:54.290432Z"
+      },
+      "schema_version": 1
+    }
+  },
+  {
+    "tool": "mnemos_retrieve",
+    "args": {
+      "query": "Which labels does this project use?"
+    },
+    "result": {
+      "context": "[627bf8bf-84f1-44ec-b6e7-56a82e145d85 version 1] The lifecycle project uses cedar labels.\n",
+      "context_token_upper_bound": 90,
+      "facts": [
+        {
+          "assertion_status": "asserted",
+          "content": "The lifecycle project uses cedar labels.",
+          "id": "627bf8bf-84f1-44ec-b6e7-56a82e145d85",
+          "original_source_status": "retained_locally",
+          "scope": "project",
+          "scope_id": "8740a60c-fde6-40f0-a33e-ceca6e5e8201",
+          "scores": {
+            "candidate_backend": "sqlite_vec_scoped_exact_cosine",
+            "context_token_upper_bound": 90,
+            "graph_contribution": 0.0,
+            "graph_energy": 0.0,
+            "graph_status": "disabled",
+            "lexical_candidate": true,
+            "lexical_status": "candidate_union",
+            "profile": "baseline",
+            "scope_match": true,
+            "semantic": 0.31012535095214844,
+            "state_match": null,
+            "state_status": "disabled",
+            "token_count_method": "utf8_bytes_upper_bound",
+            "total": 0.31012535095214844
+          },
+          "sources": [
+            {
+              "created_at": "2026-09-19T20:31:55.644568Z",
+              "evidence_id": "9d5ed2d1-80b7-47c6-9073-9decaf2f9981",
+              "excerpt": "The lifecycle project uses cedar labels.",
+              "fact_id": "627bf8bf-84f1-44ec-b6e7-56a82e145d85",
+              "original_source_status": "retained_locally",
+              "source_event_id": "1822b9e9dd49ac467b6d35108d94f38b0ac3a7cd37b6b1dc4b27ca34ae3f46da",
+              "source_ref": null
+            }
+          ],
+          "support_available": true,
+          "version": 1
+        }
+      ],
+      "profile": "baseline",
+      "schema_version": 1,
+      "token_count_method": "utf8_bytes_upper_bound"
+    }
+  },
+  {
+    "tool": "mnemos_inspect",
+    "args": {
+      "fact_id": "627bf8bf-84f1-44ec-b6e7-56a82e145d85"
+    },
+    "result": {
+      "evidence": [
+        {
+          "created_at": "2026-09-19T20:31:55.644568Z",
+          "evidence_id": "9d5ed2d1-80b7-47c6-9073-9decaf2f9981",
+          "excerpt": "The lifecycle project uses cedar labels.",
+          "fact_id": "627bf8bf-84f1-44ec-b6e7-56a82e145d85",
+          "original_source_status": "retained_locally",
+          "source_event_id": "1822b9e9dd49ac467b6d35108d94f38b0ac3a7cd37b6b1dc4b27ca34ae3f46da",
+          "source_ref": null
+        }
+      ],
+      "fact": {
+        "access_count": 1,
+        "canonical_key": "f8932acc97162f6e933883d694d1c36e963d5f7faa52bbbe14bfa311722ddcce",
+        "cognitive_state": null,
+        "cognitive_state_status": "provider_unavailable",
+        "content": "The lifecycle project uses cedar labels.",
+        "created_at": "2026-09-19T20:31:55.644533Z",
+        "id": "627bf8bf-84f1-44ec-b6e7-56a82e145d85",
+        "last_observed_at": "2026-09-19T20:31:54.290117Z",
+        "last_retrieved_at": "2026-09-19T20:31:56.355340Z",
+        "metadata": {
+          "assertion_status": "asserted",
+          "cognitive_state_status": "provider_unavailable",
+          "encoding_diagnostics": {},
+          "host": "hermes",
+          "project_id": "8740a60c-fde6-40f0-a33e-ceca6e5e8201",
+          "scope": "project",
+          "scope_id": "8740a60c-fde6-40f0-a33e-ceca6e5e8201",
+          "session_id": "hermes-api-lifecycle",
+          "source": "explicit_remember",
+          "source_event_ids": [
+            "1822b9e9dd49ac467b6d35108d94f38b0ac3a7cd37b6b1dc4b27ca34ae3f46da"
+          ],
+          "source_roles": [
+            "user"
+          ],
+          "user_profile_id": "api-fixture",
+          "workspace_id": null
+        },
+        "observation_count": 1,
+        "reconsolidation_due_at": null,
+        "salience": 0.5,
+        "surprisal_score": null,
+        "surprisal_status": "unknown",
+        "updated_at": "2026-09-19T20:31:55.644535Z",
+        "version": 1
+      },
+      "original_source_status": "retained_locally",
+      "revisions": [],
+      "schema_version": 1
+    }
+  },
+  {
+    "tool": "mnemos_correct",
+    "args": {
+      "fact_id": "627bf8bf-84f1-44ec-b6e7-56a82e145d85",
+      "expected_version": 1,
+      "content": "The lifecycle project uses maple labels.",
+      "request_id": "correct-label"
+    },
+    "result": {
+      "event_id": "d62341175e95dffb5f85f036431358712c40d75d569fc92f4a9461abb63a2150",
+      "fact_eligible": true,
+      "identity_status": "normal",
+      "job_id": "event:d62341175e95dffb5f85f036431358712c40d75d569fc92f4a9461abb63a2150",
+      "processing_status": "pending",
+      "schema_version": 1,
+      "status": "committed"
+    }
+  },
+  {
+    "tool": "mnemos_retrieve",
+    "args": {
+      "query": "Which labels does this project use?"
+    },
+    "result": {
+      "context": "[627bf8bf-84f1-44ec-b6e7-56a82e145d85 version 2] The lifecycle project uses maple labels.\n",
+      "context_token_upper_bound": 90,
+      "facts": [
+        {
+          "assertion_status": "asserted",
+          "content": "The lifecycle project uses maple labels.",
+          "id": "627bf8bf-84f1-44ec-b6e7-56a82e145d85",
+          "original_source_status": "retained_locally",
+          "scope": "project",
+          "scope_id": "8740a60c-fde6-40f0-a33e-ceca6e5e8201",
+          "scores": {
+            "candidate_backend": "sqlite_vec_scoped_exact_cosine",
+            "context_token_upper_bound": 90,
+            "graph_contribution": 0.0,
+            "graph_energy": 0.0,
+            "graph_status": "disabled",
+            "lexical_candidate": true,
+            "lexical_status": "candidate_union",
+            "profile": "baseline",
+            "scope_match": true,
+            "semantic": 0.21895533800125122,
+            "state_match": null,
+            "state_status": "disabled",
+            "token_count_method": "utf8_bytes_upper_bound",
+            "total": 0.21895533800125122
+          },
+          "sources": [
+            {
+              "created_at": "2026-09-19T20:31:55.644568Z",
+              "evidence_id": "9d5ed2d1-80b7-47c6-9073-9decaf2f9981",
+              "excerpt": "The lifecycle project uses cedar labels.",
+              "fact_id": "627bf8bf-84f1-44ec-b6e7-56a82e145d85",
+              "original_source_status": "retained_locally",
+              "source_event_id": "1822b9e9dd49ac467b6d35108d94f38b0ac3a7cd37b6b1dc4b27ca34ae3f46da",
+              "source_ref": null
+            },
+            {
+              "created_at": "2026-09-19T20:31:58.380138Z",
+              "evidence_id": "1a18a73d-7d5b-4f7b-a77c-696886a1e843",
+              "excerpt": "The lifecycle project uses maple labels.",
+              "fact_id": "627bf8bf-84f1-44ec-b6e7-56a82e145d85",
+              "original_source_status": "retained_locally",
+              "source_event_id": "d62341175e95dffb5f85f036431358712c40d75d569fc92f4a9461abb63a2150",
+              "source_ref": null
+            }
+          ],
+          "support_available": true,
+          "version": 2
+        }
+      ],
+      "profile": "baseline",
+      "schema_version": 1,
+      "token_count_method": "utf8_bytes_upper_bound"
+    }
+  },
+  {
+    "tool": "mnemos_inspect",
+    "args": {
+      "fact_id": "627bf8bf-84f1-44ec-b6e7-56a82e145d85"
+    },
+    "result": {
+      "evidence": [
+        {
+          "created_at": "2026-09-19T20:31:55.644568Z",
+          "evidence_id": "9d5ed2d1-80b7-47c6-9073-9decaf2f9981",
+          "excerpt": "The lifecycle project uses cedar labels.",
+          "fact_id": "627bf8bf-84f1-44ec-b6e7-56a82e145d85",
+          "original_source_status": "retained_locally",
+          "source_event_id": "1822b9e9dd49ac467b6d35108d94f38b0ac3a7cd37b6b1dc4b27ca34ae3f46da",
+          "source_ref": null
+        },
+        {
+          "created_at": "2026-09-19T20:31:58.380138Z",
+          "evidence_id": "1a18a73d-7d5b-4f7b-a77c-696886a1e843",
+          "excerpt": "The lifecycle project uses maple labels.",
+          "fact_id": "627bf8bf-84f1-44ec-b6e7-56a82e145d85",
+          "original_source_status": "retained_locally",
+          "source_event_id": "d62341175e95dffb5f85f036431358712c40d75d569fc92f4a9461abb63a2150",
+          "source_ref": null
+        }
+      ],
+      "fact": {
+        "access_count": 3,
+        "canonical_key": "8719bda5b5b13aac414dccdca38a3ed600d94f53d4d8887ec35307a0cfc41895",
+        "cognitive_state": null,
+        "cognitive_state_status": "provider_unavailable",
+        "content": "The lifecycle project uses maple labels.",
+        "created_at": "2026-09-19T20:31:55.644533Z",
+        "id": "627bf8bf-84f1-44ec-b6e7-56a82e145d85",
+        "last_observed_at": "2026-09-19T20:31:57.726799Z",
+        "last_retrieved_at": "2026-09-19T20:31:59.021155Z",
+        "metadata": {
+          "assertion_status": "asserted",
+          "cognitive_state_status": "provider_unavailable",
+          "encoding_diagnostics": {},
+          "host": "hermes",
+          "previous_content": "The lifecycle project uses cedar labels.",
+          "project_id": "8740a60c-fde6-40f0-a33e-ceca6e5e8201",
+          "scope": "project",
+          "scope_id": "8740a60c-fde6-40f0-a33e-ceca6e5e8201",
+          "session_id": "hermes-api-lifecycle",
+          "source": "explicit_correction",
+          "source_event_ids": [
+            "d62341175e95dffb5f85f036431358712c40d75d569fc92f4a9461abb63a2150"
+          ],
+          "source_roles": [
+            "user"
+          ],
+          "user_profile_id": "api-fixture",
+          "workspace_id": null
+        },
+        "observation_count": 1,
+        "reconsolidation_due_at": null,
+        "salience": 0.5,
+        "surprisal_score": null,
+        "surprisal_status": "unknown",
+        "updated_at": "2026-09-19T20:31:58.380084Z",
+        "version": 2
+      },
+      "original_source_status": "retained_locally",
+      "revisions": [
+        {
+          "content": "The lifecycle project uses cedar labels.",
+          "created_at": "2026-09-19T20:31:58.380127Z",
+          "fact_id": "627bf8bf-84f1-44ec-b6e7-56a82e145d85",
+          "reason": "Before source-backed correction",
+          "revision_id": "3a894152-1dfb-4bdc-88dd-37b2d07816a8",
+          "version": 1
+        }
+      ],
+      "schema_version": 1
+    }
+  },
+  {
+    "tool": "mnemos_forget",
+    "args": {
+      "fact_id": "627bf8bf-84f1-44ec-b6e7-56a82e145d85",
+      "expected_version": 1
+    },
+    "result": {
+      "schema_version": 1,
+      "status": "degraded",
+      "committed": false,
+      "degraded": true,
+      "error": "Mnemos service returned HTTP 500"
+    }
+  },
+  {
+    "tool": "mnemos_forget",
+    "args": {
+      "fact_id": "627bf8bf-84f1-44ec-b6e7-56a82e145d85",
+      "expected_version": 2
+    },
+    "result": {
+      "erasure_scope": "live_memory_and_replay_suppression",
+      "fact_id": "627bf8bf-84f1-44ec-b6e7-56a82e145d85",
+      "forgotten": true,
+      "schema_version": 1,
+      "status": "committed"
+    }
+  },
+  {
+    "tool": "mnemos_retrieve",
+    "args": {
+      "query": "Which labels does this project use?"
+    },
+    "result": {
+      "context": "",
+      "context_token_upper_bound": 0,
+      "facts": [],
+      "profile": "baseline",
+      "schema_version": 1,
+      "token_count_method": "utf8_bytes_upper_bound"
+    }
+  },
+  {
+    "tool": "mnemos_retrieve",
+    "args": {
+      "query": "foreign canary",
+      "context": {
+        "user_profile_id": "api-fixture",
+        "project_id": "95a09616-b334-4b2c-9fcd-fd5d5fbb0beb",
+        "workspace_id": null,
+        "session_id": "seed",
+        "host": "manual"
+      }
+    },
+    "result": {
+      "schema_version": 1,
+      "status": "rejected",
+      "error": "Scope and unknown argument overrides are not accepted"
+    }
+  },
+  {
+    "tool": "mnemos_inspect",
+    "args": {
+      "fact_id": "ccb73aaa-3354-4d76-a187-dec0d1dd7288"
+    },
+    "result": {
+      "schema_version": 1,
+      "status": "degraded",
+      "committed": false,
+      "degraded": true,
+      "error": "Mnemos service returned HTTP 500"
+    }
+  },
+  {
+    "tool": "mnemos_correct",
+    "args": {
+      "fact_id": "ccb73aaa-3354-4d76-a187-dec0d1dd7288",
+      "content": "wrong scope",
+      "expected_version": 1,
+      "request_id": "foreign-correction-denied"
+    },
+    "result": {
+      "schema_version": 1,
+      "status": "degraded",
+      "committed": false,
+      "degraded": true,
+      "error": "Mnemos service returned HTTP 500"
+    }
+  },
+  {
+    "tool": "mnemos_forget",
+    "args": {
+      "fact_id": "ccb73aaa-3354-4d76-a187-dec0d1dd7288",
+      "expected_version": 1
+    },
+    "result": {
+      "schema_version": 1,
+      "status": "degraded",
+      "committed": false,
+      "degraded": true,
+      "error": "Mnemos service returned HTTP 500"
+    }
+  },
+  {
+    "tool": "mnemos_job_status",
+    "args": {
+      "job_id": "event:6223c4d709373f71dd92c98c2fff3369ec2f2579fa6b8ae3ab883264d9c62c55"
+    },
+    "result": {
+      "schema_version": 1,
+      "status": "degraded",
+      "committed": false,
+      "degraded": true,
+      "error": "Mnemos service returned HTTP 500"
+    }
+  },
+  {
+    "tool": "mnemos_retrieve",
+    "args": {
+      "query": "ambiguous receipt",
+      "top_k": 100
+    },
+    "result": {
+      "context": "",
+      "context_token_upper_bound": 0,
+      "facts": [],
+      "profile": "baseline",
+      "schema_version": 1,
+      "token_count_method": "utf8_bytes_upper_bound"
+    }
+  }
+]

@@ -1,0 +1,69 @@
+FF                                                                       [100%]
+================================== FAILURES ===================================
+______ test_fallback_callbacks_persist_separately_without_creating_facts ______
+
+tmp_path = WindowsPath('D:/WindowsTemp/pytest-of-Ant/pytest-3817/test_fallback_callbacks_persis0')
+
+    @pytest.mark.asyncio
+    async def test_fallback_callbacks_persist_separately_without_creating_facts(tmp_path: Path) -> None:
+        registry = ScopeRegistry()
+        registry.register_project(tmp_path, user_profile_id="alice", enabled=True)
+        store = SQLiteStore(str(tmp_path / "memory.sqlite"))
+        memory = LocalMemoryService(
+            MnemosEngine(
+                config=MnemosConfig(
+                    modules=ModuleConfig(**{k: False for k in ModuleConfig.model_fields})
+                ),
+                store=store,
+                embedder=SimpleEmbeddingProvider(),
+                llm=UnavailableLLMProvider(),
+            ),
+            registry,
+        )
+        responses: list[dict[str, Any]] = []
+        payloads: list[dict[str, Any]] = []
+    
+        class Client:
+            async def capture(self, payload: dict[str, Any]) -> dict[str, Any]:
+                payloads.append(payload)
+                result = memory.capture(CaptureEvent.model_validate(payload))
+                responses.append(result)
+                return result
+    
+        provider = MnemosHermesProvider(client=Client(), registry=registry, user_profile_id="alice")
+        provider.initialize("s1", cwd=str(tmp_path), hermes_home=str(tmp_path / "hermes"))
+        try:
+            for _ in range(2):
+                provider.sync_turn("The label is uncertain.", "I understand.")
+>               assert provider._flush()
+E               assert False
+E                +  where False = _flush()
+E                +    where _flush = <mnemos.adapters.hermes.MnemosHermesProvider object at 0x0000012B7EA26E40>._flush
+
+test_hermes_provisional_capture.py:50: AssertionError
+_____________ test_schemas_are_narrow_and_scope_is_provider_owned _____________
+
+    def test_schemas_are_narrow_and_scope_is_provider_owned():
+        schemas = get_tool_schemas()
+        assert {item["name"] for item in schemas} == {
+            "mnemos_retrieve",
+            "mnemos_inspect",
+            "mnemos_remember",
+            "mnemos_correct",
+            "mnemos_forget",
+            "mnemos_job_status",
+        }
+        for schema in schemas:
+            assert schema["parameters"]["additionalProperties"] is False
+            assert "context" not in schema["parameters"]["properties"]
+            assert "project_id" not in schema["parameters"]["properties"]
+            assert "user_profile_id" not in schema["parameters"]["properties"]
+            if schema["name"] in {"mnemos_remember", "mnemos_correct"}:
+>               assert "request_id" in schema["parameters"]["required"]
+E               AssertionError: assert 'request_id' in ['content']
+
+test_hermes_tools.py:55: AssertionError
+=========================== short test summary info ===========================
+FAILED test_hermes_provisional_capture.py::test_fallback_callbacks_persist_separately_without_creating_facts
+FAILED test_hermes_tools.py::test_schemas_are_narrow_and_scope_is_provider_owned
+2 failed, 11 deselected in 1.64s

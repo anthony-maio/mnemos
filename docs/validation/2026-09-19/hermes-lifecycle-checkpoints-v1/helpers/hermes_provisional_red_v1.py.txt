@@ -1,0 +1,26 @@
+"""Reproduce two service-boundary regressions against the preceding installed wheel."""
+from pathlib import Path
+import json
+import os
+import shutil
+import subprocess
+
+repo = Path(__file__).resolve().parent.parent
+output = Path('C:/Users/Ant/AppData/Local/Temp/mnemos-hermes-provisional-red-v1')
+output.mkdir(exist_ok=False)
+for name in ('test_hermes_provisional_capture.py', 'test_hermes_tools.py'):
+    shutil.copyfile(repo / 'tests' / name, output / name)
+python = 'C:/Users/Ant/AppData/Local/Temp/mnemos-installed-hermes-lifecycle-v1/Scripts/python.exe'
+env = {k: v for k, v in os.environ.items() if k != 'PYTHONPATH' and not k.startswith('MNEMOS_')}
+selection = 'fallback_callbacks or schemas_are_narrow'
+command = [python, '-m', 'pytest', '--import-mode=importlib', '-q', '-k', selection, '--junitxml', str(output / 'pytest.xml')]
+with (output / 'pytest.log').open('w', encoding='utf-8') as log:
+    result = subprocess.run(command, cwd=output, env=env, stdout=log, stderr=subprocess.STDOUT)
+import xml.etree.ElementTree as ET
+suites = list(ET.parse(output / 'pytest.xml').getroot().iter('testsuite'))
+counts = {k: sum(int(s.attrib[k]) for s in suites) for k in ('tests', 'failures', 'errors', 'skipped')}
+record = {'source_commit': 'b7d75000e453fc9510a6a7148da2998ed6e3f103', 'expected_regression_reproduction': True,
+          'exit_code': result.returncode, 'counts': counts, 'command': command}
+(output / 'report.json').write_text(json.dumps(record, indent=2) + '\n', encoding='utf-8')
+assert result.returncode == 1 and counts == {'tests': 2, 'failures': 2, 'errors': 0, 'skipped': 0}, record
+print(json.dumps(record))

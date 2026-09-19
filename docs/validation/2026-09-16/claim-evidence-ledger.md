@@ -4,9 +4,14 @@ Assessment date: September 19, 2026. This covers the unreleased
 functional-local-memory worktree, not the installed public package or website.
 The capability IDs come from the original implementation plan.
 
-Current package evidence is the [Hermes continuity checkpoint](../2026-09-19/hermes-continuity-checkpoint-v1/README.md)
-at `78c63ed`: 1,172 source passes, four skips, six source/package checks,
-484 installed contract passes, two matching skips, and seven replay assertions.
+Current package evidence is the [Hermes lifecycle checkpoint](../2026-09-19/hermes-lifecycle-checkpoints-v1/README.md)
+at `5e4b057`: 1,195 source passes, four skips, six source/package checks,
+507 installed contract passes, two matching skips, and seven replay assertions.
+Its installed Hermes API v2 run passes scoped lifecycle tools and persistent
+transcript identities, and retains provisional receipts without extracting
+facts from them. It uses fixture providers; native model lifecycle and outage
+acceptance remain open. The prior candidate's two later-discovered gaps and
+failed installed regressions remain in the same archive.
 The [isolated patched Hermes v4](../2026-09-19/native-hermes-local-v4/README.md)
 passes 16 single-turn scope, recall, and raw-capture checks. The installed CLI
 is unchanged, and full native lifecycle acceptance remains open. Earlier

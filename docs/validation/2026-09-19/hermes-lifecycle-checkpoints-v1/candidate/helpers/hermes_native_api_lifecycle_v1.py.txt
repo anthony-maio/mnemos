@@ -1,0 +1,209 @@
+"""Installed Hermes API lifecycle through a real WSL bridge, with fixture providers.
+
+This is an API contract check, not a native model conversation.
+"""
+import argparse
+import asyncio
+from datetime import datetime, timezone
+import hashlib
+import json
+import os
+from pathlib import Path
+import sqlite3
+import subprocess
+import sys
+import traceback
+
+parser = argparse.ArgumentParser()
+parser.add_argument('--checks', type=Path, required=True)
+parser.add_argument('--installed-checks', type=Path, required=True)
+parser.add_argument('--output', type=Path, required=True)
+args = parser.parse_args()
+root = args.output.resolve()
+root.mkdir(exist_ok=False)
+
+def save(name, value):
+    (root / name).write_text(json.dumps(value, indent=2) + '\n', encoding='utf-8')
+
+def wsl(path):
+    value = str(path).replace('\\', '/')
+    return '/mnt/' + value[0].lower() + value[2:]
+
+BOOTSTRAP = r'''
+import asyncio, hashlib, json, os, sys, zipfile
+from pathlib import Path
+cfg = json.loads(Path(sys.argv[1]).read_text())
+root = Path(cfg['root'])
+preserved = {k: v for k,v in os.environ.items() if k in {'HOME','USER','LOGNAME','PATH','LANG','WSL_INTEROP','WSL_DISTRO_NAME'}}
+os.environ.clear()
+os.environ.update(preserved)
+os.environ.update(cfg['env'])
+sys.dont_write_bytecode = True
+wheel = Path(cfg['wheel'])
+assert hashlib.sha256(wheel.read_bytes()).hexdigest() == cfg['wheel_sha']
+extracted = root / 'wheel'
+extracted.mkdir()
+with zipfile.ZipFile(wheel) as archive:
+    archive.extractall(extracted)
+sys.path[:0] = [str(extracted), '/home/anthony/.hermes/hermes-agent']
+from agent.memory_manager import MemoryManager
+from mnemos.adapters.hermes import MnemosHermesProvider, HERMES_API_AVAILABLE
+assert HERMES_API_AVAILABLE
+provider = MnemosHermesProvider()
+manager = MemoryManager()
+manager.add_provider(provider)
+manager.initialize_all('hermes-api-lifecycle', cwd=cfg['project'])
+expected = {'mnemos_retrieve','mnemos_inspect','mnemos_remember','mnemos_correct','mnemos_forget','mnemos_job_status'}
+assert manager.get_all_tool_names() == expected
+records = []
+def call(name, args):
+    result = json.loads(manager.handle_tool_call(name, args))
+    records.append({'tool': name, 'args': args, 'result': result})
+    (root/'calls.json').write_text(json.dumps(records, indent=2))
+    return result
+def maintain():
+    result = asyncio.run(provider.client.request('maintenance', {}, queue_on_failure=False))
+    assert result.get('schema_version') == 1, result
+remembered = call('mnemos_remember', {'content': 'The lifecycle project uses cedar labels.', 'request_id':'remember-label'})
+assert remembered.get('status') == 'committed', remembered
+job = call('mnemos_job_status', {'job_id': remembered['job_id']})
+maintain()
+facts = call('mnemos_retrieve', {'query': 'Which labels does this project use?'})['facts']
+assert len(facts) == 1 and 'cedar' in facts[0]['content'], facts
+fact = call('mnemos_inspect', {'fact_id': facts[0]['id']})['fact']
+assert fact['version'] == 1
+corrected = call('mnemos_correct', {'fact_id': fact['id'], 'expected_version': 1, 'content': 'The lifecycle project uses maple labels.', 'request_id':'correct-label'})
+assert corrected.get('status') == 'committed', corrected
+maintain()
+current = call('mnemos_retrieve', {'query': 'Which labels does this project use?'})['facts']
+assert len(current) == 1 and current[0]['id'] == fact['id'] and 'maple' in current[0]['content'], current
+assert call('mnemos_inspect', {'fact_id': fact['id']})['fact']['version'] == 2
+assert call('mnemos_forget', {'fact_id': fact['id'], 'expected_version': 1}).get('forgotten') is not True
+assert call('mnemos_forget', {'fact_id': fact['id'], 'expected_version': 2})['forgotten'] is True
+maintain()
+assert call('mnemos_retrieve', {'query': 'Which labels does this project use?'})['facts'] == []
+assert call('mnemos_retrieve', {'query': 'foreign canary', 'context': cfg['foreign_context']})['status'] == 'rejected'
+for name, arguments in (
+    ('mnemos_inspect', {'fact_id': cfg['foreign_id']}),
+    ('mnemos_correct', {'fact_id': cfg['foreign_id'], 'content': 'wrong scope', 'expected_version': 1, 'request_id':'foreign-correction-denied'}),
+    ('mnemos_forget', {'fact_id': cfg['foreign_id'], 'expected_version': 1}),
+    ('mnemos_job_status', {'job_id': cfg['foreign_job_id']}),
+):
+    assert call(name, arguments)['status'] in {'degraded','rejected'}
+messages = [{'role':'user','content':'Please continue.'}, {'role':'assistant','content':'Continuing.'}]
+manager.sync_all('Please continue.', 'Continuing.', session_id='hermes-api-lifecycle', messages=messages)
+assert manager.flush_pending(timeout=15) and provider._flush(timeout=15)
+manager.sync_all('Please continue.', 'Continuing.', session_id='hermes-api-lifecycle', messages=messages + messages)
+assert manager.flush_pending(timeout=15) and provider._flush(timeout=15)
+assert 'captured 4' in provider.on_pre_compress(messages + messages, require_checkpoint=True)
+manager.on_session_end(messages + messages)
+manager.shutdown_all()
+# A newly created provider must replay the same durable payloads.
+restarted = MnemosHermesProvider()
+second = MemoryManager()
+second.add_provider(restarted)
+second.initialize_all('hermes-api-lifecycle', cwd=cfg['project'])
+second.sync_all('Please continue.', 'Continuing.', session_id='hermes-api-lifecycle', messages=messages + messages)
+assert second.flush_pending(timeout=15) and restarted._flush(timeout=15)
+second.shutdown_all()
+assert provider.get_lifecycle_diagnostics() == []
+assert restarted.get_lifecycle_diagnostics() == []
+result = {'status':'passed', 'scope':'installed Hermes MemoryManager API with fixture providers; no model conversation',
+          'tool_names':sorted(expected), 'calls':len(records),
+          'host_module': __import__('agent.memory_manager', fromlist=['x']).__file__,
+          'adapter_module': __import__('mnemos.adapters.hermes', fromlist=['x']).__file__}
+(root/'host-report.json').write_text(json.dumps(result, indent=2))
+'''
+
+record = {'status': 'running', 'started_at': datetime.now(timezone.utc).isoformat(),
+          'scope': 'installed Hermes API + Windows/WSL bridge + fixture providers; no model conversation',
+          'live_configuration_changed': False}
+save('report.json', record)
+service = None
+try:
+    checks = json.loads(args.checks.read_text())
+    installed = json.loads(args.installed_checks.read_text())
+    assert checks['status'] == installed['status'] == 'passed'
+    wheel = next(Path(item['file']) for item in checks['artifacts'] if item['file'].endswith('.whl'))
+    digest = hashlib.sha256(wheel.read_bytes()).hexdigest()
+    assert installed['bindings_after']['wheel_sha256'] == digest
+    assert installed['bindings_after']['commit'] == checks['source_commit']
+    record.update(source_commit=checks['source_commit'], wheel_sha256=digest)
+    import mnemos
+    assert Path(mnemos.__file__).resolve().is_relative_to(Path(sys.executable).resolve().parent.parent)
+    record['installed_package'] = mnemos.__file__
+    record['hermes_commit'] = subprocess.check_output(['wsl.exe','-d','Debian','--','git','-C','/home/anthony/.hermes/hermes-agent','rev-parse','HEAD'], text=True).strip()
+    assert record['hermes_commit'] == '14a346345486418aa85ed6526549412ee2665ade'
+    assert not subprocess.check_output(['wsl.exe','-d','Debian','--','git','-C','/home/anthony/.hermes/hermes-agent','status','--porcelain','--untracked-files=no'], text=True).strip()
+    from mnemos.client import MnemosClient
+    from mnemos.config import MnemosConfig, ModuleConfig
+    from mnemos.engine import MnemosEngine
+    from mnemos.memory_service import LocalMemoryService
+    from mnemos.scopes import ScopeRegistry
+    from mnemos.service import MnemosService
+    from mnemos.utils.embeddings import SimpleEmbeddingProvider
+    from mnemos.utils.llm import UnavailableLLMProvider
+    from mnemos.utils.storage import SQLiteStore
+    registry = ScopeRegistry()
+    contexts = {}
+    for name in ('project', 'foreign'):
+        directory = root / name
+        directory.mkdir()
+        project = registry.register_project(directory, user_profile_id='api-fixture', enabled=True)
+        project.aliases.append(wsl(directory))
+        contexts[name] = registry.resolve(directory, user_profile_id='api-fixture', session_id='seed', host='manual').model_dump(mode='json')
+    registry.save(root/'scopes.json')
+    config = MnemosConfig(modules=ModuleConfig(**{name: False for name in ModuleConfig.model_fields}))
+    def factory():
+        return LocalMemoryService(MnemosEngine(config=config, llm=UnavailableLLMProvider(), embedder=SimpleEmbeddingProvider(),
+            store=SQLiteStore(str(root/'memory.sqlite')), scope_registry=registry, require_scope_context=True), registry)
+    service = MnemosService(dispatcher_factory=factory, descriptor_path=root/'runtime.json', startup_timeout=10)
+    service.start()
+    client = MnemosClient(descriptor_path=root/'runtime.json', auto_start=False)
+    async def request(operation, payload):
+        return await client.request(operation, payload, queue_on_failure=False)
+    seed = asyncio.run(request('remember', {'context':contexts['foreign'], 'content':'Foreign canary label is forbidden.', 'event_id':'foreign-seed'}))
+    assert seed['status'] == 'committed', seed
+    asyncio.run(request('maintenance', {}))
+    foreign = asyncio.run(request('retrieve', {'context':contexts['foreign'], 'query':'foreign canary label', 'allowed_scopes':['project'], 'profile':'baseline'}))
+    foreign_id = foreign['facts'][0]['id']
+    home = root/'hermes-home'
+    home.mkdir()
+    bridge = [wsl(sys.executable), '-m', 'mnemos.bridge', '--descriptor', str(root/'runtime.json')]
+    cfg = {'root':wsl(root), 'wheel':wsl(wheel), 'wheel_sha':digest, 'project':wsl(root/'project'),
+           'foreign_context':contexts['foreign'], 'foreign_id':foreign_id, 'foreign_job_id':seed['job_id'],
+           'env':{'HERMES_HOME':wsl(home), 'HERMES_ENABLE_PROJECT_PLUGINS':'0', 'MNEMOS_SCOPE_REGISTRY':wsl(root/'scopes.json'),
+                  'MNEMOS_USER_PROFILE_ID':'api-fixture', 'MNEMOS_BRIDGE_COMMAND':json.dumps(bridge), 'MNEMOS_ROUTING_REVIEW_DIR':wsl(root/'routing-review')}}
+    save('bootstrap-config.json', cfg)
+    (root/'bootstrap.py').write_text(BOOTSTRAP, encoding='utf-8')
+    with (root/'host.stdout.log').open('wb') as stdout, (root/'host.stderr.log').open('wb') as stderr:
+        result = subprocess.run(['wsl.exe','-d','Debian','--','timeout','--signal=TERM','--kill-after=5s','180s',
+            '/home/anthony/.hermes/hermes-agent/venv/bin/python', wsl(root/'bootstrap.py'), wsl(root/'bootstrap-config.json')], stdout=stdout, stderr=stderr, timeout=200)
+    record['host_exit_code'] = result.returncode
+    assert result.returncode == 0, 'Inspect preserved host logs'
+    record['host'] = json.loads((root/'host-report.json').read_text())
+    assert asyncio.run(request('inspect', {'context':contexts['foreign'], 'fact_id':foreign_id}))['fact']['version'] == 1
+    service.stop()
+    service = None
+    with sqlite3.connect(root/'memory.sqlite') as db:
+        db.row_factory = sqlite3.Row
+        rows = [dict(r) for r in db.execute("SELECT id,role,content,source,session_id,metadata FROM episodic_events WHERE source='hermes'")]
+    transcript = [r for r in rows if json.loads(r['metadata']).get('source_kind') == 'hermes_memory_provider']
+    save('hermes-events.json', rows)
+    assert len(transcript) == 4, len(transcript)
+    assert [r['role'] for r in transcript].count('user') == 2
+    assert len({r['id'] for r in transcript}) == 4
+    record['persisted_transcript_events'] = len(transcript)
+    assert not subprocess.check_output(['wsl.exe','-d','Debian','--','git','-C','/home/anthony/.hermes/hermes-agent','status','--porcelain','--untracked-files=no'], text=True).strip()
+    record['status'] = 'passed'
+except BaseException as exc:
+    record['status'] = 'failed'
+    record['error'] = str(exc)
+    (root/'failure.txt').write_text(traceback.format_exc(), encoding='utf-8')
+finally:
+    if service is not None:
+        service.stop()
+    record['finished_at'] = datetime.now(timezone.utc).isoformat()
+    save('report.json', record)
+    print(json.dumps(record, indent=2))
+raise SystemExit(0 if record['status']=='passed' else 1)

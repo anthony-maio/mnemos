@@ -8,6 +8,29 @@ This is a chronological checkpoint log. Later entries supersede earlier test
 counts and open implementation items. An implementation or focused check does
 not close a native-host, quality, performance, or pilot gate.
 
+## September 19: Hermes lifecycle checkpoint and writing handoff refresh
+
+The [successor checkpoint](../2026-09-19/hermes-lifecycle-checkpoints-v1/README.md)
+at `5e4b057` passes 1,195 source tests, four skips, all six source/package
+checks, 507 installed cases, two matching skips, and seven replay assertions.
+Installed Hermes API v2 passes 16 tool calls through the actual Windows/WSL
+bridge. Four normal transcript occurrences survive repeated callbacks and
+provider recreation. Four separate provisional receipts cannot produce facts.
+Providers are fixtures; this is separate from the earlier patched CLI v4
+real-model single-turn result. Live host configuration remains unchanged.
+
+The earlier `b7d7500` candidate's full and installed suites passed, but later
+regressions exposed rejected Hermes provisional evidence and a missing
+required request ID in write schemas. The archive preserves both failed
+installed regressions and the successor checks. Identity hashes bind submitted
+fields, not host authorship; authenticated adapters remain trusted evidence
+sources, and later real transcripts can create new normal occurrences.
+
+The Substack research handoff now includes these repairs, bounded results, and
+open questions. The independent real-model encoding/retrieval queue remains
+active with its original frozen `fc72cc2` source, dataset, and protocols.
+Full native lifecycle, model utility, Desktop, and pilot acceptance stay open.
+
 ## Observed results
 
 - Initial isolated Python 3.13 suite: 323 passed, 4 failed. MCP is now constrained to >=1,<2; the website consistency test locates the outer website checkout.

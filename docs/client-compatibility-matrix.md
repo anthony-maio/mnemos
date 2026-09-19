@@ -2,7 +2,7 @@
 
 Updated September 19, 2026 for the unreleased functional-local-memory worktree. The versions below identify observed runs, not a promise about every installed or future host version. Adapter tests, native conversations, model quality, and daily-use readiness are separate claims.
 
-The latest [source/package checkpoint](validation/2026-09-19/hermes-continuity-checkpoint-v1/README.md) is `78c63ed`. The earlier [mixed-host replay probe](validation/2026-09-18/native-crosshost-recovery-v4/README.md) verifies the `fc72cc2` installed wheel and clean plugin snapshot. Earlier lifecycle results retain their original source bindings; a newer package does not silently rerun those observations.
+The latest [source/package checkpoint](validation/2026-09-19/hermes-lifecycle-checkpoints-v1/README.md) is `5e4b057`, with 1,195 source passes, 507 installed passes, and four/two respective skips. Its installed Hermes MemoryManager API check exercises all six scoped tools through the actual Windows/WSL bridge, growing transcript replay, provider recreation, and extraction-ineligible fallback receipts. This uses fixture providers, with no model conversation or service outage. The earlier [mixed-host replay probe](validation/2026-09-18/native-crosshost-recovery-v4/README.md) verifies the `fc72cc2` installed wheel and clean plugin snapshot. Earlier lifecycle results retain their original source bindings; a newer package does not silently rerun those observations.
 
 | Client | Implemented integration | Observed native evidence | Remaining acceptance |
 | --- | --- | --- | --- |

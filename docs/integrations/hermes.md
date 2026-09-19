@@ -63,6 +63,11 @@ with a `transcript_identity_unavailable` diagnostic. Each fallback callback
 gets a distinct receipt; only replay of its retained payload is idempotent.
 Several receipts may describe the same actual host turn, so receipt counts
 do not prove transcript coverage or independent evidence.
+An existing provisional receipt cannot be promoted into extractable evidence.
+A later complete transcript can supply a separate normal occurrence, including
+the same text. Identity hashes bind the supplied fields; they are not signatures
+proving host authorship. The authenticated adapter remains trusted to submit
+accurate host evidence.
 Hosts omitting Hermes home also report `nonpersistent_timestamp`; timestamp
 recovery is then limited to the provider lifetime. Transcript truncation,
 branching, and upgrades from earlier experimental identity formats still need
