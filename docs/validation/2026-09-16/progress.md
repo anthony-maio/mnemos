@@ -8,6 +8,28 @@ This is a chronological checkpoint log. Later entries supersede earlier test
 counts and open implementation items. An implementation or focused check does
 not close a native-host, quality, performance, or pilot gate.
 
+## September 19: correction retry and writing packet refresh
+
+The [correction retry checkpoint](../2026-09-19/correction-retry-checkpoint-v1/README.md)
+at `ea88dd4` passes 1,201 source tests with four skips, all six source/package
+checks, 513 isolated installed cases with two matching skips, and seven replay
+assertions. A completed correction no longer rejects its own unchanged retry
+as stale. It recovers the original durable job after restart, retention expiry,
+or a later correction without changing the newer fact. Fresh edits retain
+version checks; payload collisions, scope violations, unsafe writes, and
+forgotten targets remain rejected. Two queued corrections against the same
+version demonstrate that durable acknowledgement and completed processing
+are separate: the losing job exposes its error and does not rewrite the fact.
+
+The first installed-check invocation supplied the wrong form of report path
+and stopped at preflight. Its record is preserved; the corrected invocation
+passed against the unchanged verified wheel. No model evaluation was restarted.
+The full encoding arm has 589 complete and 11 partial observations; the
+no-surprisal arm was still running at the latest dated status observation.
+The writer handoff now includes the correction retry example alongside the
+Hermes API recovery and negative graph evidence, with final acceptance still
+open.
+
 ## September 19: development graph budget comparison
 
 The [degree diagnostic](../2026-09-19/graph-degree-development-v2/README.md)

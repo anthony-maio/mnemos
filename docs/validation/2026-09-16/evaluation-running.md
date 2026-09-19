@@ -3,9 +3,12 @@
 ## Current checkpoint: September 19, 2026, local GPU replacement
 
 An independent [supplemental v2 queue](../2026-09-19/supplemental-launch-v2/README.md)
-started at 19:50:51 UTC. The 20:06:49 UTC process observation confirmed encoding
-was live with 97 full-arm observations recorded. Retrieval follows encoding.
-Final results are pending; the original queue's unstarted follow-ons below
+started at 19:50:51 UTC. At 21:16:29 UTC, the full encoding arm had a terminal
+`incomplete` report for 600 recorded observations: 589 complete and 11 partial.
+Eleven of 60 attempted corrections had no target; the other 49 corrections
+and all 60 forgetting operations committed. The no-surprisal arm had recorded
+151 observations and was still running. Retrieval follows encoding.
+Final comparison results are pending; the original queue's unstarted follow-ons below
 remain historical failures. The source, dataset, models, and protocols remain
 frozen. Concurrent CPU-only development work qualifies timing comparisons.
 
@@ -27,7 +30,7 @@ cognition calls. They do not change the older model matrix's source or
 reinterpret its failed completeness gate, and do not establish full-module
 latency or native-host acceptance.
 
-The local main and supplemental queues are now terminal failures; the earlier
+The original local main and supplemental queues ended as terminal failures; the earlier
 live-process observations below are historical. The main lifecycle worker
 returned reports for all seven profiles, but five were incomplete. Baseline
 and `ablate-sleep_consolidation` completed 600 observations each. Across the

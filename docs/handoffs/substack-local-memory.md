@@ -61,6 +61,14 @@ The hardware interruption is available as context: Anthony reported that the rem
 
 ## Finalization checklist
 
+The [correction retry checkpoint](../validation/2026-09-19/correction-retry-checkpoint-v1/README.md)
+at `ea88dd4` passes 1,201 source tests and 513 installed cases, with four and
+two respective skips, all six source/package checks, and seven replay
+assertions. A correction that commits before its reply is lost can now recover
+its original job after restart without overwriting a newer edit. This is a
+concrete reliability result from fixture providers and actual HTTP/SQLite;
+it does not change the frozen real-model experiment or its missing targets.
+
 New evidence for reconciliation: the [Hermes API recovery probe](../validation/2026-09-19/hermes-api-recovery-v1/README.md)
 passes outage buffering, required checkpoint durability, native-request replay
 after explicit restoration, and forget suppression across fresh host processes

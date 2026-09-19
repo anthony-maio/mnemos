@@ -4,6 +4,15 @@ This record covers the unreleased `wt/functional-local-memory` worktree. It
 separates implemented behavior from acceptance evidence. The original task
 boundaries and thresholds remain in the [implementation plan](../../plans/2026-09-16-functional-local-memory.md).
 
+The latest [correction retry checkpoint](../2026-09-19/correction-retry-checkpoint-v1/README.md)
+at `ea88dd4` passes 1,201 source tests with four skips, all six source/package
+checks, 513 installed cases with two matching skips, and seven replay
+assertions. An unchanged correction retry now recovers its durable job after
+processing, restart, source retention expiry, or a later edit. New stale edits
+still fail; scope, payload identity, write policy, and forgetting remain
+enforced. This does not rerun the frozen model comparison or establish native
+model lifecycle acceptance.
+
 The [installed Hermes API recovery probe](../2026-09-19/hermes-api-recovery-v1/README.md)
 on verified `5e4b057` passes outage buffering, required checkpoint durability,
 automatic outbox drain after explicit service restoration, exact event/time
@@ -20,7 +29,7 @@ at any setting. All structural controls pass. These five variants of one
 development template do not justify a new default or establish generalization.
 The original held-out graph failure remains unchanged.
 
-The latest [Hermes lifecycle checkpoint](../2026-09-19/hermes-lifecycle-checkpoints-v1/README.md)
+The earlier [Hermes lifecycle checkpoint](../2026-09-19/hermes-lifecycle-checkpoints-v1/README.md)
 at `5e4b057` passes 1,195 source tests with four skips, all six source/package
 checks, 507 isolated installed cases with two matching skips, and seven replay
 assertions. The installed Hermes API v2 check passes scoped remember, retrieve,
@@ -29,8 +38,8 @@ Growing transcripts and provider recreation preserve four normal events;
 four provisional receipts remain ineligible for extraction. These are fixture
 provider results, not a native model conversation or outage recovery result.
 Two gaps found after the preceding candidate's passing suite are preserved
-with their regressions and successor repairs. This supersedes package counts
-below. The
+with their regressions and successor repairs. The correction retry checkpoint
+above supersedes these package counts. The
 [patched native CLI v4](../2026-09-19/native-hermes-local-v4/README.md) passes
 all 16 single-turn scope, recall, and raw-capture checks: four committed calls
 produce exactly two persisted events. The installed host is unchanged.
@@ -632,7 +641,7 @@ capture diagnostics and complete lifecycle acceptance remain open.
 | T16 Recovery | Backup, integrity, new-path restore, suppression merge, staged reindex, and activation backup behavior are implemented and tested. | Local recovery contracts pass, including a backup during an active writer transaction. Live data migration remains separately authorization-bound. |
 | T17 Cross-host | Native v9 on installed `5af3d15` passes 15 bounded lifecycle checks for Codex teaching, Claude correction and reviewed deletion, restart, direct service replay suppression, foreign-project exclusion, final recall, and retained unrelated facts. The newer mixed-host v4 probe on `fc72cc2` verifies three paired same-event native deliveries, durable queue recovery, and unchanged records through owner restart. | Lexical fixture vectors, disabled modules, explicit restoration, and a test rendezvous limit the claim. V4 retains one pairing timeout and degraded Claude identity diagnostics; the earlier v3 gate remains failed. Earlier Codex Stop timeouts remain recorded. Complete capture, Desktop, Hermes, real-provider recovery, real-model quality, and the two-week pilot remain open. |
 | T18 Evaluation | Frozen lifecycle datasets, request-bound extraction schemas, seven real-provider profiles, raw traces, checkpoints, Wilson intervals, and paired comparisons are implemented. Applied length/noise and vector/lexical/hybrid/full comparisons have a separate frozen protocol. | The local lifecycle matrix is terminal: 4,150 observations complete and 50 partial across five of seven profiles, following no-fact extraction and unavailable correction targets. This does not pass acceptance. Graph has zero eligible cases; affective supplied-state ranking improves while classifier fidelity remains poor. The independent supplemental v2 encoding run is active; its retrieval phase and final quality results remain pending. Follow the [evaluation record](evaluation-running.md) and [terminal lifecycle archive](../2026-09-19/lifecycle-incomplete-local-v2/README.md). |
-| T19 Claims and packaging | Claim ledger, compatibility matrix, release checklist, package artifacts, UI assets, negative evidence archives, and the Substack research handoff are maintained. | Latest verified package `5e4b057` passes 1,195 source tests and 507 installed contract cases, with four/two respective skips and seven replay assertions. Both synthetic replacement comparisons remain failed despite repaired baseline storage parity. The working article packet includes the voice skill and bounded evidence; final reconciliation remains pending. Real-model and native acceptance are separate. Publication, website, paper, and release actions remain separately authorization-bound. |
+| T19 Claims and packaging | Claim ledger, compatibility matrix, release checklist, package artifacts, UI assets, negative evidence archives, and the Substack research handoff are maintained. | Latest verified package `ea88dd4` passes 1,201 source tests and 513 installed contract cases, with four/two respective skips and seven replay assertions. Both synthetic replacement comparisons remain failed despite repaired baseline storage parity. The working article packet includes the voice skill and bounded evidence; final reconciliation remains pending. Real-model and native acceptance are separate. Publication, website, paper, and release actions remain separately authorization-bound. |
 
 The current capture recommendation is a hybrid: automatically capture enabled
 project conversations as retained evidence, extract durable facts separately,
