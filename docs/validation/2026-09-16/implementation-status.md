@@ -4,6 +4,18 @@ This record covers the unreleased `wt/functional-local-memory` worktree. It
 separates implemented behavior from acceptance evidence. The original task
 boundaries and thresholds remain in the [implementation plan](../../plans/2026-09-16-functional-local-memory.md).
 
+The [embedding-client checkpoint](../2026-09-19/embedding-client-checkpoint-v1/README.md)
+at `39b9c79` reuses Ollama embedding clients and closes owned providers after
+pending work drains, including cancelled and concurrent cleanup. It passes
+1,123 source tests with four skips, six source/package checks, 428 installed
+contract cases with two matching skips, and replay checks. A fixed-vector HTTP
+fixture reduced warm request median from 200.344 ms to 1.540 ms. This is client
+setup evidence only; the real recall/capture gates remain failed. The separate
+synthetic replacement gate failed both repetitions on both `fc72cc2` and
+`39b9c79`, with MRR lift ranging from -0.4 to 0.0. No gate was relaxed, and this
+checkpoint is not an all-CI-gates pass. Native observations retain their
+original package bindings.
+
 On September 19, the failed lab machine's evaluation was retired with verified
 result/checkpoint backups. A [fresh local GPU queue](../2026-09-19/local-evaluation-launch-v2/README.md)
 started on clean `fc72cc2` with the same model digests. Default-context warm
@@ -18,6 +30,14 @@ captures committed. The timing trace identifies embedding latency as a major
 component of the recall tail. A separate client-construction profile identifies
 certificate-loading overhead, without establishing a fix or changing the run.
 The supplemental comparisons are queued behind successful main completion.
+
+The [local held-out mechanism phase](../2026-09-19/mechanism-local-v1/README.md)
+has now completed on the unchanged `fc72cc2` snapshot. Graph structural
+correctness passed, but eligibility was zero of 50 cases, failing the minimum
+of 40. Synthetic gold-state affective scoring improved top-1 by 34 percentage
+points; classifier fidelity passed on only 33 of 300 outputs. These results
+do not close graph utility, end-to-end affective benefit, or T18 acceptance.
+The main queue has advanced to lifecycle evaluation.
 
 The [mixed-host replay and restart probe](../2026-09-18/native-crosshost-recovery-v4/README.md)
 on installed `fc72cc2` passes the bounded native concurrency observation.
@@ -519,7 +539,7 @@ capture diagnostics and complete lifecycle acceptance remain open.
 | T07 Surprisal | Automatic gating, explicit-remember bypass, session-safe history, and diagnostics are implemented and covered by deterministic tests. | Mechanism contract tested. Real filtering benefit remains open. |
 | T08 Correction | Stable identity, expected-version CAS, revisions, canonical updates, evidence links, and graph refresh are implemented and tested. | Native Claude corrected a Codex-stored fact after restart, preserving its ID at version 2; a fresh Codex session retrieved it after another restart. Captured old mentions remain unknown and visibly qualified as possibly outdated. General stale-context answer consistency remains open. |
 | T09 Retrieval | Scoped cosine retrieval, lexical candidate union, one scoring contract, and context budgeting are implemented. | Scope and top-1 tests pass. The September 19 local measurement fails both gates: recall p95 4,063.309 ms against 500 ms and capture p95 135.186 ms against 100 ms. The prior lab measurement (1,088.094 ms recall, 64.279 ms capture) remains preserved. Changed source/hardware conditions do not establish a code speedup or regression cause. |
-| T10 Graph | Persisted mutual top-k links, scope-safe traversal, bounded recovery, insertion-order controls, and capacity diagnostics are implemented and tested. | Structural controls pass. Graph utility and eligible-target coverage are not established by the available evidence. |
+| T10 Graph | Persisted mutual top-k links, scope-safe traversal, bounded recovery, insertion-order controls, and capacity diagnostics are implemented and tested. | Local held-out structural controls pass, but zero of 50 graph cases are eligible against the minimum of 40. Graph utility remains unmeasured; see the [negative result](../2026-09-19/mechanism-local-v1/README.md). |
 | T11 Forget | Exact fact deletion, suppression, replay protection, inflight handling, restore behavior, and selected related-removal preview/apply are implemented and tested. | Native v9 passes reviewed deletion of the target plus five selected copies, direct replay suppression, and final Codex recall without the removed values. Unindexed paraphrases and external transcripts remain outside that bounded result. Earlier v6's surviving-copy failure is preserved. |
 | T12 Claude Code | Hook capture, transcript deltas, checkpoints, capture-before-recall, identity diagnostics, and replay repair are implemented. | Native v18 on dedfcfd passed all 15 fact-lifecycle criteria with the new startup default, including correction, forgetting, restart, and reconstructed replay. Degraded hook capture keeps the overall result partial. Mixed-host v4 adds bounded native queue replay and restart on `fc72cc2`, with identity warnings preserved. Native extraction and complete capture acceptance remain open. See the [native lifecycle archive](../2026-09-17/native-claude-lifecycle-v18/README.md). |
 | T13 Codex | Generated hooks, UTF-8 payload handling, explicit MCP fallback, and bounded native continuity are implemented. | Native v9 passes teaching, corrected recall, and final post-forget recall; all three processes exited zero, but two Stop hooks timed out. The Windows ACL repair passes nine installed regressions and the installed v3 native probe persisted both roles with protected permissions and an 876 ms instrumented shell duration. Three uninstrumented sessions on c25ed98 also persisted both roles, with late native hook pairs below three seconds; Stop identity is inferred from turn timing. A separate two-session probe on this wheel automatically replayed outage captures through generated hooks and retained all four messages across restart. Mixed-host v4 adds bounded Codex/Claude concurrent replay and restart on `fc72cc2`. Tail latency, complete capture, and Desktop remain open. |
@@ -528,7 +548,7 @@ capture diagnostics and complete lifecycle acceptance remain open.
 | T16 Recovery | Backup, integrity, new-path restore, suppression merge, staged reindex, and activation backup behavior are implemented and tested. | Local recovery contracts pass, including a backup during an active writer transaction. Live data migration remains separately authorization-bound. |
 | T17 Cross-host | Native v9 on installed `5af3d15` passes 15 bounded lifecycle checks for Codex teaching, Claude correction and reviewed deletion, restart, direct service replay suppression, foreign-project exclusion, final recall, and retained unrelated facts. The newer mixed-host v4 probe on `fc72cc2` verifies three paired same-event native deliveries, durable queue recovery, and unchanged records through owner restart. | Lexical fixture vectors, disabled modules, explicit restoration, and a test rendezvous limit the claim. V4 retains one pairing timeout and degraded Claude identity diagnostics; the earlier v3 gate remains failed. Earlier Codex Stop timeouts remain recorded. Complete capture, Desktop, Hermes, real-provider recovery, real-model quality, and the two-week pilot remain open. |
 | T18 Evaluation | Frozen lifecycle datasets, request-bound extraction schemas, real-provider adapters, seven profiles, raw traces, checkpoints, Wilson intervals, and paired comparisons are implemented. Separate applied length/noise and vector/lexical/hybrid/full comparisons are implemented and prepared offline. | The frozen real-model matrix and both additional comparison executions remain open. Prepared artifacts have no real-model observations yet. Graph/affective utility evidence also remains a separate requirement. Follow the [evaluation status and recovery record](evaluation-running.md), [applied encoding checkpoint](../2026-09-18/encoding-comparison-checkpoint-v1/README.md), and [retrieval checkpoint](../2026-09-18/retrieval-comparison-checkpoint-v1/README.md). |
-| T19 Claims and packaging | Claim ledger, compatibility matrix, release checklist, package artifacts, UI assets, and negative evidence archives are maintained. | The latest source/package checkpoint is `fc72cc2`, with the runtime wheel unchanged from `aefc338`. The preserved intermittent bridge failure remains unexplained. Publication, website, paper, and release actions remain separately authorization-bound. |
+| T19 Claims and packaging | Claim ledger, compatibility matrix, release checklist, package artifacts, UI assets, and negative evidence archives are maintained. | The latest source/package checkpoint is `39b9c79`, with 1,123 source passes and 428 installed contract passes. The synthetic replacement gate fails on both old and new snapshots; real-model and native acceptance remain separate. The preserved intermittent bridge failure remains unexplained. Publication, website, paper, and release actions remain separately authorization-bound. |
 
 The current capture recommendation is a hybrid: automatically capture enabled
 project conversations as retained evidence, extract durable facts separately,

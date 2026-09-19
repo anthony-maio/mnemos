@@ -37,6 +37,23 @@ before running encoding and retrieval comparisons serially. Their execution
 and quality gates remain open. Performance findings do not change the frozen
 quality run or its parameters.
 
+The [local held-out mechanism phase](../2026-09-19/mechanism-local-v1/README.md)
+finished at 06:14:34 UTC. All ten recorded artifact hashes match. Structural
+graph checks passed, but none of the 50 graph cases met eligibility, against
+the unchanged minimum of 40. Overall mechanism coverage therefore failed.
+Affective scoring with synthetic gold states raised top-1 from 0% to 34%;
+the real classifier passed fidelity on only 33 of 300 parsed outputs. This
+does not establish end-to-end affective benefit or human acceptance. The
+coordinator advanced to lifecycle worker PID 46876, verified live separately.
+Encoding and retrieval comparisons remain queued behind main completion.
+
+The separately frozen [embedding-client fix](../2026-09-19/embedding-client-checkpoint-v1/README.md)
+at `39b9c79` passes source and isolated-wheel checks. Its disposable HTTP
+fixture shows lower setup overhead, while both real latency gates remain
+failed pending remeasurement. The legacy synthetic replacement gate fails on
+both snapshots. The active model run and its queued comparisons still use
+unchanged `fc72cc2`; these implementation results are not mixed into them.
+
 ## Historical checkpoint: September 18, 2026, 07:26 UTC observation
 
 The existing execution session remained live. At 07:26:45 UTC, coordinator

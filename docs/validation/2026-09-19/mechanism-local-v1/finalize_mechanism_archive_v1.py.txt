@@ -1,0 +1,25 @@
+"""Retain the failed archive preflight and refresh the completed archive index."""
+import hashlib
+import json
+from pathlib import Path
+import shutil
+
+root = Path(__file__).resolve().parents[1]
+archive = root / "docs/validation/2026-09-19/mechanism-local-v1"
+assert (archive / "phase-artifacts.zip").is_file()
+failure = archive / "archive-preflight-failure.json"
+assert not failure.exists()
+failure.write_text(json.dumps({
+    "helper": "archive_mechanism_local_v1.py.txt", "exit_code": 1,
+    "failure": "AssertionError: assert len(blobs) == 11",
+    "effect": "Stopped before creating the archive directory; no source artifacts changed",
+    "correction": "Version 2 validates the exact ten-entry artifact set, including eight reports/raw files and two logs",
+}, indent=2) + "\n", encoding="utf-8")
+shutil.copyfile(root / ".venv/archive_mechanism_local_v1.py", archive / "archive_mechanism_local_v1.py.txt")
+shutil.copyfile(__file__, archive / "finalize_mechanism_archive_v1.py.txt")
+readme = archive / "README.md"
+readme.write_text(readme.read_text(encoding="utf-8") + "\nThe first archive preflight incorrectly expected eleven files and stopped\nbefore writing the archive. Its helper and failure record are retained.\nVersion 2 verified the exact ten-file set and all recorded hashes.\n", encoding="utf-8")
+index = {p.relative_to(archive).as_posix(): {"bytes": p.stat().st_size, "sha256": hashlib.sha256(p.read_bytes()).hexdigest()}
+         for p in archive.rglob("*") if p.is_file() and p.name != "evidence-index.json"}
+(archive / "evidence-index.json").write_text(json.dumps({"files": index}, indent=2) + "\n", encoding="utf-8")
+print(f"Indexed {len(index)} files")

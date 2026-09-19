@@ -1,0 +1,122 @@
+"""Preserve checked source/package evidence and separate negative benchmarks."""
+from datetime import datetime, timezone
+import hashlib
+import json
+from pathlib import Path
+import shutil
+
+ROOT = Path(__file__).resolve().parents[1]
+TEMP = Path("C:/Users/Ant/AppData/Local/Temp")
+SOURCE = TEMP / "mnemos-package-checks-embedding-client-v2"
+INSTALLED = TEMP / "mnemos-installed-checks-embedding-client-v1"
+OUTPUT = ROOT / "docs/validation/2026-09-19/embedding-client-checkpoint-v1"
+COMMIT = "39b9c799020a58ea2ac3d798189474ed10389bd0"
+
+
+def sha(data):
+    return hashlib.sha256(data).hexdigest()
+
+
+source = json.loads((SOURCE / "verification.json").read_text())
+installed = json.loads((INSTALLED / "installation.json").read_text())
+assert source["source_commit"] == COMMIT and source["status"] == "passed"
+assert {row["name"] for row in source["checks"]} == {"pytest", "black", "mypy", "javascript", "build", "twine"}
+assert all(row["exit_code"] == 0 for row in source["checks"])
+assert installed["status"] == "passed"
+assert installed["bindings_after"]["commit"] == COMMIT
+assert installed["bindings_before"] == installed["bindings_after"]
+for artifact in source["artifacts"]:
+    assert sha(Path(artifact["file"]).read_bytes()) == artifact["sha256"]
+diagnostic = json.loads((TEMP / "mnemos-embedding-client-diagnostic-v1.json").read_text())
+assert diagnostic["arms"][1]["source_commit"] == COMMIT
+assert not any(arm["source_dirty"] for arm in diagnostic["arms"])
+OUTPUT.mkdir(exist_ok=False)
+for name, directory in (("source-checks", SOURCE), ("installed-checks", INSTALLED)):
+    target = OUTPUT / name
+    target.mkdir()
+    for path in directory.iterdir():
+        if path.is_file() and path.suffix in {".json", ".log", ".xml"}:
+            shutil.copyfile(path, target / path.name)
+files = {
+    "client-reuse-diagnostic.json": TEMP / "mnemos-embedding-client-diagnostic-v1.json",
+    "benchmark-candidate.json": TEMP / "mnemos-benchmark-gate-embedding-client-v2.json",
+    "benchmark-candidate.log": TEMP / "mnemos-benchmark-gate-embedding-client-v2.log",
+    "benchmark-baseline.json": TEMP / "mnemos-benchmark-gate-baseline-v1.json",
+    "benchmark-baseline.log": TEMP / "mnemos-benchmark-gate-baseline-v1.log",
+    "benchmark-inherited-config-failure.log": TEMP / "mnemos-benchmark-gate-embedding-client-v1.log",
+}
+for name, path in files.items():
+    shutil.copyfile(path, OUTPUT / name)
+for name in ("final_checkpoint_checks_v3.py", "run_combined_installed_check_v25.py",
+             "installed_contract_probe_v4.py", "verify_claude_stop_replay_v2.py",
+             "measure_embedding_client_reuse_v1.py", "archive_embedding_client_checkpoint_v1.py"):
+    shutil.copyfile(ROOT / ".venv" / name, OUTPUT / (name + ".txt"))
+baseline = json.loads((OUTPUT / "benchmark-baseline.json").read_text())
+candidate = json.loads((OUTPUT / "benchmark-candidate.json").read_text())
+assert baseline["summary"]["failed_runs"] == candidate["summary"]["failed_runs"] == 2
+record = {
+    "archived_at": datetime.now(timezone.utc).isoformat(), "source_commit": COMMIT,
+    "baseline_commit": "fc72cc251aeafa161a1a390269b8dfa34d83cf2b",
+    "source_verification": str(SOURCE / "verification.json"),
+    "installed_verification": str(INSTALLED / "installation.json"),
+    "benchmark_exit_codes": {"inherited_config_attempt": 1, "isolated_candidate": 2, "isolated_baseline": 2},
+    "benchmark_args": ["--stores", "memory,sqlite", "--retrievers", "baseline,engine", "--dataset-pack", "claim-driving", "--top-k", "1", "--repetitions", "2", "--enforce-production-gate"],
+    "benchmark_environment": {"MNEMOS_CONFIG_PATH": str(TEMP / "mnemos-offline-benchmark-missing.toml"), "MNEMOS_EMBEDDING_PROVIDER": "simple"},
+    "source_preflight_failure": {"exit_code": 1, "message": "Verification snapshot must be clean", "detail": "First verification started while worktree checkout was still running. It rejected the incomplete snapshot before any check. After checkout exited zero and the snapshot was confirmed clean, verification used fresh v2 output and temp directories."},
+    "helper_sha256": sha(Path(__file__).read_bytes()),
+}
+(OUTPUT / "checkpoint-binding.json").write_text(json.dumps(record, indent=2) + "\n", encoding="utf-8")
+counts = next(row["counts"] for row in source["checks"] if row["name"] == "pytest")
+source_passes = counts["tests"] - counts["skipped"] - counts["failures"] - counts["errors"]
+before, after = (arm["warm_median_ms"] for arm in diagnostic["arms"])
+(OUTPUT / "README.md").write_text(f"""# Embedding client reuse and shutdown checkpoint
+
+Source `{COMMIT}` reuses one Ollama embedding HTTP client per provider.
+TLS defaults, environment behavior, per-request timeouts, fallback, and retry
+settings are retained. Concurrent requests share client initialization. Close
+waits for active requests and other close calls, rejects new requests, permits
+observer-triggered close, and preserves transport teardown failures.
+
+Configured engines own their providers; library-injected providers remain
+caller-owned by default. Shutdown drains one shared cleanup task even if a
+caller cancels. Completed resources are not closed twice; failed cleanup stays
+visible. The managed service stops and drains work before closing the engine.
+
+Verification: {source_passes} source tests passed, with {counts['skipped']} skips.
+Black, strict mypy, JavaScript syntax, build, and Twine checks passed. The
+isolated wheel run passed its selected source-matched contract cases and
+replay assertions; exact case outcomes, package origins, and before/after
+hashes are retained under `installed-checks`. These are source/package checks,
+not native-host or model-quality acceptance.
+
+A separate disposable HTTP/1.0 fixture measured warm request median
+{before:.3f} ms on frozen `fc72cc2` and {after:.3f} ms on this checkpoint,
+using 12 warm requests after one cold request per arm. The fixture closes every
+TCP connection, returns a fixed vector, and makes no Ollama/model calls. This
+isolates setup overhead; it does not close the 500 ms recall or 100 ms capture
+gates. Those real-model gates remain failed pending a new bound measurement.
+The async cognition provider's per-call HTTP client is unchanged.
+
+The repository's separate synthetic replacement gate failed both repetitions
+on both source snapshots. MRR lift ranges from -0.4 to 0.0 on both stores in
+both snapshots. Thresholds were unchanged. Therefore this checkpoint is not
+an all-CI-gates pass and supports no replacement/superiority claim. The first
+benchmark invocation inherited existing OpenRouter configuration and failed
+HTTP 401; its log is retained. The two completed comparisons explicitly used
+simple embeddings and a missing configuration path in child environments.
+No live configuration was changed.
+
+The first source verification launch rejected a checkout still in progress
+before running checks. The successful run used the completed clean snapshot
+and fresh output/temp directories. Both setup failures are distinguished from
+the actual benchmark failures in `checkpoint-binding.json`.
+
+The original real-model matrix and its queued comparisons still use frozen
+`fc72cc2`; this repair does not modify that source or those results. No release,
+live host configuration, live memory database, or website was changed.
+""", encoding="utf-8")
+(OUTPUT / ".gitattributes").write_text("* -text\n*.log -whitespace\n*.txt -whitespace\n", encoding="utf-8")
+index = {p.relative_to(OUTPUT).as_posix(): {"bytes": p.stat().st_size, "sha256": sha(p.read_bytes())}
+         for p in OUTPUT.rglob("*") if p.is_file()}
+(OUTPUT / "evidence-index.json").write_text(json.dumps({"files": index}, indent=2) + "\n", encoding="utf-8")
+print(json.dumps({"archive": str(OUTPUT), "files": len(index), "source_passes": source_passes, "installed_summary": installed["contract"]["junit_summary"]}))

@@ -1,0 +1,69 @@
+{"timestamp": "2026-09-19T06:25:26.403424+00:00", "event": "mnemos.provider_failure", "provider": "openrouter", "operation": "embed_batch", "error_type": "MnemosConfigurationError"}
+Traceback (most recent call last):
+  File "C:\Users\Ant\AppData\Local\Temp\mnemos-source-embedding-client-v1\mnemos\utils\reliability.py", line 145, in call_with_retry
+    return fn()
+  File "C:\Users\Ant\AppData\Local\Temp\mnemos-source-embedding-client-v1\mnemos\utils\embeddings.py", line 699, in <lambda>
+    fn=lambda: _http_post_json(
+               ~~~~~~~~~~~~~~~^
+        f"{self.base_url}/embeddings",
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    ...<5 lines>...
+        headers=self._headers(api_key),
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    ),
+    ^
+  File "C:\Users\Ant\AppData\Local\Temp\mnemos-source-embedding-client-v1\mnemos\utils\embeddings.py", line 829, in _http_post_json
+    response.raise_for_status()
+    ~~~~~~~~~~~~~~~~~~~~~~~~~^^
+  File "D:\Development\mnemos\mnemos\.worktrees\functional-local-memory\.venv\Lib\site-packages\httpx\_models.py", line 829, in raise_for_status
+    raise HTTPStatusError(message, request=request, response=self)
+httpx.HTTPStatusError: Client error '401 Unauthorized' for url 'https://openrouter.ai/api/v1/embeddings'
+For more information check: https://developer.mozilla.org/en-US/docs/Web/HTTP/Status/401
+
+The above exception was the direct cause of the following exception:
+
+Traceback (most recent call last):
+  File "<frozen runpy>", line 198, in _run_module_as_main
+  File "<frozen runpy>", line 88, in _run_code
+  File "C:\Users\Ant\AppData\Local\Temp\mnemos-source-embedding-client-v1\mnemos\benchmark.py", line 1078, in <module>
+    main()
+    ~~~~^^
+  File "C:\Users\Ant\AppData\Local\Temp\mnemos-source-embedding-client-v1\mnemos\benchmark.py", line 1012, in main
+    result = run_retrieval_benchmark(
+        store_type=store_type,
+    ...<6 lines>...
+        baseline_scope_aware=args.baseline_scope_aware,
+    )
+  File "C:\Users\Ant\AppData\Local\Temp\mnemos-source-embedding-client-v1\mnemos\benchmark.py", line 809, in run_retrieval_benchmark
+    document_embeddings = embed_batch_for_role(
+        embedder, [doc.content for doc in documents], role="document"
+    )
+  File "C:\Users\Ant\AppData\Local\Temp\mnemos-source-embedding-client-v1\mnemos\utils\embeddings.py", line 885, in embed_batch_for_role
+    return cast(list[list[float]], _role_method(embedder, role, batch=True)(texts))
+                                   ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^
+  File "C:\Users\Ant\AppData\Local\Temp\mnemos-source-embedding-client-v1\mnemos\utils\embeddings.py", line 107, in embed_batch_documents
+    return self.embed_batch(texts)
+           ~~~~~~~~~~~~~~~~^^^^^^^
+  File "C:\Users\Ant\AppData\Local\Temp\mnemos-source-embedding-client-v1\mnemos\utils\embeddings.py", line 792, in embed_batch
+    raise error
+  File "C:\Users\Ant\AppData\Local\Temp\mnemos-source-embedding-client-v1\mnemos\utils\embeddings.py", line 766, in embed_batch
+    return self._embed_batch_with_key(
+           ~~~~~~~~~~~~~~~~~~~~~~~~~~^
+        texts,
+        ^^^^^^
+        api_key=self.api_key,
+        ^^^^^^^^^^^^^^^^^^^^^
+        provider_name=provider_name,
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    )
+    ^
+  File "C:\Users\Ant\AppData\Local\Temp\mnemos-source-embedding-client-v1\mnemos\utils\embeddings.py", line 694, in _embed_batch_with_key
+    payload = call_with_retry(
+        provider=provider_name,
+    ...<11 lines>...
+        ),
+    )
+  File "C:\Users\Ant\AppData\Local\Temp\mnemos-source-embedding-client-v1\mnemos\utils\reliability.py", line 150, in call_with_retry
+    raise _wrap_provider_exception(provider, operation, exc) from exc
+mnemos.utils.reliability.MnemosConfigurationError: openrouter embed_batch failed: Client error '401 Unauthorized' for url 'https://openrouter.ai/api/v1/embeddings'
+For more information check: https://developer.mozilla.org/en-US/docs/Web/HTTP/Status/401

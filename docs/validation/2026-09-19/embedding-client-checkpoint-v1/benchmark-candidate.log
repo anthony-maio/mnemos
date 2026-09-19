@@ -1,0 +1,1091 @@
+{
+  "dataset": "claim-driving",
+  "stores": [
+    "memory",
+    "sqlite"
+  ],
+  "retrievers": [
+    "baseline",
+    "engine"
+  ],
+  "top_k": 1,
+  "repetitions": 2,
+  "runs": [
+    {
+      "repetition": 1,
+      "dataset": "claim-driving",
+      "stores": [
+        "memory",
+        "sqlite"
+      ],
+      "retrievers": [
+        "baseline",
+        "engine"
+      ],
+      "top_k": 1,
+      "results": [
+        {
+          "store_type": "memory",
+          "retriever": "baseline",
+          "top_k": 1,
+          "document_count": 8,
+          "query_count": 8,
+          "ingest_seconds": 0.0011692000116454437,
+          "recall_at_k": 0.5,
+          "mrr": 0.5,
+          "latency_mean_ms": 0.2610875017126091,
+          "latency_p95_ms": 0.3381700022146106,
+          "store_stats": {
+            "backend": "InMemoryStore",
+            "name": "benchmark-memory",
+            "total_chunks": 8,
+            "chunks_with_embeddings": 8,
+            "average_salience": 0.5,
+            "average_access_count": 0.0
+          },
+          "dataset": "contradiction-update-v1"
+        },
+        {
+          "store_type": "memory",
+          "retriever": "engine",
+          "top_k": 1,
+          "document_count": 8,
+          "query_count": 8,
+          "ingest_seconds": 0.01686560000234749,
+          "recall_at_k": 0.375,
+          "mrr": 0.375,
+          "latency_mean_ms": 0.7383000011031982,
+          "latency_p95_ms": 0.9423450035683344,
+          "store_stats": {
+            "backend": "InMemoryStore",
+            "name": "benchmark-memory",
+            "total_chunks": 8,
+            "chunks_with_embeddings": 8,
+            "average_salience": 0.9834,
+            "average_access_count": 0.875
+          },
+          "dataset": "contradiction-update-v1"
+        },
+        {
+          "store_type": "sqlite",
+          "retriever": "baseline",
+          "top_k": 1,
+          "document_count": 8,
+          "query_count": 8,
+          "ingest_seconds": 0.025993600007495843,
+          "recall_at_k": 0.5,
+          "mrr": 0.5,
+          "latency_mean_ms": 0.41291249908681493,
+          "latency_p95_ms": 0.6068699913157615,
+          "store_stats": {
+            "backend": "SQLiteStore",
+            "name": "benchmark-sqlite",
+            "db_path": "C:\\Users\\Ant\\AppData\\Local\\Temp\\mnemos-embedding-client-benchmark-r1-sqlite-baseline.sqlite",
+            "migration_backup": null,
+            "total_chunks": 8,
+            "chunks_with_embeddings": 8,
+            "average_salience": 0.5,
+            "average_access_count": 0.0,
+            "related_edges": 0,
+            "semantic_similar_edges": 0,
+            "pending_episodic_events": 0,
+            "pending_reconsolidation_jobs": 0,
+            "fts_enabled": true,
+            "schema_version": 8,
+            "sqlite_vec_enabled": true,
+            "sqlite_vec_indexed": true,
+            "sqlite_vec_dim": 384
+          },
+          "dataset": "contradiction-update-v1"
+        },
+        {
+          "store_type": "sqlite",
+          "retriever": "engine",
+          "top_k": 1,
+          "document_count": 8,
+          "query_count": 8,
+          "ingest_seconds": 0.18906989999231882,
+          "recall_at_k": 0.375,
+          "mrr": 0.375,
+          "latency_mean_ms": 4.8309750000044005,
+          "latency_p95_ms": 6.543044997670222,
+          "store_stats": {
+            "backend": "SQLiteStore",
+            "name": "benchmark-sqlite",
+            "db_path": "C:\\Users\\Ant\\AppData\\Local\\Temp\\mnemos-embedding-client-benchmark-r1-sqlite-engine.sqlite",
+            "migration_backup": null,
+            "total_chunks": 8,
+            "chunks_with_embeddings": 8,
+            "average_salience": 0.9834,
+            "average_access_count": 0.875,
+            "related_edges": 4,
+            "semantic_similar_edges": 4,
+            "pending_episodic_events": 8,
+            "pending_reconsolidation_jobs": 0,
+            "fts_enabled": true,
+            "schema_version": 8,
+            "sqlite_vec_enabled": true,
+            "sqlite_vec_indexed": true,
+            "sqlite_vec_dim": 384
+          },
+          "dataset": "contradiction-update-v1"
+        },
+        {
+          "store_type": "memory",
+          "retriever": "baseline",
+          "top_k": 1,
+          "document_count": 8,
+          "query_count": 8,
+          "ingest_seconds": 0.0009683999960543588,
+          "recall_at_k": 0.375,
+          "mrr": 0.375,
+          "latency_mean_ms": 0.2472375017532613,
+          "latency_p95_ms": 0.3236650030885357,
+          "store_stats": {
+            "backend": "InMemoryStore",
+            "name": "benchmark-memory",
+            "total_chunks": 8,
+            "chunks_with_embeddings": 8,
+            "average_salience": 0.5,
+            "average_access_count": 0.0
+          },
+          "dataset": "preference-drift-v1"
+        },
+        {
+          "store_type": "memory",
+          "retriever": "engine",
+          "top_k": 1,
+          "document_count": 8,
+          "query_count": 8,
+          "ingest_seconds": 0.01439820000086911,
+          "recall_at_k": 0.375,
+          "mrr": 0.375,
+          "latency_mean_ms": 0.6967249992158031,
+          "latency_p95_ms": 0.8088599970506039,
+          "store_stats": {
+            "backend": "InMemoryStore",
+            "name": "benchmark-memory",
+            "total_chunks": 8,
+            "chunks_with_embeddings": 8,
+            "average_salience": 0.9887,
+            "average_access_count": 1.0
+          },
+          "dataset": "preference-drift-v1"
+        },
+        {
+          "store_type": "sqlite",
+          "retriever": "baseline",
+          "top_k": 1,
+          "document_count": 8,
+          "query_count": 8,
+          "ingest_seconds": 0.023256500004208647,
+          "recall_at_k": 0.375,
+          "mrr": 0.375,
+          "latency_mean_ms": 0.35067500175500754,
+          "latency_p95_ms": 0.5443549976916983,
+          "store_stats": {
+            "backend": "SQLiteStore",
+            "name": "benchmark-sqlite",
+            "db_path": "C:\\Users\\Ant\\AppData\\Local\\Temp\\mnemos-embedding-client-benchmark-r1-sqlite-baseline.sqlite",
+            "migration_backup": null,
+            "total_chunks": 8,
+            "chunks_with_embeddings": 8,
+            "average_salience": 0.5,
+            "average_access_count": 0.0,
+            "related_edges": 0,
+            "semantic_similar_edges": 0,
+            "pending_episodic_events": 0,
+            "pending_reconsolidation_jobs": 0,
+            "fts_enabled": true,
+            "schema_version": 8,
+            "sqlite_vec_enabled": true,
+            "sqlite_vec_indexed": true,
+            "sqlite_vec_dim": 384
+          },
+          "dataset": "preference-drift-v1"
+        },
+        {
+          "store_type": "sqlite",
+          "retriever": "engine",
+          "top_k": 1,
+          "document_count": 8,
+          "query_count": 8,
+          "ingest_seconds": 0.1676990999985719,
+          "recall_at_k": 0.375,
+          "mrr": 0.375,
+          "latency_mean_ms": 4.561412499242579,
+          "latency_p95_ms": 5.085629999666708,
+          "store_stats": {
+            "backend": "SQLiteStore",
+            "name": "benchmark-sqlite",
+            "db_path": "C:\\Users\\Ant\\AppData\\Local\\Temp\\mnemos-embedding-client-benchmark-r1-sqlite-engine.sqlite",
+            "migration_backup": null,
+            "total_chunks": 8,
+            "chunks_with_embeddings": 8,
+            "average_salience": 0.9887,
+            "average_access_count": 1.0,
+            "related_edges": 1,
+            "semantic_similar_edges": 1,
+            "pending_episodic_events": 8,
+            "pending_reconsolidation_jobs": 0,
+            "fts_enabled": true,
+            "schema_version": 8,
+            "sqlite_vec_enabled": true,
+            "sqlite_vec_indexed": true,
+            "sqlite_vec_dim": 384
+          },
+          "dataset": "preference-drift-v1"
+        },
+        {
+          "store_type": "memory",
+          "retriever": "baseline",
+          "top_k": 1,
+          "document_count": 6,
+          "query_count": 7,
+          "ingest_seconds": 0.0012825000012526289,
+          "recall_at_k": 0.7142857142857143,
+          "mrr": 0.7142857142857143,
+          "latency_mean_ms": 0.2501428555530895,
+          "latency_p95_ms": 0.4301599910832009,
+          "store_stats": {
+            "backend": "InMemoryStore",
+            "name": "benchmark-memory",
+            "total_chunks": 6,
+            "chunks_with_embeddings": 6,
+            "average_salience": 0.5,
+            "average_access_count": 0.0
+          },
+          "dataset": "cross-project-scope-v1"
+        },
+        {
+          "store_type": "memory",
+          "retriever": "engine",
+          "top_k": 1,
+          "document_count": 6,
+          "query_count": 7,
+          "ingest_seconds": 0.008436500007519498,
+          "recall_at_k": 0.42857142857142855,
+          "mrr": 0.42857142857142855,
+          "latency_mean_ms": 0.38407143022465917,
+          "latency_p95_ms": 0.5618199982563965,
+          "store_stats": {
+            "backend": "InMemoryStore",
+            "name": "benchmark-memory",
+            "total_chunks": 6,
+            "chunks_with_embeddings": 6,
+            "average_salience": 0.9316,
+            "average_access_count": 0.5
+          },
+          "dataset": "cross-project-scope-v1"
+        },
+        {
+          "store_type": "sqlite",
+          "retriever": "baseline",
+          "top_k": 1,
+          "document_count": 6,
+          "query_count": 7,
+          "ingest_seconds": 0.0217731000011554,
+          "recall_at_k": 0.7142857142857143,
+          "mrr": 0.7142857142857143,
+          "latency_mean_ms": 0.3474571380398369,
+          "latency_p95_ms": 0.5401400005212053,
+          "store_stats": {
+            "backend": "SQLiteStore",
+            "name": "benchmark-sqlite",
+            "db_path": "C:\\Users\\Ant\\AppData\\Local\\Temp\\mnemos-embedding-client-benchmark-r1-sqlite-baseline.sqlite",
+            "migration_backup": null,
+            "total_chunks": 6,
+            "chunks_with_embeddings": 6,
+            "average_salience": 0.5,
+            "average_access_count": 0.0,
+            "related_edges": 0,
+            "semantic_similar_edges": 0,
+            "pending_episodic_events": 0,
+            "pending_reconsolidation_jobs": 0,
+            "fts_enabled": true,
+            "schema_version": 8,
+            "sqlite_vec_enabled": true,
+            "sqlite_vec_indexed": true,
+            "sqlite_vec_dim": 384
+          },
+          "dataset": "cross-project-scope-v1"
+        },
+        {
+          "store_type": "sqlite",
+          "retriever": "engine",
+          "top_k": 1,
+          "document_count": 6,
+          "query_count": 7,
+          "ingest_seconds": 0.10890720000315923,
+          "recall_at_k": 0.42857142857142855,
+          "mrr": 0.42857142857142855,
+          "latency_mean_ms": 2.470314288595026,
+          "latency_p95_ms": 4.582729998219292,
+          "store_stats": {
+            "backend": "SQLiteStore",
+            "name": "benchmark-sqlite",
+            "db_path": "C:\\Users\\Ant\\AppData\\Local\\Temp\\mnemos-embedding-client-benchmark-r1-sqlite-engine.sqlite",
+            "migration_backup": null,
+            "total_chunks": 6,
+            "chunks_with_embeddings": 6,
+            "average_salience": 0.9316,
+            "average_access_count": 0.5,
+            "related_edges": 0,
+            "semantic_similar_edges": 0,
+            "pending_episodic_events": 6,
+            "pending_reconsolidation_jobs": 0,
+            "fts_enabled": true,
+            "schema_version": 8,
+            "sqlite_vec_enabled": true,
+            "sqlite_vec_indexed": true,
+            "sqlite_vec_dim": 384
+          },
+          "dataset": "cross-project-scope-v1"
+        }
+      ],
+      "comparisons": [
+        {
+          "dataset": "contradiction-update-v1",
+          "store_type": "memory",
+          "baseline": {
+            "recall_at_k": 0.5,
+            "mrr": 0.5,
+            "latency_p95_ms": 0.3381700022146106
+          },
+          "engine": {
+            "recall_at_k": 0.375,
+            "mrr": 0.375,
+            "latency_p95_ms": 0.9423450035683344
+          },
+          "delta_engine_minus_baseline": {
+            "recall_at_k": -0.125,
+            "mrr": -0.125,
+            "latency_p95_ms": 0.6041750013537238
+          }
+        },
+        {
+          "dataset": "contradiction-update-v1",
+          "store_type": "sqlite",
+          "baseline": {
+            "recall_at_k": 0.5,
+            "mrr": 0.5,
+            "latency_p95_ms": 0.6068699913157615
+          },
+          "engine": {
+            "recall_at_k": 0.375,
+            "mrr": 0.375,
+            "latency_p95_ms": 6.543044997670222
+          },
+          "delta_engine_minus_baseline": {
+            "recall_at_k": -0.125,
+            "mrr": -0.125,
+            "latency_p95_ms": 5.9361750063544605
+          }
+        },
+        {
+          "dataset": "preference-drift-v1",
+          "store_type": "memory",
+          "baseline": {
+            "recall_at_k": 0.375,
+            "mrr": 0.375,
+            "latency_p95_ms": 0.3236650030885357
+          },
+          "engine": {
+            "recall_at_k": 0.375,
+            "mrr": 0.375,
+            "latency_p95_ms": 0.8088599970506039
+          },
+          "delta_engine_minus_baseline": {
+            "recall_at_k": 0.0,
+            "mrr": 0.0,
+            "latency_p95_ms": 0.48519499396206817
+          }
+        },
+        {
+          "dataset": "preference-drift-v1",
+          "store_type": "sqlite",
+          "baseline": {
+            "recall_at_k": 0.375,
+            "mrr": 0.375,
+            "latency_p95_ms": 0.5443549976916983
+          },
+          "engine": {
+            "recall_at_k": 0.375,
+            "mrr": 0.375,
+            "latency_p95_ms": 5.085629999666708
+          },
+          "delta_engine_minus_baseline": {
+            "recall_at_k": 0.0,
+            "mrr": 0.0,
+            "latency_p95_ms": 4.541275001975009
+          }
+        },
+        {
+          "dataset": "cross-project-scope-v1",
+          "store_type": "memory",
+          "baseline": {
+            "recall_at_k": 0.7142857142857143,
+            "mrr": 0.7142857142857143,
+            "latency_p95_ms": 0.4301599910832009
+          },
+          "engine": {
+            "recall_at_k": 0.42857142857142855,
+            "mrr": 0.42857142857142855,
+            "latency_p95_ms": 0.5618199982563965
+          },
+          "delta_engine_minus_baseline": {
+            "recall_at_k": -0.28571428571428575,
+            "mrr": -0.28571428571428575,
+            "latency_p95_ms": 0.1316600071731956
+          }
+        },
+        {
+          "dataset": "cross-project-scope-v1",
+          "store_type": "sqlite",
+          "baseline": {
+            "recall_at_k": 0.7142857142857143,
+            "mrr": 0.7142857142857143,
+            "latency_p95_ms": 0.5401400005212053
+          },
+          "engine": {
+            "recall_at_k": 0.42857142857142855,
+            "mrr": 0.42857142857142855,
+            "latency_p95_ms": 4.582729998219292
+          },
+          "delta_engine_minus_baseline": {
+            "recall_at_k": -0.28571428571428575,
+            "mrr": -0.28571428571428575,
+            "latency_p95_ms": 4.042589997698086
+          }
+        }
+      ],
+      "gates": {
+        "production_replacement": {
+          "required_mrr_lift_ratio": 0.15,
+          "max_latency_p95_ratio": null,
+          "max_latency_p95_ratio_by_store": {
+            "memory": 2.0,
+            "sqlite": 4.0
+          },
+          "latency_ratio_floor_ms": 1.0,
+          "latency_ratio_floor_ms_by_store": {
+            "memory": 1.0,
+            "sqlite": 2.0
+          },
+          "evaluated_pairs": 6,
+          "passed_pairs": 0,
+          "failed_pairs": 6,
+          "passed": false,
+          "details": [
+            {
+              "dataset": "contradiction-update-v1",
+              "store_type": "memory",
+              "mrr_lift_ratio": -0.25,
+              "latency_p95_ratio": 0.9423450035683344,
+              "max_latency_p95_ratio": 2.0,
+              "latency_ratio_floor_ms": 1.0,
+              "passed": false
+            },
+            {
+              "dataset": "contradiction-update-v1",
+              "store_type": "sqlite",
+              "mrr_lift_ratio": -0.25,
+              "latency_p95_ratio": 3.271522498835111,
+              "max_latency_p95_ratio": 4.0,
+              "latency_ratio_floor_ms": 2.0,
+              "passed": false
+            },
+            {
+              "dataset": "preference-drift-v1",
+              "store_type": "memory",
+              "mrr_lift_ratio": 0.0,
+              "latency_p95_ratio": 0.8088599970506039,
+              "max_latency_p95_ratio": 2.0,
+              "latency_ratio_floor_ms": 1.0,
+              "passed": false
+            },
+            {
+              "dataset": "preference-drift-v1",
+              "store_type": "sqlite",
+              "mrr_lift_ratio": 0.0,
+              "latency_p95_ratio": 2.542814999833354,
+              "max_latency_p95_ratio": 4.0,
+              "latency_ratio_floor_ms": 2.0,
+              "passed": false
+            },
+            {
+              "dataset": "cross-project-scope-v1",
+              "store_type": "memory",
+              "mrr_lift_ratio": -0.4,
+              "latency_p95_ratio": 0.5618199982563965,
+              "max_latency_p95_ratio": 2.0,
+              "latency_ratio_floor_ms": 1.0,
+              "passed": false
+            },
+            {
+              "dataset": "cross-project-scope-v1",
+              "store_type": "sqlite",
+              "mrr_lift_ratio": -0.4,
+              "latency_p95_ratio": 2.291364999109646,
+              "max_latency_p95_ratio": 4.0,
+              "latency_ratio_floor_ms": 2.0,
+              "passed": false
+            }
+          ]
+        }
+      }
+    },
+    {
+      "repetition": 2,
+      "dataset": "claim-driving",
+      "stores": [
+        "memory",
+        "sqlite"
+      ],
+      "retrievers": [
+        "baseline",
+        "engine"
+      ],
+      "top_k": 1,
+      "results": [
+        {
+          "store_type": "memory",
+          "retriever": "baseline",
+          "top_k": 1,
+          "document_count": 8,
+          "query_count": 8,
+          "ingest_seconds": 0.0009239000064553693,
+          "recall_at_k": 0.5,
+          "mrr": 0.5,
+          "latency_mean_ms": 0.23636249898117967,
+          "latency_p95_ms": 0.2830100005667191,
+          "store_stats": {
+            "backend": "InMemoryStore",
+            "name": "benchmark-memory",
+            "total_chunks": 8,
+            "chunks_with_embeddings": 8,
+            "average_salience": 0.5,
+            "average_access_count": 0.0
+          },
+          "dataset": "contradiction-update-v1"
+        },
+        {
+          "store_type": "memory",
+          "retriever": "engine",
+          "top_k": 1,
+          "document_count": 8,
+          "query_count": 8,
+          "ingest_seconds": 0.01380780000181403,
+          "recall_at_k": 0.375,
+          "mrr": 0.375,
+          "latency_mean_ms": 0.6663875010417541,
+          "latency_p95_ms": 0.7555300013336819,
+          "store_stats": {
+            "backend": "InMemoryStore",
+            "name": "benchmark-memory",
+            "total_chunks": 8,
+            "chunks_with_embeddings": 8,
+            "average_salience": 0.9834,
+            "average_access_count": 0.875
+          },
+          "dataset": "contradiction-update-v1"
+        },
+        {
+          "store_type": "sqlite",
+          "retriever": "baseline",
+          "top_k": 1,
+          "document_count": 8,
+          "query_count": 8,
+          "ingest_seconds": 0.026865099993301556,
+          "recall_at_k": 0.5,
+          "mrr": 0.5,
+          "latency_mean_ms": 0.352625000232365,
+          "latency_p95_ms": 0.5069100021501071,
+          "store_stats": {
+            "backend": "SQLiteStore",
+            "name": "benchmark-sqlite",
+            "db_path": "C:\\Users\\Ant\\AppData\\Local\\Temp\\mnemos-embedding-client-benchmark-r2-sqlite-baseline.sqlite",
+            "migration_backup": null,
+            "total_chunks": 8,
+            "chunks_with_embeddings": 8,
+            "average_salience": 0.5,
+            "average_access_count": 0.0,
+            "related_edges": 0,
+            "semantic_similar_edges": 0,
+            "pending_episodic_events": 0,
+            "pending_reconsolidation_jobs": 0,
+            "fts_enabled": true,
+            "schema_version": 8,
+            "sqlite_vec_enabled": true,
+            "sqlite_vec_indexed": true,
+            "sqlite_vec_dim": 384
+          },
+          "dataset": "contradiction-update-v1"
+        },
+        {
+          "store_type": "sqlite",
+          "retriever": "engine",
+          "top_k": 1,
+          "document_count": 8,
+          "query_count": 8,
+          "ingest_seconds": 0.17046290000143927,
+          "recall_at_k": 0.375,
+          "mrr": 0.375,
+          "latency_mean_ms": 4.286625000531785,
+          "latency_p95_ms": 5.083300006663194,
+          "store_stats": {
+            "backend": "SQLiteStore",
+            "name": "benchmark-sqlite",
+            "db_path": "C:\\Users\\Ant\\AppData\\Local\\Temp\\mnemos-embedding-client-benchmark-r2-sqlite-engine.sqlite",
+            "migration_backup": null,
+            "total_chunks": 8,
+            "chunks_with_embeddings": 8,
+            "average_salience": 0.9834,
+            "average_access_count": 0.875,
+            "related_edges": 4,
+            "semantic_similar_edges": 4,
+            "pending_episodic_events": 8,
+            "pending_reconsolidation_jobs": 0,
+            "fts_enabled": true,
+            "schema_version": 8,
+            "sqlite_vec_enabled": true,
+            "sqlite_vec_indexed": true,
+            "sqlite_vec_dim": 384
+          },
+          "dataset": "contradiction-update-v1"
+        },
+        {
+          "store_type": "memory",
+          "retriever": "baseline",
+          "top_k": 1,
+          "document_count": 8,
+          "query_count": 8,
+          "ingest_seconds": 0.0008859000081429258,
+          "recall_at_k": 0.375,
+          "mrr": 0.375,
+          "latency_mean_ms": 0.22946249919186812,
+          "latency_p95_ms": 0.27992499963147566,
+          "store_stats": {
+            "backend": "InMemoryStore",
+            "name": "benchmark-memory",
+            "total_chunks": 8,
+            "chunks_with_embeddings": 8,
+            "average_salience": 0.5,
+            "average_access_count": 0.0
+          },
+          "dataset": "preference-drift-v1"
+        },
+        {
+          "store_type": "memory",
+          "retriever": "engine",
+          "top_k": 1,
+          "document_count": 8,
+          "query_count": 8,
+          "ingest_seconds": 0.014024599993717857,
+          "recall_at_k": 0.375,
+          "mrr": 0.375,
+          "latency_mean_ms": 0.678837503073737,
+          "latency_p95_ms": 0.7520800056227017,
+          "store_stats": {
+            "backend": "InMemoryStore",
+            "name": "benchmark-memory",
+            "total_chunks": 8,
+            "chunks_with_embeddings": 8,
+            "average_salience": 0.9887,
+            "average_access_count": 1.0
+          },
+          "dataset": "preference-drift-v1"
+        },
+        {
+          "store_type": "sqlite",
+          "retriever": "baseline",
+          "top_k": 1,
+          "document_count": 8,
+          "query_count": 8,
+          "ingest_seconds": 0.028863599989563227,
+          "recall_at_k": 0.375,
+          "mrr": 0.375,
+          "latency_mean_ms": 0.35716250022233,
+          "latency_p95_ms": 0.5352099971787538,
+          "store_stats": {
+            "backend": "SQLiteStore",
+            "name": "benchmark-sqlite",
+            "db_path": "C:\\Users\\Ant\\AppData\\Local\\Temp\\mnemos-embedding-client-benchmark-r2-sqlite-baseline.sqlite",
+            "migration_backup": null,
+            "total_chunks": 8,
+            "chunks_with_embeddings": 8,
+            "average_salience": 0.5,
+            "average_access_count": 0.0,
+            "related_edges": 0,
+            "semantic_similar_edges": 0,
+            "pending_episodic_events": 0,
+            "pending_reconsolidation_jobs": 0,
+            "fts_enabled": true,
+            "schema_version": 8,
+            "sqlite_vec_enabled": true,
+            "sqlite_vec_indexed": true,
+            "sqlite_vec_dim": 384
+          },
+          "dataset": "preference-drift-v1"
+        },
+        {
+          "store_type": "sqlite",
+          "retriever": "engine",
+          "top_k": 1,
+          "document_count": 8,
+          "query_count": 8,
+          "ingest_seconds": 0.22110399999655783,
+          "recall_at_k": 0.375,
+          "mrr": 0.375,
+          "latency_mean_ms": 5.5635000026086345,
+          "latency_p95_ms": 6.9314599997596815,
+          "store_stats": {
+            "backend": "SQLiteStore",
+            "name": "benchmark-sqlite",
+            "db_path": "C:\\Users\\Ant\\AppData\\Local\\Temp\\mnemos-embedding-client-benchmark-r2-sqlite-engine.sqlite",
+            "migration_backup": null,
+            "total_chunks": 8,
+            "chunks_with_embeddings": 8,
+            "average_salience": 0.9887,
+            "average_access_count": 1.0,
+            "related_edges": 1,
+            "semantic_similar_edges": 1,
+            "pending_episodic_events": 8,
+            "pending_reconsolidation_jobs": 0,
+            "fts_enabled": true,
+            "schema_version": 8,
+            "sqlite_vec_enabled": true,
+            "sqlite_vec_indexed": true,
+            "sqlite_vec_dim": 384
+          },
+          "dataset": "preference-drift-v1"
+        },
+        {
+          "store_type": "memory",
+          "retriever": "baseline",
+          "top_k": 1,
+          "document_count": 6,
+          "query_count": 7,
+          "ingest_seconds": 0.0010534000030020252,
+          "recall_at_k": 0.7142857142857143,
+          "mrr": 0.7142857142857143,
+          "latency_mean_ms": 0.20887142870508665,
+          "latency_p95_ms": 0.28581999504240224,
+          "store_stats": {
+            "backend": "InMemoryStore",
+            "name": "benchmark-memory",
+            "total_chunks": 6,
+            "chunks_with_embeddings": 6,
+            "average_salience": 0.5,
+            "average_access_count": 0.0
+          },
+          "dataset": "cross-project-scope-v1"
+        },
+        {
+          "store_type": "memory",
+          "retriever": "engine",
+          "top_k": 1,
+          "document_count": 6,
+          "query_count": 7,
+          "ingest_seconds": 0.0088675000006333,
+          "recall_at_k": 0.42857142857142855,
+          "mrr": 0.42857142857142855,
+          "latency_mean_ms": 0.35242857536234495,
+          "latency_p95_ms": 0.4811999999219551,
+          "store_stats": {
+            "backend": "InMemoryStore",
+            "name": "benchmark-memory",
+            "total_chunks": 6,
+            "chunks_with_embeddings": 6,
+            "average_salience": 0.9316,
+            "average_access_count": 0.5
+          },
+          "dataset": "cross-project-scope-v1"
+        },
+        {
+          "store_type": "sqlite",
+          "retriever": "baseline",
+          "top_k": 1,
+          "document_count": 6,
+          "query_count": 7,
+          "ingest_seconds": 0.02692500001285225,
+          "recall_at_k": 0.7142857142857143,
+          "mrr": 0.7142857142857143,
+          "latency_mean_ms": 0.3732428574169587,
+          "latency_p95_ms": 0.6239100024686194,
+          "store_stats": {
+            "backend": "SQLiteStore",
+            "name": "benchmark-sqlite",
+            "db_path": "C:\\Users\\Ant\\AppData\\Local\\Temp\\mnemos-embedding-client-benchmark-r2-sqlite-baseline.sqlite",
+            "migration_backup": null,
+            "total_chunks": 6,
+            "chunks_with_embeddings": 6,
+            "average_salience": 0.5,
+            "average_access_count": 0.0,
+            "related_edges": 0,
+            "semantic_similar_edges": 0,
+            "pending_episodic_events": 0,
+            "pending_reconsolidation_jobs": 0,
+            "fts_enabled": true,
+            "schema_version": 8,
+            "sqlite_vec_enabled": true,
+            "sqlite_vec_indexed": true,
+            "sqlite_vec_dim": 384
+          },
+          "dataset": "cross-project-scope-v1"
+        },
+        {
+          "store_type": "sqlite",
+          "retriever": "engine",
+          "top_k": 1,
+          "document_count": 6,
+          "query_count": 7,
+          "ingest_seconds": 0.13389270000334363,
+          "recall_at_k": 0.42857142857142855,
+          "mrr": 0.42857142857142855,
+          "latency_mean_ms": 2.5523857163664485,
+          "latency_p95_ms": 4.20280999969691,
+          "store_stats": {
+            "backend": "SQLiteStore",
+            "name": "benchmark-sqlite",
+            "db_path": "C:\\Users\\Ant\\AppData\\Local\\Temp\\mnemos-embedding-client-benchmark-r2-sqlite-engine.sqlite",
+            "migration_backup": null,
+            "total_chunks": 6,
+            "chunks_with_embeddings": 6,
+            "average_salience": 0.9316,
+            "average_access_count": 0.5,
+            "related_edges": 0,
+            "semantic_similar_edges": 0,
+            "pending_episodic_events": 6,
+            "pending_reconsolidation_jobs": 0,
+            "fts_enabled": true,
+            "schema_version": 8,
+            "sqlite_vec_enabled": true,
+            "sqlite_vec_indexed": true,
+            "sqlite_vec_dim": 384
+          },
+          "dataset": "cross-project-scope-v1"
+        }
+      ],
+      "comparisons": [
+        {
+          "dataset": "contradiction-update-v1",
+          "store_type": "memory",
+          "baseline": {
+            "recall_at_k": 0.5,
+            "mrr": 0.5,
+            "latency_p95_ms": 0.2830100005667191
+          },
+          "engine": {
+            "recall_at_k": 0.375,
+            "mrr": 0.375,
+            "latency_p95_ms": 0.7555300013336819
+          },
+          "delta_engine_minus_baseline": {
+            "recall_at_k": -0.125,
+            "mrr": -0.125,
+            "latency_p95_ms": 0.47252000076696277
+          }
+        },
+        {
+          "dataset": "contradiction-update-v1",
+          "store_type": "sqlite",
+          "baseline": {
+            "recall_at_k": 0.5,
+            "mrr": 0.5,
+            "latency_p95_ms": 0.5069100021501071
+          },
+          "engine": {
+            "recall_at_k": 0.375,
+            "mrr": 0.375,
+            "latency_p95_ms": 5.083300006663194
+          },
+          "delta_engine_minus_baseline": {
+            "recall_at_k": -0.125,
+            "mrr": -0.125,
+            "latency_p95_ms": 4.576390004513087
+          }
+        },
+        {
+          "dataset": "preference-drift-v1",
+          "store_type": "memory",
+          "baseline": {
+            "recall_at_k": 0.375,
+            "mrr": 0.375,
+            "latency_p95_ms": 0.27992499963147566
+          },
+          "engine": {
+            "recall_at_k": 0.375,
+            "mrr": 0.375,
+            "latency_p95_ms": 0.7520800056227017
+          },
+          "delta_engine_minus_baseline": {
+            "recall_at_k": 0.0,
+            "mrr": 0.0,
+            "latency_p95_ms": 0.47215500599122606
+          }
+        },
+        {
+          "dataset": "preference-drift-v1",
+          "store_type": "sqlite",
+          "baseline": {
+            "recall_at_k": 0.375,
+            "mrr": 0.375,
+            "latency_p95_ms": 0.5352099971787538
+          },
+          "engine": {
+            "recall_at_k": 0.375,
+            "mrr": 0.375,
+            "latency_p95_ms": 6.9314599997596815
+          },
+          "delta_engine_minus_baseline": {
+            "recall_at_k": 0.0,
+            "mrr": 0.0,
+            "latency_p95_ms": 6.396250002580928
+          }
+        },
+        {
+          "dataset": "cross-project-scope-v1",
+          "store_type": "memory",
+          "baseline": {
+            "recall_at_k": 0.7142857142857143,
+            "mrr": 0.7142857142857143,
+            "latency_p95_ms": 0.28581999504240224
+          },
+          "engine": {
+            "recall_at_k": 0.42857142857142855,
+            "mrr": 0.42857142857142855,
+            "latency_p95_ms": 0.4811999999219551
+          },
+          "delta_engine_minus_baseline": {
+            "recall_at_k": -0.28571428571428575,
+            "mrr": -0.28571428571428575,
+            "latency_p95_ms": 0.19538000487955287
+          }
+        },
+        {
+          "dataset": "cross-project-scope-v1",
+          "store_type": "sqlite",
+          "baseline": {
+            "recall_at_k": 0.7142857142857143,
+            "mrr": 0.7142857142857143,
+            "latency_p95_ms": 0.6239100024686194
+          },
+          "engine": {
+            "recall_at_k": 0.42857142857142855,
+            "mrr": 0.42857142857142855,
+            "latency_p95_ms": 4.20280999969691
+          },
+          "delta_engine_minus_baseline": {
+            "recall_at_k": -0.28571428571428575,
+            "mrr": -0.28571428571428575,
+            "latency_p95_ms": 3.578899997228291
+          }
+        }
+      ],
+      "gates": {
+        "production_replacement": {
+          "required_mrr_lift_ratio": 0.15,
+          "max_latency_p95_ratio": null,
+          "max_latency_p95_ratio_by_store": {
+            "memory": 2.0,
+            "sqlite": 4.0
+          },
+          "latency_ratio_floor_ms": 1.0,
+          "latency_ratio_floor_ms_by_store": {
+            "memory": 1.0,
+            "sqlite": 2.0
+          },
+          "evaluated_pairs": 6,
+          "passed_pairs": 0,
+          "failed_pairs": 6,
+          "passed": false,
+          "details": [
+            {
+              "dataset": "contradiction-update-v1",
+              "store_type": "memory",
+              "mrr_lift_ratio": -0.25,
+              "latency_p95_ratio": 0.7555300013336819,
+              "max_latency_p95_ratio": 2.0,
+              "latency_ratio_floor_ms": 1.0,
+              "passed": false
+            },
+            {
+              "dataset": "contradiction-update-v1",
+              "store_type": "sqlite",
+              "mrr_lift_ratio": -0.25,
+              "latency_p95_ratio": 2.541650003331597,
+              "max_latency_p95_ratio": 4.0,
+              "latency_ratio_floor_ms": 2.0,
+              "passed": false
+            },
+            {
+              "dataset": "preference-drift-v1",
+              "store_type": "memory",
+              "mrr_lift_ratio": 0.0,
+              "latency_p95_ratio": 0.7520800056227017,
+              "max_latency_p95_ratio": 2.0,
+              "latency_ratio_floor_ms": 1.0,
+              "passed": false
+            },
+            {
+              "dataset": "preference-drift-v1",
+              "store_type": "sqlite",
+              "mrr_lift_ratio": 0.0,
+              "latency_p95_ratio": 3.4657299998798408,
+              "max_latency_p95_ratio": 4.0,
+              "latency_ratio_floor_ms": 2.0,
+              "passed": false
+            },
+            {
+              "dataset": "cross-project-scope-v1",
+              "store_type": "memory",
+              "mrr_lift_ratio": -0.4,
+              "latency_p95_ratio": 0.4811999999219551,
+              "max_latency_p95_ratio": 2.0,
+              "latency_ratio_floor_ms": 1.0,
+              "passed": false
+            },
+            {
+              "dataset": "cross-project-scope-v1",
+              "store_type": "sqlite",
+              "mrr_lift_ratio": -0.4,
+              "latency_p95_ratio": 2.101404999848455,
+              "max_latency_p95_ratio": 4.0,
+              "latency_ratio_floor_ms": 2.0,
+              "passed": false
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "summary": {
+    "runs": 2,
+    "passed_runs": 0,
+    "failed_runs": 2,
+    "all_passed": false,
+    "stores": {
+      "memory": {
+        "latency_p95_ratio": {
+          "min": 0.4811999999219551,
+          "max": 0.9423450035683344
+        },
+        "mrr_lift_ratio": {
+          "min": -0.4,
+          "max": 0.0
+        }
+      },
+      "sqlite": {
+        "latency_p95_ratio": {
+          "min": 2.101404999848455,
+          "max": 3.4657299998798408
+        },
+        "mrr_lift_ratio": {
+          "min": -0.4,
+          "max": 0.0
+        }
+      }
+    }
+  }
+}

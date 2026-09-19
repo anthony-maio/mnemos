@@ -1,0 +1,58 @@
+{
+  "scope": "Disposable HTTP/1.0 loopback fixture; no Ollama calls or model inference; not a recall/capture acceptance result",
+  "observed_at": "2026-09-19T06:22:50.271972+00:00",
+  "samples": "1 cold plus 12 warm per arm",
+  "helper_sha256": "d100f99443d7110607e0b0c025e01674120a8da34e62fecc2f5e0e6f92aacca3",
+  "arms": [
+    {
+      "name": "baseline",
+      "source": "C:\\Users\\Ant\\AppData\\Local\\Temp\\mnemos-source-retrieval-comparison-v1",
+      "embedding_source_sha256": "9ebfa4e8ce979d26e3740846648f9302a8fe91aa1d4f44b4fa0999f113e01260",
+      "source_commit": "fc72cc251aeafa161a1a390269b8dfa34d83cf2b",
+      "source_dirty": false,
+      "httpx_version": "0.28.1",
+      "cold_ms": 221.17679999792017,
+      "warm_ms": [
+        174.65509999601636,
+        209.79980000993237,
+        210.01220001198817,
+        190.8873000065796,
+        182.40560000413097,
+        180.21340000268538,
+        178.39830000593793,
+        231.30049998871982,
+        186.05050000769552,
+        252.8083999932278,
+        223.89680000196677,
+        221.86119999969378
+      ],
+      "warm_median_ms": 200.343550008256,
+      "warm_max_ms": 252.8083999932278
+    },
+    {
+      "name": "candidate",
+      "source": "C:\\Users\\Ant\\AppData\\Local\\Temp\\mnemos-source-embedding-client-v1",
+      "embedding_source_sha256": "59c1981ac7d9d5db502da2d8acf059718496e115e5087bcd30602165a8a725d5",
+      "source_commit": "39b9c799020a58ea2ac3d798189474ed10389bd0",
+      "source_dirty": false,
+      "httpx_version": "0.28.1",
+      "cold_ms": 248.49139999423642,
+      "warm_ms": [
+        12.908700009575114,
+        15.092900008312427,
+        1.536000010673888,
+        13.46190000185743,
+        1.4879999944241717,
+        3.9275000017369166,
+        25.901400003931485,
+        1.5435999957844615,
+        1.3242999993963167,
+        1.343100011581555,
+        1.2444999883882701,
+        1.1679000017466024
+      ],
+      "warm_median_ms": 1.5398000032291748,
+      "warm_max_ms": 25.901400003931485
+    }
+  ]
+}

@@ -1,0 +1,92 @@
+"""Archive the completed mechanism phase without touching the running queue."""
+from datetime import datetime, timezone
+import hashlib
+import json
+from pathlib import Path
+import shutil
+import zipfile
+
+ROOT = Path(__file__).resolve().parents[1]
+SOURCE = ROOT / "docs/validation/2026-09-19/real-model-local-v1"
+OUTPUT = ROOT / "docs/validation/2026-09-19/mechanism-local-v1"
+
+
+def sha(data):
+    return hashlib.sha256(data).hexdigest()
+
+
+queue = json.loads((SOURCE / "queue-status.json").read_text())
+phase = next(item for item in queue["phases"] if item["name"] == "mechanism-heldout")
+assert phase["status"] == "finished" and phase["exit_code"] == 0
+assert queue["source_commit"] == "fc72cc251aeafa161a1a390269b8dfa34d83cf2b"
+assert queue["endpoint"] == "http://127.0.0.1:11434"
+blobs = {}
+for path, digest in phase["artifacts"].items():
+    path = Path(path)
+    data = path.read_bytes()
+    assert sha(data) == digest, path
+    name = path.relative_to(SOURCE).as_posix()
+    assert name not in blobs
+    blobs[name] = data
+assert set(blobs) == {
+    'mechanism-heldout.stderr.log', 'mechanism-heldout.stdout.log',
+    'mechanism-heldout/affective.observations.jsonl',
+    'mechanism-heldout/classifier.raw-outputs.jsonl',
+    'mechanism-heldout/embedding.raw-outputs.jsonl',
+    'mechanism-heldout/failures-and-coverage.json',
+    'mechanism-heldout/graph.observations.jsonl',
+    'mechanism-heldout/manifest.json',
+    'mechanism-heldout/module-mechanism.json',
+    'mechanism-heldout/module-mechanism.md',
+}
+OUTPUT.mkdir(exist_ok=False)
+with zipfile.ZipFile(OUTPUT / "phase-artifacts.zip", "x", compression=zipfile.ZIP_DEFLATED) as archive:
+    for name, data in blobs.items():
+        archive.writestr(name, data)
+with zipfile.ZipFile(OUTPUT / "phase-artifacts.zip") as archive:
+    assert set(archive.namelist()) == set(blobs)
+    for name, data in blobs.items():
+        assert archive.read(name) == data
+for name in ("module-mechanism.md", "failures-and-coverage.json", "manifest.json"):
+    (OUTPUT / name).write_bytes(blobs["mechanism-heldout/" + name])
+binding = {"archived_at": datetime.now(timezone.utc).isoformat(),
+           "source_commit": queue["source_commit"], "endpoint": queue["endpoint"],
+           "model": queue["model"], "model_digest": queue["model_digest"],
+           "embedding_model": queue["embedding_model"], "embedding_digest": queue["embedding_digest"],
+           "phase": phase, "archive_entries": {name: {"bytes": len(data), "sha256": sha(data)} for name, data in blobs.items()},
+           "helper_sha256": sha(Path(__file__).read_bytes())}
+(OUTPUT / "phase-binding.json").write_text(json.dumps(binding, indent=2) + "\n", encoding="utf-8")
+shutil.copyfile(__file__, OUTPUT / "archive_mechanism_local_v2.py.txt")
+(OUTPUT / ".gitattributes").write_text("* -text\n*.txt -whitespace\n", encoding="utf-8")
+(OUTPUT / "README.md").write_text("""# Local module mechanism result
+
+The held-out phase completed on frozen `fc72cc2` using local Ollama, Qwen
+3.5 9B, and Nomic embeddings. All 10 phase artifact hashes were verified
+before archiving and every compressed entry was read back byte-for-byte.
+Exact digests, settings, paths, and timings are in `phase-binding.json` and
+`manifest.json`. The main lifecycle run was still active when this archive
+was created; this archive makes no lifecycle or whole-matrix claim.
+
+Graph: 50 cases and 150 observations completed, but zero cases were eligible
+against the unchanged minimum of 40. Structural correctness passed, including
+144 cycle observations. Graph benefit remains unmeasured. Overall mechanism
+gates failed coverage; execution success is not acceptance success.
+
+Affective: 50 pairs, 100 conditions, and 300 observations completed. Ranking
+with synthetic gold states raised target top-1 from 0% to 34%; the clustered
+paired difference was 0.34, with 95% interval [0.18, 0.50]. This is a scorer
+result with supplied gold states, not an end-to-end classifier benefit.
+The real classifier parsed all 300 outputs, but only 33 passed the configured
+fidelity check. Twenty-one pairs were non-discriminating. Top-5 paired
+difference was 0.05 with interval [0.00, 0.15]. Human acceptance is NOT RUN.
+
+`phase-artifacts.zip` retains every original report and raw observation,
+including model outputs, embedding vectors, logs, and manifests. The small
+reports are also available directly. Negative results and thresholds are
+unchanged. No model, evaluation, website, or live-memory settings were changed
+to produce this archive.
+""", encoding="utf-8")
+index = {p.name: {"bytes": p.stat().st_size, "sha256": sha(p.read_bytes())}
+         for p in OUTPUT.iterdir() if p.is_file()}
+(OUTPUT / "evidence-index.json").write_text(json.dumps({"files": index}, indent=2) + "\n", encoding="utf-8")
+print(json.dumps({"archive": str(OUTPUT), "source_artifacts": len(blobs), "indexed_files": len(index)}))

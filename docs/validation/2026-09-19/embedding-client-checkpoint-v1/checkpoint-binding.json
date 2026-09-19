@@ -1,0 +1,35 @@
+{
+  "archived_at": "2026-09-19T06:33:00.650071+00:00",
+  "source_commit": "39b9c799020a58ea2ac3d798189474ed10389bd0",
+  "baseline_commit": "fc72cc251aeafa161a1a390269b8dfa34d83cf2b",
+  "source_verification": "C:\\Users\\Ant\\AppData\\Local\\Temp\\mnemos-package-checks-embedding-client-v2\\verification.json",
+  "installed_verification": "C:\\Users\\Ant\\AppData\\Local\\Temp\\mnemos-installed-checks-embedding-client-v1\\installation.json",
+  "benchmark_exit_codes": {
+    "inherited_config_attempt": 1,
+    "isolated_candidate": 2,
+    "isolated_baseline": 2
+  },
+  "benchmark_args": [
+    "--stores",
+    "memory,sqlite",
+    "--retrievers",
+    "baseline,engine",
+    "--dataset-pack",
+    "claim-driving",
+    "--top-k",
+    "1",
+    "--repetitions",
+    "2",
+    "--enforce-production-gate"
+  ],
+  "benchmark_environment": {
+    "MNEMOS_CONFIG_PATH": "C:\\Users\\Ant\\AppData\\Local\\Temp\\mnemos-offline-benchmark-missing.toml",
+    "MNEMOS_EMBEDDING_PROVIDER": "simple"
+  },
+  "source_preflight_failure": {
+    "exit_code": 1,
+    "message": "Verification snapshot must be clean",
+    "detail": "First verification started while worktree checkout was still running. It rejected the incomplete snapshot before any check. After checkout exited zero and the snapshot was confirmed clean, verification used fresh v2 output and temp directories."
+  },
+  "helper_sha256": "70aeaa527572ba8df15f60f17d96b34f0c68514356bdc570c5a1ce1e5a0f003d"
+}

@@ -1,8 +1,17 @@
 # Mnemos claim and evidence ledger
 
-Assessment date: September 18, 2026. This covers the unreleased
+Assessment date: September 19, 2026. This covers the unreleased
 functional-local-memory worktree, not the installed public package or website.
 The capability IDs come from the original implementation plan.
+
+The [embedding-client checkpoint](../2026-09-19/embedding-client-checkpoint-v1/README.md)
+at `39b9c79` passes 1,123 source tests, four skips, six source/package checks,
+428 installed contract cases, two matching skips, and replay checks. Client
+reuse reduces setup overhead in a fixed-vector HTTP fixture, without proving
+real recall/capture latency success. The separate synthetic replacement gate
+fails on both this source and `fc72cc2`; an all-CI-gates pass or superiority
+claim is not supported. The running real-model matrix remains frozen at
+`fc72cc2`, and earlier native observations retain their original bindings.
 
 The latest [mixed-host replay and restart observation](../2026-09-18/native-crosshost-recovery-v4/README.md)
 uses the installed `fc72cc2` package. Three same-event pairs delivered by native
@@ -366,9 +375,9 @@ acceptance gate.
 | C02 | Project, workspace, and global isolation | Scope and lifecycle regressions are included in that package. Registry identities and membership replace folder-name identity. | Complete native-host isolation matrix. Passing fixtures do not prove every external client supplies correct identity. |
 | C03 | Surprisal-gated encoding | Mechanism tests cover distance bounds, scoped prediction history, explicit-write bypass, and the later symmetric embedding role. | Real-model retention/noise benefit over baseline and simple filtering. The historical 40 percent claim remains unverified. |
 | C04 | Evidence-based mutable memory | Expected-version corrections, revisions, graph refresh, and canonical handling have regression coverage. Source `46cc101` additionally rejects a conflict proposal that would relabel an existing canonical assertion. | General semantic support of extracted proposals. The collision rule is conservative and does not establish entailment. |
-| C05 | Affective routing | Scoring, explicit-state handling, fallback, and top-1 execution are tested. Real-model mechanism evaluation is separate from injected-state controls. | Reliable classifier fidelity and a reproducible retrieval benefit within the declared accuracy and latency budgets. |
+| C05 | Affective routing | The [local held-out result](../2026-09-19/mechanism-local-v1/README.md) observes a 0.34 paired top-1 improvement with synthetic gold states, 95% interval [0.18, 0.50]. The real classifier parsed 300 outputs, but only 33 passed fidelity. | Reliable classifier fidelity and end-to-end retrieval benefit within the declared accuracy and latency budgets. Gold-state scoring benefit does not establish classifier-driven benefit. |
 | C06 | Sleep consolidation and compression | Durable maintenance, evidence-linked processing, retention, and failure/retry machinery are implemented. [Development extraction evidence](preference-contract-development-v1/README.md) preserves omissions and unsupported proposals. | Held-out supported precision, critical retention, and information-preserving compression. A valid JSON response is not a supported fact. |
-| C07 | Associative graph retrieval | Traversal, scope, persistence, and insertion-order controls are tested. The [capacity diagnostic](graph-capacity-diagnostic-v2/README.md) completed 15 development observations; successful recall was 0/5 at capacities 4, 8, and 16. | Associative retrieval benefit. Increasing capacity is not an accepted remedy; defaults and evaluation gates remain unchanged. |
+| C07 | Associative graph retrieval | The [local held-out result](../2026-09-19/mechanism-local-v1/README.md) passes structural correctness, including 144 cycle observations, but has zero eligible cases out of 50 against a minimum of 40. The [capacity diagnostic](graph-capacity-diagnostic-v2/README.md) also retains its negative development results. | Associative retrieval benefit remains unmeasured. Eligibility coverage failed; structural correctness does not establish useful recall. Defaults and evaluation gates remain unchanged. |
 | C08 | Independently usable, composable modules | Standalone and integrated module regression checks exercise write filtering, scope, graph state, and lifecycle behavior. | Completed real-model baseline, full-pipeline, and five module-disabled comparisons. Mechanical correctness does not establish usefulness. |
 | C09 | Inspectable, correctable, forgettable memory | Facts expose status, version, evidence, and ranking traces. Persistent-service checks and [native v9](../2026-09-18/native-codex-claude-continuity-v9/README.md) cover bounded correction, reviewed deletion of selected copies, and replay suppression. | Complete host/capture acceptance and arbitrary paraphrase erasure are not established. Logical forgetting does not erase historical backups or external host transcripts. |
 | C10 | Truthful local setup and readiness | Configured runtime, explicit providers, generated interpreter-bound host commands, and input-specific readiness checks are implemented. | Full native installation acceptance. Embedding revision is an operator-managed identity label; the runtime does not automatically verify a mutable Ollama tag's digest. |
