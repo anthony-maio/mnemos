@@ -483,6 +483,13 @@ Automatic capture creates raw evidence first. Maintenance defaults to a 30-day r
 
 ## Verification boundary
 
+The local service client uses authenticated plaintext HTTP restricted to
+loopback, ignores environment proxies, and does not follow redirects. Its
+transport skips certificate-bundle loading because these routes do not use
+TLS; certificate verification remains required if HTTPS is introduced. If a
+competing launcher exits while the original owner recovers, readiness probes
+can use the remaining startup deadline without launching another process.
+
 The dated [claim and evidence ledger](validation/2026-09-16/claim-evidence-ledger.md)
 maps the original capability promises to current evidence and open acceptance
 gates.

@@ -6,6 +6,7 @@ import asyncio
 import hashlib
 import json
 import os
+import ssl
 import subprocess
 import sys
 import tempfile
@@ -265,6 +266,17 @@ class MnemosClient:
             for key in ("schema_version", "host", "port", "pid", "token")
         )
 
+    @staticmethod
+    def _loopback_http_client(timeout: float) -> httpx.AsyncClient:
+        # These routes use plaintext HTTP on loopback. Loading a CA bundle
+        # cannot protect them, but can exhaust a short readiness deadline.
+        # Keep TLS verification enabled with no trust roots so accidental
+        # future HTTPS use fails closed rather than accepting certificates.
+        context = ssl.SSLContext(ssl.PROTOCOL_TLS_CLIENT)
+        return httpx.AsyncClient(
+            timeout=timeout, verify=context, trust_env=False, follow_redirects=False
+        )
+
     async def _owner_reachable(
         self, descriptor: dict[str, Any], *, timeout: float | None = None
     ) -> bool:
@@ -281,7 +293,7 @@ class MnemosClient:
             return False
 
         async def probe() -> httpx.Response:
-            async with httpx.AsyncClient(timeout=budget, trust_env=False) as client:
+            async with self._loopback_http_client(budget) as client:
                 return await client.get(
                     url, headers={"Authorization": f"Bearer {descriptor['token']}"}
                 )
@@ -335,10 +347,13 @@ class MnemosClient:
                     # unchanged descriptor for proof of readiness or failure.
                     if await self._owner_reachable(descriptor, timeout=deadline - loop.time()):
                         return descriptor
-                raise ServiceClientError(
-                    f"Mnemos service exited before startup (exit code {exit_code})",
-                    unavailable=True,
-                )
+                if descriptor is None or loop.time() >= deadline:
+                    raise ServiceClientError(
+                        f"Mnemos service exited before startup (exit code {exit_code})",
+                        unavailable=True,
+                    )
+                # An unchanged owner can still recover. Allow another probe
+                # within the original startup budget without spawning again.
             remaining = deadline - loop.time()
             if remaining <= 0:
                 raise ServiceClientError("Mnemos service startup timed out", unavailable=True)
@@ -369,10 +384,7 @@ class MnemosClient:
                 # never reuse an AsyncClient across loop boundaries.
                 if self._http_client is not None and not self._http_client.is_closed:
                     await self._http_client.aclose()
-                self._http_client = httpx.AsyncClient(
-                    timeout=self.request_timeout,
-                    trust_env=False,
-                )
+                self._http_client = self._loopback_http_client(self.request_timeout)
                 self._http_loop = loop
             response = await self._http_client.post(url, headers=headers, json=body)
         except (

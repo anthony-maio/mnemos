@@ -4,10 +4,12 @@ from __future__ import annotations
 
 import asyncio
 import socket
+import ssl
 from pathlib import Path
 from typing import Any
 
 import pytest
+import httpx
 
 import mnemos.client as client_module
 from mnemos.client import MnemosClient, ServiceClientError
@@ -238,3 +240,90 @@ async def test_owner_recovers_while_competing_launcher_exits(
     finally:
         await client.close()
         service.stop()
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize("route", ["health", "dispatch"])
+async def test_plaintext_loopback_does_not_load_certificate_bundles(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch, route: str
+) -> None:
+    service = MnemosService(
+        dispatcher=RecordingDispatcher(), descriptor_path=tmp_path / "runtime.json"
+    )
+    owner = service.start()
+    client = MnemosClient(descriptor_path=tmp_path / "runtime.json", auto_start=False)
+    original_client = httpx.AsyncClient
+    options: list[dict[str, Any]] = []
+
+    def record_client(**kwargs: Any) -> httpx.AsyncClient:
+        options.append(kwargs)
+        return original_client(**kwargs)
+
+    def forbidden_bundle_load(*args: Any, **kwargs: Any) -> None:
+        raise AssertionError("Plaintext loopback must not load a CA bundle")
+
+    monkeypatch.setattr(ssl, "create_default_context", forbidden_bundle_load)
+    monkeypatch.setattr(client_module.httpx, "AsyncClient", record_client)
+    monkeypatch.setenv("HTTP_PROXY", "http://127.0.0.1:1")
+    monkeypatch.setenv("SSL_CERT_FILE", str(tmp_path / "absent-cert.pem"))
+    try:
+        if route == "health":
+            assert await client._owner_reachable(owner)
+        else:
+            assert (await client.retrieve({"query": "local owner"}))["committed"] is True
+        assert len(options) == 1
+        assert options[0]["trust_env"] is False
+        assert options[0]["follow_redirects"] is False
+        context = options[0]["verify"]
+        assert isinstance(context, ssl.SSLContext)
+        assert context.check_hostname is True
+        assert context.verify_mode == ssl.CERT_REQUIRED
+        assert context.get_ca_certs() == []
+    finally:
+        await client.close()
+        service.stop()
+
+
+@pytest.mark.asyncio
+async def test_exited_launcher_allows_owner_recovery_until_startup_deadline(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    path = tmp_path / "runtime.json"
+    client = MnemosClient(descriptor_path=path, startup_timeout=1, request_timeout=1)
+    probes: list[float | None] = []
+    dispatches = starts = 0
+
+    async def dispatch(
+        operation: str, payload: dict[str, Any], owner: dict[str, Any]
+    ) -> dict[str, Any]:
+        nonlocal dispatches
+        dispatches += 1
+        if dispatches == 1:
+            raise ServiceClientError("transient transport failure", unavailable=True)
+        return {"status": "committed", "committed": True}
+
+    async def probe(owner: dict[str, Any], *, timeout: float | None = None) -> bool:
+        probes.append(timeout)
+        return len(probes) >= 3
+
+    def spawn(*args: Any, **kwargs: Any) -> Launcher:
+        nonlocal starts
+        starts += 1
+        return Launcher(exit_code=0)
+
+    monkeypatch.setattr(client, "_dispatch_http", dispatch)
+    monkeypatch.setattr(client, "_owner_reachable", probe)
+    monkeypatch.setattr(client_module.subprocess, "Popen", spawn)
+    with socket.socket() as reserved:
+        stale_descriptor(path, reserved)
+        original_bytes = path.read_bytes()
+        try:
+            result = await client.retrieve({"query": "recovering owner"})
+            assert result.get("committed") is True, result
+            assert dispatches == 2 and starts == 1 and len(probes) == 3
+            assert probes[0] is None
+            assert probes[1] is not None and probes[2] is not None
+            assert 0 < probes[2] < probes[1] <= client.startup_timeout
+            assert path.read_bytes() == original_bytes
+        finally:
+            await client.close()
