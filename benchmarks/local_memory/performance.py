@@ -20,6 +20,8 @@ import subprocess
 import sys
 import tempfile
 import time
+from collections.abc import Iterator
+from contextlib import contextmanager
 from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any, cast
@@ -738,6 +740,25 @@ def asyncio_run(awaitable: Any) -> Any:
     return asyncio.run(awaitable)
 
 
+@contextmanager
+def _work_directory(work_dir: Path | None) -> Iterator[Path]:
+    if work_dir is not None:
+        root = work_dir.expanduser().resolve()
+        # Never reuse a prior run or a live database directory. Keep explicit
+        # work, including partial measurements, available for inspection.
+        root.mkdir(parents=True, exist_ok=False)
+        yield root
+    else:
+        with tempfile.TemporaryDirectory(prefix="mnemos-performance-") as temporary:
+            yield Path(temporary).resolve()
+
+
+def _write_artifact(output: Path, artifact: dict[str, Any]) -> None:
+    output.parent.mkdir(parents=True, exist_ok=True)
+    with output.open("x", encoding="utf-8") as handle:
+        handle.write(json.dumps(artifact, indent=2, sort_keys=True) + "\n")
+
+
 def run(
     *,
     output: Path,
@@ -747,7 +768,10 @@ def run(
     query_prefix: str = "",
     document_prefix: str = "",
     symmetric_prefix: str = "",
+    work_dir: Path | None = None,
 ) -> dict[str, Any]:
+    if output.exists():
+        raise FileExistsError("Performance output already exists")
     started = time.perf_counter()
     started_at = datetime.now(timezone.utc)
     task_contract = embedding_task_contract(
@@ -757,9 +781,19 @@ def run(
     )
     source_root = Path(__file__).resolve().parents[2]
     source_before = _source_provenance(source_root)
-    provenance = _ollama_provenance(endpoint, embedding_model, cognition_model)
-    with tempfile.TemporaryDirectory(prefix="mnemos-performance-") as temporary:
-        root = Path(temporary)
+    with _work_directory(work_dir) as root:
+        storage_location = {
+            "work_dir": str(root),
+            "selection": "explicit" if work_dir is not None else "system_temp",
+            "system_temp_root": str(Path(tempfile.gettempdir()).resolve()),
+            "volume_anchor": root.anchor,
+            "device_id": root.stat().st_dev,
+            "cleanup": "retained" if work_dir is not None else "temporary",
+            "retrieval_database": str(root / "retrieval.sqlite"),
+            "capture_database": str(root / "capture.sqlite"),
+            "capture_outbox": str(root / "outbox.json"),
+        }
+        provenance = _ollama_provenance(endpoint, embedding_model, cognition_model)
         retrieval = measure_retrieval(
             root,
             endpoint=endpoint,
@@ -818,6 +852,7 @@ def run(
             "machine": platform.machine(),
             "processor": platform.processor(),
             "cpu_count": os.cpu_count(),
+            "storage_location": storage_location,
         },
         "provider": provenance,
         "measurement_scope": {
@@ -830,14 +865,18 @@ def run(
         "cold_cli_hook": cold_hook,
         "total_elapsed_ms": round((time.perf_counter() - started) * 1000, 3),
     }
-    output.parent.mkdir(parents=True, exist_ok=True)
-    output.write_text(json.dumps(artifact, indent=2, sort_keys=True) + "\n", encoding="utf-8")
+    _write_artifact(output, artifact)
     return artifact
 
 
 def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(description="Measure isolated local-memory performance gates")
     parser.add_argument("--output", type=Path, required=True)
+    parser.add_argument(
+        "--work-dir",
+        type=Path,
+        help="New directory on the storage volume to measure; retained after the run",
+    )
     parser.add_argument("--endpoint", default=DEFAULT_ENDPOINT)
     parser.add_argument("--embedding-model", default=DEFAULT_EMBEDDING_MODEL)
     parser.add_argument("--cognition-model", default=DEFAULT_COGNITION_MODEL)
@@ -854,6 +893,7 @@ def main(argv: list[str] | None = None) -> int:
             query_prefix=args.query_prefix,
             document_prefix=args.document_prefix,
             symmetric_prefix=args.symmetric_prefix,
+            work_dir=args.work_dir,
         )
     except Exception as exc:
         artifact = {
@@ -862,11 +902,16 @@ def main(argv: list[str] | None = None) -> int:
             "status": "not_run",
             "reason": f"Measurement could not complete: {type(exc).__name__}",
             "details": "No input content or credentials were written to the failure artifact.",
+            "requested_work_dir": (
+                str(args.work_dir.expanduser().resolve()) if args.work_dir is not None else None
+            ),
         }
-        args.output.parent.mkdir(parents=True, exist_ok=True)
-        args.output.write_text(
-            json.dumps(artifact, indent=2, sort_keys=True) + "\n", encoding="utf-8"
-        )
+        try:
+            _write_artifact(args.output, artifact)
+        except FileExistsError:
+            # A rejected run must not replace evidence from an earlier run,
+            # including an output created concurrently during measurement.
+            pass
         print(json.dumps(artifact, sort_keys=True))
         return 2
     print(json.dumps({"output": str(args.output), "status": artifact["status"]}, sort_keys=True))

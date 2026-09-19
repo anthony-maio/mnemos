@@ -205,3 +205,28 @@ latency gate. Production retrieval defaults and host configuration are unchanged
 
 The [retrieval checkpoint](../../docs/validation/2026-09-18/retrieval-comparison-checkpoint-v1/README.md)
 records the frozen source checks, installed adapter cases, and offline preparation.
+
+## Performance storage location
+
+Choose the data volume explicitly when measuring capture and 10,000-fact
+recall. Durable outbox flushes and SQLite commits depend on that volume.
+
+```text
+python -m benchmarks.local_memory.performance --endpoint http://127.0.0.1:11434 --embedding-model nomic-embed-text:latest --cognition-model qwen3.5:9b --output artifacts/performance-report.json --work-dir artifacts/performance-work
+```
+
+`--work-dir` must name a new directory. It retains the disposable databases
+after success or failure so the run can be inspected. Choose a path on the
+volume under evaluation; the relative example uses the checkout's volume.
+Without this option, the existing system temporary-directory behavior is
+unchanged and the fixture is removed afterward. Reports record the resolved
+work path, volume anchor, filesystem device ID, database/outbox paths, and
+cleanup policy. The device ID is a filesystem identifier, not a disk-model
+or media-type claim. Both existing work directories and existing report
+files are rejected. A rejected run cannot replace earlier report evidence.
+
+Report each storage placement separately. An SSD result does not supersede a
+hard-drive failure or establish a code speedup. This command calls the model
+server for retrieval embeddings, so run it after any serialized model-quality
+evaluation finishes. Capture-only diagnostics need no model calls, but remain
+separate from the combined retrieval/performance result.
