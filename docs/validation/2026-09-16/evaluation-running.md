@@ -1,5 +1,42 @@
 # Real-model evaluation status
 
+## Current frozen matrix snapshot -- 2026-09-20
+
+At `2026-09-20T15:13:04Z`, the contract-v4 matrix was still running from
+source `3d0965805622efad21d1bb5200a982bd1a956aa8`, with its protocol and
+dataset bindings frozen. These use local Qwen3.5:9b and Nomic embeddings on
+the RTX 4080. The repaired inputs are previously observed synthetic scenarios,
+not an unseen heldout set. The
+counts below describe execution completeness only; they do not establish
+final quality, a ranking change, or a lift.
+
+| Profile | Processed | Complete | Incomplete | Current state |
+| --- | ---: | ---: | ---: | --- |
+| Baseline | 600 | 600 | 0 | Complete report |
+| Full | 600 | 589 | 11 | Partial report; matrix running |
+| Surprisal ablation | 600 | 592 | 8 | Partial report; matrix running |
+| Mutable RAG ablation | 100 checkpointed | 100 checkpointed | Not available | Live checkpoint; no final report |
+
+The first three rows come from each report's
+`complete_observation_diagnostics`. The mutable RAG row has no final report or
+complete-observation diagnostics yet; its live checkpoint currently contains
+100 observations, each with `execution_status=complete`. A checkpointed
+observation is counted as processed here and is not treated as a completed
+matrix run.
+
+The current native and host evidence remains bounded. The [three-host v7
+checkpoint](../2026-09-20/three-host-native-v7/README.md) records 11 completed
+phases on `e6887de`; its [receipt audit](../2026-09-20/native-capture-coverage-v1/README.md)
+accounts for 31 native text identities, the [Hermes v14 checkpoint](../2026-09-20/hermes-native-cohort-v14/README.md)
+records one of three native lifecycle attempts, and the [Claude outage v2
+checkpoint](../2026-09-20/native-claude-outage-v2/README.md) records queued
+capture and replay on `a64afb7` behavior across a stopped service. Complete capture,
+full-module quality, provider and outage coverage, Desktop behavior, and the
+operational pilot remain open. Historical entries below retain their original
+claims and outcomes.
+
+## Historical evaluation and native records
+
 The [selection-rejection package](../2026-09-20/selection-rejection-checkpoint-v1/README.md)
 at `5155ebd` passes 1,638 source tests with four skips, all six source/package
 checks, 655 isolated installed cases with four matching skips, and seven
