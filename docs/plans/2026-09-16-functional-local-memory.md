@@ -448,8 +448,17 @@ renewal is now implemented with owner/token/expiry fencing, a non-accumulating
 renewal deadline, and bounded processor cancellation. Fifteen focused tests pass,
 including rejection of a late write from a processor that suppresses cancellation.
 The [frozen source/package checkpoint](../validation/2026-09-20/lease-renewal-source-checkpoint-v1/README.md)
-passes 2,019 tests with four skips and all six checks. Expanded installed-wheel
-validation is running separately; full recovery and quality gates remain open.
+passes 2,019 tests with four skips and all six checks. The [expanded installed check](../validation/2026-09-20/lease-renewal-installed-failure-v1/README.md)
+failed one MCP startup case (832 passed, four skipped). The recorded registry
+and a controlled reproduction expose identity drift when Git discovery fails:
+a repository must not silently become a different filesystem-based identity.
+The resolver repair retries once then fails closed for repository paths;
+the 30-case focused selection includes scope tests and all three MCP roundtrips.
+Inherited Git path overrides can also select a foreign repository; the repair
+filters those overrides and tests both GIT_DIR and GIT_COMMON_DIR. Ordinary
+folders, bare repositories and dangling Git markers have explicit coverage. A new
+full source/package and installed checkpoint is required. Recovery and quality
+acceptance remain open.
 
 ### T18 - Prove the contribution of all five modules
 

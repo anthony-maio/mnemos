@@ -60,20 +60,64 @@ def canonical_project_root(path: str | Path) -> str:
     root = Path(path).expanduser().resolve(strict=True)
     if not root.is_dir():
         raise ValueError("A project root must be a directory")
-    try:
-        result = subprocess.run(
-            ["git", "-C", str(root), "rev-parse", "--path-format=absolute", "--git-common-dir"],
-            capture_output=True,
-            text=True,
-            timeout=5,
-            creationflags=subprocess.CREATE_NO_WINDOW if os.name == "nt" else 0,
-            check=False,
+    # A worktree/submodule may use a .git file, and callers may supply a
+    # subdirectory. Never reinterpret a repository as a plain folder merely
+    # because Git was temporarily unavailable during registration or lookup.
+    git_marked = any(
+        os.path.lexists(parent / ".git")
+        or (
+            (parent / "HEAD").is_file()
+            and ((parent / "objects").is_dir() or (parent / "commondir").is_file())
         )
-        if result.returncode == 0 and result.stdout.strip():
-            root = Path(result.stdout.strip()).resolve()
-    except (OSError, subprocess.TimeoutExpired):
-        pass
-    return os.path.normcase(str(root))
+        for parent in (root, *root.parents)
+    )
+    # Project identity belongs to the supplied path, not to another repository
+    # selected by the parent shell's Git environment.
+    git_env = {
+        key: value
+        for key, value in os.environ.items()
+        if key.upper()
+        not in {
+            "GIT_DIR",
+            "GIT_COMMON_DIR",
+            "GIT_WORK_TREE",
+            "GIT_CEILING_DIRECTORIES",
+            "GIT_DISCOVERY_ACROSS_FILESYSTEM",
+        }
+    }
+    git_env["LC_ALL"] = "C"
+    error = "Git did not return a valid common directory"
+    for _ in range(2):
+        try:
+            result = subprocess.run(
+                ["git", "-C", str(root), "rev-parse", "--path-format=absolute", "--git-common-dir"],
+                capture_output=True,
+                text=True,
+                timeout=5,
+                env=git_env,
+                creationflags=subprocess.CREATE_NO_WINDOW if os.name == "nt" else 0,
+                check=False,
+            )
+            if result.returncode == 0 and result.stdout.strip():
+                common = Path(result.stdout.strip())
+                if common.is_absolute() and common.is_dir():
+                    return os.path.normcase(str(common.resolve(strict=True)))
+            elif (
+                result.returncode != 0
+                and not git_marked
+                and "not a git repository" in result.stderr.lower()
+            ):
+                return os.path.normcase(str(root))
+            error = "Git could not determine a valid common directory"
+        except FileNotFoundError:
+            if not git_marked:
+                return os.path.normcase(str(root))
+            error = "Git is unavailable for a repository"
+        except subprocess.TimeoutExpired:
+            error = "Git project lookup timed out"
+        except OSError:
+            error = "Git project lookup failed"
+    raise ValueError(f"Cannot resolve project identity: {error}; retry when Git is available")
 
 
 class ScopeRegistry(BaseModel):
