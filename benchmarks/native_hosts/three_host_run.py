@@ -24,7 +24,7 @@ if not __package__:
     sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
     __package__ = "native_hosts"
 
-from .hermes_lifecycle_run import (
+from .hermes_lifecycle_run_v3 import (
     DIGESTS,
     HERMES_CHECKOUT,
     HERMES_COMMIT,
@@ -140,6 +140,15 @@ def run_hermes(
 ) -> dict[str, Any]:
     root = runtime.root / phase
     root.mkdir()
+    profile = api("show", {"model": MODEL})
+    save(root / "sampling-profile-before.json", profile)
+    expected_profile = json.loads(
+        (
+            runtime.repo / "docs/validation/2026-09-19/native-model-profile-v1/profile-show.json"
+        ).read_text(encoding="utf-8")
+    )
+    if profile != expected_profile:
+        raise ValueError("Pinned Hermes sampling profile changed")
     home = root / "hermes-home"
     home.mkdir()
     save(
@@ -211,7 +220,7 @@ def run_hermes(
                     "--kill-after=5s",
                     "240s",
                     HERMES_LIVE + "/venv/bin/python",
-                    wsl(Path(__file__).with_name("hermes_native_bootstrap_v2.py")),
+                    wsl(Path(__file__).with_name("hermes_native_bootstrap_v3.py")),
                     wsl(root / "config.json"),
                 ],
                 stdout=stdout,
@@ -239,6 +248,10 @@ def run_hermes(
         or row["reasoning_effort"] != "none"
         or (row.get("options") or {}).get("num_ctx") != 65536
         or row["contains_foreign_label"]
+        or any(
+            row.get(key) not in (None, value) or (row.get("options") or {}).get(key, value) != value
+            for key, value in {"temperature": 0, "presence_penalty": 0, "seed": 42}.items()
+        )
         for row in requests
     ):
         raise ValueError("Hermes model binding or scope guard failed")
@@ -294,6 +307,7 @@ def main() -> int:
         for path in Path(__file__).parent.glob("*.py")
     ]
     inputs.append("docs/plans/2026-09-19-three-host-continuity-protocol-v1.md")
+    inputs.append("docs/validation/2026-09-19/native-model-profile-v1/profile-show.json")
     commit = subprocess.check_output(
         ["git", "-C", str(repo), "rev-parse", "HEAD"], text=True
     ).strip()

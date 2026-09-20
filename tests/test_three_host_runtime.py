@@ -27,6 +27,11 @@ def fx(tmp_path, monkeypatch):
         p = source / n
         p.parent.mkdir(parents=True, exist_ok=True)
         p.write_bytes(raw)
+    input_bytes = {relative: relative.encode() for relative in m.HERMES_INPUTS}
+    for relative, raw in input_bytes.items():
+        path = repo / relative
+        path.parent.mkdir(parents=True, exist_ok=True)
+        path.write_bytes(raw)
     env = tmp_path / "installed"
     package = env / "Lib/site-packages/mnemos/__init__.py"
     package.parent.mkdir(parents=True)
@@ -83,6 +88,7 @@ def fx(tmp_path, monkeypatch):
             "mutations_inspected",
             "no_foreign_tool_result",
             "real_pinned_model_request",
+            "pinned_profile_without_conflicting_override",
             "no_provider_error",
             "controls_unchanged",
             "native_capture_committed",
@@ -108,6 +114,8 @@ def fx(tmp_path, monkeypatch):
             "status": "passed",
             "source_commit": m.SOURCE_COMMIT,
             "wheel_sha256": digest,
+            "runner_commit": "fixture-commit",
+            "input_hashes": {relative: m.sha(repo / relative) for relative in m.HERMES_INPUTS},
             "phases": [{"phase": n, "exit_code": 0, "gates": gates} for n in names],
         },
     )
@@ -124,7 +132,8 @@ def fx(tmp_path, monkeypatch):
         if "ls-tree" in command:
             return "\n".join(files)
         if "show" in command:
-            return files[command[-1].split(":", 1)[1]]
+            relative = command[-1].split(":", 1)[1]
+            return files[relative] if relative in files else input_bytes[relative]
         raise AssertionError("unexpected offline subprocess")
 
     monkeypatch.setattr(m.subprocess, "check_output", git)
@@ -174,6 +183,24 @@ def test_changed_plugin_is_rejected(fx):
     (fx.source / "hooks/hooks.json").write_text("changed")
     with pytest.raises(ValueError, match="plugin source differs"):
         fx.rt.verify()
+
+
+def test_hermes_acceptance_binds_executed_input_hashes(fx, monkeypatch):
+    required = {}
+    for relative in m.HERMES_INPUTS:
+        path = fx.rt.repo / relative
+        path.parent.mkdir(parents=True, exist_ok=True)
+        path.write_bytes(relative.encode())
+        required[relative] = m.sha(path)
+    report = json.loads(fx.rt.hermes_acceptance.read_text())
+    report["runner_commit"] = "fixture-commit"
+    report["input_hashes"] = required
+    monkeypatch.setattr(m, "verify_committed_inputs", lambda repo, paths, commit: None)
+    m.verify_hermes_input_binding(fx.rt.repo, report)
+
+    report["input_hashes"][m.HERMES_INPUTS[0]] = "0" * 64
+    with pytest.raises(ValueError, match="input hash differs"):
+        m.verify_hermes_input_binding(fx.rt.repo, report)
 
 
 @pytest.mark.parametrize("mutation", ["binding", "empty", "false", "missing", "duplicate"])

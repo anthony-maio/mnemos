@@ -33,8 +33,8 @@ assuming a stale state file establishes exit. Do not compete with another
 Ollama job or selectively repeat unsuccessful phases.
 
 Use one verified Mnemos wheel and source checkpoint across every host. The
-current candidate is `3730fd96c3c50c7ef6179b2b9f70414ab5a8fb17`, wheel SHA-256
-`3772398a8e11b92d2cffd285b0571a733a9fd63cbdf932c30519d933cf0a6dd2`.
+current candidate is `68693f83b5894198daea114e018031e381a508a3`, wheel SHA-256
+`2e121c1ae81717d1b9a32349bd27ea7fafc2e5562e6eadbd7d24ddecd16f5cb8`.
 Record exact installed Codex and Claude versions and Hermes revision. Hermes
 must use an isolated checkout with a recorded compatibility patch; never
 present patched-host evidence as evidence for the unmodified installation.
@@ -136,3 +136,19 @@ optional background title model in each disposable Hermes home. The bootstrap
 checks the actual host setting before invoking the CLI. This follows the
 retained first Hermes lifecycle failure; every observed model request still
 must carry the pinned model and context settings. The driver has not run.
+
+Before native execution, the prospective source/wheel binding was advanced
+to the verified job-lookup error package `68693f8`. Its 1,308 source tests,
+533 isolated installed cases, six package checks, and seven replay assertions
+pass (four source skips and two installed skips). The earlier Hermes-only
+attempts used `3730fd9` and failed; they do not satisfy this new package's
+native prerequisite. No three-host native attempt has executed under either
+binding. This update changes neither the native acceptance criteria nor
+the frozen real-model comparison records.
+
+The prospective Hermes phases now use the pinned v3 sampling profile and
+bootstrap described in the [v3 lifecycle protocol](2026-09-19-hermes-native-lifecycle-protocol-v3.md).
+The prerequisite report must include a passing sampling-profile gate. The
+three-host driver rejects conflicting native request overrides; exact memory
+content, IDs, versions, correlation, capture, scope, and replay checks are
+unchanged. Earlier preparation records retain their original helper bindings.

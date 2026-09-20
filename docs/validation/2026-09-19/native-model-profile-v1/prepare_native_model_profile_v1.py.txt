@@ -1,0 +1,41 @@
+"""Create an isolated Ollama sampling profile without changing its source model."""
+from pathlib import Path
+from datetime import datetime,timezone
+import hashlib,json,urllib.request
+repo=Path(__file__).resolve().parents[1]
+root=repo/"docs/validation/2026-09-19/native-model-profile-v1"
+root.mkdir(exist_ok=False)
+model="mnemos-native-qwen35-9b:greedy-v1"
+base="qwen3.5:9b"
+expected="6488c96fa5faab64bb65cbd30d4289e20e6130ef535a93ef9a49f42eda893ea7"
+def api(route,payload=None):
+    request=urllib.request.Request("http://127.0.0.1:11434/api/"+route,data=None if payload is None else json.dumps(payload).encode(),headers={"Content-Type":"application/json"})
+    with urllib.request.urlopen(request,timeout=60) as response:return json.load(response)
+def save(name,value):
+    (root/name).write_text(json.dumps(value,indent=2)+"\n")
+before=api("tags");save("tags-before.json",before)
+models={row["name"]:row["digest"] for row in before["models"]}
+assert models.get(base)==expected and model not in models
+show=api("show",{"model":base});save("base-show-before.json",show)
+body={"model":model,"from":base,"parameters":{"temperature":0,"presence_penalty":0,"seed":42},"stream":False}
+save("create-request.json",body)
+created=api("create",body);save("create-response.json",created)
+assert created.get("status")=="success"
+after=api("tags");save("tags-after.json",after)
+base_after=api("show",{"model":base});save("base-show-after.json",base_after)
+profile=api("show",{"model":model});save("profile-show.json",profile)
+models={row["name"]:row["digest"] for row in after["models"]}
+assert models[base]==expected and show==base_after
+for key in ("template","system","model_info","capabilities","tensors","license"):
+    assert show.get(key)==profile.get(key),key
+base_from=next(line for line in show["modelfile"].splitlines() if line.startswith("FROM "))
+profile_from=next(line for line in profile["modelfile"].splitlines() if line.startswith("FROM "))
+assert base_from==profile_from
+parameters={line.split()[0]:line.split()[1] for line in profile["parameters"].splitlines()}
+assert all(float(parameters[key])==value for key,value in body["parameters"].items())
+save("profile.json",{"created_at":datetime.now(timezone.utc).isoformat(),"model":model,"digest":models[model],"base_model":base,"base_digest":expected,"parameters":parameters,"same_weight_blob":base_from,"same_template_model_info_capabilities":True,"ollama_version":api("version"),"native_observation":"NOT RUN"})
+(root/".gitattributes").write_bytes(b"** -text -whitespace\n")
+(root/(Path(__file__).name+".txt")).write_bytes(Path(__file__).read_bytes())
+files={p.relative_to(root).as_posix():{"bytes":p.stat().st_size,"sha256":hashlib.sha256(p.read_bytes()).hexdigest()} for p in root.iterdir() if p.is_file()}
+save("evidence-index.json",{"files":files})
+print(json.dumps({"model":model,"digest":models[model],"archive":str(root)}))

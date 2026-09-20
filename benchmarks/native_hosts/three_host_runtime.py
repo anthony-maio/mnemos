@@ -13,15 +13,47 @@ from typing import Any, TYPE_CHECKING
 import zipfile
 from copy import deepcopy
 
-from .hermes_lifecycle_run import read_rows, require_prior_queue_terminal, sha
+from .hermes_lifecycle_run import (
+    read_rows,
+    require_prior_queue_terminal,
+    sha,
+    verify_committed_inputs,
+)
 
 if TYPE_CHECKING:
     from mnemos.scopes import ScopeRegistry
     from mnemos.service import MnemosService
 
-WHEEL_SHA256 = "3772398a8e11b92d2cffd285b0571a733a9fd63cbdf932c30519d933cf0a6dd2"
-SOURCE_COMMIT = "3730fd96c3c50c7ef6179b2b9f70414ab5a8fb17"
+WHEEL_SHA256 = "2e121c1ae81717d1b9a32349bd27ea7fafc2e5562e6eadbd7d24ddecd16f5cb8"
+SOURCE_COMMIT = "68693f83b5894198daea114e018031e381a508a3"
 PROFILE = "native-three-host-v1"
+HERMES_INPUTS = (
+    "benchmarks/native_hosts/hermes_lifecycle_run_v3.py",
+    "benchmarks/native_hosts/hermes_native_bootstrap_v3.py",
+    "benchmarks/native_hosts/hermes_trace.py",
+    "docs/plans/2026-09-19-hermes-native-lifecycle-protocol-v3.md",
+    "docs/validation/2026-09-19/native-model-profile-v1/profile.json",
+)
+
+
+def verify_hermes_input_binding(repo: Path, report: dict[str, Any]) -> None:
+    """Bind the accepted Hermes report to its committed executed inputs."""
+
+    runner_commit = report.get("runner_commit")
+    hashes = report.get("input_hashes")
+    if not isinstance(runner_commit, str) or not runner_commit.strip():
+        raise ValueError("Hermes acceptance report lacks runner_commit")
+    if not isinstance(hashes, dict):
+        raise ValueError("Hermes acceptance report lacks input_hashes")
+    normalized = {str(key).replace("\\", "/"): value for key, value in hashes.items()}
+    for relative in HERMES_INPUTS:
+        path = repo / relative
+        expected = normalized.get(relative)
+        if not path.is_file() or not isinstance(expected, str):
+            raise ValueError("Hermes acceptance report lacks required input: " + relative)
+        if sha(path) != expected:
+            raise ValueError("Hermes accepted input hash differs: " + relative)
+    verify_committed_inputs(repo, list(HERMES_INPUTS), runner_commit)
 
 
 def require_hermes_acceptance(hermes: dict[str, Any]) -> None:
@@ -37,6 +69,7 @@ def require_hermes_acceptance(hermes: dict[str, Any]) -> None:
         "mutations_inspected",
         "no_foreign_tool_result",
         "real_pinned_model_request",
+        "pinned_profile_without_conflicting_override",
         "no_provider_error",
         "controls_unchanged",
         "native_capture_committed",
@@ -193,6 +226,7 @@ class ThreeHostRuntime:
                 raise ValueError("verified plugin source differs from committed bytes")
             self._plugin_bytes[relative] = raw
         hermes = json.loads(self.hermes_acceptance.read_text(encoding="utf-8"))
+        verify_hermes_input_binding(self.repo, hermes)
         require_hermes_acceptance(hermes)
         self._verified = True
         return {
