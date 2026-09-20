@@ -1,0 +1,42 @@
+<?xml version="1.0" encoding="utf-8"?><testsuites name="pytest tests"><testsuite name="pytest" errors="0" failures="1" skipped="0" tests="14" time="4.007" timestamp="2026-09-20T13:33:59.573147-04:00" hostname="Aurora"><testcase classname="tests.test_hermes_memory_evidence" name="test_provider_advertises_durable_evidence_api" time="0.005" /><testcase classname="tests.test_hermes_memory_evidence" name="test_empty_evidence_does_not_fall_back_to_model_messages[turn]" time="0.099" /><testcase classname="tests.test_hermes_memory_evidence" name="test_empty_evidence_does_not_fall_back_to_model_messages[end]" time="0.103" /><testcase classname="tests.test_hermes_memory_evidence" name="test_callback_uses_original_evidence_and_keeps_identity_after_restart[turn]" time="1.107" /><testcase classname="tests.test_hermes_memory_evidence" name="test_callback_uses_original_evidence_and_keeps_identity_after_restart[end]" time="0.896" /><testcase classname="tests.test_hermes_memory_evidence" name="test_derived_summary_and_genuine_new_user_turn_remain_distinct" time="0.741" /><testcase classname="tests.test_hermes_memory_evidence" name="test_invalid_evidence_fails_before_any_enqueue[evidence0]" time="0.082" /><testcase classname="tests.test_hermes_memory_evidence" name="test_invalid_evidence_fails_before_any_enqueue[invalid]" time="0.078" /><testcase classname="tests.test_hermes_memory_evidence" name="test_invalid_evidence_fails_before_any_enqueue[evidence2]" time="0.081" /><testcase classname="tests.test_hermes_memory_evidence" name="test_invalid_evidence_fails_before_any_enqueue[evidence3]" time="0.079" /><testcase classname="tests.test_hermes_memory_evidence" name="test_invalid_evidence_fails_before_any_enqueue[evidence4]" time="0.105" /><testcase classname="tests.test_hermes_memory_evidence" name="test_invalid_evidence_fails_before_any_enqueue[evidence5]" time="0.079" /><testcase classname="tests.test_hermes_memory_evidence" name="test_invalid_evidence_fails_before_any_enqueue[evidence6]" time="0.074"><failure message="TypeError: unhashable type: 'dict'">tmp_path = WindowsPath('D:/WindowsTemp/pytest-of-Ant/pytest-4360/test_invalid_evidence_fails_be6')
+evidence = [{'role': 'user', 'content': 'Malformed marker', '_row_id': 1, '_memory_evidence_kind': {}}]
+
+    @pytest.mark.parametrize("evidence", [
+        {}, "invalid", [None],
+        [{"role": "user", "content": "No native identity"}],
+        [{"role": "user", "content": "Wrong marker", "_row_id": 1,
+          "_memory_evidence_kind": "derived_summary"}],
+        [{"role": "user", "content": "Unknown marker", "_row_id": 1,
+          "_memory_evidence_kind": "unknown"}],
+        [{"role": "user", "content": "Malformed marker", "_row_id": 1,
+          "_memory_evidence_kind": {}}],
+    ])
+    def test_invalid_evidence_fails_before_any_enqueue(tmp_path, evidence):
+        provider, client = setup(tmp_path)
+        with pytest.raises(ValueError):
+&gt;           provider.sync_turn("Callback must not substitute", "", evidence_messages=evidence)
+
+tests\test_hermes_memory_evidence.py:92: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+mnemos\adapters\hermes.py:634: in sync_turn
+    self._memory_evidence_entries(evidence_messages)
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+cls = &lt;class 'mnemos.adapters.hermes.MnemosHermesProvider'&gt;
+messages = [{'role': 'user', 'content': 'Malformed marker', '_row_id': 1, '_memory_evidence_kind': {}}]
+
+    @classmethod
+    def _memory_evidence_entries(cls, messages: List[Dict[str, Any]]) -&gt; list[TranscriptEntry]:
+        if not isinstance(messages, list) or any(
+            not isinstance(message, Mapping) for message in messages
+        ):
+            raise ValueError("Hermes memory evidence must be a list of message records")
+        for message in messages:
+            kind = message.get("_memory_evidence_kind")
+            if "_memory_evidence_kind" in message and (
+&gt;               kind not in {"retained_original", "derived_summary"}
+                or (kind == "derived_summary") != (message.get("_compressed_summary") is True)
+            ):
+E           TypeError: unhashable type: 'dict'
+
+mnemos\adapters\hermes.py:423: TypeError</failure></testcase><testcase classname="tests.test_hermes_memory_evidence" name="test_distinct_evidence_components_cannot_reuse_one_native_id" time="0.074" /></testsuite></testsuites>

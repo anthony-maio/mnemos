@@ -1,0 +1,70 @@
+from pathlib import Path
+import hashlib
+import json
+import subprocess
+import xml.etree.ElementTree as ET
+
+repo = Path(__file__).resolve().parents[1]
+temp = Path('C:/Users/Ant/AppData/Local/Temp')
+dest = repo / 'docs/validation/2026-09-20/hermes-memory-evidence-development-v1'
+dest.mkdir(exist_ok=False)
+
+def save(name, data):
+    path = dest / name
+    path.parent.mkdir(parents=True, exist_ok=True)
+    path.write_bytes(data)
+
+save('.gitattributes', b'** -text -whitespace\n')
+counts = {}
+for kind, expected in [('red-v1', (13, 13)), ('green-v1', (34, 1)),
+                       ('red-v2', (14, 1)), ('green-v2', (90, 0))]:
+    source = temp / ('mnemos-hermes-memory-evidence-' + kind + '.xml')
+    data = source.read_bytes()
+    suites = list(ET.fromstring(data).iter('testsuite'))
+    counts[kind] = {key: sum(int(s.attrib.get(key, 0)) for s in suites)
+                    for key in ('tests', 'failures', 'errors', 'skipped')}
+    assert (counts[kind]['tests'], counts[kind]['failures']) == expected
+    assert counts[kind]['errors'] == counts[kind]['skipped'] == 0
+    save('tests/' + source.name, data)
+for version in ('v1', 'v2'):
+    name = 'mnemos-hermes-memory-evidence-red-' + version + '.tests.py.txt'
+    save('tests/' + name, (temp / name).read_bytes())
+for name in ('mnemos/adapters/hermes.py', 'tests/test_hermes_memory_evidence.py'):
+    save('candidate/' + name + '.txt', (repo / name).read_bytes())
+save('candidate/product.patch', subprocess.check_output(['git', 'diff', '--binary', 'HEAD', '--', 'mnemos/adapters/hermes.py'], cwd=repo))
+save('collector.py.txt', Path(__file__).read_bytes())
+save('collection.json', (json.dumps({
+    'baseline_commit': subprocess.check_output(['git', 'rev-parse', 'HEAD'], cwd=repo, text=True).strip(),
+    'status': 'focused_tests_passed_full_package_pending', 'counts': counts,
+    'limits': ['Outbox callback fixtures, not a native host compression run.',
+              'Hybrid components require distinct original identities from the host.',
+              'No model, live configuration, or memory migration.']
+}, indent=2) + '\n').encode())
+index = {p.relative_to(dest).as_posix(): {'bytes': p.stat().st_size, 'sha256': hashlib.sha256(p.read_bytes()).hexdigest()}
+         for p in sorted(dest.rglob('*')) if p.is_file()}
+(dest / 'evidence-index.json').write_text(json.dumps({'files': index}, indent=2) + '\n', encoding='utf-8')
+(dest / 'README.md').write_text('''# Hermes durable evidence callback development
+
+The adapter adds a negotiated v1 evidence input to ordinary turn and session
+end callbacks. An explicit empty list is authoritative; the model-facing
+transcript and callback text cannot substitute for it. Native identity,
+origin, and summary classification checks still apply before enqueueing.
+
+Thirteen original tests failed because the capability and callback keyword
+were absent. The first candidate run had 33 passes and one test-fixture error:
+the normal payload omits identity_status, which the service defaults to normal.
+The corrected assertion reads that existing contract. A further malformed
+classification test reproduced an unhashable-dict error; the candidate now
+rejects that field with ValueError before capture. The final focused run
+passes 90 cases, including 14 new tests. Strict type checking also passes.
+
+The outbox tests preserve canonical payloads through session switches and
+provider restart, keep summaries capture-only, reject duplicate IDs, and
+check both callback paths. They do not prove that a real host supplies the
+required projection or that hybrid components retain separate durable origins.
+Full source/package checks and isolated host integration are separate gates.
+
+Original red inputs, all test reports, and candidate source are indexed.
+This README is outside the index.
+''', encoding='utf-8', newline='\n')
+print(json.dumps({'archive': str(dest), 'files': len(index), 'counts': counts}))

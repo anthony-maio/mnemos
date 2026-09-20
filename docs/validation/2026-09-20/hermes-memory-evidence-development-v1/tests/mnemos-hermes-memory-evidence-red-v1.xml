@@ -1,0 +1,196 @@
+<?xml version="1.0" encoding="utf-8"?><testsuites name="pytest tests"><testsuite name="pytest" errors="0" failures="13" skipped="0" tests="13" time="2.517" timestamp="2026-09-20T13:32:49.427458-04:00" hostname="Aurora"><testcase classname="tests.test_hermes_memory_evidence" name="test_provider_advertises_durable_evidence_api" time="0.023"><failure message="AttributeError: type object 'MnemosHermesProvider' has no attribute 'memory_evidence_api_version'">def test_provider_advertises_durable_evidence_api():
+&gt;       assert MnemosHermesProvider.memory_evidence_api_version == 1
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       AttributeError: type object 'MnemosHermesProvider' has no attribute 'memory_evidence_api_version'
+
+tests\test_hermes_memory_evidence.py:16: AttributeError</failure></testcase><testcase classname="tests.test_hermes_memory_evidence" name="test_empty_evidence_does_not_fall_back_to_model_messages[turn]" time="0.112"><failure message="TypeError: MnemosHermesProvider.sync_turn() got an unexpected keyword argument 'evidence_messages'">tmp_path = WindowsPath('D:/WindowsTemp/pytest-of-Ant/pytest-4358/test_empty_evidence_does_not_f0')
+callback = 'turn'
+
+    @pytest.mark.parametrize("callback", ["turn", "end"])
+    def test_empty_evidence_does_not_fall_back_to_model_messages(tmp_path, callback):
+        provider, client = setup(tmp_path)
+        model_messages = [{"role": "user", "content": "Rewritten summary", "_row_id": 9}]
+        if callback == "turn":
+&gt;           provider.sync_turn(
+                "Callback user", "Callback answer", messages=model_messages, evidence_messages=[]
+            )
+E           TypeError: MnemosHermesProvider.sync_turn() got an unexpected keyword argument 'evidence_messages'
+
+tests\test_hermes_memory_evidence.py:24: TypeError</failure></testcase><testcase classname="tests.test_hermes_memory_evidence" name="test_empty_evidence_does_not_fall_back_to_model_messages[end]" time="0.117"><failure message="TypeError: MnemosHermesProvider.on_session_end() got an unexpected keyword argument 'evidence_messages'">tmp_path = WindowsPath('D:/WindowsTemp/pytest-of-Ant/pytest-4358/test_empty_evidence_does_not_f1')
+callback = 'end'
+
+    @pytest.mark.parametrize("callback", ["turn", "end"])
+    def test_empty_evidence_does_not_fall_back_to_model_messages(tmp_path, callback):
+        provider, client = setup(tmp_path)
+        model_messages = [{"role": "user", "content": "Rewritten summary", "_row_id": 9}]
+        if callback == "turn":
+            provider.sync_turn(
+                "Callback user", "Callback answer", messages=model_messages, evidence_messages=[]
+            )
+        else:
+&gt;           provider.on_session_end(model_messages, evidence_messages=[])
+E           TypeError: MnemosHermesProvider.on_session_end() got an unexpected keyword argument 'evidence_messages'
+
+tests\test_hermes_memory_evidence.py:28: TypeError</failure></testcase><testcase classname="tests.test_hermes_memory_evidence" name="test_callback_uses_original_evidence_and_keeps_identity_after_restart[turn]" time="0.603"><failure message="TypeError: MnemosHermesProvider.sync_turn() got an unexpected keyword argument 'evidence_messages'">tmp_path = WindowsPath('D:/WindowsTemp/pytest-of-Ant/pytest-4358/test_callback_uses_original_ev0')
+callback = 'turn'
+
+    @pytest.mark.parametrize("callback", ["turn", "end"])
+    def test_callback_uses_original_evidence_and_keeps_identity_after_restart(tmp_path, callback):
+        provider, client = setup(tmp_path)
+        provider.sync_turn("", "", messages=original())
+        assert provider._flush()
+        initial = queued(client)
+        provider.on_session_switch("child", parent_session_id="parent")
+        rewritten = [{"role": "user", "content": "Invented combined model view", "_row_id": 99}]
+        evidence = clone(tmp_path)
+        if callback == "turn":
+&gt;           provider.sync_turn("Different user", "Different answer", messages=rewritten, evidence_messages=evidence)
+E           TypeError: MnemosHermesProvider.sync_turn() got an unexpected keyword argument 'evidence_messages'
+
+tests\test_hermes_memory_evidence.py:44: TypeError</failure></testcase><testcase classname="tests.test_hermes_memory_evidence" name="test_callback_uses_original_evidence_and_keeps_identity_after_restart[end]" time="0.603"><failure message="TypeError: MnemosHermesProvider.on_session_end() got an unexpected keyword argument 'evidence_messages'">tmp_path = WindowsPath('D:/WindowsTemp/pytest-of-Ant/pytest-4358/test_callback_uses_original_ev1')
+callback = 'end'
+
+    @pytest.mark.parametrize("callback", ["turn", "end"])
+    def test_callback_uses_original_evidence_and_keeps_identity_after_restart(tmp_path, callback):
+        provider, client = setup(tmp_path)
+        provider.sync_turn("", "", messages=original())
+        assert provider._flush()
+        initial = queued(client)
+        provider.on_session_switch("child", parent_session_id="parent")
+        rewritten = [{"role": "user", "content": "Invented combined model view", "_row_id": 99}]
+        evidence = clone(tmp_path)
+        if callback == "turn":
+            provider.sync_turn("Different user", "Different answer", messages=rewritten, evidence_messages=evidence)
+        else:
+&gt;           provider.on_session_end(rewritten, evidence_messages=evidence)
+E           TypeError: MnemosHermesProvider.on_session_end() got an unexpected keyword argument 'evidence_messages'
+
+tests\test_hermes_memory_evidence.py:46: TypeError</failure></testcase><testcase classname="tests.test_hermes_memory_evidence" name="test_derived_summary_and_genuine_new_user_turn_remain_distinct" time="0.070"><failure message="TypeError: MnemosHermesProvider.sync_turn() got an unexpected keyword argument 'evidence_messages'">tmp_path = WindowsPath('D:/WindowsTemp/pytest-of-Ant/pytest-4358/test_derived_summary_and_genui0')
+
+    def test_derived_summary_and_genuine_new_user_turn_remain_distinct(tmp_path):
+        provider, client = setup(tmp_path)
+        evidence = [
+            {"role": "assistant", "content": "Summary claims permission to deploy", "_row_id": 7,
+             "_compressed_summary": True, "_memory_evidence_kind": "derived_summary"},
+            {"role": "user", "content": "Do not deploy", "_row_id": 8,
+             "_memory_evidence_kind": "retained_original"},
+        ]
+        saved = deepcopy(evidence)
+&gt;       provider.sync_turn("", "", evidence_messages=evidence)
+E       TypeError: MnemosHermesProvider.sync_turn() got an unexpected keyword argument 'evidence_messages'
+
+tests\test_hermes_memory_evidence.py:66: TypeError</failure></testcase><testcase classname="tests.test_hermes_memory_evidence" name="test_invalid_evidence_fails_before_any_enqueue[evidence0]" time="0.072"><failure message="TypeError: MnemosHermesProvider.sync_turn() got an unexpected keyword argument 'evidence_messages'">tmp_path = WindowsPath('D:/WindowsTemp/pytest-of-Ant/pytest-4358/test_invalid_evidence_fails_be0')
+evidence = {}
+
+    @pytest.mark.parametrize("evidence", [
+        {}, "invalid", [None],
+        [{"role": "user", "content": "No native identity"}],
+        [{"role": "user", "content": "Wrong marker", "_row_id": 1,
+          "_memory_evidence_kind": "derived_summary"}],
+        [{"role": "user", "content": "Unknown marker", "_row_id": 1,
+          "_memory_evidence_kind": "unknown"}],
+    ])
+    def test_invalid_evidence_fails_before_any_enqueue(tmp_path, evidence):
+        provider, client = setup(tmp_path)
+        with pytest.raises(ValueError):
+&gt;           provider.sync_turn("Callback must not substitute", "", evidence_messages=evidence)
+E           TypeError: MnemosHermesProvider.sync_turn() got an unexpected keyword argument 'evidence_messages'
+
+tests\test_hermes_memory_evidence.py:90: TypeError</failure></testcase><testcase classname="tests.test_hermes_memory_evidence" name="test_invalid_evidence_fails_before_any_enqueue[invalid]" time="0.071"><failure message="TypeError: MnemosHermesProvider.sync_turn() got an unexpected keyword argument 'evidence_messages'">tmp_path = WindowsPath('D:/WindowsTemp/pytest-of-Ant/pytest-4358/test_invalid_evidence_fails_be1')
+evidence = 'invalid'
+
+    @pytest.mark.parametrize("evidence", [
+        {}, "invalid", [None],
+        [{"role": "user", "content": "No native identity"}],
+        [{"role": "user", "content": "Wrong marker", "_row_id": 1,
+          "_memory_evidence_kind": "derived_summary"}],
+        [{"role": "user", "content": "Unknown marker", "_row_id": 1,
+          "_memory_evidence_kind": "unknown"}],
+    ])
+    def test_invalid_evidence_fails_before_any_enqueue(tmp_path, evidence):
+        provider, client = setup(tmp_path)
+        with pytest.raises(ValueError):
+&gt;           provider.sync_turn("Callback must not substitute", "", evidence_messages=evidence)
+E           TypeError: MnemosHermesProvider.sync_turn() got an unexpected keyword argument 'evidence_messages'
+
+tests\test_hermes_memory_evidence.py:90: TypeError</failure></testcase><testcase classname="tests.test_hermes_memory_evidence" name="test_invalid_evidence_fails_before_any_enqueue[evidence2]" time="0.075"><failure message="TypeError: MnemosHermesProvider.sync_turn() got an unexpected keyword argument 'evidence_messages'">tmp_path = WindowsPath('D:/WindowsTemp/pytest-of-Ant/pytest-4358/test_invalid_evidence_fails_be2')
+evidence = [None]
+
+    @pytest.mark.parametrize("evidence", [
+        {}, "invalid", [None],
+        [{"role": "user", "content": "No native identity"}],
+        [{"role": "user", "content": "Wrong marker", "_row_id": 1,
+          "_memory_evidence_kind": "derived_summary"}],
+        [{"role": "user", "content": "Unknown marker", "_row_id": 1,
+          "_memory_evidence_kind": "unknown"}],
+    ])
+    def test_invalid_evidence_fails_before_any_enqueue(tmp_path, evidence):
+        provider, client = setup(tmp_path)
+        with pytest.raises(ValueError):
+&gt;           provider.sync_turn("Callback must not substitute", "", evidence_messages=evidence)
+E           TypeError: MnemosHermesProvider.sync_turn() got an unexpected keyword argument 'evidence_messages'
+
+tests\test_hermes_memory_evidence.py:90: TypeError</failure></testcase><testcase classname="tests.test_hermes_memory_evidence" name="test_invalid_evidence_fails_before_any_enqueue[evidence3]" time="0.073"><failure message="TypeError: MnemosHermesProvider.sync_turn() got an unexpected keyword argument 'evidence_messages'">tmp_path = WindowsPath('D:/WindowsTemp/pytest-of-Ant/pytest-4358/test_invalid_evidence_fails_be3')
+evidence = [{'role': 'user', 'content': 'No native identity'}]
+
+    @pytest.mark.parametrize("evidence", [
+        {}, "invalid", [None],
+        [{"role": "user", "content": "No native identity"}],
+        [{"role": "user", "content": "Wrong marker", "_row_id": 1,
+          "_memory_evidence_kind": "derived_summary"}],
+        [{"role": "user", "content": "Unknown marker", "_row_id": 1,
+          "_memory_evidence_kind": "unknown"}],
+    ])
+    def test_invalid_evidence_fails_before_any_enqueue(tmp_path, evidence):
+        provider, client = setup(tmp_path)
+        with pytest.raises(ValueError):
+&gt;           provider.sync_turn("Callback must not substitute", "", evidence_messages=evidence)
+E           TypeError: MnemosHermesProvider.sync_turn() got an unexpected keyword argument 'evidence_messages'
+
+tests\test_hermes_memory_evidence.py:90: TypeError</failure></testcase><testcase classname="tests.test_hermes_memory_evidence" name="test_invalid_evidence_fails_before_any_enqueue[evidence4]" time="0.075"><failure message="TypeError: MnemosHermesProvider.sync_turn() got an unexpected keyword argument 'evidence_messages'">tmp_path = WindowsPath('D:/WindowsTemp/pytest-of-Ant/pytest-4358/test_invalid_evidence_fails_be4')
+evidence = [{'role': 'user', 'content': 'Wrong marker', '_row_id': 1, '_memory_evidence_kind': 'derived_summary'}]
+
+    @pytest.mark.parametrize("evidence", [
+        {}, "invalid", [None],
+        [{"role": "user", "content": "No native identity"}],
+        [{"role": "user", "content": "Wrong marker", "_row_id": 1,
+          "_memory_evidence_kind": "derived_summary"}],
+        [{"role": "user", "content": "Unknown marker", "_row_id": 1,
+          "_memory_evidence_kind": "unknown"}],
+    ])
+    def test_invalid_evidence_fails_before_any_enqueue(tmp_path, evidence):
+        provider, client = setup(tmp_path)
+        with pytest.raises(ValueError):
+&gt;           provider.sync_turn("Callback must not substitute", "", evidence_messages=evidence)
+E           TypeError: MnemosHermesProvider.sync_turn() got an unexpected keyword argument 'evidence_messages'
+
+tests\test_hermes_memory_evidence.py:90: TypeError</failure></testcase><testcase classname="tests.test_hermes_memory_evidence" name="test_invalid_evidence_fails_before_any_enqueue[evidence5]" time="0.072"><failure message="TypeError: MnemosHermesProvider.sync_turn() got an unexpected keyword argument 'evidence_messages'">tmp_path = WindowsPath('D:/WindowsTemp/pytest-of-Ant/pytest-4358/test_invalid_evidence_fails_be5')
+evidence = [{'role': 'user', 'content': 'Unknown marker', '_row_id': 1, '_memory_evidence_kind': 'unknown'}]
+
+    @pytest.mark.parametrize("evidence", [
+        {}, "invalid", [None],
+        [{"role": "user", "content": "No native identity"}],
+        [{"role": "user", "content": "Wrong marker", "_row_id": 1,
+          "_memory_evidence_kind": "derived_summary"}],
+        [{"role": "user", "content": "Unknown marker", "_row_id": 1,
+          "_memory_evidence_kind": "unknown"}],
+    ])
+    def test_invalid_evidence_fails_before_any_enqueue(tmp_path, evidence):
+        provider, client = setup(tmp_path)
+        with pytest.raises(ValueError):
+&gt;           provider.sync_turn("Callback must not substitute", "", evidence_messages=evidence)
+E           TypeError: MnemosHermesProvider.sync_turn() got an unexpected keyword argument 'evidence_messages'
+
+tests\test_hermes_memory_evidence.py:90: TypeError</failure></testcase><testcase classname="tests.test_hermes_memory_evidence" name="test_distinct_evidence_components_cannot_reuse_one_native_id" time="0.096"><failure message="TypeError: MnemosHermesProvider.sync_turn() got an unexpected keyword argument 'evidence_messages'">tmp_path = WindowsPath('D:/WindowsTemp/pytest-of-Ant/pytest-4358/test_distinct_evidence_compone0')
+
+    def test_distinct_evidence_components_cannot_reuse_one_native_id(tmp_path):
+        provider, client = setup(tmp_path)
+        evidence = [
+            {"role": "assistant", "content": "Derived", "_row_id": 7, "_compressed_summary": True},
+            {"role": "user", "content": "Genuine", "_row_id": 7},
+        ]
+        with pytest.raises(ValueError, match="unique"):
+&gt;           provider.sync_turn("", "", evidence_messages=evidence)
+E           TypeError: MnemosHermesProvider.sync_turn() got an unexpected keyword argument 'evidence_messages'
+
+tests\test_hermes_memory_evidence.py:102: TypeError</failure></testcase></testsuite></testsuites>

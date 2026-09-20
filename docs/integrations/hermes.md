@@ -82,6 +82,25 @@ Malformed or duplicate row IDs reject the snapshot. Partially identified
 snapshots are retained as provisional evidence, ineligible for fact extraction,
 with a `partial_native_identity` diagnostic.
 
+The adapter advertises `memory_evidence_api_version = 1` for compatible
+hosts. Such a host can pass `evidence_messages` to `sync_turn` and
+`on_session_end`, separately from the model-facing `messages`. The host must
+snapshot durable evidence after database writes and before queued callbacks.
+An explicit empty list is authoritative: it captures nothing and never falls
+back to callback text or the repaired model transcript. Omitting the keyword
+retains the existing host contract.
+
+Evidence input must be a list of message records. Captured user/assistant
+entries require unique positive native `_row_id` values, with validated
+`_memory_origin` for copied rows and boolean `_compressed_summary` markers.
+If `_memory_evidence_kind` is supplied, it must be `retained_original` or
+`derived_summary` and agree with the summary marker. Summaries remain
+capture-only; a summary and genuine user turn cannot share one evidence ID.
+The host must preserve their distinct origins through later compaction.
+Malformed evidence fails before any capture is queued. This adapter contract
+does not establish complete host-side compaction support; that integration
+remains under validation in an isolated checkout.
+
 Callbacks with no native row IDs retain the older cumulative-prefix identity.
 Appending later messages leaves those prior identities unchanged; repeated
 identical messages at different positions remain distinct. That fallback has

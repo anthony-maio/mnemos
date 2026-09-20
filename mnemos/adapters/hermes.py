@@ -148,6 +148,7 @@ class MnemosHermesProvider(_HermesMemoryProvider):  # type: ignore[misc]  # Opti
     """Hermes MemoryProvider backed by the configured local Mnemos service."""
 
     pre_compress_checkpoint_api_version = 2
+    memory_evidence_api_version = 1
 
     def __init__(
         self,
@@ -410,6 +411,25 @@ class MnemosHermesProvider(_HermesMemoryProvider):  # type: ignore[misc]  # Opti
             raise ValueError("Hermes origin cannot redirect capture outside the active scope")
         return canonical
 
+    @classmethod
+    def _memory_evidence_entries(cls, messages: List[Dict[str, Any]]) -> list[TranscriptEntry]:
+        if not isinstance(messages, list) or any(
+            not isinstance(message, Mapping) for message in messages
+        ):
+            raise ValueError("Hermes memory evidence must be a list of message records")
+        for message in messages:
+            kind = message.get("_memory_evidence_kind")
+            if "_memory_evidence_kind" in message and (
+                not isinstance(kind, str)
+                or kind not in {"retained_original", "derived_summary"}
+                or (kind == "derived_summary") != (message.get("_compressed_summary") is True)
+            ):
+                raise ValueError("Hermes memory evidence classification is inconsistent")
+        selected = cls._transcript_entries(messages)
+        if any(entry.row_id is None for entry in selected):
+            raise ValueError("Hermes memory evidence requires durable native row identities")
+        return selected
+
     def _transcript_payloads(
         self,
         context: ScopeContext,
@@ -603,6 +623,7 @@ class MnemosHermesProvider(_HermesMemoryProvider):  # type: ignore[misc]  # Opti
         *,
         session_id: str = "",
         messages: Optional[List[Dict[str, Any]]] = None,
+        evidence_messages: Optional[List[Dict[str, Any]]] = None,
         turn_author: Optional[Dict[str, Any]] = None,
     ) -> None:
         del turn_author
@@ -610,8 +631,12 @@ class MnemosHermesProvider(_HermesMemoryProvider):  # type: ignore[misc]  # Opti
             context = self._current_context(session_id)
         except Exception:
             return
-        selected = self._transcript_entries(messages or [])
-        provisional = not selected
+        selected = (
+            self._memory_evidence_entries(evidence_messages)
+            if evidence_messages is not None
+            else self._transcript_entries(messages or [])
+        )
+        provisional = not selected and evidence_messages is None
         if provisional:
             selected = [
                 TranscriptEntry("user", _text(user_content)),
@@ -626,12 +651,18 @@ class MnemosHermesProvider(_HermesMemoryProvider):  # type: ignore[misc]  # Opti
             self._transcript_payloads(context, selected, provisional=provisional)
         )
 
-    def on_session_end(self, messages: List[Dict[str, Any]]) -> None:
+    def on_session_end(
+        self,
+        messages: List[Dict[str, Any]],
+        *,
+        evidence_messages: Optional[List[Dict[str, Any]]] = None,
+    ) -> None:
         self.sync_turn(
             "",
             "",
             session_id=self.session_id,
             messages=messages,
+            evidence_messages=evidence_messages,
         )
         self._flush(timeout=3.0)
 

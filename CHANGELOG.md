@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- Compatible Hermes hosts can supply a separate durable evidence snapshot for ordinary turns and session end. An explicitly empty snapshot never falls back to model-facing text. The adapter validates native identity and summary classification before enqueueing; complete host compaction integration remains under validation.
+
 - The Python affective classifier now honors an explicit model selection on supported providers without changing the shared provider's model. Omitted selection inherits the shared model; unsupported overrides and blank names fail visibly. Saved configurations containing the formerly ignored `llama3` value now request that model; omit it to inherit. See docs/configuration/affective-classifier-model.md.
 
 - Hermes capture accepts validated original-message provenance from compatible hosts, preserving identity and forget suppression across copied rows. Marked compression summaries remain capture-only evidence; changing a native carrier's classification cannot create another observation. Complete host-side provenance support remains under validation.
