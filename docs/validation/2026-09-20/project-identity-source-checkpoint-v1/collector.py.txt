@@ -1,0 +1,40 @@
+from pathlib import Path
+import hashlib,json,shutil
+repo=Path.cwd()
+src=Path('C:/Users/Ant/AppData/Local/Temp/mnemos-package-checks-project-identity-v1')
+v=json.loads((src/'verification.json').read_bytes())
+assert v['status']=='passed' and v['source_commit']=='cc940ac5bb8826e5e68528812fc86f0ad7154a4e'
+assert len(v['checks'])==6 and all(c['exit_code']==0 for c in v['checks'])
+assert v['checks'][0]['counts']=={'tests':2038,'failures':0,'errors':0,'skipped':4}
+sha=lambda p:hashlib.sha256(p.read_bytes()).hexdigest()
+assert sha(repo/'.venv/final_checkpoint_checks_v3.py')==v['runner_sha256']
+for a in v['artifacts']:
+ p=Path(a['file']); assert sha(p)==a['sha256'] and p.stat().st_size==a['bytes']
+out=repo/'docs/validation/2026-09-20/project-identity-source-checkpoint-v1'
+out.mkdir(exist_ok=False)
+(out/'.gitattributes').write_bytes(b'** -text -whitespace\n')
+for p in src.iterdir():
+ if p.is_file() and p.suffix in {'.json','.xml','.log'}: shutil.copyfile(p,out/p.name)
+shutil.copyfile(repo/'.venv/final_checkpoint_checks_v3.py',out/'runner.py.txt')
+shutil.copyfile(__file__,out/'collector.py.txt')
+(out/'README.md').write_text("""# Project identity source/package checkpoint
+
+Frozen checkpoint cc940ac passes 2,034 source tests with four skips, formatting,
+Python 3.10 compatibility type checking, JavaScript syntax, wheel/sdist build
+and twine metadata checks. All six checks have exit code zero. Source, runner,
+external inputs, individual JUnit outcomes and package hashes are preserved.
+
+Git lookup retries once and does not silently assign a folder identity to a
+repository after discovery failure. Inherited Git repository path overrides
+cannot select another project's identity. Tests cover ordinary directories,
+worktrees, unrelated clones, bare repositories, malformed output, persistent
+failure, recovery after transient failure and a dangling Git marker.
+
+Installed verification is separate. The earlier bee8357 installed MCP failure
+is preserved. This checkpoint does not close real-model extraction quality,
+native-host recovery, full-module benefit or the daily-use pilot.
+""")
+
+files={p.name:{'bytes':p.stat().st_size,'sha256':sha(p)} for p in sorted(out.iterdir()) if p.is_file()}
+(out/'evidence-index.json').write_text(json.dumps({'files':files},indent=2)+'\n')
+print(json.dumps({'archive':str(out),'files':len(files)}))
