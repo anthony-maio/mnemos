@@ -69,21 +69,22 @@ def _registry_for_dataset(dataset: HeldoutDataset, root: Path) -> ScopeRegistry:
     }
     workspace_profiles: dict[str, str] = {}
     memberships: dict[str, set[str]] = {}
+
+    def bind_profile(identities: dict[str, str], kind: str, identity: str, profile: str) -> None:
+        previous = identities.get(identity)
+        if previous is not None and previous != profile:
+            raise ValueError(f"{kind} {identity!r} has conflicting profiles")
+        identities[identity] = profile
+
     for session in dataset.heldout_sessions:
         for target in (*session.events, *session.queries, *session.state_pairs):
-            target_project = getattr(target, "target_project_id", None)
+            target_project = getattr(target, "target_project_id", None) or session.project_id
             target_profile = getattr(target, "target_user_profile_id", None) or profile_id
             target_workspace = getattr(target, "target_workspace_id", None)
-            if target_workspace and target_project is None:
-                # Workspace canaries inherit the session project when the
-                # dataset intentionally omits a separate project target.
-                target_project = session.project_id
-            if target_project:
-                project_profiles.setdefault(target_project, target_profile)
+            bind_profile(project_profiles, "project", target_project, target_profile)
             if target_workspace:
-                workspace_profiles.setdefault(target_workspace, target_profile)
-                if target_project:
-                    memberships.setdefault(target_project, set()).add(target_workspace)
+                bind_profile(workspace_profiles, "workspace", target_workspace, target_profile)
+                memberships.setdefault(target_project, set()).add(target_workspace)
     projects = {
         project_id: ProjectIdentity(
             id=project_id,
@@ -131,6 +132,19 @@ def run_heldout(
         raise ValueError("held-out dataset does not meet the 200-session minimum")
     if repetitions < 3:
         raise ValueError("T18 requires at least three repetitions")
+    registry = _registry_for_dataset(dataset, (root or Path.cwd()).resolve())
+    known_profiles = {profile.name for profile in DEFAULT_PROFILES}
+    requested_profiles = set(profile_names or ())
+    unknown_profiles = requested_profiles - known_profiles
+    if unknown_profiles:
+        raise ValueError("unknown evaluation profiles: " + ", ".join(sorted(unknown_profiles)))
+    selected = tuple(
+        profile
+        for profile in DEFAULT_PROFILES
+        if profile_names is None or profile.name in requested_profiles
+    )
+    if not selected:
+        raise ValueError("no recognized evaluation profiles were selected")
     challenge_path = module_challenge_path
     challenge_dataset = (
         load_module_challenge_dataset(challenge_path) if challenge_path is not None else None
@@ -162,19 +176,6 @@ def run_heldout(
     )
     output_dir.mkdir(parents=True, exist_ok=True)
     work_dir.mkdir(parents=True, exist_ok=True)
-    registry = _registry_for_dataset(dataset, (root or Path.cwd()).resolve())
-    known_profiles = {profile.name for profile in DEFAULT_PROFILES}
-    requested_profiles = set(profile_names or ())
-    unknown_profiles = requested_profiles - known_profiles
-    if unknown_profiles:
-        raise ValueError("unknown evaluation profiles: " + ", ".join(sorted(unknown_profiles)))
-    selected = tuple(
-        profile
-        for profile in DEFAULT_PROFILES
-        if profile_names is None or profile.name in requested_profiles
-    )
-    if not selected:
-        raise ValueError("no recognized evaluation profiles were selected")
     reports: dict[str, dict[str, Any]] = {}
     for profile in selected:
         config = ExperimentConfig(

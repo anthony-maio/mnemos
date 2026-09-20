@@ -24,9 +24,10 @@ lifecycle operations. Query-based `critical_retrieval` is reported separately.
 Extraction precision is judged per actual runtime fact output. A result is
 accepted only when its text exactly matches a supported frozen fact, its stored
 evidence resolves to the recorded user event, and its profile and scope target
-match. This is an exact-match supported-precision proxy. Paraphrases are
-unjudged by this proxy; empty output, assistant claims, and generic substring
-matches are rejected. Model provenance is verified only with exact model names and
+match. This is an exact-match supported-precision proxy. Unmatched text,
+including valid paraphrases, counts as false in this proxy; it is not a semantic
+factual-precision judgment. Empty output, assistant claims, and generic substring
+matches are also rejected. Model provenance is verified only with exact model names and
 64-character digests from the reachable server metadata, plus observed
 provider callbacks. Ollama extraction requests pass the typed response JSON
 schema through its `format` field. Providers without advertised schema support
