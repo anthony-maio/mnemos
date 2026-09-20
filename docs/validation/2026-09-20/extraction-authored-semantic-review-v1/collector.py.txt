@@ -1,0 +1,76 @@
+from pathlib import Path
+import hashlib
+import json
+import shutil
+
+repo = Path(__file__).resolve().parents[1]
+sha = lambda p: hashlib.sha256(p.read_bytes()).hexdigest()
+review_path = repo / '.venv/extraction_holdout_blind_semantic_review_v1.json'
+blind_path = repo / '.venv/extraction_holdout_blind_review_v1.json'
+review = json.loads(review_path.read_bytes())
+assert review['source_artifact']['sha256'] == sha(blind_path)
+terminal = repo / 'docs/validation/2026-09-20/extraction-authored-holdout-terminal-v1'
+rows = json.loads((terminal / 'proposal-review.json').read_bytes())
+cases = json.loads((terminal / 'extraction_holdout_authored_v1.json').read_bytes())['cases']
+mapping = {'A': 'production', 'B': 'history_only'}
+assert len(review['cases']) == 20 and len({c['case_id'] for c in review['cases']}) == 20
+for c in review['cases']:
+    assert {r['arm'] for r in c['arm_reviews']} == {'A', 'B'}
+    for r in c['arm_reviews']:
+        actual = next(x for x in rows if x['case_id'] == c['case_id'] and x['arm'] == mapping[r['arm']])
+        assert actual['status'] == r['runtime_status']
+blind = json.loads(blind_path.read_bytes())
+for c in blind['cases']:
+    for r in c['observations']:
+        actual = next(x for x in rows if x['case_id'] == c['case']['id'] and x['arm'] == mapping[r['arm']])
+        assert r['proposals'] == actual['proposals'] and r['error'] == actual['error']
+out = repo / 'docs/validation/2026-09-20/extraction-authored-semantic-review-v1'
+out.mkdir(exist_ok=False)
+(out / '.gitattributes').write_bytes(b'** -text -whitespace\n')
+for path in [review_path, blind_path, repo / '.venv/extraction_holdout_blind_semantic_review_v1.before_metadata_fix.json']:
+    shutil.copyfile(path, out / path.name)
+(out / 'terminal-N10-supplement.json').write_text(json.dumps({
+    'case': next(c for c in cases if c['id'] == 'N10'),
+    'observations': [{**r, 'arm': next(k for k, v in mapping.items() if v == r['arm'])}
+                     for r in rows if r['case_id'] == 'N10']}, indent=2) + '\n')
+(out / 'binding.json').write_text(json.dumps({'arm_mapping_revealed_after_review': mapping,
+    'terminal_proposals_sha256': sha(terminal / 'proposal-review.json'),
+    'blind_input_sha256': sha(blind_path), 'semantic_review_sha256': sha(review_path),
+    'all_runtime_statuses_and_supplied_proposals_match_terminal_record': True}, indent=2) + '\n')
+shutil.copyfile(__file__, out / 'collector.py.txt')
+(out / 'README.md').write_text('''# Semantic review with prompt identities concealed
+
+The review received the authored cases, pre-execution ambiguity notes, and
+final proposals under arm labels A and B. It did not inspect the prompts or
+implementation. N10 arrived as a terminal supplement after the first 19 pairs.
+The supplied proposals and runtime states match the terminal record. The
+mapping is disclosed here after review: A is production; B is history-only.
+
+Production omits the explicitly retained open consideration in P05 and loses
+required distinctions in P03, P06, P07, and P10. The candidate preserves those
+distinctions where it returns a proposal, but fails at runtime on P03. Both arms
+abstain on N01-N09. Both preserve N10's rejected requirement, which is acceptable
+under the negative-state interpretation documented before execution.
+
+P07 remains a qualified assistant report with absent earlier user evidence,
+not independent proof of an authoritative user requirement. The production
+proposal loses that assistant-report provenance; the candidate preserves it.
+The review's partial/support labels are authored semantic judgments, not
+independent real-world ground truth or an aggregate accuracy benchmark.
+
+The original review had the authored dataset hash in a field naming the blind
+input. Its bytes are preserved before a metadata-only correction. The corrected
+record separates the actual blind-input hash from the authored-case hash and
+clarifies the terminal N10 supplement. Classifications are unchanged.
+
+These results favor the candidate's attribution and qualification behavior in
+the observed cases, but do not justify adoption while its runtime failure and
+broader quality gates remain unresolved. A full 40-call follow-up changes only
+think from true to false, with the same cases, prompts, source, and budgets.
+That follow-up is a diagnostic on already executed cases, not unseen evidence.
+No production prompt or live configuration has changed.
+''', encoding='utf-8')
+files = {p.relative_to(out).as_posix(): {'bytes': p.stat().st_size, 'sha256': sha(p)}
+         for p in sorted(out.rglob('*')) if p.is_file()}
+(out / 'evidence-index.json').write_text(json.dumps({'files': files}, indent=2) + '\n')
+print(json.dumps({'archive': str(out), 'files': len(files)}))

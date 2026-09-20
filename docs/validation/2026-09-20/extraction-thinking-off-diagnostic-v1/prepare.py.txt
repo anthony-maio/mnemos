@@ -1,0 +1,43 @@
+from pathlib import Path
+from datetime import datetime, timezone
+from urllib.request import urlopen
+import hashlib
+import json
+import shutil
+
+repo = Path(__file__).resolve().parents[1]
+prior = Path('C:/Users/Ant/AppData/Local/Temp/mnemos-extraction-authored-holdout-v1')
+out = Path('C:/Users/Ant/AppData/Local/Temp/mnemos-extraction-thinking-off-v1')
+sha = lambda p: hashlib.sha256(p.read_bytes()).hexdigest()
+state = json.loads((prior / 'status.json').read_bytes())
+assert state['status'] == 'completed' and state['processed'] == 40
+assert sha(prior / 'observations.jsonl') == state['observations_sha256']
+prep = json.loads((prior / 'preparation.json').read_bytes())
+for name, digest in prep['files'].items():
+    assert sha(prior / name) == digest
+inputs = json.loads((prior / 'inputs.json').read_bytes())
+before = dict(inputs)
+assert inputs['think'] is True
+inputs['think'] = False
+assert [k for k in before if before[k] != inputs[k]] == ['think']
+with urlopen(inputs['endpoint'] + '/api/tags', timeout=10) as response:
+    model = next(m for m in json.loads(response.read())['models'] if m['name'] == inputs['model'])
+assert model['digest'] == prep['model']['digest']
+out.mkdir(exist_ok=False)
+(out / 'inputs.json').write_text(json.dumps(inputs, indent=2) + '\n')
+for name in ['runner.py', 'extraction_holdout_authored_v1.json', 'extraction_holdout_rubric_review_v1.json']:
+    shutil.copyfile(prior / name, out / name)
+shutil.copyfile(__file__, out / 'prepare.py.txt')
+(out / 'diagnostic-contract.json').write_text(json.dumps({
+    'comparison': 'Previously executed cases reused for a single-setting diagnostic, not an unseen holdout.',
+    'changed_setting': {'think': {'before': True, 'after': False}},
+    'unchanged': 'Source, provider, prompts, schemas, case order, identities, model digest, temperature, token budget, timeout, repetitions, and scoring qualifications.',
+    'calls': 40, 'selective_retry': False, 'original_observations_sha256': state['observations_sha256'],
+    'semantic_acceptance': 'Review every case using the original required meaning and forbidden overclaims. Preserve runtime errors and all results. No aggregate binary score.'
+}, indent=2) + '\n')
+manifest = {'prepared_at': datetime.now(timezone.utc).isoformat(), 'source_commit': prep['source_commit'],
+            'source_files': prep['source_files'], 'model': model,
+            'parent_preparation_sha256': sha(prior / 'preparation.json'),
+            'files': {p.name: sha(p) for p in sorted(out.iterdir())}}
+(out / 'preparation.json').write_text(json.dumps(manifest, indent=2) + '\n')
+print(json.dumps({'root': str(out), 'calls': 40, 'changed_setting': 'think=False', 'started': False}))

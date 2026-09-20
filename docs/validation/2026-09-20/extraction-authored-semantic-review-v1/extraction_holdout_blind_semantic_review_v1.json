@@ -1,0 +1,221 @@
+{
+  "schema_version": "extraction_holdout_blind_semantic_review_v1",
+  "source_artifact": {
+    "path": "D:/Development/mnemos/mnemos/.worktrees/functional-local-memory/.venv/extraction_holdout_blind_review_v1.json",
+    "sha256": "4468dd1b562425d7a44ed79b92e6bae2fb47073cfed906ea69eda8b67cc9fe2f",
+    "authored_case_sha256": "62b3061e0066fc9fe3d583032e6c88ac40fde6310320181719da09d7aa43af77",
+    "complete_pair_scope": "Original interim complete pairs P01-P10 and N01-N09, plus terminal N10 supplement supplied after the interim snapshot",
+    "review_mode": "blind semantic review of supplied arms; arm identity was not inferred",
+    "synthetic_evaluation": true
+  },
+  "classification_legend": {
+    "supported": "The proposal preserves the required meaning, source or uncertainty status, and does not make a forbidden overclaim.",
+    "partial": "The proposal preserves some required meaning but omits or weakens a material distinction, attribution, correction, scope, or uncertainty condition.",
+    "unsupported": "The proposal is empty where durable meaning was required, or it asserts meaning that conflicts with the authored criteria.",
+    "runtime_failure": "The arm did not produce a proposal that can be semantically reviewed because execution returned an error."
+  },
+  "ambiguity_register": {
+    "P07": {
+      "label": "provenance_qualified_acceptance",
+      "status": "reviewed_with_ambiguity",
+      "decision": "A provenance-qualified report may be accepted as a report of the earlier user instruction. It is not independently verified as an authoritative current requirement because the cited earlier user evidence is absent from this case."
+    },
+    "N10": {
+      "label": "negative_or_rejected_state",
+      "status": "reviewed_with_ambiguity",
+      "decision": "Under the authored acceptance interpretation, the rejected offline-sync proposal and current exclusion are durable negative or historical state. A positive-facts-only policy could instead justify abstention; the proposal must never be stored as an adopted requirement."
+    }
+  },
+  "cases": [
+    {
+      "case_id": "P01",
+      "expected_decision": "facts",
+      "arm_reviews": [
+        {"arm": "A", "runtime_status": "runtime_valid", "classification": "supported", "rationale": "Preserves the scoped concise-plan, decision-first, and short-paragraph preferences without turning them into an absolute rule."},
+        {"arm": "B", "runtime_status": "runtime_valid", "classification": "supported", "rationale": "Preserves the scoped concise-plan, decision-first, and short-paragraph preferences without turning them into an absolute rule."}
+      ]
+    },
+    {
+      "case_id": "P02",
+      "expected_decision": "facts",
+      "arm_reviews": [
+        {"arm": "A", "runtime_status": "runtime_valid", "classification": "supported", "rationale": "Preserves both publication gates and the instruction that an unrun gate remains open; it does not claim either gate passed or that publication occurred."},
+        {"arm": "B", "runtime_status": "runtime_valid", "classification": "supported", "rationale": "Preserves both publication gates and the instruction that an unrun gate remains open; it does not claim either gate passed or that publication occurred."}
+      ]
+    },
+    {
+      "case_id": "P03",
+      "expected_decision": "facts",
+      "arm_reviews": [
+        {"arm": "A", "runtime_status": "runtime_valid", "classification": "partial", "rationale": "Correctly retains PDF as the target, but omits the explicit correction and the superseded DOCX state, so it does not preserve the full obsolete-correction meaning."},
+        {"arm": "B", "runtime_status": "error", "classification": "runtime_failure", "rationale": "The supplied execution error was an empty final response; no proposal was produced for semantic review."}
+      ]
+    },
+    {
+      "case_id": "P04",
+      "expected_decision": "facts",
+      "arm_reviews": [
+        {"arm": "A", "runtime_status": "runtime_valid", "classification": "supported", "rationale": "Retains the date, QA-lead attribution, sample-fixture limitation, and untested recovery path, without converting the historical report into a current guarantee."},
+        {"arm": "B", "runtime_status": "runtime_valid", "classification": "supported", "rationale": "Retains the date, QA-lead attribution, sample-fixture limitation, and untested recovery path, without converting the historical report into a current guarantee."}
+      ]
+    },
+    {
+      "case_id": "P05",
+      "expected_decision": "facts",
+      "arm_reviews": [
+        {"arm": "A", "runtime_status": "runtime_valid", "classification": "unsupported", "rationale": "Produces no proposal even though the user explicitly asked to preserve the unresolved consideration and its prohibition against recording an adopted architecture decision."},
+        {"arm": "B", "runtime_status": "runtime_valid", "classification": "supported", "rationale": "Preserves the local-database consideration, unresolved status, and explicit prohibition on treating it as an adopted architecture decision. The added timestamp does not change the meaning."}
+      ]
+    },
+    {
+      "case_id": "P06",
+      "expected_decision": "facts",
+      "arm_reviews": [
+        {"arm": "A", "runtime_status": "runtime_valid", "classification": "partial", "rationale": "Correctly preserves the current evaluation-build prohibition and its current scope, but omits the qualification that a later production build is only a possible different context."},
+        {"arm": "B", "runtime_status": "runtime_valid", "classification": "supported", "rationale": "Preserves the evaluation-build prohibition, current scope, and possible later-production distinction without treating the later context as an approved change."}
+      ]
+    },
+    {
+      "case_id": "P07",
+      "expected_decision": "facts",
+      "ambiguity_label": "provenance_qualified_acceptance",
+      "arm_reviews": [
+        {"arm": "A", "runtime_status": "runtime_valid", "classification": "partial", "rationale": "Retains the preservation requirement but drops the fact that it is an attributed report of an earlier user instruction, leaving source provenance and the report-versus-new-preference distinction unstated."},
+        {"arm": "B", "runtime_status": "runtime_valid", "classification": "supported", "rationale": "Explicitly reports the requirement as the user's earlier stated requirement and does not present it as a new assistant preference. Acceptance remains provenance-qualified because the earlier user evidence is absent."}
+      ]
+    },
+    {
+      "case_id": "P08",
+      "expected_decision": "facts",
+      "arm_reviews": [
+        {"arm": "A", "runtime_status": "runtime_valid", "classification": "supported", "rationale": "Keeps the twelve-hour rule inside the fictional manuscript setting and preserves the real durable requirement for consistent glossary definition in every chapter."},
+        {"arm": "B", "runtime_status": "runtime_valid", "classification": "supported", "rationale": "Keeps the twelve-hour rule inside the fictional manuscript setting and preserves the real durable requirement for consistent glossary definition in every chapter."}
+      ]
+    },
+    {
+      "case_id": "P09",
+      "expected_decision": "facts",
+      "arm_reviews": [
+        {"arm": "A", "runtime_status": "runtime_valid", "classification": "supported", "rationale": "Preserves that a schema bump may be required, that it is unconfirmed, and that it remains unconfirmed until migration review."},
+        {"arm": "B", "runtime_status": "runtime_valid", "classification": "supported", "rationale": "Preserves that a schema bump may be required, that it is unconfirmed, and that it remains unconfirmed until migration review. The added attribution date is not an overclaim."}
+      ]
+    },
+    {
+      "case_id": "P10",
+      "expected_decision": "facts",
+      "arm_reviews": [
+        {"arm": "A", "runtime_status": "runtime_valid", "classification": "partial", "rationale": "Preserves batch-only capability and exclusion of streaming from the release, but omits the explicit correction that the earlier streaming-support claim was wrong."},
+        {"arm": "B", "runtime_status": "runtime_valid", "classification": "supported", "rationale": "Preserves the correction, current batch-only capability, and release exclusion of streaming without overclaiming support."}
+      ]
+    },
+    {
+      "case_id": "N01",
+      "expected_decision": "no_durable_facts",
+      "arm_reviews": [
+        {"arm": "A", "runtime_status": "runtime_valid", "classification": "supported", "rationale": "Abstains from storing an option that the user explicitly presented as a question rather than a decision."},
+        {"arm": "B", "runtime_status": "runtime_valid", "classification": "supported", "rationale": "Abstains from storing an option that the user explicitly presented as a question rather than a decision."}
+      ]
+    },
+    {
+      "case_id": "N02",
+      "expected_decision": "no_durable_facts",
+      "ambiguity_label": "unresolved_speculation_without_retention_signal",
+      "arm_reviews": [
+        {"arm": "A", "runtime_status": "runtime_valid", "classification": "supported", "rationale": "Abstains from storing HTML because the user marked it as thinking aloud, undecided, and not a current requirement."},
+        {"arm": "B", "runtime_status": "runtime_valid", "classification": "supported", "rationale": "Abstains from storing HTML because the user marked it as thinking aloud, undecided, and not a current requirement."}
+      ]
+    },
+    {
+      "case_id": "N03",
+      "expected_decision": "no_durable_facts",
+      "arm_reviews": [
+        {"arm": "A", "runtime_status": "runtime_valid", "classification": "supported", "rationale": "Correctly abstains from promoting an unaccepted assistant suggestion into a user preference."},
+        {"arm": "B", "runtime_status": "runtime_valid", "classification": "supported", "rationale": "Correctly abstains from promoting an unaccepted assistant suggestion into a user preference."}
+      ]
+    },
+    {
+      "case_id": "N04",
+      "expected_decision": "no_durable_facts",
+      "arm_reviews": [
+        {"arm": "A", "runtime_status": "runtime_valid", "classification": "supported", "rationale": "Correctly abstains from extracting fictional setting content that the assistant explicitly distinguishes from real-world fact."},
+        {"arm": "B", "runtime_status": "runtime_valid", "classification": "supported", "rationale": "Correctly abstains from extracting fictional setting content that the assistant explicitly distinguishes from real-world fact."}
+      ]
+    },
+    {
+      "case_id": "N05",
+      "expected_decision": "no_durable_facts",
+      "arm_reviews": [
+        {"arm": "A", "runtime_status": "runtime_valid", "classification": "supported", "rationale": "Correctly abstains from storing quoted fictional dialogue after the user explicitly rejects treating it as a preference."},
+        {"arm": "B", "runtime_status": "runtime_valid", "classification": "supported", "rationale": "Correctly abstains from storing quoted fictional dialogue after the user explicitly rejects treating it as a preference."}
+      ]
+    },
+    {
+      "case_id": "N06",
+      "expected_decision": "no_durable_facts",
+      "arm_reviews": [
+        {"arm": "A", "runtime_status": "runtime_valid", "classification": "supported", "rationale": "Correctly abstains from recording a hypothetical overconfident example that the user explicitly says not to store."},
+        {"arm": "B", "runtime_status": "runtime_valid", "classification": "supported", "rationale": "Correctly abstains from recording a hypothetical overconfident example that the user explicitly says not to store."}
+      ]
+    },
+    {
+      "case_id": "N07",
+      "expected_decision": "no_durable_facts",
+      "arm_reviews": [
+        {"arm": "A", "runtime_status": "runtime_valid", "classification": "supported", "rationale": "Correctly abstains from treating an instruction inside untrusted quoted fixture data as an accepted user instruction."},
+        {"arm": "B", "runtime_status": "runtime_valid", "classification": "supported", "rationale": "Correctly abstains from treating an instruction inside untrusted quoted fixture data as an accepted user instruction."}
+      ]
+    },
+    {
+      "case_id": "N08",
+      "expected_decision": "no_durable_facts",
+      "arm_reviews": [
+        {"arm": "A", "runtime_status": "runtime_valid", "classification": "supported", "rationale": "Correctly follows the user's inspection-only boundary and stores nothing from the pasted benchmark prompt."},
+        {"arm": "B", "runtime_status": "runtime_valid", "classification": "supported", "rationale": "Correctly follows the user's inspection-only boundary and stores nothing from the pasted benchmark prompt."}
+      ]
+    },
+    {
+      "case_id": "N09",
+      "expected_decision": "no_durable_facts",
+      "arm_reviews": [
+        {"arm": "A", "runtime_status": "runtime_valid", "classification": "supported", "rationale": "Correctly abstains from promoting an explicitly unconfirmed assistant interpretation into durable team or user preference."},
+        {"arm": "B", "runtime_status": "runtime_valid", "classification": "supported", "rationale": "Correctly abstains from promoting an explicitly unconfirmed assistant interpretation into durable team or user preference."}
+      ]
+    },
+    {
+      "case_id": "N10",
+      "expected_decision": "no_durable_facts",
+      "ambiguity_label": "negative_or_rejected_state",
+      "arm_reviews": [
+        {"arm": "A", "runtime_status": "runtime_valid", "classification": "supported", "rationale": "Preserves that offline sync was rejected and is not a current requirement, without turning the old proposal into an adopted requirement. This is accepted under the authored negative-state interpretation; a positive-facts-only policy could abstain instead."},
+        {"arm": "B", "runtime_status": "runtime_valid", "classification": "supported", "rationale": "Preserves that offline sync was rejected and is not a current requirement, without turning the old proposal into an adopted requirement. This is accepted under the authored negative-state interpretation; a positive-facts-only policy could abstain instead."}
+      ]
+    }
+  ],
+  "summary": {
+    "complete_cases_reviewed": 20,
+    "arms_reviewed": 40,
+    "classification_counts": {
+      "supported": 34,
+      "partial": 4,
+      "unsupported": 1,
+      "runtime_failure": 1
+    },
+    "partial_cases": ["P03:A", "P06:A", "P07:A", "P10:A"],
+    "unsupported_cases": ["P05:A"],
+    "runtime_failures": ["P03:B"],
+    "concrete_differences": [
+      "P03:A and P10:A retained the current outcome but omitted the obsolete or corrected prior claim.",
+      "P05:A omitted an explicitly retained unresolved consideration; P05:B preserved it without converting it into an architecture decision.",
+      "P06:A retained the current scoped prohibition but omitted the possible later-production qualification.",
+      "P07:A omitted user attribution; P07:B preserved a provenance-qualified assistant report.",
+      "The negative cases N01-N09 all correctly abstained in both arms under the authored criteria.",
+      "N10:A and N10:B preserved the rejected offline-sync state; this is policy-dependent because a positive-facts-only memory policy could abstain."
+    ],
+    "limitations": [
+      "This is a final 20-case review assembled from the interim 19-case snapshot plus the terminal N10 supplement; it is authored synthetic material, not real-world truth.",
+      "The review uses only the supplied blind pair artifact and does not inspect prompts, code, model outputs outside the artifact, diagnostics, implementation, or production behavior.",
+      "The first 19 cases came from the interim snapshot; N10 was supplied as the terminal pair and reviewed here.",
+      "No aggregate binary accuracy is reported because it was not preregistered and would collapse materially different semantic failures."
+    ]
+  }
+}

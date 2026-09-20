@@ -1,0 +1,54 @@
+{
+  "case": {
+    "id": "N10",
+    "role": "user",
+    "content": "The old proposal says we will add offline sync, but I am quoting it to explain why it was rejected. Offline sync was not accepted and is not a current requirement.",
+    "expected_decision": "no_durable_facts",
+    "required_meaning": [],
+    "forbidden_meaning": [
+      "Offline sync is a current requirement.",
+      "The user accepted the old proposal to add offline sync."
+    ],
+    "rationale": "The user supplies historical proposal text only to explain rejection and explicitly negates acceptance and current status. The rejected proposal should not be stored as a requirement."
+  },
+  "observations": [
+    {
+      "case_id": "N10",
+      "arm": "B",
+      "repetition": 0,
+      "status": "runtime_valid",
+      "proposals": [
+        {
+          "content": "Offline sync was not accepted and is not a current requirement.",
+          "evidence_ids": [
+            "195e4129a67dba26ac2f1da32a09f55fe5494a099df01f19113f881d514b139f"
+          ],
+          "operation": "add",
+          "target_fact_id": null,
+          "expected_version": null
+        }
+      ],
+      "error_type": null,
+      "error": null
+    },
+    {
+      "case_id": "N10",
+      "arm": "A",
+      "repetition": 0,
+      "status": "runtime_valid",
+      "proposals": [
+        {
+          "content": "Offline sync was not accepted and is not a current requirement.",
+          "evidence_ids": [
+            "195e4129a67dba26ac2f1da32a09f55fe5494a099df01f19113f881d514b139f"
+          ],
+          "operation": "add",
+          "target_fact_id": null,
+          "expected_version": null
+        }
+      ],
+      "error_type": null,
+      "error": null
+    }
+  ]
+}

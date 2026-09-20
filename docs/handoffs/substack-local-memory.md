@@ -53,7 +53,17 @@ uses the same managed provider and settings for both prompt arms, with its cases
 and ambiguity review frozen before execution. The [terminal record](../validation/2026-09-20/extraction-authored-holdout-terminal-v1/README.md)
 contains all 40 calls: production has 20 runtime-valid responses; the candidate
 has 19 and one empty-response failure. No failed call was selectively rerun.
-Semantic review remains separate and pending at this checkpoint. Neither live
+The [semantic review](../validation/2026-09-20/extraction-authored-semantic-review-v1/README.md)
+concealed prompt identities and found better retained qualifications in the
+candidate's successful outputs, alongside its runtime failure. Both prompts
+abstained on N01-N09; both retained the policy-dependent rejected state in N10.
+These authored judgments are not an aggregate accuracy claim.
+
+The [thinking-disabled follow-up](../validation/2026-09-20/extraction-thinking-off-diagnostic-v1/README.md)
+completed all 40 calls but lost required memories and falsely cited unrelated
+source events for an existing control fact. Zero runtime errors did not make
+the output trustworthy. That setting is not adopted. A complete comparison
+with thinking retained and a larger token budget is pending. Neither live
 settings nor the production extraction prompt have changed. Earlier negatives remain.
 
 Two subsequent extraction diagnostics preserve additional negative evidence.

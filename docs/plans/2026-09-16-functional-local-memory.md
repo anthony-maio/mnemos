@@ -417,6 +417,14 @@ Run: `py -3.13 -m pytest -q tests/test_cross_host_contract.py tests/test_mcp_com
 
 ### T18 - Prove the contribution of all five modules
 
+The [prompt-blinded semantic review](../validation/2026-09-20/extraction-authored-semantic-review-v1/README.md)
+finds better qualification retention in the candidate's successful outputs,
+but its runtime failure remains. The [thinking-disabled diagnostic](../validation/2026-09-20/extraction-thinking-off-diagnostic-v1/README.md)
+completes 40 calls without runtime errors while losing required facts and
+attaching unrelated source events to the existing control fact. That setting
+is not adopted. A full comparison with thinking retained and max_tokens 12,288
+is pending; all other inputs and original criteria remain fixed.
+
 The [terminal authored comparison](../validation/2026-09-20/extraction-authored-holdout-terminal-v1/README.md)
 records all 40 calls. Production has 20 runtime-valid responses; the history-only
 candidate has 19 and one empty final response. Every call and the original
