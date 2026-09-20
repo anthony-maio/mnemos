@@ -162,6 +162,15 @@ availability does not establish that a native model will select every
 relevant copy or perform the deletion. Unindexed paraphrases, external
 transcripts, and Hermes' separate built-in store remain outside this workflow.
 
+If selected facts require source events that were not selected, the service
+rejects the operation with HTTP 409 and
+`related_forget_source_selection_required`. Hermes receives `status: rejected`,
+`committed: false`, and a message directing it to review the required sources.
+The transaction remains unchanged, and the client does not replay its outbox
+on this rejection. Review the preview and its dependencies before another
+apply call; resending the same incomplete selection cannot complete deletion.
+This specific response does not change other validation or failure contracts.
+
 The provider advertises the Hermes version 2 pre-compress checkpoint contract.
 With checkpoint enforcement enabled by an operator, a failed or unavailable
 Mnemos service raises before lossy compression. The default best-effort

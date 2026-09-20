@@ -42,6 +42,7 @@ from ..types import (
     RetrievalFeedbackEvent,
 )
 from ..jobs import DurableJob, FactEvidence, FactRevision, JobStatus
+from ..errors import RelatedForgetSourceSelectionRequired
 from .embeddings import cosine_similarity
 
 
@@ -3784,7 +3785,7 @@ class SQLiteStore(MemoryStore):
                             )
                     missing = set(candidate["required_source_event_ids"]) - selected_sources
                     if missing:
-                        raise ValueError("Selected fact requires explicit source selection")
+                        raise RelatedForgetSourceSelectionRequired()
                 for selected_id in selected_sources:
                     if not sources[selected_id].get("selection_allowed", False):
                         raise ValueError("Selected source is not an eligible capture")

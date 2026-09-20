@@ -20,6 +20,10 @@ from uuid import uuid4
 import httpx
 
 from .memory_safety import MemoryWriteFirewall
+from .errors import (
+    RELATED_FORGET_SOURCE_SELECTION_MESSAGE,
+    RELATED_FORGET_SOURCE_SELECTION_REQUIRED,
+)
 from .service import (
     SCHEMA_VERSION,
     _protect_private_path,
@@ -401,6 +405,30 @@ class MnemosClient:
             raise ServiceClientError(
                 f"Mnemos service rejected the request ({response.status_code})"
             )
+        if response.status_code == 409 and operation.strip() == "forget_related":
+            try:
+                result = response.json()
+            except ValueError as exc:
+                raise ServiceClientError("Mnemos service returned HTTP 409") from exc
+            expected_keys = {"schema_version", "status", "committed", "error", "message"}
+            if (
+                isinstance(result, dict)
+                and set(result) == expected_keys
+                and type(result.get("schema_version")) is int
+                and result.get("schema_version") == SCHEMA_VERSION
+                and result.get("status") == "rejected"
+                and result.get("committed") is False
+                and result.get("error") == RELATED_FORGET_SOURCE_SELECTION_REQUIRED
+                and result.get("message") == RELATED_FORGET_SOURCE_SELECTION_MESSAGE
+            ):
+                return {
+                    "schema_version": SCHEMA_VERSION,
+                    "status": "rejected",
+                    "committed": False,
+                    "error": RELATED_FORGET_SOURCE_SELECTION_REQUIRED,
+                    "message": RELATED_FORGET_SOURCE_SELECTION_MESSAGE,
+                }
+            raise ServiceClientError("Mnemos service returned HTTP 409")
         if response.status_code >= 400:
             raise ServiceClientError(f"Mnemos service returned HTTP {response.status_code}")
         try:
@@ -499,6 +527,12 @@ class MnemosClient:
                 "degraded": True,
                 "error": str(exc),
             }
+        if (
+            operation.strip() == "forget_related"
+            and result.get("status") == "rejected"
+            and result.get("error") == RELATED_FORGET_SOURCE_SELECTION_REQUIRED
+        ):
+            return result
         if pending_event_id is not None:
             if self._committed(result) or result.get("status") in {"rejected", "blocked"}:
                 self.outbox.acknowledge(pending_event_id)
