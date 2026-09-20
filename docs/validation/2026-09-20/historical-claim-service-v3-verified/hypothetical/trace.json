@@ -1,0 +1,99 @@
+{
+  "config": {
+    "endpoint": "http://127.0.0.1:11434",
+    "model": "qwen3.5:9b",
+    "embedding_model": "nomic-embed-text:latest",
+    "timeout_seconds": 180.0,
+    "temperature": 0.0,
+    "max_tokens": 8192,
+    "think": true
+  },
+  "trace_key": {
+    "run_key": "hypothetical",
+    "profile": "history-service-sleep-only"
+  },
+  "service_instances": 1,
+  "predict_calls": [
+    {
+      "latency_ms": 31456.9940000074,
+      "prompt_chars": 2059,
+      "response": "{\"decision\":\"no_durable_facts\",\"facts\":[],\"reason\":\"Source event contains a hypothetical suggestion ('If telemetry were redesigned someday...') which does not establish a durable fact or preference per instructions.\"}",
+      "token_usage": {
+        "prompt_eval_count": 613,
+        "eval_count": 2727
+      },
+      "structured_output_requested": true,
+      "format_schema_sha256": "fd61428bf26ce063259e57e733750a7fd965875ae187d9917a52e267aa46d68d"
+    }
+  ],
+  "classify_calls": [],
+  "embed_calls": [
+    {
+      "latency_ms": 217.2316000214778,
+      "role": "document",
+      "text_chars": 48,
+      "vector_dimensions": 768,
+      "token_usage": {
+        "prompt_eval_count": 13
+      }
+    },
+    {
+      "latency_ms": 10.184100014157593,
+      "role": "document",
+      "text_chars": 46,
+      "vector_dimensions": 768,
+      "token_usage": {
+        "prompt_eval_count": 14
+      }
+    },
+    {
+      "latency_ms": 11.982600030023605,
+      "role": "query",
+      "text_chars": 77,
+      "vector_dimensions": 768,
+      "token_usage": {
+        "prompt_eval_count": 19
+      }
+    }
+  ],
+  "response_metadata": [
+    {
+      "provider": "ollama",
+      "kind": "embedding",
+      "model": "nomic-embed-text:latest",
+      "total_duration": 10898600,
+      "load_duration": 4647600,
+      "prompt_eval_count": 13
+    },
+    {
+      "provider": "ollama",
+      "kind": "embedding",
+      "model": "nomic-embed-text:latest",
+      "total_duration": 9112600,
+      "load_duration": 4323600,
+      "prompt_eval_count": 14
+    },
+    {
+      "provider": "ollama",
+      "kind": "embedding",
+      "model": "nomic-embed-text:latest",
+      "total_duration": 10760200,
+      "load_duration": 4771400,
+      "prompt_eval_count": 19
+    },
+    {
+      "provider": "ollama",
+      "kind": "generate",
+      "model": "qwen3.5:9b",
+      "created_at": "2026-09-20T19:56:20.1815602Z",
+      "done": true,
+      "done_reason": "stop",
+      "total_duration": 31269424000,
+      "load_duration": 4188400,
+      "prompt_eval_count": 613,
+      "prompt_eval_duration": 139058000,
+      "eval_count": 2727,
+      "eval_duration": 31010616000
+    }
+  ]
+}

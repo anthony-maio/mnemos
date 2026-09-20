@@ -1,0 +1,64 @@
+from pathlib import Path
+from datetime import datetime, timezone
+import hashlib
+import json
+import shutil
+import subprocess
+from urllib.request import urlopen
+
+repo = Path(__file__).resolve().parents[1]
+parent = repo / 'docs/validation/2026-09-20/history-reasoning-development-v1'
+root = Path('C:/Users/Ant/AppData/Local/Temp/mnemos-history-production-prompt-v1')
+snapshot = Path('C:/Users/Ant/AppData/Local/Temp/mnemos-source-generation-settings-v1')
+assert not root.exists()
+inputs = json.loads((parent / 'inputs.json').read_bytes())
+clause = inputs['candidate_clause']
+for case in inputs['cases']:
+    if 'reference_request' in case:
+        reference = case['reference_request']['prompt']
+        assert reference.count(clause) == 1
+        case['reference_request']['prompt'] = reference.replace(clause, '', 1)
+inputs.update(schema_version='history-production-prompt-v1', max_tokens=8192, timeout=180,
+              candidate_clause='', snapshot=str(snapshot))
+inputs['source_commit'] = subprocess.check_output(['git','rev-parse','HEAD'],cwd=snapshot,text=True).strip()
+assert inputs['source_commit'].startswith('05c71d2')
+assert not subprocess.check_output(['git','status','--porcelain'],cwd=snapshot).strip()
+inputs['interpretation'] = ('Same twelve authored development cases, three repeats, unchanged production extraction prompt, real production OllamaProvider at 05c71d2. '
+    'Qwen3.5:9b explicit reasoning, chat route selected by production provider, 8192-token output budget. '
+    'Removes the experimental history clause; keeps schema, source IDs, criteria, model and reasoning configuration. '
+    'Constructs the provider through canonical AppSettings and build_llm_from_settings; source also includes generation-setting wiring. '
+    'No facts committed, no live settings changed, no unseen holdout or quality acceptance.')
+with urlopen(inputs['endpoint'] + '/api/tags', timeout=10) as response:
+    model = next(m for m in json.loads(response.read())['models'] if m['name'] == inputs['model'])
+with urlopen(inputs['endpoint'] + '/api/version', timeout=10) as response:
+    version = json.loads(response.read())
+parent_prep = json.loads((parent / 'preparation.json').read_bytes())
+assert model['digest'] == parent_prep['model']['digest']
+root.mkdir()
+(root / 'inputs.json').write_text(json.dumps(inputs, indent=2) + '\n', encoding='utf-8')
+(root / 'server-version.json').write_text(json.dumps(version, indent=2) + '\n', encoding='utf-8')
+runner = (parent / 'runner.py').read_text()
+old = '''        self.provider = OllamaProvider(model=inputs['model'], base_url=inputs['endpoint'],
+            temperature=inputs['temperature'], max_tokens=inputs['max_tokens'], timeout=inputs['timeout'],
+            think=inputs['think'], response_observer=self.trace['response_metadata'].append)'''
+new = '''        from mnemos.runtime import build_llm_from_settings
+        from mnemos.settings import AppSettings
+        settings = AppSettings.model_validate({
+            'llm': {'provider': 'ollama', 'model': inputs['model']},
+            'providers': {'ollama': {'base_url': inputs['endpoint'], 'think': inputs['think'],
+                'temperature': inputs['temperature'], 'max_tokens': inputs['max_tokens'], 'timeout': inputs['timeout']}}})
+        self.provider = build_llm_from_settings(settings)
+        assert isinstance(self.provider, OllamaProvider)
+        self.provider.response_observer = self.trace['response_metadata'].append
+        self.trace['provider_configuration'] = settings.providers.ollama.model_dump()'''
+assert runner.count(old) == 1
+(root / 'runner.py').write_text(runner.replace(old, new), encoding='utf-8', newline='\n')
+shutil.copyfile(Path(__file__), root / 'prepare.py.txt')
+sha = lambda p: hashlib.sha256(p.read_bytes()).hexdigest()
+manifest = {'prepared_at': datetime.now(timezone.utc).isoformat(), 'model': model,
+            'source_commit': inputs['source_commit'],
+            'source_files': {name: sha(snapshot / name) for name in set(parent_prep['source_files']) | {'mnemos/runtime.py', 'mnemos/settings.py'}},
+            'parent_inputs_sha256': sha(parent / 'inputs.json'),
+            'files': {p.name: sha(p) for p in sorted(root.iterdir())}}
+(root / 'preparation.json').write_text(json.dumps(manifest, indent=2) + '\n', encoding='utf-8')
+print(json.dumps({'root': str(root), 'calls': 36, 'model': model['name'], 'digest': model['digest'], 'server': version}))

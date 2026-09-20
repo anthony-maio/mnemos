@@ -1,0 +1,651 @@
+{
+  "case": {
+    "id": "hypothetical",
+    "role": "user",
+    "content": "If telemetry were redesigned someday, perhaps LZ4 would be worth considering.",
+    "criterion": "No adopted requirement or configuration from hypothetical consideration."
+  },
+  "operations": [
+    {
+      "operation": "health",
+      "result": {
+        "schema_version": 1,
+        "status": "running",
+        "store": {
+          "backend": "SQLiteStore",
+          "name": "sqlite",
+          "db_path": "C:\\Users\\Ant\\AppData\\Local\\Temp\\mnemos-historical-claim-service-v3\\hypothetical\\memory-hypothetical.sqlite",
+          "migration_backup": null,
+          "total_chunks": 0,
+          "chunks_with_embeddings": 0,
+          "average_salience": 0.0,
+          "average_access_count": 0.0,
+          "related_edges": 0,
+          "semantic_similar_edges": 0,
+          "pending_episodic_events": 0,
+          "pending_reconsolidation_jobs": 0,
+          "fts_enabled": true,
+          "schema_version": 8,
+          "sqlite_vec_enabled": true,
+          "sqlite_vec_indexed": false,
+          "sqlite_vec_dim": null
+        },
+        "runtime": {
+          "store_type": "SQLiteStore",
+          "database_path": "C:\\Users\\Ant\\AppData\\Local\\Temp\\mnemos-historical-claim-service-v3\\hypothetical\\memory-hypothetical.sqlite",
+          "cognition_provider": "_TracingLLM",
+          "embedding_provider": "_TracingEmbedder"
+        },
+        "capabilities": {
+          "capture": true,
+          "retrieve": true,
+          "background_maintenance": false
+        },
+        "maintenance": {
+          "pending": 0,
+          "leased": 0,
+          "exhausted": 0,
+          "completed": 0,
+          "retry_count": 0,
+          "oldest_unfinished_seconds": 0,
+          "oldest_pending_seconds": 0,
+          "running": false,
+          "scheduler_running": false,
+          "last_success": null,
+          "last_error": null,
+          "processed_count": 0,
+          "failed_count": 0
+        },
+        "graph": {
+          "enabled": false,
+          "managed_preferences": true,
+          "ready": false,
+          "pending_count": 0,
+          "cursor": "",
+          "marked_sources": 0,
+          "total_sources": 0,
+          "legacy_graph": false
+        },
+        "cognition_provider": "_TracingLLM",
+        "provider_state": {
+          "cognition": {
+            "status": "not_observed"
+          }
+        }
+      }
+    },
+    {
+      "operation": "remember",
+      "result": {
+        "schema_version": 1,
+        "status": "committed",
+        "event_id": "d42ffa28a332d98a1a788209c0f43d127d2282eb98d43f3a54cff1e2ea915b90",
+        "processing_status": "pending",
+        "job_id": "event:d42ffa28a332d98a1a788209c0f43d127d2282eb98d43f3a54cff1e2ea915b90",
+        "identity_status": "normal",
+        "fact_eligible": true
+      }
+    },
+    {
+      "operation": "remember",
+      "result": {
+        "schema_version": 1,
+        "status": "committed",
+        "event_id": "63778f02c7a23268b93fa0d649c5a423bbd992f8e616c7ec56f9fc04a7f0e907",
+        "processing_status": "pending",
+        "job_id": "event:63778f02c7a23268b93fa0d649c5a423bbd992f8e616c7ec56f9fc04a7f0e907",
+        "identity_status": "normal",
+        "fact_eligible": true
+      }
+    },
+    {
+      "operation": "maintenance",
+      "result": {
+        "schema_version": 1,
+        "completed": 2,
+        "maintenance": {
+          "pending": 0,
+          "leased": 0,
+          "exhausted": 0,
+          "completed": 2,
+          "retry_count": 0,
+          "oldest_unfinished_seconds": 0,
+          "oldest_pending_seconds": 0,
+          "running": false,
+          "scheduler_running": false,
+          "last_success": "2026-09-20T19:55:48.705259+00:00",
+          "last_error": null,
+          "processed_count": 2,
+          "failed_count": 0
+        },
+        "graph": {
+          "enabled": false,
+          "managed_preferences": true,
+          "ready": false,
+          "pending_count": 2,
+          "cursor": "",
+          "marked_sources": 0,
+          "total_sources": 2,
+          "legacy_graph": false
+        }
+      }
+    },
+    {
+      "operation": "capture",
+      "result": {
+        "schema_version": 1,
+        "status": "committed",
+        "event_id": "47f327192836a4329d48dba4da5c36fc1a38e5535194bf2b0027b92f59ed4454",
+        "processing_status": "pending",
+        "job_id": "event:47f327192836a4329d48dba4da5c36fc1a38e5535194bf2b0027b92f59ed4454",
+        "identity_status": "normal",
+        "fact_eligible": true
+      }
+    },
+    {
+      "operation": "maintenance",
+      "result": {
+        "schema_version": 1,
+        "completed": 1,
+        "maintenance": {
+          "pending": 0,
+          "leased": 0,
+          "exhausted": 0,
+          "completed": 3,
+          "retry_count": 0,
+          "oldest_unfinished_seconds": 0,
+          "oldest_pending_seconds": 0,
+          "running": false,
+          "scheduler_running": false,
+          "last_success": "2026-09-20T19:56:20.188867+00:00",
+          "last_error": null,
+          "processed_count": 3,
+          "failed_count": 0
+        },
+        "graph": {
+          "enabled": false,
+          "managed_preferences": true,
+          "ready": false,
+          "pending_count": 2,
+          "cursor": "",
+          "marked_sources": 0,
+          "total_sources": 2,
+          "legacy_graph": false
+        }
+      }
+    }
+  ],
+  "checks": {
+    "jobs_completed_1": true,
+    "two_controls_committed": true,
+    "capture_committed": true,
+    "jobs_completed_2": true,
+    "source_exact": true,
+    "controls_unchanged_after_extraction": true,
+    "negative_control_no_facts": true
+  },
+  "semantic_review": "NOT SCORED; inspect committed text against frozen criterion",
+  "instances": [
+    {
+      "database": "C:\\Users\\Ant\\AppData\\Local\\Temp\\mnemos-historical-claim-service-v3\\hypothetical\\memory-hypothetical.sqlite",
+      "config": {
+        "modules": {
+          "surprisal": false,
+          "mutable_rag": false,
+          "affective": false,
+          "sleep": true,
+          "spreading": false
+        },
+        "retrieval": {
+          "profile": "baseline",
+          "affective_enabled": false,
+          "spreading_enabled": false,
+          "relevance_floor": 0.2,
+          "graph_weight": 0.1,
+          "max_candidates": 100
+        },
+        "surprisal": {
+          "threshold": 0.3,
+          "prediction_model": "llama3",
+          "embedding_dim": 384,
+          "history_window": 10,
+          "min_content_length": 10
+        },
+        "mutable_rag": {
+          "enabled": true,
+          "staleness_check_prompt": "You are a memory maintenance agent. A user's stored memory says:\n\"{content}\"\n\nNew context from the conversation:\n\"{context}\"\n\nHas this stored memory become outdated, contradicted, or significantly changed based on the new context? Reply with exactly one of:\n- UNCHANGED: if the memory is still accurate\n- CHANGED: <updated version of the memory>\n\nBe conservative: only mark CHANGED if there is a clear contradiction or significant update.",
+          "max_labile_chunks": 20,
+          "reconsolidation_cooldown_seconds": 60
+        },
+        "affective": {
+          "weight_similarity": 0.7,
+          "weight_state": 0.3,
+          "classifier_model": null,
+          "classifier_prompt": "Analyze the emotional/cognitive state expressed in this text and score it on three dimensions. Reply ONLY with three floats separated by commas:\nvalence (-1.0 to 1.0, negative to positive), arousal (0.0 to 1.0, calm to urgent), complexity (0.0 to 1.0, simple to complex)\n\nText: \"{content}\"\n\nExample reply: 0.3, 0.7, 0.5"
+        },
+        "sleep": {
+          "consolidation_interval_seconds": 3600,
+          "min_episodes_before_consolidation": 10,
+          "enable_proceduralization": false,
+          "consolidation_prompt": "You are a memory consolidation agent. Below is a sequence of conversation episodes from a user session:\n\n{episodes}\n\nExtract permanent facts, user preferences, behavioral patterns, and important information that should be retained long-term. Format your response as a numbered list of distinct facts, one per line. Be concise and specific. Omit transient information.",
+          "proceduralization_prompt": "You are analyzing conversation logs to identify repeated reasoning patterns that could be automated. Review these episodes:\n\n{episodes}\n\nIf you identify a clearly repeated task pattern (appearing 3+ times), write a complete, executable Python function that automates it. If no clear pattern exists, reply with 'NO_PATTERN'. Return ONLY valid Python code or 'NO_PATTERN'.",
+          "max_episodes_per_consolidation": 100,
+          "recall_gated_plasticity_enabled": false,
+          "recall_min_supporting_episodes": 2,
+          "recall_similarity_threshold": 0.82
+        },
+        "spreading": {
+          "initial_energy": 1.0,
+          "decay_rate": 0.2,
+          "activation_threshold": 0.3,
+          "max_hops": 3,
+          "max_visited": 1000,
+          "auto_connect_threshold": 0.6,
+          "max_neighbors_per_node": 4,
+          "natural_decay_rate": 0.05,
+          "hydrate_on_startup": true,
+          "startup_hydration_limit": 5000,
+          "startup_auto_connect": false
+        },
+        "safety": {
+          "enabled": true,
+          "secret_action": "block",
+          "pii_action": "redact"
+        },
+        "governance": {
+          "capture_mode": "all",
+          "retention_ttl_days": 0,
+          "max_chunks_per_scope": 0
+        },
+        "debug": false
+      }
+    }
+  ],
+  "health": {
+    "schema_version": 1,
+    "status": "running",
+    "store": {
+      "backend": "SQLiteStore",
+      "name": "sqlite",
+      "db_path": "C:\\Users\\Ant\\AppData\\Local\\Temp\\mnemos-historical-claim-service-v3\\hypothetical\\memory-hypothetical.sqlite",
+      "migration_backup": null,
+      "total_chunks": 0,
+      "chunks_with_embeddings": 0,
+      "average_salience": 0.0,
+      "average_access_count": 0.0,
+      "related_edges": 0,
+      "semantic_similar_edges": 0,
+      "pending_episodic_events": 0,
+      "pending_reconsolidation_jobs": 0,
+      "fts_enabled": true,
+      "schema_version": 8,
+      "sqlite_vec_enabled": true,
+      "sqlite_vec_indexed": false,
+      "sqlite_vec_dim": null
+    },
+    "runtime": {
+      "store_type": "SQLiteStore",
+      "database_path": "C:\\Users\\Ant\\AppData\\Local\\Temp\\mnemos-historical-claim-service-v3\\hypothetical\\memory-hypothetical.sqlite",
+      "cognition_provider": "_TracingLLM",
+      "embedding_provider": "_TracingEmbedder"
+    },
+    "capabilities": {
+      "capture": true,
+      "retrieve": true,
+      "background_maintenance": false
+    },
+    "maintenance": {
+      "pending": 0,
+      "leased": 0,
+      "exhausted": 0,
+      "completed": 0,
+      "retry_count": 0,
+      "oldest_unfinished_seconds": 0,
+      "oldest_pending_seconds": 0,
+      "running": false,
+      "scheduler_running": false,
+      "last_success": null,
+      "last_error": null,
+      "processed_count": 0,
+      "failed_count": 0
+    },
+    "graph": {
+      "enabled": false,
+      "managed_preferences": true,
+      "ready": false,
+      "pending_count": 0,
+      "cursor": "",
+      "marked_sources": 0,
+      "total_sources": 0,
+      "legacy_graph": false
+    },
+    "cognition_provider": "_TracingLLM",
+    "provider_state": {
+      "cognition": {
+        "status": "not_observed"
+      }
+    }
+  },
+  "job_snapshots": [
+    [
+      {
+        "id": "event:d42ffa28a332d98a1a788209c0f43d127d2282eb98d43f3a54cff1e2ea915b90",
+        "kind": "remember",
+        "payload": {
+          "event_id": "d42ffa28a332d98a1a788209c0f43d127d2282eb98d43f3a54cff1e2ea915b90",
+          "context": {
+            "user_profile_id": "profile-hypothetical",
+            "project_id": "project-hypothetical",
+            "workspace_id": null,
+            "session_id": "hypothetical",
+            "host": "manual"
+          },
+          "scope": "project",
+          "source_digest": "55bb70bb11b65f984fc68fc0f99bd1a0b5cd5858f50d535f2d0ec97e5c7a303e"
+        },
+        "status": "completed",
+        "attempt_count": 1,
+        "max_attempts": 5,
+        "available_at": "2026-09-20T19:55:48.444885Z",
+        "lease_owner": null,
+        "lease_token": null,
+        "lease_until": null,
+        "last_error": null,
+        "result": {
+          "decision": "facts",
+          "encoding_diagnostics": {},
+          "fact_ids": [
+            "0949fce1-d0a2-4c73-9af0-de01b5908d04"
+          ]
+        },
+        "created_at": "2026-09-20T19:55:48.444886Z",
+        "updated_at": "2026-09-20T19:55:48.672843Z"
+      },
+      {
+        "id": "event:63778f02c7a23268b93fa0d649c5a423bbd992f8e616c7ec56f9fc04a7f0e907",
+        "kind": "remember",
+        "payload": {
+          "event_id": "63778f02c7a23268b93fa0d649c5a423bbd992f8e616c7ec56f9fc04a7f0e907",
+          "context": {
+            "user_profile_id": "profile-hypothetical",
+            "project_id": "foreign-hypothetical",
+            "workspace_id": null,
+            "session_id": "foreign-hypothetical",
+            "host": "manual"
+          },
+          "scope": "project",
+          "source_digest": "42d508c498a5569f20405df2fc6c6b67a3da07f57ee746633d32ae90d3a50afb"
+        },
+        "status": "completed",
+        "attempt_count": 1,
+        "max_attempts": 5,
+        "available_at": "2026-09-20T19:55:48.448517Z",
+        "lease_owner": null,
+        "lease_token": null,
+        "lease_until": null,
+        "last_error": null,
+        "result": {
+          "decision": "facts",
+          "encoding_diagnostics": {},
+          "fact_ids": [
+            "e9cb08e7-afc2-486d-9471-fe7b60b19b8f"
+          ]
+        },
+        "created_at": "2026-09-20T19:55:48.448518Z",
+        "updated_at": "2026-09-20T19:55:48.701806Z"
+      }
+    ],
+    [
+      {
+        "id": "event:47f327192836a4329d48dba4da5c36fc1a38e5535194bf2b0027b92f59ed4454",
+        "kind": "extract",
+        "payload": {
+          "event_id": "47f327192836a4329d48dba4da5c36fc1a38e5535194bf2b0027b92f59ed4454",
+          "context": {
+            "user_profile_id": "profile-hypothetical",
+            "project_id": "project-hypothetical",
+            "workspace_id": null,
+            "session_id": "hypothetical",
+            "host": "manual"
+          },
+          "scope": "project",
+          "source_digest": "e627f201bd0f045d103d749d0ac9c9fcc5ca4f69f9d3115cb84dbfc743b3a61c"
+        },
+        "status": "completed",
+        "attempt_count": 1,
+        "max_attempts": 5,
+        "available_at": "2026-09-20T19:55:48.708381Z",
+        "lease_owner": null,
+        "lease_token": null,
+        "lease_until": null,
+        "last_error": null,
+        "result": {
+          "decision": "no_durable_facts",
+          "encoding_diagnostics": {
+            "surprisal_score": null,
+            "surprisal_status": "disabled",
+            "prediction": null,
+            "prediction_mode": "disabled",
+            "threshold": 0.3
+          },
+          "fact_ids": []
+        },
+        "created_at": "2026-09-20T19:55:48.708383Z",
+        "updated_at": "2026-09-20T19:56:20.186484Z"
+      }
+    ]
+  ],
+  "source": {
+    "id": "47f327192836a4329d48dba4da5c36fc1a38e5535194bf2b0027b92f59ed4454",
+    "event_fingerprint": "47f327192836a4329d48dba4da5c36fc1a38e5535194bf2b0027b92f59ed4454",
+    "role": "user",
+    "content": "If telemetry were redesigned someday, perhaps LZ4 would be worth considering.",
+    "normalized_content": "if telemetry were redesigned someday, perhaps lz4 would be worth considering.",
+    "scope": "project",
+    "scope_id": "project-hypothetical",
+    "source": "manual",
+    "hook_event": null,
+    "metadata": {
+      "user_profile_id": "profile-hypothetical",
+      "project_id": "project-hypothetical",
+      "workspace_id": null,
+      "session_id": "hypothetical",
+      "host": "manual",
+      "scope": "project",
+      "scope_id": "project-hypothetical",
+      "source_event_id": "source-hypothetical",
+      "source_ref": "fixture://hypothetical",
+      "source_kind": "development_transcript",
+      "explicit_remember": false,
+      "identity_status": "normal"
+    },
+    "status": "consolidated",
+    "error": null,
+    "created_at": "2026-09-20T19:55:48.708252Z",
+    "occurred_at": "2026-09-20T12:06:00Z"
+  },
+  "extracted": [],
+  "extraction_outcome": "abstained",
+  "status": "completed_negative_control",
+  "final_facts": [
+    {
+      "id": "0949fce1-d0a2-4c73-9af0-de01b5908d04",
+      "content": "The unrelated control label is cedar-quartz-118.",
+      "metadata": {
+        "user_profile_id": "profile-hypothetical",
+        "project_id": "project-hypothetical",
+        "workspace_id": null,
+        "session_id": "hypothetical",
+        "host": "manual",
+        "scope": "project",
+        "scope_id": "project-hypothetical",
+        "source": "explicit_remember",
+        "source_roles": [
+          "user"
+        ],
+        "source_event_ids": [
+          "d42ffa28a332d98a1a788209c0f43d127d2282eb98d43f3a54cff1e2ea915b90"
+        ],
+        "encoding_diagnostics": {},
+        "assertion_status": "asserted",
+        "cognitive_state_status": "provider_unavailable"
+      },
+      "salience": 0.5,
+      "cognitive_state": null,
+      "created_at": "2026-09-20T19:55:48.672816Z",
+      "updated_at": "2026-09-20T19:55:48.672818Z",
+      "access_count": 0,
+      "version": 1,
+      "canonical_key": "3a127b753a28d25da3319b41ed2423309cd6e9660f9fe784973a4eaaef82f638",
+      "surprisal_score": null,
+      "surprisal_status": "unknown",
+      "cognitive_state_status": "provider_unavailable",
+      "last_observed_at": "2026-09-20T19:55:48.444677Z",
+      "observation_count": 1,
+      "last_retrieved_at": null,
+      "reconsolidation_due_at": null
+    },
+    {
+      "id": "e9cb08e7-afc2-486d-9471-fe7b60b19b8f",
+      "content": "The foreign scope canary is violet-canyon-904.",
+      "metadata": {
+        "user_profile_id": "profile-hypothetical",
+        "project_id": "foreign-hypothetical",
+        "workspace_id": null,
+        "session_id": "foreign-hypothetical",
+        "host": "manual",
+        "scope": "project",
+        "scope_id": "foreign-hypothetical",
+        "source": "explicit_remember",
+        "source_roles": [
+          "user"
+        ],
+        "source_event_ids": [
+          "63778f02c7a23268b93fa0d649c5a423bbd992f8e616c7ec56f9fc04a7f0e907"
+        ],
+        "encoding_diagnostics": {},
+        "assertion_status": "asserted",
+        "cognitive_state_status": "provider_unavailable"
+      },
+      "salience": 0.5,
+      "cognitive_state": null,
+      "created_at": "2026-09-20T19:55:48.701779Z",
+      "updated_at": "2026-09-20T19:55:48.701781Z",
+      "access_count": 0,
+      "version": 1,
+      "canonical_key": "c36603f0ba1b77986e93203588992df2f6db9756ac17d3a5c87e2d22e27b791e",
+      "surprisal_score": null,
+      "surprisal_status": "unknown",
+      "cognitive_state_status": "provider_unavailable",
+      "last_observed_at": "2026-09-20T19:55:48.448332Z",
+      "observation_count": 1,
+      "last_retrieved_at": null,
+      "reconsolidation_due_at": null
+    }
+  ],
+  "final_jobs": [
+    {
+      "id": "event:d42ffa28a332d98a1a788209c0f43d127d2282eb98d43f3a54cff1e2ea915b90",
+      "kind": "remember",
+      "payload": {
+        "event_id": "d42ffa28a332d98a1a788209c0f43d127d2282eb98d43f3a54cff1e2ea915b90",
+        "context": {
+          "user_profile_id": "profile-hypothetical",
+          "project_id": "project-hypothetical",
+          "workspace_id": null,
+          "session_id": "hypothetical",
+          "host": "manual"
+        },
+        "scope": "project",
+        "source_digest": "55bb70bb11b65f984fc68fc0f99bd1a0b5cd5858f50d535f2d0ec97e5c7a303e"
+      },
+      "status": "completed",
+      "attempt_count": 1,
+      "max_attempts": 5,
+      "available_at": "2026-09-20T19:55:48.444885Z",
+      "lease_owner": null,
+      "lease_token": null,
+      "lease_until": null,
+      "last_error": null,
+      "result": {
+        "decision": "facts",
+        "encoding_diagnostics": {},
+        "fact_ids": [
+          "0949fce1-d0a2-4c73-9af0-de01b5908d04"
+        ]
+      },
+      "created_at": "2026-09-20T19:55:48.444886Z",
+      "updated_at": "2026-09-20T19:55:48.672843Z"
+    },
+    {
+      "id": "event:63778f02c7a23268b93fa0d649c5a423bbd992f8e616c7ec56f9fc04a7f0e907",
+      "kind": "remember",
+      "payload": {
+        "event_id": "63778f02c7a23268b93fa0d649c5a423bbd992f8e616c7ec56f9fc04a7f0e907",
+        "context": {
+          "user_profile_id": "profile-hypothetical",
+          "project_id": "foreign-hypothetical",
+          "workspace_id": null,
+          "session_id": "foreign-hypothetical",
+          "host": "manual"
+        },
+        "scope": "project",
+        "source_digest": "42d508c498a5569f20405df2fc6c6b67a3da07f57ee746633d32ae90d3a50afb"
+      },
+      "status": "completed",
+      "attempt_count": 1,
+      "max_attempts": 5,
+      "available_at": "2026-09-20T19:55:48.448517Z",
+      "lease_owner": null,
+      "lease_token": null,
+      "lease_until": null,
+      "last_error": null,
+      "result": {
+        "decision": "facts",
+        "encoding_diagnostics": {},
+        "fact_ids": [
+          "e9cb08e7-afc2-486d-9471-fe7b60b19b8f"
+        ]
+      },
+      "created_at": "2026-09-20T19:55:48.448518Z",
+      "updated_at": "2026-09-20T19:55:48.701806Z"
+    },
+    {
+      "id": "event:47f327192836a4329d48dba4da5c36fc1a38e5535194bf2b0027b92f59ed4454",
+      "kind": "extract",
+      "payload": {
+        "event_id": "47f327192836a4329d48dba4da5c36fc1a38e5535194bf2b0027b92f59ed4454",
+        "context": {
+          "user_profile_id": "profile-hypothetical",
+          "project_id": "project-hypothetical",
+          "workspace_id": null,
+          "session_id": "hypothetical",
+          "host": "manual"
+        },
+        "scope": "project",
+        "source_digest": "e627f201bd0f045d103d749d0ac9c9fcc5ca4f69f9d3115cb84dbfc743b3a61c"
+      },
+      "status": "completed",
+      "attempt_count": 1,
+      "max_attempts": 5,
+      "available_at": "2026-09-20T19:55:48.708381Z",
+      "lease_owner": null,
+      "lease_token": null,
+      "lease_until": null,
+      "last_error": null,
+      "result": {
+        "decision": "no_durable_facts",
+        "encoding_diagnostics": {
+          "surprisal_score": null,
+          "surprisal_status": "disabled",
+          "prediction": null,
+          "prediction_mode": "disabled",
+          "threshold": 0.3
+        },
+        "fact_ids": []
+      },
+      "created_at": "2026-09-20T19:55:48.708383Z",
+      "updated_at": "2026-09-20T19:56:20.186484Z"
+    }
+  ]
+}

@@ -1,0 +1,79 @@
+from pathlib import Path
+import hashlib
+import json
+import shutil
+
+repo = Path(__file__).resolve().parents[1]
+temp = Path('C:/Users/Ant/AppData/Local/Temp')
+base = repo / 'docs/validation/2026-09-20'
+sha = lambda p: hashlib.sha256(p.read_bytes()).hexdigest()
+
+def archive(source, name, terminal, readme):
+    prep = json.loads((source / 'preparation.json').read_bytes())
+    for path, digest in prep['files'].items():
+        assert sha(source / path) == digest
+    names = list(prep['files']) + ['preparation.json']
+    if terminal:
+        state = json.loads((source / 'status.json').read_bytes())
+        assert state['status'] == 'completed' and state['processed'] == 36 and state['errors'] == 0
+        assert sha(source / 'observations.jsonl') == state['observations_sha256']
+        assert sha(source / 'preparation.json') == state['preparation_sha256']
+        names += ['status.json', 'observations.jsonl', 'stdout.log', 'stderr.log']
+    out = base / name
+    out.mkdir(exist_ok=False)
+    (out / '.gitattributes').write_bytes(b'** -text -whitespace\n')
+    for name in names:
+        shutil.copyfile(source / name, out / name)
+    if terminal:
+        rows = [json.loads(line) for line in (source / 'observations.jsonl').read_text().splitlines()]
+        assert len({(r['case_id'], r['arm'], r['repetition']) for r in rows}) == 36
+        assert all(r['status'] == 'runtime_valid' for r in rows)
+        review = [{'case_id': r['case_id'], 'repetition': r['repetition'], 'proposals': r['proposals']} for r in rows]
+        (out / 'proposal-review.json').write_text(json.dumps(review, indent=2) + '\n')
+    shutil.copyfile(__file__, out / 'collector.py.txt')
+    files = {p.name: {'bytes': p.stat().st_size, 'sha256': sha(p)} for p in sorted(out.iterdir()) if p.is_file()}
+    (out / 'evidence-index.json').write_text(json.dumps({'files': files}, indent=2) + '\n')
+    (out / 'README.md').write_text(readme, encoding='utf-8', newline='\n')
+    print(json.dumps({'archive': str(out), 'indexed_files': len(files)}))
+
+archive(temp / 'mnemos-history-production-prompt-v1', 'history-production-prompt-v1', True, '''# Unchanged production prompt with managed structured reasoning
+
+All 36 calls completed and passed runtime response validation on source
+05c71d2 using the managed production provider, local Qwen3.5:9b, thinking
+enabled, temperature zero, an 8,192-token budget, and a 180-second timeout.
+The extraction prompt was unchanged. Twelve previously authored development
+cases each ran three times. No facts were committed.
+
+Manual inspection finds abstention on the historical approval and unverified
+relay in all three repetitions. The fiction input yields a team-policy
+prohibition in all three repetitions, failing its frozen zero-fact control.
+The question, hypothetical, and unaccepted assistant suggestion abstain.
+All final proposals are copied into proposal-review.json for direct review.
+Runtime validity does not establish semantic correctness.
+
+The earlier history-clause chat comparison used an experimental provider and
+an older source snapshot. Do not present their difference as a one-factor
+controlled prompt experiment. The separately prepared authored holdout uses
+the same managed provider and source in both prompt arms. The candidate prompt
+has not been adopted. Service lifecycle and broader quality remain open.
+''')
+archive(temp / 'mnemos-extraction-authored-holdout-v1', 'extraction-authored-holdout-preparation-v1', False, '''# Frozen prompt-independent authored extraction cases
+
+Twenty synthetic cases were authored without inspecting extraction prompts,
+implementation, or model outputs. The history-only candidate predates these
+cases and its input hash is frozen here. The planned 40 calls compare unchanged
+production and history-only prompts through the same source/provider/settings.
+No execution or quality result is claimed by this preparation archive.
+
+Before execution, a separate rubric review identified ambiguity in P07 and
+N10: an assistant report without its original user evidence, and an explicitly
+rejected historical proposal. The original artifact and labels remain intact.
+Qualified attribution or correct rejected-state retention must be reviewed
+on meaning; those cases do not justify binary abstention scoring. P05 explicitly
+asks to retain uncertainty, unlike N02's unretained speculation. All cases and
+the pre-execution review remain visible. No aggregate binary accuracy score is
+pre-registered; inspect meaning, provenance, and forbidden overclaims manually.
+
+This is authored, prompt-independent evaluation material, not real-world ground
+truth. It cannot by itself establish operational quality or native-host behavior.
+''')

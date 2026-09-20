@@ -1,0 +1,651 @@
+{
+  "case": {
+    "id": "question",
+    "role": "user",
+    "content": "Did the old harbor memo say Leena approved the ferry review?",
+    "criterion": "No affirmative project fact from a question."
+  },
+  "operations": [
+    {
+      "operation": "health",
+      "result": {
+        "schema_version": 1,
+        "status": "running",
+        "store": {
+          "backend": "SQLiteStore",
+          "name": "sqlite",
+          "db_path": "C:\\Users\\Ant\\AppData\\Local\\Temp\\mnemos-historical-claim-service-v3\\question\\memory-question.sqlite",
+          "migration_backup": null,
+          "total_chunks": 0,
+          "chunks_with_embeddings": 0,
+          "average_salience": 0.0,
+          "average_access_count": 0.0,
+          "related_edges": 0,
+          "semantic_similar_edges": 0,
+          "pending_episodic_events": 0,
+          "pending_reconsolidation_jobs": 0,
+          "fts_enabled": true,
+          "schema_version": 8,
+          "sqlite_vec_enabled": true,
+          "sqlite_vec_indexed": false,
+          "sqlite_vec_dim": null
+        },
+        "runtime": {
+          "store_type": "SQLiteStore",
+          "database_path": "C:\\Users\\Ant\\AppData\\Local\\Temp\\mnemos-historical-claim-service-v3\\question\\memory-question.sqlite",
+          "cognition_provider": "_TracingLLM",
+          "embedding_provider": "_TracingEmbedder"
+        },
+        "capabilities": {
+          "capture": true,
+          "retrieve": true,
+          "background_maintenance": false
+        },
+        "maintenance": {
+          "pending": 0,
+          "leased": 0,
+          "exhausted": 0,
+          "completed": 0,
+          "retry_count": 0,
+          "oldest_unfinished_seconds": 0,
+          "oldest_pending_seconds": 0,
+          "running": false,
+          "scheduler_running": false,
+          "last_success": null,
+          "last_error": null,
+          "processed_count": 0,
+          "failed_count": 0
+        },
+        "graph": {
+          "enabled": false,
+          "managed_preferences": true,
+          "ready": false,
+          "pending_count": 0,
+          "cursor": "",
+          "marked_sources": 0,
+          "total_sources": 0,
+          "legacy_graph": false
+        },
+        "cognition_provider": "_TracingLLM",
+        "provider_state": {
+          "cognition": {
+            "status": "not_observed"
+          }
+        }
+      }
+    },
+    {
+      "operation": "remember",
+      "result": {
+        "schema_version": 1,
+        "status": "committed",
+        "event_id": "c74e608b51c229ae20000ff7d7ade90158dce50a97ba47ccb23d29dcc0f84871",
+        "processing_status": "pending",
+        "job_id": "event:c74e608b51c229ae20000ff7d7ade90158dce50a97ba47ccb23d29dcc0f84871",
+        "identity_status": "normal",
+        "fact_eligible": true
+      }
+    },
+    {
+      "operation": "remember",
+      "result": {
+        "schema_version": 1,
+        "status": "committed",
+        "event_id": "c6643b42d1a26aeef2a14aabba26ffa3bd3f4345e939ae374559ec572fea05ca",
+        "processing_status": "pending",
+        "job_id": "event:c6643b42d1a26aeef2a14aabba26ffa3bd3f4345e939ae374559ec572fea05ca",
+        "identity_status": "normal",
+        "fact_eligible": true
+      }
+    },
+    {
+      "operation": "maintenance",
+      "result": {
+        "schema_version": 1,
+        "completed": 2,
+        "maintenance": {
+          "pending": 0,
+          "leased": 0,
+          "exhausted": 0,
+          "completed": 2,
+          "retry_count": 0,
+          "oldest_unfinished_seconds": 0,
+          "oldest_pending_seconds": 0,
+          "running": false,
+          "scheduler_running": false,
+          "last_success": "2026-09-20T19:55:20.410684+00:00",
+          "last_error": null,
+          "processed_count": 2,
+          "failed_count": 0
+        },
+        "graph": {
+          "enabled": false,
+          "managed_preferences": true,
+          "ready": false,
+          "pending_count": 2,
+          "cursor": "",
+          "marked_sources": 0,
+          "total_sources": 2,
+          "legacy_graph": false
+        }
+      }
+    },
+    {
+      "operation": "capture",
+      "result": {
+        "schema_version": 1,
+        "status": "committed",
+        "event_id": "470e2df2fc11402317f05f9928a9ee235f39b27ba0b9c1076b59890dbdef3570",
+        "processing_status": "pending",
+        "job_id": "event:470e2df2fc11402317f05f9928a9ee235f39b27ba0b9c1076b59890dbdef3570",
+        "identity_status": "normal",
+        "fact_eligible": true
+      }
+    },
+    {
+      "operation": "maintenance",
+      "result": {
+        "schema_version": 1,
+        "completed": 1,
+        "maintenance": {
+          "pending": 0,
+          "leased": 0,
+          "exhausted": 0,
+          "completed": 3,
+          "retry_count": 0,
+          "oldest_unfinished_seconds": 0,
+          "oldest_pending_seconds": 0,
+          "running": false,
+          "scheduler_running": false,
+          "last_success": "2026-09-20T19:55:48.398097+00:00",
+          "last_error": null,
+          "processed_count": 3,
+          "failed_count": 0
+        },
+        "graph": {
+          "enabled": false,
+          "managed_preferences": true,
+          "ready": false,
+          "pending_count": 2,
+          "cursor": "",
+          "marked_sources": 0,
+          "total_sources": 2,
+          "legacy_graph": false
+        }
+      }
+    }
+  ],
+  "checks": {
+    "jobs_completed_1": true,
+    "two_controls_committed": true,
+    "capture_committed": true,
+    "jobs_completed_2": true,
+    "source_exact": true,
+    "controls_unchanged_after_extraction": true,
+    "negative_control_no_facts": true
+  },
+  "semantic_review": "NOT SCORED; inspect committed text against frozen criterion",
+  "instances": [
+    {
+      "database": "C:\\Users\\Ant\\AppData\\Local\\Temp\\mnemos-historical-claim-service-v3\\question\\memory-question.sqlite",
+      "config": {
+        "modules": {
+          "surprisal": false,
+          "mutable_rag": false,
+          "affective": false,
+          "sleep": true,
+          "spreading": false
+        },
+        "retrieval": {
+          "profile": "baseline",
+          "affective_enabled": false,
+          "spreading_enabled": false,
+          "relevance_floor": 0.2,
+          "graph_weight": 0.1,
+          "max_candidates": 100
+        },
+        "surprisal": {
+          "threshold": 0.3,
+          "prediction_model": "llama3",
+          "embedding_dim": 384,
+          "history_window": 10,
+          "min_content_length": 10
+        },
+        "mutable_rag": {
+          "enabled": true,
+          "staleness_check_prompt": "You are a memory maintenance agent. A user's stored memory says:\n\"{content}\"\n\nNew context from the conversation:\n\"{context}\"\n\nHas this stored memory become outdated, contradicted, or significantly changed based on the new context? Reply with exactly one of:\n- UNCHANGED: if the memory is still accurate\n- CHANGED: <updated version of the memory>\n\nBe conservative: only mark CHANGED if there is a clear contradiction or significant update.",
+          "max_labile_chunks": 20,
+          "reconsolidation_cooldown_seconds": 60
+        },
+        "affective": {
+          "weight_similarity": 0.7,
+          "weight_state": 0.3,
+          "classifier_model": null,
+          "classifier_prompt": "Analyze the emotional/cognitive state expressed in this text and score it on three dimensions. Reply ONLY with three floats separated by commas:\nvalence (-1.0 to 1.0, negative to positive), arousal (0.0 to 1.0, calm to urgent), complexity (0.0 to 1.0, simple to complex)\n\nText: \"{content}\"\n\nExample reply: 0.3, 0.7, 0.5"
+        },
+        "sleep": {
+          "consolidation_interval_seconds": 3600,
+          "min_episodes_before_consolidation": 10,
+          "enable_proceduralization": false,
+          "consolidation_prompt": "You are a memory consolidation agent. Below is a sequence of conversation episodes from a user session:\n\n{episodes}\n\nExtract permanent facts, user preferences, behavioral patterns, and important information that should be retained long-term. Format your response as a numbered list of distinct facts, one per line. Be concise and specific. Omit transient information.",
+          "proceduralization_prompt": "You are analyzing conversation logs to identify repeated reasoning patterns that could be automated. Review these episodes:\n\n{episodes}\n\nIf you identify a clearly repeated task pattern (appearing 3+ times), write a complete, executable Python function that automates it. If no clear pattern exists, reply with 'NO_PATTERN'. Return ONLY valid Python code or 'NO_PATTERN'.",
+          "max_episodes_per_consolidation": 100,
+          "recall_gated_plasticity_enabled": false,
+          "recall_min_supporting_episodes": 2,
+          "recall_similarity_threshold": 0.82
+        },
+        "spreading": {
+          "initial_energy": 1.0,
+          "decay_rate": 0.2,
+          "activation_threshold": 0.3,
+          "max_hops": 3,
+          "max_visited": 1000,
+          "auto_connect_threshold": 0.6,
+          "max_neighbors_per_node": 4,
+          "natural_decay_rate": 0.05,
+          "hydrate_on_startup": true,
+          "startup_hydration_limit": 5000,
+          "startup_auto_connect": false
+        },
+        "safety": {
+          "enabled": true,
+          "secret_action": "block",
+          "pii_action": "redact"
+        },
+        "governance": {
+          "capture_mode": "all",
+          "retention_ttl_days": 0,
+          "max_chunks_per_scope": 0
+        },
+        "debug": false
+      }
+    }
+  ],
+  "health": {
+    "schema_version": 1,
+    "status": "running",
+    "store": {
+      "backend": "SQLiteStore",
+      "name": "sqlite",
+      "db_path": "C:\\Users\\Ant\\AppData\\Local\\Temp\\mnemos-historical-claim-service-v3\\question\\memory-question.sqlite",
+      "migration_backup": null,
+      "total_chunks": 0,
+      "chunks_with_embeddings": 0,
+      "average_salience": 0.0,
+      "average_access_count": 0.0,
+      "related_edges": 0,
+      "semantic_similar_edges": 0,
+      "pending_episodic_events": 0,
+      "pending_reconsolidation_jobs": 0,
+      "fts_enabled": true,
+      "schema_version": 8,
+      "sqlite_vec_enabled": true,
+      "sqlite_vec_indexed": false,
+      "sqlite_vec_dim": null
+    },
+    "runtime": {
+      "store_type": "SQLiteStore",
+      "database_path": "C:\\Users\\Ant\\AppData\\Local\\Temp\\mnemos-historical-claim-service-v3\\question\\memory-question.sqlite",
+      "cognition_provider": "_TracingLLM",
+      "embedding_provider": "_TracingEmbedder"
+    },
+    "capabilities": {
+      "capture": true,
+      "retrieve": true,
+      "background_maintenance": false
+    },
+    "maintenance": {
+      "pending": 0,
+      "leased": 0,
+      "exhausted": 0,
+      "completed": 0,
+      "retry_count": 0,
+      "oldest_unfinished_seconds": 0,
+      "oldest_pending_seconds": 0,
+      "running": false,
+      "scheduler_running": false,
+      "last_success": null,
+      "last_error": null,
+      "processed_count": 0,
+      "failed_count": 0
+    },
+    "graph": {
+      "enabled": false,
+      "managed_preferences": true,
+      "ready": false,
+      "pending_count": 0,
+      "cursor": "",
+      "marked_sources": 0,
+      "total_sources": 0,
+      "legacy_graph": false
+    },
+    "cognition_provider": "_TracingLLM",
+    "provider_state": {
+      "cognition": {
+        "status": "not_observed"
+      }
+    }
+  },
+  "job_snapshots": [
+    [
+      {
+        "id": "event:c74e608b51c229ae20000ff7d7ade90158dce50a97ba47ccb23d29dcc0f84871",
+        "kind": "remember",
+        "payload": {
+          "event_id": "c74e608b51c229ae20000ff7d7ade90158dce50a97ba47ccb23d29dcc0f84871",
+          "context": {
+            "user_profile_id": "profile-question",
+            "project_id": "project-question",
+            "workspace_id": null,
+            "session_id": "question",
+            "host": "manual"
+          },
+          "scope": "project",
+          "source_digest": "ec6680a95c3906d63e9faf15bd78f796823b2c82d7980b6411f9a396fa378c00"
+        },
+        "status": "completed",
+        "attempt_count": 1,
+        "max_attempts": 5,
+        "available_at": "2026-09-20T19:55:20.177678Z",
+        "lease_owner": null,
+        "lease_token": null,
+        "lease_until": null,
+        "last_error": null,
+        "result": {
+          "decision": "facts",
+          "encoding_diagnostics": {},
+          "fact_ids": [
+            "a131d403-1d27-4572-99f5-f60f0b732a2e"
+          ]
+        },
+        "created_at": "2026-09-20T19:55:20.177679Z",
+        "updated_at": "2026-09-20T19:55:20.376031Z"
+      },
+      {
+        "id": "event:c6643b42d1a26aeef2a14aabba26ffa3bd3f4345e939ae374559ec572fea05ca",
+        "kind": "remember",
+        "payload": {
+          "event_id": "c6643b42d1a26aeef2a14aabba26ffa3bd3f4345e939ae374559ec572fea05ca",
+          "context": {
+            "user_profile_id": "profile-question",
+            "project_id": "foreign-question",
+            "workspace_id": null,
+            "session_id": "foreign-question",
+            "host": "manual"
+          },
+          "scope": "project",
+          "source_digest": "0a0285b38a709a93e225008310f66c043e69c3802c294826086935db3b40e4ec"
+        },
+        "status": "completed",
+        "attempt_count": 1,
+        "max_attempts": 5,
+        "available_at": "2026-09-20T19:55:20.181644Z",
+        "lease_owner": null,
+        "lease_token": null,
+        "lease_until": null,
+        "last_error": null,
+        "result": {
+          "decision": "facts",
+          "encoding_diagnostics": {},
+          "fact_ids": [
+            "d140799c-be73-4036-8395-eae148a04a24"
+          ]
+        },
+        "created_at": "2026-09-20T19:55:20.181646Z",
+        "updated_at": "2026-09-20T19:55:20.406381Z"
+      }
+    ],
+    [
+      {
+        "id": "event:470e2df2fc11402317f05f9928a9ee235f39b27ba0b9c1076b59890dbdef3570",
+        "kind": "extract",
+        "payload": {
+          "event_id": "470e2df2fc11402317f05f9928a9ee235f39b27ba0b9c1076b59890dbdef3570",
+          "context": {
+            "user_profile_id": "profile-question",
+            "project_id": "project-question",
+            "workspace_id": null,
+            "session_id": "question",
+            "host": "manual"
+          },
+          "scope": "project",
+          "source_digest": "e75694c45eb97c90e7b5303418e9f23351b05cc8f8b0715016823a35a1e5aac4"
+        },
+        "status": "completed",
+        "attempt_count": 1,
+        "max_attempts": 5,
+        "available_at": "2026-09-20T19:55:20.413315Z",
+        "lease_owner": null,
+        "lease_token": null,
+        "lease_until": null,
+        "last_error": null,
+        "result": {
+          "decision": "no_durable_facts",
+          "encoding_diagnostics": {
+            "surprisal_score": null,
+            "surprisal_status": "disabled",
+            "prediction": null,
+            "prediction_mode": "disabled",
+            "threshold": 0.3
+          },
+          "fact_ids": []
+        },
+        "created_at": "2026-09-20T19:55:20.413316Z",
+        "updated_at": "2026-09-20T19:55:48.395900Z"
+      }
+    ]
+  ],
+  "source": {
+    "id": "470e2df2fc11402317f05f9928a9ee235f39b27ba0b9c1076b59890dbdef3570",
+    "event_fingerprint": "470e2df2fc11402317f05f9928a9ee235f39b27ba0b9c1076b59890dbdef3570",
+    "role": "user",
+    "content": "Did the old harbor memo say Leena approved the ferry review?",
+    "normalized_content": "did the old harbor memo say leena approved the ferry review?",
+    "scope": "project",
+    "scope_id": "project-question",
+    "source": "manual",
+    "hook_event": null,
+    "metadata": {
+      "user_profile_id": "profile-question",
+      "project_id": "project-question",
+      "workspace_id": null,
+      "session_id": "question",
+      "host": "manual",
+      "scope": "project",
+      "scope_id": "project-question",
+      "source_event_id": "source-question",
+      "source_ref": "fixture://question",
+      "source_kind": "development_transcript",
+      "explicit_remember": false,
+      "identity_status": "normal"
+    },
+    "status": "consolidated",
+    "error": null,
+    "created_at": "2026-09-20T19:55:20.413297Z",
+    "occurred_at": "2026-09-20T12:05:00Z"
+  },
+  "extracted": [],
+  "extraction_outcome": "abstained",
+  "status": "completed_negative_control",
+  "final_facts": [
+    {
+      "id": "a131d403-1d27-4572-99f5-f60f0b732a2e",
+      "content": "The unrelated control label is cedar-quartz-118.",
+      "metadata": {
+        "user_profile_id": "profile-question",
+        "project_id": "project-question",
+        "workspace_id": null,
+        "session_id": "question",
+        "host": "manual",
+        "scope": "project",
+        "scope_id": "project-question",
+        "source": "explicit_remember",
+        "source_roles": [
+          "user"
+        ],
+        "source_event_ids": [
+          "c74e608b51c229ae20000ff7d7ade90158dce50a97ba47ccb23d29dcc0f84871"
+        ],
+        "encoding_diagnostics": {},
+        "assertion_status": "asserted",
+        "cognitive_state_status": "provider_unavailable"
+      },
+      "salience": 0.5,
+      "cognitive_state": null,
+      "created_at": "2026-09-20T19:55:20.376001Z",
+      "updated_at": "2026-09-20T19:55:20.376007Z",
+      "access_count": 0,
+      "version": 1,
+      "canonical_key": "4492228b8fbf7e9c26e71e9a3d6c2c6581e36e25ce3c9a1c398b81012d3a5d5b",
+      "surprisal_score": null,
+      "surprisal_status": "unknown",
+      "cognitive_state_status": "provider_unavailable",
+      "last_observed_at": "2026-09-20T19:55:20.177510Z",
+      "observation_count": 1,
+      "last_retrieved_at": null,
+      "reconsolidation_due_at": null
+    },
+    {
+      "id": "d140799c-be73-4036-8395-eae148a04a24",
+      "content": "The foreign scope canary is violet-canyon-904.",
+      "metadata": {
+        "user_profile_id": "profile-question",
+        "project_id": "foreign-question",
+        "workspace_id": null,
+        "session_id": "foreign-question",
+        "host": "manual",
+        "scope": "project",
+        "scope_id": "foreign-question",
+        "source": "explicit_remember",
+        "source_roles": [
+          "user"
+        ],
+        "source_event_ids": [
+          "c6643b42d1a26aeef2a14aabba26ffa3bd3f4345e939ae374559ec572fea05ca"
+        ],
+        "encoding_diagnostics": {},
+        "assertion_status": "asserted",
+        "cognitive_state_status": "provider_unavailable"
+      },
+      "salience": 0.5,
+      "cognitive_state": null,
+      "created_at": "2026-09-20T19:55:20.406357Z",
+      "updated_at": "2026-09-20T19:55:20.406358Z",
+      "access_count": 0,
+      "version": 1,
+      "canonical_key": "4c650d4aca7417351240e58fd1216f8c4408866220f20a83660e8471821a764e",
+      "surprisal_score": null,
+      "surprisal_status": "unknown",
+      "cognitive_state_status": "provider_unavailable",
+      "last_observed_at": "2026-09-20T19:55:20.181498Z",
+      "observation_count": 1,
+      "last_retrieved_at": null,
+      "reconsolidation_due_at": null
+    }
+  ],
+  "final_jobs": [
+    {
+      "id": "event:c74e608b51c229ae20000ff7d7ade90158dce50a97ba47ccb23d29dcc0f84871",
+      "kind": "remember",
+      "payload": {
+        "event_id": "c74e608b51c229ae20000ff7d7ade90158dce50a97ba47ccb23d29dcc0f84871",
+        "context": {
+          "user_profile_id": "profile-question",
+          "project_id": "project-question",
+          "workspace_id": null,
+          "session_id": "question",
+          "host": "manual"
+        },
+        "scope": "project",
+        "source_digest": "ec6680a95c3906d63e9faf15bd78f796823b2c82d7980b6411f9a396fa378c00"
+      },
+      "status": "completed",
+      "attempt_count": 1,
+      "max_attempts": 5,
+      "available_at": "2026-09-20T19:55:20.177678Z",
+      "lease_owner": null,
+      "lease_token": null,
+      "lease_until": null,
+      "last_error": null,
+      "result": {
+        "decision": "facts",
+        "encoding_diagnostics": {},
+        "fact_ids": [
+          "a131d403-1d27-4572-99f5-f60f0b732a2e"
+        ]
+      },
+      "created_at": "2026-09-20T19:55:20.177679Z",
+      "updated_at": "2026-09-20T19:55:20.376031Z"
+    },
+    {
+      "id": "event:c6643b42d1a26aeef2a14aabba26ffa3bd3f4345e939ae374559ec572fea05ca",
+      "kind": "remember",
+      "payload": {
+        "event_id": "c6643b42d1a26aeef2a14aabba26ffa3bd3f4345e939ae374559ec572fea05ca",
+        "context": {
+          "user_profile_id": "profile-question",
+          "project_id": "foreign-question",
+          "workspace_id": null,
+          "session_id": "foreign-question",
+          "host": "manual"
+        },
+        "scope": "project",
+        "source_digest": "0a0285b38a709a93e225008310f66c043e69c3802c294826086935db3b40e4ec"
+      },
+      "status": "completed",
+      "attempt_count": 1,
+      "max_attempts": 5,
+      "available_at": "2026-09-20T19:55:20.181644Z",
+      "lease_owner": null,
+      "lease_token": null,
+      "lease_until": null,
+      "last_error": null,
+      "result": {
+        "decision": "facts",
+        "encoding_diagnostics": {},
+        "fact_ids": [
+          "d140799c-be73-4036-8395-eae148a04a24"
+        ]
+      },
+      "created_at": "2026-09-20T19:55:20.181646Z",
+      "updated_at": "2026-09-20T19:55:20.406381Z"
+    },
+    {
+      "id": "event:470e2df2fc11402317f05f9928a9ee235f39b27ba0b9c1076b59890dbdef3570",
+      "kind": "extract",
+      "payload": {
+        "event_id": "470e2df2fc11402317f05f9928a9ee235f39b27ba0b9c1076b59890dbdef3570",
+        "context": {
+          "user_profile_id": "profile-question",
+          "project_id": "project-question",
+          "workspace_id": null,
+          "session_id": "question",
+          "host": "manual"
+        },
+        "scope": "project",
+        "source_digest": "e75694c45eb97c90e7b5303418e9f23351b05cc8f8b0715016823a35a1e5aac4"
+      },
+      "status": "completed",
+      "attempt_count": 1,
+      "max_attempts": 5,
+      "available_at": "2026-09-20T19:55:20.413315Z",
+      "lease_owner": null,
+      "lease_token": null,
+      "lease_until": null,
+      "last_error": null,
+      "result": {
+        "decision": "no_durable_facts",
+        "encoding_diagnostics": {
+          "surprisal_score": null,
+          "surprisal_status": "disabled",
+          "prediction": null,
+          "prediction_mode": "disabled",
+          "threshold": 0.3
+        },
+        "fact_ids": []
+      },
+      "created_at": "2026-09-20T19:55:20.413316Z",
+      "updated_at": "2026-09-20T19:55:48.395900Z"
+    }
+  ]
+}

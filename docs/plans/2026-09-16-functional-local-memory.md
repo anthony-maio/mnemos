@@ -386,6 +386,17 @@ Run: `py -3.13 -m pytest -q tests/test_cross_host_contract.py tests/test_mcp_com
 
 ### T18 - Prove the contribution of all five modules
 
+The [Qwen3.5 service follow-up](../validation/2026-09-20/historical-claim-service-v3-verified/README.md)
+passes all seven bounded development cases on source `05c71d2`, including three
+explicit correction/restart/forget/replay lifecycles and four abstention controls.
+Seven SQLite backups pass integrity and foreign-key checks. This is one
+repetition of previously observed cases with only sleep extraction enabled.
+The [production-prompt comparison](../validation/2026-09-20/history-production-prompt-v1/README.md)
+records 36 runtime-valid responses but retains semantic failures. The separate
+[20-case comparison preparation](../validation/2026-09-20/extraction-authored-holdout-preparation-v1/README.md)
+freezes both prompt arms and records rubric ambiguities before execution.
+Its execution remains incomplete; no prompt adoption or T18 acceptance is claimed.
+
 Subsequent [historical-claim service development](../validation/2026-09-20/historical-claim-service-v1/README.md)
 completes three positive correction/restart/retrieval/forget/replay lifecycles
 with real Qwen2.5 and Nomic, sleep extraction enabled, and the other modules

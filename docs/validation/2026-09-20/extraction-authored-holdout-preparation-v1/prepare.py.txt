@@ -1,0 +1,61 @@
+from pathlib import Path
+from copy import deepcopy
+from datetime import datetime, timezone
+import hashlib
+import json
+import shutil
+from urllib.request import urlopen
+
+repo = Path(__file__).resolve().parents[1]
+prior = Path('C:/Users/Ant/AppData/Local/Temp/mnemos-history-production-prompt-v1')
+out = Path('C:/Users/Ant/AppData/Local/Temp/mnemos-extraction-authored-holdout-v1')
+assert not out.exists()
+sha = lambda p: hashlib.sha256(p.read_bytes()).hexdigest()
+authored = repo / '.venv/extraction_holdout_authored_v1.json'
+review = repo / '.venv/extraction_holdout_rubric_review_v1.json'
+assert sha(authored) == '62b3061e0066fc9fe3d583032e6c88ac40fde6310320181719da09d7aa43af77'
+assert sha(review) == '64f629b8b3db6c3e380369bc5823828dd16a41134f96128ec6ae7a429032f048'
+dataset = json.loads(authored.read_bytes())
+inputs = json.loads((prior / 'inputs.json').read_bytes())
+prep = json.loads((prior / 'preparation.json').read_bytes())
+template = deepcopy(inputs['cases'][0])
+candidate_source = repo / 'docs/validation/2026-09-20/history-chat-development-v1/inputs.json'
+inputs['candidate_clause'] = json.loads(candidate_source.read_bytes())['candidate_clause']
+inputs.update(schema_version='prompt-independent-authored-holdout-v1', repetitions=1,
+              arms=['production', 'history_only'], cases=[],
+              interpretation='Previously unexecuted authored cases, built without inspecting prompts or outputs. Fixed candidate predates cases. Manual semantic review; P07 and N10 have pre-registered label ambiguity. No binary aggregate score; no real-world accuracy claim.')
+for case in dataset['cases']:
+    row = deepcopy(template)
+    row.pop('reference_request', None)
+    row['id'] = case['id']
+    row['rubric'] = case
+    event = row['source']
+    digest = hashlib.sha256(('authored-holdout-v1:' + case['id'] + ':' + case['content']).encode()).hexdigest()
+    event.update(id=digest, event_fingerprint=digest, role=case['role'], content=case['content'],
+                 normalized_content=case['content'].lower(), scope_id='project-holdout-' + case['id'])
+    event['metadata'].update(user_profile_id='holdout-profile', project_id=event['scope_id'],
+                            scope_id=event['scope_id'], session_id='holdout-' + case['id'],
+                            source_event_id=digest, source_ref='fixture://authored-holdout/' + case['id'])
+    row['existing_fact']['metadata'].update(user_profile_id='holdout-profile', project_id=event['scope_id'],
+                                          scope_id=event['scope_id'], session_id='holdout-' + case['id'])
+    inputs['cases'].append(row)
+runner = (prior / 'runner.py').read_text()
+old = "clause = inputs['candidate_clause'] + (inputs['eligibility_clause'] if self.arm == 'history_and_eligibility' else '')"
+assert runner.count(old) == 1
+runner = runner.replace(old, "clause = inputs['candidate_clause'] if self.arm == 'history_only' else ''")
+with urlopen(inputs['endpoint'] + '/api/tags', timeout=10) as response:
+    model = next(m for m in json.loads(response.read())['models'] if m['name'] == inputs['model'])
+assert model['digest'] == prep['model']['digest']
+out.mkdir()
+(out / 'inputs.json').write_text(json.dumps(inputs, indent=2) + '\n')
+(out / 'runner.py').write_text(runner)
+shutil.copyfile(authored, out / authored.name)
+shutil.copyfile(review, out / review.name)
+shutil.copyfile(__file__, out / 'prepare.py.txt')
+manifest = {'prepared_at': datetime.now(timezone.utc).isoformat(), 'source_commit': inputs['source_commit'],
+            'model': model, 'source_files': prep['source_files'],
+            'fixed_candidate_inputs_sha256': sha(candidate_source),
+            'parent_runner_sha256': sha(prior / 'runner.py'),
+            'files': {p.name: sha(p) for p in sorted(out.iterdir())}}
+(out / 'preparation.json').write_text(json.dumps(manifest, indent=2) + '\n')
+print(json.dumps({'root': str(out), 'cases': len(inputs['cases']), 'calls': 40, 'started': False}))

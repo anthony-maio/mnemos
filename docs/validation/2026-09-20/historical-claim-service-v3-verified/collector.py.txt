@@ -1,0 +1,93 @@
+from pathlib import Path
+from contextlib import closing
+import hashlib
+import json
+import shutil
+import sqlite3
+import sqlite_vec
+
+repo = Path(__file__).resolve().parents[1]
+source = Path('C:/Users/Ant/AppData/Local/Temp/mnemos-historical-claim-service-v3')
+out = repo / 'docs/validation/2026-09-20/historical-claim-service-v3-verified'
+state = json.loads((source / 'status.json').read_bytes())
+prep = json.loads((source / 'preparation.json').read_bytes())
+inputs = json.loads((source / 'inputs.json').read_bytes())
+sha = lambda p: hashlib.sha256(p.read_bytes()).hexdigest()
+assert state['status'] == 'completed' and state['all_lifecycle_checks_passed'] is True
+assert state['preparation_sha256'] == sha(source / 'preparation.json')
+for path, digest in prep['files'].items():
+    assert sha(source / path) == digest
+out.mkdir(exist_ok=False)
+(out / '.gitattributes').write_bytes(b'** -text -whitespace\n')
+databases = []
+for path in sorted(source.rglob('*')):
+    if not path.is_file() or path.suffix not in {'.json', '.jsonl', '.py', '.txt', '.log', '.sqlite'}:
+        continue
+    dest = out / path.relative_to(source)
+    dest.parent.mkdir(parents=True, exist_ok=True)
+    if path.suffix == '.sqlite':
+        with closing(sqlite3.connect(path.as_uri() + '?mode=ro', uri=True)) as original:
+            with closing(sqlite3.connect(dest)) as backup:
+                original.backup(backup)
+                backup.enable_load_extension(True)
+                sqlite_vec.load(backup)
+                backup.enable_load_extension(False)
+                assert backup.execute('PRAGMA integrity_check').fetchone() == ('ok',)
+                foreign_errors = backup.execute('PRAGMA foreign_key_check').fetchall()
+                assert foreign_errors == [], foreign_errors
+                counts = {}
+                for (table,) in backup.execute("SELECT name FROM sqlite_master WHERE type='table'").fetchall():
+                    quoted = '"' + table.replace('"', '""') + '"'
+                    counts[table] = backup.execute('SELECT count(*) FROM ' + quoted).fetchone()[0]
+                backup.execute('PRAGMA journal_mode=DELETE')
+                backup.commit()
+        databases.append({'path': dest.relative_to(out).as_posix(), 'integrity': 'ok', 'foreign_key_errors': [], 'table_counts': counts})
+    else:
+        shutil.copyfile(path, dest)
+cases = []
+for case in inputs['cases']:
+    result = json.loads((source / case['id'] / 'result.json').read_bytes())
+    assert result['checks'] and all(result['checks'].values())
+    cases.append({'id': case['id'], 'status': result['status'], 'criterion': case['criterion'],
+                  'checks': result['checks'], 'committed_texts': [r['fact']['content'] for r in result.get('extracted', [])]})
+assert [case['status'] for case in cases] == ['completed_lifecycle'] * 3 + ['completed_negative_control'] * 4
+(out / 'summary.json').write_text(json.dumps({'cases': cases, 'database_inspection': databases}, indent=2) + '\n')
+shutil.copyfile(__file__, out / 'collector.py.txt')
+files = {p.relative_to(out).as_posix(): {'bytes': p.stat().st_size, 'sha256': sha(p)} for p in sorted(out.rglob('*')) if p.is_file()}
+assert not any(name.endswith(('-wal', '-shm')) for name in files)
+(out / 'evidence-index.json').write_text(json.dumps({'files': files}, indent=2) + '\n')
+(out / 'README.md').write_text('''# History-clause extraction through the real local service
+
+All seven bounded development cases pass their lifecycle checks on verified
+source 05c71d2 with local Qwen3.5:9b and Nomic embeddings. The history-only
+candidate clause is injected through the recorded provider wrapper. Thinking
+is enabled with an 8,192-token budget, temperature zero, and 180-second timeout.
+Only sleep extraction is enabled; the other four cognition modules are off.
+
+The historical approval, unverified relay, and obsolete archive each complete
+capture, extraction, explicit same-ID correction, version checks, restart,
+retrieval, reviewed forget, suppression of original and correction replays,
+and final restart. Unrelated and foreign-scope controls survive. The fiction,
+question, hypothetical, and unaccepted assistant suggestion all produce no
+durable fact. The exact initial texts in summary.json preserve the historical
+and uncertainty qualifications in these three observed examples.
+
+These are the previously observed seven authored cases and one repetition.
+Corrections are explicit service operations, not proof of automatic correction
+extraction. This establishes neither independent semantic accuracy nor general
+host readiness, full-module benefit, or performance. The earlier Qwen2.5:14b
+service run and its three failed negative controls remain unchanged. The
+production prompt has not been changed or adopted from this result.
+
+Requests, responses, configuration, source/model hashes, and final synthetic
+SQLite fixtures are preserved. SQLite backups pass integrity and foreign-key
+checks; every backup handle is closed before indexing. The separate authored
+holdout compares both prompt arms through the same provider and remains a
+distinct evaluation, not a selective rerun of these seven cases.
+
+The first archive collector stopped while counting a vec0 virtual table because
+its inspection connection had not loaded sqlite-vec. The partial archive at
+historical-claim-service-v3 remains untouched. This fresh archive loads the
+extension before inspecting tables. The service experiment was not rerun.
+''', encoding='utf-8')
+print(json.dumps({'archive': str(out), 'indexed_files': len(files), 'databases': len(databases), 'cases': len(cases)}))

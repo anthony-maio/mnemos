@@ -1,0 +1,184 @@
+{
+  "config": {
+    "endpoint": "http://127.0.0.1:11434",
+    "model": "qwen3.5:9b",
+    "embedding_model": "nomic-embed-text:latest",
+    "timeout_seconds": 180.0,
+    "temperature": 0.0,
+    "max_tokens": 8192,
+    "think": true
+  },
+  "trace_key": {
+    "run_key": "obsolete-archive",
+    "profile": "history-service-sleep-only"
+  },
+  "service_instances": 3,
+  "predict_calls": [
+    {
+      "latency_ms": 57470.88659997098,
+      "prompt_chars": 2104,
+      "response": "{\n  \"decision\": \"facts\",\n  \"facts\": [\n    {\n      \"content\": \"Our 2024 telemetry archive used LZ4. That format was retired in February 2025; I am not specifying the replacement format.\",\n      \"evidence_ids\": [\n        \"2b7f4dcdc07db52a9926461f0602c9519de365fb90edf55435c24b996bb95142\"\n      ],\n      \"operation\": \"add\"\n    }\n  ]\n}",
+      "token_usage": {
+        "prompt_eval_count": 633,
+        "eval_count": 5020
+      },
+      "structured_output_requested": true,
+      "format_schema_sha256": "490f2fc7f9cdaacdd4c227bdd5f71fd89ad351f3cdc3de442e6cdf0f54ad9868"
+    }
+  ],
+  "classify_calls": [],
+  "embed_calls": [
+    {
+      "latency_ms": 185.31709996750578,
+      "role": "document",
+      "text_chars": 48,
+      "vector_dimensions": 768,
+      "token_usage": {
+        "prompt_eval_count": 13
+      }
+    },
+    {
+      "latency_ms": 12.234099966008216,
+      "role": "document",
+      "text_chars": 46,
+      "vector_dimensions": 768,
+      "token_usage": {
+        "prompt_eval_count": 14
+      }
+    },
+    {
+      "latency_ms": 10.814899986144155,
+      "role": "query",
+      "text_chars": 122,
+      "vector_dimensions": 768,
+      "token_usage": {
+        "prompt_eval_count": 32
+      }
+    },
+    {
+      "latency_ms": 29.24380003241822,
+      "role": "document",
+      "text_chars": 122,
+      "vector_dimensions": 768,
+      "token_usage": {
+        "prompt_eval_count": 32
+      }
+    },
+    {
+      "latency_ms": 34.14060000795871,
+      "role": "query",
+      "text_chars": 55,
+      "vector_dimensions": 768,
+      "token_usage": {
+        "prompt_eval_count": 15
+      }
+    },
+    {
+      "latency_ms": 12.365599977783859,
+      "role": "document",
+      "text_chars": 145,
+      "vector_dimensions": 768,
+      "token_usage": {
+        "prompt_eval_count": 35
+      }
+    },
+    {
+      "latency_ms": 199.8240000102669,
+      "role": "query",
+      "text_chars": 55,
+      "vector_dimensions": 768,
+      "token_usage": {
+        "prompt_eval_count": 15
+      }
+    },
+    {
+      "latency_ms": 180.73890003142878,
+      "role": "query",
+      "text_chars": 55,
+      "vector_dimensions": 768,
+      "token_usage": {
+        "prompt_eval_count": 15
+      }
+    }
+  ],
+  "response_metadata": [
+    {
+      "provider": "ollama",
+      "kind": "embedding",
+      "model": "nomic-embed-text:latest",
+      "total_duration": 7993400,
+      "load_duration": 4311700,
+      "prompt_eval_count": 13
+    },
+    {
+      "provider": "ollama",
+      "kind": "embedding",
+      "model": "nomic-embed-text:latest",
+      "total_duration": 10800700,
+      "load_duration": 5555900,
+      "prompt_eval_count": 14
+    },
+    {
+      "provider": "ollama",
+      "kind": "embedding",
+      "model": "nomic-embed-text:latest",
+      "total_duration": 9755300,
+      "load_duration": 4876300,
+      "prompt_eval_count": 32
+    },
+    {
+      "provider": "ollama",
+      "kind": "generate",
+      "model": "qwen3.5:9b",
+      "created_at": "2026-09-20T19:54:50.1825727Z",
+      "done": true,
+      "done_reason": "stop",
+      "total_duration": 57281950300,
+      "load_duration": 4332600,
+      "prompt_eval_count": 633,
+      "prompt_eval_duration": 135122000,
+      "eval_count": 5020,
+      "eval_duration": 56996445000
+    },
+    {
+      "provider": "ollama",
+      "kind": "embedding",
+      "model": "nomic-embed-text:latest",
+      "total_duration": 11315800,
+      "load_duration": 5592400,
+      "prompt_eval_count": 32
+    },
+    {
+      "provider": "ollama",
+      "kind": "embedding",
+      "model": "nomic-embed-text:latest",
+      "total_duration": 33511500,
+      "load_duration": 4775500,
+      "prompt_eval_count": 15
+    },
+    {
+      "provider": "ollama",
+      "kind": "embedding",
+      "model": "nomic-embed-text:latest",
+      "total_duration": 11085600,
+      "load_duration": 5489900,
+      "prompt_eval_count": 35
+    },
+    {
+      "provider": "ollama",
+      "kind": "embedding",
+      "model": "nomic-embed-text:latest",
+      "total_duration": 8326000,
+      "load_duration": 4167600,
+      "prompt_eval_count": 15
+    },
+    {
+      "provider": "ollama",
+      "kind": "embedding",
+      "model": "nomic-embed-text:latest",
+      "total_duration": 8993800,
+      "load_duration": 4890900,
+      "prompt_eval_count": 15
+    }
+  ]
+}

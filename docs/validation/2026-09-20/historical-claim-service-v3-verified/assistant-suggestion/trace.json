@@ -1,0 +1,99 @@
+{
+  "config": {
+    "endpoint": "http://127.0.0.1:11434",
+    "model": "qwen3.5:9b",
+    "embedding_model": "nomic-embed-text:latest",
+    "timeout_seconds": 180.0,
+    "temperature": 0.0,
+    "max_tokens": 8192,
+    "think": true
+  },
+  "trace_key": {
+    "run_key": "assistant-suggestion",
+    "profile": "history-service-sleep-only"
+  },
+  "service_instances": 1,
+  "predict_calls": [
+    {
+      "latency_ms": 17870.279800030403,
+      "prompt_chars": 2035,
+      "response": "{\n\"decision\": \"no_durable_facts\",\n\"facts\": [],\n\"reason\": \"Source event contains an assistant suggestion/hypothesis ('I think you would prefer...') which does not establish a user preference or durable fact per instructions. No evidence in source events supports the existing fact regarding control labels.\"\n}",
+      "token_usage": {
+        "prompt_eval_count": 607,
+        "eval_count": 1531
+      },
+      "structured_output_requested": true,
+      "format_schema_sha256": "2059f5260b9efafd8d430ad963d70fdeda75894d5f0f5d9ce2fcde42dc1e25cd"
+    }
+  ],
+  "classify_calls": [],
+  "embed_calls": [
+    {
+      "latency_ms": 195.44380001025274,
+      "role": "document",
+      "text_chars": 48,
+      "vector_dimensions": 768,
+      "token_usage": {
+        "prompt_eval_count": 13
+      }
+    },
+    {
+      "latency_ms": 12.112600030377507,
+      "role": "document",
+      "text_chars": 46,
+      "vector_dimensions": 768,
+      "token_usage": {
+        "prompt_eval_count": 14
+      }
+    },
+    {
+      "latency_ms": 14.169699978083372,
+      "role": "query",
+      "text_chars": 48,
+      "vector_dimensions": 768,
+      "token_usage": {
+        "prompt_eval_count": 13
+      }
+    }
+  ],
+  "response_metadata": [
+    {
+      "provider": "ollama",
+      "kind": "embedding",
+      "model": "nomic-embed-text:latest",
+      "total_duration": 12695900,
+      "load_duration": 6354300,
+      "prompt_eval_count": 13
+    },
+    {
+      "provider": "ollama",
+      "kind": "embedding",
+      "model": "nomic-embed-text:latest",
+      "total_duration": 11237800,
+      "load_duration": 5986400,
+      "prompt_eval_count": 14
+    },
+    {
+      "provider": "ollama",
+      "kind": "embedding",
+      "model": "nomic-embed-text:latest",
+      "total_duration": 13537100,
+      "load_duration": 6178900,
+      "prompt_eval_count": 13
+    },
+    {
+      "provider": "ollama",
+      "kind": "generate",
+      "model": "qwen3.5:9b",
+      "created_at": "2026-09-20T19:56:38.3680418Z",
+      "done": true,
+      "done_reason": "stop",
+      "total_duration": 17680725400,
+      "load_duration": 4796500,
+      "prompt_eval_count": 607,
+      "prompt_eval_duration": 134771000,
+      "eval_count": 1531,
+      "eval_duration": 17433844000
+    }
+  ]
+}

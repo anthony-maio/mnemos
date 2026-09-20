@@ -1,0 +1,99 @@
+{
+  "config": {
+    "endpoint": "http://127.0.0.1:11434",
+    "model": "qwen3.5:9b",
+    "embedding_model": "nomic-embed-text:latest",
+    "timeout_seconds": 180.0,
+    "temperature": 0.0,
+    "max_tokens": 8192,
+    "think": true
+  },
+  "trace_key": {
+    "run_key": "question",
+    "profile": "history-service-sleep-only"
+  },
+  "service_instances": 1,
+  "predict_calls": [
+    {
+      "latency_ms": 27962.94370002579,
+      "prompt_chars": 2042,
+      "response": "{\"decision\":\"no_durable_facts\",\"facts\":[],\"reason\":\"Source event is a question asking about past content verification and does not assert a fact, preference, or requirement.\"}",
+      "token_usage": {
+        "prompt_eval_count": 616,
+        "eval_count": 2435
+      },
+      "structured_output_requested": true,
+      "format_schema_sha256": "777b5b872bc3b112b63dcd33206ba827486aee5feb6ffea605c6665b6450fcea"
+    }
+  ],
+  "classify_calls": [],
+  "embed_calls": [
+    {
+      "latency_ms": 187.10489996010438,
+      "role": "document",
+      "text_chars": 48,
+      "vector_dimensions": 768,
+      "token_usage": {
+        "prompt_eval_count": 13
+      }
+    },
+    {
+      "latency_ms": 12.54029996925965,
+      "role": "document",
+      "text_chars": 46,
+      "vector_dimensions": 768,
+      "token_usage": {
+        "prompt_eval_count": 14
+      }
+    },
+    {
+      "latency_ms": 10.61420002952218,
+      "role": "query",
+      "text_chars": 60,
+      "vector_dimensions": 768,
+      "token_usage": {
+        "prompt_eval_count": 15
+      }
+    }
+  ],
+  "response_metadata": [
+    {
+      "provider": "ollama",
+      "kind": "embedding",
+      "model": "nomic-embed-text:latest",
+      "total_duration": 9917100,
+      "load_duration": 4803700,
+      "prompt_eval_count": 13
+    },
+    {
+      "provider": "ollama",
+      "kind": "embedding",
+      "model": "nomic-embed-text:latest",
+      "total_duration": 11069700,
+      "load_duration": 5231600,
+      "prompt_eval_count": 14
+    },
+    {
+      "provider": "ollama",
+      "kind": "embedding",
+      "model": "nomic-embed-text:latest",
+      "total_duration": 9950000,
+      "load_duration": 5273900,
+      "prompt_eval_count": 15
+    },
+    {
+      "provider": "ollama",
+      "kind": "generate",
+      "model": "qwen3.5:9b",
+      "created_at": "2026-09-20T19:55:48.3916603Z",
+      "done": true,
+      "done_reason": "stop",
+      "total_duration": 27779102800,
+      "load_duration": 5084300,
+      "prompt_eval_count": 616,
+      "prompt_eval_duration": 137603000,
+      "eval_count": 2435,
+      "eval_duration": 27513211000
+    }
+  ]
+}

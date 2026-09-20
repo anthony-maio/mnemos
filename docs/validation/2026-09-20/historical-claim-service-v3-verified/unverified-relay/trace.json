@@ -1,0 +1,184 @@
+{
+  "config": {
+    "endpoint": "http://127.0.0.1:11434",
+    "model": "qwen3.5:9b",
+    "embedding_model": "nomic-embed-text:latest",
+    "timeout_seconds": 180.0,
+    "temperature": 0.0,
+    "max_tokens": 8192,
+    "think": true
+  },
+  "trace_key": {
+    "run_key": "unverified-relay",
+    "profile": "history-service-sleep-only"
+  },
+  "service_instances": 3,
+  "predict_calls": [
+    {
+      "latency_ms": 83957.35419995617,
+      "prompt_chars": 2102,
+      "response": "{\"decision\":\"facts\",\"facts\":[{\"content\":\"During the September 18 handoff, Omar reported that the staging relay used port 4729. I have not verified Omar's report.\",\"evidence_ids\":[\"d901d822fc38fa2ad51cdb04d12ea2c1c778c06d138505738697fbc4d6cd73d1\"],\"operation\":\"add\"}]}",
+      "token_usage": {
+        "prompt_eval_count": 629,
+        "eval_count": 7293
+      },
+      "structured_output_requested": true,
+      "format_schema_sha256": "5e5ee686bb98c50fc830c31f17c6b727d9cdde22ea64f9b139ce944bb4899174"
+    }
+  ],
+  "classify_calls": [],
+  "embed_calls": [
+    {
+      "latency_ms": 201.1192999780178,
+      "role": "document",
+      "text_chars": 48,
+      "vector_dimensions": 768,
+      "token_usage": {
+        "prompt_eval_count": 13
+      }
+    },
+    {
+      "latency_ms": 12.426800036337227,
+      "role": "document",
+      "text_chars": 46,
+      "vector_dimensions": 768,
+      "token_usage": {
+        "prompt_eval_count": 14
+      }
+    },
+    {
+      "latency_ms": 12.596999993547797,
+      "role": "query",
+      "text_chars": 120,
+      "vector_dimensions": 768,
+      "token_usage": {
+        "prompt_eval_count": 29
+      }
+    },
+    {
+      "latency_ms": 25.478600000496954,
+      "role": "document",
+      "text_chars": 120,
+      "vector_dimensions": 768,
+      "token_usage": {
+        "prompt_eval_count": 29
+      }
+    },
+    {
+      "latency_ms": 10.054799960926175,
+      "role": "query",
+      "text_chars": 51,
+      "vector_dimensions": 768,
+      "token_usage": {
+        "prompt_eval_count": 13
+      }
+    },
+    {
+      "latency_ms": 11.035799980163574,
+      "role": "document",
+      "text_chars": 133,
+      "vector_dimensions": 768,
+      "token_usage": {
+        "prompt_eval_count": 31
+      }
+    },
+    {
+      "latency_ms": 199.04640002641827,
+      "role": "query",
+      "text_chars": 51,
+      "vector_dimensions": 768,
+      "token_usage": {
+        "prompt_eval_count": 13
+      }
+    },
+    {
+      "latency_ms": 202.2813999792561,
+      "role": "query",
+      "text_chars": 51,
+      "vector_dimensions": 768,
+      "token_usage": {
+        "prompt_eval_count": 13
+      }
+    }
+  ],
+  "response_metadata": [
+    {
+      "provider": "ollama",
+      "kind": "embedding",
+      "model": "nomic-embed-text:latest",
+      "total_duration": 11165400,
+      "load_duration": 4914400,
+      "prompt_eval_count": 13
+    },
+    {
+      "provider": "ollama",
+      "kind": "embedding",
+      "model": "nomic-embed-text:latest",
+      "total_duration": 11142700,
+      "load_duration": 4802600,
+      "prompt_eval_count": 14
+    },
+    {
+      "provider": "ollama",
+      "kind": "embedding",
+      "model": "nomic-embed-text:latest",
+      "total_duration": 11634300,
+      "load_duration": 5803900,
+      "prompt_eval_count": 29
+    },
+    {
+      "provider": "ollama",
+      "kind": "generate",
+      "model": "qwen3.5:9b",
+      "created_at": "2026-09-20T19:53:51.8651076Z",
+      "done": true,
+      "done_reason": "stop",
+      "total_duration": 83768279900,
+      "load_duration": 4859800,
+      "prompt_eval_count": 629,
+      "prompt_eval_duration": 132811000,
+      "eval_count": 7293,
+      "eval_duration": 83465810000
+    },
+    {
+      "provider": "ollama",
+      "kind": "embedding",
+      "model": "nomic-embed-text:latest",
+      "total_duration": 10523600,
+      "load_duration": 5086700,
+      "prompt_eval_count": 29
+    },
+    {
+      "provider": "ollama",
+      "kind": "embedding",
+      "model": "nomic-embed-text:latest",
+      "total_duration": 9278000,
+      "load_duration": 4924700,
+      "prompt_eval_count": 13
+    },
+    {
+      "provider": "ollama",
+      "kind": "embedding",
+      "model": "nomic-embed-text:latest",
+      "total_duration": 9519400,
+      "load_duration": 4152400,
+      "prompt_eval_count": 31
+    },
+    {
+      "provider": "ollama",
+      "kind": "embedding",
+      "model": "nomic-embed-text:latest",
+      "total_duration": 9090800,
+      "load_duration": 4817600,
+      "prompt_eval_count": 13
+    },
+    {
+      "provider": "ollama",
+      "kind": "embedding",
+      "model": "nomic-embed-text:latest",
+      "total_duration": 9005200,
+      "load_duration": 4720100,
+      "prompt_eval_count": 13
+    }
+  ]
+}
