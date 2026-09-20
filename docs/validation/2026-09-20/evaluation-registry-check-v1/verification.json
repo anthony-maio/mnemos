@@ -1,0 +1,52 @@
+{
+  "source_commit": "1b3e227be6d190a26cff7368145d67caf747024e",
+  "started_at": "2026-09-20T23:20:19.080768+00:00",
+  "status": "passed",
+  "files": {
+    "benchmarks/local_memory/heldout_run.py": "b5bac9b45bd4ef298fdeb86fc6a7b22acf287e747b7f8c05cb3f5496ad1b3fb4",
+    "benchmarks/local_memory/README.md": "863b22d9e3240932e88d9e1e7d63e2b3792972ae7f7a233058e2739aba3f14cd",
+    "tests/test_evaluation_registry_identity.py": "45844852a9c9eed22f6387d80b1445882715caefcfc085c78f3a37b233f402cd"
+  },
+  "checks": [
+    {
+      "name": "pytest",
+      "command": [
+        "D:\\Development\\mnemos\\mnemos\\.worktrees\\functional-local-memory\\.venv\\Scripts\\python.exe",
+        "-m",
+        "pytest",
+        "-q",
+        "tests/test_evaluation_registry_identity.py",
+        "tests/test_local_memory_benchmark.py",
+        "tests/test_contract_v4.py",
+        "tests/test_lifecycle_v3_contract.py",
+        "tests/test_benchmark_thinking_option.py",
+        "tests/test_retrieval_comparison_run.py",
+        "--junitxml=C:\\Users\\Ant\\AppData\\Local\\Temp\\mnemos-evaluation-registry-check-v1\\junit.xml"
+      ],
+      "exit_code": 0
+    },
+    {
+      "name": "black",
+      "command": [
+        "D:\\Development\\mnemos\\mnemos\\.worktrees\\functional-local-memory\\.venv\\Scripts\\python.exe",
+        "-m",
+        "black",
+        "--check",
+        "benchmarks/local_memory/heldout_run.py",
+        "tests/test_evaluation_registry_identity.py"
+      ],
+      "exit_code": 0
+    },
+    {
+      "name": "mypy",
+      "command": [
+        "D:\\Development\\mnemos\\mnemos\\.worktrees\\functional-local-memory\\.venv\\compat-py310\\Scripts\\python.exe",
+        "-m",
+        "mypy",
+        "benchmarks/local_memory/heldout_run.py"
+      ],
+      "exit_code": 0
+    }
+  ],
+  "finished_at": "2026-09-20T23:23:25.361116+00:00"
+}
