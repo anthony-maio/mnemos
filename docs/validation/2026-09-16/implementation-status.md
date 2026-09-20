@@ -1,5 +1,10 @@
 # Functional local memory implementation status
 
+The [isolated Hermes component-write audit](../2026-09-20/hermes-component-write-audit-v1/README.md)
+blocks acceptance of the current host candidate: single-message capture is
+omitted, and three valid host transcript shapes fail during batch writes.
+The tested Mnemos package remains separate from this uninstalled candidate.
+
 The latest [verified package](../2026-09-20/hermes-memory-evidence-checkpoint-v1/README.md)
 is `244613a`: 1,976 source tests and 775 isolated installed cases pass, with
 four skips each, all six source/package checks, and seven replay assertions.

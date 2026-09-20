@@ -1,0 +1,50 @@
+from pathlib import Path
+import hashlib
+import json
+import subprocess
+
+repo = Path(__file__).resolve().parents[1]
+out = repo / 'docs/validation/2026-09-20/hermes-component-write-audit-v1'
+out.mkdir(exist_ok=False)
+(out / '.gitattributes').write_bytes(b'** -text -whitespace\n')
+for name in ('result.json', 'candidate.patch'):
+    data = subprocess.check_output(['wsl', '-e', 'cat', '/tmp/mnemos-hermes-root-component-audit-v1/' + name])
+    (out / name).write_bytes(data)
+(out / 'probe.py.txt').write_bytes((repo / '.venv/probe_hermes_component_writes_v1.py').read_bytes())
+(out / 'collector.py.txt').write_bytes(Path(__file__).read_bytes())
+result = json.loads((out / 'result.json').read_bytes())
+assert result['host_commit'] == '14a346345486418aa85ed6526549412ee2665ade'
+assert result['patch_sha256'] == hashlib.sha256((out / 'candidate.patch').read_bytes()).hexdigest()
+assert result['cases'][0]['write_result'] == 1 and result['cases'][0]['evidence'] == []
+assert all(row['status'] == 'error' for row in result['cases'][1:])
+files = {p.name: {'bytes': p.stat().st_size, 'sha256': hashlib.sha256(p.read_bytes()).hexdigest()}
+         for p in sorted(out.iterdir()) if p.is_file()}
+(out / 'evidence-index.json').write_text(json.dumps({'files': files}, indent=2) + '\n', encoding='utf-8')
+(out / 'README.md').write_text('''# Hermes candidate component-write audit
+
+An isolated, uninstalled Hermes compatibility candidate at base
+`14a346345486418aa85ed6526549412ee2665ade` exposes four regressions in the
+actual SessionDB write/projection path. The exact candidate patch is retained;
+these findings do not describe the released Hermes code or a live upgrade.
+
+- A single `append_message` user write persists successfully, but the new
+  `get_memory_evidence` projection returns an empty list.
+- A batch tool response raises `ValueError` during evidence-component insert.
+- An assistant tool call with null content raises the same error.
+- A multimodal user message with a text part raises the same error.
+
+The latter three errors read `memory evidence component has invalid role or
+content`. The memory integration must preserve valid host transcript writes
+and project only capturable evidence. Single-message writes need the same
+durable provenance support as batch writes. This probe records outcomes;
+it does not assert rollback behavior or cover every host content shape.
+
+The database fixtures remain under the named WSL temporary directory. No
+model, live configuration, or live memory store was used. This is preserved
+negative development evidence. A successor must rerun the affected paths and
+the host suites before making an integration acceptance claim.
+
+The evidence index binds five raw/helper artifacts. This README is outside
+the index.
+''', encoding='utf-8', newline='\n')
+print(json.dumps({'archive': str(out), 'indexed_files': len(files), 'observed_regressions': 4}))

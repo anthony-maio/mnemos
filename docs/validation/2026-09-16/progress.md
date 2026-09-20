@@ -1,5 +1,12 @@
 # Functional local memory implementation record
 
+The [isolated Hermes component-write audit](../2026-09-20/hermes-component-write-audit-v1/README.md)
+reproduces four regressions in the unfinished host candidate: a persisted
+single user message disappears from its evidence projection, and batch tool,
+null-content assistant tool-call, and multimodal user writes raise errors.
+The exact candidate patch and raw outcomes are preserved. Repairs and host
+integration verification remain open; this candidate is not installed live.
+
 The latest [verified package](../2026-09-20/hermes-memory-evidence-checkpoint-v1/README.md)
 is `244613a`: 1,976 source tests and 775 isolated installed cases pass, with
 four skips each, all six source/package checks, and seven replay assertions.

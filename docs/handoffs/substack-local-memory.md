@@ -12,6 +12,13 @@ Deliver an article draft, three possible titles, and a separate compact source/c
 
 ## Read this first
 
+The unfinished Hermes host patch has a preserved
+[component-write failure record](../validation/2026-09-20/hermes-component-write-audit-v1/README.md):
+its new evidence projection missed a single-message write and rejected three
+valid transcript shapes. Keep this isolated candidate failure separate from
+the verified Mnemos package and from live Hermes behavior. Do not describe
+compaction integration as finished until a verified successor closes it.
+
 The latest [verified package](../validation/2026-09-20/hermes-memory-evidence-checkpoint-v1/README.md)
 is `244613a`: 1,976 source tests and 775 isolated installed cases pass, with
 four skips each, all six source/package checks, and seven replay assertions.

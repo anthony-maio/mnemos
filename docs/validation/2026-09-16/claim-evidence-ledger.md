@@ -1,5 +1,10 @@
 # Mnemos claim and evidence ledger
 
+The [isolated Hermes component-write audit](../2026-09-20/hermes-component-write-audit-v1/README.md)
+records four host-candidate regressions: omitted single-message evidence and
+rejected tool, null-content assistant tool-call, and multimodal batch writes.
+No complete Hermes compaction integration or live-upgrade claim is supported.
+
 The latest [verified package](../2026-09-20/hermes-memory-evidence-checkpoint-v1/README.md)
 is `244613a`: 1,976 source tests and 775 isolated installed cases pass, with
 four skips each, all six source/package checks, and seven replay assertions.

@@ -1,0 +1,100 @@
+{
+  "host_commit": "14a346345486418aa85ed6526549412ee2665ade",
+  "patch_sha256": "52d65fa1310eacccf2495a819e858064bcd6d71fc1e7940b6565ff3230605b9a",
+  "cases": [
+    {
+      "case": "single_user",
+      "messages": [
+        {
+          "role": "user",
+          "content": "Preserve this original user statement."
+        }
+      ],
+      "write_result": 1,
+      "stored_rows": [
+        {
+          "id": 1,
+          "session_id": "single_user",
+          "role": "user",
+          "content": "Preserve this original user statement.",
+          "tool_call_id": null,
+          "tool_calls": null,
+          "tool_name": null,
+          "effect_disposition": null,
+          "timestamp": 1789927162.9913065,
+          "token_count": null,
+          "finish_reason": null,
+          "reasoning": null,
+          "reasoning_content": null,
+          "reasoning_details": null,
+          "codex_reasoning_items": null,
+          "codex_message_items": null,
+          "platform_message_id": null,
+          "observed": 0,
+          "active": 1,
+          "compacted": 0,
+          "api_content": null,
+          "display_kind": null,
+          "display_metadata": null
+        }
+      ],
+      "evidence": [],
+      "status": "completed"
+    },
+    {
+      "case": "batch_tool",
+      "messages": [
+        {
+          "role": "tool",
+          "content": "tool response",
+          "tool_call_id": "tool-1",
+          "_row_id": 1
+        }
+      ],
+      "status": "error",
+      "error_type": "ValueError",
+      "error": "memory evidence component has invalid role or content"
+    },
+    {
+      "case": "batch_assistant_tool_call",
+      "messages": [
+        {
+          "role": "assistant",
+          "content": null,
+          "tool_calls": [
+            {
+              "id": "tool-1",
+              "type": "function",
+              "function": {
+                "name": "test",
+                "arguments": "{}"
+              }
+            }
+          ],
+          "_row_id": 1
+        }
+      ],
+      "status": "error",
+      "error_type": "ValueError",
+      "error": "memory evidence component has invalid role or content"
+    },
+    {
+      "case": "batch_multimodal_user",
+      "messages": [
+        {
+          "role": "user",
+          "content": [
+            {
+              "type": "text",
+              "text": "A real user message."
+            }
+          ],
+          "_row_id": 1
+        }
+      ],
+      "status": "error",
+      "error_type": "ValueError",
+      "error": "memory evidence component has invalid role or content"
+    }
+  ]
+}
