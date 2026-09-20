@@ -285,7 +285,7 @@ class OllamaProvider(LLMProvider):
 
     async def predict(self, prompt: str, **kwargs: Any) -> str:
         """
-        Generate a completion using Ollama's /api/generate endpoint.
+        Generate a completion, using chat for explicitly enabled structured reasoning.
 
         Args:
             prompt: Input prompt string.
@@ -302,18 +302,27 @@ class OllamaProvider(LLMProvider):
         temperature = kwargs.get("temperature", self.temperature)
         max_tokens = kwargs.get("max_tokens", self.max_tokens)
         think = _validate_ollama_think(kwargs.get("think", self.think))
+        response_format = kwargs.get("format")
+        # On reasoning models, generate can constrain the reasoning channel
+        # itself and terminate without a final answer. Chat keeps the final
+        # structured response separate. Preserve the existing route when
+        # reasoning is disabled or left to the model's unspecified default.
+        use_chat = response_format is not None and think is not None and think is not False
 
         payload = {
             "model": _request_model(self.model, kwargs),
-            "prompt": prompt,
             "stream": False,
             "options": {
                 "temperature": temperature,
                 "num_predict": max_tokens,
             },
         }
-        if "format" in kwargs and kwargs["format"] is not None:
-            payload["format"] = kwargs["format"]
+        if use_chat:
+            payload["messages"] = [{"role": "user", "content": prompt}]
+        else:
+            payload["prompt"] = prompt
+        if response_format is not None:
+            payload["format"] = response_format
         if think is not None:
             payload["think"] = think
 
@@ -322,7 +331,7 @@ class OllamaProvider(LLMProvider):
                 timeout=self.timeout, verify=self._tls_verification()
             ) as client:
                 response = await client.post(
-                    f"{self.base_url}/api/generate",
+                    f"{self.base_url}/api/{'chat' if use_chat else 'generate'}",
                     json=payload,
                 )
                 response.raise_for_status()
@@ -339,7 +348,11 @@ class OllamaProvider(LLMProvider):
                             provider="ollama",
                             operation="predict_observer",
                         )
-                text = data.get("response")
+                if use_chat:
+                    message = data.get("message")
+                    text = message.get("content") if isinstance(message, dict) else None
+                else:
+                    text = data.get("response")
                 if not isinstance(text, str):
                     raise MnemosExternalServiceError("Ollama returned a non-string final response")
                 final = text.strip()
