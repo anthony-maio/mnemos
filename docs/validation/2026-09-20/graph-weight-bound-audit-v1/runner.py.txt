@@ -1,0 +1,74 @@
+"""Optimistic rank bounds on saved candidates, not a tuned retrieval experiment."""
+from pathlib import Path
+import hashlib, json, shutil
+
+repo = Path(__file__).resolve().parents[1]
+prior = json.loads((repo / 'docs/validation/2026-09-20/source-association-seed-audit-v1/source-association-seed-audit-v1.json').read_bytes())
+source = Path(prior['source_report'])
+assert hashlib.sha256(source.read_bytes()).hexdigest() == prior['source_report_sha256']
+report = json.loads(source.read_bytes())
+rows = []
+for row in report['rows']:
+    if row['repetition'] != 0:
+        continue
+    scores = {s['id']: s for s in row['candidate_scores'] if s['status'] == 'scored'}
+    target = scores.get(row['target']['id'])
+    item = {k: row[k] for k in ['embedding_contract', 'case_id', 'arm']}
+    item['observed_rank'] = row['target']['rank']
+    if target is None:
+        item.update(status='target_absent_from_scored_pool', optimistic_best_rank=None)
+        rows.append(item)
+        continue
+    others = [s for key, s in scores.items() if key != target['id']]
+    def rank(weight):
+        threshold = target['semantic'] + weight * target['graph_energy']
+        # Ties favor target, an explicitly optimistic bound.
+        return 1 + sum(s['semantic'] + weight * s['graph_energy'] > threshold + 1e-12 for s in others)
+    for s in scores.values():
+        assert abs(s['total'] - (s['semantic'] + report['options']['graph_weight'] * s['graph_energy'])) < 1e-9
+    assert rank(report['options']['graph_weight']) <= row['target']['rank']
+    breaks = {0.0, 1.0}
+    for s in others:
+        slope = target['graph_energy'] - s['graph_energy']
+        if slope:
+            crossing = (s['semantic'] - target['semantic']) / slope
+            if 0 <= crossing <= 1:
+                breaks.add(crossing)
+    ordered = sorted(breaks)
+    probes = sorted(breaks | {(a + b) / 2 for a, b in zip(ordered, ordered[1:])})
+    best = min(rank(w) for w in probes)
+    dominating = [s['id'] for s in others if s['semantic'] > target['semantic'] and s['graph_energy'] >= target['graph_energy']]
+    item.update(status='bounded', optimistic_best_rank=best, strict_dominators=dominating,
+                probe_count=len(probes), current_weight_optimistic_rank=rank(report['options']['graph_weight']))
+    rows.append(item)
+assert len(rows) == 30
+counts = {'rows': len(rows), 'target_missing': sum(r['optimistic_best_rank'] is None for r in rows),
+          'could_reach_top5_in_optimistic_bound': sum(r['optimistic_best_rank'] is not None and r['optimistic_best_rank'] <= 5 for r in rows)}
+out = repo / 'docs/validation/2026-09-20/graph-weight-bound-audit-v1'
+out.mkdir(exist_ok=False)
+(out / '.gitattributes').write_bytes(b'** -text -whitespace\n')
+(out / 'audit.json').write_text(json.dumps({'source_report_sha256': prior['source_report_sha256'], 'summary': counts, 'rows': rows}, indent=2) + '\n')
+shutil.copyfile(__file__, out / 'runner.py.txt')
+(out / 'README.md').write_text(f'''# Fixed-candidate graph-weight bound
+
+This post-hoc diagnostic reads the frozen development report and changes no
+settings or criteria. It examines repetition zero: five cases, two embedding
+contracts and three graph arms. The original top-five result remains zero.
+
+Holding each recorded candidate pool and activation energy fixed, the diagnostic
+checks the linear score's endpoints and all target-versus-candidate crossings
+inside the allowed graph-weight range [0, 1], plus intervening intervals. Ties
+favor the target, making this an optimistic rank bound. The recorded score
+arithmetic is checked at the original weight 0.1.
+
+Summary: {json.dumps(counts)}.
+
+This does not execute retrieval, enforce context budgets, test a chosen weight,
+or estimate held-out quality. A possible top-five bound is a hypothesis, not a
+successful result or recommendation to change the default. Missing candidates
+cannot be recovered by score weights alone. The separate seed audit identifies
+another coverage limitation. Original lifecycle failures remain preserved.
+''')
+files = {p.name: {'bytes': p.stat().st_size, 'sha256': hashlib.sha256(p.read_bytes()).hexdigest()} for p in out.iterdir() if p.is_file()}
+(out / 'evidence-index.json').write_text(json.dumps({'files': files}, indent=2) + '\n')
+print(json.dumps(counts))
