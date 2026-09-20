@@ -1,0 +1,25 @@
+from pathlib import Path
+import json, hashlib, shutil
+root = Path('C:/Users/Ant/AppData/Local/Temp')
+def rows(name):
+    return {(r['case_id'], r['arm']): r for r in [json.loads(x) for x in (root/name/'observations.jsonl').read_text().splitlines()]}
+old = rows('mnemos-extraction-authored-holdout-v1')
+new = rows('mnemos-extraction-budget-12288-v1')
+changes = []
+for key, row in new.items():
+    before = old[key]
+    if (before['status'], before.get('proposals')) != (row['status'], row.get('proposals')):
+        changes.append({'case_id': key[0], 'arm': key[1], 'before': before.get('proposals'), 'after': row.get('proposals'), 'status': row['status']})
+report = {'changed': len(changes), 'total': len(new), 'changes': changes,
+    'comparison': 'Exact equality of parsed status and ordered proposals, keyed by case_id and arm; not equality of traces or generation cost.',
+    'before_sha256': hashlib.sha256((root/'mnemos-extraction-authored-holdout-v1'/'observations.jsonl').read_bytes()).hexdigest(),
+    'after_sha256': hashlib.sha256((root/'mnemos-extraction-budget-12288-v1'/'observations.jsonl').read_bytes()).hexdigest()}
+out = Path(__file__).resolve().parents[1] / 'docs/validation/2026-09-20/extraction-larger-budget-v1'
+(out / 'output-comparison.json').write_text(json.dumps(report, indent=2) + '\n')
+shutil.copyfile(__file__, out / 'compare_larger_budget_v1.py.txt')
+index = json.loads((out / 'evidence-index.json').read_bytes())
+for name in ['output-comparison.json', 'compare_larger_budget_v1.py.txt']:
+    path = out / name
+    index['files'][name] = {'bytes': path.stat().st_size, 'sha256': hashlib.sha256(path.read_bytes()).hexdigest()}
+(out / 'evidence-index.json').write_text(json.dumps(index, indent=2) + '\n')
+print(json.dumps(report, indent=2))

@@ -445,8 +445,11 @@ finds better qualification retention in the candidate's successful outputs,
 but its runtime failure remains. The [thinking-disabled diagnostic](../validation/2026-09-20/extraction-thinking-off-diagnostic-v1/README.md)
 completes 40 calls without runtime errors while losing required facts and
 attaching unrelated source events to the existing control fact. That setting
-is not adopted. A full comparison with thinking retained and max_tokens 12,288
-is pending; all other inputs and original criteria remain fixed.
+is not adopted. The [12,288-token comparison](../validation/2026-09-20/extraction-larger-budget-v1/README.md)
+has completed all 40 calls: production 20 runtime-valid; candidate 19 valid
+and one empty final response after exhausting the larger budget. All parsed
+statuses and ordered proposals equal the original 8,192-token run. The larger
+budget is not adopted; other inputs and original criteria stayed fixed.
 
 The [terminal authored comparison](../validation/2026-09-20/extraction-authored-holdout-terminal-v1/README.md)
 records all 40 calls. Production has 20 runtime-valid responses; the history-only

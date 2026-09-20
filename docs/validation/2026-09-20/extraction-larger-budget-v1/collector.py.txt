@@ -1,0 +1,55 @@
+from pathlib import Path
+from collections import Counter
+import hashlib, json, shutil
+
+repo = Path(__file__).resolve().parents[1]
+source = Path('C:/Users/Ant/AppData/Local/Temp/mnemos-extraction-budget-12288-v1')
+sha = lambda p: hashlib.sha256(p.read_bytes()).hexdigest()
+state = json.loads((source / 'status.json').read_bytes())
+assert state['status'] == 'completed'
+prep = json.loads((source / 'preparation.json').read_bytes())
+assert state['preparation_sha256'] == sha(source / 'preparation.json')
+assert state['observations_sha256'] == sha(source / 'observations.jsonl')
+for name, digest in prep['files'].items():
+    assert sha(source / name) == digest
+rows = [json.loads(x) for x in (source / 'observations.jsonl').read_text().splitlines()]
+assert len(rows) == state['processed'] == 40
+assert len({(r['case_id'], r['arm'], r['repetition']) for r in rows}) == 40
+assert sum(r['status'] == 'error' for r in rows) == state['errors']
+counts = {arm: dict(Counter(r['status'] for r in rows if r['arm'] == arm))
+          for arm in ['production', 'history_only']}
+out = repo / 'docs/validation/2026-09-20/extraction-larger-budget-v1'
+out.mkdir(exist_ok=False)
+(out / '.gitattributes').write_bytes(b'** -text -whitespace\n')
+for name in list(prep['files']) + ['preparation.json', 'status.json', 'observations.jsonl', 'stdout.log', 'stderr.log', 'diagnostic-contract.json']:
+    target = out / name
+    target.parent.mkdir(parents=True, exist_ok=True)
+    shutil.copyfile(source / name, target)
+proposals = [{k: r.get(k) for k in ['case_id', 'arm', 'status', 'proposals', 'error_type', 'error']} for r in rows]
+(out / 'proposal-review.json').write_text(json.dumps(proposals, indent=2) + '\n')
+(out / 'runtime-summary.json').write_text(json.dumps(counts, indent=2) + '\n')
+shutil.copyfile(__file__, out / 'collector.py.txt')
+(out / 'README.md').write_text(f'''# Larger reasoning budget diagnostic
+
+All 40 calls completed on the previously executed 20 authored cases, with two
+prompt arms and one repetition. Runtime outcomes: {json.dumps(counts)}.
+Only the output budget changed, from 8,192 to 12,288 tokens. Thinking remained
+enabled, temperature zero and timeout 180 seconds. Source 05c71d2, prompt arms,
+model identity and cases are bound in preparation.json. No selective retries
+or prompt adoption occurred. This is diagnostic reuse, not unseen holdout data.
+
+The candidate again failed P03 with an empty final response. Its response
+metadata records done_reason=length and eval_count=12288. The larger budget
+did not repair that failure. Production's P05 still omits the user's explicitly
+retained uncertainty; the candidate preserves it. These observations are not
+an aggregate semantic accuracy score. Review of all outputs remains separate.
+
+This is a prompt/extraction experiment with local Qwen3.5:9b, not a five-module
+ablation or native-host acceptance result. No facts were committed. Raw requests,
+outputs and failures are retained without changing the authored rubric or the
+previously recorded P07/N10 scoring ambiguities. T18 remains open.
+''')
+files = {p.relative_to(out).as_posix(): {'bytes': p.stat().st_size, 'sha256': sha(p)}
+         for p in sorted(out.rglob('*')) if p.is_file()}
+(out / 'evidence-index.json').write_text(json.dumps({'files': files}, indent=2) + '\n')
+print(json.dumps({'archive': str(out), 'files': len(files), 'counts': counts}))
