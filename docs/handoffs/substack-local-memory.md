@@ -96,7 +96,7 @@ source/package checks, 669 isolated installed cases with 4 matching
 skips, and seven replay assertions. Native v13 has now tested this successor
 with the failures above; v12 tested the preceding installed package.
 
-Portable packet v25 includes this verified package checkpoint, all three
+The earlier portable packet v25 includes this verified package checkpoint, all three
 failed native v12 attempts, the corrected outbox regression, and the source-
 association development measurements. It is a working research snapshot.
 Engineering acceptance and the article's final factual reconciliation remain open.
@@ -682,5 +682,5 @@ not a requirement to recount every implementation detail in the article.
 - [ ] Record final host continuity, latency, capture coverage, and pilot status without collapsing the separate gates.
 - [ ] Identify which quantitative claims can be used, with units, sample sizes, settings, uncertainty where available, and limitations.
 - [ ] Verify original website/paper claims against primary sources and link the dated corrections.
-- [x] Prepare a portable working packet with this handoff, the selected voice skill, primary-source snapshots, key reports, regression examples, and a file manifest. Portable v25 includes the verified `db21750` package, all three failed native v12 attempts, the rejected-request outbox repair, and both source-association development measurements. Earlier native and real-model failures retain their own source/model bindings; they are not a pooled reliability estimate. Refresh the packet at final acceptance. Local validation artifacts are research inputs; public citations require accessible sources.
+- [x] Prepare a portable working packet with this handoff, the selected voice skill, primary-source snapshots, key reports, regression examples, and a file manifest. Portable v26 includes the verified `db21750` package, all three failed native v13 attempts, the rejected-request outbox repair, the paired prefix experiment, and the role-aware source-association measurement. Earlier native and real-model failures retain their own source/model bindings; they are not a pooled reliability estimate. Refresh the packet at final acceptance. Local validation artifacts are research inputs; public citations require accessible sources.
 - [ ] Keep unverified interpretations and questions outside the article's factual claims, then make the final voice pass using Anthony's skill.
