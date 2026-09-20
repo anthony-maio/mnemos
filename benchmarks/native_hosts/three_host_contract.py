@@ -135,6 +135,265 @@ def _require_inspection(calls: Sequence[Mapping[str, Any]], fact_id: str, versio
         raise ValueError("Mutation lacks prior inspection of the same fact and version")
 
 
+def _forget_ids(value: Any, label: str) -> list[str]:
+    if not isinstance(value, list) or any(
+        not isinstance(item, str) or not item.strip() for item in value
+    ):
+        raise ValueError(f"Forget {label} are malformed")
+    if len(value) != len(set(value)):
+        raise ValueError(f"Forget {label} contain duplicates")
+    return value
+
+
+def _forget_result(result: Any, label: str = "preview") -> Mapping[str, Any]:
+    if (
+        not isinstance(result, Mapping)
+        or not isinstance(result.get("schema_version"), int)
+        or isinstance(result.get("schema_version"), bool)
+        or result.get("schema_version") != 1
+    ):
+        raise ValueError(f"Forget {label} has an unknown result schema")
+    return result
+
+
+def _forget_fact(
+    value: Any, fact_id: str, version: int, content: str | None = None
+) -> Mapping[str, Any]:
+    if not isinstance(value, Mapping) or value.get("id") != fact_id:
+        raise ValueError("Forget inspection returned the wrong fact")
+    if (
+        not isinstance(value.get("version"), int)
+        or isinstance(value.get("version"), bool)
+        or value.get("version") != version
+    ):
+        raise ValueError("Forget inspection returned the wrong fact version")
+    if content is not None and value.get("content") != content:
+        raise ValueError("Forget inspection content is stale")
+    if not isinstance(value.get("content"), str):
+        raise ValueError("Forget inspection has malformed content")
+    return value
+
+
+def _forget_inspected_before(
+    calls: Sequence[Mapping[str, Any]],
+    end: int,
+    fact_id: str,
+    version: int,
+    content: str | None = None,
+) -> None:
+    for call in calls[:end]:
+        if call.get("name") != "mnemos_inspect":
+            continue
+        args = call.get("args")
+        result = call.get("result")
+        if not isinstance(args, Mapping) or not isinstance(result, Mapping):
+            continue
+        inspected_id = args.get("fact_id", args.get("chunk_id"))
+        if inspected_id != fact_id:
+            continue
+        try:
+            schema = _forget_result(result)
+            _forget_fact(schema.get("fact"), fact_id, version, content)
+        except ValueError:
+            continue
+        return
+    raise ValueError("Forget lacks prior inspection of the same fact and version")
+
+
+def _forget_limit(value: Any, label: str) -> int:
+    if isinstance(value, bool) or not isinstance(value, int) or not 1 <= value <= 500:
+        raise ValueError(f"Forget {label} is malformed")
+    return value
+
+
+def _forget_version(value: Any, label: str) -> int:
+    if isinstance(value, bool) or not isinstance(value, int) or value < 1:
+        raise ValueError(f"Forget {label} is malformed")
+    return value
+
+
+def _forget_digest(value: Any) -> str:
+    if (
+        not isinstance(value, str)
+        or len(value) != 64
+        or any(character not in "0123456789abcdefABCDEF" for character in value)
+    ):
+        raise ValueError("Forget preview digest is malformed")
+    return value
+
+
+def _reviewed_forget(
+    calls: Sequence[Mapping[str, Any]],
+    apply_index: int,
+    write: Mapping[str, Any],
+    fact_id: str,
+) -> bool:
+    args = write.get("args")
+    result = write.get("result")
+    if not isinstance(args, Mapping) or not isinstance(result, Mapping):
+        raise ValueError("Forget mutation has malformed arguments or result")
+    _forget_result(result, "apply")
+    if (
+        args.get("fact_id") != fact_id
+        or _forget_version(args.get("expected_version"), "apply version") != 2
+    ):
+        raise ValueError("Forget did not select the corrected fact and version")
+    _forget_inspected_before(calls, apply_index, fact_id, 2)
+
+    selected_facts = _forget_ids(args.get("selected_fact_ids", []), "fact selections")
+    selected_sources = _forget_ids(args.get("selected_source_event_ids", []), "source selections")
+    requested_digest = _forget_digest(args.get("preview_digest"))
+    requested_limit = _forget_limit(args.get("preview_limit", 100), "apply limit")
+
+    matching: list[tuple[int, Mapping[str, Any]]] = []
+    for preview_index, call in enumerate(calls[:apply_index]):
+        if call.get("name") != "mnemos_forget_preview":
+            continue
+        preview_args = call.get("args")
+        preview_value = call.get("result")
+        if not isinstance(preview_args, Mapping) or not isinstance(preview_value, Mapping):
+            continue
+        if (
+            preview_args.get("fact_id") == fact_id
+            and preview_args.get("expected_version") == 2
+            and preview_value.get("preview_digest") == requested_digest
+        ):
+            matching.append((preview_index, preview_value))
+    if len(matching) != 1:
+        raise ValueError("Forget lacks one matching complete native preview")
+    preview_index, preview = matching[0]
+    _forget_result(preview)
+    if preview.get("status") != "preview" or preview.get("complete") is not True:
+        raise ValueError("Forget lacks a matching complete native preview")
+
+    preview_call = calls[preview_index]
+    preview_args = preview_call.get("args")
+    if not isinstance(preview_args, Mapping):
+        raise ValueError("Forget preview arguments are malformed")
+    if (
+        preview_args.get("fact_id") != fact_id
+        or _forget_version(preview_args.get("expected_version"), "preview version") != 2
+    ):
+        raise ValueError("Forget preview selected the wrong fact and version")
+    preview_limit = _forget_limit(preview.get("limit"), "preview limit")
+    if _forget_limit(preview_args.get("limit", 100), "preview argument limit") != preview_limit:
+        raise ValueError("Forget preview limit does not match its request")
+    if requested_limit != preview_limit:
+        raise ValueError("Forget apply limit does not match the reviewed preview")
+    if _forget_digest(preview.get("preview_digest")) != requested_digest:
+        raise ValueError("Forget digest does not match the reviewed preview")
+
+    target = preview.get("target")
+    if not isinstance(target, Mapping) or target.get("fact_id") != fact_id:
+        raise ValueError("Forget preview target is malformed")
+    target_version = target.get("version")
+    target_content = target.get("content")
+    if (
+        not isinstance(target_version, int)
+        or isinstance(target_version, bool)
+        or target_version != 2
+        or not isinstance(target_content, str)
+        or not target_content
+    ):
+        raise ValueError("Forget preview target is malformed")
+    _forget_inspected_before(calls, preview_index, fact_id, 2, target_content)
+    _forget_inspected_before(calls, apply_index, fact_id, 2, target_content)
+
+    candidates_value = preview.get("candidates")
+    sources_value = preview.get("source_events")
+    if not isinstance(candidates_value, list) or not isinstance(sources_value, list):
+        raise ValueError("Forget preview candidate closure is malformed")
+    candidates: dict[str, Mapping[str, Any]] = {}
+    for candidate in candidates_value:
+        if (
+            not isinstance(candidate, Mapping)
+            or not isinstance(candidate.get("fact_id"), str)
+            or not candidate.get("fact_id", "").strip()
+        ):
+            raise ValueError("Forget preview candidate is malformed")
+        candidate_id = candidate["fact_id"]
+        if candidate_id in candidates:
+            raise ValueError("Forget preview candidate IDs are malformed")
+        if candidate_id == fact_id:
+            if (
+                candidate.get("version") != 2
+                or isinstance(candidate.get("version"), bool)
+                or not isinstance(candidate.get("version"), int)
+                or candidate.get("content") != target_content
+                or not candidate.get("content")
+            ):
+                raise ValueError("Forget preview target candidate is inconsistent")
+            _forget_ids(candidate.get("required_source_event_ids"), "required source IDs")
+            if _forget_ids(candidate.get("blocked_source_event_ids"), "blocked source IDs"):
+                raise ValueError("Forget preview target candidate has blocked sources")
+        candidates[candidate_id] = candidate
+    sources: dict[str, Mapping[str, Any]] = {}
+    for source in sources_value:
+        if (
+            not isinstance(source, Mapping)
+            or not isinstance(source.get("source_event_id"), str)
+            or not source.get("source_event_id", "").strip()
+        ):
+            raise ValueError("Forget preview source closure is malformed")
+        source_id = source["source_event_id"]
+        if source_id in sources:
+            raise ValueError("Forget preview source IDs are malformed")
+        sources[source_id] = source
+
+    selected_extra_ids = set(selected_facts) - {fact_id}
+    if not selected_extra_ids.issubset(candidates):
+        raise ValueError("Forget selected IDs that were not in the reviewed preview")
+    if not set(selected_sources).issubset(sources):
+        raise ValueError("Forget selected IDs that were not in the reviewed preview")
+
+    selected_fact_set = selected_extra_ids | {fact_id}
+    for candidate_id in selected_extra_ids:
+        candidate = candidates[candidate_id]
+        candidate_version = candidate.get("version")
+        candidate_content = candidate.get("content")
+        if (
+            isinstance(candidate_version, bool)
+            or not isinstance(candidate_version, int)
+            or candidate_version < 1
+            or not isinstance(candidate_content, str)
+            or not candidate_content
+        ):
+            raise ValueError("Forget selected candidate is malformed")
+        required_sources = _forget_ids(
+            candidate.get("required_source_event_ids"), "required source IDs"
+        )
+        blocked_sources = _forget_ids(
+            candidate.get("blocked_source_event_ids"), "blocked source IDs"
+        )
+        if blocked_sources:
+            raise ValueError("Forget selected candidate has blocked sources")
+        if not set(required_sources).issubset(selected_sources):
+            raise ValueError("Forget selected candidate is missing a required source")
+        _forget_inspected_before(
+            calls, apply_index, candidate_id, candidate_version, candidate_content
+        )
+
+    for source_id in selected_sources:
+        source = sources[source_id]
+        if source.get("selection_allowed") is not True:
+            raise ValueError("Forget selected a blocked source")
+        derived = _forget_ids(source.get("derived_fact_ids"), "derived fact IDs")
+        if not set(derived).issubset(selected_fact_set):
+            raise ValueError("Forget source closure includes an unselected fact")
+
+    result_facts = _forget_ids(result.get("selected_fact_ids"), "result fact IDs")
+    result_sources = _forget_ids(result.get("selected_source_event_ids"), "result source IDs")
+    if set(result_facts) != selected_fact_set or set(result_sources) != set(selected_sources):
+        raise ValueError("Forget result differs from the reviewed selections")
+    if (
+        result.get("forgotten") is not True
+        or result.get("fact_id") != fact_id
+        or result.get("status") != "committed"
+    ):
+        raise ValueError("Reviewed native forget did not complete")
+    return True
+
+
 def require_forget(calls: Sequence[Mapping[str, Any]], fact_id: str) -> None:
     require_native_calls(
         calls,
@@ -144,44 +403,7 @@ def require_forget(calls: Sequence[Mapping[str, Any]], fact_id: str) -> None:
     if len(writes) != 1:
         raise ValueError("Expected one reviewed related-forget operation")
     index, write = writes[0]
-    _require_inspection(calls[:index], fact_id, 2)
-    args = write["args"]
-    if args.get("fact_id") != fact_id or args.get("expected_version") != 2:
-        raise ValueError("Forget did not select the corrected fact and version")
-    previews = [
-        call
-        for call in calls[:index]
-        if call["name"] == "mnemos_forget_preview"
-        and call["args"].get("fact_id") == fact_id
-        and call["args"].get("expected_version") == 2
-        and call["result"].get("preview_digest") == args.get("preview_digest")
-    ]
-    if len(previews) != 1 or previews[0]["result"].get("complete") is not True:
-        raise ValueError("Forget lacks a matching complete native preview")
-    preview = previews[0]["result"]
-    selected_facts = args.get("selected_fact_ids") or []
-    selected_sources = args.get("selected_source_event_ids") or []
-    if any(
-        not isinstance(values, list)
-        or any(not isinstance(value, str) for value in values)
-        or len(values) != len(set(values))
-        for values in (selected_facts, selected_sources)
-    ):
-        raise ValueError("Forget selections are malformed")
-    candidates = {row["fact_id"] for row in preview.get("candidates", [])} | {fact_id}
-    sources = {row["source_event_id"] for row in preview.get("source_events", [])}
-    if not set(selected_facts).issubset(candidates) or not set(selected_sources).issubset(sources):
-        raise ValueError("Forget selected IDs that were not in the reviewed preview")
-    if set(write["result"].get("selected_fact_ids", [])) != set(selected_facts) | {fact_id} or set(
-        write["result"].get("selected_source_event_ids", [])
-    ) != set(selected_sources):
-        raise ValueError("Forget result differs from the reviewed selections")
-    if (
-        write["result"].get("forgotten") is not True
-        or write["result"].get("fact_id") != fact_id
-        or write["result"].get("status") != "committed"
-    ):
-        raise ValueError("Reviewed native forget did not complete")
+    _reviewed_forget(calls, index, write, fact_id)
 
 
 def require_absent(state: Mapping[str, Any], fact_id: str, labels: Sequence[str]) -> None:

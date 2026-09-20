@@ -24,17 +24,26 @@ if TYPE_CHECKING:
     from mnemos.scopes import ScopeRegistry
     from mnemos.service import MnemosService
 
-WHEEL_SHA256 = "4958c5ef7a509fefecacc0666d87f578b46e94e1a33a896831468c0f971bf895"
-SOURCE_COMMIT = "fd83fb27042c05897f29dba952b0924b15889aad"
-PROFILE = "native-three-host-v1"
+WHEEL_SHA256 = "8552345d2c17c4c037347961eb3043d13b20f790f54a9ccc86a096add6197b0f"
+SOURCE_COMMIT = "f2f741443e60f838b392ae8ea1d1a0b4d8c6c1f2"
+PROFILE = "native-three-host-v2"
+PROTOCOL = "docs/plans/2026-09-20-three-host-continuity-protocol-v2.md"
 HERMES_INPUTS = (
-    "benchmarks/native_hosts/hermes_lifecycle_run_v5.py",
-    "benchmarks/native_hosts/hermes_native_bootstrap_v4.py",
+    "benchmarks/native_hosts/hermes_lifecycle_run_v10.py",
+    "benchmarks/native_hosts/hermes_native_bootstrap_v6.py",
     "benchmarks/native_hosts/hermes_trace.py",
+    "benchmarks/native_hosts/hermes_trace_v2.py",
+    "benchmarks/native_hosts/hermes_request_observer.py",
+    "benchmarks/native_hosts/ollama_readiness_v2.py",
     "docs/plans/2026-09-19-hermes-native-lifecycle-protocol-v3.md",
     "docs/plans/2026-09-19-hermes-native-lifecycle-protocol-v4.md",
     "docs/plans/2026-09-19-hermes-native-lifecycle-protocol-v5.md",
-    "docs/validation/2026-09-19/native-model-profile-v1/profile.json",
+    "docs/plans/2026-09-19-hermes-native-lifecycle-protocol-v6.md",
+    "docs/plans/2026-09-20-hermes-native-lifecycle-protocol-v7.md",
+    "docs/plans/2026-09-20-hermes-native-lifecycle-protocol-v8.md",
+    "docs/plans/2026-09-20-hermes-native-lifecycle-protocol-v9.md",
+    "docs/plans/2026-09-20-hermes-native-lifecycle-protocol-v10.md",
+    "docs/validation/2026-09-20/native-model-profile-v2/profile.json",
 )
 
 
@@ -63,6 +72,8 @@ def require_hermes_acceptance(hermes: dict[str, Any]) -> None:
         hermes.get("status") != "passed"
         or hermes.get("source_commit") != SOURCE_COMMIT
         or hermes.get("wheel_sha256") != WHEEL_SHA256
+        or not hermes.get("finished_at")
+        or hermes.get("cleanup_error")
     ):
         raise ValueError("Hermes acceptance report is not passed at the verified checkpoint")
     common = {
@@ -71,6 +82,7 @@ def require_hermes_acceptance(hermes: dict[str, Any]) -> None:
         "mutations_inspected",
         "no_foreign_tool_result",
         "real_pinned_model_request",
+        "effective_context_verified_after_each_response",
         "pinned_profile_without_conflicting_override",
         "write_followup_guidance_present",
         "no_provider_error",
@@ -83,13 +95,22 @@ def require_hermes_acceptance(hermes: dict[str, Any]) -> None:
         "recall_v1": common | {"recall_v1"},
         "correct": common | {"correct", "same_id_version_two"},
         "recall_v2": common | {"recall_v2"},
-        "forget": common | {"forget", "target_absent", "target_suppressed"},
+        "forget": common
+        | {
+            "forget",
+            "target_absent",
+            "target_suppressed",
+            "reviewed_forget_verified",
+            "reviewed_deletions_persisted",
+            "no_retained_label_in_scope",
+        },
         "recall_forgotten": common
         | {
             "recall_forgotten",
             "target_absent",
             "target_suppressed",
             "no_forgotten_label_in_request",
+            "no_retained_label_in_scope",
         },
         "source-replay": {
             "original_write_suppressed",
@@ -147,7 +168,7 @@ class ThreeHostRuntime:
     def verify(self) -> dict[str, Any]:
         self._verified = False
         self._plugin_bytes = {}
-        protocol = self.repo / "docs/plans/2026-09-19-three-host-continuity-protocol-v1.md"
+        protocol = self.repo / PROTOCOL
         text = protocol.read_text(encoding="utf-8")
         if SOURCE_COMMIT not in text or WHEEL_SHA256 not in text:
             raise ValueError(
@@ -231,6 +252,23 @@ class ThreeHostRuntime:
         hermes = json.loads(self.hermes_acceptance.read_text(encoding="utf-8"))
         verify_hermes_input_binding(self.repo, hermes)
         require_hermes_acceptance(hermes)
+        cohort_path = self.hermes_acceptance.parent.parent / "cohort.json"
+        cohort = json.loads(cohort_path.read_text(encoding="utf-8"))
+        attempts = cohort.get("attempts", [])
+        if (
+            cohort.get("status") not in {"passed", "completed_with_failures"}
+            or not cohort.get("finished_at")
+            or cohort.get("planned_attempts") != 3
+            or len(attempts) != 3
+            or any(row.get("cleanup_established") is not True for row in attempts)
+            or sum(
+                row.get("report_sha256") == sha(self.hermes_acceptance)
+                and row.get("status") == "passed"
+                for row in attempts
+            )
+            != 1
+        ):
+            raise ValueError("Hermes prerequisite lacks its terminal cohort and cleanup evidence")
         self._verified = True
         return {
             "source_commit": SOURCE_COMMIT,
@@ -241,6 +279,8 @@ class ThreeHostRuntime:
             "checks_sha256": sha(self.checks),
             "installed_checks_sha256": sha(self.installed_checks),
             "hermes_acceptance_sha256": sha(self.hermes_acceptance),
+            "hermes_cohort_sha256": sha(cohort_path),
+            "hermes_cohort_results": [row["status"] for row in attempts],
             "plugin_files": {
                 name: hashlib.sha256(raw).hexdigest() for name, raw in self._plugin_bytes.items()
             },

@@ -41,12 +41,11 @@ def fx(tmp_path, monkeypatch):
         z.writestr("mnemos/__init__.py", b"verified package")
     digest = m.sha(wheel)
     monkeypatch.setattr(m, "WHEEL_SHA256", digest)
-    (repo / "docs/plans/2026-09-19-three-host-continuity-protocol-v1.md").write_text(
-        f"{m.SOURCE_COMMIT} {digest}"
-    )
+    (repo / m.PROTOCOL).write_text(f"{m.SOURCE_COMMIT} {digest}")
 
     def report(name, value):
-        p = tmp_path / (name + ".json")
+        p = tmp_path / ("cohort/attempt-3/report.json" if name == "hermes" else name + ".json")
+        p.parent.mkdir(parents=True, exist_ok=True)
         p.write_text(json.dumps(value))
         return p
 
@@ -88,6 +87,10 @@ def fx(tmp_path, monkeypatch):
             "mutations_inspected",
             "no_foreign_tool_result",
             "real_pinned_model_request",
+            "effective_context_verified_after_each_response",
+            "reviewed_forget_verified",
+            "reviewed_deletions_persisted",
+            "no_retained_label_in_scope",
             "pinned_profile_without_conflicting_override",
             "write_followup_guidance_present",
             "no_provider_error",
@@ -113,12 +116,31 @@ def fx(tmp_path, monkeypatch):
         "hermes",
         {
             "status": "passed",
+            "finished_at": "2026-09-20T07:00:45Z",
             "source_commit": m.SOURCE_COMMIT,
             "wheel_sha256": digest,
             "runner_commit": "fixture-commit",
             "input_hashes": {relative: m.sha(repo / relative) for relative in m.HERMES_INPUTS},
             "phases": [{"phase": n, "exit_code": 0, "gates": gates} for n in names],
         },
+    )
+    (hermes.parent.parent / "cohort.json").write_text(
+        json.dumps(
+            {
+                "status": "completed_with_failures",
+                "finished_at": "2026-09-20T07:00:46Z",
+                "planned_attempts": 3,
+                "attempts": [
+                    {"status": "failed", "cleanup_established": True, "report_sha256": "a" * 64},
+                    {"status": "failed", "cleanup_established": True, "report_sha256": "b" * 64},
+                    {
+                        "status": "passed",
+                        "cleanup_established": True,
+                        "report_sha256": m.sha(hermes),
+                    },
+                ],
+            }
+        )
     )
     queue = report("queue", {"pid": 123, "status": "finished"})
     monkeypatch.setattr(
@@ -150,6 +172,41 @@ def test_hermes_prerequisite_requires_recorded_write_guidance(fx):
     del report["phases"][0]["gates"]["write_followup_guidance_present"]
     path.write_text(json.dumps(report))
     with pytest.raises(ValueError, match="required successful phase gates"):
+        fx.rt.verify()
+
+
+@pytest.mark.parametrize(
+    "gate",
+    [
+        "effective_context_verified_after_each_response",
+        "reviewed_forget_verified",
+        "reviewed_deletions_persisted",
+        "no_retained_label_in_scope",
+    ],
+)
+def test_hermes_prerequisite_requires_context_and_reviewed_erasure(fx, gate):
+    path = fx.rt.hermes_acceptance
+    report = json.loads(path.read_text())
+    forget = next(row for row in report["phases"] if row["phase"] == "forget")
+    del forget["gates"][gate]
+    with pytest.raises(ValueError, match="required successful phase gates"):
+        m.require_hermes_acceptance(report)
+
+
+@pytest.mark.parametrize("fault", ["unfinished", "unclean", "wrong-report", "missing-failure"])
+def test_hermes_prerequisite_preserves_terminal_cohort(fx, fault):
+    path = fx.rt.hermes_acceptance.parent.parent / "cohort.json"
+    cohort = json.loads(path.read_text())
+    if fault == "unfinished":
+        cohort["status"] = "running"
+    elif fault == "unclean":
+        cohort["attempts"][0]["cleanup_established"] = False
+    elif fault == "wrong-report":
+        cohort["attempts"][2]["report_sha256"] = "c" * 64
+    else:
+        cohort["attempts"].pop(0)
+    path.write_text(json.dumps(cohort))
+    with pytest.raises(ValueError, match="terminal cohort"):
         fx.rt.verify()
 
 

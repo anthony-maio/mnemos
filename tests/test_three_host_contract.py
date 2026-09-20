@@ -112,43 +112,174 @@ def test_forget_checks_raw_sources_and_revisions_not_only_fact_absence():
         require_absent(state, "target", ["private-label"])
 
 
+TARGET = "fact-target"
+EXTRA = "fact-captured-copy"
+SOURCE = "event-captured-copy"
+TARGET_CONTENT = "The project release label is maple-ridge-842."
+DIGEST = "a" * 64
+
+
+def _forget_calls() -> list[dict]:
+    return [
+        call(
+            "mnemos_inspect",
+            {"fact_id": TARGET},
+            {
+                "schema_version": 1,
+                "fact": {"id": TARGET, "version": 2, "content": TARGET_CONTENT},
+            },
+        ),
+        call(
+            "mnemos_inspect",
+            {"fact_id": EXTRA},
+            {
+                "schema_version": 1,
+                "fact": {"id": EXTRA, "version": 1, "content": TARGET_CONTENT},
+            },
+        ),
+        call(
+            "mnemos_forget_preview",
+            {"fact_id": TARGET, "expected_version": 2, "limit": 100},
+            {
+                "schema_version": 1,
+                "status": "preview",
+                "complete": True,
+                "preview_digest": DIGEST,
+                "limit": 100,
+                "target": {
+                    "fact_id": TARGET,
+                    "version": 2,
+                    "content": TARGET_CONTENT,
+                },
+                "candidates": [
+                    {
+                        "fact_id": TARGET,
+                        "version": 2,
+                        "content": TARGET_CONTENT,
+                        "required_source_event_ids": [],
+                        "blocked_source_event_ids": [],
+                    },
+                    {
+                        "fact_id": EXTRA,
+                        "version": 1,
+                        "content": TARGET_CONTENT,
+                        "required_source_event_ids": [SOURCE],
+                        "blocked_source_event_ids": [],
+                    },
+                ],
+                "source_events": [
+                    {
+                        "source_event_id": SOURCE,
+                        "selection_allowed": True,
+                        "derived_fact_ids": [EXTRA, TARGET],
+                    }
+                ],
+            },
+        ),
+        call(
+            "mnemos_forget_related",
+            {
+                "fact_id": TARGET,
+                "expected_version": 2,
+                "preview_digest": DIGEST,
+                "preview_limit": 100,
+                "selected_fact_ids": [EXTRA],
+                "selected_source_event_ids": [SOURCE],
+            },
+            {
+                "schema_version": 1,
+                "status": "committed",
+                "forgotten": True,
+                "fact_id": TARGET,
+                "selected_fact_ids": [TARGET, EXTRA],
+                "selected_source_event_ids": [SOURCE],
+            },
+        ),
+    ]
+
+
 def test_related_forget_requires_exact_reviewed_selection_and_actual_receipt():
-    inspected = call(
-        "mnemos_inspect", {"chunk_id": "target"}, {"fact": {"id": "target", "version": 2}}
-    )
-    preview = call(
-        "mnemos_forget_preview",
-        {"fact_id": "target", "expected_version": 2},
-        {
-            "complete": True,
-            "preview_digest": "digest",
-            "candidates": [{"fact_id": "copy"}],
-            "source_events": [{"source_event_id": "source"}],
-        },
-    )
-    forgotten = call(
-        "mnemos_forget_related",
-        {
-            "fact_id": "target",
-            "expected_version": 2,
-            "preview_digest": "digest",
-            "selected_fact_ids": ["copy"],
-            "selected_source_event_ids": ["source"],
-        },
-        {
-            "status": "committed",
-            "forgotten": True,
-            "fact_id": "target",
-            "selected_fact_ids": ["target", "copy"],
-            "selected_source_event_ids": ["source"],
-        },
-    )
-    require_forget([inspected, preview, forgotten], "target")
-    wrong = copy.deepcopy(forgotten)
-    wrong["args"]["selected_fact_ids"] = ["never-reviewed"]
+    calls = _forget_calls()
+    require_forget(calls, TARGET)
+    wrong = copy.deepcopy(calls)
+    wrong[3]["args"]["selected_fact_ids"] = ["never-reviewed"]
     with pytest.raises(ValueError, match="not in the reviewed"):
-        require_forget([inspected, preview, wrong], "target")
-    wrong = copy.deepcopy(forgotten)
-    wrong["result"]["selected_fact_ids"] = ["target"]
+        require_forget(wrong, TARGET)
+    wrong = copy.deepcopy(calls)
+    wrong[3]["result"]["selected_fact_ids"] = [TARGET]
     with pytest.raises(ValueError, match="differs"):
-        require_forget([inspected, preview, wrong], "target")
+        require_forget(wrong, TARGET)
+
+
+@pytest.mark.parametrize(
+    "mutate",
+    [
+        lambda calls: calls[3]["args"].update(preview_limit=99),
+        lambda calls: calls[2]["result"]["source_events"][0].update(selection_allowed=False),
+        lambda calls: calls[2]["result"]["candidates"][1].update(
+            required_source_event_ids=["missing-event"]
+        ),
+        lambda calls: calls[1]["result"]["fact"].update(content="stale copy"),
+    ],
+)
+def test_related_forget_rejects_unbound_review_state(mutate) -> None:
+    calls = _forget_calls()
+    mutate(calls)
+    with pytest.raises(ValueError, match="Forget"):
+        require_forget(calls, TARGET)
+
+
+def test_related_forget_rejects_missing_target_inspection() -> None:
+    calls = _forget_calls()
+    calls.pop(0)
+    with pytest.raises(ValueError, match="Forget"):
+        require_forget(calls, TARGET)
+
+
+def test_related_forget_rejects_missing_selected_candidate_inspection() -> None:
+    calls = _forget_calls()
+    calls.pop(1)
+    with pytest.raises(ValueError, match="Forget"):
+        require_forget(calls, TARGET)
+
+
+def test_related_forget_rejects_result_selection_mismatch() -> None:
+    calls = _forget_calls()
+    calls[3]["result"]["selected_fact_ids"] = [TARGET]
+    with pytest.raises(ValueError, match="Forget"):
+        require_forget(calls, TARGET)
+
+
+def test_related_forget_rejects_unknown_apply_schema() -> None:
+    calls = _forget_calls()
+    calls[3]["result"]["schema_version"] = 2
+    with pytest.raises(ValueError, match="apply.*schema"):
+        require_forget(calls, TARGET)
+
+
+def test_related_forget_rejects_unselected_source_closure() -> None:
+    calls = _forget_calls()
+    calls[2]["result"]["source_events"][0]["derived_fact_ids"] = [EXTRA, "unselected"]
+    with pytest.raises(ValueError, match="closure"):
+        require_forget(calls, TARGET)
+
+
+def test_related_forget_rejects_duplicate_selection_ids() -> None:
+    calls = _forget_calls()
+    calls[3]["args"]["selected_fact_ids"] = [EXTRA, EXTRA]
+    with pytest.raises(ValueError, match="duplicates"):
+        require_forget(calls, TARGET)
+
+
+def test_related_forget_rejects_inconsistent_target_content() -> None:
+    calls = _forget_calls()
+    calls[2]["result"]["target"]["content"] = "different target content"
+    with pytest.raises(ValueError, match="Forget"):
+        require_forget(calls, TARGET)
+
+
+def test_related_forget_rejects_non_integer_target_version() -> None:
+    calls = _forget_calls()
+    calls[2]["result"]["target"]["version"] = 2.0
+    with pytest.raises(ValueError, match="Forget"):
+        require_forget(calls, TARGET)
