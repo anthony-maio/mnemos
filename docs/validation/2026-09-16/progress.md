@@ -1,5 +1,18 @@
 # Functional local memory implementation record
 
+September 20, compaction adapter candidate: `b28778a` adds strict original-row
+provenance within the active scope and keeps marked summaries as capture-only
+evidence. Shared native carrier IDs reject classification changes rather
+than creating another observation. The
+[development archive](../2026-09-20/hermes-compaction-development-v1/README.md)
+preserves the host diagnostic, 12 initial failures, two further classification
+failures, one test-fixture error, and the final 76-case focused pass. This
+includes 21 new cases and a forgotten-source replay after restart. All 27
+indexed artifacts match committed Git bytes. Full package checks are running
+from a clean snapshot. The inspected host does not yet supply this provenance;
+an isolated compatibility candidate is being developed. The latest fully
+verified package remains `4bbab4f` until the new package checks complete.
+
 September 20, Hermes rewind capture boundary: the existing isolated host
 identity patch passes [both undo and retry](../2026-09-20/hermes-rewind-capture-v1/README.md)
 through actual CLI methods, MemoryManager, and the `4bbab4f` wheel adapter.

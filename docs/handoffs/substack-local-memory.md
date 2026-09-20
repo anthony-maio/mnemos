@@ -12,6 +12,16 @@ Deliver an article draft, three possible titles, and a separate compact source/c
 
 ## Read this first
 
+The next repair, [compaction provenance](../validation/2026-09-20/hermes-compaction-development-v1/README.md),
+is still in development. A real host database fixture shows copied rows
+becoming new observations and an authored summary placement being merged
+into an ordinary assistant message. That does not prove a model generated
+the same layout. Mnemos candidate `b28778a` preserves supplied original-row
+identity and keeps marked summaries capture-only; 76 focused cases pass,
+while full package checks and the host compatibility repair remain open.
+This is another useful article example of why a transcript prepared for the
+model cannot automatically serve as a record of original evidence.
+
 The latest Hermes identity evidence is the isolated
 [undo/retry capture-boundary comparison](../validation/2026-09-20/hermes-rewind-capture-v1/README.md).
 An identical regenerated turn should count as new evidence while the surviving
