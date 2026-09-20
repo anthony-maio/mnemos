@@ -1,0 +1,311 @@
+<?xml version="1.0" encoding="utf-8"?><testsuites name="pytest tests"><testsuite name="pytest" errors="0" failures="5" skipped="0" tests="20" time="1.884" timestamp="2026-09-20T09:22:42.689898-04:00" hostname="Aurora"><testcase classname="tests.test_contract_v4" name="test_v4_is_reproducible_and_preserves_counts_and_criteria" time="0.099" /><testcase classname="tests.test_contract_v4" name="test_v4_changes_only_declared_fixture_fields" time="0.084" /><testcase classname="tests.test_contract_v4" name="test_v4_keeps_forgotten_and_superseded_stale_detection" time="0.055" /><testcase classname="tests.test_contract_v4" name="test_v4_state_targets_match_supported_stored_bodies" time="0.048" /><testcase classname="tests.test_contract_v4" name="test_v4_generator_refuses_overwrite_and_changed_parent" time="0.011" /><testcase classname="tests.test_contract_v4" name="test_v4_rejects_contract_regressions[missing_target-target_source_event_id does not exist]" time="0.070" /><testcase classname="tests.test_contract_v4" name="test_v4_rejects_contract_regressions[late_target-target event must precede action]" time="0.058" /><testcase classname="tests.test_contract_v4" name="test_v4_rejects_contract_regressions[wrong_context-target event context mismatch]" time="0.062" /><testcase classname="tests.test_contract_v4" name="test_v4_rejects_contract_regressions[missing_replacement-correct needs replacement_content]" time="0.058" /><testcase classname="tests.test_contract_v4" name="test_v4_rejects_contract_regressions[forget_replacement-forget cannot have replacement_content]" time="0.058" /><testcase classname="tests.test_contract_v4" name="test_v4_rejects_contract_regressions[wrong_explicit_body-explicit remember body]" time="0.060" /><testcase classname="tests.test_contract_v4" name="test_v4_rejects_contract_regressions[foreign_answerable-outside source scope]" time="0.059" /><testcase classname="tests.test_contract_v4" name="test_v4_rejects_contract_regressions[foreign_profile-outside source scope]" time="0.062" /><testcase classname="tests.test_contract_v4" name="test_v4_rejects_contract_regressions[no_answer_with_answer-no_answer cannot have expected_answer]" time="0.062" /><testcase classname="tests.test_contract_v4" name="test_v4_rejects_contract_regressions[wrong_state_target-state target must match]" time="0.063" /><testcase classname="tests.test_contract_v4" name="test_v4_rejects_contract_regressions[canary_missing_project-foreign scope canary]" time="0.081"><failure message="Failed: DID NOT RAISE ValueError">candidate = WindowsPath('D:/WindowsTemp/pytest-of-Ant/pytest-4303/test_v4_rejects_contract_regre10/v4.jsonl')
+mutation = 'canary_missing_project', expected = 'foreign scope canary'
+
+    @pytest.mark.parametrize(
+        "mutation, expected",
+        [
+            ("missing_target", "target_source_event_id does not exist"),
+            ("late_target", "target event must precede action"),
+            ("wrong_context", "target event context mismatch"),
+            ("missing_replacement", "correct needs replacement_content"),
+            ("forget_replacement", "forget cannot have replacement_content"),
+            ("wrong_explicit_body", "explicit remember body"),
+            ("foreign_answerable", "outside source scope"),
+            ("foreign_profile", "outside source scope"),
+            ("no_answer_with_answer", "no_answer cannot have expected_answer"),
+            ("wrong_state_target", "state target must match"),
+            ("canary_missing_project", "foreign scope canary"),
+            ("canary_missing_profile", "foreign scope canary"),
+            ("canary_local_project", "foreign scope canary"),
+            ("canary_local_profile", "foreign scope canary"),
+            ("canary_missing_local_pair", "paired scope canary"),
+        ],
+    )
+    def test_v4_rejects_contract_regressions(candidate: Path, mutation: str, expected: str) -&gt; None:
+        rows = _rows(candidate)
+        sessions = {row["session_id"]: row for row in rows[1:]}
+        correction = sessions["heldout-041"]["events"][1]
+        if mutation == "missing_target":
+            correction["target_source_event_id"] = "does-not-exist"
+        elif mutation == "late_target":
+            correction["target_source_event_id"] = "heldout-041-event-03"
+        elif mutation == "wrong_context":
+            correction["target_project_id"] = "foreign-project"
+        elif mutation == "missing_replacement":
+            correction["replacement_content"] = None
+        elif mutation == "forget_replacement":
+            sessions["heldout-161"]["events"][1]["replacement_content"] = "invalid"
+        elif mutation == "wrong_explicit_body":
+            sessions["heldout-001"]["facts"][0]["content"] = "normalized but not the stored body"
+        elif mutation == "foreign_answerable":
+            sessions["heldout-061"]["queries"][1]["target_project_id"] = "canary-project-01"
+        elif mutation == "foreign_profile":
+            sessions["heldout-061"]["queries"][1]["target_user_profile_id"] = "t18-canary-profile"
+        elif mutation == "no_answer_with_answer":
+            sessions["heldout-061"]["queries"][0]["expected_answer"] = "Render"
+        elif mutation == "wrong_state_target":
+            sessions["heldout-001"]["state_pairs"][0]["matched_content"] = "old normalized body"
+        elif mutation == "canary_missing_project":
+            sessions["heldout-061"]["queries"][0].pop("target_project_id")
+        elif mutation == "canary_missing_profile":
+            sessions["heldout-061"]["queries"][0].pop("target_user_profile_id")
+        elif mutation == "canary_local_project":
+            sessions["heldout-061"]["queries"][0]["target_project_id"] = "project-01"
+        elif mutation == "canary_local_profile":
+            sessions["heldout-061"]["queries"][0]["target_user_profile_id"] = "t18-synthetic-profile"
+        elif mutation == "canary_missing_local_pair":
+            sessions["heldout-061"]["queries"][1]["query_id"] = "no-longer-the-paired-query"
+        _write(candidate, rows)
+&gt;       with pytest.raises(ValueError, match=expected):
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       Failed: DID NOT RAISE ValueError
+
+tests\test_contract_v4.py:243: Failed</failure></testcase><testcase classname="tests.test_contract_v4" name="test_v4_rejects_contract_regressions[canary_missing_profile-foreign scope canary]" time="0.059"><failure message="Failed: DID NOT RAISE ValueError">candidate = WindowsPath('D:/WindowsTemp/pytest-of-Ant/pytest-4303/test_v4_rejects_contract_regre11/v4.jsonl')
+mutation = 'canary_missing_profile', expected = 'foreign scope canary'
+
+    @pytest.mark.parametrize(
+        "mutation, expected",
+        [
+            ("missing_target", "target_source_event_id does not exist"),
+            ("late_target", "target event must precede action"),
+            ("wrong_context", "target event context mismatch"),
+            ("missing_replacement", "correct needs replacement_content"),
+            ("forget_replacement", "forget cannot have replacement_content"),
+            ("wrong_explicit_body", "explicit remember body"),
+            ("foreign_answerable", "outside source scope"),
+            ("foreign_profile", "outside source scope"),
+            ("no_answer_with_answer", "no_answer cannot have expected_answer"),
+            ("wrong_state_target", "state target must match"),
+            ("canary_missing_project", "foreign scope canary"),
+            ("canary_missing_profile", "foreign scope canary"),
+            ("canary_local_project", "foreign scope canary"),
+            ("canary_local_profile", "foreign scope canary"),
+            ("canary_missing_local_pair", "paired scope canary"),
+        ],
+    )
+    def test_v4_rejects_contract_regressions(candidate: Path, mutation: str, expected: str) -&gt; None:
+        rows = _rows(candidate)
+        sessions = {row["session_id"]: row for row in rows[1:]}
+        correction = sessions["heldout-041"]["events"][1]
+        if mutation == "missing_target":
+            correction["target_source_event_id"] = "does-not-exist"
+        elif mutation == "late_target":
+            correction["target_source_event_id"] = "heldout-041-event-03"
+        elif mutation == "wrong_context":
+            correction["target_project_id"] = "foreign-project"
+        elif mutation == "missing_replacement":
+            correction["replacement_content"] = None
+        elif mutation == "forget_replacement":
+            sessions["heldout-161"]["events"][1]["replacement_content"] = "invalid"
+        elif mutation == "wrong_explicit_body":
+            sessions["heldout-001"]["facts"][0]["content"] = "normalized but not the stored body"
+        elif mutation == "foreign_answerable":
+            sessions["heldout-061"]["queries"][1]["target_project_id"] = "canary-project-01"
+        elif mutation == "foreign_profile":
+            sessions["heldout-061"]["queries"][1]["target_user_profile_id"] = "t18-canary-profile"
+        elif mutation == "no_answer_with_answer":
+            sessions["heldout-061"]["queries"][0]["expected_answer"] = "Render"
+        elif mutation == "wrong_state_target":
+            sessions["heldout-001"]["state_pairs"][0]["matched_content"] = "old normalized body"
+        elif mutation == "canary_missing_project":
+            sessions["heldout-061"]["queries"][0].pop("target_project_id")
+        elif mutation == "canary_missing_profile":
+            sessions["heldout-061"]["queries"][0].pop("target_user_profile_id")
+        elif mutation == "canary_local_project":
+            sessions["heldout-061"]["queries"][0]["target_project_id"] = "project-01"
+        elif mutation == "canary_local_profile":
+            sessions["heldout-061"]["queries"][0]["target_user_profile_id"] = "t18-synthetic-profile"
+        elif mutation == "canary_missing_local_pair":
+            sessions["heldout-061"]["queries"][1]["query_id"] = "no-longer-the-paired-query"
+        _write(candidate, rows)
+&gt;       with pytest.raises(ValueError, match=expected):
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       Failed: DID NOT RAISE ValueError
+
+tests\test_contract_v4.py:243: Failed</failure></testcase><testcase classname="tests.test_contract_v4" name="test_v4_rejects_contract_regressions[canary_local_project-foreign scope canary]" time="0.061"><failure message="Failed: DID NOT RAISE ValueError">candidate = WindowsPath('D:/WindowsTemp/pytest-of-Ant/pytest-4303/test_v4_rejects_contract_regre12/v4.jsonl')
+mutation = 'canary_local_project', expected = 'foreign scope canary'
+
+    @pytest.mark.parametrize(
+        "mutation, expected",
+        [
+            ("missing_target", "target_source_event_id does not exist"),
+            ("late_target", "target event must precede action"),
+            ("wrong_context", "target event context mismatch"),
+            ("missing_replacement", "correct needs replacement_content"),
+            ("forget_replacement", "forget cannot have replacement_content"),
+            ("wrong_explicit_body", "explicit remember body"),
+            ("foreign_answerable", "outside source scope"),
+            ("foreign_profile", "outside source scope"),
+            ("no_answer_with_answer", "no_answer cannot have expected_answer"),
+            ("wrong_state_target", "state target must match"),
+            ("canary_missing_project", "foreign scope canary"),
+            ("canary_missing_profile", "foreign scope canary"),
+            ("canary_local_project", "foreign scope canary"),
+            ("canary_local_profile", "foreign scope canary"),
+            ("canary_missing_local_pair", "paired scope canary"),
+        ],
+    )
+    def test_v4_rejects_contract_regressions(candidate: Path, mutation: str, expected: str) -&gt; None:
+        rows = _rows(candidate)
+        sessions = {row["session_id"]: row for row in rows[1:]}
+        correction = sessions["heldout-041"]["events"][1]
+        if mutation == "missing_target":
+            correction["target_source_event_id"] = "does-not-exist"
+        elif mutation == "late_target":
+            correction["target_source_event_id"] = "heldout-041-event-03"
+        elif mutation == "wrong_context":
+            correction["target_project_id"] = "foreign-project"
+        elif mutation == "missing_replacement":
+            correction["replacement_content"] = None
+        elif mutation == "forget_replacement":
+            sessions["heldout-161"]["events"][1]["replacement_content"] = "invalid"
+        elif mutation == "wrong_explicit_body":
+            sessions["heldout-001"]["facts"][0]["content"] = "normalized but not the stored body"
+        elif mutation == "foreign_answerable":
+            sessions["heldout-061"]["queries"][1]["target_project_id"] = "canary-project-01"
+        elif mutation == "foreign_profile":
+            sessions["heldout-061"]["queries"][1]["target_user_profile_id"] = "t18-canary-profile"
+        elif mutation == "no_answer_with_answer":
+            sessions["heldout-061"]["queries"][0]["expected_answer"] = "Render"
+        elif mutation == "wrong_state_target":
+            sessions["heldout-001"]["state_pairs"][0]["matched_content"] = "old normalized body"
+        elif mutation == "canary_missing_project":
+            sessions["heldout-061"]["queries"][0].pop("target_project_id")
+        elif mutation == "canary_missing_profile":
+            sessions["heldout-061"]["queries"][0].pop("target_user_profile_id")
+        elif mutation == "canary_local_project":
+            sessions["heldout-061"]["queries"][0]["target_project_id"] = "project-01"
+        elif mutation == "canary_local_profile":
+            sessions["heldout-061"]["queries"][0]["target_user_profile_id"] = "t18-synthetic-profile"
+        elif mutation == "canary_missing_local_pair":
+            sessions["heldout-061"]["queries"][1]["query_id"] = "no-longer-the-paired-query"
+        _write(candidate, rows)
+&gt;       with pytest.raises(ValueError, match=expected):
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       Failed: DID NOT RAISE ValueError
+
+tests\test_contract_v4.py:243: Failed</failure></testcase><testcase classname="tests.test_contract_v4" name="test_v4_rejects_contract_regressions[canary_local_profile-foreign scope canary]" time="0.080"><failure message="Failed: DID NOT RAISE ValueError">candidate = WindowsPath('D:/WindowsTemp/pytest-of-Ant/pytest-4303/test_v4_rejects_contract_regre13/v4.jsonl')
+mutation = 'canary_local_profile', expected = 'foreign scope canary'
+
+    @pytest.mark.parametrize(
+        "mutation, expected",
+        [
+            ("missing_target", "target_source_event_id does not exist"),
+            ("late_target", "target event must precede action"),
+            ("wrong_context", "target event context mismatch"),
+            ("missing_replacement", "correct needs replacement_content"),
+            ("forget_replacement", "forget cannot have replacement_content"),
+            ("wrong_explicit_body", "explicit remember body"),
+            ("foreign_answerable", "outside source scope"),
+            ("foreign_profile", "outside source scope"),
+            ("no_answer_with_answer", "no_answer cannot have expected_answer"),
+            ("wrong_state_target", "state target must match"),
+            ("canary_missing_project", "foreign scope canary"),
+            ("canary_missing_profile", "foreign scope canary"),
+            ("canary_local_project", "foreign scope canary"),
+            ("canary_local_profile", "foreign scope canary"),
+            ("canary_missing_local_pair", "paired scope canary"),
+        ],
+    )
+    def test_v4_rejects_contract_regressions(candidate: Path, mutation: str, expected: str) -&gt; None:
+        rows = _rows(candidate)
+        sessions = {row["session_id"]: row for row in rows[1:]}
+        correction = sessions["heldout-041"]["events"][1]
+        if mutation == "missing_target":
+            correction["target_source_event_id"] = "does-not-exist"
+        elif mutation == "late_target":
+            correction["target_source_event_id"] = "heldout-041-event-03"
+        elif mutation == "wrong_context":
+            correction["target_project_id"] = "foreign-project"
+        elif mutation == "missing_replacement":
+            correction["replacement_content"] = None
+        elif mutation == "forget_replacement":
+            sessions["heldout-161"]["events"][1]["replacement_content"] = "invalid"
+        elif mutation == "wrong_explicit_body":
+            sessions["heldout-001"]["facts"][0]["content"] = "normalized but not the stored body"
+        elif mutation == "foreign_answerable":
+            sessions["heldout-061"]["queries"][1]["target_project_id"] = "canary-project-01"
+        elif mutation == "foreign_profile":
+            sessions["heldout-061"]["queries"][1]["target_user_profile_id"] = "t18-canary-profile"
+        elif mutation == "no_answer_with_answer":
+            sessions["heldout-061"]["queries"][0]["expected_answer"] = "Render"
+        elif mutation == "wrong_state_target":
+            sessions["heldout-001"]["state_pairs"][0]["matched_content"] = "old normalized body"
+        elif mutation == "canary_missing_project":
+            sessions["heldout-061"]["queries"][0].pop("target_project_id")
+        elif mutation == "canary_missing_profile":
+            sessions["heldout-061"]["queries"][0].pop("target_user_profile_id")
+        elif mutation == "canary_local_project":
+            sessions["heldout-061"]["queries"][0]["target_project_id"] = "project-01"
+        elif mutation == "canary_local_profile":
+            sessions["heldout-061"]["queries"][0]["target_user_profile_id"] = "t18-synthetic-profile"
+        elif mutation == "canary_missing_local_pair":
+            sessions["heldout-061"]["queries"][1]["query_id"] = "no-longer-the-paired-query"
+        _write(candidate, rows)
+&gt;       with pytest.raises(ValueError, match=expected):
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       Failed: DID NOT RAISE ValueError
+
+tests\test_contract_v4.py:243: Failed</failure></testcase><testcase classname="tests.test_contract_v4" name="test_v4_rejects_contract_regressions[canary_missing_local_pair-paired scope canary]" time="0.067"><failure message="Failed: DID NOT RAISE ValueError">candidate = WindowsPath('D:/WindowsTemp/pytest-of-Ant/pytest-4303/test_v4_rejects_contract_regre14/v4.jsonl')
+mutation = 'canary_missing_local_pair', expected = 'paired scope canary'
+
+    @pytest.mark.parametrize(
+        "mutation, expected",
+        [
+            ("missing_target", "target_source_event_id does not exist"),
+            ("late_target", "target event must precede action"),
+            ("wrong_context", "target event context mismatch"),
+            ("missing_replacement", "correct needs replacement_content"),
+            ("forget_replacement", "forget cannot have replacement_content"),
+            ("wrong_explicit_body", "explicit remember body"),
+            ("foreign_answerable", "outside source scope"),
+            ("foreign_profile", "outside source scope"),
+            ("no_answer_with_answer", "no_answer cannot have expected_answer"),
+            ("wrong_state_target", "state target must match"),
+            ("canary_missing_project", "foreign scope canary"),
+            ("canary_missing_profile", "foreign scope canary"),
+            ("canary_local_project", "foreign scope canary"),
+            ("canary_local_profile", "foreign scope canary"),
+            ("canary_missing_local_pair", "paired scope canary"),
+        ],
+    )
+    def test_v4_rejects_contract_regressions(candidate: Path, mutation: str, expected: str) -&gt; None:
+        rows = _rows(candidate)
+        sessions = {row["session_id"]: row for row in rows[1:]}
+        correction = sessions["heldout-041"]["events"][1]
+        if mutation == "missing_target":
+            correction["target_source_event_id"] = "does-not-exist"
+        elif mutation == "late_target":
+            correction["target_source_event_id"] = "heldout-041-event-03"
+        elif mutation == "wrong_context":
+            correction["target_project_id"] = "foreign-project"
+        elif mutation == "missing_replacement":
+            correction["replacement_content"] = None
+        elif mutation == "forget_replacement":
+            sessions["heldout-161"]["events"][1]["replacement_content"] = "invalid"
+        elif mutation == "wrong_explicit_body":
+            sessions["heldout-001"]["facts"][0]["content"] = "normalized but not the stored body"
+        elif mutation == "foreign_answerable":
+            sessions["heldout-061"]["queries"][1]["target_project_id"] = "canary-project-01"
+        elif mutation == "foreign_profile":
+            sessions["heldout-061"]["queries"][1]["target_user_profile_id"] = "t18-canary-profile"
+        elif mutation == "no_answer_with_answer":
+            sessions["heldout-061"]["queries"][0]["expected_answer"] = "Render"
+        elif mutation == "wrong_state_target":
+            sessions["heldout-001"]["state_pairs"][0]["matched_content"] = "old normalized body"
+        elif mutation == "canary_missing_project":
+            sessions["heldout-061"]["queries"][0].pop("target_project_id")
+        elif mutation == "canary_missing_profile":
+            sessions["heldout-061"]["queries"][0].pop("target_user_profile_id")
+        elif mutation == "canary_local_project":
+            sessions["heldout-061"]["queries"][0]["target_project_id"] = "project-01"
+        elif mutation == "canary_local_profile":
+            sessions["heldout-061"]["queries"][0]["target_user_profile_id"] = "t18-synthetic-profile"
+        elif mutation == "canary_missing_local_pair":
+            sessions["heldout-061"]["queries"][1]["query_id"] = "no-longer-the-paired-query"
+        _write(candidate, rows)
+&gt;       with pytest.raises(ValueError, match=expected):
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       Failed: DID NOT RAISE ValueError
+
+tests\test_contract_v4.py:243: Failed</failure></testcase></testsuite></testsuites>

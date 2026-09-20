@@ -49,7 +49,18 @@ prefix from their expected fact, although the API preserves that submitted
 body. These are conflicts in the evaluation, not new evidence of retrieval
 quality. The original 106 hits and 183 misses among 289 eligible answerable
 observations remain unchanged. Eleven partial answerable observations stay
-excluded. A prospective contract repair is documented but has not run.
+excluded. The [v4 contract repair](../validation/2026-09-20/contract-v4-preparation-v1/README.md)
+now preserves those old results while running a fresh, separately bound
+seven-profile matrix. Forty supported bodies and twenty state targets are
+aligned with the explicit API contract; historical stale-detection text
+stays unchanged. This is previously observed synthetic data, and no final
+v4 quality result is available yet.
+
+The benchmark's session latency includes supplemental diagnostic model calls,
+including state-classifier probes in the modules-off baseline. Do not present
+that number as ordinary memory-lookup latency, or model residency as evidence
+that a production module affected retrieval. The linked preparation record
+explains this measurement boundary.
 
 If this finding belongs in the article, explain the concrete contradiction
 and why the old result remains in the record. Do not turn the diagnostic

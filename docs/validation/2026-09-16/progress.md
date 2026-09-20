@@ -1,5 +1,14 @@
 # Functional local memory implementation record
 
+September 20, v4 execution checkpoint: the [contract repair and preparation](../2026-09-20/contract-v4-preparation-v1/README.md)
+are frozen on `3d09658`. The development full suite passes 1,764 tests with
+four skips; final frozen v3/v4 guards pass 29 cases. Global Black and mypy
+pass in the frozen checkout. A new seven-profile, three-repetition matrix
+started at 13:36:53 UTC against local Qwen and Nomic. The 13:39:08 UTC
+snapshot verifies a live process and 105 complete baseline observations.
+No final execution or quality result is claimed. Old v3 outcomes remain
+unchanged, and all historical stale-detection patterns are preserved.
+
 September 20: [read-only retrieval fixture diagnosis](../2026-09-20/retrieval-fixture-audit-v1/README.md)
 confirms scope-label and explicit-body conflicts using the original hashed
 input and saved outputs. All original results remain unchanged. Reproduction

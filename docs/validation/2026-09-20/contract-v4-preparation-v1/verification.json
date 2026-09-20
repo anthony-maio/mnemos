@@ -1,0 +1,45 @@
+{
+  "source_commit": "3d0965805622efad21d1bb5200a982bd1a956aa8",
+  "checks": {
+    "contract-v4-full-suite.xml": {
+      "tests": 1768,
+      "errors": 0,
+      "failures": 0,
+      "skipped": 4,
+      "passed": 1764
+    },
+    "frozen-contract-tests.xml": {
+      "tests": 29,
+      "errors": 0,
+      "failures": 0,
+      "skipped": 0,
+      "passed": 29
+    }
+  },
+  "black": {
+    "exit_code": 0,
+    "files_checked": 323,
+    "scope": "clean frozen checkout"
+  },
+  "mypy": {
+    "exit_code": 0,
+    "files_checked": 142,
+    "scope": "clean frozen checkout"
+  },
+  "focused_strict_python_310_mypy": {
+    "exit_code": 0,
+    "files_checked": 3
+  },
+  "unchanged_scoring_git_blobs_sha256": {
+    "benchmarks/local_memory/ollama_adapter.py": "1a78f99cdf15fa4851c20e61589eb024c5827c5dae90ebd287f9e23ae854e363",
+    "benchmarks/local_memory/harness.py": "2b1f8571a2dbd4f69bb07d05fde81f2e6cb3e324444d8cb21fc2a1b2a3b5c254",
+    "benchmarks/local_memory/scoring.py": "02c9449b4ff47b1f675a11a3eb261a71129fe18655d898ebcd9da0d7b6178753",
+    "benchmarks/local_memory/retrieval_comparison.py": "d63c2d0dc8551b784594822322ba1c32b4cd8eafb08a31e452e0af0fda660ca3"
+  },
+  "product_tree_unchanged_from": "e6887deb89608dca34f7bbb463b5d0a3ba973011",
+  "limits": [
+    "The development full suite began before the final five canary guards were added.",
+    "The final frozen source separately passes all 29 current v3/v4 contract cases.",
+    "These offline checks do not establish model quality or native readiness."
+  ]
+}

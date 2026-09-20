@@ -1,0 +1,82 @@
+{
+  "observed_at": "2026-09-20T13:39:08.149038+00:00",
+  "status": {
+    "status": "running",
+    "pid": 67836,
+    "source_commit": "3d0965805622efad21d1bb5200a982bd1a956aa8",
+    "binding": {
+      "protocol_version": "contract-v4-evaluation-protocol-v1",
+      "protocol_sha256": "6a4d16fd59ab181e3e06d676c67afe5639554baf8bcf8d1ce4bf9af0f6fd0814",
+      "dataset_sha256": "0c1f74e24d485a37889a18a65463b85c4486824975de8283dda50754d6e434aa",
+      "source_commit": "3d0965805622efad21d1bb5200a982bd1a956aa8",
+      "preparation_sha256": "356f47b90e100db357a561cb71d78bcf30c2ca7075f2a235392fe1ccde92a9bc",
+      "previously_observed_synthetic_repair": true
+    },
+    "started_at": "2026-09-20T13:36:53.347150+00:00"
+  },
+  "process": {
+    "Id": 67836,
+    "ProcessName": "python",
+    "StartTime": "/Date(1789911410849)/",
+    "CPU": 61.625
+  },
+  "checkpoints": [
+    {
+      "profile": "baseline",
+      "status": "running",
+      "observations": 105,
+      "execution_statuses": {
+        "complete": 105
+      },
+      "dataset_sha256": "0c1f74e24d485a37889a18a65463b85c4486824975de8283dda50754d6e434aa",
+      "code_sha256": "c1b9431daadfaeeee8b386e0629f73a895bdf4d1944648aa2675f3ffabd9c143",
+      "checkpoint_sha256_at_read": "23fe0277bb5774c12ad861bb94c9828647127a2f43b44151857f4a8dc39852a5"
+    }
+  ],
+  "ollama_residency": {
+    "models": [
+      {
+        "name": "qwen3.5:9b",
+        "model": "qwen3.5:9b",
+        "size": 6014380276,
+        "digest": "6488c96fa5faab64bb65cbd30d4289e20e6130ef535a93ef9a49f42eda893ea7",
+        "details": {
+          "parent_model": "",
+          "format": "gguf",
+          "family": "qwen35",
+          "families": [
+            "qwen35"
+          ],
+          "parameter_size": "9.7B",
+          "quantization_level": "Q4_K_M"
+        },
+        "expires_at": "2026-09-20T09:44:08.1395169-04:00",
+        "size_vram": 6014380276,
+        "context_length": 16384
+      },
+      {
+        "name": "nomic-embed-text:latest",
+        "model": "nomic-embed-text:latest",
+        "size": 323150151,
+        "digest": "0a109f422b47e3a30ba2b10eca18548e944e8a23073ee3f3e947efcf3c45e59f",
+        "details": {
+          "parent_model": "",
+          "format": "gguf",
+          "family": "nomic-bert",
+          "families": [
+            "nomic-bert"
+          ],
+          "parameter_size": "137M",
+          "quantization_level": "F16"
+        },
+        "expires_at": "2026-09-20T09:44:07.6576043-04:00",
+        "size_vram": 323150151,
+        "context_length": 2048
+      }
+    ]
+  },
+  "limits": [
+    "A live process and saved checkpoints do not establish final completion or quality.",
+    "Residency is sampled here, not asserted for every provider request."
+  ]
+}

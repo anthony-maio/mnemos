@@ -5,7 +5,9 @@ identifies 20 foreign-scope queries mislabeled answerable and 60 explicit
 remember bodies that differ from their gold facts. Original outcomes remain
 106 hits and 183 misses among 289 eligible answerable observations, with
 11 partial observations excluded. No corrected accuracy is claimed. The
-prospective contract repair has not run and must retain the existing gates.
+[v4 repair](../2026-09-20/contract-v4-preparation-v1/README.md) is frozen on `3d09658`
+and its new seven-profile matrix is running under the unchanged gates. No
+terminal v4 result or old-to-new performance improvement is claimed.
 
 The [three-host v7 run](../2026-09-20/three-host-native-v7/README.md) passed all 11 native phases on verified
 product `e6887de`: Codex and Claude teaching, Hermes recall and same-ID
