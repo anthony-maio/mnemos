@@ -1,0 +1,45 @@
+from pathlib import Path
+import hashlib,json,inspect,shutil,zipfile
+from mnemos.client import MnemosClient
+from mnemos.config import MnemosConfig
+from mnemos.contracts import CaptureEvent,RetrievalRequest
+from mnemos.scopes import ScopeContext,ScopeRegistry,ProjectIdentity
+from mnemos.utils.storage import SQLiteStore
+root=Path('C:/Users/Ant/AppData/Local/Temp/mnemos-all-module-provider-recovery-v1')
+out=Path('C:/Users/Ant/AppData/Local/Temp/mnemos-all-module-provider-recovery-preflight-v1');out.mkdir(exist_ok=False)
+sha=lambda p:hashlib.sha256(p.read_bytes()).hexdigest()
+prep=json.loads((root/'preparation.json').read_bytes())
+for name,digest in prep['files'].items():assert sha(root/name)==digest,name
+assert sha(Path(prep['prior_result']))==prep['prior_result_sha256']
+prior=json.loads(Path(prep['prior_result']).read_bytes())
+installation=json.loads(Path(prep['installation']).read_bytes());assert installation['status']=='passed' and installation['bindings_after']['commit']==prep['source_commit']
+assert MnemosConfig().model_dump(mode='json')==prep['config']
+installed=Path(inspect.getfile(MnemosClient)).parents[1]
+assert 'site-packages' in str(installed)
+verified=0
+with zipfile.ZipFile(prep['wheel']) as z:
+ for name in z.namelist():
+  if name.startswith('mnemos/') and name.endswith('.py'):
+   assert (installed/name).read_bytes()==z.read(name),name
+   verified+=1
+entries=json.loads((root/'source-outbox.json').read_bytes())
+context=ScopeContext.model_validate(entries[0]['payload']['context'])
+foreign=context.model_copy(update={'project_id':'outage-foreign-project','session_id':'outage-foreign-session'})
+registry=ScopeRegistry(profiles=[context.user_profile_id],projects={c.project_id:ProjectIdentity(id=c.project_id,root=str(root/c.project_id),user_profile_id=c.user_profile_id,enabled=True) for c in [context,foreign]})
+for entry in entries:
+ event=CaptureEvent.model_validate(entry['payload']);assert registry.validate_context(event.context)==context
+for c in [context,foreign]:
+ request=RetrievalRequest.model_validate({'query':'What is this project outage test marker?','allowed_scopes':['project'],'profile':'biomimetic','top_k':5,'max_context_tokens':2000,'context':c.model_dump(mode='json')})
+ assert registry.validate_context(request.context)==c
+shutil.copyfile(root/'memory.sqlite',out/'memory.sqlite')
+store=SQLiteStore(str(out/'memory.sqlite'))
+try:
+ snapshot={'events':[e.model_dump(mode='json') for e in store.list_episodic_events()],'jobs':[j.model_dump(mode='json') for j in store.list_jobs()],'facts':[f.model_dump(mode='json') for f in store.get_all()]}
+ assert snapshot==prior['steps'][-1]['state']
+ assert len(snapshot['jobs'])==2 and all(j['status']=='pending' for j in snapshot['jobs'])
+ assert not snapshot['facts']
+finally:store.close()
+for name,digest in prep['files'].items():assert sha(root/name)==digest,name
+record={'status':'passed','preparation_sha256':sha(root/'preparation.json'),'source_commit':prep['source_commit'],'installed_origin':str(installed),'verified_modules':verified,'events':len(snapshot['events']),'jobs':len(snapshot['jobs']),'job_attempts':[j['attempt_count'] for j in snapshot['jobs']],'facts':0,'request_contracts':['two original captures','project and foreign biomimetic retrieval'],'frozen_inputs_unchanged':True,'model_calls':0,'limit':'Offline preflight only. No model outcome, semantic correctness, correction or forgetting acceptance is claimed.'}
+(out/'result.json').write_text(json.dumps(record,indent=2)+'\n')
+print(json.dumps(record))

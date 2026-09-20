@@ -26,3 +26,9 @@ still requires semantic review against its source. This is one development
 replay of previously captured native events, not a fresh host session, an
 unattended-worker recovery, a five-module ablation or a daily-use pilot.
 No real inference ran during preparation. Syntax compilation passed.
+
+Offline installed-package preflight passed: all 55 Python modules match the
+wheel, both captured payloads and both scoped retrieval requests validate,
+and the copied SQLite state exactly matches the preserved post-outage state:
+two events, two pending jobs at three attempts each, and zero facts. All frozen
+input hashes remained unchanged. No model calls or lifecycle operations ran.
