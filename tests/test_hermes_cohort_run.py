@@ -12,6 +12,7 @@ from benchmarks.native_hosts import (
     hermes_cohort_run_v3,
     hermes_cohort_run_v4,
     hermes_cohort_run_v5,
+    hermes_cohort_run_v6,
 )
 
 cohort = hermes_cohort_run_v1
@@ -25,6 +26,7 @@ cohort = hermes_cohort_run_v1
         hermes_cohort_run_v3,
         hermes_cohort_run_v4,
         hermes_cohort_run_v5,
+        hermes_cohort_run_v6,
     ],
 )
 def cohort_version(request, monkeypatch):
