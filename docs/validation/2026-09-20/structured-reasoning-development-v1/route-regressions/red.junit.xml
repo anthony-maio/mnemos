@@ -1,0 +1,425 @@
+<?xml version="1.0" encoding="utf-8"?><testsuites name="pytest tests"><testsuite name="pytest" errors="0" failures="13" skipped="0" tests="16" time="4.101" timestamp="2026-09-20T14:47:23.439641-04:00" hostname="Aurora"><testcase classname="tests.test_ollama_structured_reasoning" name="test_structured_reasoning_uses_chat_final_with_original_options[True]" time="0.213"><failure message="mnemos.utils.reliability.MnemosExternalServiceError: Ollama returned a non-string final response">monkeypatch = &lt;_pytest.monkeypatch.MonkeyPatch object at 0x000002238C0BC8A0&gt;
+think = True
+
+    @pytest.mark.asyncio
+    @pytest.mark.parametrize("think", [True, "low", "medium", "high", "max"])
+    async def test_structured_reasoning_uses_chat_final_with_original_options(
+        monkeypatch: pytest.MonkeyPatch, think: Any,
+    ) -&gt; None:
+        raw = {"message": {"role": "assistant", "thinking": "not an answer", "content": ' {"ok":true} '}}
+        requests = install_client(monkeypatch, raw)
+        observed: list[dict[str, Any]] = []
+        provider = OllamaProvider("default", "http://local", response_observer=observed.append, think=think)
+        schema = {"type": "object", "properties": {"ok": {"type": "boolean"}}}
+&gt;       result = await provider.predict("extract", model="classifier", format=schema, temperature=0, max_tokens=8192)
+                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+tests\test_ollama_structured_reasoning.py:51: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+mnemos\utils\llm.py:351: in predict
+    return await call_with_async_retry(
+mnemos\utils\reliability.py:123: in call_with_async_retry
+    raise _wrap_provider_exception(provider, operation, exc) from exc
+mnemos\utils\reliability.py:118: in call_with_async_retry
+    return await fn()
+           ^^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+    async def _request() -&gt; str:
+        async with httpx.AsyncClient(
+            timeout=self.timeout, verify=self._tls_verification()
+        ) as client:
+            response = await client.post(
+                f"{self.base_url}/api/generate",
+                json=payload,
+            )
+            response.raise_for_status()
+            data = response.json()
+            if not isinstance(data, dict):
+                raise MnemosExternalServiceError("Ollama returned a non-object response")
+            if self.response_observer is not None:
+                try:
+                    self.response_observer(data)
+                except Exception:
+                    log_event(
+                        "mnemos.provider_observer_failure",
+                        level=logging.WARNING,
+                        provider="ollama",
+                        operation="predict_observer",
+                    )
+            text = data.get("response")
+            if not isinstance(text, str):
+&gt;               raise MnemosExternalServiceError("Ollama returned a non-string final response")
+E               mnemos.utils.reliability.MnemosExternalServiceError: Ollama returned a non-string final response
+
+mnemos\utils\llm.py:344: MnemosExternalServiceError</failure></testcase><testcase classname="tests.test_ollama_structured_reasoning" name="test_structured_reasoning_uses_chat_final_with_original_options[low]" time="0.194"><failure message="mnemos.utils.reliability.MnemosExternalServiceError: Ollama returned a non-string final response">monkeypatch = &lt;_pytest.monkeypatch.MonkeyPatch object at 0x000002238C07F2F0&gt;
+think = 'low'
+
+    @pytest.mark.asyncio
+    @pytest.mark.parametrize("think", [True, "low", "medium", "high", "max"])
+    async def test_structured_reasoning_uses_chat_final_with_original_options(
+        monkeypatch: pytest.MonkeyPatch, think: Any,
+    ) -&gt; None:
+        raw = {"message": {"role": "assistant", "thinking": "not an answer", "content": ' {"ok":true} '}}
+        requests = install_client(monkeypatch, raw)
+        observed: list[dict[str, Any]] = []
+        provider = OllamaProvider("default", "http://local", response_observer=observed.append, think=think)
+        schema = {"type": "object", "properties": {"ok": {"type": "boolean"}}}
+&gt;       result = await provider.predict("extract", model="classifier", format=schema, temperature=0, max_tokens=8192)
+                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+tests\test_ollama_structured_reasoning.py:51: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+mnemos\utils\llm.py:351: in predict
+    return await call_with_async_retry(
+mnemos\utils\reliability.py:123: in call_with_async_retry
+    raise _wrap_provider_exception(provider, operation, exc) from exc
+mnemos\utils\reliability.py:118: in call_with_async_retry
+    return await fn()
+           ^^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+    async def _request() -&gt; str:
+        async with httpx.AsyncClient(
+            timeout=self.timeout, verify=self._tls_verification()
+        ) as client:
+            response = await client.post(
+                f"{self.base_url}/api/generate",
+                json=payload,
+            )
+            response.raise_for_status()
+            data = response.json()
+            if not isinstance(data, dict):
+                raise MnemosExternalServiceError("Ollama returned a non-object response")
+            if self.response_observer is not None:
+                try:
+                    self.response_observer(data)
+                except Exception:
+                    log_event(
+                        "mnemos.provider_observer_failure",
+                        level=logging.WARNING,
+                        provider="ollama",
+                        operation="predict_observer",
+                    )
+            text = data.get("response")
+            if not isinstance(text, str):
+&gt;               raise MnemosExternalServiceError("Ollama returned a non-string final response")
+E               mnemos.utils.reliability.MnemosExternalServiceError: Ollama returned a non-string final response
+
+mnemos\utils\llm.py:344: MnemosExternalServiceError</failure></testcase><testcase classname="tests.test_ollama_structured_reasoning" name="test_structured_reasoning_uses_chat_final_with_original_options[medium]" time="0.184"><failure message="mnemos.utils.reliability.MnemosExternalServiceError: Ollama returned a non-string final response">monkeypatch = &lt;_pytest.monkeypatch.MonkeyPatch object at 0x000002238C115150&gt;
+think = 'medium'
+
+    @pytest.mark.asyncio
+    @pytest.mark.parametrize("think", [True, "low", "medium", "high", "max"])
+    async def test_structured_reasoning_uses_chat_final_with_original_options(
+        monkeypatch: pytest.MonkeyPatch, think: Any,
+    ) -&gt; None:
+        raw = {"message": {"role": "assistant", "thinking": "not an answer", "content": ' {"ok":true} '}}
+        requests = install_client(monkeypatch, raw)
+        observed: list[dict[str, Any]] = []
+        provider = OllamaProvider("default", "http://local", response_observer=observed.append, think=think)
+        schema = {"type": "object", "properties": {"ok": {"type": "boolean"}}}
+&gt;       result = await provider.predict("extract", model="classifier", format=schema, temperature=0, max_tokens=8192)
+                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+tests\test_ollama_structured_reasoning.py:51: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+mnemos\utils\llm.py:351: in predict
+    return await call_with_async_retry(
+mnemos\utils\reliability.py:123: in call_with_async_retry
+    raise _wrap_provider_exception(provider, operation, exc) from exc
+mnemos\utils\reliability.py:118: in call_with_async_retry
+    return await fn()
+           ^^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+    async def _request() -&gt; str:
+        async with httpx.AsyncClient(
+            timeout=self.timeout, verify=self._tls_verification()
+        ) as client:
+            response = await client.post(
+                f"{self.base_url}/api/generate",
+                json=payload,
+            )
+            response.raise_for_status()
+            data = response.json()
+            if not isinstance(data, dict):
+                raise MnemosExternalServiceError("Ollama returned a non-object response")
+            if self.response_observer is not None:
+                try:
+                    self.response_observer(data)
+                except Exception:
+                    log_event(
+                        "mnemos.provider_observer_failure",
+                        level=logging.WARNING,
+                        provider="ollama",
+                        operation="predict_observer",
+                    )
+            text = data.get("response")
+            if not isinstance(text, str):
+&gt;               raise MnemosExternalServiceError("Ollama returned a non-string final response")
+E               mnemos.utils.reliability.MnemosExternalServiceError: Ollama returned a non-string final response
+
+mnemos\utils\llm.py:344: MnemosExternalServiceError</failure></testcase><testcase classname="tests.test_ollama_structured_reasoning" name="test_structured_reasoning_uses_chat_final_with_original_options[high]" time="0.184"><failure message="mnemos.utils.reliability.MnemosExternalServiceError: Ollama returned a non-string final response">monkeypatch = &lt;_pytest.monkeypatch.MonkeyPatch object at 0x000002238C0EDB50&gt;
+think = 'high'
+
+    @pytest.mark.asyncio
+    @pytest.mark.parametrize("think", [True, "low", "medium", "high", "max"])
+    async def test_structured_reasoning_uses_chat_final_with_original_options(
+        monkeypatch: pytest.MonkeyPatch, think: Any,
+    ) -&gt; None:
+        raw = {"message": {"role": "assistant", "thinking": "not an answer", "content": ' {"ok":true} '}}
+        requests = install_client(monkeypatch, raw)
+        observed: list[dict[str, Any]] = []
+        provider = OllamaProvider("default", "http://local", response_observer=observed.append, think=think)
+        schema = {"type": "object", "properties": {"ok": {"type": "boolean"}}}
+&gt;       result = await provider.predict("extract", model="classifier", format=schema, temperature=0, max_tokens=8192)
+                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+tests\test_ollama_structured_reasoning.py:51: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+mnemos\utils\llm.py:351: in predict
+    return await call_with_async_retry(
+mnemos\utils\reliability.py:123: in call_with_async_retry
+    raise _wrap_provider_exception(provider, operation, exc) from exc
+mnemos\utils\reliability.py:118: in call_with_async_retry
+    return await fn()
+           ^^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+    async def _request() -&gt; str:
+        async with httpx.AsyncClient(
+            timeout=self.timeout, verify=self._tls_verification()
+        ) as client:
+            response = await client.post(
+                f"{self.base_url}/api/generate",
+                json=payload,
+            )
+            response.raise_for_status()
+            data = response.json()
+            if not isinstance(data, dict):
+                raise MnemosExternalServiceError("Ollama returned a non-object response")
+            if self.response_observer is not None:
+                try:
+                    self.response_observer(data)
+                except Exception:
+                    log_event(
+                        "mnemos.provider_observer_failure",
+                        level=logging.WARNING,
+                        provider="ollama",
+                        operation="predict_observer",
+                    )
+            text = data.get("response")
+            if not isinstance(text, str):
+&gt;               raise MnemosExternalServiceError("Ollama returned a non-string final response")
+E               mnemos.utils.reliability.MnemosExternalServiceError: Ollama returned a non-string final response
+
+mnemos\utils\llm.py:344: MnemosExternalServiceError</failure></testcase><testcase classname="tests.test_ollama_structured_reasoning" name="test_structured_reasoning_uses_chat_final_with_original_options[max]" time="0.182"><failure message="mnemos.utils.reliability.MnemosExternalServiceError: Ollama returned a non-string final response">monkeypatch = &lt;_pytest.monkeypatch.MonkeyPatch object at 0x000002238C15B7A0&gt;
+think = 'max'
+
+    @pytest.mark.asyncio
+    @pytest.mark.parametrize("think", [True, "low", "medium", "high", "max"])
+    async def test_structured_reasoning_uses_chat_final_with_original_options(
+        monkeypatch: pytest.MonkeyPatch, think: Any,
+    ) -&gt; None:
+        raw = {"message": {"role": "assistant", "thinking": "not an answer", "content": ' {"ok":true} '}}
+        requests = install_client(monkeypatch, raw)
+        observed: list[dict[str, Any]] = []
+        provider = OllamaProvider("default", "http://local", response_observer=observed.append, think=think)
+        schema = {"type": "object", "properties": {"ok": {"type": "boolean"}}}
+&gt;       result = await provider.predict("extract", model="classifier", format=schema, temperature=0, max_tokens=8192)
+                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+tests\test_ollama_structured_reasoning.py:51: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+mnemos\utils\llm.py:351: in predict
+    return await call_with_async_retry(
+mnemos\utils\reliability.py:123: in call_with_async_retry
+    raise _wrap_provider_exception(provider, operation, exc) from exc
+mnemos\utils\reliability.py:118: in call_with_async_retry
+    return await fn()
+           ^^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+    async def _request() -&gt; str:
+        async with httpx.AsyncClient(
+            timeout=self.timeout, verify=self._tls_verification()
+        ) as client:
+            response = await client.post(
+                f"{self.base_url}/api/generate",
+                json=payload,
+            )
+            response.raise_for_status()
+            data = response.json()
+            if not isinstance(data, dict):
+                raise MnemosExternalServiceError("Ollama returned a non-object response")
+            if self.response_observer is not None:
+                try:
+                    self.response_observer(data)
+                except Exception:
+                    log_event(
+                        "mnemos.provider_observer_failure",
+                        level=logging.WARNING,
+                        provider="ollama",
+                        operation="predict_observer",
+                    )
+            text = data.get("response")
+            if not isinstance(text, str):
+&gt;               raise MnemosExternalServiceError("Ollama returned a non-string final response")
+E               mnemos.utils.reliability.MnemosExternalServiceError: Ollama returned a non-string final response
+
+mnemos\utils\llm.py:344: MnemosExternalServiceError</failure></testcase><testcase classname="tests.test_ollama_structured_reasoning" name="test_structured_reasoning_rejects_missing_or_invalid_final[None]" time="0.184"><failure message="Failed: DID NOT RAISE &lt;class 'mnemos.utils.reliability.MnemosExternalServiceError'&gt;">monkeypatch = &lt;_pytest.monkeypatch.MonkeyPatch object at 0x000002238C17E970&gt;
+message = None
+
+    @pytest.mark.asyncio
+    @pytest.mark.parametrize("message", [None, [], {}, {"content": None}, {"content": ""}, {"content": "   "}, {"content": {"ok": True}}])
+    async def test_structured_reasoning_rejects_missing_or_invalid_final(
+        monkeypatch: pytest.MonkeyPatch, message: object,
+    ) -&gt; None:
+        raw = {"response": '{"ok":true}', "thinking": "top-level scratchpad", "message": message}
+        requests = install_client(monkeypatch, raw)
+        provider = OllamaProvider(think=True)
+&gt;       with pytest.raises(MnemosExternalServiceError, match="final response"):
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       Failed: DID NOT RAISE &lt;class 'mnemos.utils.reliability.MnemosExternalServiceError'&gt;
+
+tests\test_ollama_structured_reasoning.py:69: Failed</failure></testcase><testcase classname="tests.test_ollama_structured_reasoning" name="test_structured_reasoning_rejects_missing_or_invalid_final[message1]" time="0.201"><failure message="Failed: DID NOT RAISE &lt;class 'mnemos.utils.reliability.MnemosExternalServiceError'&gt;">monkeypatch = &lt;_pytest.monkeypatch.MonkeyPatch object at 0x000002238C19C650&gt;
+message = []
+
+    @pytest.mark.asyncio
+    @pytest.mark.parametrize("message", [None, [], {}, {"content": None}, {"content": ""}, {"content": "   "}, {"content": {"ok": True}}])
+    async def test_structured_reasoning_rejects_missing_or_invalid_final(
+        monkeypatch: pytest.MonkeyPatch, message: object,
+    ) -&gt; None:
+        raw = {"response": '{"ok":true}', "thinking": "top-level scratchpad", "message": message}
+        requests = install_client(monkeypatch, raw)
+        provider = OllamaProvider(think=True)
+&gt;       with pytest.raises(MnemosExternalServiceError, match="final response"):
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       Failed: DID NOT RAISE &lt;class 'mnemos.utils.reliability.MnemosExternalServiceError'&gt;
+
+tests\test_ollama_structured_reasoning.py:69: Failed</failure></testcase><testcase classname="tests.test_ollama_structured_reasoning" name="test_structured_reasoning_rejects_missing_or_invalid_final[message2]" time="0.185"><failure message="Failed: DID NOT RAISE &lt;class 'mnemos.utils.reliability.MnemosExternalServiceError'&gt;">monkeypatch = &lt;_pytest.monkeypatch.MonkeyPatch object at 0x000002238C1464C0&gt;
+message = {}
+
+    @pytest.mark.asyncio
+    @pytest.mark.parametrize("message", [None, [], {}, {"content": None}, {"content": ""}, {"content": "   "}, {"content": {"ok": True}}])
+    async def test_structured_reasoning_rejects_missing_or_invalid_final(
+        monkeypatch: pytest.MonkeyPatch, message: object,
+    ) -&gt; None:
+        raw = {"response": '{"ok":true}', "thinking": "top-level scratchpad", "message": message}
+        requests = install_client(monkeypatch, raw)
+        provider = OllamaProvider(think=True)
+&gt;       with pytest.raises(MnemosExternalServiceError, match="final response"):
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       Failed: DID NOT RAISE &lt;class 'mnemos.utils.reliability.MnemosExternalServiceError'&gt;
+
+tests\test_ollama_structured_reasoning.py:69: Failed</failure></testcase><testcase classname="tests.test_ollama_structured_reasoning" name="test_structured_reasoning_rejects_missing_or_invalid_final[message3]" time="0.186"><failure message="Failed: DID NOT RAISE &lt;class 'mnemos.utils.reliability.MnemosExternalServiceError'&gt;">monkeypatch = &lt;_pytest.monkeypatch.MonkeyPatch object at 0x000002238C196490&gt;
+message = {'content': None}
+
+    @pytest.mark.asyncio
+    @pytest.mark.parametrize("message", [None, [], {}, {"content": None}, {"content": ""}, {"content": "   "}, {"content": {"ok": True}}])
+    async def test_structured_reasoning_rejects_missing_or_invalid_final(
+        monkeypatch: pytest.MonkeyPatch, message: object,
+    ) -&gt; None:
+        raw = {"response": '{"ok":true}', "thinking": "top-level scratchpad", "message": message}
+        requests = install_client(monkeypatch, raw)
+        provider = OllamaProvider(think=True)
+&gt;       with pytest.raises(MnemosExternalServiceError, match="final response"):
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       Failed: DID NOT RAISE &lt;class 'mnemos.utils.reliability.MnemosExternalServiceError'&gt;
+
+tests\test_ollama_structured_reasoning.py:69: Failed</failure></testcase><testcase classname="tests.test_ollama_structured_reasoning" name="test_structured_reasoning_rejects_missing_or_invalid_final[message4]" time="0.184"><failure message="Failed: DID NOT RAISE &lt;class 'mnemos.utils.reliability.MnemosExternalServiceError'&gt;">monkeypatch = &lt;_pytest.monkeypatch.MonkeyPatch object at 0x000002238C017650&gt;
+message = {'content': ''}
+
+    @pytest.mark.asyncio
+    @pytest.mark.parametrize("message", [None, [], {}, {"content": None}, {"content": ""}, {"content": "   "}, {"content": {"ok": True}}])
+    async def test_structured_reasoning_rejects_missing_or_invalid_final(
+        monkeypatch: pytest.MonkeyPatch, message: object,
+    ) -&gt; None:
+        raw = {"response": '{"ok":true}', "thinking": "top-level scratchpad", "message": message}
+        requests = install_client(monkeypatch, raw)
+        provider = OllamaProvider(think=True)
+&gt;       with pytest.raises(MnemosExternalServiceError, match="final response"):
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       Failed: DID NOT RAISE &lt;class 'mnemos.utils.reliability.MnemosExternalServiceError'&gt;
+
+tests\test_ollama_structured_reasoning.py:69: Failed</failure></testcase><testcase classname="tests.test_ollama_structured_reasoning" name="test_structured_reasoning_rejects_missing_or_invalid_final[message5]" time="0.183"><failure message="Failed: DID NOT RAISE &lt;class 'mnemos.utils.reliability.MnemosExternalServiceError'&gt;">monkeypatch = &lt;_pytest.monkeypatch.MonkeyPatch object at 0x000002238C1B77D0&gt;
+message = {'content': '   '}
+
+    @pytest.mark.asyncio
+    @pytest.mark.parametrize("message", [None, [], {}, {"content": None}, {"content": ""}, {"content": "   "}, {"content": {"ok": True}}])
+    async def test_structured_reasoning_rejects_missing_or_invalid_final(
+        monkeypatch: pytest.MonkeyPatch, message: object,
+    ) -&gt; None:
+        raw = {"response": '{"ok":true}', "thinking": "top-level scratchpad", "message": message}
+        requests = install_client(monkeypatch, raw)
+        provider = OllamaProvider(think=True)
+&gt;       with pytest.raises(MnemosExternalServiceError, match="final response"):
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       Failed: DID NOT RAISE &lt;class 'mnemos.utils.reliability.MnemosExternalServiceError'&gt;
+
+tests\test_ollama_structured_reasoning.py:69: Failed</failure></testcase><testcase classname="tests.test_ollama_structured_reasoning" name="test_structured_reasoning_rejects_missing_or_invalid_final[message6]" time="0.185"><failure message="Failed: DID NOT RAISE &lt;class 'mnemos.utils.reliability.MnemosExternalServiceError'&gt;">monkeypatch = &lt;_pytest.monkeypatch.MonkeyPatch object at 0x000002238C1CC1A0&gt;
+message = {'content': {'ok': True}}
+
+    @pytest.mark.asyncio
+    @pytest.mark.parametrize("message", [None, [], {}, {"content": None}, {"content": ""}, {"content": "   "}, {"content": {"ok": True}}])
+    async def test_structured_reasoning_rejects_missing_or_invalid_final(
+        monkeypatch: pytest.MonkeyPatch, message: object,
+    ) -&gt; None:
+        raw = {"response": '{"ok":true}', "thinking": "top-level scratchpad", "message": message}
+        requests = install_client(monkeypatch, raw)
+        provider = OllamaProvider(think=True)
+&gt;       with pytest.raises(MnemosExternalServiceError, match="final response"):
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       Failed: DID NOT RAISE &lt;class 'mnemos.utils.reliability.MnemosExternalServiceError'&gt;
+
+tests\test_ollama_structured_reasoning.py:69: Failed</failure></testcase><testcase classname="tests.test_ollama_structured_reasoning" name="test_per_call_reasoning_mode_controls_route_without_changing_default" time="0.186"><failure message="mnemos.utils.reliability.MnemosExternalServiceError: Ollama returned a non-string final response">monkeypatch = &lt;_pytest.monkeypatch.MonkeyPatch object at 0x000002238C1CC280&gt;
+
+    @pytest.mark.asyncio
+    async def test_per_call_reasoning_mode_controls_route_without_changing_default(
+        monkeypatch: pytest.MonkeyPatch,
+    ) -&gt; None:
+        provider = OllamaProvider(think=False)
+        requests = install_client(monkeypatch, {"message": {"content": "answer"}})
+&gt;       assert await provider.predict("extract", think=True, format={"type": "object"}) == "answer"
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+tests\test_ollama_structured_reasoning.py:80: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+mnemos\utils\llm.py:351: in predict
+    return await call_with_async_retry(
+mnemos\utils\reliability.py:123: in call_with_async_retry
+    raise _wrap_provider_exception(provider, operation, exc) from exc
+mnemos\utils\reliability.py:118: in call_with_async_retry
+    return await fn()
+           ^^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+    async def _request() -&gt; str:
+        async with httpx.AsyncClient(
+            timeout=self.timeout, verify=self._tls_verification()
+        ) as client:
+            response = await client.post(
+                f"{self.base_url}/api/generate",
+                json=payload,
+            )
+            response.raise_for_status()
+            data = response.json()
+            if not isinstance(data, dict):
+                raise MnemosExternalServiceError("Ollama returned a non-object response")
+            if self.response_observer is not None:
+                try:
+                    self.response_observer(data)
+                except Exception:
+                    log_event(
+                        "mnemos.provider_observer_failure",
+                        level=logging.WARNING,
+                        provider="ollama",
+                        operation="predict_observer",
+                    )
+            text = data.get("response")
+            if not isinstance(text, str):
+&gt;               raise MnemosExternalServiceError("Ollama returned a non-string final response")
+E               mnemos.utils.reliability.MnemosExternalServiceError: Ollama returned a non-string final response
+
+mnemos\utils\llm.py:344: MnemosExternalServiceError</failure></testcase><testcase classname="tests.test_ollama_structured_reasoning" name="test_other_requests_keep_generate_contract[None-output_format0]" time="0.187" /><testcase classname="tests.test_ollama_structured_reasoning" name="test_other_requests_keep_generate_contract[False-output_format1]" time="0.184" /><testcase classname="tests.test_ollama_structured_reasoning" name="test_other_requests_keep_generate_contract[True-None]" time="0.184" /></testsuite></testsuites>

@@ -1,0 +1,153 @@
+<?xml version="1.0" encoding="utf-8"?><testsuites name="pytest tests"><testsuite name="pytest" errors="0" failures="12" skipped="0" tests="13" time="1.772" timestamp="2026-09-20T15:02:43.262489-04:00" hostname="Aurora"><testcase classname="tests.test_ollama_generation_settings" name="test_managed_ollama_generation_settings_round_trip_and_reach_provider" time="0.053"><failure message="assert (True, 512, 30.0, 0.1) == (True, 8192, 180.0, 0.0)&#10;  &#10;  At index 1 diff: 512 != 8192&#10;  Use -v to get more diff">tmp_path = WindowsPath('D:/WindowsTemp/pytest-of-Ant/pytest-4364/test_managed_ollama_generation0')
+
+    def test_managed_ollama_generation_settings_round_trip_and_reach_provider(tmp_path: Path) -&gt; None:
+        path = tmp_path / "mnemos.toml"
+        path.write_text(
+            '[llm]\nprovider = "ollama"\nmodel = "qwen3.5:9b"\n'
+            '[providers.ollama]\nthink = true\nmax_tokens = 8192\ntimeout = 180.0\ntemperature = 0.0\n',
+            encoding="utf-8",
+        )
+        settings = load_settings(env={"MNEMOS_CONFIG_PATH": str(path)}, cwd=tmp_path).settings
+        provider = build_llm_from_settings(settings)
+        assert isinstance(provider, OllamaProvider)
+&gt;       assert (provider.think, provider.max_tokens, provider.timeout, provider.temperature) == (
+            True, 8192, 180.0, 0.0,
+        )
+E       assert (True, 512, 30.0, 0.1) == (True, 8192, 180.0, 0.0)
+E         
+E         At index 1 diff: 512 != 8192
+E         Use -v to get more diff
+
+tests\test_ollama_generation_settings.py:23: AssertionError</failure></testcase><testcase classname="tests.test_ollama_generation_settings" name="test_invalid_managed_generation_settings_are_rejected[max_tokens-0]" time="0.016"><failure message="Failed: DID NOT RAISE &lt;class 'pydantic_core._pydantic_core.ValidationError'&gt;">field = 'max_tokens', value = 0
+
+    @pytest.mark.parametrize("field,value", [
+        ("max_tokens", 0), ("max_tokens", -1), ("max_tokens", True), ("max_tokens", 1.5),
+        ("timeout", 0), ("timeout", -1), ("timeout", float("inf")), ("timeout", True),
+        ("temperature", -1), ("temperature", float("nan")), ("temperature", True),
+    ])
+    def test_invalid_managed_generation_settings_are_rejected(field: str, value: object) -&gt; None:
+&gt;       with pytest.raises(ValidationError):
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       Failed: DID NOT RAISE &lt;class 'pydantic_core._pydantic_core.ValidationError'&gt;
+
+tests\test_ollama_generation_settings.py:38: Failed</failure></testcase><testcase classname="tests.test_ollama_generation_settings" name="test_invalid_managed_generation_settings_are_rejected[max_tokens--1]" time="0.002"><failure message="Failed: DID NOT RAISE &lt;class 'pydantic_core._pydantic_core.ValidationError'&gt;">field = 'max_tokens', value = -1
+
+    @pytest.mark.parametrize("field,value", [
+        ("max_tokens", 0), ("max_tokens", -1), ("max_tokens", True), ("max_tokens", 1.5),
+        ("timeout", 0), ("timeout", -1), ("timeout", float("inf")), ("timeout", True),
+        ("temperature", -1), ("temperature", float("nan")), ("temperature", True),
+    ])
+    def test_invalid_managed_generation_settings_are_rejected(field: str, value: object) -&gt; None:
+&gt;       with pytest.raises(ValidationError):
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       Failed: DID NOT RAISE &lt;class 'pydantic_core._pydantic_core.ValidationError'&gt;
+
+tests\test_ollama_generation_settings.py:38: Failed</failure></testcase><testcase classname="tests.test_ollama_generation_settings" name="test_invalid_managed_generation_settings_are_rejected[max_tokens-True]" time="0.002"><failure message="Failed: DID NOT RAISE &lt;class 'pydantic_core._pydantic_core.ValidationError'&gt;">field = 'max_tokens', value = True
+
+    @pytest.mark.parametrize("field,value", [
+        ("max_tokens", 0), ("max_tokens", -1), ("max_tokens", True), ("max_tokens", 1.5),
+        ("timeout", 0), ("timeout", -1), ("timeout", float("inf")), ("timeout", True),
+        ("temperature", -1), ("temperature", float("nan")), ("temperature", True),
+    ])
+    def test_invalid_managed_generation_settings_are_rejected(field: str, value: object) -&gt; None:
+&gt;       with pytest.raises(ValidationError):
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       Failed: DID NOT RAISE &lt;class 'pydantic_core._pydantic_core.ValidationError'&gt;
+
+tests\test_ollama_generation_settings.py:38: Failed</failure></testcase><testcase classname="tests.test_ollama_generation_settings" name="test_invalid_managed_generation_settings_are_rejected[max_tokens-1.5]" time="0.002"><failure message="Failed: DID NOT RAISE &lt;class 'pydantic_core._pydantic_core.ValidationError'&gt;">field = 'max_tokens', value = 1.5
+
+    @pytest.mark.parametrize("field,value", [
+        ("max_tokens", 0), ("max_tokens", -1), ("max_tokens", True), ("max_tokens", 1.5),
+        ("timeout", 0), ("timeout", -1), ("timeout", float("inf")), ("timeout", True),
+        ("temperature", -1), ("temperature", float("nan")), ("temperature", True),
+    ])
+    def test_invalid_managed_generation_settings_are_rejected(field: str, value: object) -&gt; None:
+&gt;       with pytest.raises(ValidationError):
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       Failed: DID NOT RAISE &lt;class 'pydantic_core._pydantic_core.ValidationError'&gt;
+
+tests\test_ollama_generation_settings.py:38: Failed</failure></testcase><testcase classname="tests.test_ollama_generation_settings" name="test_invalid_managed_generation_settings_are_rejected[timeout-0]" time="0.003"><failure message="Failed: DID NOT RAISE &lt;class 'pydantic_core._pydantic_core.ValidationError'&gt;">field = 'timeout', value = 0
+
+    @pytest.mark.parametrize("field,value", [
+        ("max_tokens", 0), ("max_tokens", -1), ("max_tokens", True), ("max_tokens", 1.5),
+        ("timeout", 0), ("timeout", -1), ("timeout", float("inf")), ("timeout", True),
+        ("temperature", -1), ("temperature", float("nan")), ("temperature", True),
+    ])
+    def test_invalid_managed_generation_settings_are_rejected(field: str, value: object) -&gt; None:
+&gt;       with pytest.raises(ValidationError):
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       Failed: DID NOT RAISE &lt;class 'pydantic_core._pydantic_core.ValidationError'&gt;
+
+tests\test_ollama_generation_settings.py:38: Failed</failure></testcase><testcase classname="tests.test_ollama_generation_settings" name="test_invalid_managed_generation_settings_are_rejected[timeout--1]" time="0.002"><failure message="Failed: DID NOT RAISE &lt;class 'pydantic_core._pydantic_core.ValidationError'&gt;">field = 'timeout', value = -1
+
+    @pytest.mark.parametrize("field,value", [
+        ("max_tokens", 0), ("max_tokens", -1), ("max_tokens", True), ("max_tokens", 1.5),
+        ("timeout", 0), ("timeout", -1), ("timeout", float("inf")), ("timeout", True),
+        ("temperature", -1), ("temperature", float("nan")), ("temperature", True),
+    ])
+    def test_invalid_managed_generation_settings_are_rejected(field: str, value: object) -&gt; None:
+&gt;       with pytest.raises(ValidationError):
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       Failed: DID NOT RAISE &lt;class 'pydantic_core._pydantic_core.ValidationError'&gt;
+
+tests\test_ollama_generation_settings.py:38: Failed</failure></testcase><testcase classname="tests.test_ollama_generation_settings" name="test_invalid_managed_generation_settings_are_rejected[timeout-inf]" time="0.002"><failure message="Failed: DID NOT RAISE &lt;class 'pydantic_core._pydantic_core.ValidationError'&gt;">field = 'timeout', value = inf
+
+    @pytest.mark.parametrize("field,value", [
+        ("max_tokens", 0), ("max_tokens", -1), ("max_tokens", True), ("max_tokens", 1.5),
+        ("timeout", 0), ("timeout", -1), ("timeout", float("inf")), ("timeout", True),
+        ("temperature", -1), ("temperature", float("nan")), ("temperature", True),
+    ])
+    def test_invalid_managed_generation_settings_are_rejected(field: str, value: object) -&gt; None:
+&gt;       with pytest.raises(ValidationError):
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       Failed: DID NOT RAISE &lt;class 'pydantic_core._pydantic_core.ValidationError'&gt;
+
+tests\test_ollama_generation_settings.py:38: Failed</failure></testcase><testcase classname="tests.test_ollama_generation_settings" name="test_invalid_managed_generation_settings_are_rejected[timeout-True]" time="0.002"><failure message="Failed: DID NOT RAISE &lt;class 'pydantic_core._pydantic_core.ValidationError'&gt;">field = 'timeout', value = True
+
+    @pytest.mark.parametrize("field,value", [
+        ("max_tokens", 0), ("max_tokens", -1), ("max_tokens", True), ("max_tokens", 1.5),
+        ("timeout", 0), ("timeout", -1), ("timeout", float("inf")), ("timeout", True),
+        ("temperature", -1), ("temperature", float("nan")), ("temperature", True),
+    ])
+    def test_invalid_managed_generation_settings_are_rejected(field: str, value: object) -&gt; None:
+&gt;       with pytest.raises(ValidationError):
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       Failed: DID NOT RAISE &lt;class 'pydantic_core._pydantic_core.ValidationError'&gt;
+
+tests\test_ollama_generation_settings.py:38: Failed</failure></testcase><testcase classname="tests.test_ollama_generation_settings" name="test_invalid_managed_generation_settings_are_rejected[temperature--1]" time="0.002"><failure message="Failed: DID NOT RAISE &lt;class 'pydantic_core._pydantic_core.ValidationError'&gt;">field = 'temperature', value = -1
+
+    @pytest.mark.parametrize("field,value", [
+        ("max_tokens", 0), ("max_tokens", -1), ("max_tokens", True), ("max_tokens", 1.5),
+        ("timeout", 0), ("timeout", -1), ("timeout", float("inf")), ("timeout", True),
+        ("temperature", -1), ("temperature", float("nan")), ("temperature", True),
+    ])
+    def test_invalid_managed_generation_settings_are_rejected(field: str, value: object) -&gt; None:
+&gt;       with pytest.raises(ValidationError):
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       Failed: DID NOT RAISE &lt;class 'pydantic_core._pydantic_core.ValidationError'&gt;
+
+tests\test_ollama_generation_settings.py:38: Failed</failure></testcase><testcase classname="tests.test_ollama_generation_settings" name="test_invalid_managed_generation_settings_are_rejected[temperature-nan]" time="0.002"><failure message="Failed: DID NOT RAISE &lt;class 'pydantic_core._pydantic_core.ValidationError'&gt;">field = 'temperature', value = nan
+
+    @pytest.mark.parametrize("field,value", [
+        ("max_tokens", 0), ("max_tokens", -1), ("max_tokens", True), ("max_tokens", 1.5),
+        ("timeout", 0), ("timeout", -1), ("timeout", float("inf")), ("timeout", True),
+        ("temperature", -1), ("temperature", float("nan")), ("temperature", True),
+    ])
+    def test_invalid_managed_generation_settings_are_rejected(field: str, value: object) -&gt; None:
+&gt;       with pytest.raises(ValidationError):
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       Failed: DID NOT RAISE &lt;class 'pydantic_core._pydantic_core.ValidationError'&gt;
+
+tests\test_ollama_generation_settings.py:38: Failed</failure></testcase><testcase classname="tests.test_ollama_generation_settings" name="test_invalid_managed_generation_settings_are_rejected[temperature-True]" time="0.002"><failure message="Failed: DID NOT RAISE &lt;class 'pydantic_core._pydantic_core.ValidationError'&gt;">field = 'temperature', value = True
+
+    @pytest.mark.parametrize("field,value", [
+        ("max_tokens", 0), ("max_tokens", -1), ("max_tokens", True), ("max_tokens", 1.5),
+        ("timeout", 0), ("timeout", -1), ("timeout", float("inf")), ("timeout", True),
+        ("temperature", -1), ("temperature", float("nan")), ("temperature", True),
+    ])
+    def test_invalid_managed_generation_settings_are_rejected(field: str, value: object) -&gt; None:
+&gt;       with pytest.raises(ValidationError):
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       Failed: DID NOT RAISE &lt;class 'pydantic_core._pydantic_core.ValidationError'&gt;
+
+tests\test_ollama_generation_settings.py:38: Failed</failure></testcase><testcase classname="tests.test_ollama_generation_settings" name="test_managed_generation_defaults_match_existing_provider_defaults" time="0.002" /></testsuite></testsuites>

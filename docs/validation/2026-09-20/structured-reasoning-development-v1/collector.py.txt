@@ -1,0 +1,42 @@
+from pathlib import Path
+import hashlib
+import json
+import shutil
+import subprocess
+
+repo = Path(__file__).resolve().parents[1]
+temp = Path('C:/Users/Ant/AppData/Local/Temp')
+checks = temp / 'mnemos-package-checks-structured-reasoning-v1'
+out = repo / 'docs/validation/2026-09-20/structured-reasoning-development-v1'
+verification = json.loads((checks / 'verification.json').read_bytes())
+assert verification['status'] == 'passed' and all(c['exit_code'] == 0 for c in verification['checks'])
+assert verification['source_commit'].startswith('e28a846')
+sha = lambda p: hashlib.sha256(p.read_bytes()).hexdigest()
+for artifact in verification['artifacts']:
+    path = Path(artifact['file'])
+    assert path.stat().st_size == artifact['bytes'] and sha(path) == artifact['sha256']
+out.mkdir(exist_ok=False)
+(out / '.gitattributes').write_bytes(b'** -text -whitespace\n')
+for label, source in (
+    ('source-checks-e28a846', checks),
+    ('route-regressions', temp / 'mnemos-ollama-structured-reasoning-tests-v1'),
+    ('settings-regressions', temp / 'mnemos-ollama-generation-settings-tests-v1'),
+):
+    dest = out / label
+    dest.mkdir()
+    for path in source.iterdir():
+        if path.is_file() and path.suffix in {'.json', '.xml', '.log'}:
+            shutil.copyfile(path, dest / path.name)
+for commit, names in {
+    'e28a846': ['mnemos/utils/llm.py', 'tests/test_ollama_structured_reasoning.py'],
+    '05c71d2': ['mnemos/settings.py', 'mnemos/runtime.py', 'tests/test_ollama_generation_settings.py'],
+}.items():
+    for name in names:
+        dest = out / 'source' / commit / (name + '.txt')
+        dest.parent.mkdir(parents=True, exist_ok=True)
+        dest.write_bytes(subprocess.check_output(['git', 'show', commit + ':' + name], cwd=repo))
+shutil.copyfile(Path(__file__), out / 'collector.py.txt')
+shutil.copyfile(repo / '.venv/final_checkpoint_checks_v3.py', out / 'source-check-helper.py.txt')
+files = {p.relative_to(out).as_posix(): {'bytes': p.stat().st_size, 'sha256': sha(p)} for p in sorted(out.rglob('*')) if p.is_file()}
+(out / 'evidence-index.json').write_text(json.dumps({'files': files}, indent=2) + '\n', encoding='utf-8')
+print(json.dumps({'archive': str(out), 'files': len(files), 'source_commit': verification['source_commit']}))
