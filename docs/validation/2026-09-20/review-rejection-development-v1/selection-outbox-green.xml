@@ -1,0 +1,159 @@
+<?xml version="1.0" encoding="utf-8"?><testsuites name="pytest tests"><testsuite name="pytest" errors="0" failures="2" skipped="0" tests="24" time="24.742" timestamp="2026-09-20T06:27:28.279138-04:00" hostname="Aurora"><testcase classname="tests.test_related_forget_rejection_outbox" name="test_invalid_selection_does_not_replay_valid_outbox[client]" time="1.629"><failure message="AssertionError: assert None is not None&#10; +  where None = get_episodic_event('valid-capture-awaiting-replay')&#10; +    where get_episodic_event = &lt;mnemos.utils.storage.SQLiteStore object at 0x000002A22C2C27B0&gt;.get_episodic_event&#10; +      where &lt;mnemos.utils.storage.SQLiteStore object at 0x000002A22C2C27B0&gt; = &lt;mnemos.engine.MnemosEngine object at 0x000002A22C36C1A0&gt;.store&#10; +        where &lt;mnemos.engine.MnemosEngine object at 0x000002A22C36C1A0&gt; = &lt;mnemos.memory_service.LocalMemoryService object at 0x000002A22C36CC20&gt;.engine">tmp_path = WindowsPath('D:/WindowsTemp/pytest-of-Ant/pytest-4245/test_invalid_selection_does_no0')
+monkeypatch = &lt;_pytest.monkeypatch.MonkeyPatch object at 0x000002A22B2A3100&gt;
+entrypoint = 'client'
+
+    @pytest.mark.asyncio
+    @pytest.mark.parametrize("entrypoint", ["client", "hermes"])
+    async def test_invalid_selection_does_not_replay_valid_outbox(
+        tmp_path: Path, monkeypatch: pytest.MonkeyPatch, entrypoint: str
+    ) -&gt; None:
+        service, domain, context = _runtime(tmp_path)
+        client = MnemosClient(descriptor_path=service.descriptor_path, auto_start=False)
+        try:
+            _, target, copy = await _seed_overlap(domain, context)
+            preview = await client.request(
+                "forget_preview",
+                {
+                    "context": context.model_dump(mode="json"),
+                    "fact_id": target.id,
+                    "expected_version": target.version,
+                },
+                queue_on_failure=False,
+            )
+            queued: dict[str, Any] = {
+                "event_id": "valid-capture-awaiting-replay",
+                "context": context.model_dump(mode="json"),
+                "occurred_at": datetime.now(timezone.utc).isoformat(),
+                "role": "user",
+                "content": "The local test archive uses cobalt boxes.",
+                "source_kind": "hermes_memory_provider",
+            }
+            client.outbox.append(queued)
+            client._outbox_drained = False
+            pending_before = client.outbox.pending()
+            before = _snapshot(domain)
+            operations: list[str] = []
+            original = domain.dispatch
+    
+            async def dispatch(operation: str, payload: dict[str, Any]) -&gt; dict[str, Any]:
+                operations.append(operation)
+                result: dict[str, Any] = await original(operation, payload)
+                return result
+    
+            monkeypatch.setattr(domain, "dispatch", dispatch)
+            selection: dict[str, Any] = {
+                "fact_id": target.id,
+                "expected_version": target.version,
+                "preview_digest": preview["preview_digest"],
+                "preview_limit": preview["limit"],
+                "selected_fact_ids": [copy.id],
+                "selected_source_event_ids": ["not-in-preview"],
+            }
+            if entrypoint == "hermes":
+                result = json.loads(
+                    await dispatch_tool(client, context, "mnemos_forget_related", selection)
+                )
+            else:
+                result = await client.request(
+                    "forget_related",
+                    {"context": context.model_dump(mode="json"), **selection},
+                    queue_on_failure=False,
+                )
+            assert result["status"] == "rejected"
+            assert result["committed"] is False
+            assert result["error"] == "related_forget_selection_invalid"
+            assert operations == ["forget_related"]
+            assert _snapshot(domain) == before
+            assert client.outbox.pending() == pending_before
+    
+            # Prove the pending record can commit when replay is explicitly requested.
+            replay = await client.replay_outbox()
+            assert replay["pending"] == 0
+            assert operations == ["forget_related", "capture"]
+&gt;           assert domain.engine.store.get_episodic_event(queued["event_id"]) is not None
+E           AssertionError: assert None is not None
+E            +  where None = get_episodic_event('valid-capture-awaiting-replay')
+E            +    where get_episodic_event = &lt;mnemos.utils.storage.SQLiteStore object at 0x000002A22C2C27B0&gt;.get_episodic_event
+E            +      where &lt;mnemos.utils.storage.SQLiteStore object at 0x000002A22C2C27B0&gt; = &lt;mnemos.engine.MnemosEngine object at 0x000002A22C36C1A0&gt;.store
+E            +        where &lt;mnemos.engine.MnemosEngine object at 0x000002A22C36C1A0&gt; = &lt;mnemos.memory_service.LocalMemoryService object at 0x000002A22C36CC20&gt;.engine
+
+tests\test_related_forget_rejection_outbox.py:85: AssertionError</failure></testcase><testcase classname="tests.test_related_forget_rejection_outbox" name="test_invalid_selection_does_not_replay_valid_outbox[hermes]" time="1.286"><failure message="AssertionError: assert None is not None&#10; +  where None = get_episodic_event('valid-capture-awaiting-replay')&#10; +    where get_episodic_event = &lt;mnemos.utils.storage.SQLiteStore object at 0x000002A22C7FC410&gt;.get_episodic_event&#10; +      where &lt;mnemos.utils.storage.SQLiteStore object at 0x000002A22C7FC410&gt; = &lt;mnemos.engine.MnemosEngine object at 0x000002A22C7FD810&gt;.store&#10; +        where &lt;mnemos.engine.MnemosEngine object at 0x000002A22C7FD810&gt; = &lt;mnemos.memory_service.LocalMemoryService object at 0x000002A22C7FE0D0&gt;.engine">tmp_path = WindowsPath('D:/WindowsTemp/pytest-of-Ant/pytest-4245/test_invalid_selection_does_no1')
+monkeypatch = &lt;_pytest.monkeypatch.MonkeyPatch object at 0x000002A22C33C4D0&gt;
+entrypoint = 'hermes'
+
+    @pytest.mark.asyncio
+    @pytest.mark.parametrize("entrypoint", ["client", "hermes"])
+    async def test_invalid_selection_does_not_replay_valid_outbox(
+        tmp_path: Path, monkeypatch: pytest.MonkeyPatch, entrypoint: str
+    ) -&gt; None:
+        service, domain, context = _runtime(tmp_path)
+        client = MnemosClient(descriptor_path=service.descriptor_path, auto_start=False)
+        try:
+            _, target, copy = await _seed_overlap(domain, context)
+            preview = await client.request(
+                "forget_preview",
+                {
+                    "context": context.model_dump(mode="json"),
+                    "fact_id": target.id,
+                    "expected_version": target.version,
+                },
+                queue_on_failure=False,
+            )
+            queued: dict[str, Any] = {
+                "event_id": "valid-capture-awaiting-replay",
+                "context": context.model_dump(mode="json"),
+                "occurred_at": datetime.now(timezone.utc).isoformat(),
+                "role": "user",
+                "content": "The local test archive uses cobalt boxes.",
+                "source_kind": "hermes_memory_provider",
+            }
+            client.outbox.append(queued)
+            client._outbox_drained = False
+            pending_before = client.outbox.pending()
+            before = _snapshot(domain)
+            operations: list[str] = []
+            original = domain.dispatch
+    
+            async def dispatch(operation: str, payload: dict[str, Any]) -&gt; dict[str, Any]:
+                operations.append(operation)
+                result: dict[str, Any] = await original(operation, payload)
+                return result
+    
+            monkeypatch.setattr(domain, "dispatch", dispatch)
+            selection: dict[str, Any] = {
+                "fact_id": target.id,
+                "expected_version": target.version,
+                "preview_digest": preview["preview_digest"],
+                "preview_limit": preview["limit"],
+                "selected_fact_ids": [copy.id],
+                "selected_source_event_ids": ["not-in-preview"],
+            }
+            if entrypoint == "hermes":
+                result = json.loads(
+                    await dispatch_tool(client, context, "mnemos_forget_related", selection)
+                )
+            else:
+                result = await client.request(
+                    "forget_related",
+                    {"context": context.model_dump(mode="json"), **selection},
+                    queue_on_failure=False,
+                )
+            assert result["status"] == "rejected"
+            assert result["committed"] is False
+            assert result["error"] == "related_forget_selection_invalid"
+            assert operations == ["forget_related"]
+            assert _snapshot(domain) == before
+            assert client.outbox.pending() == pending_before
+    
+            # Prove the pending record can commit when replay is explicitly requested.
+            replay = await client.replay_outbox()
+            assert replay["pending"] == 0
+            assert operations == ["forget_related", "capture"]
+&gt;           assert domain.engine.store.get_episodic_event(queued["event_id"]) is not None
+E           AssertionError: assert None is not None
+E            +  where None = get_episodic_event('valid-capture-awaiting-replay')
+E            +    where get_episodic_event = &lt;mnemos.utils.storage.SQLiteStore object at 0x000002A22C7FC410&gt;.get_episodic_event
+E            +      where &lt;mnemos.utils.storage.SQLiteStore object at 0x000002A22C7FC410&gt; = &lt;mnemos.engine.MnemosEngine object at 0x000002A22C7FD810&gt;.store
+E            +        where &lt;mnemos.engine.MnemosEngine object at 0x000002A22C7FD810&gt; = &lt;mnemos.memory_service.LocalMemoryService object at 0x000002A22C7FE0D0&gt;.engine
+
+tests\test_related_forget_rejection_outbox.py:85: AssertionError</failure></testcase><testcase classname="tests.test_related_forget_service_errors" name="test_missing_source_selection_is_known_noncommitted_409" time="1.595" /><testcase classname="tests.test_related_forget_service_errors" name="test_explicit_source_selection_still_commits" time="1.307" /><testcase classname="tests.test_related_forget_service_errors" name="test_stale_preview_limit_is_known_noncommitted_409" time="1.332" /><testcase classname="tests.test_related_forget_service_errors" name="test_changed_target_version_is_known_stale_preview_409" time="1.316" /><testcase classname="tests.test_related_forget_service_errors" name="test_out_of_preview_selection_rejection_does_not_leak_fact_identity" time="1.819" /><testcase classname="tests.test_related_forget_service_errors" name="test_out_of_preview_source_rejection_preserves_snapshot_and_hermes_path" time="1.395" /><testcase classname="tests.test_related_forget_service_errors" name="test_unexpected_value_error_remains_degraded_500" time="0.527" /><testcase classname="tests.test_related_forget_service_errors" name="test_unrecognized_409_is_not_surfaced[forget_related-body0]" time="0.006" /><testcase classname="tests.test_related_forget_service_errors" name="test_unrecognized_409_is_not_surfaced[forget_related-body1]" time="0.004" /><testcase classname="tests.test_related_forget_service_errors" name="test_unrecognized_409_is_not_surfaced[forget_related-body2]" time="0.004" /><testcase classname="tests.test_related_forget_service_errors" name="test_unrecognized_409_is_not_surfaced[forget_related-body3]" time="0.007" /><testcase classname="tests.test_related_forget_service_errors" name="test_unrecognized_409_is_not_surfaced[forget_related-body4]" time="0.006" /><testcase classname="tests.test_related_forget_service_errors" name="test_unrecognized_409_is_not_surfaced[inspect-body5]" time="0.005" /><testcase classname="tests.test_related_forget_service_errors" name="test_unrecognized_409_is_not_surfaced[inspect-body6]" time="0.004" /><testcase classname="tests.test_client_outbox_selection" name="test_supplied_outbox_keeps_capture_available_at_selected_path_after_restart[False]" time="0.616" /><testcase classname="tests.test_client_outbox_selection" name="test_supplied_outbox_keeps_capture_available_at_selected_path_after_restart[True]" time="0.763" /><testcase classname="tests.test_client_outbox_selection" name="test_empty_supplied_outbox_keeps_its_stricter_write_policy" time="0.004" /><testcase classname="tests.test_service_lost_ack" name="test_committed_capture_lost_ack_replays_once_after_restart[extract-one_lost_ack]" time="1.815" /><testcase classname="tests.test_service_lost_ack" name="test_committed_capture_lost_ack_replays_once_after_restart[extract-two_lost_acks]" time="2.260" /><testcase classname="tests.test_service_lost_ack" name="test_committed_capture_lost_ack_replays_once_after_restart[capture_only-one_lost_ack]" time="1.957" /><testcase classname="tests.test_service_lost_ack" name="test_committed_capture_lost_ack_replays_once_after_restart[capture_only-two_lost_acks]" time="2.202" /><testcase classname="tests.test_service_lost_ack" name="test_processed_correction_lost_ack_retries_after_service_restart" time="1.944" /></testsuite></testsuites>

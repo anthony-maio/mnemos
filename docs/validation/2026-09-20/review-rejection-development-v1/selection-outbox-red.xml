@@ -1,0 +1,139 @@
+<?xml version="1.0" encoding="utf-8"?><testsuites name="pytest tests"><testsuite name="pytest" errors="0" failures="2" skipped="0" tests="2" time="5.591" timestamp="2026-09-20T06:24:35.508708-04:00" hostname="Aurora"><testcase classname="tests.test_related_forget_rejection_outbox" name="test_invalid_selection_does_not_replay_valid_outbox[client]" time="3.072"><failure message="AssertionError: assert ['forget_related', 'capture'] == ['forget_related']&#10;  &#10;  Left contains one more item: 'capture'&#10;  Use -v to get more diff">tmp_path = WindowsPath('D:/WindowsTemp/pytest-of-Ant/pytest-4244/test_invalid_selection_does_no0')
+monkeypatch = &lt;_pytest.monkeypatch.MonkeyPatch object at 0x00000275FF3DA520&gt;
+entrypoint = 'client'
+
+    @pytest.mark.asyncio
+    @pytest.mark.parametrize("entrypoint", ["client", "hermes"])
+    async def test_invalid_selection_does_not_replay_valid_outbox(
+        tmp_path: Path, monkeypatch: pytest.MonkeyPatch, entrypoint: str
+    ) -&gt; None:
+        service, domain, context = _runtime(tmp_path)
+        client = MnemosClient(descriptor_path=service.descriptor_path, auto_start=False)
+        try:
+            _, target, copy = await _seed_overlap(domain, context)
+            preview = await client.request(
+                "forget_preview",
+                {
+                    "context": context.model_dump(mode="json"),
+                    "fact_id": target.id,
+                    "expected_version": target.version,
+                },
+                queue_on_failure=False,
+            )
+            queued = {
+                "event_id": "valid-capture-awaiting-replay",
+                "context": context.model_dump(mode="json"),
+                "occurred_at": datetime.now(timezone.utc).isoformat(),
+                "role": "user",
+                "content": "The local test archive uses cobalt boxes.",
+                "source_kind": "hermes_memory_provider",
+            }
+            client.outbox.append(queued)
+            client._outbox_drained = False
+            pending_before = client.outbox.pending()
+            before = _snapshot(domain)
+            operations: list[str] = []
+            original = domain.dispatch
+    
+            async def dispatch(operation, payload):
+                operations.append(operation)
+                return await original(operation, payload)
+    
+            monkeypatch.setattr(domain, "dispatch", dispatch)
+            selection = {
+                "fact_id": target.id,
+                "expected_version": target.version,
+                "preview_digest": preview["preview_digest"],
+                "preview_limit": preview["limit"],
+                "selected_fact_ids": [copy.id],
+                "selected_source_event_ids": ["not-in-preview"],
+            }
+            if entrypoint == "hermes":
+                result = json.loads(
+                    await dispatch_tool(client, context, "mnemos_forget_related", selection)
+                )
+            else:
+                result = await client.request(
+                    "forget_related",
+                    {"context": context.model_dump(mode="json"), **selection},
+                    queue_on_failure=False,
+                )
+            assert result["status"] == "rejected"
+            assert result["committed"] is False
+            assert result["error"] == "related_forget_selection_invalid"
+&gt;           assert operations == ["forget_related"]
+E           AssertionError: assert ['forget_related', 'capture'] == ['forget_related']
+E             
+E             Left contains one more item: 'capture'
+E             Use -v to get more diff
+
+tests\test_related_forget_rejection_outbox.py:74: AssertionError</failure></testcase><testcase classname="tests.test_related_forget_rejection_outbox" name="test_invalid_selection_does_not_replay_valid_outbox[hermes]" time="1.777"><failure message="AssertionError: assert ['forget_related', 'capture'] == ['forget_related']&#10;  &#10;  Left contains one more item: 'capture'&#10;  Use -v to get more diff">tmp_path = WindowsPath('D:/WindowsTemp/pytest-of-Ant/pytest-4244/test_invalid_selection_does_no1')
+monkeypatch = &lt;_pytest.monkeypatch.MonkeyPatch object at 0x00000275FF5C2C30&gt;
+entrypoint = 'hermes'
+
+    @pytest.mark.asyncio
+    @pytest.mark.parametrize("entrypoint", ["client", "hermes"])
+    async def test_invalid_selection_does_not_replay_valid_outbox(
+        tmp_path: Path, monkeypatch: pytest.MonkeyPatch, entrypoint: str
+    ) -&gt; None:
+        service, domain, context = _runtime(tmp_path)
+        client = MnemosClient(descriptor_path=service.descriptor_path, auto_start=False)
+        try:
+            _, target, copy = await _seed_overlap(domain, context)
+            preview = await client.request(
+                "forget_preview",
+                {
+                    "context": context.model_dump(mode="json"),
+                    "fact_id": target.id,
+                    "expected_version": target.version,
+                },
+                queue_on_failure=False,
+            )
+            queued = {
+                "event_id": "valid-capture-awaiting-replay",
+                "context": context.model_dump(mode="json"),
+                "occurred_at": datetime.now(timezone.utc).isoformat(),
+                "role": "user",
+                "content": "The local test archive uses cobalt boxes.",
+                "source_kind": "hermes_memory_provider",
+            }
+            client.outbox.append(queued)
+            client._outbox_drained = False
+            pending_before = client.outbox.pending()
+            before = _snapshot(domain)
+            operations: list[str] = []
+            original = domain.dispatch
+    
+            async def dispatch(operation, payload):
+                operations.append(operation)
+                return await original(operation, payload)
+    
+            monkeypatch.setattr(domain, "dispatch", dispatch)
+            selection = {
+                "fact_id": target.id,
+                "expected_version": target.version,
+                "preview_digest": preview["preview_digest"],
+                "preview_limit": preview["limit"],
+                "selected_fact_ids": [copy.id],
+                "selected_source_event_ids": ["not-in-preview"],
+            }
+            if entrypoint == "hermes":
+                result = json.loads(
+                    await dispatch_tool(client, context, "mnemos_forget_related", selection)
+                )
+            else:
+                result = await client.request(
+                    "forget_related",
+                    {"context": context.model_dump(mode="json"), **selection},
+                    queue_on_failure=False,
+                )
+            assert result["status"] == "rejected"
+            assert result["committed"] is False
+            assert result["error"] == "related_forget_selection_invalid"
+&gt;           assert operations == ["forget_related"]
+E           AssertionError: assert ['forget_related', 'capture'] == ['forget_related']
+E             
+E             Left contains one more item: 'capture'
+E             Use -v to get more diff
+
+tests\test_related_forget_rejection_outbox.py:74: AssertionError</failure></testcase></testsuite></testsuites>

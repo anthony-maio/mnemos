@@ -1,0 +1,29 @@
+from pathlib import Path
+import hashlib
+import json
+import shutil
+import xml.etree.ElementTree as ET
+
+repo = Path(__file__).resolve().parent.parent
+out = repo / 'docs/validation/2026-09-20/review-rejection-development-v1'
+if out.exists():
+    assert {p.name for p in out.iterdir()} == {'README.md'}
+else:
+    out.mkdir(parents=True)
+(out / '.gitattributes').write_bytes(b'** -text -whitespace\n')
+names = [
+    'selection-outbox-red.xml', 'selection-outbox-green.xml',
+    'selection-outbox-green-v2.xml', 'selection-outbox-green-v3.xml',
+    'related-review-rejections-red.xml', 'related-review-rejections-green.xml',
+    'related-review-rejections-final.xml',
+]
+for name in names:
+    shutil.copyfile(repo / '.venv' / name, out / name)
+suite = ET.parse(out / 'related-review-rejections-final.xml').getroot().find('testsuite')
+assert suite is not None and suite.attrib['tests'] == '32'
+assert suite.attrib['failures'] == suite.attrib['errors'] == suite.attrib['skipped'] == '0'
+shutil.copyfile(__file__, out / (Path(__file__).name + '.txt'))
+files = {p.relative_to(out).as_posix(): {'bytes': p.stat().st_size,
+         'sha256': hashlib.sha256(p.read_bytes()).hexdigest()} for p in out.iterdir() if p.is_file() and p.name != 'README.md'}
+(out / 'evidence-index.json').write_text(json.dumps({'files': files}, indent=2) + '\n')
+print(json.dumps({'files': len(files), 'transport_tests': 32}))

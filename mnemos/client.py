@@ -20,14 +20,7 @@ from uuid import uuid4
 import httpx
 
 from .memory_safety import MemoryWriteFirewall
-from .errors import (
-    RELATED_FORGET_PREVIEW_STALE,
-    RELATED_FORGET_PREVIEW_STALE_MESSAGE,
-    RELATED_FORGET_SELECTION_INVALID,
-    RELATED_FORGET_SELECTION_INVALID_MESSAGE,
-    RELATED_FORGET_SOURCE_SELECTION_MESSAGE,
-    RELATED_FORGET_SOURCE_SELECTION_REQUIRED,
-)
+from .errors import RELATED_FORGET_REJECTIONS
 from .service import (
     SCHEMA_VERSION,
     _protect_private_path,
@@ -415,6 +408,7 @@ class MnemosClient:
             except ValueError as exc:
                 raise ServiceClientError("Mnemos service returned HTTP 409") from exc
             expected_keys = {"schema_version", "status", "committed", "error", "message"}
+            code = result.get("error") if isinstance(result, dict) else None
             if (
                 isinstance(result, dict)
                 and set(result) == expected_keys
@@ -422,50 +416,11 @@ class MnemosClient:
                 and result.get("schema_version") == SCHEMA_VERSION
                 and result.get("status") == "rejected"
                 and result.get("committed") is False
-                and result.get("error") == RELATED_FORGET_SOURCE_SELECTION_REQUIRED
-                and result.get("message") == RELATED_FORGET_SOURCE_SELECTION_MESSAGE
+                and isinstance(code, str)
+                and code in RELATED_FORGET_REJECTIONS
+                and result.get("message") == RELATED_FORGET_REJECTIONS[code]
             ):
-                return {
-                    "schema_version": SCHEMA_VERSION,
-                    "status": "rejected",
-                    "committed": False,
-                    "error": RELATED_FORGET_SOURCE_SELECTION_REQUIRED,
-                    "message": RELATED_FORGET_SOURCE_SELECTION_MESSAGE,
-                }
-            if (
-                isinstance(result, dict)
-                and set(result) == expected_keys
-                and type(result.get("schema_version")) is int
-                and result.get("schema_version") == SCHEMA_VERSION
-                and result.get("status") == "rejected"
-                and result.get("committed") is False
-                and result.get("error") == RELATED_FORGET_PREVIEW_STALE
-                and result.get("message") == RELATED_FORGET_PREVIEW_STALE_MESSAGE
-            ):
-                return {
-                    "schema_version": SCHEMA_VERSION,
-                    "status": "rejected",
-                    "committed": False,
-                    "error": RELATED_FORGET_PREVIEW_STALE,
-                    "message": RELATED_FORGET_PREVIEW_STALE_MESSAGE,
-                }
-            if (
-                isinstance(result, dict)
-                and set(result) == expected_keys
-                and type(result.get("schema_version")) is int
-                and result.get("schema_version") == SCHEMA_VERSION
-                and result.get("status") == "rejected"
-                and result.get("committed") is False
-                and result.get("error") == RELATED_FORGET_SELECTION_INVALID
-                and result.get("message") == RELATED_FORGET_SELECTION_INVALID_MESSAGE
-            ):
-                return {
-                    "schema_version": SCHEMA_VERSION,
-                    "status": "rejected",
-                    "committed": False,
-                    "error": RELATED_FORGET_SELECTION_INVALID,
-                    "message": RELATED_FORGET_SELECTION_INVALID_MESSAGE,
-                }
+                return dict(result)
             raise ServiceClientError("Mnemos service returned HTTP 409")
         if response.status_code >= 400:
             raise ServiceClientError(f"Mnemos service returned HTTP {response.status_code}")
@@ -565,11 +520,13 @@ class MnemosClient:
                 "degraded": True,
                 "error": str(exc),
             }
+        rejection_code = result.get("error")
         if (
             operation.strip() == "forget_related"
             and result.get("status") == "rejected"
-            and result.get("error")
-            in {RELATED_FORGET_SOURCE_SELECTION_REQUIRED, RELATED_FORGET_PREVIEW_STALE}
+            and result.get("committed") is False
+            and isinstance(rejection_code, str)
+            and rejection_code in RELATED_FORGET_REJECTIONS
         ):
             return result
         if pending_event_id is not None:

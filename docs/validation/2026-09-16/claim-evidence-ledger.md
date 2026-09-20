@@ -1,12 +1,30 @@
 # Mnemos claim and evidence ledger
 
+The [native Hermes v12 cohort](../2026-09-20/hermes-native-cohort-v12/README.md)
+finished zero of three complete lifecycles on `5155ebd`. One attempt omitted
+corrected retrieval, one stopped after preview, and one received the repaired
+invalid-selection rejection before applying an incomplete preview twice and
+falling back to target-only deletion. All 44 model responses had verified
+65,536-token context and GPU residency. Cleanup and independent scope-control
+inspection passed. No attempt reached replay or final recall.
+
+The [review-rejection repair](../2026-09-20/review-rejection-development-v1/README.md)
+also corrects a missed client path: invalid selections could trigger replay of
+valid pending captures after rejection. The earlier test used an invalid
+capture and did not establish the claimed no-replay behavior. A shared
+rejection map now governs decoding and the early return; incomplete previews,
+duplicate selections, and dependency conflicts receive safe rejections.
+Deletion and scope requirements are unchanged. Full package validation of
+this successor remains pending; v12 tested the preceding installed package.
+
 The [selection-rejection package](../2026-09-20/selection-rejection-checkpoint-v1/README.md)
 at `5155ebd` passes 1,638 source tests with four skips, all six source/package
 checks, 655 isolated installed cases with four matching skips, and seven
 replay assertions. Out-of-preview selected fact/source IDs receive a fixed,
 noncommitting rejection while scope, digest, version, and deletion rules stay
-unchanged. No native model has run this package. The failed v11 cohort below
-belongs to preceding source `697b672`; its outcomes remain unchanged.
+unchanged. Native v12 has now tested this package with the failures above.
+The failed v11 cohort below belongs to preceding source `697b672`; its outcomes
+remain unchanged.
 
 The [native Hermes v11 cohort](../2026-09-20/hermes-native-cohort-v11/README.md)
 finished zero of three complete lifecycles on `697b672`. Every attempt passed

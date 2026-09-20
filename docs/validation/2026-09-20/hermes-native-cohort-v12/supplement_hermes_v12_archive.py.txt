@@ -1,0 +1,51 @@
+from pathlib import Path
+import hashlib
+import json
+import shutil
+
+repo = Path(__file__).resolve().parent.parent
+root = repo / 'docs/validation/2026-09-20/hermes-native-cohort-v12'
+for source, name in [
+    (repo / '.venv/hermes-v12-terminal-analysis.json', 'terminal-analysis.json'),
+    (repo / '.venv/inspect_hermes_v12_terminal.py', 'inspect_hermes_v12_terminal.py.txt'),
+    (Path(__file__), Path(__file__).name + '.txt'),
+]:
+    shutil.copyfile(source, root / name)
+trace_path = root / 'attempt-3/forget/trace.jsonl'
+trace = [json.loads(line) for line in trace_path.read_text().splitlines()]
+previews = [row['result'] for row in trace if row['operation'] == 'tool_result' and row['name'] == 'mnemos_forget_preview']
+calls = [row for row in trace if row['operation'] == 'tool_result' and row['name'] == 'mnemos_forget_related']
+assert len(previews) == 2 and len(calls) == 3
+assert previews[0]['complete'] and previews[0]['limit'] == 100
+assert not previews[1]['complete'] and previews[1]['limit'] == 2
+assert calls[0]['result']['error'] == 'related_forget_selection_invalid'
+assert calls[1]['args'] == calls[2]['args']
+assert calls[1]['args']['preview_digest'] == previews[1]['preview_digest']
+assert calls[1]['args']['preview_limit'] == previews[1]['limit']
+assert all('HTTP 500' in row['result']['error'] for row in calls[1:])
+target_sources = set(previews[0]['target']['source_event_ids'])
+eligible_sources = {row['source_event_id'] for row in previews[0]['source_events']}
+assert set(calls[0]['args']['selected_source_event_ids']) <= target_sources
+assert not set(calls[0]['args']['selected_source_event_ids']) & eligible_sources
+summary = {
+    'trace_sha256': hashlib.sha256(trace_path.read_bytes()).hexdigest(),
+    'initial_rejection': calls[0]['result'],
+    'initial_selection_used_target_sources_outside_selectable_source_list': True,
+    'second_preview_complete': previews[1]['complete'],
+    'second_preview_limit': previews[1]['limit'],
+    'repeat_calls_identical': True,
+    'second_digest_and_limit_match': True,
+    'server_traceback_available': False,
+    'explanation': 'The incomplete-preview storage rejection precedes source selection validation. This source-grounded diagnosis matches the recorded preview and request; no server traceback was captured.',
+}
+(root / 'selection-analysis.json').write_text(json.dumps(summary, indent=2) + '\n')
+index_path = root / 'evidence-index.json'
+index = json.loads(index_path.read_text())
+for path in root.iterdir():
+    if path.is_file() and path.name not in {'evidence-index.json', 'README.md'}:
+        index['files'][path.name] = {'bytes': path.stat().st_size, 'sha256': hashlib.sha256(path.read_bytes()).hexdigest()}
+for name, expected in index['files'].items():
+    data = (root / name).read_bytes()
+    assert len(data) == expected['bytes'] and hashlib.sha256(data).hexdigest() == expected['sha256']
+index_path.write_text(json.dumps(index, indent=2) + '\n')
+print(json.dumps({'files': len(index['files']), 'verified': True}))

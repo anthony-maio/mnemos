@@ -43,7 +43,9 @@ from ..types import (
 )
 from ..jobs import DurableJob, FactEvidence, FactRevision, JobStatus
 from ..errors import (
+    RelatedForgetPreviewIncomplete,
     RelatedForgetPreviewStale,
+    RelatedForgetSelectionConflict,
     RelatedForgetSelectionInvalid,
     RelatedForgetSourceSelectionRequired,
 )
@@ -3757,9 +3759,9 @@ class SQLiteStore(MemoryStore):
         limit: int = 100,
     ) -> dict[str, Any]:
         if len(set(selected_fact_ids)) != len(selected_fact_ids):
-            raise ValueError("Duplicate selected fact IDs")
+            raise RelatedForgetSelectionInvalid("Duplicate selected fact IDs")
         if len(set(selected_source_event_ids)) != len(selected_source_event_ids):
-            raise ValueError("Duplicate selected source event IDs")
+            raise RelatedForgetSelectionInvalid("Duplicate selected source event IDs")
         with self._lock:
             self._conn.execute("BEGIN IMMEDIATE")
             self._transaction_active = True
@@ -3777,7 +3779,7 @@ class SQLiteStore(MemoryStore):
                         raise RelatedForgetPreviewStale() from exc
                     raise
                 if not preview["complete"]:
-                    raise ValueError("Forget preview is incomplete")
+                    raise RelatedForgetPreviewIncomplete()
                 if preview["preview_digest"] != preview_digest:
                     raise RelatedForgetPreviewStale()
                 candidates = {item["fact_id"]: item for item in preview["candidates"]}
@@ -3793,7 +3795,9 @@ class SQLiteStore(MemoryStore):
                 for selected_id in selected_facts:
                     candidate = candidates[selected_id]
                     if candidate["blocked_source_event_ids"]:
-                        raise ValueError("Selected fact has an unavailable linked source")
+                        raise RelatedForgetSelectionConflict(
+                            "Selected fact has an unavailable linked source"
+                        )
                     for source_id in candidate["expired_source_event_ids"]:
                         source = sources.get(source_id)
                         if source is None:
@@ -3801,7 +3805,7 @@ class SQLiteStore(MemoryStore):
                         dependencies = set(source["derived_fact_ids"])
                         unselected_dependencies = dependencies - set(selected_facts) - {fact_id}
                         if unselected_dependencies:
-                            raise ValueError(
+                            raise RelatedForgetSelectionConflict(
                                 "Source selection would remove an unselected derived fact"
                             )
                     missing = set(candidate["required_source_event_ids"]) - selected_sources
@@ -3809,16 +3813,22 @@ class SQLiteStore(MemoryStore):
                         raise RelatedForgetSourceSelectionRequired()
                 for selected_id in selected_sources:
                     if not sources[selected_id].get("selection_allowed", False):
-                        raise ValueError("Selected source is not an eligible capture")
+                        raise RelatedForgetSelectionConflict(
+                            "Selected source is not an eligible capture"
+                        )
                     dependencies = set(sources[selected_id]["derived_fact_ids"])
                     unselected_dependencies = dependencies - set(selected_facts) - {fact_id}
                     if unselected_dependencies:
-                        raise ValueError("Source selection would remove an unselected derived fact")
+                        raise RelatedForgetSelectionConflict(
+                            "Source selection would remove an unselected derived fact"
+                        )
                 for source in preview["target"]["affected_sources"]:
                     dependencies = set(source["derived_fact_ids"])
                     unselected_dependencies = dependencies - set(selected_facts) - {fact_id}
                     if unselected_dependencies:
-                        raise ValueError("Target cleanup would remove an unselected derived fact")
+                        raise RelatedForgetSelectionConflict(
+                            "Target cleanup would remove an unselected derived fact"
+                        )
                     if source["status"] != "expired" and (
                         source["scope"] != "project"
                         or source["scope_id"] != project_id

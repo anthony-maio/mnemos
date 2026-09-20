@@ -1,0 +1,497 @@
+<?xml version="1.0" encoding="utf-8"?><testsuites name="pytest tests"><testsuite name="pytest" errors="0" failures="4" skipped="0" tests="6" time="9.024" timestamp="2026-09-20T06:31:28.216282-04:00" hostname="Aurora"><testcase classname="tests.test_related_forget_rejection_outbox" name="test_invalid_selection_does_not_replay_valid_outbox[client]" time="1.440" /><testcase classname="tests.test_related_forget_rejection_outbox" name="test_invalid_selection_does_not_replay_valid_outbox[hermes]" time="1.440" /><testcase classname="tests.test_related_forget_rejection_outbox" name="test_review_rejections_preserve_storage_and_valid_outbox[duplicate_fact-related_forget_selection_invalid]" time="1.356"><failure message="AssertionError: assert 'degraded' == 'rejected'&#10;  &#10;  - rejected&#10;  + degraded">tmp_path = WindowsPath('D:/WindowsTemp/pytest-of-Ant/pytest-4248/test_review_rejections_preserv0')
+kind = 'duplicate_fact', code = 'related_forget_selection_invalid'
+
+    @pytest.mark.asyncio
+    @pytest.mark.parametrize(
+        "kind,code",
+        [
+            ("duplicate_fact", "related_forget_selection_invalid"),
+            ("duplicate_source", "related_forget_selection_invalid"),
+            ("incomplete", "related_forget_preview_incomplete"),
+            ("dependency", "related_forget_selection_conflict"),
+        ],
+    )
+    async def test_review_rejections_preserve_storage_and_valid_outbox(
+        tmp_path: Path, kind: str, code: str
+    ) -&gt; None:
+        service, domain, context = _runtime(tmp_path)
+        client = MnemosClient(descriptor_path=service.descriptor_path, auto_start=False)
+        store = cast(SQLiteStore, domain.engine.store)
+        try:
+            assertion, target, copy = await _seed_overlap(domain, context)
+            if kind == "incomplete":
+                await domain.dispatch(
+                    "capture",
+                    {
+                        "event_id": "second-related-copy",
+                        "context": context.model_dump(mode="json"),
+                        "occurred_at": datetime.now(timezone.utc).isoformat(),
+                        "role": "user",
+                        "content": f"A second captured copy: {assertion}",
+                        "source_kind": "hermes_memory_provider",
+                    },
+                )
+                await domain.dispatch("maintenance", {})
+            if kind == "dependency":
+                first_preview = store.preview_related_forget(
+                    fact_id=target.id,
+                    expected_version=target.version,
+                    user_profile_id=context.user_profile_id,
+                    project_id=context.project_id,
+                )
+                source = next(
+                    item for item in first_preview["candidates"] if item["fact_id"] == copy.id
+                )["required_source_event_ids"][0]
+                independent = MemoryChunk(
+                    id="unselected-private-fact",
+                    content="Keep this independently reviewed note.",
+                    metadata={
+                        "user_profile_id": context.user_profile_id,
+                        "scope": "project",
+                        "scope_id": context.project_id,
+                        "source": "manual",
+                    },
+                )
+                store.store(independent)
+                store._conn.execute(
+                    "INSERT INTO fact_evidence "
+                    "(evidence_id,fact_id,source_event_id,excerpt,source_ref,created_at) "
+                    "VALUES (?,?,?,?,?,?)",
+                    (
+                        "private-source-link",
+                        independent.id,
+                        source,
+                        independent.content,
+                        "manual",
+                        datetime.now(timezone.utc).isoformat(),
+                    ),
+                )
+                store._conn.commit()
+            preview = await client.request(
+                "forget_preview",
+                {
+                    "context": context.model_dump(mode="json"),
+                    "fact_id": target.id,
+                    "expected_version": target.version,
+                    "limit": 1 if kind == "incomplete" else 100,
+                },
+                queue_on_failure=False,
+            )
+            assert preview["complete"] is (kind != "incomplete")
+            selected_facts = [copy.id]
+            selected_sources = [
+                source
+                for candidate in preview["candidates"]
+                if candidate["fact_id"] == copy.id
+                for source in candidate["required_source_event_ids"]
+            ]
+            if kind == "duplicate_fact":
+                selected_facts *= 2
+            if kind == "duplicate_source":
+                assert selected_sources
+                selected_sources *= 2
+            before = _snapshot(domain)
+            client.outbox.append(
+                {
+                    "event_id": "valid-pending-review-capture",
+                    "context": context.model_dump(mode="json"),
+                    "occurred_at": datetime.now(timezone.utc).isoformat(),
+                    "role": "user",
+                    "content": "Keep the review queue intact.",
+                    "source_kind": "hermes_memory_provider",
+                }
+            )
+            client._outbox_drained = False
+            pending = client.outbox.pending()
+            result = await client.request(
+                "forget_related",
+                {
+                    "context": context.model_dump(mode="json"),
+                    "fact_id": target.id,
+                    "expected_version": target.version,
+                    "preview_digest": preview["preview_digest"],
+                    "preview_limit": preview["limit"],
+                    "selected_fact_ids": selected_facts,
+                    "selected_source_event_ids": selected_sources,
+                },
+                queue_on_failure=False,
+            )
+&gt;           assert result["status"] == "rejected"
+E           AssertionError: assert 'degraded' == 'rejected'
+E             
+E             - rejected
+E             + degraded
+
+tests\test_related_forget_rejection_outbox.py:213: AssertionError</failure></testcase><testcase classname="tests.test_related_forget_rejection_outbox" name="test_review_rejections_preserve_storage_and_valid_outbox[duplicate_source-related_forget_selection_invalid]" time="1.345"><failure message="AssertionError: assert 'degraded' == 'rejected'&#10;  &#10;  - rejected&#10;  + degraded">tmp_path = WindowsPath('D:/WindowsTemp/pytest-of-Ant/pytest-4248/test_review_rejections_preserv1')
+kind = 'duplicate_source', code = 'related_forget_selection_invalid'
+
+    @pytest.mark.asyncio
+    @pytest.mark.parametrize(
+        "kind,code",
+        [
+            ("duplicate_fact", "related_forget_selection_invalid"),
+            ("duplicate_source", "related_forget_selection_invalid"),
+            ("incomplete", "related_forget_preview_incomplete"),
+            ("dependency", "related_forget_selection_conflict"),
+        ],
+    )
+    async def test_review_rejections_preserve_storage_and_valid_outbox(
+        tmp_path: Path, kind: str, code: str
+    ) -&gt; None:
+        service, domain, context = _runtime(tmp_path)
+        client = MnemosClient(descriptor_path=service.descriptor_path, auto_start=False)
+        store = cast(SQLiteStore, domain.engine.store)
+        try:
+            assertion, target, copy = await _seed_overlap(domain, context)
+            if kind == "incomplete":
+                await domain.dispatch(
+                    "capture",
+                    {
+                        "event_id": "second-related-copy",
+                        "context": context.model_dump(mode="json"),
+                        "occurred_at": datetime.now(timezone.utc).isoformat(),
+                        "role": "user",
+                        "content": f"A second captured copy: {assertion}",
+                        "source_kind": "hermes_memory_provider",
+                    },
+                )
+                await domain.dispatch("maintenance", {})
+            if kind == "dependency":
+                first_preview = store.preview_related_forget(
+                    fact_id=target.id,
+                    expected_version=target.version,
+                    user_profile_id=context.user_profile_id,
+                    project_id=context.project_id,
+                )
+                source = next(
+                    item for item in first_preview["candidates"] if item["fact_id"] == copy.id
+                )["required_source_event_ids"][0]
+                independent = MemoryChunk(
+                    id="unselected-private-fact",
+                    content="Keep this independently reviewed note.",
+                    metadata={
+                        "user_profile_id": context.user_profile_id,
+                        "scope": "project",
+                        "scope_id": context.project_id,
+                        "source": "manual",
+                    },
+                )
+                store.store(independent)
+                store._conn.execute(
+                    "INSERT INTO fact_evidence "
+                    "(evidence_id,fact_id,source_event_id,excerpt,source_ref,created_at) "
+                    "VALUES (?,?,?,?,?,?)",
+                    (
+                        "private-source-link",
+                        independent.id,
+                        source,
+                        independent.content,
+                        "manual",
+                        datetime.now(timezone.utc).isoformat(),
+                    ),
+                )
+                store._conn.commit()
+            preview = await client.request(
+                "forget_preview",
+                {
+                    "context": context.model_dump(mode="json"),
+                    "fact_id": target.id,
+                    "expected_version": target.version,
+                    "limit": 1 if kind == "incomplete" else 100,
+                },
+                queue_on_failure=False,
+            )
+            assert preview["complete"] is (kind != "incomplete")
+            selected_facts = [copy.id]
+            selected_sources = [
+                source
+                for candidate in preview["candidates"]
+                if candidate["fact_id"] == copy.id
+                for source in candidate["required_source_event_ids"]
+            ]
+            if kind == "duplicate_fact":
+                selected_facts *= 2
+            if kind == "duplicate_source":
+                assert selected_sources
+                selected_sources *= 2
+            before = _snapshot(domain)
+            client.outbox.append(
+                {
+                    "event_id": "valid-pending-review-capture",
+                    "context": context.model_dump(mode="json"),
+                    "occurred_at": datetime.now(timezone.utc).isoformat(),
+                    "role": "user",
+                    "content": "Keep the review queue intact.",
+                    "source_kind": "hermes_memory_provider",
+                }
+            )
+            client._outbox_drained = False
+            pending = client.outbox.pending()
+            result = await client.request(
+                "forget_related",
+                {
+                    "context": context.model_dump(mode="json"),
+                    "fact_id": target.id,
+                    "expected_version": target.version,
+                    "preview_digest": preview["preview_digest"],
+                    "preview_limit": preview["limit"],
+                    "selected_fact_ids": selected_facts,
+                    "selected_source_event_ids": selected_sources,
+                },
+                queue_on_failure=False,
+            )
+&gt;           assert result["status"] == "rejected"
+E           AssertionError: assert 'degraded' == 'rejected'
+E             
+E             - rejected
+E             + degraded
+
+tests\test_related_forget_rejection_outbox.py:213: AssertionError</failure></testcase><testcase classname="tests.test_related_forget_rejection_outbox" name="test_review_rejections_preserve_storage_and_valid_outbox[incomplete-related_forget_preview_incomplete]" time="1.493"><failure message="AssertionError: assert 'degraded' == 'rejected'&#10;  &#10;  - rejected&#10;  + degraded">tmp_path = WindowsPath('D:/WindowsTemp/pytest-of-Ant/pytest-4248/test_review_rejections_preserv2')
+kind = 'incomplete', code = 'related_forget_preview_incomplete'
+
+    @pytest.mark.asyncio
+    @pytest.mark.parametrize(
+        "kind,code",
+        [
+            ("duplicate_fact", "related_forget_selection_invalid"),
+            ("duplicate_source", "related_forget_selection_invalid"),
+            ("incomplete", "related_forget_preview_incomplete"),
+            ("dependency", "related_forget_selection_conflict"),
+        ],
+    )
+    async def test_review_rejections_preserve_storage_and_valid_outbox(
+        tmp_path: Path, kind: str, code: str
+    ) -&gt; None:
+        service, domain, context = _runtime(tmp_path)
+        client = MnemosClient(descriptor_path=service.descriptor_path, auto_start=False)
+        store = cast(SQLiteStore, domain.engine.store)
+        try:
+            assertion, target, copy = await _seed_overlap(domain, context)
+            if kind == "incomplete":
+                await domain.dispatch(
+                    "capture",
+                    {
+                        "event_id": "second-related-copy",
+                        "context": context.model_dump(mode="json"),
+                        "occurred_at": datetime.now(timezone.utc).isoformat(),
+                        "role": "user",
+                        "content": f"A second captured copy: {assertion}",
+                        "source_kind": "hermes_memory_provider",
+                    },
+                )
+                await domain.dispatch("maintenance", {})
+            if kind == "dependency":
+                first_preview = store.preview_related_forget(
+                    fact_id=target.id,
+                    expected_version=target.version,
+                    user_profile_id=context.user_profile_id,
+                    project_id=context.project_id,
+                )
+                source = next(
+                    item for item in first_preview["candidates"] if item["fact_id"] == copy.id
+                )["required_source_event_ids"][0]
+                independent = MemoryChunk(
+                    id="unselected-private-fact",
+                    content="Keep this independently reviewed note.",
+                    metadata={
+                        "user_profile_id": context.user_profile_id,
+                        "scope": "project",
+                        "scope_id": context.project_id,
+                        "source": "manual",
+                    },
+                )
+                store.store(independent)
+                store._conn.execute(
+                    "INSERT INTO fact_evidence "
+                    "(evidence_id,fact_id,source_event_id,excerpt,source_ref,created_at) "
+                    "VALUES (?,?,?,?,?,?)",
+                    (
+                        "private-source-link",
+                        independent.id,
+                        source,
+                        independent.content,
+                        "manual",
+                        datetime.now(timezone.utc).isoformat(),
+                    ),
+                )
+                store._conn.commit()
+            preview = await client.request(
+                "forget_preview",
+                {
+                    "context": context.model_dump(mode="json"),
+                    "fact_id": target.id,
+                    "expected_version": target.version,
+                    "limit": 1 if kind == "incomplete" else 100,
+                },
+                queue_on_failure=False,
+            )
+            assert preview["complete"] is (kind != "incomplete")
+            selected_facts = [copy.id]
+            selected_sources = [
+                source
+                for candidate in preview["candidates"]
+                if candidate["fact_id"] == copy.id
+                for source in candidate["required_source_event_ids"]
+            ]
+            if kind == "duplicate_fact":
+                selected_facts *= 2
+            if kind == "duplicate_source":
+                assert selected_sources
+                selected_sources *= 2
+            before = _snapshot(domain)
+            client.outbox.append(
+                {
+                    "event_id": "valid-pending-review-capture",
+                    "context": context.model_dump(mode="json"),
+                    "occurred_at": datetime.now(timezone.utc).isoformat(),
+                    "role": "user",
+                    "content": "Keep the review queue intact.",
+                    "source_kind": "hermes_memory_provider",
+                }
+            )
+            client._outbox_drained = False
+            pending = client.outbox.pending()
+            result = await client.request(
+                "forget_related",
+                {
+                    "context": context.model_dump(mode="json"),
+                    "fact_id": target.id,
+                    "expected_version": target.version,
+                    "preview_digest": preview["preview_digest"],
+                    "preview_limit": preview["limit"],
+                    "selected_fact_ids": selected_facts,
+                    "selected_source_event_ids": selected_sources,
+                },
+                queue_on_failure=False,
+            )
+&gt;           assert result["status"] == "rejected"
+E           AssertionError: assert 'degraded' == 'rejected'
+E             
+E             - rejected
+E             + degraded
+
+tests\test_related_forget_rejection_outbox.py:213: AssertionError</failure></testcase><testcase classname="tests.test_related_forget_rejection_outbox" name="test_review_rejections_preserve_storage_and_valid_outbox[dependency-related_forget_selection_conflict]" time="1.427"><failure message="AssertionError: assert 'degraded' == 'rejected'&#10;  &#10;  - rejected&#10;  + degraded">tmp_path = WindowsPath('D:/WindowsTemp/pytest-of-Ant/pytest-4248/test_review_rejections_preserv3')
+kind = 'dependency', code = 'related_forget_selection_conflict'
+
+    @pytest.mark.asyncio
+    @pytest.mark.parametrize(
+        "kind,code",
+        [
+            ("duplicate_fact", "related_forget_selection_invalid"),
+            ("duplicate_source", "related_forget_selection_invalid"),
+            ("incomplete", "related_forget_preview_incomplete"),
+            ("dependency", "related_forget_selection_conflict"),
+        ],
+    )
+    async def test_review_rejections_preserve_storage_and_valid_outbox(
+        tmp_path: Path, kind: str, code: str
+    ) -&gt; None:
+        service, domain, context = _runtime(tmp_path)
+        client = MnemosClient(descriptor_path=service.descriptor_path, auto_start=False)
+        store = cast(SQLiteStore, domain.engine.store)
+        try:
+            assertion, target, copy = await _seed_overlap(domain, context)
+            if kind == "incomplete":
+                await domain.dispatch(
+                    "capture",
+                    {
+                        "event_id": "second-related-copy",
+                        "context": context.model_dump(mode="json"),
+                        "occurred_at": datetime.now(timezone.utc).isoformat(),
+                        "role": "user",
+                        "content": f"A second captured copy: {assertion}",
+                        "source_kind": "hermes_memory_provider",
+                    },
+                )
+                await domain.dispatch("maintenance", {})
+            if kind == "dependency":
+                first_preview = store.preview_related_forget(
+                    fact_id=target.id,
+                    expected_version=target.version,
+                    user_profile_id=context.user_profile_id,
+                    project_id=context.project_id,
+                )
+                source = next(
+                    item for item in first_preview["candidates"] if item["fact_id"] == copy.id
+                )["required_source_event_ids"][0]
+                independent = MemoryChunk(
+                    id="unselected-private-fact",
+                    content="Keep this independently reviewed note.",
+                    metadata={
+                        "user_profile_id": context.user_profile_id,
+                        "scope": "project",
+                        "scope_id": context.project_id,
+                        "source": "manual",
+                    },
+                )
+                store.store(independent)
+                store._conn.execute(
+                    "INSERT INTO fact_evidence "
+                    "(evidence_id,fact_id,source_event_id,excerpt,source_ref,created_at) "
+                    "VALUES (?,?,?,?,?,?)",
+                    (
+                        "private-source-link",
+                        independent.id,
+                        source,
+                        independent.content,
+                        "manual",
+                        datetime.now(timezone.utc).isoformat(),
+                    ),
+                )
+                store._conn.commit()
+            preview = await client.request(
+                "forget_preview",
+                {
+                    "context": context.model_dump(mode="json"),
+                    "fact_id": target.id,
+                    "expected_version": target.version,
+                    "limit": 1 if kind == "incomplete" else 100,
+                },
+                queue_on_failure=False,
+            )
+            assert preview["complete"] is (kind != "incomplete")
+            selected_facts = [copy.id]
+            selected_sources = [
+                source
+                for candidate in preview["candidates"]
+                if candidate["fact_id"] == copy.id
+                for source in candidate["required_source_event_ids"]
+            ]
+            if kind == "duplicate_fact":
+                selected_facts *= 2
+            if kind == "duplicate_source":
+                assert selected_sources
+                selected_sources *= 2
+            before = _snapshot(domain)
+            client.outbox.append(
+                {
+                    "event_id": "valid-pending-review-capture",
+                    "context": context.model_dump(mode="json"),
+                    "occurred_at": datetime.now(timezone.utc).isoformat(),
+                    "role": "user",
+                    "content": "Keep the review queue intact.",
+                    "source_kind": "hermes_memory_provider",
+                }
+            )
+            client._outbox_drained = False
+            pending = client.outbox.pending()
+            result = await client.request(
+                "forget_related",
+                {
+                    "context": context.model_dump(mode="json"),
+                    "fact_id": target.id,
+                    "expected_version": target.version,
+                    "preview_digest": preview["preview_digest"],
+                    "preview_limit": preview["limit"],
+                    "selected_fact_ids": selected_facts,
+                    "selected_source_event_ids": selected_sources,
+                },
+                queue_on_failure=False,
+            )
+&gt;           assert result["status"] == "rejected"
+E           AssertionError: assert 'degraded' == 'rejected'
+E             
+E             - rejected
+E             + degraded
+
+tests\test_related_forget_rejection_outbox.py:213: AssertionError</failure></testcase></testsuite></testsuites>

@@ -1,0 +1,64 @@
+from pathlib import Path
+import hashlib
+import json
+import shutil
+import xml.etree.ElementTree as ET
+
+repo = Path(__file__).resolve().parent.parent
+source = Path('C:/Users/Ant/AppData/Local/Temp/mnemos-hermes-native-discovery-preflight-v12')
+output = repo / 'docs/validation/2026-09-20/hermes-native-discovery-preflight-v12'
+report = json.loads((source / 'report.json').read_text())
+assert report['status'] == 'preflight_passed'
+trace = [json.loads(line) for line in (source / 'preflight/trace.jsonl').read_text().splitlines()]
+assert not any(row['operation'] in {'model_request', 'model_response', 'tool_result', 'bridge_response'} for row in trace)
+names = next(row['tool_names'] for row in trace if row['operation'] == 'preflight_complete')
+assert len(names) == 8 and {'mnemos_forget_preview', 'mnemos_forget_related'} <= set(names)
+assert not (source / 'model-readiness').exists() and not (source / 'runtime.json').exists()
+tests = 0
+for name in ['hermes-v12-offline.xml', 'hermes-v12-cohort-offline.xml']:
+    suite = ET.parse(repo / '.venv' / name).getroot().find('testsuite')
+    assert suite is not None
+    assert suite.attrib['failures'] == suite.attrib['errors'] == suite.attrib['skipped'] == '0'
+    tests += int(suite.attrib['tests'])
+assert tests == 137
+output.mkdir(parents=True, exist_ok=False)
+(output / '.gitattributes').write_bytes(b'** -text -whitespace\n')
+paths = ['report.json', 'host-compatibility.patch', 'host-environment-before.txt',
+         'host-environment-after.txt', 'preflight/trace.jsonl', 'preflight/stdout.log', 'preflight/stderr.log']
+for relative, digest in report['input_hashes'].items():
+    path = Path(relative)
+    name = path.name + ('.txt' if path.suffix == '.py' else '')
+    assert hashlib.sha256((source / name).read_bytes()).hexdigest() == digest
+    paths.append(name)
+for name in paths:
+    dest = output / name
+    dest.parent.mkdir(parents=True, exist_ok=True)
+    shutil.copyfile(source / name, dest)
+for name in ['hermes-v12-offline.xml', 'hermes-v12-cohort-offline.xml']:
+    shutil.copyfile(repo / '.venv' / name, output / name)
+shutil.copyfile(__file__, output / (Path(__file__).name + '.txt'))
+files = {p.relative_to(output).as_posix(): {'bytes': p.stat().st_size, 'sha256': hashlib.sha256(p.read_bytes()).hexdigest()}
+         for p in sorted(output.rglob('*')) if p.is_file()}
+(output / 'evidence-index.json').write_text(json.dumps({'files': files}, indent=2) + '\n')
+(output / 'README.md').write_text(f'''# Native Hermes selection-rejection package discovery preflight
+
+The isolated pinned Hermes host discovered all eight tools from the verified
+`5155ebd` wheel and shut down without a model request, tool dispatch, bridge
+call, or service mutation. Discovery took {report['phases'][0]['seconds']:.3f} seconds.
+Live host configuration and memory were unchanged.
+
+Runner and protocol were committed at `{report['runner_commit']}` before execution.
+Installed package bytes, source and wheel bindings, host revision, compatibility
+patch, and live dependency inventory passed the preflight guards.
+
+The two included offline reports pass 137 existing queue, trace, cleanup,
+request-observation, readiness, and cohort cases. Black and strict Python 3.10
+mypy pass the two new runner files. Comparison with their predecessors shows
+only experiment labels, package bindings, and versioned entrypoint changes;
+prompts, evaluator, deadlines, and tool schemas are unchanged.
+
+This is host discovery evidence. The separately scheduled native v12 cohort
+must be interpreted from its terminal report; discovery is not a lifecycle pass.
+The evidence index binds raw files. This README is outside that index.
+''', encoding='utf-8')
+print(json.dumps({'files': len(files), 'tests': tests, 'source_commit': report['source_commit']}))

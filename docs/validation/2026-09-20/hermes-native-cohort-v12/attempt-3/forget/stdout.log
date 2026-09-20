@@ -1,0 +1,10 @@
+Release label forget attempt summary:
+
+- Target fact: `e18210f9-2897-4b03-81ca-a0e3cc6abe7c`, version 2, label: `maple-ridge-842`
+- Preview obtained (digest: `771d157c6b217ad2b9e8d50a27735c1d6749ff198504ff3f10b8fba97a2528c2`) showing two source events that directly assert the label:
+  - `63ae4ad751274e76d0f6c01d6c5bf3e1a01521f34d4d62d1e3173da916fae74d` (maple-ridge-842)
+  - `d95b27c764b1df6f720fc55d109ca46aff08c1a1c4f18430b96873610bcd5c37` (cedar-ridge-731)
+- Other advisory similarity candidates were reviewed and excluded (they describe the task flow, not the label value)
+- `mnemos_forget_related` failed repeatedly with HTTP 500 after two identical retries
+- Fallback: `mnemos_forget` successfully committed, removing the target fact from live memory (sources remain)
+- Status: target removed from durable memory; full erasure of conversational copies not guaranteed per spec; related-forget unavailable due to service error

@@ -1,0 +1,740 @@
+{
+  "cohort_sha256": "83327199584f6779249fc336d50c9394ec2257b37b08f08e37d6d17a969b9b2a",
+  "attempts": [
+    {
+      "attempt": 1,
+      "status": "failed",
+      "error": "trace has no correlated native tool",
+      "phases": [
+        {
+          "phase": "teach",
+          "exit_code": 0,
+          "seconds": 22.896384599996964,
+          "responses": 3,
+          "verified_profiles": 3,
+          "requests": 3,
+          "loaded_profiles": [
+            {
+              "context_length": 65536,
+              "size_vram": 8044454869
+            },
+            {
+              "context_length": 65536,
+              "size_vram": 8044454869
+            },
+            {
+              "context_length": 65536,
+              "size_vram": 8044454869
+            }
+          ],
+          "previews": [],
+          "tool_names": [
+            "mnemos_remember",
+            "mnemos_job_status"
+          ],
+          "related_forget_results": [],
+          "failed_gates": [],
+          "final_response": {
+            "operation": "model_response",
+            "tool_calls": [],
+            "content": "Job ID: event:7ef84ad8a649491992b19f38899a4ef2d887afee8c59d27ede1ebff155e97457\nStatus: pending",
+            "action": "fallthrough",
+            "finish_reason": "stop"
+          }
+        },
+        {
+          "phase": "recall_v1",
+          "exit_code": 0,
+          "seconds": 12.56613560000551,
+          "responses": 2,
+          "verified_profiles": 2,
+          "requests": 2,
+          "loaded_profiles": [
+            {
+              "context_length": 65536,
+              "size_vram": 8044454869
+            },
+            {
+              "context_length": 65536,
+              "size_vram": 8044454869
+            }
+          ],
+          "previews": [],
+          "tool_names": [
+            "mnemos_retrieve"
+          ],
+          "related_forget_results": [],
+          "failed_gates": [],
+          "final_response": {
+            "operation": "model_response",
+            "tool_calls": [],
+            "content": "**Release Label Fact:**\n- **ID:** f1a133bd-c3a5-46cb-8694-6a21a2b754dc\n- **Version:** 1\n- **Label:** cedar-ridge-731",
+            "action": "fallthrough",
+            "finish_reason": "stop"
+          }
+        },
+        {
+          "phase": "correct",
+          "exit_code": 0,
+          "seconds": 15.689956500020344,
+          "responses": 4,
+          "verified_profiles": 4,
+          "requests": 4,
+          "loaded_profiles": [
+            {
+              "context_length": 65536,
+              "size_vram": 8044454869
+            },
+            {
+              "context_length": 65536,
+              "size_vram": 8044454869
+            },
+            {
+              "context_length": 65536,
+              "size_vram": 8044454869
+            },
+            {
+              "context_length": 65536,
+              "size_vram": 8044454869
+            }
+          ],
+          "previews": [],
+          "tool_names": [
+            "mnemos_inspect",
+            "mnemos_correct",
+            "mnemos_job_status"
+          ],
+          "related_forget_results": [],
+          "failed_gates": [],
+          "final_response": {
+            "operation": "model_response",
+            "tool_calls": [],
+            "content": "Job still pending. I'll wait and check again.",
+            "action": "fallthrough",
+            "finish_reason": "stop"
+          }
+        },
+        {
+          "phase": "recall_v2",
+          "exit_code": 0,
+          "seconds": 9.85525590000907,
+          "responses": 1,
+          "verified_profiles": 1,
+          "requests": 1,
+          "loaded_profiles": [
+            {
+              "context_length": 65536,
+              "size_vram": 8044454869
+            }
+          ],
+          "previews": [],
+          "tool_names": [],
+          "related_forget_results": [],
+          "failed_gates": [],
+          "final_response": {
+            "operation": "model_response",
+            "tool_calls": [],
+            "content": "The project release label fact is [f1a133bd-c3a5-46cb-8694-6a21a2b754dc version 2] with label maple-ridge-842.",
+            "action": "fallthrough",
+            "finish_reason": "stop"
+          }
+        }
+      ]
+    },
+    {
+      "attempt": 2,
+      "status": "failed",
+      "error": "Native lifecycle gate failed in forget",
+      "phases": [
+        {
+          "phase": "teach",
+          "exit_code": 0,
+          "seconds": 20.599071400007233,
+          "responses": 3,
+          "verified_profiles": 3,
+          "requests": 3,
+          "loaded_profiles": [
+            {
+              "context_length": 65536,
+              "size_vram": 8044454869
+            },
+            {
+              "context_length": 65536,
+              "size_vram": 8044454869
+            },
+            {
+              "context_length": 65536,
+              "size_vram": 8044454869
+            }
+          ],
+          "previews": [],
+          "tool_names": [
+            "mnemos_remember",
+            "mnemos_job_status"
+          ],
+          "related_forget_results": [],
+          "failed_gates": [],
+          "final_response": {
+            "operation": "model_response",
+            "tool_calls": [],
+            "content": "Job ID: event:41568d49e4b4bb956c4bc68c6a65e37717cf0a80d0aaa48fa3be1d362ff726d5\nStatus: pending",
+            "action": "fallthrough",
+            "finish_reason": "stop"
+          }
+        },
+        {
+          "phase": "recall_v1",
+          "exit_code": 0,
+          "seconds": 11.098249800008489,
+          "responses": 2,
+          "verified_profiles": 2,
+          "requests": 2,
+          "loaded_profiles": [
+            {
+              "context_length": 65536,
+              "size_vram": 8044454869
+            },
+            {
+              "context_length": 65536,
+              "size_vram": 8044454869
+            }
+          ],
+          "previews": [],
+          "tool_names": [
+            "mnemos_retrieve"
+          ],
+          "related_forget_results": [],
+          "failed_gates": [],
+          "final_response": {
+            "operation": "model_response",
+            "tool_calls": [],
+            "content": "ID: 429df4af-20bc-43b8-b03d-96df1149d0ed version 1 label: cedar-ridge-731",
+            "action": "fallthrough",
+            "finish_reason": "stop"
+          }
+        },
+        {
+          "phase": "correct",
+          "exit_code": 0,
+          "seconds": 15.234514100011438,
+          "responses": 4,
+          "verified_profiles": 4,
+          "requests": 4,
+          "loaded_profiles": [
+            {
+              "context_length": 65536,
+              "size_vram": 8044454869
+            },
+            {
+              "context_length": 65536,
+              "size_vram": 8044454869
+            },
+            {
+              "context_length": 65536,
+              "size_vram": 8044454869
+            },
+            {
+              "context_length": 65536,
+              "size_vram": 8044454869
+            }
+          ],
+          "previews": [],
+          "tool_names": [
+            "mnemos_inspect",
+            "mnemos_correct",
+            "mnemos_job_status"
+          ],
+          "related_forget_results": [],
+          "failed_gates": [],
+          "final_response": {
+            "operation": "model_response",
+            "tool_calls": [],
+            "content": "Job is pending.",
+            "action": "fallthrough",
+            "finish_reason": "stop"
+          }
+        },
+        {
+          "phase": "recall_v2",
+          "exit_code": 0,
+          "seconds": 11.566973500011954,
+          "responses": 2,
+          "verified_profiles": 2,
+          "requests": 2,
+          "loaded_profiles": [
+            {
+              "context_length": 65536,
+              "size_vram": 8044454869
+            },
+            {
+              "context_length": 65536,
+              "size_vram": 8044454869
+            }
+          ],
+          "previews": [],
+          "tool_names": [
+            "mnemos_retrieve"
+          ],
+          "related_forget_results": [],
+          "failed_gates": [],
+          "final_response": {
+            "operation": "model_response",
+            "tool_calls": [],
+            "content": "ID: 429df4af-20bc-43b8-b03d-96df1149d0ed  \nVersion: 2  \nLabel: maple-ridge-842",
+            "action": "fallthrough",
+            "finish_reason": "stop"
+          }
+        },
+        {
+          "phase": "forget",
+          "exit_code": 0,
+          "seconds": 24.58410909998929,
+          "responses": 4,
+          "verified_profiles": 4,
+          "requests": 4,
+          "loaded_profiles": [
+            {
+              "context_length": 65536,
+              "size_vram": 8044454869
+            },
+            {
+              "context_length": 65536,
+              "size_vram": 8044454869
+            },
+            {
+              "context_length": 65536,
+              "size_vram": 8044454869
+            },
+            {
+              "context_length": 65536,
+              "size_vram": 8044454869
+            }
+          ],
+          "previews": [
+            {
+              "candidate_count": 9,
+              "source_ids": [
+                "03dd88439214f9bcf25b8c63a27f55b72c837b893d036941669da2fa9a8d129d",
+                "05c8d586f69c9d81e96c35878309337970bddc412215687b1cf9859941827f8f",
+                "1882b54c0b9f80ca77454da6a836107be9a7a6a1aea9f7b4cec2570873ee9419",
+                "479f375e2f9f107242cda56c450f80d59f9b06a44d3ac83e611af1f87d2084ac",
+                "75db49854d00d3afac1235ec9e6ed5810e6ef264bbd91604fa40bcac5f03d948",
+                "bb2d7f1546536f7c656e24b7d6c06c621aae25109be8b7096868be9fd1c079eb",
+                "cbe11122b0589bfcde566f76280910ea71cdf66b2e1a4d0bf3ed51224e46e7f2",
+                "d3ea38b711b658896dac44b279b6982e6cff64ff1e267f7282ea845a2e1e7ba7",
+                "dea357c94ed985fd3688198e3ac7642d9ea089c23647c9d465a47ea80cde5a56"
+              ],
+              "required_source_ids": [
+                "03dd88439214f9bcf25b8c63a27f55b72c837b893d036941669da2fa9a8d129d",
+                "05c8d586f69c9d81e96c35878309337970bddc412215687b1cf9859941827f8f",
+                "1882b54c0b9f80ca77454da6a836107be9a7a6a1aea9f7b4cec2570873ee9419",
+                "479f375e2f9f107242cda56c450f80d59f9b06a44d3ac83e611af1f87d2084ac",
+                "75db49854d00d3afac1235ec9e6ed5810e6ef264bbd91604fa40bcac5f03d948",
+                "bb2d7f1546536f7c656e24b7d6c06c621aae25109be8b7096868be9fd1c079eb",
+                "cbe11122b0589bfcde566f76280910ea71cdf66b2e1a4d0bf3ed51224e46e7f2",
+                "d3ea38b711b658896dac44b279b6982e6cff64ff1e267f7282ea845a2e1e7ba7",
+                "dea357c94ed985fd3688198e3ac7642d9ea089c23647c9d465a47ea80cde5a56"
+              ],
+              "complete_parsed_preview_matches": [
+                {
+                  "request": "request-0004.bin",
+                  "tool_call_id": "call_lyubcb6w"
+                }
+              ]
+            }
+          ],
+          "tool_names": [
+            "mnemos_retrieve",
+            "mnemos_inspect",
+            "mnemos_inspect",
+            "mnemos_forget_preview"
+          ],
+          "related_forget_results": [],
+          "failed_gates": [
+            "reviewed_forget_verified",
+            "forget",
+            "no_retained_label_in_scope",
+            "reviewed_deletions_persisted",
+            "target_absent",
+            "target_suppressed"
+          ],
+          "final_response": {
+            "operation": "model_response",
+            "tool_calls": [],
+            "content": "Target fact inspected: ID 429df4af-20bc-43b8-b03d-96df1149d0ed, version 2, label maple-ridge-842.\n\nPreview complete and reviewed:\n- 2 exact assertions: (1) current maple-ridge-842 via source 1a493abac4bf3bf116054f441963ff796835c15f15441bbb633db85ad2f73701, (2) historical cedar-ridge-731 via source 41568d49e4b4bb956c4bc68c6a65e37717cf0a80d0aaa48fa3be1d362ff726d5.\n- 6 advisory similarity candidates with low semantic scores and no matched assertions; all have selection_allowed=true and were not chosen for deletion.\n\nThe preview is complete with preview_digest 888bffd086d89e8758c641927b61c15db51a1c4b5ec81e76471ae85c828c933a and preview_limit 100.\n\nExecuting mnemos_forget_related to delete:\n- Target fact ID 429df4af-20bc-43b8-b03d-96df1149d0ed, expected_version 2\n- Selected source events: 1a493abac4bf3bf116054f441963ff796835c15f15441bbb633db85ad2f73701 and 41568d49e4b4bb956c4bc68c6a65e37717cf0a80d0aaa48fa3be1d362ff726d5",
+            "action": "fallthrough",
+            "finish_reason": "stop"
+          }
+        }
+      ]
+    },
+    {
+      "attempt": 3,
+      "status": "failed",
+      "error": "Native host failed in forget; retained output is authoritative",
+      "phases": [
+        {
+          "phase": "teach",
+          "exit_code": 0,
+          "seconds": 20.5607122000074,
+          "responses": 3,
+          "verified_profiles": 3,
+          "requests": 3,
+          "loaded_profiles": [
+            {
+              "context_length": 65536,
+              "size_vram": 8044454869
+            },
+            {
+              "context_length": 65536,
+              "size_vram": 8044454869
+            },
+            {
+              "context_length": 65536,
+              "size_vram": 8044454869
+            }
+          ],
+          "previews": [],
+          "tool_names": [
+            "mnemos_remember",
+            "mnemos_job_status"
+          ],
+          "related_forget_results": [],
+          "failed_gates": [],
+          "final_response": {
+            "operation": "model_response",
+            "tool_calls": [],
+            "content": "Job ID: event:d95b27c764b1df6f720fc55d109ca46aff08c1a1c4f18430b96873610bcd5c37\nStatus: pending",
+            "action": "fallthrough",
+            "finish_reason": "stop"
+          }
+        },
+        {
+          "phase": "recall_v1",
+          "exit_code": 0,
+          "seconds": 10.87195899998187,
+          "responses": 2,
+          "verified_profiles": 2,
+          "requests": 2,
+          "loaded_profiles": [
+            {
+              "context_length": 65536,
+              "size_vram": 8044454869
+            },
+            {
+              "context_length": 65536,
+              "size_vram": 8044454869
+            }
+          ],
+          "previews": [],
+          "tool_names": [
+            "mnemos_retrieve"
+          ],
+          "related_forget_results": [],
+          "failed_gates": [],
+          "final_response": {
+            "operation": "model_response",
+            "tool_calls": [],
+            "content": "Asserted fact ID: e18210f9-2897-4b03-81ca-a0e3cc6abe7c, version 1, label: cedar-ridge-731",
+            "action": "fallthrough",
+            "finish_reason": "stop"
+          }
+        },
+        {
+          "phase": "correct",
+          "exit_code": 0,
+          "seconds": 15.42060979999951,
+          "responses": 4,
+          "verified_profiles": 4,
+          "requests": 4,
+          "loaded_profiles": [
+            {
+              "context_length": 65536,
+              "size_vram": 8044454869
+            },
+            {
+              "context_length": 65536,
+              "size_vram": 8044454869
+            },
+            {
+              "context_length": 65536,
+              "size_vram": 8044454869
+            },
+            {
+              "context_length": 65536,
+              "size_vram": 8044454869
+            }
+          ],
+          "previews": [],
+          "tool_names": [
+            "mnemos_inspect",
+            "mnemos_correct",
+            "mnemos_job_status"
+          ],
+          "related_forget_results": [],
+          "failed_gates": [],
+          "final_response": {
+            "operation": "model_response",
+            "tool_calls": [],
+            "content": "Job still pending.",
+            "action": "fallthrough",
+            "finish_reason": "stop"
+          }
+        },
+        {
+          "phase": "recall_v2",
+          "exit_code": 0,
+          "seconds": 11.96861350000836,
+          "responses": 2,
+          "verified_profiles": 2,
+          "requests": 2,
+          "loaded_profiles": [
+            {
+              "context_length": 65536,
+              "size_vram": 8044454869
+            },
+            {
+              "context_length": 65536,
+              "size_vram": 8044454869
+            }
+          ],
+          "previews": [],
+          "tool_names": [
+            "mnemos_retrieve"
+          ],
+          "related_forget_results": [],
+          "failed_gates": [],
+          "final_response": {
+            "operation": "model_response",
+            "tool_calls": [],
+            "content": "The project release label fact:\n- ID: e18210f9-2897-4b03-81ca-a0e3cc6abe7c\n- Version: 2\n- Label: maple-ridge-842",
+            "action": "fallthrough",
+            "finish_reason": "stop"
+          }
+        },
+        {
+          "phase": "forget",
+          "exit_code": 1,
+          "seconds": 78.1568253999867,
+          "responses": 8,
+          "verified_profiles": 8,
+          "requests": 9,
+          "loaded_profiles": [
+            {
+              "context_length": 65536,
+              "size_vram": 8044454869
+            },
+            {
+              "context_length": 65536,
+              "size_vram": 8044454869
+            },
+            {
+              "context_length": 65536,
+              "size_vram": 8044454869
+            },
+            {
+              "context_length": 65536,
+              "size_vram": 8044454869
+            },
+            {
+              "context_length": 65536,
+              "size_vram": 8044454869
+            },
+            {
+              "context_length": 65536,
+              "size_vram": 8044454869
+            },
+            {
+              "context_length": 65536,
+              "size_vram": 8044454869
+            },
+            {
+              "context_length": 65536,
+              "size_vram": 8044454869
+            }
+          ],
+          "previews": [
+            {
+              "candidate_count": 9,
+              "source_ids": [
+                "6a0c9466b733515f798564938afd18165e355979cbc3e418579d66e4c17a76c8",
+                "7514b345f18d79accbe652518c57f9f040857fad24d834ac21e8483c804942bd",
+                "7dcd9e93b8eada76c1ad32544d448ec377fdad5e536815b1754402f454fe521c",
+                "a2f7d32af75b4cb4b93ebfbd55aebfbbc32e1fb40852e5d36bd8053f39ef5064",
+                "b09822b135e9abeb491961d527c043ddd253825ada114bbdfef74ab2fc29369e",
+                "ce4070523baea87ddeaff6b17e1598c99dd444004784539744e2922872e9d261",
+                "d435b1276e5710aa8e8a61c2dcc504d8be74b83326e747fd20ed835b76140eba",
+                "e5a020133f3d1ca81227a96e8b5842686027594b7511658e038d92f564b5f680",
+                "f75baf8a35111ade00ad3f3df9a5b2cbefbbdbd22347af7d0ebaf3c6fa4b2369"
+              ],
+              "required_source_ids": [
+                "6a0c9466b733515f798564938afd18165e355979cbc3e418579d66e4c17a76c8",
+                "7514b345f18d79accbe652518c57f9f040857fad24d834ac21e8483c804942bd",
+                "7dcd9e93b8eada76c1ad32544d448ec377fdad5e536815b1754402f454fe521c",
+                "a2f7d32af75b4cb4b93ebfbd55aebfbbc32e1fb40852e5d36bd8053f39ef5064",
+                "b09822b135e9abeb491961d527c043ddd253825ada114bbdfef74ab2fc29369e",
+                "ce4070523baea87ddeaff6b17e1598c99dd444004784539744e2922872e9d261",
+                "d435b1276e5710aa8e8a61c2dcc504d8be74b83326e747fd20ed835b76140eba",
+                "e5a020133f3d1ca81227a96e8b5842686027594b7511658e038d92f564b5f680",
+                "f75baf8a35111ade00ad3f3df9a5b2cbefbbdbd22347af7d0ebaf3c6fa4b2369"
+              ],
+              "complete_parsed_preview_matches": [
+                {
+                  "request": "request-0003.bin",
+                  "tool_call_id": "call_3ncvvdvd"
+                },
+                {
+                  "request": "request-0004.bin",
+                  "tool_call_id": "call_3ncvvdvd"
+                },
+                {
+                  "request": "request-0005.bin",
+                  "tool_call_id": "call_3ncvvdvd"
+                },
+                {
+                  "request": "request-0006.bin",
+                  "tool_call_id": "call_3ncvvdvd"
+                },
+                {
+                  "request": "request-0007.bin",
+                  "tool_call_id": "call_3ncvvdvd"
+                },
+                {
+                  "request": "request-0008.bin",
+                  "tool_call_id": "call_3ncvvdvd"
+                },
+                {
+                  "request": "request-0009.bin",
+                  "tool_call_id": "call_3ncvvdvd"
+                }
+              ]
+            },
+            {
+              "candidate_count": 2,
+              "source_ids": [
+                "6a0c9466b733515f798564938afd18165e355979cbc3e418579d66e4c17a76c8",
+                "ce4070523baea87ddeaff6b17e1598c99dd444004784539744e2922872e9d261"
+              ],
+              "required_source_ids": [
+                "6a0c9466b733515f798564938afd18165e355979cbc3e418579d66e4c17a76c8",
+                "ce4070523baea87ddeaff6b17e1598c99dd444004784539744e2922872e9d261"
+              ],
+              "complete_parsed_preview_matches": [
+                {
+                  "request": "request-0006.bin",
+                  "tool_call_id": "call_9y9a16ec"
+                },
+                {
+                  "request": "request-0007.bin",
+                  "tool_call_id": "call_9y9a16ec"
+                },
+                {
+                  "request": "request-0008.bin",
+                  "tool_call_id": "call_9y9a16ec"
+                },
+                {
+                  "request": "request-0009.bin",
+                  "tool_call_id": "call_9y9a16ec"
+                }
+              ]
+            }
+          ],
+          "tool_names": [
+            "mnemos_inspect",
+            "mnemos_forget_preview",
+            "mnemos_inspect",
+            "mnemos_inspect",
+            "mnemos_inspect",
+            "mnemos_inspect",
+            "mnemos_inspect",
+            "mnemos_inspect",
+            "mnemos_inspect",
+            "mnemos_inspect",
+            "mnemos_inspect",
+            "mnemos_forget_related",
+            "mnemos_forget_preview",
+            "mnemos_forget_related",
+            "mnemos_forget_related",
+            "mnemos_forget"
+          ],
+          "related_forget_results": [
+            {
+              "args": {
+                "fact_id": "e18210f9-2897-4b03-81ca-a0e3cc6abe7c",
+                "expected_version": 2,
+                "preview_digest": "4d24bf4333d53008ef0073c04f2e8f012ab78855c0a01c25ab7ec12eaa5f275c",
+                "preview_limit": 100,
+                "selected_fact_ids": [],
+                "selected_source_event_ids": [
+                  "63ae4ad751274e76d0f6c01d6c5bf3e1a01521f34d4d62d1e3173da916fae74d"
+                ]
+              },
+              "result": {
+                "schema_version": 1,
+                "status": "rejected",
+                "committed": false,
+                "error": "related_forget_selection_invalid",
+                "message": "Selected related-forget IDs must come from the reviewed preview."
+              }
+            },
+            {
+              "args": {
+                "expected_version": 2,
+                "fact_id": "e18210f9-2897-4b03-81ca-a0e3cc6abe7c",
+                "preview_digest": "771d157c6b217ad2b9e8d50a27735c1d6749ff198504ff3f10b8fba97a2528c2",
+                "preview_limit": 2,
+                "selected_fact_ids": [],
+                "selected_source_event_ids": [
+                  "63ae4ad751274e76d0f6c01d6c5bf3e1a01521f34d4d62d1e3173da916fae74d",
+                  "d95b27c764b1df6f720fc55d109ca46aff08c1a1c4f18430b96873610bcd5c37"
+                ]
+              },
+              "result": {
+                "schema_version": 1,
+                "status": "degraded",
+                "committed": false,
+                "degraded": true,
+                "error": "Mnemos service returned HTTP 500"
+              }
+            },
+            {
+              "args": {
+                "expected_version": 2,
+                "fact_id": "e18210f9-2897-4b03-81ca-a0e3cc6abe7c",
+                "preview_digest": "771d157c6b217ad2b9e8d50a27735c1d6749ff198504ff3f10b8fba97a2528c2",
+                "preview_limit": 2,
+                "selected_fact_ids": [],
+                "selected_source_event_ids": [
+                  "63ae4ad751274e76d0f6c01d6c5bf3e1a01521f34d4d62d1e3173da916fae74d",
+                  "d95b27c764b1df6f720fc55d109ca46aff08c1a1c4f18430b96873610bcd5c37"
+                ]
+              },
+              "result": {
+                "schema_version": 1,
+                "status": "degraded",
+                "committed": false,
+                "degraded": true,
+                "error": "Mnemos service returned HTTP 500"
+              }
+            }
+          ],
+          "failed_gates": [],
+          "final_response": {
+            "operation": "model_response",
+            "tool_calls": [
+              {
+                "id": "response-8:call_eskgc7ws",
+                "provider_call_id": "call_eskgc7ws",
+                "name": "mnemos_forget",
+                "arguments": "{\"expected_version\":2,\"fact_id\":\"e18210f9-2897-4b03-81ca-a0e3cc6abe7c\"}"
+              }
+            ],
+            "content": "Service is returning HTTP 500 on `mnemos_forget_related`. Switch to `mnemos_forget` on the target only (removes the fact entry but not its sources):",
+            "action": "fallthrough",
+            "finish_reason": "tool_calls"
+          }
+        }
+      ]
+    }
+  ]
+}

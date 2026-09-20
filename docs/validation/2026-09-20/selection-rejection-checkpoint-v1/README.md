@@ -20,8 +20,10 @@ found the target retained, no suppressions, and unchanged control state.
 Unknown selected facts and sources now raise a typed ValueError subclass.
 The service returns a fixed, noncommitting HTTP 409 rejection with code
 `related_forget_selection_invalid`. The client recognizes only the exact
-known response for related forget and returns before replaying pending
-captures. Hermes receives the same rejection. The original scope, digest,
+known response for related forget. A subsequent valid-capture regression
+found that this version could still replay pending captures after this
+rejection. The original malformed-capture test did not establish a no-replay
+guarantee; see the [successor repair](../review-rejection-development-v1/README.md). Hermes receives the same rejection. The original scope, digest,
 version, dependency, and explicit-source requirements remain unchanged.
 No arguments are repaired, no selected IDs are inferred, and no invalid
 request becomes a successful deletion.
@@ -35,9 +37,10 @@ retain HTTP 500. Product formatting and strict Python 3.10 type checks pass.
 
 ## Evidence limits
 
-No native model has run this new package. V11 remains zero of three, and the
-repair does not establish that the model will choose valid sources or recover
-from a rejection. The package also includes a read-only graph source-relation
+The subsequent [native v12 cohort](../hermes-native-cohort-v12/README.md)
+tested this package and completed zero of three lifecycles. The fixed
+invalid-selection rejection occurred, but successful recovery did not. V11
+remains zero of three on its preceding package. The package also includes a read-only graph source-relation
 diagnostic and its 20 offline tests. It does not change production retrieval
 or establish graph utility. Native continuity, complete capture, full-module
 quality, Desktop, and the operational pilot remain open.

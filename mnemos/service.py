@@ -40,9 +40,8 @@ from urllib.parse import urlsplit
 
 from .jobs import FactNotFoundError, JobNotFoundError
 from .errors import (
-    RelatedForgetPreviewStale,
-    RelatedForgetSelectionInvalid,
-    RelatedForgetSourceSelectionRequired,
+    RELATED_FORGET_REJECTIONS,
+    RelatedForgetRejection,
 )
 from .observability import (
     ServiceLogBinding,
@@ -493,39 +492,21 @@ class _RequestHandler(BaseHTTPRequestHandler):
         except FactNotFoundError:
             self._write_json(404, {"schema_version": SCHEMA_VERSION, "error": "fact_not_found"})
             return
-        except RelatedForgetSourceSelectionRequired:
+        except RelatedForgetRejection as exc:
+            safe_message = RELATED_FORGET_REJECTIONS.get(exc.code)
+            if safe_message is None:
+                self._write_json(
+                    500, {"schema_version": SCHEMA_VERSION, "error": "dispatch_failed"}
+                )
+                return
             self._write_json(
                 409,
                 {
                     "schema_version": SCHEMA_VERSION,
                     "status": "rejected",
                     "committed": False,
-                    "error": RelatedForgetSourceSelectionRequired.code,
-                    "message": RelatedForgetSourceSelectionRequired.safe_message,
-                },
-            )
-            return
-        except RelatedForgetPreviewStale:
-            self._write_json(
-                409,
-                {
-                    "schema_version": SCHEMA_VERSION,
-                    "status": "rejected",
-                    "committed": False,
-                    "error": RelatedForgetPreviewStale.code,
-                    "message": RelatedForgetPreviewStale.safe_message,
-                },
-            )
-            return
-        except RelatedForgetSelectionInvalid:
-            self._write_json(
-                409,
-                {
-                    "schema_version": SCHEMA_VERSION,
-                    "status": "rejected",
-                    "committed": False,
-                    "error": RelatedForgetSelectionInvalid.code,
-                    "message": RelatedForgetSelectionInvalid.safe_message,
+                    "error": exc.code,
+                    "message": safe_message,
                 },
             )
             return
