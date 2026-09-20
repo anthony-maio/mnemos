@@ -16,7 +16,11 @@ from typing import Any
 
 DATASET_VERSION = "local-memory-heldout-v2"
 LIFECYCLE_V3_VERSION = "local-memory-heldout-v3"
-SUPPORTED_DATASET_VERSIONS = {DATASET_VERSION, LIFECYCLE_V3_VERSION}
+CONTRACT_V4_VERSION = "local-memory-heldout-v4"
+LIFECYCLE_TARGET_VERSIONS = {LIFECYCLE_V3_VERSION, CONTRACT_V4_VERSION}
+SUPPORTED_DATASET_VERSIONS = {DATASET_VERSION, *LIFECYCLE_TARGET_VERSIONS}
+# This version repairs a fixed, audited v3 family; future datasets get new versions.
+V4_REPAIRED_CANARY_SESSIONS = {f"heldout-{number:03d}" for number in range(61, 81)}
 MINIMUMS = {
     "heldout_sessions": 200,
     "critical_facts": 100,
@@ -498,6 +502,91 @@ def _validate_v3_lifecycle_targets(
                 )
 
 
+def _validate_v4_contract(
+    session: SessionScenario,
+    events_by_id: dict[str, SourceEvent],
+    facts_by_id: dict[str, FactRecord],
+) -> None:
+    """Reject source/body and scope-label contradictions before inference."""
+
+    def identity(
+        target: SourceEvent | QueryRecord | StatePair, scope: str
+    ) -> tuple[str, str, str | None]:
+        profile = target.target_user_profile_id or "t18-synthetic-profile"
+        scope_id: str | None
+        if scope == "project":
+            scope_id = target.target_project_id or session.project_id
+        elif scope == "workspace":
+            scope_id = target.target_workspace_id
+            if scope_id is None:
+                raise ValueError("workspace fact needs an explicit workspace identity")
+        elif scope == "global":
+            scope_id = None
+        else:
+            raise ValueError(f"unsupported fact scope {scope!r}")
+        return profile, scope, scope_id
+
+    def check_target(target: QueryRecord | StatePair, fact_ids: tuple[str, ...]) -> None:
+        for fact_id in fact_ids:
+            fact = facts_by_id.get(fact_id)
+            if fact is None or fact.gold_status != "supported":
+                raise ValueError("answerable target needs a supported fact in its own session")
+            sources = [
+                events_by_id[event_id]
+                for event_id in fact.evidence_event_ids
+                if events_by_id[event_id].role == "user"
+                and events_by_id[event_id].write_mode != "none"
+                and events_by_id[event_id].lifecycle_operation in {"capture", "remember", "correct"}
+            ]
+            if not sources or any(
+                identity(source, fact.scope) != identity(target, fact.scope) for source in sources
+            ):
+                raise ValueError(f"answerable target for {fact_id} is outside source scope")
+
+    for event in session.events:
+        if event.lifecycle_operation != "remember":
+            continue
+        if any((event.target_user_profile_id, event.target_project_id, event.target_workspace_id)):
+            raise ValueError("explicit remember uses the base session context")
+        for fact_id in event.evidence_fact_ids:
+            fact = facts_by_id[fact_id]
+            if fact.gold_status == "supported" and fact.content != event.content:
+                raise ValueError(f"fact {fact_id} must equal its explicit remember body")
+    for query in session.queries:
+        if query.kind == "answerable":
+            check_target(query, query.relevant_fact_ids)
+        elif query.expected_answer is not None:
+            raise ValueError(f"query {query.query_id}: no_answer cannot have expected_answer")
+    if session.session_id in V4_REPAIRED_CANARY_SESSIONS:
+        original_id = "query-answerable-" + session.session_id.rsplit("-", 1)[1]
+        if [query.query_id for query in session.queries] != [
+            original_id,
+            original_id + "-in-scope-v4",
+        ]:
+            raise ValueError(f"session {session.session_id}: missing paired scope canary queries")
+        foreign, local = session.queries
+        if (
+            foreign.kind != "no_answer"
+            or not foreign.target_user_profile_id
+            or foreign.target_user_profile_id == "t18-synthetic-profile"
+            or not foreign.target_project_id
+            or foreign.target_project_id == session.project_id
+        ):
+            raise ValueError(
+                f"session {session.session_id}: foreign scope canary must stay foreign"
+            )
+        if local.kind != "answerable" or any(
+            (local.target_user_profile_id, local.target_project_id, local.target_workspace_id)
+        ):
+            raise ValueError(f"session {session.session_id}: paired scope canary must stay local")
+    for pair in session.state_pairs:
+        check_target(pair, pair.relevant_fact_ids)
+        if pair.matched_content not in {
+            facts_by_id[fact_id].content for fact_id in pair.relevant_fact_ids
+        }:
+            raise ValueError(f"pair {pair.pair_id}: state target must match a supported fact body")
+
+
 def validate_dataset(dataset: HeldoutDataset) -> HeldoutDataset:
     """Validate counts, labels, uniqueness, and development/held-out separation."""
     sessions = dataset.sessions
@@ -587,8 +676,10 @@ def validate_dataset(dataset: HeldoutDataset) -> HeldoutDataset:
         for event in session.events:
             if set(event.evidence_fact_ids) - fact_ids_for_session:
                 raise ValueError(f"event {event.event_id} references an unknown fact")
-        if dataset.version == LIFECYCLE_V3_VERSION:
+        if dataset.version in LIFECYCLE_TARGET_VERSIONS:
             _validate_v3_lifecycle_targets(session, events_by_id, facts_by_id)
+        if dataset.version == CONTRACT_V4_VERSION:
+            _validate_v4_contract(session, events_by_id, facts_by_id)
         if not any(event.lifecycle_operation == "restart" for event in session.events):
             raise ValueError(f"session {session.session_id} needs a restart boundary")
     query_ids = [query.query_id for query in queries]
