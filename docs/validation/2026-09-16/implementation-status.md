@@ -1,13 +1,13 @@
 # Functional local memory implementation status
 
-The [three-host v2 attempt](../2026-09-20/three-host-native-v2/README.md) stopped at its first Codex phase.
-The synthetic fact was stored and its job completed, but native calls still
-used an `exec` wrapper despite the requested direct-tool setting. Separate
-provider and MCP execution IDs did not meet the frozen correlation requirement.
-The attempt remains failed; no Claude or Hermes model phase followed. Cleanup
-passed. Its separate eight-tool Hermes preflight passed, and 141 offline
-benchmark cases passed. Three-host continuity remains open. The earlier Hermes
-v10 result below remains one complete lifecycle pass and two failures.
+The [three-host v3 attempt](../2026-09-20/three-host-native-v3/README.md) failed after
+startup selected a different Codex model than requested. The new model check
+rejected both turns. Explicit teaching calls were cancelled; raw hook captures
+committed, including an unintended controller shutdown prompt. Cleanup and
+separate Hermes discovery passed. No later host phase ran. The
+[earlier v2 correlation failure](../2026-09-20/three-host-native-v2/README.md) remains
+failed. Three-host continuity is open; Hermes v10 still has one complete
+lifecycle pass and two failures. The v4 setup repair is prospective.
 
 The [native Hermes v10 cohort](../2026-09-20/hermes-native-cohort-v10/README.md)
 completed one of three full lifecycles on `f2f7414`. Attempt 1 omitted

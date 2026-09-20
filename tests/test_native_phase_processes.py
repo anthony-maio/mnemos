@@ -5,6 +5,7 @@ import json
 from pathlib import Path
 import subprocess
 from types import SimpleNamespace
+import tomllib
 
 import pytest
 
@@ -121,7 +122,14 @@ def test_codex_setup_failure_records_failure_before_auth_copy(config, monkeypatc
 
 
 def _run_codex_pinned(
-    config, source, monkeypatch, *, model="codex-pinned", observed_model=None, observations=None
+    config,
+    source,
+    monkeypatch,
+    *,
+    model="codex-pinned",
+    observed_model=None,
+    observations=None,
+    user_messages=None,
 ):
     home = config.root / "codex-home" / ".codex"
     home.mkdir(parents=True)
@@ -132,12 +140,20 @@ def _run_codex_pinned(
     def launch(command, **kwargs):
         observed = model if observed_model is None else observed_model
         values = [observed] if observations is None else observations
+        prompt_messages = ["synthetic prompt"] if user_messages is None else user_messages
         sessions = Path(kwargs["env"]["CODEX_HOME"]) / "sessions"
         sessions.mkdir(parents=True)
         (sessions / "session.jsonl").write_text(
             "".join(
                 json.dumps({"type": "turn_context", "payload": {"model": value}}) + "\n"
                 for value in values
+            )
+            + "".join(
+                json.dumps(
+                    {"type": "event_msg", "payload": {"type": "user_message", "message": message}}
+                )
+                + "\n"
+                for message in prompt_messages
             )
         )
         return FakeProcess()
@@ -151,6 +167,7 @@ def _run_codex_pinned(
         executable=Path("codex.exe"),
         auth_source=source,
         model=model,
+        migration_notice_target="gpt-5.6-sol",
     )
 
 
@@ -159,8 +176,13 @@ def test_codex_model_pin_is_command_bound_and_verified(config, tmp_path, monkeyp
     assert result["requested_model"] == "codex-pinned"
     assert result["observed_models"] == ["codex-pinned"]
     assert result["model_verified"] is True
+    assert result["user_prompt_count"] == 1
+    assert result["user_prompt_verified"] is True
+    assert result["migration_notice_pair"] == {"from": "codex-pinned", "to": "gpt-5.6-sol"}
     command = json.loads((config.root / "codex-pinned" / "process.json").read_text())["command"]
     assert command[command.index("--model") + 1] == "codex-pinned"
+    override = tomllib.loads(command[command.index("-c") + 1])
+    assert override == {"notice": {"model_migrations": {"codex-pinned": "gpt-5.6-sol"}}}
 
 
 def test_codex_legacy_mode_has_no_model_pin_or_observation_requirement(
@@ -238,6 +260,24 @@ def test_codex_model_pin_rejects_later_bad_observation(config, tmp_path, monkeyp
     assert record["auth_copy_removed"] is True
 
 
+@pytest.mark.parametrize("user_messages", [[], ["synthetic prompt", "/exit"], ["changed prompt"]])
+def test_codex_model_pin_rejects_prompt_integrity_failure(
+    config, tmp_path, monkeypatch, user_messages
+):
+    with pytest.raises(ValueError, match="user prompt observation"):
+        _run_codex_pinned(
+            config,
+            tmp_path / "auth.json",
+            monkeypatch,
+            user_messages=user_messages,
+        )
+    record = json.loads((config.root / "codex-pinned" / "process.json").read_text())
+    assert record["user_prompt_count"] == len(user_messages)
+    assert record["user_prompt_verified"] is False
+    assert record["status"] == "failed"
+    assert record["auth_copy_removed"] is True
+
+
 @pytest.mark.parametrize("model", ["", "bad/model", "x" * 129])
 def test_codex_model_pin_validates_slug_before_phase(config, model, monkeypatch):
     monkeypatch.setattr(phases.sys, "stdin", SimpleNamespace(isatty=lambda: True))
@@ -252,6 +292,26 @@ def test_codex_model_pin_validates_slug_before_phase(config, model, monkeypatch)
             model=model,
         )
     assert not (config.root / "codex-invalid-model").exists()
+
+
+@pytest.mark.parametrize(
+    "model,target,match",
+    [(None, "gpt-5.6-sol", "requires a pinned model"), ("codex-pinned", "bad/model", "target")],
+)
+def test_codex_migration_notice_validates_before_phase(config, model, target, match, monkeypatch):
+    monkeypatch.setattr(phases.sys, "stdin", SimpleNamespace(isatty=lambda: True))
+    monkeypatch.setattr(phases.sys, "stdout", SimpleNamespace(isatty=lambda: True))
+    with pytest.raises(ValueError, match=match):
+        phases.run_codex_phase(
+            config,
+            phase="codex-invalid-migration",
+            prompt="synthetic prompt",
+            executable=Path("codex.exe"),
+            auth_source=Path("unused"),
+            model=model,
+            migration_notice_target=target,
+        )
+    assert not (config.root / "codex-invalid-migration").exists()
 
 
 class FakeProcess:

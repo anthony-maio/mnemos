@@ -400,6 +400,7 @@ def main() -> int:
         for path in Path(__file__).parent.glob("*.py")
     ]
     inputs.append(PROTOCOL)
+    inputs.append("docs/plans/2026-09-20-three-host-continuity-protocol-v3.md")
     inputs.append("docs/plans/2026-09-20-three-host-continuity-protocol-v2.md")
     inputs.append("docs/validation/2026-09-20/codex-tool-mode-diagnostic-v1/selected-catalog.json")
     inputs.append("docs/plans/2026-09-19-three-host-continuity-protocol-v1.md")
@@ -483,6 +484,7 @@ def main() -> int:
                     auth_source=Path.home() / ".codex/auth.json",
                     disable_code_mode_host=True,
                     model=CODEX_MODEL,
+                    migration_notice_target="gpt-5.6-sol",
                 )
             else:
                 process = run_claude_phase(

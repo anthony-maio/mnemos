@@ -1,0 +1,2840 @@
+{
+  "status": "failed",
+  "started_at": "2026-09-20T07:51:06.090927+00:00",
+  "bindings": {
+    "source_commit": "f2f741443e60f838b392ae8ea1d1a0b4d8c6c1f2",
+    "wheel_sha256": "8552345d2c17c4c037347961eb3043d13b20f790f54a9ccc86a096add6197b0f",
+    "wheel": "C:\\Users\\Ant\\AppData\\Local\\Temp\\mnemos-package-checks-stale-preview-v1\\dist\\mnemos_memory-0.7.0-py3-none-any.whl",
+    "prior_queue": {
+      "state": {
+        "updated_at": "2026-09-19T23:38:37.1638571Z",
+        "cost": "unknown; provider usage and local GPU timing are recorded by the child reports when available",
+        "status": "finished_with_incomplete",
+        "any_incomplete": true,
+        "pid": 46060,
+        "model_digests": {
+          "qwen3.5:9b": "6488c96fa5faab64bb65cbd30d4289e20e6130ef535a93ef9a49f42eda893ea7",
+          "nomic-embed-text:latest": "0a109f422b47e3a30ba2b10eca18548e944e8a23073ee3f3e947efcf3c45e59f"
+        },
+        "stages": [
+          {
+            "finished_at": "2026-09-19T22:24:29.9377978Z",
+            "exit_code": 0,
+            "output": "encoding-comparison-local-v2",
+            "manifest_status": "incomplete",
+            "output_path": "D:\\Development\\mnemos\\mnemos\\.worktrees\\functional-local-memory\\docs\\validation\\2026-09-19\\encoding-comparison-local-v2",
+            "work": "mnemos-encoding-comparison-local-v2",
+            "status": "finished_incomplete",
+            "work_path": "C:\\Users\\Ant\\AppData\\Local\\Temp\\mnemos-encoding-comparison-local-v2",
+            "started_at": "2026-09-19T19:50:51.9017369Z",
+            "name": "encoding",
+            "protocol_sha": "f403c5d49352a649a59a8aad38953a8f94699e0aa00596b35e32f617ff7520bf",
+            "protocol": "2026-09-18-encoding-comparison-protocol-v1.md",
+            "terminal": "incomplete",
+            "module": "encoding_comparator_run",
+            "command": [
+              "D:\\Development\\mnemos\\mnemos\\.worktrees\\functional-local-memory\\.venv\\Scripts\\python.exe",
+              "-u",
+              "-m",
+              "benchmarks.local_memory.encoding_comparator_run",
+              "--dataset",
+              "C:\\Users\\Ant\\AppData\\Local\\Temp\\mnemos-source-retrieval-comparison-v1\\benchmarks\\local_memory\\datasets\\local-memory-heldout-v3.jsonl",
+              "--protocol",
+              "C:\\Users\\Ant\\AppData\\Local\\Temp\\mnemos-source-retrieval-comparison-v1\\docs\\plans\\2026-09-18-encoding-comparison-protocol-v1.md",
+              "--output-dir",
+              "D:\\Development\\mnemos\\mnemos\\.worktrees\\functional-local-memory\\docs\\validation\\2026-09-19\\encoding-comparison-local-v2",
+              "--work-dir",
+              "C:\\Users\\Ant\\AppData\\Local\\Temp\\mnemos-encoding-comparison-local-v2",
+              "--endpoint",
+              "http://127.0.0.1:11434",
+              "--model",
+              "qwen3.5:9b",
+              "--embedding-model",
+              "nomic-embed-text:latest",
+              "--repetitions",
+              "3",
+              "--think",
+              "false"
+            ]
+          },
+          {
+            "finished_at": "2026-09-19T23:38:37.1516294Z",
+            "exit_code": 0,
+            "output": "retrieval-comparison-local-v2",
+            "manifest_status": "incomplete",
+            "output_path": "D:\\Development\\mnemos\\mnemos\\.worktrees\\functional-local-memory\\docs\\validation\\2026-09-19\\retrieval-comparison-local-v2",
+            "work": "mnemos-retrieval-comparison-local-v2",
+            "status": "finished_incomplete",
+            "work_path": "C:\\Users\\Ant\\AppData\\Local\\Temp\\mnemos-retrieval-comparison-local-v2",
+            "started_at": "2026-09-19T22:24:30.2217397Z",
+            "name": "retrieval",
+            "protocol_sha": "3220dda551ddaf2774296107f2c8872ee7a7db99c71d05f8096ca46aaf3aa1ec",
+            "protocol": "2026-09-18-retrieval-comparison-protocol-v1.md",
+            "terminal": "incomplete",
+            "module": "retrieval_comparison_run",
+            "command": [
+              "D:\\Development\\mnemos\\mnemos\\.worktrees\\functional-local-memory\\.venv\\Scripts\\python.exe",
+              "-u",
+              "-m",
+              "benchmarks.local_memory.retrieval_comparison_run",
+              "--dataset",
+              "C:\\Users\\Ant\\AppData\\Local\\Temp\\mnemos-source-retrieval-comparison-v1\\benchmarks\\local_memory\\datasets\\local-memory-heldout-v3.jsonl",
+              "--protocol",
+              "C:\\Users\\Ant\\AppData\\Local\\Temp\\mnemos-source-retrieval-comparison-v1\\docs\\plans\\2026-09-18-retrieval-comparison-protocol-v1.md",
+              "--output-dir",
+              "D:\\Development\\mnemos\\mnemos\\.worktrees\\functional-local-memory\\docs\\validation\\2026-09-19\\retrieval-comparison-local-v2",
+              "--work-dir",
+              "C:\\Users\\Ant\\AppData\\Local\\Temp\\mnemos-retrieval-comparison-local-v2",
+              "--endpoint",
+              "http://127.0.0.1:11434",
+              "--model",
+              "qwen3.5:9b",
+              "--embedding-model",
+              "nomic-embed-text:latest",
+              "--repetitions",
+              "3",
+              "--think",
+              "false"
+            ]
+          }
+        ],
+        "snapshot": "C:\\Users\\Ant\\AppData\\Local\\Temp\\mnemos-source-retrieval-comparison-v1",
+        "started_at": "2026-09-19T19:50:51.7355693Z",
+        "dataset_sha256": "036fa51ee13271a85a14a62a2fe4ef65d13eaeb290331fe325aa5bf32ce893fc",
+        "original_failed_run_preserved": true,
+        "source_commit": "fc72cc251aeafa161a1a390269b8dfa34d83cf2b",
+        "settings": {
+          "max_context_tokens": 1200,
+          "temperature": 0.0,
+          "model": "qwen3.5:9b",
+          "top_k": 5,
+          "repetitions": 3,
+          "think": false,
+          "max_tokens": 512,
+          "timeout_seconds": 120,
+          "embedding_model": "nomic-embed-text:latest"
+        },
+        "endpoint": "http://127.0.0.1:11434"
+      },
+      "excluded_pids": [
+        46060,
+        19836,
+        68804
+      ]
+    },
+    "hermes": {
+      "status": "passed",
+      "started_at": "2026-09-20T06:58:32.679915+00:00",
+      "preflight_only": false,
+      "experiment_kind": "native-stale-preview-lifecycle-v10",
+      "phases": [
+        {
+          "phase": "teach",
+          "mode": "model",
+          "seconds": 21.875515399995493,
+          "exit_code": 0,
+          "gates": {
+            "correlated": true,
+            "phase_tools_allowed": true,
+            "mutations_inspected": true,
+            "teach": true,
+            "no_foreign_tool_result": true,
+            "real_pinned_model_request": true,
+            "effective_context_verified_after_each_response": true,
+            "pinned_profile_without_conflicting_override": true,
+            "write_followup_guidance_present": true,
+            "no_provider_error": true,
+            "controls_unchanged": true,
+            "native_capture_committed": true,
+            "native_capture_retained_or_suppressed": true,
+            "single_asserted_target": true
+          }
+        },
+        {
+          "phase": "recall_v1",
+          "mode": "model",
+          "seconds": 11.021923499996774,
+          "exit_code": 0,
+          "gates": {
+            "correlated": true,
+            "phase_tools_allowed": true,
+            "mutations_inspected": true,
+            "recall_v1": true,
+            "no_foreign_tool_result": true,
+            "real_pinned_model_request": true,
+            "effective_context_verified_after_each_response": true,
+            "pinned_profile_without_conflicting_override": true,
+            "write_followup_guidance_present": true,
+            "no_provider_error": true,
+            "controls_unchanged": true,
+            "native_capture_committed": true,
+            "native_capture_retained_or_suppressed": true
+          }
+        },
+        {
+          "phase": "correct",
+          "mode": "model",
+          "seconds": 14.702626600017538,
+          "exit_code": 0,
+          "gates": {
+            "correlated": true,
+            "phase_tools_allowed": true,
+            "mutations_inspected": true,
+            "correct": true,
+            "no_foreign_tool_result": true,
+            "real_pinned_model_request": true,
+            "effective_context_verified_after_each_response": true,
+            "pinned_profile_without_conflicting_override": true,
+            "write_followup_guidance_present": true,
+            "no_provider_error": true,
+            "controls_unchanged": true,
+            "native_capture_committed": true,
+            "native_capture_retained_or_suppressed": true,
+            "same_id_version_two": true
+          }
+        },
+        {
+          "phase": "recall_v2",
+          "mode": "model",
+          "seconds": 12.098414000007324,
+          "exit_code": 0,
+          "gates": {
+            "correlated": true,
+            "phase_tools_allowed": true,
+            "mutations_inspected": true,
+            "recall_v2": true,
+            "no_foreign_tool_result": true,
+            "real_pinned_model_request": true,
+            "effective_context_verified_after_each_response": true,
+            "pinned_profile_without_conflicting_override": true,
+            "write_followup_guidance_present": true,
+            "no_provider_error": true,
+            "controls_unchanged": true,
+            "native_capture_committed": true,
+            "native_capture_retained_or_suppressed": true
+          }
+        },
+        {
+          "phase": "forget",
+          "mode": "model",
+          "seconds": 50.14817469997797,
+          "exit_code": 0,
+          "gates": {
+            "correlated": true,
+            "phase_tools_allowed": true,
+            "mutations_inspected": true,
+            "reviewed_forget_verified": true,
+            "forget": true,
+            "no_foreign_tool_result": true,
+            "real_pinned_model_request": true,
+            "effective_context_verified_after_each_response": true,
+            "pinned_profile_without_conflicting_override": true,
+            "write_followup_guidance_present": true,
+            "no_provider_error": true,
+            "controls_unchanged": true,
+            "no_retained_label_in_scope": true,
+            "reviewed_deletions_persisted": true,
+            "native_capture_committed": true,
+            "native_capture_retained_or_suppressed": true,
+            "target_absent": true,
+            "target_suppressed": true
+          }
+        },
+        {
+          "phase": "source-replay",
+          "mode": "replay",
+          "seconds": 4.805825499992352,
+          "exit_code": 0,
+          "gates": {
+            "original_write_suppressed": true,
+            "native_replay_flushed": true,
+            "no_provider_error": true
+          }
+        },
+        {
+          "phase": "recall_forgotten",
+          "mode": "model",
+          "seconds": 11.493904299975839,
+          "exit_code": 0,
+          "gates": {
+            "correlated": true,
+            "phase_tools_allowed": true,
+            "mutations_inspected": true,
+            "recall_forgotten": true,
+            "no_foreign_tool_result": true,
+            "real_pinned_model_request": true,
+            "effective_context_verified_after_each_response": true,
+            "pinned_profile_without_conflicting_override": true,
+            "write_followup_guidance_present": true,
+            "no_provider_error": true,
+            "controls_unchanged": true,
+            "no_retained_label_in_scope": true,
+            "native_capture_committed": true,
+            "native_capture_retained_or_suppressed": true,
+            "target_absent": true,
+            "target_suppressed": true,
+            "no_forgotten_label_in_request": true
+          }
+        }
+      ],
+      "live_configuration_changed": false,
+      "scope": "model-driven native Hermes baseline lifecycle with effective context checks",
+      "source_commit": "f2f741443e60f838b392ae8ea1d1a0b4d8c6c1f2",
+      "wheel_sha256": "8552345d2c17c4c037347961eb3043d13b20f790f54a9ccc86a096add6197b0f",
+      "installed_package": "C:\\Users\\Ant\\AppData\\Local\\Temp\\mnemos-installed-stale-preview-v1\\Lib\\site-packages\\mnemos\\__init__.py",
+      "hermes_commit": "14a346345486418aa85ed6526549412ee2665ade",
+      "live_hermes_commit": "ebe3fcb2f85ebdbe0e469e9d295636ac930246b4",
+      "host_environment_sha256": "a175bfc46955bc72ebb1c854ce7646f3dad3fd22716d3219d3a42d8928a30f7f",
+      "input_hashes": {
+        "benchmarks\\native_hosts\\hermes_lifecycle_run_v10.py": "9daa980f349616dd55f5b5f191ec070a2ecb177a4497e23bc3eef0476fcb882a",
+        "benchmarks\\native_hosts\\hermes_native_bootstrap_v6.py": "c28c567131388b7f15218333e096598d227d3f5d8b4b2a057ca4590b893f2af5",
+        "benchmarks\\native_hosts\\hermes_request_observer.py": "a14da0d8f98cc71589a759f799db3fa41c7fa61d44dbd172c3b91b1ba71f469f",
+        "docs\\plans\\2026-09-20-hermes-native-lifecycle-protocol-v8.md": "4c6194c0ee59bc120526cf59d90fbf27cbaf3d1a3aa34d3b079ba789492294dd",
+        "benchmarks\\native_hosts\\hermes_trace.py": "fa82d4f270e916c6aae4eb01eb3738239cc91f88e3029d919bc0ba98c79609c8",
+        "benchmarks\\native_hosts\\hermes_trace_v2.py": "9beffe22889c6f7e03d66da6b8c32769b8ca6bd0b48be68cc4e4219401ff1d38",
+        "docs\\plans\\2026-09-20-hermes-native-lifecycle-protocol-v10.md": "9b9f2f6d3d35552244a4f19ba68c0425503968d9229d2ac058775dff5d12cac6",
+        "docs\\plans\\2026-09-20-hermes-native-lifecycle-protocol-v9.md": "99dda22f87122c94df4779acc57bb3bd014dd12e84c70dd3f334e6aed731ec38",
+        "benchmarks\\native_hosts\\ollama_readiness_v2.py": "a22d7c787c034f9ea71f4b22982cc44896ae69917cf2ad8107152d55eadbabf0",
+        "docs\\plans\\2026-09-20-hermes-native-lifecycle-protocol-v7.md": "0998e48aea300c061c3c3cd0fbba050518cfd0f10c0be6d2ed848373094dfb72",
+        "docs\\plans\\2026-09-19-hermes-native-lifecycle-protocol-v6.md": "ffd591eb7b94cb8d05bc34e7dc62119fc956516f013d578e05de8501154695ab",
+        "docs\\plans\\2026-09-19-hermes-native-lifecycle-protocol-v3.md": "18b8a01ba62510f714e6e3db6aa24707b72d8028f96ae68dabb2e939a40b36b5",
+        "docs\\plans\\2026-09-19-hermes-native-lifecycle-protocol-v4.md": "d0ba8a3de586ed6f9a3f1709a79033788995b08d79af9b8a2d2b3fd67a3fee2b",
+        "docs\\plans\\2026-09-19-hermes-native-lifecycle-protocol-v5.md": "56d2fe0c6eb4e3e9013a4f0b341aa9cd33f06de51fe5298e0a13a306b42fd952",
+        "docs\\validation\\2026-09-20\\native-model-profile-v2\\profile.json": "34c01c6063357a5a4ea972d9350536f41483f7a7d87cc960f36d658f82bd5e4e"
+      },
+      "runner_commit": "11756832908a7c7fc7e3285d7918426683182777",
+      "prior_queue": {
+        "state": {
+          "updated_at": "2026-09-19T23:38:37.1638571Z",
+          "cost": "unknown; provider usage and local GPU timing are recorded by the child reports when available",
+          "status": "finished_with_incomplete",
+          "any_incomplete": true,
+          "pid": 46060,
+          "model_digests": {
+            "qwen3.5:9b": "6488c96fa5faab64bb65cbd30d4289e20e6130ef535a93ef9a49f42eda893ea7",
+            "nomic-embed-text:latest": "0a109f422b47e3a30ba2b10eca18548e944e8a23073ee3f3e947efcf3c45e59f"
+          },
+          "stages": [
+            {
+              "finished_at": "2026-09-19T22:24:29.9377978Z",
+              "exit_code": 0,
+              "output": "encoding-comparison-local-v2",
+              "manifest_status": "incomplete",
+              "output_path": "D:\\Development\\mnemos\\mnemos\\.worktrees\\functional-local-memory\\docs\\validation\\2026-09-19\\encoding-comparison-local-v2",
+              "work": "mnemos-encoding-comparison-local-v2",
+              "status": "finished_incomplete",
+              "work_path": "C:\\Users\\Ant\\AppData\\Local\\Temp\\mnemos-encoding-comparison-local-v2",
+              "started_at": "2026-09-19T19:50:51.9017369Z",
+              "name": "encoding",
+              "protocol_sha": "f403c5d49352a649a59a8aad38953a8f94699e0aa00596b35e32f617ff7520bf",
+              "protocol": "2026-09-18-encoding-comparison-protocol-v1.md",
+              "terminal": "incomplete",
+              "module": "encoding_comparator_run",
+              "command": [
+                "D:\\Development\\mnemos\\mnemos\\.worktrees\\functional-local-memory\\.venv\\Scripts\\python.exe",
+                "-u",
+                "-m",
+                "benchmarks.local_memory.encoding_comparator_run",
+                "--dataset",
+                "C:\\Users\\Ant\\AppData\\Local\\Temp\\mnemos-source-retrieval-comparison-v1\\benchmarks\\local_memory\\datasets\\local-memory-heldout-v3.jsonl",
+                "--protocol",
+                "C:\\Users\\Ant\\AppData\\Local\\Temp\\mnemos-source-retrieval-comparison-v1\\docs\\plans\\2026-09-18-encoding-comparison-protocol-v1.md",
+                "--output-dir",
+                "D:\\Development\\mnemos\\mnemos\\.worktrees\\functional-local-memory\\docs\\validation\\2026-09-19\\encoding-comparison-local-v2",
+                "--work-dir",
+                "C:\\Users\\Ant\\AppData\\Local\\Temp\\mnemos-encoding-comparison-local-v2",
+                "--endpoint",
+                "http://127.0.0.1:11434",
+                "--model",
+                "qwen3.5:9b",
+                "--embedding-model",
+                "nomic-embed-text:latest",
+                "--repetitions",
+                "3",
+                "--think",
+                "false"
+              ]
+            },
+            {
+              "finished_at": "2026-09-19T23:38:37.1516294Z",
+              "exit_code": 0,
+              "output": "retrieval-comparison-local-v2",
+              "manifest_status": "incomplete",
+              "output_path": "D:\\Development\\mnemos\\mnemos\\.worktrees\\functional-local-memory\\docs\\validation\\2026-09-19\\retrieval-comparison-local-v2",
+              "work": "mnemos-retrieval-comparison-local-v2",
+              "status": "finished_incomplete",
+              "work_path": "C:\\Users\\Ant\\AppData\\Local\\Temp\\mnemos-retrieval-comparison-local-v2",
+              "started_at": "2026-09-19T22:24:30.2217397Z",
+              "name": "retrieval",
+              "protocol_sha": "3220dda551ddaf2774296107f2c8872ee7a7db99c71d05f8096ca46aaf3aa1ec",
+              "protocol": "2026-09-18-retrieval-comparison-protocol-v1.md",
+              "terminal": "incomplete",
+              "module": "retrieval_comparison_run",
+              "command": [
+                "D:\\Development\\mnemos\\mnemos\\.worktrees\\functional-local-memory\\.venv\\Scripts\\python.exe",
+                "-u",
+                "-m",
+                "benchmarks.local_memory.retrieval_comparison_run",
+                "--dataset",
+                "C:\\Users\\Ant\\AppData\\Local\\Temp\\mnemos-source-retrieval-comparison-v1\\benchmarks\\local_memory\\datasets\\local-memory-heldout-v3.jsonl",
+                "--protocol",
+                "C:\\Users\\Ant\\AppData\\Local\\Temp\\mnemos-source-retrieval-comparison-v1\\docs\\plans\\2026-09-18-retrieval-comparison-protocol-v1.md",
+                "--output-dir",
+                "D:\\Development\\mnemos\\mnemos\\.worktrees\\functional-local-memory\\docs\\validation\\2026-09-19\\retrieval-comparison-local-v2",
+                "--work-dir",
+                "C:\\Users\\Ant\\AppData\\Local\\Temp\\mnemos-retrieval-comparison-local-v2",
+                "--endpoint",
+                "http://127.0.0.1:11434",
+                "--model",
+                "qwen3.5:9b",
+                "--embedding-model",
+                "nomic-embed-text:latest",
+                "--repetitions",
+                "3",
+                "--think",
+                "false"
+              ]
+            }
+          ],
+          "snapshot": "C:\\Users\\Ant\\AppData\\Local\\Temp\\mnemos-source-retrieval-comparison-v1",
+          "started_at": "2026-09-19T19:50:51.7355693Z",
+          "dataset_sha256": "036fa51ee13271a85a14a62a2fe4ef65d13eaeb290331fe325aa5bf32ce893fc",
+          "original_failed_run_preserved": true,
+          "source_commit": "fc72cc251aeafa161a1a390269b8dfa34d83cf2b",
+          "settings": {
+            "max_context_tokens": 1200,
+            "temperature": 0.0,
+            "model": "qwen3.5:9b",
+            "top_k": 5,
+            "repetitions": 3,
+            "think": false,
+            "max_tokens": 512,
+            "timeout_seconds": 120,
+            "embedding_model": "nomic-embed-text:latest"
+          },
+          "endpoint": "http://127.0.0.1:11434"
+        },
+        "excluded_pids": [
+          46060,
+          19836,
+          68804
+        ]
+      },
+      "models": {
+        "mnemos-native-qwen35-9b:greedy-ctx64k-v2": "87bc5156d86918e0435431ab0286167a4c79c4a4a259b82fba5f3f75022006e2",
+        "qwen3.5:9b": "6488c96fa5faab64bb65cbd30d4289e20e6130ef535a93ef9a49f42eda893ea7",
+        "nomic-embed-text:latest": "0a109f422b47e3a30ba2b10eca18548e944e8a23073ee3f3e947efcf3c45e59f"
+      },
+      "ollama_version": {
+        "version": "0.34.1"
+      },
+      "service_config": {
+        "modules": {
+          "surprisal": false,
+          "mutable_rag": false,
+          "affective": false,
+          "sleep": false,
+          "spreading": false
+        },
+        "retrieval": {
+          "profile": "baseline",
+          "affective_enabled": true,
+          "spreading_enabled": true,
+          "relevance_floor": 0.2,
+          "graph_weight": 0.1,
+          "max_candidates": 100
+        },
+        "surprisal": {
+          "threshold": 0.3,
+          "prediction_model": "llama3",
+          "embedding_dim": 768,
+          "history_window": 10,
+          "min_content_length": 10
+        },
+        "mutable_rag": {
+          "enabled": true,
+          "staleness_check_prompt": "You are a memory maintenance agent. A user's stored memory says:\n\"{content}\"\n\nNew context from the conversation:\n\"{context}\"\n\nHas this stored memory become outdated, contradicted, or significantly changed based on the new context? Reply with exactly one of:\n- UNCHANGED: if the memory is still accurate\n- CHANGED: <updated version of the memory>\n\nBe conservative: only mark CHANGED if there is a clear contradiction or significant update.",
+          "max_labile_chunks": 20,
+          "reconsolidation_cooldown_seconds": 60
+        },
+        "affective": {
+          "weight_similarity": 0.7,
+          "weight_state": 0.3,
+          "classifier_model": "llama3",
+          "classifier_prompt": "Analyze the emotional/cognitive state expressed in this text and score it on three dimensions. Reply ONLY with three floats separated by commas:\nvalence (-1.0 to 1.0, negative to positive), arousal (0.0 to 1.0, calm to urgent), complexity (0.0 to 1.0, simple to complex)\n\nText: \"{content}\"\n\nExample reply: 0.3, 0.7, 0.5"
+        },
+        "sleep": {
+          "consolidation_interval_seconds": 3600,
+          "min_episodes_before_consolidation": 10,
+          "enable_proceduralization": false,
+          "consolidation_prompt": "You are a memory consolidation agent. Below is a sequence of conversation episodes from a user session:\n\n{episodes}\n\nExtract permanent facts, user preferences, behavioral patterns, and important information that should be retained long-term. Format your response as a numbered list of distinct facts, one per line. Be concise and specific. Omit transient information.",
+          "proceduralization_prompt": "You are analyzing conversation logs to identify repeated reasoning patterns that could be automated. Review these episodes:\n\n{episodes}\n\nIf you identify a clearly repeated task pattern (appearing 3+ times), write a complete, executable Python function that automates it. If no clear pattern exists, reply with 'NO_PATTERN'. Return ONLY valid Python code or 'NO_PATTERN'.",
+          "max_episodes_per_consolidation": 100,
+          "recall_gated_plasticity_enabled": false,
+          "recall_min_supporting_episodes": 2,
+          "recall_similarity_threshold": 0.82
+        },
+        "spreading": {
+          "initial_energy": 1.0,
+          "decay_rate": 0.2,
+          "activation_threshold": 0.3,
+          "max_hops": 3,
+          "max_visited": 1000,
+          "auto_connect_threshold": 0.6,
+          "max_neighbors_per_node": 4,
+          "natural_decay_rate": 0.05,
+          "hydrate_on_startup": true,
+          "startup_hydration_limit": 5000,
+          "startup_auto_connect": false
+        },
+        "safety": {
+          "enabled": true,
+          "secret_action": "block",
+          "pii_action": "redact"
+        },
+        "governance": {
+          "capture_mode": "all",
+          "retention_ttl_days": 0,
+          "max_chunks_per_scope": 0
+        },
+        "debug": false
+      },
+      "service_providers": {
+        "cognition": "UnavailableLLMProvider",
+        "embeddings": "OllamaEmbeddingProvider/nomic-embed-text",
+        "automatic_capture": true
+      },
+      "model_readiness": {
+        "status": "ready",
+        "model": "mnemos-native-qwen35-9b:greedy-ctx64k-v2",
+        "expected_digest": "87bc5156d86918e0435431ab0286167a4c79c4a4a259b82fba5f3f75022006e2",
+        "context_length": 65536,
+        "endpoint": "http://127.0.0.1:11434/v1/chat/completions",
+        "started_at": "2026-09-20T06:58:35.216777+00:00",
+        "http_attempts": [
+          {
+            "route": "version",
+            "request": null,
+            "url": "http://127.0.0.1:11434/api/version",
+            "method": "GET",
+            "request_bytes_file": "http-001.request",
+            "started_at": "2026-09-20T06:58:35.217646+00:00",
+            "timeout_seconds": 10,
+            "status_code": 200,
+            "finished_at": "2026-09-20T06:58:35.218951+00:00",
+            "duration_seconds": 0.0013225000002421439,
+            "body_file": "http-001.body"
+          },
+          {
+            "route": "tags",
+            "request": null,
+            "url": "http://127.0.0.1:11434/api/tags",
+            "method": "GET",
+            "request_bytes_file": "http-002.request",
+            "started_at": "2026-09-20T06:58:35.220629+00:00",
+            "timeout_seconds": 10,
+            "status_code": 200,
+            "finished_at": "2026-09-20T06:58:35.289723+00:00",
+            "duration_seconds": 0.06911019998369738,
+            "body_file": "http-002.body"
+          },
+          {
+            "route": "show",
+            "request": {
+              "model": "mnemos-native-qwen35-9b:greedy-ctx64k-v2"
+            },
+            "url": "http://127.0.0.1:11434/api/show",
+            "method": "POST",
+            "request_bytes_file": "http-003.request",
+            "started_at": "2026-09-20T06:58:35.291129+00:00",
+            "timeout_seconds": 10,
+            "status_code": 200,
+            "finished_at": "2026-09-20T06:58:35.325092+00:00",
+            "duration_seconds": 0.033985699992626905,
+            "body_file": "http-003.body"
+          },
+          {
+            "route": "ps",
+            "request": null,
+            "url": "http://127.0.0.1:11434/api/ps",
+            "method": "GET",
+            "request_bytes_file": "http-004.request",
+            "started_at": "2026-09-20T06:58:35.326449+00:00",
+            "timeout_seconds": 10,
+            "status_code": 200,
+            "finished_at": "2026-09-20T06:58:35.327661+00:00",
+            "duration_seconds": 0.0012248000130057335,
+            "body_file": "http-004.body"
+          },
+          {
+            "route": "chat",
+            "request": {
+              "model": "mnemos-native-qwen35-9b:greedy-ctx64k-v2",
+              "messages": [
+                {
+                  "role": "user",
+                  "content": "Reply with READY."
+                }
+              ],
+              "stream": false,
+              "think": false,
+              "max_tokens": 16,
+              "reasoning_effort": "none"
+            },
+            "url": "http://127.0.0.1:11434/v1/chat/completions",
+            "method": "POST",
+            "request_bytes_file": "http-005.request",
+            "started_at": "2026-09-20T06:58:35.328913+00:00",
+            "timeout_seconds": 180,
+            "status_code": 200,
+            "finished_at": "2026-09-20T06:58:36.073337+00:00",
+            "duration_seconds": 0.744449199992232,
+            "body_file": "http-005.body"
+          },
+          {
+            "route": "ps",
+            "request": null,
+            "url": "http://127.0.0.1:11434/api/ps",
+            "method": "GET",
+            "request_bytes_file": "http-006.request",
+            "started_at": "2026-09-20T06:58:36.074873+00:00",
+            "timeout_seconds": 10,
+            "status_code": 200,
+            "finished_at": "2026-09-20T06:58:36.076277+00:00",
+            "duration_seconds": 0.0014665999915450811,
+            "body_file": "http-006.body"
+          },
+          {
+            "route": "tags",
+            "request": null,
+            "url": "http://127.0.0.1:11434/api/tags",
+            "method": "GET",
+            "request_bytes_file": "http-007.request",
+            "started_at": "2026-09-20T06:58:36.077898+00:00",
+            "timeout_seconds": 10,
+            "status_code": 200,
+            "finished_at": "2026-09-20T06:58:36.151861+00:00",
+            "duration_seconds": 0.07397770002717152,
+            "body_file": "http-007.body"
+          }
+        ],
+        "version": {
+          "version": "0.34.1"
+        },
+        "tags_before": {
+          "models": [
+            {
+              "name": "mnemos-native-qwen35-9b:greedy-ctx64k-v2",
+              "model": "mnemos-native-qwen35-9b:greedy-ctx64k-v2",
+              "modified_at": "2026-09-20T02:02:21.65603-04:00",
+              "size": 6594474437,
+              "digest": "87bc5156d86918e0435431ab0286167a4c79c4a4a259b82fba5f3f75022006e2",
+              "details": {
+                "parent_model": "mnemos-native-qwen35-9b:greedy-v1",
+                "format": "gguf",
+                "family": "qwen35",
+                "families": [
+                  "qwen35"
+                ],
+                "parameter_size": "9.7B",
+                "quantization_level": "Q4_K_M",
+                "context_length": 262144,
+                "embedding_length": 4096
+              },
+              "capabilities": [
+                "completion",
+                "vision",
+                "tools",
+                "thinking"
+              ]
+            },
+            {
+              "name": "gpt-oss:20b",
+              "model": "gpt-oss:20b",
+              "modified_at": "2026-09-19T23:14:26.426297-04:00",
+              "size": 13793441244,
+              "digest": "17052f91a42e97930aa6e28a6c6c06a983e6a58dbb00434885a0cf5313e376f7",
+              "details": {
+                "parent_model": "",
+                "format": "gguf",
+                "family": "gptoss",
+                "families": [
+                  "gptoss"
+                ],
+                "parameter_size": "20.9B",
+                "quantization_level": "MXFP4",
+                "context_length": 131072,
+                "embedding_length": 2880
+              },
+              "capabilities": [
+                "completion",
+                "tools",
+                "thinking"
+              ]
+            },
+            {
+              "name": "mnemos-gptoss20b-before-refresh:20260919-v1",
+              "model": "mnemos-gptoss20b-before-refresh:20260919-v1",
+              "modified_at": "2026-09-19T23:03:57.9061378-04:00",
+              "size": 13780173724,
+              "digest": "aa4295ac10c3afb60e6d711289fc6896f5aef82258997b9efdaed6d0cc4cd8b8",
+              "details": {
+                "parent_model": "/Users/ollama/.ollama/models/blobs/sha256-b112e727c6f18875636c56a779790a590d705aec9e1c0eb5a97d51fc2a778583",
+                "format": "gguf",
+                "family": "gptoss",
+                "families": [
+                  "gptoss"
+                ],
+                "parameter_size": "20.9B",
+                "quantization_level": "MXFP4"
+              },
+              "capabilities": [
+                "completion",
+                "tools",
+                "thinking"
+              ]
+            },
+            {
+              "name": "mnemos-native-qwen35-9b:greedy-v1",
+              "model": "mnemos-native-qwen35-9b:greedy-v1",
+              "modified_at": "2026-09-19T20:18:48.3532887-04:00",
+              "size": 6594474421,
+              "digest": "243c7dc812e847df8f175763c8e91b6daa88483f141957b76f9e9722e8d526a5",
+              "details": {
+                "parent_model": "qwen3.5:9b",
+                "format": "gguf",
+                "family": "qwen35",
+                "families": [
+                  "qwen35"
+                ],
+                "parameter_size": "9.7B",
+                "quantization_level": "Q4_K_M",
+                "context_length": 262144,
+                "embedding_length": 4096
+              },
+              "capabilities": [
+                "completion",
+                "vision",
+                "tools",
+                "thinking"
+              ]
+            },
+            {
+              "name": "nomic-embed-text:latest",
+              "model": "nomic-embed-text:latest",
+              "modified_at": "2026-09-18T15:38:50.3313315-04:00",
+              "size": 274302450,
+              "digest": "0a109f422b47e3a30ba2b10eca18548e944e8a23073ee3f3e947efcf3c45e59f",
+              "details": {
+                "parent_model": "",
+                "format": "gguf",
+                "family": "nomic-bert",
+                "families": [
+                  "nomic-bert"
+                ],
+                "parameter_size": "137M",
+                "quantization_level": "F16",
+                "context_length": 2048,
+                "embedding_length": 768
+              },
+              "capabilities": [
+                "embedding"
+              ]
+            },
+            {
+              "name": "qwen3.5:9b",
+              "model": "qwen3.5:9b",
+              "modified_at": "2026-09-18T15:38:31.3310652-04:00",
+              "size": 6594474711,
+              "digest": "6488c96fa5faab64bb65cbd30d4289e20e6130ef535a93ef9a49f42eda893ea7",
+              "details": {
+                "parent_model": "",
+                "format": "gguf",
+                "family": "qwen35",
+                "families": [
+                  "qwen35"
+                ],
+                "parameter_size": "9.7B",
+                "quantization_level": "Q4_K_M",
+                "context_length": 262144,
+                "embedding_length": 4096
+              },
+              "capabilities": [
+                "completion",
+                "vision",
+                "tools",
+                "thinking"
+              ]
+            },
+            {
+              "name": "qwen2.5:7b",
+              "model": "qwen2.5:7b",
+              "modified_at": "2026-01-29T16:53:39.6378873-05:00",
+              "size": 4683087332,
+              "digest": "845dbda0ea48ed749caafd9e6037047aa19acfcfd82e704d7ca97d631a0b697e",
+              "details": {
+                "parent_model": "",
+                "format": "gguf",
+                "family": "qwen2",
+                "families": [
+                  "qwen2"
+                ],
+                "parameter_size": "7.6B",
+                "quantization_level": "Q4_K_M",
+                "context_length": 32768,
+                "embedding_length": 3584
+              },
+              "capabilities": [
+                "completion",
+                "tools"
+              ]
+            },
+            {
+              "name": "anthony-maio/remnantinstruct-8b:latest",
+              "model": "anthony-maio/remnantinstruct-8b:latest",
+              "modified_at": "2026-01-27T23:46:24.269713-05:00",
+              "size": 5027784917,
+              "digest": "49bd0a32d5fef3e2eb4a8e20f8c0885e60965950f532304233a21cd9872c0f89",
+              "details": {
+                "parent_model": "D:\\OllamaModels\\blobs\\sha256-6648ab37397b78161dbef10eaee971c3887b9bc08c2c7e5c24392a0cd025e3e6",
+                "format": "gguf",
+                "family": "qwen3",
+                "families": [
+                  "qwen3"
+                ],
+                "parameter_size": "8.2B",
+                "quantization_level": "Q4_K_M",
+                "context_length": 40960,
+                "embedding_length": 4096
+              },
+              "capabilities": [
+                "tools",
+                "thinking",
+                "completion"
+              ]
+            },
+            {
+              "name": "anthonym21/remnantinstruct-8b:latest",
+              "model": "anthonym21/remnantinstruct-8b:latest",
+              "modified_at": "2026-01-26T11:37:14.2243502-05:00",
+              "size": 5027784917,
+              "digest": "49bd0a32d5fef3e2eb4a8e20f8c0885e60965950f532304233a21cd9872c0f89",
+              "details": {
+                "parent_model": "D:\\OllamaModels\\blobs\\sha256-6648ab37397b78161dbef10eaee971c3887b9bc08c2c7e5c24392a0cd025e3e6",
+                "format": "gguf",
+                "family": "qwen3",
+                "families": [
+                  "qwen3"
+                ],
+                "parameter_size": "8.2B",
+                "quantization_level": "Q4_K_M",
+                "context_length": 40960,
+                "embedding_length": 4096
+              },
+              "capabilities": [
+                "tools",
+                "thinking",
+                "completion"
+              ]
+            },
+            {
+              "name": "qwen3:30b",
+              "model": "qwen3:30b",
+              "modified_at": "2025-09-17T00:08:17.2492434-04:00",
+              "size": 18556699301,
+              "digest": "e50831eb2d919df6268f18bc3cec980d597ae27e98c3308f90a0ec4941b64f28",
+              "details": {
+                "parent_model": "",
+                "format": "gguf",
+                "family": "qwen3moe",
+                "families": [
+                  "qwen3moe"
+                ],
+                "parameter_size": "30.5B",
+                "quantization_level": "Q4_K_M",
+                "context_length": 262144,
+                "embedding_length": 2048
+              },
+              "capabilities": [
+                "completion",
+                "tools",
+                "thinking"
+              ]
+            },
+            {
+              "name": "deepseek-r1:8b",
+              "model": "deepseek-r1:8b",
+              "modified_at": "2025-09-13T22:01:39.4549293-04:00",
+              "size": 5225376047,
+              "digest": "6995872bfe4c521a67b32da386cd21d5c6e819b6e0d62f79f64ec83be99f5763",
+              "details": {
+                "parent_model": "",
+                "format": "gguf",
+                "family": "qwen3",
+                "families": [
+                  "qwen3"
+                ],
+                "parameter_size": "8.2B",
+                "quantization_level": "Q4_K_M",
+                "context_length": 131072,
+                "embedding_length": 4096
+              },
+              "capabilities": [
+                "tools",
+                "thinking",
+                "completion"
+              ]
+            },
+            {
+              "name": "qwen2.5:14b",
+              "model": "qwen2.5:14b",
+              "modified_at": "2025-09-12T05:33:27.1047131-04:00",
+              "size": 8988124069,
+              "digest": "7cdf5a0187d5c58cc5d369b255592f7841d1c4696d45a8c8a9489440385b22f6",
+              "details": {
+                "parent_model": "",
+                "format": "gguf",
+                "family": "qwen2",
+                "families": [
+                  "qwen2"
+                ],
+                "parameter_size": "14.8B",
+                "quantization_level": "Q4_K_M",
+                "context_length": 32768,
+                "embedding_length": 5120
+              },
+              "capabilities": [
+                "completion",
+                "tools"
+              ]
+            },
+            {
+              "name": "gemma3:27b",
+              "model": "gemma3:27b",
+              "modified_at": "2025-09-11T19:16:10.1369476-04:00",
+              "size": 17396936941,
+              "digest": "a418f5838eaf7fe2cfe0a3046c8384b68ba43a4435542c942f9db00a5f342203",
+              "details": {
+                "parent_model": "",
+                "format": "gguf",
+                "family": "gemma3",
+                "families": [
+                  "gemma3"
+                ],
+                "parameter_size": "27.4B",
+                "quantization_level": "Q4_K_M",
+                "context_length": 131072,
+                "embedding_length": 5376
+              },
+              "capabilities": [
+                "completion",
+                "vision"
+              ]
+            },
+            {
+              "name": "gemma3:12B",
+              "model": "gemma3:12B",
+              "modified_at": "2025-09-10T15:29:15.9047568-04:00",
+              "size": 8149190253,
+              "digest": "f4031aab637d1ffa37b42570452ae0e4fad0314754d17ded67322e4b95836f8a",
+              "details": {
+                "parent_model": "",
+                "format": "gguf",
+                "family": "gemma3",
+                "families": [
+                  "gemma3"
+                ],
+                "parameter_size": "12.2B",
+                "quantization_level": "Q4_K_M",
+                "context_length": 131072,
+                "embedding_length": 3840
+              },
+              "capabilities": [
+                "completion",
+                "vision"
+              ]
+            },
+            {
+              "name": "gemma3:4b",
+              "model": "gemma3:4b",
+              "modified_at": "2025-09-10T03:20:03.9386803-04:00",
+              "size": 3338801804,
+              "digest": "a2af6cc3eb7fa8be8504abaf9b04e88f17a119ec3f04a3addf55f92841195f5a",
+              "details": {
+                "parent_model": "",
+                "format": "gguf",
+                "family": "gemma3",
+                "families": [
+                  "gemma3"
+                ],
+                "parameter_size": "4.3B",
+                "quantization_level": "Q4_K_M",
+                "context_length": 131072,
+                "embedding_length": 2560
+              },
+              "capabilities": [
+                "completion",
+                "vision"
+              ]
+            },
+            {
+              "name": "gemma3:1b",
+              "model": "gemma3:1b",
+              "modified_at": "2025-09-10T03:18:13.3797485-04:00",
+              "size": 815319791,
+              "digest": "8648f39daa8fbf5b18c7b4e6a8fb4990c692751d49917417b8842ca5758e7ffc",
+              "details": {
+                "parent_model": "",
+                "format": "gguf",
+                "family": "gemma3",
+                "families": [
+                  "gemma3"
+                ],
+                "parameter_size": "999.89M",
+                "quantization_level": "Q4_K_M",
+                "context_length": 32768,
+                "embedding_length": 1152
+              },
+              "capabilities": [
+                "completion"
+              ]
+            }
+          ]
+        },
+        "show": {
+          "license": "                                Apache License\n                           Version 2.0, January 2004\n                        http://www.apache.org/licenses/\n\n   TERMS AND CONDITIONS FOR USE, REPRODUCTION, AND DISTRIBUTION\n\n   1. Definitions.\n\n      \"License\" shall mean the terms and conditions for use, reproduction,\n      and distribution as defined by Sections 1 through 9 of this document.\n\n      \"Licensor\" shall mean the copyright owner or entity authorized by\n      the copyright owner that is granting the License.\n\n      \"Legal Entity\" shall mean the union of the acting entity and all\n      other entities that control, are controlled by, or are under common\n      control with that entity. For the purposes of this definition,\n      \"control\" means (i) the power, direct or indirect, to cause the\n      direction or management of such entity, whether by contract or\n      otherwise, or (ii) ownership of fifty percent (50%) or more of the\n      outstanding shares, or (iii) beneficial ownership of such entity.\n\n      \"You\" (or \"Your\") shall mean an individual or Legal Entity\n      exercising permissions granted by this License.\n\n      \"Source\" form shall mean the preferred form for making modifications,\n      including but not limited to software source code, documentation\n      source, and configuration files.\n\n      \"Object\" form shall mean any form resulting from mechanical\n      transformation or translation of a Source form, including but\n      not limited to compiled object code, generated documentation,\n      and conversions to other media types.\n\n      \"Work\" shall mean the work of authorship, whether in Source or\n      Object form, made available under the License, as indicated by a\n      copyright notice that is included in or attached to the work\n      (an example is provided in the Appendix below).\n\n      \"Derivative Works\" shall mean any work, whether in Source or Object\n      form, that is based on (or derived from) the Work and for which the\n      editorial revisions, annotations, elaborations, or other modifications\n      represent, as a whole, an original work of authorship. For the purposes\n      of this License, Derivative Works shall not include works that remain\n      separable from, or merely link (or bind by name) to the interfaces of,\n      the Work and Derivative Works thereof.\n\n      \"Contribution\" shall mean any work of authorship, including\n      the original version of the Work and any modifications or additions\n      to that Work or Derivative Works thereof, that is intentionally\n      submitted to Licensor for inclusion in the Work by the copyright owner\n      or by an individual or Legal Entity authorized to submit on behalf of\n      the copyright owner. For the purposes of this definition, \"submitted\"\n      means any form of electronic, verbal, or written communication sent\n      to the Licensor or its representatives, including but not limited to\n      communication on electronic mailing lists, source code control systems,\n      and issue tracking systems that are managed by, or on behalf of, the\n      Licensor for the purpose of discussing and improving the Work, but\n      excluding communication that is conspicuously marked or otherwise\n      designated in writing by the copyright owner as \"Not a Contribution.\"\n\n      \"Contributor\" shall mean Licensor and any individual or Legal Entity\n      on behalf of whom a Contribution has been received by Licensor and\n      subsequently incorporated within the Work.\n\n   2. Grant of Copyright License. Subject to the terms and conditions of\n      this License, each Contributor hereby grants to You a perpetual,\n      worldwide, non-exclusive, no-charge, royalty-free, irrevocable\n      copyright license to reproduce, prepare Derivative Works of,\n      publicly display, publicly perform, sublicense, and distribute the\n      Work and such Derivative Works in Source or Object form.\n\n   3. Grant of Patent License. Subject to the terms and conditions of\n      this License, each Contributor hereby grants to You a perpetual,\n      worldwide, non-exclusive, no-charge, royalty-free, irrevocable\n      (except as stated in this section) patent license to make, have made,\n      use, offer to sell, sell, import, and otherwise transfer the Work,\n      where such license applies only to those patent claims licensable\n      by such Contributor that are necessarily infringed by their\n      Contribution(s) alone or by combination of their Contribution(s)\n      with the Work to which such Contribution(s) was submitted. If You\n      institute patent litigation against any entity (including a\n      cross-claim or counterclaim in a lawsuit) alleging that the Work\n      or a Contribution incorporated within the Work constitutes direct\n      or contributory patent infringement, then any patent licenses\n      granted to You under this License for that Work shall terminate\n      as of the date such litigation is filed.\n\n   4. Redistribution. You may reproduce and distribute copies of the\n      Work or Derivative Works thereof in any medium, with or without\n      modifications, and in Source or Object form, provided that You\n      meet the following conditions:\n\n      (a) You must give any other recipients of the Work or\n          Derivative Works a copy of this License; and\n\n      (b) You must cause any modified files to carry prominent notices\n          stating that You changed the files; and\n\n      (c) You must retain, in the Source form of any Derivative Works\n          that You distribute, all copyright, patent, trademark, and\n          attribution notices from the Source form of the Work,\n          excluding those notices that do not pertain to any part of\n          the Derivative Works; and\n\n      (d) If the Work includes a \"NOTICE\" text file as part of its\n          distribution, then any Derivative Works that You distribute must\n          include a readable copy of the attribution notices contained\n          within such NOTICE file, excluding those notices that do not\n          pertain to any part of the Derivative Works, in at least one\n          of the following places: within a NOTICE text file distributed\n          as part of the Derivative Works; within the Source form or\n          documentation, if provided along with the Derivative Works; or,\n          within a display generated by the Derivative Works, if and\n          wherever such third-party notices normally appear. The contents\n          of the NOTICE file are for informational purposes only and\n          do not modify the License. You may add Your own attribution\n          notices within Derivative Works that You distribute, alongside\n          or as an addendum to the NOTICE text from the Work, provided\n          that such additional attribution notices cannot be construed\n          as modifying the License.\n\n      You may add Your own copyright statement to Your modifications and\n      may provide additional or different license terms and conditions\n      for use, reproduction, or distribution of Your modifications, or\n      for any such Derivative Works as a whole, provided Your use,\n      reproduction, and distribution of the Work otherwise complies with\n      the conditions stated in this License.\n\n   5. Submission of Contributions. Unless You explicitly state otherwise,\n      any Contribution intentionally submitted for inclusion in the Work\n      by You to the Licensor shall be under the terms and conditions of\n      this License, without any additional terms or conditions.\n      Notwithstanding the above, nothing herein shall supersede or modify\n      the terms of any separate license agreement you may have executed\n      with Licensor regarding such Contributions.\n\n   6. Trademarks. This License does not grant permission to use the trade\n      names, trademarks, service marks, or product names of the Licensor,\n      except as required for reasonable and customary use in describing the\n      origin of the Work and reproducing the content of the NOTICE file.\n\n   7. Disclaimer of Warranty. Unless required by applicable law or\n      agreed to in writing, Licensor provides the Work (and each\n      Contributor provides its Contributions) on an \"AS IS\" BASIS,\n      WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or\n      implied, including, without limitation, any warranties or conditions\n      of TITLE, NON-INFRINGEMENT, MERCHANTABILITY, or FITNESS FOR A\n      PARTICULAR PURPOSE. You are solely responsible for determining the\n      appropriateness of using or redistributing the Work and assume any\n      risks associated with Your exercise of permissions under this License.\n\n   8. Limitation of Liability. In no event and under no legal theory,\n      whether in tort (including negligence), contract, or otherwise,\n      unless required by applicable law (such as deliberate and grossly\n      negligent acts) or agreed to in writing, shall any Contributor be\n      liable to You for damages, including any direct, indirect, special,\n      incidental, or consequential damages of any character arising as a\n      result of this License or out of the use or inability to use the\n      Work (including but not limited to damages for loss of goodwill,\n      work stoppage, computer failure or malfunction, or any and all\n      other commercial damages or losses), even if such Contributor\n      has been advised of the possibility of such damages.\n\n   9. Accepting Warranty or Additional Liability. While redistributing\n      the Work or Derivative Works thereof, You may choose to offer,\n      and charge a fee for, acceptance of support, warranty, indemnity,\n      or other liability obligations and/or rights consistent with this\n      License. However, in accepting such obligations, You may act only\n      on Your own behalf and on Your sole responsibility, not on behalf\n      of any other Contributor, and only if You agree to indemnify,\n      defend, and hold each Contributor harmless for any liability\n      incurred by, or claims asserted against, such Contributor by reason\n      of your accepting any such warranty or additional liability.\n\n   END OF TERMS AND CONDITIONS\n\n   APPENDIX: How to apply the Apache License to your work.\n\n      To apply the Apache License to your work, attach the following\n      boilerplate notice, with the fields enclosed by brackets \"[]\"\n      replaced with your own identifying information. (Don't include\n      the brackets!)  The text should be enclosed in the appropriate\n      comment syntax for the file format. We also recommend that a\n      file or class name and description of purpose be included on the\n      same \"printed page\" as the copyright notice for easier\n      identification within third-party archives.\n\n   Copyright [yyyy] [name of copyright owner]\n\n   Licensed under the Apache License, Version 2.0 (the \"License\");\n   you may not use this file except in compliance with the License.\n   You may obtain a copy of the License at\n\n       http://www.apache.org/licenses/LICENSE-2.0\n\n   Unless required by applicable law or agreed to in writing, software\n   distributed under the License is distributed on an \"AS IS\" BASIS,\n   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.\n   See the License for the specific language governing permissions and\n   limitations under the License.",
+          "modelfile": "# Modelfile generated by \"ollama show\"\n# To build a new Modelfile based on this, replace FROM with:\n# FROM mnemos-native-qwen35-9b:greedy-ctx64k-v2\n\nFROM D:\\OllamaModels\\blobs\\sha256-dec52a44569a2a25341c4e4d3fee25846eed4f6f0b936278e3a3c900bb99d37c\nTEMPLATE {{ .Prompt }}\nRENDERER qwen3.5\nPARSER qwen3.5\nPARAMETER num_ctx 65536\nPARAMETER presence_penalty 0\nPARAMETER seed 42\nPARAMETER temperature 0\nPARAMETER top_k 20\nPARAMETER top_p 0.95\nLICENSE \"\"\"                                Apache License\n                           Version 2.0, January 2004\n                        http://www.apache.org/licenses/\n\n   TERMS AND CONDITIONS FOR USE, REPRODUCTION, AND DISTRIBUTION\n\n   1. Definitions.\n\n      \"License\" shall mean the terms and conditions for use, reproduction,\n      and distribution as defined by Sections 1 through 9 of this document.\n\n      \"Licensor\" shall mean the copyright owner or entity authorized by\n      the copyright owner that is granting the License.\n\n      \"Legal Entity\" shall mean the union of the acting entity and all\n      other entities that control, are controlled by, or are under common\n      control with that entity. For the purposes of this definition,\n      \"control\" means (i) the power, direct or indirect, to cause the\n      direction or management of such entity, whether by contract or\n      otherwise, or (ii) ownership of fifty percent (50%) or more of the\n      outstanding shares, or (iii) beneficial ownership of such entity.\n\n      \"You\" (or \"Your\") shall mean an individual or Legal Entity\n      exercising permissions granted by this License.\n\n      \"Source\" form shall mean the preferred form for making modifications,\n      including but not limited to software source code, documentation\n      source, and configuration files.\n\n      \"Object\" form shall mean any form resulting from mechanical\n      transformation or translation of a Source form, including but\n      not limited to compiled object code, generated documentation,\n      and conversions to other media types.\n\n      \"Work\" shall mean the work of authorship, whether in Source or\n      Object form, made available under the License, as indicated by a\n      copyright notice that is included in or attached to the work\n      (an example is provided in the Appendix below).\n\n      \"Derivative Works\" shall mean any work, whether in Source or Object\n      form, that is based on (or derived from) the Work and for which the\n      editorial revisions, annotations, elaborations, or other modifications\n      represent, as a whole, an original work of authorship. For the purposes\n      of this License, Derivative Works shall not include works that remain\n      separable from, or merely link (or bind by name) to the interfaces of,\n      the Work and Derivative Works thereof.\n\n      \"Contribution\" shall mean any work of authorship, including\n      the original version of the Work and any modifications or additions\n      to that Work or Derivative Works thereof, that is intentionally\n      submitted to Licensor for inclusion in the Work by the copyright owner\n      or by an individual or Legal Entity authorized to submit on behalf of\n      the copyright owner. For the purposes of this definition, \"submitted\"\n      means any form of electronic, verbal, or written communication sent\n      to the Licensor or its representatives, including but not limited to\n      communication on electronic mailing lists, source code control systems,\n      and issue tracking systems that are managed by, or on behalf of, the\n      Licensor for the purpose of discussing and improving the Work, but\n      excluding communication that is conspicuously marked or otherwise\n      designated in writing by the copyright owner as \"Not a Contribution.\"\n\n      \"Contributor\" shall mean Licensor and any individual or Legal Entity\n      on behalf of whom a Contribution has been received by Licensor and\n      subsequently incorporated within the Work.\n\n   2. Grant of Copyright License. Subject to the terms and conditions of\n      this License, each Contributor hereby grants to You a perpetual,\n      worldwide, non-exclusive, no-charge, royalty-free, irrevocable\n      copyright license to reproduce, prepare Derivative Works of,\n      publicly display, publicly perform, sublicense, and distribute the\n      Work and such Derivative Works in Source or Object form.\n\n   3. Grant of Patent License. Subject to the terms and conditions of\n      this License, each Contributor hereby grants to You a perpetual,\n      worldwide, non-exclusive, no-charge, royalty-free, irrevocable\n      (except as stated in this section) patent license to make, have made,\n      use, offer to sell, sell, import, and otherwise transfer the Work,\n      where such license applies only to those patent claims licensable\n      by such Contributor that are necessarily infringed by their\n      Contribution(s) alone or by combination of their Contribution(s)\n      with the Work to which such Contribution(s) was submitted. If You\n      institute patent litigation against any entity (including a\n      cross-claim or counterclaim in a lawsuit) alleging that the Work\n      or a Contribution incorporated within the Work constitutes direct\n      or contributory patent infringement, then any patent licenses\n      granted to You under this License for that Work shall terminate\n      as of the date such litigation is filed.\n\n   4. Redistribution. You may reproduce and distribute copies of the\n      Work or Derivative Works thereof in any medium, with or without\n      modifications, and in Source or Object form, provided that You\n      meet the following conditions:\n\n      (a) You must give any other recipients of the Work or\n          Derivative Works a copy of this License; and\n\n      (b) You must cause any modified files to carry prominent notices\n          stating that You changed the files; and\n\n      (c) You must retain, in the Source form of any Derivative Works\n          that You distribute, all copyright, patent, trademark, and\n          attribution notices from the Source form of the Work,\n          excluding those notices that do not pertain to any part of\n          the Derivative Works; and\n\n      (d) If the Work includes a \"NOTICE\" text file as part of its\n          distribution, then any Derivative Works that You distribute must\n          include a readable copy of the attribution notices contained\n          within such NOTICE file, excluding those notices that do not\n          pertain to any part of the Derivative Works, in at least one\n          of the following places: within a NOTICE text file distributed\n          as part of the Derivative Works; within the Source form or\n          documentation, if provided along with the Derivative Works; or,\n          within a display generated by the Derivative Works, if and\n          wherever such third-party notices normally appear. The contents\n          of the NOTICE file are for informational purposes only and\n          do not modify the License. You may add Your own attribution\n          notices within Derivative Works that You distribute, alongside\n          or as an addendum to the NOTICE text from the Work, provided\n          that such additional attribution notices cannot be construed\n          as modifying the License.\n\n      You may add Your own copyright statement to Your modifications and\n      may provide additional or different license terms and conditions\n      for use, reproduction, or distribution of Your modifications, or\n      for any such Derivative Works as a whole, provided Your use,\n      reproduction, and distribution of the Work otherwise complies with\n      the conditions stated in this License.\n\n   5. Submission of Contributions. Unless You explicitly state otherwise,\n      any Contribution intentionally submitted for inclusion in the Work\n      by You to the Licensor shall be under the terms and conditions of\n      this License, without any additional terms or conditions.\n      Notwithstanding the above, nothing herein shall supersede or modify\n      the terms of any separate license agreement you may have executed\n      with Licensor regarding such Contributions.\n\n   6. Trademarks. This License does not grant permission to use the trade\n      names, trademarks, service marks, or product names of the Licensor,\n      except as required for reasonable and customary use in describing the\n      origin of the Work and reproducing the content of the NOTICE file.\n\n   7. Disclaimer of Warranty. Unless required by applicable law or\n      agreed to in writing, Licensor provides the Work (and each\n      Contributor provides its Contributions) on an \"AS IS\" BASIS,\n      WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or\n      implied, including, without limitation, any warranties or conditions\n      of TITLE, NON-INFRINGEMENT, MERCHANTABILITY, or FITNESS FOR A\n      PARTICULAR PURPOSE. You are solely responsible for determining the\n      appropriateness of using or redistributing the Work and assume any\n      risks associated with Your exercise of permissions under this License.\n\n   8. Limitation of Liability. In no event and under no legal theory,\n      whether in tort (including negligence), contract, or otherwise,\n      unless required by applicable law (such as deliberate and grossly\n      negligent acts) or agreed to in writing, shall any Contributor be\n      liable to You for damages, including any direct, indirect, special,\n      incidental, or consequential damages of any character arising as a\n      result of this License or out of the use or inability to use the\n      Work (including but not limited to damages for loss of goodwill,\n      work stoppage, computer failure or malfunction, or any and all\n      other commercial damages or losses), even if such Contributor\n      has been advised of the possibility of such damages.\n\n   9. Accepting Warranty or Additional Liability. While redistributing\n      the Work or Derivative Works thereof, You may choose to offer,\n      and charge a fee for, acceptance of support, warranty, indemnity,\n      or other liability obligations and/or rights consistent with this\n      License. However, in accepting such obligations, You may act only\n      on Your own behalf and on Your sole responsibility, not on behalf\n      of any other Contributor, and only if You agree to indemnify,\n      defend, and hold each Contributor harmless for any liability\n      incurred by, or claims asserted against, such Contributor by reason\n      of your accepting any such warranty or additional liability.\n\n   END OF TERMS AND CONDITIONS\n\n   APPENDIX: How to apply the Apache License to your work.\n\n      To apply the Apache License to your work, attach the following\n      boilerplate notice, with the fields enclosed by brackets \"[]\"\n      replaced with your own identifying information. (Don't include\n      the brackets!)  The text should be enclosed in the appropriate\n      comment syntax for the file format. We also recommend that a\n      file or class name and description of purpose be included on the\n      same \"printed page\" as the copyright notice for easier\n      identification within third-party archives.\n\n   Copyright [yyyy] [name of copyright owner]\n\n   Licensed under the Apache License, Version 2.0 (the \"License\");\n   you may not use this file except in compliance with the License.\n   You may obtain a copy of the License at\n\n       http://www.apache.org/licenses/LICENSE-2.0\n\n   Unless required by applicable law or agreed to in writing, software\n   distributed under the License is distributed on an \"AS IS\" BASIS,\n   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.\n   See the License for the specific language governing permissions and\n   limitations under the License.\"\"\"\n",
+          "parameters": "top_p                          0.95\nnum_ctx                        65536\npresence_penalty               0\nseed                           42\ntemperature                    0\ntop_k                          20",
+          "template": "{{ .Prompt }}",
+          "details": {
+            "parent_model": "mnemos-native-qwen35-9b:greedy-v1",
+            "format": "gguf",
+            "family": "qwen35",
+            "families": [
+              "qwen35"
+            ],
+            "parameter_size": "9.7B",
+            "quantization_level": "Q4_K_M"
+          },
+          "model_info": {
+            "general.architecture": "qwen35",
+            "general.file_type": 15,
+            "general.parameter_count": 9653104368,
+            "general.quantization_version": 2,
+            "qwen35.attention.head_count": 16,
+            "qwen35.attention.head_count_kv": [
+              0,
+              0,
+              0,
+              4,
+              0,
+              0,
+              0,
+              4,
+              0,
+              0,
+              0,
+              4,
+              0,
+              0,
+              0,
+              4,
+              0,
+              0,
+              0,
+              4,
+              0,
+              0,
+              0,
+              4,
+              0,
+              0,
+              0,
+              4,
+              0,
+              0,
+              0,
+              4
+            ],
+            "qwen35.attention.key_length": 256,
+            "qwen35.attention.layer_norm_rms_epsilon": 1e-06,
+            "qwen35.attention.value_length": 256,
+            "qwen35.block_count": 32,
+            "qwen35.context_length": 262144,
+            "qwen35.embedding_length": 4096,
+            "qwen35.feed_forward_length": 12288,
+            "qwen35.full_attention_interval": 4,
+            "qwen35.image_token_id": 248056,
+            "qwen35.mrope_sections": [
+              11,
+              11,
+              10
+            ],
+            "qwen35.rope.dimension_count": 64,
+            "qwen35.rope.dimension_sections": [
+              11,
+              11,
+              10
+            ],
+            "qwen35.rope.freq_base": 10000000,
+            "qwen35.rope.mrope_interleaved": true,
+            "qwen35.rope.mrope_section": [
+              11,
+              11,
+              10
+            ],
+            "qwen35.ssm.conv_kernel": 4,
+            "qwen35.ssm.group_count": 16,
+            "qwen35.ssm.inner_size": 4096,
+            "qwen35.ssm.state_size": 128,
+            "qwen35.ssm.time_step_rank": 32,
+            "qwen35.ssm.v_head_reordered": true,
+            "qwen35.vision.attention.head_count": 16,
+            "qwen35.vision.block_count": 27,
+            "qwen35.vision.deepstack_visual_indexes": [],
+            "qwen35.vision.embedding_length": 1152,
+            "qwen35.vision.image_mean": [
+              0.5,
+              0.5,
+              0.5
+            ],
+            "qwen35.vision.image_std": [
+              0.5,
+              0.5,
+              0.5
+            ],
+            "qwen35.vision.longest_edge": 16777216,
+            "qwen35.vision.num_channels": 3,
+            "qwen35.vision.patch_size": 16,
+            "qwen35.vision.shortest_edge": 65536,
+            "qwen35.vision.spatial_merge_size": 2,
+            "qwen35.vision.temporal_patch_size": 2,
+            "qwen35.vision_end_token_id": 248054,
+            "qwen35.vision_start_token_id": 248053,
+            "tokenizer.ggml.add_eos_token": false,
+            "tokenizer.ggml.add_padding_token": false,
+            "tokenizer.ggml.eos_token_id": 248046,
+            "tokenizer.ggml.merges": [],
+            "tokenizer.ggml.model": "gpt2",
+            "tokenizer.ggml.padding_token_id": 248044,
+            "tokenizer.ggml.pre": "qwen35",
+            "tokenizer.ggml.scores": [],
+            "tokenizer.ggml.token_type": [],
+            "tokenizer.ggml.tokens": []
+          },
+          "capabilities": [
+            "completion",
+            "vision",
+            "tools",
+            "thinking"
+          ],
+          "modified_at": "2026-09-20T02:02:21.65603-04:00",
+          "requires": "0.17.1"
+        },
+        "ps_before": {
+          "models": [
+            {
+              "name": "nomic-embed-text:latest",
+              "model": "nomic-embed-text:latest",
+              "size": 323150151,
+              "digest": "0a109f422b47e3a30ba2b10eca18548e944e8a23073ee3f3e947efcf3c45e59f",
+              "details": {
+                "parent_model": "",
+                "format": "gguf",
+                "family": "nomic-bert",
+                "families": [
+                  "nomic-bert"
+                ],
+                "parameter_size": "137M",
+                "quantization_level": "F16"
+              },
+              "expires_at": "2026-09-20T03:03:35.1760562-04:00",
+              "size_vram": 323150151,
+              "context_length": 2048
+            },
+            {
+              "name": "mnemos-native-qwen35-9b:greedy-ctx64k-v2",
+              "model": "mnemos-native-qwen35-9b:greedy-ctx64k-v2",
+              "size": 8044454869,
+              "digest": "87bc5156d86918e0435431ab0286167a4c79c4a4a259b82fba5f3f75022006e2",
+              "details": {
+                "parent_model": "",
+                "format": "gguf",
+                "family": "qwen35",
+                "families": [
+                  "qwen35"
+                ],
+                "parameter_size": "9.7B",
+                "quantization_level": "Q4_K_M"
+              },
+              "expires_at": "2026-09-20T03:03:28.4854471-04:00",
+              "size_vram": 8044454869,
+              "context_length": 65536
+            }
+          ]
+        },
+        "chat": {
+          "id": "chatcmpl-125",
+          "object": "chat.completion",
+          "created": 1789887516,
+          "model": "mnemos-native-qwen35-9b:greedy-ctx64k-v2",
+          "system_fingerprint": "fp_ollama",
+          "choices": [
+            {
+              "index": 0,
+              "message": {
+                "role": "assistant",
+                "content": "READY"
+              },
+              "finish_reason": "stop"
+            }
+          ],
+          "usage": {
+            "prompt_tokens": 16,
+            "prompt_tokens_details": {
+              "cached_tokens": 12
+            },
+            "completion_tokens": 2,
+            "total_tokens": 18
+          }
+        },
+        "ps_after": {
+          "models": [
+            {
+              "name": "mnemos-native-qwen35-9b:greedy-ctx64k-v2",
+              "model": "mnemos-native-qwen35-9b:greedy-ctx64k-v2",
+              "size": 8044454869,
+              "digest": "87bc5156d86918e0435431ab0286167a4c79c4a4a259b82fba5f3f75022006e2",
+              "details": {
+                "parent_model": "",
+                "format": "gguf",
+                "family": "qwen35",
+                "families": [
+                  "qwen35"
+                ],
+                "parameter_size": "9.7B",
+                "quantization_level": "Q4_K_M"
+              },
+              "expires_at": "2026-09-20T03:03:36.0726299-04:00",
+              "size_vram": 8044454869,
+              "context_length": 65536
+            },
+            {
+              "name": "nomic-embed-text:latest",
+              "model": "nomic-embed-text:latest",
+              "size": 323150151,
+              "digest": "0a109f422b47e3a30ba2b10eca18548e944e8a23073ee3f3e947efcf3c45e59f",
+              "details": {
+                "parent_model": "",
+                "format": "gguf",
+                "family": "nomic-bert",
+                "families": [
+                  "nomic-bert"
+                ],
+                "parameter_size": "137M",
+                "quantization_level": "F16"
+              },
+              "expires_at": "2026-09-20T03:03:35.1760562-04:00",
+              "size_vram": 323150151,
+              "context_length": 2048
+            }
+          ]
+        },
+        "tags_after": {
+          "models": [
+            {
+              "name": "mnemos-native-qwen35-9b:greedy-ctx64k-v2",
+              "model": "mnemos-native-qwen35-9b:greedy-ctx64k-v2",
+              "modified_at": "2026-09-20T02:02:21.65603-04:00",
+              "size": 6594474437,
+              "digest": "87bc5156d86918e0435431ab0286167a4c79c4a4a259b82fba5f3f75022006e2",
+              "details": {
+                "parent_model": "mnemos-native-qwen35-9b:greedy-v1",
+                "format": "gguf",
+                "family": "qwen35",
+                "families": [
+                  "qwen35"
+                ],
+                "parameter_size": "9.7B",
+                "quantization_level": "Q4_K_M",
+                "context_length": 262144,
+                "embedding_length": 4096
+              },
+              "capabilities": [
+                "completion",
+                "vision",
+                "tools",
+                "thinking"
+              ]
+            },
+            {
+              "name": "gpt-oss:20b",
+              "model": "gpt-oss:20b",
+              "modified_at": "2026-09-19T23:14:26.426297-04:00",
+              "size": 13793441244,
+              "digest": "17052f91a42e97930aa6e28a6c6c06a983e6a58dbb00434885a0cf5313e376f7",
+              "details": {
+                "parent_model": "",
+                "format": "gguf",
+                "family": "gptoss",
+                "families": [
+                  "gptoss"
+                ],
+                "parameter_size": "20.9B",
+                "quantization_level": "MXFP4",
+                "context_length": 131072,
+                "embedding_length": 2880
+              },
+              "capabilities": [
+                "completion",
+                "tools",
+                "thinking"
+              ]
+            },
+            {
+              "name": "mnemos-gptoss20b-before-refresh:20260919-v1",
+              "model": "mnemos-gptoss20b-before-refresh:20260919-v1",
+              "modified_at": "2026-09-19T23:03:57.9061378-04:00",
+              "size": 13780173724,
+              "digest": "aa4295ac10c3afb60e6d711289fc6896f5aef82258997b9efdaed6d0cc4cd8b8",
+              "details": {
+                "parent_model": "/Users/ollama/.ollama/models/blobs/sha256-b112e727c6f18875636c56a779790a590d705aec9e1c0eb5a97d51fc2a778583",
+                "format": "gguf",
+                "family": "gptoss",
+                "families": [
+                  "gptoss"
+                ],
+                "parameter_size": "20.9B",
+                "quantization_level": "MXFP4"
+              },
+              "capabilities": [
+                "completion",
+                "tools",
+                "thinking"
+              ]
+            },
+            {
+              "name": "mnemos-native-qwen35-9b:greedy-v1",
+              "model": "mnemos-native-qwen35-9b:greedy-v1",
+              "modified_at": "2026-09-19T20:18:48.3532887-04:00",
+              "size": 6594474421,
+              "digest": "243c7dc812e847df8f175763c8e91b6daa88483f141957b76f9e9722e8d526a5",
+              "details": {
+                "parent_model": "qwen3.5:9b",
+                "format": "gguf",
+                "family": "qwen35",
+                "families": [
+                  "qwen35"
+                ],
+                "parameter_size": "9.7B",
+                "quantization_level": "Q4_K_M",
+                "context_length": 262144,
+                "embedding_length": 4096
+              },
+              "capabilities": [
+                "completion",
+                "vision",
+                "tools",
+                "thinking"
+              ]
+            },
+            {
+              "name": "nomic-embed-text:latest",
+              "model": "nomic-embed-text:latest",
+              "modified_at": "2026-09-18T15:38:50.3313315-04:00",
+              "size": 274302450,
+              "digest": "0a109f422b47e3a30ba2b10eca18548e944e8a23073ee3f3e947efcf3c45e59f",
+              "details": {
+                "parent_model": "",
+                "format": "gguf",
+                "family": "nomic-bert",
+                "families": [
+                  "nomic-bert"
+                ],
+                "parameter_size": "137M",
+                "quantization_level": "F16",
+                "context_length": 2048,
+                "embedding_length": 768
+              },
+              "capabilities": [
+                "embedding"
+              ]
+            },
+            {
+              "name": "qwen3.5:9b",
+              "model": "qwen3.5:9b",
+              "modified_at": "2026-09-18T15:38:31.3310652-04:00",
+              "size": 6594474711,
+              "digest": "6488c96fa5faab64bb65cbd30d4289e20e6130ef535a93ef9a49f42eda893ea7",
+              "details": {
+                "parent_model": "",
+                "format": "gguf",
+                "family": "qwen35",
+                "families": [
+                  "qwen35"
+                ],
+                "parameter_size": "9.7B",
+                "quantization_level": "Q4_K_M",
+                "context_length": 262144,
+                "embedding_length": 4096
+              },
+              "capabilities": [
+                "completion",
+                "vision",
+                "tools",
+                "thinking"
+              ]
+            },
+            {
+              "name": "qwen2.5:7b",
+              "model": "qwen2.5:7b",
+              "modified_at": "2026-01-29T16:53:39.6378873-05:00",
+              "size": 4683087332,
+              "digest": "845dbda0ea48ed749caafd9e6037047aa19acfcfd82e704d7ca97d631a0b697e",
+              "details": {
+                "parent_model": "",
+                "format": "gguf",
+                "family": "qwen2",
+                "families": [
+                  "qwen2"
+                ],
+                "parameter_size": "7.6B",
+                "quantization_level": "Q4_K_M",
+                "context_length": 32768,
+                "embedding_length": 3584
+              },
+              "capabilities": [
+                "completion",
+                "tools"
+              ]
+            },
+            {
+              "name": "anthony-maio/remnantinstruct-8b:latest",
+              "model": "anthony-maio/remnantinstruct-8b:latest",
+              "modified_at": "2026-01-27T23:46:24.269713-05:00",
+              "size": 5027784917,
+              "digest": "49bd0a32d5fef3e2eb4a8e20f8c0885e60965950f532304233a21cd9872c0f89",
+              "details": {
+                "parent_model": "D:\\OllamaModels\\blobs\\sha256-6648ab37397b78161dbef10eaee971c3887b9bc08c2c7e5c24392a0cd025e3e6",
+                "format": "gguf",
+                "family": "qwen3",
+                "families": [
+                  "qwen3"
+                ],
+                "parameter_size": "8.2B",
+                "quantization_level": "Q4_K_M",
+                "context_length": 40960,
+                "embedding_length": 4096
+              },
+              "capabilities": [
+                "tools",
+                "thinking",
+                "completion"
+              ]
+            },
+            {
+              "name": "anthonym21/remnantinstruct-8b:latest",
+              "model": "anthonym21/remnantinstruct-8b:latest",
+              "modified_at": "2026-01-26T11:37:14.2243502-05:00",
+              "size": 5027784917,
+              "digest": "49bd0a32d5fef3e2eb4a8e20f8c0885e60965950f532304233a21cd9872c0f89",
+              "details": {
+                "parent_model": "D:\\OllamaModels\\blobs\\sha256-6648ab37397b78161dbef10eaee971c3887b9bc08c2c7e5c24392a0cd025e3e6",
+                "format": "gguf",
+                "family": "qwen3",
+                "families": [
+                  "qwen3"
+                ],
+                "parameter_size": "8.2B",
+                "quantization_level": "Q4_K_M",
+                "context_length": 40960,
+                "embedding_length": 4096
+              },
+              "capabilities": [
+                "tools",
+                "thinking",
+                "completion"
+              ]
+            },
+            {
+              "name": "qwen3:30b",
+              "model": "qwen3:30b",
+              "modified_at": "2025-09-17T00:08:17.2492434-04:00",
+              "size": 18556699301,
+              "digest": "e50831eb2d919df6268f18bc3cec980d597ae27e98c3308f90a0ec4941b64f28",
+              "details": {
+                "parent_model": "",
+                "format": "gguf",
+                "family": "qwen3moe",
+                "families": [
+                  "qwen3moe"
+                ],
+                "parameter_size": "30.5B",
+                "quantization_level": "Q4_K_M",
+                "context_length": 262144,
+                "embedding_length": 2048
+              },
+              "capabilities": [
+                "completion",
+                "tools",
+                "thinking"
+              ]
+            },
+            {
+              "name": "deepseek-r1:8b",
+              "model": "deepseek-r1:8b",
+              "modified_at": "2025-09-13T22:01:39.4549293-04:00",
+              "size": 5225376047,
+              "digest": "6995872bfe4c521a67b32da386cd21d5c6e819b6e0d62f79f64ec83be99f5763",
+              "details": {
+                "parent_model": "",
+                "format": "gguf",
+                "family": "qwen3",
+                "families": [
+                  "qwen3"
+                ],
+                "parameter_size": "8.2B",
+                "quantization_level": "Q4_K_M",
+                "context_length": 131072,
+                "embedding_length": 4096
+              },
+              "capabilities": [
+                "tools",
+                "thinking",
+                "completion"
+              ]
+            },
+            {
+              "name": "qwen2.5:14b",
+              "model": "qwen2.5:14b",
+              "modified_at": "2025-09-12T05:33:27.1047131-04:00",
+              "size": 8988124069,
+              "digest": "7cdf5a0187d5c58cc5d369b255592f7841d1c4696d45a8c8a9489440385b22f6",
+              "details": {
+                "parent_model": "",
+                "format": "gguf",
+                "family": "qwen2",
+                "families": [
+                  "qwen2"
+                ],
+                "parameter_size": "14.8B",
+                "quantization_level": "Q4_K_M",
+                "context_length": 32768,
+                "embedding_length": 5120
+              },
+              "capabilities": [
+                "completion",
+                "tools"
+              ]
+            },
+            {
+              "name": "gemma3:27b",
+              "model": "gemma3:27b",
+              "modified_at": "2025-09-11T19:16:10.1369476-04:00",
+              "size": 17396936941,
+              "digest": "a418f5838eaf7fe2cfe0a3046c8384b68ba43a4435542c942f9db00a5f342203",
+              "details": {
+                "parent_model": "",
+                "format": "gguf",
+                "family": "gemma3",
+                "families": [
+                  "gemma3"
+                ],
+                "parameter_size": "27.4B",
+                "quantization_level": "Q4_K_M",
+                "context_length": 131072,
+                "embedding_length": 5376
+              },
+              "capabilities": [
+                "completion",
+                "vision"
+              ]
+            },
+            {
+              "name": "gemma3:12B",
+              "model": "gemma3:12B",
+              "modified_at": "2025-09-10T15:29:15.9047568-04:00",
+              "size": 8149190253,
+              "digest": "f4031aab637d1ffa37b42570452ae0e4fad0314754d17ded67322e4b95836f8a",
+              "details": {
+                "parent_model": "",
+                "format": "gguf",
+                "family": "gemma3",
+                "families": [
+                  "gemma3"
+                ],
+                "parameter_size": "12.2B",
+                "quantization_level": "Q4_K_M",
+                "context_length": 131072,
+                "embedding_length": 3840
+              },
+              "capabilities": [
+                "completion",
+                "vision"
+              ]
+            },
+            {
+              "name": "gemma3:4b",
+              "model": "gemma3:4b",
+              "modified_at": "2025-09-10T03:20:03.9386803-04:00",
+              "size": 3338801804,
+              "digest": "a2af6cc3eb7fa8be8504abaf9b04e88f17a119ec3f04a3addf55f92841195f5a",
+              "details": {
+                "parent_model": "",
+                "format": "gguf",
+                "family": "gemma3",
+                "families": [
+                  "gemma3"
+                ],
+                "parameter_size": "4.3B",
+                "quantization_level": "Q4_K_M",
+                "context_length": 131072,
+                "embedding_length": 2560
+              },
+              "capabilities": [
+                "completion",
+                "vision"
+              ]
+            },
+            {
+              "name": "gemma3:1b",
+              "model": "gemma3:1b",
+              "modified_at": "2025-09-10T03:18:13.3797485-04:00",
+              "size": 815319791,
+              "digest": "8648f39daa8fbf5b18c7b4e6a8fb4990c692751d49917417b8842ca5758e7ffc",
+              "details": {
+                "parent_model": "",
+                "format": "gguf",
+                "family": "gemma3",
+                "families": [
+                  "gemma3"
+                ],
+                "parameter_size": "999.89M",
+                "quantization_level": "Q4_K_M",
+                "context_length": 32768,
+                "embedding_length": 1152
+              },
+              "capabilities": [
+                "completion"
+              ]
+            }
+          ]
+        },
+        "gpu_residency": {
+          "digest": "87bc5156d86918e0435431ab0286167a4c79c4a4a259b82fba5f3f75022006e2",
+          "size_vram": 8044454869
+        },
+        "finished_at": "2026-09-20T06:58:36.153310+00:00"
+      },
+      "known_project_fact_ids": [
+        "101e49b5-30da-4a10-a5bd-6742558001c9",
+        "2c0b1460-fdb4-4a6d-ae19-cb429e08d77d",
+        "32b154f8-14da-4d17-9b4f-6e34d6d77b6b",
+        "54d88604-37cc-4230-a225-49243f655d8b",
+        "5e78d4e1-7912-49c0-aed8-9925f5c4c729",
+        "71d9f6ac-d0ce-4137-803b-4bfafcf756ef",
+        "96609cf2-1b02-4ae0-a9e2-7bec490c4260",
+        "9c5f04a5-1e09-4c5f-9d3a-66712ed14f60",
+        "a08426b5-f5e3-43ee-9e34-744d43491e5a",
+        "acc12f2a-6e7a-4ea2-976c-f356d3a76a02",
+        "b8ebf1fc-4553-473b-b247-9701338457e6",
+        "cd23cbf2-2221-4d3c-8e42-39705761e414",
+        "d6eb874c-0e68-4162-bc8f-65317df28430",
+        "e1782d0f-a563-4ffe-8b6b-3d33cdb8f50d",
+        "eacef9ae-614c-48ce-abf9-3b603d0a45f3",
+        "ed5c2a13-fcfe-4b9f-a484-5cab97bfa31f"
+      ],
+      "target_id": "5e78d4e1-7912-49c0-aed8-9925f5c4c729",
+      "finished_at": "2026-09-20T07:00:45.445725+00:00"
+    },
+    "checks_sha256": "f4c59f38123d765a422930367c12d63cc26d6d013a16477d541d323adece2fd5",
+    "installed_checks_sha256": "05150520e6cdbbae350b11947081e1a699ad7c518c0feff55a8a46a680ae6827",
+    "hermes_acceptance_sha256": "6ee1548dfb4ca281289f400f879e9d8f276393c44509b29d01716f7a4ced8e16",
+    "hermes_cohort_sha256": "a187e9dcac4acc1bb71cfca0b1f2f90a19a2bd994a36c08dcf6f1c36d1f76efc",
+    "hermes_cohort_results": [
+      "failed",
+      "failed",
+      "passed"
+    ],
+    "plugin_files": {
+      ".claude-plugin/marketplace.json": "9496bf3701ad6d0a0fc5ed74da48e7bf6633afc5f04dc1605cebcbb19971973a",
+      ".claude-plugin/plugin.json": "400288ccee02bf854ba4ce7b10357507c6d6fb6728bbeef8de10ae245e052a48",
+      ".claude-plugin/run_mnemos_hook.py": "9ca11e4a0efa9b61dea647e0675729a523e1b9aed0fb56468af08079d04512c0",
+      ".claude-plugin/run_mnemos_mcp.py": "81bf0d833d132bb3136cf624933177a7a9b35ccb830db66234b2a78e19bcfde8",
+      "agents/memory-orchestrator.md": "b6a8c980a99f05ed2f95afae59f7b9d1e0d4b4c83737963e3bf6fcb61b27e2b1",
+      "agents/mnemos-curator.md": "71721de98145cf443430cfc08d990d77e6eee667529b384a8c336b94b725b7fd",
+      "agents/mnemos-recall.md": "10bb740e1758e7dca3f2cefeeeb05371ad243dbf963c53ee6c061387317a5fed",
+      "commands/mnemos/consolidate.md": "b084bbe1db07ea530cf9154eb44c08e0223aca6067b9b132766094bbcf6b6a5f",
+      "commands/mnemos/prime.md": "8de74b2f88ea32e1ca4c38e49347a02521473c2ca214042bcaf0e31c39d27e2e",
+      "hooks/hooks.json": "7ca43bda20e14e4363c84fd2fddd26fd257afaa9ba3146bff2a389c52817d1a7",
+      "skills/mnemos-codex/SKILL.md": "71c257e765a6bdc7653866d01559a9c3ac5f7bdbc3ce8d1ea3efa9289e6c7ed7",
+      "skills/mnemos-codex/references/install.md": "646b5e281fc1d9c6400974c0709b41cbd8e89cb7366083b59cf685f33b72deda",
+      "skills/mnemos-codex/references/operations.md": "91a6161761894b546a021be25a08c80ffaf82925aa5fa511dba0666ee0973ab5",
+      "skills/mnemos-memory/SKILL.md": "ee1654e5975ed0c458902a26d84a5b403ae7822101be8ab7e542fb0e6ee4d52a",
+      "skills/mnemos-memory/references/hosts.md": "57c4c1404cd50415356f2d72a8f16c809c2512c19731d7f2fc563cbd71f25956",
+      "skills/mnemos-memory/references/operations.md": "cb4893e1b6d21f9d3005f5156bc50f6f20b93760126ee67163b079f8161e22f3"
+    }
+  },
+  "runner_commit": "3f77cbbfa5f7c9dd4357171ab74fd51b1e738260",
+  "hosts": {
+    "codex": {
+      "version": "codex-cli 0.146.0",
+      "executable": "C:\\Users\\Ant\\AppData\\Roaming\\npm\\node_modules\\@openai\\codex\\node_modules\\@openai\\codex-win32-x64\\vendor\\x86_64-pc-windows-msvc\\bin\\codex.exe",
+      "sha256": "bc343ba420dc2e2e9f59e6fc5e5bf0aae1cd8c771fc319665241fc9c0271fddb"
+    },
+    "claude": {
+      "version": "2.1.191 (Claude Code)",
+      "executable": "C:\\Users\\Ant\\.local\\bin\\claude.exe",
+      "sha256": "83397a6a029c7da663fb1ce27211e05174a3546d8b151e42451bf4590b8343d7"
+    }
+  },
+  "models": {
+    "mnemos-native-qwen35-9b:greedy-ctx64k-v2": "87bc5156d86918e0435431ab0286167a4c79c4a4a259b82fba5f3f75022006e2",
+    "qwen3.5:9b": "6488c96fa5faab64bb65cbd30d4289e20e6130ef535a93ef9a49f42eda893ea7",
+    "nomic-embed-text:latest": "0a109f422b47e3a30ba2b10eca18548e944e8a23073ee3f3e947efcf3c45e59f"
+  },
+  "input_hashes": {
+    "benchmarks/native_hosts/hermes_cohort_run_v1.py": "6e05bdd0aa57c7abb0749a6208015d68c499ef5c7964ef9da23a33af26f395ad",
+    "benchmarks/native_hosts/hermes_cohort_run_v2.py": "2e711b03f7202758e747b77d470051b1063b5efe39ca5e9d397580aa783bfbcf",
+    "benchmarks/native_hosts/hermes_cohort_run_v3.py": "04d137e9d369676e18e6c78c6c21706c18cc36f3b20a4290f03eaa027d21f9f4",
+    "benchmarks/native_hosts/hermes_cohort_run_v4.py": "db3ce33793869aaba96a354df722b23fcf487e37e8fc11eb57d59fc8b3f6e4c1",
+    "benchmarks/native_hosts/hermes_cohort_run_v5.py": "d188ec0aa5568c46ca189141f096a32c9768e9e2f6116b795a1ea6c4b396fff4",
+    "benchmarks/native_hosts/hermes_cohort_run_v6.py": "dfbe5c638c119dea3858ddb19eb4aab24d06de285188ddc113e618278f6a7962",
+    "benchmarks/native_hosts/hermes_cohort_run_v7.py": "d17a72acada71215a716d1360b57474077935d2a79e5624dbbcab11a745fc068",
+    "benchmarks/native_hosts/hermes_cohort_run_v8.py": "67e676c9cd627c5645de4bd9cc2f1b297eeccc58ec429e8d5c347cb4b4934a52",
+    "benchmarks/native_hosts/hermes_lifecycle_observation_v1.py": "769e677d55c4087401179ed800c3d58d546af01ce53f9189718238cedd5a8c94",
+    "benchmarks/native_hosts/hermes_lifecycle_run.py": "1b165a644d4ad31c59197f812ed7408c460c8e8ec55da8de62f171226d6c4616",
+    "benchmarks/native_hosts/hermes_lifecycle_run_v10.py": "9daa980f349616dd55f5b5f191ec070a2ecb177a4497e23bc3eef0476fcb882a",
+    "benchmarks/native_hosts/hermes_lifecycle_run_v2.py": "e845eddaf26ea8cacdf6445c2dca99ebc81bff12d281f680f3d0b9b461383008",
+    "benchmarks/native_hosts/hermes_lifecycle_run_v3.py": "dd8ff1b494d82ef00d9478a214a5eea5f9b03c6086da920e089f54e92131761c",
+    "benchmarks/native_hosts/hermes_lifecycle_run_v4.py": "7505b6d62a77c012a4a9385f86560345533fd7476be9a3087f5cec13ce4a72f8",
+    "benchmarks/native_hosts/hermes_lifecycle_run_v5.py": "18e7446a542df6734418a925b9a2a2031287a0122a0b97bead0b54d1768a754a",
+    "benchmarks/native_hosts/hermes_lifecycle_run_v6.py": "a85da3242f600e869d5769aad21c1eb7e76e4f4f4e363dca4d5175cb0fd0d16f",
+    "benchmarks/native_hosts/hermes_lifecycle_run_v7.py": "4c366ac77f668cc0528415d7c550ea197ad9325890318dd4c852ffb863a728f0",
+    "benchmarks/native_hosts/hermes_lifecycle_run_v8.py": "70d36fc4cb751b84b85f4f62b323040d8c1a19b938b084af66cfb13d2f29239e",
+    "benchmarks/native_hosts/hermes_lifecycle_run_v9.py": "2a60c4b4c9e0d8889ff1f11f7f7fa868d8b8c3e33deb8361a71084ea90ef07e8",
+    "benchmarks/native_hosts/hermes_native_bootstrap.py": "3d4ff9564a7e175244fef2be77c78196ca28a7e91f6696a38995c0ceff6d902b",
+    "benchmarks/native_hosts/hermes_native_bootstrap_v2.py": "f2c88d8081f96779c89e8a070db3a7b742c1b173eb0a25f3993b43f266b598c0",
+    "benchmarks/native_hosts/hermes_native_bootstrap_v3.py": "5012c4e696f8459033d4b05d5f848aa96c23f749728166acad246cc5e3f078e1",
+    "benchmarks/native_hosts/hermes_native_bootstrap_v4.py": "16331798effeb01ea98174433a0250d6890e31b8078641ab0e941887ff846f41",
+    "benchmarks/native_hosts/hermes_native_bootstrap_v5.py": "24079c3561dd29003882a9e95720993cdcb44c6f4277ad589e31fdb3bf6a66d7",
+    "benchmarks/native_hosts/hermes_native_bootstrap_v6.py": "c28c567131388b7f15218333e096598d227d3f5d8b4b2a057ca4590b893f2af5",
+    "benchmarks/native_hosts/hermes_native_bootstrap_v7.py": "d5c5da0bfaaaf3d211375f4fd49943ce914ad2b3467cb3004fd9de3c7611eaf5",
+    "benchmarks/native_hosts/hermes_request_observer.py": "a14da0d8f98cc71589a759f799db3fa41c7fa61d44dbd172c3b91b1ba71f469f",
+    "benchmarks/native_hosts/hermes_trace.py": "fa82d4f270e916c6aae4eb01eb3738239cc91f88e3029d919bc0ba98c79609c8",
+    "benchmarks/native_hosts/hermes_trace_v2.py": "9beffe22889c6f7e03d66da6b8c32769b8ca6bd0b48be68cc4e4219401ff1d38",
+    "benchmarks/native_hosts/model_forget_development_v1.py": "3ad262b88d6badef98b779b1fbaf3bcad7dbdb2cc40a7302e049bdd31688cfad",
+    "benchmarks/native_hosts/native_processes.py": "61008ed57bb9fc61440c48fe924c149a3bc6081f01ef19d2e99e20f459c93927",
+    "benchmarks/native_hosts/ollama_context_probe_v1.py": "925187a1c41cde5295977316bf9a32ab1a027546f9067823066f92877730d2a9",
+    "benchmarks/native_hosts/ollama_readiness_v1.py": "d6630babff748cf1736b00f051a1e9f449513929be35f70d6a479e5922f1804e",
+    "benchmarks/native_hosts/ollama_readiness_v2.py": "a22d7c787c034f9ea71f4b22982cc44896ae69917cf2ad8107152d55eadbabf0",
+    "benchmarks/native_hosts/shared_trace.py": "e4675cd1dbce44b4ebb22dd05c665e0690ae6a41ba2b79d0ce6947aeddf6a1de",
+    "benchmarks/native_hosts/three_host_contract.py": "3de20c9c3fe23d8938aaa848f20ffdfb51f741ea328bebfd60744b3eeca1bcf1",
+    "benchmarks/native_hosts/three_host_evidence.py": "a3e8a847b7d6d9b9488bbbef93cd404f13b37b01d2ccee47a94ff2d0e5b54d15",
+    "benchmarks/native_hosts/three_host_run.py": "cbcf1eb678b2c7391c4dce0b1e9bd9872282b6eb51fbe418cd4721c92968c6b1",
+    "benchmarks/native_hosts/three_host_runtime.py": "f8edc55fd692b21fb27d4799d1a56110cd933c9793f3e310720d18cba9dfea0a",
+    "benchmarks/native_hosts/__init__.py": "870e07e48aca3e90ceb91bc7e94340d13d193ee614a311a5c24a66b355f597aa",
+    "docs/plans/2026-09-20-three-host-continuity-protocol-v3.md": "76e9255a788ab7efdec92ccab5b3a62f7fe38b0f87e41d2ee3432c87a2258fc0",
+    "docs/plans/2026-09-20-three-host-continuity-protocol-v2.md": "695ad95ebacbf81138c9ef6d4e573663bcfd512f33d0b31362f7b0a5291f113d",
+    "docs/validation/2026-09-20/codex-tool-mode-diagnostic-v1/selected-catalog.json": "1dda81660fbe55038f186b3c00e76790998b0d45970d67cbde85cce570f78d44",
+    "docs/plans/2026-09-19-three-host-continuity-protocol-v1.md": "862c6618204c24e3b55c49d6fd413e8f5de7c3b72d91dcc62f9d1816de4eca3b",
+    "docs/validation/2026-09-20/native-model-profile-v2/profile.json": "34c01c6063357a5a4ea972d9350536f41483f7a7d87cc960f36d658f82bd5e4e",
+    "docs/validation/2026-09-19/native-hermes-local-v4/host-compatibility.patch": "d7e68a629f5780ac06c856a70160d1264701284586e28ab3c123db5fdbf8a1f0"
+  },
+  "scenario": {
+    "old": "The project release label is cedar-ridge-731.",
+    "new": "The project release label is maple-ridge-842.",
+    "retained": "The project review label is amber-grove-264.",
+    "unrelated": "The build artifact checksum marker is slate-safe-553.",
+    "foreign": "The project release label is forbidden-foreign-ridge-992.",
+    "target_query": "current asserted project release label",
+    "retained_query": "current asserted project review label"
+  },
+  "phases": [
+    {
+      "name": "teach-release",
+      "host": "codex",
+      "status": "failed"
+    }
+  ],
+  "live_configuration_changed": false,
+  "preflight_only": false,
+  "codex_mode": "pinned gpt-5.5 with --disable code_mode_host; direct tools require native ID correlation",
+  "codex_requested_model": "gpt-5.5",
+  "host_environment_before": {
+    "revision": "ebe3fcb2f85ebdbe0e469e9d295636ac930246b4",
+    "environment_sha256": "a175bfc46955bc72ebb1c854ce7646f3dad3fd22716d3219d3a42d8928a30f7f"
+  },
+  "model_readiness": {
+    "status": "ready",
+    "model": "mnemos-native-qwen35-9b:greedy-ctx64k-v2",
+    "expected_digest": "87bc5156d86918e0435431ab0286167a4c79c4a4a259b82fba5f3f75022006e2",
+    "context_length": 65536,
+    "endpoint": "http://127.0.0.1:11434/v1/chat/completions",
+    "started_at": "2026-09-20T07:51:06.747934+00:00",
+    "http_attempts": [
+      {
+        "route": "version",
+        "request": null,
+        "url": "http://127.0.0.1:11434/api/version",
+        "method": "GET",
+        "request_bytes_file": "http-001.request",
+        "started_at": "2026-09-20T07:51:06.748970+00:00",
+        "timeout_seconds": 10,
+        "status_code": 200,
+        "finished_at": "2026-09-20T07:51:06.750416+00:00",
+        "duration_seconds": 0.0014601000002585351,
+        "body_file": "http-001.body"
+      },
+      {
+        "route": "tags",
+        "request": null,
+        "url": "http://127.0.0.1:11434/api/tags",
+        "method": "GET",
+        "request_bytes_file": "http-002.request",
+        "started_at": "2026-09-20T07:51:06.752021+00:00",
+        "timeout_seconds": 10,
+        "status_code": 200,
+        "finished_at": "2026-09-20T07:51:06.842458+00:00",
+        "duration_seconds": 0.09045260000857525,
+        "body_file": "http-002.body"
+      },
+      {
+        "route": "show",
+        "request": {
+          "model": "mnemos-native-qwen35-9b:greedy-ctx64k-v2"
+        },
+        "url": "http://127.0.0.1:11434/api/show",
+        "method": "POST",
+        "request_bytes_file": "http-003.request",
+        "started_at": "2026-09-20T07:51:06.844047+00:00",
+        "timeout_seconds": 10,
+        "status_code": 200,
+        "finished_at": "2026-09-20T07:51:06.863818+00:00",
+        "duration_seconds": 0.019799300003796816,
+        "body_file": "http-003.body"
+      },
+      {
+        "route": "ps",
+        "request": null,
+        "url": "http://127.0.0.1:11434/api/ps",
+        "method": "GET",
+        "request_bytes_file": "http-004.request",
+        "started_at": "2026-09-20T07:51:06.865986+00:00",
+        "timeout_seconds": 10,
+        "status_code": 200,
+        "finished_at": "2026-09-20T07:51:06.887978+00:00",
+        "duration_seconds": 0.02200769999762997,
+        "body_file": "http-004.body"
+      },
+      {
+        "route": "chat",
+        "request": {
+          "model": "mnemos-native-qwen35-9b:greedy-ctx64k-v2",
+          "messages": [
+            {
+              "role": "user",
+              "content": "Reply with READY."
+            }
+          ],
+          "stream": false,
+          "think": false,
+          "max_tokens": 16,
+          "reasoning_effort": "none"
+        },
+        "url": "http://127.0.0.1:11434/v1/chat/completions",
+        "method": "POST",
+        "request_bytes_file": "http-005.request",
+        "started_at": "2026-09-20T07:51:06.889615+00:00",
+        "timeout_seconds": 180,
+        "status_code": 200,
+        "finished_at": "2026-09-20T07:51:11.271327+00:00",
+        "duration_seconds": 4.381742899975507,
+        "body_file": "http-005.body"
+      },
+      {
+        "route": "ps",
+        "request": null,
+        "url": "http://127.0.0.1:11434/api/ps",
+        "method": "GET",
+        "request_bytes_file": "http-006.request",
+        "started_at": "2026-09-20T07:51:11.272972+00:00",
+        "timeout_seconds": 10,
+        "status_code": 200,
+        "finished_at": "2026-09-20T07:51:11.291867+00:00",
+        "duration_seconds": 0.018910600017989054,
+        "body_file": "http-006.body"
+      },
+      {
+        "route": "tags",
+        "request": null,
+        "url": "http://127.0.0.1:11434/api/tags",
+        "method": "GET",
+        "request_bytes_file": "http-007.request",
+        "started_at": "2026-09-20T07:51:11.293749+00:00",
+        "timeout_seconds": 10,
+        "status_code": 200,
+        "finished_at": "2026-09-20T07:51:11.379263+00:00",
+        "duration_seconds": 0.08553189999656752,
+        "body_file": "http-007.body"
+      }
+    ],
+    "version": {
+      "version": "0.34.1"
+    },
+    "tags_before": {
+      "models": [
+        {
+          "name": "mnemos-native-qwen35-9b:greedy-ctx64k-v2",
+          "model": "mnemos-native-qwen35-9b:greedy-ctx64k-v2",
+          "modified_at": "2026-09-20T02:02:21.65603-04:00",
+          "size": 6594474437,
+          "digest": "87bc5156d86918e0435431ab0286167a4c79c4a4a259b82fba5f3f75022006e2",
+          "details": {
+            "parent_model": "mnemos-native-qwen35-9b:greedy-v1",
+            "format": "gguf",
+            "family": "qwen35",
+            "families": [
+              "qwen35"
+            ],
+            "parameter_size": "9.7B",
+            "quantization_level": "Q4_K_M",
+            "context_length": 262144,
+            "embedding_length": 4096
+          },
+          "capabilities": [
+            "completion",
+            "vision",
+            "tools",
+            "thinking"
+          ]
+        },
+        {
+          "name": "gpt-oss:20b",
+          "model": "gpt-oss:20b",
+          "modified_at": "2026-09-19T23:14:26.426297-04:00",
+          "size": 13793441244,
+          "digest": "17052f91a42e97930aa6e28a6c6c06a983e6a58dbb00434885a0cf5313e376f7",
+          "details": {
+            "parent_model": "",
+            "format": "gguf",
+            "family": "gptoss",
+            "families": [
+              "gptoss"
+            ],
+            "parameter_size": "20.9B",
+            "quantization_level": "MXFP4",
+            "context_length": 131072,
+            "embedding_length": 2880
+          },
+          "capabilities": [
+            "completion",
+            "tools",
+            "thinking"
+          ]
+        },
+        {
+          "name": "mnemos-gptoss20b-before-refresh:20260919-v1",
+          "model": "mnemos-gptoss20b-before-refresh:20260919-v1",
+          "modified_at": "2026-09-19T23:03:57.9061378-04:00",
+          "size": 13780173724,
+          "digest": "aa4295ac10c3afb60e6d711289fc6896f5aef82258997b9efdaed6d0cc4cd8b8",
+          "details": {
+            "parent_model": "/Users/ollama/.ollama/models/blobs/sha256-b112e727c6f18875636c56a779790a590d705aec9e1c0eb5a97d51fc2a778583",
+            "format": "gguf",
+            "family": "gptoss",
+            "families": [
+              "gptoss"
+            ],
+            "parameter_size": "20.9B",
+            "quantization_level": "MXFP4"
+          },
+          "capabilities": [
+            "completion",
+            "tools",
+            "thinking"
+          ]
+        },
+        {
+          "name": "mnemos-native-qwen35-9b:greedy-v1",
+          "model": "mnemos-native-qwen35-9b:greedy-v1",
+          "modified_at": "2026-09-19T20:18:48.3532887-04:00",
+          "size": 6594474421,
+          "digest": "243c7dc812e847df8f175763c8e91b6daa88483f141957b76f9e9722e8d526a5",
+          "details": {
+            "parent_model": "qwen3.5:9b",
+            "format": "gguf",
+            "family": "qwen35",
+            "families": [
+              "qwen35"
+            ],
+            "parameter_size": "9.7B",
+            "quantization_level": "Q4_K_M",
+            "context_length": 262144,
+            "embedding_length": 4096
+          },
+          "capabilities": [
+            "completion",
+            "vision",
+            "tools",
+            "thinking"
+          ]
+        },
+        {
+          "name": "nomic-embed-text:latest",
+          "model": "nomic-embed-text:latest",
+          "modified_at": "2026-09-18T15:38:50.3313315-04:00",
+          "size": 274302450,
+          "digest": "0a109f422b47e3a30ba2b10eca18548e944e8a23073ee3f3e947efcf3c45e59f",
+          "details": {
+            "parent_model": "",
+            "format": "gguf",
+            "family": "nomic-bert",
+            "families": [
+              "nomic-bert"
+            ],
+            "parameter_size": "137M",
+            "quantization_level": "F16",
+            "context_length": 2048,
+            "embedding_length": 768
+          },
+          "capabilities": [
+            "embedding"
+          ]
+        },
+        {
+          "name": "qwen3.5:9b",
+          "model": "qwen3.5:9b",
+          "modified_at": "2026-09-18T15:38:31.3310652-04:00",
+          "size": 6594474711,
+          "digest": "6488c96fa5faab64bb65cbd30d4289e20e6130ef535a93ef9a49f42eda893ea7",
+          "details": {
+            "parent_model": "",
+            "format": "gguf",
+            "family": "qwen35",
+            "families": [
+              "qwen35"
+            ],
+            "parameter_size": "9.7B",
+            "quantization_level": "Q4_K_M",
+            "context_length": 262144,
+            "embedding_length": 4096
+          },
+          "capabilities": [
+            "completion",
+            "vision",
+            "tools",
+            "thinking"
+          ]
+        },
+        {
+          "name": "qwen2.5:7b",
+          "model": "qwen2.5:7b",
+          "modified_at": "2026-01-29T16:53:39.6378873-05:00",
+          "size": 4683087332,
+          "digest": "845dbda0ea48ed749caafd9e6037047aa19acfcfd82e704d7ca97d631a0b697e",
+          "details": {
+            "parent_model": "",
+            "format": "gguf",
+            "family": "qwen2",
+            "families": [
+              "qwen2"
+            ],
+            "parameter_size": "7.6B",
+            "quantization_level": "Q4_K_M",
+            "context_length": 32768,
+            "embedding_length": 3584
+          },
+          "capabilities": [
+            "completion",
+            "tools"
+          ]
+        },
+        {
+          "name": "anthony-maio/remnantinstruct-8b:latest",
+          "model": "anthony-maio/remnantinstruct-8b:latest",
+          "modified_at": "2026-01-27T23:46:24.269713-05:00",
+          "size": 5027784917,
+          "digest": "49bd0a32d5fef3e2eb4a8e20f8c0885e60965950f532304233a21cd9872c0f89",
+          "details": {
+            "parent_model": "D:\\OllamaModels\\blobs\\sha256-6648ab37397b78161dbef10eaee971c3887b9bc08c2c7e5c24392a0cd025e3e6",
+            "format": "gguf",
+            "family": "qwen3",
+            "families": [
+              "qwen3"
+            ],
+            "parameter_size": "8.2B",
+            "quantization_level": "Q4_K_M",
+            "context_length": 40960,
+            "embedding_length": 4096
+          },
+          "capabilities": [
+            "tools",
+            "thinking",
+            "completion"
+          ]
+        },
+        {
+          "name": "anthonym21/remnantinstruct-8b:latest",
+          "model": "anthonym21/remnantinstruct-8b:latest",
+          "modified_at": "2026-01-26T11:37:14.2243502-05:00",
+          "size": 5027784917,
+          "digest": "49bd0a32d5fef3e2eb4a8e20f8c0885e60965950f532304233a21cd9872c0f89",
+          "details": {
+            "parent_model": "D:\\OllamaModels\\blobs\\sha256-6648ab37397b78161dbef10eaee971c3887b9bc08c2c7e5c24392a0cd025e3e6",
+            "format": "gguf",
+            "family": "qwen3",
+            "families": [
+              "qwen3"
+            ],
+            "parameter_size": "8.2B",
+            "quantization_level": "Q4_K_M",
+            "context_length": 40960,
+            "embedding_length": 4096
+          },
+          "capabilities": [
+            "tools",
+            "thinking",
+            "completion"
+          ]
+        },
+        {
+          "name": "qwen3:30b",
+          "model": "qwen3:30b",
+          "modified_at": "2025-09-17T00:08:17.2492434-04:00",
+          "size": 18556699301,
+          "digest": "e50831eb2d919df6268f18bc3cec980d597ae27e98c3308f90a0ec4941b64f28",
+          "details": {
+            "parent_model": "",
+            "format": "gguf",
+            "family": "qwen3moe",
+            "families": [
+              "qwen3moe"
+            ],
+            "parameter_size": "30.5B",
+            "quantization_level": "Q4_K_M",
+            "context_length": 262144,
+            "embedding_length": 2048
+          },
+          "capabilities": [
+            "completion",
+            "tools",
+            "thinking"
+          ]
+        },
+        {
+          "name": "deepseek-r1:8b",
+          "model": "deepseek-r1:8b",
+          "modified_at": "2025-09-13T22:01:39.4549293-04:00",
+          "size": 5225376047,
+          "digest": "6995872bfe4c521a67b32da386cd21d5c6e819b6e0d62f79f64ec83be99f5763",
+          "details": {
+            "parent_model": "",
+            "format": "gguf",
+            "family": "qwen3",
+            "families": [
+              "qwen3"
+            ],
+            "parameter_size": "8.2B",
+            "quantization_level": "Q4_K_M",
+            "context_length": 131072,
+            "embedding_length": 4096
+          },
+          "capabilities": [
+            "tools",
+            "thinking",
+            "completion"
+          ]
+        },
+        {
+          "name": "qwen2.5:14b",
+          "model": "qwen2.5:14b",
+          "modified_at": "2025-09-12T05:33:27.1047131-04:00",
+          "size": 8988124069,
+          "digest": "7cdf5a0187d5c58cc5d369b255592f7841d1c4696d45a8c8a9489440385b22f6",
+          "details": {
+            "parent_model": "",
+            "format": "gguf",
+            "family": "qwen2",
+            "families": [
+              "qwen2"
+            ],
+            "parameter_size": "14.8B",
+            "quantization_level": "Q4_K_M",
+            "context_length": 32768,
+            "embedding_length": 5120
+          },
+          "capabilities": [
+            "completion",
+            "tools"
+          ]
+        },
+        {
+          "name": "gemma3:27b",
+          "model": "gemma3:27b",
+          "modified_at": "2025-09-11T19:16:10.1369476-04:00",
+          "size": 17396936941,
+          "digest": "a418f5838eaf7fe2cfe0a3046c8384b68ba43a4435542c942f9db00a5f342203",
+          "details": {
+            "parent_model": "",
+            "format": "gguf",
+            "family": "gemma3",
+            "families": [
+              "gemma3"
+            ],
+            "parameter_size": "27.4B",
+            "quantization_level": "Q4_K_M",
+            "context_length": 131072,
+            "embedding_length": 5376
+          },
+          "capabilities": [
+            "completion",
+            "vision"
+          ]
+        },
+        {
+          "name": "gemma3:12B",
+          "model": "gemma3:12B",
+          "modified_at": "2025-09-10T15:29:15.9047568-04:00",
+          "size": 8149190253,
+          "digest": "f4031aab637d1ffa37b42570452ae0e4fad0314754d17ded67322e4b95836f8a",
+          "details": {
+            "parent_model": "",
+            "format": "gguf",
+            "family": "gemma3",
+            "families": [
+              "gemma3"
+            ],
+            "parameter_size": "12.2B",
+            "quantization_level": "Q4_K_M",
+            "context_length": 131072,
+            "embedding_length": 3840
+          },
+          "capabilities": [
+            "completion",
+            "vision"
+          ]
+        },
+        {
+          "name": "gemma3:4b",
+          "model": "gemma3:4b",
+          "modified_at": "2025-09-10T03:20:03.9386803-04:00",
+          "size": 3338801804,
+          "digest": "a2af6cc3eb7fa8be8504abaf9b04e88f17a119ec3f04a3addf55f92841195f5a",
+          "details": {
+            "parent_model": "",
+            "format": "gguf",
+            "family": "gemma3",
+            "families": [
+              "gemma3"
+            ],
+            "parameter_size": "4.3B",
+            "quantization_level": "Q4_K_M",
+            "context_length": 131072,
+            "embedding_length": 2560
+          },
+          "capabilities": [
+            "completion",
+            "vision"
+          ]
+        },
+        {
+          "name": "gemma3:1b",
+          "model": "gemma3:1b",
+          "modified_at": "2025-09-10T03:18:13.3797485-04:00",
+          "size": 815319791,
+          "digest": "8648f39daa8fbf5b18c7b4e6a8fb4990c692751d49917417b8842ca5758e7ffc",
+          "details": {
+            "parent_model": "",
+            "format": "gguf",
+            "family": "gemma3",
+            "families": [
+              "gemma3"
+            ],
+            "parameter_size": "999.89M",
+            "quantization_level": "Q4_K_M",
+            "context_length": 32768,
+            "embedding_length": 1152
+          },
+          "capabilities": [
+            "completion"
+          ]
+        }
+      ]
+    },
+    "show": {
+      "license": "                                Apache License\n                           Version 2.0, January 2004\n                        http://www.apache.org/licenses/\n\n   TERMS AND CONDITIONS FOR USE, REPRODUCTION, AND DISTRIBUTION\n\n   1. Definitions.\n\n      \"License\" shall mean the terms and conditions for use, reproduction,\n      and distribution as defined by Sections 1 through 9 of this document.\n\n      \"Licensor\" shall mean the copyright owner or entity authorized by\n      the copyright owner that is granting the License.\n\n      \"Legal Entity\" shall mean the union of the acting entity and all\n      other entities that control, are controlled by, or are under common\n      control with that entity. For the purposes of this definition,\n      \"control\" means (i) the power, direct or indirect, to cause the\n      direction or management of such entity, whether by contract or\n      otherwise, or (ii) ownership of fifty percent (50%) or more of the\n      outstanding shares, or (iii) beneficial ownership of such entity.\n\n      \"You\" (or \"Your\") shall mean an individual or Legal Entity\n      exercising permissions granted by this License.\n\n      \"Source\" form shall mean the preferred form for making modifications,\n      including but not limited to software source code, documentation\n      source, and configuration files.\n\n      \"Object\" form shall mean any form resulting from mechanical\n      transformation or translation of a Source form, including but\n      not limited to compiled object code, generated documentation,\n      and conversions to other media types.\n\n      \"Work\" shall mean the work of authorship, whether in Source or\n      Object form, made available under the License, as indicated by a\n      copyright notice that is included in or attached to the work\n      (an example is provided in the Appendix below).\n\n      \"Derivative Works\" shall mean any work, whether in Source or Object\n      form, that is based on (or derived from) the Work and for which the\n      editorial revisions, annotations, elaborations, or other modifications\n      represent, as a whole, an original work of authorship. For the purposes\n      of this License, Derivative Works shall not include works that remain\n      separable from, or merely link (or bind by name) to the interfaces of,\n      the Work and Derivative Works thereof.\n\n      \"Contribution\" shall mean any work of authorship, including\n      the original version of the Work and any modifications or additions\n      to that Work or Derivative Works thereof, that is intentionally\n      submitted to Licensor for inclusion in the Work by the copyright owner\n      or by an individual or Legal Entity authorized to submit on behalf of\n      the copyright owner. For the purposes of this definition, \"submitted\"\n      means any form of electronic, verbal, or written communication sent\n      to the Licensor or its representatives, including but not limited to\n      communication on electronic mailing lists, source code control systems,\n      and issue tracking systems that are managed by, or on behalf of, the\n      Licensor for the purpose of discussing and improving the Work, but\n      excluding communication that is conspicuously marked or otherwise\n      designated in writing by the copyright owner as \"Not a Contribution.\"\n\n      \"Contributor\" shall mean Licensor and any individual or Legal Entity\n      on behalf of whom a Contribution has been received by Licensor and\n      subsequently incorporated within the Work.\n\n   2. Grant of Copyright License. Subject to the terms and conditions of\n      this License, each Contributor hereby grants to You a perpetual,\n      worldwide, non-exclusive, no-charge, royalty-free, irrevocable\n      copyright license to reproduce, prepare Derivative Works of,\n      publicly display, publicly perform, sublicense, and distribute the\n      Work and such Derivative Works in Source or Object form.\n\n   3. Grant of Patent License. Subject to the terms and conditions of\n      this License, each Contributor hereby grants to You a perpetual,\n      worldwide, non-exclusive, no-charge, royalty-free, irrevocable\n      (except as stated in this section) patent license to make, have made,\n      use, offer to sell, sell, import, and otherwise transfer the Work,\n      where such license applies only to those patent claims licensable\n      by such Contributor that are necessarily infringed by their\n      Contribution(s) alone or by combination of their Contribution(s)\n      with the Work to which such Contribution(s) was submitted. If You\n      institute patent litigation against any entity (including a\n      cross-claim or counterclaim in a lawsuit) alleging that the Work\n      or a Contribution incorporated within the Work constitutes direct\n      or contributory patent infringement, then any patent licenses\n      granted to You under this License for that Work shall terminate\n      as of the date such litigation is filed.\n\n   4. Redistribution. You may reproduce and distribute copies of the\n      Work or Derivative Works thereof in any medium, with or without\n      modifications, and in Source or Object form, provided that You\n      meet the following conditions:\n\n      (a) You must give any other recipients of the Work or\n          Derivative Works a copy of this License; and\n\n      (b) You must cause any modified files to carry prominent notices\n          stating that You changed the files; and\n\n      (c) You must retain, in the Source form of any Derivative Works\n          that You distribute, all copyright, patent, trademark, and\n          attribution notices from the Source form of the Work,\n          excluding those notices that do not pertain to any part of\n          the Derivative Works; and\n\n      (d) If the Work includes a \"NOTICE\" text file as part of its\n          distribution, then any Derivative Works that You distribute must\n          include a readable copy of the attribution notices contained\n          within such NOTICE file, excluding those notices that do not\n          pertain to any part of the Derivative Works, in at least one\n          of the following places: within a NOTICE text file distributed\n          as part of the Derivative Works; within the Source form or\n          documentation, if provided along with the Derivative Works; or,\n          within a display generated by the Derivative Works, if and\n          wherever such third-party notices normally appear. The contents\n          of the NOTICE file are for informational purposes only and\n          do not modify the License. You may add Your own attribution\n          notices within Derivative Works that You distribute, alongside\n          or as an addendum to the NOTICE text from the Work, provided\n          that such additional attribution notices cannot be construed\n          as modifying the License.\n\n      You may add Your own copyright statement to Your modifications and\n      may provide additional or different license terms and conditions\n      for use, reproduction, or distribution of Your modifications, or\n      for any such Derivative Works as a whole, provided Your use,\n      reproduction, and distribution of the Work otherwise complies with\n      the conditions stated in this License.\n\n   5. Submission of Contributions. Unless You explicitly state otherwise,\n      any Contribution intentionally submitted for inclusion in the Work\n      by You to the Licensor shall be under the terms and conditions of\n      this License, without any additional terms or conditions.\n      Notwithstanding the above, nothing herein shall supersede or modify\n      the terms of any separate license agreement you may have executed\n      with Licensor regarding such Contributions.\n\n   6. Trademarks. This License does not grant permission to use the trade\n      names, trademarks, service marks, or product names of the Licensor,\n      except as required for reasonable and customary use in describing the\n      origin of the Work and reproducing the content of the NOTICE file.\n\n   7. Disclaimer of Warranty. Unless required by applicable law or\n      agreed to in writing, Licensor provides the Work (and each\n      Contributor provides its Contributions) on an \"AS IS\" BASIS,\n      WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or\n      implied, including, without limitation, any warranties or conditions\n      of TITLE, NON-INFRINGEMENT, MERCHANTABILITY, or FITNESS FOR A\n      PARTICULAR PURPOSE. You are solely responsible for determining the\n      appropriateness of using or redistributing the Work and assume any\n      risks associated with Your exercise of permissions under this License.\n\n   8. Limitation of Liability. In no event and under no legal theory,\n      whether in tort (including negligence), contract, or otherwise,\n      unless required by applicable law (such as deliberate and grossly\n      negligent acts) or agreed to in writing, shall any Contributor be\n      liable to You for damages, including any direct, indirect, special,\n      incidental, or consequential damages of any character arising as a\n      result of this License or out of the use or inability to use the\n      Work (including but not limited to damages for loss of goodwill,\n      work stoppage, computer failure or malfunction, or any and all\n      other commercial damages or losses), even if such Contributor\n      has been advised of the possibility of such damages.\n\n   9. Accepting Warranty or Additional Liability. While redistributing\n      the Work or Derivative Works thereof, You may choose to offer,\n      and charge a fee for, acceptance of support, warranty, indemnity,\n      or other liability obligations and/or rights consistent with this\n      License. However, in accepting such obligations, You may act only\n      on Your own behalf and on Your sole responsibility, not on behalf\n      of any other Contributor, and only if You agree to indemnify,\n      defend, and hold each Contributor harmless for any liability\n      incurred by, or claims asserted against, such Contributor by reason\n      of your accepting any such warranty or additional liability.\n\n   END OF TERMS AND CONDITIONS\n\n   APPENDIX: How to apply the Apache License to your work.\n\n      To apply the Apache License to your work, attach the following\n      boilerplate notice, with the fields enclosed by brackets \"[]\"\n      replaced with your own identifying information. (Don't include\n      the brackets!)  The text should be enclosed in the appropriate\n      comment syntax for the file format. We also recommend that a\n      file or class name and description of purpose be included on the\n      same \"printed page\" as the copyright notice for easier\n      identification within third-party archives.\n\n   Copyright [yyyy] [name of copyright owner]\n\n   Licensed under the Apache License, Version 2.0 (the \"License\");\n   you may not use this file except in compliance with the License.\n   You may obtain a copy of the License at\n\n       http://www.apache.org/licenses/LICENSE-2.0\n\n   Unless required by applicable law or agreed to in writing, software\n   distributed under the License is distributed on an \"AS IS\" BASIS,\n   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.\n   See the License for the specific language governing permissions and\n   limitations under the License.",
+      "modelfile": "# Modelfile generated by \"ollama show\"\n# To build a new Modelfile based on this, replace FROM with:\n# FROM mnemos-native-qwen35-9b:greedy-ctx64k-v2\n\nFROM D:\\OllamaModels\\blobs\\sha256-dec52a44569a2a25341c4e4d3fee25846eed4f6f0b936278e3a3c900bb99d37c\nTEMPLATE {{ .Prompt }}\nRENDERER qwen3.5\nPARSER qwen3.5\nPARAMETER num_ctx 65536\nPARAMETER presence_penalty 0\nPARAMETER seed 42\nPARAMETER temperature 0\nPARAMETER top_k 20\nPARAMETER top_p 0.95\nLICENSE \"\"\"                                Apache License\n                           Version 2.0, January 2004\n                        http://www.apache.org/licenses/\n\n   TERMS AND CONDITIONS FOR USE, REPRODUCTION, AND DISTRIBUTION\n\n   1. Definitions.\n\n      \"License\" shall mean the terms and conditions for use, reproduction,\n      and distribution as defined by Sections 1 through 9 of this document.\n\n      \"Licensor\" shall mean the copyright owner or entity authorized by\n      the copyright owner that is granting the License.\n\n      \"Legal Entity\" shall mean the union of the acting entity and all\n      other entities that control, are controlled by, or are under common\n      control with that entity. For the purposes of this definition,\n      \"control\" means (i) the power, direct or indirect, to cause the\n      direction or management of such entity, whether by contract or\n      otherwise, or (ii) ownership of fifty percent (50%) or more of the\n      outstanding shares, or (iii) beneficial ownership of such entity.\n\n      \"You\" (or \"Your\") shall mean an individual or Legal Entity\n      exercising permissions granted by this License.\n\n      \"Source\" form shall mean the preferred form for making modifications,\n      including but not limited to software source code, documentation\n      source, and configuration files.\n\n      \"Object\" form shall mean any form resulting from mechanical\n      transformation or translation of a Source form, including but\n      not limited to compiled object code, generated documentation,\n      and conversions to other media types.\n\n      \"Work\" shall mean the work of authorship, whether in Source or\n      Object form, made available under the License, as indicated by a\n      copyright notice that is included in or attached to the work\n      (an example is provided in the Appendix below).\n\n      \"Derivative Works\" shall mean any work, whether in Source or Object\n      form, that is based on (or derived from) the Work and for which the\n      editorial revisions, annotations, elaborations, or other modifications\n      represent, as a whole, an original work of authorship. For the purposes\n      of this License, Derivative Works shall not include works that remain\n      separable from, or merely link (or bind by name) to the interfaces of,\n      the Work and Derivative Works thereof.\n\n      \"Contribution\" shall mean any work of authorship, including\n      the original version of the Work and any modifications or additions\n      to that Work or Derivative Works thereof, that is intentionally\n      submitted to Licensor for inclusion in the Work by the copyright owner\n      or by an individual or Legal Entity authorized to submit on behalf of\n      the copyright owner. For the purposes of this definition, \"submitted\"\n      means any form of electronic, verbal, or written communication sent\n      to the Licensor or its representatives, including but not limited to\n      communication on electronic mailing lists, source code control systems,\n      and issue tracking systems that are managed by, or on behalf of, the\n      Licensor for the purpose of discussing and improving the Work, but\n      excluding communication that is conspicuously marked or otherwise\n      designated in writing by the copyright owner as \"Not a Contribution.\"\n\n      \"Contributor\" shall mean Licensor and any individual or Legal Entity\n      on behalf of whom a Contribution has been received by Licensor and\n      subsequently incorporated within the Work.\n\n   2. Grant of Copyright License. Subject to the terms and conditions of\n      this License, each Contributor hereby grants to You a perpetual,\n      worldwide, non-exclusive, no-charge, royalty-free, irrevocable\n      copyright license to reproduce, prepare Derivative Works of,\n      publicly display, publicly perform, sublicense, and distribute the\n      Work and such Derivative Works in Source or Object form.\n\n   3. Grant of Patent License. Subject to the terms and conditions of\n      this License, each Contributor hereby grants to You a perpetual,\n      worldwide, non-exclusive, no-charge, royalty-free, irrevocable\n      (except as stated in this section) patent license to make, have made,\n      use, offer to sell, sell, import, and otherwise transfer the Work,\n      where such license applies only to those patent claims licensable\n      by such Contributor that are necessarily infringed by their\n      Contribution(s) alone or by combination of their Contribution(s)\n      with the Work to which such Contribution(s) was submitted. If You\n      institute patent litigation against any entity (including a\n      cross-claim or counterclaim in a lawsuit) alleging that the Work\n      or a Contribution incorporated within the Work constitutes direct\n      or contributory patent infringement, then any patent licenses\n      granted to You under this License for that Work shall terminate\n      as of the date such litigation is filed.\n\n   4. Redistribution. You may reproduce and distribute copies of the\n      Work or Derivative Works thereof in any medium, with or without\n      modifications, and in Source or Object form, provided that You\n      meet the following conditions:\n\n      (a) You must give any other recipients of the Work or\n          Derivative Works a copy of this License; and\n\n      (b) You must cause any modified files to carry prominent notices\n          stating that You changed the files; and\n\n      (c) You must retain, in the Source form of any Derivative Works\n          that You distribute, all copyright, patent, trademark, and\n          attribution notices from the Source form of the Work,\n          excluding those notices that do not pertain to any part of\n          the Derivative Works; and\n\n      (d) If the Work includes a \"NOTICE\" text file as part of its\n          distribution, then any Derivative Works that You distribute must\n          include a readable copy of the attribution notices contained\n          within such NOTICE file, excluding those notices that do not\n          pertain to any part of the Derivative Works, in at least one\n          of the following places: within a NOTICE text file distributed\n          as part of the Derivative Works; within the Source form or\n          documentation, if provided along with the Derivative Works; or,\n          within a display generated by the Derivative Works, if and\n          wherever such third-party notices normally appear. The contents\n          of the NOTICE file are for informational purposes only and\n          do not modify the License. You may add Your own attribution\n          notices within Derivative Works that You distribute, alongside\n          or as an addendum to the NOTICE text from the Work, provided\n          that such additional attribution notices cannot be construed\n          as modifying the License.\n\n      You may add Your own copyright statement to Your modifications and\n      may provide additional or different license terms and conditions\n      for use, reproduction, or distribution of Your modifications, or\n      for any such Derivative Works as a whole, provided Your use,\n      reproduction, and distribution of the Work otherwise complies with\n      the conditions stated in this License.\n\n   5. Submission of Contributions. Unless You explicitly state otherwise,\n      any Contribution intentionally submitted for inclusion in the Work\n      by You to the Licensor shall be under the terms and conditions of\n      this License, without any additional terms or conditions.\n      Notwithstanding the above, nothing herein shall supersede or modify\n      the terms of any separate license agreement you may have executed\n      with Licensor regarding such Contributions.\n\n   6. Trademarks. This License does not grant permission to use the trade\n      names, trademarks, service marks, or product names of the Licensor,\n      except as required for reasonable and customary use in describing the\n      origin of the Work and reproducing the content of the NOTICE file.\n\n   7. Disclaimer of Warranty. Unless required by applicable law or\n      agreed to in writing, Licensor provides the Work (and each\n      Contributor provides its Contributions) on an \"AS IS\" BASIS,\n      WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or\n      implied, including, without limitation, any warranties or conditions\n      of TITLE, NON-INFRINGEMENT, MERCHANTABILITY, or FITNESS FOR A\n      PARTICULAR PURPOSE. You are solely responsible for determining the\n      appropriateness of using or redistributing the Work and assume any\n      risks associated with Your exercise of permissions under this License.\n\n   8. Limitation of Liability. In no event and under no legal theory,\n      whether in tort (including negligence), contract, or otherwise,\n      unless required by applicable law (such as deliberate and grossly\n      negligent acts) or agreed to in writing, shall any Contributor be\n      liable to You for damages, including any direct, indirect, special,\n      incidental, or consequential damages of any character arising as a\n      result of this License or out of the use or inability to use the\n      Work (including but not limited to damages for loss of goodwill,\n      work stoppage, computer failure or malfunction, or any and all\n      other commercial damages or losses), even if such Contributor\n      has been advised of the possibility of such damages.\n\n   9. Accepting Warranty or Additional Liability. While redistributing\n      the Work or Derivative Works thereof, You may choose to offer,\n      and charge a fee for, acceptance of support, warranty, indemnity,\n      or other liability obligations and/or rights consistent with this\n      License. However, in accepting such obligations, You may act only\n      on Your own behalf and on Your sole responsibility, not on behalf\n      of any other Contributor, and only if You agree to indemnify,\n      defend, and hold each Contributor harmless for any liability\n      incurred by, or claims asserted against, such Contributor by reason\n      of your accepting any such warranty or additional liability.\n\n   END OF TERMS AND CONDITIONS\n\n   APPENDIX: How to apply the Apache License to your work.\n\n      To apply the Apache License to your work, attach the following\n      boilerplate notice, with the fields enclosed by brackets \"[]\"\n      replaced with your own identifying information. (Don't include\n      the brackets!)  The text should be enclosed in the appropriate\n      comment syntax for the file format. We also recommend that a\n      file or class name and description of purpose be included on the\n      same \"printed page\" as the copyright notice for easier\n      identification within third-party archives.\n\n   Copyright [yyyy] [name of copyright owner]\n\n   Licensed under the Apache License, Version 2.0 (the \"License\");\n   you may not use this file except in compliance with the License.\n   You may obtain a copy of the License at\n\n       http://www.apache.org/licenses/LICENSE-2.0\n\n   Unless required by applicable law or agreed to in writing, software\n   distributed under the License is distributed on an \"AS IS\" BASIS,\n   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.\n   See the License for the specific language governing permissions and\n   limitations under the License.\"\"\"\n",
+      "parameters": "top_p                          0.95\nnum_ctx                        65536\npresence_penalty               0\nseed                           42\ntemperature                    0\ntop_k                          20",
+      "template": "{{ .Prompt }}",
+      "details": {
+        "parent_model": "mnemos-native-qwen35-9b:greedy-v1",
+        "format": "gguf",
+        "family": "qwen35",
+        "families": [
+          "qwen35"
+        ],
+        "parameter_size": "9.7B",
+        "quantization_level": "Q4_K_M"
+      },
+      "model_info": {
+        "general.architecture": "qwen35",
+        "general.file_type": 15,
+        "general.parameter_count": 9653104368,
+        "general.quantization_version": 2,
+        "qwen35.attention.head_count": 16,
+        "qwen35.attention.head_count_kv": [
+          0,
+          0,
+          0,
+          4,
+          0,
+          0,
+          0,
+          4,
+          0,
+          0,
+          0,
+          4,
+          0,
+          0,
+          0,
+          4,
+          0,
+          0,
+          0,
+          4,
+          0,
+          0,
+          0,
+          4,
+          0,
+          0,
+          0,
+          4,
+          0,
+          0,
+          0,
+          4
+        ],
+        "qwen35.attention.key_length": 256,
+        "qwen35.attention.layer_norm_rms_epsilon": 1e-06,
+        "qwen35.attention.value_length": 256,
+        "qwen35.block_count": 32,
+        "qwen35.context_length": 262144,
+        "qwen35.embedding_length": 4096,
+        "qwen35.feed_forward_length": 12288,
+        "qwen35.full_attention_interval": 4,
+        "qwen35.image_token_id": 248056,
+        "qwen35.mrope_sections": [
+          11,
+          11,
+          10
+        ],
+        "qwen35.rope.dimension_count": 64,
+        "qwen35.rope.dimension_sections": [
+          11,
+          11,
+          10
+        ],
+        "qwen35.rope.freq_base": 10000000,
+        "qwen35.rope.mrope_interleaved": true,
+        "qwen35.rope.mrope_section": [
+          11,
+          11,
+          10
+        ],
+        "qwen35.ssm.conv_kernel": 4,
+        "qwen35.ssm.group_count": 16,
+        "qwen35.ssm.inner_size": 4096,
+        "qwen35.ssm.state_size": 128,
+        "qwen35.ssm.time_step_rank": 32,
+        "qwen35.ssm.v_head_reordered": true,
+        "qwen35.vision.attention.head_count": 16,
+        "qwen35.vision.block_count": 27,
+        "qwen35.vision.deepstack_visual_indexes": [],
+        "qwen35.vision.embedding_length": 1152,
+        "qwen35.vision.image_mean": [
+          0.5,
+          0.5,
+          0.5
+        ],
+        "qwen35.vision.image_std": [
+          0.5,
+          0.5,
+          0.5
+        ],
+        "qwen35.vision.longest_edge": 16777216,
+        "qwen35.vision.num_channels": 3,
+        "qwen35.vision.patch_size": 16,
+        "qwen35.vision.shortest_edge": 65536,
+        "qwen35.vision.spatial_merge_size": 2,
+        "qwen35.vision.temporal_patch_size": 2,
+        "qwen35.vision_end_token_id": 248054,
+        "qwen35.vision_start_token_id": 248053,
+        "tokenizer.ggml.add_eos_token": false,
+        "tokenizer.ggml.add_padding_token": false,
+        "tokenizer.ggml.eos_token_id": 248046,
+        "tokenizer.ggml.merges": [],
+        "tokenizer.ggml.model": "gpt2",
+        "tokenizer.ggml.padding_token_id": 248044,
+        "tokenizer.ggml.pre": "qwen35",
+        "tokenizer.ggml.scores": [],
+        "tokenizer.ggml.token_type": [],
+        "tokenizer.ggml.tokens": []
+      },
+      "capabilities": [
+        "completion",
+        "vision",
+        "tools",
+        "thinking"
+      ],
+      "modified_at": "2026-09-20T02:02:21.65603-04:00",
+      "requires": "0.17.1"
+    },
+    "ps_before": {
+      "models": []
+    },
+    "chat": {
+      "id": "chatcmpl-750",
+      "object": "chat.completion",
+      "created": 1789890671,
+      "model": "mnemos-native-qwen35-9b:greedy-ctx64k-v2",
+      "system_fingerprint": "fp_ollama",
+      "choices": [
+        {
+          "index": 0,
+          "message": {
+            "role": "assistant",
+            "content": "READY"
+          },
+          "finish_reason": "stop"
+        }
+      ],
+      "usage": {
+        "prompt_tokens": 16,
+        "prompt_tokens_details": {
+          "cached_tokens": 0
+        },
+        "completion_tokens": 2,
+        "total_tokens": 18
+      }
+    },
+    "ps_after": {
+      "models": [
+        {
+          "name": "mnemos-native-qwen35-9b:greedy-ctx64k-v2",
+          "model": "mnemos-native-qwen35-9b:greedy-ctx64k-v2",
+          "size": 8044454869,
+          "digest": "87bc5156d86918e0435431ab0286167a4c79c4a4a259b82fba5f3f75022006e2",
+          "details": {
+            "parent_model": "",
+            "format": "gguf",
+            "family": "qwen35",
+            "families": [
+              "qwen35"
+            ],
+            "parameter_size": "9.7B",
+            "quantization_level": "Q4_K_M"
+          },
+          "expires_at": "2026-09-20T03:56:11.2709803-04:00",
+          "size_vram": 8044454869,
+          "context_length": 65536
+        }
+      ]
+    },
+    "tags_after": {
+      "models": [
+        {
+          "name": "mnemos-native-qwen35-9b:greedy-ctx64k-v2",
+          "model": "mnemos-native-qwen35-9b:greedy-ctx64k-v2",
+          "modified_at": "2026-09-20T02:02:21.65603-04:00",
+          "size": 6594474437,
+          "digest": "87bc5156d86918e0435431ab0286167a4c79c4a4a259b82fba5f3f75022006e2",
+          "details": {
+            "parent_model": "mnemos-native-qwen35-9b:greedy-v1",
+            "format": "gguf",
+            "family": "qwen35",
+            "families": [
+              "qwen35"
+            ],
+            "parameter_size": "9.7B",
+            "quantization_level": "Q4_K_M",
+            "context_length": 262144,
+            "embedding_length": 4096
+          },
+          "capabilities": [
+            "completion",
+            "vision",
+            "tools",
+            "thinking"
+          ]
+        },
+        {
+          "name": "gpt-oss:20b",
+          "model": "gpt-oss:20b",
+          "modified_at": "2026-09-19T23:14:26.426297-04:00",
+          "size": 13793441244,
+          "digest": "17052f91a42e97930aa6e28a6c6c06a983e6a58dbb00434885a0cf5313e376f7",
+          "details": {
+            "parent_model": "",
+            "format": "gguf",
+            "family": "gptoss",
+            "families": [
+              "gptoss"
+            ],
+            "parameter_size": "20.9B",
+            "quantization_level": "MXFP4",
+            "context_length": 131072,
+            "embedding_length": 2880
+          },
+          "capabilities": [
+            "completion",
+            "tools",
+            "thinking"
+          ]
+        },
+        {
+          "name": "mnemos-gptoss20b-before-refresh:20260919-v1",
+          "model": "mnemos-gptoss20b-before-refresh:20260919-v1",
+          "modified_at": "2026-09-19T23:03:57.9061378-04:00",
+          "size": 13780173724,
+          "digest": "aa4295ac10c3afb60e6d711289fc6896f5aef82258997b9efdaed6d0cc4cd8b8",
+          "details": {
+            "parent_model": "/Users/ollama/.ollama/models/blobs/sha256-b112e727c6f18875636c56a779790a590d705aec9e1c0eb5a97d51fc2a778583",
+            "format": "gguf",
+            "family": "gptoss",
+            "families": [
+              "gptoss"
+            ],
+            "parameter_size": "20.9B",
+            "quantization_level": "MXFP4"
+          },
+          "capabilities": [
+            "completion",
+            "tools",
+            "thinking"
+          ]
+        },
+        {
+          "name": "mnemos-native-qwen35-9b:greedy-v1",
+          "model": "mnemos-native-qwen35-9b:greedy-v1",
+          "modified_at": "2026-09-19T20:18:48.3532887-04:00",
+          "size": 6594474421,
+          "digest": "243c7dc812e847df8f175763c8e91b6daa88483f141957b76f9e9722e8d526a5",
+          "details": {
+            "parent_model": "qwen3.5:9b",
+            "format": "gguf",
+            "family": "qwen35",
+            "families": [
+              "qwen35"
+            ],
+            "parameter_size": "9.7B",
+            "quantization_level": "Q4_K_M",
+            "context_length": 262144,
+            "embedding_length": 4096
+          },
+          "capabilities": [
+            "completion",
+            "vision",
+            "tools",
+            "thinking"
+          ]
+        },
+        {
+          "name": "nomic-embed-text:latest",
+          "model": "nomic-embed-text:latest",
+          "modified_at": "2026-09-18T15:38:50.3313315-04:00",
+          "size": 274302450,
+          "digest": "0a109f422b47e3a30ba2b10eca18548e944e8a23073ee3f3e947efcf3c45e59f",
+          "details": {
+            "parent_model": "",
+            "format": "gguf",
+            "family": "nomic-bert",
+            "families": [
+              "nomic-bert"
+            ],
+            "parameter_size": "137M",
+            "quantization_level": "F16",
+            "context_length": 2048,
+            "embedding_length": 768
+          },
+          "capabilities": [
+            "embedding"
+          ]
+        },
+        {
+          "name": "qwen3.5:9b",
+          "model": "qwen3.5:9b",
+          "modified_at": "2026-09-18T15:38:31.3310652-04:00",
+          "size": 6594474711,
+          "digest": "6488c96fa5faab64bb65cbd30d4289e20e6130ef535a93ef9a49f42eda893ea7",
+          "details": {
+            "parent_model": "",
+            "format": "gguf",
+            "family": "qwen35",
+            "families": [
+              "qwen35"
+            ],
+            "parameter_size": "9.7B",
+            "quantization_level": "Q4_K_M",
+            "context_length": 262144,
+            "embedding_length": 4096
+          },
+          "capabilities": [
+            "completion",
+            "vision",
+            "tools",
+            "thinking"
+          ]
+        },
+        {
+          "name": "qwen2.5:7b",
+          "model": "qwen2.5:7b",
+          "modified_at": "2026-01-29T16:53:39.6378873-05:00",
+          "size": 4683087332,
+          "digest": "845dbda0ea48ed749caafd9e6037047aa19acfcfd82e704d7ca97d631a0b697e",
+          "details": {
+            "parent_model": "",
+            "format": "gguf",
+            "family": "qwen2",
+            "families": [
+              "qwen2"
+            ],
+            "parameter_size": "7.6B",
+            "quantization_level": "Q4_K_M",
+            "context_length": 32768,
+            "embedding_length": 3584
+          },
+          "capabilities": [
+            "completion",
+            "tools"
+          ]
+        },
+        {
+          "name": "anthony-maio/remnantinstruct-8b:latest",
+          "model": "anthony-maio/remnantinstruct-8b:latest",
+          "modified_at": "2026-01-27T23:46:24.269713-05:00",
+          "size": 5027784917,
+          "digest": "49bd0a32d5fef3e2eb4a8e20f8c0885e60965950f532304233a21cd9872c0f89",
+          "details": {
+            "parent_model": "D:\\OllamaModels\\blobs\\sha256-6648ab37397b78161dbef10eaee971c3887b9bc08c2c7e5c24392a0cd025e3e6",
+            "format": "gguf",
+            "family": "qwen3",
+            "families": [
+              "qwen3"
+            ],
+            "parameter_size": "8.2B",
+            "quantization_level": "Q4_K_M",
+            "context_length": 40960,
+            "embedding_length": 4096
+          },
+          "capabilities": [
+            "tools",
+            "thinking",
+            "completion"
+          ]
+        },
+        {
+          "name": "anthonym21/remnantinstruct-8b:latest",
+          "model": "anthonym21/remnantinstruct-8b:latest",
+          "modified_at": "2026-01-26T11:37:14.2243502-05:00",
+          "size": 5027784917,
+          "digest": "49bd0a32d5fef3e2eb4a8e20f8c0885e60965950f532304233a21cd9872c0f89",
+          "details": {
+            "parent_model": "D:\\OllamaModels\\blobs\\sha256-6648ab37397b78161dbef10eaee971c3887b9bc08c2c7e5c24392a0cd025e3e6",
+            "format": "gguf",
+            "family": "qwen3",
+            "families": [
+              "qwen3"
+            ],
+            "parameter_size": "8.2B",
+            "quantization_level": "Q4_K_M",
+            "context_length": 40960,
+            "embedding_length": 4096
+          },
+          "capabilities": [
+            "tools",
+            "thinking",
+            "completion"
+          ]
+        },
+        {
+          "name": "qwen3:30b",
+          "model": "qwen3:30b",
+          "modified_at": "2025-09-17T00:08:17.2492434-04:00",
+          "size": 18556699301,
+          "digest": "e50831eb2d919df6268f18bc3cec980d597ae27e98c3308f90a0ec4941b64f28",
+          "details": {
+            "parent_model": "",
+            "format": "gguf",
+            "family": "qwen3moe",
+            "families": [
+              "qwen3moe"
+            ],
+            "parameter_size": "30.5B",
+            "quantization_level": "Q4_K_M",
+            "context_length": 262144,
+            "embedding_length": 2048
+          },
+          "capabilities": [
+            "completion",
+            "tools",
+            "thinking"
+          ]
+        },
+        {
+          "name": "deepseek-r1:8b",
+          "model": "deepseek-r1:8b",
+          "modified_at": "2025-09-13T22:01:39.4549293-04:00",
+          "size": 5225376047,
+          "digest": "6995872bfe4c521a67b32da386cd21d5c6e819b6e0d62f79f64ec83be99f5763",
+          "details": {
+            "parent_model": "",
+            "format": "gguf",
+            "family": "qwen3",
+            "families": [
+              "qwen3"
+            ],
+            "parameter_size": "8.2B",
+            "quantization_level": "Q4_K_M",
+            "context_length": 131072,
+            "embedding_length": 4096
+          },
+          "capabilities": [
+            "tools",
+            "thinking",
+            "completion"
+          ]
+        },
+        {
+          "name": "qwen2.5:14b",
+          "model": "qwen2.5:14b",
+          "modified_at": "2025-09-12T05:33:27.1047131-04:00",
+          "size": 8988124069,
+          "digest": "7cdf5a0187d5c58cc5d369b255592f7841d1c4696d45a8c8a9489440385b22f6",
+          "details": {
+            "parent_model": "",
+            "format": "gguf",
+            "family": "qwen2",
+            "families": [
+              "qwen2"
+            ],
+            "parameter_size": "14.8B",
+            "quantization_level": "Q4_K_M",
+            "context_length": 32768,
+            "embedding_length": 5120
+          },
+          "capabilities": [
+            "completion",
+            "tools"
+          ]
+        },
+        {
+          "name": "gemma3:27b",
+          "model": "gemma3:27b",
+          "modified_at": "2025-09-11T19:16:10.1369476-04:00",
+          "size": 17396936941,
+          "digest": "a418f5838eaf7fe2cfe0a3046c8384b68ba43a4435542c942f9db00a5f342203",
+          "details": {
+            "parent_model": "",
+            "format": "gguf",
+            "family": "gemma3",
+            "families": [
+              "gemma3"
+            ],
+            "parameter_size": "27.4B",
+            "quantization_level": "Q4_K_M",
+            "context_length": 131072,
+            "embedding_length": 5376
+          },
+          "capabilities": [
+            "completion",
+            "vision"
+          ]
+        },
+        {
+          "name": "gemma3:12B",
+          "model": "gemma3:12B",
+          "modified_at": "2025-09-10T15:29:15.9047568-04:00",
+          "size": 8149190253,
+          "digest": "f4031aab637d1ffa37b42570452ae0e4fad0314754d17ded67322e4b95836f8a",
+          "details": {
+            "parent_model": "",
+            "format": "gguf",
+            "family": "gemma3",
+            "families": [
+              "gemma3"
+            ],
+            "parameter_size": "12.2B",
+            "quantization_level": "Q4_K_M",
+            "context_length": 131072,
+            "embedding_length": 3840
+          },
+          "capabilities": [
+            "completion",
+            "vision"
+          ]
+        },
+        {
+          "name": "gemma3:4b",
+          "model": "gemma3:4b",
+          "modified_at": "2025-09-10T03:20:03.9386803-04:00",
+          "size": 3338801804,
+          "digest": "a2af6cc3eb7fa8be8504abaf9b04e88f17a119ec3f04a3addf55f92841195f5a",
+          "details": {
+            "parent_model": "",
+            "format": "gguf",
+            "family": "gemma3",
+            "families": [
+              "gemma3"
+            ],
+            "parameter_size": "4.3B",
+            "quantization_level": "Q4_K_M",
+            "context_length": 131072,
+            "embedding_length": 2560
+          },
+          "capabilities": [
+            "completion",
+            "vision"
+          ]
+        },
+        {
+          "name": "gemma3:1b",
+          "model": "gemma3:1b",
+          "modified_at": "2025-09-10T03:18:13.3797485-04:00",
+          "size": 815319791,
+          "digest": "8648f39daa8fbf5b18c7b4e6a8fb4990c692751d49917417b8842ca5758e7ffc",
+          "details": {
+            "parent_model": "",
+            "format": "gguf",
+            "family": "gemma3",
+            "families": [
+              "gemma3"
+            ],
+            "parameter_size": "999.89M",
+            "quantization_level": "Q4_K_M",
+            "context_length": 32768,
+            "embedding_length": 1152
+          },
+          "capabilities": [
+            "completion"
+          ]
+        }
+      ]
+    },
+    "gpu_residency": {
+      "digest": "87bc5156d86918e0435431ab0286167a4c79c4a4a259b82fba5f3f75022006e2",
+      "size_vram": 8044454869
+    },
+    "finished_at": "2026-09-20T07:51:11.380821+00:00"
+  },
+  "error_type": "ValueError",
+  "error": "Codex model observation is missing or mismatched",
+  "host_environment_after": {
+    "revision": "ebe3fcb2f85ebdbe0e469e9d295636ac930246b4",
+    "environment_sha256": "a175bfc46955bc72ebb1c854ce7646f3dad3fd22716d3219d3a42d8928a30f7f"
+  },
+  "cleanup_established": true,
+  "finished_at": "2026-09-20T07:52:48.409665+00:00"
+}

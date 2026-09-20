@@ -1,0 +1,463 @@
+[
+  {
+    "phase": "controller-controls",
+    "operation": "remember",
+    "payload": {
+      "context": {
+        "user_profile_id": "native-three-host-v3",
+        "project_id": "595e6f5a-2b5b-48f9-803f-f9ed7f8df302",
+        "workspace_id": null,
+        "session_id": "controller",
+        "host": "manual"
+      },
+      "event_id": "control-project",
+      "content": "The build artifact checksum marker is slate-safe-553."
+    },
+    "result": {
+      "schema_version": 1,
+      "status": "committed",
+      "event_id": "d03ecfa70951170384efa9405bd09e592da081da78b3cf4a33d1e605099d9734",
+      "processing_status": "pending",
+      "job_id": "event:d03ecfa70951170384efa9405bd09e592da081da78b3cf4a33d1e605099d9734",
+      "identity_status": "normal",
+      "fact_eligible": true
+    },
+    "source": "service-dispatch"
+  },
+  {
+    "phase": "controller-controls",
+    "operation": "remember",
+    "payload": {
+      "context": {
+        "user_profile_id": "native-three-host-v3",
+        "project_id": "a127f0aa-c07b-497e-b92c-6cea4aa45340",
+        "workspace_id": null,
+        "session_id": "controller",
+        "host": "manual"
+      },
+      "event_id": "control-foreign-project",
+      "content": "The project release label is forbidden-foreign-ridge-992."
+    },
+    "result": {
+      "schema_version": 1,
+      "status": "committed",
+      "event_id": "d96847368e38cbe459f1a1b80d5c0fdfcf3147b4b8d24599102c6a7a1c929d17",
+      "processing_status": "pending",
+      "job_id": "event:d96847368e38cbe459f1a1b80d5c0fdfcf3147b4b8d24599102c6a7a1c929d17",
+      "identity_status": "normal",
+      "fact_eligible": true
+    },
+    "source": "service-dispatch"
+  },
+  {
+    "phase": "controller-controls",
+    "operation": "maintenance",
+    "payload": {},
+    "result": {
+      "schema_version": 1,
+      "completed": 2,
+      "maintenance": {
+        "pending": 0,
+        "leased": 0,
+        "exhausted": 0,
+        "completed": 2,
+        "retry_count": 0,
+        "oldest_unfinished_seconds": 0,
+        "oldest_pending_seconds": 0,
+        "running": false,
+        "scheduler_running": false,
+        "last_success": "2026-09-20T07:51:12.889086+00:00",
+        "last_error": null,
+        "processed_count": 2,
+        "failed_count": 0
+      },
+      "graph": {
+        "enabled": false,
+        "managed_preferences": true,
+        "ready": false,
+        "pending_count": 2,
+        "cursor": "",
+        "marked_sources": 0,
+        "total_sources": 2,
+        "legacy_graph": false
+      }
+    },
+    "source": "service-dispatch"
+  },
+  {
+    "phase": "teach-release",
+    "operation": "retrieve",
+    "payload": {
+      "query": "recent project context and decisions",
+      "context": {
+        "user_profile_id": "native-three-host-v3",
+        "project_id": "595e6f5a-2b5b-48f9-803f-f9ed7f8df302",
+        "workspace_id": null,
+        "session_id": "01a0bdcc-9103-7e00-8e73-27a44cae5379",
+        "host": "codex"
+      },
+      "allowed_scopes": [
+        "project",
+        "workspace",
+        "global"
+      ],
+      "top_k": 5,
+      "max_context_tokens": 1200,
+      "profile": "baseline"
+    },
+    "result": {
+      "schema_version": 1,
+      "profile": "baseline",
+      "view": "memory",
+      "facts": [
+        {
+          "id": "0faa2b81-f67e-4f7e-a5ce-27fcd78ede99",
+          "version": 1,
+          "content": "The build artifact checksum marker is slate-safe-553.",
+          "scope": "project",
+          "scope_id": "595e6f5a-2b5b-48f9-803f-f9ed7f8df302",
+          "assertion_status": "asserted",
+          "sources": [
+            {
+              "evidence_id": "392fc7c1-773a-4f6b-9a61-a8474d9e6922",
+              "fact_id": "0faa2b81-f67e-4f7e-a5ce-27fcd78ede99",
+              "source_event_id": "d03ecfa70951170384efa9405bd09e592da081da78b3cf4a33d1e605099d9734",
+              "excerpt": "The build artifact checksum marker is slate-safe-553.",
+              "source_ref": null,
+              "created_at": "2026-09-20T07:51:12.851921Z",
+              "original_source_status": "retained_locally"
+            }
+          ],
+          "support_available": true,
+          "original_source_status": "retained_locally",
+          "scores": {
+            "semantic": 0.4688478112220764,
+            "state_match": null,
+            "graph_energy": 0.0,
+            "graph_contribution": 0.0,
+            "total": 0.4688478112220764,
+            "state_status": "disabled",
+            "profile": "baseline",
+            "scope_match": true,
+            "context_token_upper_bound": 103,
+            "token_count_method": "utf8_bytes_upper_bound",
+            "graph_status": "disabled",
+            "candidate_backend": "sqlite_vec_scoped_exact_cosine",
+            "lexical_candidate": false,
+            "lexical_status": "candidate_union"
+          }
+        }
+      ],
+      "context": "[0faa2b81-f67e-4f7e-a5ce-27fcd78ede99 version 1] The build artifact checksum marker is slate-safe-553.\n",
+      "captured_evidence": [],
+      "evidence_context": "",
+      "token_count_method": "utf8_bytes_upper_bound",
+      "context_token_upper_bound": 103
+    },
+    "source": "service-dispatch"
+  },
+  {
+    "phase": "teach-release",
+    "operation": "capture",
+    "payload": {
+      "event_id": "codex:4e5c138156e649efe30deee05538396c47a56d12f15750d7553b3a09e7c1614c",
+      "context": {
+        "user_profile_id": "native-three-host-v3",
+        "project_id": "595e6f5a-2b5b-48f9-803f-f9ed7f8df302",
+        "workspace_id": null,
+        "session_id": "01a0bdcc-9103-7e00-8e73-27a44cae5379",
+        "host": "codex"
+      },
+      "occurred_at": "2026-09-20T07:51:41.204122+00:00",
+      "role": "user",
+      "content": "Use only the requested Mnemos tools and this project's scope. Do not add conversational text as an explicit fact. Call mnemos_store exactly once with content \"The project release label is cedar-ridge-731.\", role user, scope project. Then consolidate, then use mnemos_job_status with the returned job ID to establish completion. Report the actual result.",
+      "source_kind": "codex_hook",
+      "source_ref": "UserPromptSubmit:01a0bdcc-9a59-7250-95e9-888082d8717b"
+    },
+    "result": {
+      "schema_version": 1,
+      "status": "committed",
+      "event_id": "a088a4a2149031fffff0ab945362bfefa3ced34edfa3e8cd48d90d2b3ec76bb3",
+      "processing_status": "pending",
+      "job_id": "event:a088a4a2149031fffff0ab945362bfefa3ced34edfa3e8cd48d90d2b3ec76bb3",
+      "identity_status": "normal",
+      "fact_eligible": true
+    },
+    "source": "service-dispatch"
+  },
+  {
+    "phase": "teach-release",
+    "operation": "retrieve",
+    "payload": {
+      "query": "Use only the requested Mnemos tools and this project's scope. Do not add conversational text as an explicit fact. Call mnemos_store exactly once with content \"The project release label is cedar-ridge-731.\", role user, scope project. Then consolidate, then use mnemos_job_status with the returned job ID to establish completion. Report the actual result.",
+      "context": {
+        "user_profile_id": "native-three-host-v3",
+        "project_id": "595e6f5a-2b5b-48f9-803f-f9ed7f8df302",
+        "workspace_id": null,
+        "session_id": "01a0bdcc-9103-7e00-8e73-27a44cae5379",
+        "host": "codex"
+      },
+      "allowed_scopes": [
+        "project",
+        "workspace",
+        "global"
+      ],
+      "top_k": 5,
+      "max_context_tokens": 1200,
+      "profile": "baseline"
+    },
+    "result": {
+      "schema_version": 1,
+      "profile": "baseline",
+      "view": "memory",
+      "facts": [
+        {
+          "id": "0faa2b81-f67e-4f7e-a5ce-27fcd78ede99",
+          "version": 1,
+          "content": "The build artifact checksum marker is slate-safe-553.",
+          "scope": "project",
+          "scope_id": "595e6f5a-2b5b-48f9-803f-f9ed7f8df302",
+          "assertion_status": "asserted",
+          "sources": [
+            {
+              "evidence_id": "392fc7c1-773a-4f6b-9a61-a8474d9e6922",
+              "fact_id": "0faa2b81-f67e-4f7e-a5ce-27fcd78ede99",
+              "source_event_id": "d03ecfa70951170384efa9405bd09e592da081da78b3cf4a33d1e605099d9734",
+              "excerpt": "The build artifact checksum marker is slate-safe-553.",
+              "source_ref": null,
+              "created_at": "2026-09-20T07:51:12.851921Z",
+              "original_source_status": "retained_locally"
+            }
+          ],
+          "support_available": true,
+          "original_source_status": "retained_locally",
+          "scores": {
+            "semantic": 0.4829583466053009,
+            "state_match": null,
+            "graph_energy": 0.0,
+            "graph_contribution": 0.0,
+            "total": 0.4829583466053009,
+            "state_status": "disabled",
+            "profile": "baseline",
+            "scope_match": true,
+            "context_token_upper_bound": 103,
+            "token_count_method": "utf8_bytes_upper_bound",
+            "graph_status": "disabled",
+            "candidate_backend": "sqlite_vec_scoped_exact_cosine",
+            "lexical_candidate": true,
+            "lexical_status": "candidate_union"
+          }
+        }
+      ],
+      "context": "[0faa2b81-f67e-4f7e-a5ce-27fcd78ede99 version 1] The build artifact checksum marker is slate-safe-553.\n",
+      "captured_evidence": [],
+      "evidence_context": "",
+      "token_count_method": "utf8_bytes_upper_bound",
+      "context_token_upper_bound": 103
+    },
+    "source": "service-dispatch"
+  },
+  {
+    "phase": "teach-release",
+    "operation": "capture",
+    "payload": {
+      "event_id": "codex:9c195e5ca4d9ed39be8efad645cb1a0f47c8d2c05c84e5eb11ded1dbc44f7b4e",
+      "context": {
+        "user_profile_id": "native-three-host-v3",
+        "project_id": "595e6f5a-2b5b-48f9-803f-f9ed7f8df302",
+        "workspace_id": null,
+        "session_id": "01a0bdcc-9103-7e00-8e73-27a44cae5379",
+        "host": "codex"
+      },
+      "occurred_at": "2026-09-20T07:52:10.063367+00:00",
+      "role": "assistant",
+      "content": "The operation did not complete:\n\n- `mnemos_store` was called exactly once, but was cancelled.\n- `mnemos_consolidate` was then called, but was also cancelled.\n- No job ID was returned, so `mnemos_job_status` could not be called.",
+      "source_kind": "codex_hook",
+      "source_ref": "Stop:01a0bdcc-9a59-7250-95e9-888082d8717b"
+    },
+    "result": {
+      "schema_version": 1,
+      "status": "committed",
+      "event_id": "f75dd0bb81af5abeca76150eb4814205502c868b19977cd7d936280723fc0908",
+      "processing_status": "pending",
+      "job_id": "event:f75dd0bb81af5abeca76150eb4814205502c868b19977cd7d936280723fc0908",
+      "identity_status": "normal",
+      "fact_eligible": true
+    },
+    "source": "service-dispatch"
+  },
+  {
+    "phase": "teach-release",
+    "operation": "capture",
+    "payload": {
+      "event_id": "codex:43a901312898e3296565d5603a142a22c247dae9eb389f822ed6e30cf4b04320",
+      "context": {
+        "user_profile_id": "native-three-host-v3",
+        "project_id": "595e6f5a-2b5b-48f9-803f-f9ed7f8df302",
+        "workspace_id": null,
+        "session_id": "01a0bdcc-9103-7e00-8e73-27a44cae5379",
+        "host": "codex"
+      },
+      "occurred_at": "2026-09-20T07:52:22.038579+00:00",
+      "role": "user",
+      "content": "/exit",
+      "source_kind": "codex_hook",
+      "source_ref": "UserPromptSubmit:01a0bdcd-438a-72e2-89df-d5c0f640529a"
+    },
+    "result": {
+      "schema_version": 1,
+      "status": "committed",
+      "event_id": "7a155cabdbee92e3c317690cd55b0779e28dc124fc441e59a7766b198bb695ae",
+      "processing_status": "pending",
+      "job_id": "event:7a155cabdbee92e3c317690cd55b0779e28dc124fc441e59a7766b198bb695ae",
+      "identity_status": "normal",
+      "fact_eligible": true
+    },
+    "source": "service-dispatch"
+  },
+  {
+    "phase": "teach-release",
+    "operation": "retrieve",
+    "payload": {
+      "query": "/exit",
+      "context": {
+        "user_profile_id": "native-three-host-v3",
+        "project_id": "595e6f5a-2b5b-48f9-803f-f9ed7f8df302",
+        "workspace_id": null,
+        "session_id": "01a0bdcc-9103-7e00-8e73-27a44cae5379",
+        "host": "codex"
+      },
+      "allowed_scopes": [
+        "project",
+        "workspace",
+        "global"
+      ],
+      "top_k": 5,
+      "max_context_tokens": 1200,
+      "profile": "baseline"
+    },
+    "result": {
+      "schema_version": 1,
+      "profile": "baseline",
+      "view": "memory",
+      "facts": [
+        {
+          "id": "0faa2b81-f67e-4f7e-a5ce-27fcd78ede99",
+          "version": 1,
+          "content": "The build artifact checksum marker is slate-safe-553.",
+          "scope": "project",
+          "scope_id": "595e6f5a-2b5b-48f9-803f-f9ed7f8df302",
+          "assertion_status": "asserted",
+          "sources": [
+            {
+              "evidence_id": "392fc7c1-773a-4f6b-9a61-a8474d9e6922",
+              "fact_id": "0faa2b81-f67e-4f7e-a5ce-27fcd78ede99",
+              "source_event_id": "d03ecfa70951170384efa9405bd09e592da081da78b3cf4a33d1e605099d9734",
+              "excerpt": "The build artifact checksum marker is slate-safe-553.",
+              "source_ref": null,
+              "created_at": "2026-09-20T07:51:12.851921Z",
+              "original_source_status": "retained_locally"
+            }
+          ],
+          "support_available": true,
+          "original_source_status": "retained_locally",
+          "scores": {
+            "semantic": 0.3998897671699524,
+            "state_match": null,
+            "graph_energy": 0.0,
+            "graph_contribution": 0.0,
+            "total": 0.3998897671699524,
+            "state_status": "disabled",
+            "profile": "baseline",
+            "scope_match": true,
+            "context_token_upper_bound": 103,
+            "token_count_method": "utf8_bytes_upper_bound",
+            "graph_status": "disabled",
+            "candidate_backend": "sqlite_vec_scoped_exact_cosine",
+            "lexical_candidate": false,
+            "lexical_status": "candidate_union"
+          }
+        }
+      ],
+      "context": "[0faa2b81-f67e-4f7e-a5ce-27fcd78ede99 version 1] The build artifact checksum marker is slate-safe-553.\n",
+      "captured_evidence": [],
+      "evidence_context": "",
+      "token_count_method": "utf8_bytes_upper_bound",
+      "context_token_upper_bound": 103
+    },
+    "source": "service-dispatch"
+  },
+  {
+    "phase": "teach-release",
+    "operation": "capture",
+    "payload": {
+      "event_id": "codex:6ccc2f8512c9a9a267961335738b942b2df71ecb7a9513f3c0697d1777f33f31",
+      "context": {
+        "user_profile_id": "native-three-host-v3",
+        "project_id": "595e6f5a-2b5b-48f9-803f-f9ed7f8df302",
+        "workspace_id": null,
+        "session_id": "01a0bdcc-9103-7e00-8e73-27a44cae5379",
+        "host": "codex"
+      },
+      "occurred_at": "2026-09-20T07:52:25.095796+00:00",
+      "role": "assistant",
+      "content": "Session ended.",
+      "source_kind": "codex_hook",
+      "source_ref": "Stop:01a0bdcd-438a-72e2-89df-d5c0f640529a"
+    },
+    "result": {
+      "schema_version": 1,
+      "status": "committed",
+      "event_id": "c8fa69b10031d2e7aeffebd8e2c9be86655851fb8692e27fec0f1493ee5f5736",
+      "processing_status": "pending",
+      "job_id": "event:c8fa69b10031d2e7aeffebd8e2c9be86655851fb8692e27fec0f1493ee5f5736",
+      "identity_status": "normal",
+      "fact_eligible": true
+    },
+    "source": "service-dispatch"
+  },
+  {
+    "phase": "teach-release",
+    "operation": "maintenance",
+    "payload": {
+      "context": {
+        "user_profile_id": "native-three-host-v3",
+        "project_id": "595e6f5a-2b5b-48f9-803f-f9ed7f8df302",
+        "workspace_id": null,
+        "session_id": "01a0bdcc-9103-7e00-8e73-27a44cae5379",
+        "host": "codex"
+      },
+      "host": "codex"
+    },
+    "result": {
+      "schema_version": 1,
+      "completed": 4,
+      "maintenance": {
+        "pending": 0,
+        "leased": 0,
+        "exhausted": 0,
+        "completed": 6,
+        "retry_count": 0,
+        "oldest_unfinished_seconds": 0,
+        "oldest_pending_seconds": 0,
+        "running": false,
+        "scheduler_running": false,
+        "last_success": "2026-09-20T07:52:46.039050+00:00",
+        "last_error": null,
+        "processed_count": 6,
+        "failed_count": 0
+      },
+      "graph": {
+        "enabled": false,
+        "managed_preferences": true,
+        "ready": false,
+        "pending_count": 6,
+        "cursor": "",
+        "marked_sources": 0,
+        "total_sources": 6,
+        "legacy_graph": false
+      }
+    },
+    "source": "service-dispatch"
+  }
+]

@@ -335,7 +335,7 @@ Run: `py -3.13 -m pytest -q tests/test_backup_restore.py tests/test_storage_sqli
 
 ### T17 - Verify the complete local and cross-host workflow
 
-Latest native result: [three-host v2](../validation/2026-09-20/three-host-native-v2/README.md) failed at the first Codex phase because its saved wrapper calls lacked the required model-to-MCP ID correlation. The write and completed job were observed; later host phases did not run. Separate Hermes discovery and cleanup passed. T17 acceptance remains open.
+Latest native result: [three-host v3](../validation/2026-09-20/three-host-native-v3/README.md) failed when the startup migration selected a different Codex model. Its model check rejected both turns; raw captures and the controller's shutdown mistake are preserved. V2 remains failed for missing model-to-MCP correlation. The [v4 setup protocol](2026-09-20-three-host-continuity-protocol-v4.md) is prospective. T17 acceptance remains open.
 
 Depends on: T12-T16.
 

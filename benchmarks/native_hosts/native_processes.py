@@ -214,6 +214,25 @@ def _codex_observed_models(home: Path) -> list[Any]:
     return observations
 
 
+def _codex_user_messages(home: Path) -> list[Any]:
+    """Read user-message events only from the fresh disposable Codex home."""
+    sessions = home / "sessions"
+    messages: list[Any] = []
+    if not sessions.is_dir():
+        return messages
+    for path in sorted(sessions.rglob("*.jsonl")):
+        for line in path.read_text(encoding="utf-8").splitlines():
+            if not line.strip():
+                continue
+            record = json.loads(line)
+            if record.get("type") != "event_msg":
+                continue
+            payload = record.get("payload")
+            if isinstance(payload, dict) and payload.get("type") == "user_message":
+                messages.append(payload.get("message"))
+    return messages
+
+
 def _cleanup_phase(
     directory: Path,
     result: dict[str, Any],
@@ -303,6 +322,7 @@ def run_codex_phase(
     max_seconds: int = 180,
     disable_code_mode_host: bool = False,
     model: str | None = None,
+    migration_notice_target: str | None = None,
 ) -> dict[str, Any]:
     """Run an interactive Codex phase in the caller's terminal and return provenance.
 
@@ -317,6 +337,14 @@ def run_codex_phase(
         not isinstance(model, str) or re.fullmatch(r"[A-Za-z0-9._-]{1,128}", model) is None
     ):
         raise ValueError("Codex model must be a nonempty safe model slug")
+    if migration_notice_target is not None:
+        if model is None:
+            raise ValueError("Codex migration notice requires a pinned model")
+        if (
+            not isinstance(migration_notice_target, str)
+            or re.fullmatch(r"[A-Za-z0-9._-]{1,128}", migration_notice_target) is None
+        ):
+            raise ValueError("Codex migration notice target must be a nonempty safe model slug")
     directory = _phase_root(config, phase)
     command = [
         str(executable),
@@ -328,6 +356,19 @@ def run_codex_phase(
         "--cd",
         str(config.project),
         "--no-alt-screen",
+        *(
+            [
+                "-c",
+                "notice.model_migrations="
+                + "{"
+                + json.dumps(model)
+                + "="
+                + json.dumps(migration_notice_target)
+                + "}",
+            ]
+            if migration_notice_target is not None
+            else []
+        ),
         *(["--model", model] if model is not None else []),
         prompt,
     ]
@@ -341,6 +382,11 @@ def run_codex_phase(
         "max_seconds": max_seconds,
         "code_mode_host_disabled": disable_code_mode_host,
         "requested_model": model,
+        "migration_notice_pair": (
+            {"from": model, "to": migration_notice_target}
+            if migration_notice_target is not None
+            else None
+        ),
     }
     auth = None
     process = None
@@ -374,6 +420,16 @@ def run_codex_phase(
             result["model_verified"] = bool(observed) and all(item == model for item in observed)
             if not result["model_verified"]:
                 raise ValueError("Codex model observation is missing or mismatched")
+            user_messages = _codex_user_messages(codex_home)
+            result["user_prompt_count"] = len(user_messages)
+            result["user_prompt_hashes"] = [
+                hashlib.sha256(message.encode()).hexdigest()
+                for message in user_messages
+                if isinstance(message, str)
+            ]
+            result["user_prompt_verified"] = len(user_messages) == 1 and user_messages[0] == prompt
+            if not result["user_prompt_verified"]:
+                raise ValueError("Codex user prompt observation is missing or mismatched")
     except BaseException as exc:
         result["status"] = "failed"
         result["exception_type"] = type(exc).__name__

@@ -1,0 +1,108 @@
+"""Archive the terminal model-substitution failure, including controller mistakes."""
+from pathlib import Path
+import hashlib
+import json
+import subprocess
+
+repo = Path(__file__).resolve().parent.parent
+temp = Path('C:/Users/Ant/AppData/Local/Temp')
+target = repo / 'docs/validation/2026-09-20/three-host-native-v3'
+target.mkdir(parents=True, exist_ok=False)
+
+def sha(raw):
+    return hashlib.sha256(raw).hexdigest()
+
+def write(name, raw):
+    p = target / name
+    p.parent.mkdir(parents=True, exist_ok=True)
+    if p.exists():
+        assert p.read_bytes() == raw
+    else:
+        p.write_bytes(raw)
+
+def dump(name, value):
+    write(name, (json.dumps(value, indent=2) + '\n').encode())
+
+for kind in ('preflight', 'native'):
+    source = temp / ('mnemos-three-host-' + kind + '-v3')
+    report = json.loads((source / 'report.json').read_text(encoding='utf-8'))
+    assert report['cleanup_established'] and report['finished_at']
+    assert not (source / 'runtime.json').exists()
+    names = ['report.json', 'dispatch-records.json', 'host-environment-before.txt',
+             'host-environment-after.txt', 'scopes.json', 'settings.toml']
+    if kind == 'preflight':
+        assert report['status'] == 'preflight_passed' and report['phases'] == []
+        names += ['preflight/' + p.name for p in (source / 'preflight').iterdir()
+                  if p.is_file() and p.suffix in ('.json', '.jsonl', '.txt', '.log')]
+    else:
+        assert report['status'] == 'failed'
+        assert report['error'] == 'Codex model observation is missing or mismatched'
+        names += ['failure.txt', 'final-state.json', 'teach-release/process.json', 'project/AGENTS.md']
+        names += [p.relative_to(source).as_posix() for p in (source / 'model-readiness').iterdir() if p.is_file()]
+        process = json.loads((source / 'teach-release/process.json').read_text(encoding='utf-8'))
+        assert process['auth_copy_removed'] and not process['cleanup_errors']
+        assert process['requested_model'] == 'gpt-5.5' and process['model_verified'] is False
+        assert process['observed_models'] == ['gpt-5.6-sol', 'gpt-5.6-sol']
+        home = Path(process['home'])
+        assert not (home / 'auth.json').exists()
+        paths = list((home / 'sessions').rglob('rollout*.jsonl'))
+        assert len(paths) == 1
+        raw = paths[0].read_bytes()
+        records, locations, models = [], [], []
+        for number, line in enumerate(raw.splitlines(), 1):
+            row = json.loads(line); payload = row.get('payload', {})
+            if row['type'] == 'turn_context':
+                models.append({'source_line': number, 'source_line_sha256': sha(line), 'model': payload.get('model')})
+            keep = (row['type'] == 'response_item' and payload.get('type') in (
+                'custom_tool_call', 'custom_tool_call_output', 'function_call', 'function_call_output'
+            )) or (row['type'] == 'event_msg' and payload.get('type') == 'mcp_tool_call_end')
+            if row['type'] == 'response_item' and payload.get('type') == 'message' and payload.get('role') == 'user':
+                keep = True
+            if keep:
+                records.append(line)
+                locations.append({'selected_line': len(records), 'source_line': number, 'source_line_sha256': sha(line)})
+        write('native/teach-release/native-records.selected.jsonl', b'\n'.join(records) + b'\n')
+        dump('native/teach-release/native-selection.json', {
+            'source_file': str(paths[0]), 'source_sha256': sha(raw), 'source_bytes': len(raw),
+            'records': locations, 'observed_models': models,
+            'selection': 'All native tool call/output, MCP completion, and user message lines; unchanged bytes.',
+            'omitted': 'Full session instructions, account metadata, assistant prose, and full turn context.',
+            'provider_wire_captured': False,
+        })
+        dump('controller-actions.json', {
+            'basis': 'Controller tool-call record; ordinal actions, not reconstructed timestamps.',
+            'actions': [
+                'Accepted trust for the fresh disposable project.',
+                'Trusted the six generated hooks.',
+                'Sent numeric 2 plus Enter intending Use existing model at migration prompt.',
+                'Observed model changed to gpt-5.6-sol; intended selection did not take effect.',
+                'Sent Escape and Ctrl+C to interrupt; MCP store and consolidation were cancelled.',
+                'Sent /exit plus Enter, then Enter; native session treated /exit as another user prompt.',
+                'Sent two Ctrl+C characters; observed shutdown and zero child exit.',
+            ],
+            'classification': 'Controller setup/shutdown error; not native memory lifecycle acceptance.',
+            'delivery_cause': 'Unresolved. Source supports numeric selection, so do not claim the digit is unsupported.',
+            'explicit_memory_write_committed': False,
+            'raw_hook_captures_committed': True,
+        })
+    for name in names:
+        write(kind + '/' + name, (source / name).read_bytes())
+    for relative, expected in report['input_hashes'].items():
+        committed = subprocess.check_output(['git', 'show', report['runner_commit'] + ':' + relative], cwd=repo)
+        raw = (repo / relative).read_bytes()
+        # A later preparation may already be editing the runner. Recover the
+        # exact Windows runtime representation from the bound committed blob.
+        if sha(raw) != expected:
+            candidates = (committed, committed.replace(b'\r\n', b'\n').replace(b'\n', b'\r\n'))
+            raw = next((value for value in candidates if sha(value) == expected), b'')
+        assert sha(raw) == expected, relative
+        assert raw.replace(b'\r\n', b'\n') == committed.replace(b'\r\n', b'\n')
+        write('runner-inputs/' + relative + '.txt', raw)
+
+write('offline/three-host-v3-offline.xml', (repo / '.venv/three-host-v3-offline.xml').read_bytes())
+write('archive_three_host_v3.py.txt', Path(__file__).read_bytes())
+write('.gitattributes', b'** -text -whitespace\n')
+files = {p.relative_to(target).as_posix(): {'bytes': p.stat().st_size, 'sha256': sha(p.read_bytes())}
+         for p in sorted(target.rglob('*')) if p.is_file()}
+dump('evidence-index.json', {'files': files})
+print(json.dumps({'path': str(target), 'files': len(files)}))

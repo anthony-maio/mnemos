@@ -26,8 +26,8 @@ if TYPE_CHECKING:
 
 WHEEL_SHA256 = "8552345d2c17c4c037347961eb3043d13b20f790f54a9ccc86a096add6197b0f"
 SOURCE_COMMIT = "f2f741443e60f838b392ae8ea1d1a0b4d8c6c1f2"
-PROFILE = "native-three-host-v3"
-PROTOCOL = "docs/plans/2026-09-20-three-host-continuity-protocol-v3.md"
+PROFILE = "native-three-host-v4"
+PROTOCOL = "docs/plans/2026-09-20-three-host-continuity-protocol-v4.md"
 HERMES_INPUTS = (
     "benchmarks/native_hosts/hermes_lifecycle_run_v10.py",
     "benchmarks/native_hosts/hermes_native_bootstrap_v6.py",
