@@ -1,10 +1,32 @@
 # Functional local memory implementation status
 
+The [context-verified Hermes v9 cohort](../2026-09-20/hermes-native-cohort-v9/README.md)
+finished zero of three full lifecycles on `e419c2a`. All 39 model responses
+had verified 65,536-token serving context and positive GPU residency; all
+three attempts established cleanup. Attempt 1 omitted restarted retrieval.
+Attempt 2 passed through corrected recall, then inspected related candidates
+without applying deletion. Attempt 3 reached three deletion calls, each
+returning degraded HTTP 500 with no committed receipt. The service errors
+need separate diagnosis. No source replay or final recall ran.
+
+Both forget previews reached subsequent recorded HTTP requests intact,
+with ten candidates and ten required source IDs. The
+[endpoint diagnostic](../2026-09-20/ollama-context-boundary-v1/README.md)
+found that the old alias served 16,384 tokens through the OpenAI endpoint
+while native readiness loaded 65,536. Pinning the context in a new alias
+repairs that configuration defect. This does not prove the cause of earlier
+failures, and earlier requested settings are not effective-context proof.
+The isolated Hermes source stayed pinned; the independently advanced live
+interpreter installation and its dependencies were separately bound.
+Native lifecycle, three-host continuity, complete capture, T18 quality,
+Desktop, and the operational pilot remain open.
+
 Subsequent diagnostics narrow that uncertainty. The [saved previews](../2026-09-20/hermes-v8-preview-persistence-v1/README.md)
 in v8 attempts 2 and 3 match the native tool results intact. A separate
 [single instrumented attempt](../2026-09-20/hermes-request-observation-v1/README.md)
 recorded two outgoing teach requests with the complete source-selection
-schema, thinking disabled, and the intended context setting. It failed at
+schema, thinking disabled, and the requested context setting. That field
+did not prove the serving context. It failed at
 teaching after omitting the job-status call and never reached forgetting.
 This is limited request-boundary evidence, not a rerun or repair of v8.
 
@@ -804,7 +826,7 @@ capture diagnostics and complete lifecycle acceptance remain open.
 | T16 Recovery | Backup, integrity, new-path restore, suppression merge, staged reindex, and activation backup behavior are implemented and tested. | Local recovery contracts pass, including a backup during an active writer transaction. Live data migration remains separately authorization-bound. |
 | T17 Cross-host | Native v9 on installed `5af3d15` passes 15 bounded lifecycle checks for Codex teaching, Claude correction and reviewed deletion, restart, direct service replay suppression, foreign-project exclusion, final recall, and retained unrelated facts. The newer mixed-host v4 probe on `fc72cc2` verifies three paired same-event native deliveries, durable queue recovery, and unchanged records through owner restart. | Lexical fixture vectors, disabled modules, explicit restoration, and a test rendezvous limit the claim. V4 retains one pairing timeout and degraded Claude identity diagnostics; the earlier v3 gate remains failed. Earlier Codex Stop timeouts remain recorded. Complete capture, Desktop, Hermes, real-provider recovery, real-model quality, and the two-week pilot remain open. |
 | T18 Evaluation | Frozen lifecycle datasets, request-bound extraction schemas, seven real-provider profiles, raw traces, checkpoints, Wilson intervals, and paired comparisons are implemented. Applied length/noise and vector/lexical/hybrid/full comparisons have a separate frozen protocol. | The local lifecycle matrix is terminal: 4,150 observations complete and 50 partial across five of seven profiles, following no-fact extraction and unavailable correction targets. This does not pass acceptance. Graph has zero eligible cases; affective supplied-state ranking improves while classifier fidelity remains poor. The independent supplemental v2 encoding run is terminal and incomplete: 34 partial observations out of 1,800, with all 1,320 automatic-policy decisions observed per arm. Retrieval is also terminal and incomplete: 589 of 600 session observations complete, 900 query rows, and 3,600 strategy results. All three alternative strategies have zero paired quality delta against full on eligible rows. These are conditional diagnostics; complete-run quality acceptance remains open. Follow the [evaluation record](evaluation-running.md), [terminal lifecycle archive](../2026-09-19/lifecycle-incomplete-local-v2/README.md), and [retrieval terminal archive](../2026-09-19/retrieval-terminal-local-v1/README.md). |
-| T19 Claims and packaging | Claim ledger, compatibility matrix, release checklist, package artifacts, UI assets, negative evidence archives, and the Substack research handoff are maintained. | Latest verified package `e419c2a` passes 1,500 source tests and 648 installed contract cases, with 4/4 respective skips and seven replay assertions. Ordinary memory and captured evidence now have separate retrieval views; native v8 failed all three complete lifecycles on this package. Both synthetic replacement comparisons remain failed despite repaired baseline storage parity. The working article packet includes the voice skill and bounded evidence; final reconciliation remains pending. Real-model and native acceptance are separate. Publication, website, paper, and release actions remain separately authorization-bound. |
+| T19 Claims and packaging | Claim ledger, compatibility matrix, release checklist, package artifacts, UI assets, negative evidence archives, and the Substack research handoff are maintained. | Latest verified package `e419c2a` passes 1,500 source tests and 648 installed contract cases, with 4/4 respective skips and seven replay assertions. Ordinary memory and captured evidence now have separate retrieval views; native v8 and the context-verified v9 each failed all three complete lifecycles on this package. V9 also exposed degraded HTTP 500 deletion responses that require diagnosis. Both synthetic replacement comparisons remain failed despite repaired baseline storage parity. The working article packet includes the voice skill and bounded evidence; final reconciliation remains pending. Real-model and native acceptance are separate. Publication, website, paper, and release actions remain separately authorization-bound. |
 
 The current capture recommendation is a hybrid: automatically capture enabled
 project conversations as retained evidence, extract durable facts separately,

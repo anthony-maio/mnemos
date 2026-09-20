@@ -12,11 +12,33 @@ Deliver an article draft, three possible titles, and a separate compact source/c
 
 ## Latest implementation and native evidence
 
+The [context-verified Hermes v9 cohort](../validation/2026-09-20/hermes-native-cohort-v9/README.md)
+finished zero of three full lifecycles on `e419c2a`. All 39 model responses
+had verified 65,536-token serving context and positive GPU residency; all
+three attempts established cleanup. Attempt 1 omitted restarted retrieval.
+Attempt 2 passed through corrected recall, then inspected related candidates
+without applying deletion. Attempt 3 reached three deletion calls, each
+returning degraded HTTP 500 with no committed receipt. The service errors
+need separate diagnosis. No source replay or final recall ran.
+
+Both forget previews reached subsequent recorded HTTP requests intact,
+with ten candidates and ten required source IDs. The
+[endpoint diagnostic](../validation/2026-09-20/ollama-context-boundary-v1/README.md)
+found that the old alias served 16,384 tokens through the OpenAI endpoint
+while native readiness loaded 65,536. Pinning the context in a new alias
+repairs that configuration defect. This does not prove the cause of earlier
+failures, and earlier requested settings are not effective-context proof.
+The isolated Hermes source stayed pinned; the independently advanced live
+interpreter installation and its dependencies were separately bound.
+Native lifecycle, three-host continuity, complete capture, T18 quality,
+Desktop, and the operational pilot remain open.
+
 Subsequent diagnostics narrow that uncertainty. The [saved previews](../validation/2026-09-20/hermes-v8-preview-persistence-v1/README.md)
 in v8 attempts 2 and 3 match the native tool results intact. A separate
 [single instrumented attempt](../validation/2026-09-20/hermes-request-observation-v1/README.md)
 recorded two outgoing teach requests with the complete source-selection
-schema, thinking disabled, and the intended context setting. It failed at
+schema, thinking disabled, and the requested context setting. That field
+did not prove the serving context. It failed at
 teaching after omitting the job-status call and never reached forgetting.
 This is limited request-boundary evidence, not a rerun or repair of v8.
 
@@ -400,7 +422,7 @@ them; the adapter needed to preserve those IDs and reject conflicting payloads.
 - Native adapter tests, observed native host conversations, Codex Desktop, complete automatic capture, and a two-week pilot are separate evidence categories. Do not promote one into another.
 - The [September 19 native Hermes attempts](../validation/2026-09-19/native-hermes-local-v1/README.md) completed local model turns, but failed acceptance because the installed CLI omitted the provider's session directory. A correct answer obtained through an unintended process-directory fallback is not evidence of safe scope isolation. The adapter repair closes that fallback; later patched-host runs validate explicit propagation in an isolated checkout. Built-in remove/replace notifications also lack exact Mnemos targets and remain unresolved. The diagnostic queue is in-memory only.
 - The later [native lifecycle attempt](../validation/2026-09-19/hermes-native-lifecycle-local-v1/README.md) stopped at teach. Its `mnemos_remember` response reported `status: committed` with `processing_status: pending`, but the model omitted the exact target's final period and an auxiliary title-generation request lacked the required context option. These are distinct failures from the earlier scope defect. The [v2 configuration preflight](../validation/2026-09-19/hermes-native-discovery-preflight-v3/README.md) confirms that the disposable host disables the optional title model without making a model or service request; the successor lifecycle has now also failed, as described below.
-- The [native Hermes v2 lifecycle](../validation/2026-09-19/hermes-native-lifecycle-local-v2/README.md) fixed both setup problems: the exact-content write returned `status: committed` with its job still pending, and all three model requests carried the required context setting. The model then altered the returned job ID when calling `mnemos_job_status`. That unknown ID produced HTTP 500 and a degraded result, so the evaluator stopped before maintenance and later phases. This does not establish a completed asserted fact or a passed lifecycle. Keep the model's argument-copy error and the service's error handling distinct; no argument was repaired on the model's behalf.
+- The [native Hermes v2 lifecycle](../validation/2026-09-19/hermes-native-lifecycle-local-v2/README.md) fixed both setup problems: the exact-content write returned `status: committed` with its job still pending, and all three model requests carried the required context field. This established the requested setting, not the effective loaded context; the later endpoint diagnostic found those could differ. The model then altered the returned job ID when calling `mnemos_job_status`. That unknown ID produced HTTP 500 and a degraded result, so the evaluator stopped before maintenance and later phases. This does not establish a completed asserted fact or a passed lifecycle. Keep the model's argument-copy error and the service's error handling distinct; no argument was repaired on the model's behalf.
 - An earlier [isolated patched-host run](../validation/2026-09-19/native-hermes-local-v3/README.md) passed explicit scope, recall, foreign-project exclusion and raw user/assistant persistence. It failed the all-captures gate because duplicate callbacks generated different timestamps for the same event ID. The outbox rejected that conflict correctly. Preserve the failure and any successor separately; a patched host is also a distinct compatibility claim from the installed version.
 
 - The [native Hermes v4 successor](../validation/2026-09-19/native-hermes-local-v4/README.md) passes all 16 bounded checks. Four capture calls returned committed while exactly two raw conversation events persisted. The native turn took 24.592 seconds, with a separate 3.569-second cold/load preflight. It uses the proposed CLI patch in an isolated host checkout; the installed host is unchanged. Full native correction, forgetting, outage recovery, extraction quality, and daily-use readiness remain open.
@@ -465,5 +487,5 @@ not a requirement to recount every implementation detail in the article.
 - [ ] Record final host continuity, latency, capture coverage, and pilot status without collapsing the separate gates.
 - [ ] Identify which quantitative claims can be used, with units, sample sizes, settings, uncertainty where available, and limitations.
 - [ ] Verify original website/paper claims against primary sources and link the dated corrections.
-- [x] Prepare a portable working packet with this handoff, the selected voice skill, key reports, regression examples, and a file manifest. Refresh that packet at final acceptance. The portable v16 packet includes terminal encoding/retrieval reports, the two earlier native lifecycle failures, all six fixed-cohort runs (all eighteen attempts failed), the deletion coverage and source-selection repair evidence, the six-case development diagnostic and model readiness records, the affective fidelity review, and dated website/paper snapshots. Some older evidence links still require the full checkout. Local validation artifacts are research inputs; public citations require accessible sources.
+- [x] Prepare a portable working packet with this handoff, the selected voice skill, key reports, regression examples, and a file manifest. Refresh that packet at final acceptance. The portable v17 packet includes terminal encoding/retrieval reports, the two earlier native lifecycle failures, all seven fixed-cohort runs (all twenty-one attempts failed under their respective bindings; this is not a pooled reliability estimate), the deletion coverage and source-selection repair evidence, the six-case development diagnostic and model readiness records, the affective fidelity review, the endpoint context diagnostic and verified-context native successor, and dated website/paper snapshots. Some older evidence links still require the full checkout. Local validation artifacts are research inputs; public citations require accessible sources.
 - [ ] Keep unverified interpretations and questions outside the article's factual claims, then make the final voice pass using Anthony's skill.

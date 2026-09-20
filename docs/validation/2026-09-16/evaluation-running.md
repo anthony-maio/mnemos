@@ -1,10 +1,32 @@
 # Real-model evaluation status
 
+The [context-verified Hermes v9 cohort](../2026-09-20/hermes-native-cohort-v9/README.md)
+finished zero of three full lifecycles on `e419c2a`. All 39 model responses
+had verified 65,536-token serving context and positive GPU residency; all
+three attempts established cleanup. Attempt 1 omitted restarted retrieval.
+Attempt 2 passed through corrected recall, then inspected related candidates
+without applying deletion. Attempt 3 reached three deletion calls, each
+returning degraded HTTP 500 with no committed receipt. The service errors
+need separate diagnosis. No source replay or final recall ran.
+
+Both forget previews reached subsequent recorded HTTP requests intact,
+with ten candidates and ten required source IDs. The
+[endpoint diagnostic](../2026-09-20/ollama-context-boundary-v1/README.md)
+found that the old alias served 16,384 tokens through the OpenAI endpoint
+while native readiness loaded 65,536. Pinning the context in a new alias
+repairs that configuration defect. This does not prove the cause of earlier
+failures, and earlier requested settings are not effective-context proof.
+The isolated Hermes source stayed pinned; the independently advanced live
+interpreter installation and its dependencies were separately bound.
+Native lifecycle, three-host continuity, complete capture, T18 quality,
+Desktop, and the operational pilot remain open.
+
 Subsequent diagnostics narrow that uncertainty. The [saved previews](../2026-09-20/hermes-v8-preview-persistence-v1/README.md)
 in v8 attempts 2 and 3 match the native tool results intact. A separate
 [single instrumented attempt](../2026-09-20/hermes-request-observation-v1/README.md)
 recorded two outgoing teach requests with the complete source-selection
-schema, thinking disabled, and the intended context setting. It failed at
+schema, thinking disabled, and the requested context setting. That field
+did not prove the serving context. It failed at
 teaching after omitting the job-status call and never reached forgetting.
 This is limited request-boundary evidence, not a rerun or repair of v8.
 

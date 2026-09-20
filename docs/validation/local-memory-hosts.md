@@ -1,6 +1,6 @@
 # Local memory host validation
 
-Updated September 18, 2026 for the unreleased functional-local-memory worktree. This record separates adapter and transport checks from native host acceptance. The [compatibility matrix](../client-compatibility-matrix.md) records observed versions and source bindings.
+Updated September 20, 2026 for the unreleased functional-local-memory worktree. This record separates adapter and transport checks from native host acceptance. The [compatibility matrix](../client-compatibility-matrix.md) records observed versions and source bindings.
 
 ## Current native evidence
 
@@ -10,7 +10,7 @@ Updated September 18, 2026 for the unreleased functional-local-memory worktree. 
 | Concurrent Codex/Claude recovery | [Mixed-host v4](2026-09-18/native-crosshost-recovery-v4/README.md), installed `fc72cc2`: three same-event replay pairs committed to stable event/job identities; eight normal messages and two non-extractable provisional records survived owner restart. | One pairing timeout and degraded Claude identity diagnostics remain. The test instruments overlap and explicitly restores a fixture owner. |
 | Claude Code lifecycle | [Native v18](2026-09-17/native-claude-lifecycle-v18/README.md), installed `dedfcfd`: 15 fact-lifecycle criteria pass, including correction, forgetting, restarts, and reconstructed replay. | Overall partial because capture diagnostics were degraded. An observed connection abort remains unexplained. |
 | Codex Desktop | No isolated native conversation run. | NOT RUN; shared adapter tests are insufficient. |
-| Hermes Agent 0.21.3 in WSL | Installed provider API, wheel discovery, and authenticated Windows bridge exercised. | A native model conversation has not passed; native continuity remains open. |
+| Hermes in WSL, isolated source `14a3463` with cwd-only patch | [Single-turn v4](2026-09-19/native-hermes-local-v4/README.md) passed 16 bounded checks. The [context-verified v9 cohort](2026-09-20/hermes-native-cohort-v9/README.md), installed `e419c2a`, failed all three complete lifecycles despite 39 verified serving-context checks. | Omitted actions and HTTP 500 deletion responses remain. Three-host continuity, complete capture, and daily-use readiness are open. The old single-turn result did not establish effective context per phase. |
 
 The Hermes installation used by the recorded checks is `/home/anthony/.hermes/hermes-agent` in WSL. Initial API evidence used revision `97962358`; later wheel-discovery evidence used `36842e639a178741b70c821e0f4cdd129cd0dfe3`. Those are observation bindings, not a live installation inventory. The Windows Mnemos environment does not claim Hermes as a native dependency. See the [bridge record](2026-09-16/hermes-bridge-smoke.md) and [host smoke history](2026-09-16/native-host-smoke.md).
 

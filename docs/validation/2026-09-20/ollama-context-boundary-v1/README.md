@@ -37,7 +37,7 @@ This is a verified configuration defect, not proof that context size caused
 all missing tool calls or malformed forget arguments. The short failed teach
 requests particularly require their own explanation. The replacement
 [model profile](../native-model-profile-v2/profile.json) has only endpoint
-context-probe evidence so far; native memory acceptance remains open.
+context-probe evidence at creation. The later [native v9 cohort](../hermes-native-cohort-v9/README.md) verified context after every response but failed all three lifecycles; native memory acceptance remains open.
 
 ## Provenance
 

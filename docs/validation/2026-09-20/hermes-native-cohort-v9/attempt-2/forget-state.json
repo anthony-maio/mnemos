@@ -1,0 +1,488 @@
+{
+  "facts": [
+    {
+      "id": "01ef1a51-a294-4080-84bd-e13adca38809",
+      "content": "Use only the mnemos_* tools. Do not use built-in memory or other tools. Do not store the conversation as a new explicit fact. Use mnemos_retrieve to find this project's release label. Report the asserted fact's ID, version, and label. Do not change memory.",
+      "version": 1,
+      "metadata": "{\"user_profile_id\": \"native-lifecycle\", \"project_id\": \"4c6d4126-1751-4c8e-83ef-4835ea09a919\", \"workspace_id\": null, \"session_id\": \"20260920_021919_5be167\", \"host\": \"hermes\", \"scope\": \"project\", \"scope_id\": \"4c6d4126-1751-4c8e-83ef-4835ea09a919\", \"source\": \"captured_passthrough\", \"source_roles\": [\"user\"], \"source_event_ids\": [\"5f06622f720658675e96442dcf130c27684592e00c3dced9fad020c37b896e89\"], \"encoding_diagnostics\": {\"surprisal_score\": null, \"surprisal_status\": \"disabled\", \"prediction\": null, \"prediction_mode\": \"disabled\", \"threshold\": 0.3}, \"assertion_status\": \"unknown\", \"cognitive_state_status\": \"provider_unavailable\"}"
+    },
+    {
+      "id": "121a8b51-fe8a-4fae-a6c9-7c08835f9fc9",
+      "content": "Use only the mnemos_* tools. Do not use built-in memory or other tools. Do not store the conversation as a new explicit fact. Forget this project's release label, including retained conversational copies containing it. Retrieve the asserted target and inspect its exact current fact ID and version. Call mnemos_forget_preview at that version. Review the exact, historical, and advisory candidates and their source dependencies. Inspect each selected additional fact by its exact ID and current version. Call mnemos_forget_related with the unchanged preview_digest, matching preview_limit, explicitly reviewed fact IDs, and the selected source event IDs required by those facts. Preserve unrelated facts. Do not apply an incomplete preview or mismatched versions, and do not claim complete erasure from a bounded semantic search. Do not add any memory.",
+      "version": 1,
+      "metadata": "{\"user_profile_id\": \"native-lifecycle\", \"project_id\": \"4c6d4126-1751-4c8e-83ef-4835ea09a919\", \"workspace_id\": null, \"session_id\": \"20260920_022004_f48443\", \"host\": \"hermes\", \"scope\": \"project\", \"scope_id\": \"4c6d4126-1751-4c8e-83ef-4835ea09a919\", \"source\": \"captured_passthrough\", \"source_roles\": [\"user\"], \"source_event_ids\": [\"106cf5aeb1bb17e31c123df299a499ecf0b65c8d4c9847e79aec767b8f75e57d\"], \"encoding_diagnostics\": {\"surprisal_score\": null, \"surprisal_status\": \"disabled\", \"prediction\": null, \"prediction_mode\": \"disabled\", \"threshold\": 0.3}, \"assertion_status\": \"unknown\", \"cognitive_state_status\": \"provider_unavailable\"}"
+    },
+    {
+      "id": "275c0c23-488e-4236-9f74-bbc89b6952dd",
+      "content": "Assistant reported: Correction committed for fact bab58902-d0c6-43bd-906b-5c416c7ed2a6 (version 1). Content changed from \"The project release label is cedar-ridge-731.\" to \"The project release label is maple-ridge-842.\" Job status pending.",
+      "version": 1,
+      "metadata": "{\"user_profile_id\": \"native-lifecycle\", \"project_id\": \"4c6d4126-1751-4c8e-83ef-4835ea09a919\", \"workspace_id\": null, \"session_id\": \"20260920_021932_520195\", \"host\": \"hermes\", \"scope\": \"project\", \"scope_id\": \"4c6d4126-1751-4c8e-83ef-4835ea09a919\", \"source\": \"captured_passthrough\", \"source_roles\": [\"assistant\"], \"source_event_ids\": [\"47ec75dff797c4a6dc22f48afa65d63937c8edbfa81b99570474b52f08f31be9\"], \"encoding_diagnostics\": {\"surprisal_score\": null, \"surprisal_status\": \"disabled\", \"prediction\": null, \"prediction_mode\": \"disabled\", \"threshold\": 0.3}, \"assertion_status\": \"unknown\", \"cognitive_state_status\": \"provider_unavailable\"}"
+    },
+    {
+      "id": "30274e7e-4fad-4c54-94ec-4c30ddd3bf75",
+      "content": "Assistant reported: Job ID: event:85327250b0a86074ac5792500f09bf48062e10b5c0fc90c6366dc31faf681d40\n\nStatus: pending",
+      "version": 1,
+      "metadata": "{\"user_profile_id\": \"native-lifecycle\", \"project_id\": \"4c6d4126-1751-4c8e-83ef-4835ea09a919\", \"workspace_id\": null, \"session_id\": \"20260920_021903_f81516\", \"host\": \"hermes\", \"scope\": \"project\", \"scope_id\": \"4c6d4126-1751-4c8e-83ef-4835ea09a919\", \"source\": \"captured_passthrough\", \"source_roles\": [\"assistant\"], \"source_event_ids\": [\"132fb3e6841c3fdd12160d65928b46f88803326428d405a0b8d47fcaafe95659\"], \"encoding_diagnostics\": {\"surprisal_score\": null, \"surprisal_status\": \"disabled\", \"prediction\": null, \"prediction_mode\": \"disabled\", \"threshold\": 0.3}, \"assertion_status\": \"unknown\", \"cognitive_state_status\": \"provider_unavailable\"}"
+    },
+    {
+      "id": "5c0b7629-814f-461d-be14-e943f0d92f28",
+      "content": "Assistant reported: Inspected:\n- `275c0c23-488e-4236-9f74-bbc89b6952dd` (version 1): assistant-reported correction event, requires source `47ec75dff797c4a6dc22f48afa65d63937c8edbfa81b99570474b52f08f31be9`\n- `8da3dc87-31b4-49e0-8906-e3df9be34e04` (version 1): user instruction to remember cedar-ridge-731, requires source `c4645bd1970551b3bb23474c6e873de8d223e29ef8637627834079990b4ee3d6`\n- `fb2615e4-ffab-45e5-a86e-3a272bf1bbf0` (version 1): user instruction to correct to maple-ridge-842, requires source `ec91ff2bf6c0c72044a46cbbb1198f8c77ddfde01602ae4e76f1321b86bba751`\n\nAll three derived facts are part of the conversational history surrounding this project's release label. They should all be removed via mnemos_forget_related using the preview_digest `f21b11c162ae81e973116d6b62ad75e5a7c002d2958db88b71d79878294814b3`.\n\n**Fact to forget (target):** `bab58902-d0c6-43bd-906b-5c416c7ed2a6` version 2",
+      "version": 1,
+      "metadata": "{\"user_profile_id\": \"native-lifecycle\", \"project_id\": \"4c6d4126-1751-4c8e-83ef-4835ea09a919\", \"workspace_id\": null, \"session_id\": \"20260920_022004_f48443\", \"host\": \"hermes\", \"scope\": \"project\", \"scope_id\": \"4c6d4126-1751-4c8e-83ef-4835ea09a919\", \"source\": \"captured_passthrough\", \"source_roles\": [\"assistant\"], \"source_event_ids\": [\"b324961263ac4959f9d2da7d6e9c6810313861c85e59b1fbcb94aa5f13208169\"], \"encoding_diagnostics\": {\"surprisal_score\": null, \"surprisal_status\": \"disabled\", \"prediction\": null, \"prediction_mode\": \"disabled\", \"threshold\": 0.3}, \"assertion_status\": \"unknown\", \"cognitive_state_status\": \"provider_unavailable\"}"
+    },
+    {
+      "id": "6c244f5d-7b74-404b-a89c-f76b9f6b6676",
+      "content": "The build artifact checksum marker is slate-safe-553.",
+      "version": 1,
+      "metadata": "{\"user_profile_id\": \"native-lifecycle\", \"project_id\": \"4c6d4126-1751-4c8e-83ef-4835ea09a919\", \"workspace_id\": null, \"session_id\": \"controller\", \"host\": \"manual\", \"scope\": \"project\", \"scope_id\": \"4c6d4126-1751-4c8e-83ef-4835ea09a919\", \"source\": \"explicit_remember\", \"source_roles\": [\"user\"], \"source_event_ids\": [\"4a1b1ac85d7668efe8c5c41febb6d5db049d93287f6055838ee5a0c06eafd26a\"], \"encoding_diagnostics\": {}, \"assertion_status\": \"asserted\", \"cognitive_state_status\": \"provider_unavailable\"}"
+    },
+    {
+      "id": "6d948c3b-f838-44cc-93ef-32d96a50f8d9",
+      "content": "Assistant reported: ID: bab58902-d0c6-43bd-906b-5c416c7ed2a6  \nVersion: 2  \nLabel: maple-ridge-842",
+      "version": 1,
+      "metadata": "{\"user_profile_id\": \"native-lifecycle\", \"project_id\": \"4c6d4126-1751-4c8e-83ef-4835ea09a919\", \"workspace_id\": null, \"session_id\": \"20260920_021951_6accd1\", \"host\": \"hermes\", \"scope\": \"project\", \"scope_id\": \"4c6d4126-1751-4c8e-83ef-4835ea09a919\", \"source\": \"captured_passthrough\", \"source_roles\": [\"assistant\"], \"source_event_ids\": [\"e49d5844f86019317efbc37d0fdbb62a76b0c3129e31e8a7799faecff969b88d\"], \"encoding_diagnostics\": {\"surprisal_score\": null, \"surprisal_status\": \"disabled\", \"prediction\": null, \"prediction_mode\": \"disabled\", \"threshold\": 0.3}, \"assertion_status\": \"unknown\", \"cognitive_state_status\": \"provider_unavailable\"}"
+    },
+    {
+      "id": "8da3dc87-31b4-49e0-8906-e3df9be34e04",
+      "content": "Use only the mnemos_* tools. Do not use built-in memory or other tools. Do not store the conversation as a new explicit fact. Use mnemos_remember to save the exact content in this JSON string (including its final period): \"The project release label is cedar-ridge-731.\". Use request_id native-teach-1. Check its returned job ID once with mnemos_job_status, then report the ID and actual status. Pending is acceptable; do not claim completion unless confirmed. Do not correct or forget anything.",
+      "version": 1,
+      "metadata": "{\"user_profile_id\": \"native-lifecycle\", \"project_id\": \"4c6d4126-1751-4c8e-83ef-4835ea09a919\", \"workspace_id\": null, \"session_id\": \"20260920_021903_f81516\", \"host\": \"hermes\", \"scope\": \"project\", \"scope_id\": \"4c6d4126-1751-4c8e-83ef-4835ea09a919\", \"source\": \"captured_passthrough\", \"source_roles\": [\"user\"], \"source_event_ids\": [\"c4645bd1970551b3bb23474c6e873de8d223e29ef8637627834079990b4ee3d6\"], \"encoding_diagnostics\": {\"surprisal_score\": null, \"surprisal_status\": \"disabled\", \"prediction\": null, \"prediction_mode\": \"disabled\", \"threshold\": 0.3}, \"assertion_status\": \"unknown\", \"cognitive_state_status\": \"provider_unavailable\"}"
+    },
+    {
+      "id": "8e5a6e00-3648-43ad-b329-23f419c801ff",
+      "content": "Assistant reported: Reviewing candidates and source dependencies:\n\n**Exact assertion candidates** (not advisory similarity):\n- `275c0c23-488e-4236-9f74-bbc89b6952dd` (version 1): assistant-reported correction event, requires source `47ec75dff797c4a6dc22f48afa65d63937c8edbfa81b99570474b52f08f31be9`\n- `8da3dc87-31b4-49e0-8906-e3df9be34e04` (version 1): teaches cedar-ridge-731, requires source `c4645bd1970551b3bb23474c6e873de8d223e29ef8637627834079990b4ee3d6`\n- `fb2615e4-ffab-45e5-a86e-3a272bf1bbf0` (version 1): instructs correction to maple-ridge-842, requires source `ec91ff2bf6c0c72044a46cbbb1198f8c77ddfde01602ae4e76f1321b86bba751`\n\nI inspect each candidate:",
+      "version": 1,
+      "metadata": "{\"user_profile_id\": \"native-lifecycle\", \"project_id\": \"4c6d4126-1751-4c8e-83ef-4835ea09a919\", \"workspace_id\": null, \"session_id\": \"20260920_022004_f48443\", \"host\": \"hermes\", \"scope\": \"project\", \"scope_id\": \"4c6d4126-1751-4c8e-83ef-4835ea09a919\", \"source\": \"captured_passthrough\", \"source_roles\": [\"assistant\"], \"source_event_ids\": [\"3ba44aeaf133c08a0210f9ce5664fb277334ff8f55fd0a3da05fb89354a8c9d4\"], \"encoding_diagnostics\": {\"surprisal_score\": null, \"surprisal_status\": \"disabled\", \"prediction\": null, \"prediction_mode\": \"disabled\", \"threshold\": 0.3}, \"assertion_status\": \"unknown\", \"cognitive_state_status\": \"provider_unavailable\"}"
+    },
+    {
+      "id": "bab58902-d0c6-43bd-906b-5c416c7ed2a6",
+      "content": "The project release label is maple-ridge-842.",
+      "version": 2,
+      "metadata": "{\"user_profile_id\": \"native-lifecycle\", \"project_id\": \"4c6d4126-1751-4c8e-83ef-4835ea09a919\", \"workspace_id\": null, \"session_id\": \"20260920_021932_520195\", \"host\": \"hermes\", \"scope\": \"project\", \"scope_id\": \"4c6d4126-1751-4c8e-83ef-4835ea09a919\", \"source\": \"explicit_correction\", \"source_roles\": [\"user\"], \"source_event_ids\": [\"1414d4f33b2dce1cb849f55ae374b1b50f2f5c3828edb7a87dbbeb20913c5193\"], \"encoding_diagnostics\": {}, \"assertion_status\": \"asserted\", \"cognitive_state_status\": \"provider_unavailable\", \"previous_content\": \"The project release label is cedar-ridge-731.\"}"
+    },
+    {
+      "id": "bc902ae1-0998-4395-b44a-829db11ee3a6",
+      "content": "The project release label is forbidden-foreign-ridge-992.",
+      "version": 1,
+      "metadata": "{\"user_profile_id\": \"native-lifecycle\", \"project_id\": \"9aa30cc9-c22e-4ed8-881a-51a15c14501a\", \"workspace_id\": null, \"session_id\": \"controller\", \"host\": \"manual\", \"scope\": \"project\", \"scope_id\": \"9aa30cc9-c22e-4ed8-881a-51a15c14501a\", \"source\": \"explicit_remember\", \"source_roles\": [\"user\"], \"source_event_ids\": [\"ca0b9351071e1d7ac540747c66e6be9c2f9f5c055f036d30e31e934a8a580f5a\"], \"encoding_diagnostics\": {}, \"assertion_status\": \"asserted\", \"cognitive_state_status\": \"provider_unavailable\"}"
+    },
+    {
+      "id": "c854bcad-2c28-4462-bc40-c2d19db6e60e",
+      "content": "Assistant reported: I'll use mnemos_retrieve to find the project's release label, as instructed.",
+      "version": 1,
+      "metadata": "{\"user_profile_id\": \"native-lifecycle\", \"project_id\": \"4c6d4126-1751-4c8e-83ef-4835ea09a919\", \"workspace_id\": null, \"session_id\": \"20260920_021919_5be167\", \"host\": \"hermes\", \"scope\": \"project\", \"scope_id\": \"4c6d4126-1751-4c8e-83ef-4835ea09a919\", \"source\": \"captured_passthrough\", \"source_roles\": [\"assistant\"], \"source_event_ids\": [\"1434a0318f1ad13be3fc14b981f0f0bd21b382def2621ca206c7980ead3b2429\"], \"encoding_diagnostics\": {\"surprisal_score\": null, \"surprisal_status\": \"disabled\", \"prediction\": null, \"prediction_mode\": \"disabled\", \"threshold\": 0.3}, \"assertion_status\": \"unknown\", \"cognitive_state_status\": \"provider_unavailable\"}"
+    },
+    {
+      "id": "c9c60a30-0a27-4cbc-be75-cfd326cfb3e9",
+      "content": "Assistant reported: I'll retrieve the project release label fact from memory.",
+      "version": 1,
+      "metadata": "{\"user_profile_id\": \"native-lifecycle\", \"project_id\": \"4c6d4126-1751-4c8e-83ef-4835ea09a919\", \"workspace_id\": null, \"session_id\": \"20260920_021951_6accd1\", \"host\": \"hermes\", \"scope\": \"project\", \"scope_id\": \"4c6d4126-1751-4c8e-83ef-4835ea09a919\", \"source\": \"captured_passthrough\", \"source_roles\": [\"assistant\"], \"source_event_ids\": [\"1d3d9b6525d0d96f460d207a02f1536dc596d0a686ab28719e71164936f7a88d\"], \"encoding_diagnostics\": {\"surprisal_score\": null, \"surprisal_status\": \"disabled\", \"prediction\": null, \"prediction_mode\": \"disabled\", \"threshold\": 0.3}, \"assertion_status\": \"unknown\", \"cognitive_state_status\": \"provider_unavailable\"}"
+    },
+    {
+      "id": "dd0b27b2-ed86-4f66-8981-f5d7f1fe908c",
+      "content": "Use only the mnemos_* tools. Do not use built-in memory or other tools. Do not store the conversation as a new explicit fact. Use mnemos_retrieve to find the current asserted project release label. Report its ID, version, and label. Do not change memory.",
+      "version": 1,
+      "metadata": "{\"user_profile_id\": \"native-lifecycle\", \"project_id\": \"4c6d4126-1751-4c8e-83ef-4835ea09a919\", \"workspace_id\": null, \"session_id\": \"20260920_021951_6accd1\", \"host\": \"hermes\", \"scope\": \"project\", \"scope_id\": \"4c6d4126-1751-4c8e-83ef-4835ea09a919\", \"source\": \"captured_passthrough\", \"source_roles\": [\"user\"], \"source_event_ids\": [\"b441774ea14672ef8fa2a43de613b74af4a0bda30f5855932c0793f4afc2da66\"], \"encoding_diagnostics\": {\"surprisal_score\": null, \"surprisal_status\": \"disabled\", \"prediction\": null, \"prediction_mode\": \"disabled\", \"threshold\": 0.3}, \"assertion_status\": \"unknown\", \"cognitive_state_status\": \"provider_unavailable\"}"
+    },
+    {
+      "id": "fb2615e4-ffab-45e5-a86e-3a272bf1bbf0",
+      "content": "Use only the mnemos_* tools. Do not use built-in memory or other tools. Do not store the conversation as a new explicit fact. Retrieve the asserted fact about this project's release label, then inspect its exact ID and version. Correct that same fact to the exact content in this JSON string (including its final period): \"The project release label is maple-ridge-842.\". Use request_id native-correct-1 and the inspected version. Do not add a separate fact.",
+      "version": 1,
+      "metadata": "{\"user_profile_id\": \"native-lifecycle\", \"project_id\": \"4c6d4126-1751-4c8e-83ef-4835ea09a919\", \"workspace_id\": null, \"session_id\": \"20260920_021932_520195\", \"host\": \"hermes\", \"scope\": \"project\", \"scope_id\": \"4c6d4126-1751-4c8e-83ef-4835ea09a919\", \"source\": \"captured_passthrough\", \"source_roles\": [\"user\"], \"source_event_ids\": [\"ec91ff2bf6c0c72044a46cbbb1198f8c77ddfde01602ae4e76f1321b86bba751\"], \"encoding_diagnostics\": {\"surprisal_score\": null, \"surprisal_status\": \"disabled\", \"prediction\": null, \"prediction_mode\": \"disabled\", \"threshold\": 0.3}, \"assertion_status\": \"unknown\", \"cognitive_state_status\": \"provider_unavailable\"}"
+    },
+    {
+      "id": "febbfe98-2f8d-4021-a4c8-0c159b81937d",
+      "content": "Assistant reported: **Release label fact:**\n- **ID:** bab58902-d0c6-43bd-906b-5c416c7ed2a6\n- **Version:** 1\n- **Label:** cedar-ridge-731",
+      "version": 1,
+      "metadata": "{\"user_profile_id\": \"native-lifecycle\", \"project_id\": \"4c6d4126-1751-4c8e-83ef-4835ea09a919\", \"workspace_id\": null, \"session_id\": \"20260920_021919_5be167\", \"host\": \"hermes\", \"scope\": \"project\", \"scope_id\": \"4c6d4126-1751-4c8e-83ef-4835ea09a919\", \"source\": \"captured_passthrough\", \"source_roles\": [\"assistant\"], \"source_event_ids\": [\"fab81e9e8d2b675255cc87d398549bc7a8c8dd2b989418ef3ab64d95fcb2d977\"], \"encoding_diagnostics\": {\"surprisal_score\": null, \"surprisal_status\": \"disabled\", \"prediction\": null, \"prediction_mode\": \"disabled\", \"threshold\": 0.3}, \"assertion_status\": \"unknown\", \"cognitive_state_status\": \"provider_unavailable\"}"
+    }
+  ],
+  "events": [
+    {
+      "id": "106cf5aeb1bb17e31c123df299a499ecf0b65c8d4c9847e79aec767b8f75e57d",
+      "role": "user",
+      "content": "Use only the mnemos_* tools. Do not use built-in memory or other tools. Do not store the conversation as a new explicit fact. Forget this project's release label, including retained conversational copies containing it. Retrieve the asserted target and inspect its exact current fact ID and version. Call mnemos_forget_preview at that version. Review the exact, historical, and advisory candidates and their source dependencies. Inspect each selected additional fact by its exact ID and current version. Call mnemos_forget_related with the unchanged preview_digest, matching preview_limit, explicitly reviewed fact IDs, and the selected source event IDs required by those facts. Preserve unrelated facts. Do not apply an incomplete preview or mismatched versions, and do not claim complete erasure from a bounded semantic search. Do not add any memory.",
+      "source": "hermes",
+      "scope_id": "4c6d4126-1751-4c8e-83ef-4835ea09a919",
+      "metadata": "{\"user_profile_id\": \"native-lifecycle\", \"project_id\": \"4c6d4126-1751-4c8e-83ef-4835ea09a919\", \"workspace_id\": null, \"session_id\": \"20260920_022004_f48443\", \"host\": \"hermes\", \"scope\": \"project\", \"scope_id\": \"4c6d4126-1751-4c8e-83ef-4835ea09a919\", \"source_event_id\": \"hermes:eff6a3426aa327e4af37721de90f98a11e16c58f102feeb6705da01afc1c3de8\", \"source_ref\": \"transcript:v2:23\", \"source_kind\": \"hermes_memory_provider\", \"explicit_remember\": false, \"identity_status\": \"normal\"}",
+      "occurred_at": "2026-09-20T06:20:33.094947+00:00"
+    },
+    {
+      "id": "132fb3e6841c3fdd12160d65928b46f88803326428d405a0b8d47fcaafe95659",
+      "role": "assistant",
+      "content": "Job ID: event:85327250b0a86074ac5792500f09bf48062e10b5c0fc90c6366dc31faf681d40\n\nStatus: pending",
+      "source": "hermes",
+      "scope_id": "4c6d4126-1751-4c8e-83ef-4835ea09a919",
+      "metadata": "{\"user_profile_id\": \"native-lifecycle\", \"project_id\": \"4c6d4126-1751-4c8e-83ef-4835ea09a919\", \"workspace_id\": null, \"session_id\": \"20260920_021903_f81516\", \"host\": \"hermes\", \"scope\": \"project\", \"scope_id\": \"4c6d4126-1751-4c8e-83ef-4835ea09a919\", \"source_event_id\": \"hermes:e194cfadb5c6752b07194a3b2651a91a3c3a11341cf30f433d9644509bd126f7\", \"source_ref\": \"transcript:v2:6\", \"source_kind\": \"hermes_memory_provider\", \"explicit_remember\": false, \"identity_status\": \"normal\"}",
+      "occurred_at": "2026-09-20T06:19:14.543510+00:00"
+    },
+    {
+      "id": "1414d4f33b2dce1cb849f55ae374b1b50f2f5c3828edb7a87dbbeb20913c5193",
+      "role": "user",
+      "content": "The project release label is maple-ridge-842.",
+      "source": "hermes",
+      "scope_id": "4c6d4126-1751-4c8e-83ef-4835ea09a919",
+      "metadata": "{\"user_profile_id\": \"native-lifecycle\", \"project_id\": \"4c6d4126-1751-4c8e-83ef-4835ea09a919\", \"workspace_id\": null, \"session_id\": \"20260920_021932_520195\", \"host\": \"hermes\", \"scope\": \"project\", \"scope_id\": \"4c6d4126-1751-4c8e-83ef-4835ea09a919\", \"source_event_id\": \"hermes-tool:3c3680d5245e36bc42e285dc70bf2de48c9e25f8d098980da17debbd9feab3a2\", \"source_ref\": \"bab58902-d0c6-43bd-906b-5c416c7ed2a6#1\", \"source_kind\": \"explicit_correction\", \"explicit_remember\": true, \"identity_status\": \"normal\"}",
+      "occurred_at": "2026-09-20T06:19:41.924956+00:00"
+    },
+    {
+      "id": "1434a0318f1ad13be3fc14b981f0f0bd21b382def2621ca206c7980ead3b2429",
+      "role": "assistant",
+      "content": "I'll use mnemos_retrieve to find the project's release label, as instructed.",
+      "source": "hermes",
+      "scope_id": "4c6d4126-1751-4c8e-83ef-4835ea09a919",
+      "metadata": "{\"user_profile_id\": \"native-lifecycle\", \"project_id\": \"4c6d4126-1751-4c8e-83ef-4835ea09a919\", \"workspace_id\": null, \"session_id\": \"20260920_021919_5be167\", \"host\": \"hermes\", \"scope\": \"project\", \"scope_id\": \"4c6d4126-1751-4c8e-83ef-4835ea09a919\", \"source_event_id\": \"hermes:833232aeed4a559e93f59c23910153aaa0780a1cf4aaf2b21d384f433e719865\", \"source_ref\": \"transcript:v2:8\", \"source_kind\": \"hermes_memory_provider\", \"explicit_remember\": false, \"identity_status\": \"normal\"}",
+      "occurred_at": "2026-09-20T06:19:27.368224+00:00"
+    },
+    {
+      "id": "1d3d9b6525d0d96f460d207a02f1536dc596d0a686ab28719e71164936f7a88d",
+      "role": "assistant",
+      "content": "I'll retrieve the project release label fact from memory.",
+      "source": "hermes",
+      "scope_id": "4c6d4126-1751-4c8e-83ef-4835ea09a919",
+      "metadata": "{\"user_profile_id\": \"native-lifecycle\", \"project_id\": \"4c6d4126-1751-4c8e-83ef-4835ea09a919\", \"workspace_id\": null, \"session_id\": \"20260920_021951_6accd1\", \"host\": \"hermes\", \"scope\": \"project\", \"scope_id\": \"4c6d4126-1751-4c8e-83ef-4835ea09a919\", \"source_event_id\": \"hermes:6ce30cf9d3745c86bf8a34bbaf45a3a6ba71ef8a1a3f3c9bf7a5cb9140b7f69e\", \"source_ref\": \"transcript:v2:20\", \"source_kind\": \"hermes_memory_provider\", \"explicit_remember\": false, \"identity_status\": \"normal\"}",
+      "occurred_at": "2026-09-20T06:19:58.863991+00:00"
+    },
+    {
+      "id": "3ba44aeaf133c08a0210f9ce5664fb277334ff8f55fd0a3da05fb89354a8c9d4",
+      "role": "assistant",
+      "content": "Reviewing candidates and source dependencies:\n\n**Exact assertion candidates** (not advisory similarity):\n- `275c0c23-488e-4236-9f74-bbc89b6952dd` (version 1): assistant-reported correction event, requires source `47ec75dff797c4a6dc22f48afa65d63937c8edbfa81b99570474b52f08f31be9`\n- `8da3dc87-31b4-49e0-8906-e3df9be34e04` (version 1): teaches cedar-ridge-731, requires source `c4645bd1970551b3bb23474c6e873de8d223e29ef8637627834079990b4ee3d6`\n- `fb2615e4-ffab-45e5-a86e-3a272bf1bbf0` (version 1): instructs correction to maple-ridge-842, requires source `ec91ff2bf6c0c72044a46cbbb1198f8c77ddfde01602ae4e76f1321b86bba751`\n\nI inspect each candidate:",
+      "source": "hermes",
+      "scope_id": "4c6d4126-1751-4c8e-83ef-4835ea09a919",
+      "metadata": "{\"user_profile_id\": \"native-lifecycle\", \"project_id\": \"4c6d4126-1751-4c8e-83ef-4835ea09a919\", \"workspace_id\": null, \"session_id\": \"20260920_022004_f48443\", \"host\": \"hermes\", \"scope\": \"project\", \"scope_id\": \"4c6d4126-1751-4c8e-83ef-4835ea09a919\", \"source_event_id\": \"hermes:bbffd4d130abf40823c62beef71f71cced1745866d177122c32a97b63aa45b85\", \"source_ref\": \"transcript:v2:31\", \"source_kind\": \"hermes_memory_provider\", \"explicit_remember\": false, \"identity_status\": \"normal\"}",
+      "occurred_at": "2026-09-20T06:20:33.124609+00:00"
+    },
+    {
+      "id": "47ec75dff797c4a6dc22f48afa65d63937c8edbfa81b99570474b52f08f31be9",
+      "role": "assistant",
+      "content": "Correction committed for fact bab58902-d0c6-43bd-906b-5c416c7ed2a6 (version 1). Content changed from \"The project release label is cedar-ridge-731.\" to \"The project release label is maple-ridge-842.\" Job status pending.",
+      "source": "hermes",
+      "scope_id": "4c6d4126-1751-4c8e-83ef-4835ea09a919",
+      "metadata": "{\"user_profile_id\": \"native-lifecycle\", \"project_id\": \"4c6d4126-1751-4c8e-83ef-4835ea09a919\", \"workspace_id\": null, \"session_id\": \"20260920_021932_520195\", \"host\": \"hermes\", \"scope\": \"project\", \"scope_id\": \"4c6d4126-1751-4c8e-83ef-4835ea09a919\", \"source_event_id\": \"hermes:536481df27641380e5923f0b83bba76a05b61e652ad84e7146e35d4502862639\", \"source_ref\": \"transcript:v2:18\", \"source_kind\": \"hermes_memory_provider\", \"explicit_remember\": false, \"identity_status\": \"normal\"}",
+      "occurred_at": "2026-09-20T06:19:45.957228+00:00"
+    },
+    {
+      "id": "4a1b1ac85d7668efe8c5c41febb6d5db049d93287f6055838ee5a0c06eafd26a",
+      "role": "user",
+      "content": "The build artifact checksum marker is slate-safe-553.",
+      "source": "manual",
+      "scope_id": "4c6d4126-1751-4c8e-83ef-4835ea09a919",
+      "metadata": "{\"user_profile_id\": \"native-lifecycle\", \"project_id\": \"4c6d4126-1751-4c8e-83ef-4835ea09a919\", \"workspace_id\": null, \"session_id\": \"controller\", \"host\": \"manual\", \"scope\": \"project\", \"scope_id\": \"4c6d4126-1751-4c8e-83ef-4835ea09a919\", \"source_event_id\": \"control-project\", \"source_ref\": null, \"source_kind\": \"explicit_remember\", \"explicit_remember\": true, \"identity_status\": \"normal\"}",
+      "occurred_at": "2026-09-20T06:18:53.861785+00:00"
+    },
+    {
+      "id": "5f06622f720658675e96442dcf130c27684592e00c3dced9fad020c37b896e89",
+      "role": "user",
+      "content": "Use only the mnemos_* tools. Do not use built-in memory or other tools. Do not store the conversation as a new explicit fact. Use mnemos_retrieve to find this project's release label. Report the asserted fact's ID, version, and label. Do not change memory.",
+      "source": "hermes",
+      "scope_id": "4c6d4126-1751-4c8e-83ef-4835ea09a919",
+      "metadata": "{\"user_profile_id\": \"native-lifecycle\", \"project_id\": \"4c6d4126-1751-4c8e-83ef-4835ea09a919\", \"workspace_id\": null, \"session_id\": \"20260920_021919_5be167\", \"host\": \"hermes\", \"scope\": \"project\", \"scope_id\": \"4c6d4126-1751-4c8e-83ef-4835ea09a919\", \"source_event_id\": \"hermes:0d1f3db261609a7b937f3157ceef87ff34f3c4150214644ffb0dcb3744a14106\", \"source_ref\": \"transcript:v2:7\", \"source_kind\": \"hermes_memory_provider\", \"explicit_remember\": false, \"identity_status\": \"normal\"}",
+      "occurred_at": "2026-09-20T06:19:27.337780+00:00"
+    },
+    {
+      "id": "85327250b0a86074ac5792500f09bf48062e10b5c0fc90c6366dc31faf681d40",
+      "role": "user",
+      "content": "The project release label is cedar-ridge-731.",
+      "source": "hermes",
+      "scope_id": "4c6d4126-1751-4c8e-83ef-4835ea09a919",
+      "metadata": "{\"user_profile_id\": \"native-lifecycle\", \"project_id\": \"4c6d4126-1751-4c8e-83ef-4835ea09a919\", \"workspace_id\": null, \"session_id\": \"20260920_021903_f81516\", \"host\": \"hermes\", \"scope\": \"project\", \"scope_id\": \"4c6d4126-1751-4c8e-83ef-4835ea09a919\", \"source_event_id\": \"hermes-tool:f4702c4274e56affcda1752e2d92cb470063b99de7b18aeb7a9cacb8c7231b39\", \"source_ref\": null, \"source_kind\": \"explicit_remember\", \"explicit_remember\": true, \"identity_status\": \"normal\"}",
+      "occurred_at": "2026-09-20T06:19:10.710344+00:00"
+    },
+    {
+      "id": "b324961263ac4959f9d2da7d6e9c6810313861c85e59b1fbcb94aa5f13208169",
+      "role": "assistant",
+      "content": "Inspected:\n- `275c0c23-488e-4236-9f74-bbc89b6952dd` (version 1): assistant-reported correction event, requires source `47ec75dff797c4a6dc22f48afa65d63937c8edbfa81b99570474b52f08f31be9`\n- `8da3dc87-31b4-49e0-8906-e3df9be34e04` (version 1): user instruction to remember cedar-ridge-731, requires source `c4645bd1970551b3bb23474c6e873de8d223e29ef8637627834079990b4ee3d6`\n- `fb2615e4-ffab-45e5-a86e-3a272bf1bbf0` (version 1): user instruction to correct to maple-ridge-842, requires source `ec91ff2bf6c0c72044a46cbbb1198f8c77ddfde01602ae4e76f1321b86bba751`\n\nAll three derived facts are part of the conversational history surrounding this project's release label. They should all be removed via mnemos_forget_related using the preview_digest `f21b11c162ae81e973116d6b62ad75e5a7c002d2958db88b71d79878294814b3`.\n\n**Fact to forget (target):** `bab58902-d0c6-43bd-906b-5c416c7ed2a6` version 2",
+      "source": "hermes",
+      "scope_id": "4c6d4126-1751-4c8e-83ef-4835ea09a919",
+      "metadata": "{\"user_profile_id\": \"native-lifecycle\", \"project_id\": \"4c6d4126-1751-4c8e-83ef-4835ea09a919\", \"workspace_id\": null, \"session_id\": \"20260920_022004_f48443\", \"host\": \"hermes\", \"scope\": \"project\", \"scope_id\": \"4c6d4126-1751-4c8e-83ef-4835ea09a919\", \"source_event_id\": \"hermes:5ce47bc8d74293ac31886c7f0949a1e090f5318c2b21d834dfc4e7e397304ac5\", \"source_ref\": \"transcript:v2:35\", \"source_kind\": \"hermes_memory_provider\", \"explicit_remember\": false, \"identity_status\": \"normal\"}",
+      "occurred_at": "2026-09-20T06:20:33.160546+00:00"
+    },
+    {
+      "id": "b441774ea14672ef8fa2a43de613b74af4a0bda30f5855932c0793f4afc2da66",
+      "role": "user",
+      "content": "Use only the mnemos_* tools. Do not use built-in memory or other tools. Do not store the conversation as a new explicit fact. Use mnemos_retrieve to find the current asserted project release label. Report its ID, version, and label. Do not change memory.",
+      "source": "hermes",
+      "scope_id": "4c6d4126-1751-4c8e-83ef-4835ea09a919",
+      "metadata": "{\"user_profile_id\": \"native-lifecycle\", \"project_id\": \"4c6d4126-1751-4c8e-83ef-4835ea09a919\", \"workspace_id\": null, \"session_id\": \"20260920_021951_6accd1\", \"host\": \"hermes\", \"scope\": \"project\", \"scope_id\": \"4c6d4126-1751-4c8e-83ef-4835ea09a919\", \"source_event_id\": \"hermes:81b3db39c2fabfcb2d65daa5fad0bce117cbc682fec7524cac3c26be5d58ad95\", \"source_ref\": \"transcript:v2:19\", \"source_kind\": \"hermes_memory_provider\", \"explicit_remember\": false, \"identity_status\": \"normal\"}",
+      "occurred_at": "2026-09-20T06:19:58.834910+00:00"
+    },
+    {
+      "id": "c4645bd1970551b3bb23474c6e873de8d223e29ef8637627834079990b4ee3d6",
+      "role": "user",
+      "content": "Use only the mnemos_* tools. Do not use built-in memory or other tools. Do not store the conversation as a new explicit fact. Use mnemos_remember to save the exact content in this JSON string (including its final period): \"The project release label is cedar-ridge-731.\". Use request_id native-teach-1. Check its returned job ID once with mnemos_job_status, then report the ID and actual status. Pending is acceptable; do not claim completion unless confirmed. Do not correct or forget anything.",
+      "source": "hermes",
+      "scope_id": "4c6d4126-1751-4c8e-83ef-4835ea09a919",
+      "metadata": "{\"user_profile_id\": \"native-lifecycle\", \"project_id\": \"4c6d4126-1751-4c8e-83ef-4835ea09a919\", \"workspace_id\": null, \"session_id\": \"20260920_021903_f81516\", \"host\": \"hermes\", \"scope\": \"project\", \"scope_id\": \"4c6d4126-1751-4c8e-83ef-4835ea09a919\", \"source_event_id\": \"hermes:6be5312844c22268ef580843eb5a2dd9718f875bebfd66b0956a446342259920\", \"source_ref\": \"transcript:v2:1\", \"source_kind\": \"hermes_memory_provider\", \"explicit_remember\": false, \"identity_status\": \"normal\"}",
+      "occurred_at": "2026-09-20T06:19:14.515428+00:00"
+    },
+    {
+      "id": "ca0b9351071e1d7ac540747c66e6be9c2f9f5c055f036d30e31e934a8a580f5a",
+      "role": "user",
+      "content": "The project release label is forbidden-foreign-ridge-992.",
+      "source": "manual",
+      "scope_id": "9aa30cc9-c22e-4ed8-881a-51a15c14501a",
+      "metadata": "{\"user_profile_id\": \"native-lifecycle\", \"project_id\": \"9aa30cc9-c22e-4ed8-881a-51a15c14501a\", \"workspace_id\": null, \"session_id\": \"controller\", \"host\": \"manual\", \"scope\": \"project\", \"scope_id\": \"9aa30cc9-c22e-4ed8-881a-51a15c14501a\", \"source_event_id\": \"control-foreign-project\", \"source_ref\": null, \"source_kind\": \"explicit_remember\", \"explicit_remember\": true, \"identity_status\": \"normal\"}",
+      "occurred_at": "2026-09-20T06:18:53.864472+00:00"
+    },
+    {
+      "id": "e49d5844f86019317efbc37d0fdbb62a76b0c3129e31e8a7799faecff969b88d",
+      "role": "assistant",
+      "content": "ID: bab58902-d0c6-43bd-906b-5c416c7ed2a6  \nVersion: 2  \nLabel: maple-ridge-842",
+      "source": "hermes",
+      "scope_id": "4c6d4126-1751-4c8e-83ef-4835ea09a919",
+      "metadata": "{\"user_profile_id\": \"native-lifecycle\", \"project_id\": \"4c6d4126-1751-4c8e-83ef-4835ea09a919\", \"workspace_id\": null, \"session_id\": \"20260920_021951_6accd1\", \"host\": \"hermes\", \"scope\": \"project\", \"scope_id\": \"4c6d4126-1751-4c8e-83ef-4835ea09a919\", \"source_event_id\": \"hermes:64826dc7692966acabbf1f45358c55e024eff4b8fa3938ec036509168c96c628\", \"source_ref\": \"transcript:v2:22\", \"source_kind\": \"hermes_memory_provider\", \"explicit_remember\": false, \"identity_status\": \"normal\"}",
+      "occurred_at": "2026-09-20T06:19:58.902657+00:00"
+    },
+    {
+      "id": "ec91ff2bf6c0c72044a46cbbb1198f8c77ddfde01602ae4e76f1321b86bba751",
+      "role": "user",
+      "content": "Use only the mnemos_* tools. Do not use built-in memory or other tools. Do not store the conversation as a new explicit fact. Retrieve the asserted fact about this project's release label, then inspect its exact ID and version. Correct that same fact to the exact content in this JSON string (including its final period): \"The project release label is maple-ridge-842.\". Use request_id native-correct-1 and the inspected version. Do not add a separate fact.",
+      "source": "hermes",
+      "scope_id": "4c6d4126-1751-4c8e-83ef-4835ea09a919",
+      "metadata": "{\"user_profile_id\": \"native-lifecycle\", \"project_id\": \"4c6d4126-1751-4c8e-83ef-4835ea09a919\", \"workspace_id\": null, \"session_id\": \"20260920_021932_520195\", \"host\": \"hermes\", \"scope\": \"project\", \"scope_id\": \"4c6d4126-1751-4c8e-83ef-4835ea09a919\", \"source_event_id\": \"hermes:706e38ab62547fbf0233adc4318dc04a5930874affb007d2a68eae86fe2df07b\", \"source_ref\": \"transcript:v2:11\", \"source_kind\": \"hermes_memory_provider\", \"explicit_remember\": false, \"identity_status\": \"normal\"}",
+      "occurred_at": "2026-09-20T06:19:45.895095+00:00"
+    },
+    {
+      "id": "fab81e9e8d2b675255cc87d398549bc7a8c8dd2b989418ef3ab64d95fcb2d977",
+      "role": "assistant",
+      "content": "**Release label fact:**\n- **ID:** bab58902-d0c6-43bd-906b-5c416c7ed2a6\n- **Version:** 1\n- **Label:** cedar-ridge-731",
+      "source": "hermes",
+      "scope_id": "4c6d4126-1751-4c8e-83ef-4835ea09a919",
+      "metadata": "{\"user_profile_id\": \"native-lifecycle\", \"project_id\": \"4c6d4126-1751-4c8e-83ef-4835ea09a919\", \"workspace_id\": null, \"session_id\": \"20260920_021919_5be167\", \"host\": \"hermes\", \"scope\": \"project\", \"scope_id\": \"4c6d4126-1751-4c8e-83ef-4835ea09a919\", \"source_event_id\": \"hermes:f576f05516dfc1208e41ad90927b3f834e14dbe386122172664feee9f0c73f61\", \"source_ref\": \"transcript:v2:10\", \"source_kind\": \"hermes_memory_provider\", \"explicit_remember\": false, \"identity_status\": \"normal\"}",
+      "occurred_at": "2026-09-20T06:19:27.398549+00:00"
+    }
+  ],
+  "jobs": [
+    {
+      "id": "event:106cf5aeb1bb17e31c123df299a499ecf0b65c8d4c9847e79aec767b8f75e57d",
+      "kind": "extract",
+      "status": "completed",
+      "payload": "{\"event_id\": \"106cf5aeb1bb17e31c123df299a499ecf0b65c8d4c9847e79aec767b8f75e57d\", \"context\": {\"user_profile_id\": \"native-lifecycle\", \"project_id\": \"4c6d4126-1751-4c8e-83ef-4835ea09a919\", \"workspace_id\": null, \"session_id\": \"20260920_022004_f48443\", \"host\": \"hermes\"}, \"scope\": \"project\", \"source_digest\": \"1e73946d4f384748e673650f8d6b5f26cc6580e3e5cbc058ff5e94fa0114f8ad\"}",
+      "result": "{\"decision\": \"facts\", \"encoding_diagnostics\": {\"surprisal_score\": null, \"surprisal_status\": \"disabled\", \"prediction\": null, \"prediction_mode\": \"disabled\", \"threshold\": 0.3}, \"fact_ids\": [\"121a8b51-fe8a-4fae-a6c9-7c08835f9fc9\"]}",
+      "last_error": null
+    },
+    {
+      "id": "event:132fb3e6841c3fdd12160d65928b46f88803326428d405a0b8d47fcaafe95659",
+      "kind": "extract",
+      "status": "completed",
+      "payload": "{\"event_id\": \"132fb3e6841c3fdd12160d65928b46f88803326428d405a0b8d47fcaafe95659\", \"context\": {\"user_profile_id\": \"native-lifecycle\", \"project_id\": \"4c6d4126-1751-4c8e-83ef-4835ea09a919\", \"workspace_id\": null, \"session_id\": \"20260920_021903_f81516\", \"host\": \"hermes\"}, \"scope\": \"project\", \"source_digest\": \"c230b0beb0d167c94d6ceac41b1ec4ac22155f6ea91ad281bb2fa1d5f0857a3e\"}",
+      "result": "{\"decision\": \"facts\", \"encoding_diagnostics\": {\"surprisal_score\": null, \"surprisal_status\": \"disabled\", \"prediction\": null, \"prediction_mode\": \"disabled\", \"threshold\": 0.3}, \"fact_ids\": [\"30274e7e-4fad-4c54-94ec-4c30ddd3bf75\"]}",
+      "last_error": null
+    },
+    {
+      "id": "event:1414d4f33b2dce1cb849f55ae374b1b50f2f5c3828edb7a87dbbeb20913c5193",
+      "kind": "correct",
+      "status": "completed",
+      "payload": "{\"event_id\": \"1414d4f33b2dce1cb849f55ae374b1b50f2f5c3828edb7a87dbbeb20913c5193\", \"context\": {\"user_profile_id\": \"native-lifecycle\", \"project_id\": \"4c6d4126-1751-4c8e-83ef-4835ea09a919\", \"workspace_id\": null, \"session_id\": \"20260920_021932_520195\", \"host\": \"hermes\"}, \"scope\": \"project\", \"source_digest\": \"2e4c4ba0c2df0d75b0e94d88c74fb53f0d98e484592558674546d65b18412a2e\", \"target_fact_id\": \"bab58902-d0c6-43bd-906b-5c416c7ed2a6\", \"expected_version\": 1}",
+      "result": "{\"decision\": \"facts\", \"encoding_diagnostics\": {}, \"fact_ids\": [\"bab58902-d0c6-43bd-906b-5c416c7ed2a6\"]}",
+      "last_error": null
+    },
+    {
+      "id": "event:1434a0318f1ad13be3fc14b981f0f0bd21b382def2621ca206c7980ead3b2429",
+      "kind": "extract",
+      "status": "completed",
+      "payload": "{\"event_id\": \"1434a0318f1ad13be3fc14b981f0f0bd21b382def2621ca206c7980ead3b2429\", \"context\": {\"user_profile_id\": \"native-lifecycle\", \"project_id\": \"4c6d4126-1751-4c8e-83ef-4835ea09a919\", \"workspace_id\": null, \"session_id\": \"20260920_021919_5be167\", \"host\": \"hermes\"}, \"scope\": \"project\", \"source_digest\": \"c7762bf98b7189401d26ec71f8120d933bd78462da9412eb1f1cd0e26a344d87\"}",
+      "result": "{\"decision\": \"facts\", \"encoding_diagnostics\": {\"surprisal_score\": null, \"surprisal_status\": \"disabled\", \"prediction\": null, \"prediction_mode\": \"disabled\", \"threshold\": 0.3}, \"fact_ids\": [\"c854bcad-2c28-4462-bc40-c2d19db6e60e\"]}",
+      "last_error": null
+    },
+    {
+      "id": "event:1d3d9b6525d0d96f460d207a02f1536dc596d0a686ab28719e71164936f7a88d",
+      "kind": "extract",
+      "status": "completed",
+      "payload": "{\"event_id\": \"1d3d9b6525d0d96f460d207a02f1536dc596d0a686ab28719e71164936f7a88d\", \"context\": {\"user_profile_id\": \"native-lifecycle\", \"project_id\": \"4c6d4126-1751-4c8e-83ef-4835ea09a919\", \"workspace_id\": null, \"session_id\": \"20260920_021951_6accd1\", \"host\": \"hermes\"}, \"scope\": \"project\", \"source_digest\": \"16ca55a14c998b1b5cd9ba8b795b51b4289d144e7ef11bd2538dbc2e67d1594d\"}",
+      "result": "{\"decision\": \"facts\", \"encoding_diagnostics\": {\"surprisal_score\": null, \"surprisal_status\": \"disabled\", \"prediction\": null, \"prediction_mode\": \"disabled\", \"threshold\": 0.3}, \"fact_ids\": [\"c9c60a30-0a27-4cbc-be75-cfd326cfb3e9\"]}",
+      "last_error": null
+    },
+    {
+      "id": "event:3ba44aeaf133c08a0210f9ce5664fb277334ff8f55fd0a3da05fb89354a8c9d4",
+      "kind": "extract",
+      "status": "completed",
+      "payload": "{\"event_id\": \"3ba44aeaf133c08a0210f9ce5664fb277334ff8f55fd0a3da05fb89354a8c9d4\", \"context\": {\"user_profile_id\": \"native-lifecycle\", \"project_id\": \"4c6d4126-1751-4c8e-83ef-4835ea09a919\", \"workspace_id\": null, \"session_id\": \"20260920_022004_f48443\", \"host\": \"hermes\"}, \"scope\": \"project\", \"source_digest\": \"fa2b714ac39e94dc1fc218d77ec855e9951775a3d97005a7740801d1d0d30fe0\"}",
+      "result": "{\"decision\": \"facts\", \"encoding_diagnostics\": {\"surprisal_score\": null, \"surprisal_status\": \"disabled\", \"prediction\": null, \"prediction_mode\": \"disabled\", \"threshold\": 0.3}, \"fact_ids\": [\"8e5a6e00-3648-43ad-b329-23f419c801ff\"]}",
+      "last_error": null
+    },
+    {
+      "id": "event:47ec75dff797c4a6dc22f48afa65d63937c8edbfa81b99570474b52f08f31be9",
+      "kind": "extract",
+      "status": "completed",
+      "payload": "{\"event_id\": \"47ec75dff797c4a6dc22f48afa65d63937c8edbfa81b99570474b52f08f31be9\", \"context\": {\"user_profile_id\": \"native-lifecycle\", \"project_id\": \"4c6d4126-1751-4c8e-83ef-4835ea09a919\", \"workspace_id\": null, \"session_id\": \"20260920_021932_520195\", \"host\": \"hermes\"}, \"scope\": \"project\", \"source_digest\": \"4955427c9e112fdd6760710983bca870b876634945e9e4574b35d4810b334bc2\"}",
+      "result": "{\"decision\": \"facts\", \"encoding_diagnostics\": {\"surprisal_score\": null, \"surprisal_status\": \"disabled\", \"prediction\": null, \"prediction_mode\": \"disabled\", \"threshold\": 0.3}, \"fact_ids\": [\"275c0c23-488e-4236-9f74-bbc89b6952dd\"]}",
+      "last_error": null
+    },
+    {
+      "id": "event:4a1b1ac85d7668efe8c5c41febb6d5db049d93287f6055838ee5a0c06eafd26a",
+      "kind": "remember",
+      "status": "completed",
+      "payload": "{\"event_id\": \"4a1b1ac85d7668efe8c5c41febb6d5db049d93287f6055838ee5a0c06eafd26a\", \"context\": {\"user_profile_id\": \"native-lifecycle\", \"project_id\": \"4c6d4126-1751-4c8e-83ef-4835ea09a919\", \"workspace_id\": null, \"session_id\": \"controller\", \"host\": \"manual\"}, \"scope\": \"project\", \"source_digest\": \"67b3b4cd63c41243befa77a2d2ad2a34f5a4c89cc30d0716d615643c94c9919f\"}",
+      "result": "{\"decision\": \"facts\", \"encoding_diagnostics\": {}, \"fact_ids\": [\"6c244f5d-7b74-404b-a89c-f76b9f6b6676\"]}",
+      "last_error": null
+    },
+    {
+      "id": "event:5f06622f720658675e96442dcf130c27684592e00c3dced9fad020c37b896e89",
+      "kind": "extract",
+      "status": "completed",
+      "payload": "{\"event_id\": \"5f06622f720658675e96442dcf130c27684592e00c3dced9fad020c37b896e89\", \"context\": {\"user_profile_id\": \"native-lifecycle\", \"project_id\": \"4c6d4126-1751-4c8e-83ef-4835ea09a919\", \"workspace_id\": null, \"session_id\": \"20260920_021919_5be167\", \"host\": \"hermes\"}, \"scope\": \"project\", \"source_digest\": \"117201874683fbe9a20951187b1837132a92efd95ace9e9bcf2eb46efa2990ae\"}",
+      "result": "{\"decision\": \"facts\", \"encoding_diagnostics\": {\"surprisal_score\": null, \"surprisal_status\": \"disabled\", \"prediction\": null, \"prediction_mode\": \"disabled\", \"threshold\": 0.3}, \"fact_ids\": [\"01ef1a51-a294-4080-84bd-e13adca38809\"]}",
+      "last_error": null
+    },
+    {
+      "id": "event:85327250b0a86074ac5792500f09bf48062e10b5c0fc90c6366dc31faf681d40",
+      "kind": "remember",
+      "status": "completed",
+      "payload": "{\"event_id\": \"85327250b0a86074ac5792500f09bf48062e10b5c0fc90c6366dc31faf681d40\", \"context\": {\"user_profile_id\": \"native-lifecycle\", \"project_id\": \"4c6d4126-1751-4c8e-83ef-4835ea09a919\", \"workspace_id\": null, \"session_id\": \"20260920_021903_f81516\", \"host\": \"hermes\"}, \"scope\": \"project\", \"source_digest\": \"dd5110e2359120e3680e9162913ee61772af59d838b04a8e81173a19b864732f\"}",
+      "result": "{\"decision\": \"facts\", \"encoding_diagnostics\": {}, \"fact_ids\": [\"bab58902-d0c6-43bd-906b-5c416c7ed2a6\"]}",
+      "last_error": null
+    },
+    {
+      "id": "event:b324961263ac4959f9d2da7d6e9c6810313861c85e59b1fbcb94aa5f13208169",
+      "kind": "extract",
+      "status": "completed",
+      "payload": "{\"event_id\": \"b324961263ac4959f9d2da7d6e9c6810313861c85e59b1fbcb94aa5f13208169\", \"context\": {\"user_profile_id\": \"native-lifecycle\", \"project_id\": \"4c6d4126-1751-4c8e-83ef-4835ea09a919\", \"workspace_id\": null, \"session_id\": \"20260920_022004_f48443\", \"host\": \"hermes\"}, \"scope\": \"project\", \"source_digest\": \"27bf20fab59c77d01999b76f92b42d2caa0576574ebad64f95c2b3af3293cebd\"}",
+      "result": "{\"decision\": \"facts\", \"encoding_diagnostics\": {\"surprisal_score\": null, \"surprisal_status\": \"disabled\", \"prediction\": null, \"prediction_mode\": \"disabled\", \"threshold\": 0.3}, \"fact_ids\": [\"5c0b7629-814f-461d-be14-e943f0d92f28\"]}",
+      "last_error": null
+    },
+    {
+      "id": "event:b441774ea14672ef8fa2a43de613b74af4a0bda30f5855932c0793f4afc2da66",
+      "kind": "extract",
+      "status": "completed",
+      "payload": "{\"event_id\": \"b441774ea14672ef8fa2a43de613b74af4a0bda30f5855932c0793f4afc2da66\", \"context\": {\"user_profile_id\": \"native-lifecycle\", \"project_id\": \"4c6d4126-1751-4c8e-83ef-4835ea09a919\", \"workspace_id\": null, \"session_id\": \"20260920_021951_6accd1\", \"host\": \"hermes\"}, \"scope\": \"project\", \"source_digest\": \"66cebc44dbc31eadfa37bd804f5314782ac1f4830cc5109735dbd1b42a7878c8\"}",
+      "result": "{\"decision\": \"facts\", \"encoding_diagnostics\": {\"surprisal_score\": null, \"surprisal_status\": \"disabled\", \"prediction\": null, \"prediction_mode\": \"disabled\", \"threshold\": 0.3}, \"fact_ids\": [\"dd0b27b2-ed86-4f66-8981-f5d7f1fe908c\"]}",
+      "last_error": null
+    },
+    {
+      "id": "event:c4645bd1970551b3bb23474c6e873de8d223e29ef8637627834079990b4ee3d6",
+      "kind": "extract",
+      "status": "completed",
+      "payload": "{\"event_id\": \"c4645bd1970551b3bb23474c6e873de8d223e29ef8637627834079990b4ee3d6\", \"context\": {\"user_profile_id\": \"native-lifecycle\", \"project_id\": \"4c6d4126-1751-4c8e-83ef-4835ea09a919\", \"workspace_id\": null, \"session_id\": \"20260920_021903_f81516\", \"host\": \"hermes\"}, \"scope\": \"project\", \"source_digest\": \"06e549b424b79c1b64c2ad70d5ab60830f339c9cc31386326cd2e21d343373ec\"}",
+      "result": "{\"decision\": \"facts\", \"encoding_diagnostics\": {\"surprisal_score\": null, \"surprisal_status\": \"disabled\", \"prediction\": null, \"prediction_mode\": \"disabled\", \"threshold\": 0.3}, \"fact_ids\": [\"8da3dc87-31b4-49e0-8906-e3df9be34e04\"]}",
+      "last_error": null
+    },
+    {
+      "id": "event:ca0b9351071e1d7ac540747c66e6be9c2f9f5c055f036d30e31e934a8a580f5a",
+      "kind": "remember",
+      "status": "completed",
+      "payload": "{\"event_id\": \"ca0b9351071e1d7ac540747c66e6be9c2f9f5c055f036d30e31e934a8a580f5a\", \"context\": {\"user_profile_id\": \"native-lifecycle\", \"project_id\": \"9aa30cc9-c22e-4ed8-881a-51a15c14501a\", \"workspace_id\": null, \"session_id\": \"controller\", \"host\": \"manual\"}, \"scope\": \"project\", \"source_digest\": \"dfd459cb553960fb77552849bd7bbda55ddbaa318281fd11105bcf84250049fc\"}",
+      "result": "{\"decision\": \"facts\", \"encoding_diagnostics\": {}, \"fact_ids\": [\"bc902ae1-0998-4395-b44a-829db11ee3a6\"]}",
+      "last_error": null
+    },
+    {
+      "id": "event:e49d5844f86019317efbc37d0fdbb62a76b0c3129e31e8a7799faecff969b88d",
+      "kind": "extract",
+      "status": "completed",
+      "payload": "{\"event_id\": \"e49d5844f86019317efbc37d0fdbb62a76b0c3129e31e8a7799faecff969b88d\", \"context\": {\"user_profile_id\": \"native-lifecycle\", \"project_id\": \"4c6d4126-1751-4c8e-83ef-4835ea09a919\", \"workspace_id\": null, \"session_id\": \"20260920_021951_6accd1\", \"host\": \"hermes\"}, \"scope\": \"project\", \"source_digest\": \"29b253dee00929b0df351ef87d51965d5451f4648d42fa87bdc3fa6bf484c3d6\"}",
+      "result": "{\"decision\": \"facts\", \"encoding_diagnostics\": {\"surprisal_score\": null, \"surprisal_status\": \"disabled\", \"prediction\": null, \"prediction_mode\": \"disabled\", \"threshold\": 0.3}, \"fact_ids\": [\"6d948c3b-f838-44cc-93ef-32d96a50f8d9\"]}",
+      "last_error": null
+    },
+    {
+      "id": "event:ec91ff2bf6c0c72044a46cbbb1198f8c77ddfde01602ae4e76f1321b86bba751",
+      "kind": "extract",
+      "status": "completed",
+      "payload": "{\"event_id\": \"ec91ff2bf6c0c72044a46cbbb1198f8c77ddfde01602ae4e76f1321b86bba751\", \"context\": {\"user_profile_id\": \"native-lifecycle\", \"project_id\": \"4c6d4126-1751-4c8e-83ef-4835ea09a919\", \"workspace_id\": null, \"session_id\": \"20260920_021932_520195\", \"host\": \"hermes\"}, \"scope\": \"project\", \"source_digest\": \"62cdfe23a2bf6a51969851b3d4fefae8339ee6d8c818fdaaa9fc1a4935a0f7c4\"}",
+      "result": "{\"decision\": \"facts\", \"encoding_diagnostics\": {\"surprisal_score\": null, \"surprisal_status\": \"disabled\", \"prediction\": null, \"prediction_mode\": \"disabled\", \"threshold\": 0.3}, \"fact_ids\": [\"fb2615e4-ffab-45e5-a86e-3a272bf1bbf0\"]}",
+      "last_error": null
+    },
+    {
+      "id": "event:fab81e9e8d2b675255cc87d398549bc7a8c8dd2b989418ef3ab64d95fcb2d977",
+      "kind": "extract",
+      "status": "completed",
+      "payload": "{\"event_id\": \"fab81e9e8d2b675255cc87d398549bc7a8c8dd2b989418ef3ab64d95fcb2d977\", \"context\": {\"user_profile_id\": \"native-lifecycle\", \"project_id\": \"4c6d4126-1751-4c8e-83ef-4835ea09a919\", \"workspace_id\": null, \"session_id\": \"20260920_021919_5be167\", \"host\": \"hermes\"}, \"scope\": \"project\", \"source_digest\": \"48fec1d9733b0882f7a9d26e96920c5cd1886eab4b7a68cce8d40ede73c4cf1d\"}",
+      "result": "{\"decision\": \"facts\", \"encoding_diagnostics\": {\"surprisal_score\": null, \"surprisal_status\": \"disabled\", \"prediction\": null, \"prediction_mode\": \"disabled\", \"threshold\": 0.3}, \"fact_ids\": [\"febbfe98-2f8d-4021-a4c8-0c159b81937d\"]}",
+      "last_error": null
+    }
+  ],
+  "evidence": [
+    {
+      "fact_id": "01ef1a51-a294-4080-84bd-e13adca38809",
+      "source_event_id": "5f06622f720658675e96442dcf130c27684592e00c3dced9fad020c37b896e89",
+      "excerpt": "Use only the mnemos_* tools. Do not use built-in memory or other tools. Do not store the conversation as a new explicit fact. Use mnemos_retrieve to find this project's release label. Report the asserted fact's ID, version, and label. Do not change memory."
+    },
+    {
+      "fact_id": "121a8b51-fe8a-4fae-a6c9-7c08835f9fc9",
+      "source_event_id": "106cf5aeb1bb17e31c123df299a499ecf0b65c8d4c9847e79aec767b8f75e57d",
+      "excerpt": "Use only the mnemos_* tools. Do not use built-in memory or other tools. Do not store the conversation as a new explicit fact. Forget this project's release label, including retained conversational copies containing it. Retrieve the asserted target and inspect its exact current fact ID and version. Call mnemos_forget_preview at that version. Review the exact, historical, and advisory candidates and their source dependencies. Inspect each selected additional fact by its exact ID and current version. Call mnemos_forget_related with the unchanged preview_digest, matching preview_limit, explicitly reviewed fact IDs, and the selected source event IDs required by those facts. Preserve unrelated facts. Do not apply an incomplete preview or mismatched versions, and do not claim complete erasure from a bounded semantic search. Do not add any memory."
+    },
+    {
+      "fact_id": "275c0c23-488e-4236-9f74-bbc89b6952dd",
+      "source_event_id": "47ec75dff797c4a6dc22f48afa65d63937c8edbfa81b99570474b52f08f31be9",
+      "excerpt": "Correction committed for fact bab58902-d0c6-43bd-906b-5c416c7ed2a6 (version 1). Content changed from \"The project release label is cedar-ridge-731.\" to \"The project release label is maple-ridge-842.\" Job status pending."
+    },
+    {
+      "fact_id": "30274e7e-4fad-4c54-94ec-4c30ddd3bf75",
+      "source_event_id": "132fb3e6841c3fdd12160d65928b46f88803326428d405a0b8d47fcaafe95659",
+      "excerpt": "Job ID: event:85327250b0a86074ac5792500f09bf48062e10b5c0fc90c6366dc31faf681d40\n\nStatus: pending"
+    },
+    {
+      "fact_id": "5c0b7629-814f-461d-be14-e943f0d92f28",
+      "source_event_id": "b324961263ac4959f9d2da7d6e9c6810313861c85e59b1fbcb94aa5f13208169",
+      "excerpt": "Inspected:\n- `275c0c23-488e-4236-9f74-bbc89b6952dd` (version 1): assistant-reported correction event, requires source `47ec75dff797c4a6dc22f48afa65d63937c8edbfa81b99570474b52f08f31be9`\n- `8da3dc87-31b4-49e0-8906-e3df9be34e04` (version 1): user instruction to remember cedar-ridge-731, requires source `c4645bd1970551b3bb23474c6e873de8d223e29ef8637627834079990b4ee3d6`\n- `fb2615e4-ffab-45e5-a86e-3a272bf1bbf0` (version 1): user instruction to correct to maple-ridge-842, requires source `ec91ff2bf6c0c72044a46cbbb1198f8c77ddfde01602ae4e76f1321b86bba751`\n\nAll three derived facts are part of the conversational history surrounding this project's release label. They should all be removed via mnemos_forget_related using the preview_digest `f21b11c162ae81e973116d6b62ad75e5a7c002d2958db88b71d79878294814b3`.\n\n**Fact to forget (target):** `bab58902-d0c6-43bd-906b-5c416c7ed2a6` version 2"
+    },
+    {
+      "fact_id": "6c244f5d-7b74-404b-a89c-f76b9f6b6676",
+      "source_event_id": "4a1b1ac85d7668efe8c5c41febb6d5db049d93287f6055838ee5a0c06eafd26a",
+      "excerpt": "The build artifact checksum marker is slate-safe-553."
+    },
+    {
+      "fact_id": "6d948c3b-f838-44cc-93ef-32d96a50f8d9",
+      "source_event_id": "e49d5844f86019317efbc37d0fdbb62a76b0c3129e31e8a7799faecff969b88d",
+      "excerpt": "ID: bab58902-d0c6-43bd-906b-5c416c7ed2a6  \nVersion: 2  \nLabel: maple-ridge-842"
+    },
+    {
+      "fact_id": "8da3dc87-31b4-49e0-8906-e3df9be34e04",
+      "source_event_id": "c4645bd1970551b3bb23474c6e873de8d223e29ef8637627834079990b4ee3d6",
+      "excerpt": "Use only the mnemos_* tools. Do not use built-in memory or other tools. Do not store the conversation as a new explicit fact. Use mnemos_remember to save the exact content in this JSON string (including its final period): \"The project release label is cedar-ridge-731.\". Use request_id native-teach-1. Check its returned job ID once with mnemos_job_status, then report the ID and actual status. Pending is acceptable; do not claim completion unless confirmed. Do not correct or forget anything."
+    },
+    {
+      "fact_id": "8e5a6e00-3648-43ad-b329-23f419c801ff",
+      "source_event_id": "3ba44aeaf133c08a0210f9ce5664fb277334ff8f55fd0a3da05fb89354a8c9d4",
+      "excerpt": "Reviewing candidates and source dependencies:\n\n**Exact assertion candidates** (not advisory similarity):\n- `275c0c23-488e-4236-9f74-bbc89b6952dd` (version 1): assistant-reported correction event, requires source `47ec75dff797c4a6dc22f48afa65d63937c8edbfa81b99570474b52f08f31be9`\n- `8da3dc87-31b4-49e0-8906-e3df9be34e04` (version 1): teaches cedar-ridge-731, requires source `c4645bd1970551b3bb23474c6e873de8d223e29ef8637627834079990b4ee3d6`\n- `fb2615e4-ffab-45e5-a86e-3a272bf1bbf0` (version 1): instructs correction to maple-ridge-842, requires source `ec91ff2bf6c0c72044a46cbbb1198f8c77ddfde01602ae4e76f1321b86bba751`\n\nI inspect each candidate:"
+    },
+    {
+      "fact_id": "bab58902-d0c6-43bd-906b-5c416c7ed2a6",
+      "source_event_id": "1414d4f33b2dce1cb849f55ae374b1b50f2f5c3828edb7a87dbbeb20913c5193",
+      "excerpt": "The project release label is maple-ridge-842."
+    },
+    {
+      "fact_id": "bab58902-d0c6-43bd-906b-5c416c7ed2a6",
+      "source_event_id": "85327250b0a86074ac5792500f09bf48062e10b5c0fc90c6366dc31faf681d40",
+      "excerpt": "The project release label is cedar-ridge-731."
+    },
+    {
+      "fact_id": "bc902ae1-0998-4395-b44a-829db11ee3a6",
+      "source_event_id": "ca0b9351071e1d7ac540747c66e6be9c2f9f5c055f036d30e31e934a8a580f5a",
+      "excerpt": "The project release label is forbidden-foreign-ridge-992."
+    },
+    {
+      "fact_id": "c854bcad-2c28-4462-bc40-c2d19db6e60e",
+      "source_event_id": "1434a0318f1ad13be3fc14b981f0f0bd21b382def2621ca206c7980ead3b2429",
+      "excerpt": "I'll use mnemos_retrieve to find the project's release label, as instructed."
+    },
+    {
+      "fact_id": "c9c60a30-0a27-4cbc-be75-cfd326cfb3e9",
+      "source_event_id": "1d3d9b6525d0d96f460d207a02f1536dc596d0a686ab28719e71164936f7a88d",
+      "excerpt": "I'll retrieve the project release label fact from memory."
+    },
+    {
+      "fact_id": "dd0b27b2-ed86-4f66-8981-f5d7f1fe908c",
+      "source_event_id": "b441774ea14672ef8fa2a43de613b74af4a0bda30f5855932c0793f4afc2da66",
+      "excerpt": "Use only the mnemos_* tools. Do not use built-in memory or other tools. Do not store the conversation as a new explicit fact. Use mnemos_retrieve to find the current asserted project release label. Report its ID, version, and label. Do not change memory."
+    },
+    {
+      "fact_id": "fb2615e4-ffab-45e5-a86e-3a272bf1bbf0",
+      "source_event_id": "ec91ff2bf6c0c72044a46cbbb1198f8c77ddfde01602ae4e76f1321b86bba751",
+      "excerpt": "Use only the mnemos_* tools. Do not use built-in memory or other tools. Do not store the conversation as a new explicit fact. Retrieve the asserted fact about this project's release label, then inspect its exact ID and version. Correct that same fact to the exact content in this JSON string (including its final period): \"The project release label is maple-ridge-842.\". Use request_id native-correct-1 and the inspected version. Do not add a separate fact."
+    },
+    {
+      "fact_id": "febbfe98-2f8d-4021-a4c8-0c159b81937d",
+      "source_event_id": "fab81e9e8d2b675255cc87d398549bc7a8c8dd2b989418ef3ab64d95fcb2d977",
+      "excerpt": "**Release label fact:**\n- **ID:** bab58902-d0c6-43bd-906b-5c416c7ed2a6\n- **Version:** 1\n- **Label:** cedar-ridge-731"
+    }
+  ],
+  "revisions": [
+    {
+      "fact_id": "bab58902-d0c6-43bd-906b-5c416c7ed2a6",
+      "version": 1,
+      "content": "The project release label is cedar-ridge-731."
+    }
+  ],
+  "suppressions": []
+}
