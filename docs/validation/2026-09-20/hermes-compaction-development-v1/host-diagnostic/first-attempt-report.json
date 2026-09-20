@@ -1,0 +1,544 @@
+{
+  "status": "diagnostic_observed",
+  "diagnostic": "model-free compression child provenance; no service or network",
+  "host_commit_expected": "14a346345486418aa85ed6526549412ee2665ade",
+  "wheel_sha256_expected": "9af6667d86933570beecc940e55e637f70a9258e5339e948dc48ba9692782bf6",
+  "host": "/tmp/mnemos-hermes-durable-identity-v1",
+  "wheel": "/mnt/c/Users/Ant/AppData/Local/Temp/mnemos-package-checks-retrieval-outage-v1/dist/mnemos_memory-0.7.0-py3-none-any.whl",
+  "phases": [],
+  "host_commit_observed": "14a346345486418aa85ed6526549412ee2665ade",
+  "host_files_before": {
+    "hermes_state.py": "9f9cdf0e366c8dcad7fb43e28518e58930904421c4f9bed2c7342d4a413ecf55",
+    "hermes_state_compression.py": "d44d80e83c633accf5abd9a5395ab1e22f1303ffda67112c3b4d603217b17ac3",
+    "hermes_state_messages.py": "651407ad69f13c3b8ca32ccdbb039c84be55b1c52e6ad6dcdebcd9e5ac2f769b",
+    "agent/conversation_compression.py": "78ded327356f0f8c643a68fe13e2052b2443fda54d73559f7b8dbd3d902f95eb",
+    "agent/context_compressor.py": "c2005fdd10495f4b95776f3488601195400529f96a12108376ae2a916d966b73",
+    "agent/memory_manager.py": "bd688b6ceecaf63e737516d9a65d2e0db3c3a8c12d5d7ede26c415b609a2898a"
+  },
+  "module_origins": {
+    "agent.memory_manager": "/tmp/mnemos-hermes-durable-identity-v1/agent/memory_manager.py",
+    "hermes_state": "/tmp/mnemos-hermes-durable-identity-v1/hermes_state.py",
+    "hermes_state_compression": "/tmp/mnemos-hermes-durable-identity-v1/hermes_state_compression.py",
+    "hermes_state_messages": "/tmp/mnemos-hermes-durable-identity-v1/hermes_state_messages.py",
+    "mnemos.adapters.hermes": "/tmp/mnemos-hermes-compaction-provenance-v1/result/wheel/mnemos/adapters/hermes.py"
+  },
+  "database": {
+    "parent_rows": [
+      {
+        "id": 1,
+        "session_id": "compression-parent",
+        "role": "user",
+        "content": "Original retained question.",
+        "timestamp": 1789922401.80355,
+        "platform_message_id": null,
+        "active": 1,
+        "compacted": 0,
+        "display_kind": null
+      },
+      {
+        "id": 2,
+        "session_id": "compression-parent",
+        "role": "assistant",
+        "content": "Original retained answer.",
+        "timestamp": 1789922401.803551,
+        "platform_message_id": null,
+        "active": 1,
+        "compacted": 0,
+        "display_kind": null
+      },
+      {
+        "id": 3,
+        "session_id": "compression-parent",
+        "role": "user",
+        "content": "Concurrent tail question.",
+        "timestamp": 1789922401.851741,
+        "platform_message_id": null,
+        "active": 1,
+        "compacted": 0,
+        "display_kind": null
+      },
+      {
+        "id": 4,
+        "session_id": "compression-parent",
+        "role": "assistant",
+        "content": "Concurrent tail answer.",
+        "timestamp": 1789922401.851742,
+        "platform_message_id": null,
+        "active": 1,
+        "compacted": 0,
+        "display_kind": null
+      }
+    ],
+    "child_rows": [
+      {
+        "id": 5,
+        "session_id": "compression-child",
+        "role": "user",
+        "content": "Original retained question.",
+        "timestamp": 1789922401.80355,
+        "platform_message_id": null,
+        "active": 1,
+        "compacted": 0,
+        "display_kind": null
+      },
+      {
+        "id": 6,
+        "session_id": "compression-child",
+        "role": "assistant",
+        "content": "Original retained answer.",
+        "timestamp": 1789922401.803551,
+        "platform_message_id": null,
+        "active": 1,
+        "compacted": 0,
+        "display_kind": null
+      },
+      {
+        "id": 7,
+        "session_id": "compression-child",
+        "role": "assistant",
+        "content": "Derived compaction summary: Original retained question and answer.",
+        "timestamp": 1789922401.8523922,
+        "platform_message_id": null,
+        "active": 1,
+        "compacted": 0,
+        "display_kind": "hidden",
+        "_compressed_summary": true
+      },
+      {
+        "id": 8,
+        "session_id": "compression-child",
+        "role": "user",
+        "content": "Concurrent tail question.",
+        "timestamp": 1789922401.851741,
+        "platform_message_id": null,
+        "active": 1,
+        "compacted": 0,
+        "display_kind": null
+      },
+      {
+        "id": 9,
+        "session_id": "compression-child",
+        "role": "assistant",
+        "content": "Concurrent tail answer.",
+        "timestamp": 1789922401.851742,
+        "platform_message_id": null,
+        "active": 1,
+        "compacted": 0,
+        "display_kind": null
+      }
+    ],
+    "original_parent_ids": [
+      1,
+      2,
+      3,
+      4
+    ],
+    "child_loaded_ids": [
+      5,
+      6,
+      8,
+      9
+    ],
+    "child_no_repair_ids": [
+      5,
+      6,
+      7,
+      8,
+      9
+    ],
+    "summary_rows": [
+      {
+        "id": 7,
+        "session_id": "compression-child",
+        "role": "assistant",
+        "content": "Derived compaction summary: Original retained question and answer.",
+        "timestamp": 1789922401.8523922,
+        "platform_message_id": null,
+        "active": 1,
+        "compacted": 0,
+        "display_kind": "hidden",
+        "_compressed_summary": true
+      }
+    ],
+    "parent_session": {
+      "id": "compression-parent",
+      "source": "cli",
+      "user_id": null,
+      "session_key": null,
+      "chat_id": null,
+      "chat_type": null,
+      "thread_id": null,
+      "display_name": null,
+      "origin_json": null,
+      "expiry_finalized": 0,
+      "model": "fixture",
+      "model_config": null,
+      "system_prompt": null,
+      "system_prompt_hash": null,
+      "parent_session_id": null,
+      "started_at": 1789922401.8024054,
+      "ended_at": 1789922401.8529196,
+      "end_reason": "compression",
+      "message_count": 4,
+      "tool_call_count": 0,
+      "input_tokens": 0,
+      "output_tokens": 0,
+      "cache_read_tokens": 0,
+      "cache_write_tokens": 0,
+      "reasoning_tokens": 0,
+      "cwd": "/tmp/mnemos-hermes-compaction-provenance-v1/result/case",
+      "git_branch": null,
+      "git_repo_root": null,
+      "git_metadata_generation": 0,
+      "billing_provider": null,
+      "billing_base_url": null,
+      "billing_mode": null,
+      "estimated_cost_usd": null,
+      "actual_cost_usd": null,
+      "cost_status": null,
+      "cost_source": null,
+      "pricing_version": null,
+      "title": null,
+      "title_source": null,
+      "last_activity_at": null,
+      "last_activity_description": null,
+      "last_activity_provenance": null,
+      "api_call_count": 0,
+      "handoff_state": null,
+      "handoff_platform": null,
+      "handoff_error": null,
+      "compression_failure_cooldown_until": null,
+      "compression_failure_error": null,
+      "compression_fallback_streak": 0,
+      "compression_ineffective_count": 0,
+      "compression_recovery_deadline": null,
+      "profile_name": null,
+      "rewind_count": 0,
+      "archived": 0,
+      "pinned": 0,
+      "hidden": 0,
+      "last_read_at": null,
+      "tool_names": null
+    },
+    "child_session": {
+      "id": "compression-child",
+      "source": "cli",
+      "user_id": null,
+      "session_key": null,
+      "chat_id": null,
+      "chat_type": null,
+      "thread_id": null,
+      "display_name": null,
+      "origin_json": null,
+      "expiry_finalized": 0,
+      "model": null,
+      "model_config": null,
+      "system_prompt": null,
+      "system_prompt_hash": null,
+      "parent_session_id": "compression-parent",
+      "started_at": 1789922401.8523128,
+      "ended_at": null,
+      "end_reason": null,
+      "message_count": 5,
+      "tool_call_count": 0,
+      "input_tokens": 0,
+      "output_tokens": 0,
+      "cache_read_tokens": 0,
+      "cache_write_tokens": 0,
+      "reasoning_tokens": 0,
+      "cwd": "/tmp/mnemos-hermes-compaction-provenance-v1/result/case",
+      "git_branch": null,
+      "git_repo_root": null,
+      "git_metadata_generation": 0,
+      "billing_provider": null,
+      "billing_base_url": null,
+      "billing_mode": null,
+      "estimated_cost_usd": null,
+      "actual_cost_usd": null,
+      "cost_status": null,
+      "cost_source": null,
+      "pricing_version": null,
+      "title": null,
+      "title_source": null,
+      "last_activity_at": null,
+      "last_activity_description": null,
+      "last_activity_provenance": null,
+      "api_call_count": 0,
+      "handoff_state": null,
+      "handoff_platform": null,
+      "handoff_error": null,
+      "compression_failure_cooldown_until": null,
+      "compression_failure_error": null,
+      "compression_fallback_streak": 0,
+      "compression_ineffective_count": 0,
+      "compression_recovery_deadline": null,
+      "profile_name": null,
+      "rewind_count": 0,
+      "archived": 0,
+      "pinned": 0,
+      "hidden": 0,
+      "last_read_at": null,
+      "tool_names": null
+    }
+  },
+  "adapter": {
+    "initial_payloads": [
+      {
+        "content": "Original retained question.",
+        "context": {
+          "host": "hermes",
+          "project_id": "d32a2a17-8d84-49f2-9438-8a9c84453570",
+          "session_id": "compression-parent",
+          "user_profile_id": "compression-fixture",
+          "workspace_id": null
+        },
+        "event_id": "hermes:7b45587cb997c7e44ddf06042dc5c6e54ee29b16a1b5254ea55f3e2013f9e0cf",
+        "occurred_at": "2026-09-20T16:40:01.875682+00:00",
+        "role": "user",
+        "source_kind": "hermes_memory_provider",
+        "source_ref": "transcript:v2:1"
+      },
+      {
+        "content": "Original retained answer.",
+        "context": {
+          "host": "hermes",
+          "project_id": "d32a2a17-8d84-49f2-9438-8a9c84453570",
+          "session_id": "compression-parent",
+          "user_profile_id": "compression-fixture",
+          "workspace_id": null
+        },
+        "event_id": "hermes:4943d2307b7680b1b7a822c702178ce141f3dd990ca6c195b063c3a14c304614",
+        "occurred_at": "2026-09-20T16:40:01.876183+00:00",
+        "role": "assistant",
+        "source_kind": "hermes_memory_provider",
+        "source_ref": "transcript:v2:2"
+      },
+      {
+        "content": "Concurrent tail question.",
+        "context": {
+          "host": "hermes",
+          "project_id": "d32a2a17-8d84-49f2-9438-8a9c84453570",
+          "session_id": "compression-parent",
+          "user_profile_id": "compression-fixture",
+          "workspace_id": null
+        },
+        "event_id": "hermes:12856be4de116865c146d44e448b090ebecbaf7df9806d435440f655a7d3b8ea",
+        "occurred_at": "2026-09-20T16:40:01.876440+00:00",
+        "role": "user",
+        "source_kind": "hermes_memory_provider",
+        "source_ref": "transcript:v2:3"
+      },
+      {
+        "content": "Concurrent tail answer.",
+        "context": {
+          "host": "hermes",
+          "project_id": "d32a2a17-8d84-49f2-9438-8a9c84453570",
+          "session_id": "compression-parent",
+          "user_profile_id": "compression-fixture",
+          "workspace_id": null
+        },
+        "event_id": "hermes:7470ec248f9c9305be719b7a365b7268c48f3231889405f454a22a84111ee499",
+        "occurred_at": "2026-09-20T16:40:01.876656+00:00",
+        "role": "assistant",
+        "source_kind": "hermes_memory_provider",
+        "source_ref": "transcript:v2:4"
+      }
+    ],
+    "child_payloads": [
+      {
+        "content": "Original retained question.",
+        "context": {
+          "host": "hermes",
+          "project_id": "d32a2a17-8d84-49f2-9438-8a9c84453570",
+          "session_id": "compression-child",
+          "user_profile_id": "compression-fixture",
+          "workspace_id": null
+        },
+        "event_id": "hermes:d3d4f87db5eccd5f60bd2ec6fee89e84f7827dc1277f1c948f3d24387a29b709",
+        "occurred_at": "2026-09-20T16:40:01.880757+00:00",
+        "role": "user",
+        "source_kind": "hermes_memory_provider",
+        "source_ref": "transcript:v2:5"
+      },
+      {
+        "content": "Original retained answer.\nDerived compaction summary: Original retained question and answer.",
+        "context": {
+          "host": "hermes",
+          "project_id": "d32a2a17-8d84-49f2-9438-8a9c84453570",
+          "session_id": "compression-child",
+          "user_profile_id": "compression-fixture",
+          "workspace_id": null
+        },
+        "event_id": "hermes:9ce5233222c3f13cb5e1cd48e1aa545802487ab83ab872207bca037cfcdb8b3c",
+        "occurred_at": "2026-09-20T16:40:01.881041+00:00",
+        "role": "assistant",
+        "source_kind": "hermes_memory_provider",
+        "source_ref": "transcript:v2:6"
+      },
+      {
+        "content": "Concurrent tail question.",
+        "context": {
+          "host": "hermes",
+          "project_id": "d32a2a17-8d84-49f2-9438-8a9c84453570",
+          "session_id": "compression-child",
+          "user_profile_id": "compression-fixture",
+          "workspace_id": null
+        },
+        "event_id": "hermes:09e3c8632d84c9e546997cdf07506734f010dbe64214fe481216a2de535ddc4a",
+        "occurred_at": "2026-09-20T16:40:01.881231+00:00",
+        "role": "user",
+        "source_kind": "hermes_memory_provider",
+        "source_ref": "transcript:v2:8"
+      },
+      {
+        "content": "Concurrent tail answer.",
+        "context": {
+          "host": "hermes",
+          "project_id": "d32a2a17-8d84-49f2-9438-8a9c84453570",
+          "session_id": "compression-child",
+          "user_profile_id": "compression-fixture",
+          "workspace_id": null
+        },
+        "event_id": "hermes:7dbe5d4395dd72ff264f2c93c998a841750f265a7311cfb4d206967ddbaec820",
+        "occurred_at": "2026-09-20T16:40:01.881398+00:00",
+        "role": "assistant",
+        "source_kind": "hermes_memory_provider",
+        "source_ref": "transcript:v2:9"
+      }
+    ],
+    "summary_payloads": [
+      {
+        "content": "Original retained answer.\nDerived compaction summary: Original retained question and answer.",
+        "context": {
+          "host": "hermes",
+          "project_id": "d32a2a17-8d84-49f2-9438-8a9c84453570",
+          "session_id": "compression-child",
+          "user_profile_id": "compression-fixture",
+          "workspace_id": null
+        },
+        "event_id": "hermes:9ce5233222c3f13cb5e1cd48e1aa545802487ab83ab872207bca037cfcdb8b3c",
+        "occurred_at": "2026-09-20T16:40:01.881041+00:00",
+        "role": "assistant",
+        "source_kind": "hermes_memory_provider",
+        "source_ref": "transcript:v2:6"
+      }
+    ],
+    "parent_content_to_event_ids": {
+      "Original retained question.": [
+        "hermes:7b45587cb997c7e44ddf06042dc5c6e54ee29b16a1b5254ea55f3e2013f9e0cf"
+      ],
+      "Original retained answer.": [
+        "hermes:4943d2307b7680b1b7a822c702178ce141f3dd990ca6c195b063c3a14c304614"
+      ],
+      "Concurrent tail question.": [
+        "hermes:12856be4de116865c146d44e448b090ebecbaf7df9806d435440f655a7d3b8ea"
+      ],
+      "Concurrent tail answer.": [
+        "hermes:7470ec248f9c9305be719b7a365b7268c48f3231889405f454a22a84111ee499"
+      ]
+    },
+    "child_content_to_event_ids": {
+      "Original retained question.": [
+        "hermes:d3d4f87db5eccd5f60bd2ec6fee89e84f7827dc1277f1c948f3d24387a29b709"
+      ],
+      "Original retained answer.\nDerived compaction summary: Original retained question and answer.": [
+        "hermes:9ce5233222c3f13cb5e1cd48e1aa545802487ab83ab872207bca037cfcdb8b3c"
+      ],
+      "Concurrent tail question.": [
+        "hermes:09e3c8632d84c9e546997cdf07506734f010dbe64214fe481216a2de535ddc4a"
+      ],
+      "Concurrent tail answer.": [
+        "hermes:7dbe5d4395dd72ff264f2c93c998a841750f265a7311cfb4d206967ddbaec820"
+      ]
+    },
+    "child_lifecycle_diagnostics": [],
+    "child_loaded_messages": [
+      {
+        "role": "user",
+        "content": "Original retained question.",
+        "_db_persisted": true,
+        "_row_id": 5,
+        "timestamp": 1789922401.80355
+      },
+      {
+        "role": "assistant",
+        "content": "Original retained answer.\nDerived compaction summary: Original retained question and answer.",
+        "_db_persisted": true,
+        "_row_id": 6,
+        "timestamp": 1789922401.803551
+      },
+      {
+        "role": "user",
+        "content": "Concurrent tail question.",
+        "_db_persisted": true,
+        "_row_id": 8,
+        "timestamp": 1789922401.851741
+      },
+      {
+        "role": "assistant",
+        "content": "Concurrent tail answer.",
+        "_db_persisted": true,
+        "_row_id": 9,
+        "timestamp": 1789922401.851742
+      }
+    ],
+    "child_loaded_messages_no_repair": [
+      {
+        "role": "user",
+        "content": "Original retained question.",
+        "_db_persisted": true,
+        "_row_id": 5,
+        "timestamp": 1789922401.80355
+      },
+      {
+        "role": "assistant",
+        "content": "Original retained answer.",
+        "_db_persisted": true,
+        "_row_id": 6,
+        "timestamp": 1789922401.803551
+      },
+      {
+        "role": "assistant",
+        "content": "Derived compaction summary: Original retained question and answer.",
+        "_db_persisted": true,
+        "_row_id": 7,
+        "display_kind": "hidden",
+        "timestamp": 1789922401.8523922
+      },
+      {
+        "role": "user",
+        "content": "Concurrent tail question.",
+        "_db_persisted": true,
+        "_row_id": 8,
+        "timestamp": 1789922401.851741
+      },
+      {
+        "role": "assistant",
+        "content": "Concurrent tail answer.",
+        "_db_persisted": true,
+        "_row_id": 9,
+        "timestamp": 1789922401.851742
+      }
+    ]
+  },
+  "observations": {
+    "child_rows_have_fresh_ids": true,
+    "retained_content_has_new_event": true,
+    "tail_clone_has_new_event": true,
+    "summary_marker_reloaded": true,
+    "summary_sent_as_normal_adapter_payload": true,
+    "service_extraction_not_run": true
+  },
+  "network_attempts": 0,
+  "host_files_after": {
+    "hermes_state.py": "9f9cdf0e366c8dcad7fb43e28518e58930904421c4f9bed2c7342d4a413ecf55",
+    "hermes_state_compression.py": "d44d80e83c633accf5abd9a5395ab1e22f1303ffda67112c3b4d603217b17ac3",
+    "hermes_state_messages.py": "651407ad69f13c3b8ca32ccdbb039c84be55b1c52e6ad6dcdebcd9e5ac2f769b",
+    "agent/conversation_compression.py": "78ded327356f0f8c643a68fe13e2052b2443fda54d73559f7b8dbd3d902f95eb",
+    "agent/context_compressor.py": "c2005fdd10495f4b95776f3488601195400529f96a12108376ae2a916d966b73",
+    "agent/memory_manager.py": "bd688b6ceecaf63e737516d9a65d2e0db3c3a8c12d5d7ede26c415b609a2898a"
+  },
+  "host_unchanged": true,
+  "runner_sha256": "6c333fe8d4a213607192b0328010560e4d7ca2f29b171acb3c6786d4aff0ac31",
+  "report_path": "/tmp/mnemos-hermes-compaction-provenance-v1/result/report.json"
+}\n

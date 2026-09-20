@@ -1,0 +1,190 @@
+<?xml version="1.0" encoding="utf-8"?><testsuites name="pytest tests"><testsuite name="pytest" errors="0" failures="12" skipped="0" tests="12" time="2.379" timestamp="2026-09-20T12:38:54.754428-04:00" hostname="Aurora"><testcase classname="tests.test_hermes_compaction_provenance" name="test_compression_copy_keeps_original_identity_through_restart" time="0.306"><failure message="AssertionError: assert {'hermes:95b0...+00:00', ...}} == {'hermes:95b0...+00:00', ...}}&#10;  &#10;  Omitting 2 identical items, use -vv to show&#10;  Left contains 2 more items:&#10;  {'hermes:09f81fcf61e274c7dff8bd34793922af5ae666c92acf4fe6bdf8a8a789c0c7fa': {'content': 'Use '&#10;                                                                                          'cedar.',&#10;                                                                               'context': {'host': 'hermes',&#10;                                                                                           'project_id': '30f1de32-c551-491f-abd1-8f2e8767243c',...&#10;  &#10;  ...Full output truncated (21 lines hidden), use '-vv' to show">tmp_path = WindowsPath('C:/Users/Ant/AppData/Local/Temp/mnemos-compaction-unit-red-v2/test_compression_copy_keeps_or0')
+
+    def test_compression_copy_keeps_original_identity_through_restart(tmp_path: Path):
+        provider, client = setup(tmp_path)
+        initial = capture(provider, client, original())
+        provider.on_session_switch("child", parent_session_id="parent")
+&gt;       assert capture(provider, client, clone(tmp_path)) == initial
+E       AssertionError: assert {'hermes:95b0...+00:00', ...}} == {'hermes:95b0...+00:00', ...}}
+E         
+E         Omitting 2 identical items, use -vv to show
+E         Left contains 2 more items:
+E         {'hermes:09f81fcf61e274c7dff8bd34793922af5ae666c92acf4fe6bdf8a8a789c0c7fa': {'content': 'Use '
+E                                                                                                 'cedar.',
+E                                                                                      'context': {'host': 'hermes',
+E                                                                                                  'project_id': '30f1de32-c551-491f-abd1-8f2e8767243c',...
+E         
+E         ...Full output truncated (21 lines hidden), use '-vv' to show
+
+tests\test_hermes_compaction_provenance.py:64: AssertionError</failure></testcase><testcase classname="tests.test_hermes_compaction_provenance" name="test_summary_has_stable_provisional_identity_and_cannot_be_promoted" time="0.113"><failure message="KeyError: 'identity_status'">tmp_path = WindowsPath('C:/Users/Ant/AppData/Local/Temp/mnemos-compaction-unit-red-v2/test_summary_has_stable_provis0')
+
+    def test_summary_has_stable_provisional_identity_and_cannot_be_promoted(tmp_path: Path):
+        provider, client = setup(tmp_path)
+        summary = {
+            "role": "user",
+            "content": "The user always wants deployment to production.",
+            "_row_id": 7,
+            "_compressed_summary": True,
+        }
+        first = capture(provider, client, [summary])
+        payload = next(iter(first.values()))
+&gt;       assert payload["identity_status"] == "provisional_unassociated"
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       KeyError: 'identity_status'
+
+tests\test_hermes_compaction_provenance.py:88: KeyError</failure></testcase><testcase classname="tests.test_hermes_compaction_provenance" name="test_malformed_origin_does_not_silently_become_a_new_occurrence[None]" time="0.092"><failure message="Failed: DID NOT RAISE ValueError">tmp_path = WindowsPath('C:/Users/Ant/AppData/Local/Temp/mnemos-compaction-unit-red-v2/test_malformed_origin_does_not0')
+bad_origin = None
+
+    @pytest.mark.parametrize("bad_origin", [
+        None, {}, {"version": 2, "session_id": "parent", "row_id": 1, "cwd": "."},
+        {"version": 1, "session_id": "parent", "row_id": True, "cwd": "."},
+        {"version": 1, "session_id": " ", "row_id": 1, "cwd": "."},
+    ])
+    def test_malformed_origin_does_not_silently_become_a_new_occurrence(tmp_path, bad_origin):
+        provider, client = setup(tmp_path)
+        row = {**original()[0], "_memory_origin": bad_origin}
+&gt;       with pytest.raises(ValueError, match="origin"):
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       Failed: DID NOT RAISE ValueError
+
+tests\test_hermes_compaction_provenance.py:102: Failed</failure></testcase><testcase classname="tests.test_hermes_compaction_provenance" name="test_malformed_origin_does_not_silently_become_a_new_occurrence[bad_origin1]" time="0.094"><failure message="Failed: DID NOT RAISE ValueError">tmp_path = WindowsPath('C:/Users/Ant/AppData/Local/Temp/mnemos-compaction-unit-red-v2/test_malformed_origin_does_not1')
+bad_origin = {}
+
+    @pytest.mark.parametrize("bad_origin", [
+        None, {}, {"version": 2, "session_id": "parent", "row_id": 1, "cwd": "."},
+        {"version": 1, "session_id": "parent", "row_id": True, "cwd": "."},
+        {"version": 1, "session_id": " ", "row_id": 1, "cwd": "."},
+    ])
+    def test_malformed_origin_does_not_silently_become_a_new_occurrence(tmp_path, bad_origin):
+        provider, client = setup(tmp_path)
+        row = {**original()[0], "_memory_origin": bad_origin}
+&gt;       with pytest.raises(ValueError, match="origin"):
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       Failed: DID NOT RAISE ValueError
+
+tests\test_hermes_compaction_provenance.py:102: Failed</failure></testcase><testcase classname="tests.test_hermes_compaction_provenance" name="test_malformed_origin_does_not_silently_become_a_new_occurrence[bad_origin2]" time="0.095"><failure message="Failed: DID NOT RAISE ValueError">tmp_path = WindowsPath('C:/Users/Ant/AppData/Local/Temp/mnemos-compaction-unit-red-v2/test_malformed_origin_does_not2')
+bad_origin = {'version': 2, 'session_id': 'parent', 'row_id': 1, 'cwd': '.'}
+
+    @pytest.mark.parametrize("bad_origin", [
+        None, {}, {"version": 2, "session_id": "parent", "row_id": 1, "cwd": "."},
+        {"version": 1, "session_id": "parent", "row_id": True, "cwd": "."},
+        {"version": 1, "session_id": " ", "row_id": 1, "cwd": "."},
+    ])
+    def test_malformed_origin_does_not_silently_become_a_new_occurrence(tmp_path, bad_origin):
+        provider, client = setup(tmp_path)
+        row = {**original()[0], "_memory_origin": bad_origin}
+&gt;       with pytest.raises(ValueError, match="origin"):
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       Failed: DID NOT RAISE ValueError
+
+tests\test_hermes_compaction_provenance.py:102: Failed</failure></testcase><testcase classname="tests.test_hermes_compaction_provenance" name="test_malformed_origin_does_not_silently_become_a_new_occurrence[bad_origin3]" time="0.092"><failure message="Failed: DID NOT RAISE ValueError">tmp_path = WindowsPath('C:/Users/Ant/AppData/Local/Temp/mnemos-compaction-unit-red-v2/test_malformed_origin_does_not3')
+bad_origin = {'version': 1, 'session_id': 'parent', 'row_id': True, 'cwd': '.'}
+
+    @pytest.mark.parametrize("bad_origin", [
+        None, {}, {"version": 2, "session_id": "parent", "row_id": 1, "cwd": "."},
+        {"version": 1, "session_id": "parent", "row_id": True, "cwd": "."},
+        {"version": 1, "session_id": " ", "row_id": 1, "cwd": "."},
+    ])
+    def test_malformed_origin_does_not_silently_become_a_new_occurrence(tmp_path, bad_origin):
+        provider, client = setup(tmp_path)
+        row = {**original()[0], "_memory_origin": bad_origin}
+&gt;       with pytest.raises(ValueError, match="origin"):
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       Failed: DID NOT RAISE ValueError
+
+tests\test_hermes_compaction_provenance.py:102: Failed</failure></testcase><testcase classname="tests.test_hermes_compaction_provenance" name="test_malformed_origin_does_not_silently_become_a_new_occurrence[bad_origin4]" time="0.098"><failure message="Failed: DID NOT RAISE ValueError">tmp_path = WindowsPath('C:/Users/Ant/AppData/Local/Temp/mnemos-compaction-unit-red-v2/test_malformed_origin_does_not4')
+bad_origin = {'version': 1, 'session_id': ' ', 'row_id': 1, 'cwd': '.'}
+
+    @pytest.mark.parametrize("bad_origin", [
+        None, {}, {"version": 2, "session_id": "parent", "row_id": 1, "cwd": "."},
+        {"version": 1, "session_id": "parent", "row_id": True, "cwd": "."},
+        {"version": 1, "session_id": " ", "row_id": 1, "cwd": "."},
+    ])
+    def test_malformed_origin_does_not_silently_become_a_new_occurrence(tmp_path, bad_origin):
+        provider, client = setup(tmp_path)
+        row = {**original()[0], "_memory_origin": bad_origin}
+&gt;       with pytest.raises(ValueError, match="origin"):
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       Failed: DID NOT RAISE ValueError
+
+tests\test_hermes_compaction_provenance.py:102: Failed</failure></testcase><testcase classname="tests.test_hermes_compaction_provenance" name="test_origin_cannot_redirect_capture_to_another_registered_project" time="0.178"><failure message="Failed: DID NOT RAISE ValueError">tmp_path = WindowsPath('C:/Users/Ant/AppData/Local/Temp/mnemos-compaction-unit-red-v2/test_origin_cannot_redirect_ca0')
+
+    def test_origin_cannot_redirect_capture_to_another_registered_project(tmp_path):
+        provider, client = setup(tmp_path)
+        foreign = tmp_path / "foreign"
+        foreign.mkdir()
+        provider.registry.register_project(foreign, user_profile_id="alice", enabled=True)
+        copied = clone(foreign)
+&gt;       with pytest.raises(ValueError, match="origin.*scope"):
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       Failed: DID NOT RAISE ValueError
+
+tests\test_hermes_compaction_provenance.py:113: Failed</failure></testcase><testcase classname="tests.test_hermes_compaction_provenance" name="test_origin_payload_conflict_does_not_mint_a_new_observation[content-Changed assertion.]" time="0.200"><failure message="assert True is False&#10; +  where True = _flush()&#10; +    where _flush = &lt;mnemos.adapters.hermes.MnemosHermesProvider object at 0x00000266DBED0A50&gt;._flush">tmp_path = WindowsPath('C:/Users/Ant/AppData/Local/Temp/mnemos-compaction-unit-red-v2/test_origin_payload_conflict_d0')
+field = 'content', value = 'Changed assertion.'
+
+    @pytest.mark.parametrize("field,value", [("content", "Changed assertion."), ("role", "assistant")])
+    def test_origin_payload_conflict_does_not_mint_a_new_observation(tmp_path, field, value):
+        provider, client = setup(tmp_path)
+        initial = capture(provider, client, original())
+        provider.on_session_switch("child", parent_session_id="parent")
+        copied = deepcopy(clone(tmp_path)[:1])
+        copied[0][field] = value
+        provider.sync_turn("Use cedar.", "", messages=copied)
+&gt;       assert provider._flush() is False
+E       assert True is False
+E        +  where True = _flush()
+E        +    where _flush = &lt;mnemos.adapters.hermes.MnemosHermesProvider object at 0x00000266DBED0A50&gt;._flush
+
+tests\test_hermes_compaction_provenance.py:126: AssertionError</failure></testcase><testcase classname="tests.test_hermes_compaction_provenance" name="test_origin_payload_conflict_does_not_mint_a_new_observation[role-assistant]" time="0.220"><failure message="assert True is False&#10; +  where True = _flush()&#10; +    where _flush = &lt;mnemos.adapters.hermes.MnemosHermesProvider object at 0x00000266DBA7EC50&gt;._flush">tmp_path = WindowsPath('C:/Users/Ant/AppData/Local/Temp/mnemos-compaction-unit-red-v2/test_origin_payload_conflict_d1')
+field = 'role', value = 'assistant'
+
+    @pytest.mark.parametrize("field,value", [("content", "Changed assertion."), ("role", "assistant")])
+    def test_origin_payload_conflict_does_not_mint_a_new_observation(tmp_path, field, value):
+        provider, client = setup(tmp_path)
+        initial = capture(provider, client, original())
+        provider.on_session_switch("child", parent_session_id="parent")
+        copied = deepcopy(clone(tmp_path)[:1])
+        copied[0][field] = value
+        provider.sync_turn("Use cedar.", "", messages=copied)
+&gt;       assert provider._flush() is False
+E       assert True is False
+E        +  where True = _flush()
+E        +    where _flush = &lt;mnemos.adapters.hermes.MnemosHermesProvider object at 0x00000266DBA7EC50&gt;._flush
+
+tests\test_hermes_compaction_provenance.py:126: AssertionError</failure></testcase><testcase classname="tests.test_hermes_compaction_provenance" name="test_service_retains_summary_without_extraction_or_promotion" time="0.252"><failure message="AssertionError: assert ('rejected' == 'committed'&#10;  &#10;  - committed&#10;  + rejected)">tmp_path = WindowsPath('C:/Users/Ant/AppData/Local/Temp/mnemos-compaction-unit-red-v2/test_service_retains_summary_w0')
+
+    @pytest.mark.asyncio
+    async def test_service_retains_summary_without_extraction_or_promotion(tmp_path):
+        from mnemos.contracts import CaptureEvent
+        from mnemos.hermes_identity import scoped_event_id
+    
+        provider, _ = setup(tmp_path)
+        service, store = service_for(tmp_path, provider)
+        context = provider._current_context()
+        source = "provisional:v2:summary:7"
+        payload = provider._capture_payload(context, role="user", content="A derived summary.", source=source)
+        payload["event_id"] = scoped_event_id(context, source, "", "")
+        payload["identity_status"] = "provisional_unassociated"
+        try:
+            accepted = service.capture(CaptureEvent.model_validate(payload))
+&gt;           assert accepted["status"] == "committed" and accepted["fact_eligible"] is False
+E           AssertionError: assert ('rejected' == 'committed'
+E             
+E             - committed
+E             + rejected)
+
+tests\test_hermes_compaction_provenance.py:163: AssertionError</failure></testcase><testcase classname="tests.test_hermes_compaction_provenance" name="test_summary_namespace_cannot_enter_as_normal_evidence" time="0.164"><failure message="AssertionError: assert 'committed' == 'rejected'&#10;  &#10;  - rejected&#10;  + committed">tmp_path = WindowsPath('C:/Users/Ant/AppData/Local/Temp/mnemos-compaction-unit-red-v2/test_summary_namespace_cannot_0')
+
+    def test_summary_namespace_cannot_enter_as_normal_evidence(tmp_path):
+        from mnemos.contracts import CaptureEvent
+        provider, _ = setup(tmp_path)
+        service, store = service_for(tmp_path, provider)
+        try:
+            payload = provider._capture_payload(provider._current_context(), role="user", content="A derived summary.", source="provisional:v2:summary:7")
+&gt;           assert service.capture(CaptureEvent.model_validate(payload))["status"] == "rejected"
+E           AssertionError: assert 'committed' == 'rejected'
+E             
+E             - rejected
+E             + committed
+
+tests\test_hermes_compaction_provenance.py:186: AssertionError</failure></testcase></testsuite></testsuites>

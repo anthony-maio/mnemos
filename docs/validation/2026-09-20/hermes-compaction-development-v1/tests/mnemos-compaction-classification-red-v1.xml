@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="utf-8"?><testsuites name="pytest tests"><testsuite name="pytest" errors="0" failures="2" skipped="0" tests="2" time="0.679" timestamp="2026-09-20T12:41:36.072434-04:00" hostname="Aurora"><testcase classname="tests.test_hermes_compaction_provenance" name="test_native_carrier_cannot_change_evidence_classification[True]" time="0.146"><failure message="assert True is False&#10; +  where True = _flush()&#10; +    where _flush = &lt;mnemos.adapters.hermes.MnemosHermesProvider object at 0x000002621AFA9160&gt;._flush">tmp_path = WindowsPath('C:/Users/Ant/AppData/Local/Temp/mnemos-compaction-classification-red-v1/test_native_carrier_cannot_cha0')
+first_is_summary = True
+
+    @pytest.mark.parametrize("first_is_summary", [True, False])
+    def test_native_carrier_cannot_change_evidence_classification(tmp_path, first_is_summary):
+        provider, client = setup(tmp_path)
+        row = {"role": "user", "content": "An assertion.", "_row_id": 7,
+               "_compressed_summary": first_is_summary}
+        initial = capture(provider, client, [row])
+        changed = {**row, "_compressed_summary": not first_is_summary}
+        provider.sync_turn("An assertion.", "", messages=[changed])
+&gt;       assert provider._flush() is False
+E       assert True is False
+E        +  where True = _flush()
+E        +    where _flush = &lt;mnemos.adapters.hermes.MnemosHermesProvider object at 0x000002621AFA9160&gt;._flush
+
+tests\test_hermes_compaction_provenance.py:220: AssertionError</failure></testcase><testcase classname="tests.test_hermes_compaction_provenance" name="test_native_carrier_cannot_change_evidence_classification[False]" time="0.139"><failure message="assert True is False&#10; +  where True = _flush()&#10; +    where _flush = &lt;mnemos.adapters.hermes.MnemosHermesProvider object at 0x000002621AFE9450&gt;._flush">tmp_path = WindowsPath('C:/Users/Ant/AppData/Local/Temp/mnemos-compaction-classification-red-v1/test_native_carrier_cannot_cha1')
+first_is_summary = False
+
+    @pytest.mark.parametrize("first_is_summary", [True, False])
+    def test_native_carrier_cannot_change_evidence_classification(tmp_path, first_is_summary):
+        provider, client = setup(tmp_path)
+        row = {"role": "user", "content": "An assertion.", "_row_id": 7,
+               "_compressed_summary": first_is_summary}
+        initial = capture(provider, client, [row])
+        changed = {**row, "_compressed_summary": not first_is_summary}
+        provider.sync_turn("An assertion.", "", messages=[changed])
+&gt;       assert provider._flush() is False
+E       assert True is False
+E        +  where True = _flush()
+E        +    where _flush = &lt;mnemos.adapters.hermes.MnemosHermesProvider object at 0x000002621AFE9450&gt;._flush
+
+tests\test_hermes_compaction_provenance.py:220: AssertionError</failure></testcase></testsuite></testsuites>

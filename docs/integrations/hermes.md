@@ -58,6 +58,16 @@ This remains isolated API and outbox evidence, not a live-host upgrade.
 Compaction that clones original rows still needs an occurrence-provenance
 contract; carrying IDs through a reload does not solve that separate problem.
 
+The [compaction development candidate](../validation/2026-09-20/hermes-compaction-development-v1/README.md)
+adds adapter support for `_memory_origin`: `{version: 1, session_id, row_id, cwd}`.
+The host must derive these fields from original durable rows, preserve them
+through copies, and provide memory evidence separately from role-repaired
+model text. Mnemos rejects malformed origins and any origin cwd that resolves
+outside the active registered scope. Copies reuse original event identities
+and timestamps. Marked summaries remain capture-only evidence, with stable
+identities when native carrier IDs are present. This contract is not supplied
+by the inspected live host, and host compatibility validation remains open.
+
 `prefetch()` injects bounded baseline recall. `sync_turn()` queues user and
 assistant evidence without blocking the Hermes turn. The local service or its
 durable outbox acknowledges each accepted event. Repeated callbacks use stable

@@ -1,0 +1,63 @@
+import hashlib
+import json
+from pathlib import Path
+import subprocess
+
+repo = Path(__file__).resolve().parent.parent
+dest = repo / "docs/validation/2026-09-20/hermes-compaction-development-v1"
+dest.mkdir(exist_ok=False)
+(dest / ".gitattributes").write_text("** -text -whitespace\n", encoding="ascii")
+temp = Path("C:/Users/Ant/AppData/Local/Temp")
+
+def digest(data):
+    return hashlib.sha256(data).hexdigest()
+
+def save(name, data):
+    target = dest / name
+    target.parent.mkdir(parents=True, exist_ok=True)
+    target.write_bytes(data)
+
+diag = "/tmp/mnemos-hermes-compaction-provenance-v1"
+raw = subprocess.check_output(["wsl", "-e", "cat", diag + "/result/report.json"])
+report = json.loads(raw)
+assert report["status"] == "diagnostic_observed"
+assert report["network_attempts"] == 0 and report["host_unchanged"] is True
+save("host-diagnostic/report.json", raw)
+runner = subprocess.check_output(["wsl", "-e", "cat", diag + "/run.py"])
+assert digest(runner) == report["runner_sha256"]
+save("host-diagnostic/run.py.txt", runner)
+save("host-diagnostic/first-attempt-report.json", subprocess.check_output([
+    "wsl", "-e", "cat", diag + "/result-attempt-1/report.json"]))
+for name, expected in report["host_files_after"].items():
+    content = subprocess.check_output(["wsl", "-e", "cat", report["host"] + "/" + name])
+    assert digest(content) == expected == report["host_files_before"][name]
+    save("host-diagnostic/source/" + name + ".txt", content)
+save("host-diagnostic/host.diff", subprocess.check_output([
+    "wsl", "-e", "git", "-C", report["host"], "diff", "--"]))
+names = [
+    "mnemos-compaction-unit-red-v1.xml", "mnemos-compaction-unit-red-v2.xml",
+    "mnemos-compaction-unit-red-v2.tests.py.txt",
+    "mnemos-compaction-classification-red-v1.xml",
+    "mnemos-compaction-classification-red-v1.tests.py.txt",
+    "mnemos-compaction-unit-green-v1.xml", "mnemos-compaction-unit-green-v2.xml",
+    "mnemos-compaction-unit-green-v3.xml", "mnemos-compaction-unit-green-v4.xml",
+]
+for name in names:
+    save("tests/" + name, (temp / name).read_bytes())
+for name in ["mnemos/hermes_identity.py", "mnemos/adapters/hermes.py", "mnemos/memory_service.py", "tests/test_hermes_compaction_provenance.py"]:
+    save("candidate/" + name + ".txt", (repo / name).read_bytes())
+save("candidate/product.patch", subprocess.check_output([
+    "git", "diff", "--binary", "HEAD", "--", "mnemos/hermes_identity.py", "mnemos/adapters/hermes.py", "mnemos/memory_service.py"], cwd=repo))
+save("collector.py.txt", Path(__file__).read_bytes())
+save("collection.json", (json.dumps({
+    "baseline_commit": subprocess.check_output(["git", "rev-parse", "HEAD"], cwd=repo, text=True).strip(),
+    "diagnostic_wheel_sha256": report["wheel_sha256_expected"],
+    "status":"development_candidate_focused_tests_passed",
+    "limitations":["Host diagnostic used verified old wheel; candidate source has only focused verification here.",
+                    "Final diagnostic runner matches report; first malformed report retained but its original runner bytes were not retained.",
+                    "No live migration, native model conversation, or complete host compatibility repair is established."]
+}, indent=2)+"\n").encode())
+files = [{"path":str(p.relative_to(dest)).replace("\\", "/"), "bytes":p.stat().st_size, "sha256":digest(p.read_bytes())}
+         for p in sorted(dest.rglob("*")) if p.is_file()]
+(dest / "artifact-index.json").write_text(json.dumps({"files":files}, indent=2)+"\n", encoding="utf-8")
+print(json.dumps({"archive":str(dest),"indexed_files":len(files)}))

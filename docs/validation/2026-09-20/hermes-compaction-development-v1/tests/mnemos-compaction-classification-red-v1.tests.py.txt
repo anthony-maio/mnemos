@@ -1,0 +1,221 @@
+"""Compression copies keep original identity; summaries are not original evidence."""
+
+from copy import deepcopy
+from pathlib import Path
+
+import pytest
+
+from mnemos.adapters.hermes import MnemosHermesProvider
+from mnemos.client import Outbox
+from mnemos.scopes import ScopeRegistry
+
+
+def setup(tmp_path):
+    registry = ScopeRegistry()
+    registry.register_project(tmp_path, user_profile_id="alice", enabled=True)
+
+    class Client:
+        def __init__(self):
+            self.outbox = Outbox(tmp_path / "outbox.json")
+
+        async def capture(self, payload):
+            self.outbox.append(payload, event_id=payload["event_id"])
+            return {"status": "queued"}
+
+    client = Client()
+    provider = MnemosHermesProvider(client=client, registry=registry, user_profile_id="alice")
+    provider.initialize("parent", cwd=str(tmp_path), hermes_home=str(tmp_path / "home"))
+    return provider, client
+
+
+def original():
+    return [
+        {"role": "user", "content": "Use cedar.", "_row_id": 1},
+        {"role": "assistant", "content": "Cedar recorded.", "_row_id": 2},
+    ]
+
+
+def clone(tmp_path):
+    return [
+        {
+            **row,
+            "_row_id": row["_row_id"] + 10,
+            "_memory_origin": {
+                "version": 1,
+                "session_id": "parent",
+                "row_id": row["_row_id"],
+                "cwd": str(tmp_path),
+            },
+        }
+        for row in original()
+    ]
+
+
+def capture(provider, client, messages):
+    provider.sync_turn("Use cedar.", "Cedar recorded.", messages=messages)
+    assert provider._flush()
+    return {row["payload"]["event_id"]: row["payload"] for row in client.outbox.pending()}
+
+
+def test_compression_copy_keeps_original_identity_through_restart(tmp_path: Path):
+    provider, client = setup(tmp_path)
+    initial = capture(provider, client, original())
+    provider.on_session_switch("child", parent_session_id="parent")
+    assert capture(provider, client, clone(tmp_path)) == initial
+    provider.shutdown()
+    restarted = MnemosHermesProvider(
+        client=client, registry=provider.registry, user_profile_id="alice"
+    )
+    restarted.initialize("child", cwd=str(tmp_path), hermes_home=str(tmp_path / "home"))
+    assert capture(restarted, client, clone(tmp_path)) == initial
+    new_turn = {"role": "user", "content": "Use cedar.", "_row_id": 13}
+    after = capture(restarted, client, clone(tmp_path) + [new_turn])
+    assert len(after) == 3
+    added = list(after.keys() - initial.keys())
+    assert after[added[0]]["context"]["session_id"] == "child"
+
+
+def test_summary_has_stable_provisional_identity_and_cannot_be_promoted(tmp_path: Path):
+    provider, client = setup(tmp_path)
+    summary = {
+        "role": "user",
+        "content": "The user always wants deployment to production.",
+        "_row_id": 7,
+        "_compressed_summary": True,
+    }
+    first = capture(provider, client, [summary])
+    payload = next(iter(first.values()))
+    assert payload["identity_status"] == "provisional_unassociated"
+    assert payload["source_ref"] == "provisional:v2:summary:7"
+    assert capture(provider, client, [summary]) == first
+    assert any(d["status"] == "derived_summary" for d in provider.get_lifecycle_diagnostics())
+
+
+@pytest.mark.parametrize(
+    "bad_origin",
+    [
+        None,
+        {},
+        {"version": 2, "session_id": "parent", "row_id": 1, "cwd": "."},
+        {"version": 1, "session_id": "parent", "row_id": True, "cwd": "."},
+        {"version": 1, "session_id": " ", "row_id": 1, "cwd": "."},
+    ],
+)
+def test_malformed_origin_does_not_silently_become_a_new_occurrence(tmp_path, bad_origin):
+    provider, client = setup(tmp_path)
+    row = {**original()[0], "_memory_origin": bad_origin}
+    with pytest.raises(ValueError, match="origin"):
+        provider.sync_turn("Use cedar.", "", messages=[row])
+    assert client.outbox.pending() == []
+
+
+def test_origin_cannot_redirect_capture_to_another_registered_project(tmp_path):
+    provider, client = setup(tmp_path)
+    foreign = tmp_path / "foreign"
+    foreign.mkdir()
+    provider.registry.register_project(foreign, user_profile_id="alice", enabled=True)
+    copied = clone(foreign)
+    with pytest.raises(ValueError, match="origin.*scope"):
+        provider.sync_turn("Use cedar.", "", messages=copied)
+    assert client.outbox.pending() == []
+
+
+@pytest.mark.parametrize("field,value", [("content", "Changed assertion."), ("role", "assistant")])
+def test_origin_payload_conflict_does_not_mint_a_new_observation(tmp_path, field, value):
+    provider, client = setup(tmp_path)
+    initial = capture(provider, client, original())
+    provider.on_session_switch("child", parent_session_id="parent")
+    copied = deepcopy(clone(tmp_path)[:1])
+    copied[0][field] = value
+    provider.sync_turn("Use cedar.", "", messages=copied)
+    assert provider._flush() is False
+    assert {
+        row["payload"]["event_id"]: row["payload"] for row in client.outbox.pending()
+    } == initial
+
+
+def service_for(tmp_path, provider):
+    from mnemos.config import MnemosConfig, ModuleConfig
+    from mnemos.engine import MnemosEngine
+    from mnemos.memory_service import LocalMemoryService
+    from mnemos.utils.embeddings import SimpleEmbeddingProvider
+    from mnemos.utils.llm import UnavailableLLMProvider
+    from mnemos.utils.storage import SQLiteStore
+
+    store = SQLiteStore(str(tmp_path / "service.sqlite"))
+    service = LocalMemoryService(
+        MnemosEngine(
+            config=MnemosConfig(
+                modules=ModuleConfig(**{key: False for key in ModuleConfig.model_fields})
+            ),
+            store=store,
+            embedder=SimpleEmbeddingProvider(),
+            llm=UnavailableLLMProvider(),
+        ),
+        provider.registry,
+    )
+    return service, store
+
+
+@pytest.mark.asyncio
+async def test_service_retains_summary_without_extraction_or_promotion(tmp_path):
+    from mnemos.contracts import CaptureEvent
+    from mnemos.hermes_identity import scoped_event_id
+
+    provider, _ = setup(tmp_path)
+    service, store = service_for(tmp_path, provider)
+    context = provider._current_context()
+    source = "provisional:v2:summary:7"
+    payload = provider._capture_payload(
+        context, role="user", content="A derived summary.", source=source
+    )
+    payload["event_id"] = scoped_event_id(context, source, "", "")
+    payload["identity_status"] = "provisional_unassociated"
+    try:
+        accepted = service.capture(CaptureEvent.model_validate(payload))
+        assert accepted["status"] == "committed" and accepted["fact_eligible"] is False
+        assert await service.maintenance.run_once(force=True) == 1
+        assert store.get_all() == []
+        assert len(store.list_episodic_events()) == 1
+        assert service.capture(CaptureEvent.model_validate(payload))["job_id"] == accepted["job_id"]
+        for change in ({"identity_status": "normal"}, {"content": "Changed summary."}):
+            modified = CaptureEvent.model_validate({**payload, **change})
+            if "identity_status" in change:
+                assert service.capture(modified)["status"] == "rejected"
+            else:
+                with pytest.raises(ValueError, match="different payload"):
+                    service.capture(modified)
+        assert store.get_all() == []
+    finally:
+        store.close()
+
+
+def test_summary_namespace_cannot_enter_as_normal_evidence(tmp_path):
+    from mnemos.contracts import CaptureEvent
+
+    provider, _ = setup(tmp_path)
+    service, store = service_for(tmp_path, provider)
+    try:
+        payload = provider._capture_payload(
+            provider._current_context(),
+            role="user",
+            content="A derived summary.",
+            source="provisional:v2:summary:7",
+        )
+        assert service.capture(CaptureEvent.model_validate(payload))["status"] == "rejected"
+        assert store.list_jobs() == []
+        assert store.list_episodic_events() == []
+    finally:
+        store.close()
+
+
+@pytest.mark.parametrize("first_is_summary", [True, False])
+def test_native_carrier_cannot_change_evidence_classification(tmp_path, first_is_summary):
+    provider, client = setup(tmp_path)
+    row = {"role": "user", "content": "An assertion.", "_row_id": 7,
+           "_compressed_summary": first_is_summary}
+    initial = capture(provider, client, [row])
+    changed = {**row, "_compressed_summary": not first_is_summary}
+    provider.sync_turn("An assertion.", "", messages=[changed])
+    assert provider._flush() is False
+    assert {p["payload"]["event_id"]: p["payload"] for p in client.outbox.pending()} == initial

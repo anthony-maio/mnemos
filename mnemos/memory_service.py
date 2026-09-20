@@ -16,7 +16,11 @@ from .contracts import (
     RetrievalRequest,
 )
 from .claude_identity import legacy_event_id, scoped_event_id
-from .hermes_identity import scoped_event_id as hermes_scoped_event_id
+from .hermes_identity import (
+    canonical_native_ref,
+    is_summary_source_ref,
+    scoped_event_id as hermes_scoped_event_id,
+)
 from .engine import MnemosEngine
 from .jobs import DurableJob, FactEvidence, FactNotFoundError, FactRevision, JobNotFoundError
 from .maintenance import MaintenanceScheduler
@@ -125,9 +129,22 @@ class LocalMemoryService:
             and event.context.host == "hermes"
             and event.source_kind == "hermes_memory_provider"
             and event.source_ref is not None
-            and event.source_ref.startswith("provisional:v1:")
-            and event.event_id
-            == hermes_scoped_event_id(event.context, event.source_ref, event.role, event.content)
+            and (
+                (
+                    event.source_ref.startswith("provisional:v1:")
+                    and event.event_id
+                    == hermes_scoped_event_id(
+                        event.context, event.source_ref, event.role, event.content
+                    )
+                )
+                or (
+                    is_summary_source_ref(event.source_ref)
+                    and event.event_id
+                    == hermes_scoped_event_id(
+                        event.context, canonical_native_ref(event.source_ref), "", ""
+                    )
+                )
+            )
         )
         if event.identity_status == "provisional_unassociated" and (
             not (claude_provisional or hermes_provisional)
@@ -146,7 +163,7 @@ class LocalMemoryService:
         if (
             event.context.host == "hermes"
             and event.source_kind == "hermes_memory_provider"
-            and (event.source_ref or "").startswith("provisional:v1:")
+            and (event.source_ref or "").startswith("provisional:")
             and event.identity_status != "provisional_unassociated"
         ):
             return {

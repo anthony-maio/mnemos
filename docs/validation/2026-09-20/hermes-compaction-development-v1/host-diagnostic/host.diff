@@ -1,0 +1,79 @@
+diff --git a/agent/conversation_compression.py b/agent/conversation_compression.py
+index f282354b35..2d7d7cbc7e 100644
+--- a/agent/conversation_compression.py
++++ b/agent/conversation_compression.py
+@@ -1582,7 +1582,7 @@ def _adopt_live_compression_child(
+     child = row_getter(session_db, child_session_id)
+     if not isinstance(child, dict) or child.get("ended_at") is not None:
+         return None
+-    recovered = loader(session_db, child_session_id)
++    recovered = loader(session_db, child_session_id, include_row_ids=True)
+     if not (isinstance(recovered, list) and recovered):
+         return None
+     # Revalidate after loading: the tip may have rotated or a competing
+@@ -2805,7 +2805,7 @@ def _adopt_grown_durable_parent(agent: Any, lease: _CompressionLease, messages:
+     durable_loader = getattr(type(lease.db), "get_messages_as_conversation", None)
+     if not callable(durable_loader):
+         return None
+-    durable_parent = durable_loader(lease.db, lease.sid)
++    durable_parent = durable_loader(lease.db, lease.sid, include_row_ids=True)
+     if not (isinstance(durable_parent, list) and len(durable_parent) > len(messages)):
+         return None
+     # In-memory carries this turn's un-persisted user tail; flush it via the normal
+@@ -2832,7 +2832,7 @@ def _adopt_grown_durable_parent(agent: Any, lease: _CompressionLease, messages:
+         )
+         return None
+     # Re-read after the flush so the adopted snapshot carries the just-persisted tail.
+-    durable_parent = durable_loader(lease.db, lease.sid)
++    durable_parent = durable_loader(lease.db, lease.sid, include_row_ids=True)
+     if not (isinstance(durable_parent, list) and len(durable_parent) > len(messages)):
+         return None
+     logger.info(
+diff --git a/hermes_cli/cli_agent_setup_mixin.py b/hermes_cli/cli_agent_setup_mixin.py
+index c7d5f69683..81f7a3248d 100644
+--- a/hermes_cli/cli_agent_setup_mixin.py
++++ b/hermes_cli/cli_agent_setup_mixin.py
+@@ -582,7 +582,7 @@ class CLIAgentSetupMixin:
+                 f"Cannot resume session: {resume_limit_error}",
+                 f"[bold red]Cannot resume session:[/] {_escape(resume_limit_error)}")
+             return False
+-        restored = self._session_db.get_messages_as_conversation(self.session_id, repair_alternation=True)
++        restored = self._session_db.get_messages_as_conversation(self.session_id, repair_alternation=True, include_row_ids=True)
+         if restored:
+             restored = [m for m in restored if m.get("role") != "session_meta"]
+             self.conversation_history = restored
+diff --git a/hermes_cli/cli_session_mixin.py b/hermes_cli/cli_session_mixin.py
+index 31e3332c3b..a8a148cd84 100644
+--- a/hermes_cli/cli_session_mixin.py
++++ b/hermes_cli/cli_session_mixin.py
+@@ -750,7 +750,7 @@ class CLISessionMixin:
+         if self._session_db is not None and self.session_id:
+             try:
+                 truncated = self._session_db.rewind_user_turn(
+-                    self.session_id, -1, warm_history=warm_history, require_retryable=True).prefix
++                    self.session_id, -1, warm_history=warm_history, require_retryable=True, adopt_row_ids=True).prefix
+             except Exception as exc:
+                 print(f"(x_x) Retry rewind failed; history was not changed: {exc}")
+                 return None
+@@ -793,7 +793,7 @@ class CLISessionMixin:
+         if self._session_db is not None and self.session_id:
+             try:
+                 outcome = self._session_db.rewind_user_turn(
+-                    self.session_id, target_ordinal, warm_history=warm_history)
++                    self.session_id, target_ordinal, warm_history=warm_history, adopt_row_ids=True)
+                 truncated = outcome.prefix
+                 # Canonical editable prefill: the raw carrier holds the reference-summary wrapper.
+                 removed_text = outcome.live_text or removed_text
+diff --git a/tests/hermes_state/test_rewind_surfaces_invariant.py b/tests/hermes_state/test_rewind_surfaces_invariant.py
+index 44cbac499f..ef4106ba95 100644
+--- a/tests/hermes_state/test_rewind_surfaces_invariant.py
++++ b/tests/hermes_state/test_rewind_surfaces_invariant.py
+@@ -109,7 +109,7 @@ def test_cli_undo_leaves_the_warm_history_shape_alone_while_the_tui_adopts_row_i
+     cli._session_db, cli.session_id, cli.conversation_history, cli.agent = db, "shape-cli", warm, None
+     cli._prefill_input_buffer = MagicMock()
+     cli.undo_last(1)
+-    assert len(cli.conversation_history) == 4 and not any("_row_id" in m for m in cli.conversation_history)
++    assert len(cli.conversation_history) == 4 and [m["_row_id"] for m in cli.conversation_history] == [1, 2, 3, 4]
+ 
+     installed, _view, _count = _rewind_via("tui", db, "shape-tui", 1)
+     assert [m["_row_id"] for m in installed] == [row[0] for row in _active_rows(db, "shape-tui") if row[3]]

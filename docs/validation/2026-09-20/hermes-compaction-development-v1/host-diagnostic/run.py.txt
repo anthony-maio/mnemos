@@ -1,0 +1,240 @@
+"""Model-free Hermes compression child provenance diagnostic."""
+from __future__ import annotations
+import argparse, hashlib, importlib, json, os, socket, subprocess, sys, zipfile
+from pathlib import Path
+from typing import Any
+
+HOST_COMMIT = "14a346345486418aa85ed6526549412ee2665ade"
+WHEEL_SHA = "9af6667d86933570beecc940e55e637f70a9258e5339e948dc48ba9692782bf6"
+HOST_FILES = (
+    "hermes_state.py", "hermes_state_compression.py", "hermes_state_messages.py",
+    "agent/conversation_compression.py", "agent/context_compressor.py",
+    "agent/memory_manager.py",
+)
+
+def sha(path: Path) -> str:
+    return hashlib.sha256(path.read_bytes()).hexdigest()
+
+def clean_row(row: Any) -> dict[str, Any]:
+    keys = {"id", "session_id", "role", "content", "platform_message_id",
+            "_compressed_summary", "active", "compacted", "display_kind",
+            "timestamp", "display_identity"}
+    return {k: row[k] for k in row.keys() if k in keys}
+
+def main() -> int:
+    parser = argparse.ArgumentParser()
+    parser.add_argument("--host", type=Path, required=True)
+    parser.add_argument("--wheel", type=Path, required=True)
+    parser.add_argument("--output", type=Path, required=True)
+    args = parser.parse_args()
+    host, wheel, root = args.host.resolve(), args.wheel.resolve(), args.output.resolve()
+    report: dict[str, Any] = {
+        "status": "running",
+        "diagnostic": "model-free compression child provenance; no service or network",
+        "host_commit_expected": HOST_COMMIT,
+        "wheel_sha256_expected": WHEEL_SHA,
+        "host": str(host), "wheel": str(wheel), "phases": [],
+    }
+    socket_attempts: list[str] = []
+    manager = None
+    db = None
+    try:
+        observed_commit = subprocess.check_output(
+            ["git", "-C", str(host), "rev-parse", "HEAD"], text=True
+        ).strip()
+        report["host_commit_observed"] = observed_commit
+        if observed_commit != HOST_COMMIT:
+            raise AssertionError("Hermes host revision mismatch")
+        if sha(wheel) != WHEEL_SHA:
+            raise AssertionError("Mnemos wheel hash mismatch")
+        if root.exists():
+            raise FileExistsError(f"refusing existing output: {root}")
+        root.mkdir(parents=True)
+        original_env = os.environ.copy()
+        os.environ.clear()
+        os.environ.update({k: v for k, v in original_env.items() if k in {"PATH", "LANG", "WSL_INTEROP"}})
+        os.environ.update(HOME=str(root / "home"), HERMES_HOME=str(root / "home"),
+                          MNEMOS_AUTO_START="false", PYTHONDONTWRITEBYTECODE="1")
+        (root / "home").mkdir()
+        os.chdir(root)
+        sys.dont_write_bytecode = True
+        extracted = root / "wheel"
+        with zipfile.ZipFile(wheel) as archive:
+            archive.extractall(extracted)
+        sys.path[:0] = [str(extracted), str(host)]
+        before = {name: sha(host / name) for name in HOST_FILES}
+        report["host_files_before"] = before
+
+        def deny_network(*unused: Any, **kwargs: Any) -> Any:
+            socket_attempts.append("blocked")
+            raise RuntimeError("network prohibited")
+        socket.socket.connect = deny_network  # type: ignore[method-assign]
+        socket.socket.connect_ex = deny_network  # type: ignore[method-assign]
+        socket.create_connection = deny_network
+
+        from agent.memory_manager import MemoryManager
+        from hermes_state import SessionDB
+        from mnemos.adapters.hermes import MnemosHermesProvider
+        from mnemos.client import Outbox
+        from mnemos.scopes import ScopeRegistry
+
+        origins = {}
+        for name in ("agent.memory_manager", "hermes_state", "hermes_state_compression",
+                     "hermes_state_messages", "mnemos.adapters.hermes"):
+            module = importlib.import_module(name)
+            origins[name] = str(getattr(module, "__file__", ""))
+        report["module_origins"] = origins
+        if not Path(origins["agent.memory_manager"]).resolve().is_relative_to(host):
+            raise AssertionError("Hermes module did not load from frozen host")
+        if not Path(origins["mnemos.adapters.hermes"]).resolve().is_relative_to(extracted):
+            raise AssertionError("Mnemos adapter did not load from wheel")
+
+        case_root = root / "case"
+        case_root.mkdir()
+        db = SessionDB(case_root / "state.db")
+        parent, child = "compression-parent", "compression-child"
+        db.create_session(parent, "cli", cwd=str(case_root), model="fixture")
+        original_messages = [
+            {"role": "user", "content": "Original retained question."},
+            {"role": "assistant", "content": "Original retained answer."},
+        ]
+        if db.append_messages_batch(parent, original_messages) != 2:
+            raise AssertionError("failed to append retained originals")
+        watermark = db.get_active_message_watermark(parent)
+        tail_messages = [
+            {"role": "user", "content": "Concurrent tail question."},
+            {"role": "assistant", "content": "Concurrent tail answer."},
+        ]
+        if db.append_messages_batch(parent, tail_messages) != 2:
+            raise AssertionError("failed to append concurrent tail")
+        ceiling = db.get_active_message_watermark(parent)
+        parent_conversation = db.get_messages_as_conversation(parent, include_row_ids=True)
+        parent_rows = [clean_row(row) for row in db.get_messages(parent, include_inactive=True)]
+        original_ids = [int(row["_row_id"]) for row in parent_conversation]
+        retained = [dict(row) for row in parent_conversation[:2]]
+        summary = {
+            "role": "assistant",
+            "content": "Derived compaction summary: Original retained question and answer.",
+            "_compressed_summary": True, "_compressed_summary_has_user_turn": False,
+            "display_kind": "hidden",
+        }
+        db.publish_compression_child(
+            parent_session_id=parent, child_session_id=child, source="cli",
+            messages=retained + [summary], require_compression_lease=False,
+            watermark=watermark, watermark_ceiling=ceiling,
+        )
+        child_rows = [clean_row(row) for row in db.get_messages(child, include_inactive=True)]
+        child_with_ids = db.get_messages_as_conversation(
+            child, include_row_ids=True, repair_alternation=True)
+        child_without_repair = db.get_messages_as_conversation(
+            child, include_row_ids=True, repair_alternation=False)
+        summary_rows = [row for row in child_rows if row.get("_compressed_summary") == 1]
+        report["database"] = {
+            "parent_rows": parent_rows, "child_rows": child_rows,
+            "original_parent_ids": original_ids,
+            "child_loaded_ids": [row.get("_row_id") for row in child_with_ids],
+            "child_no_repair_ids": [row.get("_row_id") for row in child_without_repair],
+            "summary_rows": summary_rows,
+            "parent_session": db.get_session(parent), "child_session": db.get_session(child),
+        }
+
+        registry = ScopeRegistry()
+        registry.register_project(case_root, user_profile_id="compression-fixture", enabled=True)
+        outbox = Outbox(case_root / "outbox.json")
+        class QueueClient:
+            async def capture(self, payload: dict[str, Any]) -> dict[str, Any]:
+                outbox.append(payload, event_id=payload["event_id"])
+                return {"status": "queued", "committed": False}
+        client = QueueClient()
+        provider = MnemosHermesProvider(
+            client=client, registry=registry, user_profile_id="compression-fixture")
+        manager = MemoryManager()
+        manager.add_provider(provider)
+        manager.initialize_all(parent, cwd=str(case_root), hermes_home=str(case_root / "home"))
+
+        manager.sync_all("Original retained question.", "Concurrent tail answer.",
+                         session_id=parent, messages=parent_conversation)
+        if not manager.flush_pending(timeout=10) or not provider._flush(timeout=10):
+            raise AssertionError("initial adapter capture did not drain")
+        initial_payloads = [row["payload"] for row in outbox.pending()]
+        initial_ids = {payload["event_id"] for payload in initial_payloads}
+
+        manager.on_session_switch(child, parent_session_id=parent, reset=False, reason="compression")
+        manager.sync_all("Derived summary.", "Concurrent tail answer.",
+                         session_id=child, messages=child_with_ids)
+        if not manager.flush_pending(timeout=10) or not provider._flush(timeout=10):
+            raise AssertionError("child adapter capture did not drain")
+        all_payloads = [row["payload"] for row in outbox.pending()]
+        child_payloads = [p for p in all_payloads if p["event_id"] not in initial_ids]
+        summary_contents = [row["content"] for row in summary_rows if isinstance(row.get("content"), str)]
+        summary_payloads = [p for p in child_payloads
+                            if any(text in p.get("content", "") for text in summary_contents)]
+        parent_content_to_ids: dict[str, list[str]] = {}
+        child_content_to_ids: dict[str, list[str]] = {}
+        for payload in initial_payloads:
+            parent_content_to_ids.setdefault(payload["content"], []).append(payload["event_id"])
+        for payload in child_payloads:
+            child_content_to_ids.setdefault(payload["content"], []).append(payload["event_id"])
+        report["adapter"] = {
+            "initial_payloads": initial_payloads, "child_payloads": child_payloads,
+            "summary_payloads": summary_payloads,
+            "parent_content_to_event_ids": parent_content_to_ids,
+            "child_content_to_event_ids": child_content_to_ids,
+            "child_lifecycle_diagnostics": provider.get_lifecycle_diagnostics(),
+            "child_loaded_messages": child_with_ids,
+            "child_loaded_messages_no_repair": child_without_repair,
+        }
+        report["observations"] = {
+            "child_rows_have_fresh_ids": all(row["id"] not in original_ids for row in child_rows),
+            "retained_content_has_new_event": any(
+                p["content"] == "Original retained question." and p["event_id"] not in initial_ids
+                for p in child_payloads),
+            "tail_clone_has_new_event": any(
+                p["content"] == "Concurrent tail question." and p["event_id"] not in initial_ids
+                for p in child_payloads),
+            "summary_marker_reloaded": bool(summary_rows) and any(
+                row.get("_compressed_summary") == 1 for row in summary_rows),
+            "summary_sent_as_normal_adapter_payload": bool(summary_payloads) and all(
+                "identity_status" not in p for p in summary_payloads),
+            "service_extraction_not_run": True,
+        }
+        for name, value in report["observations"].items():
+            if name in {"service_extraction_not_run"}:
+                continue
+            if not value:
+                raise AssertionError(f"observation failed: {name}")
+        if socket_attempts:
+            raise AssertionError("unexpected network attempt")
+        report["status"] = "diagnostic_observed"
+    except Exception as exc:
+        report["status"] = "failed"
+        report["error"] = f"{type(exc).__name__}: {exc}"
+    finally:
+        if manager is not None:
+            try:
+                manager.shutdown_all()
+            except Exception as exc:
+                report["cleanup_error"] = f"{type(exc).__name__}: {exc}"
+        if db is not None:
+            try:
+                db.close()
+            except Exception as exc:
+                report["cleanup_error"] = f"{type(exc).__name__}: {exc}"
+    report["network_attempts"] = len(socket_attempts)
+    if root.exists() and "host_files_before" in report:
+        try:
+            report["host_files_after"] = {name: sha(host / name) for name in HOST_FILES}
+            report["host_unchanged"] = report["host_files_after"] == report["host_files_before"]
+        except Exception as exc:
+            report["host_hash_error"] = f"{type(exc).__name__}: {exc}"
+    else:
+        root.mkdir(parents=True, exist_ok=True)
+    report["runner_sha256"] = sha(Path(__file__))
+    report["report_path"] = str(root / "report.json")
+    (root / "report.json").write_text(json.dumps(report, indent=2, default=str) + "\
+", encoding="utf-8")
+    print(json.dumps({"status": report["status"], "report": str(root / "report.json")}))
+    return 0 if report["status"] == "diagnostic_observed" else 1
+
+if __name__ == "__main__":
+    raise SystemExit(main())

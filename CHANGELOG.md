@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- Hermes capture accepts validated original-message provenance from compatible hosts, preserving identity and forget suppression across copied rows. Marked compression summaries remain capture-only evidence; changing a native carrier's classification cannot create another observation. Complete host-side provenance support remains under validation.
+
 - Existing SQLite memories remain searchable through scoped lexical retrieval after a transient embedding failure. Responses, context, and host diagnostics identify the degraded mode, including empty results; semantic scores stay unmeasured. Configuration and database errors still propagate.
 
 - Client-created services now honor `MNEMOS_AUTO_START`, including bridge and managed CLI requests. Disabling startup preserves local capture buffering and access to an existing owner. Disposable native phases also pin their database and runtime paths.

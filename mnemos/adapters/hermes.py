@@ -23,7 +23,7 @@ from uuid import uuid4
 
 from ..bridge import BridgeClient
 from ..client import MnemosClient
-from ..hermes_identity import scoped_event_id
+from ..hermes_identity import canonical_native_ref, is_summary_source_ref, scoped_event_id
 from ..scopes import ScopeContext, ScopeRegistry, default_registry_path as shared_registry_path
 from .context import format_retrieved_context
 from .hermes_occurrences import occurrence_time
@@ -47,6 +47,22 @@ except ImportError:  # pragma: no cover - exercised by the normal Windows instal
 
 MAX_CONTEXT_CHARS = 8_000
 MAX_MESSAGE_CHARS = 100_000
+
+
+@dataclass(frozen=True)
+class TranscriptOrigin:
+    session_id: str
+    row_id: int
+    cwd: str
+
+
+@dataclass(frozen=True)
+class TranscriptEntry:
+    role: str
+    content: str
+    row_id: int | None = None
+    origin: TranscriptOrigin | None = None
+    summary: bool = False
 
 
 @dataclass(frozen=True)
@@ -255,11 +271,11 @@ class MnemosHermesProvider(_HermesMemoryProvider):  # type: ignore[misc]  # Opti
 
     @staticmethod
     def _event_id(context: ScopeContext, *, role: str, content: str, source: str) -> str:
-        if source.startswith("transcript:v2:"):
+        if source.startswith("transcript:v2:") or is_summary_source_ref(source):
             # A durable row identifies one occurrence. Payload changes must
             # conflict with that occurrence in the outbox/service, not mint a
             # new event merely because its role or text changed.
-            return scoped_event_id(context, source, "", "")
+            return scoped_event_id(context, canonical_native_ref(source), "", "")
         return scoped_event_id(context, source, role, content)
 
     def _capture_payload(
@@ -334,8 +350,8 @@ class MnemosHermesProvider(_HermesMemoryProvider):  # type: ignore[misc]  # Opti
     @staticmethod
     def _transcript_entries(
         messages: List[Dict[str, Any]],
-    ) -> list[tuple[str, str, int | None]]:
-        selected: list[tuple[str, str, int | None]] = []
+    ) -> list[TranscriptEntry]:
+        selected: list[TranscriptEntry] = []
         native_ids: set[int] = set()
         for message in messages:
             if not isinstance(message, Mapping):
@@ -351,21 +367,61 @@ class MnemosHermesProvider(_HermesMemoryProvider):  # type: ignore[misc]  # Opti
                         "Hermes transcript row identity must be a unique positive integer"
                     )
                 native_ids.add(row_id)
-            selected.append((role, content, row_id))
+            origin = None
+            if "_memory_origin" in message:
+                value = message["_memory_origin"]
+                if (
+                    not isinstance(value, Mapping)
+                    or set(value) != {"version", "session_id", "row_id", "cwd"}
+                    or type(value.get("version")) is not int
+                    or value["version"] != 1
+                    or type(value.get("row_id")) is not int
+                    or value["row_id"] <= 0
+                    or not isinstance(value.get("session_id"), str)
+                    or not value["session_id"].strip()
+                    or value["session_id"] != value["session_id"].strip()
+                    or not isinstance(value.get("cwd"), str)
+                    or not value["cwd"].strip()
+                    or row_id is None
+                ):
+                    raise ValueError("Hermes memory origin must identify a durable native row")
+                origin = TranscriptOrigin(value["session_id"], value["row_id"], value["cwd"])
+            summary = message.get("_compressed_summary", False)
+            if type(summary) is not bool:
+                raise ValueError("Hermes summary marker must be a boolean")
+            selected.append(TranscriptEntry(role, content, row_id, origin, summary))
         return selected
+
+    def _origin_context(self, context: ScopeContext, origin: TranscriptOrigin) -> ScopeContext:
+        if self.registry is None:
+            raise ValueError("Hermes origin has no scope registry")
+        try:
+            canonical = self.registry.resolve(
+                origin.cwd,
+                user_profile_id=context.user_profile_id,
+                session_id=origin.session_id,
+                host="hermes",
+            )
+        except Exception as exc:
+            raise ValueError("Hermes origin scope cannot be resolved") from exc
+        if canonical.model_dump(exclude={"session_id"}) != context.model_dump(
+            exclude={"session_id"}
+        ):
+            raise ValueError("Hermes origin cannot redirect capture outside the active scope")
+        return canonical
 
     def _transcript_payloads(
         self,
         context: ScopeContext,
-        messages: list[tuple[str, str, int | None]],
+        messages: list[TranscriptEntry],
         *,
         provisional: bool = False,
     ) -> list[dict[str, Any]]:
         # Durable host rows retain identity across shortened views and resume.
         # Undo creates new rows only for the regenerated suffix. Older hosts
         # without native IDs retain the legacy cumulative-prefix contract.
-        if any(row_id is not None for _, _, row_id in messages) and any(
-            row_id is None for _, _, row_id in messages
+        if any(entry.row_id is not None for entry in messages) and any(
+            entry.row_id is None for entry in messages
         ):
             provisional = True
             self._record_lifecycle_diagnostic(
@@ -376,26 +432,44 @@ class MnemosHermesProvider(_HermesMemoryProvider):  # type: ignore[misc]  # Opti
         # Without a transcript, only the callback receipt is identifiable.
         # Preserve each receipt separately without counting it as fact evidence.
         namespace = f"provisional:v1:{uuid4()}" if provisional else "transcript:v1"
-        for index, (role, content, row_id) in enumerate(messages):
+        for index, entry in enumerate(messages):
+            role, content, row_id = entry.role, entry.content, entry.row_id
+            canonical_context = (
+                self._origin_context(context, entry.origin) if entry.origin else context
+            )
+            if entry.origin:
+                row_id = entry.origin.row_id
             prefix.update(
                 json.dumps([role, content], ensure_ascii=False, separators=(",", ":")).encode(
                     "utf-8"
                 )
                 + b"\0"
             )
-            payloads.append(
-                self._capture_payload(
-                    context,
-                    role=role,
-                    content=content,
-                    source=(
-                        f"transcript:v2:{row_id}"
-                        if row_id is not None and not provisional
-                        else f"{namespace}:{index}:{prefix.hexdigest()}"
-                    ),
+            summary_native = entry.summary and row_id is not None and not provisional
+            if entry.summary:
+                self._record_lifecycle_diagnostic(
+                    action="capture_identity", target="", status="derived_summary"
+                )
+            source = (
+                f"provisional:v2:summary:{row_id}"
+                if summary_native
+                else (
+                    f"transcript:v2:{row_id}"
+                    if row_id is not None and not provisional and not entry.summary
+                    else f"{namespace}:{index}:{prefix.hexdigest()}"
                 )
             )
-            if provisional:
+            if entry.summary and not summary_native and not provisional:
+                source = f"provisional:v1:{uuid4()}:{index}:{prefix.hexdigest()}"
+            payloads.append(
+                self._capture_payload(
+                    canonical_context,
+                    role=role,
+                    content=content,
+                    source=source,
+                )
+            )
+            if provisional or entry.summary:
                 payloads[-1]["identity_status"] = "provisional_unassociated"
         return payloads
 
@@ -540,10 +614,10 @@ class MnemosHermesProvider(_HermesMemoryProvider):  # type: ignore[misc]  # Opti
         provisional = not selected
         if provisional:
             selected = [
-                ("user", _text(user_content), None),
-                ("assistant", _text(assistant_content), None),
+                TranscriptEntry("user", _text(user_content)),
+                TranscriptEntry("assistant", _text(assistant_content)),
             ]
-        selected = [(role, content, row_id) for role, content, row_id in selected if content]
+        selected = [entry for entry in selected if entry.content]
         if provisional and selected:
             self._record_lifecycle_diagnostic(
                 action="capture_identity", target="", status="transcript_identity_unavailable"
