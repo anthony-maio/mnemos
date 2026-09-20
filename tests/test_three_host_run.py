@@ -128,13 +128,19 @@ def test_hermes_preflight_requires_discovery_without_inference_or_writes(
 
         def __init__(self, command, **kwargs):
             assert "60s" in command
-            assert command[-2].endswith("hermes_native_bootstrap_v6.py.txt")
+            assert command[-2].endswith("hermes_native_bootstrap_v7.py.txt")
             root = tmp_path / "preflight"
+            origins = {
+                "origins": {"hermes_cli.main": "/isolated/main.py"},
+                "adapter_origin": "/phase/wheel/mnemos.py",
+            }
             rows = [
+                {"operation": "bootstrap", **origins},
+                {"operation": "bootstrap_exit", **origins},
                 {
                     "operation": "preflight_complete",
                     "tool_names": [row["name"] for row in get_tool_schemas()],
-                }
+                },
             ]
             if unexpected_operation:
                 rows.append({"operation": unexpected_operation})

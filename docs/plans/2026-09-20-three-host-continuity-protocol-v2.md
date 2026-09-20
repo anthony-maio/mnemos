@@ -24,7 +24,10 @@ both failed attempts. This requirement establishes a bounded demonstration;
 it does not reinterpret the cohort as a reliability pass.
 
 Use isolated Hermes source `14a346345486418aa85ed6526549412ee2665ade` with the
-unchanged cwd-only patch and bootstrap v6. The live interpreter installation
+unchanged cwd-only patch. Bootstrap v7 wraps the unchanged v6 invocation,
+adding an exit-time module-origin check without changing calls, prompts,
+budgets, or results. Reject untracked host source and compare entry/exit
+module origins as well as the interpreter inventory. The live interpreter installation
 is `ebe3fcb2f85ebdbe0e469e9d295636ac930246b4`; its sorted dependency inventory
 must retain SHA-256 `a175bfc46955bc72ebb1c854ce7646f3dad3fd22716d3219d3a42d8928a30f7f`.
 Verify source/import origins and inventory before and after execution. The
@@ -51,7 +54,7 @@ hashes. Never archive copied authentication or runtime descriptor tokens.
 ## Validation repairs before execution
 
 The driver remains `benchmarks/native_hosts/three_host_run.py`. It now uses
-the v10 package/profile bindings, bootstrap v6, readiness v2, and an explicit
+the v10 package/profile bindings, bootstrap v7's observation wrapper, readiness v2, and an explicit
 `--preflight-only` mode. Preflight verifies imports and eight-tool discovery
 without model inference or service writes. It has its own fresh output
 directory and cannot be called a native lifecycle result.

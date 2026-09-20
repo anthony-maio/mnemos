@@ -90,7 +90,7 @@ def host_environment(output: Path) -> dict[str, str]:
         ).strip()
 
     revision = git("rev-parse", "HEAD")
-    if revision != HERMES_LIVE_COMMIT or git("status", "--porcelain", "--untracked-files=no"):
+    if revision != HERMES_LIVE_COMMIT or git("status", "--porcelain"):
         raise ValueError("Live Hermes revision or tracked source changed")
     inventory = subprocess.check_output(
         ["wsl.exe", "-d", "Debian", "--", HERMES_LIVE + "/venv/bin/python", "-m", "pip", "freeze"],
@@ -209,6 +209,7 @@ def run_hermes(
     if any(float(parameters.get(key, "nan")) != value for key, value in expected.items()):
         raise ValueError("Pinned Hermes sampling profile changed")
     for helper in (
+        "hermes_native_bootstrap_v7.py",
         "hermes_native_bootstrap_v6.py",
         "hermes_request_observer.py",
         "ollama_readiness_v2.py",
@@ -289,7 +290,7 @@ def run_hermes(
                     "--kill-after=5s",
                     str(deadline) + "s",
                     HERMES_LIVE + "/venv/bin/python",
-                    wsl(root / "hermes_native_bootstrap_v6.py.txt"),
+                    wsl(root / "hermes_native_bootstrap_v7.py.txt"),
                     wsl(root / "config.json"),
                 ],
                 stdout=stdout,
@@ -316,6 +317,14 @@ def run_hermes(
             )
         host_environment(root / "host-environment-after.txt")
     trace = [json.loads(line) for line in (root / "trace.jsonl").read_bytes().splitlines()]
+    entered = [row for row in trace if row["operation"] == "bootstrap"]
+    exited = [row for row in trace if row["operation"] == "bootstrap_exit"]
+    if (
+        len(entered) != 1
+        or len(exited) != 1
+        or any(entered[0].get(key) != exited[0].get(key) for key in ("origins", "adapter_origin"))
+    ):
+        raise ValueError("Hermes module origins changed or were not verified at exit")
     profile_after = api("show", {"model": MODEL})
     save(root / "sampling-profile-after.json", profile_after)
     if profile_after != profile:
@@ -415,6 +424,8 @@ def main() -> int:
 
     if host_git("rev-parse", "HEAD") != HERMES_COMMIT:
         raise ValueError("Hermes revision changed")
+    if host_git("ls-files", "--others", "--exclude-standard"):
+        raise ValueError("Isolated Hermes checkout contains untracked source")
     expected_patch = (
         repo / "docs/validation/2026-09-19/native-hermes-local-v4/host-compatibility.patch"
     )
