@@ -460,6 +460,18 @@ class MemoryStore(ABC):
         """Claim available jobs, recovering leases that have expired."""
         raise NotImplementedError("This storage backend does not support durable jobs.")
 
+    def renew_job_lease(
+        self,
+        job_id: str,
+        *,
+        owner: str,
+        lease_token: str | None,
+        lease_seconds: int = 300,
+        now: datetime | None = None,
+    ) -> bool:
+        """Extend a live ownership token without reviving an expired lease."""
+        raise NotImplementedError("This storage backend does not support durable jobs.")
+
     def complete_job(
         self,
         job_id: str,
@@ -2596,6 +2608,41 @@ class SQLiteStore(MemoryStore):
             ).fetchall()
         by_id = {str(row[0]): self._row_to_job(row) for row in claimed_rows}
         return [by_id[job_id] for job_id in ids]
+
+    def renew_job_lease(
+        self,
+        job_id: str,
+        *,
+        owner: str,
+        lease_token: str | None,
+        lease_seconds: int = 300,
+        now: datetime | None = None,
+    ) -> bool:
+        if lease_seconds <= 0:
+            raise ValueError("Lease duration must be positive")
+        renewed_at = now or datetime.now(timezone.utc)
+        deadline = renewed_at + timedelta(seconds=lease_seconds)
+        with self._lock:
+            self._conn.execute("BEGIN IMMEDIATE")
+            try:
+                cursor = self._conn.execute(
+                    """UPDATE memory_jobs SET lease_until=MAX(lease_until, ?), updated_at=?
+                       WHERE id=? AND status='leased' AND lease_owner=? AND lease_token=?
+                         AND lease_until > ?""",
+                    (
+                        deadline.isoformat(),
+                        renewed_at.isoformat(),
+                        job_id,
+                        owner,
+                        lease_token,
+                        renewed_at.isoformat(),
+                    ),
+                )
+                self._conn.commit()
+                return cursor.rowcount > 0
+            except Exception:
+                self._conn.rollback()
+                raise
 
     def complete_job(
         self,
