@@ -1,0 +1,65 @@
+{
+  "prepared_at": "2026-09-20T21:49:55.160350+00:00",
+  "source_commit": "d93789250ed1cd9aac31a58da1cb932e93b41582",
+  "installation": "C:/Users/Ant/AppData/Local/Temp/mnemos-installed-checks-reconsolidation-return-v2/installation.json",
+  "wheel": "C:\\Users\\Ant\\AppData\\Local\\Temp\\mnemos-package-checks-reconsolidation-return-v1\\dist\\mnemos_memory-0.7.0-py3-none-any.whl",
+  "wheel_sha256": "513b9e1d6cad453eb165128787aba2b96fb38b4d6460aa3fe00ebff5b7b95b76",
+  "model": "qwen3.5:9b",
+  "embedding_model": "nomic-embed-text:latest",
+  "available_models": {
+    "qwen3.5:9b": {
+      "name": "qwen3.5:9b",
+      "model": "qwen3.5:9b",
+      "modified_at": "2026-09-18T15:38:31.3310652-04:00",
+      "size": 6594474711,
+      "digest": "6488c96fa5faab64bb65cbd30d4289e20e6130ef535a93ef9a49f42eda893ea7",
+      "details": {
+        "parent_model": "",
+        "format": "gguf",
+        "family": "qwen35",
+        "families": [
+          "qwen35"
+        ],
+        "parameter_size": "9.7B",
+        "quantization_level": "Q4_K_M",
+        "context_length": 262144,
+        "embedding_length": 4096
+      },
+      "capabilities": [
+        "completion",
+        "vision",
+        "tools",
+        "thinking"
+      ]
+    },
+    "nomic-embed-text:latest": {
+      "name": "nomic-embed-text:latest",
+      "model": "nomic-embed-text:latest",
+      "modified_at": "2026-09-18T15:38:50.3313315-04:00",
+      "size": 274302450,
+      "digest": "0a109f422b47e3a30ba2b10eca18548e944e8a23073ee3f3e947efcf3c45e59f",
+      "details": {
+        "parent_model": "",
+        "format": "gguf",
+        "family": "nomic-bert",
+        "families": [
+          "nomic-bert"
+        ],
+        "parameter_size": "137M",
+        "quantization_level": "F16",
+        "context_length": 2048,
+        "embedding_length": 768
+      },
+      "capabilities": [
+        "embedding"
+      ]
+    }
+  },
+  "planned_recovery_endpoint": "http://127.0.0.1:11434",
+  "recovery_status": "NOT RUN; no concurrent inference during extraction temperature diagnostic",
+  "files": {
+    "runner.py": "9d78acefea70c140aaca10c666fdfb0d499a1822df7c33508ae803b57c21a939",
+    "source-outbox.json": "a66328fc45d547dcf27d0ef9995c6fcfd9535a5e11b4b963a1235effe5c60712"
+  },
+  "supersedes": "v1 probe incorrectly assumed one attempt per maintenance call. Production scheduler and module defaults unchanged; pending attempts must be positive and below exhaustion, sources retained and facts absent."
+}

@@ -1,0 +1,92 @@
+{
+  "status": "failed",
+  "pid": 43436,
+  "started_at": "2026-09-20T21:48:46.318720+00:00",
+  "source_commit": "d93789250ed1cd9aac31a58da1cb932e93b41582",
+  "verified_modules": 55,
+  "module_flags": {
+    "surprisal": true,
+    "mutable_rag": true,
+    "affective": true,
+    "sleep": true,
+    "spreading": true
+  },
+  "config": {
+    "modules": {
+      "surprisal": true,
+      "mutable_rag": true,
+      "affective": true,
+      "sleep": true,
+      "spreading": true
+    },
+    "retrieval": {
+      "profile": "baseline",
+      "affective_enabled": true,
+      "spreading_enabled": true,
+      "relevance_floor": 0.2,
+      "graph_weight": 0.1,
+      "max_candidates": 100
+    },
+    "surprisal": {
+      "threshold": 0.3,
+      "prediction_model": "llama3",
+      "embedding_dim": 384,
+      "history_window": 10,
+      "min_content_length": 10
+    },
+    "mutable_rag": {
+      "enabled": true,
+      "staleness_check_prompt": "You are a memory maintenance agent. A user's stored memory says:\n\"{content}\"\n\nNew context from the conversation:\n\"{context}\"\n\nHas this stored memory become outdated, contradicted, or significantly changed based on the new context? Reply with exactly one of:\n- UNCHANGED: if the memory is still accurate\n- CHANGED: <updated version of the memory>\n\nBe conservative: only mark CHANGED if there is a clear contradiction or significant update.",
+      "max_labile_chunks": 20,
+      "reconsolidation_cooldown_seconds": 60
+    },
+    "affective": {
+      "weight_similarity": 0.7,
+      "weight_state": 0.3,
+      "classifier_model": null,
+      "classifier_prompt": "Analyze the emotional/cognitive state expressed in this text and score it on three dimensions. Reply ONLY with three floats separated by commas:\nvalence (-1.0 to 1.0, negative to positive), arousal (0.0 to 1.0, calm to urgent), complexity (0.0 to 1.0, simple to complex)\n\nText: \"{content}\"\n\nExample reply: 0.3, 0.7, 0.5"
+    },
+    "sleep": {
+      "consolidation_interval_seconds": 3600,
+      "min_episodes_before_consolidation": 10,
+      "enable_proceduralization": false,
+      "consolidation_prompt": "You are a memory consolidation agent. Below is a sequence of conversation episodes from a user session:\n\n{episodes}\n\nExtract permanent facts, user preferences, behavioral patterns, and important information that should be retained long-term. Format your response as a numbered list of distinct facts, one per line. Be concise and specific. Omit transient information.",
+      "proceduralization_prompt": "You are analyzing conversation logs to identify repeated reasoning patterns that could be automated. Review these episodes:\n\n{episodes}\n\nIf you identify a clearly repeated task pattern (appearing 3+ times), write a complete, executable Python function that automates it. If no clear pattern exists, reply with 'NO_PATTERN'. Return ONLY valid Python code or 'NO_PATTERN'.",
+      "max_episodes_per_consolidation": 100,
+      "recall_gated_plasticity_enabled": false,
+      "recall_min_supporting_episodes": 2,
+      "recall_similarity_threshold": 0.82
+    },
+    "spreading": {
+      "initial_energy": 1.0,
+      "decay_rate": 0.2,
+      "activation_threshold": 0.3,
+      "max_hops": 3,
+      "max_visited": 1000,
+      "auto_connect_threshold": 0.6,
+      "max_neighbors_per_node": 4,
+      "natural_decay_rate": 0.05,
+      "hydrate_on_startup": true,
+      "startup_hydration_limit": 5000,
+      "startup_auto_connect": false
+    },
+    "safety": {
+      "enabled": true,
+      "secret_action": "block",
+      "pii_action": "redact"
+    },
+    "governance": {
+      "capture_mode": "all",
+      "retention_ttl_days": 0,
+      "max_chunks_per_scope": 0
+    },
+    "debug": false
+  },
+  "offline_endpoint": "http://127.0.0.1:60892",
+  "steps": [],
+  "limits": "Replay of previously captured native Codex events through actual authenticated loopback service and installed Ollama providers. Controlled connection refusal; no live host or real model success is claimed. All module flags enabled, but outage prevents downstream execution.",
+  "error_type": "AssertionError",
+  "error": "[{'id': 'event:2042de9d22b9a92b6266c1c484ca0018c3138e53780c91ca08bdeeb02d304bd5', 'kind': 'extract', 'payload': {'event_id': '2042de9d22b9a92b6266c1c484ca0018c3138e53780c91ca08bdeeb02d304bd5', 'context': {'user_profile_id': 'native-codex-outage-v1', 'project_id': '5958cf5c-ea9f-47d3-92f1-083685f0d121', 'workspace_id': None, 'session_id': '01a0bf69-2c98-7370-a182-66775449e9f8', 'host': 'codex'}, 'scope': 'project', 'source_digest': '2148253ee9043e654ef823283908f340f892c6e039dbc3749903abee809e21b0'}, 'status': 'pending', 'attempt_count': 3, 'max_attempts': 5, 'available_at': '2026-09-20T21:49:28.857500Z', 'lease_owner': None, 'lease_token': None, 'lease_until': None, 'last_error': 'ConnectionError', 'result': None, 'created_at': '2026-09-20T21:48:46.464916Z', 'updated_at': '2026-09-20T21:49:20.857500Z'}, {'id': 'event:b0b155e1fef0b66a1ccf7059665ee8de58d3e246f6f777a06b9e7e2f4ba7670d', 'kind': 'extract', 'payload': {'event_id': 'b0b155e1fef0b66a1ccf7059665ee8de58d3e246f6f777a06b9e7e2f4ba7670d', 'context': {'user_profile_id': 'native-codex-outage-v1', 'project_id': '5958cf5c-ea9f-47d3-92f1-083685f0d121', 'workspace_id': None, 'session_id': '01a0bf69-2c98-7370-a182-66775449e9f8', 'host': 'codex'}, 'scope': 'project', 'source_digest': '3454d5407e5ac60481981183c6cd5e2e856ed9eb1b914289910f5c9bc71fd8f7'}, 'status': 'pending', 'attempt_count': 3, 'max_attempts': 5, 'available_at': '2026-09-20T21:49:36.240539Z', 'lease_owner': None, 'lease_token': None, 'lease_until': None, 'last_error': 'ConnectionError', 'result': None, 'created_at': '2026-09-20T21:48:46.482139Z', 'updated_at': '2026-09-20T21:49:28.240539Z'}]",
+  "descriptor_removed": true,
+  "finished_at": "2026-09-20T21:49:28.512846+00:00"
+}

@@ -1,0 +1,48 @@
+from pathlib import Path
+import hashlib,json,shutil,sqlite3
+from contextlib import closing
+repo=Path.cwd();sha=lambda p:hashlib.sha256(p.read_bytes()).hexdigest()
+for version in [1,2]:
+ src=Path(f'C:/Users/Ant/AppData/Local/Temp/mnemos-all-module-provider-outage-v{version}')
+ record=json.loads((src/'offline-result.json').read_bytes())
+ expected='failed' if version==1 else 'offline_restart_passed_recovery_not_run'
+ assert record['status']==expected,record['status']
+ assert record['descriptor_removed'] and record['verified_modules']==55
+ assert all(record['module_flags'].values())
+ prep=json.loads((src/'preparation.json').read_bytes())
+ for name,digest in prep['files'].items(): assert sha(src/name)==digest
+ out=repo/f'docs/validation/2026-09-20/all-module-provider-outage-v{version}'
+ out.mkdir(exist_ok=False)
+ for p in src.iterdir():
+  if p.suffix in {'.json','.py','.log'}: shutil.copyfile(p,out/p.name)
+ with closing(sqlite3.connect((src/'memory.sqlite').as_uri()+'?mode=ro',uri=True)) as source,closing(sqlite3.connect(out/'memory.sqlite')) as target:
+  source.backup(target)
+  assert target.execute('PRAGMA integrity_check').fetchone()==('ok',)
+  assert target.execute('PRAGMA foreign_key_check').fetchall()==[]
+ (out/'.gitattributes').write_bytes(b'** -text -whitespace\n')
+ result=('The probe failed on its incorrect expectation of exactly one attempt per maintenance call. Both jobs remained pending after three attempts and no facts were committed. Restart was NOT RUN. The preserved failure is a harness expectation defect, not proof of lost memory.' if version==1 else 'The corrected probe passed controlled provider outage, service shutdown, fresh service/SQLite reopen and exact source replay. Both source events and their pending jobs survived unchanged. No facts were committed. All 55 installed Python modules matched the verified wheel.')
+ (out/'README.md').write_text(f'''# Installed provider outage, all module flags enabled: v{version}
+
+{result}
+
+The installed product is d937892. The input is an exact replay of the two
+synthetic native Codex events preserved in native-codex-outage-v1. This is
+not a new native host session. The service uses authenticated loopback HTTP,
+SQLite and actual Ollama provider adapters pointed at a reserved non-listening
+local socket. No live Ollama endpoint or host configuration was changed.
+
+All five flags use enabled defaults, but prediction failure prevents downstream
+module execution. No mock model responses were used. This does not prove
+real-model extraction recovery, full-module quality or the cross-host pilot.
+Real-provider recovery is NOT RUN and must be recorded separately. The default
+scheduler's exponential backoff permits several attempts during one batch.
+A maintenance call is not an exactly-once-attempt boundary.
+
+The archive includes the frozen inputs, runner, terminal outcome and an
+integrity/FK-checked SQLite backup. Runtime descriptors and authentication are
+not included. No selection or semantic acceptance criterion was changed.
+''')
+ shutil.copyfile(__file__,out/'collector.py.txt')
+ files={p.name:{'bytes':p.stat().st_size,'sha256':sha(p)} for p in sorted(out.iterdir()) if p.is_file()}
+ (out/'evidence-index.json').write_text(json.dumps({'files':files},indent=2)+'\n')
+ print(json.dumps({'archive':str(out),'files':len(files),'status':record['status']}))
