@@ -1,0 +1,146 @@
+{
+  "prepared_at": "2026-09-20T21:53:32.190249+00:00",
+  "source_commit": "d93789250ed1cd9aac31a58da1cb932e93b41582",
+  "prior_result": "D:\\Development\\mnemos\\mnemos\\.worktrees\\functional-local-memory\\docs\\validation\\2026-09-20\\all-module-provider-outage-v2\\offline-result.json",
+  "prior_result_sha256": "80dffaf977e95817795cc5086734be46f9187e1d048f54946702570e22e3302d",
+  "installation": "C:/Users/Ant/AppData/Local/Temp/mnemos-installed-checks-reconsolidation-return-v2/installation.json",
+  "wheel": "C:\\Users\\Ant\\AppData\\Local\\Temp\\mnemos-package-checks-reconsolidation-return-v1\\dist\\mnemos_memory-0.7.0-py3-none-any.whl",
+  "wheel_sha256": "513b9e1d6cad453eb165128787aba2b96fb38b4d6460aa3fe00ebff5b7b95b76",
+  "models": {
+    "qwen3.5:9b": {
+      "name": "qwen3.5:9b",
+      "model": "qwen3.5:9b",
+      "modified_at": "2026-09-18T15:38:31.3310652-04:00",
+      "size": 6594474711,
+      "digest": "6488c96fa5faab64bb65cbd30d4289e20e6130ef535a93ef9a49f42eda893ea7",
+      "details": {
+        "parent_model": "",
+        "format": "gguf",
+        "family": "qwen35",
+        "families": [
+          "qwen35"
+        ],
+        "parameter_size": "9.7B",
+        "quantization_level": "Q4_K_M",
+        "context_length": 262144,
+        "embedding_length": 4096
+      },
+      "capabilities": [
+        "completion",
+        "vision",
+        "tools",
+        "thinking"
+      ]
+    },
+    "nomic-embed-text:latest": {
+      "name": "nomic-embed-text:latest",
+      "model": "nomic-embed-text:latest",
+      "modified_at": "2026-09-18T15:38:50.3313315-04:00",
+      "size": 274302450,
+      "digest": "0a109f422b47e3a30ba2b10eca18548e944e8a23073ee3f3e947efcf3c45e59f",
+      "details": {
+        "parent_model": "",
+        "format": "gguf",
+        "family": "nomic-bert",
+        "families": [
+          "nomic-bert"
+        ],
+        "parameter_size": "137M",
+        "quantization_level": "F16",
+        "context_length": 2048,
+        "embedding_length": 768
+      },
+      "capabilities": [
+        "embedding"
+      ]
+    }
+  },
+  "model": "qwen3.5:9b",
+  "embedding_model": "nomic-embed-text:latest",
+  "endpoint": "http://127.0.0.1:11434",
+  "config": {
+    "modules": {
+      "surprisal": true,
+      "mutable_rag": true,
+      "affective": true,
+      "sleep": true,
+      "spreading": true
+    },
+    "retrieval": {
+      "profile": "baseline",
+      "affective_enabled": true,
+      "spreading_enabled": true,
+      "relevance_floor": 0.2,
+      "graph_weight": 0.1,
+      "max_candidates": 100
+    },
+    "surprisal": {
+      "threshold": 0.3,
+      "prediction_model": "llama3",
+      "embedding_dim": 384,
+      "history_window": 10,
+      "min_content_length": 10
+    },
+    "mutable_rag": {
+      "enabled": true,
+      "staleness_check_prompt": "You are a memory maintenance agent. A user's stored memory says:\n\"{content}\"\n\nNew context from the conversation:\n\"{context}\"\n\nHas this stored memory become outdated, contradicted, or significantly changed based on the new context? Reply with exactly one of:\n- UNCHANGED: if the memory is still accurate\n- CHANGED: <updated version of the memory>\n\nBe conservative: only mark CHANGED if there is a clear contradiction or significant update.",
+      "max_labile_chunks": 20,
+      "reconsolidation_cooldown_seconds": 60
+    },
+    "affective": {
+      "weight_similarity": 0.7,
+      "weight_state": 0.3,
+      "classifier_model": null,
+      "classifier_prompt": "Analyze the emotional/cognitive state expressed in this text and score it on three dimensions. Reply ONLY with three floats separated by commas:\nvalence (-1.0 to 1.0, negative to positive), arousal (0.0 to 1.0, calm to urgent), complexity (0.0 to 1.0, simple to complex)\n\nText: \"{content}\"\n\nExample reply: 0.3, 0.7, 0.5"
+    },
+    "sleep": {
+      "consolidation_interval_seconds": 3600,
+      "min_episodes_before_consolidation": 10,
+      "enable_proceduralization": false,
+      "consolidation_prompt": "You are a memory consolidation agent. Below is a sequence of conversation episodes from a user session:\n\n{episodes}\n\nExtract permanent facts, user preferences, behavioral patterns, and important information that should be retained long-term. Format your response as a numbered list of distinct facts, one per line. Be concise and specific. Omit transient information.",
+      "proceduralization_prompt": "You are analyzing conversation logs to identify repeated reasoning patterns that could be automated. Review these episodes:\n\n{episodes}\n\nIf you identify a clearly repeated task pattern (appearing 3+ times), write a complete, executable Python function that automates it. If no clear pattern exists, reply with 'NO_PATTERN'. Return ONLY valid Python code or 'NO_PATTERN'.",
+      "max_episodes_per_consolidation": 100,
+      "recall_gated_plasticity_enabled": false,
+      "recall_min_supporting_episodes": 2,
+      "recall_similarity_threshold": 0.82
+    },
+    "spreading": {
+      "initial_energy": 1.0,
+      "decay_rate": 0.2,
+      "activation_threshold": 0.3,
+      "max_hops": 3,
+      "max_visited": 1000,
+      "auto_connect_threshold": 0.6,
+      "max_neighbors_per_node": 4,
+      "natural_decay_rate": 0.05,
+      "hydrate_on_startup": true,
+      "startup_hydration_limit": 5000,
+      "startup_auto_connect": false
+    },
+    "safety": {
+      "enabled": true,
+      "secret_action": "block",
+      "pii_action": "redact"
+    },
+    "governance": {
+      "capture_mode": "all",
+      "retention_ttl_days": 0,
+      "max_chunks_per_scope": 0
+    },
+    "debug": false
+  },
+  "prerequisite_status": "C:/Users/Ant/AppData/Local/Temp/mnemos-extraction-temperature-one-v1/status.json",
+  "sampling": {
+    "think": true,
+    "temperature": 0.0,
+    "max_tokens": 8192,
+    "timeout": 180
+  },
+  "status": "PREPARED_NOT_RUN",
+  "limits": "One bounded saved native-source replay; all five flags on, explicit manual maintenance. No new native host session or unattended-worker recovery. Presence of a marker is only a lifecycle check, not semantic accuracy.",
+  "files": {
+    "memory.sqlite": "ba83e4e5922439db643d78439d9e71edf62b032ed2fe5163391dc8429a6fdd3e",
+    "runner.py": "e083e9ab0600587536633e9eaa40d0ec84c49e318f8ff69439220acaf0fc3f5c",
+    "source-outbox.json": "a66328fc45d547dcf27d0ef9995c6fcfd9535a5e11b4b963a1235effe5c60712"
+  }
+}

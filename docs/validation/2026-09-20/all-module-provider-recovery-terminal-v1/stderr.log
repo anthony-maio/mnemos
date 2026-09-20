@@ -1,0 +1,19 @@
+{"timestamp": "2026-09-20T22:14:46.175805+00:00", "event": "mnemos.provider_failure", "provider": "ollama", "operation": "predict", "error_type": "MnemosExternalServiceError"}
+{"timestamp": "2026-09-20T22:17:41.586241+00:00", "event": "mnemos.provider_failure", "provider": "ollama", "operation": "predict", "error_type": "MnemosExternalServiceError"}
+Traceback (most recent call last):
+  File "C:\Users\Ant\AppData\Local\Temp\mnemos-all-module-provider-recovery-v1\runner.py", line 115, in <module>
+    asyncio.run(main())
+    ~~~~~~~~~~~^^^^^^^^
+  File "C:\Users\Ant\AppData\Roaming\uv\python\cpython-3.13.7-windows-x86_64-none\Lib\asyncio\runners.py", line 195, in run
+    return runner.run(main)
+           ~~~~~~~~~~^^^^^^
+  File "C:\Users\Ant\AppData\Roaming\uv\python\cpython-3.13.7-windows-x86_64-none\Lib\asyncio\runners.py", line 118, in run
+    return self._loop.run_until_complete(task)
+           ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^
+  File "C:\Users\Ant\AppData\Roaming\uv\python\cpython-3.13.7-windows-x86_64-none\Lib\asyncio\base_events.py", line 725, in run_until_complete
+    return future.result()
+           ~~~~~~~~~~~~~^^
+  File "C:\Users\Ant\AppData\Local\Temp\mnemos-all-module-provider-recovery-v1\runner.py", line 69, in main
+    assert all(j['status']=='completed' for j in recovered['jobs']),'Recovery left pending or exhausted jobs'
+           ~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AssertionError: Recovery left pending or exhausted jobs
