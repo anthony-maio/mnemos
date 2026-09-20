@@ -610,6 +610,9 @@ async def test_preview_and_related_apply_remove_exact_copy_and_replay(tmp_path: 
                 "context": "",
                 "token_count_method": "utf8_bytes_upper_bound",
                 "context_token_upper_bound": 0,
+                "view": "memory",
+                "captured_evidence": [],
+                "evidence_context": "",
             }
         finally:
             restarted.engine.store.close()

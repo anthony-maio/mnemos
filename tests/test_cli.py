@@ -277,6 +277,7 @@ async def test_cli_retrieve_forwards_scope_args(
             self.current_scope: str | None = None
             self.scope_id: str | None = None
             self.allowed_scopes: tuple[str, ...] = ()
+            self.view = ""
 
         async def retrieve(
             self,
@@ -286,11 +287,13 @@ async def test_cli_retrieve_forwards_scope_args(
             current_scope: str = "project",
             scope_id: str | None = None,
             allowed_scopes: tuple[str, ...] = ("project", "workspace", "global"),
+            view: str = "memory",
         ) -> list[MemoryChunk]:
             _ = query, top_k, reconsolidate
             self.current_scope = current_scope
             self.scope_id = scope_id
             self.allowed_scopes = allowed_scopes
+            self.view = view
             return [
                 MemoryChunk(
                     content="result",
@@ -314,6 +317,7 @@ async def test_cli_retrieve_forwards_scope_args(
     assert engine.current_scope == "project"
     assert engine.scope_id == "alpha"
     assert engine.allowed_scopes == ("project", "global")
+    assert engine.view == "memory"
     assert '"scope": "project"' in capsys.readouterr().out
 
 

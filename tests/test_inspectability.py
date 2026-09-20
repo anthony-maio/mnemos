@@ -104,6 +104,55 @@ async def test_build_chunk_inspection_can_explain_retrieval_relevance(
 
 
 @pytest.mark.asyncio
+async def test_build_chunk_inspection_resolves_selected_retrieval_view(
+    engine: MnemosEngine,
+) -> None:
+    captured = MemoryChunk(
+        id="captured-evidence",
+        content="Captured release instruction",
+        embedding=engine.embedder.embed("Captured release instruction"),
+        metadata={
+            "scope": "project",
+            "scope_id": "default",
+            "source": "captured_passthrough",
+            "assertion_status": "unknown",
+        },
+    )
+    engine.store.store(captured)
+
+    await engine.retrieve(
+        "Captured release instruction",
+        top_k=1,
+        view="captured_evidence",
+        reconsolidate=False,
+    )
+
+    evidence_inspection = build_chunk_inspection(
+        engine,
+        captured.id,
+        query="Captured release instruction",
+        view="captured_evidence",
+    )
+    memory_inspection = build_chunk_inspection(
+        engine,
+        captured.id,
+        query="Captured release instruction",
+        view="memory",
+    )
+
+    assert evidence_inspection is not None
+    assert evidence_inspection["retrieval"]["status"] == "observed"
+    assert evidence_inspection["retrieval"]["view"] == "captured_evidence"
+    assert memory_inspection is not None
+    assert memory_inspection["retrieval"]["status"] == "not_observed"
+
+
+def test_build_chunk_inspection_rejects_unknown_retrieval_view(engine: MnemosEngine) -> None:
+    with pytest.raises(ValueError, match="Unknown retrieval view"):
+        build_chunk_inspection(engine, "missing", view="unsupported")  # type: ignore[arg-type]
+
+
+@pytest.mark.asyncio
 async def test_reconsolidation_appends_revision_history() -> None:
     embedder = SimpleEmbeddingProvider(dim=64)
     store = InMemoryStore()

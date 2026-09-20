@@ -5,7 +5,7 @@ from __future__ import annotations
 import hashlib
 import json
 from datetime import datetime, timezone
-from typing import Any
+from typing import Any, Literal, TypedDict
 from uuid import uuid4
 
 from .contracts import (
@@ -26,6 +26,10 @@ from .scopes import ScopeContext, ScopeRegistry, context_metadata, scope_allows
 from .types import EpisodicEvent, Interaction, MemoryChunk, RetrievalFeedbackEvent
 from .utils.embeddings import embed_text_async
 from .utils.storage import SQLiteStore, compute_canonical_key, normalize_memory_text
+
+
+class _RetrievalViewOptions(TypedDict, total=False):
+    view: Literal["memory", "captured_evidence"]
 
 
 class LocalMemoryService:
@@ -658,6 +662,11 @@ class LocalMemoryService:
 
     async def retrieve(self, request: RetrievalRequest) -> dict[str, Any]:
         self.registry.validate_context(request.context)
+        # Ordinary calls retain compatibility with existing custom engines.
+        # The production engine defaults to memory; evidence review opts in.
+        view_options: _RetrievalViewOptions = {}
+        if request.view == "captured_evidence":
+            view_options["view"] = request.view
         chunks = await self.engine.retrieve(
             request.query,
             top_k=request.top_k,
@@ -665,7 +674,7 @@ class LocalMemoryService:
             allowed_scopes=tuple(request.allowed_scopes),
             profile=request.profile,
             max_context_tokens=request.max_context_tokens,
-            view=request.view,
+            **view_options,
         )
         facts = []
         for chunk in chunks:

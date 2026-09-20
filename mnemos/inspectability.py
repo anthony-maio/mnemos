@@ -4,7 +4,7 @@ mnemos/inspectability.py — Shared memory inspection helpers.
 
 from __future__ import annotations
 
-from typing import Any
+from typing import Any, Literal
 
 from .types import MemoryChunk
 
@@ -73,12 +73,20 @@ def _build_retrieval_explanation(
     current_scope: str,
     scope_id: str | None,
     allowed_scopes: tuple[str, ...],
+    view: Literal["memory", "captured_evidence"],
 ) -> dict[str, Any]:
-    key = (query.strip(), current_scope, scope_id, allowed_scopes, None, None)
-    trace = getattr(engine, "_retrieval_traces", {}).get(key, {}).get(chunk.id)
+    if view != "memory" and view != "captured_evidence":
+        raise ValueError("Unknown retrieval view")
+    key = (query.strip(), current_scope, scope_id, allowed_scopes, None, None, view)
+    traces = getattr(engine, "_retrieval_traces", {})
+    trace = traces.get(key, {}).get(chunk.id)
+    if trace is None and view == "memory":
+        legacy_key = key[:-1]
+        trace = traces.get(legacy_key, {}).get(chunk.id)
     if trace is None or trace.get("version") != chunk.version:
         return {
             "query": query,
+            "view": view,
             "status": "not_observed",
             "semantic_rank": None,
             "explanation": ["No matching retrieval trace is available for this fact version."],
@@ -86,6 +94,7 @@ def _build_retrieval_explanation(
     return {
         **trace,
         "query": query,
+        "view": view,
         "in_semantic_candidates": trace.get("semantic_rank") is not None,
         "semantic_similarity": trace.get("semantic"),
         "graph_activated": trace.get("graph_energy", 0) > 0,
@@ -101,7 +110,10 @@ def build_chunk_inspection(
     current_scope: str = "project",
     scope_id: str | None = None,
     allowed_scopes: tuple[str, ...] | list[str] | None = None,
+    view: Literal["memory", "captured_evidence"] = "memory",
 ) -> dict[str, Any] | None:
+    if view != "memory" and view != "captured_evidence":
+        raise ValueError("Unknown retrieval view")
     chunk = engine.store.get(chunk_id)
     if chunk is None:
         return None
@@ -138,6 +150,7 @@ def build_chunk_inspection(
             current_scope=normalized_current_scope,
             scope_id=normalized_scope_id,
             allowed_scopes=_normalize_allowed_scopes(allowed_scopes),
+            view=view,
         )
 
     return {

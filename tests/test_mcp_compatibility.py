@@ -144,6 +144,11 @@ async def _assert_tier1_roundtrip(params: StdioServerParameters) -> None:
 
             tools = await session.list_tools()
             assert TOOL_NAMES.issubset({tool.name for tool in tools.tools})
+            retrieve_tool = next(tool for tool in tools.tools if tool.name == "mnemos_retrieve")
+            assert retrieve_tool.inputSchema["properties"]["view"]["enum"] == [
+                "memory",
+                "captured_evidence",
+            ]
 
             resources = await session.list_resources()
             assert RESOURCE_URIS.issubset({str(resource.uri) for resource in resources.resources})
@@ -154,6 +159,7 @@ async def _assert_tier1_roundtrip(params: StdioServerParameters) -> None:
                     "content": "Current project uses uv and Ruff for Python tooling.",
                     "role": "user",
                     "source_kind": "compatibility-test",
+                    "source_ref": "compatibility-test",
                     "scope": "project",
                     "scope_id": PROJECT_ID,
                 },
@@ -190,12 +196,34 @@ async def _assert_tier1_roundtrip(params: StdioServerParameters) -> None:
             )
             retrieve_payload = json.loads(_call_result_text(retrieve_result))
             assert retrieve_payload["schema_version"] == 1
-            assert retrieve_payload["facts"]
-            fact = retrieve_payload["facts"][0]
+            assert retrieve_payload["view"] == "memory"
+            assert retrieve_payload["facts"] == []
+
+            evidence_result = await session.call_tool(
+                "mnemos_retrieve",
+                {
+                    "query": "python tooling",
+                    "top_k": 3,
+                    "reconsolidate": False,
+                    "current_scope": "project",
+                    "scope_id": PROJECT_ID,
+                    "allowed_scopes": "project,global",
+                    "view": "captured_evidence",
+                },
+            )
+            evidence_payload = json.loads(_call_result_text(evidence_result))
+            assert evidence_payload["schema_version"] == 1
+            assert evidence_payload["view"] == "captured_evidence"
+            assert evidence_payload["facts"] == []
+            assert evidence_payload["context"] == ""
+            assert evidence_payload["captured_evidence"]
+            fact = evidence_payload["captured_evidence"][0]
             fact_id = fact["id"]
             assert fact["scope"] == "project"
             assert fact["scope_id"] == PROJECT_ID
             assert fact["scores"]
+            assert fact["sources"]
+            assert fact["sources"][0]["source_ref"] == "compatibility-test"
 
             inspect_result = await session.call_tool(
                 "mnemos_inspect",
