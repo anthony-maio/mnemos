@@ -1,0 +1,47 @@
+from pathlib import Path
+import hashlib, json, shutil
+
+repo = Path(__file__).resolve().parents[1]
+temp = Path('C:/Users/Ant/AppData/Local/Temp')
+source = temp / 'mnemos-installed-checks-captured-merge-v2'
+record = json.loads((source / 'installation.json').read_bytes())
+contract = json.loads((source / 'contract.json').read_bytes())
+assert record['status'] == contract['status'] == 'passed'
+assert record['bindings_after']['commit'] == '26c9ddbb218df44ddba6d9b06a09fd258cdd3efc'
+sha = lambda p: hashlib.sha256(p.read_bytes()).hexdigest()
+assert record['runner_sha256'] == sha(repo / '.venv/run_combined_installed_check_v49.py')
+assert record['bindings_before']['checks_sha256'] == sha(temp / 'mnemos-package-checks-captured-merge-v1/verification.json')
+for command in record['commands']:
+    for stream in ('stdout', 'stderr'):
+        assert sha(source / (command['name'] + '.' + stream + '.log')) == command[stream + '_sha256']
+out = repo / 'docs/validation/2026-09-20/captured-merge-installed-checkpoint-v2'
+out.mkdir(exist_ok=False)
+(out / '.gitattributes').write_bytes(b'** -text -whitespace\n')
+for path in source.iterdir():
+    if path.is_file() and path.suffix in {'.json', '.xml', '.log'}:
+        shutil.copyfile(path, out / path.name)
+for name in ['run_combined_installed_check_v49.py', 'installed_contract_probe_v4.py', 'verify_claude_stop_replay_v2.py']:
+    shutil.copyfile(repo / '.venv' / name, out / (name + '.txt'))
+shutil.copyfile(__file__, out / 'collector.py.txt')
+summary = record['contract']['junit_summary']
+(out / 'README.md').write_text(f'''# Captured-correction merge installed-package checkpoint
+
+Frozen product 26c9ddb passes {summary['tests'] - summary['skipped']} installed cases
+with {summary['skipped']} skips. The isolated runner verifies each selected test
+outcome against the frozen source JUnit, along with installed module origins,
+wheel bytes, input hashes and the replay contract. The new captured correction
+merge tests are included. Counts and individual outcomes are preserved here.
+
+The first attempt failed before installation because the launcher supplied a
+directory instead of verification.json. It remains in the source checkpoint
+archive. This corrected run uses fresh output, environment and replay paths.
+No test criterion or source code changed between those attempts.
+
+This establishes the selected installed contract, not complete native-host
+coverage, full-module quality, or pilot acceptance. The separate Hermes v35
+archive proves its bounded installed correction/forgetting lifecycle. Nothing
+was installed into live host configuration or published.
+''')
+files = {p.name: {'bytes': p.stat().st_size, 'sha256': sha(p)} for p in sorted(out.iterdir()) if p.is_file()}
+(out / 'evidence-index.json').write_text(json.dumps({'files': files}, indent=2) + '\n')
+print(json.dumps({'archive': str(out), 'files': len(files), 'junit': summary}))

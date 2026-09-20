@@ -1,6 +1,14 @@
 # Functional local memory implementation record
 
-The [latest package checkpoint](../2026-09-20/generation-settings-checkpoint-v1/README.md)
+Current verified product is 26c9ddb. The [source/package checks](../2026-09-20/captured-merge-source-checkpoint-v1/README.md)
+pass 2,012 tests with four skips and all six checks. The [isolated installed suite](../2026-09-20/captured-merge-installed-checkpoint-v2/README.md)
+passes 811 cases with four matching skips. The [Hermes v35 lifecycle](../2026-09-20/hermes-revision-lifecycle-v35/README.md)
+passes correction with duplicate captured-evidence absorption, restart, reviewed
+forgetting, and original/correction replay suppression. All modules were disabled
+in that lifecycle; native reliability and full-module quality remain open.
+The earlier installed launcher failure is preserved in the source checkpoint.
+
+The [previous package checkpoint](../2026-09-20/generation-settings-checkpoint-v1/README.md)
 is 05c71d2: 2,005 source tests, 804 isolated installed cases, four skips in
 each, all six source/package checks, and seven replay assertions pass.
 Structured reasoning uses the chat final-content channel; managed token,

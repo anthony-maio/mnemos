@@ -12,7 +12,15 @@ Deliver an article draft, three possible titles, and a separate compact source/c
 
 ## Read this first
 
-The [latest package checkpoint](../validation/2026-09-20/generation-settings-checkpoint-v1/README.md)
+Current verified product is 26c9ddb. The [source/package checks](../validation/2026-09-20/captured-merge-source-checkpoint-v1/README.md)
+pass 2,012 tests with four skips and all six checks. The [isolated installed suite](../validation/2026-09-20/captured-merge-installed-checkpoint-v2/README.md)
+passes 811 cases with four matching skips. The [Hermes v35 lifecycle](../validation/2026-09-20/hermes-revision-lifecycle-v35/README.md)
+passes correction with duplicate captured-evidence absorption, restart, reviewed
+forgetting, and original/correction replay suppression. All modules were disabled
+in that lifecycle; native reliability and full-module quality remain open.
+The earlier installed launcher failure is preserved in the source checkpoint.
+
+The [previous package checkpoint](../validation/2026-09-20/generation-settings-checkpoint-v1/README.md)
 is 05c71d2: 2,005 source tests, 804 isolated installed cases, four skips in
 each, all six source/package checks, and seven replay assertions pass.
 Structured reasoning uses the chat final-content channel; managed token,
@@ -85,7 +93,7 @@ forgetting pass the focused checks. Source 26c9ddb passes 2,012 tests with four
 skips and all six source/package checks. The [rebuilt-wheel v35 lifecycle](../validation/2026-09-20/hermes-revision-lifecycle-v35/README.md)
 also passes correction, restart, reviewed forgetting and original/correction
 source replay. All five modules were disabled. The broader installed contract
-suite remains open; do not describe this as a live host upgrade.
+suite also passes; this remains an isolated validation, not a live host upgrade.
 
 Two subsequent extraction diagnostics preserve additional negative evidence.
 The [42-observation context comparison](../validation/2026-09-20/history-context-diagnostic-v1/README.md)
