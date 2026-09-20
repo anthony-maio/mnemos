@@ -1,12 +1,20 @@
 # Functional local memory implementation record
 
-Current verified product is 26c9ddb. The [source/package checks](../2026-09-20/captured-merge-source-checkpoint-v1/README.md)
-pass 2,012 tests with four skips and all six checks. The [isolated installed suite](../2026-09-20/captured-merge-installed-checkpoint-v2/README.md)
-passes 811 cases with four matching skips. The [Hermes v35 lifecycle](../2026-09-20/hermes-revision-lifecycle-v35/README.md)
-passes correction with duplicate captured-evidence absorption, restart, reviewed
-forgetting, and original/correction replay suppression. All modules were disabled
-in that lifecycle; native reliability and full-module quality remain open.
-The earlier installed launcher failure is preserved in the source checkpoint.
+Current verified product is d937892. The [source/package checks](../2026-09-20/reconsolidation-return-source-checkpoint-v1/README.md)
+pass 2,013 tests with four skips and all six checks. The [expanded installed suite](../2026-09-20/reconsolidation-return-installed-checkpoint-v2/README.md)
+passes 818 cases with four matching skips, including the direct-return
+reconsolidation regression. Its earlier 811-case selection omitted that file;
+the narrower result remains preserved. Direct correction now returns the
+persisted fact's merged evidence metadata after captured-duplicate absorption.
+
+The [Hermes v35 lifecycle](../2026-09-20/hermes-revision-lifecycle-v35/README.md)
+remains bound to previous product 26c9ddb. It passes duplicate absorption,
+restart, reviewed forgetting and replay suppression with all modules disabled.
+It does not establish a native lifecycle on d937892 or full-module quality.
+The [missing-target prompt diagnostic](../2026-09-20/extraction-missing-target-v1/README.md)
+completed all 40 calls; the candidate introduced three length failures and lost
+an explicit uncertainty statement. It was rejected. A frozen temperature-only
+development comparison is running; production settings remain unchanged.
 
 The [previous package checkpoint](../2026-09-20/generation-settings-checkpoint-v1/README.md)
 is 05c71d2: 2,005 source tests, 804 isolated installed cases, four skips in

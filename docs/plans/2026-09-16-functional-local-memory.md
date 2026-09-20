@@ -510,13 +510,12 @@ structural diagnostic, not retrieval improvement or a changed graph default.
 
 ### T19 - Reconcile release, documentation, and research claims
 
-Current source/package evidence: [product d937892](../validation/2026-09-20/reconsolidation-return-source-checkpoint-v1/README.md)
+Current verified product [d937892](../validation/2026-09-20/reconsolidation-return-source-checkpoint-v1/README.md)
 passes 2,013 source tests with four skips and all six source/package checks.
-Its [initial installed check](../validation/2026-09-20/reconsolidation-return-installed-checkpoint-v1/README.md)
-passes 811 cases with four skips but omits the direct-return regression. An
-expanded check is running. The preceding verified installed
-[product 26c9ddb](../validation/2026-09-20/captured-merge-installed-checkpoint-v2/README.md)
-passes 811 cases with four matching skips. These are separate checkpoints.
+The [expanded installed check](../validation/2026-09-20/reconsolidation-return-installed-checkpoint-v2/README.md)
+passes 818 cases with four matching skips and includes the direct-return
+regression. The earlier 811-case installed selection omitted that file and is
+preserved separately. Hermes v35 remains bound to previous product 26c9ddb.
 Native host integration, full-module quality and final acceptance remain open.
 The [larger-budget extraction diagnostic](../validation/2026-09-20/extraction-larger-budget-v1/README.md)
 preserves the same parsed outputs and failure as the original comparison;
