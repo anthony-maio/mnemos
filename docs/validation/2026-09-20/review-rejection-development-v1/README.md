@@ -33,6 +33,7 @@ an unscoped ID and then a nonexistent receipt field; both were corrected to
 the existing capture contract before the final run. They were test defects,
 not additional production changes.
 
-The evidence index binds the raw JUnit reports. Full source/package and
-isolated installed validation of this successor remain pending. Native-host
+The evidence index binds the raw JUnit reports. The subsequent
+[package checkpoint](../review-rejection-checkpoint-v1/README.md) passes full
+source/package and isolated installed validation on `db21750`. Native-host
 and full-module quality gates remain open.

@@ -14,8 +14,11 @@ valid pending captures after rejection. The earlier test used an invalid
 capture and did not establish the claimed no-replay behavior. A shared
 rejection map now governs decoding and the early return; incomplete previews,
 duplicate selections, and dependency conflicts receive safe rejections.
-Deletion and scope requirements are unchanged. Full package validation of
-this successor remains pending; v12 tested the preceding installed package.
+Deletion and scope requirements are unchanged. The [successor package checkpoint](../2026-09-20/review-rejection-checkpoint-v1/README.md)
+at `db21750` passes 1,692 source tests with 4 skips, all six
+source/package checks, 669 isolated installed cases with 4 matching
+skips, and seven replay assertions. No native cohort has run this successor;
+v12 tested the preceding installed package.
 
 The [source-association repeat measurement](../2026-09-20/source-association-measurement-v2/README.md)
 completed all 45 rows after repairing the supplementary benchmark visit limit.

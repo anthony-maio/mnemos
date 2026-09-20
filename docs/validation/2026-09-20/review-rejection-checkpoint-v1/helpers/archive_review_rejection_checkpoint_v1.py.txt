@@ -1,0 +1,99 @@
+"""Preserve verified source and installed evidence for out-of-preview selection rejection."""
+from pathlib import Path
+import hashlib
+import json
+import shutil
+
+repo = Path(__file__).resolve().parents[1]
+temp = Path('C:/Users/Ant/AppData/Local/Temp')
+checks = temp / 'mnemos-package-checks-review-rejection-v1'
+installed = temp / 'mnemos-installed-checks-review-rejection-v1'
+output = repo / 'docs/validation/2026-09-20/review-rejection-checkpoint-v1'
+verification = json.loads((checks / 'verification.json').read_text(encoding='utf-8'))
+installation = json.loads((installed / 'installation.json').read_text(encoding='utf-8'))
+contract = json.loads((installed / 'contract.json').read_text(encoding='utf-8'))
+assert verification['status'] == installation['status'] == contract['status'] == 'passed'
+commit = verification['source_commit']
+assert commit == 'db217509477d92b9a82bd7e11d4a4bffb542fa29'
+assert commit == installation['bindings_after']['commit']
+assert all(c['exit_code'] == 0 for c in verification['checks'])
+
+def sha(path):
+    return hashlib.sha256(path.read_bytes()).hexdigest()
+
+assert sha(checks / 'verification.json') == installation['bindings_before']['checks_sha256']
+assert sha(checks / 'pytest.xml') == installation['successful_pytest_xml_sha256']
+for artifact in verification['artifacts']:
+    p = Path(artifact['file'])
+    assert sha(p) == artifact['sha256'] and p.stat().st_size == artifact['bytes']
+for command in installation['commands']:
+    for stream in ('stdout', 'stderr'):
+        assert sha(installed / (command['name'] + '.' + stream + '.log')) == command[stream + '_sha256']
+assert sha(repo / '.venv/final_checkpoint_checks_v3.py') == verification['runner_sha256']
+assert sha(repo / '.venv/run_combined_installed_check_v40.py') == installation['runner_sha256']
+output.mkdir(exist_ok=False)
+(output / '.gitattributes').write_bytes(b'** -text -whitespace\n')
+
+def copy(path, relative):
+    target = output / relative
+    target.parent.mkdir(parents=True, exist_ok=True)
+    shutil.copyfile(path, target)
+
+for kind, folder in (('source-checks', checks), ('installed-checks', installed)):
+    for p in folder.iterdir():
+        if p.is_file() and p.suffix in {'.json', '.xml', '.log'}:
+            copy(p, Path(kind) / p.name)
+for name in ('final_checkpoint_checks_v3.py', 'run_combined_installed_check_v40.py', 'installed_contract_probe_v4.py', 'verify_claude_stop_replay_v2.py'):
+    copy(repo / '.venv' / name, Path('helpers') / (name + '.txt'))
+copy(Path(__file__), Path('helpers') / (Path(__file__).name + '.txt'))
+files = {p.relative_to(output).as_posix(): {'bytes': p.stat().st_size, 'sha256': sha(p)}
+         for p in sorted(output.rglob('*')) if p.is_file()}
+(output / 'evidence-index.json').write_text(json.dumps({'files': files}, indent=2) + '\n', encoding='utf-8')
+s = verification['checks'][0]['counts']
+i = installation['contract']['junit_summary']
+wheel = next(a for a in verification['artifacts'] if a['file'].endswith('.whl'))
+(output / 'README.md').write_text(f"""# Reviewed-forget rejection package checkpoint
+
+Frozen source `{commit}` passes {s['tests'] - s['skipped']:,} source tests
+with {s['skipped']} skips, all six source/package checks, {i['tests'] - i['skipped']:,} isolated
+installed cases with {i['skipped']} matching skips, and seven replay assertions.
+Installed validation compares case outcomes, import origins, and package bytes
+against the frozen source and wheel.
+
+Wheel: {wheel['bytes']:,} bytes; SHA-256 `{wheel['sha256']}`.
+
+## What changed
+
+The [development record](../review-rejection-development-v1/README.md)
+preserves the rejected-request outbox regression and the broader rejection
+tests. A valid pending capture previously replayed after an invalid related
+forget selection. The earlier regression used an invalid capture, so its
+unchanged outbox did not prove that replay was skipped. A shared rejection
+map now governs both strict response decoding and the return before replay.
+
+Incomplete previews, duplicate selections, and dependency conflicts receive
+fixed, noncommitting HTTP 409 responses. Their client and Hermes paths retain
+pending captures without replay. An explicit later replay commits a valid
+capture. Scope, digest, version, dependency, and deletion requirements remain
+unchanged; unknown errors retain opaque HTTP 500 responses.
+
+## Evidence limits
+
+The [native Hermes v12 cohort](../hermes-native-cohort-v12/README.md) ran the
+preceding `5155ebd` package and finished zero of three complete lifecycles.
+One attempt ultimately committed target-only deletion, without establishing
+reviewed-copy erasure. No attempt reached replay or final recall. Its model
+behavior is not an observation of this repaired package.
+
+No native cohort has run this checkpoint. Native continuity, complete capture,
+full-module quality, Desktop, and the operational pilot remain open. Graph
+development measurements remain negative. Passing these package checks does
+not establish model reliability or retrieval utility.
+
+No live host configuration or memory data was changed. The evidence index
+binds the raw files; this README is outside that index.
+""", encoding='utf-8')
+print(json.dumps({'archive': str(output), 'files': len(files), 'source_commit': commit,
+                  'source_passes': s['tests']-s['skipped'], 'source_skips': s['skipped'],
+                  'installed_passes': i['tests']-i['skipped'], 'installed_skips': i['skipped'],
+                  'wheel': wheel}))

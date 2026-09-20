@@ -54,15 +54,16 @@ valid pending captures after rejection. The earlier test used an invalid
 capture and did not establish the claimed no-replay behavior. A shared
 rejection map now governs decoding and the early return; incomplete previews,
 duplicate selections, and dependency conflicts receive safe rejections.
-Deletion and scope requirements are unchanged. Full package validation of
-this successor remains pending; v12 tested the preceding installed package.
+Deletion and scope requirements are unchanged. The [successor package checkpoint](../validation/2026-09-20/review-rejection-checkpoint-v1/README.md)
+at `db21750` passes 1,692 source tests with 4 skips, all six
+source/package checks, 669 isolated installed cases with 4 matching
+skips, and seven replay assertions. No native cohort has run this successor;
+v12 tested the preceding installed package.
 
-The checkout handoff now includes findings after portable packet v24. That
-packet remains a dated working snapshot; refresh it after the next package
-checkpoint before using these new findings in the article.
-
-Packet v24 adds the source-association development measurements to the verified
-package record and preceding native failures. The engineering goal remains open.
+Portable packet v25 includes this verified package checkpoint, all three
+failed native v12 attempts, the corrected outbox regression, and the source-
+association development measurements. It is a working research snapshot.
+Engineering acceptance and the article's final factual reconciliation remain open.
 
 The [source-association repeat measurement](../validation/2026-09-20/source-association-measurement-v2/README.md)
 completed 45 observations across five cases, three arms, and three deterministic
@@ -645,5 +646,5 @@ not a requirement to recount every implementation detail in the article.
 - [ ] Record final host continuity, latency, capture coverage, and pilot status without collapsing the separate gates.
 - [ ] Identify which quantitative claims can be used, with units, sample sizes, settings, uncertainty where available, and limitations.
 - [ ] Verify original website/paper claims against primary sources and link the dated corrections.
-- [x] Prepare a portable working packet with this handoff, the selected voice skill, key reports, regression examples, and a file manifest. Refresh that packet at final acceptance. The portable v22 packet adds the verified shared-guidance package, worker repair, native v5 failure, and all three failed v11 attempts. It also includes the three-host v2 and v3 failures and the v4 teaching/restarted-recall result followed by correction failure, selected native records, and terminal encoding/retrieval reports, the two earlier native lifecycle failures, all eight fixed-cohort runs (v3-v9 retain twenty-one failed attempts; v10 adds one pass and two failures under its own binding; these are not a pooled reliability estimate), the deletion coverage and source-selection repair evidence, the six-case development diagnostic and model readiness records, the affective fidelity review, the endpoint context diagnostic and verified-context native successor, and dated website/paper snapshots. Some older evidence links still require the full checkout. Local validation artifacts are research inputs; public citations require accessible sources.
+- [x] Prepare a portable working packet with this handoff, the selected voice skill, primary-source snapshots, key reports, regression examples, and a file manifest. Portable v25 includes the verified `db21750` package, all three failed native v12 attempts, the rejected-request outbox repair, and both source-association development measurements. Earlier native and real-model failures retain their own source/model bindings; they are not a pooled reliability estimate. Refresh the packet at final acceptance. Local validation artifacts are research inputs; public citations require accessible sources.
 - [ ] Keep unverified interpretations and questions outside the article's factual claims, then make the final voice pass using Anthony's skill.
