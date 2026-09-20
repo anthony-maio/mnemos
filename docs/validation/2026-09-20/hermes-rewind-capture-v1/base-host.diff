@@ -1,0 +1,21 @@
+diff --git a/hermes_cli/cli_agent_setup_mixin.py b/hermes_cli/cli_agent_setup_mixin.py
+index c7d5f69683..ad84d7761c 100644
+--- a/hermes_cli/cli_agent_setup_mixin.py
++++ b/hermes_cli/cli_agent_setup_mixin.py
+@@ -4,6 +4,7 @@ imported lazily inside each method (import cycle)."""
+ 
+ from __future__ import annotations
+ 
++import os
+ import sys
+ 
+ from rich.markup import escape as _escape
+@@ -662,6 +663,8 @@ class CLIAgentSetupMixin:
+                 provider_data_collection=self._provider_data_collection,
+                 openrouter_min_coding_score=self._openrouter_min_coding_score,
+                 session_id=self.session_id, platform="cli", session_db=self._session_db,
++                # --in has already resolved and selected this CLI session directory.
++                cwd=os.path.abspath(os.getcwd()),
+                 clarify_callback=clarify_callback,
+                 reasoning_callback=self._current_reasoning_callback(),
+                 fallback_model=self._fallback_model, thinking_callback=self._on_thinking,

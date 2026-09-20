@@ -12,6 +12,15 @@ Deliver an article draft, three possible titles, and a separate compact source/c
 
 ## Read this first
 
+The latest Hermes identity evidence is the isolated
+[undo/retry capture-boundary comparison](../validation/2026-09-20/hermes-rewind-capture-v1/README.md).
+An identical regenerated turn should count as new evidence while the surviving
+turn remains the same observation. The cwd-only host loses IDs on that
+surviving prefix; the proposed compatibility patch preserves them through the
+actual host methods and Mnemos's queued outbox. Both candidate cases pass
+restart and replay, and both unpatched failures remain recorded. Keep this
+API fixture separate from a native model conversation or a live installation.
+
 The article's central question is whether several agents can share a memory
 that remains useful after a correction, a restart, or a request to forget.
 The work produced tested infrastructure and exposed unresolved behavior in

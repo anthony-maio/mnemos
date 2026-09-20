@@ -1,0 +1,940 @@
+{
+  "status": "passed",
+  "scope": "actual CLI methods and MemoryManager; local queued outbox only",
+  "host_commit": "14a346345486418aa85ed6526549412ee2665ade",
+  "host": "/tmp/mnemos-hermes-durable-identity-v1",
+  "host_files_before": {
+    "hermes_state.py": "9f9cdf0e366c8dcad7fb43e28518e58930904421c4f9bed2c7342d4a413ecf55",
+    "agent/memory_manager.py": "bd688b6ceecaf63e737516d9a65d2e0db3c3a8c12d5d7ede26c415b609a2898a",
+    "agent/conversation_compression.py": "78ded327356f0f8c643a68fe13e2052b2443fda54d73559f7b8dbd3d902f95eb",
+    "hermes_cli/cli_agent_setup_mixin.py": "e993899d81e786bb044d2ed3763e09dc259a22fc39e1d61854c0954d2b2c0fa8",
+    "hermes_cli/cli_session_mixin.py": "5d0a8220ca4f607d7f473ebf52feb5ae5c11e52e0b34d2f4209a92761e9556eb"
+  },
+  "host_origins": {
+    "agent.memory_manager": "/tmp/mnemos-hermes-durable-identity-v1/agent/memory_manager.py",
+    "hermes_cli.cli_session_mixin": "/tmp/mnemos-hermes-durable-identity-v1/hermes_cli/cli_session_mixin.py",
+    "hermes_state": "/tmp/mnemos-hermes-durable-identity-v1/hermes_state.py"
+  },
+  "adapter_origin": "/tmp/mnemos-hermes-rewind-capture-v1-candidate/wheel/mnemos/adapters/hermes.py",
+  "wheel_sha256": "9af6667d86933570beecc940e55e637f70a9258e5339e948dc48ba9692782bf6",
+  "runner_sha256": "42cb43317cc34f0f2beadfeedb59231dde474fda7d34bb7e57ecc7c6b883bd14",
+  "cases": [
+    {
+      "operation": "undo",
+      "status": "passed",
+      "phases": [
+        {
+          "label": "initial_native_capture",
+          "input_row_ids": [
+            1,
+            2,
+            3,
+            4
+          ],
+          "pending": [
+            {
+              "content": "Use cedar.",
+              "context": {
+                "host": "hermes",
+                "project_id": "9d816c75-469e-45e6-b80c-58479567aed2",
+                "session_id": "rewind-capture-fixture",
+                "user_profile_id": "rewind-fixture",
+                "workspace_id": null
+              },
+              "event_id": "hermes:26311cb8eebc2c55673ec9a5f59bd9cea1337ca9ce1c64d20011ee36cf6eed71",
+              "occurred_at": "2026-09-20T16:28:24.560375+00:00",
+              "role": "user",
+              "source_kind": "hermes_memory_provider",
+              "source_ref": "transcript:v2:1"
+            },
+            {
+              "content": "Cedar recorded.",
+              "context": {
+                "host": "hermes",
+                "project_id": "9d816c75-469e-45e6-b80c-58479567aed2",
+                "session_id": "rewind-capture-fixture",
+                "user_profile_id": "rewind-fixture",
+                "workspace_id": null
+              },
+              "event_id": "hermes:cf960644e31217e5d64626370277e92ef1841ff6813b295cc1c1976bd8ac9c3a",
+              "occurred_at": "2026-09-20T16:28:24.560945+00:00",
+              "role": "assistant",
+              "source_kind": "hermes_memory_provider",
+              "source_ref": "transcript:v2:2"
+            },
+            {
+              "content": "Use maple.",
+              "context": {
+                "host": "hermes",
+                "project_id": "9d816c75-469e-45e6-b80c-58479567aed2",
+                "session_id": "rewind-capture-fixture",
+                "user_profile_id": "rewind-fixture",
+                "workspace_id": null
+              },
+              "event_id": "hermes:777c3df3e1a79e43f4d9cebfc555072184d28345d3c5603ce379c8789bd207c0",
+              "occurred_at": "2026-09-20T16:28:24.561171+00:00",
+              "role": "user",
+              "source_kind": "hermes_memory_provider",
+              "source_ref": "transcript:v2:3"
+            },
+            {
+              "content": "Maple recorded.",
+              "context": {
+                "host": "hermes",
+                "project_id": "9d816c75-469e-45e6-b80c-58479567aed2",
+                "session_id": "rewind-capture-fixture",
+                "user_profile_id": "rewind-fixture",
+                "workspace_id": null
+              },
+              "event_id": "hermes:ce2643be46df655e044fbf8701132c978c59c706deeaf8bc938b5508608f64db",
+              "occurred_at": "2026-09-20T16:28:24.561343+00:00",
+              "role": "assistant",
+              "source_kind": "hermes_memory_provider",
+              "source_ref": "transcript:v2:4"
+            }
+          ],
+          "diagnostics": []
+        },
+        {
+          "label": "duplicate_replay",
+          "input_row_ids": [
+            1,
+            2,
+            3,
+            4
+          ],
+          "pending": [
+            {
+              "content": "Use cedar.",
+              "context": {
+                "host": "hermes",
+                "project_id": "9d816c75-469e-45e6-b80c-58479567aed2",
+                "session_id": "rewind-capture-fixture",
+                "user_profile_id": "rewind-fixture",
+                "workspace_id": null
+              },
+              "event_id": "hermes:26311cb8eebc2c55673ec9a5f59bd9cea1337ca9ce1c64d20011ee36cf6eed71",
+              "occurred_at": "2026-09-20T16:28:24.560375+00:00",
+              "role": "user",
+              "source_kind": "hermes_memory_provider",
+              "source_ref": "transcript:v2:1"
+            },
+            {
+              "content": "Cedar recorded.",
+              "context": {
+                "host": "hermes",
+                "project_id": "9d816c75-469e-45e6-b80c-58479567aed2",
+                "session_id": "rewind-capture-fixture",
+                "user_profile_id": "rewind-fixture",
+                "workspace_id": null
+              },
+              "event_id": "hermes:cf960644e31217e5d64626370277e92ef1841ff6813b295cc1c1976bd8ac9c3a",
+              "occurred_at": "2026-09-20T16:28:24.560945+00:00",
+              "role": "assistant",
+              "source_kind": "hermes_memory_provider",
+              "source_ref": "transcript:v2:2"
+            },
+            {
+              "content": "Use maple.",
+              "context": {
+                "host": "hermes",
+                "project_id": "9d816c75-469e-45e6-b80c-58479567aed2",
+                "session_id": "rewind-capture-fixture",
+                "user_profile_id": "rewind-fixture",
+                "workspace_id": null
+              },
+              "event_id": "hermes:777c3df3e1a79e43f4d9cebfc555072184d28345d3c5603ce379c8789bd207c0",
+              "occurred_at": "2026-09-20T16:28:24.561171+00:00",
+              "role": "user",
+              "source_kind": "hermes_memory_provider",
+              "source_ref": "transcript:v2:3"
+            },
+            {
+              "content": "Maple recorded.",
+              "context": {
+                "host": "hermes",
+                "project_id": "9d816c75-469e-45e6-b80c-58479567aed2",
+                "session_id": "rewind-capture-fixture",
+                "user_profile_id": "rewind-fixture",
+                "workspace_id": null
+              },
+              "event_id": "hermes:ce2643be46df655e044fbf8701132c978c59c706deeaf8bc938b5508608f64db",
+              "occurred_at": "2026-09-20T16:28:24.561343+00:00",
+              "role": "assistant",
+              "source_kind": "hermes_memory_provider",
+              "source_ref": "transcript:v2:4"
+            }
+          ],
+          "diagnostics": []
+        },
+        {
+          "label": "identical_regenerated_suffix",
+          "input_row_ids": [
+            1,
+            2,
+            5,
+            6
+          ],
+          "pending": [
+            {
+              "content": "Use cedar.",
+              "context": {
+                "host": "hermes",
+                "project_id": "9d816c75-469e-45e6-b80c-58479567aed2",
+                "session_id": "rewind-capture-fixture",
+                "user_profile_id": "rewind-fixture",
+                "workspace_id": null
+              },
+              "event_id": "hermes:26311cb8eebc2c55673ec9a5f59bd9cea1337ca9ce1c64d20011ee36cf6eed71",
+              "occurred_at": "2026-09-20T16:28:24.560375+00:00",
+              "role": "user",
+              "source_kind": "hermes_memory_provider",
+              "source_ref": "transcript:v2:1"
+            },
+            {
+              "content": "Cedar recorded.",
+              "context": {
+                "host": "hermes",
+                "project_id": "9d816c75-469e-45e6-b80c-58479567aed2",
+                "session_id": "rewind-capture-fixture",
+                "user_profile_id": "rewind-fixture",
+                "workspace_id": null
+              },
+              "event_id": "hermes:cf960644e31217e5d64626370277e92ef1841ff6813b295cc1c1976bd8ac9c3a",
+              "occurred_at": "2026-09-20T16:28:24.560945+00:00",
+              "role": "assistant",
+              "source_kind": "hermes_memory_provider",
+              "source_ref": "transcript:v2:2"
+            },
+            {
+              "content": "Use maple.",
+              "context": {
+                "host": "hermes",
+                "project_id": "9d816c75-469e-45e6-b80c-58479567aed2",
+                "session_id": "rewind-capture-fixture",
+                "user_profile_id": "rewind-fixture",
+                "workspace_id": null
+              },
+              "event_id": "hermes:777c3df3e1a79e43f4d9cebfc555072184d28345d3c5603ce379c8789bd207c0",
+              "occurred_at": "2026-09-20T16:28:24.561171+00:00",
+              "role": "user",
+              "source_kind": "hermes_memory_provider",
+              "source_ref": "transcript:v2:3"
+            },
+            {
+              "content": "Maple recorded.",
+              "context": {
+                "host": "hermes",
+                "project_id": "9d816c75-469e-45e6-b80c-58479567aed2",
+                "session_id": "rewind-capture-fixture",
+                "user_profile_id": "rewind-fixture",
+                "workspace_id": null
+              },
+              "event_id": "hermes:ce2643be46df655e044fbf8701132c978c59c706deeaf8bc938b5508608f64db",
+              "occurred_at": "2026-09-20T16:28:24.561343+00:00",
+              "role": "assistant",
+              "source_kind": "hermes_memory_provider",
+              "source_ref": "transcript:v2:4"
+            },
+            {
+              "content": "Use maple.",
+              "context": {
+                "host": "hermes",
+                "project_id": "9d816c75-469e-45e6-b80c-58479567aed2",
+                "session_id": "rewind-capture-fixture",
+                "user_profile_id": "rewind-fixture",
+                "workspace_id": null
+              },
+              "event_id": "hermes:63158f0a2671a6a3927e00a53cf4d9c05aadaae5b5a67639ee8b4bdf4ee8f8bb",
+              "occurred_at": "2026-09-20T16:28:24.715340+00:00",
+              "role": "user",
+              "source_kind": "hermes_memory_provider",
+              "source_ref": "transcript:v2:5"
+            },
+            {
+              "content": "Maple recorded.",
+              "context": {
+                "host": "hermes",
+                "project_id": "9d816c75-469e-45e6-b80c-58479567aed2",
+                "session_id": "rewind-capture-fixture",
+                "user_profile_id": "rewind-fixture",
+                "workspace_id": null
+              },
+              "event_id": "hermes:5988872f098a554ccced4cf17d016d33ccfb1c0fe61063101a7d2151642429f2",
+              "occurred_at": "2026-09-20T16:28:24.716334+00:00",
+              "role": "assistant",
+              "source_kind": "hermes_memory_provider",
+              "source_ref": "transcript:v2:6"
+            }
+          ],
+          "diagnostics": []
+        },
+        {
+          "label": "provider_restart_durable_reload",
+          "input_row_ids": [
+            1,
+            2,
+            5,
+            6
+          ],
+          "pending": [
+            {
+              "content": "Use cedar.",
+              "context": {
+                "host": "hermes",
+                "project_id": "9d816c75-469e-45e6-b80c-58479567aed2",
+                "session_id": "rewind-capture-fixture",
+                "user_profile_id": "rewind-fixture",
+                "workspace_id": null
+              },
+              "event_id": "hermes:26311cb8eebc2c55673ec9a5f59bd9cea1337ca9ce1c64d20011ee36cf6eed71",
+              "occurred_at": "2026-09-20T16:28:24.560375+00:00",
+              "role": "user",
+              "source_kind": "hermes_memory_provider",
+              "source_ref": "transcript:v2:1"
+            },
+            {
+              "content": "Cedar recorded.",
+              "context": {
+                "host": "hermes",
+                "project_id": "9d816c75-469e-45e6-b80c-58479567aed2",
+                "session_id": "rewind-capture-fixture",
+                "user_profile_id": "rewind-fixture",
+                "workspace_id": null
+              },
+              "event_id": "hermes:cf960644e31217e5d64626370277e92ef1841ff6813b295cc1c1976bd8ac9c3a",
+              "occurred_at": "2026-09-20T16:28:24.560945+00:00",
+              "role": "assistant",
+              "source_kind": "hermes_memory_provider",
+              "source_ref": "transcript:v2:2"
+            },
+            {
+              "content": "Use maple.",
+              "context": {
+                "host": "hermes",
+                "project_id": "9d816c75-469e-45e6-b80c-58479567aed2",
+                "session_id": "rewind-capture-fixture",
+                "user_profile_id": "rewind-fixture",
+                "workspace_id": null
+              },
+              "event_id": "hermes:777c3df3e1a79e43f4d9cebfc555072184d28345d3c5603ce379c8789bd207c0",
+              "occurred_at": "2026-09-20T16:28:24.561171+00:00",
+              "role": "user",
+              "source_kind": "hermes_memory_provider",
+              "source_ref": "transcript:v2:3"
+            },
+            {
+              "content": "Maple recorded.",
+              "context": {
+                "host": "hermes",
+                "project_id": "9d816c75-469e-45e6-b80c-58479567aed2",
+                "session_id": "rewind-capture-fixture",
+                "user_profile_id": "rewind-fixture",
+                "workspace_id": null
+              },
+              "event_id": "hermes:ce2643be46df655e044fbf8701132c978c59c706deeaf8bc938b5508608f64db",
+              "occurred_at": "2026-09-20T16:28:24.561343+00:00",
+              "role": "assistant",
+              "source_kind": "hermes_memory_provider",
+              "source_ref": "transcript:v2:4"
+            },
+            {
+              "content": "Use maple.",
+              "context": {
+                "host": "hermes",
+                "project_id": "9d816c75-469e-45e6-b80c-58479567aed2",
+                "session_id": "rewind-capture-fixture",
+                "user_profile_id": "rewind-fixture",
+                "workspace_id": null
+              },
+              "event_id": "hermes:63158f0a2671a6a3927e00a53cf4d9c05aadaae5b5a67639ee8b4bdf4ee8f8bb",
+              "occurred_at": "2026-09-20T16:28:24.715340+00:00",
+              "role": "user",
+              "source_kind": "hermes_memory_provider",
+              "source_ref": "transcript:v2:5"
+            },
+            {
+              "content": "Maple recorded.",
+              "context": {
+                "host": "hermes",
+                "project_id": "9d816c75-469e-45e6-b80c-58479567aed2",
+                "session_id": "rewind-capture-fixture",
+                "user_profile_id": "rewind-fixture",
+                "workspace_id": null
+              },
+              "event_id": "hermes:5988872f098a554ccced4cf17d016d33ccfb1c0fe61063101a7d2151642429f2",
+              "occurred_at": "2026-09-20T16:28:24.716334+00:00",
+              "role": "assistant",
+              "source_kind": "hermes_memory_provider",
+              "source_ref": "transcript:v2:6"
+            }
+          ],
+          "diagnostics": []
+        },
+        {
+          "label": "shortened_retained_view",
+          "input_row_ids": [
+            1,
+            2
+          ],
+          "pending": [
+            {
+              "content": "Use cedar.",
+              "context": {
+                "host": "hermes",
+                "project_id": "9d816c75-469e-45e6-b80c-58479567aed2",
+                "session_id": "rewind-capture-fixture",
+                "user_profile_id": "rewind-fixture",
+                "workspace_id": null
+              },
+              "event_id": "hermes:26311cb8eebc2c55673ec9a5f59bd9cea1337ca9ce1c64d20011ee36cf6eed71",
+              "occurred_at": "2026-09-20T16:28:24.560375+00:00",
+              "role": "user",
+              "source_kind": "hermes_memory_provider",
+              "source_ref": "transcript:v2:1"
+            },
+            {
+              "content": "Cedar recorded.",
+              "context": {
+                "host": "hermes",
+                "project_id": "9d816c75-469e-45e6-b80c-58479567aed2",
+                "session_id": "rewind-capture-fixture",
+                "user_profile_id": "rewind-fixture",
+                "workspace_id": null
+              },
+              "event_id": "hermes:cf960644e31217e5d64626370277e92ef1841ff6813b295cc1c1976bd8ac9c3a",
+              "occurred_at": "2026-09-20T16:28:24.560945+00:00",
+              "role": "assistant",
+              "source_kind": "hermes_memory_provider",
+              "source_ref": "transcript:v2:2"
+            },
+            {
+              "content": "Use maple.",
+              "context": {
+                "host": "hermes",
+                "project_id": "9d816c75-469e-45e6-b80c-58479567aed2",
+                "session_id": "rewind-capture-fixture",
+                "user_profile_id": "rewind-fixture",
+                "workspace_id": null
+              },
+              "event_id": "hermes:777c3df3e1a79e43f4d9cebfc555072184d28345d3c5603ce379c8789bd207c0",
+              "occurred_at": "2026-09-20T16:28:24.561171+00:00",
+              "role": "user",
+              "source_kind": "hermes_memory_provider",
+              "source_ref": "transcript:v2:3"
+            },
+            {
+              "content": "Maple recorded.",
+              "context": {
+                "host": "hermes",
+                "project_id": "9d816c75-469e-45e6-b80c-58479567aed2",
+                "session_id": "rewind-capture-fixture",
+                "user_profile_id": "rewind-fixture",
+                "workspace_id": null
+              },
+              "event_id": "hermes:ce2643be46df655e044fbf8701132c978c59c706deeaf8bc938b5508608f64db",
+              "occurred_at": "2026-09-20T16:28:24.561343+00:00",
+              "role": "assistant",
+              "source_kind": "hermes_memory_provider",
+              "source_ref": "transcript:v2:4"
+            },
+            {
+              "content": "Use maple.",
+              "context": {
+                "host": "hermes",
+                "project_id": "9d816c75-469e-45e6-b80c-58479567aed2",
+                "session_id": "rewind-capture-fixture",
+                "user_profile_id": "rewind-fixture",
+                "workspace_id": null
+              },
+              "event_id": "hermes:63158f0a2671a6a3927e00a53cf4d9c05aadaae5b5a67639ee8b4bdf4ee8f8bb",
+              "occurred_at": "2026-09-20T16:28:24.715340+00:00",
+              "role": "user",
+              "source_kind": "hermes_memory_provider",
+              "source_ref": "transcript:v2:5"
+            },
+            {
+              "content": "Maple recorded.",
+              "context": {
+                "host": "hermes",
+                "project_id": "9d816c75-469e-45e6-b80c-58479567aed2",
+                "session_id": "rewind-capture-fixture",
+                "user_profile_id": "rewind-fixture",
+                "workspace_id": null
+              },
+              "event_id": "hermes:5988872f098a554ccced4cf17d016d33ccfb1c0fe61063101a7d2151642429f2",
+              "occurred_at": "2026-09-20T16:28:24.716334+00:00",
+              "role": "assistant",
+              "source_kind": "hermes_memory_provider",
+              "source_ref": "transcript:v2:6"
+            }
+          ],
+          "diagnostics": []
+        }
+      ]
+    },
+    {
+      "operation": "retry",
+      "status": "passed",
+      "phases": [
+        {
+          "label": "initial_native_capture",
+          "input_row_ids": [
+            1,
+            2,
+            3,
+            4
+          ],
+          "pending": [
+            {
+              "content": "Use cedar.",
+              "context": {
+                "host": "hermes",
+                "project_id": "338f0d84-5107-4c6b-a1ea-6ced2222a5bb",
+                "session_id": "rewind-capture-fixture",
+                "user_profile_id": "rewind-fixture",
+                "workspace_id": null
+              },
+              "event_id": "hermes:d2def6b3e62d2e2e5782612665cdd9d671d1964dcb3dfd089997a376613a1693",
+              "occurred_at": "2026-09-20T16:28:24.751924+00:00",
+              "role": "user",
+              "source_kind": "hermes_memory_provider",
+              "source_ref": "transcript:v2:1"
+            },
+            {
+              "content": "Cedar recorded.",
+              "context": {
+                "host": "hermes",
+                "project_id": "338f0d84-5107-4c6b-a1ea-6ced2222a5bb",
+                "session_id": "rewind-capture-fixture",
+                "user_profile_id": "rewind-fixture",
+                "workspace_id": null
+              },
+              "event_id": "hermes:397ea3dc55e97cf152267b528d78df6da998b2f94927a137cd689a00675a9194",
+              "occurred_at": "2026-09-20T16:28:24.752320+00:00",
+              "role": "assistant",
+              "source_kind": "hermes_memory_provider",
+              "source_ref": "transcript:v2:2"
+            },
+            {
+              "content": "Use maple.",
+              "context": {
+                "host": "hermes",
+                "project_id": "338f0d84-5107-4c6b-a1ea-6ced2222a5bb",
+                "session_id": "rewind-capture-fixture",
+                "user_profile_id": "rewind-fixture",
+                "workspace_id": null
+              },
+              "event_id": "hermes:83d85e93b0099c18c0ee3e9290ad3a34d6cba3425568d5eaadb11b5949e2fe6b",
+              "occurred_at": "2026-09-20T16:28:24.752561+00:00",
+              "role": "user",
+              "source_kind": "hermes_memory_provider",
+              "source_ref": "transcript:v2:3"
+            },
+            {
+              "content": "Maple recorded.",
+              "context": {
+                "host": "hermes",
+                "project_id": "338f0d84-5107-4c6b-a1ea-6ced2222a5bb",
+                "session_id": "rewind-capture-fixture",
+                "user_profile_id": "rewind-fixture",
+                "workspace_id": null
+              },
+              "event_id": "hermes:0a220b7fc3723af1121da4fd891b407fbaf8d38b9b615832bd702b21aa7e784b",
+              "occurred_at": "2026-09-20T16:28:24.752742+00:00",
+              "role": "assistant",
+              "source_kind": "hermes_memory_provider",
+              "source_ref": "transcript:v2:4"
+            }
+          ],
+          "diagnostics": []
+        },
+        {
+          "label": "duplicate_replay",
+          "input_row_ids": [
+            1,
+            2,
+            3,
+            4
+          ],
+          "pending": [
+            {
+              "content": "Use cedar.",
+              "context": {
+                "host": "hermes",
+                "project_id": "338f0d84-5107-4c6b-a1ea-6ced2222a5bb",
+                "session_id": "rewind-capture-fixture",
+                "user_profile_id": "rewind-fixture",
+                "workspace_id": null
+              },
+              "event_id": "hermes:d2def6b3e62d2e2e5782612665cdd9d671d1964dcb3dfd089997a376613a1693",
+              "occurred_at": "2026-09-20T16:28:24.751924+00:00",
+              "role": "user",
+              "source_kind": "hermes_memory_provider",
+              "source_ref": "transcript:v2:1"
+            },
+            {
+              "content": "Cedar recorded.",
+              "context": {
+                "host": "hermes",
+                "project_id": "338f0d84-5107-4c6b-a1ea-6ced2222a5bb",
+                "session_id": "rewind-capture-fixture",
+                "user_profile_id": "rewind-fixture",
+                "workspace_id": null
+              },
+              "event_id": "hermes:397ea3dc55e97cf152267b528d78df6da998b2f94927a137cd689a00675a9194",
+              "occurred_at": "2026-09-20T16:28:24.752320+00:00",
+              "role": "assistant",
+              "source_kind": "hermes_memory_provider",
+              "source_ref": "transcript:v2:2"
+            },
+            {
+              "content": "Use maple.",
+              "context": {
+                "host": "hermes",
+                "project_id": "338f0d84-5107-4c6b-a1ea-6ced2222a5bb",
+                "session_id": "rewind-capture-fixture",
+                "user_profile_id": "rewind-fixture",
+                "workspace_id": null
+              },
+              "event_id": "hermes:83d85e93b0099c18c0ee3e9290ad3a34d6cba3425568d5eaadb11b5949e2fe6b",
+              "occurred_at": "2026-09-20T16:28:24.752561+00:00",
+              "role": "user",
+              "source_kind": "hermes_memory_provider",
+              "source_ref": "transcript:v2:3"
+            },
+            {
+              "content": "Maple recorded.",
+              "context": {
+                "host": "hermes",
+                "project_id": "338f0d84-5107-4c6b-a1ea-6ced2222a5bb",
+                "session_id": "rewind-capture-fixture",
+                "user_profile_id": "rewind-fixture",
+                "workspace_id": null
+              },
+              "event_id": "hermes:0a220b7fc3723af1121da4fd891b407fbaf8d38b9b615832bd702b21aa7e784b",
+              "occurred_at": "2026-09-20T16:28:24.752742+00:00",
+              "role": "assistant",
+              "source_kind": "hermes_memory_provider",
+              "source_ref": "transcript:v2:4"
+            }
+          ],
+          "diagnostics": []
+        },
+        {
+          "label": "identical_regenerated_suffix",
+          "input_row_ids": [
+            1,
+            2,
+            5,
+            6
+          ],
+          "pending": [
+            {
+              "content": "Use cedar.",
+              "context": {
+                "host": "hermes",
+                "project_id": "338f0d84-5107-4c6b-a1ea-6ced2222a5bb",
+                "session_id": "rewind-capture-fixture",
+                "user_profile_id": "rewind-fixture",
+                "workspace_id": null
+              },
+              "event_id": "hermes:d2def6b3e62d2e2e5782612665cdd9d671d1964dcb3dfd089997a376613a1693",
+              "occurred_at": "2026-09-20T16:28:24.751924+00:00",
+              "role": "user",
+              "source_kind": "hermes_memory_provider",
+              "source_ref": "transcript:v2:1"
+            },
+            {
+              "content": "Cedar recorded.",
+              "context": {
+                "host": "hermes",
+                "project_id": "338f0d84-5107-4c6b-a1ea-6ced2222a5bb",
+                "session_id": "rewind-capture-fixture",
+                "user_profile_id": "rewind-fixture",
+                "workspace_id": null
+              },
+              "event_id": "hermes:397ea3dc55e97cf152267b528d78df6da998b2f94927a137cd689a00675a9194",
+              "occurred_at": "2026-09-20T16:28:24.752320+00:00",
+              "role": "assistant",
+              "source_kind": "hermes_memory_provider",
+              "source_ref": "transcript:v2:2"
+            },
+            {
+              "content": "Use maple.",
+              "context": {
+                "host": "hermes",
+                "project_id": "338f0d84-5107-4c6b-a1ea-6ced2222a5bb",
+                "session_id": "rewind-capture-fixture",
+                "user_profile_id": "rewind-fixture",
+                "workspace_id": null
+              },
+              "event_id": "hermes:83d85e93b0099c18c0ee3e9290ad3a34d6cba3425568d5eaadb11b5949e2fe6b",
+              "occurred_at": "2026-09-20T16:28:24.752561+00:00",
+              "role": "user",
+              "source_kind": "hermes_memory_provider",
+              "source_ref": "transcript:v2:3"
+            },
+            {
+              "content": "Maple recorded.",
+              "context": {
+                "host": "hermes",
+                "project_id": "338f0d84-5107-4c6b-a1ea-6ced2222a5bb",
+                "session_id": "rewind-capture-fixture",
+                "user_profile_id": "rewind-fixture",
+                "workspace_id": null
+              },
+              "event_id": "hermes:0a220b7fc3723af1121da4fd891b407fbaf8d38b9b615832bd702b21aa7e784b",
+              "occurred_at": "2026-09-20T16:28:24.752742+00:00",
+              "role": "assistant",
+              "source_kind": "hermes_memory_provider",
+              "source_ref": "transcript:v2:4"
+            },
+            {
+              "content": "Use maple.",
+              "context": {
+                "host": "hermes",
+                "project_id": "338f0d84-5107-4c6b-a1ea-6ced2222a5bb",
+                "session_id": "rewind-capture-fixture",
+                "user_profile_id": "rewind-fixture",
+                "workspace_id": null
+              },
+              "event_id": "hermes:92c5d81cf5cd20acb5a26a2c390ed27034eb25e68e26ee8545a6a9d465d2eb63",
+              "occurred_at": "2026-09-20T16:28:24.759025+00:00",
+              "role": "user",
+              "source_kind": "hermes_memory_provider",
+              "source_ref": "transcript:v2:5"
+            },
+            {
+              "content": "Maple recorded.",
+              "context": {
+                "host": "hermes",
+                "project_id": "338f0d84-5107-4c6b-a1ea-6ced2222a5bb",
+                "session_id": "rewind-capture-fixture",
+                "user_profile_id": "rewind-fixture",
+                "workspace_id": null
+              },
+              "event_id": "hermes:09657e27ef35606875e16e4777455f7ebea76dd454512fdf6d885611aa4becb3",
+              "occurred_at": "2026-09-20T16:28:24.759325+00:00",
+              "role": "assistant",
+              "source_kind": "hermes_memory_provider",
+              "source_ref": "transcript:v2:6"
+            }
+          ],
+          "diagnostics": []
+        },
+        {
+          "label": "provider_restart_durable_reload",
+          "input_row_ids": [
+            1,
+            2,
+            5,
+            6
+          ],
+          "pending": [
+            {
+              "content": "Use cedar.",
+              "context": {
+                "host": "hermes",
+                "project_id": "338f0d84-5107-4c6b-a1ea-6ced2222a5bb",
+                "session_id": "rewind-capture-fixture",
+                "user_profile_id": "rewind-fixture",
+                "workspace_id": null
+              },
+              "event_id": "hermes:d2def6b3e62d2e2e5782612665cdd9d671d1964dcb3dfd089997a376613a1693",
+              "occurred_at": "2026-09-20T16:28:24.751924+00:00",
+              "role": "user",
+              "source_kind": "hermes_memory_provider",
+              "source_ref": "transcript:v2:1"
+            },
+            {
+              "content": "Cedar recorded.",
+              "context": {
+                "host": "hermes",
+                "project_id": "338f0d84-5107-4c6b-a1ea-6ced2222a5bb",
+                "session_id": "rewind-capture-fixture",
+                "user_profile_id": "rewind-fixture",
+                "workspace_id": null
+              },
+              "event_id": "hermes:397ea3dc55e97cf152267b528d78df6da998b2f94927a137cd689a00675a9194",
+              "occurred_at": "2026-09-20T16:28:24.752320+00:00",
+              "role": "assistant",
+              "source_kind": "hermes_memory_provider",
+              "source_ref": "transcript:v2:2"
+            },
+            {
+              "content": "Use maple.",
+              "context": {
+                "host": "hermes",
+                "project_id": "338f0d84-5107-4c6b-a1ea-6ced2222a5bb",
+                "session_id": "rewind-capture-fixture",
+                "user_profile_id": "rewind-fixture",
+                "workspace_id": null
+              },
+              "event_id": "hermes:83d85e93b0099c18c0ee3e9290ad3a34d6cba3425568d5eaadb11b5949e2fe6b",
+              "occurred_at": "2026-09-20T16:28:24.752561+00:00",
+              "role": "user",
+              "source_kind": "hermes_memory_provider",
+              "source_ref": "transcript:v2:3"
+            },
+            {
+              "content": "Maple recorded.",
+              "context": {
+                "host": "hermes",
+                "project_id": "338f0d84-5107-4c6b-a1ea-6ced2222a5bb",
+                "session_id": "rewind-capture-fixture",
+                "user_profile_id": "rewind-fixture",
+                "workspace_id": null
+              },
+              "event_id": "hermes:0a220b7fc3723af1121da4fd891b407fbaf8d38b9b615832bd702b21aa7e784b",
+              "occurred_at": "2026-09-20T16:28:24.752742+00:00",
+              "role": "assistant",
+              "source_kind": "hermes_memory_provider",
+              "source_ref": "transcript:v2:4"
+            },
+            {
+              "content": "Use maple.",
+              "context": {
+                "host": "hermes",
+                "project_id": "338f0d84-5107-4c6b-a1ea-6ced2222a5bb",
+                "session_id": "rewind-capture-fixture",
+                "user_profile_id": "rewind-fixture",
+                "workspace_id": null
+              },
+              "event_id": "hermes:92c5d81cf5cd20acb5a26a2c390ed27034eb25e68e26ee8545a6a9d465d2eb63",
+              "occurred_at": "2026-09-20T16:28:24.759025+00:00",
+              "role": "user",
+              "source_kind": "hermes_memory_provider",
+              "source_ref": "transcript:v2:5"
+            },
+            {
+              "content": "Maple recorded.",
+              "context": {
+                "host": "hermes",
+                "project_id": "338f0d84-5107-4c6b-a1ea-6ced2222a5bb",
+                "session_id": "rewind-capture-fixture",
+                "user_profile_id": "rewind-fixture",
+                "workspace_id": null
+              },
+              "event_id": "hermes:09657e27ef35606875e16e4777455f7ebea76dd454512fdf6d885611aa4becb3",
+              "occurred_at": "2026-09-20T16:28:24.759325+00:00",
+              "role": "assistant",
+              "source_kind": "hermes_memory_provider",
+              "source_ref": "transcript:v2:6"
+            }
+          ],
+          "diagnostics": []
+        },
+        {
+          "label": "shortened_retained_view",
+          "input_row_ids": [
+            1,
+            2
+          ],
+          "pending": [
+            {
+              "content": "Use cedar.",
+              "context": {
+                "host": "hermes",
+                "project_id": "338f0d84-5107-4c6b-a1ea-6ced2222a5bb",
+                "session_id": "rewind-capture-fixture",
+                "user_profile_id": "rewind-fixture",
+                "workspace_id": null
+              },
+              "event_id": "hermes:d2def6b3e62d2e2e5782612665cdd9d671d1964dcb3dfd089997a376613a1693",
+              "occurred_at": "2026-09-20T16:28:24.751924+00:00",
+              "role": "user",
+              "source_kind": "hermes_memory_provider",
+              "source_ref": "transcript:v2:1"
+            },
+            {
+              "content": "Cedar recorded.",
+              "context": {
+                "host": "hermes",
+                "project_id": "338f0d84-5107-4c6b-a1ea-6ced2222a5bb",
+                "session_id": "rewind-capture-fixture",
+                "user_profile_id": "rewind-fixture",
+                "workspace_id": null
+              },
+              "event_id": "hermes:397ea3dc55e97cf152267b528d78df6da998b2f94927a137cd689a00675a9194",
+              "occurred_at": "2026-09-20T16:28:24.752320+00:00",
+              "role": "assistant",
+              "source_kind": "hermes_memory_provider",
+              "source_ref": "transcript:v2:2"
+            },
+            {
+              "content": "Use maple.",
+              "context": {
+                "host": "hermes",
+                "project_id": "338f0d84-5107-4c6b-a1ea-6ced2222a5bb",
+                "session_id": "rewind-capture-fixture",
+                "user_profile_id": "rewind-fixture",
+                "workspace_id": null
+              },
+              "event_id": "hermes:83d85e93b0099c18c0ee3e9290ad3a34d6cba3425568d5eaadb11b5949e2fe6b",
+              "occurred_at": "2026-09-20T16:28:24.752561+00:00",
+              "role": "user",
+              "source_kind": "hermes_memory_provider",
+              "source_ref": "transcript:v2:3"
+            },
+            {
+              "content": "Maple recorded.",
+              "context": {
+                "host": "hermes",
+                "project_id": "338f0d84-5107-4c6b-a1ea-6ced2222a5bb",
+                "session_id": "rewind-capture-fixture",
+                "user_profile_id": "rewind-fixture",
+                "workspace_id": null
+              },
+              "event_id": "hermes:0a220b7fc3723af1121da4fd891b407fbaf8d38b9b615832bd702b21aa7e784b",
+              "occurred_at": "2026-09-20T16:28:24.752742+00:00",
+              "role": "assistant",
+              "source_kind": "hermes_memory_provider",
+              "source_ref": "transcript:v2:4"
+            },
+            {
+              "content": "Use maple.",
+              "context": {
+                "host": "hermes",
+                "project_id": "338f0d84-5107-4c6b-a1ea-6ced2222a5bb",
+                "session_id": "rewind-capture-fixture",
+                "user_profile_id": "rewind-fixture",
+                "workspace_id": null
+              },
+              "event_id": "hermes:92c5d81cf5cd20acb5a26a2c390ed27034eb25e68e26ee8545a6a9d465d2eb63",
+              "occurred_at": "2026-09-20T16:28:24.759025+00:00",
+              "role": "user",
+              "source_kind": "hermes_memory_provider",
+              "source_ref": "transcript:v2:5"
+            },
+            {
+              "content": "Maple recorded.",
+              "context": {
+                "host": "hermes",
+                "project_id": "338f0d84-5107-4c6b-a1ea-6ced2222a5bb",
+                "session_id": "rewind-capture-fixture",
+                "user_profile_id": "rewind-fixture",
+                "workspace_id": null
+              },
+              "event_id": "hermes:09657e27ef35606875e16e4777455f7ebea76dd454512fdf6d885611aa4becb3",
+              "occurred_at": "2026-09-20T16:28:24.759325+00:00",
+              "role": "assistant",
+              "source_kind": "hermes_memory_provider",
+              "source_ref": "transcript:v2:6"
+            }
+          ],
+          "diagnostics": []
+        }
+      ]
+    }
+  ],
+  "host_files_after": {
+    "hermes_state.py": "9f9cdf0e366c8dcad7fb43e28518e58930904421c4f9bed2c7342d4a413ecf55",
+    "agent/memory_manager.py": "bd688b6ceecaf63e737516d9a65d2e0db3c3a8c12d5d7ede26c415b609a2898a",
+    "agent/conversation_compression.py": "78ded327356f0f8c643a68fe13e2052b2443fda54d73559f7b8dbd3d902f95eb",
+    "hermes_cli/cli_agent_setup_mixin.py": "e993899d81e786bb044d2ed3763e09dc259a22fc39e1d61854c0954d2b2c0fa8",
+    "hermes_cli/cli_session_mixin.py": "5d0a8220ca4f607d7f473ebf52feb5ae5c11e52e0b34d2f4209a92761e9556eb"
+  },
+  "network_attempts": 0,
+  "host_unchanged": true
+}

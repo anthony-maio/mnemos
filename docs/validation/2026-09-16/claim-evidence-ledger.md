@@ -1,5 +1,14 @@
 # Mnemos claim and evidence ledger
 
+The isolated Hermes identity candidate now passes the
+[undo/retry capture boundary](../2026-09-20/hermes-rewind-capture-v1/README.md)
+with the verified `4bbab4f` wheel. Actual CLI rewind methods preserve the
+surviving native IDs; identical regenerated turns add two observations, and
+provider restart and replay preserve all six payloads. Both unpatched cases
+fail and remain archived. This is queued-outbox API evidence with fixture
+turns, not native inference, a live host upgrade, or a legacy-data migration.
+Compaction clone provenance remains open.
+
 The [embedding-outage package](../2026-09-20/retrieval-provider-outage-checkpoint-v1/README.md)
 at `4bbab4f` passes 1,894 source tests and 722 installed cases, four skips
 each, all six source/package checks, and seven replay assertions. Existing

@@ -1027,6 +1027,15 @@ prompt hook. The transcript appeared by Stop with native identifiers. Reading
 the transcript earlier cannot resolve that observed turn's association;
 capture diagnostics and complete lifecycle acceptance remain open.
 
+The latest T14 candidate evidence is the
+[Hermes undo/retry capture-boundary check](../2026-09-20/hermes-rewind-capture-v1/README.md).
+Both actual CLI methods preserve six native observations through the patched
+host, installed-wheel adapter, provider restart, and replay. Both cwd-only
+control cases fail with eight queued records, including four provisional
+receipts. This verifies the isolated compatibility candidate's queued-capture
+boundary; live installation, legacy identity migration, and compaction clone
+provenance remain open. Product package verification remains at `4bbab4f`.
+
 | Plan item | Current implementation and evidence | Acceptance state |
 | --- | --- | --- |
 | T01 Runtime | Configured providers, SQLite default, explicit mock rejection, readiness checks, health reporting, and installed entry points are covered by the `a5a9101` package and wheel checks. Windows private-path inheritance and permission drift are now explicitly tested. | Installed doctor cases cover configuration states but do not substitute for a live provider reachability probe. Managed service logging, omitted-provider startup, and generated host provenance are also covered. |

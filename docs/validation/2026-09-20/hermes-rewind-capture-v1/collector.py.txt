@@ -1,0 +1,51 @@
+import hashlib
+import json
+from pathlib import Path
+import subprocess
+
+repo = Path(__file__).resolve().parent.parent
+dest = repo / "docs/validation/2026-09-20/hermes-rewind-capture-v1"
+dest.mkdir(exist_ok=False)
+(dest / ".gitattributes").write_text("** -text -whitespace\n", encoding="ascii")
+
+def digest(data):
+    return hashlib.sha256(data).hexdigest()
+
+records = []
+for arm, host in (
+    ("base", "/tmp/mnemos-hermes-cwd-compat-v1"),
+    ("candidate", "/tmp/mnemos-hermes-durable-identity-v1"),
+):
+    path = f"/tmp/mnemos-hermes-rewind-capture-v1-{arm}/report.json"
+    raw = subprocess.check_output(["wsl", "-e", "cat", path])
+    report = json.loads(raw)
+    (dest / f"{arm}-report.json").write_bytes(raw)
+    diff = subprocess.check_output(["wsl", "-e", "git", "-C", host, "diff", "--"])
+    (dest / f"{arm}-host.diff").write_bytes(diff)
+    for name, expected in report["host_files_after"].items():
+        content = subprocess.check_output(["wsl", "-e", "cat", f"{host}/{name}"])
+        assert digest(content) == expected == report["host_files_before"][name]
+        target = dest / "host-source" / arm / (name + ".txt")
+        target.parent.mkdir(parents=True, exist_ok=True)
+        target.write_bytes(content)
+    records.append({"arm":arm, "report_source":path, "expected_exit":1 if arm == "base" else 0,
+                    "observed_status":report["status"], "host_diff_sha256":digest(diff)})
+
+runner = repo / "benchmarks/native_hosts/hermes_rewind_capture_v1.py"
+for arm in ("base", "candidate"):
+    report = json.loads((dest / f"{arm}-report.json").read_bytes())
+    assert digest(runner.read_bytes()) == report["runner_sha256"]
+(dest / "hermes_rewind_capture_v1.py.txt").write_bytes(runner.read_bytes())
+(dest / "protocol.md").write_bytes((repo / "docs/plans/2026-09-20-hermes-rewind-capture-v1.md").read_bytes())
+(dest / "collector.py.txt").write_bytes(Path(__file__).read_bytes())
+(dest / "collection.json").write_text(json.dumps({
+    "frozen_runner_commit":subprocess.check_output(["git", "rev-parse", "HEAD"], cwd=repo, text=True).strip(),
+    "collection_scope":"Original JSON reports and host source bytes; stdout is available in execution tool results, not archived as a raw log.",
+    "interpreter":"/tmp/mnemos-hermes-durable-identity-pytest311-v1/bin/python",
+    "dependency_path":"/home/anthony/.hermes/hermes-agent/venv/lib/python3.11/site-packages",
+    "arms":records,
+}, indent=2)+"\n", encoding="utf-8")
+files = [{"path":str(path.relative_to(dest)).replace("\\", "/"), "bytes":path.stat().st_size,
+          "sha256":digest(path.read_bytes())} for path in sorted(dest.rglob("*")) if path.is_file()]
+(dest / "artifact-index.json").write_text(json.dumps({"files":files}, indent=2)+"\n", encoding="utf-8")
+print(json.dumps({"archive":str(dest), "indexed_files":len(files)}))

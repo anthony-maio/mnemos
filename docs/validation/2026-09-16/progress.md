@@ -1,5 +1,15 @@
 # Functional local memory implementation record
 
+September 20, Hermes rewind capture boundary: the existing isolated host
+identity patch passes [both undo and retry](../2026-09-20/hermes-rewind-capture-v1/README.md)
+through actual CLI methods, MemoryManager, and the `4bbab4f` wheel adapter.
+An identical regenerated turn adds exactly two observations; original
+payloads survive provider restart and replay unchanged. The cwd-only host
+fails both cases with eight queued records rather than six, including four
+provisional receipts. Both arms and 19 bound artifacts are retained. This
+does not install the patch, test inference or service delivery, migrate legacy
+identities, or close compaction provenance. Product test counts are unchanged.
+
 September 20, embedding-outage package verified: product `4bbab4f` passes
 [all six source/package checks](../2026-09-20/retrieval-provider-outage-checkpoint-v1/README.md),
 1,894 source tests and 722 isolated installed cases, with four skips each,

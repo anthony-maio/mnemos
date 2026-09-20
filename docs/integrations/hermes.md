@@ -49,6 +49,12 @@ undo/retry of an ID-less warm transcript. It targets the same pinned host
 revision and has not been applied to the live installation or the cwd-only
 native-test checkout. Its [28-case verification](../validation/2026-09-19/hermes-host-identity-candidate-v1/README.md)
 includes real resume/rewind persistence and bounded loader contract checks.
+The later [capture-boundary check](../validation/2026-09-20/hermes-rewind-capture-v1/README.md)
+passes actual undo and retry through MemoryManager and the verified Mnemos
+wheel: four original observations become six after an identical regenerated
+turn, with unchanged payloads after provider restart and replay. The cwd-only
+host fails both cases by producing four additional provisional receipts.
+This remains isolated API and outbox evidence, not a live-host upgrade.
 Compaction that clones original rows still needs an occurrence-provenance
 contract; carrying IDs through a reload does not solve that separate problem.
 
