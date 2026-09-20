@@ -335,6 +335,14 @@ Run: `py -3.13 -m pytest -q tests/test_backup_restore.py tests/test_storage_sqli
 
 ### T17 - Verify the complete local and cross-host workflow
 
+The [provenance repair follow-up](../validation/2026-09-20/hermes-provenance-repair-v27/README.md)
+reproduces and repairs unmarked compression output acquiring original authority,
+edited hybrid components retaining stale ancestor references, and derived user
+edits being promoted to originals. Its 32 focused cases cover classification,
+restart, recopy, rollback, and tamper rejection. Parent originals remain intact;
+hybrid revisions receive separate durable source records. The broad SessionDB
+rerun and native delivery acceptance remain open at this checkpoint.
+
 The [pre-compression source snapshot follow-up](../validation/2026-09-20/hermes-source-snapshot-v21/README.md)
 passes 23 focused cases after persisting original evidence before compression,
 advancing its lease watermark, and correcting carrier classification. One

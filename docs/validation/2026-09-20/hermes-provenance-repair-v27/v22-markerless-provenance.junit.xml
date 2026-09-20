@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="utf-8"?><testsuites name="pytest tests"><testsuite name="pytest" errors="0" failures="1" skipped="0" tests="1" time="0.207" timestamp="2026-09-20T16:08:56.547255-04:00" hostname="Aurora"><testcase classname="tests.hermes_state.test_provenance_regressions_v22" name="test_v22_unmarked_compaction_assistant_is_not_self_originated" time="0.047"><failure message="AssertionError: assert [{'session_id...': None, ...}] == []&#10;  &#10;  Left contains one more item: {'session_id': 'session', 'role': 'assistant', 'content': 'generated answer', 'tool_call_id': None, ...}&#10;  Use -v to get more diff">tmp_path = PosixPath('/tmp/pytest-of-anthony/pytest-100/test_v22_unmarked_compaction_a0')
+
+    def test_v22_unmarked_compaction_assistant_is_not_self_originated(tmp_path):
+        db = SessionDB(tmp_path / "state.db")
+        db.create_session("session", "cli", cwd=str(tmp_path))
+        db.archive_and_compact("session", [{"role": "assistant", "content": "generated answer"}])
+&gt;       assert db.get_memory_evidence("session") == []
+E       AssertionError: assert [{'session_id...': None, ...}] == []
+E         
+E         Left contains one more item: {'session_id': 'session', 'role': 'assistant', 'content': 'generated answer', 'tool_call_id': None, ...}
+E         Use -v to get more diff
+
+tests/hermes_state/test_provenance_regressions_v22.py:12: AssertionError</failure></testcase></testsuite></testsuites>

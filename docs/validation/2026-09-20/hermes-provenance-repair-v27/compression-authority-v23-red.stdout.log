@@ -1,0 +1,140 @@
+FFFF..                                                                   [100%]
+=================================== FAILURES ===================================
+_ test_unproven_compression_is_derived_and_proven_source_survives[user-in_place] _
+
+tmp_path = PosixPath('/tmp/pytest-of-anthony/pytest-101/test_unproven_compression_is_d0')
+route = 'in_place', role = 'user'
+
+    @pytest.mark.parametrize("route", ["in_place", "child"])
+    @pytest.mark.parametrize("role", ["user", "assistant"])
+    def test_unproven_compression_is_derived_and_proven_source_survives(tmp_path, route, role):
+        path = tmp_path / "state.db"
+        db = SessionDB(path)
+        try:
+            db.create_session("parent", "cli", cwd=str(tmp_path))
+            original_id = db.append_message("parent", role, "Actual original statement")
+            rows = db.get_messages_as_conversation("parent", include_row_ids=True)
+            rows.append({"role": role, "content": "Generated compression context"})
+            if route == "in_place":
+                db.archive_and_compact("parent", rows)
+                session = "parent"
+            else:
+                db.publish_compression_child(parent_session_id="parent", child_session_id="child",
+                    source="cli", messages=rows, require_compression_lease=False)
+                session = "child"
+            evidence = db.get_memory_evidence(session)
+>           assert [(x["content"], x["_memory_evidence_kind"]) for x in evidence] == [
+                ("Actual original statement", "retained_original"),
+                ("Generated compression context", "derived_summary"),
+            ]
+E           AssertionError: assert [('Actual ori...ed_original')] == [('Actual ori...ved_summary')]
+E             
+E             At index 1 diff: ('Generated compression context', 'retained_original') != ('Generated compression context', 'derived_summary')
+E             Use -v to get more diff
+
+tests/hermes_state/test_compression_authority_v23.py:23: AssertionError
+_ test_unproven_compression_is_derived_and_proven_source_survives[user-child] __
+
+tmp_path = PosixPath('/tmp/pytest-of-anthony/pytest-101/test_unproven_compression_is_d1')
+route = 'child', role = 'user'
+
+    @pytest.mark.parametrize("route", ["in_place", "child"])
+    @pytest.mark.parametrize("role", ["user", "assistant"])
+    def test_unproven_compression_is_derived_and_proven_source_survives(tmp_path, route, role):
+        path = tmp_path / "state.db"
+        db = SessionDB(path)
+        try:
+            db.create_session("parent", "cli", cwd=str(tmp_path))
+            original_id = db.append_message("parent", role, "Actual original statement")
+            rows = db.get_messages_as_conversation("parent", include_row_ids=True)
+            rows.append({"role": role, "content": "Generated compression context"})
+            if route == "in_place":
+                db.archive_and_compact("parent", rows)
+                session = "parent"
+            else:
+                db.publish_compression_child(parent_session_id="parent", child_session_id="child",
+                    source="cli", messages=rows, require_compression_lease=False)
+                session = "child"
+            evidence = db.get_memory_evidence(session)
+>           assert [(x["content"], x["_memory_evidence_kind"]) for x in evidence] == [
+                ("Actual original statement", "retained_original"),
+                ("Generated compression context", "derived_summary"),
+            ]
+E           AssertionError: assert [('Actual ori...ed_original')] == [('Actual ori...ved_summary')]
+E             
+E             At index 1 diff: ('Generated compression context', 'retained_original') != ('Generated compression context', 'derived_summary')
+E             Use -v to get more diff
+
+tests/hermes_state/test_compression_authority_v23.py:23: AssertionError
+_ test_unproven_compression_is_derived_and_proven_source_survives[assistant-in_place] _
+
+tmp_path = PosixPath('/tmp/pytest-of-anthony/pytest-101/test_unproven_compression_is_d2')
+route = 'in_place', role = 'assistant'
+
+    @pytest.mark.parametrize("route", ["in_place", "child"])
+    @pytest.mark.parametrize("role", ["user", "assistant"])
+    def test_unproven_compression_is_derived_and_proven_source_survives(tmp_path, route, role):
+        path = tmp_path / "state.db"
+        db = SessionDB(path)
+        try:
+            db.create_session("parent", "cli", cwd=str(tmp_path))
+            original_id = db.append_message("parent", role, "Actual original statement")
+            rows = db.get_messages_as_conversation("parent", include_row_ids=True)
+            rows.append({"role": role, "content": "Generated compression context"})
+            if route == "in_place":
+                db.archive_and_compact("parent", rows)
+                session = "parent"
+            else:
+                db.publish_compression_child(parent_session_id="parent", child_session_id="child",
+                    source="cli", messages=rows, require_compression_lease=False)
+                session = "child"
+            evidence = db.get_memory_evidence(session)
+>           assert [(x["content"], x["_memory_evidence_kind"]) for x in evidence] == [
+                ("Actual original statement", "retained_original"),
+                ("Generated compression context", "derived_summary"),
+            ]
+E           AssertionError: assert [('Actual ori...ed_original')] == [('Actual ori...ved_summary')]
+E             
+E             At index 1 diff: ('Generated compression context', 'retained_original') != ('Generated compression context', 'derived_summary')
+E             Use -v to get more diff
+
+tests/hermes_state/test_compression_authority_v23.py:23: AssertionError
+_ test_unproven_compression_is_derived_and_proven_source_survives[assistant-child] _
+
+tmp_path = PosixPath('/tmp/pytest-of-anthony/pytest-101/test_unproven_compression_is_d3')
+route = 'child', role = 'assistant'
+
+    @pytest.mark.parametrize("route", ["in_place", "child"])
+    @pytest.mark.parametrize("role", ["user", "assistant"])
+    def test_unproven_compression_is_derived_and_proven_source_survives(tmp_path, route, role):
+        path = tmp_path / "state.db"
+        db = SessionDB(path)
+        try:
+            db.create_session("parent", "cli", cwd=str(tmp_path))
+            original_id = db.append_message("parent", role, "Actual original statement")
+            rows = db.get_messages_as_conversation("parent", include_row_ids=True)
+            rows.append({"role": role, "content": "Generated compression context"})
+            if route == "in_place":
+                db.archive_and_compact("parent", rows)
+                session = "parent"
+            else:
+                db.publish_compression_child(parent_session_id="parent", child_session_id="child",
+                    source="cli", messages=rows, require_compression_lease=False)
+                session = "child"
+            evidence = db.get_memory_evidence(session)
+>           assert [(x["content"], x["_memory_evidence_kind"]) for x in evidence] == [
+                ("Actual original statement", "retained_original"),
+                ("Generated compression context", "derived_summary"),
+            ]
+E           AssertionError: assert [('Actual ori...ed_original')] == [('Actual ori...ved_summary')]
+E             
+E             At index 1 diff: ('Generated compression context', 'retained_original') != ('Generated compression context', 'derived_summary')
+E             Use -v to get more diff
+
+tests/hermes_state/test_compression_authority_v23.py:23: AssertionError
+=========================== short test summary info ============================
+FAILED tests/hermes_state/test_compression_authority_v23.py::test_unproven_compression_is_derived_and_proven_source_survives[user-in_place]
+FAILED tests/hermes_state/test_compression_authority_v23.py::test_unproven_compression_is_derived_and_proven_source_survives[user-child]
+FAILED tests/hermes_state/test_compression_authority_v23.py::test_unproven_compression_is_derived_and_proven_source_survives[assistant-in_place]
+FAILED tests/hermes_state/test_compression_authority_v23.py::test_unproven_compression_is_derived_and_proven_source_survives[assistant-child]
+4 failed, 2 passed in 0.39s

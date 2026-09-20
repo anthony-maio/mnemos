@@ -1,0 +1,71 @@
+"""v22 regressions for durable memory provenance identity."""
+
+from hermes_state import SessionDB
+
+
+def test_v22_unmarked_compaction_assistant_is_not_self_originated(tmp_path):
+    db = SessionDB(tmp_path / "state.db")
+    db.create_session("session", "cli", cwd=str(tmp_path))
+    db.archive_and_compact("session", [{"role": "assistant", "content": "generated answer"}])
+    evidence = db.get_memory_evidence("session")
+    assert [(item["_memory_evidence_kind"], item["content"]) for item in evidence] == [
+        ("derived_summary", "generated answer")
+    ]
+
+
+def test_v22_hybrid_user_update_gets_new_origin_and_survives_recopy(tmp_path):
+    from agent.context_compressor import ContextCompressor
+
+    db_path = tmp_path / "state.db"
+    db = SessionDB(db_path)
+    try:
+        db.create_session("parent", "cli", cwd=str(tmp_path))
+        parent_row_id = db.append_message("parent", "user", "live request")
+        carrier = db.get_messages_as_conversation("parent", include_row_ids=True)[0]
+        compressor = ContextCompressor("fixture")
+        compressor._summary_has_user_turn = True
+        compressor._merge_summary_into_tail_row(carrier, "derived summary", "user", False)
+        db.publish_compression_child(
+            parent_session_id="parent", child_session_id="child", source="cli",
+            messages=[carrier], require_compression_lease=False,
+        )
+
+        child = db.get_messages_as_conversation("child", include_row_ids=True)[0]
+        edited_content = child["content"].replace("live request", "live request\nexpanded")
+        assert db.set_user_message_content("child", child["_row_id"], edited_content) == 1
+        evidence = db.get_memory_evidence("child")
+        retained = next(item for item in evidence if item["_memory_evidence_kind"] == "retained_original")
+        assert retained["content"] == "live request\nexpanded"
+        assert retained["_memory_origin"]["row_id"] != parent_row_id
+        source = db._read_one(
+            "SELECT session_id, role, content, active, compacted FROM messages WHERE id = ?",
+            (retained["_memory_origin"]["row_id"],),
+        )
+        assert source["session_id"] == "child"
+        assert source["role"] == "user"
+        assert db._decode_content(source["content"]) == "live request\nexpanded"
+        assert (source["active"], source["compacted"]) == (0, 0)
+        assert db.get_messages("parent")[0]["content"] == "live request"
+
+        db.close()
+        db = SessionDB(db_path)
+        reopened = next(
+            item for item in db.get_memory_evidence("child")
+            if item["_memory_evidence_kind"] == "retained_original"
+        )
+        assert reopened["content"] == "live request\nexpanded"
+        assert reopened["_memory_origin"]["row_id"] == retained["_memory_origin"]["row_id"]
+
+        replay = db.get_messages_as_conversation("child", include_row_ids=True)
+        assert db.append_messages_batch("child", replay) == len(replay)
+        replayed = [
+            item for item in db.get_memory_evidence("child")
+            if item["_memory_evidence_kind"] == "retained_original"
+        ]
+        assert any(
+            item["content"] == "live request\nexpanded"
+            and item["_memory_origin"]["row_id"] == retained["_memory_origin"]["row_id"]
+            for item in replayed
+        )
+    finally:
+        db.close()

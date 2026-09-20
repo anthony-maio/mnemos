@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="utf-8"?><testsuites name="pytest tests"><testsuite name="pytest" errors="0" failures="1" skipped="0" tests="3" time="0.285" timestamp="2026-09-20T16:13:39.272060-04:00" hostname="Aurora"><testcase classname="tests.hermes_state.test_revision_integrity_v26" name="test_revision_source_failure_rolls_back_transcript_and_evidence" time="0.075" /><testcase classname="tests.hermes_state.test_revision_integrity_v26" name="test_revision_cannot_launder_tampered_original" time="0.023" /><testcase classname="tests.hermes_state.test_revision_integrity_v26" name="test_editing_derived_user_carrier_cannot_promote_it_to_original" time="0.021"><failure message="AssertionError: assert [('derived af...ed_original')] == [('derived af...ved_summary')]&#10;  &#10;  At index 0 diff: ('derived after', 'retained_original') != ('derived after', 'derived_summary')&#10;  Use -v to get more diff">tmp_path = PosixPath('/tmp/pytest-of-anthony/pytest-106/test_editing_derived_user_carr0')
+
+    def test_editing_derived_user_carrier_cannot_promote_it_to_original(tmp_path):
+        db = SessionDB(tmp_path / "state.db")
+        try:
+            db.create_session("session", "cli", cwd=str(tmp_path))
+            db.archive_and_compact("session", [{"role": "user", "content": "derived before"}])
+            row = db.get_messages_as_conversation("session", include_row_ids=True)[0]
+            assert db.get_memory_evidence("session")[0]["_memory_evidence_kind"] == "derived_summary"
+            db.set_user_message_content("session", row["_row_id"], "derived after")
+            evidence = db.get_memory_evidence("session")
+&gt;           assert [(x["content"], x["_memory_evidence_kind"]) for x in evidence] == [("derived after", "derived_summary")]
+E           AssertionError: assert [('derived af...ed_original')] == [('derived af...ved_summary')]
+E             
+E             At index 0 diff: ('derived after', 'retained_original') != ('derived after', 'derived_summary')
+E             Use -v to get more diff
+
+tests/hermes_state/test_revision_integrity_v26.py:61: AssertionError</failure></testcase></testsuite></testsuites>

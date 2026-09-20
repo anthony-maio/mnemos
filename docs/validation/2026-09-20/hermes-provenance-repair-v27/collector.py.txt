@@ -1,0 +1,72 @@
+from pathlib import Path
+import hashlib
+import json
+import shutil
+import subprocess
+
+repo = Path('/mnt/d/Development/mnemos/mnemos/.worktrees/functional-local-memory')
+root = Path('/tmp/mnemos-hermes-compaction-origin-candidate-v1')
+out = repo / 'docs/validation/2026-09-20/hermes-provenance-repair-v27'
+out.mkdir(exist_ok=False)
+(out / '.gitattributes').write_bytes(b'** -text -whitespace\n')
+(out / 'candidate.patch').write_bytes(subprocess.check_output(['git', 'diff', '--binary'], cwd=root))
+for name in ['hermes_state_messages.py', 'tests/hermes_state/test_provenance_regressions_v22.py',
+             'tests/hermes_state/test_compression_authority_v23.py', 'tests/hermes_state/test_revision_integrity_v26.py']:
+    dest = out / 'source' / (name + '.txt')
+    dest.parent.mkdir(parents=True, exist_ok=True)
+    shutil.copyfile(root / name, dest)
+for prefix in ['v22-markerless-provenance', 'v22-provenance-regressions', 'v22-provenance-final2',
+               'compression-authority-v23-red', 'compression-authority-v23-green',
+               'compression-authority-v24-green', 'hybrid-revision-v25',
+               'revision-integrity-v26-red', 'revision-integrity-v27']:
+    for suffix in ['.stdout.log', '.stderr.log', '.junit.xml']:
+        src = root / (prefix + suffix)
+        if src.exists():
+            shutil.copyfile(src, out / src.name)
+for dirname in ['mnemos-hermes-unproven-compression-v23', 'mnemos-hermes-hybrid-revision-v25',
+                'mnemos-hermes-v22-reproduction-history']:
+    for src in sorted((Path('/tmp') / dirname).iterdir()):
+        if src.is_file():
+            dest = out / 'attempts' / dirname / (src.name + '.txt')
+            dest.parent.mkdir(parents=True, exist_ok=True)
+            shutil.copyfile(src, dest)
+shutil.copyfile(__file__, out / 'collector.py.txt')
+(out / 'README.md').write_text('''# Hermes compression and edit provenance repairs
+
+Four new route/role cases failed because unmarked compression output acquired
+retained-original authority. The repair classifies unproven compression output
+as derived context while retaining actual original rows and ordinary writes.
+Tests cover in-place and child compression, user and assistant roles, restart,
+and repeated compression with stable canonical identities.
+
+An actual live-payload edit inside a hybrid wrapper reproduced stale ancestor
+provenance: the reader rejected the changed component against the unchanged
+parent. The repair writes the revision as a separate inactive, non-compacted
+source row within the same transaction. The original parent remains unchanged;
+the revised component points to matching text and survives restart and recopy.
+The source record does not add an active or displayed conversation turn.
+
+A further failing test showed editing an unmarked derived user carrier could
+promote it to retained-original. Refresh now preserves derived classification,
+and full-row edits bind to the edited row rather than an unchanged ancestor.
+Existing evidence is validated before edits, and unchanged writes preserve
+identity. Injected failure after source insertion rolls back transcript,
+components, and the new source row; tampered source evidence remains rejected.
+
+The combined focused selection passes 32 tests. The full SessionDB rerun was
+still in progress when this focused archive was collected. General host
+acceptance, native delivery, complete capture, and full-suite acceptance remain
+open. This code is only in the isolated host candidate, not live Hermes.
+
+Failed attempts are preserved. The initial v22 test incorrectly demanded empty
+evidence instead of derived context; the hybrid draft incorrectly expected old
+content after editing. Corrected tests assert the actual provenance contract,
+and the original drafts remain outside executable test directories. The v23
+repair also exposed a keyword incompatibility in a rollback test's injected
+handler; ordinary writes now retain the previous calling convention.
+''', encoding='utf-8')
+files = {p.relative_to(out).as_posix(): {'bytes': p.stat().st_size,
+         'sha256': hashlib.sha256(p.read_bytes()).hexdigest()}
+         for p in sorted(out.rglob('*')) if p.is_file()}
+(out / 'evidence-index.json').write_text(json.dumps({'files': files}, indent=2) + '\n')
+print(json.dumps({'archive': str(out), 'indexed_files': len(files)}))

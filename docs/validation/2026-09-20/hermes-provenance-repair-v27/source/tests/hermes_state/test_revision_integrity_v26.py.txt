@@ -1,0 +1,63 @@
+import pytest
+from hermes_state import SessionDB
+from agent.context_compressor import ContextCompressor
+
+
+def _hybrid(db, tmp_path):
+    db.create_session("parent", "cli", cwd=str(tmp_path))
+    parent_id = db.append_message("parent", "user", "live request")
+    carrier = db.get_messages_as_conversation("parent", include_row_ids=True)[0]
+    compressor = ContextCompressor("fixture")
+    compressor._summary_has_user_turn = True
+    compressor._merge_summary_into_tail_row(carrier, "derived summary", "user", False)
+    db.publish_compression_child(parent_session_id="parent", child_session_id="child",
+        source="cli", messages=[carrier], require_compression_lease=False)
+    return parent_id, db.get_messages_as_conversation("child", include_row_ids=True)[0]
+
+
+def test_revision_source_failure_rolls_back_transcript_and_evidence(tmp_path, monkeypatch):
+    db = SessionDB(tmp_path / "state.db")
+    try:
+        _, child = _hybrid(db, tmp_path)
+        before = db.get_memory_evidence("child")
+        count = db._read_one("SELECT count(*) AS n FROM messages")["n"]
+        original = db._insert_message_rows
+        def fail_after_insert(*args, **kwargs):
+            original(*args, **kwargs)
+            raise ValueError("injected revision write failure")
+        monkeypatch.setattr(db, "_insert_message_rows", fail_after_insert)
+        with pytest.raises(ValueError, match="injected revision"):
+            db.set_user_message_content("child", child["_row_id"], child["content"].replace("live request", "edited request"))
+        assert db.get_messages_as_conversation("child")[0]["content"] == child["content"]
+        assert db.get_memory_evidence("child") == before
+        assert db._read_one("SELECT count(*) AS n FROM messages")["n"] == count
+    finally:
+        db.close()
+
+
+def test_revision_cannot_launder_tampered_original(tmp_path):
+    db = SessionDB(tmp_path / "state.db")
+    try:
+        parent_id, child = _hybrid(db, tmp_path)
+        db._write_sql("UPDATE messages SET content = ? WHERE id = ?", (db._encode_content("tampered"), parent_id))
+        count = db._read_one("SELECT count(*) AS n FROM messages")["n"]
+        with pytest.raises(ValueError, match="retained memory evidence component"):
+            db.set_user_message_content("child", child["_row_id"], child["content"].replace("live request", "edited request"))
+        assert db.get_messages_as_conversation("child")[0]["content"] == child["content"]
+        assert db._read_one("SELECT count(*) AS n FROM messages")["n"] == count
+    finally:
+        db.close()
+
+
+def test_editing_derived_user_carrier_cannot_promote_it_to_original(tmp_path):
+    db = SessionDB(tmp_path / "state.db")
+    try:
+        db.create_session("session", "cli", cwd=str(tmp_path))
+        db.archive_and_compact("session", [{"role": "user", "content": "derived before"}])
+        row = db.get_messages_as_conversation("session", include_row_ids=True)[0]
+        assert db.get_memory_evidence("session")[0]["_memory_evidence_kind"] == "derived_summary"
+        db.set_user_message_content("session", row["_row_id"], "derived after")
+        evidence = db.get_memory_evidence("session")
+        assert [(x["content"], x["_memory_evidence_kind"]) for x in evidence] == [("derived after", "derived_summary")]
+    finally:
+        db.close()

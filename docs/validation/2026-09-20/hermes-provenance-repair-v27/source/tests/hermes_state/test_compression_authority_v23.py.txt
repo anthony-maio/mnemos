@@ -1,0 +1,55 @@
+import pytest
+from hermes_state import SessionDB
+
+
+@pytest.mark.parametrize("route", ["in_place", "child"])
+@pytest.mark.parametrize("role", ["user", "assistant"])
+def test_unproven_compression_is_derived_and_proven_source_survives(tmp_path, route, role):
+    path = tmp_path / "state.db"
+    db = SessionDB(path)
+    try:
+        db.create_session("parent", "cli", cwd=str(tmp_path))
+        original_id = db.append_message("parent", role, "Actual original statement")
+        rows = db.get_messages_as_conversation("parent", include_row_ids=True)
+        rows.append({"role": role, "content": "Generated compression context"})
+        if route == "in_place":
+            db.archive_and_compact("parent", rows)
+            session = "parent"
+        else:
+            db.publish_compression_child(parent_session_id="parent", child_session_id="child",
+                source="cli", messages=rows, require_compression_lease=False)
+            session = "child"
+        evidence = db.get_memory_evidence(session)
+        assert [(x["content"], x["_memory_evidence_kind"]) for x in evidence] == [
+            ("Actual original statement", "retained_original"),
+            ("Generated compression context", "derived_summary"),
+        ]
+        assert evidence[0]["_memory_origin"]["row_id"] == original_id
+        identities = [x["_memory_origin"] for x in evidence]
+    finally:
+        db.close()
+    db = SessionDB(path)
+    try:
+        assert [x["_memory_origin"] for x in db.get_memory_evidence(session)] == identities
+        replay = db.get_messages_as_conversation(session, include_row_ids=True)
+        db.archive_and_compact(session, replay)
+        after = db.get_memory_evidence(session)
+        assert [x["_memory_evidence_kind"] for x in after] == ["retained_original", "derived_summary"]
+        assert [x["_memory_origin"] for x in after] == identities
+    finally:
+        db.close()
+
+
+@pytest.mark.parametrize("role", ["user", "assistant"])
+def test_ordinary_new_message_keeps_original_authority(tmp_path, role):
+    db = SessionDB(tmp_path / "state.db")
+    try:
+        db.create_session("session", "cli", cwd=str(tmp_path))
+        row = {"role": role, "content": "Actual new source statement"}
+        db.append_messages_batch("session", [row])
+        evidence = db.get_memory_evidence("session")
+        assert len(evidence) == 1
+        assert evidence[0]["_memory_evidence_kind"] == "retained_original"
+        assert evidence[0]["_memory_origin"]["row_id"] == row["_row_id"]
+    finally:
+        db.close()

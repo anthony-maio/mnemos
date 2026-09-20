@@ -1,0 +1,20 @@
+F                                                                        [100%]
+=================================== FAILURES ===================================
+________ test_v22_unmarked_compaction_assistant_is_not_self_originated _________
+
+tmp_path = PosixPath('/tmp/pytest-of-anthony/pytest-100/test_v22_unmarked_compaction_a0')
+
+    def test_v22_unmarked_compaction_assistant_is_not_self_originated(tmp_path):
+        db = SessionDB(tmp_path / "state.db")
+        db.create_session("session", "cli", cwd=str(tmp_path))
+        db.archive_and_compact("session", [{"role": "assistant", "content": "generated answer"}])
+>       assert db.get_memory_evidence("session") == []
+E       AssertionError: assert [{'session_id...': None, ...}] == []
+E         
+E         Left contains one more item: {'session_id': 'session', 'role': 'assistant', 'content': 'generated answer', 'tool_call_id': None, ...}
+E         Use -v to get more diff
+
+tests/hermes_state/test_provenance_regressions_v22.py:12: AssertionError
+=========================== short test summary info ============================
+FAILED tests/hermes_state/test_provenance_regressions_v22.py::test_v22_unmarked_compaction_assistant_is_not_self_originated
+1 failed in 0.22s

@@ -1,0 +1,67 @@
+...................F.......                                              [100%]
+=================================== FAILURES ===================================
+________________ test_failure_rolls_back_rows_and_caller_stamps ________________
+
+state = (<hermes_state.SessionDB object at 0x79ac4791a110>, namespace(_session_db=<hermes_state.SessionDB object at 0x79ac4791a110>, session_id='parent'))
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x79ac47916990>
+
+    def test_failure_rolls_back_rows_and_caller_stamps(state, monkeypatch):
+        db, agent = state
+        messages = [{'role': 'user', 'content': 'first'}, {'role': 'assistant', 'content': 'second'}]
+        original = deepcopy(messages)
+        real = db._insert_evidence_components
+        def fail_second(conn, row_id, sid, msg, *args):
+            if msg.get('content') == 'second':
+                raise RuntimeError('injected evidence failure')
+            return real(conn, row_id, sid, msg, *args)
+        monkeypatch.setattr(db, '_insert_evidence_components', fail_second)
+        with pytest.raises(RuntimeError, match='injected evidence failure'):
+>           prepare_memory_source_snapshot(agent, messages)
+
+tests/agent/test_memory_source_snapshot.py:57: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+agent/memory_source_snapshot.py:87: in prepare_memory_source_snapshot
+    identities, watermark = db._execute_write(write)
+                            ^^^^^^^^^^^^^^^^^^^^^^^^
+hermes_state.py:978: in _execute_write
+    result = fn(self._conn)
+             ^^^^^^^^^^^^^^
+agent/memory_source_snapshot.py:78: in write
+    inserted, tool_count = db._insert_message_rows(conn, sid, suffix)
+                           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = <hermes_state.SessionDB object at 0x79ac4791a110>
+conn = <hermes_cli.sqlite_safe_read.TrackedConnection object at 0x79ac479ea050>
+session_id = 'parent'
+messages = [{'role': 'user', 'content': 'first', 'tool_name': None, 'tool_calls': None, ...}, {'role': 'assistant', 'content': 'second', 'tool_name': None, 'tool_calls': None, ...}]
+preserve_origins = False
+
+    def _insert_message_rows(self, conn, session_id: str, messages: List[Dict[str, Any]], *,
+                             preserve_origins: bool = False) -> tuple[int, int]:
+        """Insert rows in the caller transaction; compression carries can preserve validated origins."""
+        source_origins = self._source_origins_for_insert(conn, session_id, messages) if preserve_origins else [None] * len(messages)
+        now_ts = time.time()
+        inserted = tool_calls_total = 0
+        for index, msg in enumerate(messages):
+            role = msg.get("role", "unknown")
+            tool_calls = _parse_tool_calls(msg.get("tool_calls"))
+            message_timestamp = _coerce_timestamp(msg.get("timestamp"), now_ts)
+            cur = conn.execute(_INSERT_MESSAGE_SQL, self._message_row_params(
+                session_id, role, msg, tool_calls, message_timestamp, keep_reasoning=role == "assistant"))
+            if cur.lastrowid is not None:
+                source_id = msg.get("_row_id") if preserve_origins else None
+                if preserve_origins:
+                    self._insert_origin(conn, int(cur.lastrowid), session_id, source_origins[index])
+>               self._insert_evidence_components(
+                    conn, int(cur.lastrowid), session_id, msg,
+                    source_id if isinstance(source_id, int) else None,
+                    source_origins[index] if preserve_origins else None,
+                    compression_output=preserve_origins,
+                )
+E               TypeError: test_failure_rolls_back_rows_and_caller_stamps.<locals>.fail_second() got an unexpected keyword argument 'compression_output'
+
+hermes_state_messages.py:936: TypeError
+=========================== short test summary info ============================
+FAILED tests/agent/test_memory_source_snapshot.py::test_failure_rolls_back_rows_and_caller_stamps
+1 failed, 26 passed in 7.51s

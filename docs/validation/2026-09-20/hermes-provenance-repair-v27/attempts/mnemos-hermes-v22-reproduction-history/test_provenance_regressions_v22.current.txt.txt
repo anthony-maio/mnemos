@@ -1,0 +1,39 @@
+"""v22 regressions for durable memory provenance identity."""
+
+from hermes_state import SessionDB
+
+
+def test_v22_unmarked_compaction_assistant_is_not_self_originated(tmp_path):
+    db = SessionDB(tmp_path / "state.db")
+    db.create_session("session", "cli", cwd=str(tmp_path))
+    db.archive_and_compact("session", [{"role": "assistant", "content": "generated answer"}])
+    evidence = db.get_memory_evidence("session")
+    assert [(item["_memory_evidence_kind"], item["content"]) for item in evidence] == [
+        ("derived_summary", "generated answer")
+    ]
+
+
+def test_v22_hybrid_user_update_rejects_stale_ancestor_identity(tmp_path):
+    from agent.context_compressor import ContextCompressor
+
+    db = SessionDB(tmp_path / "state.db")
+    db.create_session("parent", "cli", cwd=str(tmp_path))
+    db.append_message("parent", "user", "live request")
+    carrier = db.get_messages_as_conversation("parent", include_row_ids=True)[0]
+    compressor = ContextCompressor("fixture")
+    compressor._summary_has_user_turn = True
+    compressor._merge_summary_into_tail_row(carrier, "derived summary", "user", False)
+    db.publish_compression_child(
+        parent_session_id="parent", child_session_id="child", source="cli",
+        messages=[carrier], require_compression_lease=False,
+    )
+    child = db.get_messages_as_conversation("child", include_row_ids=True)[0]
+    original_evidence = db.get_memory_evidence("child")
+    edited_content = child["content"].replace("live request", "live request\nexpanded")
+    assert db.set_user_message_content("child", child["_row_id"], edited_content) == 1
+    assert db.get_messages_as_conversation("child")[0]["content"] == edited_content
+    refreshed_evidence = db.get_memory_evidence("child")
+    assert [(item["_memory_evidence_kind"], item["content"]) for item in refreshed_evidence] == [
+        ("derived_summary", original_evidence[0]["content"]),
+        ("retained_original", original_evidence[1]["content"]),
+    ]

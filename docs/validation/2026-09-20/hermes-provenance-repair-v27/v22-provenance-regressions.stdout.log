@@ -1,0 +1,69 @@
+.F                                                                       [100%]
+=================================== FAILURES ===================================
+_________ test_v22_hybrid_user_update_rejects_stale_ancestor_identity __________
+
+tmp_path = PosixPath('/tmp/pytest-of-anthony/pytest-103/test_v22_hybrid_user_update_re0')
+
+    def test_v22_hybrid_user_update_rejects_stale_ancestor_identity(tmp_path):
+        from agent.context_compressor import ContextCompressor
+    
+        db = SessionDB(tmp_path / "state.db")
+        db.create_session("parent", "cli", cwd=str(tmp_path))
+        db.append_message("parent", "user", "live request")
+        carrier = db.get_messages_as_conversation("parent", include_row_ids=True)[0]
+        compressor = ContextCompressor("fixture")
+        compressor._summary_has_user_turn = True
+        compressor._merge_summary_into_tail_row(carrier, "derived summary", "user", False)
+        db.publish_compression_child(
+            parent_session_id="parent", child_session_id="child", source="cli",
+            messages=[carrier], require_compression_lease=False,
+        )
+        child = db.get_messages_as_conversation("child", include_row_ids=True)[0]
+        original_evidence = db.get_memory_evidence("child")
+        edited_content = child["content"].replace("live request", "live request\nexpanded")
+        assert db.set_user_message_content("child", child["_row_id"], edited_content) == 1
+        assert db.get_messages_as_conversation("child")[0]["content"] == edited_content
+>       refreshed_evidence = db.get_memory_evidence("child")
+                             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+tests/hermes_state/test_provenance_regressions_v22.py:37: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+hermes_state_messages.py:1580: in get_memory_evidence
+    self._validate_component_read(session_id, component_dict)
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = <hermes_state.SessionDB object at 0x7fd1186d5990>
+current_session_id = 'child'
+component = {'component_ordinal': 1, 'component_kind': 'retained_original', 'role': 'user', 'content': 'live request\nexpanded', ...}
+
+    def _validate_component_read(self, current_session_id: str, component: Dict[str, Any]) -> None:
+        origin_session = str(component["origin_session_id"])
+        origin_row = int(component["origin_row_id"])
+        origin_cwd = str(component["origin_cwd"])
+        if not origin_cwd.strip():
+            raise ValueError("memory evidence component origin has no verified cwd")
+        source = self._read_one(
+            "SELECT session_id, role, content, _compressed_summary, _compressed_summary_has_user_turn FROM messages WHERE id = ?",
+            (origin_row,),
+        )
+        if source is None or str(source["session_id"]) != origin_session:
+            raise ValueError("memory evidence component origin row is missing")
+        lineage = self._read_one(
+            "WITH RECURSIVE lineage(id) AS (SELECT ? UNION ALL "
+            "SELECT parent_session_id FROM sessions JOIN lineage ON sessions.id = lineage.id "
+            "WHERE parent_session_id IS NOT NULL) SELECT 1 FROM lineage WHERE id = ? LIMIT 1",
+            (current_session_id, origin_session),
+        )
+        if lineage is None:
+            raise ValueError("memory evidence component origin is outside the session lineage")
+        role = str(component["role"])
+        content = self._decode_content(component["content"])
+        if component["component_kind"] == "retained_original":
+            if str(source["role"]) != role or _canonical_memory_text(self._decode_content(source["content"])) != _canonical_memory_text(content):
+>               raise ValueError("retained memory evidence component no longer matches its source")
+E               ValueError: retained memory evidence component no longer matches its source
+
+hermes_state_messages.py:1512: ValueError
+=========================== short test summary info ============================
+FAILED tests/hermes_state/test_provenance_regressions_v22.py::test_v22_hybrid_user_update_rejects_stale_ancestor_identity
+1 failed, 1 passed in 0.54s
