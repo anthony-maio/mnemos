@@ -1569,6 +1569,10 @@ class SQLiteStore(MemoryStore):
         self._conn.execute(self._CREATE_FACT_EVIDENCE_SQL)
         self._conn.execute(self._CREATE_FACT_REVISIONS_SQL)
         self._conn.execute(self._CREATE_MEMORY_SUPPRESSIONS_SQL)
+        self._conn.execute(
+            "CREATE INDEX IF NOT EXISTS idx_memory_suppressions_fact_id "
+            "ON memory_suppressions(fact_id, reason) WHERE fact_id IS NOT NULL"
+        )
         self._conn.execute(self._CREATE_CHUNK_ACCESS_SQL)
         if self._meta_value("migration_8") != "applied":
             self._conn.execute("""INSERT OR IGNORE INTO memory_chunk_access
@@ -2722,8 +2726,23 @@ class SQLiteStore(MemoryStore):
                 accepted_by_input: dict[str, str] = {}
                 accepted_chunks: list[MemoryChunk] = []
                 suppressed_ids: set[str] = set()
+                source_role_row = self._conn.execute(
+                    "SELECT role, content FROM episodic_events WHERE id=?",
+                    (json.loads(lease_row[1]).get("event_id"),),
+                ).fetchone()
+                source_is_assistant = (
+                    source_role_row is not None and str(source_role_row[0]) == "assistant"
+                )
+                source_contains_forgotten_id = source_is_assistant and self._contains_forgotten_id(
+                    str(source_role_row[1])
+                )
                 for index, candidate in enumerate(fact_chunks):
                     if lease_row[0] == "extract":
+                        if source_contains_forgotten_id or (
+                            source_is_assistant and self._contains_forgotten_id(candidate.content)
+                        ):
+                            suppressed_ids.add(candidate.id)
+                            continue
                         canonical = compute_canonical_key(
                             candidate.content,
                             candidate.metadata.get("scope", "unassigned"),
@@ -2873,6 +2892,13 @@ class SQLiteStore(MemoryStore):
                     event.scope_id,
                     event.metadata.get("user_profile_id"),
                 )
+                if (
+                    job.kind == "extract"
+                    and event.role == "assistant"
+                    and self._contains_forgotten_id(event.content)
+                ):
+                    self._conn.commit()
+                    return None
                 if (
                     any(
                         self.is_suppressed(source_event_id=source_id)
@@ -3896,6 +3922,32 @@ class SQLiteStore(MemoryStore):
                 tuple(value for _, value in selectors),
             ).fetchone()
         return row is not None
+
+    def _contains_forgotten_id(self, content: str) -> bool:
+        """Match exact explicitly forgotten IDs without exposing tombstones.
+
+        Automatic assistant captures that quote an erased native UUID are
+        conservatively suppressed. User captures and explicit writes do not
+        call this helper. The boundaries avoid matching an ID embedded inside
+        another opaque token.
+        """
+        tokens = {match.group(0) for match in re.finditer(r"[A-Za-z0-9_-]+", content)}
+        if not tokens:
+            return False
+        with self._lock:
+            token_list = list(tokens)
+            for start in range(0, len(token_list), 200):
+                batch = token_list[start : start + 200]
+                placeholders = ",".join("?" for _ in batch)
+                row = self._conn.execute(
+                    f"""SELECT 1 FROM memory_suppressions
+                        WHERE reason='explicit_forget' AND fact_id IN ({placeholders})
+                        LIMIT 1""",
+                    batch,
+                ).fetchone()
+                if row is not None:
+                    return True
+        return False
 
     def list_fact_revisions(self, fact_id: str) -> list[FactRevision]:
         with self._lock:

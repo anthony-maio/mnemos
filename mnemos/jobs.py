@@ -20,6 +20,10 @@ class JobNotFoundError(KeyError):
     """The requested job is absent or unavailable in the caller's scope."""
 
 
+class FactNotFoundError(KeyError):
+    """The requested fact is absent or unavailable in the caller's scope."""
+
+
 class DurableJob(BaseModel):
     """A retryable, lease-protected unit of local maintenance work."""
 

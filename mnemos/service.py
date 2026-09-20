@@ -38,7 +38,7 @@ from pathlib import Path
 from typing import Any, Callable, Mapping
 from urllib.parse import urlsplit
 
-from .jobs import JobNotFoundError
+from .jobs import FactNotFoundError, JobNotFoundError
 from .observability import (
     ServiceLogBinding,
     install_service_file_logging,
@@ -484,6 +484,9 @@ class _RequestHandler(BaseHTTPRequestHandler):
             return
         except JobNotFoundError:
             self._write_json(404, {"schema_version": SCHEMA_VERSION, "error": "job_not_found"})
+            return
+        except FactNotFoundError:
+            self._write_json(404, {"schema_version": SCHEMA_VERSION, "error": "fact_not_found"})
             return
         except Exception:
             self._write_json(500, {"schema_version": SCHEMA_VERSION, "error": "dispatch_failed"})

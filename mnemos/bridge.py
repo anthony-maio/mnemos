@@ -45,6 +45,13 @@ def _json_result(status: str, *, error: str | None = None) -> dict[str, Any]:
     return result
 
 
+def _write_json_response(value: Mapping[str, Any]) -> None:
+    """Write one UTF-8 JSON response without consulting the host locale."""
+    wire = (json.dumps(value, ensure_ascii=False, separators=(",", ":")) + "\n").encode("utf-8")
+    sys.stdout.buffer.write(wire)
+    sys.stdout.buffer.flush()
+
+
 class BridgeClient:
     """Client for one explicitly configured bridge executable."""
 
@@ -144,7 +151,7 @@ class BridgeClient:
 async def _serve_once(*, descriptor: Path, max_request_bytes: int, deadline: float) -> int:
     raw = sys.stdin.buffer.read(max_request_bytes + 1)
     if len(raw) > max_request_bytes:
-        print(json.dumps(_json_result("degraded", error="bridge request exceeds size limit")))
+        _write_json_response(_json_result("degraded", error="bridge request exceeds size limit"))
         return 2
     try:
         request = json.loads(raw.decode("utf-8"))
@@ -166,11 +173,11 @@ async def _serve_once(*, descriptor: Path, max_request_bytes: int, deadline: flo
             client.request(normalized_operation, payload, queue_on_failure=queue_on_failure),
             deadline,
         )
-        print(json.dumps(result, ensure_ascii=False, separators=(",", ":")))
+        _write_json_response(result)
         await client.close()
         return 0
     except Exception as exc:
-        print(json.dumps(_json_result("degraded", error=str(exc)), separators=(",", ":")))
+        _write_json_response(_json_result("degraded", error=str(exc)))
         return 1
 
 

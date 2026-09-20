@@ -18,7 +18,7 @@ from .contracts import (
 from .claude_identity import legacy_event_id, scoped_event_id
 from .hermes_identity import scoped_event_id as hermes_scoped_event_id
 from .engine import MnemosEngine
-from .jobs import DurableJob, FactEvidence, FactRevision, JobNotFoundError
+from .jobs import DurableJob, FactEvidence, FactNotFoundError, FactRevision, JobNotFoundError
 from .maintenance import MaintenanceScheduler
 from .memory_safety import MemoryWriteFirewall
 from .retrieval import assertion_status, render_context_chunk
@@ -1016,7 +1016,7 @@ class LocalMemoryService:
             if previous is None or not scope_allows(
                 previous.metadata, context, ("project", "workspace", "global")
             ):
-                raise KeyError("Correction target not found in the requested scope")
+                raise FactNotFoundError("Correction target not found in the requested scope")
             event = CaptureEvent(
                 event_id=payload.get("event_id") or str(uuid4()),
                 context=context,
@@ -1085,7 +1085,7 @@ class LocalMemoryService:
             if chunk is None or not scope_allows(
                 chunk.metadata, context, ("project", "workspace", "global")
             ):
-                raise KeyError("Memory not found in the requested scope")
+                raise FactNotFoundError("Memory not found in the requested scope")
             forgotten = self.engine.store.forget_fact(
                 chunk.id, expected_version=payload["expected_version"]
             )
@@ -1110,7 +1110,7 @@ class LocalMemoryService:
             if chunk is None or not scope_allows(
                 chunk.metadata, context, ("project", "workspace", "global")
             ):
-                raise KeyError("Memory not found in the requested scope")
+                raise FactNotFoundError("Memory not found in the requested scope")
             evidence = [
                 {
                     **item.model_dump(mode="json"),

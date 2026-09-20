@@ -47,6 +47,110 @@ async def test_bridge_client_roundtrip_uses_one_json_request(tmp_path: Path) -> 
 
 
 @pytest.mark.asyncio
+@pytest.mark.parametrize("encoding", ["cp1252", "ascii", "utf-16"])
+async def test_bridge_subprocess_writes_utf8_under_non_utf8_stdout(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch, encoding: str
+) -> None:
+    project = tmp_path / "project"
+    project.mkdir()
+    registry = ScopeRegistry()
+    registry.register_project(project, user_profile_id="bridge-profile", enabled=True)
+    service = _start_service(tmp_path, registry)
+    context = registry.resolve(
+        project,
+        user_profile_id="bridge-profile",
+        session_id="bridge-session",
+        host="manual",
+    ).model_dump(mode="json")
+    client = BridgeClient(
+        [
+            sys.executable,
+            "-m",
+            "mnemos.bridge",
+            "--descriptor",
+            str(service.descriptor_path),
+        ],
+        deadline=5,
+    )
+    monkeypatch.setenv("PYTHONIOENCODING", encoding)
+
+    try:
+        remembered = await client.request(
+            "remember",
+            {
+                "context": context,
+                "event_id": "bridge-utf8-event",
+                "content": "caf\u00e9 \u2014 bridge r\u00e9sum\u00e9",
+                "scope": "project",
+            },
+            queue_on_failure=False,
+        )
+        assert remembered["status"] == "committed"
+        await client.request("maintenance", {"context": context}, queue_on_failure=False)
+        retrieved = await client.request(
+            "retrieve",
+            {
+                "context": context,
+                "query": "caf\u00e9",
+                "allowed_scopes": ["project"],
+            },
+            queue_on_failure=False,
+        )
+        assert "facts" in retrieved, retrieved
+        assert any(
+            fact["content"] == "caf\u00e9 \u2014 bridge r\u00e9sum\u00e9"
+            for fact in retrieved["facts"]
+        )
+    finally:
+        service.stop()
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize("encoding", ["cp1252", "ascii", "utf-16"])
+async def test_bridge_error_responses_are_utf8_under_non_utf8_stdout(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch, encoding: str
+) -> None:
+    monkeypatch.setenv("PYTHONIOENCODING", encoding)
+    command = [
+        sys.executable,
+        "-m",
+        "mnemos.bridge",
+        "--descriptor",
+        str(tmp_path / "missing-descriptor.json"),
+        "--max-request-bytes",
+        "1",
+    ]
+
+    process = await asyncio.create_subprocess_exec(
+        *command,
+        stdin=asyncio.subprocess.PIPE,
+        stdout=asyncio.subprocess.PIPE,
+        stderr=asyncio.subprocess.PIPE,
+    )
+    stdout, _ = await process.communicate(b'{"operation":"health","payload":{}}')
+    oversized = json.loads(stdout.decode("utf-8"))
+    assert process.returncode == 2
+    assert oversized["status"] == "degraded"
+    assert "size limit" in oversized["error"]
+
+    process = await asyncio.create_subprocess_exec(
+        sys.executable,
+        "-m",
+        "mnemos.bridge",
+        "--descriptor",
+        str(tmp_path / "missing.json"),
+        stdin=asyncio.subprocess.PIPE,
+        stdout=asyncio.subprocess.PIPE,
+        stderr=asyncio.subprocess.PIPE,
+    )
+    stdout, _ = await process.communicate(b"not-json")
+    failed = json.loads(stdout.decode("utf-8"))
+    assert process.returncode == 1
+    assert failed["status"] == "degraded"
+    assert failed["error"]
+
+
+@pytest.mark.asyncio
 @pytest.mark.skipif(
     sys.platform != "win32" or not os.environ.get("MNEMOS_TEST_HERMES_PYTHON"),
     reason="Set MNEMOS_TEST_HERMES_PYTHON to the installed WSL Hermes Python on Windows",
