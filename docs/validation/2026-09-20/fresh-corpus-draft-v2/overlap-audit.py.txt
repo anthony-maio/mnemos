@@ -1,0 +1,36 @@
+from pathlib import Path
+import hashlib,json,unicodedata,collections
+repo=Path.cwd();candidate=repo/'.venv/fresh-corpus-authored-v2.jsonl'
+prior=list(sorted((repo/'benchmarks/local_memory/datasets').glob('*.json*')))
+prior += [repo/'docs/validation/2026-09-20/extraction-durability-history-preparation-v3/inputs.json']
+sha=lambda p:hashlib.sha256(p.read_bytes()).hexdigest()
+text_keys={'content','text','query','semantic_query','state_query'}
+id_keys={'id','session_id','event_id','fact_id','query_id','pair_id'}
+def rows(path):
+ return [json.loads(x) for x in path.read_text(encoding='utf-8').splitlines() if x.strip()] if path.suffix=='.jsonl' else json.loads(path.read_text(encoding='utf-8'))
+def collect(value,path='$',role=None):
+ if isinstance(value,dict):
+  role=value.get('role',role)
+  for k,v in value.items():
+   if isinstance(v,str) and k in text_keys:
+    normalized=' '.join(unicodedata.normalize('NFKC',v).casefold().split())
+    if normalized:yield ('text',hashlib.sha256(normalized.encode()).hexdigest(),path+'.'+k,role)
+   elif isinstance(v,str) and k in id_keys:yield ('identity',hashlib.sha256(v.encode()).hexdigest(),path+'.'+k,role)
+   elif isinstance(v,(dict,list)):yield from collect(v,path+'.'+k,role)
+ elif isinstance(value,list):
+  for i,item in enumerate(value):yield from collect(item,path+f'[{i}]',role)
+left=list(collect({'role':'user','content':'A   B','event_id':'literal-ID'}))
+right=list(collect({'role':'user','content':'a b','event_id':'literal-ID'}))
+assert [(x[0],x[1]) for x in left]==[(x[0],x[1]) for x in right]
+assert list(collect({'content':'different'}))[0][1]!=left[0][1]
+index=collections.defaultdict(list);sources=[]
+for p in prior:
+ entries=list(collect(rows(p)));sources.append({'file':str(p.relative_to(repo)).replace('\\','/'),'sha256':sha(p),'extracted_fields':len(entries)})
+ for kind,digest,path,role in entries:index[(kind,digest)].append({'file':sources[-1]['file'],'path':path,'role':role})
+entries=list(collect(rows(candidate)));matches=[]
+for kind,digest,path,role in entries:
+ if (kind,digest) in index:
+  matches.append({'kind':kind,'normalized_sha256':digest,'candidate_path':path,'candidate_role':role,'prior_matches':index[(kind,digest)]})
+report={'candidate_sha256':sha(candidate),'prior_corpora':sources,'normalization':'NFKC, casefold, whitespace collapse for text; literal identity bytes for identity. Text field whitelist: '+','.join(sorted(text_keys)),'candidate_extracted_fields':len(entries),'matching_candidate_fields':len(matches),'matching_user_text_fields':sum(m['kind']=='text' and m['candidate_role']=='user' for m in matches),'matching_identity_fields':sum(m['kind']=='identity' for m in matches),'matches':matches,'limitations':['Exact normalized lexical overlap only; no semantic/template independence claim.','All recognized text includes shared system/assistant boilerplate and query wording; context requires separate review.','Prior inputs are the explicitly enumerated repository corpora and combined development inputs, not every historical transcript.','Unexecuted corpus drafting revisions are not counted as evaluated-model exposure.','No model inference or automatic acceptance decision.']}
+out=repo/'.venv/fresh-corpus-overlap-v2.json';out.write_text(json.dumps(report,indent=2)+'\n')
+print(json.dumps({k:v for k,v in report.items() if k not in {'matches','prior_corpora'}}));print('prior_corpora',len(sources))

@@ -1,0 +1,58 @@
+{
+  "candidate_sha256": "b4301a90cdc8e0e4096cdcf90ae22576390c6a0172f431501378595dddbfc334",
+  "prior_corpora": [
+    {
+      "file": "benchmarks/local_memory/datasets/lifecycle-target-development-v1.json",
+      "sha256": "0494c32a8a17f8be374db136eb48837ea6d52371eba3022587e3c3ee52f3fb7a",
+      "extracted_fields": 26
+    },
+    {
+      "file": "benchmarks/local_memory/datasets/local-memory-heldout-v2.jsonl",
+      "sha256": "297e2c3bc4e3bf183ed88e293e3da8e2200ea703ff2a425fbdd302da24c0c776",
+      "extracted_fields": 2890
+    },
+    {
+      "file": "benchmarks/local_memory/datasets/local-memory-heldout-v3.jsonl",
+      "sha256": "965009973b836070aa03625d2a4bc4745274da002720b5e8922ee18dce562b4d",
+      "extracted_fields": 2890
+    },
+    {
+      "file": "benchmarks/local_memory/datasets/local-memory-heldout-v4.jsonl",
+      "sha256": "0c1f74e24d485a37889a18a65463b85c4486824975de8283dda50754d6e434aa",
+      "extracted_fields": 2930
+    },
+    {
+      "file": "benchmarks/local_memory/datasets/local-memory-module-challenge-v1.jsonl",
+      "sha256": "78f01ead96a75de604ebd37f81461983633710ac3087e9d39eca00931f88ce75",
+      "extracted_fields": 6160
+    },
+    {
+      "file": "benchmarks/local_memory/datasets/module-mechanism-v1.json",
+      "sha256": "e8263f9bb02b51f962d99f7cc67a845839361f637362b0118abf0731f410fabb",
+      "extracted_fields": 8800
+    },
+    {
+      "file": "benchmarks/local_memory/datasets/source-association-development-v1.json",
+      "sha256": "809a3a27ed0052e0fdf872542168af0a38337c1dc42f3d0b2af66d769cee5741",
+      "extracted_fields": 733
+    },
+    {
+      "file": "docs/validation/2026-09-20/extraction-durability-history-preparation-v3/inputs.json",
+      "sha256": "003bdb6d7ef7fcd857aaf44716fc05054c7b4f5d2d1ce7f2b9b2c823247407c4",
+      "extracted_fields": 310
+    }
+  ],
+  "normalization": "NFKC, casefold, whitespace collapse for text; literal identity bytes for identity. Text field whitelist: content,query,semantic_query,state_query,text",
+  "candidate_extracted_fields": 4340,
+  "matching_candidate_fields": 0,
+  "matching_user_text_fields": 0,
+  "matching_identity_fields": 0,
+  "matches": [],
+  "limitations": [
+    "Exact normalized lexical overlap only; no semantic/template independence claim.",
+    "All recognized text includes shared system/assistant boilerplate and query wording; context requires separate review.",
+    "Prior inputs are the explicitly enumerated repository corpora and combined development inputs, not every historical transcript.",
+    "Unexecuted corpus drafting revisions are not counted as evaluated-model exposure.",
+    "No model inference or automatic acceptance decision."
+  ]
+}
