@@ -40,6 +40,12 @@ negative results even if they complicate the ending.
 
 ## Latest implementation and native evidence
 
+Checkout addendum after packet v22: the
+[out-of-preview selection repair](../validation/2026-09-20/selection-rejection-development-v1/README.md)
+returns a clear noncommitting rejection for unknown selected IDs. Focused
+checks pass; full package verification is running. It does not change the
+archived v11 failure, and it is not yet part of the portable packet.
+
 The [native Hermes v11 cohort](../validation/2026-09-20/hermes-native-cohort-v11/README.md)
 finished zero of three complete lifecycles on `697b672`. Every attempt passed
 teaching, restarted recall, correction, and corrected recall, then failed at

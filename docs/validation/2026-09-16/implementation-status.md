@@ -1,5 +1,13 @@
 # Functional local memory implementation status
 
+Current candidate `5155ebd` adds a typed, noncommitting rejection for
+out-of-preview related-forget selections. Its
+[development checks](../2026-09-20/selection-rejection-development-v1/README.md)
+pass 14 service-error cases and 58 adjacent cases. Full source/package
+verification is running in the isolated selection-rejection checkout;
+installed and native checks have not run for this candidate. The verified
+`697b672` package and its failed v11 cohort below retain their own bindings.
+
 The [native Hermes v11 cohort](../2026-09-20/hermes-native-cohort-v11/README.md)
 finished zero of three complete lifecycles on `697b672`. Every attempt passed
 teaching, restarted recall, correction, and corrected recall, then failed at

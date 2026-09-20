@@ -1,0 +1,19 @@
+from pathlib import Path
+import hashlib
+import json
+import shutil
+
+repo = Path(__file__).resolve().parents[1]
+output = repo / 'docs/validation/2026-09-20/selection-rejection-development-v1'
+output.mkdir(exist_ok=True)
+assert {p.name for p in output.iterdir()} == {'README.md'}
+(output / '.gitattributes').write_bytes(b'** -text -whitespace\n')
+for name in ('out-of-preview-red.log', 'out-of-preview-green.log',
+             'out-of-preview-adjacent.log', 'out-of-preview-black.log',
+             'out-of-preview-mypy.log'):
+    shutil.copyfile(repo / '.venv' / name, output / name)
+shutil.copyfile(__file__, output / (Path(__file__).name + '.txt'))
+files = {p.name: {'bytes': p.stat().st_size, 'sha256': hashlib.sha256(p.read_bytes()).hexdigest()}
+         for p in sorted(output.iterdir()) if p.is_file() and p.name != 'README.md'}
+(output / 'evidence-index.json').write_text(json.dumps({'files': files}, indent=2) + '\n', encoding='utf-8')
+print(json.dumps({'archive': str(output), 'indexed_files': len(files)}))
