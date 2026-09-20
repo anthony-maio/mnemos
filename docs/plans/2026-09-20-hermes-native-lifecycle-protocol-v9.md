@@ -33,6 +33,16 @@ profile, and protocols before inference. Use the unchanged isolated Hermes
 revision and cwd-only patch. No live host configuration, source, credentials,
 or memory is changed.
 
+The first import-only preflight stopped before importing Hermes because the
+live checkout advanced to `ebe3fcb2f85ebdbe0e469e9d295636ac930246b4`.
+Preserve that failed report. The isolated source remains pinned at
+`14a346345486418aa85ed6526549412ee2665ade`; the successor independently binds
+the live installation's revision and sorted `pip freeze` SHA-256, checks both
+before and after each attempt, and records the dependency inventory. Existing
+module-origin checks must still prove Hermes imports came from the isolated
+checkout. No host downgrade is performed. This is another environment binding
+and limits comparison with earlier cohorts; it does not change memory tasks.
+
 ## Serving-context checks
 
 Readiness v2 sends one tool-free, 16-output-token request through

@@ -25,6 +25,8 @@ import urllib.request
 import zipfile
 
 HERMES_COMMIT = "14a346345486418aa85ed6526549412ee2665ade"
+HERMES_LIVE_COMMIT = "ebe3fcb2f85ebdbe0e469e9d295636ac930246b4"
+HERMES_ENVIRONMENT_SHA256 = "a175bfc46955bc72ebb1c854ce7646f3dad3fd22716d3219d3a42d8928a30f7f"
 HERMES_LIVE = "/home/anthony/.hermes/hermes-agent"
 HERMES_CHECKOUT = "/tmp/mnemos-hermes-cwd-compat-v1"
 MODEL = "mnemos-native-qwen35-9b:greedy-ctx64k-v2"
@@ -184,6 +186,23 @@ def main() -> int:
             ["wsl.exe", "-d", "Debian", "--", "git", "-C", checkout, *arguments], text=True
         ).strip()
 
+    def host_environment() -> str:
+        result = subprocess.check_output(
+            [
+                "wsl.exe",
+                "-d",
+                "Debian",
+                "--",
+                HERMES_LIVE + "/venv/bin/python",
+                "-m",
+                "pip",
+                "freeze",
+            ],
+            text=True,
+            timeout=30,
+        )
+        return "\n".join(sorted(result.splitlines())) + "\n"
+
     record: dict[str, Any] = {
         "status": "running",
         "started_at": datetime.now(timezone.utc).isoformat(),
@@ -240,11 +259,22 @@ def main() -> int:
             installed_package=mnemos.__file__,
             hermes_commit=HERMES_COMMIT,
         )
-        for checkout in (HERMES_LIVE, HERMES_CHECKOUT):
-            if host_git(checkout, "rev-parse", "HEAD") != HERMES_COMMIT:
+        for checkout, expected in (
+            (HERMES_LIVE, HERMES_LIVE_COMMIT),
+            (HERMES_CHECKOUT, HERMES_COMMIT),
+        ):
+            if host_git(checkout, "rev-parse", "HEAD") != expected:
                 raise ValueError("Hermes revision changed")
         if host_git(HERMES_LIVE, "status", "--porcelain", "--untracked-files=no"):
             raise ValueError("Live Hermes has tracked modifications")
+        environment = host_environment()
+        (root / "host-environment-before.txt").write_text(environment, encoding="utf-8")
+        environment_digest = hashlib.sha256(environment.encode()).hexdigest()
+        record.update(
+            live_hermes_commit=HERMES_LIVE_COMMIT, host_environment_sha256=environment_digest
+        )
+        if environment_digest != HERMES_ENVIRONMENT_SHA256:
+            raise ValueError("Hermes shared environment changed")
         patch = host_git(HERMES_CHECKOUT, "diff") + "\n"
         expected_patch = (
             repo / "docs/validation/2026-09-19/native-hermes-local-v4/host-compatibility.patch"
@@ -759,6 +789,16 @@ def main() -> int:
                 service.stop()
             if host_git(HERMES_LIVE, "status", "--porcelain", "--untracked-files=no"):
                 record.update(status="failed", cleanup_error="Live Hermes tracked source changed")
+            if host_git(HERMES_LIVE, "rev-parse", "HEAD") != HERMES_LIVE_COMMIT:
+                record.update(
+                    status="failed", cleanup_error="Live Hermes revision changed during run"
+                )
+            environment_after = host_environment()
+            (root / "host-environment-after.txt").write_text(environment_after, encoding="utf-8")
+            if hashlib.sha256(environment_after.encode()).hexdigest() != HERMES_ENVIRONMENT_SHA256:
+                record.update(
+                    status="failed", cleanup_error="Hermes shared environment changed during run"
+                )
         except Exception as exc:
             record.update(status="failed", cleanup_error=type(exc).__name__ + ": " + str(exc))
         record["finished_at"] = datetime.now(timezone.utc).isoformat()
