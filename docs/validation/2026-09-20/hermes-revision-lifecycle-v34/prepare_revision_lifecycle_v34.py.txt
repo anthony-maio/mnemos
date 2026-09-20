@@ -1,0 +1,56 @@
+from pathlib import Path
+
+base = Path(__file__).parent
+source = (base / 'hermes_revision_delivery_v33.py').read_text()
+source = source.replace('v33', 'v34')
+insert = '''
+        async def call(operation, payload):
+            response = await client.request(operation, payload, queue_on_failure=False)
+            result.setdefault('requests', []).append({'operation': operation, 'payload': payload, 'response': response})
+            return response
+
+        context = capture_context.model_dump(mode='json')
+        await call('maintenance', {})
+        store = instances[-1].engine.store
+        chunks = store.get_all()
+        assert len(chunks) == 2, [x.model_dump(mode='json') for x in chunks]
+        target = next(x for x in chunks if x.content == 'Use cedar export format.')
+        correction = await call('correct', {'event_id': 'revision-lifecycle-v34-correction',
+            'context': context, 'content': 'Use birch export format.',
+            'fact_id': target.id, 'expected_version': target.version})
+        assert correction['status'] == 'committed', correction
+        await call('maintenance', {})
+        inspected = await call('inspect', {'context': context, 'fact_id': target.id})
+        assert inspected['fact']['content'] == 'Use birch export format.', inspected
+        assert inspected['fact']['version'] == target.version + 1, inspected
+        assert len(store.get_all()) == 1, [x.model_dump(mode='json') for x in store.get_all()]
+        result['phases'].append({'phase': 'correction_deduplication', 'inspection': inspected})
+        await client.close()
+        service.stop()
+        service = runtime()
+        service.start()
+        reopened = await call('inspect', {'context': context, 'fact_id': target.id})
+        assert reopened == inspected
+        preview = await call('forget_preview', {'context': context, 'fact_id': target.id,
+            'expected_version': target.version + 1, 'limit': 100})
+        assert preview['complete'] and preview['apply_preconditions'], preview
+        assert not preview['candidates'], preview
+        await call('forget_related', {'context': context, **preview['apply_preconditions'],
+            'selected_fact_ids': [target.id],
+            'selected_source_event_ids': [s['source_event_id'] for s in preview['source_events']]})
+        outbox.write_bytes(original)
+        replay_forgotten = await client.replay_outbox()
+        assert (replay_forgotten['acknowledged'], replay_forgotten['failed'], replay_forgotten['pending']) == (3, 0, 0)
+        await call('maintenance', {})
+        assert not instances[-1].engine.store.get_all()
+        result['phases'].append({'phase': 'reviewed_forget_replay', 'replay': replay_forgotten, 'state': snapshot()})
+        await client.close()
+        service.stop()
+        service = runtime()
+        service.start()
+        assert not instances[-1].engine.store.get_all()
+        result['phases'].append({'phase': 'final_restart_no_resurrection', 'state': snapshot()})
+'''
+source = source.replace("        result['status'] = 'passed'", insert + "        result['status'] = 'passed'")
+source = source.replace('    finally:\n', "    except Exception as exc:\n        import traceback\n        result.update(status='failed', error=str(exc), traceback=traceback.format_exc())\n        raise\n    finally:\n")
+(base / 'hermes_revision_delivery_v34.py').write_text(source)

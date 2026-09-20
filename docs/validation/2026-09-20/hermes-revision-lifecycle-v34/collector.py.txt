@@ -1,0 +1,58 @@
+from pathlib import Path
+from contextlib import closing
+import hashlib, json, shutil, sqlite3
+
+repo = Path('/mnt/d/Development/mnemos/mnemos/.worktrees/functional-local-memory')
+root = Path('/tmp/mnemos-hermes-outbox-revision-delivery-v34-0m81q8ri')
+candidate = Path('/tmp/mnemos-hermes-compaction-origin-candidate-v1')
+out = repo / 'docs/validation/2026-09-20/hermes-revision-lifecycle-v34'
+record = json.loads((root / 'result.json').read_bytes())
+assert record['status'] == 'failed' and record['descriptor_removed']
+out.mkdir(exist_ok=False)
+(out / '.gitattributes').write_bytes(b'** -text -whitespace\n')
+shutil.copyfile(root / 'result.json', out / 'result.json')
+for suffix in ['stdout.log', 'stderr.log']:
+    shutil.copyfile(candidate / ('revision_delivery_v34.' + suffix), out / suffix)
+for name in ['hermes_revision_delivery_v34.py', 'prepare_revision_lifecycle_v34.py']:
+    shutil.copyfile(repo / '.venv' / name, out / (name + '.txt'))
+with closing(sqlite3.connect(root / 'memory.sqlite')) as source:
+    with closing(sqlite3.connect(out / 'service.sqlite')) as backup:
+        source.backup(backup)
+        assert backup.execute('PRAGMA integrity_check').fetchone() == ('ok',)
+        assert backup.execute('PRAGMA foreign_key_check').fetchall() == []
+        backup.row_factory = sqlite3.Row
+        jobs = [dict(x) for x in backup.execute('SELECT * FROM memory_jobs')]
+        (out / 'jobs.json').write_text(json.dumps(jobs, indent=2) + '\n')
+        backup.execute('PRAGMA journal_mode=DELETE')
+        backup.commit()
+shutil.copyfile(__file__, out / 'collector.py.txt')
+(out / 'README.md').write_text('''# Hermes revision lifecycle: correction collision remains open
+
+The exact three-record v32 outbox was delivered into a new private service
+fixture using the byte-verified installed wheel from product 05c71d2.
+Delivery, stopped-service buffering, restart and duplicate replay passed.
+Maintenance completed both original-source jobs as captured evidence and
+kept the derived summary ineligible for facts.
+
+Explicit correction of "Use cedar export format." to the already captured
+"Use birch export format." was accepted as a durable request. Its maintenance
+job failed with RuntimeError and remained pending after one attempt. The old
+target stayed at version 1, unchanged. The lifecycle verifier failed here;
+forgetting and subsequent replay phases did not run.
+
+Storage has an explicit expected-version canonical-collision guard. Its
+contract and safe recovery behavior require review before changing it: an
+implicit merge must not discard source history, versions or scope boundaries.
+This record does not establish the exact exception message from the worker,
+which stores only the exception class. No retries or live-store edits were
+performed to make this attempt pass.
+
+All modules were disabled, with an unavailable language model and simple
+embeddings. This is a structural lifecycle failure, not an extraction-quality
+measurement. Service descriptor cleanup passed. The copied database passes
+integrity and foreign-key checks. Original v32/v33 evidence is untouched.
+''')
+files = {p.name: {'bytes': p.stat().st_size, 'sha256': hashlib.sha256(p.read_bytes()).hexdigest()}
+         for p in sorted(out.iterdir()) if p.is_file()}
+(out / 'evidence-index.json').write_text(json.dumps({'files': files}, indent=2) + '\n')
+print(json.dumps({'archive': str(out), 'files': len(files)}))

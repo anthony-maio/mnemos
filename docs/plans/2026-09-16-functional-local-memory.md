@@ -425,6 +425,14 @@ Run: `py -3.13 -m pytest -q tests/test_cross_host_contract.py tests/test_mcp_com
 
 ### T18 - Prove the contribution of all five modules
 
+T17 follow-up: the [revision lifecycle v34](../validation/2026-09-20/hermes-revision-lifecycle-v34/README.md)
+passes raw delivery and restart replay, then fails explicit correction when
+the destination text already exists as captured evidence. The durable job
+remains pending with RuntimeError; the original target stays unchanged.
+The expected-version canonical-collision contract requires review before a
+repair. Forgetting and final replay did not run. All modules were disabled;
+the preserved failure is structural, not a semantic extraction measurement.
+
 The [prompt-blinded semantic review](../validation/2026-09-20/extraction-authored-semantic-review-v1/README.md)
 finds better qualification retention in the candidate's successful outputs,
 but its runtime failure remains. The [thinking-disabled diagnostic](../validation/2026-09-20/extraction-thinking-off-diagnostic-v1/README.md)

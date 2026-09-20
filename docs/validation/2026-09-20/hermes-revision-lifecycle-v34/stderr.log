@@ -1,0 +1,16 @@
+Traceback (most recent call last):
+  File "/mnt/d/Development/mnemos/mnemos/.worktrees/functional-local-memory/.venv/hermes_revision_delivery_v34.py", line 176, in <module>
+    asyncio.run(main())
+  File "/home/anthony/.hermes/hermes-agent/.hermes-runtime/python/generation-1785088062-1959075-bb6b6250/cpython-3.11.15-linux-x86_64-gnu/lib/python3.11/asyncio/runners.py", line 190, in run
+    return runner.run(main)
+           ^^^^^^^^^^^^^^^^
+  File "/home/anthony/.hermes/hermes-agent/.hermes-runtime/python/generation-1785088062-1959075-bb6b6250/cpython-3.11.15-linux-x86_64-gnu/lib/python3.11/asyncio/runners.py", line 118, in run
+    return self._loop.run_until_complete(task)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/anthony/.hermes/hermes-agent/.hermes-runtime/python/generation-1785088062-1959075-bb6b6250/cpython-3.11.15-linux-x86_64-gnu/lib/python3.11/asyncio/base_events.py", line 654, in run_until_complete
+    return future.result()
+           ^^^^^^^^^^^^^^^
+  File "/mnt/d/Development/mnemos/mnemos/.worktrees/functional-local-memory/.venv/hermes_revision_delivery_v34.py", line 129, in main
+    assert inspected['fact']['content'] == 'Use birch export format.', inspected
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AssertionError: {'evidence': [{'created_at': '2026-09-20T20:47:02.684685Z', 'evidence_id': '5a82cca8-2b73-4f8a-aa25-3c51b5a0f683', 'excerpt': 'Use cedar export format.', 'fact_id': '1cb73cab-7e60-4177-b915-7a5c6b8b7b41', 'original_source_status': 'retained_locally', 'source_event_id': '70a7597e6310379432d8b205c457f1f2706f9f54e1b49770a34b6ab97295f585', 'source_ref': 'transcript:v2:1'}], 'fact': {'access_count': 0, 'canonical_key': 'bdee113c890d2e9d15bcaf15070ae4fda4ebbb97f275672ff5d79f5d31443d8a', 'cognitive_state': None, 'cognitive_state_status': 'provider_unavailable', 'content': 'Use cedar export format.', 'created_at': '2026-09-20T20:47:02.684635Z', 'id': '1cb73cab-7e60-4177-b915-7a5c6b8b7b41', 'last_observed_at': '2026-09-20T20:37:33.046511Z', 'last_retrieved_at': None, 'metadata': {'assertion_status': 'unknown', 'cognitive_state_status': 'provider_unavailable', 'encoding_diagnostics': {'prediction': None, 'prediction_mode': 'disabled', 'surprisal_score': None, 'surprisal_status': 'disabled', 'threshold': 0.3}, 'host': 'hermes', 'project_id': '9d21671a-4fd0-4b6f-8f09-3d6b6541ecc1', 'scope': 'project', 'scope_id': '9d21671a-4fd0-4b6f-8f09-3d6b6541ecc1', 'session_id': 'parent', 'source': 'captured_passthrough', 'source_event_ids': ['70a7597e6310379432d8b205c457f1f2706f9f54e1b49770a34b6ab97295f585'], 'source_roles': ['user'], 'user_profile_id': 'profile', 'workspace_id': None}, 'observation_count': 1, 'reconsolidation_due_at': None, 'salience': 0.5, 'surprisal_score': None, 'surprisal_status': 'unknown', 'updated_at': '2026-09-20T20:47:02.684638Z', 'version': 1}, 'original_source_status': 'retained_locally', 'revisions': [], 'schema_version': 1}
