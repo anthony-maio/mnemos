@@ -1,5 +1,13 @@
 # Local memory host validation
 
+The [selection-rejection package](2026-09-20/selection-rejection-checkpoint-v1/README.md)
+at `5155ebd` passes 1,638 source tests with four skips, all six source/package
+checks, 655 isolated installed cases with four matching skips, and seven
+replay assertions. Out-of-preview selected fact/source IDs receive a fixed,
+noncommitting rejection while scope, digest, version, and deletion rules stay
+unchanged. No native model has run this package. The failed v11 cohort below
+belongs to preceding source `697b672`; its outcomes remain unchanged.
+
 The [native Hermes v11 cohort](2026-09-20/hermes-native-cohort-v11/README.md)
 finished zero of three complete lifecycles on `697b672`. Every attempt passed
 teaching, restarted recall, correction, and corrected recall, then failed at

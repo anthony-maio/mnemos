@@ -1,0 +1,108 @@
+"""Preserve verified source and installed evidence for out-of-preview selection rejection."""
+from pathlib import Path
+import hashlib
+import json
+import shutil
+
+repo = Path(__file__).resolve().parents[1]
+temp = Path('C:/Users/Ant/AppData/Local/Temp')
+checks = temp / 'mnemos-package-checks-selection-rejection-v1'
+installed = temp / 'mnemos-installed-checks-selection-rejection-v1'
+output = repo / 'docs/validation/2026-09-20/selection-rejection-checkpoint-v1'
+verification = json.loads((checks / 'verification.json').read_text(encoding='utf-8'))
+installation = json.loads((installed / 'installation.json').read_text(encoding='utf-8'))
+contract = json.loads((installed / 'contract.json').read_text(encoding='utf-8'))
+assert verification['status'] == installation['status'] == contract['status'] == 'passed'
+commit = verification['source_commit']
+assert commit == '5155ebddd8e8cf42df1c67f11a1578f5edfb43ec'
+assert commit == installation['bindings_after']['commit']
+assert all(c['exit_code'] == 0 for c in verification['checks'])
+
+def sha(path):
+    return hashlib.sha256(path.read_bytes()).hexdigest()
+
+assert sha(checks / 'verification.json') == installation['bindings_before']['checks_sha256']
+assert sha(checks / 'pytest.xml') == installation['successful_pytest_xml_sha256']
+for artifact in verification['artifacts']:
+    p = Path(artifact['file'])
+    assert sha(p) == artifact['sha256'] and p.stat().st_size == artifact['bytes']
+for command in installation['commands']:
+    for stream in ('stdout', 'stderr'):
+        assert sha(installed / (command['name'] + '.' + stream + '.log')) == command[stream + '_sha256']
+assert sha(repo / '.venv/final_checkpoint_checks_v3.py') == verification['runner_sha256']
+assert sha(repo / '.venv/run_combined_installed_check_v39.py') == installation['runner_sha256']
+output.mkdir(exist_ok=False)
+(output / '.gitattributes').write_bytes(b'** -text -whitespace\n')
+
+def copy(path, relative):
+    target = output / relative
+    target.parent.mkdir(parents=True, exist_ok=True)
+    shutil.copyfile(path, target)
+
+for kind, folder in (('source-checks', checks), ('installed-checks', installed)):
+    for p in folder.iterdir():
+        if p.is_file() and p.suffix in {'.json', '.xml', '.log'}:
+            copy(p, Path(kind) / p.name)
+for name in ('final_checkpoint_checks_v3.py', 'run_combined_installed_check_v39.py', 'installed_contract_probe_v4.py', 'verify_claude_stop_replay_v2.py'):
+    copy(repo / '.venv' / name, Path('helpers') / (name + '.txt'))
+for p in sorted((repo / '.venv').glob('out-of-preview-*')):
+    if p.is_file() and p.suffix in {'.log', '.xml', '.json', '.stdout'}:
+        copy(p, Path('development-checks') / p.name)
+copy(Path(__file__), Path('helpers') / (Path(__file__).name + '.txt'))
+files = {p.relative_to(output).as_posix(): {'bytes': p.stat().st_size, 'sha256': sha(p)}
+         for p in sorted(output.rglob('*')) if p.is_file()}
+(output / 'evidence-index.json').write_text(json.dumps({'files': files}, indent=2) + '\n', encoding='utf-8')
+s = verification['checks'][0]['counts']
+i = installation['contract']['junit_summary']
+wheel = next(a for a in verification['artifacts'] if a['file'].endswith('.whl'))
+(output / 'README.md').write_text(f'''# Out-of-preview forget selections return a noncommitting rejection
+
+Frozen source `{commit}` passes {s['tests'] - s['skipped']:,} source tests
+with {s['skipped']} skips, all six source/package checks, {i['tests'] - i['skipped']:,} isolated
+installed cases with {i['skipped']} matching skips, and seven replay assertions.
+Installed validation checks case outcomes, import origins, and package bytes
+against the frozen source and wheel.
+
+Wheel: {wheel['bytes']:,} bytes; SHA-256 `{wheel['sha256']}`.
+
+## Observed failure and repair
+
+The [native Hermes v11 cohort](../hermes-native-cohort-v11/README.md) failed
+all three lifecycles on the preceding `697b672` package. Attempt 2 selected
+all ten previewed fact IDs but supplied two source IDs absent from the
+preview. It reused the correct digest and limit. Both identical apply calls
+returned HTTP 500 with no committed receipt. Read-only terminal inspection
+found the target retained, no suppressions, and unchanged control state.
+
+Unknown selected facts and sources now raise a typed ValueError subclass.
+The service returns a fixed, noncommitting HTTP 409 rejection with code
+`related_forget_selection_invalid`. The client recognizes only the exact
+known response for related forget and returns before replaying pending
+captures. Hermes receives the same rejection. The original scope, digest,
+version, dependency, and explicit-source requirements remain unchanged.
+No arguments are repaired, no selected IDs are inferred, and no invalid
+request becomes a successful deletion.
+
+The [focused development record](../selection-rejection-development-v1/README.md)
+preserves two expected red failures followed by 14 passing service-error
+cases and 58 adjacent cases. Tests include full SQLite-state preservation,
+pending-outbox preservation, Hermes dispatch, valid apply, no identity leak,
+and malformed/wrong-operation responses. Unexpected generic ValueErrors
+retain HTTP 500. Product formatting and strict Python 3.10 type checks pass.
+
+## Evidence limits
+
+No native model has run this new package. V11 remains zero of three, and the
+repair does not establish that the model will choose valid sources or recover
+from a rejection. The package also includes a read-only graph source-relation
+diagnostic and its 20 offline tests. It does not change production retrieval
+or establish graph utility. Native continuity, complete capture, full-module
+quality, Desktop, and the operational pilot remain open.
+
+No live host configuration, source, or memory was changed. The evidence index
+binds the raw files; this README is outside that index.
+''', encoding='utf-8')
+print(json.dumps({'archive': str(output), 'files': len(files), 'source_commit': commit,
+                  'source_passes': s['tests']-s['skipped'], 'source_skips': s['skipped'],
+                  'installed_passes': i['tests']-i['skipped'], 'installed_skips': i['skipped'],
+                  'wheel': wheel}))

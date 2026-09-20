@@ -40,11 +40,16 @@ negative results even if they complicate the ending.
 
 ## Latest implementation and native evidence
 
-Checkout addendum after packet v22: the
-[out-of-preview selection repair](../validation/2026-09-20/selection-rejection-development-v1/README.md)
-returns a clear noncommitting rejection for unknown selected IDs. Focused
-checks pass; full package verification is running. It does not change the
-archived v11 failure, and it is not yet part of the portable packet.
+Checkout addendum after packet v22; this later package record is not included
+in that portable snapshot.
+
+The [selection-rejection package](../validation/2026-09-20/selection-rejection-checkpoint-v1/README.md)
+at `5155ebd` passes 1,638 source tests with four skips, all six source/package
+checks, 655 isolated installed cases with four matching skips, and seven
+replay assertions. Out-of-preview selected fact/source IDs receive a fixed,
+noncommitting rejection while scope, digest, version, and deletion rules stay
+unchanged. No native model has run this package. The failed v11 cohort below
+belongs to preceding source `697b672`; its outcomes remain unchanged.
 
 The [native Hermes v11 cohort](../validation/2026-09-20/hermes-native-cohort-v11/README.md)
 finished zero of three complete lifecycles on `697b672`. Every attempt passed

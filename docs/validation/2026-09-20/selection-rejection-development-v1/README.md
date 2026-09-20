@@ -23,11 +23,12 @@ boundaries, and unchanged HTTP 500 for unexpected internal ValueErrors.
 Black passes all five changed files. Strict Python 3.10 mypy passes the four
 production files; this is not a strict typing pass for the test module.
 
-Full source/package checks are running against the isolated
-`mnemos-source-selection-rejection-v1` checkout. No new installed-package or
-native result is claimed. The latest fully verified package remains
-`697b672`, with the failed v11 cohort bound to it. The new graph association
-diagnostic is development-only and does not change production retrieval.
+Subsequent [full package verification](../selection-rejection-checkpoint-v1/README.md)
+passes 1,638 source tests and 655 installed cases, with four matching skips
+in each, all six source/package checks, and seven replay assertions. No
+native model has run this package. The failed v11 cohort remains bound to
+preceding `697b672`. The graph diagnostic is development-only and does not
+change production retrieval.
 
 This development record was created after portable writing packet v22 and
 is not included in that snapshot. The packet must be refreshed at final
