@@ -1,5 +1,12 @@
 # Functional local memory implementation record
 
+September 20: [read-only retrieval fixture diagnosis](../2026-09-20/retrieval-fixture-audit-v1/README.md)
+confirms scope-label and explicit-body conflicts using the original hashed
+input and saved outputs. All original results remain unchanged. Reproduction
+scripts, source contracts, and per-case evidence are archived; the writing
+handoff and current task table now distinguish these evaluation defects
+from open product and native-workflow gates. No new inference was run.
+
 The [three-host v7 run](../2026-09-20/three-host-native-v7/README.md) passed all 11 native phases on verified
 product `e6887de`: Codex and Claude teaching, Hermes recall and same-ID
 correction, corrected recall from all three hosts, Claude reviewed deletion,

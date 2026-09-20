@@ -335,7 +335,9 @@ Run: `py -3.13 -m pytest -q tests/test_backup_restore.py tests/test_storage_sqli
 
 ### T17 - Verify the complete local and cross-host workflow
 
-Latest native result: [three-host v5](../validation/2026-09-20/three-host-native-v5/README.md) passed teaching but failed Hermes recall on unsupported scope arguments. Generated shared guidance requests those exact arguments; all three provider requests contain that conflicting instruction. Worker startup and cleanup passed. Correction and later phases did not run. Full continuity remains open.
+Latest native result: [three-host v7](../validation/2026-09-20/three-host-native-v7/README.md) passes all 11 phases on verified product `e6887de`: teaching, restarted recall, same-ID correction, all-host corrected recall, reviewed deletion, 12 suppressed source replays, and all-host final recall. Controls and cleanup pass. All five cognition modules were disabled; complete capture, Desktop, native outage recovery, full-module quality, and the pilot remain open.
+
+Previous native result: [three-host v5](../validation/2026-09-20/three-host-native-v5/README.md) passed teaching but failed Hermes recall on unsupported scope arguments. Generated shared guidance requests those exact arguments; all three provider requests contain that conflicting instruction. Worker startup and cleanup passed. Correction and later phases did not run. Full continuity remains open.
 
 Previous native result: [three-host v4](../validation/2026-09-20/three-host-native-v4/README.md) passed Codex and Claude teaching, followed by Hermes recall of both facts after restart. Correction failed: rejected scope override, omitted inspection, and a pending correction job. The final fact remained at version 1; later phases did not run. Cleanup passed. Validation stopped before the runner's post-phase maintenance; pending status does not establish a production worker defect. V2 and v3 remain failed. T17 acceptance remains open.
 
@@ -349,11 +351,13 @@ Acceptance: host A teaches a source-backed project convention; after restart hos
 
 The [Hermes v10 cohort](../validation/2026-09-20/hermes-native-cohort-v10/README.md) now supplies one complete bounded lifecycle in three attempts, with both failures retained. All five cognition modules were disabled; general reliability remains open.
 
-The [original three-host protocol](2026-09-19-three-host-continuity-protocol-v1.md) now has preserved successor attempts. V4 establishes teaching and restarted retrieval across all three hosts; full correction, forgetting, and replay continuity remains unproven.
+The [original three-host protocol](2026-09-19-three-host-continuity-protocol-v1.md) now has preserved successor attempts. V7 establishes one bounded teaching, recall, correction, forgetting, and replay lifecycle across all three hosts. Earlier failures remain preserved; broader acceptance gates remain open.
 
 Run: `py -3.13 -m pytest -q tests/test_cross_host_contract.py tests/test_mcp_compatibility.py`. Real-host results remain NOT RUN until observed; protocol tests do not promote host tiers.
 
 ### T18 - Prove the contribution of all five modules
+
+The [frozen fixture audit](../validation/2026-09-20/retrieval-fixture-audit-v1/README.md) identifies scope-label and explicit-body conflicts in the original retrieval evaluation. Preserve the original negatives. Its prospective repair requires a new manifest, unchanged minimum counts and gates, and fresh runs; it must not be described as unseen heldout data.
 
 Depends on: T07-T11, T17.
 

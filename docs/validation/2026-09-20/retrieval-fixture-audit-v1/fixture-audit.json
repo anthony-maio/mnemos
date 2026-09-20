@@ -1,0 +1,1444 @@
+{
+  "dataset_sha256": "036fa51ee13271a85a14a62a2fe4ef65d13eaeb290331fe325aa5bf32ce893fc",
+  "report_sha256": "9553827a7c5f8b14079607c7fb5b38a4c40457d8987ad41efac1b825a028b8de",
+  "source_commit": "fc72cc251aeafa161a1a390269b8dfa34d83cf2b",
+  "heldout_sessions": 200,
+  "cross_scope_answerable_conflicts": 20,
+  "complete_canary_observations": 60,
+  "explicit_remember_gold_mismatches": 60,
+  "prefix_counts": {
+    "Please remember this project decision explicitly: ": 20,
+    "Remember for this project: ": 20,
+    "Remember temporarily: ": 20
+  },
+  "scope_canaries": [
+    {
+      "session_id": "heldout-061",
+      "source_project_id": "project-01",
+      "source_event": {
+        "event_id": "heldout-061-event-01",
+        "occurred_at": "2026-01-01T00:01:00Z",
+        "role": "user",
+        "content": "For project-01 only, For this project, deployment target is Render.",
+        "source_kind": "scoped_project_event",
+        "write_mode": "automatic",
+        "lifecycle_operation": "capture",
+        "evidence_fact_ids": [
+          "fact-061"
+        ]
+      },
+      "query": {
+        "query_id": "query-answerable-061",
+        "text": "Which deployment target applies to this project?",
+        "kind": "answerable",
+        "relevant_fact_ids": [
+          "fact-061"
+        ],
+        "expected_answer": "Render",
+        "target_user_profile_id": "t18-canary-profile",
+        "target_project_id": "canary-project-01"
+      },
+      "observations": [
+        {
+          "repetition": 1,
+          "all_four_strategies_empty": true,
+          "original_quality_hit": false
+        },
+        {
+          "repetition": 2,
+          "all_four_strategies_empty": true,
+          "original_quality_hit": false
+        },
+        {
+          "repetition": 3,
+          "all_four_strategies_empty": true,
+          "original_quality_hit": false
+        }
+      ]
+    },
+    {
+      "session_id": "heldout-062",
+      "source_project_id": "project-02",
+      "source_event": {
+        "event_id": "heldout-062-event-01",
+        "occurred_at": "2026-01-01T00:01:00Z",
+        "role": "user",
+        "content": "For project-02 only, For this project, code review is the owning team review.",
+        "source_kind": "scoped_project_event",
+        "write_mode": "automatic",
+        "lifecycle_operation": "capture",
+        "evidence_fact_ids": [
+          "fact-062"
+        ]
+      },
+      "query": {
+        "query_id": "query-answerable-062",
+        "text": "Which code review applies to this project?",
+        "kind": "answerable",
+        "relevant_fact_ids": [
+          "fact-062"
+        ],
+        "expected_answer": "the owning team review",
+        "target_user_profile_id": "t18-canary-profile",
+        "target_project_id": "canary-project-02"
+      },
+      "observations": [
+        {
+          "repetition": 1,
+          "all_four_strategies_empty": true,
+          "original_quality_hit": false
+        },
+        {
+          "repetition": 2,
+          "all_four_strategies_empty": true,
+          "original_quality_hit": false
+        },
+        {
+          "repetition": 3,
+          "all_four_strategies_empty": true,
+          "original_quality_hit": false
+        }
+      ]
+    },
+    {
+      "session_id": "heldout-063",
+      "source_project_id": "project-03",
+      "source_event": {
+        "event_id": "heldout-063-event-01",
+        "occurred_at": "2026-01-01T00:01:00Z",
+        "role": "user",
+        "content": "For project-03 only, For this project, branch naming is bugfix slash ticket.",
+        "source_kind": "scoped_project_event",
+        "write_mode": "automatic",
+        "lifecycle_operation": "capture",
+        "evidence_fact_ids": [
+          "fact-063"
+        ]
+      },
+      "query": {
+        "query_id": "query-answerable-063",
+        "text": "Which branch naming applies to this project?",
+        "kind": "answerable",
+        "relevant_fact_ids": [
+          "fact-063"
+        ],
+        "expected_answer": "bugfix slash ticket",
+        "target_user_profile_id": "t18-canary-profile",
+        "target_project_id": "canary-project-03"
+      },
+      "observations": [
+        {
+          "repetition": 1,
+          "all_four_strategies_empty": true,
+          "original_quality_hit": false
+        },
+        {
+          "repetition": 2,
+          "all_four_strategies_empty": true,
+          "original_quality_hit": false
+        },
+        {
+          "repetition": 3,
+          "all_four_strategies_empty": true,
+          "original_quality_hit": false
+        }
+      ]
+    },
+    {
+      "session_id": "heldout-064",
+      "source_project_id": "project-04",
+      "source_event": {
+        "event_id": "heldout-064-event-01",
+        "occurred_at": "2026-01-01T00:01:00Z",
+        "role": "user",
+        "content": "For project-04 only, For this project, test command is go test ./....",
+        "source_kind": "scoped_project_event",
+        "write_mode": "automatic",
+        "lifecycle_operation": "capture",
+        "evidence_fact_ids": [
+          "fact-064"
+        ]
+      },
+      "query": {
+        "query_id": "query-answerable-064",
+        "text": "Which test command applies to this project?",
+        "kind": "answerable",
+        "relevant_fact_ids": [
+          "fact-064"
+        ],
+        "expected_answer": "go test ./...",
+        "target_user_profile_id": "t18-canary-profile",
+        "target_project_id": "canary-project-04"
+      },
+      "observations": [
+        {
+          "repetition": 1,
+          "all_four_strategies_empty": true,
+          "original_quality_hit": false
+        },
+        {
+          "repetition": 2,
+          "all_four_strategies_empty": true,
+          "original_quality_hit": false
+        },
+        {
+          "repetition": 3,
+          "all_four_strategies_empty": true,
+          "original_quality_hit": false
+        }
+      ]
+    },
+    {
+      "session_id": "heldout-065",
+      "source_project_id": "project-05",
+      "source_event": {
+        "event_id": "heldout-065-event-01",
+        "occurred_at": "2026-01-01T00:01:00Z",
+        "role": "user",
+        "content": "For project-05 only, For this project, incident channel is #infra-alerts.",
+        "source_kind": "scoped_project_event",
+        "write_mode": "automatic",
+        "lifecycle_operation": "capture",
+        "evidence_fact_ids": [
+          "fact-065"
+        ]
+      },
+      "query": {
+        "query_id": "query-answerable-065",
+        "text": "Which incident channel applies to this project?",
+        "kind": "answerable",
+        "relevant_fact_ids": [
+          "fact-065"
+        ],
+        "expected_answer": "#infra-alerts",
+        "target_user_profile_id": "t18-canary-profile",
+        "target_project_id": "canary-project-05"
+      },
+      "observations": [
+        {
+          "repetition": 1,
+          "all_four_strategies_empty": true,
+          "original_quality_hit": false
+        },
+        {
+          "repetition": 2,
+          "all_four_strategies_empty": true,
+          "original_quality_hit": false
+        },
+        {
+          "repetition": 3,
+          "all_four_strategies_empty": true,
+          "original_quality_hit": false
+        }
+      ]
+    },
+    {
+      "session_id": "heldout-066",
+      "source_project_id": "project-06",
+      "source_event": {
+        "event_id": "heldout-066-event-01",
+        "occurred_at": "2026-01-01T00:01:00Z",
+        "role": "user",
+        "content": "For project-06 only, For this project, documentation home is the architecture notes.",
+        "source_kind": "scoped_project_event",
+        "write_mode": "automatic",
+        "lifecycle_operation": "capture",
+        "evidence_fact_ids": [
+          "fact-066"
+        ]
+      },
+      "query": {
+        "query_id": "query-answerable-066",
+        "text": "Which documentation home applies to this project?",
+        "kind": "answerable",
+        "relevant_fact_ids": [
+          "fact-066"
+        ],
+        "expected_answer": "the architecture notes",
+        "target_user_profile_id": "t18-canary-profile",
+        "target_project_id": "canary-project-06"
+      },
+      "observations": [
+        {
+          "repetition": 1,
+          "all_four_strategies_empty": true,
+          "original_quality_hit": false
+        },
+        {
+          "repetition": 2,
+          "all_four_strategies_empty": true,
+          "original_quality_hit": false
+        },
+        {
+          "repetition": 3,
+          "all_four_strategies_empty": true,
+          "original_quality_hit": false
+        }
+      ]
+    },
+    {
+      "session_id": "heldout-067",
+      "source_project_id": "project-07",
+      "source_event": {
+        "event_id": "heldout-067-event-01",
+        "occurred_at": "2026-01-01T00:01:00Z",
+        "role": "user",
+        "content": "For project-07 only, For this project, package manager is Cargo.",
+        "source_kind": "scoped_project_event",
+        "write_mode": "automatic",
+        "lifecycle_operation": "capture",
+        "evidence_fact_ids": [
+          "fact-067"
+        ]
+      },
+      "query": {
+        "query_id": "query-answerable-067",
+        "text": "Which package manager applies to this project?",
+        "kind": "answerable",
+        "relevant_fact_ids": [
+          "fact-067"
+        ],
+        "expected_answer": "Cargo",
+        "target_user_profile_id": "t18-canary-profile",
+        "target_project_id": "canary-project-07"
+      },
+      "observations": [
+        {
+          "repetition": 1,
+          "all_four_strategies_empty": true,
+          "original_quality_hit": false
+        },
+        {
+          "repetition": 2,
+          "all_four_strategies_empty": true,
+          "original_quality_hit": false
+        },
+        {
+          "repetition": 3,
+          "all_four_strategies_empty": true,
+          "original_quality_hit": false
+        }
+      ]
+    },
+    {
+      "session_id": "heldout-068",
+      "source_project_id": "project-08",
+      "source_event": {
+        "event_id": "heldout-068-event-01",
+        "occurred_at": "2026-01-01T00:01:00Z",
+        "role": "user",
+        "content": "For project-08 only, For this project, primary database is DynamoDB.",
+        "source_kind": "scoped_project_event",
+        "write_mode": "automatic",
+        "lifecycle_operation": "capture",
+        "evidence_fact_ids": [
+          "fact-068"
+        ]
+      },
+      "query": {
+        "query_id": "query-answerable-068",
+        "text": "Which primary database applies to this project?",
+        "kind": "answerable",
+        "relevant_fact_ids": [
+          "fact-068"
+        ],
+        "expected_answer": "DynamoDB",
+        "target_user_profile_id": "t18-canary-profile",
+        "target_project_id": "canary-project-08"
+      },
+      "observations": [
+        {
+          "repetition": 1,
+          "all_four_strategies_empty": true,
+          "original_quality_hit": false
+        },
+        {
+          "repetition": 2,
+          "all_four_strategies_empty": true,
+          "original_quality_hit": false
+        },
+        {
+          "repetition": 3,
+          "all_four_strategies_empty": true,
+          "original_quality_hit": false
+        }
+      ]
+    },
+    {
+      "session_id": "heldout-069",
+      "source_project_id": "project-09",
+      "source_event": {
+        "event_id": "heldout-069-event-01",
+        "occurred_at": "2026-01-01T00:01:00Z",
+        "role": "user",
+        "content": "For project-09 only, For this project, queue service is Redis Streams.",
+        "source_kind": "scoped_project_event",
+        "write_mode": "automatic",
+        "lifecycle_operation": "capture",
+        "evidence_fact_ids": [
+          "fact-069"
+        ]
+      },
+      "query": {
+        "query_id": "query-answerable-069",
+        "text": "Which queue service applies to this project?",
+        "kind": "answerable",
+        "relevant_fact_ids": [
+          "fact-069"
+        ],
+        "expected_answer": "Redis Streams",
+        "target_user_profile_id": "t18-canary-profile",
+        "target_project_id": "canary-project-09"
+      },
+      "observations": [
+        {
+          "repetition": 1,
+          "all_four_strategies_empty": true,
+          "original_quality_hit": false
+        },
+        {
+          "repetition": 2,
+          "all_four_strategies_empty": true,
+          "original_quality_hit": false
+        },
+        {
+          "repetition": 3,
+          "all_four_strategies_empty": true,
+          "original_quality_hit": false
+        }
+      ]
+    },
+    {
+      "session_id": "heldout-070",
+      "source_project_id": "project-10",
+      "source_event": {
+        "event_id": "heldout-070-event-01",
+        "occurred_at": "2026-01-01T00:01:00Z",
+        "role": "user",
+        "content": "For project-10 only, For this project, auth method is short-lived API keys.",
+        "source_kind": "scoped_project_event",
+        "write_mode": "automatic",
+        "lifecycle_operation": "capture",
+        "evidence_fact_ids": [
+          "fact-070"
+        ]
+      },
+      "query": {
+        "query_id": "query-answerable-070",
+        "text": "Which auth method applies to this project?",
+        "kind": "answerable",
+        "relevant_fact_ids": [
+          "fact-070"
+        ],
+        "expected_answer": "short-lived API keys",
+        "target_user_profile_id": "t18-canary-profile",
+        "target_project_id": "canary-project-10"
+      },
+      "observations": [
+        {
+          "repetition": 1,
+          "all_four_strategies_empty": true,
+          "original_quality_hit": false
+        },
+        {
+          "repetition": 2,
+          "all_four_strategies_empty": true,
+          "original_quality_hit": false
+        },
+        {
+          "repetition": 3,
+          "all_four_strategies_empty": true,
+          "original_quality_hit": false
+        }
+      ]
+    },
+    {
+      "session_id": "heldout-071",
+      "source_project_id": "project-01",
+      "source_event": {
+        "event_id": "heldout-071-event-01",
+        "occurred_at": "2026-01-01T00:01:00Z",
+        "role": "user",
+        "content": "For project-01 only, For this project, release cadence is every other Friday.",
+        "source_kind": "scoped_project_event",
+        "write_mode": "automatic",
+        "lifecycle_operation": "capture",
+        "evidence_fact_ids": [
+          "fact-071"
+        ]
+      },
+      "query": {
+        "query_id": "query-answerable-071",
+        "text": "Which release cadence applies to this project?",
+        "kind": "answerable",
+        "relevant_fact_ids": [
+          "fact-071"
+        ],
+        "expected_answer": "every other Friday",
+        "target_user_profile_id": "t18-canary-profile",
+        "target_project_id": "canary-project-01"
+      },
+      "observations": [
+        {
+          "repetition": 1,
+          "all_four_strategies_empty": true,
+          "original_quality_hit": false
+        },
+        {
+          "repetition": 2,
+          "all_four_strategies_empty": true,
+          "original_quality_hit": false
+        },
+        {
+          "repetition": 3,
+          "all_four_strategies_empty": true,
+          "original_quality_hit": false
+        }
+      ]
+    },
+    {
+      "session_id": "heldout-072",
+      "source_project_id": "project-02",
+      "source_event": {
+        "event_id": "heldout-072-event-01",
+        "occurred_at": "2026-01-01T00:01:00Z",
+        "role": "user",
+        "content": "For project-02 only, For this project, log retention is one year.",
+        "source_kind": "scoped_project_event",
+        "write_mode": "automatic",
+        "lifecycle_operation": "capture",
+        "evidence_fact_ids": [
+          "fact-072"
+        ]
+      },
+      "query": {
+        "query_id": "query-answerable-072",
+        "text": "Which log retention applies to this project?",
+        "kind": "answerable",
+        "relevant_fact_ids": [
+          "fact-072"
+        ],
+        "expected_answer": "one year",
+        "target_user_profile_id": "t18-canary-profile",
+        "target_project_id": "canary-project-02"
+      },
+      "observations": [
+        {
+          "repetition": 1,
+          "all_four_strategies_empty": true,
+          "original_quality_hit": false
+        },
+        {
+          "repetition": 2,
+          "all_four_strategies_empty": true,
+          "original_quality_hit": false
+        },
+        {
+          "repetition": 3,
+          "all_four_strategies_empty": true,
+          "original_quality_hit": false
+        }
+      ]
+    },
+    {
+      "session_id": "heldout-073",
+      "source_project_id": "project-03",
+      "source_event": {
+        "event_id": "heldout-073-event-01",
+        "occurred_at": "2026-01-01T00:01:00Z",
+        "role": "user",
+        "content": "For project-03 only, For this project, preferred editor is Emacs.",
+        "source_kind": "scoped_project_event",
+        "write_mode": "automatic",
+        "lifecycle_operation": "capture",
+        "evidence_fact_ids": [
+          "fact-073"
+        ]
+      },
+      "query": {
+        "query_id": "query-answerable-073",
+        "text": "Which preferred editor applies to this project?",
+        "kind": "answerable",
+        "relevant_fact_ids": [
+          "fact-073"
+        ],
+        "expected_answer": "Emacs",
+        "target_user_profile_id": "t18-canary-profile",
+        "target_project_id": "canary-project-03"
+      },
+      "observations": [
+        {
+          "repetition": 1,
+          "all_four_strategies_empty": true,
+          "original_quality_hit": false
+        },
+        {
+          "repetition": 2,
+          "all_four_strategies_empty": true,
+          "original_quality_hit": false
+        },
+        {
+          "repetition": 3,
+          "all_four_strategies_empty": true,
+          "original_quality_hit": false
+        }
+      ]
+    },
+    {
+      "session_id": "heldout-074",
+      "source_project_id": "project-04",
+      "source_event": {
+        "event_id": "heldout-074-event-01",
+        "occurred_at": "2026-01-01T00:01:00Z",
+        "role": "user",
+        "content": "For project-04 only, For this project, CI provider is CircleCI.",
+        "source_kind": "scoped_project_event",
+        "write_mode": "automatic",
+        "lifecycle_operation": "capture",
+        "evidence_fact_ids": [
+          "fact-074"
+        ]
+      },
+      "query": {
+        "query_id": "query-answerable-074",
+        "text": "Which CI provider applies to this project?",
+        "kind": "answerable",
+        "relevant_fact_ids": [
+          "fact-074"
+        ],
+        "expected_answer": "CircleCI",
+        "target_user_profile_id": "t18-canary-profile",
+        "target_project_id": "canary-project-04"
+      },
+      "observations": [
+        {
+          "repetition": 1,
+          "all_four_strategies_empty": true,
+          "original_quality_hit": false
+        },
+        {
+          "repetition": 2,
+          "all_four_strategies_empty": true,
+          "original_quality_hit": false
+        },
+        {
+          "repetition": 3,
+          "all_four_strategies_empty": true,
+          "original_quality_hit": false
+        }
+      ]
+    },
+    {
+      "session_id": "heldout-075",
+      "source_project_id": "project-05",
+      "source_event": {
+        "event_id": "heldout-075-event-01",
+        "occurred_at": "2026-01-01T00:01:00Z",
+        "role": "user",
+        "content": "For project-05 only, For this project, shell is Fish.",
+        "source_kind": "scoped_project_event",
+        "write_mode": "automatic",
+        "lifecycle_operation": "capture",
+        "evidence_fact_ids": [
+          "fact-075"
+        ]
+      },
+      "query": {
+        "query_id": "query-answerable-075",
+        "text": "Which shell applies to this project?",
+        "kind": "answerable",
+        "relevant_fact_ids": [
+          "fact-075"
+        ],
+        "expected_answer": "Fish",
+        "target_user_profile_id": "t18-canary-profile",
+        "target_project_id": "canary-project-05"
+      },
+      "observations": [
+        {
+          "repetition": 1,
+          "all_four_strategies_empty": true,
+          "original_quality_hit": false
+        },
+        {
+          "repetition": 2,
+          "all_four_strategies_empty": true,
+          "original_quality_hit": false
+        },
+        {
+          "repetition": 3,
+          "all_four_strategies_empty": true,
+          "original_quality_hit": false
+        }
+      ]
+    },
+    {
+      "session_id": "heldout-076",
+      "source_project_id": "project-06",
+      "source_event": {
+        "event_id": "heldout-076-event-01",
+        "occurred_at": "2026-01-01T00:01:00Z",
+        "role": "user",
+        "content": "For project-06 only, For this project, timezone is Central European Time.",
+        "source_kind": "scoped_project_event",
+        "write_mode": "automatic",
+        "lifecycle_operation": "capture",
+        "evidence_fact_ids": [
+          "fact-076"
+        ]
+      },
+      "query": {
+        "query_id": "query-answerable-076",
+        "text": "Which timezone applies to this project?",
+        "kind": "answerable",
+        "relevant_fact_ids": [
+          "fact-076"
+        ],
+        "expected_answer": "Central European Time",
+        "target_user_profile_id": "t18-canary-profile",
+        "target_project_id": "canary-project-06"
+      },
+      "observations": [
+        {
+          "repetition": 1,
+          "all_four_strategies_empty": true,
+          "original_quality_hit": false
+        },
+        {
+          "repetition": 2,
+          "all_four_strategies_empty": true,
+          "original_quality_hit": false
+        },
+        {
+          "repetition": 3,
+          "all_four_strategies_empty": true,
+          "original_quality_hit": false
+        }
+      ]
+    },
+    {
+      "session_id": "heldout-077",
+      "source_project_id": "project-07",
+      "source_event": {
+        "event_id": "heldout-077-event-01",
+        "occurred_at": "2026-01-01T00:01:00Z",
+        "role": "user",
+        "content": "For project-07 only, For this project, API style is JSON-RPC.",
+        "source_kind": "scoped_project_event",
+        "write_mode": "automatic",
+        "lifecycle_operation": "capture",
+        "evidence_fact_ids": [
+          "fact-077"
+        ]
+      },
+      "query": {
+        "query_id": "query-answerable-077",
+        "text": "Which API style applies to this project?",
+        "kind": "answerable",
+        "relevant_fact_ids": [
+          "fact-077"
+        ],
+        "expected_answer": "JSON-RPC",
+        "target_user_profile_id": "t18-canary-profile",
+        "target_project_id": "canary-project-07"
+      },
+      "observations": [
+        {
+          "repetition": 1,
+          "all_four_strategies_empty": true,
+          "original_quality_hit": false
+        },
+        {
+          "repetition": 2,
+          "all_four_strategies_empty": true,
+          "original_quality_hit": false
+        },
+        {
+          "repetition": 3,
+          "all_four_strategies_empty": true,
+          "original_quality_hit": false
+        }
+      ]
+    },
+    {
+      "session_id": "heldout-078",
+      "source_project_id": "project-08",
+      "source_event": {
+        "event_id": "heldout-078-event-01",
+        "occurred_at": "2026-01-01T00:01:00Z",
+        "role": "user",
+        "content": "For project-08 only, For this project, service owner is the web team.",
+        "source_kind": "scoped_project_event",
+        "write_mode": "automatic",
+        "lifecycle_operation": "capture",
+        "evidence_fact_ids": [
+          "fact-078"
+        ]
+      },
+      "query": {
+        "query_id": "query-answerable-078",
+        "text": "Which service owner applies to this project?",
+        "kind": "answerable",
+        "relevant_fact_ids": [
+          "fact-078"
+        ],
+        "expected_answer": "the web team",
+        "target_user_profile_id": "t18-canary-profile",
+        "target_project_id": "canary-project-08"
+      },
+      "observations": [
+        {
+          "repetition": 1,
+          "all_four_strategies_empty": true,
+          "original_quality_hit": false
+        },
+        {
+          "repetition": 2,
+          "all_four_strategies_empty": true,
+          "original_quality_hit": false
+        },
+        {
+          "repetition": 3,
+          "all_four_strategies_empty": true,
+          "original_quality_hit": false
+        }
+      ]
+    },
+    {
+      "session_id": "heldout-079",
+      "source_project_id": "project-09",
+      "source_event": {
+        "event_id": "heldout-079-event-01",
+        "occurred_at": "2026-01-01T00:01:00Z",
+        "role": "user",
+        "content": "For project-09 only, For this project, backup window is 01:15 UTC.",
+        "source_kind": "scoped_project_event",
+        "write_mode": "automatic",
+        "lifecycle_operation": "capture",
+        "evidence_fact_ids": [
+          "fact-079"
+        ]
+      },
+      "query": {
+        "query_id": "query-answerable-079",
+        "text": "Which backup window applies to this project?",
+        "kind": "answerable",
+        "relevant_fact_ids": [
+          "fact-079"
+        ],
+        "expected_answer": "01:15 UTC",
+        "target_user_profile_id": "t18-canary-profile",
+        "target_project_id": "canary-project-09"
+      },
+      "observations": [
+        {
+          "repetition": 1,
+          "all_four_strategies_empty": true,
+          "original_quality_hit": false
+        },
+        {
+          "repetition": 2,
+          "all_four_strategies_empty": true,
+          "original_quality_hit": false
+        },
+        {
+          "repetition": 3,
+          "all_four_strategies_empty": true,
+          "original_quality_hit": false
+        }
+      ]
+    },
+    {
+      "session_id": "heldout-080",
+      "source_project_id": "project-10",
+      "source_event": {
+        "event_id": "heldout-080-event-01",
+        "occurred_at": "2026-01-01T00:01:00Z",
+        "role": "user",
+        "content": "For project-10 only, For this project, observability stack is CloudWatch.",
+        "source_kind": "scoped_project_event",
+        "write_mode": "automatic",
+        "lifecycle_operation": "capture",
+        "evidence_fact_ids": [
+          "fact-080"
+        ]
+      },
+      "query": {
+        "query_id": "query-answerable-080",
+        "text": "Which observability stack applies to this project?",
+        "kind": "answerable",
+        "relevant_fact_ids": [
+          "fact-080"
+        ],
+        "expected_answer": "CloudWatch",
+        "target_user_profile_id": "t18-canary-profile",
+        "target_project_id": "canary-project-10"
+      },
+      "observations": [
+        {
+          "repetition": 1,
+          "all_four_strategies_empty": true,
+          "original_quality_hit": false
+        },
+        {
+          "repetition": 2,
+          "all_four_strategies_empty": true,
+          "original_quality_hit": false
+        },
+        {
+          "repetition": 3,
+          "all_four_strategies_empty": true,
+          "original_quality_hit": false
+        }
+      ]
+    }
+  ],
+  "explicit_remember": [
+    {
+      "session_id": "heldout-001",
+      "event_id": "heldout-001-event-01",
+      "fact_id": "fact-001",
+      "event_content": "Please remember this project decision explicitly: For this project, deployment target is AWS ECS.",
+      "gold_content": "For this project, deployment target is AWS ECS.",
+      "prefix": "Please remember this project decision explicitly: ",
+      "exact_match": false
+    },
+    {
+      "session_id": "heldout-002",
+      "event_id": "heldout-002-event-01",
+      "fact_id": "fact-002",
+      "event_content": "Please remember this project decision explicitly: For this project, code review is two approvals.",
+      "gold_content": "For this project, code review is two approvals.",
+      "prefix": "Please remember this project decision explicitly: ",
+      "exact_match": false
+    },
+    {
+      "session_id": "heldout-003",
+      "event_id": "heldout-003-event-01",
+      "fact_id": "fact-003",
+      "event_content": "Please remember this project decision explicitly: For this project, branch naming is feature slash ticket.",
+      "gold_content": "For this project, branch naming is feature slash ticket.",
+      "prefix": "Please remember this project decision explicitly: ",
+      "exact_match": false
+    },
+    {
+      "session_id": "heldout-004",
+      "event_id": "heldout-004-event-01",
+      "fact_id": "fact-004",
+      "event_content": "Please remember this project decision explicitly: For this project, test command is pytest -q.",
+      "gold_content": "For this project, test command is pytest -q.",
+      "prefix": "Please remember this project decision explicitly: ",
+      "exact_match": false
+    },
+    {
+      "session_id": "heldout-005",
+      "event_id": "heldout-005-event-01",
+      "fact_id": "fact-005",
+      "event_content": "Please remember this project decision explicitly: For this project, incident channel is #ops-critical.",
+      "gold_content": "For this project, incident channel is #ops-critical.",
+      "prefix": "Please remember this project decision explicitly: ",
+      "exact_match": false
+    },
+    {
+      "session_id": "heldout-006",
+      "event_id": "heldout-006-event-01",
+      "fact_id": "fact-006",
+      "event_content": "Please remember this project decision explicitly: For this project, documentation home is the docs/runbooks directory.",
+      "gold_content": "For this project, documentation home is the docs/runbooks directory.",
+      "prefix": "Please remember this project decision explicitly: ",
+      "exact_match": false
+    },
+    {
+      "session_id": "heldout-007",
+      "event_id": "heldout-007-event-01",
+      "fact_id": "fact-007",
+      "event_content": "Please remember this project decision explicitly: For this project, package manager is uv.",
+      "gold_content": "For this project, package manager is uv.",
+      "prefix": "Please remember this project decision explicitly: ",
+      "exact_match": false
+    },
+    {
+      "session_id": "heldout-008",
+      "event_id": "heldout-008-event-01",
+      "fact_id": "fact-008",
+      "event_content": "Please remember this project decision explicitly: For this project, primary database is PostgreSQL.",
+      "gold_content": "For this project, primary database is PostgreSQL.",
+      "prefix": "Please remember this project decision explicitly: ",
+      "exact_match": false
+    },
+    {
+      "session_id": "heldout-009",
+      "event_id": "heldout-009-event-01",
+      "fact_id": "fact-009",
+      "event_content": "Please remember this project decision explicitly: For this project, queue service is SQS.",
+      "gold_content": "For this project, queue service is SQS.",
+      "prefix": "Please remember this project decision explicitly: ",
+      "exact_match": false
+    },
+    {
+      "session_id": "heldout-010",
+      "event_id": "heldout-010-event-01",
+      "fact_id": "fact-010",
+      "event_content": "Please remember this project decision explicitly: For this project, auth method is OAuth2 bearer tokens.",
+      "gold_content": "For this project, auth method is OAuth2 bearer tokens.",
+      "prefix": "Please remember this project decision explicitly: ",
+      "exact_match": false
+    },
+    {
+      "session_id": "heldout-011",
+      "event_id": "heldout-011-event-01",
+      "fact_id": "fact-011",
+      "event_content": "Please remember this project decision explicitly: For this project, release cadence is weekly.",
+      "gold_content": "For this project, release cadence is weekly.",
+      "prefix": "Please remember this project decision explicitly: ",
+      "exact_match": false
+    },
+    {
+      "session_id": "heldout-012",
+      "event_id": "heldout-012-event-01",
+      "fact_id": "fact-012",
+      "event_content": "Please remember this project decision explicitly: For this project, log retention is thirty days.",
+      "gold_content": "For this project, log retention is thirty days.",
+      "prefix": "Please remember this project decision explicitly: ",
+      "exact_match": false
+    },
+    {
+      "session_id": "heldout-013",
+      "event_id": "heldout-013-event-01",
+      "fact_id": "fact-013",
+      "event_content": "Please remember this project decision explicitly: For this project, preferred editor is Vim.",
+      "gold_content": "For this project, preferred editor is Vim.",
+      "prefix": "Please remember this project decision explicitly: ",
+      "exact_match": false
+    },
+    {
+      "session_id": "heldout-014",
+      "event_id": "heldout-014-event-01",
+      "fact_id": "fact-014",
+      "event_content": "Please remember this project decision explicitly: For this project, CI provider is GitHub Actions.",
+      "gold_content": "For this project, CI provider is GitHub Actions.",
+      "prefix": "Please remember this project decision explicitly: ",
+      "exact_match": false
+    },
+    {
+      "session_id": "heldout-015",
+      "event_id": "heldout-015-event-01",
+      "fact_id": "fact-015",
+      "event_content": "Please remember this project decision explicitly: For this project, shell is PowerShell.",
+      "gold_content": "For this project, shell is PowerShell.",
+      "prefix": "Please remember this project decision explicitly: ",
+      "exact_match": false
+    },
+    {
+      "session_id": "heldout-016",
+      "event_id": "heldout-016-event-01",
+      "fact_id": "fact-016",
+      "event_content": "Please remember this project decision explicitly: For this project, timezone is Eastern Time.",
+      "gold_content": "For this project, timezone is Eastern Time.",
+      "prefix": "Please remember this project decision explicitly: ",
+      "exact_match": false
+    },
+    {
+      "session_id": "heldout-017",
+      "event_id": "heldout-017-event-01",
+      "fact_id": "fact-017",
+      "event_content": "Please remember this project decision explicitly: For this project, API style is REST with JSON.",
+      "gold_content": "For this project, API style is REST with JSON.",
+      "prefix": "Please remember this project decision explicitly: ",
+      "exact_match": false
+    },
+    {
+      "session_id": "heldout-018",
+      "event_id": "heldout-018-event-01",
+      "fact_id": "fact-018",
+      "event_content": "Please remember this project decision explicitly: For this project, service owner is the platform team.",
+      "gold_content": "For this project, service owner is the platform team.",
+      "prefix": "Please remember this project decision explicitly: ",
+      "exact_match": false
+    },
+    {
+      "session_id": "heldout-019",
+      "event_id": "heldout-019-event-01",
+      "fact_id": "fact-019",
+      "event_content": "Please remember this project decision explicitly: For this project, backup window is 02:00 UTC.",
+      "gold_content": "For this project, backup window is 02:00 UTC.",
+      "prefix": "Please remember this project decision explicitly: ",
+      "exact_match": false
+    },
+    {
+      "session_id": "heldout-020",
+      "event_id": "heldout-020-event-01",
+      "fact_id": "fact-020",
+      "event_content": "Please remember this project decision explicitly: For this project, observability stack is Prometheus and Grafana.",
+      "gold_content": "For this project, observability stack is Prometheus and Grafana.",
+      "prefix": "Please remember this project decision explicitly: ",
+      "exact_match": false
+    },
+    {
+      "session_id": "heldout-081",
+      "event_id": "heldout-081-event-01",
+      "fact_id": "fact-081",
+      "event_content": "Remember for this project: For this project, deployment target is Google Cloud Run.",
+      "gold_content": "For this project, deployment target is Google Cloud Run.",
+      "prefix": "Remember for this project: ",
+      "exact_match": false
+    },
+    {
+      "session_id": "heldout-082",
+      "event_id": "heldout-082-event-01",
+      "fact_id": "fact-082",
+      "event_content": "Remember for this project: For this project, code review is a maintainer sign-off.",
+      "gold_content": "For this project, code review is a maintainer sign-off.",
+      "prefix": "Remember for this project: ",
+      "exact_match": false
+    },
+    {
+      "session_id": "heldout-083",
+      "event_id": "heldout-083-event-01",
+      "fact_id": "fact-083",
+      "event_content": "Remember for this project: For this project, branch naming is experiment slash date.",
+      "gold_content": "For this project, branch naming is experiment slash date.",
+      "prefix": "Remember for this project: ",
+      "exact_match": false
+    },
+    {
+      "session_id": "heldout-084",
+      "event_id": "heldout-084-event-01",
+      "fact_id": "fact-084",
+      "event_content": "Remember for this project: For this project, test command is dotnet test.",
+      "gold_content": "For this project, test command is dotnet test.",
+      "prefix": "Remember for this project: ",
+      "exact_match": false
+    },
+    {
+      "session_id": "heldout-085",
+      "event_id": "heldout-085-event-01",
+      "fact_id": "fact-085",
+      "event_content": "Remember for this project: For this project, incident channel is #incident-bridge.",
+      "gold_content": "For this project, incident channel is #incident-bridge.",
+      "prefix": "Remember for this project: ",
+      "exact_match": false
+    },
+    {
+      "session_id": "heldout-086",
+      "event_id": "heldout-086-event-01",
+      "fact_id": "fact-086",
+      "event_content": "Remember for this project: For this project, documentation home is the service catalog.",
+      "gold_content": "For this project, documentation home is the service catalog.",
+      "prefix": "Remember for this project: ",
+      "exact_match": false
+    },
+    {
+      "session_id": "heldout-087",
+      "event_id": "heldout-087-event-01",
+      "fact_id": "fact-087",
+      "event_content": "Remember for this project: For this project, package manager is npm.",
+      "gold_content": "For this project, package manager is npm.",
+      "prefix": "Remember for this project: ",
+      "exact_match": false
+    },
+    {
+      "session_id": "heldout-088",
+      "event_id": "heldout-088-event-01",
+      "fact_id": "fact-088",
+      "event_content": "Remember for this project: For this project, primary database is Redis Streams.",
+      "gold_content": "For this project, primary database is Redis Streams.",
+      "prefix": "Remember for this project: ",
+      "exact_match": false
+    },
+    {
+      "session_id": "heldout-089",
+      "event_id": "heldout-089-event-01",
+      "fact_id": "fact-089",
+      "event_content": "Remember for this project: For this project, queue service is Kafka.",
+      "gold_content": "For this project, queue service is Kafka.",
+      "prefix": "Remember for this project: ",
+      "exact_match": false
+    },
+    {
+      "session_id": "heldout-090",
+      "event_id": "heldout-090-event-01",
+      "fact_id": "fact-090",
+      "event_content": "Remember for this project: For this project, auth method is OIDC claims.",
+      "gold_content": "For this project, auth method is OIDC claims.",
+      "prefix": "Remember for this project: ",
+      "exact_match": false
+    },
+    {
+      "session_id": "heldout-091",
+      "event_id": "heldout-091-event-01",
+      "fact_id": "fact-091",
+      "event_content": "Remember for this project: For this project, release cadence is monthly.",
+      "gold_content": "For this project, release cadence is monthly.",
+      "prefix": "Remember for this project: ",
+      "exact_match": false
+    },
+    {
+      "session_id": "heldout-092",
+      "event_id": "heldout-092-event-01",
+      "fact_id": "fact-092",
+      "event_content": "Remember for this project: For this project, log retention is fourteen days.",
+      "gold_content": "For this project, log retention is fourteen days.",
+      "prefix": "Remember for this project: ",
+      "exact_match": false
+    },
+    {
+      "session_id": "heldout-093",
+      "event_id": "heldout-093-event-01",
+      "fact_id": "fact-093",
+      "event_content": "Remember for this project: For this project, preferred editor is Zed.",
+      "gold_content": "For this project, preferred editor is Zed.",
+      "prefix": "Remember for this project: ",
+      "exact_match": false
+    },
+    {
+      "session_id": "heldout-094",
+      "event_id": "heldout-094-event-01",
+      "fact_id": "fact-094",
+      "event_content": "Remember for this project: For this project, CI provider is Jenkins.",
+      "gold_content": "For this project, CI provider is Jenkins.",
+      "prefix": "Remember for this project: ",
+      "exact_match": false
+    },
+    {
+      "session_id": "heldout-095",
+      "event_id": "heldout-095-event-01",
+      "fact_id": "fact-095",
+      "event_content": "Remember for this project: For this project, shell is  nushell.",
+      "gold_content": "For this project, shell is  nushell.",
+      "prefix": "Remember for this project: ",
+      "exact_match": false
+    },
+    {
+      "session_id": "heldout-096",
+      "event_id": "heldout-096-event-01",
+      "fact_id": "fact-096",
+      "event_content": "Remember for this project: For this project, timezone is Mountain Time.",
+      "gold_content": "For this project, timezone is Mountain Time.",
+      "prefix": "Remember for this project: ",
+      "exact_match": false
+    },
+    {
+      "session_id": "heldout-097",
+      "event_id": "heldout-097-event-01",
+      "fact_id": "fact-097",
+      "event_content": "Remember for this project: For this project, API style is webhooks.",
+      "gold_content": "For this project, API style is webhooks.",
+      "prefix": "Remember for this project: ",
+      "exact_match": false
+    },
+    {
+      "session_id": "heldout-098",
+      "event_id": "heldout-098-event-01",
+      "fact_id": "fact-098",
+      "event_content": "Remember for this project: For this project, service owner is the developer experience team.",
+      "gold_content": "For this project, service owner is the developer experience team.",
+      "prefix": "Remember for this project: ",
+      "exact_match": false
+    },
+    {
+      "session_id": "heldout-099",
+      "event_id": "heldout-099-event-01",
+      "fact_id": "fact-099",
+      "event_content": "Remember for this project: For this project, backup window is 23:00 UTC.",
+      "gold_content": "For this project, backup window is 23:00 UTC.",
+      "prefix": "Remember for this project: ",
+      "exact_match": false
+    },
+    {
+      "session_id": "heldout-100",
+      "event_id": "heldout-100-event-01",
+      "fact_id": "fact-100",
+      "event_content": "Remember for this project: For this project, observability stack is Honeycomb.",
+      "gold_content": "For this project, observability stack is Honeycomb.",
+      "prefix": "Remember for this project: ",
+      "exact_match": false
+    },
+    {
+      "session_id": "heldout-161",
+      "event_id": "heldout-161-event-01",
+      "fact_id": "fact-161",
+      "event_content": "Remember temporarily: This project notes an internal research question about deployment target variant 161.",
+      "gold_content": "This project notes an internal research question about deployment target variant 161.",
+      "prefix": "Remember temporarily: ",
+      "exact_match": false
+    },
+    {
+      "session_id": "heldout-162",
+      "event_id": "heldout-162-event-01",
+      "fact_id": "fact-162",
+      "event_content": "Remember temporarily: This project notes an internal research question about code review variant 162.",
+      "gold_content": "This project notes an internal research question about code review variant 162.",
+      "prefix": "Remember temporarily: ",
+      "exact_match": false
+    },
+    {
+      "session_id": "heldout-163",
+      "event_id": "heldout-163-event-01",
+      "fact_id": "fact-163",
+      "event_content": "Remember temporarily: This project notes an internal research question about branch naming variant 163.",
+      "gold_content": "This project notes an internal research question about branch naming variant 163.",
+      "prefix": "Remember temporarily: ",
+      "exact_match": false
+    },
+    {
+      "session_id": "heldout-164",
+      "event_id": "heldout-164-event-01",
+      "fact_id": "fact-164",
+      "event_content": "Remember temporarily: This project notes an internal research question about test command variant 164.",
+      "gold_content": "This project notes an internal research question about test command variant 164.",
+      "prefix": "Remember temporarily: ",
+      "exact_match": false
+    },
+    {
+      "session_id": "heldout-165",
+      "event_id": "heldout-165-event-01",
+      "fact_id": "fact-165",
+      "event_content": "Remember temporarily: This project notes an internal research question about incident channel variant 165.",
+      "gold_content": "This project notes an internal research question about incident channel variant 165.",
+      "prefix": "Remember temporarily: ",
+      "exact_match": false
+    },
+    {
+      "session_id": "heldout-166",
+      "event_id": "heldout-166-event-01",
+      "fact_id": "fact-166",
+      "event_content": "Remember temporarily: This project notes an internal research question about documentation home variant 166.",
+      "gold_content": "This project notes an internal research question about documentation home variant 166.",
+      "prefix": "Remember temporarily: ",
+      "exact_match": false
+    },
+    {
+      "session_id": "heldout-167",
+      "event_id": "heldout-167-event-01",
+      "fact_id": "fact-167",
+      "event_content": "Remember temporarily: This project notes an internal research question about package manager variant 167.",
+      "gold_content": "This project notes an internal research question about package manager variant 167.",
+      "prefix": "Remember temporarily: ",
+      "exact_match": false
+    },
+    {
+      "session_id": "heldout-168",
+      "event_id": "heldout-168-event-01",
+      "fact_id": "fact-168",
+      "event_content": "Remember temporarily: This project notes an internal research question about primary database variant 168.",
+      "gold_content": "This project notes an internal research question about primary database variant 168.",
+      "prefix": "Remember temporarily: ",
+      "exact_match": false
+    },
+    {
+      "session_id": "heldout-169",
+      "event_id": "heldout-169-event-01",
+      "fact_id": "fact-169",
+      "event_content": "Remember temporarily: This project notes an internal research question about queue service variant 169.",
+      "gold_content": "This project notes an internal research question about queue service variant 169.",
+      "prefix": "Remember temporarily: ",
+      "exact_match": false
+    },
+    {
+      "session_id": "heldout-170",
+      "event_id": "heldout-170-event-01",
+      "fact_id": "fact-170",
+      "event_content": "Remember temporarily: This project notes an internal research question about auth method variant 170.",
+      "gold_content": "This project notes an internal research question about auth method variant 170.",
+      "prefix": "Remember temporarily: ",
+      "exact_match": false
+    },
+    {
+      "session_id": "heldout-171",
+      "event_id": "heldout-171-event-01",
+      "fact_id": "fact-171",
+      "event_content": "Remember temporarily: This project notes an internal research question about release cadence variant 171.",
+      "gold_content": "This project notes an internal research question about release cadence variant 171.",
+      "prefix": "Remember temporarily: ",
+      "exact_match": false
+    },
+    {
+      "session_id": "heldout-172",
+      "event_id": "heldout-172-event-01",
+      "fact_id": "fact-172",
+      "event_content": "Remember temporarily: This project notes an internal research question about log retention variant 172.",
+      "gold_content": "This project notes an internal research question about log retention variant 172.",
+      "prefix": "Remember temporarily: ",
+      "exact_match": false
+    },
+    {
+      "session_id": "heldout-173",
+      "event_id": "heldout-173-event-01",
+      "fact_id": "fact-173",
+      "event_content": "Remember temporarily: This project notes an internal research question about preferred editor variant 173.",
+      "gold_content": "This project notes an internal research question about preferred editor variant 173.",
+      "prefix": "Remember temporarily: ",
+      "exact_match": false
+    },
+    {
+      "session_id": "heldout-174",
+      "event_id": "heldout-174-event-01",
+      "fact_id": "fact-174",
+      "event_content": "Remember temporarily: This project notes an internal research question about CI provider variant 174.",
+      "gold_content": "This project notes an internal research question about CI provider variant 174.",
+      "prefix": "Remember temporarily: ",
+      "exact_match": false
+    },
+    {
+      "session_id": "heldout-175",
+      "event_id": "heldout-175-event-01",
+      "fact_id": "fact-175",
+      "event_content": "Remember temporarily: This project notes an internal research question about shell variant 175.",
+      "gold_content": "This project notes an internal research question about shell variant 175.",
+      "prefix": "Remember temporarily: ",
+      "exact_match": false
+    },
+    {
+      "session_id": "heldout-176",
+      "event_id": "heldout-176-event-01",
+      "fact_id": "fact-176",
+      "event_content": "Remember temporarily: This project notes an internal research question about timezone variant 176.",
+      "gold_content": "This project notes an internal research question about timezone variant 176.",
+      "prefix": "Remember temporarily: ",
+      "exact_match": false
+    },
+    {
+      "session_id": "heldout-177",
+      "event_id": "heldout-177-event-01",
+      "fact_id": "fact-177",
+      "event_content": "Remember temporarily: This project notes an internal research question about API style variant 177.",
+      "gold_content": "This project notes an internal research question about API style variant 177.",
+      "prefix": "Remember temporarily: ",
+      "exact_match": false
+    },
+    {
+      "session_id": "heldout-178",
+      "event_id": "heldout-178-event-01",
+      "fact_id": "fact-178",
+      "event_content": "Remember temporarily: This project notes an internal research question about service owner variant 178.",
+      "gold_content": "This project notes an internal research question about service owner variant 178.",
+      "prefix": "Remember temporarily: ",
+      "exact_match": false
+    },
+    {
+      "session_id": "heldout-179",
+      "event_id": "heldout-179-event-01",
+      "fact_id": "fact-179",
+      "event_content": "Remember temporarily: This project notes an internal research question about backup window variant 179.",
+      "gold_content": "This project notes an internal research question about backup window variant 179.",
+      "prefix": "Remember temporarily: ",
+      "exact_match": false
+    },
+    {
+      "session_id": "heldout-180",
+      "event_id": "heldout-180-event-01",
+      "fact_id": "fact-180",
+      "event_content": "Remember temporarily: This project notes an internal research question about observability stack variant 180.",
+      "gold_content": "This project notes an internal research question about observability stack variant 180.",
+      "prefix": "Remember temporarily: ",
+      "exact_match": false
+    }
+  ],
+  "limits": [
+    "Read-only audit of previously observed synthetic fixtures.",
+    "Original labels, thresholds, model outputs, and verdicts are unchanged.",
+    "Literal inclusion and source association do not establish semantic correctness.",
+    "No corrected accuracy or unseen heldout claim is made."
+  ]
+}

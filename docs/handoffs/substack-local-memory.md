@@ -40,6 +40,22 @@ negative results even if they complicate the ending.
 
 ## Latest implementation and native evidence
 
+The [frozen retrieval fixture audit](../validation/2026-09-20/retrieval-fixture-audit-v1/README.md)
+adds a useful research complication. Twenty queries expect facts from a
+different profile and project, even though the scope contract requires
+those facts to stay private. All three repetitions and all four strategies
+return no facts. Sixty explicit remember fixtures also omit an instruction
+prefix from their expected fact, although the API preserves that submitted
+body. These are conflicts in the evaluation, not new evidence of retrieval
+quality. The original 106 hits and 183 misses among 289 eligible answerable
+observations remain unchanged. Eleven partial answerable observations stay
+excluded. A prospective contract repair is documented but has not run.
+
+If this finding belongs in the article, explain the concrete contradiction
+and why the old result remains in the record. Do not turn the diagnostic
+into a corrected success rate. This audit postdates portable packet v27;
+use the current linked checkout record until the final packet is refreshed.
+
 The [three-host v7 run](../validation/2026-09-20/three-host-native-v7/README.md) passed all 11 native phases on verified
 product `e6887de`: Codex and Claude teaching, Hermes recall and same-ID
 correction, corrected recall from all three hosts, Claude reviewed deletion,

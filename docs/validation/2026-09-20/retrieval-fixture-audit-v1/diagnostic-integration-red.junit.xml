@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="utf-8"?><testsuites name="pytest tests"><testsuite name="pytest" errors="0" failures="1" skipped="0" tests="13" time="0.569" timestamp="2026-09-20T09:09:25.206830-04:00" hostname="Aurora"><testcase classname="tests.test_retrieval_miss_audit" name="test_exact_stored_ranking_miss_keeps_original_quality_and_literal_diagnostic" time="0.006" /><testcase classname="tests.test_retrieval_miss_audit" name="test_exact_stored_fact_omitted_from_results_is_reported_separately" time="0.004" /><testcase classname="tests.test_retrieval_miss_audit" name="test_source_linked_omission_without_retention_proof_stays_conservative" time="0.002" /><testcase classname="tests.test_retrieval_miss_audit" name="test_wrapper_literal_span_with_wrong_source_is_not_validated" time="0.002" /><testcase classname="tests.test_retrieval_miss_audit" name="test_unrelated_returned_fact_does_not_mask_omitted_linked_fact" time="0.002" /><testcase classname="tests.test_retrieval_miss_audit" name="test_conflicting_or_negated_span_does_not_count_as_semantic_success" time="0.002" /><testcase classname="tests.test_retrieval_miss_audit" name="test_wrong_scope_is_conservative_even_with_matching_source_id" time="0.002" /><testcase classname="tests.test_retrieval_miss_audit" name="test_missing_fields_are_unverified" time="0.002" /><testcase classname="tests.test_retrieval_miss_audit" name="test_partial_observations_are_separate_and_not_promoted" time="0.002" /><testcase classname="tests.test_retrieval_miss_audit" name="test_all_four_strategies_and_original_denominator_are_reported" time="0.002" /><testcase classname="tests.test_retrieval_miss_audit" name="test_missing_strategy_grade_is_not_filled_from_the_full_run_or_counted_as_miss" time="0.002"><failure message="AssertionError: assert {'count': 3, 'denominator': 4} == {'count': 3, 'denominator': 3}&#10;  &#10;  Omitting 1 identical items, use -vv to show&#10;  Differing items:&#10;  {'denominator': 4} != {'denominator': 3}&#10;  Use -v to get more diff">def test_missing_strategy_grade_is_not_filled_from_the_full_run_or_counted_as_miss() -&gt; None:
+        report, sessions = _case(facts=[], quality_hit=True)
+        report["raw_outputs"][0]["raw_output"]["retrieval_comparisons"][0]["strategies"][
+            "lexical"
+        ].pop("quality_hit")
+    
+        result = analyze(report, sessions)
+    
+        assert result["observations"][0]["original_quality_hit"] is None
+&gt;       assert result["strategy_quality_hits"] == {"count": 3, "denominator": 3}
+E       AssertionError: assert {'count': 3, 'denominator': 4} == {'count': 3, 'denominator': 3}
+E         
+E         Omitting 1 identical items, use -vv to show
+E         Differing items:
+E         {'denominator': 4} != {'denominator': 3}
+E         Use -v to get more diff
+
+tests\test_retrieval_miss_audit.py:282: AssertionError</failure></testcase><testcase classname="tests.test_retrieval_miss_audit" name="test_foreign_query_empty_result_is_not_labeled_a_ranking_failure" time="0.002" /><testcase classname="tests.test_retrieval_miss_audit" name="test_unknown_target_profile_does_not_imply_scope_match" time="0.013" /></testsuite></testsuites>

@@ -1,5 +1,12 @@
 # Mnemos claim and evidence ledger
 
+The [frozen retrieval fixture audit](../2026-09-20/retrieval-fixture-audit-v1/README.md)
+identifies 20 foreign-scope queries mislabeled answerable and 60 explicit
+remember bodies that differ from their gold facts. Original outcomes remain
+106 hits and 183 misses among 289 eligible answerable observations, with
+11 partial observations excluded. No corrected accuracy is claimed. The
+prospective contract repair has not run and must retain the existing gates.
+
 The [three-host v7 run](../2026-09-20/three-host-native-v7/README.md) passed all 11 native phases on verified
 product `e6887de`: Codex and Claude teaching, Hermes recall and same-ID
 correction, corrected recall from all three hosts, Claude reviewed deletion,
