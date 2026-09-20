@@ -44,6 +44,7 @@ from ..scopes import interaction_partition
 from ..types import CognitiveState, Interaction, MemoryChunk
 from ..utils.embeddings import EmbeddingProvider, cosine_similarity, embed_text_async
 from ..utils.llm import LLMProvider
+from ..utils.reliability import MnemosConfigurationError
 from ..utils.storage import MemoryStore
 
 
@@ -70,12 +71,23 @@ class AffectiveRouter:
         self._llm = llm
         self._embedder = embedder
         self._config = config or AffectiveConfig()
+        self._classifier_options()
         # Running window of recent states (last N interactions)
         self._state_history: deque[CognitiveState] = deque(maxlen=10)
         self._states: OrderedDict[tuple[str, str, str, str], deque[CognitiveState]] = OrderedDict()
         # Stats
         self._total_classified: int = 0
         self._total_retrieved: int = 0
+
+    def _classifier_options(self) -> dict[str, Any]:
+        model = self._config.classifier_model
+        if model is None:
+            return {}
+        if not getattr(self._llm, "supports_model_override", False):
+            raise MnemosConfigurationError(
+                "The classifier provider does not support a model override"
+            )
+        return {"model": model}
 
     def _build_classifier_prompt(self, content: str) -> str:
         """
@@ -147,7 +159,7 @@ class AffectiveRouter:
         prompt = self._build_classifier_prompt(interaction.content)
 
         try:
-            response = await self._llm.predict(prompt)
+            response = await self._llm.predict(prompt, **self._classifier_options())
             state = self._parse_state_response(response)
         except Exception:
             state = None
@@ -348,6 +360,16 @@ class AffectiveRouter:
             "total_classified": self._total_classified,
             "total_retrieved": self._total_retrieved,
             "history_length": len(self._state_history),
+            "classifier": {
+                "model": (
+                    self._config.classifier_model
+                    if self._config.classifier_model is not None
+                    else getattr(self._llm, "model", None)
+                ),
+                "selection": (
+                    "override" if self._config.classifier_model is not None else "provider_default"
+                ),
+            },
             "current_state": {
                 "valence": round(current.valence, 3),
                 "arousal": round(current.arousal, 3),

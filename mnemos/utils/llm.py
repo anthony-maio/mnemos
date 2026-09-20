@@ -45,6 +45,13 @@ def _provider_name_from_base_url(base_url: str) -> str:
     return "openai"
 
 
+def _request_model(default: str, options: dict[str, Any]) -> str:
+    model = options.get("model", default)
+    if not isinstance(model, str) or not model.strip():
+        raise MnemosConfigurationError("A nonempty model name is required")
+    return model.strip()
+
+
 class LLMProvider(ABC):
     """
     Abstract base class for LLM providers.
@@ -60,6 +67,8 @@ class LLMProvider(ABC):
     # Providers that can enforce a response schema override this capability.
     # Callers keep prompt-only behavior for providers that do not advertise it.
     supports_structured_output = False
+    # An explicit selection must never disappear in a provider's **kwargs.
+    supports_model_override = False
 
     @abstractmethod
     async def predict(self, prompt: str, **kwargs: Any) -> str:
@@ -235,6 +244,7 @@ class OllamaProvider(LLMProvider):
     """
 
     supports_structured_output = True
+    supports_model_override = True
 
     def __init__(
         self,
@@ -294,7 +304,7 @@ class OllamaProvider(LLMProvider):
         think = _validate_ollama_think(kwargs.get("think", self.think))
 
         payload = {
-            "model": self.model,
+            "model": _request_model(self.model, kwargs),
             "prompt": prompt,
             "stream": False,
             "options": {
@@ -413,6 +423,8 @@ class OpenAIProvider(LLMProvider):
         system_prompt: Optional system prompt prepended to all requests.
     """
 
+    supports_model_override = True
+
     def __init__(
         self,
         api_key: str,
@@ -498,7 +510,7 @@ class OpenAIProvider(LLMProvider):
         """
         temperature = kwargs.get("temperature", self.temperature)
         max_tokens = kwargs.get("max_tokens", self.max_tokens)
-        model = kwargs.get("model", self.model)
+        model = _request_model(self.model, kwargs)
 
         payload: dict[str, Any] = {
             "model": model,

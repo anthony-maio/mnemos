@@ -1,0 +1,162 @@
+diff --git a/mnemos/config.py b/mnemos/config.py
+index 07ea2b4..3418404 100644
+--- a/mnemos/config.py
++++ b/mnemos/config.py
+@@ -11,7 +11,7 @@ from __future__ import annotations
+ 
+ from typing import Literal
+ 
+-from pydantic import BaseModel, Field, model_validator
++from pydantic import BaseModel, Field, field_validator, model_validator
+ from .retrieval import RetrievalConfig
+ 
+ 
+@@ -118,10 +118,20 @@ class AffectiveConfig(BaseModel):
+         le=1.0,
+         description="Weight given to affective state match in retrieval scoring.",
+     )
+-    classifier_model: str = Field(
+-        default="llama3",
+-        description="LLM model name used for emotional state classification.",
++    classifier_model: str | None = Field(
++        default=None,
++        description="Optional classifier model override; None inherits the supplied LLM provider.",
+     )
++
++    @field_validator("classifier_model")
++    @classmethod
++    def validate_classifier_model(cls, value: str | None) -> str | None:
++        if value is not None:
++            value = value.strip()
++            if not value:
++                raise ValueError("Classifier model must be a nonempty model name or None")
++        return value
++
+     classifier_prompt: str = Field(
+         default=(
+             "Analyze the emotional/cognitive state expressed in this text and score it "
+diff --git a/mnemos/modules/affective.py b/mnemos/modules/affective.py
+index 40a4b27..b4936b9 100644
+--- a/mnemos/modules/affective.py
++++ b/mnemos/modules/affective.py
+@@ -44,6 +44,7 @@ from ..scopes import interaction_partition
+ from ..types import CognitiveState, Interaction, MemoryChunk
+ from ..utils.embeddings import EmbeddingProvider, cosine_similarity, embed_text_async
+ from ..utils.llm import LLMProvider
++from ..utils.reliability import MnemosConfigurationError
+ from ..utils.storage import MemoryStore
+ 
+ 
+@@ -70,6 +71,7 @@ class AffectiveRouter:
+         self._llm = llm
+         self._embedder = embedder
+         self._config = config or AffectiveConfig()
++        self._classifier_options()
+         # Running window of recent states (last N interactions)
+         self._state_history: deque[CognitiveState] = deque(maxlen=10)
+         self._states: OrderedDict[tuple[str, str, str, str], deque[CognitiveState]] = OrderedDict()
+@@ -77,6 +79,16 @@ class AffectiveRouter:
+         self._total_classified: int = 0
+         self._total_retrieved: int = 0
+ 
++    def _classifier_options(self) -> dict[str, Any]:
++        model = self._config.classifier_model
++        if model is None:
++            return {}
++        if not getattr(self._llm, "supports_model_override", False):
++            raise MnemosConfigurationError(
++                "The classifier provider does not support a model override"
++            )
++        return {"model": model}
++
+     def _build_classifier_prompt(self, content: str) -> str:
+         """
+         Build the LLM prompt for affective state classification.
+@@ -147,7 +159,7 @@ class AffectiveRouter:
+         prompt = self._build_classifier_prompt(interaction.content)
+ 
+         try:
+-            response = await self._llm.predict(prompt)
++            response = await self._llm.predict(prompt, **self._classifier_options())
+             state = self._parse_state_response(response)
+         except Exception:
+             state = None
+@@ -348,6 +360,16 @@ class AffectiveRouter:
+             "total_classified": self._total_classified,
+             "total_retrieved": self._total_retrieved,
+             "history_length": len(self._state_history),
++            "classifier": {
++                "model": (
++                    self._config.classifier_model
++                    if self._config.classifier_model is not None
++                    else getattr(self._llm, "model", None)
++                ),
++                "selection": (
++                    "override" if self._config.classifier_model is not None else "provider_default"
++                ),
++            },
+             "current_state": {
+                 "valence": round(current.valence, 3),
+                 "arousal": round(current.arousal, 3),
+diff --git a/mnemos/utils/llm.py b/mnemos/utils/llm.py
+index b940029..49201f4 100644
+--- a/mnemos/utils/llm.py
++++ b/mnemos/utils/llm.py
+@@ -45,6 +45,13 @@ def _provider_name_from_base_url(base_url: str) -> str:
+     return "openai"
+ 
+ 
++def _request_model(default: str, options: dict[str, Any]) -> str:
++    model = options.get("model", default)
++    if not isinstance(model, str) or not model.strip():
++        raise MnemosConfigurationError("A nonempty model name is required")
++    return model.strip()
++
++
+ class LLMProvider(ABC):
+     """
+     Abstract base class for LLM providers.
+@@ -60,6 +67,8 @@ class LLMProvider(ABC):
+     # Providers that can enforce a response schema override this capability.
+     # Callers keep prompt-only behavior for providers that do not advertise it.
+     supports_structured_output = False
++    # An explicit selection must never disappear in a provider's **kwargs.
++    supports_model_override = False
+ 
+     @abstractmethod
+     async def predict(self, prompt: str, **kwargs: Any) -> str:
+@@ -235,6 +244,7 @@ class OllamaProvider(LLMProvider):
+     """
+ 
+     supports_structured_output = True
++    supports_model_override = True
+ 
+     def __init__(
+         self,
+@@ -294,7 +304,7 @@ class OllamaProvider(LLMProvider):
+         think = _validate_ollama_think(kwargs.get("think", self.think))
+ 
+         payload = {
+-            "model": self.model,
++            "model": _request_model(self.model, kwargs),
+             "prompt": prompt,
+             "stream": False,
+             "options": {
+@@ -413,6 +423,8 @@ class OpenAIProvider(LLMProvider):
+         system_prompt: Optional system prompt prepended to all requests.
+     """
+ 
++    supports_model_override = True
++
+     def __init__(
+         self,
+         api_key: str,
+@@ -498,7 +510,7 @@ class OpenAIProvider(LLMProvider):
+         """
+         temperature = kwargs.get("temperature", self.temperature)
+         max_tokens = kwargs.get("max_tokens", self.max_tokens)
+-        model = kwargs.get("model", self.model)
++        model = _request_model(self.model, kwargs)
+ 
+         payload: dict[str, Any] = {
+             "model": model,

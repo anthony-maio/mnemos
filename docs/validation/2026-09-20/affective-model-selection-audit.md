@@ -25,7 +25,12 @@ model provenance, and readiness/error behavior. Merely passing a `model`
 keyword is insufficient while a provider ignores it. Preserve inheritance
 from the configured shared provider unless a separate classifier is selected;
 do not silently redirect the current local workload to another model or cloud.
-Implementation and regression validation remain open.
+The [development repair](affective-model-selection-development-v1/README.md)
+now implements that request contract. Eighteen initial failures become
+passing regressions, and an expanded 83-case focused run passes. Full source
+and installed-package validation remain pending at this development checkpoint.
+The [configuration note](../../configuration/affective-classifier-model.md)
+explains inheritance, custom-provider capability, and the saved-value change.
 
 The [earlier fidelity review](../2026-09-19/affective-fidelity-review.md)
 still stands: all 300 outputs parsed, but only 33 met the frozen distance

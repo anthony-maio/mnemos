@@ -1,0 +1,71 @@
+from pathlib import Path
+import hashlib
+import json
+import subprocess
+import xml.etree.ElementTree as ET
+
+repo = Path(__file__).resolve().parents[1]
+temp = Path('C:/Users/Ant/AppData/Local/Temp')
+dest = repo / 'docs/validation/2026-09-20/affective-model-selection-development-v1'
+dest.mkdir(exist_ok=False)
+
+def save(name, data):
+    path = dest / name
+    path.parent.mkdir(parents=True, exist_ok=True)
+    path.write_bytes(data)
+
+save('.gitattributes', b'** -text -whitespace\n')
+counts = {}
+for kind, expected in [('red-v1', (18, 18)), ('green-v1', (45, 0)), ('green-v2', (83, 0))]:
+    source = temp / ('mnemos-classifier-model-' + kind + '.xml')
+    data = source.read_bytes()
+    suites = list(ET.fromstring(data).iter('testsuite'))
+    counts[kind] = {key: sum(int(s.attrib.get(key, 0)) for s in suites)
+                    for key in ('tests', 'failures', 'errors', 'skipped')}
+    assert (counts[kind]['tests'], counts[kind]['failures']) == expected
+    assert counts[kind]['errors'] == counts[kind]['skipped'] == 0
+    save('tests/' + source.name, data)
+save('tests/red-input.py.txt', (temp / 'mnemos-classifier-model-red-v1.tests.py.txt').read_bytes())
+names = ['mnemos/config.py', 'mnemos/modules/affective.py', 'mnemos/utils/llm.py',
+         'tests/test_affective_model_selection.py']
+for name in names:
+    save('candidate/' + name + '.txt', (repo / name).read_bytes())
+save('candidate/product.patch', subprocess.check_output(['git', 'diff', '--binary', 'HEAD', '--', *names[:3]], cwd=repo))
+save('collector.py.txt', Path(__file__).read_bytes())
+save('collection.json', (json.dumps({
+    'baseline_commit': subprocess.check_output(['git', 'rev-parse', 'HEAD'], cwd=repo, text=True).strip(),
+    'status': 'focused_tests_passed_full_package_pending', 'counts': counts,
+    'limitations': ['Mock HTTP transport, no real model calls.',
+                    'Configured selection is not observed model revision.',
+                    'Existing affective fidelity results remain unchanged.',
+                    'Managed runtime has no separate classifier setting.']
+}, indent=2) + '\n').encode())
+files = {p.relative_to(dest).as_posix(): {'bytes': p.stat().st_size,
+         'sha256': hashlib.sha256(p.read_bytes()).hexdigest()}
+         for p in sorted(dest.rglob('*')) if p.is_file()}
+(dest / 'evidence-index.json').write_text(json.dumps({'files': files}, indent=2) + '\n', encoding='utf-8')
+(dest / 'README.md').write_text('''# Affective classifier model selection development
+
+The configured classifier model was ignored. This repair sends an explicit
+model on supported Ollama and OpenAI-compatible request paths, preserves
+shared-provider defaults, and rejects unsupported overrides. Omitted model
+selection inherits the supplied provider. Statistics identify configuration
+selection without claiming an observed model revision.
+
+The original 18 failing regression cases are preserved with their exact test
+input. The first focused run passes 45 cases; the expanded run passes 83.
+HTTP transport fixtures cover concurrent classification/shared requests,
+inheritance, unavailable selected models, unsupported custom providers, and
+invalid selections rejected before HTTP. No network or actual model is used.
+Full source and installed-package checks are separate and pending here.
+
+This fixes a configuration contract. It does not improve the archived
+33-of-300 classifier fidelity result or establish independent calibration.
+Managed runtime settings still use their shared LLM. See the
+[configuration note](../../../configuration/affective-classifier-model.md)
+for the saved-configuration behavior change.
+
+The index binds original test results, candidate sources, and collection
+inputs. This README is outside the index.
+''', encoding='utf-8', newline='\n')
+print(json.dumps({'archive': str(dest), 'files': len(files), 'counts': counts}))

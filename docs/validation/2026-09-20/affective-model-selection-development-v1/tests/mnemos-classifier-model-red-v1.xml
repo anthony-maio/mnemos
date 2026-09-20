@@ -1,0 +1,323 @@
+<?xml version="1.0" encoding="utf-8"?><testsuites name="pytest tests"><testsuite name="pytest" errors="0" failures="18" skipped="0" tests="18" time="1.942" timestamp="2026-09-20T13:03:18.029564-04:00" hostname="Aurora"><testcase classname="tests.test_affective_model_selection" name="test_classifier_default_inherits_instead_of_selecting_an_unrequested_model" time="0.005"><failure message="assert 'llama3' is None&#10; +  where 'llama3' = AffectiveConfig(weight_similarity=0.7, weight_state=0.3, classifier_model='llama3', classifier_prompt='Analyze the emo...1.0, calm to urgent), complexity (0.0 to 1.0, simple to complex)\n\nText: &quot;{content}&quot;\n\nExample reply: 0.3, 0.7, 0.5').classifier_model&#10; +    where AffectiveConfig(weight_similarity=0.7, weight_state=0.3, classifier_model='llama3', classifier_prompt='Analyze the emo...1.0, calm to urgent), complexity (0.0 to 1.0, simple to complex)\n\nText: &quot;{content}&quot;\n\nExample reply: 0.3, 0.7, 0.5') = AffectiveConfig()">def test_classifier_default_inherits_instead_of_selecting_an_unrequested_model():
+&gt;       assert AffectiveConfig().classifier_model is None
+E       assert 'llama3' is None
+E        +  where 'llama3' = AffectiveConfig(weight_similarity=0.7, weight_state=0.3, classifier_model='llama3', classifier_prompt='Analyze the emo...1.0, calm to urgent), complexity (0.0 to 1.0, simple to complex)\n\nText: "{content}"\n\nExample reply: 0.3, 0.7, 0.5').classifier_model
+E        +    where AffectiveConfig(weight_similarity=0.7, weight_state=0.3, classifier_model='llama3', classifier_prompt='Analyze the emo...1.0, calm to urgent), complexity (0.0 to 1.0, simple to complex)\n\nText: "{content}"\n\nExample reply: 0.3, 0.7, 0.5') = AffectiveConfig()
+
+tests\test_affective_model_selection.py:46: AssertionError</failure></testcase><testcase classname="tests.test_affective_model_selection" name="test_blank_classifier_model_is_rejected[]" time="0.004"><failure message="Failed: DID NOT RAISE ValidationError">value = ''
+
+    @pytest.mark.parametrize("value", ["", " ", "\n\t"])
+    def test_blank_classifier_model_is_rejected(value):
+&gt;       with pytest.raises(ValidationError):
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       Failed: DID NOT RAISE ValidationError
+
+tests\test_affective_model_selection.py:51: Failed</failure></testcase><testcase classname="tests.test_affective_model_selection" name="test_blank_classifier_model_is_rejected[ ]" time="0.003"><failure message="Failed: DID NOT RAISE ValidationError">value = ' '
+
+    @pytest.mark.parametrize("value", ["", " ", "\n\t"])
+    def test_blank_classifier_model_is_rejected(value):
+&gt;       with pytest.raises(ValidationError):
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       Failed: DID NOT RAISE ValidationError
+
+tests\test_affective_model_selection.py:51: Failed</failure></testcase><testcase classname="tests.test_affective_model_selection" name="test_blank_classifier_model_is_rejected[\n\t]" time="0.003"><failure message="Failed: DID NOT RAISE ValidationError">value = '\n\t'
+
+    @pytest.mark.parametrize("value", ["", " ", "\n\t"])
+    def test_blank_classifier_model_is_rejected(value):
+&gt;       with pytest.raises(ValidationError):
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       Failed: DID NOT RAISE ValidationError
+
+tests\test_affective_model_selection.py:51: Failed</failure></testcase><testcase classname="tests.test_affective_model_selection" name="test_override_reaches_http_without_changing_shared_provider[ollama]" time="0.216"><failure message="AssertionError: assert ['shared-mode...shared-model'] == ['classifier-...shared-model']&#10;  &#10;  At index 0 diff: 'shared-model' != 'classifier-model'&#10;  Use -v to get more diff">monkeypatch = &lt;_pytest.monkeypatch.MonkeyPatch object at 0x000001ED77EAE250&gt;
+kind = 'ollama'
+
+    @pytest.mark.asyncio
+    @pytest.mark.parametrize("kind", ["ollama", "openai"])
+    async def test_override_reaches_http_without_changing_shared_provider(monkeypatch, kind):
+        requests = install_transport(monkeypatch)
+        provider = provider_for(kind)
+        router = AffectiveRouter(provider, SimpleEmbeddingProvider(), AffectiveConfig(classifier_model="classifier-model"))
+        state, _ = await asyncio.gather(
+            router.classify_state(Interaction(role="user", content="An ordinary request.")),
+            provider.predict("An unrelated module request."),
+        )
+        assert state is not None
+&gt;       assert sorted(payload["model"] for _, payload in requests) == ["classifier-model", "shared-model"]
+E       AssertionError: assert ['shared-mode...shared-model'] == ['classifier-...shared-model']
+E         
+E         At index 0 diff: 'shared-model' != 'classifier-model'
+E         Use -v to get more diff
+
+tests\test_affective_model_selection.py:66: AssertionError</failure></testcase><testcase classname="tests.test_affective_model_selection" name="test_override_reaches_http_without_changing_shared_provider[openai]" time="0.005"><failure message="AssertionError: assert ['shared-mode...shared-model'] == ['classifier-...shared-model']&#10;  &#10;  At index 0 diff: 'shared-model' != 'classifier-model'&#10;  Use -v to get more diff">monkeypatch = &lt;_pytest.monkeypatch.MonkeyPatch object at 0x000001ED77E85E50&gt;
+kind = 'openai'
+
+    @pytest.mark.asyncio
+    @pytest.mark.parametrize("kind", ["ollama", "openai"])
+    async def test_override_reaches_http_without_changing_shared_provider(monkeypatch, kind):
+        requests = install_transport(monkeypatch)
+        provider = provider_for(kind)
+        router = AffectiveRouter(provider, SimpleEmbeddingProvider(), AffectiveConfig(classifier_model="classifier-model"))
+        state, _ = await asyncio.gather(
+            router.classify_state(Interaction(role="user", content="An ordinary request.")),
+            provider.predict("An unrelated module request."),
+        )
+        assert state is not None
+&gt;       assert sorted(payload["model"] for _, payload in requests) == ["classifier-model", "shared-model"]
+E       AssertionError: assert ['shared-mode...shared-model'] == ['classifier-...shared-model']
+E         
+E         At index 0 diff: 'shared-model' != 'classifier-model'
+E         Use -v to get more diff
+
+tests\test_affective_model_selection.py:66: AssertionError</failure></testcase><testcase classname="tests.test_affective_model_selection" name="test_inherited_model_and_missing_override_do_not_silently_switch_models[ollama]" time="0.193"><failure message="KeyError: 'classifier'">monkeypatch = &lt;_pytest.monkeypatch.MonkeyPatch object at 0x000001ED77ED7980&gt;
+kind = 'ollama'
+
+    @pytest.mark.asyncio
+    @pytest.mark.parametrize("kind", ["ollama", "openai"])
+    async def test_inherited_model_and_missing_override_do_not_silently_switch_models(monkeypatch, kind):
+        requests = install_transport(monkeypatch, missing_model="missing-classifier")
+        provider = provider_for(kind)
+        inherited = AffectiveRouter(provider, SimpleEmbeddingProvider())
+        state = await inherited.classify_state(Interaction(role="user", content="An ordinary request."))
+        assert state is not None
+        assert requests[-1][1]["model"] == "shared-model"
+&gt;       assert inherited.get_stats()["classifier"] == {"model": "shared-model", "selection": "provider_default"}
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       KeyError: 'classifier'
+
+tests\test_affective_model_selection.py:81: KeyError</failure></testcase><testcase classname="tests.test_affective_model_selection" name="test_inherited_model_and_missing_override_do_not_silently_switch_models[openai]" time="0.006"><failure message="KeyError: 'classifier'">monkeypatch = &lt;_pytest.monkeypatch.MonkeyPatch object at 0x000001ED77ECAEB0&gt;
+kind = 'openai'
+
+    @pytest.mark.asyncio
+    @pytest.mark.parametrize("kind", ["ollama", "openai"])
+    async def test_inherited_model_and_missing_override_do_not_silently_switch_models(monkeypatch, kind):
+        requests = install_transport(monkeypatch, missing_model="missing-classifier")
+        provider = provider_for(kind)
+        inherited = AffectiveRouter(provider, SimpleEmbeddingProvider())
+        state = await inherited.classify_state(Interaction(role="user", content="An ordinary request."))
+        assert state is not None
+        assert requests[-1][1]["model"] == "shared-model"
+&gt;       assert inherited.get_stats()["classifier"] == {"model": "shared-model", "selection": "provider_default"}
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       KeyError: 'classifier'
+
+tests\test_affective_model_selection.py:81: KeyError</failure></testcase><testcase classname="tests.test_affective_model_selection" name="test_unsupported_override_is_a_configuration_error_instead_of_being_ignored" time="0.003"><failure message="Failed: DID NOT RAISE MnemosConfigurationError">def test_unsupported_override_is_a_configuration_error_instead_of_being_ignored():
+&gt;       with pytest.raises(MnemosConfigurationError, match="model override"):
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       Failed: DID NOT RAISE MnemosConfigurationError
+
+tests\test_affective_model_selection.py:89: Failed</failure></testcase><testcase classname="tests.test_affective_model_selection" name="test_later_unsupported_override_cannot_produce_a_measured_state" time="0.005"><failure message="assert CognitiveState(valence=0.0, arousal=0.5, complexity=0.5) is None">@pytest.mark.asyncio
+    async def test_later_unsupported_override_cannot_produce_a_measured_state():
+        config = AffectiveConfig()
+        provider = MockLLMProvider(record_calls=True)
+        router = AffectiveRouter(provider, SimpleEmbeddingProvider(), config)
+        config.classifier_model = "requested-model"
+&gt;       assert await router.classify_state(Interaction(role="user", content="An ordinary request.")) is None
+E       assert CognitiveState(valence=0.0, arousal=0.5, complexity=0.5) is None
+
+tests\test_affective_model_selection.py:99: AssertionError</failure></testcase><testcase classname="tests.test_affective_model_selection" name="test_provider_rejects_invalid_explicit_model_before_http[None-ollama]" time="0.222"><failure message="Failed: DID NOT RAISE MnemosConfigurationError">monkeypatch = &lt;_pytest.monkeypatch.MonkeyPatch object at 0x000001ED78F0A4C0&gt;
+kind = 'ollama', value = None
+
+    @pytest.mark.asyncio
+    @pytest.mark.parametrize("kind", ["ollama", "openai"])
+    @pytest.mark.parametrize("value", [None, "", " ", 7])
+    async def test_provider_rejects_invalid_explicit_model_before_http(monkeypatch, kind, value):
+        requests = install_transport(monkeypatch)
+&gt;       with pytest.raises(MnemosConfigurationError, match="model"):
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       Failed: DID NOT RAISE MnemosConfigurationError
+
+tests\test_affective_model_selection.py:108: Failed</failure></testcase><testcase classname="tests.test_affective_model_selection" name="test_provider_rejects_invalid_explicit_model_before_http[None-openai]" time="0.006"><failure message="mnemos.utils.reliability.MnemosExternalServiceError: openai predict failed: Client error '404 Not Found' for url 'http://classifier.test/v1/chat/completions'&#10;For more information check: https://developer.mozilla.org/en-US/docs/Web/HTTP/Status/404">provider = 'openai', operation = 'predict'
+fn = &lt;function OpenAIProvider._predict_with_key.&lt;locals&gt;._request at 0x000001ED78F91120&gt;
+policy = RetryPolicy(max_attempts=3, initial_backoff_seconds=0.25, max_backoff_seconds=2.0, backoff_multiplier=2.0, jitter_ratio=0.1)
+should_retry = None
+
+    async def call_with_async_retry(
+        *,
+        provider: str,
+        operation: str,
+        fn: Callable[[], Awaitable[T]],
+        policy: RetryPolicy | None = None,
+        should_retry: Callable[[Exception], bool] | None = None,
+    ) -&gt; T:
+        """Execute an async call with retries and standardized error mapping."""
+        effective_policy = policy or RetryPolicy()
+        retry_predicate = should_retry or is_retryable_http_exception
+    
+        last_exception: Exception | None = None
+        for attempt in range(1, effective_policy.max_attempts + 1):
+            try:
+&gt;               return await fn()
+                       ^^^^^^^^^^
+
+mnemos\utils\reliability.py:118: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+mnemos\utils\llm.py:470: in _request
+    response.raise_for_status()
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+self = &lt;Response [404 Not Found]&gt;
+
+    def raise_for_status(self) -&gt; Response:
+        """
+        Raise the `HTTPStatusError` if one occurred.
+        """
+        request = self._request
+        if request is None:
+            raise RuntimeError(
+                "Cannot call `raise_for_status` as the request "
+                "instance has not been set on this response."
+            )
+    
+        if self.is_success:
+            return self
+    
+        if self.has_redirect_location:
+            message = (
+                "{error_type} '{0.status_code} {0.reason_phrase}' for url '{0.url}'\n"
+                "Redirect location: '{0.headers[location]}'\n"
+                "For more information check: https://developer.mozilla.org/en-US/docs/Web/HTTP/Status/{0.status_code}"
+            )
+        else:
+            message = (
+                "{error_type} '{0.status_code} {0.reason_phrase}' for url '{0.url}'\n"
+                "For more information check: https://developer.mozilla.org/en-US/docs/Web/HTTP/Status/{0.status_code}"
+            )
+    
+        status_class = self.status_code // 100
+        error_types = {
+            1: "Informational response",
+            3: "Redirect response",
+            4: "Client error",
+            5: "Server error",
+        }
+        error_type = error_types.get(status_class, "Invalid status code")
+        message = message.format(self, error_type=error_type)
+&gt;       raise HTTPStatusError(message, request=request, response=self)
+E       httpx.HTTPStatusError: Client error '404 Not Found' for url 'http://classifier.test/v1/chat/completions'
+E       For more information check: https://developer.mozilla.org/en-US/docs/Web/HTTP/Status/404
+
+.venv\Lib\site-packages\httpx\_models.py:829: HTTPStatusError
+
+The above exception was the direct cause of the following exception:
+
+monkeypatch = &lt;_pytest.monkeypatch.MonkeyPatch object at 0x000001ED78F371B0&gt;
+kind = 'openai', value = None
+
+    @pytest.mark.asyncio
+    @pytest.mark.parametrize("kind", ["ollama", "openai"])
+    @pytest.mark.parametrize("value", [None, "", " ", 7])
+    async def test_provider_rejects_invalid_explicit_model_before_http(monkeypatch, kind, value):
+        requests = install_transport(monkeypatch)
+        with pytest.raises(MnemosConfigurationError, match="model"):
+&gt;           await provider_for(kind).predict("prompt", model=value)
+
+tests\test_affective_model_selection.py:109: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+mnemos\utils\llm.py:516: in predict
+    return await self._predict_with_key(
+mnemos\utils\llm.py:478: in _predict_with_key
+    return await call_with_async_retry(
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+provider = 'openai', operation = 'predict'
+fn = &lt;function OpenAIProvider._predict_with_key.&lt;locals&gt;._request at 0x000001ED78F91120&gt;
+policy = RetryPolicy(max_attempts=3, initial_backoff_seconds=0.25, max_backoff_seconds=2.0, backoff_multiplier=2.0, jitter_ratio=0.1)
+should_retry = None
+
+    async def call_with_async_retry(
+        *,
+        provider: str,
+        operation: str,
+        fn: Callable[[], Awaitable[T]],
+        policy: RetryPolicy | None = None,
+        should_retry: Callable[[Exception], bool] | None = None,
+    ) -&gt; T:
+        """Execute an async call with retries and standardized error mapping."""
+        effective_policy = policy or RetryPolicy()
+        retry_predicate = should_retry or is_retryable_http_exception
+    
+        last_exception: Exception | None = None
+        for attempt in range(1, effective_policy.max_attempts + 1):
+            try:
+                return await fn()
+            except Exception as exc:  # pragma: no cover - exercised by integration paths
+                last_exception = exc
+                retryable = retry_predicate(exc)
+                if not retryable or attempt &gt;= effective_policy.max_attempts:
+&gt;                   raise _wrap_provider_exception(provider, operation, exc) from exc
+E                   mnemos.utils.reliability.MnemosExternalServiceError: openai predict failed: Client error '404 Not Found' for url 'http://classifier.test/v1/chat/completions'
+E                   For more information check: https://developer.mozilla.org/en-US/docs/Web/HTTP/Status/404
+
+mnemos\utils\reliability.py:123: MnemosExternalServiceError</failure></testcase><testcase classname="tests.test_affective_model_selection" name="test_provider_rejects_invalid_explicit_model_before_http[-ollama]" time="0.196"><failure message="Failed: DID NOT RAISE MnemosConfigurationError">monkeypatch = &lt;_pytest.monkeypatch.MonkeyPatch object at 0x000001ED78F1A2D0&gt;
+kind = 'ollama', value = ''
+
+    @pytest.mark.asyncio
+    @pytest.mark.parametrize("kind", ["ollama", "openai"])
+    @pytest.mark.parametrize("value", [None, "", " ", 7])
+    async def test_provider_rejects_invalid_explicit_model_before_http(monkeypatch, kind, value):
+        requests = install_transport(monkeypatch)
+&gt;       with pytest.raises(MnemosConfigurationError, match="model"):
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       Failed: DID NOT RAISE MnemosConfigurationError
+
+tests\test_affective_model_selection.py:108: Failed</failure></testcase><testcase classname="tests.test_affective_model_selection" name="test_provider_rejects_invalid_explicit_model_before_http[-openai]" time="0.005"><failure message="Failed: DID NOT RAISE MnemosConfigurationError">monkeypatch = &lt;_pytest.monkeypatch.MonkeyPatch object at 0x000001ED77EE38C0&gt;
+kind = 'openai', value = ''
+
+    @pytest.mark.asyncio
+    @pytest.mark.parametrize("kind", ["ollama", "openai"])
+    @pytest.mark.parametrize("value", [None, "", " ", 7])
+    async def test_provider_rejects_invalid_explicit_model_before_http(monkeypatch, kind, value):
+        requests = install_transport(monkeypatch)
+&gt;       with pytest.raises(MnemosConfigurationError, match="model"):
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       Failed: DID NOT RAISE MnemosConfigurationError
+
+tests\test_affective_model_selection.py:108: Failed</failure></testcase><testcase classname="tests.test_affective_model_selection" name="test_provider_rejects_invalid_explicit_model_before_http[ -ollama]" time="0.202"><failure message="Failed: DID NOT RAISE MnemosConfigurationError">monkeypatch = &lt;_pytest.monkeypatch.MonkeyPatch object at 0x000001ED78FD2BA0&gt;
+kind = 'ollama', value = ' '
+
+    @pytest.mark.asyncio
+    @pytest.mark.parametrize("kind", ["ollama", "openai"])
+    @pytest.mark.parametrize("value", [None, "", " ", 7])
+    async def test_provider_rejects_invalid_explicit_model_before_http(monkeypatch, kind, value):
+        requests = install_transport(monkeypatch)
+&gt;       with pytest.raises(MnemosConfigurationError, match="model"):
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       Failed: DID NOT RAISE MnemosConfigurationError
+
+tests\test_affective_model_selection.py:108: Failed</failure></testcase><testcase classname="tests.test_affective_model_selection" name="test_provider_rejects_invalid_explicit_model_before_http[ -openai]" time="0.005"><failure message="Failed: DID NOT RAISE MnemosConfigurationError">monkeypatch = &lt;_pytest.monkeypatch.MonkeyPatch object at 0x000001ED78FEB620&gt;
+kind = 'openai', value = ' '
+
+    @pytest.mark.asyncio
+    @pytest.mark.parametrize("kind", ["ollama", "openai"])
+    @pytest.mark.parametrize("value", [None, "", " ", 7])
+    async def test_provider_rejects_invalid_explicit_model_before_http(monkeypatch, kind, value):
+        requests = install_transport(monkeypatch)
+&gt;       with pytest.raises(MnemosConfigurationError, match="model"):
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       Failed: DID NOT RAISE MnemosConfigurationError
+
+tests\test_affective_model_selection.py:108: Failed</failure></testcase><testcase classname="tests.test_affective_model_selection" name="test_provider_rejects_invalid_explicit_model_before_http[7-ollama]" time="0.198"><failure message="Failed: DID NOT RAISE MnemosConfigurationError">monkeypatch = &lt;_pytest.monkeypatch.MonkeyPatch object at 0x000001ED78FEB070&gt;
+kind = 'ollama', value = 7
+
+    @pytest.mark.asyncio
+    @pytest.mark.parametrize("kind", ["ollama", "openai"])
+    @pytest.mark.parametrize("value", [None, "", " ", 7])
+    async def test_provider_rejects_invalid_explicit_model_before_http(monkeypatch, kind, value):
+        requests = install_transport(monkeypatch)
+&gt;       with pytest.raises(MnemosConfigurationError, match="model"):
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       Failed: DID NOT RAISE MnemosConfigurationError
+
+tests\test_affective_model_selection.py:108: Failed</failure></testcase><testcase classname="tests.test_affective_model_selection" name="test_provider_rejects_invalid_explicit_model_before_http[7-openai]" time="0.005"><failure message="Failed: DID NOT RAISE MnemosConfigurationError">monkeypatch = &lt;_pytest.monkeypatch.MonkeyPatch object at 0x000001ED78FEB5B0&gt;
+kind = 'openai', value = 7
+
+    @pytest.mark.asyncio
+    @pytest.mark.parametrize("kind", ["ollama", "openai"])
+    @pytest.mark.parametrize("value", [None, "", " ", 7])
+    async def test_provider_rejects_invalid_explicit_model_before_http(monkeypatch, kind, value):
+        requests = install_transport(monkeypatch)
+&gt;       with pytest.raises(MnemosConfigurationError, match="model"):
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       Failed: DID NOT RAISE MnemosConfigurationError
+
+tests\test_affective_model_selection.py:108: Failed</failure></testcase></testsuite></testsuites>

@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- The Python affective classifier now honors an explicit model selection on supported providers without changing the shared provider's model. Omitted selection inherits the shared model; unsupported overrides and blank names fail visibly. Saved configurations containing the formerly ignored `llama3` value now request that model; omit it to inherit. See docs/configuration/affective-classifier-model.md.
+
 - Hermes capture accepts validated original-message provenance from compatible hosts, preserving identity and forget suppression across copied rows. Marked compression summaries remain capture-only evidence; changing a native carrier's classification cannot create another observation. Complete host-side provenance support remains under validation.
 
 - Existing SQLite memories remain searchable through scoped lexical retrieval after a transient embedding failure. Responses, context, and host diagnostics identify the degraded mode, including empty results; semantic scores stay unmeasured. Configuration and database errors still propagate.

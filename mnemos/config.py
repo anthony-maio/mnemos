@@ -11,7 +11,7 @@ from __future__ import annotations
 
 from typing import Literal
 
-from pydantic import BaseModel, Field, model_validator
+from pydantic import BaseModel, Field, field_validator, model_validator
 from .retrieval import RetrievalConfig
 
 
@@ -118,10 +118,20 @@ class AffectiveConfig(BaseModel):
         le=1.0,
         description="Weight given to affective state match in retrieval scoring.",
     )
-    classifier_model: str = Field(
-        default="llama3",
-        description="LLM model name used for emotional state classification.",
+    classifier_model: str | None = Field(
+        default=None,
+        description="Optional classifier model override; None inherits the supplied LLM provider.",
     )
+
+    @field_validator("classifier_model")
+    @classmethod
+    def validate_classifier_model(cls, value: str | None) -> str | None:
+        if value is not None:
+            value = value.strip()
+            if not value:
+                raise ValueError("Classifier model must be a nonempty model name or None")
+        return value
+
     classifier_prompt: str = Field(
         default=(
             "Analyze the emotional/cognitive state expressed in this text and score it "

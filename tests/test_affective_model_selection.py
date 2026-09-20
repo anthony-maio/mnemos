@@ -1,0 +1,141 @@
+"""Classifier model choices reach the provider without mutating shared defaults."""
+
+import asyncio
+import json
+
+import httpx
+import pytest
+from pydantic import ValidationError
+
+from mnemos.config import AffectiveConfig
+from mnemos.modules.affective import AffectiveRouter
+from mnemos.types import Interaction
+from mnemos.utils.embeddings import SimpleEmbeddingProvider
+from mnemos.utils.llm import MockLLMProvider, OllamaProvider, OpenAIProvider
+from mnemos.utils.reliability import MnemosConfigurationError
+
+
+def install_transport(monkeypatch, missing_model=None):
+    requests = []
+    original_client = httpx.AsyncClient
+
+    def respond(request):
+        payload = json.loads(request.content)
+        requests.append((str(request.url), payload))
+        if payload["model"] == missing_model:
+            return httpx.Response(404, json={"error": "model not found"})
+        return httpx.Response(
+            200,
+            json={
+                "response": "0, 0.1, 0.2",
+                "done": True,
+                "choices": [{"message": {"content": "0, 0.1, 0.2"}}],
+            },
+        )
+
+    def client(**kwargs):
+        return original_client(transport=httpx.MockTransport(respond), **kwargs)
+
+    monkeypatch.setattr(httpx, "AsyncClient", client)
+    return requests
+
+
+def provider_for(kind):
+    if kind == "ollama":
+        return OllamaProvider(model="shared-model", base_url="http://classifier.test")
+    return OpenAIProvider(
+        api_key="fixture", model="shared-model", base_url="http://classifier.test/v1"
+    )
+
+
+def test_classifier_default_inherits_instead_of_selecting_an_unrequested_model():
+    assert AffectiveConfig().classifier_model is None
+
+
+@pytest.mark.parametrize("value", ["", " ", "\n\t"])
+def test_blank_classifier_model_is_rejected(value):
+    with pytest.raises(ValidationError):
+        AffectiveConfig(classifier_model=value)
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize("kind", ["ollama", "openai"])
+async def test_override_reaches_http_without_changing_shared_provider(monkeypatch, kind):
+    requests = install_transport(monkeypatch)
+    provider = provider_for(kind)
+    router = AffectiveRouter(
+        provider, SimpleEmbeddingProvider(), AffectiveConfig(classifier_model="classifier-model")
+    )
+    state, _ = await asyncio.gather(
+        router.classify_state(Interaction(role="user", content="An ordinary request.")),
+        provider.predict("An unrelated module request."),
+    )
+    assert state is not None
+    assert sorted(payload["model"] for _, payload in requests) == [
+        "classifier-model",
+        "shared-model",
+    ]
+    assert provider.model == "shared-model"
+    assert all(url.startswith("http://classifier.test/") for url, _ in requests)
+    assert router.get_stats()["classifier"] == {
+        "model": "classifier-model",
+        "selection": "override",
+    }
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize("kind", ["ollama", "openai"])
+async def test_inherited_model_and_missing_override_do_not_silently_switch_models(
+    monkeypatch, kind
+):
+    requests = install_transport(monkeypatch, missing_model="missing-classifier")
+    provider = provider_for(kind)
+    inherited = AffectiveRouter(provider, SimpleEmbeddingProvider())
+    state = await inherited.classify_state(Interaction(role="user", content="An ordinary request."))
+    assert state is not None
+    assert requests[-1][1]["model"] == "shared-model"
+    assert inherited.get_stats()["classifier"] == {
+        "model": "shared-model",
+        "selection": "provider_default",
+    }
+    explicit = AffectiveRouter(
+        provider, SimpleEmbeddingProvider(), AffectiveConfig(classifier_model="missing-classifier")
+    )
+    assert (
+        await explicit.classify_state(Interaction(role="user", content="An ordinary request."))
+        is None
+    )
+    assert [p["model"] for _, p in requests] == ["shared-model", "missing-classifier"]
+    assert list(explicit._state_history) == []
+
+
+def test_unsupported_override_is_a_configuration_error_instead_of_being_ignored():
+    with pytest.raises(MnemosConfigurationError, match="model override"):
+        AffectiveRouter(
+            MockLLMProvider(),
+            SimpleEmbeddingProvider(),
+            AffectiveConfig(classifier_model="requested-model"),
+        )
+
+
+@pytest.mark.asyncio
+async def test_later_unsupported_override_cannot_produce_a_measured_state():
+    config = AffectiveConfig()
+    provider = MockLLMProvider(record_calls=True)
+    router = AffectiveRouter(provider, SimpleEmbeddingProvider(), config)
+    config.classifier_model = "requested-model"
+    assert (
+        await router.classify_state(Interaction(role="user", content="An ordinary request."))
+        is None
+    )
+    assert provider.calls == []
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize("kind", ["ollama", "openai"])
+@pytest.mark.parametrize("value", [None, "", " ", 7])
+async def test_provider_rejects_invalid_explicit_model_before_http(monkeypatch, kind, value):
+    requests = install_transport(monkeypatch)
+    with pytest.raises(MnemosConfigurationError, match="model"):
+        await provider_for(kind).predict("prompt", model=value)
+    assert requests == []
