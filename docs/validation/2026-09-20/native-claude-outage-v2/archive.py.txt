@@ -1,0 +1,51 @@
+"""Archive only the disposable native outage evidence and bound helpers."""
+import hashlib
+import json
+from pathlib import Path
+import shutil
+
+repo = Path(__file__).resolve().parent.parent
+runtime = Path("C:/Users/Ant/AppData/Local/Temp/mnemos-native-claude-outage-v2")
+archive = repo / "docs/validation/2026-09-20/native-claude-outage-v2"
+report = json.loads((runtime / "report.json").read_bytes())
+assert report["status"] == "native_service_outage_raw_capture_observed"
+assert report["cleanup_established"] is True and not (runtime / "runtime.json").exists()
+assert not list(runtime.rglob(".credentials.json"))
+archive.mkdir(parents=True, exist_ok=False)
+(archive / ".gitattributes").write_bytes(b"** -text -whitespace\n")
+
+def copy(source, relative):
+    target = archive / relative
+    target.parent.mkdir(parents=True, exist_ok=True)
+    shutil.copyfile(source, target)
+
+for relative in [
+    "report.json", "state-after-recovery.json", "final-state.json", "outbox-before-recovery.json",
+    "capture-coverage.json", "dispatch-records.json", "health-responses.json",
+    "injected-module-configs.json", "service.log", "claude-offline/process.json",
+    "claude-offline/stdout.jsonl", "claude-offline/stderr.log",
+]:
+    copy(runtime / relative, relative)
+transcript = Path(report["native_transcript"]["path"])
+assert transcript.resolve().is_relative_to(runtime.resolve())
+assert hashlib.sha256(transcript.read_bytes()).hexdigest() == report["native_transcript"]["sha256"]
+copy(transcript, "native-transcript.jsonl")
+source_map = {}
+for relative, expected in report["input_hashes"].items():
+    path = repo / relative
+    assert hashlib.sha256(path.read_bytes()).hexdigest() == expected
+    destination = "sources/native_hosts/" + path.name if path.suffix == ".py" else "protocol.md"
+    copy(path, destination)
+    source_map[relative] = destination
+(archive / "sources/native_hosts/__init__.py").write_bytes(b"")
+copy(repo / ".venv/native-outage-successor-gates.xml", "successor-gates.junit.xml")
+copy(Path(__file__), "archive.py.txt")
+(archive / "source-map.json").write_bytes((json.dumps(source_map, indent=2) + "\n").encode())
+files = {
+    path.relative_to(archive).as_posix(): {
+        "bytes": path.stat().st_size, "sha256": hashlib.sha256(path.read_bytes()).hexdigest(),
+    }
+    for path in sorted(archive.rglob("*")) if path.is_file()
+}
+(archive / "evidence-index.json").write_bytes((json.dumps({"files": files}, indent=2) + "\n").encode())
+print(json.dumps({"archive": str(archive), "files": len(files)}))

@@ -1,0 +1,112 @@
+{
+  "status": "native_service_outage_raw_capture_observed",
+  "started_at": "2026-09-20T14:53:29.104907+00:00",
+  "pid": 58640,
+  "runner_commit": "69183056457b3a11d59e67836610e711d861081d",
+  "input_hashes": {
+    "docs/plans/2026-09-20-native-claude-service-outage-v2.md": "d2e97939464d9dcb954c98a3d52f3c4c68eab08a772e809ab682b1cdc483749d",
+    "benchmarks/native_hosts/claude_service_outage_v2.py": "720d28cd20bb301978bcd509ebe94524d913277295b5e76750c6050a866ac956",
+    "benchmarks/native_hosts/native_processes.py": "7490cd5c3312ddc355ad41765438e5dbf3a4a3a2212d34a3bce78fa7ef16e792",
+    "benchmarks/native_hosts/capture_coverage.py": "06113247c6a1d6ae0a2dc80b2a8606d8ca6044229c9af64af9d57048f981c091",
+    "benchmarks/native_hosts/outage_acceptance.py": "274a749fa2730b0683a8e76b0760d40ff09b302a375736195e0c20b0e4026970",
+    "benchmarks/native_hosts/claude_service_outage_v1.py": "059e13eb0d3064a1c9d317c12ade0a3fa47d5624dc8d026fd6902fe980200ea8"
+  },
+  "wheel_sha256": "594c7cf6888ae919e9bd99d35a7484aa3b6e2e0609c50ae5b5d806a138b30273",
+  "package_checks": {
+    "source_commit": "a64afb73d1b99510cfa32e96164bf6c11458b51e",
+    "verification_sha256": "2e40f76dcfc1c0d6bba1e58ea5638f216e7714bf818df0f4b1e502c738ce64ef",
+    "installation_sha256": "fe70106b7bea6449e338ca63bba3c5f7cf89cb5e8071b8d361f8ca272f1ef90f"
+  },
+  "installed_package": "C:\\Users\\Ant\\AppData\\Local\\Temp\\mnemos-installed-autostart-env-v1\\Lib\\site-packages\\mnemos",
+  "claude_version": "2.1.191 (Claude Code)",
+  "claude_executable_sha256": "83397a6a029c7da663fb1ce27211e05174a3546d8b151e42451bf4590b8343d7",
+  "model_requested": "claude-sonnet-4-6",
+  "background_processing_enabled": false,
+  "local_provider_calls_expected": 0,
+  "isolation": {
+    "selectors": {
+      "MNEMOS_CONFIG_PATH": "C:\\Users\\Ant\\AppData\\Local\\Temp\\mnemos-native-claude-outage-v2\\settings.toml",
+      "MNEMOS_SCOPE_REGISTRY": "C:\\Users\\Ant\\AppData\\Local\\Temp\\mnemos-native-claude-outage-v2\\scopes.json",
+      "MNEMOS_USER_PROFILE_ID": "native-claude-outage-v2",
+      "MNEMOS_RUNTIME_DESCRIPTOR": "C:\\Users\\Ant\\AppData\\Local\\Temp\\mnemos-native-claude-outage-v2\\runtime.json",
+      "MNEMOS_RUNTIME_DIR": "C:\\Users\\Ant\\AppData\\Local\\Temp\\mnemos-native-claude-outage-v2",
+      "MNEMOS_STORE_TYPE": "sqlite",
+      "MNEMOS_SQLITE_PATH": "C:\\Users\\Ant\\AppData\\Local\\Temp\\mnemos-native-claude-outage-v2\\memory.sqlite",
+      "MNEMOS_PROJECT_ROOT": "C:\\Users\\Ant\\AppData\\Local\\Temp\\mnemos-native-claude-outage-v2\\project",
+      "MNEMOS_HOST": "claude-code",
+      "MNEMOS_SESSION_ID": "native-three-host-claude-offline",
+      "MNEMOS_AUTO_START": "false",
+      "MNEMOS_ROUTING_REVIEW_DIR": "C:\\Users\\Ant\\AppData\\Local\\Temp\\mnemos-native-claude-outage-v2\\routing-review"
+    },
+    "resolved_database": "C:\\Users\\Ant\\AppData\\Local\\Temp\\mnemos-native-claude-outage-v2\\memory.sqlite",
+    "autostart_disabled": true
+  },
+  "outage_verified": {
+    "descriptor_absent": true,
+    "former_port_closed": true
+  },
+  "native_process": {
+    "host": "claude-code",
+    "phase": "claude-offline",
+    "session_id": "1d54ff4e-9eb7-4f74-84d6-94e4cd266109",
+    "status": "completed",
+    "home": "C:\\Users\\Ant\\AppData\\Local\\Temp\\mnemos-native-claude-outage-v2\\claude-offline\\claude-home",
+    "command": [
+      "C:\\Users\\Ant\\.local\\bin\\claude.exe",
+      "--print",
+      "--verbose",
+      "--output-format",
+      "stream-json",
+      "--include-hook-events",
+      "--setting-sources",
+      "project",
+      "--plugin-dir",
+      "C:\\Users\\Ant\\AppData\\Local\\Temp\\mnemos-native-claude-outage-v2\\plugin",
+      "--tools",
+      "",
+      "--allowed-tools",
+      "mcp__plugin_mnemos-memory_mnemos__mnemos_retrieve",
+      "--disable-slash-commands",
+      "--permission-mode",
+      "default",
+      "--session-id",
+      "1d54ff4e-9eb7-4f74-84d6-94e4cd266109",
+      "--model",
+      "claude-sonnet-4-6",
+      "--max-budget-usd",
+      "0.5",
+      "--system-prompt",
+      "Use only the explicitly allowed Mnemos tools. Complete the requested lifecycle in order.",
+      "<synthetic phase prompt>"
+    ],
+    "prompt_sha256": "e5fdffc1e6586f0f1a0e608f815a1c6bbf0d5f3ef07249eaf17638dbfc2e242f",
+    "allowed_tools": [
+      "mcp__plugin_mnemos-memory_mnemos__mnemos_retrieve"
+    ],
+    "max_seconds": 180,
+    "max_budget_usd": 0.5,
+    "pid": 67292,
+    "timed_out": false,
+    "returncode": 0,
+    "stdout_sha256": "71ac7e31ae09721195a40eef042e4bb65c51c51e139bae84c05f0b62b05feee2",
+    "stderr_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "auth_copy_removed": true,
+    "cleanup_errors": [],
+    "seconds": 6.11367649998283
+  },
+  "models_observed": [
+    "claude-sonnet-4-6"
+  ],
+  "native_transcript": {
+    "path": "C:\\Users\\Ant\\AppData\\Local\\Temp\\mnemos-native-claude-outage-v2\\claude-offline\\claude-home\\projects\\C--Users-Ant-AppData-Local-Temp-mnemos-native-claude-outage-v2-project\\1d54ff4e-9eb7-4f74-84d6-94e4cd266109.jsonl",
+    "sha256": "f975ad25539229e0f792d857f2e93a104676281340264d11b1e7aec255581703",
+    "expected_text_messages": 2
+  },
+  "queued_entries": 3,
+  "covered_messages": 2,
+  "repeat_replay_and_restart_preserved": true,
+  "cleanup_errors": [],
+  "embedding_responses_observed": 0,
+  "cleanup_established": true,
+  "finished_at": "2026-09-20T14:53:38.353568+00:00"
+}

@@ -1,19 +1,30 @@
 # Functional local memory implementation record
 
+September 20, repaired package and native outage observation: product `a64afb7`
+passes [all six checks](../2026-09-20/autostart-environment-checkpoint-v1/README.md),
+1,834 source tests and 703 isolated installed cases, with four skips in each,
+plus seven replay assertions. The [single Claude v2 attempt](../2026-09-20/native-claude-outage-v2/README.md)
+passes raw capture while the service is stopped, restoration through the
+outbox, replay, and a second restart. Two native messages map to three entries
+including a provisional prompt; all three jobs are pending, with zero facts.
+Cleanup passed. Extraction, provider-outage, other-host outages, Desktop,
+full-module quality, and the pilot remain separate gates. V1's default-store
+incident remains preserved, with no cleanup deletion performed.
+
 September 20, native outage failure: the [Claude attempt](../2026-09-20/native-claude-outage-failure-v1/README.md)
 unexpectedly autostarted a service and wrote three synthetic events and three
 jobs to the default database, with zero scoped facts observed. The ignored
 autostart setting and missing host-side storage pin are both repaired in the
 working source. The owner is stopped, a verified private backup is preserved,
 and no default-store cleanup deletion has run. Recovery acceptance remains
-open. The new focused suite passes 139 tests with two platform skips; broader
-source and installed-package validation are pending. The frozen v4 model
+open at that checkpoint. The new focused suite passes 139 tests with two platform skips;
+the newer package and native results are above. The frozen v4 model
 matrix continues on its original source independently of this transport fix.
 
 The successor outage verifier passes 64 focused cases, including actual
 dispatcher health and production capture-schema checks. It adds physical
 scope/source verification, exact native prompt/reply matching, and recursive
-tool-block rejection. No successor native run has executed. Frozen v1 evidence
+tool-block rejection. This preceded the successor native result above. Frozen v1 evidence
 remains unchanged. Archive byte preservation was corrected in `c9ae826` after
 a clean checkout exposed line-ending conversion; all twenty indexed files
 now match the committed Git blobs. Product validation remains bound to `a64afb7`.

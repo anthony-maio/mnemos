@@ -1,0 +1,69 @@
+{
+  "schema_version": 1,
+  "status": "bounded_text_receipts_matched",
+  "expected_messages": 2,
+  "covered_messages": 2,
+  "duplicate_receipts": 0,
+  "provisional_receipts": [
+    2
+  ],
+  "unmatched_receipts": [],
+  "excluded_receipts": [],
+  "identity_conflicts": [],
+  "messages": [
+    {
+      "identity": "claude-offline:claude-code:1d54ff4e-9eb7-4f74-84d6-94e4cd266109:user:e573deef-771a-4086-ba36-e805f0d3b031",
+      "host": "claude-code",
+      "phase": "claude-offline",
+      "role": "user",
+      "native_line": 3,
+      "content_sha256": "e5fdffc1e6586f0f1a0e608f815a1c6bbf0d5f3ef07249eaf17638dbfc2e242f",
+      "content_bytes": 185,
+      "capture_supported": true,
+      "message_covered": true,
+      "receipt_indices": [
+        3
+      ],
+      "durable_event_ids": [
+        "58f0181f06a6ab55b466e831499fa31913105231b9b58f6b2cb1cd557906978d"
+      ],
+      "suppressed": false,
+      "processing_statuses": [
+        "pending"
+      ],
+      "job_statuses": [
+        "pending"
+      ]
+    },
+    {
+      "identity": "claude-offline:claude-code:1d54ff4e-9eb7-4f74-84d6-94e4cd266109:assistant:1cc4c823-faa0-4d0e-8a41-7d252e3c4392",
+      "host": "claude-code",
+      "phase": "claude-offline",
+      "role": "assistant",
+      "native_line": 5,
+      "content_sha256": "3b6da0f73e7c20284879fba8e132340bbcc1da66e91c8cafc746bdc1b8635318",
+      "content_bytes": 30,
+      "capture_supported": true,
+      "message_covered": true,
+      "receipt_indices": [
+        4
+      ],
+      "durable_event_ids": [
+        "2336446917f76e9bde5dbb93fc2cc27aedf409de3a1f8715c923393b465afa3e"
+      ],
+      "suppressed": false,
+      "processing_statuses": [
+        "pending"
+      ],
+      "job_statuses": [
+        "pending"
+      ]
+    }
+  ],
+  "limits": [
+    "Coverage is conditional on the supplied native records being complete.",
+    "Committed receipts do not prove exactly-once callbacks or retained facts.",
+    "Pending/deferred/suppressed receipts and final job states are separate observations.",
+    "No provider wire, outage, Desktop, multi-turn, or daily-use guarantee follows."
+  ]
+}

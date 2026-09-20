@@ -40,6 +40,19 @@ negative results even if they complicate the ending.
 
 ## Latest implementation and native evidence
 
+The [successor Claude outage attempt](../validation/2026-09-20/native-claude-outage-v2/README.md)
+passed on repaired product `a64afb7`. Two native messages remained buffered
+while the service was stopped, then reached the disposable database after
+restart. Three entries include a separate provisional prompt capture. Replay
+and a second restart preserved the records; cleanup passed. All three jobs
+remain pending and there are zero facts because extraction was deliberately
+disabled. Describe this as one observed raw-capture recovery, not completed
+memory extraction or general outage reliability. The new
+[package checkpoint](../validation/2026-09-20/autostart-environment-checkpoint-v1/README.md)
+passes 1,834 source tests and 703 installed cases, with four skips in each,
+all six source/package checks, and seven replay assertions. These newer
+records are not yet included in portable packet v27.
+
 The [native Claude outage attempt](../validation/2026-09-20/native-claude-outage-failure-v1/README.md)
 failed before recovery could be tested. The shared client ignored
 `MNEMOS_AUTO_START=false`, and the experiment had not pinned its host-side
@@ -48,8 +61,8 @@ jobs to the default database; the scoped inspection found zero facts. The
 owner was stopped and a verified private backup preserved. No cleanup deletion
 was performed. There was no pre-attempt database snapshot, so do not claim
 unrelated contents were unchanged. The repair now honors the environment
-setting and pins disposable storage independently; native recovery remains
-open until a new installed package and separate attempt pass. This failure
+setting and pins disposable storage independently; the successor above observes
+raw recovery on a verified installed package. Broader recovery remains open. This failure
 belongs in the research record even if the final repair succeeds. The default
 database and its full backup must never be included in the writing packet.
 
@@ -97,7 +110,7 @@ became a durable fact, or establish capture reliability outside this run.
 
 This is one bounded lifecycle with real Nomic embeddings and all five
 cognition modules disabled. It does not close complete capture, Codex Desktop,
-native outage recovery, full-module quality, general reliability, or the
+general native outage recovery, full-module quality, general reliability, or the
 two-week pilot. Hermes v14's one pass and two failures remain separate.
 The runner passed 149 offline checks, including prerequisite-integrity and
 documentation cases; its import preflight passed before native execution.

@@ -1,12 +1,23 @@
 # Mnemos claim and evidence ledger
 
+The [Claude outage successor](../2026-09-20/native-claude-outage-v2/README.md)
+observes raw capture recovery for one conversation on verified product `a64afb7`.
+Two native messages map to three queued entries including a provisional
+prompt. Restart drains the outbox; independent database reads, replay, and
+a second restart preserve raw sources and pending jobs. Zero facts and no
+local provider responses are expected because extraction is disabled.
+Cleanup passes. This is not a general outage or extraction-recovery claim.
+The [package](../2026-09-20/autostart-environment-checkpoint-v1/README.md)
+passes 1,834 source and 703 installed tests, four skips each, all six checks,
+and seven replay assertions. The full-module matrix and pilot remain open.
+
 The [native Claude outage attempt](../2026-09-20/native-claude-outage-failure-v1/README.md)
 failed: the client ignored its autostart setting, and incomplete experiment
 storage isolation let an unexpected owner write three synthetic events and
 three jobs to the default database. Zero scoped facts were observed. The owner
 was stopped and a verified private backup preserved; no cleanup deletion was
 performed. Do not claim this attempt preserved an outage or avoided the default
-store. Native recovery remains open pending a new package and separate run.
+store. The separately verified successor above does not change this outcome.
 
 The [frozen retrieval fixture audit](../2026-09-20/retrieval-fixture-audit-v1/README.md)
 identifies 20 foreign-scope queries mislabeled answerable and 60 explicit

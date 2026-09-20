@@ -339,6 +339,13 @@ The [native text audit](../validation/2026-09-20/native-capture-coverage-v1/READ
 
 Latest native result: [three-host v7](../validation/2026-09-20/three-host-native-v7/README.md) passes all 11 phases on verified product `e6887de`: teaching, restarted recall, same-ID correction, all-host corrected recall, reviewed deletion, 12 suppressed source replays, and all-host final recall. Controls and cleanup pass. All five cognition modules were disabled; complete capture, Desktop, native outage recovery, full-module quality, and the pilot remain open.
 
+Subsequent bounded outage result: [Claude v2](../validation/2026-09-20/native-claude-outage-v2/README.md)
+observes two native messages buffered while the service is stopped, then
+persisted after restart on verified product `a64afb7`. Replay, another restart,
+physical source checks, and cleanup pass. Three pending jobs include a
+provisional prompt, with zero facts. Provider/extraction recovery and broader
+host reliability remain open. The earlier v1 default-store incident is preserved.
+
 Previous native result: [three-host v5](../validation/2026-09-20/three-host-native-v5/README.md) passed teaching but failed Hermes recall on unsupported scope arguments. Generated shared guidance requests those exact arguments; all three provider requests contain that conflicting instruction. Worker startup and cleanup passed. Correction and later phases did not run. Full continuity remains open.
 
 Previous native result: [three-host v4](../validation/2026-09-20/three-host-native-v4/README.md) passed Codex and Claude teaching, followed by Hermes recall of both facts after restart. Correction failed: rejected scope override, omitted inspection, and a pending correction job. The final fact remained at version 1; later phases did not run. Cleanup passed. Validation stopped before the runner's post-phase maintenance; pending status does not establish a production worker defect. V2 and v3 remain failed. T17 acceptance remains open.
