@@ -1,14 +1,13 @@
 # Functional local memory implementation record
 
-Current source candidate: `697b672` makes generated shared instructions follow
-the active host's tool schemas. MCP scope selectors are conditional; native
-provider-owned tools omit them, and write/consolidation tools are requested
-only when exposed. The scope firewall is unchanged. Targeted verification
-passed 90 cases with two opt-in host skips; formatting and strict Python 3.10
-type checks passed. Full source/package verification is running in the
-isolated `mnemos-source-shared-guidance-v1` checkout. No new installed or
-native result is claimed yet. Earlier package and native records below keep
-their original source bindings.
+The [shared-guidance package](../2026-09-20/shared-guidance-checkpoint-v1/README.md)
+at `697b672` passes 1,615 source tests with four skips, all six source/package
+checks, 652 isolated installed cases with four matching skips, and seven
+replay assertions. Generated instructions follow the active tool schema;
+provider-owned tools omit unsupported scope fields. The scope firewall is
+unchanged. Native v11 import preflight passed and its fixed three-attempt
+Hermes cohort is running. No native success is claimed for this package yet.
+Earlier package and native records retain their original source bindings.
 
 The [offline worker checkpoint](../2026-09-20/three-host-worker-checkpoint-v1/README.md)
 reproduces a three-host runner defect: its injected factory never starts the
@@ -24,7 +23,8 @@ arguments. Query-only retries retrieved both facts but do not clear the
 failure. Both service starts reported a running worker; native correction
 was not reached. Generated project guidance explicitly requests the rejected
 arguments and appears in all three Hermes provider requests. That instruction
-conflict needs repair. Cleanup passed; full continuity remains open.
+conflict is repaired in source `697b672`; native confirmation remains open.
+Cleanup passed; full continuity remains open.
 
 The [three-host v4 attempt](../2026-09-20/three-host-native-v4/README.md) passed
 Codex teaching, Claude teaching, and Hermes retrieval of both facts after a

@@ -12,6 +12,14 @@ Deliver an article draft, three possible titles, and a separate compact source/c
 
 ## Latest implementation and native evidence
 
+The [shared-guidance package checkpoint](../validation/2026-09-20/shared-guidance-checkpoint-v1/README.md)
+records 1,615 source tests passed with four skips, six successful source/package
+checks, 652 installed cases passed with four matching skips, and seven replay
+assertions. It repairs the conflict seen in the v5 trace between shared
+instructions and Hermes tool schemas. This is a verified instruction/dispatch
+repair; its effect on native completion has not yet been demonstrated. A new
+three-attempt prerequisite cohort is running under unchanged requirements.
+
 Checkout addendum: the [offline correction-worker repair](../validation/2026-09-20/three-host-worker-checkpoint-v1/README.md) fixes a benchmark setup defect discovered after packet v21. The default production service already starts its scheduler; the custom runner did not. The repaired runner passes a correction/restart regression and 167 offline cases. Native acceptance remains open, and packet v21 does not contain this later addendum.
 
 The portable v21 packet is a working snapshot through the v4 attempt. It includes the partial cross-host success and the correction failure below. Refresh the handoff and packet at final acceptance; this is enough to begin research, not a finished engineering account.
@@ -22,7 +30,8 @@ arguments. Query-only retries retrieved both facts but do not clear the
 failure. Both service starts reported a running worker; native correction
 was not reached. Generated project guidance explicitly requests the rejected
 arguments and appears in all three Hermes provider requests. That instruction
-conflict needs repair. Cleanup passed; full continuity remains open.
+conflict is repaired in source `697b672`; native confirmation remains open.
+Cleanup passed; full continuity remains open.
 
 The [three-host v4 attempt](../validation/2026-09-20/three-host-native-v4/README.md) passed
 Codex teaching, Claude teaching, and Hermes retrieval of both facts after a

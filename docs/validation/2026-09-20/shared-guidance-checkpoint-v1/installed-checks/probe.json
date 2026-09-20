@@ -1,0 +1,100 @@
+{
+  "assertions": {
+    "first_stop_captured_two": true,
+    "first_stop_ok": true,
+    "first_store_has_two_events": true,
+    "one_native_assistant": true,
+    "replay_captured_zero": true,
+    "replay_explicitly_degraded_without_turn_id": true,
+    "restarted_store_has_same_two_events": true
+  },
+  "finished_at": "2026-09-20T08:49:50.764671+00:00",
+  "fixture_directory": "C:\\Users\\Ant\\AppData\\Local\\Temp\\mnemos-replay-shared-guidance-v1",
+  "fixture_root": "C:\\Users\\Ant\\AppData\\Local\\Temp\\mnemos-replay-shared-guidance-v1",
+  "import_mode": "installed_wheel",
+  "imported_mnemos": "C:\\Users\\Ant\\AppData\\Local\\Temp\\mnemos-installed-shared-guidance-v1\\Lib\\site-packages\\mnemos\\__init__.py",
+  "package_binding": {
+    "exact_wheel_members": 62,
+    "source_files_normalized_lf": 59
+  },
+  "probe": "claude_stop_replay_positive_assertions",
+  "providers": {
+    "cognition": "unavailable",
+    "embedding": "constant"
+  },
+  "reproducer_path": "C:\\Users\\Ant\\AppData\\Local\\Temp\\mnemos-source-shared-guidance-v1\\docs\\validation\\2026-09-16\\claude-stop-replay\\runner.py.txt",
+  "reproducer_sha256": "63c44dad666bd4764184c77ff2a8b7438a7386031d7cc16291989a9a1cd5d342",
+  "reproduction": {
+    "assistant_source_refs_after_restart": [
+      "native-assistant-uuid"
+    ],
+    "checkpoint": "C:\\Users\\Ant\\AppData\\Local\\Temp\\mnemos-replay-shared-guidance-v1\\checkpoints\\89c01aab9b1d70197943649f0f721ae55a95fc805e16b94d22996b60b8f8f423.json",
+    "checkpoint_offset": 364,
+    "events_after_first_stop": [
+      {
+        "content_length": 38,
+        "content_sha256": "c66d9436d3da49787effce5ad93c5a02ffa42720c55c629049478b64fb52b942",
+        "id": "0132a79857b6b7b4039cb4928d8f758e8f4cd516a544b22bc978a5a463b1cfac",
+        "role": "user",
+        "source_event_id": "claude:v2:446628ff0f8229543c76a32040cac0973bb1d1f1747f40b5000074d3938a9bf0",
+        "source_ref": "native-user-uuid"
+      },
+      {
+        "content_length": 47,
+        "content_sha256": "9ab209bcf6e9704f78e6233831c2e6d32f8c9344d904676041e20d742baa7271",
+        "id": "758a2a24f850af0562fed35d36bf2b8c23196ccbfadafd9d296acd7b2d164f8c",
+        "role": "assistant",
+        "source_event_id": "claude:v2:5ed1ec43bf9e0e5bf78ada8b3e6ae135c0827abee670509cf990460b99125e0d",
+        "source_ref": "native-assistant-uuid"
+      }
+    ],
+    "events_after_second_stop": [
+      {
+        "content_length": 38,
+        "content_sha256": "c66d9436d3da49787effce5ad93c5a02ffa42720c55c629049478b64fb52b942",
+        "id": "0132a79857b6b7b4039cb4928d8f758e8f4cd516a544b22bc978a5a463b1cfac",
+        "role": "user",
+        "source_event_id": "claude:v2:446628ff0f8229543c76a32040cac0973bb1d1f1747f40b5000074d3938a9bf0",
+        "source_ref": "native-user-uuid"
+      },
+      {
+        "content_length": 47,
+        "content_sha256": "9ab209bcf6e9704f78e6233831c2e6d32f8c9344d904676041e20d742baa7271",
+        "id": "758a2a24f850af0562fed35d36bf2b8c23196ccbfadafd9d296acd7b2d164f8c",
+        "role": "assistant",
+        "source_event_id": "claude:v2:5ed1ec43bf9e0e5bf78ada8b3e6ae135c0827abee670509cf990460b99125e0d",
+        "source_ref": "native-assistant-uuid"
+      }
+    ],
+    "expected_behavior": "The first Stop consumes transcript deltas; an identical Stop after restart must not capture a fallback assistant event.",
+    "first_stop": {
+      "captured": 2,
+      "committed": true,
+      "error": null,
+      "queued": false,
+      "status": "ok"
+    },
+    "minimal_fix_principle": "Persist the last captured assistant source reference, content fingerprint, and native turn identity in the v2 checkpoint. Suppress a fallback only when those durable fields identify the same turn. If no native turn identity is available, return a degraded result and wait for a transcript delta rather than synthesizing last_assistant_message as a new event. This avoids duplicate replay while leaving same-text responses from later turns eligible when their turn identity differs.",
+    "project_id": "eae39e4b-8c7d-4aea-b8ba-29f979fb14d4",
+    "second_stop_after_restart": {
+      "captured": 0,
+      "committed": false,
+      "error": "identity_reference_unavailable",
+      "queued": false,
+      "status": "degraded"
+    },
+    "status": "not_reproduced",
+    "transcript": "C:\\Users\\Ant\\AppData\\Local\\Temp\\mnemos-replay-shared-guidance-v1\\transcript.jsonl"
+  },
+  "runner_sha256": "49175f0b6f9f17b94358767da79857f23fd9d64b6d60d3e46fbbffbb1c7f34cd",
+  "schema_version": 1,
+  "source_checkout": "C:\\Users\\Ant\\AppData\\Local\\Temp\\mnemos-source-shared-guidance-v1",
+  "source_commit_actual": "697b6720b201d578c03ce33d98dff3dda6d2def8",
+  "source_commit_expected": "697b6720b201d578c03ce33d98dff3dda6d2def8",
+  "started_at": "2026-09-20T08:49:49.733682+00:00",
+  "status": "passed",
+  "wheel": {
+    "path": "C:\\Users\\Ant\\AppData\\Local\\Temp\\mnemos-package-checks-shared-guidance-v1\\dist\\mnemos_memory-0.7.0-py3-none-any.whl",
+    "sha256": "49c7d791cd6b5d7645125cec72371b453607543b371e6834c6a2e122774f42b0"
+  }
+}
