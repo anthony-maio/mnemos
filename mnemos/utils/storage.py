@@ -42,7 +42,7 @@ from ..types import (
     RetrievalFeedbackEvent,
 )
 from ..jobs import DurableJob, FactEvidence, FactRevision, JobStatus
-from ..errors import RelatedForgetSourceSelectionRequired
+from ..errors import RelatedForgetPreviewStale, RelatedForgetSourceSelectionRequired
 from .embeddings import cosine_similarity
 
 
@@ -3760,17 +3760,22 @@ class SQLiteStore(MemoryStore):
             self._conn.execute("BEGIN IMMEDIATE")
             self._transaction_active = True
             try:
-                preview = self._related_forget_preview_locked(
-                    fact_id=fact_id,
-                    expected_version=expected_version,
-                    user_profile_id=user_profile_id,
-                    project_id=project_id,
-                    limit=max(1, min(limit, 500)),
-                )
+                try:
+                    preview = self._related_forget_preview_locked(
+                        fact_id=fact_id,
+                        expected_version=expected_version,
+                        user_profile_id=user_profile_id,
+                        project_id=project_id,
+                        limit=max(1, min(limit, 500)),
+                    )
+                except ValueError as exc:
+                    if str(exc) == "Forget preview is stale":
+                        raise RelatedForgetPreviewStale() from exc
+                    raise
                 if not preview["complete"]:
                     raise ValueError("Forget preview is incomplete")
                 if preview["preview_digest"] != preview_digest:
-                    raise ValueError("Forget preview is stale")
+                    raise RelatedForgetPreviewStale()
                 candidates = {item["fact_id"]: item for item in preview["candidates"]}
                 sources = {item["source_event_id"]: item for item in preview["source_events"]}
                 selected_facts = [item for item in selected_fact_ids if item != fact_id]
@@ -3788,7 +3793,7 @@ class SQLiteStore(MemoryStore):
                     for source_id in candidate["expired_source_event_ids"]:
                         source = sources.get(source_id)
                         if source is None:
-                            raise ValueError("Forget preview is stale")
+                            raise RelatedForgetPreviewStale()
                         dependencies = set(source["derived_fact_ids"])
                         unselected_dependencies = dependencies - set(selected_facts) - {fact_id}
                         if unselected_dependencies:
@@ -3819,7 +3824,7 @@ class SQLiteStore(MemoryStore):
 
                 target = self.get(fact_id)
                 if target is None or target.version != expected_version:
-                    raise ValueError("Forget preview is stale")
+                    raise RelatedForgetPreviewStale()
                 changed_ids = [fact_id]
                 if not self._forget_fact_locked(
                     fact_id, expected_version=expected_version, preserve_shared_sources=True
@@ -3828,7 +3833,7 @@ class SQLiteStore(MemoryStore):
                 for selected_id in selected_facts:
                     candidate = self.get(selected_id)
                     if candidate is None:
-                        raise ValueError("Forget preview is stale")
+                        raise RelatedForgetPreviewStale()
                     self._forget_fact_locked(
                         selected_id,
                         expected_version=candidate.version,

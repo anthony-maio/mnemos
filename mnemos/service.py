@@ -39,7 +39,10 @@ from typing import Any, Callable, Mapping
 from urllib.parse import urlsplit
 
 from .jobs import FactNotFoundError, JobNotFoundError
-from .errors import RelatedForgetSourceSelectionRequired
+from .errors import (
+    RelatedForgetPreviewStale,
+    RelatedForgetSourceSelectionRequired,
+)
 from .observability import (
     ServiceLogBinding,
     install_service_file_logging,
@@ -498,6 +501,18 @@ class _RequestHandler(BaseHTTPRequestHandler):
                     "committed": False,
                     "error": RelatedForgetSourceSelectionRequired.code,
                     "message": RelatedForgetSourceSelectionRequired.safe_message,
+                },
+            )
+            return
+        except RelatedForgetPreviewStale:
+            self._write_json(
+                409,
+                {
+                    "schema_version": SCHEMA_VERSION,
+                    "status": "rejected",
+                    "committed": False,
+                    "error": RelatedForgetPreviewStale.code,
+                    "message": RelatedForgetPreviewStale.safe_message,
                 },
             )
             return

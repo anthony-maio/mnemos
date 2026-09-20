@@ -201,6 +201,107 @@ async def test_explicit_source_selection_still_commits(tmp_path: Path) -> None:
 
 
 @pytest.mark.asyncio
+async def test_stale_preview_limit_is_known_noncommitted_409(tmp_path: Path) -> None:
+    service, domain, context = _runtime(tmp_path)
+    client = MnemosClient(descriptor_path=service.descriptor_path, auto_start=False)
+    try:
+        _, target, copy = await _seed_overlap(domain, context)
+        preview = await client.request(
+            "forget_preview",
+            {
+                "context": context.model_dump(mode="json"),
+                "fact_id": target.id,
+                "expected_version": target.version,
+            },
+            queue_on_failure=False,
+        )
+        candidate = next(item for item in preview["candidates"] if item["fact_id"] == copy.id)
+        before = _snapshot(domain)
+        client.outbox.append(
+            {
+                "event_id": "queued-before-stale-rejection",
+                "context": context.model_dump(mode="json"),
+                "content": "pending capture",
+            }
+        )
+        client._outbox_drained = False  # noqa: SLF001
+        result = json.loads(
+            await dispatch_tool(
+                client,
+                context,
+                "mnemos_forget_related",
+                {
+                    "fact_id": target.id,
+                    "expected_version": target.version,
+                    "preview_digest": preview["preview_digest"],
+                    "preview_limit": 20,
+                    "selected_fact_ids": [copy.id],
+                    "selected_source_event_ids": candidate["required_source_event_ids"],
+                },
+            )
+        )
+        assert result == {
+            "schema_version": 1,
+            "status": "rejected",
+            "committed": False,
+            "error": "related_forget_preview_stale",
+            "message": "The related-forget preview is stale. Request a fresh preview and reuse its digest and limit.",
+        }
+        assert _snapshot(domain) == before
+        pending = client.outbox.pending()
+        assert len(pending) == 1
+        assert pending[0]["payload"]["event_id"] == "queued-before-stale-rejection"
+    finally:
+        await client.close()
+        service.stop()
+        domain.engine.store.close()
+
+
+@pytest.mark.asyncio
+async def test_changed_target_version_is_known_stale_preview_409(tmp_path: Path) -> None:
+    service, domain, context = _runtime(tmp_path)
+    client = MnemosClient(descriptor_path=service.descriptor_path, auto_start=False)
+    try:
+        _, target, _copy = await _seed_overlap(domain, context)
+        preview = await client.request(
+            "forget_preview",
+            {
+                "context": context.model_dump(mode="json"),
+                "fact_id": target.id,
+                "expected_version": target.version,
+            },
+            queue_on_failure=False,
+        )
+        await domain.dispatch(
+            "correct",
+            {
+                "context": context.model_dump(mode="json"),
+                "fact_id": target.id,
+                "expected_version": target.version,
+                "content": "The project release label is a new value.",
+            },
+        )
+        result = await client.request(
+            "forget_related",
+            {
+                "context": context.model_dump(mode="json"),
+                "fact_id": target.id,
+                "expected_version": target.version,
+                "preview_digest": preview["preview_digest"],
+                "preview_limit": preview["limit"],
+            },
+            queue_on_failure=False,
+        )
+        assert result["status"] == "rejected"
+        assert result["error"] == "related_forget_preview_stale"
+        assert result["committed"] is False
+    finally:
+        await client.close()
+        service.stop()
+        domain.engine.store.close()
+
+
+@pytest.mark.asyncio
 async def test_out_of_preview_selection_rejection_does_not_leak_fact_identity(
     tmp_path: Path,
 ) -> None:
