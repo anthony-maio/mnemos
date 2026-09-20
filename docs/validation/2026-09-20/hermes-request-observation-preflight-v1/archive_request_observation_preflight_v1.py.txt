@@ -1,0 +1,63 @@
+from pathlib import Path
+import hashlib
+import json
+import shutil
+import xml.etree.ElementTree as ET
+
+repo = Path(__file__).resolve().parents[1]
+source = Path('C:/Users/Ant/AppData/Local/Temp/mnemos-hermes-request-observation-preflight-v1')
+output = repo / 'docs/validation/2026-09-20/hermes-request-observation-preflight-v1'
+report = json.loads((source / 'report.json').read_text(encoding='utf-8'))
+assert report['status'] == 'preflight_passed'
+trace = [json.loads(line) for line in (source / 'preflight/trace.jsonl').read_text(encoding='utf-8').splitlines()]
+assert not any(row['operation'] in {'model_request', 'model_response', 'tool_result', 'bridge_response'} for row in trace)
+names = next(row['tool_names'] for row in trace if row['operation'] == 'preflight_complete')
+assert len(names) == 8 and {'mnemos_forget_preview', 'mnemos_forget_related'} <= set(names)
+assert not (source / 'model-readiness').exists()
+assert not (source / 'runtime.json').exists()
+assert not (source / 'preflight/provider-requests').exists()
+for name, count in [('request-observer-v2.xml', '10'), ('request-observation-harness-v1.xml', '63')]:
+    suite = ET.parse(repo / '.venv' / name).getroot().find('testsuite')
+    assert suite is not None and suite.attrib['tests'] == count
+    assert suite.attrib['failures'] == suite.attrib['errors'] == suite.attrib['skipped'] == '0'
+output.mkdir(parents=True, exist_ok=False)
+(output / '.gitattributes').write_bytes(b'** -text -whitespace\n')
+paths = ['report.json', 'host-compatibility.patch', 'preflight/trace.jsonl', 'preflight/stdout.log', 'preflight/stderr.log']
+for relative, digest in report['input_hashes'].items():
+    path = Path(relative)
+    name = path.name + ('.txt' if path.suffix == '.py' else '')
+    assert hashlib.sha256((source / name).read_bytes()).hexdigest() == digest
+    paths.append(name)
+for name in paths:
+    target = output / name
+    target.parent.mkdir(parents=True, exist_ok=True)
+    shutil.copyfile(source / name, target)
+shutil.copyfile(__file__, output / (Path(__file__).name + '.txt'))
+for name in ('request-observer-v2.xml', 'request-observation-harness-v1.xml'):
+    shutil.copyfile(repo / '.venv' / name, output / name)
+files = {p.relative_to(output).as_posix(): {'bytes': p.stat().st_size, 'sha256': hashlib.sha256(p.read_bytes()).hexdigest()}
+         for p in sorted(output.rglob('*')) if p.is_file()}
+(output / 'evidence-index.json').write_text(json.dumps({'files': files}, indent=2) + '\n', encoding='utf-8')
+seconds = report['phases'][0]['seconds']
+(output / 'README.md').write_text(f'''# Native Hermes request-observation preflight
+
+The pinned Hermes checkout discovered all eight Mnemos tools from the verified
+`e419c2a` wheel, resolved the disposable project/home, and shut down without a
+model request, tool dispatch, bridge call, or service mutation. The phase took
+{seconds:.3f} seconds. The request observer imported successfully but was not activated;
+no provider-request directory was created. Readiness was not run.
+Live host configuration and memory were unchanged.
+
+The archived JUnit reports pass 10 request-observer cases and 63 native
+process, trace, queue, and readiness cases. Formatting and explicit-package-base
+mypy checks passed separately on four changed Python files. These are distinct
+from the import-only host observation. The diagnostic runner and protocol
+were committed as `4274a90` before this preflight.
+
+This is import/configuration evidence, not native-model lifecycle acceptance.
+The single development diagnostic binds its committed runner, observer,
+protocol, readiness helper, and unchanged evaluator. No model attempt ran
+during this preflight. The evidence index binds the raw files;
+this README is outside that index.
+''', encoding='utf-8')
+print(json.dumps({'files': len(files), 'path': str(output)}))
