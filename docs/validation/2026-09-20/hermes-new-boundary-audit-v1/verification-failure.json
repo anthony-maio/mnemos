@@ -1,0 +1,14 @@
+{
+  "status": "failed",
+  "failures": [
+    {
+      "file": "v10-tampered.sqlite-shm",
+      "error": "missing committed artifact"
+    },
+    {
+      "file": "v10-tampered.sqlite-wal",
+      "error": "missing committed artifact"
+    }
+  ],
+  "cause": "Collector indexed SQLite backup files before closing connections. Context-manager exit commits but does not close sqlite3 connections. Two transient sidecars disappeared on process exit; all committed main database hashes matched."
+}

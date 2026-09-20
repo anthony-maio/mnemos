@@ -12,6 +12,20 @@ Deliver an article draft, three possible titles, and a separate compact source/c
 
 ## Read this first
 
+The [actual Hermes new-session audit](../validation/2026-09-20/hermes-new-boundary-audit-v2/README.md)
+verifies committed-message capture and fail-closed handling of genuinely
+corrupted durable evidence through the actual handler. It also reproduces a
+separate missing-message defect: uncommitted history is mistaken for an
+already-persisted prefix. That repair remains open. The complete SessionDB
+suite has 1,402 passes, 11 skips, and one failure reproduced on the untouched
+Hermes base. These are isolated host-candidate results, not a live upgrade.
+
+The provider implementation at `e28a846` routes explicitly enabled structured
+reasoning through chat and consumes only its final content. The 33 focused
+checks pass; full source/package verification is running. Reasoning defaults,
+output budgets, production extraction prompts, and live settings are unchanged.
+The latest fully verified package remains `244613a` below.
+
 The [reasoning-configuration run](../validation/2026-09-20/history-reasoning-development-v1/README.md)
 records 36 empty-final-response failures, not extraction abstentions. The
 [subsequent API/configuration diagnostic](../validation/2026-09-20/ollama-reasoning-channel-diagnostic-v1/README.md)

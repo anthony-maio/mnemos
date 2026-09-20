@@ -1,5 +1,10 @@
 # Actual Hermes new-session boundary audit
 
+Archive verification failed: the index includes two transient SQLite sidecars
+that disappeared after the collector exited. Main database hashes match.
+See verification-failure.json and the [corrected archive](../hermes-new-boundary-audit-v2/README.md).
+The original index remains unchanged.
+
 This archive preserves two independent probes of the actual
 CLISessionMixin.new_session method. Both use private SessionDB files, actual
 AIAgent persistence/evidence methods, MemoryManager, and the installed Mnemos
