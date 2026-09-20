@@ -68,6 +68,14 @@ Correct requires fact_id, content, and expected_version. Forget supports expecte
 
 ## Compatibility Scope
 
+`mnemos_forget_preview` is read-only. A complete preview returns
+`apply_preconditions` with `fact_id`, `expected_version`, `preview_digest`,
+and `preview_limit` under the exact names accepted by `mnemos_forget_related`.
+Copy these fields unchanged, then add explicitly reviewed fact/source IDs.
+An incomplete preview returns null preconditions and cannot be applied.
+The object does not select records, grant permission, or bypass fresh scope,
+version, digest, and dependency checks. Existing request fields remain valid.
+
 Protocol coverage, adapter coverage, and a native host conversation are recorded separately. No support tier substitutes for installed-host evidence.
 
 See [client-compatibility-matrix.md](client-compatibility-matrix.md) for current tested versions and caveats.

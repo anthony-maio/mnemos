@@ -112,8 +112,10 @@ _SCHEMAS = (
             "Preview the exact and advisory related facts and source events for a reviewed "
             "forget operation. The preview is read-only, bounded by limit, and reports "
             "whether it is complete. Similarity candidates "
-            "are advisory only and are never deleted automatically. Reuse the returned "
-            "preview_digest when applying reviewed selections. A complete bounded preview "
+            "are advisory only and are never deleted automatically. Copy the returned "
+            "apply_preconditions fields unchanged into mnemos_forget_related, then add "
+            "your explicitly reviewed selections. Null apply_preconditions means the "
+            "preview is incomplete and cannot be applied. A complete bounded preview "
             "does not prove that every semantic copy was found; inspect similarity_search "
             "truncation and exhaustive fields before claiming broad erasure."
         ),
@@ -131,8 +133,9 @@ _SCHEMAS = (
     {
         "name": "mnemos_forget_related",
         "description": (
-            "Apply a reviewed related-forget preview using the unchanged preview_digest and "
-            "matching preview_limit. The target fact is always forgotten; "
+            "Apply a reviewed related-forget preview. Copy its apply_preconditions fields "
+            "unchanged: fact_id, expected_version, preview_digest, and preview_limit. "
+            "Then add your explicitly reviewed selections. The target fact is always forgotten; "
             "additional facts and source events require exact IDs from the matching preview. "
             "An empty selection is target-only. Do not infer or add IDs outside the preview."
             " Report deletion_coverage from the receipt: retained exact facts, advisory "

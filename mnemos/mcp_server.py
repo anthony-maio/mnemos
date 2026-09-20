@@ -656,8 +656,7 @@ def _register_service_tools(mcp: Any) -> None:
         limit: StrictInt = 100,
         ctx: Context[Any, Any, Any] | None = None,
     ) -> str:
-        """Forget one exact fact; the target-only receipt does not prove related-copy erasure."""
-        """Preview related facts and source events before a reviewed forget.
+        """Read-only preview of related facts and source events before a reviewed forget.
 
         The bounded preview includes exact current or historical assertion
         matches and, when indexed vectors are available, advisory similarity
@@ -667,6 +666,10 @@ def _register_service_tools(mcp: Any) -> None:
         cleanup. Only additional related facts or source events require
         explicit reviewed selections; stale previews must be regenerated. No
         other facts are deleted automatically.
+        Copy the returned apply_preconditions fields unchanged into
+        mnemos_forget_related, then add explicitly reviewed selections.
+        Null apply_preconditions means the preview is incomplete and cannot
+        be applied.
         """
         service_context = _service_context_from_ctx(ctx, "mnemos_forget_preview")
         if service_context.scope.project_id is None:
@@ -703,6 +706,9 @@ def _register_service_tools(mcp: Any) -> None:
         matching preview. The current project context is injected by the
         service, and stale previews must be re-previewed. No unselected or
         automatically inferred memories are deleted.
+        Copy the preview's apply_preconditions fields unchanged: fact_id,
+        expected_version, preview_digest, and preview_limit. Then add the
+        explicitly reviewed fact and source selections.
         Report the returned deletion_coverage rather than inferring complete
         erasure from committed status. Its retained exact/advisory fact and
         eligible source counts cover only the reviewed preview. Zero counts

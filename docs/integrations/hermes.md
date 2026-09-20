@@ -188,6 +188,15 @@ apply call; resending the same incomplete selection cannot complete deletion.
 This specific response does not change other validation or failure contracts.
 
 The provider advertises the Hermes version 2 pre-compress checkpoint contract.
+
+For reviewed forgetting, copy the complete preview's `apply_preconditions`
+fields unchanged into `mnemos_forget_related`, then add the explicitly
+reviewed fact and source event IDs. The object contains the target ID,
+expected version, digest, and matching preview limit; it does not choose
+additional records. Incomplete previews return null preconditions. Changed
+arguments, stale state, invalid IDs, and conflicting dependencies still
+reject the operation without deleting anything.
+
 With checkpoint enforcement enabled by an operator, a failed or unavailable
 Mnemos service raises before lossy compression. The default best-effort
 setting remains unchanged. The provider does not select or replace Hermes'

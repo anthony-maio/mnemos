@@ -3597,6 +3597,16 @@ class SQLiteStore(MemoryStore):
             "complete": complete,
             "limit": limit,
             "preview_digest": digest,
+            "apply_preconditions": (
+                {
+                    "fact_id": target.id,
+                    "expected_version": target.version,
+                    "preview_digest": digest,
+                    "preview_limit": limit,
+                }
+                if complete
+                else None
+            ),
         }
 
     def preview_related_forget(
