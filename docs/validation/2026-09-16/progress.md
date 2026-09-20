@@ -7,6 +7,13 @@ null-content assistant tool-call, and multimodal user writes raise errors.
 The exact candidate patch and raw outcomes are preserved. Repairs and host
 integration verification remain open; this candidate is not installed live.
 
+The [hybrid-copy audit](../2026-09-20/hermes-hybrid-copy-audit-v1/README.md)
+also finds that copying an unchanged summary/user carrier through the actual
+model-facing restore path changes the derived summary's identity. The
+original user identity survives. A copied-component role/content tamper is
+rejected. The invalid first probe invocation and corrected v2 outcomes are
+both preserved; complete host compaction acceptance remains open.
+
 The latest [verified package](../2026-09-20/hermes-memory-evidence-checkpoint-v1/README.md)
 is `244613a`: 1,976 source tests and 775 isolated installed cases pass, with
 four skips each, all six source/package checks, and seven replay assertions.

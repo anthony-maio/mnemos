@@ -1,0 +1,55 @@
+from pathlib import Path
+import hashlib
+import json
+import subprocess
+
+repo = Path(__file__).resolve().parents[1]
+out = repo / 'docs/validation/2026-09-20/hermes-hybrid-copy-audit-v1'
+out.mkdir(exist_ok=False)
+(out / '.gitattributes').write_bytes(b'** -text -whitespace\n')
+for version in ('v1', 'v2'):
+    target = out / version
+    target.mkdir()
+    for name in ('result.json', 'candidate.patch'):
+        data = subprocess.check_output(['wsl', '-e', 'cat', '/tmp/mnemos-hermes-root-hybrid-audit-' + version + '/' + name])
+        (target / name).write_bytes(data)
+    (target / 'probe.py.txt').write_bytes((repo / ('.venv/probe_hermes_hybrid_copy_' + version + '.py')).read_bytes())
+    result = json.loads((target / 'result.json').read_bytes())
+    assert result['stable_patch'] is True
+    assert result['patch_sha256_before'] == result['patch_sha256_after'] == hashlib.sha256((target / 'candidate.patch').read_bytes()).hexdigest()
+v2 = json.loads((out / 'v2/result.json').read_bytes())
+assert v2['cases'][0]['same_origins'] is False
+assert v2['cases'][1]['error'] == 'derived memory evidence component no longer matches its source'
+(out / 'collector.py.txt').write_bytes(Path(__file__).read_bytes())
+files = {p.relative_to(out).as_posix(): {'bytes': p.stat().st_size, 'sha256': hashlib.sha256(p.read_bytes()).hexdigest()}
+         for p in sorted(out.rglob('*')) if p.is_file()}
+(out / 'evidence-index.json').write_text(json.dumps({'files': files}, indent=2) + '\n', encoding='utf-8')
+(out / 'README.md').write_text('''# Hermes candidate hybrid-copy audit
+
+The actual host compressor can combine a generated summary and an original
+user message in one model-facing carrier. The candidate projects those into
+separate durable evidence components. Copying an unchanged hybrid through
+the model-facing restore path still changes the summary's canonical identity.
+
+The valid v2 probe calls `ContextCompressor._merge_summary_into_tail_row`,
+publishes a compression child, reloads with
+`get_messages_as_conversation(include_row_ids=True, repair_alternation=True)`,
+and publishes a grandchild. The original user retains canonical row 1, but
+the unchanged derived summary moves from canonical row 2 to row 3. A copy
+must preserve both identities. Recomputed summary text is a separate case
+that needs its own new derived identity and verification.
+
+The second v2 case alters a copied summary component's role and content in
+the isolated SQLite fixture. The candidate rejects it with `ValueError`.
+This supports that bounded tamper check; it does not close compaction.
+
+The earlier v1 probe supplied an unsupported public-loader keyword and did
+not exercise the copy case. Its error, second-case result, source patch, and
+runner remain preserved. V2 corrects the loader invocation. Both runs record
+identical before/after patch hashes, and their patches bind the candidate
+state. This is fixture evidence, not model inference or a live installation.
+
+All eight indexed artifacts match the copied bytes. This README is outside
+the evidence index.
+''', encoding='utf-8', newline='\n')
+print(json.dumps({'archive': str(out), 'indexed_files': len(files)}))

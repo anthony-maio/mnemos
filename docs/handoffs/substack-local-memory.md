@@ -19,6 +19,12 @@ valid transcript shapes. Keep this isolated candidate failure separate from
 the verified Mnemos package and from live Hermes behavior. Do not describe
 compaction integration as finished until a verified successor closes it.
 
+The subsequent [hybrid-copy audit](../validation/2026-09-20/hermes-hybrid-copy-audit-v1/README.md)
+shows why the host's real restore path matters: an unchanged summary/user
+carrier preserves the user's identity but gives the copied summary a new
+identity. A separate component-tamper check is rejected correctly. These are
+bounded fixture observations from the unfinished candidate.
+
 The latest [verified package](../validation/2026-09-20/hermes-memory-evidence-checkpoint-v1/README.md)
 is `244613a`: 1,976 source tests and 775 isolated installed cases pass, with
 four skips each, all six source/package checks, and seven replay assertions.
