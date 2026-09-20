@@ -1,0 +1,189 @@
+{
+  "status": "completed_with_failures",
+  "started_at": "2026-09-20T00:36:54.560458+00:00",
+  "planned_attempts": 3,
+  "attempt_timeout_seconds": 1800,
+  "runner_commit": "899490a196983009aea3047061dc7230d9900267",
+  "input_hashes": {
+    "benchmarks/native_hosts/hermes_cohort_run_v1.py": "6e05bdd0aa57c7abb0749a6208015d68c499ef5c7964ef9da23a33af26f395ad",
+    "benchmarks/native_hosts/native_processes.py": "262b7fe3dafd83e336c15a651cc44177636ffb44a2f01244e795dcb419b47be6",
+    "benchmarks/native_hosts/hermes_lifecycle_run_v3.py": "dd8ff1b494d82ef00d9478a214a5eea5f9b03c6086da920e089f54e92131761c",
+    "benchmarks/native_hosts/hermes_native_bootstrap_v3.py": "5012c4e696f8459033d4b05d5f848aa96c23f749728166acad246cc5e3f078e1",
+    "benchmarks/native_hosts/hermes_trace.py": "fa82d4f270e916c6aae4eb01eb3738239cc91f88e3029d919bc0ba98c79609c8",
+    "docs/plans/2026-09-19-hermes-native-lifecycle-protocol-v3.md": "18b8a01ba62510f714e6e3db6aa24707b72d8028f96ae68dabb2e939a40b36b5",
+    "docs/validation/2026-09-19/native-model-profile-v1/profile.json": "d525882d18671e57b62bec02f5d89ab9b61e8c3fdd6dff7485c58a27320f6d28"
+  },
+  "runner_sha256": "6e05bdd0aa57c7abb0749a6208015d68c499ef5c7964ef9da23a33af26f395ad",
+  "attempts": [
+    {
+      "attempt": 1,
+      "status": "failed",
+      "started_at": "2026-09-20T00:36:54.561944+00:00",
+      "report": "C:\\Users\\Ant\\AppData\\Local\\Temp\\mnemos-hermes-native-cohort-v3\\attempt-1\\report.json",
+      "command": [
+        "C:\\Users\\Ant\\AppData\\Local\\Temp\\mnemos-installed-job-not-found-v1\\Scripts\\python.exe",
+        "-I",
+        "-u",
+        "D:\\Development\\mnemos\\mnemos\\.worktrees\\functional-local-memory\\benchmarks\\native_hosts\\hermes_lifecycle_run_v3.py",
+        "--checks",
+        "C:\\Users\\Ant\\AppData\\Local\\Temp\\mnemos-package-checks-job-not-found-v2\\verification.json",
+        "--installed-checks",
+        "C:\\Users\\Ant\\AppData\\Local\\Temp\\mnemos-installed-checks-job-not-found-v1\\installation.json",
+        "--output",
+        "C:\\Users\\Ant\\AppData\\Local\\Temp\\mnemos-hermes-native-cohort-v3\\attempt-1",
+        "--prior-queue-state",
+        "C:\\Users\\Ant\\AppData\\Local\\Temp\\mnemos-local-supplemental-v2\\state.json",
+        "--exclude-pid",
+        "46060",
+        "--exclude-pid",
+        "19836",
+        "--exclude-pid",
+        "68804"
+      ],
+      "exit_code": 1,
+      "report_sha256": "4c8ddd3df2c093ccb9a7a39c06fad8c25bd72885643965c397bb7690a97deacc",
+      "phases": [
+        {
+          "phase": "teach",
+          "mode": "model",
+          "seconds": 35.88534239999717,
+          "exit_code": 0,
+          "gates": {
+            "correlated": true,
+            "phase_tools_allowed": true,
+            "mutations_inspected": true,
+            "teach": false,
+            "no_foreign_tool_result": true,
+            "real_pinned_model_request": true,
+            "pinned_profile_without_conflicting_override": true,
+            "no_provider_error": true,
+            "controls_unchanged": true,
+            "native_capture_committed": true,
+            "native_capture_retained_or_suppressed": true,
+            "single_asserted_target": true
+          }
+        }
+      ],
+      "source_commit": "68693f83b5894198daea114e018031e381a508a3",
+      "wheel_sha256": "2e121c1ae81717d1b9a32349bd27ea7fafc2e5562e6eadbd7d24ddecd16f5cb8",
+      "error": "Native lifecycle gate failed in teach",
+      "cleanup_error": null,
+      "cleanup_established": true,
+      "finished_at": "2026-09-20T00:37:41.225388+00:00"
+    },
+    {
+      "attempt": 2,
+      "status": "failed",
+      "started_at": "2026-09-20T00:37:41.227331+00:00",
+      "report": "C:\\Users\\Ant\\AppData\\Local\\Temp\\mnemos-hermes-native-cohort-v3\\attempt-2\\report.json",
+      "command": [
+        "C:\\Users\\Ant\\AppData\\Local\\Temp\\mnemos-installed-job-not-found-v1\\Scripts\\python.exe",
+        "-I",
+        "-u",
+        "D:\\Development\\mnemos\\mnemos\\.worktrees\\functional-local-memory\\benchmarks\\native_hosts\\hermes_lifecycle_run_v3.py",
+        "--checks",
+        "C:\\Users\\Ant\\AppData\\Local\\Temp\\mnemos-package-checks-job-not-found-v2\\verification.json",
+        "--installed-checks",
+        "C:\\Users\\Ant\\AppData\\Local\\Temp\\mnemos-installed-checks-job-not-found-v1\\installation.json",
+        "--output",
+        "C:\\Users\\Ant\\AppData\\Local\\Temp\\mnemos-hermes-native-cohort-v3\\attempt-2",
+        "--prior-queue-state",
+        "C:\\Users\\Ant\\AppData\\Local\\Temp\\mnemos-local-supplemental-v2\\state.json",
+        "--exclude-pid",
+        "46060",
+        "--exclude-pid",
+        "19836",
+        "--exclude-pid",
+        "68804"
+      ],
+      "exit_code": 1,
+      "report_sha256": "85e6f05367c8bbc79695dabe9d69a42260cd361eb4899d8e6129cca999351ab1",
+      "phases": [
+        {
+          "phase": "teach",
+          "mode": "model",
+          "seconds": 29.14791709999554,
+          "exit_code": 0,
+          "gates": {
+            "correlated": true,
+            "phase_tools_allowed": true,
+            "mutations_inspected": true,
+            "teach": false,
+            "no_foreign_tool_result": true,
+            "real_pinned_model_request": true,
+            "pinned_profile_without_conflicting_override": true,
+            "no_provider_error": true,
+            "controls_unchanged": true,
+            "native_capture_committed": true,
+            "native_capture_retained_or_suppressed": true,
+            "single_asserted_target": true
+          }
+        }
+      ],
+      "source_commit": "68693f83b5894198daea114e018031e381a508a3",
+      "wheel_sha256": "2e121c1ae81717d1b9a32349bd27ea7fafc2e5562e6eadbd7d24ddecd16f5cb8",
+      "error": "Native lifecycle gate failed in teach",
+      "cleanup_error": null,
+      "cleanup_established": true,
+      "finished_at": "2026-09-20T00:38:23.953205+00:00"
+    },
+    {
+      "attempt": 3,
+      "status": "failed",
+      "started_at": "2026-09-20T00:38:23.957546+00:00",
+      "report": "C:\\Users\\Ant\\AppData\\Local\\Temp\\mnemos-hermes-native-cohort-v3\\attempt-3\\report.json",
+      "command": [
+        "C:\\Users\\Ant\\AppData\\Local\\Temp\\mnemos-installed-job-not-found-v1\\Scripts\\python.exe",
+        "-I",
+        "-u",
+        "D:\\Development\\mnemos\\mnemos\\.worktrees\\functional-local-memory\\benchmarks\\native_hosts\\hermes_lifecycle_run_v3.py",
+        "--checks",
+        "C:\\Users\\Ant\\AppData\\Local\\Temp\\mnemos-package-checks-job-not-found-v2\\verification.json",
+        "--installed-checks",
+        "C:\\Users\\Ant\\AppData\\Local\\Temp\\mnemos-installed-checks-job-not-found-v1\\installation.json",
+        "--output",
+        "C:\\Users\\Ant\\AppData\\Local\\Temp\\mnemos-hermes-native-cohort-v3\\attempt-3",
+        "--prior-queue-state",
+        "C:\\Users\\Ant\\AppData\\Local\\Temp\\mnemos-local-supplemental-v2\\state.json",
+        "--exclude-pid",
+        "46060",
+        "--exclude-pid",
+        "19836",
+        "--exclude-pid",
+        "68804"
+      ],
+      "exit_code": 1,
+      "report_sha256": "fae2ac09ada7da3e4468c0bab4f5e1e8185ccb3ddbca1c1041e8bed575892012",
+      "phases": [
+        {
+          "phase": "teach",
+          "mode": "model",
+          "seconds": 32.96457020001253,
+          "exit_code": 0,
+          "gates": {
+            "correlated": true,
+            "phase_tools_allowed": true,
+            "mutations_inspected": true,
+            "teach": false,
+            "no_foreign_tool_result": true,
+            "real_pinned_model_request": true,
+            "pinned_profile_without_conflicting_override": true,
+            "no_provider_error": true,
+            "controls_unchanged": true,
+            "native_capture_committed": true,
+            "native_capture_retained_or_suppressed": true,
+            "single_asserted_target": true
+          }
+        }
+      ],
+      "source_commit": "68693f83b5894198daea114e018031e381a508a3",
+      "wheel_sha256": "2e121c1ae81717d1b9a32349bd27ea7fafc2e5562e6eadbd7d24ddecd16f5cb8",
+      "error": "Native lifecycle gate failed in teach",
+      "cleanup_error": null,
+      "cleanup_established": true,
+      "finished_at": "2026-09-20T00:39:08.780827+00:00"
+    }
+  ],
+  "passed_attempts": 0,
+  "finished_at": "2026-09-20T00:39:08.781268+00:00"
+}

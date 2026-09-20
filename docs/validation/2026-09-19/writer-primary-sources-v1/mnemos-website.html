@@ -1,0 +1,1167 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>mnemos — Reliable scoped memory for coding agents</title>
+<meta name="description" content="Local-first scoped memory for coding agents with a single-file SQLite backend, guided mnemos ui setup, and MCP support for Claude Code, Claude Desktop, generic hosts, and documented Codex setup.">
+<meta property="og:title" content="mnemos — Reliable scoped memory for coding agents">
+<meta property="og:description" content="Local-first scoped memory for coding agents with a single-file SQLite backend, guided mnemos ui setup, and biomimetic retrieval and consolidation under the hood.">
+<meta property="og:type" content="website">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300..700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+
+<link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🧠</text></svg>">
+<link rel="stylesheet" href="style.css">
+</head>
+
+<body>
+
+<a href="#main-content" class="skip-link">Skip to main content</a>
+
+<!-- ============================================================
+     NAVIGATION
+     ============================================================ -->
+<nav class="nav" id="nav" role="navigation" aria-label="Main navigation">
+  <div class="container--wide">
+    <div class="nav-inner">
+      <a href="https://making-minds.ai" class="nav-parent">making-minds.ai <span class="nav-parent-sep">›</span></a>
+      <a href="#" class="nav-logo" aria-label="mnemos home">
+        <!-- SVG Logo: stylized μ neural circuit mark -->
+        <svg class="nav-logo-mark" viewBox="0 0 28 28" fill="none" aria-hidden="true">
+          <circle cx="14" cy="14" r="13" stroke="currentColor" stroke-opacity="0.15" stroke-width="1"/>
+          <!-- mu letterform as circuit nodes -->
+          <circle cx="7" cy="20" r="2" fill="#d4a853"/>
+          <circle cx="14" cy="9" r="2" fill="#d4a853"/>
+          <circle cx="21" cy="20" r="2" fill="#d4a853"/>
+          <circle cx="14" cy="20" r="1.5" fill="currentColor" fill-opacity="0.4"/>
+          <path d="M7 20 L7 12 Q7 9 9 8.5 Q11 8 12 9 L14 11 L16 9 Q17 8 19 8.5 Q21 9 21 12 L21 20" stroke="#d4a853" stroke-width="1.5" stroke-linecap="round" fill="none"/>
+          <line x1="7" y1="20" x2="14" y2="20" stroke="currentColor" stroke-opacity="0.3" stroke-width="0.75"/>
+          <line x1="14" y1="20" x2="21" y2="20" stroke="currentColor" stroke-opacity="0.3" stroke-width="0.75"/>
+        </svg>
+        mnemos
+      </a>
+
+      <ul class="nav-links" id="nav-links" role="list">
+        <li><a href="#problem">The Problem</a></li>
+        <li><a href="#architectures">Architectures</a></li>
+        <li><a href="#pipeline">Pipeline</a></li>
+        <li><a href="#quickstart">Quick Start</a></li>
+        <li><a href="#compare">Readiness</a></li>
+      </ul>
+
+      <div class="nav-actions">
+        <button class="theme-toggle" data-theme-toggle aria-label="Toggle theme">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+            <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/>
+          </svg>
+        </button>
+        <a href="https://github.com/anthony-maio/mnemos" target="_blank" rel="noopener noreferrer" class="btn btn-ghost">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 0C5.37 0 0 5.37 0 12c0 5.31 3.435 9.795 8.205 11.385.6.105.825-.255.825-.57 0-.285-.015-1.23-.015-2.235-3.015.555-3.795-.735-4.035-1.41-.135-.345-.72-1.41-1.23-1.695-.42-.225-1.02-.78-.015-.795.945-.015 1.62.87 1.845 1.23 1.08 1.815 2.805 1.305 3.495.99.105-.78.42-1.305.765-1.605-2.67-.3-5.46-1.335-5.46-5.925 0-1.305.465-2.385 1.23-3.225-.12-.3-.54-1.53.12-3.18 0 0 1.005-.315 3.3 1.23.96-.27 1.98-.405 3-.405s2.04.135 3 .405c2.295-1.56 3.3-1.23 3.3-1.23.66 1.65.24 2.88.12 3.18.765.84 1.23 1.905 1.23 3.225 0 4.605-2.805 5.625-5.475 5.925.435.375.81 1.095.81 2.22 0 1.605-.015 2.895-.015 3.3 0 .315.225.69.825.57A12.02 12.02 0 0 0 24 12c0-6.63-5.37-12-12-12z"/></svg>
+          GitHub
+        </a>
+        <a href="#quickstart" class="btn btn-primary">pip install mnemos-memory[mcp]</a>
+        <button class="nav-mobile-toggle" type="button" aria-label="Open menu" aria-controls="nav-links" aria-expanded="false">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+            <line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/>
+          </svg>
+        </button>
+      </div>
+    </div>
+  </div>
+</nav>
+
+<!-- ============================================================
+     MAIN CONTENT
+     ============================================================ -->
+<main id="main-content">
+
+  <!-- HERO -->
+  <section class="hero" aria-labelledby="hero-title">
+    <div class="container--wide">
+      <div class="hero-inner">
+        <div class="hero-content">
+          <div class="hero-overline">Open Source · Local-First · MCP + UI</div>
+          <h1 class="hero-title" id="hero-title">mnemos</h1>
+          <p class="hero-greek">μνῆμος — of memory</p>
+          <p class="hero-tagline">Reliable scoped memory for coding agents.</p>
+          <p class="hero-sub">Mnemos keeps project, workspace, and global memory separate, survives restarts in a single local SQLite file, ships a guided <code>mnemos ui</code> control plane for setup and host config, and plugs into Claude Code, Claude Desktop, generic MCP hosts, and documented Codex setups. Biomimetic retrieval and consolidation stay under the hood so memory stays compact and adaptive without extra services.</p>
+          <div class="hero-actions">
+            <a href="https://github.com/anthony-maio/mnemos" target="_blank" rel="noopener noreferrer" class="btn btn-primary">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 0C5.37 0 0 5.37 0 12c0 5.31 3.435 9.795 8.205 11.385.6.105.825-.255.825-.57 0-.285-.015-1.23-.015-2.235-3.015.555-3.795-.735-4.035-1.41-.135-.345-.72-1.41-1.23-1.695-.42-.225-1.02-.78-.015-.795.945-.015 1.62.87 1.845 1.23 1.08 1.815 2.805 1.305 3.495.99.105-.78.42-1.305.765-1.605-2.67-.3-5.46-1.335-5.46-5.925 0-1.305.465-2.385 1.23-3.225-.12-.3-.54-1.53.12-3.18 0 0 1.005-.315 3.3 1.23.96-.27 1.98-.405 3-.405s2.04.135 3 .405c2.295-1.56 3.3-1.23 3.3-1.23.66 1.65.24 2.88.12 3.18.765.84 1.23 1.905 1.23 3.225 0 4.605-2.805 5.625-5.475 5.925.435.375.81 1.095.81 2.22 0 1.605-.015 2.895-.015 3.3 0 .315.225.69.825.57A12.02 12.02 0 0 0 24 12c0-6.63-5.37-12-12-12z"/></svg>
+              View on GitHub
+            </a>
+            <a href="#quickstart" class="btn btn-ghost">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+                <polyline points="16 18 22 12 16 6"/><polyline points="8 6 2 12 8 18"/>
+              </svg>
+              pip install mnemos-memory[mcp]
+            </a>
+          </div>
+        </div>
+
+        <!-- Hero neural circuit illustration -->
+        <div class="hero-illustration" aria-hidden="true">
+          <svg viewBox="0 0 420 360" fill="none" xmlns="http://www.w3.org/2000/svg" style="width:100%;max-width:420px;">
+            <!-- Background grid -->
+            <defs>
+              <radialGradient id="hero-glow" cx="50%" cy="50%" r="50%">
+                <stop offset="0%" stop-color="#d4a853" stop-opacity="0.15"/>
+                <stop offset="100%" stop-color="#d4a853" stop-opacity="0"/>
+              </radialGradient>
+              <filter id="glow-filter">
+                <feGaussianBlur stdDeviation="3" result="blur"/>
+                <feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge>
+              </filter>
+            </defs>
+
+            <circle cx="210" cy="180" r="150" fill="url(#hero-glow)"/>
+
+            <!-- Connection lines -->
+            <g stroke="currentColor" stroke-opacity="0.08" stroke-width="1">
+              <line x1="80" y1="80" x2="210" y2="60"/>
+              <line x1="80" y1="80" x2="130" y2="180"/>
+              <line x1="340" y1="80" x2="210" y2="60"/>
+              <line x1="340" y1="80" x2="290" y2="180"/>
+              <line x1="210" y1="60" x2="210" y2="300"/>
+              <line x1="130" y1="180" x2="210" y2="300"/>
+              <line x1="290" y1="180" x2="210" y2="300"/>
+              <line x1="60" y1="230" x2="130" y2="180"/>
+              <line x1="360" y1="230" x2="290" y2="180"/>
+              <line x1="60" y1="230" x2="210" y2="300"/>
+              <line x1="360" y1="230" x2="210" y2="300"/>
+              <line x1="130" y1="180" x2="290" y2="180"/>
+              <line x1="80" y1="80" x2="60" y2="230"/>
+              <line x1="340" y1="80" x2="360" y2="230"/>
+            </g>
+
+            <!-- Accent connection lines -->
+            <g stroke="#d4a853" stroke-opacity="0.3" stroke-width="1">
+              <line x1="210" y1="60" x2="130" y2="180"/>
+              <line x1="210" y1="60" x2="290" y2="180"/>
+              <line x1="130" y1="180" x2="60" y2="230"/>
+              <line x1="290" y1="180" x2="360" y2="230"/>
+            </g>
+
+            <!-- Animated energy pulse lines -->
+            <line x1="210" y1="60" x2="130" y2="180" stroke="#d4a853" stroke-width="1.5" stroke-opacity="0.6" stroke-dasharray="8 4">
+              <animate attributeName="stroke-dashoffset" from="0" to="-24" dur="2s" repeatCount="indefinite"/>
+            </line>
+            <line x1="210" y1="60" x2="290" y2="180" stroke="#d4a853" stroke-width="1.5" stroke-opacity="0.6" stroke-dasharray="8 4">
+              <animate attributeName="stroke-dashoffset" from="0" to="-24" dur="2.5s" repeatCount="indefinite"/>
+            </line>
+
+            <!-- Node circles - outer ring -->
+            <circle cx="80" cy="80" r="8" fill="currentColor" fill-opacity="0.08" stroke="currentColor" stroke-opacity="0.2" stroke-width="1"/>
+            <circle cx="340" cy="80" r="8" fill="currentColor" fill-opacity="0.08" stroke="currentColor" stroke-opacity="0.2" stroke-width="1"/>
+            <circle cx="60" cy="230" r="8" fill="currentColor" fill-opacity="0.08" stroke="currentColor" stroke-opacity="0.2" stroke-width="1"/>
+            <circle cx="360" cy="230" r="8" fill="currentColor" fill-opacity="0.08" stroke="currentColor" stroke-opacity="0.2" stroke-width="1"/>
+
+            <!-- Node circles - inner ring -->
+            <circle cx="130" cy="180" r="10" fill="currentColor" fill-opacity="0.08" stroke="currentColor" stroke-opacity="0.2" stroke-width="1"/>
+            <circle cx="290" cy="180" r="10" fill="currentColor" fill-opacity="0.08" stroke="currentColor" stroke-opacity="0.2" stroke-width="1"/>
+
+            <!-- Center nodes with accent -->
+            <circle cx="210" cy="60" r="14" fill="currentColor" fill-opacity="0.06" stroke="#d4a853" stroke-opacity="0.5" stroke-width="1.5"/>
+            <circle cx="210" cy="60" r="7" fill="#d4a853" fill-opacity="0.9" filter="url(#glow-filter)">
+              <animate attributeName="fill-opacity" values="0.9;0.5;0.9" dur="3s" repeatCount="indefinite"/>
+            </circle>
+
+            <circle cx="210" cy="300" r="14" fill="currentColor" fill-opacity="0.06" stroke="#d4a853" stroke-opacity="0.5" stroke-width="1.5"/>
+            <circle cx="210" cy="300" r="7" fill="#d4a853" fill-opacity="0.9" filter="url(#glow-filter)">
+              <animate attributeName="fill-opacity" values="0.5;0.9;0.5" dur="3s" repeatCount="indefinite"/>
+            </circle>
+
+            <!-- Inner dots for outer nodes -->
+            <circle cx="80" cy="80" r="3" fill="currentColor" fill-opacity="0.4"/>
+            <circle cx="340" cy="80" r="3" fill="currentColor" fill-opacity="0.4"/>
+            <circle cx="60" cy="230" r="3" fill="currentColor" fill-opacity="0.4"/>
+            <circle cx="360" cy="230" r="3" fill="currentColor" fill-opacity="0.4"/>
+            <circle cx="130" cy="180" r="4" fill="currentColor" fill-opacity="0.5"/>
+            <circle cx="290" cy="180" r="4" fill="currentColor" fill-opacity="0.5"/>
+
+            <!-- Module labels -->
+            <text x="65" y="68" font-family="JetBrains Mono, monospace" font-size="7" fill="currentColor" fill-opacity="0.35" text-anchor="middle">surprisal</text>
+            <text x="346" y="68" font-family="JetBrains Mono, monospace" font-size="7" fill="currentColor" fill-opacity="0.35" text-anchor="middle">mutable</text>
+            <text x="36" y="248" font-family="JetBrains Mono, monospace" font-size="7" fill="currentColor" fill-opacity="0.35" text-anchor="middle">affective</text>
+            <text x="388" y="248" font-family="JetBrains Mono, monospace" font-size="7" fill="currentColor" fill-opacity="0.35" text-anchor="middle">spreading</text>
+            <text x="210" y="320" font-family="JetBrains Mono, monospace" font-size="7" fill="#d4a853" fill-opacity="0.6" text-anchor="middle">sleep</text>
+          </svg>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- PROBLEM SECTION -->
+  <section class="problem" id="problem" aria-labelledby="problem-heading">
+    <div class="container">
+      <div class="section-label">The Problem</div>
+      <h2 class="problem-heading" id="problem-heading">Current agent memory breaks under scope and drift.</h2>
+      <p class="problem-body">
+        Most agent memory tools either dump every interaction into one growing log or append new facts forever without cleaning up old ones. That works for demos. It breaks when an agent moves between repos, drags stale instructions forward, or has to answer from memory under latency limits.<br><br>
+        Mnemos v1 is aimed at a narrower problem: <strong>safe scoped memory for solo coding-agent workflows</strong>. Project, workspace, and global knowledge stay partitioned. Retrieval stays compact. Consolidation turns raw episodes into durable facts instead of one more append-only transcript.
+      </p>
+
+      <div class="problem-comparison">
+        <div class="comparison-card" aria-label="Append-only memory pattern">
+          <div class="comparison-label">Common Pattern</div>
+          <div class="comparison-title">Append-Only Memory Layer</div>
+          <ul class="comparison-list" role="list">
+            <li>Mixed project context in one pool</li>
+            <li>Contradictions accumulate over time</li>
+            <li>Retrieval quality depends on transcript volume</li>
+            <li>Operational readiness is hard to inspect</li>
+            <li>Host support is often implied, not verified</li>
+            <li>Easy to demo, harder to trust every day</li>
+          </ul>
+        </div>
+
+        <div class="comparison-card comparison-card--brain" aria-label="Mnemos v1 target">
+          <div class="comparison-label">Mnemos v1 Target</div>
+          <div class="comparison-title">Scoped, Local-First Memory</div>
+          <ul class="comparison-list" role="list">
+            <li>Project, workspace, and global scope boundaries</li>
+            <li>Reconsolidation rewrites stale facts</li>
+            <li>Single-file SQLite persistence with built-in graph edges</li>
+            <li><code>doctor</code> and <code>mnemos_health</code> expose readiness</li>
+            <li>Claude Code, Claude Desktop, and generic MCP are Tier 1</li>
+            <li>Codex is documented via MCP plus <code>AGENTS.md</code></li>
+          </ul>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ARCHITECTURES -->
+  <section id="architectures" aria-labelledby="arch-main-heading">
+    <div class="container">
+      <div class="arch-header">
+        <div class="section-label">Five Architectures</div>
+        <h2 class="arch-heading" id="arch-main-heading">Biomimetic internals for practical agent memory.</h2>
+        <p class="arch-sub">The product promise is narrow: reliable scoped memory for solo coding-agent workflows. These neuroscience-inspired modules are how Mnemos keeps retrieval compact, adaptive, and less append-only than standard RAG.</p>
+      </div>
+
+      <div class="arch-grid" role="list">
+
+        <!-- CARD 1: Surprisal Gate -->
+        <article class="arch-card" role="listitem" aria-labelledby="arch-1-name">
+          <div class="arch-card-body">
+            <div class="arch-number">MODULE 01</div>
+            <h3 class="arch-name" id="arch-1-name">Surprisal Gate</h3>
+            <p class="arch-neuro">Predictive coding (Active Inference) — the brain only permanently encodes prediction errors, ignoring what it already expects.</p>
+            <div class="arch-section-label">The AI Flaw</div>
+            <p class="arch-flaw">Vector databases encode everything equally. A mundane greeting consumes the same conceptual weight and storage as a critical instruction like "My production server is down."</p>
+            <div class="arch-section-label">How it Works</div>
+            <p class="arch-how">A fast local model runs as a background Prediction Engine, constantly predicting user intent. When input arrives, semantic divergence (cosine distance) is computed between the prediction and actual input. Low divergence is discarded. High divergence is stored with an elevated salience weight — only surprises become long-term memories.</p>
+          </div>
+          <div class="arch-diagram" aria-hidden="true">
+            <!-- Surprisal gate SVG: stream of inputs, some pass (bright), most filtered (dim) -->
+            <svg viewBox="0 0 320 180" fill="none" style="width:100%;max-width:300px;">
+              <defs>
+                <filter id="sg-glow">
+                  <feGaussianBlur stdDeviation="2.5" result="blur"/>
+                  <feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge>
+                </filter>
+              </defs>
+
+              <!-- Input stream labels -->
+              <text x="18" y="47" font-family="JetBrains Mono, monospace" font-size="7" fill="currentColor" fill-opacity="0.3" text-anchor="middle">input</text>
+              <text x="18" y="77" font-family="JetBrains Mono, monospace" font-size="7" fill="currentColor" fill-opacity="0.3" text-anchor="middle">input</text>
+              <text x="18" y="107" font-family="JetBrains Mono, monospace" font-size="7" fill="currentColor" fill-opacity="0.3" text-anchor="middle">input</text>
+              <text x="18" y="137" font-family="JetBrains Mono, monospace" font-size="7" fill="currentColor" fill-opacity="0.3" text-anchor="middle">input</text>
+              <text x="18" y="167" font-family="JetBrains Mono, monospace" font-size="7" fill="currentColor" fill-opacity="0.3" text-anchor="middle">input</text>
+
+              <!-- Input lines going right -->
+              <line x1="36" y1="44" x2="110" y2="44" stroke="currentColor" stroke-opacity="0.15" stroke-width="1" stroke-dasharray="3 3"/>
+              <line x1="36" y1="74" x2="110" y2="74" stroke="currentColor" stroke-opacity="0.15" stroke-width="1" stroke-dasharray="3 3"/>
+              <line x1="36" y1="104" x2="110" y2="104" stroke="currentColor" stroke-opacity="0.15" stroke-width="1" stroke-dasharray="3 3"/>
+              <line x1="36" y1="134" x2="110" y2="134" stroke="currentColor" stroke-opacity="0.15" stroke-width="1" stroke-dasharray="3 3"/>
+
+              <!-- Gate box -->
+              <rect x="110" y="30" width="60" height="130" rx="4" fill="currentColor" fill-opacity="0.04" stroke="currentColor" stroke-opacity="0.15" stroke-width="1"/>
+              <text x="140" y="100" font-family="JetBrains Mono, monospace" font-size="6.5" fill="currentColor" fill-opacity="0.5" text-anchor="middle" transform="rotate(-90 140 100)">SURPRISAL GATE</text>
+
+              <!-- Filtered (dimmed) outputs -->
+              <line x1="170" y1="44" x2="230" y2="44" stroke="currentColor" stroke-opacity="0.08" stroke-width="1" stroke-dasharray="2 4"/>
+              <circle cx="240" cy="44" r="5" fill="currentColor" fill-opacity="0.07" stroke="currentColor" stroke-opacity="0.15" stroke-width="1"/>
+              <text x="257" y="47" font-family="JetBrains Mono, monospace" font-size="6" fill="currentColor" fill-opacity="0.25">discard</text>
+
+              <line x1="170" y1="74" x2="230" y2="74" stroke="currentColor" stroke-opacity="0.08" stroke-width="1" stroke-dasharray="2 4"/>
+              <circle cx="240" cy="74" r="5" fill="currentColor" fill-opacity="0.07" stroke="currentColor" stroke-opacity="0.15" stroke-width="1"/>
+              <text x="257" y="77" font-family="JetBrains Mono, monospace" font-size="6" fill="currentColor" fill-opacity="0.25">discard</text>
+
+              <line x1="170" y1="134" x2="230" y2="134" stroke="currentColor" stroke-opacity="0.08" stroke-width="1" stroke-dasharray="2 4"/>
+              <circle cx="240" cy="134" r="5" fill="currentColor" fill-opacity="0.07" stroke="currentColor" stroke-opacity="0.15" stroke-width="1"/>
+              <text x="257" y="137" font-family="JetBrains Mono, monospace" font-size="6" fill="currentColor" fill-opacity="0.25">discard</text>
+
+              <!-- HIGH SURPRISAL - passes through, bright gold -->
+              <line x1="170" y1="104" x2="230" y2="104" stroke="#d4a853" stroke-width="1.5" filter="url(#sg-glow)">
+                <animate attributeName="stroke-dashoffset" from="0" to="-20" dur="1.8s" repeatCount="indefinite"/>
+                <animate attributeName="stroke-opacity" values="0.4;1;0.4" dur="2s" repeatCount="indefinite"/>
+              </line>
+              <circle cx="240" cy="104" r="7" fill="#d4a853" fill-opacity="0.9" filter="url(#sg-glow)">
+                <animate attributeName="fill-opacity" values="0.9;0.4;0.9" dur="2s" repeatCount="indefinite"/>
+              </circle>
+              <text x="257" y="107" font-family="JetBrains Mono, monospace" font-size="6" fill="#d4a853" fill-opacity="0.9">STORE</text>
+
+              <!-- Salience label -->
+              <text x="140" y="14" font-family="JetBrains Mono, monospace" font-size="6" fill="#d4a853" fill-opacity="0.6" text-anchor="middle">Δ divergence</text>
+            </svg>
+          </div>
+        </article>
+
+        <!-- CARD 2: Mutable RAG -->
+        <article class="arch-card" role="listitem" aria-labelledby="arch-2-name">
+          <div class="arch-card-body">
+            <div class="arch-number">MODULE 02</div>
+            <h3 class="arch-name" id="arch-2-name">Mutable RAG</h3>
+            <p class="arch-neuro">Memory reconsolidation — every time a human recall occurs, the memory enters an unstable labile state and is physically rewritten with current context before restoring.</p>
+            <div class="arch-section-label">The AI Flaw</div>
+            <p class="arch-flaw">RAG is append-only. If a user says "I use React" in 2025 and "I'm migrating to Rust" in 2026, standard RAG retrieves both facts, forcing the LLM to waste tokens resolving the contradiction in its context window.</p>
+            <div class="arch-section-label">How it Works</div>
+            <p class="arch-how">Retrieved memory chunks are flagged as "labile." After each conversational turn, an async background agent evaluates whether the retrieved fact has changed given the new context. If it has, the stored chunk is overwritten — not appended to — with a synthesized, updated chunk. The AI's beliefs naturally drift and adapt without accumulating contradictory junk.</p>
+          </div>
+          <div class="arch-diagram" aria-hidden="true">
+            <!-- Mutable RAG SVG: chunk recalled, glows, rewritten -->
+            <svg viewBox="0 0 320 180" fill="none" style="width:100%;max-width:300px;">
+              <defs>
+                <filter id="mr-glow">
+                  <feGaussianBlur stdDeviation="3" result="blur"/>
+                  <feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge>
+                </filter>
+              </defs>
+
+              <!-- Database stack - original -->
+              <rect x="30" y="55" width="70" height="18" rx="3" fill="currentColor" fill-opacity="0.06" stroke="currentColor" stroke-opacity="0.12" stroke-width="1"/>
+              <rect x="30" y="78" width="70" height="18" rx="3" fill="currentColor" fill-opacity="0.06" stroke="currentColor" stroke-opacity="0.12" stroke-width="1"/>
+              <rect x="30" y="101" width="70" height="18" rx="3" fill="#d4a853" fill-opacity="0.15" stroke="#d4a853" stroke-opacity="0.4" stroke-width="1">
+                <animate attributeName="fill-opacity" values="0.15;0.35;0.15" dur="2.5s" repeatCount="indefinite"/>
+              </rect>
+              <rect x="30" y="124" width="70" height="18" rx="3" fill="currentColor" fill-opacity="0.06" stroke="currentColor" stroke-opacity="0.12" stroke-width="1"/>
+              <text x="65" y="39" font-family="JetBrains Mono, monospace" font-size="7" fill="currentColor" fill-opacity="0.4" text-anchor="middle">memory store</text>
+
+              <!-- Chunk text labels -->
+              <text x="65" y="68" font-family="JetBrains Mono, monospace" font-size="5.5" fill="currentColor" fill-opacity="0.3" text-anchor="middle">memory_a</text>
+              <text x="65" y="91" font-family="JetBrains Mono, monospace" font-size="5.5" fill="currentColor" fill-opacity="0.3" text-anchor="middle">memory_b</text>
+              <text x="65" y="114" font-family="JetBrains Mono, monospace" font-size="5.5" fill="#d4a853" fill-opacity="0.8" text-anchor="middle">LABILE ↗</text>
+              <text x="65" y="137" font-family="JetBrains Mono, monospace" font-size="5.5" fill="currentColor" fill-opacity="0.3" text-anchor="middle">memory_d</text>
+
+              <!-- Arrow to center eval -->
+              <path d="M 100 110 Q 145 90 145 110 Q 145 130 100 110" stroke="currentColor" stroke-opacity="0.2" stroke-width="1" fill="none"/>
+              <line x1="100" y1="110" x2="140" y2="90" stroke="currentColor" stroke-opacity="0.2" stroke-width="1"/>
+              <text x="160" y="70" font-family="JetBrains Mono, monospace" font-size="6.5" fill="currentColor" fill-opacity="0.45" text-anchor="middle">evaluate</text>
+              <text x="160" y="80" font-family="JetBrains Mono, monospace" font-size="6.5" fill="currentColor" fill-opacity="0.45" text-anchor="middle">changed?</text>
+              <circle cx="160" cy="100" r="22" fill="currentColor" fill-opacity="0.04" stroke="currentColor" stroke-opacity="0.15" stroke-width="1"/>
+              <circle cx="160" cy="100" r="14" fill="currentColor" fill-opacity="0.04" stroke="#d4a853" stroke-opacity="0.35" stroke-width="1">
+                <animate attributeName="stroke-opacity" values="0.35;0.7;0.35" dur="2.5s" repeatCount="indefinite"/>
+              </circle>
+              <text x="160" y="104" font-family="JetBrains Mono, monospace" font-size="8" fill="#d4a853" fill-opacity="0.8" text-anchor="middle">⚡</text>
+
+              <!-- Arrow to rewritten chunk -->
+              <line x1="200" y1="100" x2="230" y2="100" stroke="currentColor" stroke-opacity="0.25" stroke-width="1"/>
+
+              <!-- Rewritten chunk -->
+              <rect x="230" y="83" width="70" height="34" rx="4" fill="#d4a853" fill-opacity="0.1" stroke="#d4a853" stroke-opacity="0.5" stroke-width="1" filter="url(#mr-glow)">
+                <animate attributeName="fill-opacity" values="0.1;0.2;0.1" dur="2.5s" repeatCount="indefinite"/>
+              </rect>
+              <text x="265" y="96" font-family="JetBrains Mono, monospace" font-size="5.5" fill="#d4a853" fill-opacity="0.9" text-anchor="middle">REWRITTEN</text>
+              <text x="265" y="107" font-family="JetBrains Mono, monospace" font-size="5.5" fill="#d4a853" fill-opacity="0.7" text-anchor="middle">v2 chunk</text>
+              <text x="265" y="135" font-family="JetBrains Mono, monospace" font-size="6.5" fill="currentColor" fill-opacity="0.35" text-anchor="middle">overwrites</text>
+              <line x1="265" y1="117" x2="265" y2="148" stroke="currentColor" stroke-opacity="0.2" stroke-width="1" stroke-dasharray="3 2"/>
+              <line x1="200" y1="155" x2="265" y2="155" stroke="currentColor" stroke-opacity="0.2" stroke-width="1" stroke-dasharray="3 2"/>
+              <line x1="100" y1="155" x2="200" y2="155" stroke="currentColor" stroke-opacity="0.2" stroke-width="1" stroke-dasharray="3 2"/>
+              <line x1="100" y1="117" x2="100" y2="155" stroke="currentColor" stroke-opacity="0.2" stroke-width="1" stroke-dasharray="3 2"/>
+            </svg>
+          </div>
+        </article>
+
+        <!-- CARD 3: Affective Router -->
+        <article class="arch-card" role="listitem" aria-labelledby="arch-3-name">
+          <div class="arch-card-body">
+            <div class="arch-number">MODULE 03</div>
+            <h3 class="arch-name" id="arch-3-name">Affective Router</h3>
+            <p class="arch-neuro">State-dependent memory (amygdala filter) — the brain retrieves past emotional states when the current state matches, naturally surfacing contextually relevant experiences.</p>
+            <div class="arch-section-label">The AI Flaw</div>
+            <p class="arch-flaw">Standard embedding models retrieve based purely on semantic text similarity. A critical, urgent constraint ("PROD IS DOWN") carries the same retrieval weight as a trivial passing comment.</p>
+            <div class="arch-section-label">How it Works</div>
+            <p class="arch-how">Every interaction is classified on three axes — Valence (−1.0 to 1.0), Arousal (0.0–1.0), and Complexity (0.0–1.0) — and appended as a CognitiveState metadata vector. The retrieval formula blends semantic similarity (70%) with affective state match (30%). A panicked user surfaces past crisis resolutions, not just semantically similar code snippets.</p>
+          </div>
+          <div class="arch-diagram" aria-hidden="true">
+            <!-- Affective Router SVG: 3-axis plot with moving dot -->
+            <svg viewBox="0 0 320 200" fill="none" style="width:100%;max-width:300px;">
+              <defs>
+                <filter id="ar-glow">
+                  <feGaussianBlur stdDeviation="3" result="blur"/>
+                  <feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge>
+                </filter>
+              </defs>
+
+              <!-- Axis lines -->
+              <line x1="60" y1="160" x2="260" y2="160" stroke="currentColor" stroke-opacity="0.2" stroke-width="1"/>
+              <line x1="60" y1="160" x2="60" y2="30" stroke="currentColor" stroke-opacity="0.2" stroke-width="1"/>
+              <line x1="60" y1="160" x2="160" y2="100" stroke="currentColor" stroke-opacity="0.2" stroke-width="1" stroke-dasharray="4 3"/>
+
+              <!-- Arrowheads -->
+              <polygon points="260,156 268,160 260,164" fill="currentColor" fill-opacity="0.3"/>
+              <polygon points="56,30 60,22 64,30" fill="currentColor" fill-opacity="0.3"/>
+              <polygon points="156,96 164,100 158,106" fill="currentColor" fill-opacity="0.3"/>
+
+              <!-- Axis labels -->
+              <text x="270" y="163" font-family="JetBrains Mono, monospace" font-size="7" fill="currentColor" fill-opacity="0.5">valence</text>
+              <text x="25" y="24" font-family="JetBrains Mono, monospace" font-size="7" fill="currentColor" fill-opacity="0.5" text-anchor="middle">arousal</text>
+              <text x="168" y="97" font-family="JetBrains Mono, monospace" font-size="7" fill="currentColor" fill-opacity="0.5">complexity</text>
+
+              <!-- Axis tick labels -->
+              <text x="55" y="165" font-family="JetBrains Mono, monospace" font-size="6" fill="currentColor" fill-opacity="0.3" text-anchor="middle">−1</text>
+              <text x="160" y="173" font-family="JetBrains Mono, monospace" font-size="6" fill="currentColor" fill-opacity="0.3" text-anchor="middle">0</text>
+              <text x="255" y="173" font-family="JetBrains Mono, monospace" font-size="6" fill="currentColor" fill-opacity="0.3" text-anchor="middle">+1</text>
+
+              <!-- Grid dots -->
+              <circle cx="60" cy="160" r="1.5" fill="currentColor" fill-opacity="0.2"/>
+              <circle cx="160" cy="160" r="1.5" fill="currentColor" fill-opacity="0.2"/>
+              <circle cx="260" cy="160" r="1.5" fill="currentColor" fill-opacity="0.2"/>
+              <circle cx="60" cy="95" r="1.5" fill="currentColor" fill-opacity="0.2"/>
+              <circle cx="60" cy="30" r="1.5" fill="currentColor" fill-opacity="0.2"/>
+
+              <!-- Projected state trail -->
+              <circle cx="200" cy="110" r="4" fill="currentColor" fill-opacity="0.08" stroke="currentColor" stroke-opacity="0.15" stroke-width="1"/>
+              <circle cx="170" cy="130" r="4" fill="currentColor" fill-opacity="0.08" stroke="currentColor" stroke-opacity="0.15" stroke-width="1"/>
+
+              <!-- Moving current state dot -->
+              <circle cx="220" cy="90" r="9" fill="#d4a853" fill-opacity="0.15" stroke="#d4a853" stroke-opacity="0.4" stroke-width="1" filter="url(#ar-glow)">
+                <animate attributeName="cx" values="200;230;210;180;200" dur="5s" repeatCount="indefinite" calcMode="spline" keySplines="0.4 0 0.6 1;0.4 0 0.6 1;0.4 0 0.6 1;0.4 0 0.6 1"/>
+                <animate attributeName="cy" values="110;80;95;120;110" dur="5s" repeatCount="indefinite" calcMode="spline" keySplines="0.4 0 0.6 1;0.4 0 0.6 1;0.4 0 0.6 1;0.4 0 0.6 1"/>
+              </circle>
+              <circle cx="220" cy="90" r="5" fill="#d4a853" fill-opacity="0.9" filter="url(#ar-glow)">
+                <animate attributeName="cx" values="200;230;210;180;200" dur="5s" repeatCount="indefinite" calcMode="spline" keySplines="0.4 0 0.6 1;0.4 0 0.6 1;0.4 0 0.6 1;0.4 0 0.6 1"/>
+                <animate attributeName="cy" values="110;80;95;120;110" dur="5s" repeatCount="indefinite" calcMode="spline" keySplines="0.4 0 0.6 1;0.4 0 0.6 1;0.4 0 0.6 1;0.4 0 0.6 1"/>
+              </circle>
+
+              <!-- Label -->
+              <text x="240" y="72" font-family="JetBrains Mono, monospace" font-size="6.5" fill="#d4a853" fill-opacity="0.8" text-anchor="middle">state(t)</text>
+
+              <!-- Formula -->
+              <rect x="60" y="175" width="200" height="18" rx="3" fill="currentColor" fill-opacity="0.04"/>
+              <text x="160" y="187" font-family="JetBrains Mono, monospace" font-size="6.5" fill="currentColor" fill-opacity="0.5" text-anchor="middle">score = sim×0.7 + affect×0.3</text>
+            </svg>
+          </div>
+        </article>
+
+        <!-- CARD 4: Sleep Daemon -->
+        <article class="arch-card" role="listitem" aria-labelledby="arch-4-name">
+          <div class="arch-card-body">
+            <div class="arch-number">MODULE 04</div>
+            <h3 class="arch-name" id="arch-4-name">Sleep Daemon</h3>
+            <p class="arch-neuro">Hippocampal-neocortical transfer — during deep sleep, the brain replays episodic memories, extracts generalized semantic rules into the neocortex, then prunes the raw episodes to reclaim capacity.</p>
+            <div class="arch-section-label">The AI Flaw</div>
+            <p class="arch-flaw">Raw transcripts accumulate fast when every session is kept forever. Scoped stores get noisy, retrieval slows down, and the facts that matter stay buried inside turn-by-turn logs.</p>
+            <div class="arch-section-label">How it Works</div>
+            <p class="arch-how">A per-scope episodic buffer collects recent interactions. On idle, sleep consolidation extracts durable facts and preferences into long-term storage, preserves the originating scope, and prunes the episodic trace. The result is smaller, cleaner memory without cross-project bleed.</p>
+          </div>
+          <div class="arch-diagram" aria-hidden="true">
+            <!-- Sleep Daemon SVG: episodic fragments compress into knowledge nodes -->
+            <svg viewBox="0 0 320 180" fill="none" style="width:100%;max-width:300px;">
+              <defs>
+                <filter id="sd-glow">
+                  <feGaussianBlur stdDeviation="2.5" result="blur"/>
+                  <feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge>
+                </filter>
+              </defs>
+
+              <!-- Left side: episodic fragments -->
+              <text x="60" y="18" font-family="JetBrains Mono, monospace" font-size="7" fill="currentColor" fill-opacity="0.4" text-anchor="middle">episodic</text>
+
+              <!-- Fragments (squarish, varying, scattered) -->
+              <rect x="15" y="28" width="35" height="22" rx="2" fill="currentColor" fill-opacity="0.08" stroke="currentColor" stroke-opacity="0.2" stroke-width="1">
+                <animate attributeName="fill-opacity" values="0.08;0.03;0.08" dur="3s" repeatCount="indefinite"/>
+              </rect>
+              <rect x="58" y="24" width="40" height="18" rx="2" fill="currentColor" fill-opacity="0.08" stroke="currentColor" stroke-opacity="0.2" stroke-width="1">
+                <animate attributeName="fill-opacity" values="0.08;0.03;0.08" dur="3.5s" repeatCount="indefinite"/>
+              </rect>
+              <rect x="20" y="58" width="30" height="25" rx="2" fill="currentColor" fill-opacity="0.08" stroke="currentColor" stroke-opacity="0.2" stroke-width="1">
+                <animate attributeName="fill-opacity" values="0.08;0.03;0.08" dur="4s" repeatCount="indefinite"/>
+              </rect>
+              <rect x="58" y="52" width="45" height="20" rx="2" fill="currentColor" fill-opacity="0.08" stroke="currentColor" stroke-opacity="0.2" stroke-width="1">
+                <animate attributeName="fill-opacity" values="0.08;0.03;0.08" dur="2.8s" repeatCount="indefinite"/>
+              </rect>
+              <rect x="12" y="92" width="38" height="15" rx="2" fill="currentColor" fill-opacity="0.08" stroke="currentColor" stroke-opacity="0.2" stroke-width="1">
+                <animate attributeName="fill-opacity" values="0.08;0.03;0.08" dur="3.2s" repeatCount="indefinite"/>
+              </rect>
+              <rect x="55" y="85" width="48" height="22" rx="2" fill="currentColor" fill-opacity="0.08" stroke="currentColor" stroke-opacity="0.2" stroke-width="1">
+                <animate attributeName="fill-opacity" values="0.08;0.03;0.08" dur="3.8s" repeatCount="indefinite"/>
+              </rect>
+              <rect x="18" y="120" width="40" height="18" rx="2" fill="currentColor" fill-opacity="0.08" stroke="currentColor" stroke-opacity="0.2" stroke-width="1">
+                <animate attributeName="fill-opacity" values="0.08;0.03;0.08" dur="4.2s" repeatCount="indefinite"/>
+              </rect>
+
+              <!-- Fragment text samples -->
+              <text x="32" y="41" font-family="JetBrains Mono, monospace" font-size="4.5" fill="currentColor" fill-opacity="0.25" text-anchor="middle">turn_0042</text>
+              <text x="78" y="37" font-family="JetBrains Mono, monospace" font-size="4.5" fill="currentColor" fill-opacity="0.25" text-anchor="middle">log_2026</text>
+              <text x="35" y="73" font-family="JetBrains Mono, monospace" font-size="4.5" fill="currentColor" fill-opacity="0.25" text-anchor="middle">raw_ctx</text>
+              <text x="80" y="65" font-family="JetBrains Mono, monospace" font-size="4.5" fill="currentColor" fill-opacity="0.25" text-anchor="middle">session_3</text>
+              <text x="31" y="103" font-family="JetBrains Mono, monospace" font-size="4.5" fill="currentColor" fill-opacity="0.25" text-anchor="middle">ep_119</text>
+
+              <!-- Arrow / compression funnel -->
+              <path d="M 115 90 L 155 70 L 155 110 Z" fill="currentColor" fill-opacity="0.06" stroke="currentColor" stroke-opacity="0.15" stroke-width="1"/>
+              <text x="136" y="95" font-family="JetBrains Mono, monospace" font-size="6" fill="currentColor" fill-opacity="0.4" text-anchor="middle">↝</text>
+
+              <!-- Vertical sleep label -->
+              <text x="160" y="18" font-family="JetBrains Mono, monospace" font-size="7" fill="#d4a853" fill-opacity="0.6" text-anchor="middle">sleep zzz</text>
+              <line x1="160" y1="22" x2="160" y2="158" stroke="currentColor" stroke-opacity="0.08" stroke-width="1" stroke-dasharray="3 3"/>
+
+              <!-- Right side: dense knowledge nodes -->
+              <text x="250" y="18" font-family="JetBrains Mono, monospace" font-size="7" fill="currentColor" fill-opacity="0.4" text-anchor="middle">semantic</text>
+
+              <circle cx="230" cy="55" r="16" fill="currentColor" fill-opacity="0.06" stroke="#d4a853" stroke-opacity="0.35" stroke-width="1" filter="url(#sd-glow)">
+                <animate attributeName="r" values="16;18;16" dur="4s" repeatCount="indefinite"/>
+              </circle>
+              <circle cx="230" cy="55" r="8" fill="#d4a853" fill-opacity="0.8" filter="url(#sd-glow)"/>
+              <text x="265" y="59" font-family="JetBrains Mono, monospace" font-size="5.5" fill="currentColor" fill-opacity="0.4">prefs</text>
+
+              <circle cx="240" cy="105" r="14" fill="currentColor" fill-opacity="0.06" stroke="#d4a853" stroke-opacity="0.35" stroke-width="1" filter="url(#sd-glow)">
+                <animate attributeName="r" values="14;16;14" dur="3.5s" repeatCount="indefinite"/>
+              </circle>
+              <circle cx="240" cy="105" r="7" fill="#d4a853" fill-opacity="0.7" filter="url(#sd-glow)"/>
+              <text x="263" y="109" font-family="JetBrains Mono, monospace" font-size="5.5" fill="currentColor" fill-opacity="0.4">facts</text>
+
+              <circle cx="210" cy="148" r="11" fill="currentColor" fill-opacity="0.06" stroke="#d4a853" stroke-opacity="0.3" stroke-width="1">
+                <animate attributeName="r" values="11;13;11" dur="5s" repeatCount="indefinite"/>
+              </circle>
+              <circle cx="210" cy="148" r="5" fill="#d4a853" fill-opacity="0.5"/>
+              <text x="232" y="152" font-family="JetBrains Mono, monospace" font-size="5.5" fill="currentColor" fill-opacity="0.4">tools</text>
+
+              <!-- Connections between knowledge nodes -->
+              <line x1="230" y1="71" x2="240" y2="91" stroke="#d4a853" stroke-opacity="0.2" stroke-width="1"/>
+              <line x1="240" y1="119" x2="218" y2="137" stroke="#d4a853" stroke-opacity="0.2" stroke-width="1"/>
+
+              <!-- Delete raw label -->
+              <text x="75" y="158" font-family="JetBrains Mono, monospace" font-size="6" fill="currentColor" fill-opacity="0.3" text-anchor="middle">pruned ✕</text>
+            </svg>
+          </div>
+        </article>
+
+        <!-- CARD 5: Spreading Activation -->
+        <article class="arch-card" role="listitem" aria-labelledby="arch-5-name">
+          <div class="arch-card-body">
+            <div class="arch-number">MODULE 05</div>
+            <h3 class="arch-name" id="arch-5-name">Spreading Activation</h3>
+            <p class="arch-neuro">Collins &amp; Loftus associative networks — hearing "server" pre-activates "AWS," "downtime," and "Nginx" in human neural networks, priming associated concepts before they're consciously needed.</p>
+            <div class="arch-section-label">The AI Flaw</div>
+            <p class="arch-flaw">Vector search is a discrete point-in-space lookup. It retrieves exact mathematical matches but completely misses the broader associative "train of thought" — unless explicitly queried by name.</p>
+            <div class="arch-section-label">How it Works</div>
+            <p class="arch-how">When a node is retrieved via vector search, activation energy (1.0) is injected into it and propagates along graph edges to connected nodes, decaying by 20% per hop. The LLM receives the directly retrieved node plus all adjacent nodes above the activation threshold — creating a fluid, moving spotlight of context that delivers human-like associative intuition.</p>
+          </div>
+          <div class="arch-diagram" aria-hidden="true">
+            <!-- Spreading Activation SVG: graph, one node lights up, energy ripples outward -->
+            <svg viewBox="0 0 320 200" fill="none" style="width:100%;max-width:300px;">
+              <defs>
+                <filter id="sa-glow">
+                  <feGaussianBlur stdDeviation="3" result="blur"/>
+                  <feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge>
+                </filter>
+              </defs>
+
+              <!-- Graph edges -->
+              <line x1="160" y1="100" x2="80" y2="55" stroke="currentColor" stroke-opacity="0.15" stroke-width="1.5"/>
+              <line x1="160" y1="100" x2="240" y2="55" stroke="currentColor" stroke-opacity="0.15" stroke-width="1.5"/>
+              <line x1="160" y1="100" x2="80" y2="150" stroke="currentColor" stroke-opacity="0.15" stroke-width="1.5"/>
+              <line x1="160" y1="100" x2="240" y2="150" stroke="currentColor" stroke-opacity="0.15" stroke-width="1.5"/>
+              <line x1="80" y1="55" x2="30" y2="95" stroke="currentColor" stroke-opacity="0.1" stroke-width="1"/>
+              <line x1="240" y1="55" x2="295" y2="90" stroke="currentColor" stroke-opacity="0.1" stroke-width="1"/>
+              <line x1="80" y1="150" x2="30" y2="110" stroke="currentColor" stroke-opacity="0.1" stroke-width="1"/>
+              <line x1="240" y1="150" x2="295" y2="120" stroke="currentColor" stroke-opacity="0.1" stroke-width="1"/>
+              <line x1="80" y1="55" x2="80" y2="150" stroke="currentColor" stroke-opacity="0.08" stroke-width="1"/>
+              <line x1="240" y1="55" x2="240" y2="150" stroke="currentColor" stroke-opacity="0.08" stroke-width="1"/>
+
+              <!-- Animated energy edges (from center outward) -->
+              <line x1="160" y1="100" x2="80" y2="55" stroke="#d4a853" stroke-width="2" stroke-dasharray="6 4">
+                <animate attributeName="stroke-dashoffset" from="0" to="-20" dur="1.5s" repeatCount="indefinite"/>
+                <animate attributeName="stroke-opacity" values="0;0.7;0.3;0" dur="3s" repeatCount="indefinite"/>
+              </line>
+              <line x1="160" y1="100" x2="240" y2="55" stroke="#d4a853" stroke-width="2" stroke-dasharray="6 4">
+                <animate attributeName="stroke-dashoffset" from="0" to="-20" dur="1.5s" begin="0.3s" repeatCount="indefinite"/>
+                <animate attributeName="stroke-opacity" values="0;0.7;0.3;0" dur="3s" begin="0.3s" repeatCount="indefinite"/>
+              </line>
+              <line x1="160" y1="100" x2="80" y2="150" stroke="#d4a853" stroke-width="2" stroke-dasharray="6 4">
+                <animate attributeName="stroke-dashoffset" from="0" to="-20" dur="1.5s" begin="0.6s" repeatCount="indefinite"/>
+                <animate attributeName="stroke-opacity" values="0;0.7;0.3;0" dur="3s" begin="0.6s" repeatCount="indefinite"/>
+              </line>
+              <line x1="160" y1="100" x2="240" y2="150" stroke="#d4a853" stroke-width="2" stroke-dasharray="6 4">
+                <animate attributeName="stroke-dashoffset" from="0" to="-20" dur="1.5s" begin="0.9s" repeatCount="indefinite"/>
+                <animate attributeName="stroke-opacity" values="0;0.7;0.3;0" dur="3s" begin="0.9s" repeatCount="indefinite"/>
+              </line>
+
+              <!-- Secondary hop energy -->
+              <line x1="80" y1="55" x2="30" y2="95" stroke="#d4a853" stroke-width="1" stroke-dasharray="4 5">
+                <animate attributeName="stroke-opacity" values="0;0.35;0" dur="3s" begin="0.8s" repeatCount="indefinite"/>
+              </line>
+              <line x1="240" y1="55" x2="295" y2="90" stroke="#d4a853" stroke-width="1" stroke-dasharray="4 5">
+                <animate attributeName="stroke-opacity" values="0;0.35;0" dur="3s" begin="1.1s" repeatCount="indefinite"/>
+              </line>
+
+              <!-- Outer nodes (periphery) -->
+              <circle cx="30" cy="95" r="8" fill="currentColor" fill-opacity="0.05" stroke="currentColor" stroke-opacity="0.12" stroke-width="1"/>
+              <circle cx="295" cy="90" r="8" fill="currentColor" fill-opacity="0.05" stroke="currentColor" stroke-opacity="0.12" stroke-width="1"/>
+              <circle cx="30" cy="110" r="8" fill="currentColor" fill-opacity="0.05" stroke="currentColor" stroke-opacity="0.12" stroke-width="1"/>
+              <circle cx="295" cy="120" r="8" fill="currentColor" fill-opacity="0.05" stroke="currentColor" stroke-opacity="0.12" stroke-width="1"/>
+              <circle cx="30" cy="95" r="3" fill="currentColor" fill-opacity="0.2"/>
+              <circle cx="295" cy="90" r="3" fill="currentColor" fill-opacity="0.2"/>
+              <circle cx="30" cy="110" r="3" fill="currentColor" fill-opacity="0.2"/>
+              <circle cx="295" cy="120" r="3" fill="currentColor" fill-opacity="0.2"/>
+
+              <!-- Mid nodes (first hop) -->
+              <circle cx="80" cy="55" r="14" fill="currentColor" fill-opacity="0.05" stroke="currentColor" stroke-opacity="0.2" stroke-width="1">
+                <animate attributeName="fill-opacity" values="0.05;0.2;0.05" dur="3s" begin="0.5s" repeatCount="indefinite"/>
+              </circle>
+              <circle cx="80" cy="55" r="7" fill="currentColor" fill-opacity="0.3">
+                <animate attributeName="fill-opacity" values="0.3;0.7;0.3" dur="3s" begin="0.5s" repeatCount="indefinite"/>
+              </circle>
+              <text x="80" y="42" font-family="JetBrains Mono, monospace" font-size="6" fill="currentColor" fill-opacity="0.4" text-anchor="middle">Ubuntu</text>
+
+              <circle cx="240" cy="55" r="14" fill="currentColor" fill-opacity="0.05" stroke="currentColor" stroke-opacity="0.2" stroke-width="1">
+                <animate attributeName="fill-opacity" values="0.05;0.2;0.05" dur="3s" begin="0.8s" repeatCount="indefinite"/>
+              </circle>
+              <circle cx="240" cy="55" r="7" fill="currentColor" fill-opacity="0.3">
+                <animate attributeName="fill-opacity" values="0.3;0.7;0.3" dur="3s" begin="0.8s" repeatCount="indefinite"/>
+              </circle>
+              <text x="240" y="42" font-family="JetBrains Mono, monospace" font-size="6" fill="currentColor" fill-opacity="0.4" text-anchor="middle">Nginx</text>
+
+              <circle cx="80" cy="150" r="14" fill="currentColor" fill-opacity="0.05" stroke="currentColor" stroke-opacity="0.2" stroke-width="1">
+                <animate attributeName="fill-opacity" values="0.05;0.2;0.05" dur="3s" begin="1.1s" repeatCount="indefinite"/>
+              </circle>
+              <circle cx="80" cy="150" r="7" fill="currentColor" fill-opacity="0.3">
+                <animate attributeName="fill-opacity" values="0.3;0.7;0.3" dur="3s" begin="1.1s" repeatCount="indefinite"/>
+              </circle>
+              <text x="80" y="170" font-family="JetBrains Mono, monospace" font-size="6" fill="currentColor" fill-opacity="0.4" text-anchor="middle">Downtime</text>
+
+              <circle cx="240" cy="150" r="14" fill="currentColor" fill-opacity="0.05" stroke="currentColor" stroke-opacity="0.2" stroke-width="1">
+                <animate attributeName="fill-opacity" values="0.05;0.2;0.05" dur="3s" begin="1.4s" repeatCount="indefinite"/>
+              </circle>
+              <circle cx="240" cy="150" r="7" fill="currentColor" fill-opacity="0.3">
+                <animate attributeName="fill-opacity" values="0.3;0.7;0.3" dur="3s" begin="1.4s" repeatCount="indefinite"/>
+              </circle>
+              <text x="240" y="170" font-family="JetBrains Mono, monospace" font-size="6" fill="currentColor" fill-opacity="0.4" text-anchor="middle">AWS</text>
+
+              <!-- Center node (trigger) -->
+              <circle cx="160" cy="100" r="22" fill="#d4a853" fill-opacity="0.1" stroke="#d4a853" stroke-opacity="0.3" stroke-width="1">
+                <animate attributeName="r" values="22;28;22" dur="3s" repeatCount="indefinite"/>
+                <animate attributeName="stroke-opacity" values="0.3;0.6;0.3" dur="3s" repeatCount="indefinite"/>
+              </circle>
+              <circle cx="160" cy="100" r="13" fill="#d4a853" fill-opacity="0.2" stroke="#d4a853" stroke-opacity="0.6" stroke-width="1.5" filter="url(#sa-glow)"/>
+              <circle cx="160" cy="100" r="7" fill="#d4a853" fill-opacity="1" filter="url(#sa-glow)"/>
+              <text x="160" y="116" font-family="JetBrains Mono, monospace" font-size="6.5" fill="#d4a853" fill-opacity="0.9" text-anchor="middle">Docker bug</text>
+            </svg>
+          </div>
+        </article>
+
+      </div><!-- end arch-grid -->
+    </div>
+  </section>
+
+  <!-- PIPELINE SECTION -->
+  <section class="pipeline" id="pipeline" aria-labelledby="pipeline-heading">
+    <div class="container">
+      <div class="section-label">The Pipeline</div>
+      <h2 class="pipeline-heading" id="pipeline-heading">Encode → Retrieve → Consolidate</h2>
+      <p class="pipeline-sub">The MnemosEngine composes all five modules into a coherent pipeline. Each module is independently usable — or let the engine orchestrate the full sequence.</p>
+
+      <div class="pipeline-diagram">
+        <svg viewBox="0 0 720 380" fill="none" xmlns="http://www.w3.org/2000/svg" style="width:100%;max-width:720px;margin:0 auto;display:block;">
+          <defs>
+            <filter id="pl-glow">
+              <feGaussianBlur stdDeviation="2" result="blur"/>
+              <feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge>
+            </filter>
+            <marker id="arrow" markerWidth="8" markerHeight="8" refX="5" refY="3" orient="auto">
+              <path d="M 0 0 L 6 3 L 0 6 Z" fill="currentColor" fill-opacity="0.4"/>
+            </marker>
+            <marker id="arrow-accent" markerWidth="8" markerHeight="8" refX="5" refY="3" orient="auto">
+              <path d="M 0 0 L 6 3 L 0 6 Z" fill="#d4a853" fill-opacity="0.7"/>
+            </marker>
+          </defs>
+
+          <!-- ENCODE PATH -->
+          <text x="30" y="32" font-family="JetBrains Mono, monospace" font-size="9" fill="#d4a853" fill-opacity="0.7" letter-spacing="2">ENCODE</text>
+          <line x1="30" y1="38" x2="690" y2="38" stroke="currentColor" stroke-opacity="0.06" stroke-width="1"/>
+
+          <!-- Encode nodes -->
+          <!-- Input -->
+          <rect x="30" y="50" width="90" height="50" rx="6" fill="currentColor" fill-opacity="0.05" stroke="currentColor" stroke-opacity="0.15" stroke-width="1"/>
+          <text x="75" y="73" font-family="JetBrains Mono, monospace" font-size="8" fill="currentColor" fill-opacity="0.6" text-anchor="middle">Input</text>
+          <text x="75" y="86" font-family="JetBrains Mono, monospace" font-size="7" fill="currentColor" fill-opacity="0.35" text-anchor="middle">interaction</text>
+
+          <!-- Arrow 1 -->
+          <line x1="122" y1="75" x2="148" y2="75" stroke="currentColor" stroke-opacity="0.3" stroke-width="1" marker-end="url(#arrow)"/>
+
+          <!-- SurprisalGate -->
+          <rect x="150" y="50" width="110" height="50" rx="6" fill="currentColor" fill-opacity="0.05" stroke="#d4a853" stroke-opacity="0.3" stroke-width="1"/>
+          <text x="205" y="71" font-family="JetBrains Mono, monospace" font-size="8" fill="#d4a853" fill-opacity="0.8" text-anchor="middle">Surprisal</text>
+          <text x="205" y="82" font-family="JetBrains Mono, monospace" font-size="7" fill="#d4a853" fill-opacity="0.5" text-anchor="middle">Gate</text>
+          <text x="205" y="93" font-family="JetBrains Mono, monospace" font-size="6.5" fill="currentColor" fill-opacity="0.3" text-anchor="middle">filters mundane</text>
+
+          <!-- Arrow 2 -->
+          <line x1="262" y1="75" x2="288" y2="75" stroke="currentColor" stroke-opacity="0.3" stroke-width="1" marker-end="url(#arrow)"/>
+
+          <!-- AffectiveRouter -->
+          <rect x="290" y="50" width="110" height="50" rx="6" fill="currentColor" fill-opacity="0.05" stroke="#d4a853" stroke-opacity="0.3" stroke-width="1"/>
+          <text x="345" y="71" font-family="JetBrains Mono, monospace" font-size="8" fill="#d4a853" fill-opacity="0.8" text-anchor="middle">Affective</text>
+          <text x="345" y="82" font-family="JetBrains Mono, monospace" font-size="7" fill="#d4a853" fill-opacity="0.5" text-anchor="middle">Router</text>
+          <text x="345" y="93" font-family="JetBrains Mono, monospace" font-size="6.5" fill="currentColor" fill-opacity="0.3" text-anchor="middle">tags emotion</text>
+
+          <!-- Arrow 3 -->
+          <line x1="402" y1="75" x2="428" y2="75" stroke="currentColor" stroke-opacity="0.3" stroke-width="1" marker-end="url(#arrow)"/>
+
+          <!-- SpreadingActivation encode -->
+          <rect x="430" y="50" width="110" height="50" rx="6" fill="currentColor" fill-opacity="0.05" stroke="#d4a853" stroke-opacity="0.3" stroke-width="1"/>
+          <text x="485" y="71" font-family="JetBrains Mono, monospace" font-size="8" fill="#d4a853" fill-opacity="0.8" text-anchor="middle">Spreading</text>
+          <text x="485" y="82" font-family="JetBrains Mono, monospace" font-size="7" fill="#d4a853" fill-opacity="0.5" text-anchor="middle">Activation</text>
+          <text x="485" y="93" font-family="JetBrains Mono, monospace" font-size="6.5" fill="currentColor" fill-opacity="0.3" text-anchor="middle">links graph</text>
+
+          <!-- Arrow 4 -->
+          <line x1="542" y1="75" x2="568" y2="75" stroke="currentColor" stroke-opacity="0.3" stroke-width="1" marker-end="url(#arrow)"/>
+
+          <!-- Store -->
+          <rect x="570" y="50" width="90" height="50" rx="6" fill="currentColor" fill-opacity="0.05" stroke="currentColor" stroke-opacity="0.15" stroke-width="1"/>
+          <text x="615" y="73" font-family="JetBrains Mono, monospace" font-size="8" fill="currentColor" fill-opacity="0.6" text-anchor="middle">Store</text>
+          <text x="615" y="86" font-family="JetBrains Mono, monospace" font-size="7" fill="currentColor" fill-opacity="0.35" text-anchor="middle">memory</text>
+
+          <!-- RETRIEVE PATH -->
+          <text x="30" y="158" font-family="JetBrains Mono, monospace" font-size="9" fill="#d4a853" fill-opacity="0.7" letter-spacing="2">RETRIEVE</text>
+          <line x1="30" y1="164" x2="690" y2="164" stroke="currentColor" stroke-opacity="0.06" stroke-width="1"/>
+
+          <!-- Retrieve nodes -->
+          <rect x="30" y="176" width="90" height="50" rx="6" fill="currentColor" fill-opacity="0.05" stroke="currentColor" stroke-opacity="0.15" stroke-width="1"/>
+          <text x="75" y="199" font-family="JetBrains Mono, monospace" font-size="8" fill="currentColor" fill-opacity="0.6" text-anchor="middle">Query</text>
+          <text x="75" y="212" font-family="JetBrains Mono, monospace" font-size="7" fill="currentColor" fill-opacity="0.35" text-anchor="middle">user prompt</text>
+
+          <line x1="122" y1="201" x2="148" y2="201" stroke="currentColor" stroke-opacity="0.3" stroke-width="1" marker-end="url(#arrow)"/>
+
+          <rect x="150" y="176" width="110" height="50" rx="6" fill="currentColor" fill-opacity="0.05" stroke="#d4a853" stroke-opacity="0.3" stroke-width="1"/>
+          <text x="205" y="197" font-family="JetBrains Mono, monospace" font-size="8" fill="#d4a853" fill-opacity="0.8" text-anchor="middle">Spreading</text>
+          <text x="205" y="208" font-family="JetBrains Mono, monospace" font-size="7" fill="#d4a853" fill-opacity="0.5" text-anchor="middle">Activation</text>
+          <text x="205" y="219" font-family="JetBrains Mono, monospace" font-size="6.5" fill="currentColor" fill-opacity="0.3" text-anchor="middle">graph traversal</text>
+
+          <line x1="262" y1="201" x2="288" y2="201" stroke="currentColor" stroke-opacity="0.3" stroke-width="1" marker-end="url(#arrow)"/>
+
+          <rect x="290" y="176" width="110" height="50" rx="6" fill="currentColor" fill-opacity="0.05" stroke="#d4a853" stroke-opacity="0.3" stroke-width="1"/>
+          <text x="345" y="197" font-family="JetBrains Mono, monospace" font-size="8" fill="#d4a853" fill-opacity="0.8" text-anchor="middle">Affective</text>
+          <text x="345" y="208" font-family="JetBrains Mono, monospace" font-size="7" fill="#d4a853" fill-opacity="0.5" text-anchor="middle">Router</text>
+          <text x="345" y="219" font-family="JetBrains Mono, monospace" font-size="6.5" fill="currentColor" fill-opacity="0.3" text-anchor="middle">re-ranks results</text>
+
+          <line x1="402" y1="201" x2="428" y2="201" stroke="currentColor" stroke-opacity="0.3" stroke-width="1" marker-end="url(#arrow)"/>
+
+          <rect x="430" y="176" width="110" height="50" rx="6" fill="currentColor" fill-opacity="0.05" stroke="#d4a853" stroke-opacity="0.3" stroke-width="1"/>
+          <text x="485" y="197" font-family="JetBrains Mono, monospace" font-size="8" fill="#d4a853" fill-opacity="0.8" text-anchor="middle">Mutable</text>
+          <text x="485" y="208" font-family="JetBrains Mono, monospace" font-size="7" fill="#d4a853" fill-opacity="0.5" text-anchor="middle">RAG</text>
+          <text x="485" y="219" font-family="JetBrains Mono, monospace" font-size="6.5" fill="currentColor" fill-opacity="0.3" text-anchor="middle">reconsolidates</text>
+
+          <line x1="542" y1="201" x2="568" y2="201" stroke="currentColor" stroke-opacity="0.3" stroke-width="1" marker-end="url(#arrow)"/>
+
+          <rect x="570" y="176" width="90" height="50" rx="6" fill="currentColor" fill-opacity="0.05" stroke="currentColor" stroke-opacity="0.15" stroke-width="1"/>
+          <text x="615" y="199" font-family="JetBrains Mono, monospace" font-size="8" fill="currentColor" fill-opacity="0.6" text-anchor="middle">Results</text>
+          <text x="615" y="212" font-family="JetBrains Mono, monospace" font-size="7" fill="currentColor" fill-opacity="0.35" text-anchor="middle">to LLM</text>
+
+          <!-- CONSOLIDATE PATH -->
+          <text x="30" y="284" font-family="JetBrains Mono, monospace" font-size="9" fill="#d4a853" fill-opacity="0.7" letter-spacing="2">CONSOLIDATE</text>
+          <line x1="30" y1="290" x2="690" y2="290" stroke="currentColor" stroke-opacity="0.06" stroke-width="1"/>
+
+          <!-- Consolidate nodes -->
+          <rect x="30" y="302" width="90" height="50" rx="6" fill="currentColor" fill-opacity="0.05" stroke="currentColor" stroke-opacity="0.15" stroke-width="1"/>
+          <text x="75" y="325" font-family="JetBrains Mono, monospace" font-size="8" fill="currentColor" fill-opacity="0.6" text-anchor="middle">Idle</text>
+          <text x="75" y="338" font-family="JetBrains Mono, monospace" font-size="7" fill="currentColor" fill-opacity="0.35" text-anchor="middle">system quiet</text>
+
+          <line x1="122" y1="327" x2="148" y2="327" stroke="currentColor" stroke-opacity="0.3" stroke-width="1" marker-end="url(#arrow)"/>
+
+          <rect x="150" y="302" width="110" height="50" rx="6" fill="currentColor" fill-opacity="0.05" stroke="#d4a853" stroke-opacity="0.3" stroke-width="1"/>
+          <text x="205" y="323" font-family="JetBrains Mono, monospace" font-size="8" fill="#d4a853" fill-opacity="0.8" text-anchor="middle">Sleep</text>
+          <text x="205" y="334" font-family="JetBrains Mono, monospace" font-size="7" fill="#d4a853" fill-opacity="0.5" text-anchor="middle">Daemon</text>
+          <text x="205" y="345" font-family="JetBrains Mono, monospace" font-size="6.5" fill="currentColor" fill-opacity="0.3" text-anchor="middle">triggers</text>
+
+          <line x1="262" y1="327" x2="288" y2="327" stroke="currentColor" stroke-opacity="0.3" stroke-width="1" marker-end="url(#arrow)"/>
+
+          <rect x="290" y="302" width="130" height="50" rx="6" fill="currentColor" fill-opacity="0.05" stroke="currentColor" stroke-opacity="0.12" stroke-width="1"/>
+          <text x="355" y="323" font-family="JetBrains Mono, monospace" font-size="8" fill="currentColor" fill-opacity="0.6" text-anchor="middle">Facts Extracted</text>
+          <text x="355" y="338" font-family="JetBrains Mono, monospace" font-size="7" fill="currentColor" fill-opacity="0.35" text-anchor="middle">prefs + patterns</text>
+
+          <line x1="422" y1="327" x2="448" y2="327" stroke="currentColor" stroke-opacity="0.3" stroke-width="1" marker-end="url(#arrow)"/>
+
+          <rect x="450" y="302" width="110" height="50" rx="6" fill="currentColor" fill-opacity="0.05" stroke="currentColor" stroke-opacity="0.12" stroke-width="1"/>
+          <text x="505" y="323" font-family="JetBrains Mono, monospace" font-size="8" fill="currentColor" fill-opacity="0.6" text-anchor="middle">Episodes</text>
+          <text x="505" y="334" font-family="JetBrains Mono, monospace" font-size="7" fill="currentColor" fill-opacity="0.35" text-anchor="middle">Pruned</text>
+
+          <line x1="562" y1="327" x2="588" y2="327" stroke="currentColor" stroke-opacity="0.3" stroke-width="1" marker-end="url(#arrow)"/>
+
+          <rect x="590" y="302" width="90" height="50" rx="6" fill="#d4a853" fill-opacity="0.06" stroke="#d4a853" stroke-opacity="0.35" stroke-width="1"/>
+          <text x="635" y="323" font-family="JetBrains Mono, monospace" font-size="8" fill="#d4a853" fill-opacity="0.9" text-anchor="middle">Knowledge</text>
+          <text x="635" y="334" font-family="JetBrains Mono, monospace" font-size="7" fill="#d4a853" fill-opacity="0.6" text-anchor="middle">Graph</text>
+          <text x="635" y="345" font-family="JetBrains Mono, monospace" font-size="6.5" fill="currentColor" fill-opacity="0.3" text-anchor="middle">updated</text>
+
+        </svg>
+      </div>
+    </div>
+  </section>
+
+  <!-- QUICK START -->
+  <section id="quickstart" aria-labelledby="quickstart-heading">
+    <div class="container">
+      <div class="section-label">Quick Start</div>
+      <h2 class="quickstart-heading" id="quickstart-heading">Start local in minutes.</h2>
+      <p class="quickstart-sub">Start with the control plane. It writes canonical config around the built-in SQLite store, applies host setup for Claude Code, Cursor, or Codex, and runs the built-in smoke checks. Use the Python API directly only when you want a manual or embedded integration.</p>
+
+      <div class="quickstart-grid">
+        <div>
+          <div class="code-block">
+            <div class="code-block-header">
+              <span class="code-block-title">install &amp; guided onboarding</span>
+              <button class="code-copy" onclick="copyCode(this)" aria-label="Copy code">copy</button>
+            </div>
+            <pre><code># Install with MCP support
+pip install "mnemos-memory[mcp]"
+
+# Launch the control plane
+mnemos ui
+
+# In the UI:
+# 1. Choose your model provider
+# 2. Review the local SQLite memory path
+# 3. Apply Claude Code, Cursor, or Codex config
+# 4. Run the smoke check and start using Mnemos</code></pre>
+          </div>
+        </div>
+
+        <div>
+          <div class="code-block" style="margin-bottom:var(--space-5);">
+            <div class="code-block-header">
+              <span class="code-block-title">python api (advanced / manual)</span>
+              <button class="code-copy" onclick="copyCode(this)" aria-label="Copy code">copy</button>
+            </div>
+            <pre><code>import asyncio
+from mnemos import Interaction, MnemosEngine
+
+async def main():
+    engine = MnemosEngine()
+
+    await engine.process(
+        Interaction(role="user", content="Use uv for Python tooling in this repo.")
+    )
+
+    memories = await engine.retrieve("python tooling", top_k=3)
+    for memory in memories:
+        print(memory.content)
+
+    await engine.consolidate()
+
+asyncio.run(main())</code></pre>
+          </div>
+
+          <div class="code-block">
+            <div class="code-block-header">
+              <span class="code-block-title">scoped cli + codex workflow</span>
+            </div>
+            <pre><code>mnemos-cli doctor
+
+mnemos-cli store "Use uv for Python tooling" \
+  --scope project --scope-id repo-alpha
+
+mnemos-cli retrieve "tooling preferences" \
+  --current-scope project \
+  --scope-id repo-alpha \
+  --allowed-scopes project,global
+
+mnemos-cli antigravity codex
+# add the generated policy to AGENTS.md
+# keep Codex on retrieve -> work -> store -> consolidate</code></pre>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- COMPARISON TABLE -->
+  <section class="comparison-table-section" id="compare" aria-labelledby="compare-heading">
+    <div class="container">
+      <div class="section-label">Release Readiness</div>
+      <h2 class="quickstart-heading" id="compare-heading">Supported hosts and current release posture.</h2>
+      <p class="quickstart-sub" style="margin-bottom:var(--space-10);">Tier 1 means real end-to-end validation in a supported workflow. Tier 2 means documented and usable, but not yet promoted to release-blocking support.</p>
+
+      <div class="table-wrap">
+        <table class="compare-table" role="table" aria-label="Host support and release-readiness matrix">
+          <thead>
+            <tr>
+              <th scope="col">Client</th>
+              <th scope="col" class="col-mnemos">Tier</th>
+              <th scope="col">Status</th>
+              <th scope="col">Notes</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>Claude Code</td>
+              <td>Tier 1</td>
+              <td>Supported</td>
+              <td>Primary install path via plugin; uses the built-in single-file SQLite store.</td>
+            </tr>
+            <tr>
+              <td>Claude Desktop</td>
+              <td>Tier 1</td>
+              <td>Supported</td>
+              <td>Minimal tested stdio config ships in the repo docs.</td>
+            </tr>
+            <tr>
+              <td>Generic MCP host</td>
+              <td>Tier 1</td>
+              <td>Supported</td>
+              <td>Verified against the live stdio server, not just static config.</td>
+            </tr>
+            <tr>
+              <td>Codex</td>
+              <td>Tier 2</td>
+              <td>Documented</td>
+              <td>MCP plus <code>AGENTS.md</code> setup is documented; promotion needs verified daily-use E2E validation.</td>
+            </tr>
+            <tr>
+              <td>Cursor</td>
+              <td>Tier 2</td>
+              <td>Best effort</td>
+              <td>Config and antigravity docs exist, but support is not release-blocking.</td>
+            </tr>
+            <tr>
+              <td>Windsurf</td>
+              <td>Tier 2</td>
+              <td>Best effort</td>
+              <td>Config is documented, but not yet part of the release-blocking validation set.</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+      <p class="quickstart-sub compare-note">Mnemos is much closer to a public open-source release now, but the v1 claim gate still requires external pilot evidence: at least two pilot users or projects, two weeks of daily use, and zero blocker incidents for scope leakage, startup failure, or data corruption.</p>
+    </div>
+  </section>
+
+</main>
+
+<!-- FOOTER -->
+<footer class="footer" role="contentinfo">
+  <div class="container">
+    <div class="footer-inner">
+      <div class="footer-brand">
+        <div class="footer-logo">
+          <svg width="22" height="22" viewBox="0 0 28 28" fill="none" aria-hidden="true">
+            <circle cx="14" cy="14" r="13" stroke="currentColor" stroke-opacity="0.15" stroke-width="1"/>
+            <circle cx="7" cy="20" r="2" fill="#d4a853"/>
+            <circle cx="14" cy="9" r="2" fill="#d4a853"/>
+            <circle cx="21" cy="20" r="2" fill="#d4a853"/>
+            <circle cx="14" cy="20" r="1.5" fill="currentColor" fill-opacity="0.4"/>
+            <path d="M7 20 L7 12 Q7 9 9 8.5 Q11 8 12 9 L14 11 L16 9 Q17 8 19 8.5 Q21 9 21 12 L21 20" stroke="#d4a853" stroke-width="1.5" stroke-linecap="round" fill="none"/>
+            <line x1="7" y1="20" x2="14" y2="20" stroke="currentColor" stroke-opacity="0.3" stroke-width="0.75"/>
+            <line x1="14" y1="20" x2="21" y2="20" stroke="currentColor" stroke-opacity="0.3" stroke-width="0.75"/>
+          </svg>
+          mnemos
+        </div>
+        <p class="footer-desc">Reliable scoped memory for coding agents. Local-first, Python-native, single-file SQLite, MCP-ready.</p>
+        <p class="footer-creator">Created by Anthony Maio</p>
+      </div>
+
+      <div class="footer-links">
+        <div class="footer-links-heading">Project</div>
+        <a href="https://making-minds.ai">
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
+          making-minds.ai
+        </a>
+        <a href="https://making-minds.ai/research/mnemos">
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+          Research Paper
+        </a>
+        <a href="https://github.com/anthony-maio/mnemos" target="_blank" rel="noopener noreferrer">
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 0C5.37 0 0 5.37 0 12c0 5.31 3.435 9.795 8.205 11.385.6.105.825-.255.825-.57 0-.285-.015-1.23-.015-2.235-3.015.555-3.795-.735-4.035-1.41-.135-.345-.72-1.41-1.23-1.695-.42-.225-1.02-.78-.015-.795.945-.015 1.62.87 1.845 1.23 1.08 1.815 2.805 1.305 3.495.99.105-.78.42-1.305.765-1.605-2.67-.3-5.46-1.335-5.46-5.925 0-1.305.465-2.385 1.23-3.225-.12-.3-.54-1.53.12-3.18 0 0 1.005-.315 3.3 1.23.96-.27 1.98-.405 3-.405s2.04.135 3 .405c2.295-1.56 3.3-1.23 3.3-1.23.66 1.65.24 2.88.12 3.18.765.84 1.23 1.905 1.23 3.225 0 4.605-2.805 5.625-5.475 5.925.435.375.81 1.095.81 2.22 0 1.605-.015 2.895-.015 3.3 0 .315.225.69.825.57A12.02 12.02 0 0 0 24 12c0-6.63-5.37-12-12-12z"/></svg>
+          GitHub
+        </a>
+        <a href="https://pypi.org/project/mnemos-memory" target="_blank" rel="noopener noreferrer">
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/></svg>
+          PyPI
+        </a>
+        <a href="#quickstart">
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><polyline points="16 18 22 12 16 6"/><polyline points="8 6 2 12 8 18"/></svg>
+          Quick Start
+        </a>
+        <a href="#compare">
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M3 3v18h18"/><path d="M7 14l4-4 3 3 5-7"/></svg>
+          Readiness
+        </a>
+      </div>
+
+      <div class="footer-links">
+        <div class="footer-links-heading">Docs</div>
+        <a href="https://github.com/anthony-maio/mnemos/blob/main/docs/codex.md" target="_blank" rel="noopener noreferrer">Codex Setup</a>
+        <a href="https://github.com/anthony-maio/mnemos/blob/main/docs/client-compatibility-matrix.md" target="_blank" rel="noopener noreferrer">Compatibility Matrix</a>
+        <a href="https://github.com/anthony-maio/mnemos/blob/main/docs/release-checklist.md" target="_blank" rel="noopener noreferrer">Release Checklist</a>
+        <a href="https://github.com/anthony-maio/mnemos/blob/main/docs/MCP_INTEGRATION.md" target="_blank" rel="noopener noreferrer">MCP Integration</a>
+      </div>
+    </div>
+
+    <div class="footer-bottom">
+      <p class="footer-bottom-text">
+        MIT License · <a href="https://github.com/anthony-maio/mnemos" target="_blank" rel="noopener noreferrer">mnemos on GitHub</a> · <a href="privacy.html">Privacy</a>
+      </p>
+    </div>
+  </div>
+</footer>
+
+<script>
+/* ============================================================
+   THEME TOGGLE
+   ============================================================ */
+(function() {
+  const toggle = document.querySelector('[data-theme-toggle]');
+  const root = document.documentElement;
+  let theme = 'dark';
+  try {
+    const storedTheme = window.localStorage.getItem('mnemos-theme');
+    if (storedTheme === 'light' || storedTheme === 'dark') {
+      theme = storedTheme;
+    }
+  } catch (_) {
+    theme = 'dark';
+  }
+  root.setAttribute('data-theme', theme);
+
+  function updateToggleIcon() {
+    if (!toggle) return;
+    if (theme === 'dark') {
+      toggle.innerHTML = '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="12" cy="12" r="5"/><path d="M12 1v2M12 21v2M4.22 4.22l1.42 1.42M18.36 18.36l1.42 1.42M1 12h2M21 12h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42"/></svg>';
+      toggle.setAttribute('aria-label', 'Switch to light mode');
+    } else {
+      toggle.innerHTML = '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>';
+      toggle.setAttribute('aria-label', 'Switch to dark mode');
+    }
+  }
+
+  updateToggleIcon();
+
+  if (toggle) {
+    toggle.addEventListener('click', () => {
+      theme = theme === 'dark' ? 'light' : 'dark';
+      root.setAttribute('data-theme', theme);
+      try {
+        window.localStorage.setItem('mnemos-theme', theme);
+      } catch (_) {
+        // Ignore storage failures and keep the in-memory theme.
+      }
+      updateToggleIcon();
+    });
+  }
+})();
+
+/* ============================================================
+   NAV SCROLL BEHAVIOR
+   ============================================================ */
+const nav = document.getElementById('nav');
+window.addEventListener('scroll', () => {
+  if (window.scrollY > 10) {
+    nav.classList.add('nav--scrolled');
+  } else {
+    nav.classList.remove('nav--scrolled');
+  }
+}, { passive: true });
+
+/* ============================================================
+   INTERSECTION OBSERVER — SCROLL REVEALS
+   ============================================================ */
+const archCards = document.querySelectorAll('.arch-card');
+const observer = new IntersectionObserver((entries) => {
+  entries.forEach((entry) => {
+    if (entry.isIntersecting) {
+      const cards = Array.from(archCards);
+      const idx = cards.indexOf(entry.target);
+      setTimeout(() => {
+        entry.target.classList.add('visible');
+        entry.target.classList.remove('reveal-pending');
+      }, Math.min(idx * 80, 320));
+      observer.unobserve(entry.target);
+    }
+  });
+}, { threshold: 0.05, rootMargin: '0px 0px -20px 0px' });
+
+// Add reveal-pending to cards that are below the fold, observe them for reveal
+requestAnimationFrame(() => {
+  archCards.forEach((card, idx) => {
+    const rect = card.getBoundingClientRect();
+    if (rect.top > window.innerHeight * 0.9) {
+      card.classList.add('reveal-pending');
+      observer.observe(card);
+    } else {
+      // Already in view or near it — just show immediately
+      card.classList.add('visible');
+    }
+  });
+});
+
+/* ============================================================
+   CODE COPY
+   ============================================================ */
+function copyCode(btn) {
+  const pre = btn.closest('.code-block').querySelector('pre');
+  const text = pre.textContent;
+  navigator.clipboard.writeText(text).then(() => {
+    const orig = btn.textContent;
+    btn.textContent = 'copied!';
+    btn.style.color = 'var(--color-success)';
+    setTimeout(() => {
+      btn.textContent = orig;
+      btn.style.color = '';
+    }, 2000);
+  }).catch(() => {
+    // fallback
+    const range = document.createRange();
+    range.selectNode(pre);
+    window.getSelection().removeAllRanges();
+    window.getSelection().addRange(range);
+    document.execCommand('copy');
+    window.getSelection().removeAllRanges();
+    btn.textContent = 'copied!';
+    setTimeout(() => { btn.textContent = 'copy'; }, 2000);
+  });
+}
+
+/* ============================================================
+   MOBILE NAV TOGGLE
+   ============================================================ */
+const mobileToggle = document.querySelector('.nav-mobile-toggle');
+const navLinks = document.getElementById('nav-links');
+
+if (mobileToggle && navLinks) {
+  const closeMobileNav = () => {
+    navLinks.classList.remove('nav-links--open');
+    mobileToggle.setAttribute('aria-expanded', 'false');
+  };
+
+  mobileToggle.addEventListener('click', () => {
+    const isOpen = navLinks.classList.toggle('nav-links--open');
+    mobileToggle.setAttribute('aria-expanded', String(isOpen));
+  });
+
+  navLinks.querySelectorAll('a').forEach((link) => {
+    link.addEventListener('click', closeMobileNav);
+  });
+
+  document.addEventListener('click', (event) => {
+    if (window.innerWidth > 768) {
+      return;
+    }
+
+    if (!nav.contains(event.target)) {
+      closeMobileNav();
+    }
+  });
+
+  window.addEventListener('resize', () => {
+    if (window.innerWidth > 768) {
+      closeMobileNav();
+    }
+  });
+}
+</script>
+
+</body>
+</html>

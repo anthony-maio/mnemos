@@ -1,0 +1,31 @@
+"""Retain current public source bytes for the writer without calling them original-audit snapshots."""
+from datetime import datetime, timezone
+from pathlib import Path
+import hashlib
+import json
+import urllib.request
+
+repo = Path(__file__).resolve().parent.parent
+root = repo / "docs/validation/2026-09-19/writer-primary-sources-v1"
+root.mkdir(exist_ok=False)
+sources = []
+for name, url in (
+    ("mnemos-website.html", "https://mnemos.making-minds.ai/"),
+    ("mnemos-paper.pdf", "https://making-minds.ai/papers/mnemos.pdf"),
+):
+    request = urllib.request.Request(url, headers={"User-Agent": "MnemosSourceSnapshot/1.0"})
+    with urllib.request.urlopen(request, timeout=30) as response:
+        raw = response.read()
+        headers = {key: response.headers.get(key) for key in ("Content-Type", "Last-Modified", "ETag")}
+        final_url = response.url
+    (root / name).write_bytes(raw)
+    sources.append({"file": name, "url": url, "final_url": final_url,
+                    "retrieved_at": datetime.now(timezone.utc).isoformat(),
+                    "headers": headers, "bytes": len(raw), "sha256": hashlib.sha256(raw).hexdigest()})
+(root / "sources.json").write_text(json.dumps({"scope": "current public pages, not proof of their original audit state", "sources": sources}, indent=2) + "\n", encoding="utf-8")
+(root / "snapshot_writer_primary_sources_v1.py.txt").write_bytes(Path(__file__).read_bytes())
+(root / ".gitattributes").write_bytes(b"** -text -whitespace\n")
+files = {p.name: {"bytes": p.stat().st_size, "sha256": hashlib.sha256(p.read_bytes()).hexdigest()}
+         for p in sorted(root.iterdir()) if p.is_file()}
+(root / "evidence-index.json").write_text(json.dumps({"files": files}, indent=2) + "\n", encoding="utf-8")
+print(json.dumps(sources, indent=2))

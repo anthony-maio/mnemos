@@ -1,0 +1,64 @@
+"""Archive the fixed native cohort's terminal synthetic evidence, never live credentials."""
+from pathlib import Path
+import hashlib
+import json
+import shutil
+
+repo = Path(__file__).resolve().parent.parent
+source = Path("C:/Users/Ant/AppData/Local/Temp/mnemos-hermes-native-cohort-v3")
+target = repo / "docs/validation/2026-09-19/hermes-native-cohort-v3"
+cohort = json.loads((source / "cohort.json").read_text())
+assert cohort["status"] in {"passed", "completed_with_failures"}, cohort["status"]
+assert cohort.get("finished_at") and len(cohort["attempts"]) == 3
+target.mkdir(exist_ok=False)
+
+def sha(path):
+    return hashlib.sha256(path.read_bytes()).hexdigest()
+
+def copy(path, relative):
+    dest = target / relative
+    dest.parent.mkdir(parents=True, exist_ok=True)
+    shutil.copyfile(path, dest)
+
+copy(source / "cohort.json", Path("cohort.json"))
+for relative, digest in cohort["input_hashes"].items():
+    path = repo / relative
+    assert sha(path) == digest, relative
+    copy(path, Path("cohort-inputs") / (path.name + ".txt"))
+for attempt in cohort["attempts"]:
+    assert attempt["cleanup_established"] is True
+    label = "attempt-" + str(attempt["attempt"])
+    root = source / label
+    report = json.loads((root / "report.json").read_text())
+    assert sha(root / "report.json") == attempt["report_sha256"]
+    assert not (root / "runtime.json").exists()
+    assert report.get("finished_at") and report["status"] in {"passed", "failed"}
+    for stream in ("stdout", "stderr"):
+        copy(source / (label + "." + stream + ".log"), Path(label + "." + stream + ".log"))
+    selected = {"report.json", "host-compatibility.patch"}
+    for relative, digest in report["input_hashes"].items():
+        path = Path(relative)
+        name = path.name + (".txt" if path.suffix == ".py" else "")
+        assert sha(root / name) == digest
+        selected.add(name)
+    for name in ("failure.txt", "cold-load.json", "models-loaded.json", "controls.json",
+                 "source-replay-records.json", "sampling-profile-before.json", "sampling-profile-after.json"):
+        if (root / name).is_file():
+            selected.add(name)
+    for phase in report["phases"]:
+        phase_name = phase["phase"]
+        for name in ("trace.jsonl", "stdout.log", "stderr.log", "query.txt", "config.json"):
+            relative = phase_name + "/" + name
+            if (root / relative).is_file():
+                selected.add(relative)
+        for suffix in ("-state.json", "-sampling-profile.json"):
+            if (root / (phase_name + suffix)).is_file():
+                selected.add(phase_name + suffix)
+    for name in sorted(selected):
+        copy(root / name, Path(label) / name)
+copy(Path(__file__), Path(Path(__file__).name + ".txt"))
+(target / ".gitattributes").write_bytes(b"** -text -whitespace\n")
+files = {p.relative_to(target).as_posix(): {"bytes": p.stat().st_size, "sha256": sha(p)}
+         for p in sorted(target.rglob("*")) if p.is_file()}
+(target / "evidence-index.json").write_text(json.dumps({"files": files}, indent=2) + "\n", encoding="utf-8")
+print(json.dumps({"archive": str(target), "files": len(files), "status": cohort["status"]}))

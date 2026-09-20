@@ -1,6 +1,13 @@
 # Client compatibility and observed evidence
 
-Latest native lifecycle observation: the [Hermes v2 attempt](validation/2026-09-19/hermes-native-lifecycle-local-v2/README.md)
+Latest observation: the [fixed Hermes v3 cohort](validation/2026-09-19/hermes-native-cohort-v3/README.md)
+has zero complete lifecycles out of three attempts on the verified `68693f8`
+wheel. Each native host saved the exact requested fact but skipped the required
+job-status call. Maintenance confirmed one asserted target per store. Capture,
+scope, and provider checks passed; recall, correction, forgetting, and replay
+were not reached. The three-host native driver remains NOT RUN.
+
+Earlier native lifecycle observation: the [Hermes v2 attempt](validation/2026-09-19/hermes-native-lifecycle-local-v2/README.md)
 stopped at teach after the model used the wrong returned job ID. The
 [verified error-handling repair](validation/2026-09-19/job-not-found-checkpoint-v1/README.md)
 changes unknown or inaccessible job lookups from HTTP 500 to a generic 404.
@@ -9,7 +16,7 @@ The complete three-host native driver remains NOT RUN.
 
 Updated September 19, 2026 for the unreleased functional-local-memory worktree. The versions below identify observed runs, not a promise about every installed or future host version. Adapter tests, native conversations, model quality, and daily-use readiness are separate claims.
 
-The latest [source/package checkpoint](validation/2026-09-19/hermes-native-identity-checkpoint-v1/README.md) is `3730fd9`, with 1,247 source passes, 530 installed passes, four/two respective skips, and seven replay assertions. It preserves native Hermes message identity through rewind and rejects changed-payload retries under the same native ID. It includes the earlier correction acknowledgement repair. The earlier [Hermes API checkpoint](validation/2026-09-19/hermes-lifecycle-checkpoints-v1/README.md) at `5e4b057` exercises all six scoped tools through the actual Windows/WSL bridge, growing transcript replay, provider recreation, and extraction-ineligible fallback receipts. That check uses fixture providers, with no model conversation or service outage. The [mixed-host replay probe](validation/2026-09-18/native-crosshost-recovery-v4/README.md) verifies the `fc72cc2` installed wheel and clean plugin snapshot. Earlier lifecycle results retain their original source bindings; a newer package does not silently rerun those observations.
+The earlier [source/package checkpoint](validation/2026-09-19/hermes-native-identity-checkpoint-v1/README.md) is `3730fd9`, with 1,247 source passes, 530 installed passes, four/two respective skips, and seven replay assertions. It preserves native Hermes message identity through rewind and rejects changed-payload retries under the same native ID. It includes the earlier correction acknowledgement repair. The earlier [Hermes API checkpoint](validation/2026-09-19/hermes-lifecycle-checkpoints-v1/README.md) at `5e4b057` exercises all six scoped tools through the actual Windows/WSL bridge, growing transcript replay, provider recreation, and extraction-ineligible fallback receipts. That check uses fixture providers, with no model conversation or service outage. The [mixed-host replay probe](validation/2026-09-18/native-crosshost-recovery-v4/README.md) verifies the `fc72cc2` installed wheel and clean plugin snapshot. Earlier lifecycle results retain their original source bindings; a newer package does not silently rerun those observations.
 
 The first native model-driven Hermes lifecycle attempt is preserved as a
 [failed terminal archive](validation/2026-09-19/hermes-native-lifecycle-local-v1/README.md).

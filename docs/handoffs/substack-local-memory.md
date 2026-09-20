@@ -10,6 +10,24 @@ Apply [writing-in-anthonys-voice](C:/Users/Ant/.agents/skills/writing-in-anthony
 
 Deliver an article draft, three possible titles, and a separate compact source/claim note. Keep the article close to 2,500 words, excluding source notes. Do not publish it.
 
+## Latest native result and portable primary sources
+
+The [fixed Hermes v3 cohort](../validation/2026-09-19/hermes-native-cohort-v3/README.md)
+ran all three planned attempts on verified runtime `68693f8`. All stopped at
+teach because the model omitted the requested job-status tool call. It saved
+the exact fact each time, and maintenance confirmed one asserted target in
+each store. No recall, correction, forgetting, or replay phase ran. The write
+path evidence and the failed lifecycle result both belong in the account.
+The three-host driver remains unrun; do not turn three repeated writes into
+three successful lifecycle demonstrations.
+
+The packet now includes [dated website and paper snapshots](../validation/2026-09-19/writer-primary-sources-v1/README.md),
+with original URLs, retrieval timestamps, response metadata, and hashes. These
+preserve the current public sources, not a proven snapshot of the original
+audit date. Cite the public URLs and distinguish their promises from later
+local validation. The paper's broader competitor and neuroscience claims
+still need independent primary-source research before repeating them.
+
 ## Starting point and source map
 
 The initial question was the gap between [the Mnemos website](https://mnemos.making-minds.ai/) and [the paper](https://making-minds.ai/papers/mnemos.pdf), and what it would take to make the software functional local memory. Read those primary sources directly and record the versions or retrieval dates. Do not treat the current website as an immutable record of the original audit.
@@ -182,5 +200,5 @@ not a requirement to recount every implementation detail in the article.
 - [ ] Record final host continuity, latency, capture coverage, and pilot status without collapsing the separate gates.
 - [ ] Identify which quantitative claims can be used, with units, sample sizes, settings, uncertainty where available, and limitations.
 - [ ] Verify original website/paper claims against primary sources and link the dated corrections.
-- [x] Prepare a portable working packet with this handoff, the selected voice skill, key reports, regression examples, and a file manifest. Refresh that packet at final acceptance. The portable v6 packet includes compressed terminal encoding/retrieval reports and both native lifecycle failure traces. Some older evidence links still require the full checkout. Local validation artifacts are research inputs; public citations require accessible sources.
+- [x] Prepare a portable working packet with this handoff, the selected voice skill, key reports, regression examples, and a file manifest. Refresh that packet at final acceptance. The portable v7 packet includes terminal encoding/retrieval reports, the two earlier native lifecycle failures, all three fixed-cohort failures, and dated website/paper snapshots. Some older evidence links still require the full checkout. Local validation artifacts are research inputs; public citations require accessible sources.
 - [ ] Keep unverified interpretations and questions outside the article's factual claims, then make the final voice pass using Anthony's skill.
