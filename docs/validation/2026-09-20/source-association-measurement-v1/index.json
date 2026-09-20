@@ -1,0 +1,823 @@
+{
+  "source_commit": "f163db1aa155b3cfa5e0d6bd2e8abedc52b2240d",
+  "files": {
+    "helpers/archive_source_association_measurement_v1.py": {
+      "bytes": 1469,
+      "sha256": "dcb349060ebfa50d54bc1d65018199e473ecb81cd4b6c79991e1f6e5ac5ee0ca"
+    },
+    "helpers/pack_source_association_measurement_v1.py": {
+      "bytes": 2773,
+      "sha256": "1e85b9fd1f7ee2c709b8046507ce9e6a5259dc1d9ed0557d3d35c72870a25b75"
+    },
+    "helpers/verify_source_association_measurement_v1.py": {
+      "bytes": 3984,
+      "sha256": "4913c921cda7038ca386755df9c26866a20495ff195f5224087ff117736e2fdf"
+    },
+    "raw-evidence.zip": {
+      "bytes": 76440045,
+      "sha256": "ceb09229ae631d86ea4ee47f843f95e8e81bd6300fe29d05feb5572e8c78f77e"
+    },
+    "source-association-fixture-root-v1.xml": {
+      "bytes": 1854,
+      "sha256": "d6a1bf6804ded08f379d148fa625721591ed07b61a897e79e52e397057519da4"
+    },
+    "source-association-lifecycle-root-v1.xml": {
+      "bytes": 677,
+      "sha256": "879e01fed0236f9f05016ba41b2a07886acf7beeca643f663152627f91976fe2"
+    },
+    "source-association-view-measurement-root-v3.xml": {
+      "bytes": 1828,
+      "sha256": "2099d6c477d0f8a98b64e49ee20762006458fc0b36eb7ac6fe50241cf8cbc76e"
+    },
+    "summary.json": {
+      "bytes": 5375,
+      "sha256": "e14c1937426ad9cc44fd1fcb0dad54cfbc3bbbba2fb4150646e88973af194ed8"
+    }
+  },
+  "archive_members": {
+    "measurement.json": {
+      "bytes": 67363649,
+      "sha256": "b12d46dff66533dfc0131f10dd1fe95a882a38c7bc9a431c22b4c787590f352f"
+    },
+    "revision_forget_replay/repetition-00/canonical.sqlite": {
+      "bytes": 4124672,
+      "sha256": "8c7c0c1f1c39912cc83879dfd9d9bafbdef8126e24027f85e29f0c51824cd730"
+    },
+    "revision_forget_replay/repetition-00/combined-after-lifecycle.sqlite": {
+      "bytes": 4124672,
+      "sha256": "e13d975fe15f9a7c0aaae619f0b2ba13a9d9454c442f4380fffef1a662bad53b"
+    },
+    "revision_forget_replay/repetition-00/combined-reverse.sqlite": {
+      "bytes": 4124672,
+      "sha256": "085976f0ce0a29111cddd2354a68dfeba46ea2767ab2f74549de93aa0759c066"
+    },
+    "revision_forget_replay/repetition-00/combined.json": {
+      "bytes": 5319515,
+      "sha256": "47844641525dffd69902afe33c2d28dacabdcd6ed7ca1f60fd64043414df3245"
+    },
+    "revision_forget_replay/repetition-00/combined.sqlite": {
+      "bytes": 4124672,
+      "sha256": "0f24d0aff2e2670d0dab93e7456463c7aaa1e5028d3600fd87dbdca1834e9cfa"
+    },
+    "revision_forget_replay/repetition-00/fixtures.json": {
+      "bytes": 13513,
+      "sha256": "f6bced631e2af9d5d6a8f42bcda2762d0b1235f294ced19b908c9375029a8c43"
+    },
+    "revision_forget_replay/repetition-00/lifecycle.json": {
+      "bytes": 4269465,
+      "sha256": "587ea25fe6167d707a5f72d291ffa05fc92648d2c70e8557dca494a44f78d231"
+    },
+    "revision_forget_replay/repetition-00/lifecycle.sqlite": {
+      "bytes": 4124672,
+      "sha256": "45bc42b5c9e54d92bbdb40a8a4d74482728d524ad1233e3bf559de8ad53bc210"
+    },
+    "revision_forget_replay/repetition-00/reverse.sqlite": {
+      "bytes": 4124672,
+      "sha256": "dd7b1af703bcdec530550638820748eeeb6df90397565854a94ecd4f64f1f1a2"
+    },
+    "revision_forget_replay/repetition-00/semantic-after-lifecycle.sqlite": {
+      "bytes": 4124672,
+      "sha256": "9f07de020e003ab0bd11dc3bb02f4e9a214dfaefc83b1e1e7e5dc4ffc9531743"
+    },
+    "revision_forget_replay/repetition-00/semantic-reverse.sqlite": {
+      "bytes": 4124672,
+      "sha256": "9b8972ffb4ddd097a7aae325fb48dd1faee85adc360ffbeec637c7b21f6e09fc"
+    },
+    "revision_forget_replay/repetition-00/semantic.json": {
+      "bytes": 5337600,
+      "sha256": "93678f5ee01114a369139761b33c5186a2bd11e79a0134a8b3329f3d34c466d7"
+    },
+    "revision_forget_replay/repetition-00/semantic.sqlite": {
+      "bytes": 4124672,
+      "sha256": "66caff5ed48f7747194db98e1187e819f035d18067a916a300c493e2ea6892b1"
+    },
+    "revision_forget_replay/repetition-00/source_association-after-lifecycle.sqlite": {
+      "bytes": 4124672,
+      "sha256": "d15ff34563ea203375634975815fa570e135552ac73e56da9ac9b0c1decd1772"
+    },
+    "revision_forget_replay/repetition-00/source_association-reverse.sqlite": {
+      "bytes": 4124672,
+      "sha256": "7fe0e82dc9a53383cb65f55b5ebf90caf89929d5debe51bf5c9e905780f26aab"
+    },
+    "revision_forget_replay/repetition-00/source_association.json": {
+      "bytes": 5208653,
+      "sha256": "46c3243503fc750208463388e33e3a9a22dd1792cf09754221873f553b97b94b"
+    },
+    "revision_forget_replay/repetition-00/source_association.sqlite": {
+      "bytes": 4124672,
+      "sha256": "aa94df5c719a10e96e280f1a7314fd2c20d0058fee9882105d6552e41e348d16"
+    },
+    "revision_forget_replay/repetition-01/canonical.sqlite": {
+      "bytes": 4124672,
+      "sha256": "4000914141c145238451466c20ee131424d26b113cfe3b0369207c41b48709e4"
+    },
+    "revision_forget_replay/repetition-01/combined-after-lifecycle.sqlite": {
+      "bytes": 4124672,
+      "sha256": "df71bb64a8bb711a483d22fa360ae2542c5eb5af1d4627cc9323901ba2db0d10"
+    },
+    "revision_forget_replay/repetition-01/combined-reverse.sqlite": {
+      "bytes": 4124672,
+      "sha256": "ef0ead0f1a0287f5d44e79d140e66187f10f4a6cc45e7a44a5df49630eaf8ec9"
+    },
+    "revision_forget_replay/repetition-01/combined.json": {
+      "bytes": 5319515,
+      "sha256": "7a7164904bd3b4fa30df3a1a9cc115c7d4822ab688bd7416e9d387362747e2fe"
+    },
+    "revision_forget_replay/repetition-01/combined.sqlite": {
+      "bytes": 4124672,
+      "sha256": "4d8c7bd90b79c1c4c190a8eb48c48a4fb9754926e10259c679a29efc9a4229e9"
+    },
+    "revision_forget_replay/repetition-01/fixtures.json": {
+      "bytes": 13513,
+      "sha256": "3214a8add8e88f3c7290468531f07555a6d90cf704ffe2f3bcd919631cd0417b"
+    },
+    "revision_forget_replay/repetition-01/lifecycle.json": {
+      "bytes": 4269465,
+      "sha256": "f04c544db11f7dbfb18dcfeda7e80f8bc357fd5f3c05f63907f22f026aa544b7"
+    },
+    "revision_forget_replay/repetition-01/lifecycle.sqlite": {
+      "bytes": 4124672,
+      "sha256": "544ca6d052c1d291d4e62e4ee5b6018290628a95532eb22d232cd0354d91fd16"
+    },
+    "revision_forget_replay/repetition-01/reverse.sqlite": {
+      "bytes": 4124672,
+      "sha256": "226de1522cba67d596fd35af61b2be2f4d22c7f5ede8f98a9a6b8977be05af08"
+    },
+    "revision_forget_replay/repetition-01/semantic-after-lifecycle.sqlite": {
+      "bytes": 4124672,
+      "sha256": "5eb3e87d84858d4f309c216188c3f0626e6050663d7b2d972dc2171eb4646844"
+    },
+    "revision_forget_replay/repetition-01/semantic-reverse.sqlite": {
+      "bytes": 4124672,
+      "sha256": "982c4237a9f55d4ab3a1188af594e5024560150b90782d6d03823a4c0b727ab4"
+    },
+    "revision_forget_replay/repetition-01/semantic.json": {
+      "bytes": 5337600,
+      "sha256": "f69ab290c72f983096c653258327b0a316ba92b92218cdaffeda3ee58581ca2d"
+    },
+    "revision_forget_replay/repetition-01/semantic.sqlite": {
+      "bytes": 4124672,
+      "sha256": "f5339ca2159b8881f39a3af28138a72579b0096edda4c18b0799e0f66ee4397c"
+    },
+    "revision_forget_replay/repetition-01/source_association-after-lifecycle.sqlite": {
+      "bytes": 4124672,
+      "sha256": "793df9269899fdd702d9fc19f0184eb2ed528a3a343a2ee487729b071f17ddae"
+    },
+    "revision_forget_replay/repetition-01/source_association-reverse.sqlite": {
+      "bytes": 4124672,
+      "sha256": "e6605e0919521e5ca9ec7a2ebf9a00f7073efa4d6ea99398d92c709029bd033f"
+    },
+    "revision_forget_replay/repetition-01/source_association.json": {
+      "bytes": 5208653,
+      "sha256": "6fe697f1736d3357bedb0c9d6b0f45db5e6441e99b81f0c23b34c152bce154ab"
+    },
+    "revision_forget_replay/repetition-01/source_association.sqlite": {
+      "bytes": 4124672,
+      "sha256": "d0033f9321432d260b3076d92c6b98725ea041bbf59dbaf99d930852a7a057c9"
+    },
+    "revision_forget_replay/repetition-02/canonical.sqlite": {
+      "bytes": 4124672,
+      "sha256": "932fb31ffe0fbadf8d1b20afc71f7917c6b54693cc86e56f756414a0f88bcbae"
+    },
+    "revision_forget_replay/repetition-02/combined-after-lifecycle.sqlite": {
+      "bytes": 4124672,
+      "sha256": "17f40c54e24acbb74f14e8b58be6d9bce7bd79f97aa027c99ecd1b98c335f36a"
+    },
+    "revision_forget_replay/repetition-02/combined-reverse.sqlite": {
+      "bytes": 4124672,
+      "sha256": "501ae45717536c09776cb04a4415df84bf71baa848e497900efa389aaa4c3fce"
+    },
+    "revision_forget_replay/repetition-02/combined.json": {
+      "bytes": 5319515,
+      "sha256": "5247b91929ade1f76244b84520b8c867802ac2772e47a689a652c560bdca3c8b"
+    },
+    "revision_forget_replay/repetition-02/combined.sqlite": {
+      "bytes": 4124672,
+      "sha256": "9ae81056546d0cba86e8b95a746df1b52325f3d159427f3d1cc3302557ff6156"
+    },
+    "revision_forget_replay/repetition-02/fixtures.json": {
+      "bytes": 13513,
+      "sha256": "746d71bcbfbb4d6d1bea3f095ac3d3e463e4dfddad8ede6ca5954f270e16d35e"
+    },
+    "revision_forget_replay/repetition-02/lifecycle.json": {
+      "bytes": 4269465,
+      "sha256": "53cd28366cdb33c56870a167ae957a65d9440e9f2c094c09a51474c5975e23f9"
+    },
+    "revision_forget_replay/repetition-02/lifecycle.sqlite": {
+      "bytes": 4124672,
+      "sha256": "6b9c82fac1d4554f76ee0942adaab6c511701d2c8bfd10b68bfe463cfea73a00"
+    },
+    "revision_forget_replay/repetition-02/reverse.sqlite": {
+      "bytes": 4124672,
+      "sha256": "1aad4c25c5a9cec84c9a176d908194d40ac1f8c8e1de7980372ac52c794359b1"
+    },
+    "revision_forget_replay/repetition-02/semantic-after-lifecycle.sqlite": {
+      "bytes": 4124672,
+      "sha256": "1e87380311843717ee06e219c8fe8482044f97fc31d97f9719a8e97036bbce49"
+    },
+    "revision_forget_replay/repetition-02/semantic-reverse.sqlite": {
+      "bytes": 4124672,
+      "sha256": "797d579b4d932398157f00226cf0e1b87ad0e5619f6e272feb14f07d66dac2ea"
+    },
+    "revision_forget_replay/repetition-02/semantic.json": {
+      "bytes": 5337600,
+      "sha256": "7d9332a7c53d5d65653c79990793408cecd9885ca5d38cbaabb4dc7c45cfa3c3"
+    },
+    "revision_forget_replay/repetition-02/semantic.sqlite": {
+      "bytes": 4124672,
+      "sha256": "58710c03d257601efa3376bf70865e4a3a805a277cfff0bb7a14dfb81dcb528a"
+    },
+    "revision_forget_replay/repetition-02/source_association-after-lifecycle.sqlite": {
+      "bytes": 4124672,
+      "sha256": "19216eb0c76d9514ce08f40775f5a1f3f66a77a38257943be34666b86182582d"
+    },
+    "revision_forget_replay/repetition-02/source_association-reverse.sqlite": {
+      "bytes": 4124672,
+      "sha256": "bbf9b5fdbaff6dc85a1e460b09bbd95e5ab315621fb2f02e935f6306e334ba7b"
+    },
+    "revision_forget_replay/repetition-02/source_association.json": {
+      "bytes": 5208653,
+      "sha256": "a2fbb77a38be49ca174f047a7c2e2d251eedaddbbf08a5fcae18c3fda82cd5f7"
+    },
+    "revision_forget_replay/repetition-02/source_association.sqlite": {
+      "bytes": 4124672,
+      "sha256": "bbf8a419a74e69a12d21a5b3538d97cbb9069eb7dd370b0b346761b584b8d50b"
+    },
+    "scope_isolation_pair/repetition-00/canonical.sqlite": {
+      "bytes": 4202496,
+      "sha256": "a5091f46098c670ccb20104cd833e8bbf648c35590ed511a5cb865ac3033224d"
+    },
+    "scope_isolation_pair/repetition-00/combined-reverse.sqlite": {
+      "bytes": 4202496,
+      "sha256": "8f1163d4814a41bedb3b50a548cc00b6561e6c52a9a810476083df3806fcc854"
+    },
+    "scope_isolation_pair/repetition-00/combined.json": {
+      "bytes": 408172,
+      "sha256": "0952cbe46ccc304d7a206545465a5b466a518f9c78522564a1e9a55627162d58"
+    },
+    "scope_isolation_pair/repetition-00/combined.sqlite": {
+      "bytes": 4202496,
+      "sha256": "2e55580e5722e869fa5bda3b59471a9fa974511851c8130ae2d7ec134821897c"
+    },
+    "scope_isolation_pair/repetition-00/fixtures.json": {
+      "bytes": 13647,
+      "sha256": "8dc0585b0e09a33e90864d15639331c693781f8b0de4c08bd15bf15c4113256c"
+    },
+    "scope_isolation_pair/repetition-00/reverse.sqlite": {
+      "bytes": 4202496,
+      "sha256": "1e15f3e25a873322f316b49154d7d4dc1f94af908895c8a8350713d987d04e7c"
+    },
+    "scope_isolation_pair/repetition-00/semantic-reverse.sqlite": {
+      "bytes": 4202496,
+      "sha256": "f7f11b9273fd660d6688177c4a271e9fabc694b1827cebec2e66e16f21d3632d"
+    },
+    "scope_isolation_pair/repetition-00/semantic.json": {
+      "bytes": 429201,
+      "sha256": "8cb9de4fb2cb42cf31207a5a8f91020aa19f387cbdfab8f5e44f1302910bd1c2"
+    },
+    "scope_isolation_pair/repetition-00/semantic.sqlite": {
+      "bytes": 4202496,
+      "sha256": "4c1a20a0e5109a376721ee63a6f5a3f5f2d13abc61bd2764e6ea425370a66e36"
+    },
+    "scope_isolation_pair/repetition-00/source_association-reverse.sqlite": {
+      "bytes": 4202496,
+      "sha256": "29ed60367e03fc805f01a7d93092ce923a983cfabcbdd5acb514e06816f4397e"
+    },
+    "scope_isolation_pair/repetition-00/source_association.json": {
+      "bytes": 305768,
+      "sha256": "8920fe213f57f623d3465f1980339e3669303d76694983625429919fef993328"
+    },
+    "scope_isolation_pair/repetition-00/source_association.sqlite": {
+      "bytes": 4202496,
+      "sha256": "b7169bfa5819e43d7d1a769a34f0779b0c2e22adadd0d245186778e833a2d92b"
+    },
+    "scope_isolation_pair/repetition-01/canonical.sqlite": {
+      "bytes": 4202496,
+      "sha256": "688d303dcd64293391452bfbeb7003d8034d1b90f8c089eee64d829b0fa16f0b"
+    },
+    "scope_isolation_pair/repetition-01/combined-reverse.sqlite": {
+      "bytes": 4202496,
+      "sha256": "130b0245c875424e780a6944ef423ac4392a366bb83a7e79b5871c6fba144c2c"
+    },
+    "scope_isolation_pair/repetition-01/combined.json": {
+      "bytes": 408172,
+      "sha256": "0a342ceb55b89a067a324881dc2eef45a1b44de0177154a8596b1cc6a6223a15"
+    },
+    "scope_isolation_pair/repetition-01/combined.sqlite": {
+      "bytes": 4202496,
+      "sha256": "a40a997546e793d8c7bc1b36d3df6b66e8797ba5a01647d590ae405c76a2c4f3"
+    },
+    "scope_isolation_pair/repetition-01/fixtures.json": {
+      "bytes": 13647,
+      "sha256": "d1431beecf50a501c9f4a7fa0b5ab013a96f6c94f52b2ec9b2a6fb1413cbbc25"
+    },
+    "scope_isolation_pair/repetition-01/reverse.sqlite": {
+      "bytes": 4202496,
+      "sha256": "b2e9b37dc2d50dcd3d41c943afdc7a38f30691708dc94939503868f2ed14736e"
+    },
+    "scope_isolation_pair/repetition-01/semantic-reverse.sqlite": {
+      "bytes": 4202496,
+      "sha256": "7b9a2548ee9adfc5ed27575d64a5785eb880748c20578de1e5f6103e2df8521b"
+    },
+    "scope_isolation_pair/repetition-01/semantic.json": {
+      "bytes": 429201,
+      "sha256": "512568fa1b4523b69f8f6260437a747763fe0bbac7346d8b6df702094d41677e"
+    },
+    "scope_isolation_pair/repetition-01/semantic.sqlite": {
+      "bytes": 4202496,
+      "sha256": "bf6e579853faf64eec578caa1df8ab511ab4ec6924c89b73e6b3e8e87534f56e"
+    },
+    "scope_isolation_pair/repetition-01/source_association-reverse.sqlite": {
+      "bytes": 4202496,
+      "sha256": "eb4e3d2ab96152f33eef223cc75739645a5589def3972a97451b6f325b64b46d"
+    },
+    "scope_isolation_pair/repetition-01/source_association.json": {
+      "bytes": 305768,
+      "sha256": "1652bec9defcac7a18e6039c4b5cfe16e3b1a2da69798f0170c3c6e6e1ca17d5"
+    },
+    "scope_isolation_pair/repetition-01/source_association.sqlite": {
+      "bytes": 4202496,
+      "sha256": "02208abad7e48a6885f1712a705acf8ce575fc6eaba5c13ed81e31f936938bc1"
+    },
+    "scope_isolation_pair/repetition-02/canonical.sqlite": {
+      "bytes": 4202496,
+      "sha256": "3566aa54991db2a27af43332993d08e9a200c6c077609ef6847fe7ed0954ae36"
+    },
+    "scope_isolation_pair/repetition-02/combined-reverse.sqlite": {
+      "bytes": 4202496,
+      "sha256": "0b91f42e80e3e6a867c2f7d8c8313ff2d8f4bd901cefb7f20670ae076c4e81a7"
+    },
+    "scope_isolation_pair/repetition-02/combined.json": {
+      "bytes": 408172,
+      "sha256": "5232a71f37c4965bd5b9647ff5393c3316ec722b4a529f4a8c011abb7c9173a4"
+    },
+    "scope_isolation_pair/repetition-02/combined.sqlite": {
+      "bytes": 4202496,
+      "sha256": "07108c1cdbb525e3c9a7c034940f7678cefd54af95495f0c23bb8d0614361803"
+    },
+    "scope_isolation_pair/repetition-02/fixtures.json": {
+      "bytes": 13647,
+      "sha256": "0adcacf7753aa038cc85a5f5710de38e5c4f05c4a90e197f2b6e75300492ba81"
+    },
+    "scope_isolation_pair/repetition-02/reverse.sqlite": {
+      "bytes": 4202496,
+      "sha256": "b7f60ddfb347d8d52322715bd8743012965f864bca8a5b66fde19a7d81a91654"
+    },
+    "scope_isolation_pair/repetition-02/semantic-reverse.sqlite": {
+      "bytes": 4202496,
+      "sha256": "e22d63f74edd5ac26b5c3e4d31995f50def8b49a1a43c570d552ecb71a258e82"
+    },
+    "scope_isolation_pair/repetition-02/semantic.json": {
+      "bytes": 429201,
+      "sha256": "59483dbabcf50618211c88eeae5049250e044e274d6d0a5abb7e1d952dcf6f75"
+    },
+    "scope_isolation_pair/repetition-02/semantic.sqlite": {
+      "bytes": 4202496,
+      "sha256": "373379339bff198f9571cd2ddca93a0aa428a189b5248e3f8f4a38fc2860a95f"
+    },
+    "scope_isolation_pair/repetition-02/source_association-reverse.sqlite": {
+      "bytes": 4202496,
+      "sha256": "72e86d0d52403d8dce1f7c29307012af77e48a51cb01839df3035051aee6bed1"
+    },
+    "scope_isolation_pair/repetition-02/source_association.json": {
+      "bytes": 305768,
+      "sha256": "c54293e804170eba3ed27de6734027de574f0488bec5742ab91e21176925563f"
+    },
+    "scope_isolation_pair/repetition-02/source_association.sqlite": {
+      "bytes": 4202496,
+      "sha256": "fc5dbf006f9311b15826a1c4d1514f5b53388730ac8b2a08f356c058f3cec808"
+    },
+    "semantic_only_chain/repetition-00/canonical.sqlite": {
+      "bytes": 4108288,
+      "sha256": "b925c93875c753a7dcf73a81cb182afb56cf17402825ed9118fc11d29f32111d"
+    },
+    "semantic_only_chain/repetition-00/combined-reverse.sqlite": {
+      "bytes": 4108288,
+      "sha256": "07c32e164d6c950eff97fe24e0bc27afa2ec5549a9a43d3c7633de907a25068e"
+    },
+    "semantic_only_chain/repetition-00/combined.json": {
+      "bytes": 308638,
+      "sha256": "18696cda61b47859b7a96d051b281149d42f82d8f5d91ebc81f9cd28bc1dde29"
+    },
+    "semantic_only_chain/repetition-00/combined.sqlite": {
+      "bytes": 4108288,
+      "sha256": "90d795d1acada8bd75a97ea7e6e8e55f7c8b63949edd721373a164244539511f"
+    },
+    "semantic_only_chain/repetition-00/fixtures.json": {
+      "bytes": 13479,
+      "sha256": "8e6c8558e29534a85c922d984fa247c00200148a3a92724fdd65fb47247acdb2"
+    },
+    "semantic_only_chain/repetition-00/reverse.sqlite": {
+      "bytes": 4108288,
+      "sha256": "131d9837e28cf172cdf295fd1617d1d252c35a6450d0e28915e8b7138bfd858f"
+    },
+    "semantic_only_chain/repetition-00/semantic-reverse.sqlite": {
+      "bytes": 4108288,
+      "sha256": "8710b433b329a8e39cf48e9b07b0ee16c5005703e449ac2b0dd584f992025954"
+    },
+    "semantic_only_chain/repetition-00/semantic.json": {
+      "bytes": 338685,
+      "sha256": "3d12df2f29a0d584d2720e0d4f153652cc46a6a7df32914ea4ea391856d25309"
+    },
+    "semantic_only_chain/repetition-00/semantic.sqlite": {
+      "bytes": 4108288,
+      "sha256": "72d1b6b4f1311b47105fc815823c0fe1c1b680a20ca2ab742dd50b704ceb29b1"
+    },
+    "semantic_only_chain/repetition-00/source_association-reverse.sqlite": {
+      "bytes": 4108288,
+      "sha256": "d9b6d59f1089bab1f00cbbd50aa6a0b74e077108c72b1dc7a022ecb8a9f5affa"
+    },
+    "semantic_only_chain/repetition-00/source_association.json": {
+      "bytes": 225274,
+      "sha256": "456a2850fa919118f6cebe153e9c017efd2bf174487967d0fc84919105ce79be"
+    },
+    "semantic_only_chain/repetition-00/source_association.sqlite": {
+      "bytes": 4108288,
+      "sha256": "ea765779b6207285cf74d9a32ccba97c636784961c51865c6148a8873be919c0"
+    },
+    "semantic_only_chain/repetition-01/canonical.sqlite": {
+      "bytes": 4108288,
+      "sha256": "786e85a1518b71dcde544ab5a8d2eced6ba6fc77e9055b63d6212fa9c24990c4"
+    },
+    "semantic_only_chain/repetition-01/combined-reverse.sqlite": {
+      "bytes": 4108288,
+      "sha256": "29d5a53c3de5377c7e42a76d5e895fccce6ccbefa48c2e8d93a8b5f5dd46f574"
+    },
+    "semantic_only_chain/repetition-01/combined.json": {
+      "bytes": 308638,
+      "sha256": "211f9810ac2daeb63e495e00e9e06c025d24a3709a0382d517a5248052cf733e"
+    },
+    "semantic_only_chain/repetition-01/combined.sqlite": {
+      "bytes": 4108288,
+      "sha256": "5b13c93b426537901a11bb4bb47b87567ffc1e0038037b23a69e60907cf25bac"
+    },
+    "semantic_only_chain/repetition-01/fixtures.json": {
+      "bytes": 13479,
+      "sha256": "564fe811c032b5c9880db970a9640cdba0e353c293b5190c0cc84cfcf53067f4"
+    },
+    "semantic_only_chain/repetition-01/reverse.sqlite": {
+      "bytes": 4108288,
+      "sha256": "fd390e1cb57e30ee1158ef30cd5246938ed2868c6ab4bcb1aa1a6db66c6c61a8"
+    },
+    "semantic_only_chain/repetition-01/semantic-reverse.sqlite": {
+      "bytes": 4108288,
+      "sha256": "c5d2cea6cdcb3ba9e5ef564fa76a07470260f466489d5a717ca21822d6fa5046"
+    },
+    "semantic_only_chain/repetition-01/semantic.json": {
+      "bytes": 338685,
+      "sha256": "f2c1d21fea87958e944fb326106be22ab0e65d3bb91e3f0e3137bd917daf0bc4"
+    },
+    "semantic_only_chain/repetition-01/semantic.sqlite": {
+      "bytes": 4108288,
+      "sha256": "80bfc63ebe711c265d79a59e1bfae2fcfc31a620d1f4b4e735a3af8f693f86e5"
+    },
+    "semantic_only_chain/repetition-01/source_association-reverse.sqlite": {
+      "bytes": 4108288,
+      "sha256": "6ecee3c35f9792d01c62d3b74e16a205120cc22cd3a45c31108d11a61619b5d7"
+    },
+    "semantic_only_chain/repetition-01/source_association.json": {
+      "bytes": 225274,
+      "sha256": "64242d36bbce48ae9e0e1912c6158b2dc4288d515cb728dfac3c02c5a78251d3"
+    },
+    "semantic_only_chain/repetition-01/source_association.sqlite": {
+      "bytes": 4108288,
+      "sha256": "a31a148cd173930818c7f27abb508b2822609d2d5870a1f8de45fd691f36c202"
+    },
+    "semantic_only_chain/repetition-02/canonical.sqlite": {
+      "bytes": 4108288,
+      "sha256": "a85c8362aae7358cfae42142b121a24c9d84dceeaeebd6f15d6ea5a7a7f57387"
+    },
+    "semantic_only_chain/repetition-02/combined-reverse.sqlite": {
+      "bytes": 4108288,
+      "sha256": "99aa088581930e48e6738ccf5dad4961715856f41353846948ee73219d429d8f"
+    },
+    "semantic_only_chain/repetition-02/combined.json": {
+      "bytes": 308638,
+      "sha256": "8b03bc488eb21d2fb44a57effd3f30807cc34d6d14c2e2703f0497f70b7e4699"
+    },
+    "semantic_only_chain/repetition-02/combined.sqlite": {
+      "bytes": 4108288,
+      "sha256": "a0abc0c843865dde100eee690821a4abb9cd910cdf7ef00755f97ad48ff3f18c"
+    },
+    "semantic_only_chain/repetition-02/fixtures.json": {
+      "bytes": 13479,
+      "sha256": "bd2bf48e5ec5b52073e88612666b5b272a38ea9ef04fd61c0dae70ba6be521ad"
+    },
+    "semantic_only_chain/repetition-02/reverse.sqlite": {
+      "bytes": 4108288,
+      "sha256": "cda58ba9ba76ed86ac2202a8720f818b60683aa5f8ad2bdd88a3111547501863"
+    },
+    "semantic_only_chain/repetition-02/semantic-reverse.sqlite": {
+      "bytes": 4108288,
+      "sha256": "dd95397aaa7a44adcf01889ba7608b81b35f07996bdc6aa66830a66c1c054a8d"
+    },
+    "semantic_only_chain/repetition-02/semantic.json": {
+      "bytes": 338685,
+      "sha256": "19fbcff7c5562f0d2a414ee792abf959d2fff7828cdaa897169a081d4fa5a8ba"
+    },
+    "semantic_only_chain/repetition-02/semantic.sqlite": {
+      "bytes": 4108288,
+      "sha256": "6c2ec30ad1a8491f64f0577285fea4fee31364ecaf38813ab63ef1dbccdb261d"
+    },
+    "semantic_only_chain/repetition-02/source_association-reverse.sqlite": {
+      "bytes": 4108288,
+      "sha256": "29cac570481ae17dead22e60a68318e7b4a95c4e1e800890fb32cc08e1d139ba"
+    },
+    "semantic_only_chain/repetition-02/source_association.json": {
+      "bytes": 225274,
+      "sha256": "8f484599bffe423a0d27a8d1dd0603672037efc701052edcccb1f1f266dfccab"
+    },
+    "semantic_only_chain/repetition-02/source_association.sqlite": {
+      "bytes": 4108288,
+      "sha256": "201b25fe365ec772688cf2298d175c9123c4cc15413b82f9d6594711edf7669b"
+    },
+    "shared_capture_triplet/repetition-00/canonical.sqlite": {
+      "bytes": 4112384,
+      "sha256": "429c6aae15eb91e61ff5acf161a148c3b5916aae863534130a2e4307805cba40"
+    },
+    "shared_capture_triplet/repetition-00/combined-reverse.sqlite": {
+      "bytes": 4112384,
+      "sha256": "a2f66e654643982f07209828f2f338517d6f1e3e9d53ccabc603b79cef2e6fac"
+    },
+    "shared_capture_triplet/repetition-00/combined.json": {
+      "bytes": 347612,
+      "sha256": "a528a5ce4bb0b2d7db9ebd120d28588b510ccf4986b8319f72ae636a451f778c"
+    },
+    "shared_capture_triplet/repetition-00/combined.sqlite": {
+      "bytes": 4112384,
+      "sha256": "2cb6c17cbf7558f682968c427843b649fb2e4a67b90286b6ad7cf203c05a712d"
+    },
+    "shared_capture_triplet/repetition-00/fixtures.json": {
+      "bytes": 13411,
+      "sha256": "1fcfe156259bc3cfcc01fb1b538fe05eab0ce7f6aaa4688903734c1ae13d3bc3"
+    },
+    "shared_capture_triplet/repetition-00/reverse.sqlite": {
+      "bytes": 4112384,
+      "sha256": "754115e3e1a6e92f003320fc74f35e658166e2528b969ad81b303847a2d4ccad"
+    },
+    "shared_capture_triplet/repetition-00/semantic-reverse.sqlite": {
+      "bytes": 4112384,
+      "sha256": "7ef988044d917cff386a264a3199f79f6fde316703fedb3d649353aaeeb07311"
+    },
+    "shared_capture_triplet/repetition-00/semantic.json": {
+      "bytes": 371756,
+      "sha256": "5cc632b5f5a4a0c298c33291303709fd2f776919f3b4f1c62f4b4cdac6de276c"
+    },
+    "shared_capture_triplet/repetition-00/semantic.sqlite": {
+      "bytes": 4112384,
+      "sha256": "6901a5cf8c85ab2cfe93860ef2328b0ce1276255f3eba7c283c509acacfccb65"
+    },
+    "shared_capture_triplet/repetition-00/source_association-reverse.sqlite": {
+      "bytes": 4112384,
+      "sha256": "e8d56691be8297db53bf8ffd173db935cb9b4fc80477478618685adb6a0ac9ef"
+    },
+    "shared_capture_triplet/repetition-00/source_association.json": {
+      "bytes": 266283,
+      "sha256": "740cb68c966afeba42da71e7bd8bce04cdc6c10ec439dbc099df6a112d56b2be"
+    },
+    "shared_capture_triplet/repetition-00/source_association.sqlite": {
+      "bytes": 4112384,
+      "sha256": "7ff90f468db0855f5f5cd5116480fa9fb45bfb60c1248713578f4fda1f0dec0c"
+    },
+    "shared_capture_triplet/repetition-01/canonical.sqlite": {
+      "bytes": 4112384,
+      "sha256": "0673982badaaa93c5c7b2ab6b2f8c9c180a79b926d0f95592db1d493120f0cba"
+    },
+    "shared_capture_triplet/repetition-01/combined-reverse.sqlite": {
+      "bytes": 4112384,
+      "sha256": "0a07b173d74d89677d05953d7c6731294edb7aa0cc9804111179ddce2ad1555c"
+    },
+    "shared_capture_triplet/repetition-01/combined.json": {
+      "bytes": 347612,
+      "sha256": "06b565ef7d4063fd388a27a15d12879e3f3f0343e3da21291055dfffb006d889"
+    },
+    "shared_capture_triplet/repetition-01/combined.sqlite": {
+      "bytes": 4112384,
+      "sha256": "be14d41a3398845d34e36366dd61ed5b8c2a1f02721b378a58b090f5bd9e1bbb"
+    },
+    "shared_capture_triplet/repetition-01/fixtures.json": {
+      "bytes": 13411,
+      "sha256": "817064d39c870f14832511041aea89a5d75be8b0646ff9024a4ed11dd22230a4"
+    },
+    "shared_capture_triplet/repetition-01/reverse.sqlite": {
+      "bytes": 4112384,
+      "sha256": "e717bdd44245aed1450cee631f821fbde91629dab581456691c40c2a337477ca"
+    },
+    "shared_capture_triplet/repetition-01/semantic-reverse.sqlite": {
+      "bytes": 4112384,
+      "sha256": "2267335c51b1d4ace86b0297dbefa626a1694a9ec47d5ac1ec4d86c3ef011acb"
+    },
+    "shared_capture_triplet/repetition-01/semantic.json": {
+      "bytes": 371756,
+      "sha256": "1bf6992eb69885053077019d3a89fd24471db8054372cfa656be1571fcc39482"
+    },
+    "shared_capture_triplet/repetition-01/semantic.sqlite": {
+      "bytes": 4112384,
+      "sha256": "40cebdbe6c53b27915c177276ac77e0e6f316d4d5436fc758b80bfc523485ca5"
+    },
+    "shared_capture_triplet/repetition-01/source_association-reverse.sqlite": {
+      "bytes": 4112384,
+      "sha256": "9c670a56326c336aa116ff5537dab07063624dc11e1e41be094b285120f21038"
+    },
+    "shared_capture_triplet/repetition-01/source_association.json": {
+      "bytes": 266283,
+      "sha256": "7a66948c3ebf634af962282ee79011dc6f9f9c88661ea8ea549f9971563df75c"
+    },
+    "shared_capture_triplet/repetition-01/source_association.sqlite": {
+      "bytes": 4112384,
+      "sha256": "76a994c63699b73e32b37c9d49df7076c08fb846dc59789d594ccb4ba81a6e60"
+    },
+    "shared_capture_triplet/repetition-02/canonical.sqlite": {
+      "bytes": 4112384,
+      "sha256": "a00f5c8c65fb1c190b5fa05e5a0d7e4739ecad46368a0451d718f0ec1e164a57"
+    },
+    "shared_capture_triplet/repetition-02/combined-reverse.sqlite": {
+      "bytes": 4112384,
+      "sha256": "73310dffaed868be5d497de43659d4b2c68bbca70701a6398f1a4b00170d87c2"
+    },
+    "shared_capture_triplet/repetition-02/combined.json": {
+      "bytes": 347612,
+      "sha256": "5aa9931ea80f41e847234caebe9920fb462c64f7adf22304370cb53eddf70a19"
+    },
+    "shared_capture_triplet/repetition-02/combined.sqlite": {
+      "bytes": 4112384,
+      "sha256": "a54029f374919cab7806ad2b7bd14b288d113b847473c3e41178a9636d83b4e0"
+    },
+    "shared_capture_triplet/repetition-02/fixtures.json": {
+      "bytes": 13411,
+      "sha256": "54766fd9c580ba3f6f6ed0756251dc3926fc62fe279e71feff7e050c11017bd5"
+    },
+    "shared_capture_triplet/repetition-02/reverse.sqlite": {
+      "bytes": 4112384,
+      "sha256": "cec2f3cedb09898ccb4d851df727b0dfe6cbc3a3abe2045b8ca30d69b2eb6b1e"
+    },
+    "shared_capture_triplet/repetition-02/semantic-reverse.sqlite": {
+      "bytes": 4112384,
+      "sha256": "c8d4815398c31a169902251107490588505ea2d004138723d96c593bcc0ca2e8"
+    },
+    "shared_capture_triplet/repetition-02/semantic.json": {
+      "bytes": 371756,
+      "sha256": "6729301dca31f1a84b89b11f7b35c1eedc46eee4e12be448b7a28024fc51e07f"
+    },
+    "shared_capture_triplet/repetition-02/semantic.sqlite": {
+      "bytes": 4112384,
+      "sha256": "1bc4e5dccf0d60ac0a5a891bf02213ba36ab759d48026340f141b46a83acf7e9"
+    },
+    "shared_capture_triplet/repetition-02/source_association-reverse.sqlite": {
+      "bytes": 4112384,
+      "sha256": "dc2b8550694f7cd23380d39c4bd9b0a9f10709850a41ba471fae35369f0a8c0f"
+    },
+    "shared_capture_triplet/repetition-02/source_association.json": {
+      "bytes": 266283,
+      "sha256": "67ddbfc6113b24be65e846336bfea79405ba5177444e29ef1f2cb40e35edbb45"
+    },
+    "shared_capture_triplet/repetition-02/source_association.sqlite": {
+      "bytes": 4112384,
+      "sha256": "78efbf36b5857229d3ba35f4cb6898e0c8839d4d1d401fc83cb80b52af7b2065"
+    },
+    "shared_extraction_batch/repetition-00/canonical.sqlite": {
+      "bytes": 4124672,
+      "sha256": "2a3714022ffa57cad29129e878dc9190131a2e6dd5bcb3ff4a68aab8c001b8d2"
+    },
+    "shared_extraction_batch/repetition-00/combined-reverse.sqlite": {
+      "bytes": 4124672,
+      "sha256": "83ac16df5bbfce3509352c79b0321881e2d3d0ec74c58ea1d239375de3f21048"
+    },
+    "shared_extraction_batch/repetition-00/combined.json": {
+      "bytes": 402115,
+      "sha256": "0daff86246c27813a817dd38120a61cde49741c244c58f1ee3033d1b2cb678af"
+    },
+    "shared_extraction_batch/repetition-00/combined.sqlite": {
+      "bytes": 4124672,
+      "sha256": "d5b2222dfa3d484addcba1120c4793c89b995f1e5a8b1e1f64b0719e0dbf3d4d"
+    },
+    "shared_extraction_batch/repetition-00/fixtures.json": {
+      "bytes": 13283,
+      "sha256": "8e50752e34f00b1d76166b3a3266890c251b0d1d515785dcec2607b7dc8bfdb5"
+    },
+    "shared_extraction_batch/repetition-00/reverse.sqlite": {
+      "bytes": 4124672,
+      "sha256": "f9190f509c5a7a4c1d074894aab8c1fa2a3bd7f188a5935441b96ba203b8083e"
+    },
+    "shared_extraction_batch/repetition-00/semantic-reverse.sqlite": {
+      "bytes": 4124672,
+      "sha256": "c54fe3830a57a142a9fb86e312ece300237d6f263ed37c46b7d17de710407dd2"
+    },
+    "shared_extraction_batch/repetition-00/semantic.json": {
+      "bytes": 419567,
+      "sha256": "f5c94d4f321036ecd9a52fb2102cef786a74d2dc2b7fe4f8fc23ac31b929da23"
+    },
+    "shared_extraction_batch/repetition-00/semantic.sqlite": {
+      "bytes": 4124672,
+      "sha256": "275efe08ac444229f6a43cb967002f140d9bfbd803b83e590b36f55b2a3d0b15"
+    },
+    "shared_extraction_batch/repetition-00/source_association-reverse.sqlite": {
+      "bytes": 4124672,
+      "sha256": "7b164d50ef7851ffbb9cdd95c475253217e6a4de18ac6df6a436cb49f12ef264"
+    },
+    "shared_extraction_batch/repetition-00/source_association.json": {
+      "bytes": 309601,
+      "sha256": "c09a92be396b20a54e9447c4ae8406429eb29dc1c8a1f8ee3876acc1f8517299"
+    },
+    "shared_extraction_batch/repetition-00/source_association.sqlite": {
+      "bytes": 4124672,
+      "sha256": "5fe92fa71bb2357fa7e511d882f021a7aaf04b2a241f17fd446b27117cc8fc0b"
+    },
+    "shared_extraction_batch/repetition-01/canonical.sqlite": {
+      "bytes": 4124672,
+      "sha256": "f128bccba1c32e09439f2040ebd9759baec8787f5002fc0e512572a06ccd6a42"
+    },
+    "shared_extraction_batch/repetition-01/combined-reverse.sqlite": {
+      "bytes": 4124672,
+      "sha256": "e1bfba17a2c377eced65557ca1d1dc649d4d002380bc5f63aea9194fd24402cb"
+    },
+    "shared_extraction_batch/repetition-01/combined.json": {
+      "bytes": 402115,
+      "sha256": "6372bd0e9024aba4b3dd1325a6623fc880846c06550c485602b20463a2146d59"
+    },
+    "shared_extraction_batch/repetition-01/combined.sqlite": {
+      "bytes": 4124672,
+      "sha256": "65a0e6e826ccd03f58eb5446c112d1acce0a12a4661e2aa3bb4b85747d3311e4"
+    },
+    "shared_extraction_batch/repetition-01/fixtures.json": {
+      "bytes": 13283,
+      "sha256": "b4b79a79ac2fa3c3dc5631244c576641351fd2c404c7fd783ebe0e50bb34b95a"
+    },
+    "shared_extraction_batch/repetition-01/reverse.sqlite": {
+      "bytes": 4124672,
+      "sha256": "4b86cede1526c0797c86bfdbef9d7f4944e3b763d28667536d8b0dca26c7bcf6"
+    },
+    "shared_extraction_batch/repetition-01/semantic-reverse.sqlite": {
+      "bytes": 4124672,
+      "sha256": "d8ec4ac9037e6f88cbf84d42d47d6552660fd9713bf1792bf47f49c421670afc"
+    },
+    "shared_extraction_batch/repetition-01/semantic.json": {
+      "bytes": 419567,
+      "sha256": "0fa091e4527a5311f413e59f3cf3ba2f9b471f7847028ce7b7f18ef0907a991a"
+    },
+    "shared_extraction_batch/repetition-01/semantic.sqlite": {
+      "bytes": 4124672,
+      "sha256": "f4fb4f2325d440c4825057824db991496357ee3532387739f4f86b362872f754"
+    },
+    "shared_extraction_batch/repetition-01/source_association-reverse.sqlite": {
+      "bytes": 4124672,
+      "sha256": "507a7de19a22c416e8e23adbfb3fb89a19b74308b4884746daa3ea8f94f9bba9"
+    },
+    "shared_extraction_batch/repetition-01/source_association.json": {
+      "bytes": 309601,
+      "sha256": "916dacba86ef3d1ee301aaf72ea0acde71d4bf65194ebcc20ed84f09fadb5345"
+    },
+    "shared_extraction_batch/repetition-01/source_association.sqlite": {
+      "bytes": 4124672,
+      "sha256": "d722d45769ebf7cd93c9b8b794e096a56ff95c6e69d8d59706b93b60e6fd59d6"
+    },
+    "shared_extraction_batch/repetition-02/canonical.sqlite": {
+      "bytes": 4124672,
+      "sha256": "201b44517af08eecc81d18f2e66e43ff42e1731cb906a20241d7a3c91f26738d"
+    },
+    "shared_extraction_batch/repetition-02/combined-reverse.sqlite": {
+      "bytes": 4124672,
+      "sha256": "b8f31ce9d7d08b7f36405a02a921aa9e8feb5e6bf1654b1c1041d8b709d16748"
+    },
+    "shared_extraction_batch/repetition-02/combined.json": {
+      "bytes": 402115,
+      "sha256": "d64ffe27d9a4c659ee8ff39fab28edcc438110ca7f8e3c4c195ef7e8c940bf4c"
+    },
+    "shared_extraction_batch/repetition-02/combined.sqlite": {
+      "bytes": 4124672,
+      "sha256": "71dc645a523e34beee945c794b690271ed4be679023a435abef9f58837a5bead"
+    },
+    "shared_extraction_batch/repetition-02/fixtures.json": {
+      "bytes": 13283,
+      "sha256": "fe1ebbbcc0b3a18fcce1f0683d09a62dfefe61011c587ba626833b2000c97f38"
+    },
+    "shared_extraction_batch/repetition-02/reverse.sqlite": {
+      "bytes": 4124672,
+      "sha256": "45abac9b5e8c1477d77318a5e7c5be04a043a0197f2220212070258891c066dd"
+    },
+    "shared_extraction_batch/repetition-02/semantic-reverse.sqlite": {
+      "bytes": 4124672,
+      "sha256": "538700531df5adfdc0cae4953cf8cafa06afe51c4af4b230fb482c78e2be8db7"
+    },
+    "shared_extraction_batch/repetition-02/semantic.json": {
+      "bytes": 419567,
+      "sha256": "7020ae53325c74e40bb1068cdc4349d855f43161ca4be7eb75a1585827430e8d"
+    },
+    "shared_extraction_batch/repetition-02/semantic.sqlite": {
+      "bytes": 4124672,
+      "sha256": "08c6d8226934c06adfc934d28515959dafb5cff0eda05a6efde6994d217722aa"
+    },
+    "shared_extraction_batch/repetition-02/source_association-reverse.sqlite": {
+      "bytes": 4124672,
+      "sha256": "52ccd8866539fe1f0654f9355995bc65bd9aedbf1df75e7c8a03986070c1f662"
+    },
+    "shared_extraction_batch/repetition-02/source_association.json": {
+      "bytes": 309601,
+      "sha256": "a41eb06bf77b3f471238a5385d0041cd4eec6aeb7ae82ab6e5f396ef0f473616"
+    },
+    "shared_extraction_batch/repetition-02/source_association.sqlite": {
+      "bytes": 4124672,
+      "sha256": "b28b5f8253d4bad00d47e5feb47088a99abaab76446df0fd19252f5c18e48c9d"
+    }
+  }
+}
