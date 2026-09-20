@@ -1,5 +1,19 @@
 # Local memory benchmark preparation
 
+Dataset contract `local-memory-heldout-v5` supports new authored scenarios
+without v4's historical repaired-canary ID conventions. It retains the same
+minimum coverage, v3 lifecycle targets and generic scope/body/state checks,
+and requires globally unique event, query and state-pair IDs across both
+development and heldout rows. Existing fact/session uniqueness checks remain.
+The base user profile is still `t18-synthetic-profile`; alternate contexts must
+use explicit target identities with consistent project/workspace ownership.
+
+Version support is not a new corpus or proof of unseen data. The v5 unit tests
+deliberately reuse v4 rows as contract fixtures. A fresh evaluation needs a
+separately authored and frozen dataset, an overlap audit against observed data,
+semantic review and unchanged acceptance gates. No default dataset is changed
+by adding the v5 parser path, and historical v2-v4 inputs/results remain intact.
+
 This directory contains the frozen T18 contract, synthetic seed scenarios, and
 the offline runner. The JSONL file is deliberately labeled `synthetic_seed` and
 `human_acceptance=not_run`. It is a fixture for protocol and scoring work. It is

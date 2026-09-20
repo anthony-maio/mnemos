@@ -17,7 +17,8 @@ from typing import Any
 DATASET_VERSION = "local-memory-heldout-v2"
 LIFECYCLE_V3_VERSION = "local-memory-heldout-v3"
 CONTRACT_V4_VERSION = "local-memory-heldout-v4"
-LIFECYCLE_TARGET_VERSIONS = {LIFECYCLE_V3_VERSION, CONTRACT_V4_VERSION}
+CONTRACT_V5_VERSION = "local-memory-heldout-v5"
+LIFECYCLE_TARGET_VERSIONS = {LIFECYCLE_V3_VERSION, CONTRACT_V4_VERSION, CONTRACT_V5_VERSION}
 SUPPORTED_DATASET_VERSIONS = {DATASET_VERSION, *LIFECYCLE_TARGET_VERSIONS}
 # This version repairs a fixed, audited v3 family; future datasets get new versions.
 V4_REPAIRED_CANARY_SESSIONS = {f"heldout-{number:03d}" for number in range(61, 81)}
@@ -506,6 +507,8 @@ def _validate_v4_contract(
     session: SessionScenario,
     events_by_id: dict[str, SourceEvent],
     facts_by_id: dict[str, FactRecord],
+    *,
+    check_repaired_canaries: bool = True,
 ) -> None:
     """Reject source/body and scope-label contradictions before inference."""
 
@@ -557,7 +560,7 @@ def _validate_v4_contract(
             check_target(query, query.relevant_fact_ids)
         elif query.expected_answer is not None:
             raise ValueError(f"query {query.query_id}: no_answer cannot have expected_answer")
-    if session.session_id in V4_REPAIRED_CANARY_SESSIONS:
+    if check_repaired_canaries and session.session_id in V4_REPAIRED_CANARY_SESSIONS:
         original_id = "query-answerable-" + session.session_id.rsplit("-", 1)[1]
         if [query.query_id for query in session.queries] != [
             original_id,
@@ -601,6 +604,14 @@ def validate_dataset(dataset: HeldoutDataset) -> HeldoutDataset:
         raise ValueError("session IDs must be unique")
     if set(dataset.development_session_ids) != {session.session_id for session in development}:
         raise ValueError("development_session_ids must exactly identify development rows")
+    if dataset.version == CONTRACT_V5_VERSION:
+        for kind, identities in (
+            ("event", [event.event_id for session in sessions for event in session.events]),
+            ("query", [query.query_id for session in sessions for query in session.queries]),
+            ("state pair", [pair.pair_id for session in sessions for pair in session.state_pairs]),
+        ):
+            if len(identities) != len(set(identities)):
+                raise ValueError(f"{kind} IDs must be globally unique across all splits")
     facts = [fact for session in sessions for fact in session.facts]
     fact_ids = [fact.fact_id for fact in facts]
     if len(fact_ids) != len(set(fact_ids)):
@@ -678,8 +689,13 @@ def validate_dataset(dataset: HeldoutDataset) -> HeldoutDataset:
                 raise ValueError(f"event {event.event_id} references an unknown fact")
         if dataset.version in LIFECYCLE_TARGET_VERSIONS:
             _validate_v3_lifecycle_targets(session, events_by_id, facts_by_id)
-        if dataset.version == CONTRACT_V4_VERSION:
-            _validate_v4_contract(session, events_by_id, facts_by_id)
+        if dataset.version in {CONTRACT_V4_VERSION, CONTRACT_V5_VERSION}:
+            _validate_v4_contract(
+                session,
+                events_by_id,
+                facts_by_id,
+                check_repaired_canaries=dataset.version == CONTRACT_V4_VERSION,
+            )
         if not any(event.lifecycle_operation == "restart" for event in session.events):
             raise ValueError(f"session {session.session_id} needs a restart boundary")
     query_ids = [query.query_id for query in queries]
