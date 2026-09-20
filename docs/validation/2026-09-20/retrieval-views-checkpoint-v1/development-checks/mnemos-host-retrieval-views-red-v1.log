@@ -1,0 +1,77 @@
+FFF                                                                      [100%]
+================================== FAILURES ===================================
+_______ test_hermes_retrieve_schema_and_dispatch_support_evidence_view ________
+
+    def test_hermes_retrieve_schema_and_dispatch_support_evidence_view() -> None:
+        schema = next(item for item in get_tool_schemas() if item["name"] == "mnemos_retrieve")
+>       assert schema["parameters"]["properties"]["view"]["enum"] == [
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+            "memory",
+            "captured_evidence",
+        ]
+E       KeyError: 'view'
+
+tests\test_host_retrieval_views.py:50: KeyError
+______ test_hermes_retrieve_defaults_to_memory_and_rejects_invalid_view _______
+
+tmp_path = WindowsPath('D:/WindowsTemp/pytest-of-Ant/pytest-4016/test_hermes_retrieve_defaults_0')
+
+    def test_hermes_retrieve_defaults_to_memory_and_rejects_invalid_view(tmp_path: Path) -> None:
+        registry = ScopeRegistry()
+        registry.register_project(tmp_path, user_profile_id="profile-a", enabled=True)
+        client = RecordingClient()
+        provider = MnemosHermesProvider(
+            client=client, registry=registry, user_profile_id="profile-a"
+        )
+        provider.initialize("session-a", hermes_home=str(tmp_path), cwd=str(tmp_path))
+        default = json.loads(provider.handle_tool_call("mnemos_retrieve", {"query": "current"}))
+        assert default["view"] == "memory"
+>       assert client.calls[-1][1]["view"] == "memory"
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       KeyError: 'view'
+
+tests\test_host_retrieval_views.py:80: KeyError
+___________ test_mcp_retrieve_forwards_view_without_scope_override ____________
+
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x0000012E318EDA30>
+
+    @pytest.mark.asyncio
+    async def test_mcp_retrieve_forwards_view_without_scope_override(monkeypatch: pytest.MonkeyPatch) -> None:
+        captured: dict[str, Any] = {}
+    
+        async def fake_request(
+            service_context: ServiceMCPContext, operation: str, payload: dict[str, Any]
+        ) -> dict[str, Any]:
+            captured.update(operation=operation, payload=payload)
+            return {"schema_version": 1, "view": payload["view"], "facts": []}
+    
+        class FakeMCP:
+            def tool(self, **_: Any):
+                def decorate(function: Any) -> Any:
+                    setattr(self, function.__name__, function)
+                    return function
+    
+                return decorate
+    
+            def resource(self, *_: Any, **__: Any):
+                return lambda function: function
+    
+        monkeypatch.setattr(mcp_server, "_service_request", fake_request)
+        fake = FakeMCP()
+        mcp_server._register_service_tools(fake)
+        scope = context()
+        service_context = ServiceMCPContext(client=RecordingClient(), scope=scope)
+        ctx = SimpleNamespace(request_context=SimpleNamespace(lifespan_context=service_context))
+        result = json.loads(
+>           await fake.mnemos_retrieve(
+                "raw transcript", view="captured_evidence", ctx=ctx
+            )
+        )
+E       TypeError: _register_service_tools.<locals>.mnemos_retrieve() got an unexpected keyword argument 'view'
+
+tests\test_host_retrieval_views.py:117: TypeError
+=========================== short test summary info ===========================
+FAILED tests/test_host_retrieval_views.py::test_hermes_retrieve_schema_and_dispatch_support_evidence_view
+FAILED tests/test_host_retrieval_views.py::test_hermes_retrieve_defaults_to_memory_and_rejects_invalid_view
+FAILED tests/test_host_retrieval_views.py::test_mcp_retrieve_forwards_view_without_scope_override
+3 failed in 1.28s

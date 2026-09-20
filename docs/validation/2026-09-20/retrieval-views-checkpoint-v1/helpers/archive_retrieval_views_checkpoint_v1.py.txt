@@ -1,0 +1,142 @@
+"""Archive a verified retrieval-view checkpoint, including development failures."""
+from pathlib import Path
+import argparse
+import hashlib
+import json
+import shutil
+
+p = argparse.ArgumentParser()
+p.add_argument('--checks', type=Path, required=True)
+p.add_argument('--installed', type=Path, required=True)
+p.add_argument('--prior-checks', type=Path, action='append', default=[])
+a = p.parse_args()
+repo = Path(__file__).resolve().parent.parent
+out = repo / 'docs/validation/2026-09-20/retrieval-views-checkpoint-v1'
+verification = json.loads((a.checks / 'verification.json').read_text(encoding='utf-8'))
+installation = json.loads((a.installed / 'installation.json').read_text(encoding='utf-8'))
+assert verification['status'] == installation['status'] == 'passed'
+assert verification['source_commit'] == installation['bindings_after']['commit']
+assert all(c['exit_code'] == 0 for c in verification['checks'])
+
+def sha(path):
+    return hashlib.sha256(path.read_bytes()).hexdigest()
+
+assert sha(a.checks / 'verification.json') == installation['bindings_before']['checks_sha256']
+assert sha(a.checks / 'pytest.xml') == installation['successful_pytest_xml_sha256']
+for artifact in verification['artifacts']:
+    path = Path(artifact['file'])
+    assert sha(path) == artifact['sha256'] and path.stat().st_size == artifact['bytes']
+for command in installation['commands']:
+    for stream in ('stdout', 'stderr'):
+        assert sha(a.installed / (command['name'] + '.' + stream + '.log')) == command[stream + '_sha256']
+out.mkdir(exist_ok=False)
+(out / '.gitattributes').write_bytes(b'** -text -whitespace\n')
+
+def copy(path, relative):
+    target = out / relative
+    target.parent.mkdir(parents=True, exist_ok=True)
+    shutil.copyfile(path, target)
+
+for label, folder in [('source-checks', a.checks), ('installed-checks', a.installed),
+                      *[(f'prior-source-checks-v{index}', folder) for index, folder in enumerate(a.prior_checks, 1)]]:
+    for path in folder.iterdir():
+        if path.is_file() and path.suffix in {'.json', '.xml', '.log'}:
+            copy(path, Path(label) / path.name)
+for path in (repo / '.venv').glob('retrieval-views-*'):
+    if path.is_file() and path.suffix in {'.xml', '.json', '.log'}:
+        copy(path, Path('development-checks') / path.name)
+    elif path.is_dir():
+        for nested in path.iterdir():
+            if nested.is_file() and nested.suffix in {'.xml', '.json', '.log'}:
+                copy(nested, Path('development-checks') / path.name / nested.name)
+temp = Path('C:/Users/Ant/AppData/Local/Temp')
+for pattern in ('mnemos-host-retrieval-views-*.log', 'mnemos-hermes-host-retrieval-broad-*.log',
+                'mnemos-mcp-compatibility-retrieval-views-*.log', 'mnemos-installed-origin-*.log'):
+    for path in temp.glob(pattern):
+        copy(path, Path('development-checks') / path.name)
+for name in ('final_checkpoint_checks_v3.py', 'run_combined_installed_check_v38.py',
+             'installed_contract_probe_v4.py', 'verify_claude_stop_replay_v2.py',
+             'prepare_retrieval_views_helpers_v1.py', 'package_substack_handoff_v14.py',
+             'reconcile_retrieval_views_docs_v1.py',
+             'verify_staged_retrieval_views_archive_v1.py',
+             'verify_substack_packet_v14.py', Path(__file__).name):
+    copy(repo / '.venv' / name, Path('helpers') / (name + '.txt'))
+files = {path.relative_to(out).as_posix(): {'bytes': path.stat().st_size, 'sha256': sha(path)}
+         for path in sorted(out.rglob('*')) if path.is_file()}
+(out / 'evidence-index.json').write_text(json.dumps({'files': files}, indent=2) + '\n', encoding='utf-8')
+s = verification['checks'][0]['counts']
+i = installation['contract']['junit_summary']
+wheel = next(x for x in verification['artifacts'] if x['file'].endswith('.whl'))
+(out / 'README.md').write_text(f'''# Separate captured evidence from ordinary recall
+
+Frozen source `{verification['source_commit']}` passes {s['tests'] - s['skipped']:,}
+source tests with {s['skipped']} skips, all six source/package checks, and
+{i['tests'] - i['skipped']:,} installed contract cases with {i['skipped']} matching skips.
+Seven installed replay assertions also pass. Individual installed case outcomes,
+module origins, and package bytes match the frozen source and wheel.
+
+Wheel: {wheel['bytes']:,} bytes; SHA-256 `{wheel['sha256']}`.
+
+## Behavior
+
+Ordinary retrieval defaults to `view="memory"`, excluding only chunks marked
+`source: captured_passthrough`. Explicit `view="captured_evidence"` returns those
+chunks in `captured_evidence` and `evidence_context`, leaving ordinary `facts`
+and `context` empty. Other unknown or legacy records remain eligible memory.
+The source predicate combines with scope checks before candidate limits,
+lexical ranking, graph traversal, and context budgeting. Both channels retain
+source evidence and the existing UTF-8 byte upper bound.
+
+Hermes and MCP expose the view on their existing retrieve tool; the CLI has
+`--view captured_evidence`. Automatic recall stays on the memory view. The
+inspector retains captured records, labels them as unverified, and explains
+their evidence-view retrieval. This changes retrieval behavior without
+migrating data, changing capture consent, or deleting captured copies.
+
+Regression coverage includes both storage backends, candidate starvation,
+foreign profiles and scopes, legacy unknown records, graph bridges, context
+budgeting, correction authority after restart, and related-forget inventory.
+Authenticated service, Hermes dispatch, MCP wrapper, and CLI subprocess tests
+exercise the response channels. The host adapter checks retain their assertion
+and conflict labels while separately reviewing captured history. This does
+not establish a native model conversation or a browser acceptance result.
+
+## Evidence limits
+
+The [v7 cohort](../hermes-native-cohort-v7/README.md) remains zero of three
+complete lifecycles on its original runtime. No new native model cohort was
+run for this checkpoint. Separating evidence addresses an API contract gap;
+it does not prove why the model omitted correction, inspection, or job-status
+calls. Stored-copy erasure checks, frozen model criteria, and old negative
+results are unchanged. Hiding a copy from recall cannot satisfy erasure.
+
+Development evidence includes the intended missing-field/API failures and
+test-authoring mistakes (source-status label, canonical event identity, and
+preview field names). Those mistakes are not product defects. The origin-check
+log named `discrepancy-red-v1` passed six source cases; it did not reproduce
+an import-origin failure and is not RED evidence. An evolving
+development suite was interrupted and has no complete result; the frozen
+source run is the basis for the counts above. Any prior frozen run is retained
+separately. The first frozen run at `f49c86c` had 13 failures, 1,481 passes,
+and four skips: the CLI stub lacked the new argument, three MCP roundtrips
+still expected raw capture in ordinary facts, the empty forget response
+expected the old shape, and eight comparison tests exercised an older engine
+signature. Ordinary service calls now rely on the engine's default memory
+view so older custom engines remain callable. No benchmark scoring,
+protocol, dataset, or recorded outcome was edited. Source tests explicitly
+review capture and retain the original scope, mutation, and replay checks.
+The second frozen run at `034cbd9` passed 1,496 tests with four skips, then
+stopped at a mypy override error: the benchmark-only subclass still declared
+the older retrieval signature. Its signature now accepts the new argument and
+explicitly rejects evidence-view experiments. Ranking, scoring, and historical
+results are unchanged. Reproduce earlier experiments with their pinned source.
+CLI and MCP subprocess tests also bind child imports to the parent's package
+and check the origin, so their installed-wheel run cannot silently load the
+source checkout. Direct inspection gained a view-aware trace lookup. No live host
+configuration or live memory was changed.
+
+The evidence index binds {len(files)} raw files. This interpretive README is
+outside that index. Native lifecycle, three-host continuity, complete capture,
+model-quality acceptance, Desktop, and the two-project pilot remain open.
+''', encoding='utf-8')
+print(json.dumps({'archive': str(out), 'files': len(files), 'source': s, 'installed': i}))

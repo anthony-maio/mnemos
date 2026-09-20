@@ -1,0 +1,161 @@
+<?xml version="1.0" encoding="utf-8"?><testsuites name="pytest tests"><testsuite name="pytest" errors="0" failures="4" skipped="0" tests="4" time="6.610" timestamp="2026-09-20T01:07:48.328502-04:00" hostname="Aurora"><testcase classname="tests.test_retrieval_comparison" name="test_comparison_does_not_treat_evidence_view_as_memory_experiment[vector]" time="1.357"><failure message="TypeError: ComparisonEngine.retrieve() got an unexpected keyword argument 'view'">tmp_path = WindowsPath('D:/WindowsTemp/pytest-of-Ant/pytest-4057/test_comparison_does_not_treat0')
+strategy = 'vector'
+
+    @pytest.mark.asyncio
+    @pytest.mark.parametrize("strategy", ["vector", "lexical", "hybrid", "full"])
+    async def test_comparison_does_not_treat_evidence_view_as_memory_experiment(tmp_path, strategy):
+        from benchmarks.local_memory.retrieval_comparison import comparison_snapshots
+    
+        service, context = fixture_service(tmp_path)
+        try:
+            with comparison_snapshots(service) as (_, variants):
+                with pytest.raises(ValueError, match="only evaluates the memory view"):
+&gt;                   await variants[strategy].retrieve(
+                        RetrievalRequest(query="Orchid", context=context, view="captured_evidence")
+                    )
+
+tests\test_retrieval_comparison.py:52: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+self = &lt;mnemos.memory_service.LocalMemoryService object at 0x00000215FF500190&gt;
+request = RetrievalRequest(query='Orchid', context=ScopeContext(user_profile_id='local', project_id='2e5d3bdb-e17f-4f02-b05e-682..., allowed_scopes=['project', 'global'], top_k=5, max_context_tokens=1200, profile='baseline', view='captured_evidence')
+
+    async def retrieve(self, request: RetrievalRequest) -&gt; dict[str, Any]:
+        self.registry.validate_context(request.context)
+        # Ordinary calls retain compatibility with existing custom engines.
+        # The production engine defaults to memory; evidence review opts in.
+        view_options: _RetrievalViewOptions = {}
+        if request.view == "captured_evidence":
+            view_options["view"] = request.view
+&gt;       chunks = await self.engine.retrieve(
+            request.query,
+            top_k=request.top_k,
+            context=request.context,
+            allowed_scopes=tuple(request.allowed_scopes),
+            profile=request.profile,
+            max_context_tokens=request.max_context_tokens,
+            **view_options,
+        )
+E       TypeError: ComparisonEngine.retrieve() got an unexpected keyword argument 'view'
+
+mnemos\memory_service.py:670: TypeError</failure></testcase><testcase classname="tests.test_retrieval_comparison" name="test_comparison_does_not_treat_evidence_view_as_memory_experiment[lexical]" time="1.310"><failure message="TypeError: ComparisonEngine.retrieve() got an unexpected keyword argument 'view'">tmp_path = WindowsPath('D:/WindowsTemp/pytest-of-Ant/pytest-4057/test_comparison_does_not_treat1')
+strategy = 'lexical'
+
+    @pytest.mark.asyncio
+    @pytest.mark.parametrize("strategy", ["vector", "lexical", "hybrid", "full"])
+    async def test_comparison_does_not_treat_evidence_view_as_memory_experiment(tmp_path, strategy):
+        from benchmarks.local_memory.retrieval_comparison import comparison_snapshots
+    
+        service, context = fixture_service(tmp_path)
+        try:
+            with comparison_snapshots(service) as (_, variants):
+                with pytest.raises(ValueError, match="only evaluates the memory view"):
+&gt;                   await variants[strategy].retrieve(
+                        RetrievalRequest(query="Orchid", context=context, view="captured_evidence")
+                    )
+
+tests\test_retrieval_comparison.py:52: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+self = &lt;mnemos.memory_service.LocalMemoryService object at 0x00000215FF57C7C0&gt;
+request = RetrievalRequest(query='Orchid', context=ScopeContext(user_profile_id='local', project_id='46e9a82c-115f-43bc-adfd-022..., allowed_scopes=['project', 'global'], top_k=5, max_context_tokens=1200, profile='baseline', view='captured_evidence')
+
+    async def retrieve(self, request: RetrievalRequest) -&gt; dict[str, Any]:
+        self.registry.validate_context(request.context)
+        # Ordinary calls retain compatibility with existing custom engines.
+        # The production engine defaults to memory; evidence review opts in.
+        view_options: _RetrievalViewOptions = {}
+        if request.view == "captured_evidence":
+            view_options["view"] = request.view
+&gt;       chunks = await self.engine.retrieve(
+            request.query,
+            top_k=request.top_k,
+            context=request.context,
+            allowed_scopes=tuple(request.allowed_scopes),
+            profile=request.profile,
+            max_context_tokens=request.max_context_tokens,
+            **view_options,
+        )
+E       TypeError: ComparisonEngine.retrieve() got an unexpected keyword argument 'view'
+
+mnemos\memory_service.py:670: TypeError</failure></testcase><testcase classname="tests.test_retrieval_comparison" name="test_comparison_does_not_treat_evidence_view_as_memory_experiment[hybrid]" time="1.288"><failure message="TypeError: ComparisonEngine.retrieve() got an unexpected keyword argument 'view'">tmp_path = WindowsPath('D:/WindowsTemp/pytest-of-Ant/pytest-4057/test_comparison_does_not_treat2')
+strategy = 'hybrid'
+
+    @pytest.mark.asyncio
+    @pytest.mark.parametrize("strategy", ["vector", "lexical", "hybrid", "full"])
+    async def test_comparison_does_not_treat_evidence_view_as_memory_experiment(tmp_path, strategy):
+        from benchmarks.local_memory.retrieval_comparison import comparison_snapshots
+    
+        service, context = fixture_service(tmp_path)
+        try:
+            with comparison_snapshots(service) as (_, variants):
+                with pytest.raises(ValueError, match="only evaluates the memory view"):
+&gt;                   await variants[strategy].retrieve(
+                        RetrievalRequest(query="Orchid", context=context, view="captured_evidence")
+                    )
+
+tests\test_retrieval_comparison.py:52: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+self = &lt;mnemos.memory_service.LocalMemoryService object at 0x00000215FF59EC10&gt;
+request = RetrievalRequest(query='Orchid', context=ScopeContext(user_profile_id='local', project_id='e1b1c935-e7d2-4521-b064-828..., allowed_scopes=['project', 'global'], top_k=5, max_context_tokens=1200, profile='baseline', view='captured_evidence')
+
+    async def retrieve(self, request: RetrievalRequest) -&gt; dict[str, Any]:
+        self.registry.validate_context(request.context)
+        # Ordinary calls retain compatibility with existing custom engines.
+        # The production engine defaults to memory; evidence review opts in.
+        view_options: _RetrievalViewOptions = {}
+        if request.view == "captured_evidence":
+            view_options["view"] = request.view
+&gt;       chunks = await self.engine.retrieve(
+            request.query,
+            top_k=request.top_k,
+            context=request.context,
+            allowed_scopes=tuple(request.allowed_scopes),
+            profile=request.profile,
+            max_context_tokens=request.max_context_tokens,
+            **view_options,
+        )
+E       TypeError: ComparisonEngine.retrieve() got an unexpected keyword argument 'view'
+
+mnemos\memory_service.py:670: TypeError</failure></testcase><testcase classname="tests.test_retrieval_comparison" name="test_comparison_does_not_treat_evidence_view_as_memory_experiment[full]" time="1.711"><failure message="TypeError: ComparisonEngine.retrieve() got an unexpected keyword argument 'view'">tmp_path = WindowsPath('D:/WindowsTemp/pytest-of-Ant/pytest-4057/test_comparison_does_not_treat3')
+strategy = 'full'
+
+    @pytest.mark.asyncio
+    @pytest.mark.parametrize("strategy", ["vector", "lexical", "hybrid", "full"])
+    async def test_comparison_does_not_treat_evidence_view_as_memory_experiment(tmp_path, strategy):
+        from benchmarks.local_memory.retrieval_comparison import comparison_snapshots
+    
+        service, context = fixture_service(tmp_path)
+        try:
+            with comparison_snapshots(service) as (_, variants):
+                with pytest.raises(ValueError, match="only evaluates the memory view"):
+&gt;                   await variants[strategy].retrieve(
+                        RetrievalRequest(query="Orchid", context=context, view="captured_evidence")
+                    )
+
+tests\test_retrieval_comparison.py:52: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+self = &lt;mnemos.memory_service.LocalMemoryService object at 0x00000215FF55E990&gt;
+request = RetrievalRequest(query='Orchid', context=ScopeContext(user_profile_id='local', project_id='be77ef6d-8c25-4541-911e-f0d..., allowed_scopes=['project', 'global'], top_k=5, max_context_tokens=1200, profile='baseline', view='captured_evidence')
+
+    async def retrieve(self, request: RetrievalRequest) -&gt; dict[str, Any]:
+        self.registry.validate_context(request.context)
+        # Ordinary calls retain compatibility with existing custom engines.
+        # The production engine defaults to memory; evidence review opts in.
+        view_options: _RetrievalViewOptions = {}
+        if request.view == "captured_evidence":
+            view_options["view"] = request.view
+&gt;       chunks = await self.engine.retrieve(
+            request.query,
+            top_k=request.top_k,
+            context=request.context,
+            allowed_scopes=tuple(request.allowed_scopes),
+            profile=request.profile,
+            max_context_tokens=request.max_context_tokens,
+            **view_options,
+        )
+E       TypeError: ComparisonEngine.retrieve() got an unexpected keyword argument 'view'
+
+mnemos\memory_service.py:670: TypeError</failure></testcase></testsuite></testsuites>

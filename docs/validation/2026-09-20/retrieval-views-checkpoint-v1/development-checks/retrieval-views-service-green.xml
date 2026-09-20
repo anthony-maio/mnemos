@@ -1,0 +1,57 @@
+<?xml version="1.0" encoding="utf-8"?><testsuites name="pytest tests"><testsuite name="pytest" errors="0" failures="1" skipped="0" tests="8" time="4.998" timestamp="2026-09-20T00:45:00.521603-04:00" hostname="Aurora"><testcase classname="tests.test_service_retrieval_views" name="test_service_separates_capture_and_memory_without_erasing_source" time="0.981"><failure message="AssertionError: assert 'retained_locally' == 'available'&#10;  &#10;  - available&#10;  + retained_locally">tmp_path = WindowsPath('D:/WindowsTemp/pytest-of-Ant/pytest-4025/test_service_separates_capture0')
+
+    @pytest.mark.asyncio
+    async def test_service_separates_capture_and_memory_without_erasing_source(tmp_path):
+        memory, context = service(tmp_path)
+        for name in type(memory.engine.config.modules).model_fields:
+            setattr(memory.engine.config.modules, name, False)
+        try:
+            await memory.dispatch(
+                "remember",
+                {"context": context.model_dump(), "content": "The release label is maple-heron."},
+            )
+            memory.capture(
+                CaptureEvent(
+                    event_id="old-release-conversation",
+                    context=context,
+                    occurred_at=datetime.now(timezone.utc),
+                    role="assistant",
+                    content="Earlier we used cedar-otter as the release label.",
+                    source_kind="conversation",
+                )
+            )
+            await memory.maintenance.run_once(force=True)
+            facts = memory.engine.store.get_all()
+            assert len(facts) == 2
+            for fact in facts:
+                fact.embedding = memory.engine.embedder.embed_query("release label")
+                memory.engine.store.update(fact.id, fact)
+            ids_before = {fact.id for fact in facts}
+            payload = {
+                "context": context.model_dump(),
+                "query": "release label",
+                "top_k": 10,
+                "max_context_tokens": 4000,
+            }
+            ordinary = await memory.dispatch("retrieve", payload)
+            assert ordinary["view"] == "memory"
+            assert len(ordinary["facts"]) == 1
+            assert ordinary["facts"][0]["content"] == "The release label is maple-heron."
+            assert ordinary["captured_evidence"] == []
+            assert ordinary["evidence_context"] == ""
+            assert "cedar-otter" not in ordinary["context"]
+    
+            review = await memory.dispatch("retrieve", {**payload, "view": "captured_evidence"})
+            assert review["view"] == "captured_evidence"
+            assert review["facts"] == [] and review["context"] == ""
+            assert len(review["captured_evidence"]) == 1
+            evidence = review["captured_evidence"][0]
+            assert evidence["assertion_status"] == "unknown"
+            assert evidence["support_available"]
+&gt;           assert evidence["sources"][0]["original_source_status"] == "available"
+E           AssertionError: assert 'retained_locally' == 'available'
+E             
+E             - available
+E             + retained_locally
+
+tests\test_service_retrieval_views.py:60: AssertionError</failure></testcase><testcase classname="tests.test_service_retrieval_views" name="test_retrieval_request_rejects_invalid_views[all]" time="0.448" /><testcase classname="tests.test_service_retrieval_views" name="test_retrieval_request_rejects_invalid_views[unknown]" time="0.385" /><testcase classname="tests.test_service_retrieval_views" name="test_retrieval_request_rejects_invalid_views[None]" time="0.443" /><testcase classname="tests.test_service_retrieval_views" name="test_retrieval_request_rejects_invalid_views[1]" time="0.437" /><testcase classname="tests.test_service_retrieval_views" name="test_retrieval_request_rejects_invalid_views[True]" time="0.451" /><testcase classname="tests.test_service_retrieval_views" name="test_retrieval_request_rejects_invalid_views[view5]" time="0.455" /><testcase classname="tests.test_service_retrieval_views" name="test_retrieval_request_rejects_invalid_views[view6]" time="0.440" /></testsuite></testsuites>

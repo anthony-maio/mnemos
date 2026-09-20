@@ -1,5 +1,22 @@
 # Mnemos claim and evidence ledger
 
+The verified [retrieval-view checkpoint](../2026-09-20/retrieval-views-checkpoint-v1/README.md)
+at `e419c2a` passes 1,500 source tests with 4 skips,
+all six source/package checks, 648 isolated installed cases
+with 4 matching skips, and seven replay assertions. Ordinary recall
+now excludes whole captured conversations before retrieval limits. Explicit
+evidence review returns those copies separately, with provenance and unverified
+labels. Capture storage and related-forget inventory remain intact. This is a
+verified API change; no native model cohort has run this package, and the v7
+failures retain their original runtime and outcome. Native lifecycle,
+three-host continuity, complete capture, quality acceptance, Desktop, and the
+pilot remain open.
+
+The updated CLI and MCP subprocess checks verify that the child imports the
+same package as the parent. Older parent-process origin checks alone did not
+establish that boundary for those subprocesses. Preserve the earlier test
+results while keeping that limit on their installed-package interpretation.
+
 The [fixed Hermes v7 cohort](../2026-09-20/hermes-native-cohort-v7/README.md) on verified `1a11058`
 finished zero of three complete lifecycles. All three model-readiness checks
 passed with positive reported GPU residency, and all attempts established
@@ -19,7 +36,7 @@ from general next-action omissions. Native mutation and forgetting, three-host
 continuity, complete capture, model-quality acceptance, Desktop, and the pilot
 remain open.
 
-The latest verified [deletion coverage checkpoint](../2026-09-19/forget-coverage-checkpoint-v1/README.md)
+The earlier verified [deletion coverage checkpoint](../2026-09-19/forget-coverage-checkpoint-v1/README.md)
 at `1a11058` passes 1,439 source tests with 4 skips, all six
 source/package checks, 608 isolated installed cases with 4 matching
 skips, and seven replay assertions. Related-forget receipts now report

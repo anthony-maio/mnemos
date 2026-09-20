@@ -1,0 +1,37 @@
+from pathlib import Path
+
+repo = Path(__file__).resolve().parent.parent
+helpers = repo / '.venv'
+source = (helpers / 'run_combined_installed_check_v37.py').read_text(encoding='utf-8')
+addition = ''.join(f'    "tests/{name}",\n' for name in (
+    'test_inspectability.py',
+    'test_retrieval_views.py', 'test_service_retrieval_views.py',
+    'test_host_retrieval_views.py', 'test_control_plane_retrieval_views.py',
+    'test_cli_retrieval_views.py',
+))
+assert source.count('CONTRACT_TESTS = (\n') == 1
+(helpers / 'run_combined_installed_check_v38.py').write_text(
+    source.replace('CONTRACT_TESTS = (\n', 'CONTRACT_TESTS = (\n' + addition), encoding='utf-8')
+source = (helpers / 'package_substack_handoff_v13.py').read_text(encoding='utf-8')
+source = source.replace('2026-09-20-v13.zip', '2026-09-20-v14.zip')
+new_files = [
+    'benchmarks/local_memory/retrieval_comparison.py', 'tests/test_retrieval_comparison.py',
+    'mnemos/inspectability.py', 'tests/test_inspectability.py',
+    'mnemos/contracts.py', 'mnemos/engine.py', 'mnemos/control_plane.py',
+    'mnemos/managed_cli.py', 'mnemos/cli.py', 'mnemos/ui/app.js',
+    'tests/test_adapter_context_authority.py', 'docs/mcp-transport-contract.md',
+    *['tests/' + x for x in ('test_retrieval_views.py', 'test_service_retrieval_views.py',
+       'test_host_retrieval_views.py', 'test_control_plane_retrieval_views.py',
+       'test_cli_retrieval_views.py')],
+]
+source = source.replace('selected = [\n', 'selected = [\n' + ''.join(f'    "{x}",\n' for x in new_files))
+source = source.replace('for folder in (\n    "docs/validation/2026-09-20/hermes-native-cohort-v7",',
+    'for folder in (\n    "docs/validation/2026-09-20/retrieval-views-checkpoint-v1",\n    "docs/validation/2026-09-20/hermes-native-cohort-v7",')
+source = source.replace('native failure traces, the captured-evidence contract review,',
+    'native failure traces, the captured-evidence contract review and retrieval-view implementation checkpoint,')
+(helpers / 'package_substack_handoff_v14.py').write_text(source, encoding='utf-8')
+source = (helpers / 'verify_substack_packet_v13.py').read_text(encoding='utf-8')
+(helpers / 'verify_substack_packet_v14.py').write_text(source.replace('2026-09-20-v13.zip', '2026-09-20-v14.zip'), encoding='utf-8')
+(helpers / 'retrieval-views-development-v1' / 'interruption.json').write_text(
+    '{"status":"interrupted","reason":"Superseded by a frozen source check with temporary storage outside Git; source was changing during this development run. Early adapter expectations were repaired separately. No complete suite result."}\n', encoding='utf-8')
+print('Prepared installed check v38 and writing packet v14 helpers; neither run yet.')

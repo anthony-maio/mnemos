@@ -1,0 +1,94 @@
+......F                                                                  [100%]
+================================== FAILURES ===================================
+_______ test_authenticated_hosts_separate_memory_and_captured_evidence ________
+
+tmp_path = WindowsPath('D:/WindowsTemp/pytest-of-Ant/pytest-4029/test_authenticated_hosts_separ0')
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x00000173956075C0>
+
+    def test_authenticated_hosts_separate_memory_and_captured_evidence(
+        tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
+        registry = ScopeRegistry()
+        registry.register_project(tmp_path, user_profile_id="profile-a", enabled=True)
+        resolved = registry.resolve(
+            tmp_path, user_profile_id="profile-a", session_id="session-a", host="hermes"
+        )
+        config = MnemosConfig(
+            modules=ModuleConfig(**{name: False for name in ModuleConfig.model_fields})
+        )
+        service = MnemosService(
+            dispatcher_factory=lambda: LocalMemoryService(
+                MnemosEngine(
+                    config=config,
+                    llm=UnavailableLLMProvider(),
+                    embedder=SimpleEmbeddingProvider(),
+                    store=SQLiteStore(str(tmp_path / "memory.sqlite")),
+                ),
+                registry,
+            ),
+            descriptor_path=tmp_path / "runtime.json",
+        )
+        service.start()
+        client = MnemosClient(descriptor_path=service.descriptor_path, auto_start=False)
+        try:
+            remembered = json.loads(
+                asyncio.run(
+                    dispatch_tool(
+                        client,
+                        resolved,
+                        "mnemos_remember",
+                        {
+                            "content": "Durable release marker is blue.",
+                            "request_id": "view-explicit-1",
+                        },
+                    )
+                )
+            )
+            assert remembered["status"] == "committed"
+            captured = service.submit(
+                "capture",
+                {
+                    "event_id": "view-captured-1",
+                    "context": resolved.model_dump(mode="json"),
+                    "scope": "project",
+                    "occurred_at": datetime.now(timezone.utc).isoformat(),
+                    "role": "assistant",
+                    "content": "Raw captured release marker is red.",
+                    "source_kind": "fixture_transcript",
+                    "source_ref": "fixture:view-captured-1",
+                },
+            )
+            assert captured["status"] == "committed"
+            asyncio.run(client.request("maintenance", {}, queue_on_failure=False))
+    
+            def call(view: str) -> dict[str, Any]:
+                return json.loads(
+                    asyncio.run(
+                        dispatch_tool(
+                            client,
+                            resolved,
+                            "mnemos_retrieve",
+                            {"query": "release marker", "top_k": 20, "view": view},
+                        )
+                    )
+                )
+    
+            memory = call("memory")
+            evidence = call("captured_evidence")
+            assert memory["view"] == "memory"
+            assert any("Durable release marker" in row["content"] for row in memory["facts"])
+            assert all("Raw captured release marker" not in row["content"] for row in memory["facts"])
+            assert evidence["view"] == "captured_evidence"
+            assert evidence["facts"] == []
+>           assert any(
+                "Raw captured release marker" in row["content"]
+                and row["sources"][0]["source_event_id"] == "view-captured-1"
+                for row in evidence["captured_evidence"]
+            )
+E           assert False
+E            +  where False = any(<generator object test_authenticated_hosts_separate_memory_and_captured_evidence.<locals>.<genexpr> at 0x00000173958042B0>)
+
+tests\test_host_retrieval_views.py:212: AssertionError
+=========================== short test summary info ===========================
+FAILED tests/test_host_retrieval_views.py::test_authenticated_hosts_separate_memory_and_captured_evidence
+1 failed, 6 passed in 3.07s

@@ -1,0 +1,196 @@
+FFF........                                                              [100%]
+================================== FAILURES ===================================
+_ test_tier1_stdio_configs_execute_real_roundtrip[generic-stdio-config_path0] _
+  + Exception Group Traceback (most recent call last):
+  |   File "D:\Development\mnemos\mnemos\.worktrees\functional-local-memory\tests\test_mcp_compatibility.py", line 322, in test_tier1_stdio_configs_execute_real_roundtrip
+  |     await _assert_tier1_roundtrip(params)
+  |   File "D:\Development\mnemos\mnemos\.worktrees\functional-local-memory\tests\test_mcp_compatibility.py", line 141, in _assert_tier1_roundtrip
+  |     async with stdio_client(params) as (read_stream, write_stream):
+  |                ~~~~~~~~~~~~^^^^^^^^
+  |   File "C:\Users\Ant\AppData\Roaming\uv\python\cpython-3.13.7-windows-x86_64-none\Lib\contextlib.py", line 235, in __aexit__
+  |     await self.gen.athrow(value)
+  |   File "D:\Development\mnemos\mnemos\.worktrees\functional-local-memory\.venv\Lib\site-packages\mcp\client\stdio\__init__.py", line 183, in stdio_client
+  |     anyio.create_task_group() as tg,
+  |     ~~~~~~~~~~~~~~~~~~~~~~~^^
+  |   File "D:\Development\mnemos\mnemos\.worktrees\functional-local-memory\.venv\Lib\site-packages\anyio\_backends\_asyncio.py", line 847, in __aexit__
+  |     raise BaseExceptionGroup(
+  |         "unhandled errors in a TaskGroup", self._exceptions
+  |     ) from None
+  | ExceptionGroup: unhandled errors in a TaskGroup (1 sub-exception)
+  +-+---------------- 1 ----------------
+    | Exception Group Traceback (most recent call last):
+    |   File "D:\Development\mnemos\mnemos\.worktrees\functional-local-memory\.venv\Lib\site-packages\mcp\client\stdio\__init__.py", line 189, in stdio_client
+    |     yield read_stream, write_stream
+    |   File "D:\Development\mnemos\mnemos\.worktrees\functional-local-memory\tests\test_mcp_compatibility.py", line 142, in _assert_tier1_roundtrip
+    |     async with ClientSession(read_stream, write_stream) as session:
+    |                ~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    |   File "D:\Development\mnemos\mnemos\.worktrees\functional-local-memory\.venv\Lib\site-packages\mcp\shared\session.py", line 238, in __aexit__
+    |     return await self._task_group.__aexit__(exc_type, exc_val, exc_tb)
+    |            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    |   File "D:\Development\mnemos\mnemos\.worktrees\functional-local-memory\.venv\Lib\site-packages\anyio\_backends\_asyncio.py", line 847, in __aexit__
+    |     raise BaseExceptionGroup(
+    |         "unhandled errors in a TaskGroup", self._exceptions
+    |     ) from None
+    | ExceptionGroup: unhandled errors in a TaskGroup (1 sub-exception)
+    +-+---------------- 1 ----------------
+      | Traceback (most recent call last):
+      |   File "D:\Development\mnemos\mnemos\.worktrees\functional-local-memory\tests\test_mcp_compatibility.py", line 220, in _assert_tier1_roundtrip
+      |     assert fact["sources"][0]["source_ref"] == "compatibility-test"
+      | AssertionError: assert None == 'compatibility-test'
+      +------------------------------------
+---------------------------- Captured stderr call -----------------------------
+Processing request of type ListToolsRequest
+
+Processing request of type ListResourcesRequest
+
+Processing request of type CallToolRequest
+
+HTTP Request: POST http://127.0.0.1:51748/v1/dispatch "HTTP/1.1 200 OK"
+
+Processing request of type CallToolRequest
+
+HTTP Request: POST http://127.0.0.1:51748/v1/dispatch "HTTP/1.1 200 OK"
+
+Processing request of type CallToolRequest
+
+HTTP Request: POST http://127.0.0.1:51748/v1/dispatch "HTTP/1.1 200 OK"
+
+Processing request of type CallToolRequest
+
+HTTP Request: POST http://127.0.0.1:51748/v1/dispatch "HTTP/1.1 200 OK"
+
+Processing request of type CallToolRequest
+
+HTTP Request: POST http://127.0.0.1:51748/v1/dispatch "HTTP/1.1 200 OK"
+
+_ test_tier1_stdio_configs_execute_real_roundtrip[claude-desktop-config_path1] _
+  + Exception Group Traceback (most recent call last):
+  |   File "D:\Development\mnemos\mnemos\.worktrees\functional-local-memory\tests\test_mcp_compatibility.py", line 322, in test_tier1_stdio_configs_execute_real_roundtrip
+  |     await _assert_tier1_roundtrip(params)
+  |   File "D:\Development\mnemos\mnemos\.worktrees\functional-local-memory\tests\test_mcp_compatibility.py", line 141, in _assert_tier1_roundtrip
+  |     async with stdio_client(params) as (read_stream, write_stream):
+  |                ~~~~~~~~~~~~^^^^^^^^
+  |   File "C:\Users\Ant\AppData\Roaming\uv\python\cpython-3.13.7-windows-x86_64-none\Lib\contextlib.py", line 235, in __aexit__
+  |     await self.gen.athrow(value)
+  |   File "D:\Development\mnemos\mnemos\.worktrees\functional-local-memory\.venv\Lib\site-packages\mcp\client\stdio\__init__.py", line 183, in stdio_client
+  |     anyio.create_task_group() as tg,
+  |     ~~~~~~~~~~~~~~~~~~~~~~~^^
+  |   File "D:\Development\mnemos\mnemos\.worktrees\functional-local-memory\.venv\Lib\site-packages\anyio\_backends\_asyncio.py", line 847, in __aexit__
+  |     raise BaseExceptionGroup(
+  |         "unhandled errors in a TaskGroup", self._exceptions
+  |     ) from None
+  | ExceptionGroup: unhandled errors in a TaskGroup (1 sub-exception)
+  +-+---------------- 1 ----------------
+    | Exception Group Traceback (most recent call last):
+    |   File "D:\Development\mnemos\mnemos\.worktrees\functional-local-memory\.venv\Lib\site-packages\mcp\client\stdio\__init__.py", line 189, in stdio_client
+    |     yield read_stream, write_stream
+    |   File "D:\Development\mnemos\mnemos\.worktrees\functional-local-memory\tests\test_mcp_compatibility.py", line 142, in _assert_tier1_roundtrip
+    |     async with ClientSession(read_stream, write_stream) as session:
+    |                ~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    |   File "D:\Development\mnemos\mnemos\.worktrees\functional-local-memory\.venv\Lib\site-packages\mcp\shared\session.py", line 238, in __aexit__
+    |     return await self._task_group.__aexit__(exc_type, exc_val, exc_tb)
+    |            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    |   File "D:\Development\mnemos\mnemos\.worktrees\functional-local-memory\.venv\Lib\site-packages\anyio\_backends\_asyncio.py", line 847, in __aexit__
+    |     raise BaseExceptionGroup(
+    |         "unhandled errors in a TaskGroup", self._exceptions
+    |     ) from None
+    | ExceptionGroup: unhandled errors in a TaskGroup (1 sub-exception)
+    +-+---------------- 1 ----------------
+      | Traceback (most recent call last):
+      |   File "D:\Development\mnemos\mnemos\.worktrees\functional-local-memory\tests\test_mcp_compatibility.py", line 220, in _assert_tier1_roundtrip
+      |     assert fact["sources"][0]["source_ref"] == "compatibility-test"
+      | AssertionError: assert None == 'compatibility-test'
+      +------------------------------------
+---------------------------- Captured stderr call -----------------------------
+Processing request of type ListToolsRequest
+
+Processing request of type ListResourcesRequest
+
+Processing request of type CallToolRequest
+
+HTTP Request: POST http://127.0.0.1:59164/v1/dispatch "HTTP/1.1 200 OK"
+
+Processing request of type CallToolRequest
+
+HTTP Request: POST http://127.0.0.1:59164/v1/dispatch "HTTP/1.1 200 OK"
+
+Processing request of type CallToolRequest
+
+HTTP Request: POST http://127.0.0.1:59164/v1/dispatch "HTTP/1.1 200 OK"
+
+Processing request of type CallToolRequest
+
+HTTP Request: POST http://127.0.0.1:59164/v1/dispatch "HTTP/1.1 200 OK"
+
+Processing request of type CallToolRequest
+
+HTTP Request: POST http://127.0.0.1:59164/v1/dispatch "HTTP/1.1 200 OK"
+
+_______ test_tier1_claude_code_plugin_manifest_executes_real_roundtrip ________
+  + Exception Group Traceback (most recent call last):
+  |   File "D:\Development\mnemos\mnemos\.worktrees\functional-local-memory\tests\test_mcp_compatibility.py", line 342, in test_tier1_claude_code_plugin_manifest_executes_real_roundtrip
+  |     await _assert_tier1_roundtrip(params)
+  |   File "D:\Development\mnemos\mnemos\.worktrees\functional-local-memory\tests\test_mcp_compatibility.py", line 141, in _assert_tier1_roundtrip
+  |     async with stdio_client(params) as (read_stream, write_stream):
+  |                ~~~~~~~~~~~~^^^^^^^^
+  |   File "C:\Users\Ant\AppData\Roaming\uv\python\cpython-3.13.7-windows-x86_64-none\Lib\contextlib.py", line 235, in __aexit__
+  |     await self.gen.athrow(value)
+  |   File "D:\Development\mnemos\mnemos\.worktrees\functional-local-memory\.venv\Lib\site-packages\mcp\client\stdio\__init__.py", line 183, in stdio_client
+  |     anyio.create_task_group() as tg,
+  |     ~~~~~~~~~~~~~~~~~~~~~~~^^
+  |   File "D:\Development\mnemos\mnemos\.worktrees\functional-local-memory\.venv\Lib\site-packages\anyio\_backends\_asyncio.py", line 847, in __aexit__
+  |     raise BaseExceptionGroup(
+  |         "unhandled errors in a TaskGroup", self._exceptions
+  |     ) from None
+  | ExceptionGroup: unhandled errors in a TaskGroup (1 sub-exception)
+  +-+---------------- 1 ----------------
+    | Exception Group Traceback (most recent call last):
+    |   File "D:\Development\mnemos\mnemos\.worktrees\functional-local-memory\.venv\Lib\site-packages\mcp\client\stdio\__init__.py", line 189, in stdio_client
+    |     yield read_stream, write_stream
+    |   File "D:\Development\mnemos\mnemos\.worktrees\functional-local-memory\tests\test_mcp_compatibility.py", line 142, in _assert_tier1_roundtrip
+    |     async with ClientSession(read_stream, write_stream) as session:
+    |                ~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    |   File "D:\Development\mnemos\mnemos\.worktrees\functional-local-memory\.venv\Lib\site-packages\mcp\shared\session.py", line 238, in __aexit__
+    |     return await self._task_group.__aexit__(exc_type, exc_val, exc_tb)
+    |            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    |   File "D:\Development\mnemos\mnemos\.worktrees\functional-local-memory\.venv\Lib\site-packages\anyio\_backends\_asyncio.py", line 847, in __aexit__
+    |     raise BaseExceptionGroup(
+    |         "unhandled errors in a TaskGroup", self._exceptions
+    |     ) from None
+    | ExceptionGroup: unhandled errors in a TaskGroup (1 sub-exception)
+    +-+---------------- 1 ----------------
+      | Traceback (most recent call last):
+      |   File "D:\Development\mnemos\mnemos\.worktrees\functional-local-memory\tests\test_mcp_compatibility.py", line 220, in _assert_tier1_roundtrip
+      |     assert fact["sources"][0]["source_ref"] == "compatibility-test"
+      | AssertionError: assert None == 'compatibility-test'
+      +------------------------------------
+---------------------------- Captured stderr call -----------------------------
+Processing request of type ListToolsRequest
+
+Processing request of type ListResourcesRequest
+
+Processing request of type CallToolRequest
+
+HTTP Request: POST http://127.0.0.1:59183/v1/dispatch "HTTP/1.1 200 OK"
+
+Processing request of type CallToolRequest
+
+HTTP Request: POST http://127.0.0.1:59183/v1/dispatch "HTTP/1.1 200 OK"
+
+Processing request of type CallToolRequest
+
+HTTP Request: POST http://127.0.0.1:59183/v1/dispatch "HTTP/1.1 200 OK"
+
+Processing request of type CallToolRequest
+
+HTTP Request: POST http://127.0.0.1:59183/v1/dispatch "HTTP/1.1 200 OK"
+
+Processing request of type CallToolRequest
+
+HTTP Request: POST http://127.0.0.1:59183/v1/dispatch "HTTP/1.1 200 OK"
+
+=========================== short test summary info ===========================
+FAILED tests/test_mcp_compatibility.py::test_tier1_stdio_configs_execute_real_roundtrip[generic-stdio-config_path0]
+FAILED tests/test_mcp_compatibility.py::test_tier1_stdio_configs_execute_real_roundtrip[claude-desktop-config_path1]
+FAILED tests/test_mcp_compatibility.py::test_tier1_claude_code_plugin_manifest_executes_real_roundtrip
+3 failed, 8 passed in 26.21s

@@ -1,0 +1,69 @@
+<?xml version="1.0" encoding="utf-8"?><testsuites name="pytest tests"><testsuite name="pytest" errors="0" failures="1" skipped="0" tests="15" time="8.096" timestamp="2026-09-20T00:46:11.199576-04:00" hostname="Aurora"><testcase classname="tests.test_service_retrieval_views" name="test_service_separates_capture_and_memory_without_erasing_source" time="1.113"><failure message="AssertionError: assert None is not None&#10; +  where None = get_episodic_event('old-release-conversation')&#10; +    where get_episodic_event = &lt;mnemos.utils.storage.SQLiteStore object at 0x00000203AE3D0EC0&gt;.get_episodic_event&#10; +      where &lt;mnemos.utils.storage.SQLiteStore object at 0x00000203AE3D0EC0&gt; = &lt;mnemos.engine.MnemosEngine object at 0x00000203AE3D3770&gt;.store&#10; +        where &lt;mnemos.engine.MnemosEngine object at 0x00000203AE3D3770&gt; = &lt;mnemos.memory_service.LocalMemoryService object at 0x00000203AF4202F0&gt;.engine">tmp_path = WindowsPath('D:/WindowsTemp/pytest-of-Ant/pytest-4026/test_service_separates_capture0')
+
+    @pytest.mark.asyncio
+    async def test_service_separates_capture_and_memory_without_erasing_source(tmp_path):
+        memory, context = service(tmp_path)
+        for name in type(memory.engine.config.modules).model_fields:
+            setattr(memory.engine.config.modules, name, False)
+        try:
+            await memory.dispatch(
+                "remember",
+                {"context": context.model_dump(), "content": "The release label is maple-heron."},
+            )
+            memory.capture(
+                CaptureEvent(
+                    event_id="old-release-conversation",
+                    context=context,
+                    occurred_at=datetime.now(timezone.utc),
+                    role="assistant",
+                    content="Earlier we used cedar-otter as the release label.",
+                    source_kind="conversation",
+                )
+            )
+            await memory.maintenance.run_once(force=True)
+            facts = memory.engine.store.get_all()
+            assert len(facts) == 2
+            for fact in facts:
+                fact.embedding = memory.engine.embedder.embed_query("release label")
+                memory.engine.store.update(fact.id, fact)
+            ids_before = {fact.id for fact in facts}
+            payload = {
+                "context": context.model_dump(),
+                "query": "release label",
+                "top_k": 10,
+                "max_context_tokens": 4000,
+            }
+            ordinary = await memory.dispatch("retrieve", payload)
+            assert ordinary["view"] == "memory"
+            assert len(ordinary["facts"]) == 1
+            assert ordinary["facts"][0]["content"] == "The release label is maple-heron."
+            assert ordinary["captured_evidence"] == []
+            assert ordinary["evidence_context"] == ""
+            assert "cedar-otter" not in ordinary["context"]
+    
+            review = await memory.dispatch("retrieve", {**payload, "view": "captured_evidence"})
+            assert review["view"] == "captured_evidence"
+            assert review["facts"] == [] and review["context"] == ""
+            assert len(review["captured_evidence"]) == 1
+            evidence = review["captured_evidence"][0]
+            assert evidence["assertion_status"] == "unknown"
+            assert evidence["support_available"]
+            assert evidence["sources"][0]["original_source_status"] == "retained_locally"
+            assert "cedar-otter" in review["evidence_context"]
+            assert "captured conversation" in review["evidence_context"]
+            assert "unverified" in review["evidence_context"]
+            for result in (ordinary, review):
+                assert result["schema_version"] == 1
+                assert result["token_count_method"] == "utf8_bytes_upper_bound"
+                assert result["context_token_upper_bound"] == len(
+                    (result["context"] + result["evidence_context"]).encode("utf-8")
+                )
+            assert {fact.id for fact in memory.engine.store.get_all()} == ids_before
+&gt;           assert memory.engine.store.get_episodic_event("old-release-conversation") is not None
+E           AssertionError: assert None is not None
+E            +  where None = get_episodic_event('old-release-conversation')
+E            +    where get_episodic_event = &lt;mnemos.utils.storage.SQLiteStore object at 0x00000203AE3D0EC0&gt;.get_episodic_event
+E            +      where &lt;mnemos.utils.storage.SQLiteStore object at 0x00000203AE3D0EC0&gt; = &lt;mnemos.engine.MnemosEngine object at 0x00000203AE3D3770&gt;.store
+E            +        where &lt;mnemos.engine.MnemosEngine object at 0x00000203AE3D3770&gt; = &lt;mnemos.memory_service.LocalMemoryService object at 0x00000203AF4202F0&gt;.engine
+
+tests\test_service_retrieval_views.py:71: AssertionError</failure></testcase><testcase classname="tests.test_service_retrieval_views" name="test_retrieval_request_rejects_invalid_views[all]" time="0.435" /><testcase classname="tests.test_service_retrieval_views" name="test_retrieval_request_rejects_invalid_views[unknown]" time="0.406" /><testcase classname="tests.test_service_retrieval_views" name="test_retrieval_request_rejects_invalid_views[None]" time="0.551" /><testcase classname="tests.test_service_retrieval_views" name="test_retrieval_request_rejects_invalid_views[1]" time="0.451" /><testcase classname="tests.test_service_retrieval_views" name="test_retrieval_request_rejects_invalid_views[True]" time="0.428" /><testcase classname="tests.test_service_retrieval_views" name="test_retrieval_request_rejects_invalid_views[view5]" time="0.407" /><testcase classname="tests.test_service_retrieval_views" name="test_retrieval_request_rejects_invalid_views[view6]" time="0.373" /><testcase classname="tests.test_captured_assertion_status" name="test_corrected_fact_and_captured_history_keep_distinct_authority_after_restart" time="1.826" /><testcase classname="tests.test_captured_assertion_status" name="test_identical_capture_and_explicit_fact_retain_explicit_authority[True-memory]" time="0.003" /><testcase classname="tests.test_captured_assertion_status" name="test_identical_capture_and_explicit_fact_retain_explicit_authority[True-sqlite]" time="0.374" /><testcase classname="tests.test_captured_assertion_status" name="test_identical_capture_and_explicit_fact_retain_explicit_authority[False-memory]" time="0.002" /><testcase classname="tests.test_captured_assertion_status" name="test_identical_capture_and_explicit_fact_retain_explicit_authority[False-sqlite]" time="0.353" /><testcase classname="tests.test_captured_assertion_status" name="test_unknown_context_qualification_counts_toward_retrieval_budget[captured_passthrough]" time="0.007" /><testcase classname="tests.test_captured_assertion_status" name="test_unknown_context_qualification_counts_toward_retrieval_budget[legacy]" time="0.004" /></testsuite></testsuites>

@@ -1,0 +1,127 @@
+{
+  "source_commit": "e419c2aa615e037e639a74b14615889d03f4e47f",
+  "source_checkout": "C:\\Users\\Ant\\AppData\\Local\\Temp\\mnemos-source-retrieval-views-v3",
+  "status": "passed",
+  "started_at": "2026-09-20T05:11:57.704785+00:00",
+  "checks": [
+    {
+      "name": "pytest",
+      "command": [
+        "D:\\Development\\mnemos\\mnemos\\.worktrees\\functional-local-memory\\.venv\\Scripts\\python.exe",
+        "-m",
+        "pytest",
+        "-q",
+        "--basetemp",
+        "C:\\Users\\Ant\\AppData\\Local\\Temp\\mnemos-check-temp-retrieval-views-v3\\pytest",
+        "--junitxml",
+        "C:\\Users\\Ant\\AppData\\Local\\Temp\\mnemos-package-checks-retrieval-views-v3\\pytest.xml"
+      ],
+      "status": "passed",
+      "started_at": "2026-09-20T05:11:57.706191+00:00",
+      "exit_code": 0,
+      "finished_at": "2026-09-20T05:16:53.715021+00:00",
+      "counts": {
+        "tests": 1504,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 4
+      }
+    },
+    {
+      "name": "black",
+      "command": [
+        "D:\\Development\\mnemos\\mnemos\\.worktrees\\functional-local-memory\\.venv\\Scripts\\python.exe",
+        "-m",
+        "black",
+        "--check",
+        "."
+      ],
+      "status": "passed",
+      "started_at": "2026-09-20T05:16:53.726222+00:00",
+      "exit_code": 0,
+      "finished_at": "2026-09-20T05:16:57.635965+00:00"
+    },
+    {
+      "name": "mypy",
+      "command": [
+        "D:\\Development\\mnemos\\mnemos\\.worktrees\\functional-local-memory\\.venv\\compat-py310\\Scripts\\python.exe",
+        "-m",
+        "mypy",
+        "."
+      ],
+      "status": "passed",
+      "started_at": "2026-09-20T05:16:57.637340+00:00",
+      "exit_code": 0,
+      "finished_at": "2026-09-20T05:17:08.086584+00:00"
+    },
+    {
+      "name": "javascript",
+      "command": [
+        "node",
+        "--check",
+        "mnemos/ui/app.js"
+      ],
+      "status": "passed",
+      "started_at": "2026-09-20T05:17:08.087912+00:00",
+      "exit_code": 0,
+      "finished_at": "2026-09-20T05:17:08.165734+00:00"
+    },
+    {
+      "name": "build",
+      "command": [
+        "D:\\Development\\mnemos\\mnemos\\.worktrees\\functional-local-memory\\.venv\\Scripts\\python.exe",
+        "-m",
+        "build",
+        "--outdir",
+        "C:\\Users\\Ant\\AppData\\Local\\Temp\\mnemos-package-checks-retrieval-views-v3\\dist"
+      ],
+      "status": "passed",
+      "started_at": "2026-09-20T05:17:08.167065+00:00",
+      "exit_code": 0,
+      "finished_at": "2026-09-20T05:18:27.152023+00:00"
+    },
+    {
+      "name": "twine",
+      "command": [
+        "D:\\Development\\mnemos\\mnemos\\.worktrees\\functional-local-memory\\.venv\\Scripts\\python.exe",
+        "-m",
+        "twine",
+        "check",
+        "C:\\Users\\Ant\\AppData\\Local\\Temp\\mnemos-package-checks-retrieval-views-v3\\dist\\mnemos_memory-0.7.0-py3-none-any.whl",
+        "C:\\Users\\Ant\\AppData\\Local\\Temp\\mnemos-package-checks-retrieval-views-v3\\dist\\mnemos_memory-0.7.0.tar.gz"
+      ],
+      "exit_code": 0,
+      "status": "passed"
+    }
+  ],
+  "runner_sha256": "7b241853adab66b8fd1e0c570d00462a216ffe21dca554fb95ae522ecbedc3ef",
+  "temporary_storage": {
+    "path": "C:\\Users\\Ant\\AppData\\Local\\Temp\\mnemos-check-temp-retrieval-views-v3",
+    "git_discovery_exit_code": 128,
+    "git_discovery_stderr": "fatal: not a git repository (or any of the parent directories): .git"
+  },
+  "website_input": {
+    "path": "D:\\Development\\mnemos\\web\\index.html",
+    "sha256_before": "f71a4cb5b7004f9ba584f45a03dab61cfc608fed377b1e07b46e2f2bc0b77d4d",
+    "sha256_after": "f71a4cb5b7004f9ba584f45a03dab61cfc608fed377b1e07b46e2f2bc0b77d4d"
+  },
+  "environment_overrides": {
+    "TEMP": "C:\\Users\\Ant\\AppData\\Local\\Temp\\mnemos-check-temp-retrieval-views-v3",
+    "TMP": "C:\\Users\\Ant\\AppData\\Local\\Temp\\mnemos-check-temp-retrieval-views-v3",
+    "TMPDIR": "C:\\Users\\Ant\\AppData\\Local\\Temp\\mnemos-check-temp-retrieval-views-v3",
+    "MNEMOS_WEBSITE_INDEX": "D:\\Development\\mnemos\\web\\index.html"
+  },
+  "updated_at": "2026-09-20T05:18:28.985319+00:00",
+  "artifacts": [
+    {
+      "file": "C:\\Users\\Ant\\AppData\\Local\\Temp\\mnemos-package-checks-retrieval-views-v3\\dist\\mnemos_memory-0.7.0-py3-none-any.whl",
+      "bytes": 303727,
+      "sha256": "185f3df7720a32e5ed285d9c507e1e45e7f57370942740b53c4f8178bb97a97e"
+    },
+    {
+      "file": "C:\\Users\\Ant\\AppData\\Local\\Temp\\mnemos-package-checks-retrieval-views-v3\\dist\\mnemos_memory-0.7.0.tar.gz",
+      "bytes": 61165656,
+      "sha256": "81e0a2e15d148c0c209be0d4f81a828f7196e135e93c16195d1e2fefeca7c097"
+    }
+  ]
+}

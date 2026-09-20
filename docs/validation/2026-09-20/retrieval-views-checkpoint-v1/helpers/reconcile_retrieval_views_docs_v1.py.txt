@@ -1,0 +1,76 @@
+"""Bind the working article handoff to verified retrieval-view evidence."""
+from pathlib import Path
+import argparse
+import json
+
+p = argparse.ArgumentParser()
+p.add_argument('--checks', type=Path, required=True)
+p.add_argument('--installed', type=Path, required=True)
+a = p.parse_args()
+repo = Path(__file__).resolve().parent.parent
+v = json.loads(a.checks.read_text(encoding='utf-8'))
+i = json.loads(a.installed.read_text(encoding='utf-8'))
+assert v['status'] == i['status'] == 'passed'
+s = v['checks'][0]['counts']
+c = i['contract']['junit_summary']
+short = v['source_commit'][:7]
+
+def paragraph(link):
+    return f'''The verified [retrieval-view checkpoint]({link})
+at `{short}` passes {s['tests'] - s['skipped']:,} source tests with {s['skipped']} skips,
+all six source/package checks, {c['tests'] - c['skipped']:,} isolated installed cases
+with {c['skipped']} matching skips, and seven replay assertions. Ordinary recall
+now excludes whole captured conversations before retrieval limits. Explicit
+evidence review returns those copies separately, with provenance and unverified
+labels. Capture storage and related-forget inventory remain intact. This is a
+verified API change; no native model cohort has run this package, and the v7
+failures retain their original runtime and outcome. Native lifecycle,
+three-host continuity, complete capture, quality acceptance, Desktop, and the
+pilot remain open.
+
+The updated CLI and MCP subprocess checks verify that the child imports the
+same package as the parent. Older parent-process origin checks alone did not
+establish that boundary for those subprocesses. Preserve the earlier test
+results while keeping that limit on their installed-package interpretation.
+
+'''
+
+for relative in ('docs/validation/2026-09-16/implementation-status.md',
+                 'docs/validation/2026-09-16/progress.md',
+                 'docs/validation/2026-09-16/claim-evidence-ledger.md'):
+    path = repo / relative
+    text = path.read_text(encoding='utf-8')
+    first, rest = text.split('\n\n', 1)
+    rest = rest.replace('The latest verified [deletion coverage checkpoint]', 'The earlier verified [deletion coverage checkpoint]')
+    text = first + '\n\n' + paragraph('../2026-09-20/retrieval-views-checkpoint-v1/README.md') + rest
+    text = text.replace('Latest verified package `1a11058` passes 1,439 source tests and 608 installed contract cases, with 4/4 respective skips and seven replay assertions.',
+        f'Latest verified package `{short}` passes {s["tests"] - s["skipped"]:,} source tests and {c["tests"] - c["skipped"]:,} installed contract cases, with {s["skipped"]}/{c["skipped"]} respective skips and seven replay assertions. Ordinary memory and captured evidence now have separate retrieval views; native behavior on this package is untested.')
+    path.write_text(text, encoding='utf-8')
+
+path = repo / 'docs/handoffs/substack-local-memory.md'
+text = path.read_text(encoding='utf-8')
+text = text.replace('## Latest native result and portable primary sources\n\n',
+    '## Latest implementation and native evidence\n\n' + paragraph('../validation/2026-09-20/retrieval-views-checkpoint-v1/README.md'))
+old = '''fact channel. A proposed separation would preserve capture and expose raw
+history through explicit evidence review. It is not implemented, does not
+prove the cause of v7's omissions, and must not relax the stored-copy erasure
+checks.'''
+assert old in text
+text = text.replace(old, '''fact channel at the time of v7. The verified retrieval-view change now
+preserves capture and exposes raw history through explicit evidence review.
+It does not prove the cause of v7's omissions or relax stored-copy erasure
+checks.''')
+text = text.replace('The latest verified [deletion coverage checkpoint]', 'The earlier verified [deletion coverage checkpoint]')
+path.write_text(text, encoding='utf-8')
+
+path = repo / 'docs/validation/2026-09-20/captured-evidence-contract-review.md'
+text = path.read_text(encoding='utf-8')
+text = text.replace('Status: source-grounded diagnosis and proposed contract, not an implemented\nrepair or a new acceptance result.',
+    'Status: historical diagnosis followed by the verified [retrieval-view\nimplementation](retrieval-views-checkpoint-v1/README.md). The behavior described\nbelow is the pre-change state. No new native model acceptance is established.')
+text = text.replace('## Current behavior', '## Behavior at diagnosis').replace('## Proposed next implementation', '## Proposed contract, now implemented')
+path.write_text(text, encoding='utf-8')
+
+path = repo / 'docs/plans/2026-09-16-functional-local-memory.md'
+text = path.read_text(encoding='utf-8').replace('2026-09-20-v13.zip', '2026-09-20-v14.zip')
+path.write_text(text, encoding='utf-8')
+print(json.dumps({'source_commit': v['source_commit'], 'source': s, 'installed': c}))

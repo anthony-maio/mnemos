@@ -1,0 +1,133 @@
+......................FF.............................                    [100%]
+================================== FAILURES ===================================
+__________ test_real_service_lifecycle_is_scoped_and_version_checked __________
+
+tmp_path = WindowsPath('D:/WindowsTemp/pytest-of-Ant/pytest-4018/test_real_service_lifecycle_is0')
+
+    def test_real_service_lifecycle_is_scoped_and_version_checked(tmp_path: Path):
+        from mnemos.client import MnemosClient
+        from mnemos.scopes import ScopeRegistry
+    
+        registry = ScopeRegistry()
+        registry.register_project(tmp_path, user_profile_id="profile-a", enabled=True)
+        foreign_root = tmp_path / "foreign"
+        foreign_root.mkdir()
+        registry.register_project(foreign_root, user_profile_id="profile-a", enabled=True)
+        resolved = registry.resolve(
+            tmp_path, user_profile_id="profile-a", session_id="hermes-session", host="hermes"
+        )
+        foreign = registry.resolve(
+            foreign_root, user_profile_id="profile-a", session_id="foreign-session", host="hermes"
+        )
+        service = MnemosService(
+            dispatcher_factory=lambda: LocalMemoryService(
+                MnemosEngine(
+                    config=MnemosConfig(
+                        modules=ModuleConfig(**{name: False for name in ModuleConfig.model_fields})
+                    ),
+                    llm=UnavailableLLMProvider(),
+                    embedder=SimpleEmbeddingProvider(),
+                    store=SQLiteStore(str(tmp_path / "memory.sqlite")),
+                ),
+                registry,
+            ),
+            descriptor_path=tmp_path / "runtime.json",
+        )
+        service.start()
+        client = MnemosClient(descriptor_path=service.descriptor_path, auto_start=False)
+    
+        def call(name: str, args: dict[str, Any]) -> dict[str, Any]:
+            return json.loads(asyncio.run(dispatch_tool(client, resolved, name, args)))
+    
+        try:
+            remembered = call(
+                "mnemos_remember", {"content": "Release label is cedar.", "request_id": "remember-1"}
+            )
+            assert remembered["status"] == "committed"
+            asyncio.run(client.request("maintenance", queue_on_failure=False))
+>           facts = call("mnemos_retrieve", {"query": "release label"})["facts"]
+                    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E           KeyError: 'facts'
+
+tests\test_hermes_tools.py:287: KeyError
+________ test_remember_retry_reuses_event_identity_after_lost_response ________
+
+tmp_path = WindowsPath('D:/WindowsTemp/pytest-of-Ant/pytest-4018/test_remember_retry_reuses_eve0')
+
+    def test_remember_retry_reuses_event_identity_after_lost_response(tmp_path: Path):
+        from mnemos.client import MnemosClient
+        from mnemos.scopes import ScopeRegistry
+    
+        registry = ScopeRegistry()
+        registry.register_project(tmp_path, user_profile_id="profile-a", enabled=True)
+        resolved = registry.resolve(
+            tmp_path, user_profile_id="profile-a", session_id="hermes-session", host="hermes"
+        )
+        service = MnemosService(
+            dispatcher_factory=lambda: LocalMemoryService(
+                MnemosEngine(
+                    config=MnemosConfig(
+                        modules=ModuleConfig(**{name: False for name in ModuleConfig.model_fields})
+                    ),
+                    llm=UnavailableLLMProvider(),
+                    embedder=SimpleEmbeddingProvider(),
+                    store=SQLiteStore(str(tmp_path / "memory.sqlite")),
+                ),
+                registry,
+            ),
+            descriptor_path=tmp_path / "runtime.json",
+        )
+        service.start()
+        real_client = MnemosClient(descriptor_path=service.descriptor_path, auto_start=False)
+    
+        class LoseFirstResponse:
+            def __init__(self) -> None:
+                self.first = True
+                self.committed: dict[str, Any] = {}
+    
+            async def request(self, operation: str, payload: dict[str, Any], *, queue_on_failure: bool):
+                result = await real_client.request(
+                    operation, payload, queue_on_failure=queue_on_failure
+                )
+                if self.first:
+                    self.first = False
+                    self.committed = result
+                    raise TimeoutError("response lost after commit")
+                return result
+    
+        client = LoseFirstResponse()
+        args = {"content": "A retry-safe remembered fact.", "request_id": "retry-1"}
+        try:
+            first = json.loads(asyncio.run(dispatch_tool(client, resolved, "mnemos_remember", args)))
+            second = json.loads(asyncio.run(dispatch_tool(client, resolved, "mnemos_remember", args)))
+            assert first["status"] == "degraded"
+            assert first["committed"] is False
+            assert second["status"] == "committed"
+            assert second["event_id"] == client.committed["event_id"]
+            assert second["job_id"] == client.committed["job_id"]
+            changed = json.loads(
+                asyncio.run(
+                    dispatch_tool(
+                        client,
+                        resolved,
+                        "mnemos_remember",
+                        {"content": "Changed payload.", "request_id": "retry-1"},
+                    )
+                )
+            )
+            assert changed["status"] == "degraded"
+            asyncio.run(real_client.request("maintenance", queue_on_failure=False))
+>           facts = json.loads(
+                asyncio.run(
+                    dispatch_tool(
+                        real_client, resolved, "mnemos_retrieve", {"query": "retry-safe fact"}
+                    )
+                )
+            )["facts"]
+E           KeyError: 'facts'
+
+tests\test_hermes_tools.py:436: KeyError
+=========================== short test summary info ===========================
+FAILED tests/test_hermes_tools.py::test_real_service_lifecycle_is_scoped_and_version_checked
+FAILED tests/test_hermes_tools.py::test_remember_retry_reuses_event_identity_after_lost_response
+2 failed, 51 passed in 9.09s

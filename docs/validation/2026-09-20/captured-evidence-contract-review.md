@@ -1,7 +1,8 @@
 # Captured conversation and the ordinary memory retrieval contract
 
-Status: source-grounded diagnosis and proposed contract, not an implemented
-repair or a new acceptance result.
+Status: historical diagnosis followed by the verified [retrieval-view
+implementation](retrieval-views-checkpoint-v1/README.md). The behavior described
+below is the pre-change state. No new native model acceptance is established.
 
 The [v7 native cohort](hermes-native-cohort-v7/README.md) failed all three
 lifecycles despite successful model readiness. In attempt 1, correction
@@ -11,7 +12,7 @@ that both occurred; it does not establish causation. Attempt 3 omitted a
 job-status call during fresh teaching, which this context explanation alone
 cannot explain.
 
-## Current behavior
+## Behavior at diagnosis
 
 The accepted [service contract](../../plans/2026-09-16-functional-local-memory.md)
 distinguishes explicit requested writes from capture for later processing.
@@ -33,7 +34,7 @@ assertions. This behavior is intentional and covered by
 of the stored assertion status. The product contract still gives ordinary
 memory consumers raw conversation and task instructions in the fact channel.
 
-## Proposed next implementation
+## Proposed contract, now implemented
 
 Preserve episodic events, indexed captured evidence, provenance, and deletion
 coverage. Give ordinary host recall a durable-memory view; expose raw captured

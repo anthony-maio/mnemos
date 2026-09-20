@@ -1,0 +1,128 @@
+<?xml version="1.0" encoding="utf-8"?><testsuites name="pytest tests"><testsuite name="pytest" errors="0" failures="3" skipped="0" tests="3" time="0.620" timestamp="2026-09-20T00:47:02.539959-04:00" hostname="Aurora"><testcase classname="tests.test_control_plane_retrieval_views" name="test_inspector_explains_selected_record_in_its_own_view[False]" time="0.006"><failure message="KeyError: 'view'">tmp_path = WindowsPath('D:/WindowsTemp/pytest-of-Ant/pytest-4027/test_inspector_explains_select0')
+captured = False
+
+    @pytest.mark.parametrize("captured", [False, True])
+    def test_inspector_explains_selected_record_in_its_own_view(tmp_path, captured):
+        service, _ = _facade_service(tmp_path)
+        view = "captured_evidence" if captured else "memory"
+        channel = "captured_evidence" if captured else "facts"
+        calls = []
+    
+        def request(operation, payload):
+            calls.append((operation, payload))
+            if operation == "inspect":
+                return {
+                    "fact": {
+                        "id": "selected",
+                        "content": "release convention",
+                        "metadata": {
+                            "source": "captured_passthrough" if captured else "explicit_remember",
+                            "scope": "project",
+                            "scope_id": "project-1",
+                        },
+                    }
+                }
+            assert operation == "retrieve"
+            assert payload["view"] == view
+            return {channel: [{"id": "selected", "scores": {"semantic_rank": 1}}]}
+    
+        service._service_request = request
+&gt;       result = service.get_memory_detail("selected", query="release convention")
+                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+tests\test_control_plane_retrieval_views.py:34: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+mnemos\control_plane.py:683: in get_memory_detail
+    retrieval = self._service_request(
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+operation = 'retrieve'
+payload = {'query': 'release convention', 'context': {'user_profile_id': 'alice', 'project_id': 'project-1', 'workspace_id': None, 'session_id': 'ui-test', ...}, 'allowed_scopes': ['project', 'workspace', 'global'], 'top_k': 10, ...}
+
+    def request(operation, payload):
+        calls.append((operation, payload))
+        if operation == "inspect":
+            return {
+                "fact": {
+                    "id": "selected",
+                    "content": "release convention",
+                    "metadata": {
+                        "source": "captured_passthrough" if captured else "explicit_remember",
+                        "scope": "project",
+                        "scope_id": "project-1",
+                    },
+                }
+            }
+        assert operation == "retrieve"
+&gt;       assert payload["view"] == view
+               ^^^^^^^^^^^^^^^
+E       KeyError: 'view'
+
+tests\test_control_plane_retrieval_views.py:30: KeyError</failure></testcase><testcase classname="tests.test_control_plane_retrieval_views" name="test_inspector_explains_selected_record_in_its_own_view[True]" time="0.002"><failure message="KeyError: 'view'">tmp_path = WindowsPath('D:/WindowsTemp/pytest-of-Ant/pytest-4027/test_inspector_explains_select1')
+captured = True
+
+    @pytest.mark.parametrize("captured", [False, True])
+    def test_inspector_explains_selected_record_in_its_own_view(tmp_path, captured):
+        service, _ = _facade_service(tmp_path)
+        view = "captured_evidence" if captured else "memory"
+        channel = "captured_evidence" if captured else "facts"
+        calls = []
+    
+        def request(operation, payload):
+            calls.append((operation, payload))
+            if operation == "inspect":
+                return {
+                    "fact": {
+                        "id": "selected",
+                        "content": "release convention",
+                        "metadata": {
+                            "source": "captured_passthrough" if captured else "explicit_remember",
+                            "scope": "project",
+                            "scope_id": "project-1",
+                        },
+                    }
+                }
+            assert operation == "retrieve"
+            assert payload["view"] == view
+            return {channel: [{"id": "selected", "scores": {"semantic_rank": 1}}]}
+    
+        service._service_request = request
+&gt;       result = service.get_memory_detail("selected", query="release convention")
+                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+tests\test_control_plane_retrieval_views.py:34: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+mnemos\control_plane.py:683: in get_memory_detail
+    retrieval = self._service_request(
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+operation = 'retrieve'
+payload = {'query': 'release convention', 'context': {'user_profile_id': 'alice', 'project_id': 'project-1', 'workspace_id': None, 'session_id': 'ui-test', ...}, 'allowed_scopes': ['project', 'workspace', 'global'], 'top_k': 10, ...}
+
+    def request(operation, payload):
+        calls.append((operation, payload))
+        if operation == "inspect":
+            return {
+                "fact": {
+                    "id": "selected",
+                    "content": "release convention",
+                    "metadata": {
+                        "source": "captured_passthrough" if captured else "explicit_remember",
+                        "scope": "project",
+                        "scope_id": "project-1",
+                    },
+                }
+            }
+        assert operation == "retrieve"
+&gt;       assert payload["view"] == view
+               ^^^^^^^^^^^^^^^
+E       KeyError: 'view'
+
+tests\test_control_plane_retrieval_views.py:30: KeyError</failure></testcase><testcase classname="tests.test_control_plane_retrieval_views" name="test_control_plane_forwards_explicit_evidence_view" time="0.002"><failure message="TypeError: ControlPlaneService.retrieve_memory() got an unexpected keyword argument 'view'">tmp_path = WindowsPath('D:/WindowsTemp/pytest-of-Ant/pytest-4027/test_control_plane_forwards_ex0')
+
+    def test_control_plane_forwards_explicit_evidence_view(tmp_path):
+        service, client = _facade_service(tmp_path)
+&gt;       service.retrieve_memory("release convention", view="captured_evidence")
+E       TypeError: ControlPlaneService.retrieve_memory() got an unexpected keyword argument 'view'
+
+tests\test_control_plane_retrieval_views.py:44: TypeError</failure></testcase></testsuite></testsuites>

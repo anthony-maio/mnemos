@@ -1,0 +1,14 @@
+from pathlib import Path
+import hashlib
+import json
+import subprocess
+
+repo = Path(__file__).resolve().parent.parent
+relative = Path('docs/validation/2026-09-20/retrieval-views-checkpoint-v1')
+index = json.loads((repo / relative / 'evidence-index.json').read_text(encoding='utf-8'))
+for name, expected in index['files'].items():
+    path = (relative / name).as_posix()
+    data = subprocess.check_output(['git', 'show', ':' + path], cwd=repo)
+    assert len(data) == expected['bytes'], path
+    assert hashlib.sha256(data).hexdigest() == expected['sha256'], path
+print(json.dumps({'staged_archive_files_verified': len(index['files'])}))

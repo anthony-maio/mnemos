@@ -1,0 +1,117 @@
+<?xml version="1.0" encoding="utf-8"?><testsuites name="pytest tests"><testsuite name="pytest" errors="0" failures="1" skipped="0" tests="22" time="7.889" timestamp="2026-09-20T00:51:47.183789-04:00" hostname="Aurora"><testcase classname="tests.test_captured_assertion_status" name="test_corrected_fact_and_captured_history_keep_distinct_authority_after_restart" time="1.568"><failure message="KeyError: 'exact_facts'">tmp_path = WindowsPath('D:/WindowsTemp/pytest-of-Ant/pytest-4048/test_corrected_fact_and_captur0')
+
+    @pytest.mark.asyncio
+    async def test_corrected_fact_and_captured_history_keep_distinct_authority_after_restart(tmp_path):
+        memory, context = service(tmp_path)
+        for name in type(memory.engine.config.modules).model_fields:
+            setattr(memory.engine.config.modules, name, False)
+        old = "The release label is cedar-otter."
+        new = "The release label is maple-heron."
+        try:
+            await memory.dispatch("remember", {"context": context.model_dump(), "content": old})
+            await memory.maintenance.run_once(force=True)
+            target = memory.engine.store.get_all()[0]
+            captured_ids = []
+            for role, text in (
+                ("user", 'Please remember this quoted convention: "' + old + '"'),
+                ("assistant", old),
+            ):
+                result = memory.capture(
+                    CaptureEvent(
+                        event_id="captured-" + role,
+                        context=context,
+                        occurred_at=datetime.now(timezone.utc),
+                        role=role,
+                        content=text,
+                        source_kind="conversation",
+                    )
+                )
+                captured_ids.append(result["event_id"])
+            await memory.maintenance.run_once(force=True)
+            await memory.dispatch(
+                "correct",
+                {
+                    "context": context.model_dump(),
+                    "fact_id": target.id,
+                    "expected_version": 1,
+                    "content": new,
+                },
+            )
+            await memory.maintenance.run_once(force=True)
+            # A new explicit assertion containing the old text remains legitimate.
+            await memory.dispatch(
+                "remember", {"context": context.model_dump(), "content": "Archive convention: " + old}
+            )
+            await memory.maintenance.run_once(force=True)
+            engine = memory.engine
+            engine.store.close()
+            memory = LocalMemoryService(
+                MnemosEngine(
+                    config=engine.config,
+                    store=SQLiteStore(str(tmp_path / "memory.sqlite")),
+                    llm=engine.llm,
+                    embedder=engine.embedder,
+                ),
+                memory.registry,
+            )
+            # Fix candidate similarities only; exercise actual service/storage/rendering.
+            for fact in memory.engine.store.get_all():
+                fact.embedding = memory.engine.embedder.embed_query("release label")
+                memory.engine.store.update(fact.id, fact)
+            result = await memory.dispatch(
+                "retrieve",
+                {
+                    "context": context.model_dump(),
+                    "query": "release label",
+                    "top_k": 10,
+                    "max_context_tokens": 4000,
+                },
+            )
+            returned = {fact["id"]: fact for fact in result["facts"]}
+            assert returned[target.id]["content"] == new
+            assert returned[target.id]["version"] == 2
+            assert returned[target.id]["assertion_status"] == "asserted"
+            assert len(returned) == 2
+            assert result["captured_evidence"] == [] and result["evidence_context"] == ""
+            review = await memory.dispatch(
+                "retrieve",
+                {
+                    "context": context.model_dump(),
+                    "query": "release label",
+                    "top_k": 10,
+                    "max_context_tokens": 4000,
+                    "view": "captured_evidence",
+                },
+            )
+            assert review["facts"] == [] and review["context"] == ""
+            raw = review["captured_evidence"]
+            assert len(raw) == 2
+            assert all(fact["assertion_status"] == "unknown" for fact in raw)
+            for fact in raw:
+                line = next(
+                    line for line in review["evidence_context"].splitlines() if fact["id"] in line
+                )
+                assert "captured conversation" in line and "unverified" in line
+                assert fact["support_available"]
+            assert any(
+                f["content"].startswith("Archive convention:") and f["assertion_status"] == "asserted"
+                for f in returned.values()
+            )
+            for event_id in captured_ids:
+                assert memory.engine.store.get_episodic_event(event_id) is not None
+            preview = await memory.dispatch(
+                "forget_preview",
+                {
+                    "context": context.model_dump(),
+                    "fact_id": target.id,
+                    "expected_version": 2,
+                },
+            )
+            # Omitting captured history from recall must not omit it from erasure review.
+            assert {fact["id"] for fact in raw} &lt;= {
+&gt;               fact["id"] for fact in preview["exact_facts"]
+                                       ^^^^^^^^^^^^^^^^^^^^^^
+            }
+E           KeyError: 'exact_facts'
+
+tests\test_captured_assertion_status.py:126: KeyError</failure></testcase><testcase classname="tests.test_captured_assertion_status" name="test_identical_capture_and_explicit_fact_retain_explicit_authority[True-memory]" time="0.003" /><testcase classname="tests.test_captured_assertion_status" name="test_identical_capture_and_explicit_fact_retain_explicit_authority[True-sqlite]" time="0.445" /><testcase classname="tests.test_captured_assertion_status" name="test_identical_capture_and_explicit_fact_retain_explicit_authority[False-memory]" time="0.002" /><testcase classname="tests.test_captured_assertion_status" name="test_identical_capture_and_explicit_fact_retain_explicit_authority[False-sqlite]" time="0.419" /><testcase classname="tests.test_captured_assertion_status" name="test_unknown_context_qualification_counts_toward_retrieval_budget[captured_passthrough]" time="0.006" /><testcase classname="tests.test_captured_assertion_status" name="test_unknown_context_qualification_counts_toward_retrieval_budget[legacy]" time="0.004" /><testcase classname="tests.test_retrieval_views" name="test_memory_view_filters_raw_before_top_k_and_evidence_view_returns_it[memory]" time="0.004" /><testcase classname="tests.test_retrieval_views" name="test_memory_view_filters_raw_before_top_k_and_evidence_view_returns_it[sqlite]" time="1.579" /><testcase classname="tests.test_retrieval_views" name="test_legacy_unknown_remains_in_memory_view[memory]" time="0.004" /><testcase classname="tests.test_retrieval_views" name="test_legacy_unknown_remains_in_memory_view[sqlite]" time="0.422" /><testcase classname="tests.test_retrieval_views" name="test_views_keep_foreign_scopes_out[memory]" time="0.004" /><testcase classname="tests.test_retrieval_views" name="test_views_keep_foreign_scopes_out[sqlite]" time="0.562" /><testcase classname="tests.test_retrieval_views" name="test_sqlite_lexical_view_filter_is_applied_before_limit" time="1.309" /><testcase classname="tests.test_retrieval_views" name="test_invalid_view_is_rejected_before_embedding[None]" time="0.004" /><testcase classname="tests.test_retrieval_views" name="test_invalid_view_is_rejected_before_embedding[1]" time="0.003" /><testcase classname="tests.test_retrieval_views" name="test_invalid_view_is_rejected_before_embedding[True]" time="0.003" /><testcase classname="tests.test_retrieval_views" name="test_invalid_view_is_rejected_before_embedding[invalid_view3]" time="0.003" /><testcase classname="tests.test_retrieval_views" name="test_invalid_view_is_rejected_before_embedding[invalid_view4]" time="0.004" /><testcase classname="tests.test_retrieval_views" name="test_context_scope_and_profile_filters_apply_to_both_views[memory]" time="0.078" /><testcase classname="tests.test_retrieval_views" name="test_context_scope_and_profile_filters_apply_to_both_views[sqlite]" time="0.666" /><testcase classname="tests.test_retrieval_views" name="test_graph_traversal_does_not_cross_view_boundary" time="0.006" /></testsuite></testsuites>

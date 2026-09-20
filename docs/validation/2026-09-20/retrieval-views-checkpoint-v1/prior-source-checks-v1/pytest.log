@@ -1,0 +1,803 @@
+........................................................................ [  4%]
+.......................ss............................................... [  9%]
+........................................................................ [ 14%]
+.....F.................................................................. [ 19%]
+........................................................................ [ 24%]
+........................................................................ [ 28%]
+........................................................................ [ 33%]
+........................................................................ [ 38%]
+........................................................................ [ 43%]
+........................................................................ [ 48%]
+.ss..................................................................... [ 52%]
+.........................FFF............................................ [ 57%]
+........................................................................ [ 62%]
+........................................................................ [ 67%]
+..................................................................F..... [ 72%]
+...........................................FF.FFFFFF.................... [ 76%]
+........................................................................ [ 81%]
+........................................................................ [ 86%]
+........................................................................ [ 91%]
+........................................................................ [ 96%]
+..........................................................               [100%]
+================================== FAILURES ===================================
+____________________ test_cli_retrieve_forwards_scope_args ____________________
+
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x000002B0279E94E0>
+capsys = <_pytest.capture.CaptureFixture object at 0x000002B027926E40>
+
+    @pytest.mark.asyncio
+    async def test_cli_retrieve_forwards_scope_args(
+        monkeypatch: pytest.MonkeyPatch, capsys: Any
+    ) -> None:
+        class DummyEngine:
+            def __init__(self) -> None:
+                self.current_scope: str | None = None
+                self.scope_id: str | None = None
+                self.allowed_scopes: tuple[str, ...] = ()
+    
+            async def retrieve(
+                self,
+                query: str,
+                top_k: int = 5,
+                reconsolidate: bool = True,
+                current_scope: str = "project",
+                scope_id: str | None = None,
+                allowed_scopes: tuple[str, ...] = ("project", "workspace", "global"),
+            ) -> list[MemoryChunk]:
+                _ = query, top_k, reconsolidate
+                self.current_scope = current_scope
+                self.scope_id = scope_id
+                self.allowed_scopes = allowed_scopes
+                return [
+                    MemoryChunk(
+                        content="result",
+                        metadata={"scope": "project", "scope_id": "alpha"},
+                    )
+                ]
+    
+        engine = DummyEngine()
+        monkeypatch.setattr("mnemos.cli._build_engine", lambda: engine)
+    
+>       await _cmd_retrieve(
+            Namespace(
+                query="deployment",
+                top_k=3,
+                current_scope="project",
+                scope_id="alpha",
+                allowed_scopes="project,global",
+                reconsolidate=False,
+            )
+        )
+
+tests\test_cli.py:304: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+args = Namespace(query='deployment', top_k=3, current_scope='project', scope_id='alpha', allowed_scopes='project,global', reconsolidate=False)
+
+    async def _cmd_retrieve(args: argparse.Namespace) -> None:
+        engine = _build_engine()
+        allowed_scopes = _parse_allowed_scopes(args.allowed_scopes)
+>       chunks = await engine.retrieve(
+            args.query,
+            top_k=args.top_k,
+            reconsolidate=args.reconsolidate,
+            current_scope=args.current_scope,
+            scope_id=(args.scope_id or None),
+            allowed_scopes=allowed_scopes,
+            view=getattr(args, "view", "memory"),
+        )
+E       TypeError: test_cli_retrieve_forwards_scope_args.<locals>.DummyEngine.retrieve() got an unexpected keyword argument 'view'
+
+mnemos\cli.py:585: TypeError
+_ test_tier1_stdio_configs_execute_real_roundtrip[generic-stdio-config_path0] _
+  + Exception Group Traceback (most recent call last):
+  |   File "C:\Users\Ant\AppData\Local\Temp\mnemos-source-retrieval-views-v1\tests\test_mcp_compatibility.py", line 300, in test_tier1_stdio_configs_execute_real_roundtrip
+  |     await _assert_tier1_roundtrip(params)
+  |   File "C:\Users\Ant\AppData\Local\Temp\mnemos-source-retrieval-views-v1\tests\test_mcp_compatibility.py", line 141, in _assert_tier1_roundtrip
+  |     async with stdio_client(params) as (read_stream, write_stream):
+  |                ~~~~~~~~~~~~^^^^^^^^
+  |   File "C:\Users\Ant\AppData\Roaming\uv\python\cpython-3.13.7-windows-x86_64-none\Lib\contextlib.py", line 235, in __aexit__
+  |     await self.gen.athrow(value)
+  |   File "D:\Development\mnemos\mnemos\.worktrees\functional-local-memory\.venv\Lib\site-packages\mcp\client\stdio\__init__.py", line 183, in stdio_client
+  |     anyio.create_task_group() as tg,
+  |     ~~~~~~~~~~~~~~~~~~~~~~~^^
+  |   File "D:\Development\mnemos\mnemos\.worktrees\functional-local-memory\.venv\Lib\site-packages\anyio\_backends\_asyncio.py", line 847, in __aexit__
+  |     raise BaseExceptionGroup(
+  |         "unhandled errors in a TaskGroup", self._exceptions
+  |     ) from None
+  | ExceptionGroup: unhandled errors in a TaskGroup (1 sub-exception)
+  +-+---------------- 1 ----------------
+    | Exception Group Traceback (most recent call last):
+    |   File "D:\Development\mnemos\mnemos\.worktrees\functional-local-memory\.venv\Lib\site-packages\mcp\client\stdio\__init__.py", line 189, in stdio_client
+    |     yield read_stream, write_stream
+    |   File "C:\Users\Ant\AppData\Local\Temp\mnemos-source-retrieval-views-v1\tests\test_mcp_compatibility.py", line 142, in _assert_tier1_roundtrip
+    |     async with ClientSession(read_stream, write_stream) as session:
+    |                ~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    |   File "D:\Development\mnemos\mnemos\.worktrees\functional-local-memory\.venv\Lib\site-packages\mcp\shared\session.py", line 238, in __aexit__
+    |     return await self._task_group.__aexit__(exc_type, exc_val, exc_tb)
+    |            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    |   File "D:\Development\mnemos\mnemos\.worktrees\functional-local-memory\.venv\Lib\site-packages\anyio\_backends\_asyncio.py", line 847, in __aexit__
+    |     raise BaseExceptionGroup(
+    |         "unhandled errors in a TaskGroup", self._exceptions
+    |     ) from None
+    | ExceptionGroup: unhandled errors in a TaskGroup (1 sub-exception)
+    +-+---------------- 1 ----------------
+      | Traceback (most recent call last):
+      |   File "C:\Users\Ant\AppData\Local\Temp\mnemos-source-retrieval-views-v1\tests\test_mcp_compatibility.py", line 193, in _assert_tier1_roundtrip
+      |     assert retrieve_payload["facts"]
+      | AssertionError: assert []
+      +------------------------------------
+---------------------------- Captured stderr call -----------------------------
+Processing request of type ListToolsRequest
+Processing request of type ListResourcesRequest
+Processing request of type CallToolRequest
+HTTP Request: POST http://127.0.0.1:51357/v1/dispatch "HTTP/1.1 200 OK"
+Processing request of type CallToolRequest
+HTTP Request: POST http://127.0.0.1:51357/v1/dispatch "HTTP/1.1 200 OK"
+Processing request of type CallToolRequest
+HTTP Request: POST http://127.0.0.1:51357/v1/dispatch "HTTP/1.1 200 OK"
+Processing request of type CallToolRequest
+HTTP Request: POST http://127.0.0.1:51357/v1/dispatch "HTTP/1.1 200 OK"
+_ test_tier1_stdio_configs_execute_real_roundtrip[claude-desktop-config_path1] _
+  + Exception Group Traceback (most recent call last):
+  |   File "C:\Users\Ant\AppData\Local\Temp\mnemos-source-retrieval-views-v1\tests\test_mcp_compatibility.py", line 300, in test_tier1_stdio_configs_execute_real_roundtrip
+  |     await _assert_tier1_roundtrip(params)
+  |   File "C:\Users\Ant\AppData\Local\Temp\mnemos-source-retrieval-views-v1\tests\test_mcp_compatibility.py", line 141, in _assert_tier1_roundtrip
+  |     async with stdio_client(params) as (read_stream, write_stream):
+  |                ~~~~~~~~~~~~^^^^^^^^
+  |   File "C:\Users\Ant\AppData\Roaming\uv\python\cpython-3.13.7-windows-x86_64-none\Lib\contextlib.py", line 235, in __aexit__
+  |     await self.gen.athrow(value)
+  |   File "D:\Development\mnemos\mnemos\.worktrees\functional-local-memory\.venv\Lib\site-packages\mcp\client\stdio\__init__.py", line 183, in stdio_client
+  |     anyio.create_task_group() as tg,
+  |     ~~~~~~~~~~~~~~~~~~~~~~~^^
+  |   File "D:\Development\mnemos\mnemos\.worktrees\functional-local-memory\.venv\Lib\site-packages\anyio\_backends\_asyncio.py", line 847, in __aexit__
+  |     raise BaseExceptionGroup(
+  |         "unhandled errors in a TaskGroup", self._exceptions
+  |     ) from None
+  | ExceptionGroup: unhandled errors in a TaskGroup (1 sub-exception)
+  +-+---------------- 1 ----------------
+    | Exception Group Traceback (most recent call last):
+    |   File "D:\Development\mnemos\mnemos\.worktrees\functional-local-memory\.venv\Lib\site-packages\mcp\client\stdio\__init__.py", line 189, in stdio_client
+    |     yield read_stream, write_stream
+    |   File "C:\Users\Ant\AppData\Local\Temp\mnemos-source-retrieval-views-v1\tests\test_mcp_compatibility.py", line 142, in _assert_tier1_roundtrip
+    |     async with ClientSession(read_stream, write_stream) as session:
+    |                ~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    |   File "D:\Development\mnemos\mnemos\.worktrees\functional-local-memory\.venv\Lib\site-packages\mcp\shared\session.py", line 238, in __aexit__
+    |     return await self._task_group.__aexit__(exc_type, exc_val, exc_tb)
+    |            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    |   File "D:\Development\mnemos\mnemos\.worktrees\functional-local-memory\.venv\Lib\site-packages\anyio\_backends\_asyncio.py", line 847, in __aexit__
+    |     raise BaseExceptionGroup(
+    |         "unhandled errors in a TaskGroup", self._exceptions
+    |     ) from None
+    | ExceptionGroup: unhandled errors in a TaskGroup (1 sub-exception)
+    +-+---------------- 1 ----------------
+      | Traceback (most recent call last):
+      |   File "C:\Users\Ant\AppData\Local\Temp\mnemos-source-retrieval-views-v1\tests\test_mcp_compatibility.py", line 193, in _assert_tier1_roundtrip
+      |     assert retrieve_payload["facts"]
+      | AssertionError: assert []
+      +------------------------------------
+---------------------------- Captured stderr call -----------------------------
+Processing request of type ListToolsRequest
+Processing request of type ListResourcesRequest
+Processing request of type CallToolRequest
+HTTP Request: POST http://127.0.0.1:51370/v1/dispatch "HTTP/1.1 200 OK"
+Processing request of type CallToolRequest
+HTTP Request: POST http://127.0.0.1:51370/v1/dispatch "HTTP/1.1 200 OK"
+Processing request of type CallToolRequest
+HTTP Request: POST http://127.0.0.1:51370/v1/dispatch "HTTP/1.1 200 OK"
+Processing request of type CallToolRequest
+HTTP Request: POST http://127.0.0.1:51370/v1/dispatch "HTTP/1.1 200 OK"
+_______ test_tier1_claude_code_plugin_manifest_executes_real_roundtrip ________
+  + Exception Group Traceback (most recent call last):
+  |   File "C:\Users\Ant\AppData\Local\Temp\mnemos-source-retrieval-views-v1\tests\test_mcp_compatibility.py", line 320, in test_tier1_claude_code_plugin_manifest_executes_real_roundtrip
+  |     await _assert_tier1_roundtrip(params)
+  |   File "C:\Users\Ant\AppData\Local\Temp\mnemos-source-retrieval-views-v1\tests\test_mcp_compatibility.py", line 141, in _assert_tier1_roundtrip
+  |     async with stdio_client(params) as (read_stream, write_stream):
+  |                ~~~~~~~~~~~~^^^^^^^^
+  |   File "C:\Users\Ant\AppData\Roaming\uv\python\cpython-3.13.7-windows-x86_64-none\Lib\contextlib.py", line 235, in __aexit__
+  |     await self.gen.athrow(value)
+  |   File "D:\Development\mnemos\mnemos\.worktrees\functional-local-memory\.venv\Lib\site-packages\mcp\client\stdio\__init__.py", line 183, in stdio_client
+  |     anyio.create_task_group() as tg,
+  |     ~~~~~~~~~~~~~~~~~~~~~~~^^
+  |   File "D:\Development\mnemos\mnemos\.worktrees\functional-local-memory\.venv\Lib\site-packages\anyio\_backends\_asyncio.py", line 847, in __aexit__
+  |     raise BaseExceptionGroup(
+  |         "unhandled errors in a TaskGroup", self._exceptions
+  |     ) from None
+  | ExceptionGroup: unhandled errors in a TaskGroup (1 sub-exception)
+  +-+---------------- 1 ----------------
+    | Exception Group Traceback (most recent call last):
+    |   File "D:\Development\mnemos\mnemos\.worktrees\functional-local-memory\.venv\Lib\site-packages\mcp\client\stdio\__init__.py", line 189, in stdio_client
+    |     yield read_stream, write_stream
+    |   File "C:\Users\Ant\AppData\Local\Temp\mnemos-source-retrieval-views-v1\tests\test_mcp_compatibility.py", line 142, in _assert_tier1_roundtrip
+    |     async with ClientSession(read_stream, write_stream) as session:
+    |                ~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    |   File "D:\Development\mnemos\mnemos\.worktrees\functional-local-memory\.venv\Lib\site-packages\mcp\shared\session.py", line 238, in __aexit__
+    |     return await self._task_group.__aexit__(exc_type, exc_val, exc_tb)
+    |            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    |   File "D:\Development\mnemos\mnemos\.worktrees\functional-local-memory\.venv\Lib\site-packages\anyio\_backends\_asyncio.py", line 847, in __aexit__
+    |     raise BaseExceptionGroup(
+    |         "unhandled errors in a TaskGroup", self._exceptions
+    |     ) from None
+    | ExceptionGroup: unhandled errors in a TaskGroup (1 sub-exception)
+    +-+---------------- 1 ----------------
+      | Traceback (most recent call last):
+      |   File "C:\Users\Ant\AppData\Local\Temp\mnemos-source-retrieval-views-v1\tests\test_mcp_compatibility.py", line 193, in _assert_tier1_roundtrip
+      |     assert retrieve_payload["facts"]
+      | AssertionError: assert []
+      +------------------------------------
+---------------------------- Captured stderr call -----------------------------
+Processing request of type ListToolsRequest
+Processing request of type ListResourcesRequest
+Processing request of type CallToolRequest
+HTTP Request: POST http://127.0.0.1:51382/v1/dispatch "HTTP/1.1 200 OK"
+Processing request of type CallToolRequest
+HTTP Request: POST http://127.0.0.1:51382/v1/dispatch "HTTP/1.1 200 OK"
+Processing request of type CallToolRequest
+HTTP Request: POST http://127.0.0.1:51382/v1/dispatch "HTTP/1.1 200 OK"
+Processing request of type CallToolRequest
+HTTP Request: POST http://127.0.0.1:51382/v1/dispatch "HTTP/1.1 200 OK"
+_________ test_preview_and_related_apply_remove_exact_copy_and_replay _________
+
+tmp_path = WindowsPath('C:/Users/Ant/AppData/Local/Temp/mnemos-check-temp-retrieval-views-v1/pytest/test_preview_and_related_apply0')
+
+    @pytest.mark.asyncio
+    async def test_preview_and_related_apply_remove_exact_copy_and_replay(tmp_path: Path) -> None:
+        memory, context, registry, root = _service(tmp_path)
+        try:
+            assertion, target, captured = await _seed_overlap(memory, context)
+            preview = await memory.dispatch("forget_preview", _preview_payload(context, target))
+            assert preview["status"] == "preview"
+            assert preview["complete"] is True
+            match = next(item for item in preview["candidates"] if item["fact_id"] == captured.id)
+            source_ids = match["source_event_ids"]
+            result = await memory.dispatch(
+                "forget_related",
+                {
+                    **_preview_payload(context, target),
+                    "preview_digest": preview["preview_digest"],
+                    "selected_fact_ids": [target.id, captured.id],
+                    "selected_source_event_ids": source_ids,
+                },
+            )
+            assert result["status"] == "committed"
+            assert memory.engine.store.get(target.id) is None
+            assert memory.engine.store.get(captured.id) is None
+            retrieved = await memory.dispatch(
+                "retrieve",
+                {"context": context.model_dump(mode="json"), "query": assertion, "top_k": 10},
+            )
+            assert retrieved["facts"] == []
+            memory.engine.store.close()
+    
+            restarted = _service(root, registry)[0]
+            try:
+                replay = await restarted.dispatch(
+                    "capture",
+                    {
+                        "event_id": "captured-overlap-event",
+                        "context": context.model_dump(mode="json"),
+                        "scope": "project",
+                        "occurred_at": datetime.now(timezone.utc).isoformat(),
+                        "role": "user",
+                        "content": f"Please remember: {assertion} Use Mnemos tools.",
+                        "source_kind": "claude_code_transcript",
+                        "source_ref": "related-forget-transcript#1",
+                    },
+                )
+                assert replay["processing_status"] == "suppressed"
+>               assert await restarted.dispatch(
+                    "retrieve",
+                    {
+                        "context": context.model_dump(mode="json"),
+                        "query": assertion,
+                        "top_k": 10,
+                    },
+                ) == {
+                    "schema_version": 1,
+                    "profile": "baseline",
+                    "facts": [],
+                    "context": "",
+                    "token_count_method": "utf8_bytes_upper_bound",
+                    "context_token_upper_bound": 0,
+                }
+E               AssertionError: assert {'schema_vers...cts': [], ...} == {'schema_vers...ext': '', ...}
+E                 
+E                 Omitting 6 identical items, use -vv to show
+E                 Left contains 3 more items:
+E                 {'captured_evidence': [], 'evidence_context': '', 'view': 'memory'}
+E                 Use -v to get more diff
+
+tests\test_related_forget.py:599: AssertionError
+_ test_lexical_needs_no_embedding_and_scopes_before_candidate_limit[user_profile_id] _
+
+tmp_path = WindowsPath('C:/Users/Ant/AppData/Local/Temp/mnemos-check-temp-retrieval-views-v1/pytest/test_lexical_needs_no_embeddin0')
+foreign_identity = 'user_profile_id'
+
+    @pytest.mark.asyncio
+    @pytest.mark.parametrize("foreign_identity", ["user_profile_id", "project_id"])
+    async def test_lexical_needs_no_embedding_and_scopes_before_candidate_limit(
+        tmp_path, foreign_identity
+    ):
+        from benchmarks.local_memory.retrieval_comparison import comparison_snapshots
+    
+        service, context = fixture_service(tmp_path)
+    
+        class BrokenEmbedder:
+            def embed(self, text):
+                raise AssertionError("Lexical search must not embed queries")
+    
+        service.engine._embedder = BrokenEmbedder()
+        try:
+            for i in range(40):
+                add_fact(
+                    service,
+                    context.model_copy(update={foreign_identity: "foreign"}),
+                    f"foreign-{i}",
+                    "Orchid",
+                )
+            add_fact(service, context, "ours", "Orchid exact codeword", [0.0, 1.0])
+            with comparison_snapshots(service) as (digest, variants):
+>               result = await variants["lexical"].retrieve(
+                    RetrievalRequest(
+                        query="Orchid",
+                        context=context,
+                        top_k=1,
+                    )
+                )
+
+tests\test_retrieval_comparison.py:67: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+self = <mnemos.memory_service.LocalMemoryService object at 0x000002B02A49E1D0>
+request = RetrievalRequest(query='Orchid', context=ScopeContext(user_profile_id='local', project_id='f6da3879-0fb2-4463-b5db-aa6...st='codex'), allowed_scopes=['project', 'global'], top_k=1, max_context_tokens=1200, profile='baseline', view='memory')
+
+    async def retrieve(self, request: RetrievalRequest) -> dict[str, Any]:
+        self.registry.validate_context(request.context)
+>       chunks = await self.engine.retrieve(
+            request.query,
+            top_k=request.top_k,
+            context=request.context,
+            allowed_scopes=tuple(request.allowed_scopes),
+            profile=request.profile,
+            max_context_tokens=request.max_context_tokens,
+            view=request.view,
+        )
+E       TypeError: ComparisonEngine.retrieve() got an unexpected keyword argument 'view'
+
+mnemos\memory_service.py:661: TypeError
+_ test_lexical_needs_no_embedding_and_scopes_before_candidate_limit[project_id] _
+
+tmp_path = WindowsPath('C:/Users/Ant/AppData/Local/Temp/mnemos-check-temp-retrieval-views-v1/pytest/test_lexical_needs_no_embeddin1')
+foreign_identity = 'project_id'
+
+    @pytest.mark.asyncio
+    @pytest.mark.parametrize("foreign_identity", ["user_profile_id", "project_id"])
+    async def test_lexical_needs_no_embedding_and_scopes_before_candidate_limit(
+        tmp_path, foreign_identity
+    ):
+        from benchmarks.local_memory.retrieval_comparison import comparison_snapshots
+    
+        service, context = fixture_service(tmp_path)
+    
+        class BrokenEmbedder:
+            def embed(self, text):
+                raise AssertionError("Lexical search must not embed queries")
+    
+        service.engine._embedder = BrokenEmbedder()
+        try:
+            for i in range(40):
+                add_fact(
+                    service,
+                    context.model_copy(update={foreign_identity: "foreign"}),
+                    f"foreign-{i}",
+                    "Orchid",
+                )
+            add_fact(service, context, "ours", "Orchid exact codeword", [0.0, 1.0])
+            with comparison_snapshots(service) as (digest, variants):
+>               result = await variants["lexical"].retrieve(
+                    RetrievalRequest(
+                        query="Orchid",
+                        context=context,
+                        top_k=1,
+                    )
+                )
+
+tests\test_retrieval_comparison.py:67: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+self = <mnemos.memory_service.LocalMemoryService object at 0x000002B02A51BD50>
+request = RetrievalRequest(query='Orchid', context=ScopeContext(user_profile_id='local', project_id='c41f3eaf-0afe-4b88-b5f0-d50...st='codex'), allowed_scopes=['project', 'global'], top_k=1, max_context_tokens=1200, profile='baseline', view='memory')
+
+    async def retrieve(self, request: RetrievalRequest) -> dict[str, Any]:
+        self.registry.validate_context(request.context)
+>       chunks = await self.engine.retrieve(
+            request.query,
+            top_k=request.top_k,
+            context=request.context,
+            allowed_scopes=tuple(request.allowed_scopes),
+            profile=request.profile,
+            max_context_tokens=request.max_context_tokens,
+            view=request.view,
+        )
+E       TypeError: ComparisonEngine.retrieve() got an unexpected keyword argument 'view'
+
+mnemos\memory_service.py:661: TypeError
+____________ test_each_query_restarts_from_original_accepted_state ____________
+
+tmp_path = WindowsPath('C:/Users/Ant/AppData/Local/Temp/mnemos-check-temp-retrieval-views-v1/pytest/test_each_query_restarts_from_0')
+
+    @pytest.mark.asyncio
+    async def test_each_query_restarts_from_original_accepted_state(tmp_path):
+        from benchmarks.local_memory.retrieval_comparison import comparison_snapshots
+    
+        service, context = fixture_service(tmp_path)
+        fact = add_fact(service, context, "ours", "Orchid")
+    
+        class FixedEmbedder:
+            def embed(self, text):
+                return [1.0, 0.0]
+    
+        service.engine._embedder = FixedEmbedder()
+        try:
+            digests = []
+            for _ in range(2):
+                with comparison_snapshots(service) as (digest, variants):
+                    digests.append(digest)
+                    lexical = variants["lexical"]
+                    assert lexical.engine.store.get("ours").access_count == 0
+>                   await lexical.retrieve(RetrievalRequest(query="Orchid", context=context))
+
+tests\test_retrieval_comparison.py:130: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+self = <mnemos.memory_service.LocalMemoryService object at 0x000002B02A663F50>
+request = RetrievalRequest(query='Orchid', context=ScopeContext(user_profile_id='local', project_id='817769c3-4c1a-4e01-9506-af5...st='codex'), allowed_scopes=['project', 'global'], top_k=5, max_context_tokens=1200, profile='baseline', view='memory')
+
+    async def retrieve(self, request: RetrievalRequest) -> dict[str, Any]:
+        self.registry.validate_context(request.context)
+>       chunks = await self.engine.retrieve(
+            request.query,
+            top_k=request.top_k,
+            context=request.context,
+            allowed_scopes=tuple(request.allowed_scopes),
+            profile=request.profile,
+            max_context_tokens=request.max_context_tokens,
+            view=request.view,
+        )
+E       TypeError: ComparisonEngine.retrieve() got an unexpected keyword argument 'view'
+
+mnemos\memory_service.py:661: TypeError
+_________ test_vector_does_not_use_fts_and_skips_oversized_candidates _________
+
+tmp_path = WindowsPath('C:/Users/Ant/AppData/Local/Temp/mnemos-check-temp-retrieval-views-v1/pytest/test_vector_does_not_use_fts_a0')
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x000002B02A43CA60>
+
+    @pytest.mark.asyncio
+    async def test_vector_does_not_use_fts_and_skips_oversized_candidates(tmp_path, monkeypatch):
+        from benchmarks.local_memory.retrieval_comparison import comparison_snapshots
+        from mnemos.retrieval import context_token_upper_bound
+    
+        service, context = fixture_service(tmp_path)
+    
+        class FixedEmbedder:
+            def embed(self, text):
+                return [1.0, 0.0]
+    
+        service.engine._embedder = FixedEmbedder()
+        try:
+            for i in range(40):
+                add_fact(
+                    service,
+                    context.model_copy(update={"user_profile_id": "foreign"}),
+                    f"0-foreign-{i}",
+                    "compact",
+                )
+            add_fact(service, context, "a-long", "long " * 200)
+            small = add_fact(service, context, "b-short", "compact")
+            add_fact(service, context, "c-unrelated", "Orchid", [0.0, 1.0])
+            with comparison_snapshots(service) as (_, variants):
+    
+                def forbidden(*args, **kwargs):
+                    raise AssertionError("Vector arm must not query FTS")
+    
+                monkeypatch.setattr(variants["vector"].engine.store, "retrieve_lexical", forbidden)
+>               result = await variants["vector"].retrieve(
+                    RetrievalRequest(
+                        query="Orchid",
+                        context=context,
+                        top_k=1,
+                        max_context_tokens=context_token_upper_bound(small),
+                    )
+                )
+
+tests\test_retrieval_comparison.py:177: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+self = <mnemos.memory_service.LocalMemoryService object at 0x000002B02A663450>
+request = RetrievalRequest(query='Orchid', context=ScopeContext(user_profile_id='local', project_id='9ce17867-83eb-478f-acc5-a61...host='codex'), allowed_scopes=['project', 'global'], top_k=1, max_context_tokens=28, profile='baseline', view='memory')
+
+    async def retrieve(self, request: RetrievalRequest) -> dict[str, Any]:
+        self.registry.validate_context(request.context)
+>       chunks = await self.engine.retrieve(
+            request.query,
+            top_k=request.top_k,
+            context=request.context,
+            allowed_scopes=tuple(request.allowed_scopes),
+            profile=request.profile,
+            max_context_tokens=request.max_context_tokens,
+            view=request.view,
+        )
+E       TypeError: ComparisonEngine.retrieve() got an unexpected keyword argument 'view'
+
+mnemos\memory_service.py:661: TypeError
+________ test_existing_profiles_use_production_engine[hybrid-baseline] ________
+
+tmp_path = WindowsPath('C:/Users/Ant/AppData/Local/Temp/mnemos-check-temp-retrieval-views-v1/pytest/test_existing_profiles_use_pro0')
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x000002B02A5178C0>
+strategy = 'hybrid', profile = 'baseline'
+
+    @pytest.mark.asyncio
+    @pytest.mark.parametrize("strategy,profile", [("hybrid", "baseline"), ("full", "biomimetic")])
+    async def test_existing_profiles_use_production_engine(tmp_path, monkeypatch, strategy, profile):
+        from benchmarks.local_memory.retrieval_comparison import comparison_snapshots
+    
+        service, context = fixture_service(tmp_path)
+        observed = []
+    
+        async def production(self, query, **kwargs):
+            observed.append((query, kwargs["profile"], kwargs["context"]))
+            return []
+    
+        monkeypatch.setattr(MnemosEngine, "retrieve", production)
+        try:
+            with comparison_snapshots(service) as (_, variants):
+>               await variants[strategy].retrieve(RetrievalRequest(query="query", context=context))
+
+tests\test_retrieval_comparison.py:207: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+self = <mnemos.memory_service.LocalMemoryService object at 0x000002B02A51A350>
+request = RetrievalRequest(query='query', context=ScopeContext(user_profile_id='local', project_id='0e9b4c3f-7dba-4fbc-b7cb-50a9...st='codex'), allowed_scopes=['project', 'global'], top_k=5, max_context_tokens=1200, profile='baseline', view='memory')
+
+    async def retrieve(self, request: RetrievalRequest) -> dict[str, Any]:
+        self.registry.validate_context(request.context)
+>       chunks = await self.engine.retrieve(
+            request.query,
+            top_k=request.top_k,
+            context=request.context,
+            allowed_scopes=tuple(request.allowed_scopes),
+            profile=request.profile,
+            max_context_tokens=request.max_context_tokens,
+            view=request.view,
+        )
+E       TypeError: ComparisonEngine.retrieve() got an unexpected keyword argument 'view'
+
+mnemos\memory_service.py:661: TypeError
+________ test_existing_profiles_use_production_engine[full-biomimetic] ________
+
+tmp_path = WindowsPath('C:/Users/Ant/AppData/Local/Temp/mnemos-check-temp-retrieval-views-v1/pytest/test_existing_profiles_use_pro1')
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x000002B02A516890>
+strategy = 'full', profile = 'biomimetic'
+
+    @pytest.mark.asyncio
+    @pytest.mark.parametrize("strategy,profile", [("hybrid", "baseline"), ("full", "biomimetic")])
+    async def test_existing_profiles_use_production_engine(tmp_path, monkeypatch, strategy, profile):
+        from benchmarks.local_memory.retrieval_comparison import comparison_snapshots
+    
+        service, context = fixture_service(tmp_path)
+        observed = []
+    
+        async def production(self, query, **kwargs):
+            observed.append((query, kwargs["profile"], kwargs["context"]))
+            return []
+    
+        monkeypatch.setattr(MnemosEngine, "retrieve", production)
+        try:
+            with comparison_snapshots(service) as (_, variants):
+>               await variants[strategy].retrieve(RetrievalRequest(query="query", context=context))
+
+tests\test_retrieval_comparison.py:207: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+self = <mnemos.memory_service.LocalMemoryService object at 0x000002B02A49E6D0>
+request = RetrievalRequest(query='query', context=ScopeContext(user_profile_id='local', project_id='ad96d93c-38c9-4606-b08e-0c69...st='codex'), allowed_scopes=['project', 'global'], top_k=5, max_context_tokens=1200, profile='baseline', view='memory')
+
+    async def retrieve(self, request: RetrievalRequest) -> dict[str, Any]:
+        self.registry.validate_context(request.context)
+>       chunks = await self.engine.retrieve(
+            request.query,
+            top_k=request.top_k,
+            context=request.context,
+            allowed_scopes=tuple(request.allowed_scopes),
+            profile=request.profile,
+            max_context_tokens=request.max_context_tokens,
+            view=request.view,
+        )
+E       TypeError: ComparisonEngine.retrieve() got an unexpected keyword argument 'view'
+
+mnemos\memory_service.py:661: TypeError
+__ test_adapter_records_all_strategies_and_preserves_missing_results[False] ___
+
+tmp_path = WindowsPath('C:/Users/Ant/AppData/Local/Temp/mnemos-check-temp-retrieval-views-v1/pytest/test_adapter_records_all_strat0')
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x000002B02A5170E0>
+broken_vector = False
+
+    @pytest.mark.parametrize("broken_vector", [False, True])
+    def test_adapter_records_all_strategies_and_preserves_missing_results(
+        tmp_path, monkeypatch, broken_vector
+    ):
+        from benchmarks.local_memory.retrieval_comparison import RetrievalComparatorAdapter
+        from benchmarks.local_memory.contracts import (
+            SessionScenario,
+            SourceEvent,
+            FactRecord,
+            QueryRecord,
+            StatePair,
+        )
+        from benchmarks.local_memory.harness import DEFAULT_PROFILES
+    
+        memory, context = fixture_service(tmp_path)
+        memory.engine.store.close()
+    
+        def factory(profile, run_key=None):
+            return fixture_service(tmp_path)[0]
+    
+        # Keep the same registry identity across factory openings.
+        def stable_factory(profile, run_key=None):
+            service = factory(profile, run_key)
+            service.registry = memory.registry
+            return service
+    
+        if broken_vector:
+            original = SQLiteStore.retrieve
+    
+            def fail_vector(self, *args, **kwargs):
+                if str(self.db_path).endswith("vector.sqlite"):
+                    raise RuntimeError("deliberate vector failure")
+                return original(self, *args, **kwargs)
+    
+            monkeypatch.setattr(SQLiteStore, "retrieve", fail_vector)
+        session = SessionScenario(
+            "retrieval-dev",
+            "development",
+            "codex",
+            context.project_id,
+            (FactRecord("f", "Use Orchid", True, "project", "synthetic_seed", "supported", ("e",)),),
+            (QueryRecord("q", "Orchid", "answerable", ("f",), "Use Orchid"),),
+            (
+                (
+                    StatePair(
+                        "pair", "Orchid", "I feel relieved about Orchid", ("f",), "calm", "Use Orchid"
+                    ),
+                )
+                if not broken_vector
+                else ()
+            ),
+            "synthetic_seed",
+            "not_run",
+            (
+                SourceEvent(
+                    "e",
+                    datetime.now(timezone.utc).isoformat(),
+                    "user",
+                    "Use Orchid",
+                    "user_prompt",
+                    "explicit",
+                    "remember",
+                    ("f",),
+                ),
+            ),
+            (),
+        )
+        result = RetrievalComparatorAdapter(stable_factory, user_profile_id="local").evaluate_session(
+            session,
+            DEFAULT_PROFILES[1],
+            1,
+        )
+        comparison = result.raw_output["retrieval_comparisons"][0]
+        assert set(comparison["strategies"]) == {"vector", "lexical", "hybrid", "full"}
+        assert len(set(row["snapshot_sha256"] for row in comparison["strategies"].values())) == 1
+>       assert comparison["strategies"]["lexical"]["quality_hit"] is True
+E       assert None is True
+
+tests\test_retrieval_comparison.py:288: AssertionError
+___ test_adapter_records_all_strategies_and_preserves_missing_results[True] ___
+
+tmp_path = WindowsPath('C:/Users/Ant/AppData/Local/Temp/mnemos-check-temp-retrieval-views-v1/pytest/test_adapter_records_all_strat1')
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x000002B02A517A80>
+broken_vector = True
+
+    @pytest.mark.parametrize("broken_vector", [False, True])
+    def test_adapter_records_all_strategies_and_preserves_missing_results(
+        tmp_path, monkeypatch, broken_vector
+    ):
+        from benchmarks.local_memory.retrieval_comparison import RetrievalComparatorAdapter
+        from benchmarks.local_memory.contracts import (
+            SessionScenario,
+            SourceEvent,
+            FactRecord,
+            QueryRecord,
+            StatePair,
+        )
+        from benchmarks.local_memory.harness import DEFAULT_PROFILES
+    
+        memory, context = fixture_service(tmp_path)
+        memory.engine.store.close()
+    
+        def factory(profile, run_key=None):
+            return fixture_service(tmp_path)[0]
+    
+        # Keep the same registry identity across factory openings.
+        def stable_factory(profile, run_key=None):
+            service = factory(profile, run_key)
+            service.registry = memory.registry
+            return service
+    
+        if broken_vector:
+            original = SQLiteStore.retrieve
+    
+            def fail_vector(self, *args, **kwargs):
+                if str(self.db_path).endswith("vector.sqlite"):
+                    raise RuntimeError("deliberate vector failure")
+                return original(self, *args, **kwargs)
+    
+            monkeypatch.setattr(SQLiteStore, "retrieve", fail_vector)
+        session = SessionScenario(
+            "retrieval-dev",
+            "development",
+            "codex",
+            context.project_id,
+            (FactRecord("f", "Use Orchid", True, "project", "synthetic_seed", "supported", ("e",)),),
+            (QueryRecord("q", "Orchid", "answerable", ("f",), "Use Orchid"),),
+            (
+                (
+                    StatePair(
+                        "pair", "Orchid", "I feel relieved about Orchid", ("f",), "calm", "Use Orchid"
+                    ),
+                )
+                if not broken_vector
+                else ()
+            ),
+            "synthetic_seed",
+            "not_run",
+            (
+                SourceEvent(
+                    "e",
+                    datetime.now(timezone.utc).isoformat(),
+                    "user",
+                    "Use Orchid",
+                    "user_prompt",
+                    "explicit",
+                    "remember",
+                    ("f",),
+                ),
+            ),
+            (),
+        )
+        result = RetrievalComparatorAdapter(stable_factory, user_profile_id="local").evaluate_session(
+            session,
+            DEFAULT_PROFILES[1],
+            1,
+        )
+        comparison = result.raw_output["retrieval_comparisons"][0]
+        assert set(comparison["strategies"]) == {"vector", "lexical", "hybrid", "full"}
+        assert len(set(row["snapshot_sha256"] for row in comparison["strategies"].values())) == 1
+>       assert comparison["strategies"]["lexical"]["quality_hit"] is True
+E       assert None is True
+
+tests\test_retrieval_comparison.py:288: AssertionError
+=========================== short test summary info ===========================
+FAILED tests/test_cli.py::test_cli_retrieve_forwards_scope_args - TypeError: ...
+FAILED tests/test_mcp_compatibility.py::test_tier1_stdio_configs_execute_real_roundtrip[generic-stdio-config_path0]
+FAILED tests/test_mcp_compatibility.py::test_tier1_stdio_configs_execute_real_roundtrip[claude-desktop-config_path1]
+FAILED tests/test_mcp_compatibility.py::test_tier1_claude_code_plugin_manifest_executes_real_roundtrip
+FAILED tests/test_related_forget.py::test_preview_and_related_apply_remove_exact_copy_and_replay
+FAILED tests/test_retrieval_comparison.py::test_lexical_needs_no_embedding_and_scopes_before_candidate_limit[user_profile_id]
+FAILED tests/test_retrieval_comparison.py::test_lexical_needs_no_embedding_and_scopes_before_candidate_limit[project_id]
+FAILED tests/test_retrieval_comparison.py::test_each_query_restarts_from_original_accepted_state
+FAILED tests/test_retrieval_comparison.py::test_vector_does_not_use_fts_and_skips_oversized_candidates
+FAILED tests/test_retrieval_comparison.py::test_existing_profiles_use_production_engine[hybrid-baseline]
+FAILED tests/test_retrieval_comparison.py::test_existing_profiles_use_production_engine[full-biomimetic]
+FAILED tests/test_retrieval_comparison.py::test_adapter_records_all_strategies_and_preserves_missing_results[False]
+FAILED tests/test_retrieval_comparison.py::test_adapter_records_all_strategies_and_preserves_missing_results[True]
+13 failed, 1481 passed, 4 skipped in 274.90s (0:04:34)

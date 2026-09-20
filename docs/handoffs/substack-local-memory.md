@@ -10,7 +10,24 @@ Apply [writing-in-anthonys-voice](C:/Users/Ant/.agents/skills/writing-in-anthony
 
 Deliver an article draft, three possible titles, and a separate compact source/claim note. Keep the article close to 2,500 words, excluding source notes. Do not publish it.
 
-## Latest native result and portable primary sources
+## Latest implementation and native evidence
+
+The verified [retrieval-view checkpoint](../validation/2026-09-20/retrieval-views-checkpoint-v1/README.md)
+at `e419c2a` passes 1,500 source tests with 4 skips,
+all six source/package checks, 648 isolated installed cases
+with 4 matching skips, and seven replay assertions. Ordinary recall
+now excludes whole captured conversations before retrieval limits. Explicit
+evidence review returns those copies separately, with provenance and unverified
+labels. Capture storage and related-forget inventory remain intact. This is a
+verified API change; no native model cohort has run this package, and the v7
+failures retain their original runtime and outcome. Native lifecycle,
+three-host continuity, complete capture, quality acceptance, Desktop, and the
+pilot remain open.
+
+The updated CLI and MCP subprocess checks verify that the child imports the
+same package as the parent. Older parent-process origin checks alone did not
+establish that boundary for those subprocesses. Preserve the earlier test
+results while keeping that limit on their installed-package interpretation.
 
 The [fixed Hermes v7 cohort](../validation/2026-09-20/hermes-native-cohort-v7/README.md) on verified `1a11058`
 finished zero of three complete lifecycles. All three model-readiness checks
@@ -32,11 +49,11 @@ continuity, complete capture, model-quality acceptance, Desktop, and the pilot
 remain open.
 
 The [captured-evidence contract review](../validation/2026-09-20/captured-evidence-contract-review.md)
-traces why whole conversations enter ordinary memory context when sleep
-extraction is disabled. They are labeled unverified, but share the returned
-fact channel. A proposed separation would preserve capture and expose raw
-history through explicit evidence review. It is not implemented, does not
-prove the cause of v7's omissions, and must not relax the stored-copy erasure
+traces why whole conversations entered ordinary memory context with sleep
+extraction disabled. They were labeled unverified, but shared the returned
+fact channel at the time of v7. The verified retrieval-view change now
+preserves capture and exposes raw history through explicit evidence review.
+It does not prove the cause of v7's omissions or relax stored-copy erasure
 checks. Exact provider request bodies were not recorded in v7, so replaying
 its public transcript cannot be called a faithful request reproduction.
 
@@ -203,7 +220,7 @@ quality acceptance.
 
 ## Latest verified repair
 
-The latest verified [deletion coverage checkpoint](../validation/2026-09-19/forget-coverage-checkpoint-v1/README.md)
+The earlier verified [deletion coverage checkpoint](../validation/2026-09-19/forget-coverage-checkpoint-v1/README.md)
 at `1a11058` passes 1,439 source tests with 4 skips, all six
 source/package checks, 608 isolated installed cases with 4 matching
 skips, and seven replay assertions. Related-forget receipts now report
