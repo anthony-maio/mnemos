@@ -3,10 +3,22 @@
 Current provider package: [reviewed-copy tools](validation/2026-09-19/hermes-reviewed-forget-checkpoint-v1/README.md)
 on `db932be` passes 1,383 source tests and 595 installed cases, with 4/4
 respective skips and seven replay assertions. It exposes eight Hermes tools;
-the new preview/apply tools have fixture/service coverage but no native-model
-run. Historical six-tool results retain their original runtime bindings.
+the new preview/apply tools now have native-model observations, but all three
+v6 lifecycle attempts failed. Historical six-tool results retain their bindings.
 
-Latest native observation: the [fixed Hermes v5 cohort](validation/2026-09-19/hermes-native-cohort-v5/README.md)
+Latest native observation: the [fixed Hermes v6 cohort](validation/2026-09-19/hermes-native-cohort-v6/README.md)
+on verified `db932be` finished zero of three full lifecycles. All three
+passed teaching, restarted recall, correction, and restarted corrected
+recall, then failed at forgetting. Attempts 1 and 2 used the new preview/apply
+tools but selected only the target, leaving conversational copies. Attempt 1
+also skipped inspections; attempt 2 passed reviewed target-deletion checks
+and failed only the retained-label scan. Attempt 3 selected additional facts
+without their required source IDs; both apply calls returned degraded HTTP
+500. No source replay or final recall ran in this cohort. All outcomes and
+cleanup are archived. Three-host continuity, complete capture, real-model
+quality acceptance, Desktop, and the pilot remain open.
+
+Earlier native observation: the [fixed Hermes v5 cohort](validation/2026-09-19/hermes-native-cohort-v5/README.md)
 on verified `fd83fb2` finished zero of three full lifecycles. All three
 attempts passed teaching, restarted recall, correction, and restarted
 corrected recall. Attempts 1 and 2 deleted the target and suppressed original

@@ -12,6 +12,18 @@ Deliver an article draft, three possible titles, and a separate compact source/c
 
 ## Latest native result and portable primary sources
 
+The [fixed Hermes v6 cohort](../validation/2026-09-19/hermes-native-cohort-v6/README.md)
+on verified `db932be` finished zero of three full lifecycles. All three
+passed teaching, restarted recall, correction, and restarted corrected
+recall, then failed at forgetting. Attempts 1 and 2 used the new preview/apply
+tools but selected only the target, leaving conversational copies. Attempt 1
+also skipped inspections; attempt 2 passed reviewed target-deletion checks
+and failed only the retained-label scan. Attempt 3 selected additional facts
+without their required source IDs; both apply calls returned degraded HTTP
+500. No source replay or final recall ran in this cohort. All outcomes and
+cleanup are archived. Three-host continuity, complete capture, real-model
+quality acceptance, Desktop, and the pilot remain open.
+
 The [fixed Hermes v5 cohort](../validation/2026-09-19/hermes-native-cohort-v5/README.md)
 on verified `fd83fb2` finished zero of three full lifecycles. All three
 attempts passed teaching, restarted recall, correction, and restarted
@@ -130,8 +142,10 @@ the unchanged preview digest, and its matching limit. Empty selections
 remove only the target. Fixtures demonstrate selected deletion, rejection of
 a preview made stale by later capture, foreign-scope exclusion, and retention
 of unselected advisory matches. These are service and package observations,
-not native-model success. The v5 failures below remain unchanged, and no
-native model has exercised the two new tools yet.
+not native-model success. V6 subsequently exercised the two new tools,
+but all three attempts failed at forgetting. The earlier v5 failures remain
+unchanged. Distinguish a valid target-only deletion from erasing retained
+conversational copies when the user requests both.
 
 Explain the completeness limit carefully: the returned selection and its
 dependencies fit the preview bound, but semantic search can still be
@@ -283,7 +297,7 @@ Candidate examples for the article, with bounded evidence:
 | A Windows reader blocks atomic publication of a new runtime descriptor | Bounded sharing-error retries preserve the old descriptor until replacement succeeds | [Publication tests](../../tests/test_service_competing_recovery.py); actual Windows held-reader reproduction and persistent-failure checks |
 | Repeated Hermes callbacks reuse an ID but generate different timestamps | A private ledger retains first-observation timestamps across provider recreation; transcript prefixes distinguish repeated messages from replay | [Transcript identity regressions](../../tests/test_hermes_transcript_identity.py) and the installed API v2 record; arbitrary native transcript truncation and branching remain open |
 | A callback lacks a usable transcript | The service retains a separate provisional receipt without extracting facts from it | [Provisional capture regression](../../tests/test_hermes_provisional_capture.py) and installed API v2; receipt counts cannot establish independent observations or complete capture |
-| Hermes needs to correct or forget a specific fact | Provider tools enforce session scope, exact IDs and versions, and write request identities. Reviewed-copy preview/apply extends the original six tools to eight | [Tool regressions](../../tests/test_hermes_tools.py) and [reviewed-copy integration tests](../../tests/test_hermes_related_forget.py); older installed API v2 covers the original six. Native model use of the two new tools remains unrun |
+| Hermes needs to correct or forget a specific fact | Provider tools enforce session scope, exact IDs and versions, and write request identities. Reviewed-copy preview/apply extends the original six tools to eight | [Tool regressions](../../tests/test_hermes_tools.py) and [reviewed-copy integration tests](../../tests/test_hermes_related_forget.py); older installed API v2 covers the original six. The native v6 cohort exercised both tools, but all three attempts failed at forgetting |
 | Another client corrects or forgets a fact after Hermes retrieves it | Each ordinary prefetch reads the current service result | Same Hermes tests include a real service/SQLite correction-and-forget check; this removes a stale query cache but does not establish every native host lifecycle |
 
 Choose the examples that support the narrative. This table is an evidence map,
@@ -295,5 +309,5 @@ not a requirement to recount every implementation detail in the article.
 - [ ] Record final host continuity, latency, capture coverage, and pilot status without collapsing the separate gates.
 - [ ] Identify which quantitative claims can be used, with units, sample sizes, settings, uncertainty where available, and limitations.
 - [ ] Verify original website/paper claims against primary sources and link the dated corrections.
-- [x] Prepare a portable working packet with this handoff, the selected voice skill, key reports, regression examples, and a file manifest. Refresh that packet at final acceptance. The portable v9 packet includes terminal encoding/retrieval reports, the two earlier native lifecycle failures, all three fixed-cohort runs (all nine attempts failed), the latest repair evidence, the affective fidelity review, and dated website/paper snapshots. Some older evidence links still require the full checkout. Local validation artifacts are research inputs; public citations require accessible sources.
+- [x] Prepare a portable working packet with this handoff, the selected voice skill, key reports, regression examples, and a file manifest. Refresh that packet at final acceptance. The portable v10 packet includes terminal encoding/retrieval reports, the two earlier native lifecycle failures, all four fixed-cohort runs (all twelve attempts failed), the latest repair evidence, the affective fidelity review, and dated website/paper snapshots. Some older evidence links still require the full checkout. Local validation artifacts are research inputs; public citations require accessible sources.
 - [ ] Keep unverified interpretations and questions outside the article's factual claims, then make the final voice pass using Anthony's skill.

@@ -7,8 +7,20 @@ Hermes exposes eight scoped tools, including the existing service's reviewed
 copy preview/apply operations. New fixtures cover explicit selection, safe
 empty defaults, stale-preview rejection, scope isolation, and preservation
 of unselected advisory candidates. A complete bounded preview does not
-establish exhaustive semantic-copy discovery. Native model use of the two
-new tools remains unrun; the earlier six-tool v5 result follows.
+establish exhaustive semantic-copy discovery. The eight-tool v6 native
+result follows, with the earlier six-tool v5 outcome preserved below.
+
+The [fixed Hermes v6 cohort](../2026-09-19/hermes-native-cohort-v6/README.md)
+on verified `db932be` finished zero of three full lifecycles. All three
+passed teaching, restarted recall, correction, and restarted corrected
+recall, then failed at forgetting. Attempts 1 and 2 used the new preview/apply
+tools but selected only the target, leaving conversational copies. Attempt 1
+also skipped inspections; attempt 2 passed reviewed target-deletion checks
+and failed only the retained-label scan. Attempt 3 selected additional facts
+without their required source IDs; both apply calls returned degraded HTTP
+500. No source replay or final recall ran in this cohort. All outcomes and
+cleanup are archived. Three-host continuity, complete capture, real-model
+quality acceptance, Desktop, and the pilot remain open.
 
 The [fixed Hermes v5 cohort](../2026-09-19/hermes-native-cohort-v5/README.md)
 on verified `fd83fb2` finished zero of three full lifecycles. All three
