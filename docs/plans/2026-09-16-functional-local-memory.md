@@ -434,8 +434,12 @@ The user-event extraction twice exhausted its token budget without a final
 answer; the job exhausted its remaining retries and no facts were created.
 The [response diagnosis](../validation/2026-09-20/all-module-provider-recovery-diagnosis-v1.json)
 preserves the exact six provider outcomes. A separately frozen temperature-only
-follow-up is running on the same older installed build and original database;
-it does not yet close recovery.
+follow-up [also failed](../validation/2026-09-20/all-module-provider-recovery-temperature-one-terminal-v1/README.md)
+on the same older installed build and original database. Both jobs completed,
+but extraction retained a one-turn tool restriction as a lasting preference,
+producing two facts instead of the required marker alone. Duration and scope
+of extracted instructions need a repair and prospective regression cases;
+no sampling or prompt change is adopted and recovery remains open.
 
 Additional recovery gap: [active work can outlive its fixed lease](../validation/2026-09-20/long-job-lease-reproduction-v1/README.md).
 A controlled-clock installed reproduction rejects successful completion at
