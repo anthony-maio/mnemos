@@ -1,0 +1,763 @@
+{
+  "facts": [
+    {
+      "id": "01bb9596-856c-4005-952e-9d9216d48b1f",
+      "content": "Assistant reported: Consolidation complete. Now checking job status with the job ID returned from the store call.",
+      "version": 1,
+      "metadata": "{\"user_profile_id\": \"native-three-host-v7\", \"project_id\": \"2124842e-69de-4513-afc7-6c1764df75c2\", \"workspace_id\": null, \"session_id\": \"85f0424b-1ff4-4f7b-99be-ff186ca76ee7\", \"host\": \"claude-code\", \"scope\": \"project\", \"scope_id\": \"2124842e-69de-4513-afc7-6c1764df75c2\", \"source\": \"captured_passthrough\", \"source_roles\": [\"assistant\"], \"source_event_ids\": [\"a007244ae1737f8ef4d5b2d713559a83cb2ae47cddf62ccf5e557ca9ff9c9221\"], \"encoding_diagnostics\": {\"surprisal_score\": null, \"surprisal_status\": \"disabled\", \"prediction\": null, \"prediction_mode\": \"disabled\", \"threshold\": 0.3}, \"assertion_status\": \"unknown\", \"cognitive_state_status\": \"provider_unavailable\"}"
+    },
+    {
+      "id": "043bf76f-36bb-455d-a482-0084ba086e66",
+      "content": "Assistant reported: I'll call `mnemos_retrieve` for both queries simultaneously since they're independent.",
+      "version": 1,
+      "metadata": "{\"user_profile_id\": \"native-three-host-v7\", \"project_id\": \"2124842e-69de-4513-afc7-6c1764df75c2\", \"workspace_id\": null, \"session_id\": \"a3e4782b-8f70-46e6-a116-66c58e1ec1c9\", \"host\": \"claude-code\", \"scope\": \"project\", \"scope_id\": \"2124842e-69de-4513-afc7-6c1764df75c2\", \"source\": \"captured_passthrough\", \"source_roles\": [\"assistant\"], \"source_event_ids\": [\"13770939a9cd8533649b8989bc1c48a17a5ca4b12ab3469b062d6815a2bb05e9\"], \"encoding_diagnostics\": {\"surprisal_score\": null, \"surprisal_status\": \"disabled\", \"prediction\": null, \"prediction_mode\": \"disabled\", \"threshold\": 0.3}, \"assertion_status\": \"unknown\", \"cognitive_state_status\": \"provider_unavailable\"}"
+    },
+    {
+      "id": "04cf5035-6eff-4708-8d2b-b8082de7ce05",
+      "content": "The project release label is forbidden-foreign-ridge-992.",
+      "version": 1,
+      "metadata": "{\"user_profile_id\": \"native-three-host-v7\", \"project_id\": \"1301fa7c-8412-45bc-bb56-397801aa9d59\", \"workspace_id\": null, \"session_id\": \"controller\", \"host\": \"manual\", \"scope\": \"project\", \"scope_id\": \"1301fa7c-8412-45bc-bb56-397801aa9d59\", \"source\": \"explicit_remember\", \"source_roles\": [\"user\"], \"source_event_ids\": [\"0029f680cf0795b9a0b2bc48497d952085db68cdc8d74bfe64b07546fe0ea6a4\"], \"encoding_diagnostics\": {}, \"assertion_status\": \"asserted\", \"cognitive_state_status\": \"provider_unavailable\"}"
+    },
+    {
+      "id": "208333d3-731e-41f1-8c6e-45acdb189a0a",
+      "content": "The project review label is amber-grove-264.",
+      "version": 1,
+      "metadata": "{\"user_profile_id\": \"native-three-host-v7\", \"project_id\": \"2124842e-69de-4513-afc7-6c1764df75c2\", \"workspace_id\": null, \"session_id\": \"native-three-host-teach-review\", \"host\": \"claude-code\", \"scope\": \"project\", \"scope_id\": \"2124842e-69de-4513-afc7-6c1764df75c2\", \"source\": \"explicit_remember\", \"source_roles\": [\"user\"], \"source_event_ids\": [\"2b85d18b603f1761d58bfd7a444e53660569df828e0fdd457eef76ec1a0dc6d9\"], \"encoding_diagnostics\": {}, \"assertion_status\": \"asserted\", \"cognitive_state_status\": \"provider_unavailable\"}"
+    },
+    {
+      "id": "2a742a6e-96b6-46b9-a5cf-1243ce9a1583",
+      "content": "Use only the requested Mnemos tools and this project's scope. Do not add conversational text as an explicit fact. Retrieve the current asserted project release label and inspect its ID/version. Preview related forgetting at that ID/version, inspect each additional fact you intend to select and review its source events, then forget the target and only copies containing its current or historical release labels using the preview digest, matching preview limit, and exact selected IDs. Preserve the separate review-label convention and unrelated data. Do not repeat any release label in your final answer.",
+      "version": 1,
+      "metadata": "{\"user_profile_id\": \"native-three-host-v7\", \"project_id\": \"2124842e-69de-4513-afc7-6c1764df75c2\", \"workspace_id\": null, \"session_id\": \"ada2c44e-10e6-44cb-9f79-b6a84c98baec\", \"host\": \"claude-code\", \"scope\": \"project\", \"scope_id\": \"2124842e-69de-4513-afc7-6c1764df75c2\", \"source\": \"captured_passthrough\", \"source_roles\": [\"user\"], \"source_event_ids\": [\"938e884a1b8d6a39081c9932d0cda786af23920435f44130a502e12172561f69\"], \"encoding_diagnostics\": {\"surprisal_score\": null, \"surprisal_status\": \"disabled\", \"prediction\": null, \"prediction_mode\": \"disabled\", \"threshold\": 0.3}, \"assertion_status\": \"unknown\", \"cognitive_state_status\": \"provider_unavailable\"}"
+    },
+    {
+      "id": "2c831938-c4cb-4d7a-aad3-def8cf9bc171",
+      "content": "Use only the requested Mnemos tools and this project's scope. Do not add conversational text as an explicit fact. Call mnemos_store exactly once with content \"The project review label is amber-grove-264.\", role user, scope project. Then consolidate, then use mnemos_job_status with the returned job ID to establish completion. Report the actual result.",
+      "version": 1,
+      "metadata": "{\"user_profile_id\": \"native-three-host-v7\", \"project_id\": \"2124842e-69de-4513-afc7-6c1764df75c2\", \"workspace_id\": null, \"session_id\": \"85f0424b-1ff4-4f7b-99be-ff186ca76ee7\", \"host\": \"claude-code\", \"scope\": \"project\", \"scope_id\": \"2124842e-69de-4513-afc7-6c1764df75c2\", \"source\": \"captured_passthrough\", \"source_roles\": [\"user\"], \"source_event_ids\": [\"dad38d8b00df4e72e42f9f23b4a7c94dc483f7f85bfe2217518c6e1641ea770d\"], \"encoding_diagnostics\": {\"surprisal_score\": null, \"surprisal_status\": \"disabled\", \"prediction\": null, \"prediction_mode\": \"disabled\", \"threshold\": 0.3}, \"assertion_status\": \"unknown\", \"cognitive_state_status\": \"provider_unavailable\"}"
+    },
+    {
+      "id": "63810666-acb6-45e8-96ee-9a144a464a64",
+      "content": "Assistant reported: Done. Actual result: the Mnemos job `event:c22c8bb1f47a86f4e96800a0d181e463e06ac41aa124e0abda91a94592d1b9b6` completed successfully.\n\nIt stored one fact with ID `ee736b51-9f96-4d99-af2d-dc303e3f8d7c`.",
+      "version": 1,
+      "metadata": "{\"user_profile_id\": \"native-three-host-v7\", \"project_id\": \"2124842e-69de-4513-afc7-6c1764df75c2\", \"workspace_id\": null, \"session_id\": \"01a0bec8-8a8d-7c53-9260-1add7a16fc63\", \"host\": \"codex\", \"scope\": \"project\", \"scope_id\": \"2124842e-69de-4513-afc7-6c1764df75c2\", \"source\": \"captured_passthrough\", \"source_roles\": [\"assistant\"], \"source_event_ids\": [\"2c1cd19e784fa7e657f66cf675a28ee9c777454f6587b82717c9be48b576b069\"], \"encoding_diagnostics\": {\"surprisal_score\": null, \"surprisal_status\": \"disabled\", \"prediction\": null, \"prediction_mode\": \"disabled\", \"threshold\": 0.3}, \"assertion_status\": \"unknown\", \"cognitive_state_status\": \"provider_unavailable\"}"
+    },
+    {
+      "id": "829bead5-e261-4786-b227-9c7b17404ae7",
+      "content": "Assistant reported: I'll start by retrieving the current asserted project release label.",
+      "version": 1,
+      "metadata": "{\"user_profile_id\": \"native-three-host-v7\", \"project_id\": \"2124842e-69de-4513-afc7-6c1764df75c2\", \"workspace_id\": null, \"session_id\": \"ada2c44e-10e6-44cb-9f79-b6a84c98baec\", \"host\": \"claude-code\", \"scope\": \"project\", \"scope_id\": \"2124842e-69de-4513-afc7-6c1764df75c2\", \"source\": \"captured_passthrough\", \"source_roles\": [\"assistant\"], \"source_event_ids\": [\"1ad433911aab7fc8b54b0bff89554e4ff8fb4ccc48bf29f9dbce3cd6cbdc6f1a\"], \"encoding_diagnostics\": {\"surprisal_score\": null, \"surprisal_status\": \"disabled\", \"prediction\": null, \"prediction_mode\": \"disabled\", \"threshold\": 0.3}, \"assertion_status\": \"unknown\", \"cognitive_state_status\": \"provider_unavailable\"}"
+    },
+    {
+      "id": "8a1a4e2a-20ee-469b-9279-ec69ab2b8baa",
+      "content": "Assistant reported: Here are the actual results from the full lifecycle:\n\n**mnemos_store** -- committed successfully.\n- Event ID: `2b85d18b603f1761d58bfd7a444e53660569df828e0fdd457eef76ec1a0dc6d9`\n- Scope: `project`\n- Status: `committed`, fact_eligible: `true`\n\n**mnemos_consolidate** -- ran successfully.\n- Maintenance: 7 tasks completed, 0 failed, scheduler running.\n\n**mnemos_job_status** -- job completed.\n- Job ID: `event:2b85d18b603f1761d58bfd7a444e53660569df828e0fdd457eef76ec1a0dc6d9`\n- Status: `completed`\n- Decision: `facts` -- the content was processed and promoted to a durable fact.\n- Fact ID assigned: `208333d3-731e-41f1-8c6e-45acdb189a0a`\n- Attempt count: 1, last_error: null\n\nThe store, consolidate, and job completion lifecycle finished cleanly with no errors. The content \"The project review label is amber-grove-264.\" is now a durable project-scoped fact.",
+      "version": 1,
+      "metadata": "{\"user_profile_id\": \"native-three-host-v7\", \"project_id\": \"2124842e-69de-4513-afc7-6c1764df75c2\", \"workspace_id\": null, \"session_id\": \"85f0424b-1ff4-4f7b-99be-ff186ca76ee7\", \"host\": \"claude-code\", \"scope\": \"project\", \"scope_id\": \"2124842e-69de-4513-afc7-6c1764df75c2\", \"source\": \"captured_passthrough\", \"source_roles\": [\"assistant\"], \"source_event_ids\": [\"1a86e9ad47f80e86297aa06a4f27e743d383b8706f0a2bc298b76c64f88bae14\"], \"encoding_diagnostics\": {\"surprisal_score\": null, \"surprisal_status\": \"disabled\", \"prediction\": null, \"prediction_mode\": \"disabled\", \"threshold\": 0.3}, \"assertion_status\": \"unknown\", \"cognitive_state_status\": \"provider_unavailable\"}"
+    },
+    {
+      "id": "8fbd5bf0-c58a-45c2-8a4e-48a3f00025d1",
+      "content": "The build artifact checksum marker is slate-safe-553.",
+      "version": 1,
+      "metadata": "{\"user_profile_id\": \"native-three-host-v7\", \"project_id\": \"2124842e-69de-4513-afc7-6c1764df75c2\", \"workspace_id\": null, \"session_id\": \"controller\", \"host\": \"manual\", \"scope\": \"project\", \"scope_id\": \"2124842e-69de-4513-afc7-6c1764df75c2\", \"source\": \"explicit_remember\", \"source_roles\": [\"user\"], \"source_event_ids\": [\"1ac09a552074aac8c98cd656bef6272160a3a0c25c66ebcdec95f7a90953e00f\"], \"encoding_diagnostics\": {}, \"assertion_status\": \"asserted\", \"cognitive_state_status\": \"provider_unavailable\"}"
+    },
+    {
+      "id": "b69a7fa5-b74b-42fe-833d-acc7317c4a01",
+      "content": "Assistant reported: I'll start by calling `mnemos_store` with the exact specified parameters.",
+      "version": 1,
+      "metadata": "{\"user_profile_id\": \"native-three-host-v7\", \"project_id\": \"2124842e-69de-4513-afc7-6c1764df75c2\", \"workspace_id\": null, \"session_id\": \"85f0424b-1ff4-4f7b-99be-ff186ca76ee7\", \"host\": \"claude-code\", \"scope\": \"project\", \"scope_id\": \"2124842e-69de-4513-afc7-6c1764df75c2\", \"source\": \"captured_passthrough\", \"source_roles\": [\"assistant\"], \"source_event_ids\": [\"0d5beaaa938b078ad9e572732e4d0fb6caf51521ff090941c384857855bb844b\"], \"encoding_diagnostics\": {\"surprisal_score\": null, \"surprisal_status\": \"disabled\", \"prediction\": null, \"prediction_mode\": \"disabled\", \"threshold\": 0.3}, \"assertion_status\": \"unknown\", \"cognitive_state_status\": \"provider_unavailable\"}"
+    },
+    {
+      "id": "c34e0be3-91af-4470-8529-a7fb573f1056",
+      "content": "Assistant reported: Good. The target fact is confirmed at version 2 with a historical assertion from its prior correction. Now I'll inspect all 7 additional candidate facts I intend to select in parallel.",
+      "version": 1,
+      "metadata": "{\"user_profile_id\": \"native-three-host-v7\", \"project_id\": \"2124842e-69de-4513-afc7-6c1764df75c2\", \"workspace_id\": null, \"session_id\": \"ada2c44e-10e6-44cb-9f79-b6a84c98baec\", \"host\": \"claude-code\", \"scope\": \"project\", \"scope_id\": \"2124842e-69de-4513-afc7-6c1764df75c2\", \"source\": \"captured_passthrough\", \"source_roles\": [\"assistant\"], \"source_event_ids\": [\"945ffd94716a3462b3caa6e821eb2217874bddace1d48d309bf3bdaed9a21819\"], \"encoding_diagnostics\": {\"surprisal_score\": null, \"surprisal_status\": \"disabled\", \"prediction\": null, \"prediction_mode\": \"disabled\", \"threshold\": 0.3}, \"assertion_status\": \"unknown\", \"cognitive_state_status\": \"provider_unavailable\"}"
+    },
+    {
+      "id": "cc1ced84-5541-465b-9ecf-3e3dceb690d2",
+      "content": "Assistant reported: Store committed. Now consolidating.",
+      "version": 1,
+      "metadata": "{\"user_profile_id\": \"native-three-host-v7\", \"project_id\": \"2124842e-69de-4513-afc7-6c1764df75c2\", \"workspace_id\": null, \"session_id\": \"85f0424b-1ff4-4f7b-99be-ff186ca76ee7\", \"host\": \"claude-code\", \"scope\": \"project\", \"scope_id\": \"2124842e-69de-4513-afc7-6c1764df75c2\", \"source\": \"captured_passthrough\", \"source_roles\": [\"assistant\"], \"source_event_ids\": [\"48230097bd70bfefc0284bec27dd0f80a591eda0e283272dceea43bc83776eec\"], \"encoding_diagnostics\": {\"surprisal_score\": null, \"surprisal_status\": \"disabled\", \"prediction\": null, \"prediction_mode\": \"disabled\", \"threshold\": 0.3}, \"assertion_status\": \"unknown\", \"cognitive_state_status\": \"provider_unavailable\"}"
+    },
+    {
+      "id": "d297052c-3bf5-4f54-8d24-9e3374f968c8",
+      "content": "Use only the requested Mnemos tools and this project's scope. Do not add conversational text as an explicit fact. Call mnemos_retrieve twice, once with query \"current asserted project release label\" and once with query \"current asserted project review label\". Report the asserted facts and their IDs and versions. Do not change memory.",
+      "version": 1,
+      "metadata": "{\"user_profile_id\": \"native-three-host-v7\", \"project_id\": \"2124842e-69de-4513-afc7-6c1764df75c2\", \"workspace_id\": null, \"session_id\": \"01a0becf-61e4-7490-bece-95be8541db22\", \"host\": \"codex\", \"scope\": \"project\", \"scope_id\": \"2124842e-69de-4513-afc7-6c1764df75c2\", \"source\": \"captured_passthrough\", \"source_roles\": [\"user\"], \"source_event_ids\": [\"7fab853e12b1b9266a65e7bfc7a0d5424dcdb642c7939ff4e7c6cd701b6dacee\", \"b3bbf4c99c389bfd39dc66d1a1334c53a8dcb1c60dd51f31f77e31c58ade6496\", \"b4655d1e3aef07a9b9a6081d1e833cf2be1a67d63d11d3221b13d722f50be6bf\", \"8fc80d6eefce32071bbfa33dcd8327459e576d7be58e060a5f39ea094a27a075\", \"b949b1544fb296e2d808254f3fadf80077ebf3815b54ef06827fe0776d34ffc5\"], \"encoding_diagnostics\": {\"surprisal_score\": null, \"surprisal_status\": \"disabled\", \"prediction\": null, \"prediction_mode\": \"disabled\", \"threshold\": 0.3}, \"assertion_status\": \"unknown\", \"cognitive_state_status\": \"provider_unavailable\", \"merged_duplicate_ids\": [\"9cfc3907-b4e6-4ac4-9cb2-22dba554568e\", \"1e54e3c8-a2b2-4e1b-bed1-4c0b5f455c7a\", \"3d4aa4e8-4459-430b-8920-05ea954f40c3\", \"37e495a6-849c-46ca-86c7-4c10efd96fab\"]}"
+    },
+    {
+      "id": "e3b87121-6296-4a7e-a739-627f3818ab24",
+      "content": "Assistant reported: Retrieved in project scope only. Asserted facts found:\n\n- `208333d3-731e-41f1-8c6e-45acdb189a0a`, version `1`: The project review label is `amber-grove-264`.\n- `8fbd5bf0-c58a-45c2-8a4e-48a3f00025d1`, version `1`: The build artifact checksum marker is `slate-safe-553`.\n\nNo memory changes made.",
+      "version": 1,
+      "metadata": "{\"user_profile_id\": \"native-three-host-v7\", \"project_id\": \"2124842e-69de-4513-afc7-6c1764df75c2\", \"workspace_id\": null, \"session_id\": \"01a0becf-61e4-7490-bece-95be8541db22\", \"host\": \"codex\", \"scope\": \"project\", \"scope_id\": \"2124842e-69de-4513-afc7-6c1764df75c2\", \"source\": \"captured_passthrough\", \"source_roles\": [\"assistant\"], \"source_event_ids\": [\"5ffc549fbac3b5e08b4e3010e43129ba0ec991cbb8f5194f6e7634f2dacacaaf\"], \"encoding_diagnostics\": {\"surprisal_score\": null, \"surprisal_status\": \"disabled\", \"prediction\": null, \"prediction_mode\": \"disabled\", \"threshold\": 0.3}, \"assertion_status\": \"unknown\", \"cognitive_state_status\": \"provider_unavailable\"}"
+    },
+    {
+      "id": "f1842ef0-92eb-464c-8c33-f363c8af813b",
+      "content": "Assistant reported: All 7 inspections complete. Each is confirmed to contain current or historical release label text and each has exactly one source event, all reviewed. The review-label fact (`208333d3`), the checksum-marker fact (`8fbd5bf0`), and the similarity-only candidates that contain no release-label value are excluded. Proceeding with the forget.",
+      "version": 1,
+      "metadata": "{\"user_profile_id\": \"native-three-host-v7\", \"project_id\": \"2124842e-69de-4513-afc7-6c1764df75c2\", \"workspace_id\": null, \"session_id\": \"ada2c44e-10e6-44cb-9f79-b6a84c98baec\", \"host\": \"claude-code\", \"scope\": \"project\", \"scope_id\": \"2124842e-69de-4513-afc7-6c1764df75c2\", \"source\": \"captured_passthrough\", \"source_roles\": [\"assistant\"], \"source_event_ids\": [\"f379d6685d7d669e8827469f50774d87c564e8febc29e1da091f4ef45c4325f4\"], \"encoding_diagnostics\": {\"surprisal_score\": null, \"surprisal_status\": \"disabled\", \"prediction\": null, \"prediction_mode\": \"disabled\", \"threshold\": 0.3}, \"assertion_status\": \"unknown\", \"cognitive_state_status\": \"provider_unavailable\"}"
+    }
+  ],
+  "events": [
+    {
+      "id": "0029f680cf0795b9a0b2bc48497d952085db68cdc8d74bfe64b07546fe0ea6a4",
+      "role": "user",
+      "content": "The project release label is forbidden-foreign-ridge-992.",
+      "source": "manual",
+      "scope_id": "1301fa7c-8412-45bc-bb56-397801aa9d59",
+      "metadata": "{\"user_profile_id\": \"native-three-host-v7\", \"project_id\": \"1301fa7c-8412-45bc-bb56-397801aa9d59\", \"workspace_id\": null, \"session_id\": \"controller\", \"host\": \"manual\", \"scope\": \"project\", \"scope_id\": \"1301fa7c-8412-45bc-bb56-397801aa9d59\", \"source_event_id\": \"control-foreign-project\", \"source_ref\": null, \"source_kind\": \"explicit_remember\", \"explicit_remember\": true, \"identity_status\": \"normal\"}",
+      "occurred_at": "2026-09-20T12:26:06.072101+00:00"
+    },
+    {
+      "id": "07708e442d67d06e0fc6f759b59a84f2aa0358f99ee91fda93f1bdcd00d2155a",
+      "role": "user",
+      "content": "Use only the requested Mnemos tools and this project's scope. Do not add conversational text as an explicit fact. Call mnemos_store exactly once with content \"The project review label is amber-grove-264.\", role user, scope project. Then consolidate, then use mnemos_job_status with the returned job ID to establish completion. Report the actual result.",
+      "source": "claude-code",
+      "scope_id": "2124842e-69de-4513-afc7-6c1764df75c2",
+      "metadata": "{\"user_profile_id\": \"native-three-host-v7\", \"project_id\": \"2124842e-69de-4513-afc7-6c1764df75c2\", \"workspace_id\": null, \"session_id\": \"85f0424b-1ff4-4f7b-99be-ff186ca76ee7\", \"host\": \"claude-code\", \"scope\": \"project\", \"scope_id\": \"2124842e-69de-4513-afc7-6c1764df75c2\", \"source_event_id\": \"claude:v2:a5c615cb1484d8fa2216715d125c256738f628f4fc1f33419fd31e0c30134207\", \"source_ref\": \"prompt:4694a09ad65899f84e65bb077a7c20bfbf0ff1bfc38b19c9d10bd2d88855204d\", \"source_kind\": \"claude_code_transcript\", \"explicit_remember\": false, \"identity_status\": \"provisional_unassociated\"}",
+      "occurred_at": "2026-09-20T12:27:51.921738+00:00"
+    },
+    {
+      "id": "0d5beaaa938b078ad9e572732e4d0fb6caf51521ff090941c384857855bb844b",
+      "role": "assistant",
+      "content": "I'll start by calling `mnemos_store` with the exact specified parameters.",
+      "source": "claude-code",
+      "scope_id": "2124842e-69de-4513-afc7-6c1764df75c2",
+      "metadata": "{\"user_profile_id\": \"native-three-host-v7\", \"project_id\": \"2124842e-69de-4513-afc7-6c1764df75c2\", \"workspace_id\": null, \"session_id\": \"85f0424b-1ff4-4f7b-99be-ff186ca76ee7\", \"host\": \"claude-code\", \"scope\": \"project\", \"scope_id\": \"2124842e-69de-4513-afc7-6c1764df75c2\", \"source_event_id\": \"claude:v2:51a6a98602d2d8314d68f1a385d98fcc4a6c5d1a329568a795317dafab865442\", \"source_ref\": \"df76d46f-bdb0-40c1-b493-740af7c99eb2\", \"source_kind\": \"claude_code_transcript\", \"explicit_remember\": false, \"identity_status\": \"normal\"}",
+      "occurred_at": "2026-09-20T12:27:56.646000+00:00"
+    },
+    {
+      "id": "13770939a9cd8533649b8989bc1c48a17a5ca4b12ab3469b062d6815a2bb05e9",
+      "role": "assistant",
+      "content": "I'll call `mnemos_retrieve` for both queries simultaneously since they're independent.",
+      "source": "claude-code",
+      "scope_id": "2124842e-69de-4513-afc7-6c1764df75c2",
+      "metadata": "{\"user_profile_id\": \"native-three-host-v7\", \"project_id\": \"2124842e-69de-4513-afc7-6c1764df75c2\", \"workspace_id\": null, \"session_id\": \"a3e4782b-8f70-46e6-a116-66c58e1ec1c9\", \"host\": \"claude-code\", \"scope\": \"project\", \"scope_id\": \"2124842e-69de-4513-afc7-6c1764df75c2\", \"source_event_id\": \"claude:v2:2a3badcdf7aa249fa55ad74d6f111aa347b16478d34dbc415387df5120d059f4\", \"source_ref\": \"6f2d7356-f38e-4180-88f1-0f06fb6aff62\", \"source_kind\": \"claude_code_transcript\", \"explicit_remember\": false, \"identity_status\": \"normal\"}",
+      "occurred_at": "2026-09-20T12:30:51.664000+00:00"
+    },
+    {
+      "id": "1a86e9ad47f80e86297aa06a4f27e743d383b8706f0a2bc298b76c64f88bae14",
+      "role": "assistant",
+      "content": "Here are the actual results from the full lifecycle:\n\n**mnemos_store** -- committed successfully.\n- Event ID: `2b85d18b603f1761d58bfd7a444e53660569df828e0fdd457eef76ec1a0dc6d9`\n- Scope: `project`\n- Status: `committed`, fact_eligible: `true`\n\n**mnemos_consolidate** -- ran successfully.\n- Maintenance: 7 tasks completed, 0 failed, scheduler running.\n\n**mnemos_job_status** -- job completed.\n- Job ID: `event:2b85d18b603f1761d58bfd7a444e53660569df828e0fdd457eef76ec1a0dc6d9`\n- Status: `completed`\n- Decision: `facts` -- the content was processed and promoted to a durable fact.\n- Fact ID assigned: `208333d3-731e-41f1-8c6e-45acdb189a0a`\n- Attempt count: 1, last_error: null\n\nThe store, consolidate, and job completion lifecycle finished cleanly with no errors. The content \"The project review label is amber-grove-264.\" is now a durable project-scoped fact.",
+      "source": "claude-code",
+      "scope_id": "2124842e-69de-4513-afc7-6c1764df75c2",
+      "metadata": "{\"user_profile_id\": \"native-three-host-v7\", \"project_id\": \"2124842e-69de-4513-afc7-6c1764df75c2\", \"workspace_id\": null, \"session_id\": \"85f0424b-1ff4-4f7b-99be-ff186ca76ee7\", \"host\": \"claude-code\", \"scope\": \"project\", \"scope_id\": \"2124842e-69de-4513-afc7-6c1764df75c2\", \"source_event_id\": \"claude:v2:6e825caa7dc2ebdbacc24b5dd9c89121a060cc5b656121aabec2b1c7ad12a99c\", \"source_ref\": \"4eaa9502-455f-4cc8-804d-c55fe6460ec7\", \"source_kind\": \"claude_code_transcript\", \"explicit_remember\": false, \"identity_status\": \"normal\"}",
+      "occurred_at": "2026-09-20T12:28:06.287000+00:00"
+    },
+    {
+      "id": "1ac09a552074aac8c98cd656bef6272160a3a0c25c66ebcdec95f7a90953e00f",
+      "role": "user",
+      "content": "The build artifact checksum marker is slate-safe-553.",
+      "source": "manual",
+      "scope_id": "2124842e-69de-4513-afc7-6c1764df75c2",
+      "metadata": "{\"user_profile_id\": \"native-three-host-v7\", \"project_id\": \"2124842e-69de-4513-afc7-6c1764df75c2\", \"workspace_id\": null, \"session_id\": \"controller\", \"host\": \"manual\", \"scope\": \"project\", \"scope_id\": \"2124842e-69de-4513-afc7-6c1764df75c2\", \"source_event_id\": \"control-project\", \"source_ref\": null, \"source_kind\": \"explicit_remember\", \"explicit_remember\": true, \"identity_status\": \"normal\"}",
+      "occurred_at": "2026-09-20T12:26:06.068627+00:00"
+    },
+    {
+      "id": "1ad433911aab7fc8b54b0bff89554e4ff8fb4ccc48bf29f9dbce3cd6cbdc6f1a",
+      "role": "assistant",
+      "content": "I'll start by retrieving the current asserted project release label.",
+      "source": "claude-code",
+      "scope_id": "2124842e-69de-4513-afc7-6c1764df75c2",
+      "metadata": "{\"user_profile_id\": \"native-three-host-v7\", \"project_id\": \"2124842e-69de-4513-afc7-6c1764df75c2\", \"workspace_id\": null, \"session_id\": \"ada2c44e-10e6-44cb-9f79-b6a84c98baec\", \"host\": \"claude-code\", \"scope\": \"project\", \"scope_id\": \"2124842e-69de-4513-afc7-6c1764df75c2\", \"source_event_id\": \"claude:v2:5c1b49f680b3c1fd967fd4bb17f4a9c9b217997840cb6c86070710eca891b382\", \"source_ref\": \"908e2d28-03e2-4718-99f8-f1e8de2b22d3\", \"source_kind\": \"claude_code_transcript\", \"explicit_remember\": false, \"identity_status\": \"normal\"}",
+      "occurred_at": "2026-09-20T12:31:26.565000+00:00"
+    },
+    {
+      "id": "2b85d18b603f1761d58bfd7a444e53660569df828e0fdd457eef76ec1a0dc6d9",
+      "role": "user",
+      "content": "The project review label is amber-grove-264.",
+      "source": "claude-code",
+      "scope_id": "2124842e-69de-4513-afc7-6c1764df75c2",
+      "metadata": "{\"user_profile_id\": \"native-three-host-v7\", \"project_id\": \"2124842e-69de-4513-afc7-6c1764df75c2\", \"workspace_id\": null, \"session_id\": \"native-three-host-teach-review\", \"host\": \"claude-code\", \"scope\": \"project\", \"scope_id\": \"2124842e-69de-4513-afc7-6c1764df75c2\", \"source_event_id\": \"mcp:5775f88a18e547cbb8bc946b6a28131a\", \"source_ref\": null, \"source_kind\": \"explicit_remember\", \"explicit_remember\": true, \"identity_status\": \"normal\"}",
+      "occurred_at": "2026-09-20T12:27:57.196364+00:00"
+    },
+    {
+      "id": "2c1cd19e784fa7e657f66cf675a28ee9c777454f6587b82717c9be48b576b069",
+      "role": "assistant",
+      "content": "Done. Actual result: the Mnemos job `event:c22c8bb1f47a86f4e96800a0d181e463e06ac41aa124e0abda91a94592d1b9b6` completed successfully.\n\nIt stored one fact with ID `ee736b51-9f96-4d99-af2d-dc303e3f8d7c`.",
+      "source": "codex",
+      "scope_id": "2124842e-69de-4513-afc7-6c1764df75c2",
+      "metadata": "{\"user_profile_id\": \"native-three-host-v7\", \"project_id\": \"2124842e-69de-4513-afc7-6c1764df75c2\", \"workspace_id\": null, \"session_id\": \"01a0bec8-8a8d-7c53-9260-1add7a16fc63\", \"host\": \"codex\", \"scope\": \"project\", \"scope_id\": \"2124842e-69de-4513-afc7-6c1764df75c2\", \"source_event_id\": \"codex:25a4986ef4f4b3cf6a55ace87acc0679b9e5e6fef42c1d78f5ca6dbc57891000\", \"source_ref\": \"Stop:01a0bec8-9794-7463-a192-0ebe76abbedf\", \"source_kind\": \"codex_hook\", \"explicit_remember\": false, \"identity_status\": \"normal\"}",
+      "occurred_at": "2026-09-20T12:27:36.287170+00:00"
+    },
+    {
+      "id": "468155218172aece341cc413e3b6706e1a351dcc2681dadd853efc5b96d42772",
+      "role": "user",
+      "content": "Use only the requested Mnemos tools and this project's scope. Do not add conversational text as an explicit fact. Retrieve the current asserted project release label and inspect its ID/version. Preview related forgetting at that ID/version, inspect each additional fact you intend to select and review its source events, then forget the target and only copies containing its current or historical release labels using the preview digest, matching preview limit, and exact selected IDs. Preserve the separate review-label convention and unrelated data. Do not repeat any release label in your final answer.",
+      "source": "claude-code",
+      "scope_id": "2124842e-69de-4513-afc7-6c1764df75c2",
+      "metadata": "{\"user_profile_id\": \"native-three-host-v7\", \"project_id\": \"2124842e-69de-4513-afc7-6c1764df75c2\", \"workspace_id\": null, \"session_id\": \"ada2c44e-10e6-44cb-9f79-b6a84c98baec\", \"host\": \"claude-code\", \"scope\": \"project\", \"scope_id\": \"2124842e-69de-4513-afc7-6c1764df75c2\", \"source_event_id\": \"claude:v2:6719551bc3522c59274cf88aacb435967315a3ee512aa22f3ab21a14fb5986c0\", \"source_ref\": \"prompt:6df9fbdf66294956dd2452d9cc2c7d28be07f2a8b0fd648d4638d38209a3f680\", \"source_kind\": \"claude_code_transcript\", \"explicit_remember\": false, \"identity_status\": \"provisional_unassociated\"}",
+      "occurred_at": "2026-09-20T12:31:23.547915+00:00"
+    },
+    {
+      "id": "48230097bd70bfefc0284bec27dd0f80a591eda0e283272dceea43bc83776eec",
+      "role": "assistant",
+      "content": "Store committed. Now consolidating.",
+      "source": "claude-code",
+      "scope_id": "2124842e-69de-4513-afc7-6c1764df75c2",
+      "metadata": "{\"user_profile_id\": \"native-three-host-v7\", \"project_id\": \"2124842e-69de-4513-afc7-6c1764df75c2\", \"workspace_id\": null, \"session_id\": \"85f0424b-1ff4-4f7b-99be-ff186ca76ee7\", \"host\": \"claude-code\", \"scope\": \"project\", \"scope_id\": \"2124842e-69de-4513-afc7-6c1764df75c2\", \"source_event_id\": \"claude:v2:8dc261fff4f2ecfca4bd85b344b182108bb8a768dda90fa2660a809c92b29e1f\", \"source_ref\": \"36bfec7b-1c33-4fa1-bc06-cf54171a9bca\", \"source_kind\": \"claude_code_transcript\", \"explicit_remember\": false, \"identity_status\": \"normal\"}",
+      "occurred_at": "2026-09-20T12:27:58.992000+00:00"
+    },
+    {
+      "id": "5c18da120ef28a0826acfbf99e0a3be920f1d60314618e12a3648cb547b55976",
+      "role": "user",
+      "content": "Use only the requested Mnemos tools and this project's scope. Do not add conversational text as an explicit fact. Call mnemos_retrieve twice, once with query \"current asserted project release label\" and once with query \"current asserted project review label\". Report the asserted facts and their IDs and versions. Do not change memory.",
+      "source": "claude-code",
+      "scope_id": "2124842e-69de-4513-afc7-6c1764df75c2",
+      "metadata": "{\"user_profile_id\": \"native-three-host-v7\", \"project_id\": \"2124842e-69de-4513-afc7-6c1764df75c2\", \"workspace_id\": null, \"session_id\": \"a3e4782b-8f70-46e6-a116-66c58e1ec1c9\", \"host\": \"claude-code\", \"scope\": \"project\", \"scope_id\": \"2124842e-69de-4513-afc7-6c1764df75c2\", \"source_event_id\": \"claude:v2:5431b5d54c12fbaa5678a292dbc3519d85adb04efc2ebd3a21e50532aa6617d4\", \"source_ref\": \"prompt:14e37c656d98db3a4785c07c1a6cf8afa1ff6c5cc747d788bb6aa675225ea91d\", \"source_kind\": \"claude_code_transcript\", \"explicit_remember\": false, \"identity_status\": \"provisional_unassociated\"}",
+      "occurred_at": "2026-09-20T12:30:47.758628+00:00"
+    },
+    {
+      "id": "5ffc549fbac3b5e08b4e3010e43129ba0ec991cbb8f5194f6e7634f2dacacaaf",
+      "role": "assistant",
+      "content": "Retrieved in project scope only. Asserted facts found:\n\n- `208333d3-731e-41f1-8c6e-45acdb189a0a`, version `1`: The project review label is `amber-grove-264`.\n- `8fbd5bf0-c58a-45c2-8a4e-48a3f00025d1`, version `1`: The build artifact checksum marker is `slate-safe-553`.\n\nNo memory changes made.",
+      "source": "codex",
+      "scope_id": "2124842e-69de-4513-afc7-6c1764df75c2",
+      "metadata": "{\"user_profile_id\": \"native-three-host-v7\", \"project_id\": \"2124842e-69de-4513-afc7-6c1764df75c2\", \"workspace_id\": null, \"session_id\": \"01a0becf-61e4-7490-bece-95be8541db22\", \"host\": \"codex\", \"scope\": \"project\", \"scope_id\": \"2124842e-69de-4513-afc7-6c1764df75c2\", \"source_event_id\": \"codex:37865d222d688db00d364fe982dc25f795acd7bd92819f229c84edbdad3272e3\", \"source_ref\": \"Stop:01a0becf-6bc2-7ed1-bef2-4948d255e607\", \"source_kind\": \"codex_hook\", \"explicit_remember\": false, \"identity_status\": \"normal\"}",
+      "occurred_at": "2026-09-20T12:35:09.110788+00:00"
+    },
+    {
+      "id": "7fab853e12b1b9266a65e7bfc7a0d5424dcdb642c7939ff4e7c6cd701b6dacee",
+      "role": "user",
+      "content": "Use only the requested Mnemos tools and this project's scope. Do not add conversational text as an explicit fact. Call mnemos_retrieve twice, once with query \"current asserted project release label\" and once with query \"current asserted project review label\". Report the asserted facts and their IDs and versions. Do not change memory.",
+      "source": "hermes",
+      "scope_id": "2124842e-69de-4513-afc7-6c1764df75c2",
+      "metadata": "{\"user_profile_id\": \"native-three-host-v7\", \"project_id\": \"2124842e-69de-4513-afc7-6c1764df75c2\", \"workspace_id\": null, \"session_id\": \"20260920_082819_6e2df1\", \"host\": \"hermes\", \"scope\": \"project\", \"scope_id\": \"2124842e-69de-4513-afc7-6c1764df75c2\", \"source_event_id\": \"hermes:d662756c7c3826763f574b4c30c73c4816cdad7f97ec0cc2533f056e4ad4b2e3\", \"source_ref\": \"transcript:v2:1\", \"source_kind\": \"hermes_memory_provider\", \"explicit_remember\": false, \"identity_status\": \"normal\"}",
+      "occurred_at": "2026-09-20T12:28:29.989954+00:00"
+    },
+    {
+      "id": "8fc80d6eefce32071bbfa33dcd8327459e576d7be58e060a5f39ea094a27a075",
+      "role": "user",
+      "content": "Use only the requested Mnemos tools and this project's scope. Do not add conversational text as an explicit fact. Call mnemos_retrieve twice, once with query \"current asserted project release label\" and once with query \"current asserted project review label\". Report the asserted facts and their IDs and versions. Do not change memory.",
+      "source": "hermes",
+      "scope_id": "2124842e-69de-4513-afc7-6c1764df75c2",
+      "metadata": "{\"user_profile_id\": \"native-three-host-v7\", \"project_id\": \"2124842e-69de-4513-afc7-6c1764df75c2\", \"workspace_id\": null, \"session_id\": \"20260920_083108_c1c8af\", \"host\": \"hermes\", \"scope\": \"project\", \"scope_id\": \"2124842e-69de-4513-afc7-6c1764df75c2\", \"source_event_id\": \"hermes:67db9f1d040e8252724e811bdbb7369573497f181385621cc5369fe6a9071d13\", \"source_ref\": \"transcript:v2:1\", \"source_kind\": \"hermes_memory_provider\", \"explicit_remember\": false, \"identity_status\": \"normal\"}",
+      "occurred_at": "2026-09-20T12:31:18.160342+00:00"
+    },
+    {
+      "id": "938e884a1b8d6a39081c9932d0cda786af23920435f44130a502e12172561f69",
+      "role": "user",
+      "content": "Use only the requested Mnemos tools and this project's scope. Do not add conversational text as an explicit fact. Retrieve the current asserted project release label and inspect its ID/version. Preview related forgetting at that ID/version, inspect each additional fact you intend to select and review its source events, then forget the target and only copies containing its current or historical release labels using the preview digest, matching preview limit, and exact selected IDs. Preserve the separate review-label convention and unrelated data. Do not repeat any release label in your final answer.",
+      "source": "claude-code",
+      "scope_id": "2124842e-69de-4513-afc7-6c1764df75c2",
+      "metadata": "{\"user_profile_id\": \"native-three-host-v7\", \"project_id\": \"2124842e-69de-4513-afc7-6c1764df75c2\", \"workspace_id\": null, \"session_id\": \"ada2c44e-10e6-44cb-9f79-b6a84c98baec\", \"host\": \"claude-code\", \"scope\": \"project\", \"scope_id\": \"2124842e-69de-4513-afc7-6c1764df75c2\", \"source_event_id\": \"claude:v2:acaa74e3ba36fa0d0d286aa0dc03c5b4e19455e9ea22724afd2c504f4d493541\", \"source_ref\": \"cd03bffb-8030-4728-91cc-bacc1c306a3e\", \"source_kind\": \"claude_code_transcript\", \"explicit_remember\": false, \"identity_status\": \"normal\"}",
+      "occurred_at": "2026-09-20T12:31:22.826000+00:00"
+    },
+    {
+      "id": "945ffd94716a3462b3caa6e821eb2217874bddace1d48d309bf3bdaed9a21819",
+      "role": "assistant",
+      "content": "Good. The target fact is confirmed at version 2 with a historical assertion from its prior correction. Now I'll inspect all 7 additional candidate facts I intend to select in parallel.",
+      "source": "claude-code",
+      "scope_id": "2124842e-69de-4513-afc7-6c1764df75c2",
+      "metadata": "{\"user_profile_id\": \"native-three-host-v7\", \"project_id\": \"2124842e-69de-4513-afc7-6c1764df75c2\", \"workspace_id\": null, \"session_id\": \"ada2c44e-10e6-44cb-9f79-b6a84c98baec\", \"host\": \"claude-code\", \"scope\": \"project\", \"scope_id\": \"2124842e-69de-4513-afc7-6c1764df75c2\", \"source_event_id\": \"claude:v2:e2ce5976004b322951f9c5b9ad97b53740a97e312546c921b8c4bcf327de1970\", \"source_ref\": \"1bfcfa40-1e77-4067-bb60-796f1fd44dac\", \"source_kind\": \"claude_code_transcript\", \"explicit_remember\": false, \"identity_status\": \"normal\"}",
+      "occurred_at": "2026-09-20T12:33:00.478000+00:00"
+    },
+    {
+      "id": "a007244ae1737f8ef4d5b2d713559a83cb2ae47cddf62ccf5e557ca9ff9c9221",
+      "role": "assistant",
+      "content": "Consolidation complete. Now checking job status with the job ID returned from the store call.",
+      "source": "claude-code",
+      "scope_id": "2124842e-69de-4513-afc7-6c1764df75c2",
+      "metadata": "{\"user_profile_id\": \"native-three-host-v7\", \"project_id\": \"2124842e-69de-4513-afc7-6c1764df75c2\", \"workspace_id\": null, \"session_id\": \"85f0424b-1ff4-4f7b-99be-ff186ca76ee7\", \"host\": \"claude-code\", \"scope\": \"project\", \"scope_id\": \"2124842e-69de-4513-afc7-6c1764df75c2\", \"source_event_id\": \"claude:v2:1e90b6b5ecb575347a8711dec9b4fd997b30e91a35c700b9b9cb0d11a89ad8db\", \"source_ref\": \"8539b774-2174-476a-90c4-e90b2b7b3c92\", \"source_kind\": \"claude_code_transcript\", \"explicit_remember\": false, \"identity_status\": \"normal\"}",
+      "occurred_at": "2026-09-20T12:28:01.045000+00:00"
+    },
+    {
+      "id": "b3bbf4c99c389bfd39dc66d1a1334c53a8dcb1c60dd51f31f77e31c58ade6496",
+      "role": "user",
+      "content": "Use only the requested Mnemos tools and this project's scope. Do not add conversational text as an explicit fact. Call mnemos_retrieve twice, once with query \"current asserted project release label\" and once with query \"current asserted project review label\". Report the asserted facts and their IDs and versions. Do not change memory.",
+      "source": "codex",
+      "scope_id": "2124842e-69de-4513-afc7-6c1764df75c2",
+      "metadata": "{\"user_profile_id\": \"native-three-host-v7\", \"project_id\": \"2124842e-69de-4513-afc7-6c1764df75c2\", \"workspace_id\": null, \"session_id\": \"01a0beca-f10a-7760-9673-c9383cce386e\", \"host\": \"codex\", \"scope\": \"project\", \"scope_id\": \"2124842e-69de-4513-afc7-6c1764df75c2\", \"source_event_id\": \"codex:6014a0afe095f4e83d43e6f62609c1fe2d77ae98886d70358654ba9bf570dd1e\", \"source_ref\": \"UserPromptSubmit:01a0beca-fa40-7991-bf75-2242f0ea0411\", \"source_kind\": \"codex_hook\", \"explicit_remember\": false, \"identity_status\": \"normal\"}",
+      "occurred_at": "2026-09-20T12:29:32.552412+00:00"
+    },
+    {
+      "id": "b4655d1e3aef07a9b9a6081d1e833cf2be1a67d63d11d3221b13d722f50be6bf",
+      "role": "user",
+      "content": "Use only the requested Mnemos tools and this project's scope. Do not add conversational text as an explicit fact. Call mnemos_retrieve twice, once with query \"current asserted project release label\" and once with query \"current asserted project review label\". Report the asserted facts and their IDs and versions. Do not change memory.",
+      "source": "claude-code",
+      "scope_id": "2124842e-69de-4513-afc7-6c1764df75c2",
+      "metadata": "{\"user_profile_id\": \"native-three-host-v7\", \"project_id\": \"2124842e-69de-4513-afc7-6c1764df75c2\", \"workspace_id\": null, \"session_id\": \"a3e4782b-8f70-46e6-a116-66c58e1ec1c9\", \"host\": \"claude-code\", \"scope\": \"project\", \"scope_id\": \"2124842e-69de-4513-afc7-6c1764df75c2\", \"source_event_id\": \"claude:v2:f08b1538ccb5328432dda56bda7a2f744afee15140b45566f4667a1d16dff226\", \"source_ref\": \"2d3aab97-516b-4910-acf0-ca4c344a20c5\", \"source_kind\": \"claude_code_transcript\", \"explicit_remember\": false, \"identity_status\": \"normal\"}",
+      "occurred_at": "2026-09-20T12:30:47.005000+00:00"
+    },
+    {
+      "id": "b949b1544fb296e2d808254f3fadf80077ebf3815b54ef06827fe0776d34ffc5",
+      "role": "user",
+      "content": "Use only the requested Mnemos tools and this project's scope. Do not add conversational text as an explicit fact. Call mnemos_retrieve twice, once with query \"current asserted project release label\" and once with query \"current asserted project review label\". Report the asserted facts and their IDs and versions. Do not change memory.",
+      "source": "codex",
+      "scope_id": "2124842e-69de-4513-afc7-6c1764df75c2",
+      "metadata": "{\"user_profile_id\": \"native-three-host-v7\", \"project_id\": \"2124842e-69de-4513-afc7-6c1764df75c2\", \"workspace_id\": null, \"session_id\": \"01a0becf-61e4-7490-bece-95be8541db22\", \"host\": \"codex\", \"scope\": \"project\", \"scope_id\": \"2124842e-69de-4513-afc7-6c1764df75c2\", \"source_event_id\": \"codex:d9a3fb7e2f31ef37c111bc63596f12acb2d65ad9634a08efdb724b0a068220d3\", \"source_ref\": \"UserPromptSubmit:01a0becf-6bc2-7ed1-bef2-4948d255e607\", \"source_kind\": \"codex_hook\", \"explicit_remember\": false, \"identity_status\": \"normal\"}",
+      "occurred_at": "2026-09-20T12:34:23.266554+00:00"
+    },
+    {
+      "id": "dad38d8b00df4e72e42f9f23b4a7c94dc483f7f85bfe2217518c6e1641ea770d",
+      "role": "user",
+      "content": "Use only the requested Mnemos tools and this project's scope. Do not add conversational text as an explicit fact. Call mnemos_store exactly once with content \"The project review label is amber-grove-264.\", role user, scope project. Then consolidate, then use mnemos_job_status with the returned job ID to establish completion. Report the actual result.",
+      "source": "claude-code",
+      "scope_id": "2124842e-69de-4513-afc7-6c1764df75c2",
+      "metadata": "{\"user_profile_id\": \"native-three-host-v7\", \"project_id\": \"2124842e-69de-4513-afc7-6c1764df75c2\", \"workspace_id\": null, \"session_id\": \"85f0424b-1ff4-4f7b-99be-ff186ca76ee7\", \"host\": \"claude-code\", \"scope\": \"project\", \"scope_id\": \"2124842e-69de-4513-afc7-6c1764df75c2\", \"source_event_id\": \"claude:v2:9d555cebabe22fe25b7c6426944f0473c9b620417a1a2931ba0a52a8be40772b\", \"source_ref\": \"d152e27c-f14d-476b-81a3-52c6647ec720\", \"source_kind\": \"claude_code_transcript\", \"explicit_remember\": false, \"identity_status\": \"normal\"}",
+      "occurred_at": "2026-09-20T12:27:51.147000+00:00"
+    },
+    {
+      "id": "f379d6685d7d669e8827469f50774d87c564e8febc29e1da091f4ef45c4325f4",
+      "role": "assistant",
+      "content": "All 7 inspections complete. Each is confirmed to contain current or historical release label text and each has exactly one source event, all reviewed. The review-label fact (`208333d3`), the checksum-marker fact (`8fbd5bf0`), and the similarity-only candidates that contain no release-label value are excluded. Proceeding with the forget.",
+      "source": "claude-code",
+      "scope_id": "2124842e-69de-4513-afc7-6c1764df75c2",
+      "metadata": "{\"user_profile_id\": \"native-three-host-v7\", \"project_id\": \"2124842e-69de-4513-afc7-6c1764df75c2\", \"workspace_id\": null, \"session_id\": \"ada2c44e-10e6-44cb-9f79-b6a84c98baec\", \"host\": \"claude-code\", \"scope\": \"project\", \"scope_id\": \"2124842e-69de-4513-afc7-6c1764df75c2\", \"source_event_id\": \"claude:v2:0b8ac4dfbb6d01af6251a2fe7df198e9eb46c6c13e6f96c629642cbc0b67123e\", \"source_ref\": \"dcf164e5-1d39-4632-bf80-f137e0965a60\", \"source_kind\": \"claude_code_transcript\", \"explicit_remember\": false, \"identity_status\": \"normal\"}",
+      "occurred_at": "2026-09-20T12:33:40.331000+00:00"
+    }
+  ],
+  "jobs": [
+    {
+      "id": "event:0029f680cf0795b9a0b2bc48497d952085db68cdc8d74bfe64b07546fe0ea6a4",
+      "kind": "remember",
+      "status": "completed",
+      "payload": "{\"event_id\": \"0029f680cf0795b9a0b2bc48497d952085db68cdc8d74bfe64b07546fe0ea6a4\", \"context\": {\"user_profile_id\": \"native-three-host-v7\", \"project_id\": \"1301fa7c-8412-45bc-bb56-397801aa9d59\", \"workspace_id\": null, \"session_id\": \"controller\", \"host\": \"manual\"}, \"scope\": \"project\", \"source_digest\": \"b32831267b1d0071ead8b42ea2429f902f88c5430850793aee77c15e5ea875e2\"}",
+      "result": "{\"decision\": \"facts\", \"encoding_diagnostics\": {}, \"fact_ids\": [\"04cf5035-6eff-4708-8d2b-b8082de7ce05\"]}",
+      "last_error": null
+    },
+    {
+      "id": "event:07708e442d67d06e0fc6f759b59a84f2aa0358f99ee91fda93f1bdcd00d2155a",
+      "kind": "capture_only",
+      "status": "completed",
+      "payload": "{\"event_id\": \"07708e442d67d06e0fc6f759b59a84f2aa0358f99ee91fda93f1bdcd00d2155a\", \"context\": {\"user_profile_id\": \"native-three-host-v7\", \"project_id\": \"2124842e-69de-4513-afc7-6c1764df75c2\", \"workspace_id\": null, \"session_id\": \"85f0424b-1ff4-4f7b-99be-ff186ca76ee7\", \"host\": \"claude-code\"}, \"scope\": \"project\", \"source_digest\": \"1bf02bcb0f7e0170e45d432ed2c93f50dd74083452a8a4e27b725c53c75a549e\", \"identity_status\": \"provisional_unassociated\"}",
+      "result": "{\"decision\": \"identity_pending\", \"fact_eligible\": false, \"fact_ids\": []}",
+      "last_error": null
+    },
+    {
+      "id": "event:0d5beaaa938b078ad9e572732e4d0fb6caf51521ff090941c384857855bb844b",
+      "kind": "extract",
+      "status": "completed",
+      "payload": "{\"event_id\": \"0d5beaaa938b078ad9e572732e4d0fb6caf51521ff090941c384857855bb844b\", \"context\": {\"user_profile_id\": \"native-three-host-v7\", \"project_id\": \"2124842e-69de-4513-afc7-6c1764df75c2\", \"workspace_id\": null, \"session_id\": \"85f0424b-1ff4-4f7b-99be-ff186ca76ee7\", \"host\": \"claude-code\"}, \"scope\": \"project\", \"source_digest\": \"b2a6174ff7f1bcfb99a15333f358c31b79e55483167a681b00f2930a5fcba5f6\"}",
+      "result": "{\"decision\": \"facts\", \"encoding_diagnostics\": {\"surprisal_score\": null, \"surprisal_status\": \"disabled\", \"prediction\": null, \"prediction_mode\": \"disabled\", \"threshold\": 0.3}, \"fact_ids\": [\"b69a7fa5-b74b-42fe-833d-acc7317c4a01\"]}",
+      "last_error": null
+    },
+    {
+      "id": "event:13770939a9cd8533649b8989bc1c48a17a5ca4b12ab3469b062d6815a2bb05e9",
+      "kind": "extract",
+      "status": "completed",
+      "payload": "{\"event_id\": \"13770939a9cd8533649b8989bc1c48a17a5ca4b12ab3469b062d6815a2bb05e9\", \"context\": {\"user_profile_id\": \"native-three-host-v7\", \"project_id\": \"2124842e-69de-4513-afc7-6c1764df75c2\", \"workspace_id\": null, \"session_id\": \"a3e4782b-8f70-46e6-a116-66c58e1ec1c9\", \"host\": \"claude-code\"}, \"scope\": \"project\", \"source_digest\": \"054dd7a67b8e9e1a061ed99b63ca0633f57a67048b02850882147c8148ef026e\"}",
+      "result": "{\"decision\": \"facts\", \"encoding_diagnostics\": {\"surprisal_score\": null, \"surprisal_status\": \"disabled\", \"prediction\": null, \"prediction_mode\": \"disabled\", \"threshold\": 0.3}, \"fact_ids\": [\"043bf76f-36bb-455d-a482-0084ba086e66\"]}",
+      "last_error": null
+    },
+    {
+      "id": "event:1619e196f02d0534cb195f64fe52157f8914893ca4db15c3ce294c433a41cb54",
+      "kind": "extract",
+      "status": "completed",
+      "payload": "{\"event_id\":\"1619e196f02d0534cb195f64fe52157f8914893ca4db15c3ce294c433a41cb54\",\"context\":{\"user_profile_id\":\"native-three-host-v7\",\"project_id\":\"2124842e-69de-4513-afc7-6c1764df75c2\",\"workspace_id\":null,\"session_id\":\"20260920_082819_6e2df1\",\"host\":\"hermes\"},\"scope\":\"project\",\"source_digest\":\"bfff19430b163ca7d8382d0b5fad3360fd7d9dfcacd21dbeae8baf642907efba\"}",
+      "result": "{\"decision\": \"forgotten\"}",
+      "last_error": null
+    },
+    {
+      "id": "event:181ff5a6d7aca8099cc60bb918f71bacc5494c6632eaa6885753825716007ae5",
+      "kind": "extract",
+      "status": "completed",
+      "payload": "{\"event_id\":\"181ff5a6d7aca8099cc60bb918f71bacc5494c6632eaa6885753825716007ae5\",\"context\":{\"user_profile_id\":\"native-three-host-v7\",\"project_id\":\"2124842e-69de-4513-afc7-6c1764df75c2\",\"workspace_id\":null,\"session_id\":\"20260920_083108_c1c8af\",\"host\":\"hermes\"},\"scope\":\"project\",\"source_digest\":\"90504eafbf8378324d4a816860b5dcc2f3b9527ae459c27e4cc18ca3ab3e5419\"}",
+      "result": "{\"decision\": \"forgotten\"}",
+      "last_error": null
+    },
+    {
+      "id": "event:1a86e9ad47f80e86297aa06a4f27e743d383b8706f0a2bc298b76c64f88bae14",
+      "kind": "extract",
+      "status": "completed",
+      "payload": "{\"event_id\": \"1a86e9ad47f80e86297aa06a4f27e743d383b8706f0a2bc298b76c64f88bae14\", \"context\": {\"user_profile_id\": \"native-three-host-v7\", \"project_id\": \"2124842e-69de-4513-afc7-6c1764df75c2\", \"workspace_id\": null, \"session_id\": \"85f0424b-1ff4-4f7b-99be-ff186ca76ee7\", \"host\": \"claude-code\"}, \"scope\": \"project\", \"source_digest\": \"ac7a06dfbea88c72f68ba3c0506a0b554fabafaf5dab8a21bc61570b8fd00ffa\"}",
+      "result": "{\"decision\": \"facts\", \"encoding_diagnostics\": {\"surprisal_score\": null, \"surprisal_status\": \"disabled\", \"prediction\": null, \"prediction_mode\": \"disabled\", \"threshold\": 0.3}, \"fact_ids\": [\"8a1a4e2a-20ee-469b-9279-ec69ab2b8baa\"]}",
+      "last_error": null
+    },
+    {
+      "id": "event:1ac09a552074aac8c98cd656bef6272160a3a0c25c66ebcdec95f7a90953e00f",
+      "kind": "remember",
+      "status": "completed",
+      "payload": "{\"event_id\": \"1ac09a552074aac8c98cd656bef6272160a3a0c25c66ebcdec95f7a90953e00f\", \"context\": {\"user_profile_id\": \"native-three-host-v7\", \"project_id\": \"2124842e-69de-4513-afc7-6c1764df75c2\", \"workspace_id\": null, \"session_id\": \"controller\", \"host\": \"manual\"}, \"scope\": \"project\", \"source_digest\": \"863436a126eb4c0a19ed3a0389a945ea83d48827016de006d34ea4dd594b3351\"}",
+      "result": "{\"decision\": \"facts\", \"encoding_diagnostics\": {}, \"fact_ids\": [\"8fbd5bf0-c58a-45c2-8a4e-48a3f00025d1\"]}",
+      "last_error": null
+    },
+    {
+      "id": "event:1ad433911aab7fc8b54b0bff89554e4ff8fb4ccc48bf29f9dbce3cd6cbdc6f1a",
+      "kind": "extract",
+      "status": "completed",
+      "payload": "{\"event_id\": \"1ad433911aab7fc8b54b0bff89554e4ff8fb4ccc48bf29f9dbce3cd6cbdc6f1a\", \"context\": {\"user_profile_id\": \"native-three-host-v7\", \"project_id\": \"2124842e-69de-4513-afc7-6c1764df75c2\", \"workspace_id\": null, \"session_id\": \"ada2c44e-10e6-44cb-9f79-b6a84c98baec\", \"host\": \"claude-code\"}, \"scope\": \"project\", \"source_digest\": \"5f56ed9500591ca734ed5b642a0b1987b723a5e726d09ca9f836e8e99103e7d5\"}",
+      "result": "{\"decision\": \"facts\", \"encoding_diagnostics\": {\"surprisal_score\": null, \"surprisal_status\": \"disabled\", \"prediction\": null, \"prediction_mode\": \"disabled\", \"threshold\": 0.3}, \"fact_ids\": [\"829bead5-e261-4786-b227-9c7b17404ae7\"]}",
+      "last_error": null
+    },
+    {
+      "id": "event:2b85d18b603f1761d58bfd7a444e53660569df828e0fdd457eef76ec1a0dc6d9",
+      "kind": "remember",
+      "status": "completed",
+      "payload": "{\"event_id\": \"2b85d18b603f1761d58bfd7a444e53660569df828e0fdd457eef76ec1a0dc6d9\", \"context\": {\"user_profile_id\": \"native-three-host-v7\", \"project_id\": \"2124842e-69de-4513-afc7-6c1764df75c2\", \"workspace_id\": null, \"session_id\": \"native-three-host-teach-review\", \"host\": \"claude-code\"}, \"scope\": \"project\", \"source_digest\": \"7a246d88c5233b0e6d3b426b03e0a0c532c54f1cec442d410530a9f2e5c526df\"}",
+      "result": "{\"decision\": \"facts\", \"encoding_diagnostics\": {}, \"fact_ids\": [\"208333d3-731e-41f1-8c6e-45acdb189a0a\"]}",
+      "last_error": null
+    },
+    {
+      "id": "event:2c1cd19e784fa7e657f66cf675a28ee9c777454f6587b82717c9be48b576b069",
+      "kind": "extract",
+      "status": "completed",
+      "payload": "{\"event_id\": \"2c1cd19e784fa7e657f66cf675a28ee9c777454f6587b82717c9be48b576b069\", \"context\": {\"user_profile_id\": \"native-three-host-v7\", \"project_id\": \"2124842e-69de-4513-afc7-6c1764df75c2\", \"workspace_id\": null, \"session_id\": \"01a0bec8-8a8d-7c53-9260-1add7a16fc63\", \"host\": \"codex\"}, \"scope\": \"project\", \"source_digest\": \"45273011d761171f05efa41d82c784631b62dab1aa5e76fcb1e81e82f81a154b\"}",
+      "result": "{\"decision\": \"facts\", \"encoding_diagnostics\": {\"surprisal_score\": null, \"surprisal_status\": \"disabled\", \"prediction\": null, \"prediction_mode\": \"disabled\", \"threshold\": 0.3}, \"fact_ids\": [\"63810666-acb6-45e8-96ee-9a144a464a64\"]}",
+      "last_error": null
+    },
+    {
+      "id": "event:3d1818ee4b1ea9a13038c55d486b62a0d5a02a02aaf258d99d5bbf6e7a0a2ec1",
+      "kind": "correct",
+      "status": "completed",
+      "payload": "{\"event_id\":\"3d1818ee4b1ea9a13038c55d486b62a0d5a02a02aaf258d99d5bbf6e7a0a2ec1\",\"context\":{\"user_profile_id\":\"native-three-host-v7\",\"project_id\":\"2124842e-69de-4513-afc7-6c1764df75c2\",\"workspace_id\":null,\"session_id\":\"20260920_082841_c652c7\",\"host\":\"hermes\"},\"scope\":\"project\",\"source_digest\":\"5739eaf2df488632223ae8efa703d34bae961f9114b1fd646c79f92ee5a75fb2\",\"target_fact_id\":\"ee736b51-9f96-4d99-af2d-dc303e3f8d7c\",\"expected_version\":1}",
+      "result": "{\"decision\": \"forgotten\"}",
+      "last_error": null
+    },
+    {
+      "id": "event:4089fee73fa386ee0d1c2de3654dc92d8b129aafcc13834b05882744d28a32c0",
+      "kind": "extract",
+      "status": "completed",
+      "payload": "{\"event_id\":\"4089fee73fa386ee0d1c2de3654dc92d8b129aafcc13834b05882744d28a32c0\",\"context\":{\"user_profile_id\":\"native-three-host-v7\",\"project_id\":\"2124842e-69de-4513-afc7-6c1764df75c2\",\"workspace_id\":null,\"session_id\":\"20260920_082841_c652c7\",\"host\":\"hermes\"},\"scope\":\"project\",\"source_digest\":\"fcde6e6aa3afce6aa7e01c09fdbb03ac757e571f670202a88c7c7556d5314041\"}",
+      "result": "{\"decision\": \"forgotten\"}",
+      "last_error": null
+    },
+    {
+      "id": "event:468155218172aece341cc413e3b6706e1a351dcc2681dadd853efc5b96d42772",
+      "kind": "capture_only",
+      "status": "completed",
+      "payload": "{\"event_id\": \"468155218172aece341cc413e3b6706e1a351dcc2681dadd853efc5b96d42772\", \"context\": {\"user_profile_id\": \"native-three-host-v7\", \"project_id\": \"2124842e-69de-4513-afc7-6c1764df75c2\", \"workspace_id\": null, \"session_id\": \"ada2c44e-10e6-44cb-9f79-b6a84c98baec\", \"host\": \"claude-code\"}, \"scope\": \"project\", \"source_digest\": \"ed14f06d7ffcc7c979ed8c5086faf0b26e64afc43fed71207badfc87a0c4b412\", \"identity_status\": \"provisional_unassociated\"}",
+      "result": "{\"decision\": \"identity_pending\", \"fact_eligible\": false, \"fact_ids\": []}",
+      "last_error": null
+    },
+    {
+      "id": "event:48230097bd70bfefc0284bec27dd0f80a591eda0e283272dceea43bc83776eec",
+      "kind": "extract",
+      "status": "completed",
+      "payload": "{\"event_id\": \"48230097bd70bfefc0284bec27dd0f80a591eda0e283272dceea43bc83776eec\", \"context\": {\"user_profile_id\": \"native-three-host-v7\", \"project_id\": \"2124842e-69de-4513-afc7-6c1764df75c2\", \"workspace_id\": null, \"session_id\": \"85f0424b-1ff4-4f7b-99be-ff186ca76ee7\", \"host\": \"claude-code\"}, \"scope\": \"project\", \"source_digest\": \"83f89d7c82ebbe3d43ac2c0430bb53b90cd5087e820b7f795e4df62394bc14a8\"}",
+      "result": "{\"decision\": \"facts\", \"encoding_diagnostics\": {\"surprisal_score\": null, \"surprisal_status\": \"disabled\", \"prediction\": null, \"prediction_mode\": \"disabled\", \"threshold\": 0.3}, \"fact_ids\": [\"cc1ced84-5541-465b-9ecf-3e3dceb690d2\"]}",
+      "last_error": null
+    },
+    {
+      "id": "event:5c18da120ef28a0826acfbf99e0a3be920f1d60314618e12a3648cb547b55976",
+      "kind": "capture_only",
+      "status": "completed",
+      "payload": "{\"event_id\": \"5c18da120ef28a0826acfbf99e0a3be920f1d60314618e12a3648cb547b55976\", \"context\": {\"user_profile_id\": \"native-three-host-v7\", \"project_id\": \"2124842e-69de-4513-afc7-6c1764df75c2\", \"workspace_id\": null, \"session_id\": \"a3e4782b-8f70-46e6-a116-66c58e1ec1c9\", \"host\": \"claude-code\"}, \"scope\": \"project\", \"source_digest\": \"fa720e2a8a1830e8d0f4141608c8861cfb93b0b890684cdda73ceb44ae40ce29\", \"identity_status\": \"provisional_unassociated\"}",
+      "result": "{\"decision\": \"identity_pending\", \"fact_eligible\": false, \"fact_ids\": []}",
+      "last_error": null
+    },
+    {
+      "id": "event:5ffc549fbac3b5e08b4e3010e43129ba0ec991cbb8f5194f6e7634f2dacacaaf",
+      "kind": "extract",
+      "status": "completed",
+      "payload": "{\"event_id\": \"5ffc549fbac3b5e08b4e3010e43129ba0ec991cbb8f5194f6e7634f2dacacaaf\", \"context\": {\"user_profile_id\": \"native-three-host-v7\", \"project_id\": \"2124842e-69de-4513-afc7-6c1764df75c2\", \"workspace_id\": null, \"session_id\": \"01a0becf-61e4-7490-bece-95be8541db22\", \"host\": \"codex\"}, \"scope\": \"project\", \"source_digest\": \"81b3a811696bb523b9a478f418072fb7bc920deaa2af85217e2e2aec91d0c0e1\"}",
+      "result": "{\"decision\": \"facts\", \"encoding_diagnostics\": {\"surprisal_score\": null, \"surprisal_status\": \"disabled\", \"prediction\": null, \"prediction_mode\": \"disabled\", \"threshold\": 0.3}, \"fact_ids\": [\"e3b87121-6296-4a7e-a739-627f3818ab24\"]}",
+      "last_error": null
+    },
+    {
+      "id": "event:7fab853e12b1b9266a65e7bfc7a0d5424dcdb642c7939ff4e7c6cd701b6dacee",
+      "kind": "extract",
+      "status": "completed",
+      "payload": "{\"event_id\": \"7fab853e12b1b9266a65e7bfc7a0d5424dcdb642c7939ff4e7c6cd701b6dacee\", \"context\": {\"user_profile_id\": \"native-three-host-v7\", \"project_id\": \"2124842e-69de-4513-afc7-6c1764df75c2\", \"workspace_id\": null, \"session_id\": \"20260920_082819_6e2df1\", \"host\": \"hermes\"}, \"scope\": \"project\", \"source_digest\": \"fa720e2a8a1830e8d0f4141608c8861cfb93b0b890684cdda73ceb44ae40ce29\"}",
+      "result": "{\"decision\": \"facts\", \"encoding_diagnostics\": {\"surprisal_score\": null, \"surprisal_status\": \"disabled\", \"prediction\": null, \"prediction_mode\": \"disabled\", \"threshold\": 0.3}, \"fact_ids\": [\"d297052c-3bf5-4f54-8d24-9e3374f968c8\"]}",
+      "last_error": null
+    },
+    {
+      "id": "event:8fc80d6eefce32071bbfa33dcd8327459e576d7be58e060a5f39ea094a27a075",
+      "kind": "extract",
+      "status": "completed",
+      "payload": "{\"event_id\": \"8fc80d6eefce32071bbfa33dcd8327459e576d7be58e060a5f39ea094a27a075\", \"context\": {\"user_profile_id\": \"native-three-host-v7\", \"project_id\": \"2124842e-69de-4513-afc7-6c1764df75c2\", \"workspace_id\": null, \"session_id\": \"20260920_083108_c1c8af\", \"host\": \"hermes\"}, \"scope\": \"project\", \"source_digest\": \"fa720e2a8a1830e8d0f4141608c8861cfb93b0b890684cdda73ceb44ae40ce29\"}",
+      "result": "{\"decision\": \"facts\", \"encoding_diagnostics\": {\"surprisal_score\": null, \"surprisal_status\": \"disabled\", \"prediction\": null, \"prediction_mode\": \"disabled\", \"threshold\": 0.3}, \"fact_ids\": [\"d297052c-3bf5-4f54-8d24-9e3374f968c8\"]}",
+      "last_error": null
+    },
+    {
+      "id": "event:938e884a1b8d6a39081c9932d0cda786af23920435f44130a502e12172561f69",
+      "kind": "extract",
+      "status": "completed",
+      "payload": "{\"event_id\": \"938e884a1b8d6a39081c9932d0cda786af23920435f44130a502e12172561f69\", \"context\": {\"user_profile_id\": \"native-three-host-v7\", \"project_id\": \"2124842e-69de-4513-afc7-6c1764df75c2\", \"workspace_id\": null, \"session_id\": \"ada2c44e-10e6-44cb-9f79-b6a84c98baec\", \"host\": \"claude-code\"}, \"scope\": \"project\", \"source_digest\": \"ed14f06d7ffcc7c979ed8c5086faf0b26e64afc43fed71207badfc87a0c4b412\"}",
+      "result": "{\"decision\": \"facts\", \"encoding_diagnostics\": {\"surprisal_score\": null, \"surprisal_status\": \"disabled\", \"prediction\": null, \"prediction_mode\": \"disabled\", \"threshold\": 0.3}, \"fact_ids\": [\"2a742a6e-96b6-46b9-a5cf-1243ce9a1583\"]}",
+      "last_error": null
+    },
+    {
+      "id": "event:945ffd94716a3462b3caa6e821eb2217874bddace1d48d309bf3bdaed9a21819",
+      "kind": "extract",
+      "status": "completed",
+      "payload": "{\"event_id\": \"945ffd94716a3462b3caa6e821eb2217874bddace1d48d309bf3bdaed9a21819\", \"context\": {\"user_profile_id\": \"native-three-host-v7\", \"project_id\": \"2124842e-69de-4513-afc7-6c1764df75c2\", \"workspace_id\": null, \"session_id\": \"ada2c44e-10e6-44cb-9f79-b6a84c98baec\", \"host\": \"claude-code\"}, \"scope\": \"project\", \"source_digest\": \"2ee3542157c2641ebed0e8923c2b436ed8118a3213561485dbcf57f36262d16c\"}",
+      "result": "{\"decision\": \"facts\", \"encoding_diagnostics\": {\"surprisal_score\": null, \"surprisal_status\": \"disabled\", \"prediction\": null, \"prediction_mode\": \"disabled\", \"threshold\": 0.3}, \"fact_ids\": [\"c34e0be3-91af-4470-8529-a7fb573f1056\"]}",
+      "last_error": null
+    },
+    {
+      "id": "event:985931413b0605a63750a650909ba5e2a6b5837b226d257e75409b5ec5e04eb2",
+      "kind": "extract",
+      "status": "completed",
+      "payload": "{\"event_id\":\"985931413b0605a63750a650909ba5e2a6b5837b226d257e75409b5ec5e04eb2\",\"context\":{\"user_profile_id\":\"native-three-host-v7\",\"project_id\":\"2124842e-69de-4513-afc7-6c1764df75c2\",\"workspace_id\":null,\"session_id\":\"01a0beca-f10a-7760-9673-c9383cce386e\",\"host\":\"codex\"},\"scope\":\"project\",\"source_digest\":\"7faf827d7f424598267b569f9f9bfd3631ea5b5301fbc4c3e581603414e284c9\"}",
+      "result": "{\"decision\": \"forgotten\"}",
+      "last_error": null
+    },
+    {
+      "id": "event:a007244ae1737f8ef4d5b2d713559a83cb2ae47cddf62ccf5e557ca9ff9c9221",
+      "kind": "extract",
+      "status": "completed",
+      "payload": "{\"event_id\": \"a007244ae1737f8ef4d5b2d713559a83cb2ae47cddf62ccf5e557ca9ff9c9221\", \"context\": {\"user_profile_id\": \"native-three-host-v7\", \"project_id\": \"2124842e-69de-4513-afc7-6c1764df75c2\", \"workspace_id\": null, \"session_id\": \"85f0424b-1ff4-4f7b-99be-ff186ca76ee7\", \"host\": \"claude-code\"}, \"scope\": \"project\", \"source_digest\": \"44279069d68e3985b87047c1dd890f8bbeda2cb45401f9afaae14a8188786faa\"}",
+      "result": "{\"decision\": \"facts\", \"encoding_diagnostics\": {\"surprisal_score\": null, \"surprisal_status\": \"disabled\", \"prediction\": null, \"prediction_mode\": \"disabled\", \"threshold\": 0.3}, \"fact_ids\": [\"01bb9596-856c-4005-952e-9d9216d48b1f\"]}",
+      "last_error": null
+    },
+    {
+      "id": "event:ac0e44d2635523cd4e86be8e3459b0befc9cf976fb1aea5b555b45c3f383e406",
+      "kind": "extract",
+      "status": "completed",
+      "payload": "{\"event_id\":\"ac0e44d2635523cd4e86be8e3459b0befc9cf976fb1aea5b555b45c3f383e406\",\"context\":{\"user_profile_id\":\"native-three-host-v7\",\"project_id\":\"2124842e-69de-4513-afc7-6c1764df75c2\",\"workspace_id\":null,\"session_id\":\"a3e4782b-8f70-46e6-a116-66c58e1ec1c9\",\"host\":\"claude-code\"},\"scope\":\"project\",\"source_digest\":\"7fafaac85b39d46e4c12a24e06ac8c62b8d272e593be9f30066582e8e9ef6ef5\"}",
+      "result": "{\"decision\": \"forgotten\"}",
+      "last_error": null
+    },
+    {
+      "id": "event:b3bbf4c99c389bfd39dc66d1a1334c53a8dcb1c60dd51f31f77e31c58ade6496",
+      "kind": "extract",
+      "status": "completed",
+      "payload": "{\"event_id\": \"b3bbf4c99c389bfd39dc66d1a1334c53a8dcb1c60dd51f31f77e31c58ade6496\", \"context\": {\"user_profile_id\": \"native-three-host-v7\", \"project_id\": \"2124842e-69de-4513-afc7-6c1764df75c2\", \"workspace_id\": null, \"session_id\": \"01a0beca-f10a-7760-9673-c9383cce386e\", \"host\": \"codex\"}, \"scope\": \"project\", \"source_digest\": \"fa720e2a8a1830e8d0f4141608c8861cfb93b0b890684cdda73ceb44ae40ce29\"}",
+      "result": "{\"decision\": \"facts\", \"encoding_diagnostics\": {\"surprisal_score\": null, \"surprisal_status\": \"disabled\", \"prediction\": null, \"prediction_mode\": \"disabled\", \"threshold\": 0.3}, \"fact_ids\": [\"d297052c-3bf5-4f54-8d24-9e3374f968c8\"]}",
+      "last_error": null
+    },
+    {
+      "id": "event:b4655d1e3aef07a9b9a6081d1e833cf2be1a67d63d11d3221b13d722f50be6bf",
+      "kind": "extract",
+      "status": "completed",
+      "payload": "{\"event_id\": \"b4655d1e3aef07a9b9a6081d1e833cf2be1a67d63d11d3221b13d722f50be6bf\", \"context\": {\"user_profile_id\": \"native-three-host-v7\", \"project_id\": \"2124842e-69de-4513-afc7-6c1764df75c2\", \"workspace_id\": null, \"session_id\": \"a3e4782b-8f70-46e6-a116-66c58e1ec1c9\", \"host\": \"claude-code\"}, \"scope\": \"project\", \"source_digest\": \"fa720e2a8a1830e8d0f4141608c8861cfb93b0b890684cdda73ceb44ae40ce29\"}",
+      "result": "{\"decision\": \"facts\", \"encoding_diagnostics\": {\"surprisal_score\": null, \"surprisal_status\": \"disabled\", \"prediction\": null, \"prediction_mode\": \"disabled\", \"threshold\": 0.3}, \"fact_ids\": [\"d297052c-3bf5-4f54-8d24-9e3374f968c8\"]}",
+      "last_error": null
+    },
+    {
+      "id": "event:b949b1544fb296e2d808254f3fadf80077ebf3815b54ef06827fe0776d34ffc5",
+      "kind": "extract",
+      "status": "completed",
+      "payload": "{\"event_id\": \"b949b1544fb296e2d808254f3fadf80077ebf3815b54ef06827fe0776d34ffc5\", \"context\": {\"user_profile_id\": \"native-three-host-v7\", \"project_id\": \"2124842e-69de-4513-afc7-6c1764df75c2\", \"workspace_id\": null, \"session_id\": \"01a0becf-61e4-7490-bece-95be8541db22\", \"host\": \"codex\"}, \"scope\": \"project\", \"source_digest\": \"fa720e2a8a1830e8d0f4141608c8861cfb93b0b890684cdda73ceb44ae40ce29\"}",
+      "result": "{\"decision\": \"facts\", \"encoding_diagnostics\": {\"surprisal_score\": null, \"surprisal_status\": \"disabled\", \"prediction\": null, \"prediction_mode\": \"disabled\", \"threshold\": 0.3}, \"fact_ids\": [\"d297052c-3bf5-4f54-8d24-9e3374f968c8\"]}",
+      "last_error": null
+    },
+    {
+      "id": "event:c22c8bb1f47a86f4e96800a0d181e463e06ac41aa124e0abda91a94592d1b9b6",
+      "kind": "remember",
+      "status": "completed",
+      "payload": "{\"event_id\":\"c22c8bb1f47a86f4e96800a0d181e463e06ac41aa124e0abda91a94592d1b9b6\",\"context\":{\"user_profile_id\":\"native-three-host-v7\",\"project_id\":\"2124842e-69de-4513-afc7-6c1764df75c2\",\"workspace_id\":null,\"session_id\":\"264664d2-7121-4e54-8391-a2a0e5da6da4\",\"host\":\"codex\"},\"scope\":\"project\",\"source_digest\":\"5dd6dc8358dbebc031b2ff12163379a98ed6c4ea986a5f3f054ad19f87dbac62\"}",
+      "result": "{\"decision\": \"forgotten\"}",
+      "last_error": null
+    },
+    {
+      "id": "event:ca5095bae8a9da6394da49b28098a876366f90580aa9446ffc2541c0fb40429c",
+      "kind": "extract",
+      "status": "completed",
+      "payload": "{\"event_id\":\"ca5095bae8a9da6394da49b28098a876366f90580aa9446ffc2541c0fb40429c\",\"context\":{\"user_profile_id\":\"native-three-host-v7\",\"project_id\":\"2124842e-69de-4513-afc7-6c1764df75c2\",\"workspace_id\":null,\"session_id\":\"01a0bec8-8a8d-7c53-9260-1add7a16fc63\",\"host\":\"codex\"},\"scope\":\"project\",\"source_digest\":\"8b0ce27b35fa06aaef7dd227d22505c1c2610e225f85470fef40b8630c16339e\"}",
+      "result": "{\"decision\": \"forgotten\"}",
+      "last_error": null
+    },
+    {
+      "id": "event:dad38d8b00df4e72e42f9f23b4a7c94dc483f7f85bfe2217518c6e1641ea770d",
+      "kind": "extract",
+      "status": "completed",
+      "payload": "{\"event_id\": \"dad38d8b00df4e72e42f9f23b4a7c94dc483f7f85bfe2217518c6e1641ea770d\", \"context\": {\"user_profile_id\": \"native-three-host-v7\", \"project_id\": \"2124842e-69de-4513-afc7-6c1764df75c2\", \"workspace_id\": null, \"session_id\": \"85f0424b-1ff4-4f7b-99be-ff186ca76ee7\", \"host\": \"claude-code\"}, \"scope\": \"project\", \"source_digest\": \"1bf02bcb0f7e0170e45d432ed2c93f50dd74083452a8a4e27b725c53c75a549e\"}",
+      "result": "{\"decision\": \"facts\", \"encoding_diagnostics\": {\"surprisal_score\": null, \"surprisal_status\": \"disabled\", \"prediction\": null, \"prediction_mode\": \"disabled\", \"threshold\": 0.3}, \"fact_ids\": [\"2c831938-c4cb-4d7a-aad3-def8cf9bc171\"]}",
+      "last_error": null
+    },
+    {
+      "id": "event:f379d6685d7d669e8827469f50774d87c564e8febc29e1da091f4ef45c4325f4",
+      "kind": "extract",
+      "status": "completed",
+      "payload": "{\"event_id\": \"f379d6685d7d669e8827469f50774d87c564e8febc29e1da091f4ef45c4325f4\", \"context\": {\"user_profile_id\": \"native-three-host-v7\", \"project_id\": \"2124842e-69de-4513-afc7-6c1764df75c2\", \"workspace_id\": null, \"session_id\": \"ada2c44e-10e6-44cb-9f79-b6a84c98baec\", \"host\": \"claude-code\"}, \"scope\": \"project\", \"source_digest\": \"4341e7867b04bcafeb083a4ad4fe07978b9d891eccdefc6017ceee3bc0b9d5b6\"}",
+      "result": "{\"decision\": \"facts\", \"encoding_diagnostics\": {\"surprisal_score\": null, \"surprisal_status\": \"disabled\", \"prediction\": null, \"prediction_mode\": \"disabled\", \"threshold\": 0.3}, \"fact_ids\": [\"f1842ef0-92eb-464c-8c33-f363c8af813b\"]}",
+      "last_error": null
+    },
+    {
+      "id": "event:fc49c35a2c93c6b846e044c6aa3d8c45f7d40dc658f227334462ea39e2ad9aa3",
+      "kind": "extract",
+      "status": "completed",
+      "payload": "{\"event_id\":\"fc49c35a2c93c6b846e044c6aa3d8c45f7d40dc658f227334462ea39e2ad9aa3\",\"context\":{\"user_profile_id\":\"native-three-host-v7\",\"project_id\":\"2124842e-69de-4513-afc7-6c1764df75c2\",\"workspace_id\":null,\"session_id\":\"20260920_082841_c652c7\",\"host\":\"hermes\"},\"scope\":\"project\",\"source_digest\":\"a8c2b732202a6e520cc8950f05ea978c5ebbcd175261dbc0b9d6e711ac93d4d0\"}",
+      "result": "{\"decision\": \"forgotten\"}",
+      "last_error": null
+    }
+  ],
+  "evidence": [
+    {
+      "fact_id": "01bb9596-856c-4005-952e-9d9216d48b1f",
+      "source_event_id": "a007244ae1737f8ef4d5b2d713559a83cb2ae47cddf62ccf5e557ca9ff9c9221",
+      "excerpt": "Consolidation complete. Now checking job status with the job ID returned from the store call."
+    },
+    {
+      "fact_id": "043bf76f-36bb-455d-a482-0084ba086e66",
+      "source_event_id": "13770939a9cd8533649b8989bc1c48a17a5ca4b12ab3469b062d6815a2bb05e9",
+      "excerpt": "I'll call `mnemos_retrieve` for both queries simultaneously since they're independent."
+    },
+    {
+      "fact_id": "04cf5035-6eff-4708-8d2b-b8082de7ce05",
+      "source_event_id": "0029f680cf0795b9a0b2bc48497d952085db68cdc8d74bfe64b07546fe0ea6a4",
+      "excerpt": "The project release label is forbidden-foreign-ridge-992."
+    },
+    {
+      "fact_id": "208333d3-731e-41f1-8c6e-45acdb189a0a",
+      "source_event_id": "2b85d18b603f1761d58bfd7a444e53660569df828e0fdd457eef76ec1a0dc6d9",
+      "excerpt": "The project review label is amber-grove-264."
+    },
+    {
+      "fact_id": "2a742a6e-96b6-46b9-a5cf-1243ce9a1583",
+      "source_event_id": "938e884a1b8d6a39081c9932d0cda786af23920435f44130a502e12172561f69",
+      "excerpt": "Use only the requested Mnemos tools and this project's scope. Do not add conversational text as an explicit fact. Retrieve the current asserted project release label and inspect its ID/version. Preview related forgetting at that ID/version, inspect each additional fact you intend to select and review its source events, then forget the target and only copies containing its current or historical release labels using the preview digest, matching preview limit, and exact selected IDs. Preserve the separate review-label convention and unrelated data. Do not repeat any release label in your final answer."
+    },
+    {
+      "fact_id": "2c831938-c4cb-4d7a-aad3-def8cf9bc171",
+      "source_event_id": "dad38d8b00df4e72e42f9f23b4a7c94dc483f7f85bfe2217518c6e1641ea770d",
+      "excerpt": "Use only the requested Mnemos tools and this project's scope. Do not add conversational text as an explicit fact. Call mnemos_store exactly once with content \"The project review label is amber-grove-264.\", role user, scope project. Then consolidate, then use mnemos_job_status with the returned job ID to establish completion. Report the actual result."
+    },
+    {
+      "fact_id": "63810666-acb6-45e8-96ee-9a144a464a64",
+      "source_event_id": "2c1cd19e784fa7e657f66cf675a28ee9c777454f6587b82717c9be48b576b069",
+      "excerpt": "Done. Actual result: the Mnemos job `event:c22c8bb1f47a86f4e96800a0d181e463e06ac41aa124e0abda91a94592d1b9b6` completed successfully.\n\nIt stored one fact with ID `ee736b51-9f96-4d99-af2d-dc303e3f8d7c`."
+    },
+    {
+      "fact_id": "829bead5-e261-4786-b227-9c7b17404ae7",
+      "source_event_id": "1ad433911aab7fc8b54b0bff89554e4ff8fb4ccc48bf29f9dbce3cd6cbdc6f1a",
+      "excerpt": "I'll start by retrieving the current asserted project release label."
+    },
+    {
+      "fact_id": "8a1a4e2a-20ee-469b-9279-ec69ab2b8baa",
+      "source_event_id": "1a86e9ad47f80e86297aa06a4f27e743d383b8706f0a2bc298b76c64f88bae14",
+      "excerpt": "Here are the actual results from the full lifecycle:\n\n**mnemos_store** -- committed successfully.\n- Event ID: `2b85d18b603f1761d58bfd7a444e53660569df828e0fdd457eef76ec1a0dc6d9`\n- Scope: `project`\n- Status: `committed`, fact_eligible: `true`\n\n**mnemos_consolidate** -- ran successfully.\n- Maintenance: 7 tasks completed, 0 failed, scheduler running.\n\n**mnemos_job_status** -- job completed.\n- Job ID: `event:2b85d18b603f1761d58bfd7a444e53660569df828e0fdd457eef76ec1a0dc6d9`\n- Status: `completed`\n- Decision: `facts` -- the content was processed and promoted to a durable fact.\n- Fact ID assigned: `208333d3-731e-41f1-8c6e-45acdb189a0a`\n- Attempt count: 1, last_error: null\n\nThe store, consolidate, and job completion lifecycle finished cleanly with no errors. The content \"The project review label is amber-grove-264.\" is now a durable project-scoped fact."
+    },
+    {
+      "fact_id": "8fbd5bf0-c58a-45c2-8a4e-48a3f00025d1",
+      "source_event_id": "1ac09a552074aac8c98cd656bef6272160a3a0c25c66ebcdec95f7a90953e00f",
+      "excerpt": "The build artifact checksum marker is slate-safe-553."
+    },
+    {
+      "fact_id": "b69a7fa5-b74b-42fe-833d-acc7317c4a01",
+      "source_event_id": "0d5beaaa938b078ad9e572732e4d0fb6caf51521ff090941c384857855bb844b",
+      "excerpt": "I'll start by calling `mnemos_store` with the exact specified parameters."
+    },
+    {
+      "fact_id": "c34e0be3-91af-4470-8529-a7fb573f1056",
+      "source_event_id": "945ffd94716a3462b3caa6e821eb2217874bddace1d48d309bf3bdaed9a21819",
+      "excerpt": "Good. The target fact is confirmed at version 2 with a historical assertion from its prior correction. Now I'll inspect all 7 additional candidate facts I intend to select in parallel."
+    },
+    {
+      "fact_id": "cc1ced84-5541-465b-9ecf-3e3dceb690d2",
+      "source_event_id": "48230097bd70bfefc0284bec27dd0f80a591eda0e283272dceea43bc83776eec",
+      "excerpt": "Store committed. Now consolidating."
+    },
+    {
+      "fact_id": "d297052c-3bf5-4f54-8d24-9e3374f968c8",
+      "source_event_id": "7fab853e12b1b9266a65e7bfc7a0d5424dcdb642c7939ff4e7c6cd701b6dacee",
+      "excerpt": "Use only the requested Mnemos tools and this project's scope. Do not add conversational text as an explicit fact. Call mnemos_retrieve twice, once with query \"current asserted project release label\" and once with query \"current asserted project review label\". Report the asserted facts and their IDs and versions. Do not change memory."
+    },
+    {
+      "fact_id": "d297052c-3bf5-4f54-8d24-9e3374f968c8",
+      "source_event_id": "8fc80d6eefce32071bbfa33dcd8327459e576d7be58e060a5f39ea094a27a075",
+      "excerpt": "Use only the requested Mnemos tools and this project's scope. Do not add conversational text as an explicit fact. Call mnemos_retrieve twice, once with query \"current asserted project release label\" and once with query \"current asserted project review label\". Report the asserted facts and their IDs and versions. Do not change memory."
+    },
+    {
+      "fact_id": "d297052c-3bf5-4f54-8d24-9e3374f968c8",
+      "source_event_id": "b3bbf4c99c389bfd39dc66d1a1334c53a8dcb1c60dd51f31f77e31c58ade6496",
+      "excerpt": "Use only the requested Mnemos tools and this project's scope. Do not add conversational text as an explicit fact. Call mnemos_retrieve twice, once with query \"current asserted project release label\" and once with query \"current asserted project review label\". Report the asserted facts and their IDs and versions. Do not change memory."
+    },
+    {
+      "fact_id": "d297052c-3bf5-4f54-8d24-9e3374f968c8",
+      "source_event_id": "b4655d1e3aef07a9b9a6081d1e833cf2be1a67d63d11d3221b13d722f50be6bf",
+      "excerpt": "Use only the requested Mnemos tools and this project's scope. Do not add conversational text as an explicit fact. Call mnemos_retrieve twice, once with query \"current asserted project release label\" and once with query \"current asserted project review label\". Report the asserted facts and their IDs and versions. Do not change memory."
+    },
+    {
+      "fact_id": "d297052c-3bf5-4f54-8d24-9e3374f968c8",
+      "source_event_id": "b949b1544fb296e2d808254f3fadf80077ebf3815b54ef06827fe0776d34ffc5",
+      "excerpt": "Use only the requested Mnemos tools and this project's scope. Do not add conversational text as an explicit fact. Call mnemos_retrieve twice, once with query \"current asserted project release label\" and once with query \"current asserted project review label\". Report the asserted facts and their IDs and versions. Do not change memory."
+    },
+    {
+      "fact_id": "e3b87121-6296-4a7e-a739-627f3818ab24",
+      "source_event_id": "5ffc549fbac3b5e08b4e3010e43129ba0ec991cbb8f5194f6e7634f2dacacaaf",
+      "excerpt": "Retrieved in project scope only. Asserted facts found:\n\n- `208333d3-731e-41f1-8c6e-45acdb189a0a`, version `1`: The project review label is `amber-grove-264`.\n- `8fbd5bf0-c58a-45c2-8a4e-48a3f00025d1`, version `1`: The build artifact checksum marker is `slate-safe-553`.\n\nNo memory changes made."
+    },
+    {
+      "fact_id": "f1842ef0-92eb-464c-8c33-f363c8af813b",
+      "source_event_id": "f379d6685d7d669e8827469f50774d87c564e8febc29e1da091f4ef45c4325f4",
+      "excerpt": "All 7 inspections complete. Each is confirmed to contain current or historical release label text and each has exactly one source event, all reviewed. The review-label fact (`208333d3`), the checksum-marker fact (`8fbd5bf0`), and the similarity-only candidates that contain no release-label value are excluded. Proceeding with the forget."
+    }
+  ],
+  "revisions": [],
+  "suppressions": [
+    {
+      "fact_id": "750e4d08-d51d-46fc-919f-55c0116bc0c1",
+      "source_event_id": null,
+      "canonical_key": "96ee4476b4530618823cea20b0d49c205a1aa0af309413e412c836359206d8c8"
+    },
+    {
+      "fact_id": "b1a14cd5-5a14-4ee9-ac30-8439c5e318fb",
+      "source_event_id": null,
+      "canonical_key": "d88e97ea6f6f6338194e40d3edfdd2a77fe9ae08798a4d273f4286db8e3c25c2"
+    },
+    {
+      "fact_id": "65a4d699-1882-49d7-85bc-b6313269f5d7",
+      "source_event_id": "ca5095bae8a9da6394da49b28098a876366f90580aa9446ffc2541c0fb40429c",
+      "canonical_key": null
+    },
+    {
+      "fact_id": "4ed82d6c-a812-43ba-ba8a-791ccf5840c6",
+      "source_event_id": "985931413b0605a63750a650909ba5e2a6b5837b226d257e75409b5ec5e04eb2",
+      "canonical_key": null
+    },
+    {
+      "fact_id": "111f7dce-9519-4e5c-8391-a3db5e5dce18",
+      "source_event_id": null,
+      "canonical_key": "daf51fd70fd05603239d8d3cf6084cb000d534ac07aa0513cbea751f54b7f2d2"
+    },
+    {
+      "fact_id": "ee736b51-9f96-4d99-af2d-dc303e3f8d7c",
+      "source_event_id": "3d1818ee4b1ea9a13038c55d486b62a0d5a02a02aaf258d99d5bbf6e7a0a2ec1",
+      "canonical_key": null
+    },
+    {
+      "fact_id": "6dfe668a-3e72-4c8a-b28c-ed155ea6dfd8",
+      "source_event_id": null,
+      "canonical_key": "894638cc5eeb06e916c560d1d2fe2d7c42ebf20406eb838a28b89c66e8027a4b"
+    },
+    {
+      "fact_id": "750e4d08-d51d-46fc-919f-55c0116bc0c1",
+      "source_event_id": "181ff5a6d7aca8099cc60bb918f71bacc5494c6632eaa6885753825716007ae5",
+      "canonical_key": null
+    },
+    {
+      "fact_id": "b1a14cd5-5a14-4ee9-ac30-8439c5e318fb",
+      "source_event_id": "fc49c35a2c93c6b846e044c6aa3d8c45f7d40dc658f227334462ea39e2ad9aa3",
+      "canonical_key": null
+    },
+    {
+      "fact_id": "65a4d699-1882-49d7-85bc-b6313269f5d7",
+      "source_event_id": null,
+      "canonical_key": "9b285038f9c75ed2dc794a30c4d71e448d1d83d16fd07deb442a46f01d71d07f"
+    },
+    {
+      "fact_id": "6dfe668a-3e72-4c8a-b28c-ed155ea6dfd8",
+      "source_event_id": "1619e196f02d0534cb195f64fe52157f8914893ca4db15c3ce294c433a41cb54",
+      "canonical_key": null
+    },
+    {
+      "fact_id": "ee736b51-9f96-4d99-af2d-dc303e3f8d7c",
+      "source_event_id": null,
+      "canonical_key": "5ce9e8576f2a4cf6f2dc2376af4163ee4f467bd3dcd8f1f006a61bdf5c2b12e7"
+    },
+    {
+      "fact_id": "554a66fe-7557-45d2-a025-0088fde03b94",
+      "source_event_id": null,
+      "canonical_key": "6ccb222ce65223caae81f7bfcfbf591524c03d48d5b7997f642b00c7a418b44f"
+    },
+    {
+      "fact_id": "554a66fe-7557-45d2-a025-0088fde03b94",
+      "source_event_id": "ac0e44d2635523cd4e86be8e3459b0befc9cf976fb1aea5b555b45c3f383e406",
+      "canonical_key": null
+    },
+    {
+      "fact_id": "ee736b51-9f96-4d99-af2d-dc303e3f8d7c",
+      "source_event_id": null,
+      "canonical_key": "f08f7b64cf75d80e1b7d42fbbcee62987749a20bfa12c2f3bb27701165e6816f"
+    },
+    {
+      "fact_id": "ee736b51-9f96-4d99-af2d-dc303e3f8d7c",
+      "source_event_id": "c22c8bb1f47a86f4e96800a0d181e463e06ac41aa124e0abda91a94592d1b9b6",
+      "canonical_key": null
+    },
+    {
+      "fact_id": "4ed82d6c-a812-43ba-ba8a-791ccf5840c6",
+      "source_event_id": null,
+      "canonical_key": "2185d4e5b20d64d840640c8d5e2fa5e3b3314cad64e04c4688c18eb9d92c45e0"
+    },
+    {
+      "fact_id": "111f7dce-9519-4e5c-8391-a3db5e5dce18",
+      "source_event_id": "4089fee73fa386ee0d1c2de3654dc92d8b129aafcc13834b05882744d28a32c0",
+      "canonical_key": null
+    }
+  ],
+  "edges": []
+}

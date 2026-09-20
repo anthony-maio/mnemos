@@ -1,5 +1,23 @@
 # Mnemos claim and evidence ledger
 
+The [three-host v7 run](../2026-09-20/three-host-native-v7/README.md) passed all 11 native phases on verified
+product `e6887de`: Codex and Claude teaching, Hermes recall and same-ID
+correction, corrected recall from all three hosts, Claude reviewed deletion,
+and final recall from all three hosts after restart and source replay.
+All 12 original-source replays were suppressed. Independent read-only SQLite
+inspection confirmed the target absent, 18 suppression rows, and unchanged
+review, unrelated, and foreign-scope controls. Cleanup passed.
+
+This is one bounded lifecycle with real Nomic embeddings and all five
+cognition modules disabled. It does not close complete capture, Codex Desktop,
+native outage recovery, full-module quality, general reliability, or the
+two-week pilot. Hermes v14's one pass and two failures remain separate.
+The runner passed 149 offline checks, including prerequisite-integrity and
+documentation cases; its import preflight passed before native execution.
+
+Earlier run narratives below retain the evidence and open gates at their
+recorded checkpoints; use the newest result and current task table for status.
+
 The [native Hermes v14 cohort](../2026-09-20/hermes-native-cohort-v14/README.md)
 completed one of three full lifecycles on `e6887de`. Attempt 2 passed reviewed
 deletion, replay, restart, and final recall, copying the returned preconditions

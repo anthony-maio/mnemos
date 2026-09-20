@@ -40,6 +40,25 @@ negative results even if they complicate the ending.
 
 ## Latest implementation and native evidence
 
+The [three-host v7 run](../validation/2026-09-20/three-host-native-v7/README.md) passed all 11 native phases on verified
+product `e6887de`: Codex and Claude teaching, Hermes recall and same-ID
+correction, corrected recall from all three hosts, Claude reviewed deletion,
+and final recall from all three hosts after restart and source replay.
+All 12 original-source replays were suppressed. Independent read-only SQLite
+inspection confirmed the target absent, 18 suppression rows, and unchanged
+review, unrelated, and foreign-scope controls. Cleanup passed.
+
+This is one bounded lifecycle with real Nomic embeddings and all five
+cognition modules disabled. It does not close complete capture, Codex Desktop,
+native outage recovery, full-module quality, general reliability, or the
+two-week pilot. Hermes v14's one pass and two failures remain separate.
+The runner passed 149 offline checks, including prerequisite-integrity and
+documentation cases; its import preflight passed before native execution.
+
+The older checkpoint narratives below preserve what was known at each run.
+Statements that a gate remained open refer to that earlier checkpoint. Use
+the current implementation table and the newest result above for status.
+
 The [native Hermes v14 cohort](../validation/2026-09-20/hermes-native-cohort-v14/README.md)
 completed one of three full lifecycles on `e6887de`. Attempt 2 passed reviewed
 deletion, replay, restart, and final recall, copying the returned preconditions
@@ -67,9 +86,9 @@ independently verifies 30 representative rows. It identifies seed/candidate
 and score bottlenecks, with no new target reachability beyond semantic edges
 and no improvement in target top-five retrieval. Existing negatives remain.
 
-These native, package, and audit records postdate portable packet v26. The
-checkout handoff is newer; refresh the portable packet at final
-acceptance before describing the engineering work as finished.
+Portable packet v27 includes these native, package, and audit records, the
+three-host v7 result, and the selected voice skill. It is a working snapshot;
+refresh its final claims at engineering acceptance.
 
 The [role-aware graph measurement](../validation/2026-09-20/source-association-role-measurement-v1/README.md)
 completed all 90 observations across five authored cases, two embedding
@@ -104,8 +123,8 @@ found valid extraction abstentions followed by absent correction targets. It
 does not establish a parser or target-resolution defect. The historical-memory
 policy question is pending; prior labels and negative results remain fixed.
 
-Portable packet v26 includes the graph and v13 results below and the voice guide. It remains
-a working research snapshot; reconcile it again at final acceptance.
+The older v26 packet retains the graph and v13 results with their original
+bindings. Use v27 for the current writing assignment.
 
 The [native Hermes v12 cohort](../validation/2026-09-20/hermes-native-cohort-v12/README.md)
 finished zero of three complete lifecycles on `5155ebd`. One attempt omitted
@@ -713,5 +732,5 @@ not a requirement to recount every implementation detail in the article.
 - [ ] Record final host continuity, latency, capture coverage, and pilot status without collapsing the separate gates.
 - [ ] Identify which quantitative claims can be used, with units, sample sizes, settings, uncertainty where available, and limitations.
 - [ ] Verify original website/paper claims against primary sources and link the dated corrections.
-- [x] Prepare a portable working packet with this handoff, the selected voice skill, primary-source snapshots, key reports, regression examples, and a file manifest. Portable v26 includes the verified `db21750` package, all three failed native v13 attempts, the rejected-request outbox repair, the paired prefix experiment, and the role-aware source-association measurement. Earlier native and real-model failures retain their own source/model bindings; they are not a pooled reliability estimate. Refresh the packet at final acceptance. Local validation artifacts are research inputs; public citations require accessible sources.
+- [x] Prepare portable working packet v27 with this handoff, Anthony's selected voice skill, primary-source snapshots, current package and three-host evidence, all v14 cohort outcomes, graph negatives, regression examples, and a verified file manifest. It supports research and drafting; final engineering acceptance and publication remain separate.
 - [ ] Keep unverified interpretations and questions outside the article's factual claims, then make the final voice pass using Anthony's skill.

@@ -1,0 +1,47 @@
+"""Read-only terminal checks independent of the native controller's verdict."""
+from pathlib import Path
+import hashlib
+import json
+import sqlite3
+
+root = Path('C:/Users/Ant/AppData/Local/Temp/mnemos-three-host-native-v7')
+report = json.loads((root / 'report.json').read_bytes())
+assert report['status'] in {'failed', 'bounded_lifecycle_observed'}
+assert report['finished_at'] and report['cleanup_established'] and not report.get('cleanup_error')
+assert not (root / 'runtime.json').exists()
+database = root / 'memory.sqlite'
+before = hashlib.sha256(database.read_bytes()).hexdigest()
+with sqlite3.connect(database.as_uri() + '?mode=ro', uri=True) as connection:
+    connection.row_factory = sqlite3.Row
+    connection.execute('PRAGMA query_only=ON')
+    connection.execute('BEGIN')
+    facts = [dict(row) for row in connection.execute('SELECT id,content,version,metadata FROM memory_chunks ORDER BY id')]
+    events = [dict(row) for row in connection.execute('SELECT id,role,content,source,scope_id,metadata,occurred_at FROM episodic_events ORDER BY id')]
+    evidence = [dict(row) for row in connection.execute('SELECT fact_id,source_event_id,excerpt FROM fact_evidence ORDER BY fact_id,source_event_id')]
+    suppressions = connection.execute('SELECT COUNT(*) FROM memory_suppressions').fetchone()[0]
+assert hashlib.sha256(database.read_bytes()).hexdigest() == before
+baseline = json.loads((root / 'teach-release/state.json').read_bytes())
+labels = (report['scenario']['unrelated'], report['scenario']['foreign'])
+control_facts = [row for row in baseline['facts'] if row['content'] in labels]
+assert len(control_facts) == 2
+ids = {row['id'] for row in control_facts}
+control_evidence = [row for row in baseline['evidence'] if row['fact_id'] in ids]
+source_ids = {row['source_event_id'] for row in control_evidence}
+control_events = [row for row in baseline['events'] if row['id'] in source_ids]
+def ordered(rows):
+    return sorted(json.dumps(row, sort_keys=True) for row in rows)
+assert ordered(control_facts) == ordered([row for row in facts if row['id'] in ids or row['content'] in labels])
+assert ordered(control_evidence) == ordered([row for row in evidence if row['fact_id'] in ids])
+assert ordered(control_events) == ordered([row for row in events if row['id'] in source_ids])
+target = next((row for row in facts if row['id'] == report.get('target_id')), None)
+retained = next((row for row in facts if row['id'] == report.get('retained_id')), None)
+assert retained and retained['version'] == 1 and retained['content'] == report['scenario']['retained']
+if report['status'] == 'bounded_lifecycle_observed':
+    assert target is None and suppressions > 0
+    for value in (facts, events, evidence):
+        assert not any(label in json.dumps(value) for label in ('cedar-ridge-731', 'maple-ridge-842'))
+print(json.dumps({'status': report['status'], 'error': report.get('error'),
+    'database_sha256': before, 'controls_unchanged': True,
+    'retained_convention_unchanged': True, 'target_retained': target is not None,
+    'target_version': target['version'] if target else None,
+    'suppression_count': suppressions, 'phases': report['phases']}, indent=2))
