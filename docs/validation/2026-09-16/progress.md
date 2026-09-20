@@ -1,29 +1,30 @@
 # Functional local memory implementation record
 
-The [actual Hermes new-session audit](../2026-09-20/hermes-new-boundary-audit-v2/README.md)
-verifies committed-message capture and fail-closed handling of genuinely
-corrupted durable evidence through the actual handler. It also reproduces a
-separate missing-message defect: uncommitted history is mistaken for an
-already-persisted prefix. That repair remains open. The complete SessionDB
-suite has 1,402 passes, 11 skips, and one failure reproduced on the untouched
-Hermes base. These are isolated host-candidate results, not a live upgrade.
+The [Hermes boundary regression audit](../2026-09-20/hermes-boundary-regressions-v12/README.md)
+records a passing actual /new probe for previously unsaved messages and
+corrupted-evidence suppression, plus nine targeted boundary tests. The broader
+89-case selection found five regressions; the untouched host base passes all
+31 cases in the two affected files. Restoring ordinary row-ID stamping fixes
+four. Unscoped compression and further boundary compatibility checks remain
+under repair. These are isolated host candidates, not a live host upgrade.
 
-The provider implementation at `e28a846` routes explicitly enabled structured
-reasoning through chat and consumes only its final content. The 33 focused
-checks pass; full source/package verification is running. Reasoning defaults,
-output budgets, production extraction prompts, and live settings are unchanged.
-The latest fully verified package remains `244613a` below.
+The [structured reasoning and settings checks](../2026-09-20/structured-reasoning-development-v1/README.md)
+bind the chat-route correction and configurable local generation budgets.
+The intermediate e28a846 checkpoint passes all six source/package checks.
+The newer 05c71d2 full suite first recorded 2,004 passes, four skips, and one
+Windows replacement failure; its [original failure and diagnostic](../2026-09-20/generation-settings-source-failure-v1/README.md)
+remain preserved. A fresh unchanged-source full run passes 2,005 tests with
+four skips. Build and installed-package validation are still pending; the
+latest fully source-and-installed verified package remains 244613a.
 
-The [reasoning-configuration run](../2026-09-20/history-reasoning-development-v1/README.md)
-records 36 empty-final-response failures, not extraction abstentions. The
-[subsequent API/configuration diagnostic](../2026-09-20/ollama-reasoning-channel-diagnostic-v1/README.md)
-finds that constrained generate calls stop inside the reasoning channel;
-chat with a larger output budget returns a schema-valid historical report
-with its qualifications preserved in one observed case. The interrupted
-first route attempt and all negative arms remain archived. This supports a
-provider correction, not a quality acceptance claim. A 36-call follow-up
-across the twelve development cases is still running; no production prompt
-or live model setting has changed.
+The [36-call chat comparison](../2026-09-20/history-chat-development-v1/README.md)
+completes all twelve authored cases across three repetitions with no runtime
+errors. Final proposals are preserved for semantic review. This is development
+evidence with the history-only candidate prompt, not held-out accuracy or
+service lifecycle proof. A separate unchanged-production-prompt run is in
+progress through the managed production provider. Neither live settings nor
+the production extraction prompt have changed. Earlier generate-route failures
+and negative extraction results remain unchanged.
 
 Two subsequent extraction diagnostics preserve additional negative evidence.
 The [42-observation context comparison](../2026-09-20/history-context-diagnostic-v1/README.md)
