@@ -2,7 +2,7 @@
 
 ## Current frozen matrix snapshot -- 2026-09-20
 
-At `2026-09-20T15:13:04Z`, the contract-v4 matrix was still running from
+At `2026-09-20T15:55:32Z`, the contract-v4 matrix was still running from
 source `3d0965805622efad21d1bb5200a982bd1a956aa8`, with its protocol and
 dataset bindings frozen. These use local Qwen3.5:9b and Nomic embeddings on
 the RTX 4080. The repaired inputs are previously observed synthetic scenarios,
@@ -15,14 +15,20 @@ final quality, a ranking change, or a lift.
 | Baseline | 600 | 600 | 0 | Complete report |
 | Full | 600 | 589 | 11 | Partial report; matrix running |
 | Surprisal ablation | 600 | 592 | 8 | Partial report; matrix running |
-| Mutable RAG ablation | 100 checkpointed | 100 checkpointed | Not available | Live checkpoint; no final report |
+| Mutable RAG ablation | 600 | 588 | 12 | Partial report; matrix running |
+| Affective routing ablation | 117 checkpointed | 117 checkpointed | 0 checkpointed | Live checkpoint; no final report |
 
-The first three rows come from each report's
-`complete_observation_diagnostics`. The mutable RAG row has no final report or
-complete-observation diagnostics yet; its live checkpoint currently contains
-100 observations, each with `execution_status=complete`. A checkpointed
-observation is counted as processed here and is not treated as a completed
-matrix run.
+The first four rows agree with the reports' complete-observation diagnostics.
+The affective routing row has no final report yet; its live checkpoint
+contains 117 observations, each with `execution_status=complete`. Checkpointed
+observations do not establish a completed matrix run. All twelve incomplete
+mutable RAG observations record `missing_accepted_target` during correction;
+they remain incomplete, with no selective retry or changed labels.
+
+The matrix shares this machine with CPU-based source and package validation.
+No competing local-model experiment was started for the embedding-outage
+repair. End-to-end session timings include supplementary diagnostic calls
+and are not isolated ordinary-lookup latency measurements.
 
 The current native and host evidence remains bounded. The [three-host v7
 checkpoint](../2026-09-20/three-host-native-v7/README.md) records 11 completed

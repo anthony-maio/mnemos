@@ -1,5 +1,14 @@
 # Functional local memory implementation status
 
+Latest [verified product](../2026-09-20/retrieval-provider-outage-checkpoint-v1/README.md):
+`4bbab4f`, with 1,894 source tests and 722 installed cases passing, four skips
+each, all six source/package checks, and seven replay assertions. Scoped
+lexical fallback keeps existing SQLite facts searchable after a transient
+embedding failure and reports the degraded mode honestly. Native acceptance
+of this provider-outage behavior remains unrun. Earlier stopped-service
+raw-capture observations for Codex and Claude remain bound to their own
+packages; full-module quality, Desktop, wider recovery, and the pilot remain open.
+
 The [retrieval fixture audit](../2026-09-20/retrieval-fixture-audit-v1/README.md)
 confirms 20 scope-label conflicts and 60 explicit-memory/gold mismatches.
 Original verdicts remain unchanged. The [v4 repair and preparation](../2026-09-20/contract-v4-preparation-v1/README.md)

@@ -40,7 +40,10 @@ negative results even if they complicate the ending.
 
 ## Latest implementation and native evidence
 
-The current working change closes a simpler outage gap: retrieval requested
+The latest [verified package](../validation/2026-09-20/retrieval-provider-outage-checkpoint-v1/README.md)
+is product `4bbab4f`: 1,894 source tests and 722 isolated installed cases pass,
+with four skips each, all six source/package checks, and seven replay
+assertions. It closes a simpler outage gap: retrieval requested
 a query embedding before searching text already stored in SQLite. A stopped
 embedding endpoint therefore blocked recall of an existing matching fact.
 Two regression cases reproduced that failure. Scoped lexical fallback now
@@ -48,13 +51,13 @@ returns matching stored text with an explicit degraded status and no invented
 semantic score, including when no matches fit the budget. It preserves
 correction, forgetting, scope, and captured-evidence boundaries. The
 [development record](../validation/2026-09-20/retrieval-provider-outage-development-v1/README.md)
-contains the failing and passing checks. Package and native acceptance for
-this change remain separate; the latest completed package is still below.
+contains the failing and passing checks. Native provider-outage recall has
+not yet run on this package; that remains a separate gate.
 Lexical matches require shared words and can miss paraphrases. Fallback also
 waits for the configured provider timeout and retries; this is no latency
 guarantee and does not demonstrate extraction during an outage.
 
-The latest [package checkpoint](../validation/2026-09-20/codex-runtime-environment-checkpoint-v1/README.md)
+The preceding [package checkpoint](../validation/2026-09-20/codex-runtime-environment-checkpoint-v1/README.md)
 is product `9722d92`: 1,857 source tests and 703 installed cases pass, with
 four skips each, all six source/package checks, and seven replay assertions.
 It explicitly carries runtime, SQLite storage, and disabled-autostart settings

@@ -11,7 +11,11 @@ successful retrieval. Stores without lexical capability retain the original
 provider error. Fallback waits for the configured provider timeout and retries,
 and shared-word matching can miss paraphrases. The
 [development checks](2026-09-20/retrieval-provider-outage-development-v1/README.md)
-are separate from the native observations below.
+and [verified package](2026-09-20/retrieval-provider-outage-checkpoint-v1/README.md)
+are separate from the native observations below. Product `4bbab4f` passes
+1,894 source tests and 722 installed cases, with four skips each, all six
+source/package checks, and seven replay assertions. Native provider-outage
+recall has not run on this product.
 
 The [Codex outage run](2026-09-20/native-codex-outage-v1/README.md)
 passes one stopped-service raw-capture recovery on verified product `9722d92`.

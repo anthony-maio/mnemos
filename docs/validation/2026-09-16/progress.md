@@ -1,15 +1,18 @@
 # Functional local memory implementation record
 
-September 20, embedding-outage repair in progress: two real closed-endpoint
+September 20, embedding-outage package verified: product `4bbab4f` passes
+[all six source/package checks](../2026-09-20/retrieval-provider-outage-checkpoint-v1/README.md),
+1,894 source tests and 722 isolated installed cases, with four skips each,
+and seven replay assertions. Two real closed-endpoint
 regressions reproduced loss of existing SQLite recall. The scoped lexical
 fallback now passes 85 focused retrieval checks. Responses retain degraded
 status even when empty, avoid fabricated semantic scores, preserve scope and
 evidence views, and read corrections or deletions made during the failed
 embedding wait. Claude and Hermes propagate degraded status. See the
 [development record](../2026-09-20/retrieval-provider-outage-development-v1/README.md).
-Source/package and native validation of this repair remain separate gates.
+Native provider-outage recall on this package remains a separate, unrun gate.
 
-The latest completed [package checkpoint](../2026-09-20/codex-runtime-environment-checkpoint-v1/README.md)
+The preceding [package checkpoint](../2026-09-20/codex-runtime-environment-checkpoint-v1/README.md)
 is product `9722d92`, with 1,857 source tests, 703 installed cases, four skips
 each, six source/package checks, and seven replay assertions. The
 [native Codex outage run](../2026-09-20/native-codex-outage-v1/README.md)

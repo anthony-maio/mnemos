@@ -1,5 +1,15 @@
 # Mnemos claim and evidence ledger
 
+The [embedding-outage package](../2026-09-20/retrieval-provider-outage-checkpoint-v1/README.md)
+at `4bbab4f` passes 1,894 source tests and 722 installed cases, four skips
+each, all six source/package checks, and seven replay assertions. Existing
+SQLite facts remain available through scoped lexical search after transient
+embedding failures. Context and responses identify degraded retrieval, even
+with no returned facts, and do not invent semantic scores. These are package
+and fixture observations. Native provider-outage recall has not run on this
+product; paraphrase recall, outage latency, and extraction success are not
+established by this fallback.
+
 The [Codex outage run](../2026-09-20/native-codex-outage-v1/README.md) now observes
 one stopped-service raw-capture recovery on verified product `9722d92`.
 Two exact native messages became two pending jobs after restart, with zero
