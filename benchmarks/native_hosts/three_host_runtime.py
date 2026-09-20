@@ -13,6 +13,8 @@ from typing import Any, TYPE_CHECKING
 import zipfile
 from copy import deepcopy
 
+from .hermes_prerequisite import validate_hermes_cohort
+
 from .hermes_lifecycle_run import (
     read_rows,
     require_prior_queue_terminal,
@@ -24,10 +26,10 @@ if TYPE_CHECKING:
     from mnemos.scopes import ScopeRegistry
     from mnemos.service import MnemosService
 
-WHEEL_SHA256 = "8552345d2c17c4c037347961eb3043d13b20f790f54a9ccc86a096add6197b0f"
-SOURCE_COMMIT = "f2f741443e60f838b392ae8ea1d1a0b4d8c6c1f2"
-PROFILE = "native-three-host-v5"
-PROTOCOL = "docs/plans/2026-09-20-three-host-continuity-protocol-v5.md"
+WHEEL_SHA256 = "3d37b864d35916dbed0c22bcb0428a4e091d6b6c31a0177491130fa18da34fa1"
+SOURCE_COMMIT = "e6887deb89608dca34f7bbb463b5d0a3ba973011"
+PROFILE = "native-three-host-v7"
+PROTOCOL = "docs/plans/2026-09-20-three-host-continuity-protocol-v7.md"
 MAINTENANCE_INTERVAL_SECONDS = 0.25
 MAINTENANCE_IDLE_SECONDS = 0
 MAINTENANCE_PROFILE = {
@@ -38,7 +40,7 @@ MAINTENANCE_PROFILE = {
     "production_latency_evidence": False,
 }
 HERMES_INPUTS = (
-    "benchmarks/native_hosts/hermes_lifecycle_run_v10.py",
+    "benchmarks/native_hosts/hermes_lifecycle_run_v14.py",
     "benchmarks/native_hosts/hermes_native_bootstrap_v6.py",
     "benchmarks/native_hosts/hermes_trace.py",
     "benchmarks/native_hosts/hermes_trace_v2.py",
@@ -52,6 +54,7 @@ HERMES_INPUTS = (
     "docs/plans/2026-09-20-hermes-native-lifecycle-protocol-v8.md",
     "docs/plans/2026-09-20-hermes-native-lifecycle-protocol-v9.md",
     "docs/plans/2026-09-20-hermes-native-lifecycle-protocol-v10.md",
+    "docs/plans/2026-09-20-hermes-native-lifecycle-protocol-v14.md",
     "docs/validation/2026-09-20/native-model-profile-v2/profile.json",
 )
 
@@ -261,23 +264,11 @@ class ThreeHostRuntime:
         hermes = json.loads(self.hermes_acceptance.read_text(encoding="utf-8"))
         verify_hermes_input_binding(self.repo, hermes)
         require_hermes_acceptance(hermes)
-        cohort_path = self.hermes_acceptance.parent.parent / "cohort.json"
-        cohort = json.loads(cohort_path.read_text(encoding="utf-8"))
-        attempts = cohort.get("attempts", [])
-        if (
-            cohort.get("status") not in {"passed", "completed_with_failures"}
-            or not cohort.get("finished_at")
-            or cohort.get("planned_attempts") != 3
-            or len(attempts) != 3
-            or any(row.get("cleanup_established") is not True for row in attempts)
-            or sum(
-                row.get("report_sha256") == sha(self.hermes_acceptance)
-                and row.get("status") == "passed"
-                for row in attempts
-            )
-            != 1
-        ):
-            raise ValueError("Hermes prerequisite lacks its terminal cohort and cleanup evidence")
+        cohort_binding = validate_hermes_cohort(
+            self.hermes_acceptance, source_commit=SOURCE_COMMIT, wheel_sha256=WHEEL_SHA256
+        )
+        cohort_path = Path(cohort_binding["cohort_path"])
+        attempts = cohort_binding["cohort"]["attempts"]
         self._verified = True
         return {
             "source_commit": SOURCE_COMMIT,
@@ -289,6 +280,7 @@ class ThreeHostRuntime:
             "installed_checks_sha256": sha(self.installed_checks),
             "hermes_acceptance_sha256": sha(self.hermes_acceptance),
             "hermes_cohort_sha256": sha(cohort_path),
+            "hermes_cohort_report_hashes": cohort_binding["report_hashes"],
             "hermes_cohort_results": [row["status"] for row in attempts],
             "plugin_files": {
                 name: hashlib.sha256(raw).hexdigest() for name, raw in self._plugin_bytes.items()

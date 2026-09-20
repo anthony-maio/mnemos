@@ -400,6 +400,8 @@ def main() -> int:
         for path in Path(__file__).parent.glob("*.py")
     ]
     inputs.append(PROTOCOL)
+    inputs.append("docs/plans/2026-09-20-three-host-continuity-protocol-v6.md")
+    inputs.append("docs/plans/2026-09-20-three-host-continuity-protocol-v5.md")
     inputs.append("docs/plans/2026-09-20-three-host-continuity-protocol-v4.md")
     inputs.append("docs/plans/2026-09-20-three-host-continuity-protocol-v3.md")
     inputs.append("docs/plans/2026-09-20-three-host-continuity-protocol-v2.md")

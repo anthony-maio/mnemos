@@ -125,21 +125,37 @@ def fx(tmp_path, monkeypatch):
             "phases": [{"phase": n, "exit_code": 0, "gates": gates} for n in names],
         },
     )
+    attempts = []
+    for attempt_id in (1, 2, 3):
+        child = hermes.parent.parent / f"attempt-{attempt_id}" / "report.json"
+        if attempt_id != 3:
+            child.parent.mkdir(parents=True)
+            child.write_text(
+                json.dumps(
+                    {
+                        "status": "failed",
+                        "finished_at": "2026-09-20T07:00:45Z",
+                        "source_commit": m.SOURCE_COMMIT,
+                        "wheel_sha256": digest,
+                    }
+                )
+            )
+        attempts.append(
+            {
+                "attempt": attempt_id,
+                "report": str(child),
+                "status": "passed" if attempt_id == 3 else "failed",
+                "cleanup_established": True,
+                "report_sha256": m.sha(child),
+            }
+        )
     (hermes.parent.parent / "cohort.json").write_text(
         json.dumps(
             {
                 "status": "completed_with_failures",
                 "finished_at": "2026-09-20T07:00:46Z",
                 "planned_attempts": 3,
-                "attempts": [
-                    {"status": "failed", "cleanup_established": True, "report_sha256": "a" * 64},
-                    {"status": "failed", "cleanup_established": True, "report_sha256": "b" * 64},
-                    {
-                        "status": "passed",
-                        "cleanup_established": True,
-                        "report_sha256": m.sha(hermes),
-                    },
-                ],
+                "attempts": attempts,
             }
         )
     )
@@ -207,7 +223,7 @@ def test_hermes_prerequisite_preserves_terminal_cohort(fx, fault):
     else:
         cohort["attempts"].pop(0)
     path.write_text(json.dumps(cohort))
-    with pytest.raises(ValueError, match="terminal cohort"):
+    with pytest.raises(ValueError, match="Hermes cohort"):
         fx.rt.verify()
 
 
