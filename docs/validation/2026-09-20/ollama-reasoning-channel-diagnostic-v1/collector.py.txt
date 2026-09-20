@@ -1,0 +1,73 @@
+from pathlib import Path
+from datetime import datetime, timezone
+import hashlib
+import json
+import shutil
+import jsonschema
+
+repo = Path(__file__).resolve().parents[1]
+temp = Path('C:/Users/Ant/AppData/Local/Temp')
+out = repo / 'docs/validation/2026-09-20/ollama-reasoning-channel-diagnostic-v1'
+sha = lambda p: hashlib.sha256(p.read_bytes()).hexdigest()
+phases = {'routes-interrupted': 'mnemos-ollama-reasoning-routes-v1',
+          'routes-complete': 'mnemos-ollama-reasoning-routes-v2',
+          'format-omitted': 'mnemos-ollama-reasoning-format-v1',
+          'larger-budget': 'mnemos-ollama-reasoning-budget-v1'}
+summaries = {}
+for label, dirname in phases.items():
+    source = temp / dirname
+    prep = json.loads((source / 'preparation.json').read_bytes())
+    state = json.loads((source / 'status.json').read_bytes())
+    inputs = json.loads((source / 'inputs.json').read_bytes())
+    for name, digest in prep['files'].items():
+        assert sha(source / name) == digest
+    assert state['preparation_sha256'] == sha(source / 'preparation.json')
+    rows = [json.loads(line) for line in (source / 'observations.jsonl').read_text().splitlines()]
+    assert len(rows) == state['processed']
+    assert [r['index'] for r in rows] == list(range(len(rows)))
+    if label == 'routes-interrupted':
+        terminal = json.loads((source / 'terminal-observation.json').read_bytes())
+        assert terminal['process_absent'] and terminal['processed'] == 5
+        for name, digest in terminal['files'].items():
+            assert sha(source / name) == digest
+    else:
+        assert state['status'] == 'completed' and state['processed'] == len(inputs['requests'])
+        assert state['observations_sha256'] == sha(source / 'observations.jsonl')
+    summary = []
+    for row in rows:
+        request = inputs['requests'][row['index']]
+        assert all(row[k] == request[k] for k in ('route', 'think', 'case_id'))
+        item = {k: row[k] for k in ('index', 'route', 'think', 'case_id', 'status')}
+        item['api_format_constrained'] = 'format' in request['payload']
+        if row['status'] == 'response_received':
+            response_path = source / f"response-{row['index']:02d}.json"
+            assert sha(response_path) == row['response_sha256']
+            response = json.loads(response_path.read_bytes())
+            final = response.get('response') if row['route'] == 'generate' else response.get('message', {}).get('content')
+            assert row['final_nonempty'] == (isinstance(final, str) and bool(final.strip()))
+            item.update({k: row[k] for k in ('final_nonempty', 'thinking_nonempty', 'done_reason', 'eval_count')})
+            item['final_schema_valid'] = False
+            if row['final_nonempty']:
+                # Match the existing extraction parser's code-fence handling;
+                # never use reasoning text, repair JSON, or invent fields.
+                text = final.strip()
+                if text.startswith('```') and text.endswith('```'):
+                    text = text.split('\n', 1)[1].rsplit('```', 1)[0].strip()
+                try:
+                    parsed = json.loads(text)
+                    schema = request.get('validation_schema', request['payload'].get('format'))
+                    jsonschema.Draft202012Validator(schema).validate(parsed)
+                    item.update(final_schema_valid=True, final_json=parsed)
+                except (ValueError, jsonschema.ValidationError) as exc:
+                    item['validation_error'] = str(exc)
+        summary.append(item)
+    summaries[label] = summary
+out.mkdir(exist_ok=False)
+(out / '.gitattributes').write_bytes(b'** -text -whitespace\n')
+for label, dirname in phases.items():
+    shutil.copytree(temp / dirname, out / label)
+shutil.copyfile(Path(__file__), out / 'collector.py.txt')
+(out / 'summary.json').write_text(json.dumps({'verified_at': datetime.now(timezone.utc).isoformat(), 'phases': summaries}, indent=2) + '\n', encoding='utf-8')
+files = {p.relative_to(out).as_posix(): {'bytes': p.stat().st_size, 'sha256': sha(p)} for p in sorted(out.rglob('*')) if p.is_file()}
+(out / 'evidence-index.json').write_text(json.dumps({'files': files}, indent=2) + '\n', encoding='utf-8')
+print(json.dumps({'archive': str(out), 'indexed_files': len(files), 'counts': {k: len(v) for k, v in summaries.items()}}))

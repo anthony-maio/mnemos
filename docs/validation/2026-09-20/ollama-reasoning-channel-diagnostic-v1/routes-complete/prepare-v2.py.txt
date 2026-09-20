@@ -1,0 +1,33 @@
+from pathlib import Path
+from datetime import datetime, timezone
+import hashlib
+import json
+import shutil
+import subprocess
+
+parent = Path('C:/Users/Ant/AppData/Local/Temp/mnemos-ollama-reasoning-routes-v1')
+root = parent.with_name('mnemos-ollama-reasoning-routes-v2')
+assert not root.exists()
+state = json.loads((parent / 'status.json').read_bytes())
+result = subprocess.run(['powershell', '-NoProfile', '-Command',
+    f"Get-CimInstance Win32_Process -Filter 'ProcessId={int(state['pid'])}' | Select-Object -ExpandProperty ProcessId"],
+    capture_output=True, text=True, check=True)
+assert not result.stdout.strip(), 'Original worker is still alive'
+sha = lambda p: hashlib.sha256(p.read_bytes()).hexdigest()
+terminal = {'observed_at': datetime.now(timezone.utc).isoformat(), 'status': 'interrupted',
+    'process_id': state['pid'], 'process_absent': True,
+    'processed': state['processed'], 'planned': 12,
+    'note': 'Unified exec handle missing after turn interruption; OS process absent. Original status retained unchanged. No response exists for remaining seven planned calls.',
+    'files': {p.name: sha(p) for p in sorted(parent.iterdir()) if p.is_file()}}
+assert not (parent / 'terminal-observation.json').exists()
+(parent / 'terminal-observation.json').write_text(json.dumps(terminal, indent=2) + '\n', encoding='utf-8')
+root.mkdir()
+for name in ('inputs.json', 'runner.py'):
+    shutil.copyfile(parent / name, root / name)
+shutil.copyfile(Path(__file__), root / 'prepare-v2.py.txt')
+manifest = {'prepared_at': datetime.now(timezone.utc).isoformat(),
+    'parent_terminal_sha256': sha(parent / 'terminal-observation.json'),
+    'rerun_policy': 'Full twelve-call rerun after confirmed original process disappearance. No selective retry or changed inputs.',
+    'files': {p.name: sha(p) for p in sorted(root.iterdir())}}
+(root / 'preparation.json').write_text(json.dumps(manifest, indent=2) + '\n', encoding='utf-8')
+print(json.dumps({'root': str(root), 'original_processed': state['processed']}))

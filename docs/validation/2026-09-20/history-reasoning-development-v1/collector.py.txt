@@ -1,0 +1,61 @@
+from pathlib import Path
+import hashlib
+import json
+import shutil
+
+repo = Path(__file__).resolve().parents[1]
+source = Path('C:/Users/Ant/AppData/Local/Temp/mnemos-history-reasoning-development-v1')
+out = repo / 'docs/validation/2026-09-20/history-reasoning-development-v1'
+sha = lambda p: hashlib.sha256(p.read_bytes()).hexdigest()
+state = json.loads((source / 'status.json').read_bytes())
+prep = json.loads((source / 'preparation.json').read_bytes())
+assert state['status'] == 'completed' and state['processed'] == state['errors'] == 36
+assert state['observations_sha256'] == sha(source / 'observations.jsonl')
+assert state['preparation_sha256'] == sha(source / 'preparation.json')
+for name, digest in prep['files'].items():
+    assert sha(source / name) == digest
+rows = [json.loads(line) for line in (source / 'observations.jsonl').read_text().splitlines()]
+assert len({(r['case_id'], r['arm'], r['repetition']) for r in rows}) == 36
+assert all(r['error'] == 'Ollama returned an empty final response' for r in rows)
+responses = [m for r in rows for m in r['trace']['response_metadata']]
+assert len(responses) == 36
+assert all(m['response'] == '' and m['thinking'].strip() and m['done'] and m['done_reason'] == 'stop' for m in responses)
+summary = {'observations': 36, 'runtime_errors': 36, 'quality_scored': 0,
+           'eval_count_range': [min(m['eval_count'] for m in responses), max(m['eval_count'] for m in responses)],
+           'empty_final_with_nonempty_thinking': 36}
+out.mkdir(exist_ok=False)
+(out / '.gitattributes').write_bytes(b'** -text -whitespace\n')
+for path in source.iterdir():
+    if path.is_file():
+        shutil.copyfile(path, out / path.name)
+shutil.copyfile(Path(__file__), out / 'collector.py.txt')
+(out / 'summary.json').write_text(json.dumps(summary, indent=2) + '\n', encoding='utf-8')
+files = {p.name: {'bytes': p.stat().st_size, 'sha256': sha(p)} for p in sorted(out.iterdir()) if p.is_file()}
+(out / 'evidence-index.json').write_text(json.dumps({'files': files}, indent=2) + '\n', encoding='utf-8')
+(out / 'README.md').write_text('''# Qwen reasoning configuration: empty final responses
+
+All 36 proposal calls failed the production provider's final-response check.
+The twelve previously authored inputs ran three repetitions with local
+Qwen3.5:9b, thinking enabled, temperature zero, a 2,048-token output budget,
+and the history-only candidate prompt. Inputs, model digest, source hashes,
+and settings were frozen before execution. No facts were committed.
+
+Every preserved API response has an empty response field, nonempty thinking,
+done=true, and done_reason=stop. The token counts in summary.json are below
+the configured budget. These are runtime failures, not abstentions or semantic
+quality scores. The runner's terminal success means recording completed;
+its status explicitly records 36 errors. Earlier results remain unchanged.
+
+Ollama documents separate reasoning and final-answer fields for both routes:
+[thinking contract](https://docs.ollama.com/capabilities/thinking). Reading
+thinking as a substitute final answer would bypass that contract. The existing
+provider rejected these responses correctly. No production transport, prompt,
+model default, or live configuration was changed. A separate route diagnostic
+will compare chat and generate with thinking enabled and disabled.
+
+This is development evidence using previously observed cases. It establishes
+neither general model quality nor the cause of the server behavior. The index
+binds the original inputs, prompts, schemas, raw responses, source binding,
+helpers, and terminal status; this README is outside the index.
+''', encoding='utf-8', newline='\n')
+print(json.dumps({'archive': str(out), 'indexed_files': len(files), 'summary': summary}))

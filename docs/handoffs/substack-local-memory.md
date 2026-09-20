@@ -12,6 +12,17 @@ Deliver an article draft, three possible titles, and a separate compact source/c
 
 ## Read this first
 
+The [reasoning-configuration run](../validation/2026-09-20/history-reasoning-development-v1/README.md)
+records 36 empty-final-response failures, not extraction abstentions. The
+[subsequent API/configuration diagnostic](../validation/2026-09-20/ollama-reasoning-channel-diagnostic-v1/README.md)
+finds that constrained generate calls stop inside the reasoning channel;
+chat with a larger output budget returns a schema-valid historical report
+with its qualifications preserved in one observed case. The interrupted
+first route attempt and all negative arms remain archived. This supports a
+provider correction, not a quality acceptance claim. A 36-call follow-up
+across the twelve development cases is still running; no production prompt
+or live model setting has changed.
+
 Two subsequent extraction diagnostics preserve additional negative evidence.
 The [42-observation context comparison](../validation/2026-09-20/history-context-diagnostic-v1/README.md)
 repeats the seven service inputs with and without an existing fact. Fiction

@@ -1,0 +1,27 @@
+from pathlib import Path
+from datetime import datetime, timezone
+import hashlib
+import json
+import shutil
+
+repo = Path(__file__).resolve().parents[1]
+parent = Path('C:/Users/Ant/AppData/Local/Temp/mnemos-ollama-reasoning-routes-v2')
+root = parent.with_name('mnemos-ollama-reasoning-format-v1')
+assert not root.exists()
+inputs = json.loads((parent / 'inputs.json').read_bytes())
+inputs['schema_version'] = 'ollama-reasoning-format-v1'
+inputs['requests'] = [r for r in inputs['requests'] if r['think']]
+for request in inputs['requests']:
+    request['validation_schema'] = request['payload'].pop('format')
+inputs['interpretation'] = ('Six follow-up calls, same prior prompt/case/route/think=true/budget, omitting only API format constraint. '
+    'Original schema retained for validation of final content. No reasoning text parsed as final. No fact commits or quality acceptance.')
+root.mkdir()
+(root / 'inputs.json').write_text(json.dumps(inputs, indent=2) + '\n', encoding='utf-8')
+shutil.copyfile(parent / 'runner.py', root / 'runner.py')
+shutil.copyfile(Path(__file__), root / 'prepare.py.txt')
+sha = lambda p: hashlib.sha256(p.read_bytes()).hexdigest()
+manifest = {'prepared_at': datetime.now(timezone.utc).isoformat(),
+            'parent_inputs_sha256': sha(parent / 'inputs.json'),
+            'files': {p.name: sha(p) for p in sorted(root.iterdir())}}
+(root / 'preparation.json').write_text(json.dumps(manifest, indent=2) + '\n', encoding='utf-8')
+print(json.dumps({'root': str(root), 'calls': len(inputs['requests'])}))
