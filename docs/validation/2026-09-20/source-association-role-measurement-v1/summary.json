@@ -1,0 +1,505 @@
+{
+  "controls_pass": false,
+  "coverage_by_embedding": {
+    "nomic_task": {
+      "cases_with_shared_source_relations": [
+        "revision_forget_replay",
+        "scope_isolation_pair",
+        "shared_capture_triplet",
+        "shared_extraction_batch"
+      ],
+      "semantic_only_negative_control": true,
+      "shared_case_coverage": true
+    },
+    "unprefixed": {
+      "cases_with_shared_source_relations": [
+        "revision_forget_replay",
+        "scope_isolation_pair",
+        "shared_capture_triplet",
+        "shared_extraction_batch"
+      ],
+      "semantic_only_negative_control": true,
+      "shared_case_coverage": true
+    }
+  },
+  "coverage_pass": false,
+  "embedding_role_contracts": {
+    "nomic_task": {
+      "document_prefix": "search_document: ",
+      "query_prefix": "search_query: ",
+      "symmetric_prefix": ""
+    },
+    "unprefixed": {
+      "document_prefix": "",
+      "query_prefix": "",
+      "symmetric_prefix": ""
+    }
+  },
+  "execution_complete": true,
+  "expected_rows": 90,
+  "extraction": "synthetic_fixture",
+  "failed_controls": [
+    {
+      "arm": "semantic",
+      "case_id": "revision_forget_replay",
+      "control": "lifecycle_pass",
+      "embedding_contract": "unprefixed",
+      "repetition": 0,
+      "value": false
+    },
+    {
+      "arm": "source_association",
+      "case_id": "revision_forget_replay",
+      "control": "lifecycle_pass",
+      "embedding_contract": "unprefixed",
+      "repetition": 0,
+      "value": false
+    },
+    {
+      "arm": "combined",
+      "case_id": "revision_forget_replay",
+      "control": "lifecycle_pass",
+      "embedding_contract": "unprefixed",
+      "repetition": 0,
+      "value": false
+    },
+    {
+      "arm": "semantic",
+      "case_id": "revision_forget_replay",
+      "control": "lifecycle_pass",
+      "embedding_contract": "unprefixed",
+      "repetition": 1,
+      "value": false
+    },
+    {
+      "arm": "source_association",
+      "case_id": "revision_forget_replay",
+      "control": "lifecycle_pass",
+      "embedding_contract": "unprefixed",
+      "repetition": 1,
+      "value": false
+    },
+    {
+      "arm": "combined",
+      "case_id": "revision_forget_replay",
+      "control": "lifecycle_pass",
+      "embedding_contract": "unprefixed",
+      "repetition": 1,
+      "value": false
+    },
+    {
+      "arm": "semantic",
+      "case_id": "revision_forget_replay",
+      "control": "lifecycle_pass",
+      "embedding_contract": "unprefixed",
+      "repetition": 2,
+      "value": false
+    },
+    {
+      "arm": "source_association",
+      "case_id": "revision_forget_replay",
+      "control": "lifecycle_pass",
+      "embedding_contract": "unprefixed",
+      "repetition": 2,
+      "value": false
+    },
+    {
+      "arm": "combined",
+      "case_id": "revision_forget_replay",
+      "control": "lifecycle_pass",
+      "embedding_contract": "unprefixed",
+      "repetition": 2,
+      "value": false
+    },
+    {
+      "arm": "semantic",
+      "case_id": "revision_forget_replay",
+      "control": "lifecycle_pass",
+      "embedding_contract": "nomic_task",
+      "repetition": 0,
+      "value": false
+    },
+    {
+      "arm": "source_association",
+      "case_id": "revision_forget_replay",
+      "control": "lifecycle_pass",
+      "embedding_contract": "nomic_task",
+      "repetition": 0,
+      "value": false
+    },
+    {
+      "arm": "combined",
+      "case_id": "revision_forget_replay",
+      "control": "lifecycle_pass",
+      "embedding_contract": "nomic_task",
+      "repetition": 0,
+      "value": false
+    },
+    {
+      "arm": "semantic",
+      "case_id": "revision_forget_replay",
+      "control": "lifecycle_pass",
+      "embedding_contract": "nomic_task",
+      "repetition": 1,
+      "value": false
+    },
+    {
+      "arm": "source_association",
+      "case_id": "revision_forget_replay",
+      "control": "lifecycle_pass",
+      "embedding_contract": "nomic_task",
+      "repetition": 1,
+      "value": false
+    },
+    {
+      "arm": "combined",
+      "case_id": "revision_forget_replay",
+      "control": "lifecycle_pass",
+      "embedding_contract": "nomic_task",
+      "repetition": 1,
+      "value": false
+    },
+    {
+      "arm": "semantic",
+      "case_id": "revision_forget_replay",
+      "control": "lifecycle_pass",
+      "embedding_contract": "nomic_task",
+      "repetition": 2,
+      "value": false
+    },
+    {
+      "arm": "source_association",
+      "case_id": "revision_forget_replay",
+      "control": "lifecycle_pass",
+      "embedding_contract": "nomic_task",
+      "repetition": 2,
+      "value": false
+    },
+    {
+      "arm": "combined",
+      "case_id": "revision_forget_replay",
+      "control": "lifecycle_pass",
+      "embedding_contract": "nomic_task",
+      "repetition": 2,
+      "value": false
+    }
+  ],
+  "finished_at": "2026-09-20T11:29:26.265106+00:00",
+  "independent_cases": 5,
+  "input_hashes": {
+    "benchmarks/local_memory/datasets/source-association-development-v1.json": "809a3a27ed0052e0fdf872542168af0a38337c1dc42f3d0b2af66d769cee5741",
+    "benchmarks/local_memory/embedding_prefix_development_v1.py": "c6f5128a727534f7ece350556bb0a19002170b22a719bfc6434a4ec62cea3bba",
+    "benchmarks/local_memory/graph_measurement.py": "1117b14d8afa1f4e123ac7821c4ee985f9d9b441be08a5e853147677ce52bda4",
+    "benchmarks/local_memory/module_mechanism.py": "78eb43760dd15e10804bbcc770241975200aefccc3a7025fcdfeb04416a192f5",
+    "benchmarks/local_memory/prepare_source_association_vectors.py": "a15716c9d50733db4900ca5051dcb545a5bad0ce4599b519b697e2d280027814",
+    "benchmarks/local_memory/run_source_association.py": "0b30f2c59ffc4814815da80d4f4eaaf97093e5133c9b85984c55a5862ef900a3",
+    "benchmarks/local_memory/run_source_association_roles_v1.py": "c14188cd6f7a87ca81fed9c9661b190891ae943387218a4b8f8dde3768a7e1a0",
+    "benchmarks/local_memory/source_association_diagnostic.py": "329526a8b69b6c0f1f040359124616fd5d4f94367ef23a0e990def9412641c21",
+    "benchmarks/local_memory/source_association_fixture.py": "d2ba885553f64c82836555714261b85c80ab7321c0104366fef3365391f742f8",
+    "benchmarks/local_memory/source_association_lifecycle.py": "b0736235fd9c4bb65e1fc8dd2c27fb052046e687c4887b36c67e80fb9c6f6fad",
+    "benchmarks/local_memory/source_association_measurement.py": "6cbf21fdf6ef0668aac9b62579c5e3293dd8494d14a477839db2ef4687f17bd1",
+    "benchmarks/local_memory/source_association_role_preparation_v1.py": "36c2c2882e0f8c4e34b6d0c53147119256025993761851be9fb30901ab1e38be",
+    "benchmarks/local_memory/source_association_view.py": "c1b28ec50f85551d615820ec36b0a67dd8aa3946d1a4085703808f13b7db795f",
+    "docs/plans/2026-09-20-source-association-role-protocol-v1.md": "33d2110fb7081bd3e4760bf7aa0f06d40b7d403b1bde508b41a2d7a0c7563f9f",
+    "docs/validation/2026-09-20/source-association-role-vectors-v1/artifact.json": "c5e0e073859e8343885f0d4a3659ca70de3afd44d83590160a9a9b279396c444",
+    "mnemos/__init__.py": "bed934cb4c54915b8f75e7a9353fba5860ba39da96b75b12df74d0aa188d2b0e",
+    "mnemos/__main__.py": "51ba40694573941e2ea5002e0ff4244c44be67ac5abc132cfd7e8e70ca448794",
+    "mnemos/adapters/claude_code.py": "9f7f6f9c73e14d0711bc55ae99708ba96227501b8e648c34520b6ccf9c3b1d35",
+    "mnemos/adapters/codex.py": "7b3d1149b4e6bcd0b5e316e941d5e25e11b773fac167dd901937eda02a4b5f6a",
+    "mnemos/adapters/context.py": "baedca2032a8c5c2b565d72e15c878f966b4e20e7bedc066d30ffa6c325d8a3b",
+    "mnemos/adapters/diagnostics.py": "746d24fe900c2b16b9a8ad2b050752083aec51e288536949e5a106c76ac83aec",
+    "mnemos/adapters/hermes.py": "40e50b49f373bec56cdbb8b7d4c9778683abc5bd4981fb9d87ee0d13da0c5b52",
+    "mnemos/adapters/hermes_occurrences.py": "03e8249de0c6e328daab07dc3a2eaa1c637e62fb86e24097442a3ead316da4a9",
+    "mnemos/adapters/hermes_tools.py": "ef4ec5cbbba302389d54fc4570f8a5723c910ab654365592c9a55c5b5ecef914",
+    "mnemos/adapters/hook_input.py": "70c198d07db24bd69a0b5787478ead9cc82233d97e1aa8de4d4e636471320946",
+    "mnemos/antigravity.py": "217c6330f5b033f5e501618fd6752e066bfbdeaad53f20b5f1212a493f8bc85b",
+    "mnemos/backup.py": "8d269fd553993d46af6ba8eef417994e17622ef0da345ebae0d592b5279a7fa1",
+    "mnemos/benchmark.py": "c7f6e007e5f1cb64e4532af919f419e8ec01e11168733cf975da1b09f4a23610",
+    "mnemos/bridge.py": "0818c40494d85b1f2d0bf362580107a2ef99bf79af236647778aff55f0a1fade",
+    "mnemos/claude_identity.py": "0336e7561c6680d9d6a9aeaabdc6ac3127f994dbe5bb4adf7441a17639eb3e7a",
+    "mnemos/cli.py": "90af14ffcbdca97ff120b109fab31d579f95dc59277f40ecfd1b7eaa4b69053c",
+    "mnemos/client.py": "8239b141ae23ba2921439bd68a2f92e6b8ed1cf3aec3265042bd8057b087d321",
+    "mnemos/config.py": "bca4a0c6e7d738c0ebc567b8d2b1510374e9b346e377959d3178a330d18533a3",
+    "mnemos/contracts.py": "1143c10bdb1bae3d60f240fb96604b3c140ad8247412e8832847be1b531a1aee",
+    "mnemos/control_plane.py": "9832567875574d6acb04f05077f1f0033ec57bb8ab0632d9687dcb2af6231683",
+    "mnemos/curation.py": "4038d5014fe09ed5a08aeec4045c54b8825bdd57281db698589f6d4a4383bdbf",
+    "mnemos/engine.py": "d1aab9fc137d32aa4d7a4eb759ac3cc90ccb13638337b03331c76714cec2cb12",
+    "mnemos/errors.py": "8b92b2fca441d05f238afcf33900f1cf24a5b02beeeff97a1a2e97042d3d28f9",
+    "mnemos/health.py": "8a23f6cdaa095c5066b21bfade104b779315079226d2cec3942836f541128527",
+    "mnemos/hermes_identity.py": "bfd9770990b24760b45803834e2e060aeaa9c15506a04f14512f3a965e9a9033",
+    "mnemos/hook_autostore.py": "7f81ff4ad32e90cebebafbc731045bf8d1c5daad8d97fc9eb67575d5294762f8",
+    "mnemos/hosts.py": "e877b776976b80939f0d983c23bec6c7eaebecfcf8e8249c891ce076f6c3e615",
+    "mnemos/inspectability.py": "ceab84bacbb90a9001ca8b8b502e3418b7131ca7f518c3db5cc5c1f84b437962",
+    "mnemos/jobs.py": "fb37d22b9710035d1d4c42da5e37707d04c048dc8539fe73c830269740d73b5d",
+    "mnemos/maintenance.py": "ca533fe46c5ae6b4b1ede2b67bed60e7d997a6511be2bc2edf5711a90237a65c",
+    "mnemos/managed_cli.py": "660ee3c85efe1dd5bd70e569fdb07bad924963bc82d33f096b262b2b10151461",
+    "mnemos/mcp_server.py": "5282081a30c33237b536d6f2acec0ce81906d06647c38fbd9981c7fb174cea50",
+    "mnemos/memory_safety.py": "1d7a1fea75d3b77a5547bb4ae2bb97a15574d2f0206f58468a1e0d6030aee9f0",
+    "mnemos/memory_service.py": "3fab323fe6af377d096e6e6d579e83961fa5eb1bf6dbb381b3eac43c90f93468",
+    "mnemos/modules/__init__.py": "9577f0749062e56949ddc757683e32dfc2ea58e7c416dcec1b78fd48a21b4f01",
+    "mnemos/modules/affective.py": "ec8931082dc15f51700a5dbd501ff3d33d0bd969f1320fe266cf5bad081f6d94",
+    "mnemos/modules/mutable_rag.py": "78eaac0d1a70e2b3c9285665e270fad759c42b824ff8efbb6997c49fd3bc2341",
+    "mnemos/modules/sleep.py": "1819fbe81bb7d9635dee1d476823588e3c76bea48f4e7a126dcea5165ab13ab3",
+    "mnemos/modules/spreading.py": "623a6cf24f97d633bb0d6736e880411ea6723749b04b4cc95e4c1296dbf04a0c",
+    "mnemos/modules/surprisal.py": "96cf498124989e880018a3862352ffc5c3b09fc31205917e6f7aadbf7e9b6ccb",
+    "mnemos/observability.py": "5a94b117226d626c3e54b003bf168c038bbca4ed4b65908a91c5ecba3018370a",
+    "mnemos/reindex.py": "a1ab841800a5ccaaf343c1232e0f2a9d5f2a887bf8feaa8e24bcef49e7b99498",
+    "mnemos/retrieval.py": "4c3bd99670fc4d0608fce81a3489fb2046fb8bf1732a29ada62e47f1f490b344",
+    "mnemos/routing_review.py": "9426ab700e800df87d66f43e85e88224de5133487af616fc9d4be083d531d1d3",
+    "mnemos/runtime.py": "e1b1ea35a4269ecdedfd31c8c5e73e19f4cbc3a3e0de1db56943d72acf64d7f4",
+    "mnemos/scopes.py": "f436802836f911f6dcc8c8362a7627773b0d10a28efda624d1fd55fdb995c6ab",
+    "mnemos/service.py": "1b8810ad88c4ba8d33b5e7d5773b4abda8126cc584da260afb9ac6b3f1cc09f8",
+    "mnemos/settings.py": "ed2c36257c3b4d230efe0656c8bb8d4b06ddfaf2d4457a310e42f16571b48817",
+    "mnemos/types.py": "d3c781f1ac2a0190b3195ff70edfe9ca075163a6ffb5a26113a60f31334c9e1d",
+    "mnemos/ui_server.py": "661a6da8d4bfd20804ba3a3c62fd06b0257bcf32e0d463967fd78c80bf0028a1",
+    "mnemos/utils/__init__.py": "90abbf6a2fcf610056dd19d8acd55c5c715fe4aef404adfeccf56faad6748bba",
+    "mnemos/utils/embeddings.py": "34018a96c91e5d43be8c2de630e98c31220a8163d7003902a04fc6b3618f6bdb",
+    "mnemos/utils/llm.py": "2edfd8121fbe07ad269c4850a6ab1d0f8713ed9b15e292d7bff099f3f1f4ebbc",
+    "mnemos/utils/reliability.py": "5e74212c28dc522acb65dd9c161beee8cb4e95c066eb9cae3bfcd518fa0d707a",
+    "mnemos/utils/storage.py": "13687b85e25218497463bd948f27c50755157e73ffeec833a287ddda3cba6ac7"
+  },
+  "lifecycle": "required_for_both_embedding_contracts",
+  "manifest_sha256": "809a3a27ed0052e0fdf872542168af0a38337c1dc42f3d0b2af66d769cee5741",
+  "measurement_inputs_match_head_after": true,
+  "measurement_inputs_match_head_before": true,
+  "measurement_status": "complete",
+  "model": "nomic-embed-text:latest",
+  "model_digest": "0a109f422b47e3a30ba2b10eca18548e944e8a23073ee3f3e947efcf3c45e59f",
+  "options": {
+    "activation_threshold": 0.3,
+    "context_budget_tokens": 4096,
+    "decay": 0.2,
+    "fanout_limit": 16,
+    "graph_weight": 0.1,
+    "max_candidates": 100,
+    "max_hops": 3,
+    "max_visited": 1000,
+    "neighbor_budget": 4,
+    "relevance_floor": 0.2,
+    "repetitions": 3,
+    "semantic_edge_threshold": 0.6,
+    "source_edge_weight": 1.0,
+    "top_k": 5
+  },
+  "protocol_sha256": "33d2110fb7081bd3e4760bf7aa0f06d40b7d403b1bde508b41a2d7a0c7563f9f",
+  "quality_acceptance": "not_measured",
+  "repository_status_after": "?? .playwright-cli/\n?? docs/validation/2026-09-16/mechanism-development-v1/embedding.raw-outputs.jsonl\n?? docs/validation/2026-09-16/real-model-v2/\n?? docs/validation/2026-09-16/real-model-v3/lifecycle.stderr.log\n?? docs/validation/2026-09-16/real-model-v3/lifecycle.stdout.log\n?? docs/validation/2026-09-16/real-model-v3/lifecycle/\n?? docs/validation/2026-09-16/real-model-v3/mechanism-heldout.stderr.log\n?? docs/validation/2026-09-16/real-model-v3/mechanism-heldout.stdout.log\n?? docs/validation/2026-09-16/real-model-v3/queue-status.json\n?? docs/validation/2026-09-16/real-model-v4/\n?? docs/validation/2026-09-19/encoding-comparison-local-v2/\n?? docs/validation/2026-09-19/hermes-lifecycle-regressions-v1/\n?? docs/validation/2026-09-19/hermes-native-rows-contract-v1/\n?? docs/validation/2026-09-19/hermes-native-rows-contract-v2/\n?? docs/validation/2026-09-19/hermes-rewind-diagnostic-v1-rerun/\n?? docs/validation/2026-09-19/hermes-rewind-diagnostic-v1/\n?? docs/validation/2026-09-19/lifecycle-incomplete-local-v1/\n?? docs/validation/2026-09-19/real-model-local-v1/\n?? docs/validation/2026-09-19/retrieval-comparison-local-v2/\n?? docs/validation/2026-09-20/source-association-measurement-v1/measurement.json\n?? docs/validation/2026-09-20/source-association-measurement-v1/revision_forget_replay/\n?? docs/validation/2026-09-20/source-association-measurement-v1/scope_isolation_pair/\n?? docs/validation/2026-09-20/source-association-measurement-v1/semantic_only_chain/\n?? docs/validation/2026-09-20/source-association-measurement-v1/shared_capture_triplet/\n?? docs/validation/2026-09-20/source-association-measurement-v1/shared_extraction_batch/\n?? tmp_cp_check/\n",
+  "repository_status_before": "?? .playwright-cli/\n?? docs/validation/2026-09-16/mechanism-development-v1/embedding.raw-outputs.jsonl\n?? docs/validation/2026-09-16/real-model-v2/\n?? docs/validation/2026-09-16/real-model-v3/lifecycle.stderr.log\n?? docs/validation/2026-09-16/real-model-v3/lifecycle.stdout.log\n?? docs/validation/2026-09-16/real-model-v3/lifecycle/\n?? docs/validation/2026-09-16/real-model-v3/mechanism-heldout.stderr.log\n?? docs/validation/2026-09-16/real-model-v3/mechanism-heldout.stdout.log\n?? docs/validation/2026-09-16/real-model-v3/queue-status.json\n?? docs/validation/2026-09-16/real-model-v4/\n?? docs/validation/2026-09-19/encoding-comparison-local-v2/\n?? docs/validation/2026-09-19/hermes-lifecycle-regressions-v1/\n?? docs/validation/2026-09-19/hermes-native-rows-contract-v1/\n?? docs/validation/2026-09-19/hermes-native-rows-contract-v2/\n?? docs/validation/2026-09-19/hermes-rewind-diagnostic-v1-rerun/\n?? docs/validation/2026-09-19/hermes-rewind-diagnostic-v1/\n?? docs/validation/2026-09-19/lifecycle-incomplete-local-v1/\n?? docs/validation/2026-09-19/real-model-local-v1/\n?? docs/validation/2026-09-19/retrieval-comparison-local-v2/\n?? docs/validation/2026-09-20/source-association-measurement-v1/measurement.json\n?? docs/validation/2026-09-20/source-association-measurement-v1/revision_forget_replay/\n?? docs/validation/2026-09-20/source-association-measurement-v1/scope_isolation_pair/\n?? docs/validation/2026-09-20/source-association-measurement-v1/semantic_only_chain/\n?? docs/validation/2026-09-20/source-association-measurement-v1/shared_capture_triplet/\n?? docs/validation/2026-09-20/source-association-measurement-v1/shared_extraction_batch/\n?? tmp_cp_check/\n",
+  "schema_version": "source-association-role-measurement-v1",
+  "source_commit": "366039681ba95734882f43bd870adf1c7e40d961",
+  "started_at": "2026-09-20T11:27:03.316560+00:00",
+  "summary_by_embedding": {
+    "nomic_task": {
+      "combined": {
+        "activation_path_rows": 3,
+        "direct_target_rows": 6,
+        "rows": 15,
+        "structural_path_rows": 3,
+        "target_top5_rows": 0
+      },
+      "semantic": {
+        "activation_path_rows": 3,
+        "direct_target_rows": 6,
+        "rows": 15,
+        "structural_path_rows": 3,
+        "target_top5_rows": 0
+      },
+      "source_association": {
+        "activation_path_rows": 3,
+        "direct_target_rows": 6,
+        "rows": 15,
+        "structural_path_rows": 3,
+        "target_top5_rows": 0
+      }
+    },
+    "unprefixed": {
+      "combined": {
+        "activation_path_rows": 0,
+        "direct_target_rows": 6,
+        "rows": 15,
+        "structural_path_rows": 0,
+        "target_top5_rows": 0
+      },
+      "semantic": {
+        "activation_path_rows": 0,
+        "direct_target_rows": 6,
+        "rows": 15,
+        "structural_path_rows": 0,
+        "target_top5_rows": 0
+      },
+      "source_association": {
+        "activation_path_rows": 0,
+        "direct_target_rows": 6,
+        "rows": 15,
+        "structural_path_rows": 0,
+        "target_top5_rows": 0
+      }
+    }
+  },
+  "vector_artifact_sha256": "c5e0e073859e8343885f0d4a3659ca70de3afd44d83590160a9a9b279396c444",
+  "control_failures": [
+    {
+      "embedding_contract": "unprefixed",
+      "case_id": "revision_forget_replay",
+      "arm": "semantic",
+      "repetition": 0,
+      "failed_controls": [
+        "lifecycle_pass"
+      ]
+    },
+    {
+      "embedding_contract": "unprefixed",
+      "case_id": "revision_forget_replay",
+      "arm": "source_association",
+      "repetition": 0,
+      "failed_controls": [
+        "lifecycle_pass"
+      ]
+    },
+    {
+      "embedding_contract": "unprefixed",
+      "case_id": "revision_forget_replay",
+      "arm": "combined",
+      "repetition": 0,
+      "failed_controls": [
+        "lifecycle_pass"
+      ]
+    },
+    {
+      "embedding_contract": "unprefixed",
+      "case_id": "revision_forget_replay",
+      "arm": "semantic",
+      "repetition": 1,
+      "failed_controls": [
+        "lifecycle_pass"
+      ]
+    },
+    {
+      "embedding_contract": "unprefixed",
+      "case_id": "revision_forget_replay",
+      "arm": "source_association",
+      "repetition": 1,
+      "failed_controls": [
+        "lifecycle_pass"
+      ]
+    },
+    {
+      "embedding_contract": "unprefixed",
+      "case_id": "revision_forget_replay",
+      "arm": "combined",
+      "repetition": 1,
+      "failed_controls": [
+        "lifecycle_pass"
+      ]
+    },
+    {
+      "embedding_contract": "unprefixed",
+      "case_id": "revision_forget_replay",
+      "arm": "semantic",
+      "repetition": 2,
+      "failed_controls": [
+        "lifecycle_pass"
+      ]
+    },
+    {
+      "embedding_contract": "unprefixed",
+      "case_id": "revision_forget_replay",
+      "arm": "source_association",
+      "repetition": 2,
+      "failed_controls": [
+        "lifecycle_pass"
+      ]
+    },
+    {
+      "embedding_contract": "unprefixed",
+      "case_id": "revision_forget_replay",
+      "arm": "combined",
+      "repetition": 2,
+      "failed_controls": [
+        "lifecycle_pass"
+      ]
+    },
+    {
+      "embedding_contract": "nomic_task",
+      "case_id": "revision_forget_replay",
+      "arm": "semantic",
+      "repetition": 0,
+      "failed_controls": [
+        "lifecycle_pass"
+      ]
+    },
+    {
+      "embedding_contract": "nomic_task",
+      "case_id": "revision_forget_replay",
+      "arm": "source_association",
+      "repetition": 0,
+      "failed_controls": [
+        "lifecycle_pass"
+      ]
+    },
+    {
+      "embedding_contract": "nomic_task",
+      "case_id": "revision_forget_replay",
+      "arm": "combined",
+      "repetition": 0,
+      "failed_controls": [
+        "lifecycle_pass"
+      ]
+    },
+    {
+      "embedding_contract": "nomic_task",
+      "case_id": "revision_forget_replay",
+      "arm": "semantic",
+      "repetition": 1,
+      "failed_controls": [
+        "lifecycle_pass"
+      ]
+    },
+    {
+      "embedding_contract": "nomic_task",
+      "case_id": "revision_forget_replay",
+      "arm": "source_association",
+      "repetition": 1,
+      "failed_controls": [
+        "lifecycle_pass"
+      ]
+    },
+    {
+      "embedding_contract": "nomic_task",
+      "case_id": "revision_forget_replay",
+      "arm": "combined",
+      "repetition": 1,
+      "failed_controls": [
+        "lifecycle_pass"
+      ]
+    },
+    {
+      "embedding_contract": "nomic_task",
+      "case_id": "revision_forget_replay",
+      "arm": "semantic",
+      "repetition": 2,
+      "failed_controls": [
+        "lifecycle_pass"
+      ]
+    },
+    {
+      "embedding_contract": "nomic_task",
+      "case_id": "revision_forget_replay",
+      "arm": "source_association",
+      "repetition": 2,
+      "failed_controls": [
+        "lifecycle_pass"
+      ]
+    },
+    {
+      "embedding_contract": "nomic_task",
+      "case_id": "revision_forget_replay",
+      "arm": "combined",
+      "repetition": 2,
+      "failed_controls": [
+        "lifecycle_pass"
+      ]
+    }
+  ],
+  "measurement_sha256": "7dae4c375c65c3b8f82b85375f60fb87d30d641a91dc348c30dcd0f9a31d0f3f"
+}

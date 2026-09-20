@@ -40,6 +40,17 @@ negative results even if they complicate the ending.
 
 ## Latest implementation and native evidence
 
+The [role-aware graph measurement](../validation/2026-09-20/source-association-role-measurement-v1/README.md)
+completed all 90 observations across five authored cases, two embedding
+contracts, three relation arms, and three deterministic repetitions. Task
+prefixes made the scope-isolation target reachable; source associations
+improved its rank from 31 to 20 compared with semantic edges. No arm placed
+any target in the top five. All non-lifecycle controls passed; 18 lifecycle
+controls still failed on shared-source preservation. Independent verification
+checked all 390 artifacts and the score/rank calculations. The focused suite
+passed 31 tests. This is development evidence, with production defaults and
+held-out results unchanged. Full-module quality remains open.
+
 The [native Hermes v13 cohort](../validation/2026-09-20/hermes-native-cohort-v13/README.md)
 finished zero of three complete lifecycles on verified product `db21750`.
 All three attempts passed teaching, restarted recall, correction, and corrected
@@ -55,16 +66,15 @@ several seed ranks, including 33 to 1 in the scope-isolation case, but neither
 arm put any target in the top five. All 378 query/document vector bindings and
 rank calculations were independently checked against raw responses. No graph
 traversal ran, and production defaults and previous held-out results are unchanged.
-The next graph diagnostic must preserve the separate query and document vectors.
+The subsequent role-aware graph measurement above preserves those roles.
 
 The [independent historical-assertion review](../validation/2026-09-20/historical-assertion-independent-review.md)
 found valid extraction abstentions followed by absent correction targets. It
 does not establish a parser or target-resolution defect. The historical-memory
 policy question is pending; prior labels and negative results remain fixed.
 
-These findings postdate portable packet v25. The checkout handoff is
-current; the portable packet remains a dated snapshot to refresh at
-the next substantive handoff checkpoint.
+Portable packet v26 includes these results and the voice guide. It remains
+a working research snapshot; reconcile it again at final acceptance.
 
 The [native Hermes v12 cohort](../validation/2026-09-20/hermes-native-cohort-v12/README.md)
 finished zero of three complete lifecycles on `5155ebd`. One attempt omitted
