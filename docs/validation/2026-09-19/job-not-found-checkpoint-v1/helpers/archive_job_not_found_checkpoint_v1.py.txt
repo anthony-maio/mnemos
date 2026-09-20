@@ -1,0 +1,55 @@
+"""Preserve the Job lookup error package checks and exact executed helpers."""
+from pathlib import Path
+import hashlib
+import json
+import shutil
+
+repo = Path(__file__).resolve().parents[1]
+temp = Path('C:/Users/Ant/AppData/Local/Temp')
+checks = temp/'mnemos-package-checks-job-not-found-v2'
+installed = temp/'mnemos-installed-checks-job-not-found-v1'
+output = repo/'docs/validation/2026-09-19/job-not-found-checkpoint-v1'
+verification = json.loads((checks/'verification.json').read_text())
+installation = json.loads((installed/'installation.json').read_text())
+contract = json.loads((installed/'contract.json').read_text())
+assert verification['status'] == installation['status'] == contract['status'] == 'passed'
+assert verification['source_commit'] == installation['bindings_after']['commit'] == '68693f83b5894198daea114e018031e381a508a3'
+assert all(row['exit_code'] == 0 for row in verification['checks'])
+
+def sha(path):
+    return hashlib.sha256(path.read_bytes()).hexdigest()
+
+assert sha(checks/'verification.json') == installation['bindings_before']['checks_sha256']
+assert sha(checks/'pytest.xml') == installation['successful_pytest_xml_sha256']
+for artifact in verification['artifacts']:
+    path = Path(artifact['file'])
+    assert sha(path) == artifact['sha256']
+    assert path.stat().st_size == artifact['bytes']
+for command in installation['commands']:
+    for stream in ('stdout', 'stderr'):
+        assert sha(installed/(command['name']+'.'+stream+'.log')) == command[stream+'_sha256']
+assert sha(repo/'.venv/final_checkpoint_checks_v3.py') == verification['runner_sha256']
+assert sha(repo/'.venv/run_combined_installed_check_v32.py') == installation['runner_sha256']
+output.mkdir(exist_ok=False)
+(output/'.gitattributes').write_bytes(b'** -text -whitespace\n')
+
+def copy(source, relative):
+    destination = output/relative
+    destination.parent.mkdir(parents=True, exist_ok=True)
+    shutil.copyfile(source, destination)
+
+for kind, folder in (('source-checks', checks), ('installed-checks', installed)):
+    for path in folder.iterdir():
+        if path.is_file() and path.suffix in {'.json', '.xml', '.log'}:
+            copy(path, Path(kind)/path.name)
+for path in (temp/'mnemos-package-checks-job-not-found-v1').iterdir():
+    if path.is_file() and path.suffix in {'.json', '.xml', '.log'}:
+        copy(path, Path('interrupted-source-checks')/path.name)
+for name in ('final_checkpoint_checks.py', 'final_checkpoint_checks_v3.py', 'run_combined_installed_check_v32.py',
+             'installed_contract_probe_v4.py', 'verify_claude_stop_replay_v2.py'):
+    copy(repo/'.venv'/name, Path('helpers')/(name+'.txt'))
+copy(Path(__file__), Path('helpers')/(Path(__file__).name+'.txt'))
+files = {p.relative_to(output).as_posix(): {'bytes': p.stat().st_size, 'sha256': sha(p)}
+         for p in sorted(output.rglob('*')) if p.is_file()}
+(output/'evidence-index.json').write_text(json.dumps({'files': files}, indent=2)+'\n', encoding='utf-8')
+print(json.dumps({'archive': str(output), 'indexed_files': len(files)}))

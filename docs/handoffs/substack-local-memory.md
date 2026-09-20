@@ -63,15 +63,20 @@ quality acceptance.
 
 ## Latest verified repair
 
-A later HTTP error repair has passed 48 focused service and Hermes tests plus
-configured mypy checks. Missing and out-of-scope jobs now share a generic
-`404/job_not_found` response; unrelated internal lookup errors remain 500.
-The direct API retains its `KeyError` contract, and the fix does not substitute
-a different job ID or make the failed native lifecycle pass. Full package
-verification for this candidate is pending; the checkpoint below remains the
-latest fully verified installed wheel.
+The [job lookup error checkpoint](../validation/2026-09-19/job-not-found-checkpoint-v1/README.md)
+at `68693f8` passes 1,308 source tests with 4 skips, all six
+source/package checks, 533 installed cases with 2 matching skips,
+and 7 replay assertions. Missing and out-of-scope jobs return the same
+`404/job_not_found` response. Unexpected internal lookup errors remain 500,
+and direct callers retain the `KeyError` contract. This repair leaves the
+failed native lifecycle intact: it does not substitute the right job ID for
+the model or claim that its pending write finished processing.
 
-The latest [Hermes native identity checkpoint](../validation/2026-09-19/hermes-native-identity-checkpoint-v1/README.md)
+The current wheel SHA-256 is `2e121c1ae81717d1b9a32349bd27ea7fafc2e5562e6eadbd7d24ddecd16f5cb8`. The prior package below
+remains the runtime used for both failed native lifecycle attempts; do not
+attribute those runs to this newer wheel.
+
+The preceding [Hermes native identity checkpoint](../validation/2026-09-19/hermes-native-identity-checkpoint-v1/README.md)
 at `3730fd9` passes 1,247 source tests with four skips, all six source/package
 checks, 530 isolated installed cases with two matching skips, and seven replay
 assertions. Native persisted message IDs now distinguish a regenerated turn
@@ -87,7 +92,7 @@ persistence and callbacks, without a model, service, or interactive CLI.
 ID-less transcripts, loaders that omit IDs, compaction that clones rows, and
 migration from existing prefix identities remain separate limitations.
 
-The verified wheel has SHA-256
+The preceding native-identity wheel has SHA-256
 `3772398a8e11b92d2cffd285b0571a733a9fd63cbdf932c30519d933cf0a6dd2`.
 This is a tested package checkpoint, not final project acceptance. A useful
 article example is that identical words can be a replay of an old observation
@@ -111,9 +116,9 @@ them; the adapter needed to preserve those IDs and reject conflicting payloads.
 - Three [baseline SSD performance repetitions](../validation/2026-09-19/performance-recovery-v1/README.md) on `de6cdcf` passed both unchanged latency gates: warm recall p95 245.214-252.222 ms, durable capture p95 28.804-36.062 ms, all 150 captures committed. Each run used 33 timed queries with real Nomic embeddings, 10,000 synthetic stored vectors, and fixture capture embeddings, with all cognition modules disabled. The first seed embedding took 6,691.178 ms, recorded separately from warm recall. This is a useful result with a specific scope, not evidence of semantic accuracy, full-module latency, or a native-host conversation.
 - Native adapter tests, observed native host conversations, Codex Desktop, complete automatic capture, and a two-week pilot are separate evidence categories. Do not promote one into another.
 - The [September 19 native Hermes attempts](../validation/2026-09-19/native-hermes-local-v1/README.md) completed local model turns, but failed acceptance because the installed CLI omitted the provider's session directory. A correct answer obtained through an unintended process-directory fallback is not evidence of safe scope isolation. The adapter repair closes that fallback; later patched-host runs validate explicit propagation in an isolated checkout. Built-in remove/replace notifications also lack exact Mnemos targets and remain unresolved. The diagnostic queue is in-memory only.
-- The later [native lifecycle attempt](../validation/2026-09-19/hermes-native-lifecycle-local-v1/README.md) stopped at teach. Its memory write was durably acknowledged, but the model omitted the exact target's final period and an auxiliary title-generation request lacked the required context option. These are distinct failures from the earlier scope defect. The [v2 configuration preflight](../validation/2026-09-19/hermes-native-discovery-preflight-v3/README.md) confirms that the disposable host disables the optional title model without making a model or service request; the successor lifecycle has now also failed, as described below.
-- The [native Hermes v2 lifecycle](../validation/2026-09-19/hermes-native-lifecycle-local-v2/README.md) fixed both setup problems: exact content was durably acknowledged, and all three model requests carried the required context setting. The model then altered the returned job ID when calling `mnemos_job_status`. That unknown ID produced HTTP 500 and a degraded result, so the evaluator stopped before maintenance and later phases. This does not establish a completed asserted fact or a passed lifecycle. Keep the model's argument-copy error and the service's error handling distinct; no argument was repaired on the model's behalf.
-- An [isolated patched-host run](../validation/2026-09-19/native-hermes-local-v3/README.md) then passed explicit scope, recall, foreign-project exclusion and raw user/assistant persistence. It failed the all-captures gate because duplicate callbacks generated different timestamps for the same event ID. The outbox rejected that conflict correctly. Preserve the failure and any successor separately; a patched host is also a distinct compatibility claim from the installed version.
+- The later [native lifecycle attempt](../validation/2026-09-19/hermes-native-lifecycle-local-v1/README.md) stopped at teach. Its `mnemos_remember` response reported `status: committed` with `processing_status: pending`, but the model omitted the exact target's final period and an auxiliary title-generation request lacked the required context option. These are distinct failures from the earlier scope defect. The [v2 configuration preflight](../validation/2026-09-19/hermes-native-discovery-preflight-v3/README.md) confirms that the disposable host disables the optional title model without making a model or service request; the successor lifecycle has now also failed, as described below.
+- The [native Hermes v2 lifecycle](../validation/2026-09-19/hermes-native-lifecycle-local-v2/README.md) fixed both setup problems: the exact-content write returned `status: committed` with its job still pending, and all three model requests carried the required context setting. The model then altered the returned job ID when calling `mnemos_job_status`. That unknown ID produced HTTP 500 and a degraded result, so the evaluator stopped before maintenance and later phases. This does not establish a completed asserted fact or a passed lifecycle. Keep the model's argument-copy error and the service's error handling distinct; no argument was repaired on the model's behalf.
+- An earlier [isolated patched-host run](../validation/2026-09-19/native-hermes-local-v3/README.md) passed explicit scope, recall, foreign-project exclusion and raw user/assistant persistence. It failed the all-captures gate because duplicate callbacks generated different timestamps for the same event ID. The outbox rejected that conflict correctly. Preserve the failure and any successor separately; a patched host is also a distinct compatibility claim from the installed version.
 
 - The [native Hermes v4 successor](../validation/2026-09-19/native-hermes-local-v4/README.md) passes all 16 bounded checks. Four capture calls returned committed while exactly two raw conversation events persisted. The native turn took 24.592 seconds, with a separate 3.569-second cold/load preflight. It uses the proposed CLI patch in an isolated host checkout; the installed host is unchanged. Full native correction, forgetting, outage recovery, extraction quality, and daily-use readiness remain open.
 
@@ -177,5 +182,5 @@ not a requirement to recount every implementation detail in the article.
 - [ ] Record final host continuity, latency, capture coverage, and pilot status without collapsing the separate gates.
 - [ ] Identify which quantitative claims can be used, with units, sample sizes, settings, uncertainty where available, and limitations.
 - [ ] Verify original website/paper claims against primary sources and link the dated corrections.
-- [x] Prepare a portable working packet with this handoff, the selected voice skill, key reports, regression examples, and a file manifest. Refresh that packet at final acceptance. Selected reports are included; bulky raw traces and some historical links require the full checkout. Local validation artifacts are research inputs; public citations require accessible sources.
+- [x] Prepare a portable working packet with this handoff, the selected voice skill, key reports, regression examples, and a file manifest. Refresh that packet at final acceptance. The portable v6 packet includes compressed terminal encoding/retrieval reports and both native lifecycle failure traces. Some older evidence links still require the full checkout. Local validation artifacts are research inputs; public citations require accessible sources.
 - [ ] Keep unverified interpretations and questions outside the article's factual claims, then make the final voice pass using Anthony's skill.

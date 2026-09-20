@@ -1,5 +1,11 @@
 # Real-model evaluation status
 
+The newer [job lookup error package](../2026-09-19/job-not-found-checkpoint-v1/README.md)
+on `68693f8` passes 1,308 source tests, 533 installed cases, all six package
+checks, and seven replay assertions, with four/two respective skips. This
+changes error handling; the native observations and frozen model comparisons
+retain their original runtime and model bindings.
+
 ## Latest native-host observation
 
 The [fresh native Hermes v2 attempt](../2026-09-19/hermes-native-lifecycle-local-v2/README.md) stopped at teach. Exact-content

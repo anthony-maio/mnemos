@@ -1,5 +1,13 @@
 # Functional local memory implementation record
 
+Current package checkpoint: [job lookup errors](../2026-09-19/job-not-found-checkpoint-v1/README.md)
+on `68693f8` passes 1,308 source tests (4 skips), all six package
+checks, 533 installed cases (2 matching skips), and 7 replay
+assertions. Missing or inaccessible jobs return a generic 404; unexpected
+internal errors remain 500. Native Hermes v2 still failed on the prior wheel
+because the model used the wrong job ID. Three-host continuity, complete
+capture, real-model quality acceptance, Desktop, and the pilot remain open.
+
 ## September 19: native Hermes successor stops on wrong job ID
 
 The [fresh native Hermes v2 attempt](../2026-09-19/hermes-native-lifecycle-local-v2/README.md) stopped at teach. Exact-content
