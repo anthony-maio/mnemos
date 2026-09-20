@@ -35,8 +35,9 @@ finished zero of three complete lifecycles on `db21750`. It did not test this
 package. Copyable fields are a model-interface hypothesis, not a native
 reliability result. Out-of-preview selections must still be rejected.
 
-No native cohort has run this checkpoint. Three-host continuity, complete
-capture, full-module quality, Desktop, and the operational pilot remain open.
+The subsequent [native v14 cohort](../hermes-native-cohort-v14/README.md)
+completed one of three full lifecycles. Three-host continuity, complete capture,
+full-module quality, Desktop, and the operational pilot remain open.
 The role-aware graph result remains zero top-five targets with 18 failed
 lifecycle controls. No live host configuration or memory data changed.
 The evidence index binds raw files; this README is outside the index.

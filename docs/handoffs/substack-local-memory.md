@@ -40,13 +40,23 @@ negative results even if they complicate the ending.
 
 ## Latest implementation and native evidence
 
+The [native Hermes v14 cohort](../validation/2026-09-20/hermes-native-cohort-v14/README.md)
+completed one of three full lifecycles on `e6887de`. Attempt 2 passed reviewed
+deletion, replay, restart, and final recall, copying the returned preconditions
+exactly. Attempt 1 stopped after preview without applying deletion; attempt 3
+stored the fact but omitted the required job-status check. All 35 responses
+had verified context and GPU residency; cleanup and independent scope-control
+inspection passed for all three. This supports a fresh cross-host prerequisite,
+not a reliability claim. All five modules were disabled for this transport
+baseline; broader readiness and quality gates remain open.
+
 The [copyable-preconditions package](../validation/2026-09-20/forget-preconditions-checkpoint-v1/README.md)
 at `e6887de` passes 1,721 source tests with four skips, all six source/package
 checks, 675 isolated installed cases with four matching skips, and seven
 replay assertions. Complete forget previews now return the four apply
 preconditions under their exact request names, without choosing records or
 changing deletion checks. MCP's misleading preview description is corrected.
-Native validation of this package remains open; v13 below tested `db21750`.
+Native v14 above now tests this package; v13 below tested `db21750`.
 
 The [clean-checkout failure](../validation/2026-09-20/frozen-dataset-portability-v1/README.md)
 is retained: Git line-ending conversion caused 15 benchmark hash failures.
@@ -57,7 +67,7 @@ independently verifies 30 representative rows. It identifies seed/candidate
 and score bottlenecks, with no new target reachability beyond semantic edges
 and no improvement in target top-five retrieval. Existing negatives remain.
 
-These package and audit records postdate portable packet v26. The
+These native, package, and audit records postdate portable packet v26. The
 checkout handoff is newer; refresh the portable packet at final
 acceptance before describing the engineering work as finished.
 

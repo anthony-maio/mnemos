@@ -1,0 +1,56 @@
+from pathlib import Path
+import hashlib
+import json
+import shutil
+
+repo = Path(__file__).resolve().parents[1]
+source = Path('C:/Users/Ant/AppData/Local/Temp/mnemos-hermes-native-preflight-v14')
+output = repo / 'docs/validation/2026-09-20/hermes-native-discovery-preflight-v14'
+report = json.loads((source / 'report.json').read_bytes())
+assert report['status'] == 'preflight_passed'
+trace = [json.loads(line) for line in (source / 'preflight/trace.jsonl').read_text().splitlines()]
+assert not any(row['operation'] in {'model_request', 'model_response', 'tool_result', 'bridge_response'} for row in trace)
+names = next(row['tool_names'] for row in trace if row['operation'] == 'preflight_complete')
+assert len(names) == 8 and {'mnemos_forget_preview', 'mnemos_forget_related'} <= set(names)
+assert not (source / 'model-readiness').exists() and not (source / 'runtime.json').exists()
+output.mkdir(parents=True, exist_ok=False)
+(output / '.gitattributes').write_bytes(b'** -text -whitespace\n')
+paths = ['report.json', 'host-compatibility.patch', 'host-environment-before.txt',
+         'host-environment-after.txt', 'preflight/trace.jsonl', 'preflight/stdout.log', 'preflight/stderr.log']
+for relative, digest in report['input_hashes'].items():
+    path = Path(relative)
+    name = path.name + ('.txt' if path.suffix == '.py' else '')
+    assert hashlib.sha256((source / name).read_bytes()).hexdigest() == digest
+    paths.append(name)
+for name in paths:
+    dest = output / name
+    dest.parent.mkdir(parents=True, exist_ok=True)
+    shutil.copyfile(source / name, dest)
+for name in ('hermes-v14-binding-diff.txt', 'prepare_hermes_v14.py', 'archive_hermes_preflight_v14.py'):
+    shutil.copyfile(repo / '.venv' / name, output / (name + ('.txt' if name.endswith('.py') else '')))
+files = {p.relative_to(output).as_posix(): {'bytes': p.stat().st_size, 'sha256': hashlib.sha256(p.read_bytes()).hexdigest()}
+         for p in sorted(output.rglob('*')) if p.is_file()}
+(output / 'evidence-index.json').write_text(json.dumps({'files': files}, indent=2) + '\n', encoding='utf-8')
+(output / 'README.md').write_text(f'''# Native Hermes copyable-preconditions discovery preflight
+
+The isolated pinned host discovered eight tools from the verified `e6887de`
+wheel and shut down without a model request, tool dispatch, bridge call, or
+service mutation. Discovery took {report['phases'][0]['seconds']:.3f} seconds.
+Live host configuration and memory were unchanged.
+
+Runner and protocol were committed at `{report['runner_commit']}` before
+execution. Package/source/wheel bindings, installed bytes, host revision,
+compatibility patch, and live dependency inventory passed the guards.
+
+Black and strict Python 3.10 mypy passed for the two new runner files. The
+included binding diff changes only labels, package identities, and versioned
+entrypoints; prompts, capture, evaluation, deadlines, and request schemas are
+unchanged. The preparation helper checks that reversing those substitutions
+reproduces the previous runners exactly. Product tests belong to the separate
+[package checkpoint](../forget-preconditions-checkpoint-v1/README.md).
+
+This establishes host discovery. Interpret the separately scheduled native
+v14 cohort from its terminal report; discovery is not a lifecycle pass. The
+index binds raw evidence; this README is outside the index.
+''', encoding='utf-8', newline='\n')
+print(json.dumps({'files': len(files), 'source_commit': report['source_commit']}))

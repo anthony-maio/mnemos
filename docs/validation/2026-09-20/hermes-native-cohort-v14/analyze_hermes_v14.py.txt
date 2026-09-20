@@ -1,0 +1,57 @@
+from pathlib import Path
+import hashlib
+import json
+import subprocess
+import sys
+
+repo = Path(__file__).resolve().parents[1]
+source = Path('C:/Users/Ant/AppData/Local/Temp/mnemos-hermes-native-cohort-v14')
+cohort = json.loads((source / 'cohort.json').read_bytes())
+assert cohort['status'] in {'passed', 'completed_with_failures'} and cohort.get('finished_at')
+for kind in ('boundary', 'terminal'):
+    with (repo / f'.venv/hermes-v14-{kind}-analysis.json').open('w', encoding='utf-8') as output:
+        result = subprocess.run([sys.executable, str(repo / f'.venv/inspect_hermes_v14_{kind}.py')],
+                                stdout=output, stderr=subprocess.PIPE, text=True, encoding='utf-8', cwd=repo)
+    assert result.returncode == 0, result.stderr
+selection = []
+for attempt in cohort['attempts']:
+    path = source / f"attempt-{attempt['attempt']}" / 'forget/trace.jsonl'
+    entry = {'attempt': attempt['attempt'], 'forget_phase_observed': path.is_file(),
+             'related_forget_calls': [], 'target_only_receipts': []}
+    if path.is_file():
+        entry['trace_sha256'] = hashlib.sha256(path.read_bytes()).hexdigest()
+        latest = None
+        for row in map(json.loads, path.read_text(encoding='utf-8').splitlines()):
+            if row['operation'] != 'tool_result':
+                continue
+            if row['name'] == 'mnemos_forget_preview' and isinstance(row['result'], dict) and 'candidates' in row['result']:
+                latest = row['result']
+            elif row['name'] == 'mnemos_forget_related':
+                args = row['args']
+                call = {'args': args, 'result': row['result'], 'valid_preview_observed': latest is not None}
+                if latest is not None:
+                    preconditions = latest.get('apply_preconditions')
+                    sources = {s['source_event_id']: s for s in latest['source_events']}
+                    facts = {f['fact_id'] for f in latest['candidates']} | {latest['target']['fact_id']}
+                    call.update({
+                        'returned_preconditions': preconditions,
+                        'preconditions_copied_exactly': isinstance(preconditions, dict) and all(args.get(k, 100 if k == 'preview_limit' else None) == v for k, v in preconditions.items()),
+                        'sources_outside_preview': sorted(set(args.get('selected_source_event_ids', [])) - set(sources)),
+                        'sources_not_selectable': sorted(s for s in args.get('selected_source_event_ids', []) if sources.get(s, {}).get('selection_allowed') is not True),
+                        'facts_outside_preview': sorted(set(args.get('selected_fact_ids', [])) - facts),
+                    })
+                entry['related_forget_calls'].append(call)
+            elif row['name'] == 'mnemos_forget':
+                entry['target_only_receipts'].append(row['result'])
+    selection.append(entry)
+(repo / '.venv/hermes-v14-selection-analysis.json').write_text(json.dumps(selection, indent=2) + '\n', encoding='utf-8')
+boundary = json.loads((repo / '.venv/hermes-v14-boundary-analysis.json').read_bytes())
+terminal = json.loads((repo / '.venv/hermes-v14-terminal-analysis.json').read_bytes())
+print(json.dumps({'cohort_status': cohort['status'],
+                  'attempts': [{'attempt': a['attempt'], 'status': a['status'], 'error': a.get('error'),
+                                'cleanup': a['cleanup_established']} for a in cohort['attempts']],
+                  'verified_model_responses': sum(p['responses'] for a in boundary['attempts'] for p in a['phases']),
+                  'terminal': terminal,
+                  'selection': [{'attempt': a['attempt'], 'apply_calls': len(a['related_forget_calls']),
+                                 'copied_preconditions': [c.get('preconditions_copied_exactly') for c in a['related_forget_calls']],
+                                 'target_only_calls': len(a['target_only_receipts'])} for a in selection]}, indent=2))

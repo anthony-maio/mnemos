@@ -1,0 +1,89 @@
+--- benchmarks/native_hosts/hermes_lifecycle_run_v13.py
++++ benchmarks/native_hosts/hermes_lifecycle_run_v14.py
+@@ -207,7 +207,7 @@
+         "status": "running",
+         "started_at": datetime.now(timezone.utc).isoformat(),
+         "preflight_only": args.preflight_only,
+-        "experiment_kind": "native-review-rejection-package-lifecycle-v13",
++        "experiment_kind": "native-copyable-preconditions-package-lifecycle-v14",
+         "phases": [],
+         "live_configuration_changed": False,
+         "scope": (
+@@ -221,15 +221,15 @@
+     try:
+         checks = json.loads(args.checks.read_text(encoding="utf-8"))
+         installed = json.loads(args.installed_checks.read_text(encoding="utf-8"))
+-        if checks["source_commit"] != "db217509477d92b9a82bd7e11d4a4bffb542fa29":
+-            raise ValueError("Native v13 requires the frozen review-rejection package")
++        if checks["source_commit"] != "e6887deb89608dca34f7bbb463b5d0a3ba973011":
++            raise ValueError("Native v14 requires the frozen copyable-preconditions package")
+         if checks["status"] != "passed" or installed["status"] != "passed":
+             raise ValueError("Package evidence did not pass")
+         wheel_row = next(row for row in checks["artifacts"] if row["file"].endswith(".whl"))
+         wheel = Path(wheel_row["file"])
+         wheel_sha = sha(wheel)
+         if (
+-            wheel_sha != "8b1f560e98b93376fc2aa073be7c1500997d888d09ae87573d5d70ec8694ad00"
++            wheel_sha != "3d37b864d35916dbed0c22bcb0428a4e091d6b6c31a0177491130fa18da34fa1"
+             or wheel_sha != wheel_row["sha256"]
+             or wheel_sha != installed["bindings_after"]["wheel_sha256"]
+         ):
+@@ -285,7 +285,7 @@
+         ):
+             raise ValueError("Isolated host patch differs from the validated cwd-only patch")
+         (root / "host-compatibility.patch").write_text(patch, encoding="utf-8")
+-        protocol = repo / "docs/plans/2026-09-20-hermes-native-lifecycle-protocol-v13.md"
++        protocol = repo / "docs/plans/2026-09-20-hermes-native-lifecycle-protocol-v14.md"
+         record["input_hashes"] = {
+             str(path.relative_to(repo)): sha(path)
+             for path in (
+--- benchmarks/native_hosts/hermes_cohort_run_v11.py
++++ benchmarks/native_hosts/hermes_cohort_run_v12.py
+@@ -1,4 +1,4 @@
+-"""Run exactly three independent Hermes v13 lifecycles and preserve every outcome."""
++"""Run exactly three independent Hermes v14 lifecycles and preserve every outcome."""
+ 
+ from __future__ import annotations
+ 
+@@ -14,12 +14,12 @@
+     sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
+     __package__ = "native_hosts"
+ 
+-from .hermes_lifecycle_run_v13 import sha, verify_committed_inputs
++from .hermes_lifecycle_run_v14 import sha, verify_committed_inputs
+ from .native_processes import terminate_owned_process
+ 
+ ATTEMPT_TIMEOUT_SECONDS = 1800
+ CHILD_INPUTS = (
+-    "docs/plans/2026-09-20-hermes-native-lifecycle-protocol-v13.md",
++    "docs/plans/2026-09-20-hermes-native-lifecycle-protocol-v14.md",
+     "benchmarks/native_hosts/ollama_readiness_v2.py",
+     "docs/plans/2026-09-20-hermes-native-lifecycle-protocol-v10.md",
+     "docs/plans/2026-09-20-hermes-native-lifecycle-protocol-v9.md",
+@@ -29,7 +29,7 @@
+     "docs/plans/2026-09-19-hermes-native-lifecycle-protocol-v3.md",
+     "docs/plans/2026-09-19-hermes-native-lifecycle-protocol-v4.md",
+     "benchmarks/native_hosts/native_processes.py",
+-    "benchmarks/native_hosts/hermes_lifecycle_run_v13.py",
++    "benchmarks/native_hosts/hermes_lifecycle_run_v14.py",
+     "benchmarks/native_hosts/hermes_native_bootstrap_v6.py",
+     "benchmarks/native_hosts/hermes_trace.py",
+     "benchmarks/native_hosts/hermes_trace_v2.py",
+@@ -48,7 +48,7 @@
+ 
+ 
+ def _input_hashes(repo: Path, commit: str) -> dict[str, str]:
+-    paths = ("benchmarks/native_hosts/hermes_cohort_run_v11.py", *CHILD_INPUTS)
++    paths = ("benchmarks/native_hosts/hermes_cohort_run_v12.py", *CHILD_INPUTS)
+     verify_committed_inputs(repo, list(paths), commit)
+     return {relative: sha(repo / relative) for relative in paths}
+ 
+@@ -58,7 +58,7 @@
+         sys.executable,
+         "-I",
+         "-u",
+-        str(Path(__file__).with_name("hermes_lifecycle_run_v13.py")),
++        str(Path(__file__).with_name("hermes_lifecycle_run_v14.py")),
+         "--checks",
+         str(args.checks.resolve()),
+         "--installed-checks",
