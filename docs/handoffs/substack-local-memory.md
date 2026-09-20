@@ -40,8 +40,8 @@ negative results even if they complicate the ending.
 
 ## Latest implementation and native evidence
 
-Checkout addendum after packet v22; this later package record is not included
-in that portable snapshot.
+Packet v23 includes this verified package record and the preceding native
+failures. The engineering goal remains open.
 
 The [selection-rejection package](../validation/2026-09-20/selection-rejection-checkpoint-v1/README.md)
 at `5155ebd` passes 1,638 source tests with four skips, all six source/package
@@ -75,9 +75,9 @@ instructions and Hermes tool schemas. This is a verified instruction/dispatch
 repair; its effect on native completion has not yet been demonstrated. The new
 three-attempt prerequisite cohort failed all three lifecycles under unchanged requirements.
 
-The [offline correction-worker repair](../validation/2026-09-20/three-host-worker-checkpoint-v1/README.md) fixes a benchmark setup defect. The default production service already starts its scheduler; the custom runner did not. The repaired runner passes a correction/restart regression and 167 offline cases. Native acceptance remains open. Packet v22 includes this record.
+The [offline correction-worker repair](../validation/2026-09-20/three-host-worker-checkpoint-v1/README.md) fixes a benchmark setup defect. The default production service already starts its scheduler; the custom runner did not. The repaired runner passes a correction/restart regression and 167 offline cases. Native acceptance remains open. Packet v23 includes this record.
 
-The portable v22 packet is a working snapshot through the verified shared-guidance package and native Hermes v11 failures. It includes the earlier partial cross-host success and the later v5 failure. Refresh the handoff and packet at final acceptance; this is enough to begin research, not a finished engineering account.
+The portable v23 packet is a working snapshot through the verified selection-rejection package and the preceding native Hermes v11 failures. It includes the earlier partial cross-host success and the later v5 failure. Refresh the handoff and packet at final acceptance; this is enough to begin research, not a finished engineering account.
 
 The [three-host v5 attempt](../validation/2026-09-20/three-host-native-v5/README.md) passed
 both teaching phases, then failed at Hermes recall on unsupported scope
