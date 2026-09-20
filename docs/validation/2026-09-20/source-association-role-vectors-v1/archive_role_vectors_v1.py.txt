@@ -1,0 +1,95 @@
+from pathlib import Path
+import hashlib
+import json
+import shutil
+import sys
+
+repo = Path(__file__).resolve().parents[1]
+sys.path.insert(0, str(repo))
+from benchmarks.local_memory.embedding_prefix_development_v1 import load_cases
+from benchmarks.local_memory.source_association_role_preparation_v1 import maps_from_paired, corrected_contents
+
+source = Path('C:/Users/Ant/AppData/Local/Temp/mnemos-source-association-role-vectors-v1')
+target = repo / 'docs/validation/2026-09-20/source-association-role-vectors-v1'
+artifact = json.loads((source / 'artifact.json').read_bytes())
+assert artifact['status'] == 'complete' and artifact['request_count'] == 11
+manifest, digest, _ = load_cases()
+assert artifact['manifest_sha256'] == digest
+prior = json.loads((repo / 'docs/validation/2026-09-20/embedding-prefix-development-v1/paired.json').read_bytes())
+before = maps_from_paired(manifest, prior)
+corrected = corrected_contents(manifest)[0]
+requests = [json.loads(line) for line in (source / 'requests.jsonl').read_text().splitlines()]
+assert len(requests) == 11
+for request in requests:
+    assert request['status'] == 'complete' and request['response_status'] == 200
+    for kind in ('request', 'response'):
+        if kind + '_file' not in request:
+            continue
+        raw = (source / request[kind + '_file']).read_bytes()
+        assert len(raw) == request[kind + '_bytes']
+        assert hashlib.sha256(raw).hexdigest() == request[kind + '_sha256']
+for label, vectors in artifact['role_vectors'].items():
+    assert vectors['queries'] == before[label]['queries']
+    assert {k: v for k, v in vectors['documents'].items() if k != corrected} == before[label]['documents']
+    assert len(vectors['queries']) == 5 and len(vectors['documents']) == 185
+    assert vectors['prefixes'] == before[label]['prefixes']
+    calls = [r for r in requests if r['arm'] == label and r['url'].endswith('/api/embed')]
+    assert len(calls) == 1
+    payload = json.loads((source / calls[0]['request_file']).read_bytes())
+    response = json.loads((source / calls[0]['response_file']).read_bytes())
+    assert payload == {'model': artifact['model'], 'truncate': False,
+                       'input': [vectors['prefixes']['document_prefix'] + corrected]}
+    assert response['embeddings'] == [vectors['documents'][corrected]]
+    assert len(artifact['loaded_profiles'][label]) == 1
+    loaded = artifact['loaded_profiles'][label][0]
+    assert loaded['digest'] == artifact['model_digest'] and loaded['size_vram'] > 0
+    assert loaded['context_length'] > 0
+target.mkdir(parents=True, exist_ok=False)
+for path in source.rglob('*'):
+    if path.is_file():
+        dest = target / path.relative_to(source)
+        dest.parent.mkdir(parents=True, exist_ok=True)
+        shutil.copyfile(path, dest)
+for path, digest in artifact['input_hashes'].items():
+    raw = (repo / path).read_bytes()
+    assert hashlib.sha256(raw).hexdigest() == digest
+    # Prior complete vector and model artifacts remain in their own indexed archive.
+    if path.endswith('/paired.json') or path.endswith('/artifact.json'):
+        continue
+    dest = target / 'inputs' / (path + '.txt' if path.endswith('.py') else path)
+    dest.parent.mkdir(parents=True, exist_ok=True)
+    dest.write_bytes(raw)
+for name in ('role-preparation-red.xml', 'role-preparation-green.xml'):
+    shutil.copyfile(repo / '.venv' / name, target / name)
+shutil.copyfile(__file__, target / (Path(__file__).name + '.txt'))
+(target / '.gitattributes').write_bytes(b'** -text -whitespace\n')
+files = {p.relative_to(target).as_posix(): {'bytes': p.stat().st_size,
+          'sha256': hashlib.sha256(p.read_bytes()).hexdigest()}
+         for p in sorted(target.rglob('*')) if p.is_file()}
+(target / 'evidence-index.json').write_text(json.dumps({'files': files}, indent=2) + '\n')
+(target / 'README.md').write_text('''# Complete role vectors for graph and lifecycle development
+
+The preparation preserves all 184 document/control vectors and five queries
+from each arm of the [paired prefix measurement](../embedding-prefix-development-v1/README.md).
+It adds only the authored corrected-content document vector for each arm,
+so the graph experiment can retain the original lifecycle controls.
+
+Exactly two embedding calls and 11 total local Ollama API calls completed.
+Each arm has 185 document vectors and five separate query vectors. Independent
+verification matches the two new vectors to raw responses and confirms that
+every earlier vector remains byte-for-value unchanged. Query and document
+roles remain separate even when raw text is identical.
+
+The protocol and preparation runner were committed at `1849942` before inference.
+The pinned Nomic digest, Ollama version, and model configuration match the
+earlier paired measurement. Both new embeddings have positive observed GPU
+residency and serving context. Requests use `truncate=false` and no retry.
+Raw requests, responses, configuration observations, and input hashes are retained.
+
+Six preparation tests pass, with formatting and strict Python 3.10 type checks.
+The red report records the initial missing-module collection failure, not a
+production regression. The graph/lifecycle measurement is separate; vector
+preparation is not a retrieval or lifecycle result. Live configuration and
+memory were untouched. The index binds raw files; this README is outside it.
+''', encoding='utf-8', newline='\n')
+print(json.dumps({'indexed_files': len(files), 'artifact_sha256': hashlib.sha256((target/'artifact.json').read_bytes()).hexdigest()}))

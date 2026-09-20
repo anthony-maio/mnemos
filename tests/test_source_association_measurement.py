@@ -125,3 +125,56 @@ async def test_semantic_view_matches_untouched_production_retrieval_and_restart(
         assert all(restarted["controls"].values())
     finally:
         await engine.aclose()
+
+
+@pytest.mark.asyncio
+async def test_explicit_query_role_does_not_fall_back_to_document_role(tmp_path: Path) -> None:
+    case, vectors, options = _synthetic_case()
+    case["query"] = case["facts"][0]["content"]
+    document_vectors = dict(vectors)
+    for fact in case["facts"]:
+        document_vectors[fact["content"]] = [1.0, 0.0]
+    document_vectors[case["facts"][2]["content"]] = [0.0, 1.0]
+    query_vectors = {case["query"]: [0.0, 1.0]}
+    database = tmp_path / "role.sqlite"
+    populate_source_association_fixture(case, document_vectors, database)
+    engine, store = open_measurement_engine(
+        database, case, document_vectors, options, query_vectors=query_vectors
+    )
+    try:
+        result = await observe_retrieval(
+            engine,
+            store,
+            case,
+            document_vectors,
+            options,
+            arm="semantic",
+            query_vectors=query_vectors,
+        )
+        assert result["candidate_pool"]["actual_selected_seed_id"] == case["facts"][2]["id"]
+        assert result["returned_ids"][0] == case["facts"][2]["id"]
+        assert all(result["controls"].values())
+    finally:
+        await engine.aclose()
+    repeated = await measure_repetition(
+        case,
+        document_vectors,
+        options,
+        tmp_path / "roles-repeated",
+        0,
+        query_vectors=query_vectors,
+    )
+    for row in repeated:
+        assert row["returned_ids"][0] == case["facts"][2]["id"]
+        assert all(value is True for value in row["controls"].values() if value is not None)
+
+
+@pytest.mark.asyncio
+async def test_missing_explicit_query_vector_fails_before_repetition_directory(
+    tmp_path: Path,
+) -> None:
+    case, vectors, options = _synthetic_case()
+    destination = tmp_path / "missing-query"
+    with pytest.raises(ValueError, match="missing explicit query vector"):
+        await measure_repetition(case, vectors, options, destination, 0, query_vectors={})
+    assert not destination.exists()

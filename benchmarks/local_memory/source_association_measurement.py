@@ -28,10 +28,14 @@ def open_measurement_engine(
     case: Mapping[str, Any],
     vectors: Mapping[str, Sequence[float]],
     options: Mapping[str, Any],
+    *,
+    query_vectors: Mapping[str, Sequence[float]] | None = None,
 ) -> tuple[MnemosEngine, SQLiteStore]:
     """Open a disposable populated fixture and finish normal graph derivation."""
     if not database.is_file():
         raise FileNotFoundError(database)
+    if query_vectors is not None and str(case["query"]) not in query_vectors:
+        raise ValueError(f"missing explicit query vector for {case['id']}")
     context = ScopeContext.model_validate(case["context"])
     if context.project_id is None or context.workspace_id is None:
         raise ValueError("association fixtures require project and workspace context")
@@ -75,7 +79,11 @@ def open_measurement_engine(
             max_visited=options["max_visited"],
         ),
     )
-    embedder = _FrozenEmbedder(vectors, query_vectors=vectors, document_vectors=vectors)
+    embedder = (
+        _FrozenEmbedder(vectors, query_vectors=vectors, document_vectors=vectors)
+        if query_vectors is None
+        else _FrozenEmbedder({}, query_vectors=query_vectors, document_vectors=vectors)
+    )
     store = SQLiteStore(str(database))
     try:
         engine = MnemosEngine(config, embedder=embedder, store=store, scope_registry=registry)
@@ -101,6 +109,7 @@ async def observe_retrieval(
     *,
     arm: RelationArm | None,
     cut_fact_id: str | None = None,
+    query_vectors: Mapping[str, Sequence[float]] | None = None,
 ) -> dict[str, Any]:
     """Observe one call and retain every candidate's score and exclusion reason.
 
@@ -110,7 +119,12 @@ async def observe_retrieval(
     context = ScopeContext.model_validate(case["context"])
     predicate = _scope_predicate(context)
     query = str(case["query"])
-    query_vector = list(vectors[query])
+    if query_vectors is None:
+        query_vector = list(vectors[query])
+    else:
+        if query not in query_vectors:
+            raise ValueError(f"missing explicit query vector for {case['id']}")
+        query_vector = list(query_vectors[query])
     pool_limit = min(max(int(options["top_k"]) * 6, 20), int(options["max_candidates"]))
     baseline = store.retrieve(query_vector, top_k=pool_limit, filter_fn=predicate)
     lexical = store.retrieve_lexical(query, top_k=pool_limit, filter_fn=predicate)

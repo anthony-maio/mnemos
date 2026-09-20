@@ -50,11 +50,21 @@ async def _observe_database(
     arm: RelationArm | None,
     *,
     cut_fact_id: str | None = None,
+    query_vectors: Mapping[str, Sequence[float]] | None = None,
 ) -> dict[str, Any]:
-    engine, store = open_measurement_engine(database, case, vectors, options)
+    engine, store = open_measurement_engine(
+        database, case, vectors, options, query_vectors=query_vectors
+    )
     try:
         return await observe_retrieval(
-            engine, store, case, vectors, options, arm=arm, cut_fact_id=cut_fact_id
+            engine,
+            store,
+            case,
+            vectors,
+            options,
+            arm=arm,
+            cut_fact_id=cut_fact_id,
+            query_vectors=query_vectors,
         )
     finally:
         await engine.aclose()
@@ -66,8 +76,12 @@ async def measure_repetition(
     options: Mapping[str, Any],
     destination: Path,
     repetition: int,
+    *,
+    query_vectors: Mapping[str, Sequence[float]] | None = None,
 ) -> list[dict[str, Any]]:
     """Keep one fixed case's three arms and all control observations."""
+    if query_vectors is not None and str(case["query"]) not in query_vectors:
+        raise ValueError(f"missing explicit query vector for {case['id']}")
     destination.mkdir(parents=True, exist_ok=False)
     canonical = destination / "canonical.sqlite"
     reverse = destination / "reverse.sqlite"
@@ -77,7 +91,9 @@ async def measure_repetition(
     )
     # Derive each graph through the normal rebuild API before copying arms.
     for database in (canonical, reverse):
-        engine, _ = open_measurement_engine(database, case, vectors, options)
+        engine, _ = open_measurement_engine(
+            database, case, vectors, options, query_vectors=query_vectors
+        )
         await engine.aclose()
     _write(destination / "fixtures.json", {"forward": forward_fixture, "reverse": reverse_fixture})
     rows: list[dict[str, Any]] = []
@@ -87,15 +103,29 @@ async def measure_repetition(
         shutil.copyfile(canonical, database)
         shutil.copyfile(reverse, reverse_database)
         untouched = (
-            await _observe_database(database, case, vectors, options, None)
+            await _observe_database(
+                database, case, vectors, options, None, query_vectors=query_vectors
+            )
             if arm == "semantic"
             else None
         )
-        row = await _observe_database(database, case, vectors, options, arm)
-        restarted = await _observe_database(database, case, vectors, options, arm)
-        reversed_row = await _observe_database(reverse_database, case, vectors, options, arm)
+        row = await _observe_database(
+            database, case, vectors, options, arm, query_vectors=query_vectors
+        )
+        restarted = await _observe_database(
+            database, case, vectors, options, arm, query_vectors=query_vectors
+        )
+        reversed_row = await _observe_database(
+            reverse_database, case, vectors, options, arm, query_vectors=query_vectors
+        )
         cut = await _observe_database(
-            database, case, vectors, options, arm, cut_fact_id=str(case["target_id"])
+            database,
+            case,
+            vectors,
+            options,
+            arm,
+            cut_fact_id=str(case["target_id"]),
+            query_vectors=query_vectors,
         )
         target_is_seed = row["candidate_pool"]["actual_selected_seed_id"] == case["target_id"]
         row["repetition"] = repetition
@@ -139,7 +169,9 @@ async def measure_repetition(
         for row, arm in zip(rows, ARMS):
             post_database = destination / (arm + "-after-lifecycle.sqlite")
             shutil.copyfile(lifecycle_database, post_database)
-            post = await _observe_database(post_database, case, vectors, options, arm)
+            post = await _observe_database(
+                post_database, case, vectors, options, arm, query_vectors=query_vectors
+            )
             row["control_observations"]["lifecycle"] = lifecycle
             row["control_observations"]["after_lifecycle"] = post
             row["controls"]["lifecycle_pass"] = (
