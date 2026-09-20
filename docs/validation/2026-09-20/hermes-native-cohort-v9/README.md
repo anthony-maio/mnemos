@@ -21,8 +21,9 @@ The later [stale-preview repair](../stale-preview-checkpoint-v1/README.md)
 identified the limit mismatch: preview 100, apply 20. The first apply copied
 all candidate/source IDs and the digest correctly. The old installed wheel
 reproduces the opaque HTTP 500 for the changed limit; the new verified
-package returns a typed rejection. This does not change v9's result, and no
-native model has yet run that repair.
+package returns a typed rejection. The later [v10 cohort](../hermes-native-cohort-v10/README.md)
+completed one of three lifecycles on that package without encountering the
+new rejection. This does not change v9's result.
 
 ## Request and context evidence
 

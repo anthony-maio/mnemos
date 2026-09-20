@@ -1,0 +1,748 @@
+{
+  "cohort_sha256": "a187e9dcac4acc1bb71cfca0b1f2f90a19a2bd994a36c08dcf6f1c36d1f76efc",
+  "attempts": [
+    {
+      "attempt": 1,
+      "status": "failed",
+      "error": "trace has no correlated native tool",
+      "phases": [
+        {
+          "phase": "teach",
+          "exit_code": 0,
+          "seconds": 21.591891999996733,
+          "responses": 3,
+          "verified_profiles": 3,
+          "requests": 3,
+          "loaded_profiles": [
+            {
+              "context_length": 65536,
+              "size_vram": 8044454869
+            },
+            {
+              "context_length": 65536,
+              "size_vram": 8044454869
+            },
+            {
+              "context_length": 65536,
+              "size_vram": 8044454869
+            }
+          ],
+          "previews": [],
+          "tool_names": [
+            "mnemos_remember",
+            "mnemos_job_status"
+          ],
+          "related_forget_results": [],
+          "failed_gates": [],
+          "final_response": {
+            "operation": "model_response",
+            "tool_calls": [],
+            "content": "Job ID: event:ad12efa54f3f705887f107e93f63cfadbd1169cdca8f541def4716b599376ad6\n\nStatus: pending",
+            "action": "fallthrough",
+            "finish_reason": "stop"
+          }
+        },
+        {
+          "phase": "recall_v1",
+          "exit_code": 0,
+          "seconds": 9.273863499984145,
+          "responses": 1,
+          "verified_profiles": 1,
+          "requests": 1,
+          "loaded_profiles": [
+            {
+              "context_length": 65536,
+              "size_vram": 8044454869
+            }
+          ],
+          "previews": [],
+          "tool_names": [],
+          "related_forget_results": [],
+          "failed_gates": [],
+          "final_response": {
+            "operation": "model_response",
+            "tool_calls": [],
+            "content": "I'll use mnemos_retrieve to find the project's release label, which should be stored in memory.",
+            "action": "fallthrough",
+            "finish_reason": "stop"
+          }
+        }
+      ]
+    },
+    {
+      "attempt": 2,
+      "status": "failed",
+      "error": "Native lifecycle gate failed in forget",
+      "phases": [
+        {
+          "phase": "teach",
+          "exit_code": 0,
+          "seconds": 20.496077999996487,
+          "responses": 3,
+          "verified_profiles": 3,
+          "requests": 3,
+          "loaded_profiles": [
+            {
+              "context_length": 65536,
+              "size_vram": 8044454869
+            },
+            {
+              "context_length": 65536,
+              "size_vram": 8044454869
+            },
+            {
+              "context_length": 65536,
+              "size_vram": 8044454869
+            }
+          ],
+          "previews": [],
+          "tool_names": [
+            "mnemos_remember",
+            "mnemos_job_status"
+          ],
+          "related_forget_results": [],
+          "failed_gates": [],
+          "final_response": {
+            "operation": "model_response",
+            "tool_calls": [],
+            "content": "Job ID: event:da5db429ce4512f4d8f744d23e3dc572c00b0ea5850a4f77d4cbe79c58d68f17\n\nStatus: pending",
+            "action": "fallthrough",
+            "finish_reason": "stop"
+          }
+        },
+        {
+          "phase": "recall_v1",
+          "exit_code": 0,
+          "seconds": 11.251144799985923,
+          "responses": 2,
+          "verified_profiles": 2,
+          "requests": 2,
+          "loaded_profiles": [
+            {
+              "context_length": 65536,
+              "size_vram": 8044454869
+            },
+            {
+              "context_length": 65536,
+              "size_vram": 8044454869
+            }
+          ],
+          "previews": [],
+          "tool_names": [
+            "mnemos_retrieve"
+          ],
+          "related_forget_results": [],
+          "failed_gates": [],
+          "final_response": {
+            "operation": "model_response",
+            "tool_calls": [],
+            "content": "ID: 66882d81-b2b5-420e-80fa-6c7b8dd06902, version: 1, label: cedar-ridge-731",
+            "action": "fallthrough",
+            "finish_reason": "stop"
+          }
+        },
+        {
+          "phase": "correct",
+          "exit_code": 0,
+          "seconds": 15.49583260001964,
+          "responses": 4,
+          "verified_profiles": 4,
+          "requests": 4,
+          "loaded_profiles": [
+            {
+              "context_length": 65536,
+              "size_vram": 8044454869
+            },
+            {
+              "context_length": 65536,
+              "size_vram": 8044454869
+            },
+            {
+              "context_length": 65536,
+              "size_vram": 8044454869
+            },
+            {
+              "context_length": 65536,
+              "size_vram": 8044454869
+            }
+          ],
+          "previews": [],
+          "tool_names": [
+            "mnemos_inspect",
+            "mnemos_correct",
+            "mnemos_job_status"
+          ],
+          "related_forget_results": [],
+          "failed_gates": [],
+          "final_response": {
+            "operation": "model_response",
+            "tool_calls": [],
+            "content": "Correction committed, job pending.",
+            "action": "fallthrough",
+            "finish_reason": "stop"
+          }
+        },
+        {
+          "phase": "recall_v2",
+          "exit_code": 0,
+          "seconds": 12.403244699991774,
+          "responses": 2,
+          "verified_profiles": 2,
+          "requests": 2,
+          "loaded_profiles": [
+            {
+              "context_length": 65536,
+              "size_vram": 8044454869
+            },
+            {
+              "context_length": 65536,
+              "size_vram": 8044454869
+            }
+          ],
+          "previews": [],
+          "tool_names": [
+            "mnemos_retrieve"
+          ],
+          "related_forget_results": [],
+          "failed_gates": [],
+          "final_response": {
+            "operation": "model_response",
+            "tool_calls": [],
+            "content": "ID: 66882d81-b2b5-420e-80fa-6c7b8dd06902\nVersion: 2\nLabel: maple-ridge-842",
+            "action": "fallthrough",
+            "finish_reason": "stop"
+          }
+        },
+        {
+          "phase": "forget",
+          "exit_code": 0,
+          "seconds": 120.06644180000876,
+          "responses": 6,
+          "verified_profiles": 6,
+          "requests": 6,
+          "loaded_profiles": [
+            {
+              "context_length": 65536,
+              "size_vram": 8044454869
+            },
+            {
+              "context_length": 65536,
+              "size_vram": 8044454869
+            },
+            {
+              "context_length": 65536,
+              "size_vram": 8044454869
+            },
+            {
+              "context_length": 65536,
+              "size_vram": 8044454869
+            },
+            {
+              "context_length": 65536,
+              "size_vram": 8044454869
+            },
+            {
+              "context_length": 65536,
+              "size_vram": 8044454869
+            }
+          ],
+          "previews": [
+            {
+              "candidate_count": 9,
+              "source_ids": [
+                "19d34e69e6aecc42da9e1267f6b50bdf86bb8a9209a6911d67226813c3d5f3bb",
+                "3f08ca5f9866709dd4177cd353edb5d173c1c264255477fd06ab56af172ee720",
+                "71eaf62b7a2b0ba12e74e9457b1377ecaa8673d88bdb8a09ce6ca47163a5d30a",
+                "82aa8af3b628d68bdf55209cf4609660596466dcd039cdb68e9f4515a72f02ee",
+                "a962253029c4315c66353a60ff8b97031b4e5ebf61843e81ad33e8aeaea16ed3",
+                "aaee0a7d8b9c495b81cad238154557e786b1053b55dc3df5bd4381784964d81b",
+                "afc8462b4847bc110e4cb9c9a74b16913322588be5b4df0eeb3b19a11460fea5",
+                "d4b29ae5e94f20c6fd01ad4a2fe28cc590c2899a505cdb8e32a9cd4ec0dbb071",
+                "f32b8b8cb2ff3f520b40ed0e72d796826fe8765c8e3bbd41af8884c44c161c4f"
+              ],
+              "required_source_ids": [
+                "19d34e69e6aecc42da9e1267f6b50bdf86bb8a9209a6911d67226813c3d5f3bb",
+                "3f08ca5f9866709dd4177cd353edb5d173c1c264255477fd06ab56af172ee720",
+                "71eaf62b7a2b0ba12e74e9457b1377ecaa8673d88bdb8a09ce6ca47163a5d30a",
+                "82aa8af3b628d68bdf55209cf4609660596466dcd039cdb68e9f4515a72f02ee",
+                "a962253029c4315c66353a60ff8b97031b4e5ebf61843e81ad33e8aeaea16ed3",
+                "aaee0a7d8b9c495b81cad238154557e786b1053b55dc3df5bd4381784964d81b",
+                "afc8462b4847bc110e4cb9c9a74b16913322588be5b4df0eeb3b19a11460fea5",
+                "d4b29ae5e94f20c6fd01ad4a2fe28cc590c2899a505cdb8e32a9cd4ec0dbb071",
+                "f32b8b8cb2ff3f520b40ed0e72d796826fe8765c8e3bbd41af8884c44c161c4f"
+              ],
+              "complete_parsed_preview_matches": [
+                {
+                  "request": "request-0004.bin",
+                  "tool_call_id": "call_z1czckzz"
+                },
+                {
+                  "request": "request-0005.bin",
+                  "tool_call_id": "call_z1czckzz"
+                },
+                {
+                  "request": "request-0006.bin",
+                  "tool_call_id": "call_z1czckzz"
+                }
+              ]
+            }
+          ],
+          "tool_names": [
+            "mnemos_retrieve",
+            "mnemos_inspect",
+            "mnemos_forget_preview",
+            "mnemos_inspect",
+            "mnemos_inspect",
+            "mnemos_inspect",
+            "mnemos_inspect",
+            "mnemos_inspect",
+            "mnemos_inspect",
+            "mnemos_inspect",
+            "mnemos_forget_related"
+          ],
+          "related_forget_results": [
+            {
+              "args": {
+                "fact_id": "66882d81-b2b5-420e-80fa-6c7b8dd06902",
+                "expected_version": 2,
+                "preview_digest": "418b0bb11790ab1b2c66489d8797a5807fa4b859141a732ce927474cf345eba4",
+                "preview_limit": 100,
+                "selected_fact_ids": [
+                  "912b03a5-5830-4e03-b235-a69970a4f82a",
+                  "a5ee5236-f659-44bf-941b-2bc47c36e05a",
+                  "9a9993cb-50b3-4249-bc35-54bc594f2523",
+                  "7b97ea37-fabc-4bcd-aab7-842a9fe04303",
+                  "06cea51c-9882-4c51-b2aa-c80ce820d48d",
+                  "4607b847-0b69-4833-ac8b-946ff68cadf2",
+                  "8ba5a9ae-de0e-4160-8d32-fc5415d42beb",
+                  "0e1a7414-de18-41c9-af08-619ce916484b",
+                  "bc35c151-9c32-41ed-8db6-5218a9767347"
+                ],
+                "selected_source_event_ids": [
+                  "aaee0a7d8b9c495b81cad238154557e786b1053b55dc3df5bd4381784964d81b",
+                  "f32b8b8cb2ff3f520b40ed0e72d796826fe8765c8e3bbd41af8884c44c161c4f",
+                  "82aa8af3b628d68bdf55209cf4609660596466dcd039cdb68e9f4515a72f02ee",
+                  "71eaf62b7a2b0ba12e74e9457b1377ecaa8673d88bdb8a09ce6ca47163a5d30a",
+                  "19d34e69e6aecc42da9e1267f6b50bdf86bb8a9209a6911d67226813c3d5f3bb",
+                  "3f08ca5f9866709dd4177cd353edb5d173c1c264255477fd06ab56af172ee720",
+                  "d4b29ae5e94f20c6fd01ad4a2fe28cc590c2899a505cdb8e32a9cd4ec0dbb071",
+                  "afc8462b4847bc110e4cb9c9a74b16913322588be5b4df0eeb3b19a11460fea5",
+                  "a962253029c4315c66353a60ff8b97031b4e5ebf61843e81ad33e8aeaea16ed3"
+                ]
+              },
+              "result": {
+                "deletion_coverage": {
+                  "retained_advisory_fact_count": 0,
+                  "retained_eligible_source_event_count": 0,
+                  "retained_exact_fact_count": 0,
+                  "selection": "reviewed_selection",
+                  "semantic_erasure_proven": false
+                },
+                "erasure_scope": "live_memory_and_replay_suppression",
+                "fact_id": "66882d81-b2b5-420e-80fa-6c7b8dd06902",
+                "forgotten": true,
+                "schema_version": 1,
+                "selected_fact_ids": [
+                  "66882d81-b2b5-420e-80fa-6c7b8dd06902",
+                  "912b03a5-5830-4e03-b235-a69970a4f82a",
+                  "a5ee5236-f659-44bf-941b-2bc47c36e05a",
+                  "9a9993cb-50b3-4249-bc35-54bc594f2523",
+                  "7b97ea37-fabc-4bcd-aab7-842a9fe04303",
+                  "06cea51c-9882-4c51-b2aa-c80ce820d48d",
+                  "4607b847-0b69-4833-ac8b-946ff68cadf2",
+                  "8ba5a9ae-de0e-4160-8d32-fc5415d42beb",
+                  "0e1a7414-de18-41c9-af08-619ce916484b",
+                  "bc35c151-9c32-41ed-8db6-5218a9767347"
+                ],
+                "selected_source_event_ids": [
+                  "19d34e69e6aecc42da9e1267f6b50bdf86bb8a9209a6911d67226813c3d5f3bb",
+                  "3f08ca5f9866709dd4177cd353edb5d173c1c264255477fd06ab56af172ee720",
+                  "71eaf62b7a2b0ba12e74e9457b1377ecaa8673d88bdb8a09ce6ca47163a5d30a",
+                  "82aa8af3b628d68bdf55209cf4609660596466dcd039cdb68e9f4515a72f02ee",
+                  "a962253029c4315c66353a60ff8b97031b4e5ebf61843e81ad33e8aeaea16ed3",
+                  "aaee0a7d8b9c495b81cad238154557e786b1053b55dc3df5bd4381784964d81b",
+                  "afc8462b4847bc110e4cb9c9a74b16913322588be5b4df0eeb3b19a11460fea5",
+                  "d4b29ae5e94f20c6fd01ad4a2fe28cc590c2899a505cdb8e32a9cd4ec0dbb071",
+                  "f32b8b8cb2ff3f520b40ed0e72d796826fe8765c8e3bbd41af8884c44c161c4f"
+                ],
+                "status": "committed"
+              }
+            }
+          ],
+          "failed_gates": [
+            "reviewed_forget_verified",
+            "forget",
+            "reviewed_deletions_persisted"
+          ],
+          "final_response": {
+            "operation": "model_response",
+            "tool_calls": [],
+            "content": "Project release label forgotten:\n\n- Target fact `66882d81-b2b5-420e-80fa-6c7b8dd06902` (version 2) deleted.\n- 9 related conversational candidates deleted with their 9 source events.\n- Deletion coverage: 0 retained advisory facts, 0 retained eligible source events, 0 retained exact facts (from the selection).\n- Semantic erasure not proven (bounded preview limitation).",
+            "action": "fallthrough",
+            "finish_reason": "stop"
+          }
+        }
+      ]
+    },
+    {
+      "attempt": 3,
+      "status": "passed",
+      "error": null,
+      "phases": [
+        {
+          "phase": "teach",
+          "exit_code": 0,
+          "seconds": 21.875515399995493,
+          "responses": 3,
+          "verified_profiles": 3,
+          "requests": 3,
+          "loaded_profiles": [
+            {
+              "context_length": 65536,
+              "size_vram": 8044454869
+            },
+            {
+              "context_length": 65536,
+              "size_vram": 8044454869
+            },
+            {
+              "context_length": 65536,
+              "size_vram": 8044454869
+            }
+          ],
+          "previews": [],
+          "tool_names": [
+            "mnemos_remember",
+            "mnemos_job_status"
+          ],
+          "related_forget_results": [],
+          "failed_gates": [],
+          "final_response": {
+            "operation": "model_response",
+            "tool_calls": [],
+            "content": "Job ID: event:0855490e31f0b6a50c35f3c398fe43d9da8515d6d1e952e78e7b7ce09e9ba598, status: pending.",
+            "action": "fallthrough",
+            "finish_reason": "stop"
+          }
+        },
+        {
+          "phase": "recall_v1",
+          "exit_code": 0,
+          "seconds": 11.021923499996774,
+          "responses": 2,
+          "verified_profiles": 2,
+          "requests": 2,
+          "loaded_profiles": [
+            {
+              "context_length": 65536,
+              "size_vram": 8044454869
+            },
+            {
+              "context_length": 65536,
+              "size_vram": 8044454869
+            }
+          ],
+          "previews": [],
+          "tool_names": [
+            "mnemos_retrieve"
+          ],
+          "related_forget_results": [],
+          "failed_gates": [],
+          "final_response": {
+            "operation": "model_response",
+            "tool_calls": [],
+            "content": "ID: 5e78d4e1-7912-49c0-aed8-9925f5c4c729, version: 1, label: cedar-ridge-731",
+            "action": "fallthrough",
+            "finish_reason": "stop"
+          }
+        },
+        {
+          "phase": "correct",
+          "exit_code": 0,
+          "seconds": 14.702626600017538,
+          "responses": 4,
+          "verified_profiles": 4,
+          "requests": 4,
+          "loaded_profiles": [
+            {
+              "context_length": 65536,
+              "size_vram": 8044454869
+            },
+            {
+              "context_length": 65536,
+              "size_vram": 8044454869
+            },
+            {
+              "context_length": 65536,
+              "size_vram": 8044454869
+            },
+            {
+              "context_length": 65536,
+              "size_vram": 8044454869
+            }
+          ],
+          "previews": [],
+          "tool_names": [
+            "mnemos_inspect",
+            "mnemos_correct",
+            "mnemos_job_status"
+          ],
+          "related_forget_results": [],
+          "failed_gates": [],
+          "final_response": {
+            "operation": "model_response",
+            "tool_calls": [],
+            "content": "Correction committed, job pending.",
+            "action": "fallthrough",
+            "finish_reason": "stop"
+          }
+        },
+        {
+          "phase": "recall_v2",
+          "exit_code": 0,
+          "seconds": 12.098414000007324,
+          "responses": 2,
+          "verified_profiles": 2,
+          "requests": 2,
+          "loaded_profiles": [
+            {
+              "context_length": 65536,
+              "size_vram": 8044454869
+            },
+            {
+              "context_length": 65536,
+              "size_vram": 8044454869
+            }
+          ],
+          "previews": [],
+          "tool_names": [
+            "mnemos_retrieve"
+          ],
+          "related_forget_results": [],
+          "failed_gates": [],
+          "final_response": {
+            "operation": "model_response",
+            "tool_calls": [],
+            "content": "The project release label fact:\n- ID: 5e78d4e1-7912-49c0-aed8-9925f5c4c729\n- Version: 2\n- Label: maple-ridge-842",
+            "action": "fallthrough",
+            "finish_reason": "stop"
+          }
+        },
+        {
+          "phase": "forget",
+          "exit_code": 0,
+          "seconds": 50.14817469997797,
+          "responses": 6,
+          "verified_profiles": 6,
+          "requests": 6,
+          "loaded_profiles": [
+            {
+              "context_length": 65536,
+              "size_vram": 8044454869
+            },
+            {
+              "context_length": 65536,
+              "size_vram": 8044454869
+            },
+            {
+              "context_length": 65536,
+              "size_vram": 8044454869
+            },
+            {
+              "context_length": 65536,
+              "size_vram": 8044454869
+            },
+            {
+              "context_length": 65536,
+              "size_vram": 8044454869
+            },
+            {
+              "context_length": 65536,
+              "size_vram": 8044454869
+            }
+          ],
+          "previews": [
+            {
+              "candidate_count": 9,
+              "source_ids": [
+                "0952fe59267935b62db8b8ac3ac07f2c38d5d79a46a1aae5da170d0924271f32",
+                "13c8126f60795e59e2740a76c5d0516b71efd39ce2f06cd28a82821d840b9ea2",
+                "30bd6a244f84a1545c8b6d02b0e99049f91228f1c1fac403e42cd05817df960f",
+                "5fa220e522c73720c7d81f4eff3d37b5890901e1ba45984698ab3cfd43facb1e",
+                "817ff4c922b49ccf20e4adfe7b1e2d0ac7644afe6edeed16d39523c4e49895d0",
+                "84ae34fa48ba7cc8a3c20f68b1f61e27290d11ec7aea29ca3e7d06852cfc39ce",
+                "a8dd30357150a754fcdfed60942b54d9f43c02bd3f60e15d9e4a27dcd6d499c4",
+                "c8fcde9245483ea1c062a9e9af8739e7ea8a048527827f0ced679efa3c027db8",
+                "ee57d16787109c3b34bb3413b0e49507a5cecdd2e39c0d9dcd7c0e69bd88ae9e"
+              ],
+              "required_source_ids": [
+                "0952fe59267935b62db8b8ac3ac07f2c38d5d79a46a1aae5da170d0924271f32",
+                "13c8126f60795e59e2740a76c5d0516b71efd39ce2f06cd28a82821d840b9ea2",
+                "30bd6a244f84a1545c8b6d02b0e99049f91228f1c1fac403e42cd05817df960f",
+                "5fa220e522c73720c7d81f4eff3d37b5890901e1ba45984698ab3cfd43facb1e",
+                "817ff4c922b49ccf20e4adfe7b1e2d0ac7644afe6edeed16d39523c4e49895d0",
+                "84ae34fa48ba7cc8a3c20f68b1f61e27290d11ec7aea29ca3e7d06852cfc39ce",
+                "a8dd30357150a754fcdfed60942b54d9f43c02bd3f60e15d9e4a27dcd6d499c4",
+                "c8fcde9245483ea1c062a9e9af8739e7ea8a048527827f0ced679efa3c027db8",
+                "ee57d16787109c3b34bb3413b0e49507a5cecdd2e39c0d9dcd7c0e69bd88ae9e"
+              ],
+              "complete_parsed_preview_matches": [
+                {
+                  "request": "request-0004.bin",
+                  "tool_call_id": "call_wx6zoa6c"
+                },
+                {
+                  "request": "request-0005.bin",
+                  "tool_call_id": "call_wx6zoa6c"
+                },
+                {
+                  "request": "request-0006.bin",
+                  "tool_call_id": "call_wx6zoa6c"
+                }
+              ]
+            }
+          ],
+          "tool_names": [
+            "mnemos_retrieve",
+            "mnemos_inspect",
+            "mnemos_forget_preview",
+            "mnemos_inspect",
+            "mnemos_inspect",
+            "mnemos_inspect",
+            "mnemos_inspect",
+            "mnemos_inspect",
+            "mnemos_inspect",
+            "mnemos_inspect",
+            "mnemos_inspect",
+            "mnemos_inspect",
+            "mnemos_forget_related"
+          ],
+          "related_forget_results": [
+            {
+              "args": {
+                "preview_digest": "d95a1cd7c08537b768f3c7f2923637052b0c0b3cc30432830efb62147bc7d7e1",
+                "preview_limit": 100,
+                "fact_id": "5e78d4e1-7912-49c0-aed8-9925f5c4c729",
+                "expected_version": 2,
+                "selected_fact_ids": [
+                  "96609cf2-1b02-4ae0-a9e2-7bec490c4260",
+                  "e1782d0f-a563-4ffe-8b6b-3d33cdb8f50d",
+                  "acc12f2a-6e7a-4ea2-976c-f356d3a76a02",
+                  "32b154f8-14da-4d17-9b4f-6e34d6d77b6b",
+                  "54d88604-37cc-4230-a225-49243f655d8b",
+                  "eacef9ae-614c-48ce-abf9-3b603d0a45f3",
+                  "9c5f04a5-1e09-4c5f-9d3a-66712ed14f60",
+                  "101e49b5-30da-4a10-a5bd-6742558001c9",
+                  "2c0b1460-fdb4-4a6d-ae19-cb429e08d77d"
+                ],
+                "selected_source_event_ids": [
+                  "c8fcde9245483ea1c062a9e9af8739e7ea8a048527827f0ced679efa3c027db8",
+                  "ee57d16787109c3b34bb3413b0e49507a5cecdd2e39c0d9dcd7c0e69bd88ae9e",
+                  "84ae34fa48ba7cc8a3c20f68b1f61e27290d11ec7aea29ca3e7d06852cfc39ce",
+                  "5fa220e522c73720c7d81f4eff3d37b5890901e1ba45984698ab3cfd43facb1e",
+                  "30bd6a244f84a1545c8b6d02b0e99049f91228f1c1fac403e42cd05817df960f",
+                  "817ff4c922b49ccf20e4adfe7b1e2d0ac7644afe6edeed16d39523c4e49895d0",
+                  "0952fe59267935b62db8b8ac3ac07f2c38d5d79a46a1aae5da170d0924271f32",
+                  "13c8126f60795e59e2740a76c5d0516b71efd39ce2f06cd28a82821d840b9ea2",
+                  "a8dd30357150a754fcdfed60942b54d9f43c02bd3f60e15d9e4a27dcd6d499c4"
+                ]
+              },
+              "result": {
+                "deletion_coverage": {
+                  "retained_advisory_fact_count": 0,
+                  "retained_eligible_source_event_count": 0,
+                  "retained_exact_fact_count": 0,
+                  "selection": "reviewed_selection",
+                  "semantic_erasure_proven": false
+                },
+                "erasure_scope": "live_memory_and_replay_suppression",
+                "fact_id": "5e78d4e1-7912-49c0-aed8-9925f5c4c729",
+                "forgotten": true,
+                "schema_version": 1,
+                "selected_fact_ids": [
+                  "5e78d4e1-7912-49c0-aed8-9925f5c4c729",
+                  "96609cf2-1b02-4ae0-a9e2-7bec490c4260",
+                  "e1782d0f-a563-4ffe-8b6b-3d33cdb8f50d",
+                  "acc12f2a-6e7a-4ea2-976c-f356d3a76a02",
+                  "32b154f8-14da-4d17-9b4f-6e34d6d77b6b",
+                  "54d88604-37cc-4230-a225-49243f655d8b",
+                  "eacef9ae-614c-48ce-abf9-3b603d0a45f3",
+                  "9c5f04a5-1e09-4c5f-9d3a-66712ed14f60",
+                  "101e49b5-30da-4a10-a5bd-6742558001c9",
+                  "2c0b1460-fdb4-4a6d-ae19-cb429e08d77d"
+                ],
+                "selected_source_event_ids": [
+                  "0952fe59267935b62db8b8ac3ac07f2c38d5d79a46a1aae5da170d0924271f32",
+                  "13c8126f60795e59e2740a76c5d0516b71efd39ce2f06cd28a82821d840b9ea2",
+                  "30bd6a244f84a1545c8b6d02b0e99049f91228f1c1fac403e42cd05817df960f",
+                  "5fa220e522c73720c7d81f4eff3d37b5890901e1ba45984698ab3cfd43facb1e",
+                  "817ff4c922b49ccf20e4adfe7b1e2d0ac7644afe6edeed16d39523c4e49895d0",
+                  "84ae34fa48ba7cc8a3c20f68b1f61e27290d11ec7aea29ca3e7d06852cfc39ce",
+                  "a8dd30357150a754fcdfed60942b54d9f43c02bd3f60e15d9e4a27dcd6d499c4",
+                  "c8fcde9245483ea1c062a9e9af8739e7ea8a048527827f0ced679efa3c027db8",
+                  "ee57d16787109c3b34bb3413b0e49507a5cecdd2e39c0d9dcd7c0e69bd88ae9e"
+                ],
+                "status": "committed"
+              }
+            }
+          ],
+          "failed_gates": [],
+          "final_response": {
+            "operation": "model_response",
+            "tool_calls": [],
+            "content": "Verified: the release label fact (5e78d4e1-7912-49c0-aed8-9925f5c4c729 v2) and all related conversational copies deleted. Deletion coverage shows 0 retained facts or source events, but semantic erasure not proven (bounded preview limitation). The unrelated [a08426b5-f5e3-43ee-9e34-744d43491e5a] fact remains untouched.",
+            "action": "fallthrough",
+            "finish_reason": "stop"
+          }
+        },
+        {
+          "phase": "source-replay",
+          "exit_code": 0,
+          "seconds": 4.805825499992352,
+          "responses": 0,
+          "verified_profiles": 0,
+          "requests": 0,
+          "loaded_profiles": [],
+          "previews": [],
+          "tool_names": [
+            "mnemos_remember"
+          ],
+          "related_forget_results": [],
+          "failed_gates": [],
+          "final_response": null
+        },
+        {
+          "phase": "recall_forgotten",
+          "exit_code": 0,
+          "seconds": 11.493904299975839,
+          "responses": 2,
+          "verified_profiles": 2,
+          "requests": 2,
+          "loaded_profiles": [
+            {
+              "context_length": 65536,
+              "size_vram": 8044454869
+            },
+            {
+              "context_length": 65536,
+              "size_vram": 8044454869
+            }
+          ],
+          "previews": [],
+          "tool_names": [
+            "mnemos_retrieve"
+          ],
+          "related_forget_results": [],
+          "failed_gates": [],
+          "final_response": {
+            "operation": "model_response",
+            "tool_calls": [],
+            "content": "No release label fact is known. The only stored fact concerns a build artifact checksum marker (slate-safe-553).",
+            "action": "fallthrough",
+            "finish_reason": "stop"
+          }
+        }
+      ]
+    }
+  ]
+}

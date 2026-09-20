@@ -12,12 +12,28 @@ Deliver an article draft, three possible titles, and a separate compact source/c
 
 ## Latest implementation and native evidence
 
+The [native Hermes v10 cohort](../validation/2026-09-20/hermes-native-cohort-v10/README.md)
+completed one of three full lifecycles on `f2f7414`. Attempt 1 omitted
+restarted retrieval. Attempt 2 committed deletion but failed the review
+requirement: two selected additional facts had not been inspected. Attempt 3
+passed teaching, restarted recall, correction, corrected recall, reviewed
+deletion, source replay suppression, and restarted final recall. All 40 model
+responses had verified 65,536-token context and positive GPU residency; all
+attempts established cleanup. No stale-preview rejection occurred, so this
+does not establish native recovery from that error or a causal improvement.
+
+This is the first complete bounded Hermes lifecycle in these fixed cohorts,
+on an isolated patched host with all five cognition modules disabled. The
+two failures remain part of the result. Three-host continuity, complete
+capture, T18 quality, Desktop, and the operational pilot remain open.
+Earlier checkpoint sections below retain their historical source bindings.
+
 The [stale-preview rejection repair](../validation/2026-09-20/stale-preview-checkpoint-v1/README.md)
 at `f2f7414` passes 1,547 source tests with 4 skips,
 all six source/package checks, 650 isolated installed cases with
 4 matching skips, and seven replay assertions. The native v9 failure
-used the preceding `e419c2a` wheel and remains failed. No native model has
-run the repaired package yet.
+used the preceding `e419c2a` wheel and remains failed. Native v10 subsequently
+ran the repaired package with the one-pass, two-failure result above.
 
 In v9 attempt 3, the first apply correctly copied all ten candidate IDs,
 their required sources, and the preview digest, but changed the preview
@@ -504,5 +520,5 @@ not a requirement to recount every implementation detail in the article.
 - [ ] Record final host continuity, latency, capture coverage, and pilot status without collapsing the separate gates.
 - [ ] Identify which quantitative claims can be used, with units, sample sizes, settings, uncertainty where available, and limitations.
 - [ ] Verify original website/paper claims against primary sources and link the dated corrections.
-- [x] Prepare a portable working packet with this handoff, the selected voice skill, key reports, regression examples, and a file manifest. Refresh that packet at final acceptance. The portable v18 packet includes terminal encoding/retrieval reports, the two earlier native lifecycle failures, all seven fixed-cohort runs (all twenty-one attempts failed under their respective bindings; this is not a pooled reliability estimate), the deletion coverage and source-selection repair evidence, the six-case development diagnostic and model readiness records, the affective fidelity review, the endpoint context diagnostic and verified-context native successor, and dated website/paper snapshots. Some older evidence links still require the full checkout. Local validation artifacts are research inputs; public citations require accessible sources.
+- [x] Prepare a portable working packet with this handoff, the selected voice skill, key reports, regression examples, and a file manifest. Refresh that packet at final acceptance. The portable v19 packet includes terminal encoding/retrieval reports, the two earlier native lifecycle failures, all eight fixed-cohort runs (v3-v9 retain twenty-one failed attempts; v10 adds one pass and two failures under its own binding; these are not a pooled reliability estimate), the deletion coverage and source-selection repair evidence, the six-case development diagnostic and model readiness records, the affective fidelity review, the endpoint context diagnostic and verified-context native successor, and dated website/paper snapshots. Some older evidence links still require the full checkout. Local validation artifacts are research inputs; public citations require accessible sources.
 - [ ] Keep unverified interpretations and questions outside the article's factual claims, then make the final voice pass using Anthony's skill.

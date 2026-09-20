@@ -1,11 +1,27 @@
 # Real-model evaluation status
 
+The [native Hermes v10 cohort](../2026-09-20/hermes-native-cohort-v10/README.md)
+completed one of three full lifecycles on `f2f7414`. Attempt 1 omitted
+restarted retrieval. Attempt 2 committed deletion but failed the review
+requirement: two selected additional facts had not been inspected. Attempt 3
+passed teaching, restarted recall, correction, corrected recall, reviewed
+deletion, source replay suppression, and restarted final recall. All 40 model
+responses had verified 65,536-token context and positive GPU residency; all
+attempts established cleanup. No stale-preview rejection occurred, so this
+does not establish native recovery from that error or a causal improvement.
+
+This is the first complete bounded Hermes lifecycle in these fixed cohorts,
+on an isolated patched host with all five cognition modules disabled. The
+two failures remain part of the result. Three-host continuity, complete
+capture, T18 quality, Desktop, and the operational pilot remain open.
+Earlier checkpoint sections below retain their historical source bindings.
+
 The [stale-preview rejection repair](../2026-09-20/stale-preview-checkpoint-v1/README.md)
 at `f2f7414` passes 1,547 source tests with 4 skips,
 all six source/package checks, 650 isolated installed cases with
 4 matching skips, and seven replay assertions. The native v9 failure
-used the preceding `e419c2a` wheel and remains failed. No native model has
-run the repaired package yet.
+used the preceding `e419c2a` wheel and remains failed. Native v10 subsequently
+ran the repaired package with the one-pass, two-failure result above.
 
 In v9 attempt 3, the first apply correctly copied all ten candidate IDs,
 their required sources, and the preview digest, but changed the preview

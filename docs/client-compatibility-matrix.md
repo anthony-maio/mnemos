@@ -1,11 +1,27 @@
 # Client compatibility and observed evidence
 
+The [native Hermes v10 cohort](validation/2026-09-20/hermes-native-cohort-v10/README.md)
+completed one of three full lifecycles on `f2f7414`. Attempt 1 omitted
+restarted retrieval. Attempt 2 committed deletion but failed the review
+requirement: two selected additional facts had not been inspected. Attempt 3
+passed teaching, restarted recall, correction, corrected recall, reviewed
+deletion, source replay suppression, and restarted final recall. All 40 model
+responses had verified 65,536-token context and positive GPU residency; all
+attempts established cleanup. No stale-preview rejection occurred, so this
+does not establish native recovery from that error or a causal improvement.
+
+This is the first complete bounded Hermes lifecycle in these fixed cohorts,
+on an isolated patched host with all five cognition modules disabled. The
+two failures remain part of the result. Three-host continuity, complete
+capture, T18 quality, Desktop, and the operational pilot remain open.
+Earlier checkpoint sections below retain their historical source bindings.
+
 The [stale-preview rejection repair](validation/2026-09-20/stale-preview-checkpoint-v1/README.md)
 at `f2f7414` passes 1,547 source tests with 4 skips,
 all six source/package checks, 650 isolated installed cases with
 4 matching skips, and seven replay assertions. The native v9 failure
-used the preceding `e419c2a` wheel and remains failed. No native model has
-run the repaired package yet.
+used the preceding `e419c2a` wheel and remains failed. Native v10 subsequently
+ran the repaired package with the one-pass, two-failure result above.
 
 In v9 attempt 3, the first apply correctly copied all ten candidate IDs,
 their required sources, and the preview digest, but changed the preview
@@ -150,7 +166,7 @@ installed native failure into full lifecycle acceptance.
 | Claude Code 2.1.191 | Command hooks, transcript deltas, context injection, MCP tools, and extraction-ineligible provisional capture when native identity is missing | [Shared lifecycle v9](validation/2026-09-18/native-codex-claude-continuity-v9/README.md) on `5af3d15` retrieved and corrected a Codex-taught fact, then reviewed and deleted the target plus five selected copies. [Claude lifecycle v18](validation/2026-09-17/native-claude-lifecycle-v18/README.md) on `dedfcfd` passed 15 bounded fact-lifecycle criteria. Mixed-host v4 on `fc72cc2` verified native queue replay and restart. | Degraded identity diagnostics, complete capture, native real-model extraction, and general startup reliability remain open. |
 | Codex CLI 0.146.0 | Generated lifecycle hooks, context output, and MCP tools | Shared lifecycle v9 taught the fact, retrieved Claude's corrected version after restart, and completed both post-forget queries without repeating the removed values. Mixed-host v4 verified same-event replay from both native hosts and unchanged records through restart. | Earlier Stop timeouts remain recorded. Complete capture across lifecycle failures, tail latency, real-model quality, and pilot reliability remain open. |
 | Codex Desktop | Shared command-hook adapter and MCP fallback | No isolated native desktop conversation has been validated. | NOT RUN; CLI evidence does not establish desktop behavior. |
-| Hermes Agent 0.21.3 in WSL | Optional MemoryProvider, lifecycle callbacks, entry-point discovery, and explicit Windows/WSL bridge | The [isolated patched CLI v4 run](validation/2026-09-19/native-hermes-local-v4/README.md) passes all 16 single-turn scoped recall and raw-capture checks. Four committed callbacks produce exactly two persisted conversation events. The earlier duplicate-callback failure is preserved. | The installed CLI omits provider cwd. Built-in remove/replace lack exact Mnemos targets. Capture across failures, native outage/restart recovery, and cross-host correction/forget remain open. |
+| Hermes Agent in WSL, isolated source `14a3463` with cwd-only patch | Optional MemoryProvider, lifecycle callbacks, entry-point discovery, and explicit Windows/WSL bridge | [Native v10](validation/2026-09-20/hermes-native-cohort-v10/README.md) completes one of three full lifecycles on `f2f7414`, including correction, reviewed deletion, replay suppression, and final recall. All 40 effective-context checks and three cleanup checks pass. | Two attempts fail at omitted recall and incomplete candidate inspection. Five cognition modules were disabled. Live compatibility, built-in remove/replace reconciliation, capture across failures, native outage recovery, and three-host continuity remain open. |
 | Generic MCP stdio | MCP server acts as a client of the local service | Subprocess tests cover capture, job status, inspect, retrieve, correct, and forget. | Protocol evidence only; each host needs its own acceptance run. |
 | Claude Desktop | MCP configuration | Shared protocol coverage. | Native conversation NOT RUN. |
 | Cursor | MCP plus project rules | Configuration and policy-generation tests. | Native conversation NOT RUN. |

@@ -343,6 +343,8 @@ Steps: automate host-independent capture/recall/correct/forget fixtures, then ex
 
 Acceptance: host A teaches a source-backed project convention; after restart hosts B/C retrieve it; B corrects it and all retrieve the current version; forgetting survives maintenance and replay. Project B never sees project A's canary. Record actual host versions and transcripts with secrets removed.
 
+The [Hermes v10 cohort](../validation/2026-09-20/hermes-native-cohort-v10/README.md) now supplies one complete bounded lifecycle in three attempts, with both failures retained. All five cognition modules were disabled; general reliability remains open.
+
 The missing three-host native observation has a [prospective protocol](2026-09-19-three-host-continuity-protocol-v1.md). It remains NOT RUN; neither the earlier two-host result nor a Hermes-only lifecycle pass closes that requirement.
 
 Run: `py -3.13 -m pytest -q tests/test_cross_host_contract.py tests/test_mcp_compatibility.py`. Real-host results remain NOT RUN until observed; protocol tests do not promote host tiers.
@@ -371,7 +373,7 @@ Acceptance: install instructions match the release artifact; no synthetic result
 
 Additional deliverable requested September 19: finalize a research and writing handoff for a roughly 2,500-word Substack article in Anthony's voice. The [handoff](../handoffs/substack-local-memory.md) must identify the final verified checkpoint, original promises, concrete repairs, measured results and failures, source locations, unresolved claims, and a suggested narrative. Apply Anthony's requested `writing-in-anthonys-voice` skill. The handoff is complete only after its evidence and open items are reconciled with the final validation state; the article itself and publication are separate work.
 
-The working export is `mnemos-substack-research-packet-2026-09-20-v18.zip` in the workspace's `deliverables` directory. It includes the handoff, Anthony's selected voice skill, source documents, selected validation reports, regression examples, and a manifest. Refresh the packet at final acceptance; the current snapshot explicitly retains open engineering and research gates.
+The working export is `mnemos-substack-research-packet-2026-09-20-v19.zip` in the workspace's `deliverables` directory. It includes the handoff, Anthony's selected voice skill, source documents, selected validation reports, regression examples, and a manifest. Refresh the packet at final acceptance; the current snapshot explicitly retains open engineering and research gates.
 
 Run final repository checks in an isolated environment: `python -m pytest -q`, `python -m black --check .`, `python -m mypy .`, `python -m build`, `python -m twine check dist/*`. Run the built wheel outside the source tree so imports cannot accidentally validate the checkout.
 

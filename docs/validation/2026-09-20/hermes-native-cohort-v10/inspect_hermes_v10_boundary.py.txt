@@ -1,0 +1,52 @@
+"""Read-only correlation of archived native requests, previews, and loaded profiles."""
+from pathlib import Path
+import hashlib
+import json
+
+root = Path('C:/Users/Ant/AppData/Local/Temp/mnemos-hermes-native-cohort-v10')
+cohort = json.loads((root / 'cohort.json').read_text(encoding='utf-8'))
+assert cohort['status'] in {'passed', 'completed_with_failures'}
+report = {'cohort_sha256': hashlib.sha256((root/'cohort.json').read_bytes()).hexdigest(), 'attempts': []}
+for attempt in cohort['attempts']:
+    directory = root / ('attempt-' + str(attempt['attempt']))
+    result = json.loads((directory/'report.json').read_text(encoding='utf-8'))
+    summary = {'attempt': attempt['attempt'], 'status': result['status'], 'error': result.get('error'), 'phases': []}
+    for phase in result['phases']:
+        phase_dir = directory / phase['phase']
+        trace = [json.loads(line) for line in (phase_dir/'trace.jsonl').read_text(encoding='utf-8').splitlines()]
+        responses = [r for r in trace if r['operation']=='model_response']
+        verified = [r for r in trace if r['operation']=='loaded_profile_verified']
+        loaded = [r for r in trace if r['operation']=='loaded_models_after_response']
+        assert [r['response_number'] for r in verified] == list(range(1,len(responses)+1))
+        assert len(loaded)==len(responses)
+        contexts=[]
+        for row in loaded:
+            matching=[m for m in row['result']['models'] if m['name']=='mnemos-native-qwen35-9b:greedy-ctx64k-v2']
+            assert len(matching)==1
+            m=matching[0]
+            assert m['context_length']==65536 and m['size_vram']>0
+            assert m['digest']=='87bc5156d86918e0435431ab0286167a4c79c4a4a259b82fba5f3f75022006e2'
+            contexts.append({'context_length':m['context_length'],'size_vram':m['size_vram']})
+        requests=[]
+        for path in sorted((phase_dir/'provider-requests').glob('request-*.json')):
+            metadata=json.loads(path.read_text(encoding='utf-8'))
+            raw=(path.parent/metadata['body_file']).read_bytes()
+            assert len(raw)==metadata['byte_count'] and hashlib.sha256(raw).hexdigest()==metadata['sha256']
+            requests.append((metadata['body_file'],json.loads(raw)))
+        previews=[]
+        for row in trace:
+            if row['operation']!='tool_result' or row['name']!='mnemos_forget_preview': continue
+            preview=row['result']
+            if not isinstance(preview,dict) or 'candidates' not in preview: continue
+            matches=[]
+            for name,request in requests:
+                call_names={call['id']:call['function']['name'] for msg in request['messages'] for call in msg.get('tool_calls',[])}
+                for msg in request['messages']:
+                    if msg['role']!='tool' or call_names.get(msg.get('tool_call_id'))!='mnemos_forget_preview': continue
+                    try: parsed=json.loads(msg['content'])
+                    except (ValueError,TypeError): continue
+                    if parsed==preview: matches.append({'request':name,'tool_call_id':msg['tool_call_id']})
+            previews.append({'candidate_count':len(preview['candidates']), 'source_ids':sorted({v for c in preview['candidates'] for v in c.get('source_event_ids',[])}), 'required_source_ids':sorted({v for c in preview['candidates'] for v in c.get('required_source_event_ids',[])}), 'complete_parsed_preview_matches':matches})
+        summary['phases'].append({'phase':phase['phase'],'exit_code':phase['exit_code'],'seconds':phase['seconds'],'responses':len(responses),'verified_profiles':len(verified),'requests':len(requests),'loaded_profiles':contexts,'previews':previews,'tool_names':[r['name'] for r in trace if r['operation']=='tool_result'],'related_forget_results':[{'args':r['args'],'result':r['result']} for r in trace if r['operation']=='tool_result' and r['name']=='mnemos_forget_related'],'failed_gates':[k for k,v in phase.get('gates',{}).items() if not v],'final_response':responses[-1] if responses else None})
+    report['attempts'].append(summary)
+print(json.dumps(report,indent=2))
