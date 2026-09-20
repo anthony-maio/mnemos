@@ -1,0 +1,36 @@
+from pathlib import Path
+import hashlib,json,shutil
+repo=Path.cwd()
+src=Path('C:/Users/Ant/AppData/Local/Temp/mnemos-package-checks-reconsolidation-return-v1')
+v=json.loads((src/'verification.json').read_bytes())
+assert v['status']=='passed' and v['source_commit']=='d93789250ed1cd9aac31a58da1cb932e93b41582'
+assert len(v['checks'])==6 and all(c['exit_code']==0 for c in v['checks'])
+assert v['checks'][0]['counts']=={'tests':2017,'failures':0,'errors':0,'skipped':4}
+sha=lambda p:hashlib.sha256(p.read_bytes()).hexdigest()
+assert sha(repo/'.venv/final_checkpoint_checks_v3.py')==v['runner_sha256']
+for a in v['artifacts']:
+ p=Path(a['file']); assert sha(p)==a['sha256'] and p.stat().st_size==a['bytes']
+out=repo/'docs/validation/2026-09-20/reconsolidation-return-source-checkpoint-v1'
+out.mkdir(exist_ok=False)
+(out/'.gitattributes').write_bytes(b'** -text -whitespace\n')
+for p in src.iterdir():
+ if p.is_file() and p.suffix in {'.json','.xml','.log'}: shutil.copyfile(p,out/p.name)
+shutil.copyfile(repo/'.venv/final_checkpoint_checks_v3.py',out/'runner.py.txt')
+shutil.copyfile(__file__,out/'collector.py.txt')
+(out/'README.md').write_text('''# Reconsolidation return source/package checkpoint
+
+Frozen product d937892 passes 2,013 source tests with four skips, formatting,
+Python 3.10 compatibility type checking, JavaScript syntax, wheel/sdist build,
+and twine metadata checks. All six checks have exit code zero. The clean
+checkout, external test storage, runner hash, JUnit outcomes and package hashes
+are recorded in verification.json and the accompanying logs.
+
+This adds the regression proving that direct reconsolidation returns the
+committed metadata after absorbing a captured duplicate. The installed-package
+check is separate and is not claimed by this archive. The earlier 26c9ddb
+installed result does not validate this newer artifact. Full-module quality,
+broader host recovery and the daily-use pilot remain open.
+''')
+files={p.name:{'bytes':p.stat().st_size,'sha256':sha(p)} for p in sorted(out.iterdir()) if p.is_file()}
+(out/'evidence-index.json').write_text(json.dumps({'files':files},indent=2)+'\n')
+print(json.dumps({'archive':str(out),'files':len(files)}))

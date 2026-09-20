@@ -501,16 +501,15 @@ Run: `py -3.13 -m pytest -q tests/test_local_memory_benchmark.py tests/test_retr
 
 ### T19 - Reconcile release, documentation, and research claims
 
-Current package evidence: [product `05c71d2`](../validation/2026-09-20/generation-settings-checkpoint-v1/README.md)
-passes 2,005 source tests and 804 isolated installed cases, with four skips
-each, all six source/package checks, and seven replay assertions. This closes
-package verification for structured reasoning and managed generation settings.
-The first unchanged-source full run's Windows replacement failure remains
-preserved and its cause unresolved. Native host integration and final acceptance
-remain open. The
-[historical-claim comparison](../validation/2026-09-20/historical-claim-development-v1/README.md)
-adds 144 development responses and model-dependent qualification failures.
-It does not replace the incomplete matrix or establish held-out quality.
+Current source/package evidence: [product d937892](../validation/2026-09-20/reconsolidation-return-source-checkpoint-v1/README.md)
+passes 2,013 source tests with four skips and all six source/package checks.
+Its isolated installed check is pending. The preceding verified installed
+[product 26c9ddb](../validation/2026-09-20/captured-merge-installed-checkpoint-v2/README.md)
+passes 811 cases with four matching skips. These are separate checkpoints.
+Native host integration, full-module quality and final acceptance remain open.
+The [larger-budget extraction diagnostic](../validation/2026-09-20/extraction-larger-budget-v1/README.md)
+preserves the same parsed outputs and failure as the original comparison;
+increasing the budget did not resolve the observed extraction defect.
 
 Depends on: T17, T18.
 
