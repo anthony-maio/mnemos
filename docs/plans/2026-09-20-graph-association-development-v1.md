@@ -1,9 +1,11 @@
 # Graph association development protocol v1
 
-Status: draft design; NOT RUN. Exact authored cases, vector bytes, relation
-weights, fanout bounds, and all configuration values must be fixed in a
-committed manifest before execution. This document alone is not a frozen
-experiment or evidence of a working association channel.
+Status: measurement NOT RUN. Authored cases and vector preparation are
+separate inputs to the measurement. Bind their committed manifest, completed
+vector artifact digest, relation weights, fanout bounds, and all configuration
+values before execution. This document alone is not evidence of a working
+association channel. Vector preparation follows the separate
+[preparation protocol](2026-09-20-graph-association-vector-preparation-v1.md).
 
 Implementation checkpoint: a read-only SQLite diagnostic now derives
 candidate relations from actual source-event/evidence joins. Its 20 offline
@@ -94,10 +96,17 @@ expectations as edges.
    source must remain. Replay suppression must not recreate the forgotten
    relation after restart.
 
-Each case should contain roughly eight to twelve facts, including three or
-four focal facts and distractors. The exact count is less important than
-having real source events, current evidence, and enough negatives to expose
-scope leakage and accidental text matching. Case construction must be
+Before freezing any case, source review found that the proposed eight to
+twelve facts would all fit the production direct vector pool. With `top_k=5`,
+`MnemosEngine.retrieve` requests `min(max(top_k * 6, 20), 100) = 30` candidates.
+That smaller fixture could not measure recall outside the direct pool. No
+case or arm had been measured when this design issue was found.
+
+Each case will therefore contain exactly 36 query-eligible facts, including
+three or four focal facts and 32 or 33 distractors. Foreign-scope controls are
+additional and do not count toward the 36. This permits a target to fall
+outside the direct pool; it does not guarantee one will. Preserve all cases
+regardless of their measured direct-candidate status. Case construction must be
 complete before any arm is measured. No case may be selected, rewritten, or
 removed after seeing an observation.
 
@@ -110,11 +119,16 @@ three explicitly labelled arms.
   existing production mutual-nearest-neighbor rules.
 * **source_association** derives a diagnostic relation view from actual
   SQLite evidence joins. It must use a separate relation table or edge type
-  in disposable storage. It must not write source relations as
+  in a disposable benchmark view with exported typed provenance. It must
+  clear inherited semantic activation neighbors and provide only source
+  neighbors during retrieval. It must not write source relations as
   `SEMANTIC_SIMILAR` and must not alter production graph defaults.
 * **combined** uses both views while preserving relation type and provenance
   in every edge and score component. It must be possible to attribute a path
-  or rank change to semantic edges, source relations, or both.
+  or rank change to semantic edges, source relations, or both. For a pair
+  supported by both types, its effective traversal weight is the maximum of
+  the two weights, with both provenance records retained. Do not sum weights
+  or exceed one. This rule is fixed before any vector or ranking observation.
 
 The source arm is a diagnostic implementation of this protocol, not an
 approved production algorithm. A fixed binary source relation is preferable
@@ -136,7 +150,7 @@ Keep the existing measurement behavior and predeclare these effective values:
 
 | Setting | Value or rule |
 | --- | --- |
-| query, document, and symmetric embedding identity | frozen artifact, exact digest recorded |
+| query, document, and symmetric embedding identity | frozen artifact, exact digest recorded; separate preparation before measurement |
 | vector and lexical candidate union | production candidate construction; record both sets and their union |
 | selected seed | actual highest-cosine vector candidate; authored labels never force a seed |
 | semantic relevance floor | `0.2` |
@@ -147,7 +161,10 @@ Keep the existing measurement behavior and predeclare these effective values:
 | maximum hops | `3` |
 | maximum visited nodes | `1000` |
 | graph weight | `0.1`, with source contribution separately reported |
-| output budget | existing top-k and context-token budget, recorded per observation |
+| source relation weight | `1.0`, fixed for every eligible source relation |
+| source-event fanout limit | `16`; overflow groups are not expanded |
+| maximum direct candidates per backend | `30`, from top-k 5 and max-candidates 100 |
+| output budget | top-k `5`; context-token budget `4096` |
 | scopes | exact profile/project/workspace context from the case |
 
 Record vector seed IDs, direct candidate IDs, lexical IDs, relevance scores,
