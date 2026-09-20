@@ -1,0 +1,115 @@
+{
+  "calls": [
+    {
+      "name": "mnemos_store",
+      "args": {
+        "content": "The project review label is amber-grove-264.",
+        "role": "user",
+        "scope": "project"
+      },
+      "result": {
+        "event_id": "3a78bab17428fc4a74bb1c701d66c66ca10a09d257f513e11e1b3c69eaa57c1d",
+        "fact_eligible": true,
+        "identity_status": "normal",
+        "job_id": "event:3a78bab17428fc4a74bb1c701d66c66ca10a09d257f513e11e1b3c69eaa57c1d",
+        "processing_status": "pending",
+        "schema_version": 1,
+        "status": "committed",
+        "event_committed": true,
+        "scope": "project",
+        "scope_id": "7ef0806b-53da-4870-a472-1ad0d1a43d83"
+      },
+      "model_call_correlated": true,
+      "call_id": "msg_011CfENjsmFYcqUT53FVN1c5:toolu_01G1e99BHvsjuwK2FbAxGZUF",
+      "line": 26,
+      "line_sha256": "19c285dd1a487fbba25a51957133e730640192b8d99bc5edb0e1cdeb9d6e8afc"
+    },
+    {
+      "name": "mnemos_consolidate",
+      "args": {},
+      "result": {
+        "completed": 0,
+        "graph": {
+          "cursor": "",
+          "enabled": false,
+          "legacy_graph": false,
+          "managed_preferences": true,
+          "marked_sources": 0,
+          "pending_count": 6,
+          "ready": false,
+          "total_sources": 6
+        },
+        "maintenance": {
+          "completed": 7,
+          "exhausted": 0,
+          "failed_count": 0,
+          "last_error": null,
+          "last_success": "2026-09-20T08:28:15.445291+00:00",
+          "leased": 0,
+          "oldest_pending_seconds": 0,
+          "oldest_unfinished_seconds": 0,
+          "pending": 0,
+          "processed_count": 7,
+          "retry_count": 0,
+          "running": false,
+          "scheduler_running": true
+        },
+        "schema_version": 1
+      },
+      "model_call_correlated": true,
+      "call_id": "msg_011CfENk6d9upQdLGFxU2KxS:toolu_01NYXG1F6SE3y6phGn7VWFr9",
+      "line": 29,
+      "line_sha256": "cdcb107879aef088e8cc1ba1421ea3f669d5f993ab7570bc5b5fe1b79de3885e"
+    },
+    {
+      "name": "mnemos_job_status",
+      "args": {
+        "job_id": "event:3a78bab17428fc4a74bb1c701d66c66ca10a09d257f513e11e1b3c69eaa57c1d"
+      },
+      "result": {
+        "job": {
+          "attempt_count": 1,
+          "available_at": "2026-09-20T08:28:15.415000Z",
+          "created_at": "2026-09-20T08:28:15.415001Z",
+          "id": "event:3a78bab17428fc4a74bb1c701d66c66ca10a09d257f513e11e1b3c69eaa57c1d",
+          "kind": "remember",
+          "last_error": null,
+          "lease_owner": null,
+          "lease_until": null,
+          "max_attempts": 5,
+          "result": {
+            "decision": "facts",
+            "encoding_diagnostics": {},
+            "fact_ids": [
+              "b45c631c-7b1a-40c6-a75b-c496790df385"
+            ]
+          },
+          "status": "completed",
+          "updated_at": "2026-09-20T08:28:15.442538Z"
+        },
+        "schema_version": 1
+      },
+      "model_call_correlated": true,
+      "call_id": "msg_011CfENkCsgm3FE7qWWu5pQq:toolu_01LHUJ5eEk1p4f5z9z51CcGj",
+      "line": 32,
+      "line_sha256": "fe7b7b40b52b6e7e2604572853081a3a4c5f4347cfe9b3a0d57b9f02c140d07d"
+    }
+  ],
+  "provenance": {
+    "host": "claude-code",
+    "process_id": 67220,
+    "session_id": "3e879d18-65d0-4631-80f0-779fcdccad9a",
+    "source_file": "C:\\Users\\Ant\\AppData\\Local\\Temp\\mnemos-three-host-native-v5\\teach-review\\stdout.jsonl",
+    "source_file_sha256": "41fef370de9a84853b2d6496776373cc62211eb6cb0b846560bb9be195ef38da"
+  },
+  "final_answer": "Here are the actual results of each step:\n\n---\n\n**Step 1 \u2014 mnemos_store**\n- Status: `committed`\n- Event ID: `3a78bab1...a57c1d`\n- Job ID: `event:3a78bab17428fc4a74bb1c701d66c66ca10a09d257f513e11e1b3c69eaa57c1d`\n- Scope: `project`\n- `fact_eligible: true`\n\n**Step 2 \u2014 mnemos_consolidate**\n- Maintenance jobs: 7 completed, 0 failed, 0 pending\n- Scheduler running: `true`\n- Graph: disabled (6 pending sources, not ready)\n\n**Step 3 \u2014 mnemos_job_status**\n- Status: `completed`\n- Decision: `facts` (the content was processed and stored as a durable fact)\n- Fact ID assigned: `b45c631c-7b1a-40c6-a75b-c496790df385`\n- Attempt count: 1 of 5 max, no errors\n\n**Summary:** The store lifecycle completed successfully. The content *\"The project review label is amber-grove-264.\"* was committed as a project-scoped fact with ID `b45c631c-7b1a-40c6-a75b-c496790df385` after a single processing attempt with no errors.",
+  "context_coverage": "native session/stream records; provider wire input is not intercepted",
+  "archive_transformation": {
+    "removed": [
+      "recorded_context"
+    ],
+    "original_sha256": "a83e577760ae81b2f15e67fbada3e6c315ea5812d781e03725793b65a0aaa6dd",
+    "original_bytes": 36752,
+    "reason": "Exclude unrelated cloud host instructions and account metadata."
+  }
+}

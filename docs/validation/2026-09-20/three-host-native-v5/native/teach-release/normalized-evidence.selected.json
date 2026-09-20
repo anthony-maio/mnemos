@@ -1,0 +1,115 @@
+{
+  "calls": [
+    {
+      "name": "mnemos_store",
+      "args": {
+        "content": "The project release label is cedar-ridge-731.",
+        "role": "user",
+        "scope": "project"
+      },
+      "result": {
+        "event_id": "5ca525cdad8984fe6e267d3beab37334696bcbe32bc1e4f19d891de14d2bcdca",
+        "fact_eligible": true,
+        "identity_status": "normal",
+        "job_id": "event:5ca525cdad8984fe6e267d3beab37334696bcbe32bc1e4f19d891de14d2bcdca",
+        "processing_status": "pending",
+        "schema_version": 1,
+        "status": "committed",
+        "event_committed": true,
+        "scope": "project",
+        "scope_id": "7ef0806b-53da-4870-a472-1ad0d1a43d83"
+      },
+      "model_call_correlated": true,
+      "call_id": "call_jiGboLLTDO1saNtfOfnoRvtK",
+      "line": 20,
+      "line_sha256": "e7d9e033145e373c14bfee431fdd1c31960eb4eee6b5da4f79a714b01b9db84b"
+    },
+    {
+      "name": "mnemos_consolidate",
+      "args": {},
+      "result": {
+        "completed": 0,
+        "graph": {
+          "cursor": "",
+          "enabled": false,
+          "legacy_graph": false,
+          "managed_preferences": true,
+          "marked_sources": 0,
+          "pending_count": 4,
+          "ready": false,
+          "total_sources": 4
+        },
+        "maintenance": {
+          "completed": 4,
+          "exhausted": 0,
+          "failed_count": 0,
+          "last_error": null,
+          "last_success": "2026-09-20T08:27:29.105602+00:00",
+          "leased": 0,
+          "oldest_pending_seconds": 0,
+          "oldest_unfinished_seconds": 0,
+          "pending": 0,
+          "processed_count": 4,
+          "retry_count": 0,
+          "running": false,
+          "scheduler_running": true
+        },
+        "schema_version": 1
+      },
+      "model_call_correlated": true,
+      "call_id": "call_nxdLwPDiaJs78KC5zgZHfT7B",
+      "line": 24,
+      "line_sha256": "e3c96169efe5e4492e65f3209e425294b9193b0fa1dda1c95e260a9815f2b3a8"
+    },
+    {
+      "name": "mnemos_job_status",
+      "args": {
+        "job_id": "event:5ca525cdad8984fe6e267d3beab37334696bcbe32bc1e4f19d891de14d2bcdca"
+      },
+      "result": {
+        "job": {
+          "attempt_count": 1,
+          "available_at": "2026-09-20T08:27:28.967736Z",
+          "created_at": "2026-09-20T08:27:28.967737Z",
+          "id": "event:5ca525cdad8984fe6e267d3beab37334696bcbe32bc1e4f19d891de14d2bcdca",
+          "kind": "remember",
+          "last_error": null,
+          "lease_owner": null,
+          "lease_until": null,
+          "max_attempts": 5,
+          "result": {
+            "decision": "facts",
+            "encoding_diagnostics": {},
+            "fact_ids": [
+              "1a9c2e85-5861-4d7e-98aa-54f141fb0386"
+            ]
+          },
+          "status": "completed",
+          "updated_at": "2026-09-20T08:27:29.101304Z"
+        },
+        "schema_version": 1
+      },
+      "model_call_correlated": true,
+      "call_id": "call_apn1WiZWr8NJOPGhpY8nfQLn",
+      "line": 28,
+      "line_sha256": "8153327306199310e39417d9ed9b8d0e0f299ae76991a32b1fe6f75e78acaa96"
+    }
+  ],
+  "provenance": {
+    "host": "codex",
+    "process_id": 73680,
+    "session_id": "01a0bdec-e7d2-7e53-b967-15e82785afe0",
+    "source_file": "C:\\Users\\Ant\\AppData\\Local\\Temp\\mnemos-three-host-native-v5\\teach-release\\codex-home\\.codex\\sessions\\2026\\09\\20\\rollout-2026-09-20T04-26-54-01a0bdec-e7d2-7e53-b967-15e82785afe0.jsonl",
+    "source_file_sha256": "58c0ecb9b36638b21276382637ba8a4c295fe3bc7533816920a8fd237df9a600"
+  },
+  "final_answer": "Stored and consolidated successfully.\n\n`mnemos_job_status` for `event:5ca525cdad8984fe6e267d3beab37334696bcbe32bc1e4f19d891de14d2bcdca` returned `status: completed`.\n\nResult:\n`decision: facts`\n`fact_ids: [\"1a9c2e85-5861-4d7e-98aa-54f141fb0386\"]`",
+  "context_coverage": "native session/stream records; provider wire input is not intercepted",
+  "archive_transformation": {
+    "removed": [
+      "recorded_context"
+    ],
+    "original_sha256": "e7a7ecdcd26a6e47966189864918a05da24e5a9c37141cdcea2e8a0f077d707b",
+    "original_bytes": 115221,
+    "reason": "Exclude unrelated cloud host instructions and account metadata."
+  }
+}

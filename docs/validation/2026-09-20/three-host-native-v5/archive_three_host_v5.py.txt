@@ -1,0 +1,117 @@
+"""Export terminal synthetic three-host evidence with selected cloud session records."""
+from pathlib import Path
+import hashlib
+import json
+import subprocess
+
+repo = Path(__file__).resolve().parent.parent
+temp = Path('C:/Users/Ant/AppData/Local/Temp')
+target = repo / 'docs/validation/2026-09-20/three-host-native-v5'
+target.mkdir(parents=True, exist_ok=False)
+
+def sha(raw):
+    return hashlib.sha256(raw).hexdigest()
+
+def write(name, raw):
+    p = target / name
+    p.parent.mkdir(parents=True, exist_ok=True)
+    if p.exists():
+        assert p.read_bytes() == raw, name
+    else:
+        p.write_bytes(raw)
+
+def dump(name, value):
+    write(name, (json.dumps(value, indent=2) + '\n').encode())
+
+def copy(root, name, prefix):
+    write(prefix + '/' + name, (root / name).read_bytes())
+
+for kind in ('preflight', 'native'):
+    root = temp / ('mnemos-three-host-' + kind + '-v5')
+    report = json.loads((root / 'report.json').read_text(encoding='utf-8'))
+    assert report['status'] in ('preflight_passed', 'failed', 'bounded_lifecycle_observed')
+    assert report['cleanup_established'] and report['finished_at']
+    assert not (root / 'runtime.json').exists()
+    for name in ('report.json', 'dispatch-records.json', 'host-environment-before.txt',
+                 'host-environment-after.txt', 'scopes.json', 'settings.toml',
+                 'failure.txt', 'service.log', 'final-state.json', 'scripted-replay.json', 'project/AGENTS.md'):
+        if (root / name).is_file():
+            copy(root, name, kind)
+    for folder in ('model-readiness',):
+        if (root / folder).is_dir():
+            for p in (root / folder).rglob('*'):
+                if p.is_file():
+                    copy(root, p.relative_to(root).as_posix(), kind)
+    phases = ['preflight'] if kind == 'preflight' else [p['name'] for p in report['phases']]
+    for phase in phases:
+        directory = root / phase
+        for p in directory.iterdir():
+            if p.is_file() and p.suffix in ('.json', '.jsonl', '.log', '.txt') and p.name not in ('normalized-evidence.json', 'stdout.jsonl'):
+                copy(root, phase + '/' + p.name, kind)
+        requests = directory / 'provider-requests'
+        if requests.is_dir():
+            for p in requests.rglob('*'):
+                if p.is_file():
+                    copy(root, p.relative_to(root).as_posix(), kind)
+        evidence_path = directory / 'normalized-evidence.json'
+        if evidence_path.is_file():
+            raw = evidence_path.read_bytes(); evidence = json.loads(raw)
+            removed = evidence.pop('recorded_context', None)
+            evidence['archive_transformation'] = {
+                'removed': ['recorded_context'] if removed is not None else [],
+                'original_sha256': sha(raw), 'original_bytes': len(raw),
+                'reason': 'Exclude unrelated cloud host instructions and account metadata.',
+            }
+            dump(kind + '/' + phase + '/normalized-evidence.selected.json', evidence)
+        process_path = directory / 'process.json'
+        if not process_path.exists():
+            continue
+        process = json.loads(process_path.read_text(encoding='utf-8'))
+        if process.get('host') == 'codex':
+            sources = list((Path(process['home']) / 'sessions').rglob('rollout*.jsonl'))
+            assert len(sources) == 1
+            source = sources[0]
+        elif process.get('host') == 'claude-code':
+            source = directory / 'stdout.jsonl'
+        else:
+            continue
+        assert process['auth_copy_removed'] and not process['cleanup_errors']
+        raw = source.read_bytes(); selected, locators, models = [], [], []
+        for number, line in enumerate(raw.splitlines(), 1):
+            record = json.loads(line); payload = record.get('payload', {})
+            if process['host'] == 'codex':
+                if record.get('type') == 'turn_context':
+                    models.append({'source_line': number, 'source_line_sha256': sha(line), 'model': payload.get('model')})
+                keep = (record.get('type') == 'response_item' and payload.get('type') in (
+                    'function_call', 'function_call_output', 'custom_tool_call', 'custom_tool_call_output',
+                    'tool_search_call', 'tool_search_output'
+                )) or (record.get('type') == 'event_msg' and payload.get('type') in ('user_message', 'mcp_tool_call_end'))
+            else:
+                keep = record.get('type') in ('assistant', 'user', 'result')
+                if record.get('type') == 'assistant':
+                    models.append({'source_line': number, 'source_line_sha256': sha(line), 'model': record.get('message', {}).get('model')})
+            if keep:
+                selected.append(line)
+                locators.append({'selected_line': len(selected), 'source_line': number, 'source_line_sha256': sha(line)})
+        write(kind + '/' + phase + '/native-records.selected.jsonl', b'\n'.join(selected) + b'\n')
+        dump(kind + '/' + phase + '/native-selection.json', {
+            'source_file': str(source), 'source_sha256': sha(raw), 'source_bytes': len(raw),
+            'host': process['host'], 'records': locators, 'observed_models': models,
+            'selection': 'Codex tool and user events; Claude assistant, user and result events; unchanged source lines.',
+            'provider_wire_captured': False,
+        })
+    for relative, expected in report['input_hashes'].items():
+        raw = (repo / relative).read_bytes()
+        committed = subprocess.check_output(['git', 'show', report['runner_commit'] + ':' + relative], cwd=repo)
+        assert sha(raw) == expected, relative
+        assert raw.replace(b'\r\n', b'\n') == committed.replace(b'\r\n', b'\n'), relative
+        write('runner-inputs/' + relative + '.txt', raw)
+
+write('offline/three-host-v5-offline.xml', (repo / '.venv/three-host-v5-offline.xml').read_bytes())
+write('offline/codex-notice-override-check.json', (repo / '.venv/codex-notice-override-check.json').read_bytes())
+write('archive_three_host_v5.py.txt', Path(__file__).read_bytes())
+write('.gitattributes', b'** -text -whitespace\n')
+files = {p.relative_to(target).as_posix(): {'bytes': p.stat().st_size, 'sha256': sha(p.read_bytes())}
+         for p in sorted(target.rglob('*')) if p.is_file()}
+dump('evidence-index.json', {'files': files})
+print(json.dumps({'path': str(target), 'files': len(files)}))

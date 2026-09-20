@@ -1,5 +1,13 @@
 # Real-model evaluation status
 
+The [three-host v5 attempt](../2026-09-20/three-host-native-v5/README.md) passed
+both teaching phases, then failed at Hermes recall on unsupported scope
+arguments. Query-only retries retrieved both facts but do not clear the
+failure. Both service starts reported a running worker; native correction
+was not reached. Generated project guidance explicitly requests the rejected
+arguments and appears in all three Hermes provider requests. That instruction
+conflict needs repair. Cleanup passed; full continuity remains open.
+
 The [three-host v4 attempt](../2026-09-20/three-host-native-v4/README.md) passed
 Codex teaching, Claude teaching, and Hermes retrieval of both facts after a
 service restart. Hermes correction then failed: an unsupported scope argument

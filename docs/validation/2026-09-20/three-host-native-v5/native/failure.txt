@@ -1,0 +1,14 @@
+Traceback (most recent call last):
+  File "D:\Development\mnemos\mnemos\.worktrees\functional-local-memory\benchmarks\native_hosts\three_host_run.py", line 616, in main
+    evidence = phase("hermes", "hermes-recall-both", recall_prompt, recall_tools)
+  File "D:\Development\mnemos\mnemos\.worktrees\functional-local-memory\benchmarks\native_hosts\three_host_run.py", line 478, in phase
+    evidence = run_hermes(runtime, bindings, name, prompt)
+  File "D:\Development\mnemos\mnemos\.worktrees\functional-local-memory\benchmarks\native_hosts\three_host_run.py", line 367, in run_hermes
+    return hermes_evidence(trace, root, model=MODEL, digest=DIGESTS[MODEL])
+  File "D:\Development\mnemos\mnemos\.worktrees\functional-local-memory\benchmarks\native_hosts\three_host_evidence.py", line 133, in hermes_evidence
+    calls = correlate_native_tools(trace)
+  File "D:\Development\mnemos\mnemos\.worktrees\functional-local-memory\benchmarks\native_hosts\hermes_trace_v2.py", line 102, in correlate_native_tools
+    result = _validate_result(record.get("result"))
+  File "D:\Development\mnemos\mnemos\.worktrees\functional-local-memory\benchmarks\native_hosts\hermes_trace_v2.py", line 50, in _validate_result
+    raise ValueError(f"tool result has unsuccessful status: {status}")
+ValueError: tool result has unsuccessful status: rejected

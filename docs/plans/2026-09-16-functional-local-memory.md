@@ -335,7 +335,9 @@ Run: `py -3.13 -m pytest -q tests/test_backup_restore.py tests/test_storage_sqli
 
 ### T17 - Verify the complete local and cross-host workflow
 
-Latest native result: [three-host v4](../validation/2026-09-20/three-host-native-v4/README.md) passed Codex and Claude teaching, followed by Hermes recall of both facts after restart. Correction failed: rejected scope override, omitted inspection, and a pending correction job. The final fact remained at version 1; later phases did not run. Cleanup passed. Validation stopped before the runner's post-phase maintenance; pending status does not establish a production worker defect. V2 and v3 remain failed. T17 acceptance remains open.
+Latest native result: [three-host v5](../validation/2026-09-20/three-host-native-v5/README.md) passed teaching but failed Hermes recall on unsupported scope arguments. Generated shared guidance requests those exact arguments; all three provider requests contain that conflicting instruction. Worker startup and cleanup passed. Correction and later phases did not run. Full continuity remains open.
+
+Previous native result: [three-host v4](../validation/2026-09-20/three-host-native-v4/README.md) passed Codex and Claude teaching, followed by Hermes recall of both facts after restart. Correction failed: rejected scope override, omitted inspection, and a pending correction job. The final fact remained at version 1; later phases did not run. Cleanup passed. Validation stopped before the runner's post-phase maintenance; pending status does not establish a production worker defect. V2 and v3 remain failed. T17 acceptance remains open.
 
 Depends on: T12-T16.
 
