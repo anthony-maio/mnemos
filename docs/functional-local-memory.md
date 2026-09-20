@@ -28,6 +28,21 @@ python -m mnemos.service
 
 Most clients auto-start one bounded service process when the descriptor is absent. Set `MNEMOS_RUNTIME_DESCRIPTOR` consistently in every process when isolating a separate runtime. Automatic capture persists a sanitized event in the local outbox before waiting for startup or an HTTP response. A committed or explicitly rejected response removes it; interrupted requests retain the same event identity for replay. An outbox entry is not a committed service event. Explicit writes report failure. `mnemos service-stop` requests authenticated shutdown and waits for confirmation. Stop host clients before offline maintenance so a new request does not restart the service.
 
+Set `MNEMOS_AUTO_START=false` to prevent host clients, MCP, the bridge, and
+normal managed CLI commands from starting a service. They can still contact
+an existing service; automatic capture queues locally while it is unavailable.
+Accepted values are `true/false`, `1/0`, `yes/no`, and `on/off`, ignoring case
+and surrounding spaces. An unset value preserves automatic startup; invalid
+values raise a configuration error. An explicit library `auto_start` argument
+overrides the environment. `service-stop` always disables automatic startup.
+This setting does not stop an existing service or prevent an explicit
+`python -m mnemos.service` invocation.
+
+A separate runtime descriptor does not isolate storage. Disposable runs must
+also set an absolute `MNEMOS_SQLITE_PATH`, `MNEMOS_STORE_TYPE=sqlite`, and
+`MNEMOS_RUNTIME_DIR` inside their disposable directory, with their own
+configuration file and scope registry.
+
 This protects capture after the outbox write completes. It cannot recover text
 if the host terminates the hook before that write, and it does not establish
 that native hook deadlines or clean host shutdown are satisfied.

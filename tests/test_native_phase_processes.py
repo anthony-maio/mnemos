@@ -78,6 +78,25 @@ def test_auth_copy_removes_new_file_when_acl_protection_fails(config, tmp_path, 
     assert source.read_text() == "synthetic credential"
 
 
+def test_disposable_selectors_override_storage_from_every_config_layer(config, monkeypatch):
+    from mnemos.settings import load_settings
+
+    outside = config.root.parent / "must-not-use.sqlite"
+    monkeypatch.setenv("MNEMOS_SQLITE_PATH", str(outside))
+    config.settings.write_text('[storage]\ntype="sqlite"\nsqlite_path="outside.sqlite"\n')
+    project_config = config.project / ".mnemos" / "mnemos.toml"
+    project_config.parent.mkdir()
+    project_config.write_text('[storage]\ntype="memory"\nsqlite_path="also-outside.sqlite"\n')
+    env = phases.clean_environment(phases._selectors(config, "claude-code", "outage"))
+    resolved = load_settings(env=env, cwd=config.project)
+    assert resolved.project_config_path == project_config
+    assert resolved.settings.storage.type == "sqlite"
+    assert Path(resolved.settings.storage.sqlite_path) == config.root / "memory.sqlite"
+    assert Path(env["MNEMOS_RUNTIME_DIR"]) == config.root
+    assert env["MNEMOS_AUTO_START"] == "false"
+    assert not outside.exists()
+
+
 def test_auth_copy_refuses_to_overwrite_existing_file(config, tmp_path):
     source = tmp_path / "auth.json"
     source.write_text("new credential")

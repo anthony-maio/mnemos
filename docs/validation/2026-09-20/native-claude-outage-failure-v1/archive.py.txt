@@ -1,0 +1,47 @@
+"""Preserve the failed native attempt without copying the private database."""
+import hashlib
+import json
+from pathlib import Path
+import shutil
+import subprocess
+
+repo = Path(__file__).resolve().parent.parent
+runtime = Path("C:/Users/Ant/AppData/Local/Temp/mnemos-native-claude-outage-v1")
+archive = repo / "docs/validation/2026-09-20/native-claude-outage-failure-v1"
+archive.mkdir(parents=True, exist_ok=False)
+selected = [
+    "report.json", "claude-offline/process.json", "service.log",
+    "unexpected-owner-health.json", "unexpected-owner-shutdown.json",
+    "unexpected-default-store-probe-rows.json", "incident-backup.json",
+]
+rows = json.loads((runtime / selected[-2]).read_text())
+assert len(rows["episodic_events"]) == 3
+assert len(rows["memory_jobs"]) == 3
+assert all(x["user_profile_id"] == "native-claude-outage-v1" for x in rows["episodic_events"])
+for relative in selected:
+    destination = archive / relative
+    destination.parent.mkdir(parents=True, exist_ok=True)
+    shutil.copyfile(runtime / relative, destination)
+commit = "fc5ed255c271c01d96a948064b0e5b1473ae924f"
+for relative in [
+    "benchmarks/native_hosts/claude_service_outage_v1.py",
+    "benchmarks/native_hosts/native_processes.py",
+    "mnemos/client.py",
+]:
+    destination = archive / "frozen-source" / (relative + ".txt")
+    destination.parent.mkdir(parents=True, exist_ok=True)
+    destination.write_bytes(subprocess.check_output(["git", "show", f"{commit}:{relative}"], cwd=repo))
+shutil.copyfile(Path(__file__), archive / "archive.py.txt")
+files = {
+    path.relative_to(archive).as_posix(): {
+        "bytes": path.stat().st_size,
+        "sha256": hashlib.sha256(path.read_bytes()).hexdigest(),
+    }
+    for path in sorted(archive.rglob("*")) if path.is_file()
+}
+(archive / "evidence-index.json").write_text(json.dumps({
+    "status": "failed", "runner_commit": commit, "files": files,
+    "private_database_backup_excluded": True,
+    "live_database_cleanup_performed": False,
+}, indent=2) + "\n")
+print(json.dumps({"archive": str(archive), "indexed_files": len(files)}))

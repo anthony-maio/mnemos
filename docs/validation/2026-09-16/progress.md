@@ -1,5 +1,15 @@
 # Functional local memory implementation record
 
+September 20, native outage failure: the [Claude attempt](../2026-09-20/native-claude-outage-failure-v1/README.md)
+unexpectedly autostarted a service and wrote three synthetic events and three
+jobs to the default database, with zero scoped facts observed. The ignored
+autostart setting and missing host-side storage pin are both repaired in the
+working source. The owner is stopped, a verified private backup is preserved,
+and no default-store cleanup deletion has run. Recovery acceptance remains
+open. The new focused suite passes 139 tests with two platform skips; broader
+source and installed-package validation are pending. The frozen v4 model
+matrix continues on its original source independently of this transport fix.
+
 September 20, native receipt audit: the [offline reconciliation](../2026-09-20/native-capture-coverage-v1/README.md)
 matches all 31 native text identities to service acknowledgements. Twenty-nine
 have completed jobs in the final snapshot; two are suppressed during forgetting.

@@ -1,5 +1,13 @@
 # Mnemos claim and evidence ledger
 
+The [native Claude outage attempt](../2026-09-20/native-claude-outage-failure-v1/README.md)
+failed: the client ignored its autostart setting, and incomplete experiment
+storage isolation let an unexpected owner write three synthetic events and
+three jobs to the default database. Zero scoped facts were observed. The owner
+was stopped and a verified private backup preserved; no cleanup deletion was
+performed. Do not claim this attempt preserved an outage or avoided the default
+store. Native recovery remains open pending a new package and separate run.
+
 The [frozen retrieval fixture audit](../2026-09-20/retrieval-fixture-audit-v1/README.md)
 identifies 20 foreign-scope queries mislabeled answerable and 60 explicit
 remember bodies that differ from their gold facts. Original outcomes remain

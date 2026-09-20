@@ -40,6 +40,19 @@ negative results even if they complicate the ending.
 
 ## Latest implementation and native evidence
 
+The [native Claude outage attempt](../validation/2026-09-20/native-claude-outage-failure-v1/README.md)
+failed before recovery could be tested. The shared client ignored
+`MNEMOS_AUTO_START=false`, and the experiment had not pinned its host-side
+database path. An unexpected service wrote three synthetic events and three
+jobs to the default database; the scoped inspection found zero facts. The
+owner was stopped and a verified private backup preserved. No cleanup deletion
+was performed. There was no pre-attempt database snapshot, so do not claim
+unrelated contents were unchanged. The repair now honors the environment
+setting and pins disposable storage independently; native recovery remains
+open until a new installed package and separate attempt pass. This failure
+belongs in the research record even if the final repair succeeds. The default
+database and its full backup must never be included in the writing packet.
+
 The [frozen retrieval fixture audit](../validation/2026-09-20/retrieval-fixture-audit-v1/README.md)
 adds a useful research complication. Twenty queries expect facts from a
 different profile and project, even though the scope contract requires

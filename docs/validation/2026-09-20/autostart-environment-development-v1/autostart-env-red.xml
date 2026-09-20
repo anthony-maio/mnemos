@@ -1,0 +1,303 @@
+<?xml version="1.0" encoding="utf-8"?><testsuites name="pytest tests"><testsuite name="pytest" errors="0" failures="12" skipped="0" tests="54" time="2.238" timestamp="2026-09-20T10:29:58.013837-04:00" hostname="Aurora"><testcase classname="tests.test_client_autostart_environment" name="test_disabled_capture_persists_without_spawning[false]" time="0.089"><failure message="Failed: Disabled client attempted to spawn a service">isolated = WindowsPath('D:/WindowsTemp/pytest-of-Ant/pytest-4317/test_disabled_capture_persists0')
+monkeypatch = &lt;_pytest.monkeypatch.MonkeyPatch object at 0x000001213D6D7100&gt;
+value = 'false'
+
+    @pytest.mark.parametrize("value", ["false", "0", "no", "off", " FALSE "])
+    async def test_disabled_capture_persists_without_spawning(isolated, monkeypatch, value):
+        monkeypatch.setenv("MNEMOS_AUTO_START", value)
+        client = MnemosClient()
+        payload = {"event_id": "outage-capture", "content": "Keep the project marker"}
+&gt;       result = await client.capture(payload)
+                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+tests\test_client_autostart_environment.py:34: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+mnemos\client.py:574: in capture
+    return await self.request("capture", payload)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+mnemos\client.py:474: in request
+    self._spawn_once()
+mnemos\client.py:259: in _spawn_once
+    self._child = subprocess.Popen(command, **kwargs)
+                  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+args = (['D:\\Development\\mnemos\\mnemos\\.worktrees\\functional-local-memory\\.venv\\Scripts\\python.exe', '-m', 'mnemos.service', '--descriptor', 'D:\\WindowsTemp\\pytest-of-Ant\\pytest-4317\\test_disabled_capture_persists0\\runtime.json'],)
+kwargs = {'stdin': -3, 'stdout': -3, 'stderr': -3, 'close_fds': True, ...}
+
+    def forbid_spawn(*args, **kwargs):
+&gt;       pytest.fail("Disabled client attempted to spawn a service")
+E       Failed: Disabled client attempted to spawn a service
+
+tests\test_client_autostart_environment.py:23: Failed</failure></testcase><testcase classname="tests.test_client_autostart_environment" name="test_disabled_capture_persists_without_spawning[0]" time="0.049"><failure message="Failed: Disabled client attempted to spawn a service">isolated = WindowsPath('D:/WindowsTemp/pytest-of-Ant/pytest-4317/test_disabled_capture_persists1')
+monkeypatch = &lt;_pytest.monkeypatch.MonkeyPatch object at 0x000001213D7E5C70&gt;
+value = '0'
+
+    @pytest.mark.parametrize("value", ["false", "0", "no", "off", " FALSE "])
+    async def test_disabled_capture_persists_without_spawning(isolated, monkeypatch, value):
+        monkeypatch.setenv("MNEMOS_AUTO_START", value)
+        client = MnemosClient()
+        payload = {"event_id": "outage-capture", "content": "Keep the project marker"}
+&gt;       result = await client.capture(payload)
+                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+tests\test_client_autostart_environment.py:34: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+mnemos\client.py:574: in capture
+    return await self.request("capture", payload)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+mnemos\client.py:474: in request
+    self._spawn_once()
+mnemos\client.py:259: in _spawn_once
+    self._child = subprocess.Popen(command, **kwargs)
+                  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+args = (['D:\\Development\\mnemos\\mnemos\\.worktrees\\functional-local-memory\\.venv\\Scripts\\python.exe', '-m', 'mnemos.service', '--descriptor', 'D:\\WindowsTemp\\pytest-of-Ant\\pytest-4317\\test_disabled_capture_persists1\\runtime.json'],)
+kwargs = {'stdin': -3, 'stdout': -3, 'stderr': -3, 'close_fds': True, ...}
+
+    def forbid_spawn(*args, **kwargs):
+&gt;       pytest.fail("Disabled client attempted to spawn a service")
+E       Failed: Disabled client attempted to spawn a service
+
+tests\test_client_autostart_environment.py:23: Failed</failure></testcase><testcase classname="tests.test_client_autostart_environment" name="test_disabled_capture_persists_without_spawning[no]" time="0.083"><failure message="Failed: Disabled client attempted to spawn a service">isolated = WindowsPath('D:/WindowsTemp/pytest-of-Ant/pytest-4317/test_disabled_capture_persists2')
+monkeypatch = &lt;_pytest.monkeypatch.MonkeyPatch object at 0x000001213D74B350&gt;
+value = 'no'
+
+    @pytest.mark.parametrize("value", ["false", "0", "no", "off", " FALSE "])
+    async def test_disabled_capture_persists_without_spawning(isolated, monkeypatch, value):
+        monkeypatch.setenv("MNEMOS_AUTO_START", value)
+        client = MnemosClient()
+        payload = {"event_id": "outage-capture", "content": "Keep the project marker"}
+&gt;       result = await client.capture(payload)
+                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+tests\test_client_autostart_environment.py:34: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+mnemos\client.py:574: in capture
+    return await self.request("capture", payload)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+mnemos\client.py:474: in request
+    self._spawn_once()
+mnemos\client.py:259: in _spawn_once
+    self._child = subprocess.Popen(command, **kwargs)
+                  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+args = (['D:\\Development\\mnemos\\mnemos\\.worktrees\\functional-local-memory\\.venv\\Scripts\\python.exe', '-m', 'mnemos.service', '--descriptor', 'D:\\WindowsTemp\\pytest-of-Ant\\pytest-4317\\test_disabled_capture_persists2\\runtime.json'],)
+kwargs = {'stdin': -3, 'stdout': -3, 'stderr': -3, 'close_fds': True, ...}
+
+    def forbid_spawn(*args, **kwargs):
+&gt;       pytest.fail("Disabled client attempted to spawn a service")
+E       Failed: Disabled client attempted to spawn a service
+
+tests\test_client_autostart_environment.py:23: Failed</failure></testcase><testcase classname="tests.test_client_autostart_environment" name="test_disabled_capture_persists_without_spawning[off]" time="0.065"><failure message="Failed: Disabled client attempted to spawn a service">isolated = WindowsPath('D:/WindowsTemp/pytest-of-Ant/pytest-4317/test_disabled_capture_persists3')
+monkeypatch = &lt;_pytest.monkeypatch.MonkeyPatch object at 0x000001213DA1A050&gt;
+value = 'off'
+
+    @pytest.mark.parametrize("value", ["false", "0", "no", "off", " FALSE "])
+    async def test_disabled_capture_persists_without_spawning(isolated, monkeypatch, value):
+        monkeypatch.setenv("MNEMOS_AUTO_START", value)
+        client = MnemosClient()
+        payload = {"event_id": "outage-capture", "content": "Keep the project marker"}
+&gt;       result = await client.capture(payload)
+                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+tests\test_client_autostart_environment.py:34: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+mnemos\client.py:574: in capture
+    return await self.request("capture", payload)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+mnemos\client.py:474: in request
+    self._spawn_once()
+mnemos\client.py:259: in _spawn_once
+    self._child = subprocess.Popen(command, **kwargs)
+                  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+args = (['D:\\Development\\mnemos\\mnemos\\.worktrees\\functional-local-memory\\.venv\\Scripts\\python.exe', '-m', 'mnemos.service', '--descriptor', 'D:\\WindowsTemp\\pytest-of-Ant\\pytest-4317\\test_disabled_capture_persists3\\runtime.json'],)
+kwargs = {'stdin': -3, 'stdout': -3, 'stderr': -3, 'close_fds': True, ...}
+
+    def forbid_spawn(*args, **kwargs):
+&gt;       pytest.fail("Disabled client attempted to spawn a service")
+E       Failed: Disabled client attempted to spawn a service
+
+tests\test_client_autostart_environment.py:23: Failed</failure></testcase><testcase classname="tests.test_client_autostart_environment" name="test_disabled_capture_persists_without_spawning[ FALSE ]" time="0.055"><failure message="Failed: Disabled client attempted to spawn a service">isolated = WindowsPath('D:/WindowsTemp/pytest-of-Ant/pytest-4317/test_disabled_capture_persists4')
+monkeypatch = &lt;_pytest.monkeypatch.MonkeyPatch object at 0x000001213D7BB110&gt;
+value = ' FALSE '
+
+    @pytest.mark.parametrize("value", ["false", "0", "no", "off", " FALSE "])
+    async def test_disabled_capture_persists_without_spawning(isolated, monkeypatch, value):
+        monkeypatch.setenv("MNEMOS_AUTO_START", value)
+        client = MnemosClient()
+        payload = {"event_id": "outage-capture", "content": "Keep the project marker"}
+&gt;       result = await client.capture(payload)
+                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+tests\test_client_autostart_environment.py:34: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+mnemos\client.py:574: in capture
+    return await self.request("capture", payload)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+mnemos\client.py:474: in request
+    self._spawn_once()
+mnemos\client.py:259: in _spawn_once
+    self._child = subprocess.Popen(command, **kwargs)
+                  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+args = (['D:\\Development\\mnemos\\mnemos\\.worktrees\\functional-local-memory\\.venv\\Scripts\\python.exe', '-m', 'mnemos.service', '--descriptor', 'D:\\WindowsTemp\\pytest-of-Ant\\pytest-4317\\test_disabled_capture_persists4\\runtime.json'],)
+kwargs = {'stdin': -3, 'stdout': -3, 'stderr': -3, 'close_fds': True, ...}
+
+    def forbid_spawn(*args, **kwargs):
+&gt;       pytest.fail("Disabled client attempted to spawn a service")
+E       Failed: Disabled client attempted to spawn a service
+
+tests\test_client_autostart_environment.py:23: Failed</failure></testcase><testcase classname="tests.test_client_autostart_environment" name="test_default_or_enabled_autostart_remains_enabled[None]" time="0.003" /><testcase classname="tests.test_client_autostart_environment" name="test_default_or_enabled_autostart_remains_enabled[true]" time="0.003" /><testcase classname="tests.test_client_autostart_environment" name="test_default_or_enabled_autostart_remains_enabled[1]" time="0.002" /><testcase classname="tests.test_client_autostart_environment" name="test_default_or_enabled_autostart_remains_enabled[yes]" time="0.002" /><testcase classname="tests.test_client_autostart_environment" name="test_default_or_enabled_autostart_remains_enabled[on]" time="0.003" /><testcase classname="tests.test_client_autostart_environment" name="test_default_or_enabled_autostart_remains_enabled[ TRUE ]" time="0.002" /><testcase classname="tests.test_client_autostart_environment" name="test_invalid_setting_fails_before_start_or_write[]" time="0.003"><failure message="Failed: DID NOT RAISE ValueError">isolated = WindowsPath('D:/WindowsTemp/pytest-of-Ant/pytest-4317/test_invalid_setting_fails_bef0')
+monkeypatch = &lt;_pytest.monkeypatch.MonkeyPatch object at 0x000001213D924190&gt;
+value = ''
+
+    @pytest.mark.parametrize("value", ["", "disabled", "flase"])
+    def test_invalid_setting_fails_before_start_or_write(isolated, monkeypatch, value):
+        monkeypatch.setenv("MNEMOS_AUTO_START", value)
+&gt;       with pytest.raises(ValueError, match="MNEMOS_AUTO_START"):
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       Failed: DID NOT RAISE ValueError
+
+tests\test_client_autostart_environment.py:55: Failed</failure></testcase><testcase classname="tests.test_client_autostart_environment" name="test_invalid_setting_fails_before_start_or_write[disabled]" time="0.002"><failure message="Failed: DID NOT RAISE ValueError">isolated = WindowsPath('D:/WindowsTemp/pytest-of-Ant/pytest-4317/test_invalid_setting_fails_bef1')
+monkeypatch = &lt;_pytest.monkeypatch.MonkeyPatch object at 0x000001213D9256D0&gt;
+value = 'disabled'
+
+    @pytest.mark.parametrize("value", ["", "disabled", "flase"])
+    def test_invalid_setting_fails_before_start_or_write(isolated, monkeypatch, value):
+        monkeypatch.setenv("MNEMOS_AUTO_START", value)
+&gt;       with pytest.raises(ValueError, match="MNEMOS_AUTO_START"):
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       Failed: DID NOT RAISE ValueError
+
+tests\test_client_autostart_environment.py:55: Failed</failure></testcase><testcase classname="tests.test_client_autostart_environment" name="test_invalid_setting_fails_before_start_or_write[flase]" time="0.002"><failure message="Failed: DID NOT RAISE ValueError">isolated = WindowsPath('D:/WindowsTemp/pytest-of-Ant/pytest-4317/test_invalid_setting_fails_bef2')
+monkeypatch = &lt;_pytest.monkeypatch.MonkeyPatch object at 0x000001213D772720&gt;
+value = 'flase'
+
+    @pytest.mark.parametrize("value", ["", "disabled", "flase"])
+    def test_invalid_setting_fails_before_start_or_write(isolated, monkeypatch, value):
+        monkeypatch.setenv("MNEMOS_AUTO_START", value)
+&gt;       with pytest.raises(ValueError, match="MNEMOS_AUTO_START"):
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       Failed: DID NOT RAISE ValueError
+
+tests\test_client_autostart_environment.py:55: Failed</failure></testcase><testcase classname="tests.test_client_autostart_environment" name="test_explicit_argument_overrides_environment[True]" time="0.003" /><testcase classname="tests.test_client_autostart_environment" name="test_explicit_argument_overrides_environment[False]" time="0.002" /><testcase classname="tests.test_client_autostart_environment" name="test_claude_default_client_queues_prompt_with_autostart_disabled" time="0.003"><failure message="Failed: Disabled client attempted to spawn a service">isolated = WindowsPath('D:/WindowsTemp/pytest-of-Ant/pytest-4317/test_claude_default_client_que0')
+monkeypatch = &lt;_pytest.monkeypatch.MonkeyPatch object at 0x000001213D7E3230&gt;
+
+    async def test_claude_default_client_queues_prompt_with_autostart_disabled(isolated, monkeypatch):
+        monkeypatch.setenv("MNEMOS_AUTO_START", "false")
+        adapter = ClaudeCodeAdapter(
+&gt;           registry=registry_for(isolated),
+                     ^^^^^^^^^^^^^^^^^^^^^^
+            user_profile_id="profile-a",
+            checkpoint_directory=isolated / "checkpoints",
+        )
+
+tests\test_client_autostart_environment.py:69: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+tests\test_claude_adapter.py:117: in registry_for
+    root=canonical_project_root(path),
+         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+mnemos\scopes.py:64: in canonical_project_root
+    result = subprocess.run(
+C:\Users\Ant\AppData\Roaming\uv\python\cpython-3.13.7-windows-x86_64-none\Lib\subprocess.py:554: in run
+    with Popen(*popenargs, **kwargs) as process:
+         ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+args = (['git', '-C', 'D:\\WindowsTemp\\pytest-of-Ant\\pytest-4317\\test_claude_default_client_que0', 'rev-parse', '--path-format=absolute', '--git-common-dir'],)
+kwargs = {'text': True, 'creationflags': 134217728, 'stdout': -1, 'stderr': -1}
+
+    def forbid_spawn(*args, **kwargs):
+&gt;       pytest.fail("Disabled client attempted to spawn a service")
+E       Failed: Disabled client attempted to spawn a service
+
+tests\test_client_autostart_environment.py:23: Failed</failure></testcase><testcase classname="tests.test_client_autostart_environment" name="test_bridge_capture_honors_autostart_opt_out" time="0.078"><failure message="Failed: Disabled client attempted to spawn a service">isolated = WindowsPath('D:/WindowsTemp/pytest-of-Ant/pytest-4317/test_bridge_capture_honors_aut0')
+monkeypatch = &lt;_pytest.monkeypatch.MonkeyPatch object at 0x000001213D8EC8A0&gt;
+
+    async def test_bridge_capture_honors_autostart_opt_out(isolated, monkeypatch):
+        monkeypatch.setenv("MNEMOS_AUTO_START", "false")
+        request = {"operation": "capture", "payload": {"event_id": "bridge", "content": "marker"}}
+        monkeypatch.setattr(bridge.sys, "stdin", SimpleNamespace(buffer=io.BytesIO(json.dumps(request).encode())))
+        responses = []
+        monkeypatch.setattr(bridge, "_write_json_response", responses.append)
+&gt;       assert await bridge._serve_once(descriptor=isolated / "runtime.json", max_request_bytes=1000, deadline=1) == 0
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+tests\test_client_autostart_environment.py:89: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+mnemos\bridge.py:172: in _serve_once
+    result = await asyncio.wait_for(
+C:\Users\Ant\AppData\Roaming\uv\python\cpython-3.13.7-windows-x86_64-none\Lib\asyncio\tasks.py:507: in wait_for
+    return await fut
+           ^^^^^^^^^
+mnemos\client.py:474: in request
+    self._spawn_once()
+mnemos\client.py:259: in _spawn_once
+    self._child = subprocess.Popen(command, **kwargs)
+                  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+args = (['D:\\Development\\mnemos\\mnemos\\.worktrees\\functional-local-memory\\.venv\\Scripts\\python.exe', '-m', 'mnemos.service', '--descriptor', 'D:\\WindowsTemp\\pytest-of-Ant\\pytest-4317\\test_bridge_capture_honors_aut0\\runtime.json'],)
+kwargs = {'stdin': -3, 'stdout': -3, 'stderr': -3, 'close_fds': True, ...}
+
+    def forbid_spawn(*args, **kwargs):
+&gt;       pytest.fail("Disabled client attempted to spawn a service")
+E       Failed: Disabled client attempted to spawn a service
+
+tests\test_client_autostart_environment.py:23: Failed</failure></testcase><testcase classname="tests.test_client_autostart_environment" name="test_cli_stats_honors_autostart_opt_out" time="0.004"><failure message="Failed: Disabled client attempted to spawn a service">isolated = WindowsPath('D:/WindowsTemp/pytest-of-Ant/pytest-4317/test_cli_stats_honors_autostar0')
+monkeypatch = &lt;_pytest.monkeypatch.MonkeyPatch object at 0x000001213D8EC7C0&gt;
+
+    async def test_cli_stats_honors_autostart_opt_out(isolated, monkeypatch):
+        monkeypatch.setenv("MNEMOS_AUTO_START", "false")
+&gt;       result = await managed_cli.run_command(Namespace(command="stats"))
+                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+tests\test_client_autostart_environment.py:96: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+mnemos\managed_cli.py:69: in run_command
+    response = await client.request("health" if command == "stats" else "maintenance", {})
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+mnemos\client.py:474: in request
+    self._spawn_once()
+mnemos\client.py:259: in _spawn_once
+    self._child = subprocess.Popen(command, **kwargs)
+                  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+args = (['D:\\Development\\mnemos\\mnemos\\.worktrees\\functional-local-memory\\.venv\\Scripts\\python.exe', '-m', 'mnemos.service', '--descriptor', 'D:\\WindowsTemp\\pytest-of-Ant\\pytest-4317\\test_cli_stats_honors_autostar0\\runtime.json'],)
+kwargs = {'stdin': -3, 'stdout': -3, 'stderr': -3, 'close_fds': True, ...}
+
+    def forbid_spawn(*args, **kwargs):
+&gt;       pytest.fail("Disabled client attempted to spawn a service")
+E       Failed: Disabled client attempted to spawn a service
+
+tests\test_client_autostart_environment.py:23: Failed</failure></testcase><testcase classname="tests.test_client_autostart_environment" name="test_cli_stop_never_autostarts_even_when_env_enables" time="0.005" /><testcase classname="tests.test_native_phase_processes" name="test_resources_outside_disposable_root_are_rejected[project]" time="0.003" /><testcase classname="tests.test_native_phase_processes" name="test_resources_outside_disposable_root_are_rejected[registry]" time="0.004" /><testcase classname="tests.test_native_phase_processes" name="test_resources_outside_disposable_root_are_rejected[descriptor]" time="0.005" /><testcase classname="tests.test_native_phase_processes" name="test_resources_outside_disposable_root_are_rejected[settings]" time="0.004" /><testcase classname="tests.test_native_phase_processes" name="test_resources_outside_disposable_root_are_rejected[plugin_snapshot]" time="0.004" /><testcase classname="tests.test_native_phase_processes" name="test_environment_removes_live_selectors_credentials_and_import_overrides" time="0.002" /><testcase classname="tests.test_native_phase_processes" name="test_auth_copy_removes_new_file_when_acl_protection_fails" time="0.006" /><testcase classname="tests.test_native_phase_processes" name="test_disposable_selectors_override_storage_from_every_config_layer" time="0.038"><failure message="AssertionError: assert WindowsPath('outside.sqlite') == (WindowsPath('D:/WindowsTemp/pytest-of-Ant/pytest-4317/test_disposable_selectors_over0/disposable') / 'memory.sqlite')&#10; +  where WindowsPath('outside.sqlite') = Path('outside.sqlite')&#10; +    where 'outside.sqlite' = StorageSettings(type='sqlite', sqlite_path='outside.sqlite').sqlite_path&#10; +      where StorageSettings(type='sqlite', sqlite_path='outside.sqlite') = AppSettings(llm=LLMSettings(provider='mock', model=None), embedding=EmbeddingSettings(provider='fastembed', model='BAA...x_chunks_per_scope=0), onboarding=OnboardingSettings(mode='dev', preferred_host='claude-code', user_profile_id='test')).storage&#10; +        where AppSettings(llm=LLMSettings(provider='mock', model=None), embedding=EmbeddingSettings(provider='fastembed', model='BAA...x_chunks_per_scope=0), onboarding=OnboardingSettings(mode='dev', preferred_host='claude-code', user_profile_id='test')) = ResolvedSettings(settings=AppSettings(llm=LLMSettings(provider='mock', model=None), embedding=EmbeddingSettings(provid...posable_selectors_over0/disposable/settings.toml'), project_config_path=None, warnings=[], llm_provider_explicit=False).settings&#10; +  and   WindowsPath('D:/WindowsTemp/pytest-of-Ant/pytest-4317/test_disposable_selectors_over0/disposable') = PhaseEnvironment(root=WindowsPath('D:/WindowsTemp/pytest-of-Ant/pytest-4317/test_disposable_selectors_over0/disposable...gin_snapshot=WindowsPath('D:/WindowsTemp/pytest-of-Ant/pytest-4317/test_disposable_selectors_over0/disposable/plugin')).root">config = PhaseEnvironment(root=WindowsPath('D:/WindowsTemp/pytest-of-Ant/pytest-4317/test_disposable_selectors_over0/disposable...gin_snapshot=WindowsPath('D:/WindowsTemp/pytest-of-Ant/pytest-4317/test_disposable_selectors_over0/disposable/plugin'))
+monkeypatch = &lt;_pytest.monkeypatch.MonkeyPatch object at 0x000001213D852D60&gt;
+
+    def test_disposable_selectors_override_storage_from_every_config_layer(config, monkeypatch):
+        from mnemos.settings import load_settings
+    
+        outside = config.root.parent / "must-not-use.sqlite"
+        monkeypatch.setenv("MNEMOS_SQLITE_PATH", str(outside))
+        config.settings.write_text('[storage]\ntype="sqlite"\nsqlite_path="outside.sqlite"\n')
+        (config.project / ".mnemos.toml").write_text(
+            '[storage]\ntype="memory"\nsqlite_path="also-outside.sqlite"\n'
+        )
+        env = phases.clean_environment(phases._selectors(config, "claude-code", "outage"))
+        resolved = load_settings(env=env, cwd=config.project)
+        assert resolved.settings.storage.type == "sqlite"
+&gt;       assert Path(resolved.settings.storage.sqlite_path) == config.root / "memory.sqlite"
+E       AssertionError: assert WindowsPath('outside.sqlite') == (WindowsPath('D:/WindowsTemp/pytest-of-Ant/pytest-4317/test_disposable_selectors_over0/disposable') / 'memory.sqlite')
+E        +  where WindowsPath('outside.sqlite') = Path('outside.sqlite')
+E        +    where 'outside.sqlite' = StorageSettings(type='sqlite', sqlite_path='outside.sqlite').sqlite_path
+E        +      where StorageSettings(type='sqlite', sqlite_path='outside.sqlite') = AppSettings(llm=LLMSettings(provider='mock', model=None), embedding=EmbeddingSettings(provider='fastembed', model='BAA...x_chunks_per_scope=0), onboarding=OnboardingSettings(mode='dev', preferred_host='claude-code', user_profile_id='test')).storage
+E        +        where AppSettings(llm=LLMSettings(provider='mock', model=None), embedding=EmbeddingSettings(provider='fastembed', model='BAA...x_chunks_per_scope=0), onboarding=OnboardingSettings(mode='dev', preferred_host='claude-code', user_profile_id='test')) = ResolvedSettings(settings=AppSettings(llm=LLMSettings(provider='mock', model=None), embedding=EmbeddingSettings(provid...posable_selectors_over0/disposable/settings.toml'), project_config_path=None, warnings=[], llm_provider_explicit=False).settings
+E        +  and   WindowsPath('D:/WindowsTemp/pytest-of-Ant/pytest-4317/test_disposable_selectors_over0/disposable') = PhaseEnvironment(root=WindowsPath('D:/WindowsTemp/pytest-of-Ant/pytest-4317/test_disposable_selectors_over0/disposable...gin_snapshot=WindowsPath('D:/WindowsTemp/pytest-of-Ant/pytest-4317/test_disposable_selectors_over0/disposable/plugin')).root
+
+tests\test_native_phase_processes.py:93: AssertionError</failure></testcase><testcase classname="tests.test_native_phase_processes" name="test_auth_copy_refuses_to_overwrite_existing_file" time="0.011" /><testcase classname="tests.test_native_phase_processes" name="test_codex_home_is_generated_config_directory" time="0.004" /><testcase classname="tests.test_native_phase_processes" name="test_codex_setup_failure_records_failure_before_auth_copy" time="0.013" /><testcase classname="tests.test_native_phase_processes" name="test_codex_model_pin_is_command_bound_and_verified" time="0.024" /><testcase classname="tests.test_native_phase_processes" name="test_codex_legacy_mode_has_no_model_pin_or_observation_requirement" time="0.014" /><testcase classname="tests.test_native_phase_processes" name="test_codex_model_pin_rejects_missing_observation" time="0.008" /><testcase classname="tests.test_native_phase_processes" name="test_codex_model_pin_rejects_mismatched_observation" time="0.017" /><testcase classname="tests.test_native_phase_processes" name="test_codex_model_pin_rejects_later_bad_observation[observations0]" time="0.025" /><testcase classname="tests.test_native_phase_processes" name="test_codex_model_pin_rejects_later_bad_observation[observations1]" time="0.024" /><testcase classname="tests.test_native_phase_processes" name="test_codex_model_pin_rejects_prompt_integrity_failure[user_messages0]" time="0.025" /><testcase classname="tests.test_native_phase_processes" name="test_codex_model_pin_rejects_prompt_integrity_failure[user_messages1]" time="0.020" /><testcase classname="tests.test_native_phase_processes" name="test_codex_model_pin_rejects_prompt_integrity_failure[user_messages2]" time="0.023" /><testcase classname="tests.test_native_phase_processes" name="test_codex_model_pin_validates_slug_before_phase[]" time="0.004" /><testcase classname="tests.test_native_phase_processes" name="test_codex_model_pin_validates_slug_before_phase[bad/model]" time="0.003" /><testcase classname="tests.test_native_phase_processes" name="test_codex_model_pin_validates_slug_before_phase[xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx]" time="0.003" /><testcase classname="tests.test_native_phase_processes" name="test_codex_migration_notice_validates_before_phase[None-gpt-5.6-sol-requires a pinned model]" time="0.003" /><testcase classname="tests.test_native_phase_processes" name="test_codex_migration_notice_validates_before_phase[codex-pinned-bad/model-target]" time="0.003" /><testcase classname="tests.test_native_phase_processes" name="test_authentication_cleaned_on_process_failure_timeout_and_success[spawn]" time="0.017" /><testcase classname="tests.test_native_phase_processes" name="test_authentication_cleaned_on_process_failure_timeout_and_success[timeout]" time="0.018" /><testcase classname="tests.test_native_phase_processes" name="test_authentication_cleaned_on_process_failure_timeout_and_success[none]" time="0.018" /><testcase classname="tests.test_native_phase_processes" name="test_cleanup_error_cannot_leave_a_success_report_or_skip_auth_removal" time="0.012" /><testcase classname="tests.test_native_phase_processes" name="test_invalid_bounds_rejected_before_creating_phase[bounds0]" time="0.003" /><testcase classname="tests.test_native_phase_processes" name="test_invalid_bounds_rejected_before_creating_phase[bounds1]" time="0.003" /><testcase classname="tests.test_native_phase_processes" name="test_invalid_bounds_rejected_before_creating_phase[bounds2]" time="0.003" /><testcase classname="tests.test_native_phase_processes" name="test_unknown_mnemos_prefixed_tool_rejected_before_phase" time="0.003" /><testcase classname="tests.test_native_phase_processes" name="test_taskkill_error_after_natural_exit_is_not_a_cleanup_failure" time="0.002" /></testsuite></testsuites>

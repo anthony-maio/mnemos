@@ -194,13 +194,25 @@ class ServiceClientError(RuntimeError):
 class MnemosClient:
     """HTTP client with one bounded service autostart and honest degraded writes."""
 
+    @staticmethod
+    def _auto_start_setting() -> bool:
+        raw = os.environ.get("MNEMOS_AUTO_START")
+        if raw is None:
+            return True
+        value = raw.strip().lower()
+        if value in {"1", "true", "yes", "on"}:
+            return True
+        if value in {"0", "false", "no", "off"}:
+            return False
+        raise ValueError("MNEMOS_AUTO_START must be true/false, 1/0, yes/no, or on/off")
+
     def __init__(
         self,
         *,
         descriptor_path: str | Path | None = None,
         outbox: Outbox | None = None,
         outbox_path: str | Path | None = None,
-        auto_start: bool = True,
+        auto_start: bool | None = None,
         startup_timeout: float = 5.0,
         request_timeout: float = 10.0,
         python_executable: str | None = None,
@@ -221,7 +233,10 @@ class MnemosClient:
         )
         if startup_timeout <= 0 or request_timeout <= 0:
             raise ValueError("client timeouts must be positive")
-        self.auto_start = auto_start
+        # Explicit library arguments take precedence; host-created clients use
+        # the environment. Disabling startup still permits an existing owner
+        # and durable outbox capture when that owner is unavailable.
+        self.auto_start = self._auto_start_setting() if auto_start is None else auto_start
         self.startup_timeout = startup_timeout
         self.request_timeout = request_timeout
         self.python_executable = python_executable or sys.executable

@@ -163,7 +163,6 @@ async def _serve_once(*, descriptor: Path, max_request_bytes: int, deadline: flo
             raise ValueError("bridge request requires operation and object payload")
         client = MnemosClient(
             descriptor_path=descriptor,
-            auto_start=True,
             startup_timeout=deadline,
             request_timeout=deadline,
         )

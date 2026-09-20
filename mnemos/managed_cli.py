@@ -32,7 +32,7 @@ def resolve_context() -> ScopeContext:
 async def run_command(args: Namespace) -> dict[str, Any]:
     response: dict[str, Any]
     command = args.command
-    client = MnemosClient(auto_start=command != "service-stop")
+    client = MnemosClient(auto_start=False if command == "service-stop" else None)
     if command == "service-stop":
         from .service import read_runtime_descriptor
 

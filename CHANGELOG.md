@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- Client-created services now honor `MNEMOS_AUTO_START`, including bridge and managed CLI requests. Disabling startup preserves local capture buffering and access to an existing owner. Disposable native phases also pin their database and runtime paths.
+
 - Configurations that omit an LLM provider now start with cognition unavailable instead of being mistaken for an explicit mock selection. Explicit mock cognition remains rejected by the managed runtime.
 - Managed services now keep private, rotating JSON logs for startup, retrieval timing, and failure categories, with exception text and user content excluded from the file log.
 - Provider failure logs now record exception types instead of exception messages, keeping request content and credentials out of those structured events while preserving exceptions and retry behavior for callers.
