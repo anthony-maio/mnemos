@@ -1,0 +1,32 @@
+"""Deterministic reproduction of active work outliving the fixed job lease."""
+from pathlib import Path
+from datetime import datetime,timedelta,timezone
+import asyncio,json,inspect
+from mnemos.jobs import DurableJob
+from mnemos.maintenance import MaintenanceScheduler
+from mnemos.utils.storage import SQLiteStore
+
+root=Path('C:/Users/Ant/AppData/Local/Temp/mnemos-long-job-lease-reproduction-v1');root.mkdir(exist_ok=False)
+async def main():
+ store=SQLiteStore(str(root/'memory.sqlite'))
+ start=datetime.now(timezone.utc);clock=[start];observations=[]
+ job=store.enqueue_job(DurableJob(kind='lease-reproduction',created_at=start,available_at=start,max_attempts=3))
+ async def process(claimed):
+  # Simulate successful awaited provider work taking longer than the fixed lease.
+  await asyncio.sleep(0)
+  clock[0]=start+timedelta(seconds=301)
+  accepted=store.complete_job(claimed.id,owner=claimed.lease_owner,lease_token=claimed.lease_token,result={'provider_work':'succeeded'},now=clock[0])
+  observations.append({'claimed':claimed.model_dump(mode='json'),'finished_at':clock[0].isoformat(),'commit_accepted':accepted})
+  if not accepted:raise RuntimeError('Successful work lost lease before commit')
+ scheduler=MaintenanceScheduler(store,process,clock=lambda:clock[0],batch_limit=1)
+ try:
+  completed=await scheduler.run_once(force=True)
+  after=store.get_job(job.id)
+  assert completed==0 and observations[0]['commit_accepted'] is False
+  assert after.status=='leased' and after.attempt_count==1
+  reclaimed=store.claim_jobs(owner='next-worker',now=clock[0])
+  assert len(reclaimed)==1 and reclaimed[0].id==job.id and reclaimed[0].attempt_count==2
+  record={'status':'reproduced','installed_origin':str(Path(inspect.getfile(MaintenanceScheduler)).resolve()),'source_commit':'d93789250ed1cd9aac31a58da1cb932e93b41582','clock':'controlled, 301 elapsed seconds; no wall-clock delay or model call','competing_worker_during_processing':False,'completed':completed,'observations':observations,'after_processing':after.model_dump(mode='json'),'reclaimed':reclaimed[0].model_dump(mode='json'),'limits':'Scheduler lease lifetime reproduction only. It does not claim a recorded real-model timeout or that expired owners should bypass fencing.'}
+  (root/'result.json').write_text(json.dumps(record,indent=2)+'\n');print(json.dumps({'status':record['status'],'completed':completed,'commit_accepted':False,'reclaimed_attempt':2}))
+ finally:store.close()
+asyncio.run(main())

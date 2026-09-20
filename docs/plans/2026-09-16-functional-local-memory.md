@@ -431,6 +431,11 @@ The first probe's incorrect one-attempt expectation remains preserved in v1.
 A [real-provider continuation](../validation/2026-09-20/all-module-provider-recovery-preparation-v1/README.md)
 is frozen from that database and NOT RUN; it does not yet close recovery.
 
+Additional recovery gap: [active work can outlive its fixed lease](../validation/2026-09-20/long-job-lease-reproduction-v1/README.md).
+A controlled-clock installed reproduction rejects successful completion at
+301 seconds with no competing owner, then reclaims the same job. Fenced lease
+renewal and scheduler cancellation/race checks are required; this gap is open.
+
 ### T18 - Prove the contribution of all five modules
 
 The [alternative seed structural audit](../validation/2026-09-20/alternative-graph-seed-audit-v1/README.md)
