@@ -1,0 +1,35 @@
+from pathlib import Path
+import hashlib,json,shutil
+repo=Path.cwd();src=Path('C:/Users/Ant/AppData/Local/Temp/mnemos-extraction-temperature-one-v1')
+sha=lambda p:hashlib.sha256(p.read_bytes()).hexdigest()
+prep=json.loads((src/'preparation.json').read_bytes())
+for name,digest in prep['files'].items(): assert sha(src/name)==digest
+out=repo/'docs/validation/2026-09-20/extraction-temperature-one-preparation-v1';out.mkdir(exist_ok=False)
+(out/'.gitattributes').write_bytes(b'** -text -whitespace\n')
+for name in [*prep['files'],'preparation.json']: shutil.copyfile(src/name,out/name)
+shutil.copyfile(__file__,out/'collector.py.txt')
+(out/'README.md').write_text('''# Temperature-only extraction diagnostic: frozen preparation
+
+Status at preparation: NOT RUN. This freezes 40 calls over all 20 previously
+executed authored cases, using the original production/history prompt arms.
+Only temperature changes from zero to 1.0. Source 05c71d2, model digest,
+8,192-token budget, thinking mode, schema and rubric remain fixed. The recent
+missing-target prompt clause is not included. No selective retry is allowed.
+
+The [model author's guidance](https://huggingface.co/Qwen/Qwen3.5-9B#best-practices)
+recommends nonzero sampling temperatures, including 1.0 for thinking general
+tasks, alongside other sampling controls. This experiment isolates temperature;
+it does not implement that entire recipe or establish why earlier calls failed.
+The local server reports Ollama 0.34.1. Existing reports about older releases
+are not proof of a defect in this installation.
+
+One stochastic repetition can identify a candidate for further testing but
+cannot establish reliability or justify adopting a production configuration.
+All runtime errors, omissions and unsupported assertions remain failures under
+the original authored rubric. Earlier results and P07/N10 ambiguities remain
+unchanged. These are reused development cases, not unseen held-out evidence.
+The terminal result belongs in a separate archive after the run finishes.
+''')
+files={p.name:{'bytes':p.stat().st_size,'sha256':sha(p)} for p in sorted(out.iterdir()) if p.is_file()}
+(out/'evidence-index.json').write_text(json.dumps({'files':files},indent=2)+'\n')
+print(json.dumps({'archive':str(out),'files':len(files)}))
