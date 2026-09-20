@@ -1,0 +1,66 @@
+from hermes_state import SessionDB
+
+
+def _merged_carrier(db, session_id, child_id, role):
+    from agent.context_compressor import ContextCompressor
+    carrier = db.get_messages_as_conversation(session_id, include_row_ids=True)[0]
+    compressor = ContextCompressor('fixture')
+    compressor._summary_has_user_turn = True
+    compressor._merge_summary_into_tail_row(carrier, 'derived summary', 'user', False)
+    db.publish_compression_child(
+        parent_session_id=session_id, child_session_id=child_id, source='cli',
+        messages=[carrier], require_compression_lease=False,
+    )
+    return carrier
+
+
+def test_assistant_merged_carrier_splits_with_assistant_roles_and_origin(tmp_path):
+    db = SessionDB(tmp_path / 'state.db')
+    db.create_session('parent', 'cli', cwd=str(tmp_path))
+    db.append_message('parent', 'assistant', 'original answer')
+    _merged_carrier(db, 'parent', 'child', 'assistant')
+    evidence = db.get_memory_evidence('child')
+    assert [item['_memory_evidence_kind'] for item in evidence] == ['derived_summary', 'retained_original']
+    assert [item['role'] for item in evidence] == ['assistant', 'assistant']
+    assert evidence[1]['_memory_origin']['session_id'] == 'parent'
+
+
+def test_flagged_standalone_user_summary_is_derived_only(tmp_path):
+    db = SessionDB(tmp_path / 'state.db')
+    db.create_session('session', 'cli', cwd=str(tmp_path))
+    db.append_message('session', 'user', 'standalone summary', _compressed_summary=True)
+    evidence = db.get_memory_evidence('session')
+    assert len(evidence) == 1
+    assert evidence[0]['_memory_evidence_kind'] == 'derived_summary'
+
+
+def test_unchanged_assistant_carrier_recopy_keeps_ids_and_classification(tmp_path):
+    db = SessionDB(tmp_path / 'state.db')
+    db.create_session('parent', 'cli', cwd=str(tmp_path))
+    db.append_message('parent', 'assistant', 'original answer')
+    carrier = _merged_carrier(db, 'parent', 'child', 'assistant')
+    before = db.get_memory_evidence('child')
+    replay = db.get_messages_as_conversation('child', include_row_ids=True)
+    db.append_messages_batch('child', replay)
+    after = db.get_memory_evidence('child')
+    assert [(x['_memory_evidence_kind'], x['_row_id']) for x in after] == [
+        (x['_memory_evidence_kind'], x['_row_id']) for x in before
+    ]
+
+
+def test_tampered_derived_component_rejects_assistant_recopy(tmp_path):
+    db = SessionDB(tmp_path / 'state.db')
+    db.create_session('parent', 'cli', cwd=str(tmp_path))
+    db.append_message('parent', 'assistant', 'original answer')
+    _merged_carrier(db, 'parent', 'child', 'assistant')
+    db._write_sql(
+        "UPDATE message_evidence_components SET content = ? WHERE component_kind = 'derived_summary'",
+        (db._encode_content('tampered'),),
+    )
+    replay = db.get_messages_as_conversation('child', include_row_ids=True)
+    try:
+        db.append_messages_batch('child', replay)
+    except ValueError:
+        pass
+    else:
+        raise AssertionError('tampered derived component was accepted')

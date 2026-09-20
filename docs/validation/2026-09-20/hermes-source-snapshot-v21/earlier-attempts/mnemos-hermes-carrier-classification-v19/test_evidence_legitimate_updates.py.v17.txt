@@ -1,0 +1,94 @@
+from hermes_state import SessionDB
+
+
+def test_recovered_blank_assistant_has_durable_evidence(tmp_path):
+    db = SessionDB(tmp_path / 'state.db')
+    try:
+        db.create_session('session', 'cli', cwd=str(tmp_path))
+        row = {'role': 'assistant', 'content': ''}
+        assert db.append_messages_batch('session', [row]) == 1
+        row_id = row['_row_id']
+        row['content'] = 'The final streamed answer.'
+        assert db.append_messages_batch('session', [row]) == 0
+        assert len(db.get_messages('session')) == 1
+        evidence = db.get_memory_evidence('session')
+        assert [(r['_row_id'], r['content']) for r in evidence] == [(row_id, row['content'])]
+    finally:
+        db.close()
+
+
+def test_legitimate_user_expansion_refreshes_evidence(tmp_path):
+    db = SessionDB(tmp_path / 'state.db')
+    try:
+        db.create_session('session', 'cli', cwd=str(tmp_path))
+        row_id = db.append_message('session', 'user', 'Read @notes')
+        expanded = 'Read @notes\nResolved local notes content.'
+        assert db.set_user_message_content('session', row_id, expanded) == 1
+        assert db.get_messages('session')[0]['content'] == expanded
+        evidence = db.get_memory_evidence('session')
+        assert [(r['_row_id'], r['content']) for r in evidence] == [(row_id, expanded)]
+    finally:
+        db.close()
+
+
+from hermes_state import SessionDB
+
+
+def test_replay_preserves_derived_summary_classification(tmp_path):
+    db = SessionDB(tmp_path / 'state.db')
+    db.create_session('session', 'cli', cwd=str(tmp_path))
+    row = {'role': 'assistant', 'content': 'derived', '_compressed_summary': True}
+    db.append_messages_batch('session', [row])
+    assert db.get_memory_evidence('session')[0]['_memory_evidence_kind'] == 'derived_summary'
+    db.append_messages_batch('session', [dict(row)])
+    evidence = db.get_memory_evidence('session')
+    assert [item['_memory_evidence_kind'] for item in evidence] == ['derived_summary']
+
+
+def test_tampered_component_replay_remains_rejected(tmp_path):
+    db = SessionDB(tmp_path / 'state.db')
+    db.create_session('session', 'cli', cwd=str(tmp_path))
+    row = {'role': 'assistant', 'content': 'derived', '_compressed_summary': True}
+    db.append_messages_batch('session', [row])
+    db._write_sql("UPDATE message_evidence_components SET content = ?", (db._encode_content('tampered'),))
+    try:
+        db.append_messages_batch('session', [dict(row)])
+    except ValueError:
+        pass
+    else:
+        raise AssertionError('tampered evidence replay was accepted')
+
+
+def test_user_update_rolls_back_when_evidence_refresh_fails(tmp_path, monkeypatch):
+    db = SessionDB(tmp_path / 'state.db')
+    db.create_session('session', 'cli', cwd=str(tmp_path))
+    row_id = db.append_message('session', 'user', 'before')
+    original = db._insert_evidence_components
+    def fail(*args, **kwargs):
+        raise ValueError('injected evidence failure')
+    monkeypatch.setattr(db, '_insert_evidence_components', fail)
+    try:
+        db.set_user_message_content('session', row_id, 'after')
+    except ValueError:
+        pass
+    else:
+        raise AssertionError('evidence failure was not propagated')
+    monkeypatch.setattr(db, '_insert_evidence_components', original)
+    assert db.get_messages('session')[0]['content'] == 'before'
+
+
+def test_hybrid_user_update_preserves_component_classification(tmp_path):
+    from agent.context_compressor import ContextCompressor
+    db = SessionDB(tmp_path / 'state.db')
+    db.create_session('parent', 'cli', cwd=str(tmp_path))
+    db.append_message('parent', 'user', 'live request')
+    carrier = db.get_messages_as_conversation('parent', include_row_ids=True)[0]
+    compressor = ContextCompressor('fixture')
+    compressor._summary_has_user_turn = True
+    compressor._merge_summary_into_tail_row(carrier, 'derived summary', 'user', False)
+    db.publish_compression_child(parent_session_id='parent', child_session_id='child',
+        source='cli', messages=[carrier], require_compression_lease=False)
+    child = db.get_messages_as_conversation('child', include_row_ids=True)[0]
+    db.set_user_message_content('child', child['_row_id'], child['content'] + '\nexpanded')
+    kinds = [row['_memory_evidence_kind'] for row in db.get_memory_evidence('child')]
+    assert kinds == ['derived_summary', 'retained_original']

@@ -1,0 +1,83 @@
+........................................................................ [  5%]
+........................................................................ [ 10%]
+.........................s...............ss.s.sss....................... [ 15%]
+........................................................................ [ 20%]
+........................................................................ [ 25%]
+........................................................................ [ 30%]
+........................................................................ [ 35%]
+........................................................................ [ 40%]
+...........F............................................................ [ 45%]
+........................................................................ [ 50%]
+........................................................................ [ 55%]
+........................................................................ [ 60%]
+...............................................................s........ [ 65%]
+........................................................................ [ 70%]
+........................................................................ [ 75%]
+...............................................................s........ [ 80%]
+........................................................................ [ 85%]
+......................................................................s. [ 90%]
+........................................................................ [ 95%]
+...............s............................................             [100%]
+=================================== FAILURES ===================================
+_________ TestApplyWalProbe.test_apply_wal_concurrent_connects_no_eio __________
+
+self = <tests.hermes_state.test_hermes_state.TestApplyWalProbe object at 0x76c930fa5490>
+tmp_path = PosixPath('/tmp/pytest-of-anthony/pytest-99/test_apply_wal_concurrent_conn0')
+
+    def test_apply_wal_concurrent_connects_no_eio(self, tmp_path):
+        """20 threads calling connect() on the same DB must not see disk I/O error."""
+        import sys
+        import threading
+        import sqlite3
+        from hermes_state_wal import apply_wal_with_fallback
+    
+        db_path = tmp_path / "concurrent.db"
+        errors = []
+    
+        def _connect_cycle():
+            for _ in range(5):
+                try:
+                    conn = sqlite3.connect(str(db_path))
+                    apply_wal_with_fallback(conn)
+                    conn.close()
+                except sqlite3.OperationalError as exc:
+                    if "disk i/o error" in str(exc).lower():
+                        errors.append(exc)
+    
+        threads = [threading.Thread(target=_connect_cycle) for _ in range(20)]
+        for t in threads:
+            t.start()
+        for t in threads:
+            t.join()
+    
+        assert not errors, f"disk I/O errors from concurrent connects: {errors}"
+    
+        # Linux-only: no (deleted) WAL/SHM FDs should accumulate.
+        if sys.platform == "linux":
+            import os
+    
+            fd_dir = f"/proc/{os.getpid()}/fd"
+            deleted_fds = []
+            for fd_name in os.listdir(fd_dir):
+                try:
+                    target = os.readlink(os.path.join(fd_dir, fd_name))
+                    if "(deleted)" in target and (
+                        "wal" in target.lower() or "shm" in target.lower()
+                    ):
+                        deleted_fds.append(target)
+                except OSError:
+                    pass
+>           assert not deleted_fds, f"stale deleted WAL/SHM FDs: {deleted_fds}"
+E           AssertionError: stale deleted WAL/SHM FDs: ['/tmp/pytest-of-anthony/pytest-99/test_close_after_halt_runs_no_0/state.db-wal (deleted)', '/tmp/pytest-of-anthony/pytest-99/test_close_after_halt_runs_no_0/state.db-shm (deleted)', '/tmp/pytest-of-anthony/pytest-99/test_iter_finds_self_after_wal0/state.db-wal (deleted)', '/tmp/pytest-of-anthony/pytest-99/test_iter_finds_self_after_wal0/state.db-shm (deleted)', '/tmp/pytest-of-anthony/pytest-99/test_second_sessiondb_open_ref0/state.db-wal (deleted)', '/tmp/pytest-of-anthony/pytest-99/test_second_sessiondb_open_ref0/state.db-shm (deleted)', '/tmp/pytest-of-anthony/pytest-99/test_iter_holders_flags_orphan0/state.db-wal (deleted)', '/tmp/pytest-of-anthony/pytest-99/test_iter_holders_flags_orphan0/state.db-shm (deleted)', '/tmp/pytest-of-anthony/pytest-99/test_writer_halts_after_own_wa0/state.db-wal (deleted)', '/tmp/pytest-of-anthony/pytest-99/test_writer_halts_after_own_wa0/state.db-shm (deleted)', '/tmp/pytest-of-anthony/pytest-99/test_retirement_preserves_reco0/state.db-wal (deleted)', '/tmp/pytest-of-anthony/pytest-99/test_retirement_preserves_reco0/state.db-shm (deleted)', '/tmp/pytest-of-anthony/pytest-99/test_retirement_preserves_reco1/state.db-wal (deleted)', '/tmp/pytest-of-anthony/pytest-99/test_retirement_preserves_reco1/state.db-shm (deleted)']
+E           assert not ['/tmp/pytest-of-anthony/pytest-99/test_close_after_halt_runs_no_0/state.db-wal (deleted)', '/tmp/pytest-of-anthony/py...tate.db-wal (deleted)', '/tmp/pytest-of-anthony/pytest-99/test_second_sessiondb_open_ref0/state.db-shm (deleted)', ...]
+
+tests/hermes_state/test_hermes_state.py:4901: AssertionError
+=============================== warnings summary ===============================
+tests/hermes_state/test_journal_mode_config.py::test_real_db_openers_honor_configured_delete
+  /home/anthony/.hermes/hermes-agent/venv/lib/python3.11/site-packages/discord/player.py:30: DeprecationWarning: 'audioop' is deprecated and slated for removal in Python 3.13
+    import audioop
+
+-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html
+=========================== short test summary info ============================
+FAILED tests/hermes_state/test_hermes_state.py::TestApplyWalProbe::test_apply_wal_concurrent_connects_no_eio
+1 failed, 1416 passed, 11 skipped, 1 warning in 167.20s (0:02:47)

@@ -1,0 +1,49 @@
+<?xml version="1.0" encoding="utf-8"?><testsuites name="pytest tests"><testsuite name="pytest" errors="0" failures="1" skipped="0" tests="18" time="7.310" timestamp="2026-09-20T19:44:46.729275+00:00" hostname="Aurora"><testcase classname="tests.agent.test_memory_source_snapshot" name="test_marker_only_originals_are_saved_and_idempotent" time="0.080" /><testcase classname="tests.agent.test_memory_source_snapshot" name="test_legacy_prefix_and_uncommitted_suffix" time="0.022" /><testcase classname="tests.agent.test_memory_source_snapshot" name="test_foreign_identity_rejected_without_writes" time="0.022" /><testcase classname="tests.agent.test_memory_source_snapshot" name="test_failure_rolls_back_rows_and_caller_stamps" time="0.023" /><testcase classname="tests.agent.test_memory_source_snapshot" name="test_multimodal_and_whitespace_durable_prefix" time="0.022" /><testcase classname="tests.agent.test_memory_source_snapshot" name="test_changed_tool_name_rejected" time="0.021" /><testcase classname="tests.agent.test_compression_persistence.TestFlushAfterCompression" name="test_flush_after_compression_with_long_history" time="2.869" /><testcase classname="tests.agent.test_compression_persistence.TestFlushAfterCompression" name="test_flush_with_stale_history_loses_messages" time="0.435" /><testcase classname="tests.agent.test_compression_persistence.TestFlushAfterCompression" name="test_in_place_compression_rebaseline_prevents_duplicate_compacted_rows" time="0.381" /><testcase classname="tests.agent.test_compression_persistence.TestFlushAfterCompression" name="test_abort_after_in_place_compaction_preserves_flush_baseline" time="1.699" /><testcase classname="tests.agent.test_compression_persistence.TestFlushAfterCompression" name="test_rotation_child_session_flushes_full_compressed_transcript_with_markers" time="0.892"><failure message="AssertionError: assert '20260701_152840_parent' != '20260701_152840_parent'&#10; +  where '20260701_152840_parent' = &lt;run_agent.AIAgent object at 0x7f5a85f98c50&gt;.session_id">self = &lt;tests.agent.test_compression_persistence.TestFlushAfterCompression object at 0x7f5a874878d0&gt;
+
+    def test_rotation_child_session_flushes_full_compressed_transcript_with_markers(self):
+        """Regression for #57491: live cached-agent markers must not block child flush."""
+        from agent.conversation_compression import compress_context
+        from hermes_state import SessionDB
+    
+        with tempfile.TemporaryDirectory() as tmpdir:
+            db_path = Path(tmpdir) / "test.db"
+            db = SessionDB(db_path=db_path)
+            parent_sid = "20260701_152840_parent"
+            db.create_session(parent_sid, "gateway", model="test/model")
+    
+            agent = self._make_agent(db)
+            agent.session_id = parent_sid
+            agent.compression_in_place = False
+            agent._ensure_db_session()
+    
+            # Plain marked messages only: the exact-equality assertion below
+            # relies on `compressed` containing no message that _flush filters
+            # for a reason INDEPENDENT of _db_persisted (ephemeral scaffolding,
+            # synthetic recovery turns). Keep this fixture free of such messages
+            # or the row count would legitimately differ from len(compressed).
+            # The transcript must also be large enough that the provider-less
+            # static fallback net-shrinks it (middle drops must outweigh the
+            # fixed compaction marker overhead), or the no-growth commit guard
+            # correctly refuses the rotation this test exercises. Sized for
+            # the lean tail default: the 10K-token tail floor must leave a
+            # substantial compressible middle (~2K chars/message × 40 ≈ 20K
+            # estimated tokens total).
+            messages = [
+                {
+                    "role": "user" if i % 2 == 0 else "assistant",
+                    "content": f"message {i} " + "x" * 2000,
+                    "_db_persisted": True,
+                }
+                for i in range(40)
+            ]
+    
+            with patch("agent.context_compressor.call_llm", side_effect=RuntimeError("no provider")):
+                compressed, _ = compress_context(
+                    agent, messages, approx_tokens=100_000, system_message="sys"
+                )
+    
+&gt;           assert agent.session_id != parent_sid
+E           AssertionError: assert '20260701_152840_parent' != '20260701_152840_parent'
+E            +  where '20260701_152840_parent' = &lt;run_agent.AIAgent object at 0x7f5a85f98c50&gt;.session_id
+
+tests/agent/test_compression_persistence.py:320: AssertionError</failure></testcase><testcase classname="tests.agent.test_compression_persistence.TestGatewayHistoryOffsetAfterSplit" name="test_history_offset_zero_on_session_split" time="0.011" /><testcase classname="tests.agent.test_compression_persistence.TestGatewayHistoryOffsetAfterSplit" name="test_new_messages_extraction_after_split" time="0.005" /><testcase classname="tests.agent.test_compression_persistence.TestStoredPromptCwdDrift" name="test_stored_prompt_stale_when_cwd_differs" time="0.005" /><testcase classname="tests.agent.test_compression_persistence.TestStoredPromptCwdDrift" name="test_stored_prompt_fresh_when_cwd_matches" time="0.005" /><testcase classname="tests.agent.test_compression_persistence.TestStoredPromptCwdDrift" name="test_project_context_cannot_force_a_rebuild" time="0.007" /><testcase classname="tests.agent.test_compression_persistence.TestStoredPromptCwdDrift" name="test_project_context_cannot_mask_real_drift" time="0.005" /><testcase classname="tests.agent.test_compression_persistence.TestStoredPromptCwdDrift" name="test_built_prompt_contains_platform_line" time="0.494" /></testsuite></testsuites>

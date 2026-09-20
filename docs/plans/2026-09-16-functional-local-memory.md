@@ -335,6 +335,15 @@ Run: `py -3.13 -m pytest -q tests/test_backup_restore.py tests/test_storage_sqli
 
 ### T17 - Verify the complete local and cross-host workflow
 
+The [pre-compression source snapshot follow-up](../validation/2026-09-20/hermes-source-snapshot-v21/README.md)
+passes 23 focused cases after persisting original evidence before compression,
+advancing its lease watermark, and correcting carrier classification. One
+fixture now uses its actual seeded transcript; a separate regression rejects
+unrelated transcript claims. The complete SessionDB selection records 1,416
+passes, 11 skips, and one WAL-test failure also seen in the earlier baseline.
+Two further provenance risks require runtime reproduction. This remains an
+isolated host candidate and does not close T17.
+
 The [isolated Hermes boundary candidate](../validation/2026-09-20/hermes-boundary-projection-v15/README.md)
 passes 96 of 99 combined cases. Row-ID and /new projection repairs pass their
 focused checks; compression provenance and two legitimate evidence-update

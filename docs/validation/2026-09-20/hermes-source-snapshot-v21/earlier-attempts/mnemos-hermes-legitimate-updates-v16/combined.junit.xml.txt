@@ -1,0 +1,76 @@
+<?xml version="1.0" encoding="utf-8"?><testsuites name="pytest tests"><testsuite name="pytest" errors="0" failures="2" skipped="0" tests="25" time="4.848" timestamp="2026-09-20T15:37:24.918007-04:00" hostname="Aurora"><testcase classname="tests.hermes_state.test_evidence_legitimate_updates" name="test_recovered_blank_assistant_has_durable_evidence" time="0.039" /><testcase classname="tests.hermes_state.test_evidence_legitimate_updates" name="test_legitimate_user_expansion_refreshes_evidence" time="0.040" /><testcase classname="tests.hermes_state.test_unscoped_memory_evidence" name="test_unscoped_ordinary_compression_rows_remain_transcript_only" time="0.020" /><testcase classname="tests.hermes_state.test_unscoped_memory_evidence" name="test_unscoped_hybrid_compression_row_remains_transcript_only" time="0.021" /><testcase classname="tests.hermes_state.test_unscoped_memory_evidence" name="test_unscoped_repeated_compaction_preserves_transcript_without_evidence" time="0.020" /><testcase classname="tests.hermes_state.test_unscoped_memory_evidence" name="test_scoped_hybrid_without_verified_origin_is_rejected" time="0.018" /><testcase classname="tests.agent.test_tool_call_incremental_persistence" name="test_run_conversation_flushes_assistant_tool_call_before_execution" time="0.410" /><testcase classname="tests.agent.test_tool_call_incremental_persistence" name="test_interim_assistant_is_durable_before_ui_projection_on_abnormal_exit" time="0.232" /><testcase classname="tests.agent.test_tool_call_incremental_persistence" name="test_failed_assistant_persist_blocks_ui_projection_and_tool_side_effects" time="0.202" /><testcase classname="tests.agent.test_tool_call_incremental_persistence" name="test_locked_flush_exception_surfaces_locked_cause_in_result_contract" time="0.162" /><testcase classname="tests.agent.test_tool_call_incremental_persistence" name="test_persistence_cause_resets_between_turns" time="0.184" /><testcase classname="tests.agent.test_tool_call_incremental_persistence" name="test_execute_tool_calls_sequential_flushes_each_tool_result_before_next_dispatch" time="0.190" /><testcase classname="tests.agent.test_tool_call_incremental_persistence" name="test_sequential_keyboard_interrupt_emits_results_for_all_calls" time="0.195" /><testcase classname="tests.agent.test_tool_call_incremental_persistence" name="test_tool_result_is_durable_before_ui_completion_on_abnormal_exit[sequential]" time="0.194" /><testcase classname="tests.agent.test_tool_call_incremental_persistence" name="test_tool_result_is_durable_before_ui_completion_on_abnormal_exit[concurrent]" time="0.186" /><testcase classname="tests.agent.test_tool_call_incremental_persistence" name="test_failed_tool_result_persist_blocks_completion_projection[sequential]" time="0.147" /><testcase classname="tests.agent.test_tool_call_incremental_persistence" name="test_failed_tool_result_persist_blocks_completion_projection[concurrent]" time="0.155" /><testcase classname="tests.agent.test_tool_call_incremental_persistence" name="test_segmented_batch_stops_before_later_segment_after_persist_failure" time="0.153" /><testcase classname="tests.agent.test_tool_call_incremental_persistence" name="test_execute_tool_calls_concurrent_flushes_each_tool_result_in_order" time="0.155" /><testcase classname="tests.agent.test_tool_call_incremental_persistence" name="test_empty_final_response_updates_already_flushed_blank_assistant_row" time="0.191" /><testcase classname="tests.agent.test_tool_call_incremental_persistence" name="test_flush_stale_row_id_from_other_session_still_inserts" time="0.238"><failure message="AssertionError: assert [] == ['p-user', 'p...', 'c-answer']&#10;  &#10;  Right contains 4 more items, first extra item: 'p-user'&#10;  Use -v to get more diff">tmp_path = PosixPath('/tmp/pytest-of-anthony/pytest-82/test_flush_stale_row_id_from_o0')
+
+    def test_flush_stale_row_id_from_other_session_still_inserts(tmp_path):
+        """Copied dicts that keep a parent _row_id must still INSERT in a child session."""
+        parent = _make_agent()
+        child = _make_agent()
+        db_path = tmp_path / "state.db"
+        _attach_real_session_db(parent, db_path, "sess-parent")
+        _attach_real_session_db(child, db_path, "sess-child")
+        parent_msgs = [
+            {"role": "user", "content": "p-user"},
+            {"role": "assistant", "content": "p-answer"},
+        ]
+        parent._flush_messages_to_session_db(parent_msgs)
+        copies = [{k: v for k, v in m.items() if k != "_db_persisted"} for m in parent_msgs]
+        copies.extend(
+            [
+                {"role": "user", "content": "c-user"},
+                {"role": "assistant", "content": "c-answer"},
+            ]
+        )
+        child._flush_messages_to_session_db(copies)
+        reloaded = _durable_messages(db_path, "sess-child")
+&gt;       assert [m.get("content") for m in reloaded] == [
+            "p-user",
+            "p-answer",
+            "c-user",
+            "c-answer",
+        ]
+E       AssertionError: assert [] == ['p-user', 'p...', 'c-answer']
+E         
+E         Right contains 4 more items, first extra item: 'p-user'
+E         Use -v to get more diff
+
+tests/agent/test_tool_call_incremental_persistence.py:707: AssertionError</failure></testcase><testcase classname="tests.agent.test_tool_call_incremental_persistence" name="test_flush_stale_row_id_from_other_session_does_not_fill_child_blank" time="0.208"><failure message="AssertionError: assert ['c-keep', ''] == ['c-keep', ''...', 'c-answer']&#10;  &#10;  Right contains 4 more items, first extra item: 'p-user'&#10;  Use -v to get more diff">tmp_path = PosixPath('/tmp/pytest-of-anthony/pytest-82/test_flush_stale_row_id_from_o1')
+
+    def test_flush_stale_row_id_from_other_session_does_not_fill_child_blank(tmp_path):
+        """A parent `_row_id` must INSERT in the child, not steal a blank tail."""
+        parent = _make_agent()
+        child = _make_agent()
+        db_path = tmp_path / "state.db"
+        _attach_real_session_db(parent, db_path, "sess-parent")
+        _attach_real_session_db(child, db_path, "sess-child")
+        parent_msgs = [
+            {"role": "user", "content": "p-user"},
+            {"role": "assistant", "content": "p-answer"},
+        ]
+        parent._flush_messages_to_session_db(parent_msgs)
+        child_msgs = [
+            {"role": "user", "content": "c-keep"},
+            {"role": "assistant", "content": ""},
+        ]
+        child._flush_messages_to_session_db(child_msgs)
+        copies = [{k: v for k, v in m.items() if k != "_db_persisted"} for m in parent_msgs]
+        copies.extend(
+            [
+                {"role": "user", "content": "c-user"},
+                {"role": "assistant", "content": "c-answer"},
+            ]
+        )
+        child._flush_messages_to_session_db(copies)
+        reloaded = _durable_messages(db_path, "sess-child")
+&gt;       assert [m.get("content") for m in reloaded] == [
+            "c-keep",
+            "",
+            "p-user",
+            "p-answer",
+            "c-user",
+            "c-answer",
+        ]
+E       AssertionError: assert ['c-keep', ''] == ['c-keep', ''...', 'c-answer']
+E         
+E         Right contains 4 more items, first extra item: 'p-user'
+E         Use -v to get more diff
+
+tests/agent/test_tool_call_incremental_persistence.py:741: AssertionError</failure></testcase><testcase classname="tests.agent.test_tool_call_incremental_persistence" name="test_flush_archived_same_session_row_id_fills_active_clone" time="0.177" /><testcase classname="tests.agent.test_tool_call_incremental_persistence" name="test_flush_atomic_mixed_repair_and_append_rollback_on_failure" time="0.178" /><testcase classname="tests.agent.test_tool_call_incremental_persistence" name="test_flush_concurrent_nonblank_winner_adopts_canonical_content" time="0.167" /></testsuite></testsuites>

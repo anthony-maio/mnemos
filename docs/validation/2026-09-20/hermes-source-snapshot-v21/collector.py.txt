@@ -1,0 +1,72 @@
+from pathlib import Path
+import hashlib
+import json
+import shutil
+import subprocess
+import xml.etree.ElementTree as ET
+
+repo = Path('/mnt/d/Development/mnemos/mnemos/.worktrees/functional-local-memory')
+root = Path('/tmp/mnemos-hermes-compaction-origin-candidate-v1')
+out = repo / 'docs/validation/2026-09-20/hermes-source-snapshot-v21'
+out.mkdir(exist_ok=False)
+(out / '.gitattributes').write_bytes(b'** -text -whitespace\n')
+patch = subprocess.check_output(['git', 'diff', '--binary'], cwd=root)
+(out / 'candidate.patch').write_bytes(patch)
+names = subprocess.check_output(['git', 'diff', '--name-only'], cwd=root).decode().splitlines()
+names += ['agent/memory_source_snapshot.py', 'tests/agent/test_memory_source_snapshot.py',
+          'tests/hermes_state/test_actual_carrier_components.py',
+          'tests/hermes_state/test_evidence_legitimate_updates.py']
+for name in sorted(set(names)):
+    dest = out / 'source' / (name + '.txt')
+    dest.parent.mkdir(parents=True, exist_ok=True)
+    shutil.copyfile(root / name, dest)
+results = {}
+for prefix in ['source-snapshot-v17', 'source-snapshot-v18', 'source-snapshot-v18-scope',
+               'source-snapshot-v20', 'source-snapshot-v21',
+               'boundary-combined-root-v20', 'hermes-state-root-v21']:
+    for suffix in ['.stdout.log', '.stderr.log', '.junit.xml']:
+        shutil.copyfile(root / (prefix + suffix), out / (prefix + suffix))
+    suites = ET.parse(out / (prefix + '.junit.xml')).getroot().iter('testsuite')
+    results[prefix] = [dict(s.attrib) for s in suites]
+for dirname in ['mnemos-hermes-legitimate-updates-v16', 'mnemos-hermes-carrier-classification-v19',
+                'mnemos-hermes-precompress-snapshot-v17']:
+    for src in sorted((Path('/tmp') / dirname).iterdir()):
+        if src.is_file():
+            dest = out / 'earlier-attempts' / dirname / (src.name + '.txt')
+            dest.parent.mkdir(parents=True, exist_ok=True)
+            shutil.copyfile(src, dest)
+(out / 'results.json').write_text(json.dumps(results, indent=2) + '\n')
+shutil.copyfile(__file__, out / 'collector.py.txt')
+(out / 'README.md').write_text('''# Hermes pre-compression source snapshot candidate
+
+The isolated candidate persists and verifies original source rows before
+compression, then advances the lease watermark to include its own writes.
+That prevents those writes from being copied again as a concurrent tail.
+The first watermark interaction failure and all recorded repair attempts remain
+in this archive. The carrier repair separates derived and retained components
+even when compression produces an assistant carrier.
+
+The v21 focused selection passes 23 tests. The broader preceding v20 selection
+passes 114 and fails one: a marker test supplied unrelated messages instead
+of its seeded database transcript. V21 changes that fixture to read the actual
+stored transcript; its original count and marker assertions remain unchanged.
+A separate new test rejects an unrelated transcript without writes or stamps.
+This is a documented fixture change, not an unchanged-baseline pass.
+
+The complete SessionDB selection records 1,416 passes, 11 skips, and one failure
+in test_apply_wal_concurrent_connects_no_eio. The same named failure was observed
+on the earlier untouched baseline; this run does not independently establish
+its cause. It is preserved and the broad gate remains open.
+
+Two additional provenance risks await runtime reproduction: unmarked generated
+compression text may receive original-source authority, and an edited hybrid
+component may retain a stale ancestor reference. Neither is resolved by these
+test counts. No live host installation, service delivery, complete capture,
+or T17 acceptance is claimed. The tracked patch and current changed sources
+are included alongside the new snapshot helper and focused test files.
+''', encoding='utf-8')
+files = {p.relative_to(out).as_posix(): {'bytes': p.stat().st_size,
+         'sha256': hashlib.sha256(p.read_bytes()).hexdigest()}
+         for p in sorted(out.rglob('*')) if p.is_file()}
+(out / 'evidence-index.json').write_text(json.dumps({'files': files}, indent=2) + '\n')
+print(json.dumps({'archive': str(out), 'files': len(files), 'results': results}))

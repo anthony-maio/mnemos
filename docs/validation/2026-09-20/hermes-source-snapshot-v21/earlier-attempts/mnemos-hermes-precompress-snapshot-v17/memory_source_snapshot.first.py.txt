@@ -1,0 +1,77 @@
+"""Prove and persist original source rows before creating derived memory."""
+
+from agent.session_persistence import _db_flush_row, _durable_content, _is_ephemeral_scaffolding
+from agent.context_compressor import _DB_PERSISTED_MARKER
+
+
+def prepare_memory_source_snapshot(agent, messages):
+    db = getattr(agent, '_session_db', None)
+    sid = getattr(agent, 'session_id', None)
+    if not sid or not callable(getattr(type(db), 'get_memory_evidence', None)):
+        return
+    selected = [(index, msg) for index, msg in enumerate(messages)
+                if isinstance(msg, dict) and not _is_ephemeral_scaffolding(msg)]
+    current_index = getattr(agent, '_persist_user_message_idx', None)
+    pending = getattr(agent, '_pending_cli_user_message', None)
+    serialized = [_db_flush_row(agent, msg, index == current_index or msg is pending)
+                  for index, msg in selected]
+
+    def write(conn):
+        db._check_transcript_write_guards(
+            conn, sid, getattr(agent, '_active_compression_lock_holder', None),
+            turn_lease_holder=getattr(agent, '_active_session_turn_lease_holder', None),
+            turn_lease_ttl_seconds=getattr(agent, '_active_session_turn_lease_ttl_seconds', 300.0) or 300.0,
+        )
+        session = conn.execute('SELECT ended_at, end_reason FROM sessions WHERE id = ?', (sid,)).fetchone()
+        if session is None:
+            raise ValueError('memory source session is missing')
+        # Compression's normal automatic endings remain governed by the host
+        # guards. Never append to a deliberately closed conversation.
+        from hermes_state_common import is_automatic_end_reason
+        if session['ended_at'] is not None and not is_automatic_end_reason(session['end_reason']):
+            raise ValueError('memory source session is deliberately ended')
+        raw = conn.execute('SELECT * FROM messages WHERE session_id = ? AND active = 1 ORDER BY id', (sid,)).fetchall()
+        by_id = {int(row['id']): row for row in raw}
+        durable = db._rows_to_conversation(
+            raw, session_id=sid, include_ancestors=False, repair_alternation=False,
+            include_row_ids=True, include_summary_markers=True,
+        )
+        if len(durable) > len(selected):
+            raise ValueError('memory source snapshot omits durable rows')
+        identities = []
+        for (_, live), encoded, restored in zip(selected, serialized, durable):
+            row_id = restored['_row_id']
+            stored = by_id[row_id]
+            matches = (
+                encoded.get('content') == db._decode_content(stored['content'])
+                or _durable_content(live.get('content')) == restored.get('content')
+            )
+            if not matches or any((encoded.get(key) or None) != (restored.get(key) or None)
+                                  for key in ('role', 'tool_name', 'tool_call_id', 'tool_calls')):
+                raise ValueError('memory source snapshot disagrees with durable prefix')
+            claimed = live.get('_row_id')
+            if claimed is not None:
+                if type(claimed) is not int or claimed <= 0:
+                    raise ValueError('memory source row identity is invalid')
+                if claimed != row_id:
+                    # Compaction inputs can retain an ancestor ID. Both rows
+                    # must independently resolve to the same canonical origin.
+                    if db._origin_for_row(conn, claimed) != db._origin_for_row(conn, row_id):
+                        raise ValueError('memory source row identity is foreign or stale')
+                    db._source_origins_for_insert(conn, sid, [live])
+            identities.append(row_id)
+        suffix = serialized[len(durable):]
+        for (_, live) in selected[len(durable):]:
+            if live.get('_row_id') is not None or live.get('_memory_origin') is not None:
+                raise ValueError('memory source suffix claims an unverified identity')
+        inserted, tool_count = db._insert_message_rows(conn, sid, suffix)
+        if inserted:
+            db._bump_session_counters(conn, sid, inserted, tool_count, unit=False)
+        identities.extend(row['_row_id'] for row in suffix)
+        return identities
+
+    identities = db._execute_write(write)
+    # No caller-visible stamps until the entire transaction committed.
+    for (_, live), row_id in zip(selected, identities):
+        live['_row_id'] = row_id
+        live[_DB_PERSISTED_MARKER] = True

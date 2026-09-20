@@ -1,0 +1,153 @@
+....................FF...                                                [100%]
+=================================== FAILURES ===================================
+___________ test_flush_stale_row_id_from_other_session_still_inserts ___________
+
+tmp_path = PosixPath('/tmp/pytest-of-anthony/pytest-82/test_flush_stale_row_id_from_o0')
+
+    def test_flush_stale_row_id_from_other_session_still_inserts(tmp_path):
+        """Copied dicts that keep a parent _row_id must still INSERT in a child session."""
+        parent = _make_agent()
+        child = _make_agent()
+        db_path = tmp_path / "state.db"
+        _attach_real_session_db(parent, db_path, "sess-parent")
+        _attach_real_session_db(child, db_path, "sess-child")
+        parent_msgs = [
+            {"role": "user", "content": "p-user"},
+            {"role": "assistant", "content": "p-answer"},
+        ]
+        parent._flush_messages_to_session_db(parent_msgs)
+        copies = [{k: v for k, v in m.items() if k != "_db_persisted"} for m in parent_msgs]
+        copies.extend(
+            [
+                {"role": "user", "content": "c-user"},
+                {"role": "assistant", "content": "c-answer"},
+            ]
+        )
+        child._flush_messages_to_session_db(copies)
+        reloaded = _durable_messages(db_path, "sess-child")
+>       assert [m.get("content") for m in reloaded] == [
+            "p-user",
+            "p-answer",
+            "c-user",
+            "c-answer",
+        ]
+E       AssertionError: assert [] == ['p-user', 'p...', 'c-answer']
+E         
+E         Right contains 4 more items, first extra item: 'p-user'
+E         Use -v to get more diff
+
+tests/agent/test_tool_call_incremental_persistence.py:707: AssertionError
+------------------------------ Captured log call -------------------------------
+INFO     run_agent:agent_runtime_helpers.py:1841 OpenAI client created (agent_init, shared=True) thread=MainThread:125581725296448 provider= base_url=https://openrouter.ai/api/v1 model=
+INFO     hermes_cli.plugins:plugins.py:382 Plugin 'browser-browser-use' registered browser provider: browser-use
+INFO     hermes_cli.plugins:plugins.py:382 Plugin 'browser-browserbase' registered browser provider: browserbase
+INFO     hermes_cli.plugins:plugins.py:382 Plugin 'browser-firecrawl' registered browser provider: firecrawl
+INFO     hermes_cli.plugins:plugins.py:382 Plugin 'deepinfra' registered image_gen provider: deepinfra
+INFO     hermes_cli.plugins:plugins.py:382 Plugin 'fal' registered image_gen provider: fal
+INFO     hermes_cli.plugins:plugins.py:382 Plugin 'krea' registered image_gen provider: krea
+INFO     hermes_cli.plugins:plugins.py:382 Plugin 'meta-ai-image-gen' registered image_gen provider: meta-ai
+INFO     hermes_cli.plugins:plugins.py:382 Plugin 'openai' registered image_gen provider: openai
+INFO     hermes_cli.plugins:plugins.py:382 Plugin 'openai-codex' registered image_gen provider: openai-codex
+INFO     hermes_cli.plugins:plugins.py:382 Plugin 'openrouter' registered image_gen provider: openrouter
+INFO     hermes_cli.plugins:plugins.py:382 Plugin 'openrouter' registered image_gen provider: nous
+INFO     hermes_cli.plugins:plugins.py:382 Plugin 'xai' registered image_gen provider: xai
+INFO     hermes_cli.plugins:plugins.py:382 Plugin 'deepinfra' registered video_gen provider: deepinfra
+INFO     hermes_cli.plugins:plugins.py:382 Plugin 'fal' registered video_gen provider: fal
+INFO     hermes_cli.plugins:plugins.py:382 Plugin 'openrouter' registered video_gen provider: openrouter
+INFO     hermes_cli.plugins:plugins.py:382 Plugin 'xai' registered video_gen provider: xai
+INFO     hermes_cli.plugins:plugins.py:382 Plugin 'web-brave-free' registered web provider: brave-free
+INFO     hermes_cli.plugins:plugins.py:382 Plugin 'web-ddgs' registered web provider: ddgs
+INFO     hermes_cli.plugins:plugins.py:382 Plugin 'web-exa' registered web provider: exa
+INFO     hermes_cli.plugins:plugins.py:382 Plugin 'web-firecrawl' registered web provider: firecrawl
+INFO     hermes_cli.plugins:plugins.py:382 Plugin 'web-keenable' registered web provider: keenable
+INFO     hermes_cli.plugins:plugins.py:382 Plugin 'web-parallel' registered web provider: parallel
+INFO     hermes_cli.plugins:plugins.py:382 Plugin 'web-perplexity' registered web provider: perplexity
+INFO     hermes_cli.plugins:plugins.py:382 Plugin 'web-searxng' registered web provider: searxng
+INFO     hermes_cli.plugins:plugins.py:382 Plugin 'web-tavily' registered web provider: tavily
+INFO     hermes_cli.plugins:plugins.py:382 Plugin 'web-xai' registered web provider: xai
+INFO     hermes_cli.plugins:plugins.py:1345 Plugin discovery complete: 58 found, 52 enabled
+INFO     agent.model_metadata:model_metadata.py:2093 No model id provided for context length resolution — defaulting to 256,000 tokens.
+INFO     run_agent:agent_runtime_helpers.py:1841 OpenAI client created (agent_init, shared=True) thread=MainThread:125581725296448 provider= base_url=https://openrouter.ai/api/v1 model=
+INFO     agent.model_metadata:model_metadata.py:2093 No model id provided for context length resolution — defaulting to 256,000 tokens.
+WARNING  run_agent:session_persistence.py:277 Session DB append_message failed: cannot refresh evidence for a missing message row
+_____ test_flush_stale_row_id_from_other_session_does_not_fill_child_blank _____
+
+tmp_path = PosixPath('/tmp/pytest-of-anthony/pytest-82/test_flush_stale_row_id_from_o1')
+
+    def test_flush_stale_row_id_from_other_session_does_not_fill_child_blank(tmp_path):
+        """A parent `_row_id` must INSERT in the child, not steal a blank tail."""
+        parent = _make_agent()
+        child = _make_agent()
+        db_path = tmp_path / "state.db"
+        _attach_real_session_db(parent, db_path, "sess-parent")
+        _attach_real_session_db(child, db_path, "sess-child")
+        parent_msgs = [
+            {"role": "user", "content": "p-user"},
+            {"role": "assistant", "content": "p-answer"},
+        ]
+        parent._flush_messages_to_session_db(parent_msgs)
+        child_msgs = [
+            {"role": "user", "content": "c-keep"},
+            {"role": "assistant", "content": ""},
+        ]
+        child._flush_messages_to_session_db(child_msgs)
+        copies = [{k: v for k, v in m.items() if k != "_db_persisted"} for m in parent_msgs]
+        copies.extend(
+            [
+                {"role": "user", "content": "c-user"},
+                {"role": "assistant", "content": "c-answer"},
+            ]
+        )
+        child._flush_messages_to_session_db(copies)
+        reloaded = _durable_messages(db_path, "sess-child")
+>       assert [m.get("content") for m in reloaded] == [
+            "c-keep",
+            "",
+            "p-user",
+            "p-answer",
+            "c-user",
+            "c-answer",
+        ]
+E       AssertionError: assert ['c-keep', ''] == ['c-keep', ''...', 'c-answer']
+E         
+E         Right contains 4 more items, first extra item: 'p-user'
+E         Use -v to get more diff
+
+tests/agent/test_tool_call_incremental_persistence.py:741: AssertionError
+------------------------------ Captured log call -------------------------------
+INFO     run_agent:agent_runtime_helpers.py:1841 OpenAI client created (agent_init, shared=True) thread=MainThread:125581725296448 provider= base_url=https://openrouter.ai/api/v1 model=
+INFO     hermes_cli.plugins:plugins.py:382 Plugin 'browser-browser-use' registered browser provider: browser-use
+INFO     hermes_cli.plugins:plugins.py:382 Plugin 'browser-browserbase' registered browser provider: browserbase
+INFO     hermes_cli.plugins:plugins.py:382 Plugin 'browser-firecrawl' registered browser provider: firecrawl
+INFO     hermes_cli.plugins:plugins.py:382 Plugin 'deepinfra' registered image_gen provider: deepinfra
+INFO     hermes_cli.plugins:plugins.py:382 Plugin 'fal' registered image_gen provider: fal
+INFO     hermes_cli.plugins:plugins.py:382 Plugin 'krea' registered image_gen provider: krea
+INFO     hermes_cli.plugins:plugins.py:382 Plugin 'meta-ai-image-gen' registered image_gen provider: meta-ai
+INFO     hermes_cli.plugins:plugins.py:382 Plugin 'openai' registered image_gen provider: openai
+INFO     hermes_cli.plugins:plugins.py:382 Plugin 'openai-codex' registered image_gen provider: openai-codex
+INFO     hermes_cli.plugins:plugins.py:382 Plugin 'openrouter' registered image_gen provider: openrouter
+INFO     hermes_cli.plugins:plugins.py:382 Plugin 'openrouter' registered image_gen provider: nous
+INFO     hermes_cli.plugins:plugins.py:382 Plugin 'xai' registered image_gen provider: xai
+INFO     hermes_cli.plugins:plugins.py:382 Plugin 'deepinfra' registered video_gen provider: deepinfra
+INFO     hermes_cli.plugins:plugins.py:382 Plugin 'fal' registered video_gen provider: fal
+INFO     hermes_cli.plugins:plugins.py:382 Plugin 'openrouter' registered video_gen provider: openrouter
+INFO     hermes_cli.plugins:plugins.py:382 Plugin 'xai' registered video_gen provider: xai
+INFO     hermes_cli.plugins:plugins.py:382 Plugin 'web-brave-free' registered web provider: brave-free
+INFO     hermes_cli.plugins:plugins.py:382 Plugin 'web-ddgs' registered web provider: ddgs
+INFO     hermes_cli.plugins:plugins.py:382 Plugin 'web-exa' registered web provider: exa
+INFO     hermes_cli.plugins:plugins.py:382 Plugin 'web-firecrawl' registered web provider: firecrawl
+INFO     hermes_cli.plugins:plugins.py:382 Plugin 'web-keenable' registered web provider: keenable
+INFO     hermes_cli.plugins:plugins.py:382 Plugin 'web-parallel' registered web provider: parallel
+INFO     hermes_cli.plugins:plugins.py:382 Plugin 'web-perplexity' registered web provider: perplexity
+INFO     hermes_cli.plugins:plugins.py:382 Plugin 'web-searxng' registered web provider: searxng
+INFO     hermes_cli.plugins:plugins.py:382 Plugin 'web-tavily' registered web provider: tavily
+INFO     hermes_cli.plugins:plugins.py:382 Plugin 'web-xai' registered web provider: xai
+INFO     hermes_cli.plugins:plugins.py:1345 Plugin discovery complete: 58 found, 52 enabled
+INFO     agent.model_metadata:model_metadata.py:2093 No model id provided for context length resolution — defaulting to 256,000 tokens.
+INFO     run_agent:agent_runtime_helpers.py:1841 OpenAI client created (agent_init, shared=True) thread=MainThread:125581725296448 provider= base_url=https://openrouter.ai/api/v1 model=
+INFO     agent.model_metadata:model_metadata.py:2093 No model id provided for context length resolution — defaulting to 256,000 tokens.
+WARNING  run_agent:session_persistence.py:277 Session DB append_message failed: cannot refresh evidence for a missing message row
+=========================== short test summary info ============================
+FAILED tests/agent/test_tool_call_incremental_persistence.py::test_flush_stale_row_id_from_other_session_still_inserts
+FAILED tests/agent/test_tool_call_incremental_persistence.py::test_flush_stale_row_id_from_other_session_does_not_fill_child_blank
+2 failed, 23 passed in 4.86s
