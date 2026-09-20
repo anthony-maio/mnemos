@@ -499,11 +499,22 @@ Acceptance: each module can be activated independently, including at top-1; the 
 
 Run: `py -3.13 -m pytest -q tests/test_local_memory_benchmark.py tests/test_retrieval_comparison.py tests/test_retrieval_comparison_run.py tests/test_benchmark.py`, followed by versioned baseline/full/ablation runs that generate JSON artifacts. Add `--dataset`, `--profile`, `--disable-module`, `--provider`, `--repetitions`, and `--output` to the new runner.
 
+The [temperature-only diagnostic preparation](../validation/2026-09-20/extraction-temperature-one-preparation-v1/README.md)
+freezes a separate 40-call development comparison before execution. It retains
+the original prompt arms and changes only temperature from zero to 1.0. This
+is not a full recommended-sampling configuration or unseen validation.
+The [fixed-candidate graph-weight bound](../validation/2026-09-20/graph-weight-bound-audit-v1/README.md)
+finds only three of 30 recorded combinations could reach top five under its
+optimistic assumptions; 15 lack the target candidate altogether. This is a
+structural diagnostic, not retrieval improvement or a changed graph default.
+
 ### T19 - Reconcile release, documentation, and research claims
 
 Current source/package evidence: [product d937892](../validation/2026-09-20/reconsolidation-return-source-checkpoint-v1/README.md)
 passes 2,013 source tests with four skips and all six source/package checks.
-Its isolated installed check is pending. The preceding verified installed
+Its [initial installed check](../validation/2026-09-20/reconsolidation-return-installed-checkpoint-v1/README.md)
+passes 811 cases with four skips but omits the direct-return regression. An
+expanded check is running. The preceding verified installed
 [product 26c9ddb](../validation/2026-09-20/captured-merge-installed-checkpoint-v2/README.md)
 passes 811 cases with four matching skips. These are separate checkpoints.
 Native host integration, full-module quality and final acceptance remain open.

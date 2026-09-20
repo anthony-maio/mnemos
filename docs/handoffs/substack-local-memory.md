@@ -14,7 +14,10 @@ Deliver an article draft, three possible titles, and a separate compact source/c
 
 Latest source/package verification is [d937892](../validation/2026-09-20/reconsolidation-return-source-checkpoint-v1/README.md):
 2,013 tests pass with four skips, and all six checks pass. Its isolated installed
-check is pending. The preceding fully verified package is 26c9ddb. The [source/package checks](../validation/2026-09-20/captured-merge-source-checkpoint-v1/README.md)
+check passed 811 cases with four skips, but its test selection omitted the new
+direct-return regression. The [preserved installed result](../validation/2026-09-20/reconsolidation-return-installed-checkpoint-v1/README.md)
+records that limitation; an expanded installed check is running. The preceding
+fully verified package is 26c9ddb. The [source/package checks](../validation/2026-09-20/captured-merge-source-checkpoint-v1/README.md)
 pass 2,012 tests with four skips and all six checks. The [isolated installed suite](../validation/2026-09-20/captured-merge-installed-checkpoint-v2/README.md)
 passes 811 cases with four matching skips. The [Hermes v35 lifecycle](../validation/2026-09-20/hermes-revision-lifecycle-v35/README.md)
 passes correction with duplicate captured-evidence absorption, restart, reviewed
