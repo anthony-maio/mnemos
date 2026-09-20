@@ -1,0 +1,165 @@
+# Three-host native continuity protocol v1
+
+Status: prospective; NOT RUN. This extends T14/T17 to the missing three-host
+workflow. The earlier Codex/Claude result and the separate Hermes lifecycle
+probe remain distinct evidence. A Hermes-only pass cannot close this protocol.
+
+Preparation update: disposable process helpers and trace normalization have
+[offline verification](../validation/2026-09-19/three-host-runner-offline-v1/README.md).
+The [prospective driver](../../benchmarks/native_hosts/three_host_run.py) is now
+assembled with package/prior-run guards, exact native lifecycle checks, service
+request capture for replay, and retained controls. Its focused offline checks
+pass 68 cases; strict Python 3.10 mypy passes 88 production/benchmark files.
+This is preparation, not a native result. Historical Codex code-mode sessions
+use different model-cell and MCP call IDs; completion events alone must not
+satisfy the model-call correlation rule below. Resolve that instrumentation
+gap before claiming acceptance, and record any invocation-mode change.
+
+The prospective Codex invocation adds `--disable code_mode_host`. Installed
+Codex 0.146.0 accepts the feature override offline; actual direct-tool behavior
+remains unverified until a fresh native phase produces correlated records.
+The driver stops if that correlation is absent. Its temporary native streams
+must be selected and sanitized before archival; they are not automatically
+part of the public evidence or writer packet. A successful run is labeled
+`bounded_lifecycle_observed`, with callback coverage and unavailable Codex/Claude
+provider-wire input inspection stated separately.
+
+## Bindings and isolation
+
+Run after the supplemental GPU queue is terminal and its coordinator and
+worker processes have exited, and after the Hermes-only native lifecycle
+probe has passed its bounded contract. Verify actual processes rather than
+assuming a stale state file establishes exit. Do not compete with another
+Ollama job or selectively repeat unsuccessful phases.
+
+Use one verified Mnemos wheel and source checkpoint across every host. The
+current candidate is `fd83fb27042c05897f29dba952b0924b15889aad`, wheel SHA-256
+`4958c5ef7a509fefecacc0666d87f578b46e94e1a33a896831468c0f971bf895`.
+Record exact installed Codex and Claude versions and Hermes revision. Hermes
+must use an isolated checkout with a recorded compatibility patch; never
+present patched-host evidence as evidence for the unmodified installation.
+Changes to this binding require a new manifest and output directory.
+
+Use a disposable Windows service, SQLite database, scope registry, outbox,
+host homes, and project directories. Register one profile with projects A and
+B and explicit Windows/WSL aliases for A. All three hosts share A's identity.
+No live configuration, source installation, or memory data is changed. Keep
+only temporary copies of required authentication, omit them from artifacts,
+and remove those copies during cleanup. Model-provided tools may access only
+this service and the disposable project. Disable unrelated integrations.
+
+Use the baseline module configuration and real local Nomic embeddings.
+Automatic extraction cognition is unavailable. Conversation capture remains
+enabled and explicitly qualified as captured evidence. This tests native
+cross-host transport, identity, and lifecycle with real query embeddings;
+it does not prove automatic fact extraction or biomimetic quality. Hermes
+uses the same pinned Qwen digest and generation settings as the preceding
+native lifecycle protocol. Record provider configuration and digests.
+
+Each native phase starts a fresh conversation, without carrying earlier
+answers in its prompt. Direct controller inspection can establish database
+state but cannot substitute for a host-issued memory operation. The controller
+may seed only unrelated and foreign controls. It must not teach, correct,
+or forget the target on behalf of a host.
+
+## Native phases
+
+1. Codex teaches a project release-label convention, with an explicit durable
+   remember request. Record the model-issued tool call, actual result, source
+   evidence, fact ID/version, and completed job. Keep raw capture enabled.
+2. Claude teaches an independent project review-label convention. Its prompt
+   contains that convention only, never the Codex target value. Record the same
+   operation and persistence evidence. This fact becomes the retained control.
+3. Restart the service. A fresh native Hermes conversation retrieves both
+   conventions by topic, without either value in its prompt. Require both
+   original IDs, contents, scopes, and versions in real tool results. This
+   explicitly tests Hermes recall of facts taught by each other host.
+4. Hermes retrieves and inspects the release-label fact, then corrects its
+   exact ID using the observed version. The new label is supplied only for
+   this correction phase. Require the original ID at version 2, a completed
+   job, and no change to the review-label or foreign control.
+5. Restart the service. Fresh Codex, Claude, and Hermes conversations each
+   retrieve the release-label fact by topic. Require the same version-2 target
+   in each native tool result. Preserve any captured old mentions with their
+   actual authority labels; an answer repeating the superseded value fails
+   answer consistency even if a tool also returned the current value.
+6. A fresh Claude conversation reviews the target and its retained
+   conversational copies, then forgets the exact selected records with
+   inspected IDs/versions. No controller mutation is permitted. Require the
+   target's removal and preservation of the independent review-label fact,
+   unrelated project control, and all foreign-project controls.
+7. Restart and replay the original teaching requests and captured source
+   events using their original identities. This is explicitly scripted API
+   replay evidence, not a native host action. Require suppression without
+   resurrecting target facts, raw sources, derived edges, or new jobs that
+   can restore the forgotten values.
+8. Fresh Codex, Claude, and Hermes conversations retrieve both topics. None
+   receives either forgotten value in its prompt or injected context. Require
+   no target/value in tool results, supplied model context, or final answers;
+   the review-label control must remain available. Foreign-project canaries
+   must never appear in project A's model requests or results in any phase.
+
+Use unique synthetic values chosen before execution and recorded in the
+manifest. Do not choose them after seeing retrieval results. Maintain exact
+request/source identities for retries; do not turn a replay into new teaching.
+
+## Evidence and failure rules
+
+Correlate each successful operation with a model-issued native call, its exact
+arguments, and its actual result. Reject controller-injected tool successes,
+unissued calls, duplicate dispatch, malformed payloads, and tool errors.
+Inspection must precede correction and targeted forgetting. Job status must
+establish completion rather than treating a durable receipt as processing.
+
+Use the existing host budgets: 180 seconds for a Codex/Claude phase; for
+Hermes, eight model turns, a 180-second host budget and 240-second outer
+deadline plus five-second termination grace. Keep maintenance at its existing
+60-second observation budget and 45-second dispatch deadline. Stop dependent
+phases on failure, retain raw synthetic outputs, and keep timeout/degraded
+capture separate from successful fact operations. No deadline widening or
+selective successful reruns may replace the original attempt.
+
+Bind the reports to executed helper hashes, wheel bytes, source commit,
+host versions and patches, model digests, registry/project identities, and
+synthetic scenario bytes. Verify imports originate in the installed package.
+Record startup, capture, callback, tool, shutdown, and process-exit outcomes.
+Verify native tools completed before cleanup and inspect SQLite read-only
+after service shutdown. A missing required phase is NOT RUN, not passed.
+
+Passing closes only this bounded three-host native lifecycle observation.
+Codex Desktop, automatic extraction quality, complete capture under arbitrary
+interruptions, unindexed paraphrase erasure, automatic daemon restoration,
+and the two-week daily-use pilot remain separate gates.
+
+The prospective driver now uses the v2 Hermes bootstrap and disables the
+optional background title model in each disposable Hermes home. The bootstrap
+checks the actual host setting before invoking the CLI. This follows the
+retained first Hermes lifecycle failure; every observed model request still
+must carry the pinned model and context settings. The driver has not run.
+
+Before native execution, the prospective source/wheel binding was advanced
+to the verified job-lookup error package `68693f8`. Its 1,308 source tests,
+533 isolated installed cases, six package checks, and seven replay assertions
+pass (four source skips and two installed skips). The earlier Hermes-only
+attempts used `3730fd9` and failed; they do not satisfy this new package's
+native prerequisite. No three-host native attempt has executed under either
+binding. This update changes neither the native acceptance criteria nor
+the frozen real-model comparison records.
+
+The prospective Hermes phases now use the pinned v3 sampling profile and
+bootstrap described in the [v3 lifecycle protocol](2026-09-19-hermes-native-lifecycle-protocol-v3.md).
+The prerequisite report must include a passing sampling-profile gate. The
+three-host driver rejects conflicting native request overrides; exact memory
+content, IDs, versions, correlation, capture, scope, and replay checks are
+unchanged. Earlier preparation records retain their original helper bindings.
+
+The still-unexecuted driver is now bound to the verified native-failure repair
+package `fd83fb2`: 1,351 source tests, 569 installed cases, four skips in each,
+all six source/package checks, and seven replay assertions. The required
+Hermes-only predecessor is the [v5 lifecycle protocol](2026-09-19-hermes-native-lifecycle-protocol-v5.md)
+using the unchanged v4 bootstrap and evaluator. The v4 lifecycle cohort failed
+all three attempts and is not an acceptable prerequisite. Require the recorded
+write-guidance gate as well as every prior native lifecycle gate. This binding
+update changes neither phase prompts, model settings, budgets, scope controls,
+nor replay requirements. No three-host run may start before a passing bound
+Hermes report exists; preserve the complete predecessor cohort with that report.

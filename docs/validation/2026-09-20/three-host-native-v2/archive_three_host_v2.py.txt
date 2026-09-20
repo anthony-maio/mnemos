@@ -1,0 +1,109 @@
+"""Preserve terminal v2 results and selected native evidence without host credentials."""
+from pathlib import Path
+import hashlib
+import json
+import shutil
+import subprocess
+
+repo = Path(__file__).resolve().parent.parent
+temp = Path('C:/Users/Ant/AppData/Local/Temp')
+target = repo / 'docs/validation/2026-09-20/three-host-native-v2'
+assert not (target / 'evidence-index.json').exists()
+target.mkdir(parents=True, exist_ok=True)
+
+def digest(data):
+    return hashlib.sha256(data).hexdigest()
+
+def write(relative, data):
+    p = target / relative
+    p.parent.mkdir(parents=True, exist_ok=True)
+    if p.exists():
+        assert p.read_bytes() == data, relative
+        return
+    p.write_bytes(data)
+
+def dump(relative, value):
+    write(relative, (json.dumps(value, indent=2, ensure_ascii=True) + '\n').encode())
+
+def copy(root, relative, prefix):
+    write(prefix + '/' + relative, (root / relative).read_bytes())
+
+for kind in ('preflight', 'native'):
+    root = temp / ('mnemos-three-host-' + kind + '-v2')
+    report = json.loads((root / 'report.json').read_text(encoding='utf-8'))
+    assert report['cleanup_established'] and report['finished_at']
+    assert report['status'] == ('preflight_passed' if kind == 'preflight' else 'failed')
+    assert not (root / 'runtime.json').exists()
+    for name in ('report.json', 'dispatch-records.json', 'host-environment-before.txt',
+                 'host-environment-after.txt', 'scopes.json', 'settings.toml'):
+        copy(root, name, kind)
+    if kind == 'preflight':
+        assert report['phases'] == []
+        for name in ('config.json', 'process.json', 'query.txt', 'trace.jsonl', 'stdout.log',
+                     'stderr.log', 'sampling-profile-before.json', 'sampling-profile-after.json',
+                     'host-environment-before.txt', 'host-environment-after.txt'):
+            copy(root, 'preflight/' + name, kind)
+    else:
+        assert report['error'] == 'Native call lacks model correlation'
+        assert report['phases'] == [{'name': 'teach-release', 'host': 'codex', 'status': 'failed'}]
+        for name in ('failure.txt', 'final-state.json', 'teach-release/process.json',
+                     'teach-release/prompt.txt', 'project/AGENTS.md'):
+            copy(root, name, kind)
+        for p in (root / 'model-readiness').iterdir():
+            assert p.is_file()
+            copy(root, p.relative_to(root).as_posix(), kind)
+        evidence_path = root / 'teach-release/normalized-evidence.json'
+        evidence_bytes = evidence_path.read_bytes()
+        evidence = json.loads(evidence_bytes)
+        context = evidence.pop('recorded_context')
+        assert len(evidence['calls']) == 3
+        assert all(c['model_call_correlated'] is False for c in evidence['calls'])
+        evidence['archive_transformation'] = {
+            'removed': ['recorded_context'],
+            'reason': 'Full host context includes unrelated instructions and account metadata.',
+            'original_sha256': digest(evidence_bytes),
+            'original_bytes': len(evidence_bytes),
+        }
+        dump('native/teach-release/normalized-evidence.selected.json', evidence)
+        native_path = Path(evidence['provenance']['source_file'])
+        raw = native_path.read_bytes()
+        assert digest(raw) == evidence['provenance']['source_file_sha256']
+        selected, locators, models = [], [], []
+        for number, line in enumerate(raw.splitlines(), 1):
+            record = json.loads(line)
+            payload = record.get('payload', {})
+            if record['type'] == 'turn_context':
+                models.append({'model': payload.get('model'), 'source_line': number,
+                               'source_line_sha256': digest(line)})
+            keep = (record['type'] == 'response_item' and payload.get('type') in {
+                'custom_tool_call', 'custom_tool_call_output', 'function_call', 'function_call_output'
+            }) or (record['type'] == 'event_msg' and payload.get('type') == 'mcp_tool_call_end')
+            if keep:
+                selected.append(line)
+                locators.append({'selected_line': len(selected), 'source_line': number,
+                                 'source_line_sha256': digest(line)})
+        write('native/teach-release/native-tool-records.selected.jsonl', b'\n'.join(selected) + b'\n')
+        dump('native/teach-release/native-selection.json', {
+            'source': evidence['provenance'], 'records': locators, 'observed_models': models,
+            'selection': 'All response tool call/output and MCP completion records, unchanged line bytes.',
+            'omitted': 'Session instructions, account metadata, prose, and full turn context.',
+            'provider_wire_captured': False,
+        })
+    for relative, expected in report['input_hashes'].items():
+        committed = subprocess.check_output(['git', 'show', report['runner_commit'] + ':' + relative], cwd=repo)
+        raw = (repo / relative).read_bytes()
+        assert digest(raw) == expected, relative
+        assert raw.replace(b'\r\n', b'\n') == committed.replace(b'\r\n', b'\n'), relative
+        destination = 'runner-inputs/' + relative + '.txt'
+        if (target / destination).exists():
+            assert (target / destination).read_bytes() == raw
+        else:
+            write(destination, raw)
+
+write('offline/three-host-v2-offline.xml', (repo / '.venv/three-host-v2-offline.xml').read_bytes())
+write('archive_three_host_v2.py.txt', Path(__file__).read_bytes())
+write('.gitattributes', b'** -text -whitespace\n')
+files = {p.relative_to(target).as_posix(): {'bytes': p.stat().st_size, 'sha256': digest(p.read_bytes())}
+         for p in sorted(target.rglob('*')) if p.is_file()}
+dump('evidence-index.json', {'files': files})
+print(json.dumps({'archive': str(target), 'files': len(files)}))

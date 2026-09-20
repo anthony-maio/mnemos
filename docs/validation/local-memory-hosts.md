@@ -1,5 +1,14 @@
 # Local memory host validation
 
+The [three-host v2 attempt](2026-09-20/three-host-native-v2/README.md) stopped at its first Codex phase.
+The synthetic fact was stored and its job completed, but native calls still
+used an `exec` wrapper despite the requested direct-tool setting. Separate
+provider and MCP execution IDs did not meet the frozen correlation requirement.
+The attempt remains failed; no Claude or Hermes model phase followed. Cleanup
+passed. Its separate eight-tool Hermes preflight passed, and 141 offline
+benchmark cases passed. Three-host continuity remains open. The earlier Hermes
+v10 result below remains one complete lifecycle pass and two failures.
+
 Updated September 20, 2026 for the unreleased functional-local-memory worktree. This record separates adapter and transport checks from native host acceptance. The [compatibility matrix](../client-compatibility-matrix.md) records observed versions and source bindings.
 
 ## Current native evidence

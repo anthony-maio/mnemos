@@ -12,6 +12,15 @@ Deliver an article draft, three possible titles, and a separate compact source/c
 
 ## Latest implementation and native evidence
 
+The [three-host v2 attempt](../validation/2026-09-20/three-host-native-v2/README.md) stopped at its first Codex phase.
+The synthetic fact was stored and its job completed, but native calls still
+used an `exec` wrapper despite the requested direct-tool setting. Separate
+provider and MCP execution IDs did not meet the frozen correlation requirement.
+The attempt remains failed; no Claude or Hermes model phase followed. Cleanup
+passed. Its separate eight-tool Hermes preflight passed, and 141 offline
+benchmark cases passed. Three-host continuity remains open. The earlier Hermes
+v10 result below remains one complete lifecycle pass and two failures.
+
 The [native Hermes v10 cohort](../validation/2026-09-20/hermes-native-cohort-v10/README.md)
 completed one of three full lifecycles on `f2f7414`. Attempt 1 omitted
 restarted retrieval. Attempt 2 committed deletion but failed the review
@@ -168,7 +177,7 @@ forgetting, and known-source replay, then retrieved the deleted value from
 newly captured assistant narration. Attempt 2 failed on locale-encoded bridge
 output. Attempt 3 retrieved and inspected a fact, then announced a correction
 without calling the correction tool. Preserve the difference between a model
-claim and an observed mutation. The three-host driver remains unrun.
+claim and an observed mutation. The three-host driver was unrun at that earlier checkpoint; see the current v2 failure above.
 
 The earlier [v3 cohort](../validation/2026-09-19/hermes-native-cohort-v3/README.md)
 also failed all three attempts, at teach, because each model omitted the
@@ -520,5 +529,5 @@ not a requirement to recount every implementation detail in the article.
 - [ ] Record final host continuity, latency, capture coverage, and pilot status without collapsing the separate gates.
 - [ ] Identify which quantitative claims can be used, with units, sample sizes, settings, uncertainty where available, and limitations.
 - [ ] Verify original website/paper claims against primary sources and link the dated corrections.
-- [x] Prepare a portable working packet with this handoff, the selected voice skill, key reports, regression examples, and a file manifest. Refresh that packet at final acceptance. The portable v19 packet includes terminal encoding/retrieval reports, the two earlier native lifecycle failures, all eight fixed-cohort runs (v3-v9 retain twenty-one failed attempts; v10 adds one pass and two failures under its own binding; these are not a pooled reliability estimate), the deletion coverage and source-selection repair evidence, the six-case development diagnostic and model readiness records, the affective fidelity review, the endpoint context diagnostic and verified-context native successor, and dated website/paper snapshots. Some older evidence links still require the full checkout. Local validation artifacts are research inputs; public citations require accessible sources.
+- [x] Prepare a portable working packet with this handoff, the selected voice skill, key reports, regression examples, and a file manifest. Refresh that packet at final acceptance. The portable v20 packet includes the three-host v2 preflight and failed native attempt, selected native tool records, and terminal encoding/retrieval reports, the two earlier native lifecycle failures, all eight fixed-cohort runs (v3-v9 retain twenty-one failed attempts; v10 adds one pass and two failures under its own binding; these are not a pooled reliability estimate), the deletion coverage and source-selection repair evidence, the six-case development diagnostic and model readiness records, the affective fidelity review, the endpoint context diagnostic and verified-context native successor, and dated website/paper snapshots. Some older evidence links still require the full checkout. Local validation artifacts are research inputs; public citations require accessible sources.
 - [ ] Keep unverified interpretations and questions outside the article's factual claims, then make the final voice pass using Anthony's skill.
