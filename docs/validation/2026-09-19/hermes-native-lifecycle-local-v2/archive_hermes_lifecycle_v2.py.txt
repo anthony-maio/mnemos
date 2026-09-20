@@ -1,0 +1,32 @@
+"""Retain terminal native Hermes v2 evidence without credentials or databases."""
+from pathlib import Path
+import hashlib,json
+root=Path(__file__).resolve().parent.parent
+source=Path("C:/Users/Ant/AppData/Local/Temp/mnemos-hermes-native-lifecycle-local-v2")
+report=json.loads((source/"report.json").read_text())
+assert report["status"] in {"passed","failed"} and report.get("finished_at")
+assert not (source/"runtime.json").exists(), "Runtime descriptor remains active"
+target=root/"docs/validation/2026-09-19/hermes-native-lifecycle-local-v2"
+target.mkdir(exist_ok=False)
+selected=["report.json","host-compatibility.patch"]
+for relative,expected in report["input_hashes"].items():
+    p=Path(relative)
+    name=p.name+(".txt" if p.suffix==".py" else "")
+    assert hashlib.sha256((source/name).read_bytes()).hexdigest()==expected
+    selected.append(name)
+for name in ("failure.txt","cold-load.json","models-loaded.json","controls.json","source-replay-records.json"):
+    if (source/name).is_file(): selected.append(name)
+for phase in report["phases"]:
+    label=phase["phase"]
+    for name in ("trace.jsonl","stdout.log","stderr.log","query.txt","config.json"):
+        relative=label+"/"+name
+        if (source/relative).is_file(): selected.append(relative)
+    state=label+"-state.json"
+    if (source/state).is_file(): selected.append(state)
+for name in selected:
+    p=target/name;p.parent.mkdir(exist_ok=True);p.write_bytes((source/name).read_bytes())
+(target/".gitattributes").write_bytes(b"** -text -whitespace\n")
+(target/(Path(__file__).name+".txt")).write_bytes(Path(__file__).read_bytes())
+files={p.relative_to(target).as_posix():{"bytes":p.stat().st_size,"sha256":hashlib.sha256(p.read_bytes()).hexdigest()} for p in target.rglob("*") if p.is_file()}
+(target/"evidence-index.json").write_text(json.dumps({"files":files},indent=2)+"\n")
+print(json.dumps({"archive":str(target),"files":len(files),"status":report["status"]}))

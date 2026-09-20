@@ -18,7 +18,7 @@ from .contracts import (
 from .claude_identity import legacy_event_id, scoped_event_id
 from .hermes_identity import scoped_event_id as hermes_scoped_event_id
 from .engine import MnemosEngine
-from .jobs import DurableJob, FactEvidence, FactRevision
+from .jobs import DurableJob, FactEvidence, FactRevision, JobNotFoundError
 from .maintenance import MaintenanceScheduler
 from .memory_safety import MemoryWriteFirewall
 from .retrieval import assertion_status, render_context_chunk
@@ -918,13 +918,13 @@ class LocalMemoryService:
                     or job.payload.get("context", {}).get("user_profile_id")
                     != context.user_profile_id
                 ):
-                    raise KeyError("Job not found in the requested profile")
+                    raise JobNotFoundError("Job not found in the requested profile")
                 job_context = ScopeContext.model_validate(job.payload["context"])
                 if (
                     job_context.project_id != context.project_id
                     or job_context.workspace_id != context.workspace_id
                 ):
-                    raise KeyError("Job not found in the requested scope")
+                    raise JobNotFoundError("Job not found in the requested scope")
                 if operation == "retry_job":
                     if not self.engine.store.retry_job(job.id):
                         raise ValueError("Only exhausted jobs can be manually retried")

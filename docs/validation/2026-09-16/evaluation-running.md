@@ -1,5 +1,14 @@
 # Real-model evaluation status
 
+## Latest native-host observation
+
+The [fresh native Hermes v2 attempt](../2026-09-19/hermes-native-lifecycle-local-v2/README.md) stopped at teach. Exact-content
+and provider-context setup were corrected, but the model changed the returned
+job ID in its status request. The unknown job produced HTTP 500 and a degraded
+result. No later lifecycle phase ran; the three-host driver remains NOT RUN.
+The original and successor failures are retained separately. Runtime `3730fd9`
+and its passing package checks remain unchanged.
+
 ## Current checkpoint: September 19, 2026, local GPU replacement
 
 An independent [supplemental v2 queue](../2026-09-19/supplemental-launch-v2/README.md)

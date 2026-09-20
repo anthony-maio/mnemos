@@ -1,5 +1,14 @@
 # Functional local memory implementation record
 
+## September 19: native Hermes successor stops on wrong job ID
+
+The [fresh native Hermes v2 attempt](../2026-09-19/hermes-native-lifecycle-local-v2/README.md) stopped at teach. Exact-content
+and provider-context setup were corrected, but the model changed the returned
+job ID in its status request. The unknown job produced HTTP 500 and a degraded
+result. No later lifecycle phase ran; the three-host driver remains NOT RUN.
+The original and successor failures are retained separately. Runtime `3730fd9`
+and its passing package checks remain unchanged.
+
 Worktree: `D:/Development/mnemos/mnemos/.worktrees/functional-local-memory`
 Branch: `wt/functional-local-memory`
 Base: `5fcc925d5a90a087e5715c2fe6de56fa23a7d3a6`

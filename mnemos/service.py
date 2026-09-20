@@ -38,6 +38,7 @@ from pathlib import Path
 from typing import Any, Callable, Mapping
 from urllib.parse import urlsplit
 
+from .jobs import JobNotFoundError
 from .observability import (
     ServiceLogBinding,
     install_service_file_logging,
@@ -480,6 +481,9 @@ class _RequestHandler(BaseHTTPRequestHandler):
             result = self.server.service.submit(operation.strip(), payload)
         except TimeoutError:
             self._write_json(504, {"schema_version": SCHEMA_VERSION, "error": "dispatch_timeout"})
+            return
+        except JobNotFoundError:
+            self._write_json(404, {"schema_version": SCHEMA_VERSION, "error": "job_not_found"})
             return
         except Exception:
             self._write_json(500, {"schema_version": SCHEMA_VERSION, "error": "dispatch_failed"})
