@@ -1,0 +1,129 @@
+{
+  "requests": [
+    {
+      "phase": "teach",
+      "metadata_file": "teach/provider-requests/request-0001.json",
+      "body_file": "teach/provider-requests/request-0001.bin",
+      "sha256": "fda0f63d033f4215188e1c6ac3c6d8637dd007273bb419cb8866f4c3a8586a15",
+      "tool_choice_present": false,
+      "think": false,
+      "reasoning_effort": "none",
+      "options": {
+        "num_ctx": 65536
+      },
+      "related_forget_parameters": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "fact_id": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 512
+          },
+          "expected_version": {
+            "type": "integer",
+            "minimum": 1
+          },
+          "preview_digest": {
+            "type": "string",
+            "pattern": "^[0-9a-fA-F]{64}$"
+          },
+          "preview_limit": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 500,
+            "default": 100
+          },
+          "selected_fact_ids": {
+            "type": "array",
+            "maxItems": 500,
+            "items": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 512
+            },
+            "default": []
+          },
+          "selected_source_event_ids": {
+            "type": "array",
+            "maxItems": 500,
+            "items": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 512
+            },
+            "default": []
+          }
+        },
+        "required": [
+          "fact_id",
+          "expected_version",
+          "preview_digest"
+        ]
+      }
+    },
+    {
+      "phase": "teach",
+      "metadata_file": "teach/provider-requests/request-0002.json",
+      "body_file": "teach/provider-requests/request-0002.bin",
+      "sha256": "f53964bdbd486357ac183bae83cd635eb8ac5819c73dd1bfd9fe2b77c71184ec",
+      "tool_choice_present": false,
+      "think": false,
+      "reasoning_effort": "none",
+      "options": {
+        "num_ctx": 65536
+      },
+      "related_forget_parameters": {
+        "type": "object",
+        "additionalProperties": false,
+        "properties": {
+          "fact_id": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 512
+          },
+          "expected_version": {
+            "type": "integer",
+            "minimum": 1
+          },
+          "preview_digest": {
+            "type": "string",
+            "pattern": "^[0-9a-fA-F]{64}$"
+          },
+          "preview_limit": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 500,
+            "default": 100
+          },
+          "selected_fact_ids": {
+            "type": "array",
+            "maxItems": 500,
+            "items": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 512
+            },
+            "default": []
+          },
+          "selected_source_event_ids": {
+            "type": "array",
+            "maxItems": 500,
+            "items": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 512
+            },
+            "default": []
+          }
+        },
+        "required": [
+          "fact_id",
+          "expected_version",
+          "preview_digest"
+        ]
+      }
+    }
+  ],
+  "limitation": "Only teach requests observed; no forget preview sent in this attempt."
+}

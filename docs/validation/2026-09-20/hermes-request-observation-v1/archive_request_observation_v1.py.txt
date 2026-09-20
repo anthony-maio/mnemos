@@ -1,0 +1,57 @@
+"""Archive the one scheduled synthetic request-observation diagnostic."""
+from pathlib import Path
+import hashlib
+import json
+import shutil
+
+repo = Path(__file__).resolve().parents[1]
+source = Path('C:/Users/Ant/AppData/Local/Temp/mnemos-hermes-request-observation-v1')
+target = repo / 'docs/validation/2026-09-20/hermes-request-observation-v1'
+report = json.loads((source / 'report.json').read_text(encoding='utf-8'))
+assert report['status'] == 'failed' and report.get('finished_at')
+assert report.get('cleanup_error') is None and not (source / 'runtime.json').exists()
+target.mkdir(parents=True, exist_ok=False)
+(target / '.gitattributes').write_bytes(b'** -text -whitespace\n')
+selected = {'report.json', 'failure.txt', 'host-compatibility.patch', 'controls.json', 'sampling-profile-before.json'}
+for relative, digest in report['input_hashes'].items():
+    path = Path(relative)
+    name = path.name + ('.txt' if path.suffix == '.py' else '')
+    assert hashlib.sha256((source / name).read_bytes()).hexdigest() == digest
+    selected.add(name)
+requests = []
+for phase in report['phases']:
+    name = phase['phase']
+    for file in ('trace.jsonl', 'stdout.log', 'stderr.log', 'query.txt', 'config.json'):
+        if (source / name / file).is_file(): selected.add(name + '/' + file)
+    for suffix in ('-state.json', '-sampling-profile.json'):
+        if (source / (name + suffix)).is_file(): selected.add(name + suffix)
+    for metadata in sorted((source / name / 'provider-requests').glob('*.json')):
+        row = json.loads(metadata.read_text(encoding='utf-8'))
+        body_path = metadata.parent / row['body_file']
+        body = body_path.read_bytes()
+        assert len(body) == row['byte_count'] and hashlib.sha256(body).hexdigest() == row['sha256']
+        assert row['url'] == 'http://127.0.0.1:11434/v1/chat/completions'
+        payload = json.loads(body)
+        tool = next(t['function'] for t in payload['tools'] if t['function']['name'] == 'mnemos_forget_related')
+        parameters = tool['parameters']
+        assert 'selected_source_event_ids' in parameters['properties']
+        requests.append({'phase': name, 'metadata_file': metadata.relative_to(source).as_posix(),
+            'body_file': body_path.relative_to(source).as_posix(), 'sha256': row['sha256'],
+            'tool_choice_present': 'tool_choice' in payload, 'think': payload.get('think'),
+            'reasoning_effort': payload.get('reasoning_effort'), 'options': payload.get('options'),
+            'related_forget_parameters': parameters})
+        selected.add(metadata.relative_to(source).as_posix())
+        selected.add(body_path.relative_to(source).as_posix())
+selected.update(p.relative_to(source).as_posix() for p in (source / 'model-readiness').rglob('*') if p.is_file())
+assert len(requests) == 2 and {r['phase'] for r in requests} == {'teach'}
+for relative in sorted(selected):
+    dest = target / relative
+    dest.parent.mkdir(parents=True, exist_ok=True)
+    shutil.copyfile(source / relative, dest)
+(target / 'request-analysis.json').write_text(json.dumps({'requests': requests,
+    'limitation': 'Only teach requests observed; no forget preview sent in this attempt.'}, indent=2) + '\n', encoding='utf-8')
+shutil.copyfile(__file__, target / (Path(__file__).name + '.txt'))
+files = {p.relative_to(target).as_posix(): {'bytes':p.stat().st_size, 'sha256':hashlib.sha256(p.read_bytes()).hexdigest()}
+         for p in sorted(target.rglob('*')) if p.is_file()}
+(target / 'evidence-index.json').write_text(json.dumps({'files':files}, indent=2) + '\n', encoding='utf-8')
+print(json.dumps({'path':str(target), 'files':len(files), 'requests':len(requests)}))

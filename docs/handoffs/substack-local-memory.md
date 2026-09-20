@@ -12,6 +12,14 @@ Deliver an article draft, three possible titles, and a separate compact source/c
 
 ## Latest implementation and native evidence
 
+Subsequent diagnostics narrow that uncertainty. The [saved previews](../validation/2026-09-20/hermes-v8-preview-persistence-v1/README.md)
+in v8 attempts 2 and 3 match the native tool results intact. A separate
+[single instrumented attempt](../validation/2026-09-20/hermes-request-observation-v1/README.md)
+recorded two outgoing teach requests with the complete source-selection
+schema, thinking disabled, and the intended context setting. It failed at
+teaching after omitting the job-status call and never reached forgetting.
+This is limited request-boundary evidence, not a rerun or repair of v8.
+
 The [fixed Hermes v8 cohort](../validation/2026-09-20/hermes-native-cohort-v8/README.md) ran the verified `e419c2a`
 retrieval-view package and finished zero of three complete lifecycles. All
 readiness checks and cleanup passed. Attempt 1 saved the fact, then announced
@@ -457,5 +465,5 @@ not a requirement to recount every implementation detail in the article.
 - [ ] Record final host continuity, latency, capture coverage, and pilot status without collapsing the separate gates.
 - [ ] Identify which quantitative claims can be used, with units, sample sizes, settings, uncertainty where available, and limitations.
 - [ ] Verify original website/paper claims against primary sources and link the dated corrections.
-- [x] Prepare a portable working packet with this handoff, the selected voice skill, key reports, regression examples, and a file manifest. Refresh that packet at final acceptance. The portable v15 packet includes terminal encoding/retrieval reports, the two earlier native lifecycle failures, all six fixed-cohort runs (all eighteen attempts failed), the deletion coverage and source-selection repair evidence, the six-case development diagnostic and model readiness records, the affective fidelity review, and dated website/paper snapshots. Some older evidence links still require the full checkout. Local validation artifacts are research inputs; public citations require accessible sources.
+- [x] Prepare a portable working packet with this handoff, the selected voice skill, key reports, regression examples, and a file manifest. Refresh that packet at final acceptance. The portable v16 packet includes terminal encoding/retrieval reports, the two earlier native lifecycle failures, all six fixed-cohort runs (all eighteen attempts failed), the deletion coverage and source-selection repair evidence, the six-case development diagnostic and model readiness records, the affective fidelity review, and dated website/paper snapshots. Some older evidence links still require the full checkout. Local validation artifacts are research inputs; public citations require accessible sources.
 - [ ] Keep unverified interpretations and questions outside the article's factual claims, then make the final voice pass using Anthony's skill.

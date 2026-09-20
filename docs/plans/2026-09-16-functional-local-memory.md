@@ -371,7 +371,7 @@ Acceptance: install instructions match the release artifact; no synthetic result
 
 Additional deliverable requested September 19: finalize a research and writing handoff for a roughly 2,500-word Substack article in Anthony's voice. The [handoff](../handoffs/substack-local-memory.md) must identify the final verified checkpoint, original promises, concrete repairs, measured results and failures, source locations, unresolved claims, and a suggested narrative. Apply Anthony's requested `writing-in-anthonys-voice` skill. The handoff is complete only after its evidence and open items are reconciled with the final validation state; the article itself and publication are separate work.
 
-The working export is `mnemos-substack-research-packet-2026-09-20-v15.zip` in the workspace's `deliverables` directory. It includes the handoff, Anthony's selected voice skill, source documents, selected validation reports, regression examples, and a manifest. Refresh the packet at final acceptance; the current snapshot explicitly retains open engineering and research gates.
+The working export is `mnemos-substack-research-packet-2026-09-20-v16.zip` in the workspace's `deliverables` directory. It includes the handoff, Anthony's selected voice skill, source documents, selected validation reports, regression examples, and a manifest. Refresh the packet at final acceptance; the current snapshot explicitly retains open engineering and research gates.
 
 Run final repository checks in an isolated environment: `python -m pytest -q`, `python -m black --check .`, `python -m mypy .`, `python -m build`, `python -m twine check dist/*`. Run the built wheel outside the source tree so imports cannot accidentally validate the checkout.
 

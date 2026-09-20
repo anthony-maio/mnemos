@@ -1,5 +1,13 @@
 # Client compatibility and observed evidence
 
+Subsequent diagnostics narrow that uncertainty. The [saved previews](validation/2026-09-20/hermes-v8-preview-persistence-v1/README.md)
+in v8 attempts 2 and 3 match the native tool results intact. A separate
+[single instrumented attempt](validation/2026-09-20/hermes-request-observation-v1/README.md)
+recorded two outgoing teach requests with the complete source-selection
+schema, thinking disabled, and the intended context setting. It failed at
+teaching after omitting the job-status call and never reached forgetting.
+This is limited request-boundary evidence, not a rerun or repair of v8.
+
 The [fixed Hermes v8 cohort](validation/2026-09-20/hermes-native-cohort-v8/README.md) ran the verified `e419c2a`
 retrieval-view package and finished zero of three complete lifecycles. All
 readiness checks and cleanup passed. Attempt 1 saved the fact, then announced
