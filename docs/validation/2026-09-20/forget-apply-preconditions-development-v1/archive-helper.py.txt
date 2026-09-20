@@ -1,0 +1,35 @@
+from pathlib import Path
+import hashlib
+import json
+import shutil
+import subprocess
+import xml.etree.ElementTree as ET
+
+repo = Path(__file__).resolve().parents[1]
+output = repo / 'docs/validation/2026-09-20/forget-apply-preconditions-development-v1'
+assert not output.exists() or {p.name for p in output.iterdir()} == {'README.md'}
+output.mkdir(parents=True, exist_ok=True)
+(output / '.gitattributes').write_bytes(b'** -text -whitespace\n')
+reports = {}
+for name in (
+    'forget-apply-preconditions-red.xml',
+    'forget-apply-preconditions-red-v2.xml',
+    'forget-apply-preconditions-green.xml',
+    'forget-apply-preconditions-green-v2.xml',
+    'forget-apply-preconditions-adjacent.xml',
+):
+    source = repo / '.venv' / name
+    suites = list(ET.parse(source).getroot().iter('testsuite'))
+    reports[name] = {key: sum(int(s.attrib.get(key, 0)) for s in suites)
+                     for key in ('tests', 'failures', 'errors', 'skipped')}
+    shutil.copyfile(source, output / name)
+assert reports['forget-apply-preconditions-red.xml']['failures'] == 5
+assert reports['forget-apply-preconditions-red-v2.xml']['failures'] == 6
+assert reports['forget-apply-preconditions-green-v2.xml'] == {'tests': 6, 'failures': 0, 'errors': 0, 'skipped': 0}
+assert reports['forget-apply-preconditions-adjacent.xml'] == {'tests': 108, 'failures': 0, 'errors': 0, 'skipped': 0}
+commit = subprocess.check_output(['git', 'rev-parse', 'c7b2e65'], cwd=repo, text=True).strip()
+shutil.copyfile(Path(__file__), output / 'archive-helper.py.txt')
+files = {path.name: {'bytes': path.stat().st_size, 'sha256': hashlib.sha256(path.read_bytes()).hexdigest()}
+         for path in sorted(output.iterdir()) if path.is_file() and path.name not in {'.gitattributes', 'README.md'}}
+(output / 'index.json').write_text(json.dumps({'source_commit': commit, 'reports': reports, 'files': files}, indent=2) + '\n', encoding='utf-8')
+print(json.dumps({'source_commit': commit, 'files': len(files), 'reports': reports}))

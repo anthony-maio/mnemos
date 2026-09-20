@@ -1,0 +1,96 @@
+<?xml version="1.0" encoding="utf-8"?><testsuites name="pytest tests"><testsuite name="pytest" errors="0" failures="5" skipped="0" tests="5" time="5.391" timestamp="2026-09-20T07:41:22.178688-04:00" hostname="Aurora"><testcase classname="tests.test_forget_apply_preconditions" name="test_copy_preview_preconditions_into_real_hermes_apply[100]" time="0.851"><failure message="KeyError: 'apply_preconditions'">tmp_path = WindowsPath('D:/WindowsTemp/pytest-of-Ant/pytest-4275/test_copy_preview_precondition0')
+limit = 100
+
+    @pytest.mark.asyncio
+    @pytest.mark.parametrize("limit", [100, 37])
+    async def test_copy_preview_preconditions_into_real_hermes_apply(tmp_path: Path, limit: int):
+        memory, context, _, _ = _service(tmp_path)
+        client = LocalServiceClient(memory)
+        try:
+            _, target, captured = await _seed_overlap(memory, context)
+            preview = json.loads(await dispatch_tool(client, context, "mnemos_forget_preview", {
+                "fact_id": target.id, "expected_version": target.version, "limit": limit,
+            }))
+&gt;           preconditions = preview["apply_preconditions"]
+                            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E           KeyError: 'apply_preconditions'
+
+tests\test_forget_apply_preconditions.py:24: KeyError</failure></testcase><testcase classname="tests.test_forget_apply_preconditions" name="test_copy_preview_preconditions_into_real_hermes_apply[37]" time="0.935"><failure message="KeyError: 'apply_preconditions'">tmp_path = WindowsPath('D:/WindowsTemp/pytest-of-Ant/pytest-4275/test_copy_preview_precondition1')
+limit = 37
+
+    @pytest.mark.asyncio
+    @pytest.mark.parametrize("limit", [100, 37])
+    async def test_copy_preview_preconditions_into_real_hermes_apply(tmp_path: Path, limit: int):
+        memory, context, _, _ = _service(tmp_path)
+        client = LocalServiceClient(memory)
+        try:
+            _, target, captured = await _seed_overlap(memory, context)
+            preview = json.loads(await dispatch_tool(client, context, "mnemos_forget_preview", {
+                "fact_id": target.id, "expected_version": target.version, "limit": limit,
+            }))
+&gt;           preconditions = preview["apply_preconditions"]
+                            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E           KeyError: 'apply_preconditions'
+
+tests\test_forget_apply_preconditions.py:24: KeyError</failure></testcase><testcase classname="tests.test_forget_apply_preconditions" name="test_incomplete_preview_has_no_copyable_apply_preconditions" time="0.953"><failure message="KeyError: 'apply_preconditions'">tmp_path = WindowsPath('D:/WindowsTemp/pytest-of-Ant/pytest-4275/test_incomplete_preview_has_no0')
+
+    @pytest.mark.asyncio
+    async def test_incomplete_preview_has_no_copyable_apply_preconditions(tmp_path: Path):
+        memory, context, _, _ = _service(tmp_path)
+        try:
+            assertion, target, _ = await _seed_overlap(memory, context)
+            for number in range(2):
+                await memory.dispatch("capture", {
+                    "context": context.model_dump(mode="json"), "event_id": f"extra-copy-{number}",
+                    "occurred_at": datetime.now(timezone.utc).isoformat(), "role": "user",
+                    "content": f"Please remember: {assertion} Copy {number}",
+                    "source_kind": "claude_code_transcript",
+                })
+            preview = await memory.dispatch("forget_preview", {
+                "context": context.model_dump(mode="json"), "fact_id": target.id,
+                "expected_version": target.version, "limit": 1,
+            })
+            assert preview["complete"] is False
+&gt;           assert preview["apply_preconditions"] is None
+                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E           KeyError: 'apply_preconditions'
+
+tests\test_forget_apply_preconditions.py:60: KeyError</failure></testcase><testcase classname="tests.test_forget_apply_preconditions" name="test_copied_preconditions_do_not_bypass_stale_preview_checks[changed_limit]" time="1.202"><failure message="KeyError: 'apply_preconditions'">tmp_path = WindowsPath('D:/WindowsTemp/pytest-of-Ant/pytest-4275/test_copied_preconditions_do_n0')
+mutation = 'changed_limit'
+
+    @pytest.mark.asyncio
+    @pytest.mark.parametrize("mutation", ["changed_limit", "new_capture"])
+    async def test_copied_preconditions_do_not_bypass_stale_preview_checks(tmp_path: Path, mutation: str):
+        memory, context, _, _ = _service(tmp_path)
+        client = LocalServiceClient(memory)
+        try:
+            assertion, target, captured = await _seed_overlap(memory, context)
+            preview = json.loads(await dispatch_tool(client, context, "mnemos_forget_preview", {
+                "fact_id": target.id, "expected_version": target.version,
+            }))
+&gt;           args = {**preview["apply_preconditions"], "selected_fact_ids": [captured.id],
+                      ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+                    "selected_source_event_ids": [source["source_event_id"] for source in preview["source_events"]
+                                                  if source.get("selection_allowed") is True]}
+E                                                 KeyError: 'apply_preconditions'
+
+tests\test_forget_apply_preconditions.py:76: KeyError</failure></testcase><testcase classname="tests.test_forget_apply_preconditions" name="test_copied_preconditions_do_not_bypass_stale_preview_checks[new_capture]" time="0.935"><failure message="KeyError: 'apply_preconditions'">tmp_path = WindowsPath('D:/WindowsTemp/pytest-of-Ant/pytest-4275/test_copied_preconditions_do_n1')
+mutation = 'new_capture'
+
+    @pytest.mark.asyncio
+    @pytest.mark.parametrize("mutation", ["changed_limit", "new_capture"])
+    async def test_copied_preconditions_do_not_bypass_stale_preview_checks(tmp_path: Path, mutation: str):
+        memory, context, _, _ = _service(tmp_path)
+        client = LocalServiceClient(memory)
+        try:
+            assertion, target, captured = await _seed_overlap(memory, context)
+            preview = json.loads(await dispatch_tool(client, context, "mnemos_forget_preview", {
+                "fact_id": target.id, "expected_version": target.version,
+            }))
+&gt;           args = {**preview["apply_preconditions"], "selected_fact_ids": [captured.id],
+                      ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+                    "selected_source_event_ids": [source["source_event_id"] for source in preview["source_events"]
+                                                  if source.get("selection_allowed") is True]}
+E                                                 KeyError: 'apply_preconditions'
+
+tests\test_forget_apply_preconditions.py:76: KeyError</failure></testcase></testsuite></testsuites>
