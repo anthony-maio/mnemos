@@ -118,6 +118,29 @@ quality acceptance.
 
 ## Latest verified repair
 
+The [Hermes reviewed-copy checkpoint](../validation/2026-09-19/hermes-reviewed-forget-checkpoint-v1/README.md)
+at `db932be` passes 1,383 source tests with 4 skips, all six source/package
+checks, 595 isolated installed cases with 4 matching skips, and seven
+replay assertions. Wheel SHA-256:
+`7df060463b35853d97898ca839b500a66e233bef26b8e52a7de1db799681190a`.
+
+It exposes the existing preview/apply workflow as two additional Hermes
+tools. The provider supplies scope; the caller supplies exact reviewed IDs,
+the unchanged preview digest, and its matching limit. Empty selections
+remove only the target. Fixtures demonstrate selected deletion, rejection of
+a preview made stale by later capture, foreign-scope exclusion, and retention
+of unselected advisory matches. These are service and package observations,
+not native-model success. The v5 failures below remain unchanged, and no
+native model has exercised the two new tools yet.
+
+Explain the completeness limit carefully: the returned selection and its
+dependencies fit the preview bound, but semantic search can still be
+nonexhaustive or truncated. A tool named "forget" cannot establish that every
+paraphrase has disappeared. Do not turn this repair into a claim of universal
+erasure or completed cross-host continuity.
+
+## Package used by native v5
+
 The [native failure repair checkpoint](../validation/2026-09-19/native-repairs-checkpoint-v1/README.md)
 at `fd83fb2` passes 1,351 source tests with 4 skips, all six source/package
 checks, 569 installed cases with 4 matching skips, and seven replay

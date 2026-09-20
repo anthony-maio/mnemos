@@ -1,5 +1,11 @@
 # Client compatibility and observed evidence
 
+Current provider package: [reviewed-copy tools](validation/2026-09-19/hermes-reviewed-forget-checkpoint-v1/README.md)
+on `db932be` passes 1,383 source tests and 595 installed cases, with 4/4
+respective skips and seven replay assertions. It exposes eight Hermes tools;
+the new preview/apply tools have fixture/service coverage but no native-model
+run. Historical six-tool results retain their original runtime bindings.
+
 Latest native observation: the [fixed Hermes v5 cohort](validation/2026-09-19/hermes-native-cohort-v5/README.md)
 on verified `fd83fb2` finished zero of three full lifecycles. All three
 attempts passed teaching, restarted recall, correction, and restarted

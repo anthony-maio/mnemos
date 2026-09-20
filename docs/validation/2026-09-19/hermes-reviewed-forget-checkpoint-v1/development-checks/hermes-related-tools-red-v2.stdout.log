@@ -1,0 +1,55 @@
+F.....F.........                                                         [100%]
+================================== FAILURES ===================================
+_____________ test_schemas_are_narrow_and_scope_is_provider_owned _____________
+
+    def test_schemas_are_narrow_and_scope_is_provider_owned():
+        schemas = get_tool_schemas()
+>       assert {item["name"] for item in schemas} == {
+            "mnemos_retrieve",
+            "mnemos_inspect",
+            "mnemos_remember",
+            "mnemos_correct",
+            "mnemos_forget",
+            "mnemos_forget_preview",
+            "mnemos_forget_related",
+            "mnemos_job_status",
+        }
+E       AssertionError: assert {'mnemos_corr...mos_retrieve'} == {'mnemos_corr..._status', ...}
+E         
+E         Extra items in the right set:
+E         'mnemos_forget_related'
+E         'mnemos_forget_preview'
+E         Use -v to get more diff
+
+tests\test_hermes_tools.py:41: AssertionError
+____________ test_reviewed_forget_tools_inject_scope_and_defaults _____________
+
+    def test_reviewed_forget_tools_inject_scope_and_defaults():
+        client = RecordingClient()
+        preview = json.loads(
+            asyncio.run(
+                dispatch_tool(
+                    client,
+                    context(),
+                    "mnemos_forget_preview",
+                    {"fact_id": "fact-1", "expected_version": 1},
+                )
+            )
+        )
+>       assert preview == client.result
+E       AssertionError: assert {'schema_vers...rget_preview'} == {'status': 'c...id': 'fact-1'}
+E         
+E         Differing items:
+E         {'status': 'rejected'} != {'status': 'committed'}
+E         Left contains 2 more items:
+E         {'error': 'Unknown Mnemos provider tool: mnemos_forget_preview',
+E          'schema_version': 1}
+E         Right contains 1 more item:
+E         {'fact_id': 'fact-1'}
+E         Use -v to get more diff
+
+tests\test_hermes_tools.py:145: AssertionError
+=========================== short test summary info ===========================
+FAILED tests/test_hermes_tools.py::test_schemas_are_narrow_and_scope_is_provider_owned
+FAILED tests/test_hermes_tools.py::test_reviewed_forget_tools_inject_scope_and_defaults
+2 failed, 14 passed in 3.63s

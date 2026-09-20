@@ -1,12 +1,14 @@
 # Functional local memory implementation record
 
-Current package checkpoint: [native failure repairs](../2026-09-19/native-repairs-checkpoint-v1/README.md)
-on `fd83fb2` passes 1,351 source tests (4 skips), all six source/package
-checks, 569 installed cases (4 matching skips), and seven replay assertions.
-The bridge writes explicit UTF-8; missing or inaccessible inspect/correct/forget
-targets return a generic 404; automatic assistant captures quoting a forgotten
-fact ID are suppressed transactionally. Explicit user writes remain available.
-These counts establish package checks; the separate native result follows.
+Current package checkpoint: [Hermes reviewed-copy tools](../2026-09-19/hermes-reviewed-forget-checkpoint-v1/README.md)
+on `db932be` passes 1,383 source tests (4 skips), all six source/package
+checks, 595 installed cases (4 matching skips), and seven replay assertions.
+Hermes exposes eight scoped tools, including the existing service's reviewed
+copy preview/apply operations. New fixtures cover explicit selection, safe
+empty defaults, stale-preview rejection, scope isolation, and preservation
+of unselected advisory candidates. A complete bounded preview does not
+establish exhaustive semantic-copy discovery. Native model use of the two
+new tools remains unrun; the earlier six-tool v5 result follows.
 
 The [fixed Hermes v5 cohort](../2026-09-19/hermes-native-cohort-v5/README.md)
 on verified `fd83fb2` finished zero of three full lifecycles. All three
