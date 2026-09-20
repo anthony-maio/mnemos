@@ -1,0 +1,98 @@
+"""Run frozen extraction proposals; preserve every response without semantic rescoring."""
+from pathlib import Path
+from datetime import datetime, timezone
+import asyncio
+import hashlib
+import json
+import os
+import subprocess
+import sys
+from urllib.request import urlopen
+
+root = Path(__file__).resolve().parent
+inputs = json.loads((root / 'inputs.json').read_bytes())
+prep = json.loads((root / 'preparation.json').read_bytes())
+snapshot = Path(inputs['snapshot'])
+for name, digest in prep['files'].items():
+    assert hashlib.sha256((root / name).read_bytes()).hexdigest() == digest
+assert subprocess.check_output(['git', 'rev-parse', 'HEAD'], cwd=snapshot, text=True).strip() == prep['source_commit']
+assert not subprocess.check_output(['git', 'status', '--porcelain'], cwd=snapshot).strip()
+for name, digest in prep['source_files'].items():
+    assert hashlib.sha256((snapshot / name).read_bytes()).hexdigest() == digest
+assert not (root / 'observations.jsonl').exists()
+with urlopen(inputs['endpoint'] + '/api/tags', timeout=10) as response:
+    tags = json.loads(response.read())
+assert next(m['digest'] for m in tags['models'] if m['name'] == inputs['model']) == prep['model_metadata']['digest']
+sys.path.insert(0, str(snapshot))
+from mnemos.modules.sleep import SleepDaemon
+from mnemos.types import EpisodicEvent
+from mnemos.utils.llm import OllamaProvider, LLMProvider
+from mnemos.utils.storage import InMemoryStore
+
+class Provider(LLMProvider):
+    supports_structured_output = True
+
+    def __init__(self, arm):
+        self.arm = arm
+        self.record = {'response_metadata': []}
+        self.provider = OllamaProvider(model=inputs['model'], base_url=inputs['endpoint'],
+            timeout=inputs['timeout'], temperature=inputs['temperature'], max_tokens=inputs['max_tokens'],
+            think=inputs['think'], response_observer=self.record['response_metadata'].append)
+
+    async def predict(self, prompt, **kwargs):
+        if self.arm != 'baseline':
+            anchor = 'Do not invent facts or IDs. '
+            assert anchor in prompt
+            prompt = prompt.replace(anchor, inputs['candidate_clause'] + anchor, 1)
+        self.record.update(prompt=prompt, request_options=kwargs)
+        response = await self.provider.predict(prompt, **kwargs)
+        self.record['response'] = response
+        return response
+
+    async def classify(self, prompt, labels):
+        raise AssertionError('Classification is outside this extraction probe')
+
+state = {'status': 'running', 'pid': os.getpid(), 'started_at': datetime.now(timezone.utc).isoformat(),
+         'preparation_sha256': hashlib.sha256((root / 'preparation.json').read_bytes()).hexdigest(),
+         'processed': 0, 'runtime_valid': 0, 'errors': 0}
+
+def save():
+    (root / 'status.json').write_text(json.dumps(state, indent=2) + '\n', encoding='utf-8')
+
+async def main():
+    save()
+    for repetition in range(inputs['repetitions']):
+        for index, case in enumerate(inputs['cases']):
+            arms = inputs['arms'] if (repetition + index) % 2 == 0 else list(reversed(inputs['arms']))
+            for arm in arms:
+                provider = Provider(arm)
+                event = EpisodicEvent(id='source-' + case['id'], event_fingerprint='fixture-' + case['id'],
+                    role=case['role'], content=case['content'], normalized_content=case['content'].lower(),
+                    scope='project', scope_id='historical-claim-development',
+                    metadata={'user_profile_id': 'development-fixture'},
+                    occurred_at=datetime(2026, 9, 20, 12, tzinfo=timezone.utc))
+                row = {'case_id': case['id'], 'repetition': repetition, 'arm': arm,
+                       'review_criterion': case['review_criterion'], 'trace': provider.record}
+                try:
+                    proposals = await SleepDaemon(InMemoryStore()).propose_facts([event], provider)
+                    row.update(status='runtime_valid', proposals=[p.model_dump(mode='json') for p in proposals])
+                    state['runtime_valid'] += 1
+                except Exception as error:
+                    row.update(status='error', error_type=type(error).__name__, error=str(error))
+                    state['errors'] += 1
+                with (root / 'observations.jsonl').open('a', encoding='utf-8') as out:
+                    out.write(json.dumps(row, ensure_ascii=True) + '\n')
+                state['processed'] += 1
+                save()
+                print(json.dumps({k: row[k] for k in ('case_id', 'repetition', 'arm', 'status')}), flush=True)
+    with urlopen(inputs['endpoint'] + '/api/tags', timeout=10) as response:
+        final_tags = json.loads(response.read())
+    assert next(m['digest'] for m in final_tags['models'] if m['name'] == inputs['model']) == prep['model_metadata']['digest']
+    for name, digest in prep['source_files'].items():
+        assert hashlib.sha256((snapshot / name).read_bytes()).hexdigest() == digest
+    state.update(status='completed' if state['errors'] == 0 else 'completed_with_errors',
+                 finished_at=datetime.now(timezone.utc).isoformat(), model_digest_after=prep['model_metadata']['digest'],
+                 observations_sha256=hashlib.sha256((root / 'observations.jsonl').read_bytes()).hexdigest())
+    save()
+
+asyncio.run(main())

@@ -1,0 +1,97 @@
+{
+  "schema": "historical-claim-development-v1",
+  "cases": [
+    {
+      "id": "current-policy",
+      "role": "user",
+      "content": "For this project, Nadia is the person who approves releases.",
+      "review_criterion": "Preserve Nadia as the current release approver; do not add an approval event."
+    },
+    {
+      "id": "dated-policy",
+      "role": "user",
+      "content": "The launch checklist from April said Nadia approved releases. I am describing the April policy, not a current instruction.",
+      "review_criterion": "A supported historical memory preserves the April/checklist qualification; it must not assert that Nadia is the current approver."
+    },
+    {
+      "id": "earlier-note",
+      "role": "user",
+      "content": "The earlier project note said that archival exports used Zstandard.",
+      "review_criterion": "Preserve an attributed historical report about Zstandard exports, without asserting the current export format."
+    },
+    {
+      "id": "unverified-report",
+      "role": "user",
+      "content": "During Tuesday's handoff, Mira reported that the staging host uses port 4317. I have not checked it myself.",
+      "review_criterion": "Preserve attribution to Mira and the unverified nature of the report; do not present the port as independently confirmed."
+    },
+    {
+      "id": "obsolete-port",
+      "role": "user",
+      "content": "We used port 4317 for staging last year. That is no longer our staging port.",
+      "review_criterion": "Preserve the historical or explicitly obsolete status of port 4317; do not invent the replacement port."
+    },
+    {
+      "id": "former-tool",
+      "role": "user",
+      "content": "I stopped using Trello in March; that used to be my task tracker.",
+      "review_criterion": "Preserve discontinued use of Trello and the March qualifier; do not record a current preference for Trello."
+    },
+    {
+      "id": "fiction",
+      "role": "user",
+      "content": "In a fictional example, a character named Nadia approves every release. This is not our project policy.",
+      "review_criterion": "Abstain from durable project or personal assertions about the fictional example."
+    },
+    {
+      "id": "question",
+      "role": "user",
+      "content": "Did our earlier checklist actually say Nadia approved releases?",
+      "review_criterion": "Abstain; the question supplies no affirmative policy evidence."
+    },
+    {
+      "id": "hypothesis",
+      "role": "user",
+      "content": "If we ever changed the export format, perhaps Zstandard would be worth considering.",
+      "review_criterion": "Abstain from asserting an adopted format or standing requirement."
+    },
+    {
+      "id": "assistant-suggestion",
+      "role": "assistant",
+      "content": "I think you would prefer Trello for task tracking.",
+      "review_criterion": "Abstain from asserting a user preference from the assistant suggestion."
+    },
+    {
+      "id": "future-requirement",
+      "role": "user",
+      "content": "The next release must include signed exports. We have not built signing yet.",
+      "review_criterion": "Preserve the future requirement and incomplete status; do not assert that signed exports already exist."
+    },
+    {
+      "id": "current-preference",
+      "role": "user",
+      "content": "For release reviews I prefer a short written checklist before the meeting.",
+      "review_criterion": "Preserve a user preference for a short checklist before release-review meetings."
+    }
+  ],
+  "arms": [
+    "baseline",
+    "attributed_history_candidate"
+  ],
+  "candidate_clause": "A user may report a prior project state or what a named source said. Such a report can support a memory of that history or report even when it is not a current requirement. Preserve its attribution, time, uncertainty, negation, and obsolete status in the fact text; never turn it into an unqualified current fact or an instruction to act. Fiction, questions, hypotheticals, and assistant suggestions still do not establish user preferences or adopted project decisions. ",
+  "repetitions": 3,
+  "model": "qwen3.5:9b",
+  "endpoint": "http://127.0.0.1:11434",
+  "temperature": 0.0,
+  "max_tokens": 512,
+  "think": false,
+  "timeout": 120,
+  "source_commit": "ac1a83854dc6734511365aeda6fb92e066e1ce0f",
+  "snapshot": "C:\\Users\\Ant\\AppData\\Local\\Temp\\mnemos-source-classifier-model-v1",
+  "interpretation": [
+    "Development proposals only; no fact commits, retrieval, or lifecycle acceptance.",
+    "Manual review criteria frozen before calls; no automated semantic truth score.",
+    "Previously discovered failure class, not unseen heldout evaluation.",
+    "No selective retry, criteria revision, or production prompt change."
+  ]
+}

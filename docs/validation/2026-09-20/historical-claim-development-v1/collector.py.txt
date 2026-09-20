@@ -1,0 +1,85 @@
+"""Archive both complete development arms without changing prompts or criteria."""
+from collections import Counter
+from pathlib import Path
+import hashlib
+import json
+import shutil
+
+repo = Path(__file__).resolve().parents[1]
+temp = Path('C:/Users/Ant/AppData/Local/Temp')
+dest = repo / 'docs/validation/2026-09-20/historical-claim-development-v1'
+roots = {'qwen35': temp / 'mnemos-historical-claim-development-v1',
+         'qwen25': temp / 'mnemos-historical-claim-development-qwen25-v1'}
+records = {}
+
+def sha(data):
+    return hashlib.sha256(data).hexdigest()
+
+for model_key, root in roots.items():
+    inputs = json.loads((root / 'inputs.json').read_bytes())
+    prep = json.loads((root / 'preparation.json').read_bytes())
+    state = json.loads((root / 'status.json').read_bytes())
+    assert state['status'] in {'completed', 'completed_with_errors'}
+    assert state['processed'] == 72
+    assert sha((root / 'preparation.json').read_bytes()) == state['preparation_sha256']
+    for name, digest in prep['files'].items():
+        assert sha((root / name).read_bytes()) == digest
+    raw = (root / 'observations.jsonl').read_bytes()
+    assert sha(raw) == state['observations_sha256']
+    rows = [json.loads(line) for line in raw.splitlines()]
+    assert len(rows) == 72
+    mapping = {(r['case_id'], r['repetition'], r['arm']): r for r in rows}
+    assert len(mapping) == 72
+    observed = []
+    for case in inputs['cases']:
+        for repetition in range(3):
+            baseline = mapping[(case['id'], repetition, 'baseline')]
+            candidate = mapping[(case['id'], repetition, 'attributed_history_candidate')]
+            assert baseline['review_criterion'] == candidate['review_criterion'] == case['review_criterion']
+            anchor = 'Do not invent facts or IDs. '
+            assert candidate['trace']['prompt'] == baseline['trace']['prompt'].replace(anchor, inputs['candidate_clause'] + anchor, 1)
+            assert baseline['trace']['request_options'] == candidate['trace']['request_options']
+        for arm in inputs['arms']:
+            selected = [mapping[(case['id'], rep, arm)] for rep in range(3)]
+            variants = Counter(tuple(p['content'] for p in row.get('proposals', [])) for row in selected)
+            observed.append({'case_id': case['id'], 'arm': arm, 'review_criterion': case['review_criterion'],
+                             'statuses': dict(Counter(r['status'] for r in selected)),
+                             'nonempty_proposal_responses': sum(bool(r.get('proposals')) for r in selected),
+                             'variants': [{'count': count, 'content': list(content)} for content, count in variants.items()]})
+    records[model_key] = {'inputs': inputs, 'preparation': prep, 'status': state, 'observed_cases': observed}
+
+left, right = (records[key]['inputs'] for key in ('qwen35', 'qwen25'))
+assert {k: v for k, v in left.items() if k not in {'model', 'think', 'interpretation'}} == {
+    k: v for k, v in right.items() if k not in {'model', 'think', 'interpretation'}}
+assert records['qwen25']['preparation']['parent_inputs_sha256'] == sha((roots['qwen35'] / 'inputs.json').read_bytes())
+dest.mkdir(exist_ok=False)
+(dest / '.gitattributes').write_bytes(b'** -text -whitespace\n')
+for model_key, root in roots.items():
+    target = dest / model_key
+    target.mkdir()
+    for name in ('inputs.json', 'preparation.json', 'status.json', 'observations.jsonl', 'residency-sample.json'):
+        shutil.copyfile(root / name, target / name)
+    shutil.copyfile(root / 'runner.py', target / 'runner.py.txt')
+    if (root / 'model-capabilities.json').exists():
+        shutil.copyfile(root / 'model-capabilities.json', target / 'model-capabilities.json')
+for name, digest in records['qwen35']['preparation']['source_files'].items():
+    original = Path(left['snapshot']) / name
+    assert sha(original.read_bytes()) == digest
+    target = dest / 'source' / (name + '.txt')
+    target.parent.mkdir(parents=True, exist_ok=True)
+    shutil.copyfile(original, target)
+shutil.copyfile(Path(__file__), dest / 'collector.py.txt')
+summary = {'scope': 'proposal-only development comparison, not a production change or lifecycle result',
+           'models': records, 'interpretation_limits': [
+               'No overall semantic accuracy score or independent human annotation.',
+               'Second model chosen after the first comparison failed to retain historical claims.',
+               'Temperature, token budget, cases, criteria, source, and two prompt arms are unchanged.',
+               'Thinking disabled for Qwen3.5; omitted for Qwen2.5 because it lacks that capability.',
+               'Residency samples do not establish per-call GPU behavior or ordinary recall latency.',
+               'The original 4200-observation matrix and all failures remain unchanged.']}
+(dest / 'summary.json').write_text(json.dumps(summary, indent=2) + '\n', encoding='utf-8')
+index = {p.relative_to(dest).as_posix(): {'bytes': p.stat().st_size, 'sha256': sha(p.read_bytes())}
+         for p in sorted(dest.rglob('*')) if p.is_file()}
+(dest / 'evidence-index.json').write_text(json.dumps({'files': index}, indent=2) + '\n', encoding='utf-8')
+print(json.dumps({'archive': str(dest), 'files': len(index), 'observations': 144,
+                  'models': {key: value['status'] for key, value in records.items()}}))
