@@ -5,6 +5,17 @@ weights, fanout bounds, and all configuration values must be fixed in a
 committed manifest before execution. This document alone is not a frozen
 experiment or evidence of a working association channel.
 
+Implementation checkpoint: a read-only SQLite diagnostic now derives
+candidate relations from actual source-event/evidence joins. Its 20 offline
+tests pass, including scope/profile boundaries, provenance, malformed input,
+fanout limits, restart/order parity, correction, and forgetting. Black and
+strict Python 3.10 type checks pass for the diagnostic and tests. Since evidence
+rows have no version field, excerpt/current-content mismatch is rejected as
+`unverifiable_current_content`; matching text is a conservative eligibility
+check, not proof of historical version identity. The diagnostic does not alter
+production graph construction or rankings. The five-case comparative
+experiment below still requires frozen inputs and has NOT RUN.
+
 This protocol is a prospective development diagnostic for a possible
 source-backed association channel. It is not a rerun of the held-out
 evaluation, a threshold search, or a quality acceptance run. It must use a
