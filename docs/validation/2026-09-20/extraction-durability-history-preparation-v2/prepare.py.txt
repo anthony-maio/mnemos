@@ -1,0 +1,39 @@
+from pathlib import Path
+import json,hashlib,shutil,subprocess
+from datetime import datetime,timezone
+from urllib.request import urlopen
+repo=Path.cwd(); temp=Path('C:/Users/Ant/AppData/Local/Temp')
+prior=temp/'mnemos-extraction-durability-development-v1'
+history=temp/'mnemos-extraction-temperature-one-v1'
+root=temp/'mnemos-extraction-durability-history-development-v2'
+snapshot=temp/'mnemos-source-project-identity-v1'
+root.mkdir(exist_ok=False)
+sha=lambda p:hashlib.sha256(p.read_bytes()).hexdigest()
+a=json.loads((prior/'inputs.json').read_bytes()); b=json.loads((history/'inputs.json').read_bytes())
+archive=repo/'docs/validation/2026-09-20/extraction-temperature-one-terminal-v1'
+authored=json.loads((archive/'extraction_holdout_authored_v1.json').read_bytes())
+rubrics={c['id']:c for c in authored['cases']}
+cases=[]
+for c in a['cases']:
+ cases.append({k:c[k] for k in ['id','source','rubric']})
+for c in b['cases']:
+ assert c['source']['content']==rubrics[c['id']]['content']
+ cases.append({'id':c['id'],'source':c['source'],'existing_fact':c['existing_fact'],'rubric':rubrics[c['id']]})
+addition=('When retaining a preference, requirement, policy, or negative constraint, preserve every stated condition that limits its actor, scope, duration, trigger, exception, revocation, phase, or time. Do not omit such a condition merely to shorten the fact. A prohibition governing only how to respond to or evaluate the present source does not by itself establish a continuing project rule. Do not turn an instruction to reject or ignore a quoted or hypothetical claim in this exchange into a lasting policy about that claim. Distinguish those response instructions from actual negative project requirements, rejected decisions, attributed historical reports, and uncertainties the user explicitly asks to remember. Retain those supported project states with their attribution and unresolved, rejected, obsolete, or historical status. A requirement can remain useful for a specific deliverable or phase without being permanent. ')
+inputs={k:a[k] for k in ['endpoint','model','temperature','max_tokens','timeout','think']}
+inputs.update(snapshot=str(snapshot),source_commit=subprocess.check_output(['git','rev-parse','HEAD'],cwd=snapshot,text=True).strip(),candidate_clause=a['candidate_clause']+addition,cases=cases,arms=['production','durability_v2'],repetitions=1)
+assert inputs['source_commit']=='cc940ac5bb8826e5e68528812fc86f0ad7154a4e'
+assert not subprocess.check_output(['git','status','--porcelain'],cwd=snapshot).strip()
+assert sha(snapshot/'mnemos/modules/sleep.py')==sha(Path(a['snapshot'])/'mnemos/modules/sleep.py')==sha(Path(b['snapshot'])/'mnemos/modules/sleep.py')
+(root/'inputs.json').write_text(json.dumps(inputs,indent=2)+'\n')
+for src,dest in [(prior/'rubric.json','durability-rubric.json'),(prior/'rubric-review.json','durability-rubric-review.json'),(archive/'extraction_holdout_authored_v1.json','history-rubric.json'),(archive/'extraction_holdout_rubric_review_v1.json','history-rubric-review.json')]:
+ shutil.copyfile(src,root/dest)
+runner=(prior/'runner.py').read_text().replace("'durability'","'durability_v2'").replace('existing = []',"existing = [MemoryChunk.model_validate(case['existing_fact'])] if 'existing_fact' in case else []")
+(root/'runner.py').write_text(runner)
+contract={'calls':92,'cases':46,'arms':inputs['arms'],'repetitions':1,'variable':'Added durability clause plus qualification and response-boundary clarification, compared with unchanged production prompt. No production edit.','review':'Review all required/forbidden meanings with original pre-execution ambiguities. Original rubric artifacts are byte-identical. Stale unused criterion fields removed. No aggregate accuracy or unseen claim.','ordering':'Original durability26 followed by original history20; alternating arm order.','limits':'All development cases reused. One stochastic repetition cannot establish reliability. Prior v1 results remain preserved. Runtime validity is not semantic quality.','provider':'Same settings as v1. New verified source cc940ac; SleepDaemon bytes unchanged across the three source snapshots.','launch_gate':'Do not start until durability v1 is terminal, archived and fully reviewed. No parallel evaluation launched.'}
+(root/'diagnostic-contract.json').write_text(json.dumps(contract,indent=2)+'\n')
+with urlopen(inputs['endpoint']+'/api/tags',timeout=10) as f:model=next(m for m in json.loads(f.read())['models'] if m['name']==inputs['model'])
+shutil.copyfile(__file__,root/'prepare.py.txt')
+prep={'prepared_at':datetime.now(timezone.utc).isoformat(),'source_commit':inputs['source_commit'],'source_files':{str(p.relative_to(snapshot)).replace('\\','/'):sha(p) for p in (snapshot/'mnemos').rglob('*.py')},'model':model,'files':{p.name:sha(p) for p in root.iterdir() if p.is_file()}}
+(root/'preparation.json').write_text(json.dumps(prep,indent=2)+'\n')
+print(json.dumps({'root':str(root),'calls':92,'started':False,'preparation_sha256':sha(root/'preparation.json')}))
