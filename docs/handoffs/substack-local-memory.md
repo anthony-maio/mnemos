@@ -12,16 +12,21 @@ Deliver an article draft, three possible titles, and a separate compact source/c
 
 ## Latest implementation and native evidence
 
-The portable v20 packet is a working snapshot through the v2 attempt. This checkout handoff also records the later v3 setup failure; refresh the packet at the next completed checkpoint.
+The portable v21 packet is a working snapshot through the v4 attempt. It includes the partial cross-host success and the correction failure below. Refresh the handoff and packet at final acceptance; this is enough to begin research, not a finished engineering account.
 
-The [three-host v3 attempt](../validation/2026-09-20/three-host-native-v3/README.md) failed after
-startup selected a different Codex model than requested. The new model check
-rejected both turns. Explicit teaching calls were cancelled; raw hook captures
-committed, including an unintended controller shutdown prompt. Cleanup and
-separate Hermes discovery passed. No later host phase ran. The
-[earlier v2 correlation failure](../validation/2026-09-20/three-host-native-v2/README.md) remains
-failed. Three-host continuity is open; Hermes v10 still has one complete
-lifecycle pass and two failures. The v4 setup repair is prospective.
+The [three-host v4 attempt](../validation/2026-09-20/three-host-native-v4/README.md) passed
+Codex teaching, Claude teaching, and Hermes retrieval of both facts after a
+service restart. Hermes correction then failed: an unsupported scope argument
+was rejected, required inspection was omitted, and the committed correction
+job remained pending. The final fact stayed at version 1. Later phases did
+not run. Cleanup passed. The runner processes jobs after a successful native
+phase; validation stopped before that maintenance step. Pending status in
+this run does not establish a production worker defect.
+
+The [v3 model-substitution failure](../validation/2026-09-20/three-host-native-v3/README.md) and
+[v2 correlation failure](../validation/2026-09-20/three-host-native-v2/README.md) remain failed.
+Full three-host continuity remains open. Hermes v10 separately retains one
+complete bounded lifecycle pass and two failures.
 
 The [native Hermes v10 cohort](../validation/2026-09-20/hermes-native-cohort-v10/README.md)
 completed one of three full lifecycles on `f2f7414`. Attempt 1 omitted
@@ -179,7 +184,7 @@ forgetting, and known-source replay, then retrieved the deleted value from
 newly captured assistant narration. Attempt 2 failed on locale-encoded bridge
 output. Attempt 3 retrieved and inspected a fact, then announced a correction
 without calling the correction tool. Preserve the difference between a model
-claim and an observed mutation. The three-host driver was unrun at that earlier checkpoint; see the current v2 failure above.
+claim and an observed mutation. The three-host driver was unrun at that earlier checkpoint; see the current v4 partial result and failure above.
 
 The earlier [v3 cohort](../validation/2026-09-19/hermes-native-cohort-v3/README.md)
 also failed all three attempts, at teach, because each model omitted the
@@ -531,5 +536,5 @@ not a requirement to recount every implementation detail in the article.
 - [ ] Record final host continuity, latency, capture coverage, and pilot status without collapsing the separate gates.
 - [ ] Identify which quantitative claims can be used, with units, sample sizes, settings, uncertainty where available, and limitations.
 - [ ] Verify original website/paper claims against primary sources and link the dated corrections.
-- [x] Prepare a portable working packet with this handoff, the selected voice skill, key reports, regression examples, and a file manifest. Refresh that packet at final acceptance. The portable v20 packet includes the three-host v2 preflight and failed native attempt, selected native tool records, and terminal encoding/retrieval reports, the two earlier native lifecycle failures, all eight fixed-cohort runs (v3-v9 retain twenty-one failed attempts; v10 adds one pass and two failures under its own binding; these are not a pooled reliability estimate), the deletion coverage and source-selection repair evidence, the six-case development diagnostic and model readiness records, the affective fidelity review, the endpoint context diagnostic and verified-context native successor, and dated website/paper snapshots. Some older evidence links still require the full checkout. Local validation artifacts are research inputs; public citations require accessible sources.
+- [x] Prepare a portable working packet with this handoff, the selected voice skill, key reports, regression examples, and a file manifest. Refresh that packet at final acceptance. The portable v21 packet includes the three-host v2 and v3 failures and the v4 teaching/restarted-recall result followed by correction failure, selected native records, and terminal encoding/retrieval reports, the two earlier native lifecycle failures, all eight fixed-cohort runs (v3-v9 retain twenty-one failed attempts; v10 adds one pass and two failures under its own binding; these are not a pooled reliability estimate), the deletion coverage and source-selection repair evidence, the six-case development diagnostic and model readiness records, the affective fidelity review, the endpoint context diagnostic and verified-context native successor, and dated website/paper snapshots. Some older evidence links still require the full checkout. Local validation artifacts are research inputs; public citations require accessible sources.
 - [ ] Keep unverified interpretations and questions outside the article's factual claims, then make the final voice pass using Anthony's skill.

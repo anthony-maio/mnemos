@@ -335,7 +335,7 @@ Run: `py -3.13 -m pytest -q tests/test_backup_restore.py tests/test_storage_sqli
 
 ### T17 - Verify the complete local and cross-host workflow
 
-Latest native result: [three-host v3](../validation/2026-09-20/three-host-native-v3/README.md) failed when the startup migration selected a different Codex model. Its model check rejected both turns; raw captures and the controller's shutdown mistake are preserved. V2 remains failed for missing model-to-MCP correlation. The [v4 setup protocol](2026-09-20-three-host-continuity-protocol-v4.md) is prospective. T17 acceptance remains open.
+Latest native result: [three-host v4](../validation/2026-09-20/three-host-native-v4/README.md) passed Codex and Claude teaching, followed by Hermes recall of both facts after restart. Correction failed: rejected scope override, omitted inspection, and a pending correction job. The final fact remained at version 1; later phases did not run. Cleanup passed. Validation stopped before the runner's post-phase maintenance; pending status does not establish a production worker defect. V2 and v3 remain failed. T17 acceptance remains open.
 
 Depends on: T12-T16.
 
@@ -347,7 +347,7 @@ Acceptance: host A teaches a source-backed project convention; after restart hos
 
 The [Hermes v10 cohort](../validation/2026-09-20/hermes-native-cohort-v10/README.md) now supplies one complete bounded lifecycle in three attempts, with both failures retained. All five cognition modules were disabled; general reliability remains open.
 
-The missing three-host native observation has a [prospective protocol](2026-09-19-three-host-continuity-protocol-v1.md). It remains NOT RUN; neither the earlier two-host result nor a Hermes-only lifecycle pass closes that requirement.
+The [original three-host protocol](2026-09-19-three-host-continuity-protocol-v1.md) now has preserved successor attempts. V4 establishes teaching and restarted retrieval across all three hosts; full correction, forgetting, and replay continuity remains unproven.
 
 Run: `py -3.13 -m pytest -q tests/test_cross_host_contract.py tests/test_mcp_compatibility.py`. Real-host results remain NOT RUN until observed; protocol tests do not promote host tiers.
 
@@ -375,7 +375,7 @@ Acceptance: install instructions match the release artifact; no synthetic result
 
 Additional deliverable requested September 19: finalize a research and writing handoff for a roughly 2,500-word Substack article in Anthony's voice. The [handoff](../handoffs/substack-local-memory.md) must identify the final verified checkpoint, original promises, concrete repairs, measured results and failures, source locations, unresolved claims, and a suggested narrative. Apply Anthony's requested `writing-in-anthonys-voice` skill. The handoff is complete only after its evidence and open items are reconciled with the final validation state; the article itself and publication are separate work.
 
-The working export is `mnemos-substack-research-packet-2026-09-20-v20.zip` in the workspace's `deliverables` directory. It includes the handoff, Anthony's selected voice skill, source documents, selected validation reports, regression examples, and a manifest. Refresh the packet at final acceptance; the current snapshot explicitly retains open engineering and research gates.
+The working export is `mnemos-substack-research-packet-2026-09-20-v21.zip` in the workspace's `deliverables` directory. It includes the handoff, Anthony's selected voice skill, source documents, selected validation reports, regression examples, and a manifest. Refresh the packet at final acceptance; the current snapshot explicitly retains open engineering and research gates.
 
 Run final repository checks in an isolated environment: `python -m pytest -q`, `python -m black --check .`, `python -m mypy .`, `python -m build`, `python -m twine check dist/*`. Run the built wheel outside the source tree so imports cannot accidentally validate the checkout.
 

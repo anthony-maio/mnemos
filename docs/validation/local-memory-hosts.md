@@ -1,13 +1,18 @@
 # Local memory host validation
 
-The [three-host v3 attempt](2026-09-20/three-host-native-v3/README.md) failed after
-startup selected a different Codex model than requested. The new model check
-rejected both turns. Explicit teaching calls were cancelled; raw hook captures
-committed, including an unintended controller shutdown prompt. Cleanup and
-separate Hermes discovery passed. No later host phase ran. The
-[earlier v2 correlation failure](2026-09-20/three-host-native-v2/README.md) remains
-failed. Three-host continuity is open; Hermes v10 still has one complete
-lifecycle pass and two failures. The v4 setup repair is prospective.
+The [three-host v4 attempt](2026-09-20/three-host-native-v4/README.md) passed
+Codex teaching, Claude teaching, and Hermes retrieval of both facts after a
+service restart. Hermes correction then failed: an unsupported scope argument
+was rejected, required inspection was omitted, and the committed correction
+job remained pending. The final fact stayed at version 1. Later phases did
+not run. Cleanup passed. The runner processes jobs after a successful native
+phase; validation stopped before that maintenance step. Pending status in
+this run does not establish a production worker defect.
+
+The [v3 model-substitution failure](2026-09-20/three-host-native-v3/README.md) and
+[v2 correlation failure](2026-09-20/three-host-native-v2/README.md) remain failed.
+Full three-host continuity remains open. Hermes v10 separately retains one
+complete bounded lifecycle pass and two failures.
 
 Updated September 20, 2026 for the unreleased functional-local-memory worktree. This record separates adapter and transport checks from native host acceptance. The [compatibility matrix](../client-compatibility-matrix.md) records observed versions and source bindings.
 
