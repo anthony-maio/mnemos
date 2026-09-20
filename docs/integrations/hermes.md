@@ -127,7 +127,12 @@ or a later correction has advanced the fact. Changing the content, target,
 or expected version under the same request identity is rejected. A new edit
 still requires the current version, and forgotten or inaccessible targets
 cannot be retried. A committed response acknowledges durable evidence; job
-completion establishes processing. Inspect the fact and job status after an
+completion establishes processing. When a committed write returns a `job_id`,
+call `mnemos_job_status` once with that exact ID before the final answer and
+report the observed status. Pending or leased work is not completed. The
+provider's system guidance and write-tool descriptions both state this
+follow-up; a native trace must still demonstrate that the host performs it.
+Inspect the fact and job status after an
 uncertain response, especially when multiple corrections were queued against
 the same version.
 These explicit tools do not perform fuzzy matching or bulk deletion.

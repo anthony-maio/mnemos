@@ -1,0 +1,48 @@
+"""Compare parser behavior without rerunning or changing the held-out experiment."""
+from pathlib import Path
+import hashlib
+import json
+import subprocess
+import zipfile
+from mnemos.modules.affective import AffectiveRouter
+from mnemos.utils.embeddings import SimpleEmbeddingProvider
+from mnemos.utils.llm import MockLLMProvider
+
+repo = Path(__file__).resolve().parent.parent
+root = repo / "docs/validation/2026-09-19/affective-response-contract-v1"
+root.mkdir(exist_ok=False)
+before = subprocess.check_output(["git", "show", "45f1b012e9aa9ee6acbb93d2af887c0cd186a519:mnemos/modules/affective.py"], cwd=repo)
+namespace = {"__name__": "mnemos.modules._diagnostic_before", "__package__": "mnemos.modules"}
+exec(compile(before, "prior_affective.py", "exec"), namespace)
+old = namespace["AffectiveRouter"](MockLLMProvider(), SimpleEmbeddingProvider(dim=8))
+new = AffectiveRouter(MockLLMProvider(), SimpleEmbeddingProvider(dim=8))
+
+def state(router, raw):
+    value = router._parse_state_response(raw)
+    return None if value is None else value.model_dump()
+
+archive = repo / "docs/validation/2026-09-19/mechanism-local-v1/phase-artifacts.zip"
+with zipfile.ZipFile(archive) as z:
+    raw_bytes = z.read("mechanism-heldout/classifier.raw-outputs.jsonl")
+    rows = [json.loads(row) for row in raw_bytes.splitlines()]
+changed = [{"index": i, "response": row["response"], "old": state(old, row["response"]), "new": state(new, row["response"])}
+           for i, row in enumerate(rows) if state(old, row["response"]) != state(new, row["response"])]
+samples = ["-.3, .8, .6", "-3e-1, 8e-1, 6e-1", "1e999, .8, .6",
+           "I cannot classify 3 values for event 42 in 2026", "-2, 2, 4"]
+sha = lambda raw: hashlib.sha256(raw).hexdigest()
+report = {"prior_commit": "45f1b012e9aa9ee6acbb93d2af887c0cd186a519",
+          "old_parser_file_sha256": sha(before),
+          "new_parser_file_sha256": sha((repo / "mnemos/modules/affective.py").read_bytes()),
+          "raw_responses_sha256": sha(raw_bytes), "archive_sha256": sha(archive.read_bytes()),
+          "historical_responses": len(rows), "changed_historical_states": changed,
+          "development_examples": [{"response": raw, "old": state(old, raw), "new": state(new, raw)} for raw in samples],
+          "inference_calls": 0,
+          "quality_claim": "No historical state changes; classifier fidelity remains 33/300. This is a numeric parsing repair."}
+(root / "report.json").write_text(json.dumps(report, indent=2) + "\n", encoding="utf-8")
+(root / "affective-before.py.txt").write_bytes(before)
+(root / "affective-after.py.txt").write_bytes((repo / "mnemos/modules/affective.py").read_bytes())
+(root / "affective_response_diagnostic_v1.py.txt").write_bytes(Path(__file__).read_bytes())
+(root / ".gitattributes").write_bytes(b"** -text -whitespace\n")
+files = {p.name: {"bytes": p.stat().st_size, "sha256": sha(p.read_bytes())} for p in sorted(root.iterdir()) if p.is_file()}
+(root / "evidence-index.json").write_text(json.dumps({"files": files}, indent=2) + "\n", encoding="utf-8")
+print(json.dumps(report, indent=2))

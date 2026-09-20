@@ -34,6 +34,7 @@ Mnemos Implementation:
 from __future__ import annotations
 
 import re
+import math
 from collections import OrderedDict, deque
 from collections.abc import Callable
 from typing import Any
@@ -94,7 +95,8 @@ class AffectiveRouter:
 
         Expected format: "valence, arousal, complexity" e.g. "-0.3, 0.8, 0.6"
 
-        Falls back gracefully to a neutral state on parse failure.
+        Returns unavailable on parse failure so callers do not attach an
+        unverified state to memory.
 
         Args:
             response: Raw LLM response string.
@@ -102,26 +104,30 @@ class AffectiveRouter:
         Returns:
             Parsed CognitiveState, or neutral state if parsing fails.
         """
-        try:
-            # Extract three numbers from the response (tolerant of extra text)
-            numbers = re.findall(r"-?\d+\.?\d*", response)
-            if len(numbers) >= 3:
-                valence = float(numbers[0])
-                arousal = float(numbers[1])
-                complexity = float(numbers[2])
-                # Clamp to valid ranges
-                valence = max(-1.0, min(1.0, valence))
-                arousal = max(0.0, min(1.0, arousal))
-                complexity = max(0.0, min(1.0, complexity))
-                return CognitiveState(
-                    valence=valence,
-                    arousal=arousal,
-                    complexity=complexity,
-                )
-        except (ValueError, IndexError):
-            pass
+        number = r"[+-]?(?:\d+(?:\.\d*)?|\.\d+)(?:[eE][+-]?\d+)?"
+        match = re.fullmatch(
+            rf"\s*({number})\s*,\s*({number})\s*,\s*({number})\s*",
+            response,
+        )
+        if match is None:
+            return None
 
-        return None
+        try:
+            valence, arousal, complexity = (float(value) for value in match.groups())
+        except ValueError:
+            return None
+        if not all(math.isfinite(value) for value in (valence, arousal, complexity)):
+            return None
+
+        # Clamp to valid ranges
+        valence = max(-1.0, min(1.0, valence))
+        arousal = max(0.0, min(1.0, arousal))
+        complexity = max(0.0, min(1.0, complexity))
+        return CognitiveState(
+            valence=valence,
+            arousal=arousal,
+            complexity=complexity,
+        )
 
     async def classify_state(self, interaction: Interaction) -> CognitiveState | None:
         """

@@ -460,7 +460,10 @@ class MnemosHermesProvider(_HermesMemoryProvider):  # type: ignore[misc]  # Opti
         return (
             "Mnemos provides shared local memory through the mnemos_* tools. "
             "Retrieve or inspect a fact before correcting or forgetting its exact ID and version. "
-            "Remember and correct return a durable job; check mnemos_job_status for completion. "
+            "Remember and correct acknowledge a durable request, which may still be pending. "
+            "When a committed write returns a job_id, call mnemos_job_status once with that "
+            "exact ID before your final answer and report its actual status. Only a completed "
+            "job confirms processing; pending or leased does not. "
             "Built-in Hermes memory removals affect its own store; use mnemos_forget to remove "
             "a shared Mnemos fact."
         )

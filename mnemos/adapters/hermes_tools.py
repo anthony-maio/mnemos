@@ -35,7 +35,12 @@ _SCHEMAS = (
     },
     {
         "name": "mnemos_remember",
-        "description": "Remember one explicitly supplied user fact in the provider-owned scope.",
+        "description": (
+            "Remember one explicitly supplied user fact in the provider-owned scope. "
+            "A committed response acknowledges storage of the request, not completed processing. "
+            "When it returns a job_id, call mnemos_job_status once with that exact returned ID "
+            "before your final answer. Report the observed status; pending is not completed."
+        ),
         "parameters": {
             "type": "object",
             "additionalProperties": False,
@@ -54,7 +59,12 @@ _SCHEMAS = (
     },
     {
         "name": "mnemos_correct",
-        "description": "Correct one exact fact using its current optimistic-concurrency version.",
+        "description": (
+            "Correct one exact fact using its current optimistic-concurrency version. "
+            "A committed response acknowledges storage of the request, not completed processing. "
+            "When it returns a job_id, call mnemos_job_status once with that exact returned ID "
+            "before your final answer. Report the observed status; pending is not completed."
+        ),
         "parameters": {
             "type": "object",
             "additionalProperties": False,
@@ -88,7 +98,11 @@ _SCHEMAS = (
     },
     {
         "name": "mnemos_job_status",
-        "description": "Read durable status for one Mnemos job.",
+        "description": (
+            "Read durable status for one Mnemos job. Use the exact job_id returned by "
+            "mnemos_remember or mnemos_correct. A pending or leased job is not completed; "
+            "do not infer completion from the earlier write acknowledgement."
+        ),
         "parameters": {
             "type": "object",
             "additionalProperties": False,
