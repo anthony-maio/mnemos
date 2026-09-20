@@ -1,0 +1,41 @@
+"""Run one frozen recovery probe after the current comparison completes."""
+from pathlib import Path
+from datetime import datetime,timezone
+import ctypes,hashlib,json,os,subprocess,time
+root=Path('C:/Users/Ant/AppData/Local/Temp/mnemos-all-module-provider-recovery-v1')
+prerequisite=Path('C:/Users/Ant/AppData/Local/Temp/mnemos-extraction-temperature-one-v1')
+record_path=root/'queue.json';assert not record_path.exists()
+assert not (root/'result.json').exists()
+state=json.loads((prerequisite/'status.json').read_bytes());assert state['pid']==3816
+sha=lambda p:hashlib.sha256(p.read_bytes()).hexdigest()
+assert state['preparation_sha256']==sha(prerequisite/'preparation.json')
+# Retain an OS handle to this process, so PID reuse cannot release the gate.
+k=ctypes.WinDLL('kernel32',use_last_error=True)
+k.OpenProcess.argtypes=[ctypes.c_ulong,ctypes.c_int,ctypes.c_ulong];k.OpenProcess.restype=ctypes.c_void_p
+k.WaitForSingleObject.argtypes=[ctypes.c_void_p,ctypes.c_ulong];k.WaitForSingleObject.restype=ctypes.c_ulong
+k.CloseHandle.argtypes=[ctypes.c_void_p]
+handle=k.OpenProcess(0x100000,False,3816)
+assert handle, 'Cannot bind to prerequisite process; inspect it rather than guessing.'
+record={'pid':os.getpid(),'status':'waiting_on_bound_process','prerequisite_pid':3816,'started_at':datetime.now(timezone.utc).isoformat()}
+def save():record_path.write_text(json.dumps(record,indent=2)+'\n')
+save()
+try:
+ while True:
+  wait=k.WaitForSingleObject(handle,0)
+  assert wait in [0,258],wait
+  if wait==0:break
+  time.sleep(5)
+ state=json.loads((prerequisite/'status.json').read_bytes())
+ assert state['status']=='completed' and state['processed']==40,state
+ assert state['preparation_sha256']==sha(prerequisite/'preparation.json')
+ assert state['observations_sha256']==sha(prerequisite/'observations.jsonl')
+ assert len((prerequisite/'observations.jsonl').read_text().splitlines())==40
+ command=['C:/Users/Ant/AppData/Local/Temp/mnemos-installed-env-reconsolidation-return-v2/Scripts/python.exe','-I',str(root/'runner.py'),str(root)]
+ record.update(status='running_recovery',prerequisite_finished_at=state['finished_at'],command=command);save()
+ with (root/'stdout.log').open('w') as stdout,(root/'stderr.log').open('w') as stderr:
+  result=subprocess.run(command,cwd=root,stdout=stdout,stderr=stderr)
+ record.update(status='completed' if result.returncode==0 else 'failed',exit_code=result.returncode)
+except Exception as exc:
+ record.update(status='failed',error_type=type(exc).__name__,error=str(exc));raise
+finally:
+ k.CloseHandle(handle);record['updated_at']=datetime.now(timezone.utc).isoformat();save()

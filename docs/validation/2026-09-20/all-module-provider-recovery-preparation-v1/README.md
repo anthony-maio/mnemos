@@ -32,3 +32,10 @@ wheel, both captured payloads and both scoped retrieval requests validate,
 and the copied SQLite state exactly matches the preserved post-outage state:
 two events, two pending jobs at three attempts each, and zero facts. All frozen
 input hashes remained unchanged. No model calls or lifecycle operations ran.
+
+The recovery launcher is now queued behind the temperature comparison. It
+holds an OS handle to that exact prerequisite process, waits for exit, and
+requires its completed 40-call status and matching observation hash before
+launching the frozen installed recovery runner once. A failed prerequisite
+stops the queue; no automatic retry or overlapping inference is allowed.
+The queue's live state remains outside this frozen preparation archive.
