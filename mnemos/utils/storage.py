@@ -2284,7 +2284,19 @@ class SQLiteStore(MemoryStore):
                         "(json_extract(metadata, '$.scope') = ? AND " + identity_expr + " = ?)"
                     )
                     bindings.extend([scope, identity])
-        return profile_clause + " AND (" + (" OR ".join(clauses) or "0") + ")", bindings, True
+        source_clause = ""
+        source_view = spec.get("source_view")
+        if source_view == "captured_evidence":
+            source_clause = " AND json_extract(metadata, '$.source') = 'captured_passthrough'"
+        elif source_view == "memory":
+            source_clause = (
+                " AND COALESCE(json_extract(metadata, '$.source'), '') " "!= 'captured_passthrough'"
+            )
+        return (
+            profile_clause + " AND (" + (" OR ".join(clauses) or "0") + ")" + source_clause,
+            bindings,
+            True,
+        )
 
     def retrieve(
         self,

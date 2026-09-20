@@ -426,7 +426,7 @@ function renderMemory(snapshot) {
       >
         <div class="memory-meta">
           <span>${escapeHtml(item.scope)}${item.scope_id ? `:${escapeHtml(item.scope_id)}` : ""}</span>
-          <span>${escapeHtml(item.stored_by || "unknown source")}</span>
+          <span>${escapeHtml(item.stored_by === "captured_passthrough" ? "Captured evidence (unverified)" : item.stored_by || "unknown source")}</span>
           <span>accessed ${escapeHtml(item.access_count)}x</span>
         </div>
         <p>${escapeHtml(item.content)}</p>
@@ -520,6 +520,7 @@ async function refreshMemoryDetail() {
     const retrieval = payload.retrieval
       ? `
         <ul class="detail-list">
+          <li><strong>View:</strong> ${payload.retrieval.view === "captured_evidence" ? "Captured evidence" : "Memory"}</li>
           <li><strong>Scope match:</strong> ${escapeHtml(payload.retrieval.scope_match)}</li>
           <li><strong>Semantic candidate:</strong> ${escapeHtml(payload.retrieval.in_semantic_candidates)}</li>
           <li><strong>Semantic similarity:</strong> ${escapeHtml(payload.retrieval.semantic_similarity ?? "n/a")}</li>
@@ -543,7 +544,7 @@ async function refreshMemoryDetail() {
     document.getElementById("memory-detail").innerHTML = [
       detailSection(
         "Scope",
-        `<h3>${escapeHtml(payload.scope)}${payload.scope_id ? `:${escapeHtml(payload.scope_id)}` : ""}</h3><p>${escapeHtml(payload.content)}</p>`,
+        `<h3>${escapeHtml(payload.scope)}${payload.scope_id ? `:${escapeHtml(payload.scope_id)}` : ""}</h3>${payload.provenance?.stored_by === "captured_passthrough" ? "<p>Captured conversation: unverified, may be outdated. Available for evidence review; excluded from ordinary recall.</p>" : ""}<p>${escapeHtml(payload.content)}</p>`,
       ),
       detailSection(
         "Why Stored",

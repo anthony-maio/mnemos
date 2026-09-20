@@ -680,6 +680,11 @@ class ControlPlaneService:
             "metadata": metadata,
         }
         if query and query.strip():
+            view = (
+                "captured_evidence"
+                if metadata.get("source") == "captured_passthrough"
+                else "memory"
+            )
             retrieval = self._service_request(
                 "retrieve",
                 {
@@ -689,15 +694,24 @@ class ControlPlaneService:
                     "top_k": 10,
                     "max_context_tokens": 1200,
                     "profile": "baseline",
+                    "view": view,
                 },
             )
             candidate = next(
-                (item for item in retrieval.get("facts", []) if item.get("id") == chunk_id), None
+                (
+                    item
+                    for item in retrieval.get(
+                        "captured_evidence" if view == "captured_evidence" else "facts", []
+                    )
+                    if item.get("id") == chunk_id
+                ),
+                None,
             )
             if candidate is None:
                 result["retrieval"] = {
                     "query": query.strip(),
                     "status": "not_observed",
+                    "view": view,
                     "semantic_rank": None,
                     "explanation": [
                         "No matching retrieval trace is available for this fact version."
@@ -710,6 +724,7 @@ class ControlPlaneService:
                 result["retrieval"] = {
                     "query": query.strip(),
                     "status": "observed",
+                    "view": view,
                     "semantic_rank": scores.get("semantic_rank"),
                     "semantic_similarity": scores.get("semantic"),
                     "graph_activated": bool(scores.get("graph_energy", 0)),
@@ -790,7 +805,12 @@ class ControlPlaneService:
         )
 
     def retrieve_memory(
-        self, query: str, *, profile: str = "baseline", max_context_tokens: int = 1200
+        self,
+        query: str,
+        *,
+        profile: str = "baseline",
+        max_context_tokens: int = 1200,
+        view: str = "memory",
     ) -> dict[str, Any]:
         return self._service_request(
             "retrieve",
@@ -801,6 +821,7 @@ class ControlPlaneService:
                 "top_k": 10,
                 "max_context_tokens": max_context_tokens,
                 "profile": profile,
+                "view": view,
             },
         )
 

@@ -85,16 +85,26 @@ async def test_corrected_fact_and_captured_history_keep_distinct_authority_after
         assert returned[target.id]["content"] == new
         assert returned[target.id]["version"] == 2
         assert returned[target.id]["assertion_status"] == "asserted"
-        assert len(returned) == 4
-        raw = [
-            fact
-            for fact in returned.values()
-            if fact["id"] != target.id and not fact["content"].startswith("Archive convention:")
-        ]
+        assert len(returned) == 2
+        assert result["captured_evidence"] == [] and result["evidence_context"] == ""
+        review = await memory.dispatch(
+            "retrieve",
+            {
+                "context": context.model_dump(),
+                "query": "release label",
+                "top_k": 10,
+                "max_context_tokens": 4000,
+                "view": "captured_evidence",
+            },
+        )
+        assert review["facts"] == [] and review["context"] == ""
+        raw = review["captured_evidence"]
         assert len(raw) == 2
         assert all(fact["assertion_status"] == "unknown" for fact in raw)
         for fact in raw:
-            line = next(line for line in result["context"].splitlines() if fact["id"] in line)
+            line = next(
+                line for line in review["evidence_context"].splitlines() if fact["id"] in line
+            )
             assert "captured conversation" in line and "unverified" in line
             assert fact["support_available"]
         assert any(
@@ -103,7 +113,20 @@ async def test_corrected_fact_and_captured_history_keep_distinct_authority_after
         )
         for event_id in captured_ids:
             assert memory.engine.store.get_episodic_event(event_id) is not None
+        preview = await memory.dispatch(
+            "forget_preview",
+            {
+                "context": context.model_dump(),
+                "fact_id": target.id,
+                "expected_version": 2,
+            },
+        )
+        # Omitting captured history from recall must not omit it from erasure review.
+        assert {fact["id"] for fact in raw} <= {fact["fact_id"] for fact in preview["candidates"]}
         assert result["context_token_upper_bound"] == len(result["context"].encode("utf-8"))
+        assert review["context_token_upper_bound"] == len(
+            review["evidence_context"].encode("utf-8")
+        )
     finally:
         memory.engine.store.close()
 
@@ -184,8 +207,11 @@ async def test_unknown_context_qualification_counts_toward_retrieval_budget(sour
     )
     engine.store.store(fact)
     unqualified = f"[{fact.id} version {fact.version}] {fact.content}\n"
-    assert not await engine.retrieve("Python", max_context_tokens=len(unqualified.encode()))
+    view = "captured_evidence" if source == "captured_passthrough" else "memory"
+    assert not await engine.retrieve(
+        "Python", max_context_tokens=len(unqualified.encode()), view=view
+    )
     assert "unverified" in render_context_chunk(fact)
     assert await engine.retrieve(
-        "Python", max_context_tokens=len(render_context_chunk(fact).encode())
+        "Python", max_context_tokens=len(render_context_chunk(fact).encode()), view=view
     )

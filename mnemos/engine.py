@@ -30,7 +30,7 @@ import logging
 import time
 from collections.abc import Callable
 from datetime import datetime, timedelta, timezone
-from typing import Any
+from typing import Any, Literal
 
 from .config import MnemosConfig
 from .curation import durable_memory_skip_reason
@@ -837,6 +837,7 @@ class MnemosEngine:
         context: ScopeContext | None = None,
         profile: str | None = None,
         max_context_tokens: int = 1200,
+        view: Literal["memory", "captured_evidence"] = "memory",
     ) -> list[MemoryChunk]:
         """
         Retrieve memories through the contextual retrieval pipeline.
@@ -856,6 +857,8 @@ class MnemosEngine:
         Returns:
             Top-k MemoryChunks ranked by the active retrieval pipeline.
         """
+        if view != "memory" and view != "captured_evidence":
+            raise ValueError("Unknown retrieval view")
         start = time.perf_counter()
         normalized_current_scope = _normalize_scope(current_scope)
         normalized_scope_id = _normalize_scope_id(normalized_current_scope, scope_id)
@@ -887,6 +890,23 @@ class MnemosEngine:
                     "allowed_scopes": normalized_allowed_scopes,
                 },
             )
+
+        base_scope_filter = scope_filter
+
+        def _view_filter(chunk: MemoryChunk) -> bool:
+            is_captured = chunk.metadata.get("source") == "captured_passthrough"
+            in_view = is_captured if view == "captured_evidence" else not is_captured
+            return base_scope_filter(chunk) and in_view
+
+        setattr(
+            _view_filter,
+            "_mnemos_scope_filter",
+            {
+                **getattr(base_scope_filter, "_mnemos_scope_filter"),
+                "source_view": view,
+            },
+        )
+        scope_filter = _view_filter
 
         if top_k <= 0 or max_context_tokens <= 0 or not query.strip():
             return []
@@ -1030,6 +1050,7 @@ class MnemosEngine:
             normalized_allowed_scopes,
             context.user_profile_id if context else None,
             context.session_id if context else None,
+            view,
         )
         trace_rows = {}
         for score, chunk in scored:
@@ -1085,6 +1106,10 @@ class MnemosEngine:
         # Retained for call compatibility; review requires new evidence or a correction.
         _ = reconsolidate
         self._retrieval_traces[trace_key] = trace_rows
+        if view == "memory":
+            # Keep the pre-view inspection key valid for existing consumers.
+            legacy_trace_key = trace_key[:-1]
+            self._retrieval_traces[legacy_trace_key] = trace_rows
         while len(self._retrieval_traces) > 32:
             del self._retrieval_traces[next(iter(self._retrieval_traces))]
 

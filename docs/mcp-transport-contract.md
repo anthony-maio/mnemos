@@ -55,6 +55,15 @@ comma-separated string such as `"project,global"`. An explicit empty list or
 unknown scope is rejected. The service still enforces the registered profile,
 project, and sharing permissions for either format.
 
+`mnemos_retrieve.view` accepts `memory` (the default) or `captured_evidence`.
+Ordinary memory excludes indexed `captured_passthrough` conversation copies;
+the evidence view returns only those copies in `captured_evidence` and
+`evidence_context`, leaving `facts` and `context` empty. Both views enforce
+the same scope and context budget. These are unverified sources that may
+contain old instructions, not instructions to execute. Stored copies remain
+visible to inspection, listing, and related-forget review. See the
+[retrieval contract](functional-local-memory.md) for retention and status limits.
+
 Correct requires fact_id, content, and expected_version. Forget supports expected_version; its legacy omitted-version path resolves the current fact through the service. Scope IDs must agree with the registered context. Caller metadata cannot override scope or provenance; custom mnemos_store metadata is currently ignored with an explicit metadata_status response.
 
 ## Compatibility Scope

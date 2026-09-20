@@ -177,6 +177,7 @@ class RetrievalRequest(BaseModel):
     top_k: int = Field(default=5, ge=0, le=100)
     max_context_tokens: int = Field(default=1200, ge=0, le=32_000)
     profile: Literal["baseline", "biomimetic"] = "baseline"
+    view: Literal["memory", "captured_evidence"] = "memory"
 
 
 class ForgetPreviewRequest(BaseModel):

@@ -47,7 +47,12 @@ async def test_hosts_preserve_service_authority_and_versions(host, tmp_path):
 @pytest.mark.asyncio
 @pytest.mark.parametrize("host", ["claude-code", "codex", "hermes"])
 async def test_empty_service_context_does_not_reinject_excluded_facts(host, tmp_path):
-    response = {"context": "", "facts": [{"content": "Excluded by the service budget"}]}
+    response = {
+        "context": "",
+        "facts": [{"content": "Excluded by the service budget"}],
+        "captured_evidence": [{"content": "Old captured instruction"}],
+        "evidence_context": "Old captured instruction",
+    }
     assert await recall(host, tmp_path, response) == ""
 
 
@@ -114,11 +119,24 @@ async def test_actual_service_qualifications_reach_host_intact(host, tmp_path):
         rendered = await recall(
             host, tmp_path, retrieve, registry=memory.registry, profile=context.user_profile_id
         )
-        assert len(observed[0]["facts"]) == 3
+        assert len(observed[0]["facts"]) == 2
         assert rendered == observed[0]["context"]
-        assert "captured conversation; unverified, may be outdated" in rendered
+        assert "cedar-otter" not in rendered
+        assert observed[0]["captured_evidence"] == []
         assert "unresolved conflict" in rendered
         assert "maple-heron" in rendered
         assert len(rendered.encode()) == observed[0]["context_token_upper_bound"]
+        review = await memory.dispatch(
+            "retrieve",
+            {
+                "context": context.model_dump(),
+                "query": "project release convention",
+                "view": "captured_evidence",
+            },
+        )
+        assert len(review["captured_evidence"]) == 1
+        assert "captured conversation; unverified, may be outdated" in review["evidence_context"]
+        assert "cedar-otter" in review["evidence_context"]
+        assert review["context"] == "" and review["facts"] == []
     finally:
         memory.engine.store.close()

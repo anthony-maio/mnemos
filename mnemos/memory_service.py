@@ -665,6 +665,7 @@ class LocalMemoryService:
             allowed_scopes=tuple(request.allowed_scopes),
             profile=request.profile,
             max_context_tokens=request.max_context_tokens,
+            view=request.view,
         )
         facts = []
         for chunk in chunks:
@@ -696,15 +697,18 @@ class LocalMemoryService:
                     "scores": chunk.metadata.get("retrieval_trace", {}),
                 }
             )
+        rendered = "".join(render_context_chunk(chunk) for chunk in chunks)
+        reviewing_capture = request.view == "captured_evidence"
         return {
             "schema_version": 1,
             "profile": request.profile,
-            "facts": facts,
-            "context": "".join(render_context_chunk(chunk) for chunk in chunks),
+            "view": request.view,
+            "facts": [] if reviewing_capture else facts,
+            "context": "" if reviewing_capture else rendered,
+            "captured_evidence": facts if reviewing_capture else [],
+            "evidence_context": rendered if reviewing_capture else "",
             "token_count_method": "utf8_bytes_upper_bound",
-            "context_token_upper_bound": sum(
-                len(render_context_chunk(chunk).encode("utf-8")) for chunk in chunks
-            ),
+            "context_token_upper_bound": len(rendered.encode("utf-8")),
         }
 
     async def dispatch(self, operation: str, payload: dict[str, Any]) -> dict[str, Any]:

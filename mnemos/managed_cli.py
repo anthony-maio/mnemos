@@ -95,6 +95,7 @@ async def run_command(args: Namespace) -> dict[str, Any]:
                 allowed_scopes=allowed,
                 profile=getattr(args, "retrieval_profile", "baseline"),
                 max_context_tokens=getattr(args, "max_context_tokens", 1200),
+                view=getattr(args, "view", "memory"),
             )
             response = await client.request("retrieve", data)
         elif command in {"correct", "forget"}:

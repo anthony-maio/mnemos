@@ -589,6 +589,7 @@ async def _cmd_retrieve(args: argparse.Namespace) -> None:
         current_scope=args.current_scope,
         scope_id=(args.scope_id or None),
         allowed_scopes=allowed_scopes,
+        view=getattr(args, "view", "memory"),
     )
     results = []
     for chunk in chunks:
@@ -1175,6 +1176,12 @@ def main() -> None:
         "--no-reconsolidate",
         action="store_true",
         help="Disable post-retrieval background reconsolidation.",
+    )
+    sp_retrieve.add_argument(
+        "--view",
+        choices=("memory", "captured_evidence"),
+        default="memory",
+        help="Retrieval channel to return (default: memory).",
     )
 
     # consolidate
