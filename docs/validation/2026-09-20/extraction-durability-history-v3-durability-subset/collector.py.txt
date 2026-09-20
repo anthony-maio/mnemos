@@ -1,0 +1,100 @@
+"""Archive the completed, predefined durability subset without touching the run."""
+from pathlib import Path
+import hashlib
+import json
+import shutil
+
+repo = Path(__file__).resolve().parents[1]
+root = Path('C:/Users/Ant/AppData/Local/Temp/mnemos-extraction-durability-history-development-v3')
+inputs = json.loads((root / 'inputs.json').read_bytes())
+cases = inputs['cases'][:26]
+lines = (root / 'observations.jsonl').read_bytes().splitlines(keepends=True)[:52]
+rows = [json.loads(line) for line in lines]
+expected = [(case['id'], arm, 0) for i, case in enumerate(cases)
+            for arm in (inputs['arms'] if i % 2 == 0 else list(reversed(inputs['arms'])))]
+assert [(r['case_id'], r['arm'], r['repetition']) for r in rows] == expected
+assert all(r['status'] == 'runtime_valid' for r in rows)
+assert all(p['evidence_ids'] == [c['source']['id']]
+           for c in cases for r in rows if r['case_id'] == c['id']
+           for p in r['proposals'])
+notes = {
+    'reply-format-01-one-turn': 'Both abstain as required.',
+    'reply-format-01-policy': 'Both preserve the release-specific format and continuing applicability.',
+    'tool-use-02-one-turn': 'Both abstain in this repetition; do not assume the earlier production failure is deterministic.',
+    'tool-use-02-policy': 'Both preserve local cache-check policy and the user-change exception.',
+    'outage-03-one-turn': 'Production retains the procedure without the original current-incident framing. Candidate abstains. Preserve preregistered ambiguity about incident history.',
+    'outage-03-policy': 'Both preserve future-outage procedure and revocation condition; candidate no longer drops that condition in this repetition.',
+    'benchmark-quote-04-one-turn': 'Both abstain from quoted fixture instructions.',
+    'benchmark-quote-04-policy': 'Both retain the ongoing boundary for untrusted benchmark instructions.',
+    'benchmark-untrusted-05-one-turn': 'Both abstain from the untrusted classification input.',
+    'benchmark-untrusted-05-policy': 'Both preserve the continuing classification-only rule.',
+    'dated-report-06-one-turn': 'Both abstain, an explicitly permitted rubric outcome. No retry count is invented.',
+    'dated-report-06-policy': 'Both preserve ISO dates and observed retry counts for future reports.',
+    'rejected-proposal-07-one-turn': 'Both preserve rejection status rather than adopting automatic email alerts as a requirement.',
+    'rejected-proposal-07-policy': 'Both preserve the general rejected-proposal boundary. Original ambiguity remains; no categorical history-retention score is assigned.',
+    'reply-style-08-one-turn': 'Both abstain from next-reply-only formatting.',
+    'reply-style-08-policy': 'Both preserve internal-report scope and the user-change exception.',
+    'outage-command-09-one-turn': 'Production retains a correctly incident-qualified precaution; candidate abstains. Preregistered ambiguity prevents treating this as an unqualified standing-policy fabrication.',
+    'outage-command-09-policy': 'Candidate preserves the until-revised condition. Production retains the limit and outage scope but omits the explicit revision condition.',
+    'benchmark-date-10-one-turn': 'Production retains a prohibition about the fixture date despite the no-memory rubric. Candidate abstains. Production does not assert the quoted date is the launch date.',
+    'benchmark-date-10-policy': 'Both preserve the separate-user-confirmation boundary for fixture dates.',
+    'temporary-plan-11-one-turn': 'Production retains explicitly hypothetical, unapproved status; candidate abstains. Preserve the predeclared ambiguity rather than calling retained history an approved plan.',
+    'temporary-plan-11-policy': 'Both preserve the absent approved fallback and approval condition, combined in candidate and split in production.',
+    'durable-report-12-one-turn': 'Both retain the observed completion time. Candidate omits the explicit nonrecurrence warning but does not assert a recurring schedule.',
+    'durable-report-12-policy': 'Both retain observed UTC reporting. Candidate omits the explicit no-fixed-schedule sentence; its remaining wording does not itself invent a schedule.',
+    'mixed-marker-13-one-turn': 'Production abstains and loses the required marker. Candidate retains only the marker, excluding temporary response instructions.',
+    'mixed-marker-13-policy': 'Production retains marker and continuing policy separately. Candidate retains only the policy and loses the independently required marker. Candidate is not adoptable as-is.',
+}
+assert set(notes) == {c['id'] for c in cases}
+out = repo / 'docs/validation/2026-09-20/extraction-durability-history-v3-durability-subset'
+out.mkdir(exist_ok=False)
+(out / 'observations-subset.jsonl').write_bytes(b''.join(lines))
+(out / 'review.json').write_text(json.dumps({
+    'status': 'completed_predefined_subset_of_running_comparison',
+    'blinded': False,
+    'scope': '26 durability development cases, both arms, one repetition; remaining 20 history cases excluded',
+    'inputs_sha256': hashlib.sha256((root / 'inputs.json').read_bytes()).hexdigest(),
+    'preparation_sha256': hashlib.sha256((root / 'preparation.json').read_bytes()).hexdigest(),
+    'all_proposal_evidence_matches_case_source': True,
+    'aggregate_semantic_accuracy': None,
+    'adoption': 'not_adopted; required marker omitted in mixed-marker-13-policy',
+    'cases': [{'case_id': c['id'], 'source': c['source'], 'rubric': c['rubric'],
+               'review': notes[c['id']], 'outputs': [
+                   {k: v for k, v in r.items() if k != 'trace'}
+                   for r in rows if r['case_id'] == c['id']]} for c in cases],
+}, indent=2) + '\n')
+shutil.copyfile(__file__, out / 'collector.py.txt')
+(out / 'README.md').write_text('''# V3 durability subset: descriptive semantic review
+
+This archives the first 52 calls: all 26 predefined durability cases in both
+arms. The separate 20-case history portion is still running and is excluded.
+The complete 92-call run must still be archived and reviewed. The source,
+models, exact clause and rubrics are bound by the linked preparation below.
+
+The candidate drops the independent project marker in mixed-marker-13-policy
+while retaining the continuing policy. Production retains both. That required
+fact loss prevents adopting this candidate as-is. In mixed-marker-13-one-turn,
+the candidate retains the marker without temporary instructions, while
+production abstains and loses the marker. Neither outcome cancels the other.
+
+Candidate abstention improves the fixture-date case and avoids some temporary
+incident instructions. Both arms preserve most continuing policies. Some
+preregistered cases permit ambiguity between useful history and transient
+instructions; that ambiguity is preserved. Omitted explicit qualifications are
+recorded separately from fabricated opposite claims. No aggregate semantic
+accuracy, heldout generalization or full-pipeline success is claimed.
+
+This is an unblinded descriptive review of reused development cases, one
+stochastic repetition. All 52 calls are runtime-valid and all proposal evidence
+IDs match their source. Runtime validity is not semantic correctness. The
+internal candidate arm name durability_v2 refers to the frozen v3 clause.
+No facts, prompts, runtime settings or live data were changed.
+
+[Frozen preparation](../extraction-durability-history-preparation-v3/README.md)
+''')
+(out / '.gitattributes').write_text('* -text\n')
+(out / 'evidence-index.json').write_text(json.dumps({'files': {
+    p.name: {'sha256': hashlib.sha256(p.read_bytes()).hexdigest(), 'bytes': p.stat().st_size}
+    for p in out.iterdir() if p.is_file()
+}}, indent=2) + '\n')
+print(out)
