@@ -46,6 +46,50 @@ def _fact(embedder: SimpleEmbeddingProvider) -> MemoryChunk:
 
 
 @pytest.mark.asyncio
+async def test_direct_review_returns_authoritative_metadata_after_captured_merge(tmp_path):
+    embedder = SimpleEmbeddingProvider(dim=32)
+    store = SQLiteStore(str(tmp_path / "merged-review.sqlite"))
+    try:
+        target = _fact(embedder)
+        target.metadata.update(source="explicit_remember", assertion_status="asserted")
+        store.upsert_canonical(target)
+        duplicate = target.model_copy(
+            deep=True,
+            update={
+                "id": "captured-rust",
+                "content": "The project uses Rust",
+                "embedding": embedder.embed("The project uses Rust"),
+                "metadata": {
+                    **target.metadata,
+                    "source": "captured_passthrough",
+                    "assertion_status": "unknown",
+                    "source_event_ids": ["captured-source"],
+                },
+            },
+        )
+        store.append_episodic_event(_event("captured-source", duplicate.content))
+        store.upsert_canonical(duplicate)
+        source = _event("correction-source", "The project switched from Python to Rust")
+        store.append_episodic_event(source)
+        rag = MutableRAG(MockLLMProvider(), embedder, store)
+        result, changed = await rag.review(
+            FactProposal(
+                content=duplicate.content,
+                evidence_ids=[source.id],
+                operation="correct",
+                target_fact_id=target.id,
+                expected_version=1,
+            )
+        )
+        assert changed and store.get(duplicate.id) is None
+        assert result.model_dump() == store.get(target.id).model_dump()
+        assert duplicate.id in result.metadata["absorbed_captured_ids"]
+        assert set(result.metadata["source_event_ids"]) == {"captured-source", source.id}
+    finally:
+        store.close()
+
+
+@pytest.mark.asyncio
 async def test_retrieve_does_not_enqueue_query_as_review_evidence(tmp_path: Path) -> None:
     embedder = SimpleEmbeddingProvider(dim=32)
     store = SQLiteStore(str(tmp_path / "retrieve.sqlite"))

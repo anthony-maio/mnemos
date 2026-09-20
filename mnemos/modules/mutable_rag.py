@@ -335,7 +335,12 @@ class MutableRAG:
 
         self._total_reconsolidated += 1
         self._mark_reconsolidated_now(target.id)
-        return updated, True
+        # Atomic canonical storage can absorb captured evidence and enrich the
+        # committed metadata. Return that row, not the pre-commit proposal.
+        persisted = self._store.get(target.id)
+        if persisted is None:
+            raise RuntimeError("Corrected fact is unavailable after commit")
+        return persisted, True
 
     def _build_reconsolidation_prompt(self, chunk: MemoryChunk, context: str) -> str:
         """
