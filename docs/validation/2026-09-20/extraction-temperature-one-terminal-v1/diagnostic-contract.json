@@ -1,0 +1,16 @@
+{
+  "comparison": "Previously executed development cases, not unseen holdout.",
+  "changed_setting": "temperature only: 0.0 -> 1.0",
+  "reason": "Qwen model card recommends nonzero temperature for thinking general tasks. This isolated change tests sampling sensitivity; it does not apply or validate the full recommended sampling recipe.",
+  "reference": "https://huggingface.co/Qwen/Qwen3.5-9B#best-practices",
+  "reference_checked_at": "2026-09-20T21:35:36.974206+00:00",
+  "ollama_version": {
+    "version": "0.34.1"
+  },
+  "unchanged": "Original production/history prompt arms (without missing-target clause), source, schemas, all 20 cases, identities, ordering, model, think=true, max_tokens=8192, timeout=180, rubric and one repetition.",
+  "calls": 40,
+  "selective_retry": false,
+  "semantic_acceptance": "Review authored required and forbidden meanings. Use extraction_holdout_authored_v1.json, not the unused legacy criterion field. Preserve P07/N10 rubric ambiguities. No aggregate semantic accuracy claim or production adoption from one stochastic repetition.",
+  "original_observations_sha256": "5781f3c9568e41e8d3333e0b2f37478de80ff3a1414e8a5f883466119abdd6d3",
+  "start_condition": "Start only after the existing missing-target diagnostic is terminal and its process has exited."
+}

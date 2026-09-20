@@ -1,0 +1,51 @@
+from pathlib import Path
+from collections import Counter
+import hashlib,json,shutil
+repo=Path(__file__).resolve().parents[1];src=Path('C:/Users/Ant/AppData/Local/Temp/mnemos-extraction-temperature-one-v1')
+sha=lambda p:hashlib.sha256(p.read_bytes()).hexdigest()
+state=json.loads((src/'status.json').read_bytes());assert state['status']=='completed' and state['processed']==40
+prep=json.loads((src/'preparation.json').read_bytes());inputs=json.loads((src/'inputs.json').read_bytes())
+assert sha(src/'preparation.json')==state['preparation_sha256'] and sha(src/'observations.jsonl')==state['observations_sha256']
+for name,digest in prep['files'].items():assert sha(src/name)==digest,name
+rows=[json.loads(line) for line in (src/'observations.jsonl').read_text().splitlines()]
+assert len(rows)==40 and len({(r['case_id'],r['arm'],r['repetition']) for r in rows})==40
+expected=[]
+for i,c in enumerate(inputs['cases']):
+ for arm in inputs['arms'] if i%2==0 else list(reversed(inputs['arms'])):expected.append((c['id'],arm,0))
+assert [(r['case_id'],r['arm'],r['repetition']) for r in rows]==expected
+assert sum(r['status']=='error' for r in rows)==state['errors']
+counts={arm:dict(Counter(r['status'] for r in rows if r['arm']==arm)) for arm in inputs['arms']}
+oldpath=repo/'docs/validation/2026-09-20/extraction-authored-holdout-terminal-v1/observations.jsonl'
+old={(r['case_id'],r['arm']):r for r in map(json.loads,oldpath.read_text().splitlines())}
+changed=[{'case_id':r['case_id'],'arm':r['arm'],'before_status':old[(r['case_id'],r['arm'])]['status'],'after_status':r['status'],'before_proposals':old[(r['case_id'],r['arm'])].get('proposals'),'after_proposals':r.get('proposals')} for r in rows if (r['status'],r.get('proposals'))!=(old[(r['case_id'],r['arm'])]['status'],old[(r['case_id'],r['arm'])].get('proposals'))]
+positive=repo/'docs/validation/2026-09-20/extraction-temperature-positive-review-v1/positive-observations.jsonl'
+assert positive.read_bytes()==b''.join(line for line in (src/'observations.jsonl').read_bytes().splitlines(keepends=True) if json.loads(line)['case_id'].startswith('P'))
+out=repo/'docs/validation/2026-09-20/extraction-temperature-one-terminal-v1';out.mkdir(exist_ok=False)
+for name in set(prep['files'])|{'preparation.json','observations.jsonl','status.json','stdout.log','stderr.log'}:shutil.copyfile(src/name,out/name)
+(out/'runtime-summary.json').write_text(json.dumps(counts,indent=2)+'\n')
+(out/'output-comparison.json').write_text(json.dumps({'before_sha256':sha(oldpath),'after_sha256':sha(src/'observations.jsonl'),'comparison':'Parsed status and ordered proposal equality only; not semantic scoring or trace equality. One repetition.','changed':changed},indent=2)+'\n')
+(out/'proposal-review.json').write_text(json.dumps([{k:r.get(k) for k in ['case_id','arm','status','proposals','error_type','error']} for r in rows],indent=2)+'\n')
+shutil.copyfile(__file__,out/'collector.py.txt')
+(out/'.gitattributes').write_bytes(b'** -text -whitespace\n')
+(out/'README.md').write_text(f'''# Temperature-only extraction comparison: terminal record
+
+All 40 calls completed, preserving planned case/arm order and all failures.
+Runtime outcomes: {json.dumps(counts)}. Only temperature changed from zero to
+1.0 relative to the original authored comparison. Source 05c71d2, the original
+production/history prompt arms, model digest, thinking mode, 8,192-token budget,
+180-second timeout and one repetition are bound in preparation.json. This is
+not the full sampling recipe recommended by the model author.
+
+The earlier positive-case review is byte-matched to this terminal trace.
+Raw requests/responses and a proposal-only projection are preserved for full
+semantic review. The exact-output comparison measures changed parsed results;
+it is not an accuracy score. The original rubric and P07/N10 ambiguities remain.
+
+These are reused development cases. One stochastic repetition cannot establish
+reliability, held-out quality, or an adoption decision. No production settings
+or prompt changed and no facts were committed. This is not a five-module
+ablation, native-host recovery result or completion of T18.
+''')
+files={p.name:{'bytes':p.stat().st_size,'sha256':sha(p)} for p in sorted(out.iterdir()) if p.is_file()}
+(out/'evidence-index.json').write_text(json.dumps({'files':files},indent=2)+'\n')
+print(json.dumps({'archive':str(out),'files':len(files),'runtime':counts,'changed_outputs':len(changed)}))

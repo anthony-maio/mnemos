@@ -434,7 +434,10 @@ is frozen from that database and NOT RUN; it does not yet close recovery.
 Additional recovery gap: [active work can outlive its fixed lease](../validation/2026-09-20/long-job-lease-reproduction-v1/README.md).
 A controlled-clock installed reproduction rejects successful completion at
 301 seconds with no competing owner, then reclaims the same job. Fenced lease
-renewal and scheduler cancellation/race checks are required; this gap is open.
+renewal is now implemented with owner/token/expiry fencing, a non-accumulating
+renewal deadline, and bounded processor cancellation. Fifteen focused tests pass,
+including rejection of a late write from a processor that suppresses cancellation.
+Full source/package and installed validation of this repair remain open.
 
 ### T18 - Prove the contribution of all five modules
 
@@ -516,6 +519,10 @@ The [temperature-only diagnostic preparation](../validation/2026-09-20/extractio
 freezes a separate 40-call development comparison before execution. It retains
 the original prompt arms and changes only temperature from zero to 1.0. This
 is not a full recommended-sampling configuration or unseen validation.
+The [terminal comparison](../validation/2026-09-20/extraction-temperature-one-terminal-v1/README.md)
+completed all 40 calls with zero runtime errors. Twelve parsed outputs changed
+from the temperature-zero baseline; that count is not an accuracy measurement.
+The positive-case review is byte-matched; full semantic review remains open.
 The [fixed-candidate graph-weight bound](../validation/2026-09-20/graph-weight-bound-audit-v1/README.md)
 finds only three of 30 recorded combinations could reach top five under its
 optimistic assumptions; 15 lack the target candidate altogether. This is a
