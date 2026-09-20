@@ -1,0 +1,82 @@
+from pathlib import Path
+from contextlib import closing
+import hashlib
+import json
+import shutil
+import sqlite3
+
+repo = Path('/mnt/d/Development/mnemos/mnemos/.worktrees/functional-local-memory')
+candidate = Path('/tmp/mnemos-hermes-compaction-origin-candidate-v1')
+out = repo / 'docs/validation/2026-09-20/hermes-outbox-delivery-v31'
+result = json.loads((candidate / 'outbox_delivery_v31.json').read_bytes())
+assert result['status'] == 'passed' and result['descriptor_removed'] and result['verified_modules'] == 55
+assert [x['phase'] for x in result['phases']] == ['delivery', 'service_offline', 'restart_replay']
+out.mkdir(exist_ok=False)
+(out / '.gitattributes').write_bytes(b'** -text -whitespace\n')
+inspections = {}
+for version in (29, 30, 31):
+    roots = list(Path('/tmp').glob(f'mnemos-hermes-outbox-delivery-v{version}-*'))
+    assert len(roots) == 1
+    run = roots[0]
+    dest = out / f'v{version}'
+    dest.mkdir()
+    for name in ['result.json', 'outbox.json']:
+        if (run / name).exists():
+            shutil.copyfile(run / name, dest / name)
+    shutil.copyfile(repo / f'.venv/hermes_outbox_delivery_v{version}.py', dest / 'runner.py.txt')
+    for suffix in ['stdout.log', 'stderr.log']:
+        shutil.copyfile(candidate / f'outbox_delivery_v{version}.{suffix}', dest / suffix)
+    with closing(sqlite3.connect((run / 'memory.sqlite').as_uri() + '?mode=ro', uri=True)) as source:
+        with closing(sqlite3.connect(dest / 'memory.sqlite')) as backup:
+            source.backup(backup)
+            vector_tables = backup.execute("SELECT name FROM sqlite_master WHERE type='table' AND sql LIKE '%USING vec0%'").fetchall()
+            if vector_tables:
+                import sqlite_vec
+                backup.enable_load_extension(True)
+                sqlite_vec.load(backup)
+                backup.enable_load_extension(False)
+            assert backup.execute('PRAGMA integrity_check').fetchone() == ('ok',)
+            assert backup.execute('PRAGMA foreign_key_check').fetchall() == []
+            inspections[str(version)] = {'integrity': 'ok', 'foreign_key_errors': [],
+                'vec0_tables': len(vector_tables),
+                'episodes': backup.execute('SELECT count(*) FROM episodic_events').fetchone()[0],
+                'jobs': backup.execute('SELECT count(*) FROM memory_jobs').fetchone()[0]}
+            backup.execute('PRAGMA journal_mode=DELETE')
+            backup.commit()
+assert inspections['29']['episodes'] == 0
+assert inspections['30']['episodes'] == inspections['31']['episodes'] == 1
+(out / 'database-inspections.json').write_text(json.dumps(inspections, indent=2) + '\n')
+shutil.copyfile(__file__, out / 'collector.py.txt')
+(out / 'README.md').write_text('''# Hermes boundary outbox delivered through the current local service
+
+The exact valid capture from the v28 actual CLI session-boundary probe reaches
+the real authenticated loopback service and persists once in private SQLite.
+The queued identity, content, and original session attribution remain intact.
+All 55 imported Mnemos Python modules match the verified 05c71d2 wheel.
+
+After service shutdown, the same saved entry models an acknowledgement lost
+after commit. Replay while offline keeps it pending. Restart reopens the stored
+event, acknowledges the queued replay, and leaves the event and job identities
+unchanged with no duplicate event. Both service instances stop and remove their
+private descriptor. The original boundary outbox remains byte-for-byte intact.
+
+This extends the previous outbox-only evidence to raw delivery, restart, and
+duplicate replay. All five cognition modules are disabled, the LLM provider is
+unavailable, and the configured embedder is SimpleEmbeddingProvider. There is
+no extraction, semantic quality, full interactive CLI, or complete capture
+claim. The transport uses the real service owner and dispatcher, with an
+explicit private dispatcher factory; background maintenance is not started.
+
+Two failed harness attempts remain preserved. V29 registered a new random
+project ID instead of restoring the queued scope identity and retained the
+outbox without storing an event. V30 restored the identity and delivered the
+event, then its verifier looked up session_id at the event top level instead
+of event.metadata. V31 corrects that field path and completes all three phases.
+All three SQLite backups pass integrity and foreign-key checks.
+''', encoding='utf-8')
+files = {p.relative_to(out).as_posix(): {'bytes': p.stat().st_size,
+         'sha256': hashlib.sha256(p.read_bytes()).hexdigest()}
+         for p in sorted(out.rglob('*')) if p.is_file()}
+assert not any(name.endswith(('-wal', '-shm')) for name in files)
+(out / 'evidence-index.json').write_text(json.dumps({'files': files}, indent=2) + '\n')
+print(json.dumps({'archive': str(out), 'files': len(files), 'databases': inspections}))

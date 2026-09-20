@@ -1,0 +1,16 @@
+Traceback (most recent call last):
+  File "/mnt/d/Development/mnemos/mnemos/.worktrees/functional-local-memory/.venv/hermes_outbox_delivery_v30.py", line 121, in <module>
+    asyncio.run(main())
+  File "/home/anthony/.hermes/hermes-agent/.hermes-runtime/python/generation-1785088062-1959075-bb6b6250/cpython-3.11.15-linux-x86_64-gnu/lib/python3.11/asyncio/runners.py", line 190, in run
+    return runner.run(main)
+           ^^^^^^^^^^^^^^^^
+  File "/home/anthony/.hermes/hermes-agent/.hermes-runtime/python/generation-1785088062-1959075-bb6b6250/cpython-3.11.15-linux-x86_64-gnu/lib/python3.11/asyncio/runners.py", line 118, in run
+    return self._loop.run_until_complete(task)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/anthony/.hermes/hermes-agent/.hermes-runtime/python/generation-1785088062-1959075-bb6b6250/cpython-3.11.15-linux-x86_64-gnu/lib/python3.11/asyncio/base_events.py", line 654, in run_until_complete
+    return future.result()
+           ^^^^^^^^^^^^^^^
+  File "/mnt/d/Development/mnemos/mnemos/.worktrees/functional-local-memory/.venv/hermes_outbox_delivery_v30.py", line 83, in main
+    assert event['session_id'] == entries[0]['payload']['context']['session_id']
+           ~~~~~^^^^^^^^^^^^^^
+KeyError: 'session_id'

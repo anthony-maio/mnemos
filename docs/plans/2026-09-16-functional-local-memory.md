@@ -335,6 +335,13 @@ Run: `py -3.13 -m pytest -q tests/test_backup_restore.py tests/test_storage_sqli
 
 ### T17 - Verify the complete local and cross-host workflow
 
+The [Hermes outbox delivery check](../validation/2026-09-20/hermes-outbox-delivery-v31/README.md)
+delivers the exact v28 boundary capture through the current installed package's
+authenticated loopback service into private SQLite. Offline replay stays queued;
+restart acknowledges the same event without duplicating its episode or job.
+This closes that bounded raw-delivery path, with all five modules disabled and
+no background extraction. Failed scope-fixture and verifier attempts are retained.
+
 The [current-package boundary probe](../validation/2026-09-20/hermes-current-package-boundary-v28/README.md)
 passes actual CLI `/new` persistence and provider rotation with verified installed
 product `05c71d2`: one valid outbox capture and zero captures for corrupted evidence.
