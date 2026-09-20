@@ -157,6 +157,14 @@ limit for a truncated preview, up to 500. If it remains incomplete, report
 that limit rather than claiming complete erasure. Neither tool queues a
 deletion for later replay when the service is unavailable.
 
+Report the returned `deletion_coverage` with the outcome. A related-forget
+receipt distinguishes `target_only` from `reviewed_selection` and counts
+retained exact facts, advisory facts, and eligible source events within that
+validated preview at commit. Direct forget has no preview counts. Advisory
+matches are not confirmed copies, and zero retained records do not prove
+exhaustive semantic erasure. `semantic_erasure_proven` remains false in both
+operations. These counts do not cover future captures or external stores.
+
 These two tools expose the existing reviewed-copy service API. Their
 availability does not establish that a native model will select every
 relevant copy or perform the deletion. Unindexed paraphrases, external

@@ -253,6 +253,18 @@ the current target has a stored document vector. These candidates are advisory,
 are never selected automatically, and are not an exhaustive semantic erasure
 plan. Missing vectors, raw episodic paraphrases, historical-only meanings, and
 external transcripts may still be missed.
+
+Deletion receipts include `deletion_coverage`. For reviewed-copy operations,
+the receipt counts retained exact facts, advisory facts, and eligible source
+events from the validated preview, inside the deletion transaction. It labels
+the operation `target_only` when no additional facts or sources were selected,
+or `reviewed_selection` otherwise. Direct single-record forget reports
+`target_only` without counts because it has no preview inventory. These are
+counts at commit, not a guarantee about future captures. Even zero retained
+records cannot establish exhaustive semantic erasure, so
+`semantic_erasure_proven` remains false. Report this coverage when describing
+what was removed; `status: committed` alone does not mean every copy is gone.
+
 The [similarity source checks](validation/2026-09-18/related-forget-similarity-v1/README.md)
 cover explicit selection, source dependencies, stale previews, and replay
 suppression with controlled vectors. Native acceptance remains open.

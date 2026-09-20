@@ -85,7 +85,11 @@ _SCHEMAS = (
     },
     {
         "name": "mnemos_forget",
-        "description": "Forget one exact fact using its current optimistic-concurrency version.",
+        "description": (
+            "Forget one exact fact using its current optimistic-concurrency version. "
+            "The deletion_coverage receipt is target-only; this does not remove or prove "
+            "erasure of all related copies."
+        ),
         "parameters": {
             "type": "object",
             "additionalProperties": False,
@@ -125,6 +129,10 @@ _SCHEMAS = (
             "matching preview_limit. The target fact is always forgotten; "
             "additional facts and source events require exact IDs from the matching preview. "
             "An empty selection is target-only. Do not infer or add IDs outside the preview."
+            " Report deletion_coverage from the receipt: retained exact facts, advisory "
+            "candidates, and eligible source events are separate counts. A committed "
+            "target-only deletion is not complete related-copy erasure. Even zero retained "
+            "preview records does not prove semantic erasure."
         ),
         "parameters": {
             "type": "object",

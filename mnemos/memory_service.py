@@ -1101,6 +1101,10 @@ class LocalMemoryService:
                 "forgotten": forgotten,
                 "fact_id": chunk.id,
                 "erasure_scope": "live_memory_and_replay_suppression",
+                "deletion_coverage": {
+                    "selection": "target_only",
+                    "semantic_erasure_proven": False,
+                },
             }
         if operation == "inspect":
             context = self.registry.validate_context(

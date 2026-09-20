@@ -3826,6 +3826,35 @@ class SQLiteStore(MemoryStore):
                 for source_id in selected_sources:
                     if self.get_episodic_event(source_id) is not None:
                         self._suppress_related_source_locked(source_id, fact_id=fact_id)
+                retained_candidates = [
+                    candidate
+                    for candidate in candidates.values()
+                    if self.get(candidate["fact_id"]) is not None
+                ]
+                # Count only the permitted preview records, while the same write
+                # transaction still owns the snapshot. Advisory matches are not
+                # proof of copied assertions, even when the count is zero.
+                deletion_coverage = {
+                    "selection": (
+                        "reviewed_selection"
+                        if selected_facts or selected_sources
+                        else "target_only"
+                    ),
+                    "retained_exact_fact_count": sum(
+                        candidate["match_type"] == "exact_assertion"
+                        for candidate in retained_candidates
+                    ),
+                    "retained_advisory_fact_count": sum(
+                        candidate["match_type"] == "similarity_candidate"
+                        for candidate in retained_candidates
+                    ),
+                    "retained_eligible_source_event_count": sum(
+                        source.get("selection_allowed") is True
+                        and self.get_episodic_event(source["source_event_id"]) is not None
+                        for source in sources.values()
+                    ),
+                    "semantic_erasure_proven": False,
+                }
                 self._conn.commit()
                 return {
                     "status": "committed",
@@ -3834,6 +3863,7 @@ class SQLiteStore(MemoryStore):
                     "selected_fact_ids": changed_ids,
                     "selected_source_event_ids": sorted(selected_sources),
                     "erasure_scope": "live_memory_and_replay_suppression",
+                    "deletion_coverage": deletion_coverage,
                 }
             except BaseException:
                 self._conn.rollback()
