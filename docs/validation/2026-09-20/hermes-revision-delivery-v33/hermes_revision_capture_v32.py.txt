@@ -1,0 +1,100 @@
+from pathlib import Path
+from zipfile import ZipFile
+import asyncio
+import hashlib
+import inspect
+import json
+import os
+import subprocess
+import tempfile
+
+root = Path(tempfile.mkdtemp(prefix='mnemos-hermes-revision-capture-v32-'))
+os.environ['HERMES_HOME'] = str(root / 'home')
+for key in tuple(os.environ):
+    if key.startswith('MNEMOS_'):
+        os.environ.pop(key)
+from hermes_state import SessionDB
+from agent.context_compressor import ContextCompressor
+from mnemos.adapters.hermes import MnemosHermesProvider
+from mnemos.client import MnemosClient
+from mnemos.scopes import ScopeRegistry
+
+candidate = Path('/tmp/mnemos-hermes-compaction-origin-candidate-v1')
+patch = subprocess.check_output(['git', 'diff', '--binary'], cwd=candidate)
+snapshot_hash = hashlib.sha256((candidate / 'agent/memory_source_snapshot.py').read_bytes()).hexdigest()
+wheel = Path('/mnt/c/Users/Ant/AppData/Local/Temp/mnemos-package-checks-generation-settings-v2/dist/mnemos_memory-0.7.0-py3-none-any.whl')
+assert hashlib.sha256(wheel.read_bytes()).hexdigest() == '8d75eef166c6e7f5558dd0a3b3c3562ac66fd7e89d9e1c8d7731688ef099260a'
+installed = Path(inspect.getfile(MnemosHermesProvider)).parents[2]
+verified = 0
+with ZipFile(wheel) as archive:
+    for name in archive.namelist():
+        if name.startswith('mnemos/') and name.endswith('.py'):
+            assert (installed / name).read_bytes() == archive.read(name)
+            verified += 1
+registry = ScopeRegistry()
+registry.register_project(root, user_profile_id='profile', enabled=True)
+db = SessionDB(root / 'host.sqlite')
+client = MnemosClient(descriptor_path=root / 'runtime.json', outbox_path=root / 'outbox.json', auto_start=False)
+provider = MnemosHermesProvider(client=client, registry=registry, user_profile_id='profile')
+provider.initialize('parent', cwd=str(root), hermes_home=str(root / 'home'))
+phases = []
+
+def capture(session, expected):
+    provider.on_session_switch(session)
+    evidence = db.get_memory_evidence(session)
+    provider.sync_turn('', '', session_id=session,
+        messages=db.get_messages_as_conversation(session, include_row_ids=True), evidence_messages=evidence)
+    assert provider._flush(timeout=10)
+    queued = json.loads((root / 'outbox.json').read_bytes())
+    assert len(queued) == expected, (session, queued)
+    phases.append({'session': session, 'evidence': evidence, 'outbox': queued})
+    return queued
+
+try:
+    db.create_session('parent', 'cli', cwd=str(root))
+    parent_id = db.append_message('parent', 'user', 'Use cedar export format.')
+    first = capture('parent', 1)
+    original_payload = first[0]['payload']
+    carrier = db.get_messages_as_conversation('parent', include_row_ids=True)[0]
+    compressor = ContextCompressor('fixture')
+    compressor._summary_has_user_turn = True
+    compressor._merge_summary_into_tail_row(carrier, 'Generated historical context.', 'user', False)
+    db.publish_compression_child(parent_session_id='parent', child_session_id='child',
+        source='cli', messages=[carrier], require_compression_lease=False)
+    second = capture('child', 2)
+    assert next(x['payload'] for x in second if x['payload']['source_ref'] == f'transcript:v2:{parent_id}') == original_payload
+    live = db.get_messages_as_conversation('child', include_row_ids=True)[0]
+    changed = live['content'].replace('Use cedar export format.', 'Use birch export format.')
+    assert db.set_user_message_content('child', live['_row_id'], changed) == 1
+    third = capture('child', 3)
+    revision = next(x['payload'] for x in third if x['payload']['content'] == 'Use birch export format.')
+    assert revision['context']['session_id'] == 'child'
+    assert revision['source_ref'] != original_payload['source_ref']
+    assert db.get_messages('parent')[0]['content'] == 'Use cedar export format.'
+    assert db.set_user_message_content('child', live['_row_id'], changed) == 1
+    capture('child', 3)
+    db.close()
+    db = SessionDB(root / 'host.sqlite')
+    capture('child', 3)
+    rows = db.get_messages_as_conversation('child', include_row_ids=True)
+    db.publish_compression_child(parent_session_id='child', child_session_id='grandchild',
+        source='cli', messages=rows, require_compression_lease=False)
+    final = capture('grandchild', 3)
+    assert next(x['payload'] for x in final if x['payload']['content'] == 'Use birch export format.') == revision
+    summaries = [x['payload'] for x in final if x['payload']['source_ref'].startswith('provisional:v2:summary:')]
+    assert len(summaries) == 1 and summaries[0]['identity_status'] == 'provisional_unassociated'
+    assert subprocess.check_output(['git', 'diff', '--binary'], cwd=candidate) == patch
+    assert hashlib.sha256((candidate / 'agent/memory_source_snapshot.py').read_bytes()).hexdigest() == snapshot_hash
+    result = {'status': 'passed', 'root': str(root), 'phases': phases,
+        'verified_modules': verified, 'candidate_patch_sha256': hashlib.sha256(patch).hexdigest(),
+        'snapshot_helper_sha256': snapshot_hash, 'wheel_sha256': hashlib.sha256(wheel.read_bytes()).hexdigest(),
+        'limit': 'Actual isolated SessionDB compression/edit projection and installed provider capture into outbox. No model, service delivery, or full interactive CLI.'}
+    (root / 'result.json').write_text(json.dumps(result, indent=2) + '\n')
+    output = candidate / 'revision_capture_v32.json'
+    assert not output.exists()
+    output.write_text(json.dumps(result, indent=2) + '\n')
+    print(json.dumps({'status': 'passed', 'root': str(root), 'phases': len(phases), 'unique_captures': len(final)}))
+finally:
+    provider._flush(timeout=10)
+    db.close()
+    asyncio.run(client.close())

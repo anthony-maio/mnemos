@@ -335,6 +335,14 @@ Run: `py -3.13 -m pytest -q tests/test_backup_restore.py tests/test_storage_sqli
 
 ### T17 - Verify the complete local and cross-host workflow
 
+The [compression/edit delivery check](../validation/2026-09-20/hermes-revision-delivery-v33/README.md)
+preserves three identities across six capture phases and service restart:
+original source, edited source, and provisional summary. The service creates
+two extract jobs and one capture_only job; offline replay adds no duplicate
+episode or job. This proves raw delivery from the isolated host candidate,
+not extracted-fact correction or forgetting. Revision-snapshot retention bounds
+and long-term storage growth remain unvalidated.
+
 The [Hermes outbox delivery check](../validation/2026-09-20/hermes-outbox-delivery-v31/README.md)
 delivers the exact v28 boundary capture through the current installed package's
 authenticated loopback service into private SQLite. Offline replay stays queued;

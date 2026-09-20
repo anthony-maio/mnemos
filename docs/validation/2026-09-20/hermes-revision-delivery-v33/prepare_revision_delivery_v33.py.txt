@@ -1,0 +1,29 @@
+from pathlib import Path
+repo = Path('/mnt/d/Development/mnemos/mnemos/.worktrees/functional-local-memory')
+s = (repo / '.venv/hermes_outbox_delivery_v31.py').read_text()
+s = s.replace('integration_api_probe_v28.json', 'revision_capture_v32.json')
+s = s.replace("Path(boundary['root']) / 'valid/outbox.json'", "Path(boundary['root']) / 'outbox.json'")
+s = s.replace('assert len(entries) == 1', 'assert len(entries) == 3')
+s = s.replace("str(Path(boundary['root']) / 'valid')", "str(Path(boundary['root']))")
+s = s.replace('delivery-v31-', 'revision-delivery-v33-').replace('outbox_delivery_v31.json', 'revision_delivery_v33.json')
+s = s.replace('(1, 0, 0)', '(3, 0, 0)').replace('(0, 1, 1)', '(0, 3, 3)')
+old = '''        assert len(state['events']) == 1 and state['fact_count'] == 0, state
+        event = state['events'][0]
+        assert event['content'] == entries[0]['payload']['content']
+        assert event['metadata']['session_id'] == entries[0]['payload']['context']['session_id']'''
+new = '''        assert len(state['events']) == 3 and state['fact_count'] == 0, state
+        expected = {(x['payload']['content'], x['payload']['context']['session_id'], x['payload']['source_ref']) for x in entries}
+        observed = {(x['content'], x['metadata']['session_id'], x['metadata']['source_ref']) for x in state['events']}
+        assert observed == expected, (observed, expected)
+        assert sorted(j['kind'] for j in state['jobs']) == ['capture_only', 'extract', 'extract']
+        summaries = [e for e in state['events'] if e['metadata'].get('identity_status') == 'provisional_unassociated']
+        assert len(summaries) == 1 and summaries[0]['status'] == 'deferred'
+        event_ids = sorted(x['id'] for x in state['events'])'''
+assert s.count(old) == 1
+s = s.replace(old, new)
+s = s.replace("[x['id'] for x in reopened['events']] == [event['id']]", "sorted(x['id'] for x in reopened['events']) == event_ids")
+s = s.replace("[x['id'] for x in after['events']] == [event['id']]", "sorted(x['id'] for x in after['events']) == event_ids")
+s = s.replace("'Actual loopback service and SQLite raw delivery; no extraction/model quality or full interactive CLI proof.'", "'Actual loopback service and SQLite delivery of original, edited source, and derived summary; no extraction/model quality or full interactive CLI proof.'")
+dest = repo / '.venv/hermes_revision_delivery_v33.py'
+assert not dest.exists()
+dest.write_text(s)

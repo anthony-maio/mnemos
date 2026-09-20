@@ -1,0 +1,83 @@
+from pathlib import Path
+from contextlib import closing
+import hashlib
+import json
+import shutil
+import sqlite3
+import subprocess
+
+repo = Path('/mnt/d/Development/mnemos/mnemos/.worktrees/functional-local-memory')
+candidate = Path('/tmp/mnemos-hermes-compaction-origin-candidate-v1')
+out = repo / 'docs/validation/2026-09-20/hermes-revision-delivery-v33'
+capture = json.loads((candidate / 'revision_capture_v32.json').read_bytes())
+delivery = json.loads((candidate / 'revision_delivery_v33.json').read_bytes())
+assert capture['status'] == delivery['status'] == 'passed'
+assert len(capture['phases']) == 6 and len(delivery['phases']) == 3
+assert delivery['descriptor_removed']
+sha = lambda p: hashlib.sha256(p.read_bytes()).hexdigest()
+capture_root, delivery_root = Path(capture['root']), Path(delivery['root'])
+assert sha(capture_root / 'outbox.json') == delivery['source_outbox_sha256']
+patch = subprocess.check_output(['git', 'diff', '--binary'], cwd=candidate)
+assert hashlib.sha256(patch).hexdigest() == capture['candidate_patch_sha256']
+out.mkdir(exist_ok=False)
+(out / '.gitattributes').write_bytes(b'** -text -whitespace\n')
+(out / 'candidate.patch').write_bytes(patch)
+for prefix in ['revision_capture_v32', 'revision_delivery_v33']:
+    for suffix in ['.json', '.stdout.log', '.stderr.log']:
+        shutil.copyfile(candidate / (prefix + suffix), out / (prefix + suffix))
+for name in ['hermes_revision_capture_v32.py', 'hermes_revision_delivery_v33.py', 'prepare_revision_delivery_v33.py']:
+    shutil.copyfile(repo / '.venv' / name, out / (name + '.txt'))
+shutil.copyfile(capture_root / 'outbox.json', out / 'captured-outbox.json')
+inspections = {}
+for label, source_path in [('host', capture_root / 'host.sqlite'), ('service', delivery_root / 'memory.sqlite')]:
+    with closing(sqlite3.connect(source_path.as_uri() + '?mode=ro', uri=True)) as source:
+        with closing(sqlite3.connect(out / (label + '.sqlite'))) as backup:
+            source.backup(backup)
+            assert backup.execute('PRAGMA integrity_check').fetchone() == ('ok',)
+            assert backup.execute('PRAGMA foreign_key_check').fetchall() == []
+            inspections[label] = {'integrity': 'ok', 'foreign_key_errors': []}
+            if label == 'service':
+                inspections[label]['episodes'] = backup.execute('SELECT count(*) FROM episodic_events').fetchone()[0]
+                inspections[label]['jobs'] = backup.execute('SELECT kind,count(*) FROM memory_jobs GROUP BY kind').fetchall()
+                assert inspections[label]['episodes'] == 3
+            backup.execute('PRAGMA journal_mode=DELETE')
+            backup.commit()
+(out / 'database-inspections.json').write_text(json.dumps(inspections, indent=2) + '\n')
+shutil.copyfile(__file__, out / 'collector.py.txt')
+(out / 'README.md').write_text('''# Hermes compression revisions through the installed adapter and service
+
+Six capture phases use the actual isolated SessionDB and ContextCompressor
+carrier merge with the current installed Mnemos provider: original capture,
+child compression, live-payload edit, unchanged edit replay, database reopen,
+and grandchild recompression. Exactly three unique outbox records remain.
+The original source keeps its identity and content. The edit gets a separate
+source identity in the child session and remains stable on replay and recopy.
+The summary retains provisional-unassociated classification and its identity.
+
+The exact outbox then passes through the authenticated loopback service into
+private SQLite. There are three episodes and three jobs: two extract jobs and
+one capture_only summary job. The summary episode is deferred. Service outage
+keeps all three queued; restart acknowledges them without duplicate episodes
+or jobs. The service descriptors are removed, and the source outbox is intact.
+
+All 55 installed Mnemos Python modules match the 05c71d2 wheel. The host patch
+and source-snapshot helper hashes are recorded by the capture probe. Both
+SQLite backups pass integrity and foreign-key checks.
+
+This combines actual compression/edit projection, adapter capture, and raw
+service delivery. It is not a full interactive CLI run. All five cognition
+modules are disabled, the model provider is unavailable, no background
+maintenance runs, and the configured embedder is SimpleEmbeddingProvider.
+No extracted-fact correction, semantic quality, forgetting, or module benefit
+is claimed by these three queued source records. The host remains an isolated
+candidate with the previously documented broader validation gates open.
+
+Distinct hybrid edits retain separate inactive source snapshots as history.
+This preserves prior source references; long-term retention bounds and storage
+growth for those snapshots have not been validated by this bounded check.
+''', encoding='utf-8')
+files = {p.relative_to(out).as_posix(): {'bytes': p.stat().st_size, 'sha256': sha(p)}
+         for p in sorted(out.rglob('*')) if p.is_file()}
+assert not any(name.endswith(('-wal', '-shm')) for name in files)
+(out / 'evidence-index.json').write_text(json.dumps({'files': files}, indent=2) + '\n')
+print(json.dumps({'archive': str(out), 'files': len(files)}))

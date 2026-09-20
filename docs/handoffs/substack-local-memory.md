@@ -41,6 +41,14 @@ without duplicating the episode or job. All cognition modules were disabled,
 and no extraction ran. This proves the bounded raw-delivery path, not complete
 capture, semantic quality, or full-module recovery.
 
+The [compression/edit delivery check](../validation/2026-09-20/hermes-revision-delivery-v33/README.md)
+adds a concrete example for the article: an original message, its edited source,
+and a generated summary keep distinct identities across restart and another
+compression. The summary reaches the service as capture-only context. This
+does not prove that a model correctly reconciles the two source statements;
+extraction did not run. Historical revision snapshots remain stored, and their
+long-term growth and retention bounds remain an open operational question.
+
 The [Qwen3.5 service follow-up](../validation/2026-09-20/historical-claim-service-v3-verified/README.md)
 passes seven previously observed development cases: three explicit correction,
 restart, retrieval, forget, and replay lifecycles plus four abstention controls.
