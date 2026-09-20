@@ -1,0 +1,50 @@
+"""Reproduce bounded structural evidence for the v2 semantic review, no inference."""
+import hashlib
+import json
+from collections import Counter
+from pathlib import Path
+
+repo = Path(__file__).resolve().parents[1]
+source = repo / '.venv/fresh-corpus-authored-v2.jsonl'
+rows = [json.loads(line) for line in source.read_text().splitlines()]
+held = [row for row in rows if row.get('split') == 'heldout']
+corrections = []
+for row in held:
+    facts = {f['fact_id']: f for f in row['facts']}
+    events = {e['event_id']: e for e in row['events']}
+    for event in row['events']:
+        if event['lifecycle_operation'] != 'correct':
+            continue
+        old = facts[event['target_fact_id']]['content']
+        new = event['replacement_content']
+        target = events[event['target_source_event_id']]
+        corrections.append({
+            'session_id': row['session_id'],
+            'change': 'only_inserts_now' if new.replace(' now ', ' ') == old else
+                      'appends_review_window' if new == old + ' The current review window is Wednesday.' else 'other',
+            'old_is_substring_of_current': old in new,
+            'target_source_content': target['content'],
+            'assertion_appears_in_target': old in target['content'],
+            'other_events_containing_original_assertion': [e['event_id'] for e in row['events'] if old in e['content']],
+        })
+pairs = [p for row in held for p in row['state_pairs']]
+report = {
+    'source_sha256': hashlib.sha256(source.read_bytes()).hexdigest(),
+    'model_calls': 0,
+    'heldout_sessions': len(held),
+    'current_supported_facts_per_session': dict(Counter(sum(f['gold_status'] == 'supported' for f in r['facts']) for r in held)),
+    'correction_change_counts': dict(Counter(c['change'] for c in corrections)),
+    'corrections': corrections,
+    'state_pair_count': len(pairs),
+    'semantic_state_values': dict(Counter(p['semantic_state'] for p in pairs)),
+    'identical_seed_target_pairs': sum(p.get('direct_vector_seed_fact_ids') == p.get('graph_target_fact_ids') for p in pairs),
+    'limitations': 'Literal checks support the accompanying semantic review; absence of literal text alone does not establish lack of semantic support. No model accuracy is measured.',
+}
+assert len(held) == 200 and len(corrections) == 20 and len(pairs) == 80
+assert report['correction_change_counts'] == {'only_inserts_now': 7, 'appends_review_window': 13}
+assert all(not c['assertion_appears_in_target'] for c in corrections)
+out = repo / 'docs/validation/2026-09-20/fresh-corpus-semantic-review-v2'
+out.mkdir(exist_ok=True)
+(out / 'audit.json').write_text(json.dumps(report, indent=2) + '\n')
+(out / 'audit.py.txt').write_bytes(Path(__file__).read_bytes())
+print(json.dumps({k:v for k,v in report.items() if k != 'corrections'}, indent=2))
