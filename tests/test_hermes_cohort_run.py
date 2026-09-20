@@ -6,13 +6,24 @@ from types import SimpleNamespace
 
 import pytest
 
-from benchmarks.native_hosts import hermes_cohort_run_v1, hermes_cohort_run_v2, hermes_cohort_run_v3
+from benchmarks.native_hosts import (
+    hermes_cohort_run_v1,
+    hermes_cohort_run_v2,
+    hermes_cohort_run_v3,
+    hermes_cohort_run_v4,
+)
 
 cohort = hermes_cohort_run_v1
 
 
 @pytest.fixture(
-    autouse=True, params=[hermes_cohort_run_v1, hermes_cohort_run_v2, hermes_cohort_run_v3]
+    autouse=True,
+    params=[
+        hermes_cohort_run_v1,
+        hermes_cohort_run_v2,
+        hermes_cohort_run_v3,
+        hermes_cohort_run_v4,
+    ],
 )
 def cohort_version(request, monkeypatch):
     monkeypatch.setitem(globals(), "cohort", request.param)

@@ -1,0 +1,46 @@
+from pathlib import Path
+import hashlib
+import json
+import shutil
+
+repo = Path(__file__).resolve().parents[1]
+source = Path("C:/Users/Ant/AppData/Local/Temp/mnemos-hermes-native-discovery-preflight-v5")
+output = repo / "docs/validation/2026-09-19/hermes-native-discovery-preflight-v5"
+report = json.loads((source / "report.json").read_text())
+assert report["status"] == "preflight_passed"
+trace = [json.loads(line) for line in (source / "preflight/trace.jsonl").read_text().splitlines()]
+assert not any(row["operation"] in {"model_request", "model_response", "tool_result", "bridge_response"} for row in trace)
+names = next(row["tool_names"] for row in trace if row["operation"] == "preflight_complete")
+assert len(names) == 8 and {"mnemos_forget_preview", "mnemos_forget_related"} <= set(names)
+output.mkdir(exist_ok=False)
+(output / ".gitattributes").write_bytes(b"** -text -whitespace\n")
+paths = ["report.json", "host-compatibility.patch", "preflight/trace.jsonl", "preflight/stdout.log", "preflight/stderr.log"]
+for relative, digest in report["input_hashes"].items():
+    path = Path(relative)
+    name = path.name + (".txt" if path.suffix == ".py" else "")
+    assert hashlib.sha256((source / name).read_bytes()).hexdigest() == digest
+    paths.append(name)
+for name in paths:
+    target = output / name
+    target.parent.mkdir(parents=True, exist_ok=True)
+    shutil.copyfile(source / name, target)
+shutil.copyfile(__file__, output / (Path(__file__).name + ".txt"))
+files = {p.relative_to(output).as_posix(): {"bytes": p.stat().st_size, "sha256": hashlib.sha256(p.read_bytes()).hexdigest()}
+         for p in sorted(output.rglob("*")) if p.is_file()}
+(output / "evidence-index.json").write_text(json.dumps({"files": files}, indent=2) + "\n", encoding="utf-8")
+(output / "README.md").write_text("""# Native Hermes eight-tool discovery preflight
+
+The pinned real Hermes checkout discovered all eight Mnemos provider tools
+from the verified `db932be` wheel, resolved the disposable project and home,
+and shut down without a model request, tool dispatch, bridge call, or service
+mutation. The host phase took 3.141 seconds. Live host configuration was unchanged.
+
+This is import and configuration evidence, not native-model lifecycle
+acceptance. The report and exact copied inputs preserve the preparation
+snapshot, before the v6 inference protocol was committed. The evaluator was
+not executed in this preflight; its later type-checking repair does not alter
+the discovery observation. The native run must separately bind its final
+committed evaluator and protocol. Raw files are bound by evidence-index.json;
+this interpretive README is outside that index.
+""", encoding="utf-8")
+print(json.dumps({"files": len(files), "path": str(output)}))
