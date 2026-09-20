@@ -447,7 +447,9 @@ A controlled-clock installed reproduction rejects successful completion at
 renewal is now implemented with owner/token/expiry fencing, a non-accumulating
 renewal deadline, and bounded processor cancellation. Fifteen focused tests pass,
 including rejection of a late write from a processor that suppresses cancellation.
-Full source/package and installed validation of this repair remain open.
+The [frozen source/package checkpoint](../validation/2026-09-20/lease-renewal-source-checkpoint-v1/README.md)
+passes 2,019 tests with four skips and all six checks. Expanded installed-wheel
+validation is running separately; full recovery and quality gates remain open.
 
 ### T18 - Prove the contribution of all five modules
 
