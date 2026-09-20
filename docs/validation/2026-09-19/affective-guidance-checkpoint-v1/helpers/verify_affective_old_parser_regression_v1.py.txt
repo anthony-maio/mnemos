@@ -1,0 +1,31 @@
+"""Run the new regression against a preserved old source, without editing either source."""
+from datetime import datetime, timezone
+from pathlib import Path
+import hashlib
+import json
+import os
+import shutil
+import subprocess
+import sys
+
+repo = Path(__file__).resolve().parent.parent
+old = Path("C:/Users/Ant/AppData/Local/Temp/mnemos-source-job-not-found-v1")
+root = Path("C:/Users/Ant/AppData/Local/Temp/mnemos-affective-prior-regression-v1")
+root.mkdir(exist_ok=False)
+test = repo / "tests/test_affective_response_contract.py"
+shutil.copyfile(test, root / test.name)
+env = {k: v for k, v in os.environ.items() if not k.startswith("MNEMOS_") and k != "PYTHONPATH"}
+env["PYTHONPATH"] = str(old)
+probe = subprocess.check_output([sys.executable, "-c", "import mnemos.modules.affective as m; print(m.__file__)"], cwd=root, env=env, text=True).strip()
+assert Path(probe).resolve() == (old / "mnemos/modules/affective.py").resolve()
+commit = subprocess.check_output(["git", "-C", str(old), "rev-parse", "HEAD"], text=True).strip()
+command = [sys.executable, "-m", "pytest", "-q", test.name, "--junitxml", str(root / "pytest.xml")]
+with (root / "pytest.log").open("w", encoding="utf-8") as log:
+    result = subprocess.run(command, cwd=root, env=env, stdout=log, stderr=subprocess.STDOUT, timeout=60)
+report = {"kind": "post-fix regression run against preserved pre-fix source", "recorded_at": datetime.now(timezone.utc).isoformat(),
+          "source_commit": commit, "imported_module": probe, "command": command, "exit_code": result.returncode,
+          "test_sha256": hashlib.sha256(test.read_bytes()).hexdigest(),
+          "parser_sha256": hashlib.sha256(Path(probe).read_bytes()).hexdigest()}
+(root / "report.json").write_text(json.dumps(report, indent=2) + "\n", encoding="utf-8")
+print(json.dumps(report))
+assert result.returncode == 1, "Expected assertion failures against the old parser"

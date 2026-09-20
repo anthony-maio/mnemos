@@ -1,0 +1,194 @@
+FF.F.F..FF                                                               [100%]
+================================== FAILURES ===================================
+_ test_classify_state_preserves_signed_decimal_and_scientific_values[-.3, .8, .6-expected0] _
+
+response = '-.3, .8, .6', expected = (-0.3, 0.8, 0.6)
+
+    @pytest.mark.asyncio
+    @pytest.mark.parametrize(
+        ("response", "expected"),
+        [
+            ("-.3, .8, .6", (-0.3, 0.8, 0.6)),
+            (" +1.2e-1, 8E-1, 6e-1 ", (0.12, 0.8, 0.6)),
+            ("-2, 2, 3", (-1.0, 1.0, 1.0)),
+        ],
+    )
+    async def test_classify_state_preserves_signed_decimal_and_scientific_values(
+        response: str, expected: tuple[float, float, float]
+    ) -> None:
+        router = AffectiveRouter(_ResponseProvider(response), SimpleEmbeddingProvider(dim=8))
+    
+        state = await router.classify_state(Interaction(role="user", content="hello"))
+    
+        assert state is not None
+>       assert (state.valence, state.arousal, state.complexity) == expected
+E       assert (1.0, 1.0, 1.0) == (-0.3, 0.8, 0.6)
+E         
+E         At index 0 diff: 1.0 != -0.3
+E         Use -v to get more diff
+
+test_affective_response_contract.py:41: AssertionError
+_ test_classify_state_preserves_signed_decimal_and_scientific_values[ +1.2e-1, 8E-1, 6e-1 -expected1] _
+
+response = ' +1.2e-1, 8E-1, 6e-1 ', expected = (0.12, 0.8, 0.6)
+
+    @pytest.mark.asyncio
+    @pytest.mark.parametrize(
+        ("response", "expected"),
+        [
+            ("-.3, .8, .6", (-0.3, 0.8, 0.6)),
+            (" +1.2e-1, 8E-1, 6e-1 ", (0.12, 0.8, 0.6)),
+            ("-2, 2, 3", (-1.0, 1.0, 1.0)),
+        ],
+    )
+    async def test_classify_state_preserves_signed_decimal_and_scientific_values(
+        response: str, expected: tuple[float, float, float]
+    ) -> None:
+        router = AffectiveRouter(_ResponseProvider(response), SimpleEmbeddingProvider(dim=8))
+    
+        state = await router.classify_state(Interaction(role="user", content="hello"))
+    
+        assert state is not None
+>       assert (state.valence, state.arousal, state.complexity) == expected
+E       assert (1.0, 0.0, 1.0) == (0.12, 0.8, 0.6)
+E         
+E         At index 0 diff: 1.0 != 0.12
+E         Use -v to get more diff
+
+test_affective_response_contract.py:41: AssertionError
+_ test_malformed_or_ambiguous_response_is_unavailable[valence=-0.3, arousal=0.8, complexity=0.6] _
+
+response = 'valence=-0.3, arousal=0.8, complexity=0.6'
+
+    @pytest.mark.asyncio
+    @pytest.mark.parametrize(
+        "response",
+        [
+            "valence=-0.3, arousal=0.8, complexity=0.6",
+            "-.3, .8",
+            "-.3, .8, .6, 0.1",
+            "NaN, .8, .6",
+            "-.3, inf, .6",
+            "1e999, .8, .6",
+            "1, 2, 3 because this is a score",
+        ],
+    )
+    async def test_malformed_or_ambiguous_response_is_unavailable(response: str) -> None:
+        provider = _ResponseProvider("-.2, .4, .6")
+        router = AffectiveRouter(provider, SimpleEmbeddingProvider(dim=8))
+    
+        prior = await router.classify_state(Interaction(role="user", content="prior"))
+        assert prior is not None
+        provider.response = response
+    
+        state = await router.classify_state(Interaction(role="user", content="hello"))
+        chunk = router.tag_chunk(MemoryChunk(content="hello"), state)
+    
+>       assert state is None
+E       assert CognitiveState(valence=-0.3, arousal=0.8, complexity=0.6) is None
+
+test_affective_response_contract.py:71: AssertionError
+____ test_malformed_or_ambiguous_response_is_unavailable[-.3, .8, .6, 0.1] ____
+
+response = '-.3, .8, .6, 0.1'
+
+    @pytest.mark.asyncio
+    @pytest.mark.parametrize(
+        "response",
+        [
+            "valence=-0.3, arousal=0.8, complexity=0.6",
+            "-.3, .8",
+            "-.3, .8, .6, 0.1",
+            "NaN, .8, .6",
+            "-.3, inf, .6",
+            "1e999, .8, .6",
+            "1, 2, 3 because this is a score",
+        ],
+    )
+    async def test_malformed_or_ambiguous_response_is_unavailable(response: str) -> None:
+        provider = _ResponseProvider("-.2, .4, .6")
+        router = AffectiveRouter(provider, SimpleEmbeddingProvider(dim=8))
+    
+        prior = await router.classify_state(Interaction(role="user", content="prior"))
+        assert prior is not None
+        provider.response = response
+    
+        state = await router.classify_state(Interaction(role="user", content="hello"))
+        chunk = router.tag_chunk(MemoryChunk(content="hello"), state)
+    
+>       assert state is None
+E       assert CognitiveState(valence=1.0, arousal=1.0, complexity=1.0) is None
+
+test_affective_response_contract.py:71: AssertionError
+_____ test_malformed_or_ambiguous_response_is_unavailable[1e999, .8, .6] ______
+
+response = '1e999, .8, .6'
+
+    @pytest.mark.asyncio
+    @pytest.mark.parametrize(
+        "response",
+        [
+            "valence=-0.3, arousal=0.8, complexity=0.6",
+            "-.3, .8",
+            "-.3, .8, .6, 0.1",
+            "NaN, .8, .6",
+            "-.3, inf, .6",
+            "1e999, .8, .6",
+            "1, 2, 3 because this is a score",
+        ],
+    )
+    async def test_malformed_or_ambiguous_response_is_unavailable(response: str) -> None:
+        provider = _ResponseProvider("-.2, .4, .6")
+        router = AffectiveRouter(provider, SimpleEmbeddingProvider(dim=8))
+    
+        prior = await router.classify_state(Interaction(role="user", content="prior"))
+        assert prior is not None
+        provider.response = response
+    
+        state = await router.classify_state(Interaction(role="user", content="hello"))
+        chunk = router.tag_chunk(MemoryChunk(content="hello"), state)
+    
+>       assert state is None
+E       assert CognitiveState(valence=1.0, arousal=1.0, complexity=1.0) is None
+
+test_affective_response_contract.py:71: AssertionError
+_ test_malformed_or_ambiguous_response_is_unavailable[1, 2, 3 because this is a score] _
+
+response = '1, 2, 3 because this is a score'
+
+    @pytest.mark.asyncio
+    @pytest.mark.parametrize(
+        "response",
+        [
+            "valence=-0.3, arousal=0.8, complexity=0.6",
+            "-.3, .8",
+            "-.3, .8, .6, 0.1",
+            "NaN, .8, .6",
+            "-.3, inf, .6",
+            "1e999, .8, .6",
+            "1, 2, 3 because this is a score",
+        ],
+    )
+    async def test_malformed_or_ambiguous_response_is_unavailable(response: str) -> None:
+        provider = _ResponseProvider("-.2, .4, .6")
+        router = AffectiveRouter(provider, SimpleEmbeddingProvider(dim=8))
+    
+        prior = await router.classify_state(Interaction(role="user", content="prior"))
+        assert prior is not None
+        provider.response = response
+    
+        state = await router.classify_state(Interaction(role="user", content="hello"))
+        chunk = router.tag_chunk(MemoryChunk(content="hello"), state)
+    
+>       assert state is None
+E       assert CognitiveState(valence=1.0, arousal=1.0, complexity=1.0) is None
+
+test_affective_response_contract.py:71: AssertionError
+=========================== short test summary info ===========================
+FAILED test_affective_response_contract.py::test_classify_state_preserves_signed_decimal_and_scientific_values[-.3, .8, .6-expected0]
+FAILED test_affective_response_contract.py::test_classify_state_preserves_signed_decimal_and_scientific_values[ +1.2e-1, 8E-1, 6e-1 -expected1]
+FAILED test_affective_response_contract.py::test_malformed_or_ambiguous_response_is_unavailable[valence=-0.3, arousal=0.8, complexity=0.6]
+FAILED test_affective_response_contract.py::test_malformed_or_ambiguous_response_is_unavailable[-.3, .8, .6, 0.1]
+FAILED test_affective_response_contract.py::test_malformed_or_ambiguous_response_is_unavailable[1e999, .8, .6]
+FAILED test_affective_response_contract.py::test_malformed_or_ambiguous_response_is_unavailable[1, 2, 3 because this is a score]
+6 failed, 4 passed in 0.56s
