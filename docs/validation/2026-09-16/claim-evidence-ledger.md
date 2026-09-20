@@ -1,5 +1,23 @@
 # Mnemos claim and evidence ledger
 
+The [fixed Hermes v8 cohort](../2026-09-20/hermes-native-cohort-v8/README.md) ran the verified `e419c2a`
+retrieval-view package and finished zero of three complete lifecycles. All
+readiness checks and cleanup passed. Attempt 1 saved the fact, then announced
+restarted retrieval without calling it. Attempts 2 and 3 passed teaching,
+restarted recall, correction, and restarted corrected recall, then failed at
+forgetting. Missing source selections were rejected without commitment;
+attempt 3 also submitted a malformed digest and an invalid preview limit.
+Neither forget phase reached a successful deletion, and no attempt reached
+source replay or final recall. The host exits were inside the outer deadline,
+not outer process timeouts. Earlier cohorts and T18 results remain unchanged.
+
+The retrieval-view change therefore has package evidence but no successful
+native lifecycle in this cohort. Full request bodies were not captured, so
+schema forwarding and host processing of large tool results need direct
+verification before assigning a cause to the model's mistakes. Native
+lifecycle, three-host continuity, complete capture, quality acceptance,
+Desktop, and the operational pilot remain open.
+
 The verified [retrieval-view checkpoint](../2026-09-20/retrieval-views-checkpoint-v1/README.md)
 at `e419c2a` passes 1,500 source tests with 4 skips,
 all six source/package checks, 648 isolated installed cases
@@ -7,8 +25,8 @@ with 4 matching skips, and seven replay assertions. Ordinary recall
 now excludes whole captured conversations before retrieval limits. Explicit
 evidence review returns those copies separately, with provenance and unverified
 labels. Capture storage and related-forget inventory remain intact. This is a
-verified API change; no native model cohort has run this package, and the v7
-failures retain their original runtime and outcome. Native lifecycle,
+verified API change. Native v8 subsequently ran this package and failed all
+three lifecycles; v7 retains its original runtime and outcome. Native lifecycle,
 three-host continuity, complete capture, quality acceptance, Desktop, and the
 pilot remain open.
 

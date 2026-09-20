@@ -1,0 +1,32 @@
+{
+  "route": "chat",
+  "request": {
+    "model": "mnemos-native-qwen35-9b:greedy-v1",
+    "messages": [
+      {
+        "role": "user",
+        "content": "Reply with READY."
+      }
+    ],
+    "stream": false,
+    "think": false,
+    "options": {
+      "num_ctx": 65536,
+      "temperature": 0,
+      "seed": 42,
+      "presence_penalty": 0,
+      "top_k": 20,
+      "top_p": 0.95,
+      "num_predict": 16
+    }
+  },
+  "url": "http://127.0.0.1:11434/api/chat",
+  "method": "POST",
+  "request_bytes_file": "http-004.request",
+  "started_at": "2026-09-20T05:32:24.495751+00:00",
+  "timeout_seconds": 180,
+  "status_code": 200,
+  "finished_at": "2026-09-20T05:32:28.711511+00:00",
+  "duration_seconds": 4.215786500019021,
+  "body_file": "http-004.body"
+}

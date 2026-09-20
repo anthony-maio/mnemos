@@ -1,0 +1,339 @@
+{
+  "status": "completed_with_failures",
+  "started_at": "2026-09-20T05:32:20.592900+00:00",
+  "planned_attempts": 3,
+  "attempt_timeout_seconds": 1800,
+  "runner_commit": "6b20d36739f02d6ab8d6c1a8fbd3e2f312f6b1f2",
+  "input_hashes": {
+    "benchmarks/native_hosts/hermes_cohort_run_v6.py": "dfbe5c638c119dea3858ddb19eb4aab24d06de285188ddc113e618278f6a7962",
+    "benchmarks/native_hosts/ollama_readiness_v1.py": "d6630babff748cf1736b00f051a1e9f449513929be35f70d6a479e5922f1804e",
+    "docs/plans/2026-09-20-hermes-native-lifecycle-protocol-v8.md": "4c6194c0ee59bc120526cf59d90fbf27cbaf3d1a3aa34d3b079ba789492294dd",
+    "docs/plans/2026-09-20-hermes-native-lifecycle-protocol-v7.md": "0998e48aea300c061c3c3cd0fbba050518cfd0f10c0be6d2ed848373094dfb72",
+    "docs/plans/2026-09-19-hermes-native-lifecycle-protocol-v3.md": "18b8a01ba62510f714e6e3db6aa24707b72d8028f96ae68dabb2e939a40b36b5",
+    "docs/plans/2026-09-19-hermes-native-lifecycle-protocol-v4.md": "d0ba8a3de586ed6f9a3f1709a79033788995b08d79af9b8a2d2b3fd67a3fee2b",
+    "benchmarks/native_hosts/native_processes.py": "262b7fe3dafd83e336c15a651cc44177636ffb44a2f01244e795dcb419b47be6",
+    "benchmarks/native_hosts/hermes_lifecycle_run_v8.py": "70d36fc4cb751b84b85f4f62b323040d8c1a19b938b084af66cfb13d2f29239e",
+    "benchmarks/native_hosts/hermes_native_bootstrap_v4.py": "16331798effeb01ea98174433a0250d6890e31b8078641ab0e941887ff846f41",
+    "benchmarks/native_hosts/hermes_trace.py": "fa82d4f270e916c6aae4eb01eb3738239cc91f88e3029d919bc0ba98c79609c8",
+    "benchmarks/native_hosts/hermes_trace_v2.py": "9beffe22889c6f7e03d66da6b8c32769b8ca6bd0b48be68cc4e4219401ff1d38",
+    "docs/plans/2026-09-19-hermes-native-lifecycle-protocol-v5.md": "56d2fe0c6eb4e3e9013a4f0b341aa9cd33f06de51fe5298e0a13a306b42fd952",
+    "docs/plans/2026-09-19-hermes-native-lifecycle-protocol-v6.md": "ffd591eb7b94cb8d05bc34e7dc62119fc956516f013d578e05de8501154695ab",
+    "docs/validation/2026-09-19/native-model-profile-v1/profile.json": "d525882d18671e57b62bec02f5d89ab9b61e8c3fdd6dff7485c58a27320f6d28"
+  },
+  "runner_sha256": "dfbe5c638c119dea3858ddb19eb4aab24d06de285188ddc113e618278f6a7962",
+  "attempts": [
+    {
+      "attempt": 1,
+      "status": "failed",
+      "started_at": "2026-09-20T05:32:20.594442+00:00",
+      "report": "C:\\Users\\Ant\\AppData\\Local\\Temp\\mnemos-hermes-native-cohort-v8\\attempt-1\\report.json",
+      "command": [
+        "C:\\Users\\Ant\\AppData\\Local\\Temp\\mnemos-installed-retrieval-views-v1\\Scripts\\python.exe",
+        "-I",
+        "-u",
+        "D:\\Development\\mnemos\\mnemos\\.worktrees\\functional-local-memory\\benchmarks\\native_hosts\\hermes_lifecycle_run_v8.py",
+        "--checks",
+        "C:\\Users\\Ant\\AppData\\Local\\Temp\\mnemos-package-checks-retrieval-views-v3\\verification.json",
+        "--installed-checks",
+        "C:\\Users\\Ant\\AppData\\Local\\Temp\\mnemos-installed-checks-retrieval-views-v1\\installation.json",
+        "--output",
+        "C:\\Users\\Ant\\AppData\\Local\\Temp\\mnemos-hermes-native-cohort-v8\\attempt-1",
+        "--prior-queue-state",
+        "C:\\Users\\Ant\\AppData\\Local\\Temp\\mnemos-local-supplemental-v2\\state.json",
+        "--exclude-pid",
+        "46060",
+        "--exclude-pid",
+        "19836",
+        "--exclude-pid",
+        "68804"
+      ],
+      "exit_code": 1,
+      "report_sha256": "b73b72e397f06c84bdfe99f1ab579095272e4f1a343ac3438626a918dd7fd27c",
+      "phases": [
+        {
+          "phase": "teach",
+          "mode": "model",
+          "seconds": 29.444041500013554,
+          "exit_code": 0,
+          "gates": {
+            "correlated": true,
+            "phase_tools_allowed": true,
+            "mutations_inspected": true,
+            "teach": true,
+            "no_foreign_tool_result": true,
+            "real_pinned_model_request": true,
+            "pinned_profile_without_conflicting_override": true,
+            "write_followup_guidance_present": true,
+            "no_provider_error": true,
+            "controls_unchanged": true,
+            "native_capture_committed": true,
+            "native_capture_retained_or_suppressed": true,
+            "single_asserted_target": true
+          }
+        },
+        {
+          "phase": "recall_v1",
+          "mode": "model",
+          "seconds": 9.101974499993958,
+          "exit_code": 0
+        }
+      ],
+      "source_commit": "e419c2aa615e037e639a74b14615889d03f4e47f",
+      "wheel_sha256": "185f3df7720a32e5ed285d9c507e1e45e7f57370942740b53c4f8178bb97a97e",
+      "error": "trace has no correlated native tool",
+      "cleanup_error": null,
+      "cleanup_established": true,
+      "finished_at": "2026-09-20T05:33:08.400427+00:00"
+    },
+    {
+      "attempt": 2,
+      "status": "failed",
+      "started_at": "2026-09-20T05:33:08.402219+00:00",
+      "report": "C:\\Users\\Ant\\AppData\\Local\\Temp\\mnemos-hermes-native-cohort-v8\\attempt-2\\report.json",
+      "command": [
+        "C:\\Users\\Ant\\AppData\\Local\\Temp\\mnemos-installed-retrieval-views-v1\\Scripts\\python.exe",
+        "-I",
+        "-u",
+        "D:\\Development\\mnemos\\mnemos\\.worktrees\\functional-local-memory\\benchmarks\\native_hosts\\hermes_lifecycle_run_v8.py",
+        "--checks",
+        "C:\\Users\\Ant\\AppData\\Local\\Temp\\mnemos-package-checks-retrieval-views-v3\\verification.json",
+        "--installed-checks",
+        "C:\\Users\\Ant\\AppData\\Local\\Temp\\mnemos-installed-checks-retrieval-views-v1\\installation.json",
+        "--output",
+        "C:\\Users\\Ant\\AppData\\Local\\Temp\\mnemos-hermes-native-cohort-v8\\attempt-2",
+        "--prior-queue-state",
+        "C:\\Users\\Ant\\AppData\\Local\\Temp\\mnemos-local-supplemental-v2\\state.json",
+        "--exclude-pid",
+        "46060",
+        "--exclude-pid",
+        "19836",
+        "--exclude-pid",
+        "68804"
+      ],
+      "exit_code": 1,
+      "report_sha256": "34f1a8e86b2da7404b309b871ba15805544a7d1cf94aac1f6ebd9f3cdd37238d",
+      "phases": [
+        {
+          "phase": "teach",
+          "mode": "model",
+          "seconds": 30.272239700017963,
+          "exit_code": 0,
+          "gates": {
+            "correlated": true,
+            "phase_tools_allowed": true,
+            "mutations_inspected": true,
+            "teach": true,
+            "no_foreign_tool_result": true,
+            "real_pinned_model_request": true,
+            "pinned_profile_without_conflicting_override": true,
+            "write_followup_guidance_present": true,
+            "no_provider_error": true,
+            "controls_unchanged": true,
+            "native_capture_committed": true,
+            "native_capture_retained_or_suppressed": true,
+            "single_asserted_target": true
+          }
+        },
+        {
+          "phase": "recall_v1",
+          "mode": "model",
+          "seconds": 11.249422299995786,
+          "exit_code": 0,
+          "gates": {
+            "correlated": true,
+            "phase_tools_allowed": true,
+            "mutations_inspected": true,
+            "recall_v1": true,
+            "no_foreign_tool_result": true,
+            "real_pinned_model_request": true,
+            "pinned_profile_without_conflicting_override": true,
+            "write_followup_guidance_present": true,
+            "no_provider_error": true,
+            "controls_unchanged": true,
+            "native_capture_committed": true,
+            "native_capture_retained_or_suppressed": true
+          }
+        },
+        {
+          "phase": "correct",
+          "mode": "model",
+          "seconds": 15.508457799995085,
+          "exit_code": 0,
+          "gates": {
+            "correlated": true,
+            "phase_tools_allowed": true,
+            "mutations_inspected": true,
+            "correct": true,
+            "no_foreign_tool_result": true,
+            "real_pinned_model_request": true,
+            "pinned_profile_without_conflicting_override": true,
+            "write_followup_guidance_present": true,
+            "no_provider_error": true,
+            "controls_unchanged": true,
+            "native_capture_committed": true,
+            "native_capture_retained_or_suppressed": true,
+            "same_id_version_two": true
+          }
+        },
+        {
+          "phase": "recall_v2",
+          "mode": "model",
+          "seconds": 12.694167100009508,
+          "exit_code": 0,
+          "gates": {
+            "correlated": true,
+            "phase_tools_allowed": true,
+            "mutations_inspected": true,
+            "recall_v2": true,
+            "no_foreign_tool_result": true,
+            "real_pinned_model_request": true,
+            "pinned_profile_without_conflicting_override": true,
+            "write_followup_guidance_present": true,
+            "no_provider_error": true,
+            "controls_unchanged": true,
+            "native_capture_committed": true,
+            "native_capture_retained_or_suppressed": true
+          }
+        },
+        {
+          "phase": "forget",
+          "mode": "model",
+          "seconds": 56.89573519999976,
+          "exit_code": 1
+        }
+      ],
+      "source_commit": "e419c2aa615e037e639a74b14615889d03f4e47f",
+      "wheel_sha256": "185f3df7720a32e5ed285d9c507e1e45e7f57370942740b53c4f8178bb97a97e",
+      "error": "Native host failed in forget; retained output is authoritative",
+      "cleanup_error": null,
+      "cleanup_established": true,
+      "finished_at": "2026-09-20T05:35:23.999311+00:00"
+    },
+    {
+      "attempt": 3,
+      "status": "failed",
+      "started_at": "2026-09-20T05:35:24.001169+00:00",
+      "report": "C:\\Users\\Ant\\AppData\\Local\\Temp\\mnemos-hermes-native-cohort-v8\\attempt-3\\report.json",
+      "command": [
+        "C:\\Users\\Ant\\AppData\\Local\\Temp\\mnemos-installed-retrieval-views-v1\\Scripts\\python.exe",
+        "-I",
+        "-u",
+        "D:\\Development\\mnemos\\mnemos\\.worktrees\\functional-local-memory\\benchmarks\\native_hosts\\hermes_lifecycle_run_v8.py",
+        "--checks",
+        "C:\\Users\\Ant\\AppData\\Local\\Temp\\mnemos-package-checks-retrieval-views-v3\\verification.json",
+        "--installed-checks",
+        "C:\\Users\\Ant\\AppData\\Local\\Temp\\mnemos-installed-checks-retrieval-views-v1\\installation.json",
+        "--output",
+        "C:\\Users\\Ant\\AppData\\Local\\Temp\\mnemos-hermes-native-cohort-v8\\attempt-3",
+        "--prior-queue-state",
+        "C:\\Users\\Ant\\AppData\\Local\\Temp\\mnemos-local-supplemental-v2\\state.json",
+        "--exclude-pid",
+        "46060",
+        "--exclude-pid",
+        "19836",
+        "--exclude-pid",
+        "68804"
+      ],
+      "exit_code": 1,
+      "report_sha256": "e343c3eeb24bb97314e2932a5a9080778ef3e0155f8d4c7360681d29fbee747d",
+      "phases": [
+        {
+          "phase": "teach",
+          "mode": "model",
+          "seconds": 29.785363799979677,
+          "exit_code": 0,
+          "gates": {
+            "correlated": true,
+            "phase_tools_allowed": true,
+            "mutations_inspected": true,
+            "teach": true,
+            "no_foreign_tool_result": true,
+            "real_pinned_model_request": true,
+            "pinned_profile_without_conflicting_override": true,
+            "write_followup_guidance_present": true,
+            "no_provider_error": true,
+            "controls_unchanged": true,
+            "native_capture_committed": true,
+            "native_capture_retained_or_suppressed": true,
+            "single_asserted_target": true
+          }
+        },
+        {
+          "phase": "recall_v1",
+          "mode": "model",
+          "seconds": 11.256607499992242,
+          "exit_code": 0,
+          "gates": {
+            "correlated": true,
+            "phase_tools_allowed": true,
+            "mutations_inspected": true,
+            "recall_v1": true,
+            "no_foreign_tool_result": true,
+            "real_pinned_model_request": true,
+            "pinned_profile_without_conflicting_override": true,
+            "write_followup_guidance_present": true,
+            "no_provider_error": true,
+            "controls_unchanged": true,
+            "native_capture_committed": true,
+            "native_capture_retained_or_suppressed": true
+          }
+        },
+        {
+          "phase": "correct",
+          "mode": "model",
+          "seconds": 15.644105299987132,
+          "exit_code": 0,
+          "gates": {
+            "correlated": true,
+            "phase_tools_allowed": true,
+            "mutations_inspected": true,
+            "correct": true,
+            "no_foreign_tool_result": true,
+            "real_pinned_model_request": true,
+            "pinned_profile_without_conflicting_override": true,
+            "write_followup_guidance_present": true,
+            "no_provider_error": true,
+            "controls_unchanged": true,
+            "native_capture_committed": true,
+            "native_capture_retained_or_suppressed": true,
+            "same_id_version_two": true
+          }
+        },
+        {
+          "phase": "recall_v2",
+          "mode": "model",
+          "seconds": 11.84974149998743,
+          "exit_code": 0,
+          "gates": {
+            "correlated": true,
+            "phase_tools_allowed": true,
+            "mutations_inspected": true,
+            "recall_v2": true,
+            "no_foreign_tool_result": true,
+            "real_pinned_model_request": true,
+            "pinned_profile_without_conflicting_override": true,
+            "write_followup_guidance_present": true,
+            "no_provider_error": true,
+            "controls_unchanged": true,
+            "native_capture_committed": true,
+            "native_capture_retained_or_suppressed": true
+          }
+        },
+        {
+          "phase": "forget",
+          "mode": "model",
+          "seconds": 133.59154439999838,
+          "exit_code": 1
+        }
+      ],
+      "source_commit": "e419c2aa615e037e639a74b14615889d03f4e47f",
+      "wheel_sha256": "185f3df7720a32e5ed285d9c507e1e45e7f57370942740b53c4f8178bb97a97e",
+      "error": "Native host failed in forget; retained output is authoritative",
+      "cleanup_error": null,
+      "cleanup_established": true,
+      "finished_at": "2026-09-20T05:39:00.172463+00:00"
+    }
+  ],
+  "passed_attempts": 0,
+  "finished_at": "2026-09-20T05:39:00.173185+00:00"
+}

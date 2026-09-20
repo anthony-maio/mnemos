@@ -12,6 +12,24 @@ Deliver an article draft, three possible titles, and a separate compact source/c
 
 ## Latest implementation and native evidence
 
+The [fixed Hermes v8 cohort](../validation/2026-09-20/hermes-native-cohort-v8/README.md) ran the verified `e419c2a`
+retrieval-view package and finished zero of three complete lifecycles. All
+readiness checks and cleanup passed. Attempt 1 saved the fact, then announced
+restarted retrieval without calling it. Attempts 2 and 3 passed teaching,
+restarted recall, correction, and restarted corrected recall, then failed at
+forgetting. Missing source selections were rejected without commitment;
+attempt 3 also submitted a malformed digest and an invalid preview limit.
+Neither forget phase reached a successful deletion, and no attempt reached
+source replay or final recall. The host exits were inside the outer deadline,
+not outer process timeouts. Earlier cohorts and T18 results remain unchanged.
+
+The retrieval-view change therefore has package evidence but no successful
+native lifecycle in this cohort. Full request bodies were not captured, so
+schema forwarding and host processing of large tool results need direct
+verification before assigning a cause to the model's mistakes. Native
+lifecycle, three-host continuity, complete capture, quality acceptance,
+Desktop, and the operational pilot remain open.
+
 The verified [retrieval-view checkpoint](../validation/2026-09-20/retrieval-views-checkpoint-v1/README.md)
 at `e419c2a` passes 1,500 source tests with 4 skips,
 all six source/package checks, 648 isolated installed cases
@@ -19,8 +37,8 @@ with 4 matching skips, and seven replay assertions. Ordinary recall
 now excludes whole captured conversations before retrieval limits. Explicit
 evidence review returns those copies separately, with provenance and unverified
 labels. Capture storage and related-forget inventory remain intact. This is a
-verified API change; no native model cohort has run this package, and the v7
-failures retain their original runtime and outcome. Native lifecycle,
+verified API change. Native v8 subsequently ran this package and failed all
+three lifecycles; v7 retains its original runtime and outcome. Native lifecycle,
 three-host continuity, complete capture, quality acceptance, Desktop, and the
 pilot remain open.
 
@@ -439,5 +457,5 @@ not a requirement to recount every implementation detail in the article.
 - [ ] Record final host continuity, latency, capture coverage, and pilot status without collapsing the separate gates.
 - [ ] Identify which quantitative claims can be used, with units, sample sizes, settings, uncertainty where available, and limitations.
 - [ ] Verify original website/paper claims against primary sources and link the dated corrections.
-- [x] Prepare a portable working packet with this handoff, the selected voice skill, key reports, regression examples, and a file manifest. Refresh that packet at final acceptance. The portable v13 packet includes terminal encoding/retrieval reports, the two earlier native lifecycle failures, all five fixed-cohort runs (all fifteen attempts failed), the deletion coverage and source-selection repair evidence, the six-case development diagnostic and model readiness records, the affective fidelity review, and dated website/paper snapshots. Some older evidence links still require the full checkout. Local validation artifacts are research inputs; public citations require accessible sources.
+- [x] Prepare a portable working packet with this handoff, the selected voice skill, key reports, regression examples, and a file manifest. Refresh that packet at final acceptance. The portable v15 packet includes terminal encoding/retrieval reports, the two earlier native lifecycle failures, all six fixed-cohort runs (all eighteen attempts failed), the deletion coverage and source-selection repair evidence, the six-case development diagnostic and model readiness records, the affective fidelity review, and dated website/paper snapshots. Some older evidence links still require the full checkout. Local validation artifacts are research inputs; public citations require accessible sources.
 - [ ] Keep unverified interpretations and questions outside the article's factual claims, then make the final voice pass using Anthony's skill.

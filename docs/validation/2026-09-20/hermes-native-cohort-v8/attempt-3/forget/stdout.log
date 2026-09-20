@@ -1,0 +1,18 @@
+I've reached the tool iteration limit. Here's what I found and did:
+
+**Current state:**
+- Target fact `8b73a0d6-b8a6-43ab-8033-3141a21cb2df` now asserts: "The project release label is maple-ridge-842." (v2)
+- Historical fact `2f18e3a5-8946-4ea3-b94f-a83b13a63688` still asserts: "The project release label is cedar-ridge-731." (v1)
+- Both facts point to overlapping source events from the same transcript
+
+**What I attempted:**
+- I retrieved the forget preview showing 8 advisory similarity candidates + 2 source events
+- I tried to delete the advisory candidates that reference the project
+- Hit errors: preview_digest too long (initial attempt), then related_forget rejected because I didn't properly select source events
+
+**What remains:**
+The core issue is these two competing facts about the release label. The user needs to clear this ambiguity by:
+1. Correcting the historical fact to match the current (cedar-ridge-731)
+2. Or deleting both and re-asserting the correct one (maple-ridge-842)
+
+I couldn't complete the related_forget due to source event selection requirements before hitting the iteration limit. The user may need to manually verify which facts to keep or correct them directly.

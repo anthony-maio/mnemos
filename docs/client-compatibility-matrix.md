@@ -1,5 +1,23 @@
 # Client compatibility and observed evidence
 
+The [fixed Hermes v8 cohort](validation/2026-09-20/hermes-native-cohort-v8/README.md) ran the verified `e419c2a`
+retrieval-view package and finished zero of three complete lifecycles. All
+readiness checks and cleanup passed. Attempt 1 saved the fact, then announced
+restarted retrieval without calling it. Attempts 2 and 3 passed teaching,
+restarted recall, correction, and restarted corrected recall, then failed at
+forgetting. Missing source selections were rejected without commitment;
+attempt 3 also submitted a malformed digest and an invalid preview limit.
+Neither forget phase reached a successful deletion, and no attempt reached
+source replay or final recall. The host exits were inside the outer deadline,
+not outer process timeouts. Earlier cohorts and T18 results remain unchanged.
+
+The retrieval-view change therefore has package evidence but no successful
+native lifecycle in this cohort. Full request bodies were not captured, so
+schema forwarding and host processing of large tool results need direct
+verification before assigning a cause to the model's mistakes. Native
+lifecycle, three-host continuity, complete capture, quality acceptance,
+Desktop, and the operational pilot remain open.
+
 The [fixed Hermes v7 cohort](validation/2026-09-20/hermes-native-cohort-v7/README.md) on verified `1a11058`
 finished zero of three complete lifecycles. All three model-readiness checks
 passed with positive reported GPU residency, and all attempts established

@@ -1,0 +1,256 @@
+"""One-shot local Ollama model readiness check for later native workflows."""
+
+from __future__ import annotations
+
+from datetime import datetime, timezone
+import json
+import math
+from pathlib import Path
+import time
+from typing import Any, Callable
+from urllib import request
+
+ENDPOINT = "http://127.0.0.1:11434"
+_transport: Callable[[str, Any, float], tuple[int, bytes]]
+
+
+def _urllib_transport(route: str, payload: Any, timeout: float) -> tuple[int, bytes]:
+    data = None if payload is None else json.dumps(payload).encode("utf-8")
+    req = request.Request(
+        ENDPOINT + "/api/" + route,
+        data=data,
+        headers={"Content-Type": "application/json"},
+        method="POST" if data is not None else "GET",
+    )
+    with request.urlopen(req, timeout=timeout) as response:
+        return int(response.status), response.read()
+
+
+_transport = _urllib_transport
+
+
+def _utc() -> str:
+    return datetime.now(timezone.utc).isoformat()
+
+
+def _save_json(path: Path, value: Any) -> None:
+    temporary = path.with_name(path.name + ".tmp")
+    temporary.write_text(
+        json.dumps(value, indent=2, ensure_ascii=False, default=str) + "\n", encoding="utf-8"
+    )
+    temporary.replace(path)
+
+
+def _request_once(
+    output: Path, route: str, payload: Any, timeout: float, attempts: list[dict[str, Any]]
+) -> bytes:
+    started = time.monotonic()
+    ordinal = len(attempts) + 1
+    request_bytes = b"" if payload is None else json.dumps(payload).encode("utf-8")
+    entry: dict[str, Any] = {
+        "route": route,
+        "request": payload,
+        "url": ENDPOINT + "/api/" + route,
+        "method": "POST" if payload is not None else "GET",
+        "request_bytes_file": f"http-{ordinal:03d}.request",
+        "started_at": _utc(),
+        "timeout_seconds": timeout,
+    }
+    (output / entry["request_bytes_file"]).write_bytes(request_bytes)
+    try:
+        status, body = _transport(route, payload, timeout)
+    except BaseException as exc:
+        raw_status = getattr(exc, "code", None)
+        status_code = (
+            raw_status if isinstance(raw_status, int) and not isinstance(raw_status, bool) else None
+        )
+        raw_body = b""
+        reader = getattr(exc, "read", None)
+        if callable(reader):
+            try:
+                candidate = reader()
+                if isinstance(candidate, bytes):
+                    raw_body = candidate
+            except BaseException:
+                raw_body = b""
+        entry.update(
+            status_code=status_code,
+            finished_at=_utc(),
+            duration_seconds=time.monotonic() - started,
+            error_type=type(exc).__name__,
+            error=str(exc),
+            body_file=f"http-{ordinal:03d}.body",
+        )
+        (output / entry["body_file"]).write_bytes(raw_body)
+        attempts.append(entry)
+        _save_json(output / f"http-{ordinal:03d}.json", entry)
+        raise
+    if not isinstance(status, int) or isinstance(status, bool):
+        raise TypeError("transport returned an invalid HTTP status")
+    if not isinstance(body, bytes):
+        raise TypeError("transport returned a non-byte response body")
+    entry.update(
+        status_code=status, finished_at=_utc(), duration_seconds=time.monotonic() - started
+    )
+    entry["body_file"] = f"http-{ordinal:03d}.body"
+    (output / entry["body_file"]).write_bytes(body)
+    if status != 200:
+        entry.update(error_type="RuntimeError", error=f"Ollama {route} returned HTTP {status}")
+    attempts.append(entry)
+    _save_json(output / f"http-{ordinal:03d}.json", entry)
+    if status != 200:
+        raise RuntimeError(f"Ollama {route} returned HTTP {status}")
+    return body
+
+
+def _json(body: bytes, route: str) -> dict[str, Any]:
+    try:
+        value = json.loads(body)
+    except (UnicodeDecodeError, json.JSONDecodeError) as exc:
+        raise ValueError(f"Ollama {route} response was not JSON") from exc
+    if not isinstance(value, dict):
+        raise ValueError(f"Ollama {route} response was not an object")
+    return value
+
+
+def _model(rows: dict[str, Any], model: str) -> dict[str, Any] | None:
+    models = rows.get("models")
+    if not isinstance(models, list):
+        return None
+    return next((row for row in models if isinstance(row, dict) and row.get("name") == model), None)
+
+
+def _run_readiness(
+    output: Path,
+    *,
+    model: str,
+    expected_digest: str,
+    context_length: int,
+) -> dict[str, Any]:
+    attempts: list[dict[str, Any]] = []
+    record: dict[str, Any] = {
+        "status": "running",
+        "model": model,
+        "expected_digest": expected_digest,
+        "context_length": context_length,
+        "started_at": _utc(),
+        "http_attempts": attempts,
+    }
+    _save_json(output / "readiness.json", record)
+    try:
+        version = _json(_request_once(output, "version", None, 10, attempts), "version")
+        tags_before = _json(_request_once(output, "tags", None, 10, attempts), "tags")
+        show = _json(_request_once(output, "show", {"model": model}, 10, attempts), "show")
+        before = _model(tags_before, model)
+        if before is None or before.get("digest") != expected_digest:
+            raise ValueError("model digest mismatch before readiness request")
+        request_body = {
+            "model": model,
+            "messages": [{"role": "user", "content": "Reply with READY."}],
+            "stream": False,
+            "think": False,
+            "options": {
+                "num_ctx": context_length,
+                "temperature": 0,
+                "seed": 42,
+                "presence_penalty": 0,
+                "top_k": 20,
+                "top_p": 0.95,
+                "num_predict": 16,
+            },
+        }
+        chat: dict[str, Any] | None = None
+        chat_error: BaseException | None = None
+        try:
+            chat = _json(_request_once(output, "chat", request_body, 180, attempts), "chat")
+        except BaseException as exc:
+            chat_error = exc
+        ps: dict[str, Any] | None = None
+        ps_error: BaseException | None = None
+        try:
+            ps = _json(_request_once(output, "ps", None, 10, attempts), "ps")
+        except BaseException as exc:
+            ps_error = exc
+        tags_after: dict[str, Any] | None = None
+        tags_after_error: BaseException | None = None
+        try:
+            tags_after = _json(_request_once(output, "tags", None, 10, attempts), "tags")
+        except BaseException as exc:
+            tags_after_error = exc
+        if chat_error is not None:
+            raise chat_error
+        if ps_error is not None:
+            raise ps_error
+        if tags_after_error is not None:
+            raise tags_after_error
+        assert chat is not None and ps is not None and tags_after is not None
+        after = _model(tags_after, model)
+        if after is None or after.get("digest") != expected_digest:
+            raise ValueError("model digest mismatch after readiness request")
+        message = chat.get("message")
+        if (
+            chat.get("done") is not True
+            or chat.get("error")
+            or not isinstance(message, dict)
+            or message.get("role") != "assistant"
+            or not isinstance(message.get("content"), str)
+            or not message["content"].strip()
+            or message.get("tool_calls")
+        ):
+            raise ValueError("readiness response was not a successful assistant response")
+        ps_rows = ps.get("models")
+        loaded = next(
+            (
+                row
+                for row in ps_rows or []
+                if isinstance(row, dict)
+                and row.get("digest") == expected_digest
+                and (row.get("name") == model or row.get("model") == model)
+            ),
+            None,
+        )
+        if (
+            loaded is None
+            or isinstance(loaded.get("size_vram"), bool)
+            or not isinstance(loaded.get("size_vram"), (int, float))
+            or not math.isfinite(float(loaded["size_vram"]))
+            or loaded["size_vram"] <= 0
+        ):
+            raise ValueError("GPU residency for the expected model was not observed")
+        record.update(
+            status="ready",
+            version=version,
+            tags_before=tags_before,
+            show=show,
+            chat=chat,
+            ps_after=ps,
+            tags_after=tags_after,
+            gpu_residency={"digest": expected_digest, "size_vram": loaded["size_vram"]},
+        )
+    except BaseException as exc:
+        record.update(status="failed", error_type=type(exc).__name__, error=str(exc))
+        raise
+    finally:
+        record["finished_at"] = _utc()
+        record["http_attempts"] = attempts
+        _save_json(output / "readiness.json", record)
+    return record
+
+
+def run_readiness(
+    output: Path, *, model: str, expected_digest: str, context_length: int
+) -> dict[str, Any]:
+    """Run exactly one bounded warmup in a fresh output directory."""
+    output = Path(output)
+    if output.exists():
+        raise ValueError("readiness output directory already exists")
+    if context_length < 1:
+        raise ValueError("context_length must be positive")
+    output.mkdir(parents=True)
+    return _run_readiness(
+        output, model=model, expected_digest=expected_digest, context_length=context_length
+    )
+
+
+if __name__ == "__main__":
+    raise SystemExit("Use run_readiness from a pinned workflow")

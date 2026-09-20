@@ -1,0 +1,49 @@
+The preview returned preview_digest a3fddbf0f1e225df774d2cbf6f466a38adcfc1e34bdb4c55ef1bd09b3c346178, 10 candidates shown (limit 100). The target fact (7799dec3-1dde-4def-8e95-cc090d8fa64a) is listed under affected_sources, and several other facts are similarity candidates. Since the user asked me to "forget the project release label" (not just the current version), I should delete the target fact as well as any related conversational copies that are marked as selectable (selection_allowed=true in source_events).
+
+Looking at source_events, all have selection_allowed:true. The affected_sources also have source_allowed:true. In a related-delete context, all of these should be forgotten together:
+- target fact: 7799dec3-1dde-4def-8e95-cc090d8fa64a
+- all other facts marked as similarity_candidate with derived_fact_ids
+
+Selected fact IDs:
+- 7799dec3-1dde-4def-8e95-cc090d8fa64a (target)
+- c95fbac2-992c-4371-8e99-2238d55ff6b0
+- f35d67a5-6fbc-4f9b-89bb-8c6e67603690
+- 0d9c24e1-3652-4182-8a64-f01d736f45f3
+- 73ff812d-8009-4521-bfe2-b8b65c95da59
+- 13b78d8a-3a0f-4aed-9090-016bf1f48b2b
+- 9a59234a-70c0-4282-b096-6cf0c72e8077
+- 366c5308-b458-4334-9434-7cd6cb318579
+- a71fd883-496d-4bde-a1a9-4b299b4218f9
+- fcc00582-93fe-4925-bf55-61a3dd1cc7ce
+- e5e52985-65c9-47cc-b962-1cb15cb7e9fc
+
+I'll submit all of these to mnemos_forget_related with the unchanged preview_digest and a reasonable preview_limit (matching the preview's limit 100).
+Got it: the preview's source_events are "required source events" not just selectable facts. I need to distinguish between:
+- `affected_sources` (the sources backing the target fact) — these may be required
+- `source_events` — these are all selectable
+- `derived_fact_ids` in `source_events` — these are the facts derived from each source event (including similarity candidates)
+
+The error `related_forget_source_selection_required` means I must explicitly select at least some source events before applying the related forget. I think "required source events" refers to those in `affected_sources` that have `source_allowed:true` — which are:
+- `23f33887cc121d57ea96cc7c500735340fd5bc818a554c46be7a081b65ea1f54`
+- `9e4c53a1793c3ec5857ca4962e1a2914c48dbab9ee25b91a0f1fc0c1b7d87547`
+
+But these source event IDs are not in my selected_fact_ids list — they're not facts, they're events. The `derived_fact_ids` are:
+- `7799dec3-1dde-4def-8e95-cc090d8fa64a` (from `23f33887cc121d57ea96cc7c500735340fd5bc818a554c46be7a081b65ea1f54`)
+- (the other source event `9e4c53a1793c3ec5857ca4962e1a2914c48dbab9ee25b91a0f1fc0c1b7d87547` is listed under `omitted_source_event_ids`, which means its derived fact is the target fact with that historical assertion)
+
+The `derived_fact_ids` in all `source_events` list the facts derived from each source event. The `affected_sources` list shows the target fact is backed by both of those source events.
+
+To delete related copies, I must select at least the source events that are "required". The `source_events` list includes all 10 events, but the error says I must select required ones. The "required source events" seem to be those in `affected_sources`:
+- `23f33887cc121d57ea96cc7c500735340fd5bc818a554c46be7a081b65ea1f54`
+- `9e4c53a1793c3ec5857ca4962e1a2914c48dbab9ee25b91a0f1fc0c1b7d87547`
+
+But these IDs are source event IDs, not fact IDs. The `mnemos_forget_related` parameter `selected_fact_ids` expects fact IDs. How do I select source events? Perhaps I need to select the facts derived from those source events — which are:
+- `7799dec3-1dde-4def-8e95-cc090d8fa64a` (the target
+I need to re-read the preview output carefully. The `target` under `affected_sources` shows:
+```json
+"target": {
+  "affected_sources": [
+    {
+      "content": "The project release label is maple-ridge-842.",
+      ...
+      "source_event_id": "23f33887cc121d57ea9

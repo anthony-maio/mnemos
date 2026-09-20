@@ -69,3 +69,12 @@ configuration or live memory was changed.
 The evidence index binds 81 raw files. This interpretive README is
 outside that index. Native lifecycle, three-host continuity, complete capture,
 model-quality acceptance, Desktop, and the two-project pilot remain open.
+
+## Subsequent native observation
+
+The [fixed v8 cohort](../hermes-native-cohort-v8/README.md) ran this verified
+package and failed all three full lifecycles. All readiness and cleanup checks
+passed. One attempt failed on restarted recall, and two passed correction and
+restarted corrected recall before failing at forgetting. No successful deletion,
+source replay, or final recall was reached. These outcomes do not alter the
+package checks or establish a causal effect of the retrieval-view change.
