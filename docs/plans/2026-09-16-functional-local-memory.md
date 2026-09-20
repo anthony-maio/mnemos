@@ -423,6 +423,14 @@ The [original three-host protocol](2026-09-19-three-host-continuity-protocol-v1.
 
 Run: `py -3.13 -m pytest -q tests/test_cross_host_contract.py tests/test_mcp_compatibility.py`. Real-host results remain NOT RUN until observed; protocol tests do not promote host tiers.
 
+The [installed all-module outage v2](../validation/2026-09-20/all-module-provider-outage-v2/README.md)
+preserves both native-source events and pending jobs across controlled provider
+connection refusal, service restart and replay on product d937892. All flags
+are enabled, but failure occurs at prediction before downstream modules run.
+The first probe's incorrect one-attempt expectation remains preserved in v1.
+A [real-provider continuation](../validation/2026-09-20/all-module-provider-recovery-preparation-v1/README.md)
+is frozen from that database and NOT RUN; it does not yet close recovery.
+
 ### T18 - Prove the contribution of all five modules
 
 The [alternative seed structural audit](../validation/2026-09-20/alternative-graph-seed-audit-v1/README.md)
