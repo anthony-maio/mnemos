@@ -380,7 +380,7 @@ Run: `py -3.13 -m pytest -q tests/test_cross_host_contract.py tests/test_mcp_com
 
 ### T18 - Prove the contribution of all five modules
 
-The [frozen fixture audit](../validation/2026-09-20/retrieval-fixture-audit-v1/README.md) identifies scope-label and explicit-body conflicts in the original retrieval evaluation. Preserve the original negatives. The [v4 repair](../validation/2026-09-20/contract-v4-preparation-v1/README.md) is now frozen on `3d09658`, with unchanged minimums, scoring, and gates. Its fresh seven-profile matrix is running. Results remain pending, and this repaired synthetic input must not be described as unseen heldout data.
+The [frozen fixture audit](../validation/2026-09-20/retrieval-fixture-audit-v1/README.md) identifies scope-label and explicit-body conflicts in the original retrieval evaluation. Preserve the original negatives. The [v4 repair](../validation/2026-09-20/contract-v4-preparation-v1/README.md) is now frozen on `3d09658`, with unchanged minimums, scoring, and gates. Its [terminal seven-profile matrix](../validation/2026-09-20/contract-v4-terminal-v1/README.md) contains 4,150 complete and 50 partial observations out of 4,200 and does not pass acceptance. This repaired synthetic input must not be described as unseen heldout data.
 
 Depends on: T07-T11, T17.
 

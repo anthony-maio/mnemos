@@ -12,6 +12,14 @@ Deliver an article draft, three possible titles, and a separate compact source/c
 
 ## Read this first
 
+The [contract-v4 real-model matrix](../validation/2026-09-20/contract-v4-terminal-v1/README.md)
+is terminal and incomplete: 4,150 complete observations and 50 partial out
+of 4,200. Baseline and sleep-disabled profiles complete all 600 observations;
+the other five retain failed correction targets after extraction selected
+`no_durable_facts`. All original reports, raw responses, bindings, and gates
+are preserved. The repaired synthetic scenarios were previously observed;
+they are not an unseen holdout. This does not close quality acceptance.
+
 The latest [verified package](../validation/2026-09-20/hermes-compaction-origin-checkpoint-v1/README.md)
 is `b28778a`: 1,944 source tests and 743 isolated installed cases pass, with
 four skips each, all six source/package checks, and seven replay assertions.

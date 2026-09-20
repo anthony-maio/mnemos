@@ -1,37 +1,30 @@
 # Real-model evaluation status
 
-## Current frozen matrix snapshot -- 2026-09-20
+## Current frozen matrix -- terminal September 20, 2026
 
-At `2026-09-20T16:34:01Z`, the contract-v4 matrix was still running from
-source `3d0965805622efad21d1bb5200a982bd1a956aa8`, with its protocol and
-dataset bindings frozen. These use local Qwen3.5:9b and Nomic embeddings on
-the RTX 4080. The repaired inputs are previously observed synthetic scenarios,
-not an unseen heldout set. The
-counts below describe execution completeness only; they do not establish
-final quality, a ranking change, or a lift.
+The [contract-v4 real-model matrix](../2026-09-20/contract-v4-terminal-v1/README.md)
+is terminal and incomplete: 4,150 complete observations and 50 partial out
+of 4,200. Baseline and sleep-disabled profiles complete all 600 observations;
+the other five retain failed correction targets after extraction selected
+`no_durable_facts`. All original reports, raw responses, bindings, and gates
+are preserved. The repaired synthetic scenarios were previously observed;
+they are not an unseen holdout. This does not close quality acceptance.
 
-| Profile | Processed | Complete | Incomplete | Current state |
-| --- | ---: | ---: | ---: | --- |
-| Baseline | 600 | 600 | 0 | Complete report |
-| Full | 600 | 589 | 11 | Partial report; matrix running |
-| Surprisal ablation | 600 | 592 | 8 | Partial report; matrix running |
-| Mutable RAG ablation | 600 | 588 | 12 | Partial report; matrix running |
-| Affective routing ablation | 600 | 590 | 10 | Partial report; matrix running |
-| Sleep consolidation ablation | 303 checkpointed | 303 checkpointed | 0 checkpointed | Live checkpoint; no final report |
-| Spreading activation ablation | 0 | 0 | 0 | Not started |
+The run finished at `2026-09-20T17:24:00Z` on source `3d09658`, using local
+Qwen3.5:9b and Nomic embeddings on the RTX 4080. It exited 1 with its declared
+incomplete verdict. Complete/partial counts are baseline 600/0, full 589/11,
+surprisal-disabled 592/8, mutable-RAG-disabled 588/12, affective-disabled
+590/10, sleep-disabled 600/0, and spreading-disabled 591/9.
 
-The first five rows agree with the reports' complete-observation diagnostics.
-The sleep consolidation row has no final report yet; its live checkpoint
-contains 303 complete observations. The execution handle remains live.
-Checkpointed observations
-do not establish a completed matrix run. All twelve incomplete
-mutable RAG observations record `missing_accepted_target` during correction;
-they remain incomplete, with no selective retry or changed labels.
+All 50 partial observations record `missing_accepted_target` after the first
+structured extraction response selected `no_durable_facts`. Original gates
+and conditional diagnostics remain unchanged. The archive verifier checks
+all report bytes and independently recomputes execution and observed token
+counts. One null embedding token counter remains missing data.
 
-The matrix shares this machine with CPU-based source and package validation.
-No competing local-model experiment was started for the embedding-outage
-repair. End-to-end session timings include supplementary diagnostic calls
-and are not isolated ordinary-lookup latency measurements.
+The run shared this machine with CPU source/package validation. Session
+timings include supplementary diagnostics and are not isolated ordinary
+recall latency. No selective retries or new model experiment were started.
 
 The new [Claude embedding-outage check](../2026-09-20/native-claude-embedding-outage-v2/README.md)
 observes one scoped lexical recall on package `4bbab4f`, with degraded status,

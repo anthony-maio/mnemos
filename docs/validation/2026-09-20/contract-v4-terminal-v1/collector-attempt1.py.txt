@@ -1,0 +1,143 @@
+"""Preserve the complete seven-profile attempt without changing its verdicts."""
+from collections import Counter
+from pathlib import Path
+import hashlib
+import json
+import shutil
+import subprocess
+import sys
+import zipfile
+
+repo = Path(__file__).resolve().parents[1]
+runtime = Path('C:/Users/Ant/AppData/Local/Temp/mnemos-contract-v4-matrix-v1')
+dest = repo / 'docs/validation/2026-09-20/contract-v4-terminal-v1'
+
+def read(path):
+    return json.loads(path.read_bytes())
+
+def sha(data):
+    return hashlib.sha256(data).hexdigest()
+
+state = read(runtime / 'status.json')
+assert state['status'] in {'completed', 'incomplete'}, 'Matrix has not reached a terminal report state'
+assert len(state['profiles']) == 7
+prep = read(runtime / 'preparation.json')
+snapshot = Path(prep['snapshot'])
+assert subprocess.check_output(['git', 'rev-parse', 'HEAD'], cwd=snapshot, text=True).strip() == prep['source_commit']
+assert not subprocess.check_output(['git', 'status', '--porcelain'], cwd=snapshot).strip()
+assert sha((runtime / 'runner.py').read_bytes()) == prep['runner_sha256']
+assert sha((runtime / 'preparation.json').read_bytes()) == state['binding']['preparation_sha256']
+for key in ('dataset', 'protocol'):
+    assert sha((snapshot / prep[key]['path']).read_bytes()) == prep[key]['sha256']
+sys.path.insert(0, str(snapshot))
+from benchmarks.local_memory.dev_smoke import _code_provenance
+code_sha, code_files = _code_provenance(snapshot)
+assert code_sha == prep['code_sha256'] and code_files == prep['code_files']
+
+summaries = []
+members = {}
+token_usage = []
+for name, status in sorted(state['profiles'].items()):
+    report_path = runtime / 'reports' / (name + '.json')
+    raw_path = runtime / 'reports' / (name + '.raw-outputs.jsonl')
+    report = read(report_path)
+    checkpoint_path = runtime / 'work' / (name + '.checkpoint.json')
+    checkpoint_bytes = checkpoint_path.read_bytes()
+    checkpoint = json.loads(checkpoint_bytes)
+    manifest = read(runtime / 'work' / (name + '.manifest.json'))
+    rows = report['raw_outputs']
+    assert rows == checkpoint['completed_observations']
+    assert rows == [json.loads(line) for line in raw_path.read_bytes().splitlines()]
+    assert len(rows) == 600 and len({(r['session_id'], r['repetition']) for r in rows}) == 600
+    assert report['status'] == status == manifest['status']
+    assert checkpoint['code_sha256'] == manifest['code_sha256'] == code_sha
+    assert checkpoint['dataset_sha256'] == manifest['dataset_sha256'] == prep['dataset']['sha256']
+    assert manifest['experiment_binding'] == state['binding']
+    counts = Counter(row['execution_status'] for row in rows)
+    diagnostics = report['complete_observation_diagnostics']
+    assert counts['complete'] == diagnostics['observation_count']
+    assert len(rows) - counts['complete'] == diagnostics['excluded_incomplete_observation_count']
+    errors = Counter(e['error'] for row in rows for e in row['raw_output'].get('errors', []))
+    response_metadata = [response for row in rows
+                         for response in row['raw_output'].get('provider_trace', {}).get('response_metadata', [])]
+    usage = {'profile': name, 'response_kinds': dict(Counter(r.get('kind') for r in response_metadata))}
+    for kind in ('generate', 'embedding'):
+        responses = [r for r in response_metadata if r.get('kind') == kind]
+        values = {}
+        for field in ('prompt_eval_count', 'eval_count'):
+            measured = [r[field] for r in responses if field in r]
+            assert all(type(value) is int and value >= 0 for value in measured)
+            values[field] = {'total_observed': sum(measured), 'measured_responses': len(measured),
+                             'missing_responses': len(responses) - len(measured)}
+        usage[kind] = {'responses': len(responses), 'counters': values}
+    token_usage.append(usage)
+    incomplete = []
+    for row in rows:
+        if row['execution_status'] == 'complete':
+            continue
+        predictions = row['raw_output'].get('provider_trace', {}).get('predict_calls', [])
+        decisions = []
+        for prediction in predictions:
+            if not prediction.get('structured_output_requested'):
+                continue
+            try:
+                payload = json.loads(prediction['response'])
+            except (KeyError, ValueError):
+                continue
+            if isinstance(payload, dict) and 'decision' in payload:
+                decisions.append(payload)
+        incomplete.append({'session_id': row['session_id'], 'repetition': row['repetition'],
+                           'errors': row['raw_output'].get('errors', []),
+                           'structured_extraction_responses': decisions})
+    summaries.append({'profile': name, 'status': status, 'counts': dict(counts),
+                      'errors': dict(errors), 'incomplete_observations': incomplete,
+                      'checkpoint_sha256': sha(checkpoint_bytes),
+                      'original_gates': report['gates'],
+                      'complete_observation_diagnostics': diagnostics,
+                      'model_revisions': report['model_revisions'],
+                      'embedding_revisions': report['embedding_revisions']})
+    for path in (report_path, raw_path, runtime / 'work' / (name + '.manifest.json')):
+        members[path.relative_to(runtime).as_posix()] = path.read_bytes()
+
+assert not dest.exists(), 'Preserve existing archive'
+dest.mkdir()
+(dest / '.gitattributes').write_bytes(b'** -text -whitespace\n')
+with zipfile.ZipFile(dest / 'reports.zip', 'x', zipfile.ZIP_DEFLATED, compresslevel=6) as archive:
+    for name, data in members.items():
+        archive.writestr(name, data)
+with zipfile.ZipFile(dest / 'reports.zip') as archive:
+    assert archive.testzip() is None
+    for name, data in members.items():
+        assert archive.read(name) == data == (runtime / name).read_bytes()
+(dest / 'zip-members.json').write_text(json.dumps({name: {'bytes': len(data), 'sha256': sha(data)}
+                                               for name, data in members.items()}, indent=2) + '\n', encoding='utf-8')
+for name in ('status.json', 'preparation.json', 'metadata.json', 'frozen-contract-tests.xml'):
+    shutil.copyfile(runtime / name, dest / name)
+shutil.copyfile(runtime / 'runner.py', dest / 'runner.py.txt')
+shutil.copyfile(Path(__file__), dest / (Path(__file__).name + '.txt'))
+shutil.copyfile(repo / '.venv/verify_contract_v4_terminal_v1.py', dest / 'verify.py.txt')
+summary = {'status': state['status'], 'source_commit': prep['source_commit'],
+           'binding': state['binding'], 'profiles': summaries,
+           'processed_observations': sum(sum(p['counts'].values()) for p in summaries),
+           'complete_observations': sum(p['counts'].get('complete', 0) for p in summaries),
+           'limitations': ['Previously observed synthetic scenarios, not an unseen holdout.',
+                          'Complete-subset diagnostics do not close incomplete-run acceptance.',
+                          'Exact frozen text matching is not semantic factual precision.',
+                          'Session timing includes supplementary diagnostics and shared-machine load.',
+                          'Original gates and failed observations are preserved; no selective retries.']}
+(dest / 'summary.json').write_text(json.dumps(summary, indent=2) + '\n', encoding='utf-8')
+(dest / 'observed-token-usage.json').write_text(json.dumps({
+    'measurement': 'posthoc_descriptive_sum_of_provider_response_metadata',
+    'profiles': token_usage,
+    'limitations': ['Includes supplementary diagnostic calls and incomplete observations.',
+                    'Baseline generation calls are diagnostics, not evidence of enabled cognition.',
+                    'Missing counters are reported as missing, not assumed zero usage.',
+                    'No billing cost, ordinary-query cost, or quality acceptance is inferred.',
+                    'Does not replace the original report token_cost field or alter frozen gates.']
+}, indent=2) + '\n', encoding='utf-8')
+index = {p.name: {'bytes': p.stat().st_size, 'sha256': sha(p.read_bytes())}
+         for p in sorted(dest.iterdir()) if p.is_file()}
+(dest / 'evidence-index.json').write_text(json.dumps({'files': index}, indent=2) + '\n', encoding='utf-8')
+print(json.dumps({'archive': str(dest), 'status': summary['status'],
+                  'complete': summary['complete_observations'], 'processed': summary['processed_observations'],
+                  'profiles': [{'profile': p['profile'], 'counts': p['counts'], 'errors': p['errors']} for p in summaries]}))

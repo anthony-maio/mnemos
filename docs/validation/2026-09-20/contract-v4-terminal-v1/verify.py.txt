@@ -1,0 +1,58 @@
+"""Verify the archived report bytes and recompute execution and token counts."""
+from collections import Counter
+from pathlib import Path
+import hashlib
+import json
+import sys
+import zipfile
+
+root = Path(sys.argv[1]).resolve()
+index = json.loads((root / 'evidence-index.json').read_bytes())['files']
+for name, expected in index.items():
+    data = (root / name).read_bytes()
+    assert len(data) == expected['bytes'], name
+    assert hashlib.sha256(data).hexdigest() == expected['sha256'], name
+summary = json.loads((root / 'summary.json').read_bytes())
+members = json.loads((root / 'zip-members.json').read_bytes())
+tokens = json.loads((root / 'observed-token-usage.json').read_bytes())
+assert len(summary['profiles']) == len(tokens['profiles']) == 7
+profiles = {p['profile']: p for p in summary['profiles']}
+usages = {p['profile']: p for p in tokens['profiles']}
+observed_total = complete_total = 0
+with zipfile.ZipFile(root / 'reports.zip') as archive:
+    assert set(archive.namelist()) == set(members)
+    assert archive.testzip() is None
+    for name, expected in members.items():
+        data = archive.read(name)
+        assert len(data) == expected['bytes']
+        assert hashlib.sha256(data).hexdigest() == expected['sha256']
+    for name, profile in profiles.items():
+        report = json.loads(archive.read('reports/' + name + '.json'))
+        rows = [json.loads(line) for line in archive.read('reports/' + name + '.raw-outputs.jsonl').splitlines()]
+        assert rows == report['raw_outputs']
+        assert len(rows) == 600
+        assert len({(r['session_id'], r['repetition']) for r in rows}) == 600
+        counts = Counter(r['execution_status'] for r in rows)
+        assert dict(counts) == profile['counts']
+        assert report['gates'] == profile['original_gates']
+        assert report['status'] == profile['status']
+        assert report['complete_observation_diagnostics'] == profile['complete_observation_diagnostics']
+        assert counts['complete'] == report['complete_observation_diagnostics']['observation_count']
+        assert len(rows) - counts['complete'] == report['complete_observation_diagnostics']['excluded_incomplete_observation_count']
+        metadata = [m for row in rows for m in row['raw_output'].get('provider_trace', {}).get('response_metadata', [])]
+        for kind in ('generate', 'embedding'):
+            subset = [r for r in metadata if r.get('kind') == kind]
+            assert len(subset) == usages[name][kind]['responses']
+            for field in ('prompt_eval_count', 'eval_count'):
+                measured = [r[field] for r in subset if r.get(field) is not None]
+                assert all(type(v) is int and v >= 0 for v in measured)
+                assert usages[name][kind]['counters'][field] == {
+                    'total_observed': sum(measured), 'measured_responses': len(measured),
+                    'missing_responses': len(subset) - len(measured)}
+        observed_total += len(rows)
+        complete_total += counts['complete']
+assert observed_total == summary['processed_observations'] == 4200
+assert complete_total == summary['complete_observations']
+print(json.dumps({'archive_integrity': 'passed', 'processed': observed_total,
+                  'complete': complete_total, 'incomplete': observed_total - complete_total,
+                  'original_run_status': summary['status'], 'quality_acceptance': 'not_inferred'}))
