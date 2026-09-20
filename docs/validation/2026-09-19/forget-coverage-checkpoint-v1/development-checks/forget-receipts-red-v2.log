@@ -1,0 +1,121 @@
+FFFF                                                                     [100%]
+================================== FAILURES ===================================
+_ test_authenticated_receipt_distinguishes_target_only_and_reviewed_deletion[target_only] _
+
+tmp_path = WindowsPath('D:/WindowsTemp/pytest-of-Ant/pytest-4002/test_authenticated_receipt_dis0')
+mode = 'target_only'
+
+    @pytest.mark.asyncio
+    @pytest.mark.parametrize("mode", ["target_only", "reviewed", "direct"])
+    async def test_authenticated_receipt_distinguishes_target_only_and_reviewed_deletion(tmp_path, mode):
+        service, domain, context = _runtime(tmp_path)
+        client = MnemosClient(descriptor_path=service.descriptor_path, auto_start=False)
+        try:
+            _, target, copy = await _seed_overlap(domain, context)
+            # An unrelated but vector-similar fact is an advisory candidate, not a copy.
+            advisory = MemoryChunk(content="The unrelated checksum remains stable.",
+                                   embedding=list(target.embedding), metadata=dict(target.metadata))
+            foreign = MemoryChunk(content=copy.content, embedding=list(target.embedding),
+                                  metadata={**target.metadata, "project_id": "foreign", "scope_id": "foreign"})
+            domain.engine.store.store(advisory)
+            domain.engine.store.store(foreign)
+            preview = json.loads(await dispatch_tool(client, context, "mnemos_forget_preview",
+                {"fact_id": target.id, "expected_version": target.version}))
+>           assert {row["fact_id"] for row in preview["candidates"]} == {copy.id, advisory.id}
+E           AssertionError: assert {'130f8b6e-cc...2125e751be07'} == {'130f8b6e-cc...e8844ef50487'}
+E             
+E             Extra items in the right set:
+E             '43ce07a0-756e-4586-94fe-e8844ef50487'
+E             Use -v to get more diff
+
+tests\test_forget_receipts.py:30: AssertionError
+_ test_authenticated_receipt_distinguishes_target_only_and_reviewed_deletion[reviewed] _
+
+tmp_path = WindowsPath('D:/WindowsTemp/pytest-of-Ant/pytest-4002/test_authenticated_receipt_dis1')
+mode = 'reviewed'
+
+    @pytest.mark.asyncio
+    @pytest.mark.parametrize("mode", ["target_only", "reviewed", "direct"])
+    async def test_authenticated_receipt_distinguishes_target_only_and_reviewed_deletion(tmp_path, mode):
+        service, domain, context = _runtime(tmp_path)
+        client = MnemosClient(descriptor_path=service.descriptor_path, auto_start=False)
+        try:
+            _, target, copy = await _seed_overlap(domain, context)
+            # An unrelated but vector-similar fact is an advisory candidate, not a copy.
+            advisory = MemoryChunk(content="The unrelated checksum remains stable.",
+                                   embedding=list(target.embedding), metadata=dict(target.metadata))
+            foreign = MemoryChunk(content=copy.content, embedding=list(target.embedding),
+                                  metadata={**target.metadata, "project_id": "foreign", "scope_id": "foreign"})
+            domain.engine.store.store(advisory)
+            domain.engine.store.store(foreign)
+            preview = json.loads(await dispatch_tool(client, context, "mnemos_forget_preview",
+                {"fact_id": target.id, "expected_version": target.version}))
+>           assert {row["fact_id"] for row in preview["candidates"]} == {copy.id, advisory.id}
+E           AssertionError: assert {'e4f07982-26...20d7d2268825'} == {'e4f07982-26...de59c6e19205'}
+E             
+E             Extra items in the right set:
+E             'e904f761-292e-4dc9-8d3b-de59c6e19205'
+E             Use -v to get more diff
+
+tests\test_forget_receipts.py:30: AssertionError
+_ test_authenticated_receipt_distinguishes_target_only_and_reviewed_deletion[direct] _
+
+tmp_path = WindowsPath('D:/WindowsTemp/pytest-of-Ant/pytest-4002/test_authenticated_receipt_dis2')
+mode = 'direct'
+
+    @pytest.mark.asyncio
+    @pytest.mark.parametrize("mode", ["target_only", "reviewed", "direct"])
+    async def test_authenticated_receipt_distinguishes_target_only_and_reviewed_deletion(tmp_path, mode):
+        service, domain, context = _runtime(tmp_path)
+        client = MnemosClient(descriptor_path=service.descriptor_path, auto_start=False)
+        try:
+            _, target, copy = await _seed_overlap(domain, context)
+            # An unrelated but vector-similar fact is an advisory candidate, not a copy.
+            advisory = MemoryChunk(content="The unrelated checksum remains stable.",
+                                   embedding=list(target.embedding), metadata=dict(target.metadata))
+            foreign = MemoryChunk(content=copy.content, embedding=list(target.embedding),
+                                  metadata={**target.metadata, "project_id": "foreign", "scope_id": "foreign"})
+            domain.engine.store.store(advisory)
+            domain.engine.store.store(foreign)
+            preview = json.loads(await dispatch_tool(client, context, "mnemos_forget_preview",
+                {"fact_id": target.id, "expected_version": target.version}))
+>           assert {row["fact_id"] for row in preview["candidates"]} == {copy.id, advisory.id}
+E           AssertionError: assert {'fb228207-b4...e6e95ee0873f'} == {'118776ab-7d...e6e95ee0873f'}
+E             
+E             Extra items in the right set:
+E             '118776ab-7d92-4cad-a795-034acb58a599'
+E             Use -v to get more diff
+
+tests\test_forget_receipts.py:30: AssertionError
+_____ test_removing_every_preview_record_does_not_prove_semantic_erasure ______
+
+tmp_path = WindowsPath('D:/WindowsTemp/pytest-of-Ant/pytest-4002/test_removing_every_preview_re0')
+
+    @pytest.mark.asyncio
+    async def test_removing_every_preview_record_does_not_prove_semantic_erasure(tmp_path):
+        service, domain, context = _runtime(tmp_path)
+        client = MnemosClient(descriptor_path=service.descriptor_path, auto_start=False)
+        try:
+            _, target, copy = await _seed_overlap(domain, context)
+            payload = {"context": context.model_dump(mode="json"), "fact_id": target.id,
+                       "expected_version": target.version}
+            preview = await client.request("forget_preview", payload, queue_on_failure=False)
+            result = await client.request("forget_related", {**payload,
+                "preview_digest": preview["preview_digest"], "preview_limit": preview["limit"],
+                "selected_fact_ids": [copy.id],
+                "selected_source_event_ids": [r["source_event_id"] for r in preview["source_events"]]}, queue_on_failure=False)
+>           assert result["deletion_coverage"] == {
+                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+                "selection": "reviewed_selection", "retained_exact_fact_count": 0,
+                "retained_advisory_fact_count": 0, "retained_eligible_source_event_count": 0,
+                "semantic_erasure_proven": False,
+            }
+E           KeyError: 'deletion_coverage'
+
+tests\test_forget_receipts.py:70: KeyError
+=========================== short test summary info ===========================
+FAILED tests/test_forget_receipts.py::test_authenticated_receipt_distinguishes_target_only_and_reviewed_deletion[target_only]
+FAILED tests/test_forget_receipts.py::test_authenticated_receipt_distinguishes_target_only_and_reviewed_deletion[reviewed]
+FAILED tests/test_forget_receipts.py::test_authenticated_receipt_distinguishes_target_only_and_reviewed_deletion[direct]
+FAILED tests/test_forget_receipts.py::test_removing_every_preview_record_does_not_prove_semantic_erasure
+4 failed in 5.96s

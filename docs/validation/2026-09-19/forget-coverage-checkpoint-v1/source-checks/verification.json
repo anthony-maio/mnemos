@@ -1,0 +1,127 @@
+{
+  "source_commit": "1a110583a18408cbd3de4a695a9962109c4d02e7",
+  "source_checkout": "C:\\Users\\Ant\\AppData\\Local\\Temp\\mnemos-source-forget-coverage-v2",
+  "status": "passed",
+  "started_at": "2026-09-20T04:01:48.757057+00:00",
+  "checks": [
+    {
+      "name": "pytest",
+      "command": [
+        "D:\\Development\\mnemos\\mnemos\\.worktrees\\functional-local-memory\\.venv\\Scripts\\python.exe",
+        "-m",
+        "pytest",
+        "-q",
+        "--basetemp",
+        "C:\\Users\\Ant\\AppData\\Local\\Temp\\mnemos-check-temp-forget-coverage-v2\\pytest",
+        "--junitxml",
+        "C:\\Users\\Ant\\AppData\\Local\\Temp\\mnemos-package-checks-forget-coverage-v2\\pytest.xml"
+      ],
+      "status": "passed",
+      "started_at": "2026-09-20T04:01:48.758493+00:00",
+      "exit_code": 0,
+      "finished_at": "2026-09-20T04:06:12.095431+00:00",
+      "counts": {
+        "tests": 1443,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 4
+      }
+    },
+    {
+      "name": "black",
+      "command": [
+        "D:\\Development\\mnemos\\mnemos\\.worktrees\\functional-local-memory\\.venv\\Scripts\\python.exe",
+        "-m",
+        "black",
+        "--check",
+        "."
+      ],
+      "status": "passed",
+      "started_at": "2026-09-20T04:06:12.110624+00:00",
+      "exit_code": 0,
+      "finished_at": "2026-09-20T04:06:15.860462+00:00"
+    },
+    {
+      "name": "mypy",
+      "command": [
+        "D:\\Development\\mnemos\\mnemos\\.worktrees\\functional-local-memory\\.venv\\compat-py310\\Scripts\\python.exe",
+        "-m",
+        "mypy",
+        "."
+      ],
+      "status": "passed",
+      "started_at": "2026-09-20T04:06:15.861819+00:00",
+      "exit_code": 0,
+      "finished_at": "2026-09-20T04:06:26.206105+00:00"
+    },
+    {
+      "name": "javascript",
+      "command": [
+        "node",
+        "--check",
+        "mnemos/ui/app.js"
+      ],
+      "status": "passed",
+      "started_at": "2026-09-20T04:06:26.207280+00:00",
+      "exit_code": 0,
+      "finished_at": "2026-09-20T04:06:26.293246+00:00"
+    },
+    {
+      "name": "build",
+      "command": [
+        "D:\\Development\\mnemos\\mnemos\\.worktrees\\functional-local-memory\\.venv\\Scripts\\python.exe",
+        "-m",
+        "build",
+        "--outdir",
+        "C:\\Users\\Ant\\AppData\\Local\\Temp\\mnemos-package-checks-forget-coverage-v2\\dist"
+      ],
+      "status": "passed",
+      "started_at": "2026-09-20T04:06:26.294360+00:00",
+      "exit_code": 0,
+      "finished_at": "2026-09-20T04:07:42.967488+00:00"
+    },
+    {
+      "name": "twine",
+      "command": [
+        "D:\\Development\\mnemos\\mnemos\\.worktrees\\functional-local-memory\\.venv\\Scripts\\python.exe",
+        "-m",
+        "twine",
+        "check",
+        "C:\\Users\\Ant\\AppData\\Local\\Temp\\mnemos-package-checks-forget-coverage-v2\\dist\\mnemos_memory-0.7.0-py3-none-any.whl",
+        "C:\\Users\\Ant\\AppData\\Local\\Temp\\mnemos-package-checks-forget-coverage-v2\\dist\\mnemos_memory-0.7.0.tar.gz"
+      ],
+      "exit_code": 0,
+      "status": "passed"
+    }
+  ],
+  "runner_sha256": "7b241853adab66b8fd1e0c570d00462a216ffe21dca554fb95ae522ecbedc3ef",
+  "temporary_storage": {
+    "path": "C:\\Users\\Ant\\AppData\\Local\\Temp\\mnemos-check-temp-forget-coverage-v2",
+    "git_discovery_exit_code": 128,
+    "git_discovery_stderr": "fatal: not a git repository (or any of the parent directories): .git"
+  },
+  "website_input": {
+    "path": "D:\\Development\\mnemos\\web\\index.html",
+    "sha256_before": "f71a4cb5b7004f9ba584f45a03dab61cfc608fed377b1e07b46e2f2bc0b77d4d",
+    "sha256_after": "f71a4cb5b7004f9ba584f45a03dab61cfc608fed377b1e07b46e2f2bc0b77d4d"
+  },
+  "environment_overrides": {
+    "TEMP": "C:\\Users\\Ant\\AppData\\Local\\Temp\\mnemos-check-temp-forget-coverage-v2",
+    "TMP": "C:\\Users\\Ant\\AppData\\Local\\Temp\\mnemos-check-temp-forget-coverage-v2",
+    "TMPDIR": "C:\\Users\\Ant\\AppData\\Local\\Temp\\mnemos-check-temp-forget-coverage-v2",
+    "MNEMOS_WEBSITE_INDEX": "D:\\Development\\mnemos\\web\\index.html"
+  },
+  "updated_at": "2026-09-20T04:07:47.366875+00:00",
+  "artifacts": [
+    {
+      "file": "C:\\Users\\Ant\\AppData\\Local\\Temp\\mnemos-package-checks-forget-coverage-v2\\dist\\mnemos_memory-0.7.0-py3-none-any.whl",
+      "bytes": 302249,
+      "sha256": "4e3d16d00f7b9ab54fe1e5350f7cf0fbe6209dc881bfc6d7d9f974f1c3f697a5"
+    },
+    {
+      "file": "C:\\Users\\Ant\\AppData\\Local\\Temp\\mnemos-package-checks-forget-coverage-v2\\dist\\mnemos_memory-0.7.0.tar.gz",
+      "bytes": 60607707,
+      "sha256": "47183c41ad25d8276c898d9c3a1e5fc4fedf6a294f66c263f08ae009e4df00ae"
+    }
+  ]
+}

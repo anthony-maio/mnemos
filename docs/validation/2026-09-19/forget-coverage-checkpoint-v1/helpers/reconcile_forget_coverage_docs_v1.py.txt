@@ -1,0 +1,67 @@
+"""Reconcile the writer handoff and status against a completed receipt checkpoint."""
+from pathlib import Path
+import json
+
+repo = Path(__file__).resolve().parents[1]
+archive = repo / 'docs/validation/2026-09-19/forget-coverage-checkpoint-v1'
+v = json.loads((archive / 'source-checks/verification.json').read_text(encoding='utf-8'))
+i = json.loads((archive / 'installed-checks/installation.json').read_text(encoding='utf-8'))
+assert v['status'] == i['status'] == 'passed'
+source = v['checks'][0]['counts']
+installed = i['contract']['junit_summary']
+source_pass = source['tests'] - source['skipped']
+installed_pass = installed['tests'] - installed['skipped']
+commit = v['source_commit'][:7]
+wheel = next(a for a in v['artifacts'] if a['file'].endswith('.whl'))
+paragraph = f'''The latest verified [deletion coverage checkpoint]({{link}})
+at `{commit}` passes {source_pass:,} source tests with {source['skipped']} skips, all six
+source/package checks, {installed_pass:,} isolated installed cases with {installed['skipped']} matching
+skips, and seven replay assertions. Related-forget receipts now report
+target-only or reviewed selection and retained exact, advisory, and eligible
+source counts within the validated preview at commit. Direct forget has no
+preview counts. Both explicitly leave semantic erasure unproven. Tool guidance
+asks the model to report that coverage. No native model has run this package;
+improved receipts do not establish better copy selection or reliable forgetting.
+Earlier native and model results retain their original runtime bindings.
+'''
+for relative, link in (
+    ('docs/validation/2026-09-16/implementation-status.md', '../2026-09-19/forget-coverage-checkpoint-v1/README.md'),
+    ('docs/validation/2026-09-16/progress.md', '../2026-09-19/forget-coverage-checkpoint-v1/README.md'),
+    ('docs/validation/2026-09-16/claim-evidence-ledger.md', '../2026-09-19/forget-coverage-checkpoint-v1/README.md'),
+    ('docs/validation/2026-09-16/evaluation-running.md', '../2026-09-19/forget-coverage-checkpoint-v1/README.md'),
+    ('docs/client-compatibility-matrix.md', 'validation/2026-09-19/forget-coverage-checkpoint-v1/README.md'),
+):
+    p = repo / relative
+    s = p.read_text(encoding='utf-8')
+    assert 'deletion coverage checkpoint' not in s
+    s = s.replace('Current package checkpoint: [source-selection', 'Previous package checkpoint: [source-selection')
+    s = s.replace('The latest verified [source-selection', 'The previous verified [source-selection')
+    s = s.replace('Latest verified package `e454a85` passes 1,427 source tests and 604 installed contract cases',
+                  f'Latest verified package `{commit}` passes {source_pass:,} source tests and {installed_pass:,} installed contract cases')
+    title, rest = s.split('\n', 1)
+    p.write_text(title + '\n\n' + paragraph.format(link=link) + '\n' + rest.lstrip('\n'), encoding='utf-8')
+
+p = repo / 'docs/handoffs/substack-local-memory.md'
+s = p.read_text(encoding='utf-8')
+addition = paragraph.format(link='../validation/2026-09-19/forget-coverage-checkpoint-v1/README.md')
+addition += f'''\nWheel SHA-256: `{wheel['sha256']}`.
+The [four new regression cases](../../tests/test_forget_receipts.py) verify
+coverage without broadening deletion, preserve unselected advisory facts and
+foreign controls, and keep semantic erasure unproven even when no preview
+records remain. The direct GPT-OSS failure above motivated this change;
+whether a model uses the clearer receipt correctly remains untested.
+'''
+assert '## Latest verified repair\n' in s
+s = s.replace('Status: working handoff, September 19, 2026.', 'Status: working handoff, September 20, 2026.')
+s = s.replace('## Latest verified repair\n', '## Latest verified repair\n\n' + addition + '\n## Previous source-selection rejection repair\n', 1)
+s = s.replace('The last fully verified checkpoint before the latest repair work was', 'An earlier fully verified checkpoint was')
+s = s.replace('The portable v10 packet includes', 'The portable v12 packet includes')
+s = s.replace('the latest repair evidence, the affective fidelity review, and dated website/paper snapshots.',
+              'the deletion coverage and source-selection repair evidence, the six-case development diagnostic and model readiness records, the affective fidelity review, and dated website/paper snapshots.')
+p.write_text(s, encoding='utf-8')
+p = repo / 'docs/plans/2026-09-16-functional-local-memory.md'
+s = p.read_text(encoding='utf-8')
+assert 'mnemos-substack-research-packet-2026-09-19-v11.zip' in s
+p.write_text(s.replace('mnemos-substack-research-packet-2026-09-19-v11.zip',
+                       'mnemos-substack-research-packet-2026-09-20-v12.zip'), encoding='utf-8')
+print(json.dumps({'source_pass': source_pass, 'installed_pass': installed_pass, 'commit': commit}))

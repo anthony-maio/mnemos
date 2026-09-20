@@ -1,6 +1,17 @@
 # Real-model evaluation status
 
-The latest verified [source-selection rejection package](../2026-09-19/related-forget-error-checkpoint-v1/README.md)
+The latest verified [deletion coverage checkpoint](../2026-09-19/forget-coverage-checkpoint-v1/README.md)
+at `1a11058` passes 1,439 source tests with 4 skips, all six
+source/package checks, 608 isolated installed cases with 4 matching
+skips, and seven replay assertions. Related-forget receipts now report
+target-only or reviewed selection and retained exact, advisory, and eligible
+source counts within the validated preview at commit. Direct forget has no
+preview counts. Both explicitly leave semantic erasure unproven. Tool guidance
+asks the model to report that coverage. No native model has run this package;
+improved receipts do not establish better copy selection or reliable forgetting.
+Earlier native and model results retain their original runtime bindings.
+
+The previous verified [source-selection rejection package](../2026-09-19/related-forget-error-checkpoint-v1/README.md)
 on `e454a85` passes 1,427 source tests, 604 installed cases, all six package
 checks, and seven replay assertions, with four skips in each suite. These
 are package checks; native observations and frozen model comparisons retain

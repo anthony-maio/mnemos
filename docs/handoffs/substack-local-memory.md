@@ -1,6 +1,6 @@
 # Mnemos local memory: research and Substack writing handoff
 
-Status: working handoff, September 19, 2026. Engineering and validation remain in progress. Reconcile the final checkpoint and open results before treating this as a finished account.
+Status: working handoff, September 20, 2026. Engineering and validation remain in progress. Reconcile the final checkpoint and open results before treating this as a finished account.
 
 ## Assignment
 
@@ -175,6 +175,26 @@ quality acceptance.
 
 ## Latest verified repair
 
+The latest verified [deletion coverage checkpoint](../validation/2026-09-19/forget-coverage-checkpoint-v1/README.md)
+at `1a11058` passes 1,439 source tests with 4 skips, all six
+source/package checks, 608 isolated installed cases with 4 matching
+skips, and seven replay assertions. Related-forget receipts now report
+target-only or reviewed selection and retained exact, advisory, and eligible
+source counts within the validated preview at commit. Direct forget has no
+preview counts. Both explicitly leave semantic erasure unproven. Tool guidance
+asks the model to report that coverage. No native model has run this package;
+improved receipts do not establish better copy selection or reliable forgetting.
+Earlier native and model results retain their original runtime bindings.
+
+Wheel SHA-256: `4e3d16d00f7b9ab54fe1e5350f7cf0fbe6209dc881bfc6d7d9f974f1c3f697a5`.
+The [four new regression cases](../../tests/test_forget_receipts.py) verify
+coverage without broadening deletion, preserve unselected advisory facts and
+foreign controls, and keep semantic erasure unproven even when no preview
+records remain. The direct GPT-OSS failure above motivated this change;
+whether a model uses the clearer receipt correctly remains untested.
+
+## Previous source-selection rejection repair
+
 The [source-selection rejection checkpoint](../validation/2026-09-19/related-forget-error-checkpoint-v1/README.md)
 at `e454a85` passes 1,427 source tests with 4 skips, all six source/package
 checks, 604 isolated installed cases with 4 matching skips, and seven
@@ -296,7 +316,7 @@ them; the adapter needed to preserve those IDs and reject conflicting payloads.
 
 - The preceding `de6cdcf1c05fdad1bb19ed8f52638eff5ed67ae4` [recovery checkpoint](../validation/2026-09-19/loopback-recovery-checkpoint-v1/README.md) had 1,160 source passes and four skips, 474 isolated installed contract passes and two matching skips, plus seven replay assertions. It preserves both preceding full-suite failures and the later passing package evidence.
 
-- The last fully verified checkpoint before the latest repair work was `8fc79f01ab68d9c211f9be4818f9e566e271cefd`: 1,143 source tests passed, four skipped; the isolated installed wheel passed 440 selected cases, two skipped, plus seven replay assertions. See the [checkpoint](../validation/2026-09-19/retrieval-parity-checkpoint-v1/README.md). These are historical counts, not a claim about the eventual final build.
+- An earlier fully verified checkpoint was `8fc79f01ab68d9c211f9be4818f9e566e271cefd`: 1,143 source tests passed, four skipped; the isolated installed wheel passed 440 selected cases, two skipped, plus seven replay assertions. See the [checkpoint](../validation/2026-09-19/retrieval-parity-checkpoint-v1/README.md). These are historical counts, not a claim about the eventual final build.
 - The later `d0a344056dc9f93e10098ed405fa226095457066` run had 1,150 passes, one recovery-test failure, and four skips. A reproduced client-construction delay consumed the readiness budget. The repair is included in the verified `de6cdcf` package above; preserve the failed run when explaining how the defect was found.
 - Local real-model evaluation uses Qwen3.5:9b and nomic-embed-text through Ollama. Cite exact digests, settings, hardware and source commit from the relevant run manifest; do not combine different checkpoints into one result.
 - The September 19 lifecycle queue ended incomplete in five of seven configurations. Baseline and the configuration without sleep consolidation completed. Encoding/retrieval follow-on comparisons did not start in that queue. An [independent v2 queue](../validation/2026-09-19/supplemental-launch-v2/README.md) subsequently produced terminal but incomplete encoding and retrieval archives under the same frozen bindings. Completion alone does not establish that a configuration passed its quality gates.
@@ -373,5 +393,5 @@ not a requirement to recount every implementation detail in the article.
 - [ ] Record final host continuity, latency, capture coverage, and pilot status without collapsing the separate gates.
 - [ ] Identify which quantitative claims can be used, with units, sample sizes, settings, uncertainty where available, and limitations.
 - [ ] Verify original website/paper claims against primary sources and link the dated corrections.
-- [x] Prepare a portable working packet with this handoff, the selected voice skill, key reports, regression examples, and a file manifest. Refresh that packet at final acceptance. The portable v10 packet includes terminal encoding/retrieval reports, the two earlier native lifecycle failures, all four fixed-cohort runs (all twelve attempts failed), the latest repair evidence, the affective fidelity review, and dated website/paper snapshots. Some older evidence links still require the full checkout. Local validation artifacts are research inputs; public citations require accessible sources.
+- [x] Prepare a portable working packet with this handoff, the selected voice skill, key reports, regression examples, and a file manifest. Refresh that packet at final acceptance. The portable v12 packet includes terminal encoding/retrieval reports, the two earlier native lifecycle failures, all four fixed-cohort runs (all twelve attempts failed), the deletion coverage and source-selection repair evidence, the six-case development diagnostic and model readiness records, the affective fidelity review, and dated website/paper snapshots. Some older evidence links still require the full checkout. Local validation artifacts are research inputs; public citations require accessible sources.
 - [ ] Keep unverified interpretations and questions outside the article's factual claims, then make the final voice pass using Anthony's skill.

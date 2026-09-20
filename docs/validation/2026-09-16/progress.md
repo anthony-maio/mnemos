@@ -1,5 +1,16 @@
 # Functional local memory implementation record
 
+The latest verified [deletion coverage checkpoint](../2026-09-19/forget-coverage-checkpoint-v1/README.md)
+at `1a11058` passes 1,439 source tests with 4 skips, all six
+source/package checks, 608 isolated installed cases with 4 matching
+skips, and seven replay assertions. Related-forget receipts now report
+target-only or reviewed selection and retained exact, advisory, and eligible
+source counts within the validated preview at commit. Direct forget has no
+preview counts. Both explicitly leave semantic erasure unproven. Tool guidance
+asks the model to report that coverage. No native model has run this package;
+improved receipts do not establish better copy selection or reliable forgetting.
+Earlier native and model results retain their original runtime bindings.
+
 The [local model tool diagnostic](../2026-09-19/model-forget-development-v1/README.md) on installed
 `e454a85` finished with Qwen3.5:9b passing 2 of three cases and
 GPT-OSS:20b passing 0 of three. Each scheduled case ran once;
@@ -18,7 +29,7 @@ restart, replay, extraction-quality, or three-host result. The native v6
 failures and T18 negatives remain unchanged. The next native experiment
 needs a separately frozen host/model profile and the existing erasure gates.
 
-Current package checkpoint: [source-selection rejection repair](../2026-09-19/related-forget-error-checkpoint-v1/README.md)
+Previous package checkpoint: [source-selection rejection repair](../2026-09-19/related-forget-error-checkpoint-v1/README.md)
 on `e454a85` passes 1,427 source tests (4 skips), all six source/package
 checks, 604 installed cases (4 matching skips), and seven replay assertions.
 Omitting source events required by selected related facts now returns a

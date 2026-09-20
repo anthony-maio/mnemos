@@ -1,0 +1,123 @@
+"""Archive the bounded deletion receipt checkpoint without changing prior evidence."""
+from pathlib import Path
+import hashlib
+import json
+import shutil
+
+repo = Path(__file__).resolve().parents[1]
+temp = Path('C:/Users/Ant/AppData/Local/Temp')
+checks = temp / 'mnemos-package-checks-forget-coverage-v2'
+installed = temp / 'mnemos-installed-checks-forget-coverage-v1'
+output = repo / 'docs/validation/2026-09-19/forget-coverage-checkpoint-v1'
+verification = json.loads((checks / 'verification.json').read_text(encoding='utf-8'))
+installation = json.loads((installed / 'installation.json').read_text(encoding='utf-8'))
+contract = json.loads((installed / 'contract.json').read_text(encoding='utf-8'))
+assert verification['status'] == installation['status'] == contract['status'] == 'passed'
+commit = verification['source_commit']
+assert commit == installation['bindings_after']['commit']
+assert len(verification['checks']) == 6
+assert all(c['exit_code'] == 0 for c in verification['checks'])
+
+def sha(path):
+    return hashlib.sha256(path.read_bytes()).hexdigest()
+
+assert sha(checks / 'verification.json') == installation['bindings_before']['checks_sha256']
+assert sha(checks / 'pytest.xml') == installation['successful_pytest_xml_sha256']
+for artifact in verification['artifacts']:
+    p = Path(artifact['file'])
+    assert sha(p) == artifact['sha256'] and p.stat().st_size == artifact['bytes']
+for command in installation['commands']:
+    for stream in ('stdout', 'stderr'):
+        assert sha(installed / (command['name'] + '.' + stream + '.log')) == command[stream + '_sha256']
+assert sha(repo / '.venv/final_checkpoint_checks_v3.py') == verification['runner_sha256']
+assert sha(repo / '.venv/run_combined_installed_check_v37.py') == installation['runner_sha256']
+output.mkdir(exist_ok=False)
+(output / '.gitattributes').write_bytes(b'** -text -whitespace\n')
+
+def copy(path, relative):
+    target = output / relative
+    target.parent.mkdir(parents=True, exist_ok=True)
+    shutil.copyfile(path, target)
+
+for kind, folder in (('source-checks', checks), ('installed-checks', installed)):
+    for p in folder.iterdir():
+        if p.is_file() and p.suffix in {'.json', '.xml', '.log'}:
+            copy(p, Path(kind) / p.name)
+for p in (temp / 'mnemos-package-checks-forget-coverage-v1').iterdir():
+    if p.is_file() and p.suffix in {'.json', '.xml', '.log'}:
+        copy(p, Path('prior-source-checks') / p.name)
+for name in ('final_checkpoint_checks_v3.py', 'run_combined_installed_check_v37.py',
+             'installed_contract_probe_v4.py', 'verify_claude_stop_replay_v2.py',
+             'reconcile_forget_coverage_docs_v1.py', 'package_substack_handoff_v12.py',
+             'verify_substack_packet_v12.py'):
+    copy(repo / '.venv' / name, Path('helpers') / (name + '.txt'))
+for p in sorted((repo / '.venv').glob('forget-receipts-*')):
+    if p.is_file() and p.suffix in {'.xml', '.log'}:
+        copy(p, Path('development-checks') / p.name)
+copy(Path(__file__), Path('helpers') / (Path(__file__).name + '.txt'))
+files = {p.relative_to(output).as_posix(): {'bytes': p.stat().st_size, 'sha256': sha(p)}
+         for p in sorted(output.rglob('*')) if p.is_file()}
+(output / 'evidence-index.json').write_text(json.dumps({'files': files}, indent=2) + '\n', encoding='utf-8')
+s = verification['checks'][0]['counts']
+i = installation['contract']['junit_summary']
+wheel = next(a for a in verification['artifacts'] if a['file'].endswith('.whl'))
+(output / 'README.md').write_text(f"""# Deletion coverage receipt checkpoint
+
+Frozen source `{commit}` passes {s['tests'] - s['skipped']:,} source tests
+with {s['skipped']} skips, all six source/package checks, {i['tests'] - i['skipped']:,} installed
+cases with {i['skipped']} matching skips, and seven replay assertions. The isolated
+installed run matches individual case outcomes and verifies module origins
+and package bytes against the frozen source and wheel.
+
+Wheel: {wheel['bytes']:,} bytes; SHA-256
+`{wheel['sha256']}`.
+
+## What changed and why
+
+In the [six-case development diagnostic](../model-forget-development-v1/README.md),
+GPT-OSS made a valid target-only deletion, retained all three seeded copies,
+and claimed every related copy was gone. Storage honored the selected IDs;
+the receipt did not summarize the records left in its reviewed preview.
+
+Related-forget receipts now include `deletion_coverage`: target-only or
+reviewed selection, retained exact and advisory fact counts, and retained
+eligible source-event counts. These counts are computed inside the deletion
+transaction from the validated preview. They exclude foreign-scope facts
+and distinguish advisory similarity from an exact assertion match. Direct
+forget reports target-only coverage without counts because no preview exists.
+Both receipts set `semantic_erasure_proven` to false, even when counts are
+zero. Guidance for Hermes and MCP tells the agent to report this coverage.
+
+This does not select additional records, broaden deletion, claim exhaustive
+semantic matching, or cover future captures. No native model has run the
+new package. Whether clearer receipts improve model behavior remains untested;
+the native v6 failures and direct diagnostic outcomes remain unchanged.
+
+## Regression evidence and limits
+
+Four new regressions exercise the authenticated service/client/Hermes path:
+target-only deletion retains a known exact copy; reviewed deletion removes
+the selected copy and source; direct deletion has no inventory counts; and
+removing all preview records still does not prove semantic erasure. The
+first three also preserve an unselected advisory record and foreign control.
+The focused green run passes 80 cases.
+
+The red-v1 and red-v2 logs contain test-authoring mistakes: a nonexistent
+store method and advisory metadata excluded by the preview contract. Those
+are not product defects. Red-v3 has four failures for the intended missing
+coverage field, before the production change. All development logs remain.
+
+The first full source run at `2c0f777` passed all 1,439 tests with four skips,
+then stopped when Black tried to format six archived helper scripts. Those
+files are immutable execution evidence. The successor checkpoint excludes
+`docs/validation` from Black and mypy, preserving their exact archived bytes.
+Application and benchmark source remain checked; test execution is unchanged.
+The earlier stopped run is preserved under `prior-source-checks`.
+
+These are fixture, service, and installed-package results. Automatic capture,
+native related-copy selection and erasure, three-host continuity, real-model
+quality acceptance, Desktop, and the pilot remain open. Live host settings
+and live memory were unchanged. The evidence index binds {len(files)} raw files;
+this interpretive README is outside that index.
+""", encoding='utf-8')
+print(json.dumps({'archive': str(output), 'indexed_files': len(files), 'source': s, 'installed': i, 'wheel': wheel}))
