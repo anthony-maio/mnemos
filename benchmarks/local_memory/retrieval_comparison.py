@@ -13,7 +13,7 @@ from dataclasses import replace
 from datetime import datetime, timezone
 from pathlib import Path
 from tempfile import TemporaryDirectory
-from typing import Any
+from typing import Any, Literal
 
 from mnemos.engine import MnemosEngine
 from mnemos.memory_service import LocalMemoryService
@@ -48,7 +48,10 @@ class ComparisonEngine(MnemosEngine):
         context: ScopeContext | None = None,
         profile: str | None = None,
         max_context_tokens: int = 1200,
+        view: Literal["memory", "captured_evidence"] = "memory",
     ) -> list[MemoryChunk]:
+        if view != "memory":
+            raise ValueError("This comparison only evaluates the memory view")
         if self.strategy not in STRATEGIES:
             raise ValueError("Unknown retrieval strategy")
         self.comparison_details = {"strategy": self.strategy}

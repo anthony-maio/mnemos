@@ -41,6 +41,22 @@ def add_fact(service, context, identity, content, embedding=None):
 
 
 @pytest.mark.asyncio
+@pytest.mark.parametrize("strategy", ["vector", "lexical", "hybrid", "full"])
+async def test_comparison_does_not_treat_evidence_view_as_memory_experiment(tmp_path, strategy):
+    from benchmarks.local_memory.retrieval_comparison import comparison_snapshots
+
+    service, context = fixture_service(tmp_path)
+    try:
+        with comparison_snapshots(service) as (_, variants):
+            with pytest.raises(ValueError, match="only evaluates the memory view"):
+                await variants[strategy].retrieve(
+                    RetrievalRequest(query="Orchid", context=context, view="captured_evidence")
+                )
+    finally:
+        service.engine.store.close()
+
+
+@pytest.mark.asyncio
 @pytest.mark.parametrize("foreign_identity", ["user_profile_id", "project_id"])
 async def test_lexical_needs_no_embedding_and_scopes_before_candidate_limit(
     tmp_path, foreign_identity

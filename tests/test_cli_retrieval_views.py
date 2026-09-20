@@ -3,6 +3,7 @@
 import asyncio
 from datetime import datetime, timezone
 import json
+import mnemos
 import os
 from pathlib import Path
 import subprocess
@@ -11,6 +12,25 @@ import sys
 from mnemos.contracts import CaptureEvent
 from mnemos.service import MnemosService
 from tests.test_memory_service import service
+
+
+def _package_bound_env() -> dict[str, str]:
+    package_root = str(Path(mnemos.__file__).resolve().parent.parent)
+    return {**os.environ, "PYTHONPATH": package_root}
+
+
+def _assert_child_origin(env: dict[str, str], cwd: Path) -> None:
+    result = subprocess.run(
+        [sys.executable, "-c", "import mnemos; print(mnemos.__file__)"],
+        cwd=cwd,
+        env=env,
+        capture_output=True,
+        text=True,
+        timeout=30,
+        check=False,
+    )
+    assert result.returncode == 0, result.stderr
+    assert Path(result.stdout.strip()).resolve() == Path(mnemos.__file__).resolve()
 
 
 def test_cli_retrieve_forwards_memory_and_captured_evidence_views(tmp_path: Path) -> None:
@@ -46,7 +66,7 @@ def test_cli_retrieve_forwards_memory_and_captured_evidence_views(tmp_path: Path
     )
     asyncio.run(memory.maintenance.run_once(force=True))
     env = {
-        **os.environ,
+        **_package_bound_env(),
         "MNEMOS_RUNTIME_DESCRIPTOR": str(runtime.descriptor_path),
         "MNEMOS_RUNTIME_DIR": str(tmp_path),
         "MNEMOS_SCOPE_REGISTRY": str(registry_path),
@@ -58,7 +78,7 @@ def test_cli_retrieve_forwards_memory_and_captured_evidence_views(tmp_path: Path
     def cli(view: str) -> dict:
         result = subprocess.run(
             [sys.executable, "-m", "mnemos.cli", "retrieve", "cli note", "--view", view],
-            cwd=Path(__file__).resolve().parents[1],
+            cwd=tmp_path,
             env=env,
             capture_output=True,
             text=True,
@@ -68,6 +88,7 @@ def test_cli_retrieve_forwards_memory_and_captured_evidence_views(tmp_path: Path
         return json.loads(result.stdout)
 
     try:
+        _assert_child_origin(env, tmp_path)
         ordinary = cli("memory")
         evidence = cli("captured_evidence")
         assert ordinary["view"] == "memory"
@@ -86,8 +107,8 @@ def test_cli_retrieve_forwards_memory_and_captured_evidence_views(tmp_path: Path
 def test_cli_retrieve_rejects_unknown_view_without_starting_service(tmp_path: Path) -> None:
     result = subprocess.run(
         [sys.executable, "-m", "mnemos.cli", "retrieve", "anything", "--view", "invalid"],
-        cwd=Path(__file__).resolve().parents[1],
-        env={**os.environ, "MNEMOS_RUNTIME_DIR": str(tmp_path)},
+        cwd=tmp_path,
+        env={**_package_bound_env(), "MNEMOS_RUNTIME_DIR": str(tmp_path)},
         capture_output=True,
         text=True,
         timeout=30,

@@ -7,9 +7,12 @@ from __future__ import annotations
 import json
 import os
 import re
+import subprocess
 import sys
 from pathlib import Path
 from typing import Any
+
+import mnemos
 
 import pytest
 from mcp import ClientSession
@@ -76,6 +79,8 @@ def _server_params_from_spec(
     for key, value in spec.get("env", {}).items():
         env[key] = _expand_template(str(value), env)
     env.update(env_overrides)
+    package_root = str(Path(mnemos.__file__).resolve().parent.parent)
+    env["PYTHONPATH"] = package_root
     command = _expand_template(str(spec["command"]), env)
     if command == "python" and env.get("MNEMOS_TEST_PYTHON"):
         command = env["MNEMOS_TEST_PYTHON"]
@@ -86,6 +91,21 @@ def _server_params_from_spec(
         env=env,
         cwd=str(cwd),
     )
+
+
+def _assert_child_package_origin(params: StdioServerParameters) -> None:
+    expected = Path(mnemos.__file__).resolve()
+    probe = subprocess.run(
+        [params.command, "-c", "import mnemos; print(mnemos.__file__)"],
+        cwd=params.cwd,
+        env=params.env,
+        capture_output=True,
+        text=True,
+        timeout=30,
+        check=False,
+    )
+    assert probe.returncode == 0, probe.stderr
+    assert Path(probe.stdout.strip()).resolve() == expected
 
 
 def _start_scoped_service(tmp_path: Path, db_name: str) -> tuple[MnemosService, Path]:
@@ -319,12 +339,13 @@ async def test_tier1_stdio_configs_execute_real_roundtrip(
     try:
         params = _server_params_from_spec(
             spec,
-            cwd=ROOT,
+            cwd=tmp_path,
             env_overrides={
                 "MNEMOS_TEST_PYTHON": sys.executable,
                 **_service_env(service, registry_path),
             },
         )
+        _assert_child_package_origin(params)
         await _assert_tier1_roundtrip(params)
     finally:
         service.stop()
@@ -337,7 +358,7 @@ async def test_tier1_claude_code_plugin_manifest_executes_real_roundtrip(tmp_pat
     try:
         params = _server_params_from_spec(
             spec,
-            cwd=ROOT,
+            cwd=tmp_path,
             env_overrides={
                 "CLAUDE_PLUGIN_ROOT": str(ROOT),
                 "MNEMOS_TEST_PYTHON": sys.executable,
@@ -345,6 +366,7 @@ async def test_tier1_claude_code_plugin_manifest_executes_real_roundtrip(tmp_pat
                 **_service_env(service, registry_path),
             },
         )
+        _assert_child_package_origin(params)
         await _assert_tier1_roundtrip(params)
     finally:
         service.stop()
