@@ -486,17 +486,27 @@ class MnemosHermesProvider(_HermesMemoryProvider):  # type: ignore[misc]  # Opti
             return ""
         try:
             context = self._current_context(session_id)
-            result = self.client.retrieve(
-                {
-                    "query": query,
-                    "context": context.model_dump(mode="json"),
-                    "allowed_scopes": ["project", "workspace", "global"],
-                    "top_k": 5,
-                    "max_context_tokens": self.max_context_tokens,
-                    "profile": "baseline",
-                }
+            result = _run_sync(
+                self.client.retrieve(
+                    {
+                        "query": query,
+                        "context": context.model_dump(mode="json"),
+                        "allowed_scopes": ["project", "workspace", "global"],
+                        "top_k": 5,
+                        "max_context_tokens": self.max_context_tokens,
+                        "profile": "baseline",
+                    }
+                )
             )
-            rendered = self._format_context(_run_sync(result))
+            if isinstance(result, Mapping) and (
+                result.get("degraded") is True or result.get("status") == "degraded"
+            ):
+                self._record_lifecycle_diagnostic(
+                    action="retrieve",
+                    target=context.session_id,
+                    status="retrieval_degraded",
+                )
+            rendered = self._format_context(result)
             return rendered
         except Exception:
             return ""

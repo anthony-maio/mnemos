@@ -43,9 +43,10 @@ from .modules.spreading import SpreadingActivation
 from .modules.surprisal import SurprisalGate
 from .types import ActivationNode, ConsolidationResult, Interaction, MemoryChunk, ProcessResult
 from .observability import log_event
-from .retrieval import score_candidate, context_token_upper_bound
+from .retrieval import RetrievedChunks, score_candidate, context_token_upper_bound
 from .utils.embeddings import EmbeddingProvider, embed_text_async
 from .utils.llm import LLMProvider
+from .utils.reliability import MnemosTransientError
 from .utils.storage import MemoryStore
 
 logger = logging.getLogger(__name__)
@@ -913,15 +914,42 @@ class MnemosEngine:
         selected_profile = profile or self.config.retrieval.profile
         if selected_profile not in {"baseline", "biomimetic"}:
             raise ValueError("Unknown retrieval profile")
-        query_embedding = await embed_text_async(self._embedder, query, role="query")
         candidate_pool_k = min(max(top_k * 6, 20), self.config.retrieval.max_candidates)
         lexical_search = getattr(self._store, "retrieve_lexical", None)
+        diagnostics = {}
+        query_embedding: list[float] | None
+        try:
+            query_embedding = await embed_text_async(self._embedder, query, role="query")
+        except MnemosTransientError as exc:
+            if not callable(lexical_search):
+                raise
+            query_embedding = None
+            diagnostics = {
+                "mode": "lexical_only",
+                "reason": "embedding_unavailable",
+                "error_type": type(exc).__name__,
+                "semantic_status": "not_measured",
+            }
+            log_event(
+                "mnemos.retrieval_degraded",
+                mode="lexical_only",
+                reason="embedding_unavailable",
+                error_type=type(exc).__name__,
+            )
 
         def collect_candidates() -> tuple[list[MemoryChunk], str, set[str], dict[str, MemoryChunk]]:
-            baseline = self._store.retrieve(
-                query_embedding, top_k=candidate_pool_k, filter_fn=scope_filter
+            baseline = (
+                self._store.retrieve(
+                    query_embedding, top_k=candidate_pool_k, filter_fn=scope_filter
+                )
+                if query_embedding is not None
+                else []
             )
-            backend = getattr(self._store, "last_retrieval_backend", "embedded_cosine")
+            backend = (
+                getattr(self._store, "last_retrieval_backend", "embedded_cosine")
+                if query_embedding is not None
+                else "lexical_only"
+            )
             lexical = (
                 lexical_search(query, top_k=candidate_pool_k, filter_fn=scope_filter)
                 if callable(lexical_search)
@@ -934,6 +962,7 @@ class MnemosEngine:
         baseline_chunks, retrieval_backend, lexical_ids, candidates = collect_candidates()
         use_affective = (
             selected_profile == "biomimetic"
+            and query_embedding is not None
             and self.config.retrieval.affective_enabled
             and self.config.modules.affective
         )
@@ -962,9 +991,9 @@ class MnemosEngine:
             else {"ready": True}
         )
         graph_ready = bool(graph_status.get("ready", True))
-        use_spreading = graph_requested and graph_ready
+        use_spreading = graph_requested and graph_ready and query_embedding is not None
         activation = {}
-        if use_spreading and baseline_chunks:
+        if use_spreading and baseline_chunks and query_embedding is not None:
             # Refresh semantic seeds from authoritative rows, including corrections.
             for chunk in baseline_chunks:
                 node = self.spreading_activation.get_node(chunk.id)
@@ -1018,8 +1047,24 @@ class MnemosEngine:
                 candidates[candidate.id] = candidate
                 activation[candidate.id] = node.energy
 
-        scored = []
-        for chunk in candidates.values():
+        scored: list[tuple[dict[str, Any], MemoryChunk]] = []
+        for rank, chunk in enumerate(candidates.values(), start=1):
+            if query_embedding is None:
+                scored.append(
+                    (
+                        {
+                            "semantic": None,
+                            "state_match": None,
+                            "graph_energy": 0,
+                            "graph_contribution": 0,
+                            "total": None,
+                            "state_status": "not_measured",
+                            "lexical_rank": rank,
+                        },
+                        chunk,
+                    )
+                )
+                continue
             score = score_candidate(
                 chunk,
                 query_embedding,
@@ -1033,14 +1078,15 @@ class MnemosEngine:
             # State or graph energy cannot turn an irrelevant fact into an answer.
             if score.semantic < self.config.retrieval.relevance_floor:
                 continue
-            scored.append((score, chunk))
-        scored.sort(
-            key=lambda item: (
-                -item[0].total,
-                _chunk_scope_data(item[1])[0] != normalized_current_scope,
-                item[1].id,
+            scored.append((score.model_dump(), chunk))
+        if query_embedding is not None:
+            scored.sort(
+                key=lambda item: (
+                    -item[0]["total"],
+                    _chunk_scope_data(item[1])[0] != normalized_current_scope,
+                    item[1].id,
+                )
             )
-        )
         final_chunks = []
         remaining_budget = max_context_tokens
         trace_key = (
@@ -1053,9 +1099,9 @@ class MnemosEngine:
             view,
         )
         trace_rows = {}
-        for score, chunk in scored:
+        for score_details, chunk in scored:
             trace_rows[chunk.id] = {
-                **score.model_dump(),
+                **score_details,
                 "version": chunk.version,
                 "profile": selected_profile,
                 "scope_match": True,
@@ -1063,26 +1109,38 @@ class MnemosEngine:
                     (i + 1 for i, item in enumerate(baseline_chunks) if item.id == chunk.id), None
                 ),
                 "selected": False,
-                "status": "observed",
+                "status": "degraded" if diagnostics else "observed",
             }
-            cost = context_token_upper_bound(chunk)
-            if cost > remaining_budget:
-                continue
             returned = chunk.model_copy(deep=True)
             returned.metadata["retrieval_trace"] = {
-                **score.model_dump(),
+                "retrieval_mode": "lexical_only" if diagnostics else "semantic_and_lexical"
+            }
+            cost = context_token_upper_bound(returned)
+            if cost > remaining_budget:
+                continue
+            returned.metadata["retrieval_trace"] = {
+                **score_details,
+                **returned.metadata["retrieval_trace"],
                 "profile": selected_profile,
                 "scope_match": True,
                 "context_token_upper_bound": cost,
                 "token_count_method": "utf8_bytes_upper_bound",
                 "graph_status": (
-                    "enabled"
-                    if use_spreading
-                    else ("pending" if graph_requested and not graph_ready else "disabled")
+                    "not_used"
+                    if diagnostics
+                    else (
+                        "enabled"
+                        if use_spreading
+                        else ("pending" if graph_requested and not graph_ready else "disabled")
+                    )
                 ),
                 "candidate_backend": retrieval_backend,
                 "lexical_candidate": chunk.id in lexical_ids,
-                "lexical_status": "candidate_union" if callable(lexical_search) else "unavailable",
+                "lexical_status": (
+                    "fallback"
+                    if diagnostics
+                    else "candidate_union" if callable(lexical_search) else "unavailable"
+                ),
             }
             final_chunks.append(returned)
             trace_rows[chunk.id].update(returned.metadata["retrieval_trace"])
@@ -1130,7 +1188,9 @@ class MnemosEngine:
             store_backend=type(self._store).__name__,
         )
 
-        return final_chunks
+        return (
+            RetrievedChunks(final_chunks, diagnostics=diagnostics) if diagnostics else final_chunks
+        )
 
     async def consolidate(self) -> ConsolidationResult:
         """

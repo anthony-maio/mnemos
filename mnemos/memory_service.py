@@ -21,7 +21,7 @@ from .engine import MnemosEngine
 from .jobs import DurableJob, FactEvidence, FactNotFoundError, FactRevision, JobNotFoundError
 from .maintenance import MaintenanceScheduler
 from .memory_safety import MemoryWriteFirewall
-from .retrieval import assertion_status, render_context_chunk
+from .retrieval import RetrievedChunks, assertion_status, render_context_chunk
 from .scopes import ScopeContext, ScopeRegistry, context_metadata, scope_allows
 from .types import EpisodicEvent, Interaction, MemoryChunk, RetrievalFeedbackEvent
 from .utils.embeddings import embed_text_async
@@ -711,6 +711,11 @@ class LocalMemoryService:
         return {
             "schema_version": 1,
             "profile": request.profile,
+            **(
+                {"status": "degraded", "degraded": True, "retrieval": chunks.diagnostics}
+                if isinstance(chunks, RetrievedChunks)
+                else {}
+            ),
             "view": request.view,
             "facts": [] if reviewing_capture else facts,
             "context": "" if reviewing_capture else rendered,

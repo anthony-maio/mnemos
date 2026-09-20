@@ -1,5 +1,18 @@
 # Local memory host validation
 
+When query embedding fails with a transient provider error, SQLite retrieval
+now falls back to scoped full-text matches. The response reports
+`status=degraded`, `retrieval.mode=lexical_only`, and an unmeasured semantic
+score. This status survives empty results. Returned context labels each
+match; Claude preserves hook status and Hermes records a content-free
+lifecycle diagnostic. Codex already preserves the response status.
+Configuration, authentication, and database errors are not converted into
+successful retrieval. Stores without lexical capability retain the original
+provider error. Fallback waits for the configured provider timeout and retries,
+and shared-word matching can miss paraphrases. The
+[development checks](2026-09-20/retrieval-provider-outage-development-v1/README.md)
+are separate from the native observations below.
+
 The [Codex outage run](2026-09-20/native-codex-outage-v1/README.md)
 passes one stopped-service raw-capture recovery on verified product `9722d92`.
 Two exact native messages remained buffered, then persisted after restart with

@@ -625,7 +625,14 @@ class ClaudeCodeAdapter:
             }
         )
         context_text = format_retrieved_context(result, max_chars=MAX_CONTEXT_CHARS)
-        return HookResult(status="ok", committed=False, context=context_text)
+        degraded = isinstance(result, Mapping) and (
+            result.get("degraded") is True or result.get("status") == "degraded"
+        )
+        return HookResult(
+            status="degraded" if degraded else "ok",
+            committed=False,
+            context=context_text,
+        )
 
     async def handle(
         self, event: str, payload: Mapping[str, Any], *, include_retrieval: bool = True

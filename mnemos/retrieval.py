@@ -2,11 +2,20 @@
 
 from __future__ import annotations
 
-from typing import Literal
+from collections.abc import Iterable
+from typing import Any, Literal
 
 from pydantic import BaseModel, Field
 
 from .types import CognitiveState, MemoryChunk
+
+
+class RetrievedChunks(list[MemoryChunk]):
+    """List-compatible results with request-local diagnostics, even when empty."""
+
+    def __init__(self, chunks: Iterable[MemoryChunk], *, diagnostics: dict[str, Any]) -> None:
+        super().__init__(chunks)
+        self.diagnostics = dict(diagnostics)
 
 
 class RetrievalConfig(BaseModel):
@@ -81,6 +90,9 @@ def render_context_chunk(chunk: MemoryChunk) -> str:
             if chunk.metadata.get("source") == "captured_passthrough"
             else "; unverified"
         )
+    trace = chunk.metadata.get("retrieval_trace")
+    if isinstance(trace, dict) and trace.get("retrieval_mode") == "lexical_only":
+        qualifier += "; lexical match only; semantic retrieval unavailable"
     return f"[{chunk.id} version {chunk.version}{qualifier}] {chunk.content}\n"
 
 

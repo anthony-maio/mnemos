@@ -1,0 +1,425 @@
+<?xml version="1.0" encoding="utf-8"?><testsuites name="pytest tests"><testsuite name="pytest" errors="0" failures="2" skipped="0" tests="2" time="7.985" timestamp="2026-09-20T11:29:54.704661-04:00" hostname="Aurora"><testcase classname="tests.test_retrieval_provider_outage" name="test_closed_embedding_endpoint_keeps_existing_sqlite_recall[baseline]" time="3.871"><failure message="mnemos.utils.reliability.MnemosTransientError: ollama embed_legacy failed: timed out">@contextlib.contextmanager
+    def map_httpcore_exceptions() -&gt; typing.Iterator[None]:
+        global HTTPCORE_EXC_MAP
+        if len(HTTPCORE_EXC_MAP) == 0:
+            HTTPCORE_EXC_MAP = _load_httpcore_exceptions()
+        try:
+&gt;           yield
+
+.venv\Lib\site-packages\httpx\_transports\default.py:101: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+.venv\Lib\site-packages\httpx\_transports\default.py:250: in handle_request
+    resp = self._pool.handle_request(req)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+.venv\Lib\site-packages\httpcore\_sync\connection_pool.py:256: in handle_request
+    raise exc from None
+.venv\Lib\site-packages\httpcore\_sync\connection_pool.py:236: in handle_request
+    response = connection.handle_request(
+.venv\Lib\site-packages\httpcore\_sync\connection.py:101: in handle_request
+    raise exc
+.venv\Lib\site-packages\httpcore\_sync\connection.py:78: in handle_request
+    stream = self._connect(request)
+             ^^^^^^^^^^^^^^^^^^^^^^
+.venv\Lib\site-packages\httpcore\_sync\connection.py:124: in _connect
+    stream = self._network_backend.connect_tcp(**kwargs)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+.venv\Lib\site-packages\httpcore\_backends\sync.py:207: in connect_tcp
+    with map_exceptions(exc_map):
+         ^^^^^^^^^^^^^^^^^^^^^^^
+C:\Users\Ant\AppData\Roaming\uv\python\cpython-3.13.7-windows-x86_64-none\Lib\contextlib.py:162: in __exit__
+    self.gen.throw(value)
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+map = {&lt;class 'TimeoutError'&gt;: &lt;class 'httpcore.ConnectTimeout'&gt;, &lt;class 'OSError'&gt;: &lt;class 'httpcore.ConnectError'&gt;}
+
+    @contextlib.contextmanager
+    def map_exceptions(map: ExceptionMapping) -&gt; typing.Iterator[None]:
+        try:
+            yield
+        except Exception as exc:  # noqa: PIE786
+            for from_exc, to_exc in map.items():
+                if isinstance(exc, from_exc):
+&gt;                   raise to_exc(exc) from exc
+E                   httpcore.ConnectTimeout: timed out
+
+.venv\Lib\site-packages\httpcore\_exceptions.py:14: ConnectTimeout
+
+The above exception was the direct cause of the following exception:
+
+provider = 'ollama', operation = 'embed_legacy'
+fn = &lt;function OllamaEmbeddingProvider.embed.&lt;locals&gt;.&lt;lambda&gt; at 0x00000252C5800E00&gt;
+policy = RetryPolicy(max_attempts=3, initial_backoff_seconds=0.25, max_backoff_seconds=2.0, backoff_multiplier=2.0, jitter_ratio=0.1)
+should_retry = &lt;function is_retryable_http_exception at 0x00000252C4556C00&gt;
+
+    def call_with_retry(
+        *,
+        provider: str,
+        operation: str,
+        fn: Callable[[], T],
+        policy: RetryPolicy | None = None,
+        should_retry: Callable[[Exception], bool] | None = None,
+    ) -&gt; T:
+        """Execute a synchronous call with retries and standardized error mapping."""
+        effective_policy = policy or RetryPolicy()
+        retry_predicate = should_retry or is_retryable_transient_exception
+    
+        last_exception: Exception | None = None
+        for attempt in range(1, effective_policy.max_attempts + 1):
+            try:
+&gt;               return fn()
+                       ^^^^
+
+mnemos\utils\reliability.py:145: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+mnemos\utils\embeddings.py:576: in &lt;lambda&gt;
+    self._observed_post(
+mnemos\utils\embeddings.py:498: in _observed_post
+    response = _http_post_json(url, payload=payload, timeout=self.timeout, client=client)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+mnemos\utils\embeddings.py:813: in _http_post_json
+    response = client.post(url, json=payload, timeout=timeout)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+.venv\Lib\site-packages\httpx\_client.py:1144: in post
+    return self.request(
+.venv\Lib\site-packages\httpx\_client.py:825: in request
+    return self.send(request, auth=auth, follow_redirects=follow_redirects)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+.venv\Lib\site-packages\httpx\_client.py:914: in send
+    response = self._send_handling_auth(
+.venv\Lib\site-packages\httpx\_client.py:942: in _send_handling_auth
+    response = self._send_handling_redirects(
+.venv\Lib\site-packages\httpx\_client.py:979: in _send_handling_redirects
+    response = self._send_single_request(request)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+.venv\Lib\site-packages\httpx\_client.py:1014: in _send_single_request
+    response = transport.handle_request(request)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+.venv\Lib\site-packages\httpx\_transports\default.py:249: in handle_request
+    with map_httpcore_exceptions():
+         ^^^^^^^^^^^^^^^^^^^^^^^^^
+C:\Users\Ant\AppData\Roaming\uv\python\cpython-3.13.7-windows-x86_64-none\Lib\contextlib.py:162: in __exit__
+    self.gen.throw(value)
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+    @contextlib.contextmanager
+    def map_httpcore_exceptions() -&gt; typing.Iterator[None]:
+        global HTTPCORE_EXC_MAP
+        if len(HTTPCORE_EXC_MAP) == 0:
+            HTTPCORE_EXC_MAP = _load_httpcore_exceptions()
+        try:
+            yield
+        except Exception as exc:
+            mapped_exc = None
+    
+            for from_exc, to_exc in HTTPCORE_EXC_MAP.items():
+                if not isinstance(exc, from_exc):
+                    continue
+                # We want to map to the most specific exception we can find.
+                # Eg if `exc` is an `httpcore.ReadTimeout`, we want to map to
+                # `httpx.ReadTimeout`, not just `httpx.TimeoutException`.
+                if mapped_exc is None or issubclass(to_exc, mapped_exc):
+                    mapped_exc = to_exc
+    
+            if mapped_exc is None:  # pragma: no cover
+                raise
+    
+            message = str(exc)
+&gt;           raise mapped_exc(message) from exc
+E           httpx.ConnectTimeout: timed out
+
+.venv\Lib\site-packages\httpx\_transports\default.py:118: ConnectTimeout
+
+The above exception was the direct cause of the following exception:
+
+tmp_path = WindowsPath('D:/WindowsTemp/pytest-of-Ant/pytest-4340/test_closed_embedding_endpoint0')
+profile = 'baseline'
+
+    @pytest.mark.asyncio
+    @pytest.mark.parametrize("profile", ["baseline", "biomimetic"])
+    async def test_closed_embedding_endpoint_keeps_existing_sqlite_recall(tmp_path, profile):
+        memory, context = service(tmp_path)
+        target = MemoryChunk(
+            content="Deployment uses the maple-heron release label.",
+            embedding=[1.0, 0.0],
+            metadata={**context_metadata(context, "project"), "assertion_status": "asserted"},
+        )
+        memory.engine.store.store(target)
+        # A bound but non-listening local socket cannot be taken by another server.
+        with socket.socket() as stopped_endpoint:
+            stopped_endpoint.bind(("127.0.0.1", 0))
+            port = stopped_endpoint.getsockname()[1]
+            provider = OllamaEmbeddingProvider(base_url=f"http://127.0.0.1:{port}", timeout=0.1)
+            memory.engine._embedder = provider
+            try:
+&gt;               result = await memory.dispatch(
+                    "retrieve",
+                    {"context": context.model_dump(), "query": "maple-heron", "profile": profile},
+                )
+
+tests\test_retrieval_provider_outage.py:30: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+mnemos\memory_service.py:1023: in dispatch
+    return await self.retrieve(RetrievalRequest.model_validate(payload))
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+mnemos\memory_service.py:670: in retrieve
+    chunks = await self.engine.retrieve(
+mnemos\engine.py:916: in retrieve
+    query_embedding = await embed_text_async(self._embedder, query, role="query")
+                      ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+mnemos\utils\embeddings.py:895: in embed_text_async
+    return cast(list[float], await asyncio.to_thread(method, text))
+                             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+C:\Users\Ant\AppData\Roaming\uv\python\cpython-3.13.7-windows-x86_64-none\Lib\asyncio\threads.py:25: in to_thread
+    return await loop.run_in_executor(None, func_call)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+C:\Users\Ant\AppData\Roaming\uv\python\cpython-3.13.7-windows-x86_64-none\Lib\concurrent\futures\thread.py:59: in run
+    result = self.fn(*self.args, **self.kwargs)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+mnemos\utils\embeddings.py:91: in embed_query
+    return self.embed(text)
+           ^^^^^^^^^^^^^^^^
+mnemos\utils\embeddings.py:570: in embed
+    return call_with_retry(
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+provider = 'ollama', operation = 'embed_legacy'
+fn = &lt;function OllamaEmbeddingProvider.embed.&lt;locals&gt;.&lt;lambda&gt; at 0x00000252C5800E00&gt;
+policy = RetryPolicy(max_attempts=3, initial_backoff_seconds=0.25, max_backoff_seconds=2.0, backoff_multiplier=2.0, jitter_ratio=0.1)
+should_retry = &lt;function is_retryable_http_exception at 0x00000252C4556C00&gt;
+
+    def call_with_retry(
+        *,
+        provider: str,
+        operation: str,
+        fn: Callable[[], T],
+        policy: RetryPolicy | None = None,
+        should_retry: Callable[[Exception], bool] | None = None,
+    ) -&gt; T:
+        """Execute a synchronous call with retries and standardized error mapping."""
+        effective_policy = policy or RetryPolicy()
+        retry_predicate = should_retry or is_retryable_transient_exception
+    
+        last_exception: Exception | None = None
+        for attempt in range(1, effective_policy.max_attempts + 1):
+            try:
+                return fn()
+            except Exception as exc:  # pragma: no cover - exercised by integration paths
+                last_exception = exc
+                retryable = retry_predicate(exc)
+                if not retryable or attempt &gt;= effective_policy.max_attempts:
+&gt;                   raise _wrap_provider_exception(provider, operation, exc) from exc
+E                   mnemos.utils.reliability.MnemosTransientError: ollama embed_legacy failed: timed out
+
+mnemos\utils\reliability.py:150: MnemosTransientError</failure></testcase><testcase classname="tests.test_retrieval_provider_outage" name="test_closed_embedding_endpoint_keeps_existing_sqlite_recall[biomimetic]" time="3.178"><failure message="mnemos.utils.reliability.MnemosTransientError: ollama embed_legacy failed: timed out">@contextlib.contextmanager
+    def map_httpcore_exceptions() -&gt; typing.Iterator[None]:
+        global HTTPCORE_EXC_MAP
+        if len(HTTPCORE_EXC_MAP) == 0:
+            HTTPCORE_EXC_MAP = _load_httpcore_exceptions()
+        try:
+&gt;           yield
+
+.venv\Lib\site-packages\httpx\_transports\default.py:101: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+.venv\Lib\site-packages\httpx\_transports\default.py:250: in handle_request
+    resp = self._pool.handle_request(req)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+.venv\Lib\site-packages\httpcore\_sync\connection_pool.py:256: in handle_request
+    raise exc from None
+.venv\Lib\site-packages\httpcore\_sync\connection_pool.py:236: in handle_request
+    response = connection.handle_request(
+.venv\Lib\site-packages\httpcore\_sync\connection.py:101: in handle_request
+    raise exc
+.venv\Lib\site-packages\httpcore\_sync\connection.py:78: in handle_request
+    stream = self._connect(request)
+             ^^^^^^^^^^^^^^^^^^^^^^
+.venv\Lib\site-packages\httpcore\_sync\connection.py:124: in _connect
+    stream = self._network_backend.connect_tcp(**kwargs)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+.venv\Lib\site-packages\httpcore\_backends\sync.py:207: in connect_tcp
+    with map_exceptions(exc_map):
+         ^^^^^^^^^^^^^^^^^^^^^^^
+C:\Users\Ant\AppData\Roaming\uv\python\cpython-3.13.7-windows-x86_64-none\Lib\contextlib.py:162: in __exit__
+    self.gen.throw(value)
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+map = {&lt;class 'TimeoutError'&gt;: &lt;class 'httpcore.ConnectTimeout'&gt;, &lt;class 'OSError'&gt;: &lt;class 'httpcore.ConnectError'&gt;}
+
+    @contextlib.contextmanager
+    def map_exceptions(map: ExceptionMapping) -&gt; typing.Iterator[None]:
+        try:
+            yield
+        except Exception as exc:  # noqa: PIE786
+            for from_exc, to_exc in map.items():
+                if isinstance(exc, from_exc):
+&gt;                   raise to_exc(exc) from exc
+E                   httpcore.ConnectTimeout: timed out
+
+.venv\Lib\site-packages\httpcore\_exceptions.py:14: ConnectTimeout
+
+The above exception was the direct cause of the following exception:
+
+provider = 'ollama', operation = 'embed_legacy'
+fn = &lt;function OllamaEmbeddingProvider.embed.&lt;locals&gt;.&lt;lambda&gt; at 0x00000252C5848E00&gt;
+policy = RetryPolicy(max_attempts=3, initial_backoff_seconds=0.25, max_backoff_seconds=2.0, backoff_multiplier=2.0, jitter_ratio=0.1)
+should_retry = &lt;function is_retryable_http_exception at 0x00000252C4556C00&gt;
+
+    def call_with_retry(
+        *,
+        provider: str,
+        operation: str,
+        fn: Callable[[], T],
+        policy: RetryPolicy | None = None,
+        should_retry: Callable[[Exception], bool] | None = None,
+    ) -&gt; T:
+        """Execute a synchronous call with retries and standardized error mapping."""
+        effective_policy = policy or RetryPolicy()
+        retry_predicate = should_retry or is_retryable_transient_exception
+    
+        last_exception: Exception | None = None
+        for attempt in range(1, effective_policy.max_attempts + 1):
+            try:
+&gt;               return fn()
+                       ^^^^
+
+mnemos\utils\reliability.py:145: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+mnemos\utils\embeddings.py:576: in &lt;lambda&gt;
+    self._observed_post(
+mnemos\utils\embeddings.py:498: in _observed_post
+    response = _http_post_json(url, payload=payload, timeout=self.timeout, client=client)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+mnemos\utils\embeddings.py:813: in _http_post_json
+    response = client.post(url, json=payload, timeout=timeout)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+.venv\Lib\site-packages\httpx\_client.py:1144: in post
+    return self.request(
+.venv\Lib\site-packages\httpx\_client.py:825: in request
+    return self.send(request, auth=auth, follow_redirects=follow_redirects)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+.venv\Lib\site-packages\httpx\_client.py:914: in send
+    response = self._send_handling_auth(
+.venv\Lib\site-packages\httpx\_client.py:942: in _send_handling_auth
+    response = self._send_handling_redirects(
+.venv\Lib\site-packages\httpx\_client.py:979: in _send_handling_redirects
+    response = self._send_single_request(request)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+.venv\Lib\site-packages\httpx\_client.py:1014: in _send_single_request
+    response = transport.handle_request(request)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+.venv\Lib\site-packages\httpx\_transports\default.py:249: in handle_request
+    with map_httpcore_exceptions():
+         ^^^^^^^^^^^^^^^^^^^^^^^^^
+C:\Users\Ant\AppData\Roaming\uv\python\cpython-3.13.7-windows-x86_64-none\Lib\contextlib.py:162: in __exit__
+    self.gen.throw(value)
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+    @contextlib.contextmanager
+    def map_httpcore_exceptions() -&gt; typing.Iterator[None]:
+        global HTTPCORE_EXC_MAP
+        if len(HTTPCORE_EXC_MAP) == 0:
+            HTTPCORE_EXC_MAP = _load_httpcore_exceptions()
+        try:
+            yield
+        except Exception as exc:
+            mapped_exc = None
+    
+            for from_exc, to_exc in HTTPCORE_EXC_MAP.items():
+                if not isinstance(exc, from_exc):
+                    continue
+                # We want to map to the most specific exception we can find.
+                # Eg if `exc` is an `httpcore.ReadTimeout`, we want to map to
+                # `httpx.ReadTimeout`, not just `httpx.TimeoutException`.
+                if mapped_exc is None or issubclass(to_exc, mapped_exc):
+                    mapped_exc = to_exc
+    
+            if mapped_exc is None:  # pragma: no cover
+                raise
+    
+            message = str(exc)
+&gt;           raise mapped_exc(message) from exc
+E           httpx.ConnectTimeout: timed out
+
+.venv\Lib\site-packages\httpx\_transports\default.py:118: ConnectTimeout
+
+The above exception was the direct cause of the following exception:
+
+tmp_path = WindowsPath('D:/WindowsTemp/pytest-of-Ant/pytest-4340/test_closed_embedding_endpoint1')
+profile = 'biomimetic'
+
+    @pytest.mark.asyncio
+    @pytest.mark.parametrize("profile", ["baseline", "biomimetic"])
+    async def test_closed_embedding_endpoint_keeps_existing_sqlite_recall(tmp_path, profile):
+        memory, context = service(tmp_path)
+        target = MemoryChunk(
+            content="Deployment uses the maple-heron release label.",
+            embedding=[1.0, 0.0],
+            metadata={**context_metadata(context, "project"), "assertion_status": "asserted"},
+        )
+        memory.engine.store.store(target)
+        # A bound but non-listening local socket cannot be taken by another server.
+        with socket.socket() as stopped_endpoint:
+            stopped_endpoint.bind(("127.0.0.1", 0))
+            port = stopped_endpoint.getsockname()[1]
+            provider = OllamaEmbeddingProvider(base_url=f"http://127.0.0.1:{port}", timeout=0.1)
+            memory.engine._embedder = provider
+            try:
+&gt;               result = await memory.dispatch(
+                    "retrieve",
+                    {"context": context.model_dump(), "query": "maple-heron", "profile": profile},
+                )
+
+tests\test_retrieval_provider_outage.py:30: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+mnemos\memory_service.py:1023: in dispatch
+    return await self.retrieve(RetrievalRequest.model_validate(payload))
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+mnemos\memory_service.py:670: in retrieve
+    chunks = await self.engine.retrieve(
+mnemos\engine.py:916: in retrieve
+    query_embedding = await embed_text_async(self._embedder, query, role="query")
+                      ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+mnemos\utils\embeddings.py:895: in embed_text_async
+    return cast(list[float], await asyncio.to_thread(method, text))
+                             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+C:\Users\Ant\AppData\Roaming\uv\python\cpython-3.13.7-windows-x86_64-none\Lib\asyncio\threads.py:25: in to_thread
+    return await loop.run_in_executor(None, func_call)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+C:\Users\Ant\AppData\Roaming\uv\python\cpython-3.13.7-windows-x86_64-none\Lib\concurrent\futures\thread.py:59: in run
+    result = self.fn(*self.args, **self.kwargs)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+mnemos\utils\embeddings.py:91: in embed_query
+    return self.embed(text)
+           ^^^^^^^^^^^^^^^^
+mnemos\utils\embeddings.py:570: in embed
+    return call_with_retry(
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+provider = 'ollama', operation = 'embed_legacy'
+fn = &lt;function OllamaEmbeddingProvider.embed.&lt;locals&gt;.&lt;lambda&gt; at 0x00000252C5848E00&gt;
+policy = RetryPolicy(max_attempts=3, initial_backoff_seconds=0.25, max_backoff_seconds=2.0, backoff_multiplier=2.0, jitter_ratio=0.1)
+should_retry = &lt;function is_retryable_http_exception at 0x00000252C4556C00&gt;
+
+    def call_with_retry(
+        *,
+        provider: str,
+        operation: str,
+        fn: Callable[[], T],
+        policy: RetryPolicy | None = None,
+        should_retry: Callable[[Exception], bool] | None = None,
+    ) -&gt; T:
+        """Execute a synchronous call with retries and standardized error mapping."""
+        effective_policy = policy or RetryPolicy()
+        retry_predicate = should_retry or is_retryable_transient_exception
+    
+        last_exception: Exception | None = None
+        for attempt in range(1, effective_policy.max_attempts + 1):
+            try:
+                return fn()
+            except Exception as exc:  # pragma: no cover - exercised by integration paths
+                last_exception = exc
+                retryable = retry_predicate(exc)
+                if not retryable or attempt &gt;= effective_policy.max_attempts:
+&gt;                   raise _wrap_provider_exception(provider, operation, exc) from exc
+E                   mnemos.utils.reliability.MnemosTransientError: ollama embed_legacy failed: timed out
+
+mnemos\utils\reliability.py:150: MnemosTransientError</failure></testcase></testsuite></testsuites>

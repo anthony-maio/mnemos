@@ -1,0 +1,121 @@
+<?xml version="1.0" encoding="utf-8"?><testsuites name="pytest tests"><testsuite name="pytest" errors="0" failures="4" skipped="0" tests="4" time="1.284" timestamp="2026-09-20T11:35:28.821670-04:00" hostname="Aurora"><testcase classname="tests.test_host_retrieval_degradation" name="test_claude_retrieve_preserves_context_and_degraded_status[result0]" time="0.113"><failure message="AssertionError: assert 'ok' == 'degraded'&#10;  &#10;  - degraded&#10;  + ok">tmp_path = WindowsPath('D:/WindowsTemp/pytest-of-Ant/pytest-4343/test_claude_retrieve_preserves0')
+result = {'degraded': True, 'context': '[fact-1] Existing recall\n'}
+
+    @pytest.mark.asyncio
+    @pytest.mark.parametrize(
+        "result",
+        [
+            {"degraded": True, "context": "[fact-1] Existing recall\n"},
+            {"status": "degraded", "context": ""},
+        ],
+    )
+    async def test_claude_retrieve_preserves_context_and_degraded_status(
+        tmp_path: Path, result: dict[str, Any]
+    ) -&gt; None:
+        adapter = ClaudeCodeAdapter(
+            client=_DegradedClient(result),
+            registry=_registry(tmp_path),
+            user_profile_id="profile-a",
+            checkpoint_directory=tmp_path / "checkpoints",
+        )
+    
+        hook_result = await adapter.retrieve_context(
+            "UserPromptSubmit",
+            {"session_id": "session-a", "cwd": str(tmp_path), "prompt": "Recall this"},
+        )
+    
+&gt;       assert hook_result.status == "degraded"
+E       AssertionError: assert 'ok' == 'degraded'
+E         
+E         - degraded
+E         + ok
+
+tests\test_host_retrieval_degradation.py:60: AssertionError</failure></testcase><testcase classname="tests.test_host_retrieval_degradation" name="test_claude_retrieve_preserves_context_and_degraded_status[result1]" time="0.077"><failure message="AssertionError: assert 'ok' == 'degraded'&#10;  &#10;  - degraded&#10;  + ok">tmp_path = WindowsPath('D:/WindowsTemp/pytest-of-Ant/pytest-4343/test_claude_retrieve_preserves1')
+result = {'status': 'degraded', 'context': ''}
+
+    @pytest.mark.asyncio
+    @pytest.mark.parametrize(
+        "result",
+        [
+            {"degraded": True, "context": "[fact-1] Existing recall\n"},
+            {"status": "degraded", "context": ""},
+        ],
+    )
+    async def test_claude_retrieve_preserves_context_and_degraded_status(
+        tmp_path: Path, result: dict[str, Any]
+    ) -&gt; None:
+        adapter = ClaudeCodeAdapter(
+            client=_DegradedClient(result),
+            registry=_registry(tmp_path),
+            user_profile_id="profile-a",
+            checkpoint_directory=tmp_path / "checkpoints",
+        )
+    
+        hook_result = await adapter.retrieve_context(
+            "UserPromptSubmit",
+            {"session_id": "session-a", "cwd": str(tmp_path), "prompt": "Recall this"},
+        )
+    
+&gt;       assert hook_result.status == "degraded"
+E       AssertionError: assert 'ok' == 'degraded'
+E         
+E         - degraded
+E         + ok
+
+tests\test_host_retrieval_degradation.py:60: AssertionError</failure></testcase><testcase classname="tests.test_host_retrieval_degradation" name="test_hermes_prefetch_records_content_free_degraded_retrieval[result0]" time="0.550"><failure message="IndexError: list index out of range">tmp_path = WindowsPath('D:/WindowsTemp/pytest-of-Ant/pytest-4343/test_hermes_prefetch_records_c0')
+result = {'degraded': True, 'context': '[fact-1] Existing recall\n'}
+
+    @pytest.mark.parametrize(
+        "result",
+        [
+            {"degraded": True, "context": "[fact-1] Existing recall\n"},
+            {"status": "degraded", "context": ""},
+        ],
+    )
+    def test_hermes_prefetch_records_content_free_degraded_retrieval(
+        tmp_path: Path, result: dict[str, Any]
+    ) -&gt; None:
+        registry = _registry(tmp_path)
+        provider = MnemosHermesProvider(
+            client=_DegradedClient(result),
+            registry=registry,
+            user_profile_id="profile-a",
+        )
+        provider.initialize("hermes-session", hermes_home=str(tmp_path / "hermes"), cwd=str(tmp_path))
+        try:
+            rendered = provider.prefetch("private query text")
+    
+            assert rendered == result.get("context", "")
+&gt;           diagnostic = provider.get_lifecycle_diagnostics()[-1]
+                         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E           IndexError: list index out of range
+
+tests\test_host_retrieval_degradation.py:85: IndexError</failure></testcase><testcase classname="tests.test_host_retrieval_degradation" name="test_hermes_prefetch_records_content_free_degraded_retrieval[result1]" time="0.087"><failure message="IndexError: list index out of range">tmp_path = WindowsPath('D:/WindowsTemp/pytest-of-Ant/pytest-4343/test_hermes_prefetch_records_c1')
+result = {'status': 'degraded', 'context': ''}
+
+    @pytest.mark.parametrize(
+        "result",
+        [
+            {"degraded": True, "context": "[fact-1] Existing recall\n"},
+            {"status": "degraded", "context": ""},
+        ],
+    )
+    def test_hermes_prefetch_records_content_free_degraded_retrieval(
+        tmp_path: Path, result: dict[str, Any]
+    ) -&gt; None:
+        registry = _registry(tmp_path)
+        provider = MnemosHermesProvider(
+            client=_DegradedClient(result),
+            registry=registry,
+            user_profile_id="profile-a",
+        )
+        provider.initialize("hermes-session", hermes_home=str(tmp_path / "hermes"), cwd=str(tmp_path))
+        try:
+            rendered = provider.prefetch("private query text")
+    
+            assert rendered == result.get("context", "")
+&gt;           diagnostic = provider.get_lifecycle_diagnostics()[-1]
+                         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E           IndexError: list index out of range
+
+tests\test_host_retrieval_degradation.py:85: IndexError</failure></testcase></testsuite></testsuites>
