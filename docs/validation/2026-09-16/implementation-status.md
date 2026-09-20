@@ -8,23 +8,39 @@ timeout, and temperature settings retain their prior defaults. This unchanged
 source rerun does not establish the cause of the original Windows replacement
 failure, which remains [preserved](../2026-09-20/generation-settings-source-failure-v1/README.md).
 
-The [latest isolated Hermes candidate](../2026-09-20/hermes-boundary-projection-v15/README.md)
-passes 96 of 99 combined boundary/persistence cases. Ordinary row-ID stamping
-and /new content-projection handling are repaired; the 20-case focused CLI
-selection passes. Three failures remain: compression rotation without verified
-original provenance, missing evidence after blank assistant recovery, and stale
-evidence after legitimate user-content expansion. A narrower unscoped-row
-repair does not close the compression regression. All preceding failures,
-base comparisons, and patches remain preserved. No live host upgrade is claimed.
+The [repaired isolated Hermes candidate](../2026-09-20/hermes-provenance-repair-v27/README.md)
+passes 32 focused cases. Unmarked compression output stays derived; actual
+originals retain their identities. Editing a hybrid's live text creates a
+separate source record without changing its parent. Derived edits retain their
+classification, and rollback and tamper rejection pass. Earlier failed attempts
+and corrected test drafts remain preserved.
 
-The [36-call chat comparison](../2026-09-20/history-chat-development-v1/README.md)
-completes all twelve authored cases across three repetitions with no runtime
-errors. Final proposals are preserved for semantic review. This is development
-evidence with the history-only candidate prompt, not held-out accuracy or
-service lifecycle proof. A separate unchanged-production-prompt run is in
-progress through the managed production provider. Neither live settings nor
-the production extraction prompt have changed. Earlier generate-route failures
-and negative extraction results remain unchanged.
+The [current-package boundary probe](../2026-09-20/hermes-current-package-boundary-v28/README.md)
+passes actual CLI `/new` persistence and provider rotation with the verified
+05c71d2 wheel. Valid evidence yields one outbox capture; corrupted evidence
+yields none. The broader SessionDB suite records 1,427 passes, 11 skips, and
+the same WAL test failure observed on the earlier untouched baseline. This
+is an isolated host candidate, not a live Hermes upgrade or a passing full suite.
+
+The [subsequent delivery check](../2026-09-20/hermes-outbox-delivery-v31/README.md)
+delivers that exact queued capture through the authenticated loopback service
+into private SQLite. Offline replay remains queued; restart acknowledges it
+without duplicating the episode or job. All cognition modules were disabled,
+and no extraction ran. This proves the bounded raw-delivery path, not complete
+capture, semantic quality, or full-module recovery.
+
+The [Qwen3.5 service follow-up](../2026-09-20/historical-claim-service-v3-verified/README.md)
+passes seven previously observed development cases: three explicit correction,
+restart, retrieval, forget, and replay lifecycles plus four abstention controls.
+Only sleep extraction is enabled. The [production-prompt comparison](../2026-09-20/history-production-prompt-v1/README.md)
+records 36 runtime-valid responses but includes semantic failures. These results
+do not establish general accuracy or justify replacing the production prompt.
+
+A separate [20-case comparison](../2026-09-20/extraction-authored-holdout-preparation-v1/README.md)
+uses the same managed provider and settings for both prompt arms, with its cases
+and ambiguity review frozen before execution. Its final results and semantic
+review remain pending at this checkpoint. Neither live settings nor the
+production extraction prompt have changed. Earlier negative results remain.
 
 Two subsequent extraction diagnostics preserve additional negative evidence.
 The [42-observation context comparison](../2026-09-20/history-context-diagnostic-v1/README.md)
