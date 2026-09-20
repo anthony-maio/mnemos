@@ -1,5 +1,24 @@
 # Functional local memory implementation record
 
+The [fixed Hermes v7 cohort](../2026-09-20/hermes-native-cohort-v7/README.md) on verified `1a11058`
+finished zero of three complete lifecycles. All three model-readiness checks
+passed with positive reported GPU residency, and all attempts established
+cleanup. Attempt 1 announced a correction without inspecting or correcting;
+attempt 2 passed correction and restarted recall, then announced an inspection
+without inspecting, previewing, or deleting; attempt 3 saved the fact and
+reported its pending receipt but omitted the required job-status check.
+No attempt reached a deletion receipt, source replay, or final recall.
+This does not establish whether the clearer coverage receipt improves model
+selection. The eight tools, prompts, capture, deadlines, and erasure gates
+retain the v6 criteria. Earlier cohorts and T18 results remain unchanged.
+
+The correction trace also returned older unverified conversation containing
+instructions not to change memory. That is an observed input, not proof of
+causation. A separate prospective diagnostic must distinguish context effects
+from general next-action omissions. Native mutation and forgetting, three-host
+continuity, complete capture, model-quality acceptance, Desktop, and the pilot
+remain open.
+
 The latest verified [deletion coverage checkpoint](../2026-09-19/forget-coverage-checkpoint-v1/README.md)
 at `1a11058` passes 1,439 source tests with 4 skips, all six
 source/package checks, 608 isolated installed cases with 4 matching
@@ -7,8 +26,8 @@ skips, and seven replay assertions. Related-forget receipts now report
 target-only or reviewed selection and retained exact, advisory, and eligible
 source counts within the validated preview at commit. Direct forget has no
 preview counts. Both explicitly leave semantic erasure unproven. Tool guidance
-asks the model to report that coverage. No native model has run this package;
-improved receipts do not establish better copy selection or reliable forgetting.
+asks the model to report that coverage. Native v7 ran this package and
+failed all three lifecycles before any deletion receipt was reached.
 Earlier native and model results retain their original runtime bindings.
 
 The [local model tool diagnostic](../2026-09-19/model-forget-development-v1/README.md) on installed

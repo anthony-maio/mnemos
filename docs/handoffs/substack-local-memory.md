@@ -12,6 +12,34 @@ Deliver an article draft, three possible titles, and a separate compact source/c
 
 ## Latest native result and portable primary sources
 
+The [fixed Hermes v7 cohort](../validation/2026-09-20/hermes-native-cohort-v7/README.md) on verified `1a11058`
+finished zero of three complete lifecycles. All three model-readiness checks
+passed with positive reported GPU residency, and all attempts established
+cleanup. Attempt 1 announced a correction without inspecting or correcting;
+attempt 2 passed correction and restarted recall, then announced an inspection
+without inspecting, previewing, or deleting; attempt 3 saved the fact and
+reported its pending receipt but omitted the required job-status check.
+No attempt reached a deletion receipt, source replay, or final recall.
+This does not establish whether the clearer coverage receipt improves model
+selection. The eight tools, prompts, capture, deadlines, and erasure gates
+retain the v6 criteria. Earlier cohorts and T18 results remain unchanged.
+
+The correction trace also returned older unverified conversation containing
+instructions not to change memory. That is an observed input, not proof of
+causation. A separate prospective diagnostic must distinguish context effects
+from general next-action omissions. Native mutation and forgetting, three-host
+continuity, complete capture, model-quality acceptance, Desktop, and the pilot
+remain open.
+
+The [captured-evidence contract review](../validation/2026-09-20/captured-evidence-contract-review.md)
+traces why whole conversations enter ordinary memory context when sleep
+extraction is disabled. They are labeled unverified, but share the returned
+fact channel. A proposed separation would preserve capture and expose raw
+history through explicit evidence review. It is not implemented, does not
+prove the cause of v7's omissions, and must not relax the stored-copy erasure
+checks. Exact provider request bodies were not recorded in v7, so replaying
+its public transcript cannot be called a faithful request reproduction.
+
 The [fixed Hermes v6 cohort](../validation/2026-09-19/hermes-native-cohort-v6/README.md)
 on verified `db932be` finished zero of three full lifecycles. All three
 passed teaching, restarted recall, correction, and restarted corrected
@@ -182,8 +210,8 @@ skips, and seven replay assertions. Related-forget receipts now report
 target-only or reviewed selection and retained exact, advisory, and eligible
 source counts within the validated preview at commit. Direct forget has no
 preview counts. Both explicitly leave semantic erasure unproven. Tool guidance
-asks the model to report that coverage. No native model has run this package;
-improved receipts do not establish better copy selection or reliable forgetting.
+asks the model to report that coverage. Native v7 ran this package and
+failed all three lifecycles before any deletion receipt was reached.
 Earlier native and model results retain their original runtime bindings.
 
 Wheel SHA-256: `4e3d16d00f7b9ab54fe1e5350f7cf0fbe6209dc881bfc6d7d9f974f1c3f697a5`.
@@ -191,7 +219,8 @@ The [four new regression cases](../../tests/test_forget_receipts.py) verify
 coverage without broadening deletion, preserve unselected advisory facts and
 foreign controls, and keep semantic erasure unproven even when no preview
 records remain. The direct GPT-OSS failure above motivated this change;
-whether a model uses the clearer receipt correctly remains untested.
+whether a model uses the clearer receipt correctly remains untested because
+none of the v7 attempts reached it.
 
 ## Previous source-selection rejection repair
 
@@ -381,7 +410,7 @@ Candidate examples for the article, with bounded evidence:
 | A Windows reader blocks atomic publication of a new runtime descriptor | Bounded sharing-error retries preserve the old descriptor until replacement succeeds | [Publication tests](../../tests/test_service_competing_recovery.py); actual Windows held-reader reproduction and persistent-failure checks |
 | Repeated Hermes callbacks reuse an ID but generate different timestamps | A private ledger retains first-observation timestamps across provider recreation; transcript prefixes distinguish repeated messages from replay | [Transcript identity regressions](../../tests/test_hermes_transcript_identity.py) and the installed API v2 record; arbitrary native transcript truncation and branching remain open |
 | A callback lacks a usable transcript | The service retains a separate provisional receipt without extracting facts from it | [Provisional capture regression](../../tests/test_hermes_provisional_capture.py) and installed API v2; receipt counts cannot establish independent observations or complete capture |
-| Hermes needs to correct or forget a specific fact | Provider tools enforce session scope, exact IDs and versions, and write request identities. Reviewed-copy preview/apply extends the original six tools to eight | [Tool regressions](../../tests/test_hermes_tools.py) and [reviewed-copy integration tests](../../tests/test_hermes_related_forget.py); older installed API v2 covers the original six. The native v6 cohort exercised both tools, but all three attempts failed at forgetting |
+| Hermes needs to correct or forget a specific fact | Provider tools enforce session scope, exact IDs and versions, and write request identities. Reviewed-copy preview/apply extends the original six tools to eight | [Tool regressions](../../tests/test_hermes_tools.py) and [reviewed-copy integration tests](../../tests/test_hermes_related_forget.py); older installed API v2 covers the original six. The native v6 cohort exercised both tools, but all three attempts failed at forgetting. The newer v7 cohort failed at correction, forgetting, and teaching respectively, without reaching preview/apply |
 | Another client corrects or forgets a fact after Hermes retrieves it | Each ordinary prefetch reads the current service result | Same Hermes tests include a real service/SQLite correction-and-forget check; this removes a stale query cache but does not establish every native host lifecycle |
 
 Choose the examples that support the narrative. This table is an evidence map,
@@ -393,5 +422,5 @@ not a requirement to recount every implementation detail in the article.
 - [ ] Record final host continuity, latency, capture coverage, and pilot status without collapsing the separate gates.
 - [ ] Identify which quantitative claims can be used, with units, sample sizes, settings, uncertainty where available, and limitations.
 - [ ] Verify original website/paper claims against primary sources and link the dated corrections.
-- [x] Prepare a portable working packet with this handoff, the selected voice skill, key reports, regression examples, and a file manifest. Refresh that packet at final acceptance. The portable v12 packet includes terminal encoding/retrieval reports, the two earlier native lifecycle failures, all four fixed-cohort runs (all twelve attempts failed), the deletion coverage and source-selection repair evidence, the six-case development diagnostic and model readiness records, the affective fidelity review, and dated website/paper snapshots. Some older evidence links still require the full checkout. Local validation artifacts are research inputs; public citations require accessible sources.
+- [x] Prepare a portable working packet with this handoff, the selected voice skill, key reports, regression examples, and a file manifest. Refresh that packet at final acceptance. The portable v13 packet includes terminal encoding/retrieval reports, the two earlier native lifecycle failures, all five fixed-cohort runs (all fifteen attempts failed), the deletion coverage and source-selection repair evidence, the six-case development diagnostic and model readiness records, the affective fidelity review, and dated website/paper snapshots. Some older evidence links still require the full checkout. Local validation artifacts are research inputs; public citations require accessible sources.
 - [ ] Keep unverified interpretations and questions outside the article's factual claims, then make the final voice pass using Anthony's skill.

@@ -56,3 +56,10 @@ native related-copy selection and erasure, three-host continuity, real-model
 quality acceptance, Desktop, and the pilot remain open. Live host settings
 and live memory were unchanged. The evidence index binds 48 raw files;
 this interpretive README is outside that index.
+
+## Subsequent native observation, September 20
+
+The [v7 cohort](../../2026-09-20/hermes-native-cohort-v7/README.md) ran this
+verified package and failed all three lifecycles before any deletion receipt
+was reached. All readiness checks and cleanup passed. This later observation
+does not alter the package-check results or establish receipt effectiveness.
