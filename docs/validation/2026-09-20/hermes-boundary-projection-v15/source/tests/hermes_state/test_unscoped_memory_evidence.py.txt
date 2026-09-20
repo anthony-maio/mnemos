@@ -1,0 +1,54 @@
+import tempfile
+from pathlib import Path
+
+import pytest
+
+from hermes_state import SessionDB
+
+
+def _db(cwd=None):
+    root = Path(tempfile.mkdtemp())
+    db = SessionDB(root / "state.db")
+    db.create_session("s", "cli", cwd=cwd, model="test/model")
+    return db
+
+
+def test_unscoped_ordinary_compression_rows_remain_transcript_only():
+    db = _db(None)
+    db.append_message("s", "user", "hello")
+    assert db.get_memory_evidence("s") == []
+
+
+def test_unscoped_hybrid_compression_row_remains_transcript_only():
+    db = _db(None)
+    messages = [{
+        "role": "user", "content": "summary\noriginal",
+        "_compressed_summary": True, "_compressed_summary_has_user_turn": True,
+    }]
+    db.archive_and_compact("s", messages)
+    assert db.get_messages_as_conversation("s")[-1]["content"] == "summary\noriginal"
+    assert db.get_memory_evidence("s") == []
+
+
+def test_unscoped_repeated_compaction_preserves_transcript_without_evidence():
+    db = _db(None)
+    db.append_message("s", "user", "before")
+    db.archive_and_compact("s", [{
+        "role": "user", "content": "first summary",
+        "_compressed_summary": True,
+    }])
+    db.archive_and_compact("s", [{
+        "role": "user", "content": "second summary",
+        "_compressed_summary": True,
+    }])
+    assert [row["content"] for row in db.get_messages("s")] == ["second summary"]
+    assert db.get_memory_evidence("s") == []
+
+
+def test_scoped_hybrid_without_verified_origin_is_rejected():
+    db = _db("/tmp/project")
+    with pytest.raises(ValueError, match="verified original origin"):
+        db.archive_and_compact("s", [{
+            "role": "user", "content": "summary\noriginal",
+            "_compressed_summary": True, "_compressed_summary_has_user_turn": True,
+        }])

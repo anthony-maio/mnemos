@@ -1,0 +1,43 @@
+from pathlib import Path
+root = Path('/tmp/mnemos-hermes-compaction-origin-candidate-v1')
+p = root / 'tests/hermes_cli/test_boundary_persistence_root.py'
+s = p.read_text()
+assert 'test_new_accepts_durable_content_projection' not in s
+s += '''
+
+@pytest.mark.parametrize('content', [
+    ' hello ',
+    [{'type': 'text', 'text': 'describe'}, {'type': 'image_url', 'image_url': {'url': 'data:image/png;base64,fixture'}}],
+])
+def test_new_accepts_durable_content_projection(boundary, content):
+    cli, agent, db, _ = boundary
+    cli.conversation_history = [{'role': 'user', 'content': content}]
+    assert agent._flush_messages_to_session_db(cli.conversation_history, conversation_history=[]) is True
+    before = db.get_messages('old')
+    reset(cli)
+    assert cli.session_id != 'old'
+    assert db.get_messages('old') == before
+
+
+def test_new_does_not_skip_changed_tool_name(boundary):
+    cli, agent, db, notifications = boundary
+    original = {'role': 'tool', 'content': 'ok', 'tool_name': 'read_file', 'tool_call_id': 'call1'}
+    assert agent._flush_messages_to_session_db([original], conversation_history=[]) is True
+    history = [{**original, 'tool_name': 'write_file'}]
+    cli.conversation_history = history.copy()
+    reset(cli)
+    assert_retained(cli, db, notifications, history)
+    assert db.get_messages('old')[0]['tool_name'] == 'read_file'
+
+
+def test_new_accepts_restored_sanitized_projection(boundary):
+    cli, agent, db, _ = boundary
+    db.append_message('old', 'user', ' hello ')
+    cli.conversation_history = db.get_messages_as_conversation('old', include_row_ids=True)
+    assert cli.conversation_history[0]['content'] == 'hello'
+    before = db.get_messages('old')
+    reset(cli)
+    assert cli.session_id != 'old'
+    assert db.get_messages('old') == before
+'''
+p.write_text(s)

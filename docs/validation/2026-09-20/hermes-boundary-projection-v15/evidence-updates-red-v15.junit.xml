@@ -1,0 +1,70 @@
+<?xml version="1.0" encoding="utf-8"?><testsuites name="pytest tests"><testsuite name="pytest" errors="0" failures="2" skipped="0" tests="2" time="0.320" timestamp="2026-09-20T15:30:17.266907-04:00" hostname="Aurora"><testcase classname="tests.hermes_state.test_evidence_legitimate_updates" name="test_recovered_blank_assistant_has_durable_evidence" time="0.046"><failure message="AssertionError: assert [] == [(1, 'The fin...med answer.')]&#10;  &#10;  Right contains one more item: (1, 'The final streamed answer.')&#10;  Use -v to get more diff">tmp_path = PosixPath('/tmp/pytest-of-anthony/pytest-76/test_recovered_blank_assistant0')
+
+    def test_recovered_blank_assistant_has_durable_evidence(tmp_path):
+        db = SessionDB(tmp_path / 'state.db')
+        try:
+            db.create_session('session', 'cli', cwd=str(tmp_path))
+            row = {'role': 'assistant', 'content': ''}
+            assert db.append_messages_batch('session', [row]) == 1
+            row_id = row['_row_id']
+            row['content'] = 'The final streamed answer.'
+            assert db.append_messages_batch('session', [row]) == 0
+            assert len(db.get_messages('session')) == 1
+            evidence = db.get_memory_evidence('session')
+&gt;           assert [(r['_row_id'], r['content']) for r in evidence] == [(row_id, row['content'])]
+E           AssertionError: assert [] == [(1, 'The fin...med answer.')]
+E             
+E             Right contains one more item: (1, 'The final streamed answer.')
+E             Use -v to get more diff
+
+tests/hermes_state/test_evidence_legitimate_updates.py:15: AssertionError</failure></testcase><testcase classname="tests.hermes_state.test_evidence_legitimate_updates" name="test_legitimate_user_expansion_refreshes_evidence" time="0.054"><failure message="ValueError: retained memory evidence component no longer matches its source">tmp_path = PosixPath('/tmp/pytest-of-anthony/pytest-76/test_legitimate_user_expansion0')
+
+    def test_legitimate_user_expansion_refreshes_evidence(tmp_path):
+        db = SessionDB(tmp_path / 'state.db')
+        try:
+            db.create_session('session', 'cli', cwd=str(tmp_path))
+            row_id = db.append_message('session', 'user', 'Read @notes')
+            expanded = 'Read @notes\nResolved local notes content.'
+            assert db.set_user_message_content('session', row_id, expanded) == 1
+            assert db.get_messages('session')[0]['content'] == expanded
+&gt;           evidence = db.get_memory_evidence('session')
+                       ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+tests/hermes_state/test_evidence_legitimate_updates.py:28: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+hermes_state_messages.py:1490: in get_memory_evidence
+    self._validate_component_read(session_id, component_dict)
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = &lt;hermes_state.SessionDB object at 0x7d70d91e6b90&gt;
+current_session_id = 'session'
+component = {'component_ordinal': 0, 'component_kind': 'retained_original', 'role': 'user', 'content': 'Read @notes', ...}
+
+    def _validate_component_read(self, current_session_id: str, component: Dict[str, Any]) -&gt; None:
+        origin_session = str(component["origin_session_id"])
+        origin_row = int(component["origin_row_id"])
+        origin_cwd = str(component["origin_cwd"])
+        if not origin_cwd.strip():
+            raise ValueError("memory evidence component origin has no verified cwd")
+        source = self._read_one(
+            "SELECT session_id, role, content, _compressed_summary, _compressed_summary_has_user_turn FROM messages WHERE id = ?",
+            (origin_row,),
+        )
+        if source is None or str(source["session_id"]) != origin_session:
+            raise ValueError("memory evidence component origin row is missing")
+        lineage = self._read_one(
+            "WITH RECURSIVE lineage(id) AS (SELECT ? UNION ALL "
+            "SELECT parent_session_id FROM sessions JOIN lineage ON sessions.id = lineage.id "
+            "WHERE parent_session_id IS NOT NULL) SELECT 1 FROM lineage WHERE id = ? LIMIT 1",
+            (current_session_id, origin_session),
+        )
+        if lineage is None:
+            raise ValueError("memory evidence component origin is outside the session lineage")
+        role = str(component["role"])
+        content = self._decode_content(component["content"])
+        if component["component_kind"] == "retained_original":
+            if str(source["role"]) != role or _canonical_memory_text(self._decode_content(source["content"])) != _canonical_memory_text(content):
+&gt;               raise ValueError("retained memory evidence component no longer matches its source")
+E               ValueError: retained memory evidence component no longer matches its source
+
+hermes_state_messages.py:1422: ValueError</failure></testcase></testsuite></testsuites>

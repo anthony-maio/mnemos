@@ -1,0 +1,31 @@
+from hermes_state import SessionDB
+
+
+def test_recovered_blank_assistant_has_durable_evidence(tmp_path):
+    db = SessionDB(tmp_path / 'state.db')
+    try:
+        db.create_session('session', 'cli', cwd=str(tmp_path))
+        row = {'role': 'assistant', 'content': ''}
+        assert db.append_messages_batch('session', [row]) == 1
+        row_id = row['_row_id']
+        row['content'] = 'The final streamed answer.'
+        assert db.append_messages_batch('session', [row]) == 0
+        assert len(db.get_messages('session')) == 1
+        evidence = db.get_memory_evidence('session')
+        assert [(r['_row_id'], r['content']) for r in evidence] == [(row_id, row['content'])]
+    finally:
+        db.close()
+
+
+def test_legitimate_user_expansion_refreshes_evidence(tmp_path):
+    db = SessionDB(tmp_path / 'state.db')
+    try:
+        db.create_session('session', 'cli', cwd=str(tmp_path))
+        row_id = db.append_message('session', 'user', 'Read @notes')
+        expanded = 'Read @notes\nResolved local notes content.'
+        assert db.set_user_message_content('session', row_id, expanded) == 1
+        assert db.get_messages('session')[0]['content'] == expanded
+        evidence = db.get_memory_evidence('session')
+        assert [(r['_row_id'], r['content']) for r in evidence] == [(row_id, expanded)]
+    finally:
+        db.close()

@@ -12,22 +12,22 @@ Deliver an article draft, three possible titles, and a separate compact source/c
 
 ## Read this first
 
-The [Hermes boundary regression audit](../validation/2026-09-20/hermes-boundary-regressions-v12/README.md)
-records a passing actual /new probe for previously unsaved messages and
-corrupted-evidence suppression, plus nine targeted boundary tests. The broader
-89-case selection found five regressions; the untouched host base passes all
-31 cases in the two affected files. Restoring ordinary row-ID stamping fixes
-four. Unscoped compression and further boundary compatibility checks remain
-under repair. These are isolated host candidates, not a live host upgrade.
+The [latest package checkpoint](../validation/2026-09-20/generation-settings-checkpoint-v1/README.md)
+is 05c71d2: 2,005 source tests, 804 isolated installed cases, four skips in
+each, all six source/package checks, and seven replay assertions pass.
+Structured reasoning uses the chat final-content channel; managed token,
+timeout, and temperature settings retain their prior defaults. This unchanged
+source rerun does not establish the cause of the original Windows replacement
+failure, which remains [preserved](../validation/2026-09-20/generation-settings-source-failure-v1/README.md).
 
-The [structured reasoning and settings checks](../validation/2026-09-20/structured-reasoning-development-v1/README.md)
-bind the chat-route correction and configurable local generation budgets.
-The intermediate e28a846 checkpoint passes all six source/package checks.
-The newer 05c71d2 full suite first recorded 2,004 passes, four skips, and one
-Windows replacement failure; its [original failure and diagnostic](../validation/2026-09-20/generation-settings-source-failure-v1/README.md)
-remain preserved. A fresh unchanged-source full run passes 2,005 tests with
-four skips. Build and installed-package validation are still pending; the
-latest fully source-and-installed verified package remains 244613a.
+The [latest isolated Hermes candidate](../validation/2026-09-20/hermes-boundary-projection-v15/README.md)
+passes 96 of 99 combined boundary/persistence cases. Ordinary row-ID stamping
+and /new content-projection handling are repaired; the 20-case focused CLI
+selection passes. Three failures remain: compression rotation without verified
+original provenance, missing evidence after blank assistant recovery, and stale
+evidence after legitimate user-content expansion. A narrower unscoped-row
+repair does not close the compression regression. All preceding failures,
+base comparisons, and patches remain preserved. No live host upgrade is claimed.
 
 The [36-call chat comparison](../validation/2026-09-20/history-chat-development-v1/README.md)
 completes all twelve authored cases across three repetitions with no runtime

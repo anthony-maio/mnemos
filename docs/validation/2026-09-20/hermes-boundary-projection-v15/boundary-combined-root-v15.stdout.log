@@ -1,0 +1,189 @@
+........................................................................ [ 72%]
+............F............FF                                              [100%]
+=================================== FAILURES ===================================
+_ TestFlushAfterCompression.test_rotation_child_session_flushes_full_compressed_transcript_with_markers _
+
+self = <tests.agent.test_compression_persistence.TestFlushAfterCompression object at 0x7ebcf08e7790>
+
+    def test_rotation_child_session_flushes_full_compressed_transcript_with_markers(self):
+        """Regression for #57491: live cached-agent markers must not block child flush."""
+        from agent.conversation_compression import compress_context
+        from hermes_state import SessionDB
+    
+        with tempfile.TemporaryDirectory() as tmpdir:
+            db_path = Path(tmpdir) / "test.db"
+            db = SessionDB(db_path=db_path)
+            parent_sid = "20260701_152840_parent"
+            db.create_session(parent_sid, "gateway", model="test/model")
+    
+            agent = self._make_agent(db)
+            agent.session_id = parent_sid
+            agent.compression_in_place = False
+            agent._ensure_db_session()
+    
+            # Plain marked messages only: the exact-equality assertion below
+            # relies on `compressed` containing no message that _flush filters
+            # for a reason INDEPENDENT of _db_persisted (ephemeral scaffolding,
+            # synthetic recovery turns). Keep this fixture free of such messages
+            # or the row count would legitimately differ from len(compressed).
+            # The transcript must also be large enough that the provider-less
+            # static fallback net-shrinks it (middle drops must outweigh the
+            # fixed compaction marker overhead), or the no-growth commit guard
+            # correctly refuses the rotation this test exercises. Sized for
+            # the lean tail default: the 10K-token tail floor must leave a
+            # substantial compressible middle (~2K chars/message × 40 ≈ 20K
+            # estimated tokens total).
+            messages = [
+                {
+                    "role": "user" if i % 2 == 0 else "assistant",
+                    "content": f"message {i} " + "x" * 2000,
+                    "_db_persisted": True,
+                }
+                for i in range(40)
+            ]
+    
+            with patch("agent.context_compressor.call_llm", side_effect=RuntimeError("no provider")):
+                compressed, _ = compress_context(
+                    agent, messages, approx_tokens=100_000, system_message="sys"
+                )
+    
+>           assert agent.session_id != parent_sid
+E           AssertionError: assert '20260701_152840_parent' != '20260701_152840_parent'
+E            +  where '20260701_152840_parent' = <run_agent.AIAgent object at 0x7ebcd4b0f790>.session_id
+
+tests/agent/test_compression_persistence.py:320: AssertionError
+----------------------------- Captured stdout call -----------------------------
+🗜️ Compacting context — summarizing earlier conversation so I can continue...
+⚠ No auxiliary LLM provider configured: Hermes has no helper model for summarising long chats, so older messages will be cut without a summary. Run `hermes setup` to add one.
+⚠ Compression summary failed: no provider. Inserted a fallback context marker.
+------------------------------ Captured log call -------------------------------
+INFO     run_agent:agent_runtime_helpers.py:1841 OpenAI client created (agent_init, shared=True) thread=MainThread:139350019819328 provider= base_url=https://openrouter.ai/api/v1 model=test/model
+INFO     hermes_cli.plugins:plugins.py:382 Plugin 'browser-browser-use' registered browser provider: browser-use
+INFO     hermes_cli.plugins:plugins.py:382 Plugin 'browser-browserbase' registered browser provider: browserbase
+INFO     hermes_cli.plugins:plugins.py:382 Plugin 'browser-firecrawl' registered browser provider: firecrawl
+INFO     hermes_cli.plugins:plugins.py:382 Plugin 'deepinfra' registered image_gen provider: deepinfra
+INFO     hermes_cli.plugins:plugins.py:382 Plugin 'fal' registered image_gen provider: fal
+INFO     hermes_cli.plugins:plugins.py:382 Plugin 'krea' registered image_gen provider: krea
+INFO     hermes_cli.plugins:plugins.py:382 Plugin 'meta-ai-image-gen' registered image_gen provider: meta-ai
+INFO     hermes_cli.plugins:plugins.py:382 Plugin 'openai' registered image_gen provider: openai
+INFO     hermes_cli.plugins:plugins.py:382 Plugin 'openai-codex' registered image_gen provider: openai-codex
+INFO     hermes_cli.plugins:plugins.py:382 Plugin 'openrouter' registered image_gen provider: openrouter
+INFO     hermes_cli.plugins:plugins.py:382 Plugin 'openrouter' registered image_gen provider: nous
+INFO     hermes_cli.plugins:plugins.py:382 Plugin 'xai' registered image_gen provider: xai
+INFO     hermes_cli.plugins:plugins.py:382 Plugin 'deepinfra' registered video_gen provider: deepinfra
+INFO     hermes_cli.plugins:plugins.py:382 Plugin 'fal' registered video_gen provider: fal
+INFO     hermes_cli.plugins:plugins.py:382 Plugin 'openrouter' registered video_gen provider: openrouter
+INFO     hermes_cli.plugins:plugins.py:382 Plugin 'xai' registered video_gen provider: xai
+INFO     hermes_cli.plugins:plugins.py:382 Plugin 'web-brave-free' registered web provider: brave-free
+INFO     hermes_cli.plugins:plugins.py:382 Plugin 'web-ddgs' registered web provider: ddgs
+INFO     hermes_cli.plugins:plugins.py:382 Plugin 'web-exa' registered web provider: exa
+INFO     hermes_cli.plugins:plugins.py:382 Plugin 'web-firecrawl' registered web provider: firecrawl
+INFO     hermes_cli.plugins:plugins.py:382 Plugin 'web-keenable' registered web provider: keenable
+INFO     hermes_cli.plugins:plugins.py:382 Plugin 'web-parallel' registered web provider: parallel
+INFO     hermes_cli.plugins:plugins.py:382 Plugin 'web-perplexity' registered web provider: perplexity
+INFO     hermes_cli.plugins:plugins.py:382 Plugin 'web-searxng' registered web provider: searxng
+INFO     hermes_cli.plugins:plugins.py:382 Plugin 'web-tavily' registered web provider: tavily
+INFO     hermes_cli.plugins:plugins.py:382 Plugin 'web-xai' registered web provider: xai
+INFO     hermes_cli.plugins:plugins.py:1345 Plugin discovery complete: 58 found, 52 enabled
+INFO     tools.registry:registry.py:375 check_fn _a2a_tools_available returned False; dependent tools will be unavailable this turn
+INFO     agent.credential_pool:credential_pool.py:1813 credential pool: no available entries (all exhausted or empty)
+INFO     tools.tool_search:tool_search.py:368 tool_search activated (tier 1): 22 core/visible tools kept, 17 deferred (~6353 tokens), listing full (budget ~4000 tokens)
+INFO     agent.conversation_compression:conversation_compression.py:3848 context compression started: session=20260701_152840_parent messages=40 tokens=~100,000 model=test/model focus=None
+WARNING  agent.auxiliary_client:auxiliary_client.py:2292 Auxiliary Nous client unavailable: no Nous authentication found (run: hermes auth).
+WARNING  agent.credential_pool:credential_pool.py:2340 Copilot token exchange degraded to RAW token (exchange unavailable); enterprise-only models may 400 with model_not_available_for_integrator until exchange recovers.
+WARNING  agent.auxiliary_client:auxiliary_client.py:4499 Auxiliary auto-detect: no provider available (tried: openrouter, nous, local/custom, api-key). Compression, summarization, and memory flush will not work. Set OPENROUTER_API_KEY or configure a local model in config.yaml.
+WARNING  agent.conversation_compression:conversation_compression.py:2016 No auxiliary LLM provider for compression — summaries will be unavailable.
+INFO     agent.context_compressor:context_compressor.py:3396 Compression summary call dispatched: model=test/model prompt_chars=24,105 prompt_build_ms=1
+WARNING  agent.context_compressor:context_compressor.py:3700 Failed to generate context summary: no provider. Further summary attempts paused for 60 seconds.
+INFO     hermes_cli.mem_trim:mem_trim.py:179 memory trim: reason=post-compression malloc_trim=1 rss_kib=261180->244616 rss_anon_kib=234140->217576 threads=8 duration_ms=99.2
+WARNING  agent.conversation_compression:conversation_compression.py:3662 Compression rotation aborted and rolled back to the parent session (20260701_152840_parent): hybrid memory evidence requires a verified original origin
+INFO     agent.conversation_compression:conversation_compression.py:4035 context compression done: session=20260701_152840_parent messages=40->40 rough_tokens=~32,973 awaiting_real_usage=true
+INFO     agent.conversation_compression:conversation_compression.py:1398 context compression attempt telemetry: {"attempt_id":"6a19775a7047495397c0df5f581ecb94","chunk_count":0,"chunking":false,"commit_ms":4,"commit_status":"aborted","event":"compression_attempt","failure_class":"session_split_failed","fallback_used":false,"session_id":"20260701_152840_parent","split_status":"aborted","total_duration_ms":526}
+---------------------------- Captured log teardown -----------------------------
+ERROR    hermes_state:hermes_state.py:1338 Could not capture the retired WAL generation of /tmp/tmpzh7t_9m5/test.db at close: cannot read the main image header of /tmp/tmpzh7t_9m5/test.db. The handle stays open and close() retries the capture; those frames are NOT yet preserved.
+_____________ test_recovered_blank_assistant_has_durable_evidence ______________
+
+tmp_path = PosixPath('/tmp/pytest-of-anthony/pytest-79/test_recovered_blank_assistant0')
+
+    def test_recovered_blank_assistant_has_durable_evidence(tmp_path):
+        db = SessionDB(tmp_path / 'state.db')
+        try:
+            db.create_session('session', 'cli', cwd=str(tmp_path))
+            row = {'role': 'assistant', 'content': ''}
+            assert db.append_messages_batch('session', [row]) == 1
+            row_id = row['_row_id']
+            row['content'] = 'The final streamed answer.'
+            assert db.append_messages_batch('session', [row]) == 0
+            assert len(db.get_messages('session')) == 1
+            evidence = db.get_memory_evidence('session')
+>           assert [(r['_row_id'], r['content']) for r in evidence] == [(row_id, row['content'])]
+E           AssertionError: assert [] == [(1, 'The fin...med answer.')]
+E             
+E             Right contains one more item: (1, 'The final streamed answer.')
+E             Use -v to get more diff
+
+tests/hermes_state/test_evidence_legitimate_updates.py:15: AssertionError
+---------------------------- Captured log teardown -----------------------------
+ERROR    hermes_state:hermes_state.py:1338 Could not capture the retired WAL generation of /tmp/tmpzh7t_9m5/test.db at close: cannot read the main image header of /tmp/tmpzh7t_9m5/test.db. The handle stays open and close() retries the capture; those frames are NOT yet preserved.
+ERROR    hermes_state:hermes_state.py:1338 Could not capture the retired WAL generation of /tmp/tmpd7qubpvl/test.db at close: cannot read the main image header of /tmp/tmpd7qubpvl/test.db. The handle stays open and close() retries the capture; those frames are NOT yet preserved.
+______________ test_legitimate_user_expansion_refreshes_evidence _______________
+
+tmp_path = PosixPath('/tmp/pytest-of-anthony/pytest-79/test_legitimate_user_expansion0')
+
+    def test_legitimate_user_expansion_refreshes_evidence(tmp_path):
+        db = SessionDB(tmp_path / 'state.db')
+        try:
+            db.create_session('session', 'cli', cwd=str(tmp_path))
+            row_id = db.append_message('session', 'user', 'Read @notes')
+            expanded = 'Read @notes\nResolved local notes content.'
+            assert db.set_user_message_content('session', row_id, expanded) == 1
+            assert db.get_messages('session')[0]['content'] == expanded
+>           evidence = db.get_memory_evidence('session')
+                       ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+tests/hermes_state/test_evidence_legitimate_updates.py:28: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+hermes_state_messages.py:1490: in get_memory_evidence
+    self._validate_component_read(session_id, component_dict)
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+self = <hermes_state.SessionDB object at 0x7ebcdcb69e10>
+current_session_id = 'session'
+component = {'component_ordinal': 0, 'component_kind': 'retained_original', 'role': 'user', 'content': 'Read @notes', ...}
+
+    def _validate_component_read(self, current_session_id: str, component: Dict[str, Any]) -> None:
+        origin_session = str(component["origin_session_id"])
+        origin_row = int(component["origin_row_id"])
+        origin_cwd = str(component["origin_cwd"])
+        if not origin_cwd.strip():
+            raise ValueError("memory evidence component origin has no verified cwd")
+        source = self._read_one(
+            "SELECT session_id, role, content, _compressed_summary, _compressed_summary_has_user_turn FROM messages WHERE id = ?",
+            (origin_row,),
+        )
+        if source is None or str(source["session_id"]) != origin_session:
+            raise ValueError("memory evidence component origin row is missing")
+        lineage = self._read_one(
+            "WITH RECURSIVE lineage(id) AS (SELECT ? UNION ALL "
+            "SELECT parent_session_id FROM sessions JOIN lineage ON sessions.id = lineage.id "
+            "WHERE parent_session_id IS NOT NULL) SELECT 1 FROM lineage WHERE id = ? LIMIT 1",
+            (current_session_id, origin_session),
+        )
+        if lineage is None:
+            raise ValueError("memory evidence component origin is outside the session lineage")
+        role = str(component["role"])
+        content = self._decode_content(component["content"])
+        if component["component_kind"] == "retained_original":
+            if str(source["role"]) != role or _canonical_memory_text(self._decode_content(source["content"])) != _canonical_memory_text(content):
+>               raise ValueError("retained memory evidence component no longer matches its source")
+E               ValueError: retained memory evidence component no longer matches its source
+
+hermes_state_messages.py:1422: ValueError
+---------------------------- Captured log teardown -----------------------------
+ERROR    hermes_state:hermes_state.py:1338 Could not capture the retired WAL generation of /tmp/tmpzh7t_9m5/test.db at close: cannot read the main image header of /tmp/tmpzh7t_9m5/test.db. The handle stays open and close() retries the capture; those frames are NOT yet preserved.
+ERROR    hermes_state:hermes_state.py:1338 Could not capture the retired WAL generation of /tmp/tmpd7qubpvl/test.db at close: cannot read the main image header of /tmp/tmpd7qubpvl/test.db. The handle stays open and close() retries the capture; those frames are NOT yet preserved.
+=========================== short test summary info ============================
+FAILED tests/agent/test_compression_persistence.py::TestFlushAfterCompression::test_rotation_child_session_flushes_full_compressed_transcript_with_markers
+FAILED tests/hermes_state/test_evidence_legitimate_updates.py::test_recovered_blank_assistant_has_durable_evidence
+FAILED tests/hermes_state/test_evidence_legitimate_updates.py::test_legitimate_user_expansion_refreshes_evidence
+3 failed, 96 passed in 18.54s

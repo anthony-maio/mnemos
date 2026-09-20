@@ -1,0 +1,98 @@
+.........FFF.                                                            [100%]
+=================================== FAILURES ===================================
+_____________ test_new_accepts_durable_content_projection[ hello ] _____________
+
+boundary = (<hermes_cli.cli_session_mixin.CLISessionMixin object at 0x7594b393a110>, <run_agent.AIAgent object at 0x7594b393b8d0>, <hermes_state.SessionDB object at 0x7594b3968450>, [])
+content = ' hello '
+
+    @pytest.mark.parametrize('content', [
+        ' hello ',
+        [{'type': 'text', 'text': 'describe'}, {'type': 'image_url', 'image_url': {'url': 'data:image/png;base64,fixture'}}],
+    ])
+    def test_new_accepts_durable_content_projection(boundary, content):
+        cli, agent, db, _ = boundary
+        cli.conversation_history = [{'role': 'user', 'content': content}]
+        assert agent._flush_messages_to_session_db(cli.conversation_history, conversation_history=[]) is True
+        before = db.get_messages('old')
+        reset(cli)
+>       assert cli.session_id != 'old'
+E       AssertionError: assert 'old' != 'old'
+E        +  where 'old' = <hermes_cli.cli_session_mixin.CLISessionMixin object at 0x7594b393a110>.session_id
+
+tests/hermes_cli/test_boundary_persistence_root.py:161: AssertionError
+----------------------------- Captured stdout call -----------------------------
+The current conversation could not be saved. Your session is still open.
+------------------------------ Captured log call -------------------------------
+WARNING  hermes_cli.cli_session_mixin:cli_session_mixin.py:544 New session postponed: transcript persistence could not be verified
+Traceback (most recent call last):
+  File "/tmp/mnemos-hermes-compaction-origin-candidate-v1/hermes_cli/cli_session_mixin.py", line 539, in new_session
+    durable_prefix = _durable_boundary_history(
+                     ^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/tmp/mnemos-hermes-compaction-origin-candidate-v1/hermes_cli/cli_session_mixin.py", line 61, in _durable_boundary_history
+    raise ValueError("session boundary history does not match its durable prefix")
+ValueError: session boundary history does not match its durable prefix
+____________ test_new_accepts_durable_content_projection[content1] _____________
+
+boundary = (<hermes_cli.cli_session_mixin.CLISessionMixin object at 0x7594b37a5610>, <run_agent.AIAgent object at 0x7594b3968490>, <hermes_state.SessionDB object at 0x7594b3923150>, [])
+content = [{'type': 'text', 'text': 'describe'}, {'type': 'image_url', 'image_url': {'url': 'data:image/png;base64,fixture'}}]
+
+    @pytest.mark.parametrize('content', [
+        ' hello ',
+        [{'type': 'text', 'text': 'describe'}, {'type': 'image_url', 'image_url': {'url': 'data:image/png;base64,fixture'}}],
+    ])
+    def test_new_accepts_durable_content_projection(boundary, content):
+        cli, agent, db, _ = boundary
+        cli.conversation_history = [{'role': 'user', 'content': content}]
+        assert agent._flush_messages_to_session_db(cli.conversation_history, conversation_history=[]) is True
+        before = db.get_messages('old')
+        reset(cli)
+>       assert cli.session_id != 'old'
+E       AssertionError: assert 'old' != 'old'
+E        +  where 'old' = <hermes_cli.cli_session_mixin.CLISessionMixin object at 0x7594b37a5610>.session_id
+
+tests/hermes_cli/test_boundary_persistence_root.py:161: AssertionError
+----------------------------- Captured stdout call -----------------------------
+The current conversation could not be saved. Your session is still open.
+------------------------------ Captured log call -------------------------------
+WARNING  hermes_cli.cli_session_mixin:cli_session_mixin.py:544 New session postponed: transcript persistence could not be verified
+Traceback (most recent call last):
+  File "/tmp/mnemos-hermes-compaction-origin-candidate-v1/hermes_cli/cli_session_mixin.py", line 539, in new_session
+    durable_prefix = _durable_boundary_history(
+                     ^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/tmp/mnemos-hermes-compaction-origin-candidate-v1/hermes_cli/cli_session_mixin.py", line 61, in _durable_boundary_history
+    raise ValueError("session boundary history does not match its durable prefix")
+ValueError: session boundary history does not match its durable prefix
+___________________ test_new_does_not_skip_changed_tool_name ___________________
+
+boundary = (<hermes_cli.cli_session_mixin.CLISessionMixin object at 0x7594b3826ed0>, <run_agent.AIAgent object at 0x7594b3826e90>, <hermes_state.SessionDB object at 0x7594b3939190>, ['on_session_finalize', 'on_session_reset'])
+
+    def test_new_does_not_skip_changed_tool_name(boundary):
+        cli, agent, db, notifications = boundary
+        original = {'role': 'tool', 'content': 'ok', 'tool_name': 'read_file', 'tool_call_id': 'call1'}
+        assert agent._flush_messages_to_session_db([original], conversation_history=[]) is True
+        history = [{**original, 'tool_name': 'write_file'}]
+        cli.conversation_history = history.copy()
+        reset(cli)
+>       assert_retained(cli, db, notifications, history)
+
+tests/hermes_cli/test_boundary_persistence_root.py:172: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+cli = <hermes_cli.cli_session_mixin.CLISessionMixin object at 0x7594b3826ed0>
+db = <hermes_state.SessionDB object at 0x7594b3939190>
+notifications = ['on_session_finalize', 'on_session_reset']
+history = [{'role': 'tool', 'content': 'ok', 'tool_name': 'write_file', 'tool_call_id': 'call1', ...}]
+
+    def assert_retained(cli, db, notifications, history):
+>       assert cli.session_id == cli.agent.session_id == 'old'
+E       AssertionError: assert '20260920_152547_28b004' == 'old'
+E         
+E         - old
+E         + 20260920_152547_28b004
+
+tests/hermes_cli/test_boundary_persistence_root.py:50: AssertionError
+=========================== short test summary info ============================
+FAILED tests/hermes_cli/test_boundary_persistence_root.py::test_new_accepts_durable_content_projection[ hello ]
+FAILED tests/hermes_cli/test_boundary_persistence_root.py::test_new_accepts_durable_content_projection[content1]
+FAILED tests/hermes_cli/test_boundary_persistence_root.py::test_new_does_not_skip_changed_tool_name
+3 failed, 10 passed in 1.19s

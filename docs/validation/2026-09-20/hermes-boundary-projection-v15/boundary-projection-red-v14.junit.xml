@@ -1,0 +1,61 @@
+<?xml version="1.0" encoding="utf-8"?><testsuites name="pytest tests"><testsuite name="pytest" errors="0" failures="3" skipped="0" tests="13" time="1.186" timestamp="2026-09-20T15:25:46.814565-04:00" hostname="Aurora"><testcase classname="tests.hermes_cli.test_boundary_persistence_root" name="test_new_saves_uncommitted_message_before_rotating" time="0.189" /><testcase classname="tests.hermes_cli.test_boundary_persistence_root" name="test_new_does_not_duplicate_actual_previously_flushed_rows" time="0.022" /><testcase classname="tests.hermes_cli.test_boundary_persistence_root" name="test_new_preserves_legacy_prefix_and_identical_new_suffix" time="0.023" /><testcase classname="tests.hermes_cli.test_boundary_persistence_root" name="test_new_rejects_foreign_row_identity_without_reset" time="0.024" /><testcase classname="tests.hermes_cli.test_boundary_persistence_root" name="test_new_rejects_unverified_persisted_marker" time="0.022" /><testcase classname="tests.hermes_cli.test_boundary_persistence_root" name="test_new_keeps_session_when_projection_read_fails" time="0.024" /><testcase classname="tests.hermes_cli.test_boundary_persistence_root" name="test_new_keeps_session_when_flush_reports_failure" time="0.024" /><testcase classname="tests.hermes_cli.test_boundary_persistence_root" name="test_new_preserves_interrupted_admission_message" time="0.023" /><testcase classname="tests.hermes_cli.test_boundary_persistence_root" name="test_new_does_not_skip_changed_tool_call_prefix" time="0.025" /><testcase classname="tests.hermes_cli.test_boundary_persistence_root" name="test_new_accepts_durable_content_projection[ hello ]" time="0.024"><failure message="AssertionError: assert 'old' != 'old'&#10; +  where 'old' = &lt;hermes_cli.cli_session_mixin.CLISessionMixin object at 0x7594b393a110&gt;.session_id">boundary = (&lt;hermes_cli.cli_session_mixin.CLISessionMixin object at 0x7594b393a110&gt;, &lt;run_agent.AIAgent object at 0x7594b393b8d0&gt;, &lt;hermes_state.SessionDB object at 0x7594b3968450&gt;, [])
+content = ' hello '
+
+    @pytest.mark.parametrize('content', [
+        ' hello ',
+        [{'type': 'text', 'text': 'describe'}, {'type': 'image_url', 'image_url': {'url': 'data:image/png;base64,fixture'}}],
+    ])
+    def test_new_accepts_durable_content_projection(boundary, content):
+        cli, agent, db, _ = boundary
+        cli.conversation_history = [{'role': 'user', 'content': content}]
+        assert agent._flush_messages_to_session_db(cli.conversation_history, conversation_history=[]) is True
+        before = db.get_messages('old')
+        reset(cli)
+&gt;       assert cli.session_id != 'old'
+E       AssertionError: assert 'old' != 'old'
+E        +  where 'old' = &lt;hermes_cli.cli_session_mixin.CLISessionMixin object at 0x7594b393a110&gt;.session_id
+
+tests/hermes_cli/test_boundary_persistence_root.py:161: AssertionError</failure></testcase><testcase classname="tests.hermes_cli.test_boundary_persistence_root" name="test_new_accepts_durable_content_projection[content1]" time="0.022"><failure message="AssertionError: assert 'old' != 'old'&#10; +  where 'old' = &lt;hermes_cli.cli_session_mixin.CLISessionMixin object at 0x7594b37a5610&gt;.session_id">boundary = (&lt;hermes_cli.cli_session_mixin.CLISessionMixin object at 0x7594b37a5610&gt;, &lt;run_agent.AIAgent object at 0x7594b3968490&gt;, &lt;hermes_state.SessionDB object at 0x7594b3923150&gt;, [])
+content = [{'type': 'text', 'text': 'describe'}, {'type': 'image_url', 'image_url': {'url': 'data:image/png;base64,fixture'}}]
+
+    @pytest.mark.parametrize('content', [
+        ' hello ',
+        [{'type': 'text', 'text': 'describe'}, {'type': 'image_url', 'image_url': {'url': 'data:image/png;base64,fixture'}}],
+    ])
+    def test_new_accepts_durable_content_projection(boundary, content):
+        cli, agent, db, _ = boundary
+        cli.conversation_history = [{'role': 'user', 'content': content}]
+        assert agent._flush_messages_to_session_db(cli.conversation_history, conversation_history=[]) is True
+        before = db.get_messages('old')
+        reset(cli)
+&gt;       assert cli.session_id != 'old'
+E       AssertionError: assert 'old' != 'old'
+E        +  where 'old' = &lt;hermes_cli.cli_session_mixin.CLISessionMixin object at 0x7594b37a5610&gt;.session_id
+
+tests/hermes_cli/test_boundary_persistence_root.py:161: AssertionError</failure></testcase><testcase classname="tests.hermes_cli.test_boundary_persistence_root" name="test_new_does_not_skip_changed_tool_name" time="0.021"><failure message="AssertionError: assert '20260920_152547_28b004' == 'old'&#10;  &#10;  - old&#10;  + 20260920_152547_28b004">boundary = (&lt;hermes_cli.cli_session_mixin.CLISessionMixin object at 0x7594b3826ed0&gt;, &lt;run_agent.AIAgent object at 0x7594b3826e90&gt;, &lt;hermes_state.SessionDB object at 0x7594b3939190&gt;, ['on_session_finalize', 'on_session_reset'])
+
+    def test_new_does_not_skip_changed_tool_name(boundary):
+        cli, agent, db, notifications = boundary
+        original = {'role': 'tool', 'content': 'ok', 'tool_name': 'read_file', 'tool_call_id': 'call1'}
+        assert agent._flush_messages_to_session_db([original], conversation_history=[]) is True
+        history = [{**original, 'tool_name': 'write_file'}]
+        cli.conversation_history = history.copy()
+        reset(cli)
+&gt;       assert_retained(cli, db, notifications, history)
+
+tests/hermes_cli/test_boundary_persistence_root.py:172: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+cli = &lt;hermes_cli.cli_session_mixin.CLISessionMixin object at 0x7594b3826ed0&gt;
+db = &lt;hermes_state.SessionDB object at 0x7594b3939190&gt;
+notifications = ['on_session_finalize', 'on_session_reset']
+history = [{'role': 'tool', 'content': 'ok', 'tool_name': 'write_file', 'tool_call_id': 'call1', ...}]
+
+    def assert_retained(cli, db, notifications, history):
+&gt;       assert cli.session_id == cli.agent.session_id == 'old'
+E       AssertionError: assert '20260920_152547_28b004' == 'old'
+E         
+E         - old
+E         + 20260920_152547_28b004
+
+tests/hermes_cli/test_boundary_persistence_root.py:50: AssertionError</failure></testcase><testcase classname="tests.hermes_cli.test_boundary_persistence_root" name="test_new_accepts_restored_sanitized_projection" time="0.022" /></testsuite></testsuites>

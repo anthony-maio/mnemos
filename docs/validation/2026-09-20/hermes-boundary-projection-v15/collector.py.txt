@@ -1,0 +1,56 @@
+from pathlib import Path
+import hashlib
+import json
+import shutil
+import subprocess
+
+repo = Path('/mnt/d/Development/mnemos/mnemos/.worktrees/functional-local-memory')
+root = Path('/tmp/mnemos-hermes-compaction-origin-candidate-v1')
+out = repo / 'docs/validation/2026-09-20/hermes-boundary-projection-v15'
+out.mkdir(exist_ok=False)
+(out / '.gitattributes').write_bytes(b'** -text -whitespace\n')
+patch = subprocess.check_output(['git', 'diff', '--binary'], cwd=root)
+(out / 'candidate.patch').write_bytes(patch)
+for name in ['hermes_cli/cli_session_mixin.py', 'hermes_state_messages.py',
+             'tests/hermes_cli/test_boundary_persistence_root.py',
+             'tests/hermes_state/test_unscoped_memory_evidence.py',
+             'tests/hermes_state/test_evidence_legitimate_updates.py']:
+    target = out / 'source' / (name + '.txt')
+    target.parent.mkdir(parents=True, exist_ok=True)
+    shutil.copyfile(root / name, target)
+for prefix in ['boundary-projection-red-v14', 'boundary-projection-green-v14',
+               'evidence-updates-red-v15', 'boundary-combined-root-v15']:
+    for suffix in ['.stdout.log', '.stderr.log', '.junit.xml']:
+        shutil.copyfile(root / (prefix + suffix), out / (prefix + suffix))
+for name in ['add_boundary_projection_tests_v14.py', 'repair_boundary_projection_v14.py']:
+    shutil.copyfile(repo / '.venv' / name, out / (name + '.txt'))
+shutil.copyfile(__file__, out / 'collector.py.txt')
+files = {p.relative_to(out).as_posix(): {'bytes': p.stat().st_size, 'sha256': hashlib.sha256(p.read_bytes()).hexdigest()}
+         for p in sorted(out.rglob('*')) if p.is_file()}
+(out / 'evidence-index.json').write_text(json.dumps({'files': files}, indent=2) + '\n')
+(out / 'README.md').write_text('''# Boundary projection repair and remaining evidence-write failures
+
+Three new tests reproduce /new rejecting durable whitespace and multimodal
+messages, and failing to reject a changed persisted tool name. The repair
+accepts the actual persisted representation or the restored conversation
+projection of the same row and compares tool_name. The original nine boundary
+checks plus four new cases and existing CLI cases pass: 20 total.
+
+The combined selection records 96 passes and three failures. The original
+compression rotation failure remains. Although its fixture initially creates
+the parent without cwd, the host can assign a working directory during setup
+or rotation. Transcript-only handling for genuinely unscoped rows therefore
+does not resolve the existing host regression. The earlier v12 description
+of this failure as simply unscoped was incomplete.
+
+Two new direct SessionDB cases expose separate evidence-write gaps. Recovery
+of a blank assistant row stores its answer but yields no memory evidence.
+Legitimate user-content expansion updates the transcript while leaving stale
+evidence, so projection rejects it as a source mismatch. Both failures remain
+open at this frozen candidate. Direct tampering must remain rejected when
+these legitimate transactional update paths are repaired.
+
+This is an isolated host candidate. Nothing here establishes live installation,
+complete capture, service delivery, or general integration readiness.
+''', encoding='utf-8')
+print(json.dumps({'archive': str(out), 'indexed_files': len(files), 'patch_sha256': hashlib.sha256(patch).hexdigest()}))

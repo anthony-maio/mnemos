@@ -1,0 +1,30 @@
+from pathlib import Path
+root = Path('/tmp/mnemos-hermes-compaction-origin-candidate-v1')
+p = root / 'hermes_cli/cli_session_mixin.py'
+s = p.read_text()
+archive = Path('/tmp/mnemos-hermes-boundary-projection-v14')
+archive.mkdir(exist_ok=False)
+(archive / p.name).write_text(s)
+start = s.index('def _durable_boundary_history(')
+end = s.index('\n\ndef _timestamp_or', start)
+part = s[start:end]
+part = part.replace('from agent.session_persistence import _is_ephemeral_scaffolding', 'from agent.session_persistence import _durable_content, _is_ephemeral_scaffolding')
+part = part.replace('    live_rows = ', '    raw_by_id = {row["id"]: row for row in session_db.get_messages(session_id)}\n    live_rows = ', 1)
+old = '''        if any(live.get(key) != stored.get(key) for key in (
+                "role", "content", "tool_calls", "tool_call_id", "name")):
+            raise ValueError("session boundary history does not match its durable prefix")'''
+new = '''        raw = raw_by_id.get(stored.get("_row_id"))
+        if raw is None:
+            raise ValueError("session boundary durable projection changed during inspection")
+        # A live multimodal message is flattened for persistence; restored
+        # messages can instead carry the sanitized conversation projection.
+        # Accept only those two representations of the same durable row.
+        content_matches = (
+            _durable_content(live.get("content")) == raw.get("content")
+            or live.get("content") == stored.get("content")
+        )
+        if not content_matches or any(live.get(key) != stored.get(key) for key in (
+                "role", "tool_calls", "tool_call_id", "tool_name")):
+            raise ValueError("session boundary history does not match its durable prefix")'''
+assert part.count(old) == 1
+p.write_text(s[:start] + part.replace(old, new) + s[end:])
