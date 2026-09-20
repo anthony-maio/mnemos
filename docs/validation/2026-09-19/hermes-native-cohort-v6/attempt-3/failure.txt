@@ -1,0 +1,12 @@
+Traceback (most recent call last):
+  File "D:\Development\mnemos\mnemos\.worktrees\functional-local-memory\benchmarks\native_hosts\hermes_lifecycle_run_v6.py", line 611, in main
+    gates = evaluator.evaluate_phase(
+        trace, phase=phase, target_id=target_id, old_content=OLD, new_content=NEW
+    )
+  File "C:\Users\Ant\AppData\Local\Temp\mnemos-hermes-native-cohort-v6\attempt-3\hermes_trace_v2.py.txt", line 405, in evaluate_phase
+    rows = correlate_native_tools(records, include_positions=True)
+  File "C:\Users\Ant\AppData\Local\Temp\mnemos-hermes-native-cohort-v6\attempt-3\hermes_trace_v2.py.txt", line 102, in correlate_native_tools
+    result = _validate_result(record.get("result"))
+  File "C:\Users\Ant\AppData\Local\Temp\mnemos-hermes-native-cohort-v6\attempt-3\hermes_trace_v2.py.txt", line 50, in _validate_result
+    raise ValueError(f"tool result has unsuccessful status: {status}")
+ValueError: tool result has unsuccessful status: degraded
