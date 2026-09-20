@@ -335,6 +335,12 @@ Run: `py -3.13 -m pytest -q tests/test_backup_restore.py tests/test_storage_sqli
 
 ### T17 - Verify the complete local and cross-host workflow
 
+The [isolated Hermes boundary candidate](../validation/2026-09-20/hermes-boundary-projection-v15/README.md)
+passes 96 of 99 combined cases. Row-ID and /new projection repairs pass their
+focused checks; compression provenance and two legitimate evidence-update
+paths remain failed at that checkpoint. These are isolated candidate results,
+not a live host upgrade or complete capture acceptance.
+
 The [native Claude embedding-outage v2 check](../validation/2026-09-20/native-claude-embedding-outage-v2/README.md)
 observes one real tool retrieval during provider unavailability on verified
 product `4bbab4f`. The scoped fact and explicit degraded status reach Claude;
@@ -401,11 +407,13 @@ Run: `py -3.13 -m pytest -q tests/test_local_memory_benchmark.py tests/test_retr
 
 ### T19 - Reconcile release, documentation, and research claims
 
-Current package evidence: [product `244613a`](../validation/2026-09-20/hermes-memory-evidence-checkpoint-v1/README.md)
-passes 1,976 source tests and 775 isolated installed cases, with four skips
+Current package evidence: [product `05c71d2`](../validation/2026-09-20/generation-settings-checkpoint-v1/README.md)
+passes 2,005 source tests and 804 isolated installed cases, with four skips
 each, all six source/package checks, and seven replay assertions. This closes
-package verification for the separate Hermes evidence callback; native host
-integration and final acceptance remain open. The
+package verification for structured reasoning and managed generation settings.
+The first unchanged-source full run's Windows replacement failure remains
+preserved and its cause unresolved. Native host integration and final acceptance
+remain open. The
 [historical-claim comparison](../validation/2026-09-20/historical-claim-development-v1/README.md)
 adds 144 development responses and model-dependent qualification failures.
 It does not replace the incomplete matrix or establish held-out quality.
