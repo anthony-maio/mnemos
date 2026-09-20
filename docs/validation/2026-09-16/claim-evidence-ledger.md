@@ -1,5 +1,15 @@
 # Mnemos claim and evidence ledger
 
+The latest [verified package](../2026-09-20/hermes-compaction-origin-checkpoint-v1/README.md)
+is `b28778a`: 1,944 source tests and 743 isolated installed cases pass, with
+four skips each, all six source/package checks, and seven replay assertions.
+Original-row provenance preserves copied-message identity and forget
+suppression; marked summaries remain capture-only. These checks establish
+the adapter contract. The isolated Hermes compatibility candidate still
+needs integration review and does not establish a live host upgrade.
+The classifier-model selection repair has focused checks only and is not
+part of this verified package. Full-module quality and the pilot remain open.
+
 The isolated Hermes identity candidate now passes the
 [undo/retry capture boundary](../2026-09-20/hermes-rewind-capture-v1/README.md)
 with the verified `4bbab4f` wheel. Actual CLI rewind methods preserve the

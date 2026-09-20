@@ -1,0 +1,87 @@
+"""Preserve verified source and installed evidence for the Hermes compaction origin contract."""
+from pathlib import Path
+import hashlib
+import json
+import shutil
+
+repo = Path(__file__).resolve().parents[1]
+temp = Path('C:/Users/Ant/AppData/Local/Temp')
+checks = temp / 'mnemos-package-checks-compaction-origin-v1'
+installed = temp / 'mnemos-installed-checks-compaction-origin-v1'
+output = repo / 'docs/validation/2026-09-20/hermes-compaction-origin-checkpoint-v1'
+verification = json.loads((checks / 'verification.json').read_text(encoding='utf-8'))
+installation = json.loads((installed / 'installation.json').read_text(encoding='utf-8'))
+contract = json.loads((installed / 'contract.json').read_text(encoding='utf-8'))
+assert verification['status'] == installation['status'] == contract['status'] == 'passed'
+commit = verification['source_commit']
+assert commit == 'b28778ad1d91fac5634e5292d81a0f2d929382f5'
+assert commit == installation['bindings_after']['commit']
+assert all(c['exit_code'] == 0 for c in verification['checks'])
+
+def sha(path):
+    return hashlib.sha256(path.read_bytes()).hexdigest()
+
+assert sha(checks / 'verification.json') == installation['bindings_before']['checks_sha256']
+assert sha(checks / 'pytest.xml') == installation['successful_pytest_xml_sha256']
+for artifact in verification['artifacts']:
+    p = Path(artifact['file'])
+    assert sha(p) == artifact['sha256'] and p.stat().st_size == artifact['bytes']
+for command in installation['commands']:
+    for stream in ('stdout', 'stderr'):
+        assert sha(installed / (command['name'] + '.' + stream + '.log')) == command[stream + '_sha256']
+assert sha(repo / '.venv/final_checkpoint_checks_v3.py') == verification['runner_sha256']
+assert sha(repo / '.venv/run_combined_installed_check_v44.py') == installation['runner_sha256']
+output.mkdir(exist_ok=False)
+(output / '.gitattributes').write_bytes(b'** -text -whitespace\n')
+
+def copy(path, relative):
+    target = output / relative
+    target.parent.mkdir(parents=True, exist_ok=True)
+    shutil.copyfile(path, target)
+
+for kind, folder in (('source-checks', checks), ('installed-checks', installed)):
+    for p in folder.iterdir():
+        if p.is_file() and p.suffix in {'.json', '.xml', '.log'}:
+            copy(p, Path(kind) / p.name)
+for name in ('final_checkpoint_checks_v3.py', 'run_combined_installed_check_v44.py', 'installed_contract_probe_v4.py', 'verify_claude_stop_replay_v2.py'):
+    copy(repo / '.venv' / name, Path('helpers') / (name + '.txt'))
+copy(Path(__file__), Path('helpers') / (Path(__file__).name + '.txt'))
+files = {p.relative_to(output).as_posix(): {'bytes': p.stat().st_size, 'sha256': sha(p)}
+         for p in sorted(output.rglob('*')) if p.is_file()}
+(output / 'evidence-index.json').write_text(json.dumps({'files': files}, indent=2) + '\n', encoding='utf-8')
+s = verification['checks'][0]['counts']
+i = installation['contract']['junit_summary']
+wheel = next(a for a in verification['artifacts'] if a['file'].endswith('.whl'))
+(output / 'README.md').write_text(f"""# Hermes compaction origin package checkpoint
+
+Frozen product `{commit}` passes {s['tests'] - s['skipped']:,} source tests
+with {s['skipped']} skips, all six source/package checks, {i['tests'] - i['skipped']:,}
+isolated installed cases with {i['skipped']} matching skips, and seven replay
+assertions. Individual outcomes, module origins, and installed package bytes
+are compared with the frozen source and wheel.
+
+Wheel: {wheel['bytes']:,} bytes; SHA-256 `{wheel['sha256']}`.
+
+The [development record](../hermes-compaction-development-v1/README.md)
+preserves original failures and the host diagnostic. The adapter now consumes
+strict canonical original-row provenance within the active registered scope.
+Copied rows retain event identity and timestamps, including suppression after
+forgetting. Marked summaries remain capture-only evidence. A native carrier
+cannot change classification or content by minting a second event.
+
+These checks establish package behavior under the declared host contract.
+The inspected host does not supply that contract yet; its isolated
+compatibility candidate and complete memory-evidence projection remain
+separate acceptance work. This checkpoint does not establish native
+compression, hybrid-carrier handling, a live upgrade, or migration of old
+identities. Real-model quality, Desktop, broader recovery, and the operational
+pilot also remain open. No live host configuration or memory database was
+changed by these package checks.
+
+The evidence index binds the copied raw records and helpers. This README is
+outside that index.
+""", encoding='utf-8', newline='\n')
+print(json.dumps({'archive': str(output), 'files': len(files), 'source_commit': commit,
+                  'source_passes': s['tests']-s['skipped'], 'source_skips': s['skipped'],
+                  'installed_passes': i['tests']-i['skipped'], 'installed_skips': i['skipped'],
+                  'wheel': wheel}))

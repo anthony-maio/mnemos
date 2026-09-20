@@ -12,15 +12,20 @@ Deliver an article draft, three possible titles, and a separate compact source/c
 
 ## Read this first
 
-The next repair, [compaction provenance](../validation/2026-09-20/hermes-compaction-development-v1/README.md),
-is still in development. A real host database fixture shows copied rows
-becoming new observations and an authored summary placement being merged
-into an ordinary assistant message. That does not prove a model generated
-the same layout. Mnemos candidate `b28778a` preserves supplied original-row
-identity and keeps marked summaries capture-only; 76 focused cases pass,
-while full package checks and the host compatibility repair remain open.
-This is another useful article example of why a transcript prepared for the
-model cannot automatically serve as a record of original evidence.
+The latest [verified package](../validation/2026-09-20/hermes-compaction-origin-checkpoint-v1/README.md)
+is `b28778a`: 1,944 source tests and 743 isolated installed cases pass, with
+four skips each, all six source/package checks, and seven replay assertions.
+Original-row provenance preserves copied-message identity and forget
+suppression; marked summaries remain capture-only. These checks establish
+the adapter contract. The isolated Hermes compatibility candidate still
+needs integration review and does not establish a live host upgrade.
+The classifier-model selection repair has focused checks only and is not
+part of this verified package. Full-module quality and the pilot remain open.
+A real host database fixture shows copied rows becoming new observations
+and an authored summary placement being merged into an ordinary assistant
+message. It does not prove a model generated the same layout. This is a
+useful article example of why a transcript prepared for the model cannot
+automatically serve as a record of original evidence.
 
 The latest Hermes identity evidence is the isolated
 [undo/retry capture-boundary comparison](../validation/2026-09-20/hermes-rewind-capture-v1/README.md).
@@ -59,7 +64,7 @@ negative results even if they complicate the ending.
 
 ## Latest implementation and native evidence
 
-The latest [verified package](../validation/2026-09-20/retrieval-provider-outage-checkpoint-v1/README.md)
+The earlier [embedding-outage package](../validation/2026-09-20/retrieval-provider-outage-checkpoint-v1/README.md)
 is product `4bbab4f`: 1,894 source tests and 722 isolated installed cases pass,
 with four skips each, all six source/package checks, and seven replay
 assertions. It closes a simpler outage gap: retrieval requested

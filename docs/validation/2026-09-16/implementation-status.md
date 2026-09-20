@@ -1,16 +1,14 @@
 # Functional local memory implementation status
 
-Latest [verified product](../2026-09-20/retrieval-provider-outage-checkpoint-v1/README.md):
-`4bbab4f`, with 1,894 source tests and 722 installed cases passing, four skips
-each, all six source/package checks, and seven replay assertions. Scoped
-lexical fallback keeps existing SQLite facts searchable after a transient
-embedding failure and reports the degraded mode honestly. A
-[native Claude v2 attempt](../2026-09-20/native-claude-embedding-outage-v2/README.md)
-observes one scoped lexical recall with the provider unavailable, unchanged
-synthetic seed facts, and cleanup. Its v1 verifier failure remains recorded.
-Earlier stopped-service
-raw-capture observations for Codex and Claude remain bound to their own
-packages; full-module quality, Desktop, wider recovery, and the pilot remain open.
+The latest [verified package](../2026-09-20/hermes-compaction-origin-checkpoint-v1/README.md)
+is `b28778a`: 1,944 source tests and 743 isolated installed cases pass, with
+four skips each, all six source/package checks, and seven replay assertions.
+Original-row provenance preserves copied-message identity and forget
+suppression; marked summaries remain capture-only. These checks establish
+the adapter contract. The isolated Hermes compatibility candidate still
+needs integration review and does not establish a live host upgrade.
+The classifier-model selection repair has focused checks only and is not
+part of this verified package. Full-module quality and the pilot remain open.
 
 The [retrieval fixture audit](../2026-09-20/retrieval-fixture-audit-v1/README.md)
 confirms 20 scope-label conflicts and 60 explicit-memory/gold mismatches.
@@ -1056,7 +1054,7 @@ provenance remain open. Product package verification remains at `4bbab4f`.
 | T16 Recovery | Backup, integrity, new-path restore, suppression merge, staged reindex, and activation backup behavior are implemented and tested. | Local recovery contracts pass, including a backup during an active writer transaction. Live data migration remains separately authorization-bound. |
 | T17 Cross-host | [Three-host v7](../2026-09-20/three-host-native-v7/README.md) passes all 11 phases on `e6887de`, with real Nomic embeddings: native teaching, Hermes correction, all-host corrected recall, reviewed deletion, 12 suppressed replays, and all-host final recall. Controls and cleanup pass. | One bounded lifecycle observed, all five cognition modules off. Subsequent Codex/Claude raw-capture outages and one Claude provider-unavailable lexical recall passed on their separately verified packages. Prior failures remain preserved; v6 was not run. Complete capture, Desktop, real-provider outage recovery, full-module quality, and the two-week pilot remain open. |
 | T18 Evaluation | Frozen lifecycle datasets, request-bound extraction schemas, seven real-provider profiles, raw traces, checkpoints, Wilson intervals, and paired comparisons are implemented. Applied length/noise and vector/lexical/hybrid/full comparisons have a separate frozen protocol. | The earlier local lifecycle matrix is terminal: 4,150 observations complete and 50 partial across five of seven profiles, following no-fact extraction and unavailable correction targets. This does not pass acceptance. Graph has zero eligible cases; affective supplied-state ranking improves while classifier fidelity remains poor. The independent supplemental v2 encoding run is terminal and incomplete: 34 partial observations out of 1,800, with all 1,320 automatic-policy decisions observed per arm. Retrieval is also terminal and incomplete: 589 of 600 session observations complete, 900 query rows, and 3,600 strategy results. All three alternative strategies have zero paired quality delta against full on eligible rows. These are conditional diagnostics; complete-run quality acceptance remains open. Follow the [evaluation record](evaluation-running.md), [terminal lifecycle archive](../2026-09-19/lifecycle-incomplete-local-v2/README.md), and [retrieval terminal archive](../2026-09-19/retrieval-terminal-local-v1/README.md). The [read-only fixture audit](../2026-09-20/retrieval-fixture-audit-v1/README.md) identifies 20 foreign-scope queries mislabeled answerable and 60 explicit-memory/gold body mismatches. Original results remain unchanged. The [v4 matrix](../2026-09-20/contract-v4-preparation-v1/README.md) is running from frozen source `3d09658`; final quality acceptance remains open. |
-| T19 Claims and packaging | Claim ledger, compatibility matrix, package artifacts, negative evidence, and Substack writing handoff are maintained. | Latest verified product `4bbab4f` passes 1,894 source tests and 722 isolated installed cases, with four matching skips each, six source/package checks, and seven replay assertions. Native Claude embedding-outage v2 tests that package; v1 remains failed on its verifier mismatch. The Substack handoff reflects these records. Portable packet v27 includes the voice skill but predates the latest records and needs a final refresh; final acceptance and factual reconciliation remain open. No publication or live-data migration is authorized. |
+| T19 Claims and packaging | Claim ledger, compatibility matrix, package artifacts, negative evidence, and Substack writing handoff are maintained. | Latest verified product `b28778a` passes 1,944 source tests and 743 isolated installed cases, with four matching skips each, six source/package checks, and seven replay assertions. Native Claude embedding-outage v2 remains bound to earlier product `4bbab4f`; v1 remains failed on its verifier mismatch. The Substack handoff reflects these records. Portable packet v27 includes the voice skill but predates the latest records and needs a final refresh; final acceptance and factual reconciliation remain open. No publication or live-data migration is authorized. |
 
 The current capture recommendation is a hybrid: automatically capture enabled
 project conversations as retained evidence, extract durable facts separately,
