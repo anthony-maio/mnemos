@@ -429,7 +429,13 @@ connection refusal, service restart and replay on product d937892. All flags
 are enabled, but failure occurs at prediction before downstream modules run.
 The first probe's incorrect one-attempt expectation remains preserved in v1.
 A [real-provider continuation](../validation/2026-09-20/all-module-provider-recovery-preparation-v1/README.md)
-is frozen from that database and NOT RUN; it does not yet close recovery.
+was frozen from that database and has now [failed](../validation/2026-09-20/all-module-provider-recovery-terminal-v1/README.md).
+The user-event extraction twice exhausted its token budget without a final
+answer; the job exhausted its remaining retries and no facts were created.
+The [response diagnosis](../validation/2026-09-20/all-module-provider-recovery-diagnosis-v1.json)
+preserves the exact six provider outcomes. A separately frozen temperature-only
+follow-up is running on the same older installed build and original database;
+it does not yet close recovery.
 
 Additional recovery gap: [active work can outlive its fixed lease](../validation/2026-09-20/long-job-lease-reproduction-v1/README.md).
 A controlled-clock installed reproduction rejects successful completion at

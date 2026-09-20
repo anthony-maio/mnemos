@@ -1,0 +1,55 @@
+{
+  "source_sha256": "edf26458dc7876f72c3d3f1807f54a39eb60e65ba33da7e657ead5ec9163a1ef",
+  "observations": [
+    {
+      "response_index": 0,
+      "route": "generate",
+      "done_reason": "stop",
+      "eval_count": 2194,
+      "final_chars": 30,
+      "final": "Hi, what can you help me with?"
+    },
+    {
+      "response_index": 1,
+      "route": "chat",
+      "done_reason": "length",
+      "eval_count": 8192,
+      "final_chars": 0,
+      "final": ""
+    },
+    {
+      "response_index": 2,
+      "route": "generate",
+      "done_reason": "stop",
+      "eval_count": 3807,
+      "final_chars": 29,
+      "final": "Proceed with the outage test."
+    },
+    {
+      "response_index": 3,
+      "route": "chat",
+      "done_reason": "stop",
+      "eval_count": 1814,
+      "final_chars": 236,
+      "final": "{\n  \"decision\": \"no_durable_facts\",\n  \"facts\": [],\n  \"reason\": \"The provided source event is an acknowledgment message from an assistant and does not contain explicit user preferences, project requirements, or durable factual claims.\"\n}"
+    },
+    {
+      "response_index": 4,
+      "route": "generate",
+      "done_reason": "stop",
+      "eval_count": 2194,
+      "final_chars": 30,
+      "final": "Hi, what can you help me with?"
+    },
+    {
+      "response_index": 5,
+      "route": "chat",
+      "done_reason": "length",
+      "eval_count": 8192,
+      "final_chars": 0,
+      "final": ""
+    }
+  ],
+  "conclusion": "Two user-event extraction calls exhausted 8192 tokens with empty final answers. Prediction and assistant abstention returned final answers. No lease-expiry failure is demonstrated by this trace.",
+  "limits": "No claim about general Qwen reliability, causal effect of temperature, or all-module acceptance. Failed recovery stays failed."
+}
