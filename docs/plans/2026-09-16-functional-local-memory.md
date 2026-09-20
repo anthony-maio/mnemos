@@ -522,7 +522,7 @@ is not a full recommended-sampling configuration or unseen validation.
 The [terminal comparison](../validation/2026-09-20/extraction-temperature-one-terminal-v1/README.md)
 completed all 40 calls with zero runtime errors. Twelve parsed outputs changed
 from the temperature-zero baseline; that count is not an accuracy measurement.
-The positive-case review is byte-matched; full semantic review remains open.
+The positive-case review is byte-matched. The [completed negative review](../validation/2026-09-20/extraction-temperature-negative-review-v1.md) preserves candidate N07 unwanted retention and the preregistered N10 ambiguity. No prompt or sampling change is adopted; unseen validation remains open.
 The [fixed-candidate graph-weight bound](../validation/2026-09-20/graph-weight-bound-audit-v1/README.md)
 finds only three of 30 recorded combinations could reach top five under its
 optimistic assumptions; 15 lack the target candidate altogether. This is a
