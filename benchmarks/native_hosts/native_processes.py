@@ -287,6 +287,10 @@ def _prepare_codex(
                 "MNEMOS_SCOPE_REGISTRY",
                 "MNEMOS_USER_PROFILE_ID",
                 "MNEMOS_RUNTIME_DESCRIPTOR",
+                "MNEMOS_AUTO_START",
+                "MNEMOS_RUNTIME_DIR",
+                "MNEMOS_STORE_TYPE",
+                "MNEMOS_SQLITE_PATH",
             )
         },
     )

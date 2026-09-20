@@ -117,6 +117,31 @@ def test_codex_home_is_generated_config_directory(config):
         phases._codex_config_home(requested_home / "config.toml", requested_home)
 
 
+def test_generated_codex_mcp_and_hooks_pin_outage_and_storage_settings(config):
+    import base64
+
+    directory = config.root / "codex-offline"
+    directory.mkdir()
+    home, env = phases._prepare_codex(config, directory, "codex-offline")
+    parsed = tomllib.loads((home / "config.toml").read_text())
+    mcp_env = parsed["mcp_servers"]["mnemos"]["env"]
+    required = {
+        "MNEMOS_AUTO_START": "false",
+        "MNEMOS_RUNTIME_DIR": str(config.root.resolve()),
+        "MNEMOS_STORE_TYPE": "sqlite",
+        "MNEMOS_SQLITE_PATH": str(config.root.resolve() / "memory.sqlite"),
+    }
+    assert all(mcp_env.get(key) == value for key, value in required.items())
+    assert all(env.get(key) == value for key, value in required.items())
+    for entries in parsed["hooks"].values():
+        for entry in entries:
+            for hook in entry["hooks"]:
+                command = hook["command"]
+                encoded = command.split("base64.b64decode(", 1)[1].split(")", 1)[0]
+                decoded = json.loads(base64.b64decode(encoded.strip("'").replace("''", "'")))
+                assert all(decoded.get(key) == value for key, value in required.items())
+
+
 def test_codex_setup_failure_records_failure_before_auth_copy(config, monkeypatch):
     monkeypatch.setattr(phases.sys, "stdin", SimpleNamespace(isatty=lambda: True))
     monkeypatch.setattr(phases.sys, "stdout", SimpleNamespace(isatty=lambda: True))

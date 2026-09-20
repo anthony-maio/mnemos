@@ -1,0 +1,70 @@
+<?xml version="1.0" encoding="utf-8"?><testsuites name="pytest tests"><testsuite name="pytest" errors="0" failures="2" skipped="0" tests="2" time="1.231" timestamp="2026-09-20T11:01:52.825015-04:00" hostname="Aurora"><testcase classname="tests.test_hosts" name="test_codex_explicit_integration_env_reaches_mcp_and_hook_bootstrap" time="0.006"><failure message="ValueError: integration_env contains unsupported key(s): MNEMOS_AUTO_START, MNEMOS_RUNTIME_DIR, MNEMOS_SQLITE_PATH, MNEMOS_STORE_TYPE">tmp_path = WindowsPath('D:/WindowsTemp/pytest-of-Ant/pytest-4328/test_codex_explicit_integratio0')
+
+    def test_codex_explicit_integration_env_reaches_mcp_and_hook_bootstrap(tmp_path: Path) -&gt; None:
+        env = {
+            "MNEMOS_USER_PROFILE_ID": "Alice",
+            "MNEMOS_SCOPE_REGISTRY": r"D:\scopes.json",
+            "MNEMOS_RUNTIME_DESCRIPTOR": r"D:\runtime.json",
+            "MNEMOS_AUTO_START": "false",
+            "MNEMOS_RUNTIME_DIR": r"D:\disposable runtime",
+            "MNEMOS_STORE_TYPE": "sqlite",
+            "MNEMOS_SQLITE_PATH": r"D:\disposable runtime\memory.sqlite",
+        }
+&gt;       preview = preview_host_integration(
+            "codex",
+            mnemos_config_path=tmp_path / "Mnemos" / "mnemos.toml",
+            cwd=tmp_path / "repo",
+            home=tmp_path / "home",
+            integration_env=env,
+        )
+
+tests\test_hosts.py:224: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+mnemos\hosts.py:521: in preview_host_integration
+    rendered_config = _render_host_config(
+mnemos\hosts.py:471: in _render_host_config
+    return _merge_codex_config(
+mnemos\hosts.py:273: in _merge_codex_config
+    rendered_env = _integration_environment(mnemos_config_path, integration_env)
+                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+mnemos_config_path = WindowsPath('D:/WindowsTemp/pytest-of-Ant/pytest-4328/test_codex_explicit_integratio0/Mnemos/mnemos.toml')
+integration_env = {'MNEMOS_USER_PROFILE_ID': 'Alice', 'MNEMOS_SCOPE_REGISTRY': 'D:\\scopes.json', 'MNEMOS_RUNTIME_DESCRIPTOR': 'D:\\runtime.json', 'MNEMOS_AUTO_START': 'false', ...}
+
+    def _integration_environment(
+        mnemos_config_path: Path,
+        integration_env: IntegrationEnv,
+    ) -&gt; dict[str, str]:
+        """Build the small environment payload safe to write into host configs."""
+        values: dict[str, str] = {
+            "MNEMOS_CONFIG_PATH": mnemos_config_path.as_posix(),
+        }
+        if integration_env is None:
+            return values
+        unsupported = sorted(set(integration_env) - _INTEGRATION_ENV_KEYS)
+        if unsupported:
+&gt;           raise ValueError("integration_env contains unsupported key(s): " + ", ".join(unsupported))
+E           ValueError: integration_env contains unsupported key(s): MNEMOS_AUTO_START, MNEMOS_RUNTIME_DIR, MNEMOS_SQLITE_PATH, MNEMOS_STORE_TYPE
+
+mnemos\hosts.py:156: ValueError</failure></testcase><testcase classname="tests.test_native_phase_processes" name="test_generated_codex_mcp_and_hooks_pin_outage_and_storage_settings" time="0.315"><failure message="assert False&#10; +  where False = all(&lt;generator object test_generated_codex_mcp_and_hooks_pin_outage_and_storage_settings.&lt;locals&gt;.&lt;genexpr&gt; at 0x000001C9720DC040&gt;)">config = PhaseEnvironment(root=WindowsPath('D:/WindowsTemp/pytest-of-Ant/pytest-4328/test_generated_codex_mcp_and_h0/disposable...gin_snapshot=WindowsPath('D:/WindowsTemp/pytest-of-Ant/pytest-4328/test_generated_codex_mcp_and_h0/disposable/plugin'))
+
+    def test_generated_codex_mcp_and_hooks_pin_outage_and_storage_settings(config):
+        import base64
+    
+        directory = config.root / "codex-offline"
+        directory.mkdir()
+        home, env = phases._prepare_codex(config, directory, "codex-offline")
+        parsed = tomllib.loads((home / "config.toml").read_text())
+        mcp_env = parsed["mcp_servers"]["mnemos"]["env"]
+        required = {
+            "MNEMOS_AUTO_START": "false",
+            "MNEMOS_RUNTIME_DIR": str(config.root.resolve()),
+            "MNEMOS_STORE_TYPE": "sqlite",
+            "MNEMOS_SQLITE_PATH": str(config.root.resolve() / "memory.sqlite"),
+        }
+&gt;       assert all(mcp_env.get(key) == value for key, value in required.items())
+E       assert False
+E        +  where False = all(&lt;generator object test_generated_codex_mcp_and_hooks_pin_outage_and_storage_settings.&lt;locals&gt;.&lt;genexpr&gt; at 0x000001C9720DC040&gt;)
+
+tests\test_native_phase_processes.py:134: AssertionError</failure></testcase></testsuite></testsuites>

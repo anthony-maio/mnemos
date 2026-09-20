@@ -8,9 +8,25 @@ All 12 original-source replays were suppressed. Independent read-only SQLite
 inspection confirmed the target absent, 18 suppression rows, and unchanged
 review, unrelated, and foreign-scope controls. Cleanup passed.
 
-This is one bounded lifecycle with real Nomic embeddings and all five
-cognition modules disabled. It does not close complete capture, Codex Desktop,
-native outage recovery, full-module quality, general reliability, or the
+The [Claude service-outage v2 run](validation/2026-09-20/native-claude-outage-v2/README.md)
+adds one bounded transport observation on verified product `a64afb7`. Claude
+produced two exact native messages while the disposable service was stopped.
+Three queued entries, including one provisional prompt capture, drained after
+restart; three pending jobs, zero facts, replay, a second restart, physical
+identities, and cleanup all passed. This is raw capture and outbox recovery for
+one disposable run. It does not establish provider-outage or in-flight crash
+recovery, extraction quality, or general reliability. The earlier v1
+default-store failure remains part of the evidence.
+
+Default clients now honor `MNEMOS_AUTO_START` when no explicit constructor
+argument is supplied. Native disposable phases bind runtime and SQLite paths
+to their fresh output root, so the outage observation does not rely on a user
+profile's default store. Explicit `auto_start=False` remains the test and
+managed-service-stop escape hatch.
+
+The three-host run is one bounded lifecycle with real Nomic embeddings and all
+five cognition modules disabled. It does not close complete capture, Codex Desktop,
+broader native outage recovery, full-module quality, general reliability, or the
 two-week pilot. Hermes v14's one pass and two failures remain separate.
 The runner passed 149 offline checks, including prerequisite-integrity and
 documentation cases; its import preflight passed before native execution.
@@ -228,10 +244,10 @@ installed native failure into full lifecycle acceptance.
 
 | Client | Implemented integration | Observed native evidence | Remaining acceptance |
 | --- | --- | --- | --- |
-| Claude Code 2.1.191 | Command hooks, transcript deltas, context injection, MCP tools, and extraction-ineligible provisional capture when native identity is missing | [Three-host v7](validation/2026-09-20/three-host-native-v7/README.md) passes this host's bounded shared lifecycle on `e6887de`, with all five modules disabled. Earlier evidence: [Shared lifecycle v9](validation/2026-09-18/native-codex-claude-continuity-v9/README.md) on `5af3d15` retrieved and corrected a Codex-taught fact, then reviewed and deleted the target plus five selected copies. [Claude lifecycle v18](validation/2026-09-17/native-claude-lifecycle-v18/README.md) on `dedfcfd` passed 15 bounded fact-lifecycle criteria. Mixed-host v4 on `fc72cc2` verified native queue replay and restart. | Degraded identity diagnostics, complete capture, native real-model extraction, and general startup reliability remain open. |
+| Claude Code 2.1.191 | Command hooks, transcript deltas, context injection, MCP tools, extraction-ineligible provisional capture when native identity is missing, and one bounded stopped-service outbox recovery observation | [Three-host v7](validation/2026-09-20/three-host-native-v7/README.md) passes this host's bounded shared lifecycle on `e6887de`, with all five modules disabled. [Claude outage v2](validation/2026-09-20/native-claude-outage-v2/README.md) on `a64afb7` preserves two native messages and three queued entries through service stop, restart, replay, and a second restart. Earlier evidence: [Shared lifecycle v9](validation/2026-09-18/native-codex-claude-continuity-v9/README.md) on `5af3d15` retrieved and corrected a Codex-taught fact, then reviewed and deleted the target plus five selected copies. [Claude lifecycle v18](validation/2026-09-17/native-claude-lifecycle-v18/README.md) on `dedfcfd` passed 15 bounded fact-lifecycle criteria. Mixed-host v4 on `fc72cc2` verified native queue replay and restart. | Complete capture, native real-model extraction, provider or in-flight crash recovery, and general startup reliability remain open. |
 | Codex CLI 0.146.0 | Generated lifecycle hooks, context output, and MCP tools | [Three-host v7](validation/2026-09-20/three-host-native-v7/README.md) passes this host's bounded shared lifecycle on `e6887de`, with all five modules disabled. Earlier evidence: Shared lifecycle v9 taught the fact, retrieved Claude's corrected version after restart, and completed both post-forget queries without repeating the removed values. Mixed-host v4 verified same-event replay from both native hosts and unchanged records through restart. | Earlier Stop timeouts remain recorded. Complete capture across lifecycle failures, tail latency, real-model quality, and pilot reliability remain open. |
 | Codex Desktop | Shared command-hook adapter and MCP fallback | No isolated native desktop conversation has been validated. | NOT RUN; CLI evidence does not establish desktop behavior. |
-| Hermes Agent in WSL, isolated source `14a3463` with cwd-only patch | Optional MemoryProvider, lifecycle callbacks, entry-point discovery, and explicit Windows/WSL bridge | [Three-host v7](validation/2026-09-20/three-host-native-v7/README.md) passes this host's bounded shared lifecycle on `e6887de`, with all five modules disabled. Earlier evidence: [Native v10](validation/2026-09-20/hermes-native-cohort-v10/README.md) completes one of three full lifecycles on `f2f7414`, including correction, reviewed deletion, replay suppression, and final recall. All 40 effective-context checks and three cleanup checks pass. | Two attempts fail at omitted recall and incomplete candidate inspection. Five cognition modules were disabled. Live compatibility, built-in remove/replace reconciliation, capture across failures, native outage recovery, and general reliability remain open. Three-host v7 above separately demonstrates bounded continuity. |
+| Hermes Agent in WSL, isolated source `14a3463` with cwd-only patch | Optional MemoryProvider, lifecycle callbacks, entry-point discovery, and explicit Windows/WSL bridge | [Native v14](validation/2026-09-20/hermes-native-cohort-v14/README.md) completes one of three full lifecycles on `e6887de`, including correction, reviewed-copy deletion, replay suppression, restart, and final recall. All 35 serving-context checks and three cleanup checks pass. [Three-host v7](validation/2026-09-20/three-host-native-v7/README.md) separately passes the shared bounded lifecycle on the same product. | Two v14 attempts fail at omitted required actions. Five cognition modules were disabled. Live compatibility, built-in remove/replace reconciliation, complete capture, native outage recovery, and general reliability remain open. |
 | Generic MCP stdio | MCP server acts as a client of the local service | Subprocess tests cover capture, job status, inspect, retrieve, correct, and forget. | Protocol evidence only; each host needs its own acceptance run. |
 | Claude Desktop | MCP configuration | Shared protocol coverage. | Native conversation NOT RUN. |
 | Cursor | MCP plus project rules | Configuration and policy-generation tests. | Native conversation NOT RUN. |

@@ -1,5 +1,23 @@
 # Local memory host validation
 
+The [native Claude outage v2 observation](2026-09-20/native-claude-outage-v2/README.md)
+on verified product `a64afb7` passed one bounded raw-capture recovery run. The
+service was stopped before the native turn, and Claude produced two exact text
+messages without tool calls. Three queued entries, including one provisional
+prompt capture, drained after an ordinary service restart. SQLite inspection
+found three pending jobs and zero facts; replay, a second restart, physical
+identities, and cleanup all passed. This establishes disposable Claude capture
+and outbox recovery for one run. It does not establish provider-outage or
+in-flight crash recovery, extraction quality, or daily-use reliability. The
+[v1 failure](2026-09-20/native-claude-outage-failure-v1/README.md) remains
+historical evidence of the earlier default-store isolation defect.
+
+Default `MnemosClient` instances now honor `MNEMOS_AUTO_START` when no explicit
+argument is supplied. Native disposable phases also bind the runtime directory,
+SQLite store type, and SQLite path to their fresh output root. The native phase
+and package checks that support this note are separate from the older host runs
+below.
+
 The [selection-rejection package](2026-09-20/selection-rejection-checkpoint-v1/README.md)
 at `5155ebd` passes 1,638 source tests with four skips, all six source/package
 checks, 655 isolated installed cases with four matching skips, and seven
@@ -53,11 +71,13 @@ Updated September 20, 2026 for the unreleased functional-local-memory worktree. 
 
 | Host or workflow | Observed result | Boundary |
 | --- | --- | --- |
-| Codex CLI 0.146.0 and Claude Code 2.1.191 | [Shared lifecycle v9](2026-09-18/native-codex-claude-continuity-v9/README.md), installed `5af3d15`: 15 bounded criteria pass for teaching, corrected recall, reviewed deletion, replay suppression, retained facts, and foreign-project exclusion across restarts. | All three Codex processes exited zero, but two Stop hooks timed out. Fixture vectors and disabled cognition modules do not prove model quality or complete capture. |
-| Concurrent Codex/Claude recovery | [Mixed-host v4](2026-09-18/native-crosshost-recovery-v4/README.md), installed `fc72cc2`: three same-event replay pairs committed to stable event/job identities; eight normal messages and two non-extractable provisional records survived owner restart. | One pairing timeout and degraded Claude identity diagnostics remain. The test instruments overlap and explicitly restores a fixture owner. |
-| Claude Code lifecycle | [Native v18](2026-09-17/native-claude-lifecycle-v18/README.md), installed `dedfcfd`: 15 fact-lifecycle criteria pass, including correction, forgetting, restarts, and reconstructed replay. | Overall partial because capture diagnostics were degraded. An observed connection abort remains unexplained. |
+| Claude Code service outage | [Outage v2](2026-09-20/native-claude-outage-v2/README.md), installed `a64afb7`: service stopped before one native turn; two exact messages, three queued entries, three pending jobs, zero facts, replay and second restart preserved | One bounded raw-capture and outbox-recovery observation. Provider outage, in-flight crash recovery, extraction quality, and daily-use reliability remain open. The v1 default-store failure remains preserved. |
+| Codex CLI, Claude Code, and Hermes | [Three-host v7](2026-09-20/three-host-native-v7/README.md), installed `e6887de`: all 11 bounded phases pass; the [receipt audit](2026-09-20/native-capture-coverage-v1/README.md) accounts for 31 native texts and 43 arrivals | This is a bounded lifecycle with real Nomic embeddings and disabled cognition modules. It does not establish complete capture, full-module quality, or general reliability. |
+| Hermes in WSL, isolated source `14a3463` with cwd-only patch | [Native v14](2026-09-20/hermes-native-cohort-v14/README.md), installed `e6887de`, completed one of three full lifecycles. Attempt 2 passed correction, reviewed-copy deletion, source replay suppression, restart, and final recall. All 35 serving-context checks and three cleanup checks passed. | Attempts 1 and 3 stopped at omitted required actions. All five cognition modules were disabled. This remains one bounded patched-host cohort; additional continuity, complete capture, and daily-use readiness remain open. |
+| Historical Codex CLI 0.146.0 and Claude Code 2.1.191 | [Shared lifecycle v9](2026-09-18/native-codex-claude-continuity-v9/README.md), installed `5af3d15`: 15 bounded criteria pass for teaching, corrected recall, reviewed deletion, replay suppression, retained facts, and foreign-project exclusion across restarts. | All three Codex processes exited zero, but two Stop hooks timed out. Fixture vectors and disabled cognition modules do not prove model quality or complete capture. |
+| Historical concurrent Codex/Claude recovery | [Mixed-host v4](2026-09-18/native-crosshost-recovery-v4/README.md), installed `fc72cc2`: three same-event replay pairs committed to stable event/job identities; eight normal messages and two non-extractable provisional records survived owner restart. | One pairing timeout and degraded Claude identity diagnostics remain. The test instruments overlap and explicitly restores a fixture owner. |
+| Historical Claude Code lifecycle | [Native v18](2026-09-17/native-claude-lifecycle-v18/README.md), installed `dedfcfd`: 15 fact-lifecycle criteria pass, including correction, forgetting, restarts, and reconstructed replay. | Overall partial because capture diagnostics were degraded. An observed connection abort remains unexplained. |
 | Codex Desktop | No isolated native conversation run. | NOT RUN; shared adapter tests are insufficient. |
-| Hermes in WSL, isolated source `14a3463` with cwd-only patch | [Native v10](2026-09-20/hermes-native-cohort-v10/README.md), installed `f2f7414`, completed one of three full lifecycles. Attempt 3 passed correction, reviewed deletion, replay suppression, and restarted final recall. All 40 serving-context checks and three cleanup checks passed. | Attempts 1 and 2 failed at omitted recall and incomplete candidate inspection respectively. All five cognition modules were disabled. No stale-preview rejection occurred. Three-host continuity, complete capture, and daily-use readiness remain open; this is isolated patched-host evidence. |
 
 The Hermes installation used by the recorded checks is `/home/anthony/.hermes/hermes-agent` in WSL. Initial API evidence used revision `97962358`; later wheel-discovery evidence used `36842e639a178741b70c821e0f4cdd129cd0dfe3`. Those are observation bindings, not a live installation inventory. The Windows Mnemos environment does not claim Hermes as a native dependency. See the [bridge record](2026-09-16/hermes-bridge-smoke.md) and [host smoke history](2026-09-16/native-host-smoke.md).
 
@@ -83,7 +103,7 @@ Use the adapter regression suite for repeatable payload checks in temporary fixt
 .venv\Scripts\python.exe -m pytest -q tests/test_codex_adapter.py tests/test_claude_adapter.py tests/test_claude_provisional_capture.py
 ```
 
-For a manual check, prepare a disposable service, enabled project registry, profile, database, runtime descriptor, outbox, and Claude checkpoint directory. Bind both adapters to that fixture and restore temporary environment settings after both checks. To prevent service autostart, construct `MnemosClient(auto_start=False)` and inject it through the adapter's `client` argument; the command-hook entry points do not read an `MNEMOS_AUTO_START` switch. The automated tests supply these dependencies directly.
+For a manual check, prepare a disposable service, enabled project registry, profile, database, runtime descriptor, outbox, and Claude checkpoint directory. Bind both adapters to that fixture and restore temporary environment settings after both checks. A default client honors `MNEMOS_AUTO_START`; use `MNEMOS_AUTO_START=false` when the host must queue without starting a service, or pass `auto_start=False` explicitly when constructing a client for an isolated adapter test. The automated tests supply these dependencies directly.
 
 Hook exit code zero is not a capture acknowledgment. Inspect the fixture's source events or outbox and its diagnostics. Without a native Claude occurrence ID a synthetic prompt is provisional; a payload-only check does not establish native transcript capture or a complete conversation record.
 
@@ -93,4 +113,4 @@ For Hermes, use its WSL environment and the explicit bridge configuration descri
 
 A native acceptance run must bind the host version, disposable or approved configuration, package/plugin source, transport, profile, canonical project identity, provider configuration, and observed operations. Capture, retrieval, restart, correction, forgetting, outage, and concurrency results must be identified individually. Preserve failed attempts and remove secrets from selected records.
 
-The bounded Codex/Claude lifecycle and replay observations are complete as described above. Complete capture, native Hermes continuity, Codex Desktop, configured-provider recovery, extraction quality, and the daily-use pilot remain open. The latest local 10,000-fact measurement fails both recall and capture latency targets; see the [September 19 performance record](2026-09-19/performance-local-v1/README.md). The [evaluation status](2026-09-16/evaluation-running.md) tracks the separate frozen real-model run. Its process being live does not establish accepted quality results. The two-week internal pilot and external readiness evidence remain NOT RUN.
+The bounded Codex/Claude lifecycle, Claude raw-capture outage recovery, and replay observations are complete as described above. One of three Hermes v14 lifecycle attempts completed, while additional native Hermes continuity, complete capture, Codex Desktop, configured-provider outage recovery, extraction quality, and the daily-use pilot remain open. The earlier local 10,000-fact measurement failed both recall and capture latency targets. A later SSD baseline passed those unchanged gates under different storage and source conditions; it does not establish a causal speedup or native-host reliability. See the [failed performance record](2026-09-19/performance-local-v1/README.md) and the [recovery baseline](2026-09-19/performance-recovery-v1/README.md). The [evaluation status](2026-09-16/evaluation-running.md) tracks the separate frozen real-model run. Its process being live does not establish accepted quality results. The two-week internal pilot and external readiness evidence remain NOT RUN.

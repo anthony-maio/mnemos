@@ -216,6 +216,10 @@ def test_codex_explicit_integration_env_reaches_mcp_and_hook_bootstrap(tmp_path:
         "MNEMOS_USER_PROFILE_ID": "Alice",
         "MNEMOS_SCOPE_REGISTRY": r"D:\scopes.json",
         "MNEMOS_RUNTIME_DESCRIPTOR": r"D:\runtime.json",
+        "MNEMOS_AUTO_START": "false",
+        "MNEMOS_RUNTIME_DIR": r"D:\disposable runtime",
+        "MNEMOS_STORE_TYPE": "sqlite",
+        "MNEMOS_SQLITE_PATH": r"D:\disposable runtime\memory.sqlite",
     }
     preview = preview_host_integration(
         "codex",
@@ -231,6 +235,7 @@ def test_codex_explicit_integration_env_reaches_mcp_and_hook_bootstrap(tmp_path:
     assert mcp_env["MNEMOS_RUNTIME_DESCRIPTOR"] == r"D:\runtime.json"
     assert "MNEMOS_CONFIG_PATH" in mcp_env
     assert mcp_env["MNEMOS_HOST"] == "codex"
+    assert all(mcp_env[key] == value for key, value in env.items())
 
     command = rendered["hooks"]["UserPromptSubmit"][-1]["hooks"][0]["command"]
     assert " -c " in command
@@ -243,6 +248,7 @@ def test_codex_explicit_integration_env_reaches_mcp_and_hook_bootstrap(tmp_path:
     assert hook_env["MNEMOS_USER_PROFILE_ID"] == "Alice"
     assert hook_env["MNEMOS_SCOPE_REGISTRY"] == r"D:\scopes.json"
     assert hook_env["MNEMOS_CONFIG_PATH"] == (tmp_path / "Mnemos" / "mnemos.toml").as_posix()
+    assert all(hook_env[key] == value for key, value in env.items())
 
 
 def test_codex_integration_replaces_existing_mnemos_agents_block(tmp_path: Path) -> None:
