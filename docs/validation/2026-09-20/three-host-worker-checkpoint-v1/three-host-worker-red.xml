@@ -1,0 +1,55 @@
+<?xml version="1.0" encoding="utf-8"?><testsuites name="pytest tests"><testsuite name="pytest" errors="0" failures="1" skipped="0" tests="1" time="4.888" timestamp="2026-09-20T04:20:17.871703-04:00" hostname="Aurora"><testcase classname="tests.test_three_host_runtime" name="test_correction_finishes_without_controller_maintenance_and_survives_restart" time="4.666"><failure message="Failed: Native status polling never observed a completed job without controller maintenance">fx = namespace(rt=&lt;benchmarks.native_hosts.three_host_runtime.ThreeHostRuntime object at 0x0000021F78786F90&gt;, package=Windo...d.tmp'), WindowsPath('D:/WindowsTemp/pytest-of-Ant/pytest-4140/test_correction_finishes_witho0/runtime/runtime.json')])
+monkeypatch = &lt;_pytest.monkeypatch.MonkeyPatch object at 0x0000021F78976EA0&gt;
+
+    def test_correction_finishes_without_controller_maintenance_and_survives_restart(fx, monkeypatch):
+        from mnemos.utils.embeddings import SimpleEmbeddingProvider
+    
+        monkeypatch.setattr(
+            "mnemos.utils.embeddings.OllamaEmbeddingProvider",
+            lambda **kwargs: SimpleEmbeddingProvider(dim=768),
+        )
+        fx.rt.verify()
+        fx.rt.prepare()
+        context = fx.rt.contexts["project"]
+    
+        def completed(receipt):
+            deadline = time.monotonic() + 3
+            while time.monotonic() &lt; deadline:
+                result = fx.rt.dispatch("job", {"context": context, "job_id": receipt["job_id"]})
+                if result["job"]["status"] == "completed":
+                    return result
+                time.sleep(0.02)
+            pytest.fail("Native status polling never observed a completed job without controller maintenance")
+    
+        try:
+            fx.rt.start()
+            fx.rt.dispatch("remember", {
+                "context": context, "content": "The project release label is cedar-ridge-731.",
+                "event_id": "original-label", "scope": "project",
+            })
+            fx.rt.maintain()
+            fact = fx.rt.rows()["facts"][0]
+            fx.rt.set_phase("native-correct")
+            receipt = fx.rt.dispatch("correct", {
+                "context": context, "fact_id": fact["id"], "expected_version": 1,
+                "content": "The project release label is maple-ridge-842.",
+                "event_id": "correction-one",
+            })
+&gt;           completed(receipt)
+
+tests\test_three_host_runtime.py:377: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+receipt = {'schema_version': 1, 'status': 'committed', 'event_id': 'f6f2f3e1a6e54355b8500062076bc88697a351287ab2c29921bc29f2afff4928', 'processing_status': 'pending', ...}
+
+    def completed(receipt):
+        deadline = time.monotonic() + 3
+        while time.monotonic() &lt; deadline:
+            result = fx.rt.dispatch("job", {"context": context, "job_id": receipt["job_id"]})
+            if result["job"]["status"] == "completed":
+                return result
+            time.sleep(0.02)
+&gt;       pytest.fail("Native status polling never observed a completed job without controller maintenance")
+E       Failed: Native status polling never observed a completed job without controller maintenance
+
+tests\test_three_host_runtime.py:361: Failed</failure></testcase></testsuite></testsuites>

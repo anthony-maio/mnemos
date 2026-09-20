@@ -2,6 +2,7 @@
 
 import asyncio
 import json
+import time
 import zipfile
 from types import SimpleNamespace
 
@@ -305,14 +306,14 @@ def test_native_dispatch_is_traced_without_controller_call(fx, monkeypatch):
 
     class Dispatcher:
         def __init__(self, *args):
-            pass
+            self.maintenance = SimpleNamespace()
 
         async def dispatch(self, operation, payload):
             return response
 
     class Service:
         def __init__(self, **kwargs):
-            self.dispatcher = kwargs["dispatcher_factory"]()
+            self.dispatcher = self._make_default_dispatcher()
 
         def start(self):
             return {"status": "test-double"}
@@ -337,3 +338,85 @@ def test_native_dispatch_is_traced_without_controller_call(fx, monkeypatch):
     assert row["payload"]["context"]["host"] == "codex"
     assert row["result"]["status"] == "committed"
     assert row["phase"] == "native-teach"
+
+
+def test_correction_finishes_without_controller_maintenance_and_survives_restart(fx, monkeypatch):
+    from mnemos.utils.embeddings import SimpleEmbeddingProvider
+
+    monkeypatch.setattr(
+        "mnemos.utils.embeddings.OllamaEmbeddingProvider",
+        lambda **kwargs: SimpleEmbeddingProvider(dim=768),
+    )
+    fx.rt.verify()
+    fx.rt.prepare()
+    context = fx.rt.contexts["project"]
+
+    def completed(receipt):
+        deadline = time.monotonic() + 3
+        while time.monotonic() < deadline:
+            result = fx.rt.dispatch("job", {"context": context, "job_id": receipt["job_id"]})
+            if result["job"]["status"] == "completed":
+                return result
+            time.sleep(0.02)
+        pytest.fail(
+            "Native status polling never observed a completed job without controller maintenance"
+        )
+
+    try:
+        fx.rt.start()
+        assert fx.rt.dispatch("health", {})["maintenance"]["scheduler_running"] is True
+        fx.rt.dispatch(
+            "remember",
+            {
+                "context": context,
+                "content": "The project release label is cedar-ridge-731.",
+                "event_id": "original-label",
+                "scope": "project",
+            },
+        )
+        fx.rt.maintain()
+        fact = fx.rt.rows()["facts"][0]
+        fx.rt.set_phase("native-correct")
+        receipt = fx.rt.dispatch(
+            "correct",
+            {
+                "context": context,
+                "fact_id": fact["id"],
+                "expected_version": 1,
+                "content": "The project release label is maple-ridge-842.",
+                "event_id": "correction-one",
+            },
+        )
+        completed(receipt)
+        assert not any(
+            row["operation"] == "maintenance" and row["phase"] == "native-correct"
+            for row in fx.rt.dispatch_records
+        )
+        updated = fx.rt.rows()["facts"]
+        assert len(updated) == 1
+        assert updated[0]["id"] == fact["id"] and updated[0]["version"] == 2
+        assert updated[0]["content"] == "The project release label is maple-ridge-842."
+        first_owner = fx.rt.service._owner_thread
+        fx.rt.stop()
+        assert not first_owner.is_alive()
+        assert not fx.rt.descriptor.exists()
+        fx.rt.start()
+        assert fx.rt.dispatch("health", {})["maintenance"]["scheduler_running"] is True
+        assert fx.rt.rows()["facts"] == updated
+        second = fx.rt.dispatch(
+            "correct",
+            {
+                "context": context,
+                "fact_id": fact["id"],
+                "expected_version": 2,
+                "content": "The project release label is birch-ridge-953.",
+                "event_id": "correction-two",
+            },
+        )
+        completed(second)
+        assert fx.rt.rows()["facts"][0]["version"] == 3
+        second_owner = fx.rt.service._owner_thread
+    finally:
+        fx.rt.stop()
+    assert not second_owner.is_alive()
+    assert not fx.rt.descriptor.exists()

@@ -1,0 +1,61 @@
+{
+  "after_maintenance": {
+    "attempt_count": 1,
+    "content": "The project release label is offline-maple-842.",
+    "fact_id": "2fadad85-315d-4929-8a37-6909fc1ea96d",
+    "job_status": "completed",
+    "version": 2
+  },
+  "before_maintenance": {
+    "attempt_count": 0,
+    "job_status": "pending"
+  },
+  "context_source": "ThreeHostRuntime.prepare() project context with host=hermes",
+  "dispatch_operations": [
+    "health",
+    "remember",
+    "maintenance",
+    "correct",
+    "job",
+    "maintenance",
+    "job"
+  ],
+  "fixture_removed": true,
+  "fixture_root": "D:\\WindowsTemp\\mnemos-three-host-correction-timing-nggjgv7l\\runtime",
+  "helper_sha256": "a4fb02f70da0d0a36f6166e8b94cdae9be171195bcc6fb4a8c43266dd18db45d",
+  "interpretation": "Correction is durably queued before explicit maintenance; ThreeHostRuntime.maintain dispatches maintenance and completes it.",
+  "maintenance": {
+    "dispatch_completed": 1,
+    "job_rows_after": [
+      {
+        "attempt_count": null,
+        "id": "event:3315b0f891267da558b635cff58d7ca9830c1a02784529737b0c7204cb7dd41f",
+        "kind": "correct",
+        "last_error": null,
+        "status": "completed"
+      },
+      {
+        "attempt_count": null,
+        "id": "event:8281e881b2d50cd74fd028128012ed11fe50c8361da37716358ef6ad7441c2a3",
+        "kind": "remember",
+        "last_error": null,
+        "status": "completed"
+      }
+    ]
+  },
+  "network_calls": false,
+  "profile": "native-three-host-v4",
+  "provider": "SimpleEmbeddingProvider(dim=768, seed=42)",
+  "repo": "D:\\Development\\mnemos\\mnemos\\.worktrees\\functional-local-memory",
+  "runtime_source_commit": "f561f5c",
+  "runtime_source_sha256": "a8df190b2f49ab22c2d62a2184d48d74155aa1f5a57f35e5bbaaa2f00b633000",
+  "seed": {
+    "processing_status": "pending",
+    "status": "committed"
+  },
+  "startup_health": {
+    "running": false,
+    "scheduler_running": false
+  },
+  "status": "passed"
+}

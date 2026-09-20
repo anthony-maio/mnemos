@@ -1,5 +1,13 @@
 # Functional local memory implementation record
 
+The [offline worker checkpoint](../2026-09-20/three-host-worker-checkpoint-v1/README.md)
+reproduces a three-host runner defect: its injected factory never starts the
+background worker, while correction requires native observation of completion.
+The benchmark now uses the installed owner lifecycle with an explicit short
+polling schedule. The regression passes through restart, and 167 offline
+cases pass. Product behavior and native acceptance criteria are unchanged.
+Native v5 remains prospective; v4's model errors remain failed.
+
 The [three-host v4 attempt](../2026-09-20/three-host-native-v4/README.md) passed
 Codex teaching, Claude teaching, and Hermes retrieval of both facts after a
 service restart. Hermes correction then failed: an unsupported scope argument

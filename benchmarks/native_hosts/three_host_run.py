@@ -65,7 +65,7 @@ from .three_host_contract import (
     require_recalled,
     require_teach,
 )
-from .three_host_runtime import ThreeHostRuntime, PROTOCOL
+from .three_host_runtime import ThreeHostRuntime, PROTOCOL, MAINTENANCE_PROFILE
 
 CODEX_MODEL = "gpt-5.5"
 
@@ -400,6 +400,7 @@ def main() -> int:
         for path in Path(__file__).parent.glob("*.py")
     ]
     inputs.append(PROTOCOL)
+    inputs.append("docs/plans/2026-09-20-three-host-continuity-protocol-v4.md")
     inputs.append("docs/plans/2026-09-20-three-host-continuity-protocol-v3.md")
     inputs.append("docs/plans/2026-09-20-three-host-continuity-protocol-v2.md")
     inputs.append("docs/validation/2026-09-20/codex-tool-mode-diagnostic-v1/selected-catalog.json")
@@ -452,6 +453,7 @@ def main() -> int:
         "preflight_only": args.preflight_only,
         "codex_mode": "pinned gpt-5.5 with --disable code_mode_host; direct tools require native ID correlation",
         "codex_requested_model": CODEX_MODEL,
+        "maintenance_profile": MAINTENANCE_PROFILE,
     }
     save(runtime.root / "report.json", report)
     env = PhaseEnvironment(
@@ -537,9 +539,17 @@ def main() -> int:
         save(runtime.root / "dispatch-records.json", runtime.dispatch_records)
         return evidence
 
+    def start_runtime() -> None:
+        runtime.start()
+        health = runtime.dispatch("health", {})
+        report.setdefault("runtime_starts", []).append(health)
+        save(runtime.root / "report.json", report)
+        if health.get("maintenance", {}).get("scheduler_running") is not True:
+            raise ValueError("Native runtime background maintenance is not running")
+
     def restart() -> None:
         runtime.stop()
-        runtime.start()
+        start_runtime()
 
     base = "Use only the requested Mnemos tools and this project's scope. Do not add conversational text as an explicit fact. "
     recall_tools = {"mnemos_retrieve"}
@@ -562,7 +572,7 @@ def main() -> int:
                 context_length=65536,
             )
             save(runtime.root / "report.json", report)
-            runtime.start()
+            start_runtime()
             runtime.set_phase("controller-controls")
             for label, content in (
                 ("project", scenario.unrelated),

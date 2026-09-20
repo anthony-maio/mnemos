@@ -26,8 +26,17 @@ if TYPE_CHECKING:
 
 WHEEL_SHA256 = "8552345d2c17c4c037347961eb3043d13b20f790f54a9ccc86a096add6197b0f"
 SOURCE_COMMIT = "f2f741443e60f838b392ae8ea1d1a0b4d8c6c1f2"
-PROFILE = "native-three-host-v4"
-PROTOCOL = "docs/plans/2026-09-20-three-host-continuity-protocol-v4.md"
+PROFILE = "native-three-host-v5"
+PROTOCOL = "docs/plans/2026-09-20-three-host-continuity-protocol-v5.md"
+MAINTENANCE_INTERVAL_SECONDS = 0.25
+MAINTENANCE_IDLE_SECONDS = 0
+MAINTENANCE_PROFILE = {
+    "lifecycle": "installed default owner start and stop",
+    "interval_seconds": MAINTENANCE_INTERVAL_SECONDS,
+    "idle_seconds": MAINTENANCE_IDLE_SECONDS,
+    "service_log": "service.log in disposable runtime root",
+    "production_latency_evidence": False,
+}
 HERMES_INPUTS = (
     "benchmarks/native_hosts/hermes_lifecycle_run_v10.py",
     "benchmarks/native_hosts/hermes_native_bootstrap_v6.py",
@@ -381,13 +390,24 @@ class ThreeHostRuntime:
                 require_scope_context=True,
                 owns_providers=True,
             )
-            return TracedLocalMemoryService(engine, registry)
+            dispatcher = TracedLocalMemoryService(engine, registry)
+            # This isolated continuity profile needs progress during native turns.
+            # It measures lifecycle correctness, not production idle scheduling.
+            dispatcher.maintenance.interval_seconds = MAINTENANCE_INTERVAL_SECONDS
+            dispatcher.maintenance.idle_seconds = MAINTENANCE_IDLE_SECONDS
+            return dispatcher
 
-        self.service = MnemosService(
-            dispatcher_factory=factory,
+        class NativeRuntimeService(MnemosService):
+            def _make_default_dispatcher(self) -> LocalMemoryService:
+                # Preserve the installed owner's scheduler start/stop lifecycle.
+                # An injected factory deliberately bypasses that lifecycle.
+                return factory()
+
+        self.service = NativeRuntimeService(
             descriptor_path=self.descriptor,
             startup_timeout=10,
             dispatch_timeout=45,
+            service_log_path=self.root / "service.log",
         )
         return self.service.start()
 

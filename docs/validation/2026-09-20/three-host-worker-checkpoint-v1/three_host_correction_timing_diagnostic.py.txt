@@ -1,0 +1,211 @@
+"""Offline ThreeHostRuntime correction/job/maintenance timing diagnostic."""
+
+from __future__ import annotations
+
+import hashlib
+import importlib.util
+import json
+from pathlib import Path
+import shutil
+import subprocess
+import sys
+import tempfile
+import time
+from typing import Any
+
+
+def _sha256(path: Path) -> str:
+    return hashlib.sha256(path.read_bytes()).hexdigest()
+
+
+def _fact(rows: dict[str, list[dict[str, Any]]], content: str) -> dict[str, Any]:
+    matches = [row for row in rows["facts"] if row.get("content") == content]
+    if len(matches) != 1:
+        raise AssertionError(f"expected one fact with content, got {len(matches)}")
+    return matches[0]
+
+
+def main() -> None:
+    helper = Path(__file__).resolve()
+    repo = helper.parent.parent
+    output = helper.with_name("three_host_correction_timing_diagnostic.json")
+    fixture_parent = Path(tempfile.mkdtemp(prefix="mnemos-three-host-correction-timing-"))
+    root = fixture_parent / "runtime"
+    report: dict[str, Any] = {
+        "status": "running",
+        "helper_sha256": _sha256(helper),
+        "repo": str(repo),
+        "fixture_root": str(root),
+        "profile": "native-three-host-v4",
+        "provider": "SimpleEmbeddingProvider(dim=768, seed=42)",
+        "network_calls": False,
+        "context_source": "ThreeHostRuntime.prepare() project context with host=hermes",
+    }
+    runtime = None
+    original_ollama = None
+    try:
+        if str(repo) not in sys.path:
+            sys.path.insert(0, str(repo))
+        from mnemos.utils import embeddings
+
+        # The worktree may contain a later maintenance-scheduler experiment.
+        # Load the committed v4 runtime bytes directly so this observation
+        # cannot silently change with that uncommitted experiment.
+        runtime_source = subprocess.check_output(
+            [
+                "git",
+                "-C",
+                str(repo),
+                "show",
+                "f561f5c:benchmarks/native_hosts/three_host_runtime.py",
+            ]
+        )
+        runtime_source_path = fixture_parent / "three_host_runtime_v4.py"
+        runtime_source_path.write_bytes(runtime_source)
+        spec = importlib.util.spec_from_file_location(
+            "benchmarks.native_hosts.three_host_runtime_v4_diagnostic", runtime_source_path
+        )
+        if spec is None or spec.loader is None:
+            raise RuntimeError("could not load the committed v4 runtime")
+        runtime_module = importlib.util.module_from_spec(spec)
+        sys.modules[spec.name] = runtime_module
+        spec.loader.exec_module(runtime_module)
+        ThreeHostRuntime = runtime_module.ThreeHostRuntime
+
+        checks = fixture_parent / "checks.json"
+        installed = fixture_parent / "installed.json"
+        queue = fixture_parent / "queue.json"
+        hermes = fixture_parent / "hermes.json"
+        for path in (checks, installed, queue, hermes):
+            path.write_text("{}", encoding="utf-8")
+        runtime = ThreeHostRuntime(
+            root=root,
+            repo=repo,
+            checks=checks,
+            installed_checks=installed,
+            prior_queue_state=queue,
+            excluded_pids=[],
+            hermes_acceptance=hermes,
+        )
+        runtime._verified = True
+        runtime._plugin_bytes = {"hooks/hooks.json": b"{}"}
+        runtime.prepare()
+
+        # ThreeHostRuntime.start imports this symbol at call time. Replace only
+        # the provider used by this disposable process; no Ollama endpoint is
+        # contacted and production source remains untouched.
+        original_ollama = embeddings.OllamaEmbeddingProvider
+        embeddings.OllamaEmbeddingProvider = lambda **_: embeddings.SimpleEmbeddingProvider(
+            dim=768, seed=42
+        )
+        runtime.start()
+        startup_health = runtime.dispatch("health", {})
+        runtime.set_phase("offline-correction-timing")
+        context = dict(runtime.contexts["project"])
+        context.update({"host": "hermes", "session_id": "offline-v4-correction"})
+        old = "The project release label is offline-cedar-731."
+        new = "The project release label is offline-maple-842."
+
+        seed = runtime.dispatch(
+            "remember",
+            {"context": context, "event_id": "offline-seed", "content": old},
+        )
+        seed_state = runtime.maintain()
+        target = _fact(seed_state, old)
+        correction = runtime.dispatch(
+            "correct",
+            {
+                "context": context,
+                "fact_id": target["id"],
+                "expected_version": target["version"],
+                "content": new,
+                "event_id": "offline-correction",
+            },
+        )
+        job_id = correction.get("job_id")
+        if not isinstance(job_id, str) or not job_id:
+            raise AssertionError("correction did not return a durable job ID")
+        before = runtime.dispatch("job", {"context": context, "job_id": job_id})
+        maintained = runtime.maintain()
+        maintenance_record = next(
+            row
+            for row in reversed(runtime.dispatch_records)
+            if row["operation"] == "maintenance"
+        )
+        after = runtime.dispatch("job", {"context": context, "job_id": job_id})
+        final_fact = _fact(maintained, new)
+        report.update(
+            {
+                "status": "passed",
+                "runtime_source_commit": "f561f5c",
+                "runtime_source_sha256": hashlib.sha256(runtime_source).hexdigest(),
+                "startup_health": {
+                    "scheduler_running": startup_health["maintenance"]["scheduler_running"],
+                    "running": startup_health["maintenance"]["running"],
+                },
+                "seed": {
+                    "status": seed.get("status"),
+                    "processing_status": seed.get("processing_status"),
+                },
+                "before_maintenance": {
+                    "job_status": before["job"]["status"],
+                    "attempt_count": before["job"]["attempt_count"],
+                },
+                "maintenance": {
+                    "job_rows_after": [
+                        {
+                            "id": row["id"],
+                            "kind": row["kind"],
+                            "status": row["status"],
+                            "attempt_count": row.get("attempt_count"),
+                            "last_error": row.get("last_error"),
+                        }
+                        for row in maintained.get("jobs", [])
+                    ],
+                    "dispatch_completed": maintenance_record["result"].get("completed"),
+                },
+                "after_maintenance": {
+                    "job_status": after["job"]["status"],
+                    "attempt_count": after["job"]["attempt_count"],
+                    "fact_id": final_fact["id"],
+                    "version": final_fact["version"],
+                    "content": final_fact["content"],
+                },
+                "dispatch_operations": [
+                    row["operation"] for row in runtime.dispatch_records
+                ],
+                "interpretation": (
+                    "Correction is durably queued before explicit maintenance; "
+                    "ThreeHostRuntime.maintain dispatches maintenance and completes it."
+                ),
+            }
+        )
+    except Exception as exc:
+        report.update(
+            {
+                "status": "failed",
+                "error_type": type(exc).__name__,
+                "error": str(exc),
+            }
+        )
+    finally:
+        if runtime is not None:
+            try:
+                runtime.stop()
+            except Exception as exc:
+                report["cleanup_error"] = type(exc).__name__ + ": " + str(exc)
+        if original_ollama is not None:
+            from mnemos.utils import embeddings
+
+            embeddings.OllamaEmbeddingProvider = original_ollama
+        for _ in range(10):
+            shutil.rmtree(fixture_parent, ignore_errors=True)
+            if not fixture_parent.exists():
+                break
+            time.sleep(0.2)
+        report["fixture_removed"] = not fixture_parent.exists()
+        output.write_text(json.dumps(report, indent=2, sort_keys=True) + "\n", encoding="utf-8")
+
+
+if __name__ == "__main__":
+    main()

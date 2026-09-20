@@ -12,6 +12,8 @@ Deliver an article draft, three possible titles, and a separate compact source/c
 
 ## Latest implementation and native evidence
 
+Checkout addendum: the [offline correction-worker repair](../validation/2026-09-20/three-host-worker-checkpoint-v1/README.md) fixes a benchmark setup defect discovered after packet v21. The default production service already starts its scheduler; the custom runner did not. The repaired runner passes a correction/restart regression and 167 offline cases. Native acceptance remains open, and packet v21 does not contain this later addendum.
+
 The portable v21 packet is a working snapshot through the v4 attempt. It includes the partial cross-host success and the correction failure below. Refresh the handoff and packet at final acceptance; this is enough to begin research, not a finished engineering account.
 
 The [three-host v4 attempt](../validation/2026-09-20/three-host-native-v4/README.md) passed
