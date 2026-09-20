@@ -1,0 +1,59 @@
+from pathlib import Path
+import hashlib
+import json
+import shutil
+import subprocess
+import xml.etree.ElementTree as ET
+
+repo = Path('/mnt/d/Development/mnemos/mnemos/.worktrees/functional-local-memory')
+root = Path('/tmp/mnemos-hermes-compaction-origin-candidate-v1')
+out = repo / 'docs/validation/2026-09-20/hermes-boundary-regressions-v12'
+out.mkdir(exist_ok=False)
+(out / '.gitattributes').write_bytes(b'** -text -whitespace\n')
+names = [
+    'integration_api_probe_v11.py', 'integration_api_probe_v11.json',
+    'integration_api_probe_v11.stdout.log', 'integration_api_probe_v11.stderr.log',
+    'boundary-persistence-root-v1.junit.xml', 'boundary-persistence-root-v1.stdout.log',
+    'tests/hermes_cli/test_boundary_persistence_root.py',
+]
+for prefix in ['boundary-broad-root-v12', 'boundary-row-stamp-v13']:
+    names += [prefix + suffix for suffix in ['.junit.xml', '.stdout.log', '.stderr.log']]
+for name in names:
+    target = out / name
+    target.parent.mkdir(parents=True, exist_ok=True)
+    shutil.copyfile(root / name, target)
+for suffix in ['.junit.xml', '.stdout.log', '.stderr.log']:
+    name = 'boundary-base-root-v12' + suffix
+    shutil.copyfile(Path('/tmp/mnemos-hermes-base-14a3463-v1') / name, out / name)
+shutil.copyfile('/tmp/mnemos-hermes-root-v12-pre-repair/candidate.patch', out / 'v11-and-v12-candidate.patch')
+(out / 'v13-row-stamp-candidate.patch').write_bytes(subprocess.check_output(['git', 'diff', '--binary'], cwd=root))
+shutil.copyfile(repo / '.venv/repair_hermes_row_stamping_v1.py', out / 'row-stamp-repair.py.txt')
+shutil.copyfile(__file__, out / 'collector.py.txt')
+counts = {}
+for path in out.glob('*.junit.xml'):
+    suites = list(ET.parse(path).getroot().iter('testsuite'))
+    counts[path.name] = {key: sum(int(s.get(key, '0')) for s in suites) for key in ['tests', 'failures', 'errors', 'skipped']}
+(out / 'summary.json').write_text(json.dumps({'base_commit': subprocess.check_output(['git', 'rev-parse', 'HEAD'], cwd=root, text=True).strip(), 'counts': counts}, indent=2) + '\n')
+files = {p.relative_to(out).as_posix(): {'bytes': p.stat().st_size, 'sha256': hashlib.sha256(p.read_bytes()).hexdigest()}
+         for p in sorted(out.rglob('*')) if p.is_file()}
+(out / 'evidence-index.json').write_text(json.dumps({'files': files}, indent=2) + '\n')
+(out / 'README.md').write_text('''# Actual session boundary repair and broader regressions
+
+The v11 actual /new probe passes uncommitted-message persistence and capture,
+plus corrupted-evidence suppression. It exercises actual handler, database,
+and memory provider methods with an isolated home and verified installed
+Mnemos modules. It observes the capture outbox, not service delivery or a
+complete interactive session. Nine targeted boundary tests also pass.
+
+The subsequent 89-case boundary/persistence selection records 84 passes and
+five failures. The unchanged Hermes base passes all 31 cases in the two files
+containing those failures. These five failures are candidate regressions.
+
+The v13 repair restores durable row-ID stamping for ordinary batch inserts,
+while compression inputs preserve their reusable source IDs. The same 31-case
+selection then records 30 passes and one failure. Compression rotation in an
+unscoped session still fails because hybrid evidence requires a verified
+origin. No baseline test was weakened or removed. This candidate is not ready
+for installation. Both patch states and all failing results remain preserved.
+''', encoding='utf-8')
+print(json.dumps({'archive': str(out), 'files': len(files), 'counts': counts}))

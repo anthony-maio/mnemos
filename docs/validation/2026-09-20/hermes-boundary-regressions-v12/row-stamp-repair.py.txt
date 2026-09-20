@@ -1,0 +1,26 @@
+from pathlib import Path
+import hashlib
+import subprocess
+
+root = Path('/tmp/mnemos-hermes-compaction-origin-candidate-v1')
+archive = Path('/tmp/mnemos-hermes-root-v12-pre-repair')
+archive.mkdir(exist_ok=False)
+patch = subprocess.check_output(['git', 'diff', '--binary'], cwd=root)
+(archive / 'candidate.patch').write_bytes(patch)
+target = root / 'hermes_state_messages.py'
+original = target.read_text()
+(archive / target.name).write_text(original)
+needle = '''                    source_origins[index] if preserve_origins else None,
+                )
+            inserted += 1'''
+replacement = '''                    source_origins[index] if preserve_origins else None,
+                )
+                # Ordinary append callers need the durable ID to repair and
+                # deduplicate later flushes. Compression inputs retain their
+                # source IDs so the same snapshot can be safely reused.
+                if not preserve_origins:
+                    msg["_row_id"] = int(cur.lastrowid)
+            inserted += 1'''
+assert original.count(needle) == 1
+target.write_text(original.replace(needle, replacement))
+print('preserved patch sha256=' + hashlib.sha256(patch).hexdigest())

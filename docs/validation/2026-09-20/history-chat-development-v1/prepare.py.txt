@@ -1,0 +1,62 @@
+from pathlib import Path
+from datetime import datetime, timezone
+import hashlib
+import json
+import shutil
+from urllib.request import urlopen
+
+repo = Path(__file__).resolve().parents[1]
+parent = repo / 'docs/validation/2026-09-20/history-reasoning-development-v1'
+root = Path('C:/Users/Ant/AppData/Local/Temp/mnemos-history-chat-development-v1')
+assert not root.exists()
+inputs = json.loads((parent / 'inputs.json').read_bytes())
+inputs.update(schema_version='history-chat-development-v1', max_tokens=8192, timeout=180, api_route='chat')
+inputs['interpretation'] = ('Development follow-up on the same twelve authored cases, three repetitions, history-only prompt, existing control, source-bound schema. '
+    'Experimental chat transport, thinking enabled, 8192-token budget. Both route and budget differ from the failed generate/2048 run. '
+    'Actual frozen SleepDaemon proposal validation is unchanged; only final message.content is consumed. No facts committed, no production setting or transport changed, no unseen holdout.')
+with urlopen(inputs['endpoint'] + '/api/tags', timeout=10) as response:
+    model = next(m for m in json.loads(response.read())['models'] if m['name'] == inputs['model'])
+with urlopen(inputs['endpoint'] + '/api/version', timeout=10) as response:
+    version = json.loads(response.read())
+parent_prep = json.loads((parent / 'preparation.json').read_bytes())
+assert model['digest'] == parent_prep['model']['digest']
+runner = (parent / 'runner.py').read_text()
+anchor = 'class Provider(LLMProvider):'
+assert runner.count(anchor) == 1
+transport = '''class ChatDiagnosticProvider(OllamaProvider):
+    async def predict(self, prompt, **kwargs):
+        import httpx
+        from mnemos.utils.llm import MnemosExternalServiceError
+        assert set(kwargs) == {'format'}
+        payload = {'model': self.model, 'messages': [{'role': 'user', 'content': prompt}],
+                   'stream': False, 'think': self.think, 'format': kwargs['format'],
+                   'options': {'temperature': self.temperature, 'num_predict': self.max_tokens}}
+        async with httpx.AsyncClient(timeout=self.timeout) as client:
+            response = await client.post(self.base_url + '/api/chat', json=payload)
+            response.raise_for_status()
+            data = response.json()
+        if not isinstance(data, dict):
+            raise MnemosExternalServiceError('Ollama returned a non-object response')
+        self.response_observer(data)
+        message = data.get('message')
+        final = message.get('content') if isinstance(message, dict) else None
+        if not isinstance(final, str):
+            raise MnemosExternalServiceError('Ollama returned a non-string final response')
+        if not final.strip():
+            raise MnemosExternalServiceError('Ollama returned an empty final response')
+        return final.strip()
+
+'''
+runner = runner.replace(anchor, transport + anchor).replace('self.provider = OllamaProvider(', 'self.provider = ChatDiagnosticProvider(')
+root.mkdir()
+(root / 'inputs.json').write_text(json.dumps(inputs, indent=2) + '\n', encoding='utf-8')
+(root / 'server-version.json').write_text(json.dumps(version, indent=2) + '\n', encoding='utf-8')
+(root / 'runner.py').write_text(runner, encoding='utf-8', newline='\n')
+shutil.copyfile(Path(__file__), root / 'prepare.py.txt')
+sha = lambda p: hashlib.sha256(p.read_bytes()).hexdigest()
+manifest = {'prepared_at': datetime.now(timezone.utc).isoformat(), 'model': model,
+            'source_commit': inputs['source_commit'], 'source_files': parent_prep['source_files'],
+            'parent_inputs_sha256': sha(parent / 'inputs.json'),
+            'files': {p.name: sha(p) for p in sorted(root.iterdir())}}
+(root / 'preparation.json').write_text(json.dumps(manifest, indent=2) + '\n', encoding='utf-8')
+print(json.dumps({'root': str(root), 'calls': 36, 'model': model['name'], 'digest': model['digest'], 'server': version}))

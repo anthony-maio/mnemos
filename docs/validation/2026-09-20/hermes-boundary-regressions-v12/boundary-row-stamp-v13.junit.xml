@@ -1,0 +1,49 @@
+<?xml version="1.0" encoding="utf-8"?><testsuites name="pytest tests"><testsuite name="pytest" errors="0" failures="1" skipped="0" tests="31" time="11.487" timestamp="2026-09-20T19:22:50.995301+00:00" hostname="Aurora"><testcase classname="tests.agent.test_tool_call_incremental_persistence" name="test_run_conversation_flushes_assistant_tool_call_before_execution" time="0.439" /><testcase classname="tests.agent.test_tool_call_incremental_persistence" name="test_interim_assistant_is_durable_before_ui_projection_on_abnormal_exit" time="0.261" /><testcase classname="tests.agent.test_tool_call_incremental_persistence" name="test_failed_assistant_persist_blocks_ui_projection_and_tool_side_effects" time="0.187" /><testcase classname="tests.agent.test_tool_call_incremental_persistence" name="test_locked_flush_exception_surfaces_locked_cause_in_result_contract" time="0.186" /><testcase classname="tests.agent.test_tool_call_incremental_persistence" name="test_persistence_cause_resets_between_turns" time="0.229" /><testcase classname="tests.agent.test_tool_call_incremental_persistence" name="test_execute_tool_calls_sequential_flushes_each_tool_result_before_next_dispatch" time="0.194" /><testcase classname="tests.agent.test_tool_call_incremental_persistence" name="test_sequential_keyboard_interrupt_emits_results_for_all_calls" time="0.167" /><testcase classname="tests.agent.test_tool_call_incremental_persistence" name="test_tool_result_is_durable_before_ui_completion_on_abnormal_exit[sequential]" time="0.217" /><testcase classname="tests.agent.test_tool_call_incremental_persistence" name="test_tool_result_is_durable_before_ui_completion_on_abnormal_exit[concurrent]" time="0.250" /><testcase classname="tests.agent.test_tool_call_incremental_persistence" name="test_failed_tool_result_persist_blocks_completion_projection[sequential]" time="0.171" /><testcase classname="tests.agent.test_tool_call_incremental_persistence" name="test_failed_tool_result_persist_blocks_completion_projection[concurrent]" time="0.165" /><testcase classname="tests.agent.test_tool_call_incremental_persistence" name="test_segmented_batch_stops_before_later_segment_after_persist_failure" time="0.165" /><testcase classname="tests.agent.test_tool_call_incremental_persistence" name="test_execute_tool_calls_concurrent_flushes_each_tool_result_in_order" time="0.157" /><testcase classname="tests.agent.test_tool_call_incremental_persistence" name="test_empty_final_response_updates_already_flushed_blank_assistant_row" time="0.229" /><testcase classname="tests.agent.test_tool_call_incremental_persistence" name="test_flush_stale_row_id_from_other_session_still_inserts" time="0.209" /><testcase classname="tests.agent.test_tool_call_incremental_persistence" name="test_flush_stale_row_id_from_other_session_does_not_fill_child_blank" time="0.212" /><testcase classname="tests.agent.test_tool_call_incremental_persistence" name="test_flush_archived_same_session_row_id_fills_active_clone" time="0.190" /><testcase classname="tests.agent.test_tool_call_incremental_persistence" name="test_flush_atomic_mixed_repair_and_append_rollback_on_failure" time="0.180" /><testcase classname="tests.agent.test_tool_call_incremental_persistence" name="test_flush_concurrent_nonblank_winner_adopts_canonical_content" time="0.181" /><testcase classname="tests.agent.test_compression_persistence.TestFlushAfterCompression" name="test_flush_after_compression_with_long_history" time="2.489" /><testcase classname="tests.agent.test_compression_persistence.TestFlushAfterCompression" name="test_flush_with_stale_history_loses_messages" time="0.497" /><testcase classname="tests.agent.test_compression_persistence.TestFlushAfterCompression" name="test_in_place_compression_rebaseline_prevents_duplicate_compacted_rows" time="0.442" /><testcase classname="tests.agent.test_compression_persistence.TestFlushAfterCompression" name="test_abort_after_in_place_compaction_preserves_flush_baseline" time="1.766" /><testcase classname="tests.agent.test_compression_persistence.TestFlushAfterCompression" name="test_rotation_child_session_flushes_full_compressed_transcript_with_markers" time="0.912"><failure message="AssertionError: assert '20260701_152840_parent' != '20260701_152840_parent'&#10; +  where '20260701_152840_parent' = &lt;run_agent.AIAgent object at 0x7518b9db4110&gt;.session_id">self = &lt;tests.agent.test_compression_persistence.TestFlushAfterCompression object at 0x7518d1084050&gt;
+
+    def test_rotation_child_session_flushes_full_compressed_transcript_with_markers(self):
+        """Regression for #57491: live cached-agent markers must not block child flush."""
+        from agent.conversation_compression import compress_context
+        from hermes_state import SessionDB
+    
+        with tempfile.TemporaryDirectory() as tmpdir:
+            db_path = Path(tmpdir) / "test.db"
+            db = SessionDB(db_path=db_path)
+            parent_sid = "20260701_152840_parent"
+            db.create_session(parent_sid, "gateway", model="test/model")
+    
+            agent = self._make_agent(db)
+            agent.session_id = parent_sid
+            agent.compression_in_place = False
+            agent._ensure_db_session()
+    
+            # Plain marked messages only: the exact-equality assertion below
+            # relies on `compressed` containing no message that _flush filters
+            # for a reason INDEPENDENT of _db_persisted (ephemeral scaffolding,
+            # synthetic recovery turns). Keep this fixture free of such messages
+            # or the row count would legitimately differ from len(compressed).
+            # The transcript must also be large enough that the provider-less
+            # static fallback net-shrinks it (middle drops must outweigh the
+            # fixed compaction marker overhead), or the no-growth commit guard
+            # correctly refuses the rotation this test exercises. Sized for
+            # the lean tail default: the 10K-token tail floor must leave a
+            # substantial compressible middle (~2K chars/message × 40 ≈ 20K
+            # estimated tokens total).
+            messages = [
+                {
+                    "role": "user" if i % 2 == 0 else "assistant",
+                    "content": f"message {i} " + "x" * 2000,
+                    "_db_persisted": True,
+                }
+                for i in range(40)
+            ]
+    
+            with patch("agent.context_compressor.call_llm", side_effect=RuntimeError("no provider")):
+                compressed, _ = compress_context(
+                    agent, messages, approx_tokens=100_000, system_message="sys"
+                )
+    
+&gt;           assert agent.session_id != parent_sid
+E           AssertionError: assert '20260701_152840_parent' != '20260701_152840_parent'
+E            +  where '20260701_152840_parent' = &lt;run_agent.AIAgent object at 0x7518b9db4110&gt;.session_id
+
+tests/agent/test_compression_persistence.py:320: AssertionError</failure></testcase><testcase classname="tests.agent.test_compression_persistence.TestGatewayHistoryOffsetAfterSplit" name="test_history_offset_zero_on_session_split" time="0.012" /><testcase classname="tests.agent.test_compression_persistence.TestGatewayHistoryOffsetAfterSplit" name="test_new_messages_extraction_after_split" time="0.005" /><testcase classname="tests.agent.test_compression_persistence.TestStoredPromptCwdDrift" name="test_stored_prompt_stale_when_cwd_differs" time="0.007" /><testcase classname="tests.agent.test_compression_persistence.TestStoredPromptCwdDrift" name="test_stored_prompt_fresh_when_cwd_matches" time="0.006" /><testcase classname="tests.agent.test_compression_persistence.TestStoredPromptCwdDrift" name="test_project_context_cannot_force_a_rebuild" time="0.005" /><testcase classname="tests.agent.test_compression_persistence.TestStoredPromptCwdDrift" name="test_project_context_cannot_mask_real_drift" time="0.007" /><testcase classname="tests.agent.test_compression_persistence.TestStoredPromptCwdDrift" name="test_built_prompt_contains_platform_line" time="0.503" /></testsuite></testsuites>

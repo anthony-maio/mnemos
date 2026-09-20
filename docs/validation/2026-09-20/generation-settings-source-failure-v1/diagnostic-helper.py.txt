@@ -1,0 +1,58 @@
+from pathlib import Path
+from datetime import datetime, timezone
+import hashlib
+import json
+import sys
+import time
+import traceback
+
+snapshot = Path('C:/Users/Ant/AppData/Local/Temp/mnemos-source-generation-settings-v1')
+root = Path('C:/Users/Ant/AppData/Local/Temp/mnemos-descriptor-replace-timing-v1')
+root.mkdir(exist_ok=False)
+sys.path.insert(0, str(snapshot))
+import mnemos.service as service
+assert Path(service.__file__).resolve().is_relative_to(snapshot)
+original_replace = service.os.replace
+observations = []
+for repetition in range(25):
+    folder = root / str(repetition)
+    folder.mkdir()
+    path = folder / 'runtime.json'
+    service._write_private_json(path, {'generation': 'old'})
+    reader = path.open('rb')
+    attempts = []
+    start = time.monotonic()
+    def observed(source, destination):
+        attempt = {'start': time.monotonic() - start}
+        try:
+            result = original_replace(source, destination)
+            attempt['status'] = 'replaced'
+            return result
+        except PermissionError as exc:
+            attempt.update(status='permission_error', winerror=exc.winerror)
+            reader.close()
+            raise
+        finally:
+            attempt['end'] = time.monotonic() - start
+            attempts.append(attempt)
+    service.os.replace = observed
+    row = {'repetition': repetition, 'attempts': attempts}
+    try:
+        service._write_private_json(path, {'generation': 'new'})
+        row.update(status='passed', final=json.loads(path.read_bytes()))
+        assert row['final'] == {'generation': 'new'}
+        assert not list(folder.glob('.runtime.json.*.tmp'))
+    except Exception as exc:
+        row.update(status='failed', error_type=type(exc).__name__, error=str(exc), traceback=traceback.format_exc())
+    finally:
+        service.os.replace = original_replace
+        reader.close()
+    row['elapsed_seconds'] = time.monotonic() - start
+    observations.append(row)
+    (root / 'observations.json').write_text(json.dumps(observations, indent=2) + '\n')
+record = {'status': 'completed', 'finished_at': datetime.now(timezone.utc).isoformat(),
+          'source': str(snapshot), 'service_sha256': hashlib.sha256(Path(service.__file__).read_bytes()).hexdigest(),
+          'passed': sum(r['status'] == 'passed' for r in observations),
+          'failed': sum(r['status'] == 'failed' for r in observations)}
+(root / 'status.json').write_text(json.dumps(record, indent=2) + '\n')
+print(json.dumps(record))

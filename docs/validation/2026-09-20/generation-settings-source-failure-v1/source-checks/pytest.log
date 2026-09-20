@@ -1,0 +1,73 @@
+........................................................................ [  3%]
+.........................................ss............................. [  7%]
+........................................................................ [ 10%]
+........................................................................ [ 14%]
+........................................................................ [ 17%]
+........................................................................ [ 21%]
+........................................................................ [ 25%]
+........................................................................ [ 28%]
+........................................................................ [ 32%]
+........................................................................ [ 35%]
+........................................................................ [ 39%]
+........................................................................ [ 43%]
+.................ss..................................................... [ 46%]
+........................................................................ [ 50%]
+........................................................................ [ 53%]
+........................................................................ [ 57%]
+........................................................................ [ 60%]
+........................................................................ [ 64%]
+........................................................................ [ 68%]
+........................................................................ [ 71%]
+........................................................................ [ 75%]
+........................................................................ [ 78%]
+............................................F........................... [ 82%]
+........................................................................ [ 86%]
+........................................................................ [ 89%]
+........................................................................ [ 93%]
+........................................................................ [ 96%]
+.................................................................        [100%]
+================================== FAILURES ===================================
+________ test_private_descriptor_replace_recovers_after_reader_closes _________
+
+tmp_path = WindowsPath('C:/Users/Ant/AppData/Local/Temp/mnemos-tests-generation-settings-v1/pytest/test_private_descriptor_replac0')
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x0000018FA34AB4D0>
+
+    @pytest.mark.skipif(sys.platform != "win32", reason="Windows file sharing semantics")
+    def test_private_descriptor_replace_recovers_after_reader_closes(tmp_path, monkeypatch):
+        path = tmp_path / "runtime.json"
+        _write_private_json(path, {"generation": "old"})
+        reader = path.open("rb")
+        replace = service_module.os.replace
+        failures = []
+    
+        def observed_replace(source, destination):
+            try:
+                return replace(source, destination)
+            except PermissionError as exc:
+                failures.append(exc.winerror)
+                reader.close()
+                raise
+    
+        monkeypatch.setattr(service_module.os, "replace", observed_replace)
+        try:
+>           _write_private_json(path, {"generation": "new"})
+
+tests\test_service_competing_recovery.py:39: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+mnemos\service.py:299: in _write_private_json
+    os.replace(temporary, path)
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+source = WindowsPath('C:/Users/Ant/AppData/Local/Temp/mnemos-tests-generation-settings-v1/pytest/test_private_descriptor_replac0/.runtime.json.5cc673f31eaa3d85.tmp')
+destination = WindowsPath('C:/Users/Ant/AppData/Local/Temp/mnemos-tests-generation-settings-v1/pytest/test_private_descriptor_replac0/runtime.json')
+
+    def observed_replace(source, destination):
+        try:
+>           return replace(source, destination)
+                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E           PermissionError: [WinError 5] Access is denied: 'C:\\Users\\Ant\\AppData\\Local\\Temp\\mnemos-tests-generation-settings-v1\\pytest\\test_private_descriptor_replac0\\.runtime.json.5cc673f31eaa3d85.tmp' -> 'C:\\Users\\Ant\\AppData\\Local\\Temp\\mnemos-tests-generation-settings-v1\\pytest\\test_private_descriptor_replac0\\runtime.json'
+
+tests\test_service_competing_recovery.py:31: PermissionError
+=========================== short test summary info ===========================
+FAILED tests/test_service_competing_recovery.py::test_private_descriptor_replace_recovers_after_reader_closes
+1 failed, 2004 passed, 4 skipped in 369.73s (0:06:09)

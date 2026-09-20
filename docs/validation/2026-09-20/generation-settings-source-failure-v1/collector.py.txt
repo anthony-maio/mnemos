@@ -1,0 +1,80 @@
+from pathlib import Path
+import hashlib
+import json
+import shutil
+
+repo = Path(__file__).resolve().parents[1]
+temp = Path('C:/Users/Ant/AppData/Local/Temp')
+base = repo / 'docs/validation/2026-09-20'
+sha = lambda p: hashlib.sha256(p.read_bytes()).hexdigest()
+
+def finish(out, description):
+    shutil.copyfile(__file__, out / 'collector.py.txt')
+    (out / '.gitattributes').write_bytes(b'** -text -whitespace\n')
+    files = {p.relative_to(out).as_posix(): {'bytes': p.stat().st_size, 'sha256': sha(p)}
+             for p in sorted(out.rglob('*')) if p.is_file()}
+    (out / 'evidence-index.json').write_text(json.dumps({'files': files}, indent=2) + '\n')
+    (out / 'README.md').write_text(description, encoding='utf-8', newline='\n')
+    print(json.dumps({'archive': str(out), 'indexed_files': len(files)}))
+
+source = temp / 'mnemos-history-chat-development-v1'
+state = json.loads((source / 'status.json').read_bytes())
+prep = json.loads((source / 'preparation.json').read_bytes())
+assert state['status'] == 'completed' and state['processed'] == 36 and state['errors'] == 0
+assert state['observations_sha256'] == sha(source / 'observations.jsonl')
+assert state['preparation_sha256'] == sha(source / 'preparation.json')
+for name, digest in prep['files'].items():
+    assert sha(source / name) == digest
+rows = [json.loads(line) for line in (source / 'observations.jsonl').read_text().splitlines()]
+assert len({(r['case_id'], r['arm'], r['repetition']) for r in rows}) == 36
+assert all(r['status'] == 'runtime_valid' for r in rows)
+out = base / 'history-chat-development-v1'
+out.mkdir(exist_ok=False)
+for path in source.iterdir():
+    if path.is_file():
+        shutil.copyfile(path, out / path.name)
+summary = [{'case_id': r['case_id'], 'repetition': r['repetition'], 'proposals': r['proposals']} for r in rows]
+(out / 'proposal-review.json').write_text(json.dumps(summary, indent=2) + '\n')
+finish(out, '''# Structured chat extraction development comparison
+
+All 36 calls completed and passed the existing extraction response validation.
+Twelve previously authored cases ran three times with the history-only candidate
+prompt, local Qwen3.5:9b, thinking enabled, temperature zero, an 8,192-token
+budget, and a 180-second timeout. The frozen preparation records exact model,
+source, inputs, and settings. The experimental provider uses the chat endpoint.
+
+proposal-review.json contains the final proposals for semantic review. Runtime
+validity is not a semantic accuracy score. These are previously observed
+development cases, not an unseen holdout. No facts were committed and no live
+configuration or production extraction prompt was changed. The separate
+production-prompt comparison tests the managed production provider configuration.
+Original failed generate-route runs remain archived without revised verdicts.
+''')
+
+checks = temp / 'mnemos-package-checks-generation-settings-v1'
+verification = json.loads((checks / 'verification.json').read_bytes())
+assert verification['status'] == 'failed'
+assert verification['checks'][0]['counts'] == {'tests': 2009, 'failures': 1, 'errors': 0, 'skipped': 4}
+out = base / 'generation-settings-source-failure-v1'
+out.mkdir(exist_ok=False)
+for label, folder in [('source-checks', checks), ('descriptor-diagnostic', temp / 'mnemos-descriptor-replace-timing-v1')]:
+    target = out / label
+    target.mkdir()
+    for path in folder.iterdir():
+        if path.is_file() and path.suffix in {'.json', '.xml', '.log', '.py'}:
+            shutil.copyfile(path, target / path.name)
+shutil.copyfile(repo / '.venv/probe_descriptor_replace_timing_v1.py', out / 'diagnostic-helper.py.txt')
+shutil.copyfile(repo / '.venv/final_checkpoint_checks_v3.py', out / 'source-check-helper.py.txt')
+finish(out, '''# Generation settings checkpoint: source verification failure
+
+Source 05c71d2 recorded 2,004 passes, four skips, and one failure in the complete
+suite. test_private_descriptor_replace_recovers_after_reader_closes exhausted
+the private descriptor replacement path with Windows error 5. Subsequent
+package checks were not run because the helper stops on failure.
+
+A separate unchanged-source diagnostic exercised 25 actual reader-close and
+replacement cycles. All 25 passed. This does not establish the original cause
+or erase the failed full-suite result. The retry deadline and tests were not
+weakened. A fresh complete run uses separate output and temporary directories.
+Both the original JUnit/log and diagnostic observations are retained here.
+''')
