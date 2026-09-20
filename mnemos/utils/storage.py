@@ -56,6 +56,10 @@ class ConflictCanonicalCollisionError(ValueError):
     """A conflict proposal tried to relabel an existing non-conflict fact."""
 
 
+class CorrectionCanonicalCollisionError(RuntimeError):
+    """A versioned correction would replace its target with another fact ID."""
+
+
 def normalize_memory_text(text: str) -> str:
     """Normalize text for exact-dedupe and canonical-key generation."""
     return " ".join(text.strip().lower().split())
@@ -2796,7 +2800,9 @@ class SQLiteStore(MemoryStore):
                         (expected_version is not None and index == 0)
                         or candidate.id in (expected_versions or {})
                     ) and accepted.id != candidate.id:
-                        raise RuntimeError("Expected-version correction collided with another fact")
+                        raise CorrectionCanonicalCollisionError(
+                            "Expected-version correction collided with another fact"
+                        )
                     accepted_chunks.append(accepted)
                     accepted_by_input[candidate.id] = accepted.id
                     accepted_by_input[accepted.id] = accepted.id

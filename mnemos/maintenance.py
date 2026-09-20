@@ -8,7 +8,11 @@ from datetime import datetime, timedelta, timezone
 from uuid import uuid4
 
 from .jobs import DurableJob
-from .utils.storage import ConflictCanonicalCollisionError, MemoryStore
+from .utils.storage import (
+    ConflictCanonicalCollisionError,
+    CorrectionCanonicalCollisionError,
+    MemoryStore,
+)
 
 
 class MaintenanceScheduler:
@@ -104,7 +108,11 @@ class MaintenanceScheduler:
                     self.last_error = (
                         "conflict_canonical_collision"
                         if isinstance(exc, ConflictCanonicalCollisionError)
-                        else type(exc).__name__
+                        else (
+                            "correction_canonical_collision"
+                            if isinstance(exc, CorrectionCanonicalCollisionError)
+                            else type(exc).__name__
+                        )
                     )
                     self.failed_count += 1
                     self._notify_error(exc)

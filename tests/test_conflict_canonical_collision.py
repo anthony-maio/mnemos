@@ -2,14 +2,72 @@ from datetime import datetime, timezone
 
 import pytest
 
-from mnemos.jobs import DurableJob, FactEvidence
+from mnemos.jobs import DurableJob, FactEvidence, FactRevision
 from mnemos.maintenance import MaintenanceScheduler
 from mnemos.types import EpisodicEvent, MemoryChunk
 from mnemos.utils.storage import (
     ConflictCanonicalCollisionError,
+    CorrectionCanonicalCollisionError,
     InMemoryStore,
     SQLiteStore,
 )
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize("version_map", [False, True])
+async def test_versioned_correction_collision_is_observable_and_atomic(tmp_path, version_map):
+    path = tmp_path / "correction.sqlite"
+    store = SQLiteStore(str(path))
+    target = store.upsert_canonical(_chunk("Use cedar", status="unknown", chunk_id="target"))
+    duplicate = store.upsert_canonical(_chunk("Use birch", status="unknown", chunk_id="duplicate"))
+    original = {f.id: f.model_dump(mode="json") for f in store.get_all()}
+    source = _event()
+    store.append_episodic_event(source)
+    store.enqueue_job(DurableJob(id="correction", kind="correct", payload={"event_id": source.id}))
+    errors = []
+
+    async def process(job):
+        corrected = target.reconsolidate(duplicate.content)
+        store.commit_fact_and_job(
+            job.id,
+            owner=job.lease_owner,
+            lease_token=job.lease_token,
+            chunks=[corrected],
+            evidence=[
+                FactEvidence(fact_id=target.id, source_event_id=source.id, excerpt="correction")
+            ],
+            revisions=[
+                FactRevision(
+                    fact_id=target.id,
+                    version=target.version,
+                    content=target.content,
+                    reason="Before correction",
+                )
+            ],
+            processed_event_ids=[source.id],
+            **(
+                {"expected_versions": {target.id: target.version}}
+                if version_map
+                else {"expected_version": target.version}
+            ),
+        )
+
+    scheduler = MaintenanceScheduler(store, process, on_error=errors.append)
+    assert await scheduler.run_once(force=True) == 0
+    assert len(errors) == 1 and isinstance(errors[0], CorrectionCanonicalCollisionError)
+    assert scheduler.health()["last_error"] == "correction_canonical_collision"
+    store.close()
+    reopened = SQLiteStore(str(path))
+    try:
+        assert {f.id: f.model_dump(mode="json") for f in reopened.get_all()} == original
+        assert reopened.get_job("correction").last_error == "correction_canonical_collision"
+        assert reopened.get_job("correction").status == "pending"
+        assert reopened.get_episodic_event(source.id).status == "pending"
+        for fact_id in original:
+            assert reopened.list_fact_evidence(fact_id) == []
+            assert reopened.list_fact_revisions(fact_id) == []
+    finally:
+        reopened.close()
 
 
 def _metadata(status: str) -> dict[str, str]:
