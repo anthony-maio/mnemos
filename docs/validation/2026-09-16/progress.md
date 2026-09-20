@@ -10,6 +10,14 @@ open. The new focused suite passes 139 tests with two platform skips; broader
 source and installed-package validation are pending. The frozen v4 model
 matrix continues on its original source independently of this transport fix.
 
+The successor outage verifier passes 64 focused cases, including actual
+dispatcher health and production capture-schema checks. It adds physical
+scope/source verification, exact native prompt/reply matching, and recursive
+tool-block rejection. No successor native run has executed. Frozen v1 evidence
+remains unchanged. Archive byte preservation was corrected in `c9ae826` after
+a clean checkout exposed line-ending conversion; all twenty indexed files
+now match the committed Git blobs. Product validation remains bound to `a64afb7`.
+
 September 20, native receipt audit: the [offline reconciliation](../2026-09-20/native-capture-coverage-v1/README.md)
 matches all 31 native text identities to service acknowledgements. Twenty-nine
 have completed jobs in the final snapshot; two are suppressed during forgetting.
