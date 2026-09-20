@@ -1,0 +1,44 @@
+<?xml version="1.0" encoding="utf-8"?><testsuites name="pytest tests"><testsuite name="pytest" errors="0" failures="5" skipped="0" tests="27" time="0.262" timestamp="2026-09-20T09:57:40.281119-04:00" hostname="Aurora"><testcase classname="tests.test_native_capture_reconciliation" name="test_duplicate_arrivals_do_not_inflate_logical_coverage" time="0.006" /><testcase classname="tests.test_native_capture_reconciliation" name="test_text_or_identity_mismatch_is_missing_even_with_same_arrival_count[role-user]" time="0.002" /><testcase classname="tests.test_native_capture_reconciliation" name="test_text_or_identity_mismatch_is_missing_even_with_same_arrival_count[content-Changed.]" time="0.002" /><testcase classname="tests.test_native_capture_reconciliation" name="test_text_or_identity_mismatch_is_missing_even_with_same_arrival_count[source_ref-wrong]" time="0.002" /><testcase classname="tests.test_native_capture_reconciliation" name="test_text_or_identity_mismatch_is_missing_even_with_same_arrival_count[source_kind-manual]" time="0.003" /><testcase classname="tests.test_native_capture_reconciliation" name="test_other_context_cannot_satisfy_message[user_profile_id-foreign]" time="0.002" /><testcase classname="tests.test_native_capture_reconciliation" name="test_other_context_cannot_satisfy_message[project_id-foreign]" time="0.002" /><testcase classname="tests.test_native_capture_reconciliation" name="test_other_context_cannot_satisfy_message[workspace_id-foreign]" time="0.002" /><testcase classname="tests.test_native_capture_reconciliation" name="test_other_context_cannot_satisfy_message[session_id-foreign]" time="0.002" /><testcase classname="tests.test_native_capture_reconciliation" name="test_other_context_cannot_satisfy_message[host-hermes]" time="0.002" /><testcase classname="tests.test_native_capture_reconciliation" name="test_uncommitted_or_provisional_result_cannot_satisfy_native_identity[result_patch0]" time="0.002" /><testcase classname="tests.test_native_capture_reconciliation" name="test_uncommitted_or_provisional_result_cannot_satisfy_native_identity[result_patch1]" time="0.002" /><testcase classname="tests.test_native_capture_reconciliation" name="test_uncommitted_or_provisional_result_cannot_satisfy_native_identity[result_patch2]" time="0.002" /><testcase classname="tests.test_native_capture_reconciliation" name="test_claude_provisional_prompt_is_separate_and_never_substitutes_for_native_user" time="0.002" /><testcase classname="tests.test_native_capture_reconciliation" name="test_conflicting_durable_identity_is_not_a_duplicate_delivery" time="0.002"><failure message="assert [] == [2]&#10;  &#10;  Right contains one more item: 2&#10;  Use -v to get more diff">def test_conflicting_durable_identity_is_not_a_duplicate_delivery() -&gt; None:
+        rows = receipts()
+        extra = deepcopy(rows[0])
+        extra["result"]["event_id"] = "different-durable-id"
+        result = audit(rows + [extra])
+        assert result["status"] == "incomplete"
+&gt;       assert result["unmatched_receipts"] == [2]
+E       assert [] == [2]
+E         
+E         Right contains one more item: 2
+E         Use -v to get more diff
+
+tests\test_native_capture_reconciliation.py:158: AssertionError</failure></testcase><testcase classname="tests.test_native_capture_reconciliation" name="test_one_durable_identity_cannot_cover_two_messages" time="0.002" /><testcase classname="tests.test_native_capture_reconciliation" name="test_suppressed_and_job_completion_are_reported_separately" time="0.002" /><testcase classname="tests.test_native_capture_reconciliation" name="test_other_phase_replay_is_not_native_delivery" time="0.003" /><testcase classname="tests.test_native_capture_reconciliation" name="test_claude_ignores_tool_and_thinking_blocks_but_keeps_identical_distinct_texts" time="0.002" /><testcase classname="tests.test_native_capture_reconciliation" name="test_codex_binds_actual_user_and_final_to_turn_not_session_or_injected_context" time="0.002" /><testcase classname="tests.test_native_capture_reconciliation" name="test_codex_intermediate_text_is_exposed_as_unsupported_not_silently_omitted" time="0.002" /><testcase classname="tests.test_native_capture_reconciliation" name="test_hermes_snapshot_repeats_deduplicate_by_position_not_content" time="0.002" /><testcase classname="tests.test_native_capture_reconciliation" name="test_empty_expectations_cannot_pass" time="0.003" /><testcase classname="tests.test_native_capture_reconciliation" name="test_suppression_receipt_uses_verified_payload_identity_without_claiming_storage" time="0.002"><failure message="assert 1 == 2">def test_suppression_receipt_uses_verified_payload_identity_without_claiming_storage() -&gt; None:
+        rows = receipts()
+        rows[0]["payload"]["identity_status"] = "normal"
+        rows[0]["result"] = {"status": "committed", "event_id": DURABLE_IDS["u1"], "processing_status": "suppressed", "job_id": None}
+        result = audit(rows)
+&gt;       assert result["covered_messages"] == 2
+E       assert 1 == 2
+
+tests\test_native_capture_reconciliation.py:311: AssertionError</failure></testcase><testcase classname="tests.test_native_capture_reconciliation" name="test_forged_source_event_id_cannot_cover_native_message" time="0.002"><failure message="assert 2 == 1">def test_forged_source_event_id_cannot_cover_native_message() -&gt; None:
+        rows = receipts()
+        rows[0]["payload"]["event_id"] = "forged"
+&gt;       assert audit(rows)["covered_messages"] == 1
+E       assert 2 == 1
+
+tests\test_native_capture_reconciliation.py:321: AssertionError</failure></testcase><testcase classname="tests.test_native_capture_reconciliation" name="test_hermes_uses_native_row_id_and_rejects_missing_identity" time="0.002"><failure message="AssertionError: assert 'transcript:v2:1' == 'transcript:v2:21'&#10;  &#10;  - transcript:v2:21&#10;  ?               -&#10;  + transcript:v2:1">def test_hermes_uses_native_row_id_and_rejects_missing_identity() -&gt; None:
+        row = {"operation": "transcript", "session_id": "s", "messages": [{"role": "user", "content": "Hello", "_row_id": 21}]}
+&gt;       assert expected_messages("hermes", "teach", [row])[0]["source_ref"] == "transcript:v2:21"
+E       AssertionError: assert 'transcript:v2:1' == 'transcript:v2:21'
+E         
+E         - transcript:v2:21
+E         ?               -
+E         + transcript:v2:1
+
+tests\test_native_capture_reconciliation.py:326: AssertionError</failure></testcase><testcase classname="tests.test_native_capture_reconciliation" name="test_hermes_partial_snapshot_is_not_filled_from_other_snapshot" time="0.003"><failure message="Failed: DID NOT RAISE ValueError">def test_hermes_partial_snapshot_is_not_filled_from_other_snapshot() -&gt; None:
+        full = {"operation": "transcript", "session_id": "s", "messages": [{"role": "user", "content": "Hello", "_row_id": 1}, {"role": "assistant", "content": "Hi", "_row_id": 2}]}
+        partial = deepcopy(full)
+        partial["messages"].pop()
+&gt;       with pytest.raises(ValueError, match="conflicting"):
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+E       Failed: DID NOT RAISE ValueError
+
+tests\test_native_capture_reconciliation.py:336: Failed</failure></testcase></testsuite></testsuites>

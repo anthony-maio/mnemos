@@ -75,6 +75,13 @@ All 12 original-source replays were suppressed. Independent read-only SQLite
 inspection confirmed the target absent, 18 suppression rows, and unchanged
 review, unrelated, and foreign-scope controls. Cleanup passed.
 
+The [native text audit](../validation/2026-09-20/native-capture-coverage-v1/README.md)
+now accounts for all 31 text-bearing messages in that run. Its 43 arrivals
+include eight repeated Hermes deliveries and four provisional Claude prompts.
+Twenty-nine message identities have completed jobs; two were correctly
+suppressed during forgetting. Receipt coverage does not mean every message
+became a durable fact, or establish capture reliability outside this run.
+
 This is one bounded lifecycle with real Nomic embeddings and all five
 cognition modules disabled. It does not close complete capture, Codex Desktop,
 native outage recovery, full-module quality, general reliability, or the

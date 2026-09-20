@@ -6,6 +6,12 @@ Original verdicts remain unchanged. The [v4 repair and preparation](../2026-09-2
 are frozen on `3d09658`, and the fresh seven-profile matrix is running.
 Final quality results are pending; the gates below remain open.
 
+The [native text audit](../2026-09-20/native-capture-coverage-v1/README.md)
+accounts for all 31 text-bearing messages in v7: 29 processing acknowledgements
+with completed jobs and two suppression acknowledgements. Repeated and
+provisional arrivals remain separate. This supports bounded receipt coverage;
+the broader capture and failure-recovery gates remain open.
+
 The [three-host v7 run](../2026-09-20/three-host-native-v7/README.md) passed all 11 native phases on verified
 product `e6887de`: Codex and Claude teaching, Hermes recall and same-ID
 correction, corrected recall from all three hosts, Claude reviewed deletion,

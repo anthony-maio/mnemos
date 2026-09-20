@@ -335,6 +335,8 @@ Run: `py -3.13 -m pytest -q tests/test_backup_restore.py tests/test_storage_sqli
 
 ### T17 - Verify the complete local and cross-host workflow
 
+The [native text audit](../validation/2026-09-20/native-capture-coverage-v1/README.md) accounts for all 31 text-bearing messages in v7, including two suppression acknowledgements. It separately identifies eight repeated deliveries and four provisional prompts among 43 arrivals. This closes receipt accounting for that recorded lifecycle; the broader capture and failure-recovery gates remain open.
+
 Latest native result: [three-host v7](../validation/2026-09-20/three-host-native-v7/README.md) passes all 11 phases on verified product `e6887de`: teaching, restarted recall, same-ID correction, all-host corrected recall, reviewed deletion, 12 suppressed source replays, and all-host final recall. Controls and cleanup pass. All five cognition modules were disabled; complete capture, Desktop, native outage recovery, full-module quality, and the pilot remain open.
 
 Previous native result: [three-host v5](../validation/2026-09-20/three-host-native-v5/README.md) passed teaching but failed Hermes recall on unsupported scope arguments. Generated shared guidance requests those exact arguments; all three provider requests contain that conflicting instruction. Worker startup and cleanup passed. Correction and later phases did not run. Full continuity remains open.

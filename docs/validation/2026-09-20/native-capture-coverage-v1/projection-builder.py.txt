@@ -1,0 +1,102 @@
+from pathlib import Path
+from datetime import datetime, timezone
+import collections
+import hashlib
+import json
+import shutil
+import sys
+
+root = Path(__file__).resolve().parents[1]
+sys.path.insert(0, str(root))
+from benchmarks.native_hosts.capture_coverage import expected_messages, reconcile_captures
+
+runtime = Path('C:/Users/Ant/AppData/Local/Temp/mnemos-three-host-native-v7')
+archive = root / 'docs/validation/2026-09-20/native-capture-coverage-v1'
+archive.mkdir(exist_ok=False)
+(archive / 'sources').mkdir()
+(archive / '.gitattributes').write_bytes(b'** -text -whitespace\n')
+
+def digest(raw):
+    return {'bytes': len(raw), 'sha256': hashlib.sha256(raw).hexdigest()}
+
+def save(name, obj):
+    (archive / name).write_bytes((json.dumps(obj, indent=2, ensure_ascii=True) + '\n').encode())
+
+def text_only(value, types=('text',)):
+    if isinstance(value, str):
+        return value
+    if isinstance(value, list):
+        return [part for part in value if isinstance(part, dict) and part.get('type') in types]
+    return ''
+
+bindings = []
+all_expected = []
+phases = {
+    'codex': ['teach-release', 'codex-recall-v2', 'codex-recall-forgotten'],
+    'claude-code': ['teach-review', 'claude-recall-v2', 'claude-forget', 'claude-recall-forgotten'],
+    'hermes': ['hermes-recall-both', 'hermes-correct', 'hermes-recall-v2', 'hermes-recall-forgotten'],
+}
+for host, names in phases.items():
+    for phase in names:
+        if host == 'codex':
+            paths = list((runtime / phase / 'codex-home').rglob('rollout-*.jsonl'))
+        elif host == 'claude-code':
+            paths = list((runtime / phase / 'claude-home' / 'projects').rglob('*.jsonl'))
+        else:
+            paths = [runtime / phase / 'trace.jsonl']
+        assert len(paths) == 1, paths
+        path = paths[0]
+        raw = path.read_bytes()
+        lines = raw.splitlines()
+        records = [json.loads(line) for line in lines]
+        full_expected = expected_messages(host, phase, records)
+        projected = []
+        locators = []
+        for number, row in enumerate(records, 1):
+            item = None
+            if host == 'codex':
+                payload = row.get('payload', {})
+                if row.get('type') == 'session_meta':
+                    item = {'type': 'session_meta', 'payload': {'id': payload['id']}}
+                elif row.get('type') == 'event_msg' and payload.get('type') in {'task_started', 'task_complete', 'user_message'}:
+                    item = {'type': 'event_msg', 'payload': {key: payload[key] for key in ['type', 'turn_id', 'message'] if key in payload}}
+                elif row.get('type') == 'response_item' and payload.get('type') == 'message' and payload.get('role') == 'assistant':
+                    item = {'type': 'response_item', 'payload': {key: payload[key] for key in ['type', 'role', 'phase', 'content'] if key in payload}}
+            elif host == 'claude-code':
+                message = row.get('message', {})
+                if row.get('type') in {'user', 'assistant'} and isinstance(message, dict):
+                    content = text_only(message.get('content'))
+                    if content:
+                        item = {key: row[key] for key in ['type', 'sessionId', 'uuid'] if key in row}
+                        item['message'] = {'role': message.get('role', row['type']), 'content': content}
+            elif row.get('operation') == 'transcript':
+                item = {'operation': 'transcript', 'session_id': row['session_id'], 'messages': [
+                    {**{key: message[key] for key in ['role', '_row_id'] if key in message}, 'content': text_only(message.get('content')) if message.get('role') in {'user', 'assistant'} else ''}
+                    for message in row['messages']
+                ]}
+            if item is not None:
+                projected.append(item)
+                locators.append({'selected_line': len(projected), 'original_line': number, 'original_line_sha256': hashlib.sha256(lines[number-1]).hexdigest()})
+        selected_expected = expected_messages(host, phase, projected)
+        strip_locator = lambda rows: [{k: v for k, v in row.items() if k != 'native_line'} for row in rows]
+        assert strip_locator(full_expected) == strip_locator(selected_expected), phase
+        selected_path = f'sources/{phase}.jsonl'
+        selected_raw = b''.join((json.dumps(row, ensure_ascii=True) + '\n').encode() for row in projected)
+        (archive / selected_path).write_bytes(selected_raw)
+        bindings.append({'host': host, 'phase': phase, 'original_path': str(path), 'original': digest(raw), 'original_record_count': len(records), 'selected_path': selected_path, 'selected': digest(selected_raw), 'locators': locators, 'full_source_expected_count': len(full_expected), 'projection_preserves_all_expected_text': True})
+        all_expected.extend(selected_expected)
+
+for name in ['dispatch-records.json', 'final-state.json', 'scopes.json']:
+    shutil.copyfile(runtime / name, archive / name)
+scope = {'user_profile_id': 'native-three-host-v7', 'project_id': '2124842e-69de-4513-afc7-6c1764df75c2', 'workspace_id': None}
+registry = json.loads((archive / 'scopes.json').read_bytes())
+assert registry['projects'][scope['project_id']]['user_profile_id'] == scope['user_profile_id']
+assert not registry['projects'][scope['project_id']]['workspace_ids']
+dispatches = json.loads((archive / 'dispatch-records.json').read_bytes())
+state = json.loads((archive / 'final-state.json').read_bytes())
+result = reconcile_captures(all_expected, dispatches, scope=scope, jobs=state['jobs'])
+save('report.json', result)
+save('source-bindings.json', {'observed_at': datetime.now(timezone.utc).isoformat(), 'scope': scope, 'sources': bindings, 'verifier_file': 'benchmarks/native_hosts/capture_coverage.py', 'verifier': digest((root / 'benchmarks/native_hosts/capture_coverage.py').read_bytes()), 'projection': 'Retained only native identities and text plus Codex turn boundaries. Excluded injected instructions, thinking, tool arguments/results and credentials. Parsed full native sources and compared all expected messages to the projection before saving.'})
+for name in ['native-capture-reconciliation-red.xml','native-capture-reconciliation-green.xml','native-capture-reconciliation-guards-red.xml','native-capture-reconciliation-guards-green.xml','native-capture-first-result.json']:
+    shutil.copyfile(root / '.venv' / name, archive / name)
+print(json.dumps({'status': result['status'], 'expected': result['expected_messages'], 'covered': result['covered_messages'], 'suppressed': sum(row['suppressed'] for row in result['messages']), 'duplicate_receipts': result['duplicate_receipts'], 'provisional_receipts': len(result['provisional_receipts']), 'unmatched': result['unmatched_receipts'], 'by_host': dict(collections.Counter(row['host'] for row in result['messages']))}))

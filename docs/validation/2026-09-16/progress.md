@@ -1,5 +1,14 @@
 # Functional local memory implementation record
 
+September 20, native receipt audit: the [offline reconciliation](../2026-09-20/native-capture-coverage-v1/README.md)
+matches all 31 native text identities to service acknowledgements. Twenty-nine
+have completed jobs in the final snapshot; two are suppressed during forgetting.
+Eight repeated Hermes arrivals and four provisional Claude prompts explain
+the difference from 43 receipts. All 84 focused checks pass, including 28 new
+verifier cases. This is evidence from the existing v7 run, with wider capture,
+outage, Desktop, and daily-use gates still open. The frozen v4 model matrix
+continues independently; no product or running evaluation source changed.
+
 September 20, v4 execution checkpoint: the [contract repair and preparation](../2026-09-20/contract-v4-preparation-v1/README.md)
 are frozen on `3d09658`. The development full suite passes 1,764 tests with
 four skips; final frozen v3/v4 guards pass 29 cases. Global Black and mypy

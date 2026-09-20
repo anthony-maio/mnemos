@@ -9,6 +9,12 @@ remember bodies that differ from their gold facts. Original outcomes remain
 and its new seven-profile matrix is running under the unchanged gates. No
 terminal v4 result or old-to-new performance improvement is claimed.
 
+The [native text audit](../2026-09-20/native-capture-coverage-v1/README.md)
+matches 31 recorded native text identities to 43 service arrivals, separating
+eight repeated deliveries and four provisional prompts. Twenty-nine identities
+have completed jobs; two have suppression acknowledgements. This is bounded
+receipt coverage, not 43 independent memories or general capture reliability.
+
 The [three-host v7 run](../2026-09-20/three-host-native-v7/README.md) passed all 11 native phases on verified
 product `e6887de`: Codex and Claude teaching, Hermes recall and same-ID
 correction, corrected recall from all three hosts, Claude reviewed deletion,
