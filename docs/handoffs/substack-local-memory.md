@@ -107,6 +107,23 @@ project or all private conversation indefinitely.
 
 ## Current evaluation update
 
+The [historical-assertion contract review](../plans/2026-09-19-historical-assertion-contract-review.md)
+examines the missing-correction-target rows. The model returned valid
+`no_durable_facts` for historical wording, leaving no accepted fact for the
+target-based correction operation. This establishes an ambiguity between
+the fixture's expectations and the extraction contract, not a proven runtime
+bug. A proposed 12-case development matrix needs independent review before
+changing that contract. It does not replace the old labels or count as a
+new quality result.
+
+The [local model readiness archive](../validation/2026-09-19/local-model-readiness-v1/README.md)
+records another operational constraint: the old GPT-OSS tag was present but
+could not be read by Ollama. Its replacement loaded on the RTX 4080, with
+about 12.8 GB reported in VRAM at a 32,768-token context. Preserve the failed
+pull-client timeout and the readiness helper's punctuation mismatch when
+describing this sequence. Successful loading is not evidence of memory
+quality or native-host reliability.
+
 Native evidence has a further qualification: the new [offline trace checks](../validation/2026-09-19/three-host-runner-offline-v1/README.md)
 read six historical Codex/Claude sessions. Claude exposes directly correlated
 tool-use/results. Codex's code-mode cells and MCP completions use different

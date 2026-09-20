@@ -1,19 +1,28 @@
 # Real-model evaluation status
 
-The newer [job lookup error package](../2026-09-19/job-not-found-checkpoint-v1/README.md)
-on `68693f8` passes 1,308 source tests, 533 installed cases, all six package
-checks, and seven replay assertions, with four/two respective skips. This
-changes error handling; the native observations and frozen model comparisons
-retain their original runtime and model bindings.
+The latest verified [source-selection rejection package](../2026-09-19/related-forget-error-checkpoint-v1/README.md)
+on `e454a85` passes 1,427 source tests, 604 installed cases, all six package
+checks, and seven replay assertions, with four skips in each suite. These
+are package checks; native observations and frozen model comparisons retain
+their original runtime and model bindings.
 
 ## Latest native-host observation
 
-The [fresh native Hermes v2 attempt](../2026-09-19/hermes-native-lifecycle-local-v2/README.md) stopped at teach. Exact-content
-and provider-context setup were corrected, but the model changed the returned
-job ID in its status request. The unknown job produced HTTP 500 and a degraded
-result. No later lifecycle phase ran; the three-host driver remains NOT RUN.
-The original and successor failures are retained separately. Runtime `3730fd9`
-and its passing package checks remain unchanged.
+The [fixed Hermes v6 cohort](../2026-09-19/hermes-native-cohort-v6/README.md)
+on `db932be` completed zero of three lifecycles. All three attempts passed
+teaching, restarted recall, correction, and restarted corrected recall.
+Two deleted only the target and retained conversational copies. The third
+selected additional facts without their required source IDs and received
+degraded HTTP 500 results. The later `e454a85` package repairs that specific
+error response, but has no native-model acceptance result. Three-host
+continuity remains NOT RUN. Earlier cohorts remain separate evidence.
+
+The [historical-assertion contract review](../../plans/2026-09-19-historical-assertion-contract-review.md)
+explains why the missing-correction-target rows do not establish a runtime
+bug. Valid `no_durable_facts` responses left no accepted target. The proposed
+12-case development matrix separates current assertions, historical reports,
+and corrections with or without an accepted fact. Its expectations have not
+been independently human validated; the original negative results remain.
 
 ## Current checkpoint: September 19, 2026, local GPU replacement
 
