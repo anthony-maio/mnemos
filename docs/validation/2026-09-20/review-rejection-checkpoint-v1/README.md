@@ -31,7 +31,8 @@ One attempt ultimately committed target-only deletion, without establishing
 reviewed-copy erasure. No attempt reached replay or final recall. Its model
 behavior is not an observation of this repaired package.
 
-No native cohort has run this checkpoint. Native continuity, complete capture,
+The subsequent [native v13 cohort](../hermes-native-cohort-v13/README.md)
+finished zero of three full lifecycles. Native continuity, complete capture,
 full-module quality, Desktop, and the operational pilot remain open. Graph
 development measurements remain negative. Passing these package checks does
 not establish model reliability or retrieval utility.

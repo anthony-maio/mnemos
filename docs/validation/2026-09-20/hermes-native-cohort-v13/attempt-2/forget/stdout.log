@@ -1,0 +1,11 @@
+Attempted to forget the project release label fact `359c53d4-2ca1-452c-b87c-316689a4a3f7` version 2 ("maple-ridge-842"). Verified:
+- Inspect: fact ID `359c53d4-2ca1-452c-b87c-316689a4a3f7`, version 2, content "The project release label is maple-ridge-842." Historical revision 1 was "cedar-ridge-731."
+- Forget preview: returned preview_complete=true with preview_digest `fea97db541175766f9cdc201b93df76016369d024c9291ee859dd6520268aa03`, factor target sources `08d6b4f3a01e438227ae9780625396a416baedb3b5bfb90cc8b543c22e19d210` and `22b65add6e2377864a34683883e464476d0fe839fb6e45291f13cf8f7baa5a35`.
+- Forget related: repeatedly fails with "related_forget_preview_stale", suggesting the preview becomes invalid between fetches/execute attempts. The tool appears to enforce that the digest is bound to a single-use window that closes before I can apply it.
+
+Completed:
+- Retrieved and inspected the asserted target fact and its version.
+- Generated a complete preview with digest and source lists.
+
+Remaining blocker:
+- mnemos_forget_related cannot be used after I've made four identical/stale-attempt calls; the preview seems to expire immediately and is unusable, so I cannot complete the related-forget operation within the allowed iterations. The project release label fact remains in memory.

@@ -1,5 +1,27 @@
 # Mnemos claim and evidence ledger
 
+The [native Hermes v13 cohort](../2026-09-20/hermes-native-cohort-v13/README.md)
+finished zero of three complete lifecycles on verified product `db21750`.
+All three attempts passed teaching, restarted recall, correction, and corrected
+recall. Two failed after applying limit 20 to previews with limit 100; the third
+selected source IDs outside the preview and then committed target-only deletion.
+All 55 model responses had verified context and GPU residency; cleanup and
+independently inspected scope controls passed. No attempt reached replay or
+final recall. This does not establish reliable reviewed-copy erasure.
+
+The [paired embedding-prefix diagnostic](../2026-09-20/embedding-prefix-development-v1/README.md)
+completed fresh measurements for five development cases. Task prefixes improved
+several seed ranks, including 33 to 1 in the scope-isolation case, but neither
+arm put any target in the top five. All 378 query/document vector bindings and
+rank calculations were independently checked against raw responses. No graph
+traversal ran, and production defaults and previous held-out results are unchanged.
+The next graph diagnostic must preserve the separate query and document vectors.
+
+The [independent historical-assertion review](../2026-09-20/historical-assertion-independent-review.md)
+found valid extraction abstentions followed by absent correction targets. It
+does not establish a parser or target-resolution defect. The historical-memory
+policy question is pending; prior labels and negative results remain fixed.
+
 The [native Hermes v12 cohort](../2026-09-20/hermes-native-cohort-v12/README.md)
 finished zero of three complete lifecycles on `5155ebd`. One attempt omitted
 corrected retrieval, one stopped after preview, and one received the repaired
@@ -17,8 +39,8 @@ duplicate selections, and dependency conflicts receive safe rejections.
 Deletion and scope requirements are unchanged. The [successor package checkpoint](../2026-09-20/review-rejection-checkpoint-v1/README.md)
 at `db21750` passes 1,692 source tests with 4 skips, all six
 source/package checks, 669 isolated installed cases with 4 matching
-skips, and seven replay assertions. No native cohort has run this successor;
-v12 tested the preceding installed package.
+skips, and seven replay assertions. Native v13 has now tested this successor
+with the failures above; v12 tested the preceding installed package.
 
 The [selection-rejection package](../2026-09-20/selection-rejection-checkpoint-v1/README.md)
 at `5155ebd` passes 1,638 source tests with four skips, all six source/package

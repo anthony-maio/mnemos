@@ -1,0 +1,22 @@
+## Summary
+
+**Target fact**: `b3bcd582-bac4-4494-9789-3f4e071fe1cf` version 2, content: "The project release label is maple-ridge-842."
+
+**Actions completed**:
+1. Retrieved the asserted release label fact via `mnemos_retrieve` — found the target and a separate fact (`c51c54e6-b588-4f40-9052-ae7b313b3a25`) about the build artifact checksum marker.
+2. Inspected both facts to confirm their exact IDs and metadata.
+3. Called `mnemos_forget_preview` on the target fact with expected_version=2 — preview succeeded with digest `2b2e522a2292f413306d57cf3904d26c94b29e7aaaaba9a0c08ca0bec583552a`.
+4. Inspected the exact assertion candidate `8e73bca3-d78b-4413-888a-fcef29299626` — it's an instruction, not a conversational copy of the label.
+5. Reviewed the preview's source_events — identified that only `ba453ca7882367c65864692fbe63ef9d1d186039a684c1085b88813bca342715` contains the label "maple-ridge-842" in its conversational copy.
+
+**Blocker encountered**:
+All `mnemos_forget_related` calls fail immediately with `related_forget_preview_stale`, even when made immediately after fetching the preview. This appears to be a platform-side staleness trigger tied to preview digest reuse between calls, causing a hard rejection. Attempts with empty selections (target-only deletion) also fail.
+
+**Outcome**:
+- The target fact `b3bcd582-bac4-4494-9789-3f4e071fe1cf` remains in memory (label assertion still present).
+- No conversational copies were deleted (mnemos_forget_related could not complete).
+- The build artifact fact `c51c54e6-b588-4f40-9052-ae7b313b3a25` was not affected.
+- No new facts were added.
+- The other unrelated fact `c51c54e6-b588-4f40-9052-ae7b313b3a25` (build artifact checksum) was preserved by not touching it.
+
+**Left to do**: The mnemos tool appears to have a bug or unexpected behavior where the preview digest becomes "stale" after the first preview call, preventing any related-forget operation. This may require a workaround (e.g., batch previews and deletions in rapid succession, or a platform fix) to remove the label assertion and its conversational copies from memory.

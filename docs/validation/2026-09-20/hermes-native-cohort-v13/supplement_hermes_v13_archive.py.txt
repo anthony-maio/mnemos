@@ -1,0 +1,105 @@
+from pathlib import Path
+import hashlib
+import json
+import shutil
+
+repo = Path(__file__).resolve().parents[1]
+root = repo / 'docs/validation/2026-09-20/hermes-native-cohort-v13'
+for name, target in (
+    ('hermes-v13-terminal-analysis.json', 'terminal-analysis.json'),
+    ('inspect_hermes_v13_terminal.py', 'inspect_hermes_v13_terminal.py.txt'),
+):
+    shutil.copyfile(repo / '.venv' / name, root / target)
+shutil.copyfile(__file__, root / (Path(__file__).name + '.txt'))
+summary = []
+for number in (1, 2, 3):
+    path = root / f'attempt-{number}/forget/trace.jsonl'
+    trace = [json.loads(line) for line in path.read_text().splitlines()]
+    latest = None
+    calls = []
+    for row in trace:
+        if row['operation'] != 'tool_result':
+            continue
+        if row['name'] == 'mnemos_forget_preview':
+            latest = row['result']
+        elif row['name'] == 'mnemos_forget_related':
+            assert latest is not None
+            args, result = row['args'], row['result']
+            selected = set(args.get('selected_source_event_ids', []))
+            offered = {source['source_event_id'] for source in latest['source_events']}
+            calls.append({'result': result, 'preview_limit': latest['limit'],
+                          'apply_limit': args.get('preview_limit', 100),
+                          'digest_matches': args['preview_digest'] == latest['preview_digest'],
+                          'sources_outside_selectable_list': sorted(selected - offered),
+                          'expected_version_supplied': 'expected_version' in args})
+    summary.append({'attempt': number, 'trace_sha256': hashlib.sha256(path.read_bytes()).hexdigest(),
+                    'related_forget_calls': calls,
+                    'target_only_receipts': [r['result'] for r in trace if r['operation'] == 'tool_result'
+                                             and r['name'] == 'mnemos_forget']})
+assert all(call['preview_limit'] == 100 and call['apply_limit'] == 20
+           for attempt in summary[:2] for call in attempt['related_forget_calls'])
+assert summary[2]['related_forget_calls'][0]['result']['error'] == 'related_forget_selection_invalid'
+assert summary[2]['related_forget_calls'][0]['sources_outside_selectable_list']
+(root / 'selection-analysis.json').write_text(json.dumps(summary, indent=2) + '\n')
+index_path = root / 'evidence-index.json'
+index = json.loads(index_path.read_text())
+for name, expected in index['files'].items():
+    data = (root / name).read_bytes()
+    assert len(data) == expected['bytes'] and hashlib.sha256(data).hexdigest() == expected['sha256']
+for path in root.iterdir():
+    if path.is_file() and path.name not in {'evidence-index.json', 'README.md'}:
+        index['files'][path.name] = {'bytes': path.stat().st_size,
+                                    'sha256': hashlib.sha256(path.read_bytes()).hexdigest()}
+index_path.write_text(json.dumps(index, indent=2) + '\n')
+(root / 'README.md').write_text('''# Native Hermes v13: review-rejection package result
+
+The fixed cohort completed zero of three full lifecycles on verified product
+`db217509477d92b9a82bd7e11d4a4bffb542fa29`, wheel
+`8b1f560e98b93376fc2aa073be7c1500997d888d09ae87573d5d70ec8694ad00`.
+Every attempt passed teaching, restarted recall, correction, and corrected
+recall, then failed at forgetting. No attempt reached source replay or final
+recall. All scheduled outcomes are retained.
+
+| Attempt | Forgetting result | Independently inspected terminal state |
+| --- | --- | --- |
+| 1 | Three stale-preview rejections; apply used limit 20 after previews returned 100 | Target retained at version 2; zero suppressions |
+| 2 | Three stale-preview rejections and one missing-version rejection; apply again used 20 after previews returned 100 | Target retained at version 2; zero suppressions |
+| 3 | Rejected sources outside the selectable preview list, followed by target-only deletion | Target absent; four suppressions; reviewed-copy erasure unproven |
+
+Attempt 3's final response correctly acknowledged that target-only deletion
+did not cover the conversational copies. Its native process exited zero, but
+the frozen evaluator rejected the unsuccessful reviewed-forget operation.
+The full requested lifecycle therefore remains failed. Attempts 1 and 2
+exited one after their repeated unsuccessful tool use.
+
+## Runtime and evidence
+
+The runner and protocol were committed at `dfb08d5` before the cohort.
+The [import preflight](../hermes-native-discovery-preflight-v13/README.md)
+discovered eight tools without inference. The native cohort kept all five
+cognition modules off and preserved the preceding prompts, capture behavior,
+deadlines, tool schemas, and erasure requirements.
+
+All 55 recorded model responses had a verified pinned Qwen alias/digest,
+65,536-token serving context, and positive GPU residency. Every attempt
+established cleanup. Independent read-only database inspection confirmed
+unchanged local-control and foreign-scope facts, events, and evidence in all
+three attempts, with database hashes unchanged by inspection.
+
+The archive preserves exact outgoing requests, traces, tool results, input
+hashes, phase state, readiness observations, and selection/terminal analyses.
+The new incomplete-preview and dependency-conflict rejections were not
+exercised here. Package tests establish their bounded behavior; this cohort
+does not establish model recovery or reliable deletion. No HTTP 500 related-
+forget result was recorded, but that is not a complete lifecycle pass.
+
+The model still failed to follow the reviewed selection contract. Changing
+the stored-state checks or repairing its arguments would change the test.
+Earlier failures and the single v10 pass retain their original package
+bindings; these cohorts are not pooled into a reliability estimate.
+
+No live host configuration or memory changed. Three-host continuity,
+complete capture, Desktop, module quality, and the pilot remain open.
+The index binds raw files; this README is outside the index.
+''', encoding='utf-8', newline='\n')
+print(json.dumps({'indexed_files': len(index['files']), 'attempts': len(summary)}))

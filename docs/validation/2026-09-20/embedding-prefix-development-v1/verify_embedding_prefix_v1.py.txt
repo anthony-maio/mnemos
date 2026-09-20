@@ -1,0 +1,85 @@
+from pathlib import Path
+import hashlib
+import json
+import math
+
+repo = Path(__file__).resolve().parents[1]
+root = Path('C:/Users/Ant/AppData/Local/Temp/mnemos-embedding-prefix-development-v1')
+artifact = json.loads((root / 'artifact.json').read_text())
+paired_raw = (root / 'paired.json').read_bytes()
+paired = json.loads(paired_raw)
+assert artifact['status'] == 'complete'
+assert hashlib.sha256(paired_raw).hexdigest() == artifact['paired_sha256']
+for path, digest in artifact['input_hashes'].items():
+    assert hashlib.sha256((repo / path).read_bytes()).hexdigest() == digest, path
+dataset = json.loads((repo / 'benchmarks/local_memory/datasets/source-association-development-v1.json').read_text())
+requests = [json.loads(line) for line in (root / 'requests.jsonl').read_text().splitlines()]
+assert len(requests) == artifact['request_count'] == 87
+lookup = {}
+embed_calls = 0
+for row in requests:
+    assert row['status'] == 'complete' and row['response_status'] == 200
+    for kind in ('request', 'response'):
+        if kind + '_file' not in row:
+            continue
+        data = (root / row[kind + '_file']).read_bytes()
+        assert len(data) == row[kind + '_bytes']
+        assert hashlib.sha256(data).hexdigest() == row[kind + '_sha256']
+    if row['url'].endswith('/api/embed'):
+        embed_calls += 1
+        body = json.loads((root / row['request_file']).read_bytes())
+        response = json.loads((root / row['response_file']).read_bytes())
+        assert body['model'] == artifact['model'] and body['truncate'] is False
+        assert len(body['input']) == len(response['embeddings']) <= 16
+        for text, vector in zip(body['input'], response['embeddings']):
+            lookup.setdefault((row['arm'], text), []).append(vector)
+assert embed_calls == 40
+
+def cosine(a, b):
+    return math.fsum(x * y for x, y in zip(a, b)) / math.sqrt(
+        math.fsum(x*x for x in a) * math.fsum(y*y for y in b))
+
+results = []
+vector_bindings = 0
+for arm in paired['arms']:
+    assert len(arm['cases']) == len(dataset['graph_cases']) == 5
+    assert len(artifact['loaded_profiles'][arm['label']]) == 20
+    for profile in artifact['loaded_profiles'][arm['label']]:
+        assert profile['digest'] == artifact['digest'] and profile['size_vram'] > 0
+        assert profile['context_length'] > 0
+    for case, observed in zip(dataset['graph_cases'], arm['cases']):
+        assert case['id'] == observed['case_id']
+        query = observed['query_vector']
+        assert query in lookup[(arm['label'], arm['prefixes']['query_prefix'] + case['query'])]
+        vector_bindings += 1
+        assert len(query) == 768
+        eligible = {fact['id'] for fact in case['facts']}
+        controls = case.get('scope_controls', [])
+        for control in controls:
+            scope, context = control['scope'], case['context']
+            assert scope['user_profile_id'] != context['user_profile_id'] or (
+                scope['scope'] == 'project' and scope['project_id'] != context['project_id'])
+        for fact in [*case['facts'], *controls]:
+            vector = observed['document_vectors'][fact['id']]
+            assert vector in lookup[(arm['label'], arm['prefixes']['document_prefix'] + fact['content'])]
+            assert len(vector) == 768
+            vector_bindings += 1
+        calculated = {key: cosine(query, vector)
+                      for key, vector in observed['document_vectors'].items()}
+        for row in observed['scored_rows']:
+            assert abs(row['cosine'] - calculated[row['id']]) < 1e-6
+            assert row['eligible'] == (row['id'] in eligible)
+        expected = sorted(eligible, key=lambda key: (-calculated[key], key))
+        assert observed['ranked_fact_ids'] == expected
+        for role in ('target', 'seed', 'bridge'):
+            assert observed[role]['rank'] == expected.index(case[role + '_id']) + 1
+        assert observed['scope_controls']['present_in_ranked'] == []
+        results.append({'arm': arm['label'], 'case': case['id'],
+                        **{role + '_rank': observed[role]['rank'] for role in ('target', 'seed', 'bridge')}})
+assert vector_bindings == 378
+summary = {'status': 'verified', 'raw_api_calls': len(requests), 'embedding_batches': embed_calls,
+           'independently_verified_vector_bindings': vector_bindings,
+           'rank_arithmetic': 'independent Python double-precision cosine, tolerance 1e-6',
+           'results': results}
+(repo / '.venv/embedding-prefix-verification.json').write_text(json.dumps(summary, indent=2) + '\n')
+print(json.dumps(summary))

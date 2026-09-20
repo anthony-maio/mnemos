@@ -1,0 +1,39 @@
+from pathlib import Path
+import hashlib
+import json
+import sqlite3
+
+root = Path('C:/Users/Ant/AppData/Local/Temp/mnemos-hermes-native-cohort-v13')
+output = {'attempts': []}
+for number in (1, 2, 3):
+    folder = root / f'attempt-{number}'
+    report = json.loads((folder / 'report.json').read_text())
+    assert report['status'] in {'passed', 'failed'} and report['finished_at'] and not report.get('cleanup_error')
+    assert not (folder / 'runtime.json').exists()
+    database = folder / 'memory.sqlite'
+    before = hashlib.sha256(database.read_bytes()).hexdigest()
+    with sqlite3.connect(database.as_uri() + '?mode=ro', uri=True) as conn:
+        conn.row_factory = sqlite3.Row
+        conn.execute('PRAGMA query_only=ON')
+        conn.execute('BEGIN')
+        facts = [dict(r) for r in conn.execute('SELECT id,content,version,metadata FROM memory_chunks ORDER BY id')]
+        events = [dict(r) for r in conn.execute('SELECT id,role,content,source,scope_id,metadata,occurred_at FROM episodic_events ORDER BY id')]
+        evidence = [dict(r) for r in conn.execute('SELECT fact_id,source_event_id,excerpt FROM fact_evidence ORDER BY fact_id,source_event_id')]
+        suppressions = conn.execute('SELECT COUNT(*) FROM memory_suppressions').fetchone()[0]
+    assert hashlib.sha256(database.read_bytes()).hexdigest() == before
+    controls = json.loads((folder / 'controls.json').read_text())
+    ids = {r['id'] for r in controls['facts']}
+    content = {r['content'] for r in controls['facts']}
+    sources = {r['source_event_id'] for r in controls['evidence']}
+    def ordered(rows):
+        return sorted(json.dumps(r, sort_keys=True) for r in rows)
+    assert ordered(controls['facts']) == ordered([r for r in facts if r['id'] in ids or r['content'] in content])
+    assert ordered(controls['events']) == ordered([r for r in events if r['id'] in sources])
+    assert ordered(controls['evidence']) == ordered([r for r in evidence if r['fact_id'] in ids])
+    target = next((r for r in facts if r['id'] == report.get('target_id')), None)
+    output['attempts'].append({'attempt': number, 'database_sha256': before,
+        'controls_unchanged': True, 'target_retained': target is not None,
+        'target_version': target['version'] if target else None,
+        'suppression_count': suppressions, 'error': report.get('error'),
+        'report_sha256': hashlib.sha256((folder / 'report.json').read_bytes()).hexdigest()})
+print(json.dumps(output, indent=2))

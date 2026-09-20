@@ -1,0 +1,151 @@
+[
+  {
+    "attempt": 1,
+    "trace_sha256": "c2f8b3bf434d318e93ca5f4a678e687aa95e1e30e9ea7f9576678453c0c41c6a",
+    "related_forget_calls": [
+      {
+        "result": {
+          "committed": false,
+          "error": "related_forget_preview_stale",
+          "message": "The related-forget preview is stale. Request a fresh preview and reuse its digest and limit.",
+          "schema_version": 1,
+          "status": "rejected"
+        },
+        "preview_limit": 100,
+        "apply_limit": 20,
+        "digest_matches": true,
+        "sources_outside_selectable_list": [],
+        "expected_version_supplied": true
+      },
+      {
+        "result": {
+          "committed": false,
+          "error": "related_forget_preview_stale",
+          "message": "The related-forget preview is stale. Request a fresh preview and reuse its digest and limit.",
+          "schema_version": 1,
+          "status": "rejected"
+        },
+        "preview_limit": 100,
+        "apply_limit": 20,
+        "digest_matches": true,
+        "sources_outside_selectable_list": [],
+        "expected_version_supplied": true
+      },
+      {
+        "result": {
+          "committed": false,
+          "error": "related_forget_preview_stale",
+          "message": "The related-forget preview is stale. Request a fresh preview and reuse its digest and limit.",
+          "schema_version": 1,
+          "status": "rejected"
+        },
+        "preview_limit": 100,
+        "apply_limit": 20,
+        "digest_matches": true,
+        "sources_outside_selectable_list": [],
+        "expected_version_supplied": true
+      }
+    ],
+    "target_only_receipts": []
+  },
+  {
+    "attempt": 2,
+    "trace_sha256": "7fc7c132f9933b1c361a5f0213771d09c36f2b9f1b00ec3dbee1f5e5bde89b8d",
+    "related_forget_calls": [
+      {
+        "result": {
+          "committed": false,
+          "error": "related_forget_preview_stale",
+          "message": "The related-forget preview is stale. Request a fresh preview and reuse its digest and limit.",
+          "schema_version": 1,
+          "status": "rejected"
+        },
+        "preview_limit": 100,
+        "apply_limit": 20,
+        "digest_matches": true,
+        "sources_outside_selectable_list": [],
+        "expected_version_supplied": true
+      },
+      {
+        "result": {
+          "schema_version": 1,
+          "status": "rejected",
+          "error": "Required argument is missing"
+        },
+        "preview_limit": 100,
+        "apply_limit": 20,
+        "digest_matches": true,
+        "sources_outside_selectable_list": [],
+        "expected_version_supplied": false
+      },
+      {
+        "result": {
+          "committed": false,
+          "error": "related_forget_preview_stale",
+          "message": "The related-forget preview is stale. Request a fresh preview and reuse its digest and limit.",
+          "schema_version": 1,
+          "status": "rejected"
+        },
+        "preview_limit": 100,
+        "apply_limit": 20,
+        "digest_matches": true,
+        "sources_outside_selectable_list": [],
+        "expected_version_supplied": true
+      },
+      {
+        "result": {
+          "committed": false,
+          "error": "related_forget_preview_stale",
+          "message": "The related-forget preview is stale. Request a fresh preview and reuse its digest and limit.",
+          "schema_version": 1,
+          "status": "rejected"
+        },
+        "preview_limit": 100,
+        "apply_limit": 20,
+        "digest_matches": true,
+        "sources_outside_selectable_list": [
+          "08d6b4f3a01e438227ae9780625396a416baedb3b5bfb90cc8b543c22e19d210",
+          "22b65add6e2377864a34683883e464476d0fe839fb6e45291f13cf8f7baa5a35"
+        ],
+        "expected_version_supplied": true
+      }
+    ],
+    "target_only_receipts": []
+  },
+  {
+    "attempt": 3,
+    "trace_sha256": "c45875564e9619ce395ce3923c75bf0abbca5ddb2aed0448a017242ba1e820b1",
+    "related_forget_calls": [
+      {
+        "result": {
+          "committed": false,
+          "error": "related_forget_selection_invalid",
+          "message": "Selected related-forget IDs must come from the reviewed preview.",
+          "schema_version": 1,
+          "status": "rejected"
+        },
+        "preview_limit": 100,
+        "apply_limit": 100,
+        "digest_matches": true,
+        "sources_outside_selectable_list": [
+          "096319254f54ab22a462470879cee936e519b662bc41e81561f3c160260bdeca",
+          "2d478bf3838168e94dd935639833c1bbfeb7800916c6f1da1b7ac9776aadaada"
+        ],
+        "expected_version_supplied": true
+      }
+    ],
+    "target_only_receipts": [
+      {
+        "deletion_coverage": {
+          "selection": "target_only",
+          "semantic_erasure_proven": false
+        },
+        "erasure_scope": "live_memory_and_replay_suppression",
+        "fact_id": "8516b41d-668d-4c72-9633-7d5ed8cd6680",
+        "forgotten": true,
+        "schema_version": 1,
+        "status": "committed"
+      }
+    ]
+  }
+]
