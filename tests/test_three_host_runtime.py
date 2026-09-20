@@ -89,6 +89,7 @@ def fx(tmp_path, monkeypatch):
             "no_foreign_tool_result",
             "real_pinned_model_request",
             "pinned_profile_without_conflicting_override",
+            "write_followup_guidance_present",
             "no_provider_error",
             "controls_unchanged",
             "native_capture_committed",
@@ -141,6 +142,15 @@ def fx(tmp_path, monkeypatch):
     monkeypatch.setattr("mnemos.service._protect_private_path", lambda p: protected.append(p))
     rt = m.ThreeHostRuntime(tmp_path / "runtime", repo, checks, installed, queue, [123], hermes)
     return SimpleNamespace(rt=rt, package=package, source=source, protected=protected)
+
+
+def test_hermes_prerequisite_requires_recorded_write_guidance(fx):
+    path = fx.rt.hermes_acceptance
+    report = json.loads(path.read_text())
+    del report["phases"][0]["gates"]["write_followup_guidance_present"]
+    path.write_text(json.dumps(report))
+    with pytest.raises(ValueError, match="required successful phase gates"):
+        fx.rt.verify()
 
 
 def test_real_report_shape_and_verified_copy(fx):

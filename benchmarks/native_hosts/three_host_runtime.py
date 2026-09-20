@@ -24,14 +24,16 @@ if TYPE_CHECKING:
     from mnemos.scopes import ScopeRegistry
     from mnemos.service import MnemosService
 
-WHEEL_SHA256 = "2e121c1ae81717d1b9a32349bd27ea7fafc2e5562e6eadbd7d24ddecd16f5cb8"
-SOURCE_COMMIT = "68693f83b5894198daea114e018031e381a508a3"
+WHEEL_SHA256 = "4958c5ef7a509fefecacc0666d87f578b46e94e1a33a896831468c0f971bf895"
+SOURCE_COMMIT = "fd83fb27042c05897f29dba952b0924b15889aad"
 PROFILE = "native-three-host-v1"
 HERMES_INPUTS = (
-    "benchmarks/native_hosts/hermes_lifecycle_run_v3.py",
-    "benchmarks/native_hosts/hermes_native_bootstrap_v3.py",
+    "benchmarks/native_hosts/hermes_lifecycle_run_v5.py",
+    "benchmarks/native_hosts/hermes_native_bootstrap_v4.py",
     "benchmarks/native_hosts/hermes_trace.py",
     "docs/plans/2026-09-19-hermes-native-lifecycle-protocol-v3.md",
+    "docs/plans/2026-09-19-hermes-native-lifecycle-protocol-v4.md",
+    "docs/plans/2026-09-19-hermes-native-lifecycle-protocol-v5.md",
     "docs/validation/2026-09-19/native-model-profile-v1/profile.json",
 )
 
@@ -70,6 +72,7 @@ def require_hermes_acceptance(hermes: dict[str, Any]) -> None:
         "no_foreign_tool_result",
         "real_pinned_model_request",
         "pinned_profile_without_conflicting_override",
+        "write_followup_guidance_present",
         "no_provider_error",
         "controls_unchanged",
         "native_capture_committed",

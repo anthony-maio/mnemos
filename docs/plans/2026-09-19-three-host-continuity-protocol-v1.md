@@ -33,8 +33,8 @@ assuming a stale state file establishes exit. Do not compete with another
 Ollama job or selectively repeat unsuccessful phases.
 
 Use one verified Mnemos wheel and source checkpoint across every host. The
-current candidate is `68693f83b5894198daea114e018031e381a508a3`, wheel SHA-256
-`2e121c1ae81717d1b9a32349bd27ea7fafc2e5562e6eadbd7d24ddecd16f5cb8`.
+current candidate is `fd83fb27042c05897f29dba952b0924b15889aad`, wheel SHA-256
+`4958c5ef7a509fefecacc0666d87f578b46e94e1a33a896831468c0f971bf895`.
 Record exact installed Codex and Claude versions and Hermes revision. Hermes
 must use an isolated checkout with a recorded compatibility patch; never
 present patched-host evidence as evidence for the unmodified installation.
@@ -152,3 +152,14 @@ The prerequisite report must include a passing sampling-profile gate. The
 three-host driver rejects conflicting native request overrides; exact memory
 content, IDs, versions, correlation, capture, scope, and replay checks are
 unchanged. Earlier preparation records retain their original helper bindings.
+
+The still-unexecuted driver is now bound to the verified native-failure repair
+package `fd83fb2`: 1,351 source tests, 569 installed cases, four skips in each,
+all six source/package checks, and seven replay assertions. The required
+Hermes-only predecessor is the [v5 lifecycle protocol](2026-09-19-hermes-native-lifecycle-protocol-v5.md)
+using the unchanged v4 bootstrap and evaluator. The v4 lifecycle cohort failed
+all three attempts and is not an acceptable prerequisite. Require the recorded
+write-guidance gate as well as every prior native lifecycle gate. This binding
+update changes neither phase prompts, model settings, budgets, scope controls,
+nor replay requirements. No three-host run may start before a passing bound
+Hermes report exists; preserve the complete predecessor cohort with that report.

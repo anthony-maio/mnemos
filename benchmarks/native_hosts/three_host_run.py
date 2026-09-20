@@ -24,7 +24,7 @@ if not __package__:
     sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
     __package__ = "native_hosts"
 
-from .hermes_lifecycle_run_v3 import (
+from .hermes_lifecycle_run_v5 import (
     DIGESTS,
     HERMES_CHECKOUT,
     HERMES_COMMIT,
@@ -220,7 +220,7 @@ def run_hermes(
                     "--kill-after=5s",
                     "240s",
                     HERMES_LIVE + "/venv/bin/python",
-                    wsl(Path(__file__).with_name("hermes_native_bootstrap_v3.py")),
+                    wsl(Path(__file__).with_name("hermes_native_bootstrap_v4.py")),
                     wsl(root / "config.json"),
                 ],
                 stdout=stdout,
