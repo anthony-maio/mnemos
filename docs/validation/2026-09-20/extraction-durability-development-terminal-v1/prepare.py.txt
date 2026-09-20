@@ -1,0 +1,44 @@
+from pathlib import Path
+from datetime import datetime,timezone
+from urllib.request import urlopen
+import hashlib,json,shutil,subprocess,sys
+repo=Path.cwd(); snapshot=Path('C:/Users/Ant/AppData/Local/Temp/mnemos-source-lease-renewal-v1')
+root=Path('C:/Users/Ant/AppData/Local/Temp/mnemos-extraction-durability-development-v1')
+root.mkdir(exist_ok=False)
+sha=lambda p:hashlib.sha256(p.read_bytes()).hexdigest()
+raw=repo/'.venv/extraction_durability_development_v1.json'
+shutil.copyfile(raw,root/'authored-draft.json')
+data=json.loads(raw.read_text())
+for c in data['cases']:
+ if c['case_id']=='dated-report-06-one-turn':
+  c.update(ambiguous=True, expected_durable_meaning='Abstain or retain only that this report uses incident date 2026-09-20 and requires the observed retry count; no retry value was supplied.', ambiguity_note='Report context may remain useful as attributed history, but is not a standing rule.',ambiguity_expected_action='Abstain or retain narrow report context, without inventing a retry count.')
+ if c['case_id']=='temporary-plan-11-one-turn':
+  c.update(ambiguity_note='The fallback is considered but not approved. The source does not say it was rejected.',ambiguity_expected_action='Abstain or preserve only unapproved hypothetical context, never explicit rejection or adoption.')
+  c['forbidden_meaning']+=' The proposal was explicitly rejected.'
+data['scope']='13 related subject pairs, 26 development cases. Historical/context cases are not mechanically scored as abstention merely because their IDs say one-turn.'
+base={'pair_id':'mixed-marker-13','role':'user','ambiguous':False,'ambiguity_note':''}
+data['cases'] += [dict(base,case_id='mixed-marker-13-one-turn',content='For this disposable project, the outage test marker is cedar-window-618. Do not call any tools or claim that memory storage succeeded. Reply with exactly: Acknowledged cedar-window-618.',expected_durable_meaning='The disposable project outage test marker is cedar-window-618; retain only this durable project fact.',forbidden_meaning='A lasting user preference or project rule not to call tools, not to claim storage, or to reply with the acknowledgment.',evidence_rationale='Known failed native-event development case. The exact-reply and tool restrictions govern this exchange; the project marker remains useful.'),dict(base,case_id='mixed-marker-13-policy',content='For this disposable project, the outage test marker is cedar-window-618. Our continuing outage-test policy is to avoid external tools and never claim memory storage succeeded without checking its receipt. Keep that policy for future outage tests.',expected_durable_meaning='Project outage marker cedar-window-618; ongoing outage-test policy avoids external tools and requires a checked receipt before claiming memory storage success.',forbidden_meaning='All tool use is forbidden, or storage success may never be reported even after checking its receipt.',evidence_rationale='Positive paired control makes continuing duration, external-tool scope and receipt condition explicit.')]
+(root/'rubric.json').write_text(json.dumps(data,indent=2)+'\n')
+(root/'rubric-review.json').write_text(json.dumps({'before_execution':True,'changes':['Allow narrow dated-report context rather than force abstention.','Unapproved does not entail rejected.','Add known failed mixed-content event and ongoing-policy control.'],'limits':'Authored development cases. Ambiguous cases receive descriptive review, not forced binary scoring. No outputs were generated before this review.'},indent=2)+'\n')
+endpoint='http://127.0.0.1:11434';model_name='qwen3.5:9b'
+with urlopen(endpoint+'/api/tags',timeout=10) as f: model=next(x for x in json.loads(f.read())['models'] if x['name']==model_name)
+with urlopen(endpoint+'/api/version',timeout=10) as f: version=json.loads(f.read())
+commit=subprocess.check_output(['git','rev-parse','HEAD'],cwd=snapshot,text=True).strip()
+assert not subprocess.check_output(['git','status','--porcelain'],cwd=snapshot).strip()
+sys.path.insert(0,str(snapshot))
+from mnemos.types import EpisodicEvent
+cases=[]
+for c in data['cases']:
+ cid=c['case_id']; sid=hashlib.sha256(('durability-v1:'+cid+':'+c['content']).encode()).hexdigest()
+ scope='durability-'+c['pair_id']
+ event=EpisodicEvent(id=sid,event_fingerprint=sid,role=c['role'],content=c['content'],normalized_content=c['content'].lower(),scope='project',scope_id=scope,metadata={'user_profile_id':'durability-development','scope':'project','scope_id':scope,'project_id':scope,'source_kind':'authored_development'},created_at='2026-09-20T12:00:00Z',occurred_at='2026-09-20T12:00:00Z')
+ cases.append({'id':cid,'source':event.model_dump(mode='json'),'rubric':c})
+inputs={'snapshot':str(snapshot),'source_commit':commit,'endpoint':endpoint,'model':model_name,'temperature':1.0,'max_tokens':8192,'timeout':180,'think':True,'candidate_clause':(repo/'.venv/extraction_durability_clause_v1.txt').read_text(),'cases':cases,'arms':['production','durability'],'repetitions':1}
+(root/'inputs.json').write_text(json.dumps(inputs,indent=2)+'\n')
+runner=Path('C:/Users/Ant/AppData/Local/Temp/mnemos-extraction-temperature-one-v1/runner.py').read_text().replace("'history_only'","'durability'").replace("existing = [MemoryChunk.model_validate(case['existing_fact'])]","existing = []")
+(root/'runner.py').write_text(runner)
+(root/'diagnostic-contract.json').write_text(json.dumps({'calls':52,'cases':26,'repetitions':1,'arms':inputs['arms'],'variable':'Durability clause added to current production prompt only. Both arms use temperature1.0 and identical remaining settings. No history-only or missing-target candidate clause.','semantic_review':'Per-case supported/required/forbidden meaning, preserve ambiguity notes. Compare same-case arms; no automatic aggregate accuracy score. Runtime validity is separate from semantic quality.','limits':'Development only. No production adoption or heldout/full-module/native recovery claim. No facts are committed.','ollama_version':version,'selective_retry':False},indent=2)+'\n')
+shutil.copyfile(__file__,root/'prepare.py.txt')
+prep={'prepared_at':datetime.now(timezone.utc).isoformat(),'source_commit':commit,'source_files':{str(p.relative_to(snapshot)).replace('\\','/'):sha(p) for p in (snapshot/'mnemos').rglob('*.py')},'model':model,'files':{p.name:sha(p) for p in root.iterdir() if p.is_file()}}
+(root/'preparation.json').write_text(json.dumps(prep,indent=2)+'\n')
+print(json.dumps({'root':str(root),'cases':len(cases),'calls':52,'started':False}))

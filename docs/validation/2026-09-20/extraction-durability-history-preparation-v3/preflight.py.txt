@@ -1,0 +1,26 @@
+from pathlib import Path
+import asyncio,hashlib,json
+root=Path('C:/Users/Ant/AppData/Local/Temp/mnemos-extraction-durability-history-development-v3')
+ns={'__file__':str(root/'runner.py')}
+code=(root/'runner.py').read_text(); assert code.endswith('asyncio.run(main())\n')
+exec(compile(code.rsplit('asyncio.run(main())',1)[0],str(root/'runner.py'),'exec'),ns)
+class Offline:
+ async def predict(self,prompt,**kwargs):
+  return '{"decision":"no_durable_facts","reason":"offline contract check","facts":[]}'
+async def check():
+ daemon=ns['SleepDaemon'](ns['InMemoryStore']()); seen=0
+ for case in ns['inputs']['cases']:
+  prompts={}; options={}
+  for arm in ns['inputs']['arms']:
+   p=ns['Provider'](case,arm); p.provider=Offline()
+   existing=[ns['MemoryChunk'].model_validate(case['existing_fact'])] if 'existing_fact' in case else []
+   result=await daemon.propose_facts([ns['EpisodicEvent'].model_validate(case['source'])],p,existing_facts=existing)
+   assert result==[]
+   prompts[arm]=p.trace['prompt']; options[arm]=p.trace['options']; seen+=1
+  assert prompts['durability_v2']==prompts['production'].replace('Do not invent facts or IDs. ',ns['inputs']['candidate_clause']+'Do not invent facts or IDs. ',1)
+  assert options['production']==options['durability_v2']
+ assert seen==92
+ return seen
+count=asyncio.run(check())
+report={'status':'passed','offline_case_arm_checks':count,'model_generation_calls':0,'preparation_sha256':hashlib.sha256((root/'preparation.json').read_bytes()).hexdigest(),'checks':['frozen source and model digest','event and existing-fact schema and scope','actual production proposal path','only candidate clause differs','same structured output options'],'limitations':'Stub abstention validates wiring only; no semantic result.'}
+(root/'offline-preflight.json').write_text(json.dumps(report,indent=2)+'\n');print(json.dumps(report))
