@@ -529,9 +529,14 @@ binds all 50 partial observations to 11 scenarios: automatic historical-note
 extraction abstains before an explicit correction targets that source. This
 locates the missing target upstream of correction; no accepted target existed
 to mutate. Preserve the failure and criteria rather than inventing a target.
-The [durability comparison](../validation/2026-09-20/extraction-durability-development-preparation-v1/README.md)
-is running separately on 26 development cases and must retain useful attributed
-history as well as reject transient instructions. It cannot close T18 alone.
+The [durability comparison](../validation/2026-09-20/extraction-durability-development-terminal-v1/README.md)
+completed all 52 calls without runtime errors. Its [semantic review](../validation/2026-09-20/extraction-durability-semantic-review-v1.md)
+rejects adoption: fewer transient instructions were retained, but historical
+facts, independent markers and policy qualifications were lost. Production
+also retains unwanted temporary instructions. The [v3 follow-up](../validation/2026-09-20/extraction-durability-history-preparation-v3/README.md)
+is running on 46 reused development cases, including the previous history set,
+with assertion-level separation and qualification guidance. V2 was prepared
+but never executed. No prompt is adopted; this comparison cannot close T18 alone.
 
 Depends on: T07-T11, T17.
 
